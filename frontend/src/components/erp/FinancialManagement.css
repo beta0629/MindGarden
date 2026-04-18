@@ -116,3 +116,42 @@
 .mg-financial-tax-filing-notice__link:focus-visible {
   color: var(--mg-primary-600, var(--mg-primary-500));
 }
+
+/* 수입·taxIncluded: 금액 옆 부가세 포함가 배지 */
+.mg-financial-transaction-table__amount-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-xs, var(--spacing-xs));
+}
+
+.mg-financial-transaction-card__amount-with-badge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-xs, var(--spacing-xs));
+}
+
+.mg-financial-transaction-card__compact-amount-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-xs, var(--spacing-xs));
+}
+
+.mg-financial-tax-included-badge {
+  display: inline-block;
+  padding: var(--mg-spacing-2xs, var(--spacing-xs)) var(--spacing-xs);
+  font-size: var(--mg-font-size-caption, var(--font-size-sm));
+  font-weight: 600;
+  color: var(--mg-color-text-secondary);
+  line-height: var(--mg-line-height-snug, 1.4);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--modal-border-radius);
+  background: var(--mg-color-surface-muted, var(--mg-color-surface-main));
+}
+
+.mg-financial-tax-included-badge--form-label {
+  margin-left: var(--spacing-xs);
+  vertical-align: middle;
+}

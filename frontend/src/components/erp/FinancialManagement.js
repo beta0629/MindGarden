@@ -74,6 +74,9 @@ const FINANCIAL_TX_ICON_SIZE = 20;
 
 const FINANCIAL_WITHHOLDING_TAX_LABEL = '원천징수(3.3%)';
 
+/** 수입·taxIncluded=true 거래 금액 옆 부가세 포함가 안내 (백엔드 포함가 저장과 정합) */
+const FINANCIAL_TAX_INCLUDED_LABEL = '부가세 포함가';
+
 /**
  * 원천징수 금액 표시 SSOT.
  * {@code withholdingTaxAmount}가 응답에 있으면(0 포함) 그대로 사용한다.
@@ -143,6 +146,19 @@ function shouldShowIncomeWithholdingTax(transaction) {
     return false;
   }
   return transaction.taxIncluded !== true;
+}
+
+/**
+ * 수입이면서 포함가(taxIncluded)인 경우에만 부가세 포함가 배지 표시.
+ * @param {Object|null|undefined} transaction
+ * @returns {boolean}
+ */
+function shouldShowIncomeTaxIncludedLabel(transaction) {
+  return (
+    !!transaction &&
+    transaction.transactionType === 'INCOME' &&
+    transaction.taxIncluded === true
+  );
 }
 
 /**
@@ -899,15 +915,22 @@ const FinancialManagement = () => {
         );
       case 'amount':
         return (
-          <span
-            className={
-              amountNum >= 0
-                ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
-                : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
-            }
-          >
-            {amountNum >= 0 ? '+' : ''}
-            {formatKrw(transaction.amount)}
+          <span className="mg-financial-transaction-table__amount-cell">
+            <span
+              className={
+                amountNum >= 0
+                  ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
+                  : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
+              }
+            >
+              {amountNum >= 0 ? '+' : ''}
+              {formatKrw(transaction.amount)}
+            </span>
+            {shouldShowIncomeTaxIncludedLabel(transaction) && (
+              <span className="mg-financial-tax-included-badge">
+                <ErpSafeText value={FINANCIAL_TAX_INCLUDED_LABEL} />
+              </span>
+            )}
           </span>
         );
       case 'status':
@@ -1441,6 +1464,7 @@ const FinancialManagement = () => {
                     </h2>
                     <p className="mg-v2-text-secondary mg-mb-md">
                       수입 거래의 부가세·원천징수와 지출 거래의 세액 필드 합계입니다. (저장된 금액 기준)
+                      수입 금액이 부가세 포함가인 거래는, 부가세(VAT) 열은 포함가에서 분리한 세액의 합계입니다.
                     </p>
                     <section
                       className="mg-financial-tax-filing-notice"
@@ -1659,15 +1683,22 @@ const FinancialManagement = () => {
                                 <span className="mg-financial-transaction-card__compact-sep" aria-hidden>
                                   ·
                                 </span>
-                                <span
-                                  className={
-                                    toSafeNumber(transaction.amount) >= 0
-                                      ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
-                                      : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
-                                  }
-                                >
-                                  {toSafeNumber(transaction.amount) >= 0 ? '+' : ''}
-                                  {formatKrw(transaction.amount)}
+                                <span className="mg-financial-transaction-card__compact-amount-group">
+                                  <span
+                                    className={
+                                      toSafeNumber(transaction.amount) >= 0
+                                        ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
+                                        : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
+                                    }
+                                  >
+                                    {toSafeNumber(transaction.amount) >= 0 ? '+' : ''}
+                                    {formatKrw(transaction.amount)}
+                                  </span>
+                                  {shouldShowIncomeTaxIncludedLabel(transaction) && (
+                                    <span className="mg-financial-tax-included-badge">
+                                      <ErpSafeText value={FINANCIAL_TAX_INCLUDED_LABEL} />
+                                    </span>
+                                  )}
                                 </span>
                               </div>
                               {shouldShowIncomeWithholdingTax(transaction) && (
@@ -1727,15 +1758,22 @@ const FinancialManagement = () => {
                               </div>
                               <div className="mg-financial-transaction-card__field">
                                 <span className="mg-financial-transaction-card__label">금액</span>
-                                <span
-                                  className={
-                                    toSafeNumber(transaction.amount) >= 0
-                                      ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
-                                      : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
-                                  }
-                                >
-                                  {toSafeNumber(transaction.amount) >= 0 ? '+' : ''}
-                                  {formatKrw(transaction.amount)}
+                                <span className="mg-financial-transaction-card__amount-with-badge">
+                                  <span
+                                    className={
+                                      toSafeNumber(transaction.amount) >= 0
+                                        ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
+                                        : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
+                                    }
+                                  >
+                                    {toSafeNumber(transaction.amount) >= 0 ? '+' : ''}
+                                    {formatKrw(transaction.amount)}
+                                  </span>
+                                  {shouldShowIncomeTaxIncludedLabel(transaction) && (
+                                    <span className="mg-financial-tax-included-badge">
+                                      <ErpSafeText value={FINANCIAL_TAX_INCLUDED_LABEL} />
+                                    </span>
+                                  )}
                                 </span>
                               </div>
                               {shouldShowIncomeWithholdingTax(transaction) && (
@@ -2217,10 +2255,18 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             <ErpSafeText fallback="-">{transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}</ErpSafeText>
           </div>
           <div>
-            <strong>금액:</strong>
+            <strong>금액:</strong>{' '}
             <span className={`mg-v2-transaction-detail-amount ${transaction.transactionType === 'INCOME' ? 'mg-v2-transaction-detail-amount--income' : 'mg-v2-transaction-detail-amount--expense'}`}>
               {formatKrw(transaction.amount)}
             </span>
+            {shouldShowIncomeTaxIncludedLabel(transaction) && (
+              <>
+                {' '}
+                <span className="mg-financial-tax-included-badge">
+                  <ErpSafeText value={FINANCIAL_TAX_INCLUDED_LABEL} />
+                </span>
+              </>
+            )}
           </div>
           {shouldShowIncomeWithholdingTax(transaction) && (
             <div className="mg-v2-transaction-detail-form-grid__item--span2 mg-v2-transaction-detail-withholding">

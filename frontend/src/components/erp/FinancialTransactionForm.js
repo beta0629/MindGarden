@@ -4,6 +4,10 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import './FinancialTransactionForm.css';
+import './FinancialManagement.css';
+
+/** 승인·포함가 수입 거래 라벨 안내 (FinancialManagement 목록·상세와 동일 문구) */
+const FINANCIAL_TAX_INCLUDED_LABEL = '부가세 포함가';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import csrfTokenManager from '../../utils/csrfTokenManager';
@@ -383,6 +387,13 @@ const FinancialTransactionForm = ({
           <div className="mg-v2-form-group">
             <label className="mg-v2-form-label">
               금액 (원)
+              {isApprovedReadOnly &&
+                formData.transactionType === 'INCOME' &&
+                formData.taxIncluded && (
+                  <span className="mg-financial-tax-included-badge mg-financial-tax-included-badge--form-label">
+                    <ErpSafeText value={FINANCIAL_TAX_INCLUDED_LABEL} />
+                  </span>
+                )}
             </label>
             <input
               type="number"

@@ -10,3 +10,4 @@ export { default as ErpIncomeExpenseBarChartSection } from './ErpIncomeExpenseBa
 export { default as ErpRecentTransactionsTable } from './ErpRecentTransactionsTable';
 export { default as ErpFinanceAdminSyncCard } from './ErpFinanceAdminSyncCard';
 export { default as ErpQuickActionsPanel } from './ErpQuickActionsPanel';
+export { default as ErpRecentActivityFeed } from './ErpRecentActivityFeed';

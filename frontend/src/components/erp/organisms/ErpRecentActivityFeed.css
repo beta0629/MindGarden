@@ -1,0 +1,88 @@
+/**
+ * ERP 대시보드 최근 활동 피드 — B0KlA 카드 내부, 디자인 토큰만 사용
+ *
+ * @author CoreSolution
+ * @since 2026-04-18
+ */
+
+.erp-recent-activity-feed__loading {
+  padding: var(--mg-spacing-md, 1rem) 0;
+}
+
+.erp-recent-activity-feed__error {
+  margin: 0;
+  padding: var(--mg-spacing-sm, 0.5rem) 0;
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  color: var(--mg-error-500, var(--mg-color-error));
+}
+
+.erp-recent-activity-feed__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.erp-recent-activity-feed__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-spacing-md, 1rem);
+  padding: var(--mg-spacing-sm, 0.5rem) 0;
+  border-bottom: 1px solid var(--ad-b0kla-border-subtle, var(--mg-gray-200));
+}
+
+.erp-recent-activity-feed__row:last-child {
+  border-bottom: none;
+}
+
+.erp-recent-activity-feed__leading {
+  margin-top: var(--mg-spacing-2xs, 2px);
+}
+
+.erp-recent-activity-feed__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.erp-recent-activity-feed__title-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--mg-spacing-sm, 0.5rem);
+}
+
+.erp-recent-activity-feed__title {
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--mg-color-text-main, var(--ad-b0kla-text));
+}
+
+.erp-recent-activity-feed__badge {
+  display: inline-block;
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  font-weight: 500;
+  padding: var(--mg-spacing-2xs, 2px) var(--mg-spacing-sm, 0.5rem);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--ad-b0kla-surface-muted, var(--mg-gray-50));
+  color: var(--mg-color-text-secondary);
+}
+
+.erp-recent-activity-feed__meta {
+  margin: var(--mg-spacing-2xs, 2px) 0 0;
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  color: var(--mg-color-text-secondary);
+}
+
+.erp-recent-activity-feed__meta-sep {
+  margin: 0 var(--mg-spacing-2xs, 2px);
+  color: var(--mg-color-text-muted);
+}
+
+.erp-recent-activity-feed__trailing {
+  flex-shrink: 0;
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  color: var(--mg-color-text-secondary);
+  white-space: nowrap;
+}

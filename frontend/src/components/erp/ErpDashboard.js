@@ -20,7 +20,8 @@ import {
   ErpIncomeExpenseBarChartSection,
   ErpRecentTransactionsTable,
   ErpFinanceAdminSyncCard,
-  ErpQuickActionsPanel
+  ErpQuickActionsPanel,
+  ErpRecentActivityFeed
 } from './organisms';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -29,7 +30,7 @@ import './ErpCommon.css';
 import './ErpDashboard.css';
 import './organisms/ErpDashboardFinanceOrganisms.css';
 import ErpPageShell from './shell/ErpPageShell';
-import { ErpEmptyState, ErpFilterToolbar, useErpSilentRefresh } from './common';
+import { ErpFilterToolbar, useErpSilentRefresh } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 
@@ -101,6 +102,7 @@ const ErpDashboard = ({ user: propUser }) => {
   const [financeLoading, setFinanceLoading] = useState(false);
   const [financeError, setFinanceError] = useState(null);
   const { silentListRefreshing, runSilentListRefresh } = useErpSilentRefresh();
+  const [activityRefreshNonce, setActivityRefreshNonce] = useState(0);
 
   /** 이번 달 1일~말일 기준 수입·지출 대시보드 조회 (권한 있을 때만 호출) */
   const loadIncomeExpenseSummary = useCallback(async(options = {}) => {
@@ -206,6 +208,7 @@ const ErpDashboard = ({ user: propUser }) => {
       if (hasIF) {
         await loadIncomeExpenseSummary({ silent: true });
       }
+      setActivityRefreshNonce((n) => n + 1);
     });
   }, [
     runSilentListRefresh,
@@ -587,9 +590,11 @@ const ErpDashboard = ({ user: propUser }) => {
             hasRefundManage={hasRefundManage}
           />
 
-          <div className="mg-v2-ad-b0kla__card">
-            <h2 className="mg-v2-ad-b0kla__section-title">최근 활동</h2>
-            <ErpEmptyState title="최근 활동 내역이 없습니다." />
+          <div data-testid="erp-dashboard-recent-activity">
+            <ErpRecentActivityFeed
+              hasPurchaseRequestView={hasPurchaseRequestView}
+              refreshNonce={activityRefreshNonce}
+            />
           </div>
         </ErpPageShell>
       </ContentArea>

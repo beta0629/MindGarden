@@ -27,9 +27,93 @@ export function getDisplayWithholdingTaxAmount(transaction) {
     return 0;
   }
   if (transaction.withholdingTaxAmount != null && transaction.withholdingTaxAmount !== '') {
-    return toSafeNumber(transaction.withholdingTaxAmount);
+    const w = toSafeNumber(transaction.withholdingTaxAmount);
+    if (w > 0) {
+      return w;
+    }
+    // 명시 0이어도 레거시(원천만 tax_amount)면 tax_amount 가 원천액
+    if (transaction.transactionType === 'INCOME' && legacyWithholdingAmountProbablyInTaxField(transaction)) {
+      return toSafeNumber(transaction.taxAmount);
+    }
+    return 0;
   }
   return toSafeNumber(transaction.taxAmount);
+}
+
+/**
+ * D8 이전 레거시: 원천 예정액이 {@code tax_amount}에만 있고 비고·설명에 키워드가 있는 경우.
+ * {@link ErpMonthlyTaxBreakdownHelper#legacyWithholdingAmountProbablyInTaxField} 와 동일 휴리스틱.
+ * @param {Object|null|undefined} transaction
+ * @returns {boolean}
+ */
+export function legacyWithholdingAmountProbablyInTaxField(transaction) {
+  if (!transaction) {
+    return false;
+  }
+  const d = transaction.description;
+  const r = transaction.remarks;
+  const combined = `${d != null ? d : ''} ${r != null ? r : ''}`;
+  const lower = combined.toLowerCase();
+  return lower.includes('원천징수') || lower.includes('사업소득');
+}
+
+/**
+ * 부가세(VAT) 칸 표시값. 신규 경로(withholdingTaxAmount > 0)는 taxAmount를 부가세로 본다.
+ * 레거시(원천만 tax_amount)는 부가세 칸은 비우고(—), 원천은 getDisplayWithholdingTaxAmount와 정합.
+ * @param {Object|null|undefined} transaction
+ * @returns {number|null} null 이면 formatOptionalKrw로 — 처리
+ */
+export function getDisplayVatAmount(transaction) {
+  if (!transaction) {
+    return null;
+  }
+  if (transaction.transactionType !== 'INCOME') {
+    if (transaction.taxAmount == null || transaction.taxAmount === '') {
+      return null;
+    }
+    return toSafeNumber(transaction.taxAmount);
+  }
+  const w = transaction.withholdingTaxAmount;
+  const wNum = w != null && w !== '' ? toSafeNumber(w) : 0;
+  if (wNum > 0) {
+    if (transaction.taxAmount == null || transaction.taxAmount === '') {
+      return null;
+    }
+    return toSafeNumber(transaction.taxAmount);
+  }
+  if (legacyWithholdingAmountProbablyInTaxField(transaction)) {
+    return null;
+  }
+  if (transaction.taxAmount == null || transaction.taxAmount === '') {
+    return null;
+  }
+  return toSafeNumber(transaction.taxAmount);
+}
+
+/**
+ * 공급가액 칸 표시. 레거시로 {@code amount_before_tax} 가 비어 있으면 총액으로 보정(최소 변경).
+ * @param {Object|null|undefined} transaction
+ * @returns {unknown}
+ */
+export function getDisplaySupplyAmount(transaction) {
+  if (!transaction) {
+    return null;
+  }
+  if (transaction.transactionType !== 'INCOME') {
+    return transaction.amountBeforeTax;
+  }
+  const w = transaction.withholdingTaxAmount;
+  const wNum = w != null && w !== '' ? toSafeNumber(w) : 0;
+  if (wNum > 0) {
+    return transaction.amountBeforeTax;
+  }
+  if (
+    legacyWithholdingAmountProbablyInTaxField(transaction) &&
+    (transaction.amountBeforeTax == null || transaction.amountBeforeTax === '')
+  ) {
+    return transaction.amount;
+  }
+  return transaction.amountBeforeTax;
 }
 
 /**

@@ -4,6 +4,9 @@
  */
 import {
   getDisplayWithholdingTaxAmount,
+  getDisplaySupplyAmount,
+  getDisplayVatAmount,
+  legacyWithholdingAmountProbablyInTaxField,
   shouldShowCardSettlementSection,
   formatKrw,
   formatOptionalKrw,
@@ -44,6 +47,76 @@ describe('FinancialManagement 금액 스택 SSOT', () => {
           taxAmount: 5000
         })
       ).toBe(5000);
+    });
+  });
+
+  describe('getDisplayVatAmount / legacyWithholdingAmountProbablyInTaxField', () => {
+    it('신규 경로: withholdingTaxAmount > 0 이면 taxAmount 를 부가세로 표시', () => {
+      const tx = {
+        transactionType: 'INCOME',
+        taxAmount: 10000,
+        withholdingTaxAmount: 3300,
+        description: '상담료'
+      };
+      expect(getDisplayVatAmount(tx)).toBe(10000);
+      expect(formatOptionalKrw(getDisplayVatAmount(tx))).toBe('10,000원');
+      expect(getDisplayWithholdingTaxAmount(tx)).toBe(3300);
+    });
+
+    it('레거시: 원천만 tax_amount 에 있고 비고에 키워드가 있으면 부가세 칸은 —, 원천은 taxAmount', () => {
+      const tx = {
+        transactionType: 'INCOME',
+        amount: 850000,
+        taxAmount: 28050,
+        withholdingTaxAmount: null,
+        remarks: '사업소득 원천징수 예정'
+      };
+      expect(legacyWithholdingAmountProbablyInTaxField(tx)).toBe(true);
+      expect(getDisplayVatAmount(tx)).toBe(null);
+      expect(formatOptionalKrw(getDisplayVatAmount(tx))).toBe('—');
+      expect(getDisplayWithholdingTaxAmount(tx)).toBe(28050);
+    });
+
+    it('레거시 휴리스틱: 대소문자 무시(영문 혼합 description)', () => {
+      const tx = {
+        transactionType: 'INCOME',
+        taxAmount: 28050,
+        description: 'WITHHOLDING 원천징수'
+      };
+      expect(legacyWithholdingAmountProbablyInTaxField(tx)).toBe(true);
+      expect(getDisplayVatAmount(tx)).toBe(null);
+    });
+
+    it('지출(EXPENSE)은 taxAmount 를 그대로 부가세 칸에 사용', () => {
+      const tx = {
+        transactionType: 'EXPENSE',
+        taxAmount: 900
+      };
+      expect(getDisplayVatAmount(tx)).toBe(900);
+    });
+  });
+
+  describe('getDisplaySupplyAmount', () => {
+    it('레거시·amountBeforeTax 비어 있으면 총액으로 공급가 보정', () => {
+      const tx = {
+        transactionType: 'INCOME',
+        amount: 850000,
+        amountBeforeTax: null,
+        taxAmount: 28050,
+        remarks: '사업소득'
+      };
+      expect(getDisplaySupplyAmount(tx)).toBe(850000);
+      expect(formatOptionalKrw(getDisplaySupplyAmount(tx))).toBe('850,000원');
+    });
+
+    it('신규 분리 저장 시 공급가는 amountBeforeTax 유지', () => {
+      const tx = {
+        transactionType: 'INCOME',
+        amountBeforeTax: 100000,
+        taxAmount: 10000,
+        withholdingTaxAmount: 3300
+      };
+      expect(getDisplaySupplyAmount(tx)).toBe(100000);
     });
   });
 

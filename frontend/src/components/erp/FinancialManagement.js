@@ -11,6 +11,8 @@ import MGButton from '../common/MGButton';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../utils/safeDisplay';
 import {
   getDisplayWithholdingTaxAmount,
+  getDisplaySupplyAmount,
+  getDisplayVatAmount,
   shouldShowCardSettlementSection,
   formatKrw,
   formatOptionalKrw,
@@ -94,8 +96,8 @@ const TRANSACTION_TABLE_COLUMNS = [
  * @returns {import('react').ReactNode}
  */
 function renderAmountStackSupplyAndVatRows(transaction, layout) {
-  const supply = formatOptionalKrw(transaction.amountBeforeTax);
-  const vat = formatOptionalKrw(transaction.taxAmount);
+  const supply = formatOptionalKrw(getDisplaySupplyAmount(transaction));
+  const vat = formatOptionalKrw(getDisplayVatAmount(transaction));
   if (layout === 'compact') {
     return (
       <>

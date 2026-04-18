@@ -15,6 +15,8 @@ import { toSafeNumber } from '../../utils/safeDisplay';
 import {
   formatKrw,
   formatOptionalKrw,
+  getDisplaySupplyAmount,
+  getDisplayVatAmount,
   getDisplayWithholdingTaxAmount,
   shouldShowCardSettlementSection,
   shouldShowIncomeWithholdingTax,
@@ -495,7 +497,7 @@ const FinancialTransactionForm = ({
                   <ErpSafeText value={FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY} />
                 </span>
                 <span className="financial-transaction-form-readonly-value">
-                  <ErpSafeText value={formatOptionalKrw(initialTransaction.amountBeforeTax)} />
+                  <ErpSafeText value={formatOptionalKrw(getDisplaySupplyAmount(initialTransaction))} />
                 </span>
               </div>
               <div className="financial-transaction-form-readonly-row">
@@ -503,7 +505,7 @@ const FinancialTransactionForm = ({
                   <ErpSafeText value={FINANCIAL_AMOUNT_STACK_LABEL_VAT} />
                 </span>
                 <span className="financial-transaction-form-readonly-value">
-                  <ErpSafeText value={formatOptionalKrw(initialTransaction.taxAmount)} />
+                  <ErpSafeText value={formatOptionalKrw(getDisplayVatAmount(initialTransaction))} />
                 </span>
               </div>
               {shouldShowIncomeWithholdingTax(initialTransaction) && (

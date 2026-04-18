@@ -170,6 +170,10 @@ const FINANCIAL_MONTH_YM_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
 /** 월별 세금 요약 연도 선택 하한(표시용) */
 const FINANCIAL_TAX_SUMMARY_MIN_YEAR = 2018;
 
+/** 세금 안내 외부 링크(국세청·홈택스만) */
+const FINANCIAL_TAX_NOTICE_NTS_URL = 'https://www.nts.go.kr';
+const FINANCIAL_TAX_NOTICE_HOMETAX_URL = 'https://www.hometax.go.kr';
+
 /**
  * @returns {string} YYYY-MM (로컬 현재 달)
  */
@@ -1438,6 +1442,53 @@ const FinancialManagement = () => {
                     <p className="mg-v2-text-secondary mg-mb-md">
                       수입 거래의 부가세·원천징수와 지출 거래의 세액 필드 합계입니다. (저장된 금액 기준)
                     </p>
+                    <section
+                      className="mg-financial-tax-filing-notice"
+                      aria-labelledby="financial-tax-filing-notice-title"
+                    >
+                      <h3
+                        id="financial-tax-filing-notice-title"
+                        className="mg-financial-tax-filing-notice__title"
+                      >
+                        세금 신고·납부 안내(참고)
+                      </h3>
+                      <p className="mg-financial-tax-filing-notice__text">
+                        본 화면의 안내는 참고용이며, 실제 신고·납부 기한과 대상은 사업자 등록·과세 유형 등에 따라
+                        달라질 수 있습니다. 정확한 사항은{' '}
+                        <a
+                          className="mg-financial-tax-filing-notice__link"
+                          href={FINANCIAL_TAX_NOTICE_HOMETAX_URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          홈택스
+                        </a>
+                        {' · '}
+                        <a
+                          className="mg-financial-tax-filing-notice__link"
+                          href={FINANCIAL_TAX_NOTICE_NTS_URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          국세청
+                        </a>
+                        {' '}또는 세무사 등 전문가를 통해 확인하시기 바랍니다.
+                      </p>
+                      <ul className="mg-financial-tax-filing-notice__list">
+                        <li>
+                          원천징수: 일반적으로 소득 지급이 속하는 달의 다음 달 10일까지 신고·납부(원천징수이행상황
+                          신고 등)인 경우가 많습니다. 반기 납부 승인 시에는 7·10월, 익년 1·10월 등 별도 기한이
+                          적용될 수 있습니다.
+                        </li>
+                        <li>
+                          부가가치세: 일반과세자는 반기별 신고·납부가 일반적인 경우가 많으며(과세 유형·규모에 따라
+                          다름), 이 화면의 월별 금액과 별개로 매월 10일이 부가가치세 신고·납부 기한이 아닙니다.
+                        </li>
+                        <li>
+                          위 내용은 국세청 안내를 바탕으로 한 요약이며, 법령 개정 등으로 달라질 수 있습니다.
+                        </li>
+                      </ul>
+                    </section>
                     <div className="mg-v2-form-group mg-mb-md">
                       <label className="mg-v2-form-label" htmlFor="financial-tax-summary-year">
                         연도

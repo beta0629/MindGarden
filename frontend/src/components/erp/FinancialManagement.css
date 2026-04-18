@@ -70,3 +70,49 @@
   color: var(--mg-color-text-secondary);
   line-height: var(--mg-line-height-snug, 1.4);
 }
+
+/* 월별 세금 요약: 신고·납부 참고 안내 */
+.mg-financial-tax-filing-notice {
+  margin: 0 0 var(--spacing-md);
+  padding: var(--spacing-md);
+  border: 1px solid var(--mg-layout-section-border, var(--mg-color-border-main));
+  border-radius: var(--modal-border-radius);
+  background: var(--mg-color-surface-muted, var(--mg-layout-section-bg, var(--mg-color-surface-main)));
+}
+
+.mg-financial-tax-filing-notice__title {
+  margin: 0 0 var(--spacing-sm);
+  font-size: var(--mg-font-size-body, var(--font-size-base));
+  font-weight: 600;
+  color: var(--mg-color-text-primary);
+  line-height: var(--mg-line-height-snug, 1.4);
+}
+
+.mg-financial-tax-filing-notice__text {
+  margin: 0 0 var(--spacing-sm);
+  font-size: var(--mg-font-size-caption, var(--font-size-sm));
+  color: var(--mg-color-text-secondary);
+  line-height: var(--mg-line-height-snug, 1.5);
+}
+
+.mg-financial-tax-filing-notice__list {
+  margin: 0;
+  padding-left: var(--base-unit-xl);
+  font-size: var(--mg-font-size-caption, var(--font-size-sm));
+  color: var(--mg-color-text-secondary);
+  line-height: var(--mg-line-height-snug, 1.5);
+}
+
+.mg-financial-tax-filing-notice__list li + li {
+  margin-top: var(--spacing-xs);
+}
+
+.mg-financial-tax-filing-notice__link {
+  color: var(--mg-primary-500);
+  text-decoration: underline;
+}
+
+.mg-financial-tax-filing-notice__link:hover,
+.mg-financial-tax-filing-notice__link:focus-visible {
+  color: var(--mg-primary-600, var(--mg-primary-500));
+}

@@ -3,11 +3,6 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
-import './FinancialTransactionForm.css';
-import './FinancialManagement.css';
-
-/** 승인·포함가 수입 거래 라벨 안내 (FinancialManagement 목록·상세와 동일 문구) */
-const FINANCIAL_TAX_INCLUDED_LABEL = '부가세 포함가';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import csrfTokenManager from '../../utils/csrfTokenManager';
@@ -17,7 +12,23 @@ import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import { ERP_API } from '../../constants/api';
 import { ErpSafeText } from './common';
 import { toSafeNumber } from '../../utils/safeDisplay';
+import {
+  formatKrw,
+  formatOptionalKrw,
+  getDisplayWithholdingTaxAmount,
+  shouldShowCardSettlementSection,
+  shouldShowIncomeWithholdingTax,
+  FINANCIAL_AMOUNT_STACK_LABEL_TOTAL,
+  FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY,
+  FINANCIAL_AMOUNT_STACK_LABEL_VAT,
+  FINANCIAL_WITHHOLDING_TAX_LABEL,
+  FINANCIAL_TAX_INCLUDED_LABEL,
+  FINANCIAL_CARD_MERCHANT_FEE_LABEL,
+  FINANCIAL_CARD_NET_DEPOSIT_LABEL
+} from '../../utils/erpFinancialAmountStack';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
+import './FinancialTransactionForm.css';
+import './FinancialManagement.css';
 
 /**
  * 수입/지출 거래 등록·수정 폼 컴포넌트 (공통 코드 사용)
@@ -256,6 +267,19 @@ const FinancialTransactionForm = ({
     sub.parentCodeValue === formData.category
   );
 
+  const showSystemAmountsBlock =
+    mode === 'edit' &&
+    !!initialTransaction &&
+    (() => {
+      const tx = initialTransaction;
+      return (
+        tx.amountBeforeTax != null ||
+        tx.taxAmount != null ||
+        shouldShowIncomeWithholdingTax(tx) ||
+        shouldShowCardSettlementSection(tx)
+      );
+    })();
+
   return (
     <UnifiedModal
       isOpen={true}
@@ -383,10 +407,10 @@ const FinancialTransactionForm = ({
             )}
           </div>
 
-          {/* 금액 */}
+          {/* 금액 (목록·상세와 동일 SSOT 라벨) */}
           <div className="mg-v2-form-group">
             <label className="mg-v2-form-label">
-              금액 (원)
+              <ErpSafeText value={FINANCIAL_AMOUNT_STACK_LABEL_TOTAL} />
               {isApprovedReadOnly &&
                 formData.transactionType === 'INCOME' &&
                 formData.taxIncluded && (
@@ -456,45 +480,69 @@ const FinancialTransactionForm = ({
             </label>
           </div>
 
-          {mode === 'edit' && initialTransaction && (
-            (initialTransaction.withholdingTaxAmount != null ||
-              initialTransaction.cardMerchantFeeAmount != null ||
-              initialTransaction.cardNetDepositAmount != null) && (
-              <div
-                className="mg-v2-form-group financial-transaction-form-system-amounts"
-                role="region"
-                aria-label="시스템 산출 금액"
-              >
-                <span className="mg-v2-form-label">시스템 산출 금액</span>
-                <p className="mg-v2-text-xs mg-v2-text-secondary financial-transaction-form-field-hint">
-                  결제·연동으로 채워진 값입니다. 수정 시에도 서버 값을 유지하기 위해 함께 전송됩니다.
-                </p>
-                {initialTransaction.withholdingTaxAmount != null && (
-                  <div className="financial-transaction-form-readonly-row">
-                    <span className="financial-transaction-form-readonly-label">원천징수 예정액</span>
-                    <span className="financial-transaction-form-readonly-value">
-                      {toSafeNumber(initialTransaction.withholdingTaxAmount).toLocaleString('ko-KR')}원
-                    </span>
-                  </div>
-                )}
-                {initialTransaction.cardMerchantFeeAmount != null && (
-                  <div className="financial-transaction-form-readonly-row">
-                    <span className="financial-transaction-form-readonly-label">카드 수수료</span>
-                    <span className="financial-transaction-form-readonly-value">
-                      {toSafeNumber(initialTransaction.cardMerchantFeeAmount).toLocaleString('ko-KR')}원
-                    </span>
-                  </div>
-                )}
-                {initialTransaction.cardNetDepositAmount != null && (
-                  <div className="financial-transaction-form-readonly-row">
-                    <span className="financial-transaction-form-readonly-label">실입금(카드)</span>
-                    <span className="financial-transaction-form-readonly-value">
-                      {toSafeNumber(initialTransaction.cardNetDepositAmount).toLocaleString('ko-KR')}원
-                    </span>
-                  </div>
-                )}
+          {showSystemAmountsBlock && initialTransaction && (
+            <div
+              className="mg-v2-form-group financial-transaction-form-system-amounts"
+              role="region"
+              aria-label="시스템 산출 금액"
+            >
+              <span className="mg-v2-form-label">시스템 산출 금액</span>
+              <p className="mg-v2-text-xs mg-v2-text-secondary financial-transaction-form-field-hint">
+                결제·연동으로 채워진 값입니다. 수정 시에도 서버 값을 유지하기 위해 함께 전송됩니다.
+              </p>
+              <div className="financial-transaction-form-readonly-row">
+                <span className="financial-transaction-form-readonly-label">
+                  <ErpSafeText value={FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY} />
+                </span>
+                <span className="financial-transaction-form-readonly-value">
+                  <ErpSafeText value={formatOptionalKrw(initialTransaction.amountBeforeTax)} />
+                </span>
               </div>
-            )
+              <div className="financial-transaction-form-readonly-row">
+                <span className="financial-transaction-form-readonly-label">
+                  <ErpSafeText value={FINANCIAL_AMOUNT_STACK_LABEL_VAT} />
+                </span>
+                <span className="financial-transaction-form-readonly-value">
+                  <ErpSafeText value={formatOptionalKrw(initialTransaction.taxAmount)} />
+                </span>
+              </div>
+              {shouldShowIncomeWithholdingTax(initialTransaction) && (
+                <div className="financial-transaction-form-readonly-row">
+                  <span className="financial-transaction-form-readonly-label">
+                    <ErpSafeText value={FINANCIAL_WITHHOLDING_TAX_LABEL} />
+                  </span>
+                  <span className="financial-transaction-form-readonly-value">
+                    <ErpSafeText
+                      value={formatKrw(getDisplayWithholdingTaxAmount(initialTransaction))}
+                    />
+                  </span>
+                </div>
+              )}
+              {initialTransaction.cardMerchantFeeAmount != null && (
+                <div className="financial-transaction-form-readonly-row">
+                  <span className="financial-transaction-form-readonly-label">
+                    <ErpSafeText value={FINANCIAL_CARD_MERCHANT_FEE_LABEL} />
+                  </span>
+                  <span className="financial-transaction-form-readonly-value">
+                    <ErpSafeText
+                      value={formatKrw(toSafeNumber(initialTransaction.cardMerchantFeeAmount))}
+                    />
+                  </span>
+                </div>
+              )}
+              {initialTransaction.cardNetDepositAmount != null && (
+                <div className="financial-transaction-form-readonly-row">
+                  <span className="financial-transaction-form-readonly-label">
+                    <ErpSafeText value={FINANCIAL_CARD_NET_DEPOSIT_LABEL} />
+                  </span>
+                  <span className="financial-transaction-form-readonly-value">
+                    <ErpSafeText
+                      value={formatKrw(toSafeNumber(initialTransaction.cardNetDepositAmount))}
+                    />
+                  </span>
+                </div>
+              )}
+            </div>
           )}
 
           {/* 버튼들 */}

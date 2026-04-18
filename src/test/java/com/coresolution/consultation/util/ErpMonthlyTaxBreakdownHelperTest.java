@@ -81,6 +81,78 @@ class ErpMonthlyTaxBreakdownHelperTest {
     }
 
     @Test
+    @DisplayName("상담료형 INCOME: calculateTaxFromPayment와 동일 분리 + 원천 동시 집계")
+    void consultationFeeStyle_income_vatSplitAndWithholdingTogether() {
+        long grossKrw = 1_100_000L;
+        TaxCalculationUtil.TaxCalculationResult tax = TaxCalculationUtil.calculateTaxFromPayment(BigDecimal.valueOf(grossKrw));
+        BigDecimal expectedVat = tax.getVatAmount();
+        BigDecimal expectedWithholding = FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(grossKrw);
+
+        FinancialTransaction tx = new FinancialTransaction();
+        tx.setTransactionType(FinancialTransaction.TransactionType.INCOME);
+        tx.setAmount(tax.getAmountIncludingTax());
+        tx.setTaxAmount(expectedVat);
+        tx.setWithholdingTaxAmount(expectedWithholding);
+        tx.setDescription("상담료 입금 [부가세 분리]");
+        tx.setTransactionDate(LocalDate.of(2026, 6, 1));
+
+        Map<String, Object> row = ErpMonthlyTaxBreakdownHelper.buildBreakdown(List.of(tx));
+        assertEquals(0, expectedVat.compareTo((BigDecimal) row.get("vatTotal")));
+        assertEquals(0, expectedWithholding.compareTo((BigDecimal) row.get("withholdingTotal")));
+    }
+
+    @Test
+    @DisplayName("EXPENSE 환불·지출: tax_amount(부가세 분리)가 expenseVatTotal에 합산")
+    void expense_refundStyle_expenseVatTotalIncludesTaxAmount() {
+        FinancialTransaction refundExpense = new FinancialTransaction();
+        refundExpense.setTransactionType(FinancialTransaction.TransactionType.EXPENSE);
+        refundExpense.setAmount(new BigDecimal("-550000.00"));
+        refundExpense.setTaxAmount(new BigDecimal("50000.00"));
+        refundExpense.setWithholdingTaxAmount(BigDecimal.ZERO);
+        refundExpense.setDescription("상담료 환불 - 테스트 (1회기 환불, 사유: 청약철회)");
+        refundExpense.setTransactionDate(LocalDate.of(2026, 7, 1));
+
+        FinancialTransaction normalExpense = new FinancialTransaction();
+        normalExpense.setTransactionType(FinancialTransaction.TransactionType.EXPENSE);
+        normalExpense.setAmount(new BigDecimal("110000.00"));
+        normalExpense.setTaxAmount(new BigDecimal("10000.00"));
+        normalExpense.setTransactionDate(LocalDate.of(2026, 7, 15));
+
+        Map<String, Object> row = ErpMonthlyTaxBreakdownHelper.buildBreakdown(
+            List.of(refundExpense, normalExpense));
+        assertEquals(0, new BigDecimal("60000.00").compareTo((BigDecimal) row.get("expenseVatTotal")));
+        assertEquals(0, BigDecimal.ZERO.compareTo((BigDecimal) row.get("vatTotal")));
+
+        List<Map<String, Object>> series = ErpMonthlyTaxBreakdownHelper.buildMonthlySeriesForYear(
+            2026, List.of(refundExpense, normalExpense));
+        Map<String, Object> july = series.get(6);
+        assertEquals(7, july.get("month"));
+        assertEquals(0, new BigDecimal("60000.00").compareTo((BigDecimal) july.get("expenseVatTotal")));
+    }
+
+    @Test
+    @DisplayName("상담료형 EXPENSE 환불: calculateTaxFromPayment와 동일 분리 → expenseVatTotal")
+    void consultationFeeStyle_expenseRefund_vatInExpenseVatTotal() {
+        long grossKrw = 110_000L;
+        TaxCalculationUtil.TaxCalculationResult tax = TaxCalculationUtil.calculateTaxFromPayment(BigDecimal.valueOf(grossKrw));
+        BigDecimal expectedExpenseVat = tax.getVatAmount();
+
+        FinancialTransaction tx = new FinancialTransaction();
+        tx.setTransactionType(FinancialTransaction.TransactionType.EXPENSE);
+        tx.setAmount(tax.getAmountIncludingTax());
+        tx.setTaxAmount(expectedExpenseVat);
+        tx.setAmountBeforeTax(tax.getAmountExcludingTax());
+        tx.setTaxIncluded(true);
+        tx.setDescription("상담료 환불 [부가세 분리]");
+        tx.setTransactionDate(LocalDate.of(2026, 7, 1));
+
+        Map<String, Object> row = ErpMonthlyTaxBreakdownHelper.buildBreakdown(List.of(tx));
+        assertEquals(0, BigDecimal.ZERO.compareTo((BigDecimal) row.get("vatTotal")));
+        assertEquals(0, BigDecimal.ZERO.compareTo((BigDecimal) row.get("withholdingTotal")));
+        assertEquals(0, expectedExpenseVat.compareTo((BigDecimal) row.get("expenseVatTotal")));
+    }
+
+    @Test
     @DisplayName("신규 INCOME: 부가세는 tax_amount, 원천은 withholding_tax_amount로 분리 합산")
     void newPath_income_splitsVatAndWithholdingColumns() {
         FinancialTransaction tx = new FinancialTransaction();

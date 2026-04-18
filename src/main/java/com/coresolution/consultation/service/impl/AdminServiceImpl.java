@@ -60,6 +60,7 @@ import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.RrnValidationUtil;
 import com.coresolution.consultation.util.VehiclePlateText;
@@ -841,10 +842,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         BigDecimal withholdingTax = resolveFreelanceWithholdingTaxAmount(tenantId, mapping, accurateAmount);
         BigDecimal grossAmountBd = BigDecimal.valueOf(accurateAmount);
+        TaxCalculationUtil.TaxCalculationResult consultationTax =
+                TaxCalculationUtil.calculateTaxFromPayment(grossAmountBd);
         String incomeDescription = String.format("상담료 입금 확인 - %s (%s) [정확한금액: %,d원]",
                 mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
                 mapping.getPaymentMethod() != null ? mapping.getPaymentMethod() : "미지정",
                 accurateAmount);
+        incomeDescription = incomeDescription + String.format(" [부가세 분리: 공급가 %,d원, 부가세 %,d원]",
+                consultationTax.getAmountExcludingTax().longValue(),
+                consultationTax.getVatAmount().longValue());
         if (withholdingTax.compareTo(BigDecimal.ZERO) > 0) {
             incomeDescription = incomeDescription + String.format(" [사업소득 원천징수 3.3%% 예정 %,d원(부가세와 별개)]",
                     withholdingTax.longValue());
@@ -853,17 +859,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .transactionType("INCOME")
                 .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE) // 필수 필드: 상담료 수입 거래
                 .subcategory("CONSULTATION_FEE") // 상세 분류
-                .amount(grossAmountBd) // 매출(입금) 총액 — 기존과 동일
-                .taxAmount(BigDecimal.ZERO) // 부가세(VAT) 전용; 상담료 면세 시 0
+                .amount(consultationTax.getAmountIncludingTax()) // 부가세 포함 총액(결제 자동 생성과 동일)
+                .taxAmount(consultationTax.getVatAmount())
                 .withholdingTaxAmount(withholdingTax)
-                .amountBeforeTax(grossAmountBd) // 세무상 별도 과세표준이 아닌, 총 입금액과 동일(부가세 제외 금액 필드 재사용)
+                .amountBeforeTax(consultationTax.getAmountExcludingTax())
                 .description(incomeDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING")
                 .tenantId(tenantId) // 테넌트 명시: createTransaction 시 tenantId 누락 방지
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
-                .taxIncluded(false) // 상담료는 부가세 면세
+                .taxIncluded(true)
                 .remarks(withholdingTax.compareTo(BigDecimal.ZERO) > 0
                         ? "원천징수(사업소득 3.3%) 예정액. 부가세(VAT) 금액과 혼동 금지."
                         : null)
@@ -933,11 +939,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         BigDecimal withholdingAdditional = resolveFreelanceWithholdingTaxAmount(tenantIdForAdditional, mapping,
                 transactionAmount);
         BigDecimal grossAdditionalBd = BigDecimal.valueOf(transactionAmount);
+        TaxCalculationUtil.TaxCalculationResult additionalTax =
+                TaxCalculationUtil.calculateTaxFromPayment(grossAdditionalBd);
         String additionalDescription = String.format("추가 회기 상담료 입금 확인 - %s (%d회 추가, %s) [추가금액: %,d원]",
                 mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
                 additionalSessions,
                 mapping.getPaymentMethod() != null ? mapping.getPaymentMethod() : "미지정",
                 transactionAmount);
+        additionalDescription = additionalDescription + String.format(" [부가세 분리: 공급가 %,d원, 부가세 %,d원]",
+                additionalTax.getAmountExcludingTax().longValue(),
+                additionalTax.getVatAmount().longValue());
         if (withholdingAdditional.compareTo(BigDecimal.ZERO) > 0) {
             additionalDescription = additionalDescription + String.format(
                     " [사업소득 원천징수 3.3%% 예정 %,d원(부가세와 별개)]",
@@ -948,16 +959,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .transactionType("INCOME")
                 .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE) // 필수 필드: 상담료 수입 거래
                 .subcategory("ADDITIONAL_CONSULTATION") // 추가 회기 세부카테고리
-                .amount(grossAdditionalBd) // 매출(입금) 총액
-                .taxAmount(BigDecimal.ZERO) // 부가세(VAT) 전용
+                .amount(additionalTax.getAmountIncludingTax())
+                .taxAmount(additionalTax.getVatAmount())
                 .withholdingTaxAmount(withholdingAdditional)
-                .amountBeforeTax(grossAdditionalBd) // 총 입금액과 동일(부가세 제외 금액 필드 재사용)
+                .amountBeforeTax(additionalTax.getAmountExcludingTax())
                 .description(additionalDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING_ADDITIONAL")
                 .tenantId(tenantIdForAdditional)
-                .taxIncluded(false) // 상담료는 부가세 면세
+                .taxIncluded(true)
                 .remarks(withholdingAdditional.compareTo(BigDecimal.ZERO) > 0
                         ? "원천징수(사업소득 3.3%) 예정액. 부가세(VAT) 금액과 혼동 금지."
                         : null)
@@ -1026,20 +1037,35 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.warn("유효하지 않은 환불 금액: {}", refundAmount);
             return;
         }
+
+        String tenantId = getTenantIdFromMapping(mapping);
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TenantContextHolder.getTenantId();
+        }
+        BigDecimal grossRefundBd = BigDecimal.valueOf(refundAmount);
+        TaxCalculationUtil.TaxCalculationResult refundTax =
+                TaxCalculationUtil.calculateTaxFromPayment(grossRefundBd);
+        String refundDescription = String.format("상담료 환불 - %s (%d회기 환불, 사유: %s)",
+                mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
+                refundedSessions,
+                reason != null ? reason : "관리자 처리");
+        refundDescription = refundDescription + String.format(" [부가세 분리: 공급가 %,d원, 부가세 %,d원]",
+                refundTax.getAmountExcludingTax().longValue(),
+                refundTax.getVatAmount().longValue());
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("EXPENSE") // 환불은 지출
                 .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
                 .subcategory("CONSULTATION_REFUND") // 환불 세부카테고리
-                .amount(java.math.BigDecimal.valueOf(refundAmount))
-                .description(String.format("상담료 환불 - %s (%d회기 환불, 사유: %s)", 
-                    mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
-                    refundedSessions,
-                    reason != null ? reason : "관리자 처리"))
+                .amount(refundTax.getAmountIncludingTax())
+                .taxAmount(refundTax.getVatAmount())
+                .amountBeforeTax(refundTax.getAmountExcludingTax())
+                .description(refundDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING_REFUND")
-                .taxIncluded(false) // 환불은 부가세 면세
+                .tenantId(tenantId)
+                .taxIncluded(true)
                 .build();
         
         financialTransactionService.createTransaction(request, null);
@@ -1069,34 +1095,47 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.warn("⚠️ 부분 환불 시 금액 일관성 문제 감지: {}", consistency.getInconsistencyReason());
             log.warn("💡 권장사항: {}", consistency.getRecommendation());
         }
+
+        String tenantIdForPartial = getTenantIdFromMapping(mapping);
+        if (tenantIdForPartial == null || tenantIdForPartial.isEmpty()) {
+            tenantIdForPartial = TenantContextHolder.getTenantId();
+        }
+        BigDecimal grossPartialBd = BigDecimal.valueOf(refundAmount);
+        TaxCalculationUtil.TaxCalculationResult partialRefundTax =
+                TaxCalculationUtil.calculateTaxFromPayment(grossPartialBd);
+        String partialRefundDescription = String.format(
+                "상담료 부분 환불 - %s (%d회기 부분 환불, 사유: %s) [남은회기: %d회]",
+                mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
+                refundSessions,
+                reason != null ? reason : "관리자 처리",
+                mapping.getRemainingSessions() - refundSessions);
+        partialRefundDescription = partialRefundDescription + String.format(
+                " [부가세 분리: 공급가 %,d원, 부가세 %,d원]",
+                partialRefundTax.getAmountExcludingTax().longValue(),
+                partialRefundTax.getVatAmount().longValue());
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("EXPENSE") // 환불은 지출
                 .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
                 .subcategory("CONSULTATION_PARTIAL_REFUND") // 부분 환불 세부카테고리
-                .amount(java.math.BigDecimal.valueOf(refundAmount))
-                .description(String.format("상담료 부분 환불 - %s (%d회기 부분 환불, 사유: %s) [남은회기: %d회]", 
-                    mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
-                    refundSessions,
-                    reason != null ? reason : "관리자 처리",
-                    mapping.getRemainingSessions() - refundSessions))
+                .amount(partialRefundTax.getAmountIncludingTax())
+                .taxAmount(partialRefundTax.getVatAmount())
+                .amountBeforeTax(partialRefundTax.getAmountExcludingTax())
+                .description(partialRefundDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND")
+                .tenantId(tenantIdForPartial)
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
-                .taxIncluded(false) // 환불은 부가세 면세
+                .taxIncluded(true)
                 .build();
         
         com.coresolution.consultation.dto.FinancialTransactionResponse response = 
             financialTransactionService.createTransaction(request, null);
         
         try {
-            String ftTenantIdForReload = getTenantIdFromMapping(mapping);
-            if (ftTenantIdForReload == null || ftTenantIdForReload.isEmpty()) {
-                ftTenantIdForReload = TenantContextHolder.getTenantId();
-            }
-            FinancialTransaction transaction = (ftTenantIdForReload != null && !ftTenantIdForReload.isEmpty() && response.getId() != null)
-                ? financialTransactionRepository.findByTenantIdAndId(ftTenantIdForReload, response.getId()).orElse(null)
+            FinancialTransaction transaction = (tenantIdForPartial != null && !tenantIdForPartial.isEmpty() && response.getId() != null)
+                ? financialTransactionRepository.findByTenantIdAndId(tenantIdForPartial, response.getId()).orElse(null)
                 : null;
             if (transaction != null) {
                 transaction.complete(); // 완료 상태로 변경

@@ -16,6 +16,15 @@ import lombok.NoArgsConstructor;
  * 금액 관련 필드({@code amount}, {@code taxIncluded}, {@code taxAmount}, {@code withholdingTaxAmount},
  * {@code amountBeforeTax})의 의미는
  * 엔티티 {@link com.coresolution.consultation.entity.erp.financial.FinancialTransaction}와 동일하게 해석합니다.
+ * </p>
+ * <p>
+ * 상담료 자동 수입(입금 확인·추가 회기 등, {@code AdminServiceImpl}):
+ * 총 입금액을 부가세 포함가로 두고 {@link com.coresolution.consultation.util.TaxCalculationUtil#calculateTaxFromPayment(java.math.BigDecimal)}
+ * 로 공급가·부가세를 분리 저장합니다({@code taxIncluded=true}, {@code amount}=포함가, {@code amountBeforeTax}=공급가, {@code taxAmount}=부가세).
+ * 프리랜서 원천징수 예정액은 {@code withholdingTaxAmount}에 별도이며 총 입금(long) 기준입니다.
+ * 상담료 자동 환불·부분환불({@code EXPENSE}, {@code CONSULTATION_REFUND} / {@code CONSULTATION_PARTIAL_REFUND})도 동일하게
+ * 환불 총액을 포함가로 분리합니다. 월별 세액 집계에서 {@code EXPENSE}의 {@code tax_amount}는 지출 측 부가세(세액) 합계로 사용됩니다.
+ * </p>
  *
  * @author MindGarden
  * @version 1.0.0
@@ -39,6 +48,7 @@ public class FinancialTransactionRequest {
     
     /**
      * 거래 금액(총액). {@code taxIncluded}·세액 필드와 함께 해석합니다.
+     * 상담료 자동 수입 시 부가세 포함 총액(결제 자동 거래와 동일).
      */
     @NotNull(message = "거래 금액은 필수입니다.")
     @DecimalMin(value = "0.0", message = "거래 금액은 0 이상이어야 합니다.")

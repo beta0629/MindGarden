@@ -118,11 +118,39 @@
 }
 
 /* 수입·taxIncluded: 금액 옆 부가세 포함가 배지 */
+.mg-financial-transaction-table__amount-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-spacing-2xs, var(--spacing-xs));
+  max-width: 100%;
+}
+
 .mg-financial-transaction-table__amount-cell {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--mg-spacing-xs, var(--spacing-xs));
+}
+
+.mg-financial-transaction-table__amount-stack-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--mg-spacing-xs, var(--spacing-xs));
+  font-size: var(--mg-font-size-caption, var(--font-size-sm));
+  color: var(--mg-color-text-secondary);
+  line-height: var(--mg-line-height-snug, 1.45);
+}
+
+.mg-financial-transaction-table__amount-stack-meta--withholding {
+  font-weight: 600;
+  color: var(--mg-color-text-primary);
+}
+
+.mg-financial-transaction-table__amount-stack-label {
+  flex-shrink: 0;
+  color: var(--mg-color-text-secondary);
 }
 
 .mg-financial-transaction-card__amount-with-badge {

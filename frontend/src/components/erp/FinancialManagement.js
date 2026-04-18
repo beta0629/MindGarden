@@ -9,6 +9,21 @@ import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import MGButton from '../common/MGButton';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../utils/safeDisplay';
+import {
+  getDisplayWithholdingTaxAmount,
+  shouldShowCardSettlementSection,
+  formatKrw,
+  formatOptionalKrw,
+  shouldShowIncomeWithholdingTax,
+  shouldShowIncomeTaxIncludedLabel,
+  FINANCIAL_AMOUNT_STACK_LABEL_TOTAL,
+  FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY,
+  FINANCIAL_AMOUNT_STACK_LABEL_VAT,
+  FINANCIAL_WITHHOLDING_TAX_LABEL,
+  FINANCIAL_TAX_INCLUDED_LABEL,
+  FINANCIAL_CARD_MERCHANT_FEE_LABEL,
+  FINANCIAL_CARD_NET_DEPOSIT_LABEL
+} from '../../utils/erpFinancialAmountStack';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import { ERP_API } from '../../constants/api';
@@ -55,109 +70,196 @@ const TRANSACTION_VIEW_MODE_OPTIONS = [
   { value: 'table', label: '테이블' }
 ];
 
+const FINANCIAL_PAGE_TITLE_ID = 'financial-management-page-title';
+
+/** 재무 거래 행 액션 — Lucide 아이콘 크기(디자인 토큰 --icon-size-sm 20px에 맞춤) */
+const FINANCIAL_TX_ICON_SIZE = 20;
+
 /** 재무 거래 목록 테이블 컬럼 (ListTableView) */
 const TRANSACTION_TABLE_COLUMNS = [
   { key: 'id', label: 'ID' },
   { key: 'transactionDate', label: '일자' },
   { key: 'transactionType', label: '유형' },
   { key: 'category', label: '카테고리' },
-  { key: 'amount', label: '금액' },
+  { key: 'amount', label: FINANCIAL_AMOUNT_STACK_LABEL_TOTAL },
   { key: 'status', label: '상태' },
   { key: 'mapping', label: '매핑' },
   { key: 'actions', label: '작업' }
 ];
 
-const FINANCIAL_PAGE_TITLE_ID = 'financial-management-page-title';
-
-/** 재무 거래 행 액션 — Lucide 아이콘 크기(디자인 토큰 --icon-size-sm 20px에 맞춤) */
-const FINANCIAL_TX_ICON_SIZE = 20;
-
-const FINANCIAL_WITHHOLDING_TAX_LABEL = '원천징수(3.3%)';
-
-/** 수입·taxIncluded=true 거래 금액 옆 부가세 포함가 안내 (백엔드 포함가 저장과 정합) */
-const FINANCIAL_TAX_INCLUDED_LABEL = '부가세 포함가';
-
 /**
- * 원천징수 금액 표시 SSOT.
- * {@code withholdingTaxAmount}가 응답에 있으면(0 포함) 그대로 사용한다.
- * 레거시: 필드가 없을 때만 {@code taxAmount}를 쓴다(과거 응답에서 사업소득 원천이 taxAmount에 실리던 경우).
- * @param {Object|null|undefined} transaction
- * @returns {number}
+ * 공급가·부가세 행 (값 없으면 —).
+ * @param {Object} transaction
+ * @param {'compact' | 'card' | 'detail' | 'table'} layout
+ * @returns {import('react').ReactNode}
  */
-function getDisplayWithholdingTaxAmount(transaction) {
-  if (!transaction) {
-    return 0;
+function renderAmountStackSupplyAndVatRows(transaction, layout) {
+  const supply = formatOptionalKrw(transaction.amountBeforeTax);
+  const vat = formatOptionalKrw(transaction.taxAmount);
+  if (layout === 'compact') {
+    return (
+      <>
+        <div className="mg-financial-transaction-card__compact-line mg-financial-transaction-card__compact-line--amount-stack">
+          <span className="mg-financial-transaction-card__withholding-label">{FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY}</span>
+          <span className="mg-financial-transaction-card__withholding-amount">{supply}</span>
+        </div>
+        <div className="mg-financial-transaction-card__compact-line mg-financial-transaction-card__compact-line--amount-stack">
+          <span className="mg-financial-transaction-card__withholding-label">{FINANCIAL_AMOUNT_STACK_LABEL_VAT}</span>
+          <span className="mg-financial-transaction-card__withholding-amount">{vat}</span>
+        </div>
+      </>
+    );
   }
-  if (transaction.withholdingTaxAmount != null && transaction.withholdingTaxAmount !== '') {
-    return toSafeNumber(transaction.withholdingTaxAmount);
+  if (layout === 'card') {
+    return (
+      <>
+        <div className="mg-financial-transaction-card__field">
+          <span className="mg-financial-transaction-card__label">{FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY}</span>
+          <span>{supply}</span>
+        </div>
+        <div className="mg-financial-transaction-card__field">
+          <span className="mg-financial-transaction-card__label">{FINANCIAL_AMOUNT_STACK_LABEL_VAT}</span>
+          <span>{vat}</span>
+        </div>
+      </>
+    );
   }
-  return toSafeNumber(transaction.taxAmount);
-}
-
-/**
- * 카드 수수료·실입금 중 하나라도 내려온 경우에만 블록 표시.
- * @param {Object|null|undefined} transaction
- * @returns {boolean}
- */
-function shouldShowCardSettlementSection(transaction) {
-  if (!transaction) {
-    return false;
+  if (layout === 'detail') {
+    return (
+      <>
+        <div>
+          <strong>{FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY}:</strong> {supply}
+        </div>
+        <div>
+          <strong>{FINANCIAL_AMOUNT_STACK_LABEL_VAT}:</strong> {vat}
+        </div>
+      </>
+    );
   }
   return (
-    transaction.cardMerchantFeeAmount != null ||
-    transaction.cardNetDepositAmount != null
+    <>
+      <div className="mg-financial-transaction-table__amount-stack-meta">
+        <span className="mg-financial-transaction-table__amount-stack-label">{FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY}</span>
+        <span>{supply}</span>
+      </div>
+      <div className="mg-financial-transaction-table__amount-stack-meta">
+        <span className="mg-financial-transaction-table__amount-stack-label">{FINANCIAL_AMOUNT_STACK_LABEL_VAT}</span>
+        <span>{vat}</span>
+      </div>
+    </>
   );
 }
 
 /**
- * @param {unknown} amount
- * @returns {string}
- */
-function formatKrw(amount) {
-  if (!amount && amount !== 0) {
-    return '0원';
-  }
-  const n = typeof amount === 'number' ? amount : toSafeNumber(amount);
-  return `${new Intl.NumberFormat('ko-KR').format(n)}원`;
-}
-
-/**
- * 카드 정산 등 선택 필드: 없으면 대시(—).
- * @param {unknown} amount
- * @returns {string}
- */
-function formatOptionalKrw(amount) {
-  if (amount == null || amount === '') {
-    return '—';
-  }
-  return `${new Intl.NumberFormat('ko-KR').format(toSafeNumber(amount))}원`;
-}
-
-/**
- * 사업소득 원천징수 예정액 표시(부가세와 구분: taxIncluded가 아닌 경우).
+ * 원천징수 행 (스택 4번).
  * @param {Object} transaction
- * @returns {boolean}
+ * @param {'compact' | 'card' | 'detail' | 'table'} layout
+ * @returns {import('react').ReactNode|null}
  */
-function shouldShowIncomeWithholdingTax(transaction) {
-  if (!transaction || transaction.transactionType !== 'INCOME') {
-    return false;
+function renderAmountStackWithholdingRow(transaction, layout) {
+  if (!shouldShowIncomeWithholdingTax(transaction)) {
+    return null;
   }
-  if (getDisplayWithholdingTaxAmount(transaction) <= 0) {
-    return false;
+  const amt = formatKrw(getDisplayWithholdingTaxAmount(transaction));
+  if (layout === 'compact') {
+    return (
+      <div className="mg-financial-transaction-card__compact-line mg-financial-transaction-card__withholding-line">
+        <span className="mg-financial-transaction-card__withholding-label">{FINANCIAL_WITHHOLDING_TAX_LABEL}</span>
+        <span className="mg-financial-transaction-card__withholding-amount">{amt}</span>
+      </div>
+    );
   }
-  return transaction.taxIncluded !== true;
+  if (layout === 'card') {
+    return (
+      <div className="mg-financial-transaction-card__field mg-financial-transaction-card__field--withholding">
+        <span className="mg-financial-transaction-card__label">{FINANCIAL_WITHHOLDING_TAX_LABEL}</span>
+        <span className="mg-financial-transaction-card__withholding-amount">{amt}</span>
+      </div>
+    );
+  }
+  if (layout === 'detail') {
+    return (
+      <div className="mg-v2-transaction-detail-form-grid__item--span2 mg-v2-transaction-detail-withholding">
+        <strong>{FINANCIAL_WITHHOLDING_TAX_LABEL}:</strong>{' '}
+        <span className="mg-v2-transaction-detail-withholding__amount">{amt}</span>
+        <span className="mg-v2-transaction-detail-withholding__hint">
+          {' '}
+          (입금 총액 대비 사업소득 원천징수 예정, 부가세와 별개)
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div className="mg-financial-transaction-table__amount-stack-meta mg-financial-transaction-table__amount-stack-meta--withholding">
+      <span>{FINANCIAL_WITHHOLDING_TAX_LABEL}</span>
+      <span>{amt}</span>
+    </div>
+  );
 }
 
 /**
- * 수입이면서 포함가(taxIncluded)인 경우에만 부가세 포함가 배지 표시.
- * @param {Object|null|undefined} transaction
- * @returns {boolean}
+ * 카드 정산(가맹점 수수료·실입금) 행 (스택 5번).
+ * @param {Object} transaction
+ * @param {'compact' | 'card' | 'detail' | 'table'} layout
+ * @returns {import('react').ReactNode|null}
  */
-function shouldShowIncomeTaxIncludedLabel(transaction) {
+function renderAmountStackCardSettlementRows(transaction, layout) {
+  if (!shouldShowCardSettlementSection(transaction)) {
+    return null;
+  }
+  const fee = formatOptionalKrw(transaction.cardMerchantFeeAmount);
+  const net = formatOptionalKrw(transaction.cardNetDepositAmount);
+  if (layout === 'compact') {
+    return (
+      <>
+        <div className="mg-financial-transaction-card__compact-line">
+          <span className="mg-financial-transaction-card__withholding-label">{FINANCIAL_CARD_MERCHANT_FEE_LABEL}</span>
+          <span className="mg-financial-transaction-card__withholding-amount">{fee}</span>
+        </div>
+        <div className="mg-financial-transaction-card__compact-line">
+          <span className="mg-financial-transaction-card__withholding-label">{FINANCIAL_CARD_NET_DEPOSIT_LABEL}</span>
+          <span className="mg-financial-transaction-card__withholding-amount">{net}</span>
+        </div>
+      </>
+    );
+  }
+  if (layout === 'card') {
+    return (
+      <>
+        <div className="mg-financial-transaction-card__field">
+          <span className="mg-financial-transaction-card__label">{FINANCIAL_CARD_MERCHANT_FEE_LABEL}</span>
+          <span>{fee}</span>
+        </div>
+        <div className="mg-financial-transaction-card__field">
+          <span className="mg-financial-transaction-card__label">{FINANCIAL_CARD_NET_DEPOSIT_LABEL}</span>
+          <span>{net}</span>
+        </div>
+      </>
+    );
+  }
+  if (layout === 'detail') {
+    return (
+      <>
+        <div>
+          <strong>{FINANCIAL_CARD_MERCHANT_FEE_LABEL}:</strong> {fee}
+        </div>
+        <div>
+          <strong>{FINANCIAL_CARD_NET_DEPOSIT_LABEL}:</strong> {net}
+        </div>
+      </>
+    );
+  }
   return (
-    !!transaction &&
-    transaction.transactionType === 'INCOME' &&
-    transaction.taxIncluded === true
+    <>
+      <div className="mg-financial-transaction-table__amount-stack-meta">
+        <span className="mg-financial-transaction-table__amount-stack-label">{FINANCIAL_CARD_MERCHANT_FEE_LABEL}</span>
+        <span>{fee}</span>
+      </div>
+      <div className="mg-financial-transaction-table__amount-stack-meta">
+        <span className="mg-financial-transaction-table__amount-stack-label">{FINANCIAL_CARD_NET_DEPOSIT_LABEL}</span>
+        <span>{net}</span>
+      </div>
+    </>
   );
 }
 
@@ -915,23 +1017,28 @@ const FinancialManagement = () => {
         );
       case 'amount':
         return (
-          <span className="mg-financial-transaction-table__amount-cell">
-            <span
-              className={
-                amountNum >= 0
-                  ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
-                  : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
-              }
-            >
-              {amountNum >= 0 ? '+' : ''}
-              {formatKrw(transaction.amount)}
-            </span>
-            {shouldShowIncomeTaxIncludedLabel(transaction) && (
-              <span className="mg-financial-tax-included-badge">
-                <ErpSafeText value={FINANCIAL_TAX_INCLUDED_LABEL} />
+          <div className="mg-financial-transaction-table__amount-stack">
+            <div className="mg-financial-transaction-table__amount-cell">
+              <span
+                className={
+                  amountNum >= 0
+                    ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
+                    : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
+                }
+              >
+                {amountNum >= 0 ? '+' : ''}
+                {formatKrw(transaction.amount)}
               </span>
-            )}
-          </span>
+              {shouldShowIncomeTaxIncludedLabel(transaction) && (
+                <span className="mg-financial-tax-included-badge">
+                  <ErpSafeText value={FINANCIAL_TAX_INCLUDED_LABEL} />
+                </span>
+              )}
+            </div>
+            {renderAmountStackSupplyAndVatRows(transaction, 'table')}
+            {renderAmountStackWithholdingRow(transaction, 'table')}
+            {renderAmountStackCardSettlementRows(transaction, 'table')}
+          </div>
         );
       case 'status':
         return (
@@ -1701,36 +1808,9 @@ const FinancialManagement = () => {
                                   )}
                                 </span>
                               </div>
-                              {shouldShowIncomeWithholdingTax(transaction) && (
-                                <div className="mg-financial-transaction-card__compact-line mg-financial-transaction-card__withholding-line">
-                                  <span className="mg-financial-transaction-card__withholding-label">
-                                    {FINANCIAL_WITHHOLDING_TAX_LABEL}
-                                  </span>
-                                  <span className="mg-financial-transaction-card__withholding-amount">
-                                    {formatKrw(getDisplayWithholdingTaxAmount(transaction))}
-                                  </span>
-                                </div>
-                              )}
-                              {shouldShowCardSettlementSection(transaction) && (
-                                <>
-                                  <div className="mg-financial-transaction-card__compact-line">
-                                    <span className="mg-financial-transaction-card__withholding-label">
-                                      카드 수수료
-                                    </span>
-                                    <span className="mg-financial-transaction-card__withholding-amount">
-                                      {formatOptionalKrw(transaction.cardMerchantFeeAmount)}
-                                    </span>
-                                  </div>
-                                  <div className="mg-financial-transaction-card__compact-line">
-                                    <span className="mg-financial-transaction-card__withholding-label">
-                                      실입금(카드)
-                                    </span>
-                                    <span className="mg-financial-transaction-card__withholding-amount">
-                                      {formatOptionalKrw(transaction.cardNetDepositAmount)}
-                                    </span>
-                                  </div>
-                                </>
-                              )}
+                              {renderAmountStackSupplyAndVatRows(transaction, 'compact')}
+                              {renderAmountStackWithholdingRow(transaction, 'compact')}
+                              {renderAmountStackCardSettlementRows(transaction, 'compact')}
                               <div className="mg-financial-transaction-card__compact-line mg-financial-transaction-card__compact-line--secondary">
                                 <span className={`erp-status ${toDisplayString(transaction.status, '').toLowerCase()}`}>
                                   <ErpSafeText>{getStatusLabel(transaction.status)}</ErpSafeText>
@@ -1757,7 +1837,7 @@ const FinancialManagement = () => {
                                 </span>
                               </div>
                               <div className="mg-financial-transaction-card__field">
-                                <span className="mg-financial-transaction-card__label">금액</span>
+                                <span className="mg-financial-transaction-card__label">{FINANCIAL_AMOUNT_STACK_LABEL_TOTAL}</span>
                                 <span className="mg-financial-transaction-card__amount-with-badge">
                                   <span
                                     className={
@@ -1776,28 +1856,9 @@ const FinancialManagement = () => {
                                   )}
                                 </span>
                               </div>
-                              {shouldShowIncomeWithholdingTax(transaction) && (
-                                <div className="mg-financial-transaction-card__field mg-financial-transaction-card__field--withholding">
-                                  <span className="mg-financial-transaction-card__label">
-                                    {FINANCIAL_WITHHOLDING_TAX_LABEL}
-                                  </span>
-                                  <span className="mg-financial-transaction-card__withholding-amount">
-                                    {formatKrw(getDisplayWithholdingTaxAmount(transaction))}
-                                  </span>
-                                </div>
-                              )}
-                              {shouldShowCardSettlementSection(transaction) && (
-                                <>
-                                  <div className="mg-financial-transaction-card__field">
-                                    <span className="mg-financial-transaction-card__label">카드 수수료</span>
-                                    <span>{formatOptionalKrw(transaction.cardMerchantFeeAmount)}</span>
-                                  </div>
-                                  <div className="mg-financial-transaction-card__field">
-                                    <span className="mg-financial-transaction-card__label">실입금(카드)</span>
-                                    <span>{formatOptionalKrw(transaction.cardNetDepositAmount)}</span>
-                                  </div>
-                                </>
-                              )}
+                              {renderAmountStackSupplyAndVatRows(transaction, 'card')}
+                              {renderAmountStackWithholdingRow(transaction, 'card')}
+                              {renderAmountStackCardSettlementRows(transaction, 'card')}
                               <div className="mg-financial-transaction-card__field">
                                 <span className="mg-financial-transaction-card__label">상태</span>
                                 <span className={`erp-status ${toDisplayString(transaction.status, '').toLowerCase()}`}>
@@ -2255,7 +2316,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             <ErpSafeText fallback="-">{transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}</ErpSafeText>
           </div>
           <div>
-            <strong>금액:</strong>{' '}
+            <strong>{FINANCIAL_AMOUNT_STACK_LABEL_TOTAL}:</strong>{' '}
             <span className={`mg-v2-transaction-detail-amount ${transaction.transactionType === 'INCOME' ? 'mg-v2-transaction-detail-amount--income' : 'mg-v2-transaction-detail-amount--expense'}`}>
               {formatKrw(transaction.amount)}
             </span>
@@ -2268,28 +2329,9 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
               </>
             )}
           </div>
-          {shouldShowIncomeWithholdingTax(transaction) && (
-            <div className="mg-v2-transaction-detail-form-grid__item--span2 mg-v2-transaction-detail-withholding">
-              <strong>{FINANCIAL_WITHHOLDING_TAX_LABEL}:</strong>{' '}
-              <span className="mg-v2-transaction-detail-withholding__amount">
-                {formatKrw(getDisplayWithholdingTaxAmount(transaction))}
-              </span>
-              <span className="mg-v2-transaction-detail-withholding__hint">
-                {' '}
-                (입금 총액 대비 사업소득 원천징수 예정, 부가세와 별개)
-              </span>
-            </div>
-          )}
-          {shouldShowCardSettlementSection(transaction) && (
-            <>
-              <div>
-                <strong>카드 수수료:</strong> {formatOptionalKrw(transaction.cardMerchantFeeAmount)}
-              </div>
-              <div>
-                <strong>실입금(카드):</strong> {formatOptionalKrw(transaction.cardNetDepositAmount)}
-              </div>
-            </>
-          )}
+          {renderAmountStackSupplyAndVatRows(transaction, 'detail')}
+          {renderAmountStackWithholdingRow(transaction, 'detail')}
+          {renderAmountStackCardSettlementRows(transaction, 'detail')}
           <div>
             <strong>거래일:</strong> {formatDate(transaction.transactionDate)}
           </div>

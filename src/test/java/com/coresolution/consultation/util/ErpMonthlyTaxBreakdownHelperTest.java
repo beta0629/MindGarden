@@ -63,4 +63,36 @@ class ErpMonthlyTaxBreakdownHelperTest {
         assertEquals(0, new BigDecimal("100.00").compareTo((BigDecimal) april.get("withholdingTotal")));
         assertEquals(0, BigDecimal.ZERO.compareTo((BigDecimal) april.get("expenseVatTotal")));
     }
+
+    @Test
+    @DisplayName("레거시 INCOME: 원천만 tax_amount, withholding=0, 설명에 원천징수 → 원천 합계만, 부가세 0")
+    void legacy_income_withholdingOnlyInTaxAmount_goesToWithholdingNotVat() {
+        FinancialTransaction tx = new FinancialTransaction();
+        tx.setTransactionType(FinancialTransaction.TransactionType.INCOME);
+        tx.setAmount(new BigDecimal("850000.00"));
+        tx.setTaxAmount(new BigDecimal("28050.00"));
+        tx.setWithholdingTaxAmount(BigDecimal.ZERO);
+        tx.setDescription("사업소득 원천징수 3.3% 예정 28,050원(부가세와 별개)");
+        tx.setTransactionDate(LocalDate.of(2026, 4, 15));
+
+        Map<String, Object> row = ErpMonthlyTaxBreakdownHelper.buildBreakdown(List.of(tx));
+        assertEquals(0, BigDecimal.ZERO.compareTo((BigDecimal) row.get("vatTotal")));
+        assertEquals(0, new BigDecimal("28050.00").compareTo((BigDecimal) row.get("withholdingTotal")));
+    }
+
+    @Test
+    @DisplayName("신규 INCOME: 부가세는 tax_amount, 원천은 withholding_tax_amount로 분리 합산")
+    void newPath_income_splitsVatAndWithholdingColumns() {
+        FinancialTransaction tx = new FinancialTransaction();
+        tx.setTransactionType(FinancialTransaction.TransactionType.INCOME);
+        tx.setAmount(new BigDecimal("1000000.00"));
+        tx.setTaxAmount(new BigDecimal("10000.00"));
+        tx.setWithholdingTaxAmount(new BigDecimal("28050.00"));
+        tx.setDescription("D2 분리 저장");
+        tx.setTransactionDate(LocalDate.of(2026, 5, 1));
+
+        Map<String, Object> row = ErpMonthlyTaxBreakdownHelper.buildBreakdown(List.of(tx));
+        assertEquals(0, new BigDecimal("10000.00").compareTo((BigDecimal) row.get("vatTotal")));
+        assertEquals(0, new BigDecimal("28050.00").compareTo((BigDecimal) row.get("withholdingTotal")));
+    }
 }

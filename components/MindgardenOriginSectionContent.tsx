@@ -64,7 +64,7 @@ export default function MindgardenOriginSectionContent() {
     <div style={{ fontSize: '1.0625rem', lineHeight: 2, color: 'var(--text-sub)' }}>
       <p style={{ ...p, marginTop: 0 }}>
         ADHD(주의력결핍 과잉행동장애)는 단독으로 나타나기보다 약 60~80%의 확률로 하나 이상의 다른 질환을 동반하는 경우가 많습니다. 이를
-        &lsquo;공존 질환&rsquo;이라고도 하며, ADHD 증상과 겹쳐 나타나기 때문에 정확한 진단과 통합적인 케어가 매우 중요합니다.
+        &lsquo;공존 질환&rsquo;이라고도 하며, ADHD 증상과 겹쳐 나타나기 때문에 정확한 이해와 통합적인 케어가 매우 중요합니다.
       </p>
       <p style={p}>주요 동반질환은 다음과 같습니다.</p>
 
@@ -77,7 +77,7 @@ export default function MindgardenOriginSectionContent() {
           <strong style={{ color: 'var(--text-main)' }}>불안장애</strong> — 과도한 걱정, 긴장감, 수행 불안 등을 느끼며 ADHD 증상을 더 악화시키기도 합니다.
         </li>
         <li style={{ ...liBlock, marginBottom: 0 }}>
-          <strong style={{ color: 'var(--text-main)' }}>양극성 장애(조울증)</strong> — 감정 기복이 심하고 충동 조절이 어려운 특징이 ADHD와 유사하여 감별 진단이 필요합니다.
+          <strong style={{ color: 'var(--text-main)' }}>양극성 장애(조울증)</strong> — 감정 기복이 심하고 충동 조절이 어려운 특징이 ADHD와 유사하여 감별이 필요합니다.
         </li>
       </ul>
 
@@ -159,7 +159,7 @@ export default function MindgardenOriginSectionContent() {
           <strong style={{ color: 'var(--text-main)' }}>특징</strong> — 망상을 동반할 정도의 심한 양극성 장애는 ADHD 증상을 압도해 버립니다. 특히 조증 삽화 시기의 에너지 과잉과 ADHD의 주의산만함이 합쳐지면 사고의 비약과 판단력 상실이 극대화됩니다.
         </p>
         <p style={{ ...p, marginBottom: '20px' }}>
-          <strong style={{ color: 'var(--text-main)' }}>개입 포인트</strong> — 명확한 감별 진단이 우선이며, 약물치료와의 긴밀한 협조 하에 심리적 안정을 도모해야 합니다.
+          <strong style={{ color: 'var(--text-main)' }}>개입 포인트</strong> — 감별을 명확히 하는 것이 우선이며, 약물치료와의 긴밀한 협조 하에 심리적 안정을 도모해야 합니다.
         </p>
 
         <h4 style={{ ...h3, fontSize: '1.05rem', marginTop: '8px' }}>4. 조현병(Schizophrenia) &amp; ADHD</h4>

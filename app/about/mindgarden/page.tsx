@@ -54,7 +54,7 @@ export default function MindGardenAboutPage() {
       variant: 'band',
       comorbidityData: {
         overallRate: { min: 60, max: 80 },
-        donutTitle: 'ADHD 평가 시 동반질환 발생률',
+        donutTitle: 'ADHD와 함께 나타나는 동반질환 비율',
         barSectionTitle: '주요 동반질환별 발생률',
         centerSubLabel: '동반질환 발생',
         chartCategories: [

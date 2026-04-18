@@ -2,7 +2,7 @@
 
 export interface ComorbidityChartData {
   overallRate: { min: number; max: number };
-  /** 도넛 위 짧은 제목 (예: ADHD 진단 시 동반질환 발생률) */
+  /** 도넛 위 짧은 제목 (예: ADHD와 함께 나타나는 동반질환 비율) */
   donutTitle?: string;
   /** 막대 그룹 상단 제목 */
   barSectionTitle?: string;
@@ -35,7 +35,7 @@ const BAR_COLORS = [
 export default function MindgardenComorbidityChart({ cd }: { cd: ComorbidityChartData }) {
   const overallMid = (cd.overallRate.min + cd.overallRate.max) / 2;
   const circumference = 2 * Math.PI * 80;
-  const donutTitle = cd.donutTitle ?? 'ADHD 진단 시 동반질환 발생률';
+  const donutTitle = cd.donutTitle ?? 'ADHD와 함께 나타나는 동반질환 비율';
   const barSectionTitle = cd.barSectionTitle ?? '주요 동반질환별 발생률';
   const centerSubLabel = cd.centerSubLabel ?? '동반질환 발생';
 

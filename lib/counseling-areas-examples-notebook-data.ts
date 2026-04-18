@@ -2,7 +2,7 @@ import type { CounselingNotebookBlock } from '@/lib/counseling-notebook-types';
 
 /**
  * `/counseling/counseling-areas` — article#examples NotebookLM 스타일 본문
- * (진단·치료 효과 보장 없음. 예시 목록이며 실제 범위는 초기 면담에서 합의.)
+ * (평가·치료 효과 보장 없음. 예시 목록이며 실제 범위는 초기 면담에서 합의.)
  */
 export const COUNSELING_AREAS_EXAMPLES_NOTEBOOK_BLOCKS: CounselingNotebookBlock[] = [
   {
@@ -38,7 +38,7 @@ export const COUNSELING_AREAS_EXAMPLES_NOTEBOOK_BLOCKS: CounselingNotebookBlock[
     items: [
       {
         term: '기분·불안',
-        text: '우울, 양극성 장애(조울), 불안, 강박, 공황 등 다른 진단·경향과 겹치는 영역을 통합적으로 이해합니다.',
+        text: '우울, 양극성 장애(조울), 불안, 강박, 공황 등 다른 질환·경향과 겹치는 영역을 통합적으로 이해합니다.',
       },
       {
         term: '행동·발달·신경발달',
@@ -132,7 +132,7 @@ export const COUNSELING_AREAS_EXAMPLES_NOTEBOOK_BLOCKS: CounselingNotebookBlock[
   {
     type: 'note',
     text:
-      '위 목록은 예시이며, 법적·의학적 진단명을 확정하거나 치료 효과를 보장하는 문구가 아닙니다. ' +
+      '위 목록은 예시이며, 법적·의학적 권위를 갖는 결론을 내리거나 치료 효과를 보장하는 문구가 아닙니다. ' +
       '구체적인 세부 분야·빈도·병행 서비스는 초기 면담에서 호소와 합의에 맞춰 정리합니다.',
   },
 ];

@@ -1295,9 +1295,7 @@
   margin-top: var(--mg-spacing-sm, 0.5rem);
 }
 
-.financial-calendar-view-container .mg-calendar-header {
-  margin-bottom: var(--mg-spacing-lg, var(--spacing-lg));
-}
+/* .mg-calendar-header 레이아웃은 FinancialCalendarView.css */
 
 .financial-calendar-view-container .mg-calendar-title {
   color: var(--mg-color-text-main);

@@ -14,10 +14,37 @@
   display: inline;
 }
 
+/**
+ * 달력 헤더: 이전 | (연월 + 새로고침) | 다음 — 좁은 툴바에서도 겹치지 않도록 그리드 + 중앙 세로 스택
+ */
+.financial-calendar-view-container .mg-calendar-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  width: 100%;
+  margin-bottom: var(--mg-spacing-lg, var(--spacing-lg));
+  /* unified-design-tokens .mg-calendar-header 의 flex/space-between 덮어씀 */
+  justify-content: unset;
+}
+
+.financial-calendar-view-container .mg-calendar-header > .mg-button:first-of-type,
+.financial-calendar-view-container .mg-calendar-header > .mg-button:last-of-type {
+  flex-shrink: 0;
+}
+
 .financial-calendar-view-container .mg-financial-calendar-header-title-row {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--mg-spacing-sm, var(--spacing-sm));
-  flex-wrap: wrap;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  min-width: 0;
+  width: 100%;
+}
+
+.financial-calendar-view-container .mg-calendar-title {
+  margin: 0;
+  text-align: center;
+  line-height: 1.3;
 }

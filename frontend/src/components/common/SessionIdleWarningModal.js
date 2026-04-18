@@ -157,7 +157,7 @@ const SessionIdleWarningModal = () => {
       backdropClick={false}
       showCloseButton={false}
       zIndex={9990}
-      className="session-idle-warning-modal"
+      className="session-idle-warning-modal mg-modal--footer-safe"
       actions={
         <>
           {/* 연장을 먼저 두고 세로 스택에서도 상단에 주요 액션이 오도록 함 (가로 배치 시에도 flex-end로 오른쪽 정렬) */}

@@ -59,6 +59,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
 }
@@ -243,20 +244,20 @@
 }
 
 /*
- * 세션 만료 경고: 액션 두 개가 좁은 폭에서 잘리거나 한 번에 보이지 않는 문제 방지
- * (세로 스택 + 전체 폭, 텍스트 말줄임 방지)
+ * 푸터 안전 레이아웃: 좁은 폭·긴 라벨에서 액션이 잘리지 않도록
+ * (중복 로그인·세션 만료 경고 등 공통 — DuplicateLoginModal, SessionIdleWarningModal)
  */
-.session-idle-warning-modal.mg-modal .mg-modal__actions {
+.mg-modal--footer-safe.mg-modal .mg-modal__actions {
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
   gap: var(--spacing-md, 1rem);
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   overflow: visible;
   min-width: 0;
 }
 
-.session-idle-warning-modal.mg-modal .mg-modal__actions .mg-button {
+.mg-modal--footer-safe.mg-modal .mg-modal__actions .mg-button {
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -264,26 +265,26 @@
   flex-shrink: 0;
 }
 
-.session-idle-warning-modal.mg-modal .mg-modal__actions .mg-button .mg-button__text {
+.mg-modal--footer-safe.mg-modal .mg-modal__actions .mg-button .mg-button__text {
   white-space: normal;
   text-align: center;
 }
 
 @media (min-width: 480px) {
-  .session-idle-warning-modal.mg-modal .mg-modal__actions {
+  .mg-modal--footer-safe.mg-modal .mg-modal__actions {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: flex-end;
     align-items: center;
   }
 
-  .session-idle-warning-modal.mg-modal .mg-modal__actions .mg-button {
+  .mg-modal--footer-safe.mg-modal .mg-modal__actions .mg-button {
     width: auto;
     flex: 0 1 auto;
     min-width: 112px;
   }
 
-  /* DOM 순서는 연장→로그아웃(모바일에서 연장이 위). 가로에서는 로그아웃·연장 순으로 보이게 */
+  /* 세션 만료: DOM 순서는 연장→로그아웃(모바일에서 연장이 위). 가로에서는 로그아웃·연장 순 */
   .session-idle-warning-modal.mg-modal .mg-modal__actions [data-testid='session-idle-logout'] {
     order: 1;
   }

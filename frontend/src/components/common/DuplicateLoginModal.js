@@ -105,6 +105,7 @@ const DuplicateLoginModal = () => {
       backdropClick={false}
       showCloseButton
       zIndex={10000}
+      className="duplicate-login-modal mg-modal--footer-safe"
       actions={
         <>
           <MGButton

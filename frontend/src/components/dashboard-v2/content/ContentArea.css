@@ -107,11 +107,14 @@
   gap: var(--mg-layout-grid-gap, 1.5rem);
 }
 
-/* 한 열만 있을 때(스케줄 대기 비어 있음 등) 카드가 과도하게 좁아지지 않도록 */
+/*
+ * 입금/스케줄 대기 카드: 너무 좁지 않게 + 단독일 때 가로 전체(초울트라와이드)까지 늘어나지 않게
+ * (항목 여러 건은 각 섹션 안 ul > li 가 세로로 누적)
+ */
 .mg-v2-content-detail-row > .deposit-pending-list,
 .mg-v2-content-detail-row > .schedule-pending-list {
   flex: 1 1 280px;
   min-width: min(100%, 260px);
-  max-width: 100%;
+  max-width: min(100%, 560px);
   box-sizing: border-box;
 }

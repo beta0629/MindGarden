@@ -16,7 +16,7 @@
 .mg-dashboard-pipeline-detail > .schedule-pending-list {
   flex: 1 1 280px;
   min-width: min(100%, 260px);
-  max-width: 100%;
+  max-width: min(100%, 560px);
   box-sizing: border-box;
 }
 

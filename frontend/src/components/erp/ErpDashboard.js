@@ -398,7 +398,7 @@ const ErpDashboard = ({ user: propUser }) => {
           titleId={ERP_DASHBOARD_PAGE_TITLE_ID}
         />
         <ContentArea className={layoutContentClassName} ariaLabel="운영 현황">
-          <div className="erp-dashboard__session-load">
+          <div className="erp-dashboard__session-load" aria-busy="true">
             <UnifiedLoading type="inline" text="세션 정보를 불러오는 중..." />
           </div>
         </ContentArea>
@@ -415,7 +415,7 @@ const ErpDashboard = ({ user: propUser }) => {
           titleId={ERP_DASHBOARD_PAGE_TITLE_ID}
         />
         <ContentArea className={layoutContentClassName} ariaLabel="운영 현황">
-          <div className="erp-dashboard__data-load">
+          <div className="erp-dashboard__data-load" aria-busy="true">
             <UnifiedLoading type="inline" text="불러오는 중..." />
           </div>
         </ContentArea>

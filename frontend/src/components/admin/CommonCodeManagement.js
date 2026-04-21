@@ -23,6 +23,13 @@ import {
 } from '../../utils/codeHelper';
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
+import {
+    COMMON_CODE_MANAGEMENT_GROUP_KO_FALLBACK,
+    COMMON_CODE_MANAGEMENT_MSG as CCM_MSG,
+    COMMON_CODE_MANAGEMENT_UI as CCM_UI,
+    formatCommonCodeManagementDetailTitle,
+    formatCommonCodeManagementGroupCodesLoadError
+} from '../../constants/commonCodeManagementStrings';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import './CommonCodeManagementB0KlA.css';
@@ -146,12 +153,12 @@ const CommonCodeManagement = () => {
                     });
                     setCodeGroups(filteredGroups);
                 } else {
-                    notificationManager.error('코드그룹 목록을 불러오는데 실패했습니다.');
+                    notificationManager.error(CCM_MSG.ERR_LOAD_CODE_GROUPS);
                 }
             }
         } catch (error) {
             console.error('코드그룹 로드 오류:', error);
-            notificationManager.error('코드그룹 목록을 불러오는데 실패했습니다.');
+            notificationManager.error(CCM_MSG.ERR_LOAD_CODE_GROUPS);
         } finally {
             setLoading(false);
         }
@@ -193,15 +200,15 @@ const CommonCodeManagement = () => {
                 if (response && response.length > 0) {
                     setGroupCodes(response);
                 } else {
-                    notificationManager.error(`${groupName} 그룹의 코드 목록을 불러오는데 실패했습니다.`);
+                    notificationManager.error(formatCommonCodeManagementGroupCodesLoadError(groupName));
                 }
             }
         } catch (error) {
             console.error('그룹 코드 로드 오류:', error);
             if (error.response?.status === 403) {
-                notificationManager.error('해당 코드 그룹에 대한 접근 권한이 없습니다.');
+                notificationManager.error(CCM_MSG.ERR_NO_ACCESS_CODE_GROUP);
             } else {
-                notificationManager.error(`${groupName} 그룹의 코드 목록을 불러오는데 실패했습니다.`);
+                notificationManager.error(formatCommonCodeManagementGroupCodesLoadError(groupName));
             }
         } finally {
             setLoading(false);
@@ -211,13 +218,13 @@ const CommonCodeManagement = () => {
     const handleGroupSelect = (group) => {
         if (!hasCodeGroupPermission(group)) {
             if (isBranchCodeGroup(group)) {
-                notificationManager.error('지점 관련 코드 그룹은 관리자만 접근할 수 있습니다.');
+                notificationManager.error(CCM_MSG.ERR_BRANCH_CODE_GROUP_ADMIN_ONLY);
             } else if (isErpCodeGroup(group)) {
-                notificationManager.error('ERP 관련 코드 그룹은 관리자만 접근할 수 있습니다.');
+                notificationManager.error(CCM_MSG.ERR_ERP_CODE_GROUP_ADMIN_ONLY);
             } else if (isFinancialCodeGroup(group)) {
-                notificationManager.error('수입지출 관련 코드 그룹은 관리자만 접근할 수 있습니다.');
+                notificationManager.error(CCM_MSG.ERR_FINANCIAL_CODE_GROUP_ADMIN_ONLY);
             } else {
-                notificationManager.error('해당 코드 그룹에 대한 접근 권한이 없습니다.');
+                notificationManager.error(CCM_MSG.ERR_NO_ACCESS_CODE_GROUP);
             }
             return;
         }
@@ -274,113 +281,20 @@ const CommonCodeManagement = () => {
     };
 
     const convertGroupNameToKorean = (groupName) => {
-        const koreanMappings = {
-            'USER_ROLE': '사용자역할',
-            'USER_STATUS': '사용자상태',
-            'USER_GRADE': '사용자등급',
-            'CONSULTANT_GRADE': '상담사등급',
-            'CLIENT_STATUS': '내담자상태',
-            'GENDER': '성별',
-            'RESPONSIBILITY': '담당분야',
-            'SPECIALTY': '전문분야',
-            
-            'STATUS': '상태',
-            'PRIORITY': '우선순위',
-            'MAPPING_STATUS': '매핑상태',
-            'ROLE': '역할',
-            'PERMISSION': '권한',
-            'ROLE_PERMISSION': '역할권한',
-            
-            'PAYMENT_METHOD': '결제방법',
-            'PAYMENT_STATUS': '결제상태',
-            'PAYMENT_PROVIDER': '결제제공자',
-            'SALARY_TYPE': '급여유형',
-            'SALARY_PAY_DAY': '급여지급일',
-            'SALARY_OPTION_TYPE': '급여옵션유형',
-            'CONSULTANT_GRADE_SALARY': '상담사등급급여',
-            'FREELANCE_BASE_RATE': '프리랜서기본요율',
-            'BUDGET_CATEGORY': '예산카테고리',
-            'BUDGET_STATUS': '예산상태',
-            
-            'CONSULTATION_PACKAGE': '상담패키지',
-            'CONSULTATION_STATUS': '상담상태',
-            'CONSULTATION_TYPE': '상담유형',
-            'CONSULTATION_METHOD': '상담방법',
-            'CONSULTATION_LOCATION': '상담장소',
-            'CONSULTATION_SESSION': '상담세션',
-            'CONSULTATION_FEE': '상담료',
-            'CONSULTATION_MODE': '상담모드',
-            'SCHEDULE_STATUS': '스케줄상태',
-            'SCHEDULE_TYPE': '스케줄유형',
-            'SCHEDULE_FILTER': '스케줄필터',
-            'SCHEDULE_SORT': '스케줄정렬',
-            'SESSION_PACKAGE': '회기패키지',
-            'PACKAGE_TYPE': '패키지유형',
-            
-            'PURCHASE_STATUS': '구매상태',
-            'PURCHASE_CATEGORY': '구매카테고리',
-            'FINANCIAL_CATEGORY': '재무카테고리',
-            'TAX_CATEGORY': '세무카테고리',
-            'TAX_CALCULATION': '세금계산',
-            'VAT_APPLICABLE': '부가세적용',
-            'EXPENSE_CATEGORY': '지출카테고리',
-            'EXPENSE_SUBCATEGORY': '지출하위카테고리',
-            'INCOME_CATEGORY': '수입카테고리',
-            'INCOME_SUBCATEGORY': '수입하위카테고리',
-            'ITEM_CATEGORY': '항목카테고리',
-            'TRANSACTION_TYPE': '거래유형',
-            
-            'VACATION_TYPE': '휴가유형',
-            'VACATION_STATUS': '휴가상태',
-            
-            'REPORT_PERIOD': '보고서기간',
-            'YEAR_RANGE': '년도범위',
-            'MONTH_RANGE': '월범위',
-            'DATE_RANGE': '날짜범위',
-            'DATE_RANGE_FILTER': '날짜범위필터',
-            'CHART_TYPE_FILTER': '차트유형필터',
-            
-            'MENU': '메뉴',
-            'MENU_CATEGORY': '메뉴카테고리',
-            'ADMIN_MENU': '어드민메뉴',
-            'CLIENT_MENU': '내담자메뉴',
-            'CONSULTANT_MENU': '상담사메뉴',
-            'HQ_ADMIN_MENU': '관리자메뉴',
-            'BRANCH_SUPER_ADMIN_MENU': '지점수퍼관리자메뉴',
-            'COMMON_MENU': '공통메뉴',
-            
-            'APPROVAL_STATUS': '승인상태',
-            'BANK': '은행',
-            'CURRENCY': '통화',
-            'LANGUAGE': '언어',
-            'TIMEZONE': '시간대',
-            'ADDRESS_TYPE': '주소유형',
-            'FILE_TYPE': '파일유형',
-            'MESSAGE_TYPE': '메시지유형',
-            'NOTIFICATION_TYPE': '알림유형',
-            'NOTIFICATION_CHANNEL': '알림채널',
-            'DURATION': '기간',
-            'SORT_OPTION': '정렬옵션',
-            'PRIORITY_LEVEL': '우선순위레벨',
-            'ADMIN_PERMISSIONS': '어드민권한',
-            'AGE_GROUP': '연령대',
-            'ALIMTALK_TEMPLATE': '알림톡템플릿'
-        };
-        
-        return koreanMappings[groupName] || groupName;
+        return COMMON_CODE_MANAGEMENT_GROUP_KO_FALLBACK[groupName] || groupName;
     };
 
     const handleAddCode = async(e) => {
         e.preventDefault();
         
         if (!newCodeData.codeValue.trim() || !newCodeData.codeLabel.trim()) {
-            notificationManager.error('코드 값과 라벨은 필수입니다.');
+            notificationManager.error(CCM_MSG.ERR_CODE_VALUE_LABEL_REQUIRED);
             return;
         }
 
         if (isSubcategoryCodeGroup(selectedGroup)) {
             if (!newCodeData.parentCodeValue || !String(newCodeData.parentCodeValue).trim()) {
-                notificationManager.error('상위 카테고리를 선택하세요.');
+                notificationManager.error(CCM_MSG.ERR_SELECT_PARENT_CATEGORY);
                 return;
             }
         }
@@ -411,7 +325,7 @@ const CommonCodeManagement = () => {
             const createdCode = await createCommonCode(codeData);
             
             if (createdCode) {
-                notificationManager.success('새 코드가 추가되었습니다!');
+                notificationManager.success(CCM_MSG.SUCCESS_CODE_ADDED);
                 setShowAddForm(false);
                 setNewCodeData({
                     codeGroup: '',
@@ -429,14 +343,14 @@ const CommonCodeManagement = () => {
                 });
                 loadGroupCodes(selectedGroup);
             } else {
-                notificationManager.error('코드 추가에 실패했습니다.');
+                notificationManager.error(CCM_MSG.ERR_CODE_ADD_FAILED);
             }
         } catch (error) {
             console.error('코드 추가 오류:', error);
             if (error.response?.status === 403) {
-                notificationManager.error('해당 코드 그룹에 대한 생성 권한이 없습니다.');
+                notificationManager.error(CCM_MSG.ERR_NO_CREATE_PERMISSION);
             } else {
-                notificationManager.error(error.message || '코드 추가에 실패했습니다.');
+                notificationManager.error(error.message || CCM_MSG.ERR_CODE_ADD_FAILED);
             }
         } finally {
             setLoading(false);
@@ -445,7 +359,7 @@ const CommonCodeManagement = () => {
 
     const handleDeleteCode = async(codeId) => {
         const confirmed = await new Promise((resolve) => {
-            notificationManager.confirm('정말로 이 코드를 삭제하시겠습니까?', resolve);
+            notificationManager.confirm(CCM_MSG.CONFIRM_DELETE_CODE, resolve);
         });
         if (!confirmed) {
             return;
@@ -454,14 +368,14 @@ const CommonCodeManagement = () => {
         try {
             setLoading(true);
             await deleteCommonCode(codeId, { codeGroup: selectedGroup });
-            notificationManager.success('코드가 삭제되었습니다!');
+            notificationManager.success(CCM_MSG.SUCCESS_CODE_DELETED);
             loadGroupCodes(selectedGroup);
         } catch (error) {
             console.error('코드 삭제 오류:', error);
             if (error.response?.status === 403) {
-                notificationManager.error('해당 코드 그룹에 대한 삭제 권한이 없습니다.');
+                notificationManager.error(CCM_MSG.ERR_NO_DELETE_PERMISSION);
             } else {
-                notificationManager.error(error.message || '코드 삭제에 실패했습니다.');
+                notificationManager.error(error.message || CCM_MSG.ERR_CODE_DELETE_FAILED);
             }
         } finally {
             setLoading(false);
@@ -475,14 +389,14 @@ const CommonCodeManagement = () => {
                 codeGroup: selectedGroup,
                 currentIsActive: currentStatus
             });
-            notificationManager.success('코드 상태가 변경되었습니다!');
+            notificationManager.success(CCM_MSG.SUCCESS_CODE_STATUS_CHANGED);
             loadGroupCodes(selectedGroup);
         } catch (error) {
             console.error('코드 상태 토글 오류:', error);
             if (error.response?.status === 403) {
-                notificationManager.error('해당 코드 그룹에 대한 상태 변경 권한이 없습니다.');
+                notificationManager.error(CCM_MSG.ERR_NO_TOGGLE_PERMISSION);
             } else {
-                notificationManager.error(error.message || '코드 상태 변경에 실패했습니다.');
+                notificationManager.error(error.message || CCM_MSG.ERR_CODE_TOGGLE_FAILED);
             }
         } finally {
             setLoading(false);
@@ -513,14 +427,14 @@ const CommonCodeManagement = () => {
         e.preventDefault();
         
         if (!newCodeData.codeValue.trim() || !newCodeData.codeLabel.trim()) {
-            notificationManager.error('코드 값과 라벨은 필수입니다.');
+            notificationManager.error(CCM_MSG.ERR_CODE_VALUE_LABEL_REQUIRED);
             return;
         }
 
         const editGroup = editingCode?.codeGroup || selectedGroup;
         if (isSubcategoryCodeGroup(editGroup)) {
             if (!newCodeData.parentCodeValue || !String(newCodeData.parentCodeValue).trim()) {
-                notificationManager.error('상위 카테고리를 선택하세요.');
+                notificationManager.error(CCM_MSG.ERR_SELECT_PARENT_CATEGORY);
                 return;
             }
         }
@@ -546,7 +460,7 @@ const CommonCodeManagement = () => {
             await updateCommonCode(editingCode.id, updateData, {
                 codeGroup: editingCode?.codeGroup || selectedGroup
             });
-            notificationManager.success('코드가 수정되었습니다!');
+            notificationManager.success(CCM_MSG.SUCCESS_CODE_UPDATED);
             setShowAddForm(false);
             setEditingCode(null);
             setNewCodeData({
@@ -567,9 +481,9 @@ const CommonCodeManagement = () => {
         } catch (error) {
             console.error('코드 수정 오류:', error);
             if (error.response?.status === 403) {
-                notificationManager.error('해당 코드 그룹에 대한 수정 권한이 없습니다.');
+                notificationManager.error(CCM_MSG.ERR_NO_UPDATE_PERMISSION);
             } else {
-                notificationManager.error('코드 수정에 실패했습니다.');
+                notificationManager.error(CCM_MSG.ERR_CODE_UPDATE_FAILED);
             }
         } finally {
             setLoading(false);
@@ -602,13 +516,13 @@ const CommonCodeManagement = () => {
 
     const resolveParentCategoryLabel = (code) => {
         if (!code?.parentCodeValue) {
-            return '—';
+            return CCM_UI.DISPLAY_EMPTY;
         }
         const found = parentCategoryCodes.find((c) => c.codeValue === code.parentCodeValue);
         if (found) {
-            return toDisplayString(found.codeLabel || found.koreanName || found.codeValue, '—');
+            return toDisplayString(found.codeLabel || found.koreanName || found.codeValue, CCM_UI.DISPLAY_EMPTY);
         }
-        return toDisplayString(code.parentCodeValue, '—');
+        return toDisplayString(code.parentCodeValue, CCM_UI.DISPLAY_EMPTY);
     };
 
     const showParentColumn = isSubcategoryCodeGroup(selectedGroup);
@@ -620,22 +534,22 @@ const CommonCodeManagement = () => {
     }, [loadMetadata, loadCodeGroups]);
 
     return (
-        <AdminCommonLayout title="공통코드 관리">
+        <AdminCommonLayout title={CCM_UI.PAGE_TITLE}>
             <ContentArea>
-                <ContentHeader title="공통코드 관리" subtitle="코드그룹을 선택한 뒤 해당 그룹의 세부 코드를 관리합니다." />
+                <ContentHeader title={CCM_UI.PAGE_TITLE} subtitle={CCM_UI.HEADER_SUBTITLE} />
                 
                 <div className="mg-v2-ad-b0kla__common-code-container">
                     {/* 좌측: GroupListSection */}
                     <div className="mg-v2-ad-b0kla__group-list-section">
                         <div className="mg-v2-ad-b0kla__section-header">
-                            코드그룹 목록
+                            {CCM_UI.GROUP_LIST_TITLE}
                         </div>
 
                         <div className="mg-v2-ad-b0kla__search-bar">
                             <div className="mg-v2-ad-b0kla__search-input-wrapper">
                                 <input
                                     type="text"
-                                    placeholder="코드그룹 검색..."
+                                    placeholder={CCM_UI.SEARCH_PLACEHOLDER}
                                     value={ searchTerm }
                                     onChange={ (e) => setSearchTerm(e.target.value) }
                                     className="mg-v2-ad-b0kla__search-input"
@@ -647,12 +561,12 @@ const CommonCodeManagement = () => {
                                 onChange={ (e) => setCategoryFilter(e.target.value) }
                                 className="mg-v2-ad-b0kla__filter-select"
                             >
-                                <option value="all">전체 카테고리</option>
-                                <option value="user">사용자 관련</option>
-                                <option value="system">시스템 관련</option>
-                                <option value="payment">결제/급여</option>
-                                <option value="consultation">상담 관련</option>
-                                <option value="erp">ERP 관련</option>
+                                <option value="all">{CCM_UI.CATEGORY_ALL}</option>
+                                <option value="user">{CCM_UI.CATEGORY_USER}</option>
+                                <option value="system">{CCM_UI.CATEGORY_SYSTEM}</option>
+                                <option value="payment">{CCM_UI.CATEGORY_PAYMENT}</option>
+                                <option value="consultation">{CCM_UI.CATEGORY_CONSULTATION}</option>
+                                <option value="erp">{CCM_UI.CATEGORY_ERP}</option>
                             </select>
                         </div>
 
@@ -689,15 +603,19 @@ const CommonCodeManagement = () => {
                         {!selectedGroup ? (
                             <div className="mg-v2-ad-b0kla__detail-empty">
                                 <i className="bi bi-folder-symlink" />
-                                <h3>코드그룹을 선택하세요</h3>
-                                <p>좌측 목록에서 코드그룹을 선택하여 상세 코드를 관리할 수 있습니다.</p>
+                                <h3>{CCM_UI.EMPTY_SELECT_TITLE}</h3>
+                                <p>{CCM_UI.EMPTY_SELECT_DESC}</p>
                             </div>
                         ) : (
                             <>
                                 <div className="mg-v2-ad-b0kla__section-header">
                                     <span>
-                                        { getGroupKoreanName(selectedGroup) !== selectedGroup ? getGroupKoreanName(selectedGroup) : convertGroupNameToKorean(selectedGroup) } 
-                                        ({ selectedGroup }) 세부 코드
+                                        {formatCommonCodeManagementDetailTitle(
+                                            getGroupKoreanName(selectedGroup) !== selectedGroup
+                                                ? getGroupKoreanName(selectedGroup)
+                                                : convertGroupNameToKorean(selectedGroup),
+                                            selectedGroup
+                                        )}
                                     </span>
                                     <div className="mg-v2-ad-b0kla__action-buttons">
                                         {!showAddForm && (
@@ -733,7 +651,7 @@ const CommonCodeManagement = () => {
                                                 disabled={loading}
                                                 preventDoubleClick={false}
                                             >
-                                                신규 추가
+                                                {CCM_UI.BTN_NEW}
                                             </MGButton>
                                         )}
                                     </div>
@@ -742,7 +660,7 @@ const CommonCodeManagement = () => {
                                 {showAddForm && (
                                     <div className="mg-v2-ad-b0kla__form-container">
                                         <div className="mg-v2-ad-b0kla__form-header">
-                                            <h3 className="mg-v2-ad-b0kla__form-title">{editingCode ? '코드 수정' : '새 코드 추가'}</h3>
+                                            <h3 className="mg-v2-ad-b0kla__form-title">{editingCode ? CCM_UI.FORM_TITLE_EDIT : CCM_UI.FORM_TITLE_NEW}</h3>
                                             <MGButton
                                                 type="button"
                                                 variant="secondary"
@@ -756,32 +674,32 @@ const CommonCodeManagement = () => {
                                                 onClick={handleCancelForm}
                                                 preventDoubleClick={false}
                                             >
-                                                닫기
+                                                {CCM_UI.BTN_CLOSE}
                                             </MGButton>
                                         </div>
                                         <form onSubmit={ editingCode ? handleUpdateCode : handleAddCode }>
                                             <div className="mg-v2-ad-b0kla__form-row">
                                                 <div className="mg-v2-ad-b0kla__form-group">
-                                                    <label htmlFor="codeValue" className="mg-v2-ad-b0kla__form-label">코드 값 *</label>
+                                                    <label htmlFor="codeValue" className="mg-v2-ad-b0kla__form-label">{CCM_UI.LABEL_CODE_VALUE}</label>
                                                     <input
                                                         id="codeValue"
                                                         type="text"
                                                         value={ newCodeData.codeValue }
                                                         onChange={ (e) => setNewCodeData({ ...newCodeData, codeValue: e.target.value })}
-                                                        placeholder="예: ACTIVE, INACTIVE"
+                                                        placeholder={CCM_UI.PLACEHOLDER_CODE_VALUE}
                                                         required
                                                         disabled={!!editingCode}
                                                         className="mg-v2-ad-b0kla__form-input"
                                                     />
                                                 </div>
                                                 <div className="mg-v2-ad-b0kla__form-group">
-                                                    <label htmlFor="codeLabel" className="mg-v2-ad-b0kla__form-label">코드 라벨 *</label>
+                                                    <label htmlFor="codeLabel" className="mg-v2-ad-b0kla__form-label">{CCM_UI.LABEL_CODE_LABEL}</label>
                                                     <input
                                                         id="codeLabel"
                                                         type="text"
                                                         value={ newCodeData.codeLabel }
                                                         onChange={ (e) => setNewCodeData({ ...newCodeData, codeLabel: e.target.value })}
-                                                        placeholder="예: 활성, 비활성"
+                                                        placeholder={CCM_UI.PLACEHOLDER_CODE_LABEL}
                                                         required
                                                         className="mg-v2-ad-b0kla__form-input"
                                                     />
@@ -791,7 +709,7 @@ const CommonCodeManagement = () => {
                                                 <div className="mg-v2-ad-b0kla__form-row">
                                                     <div className="mg-v2-ad-b0kla__form-group mg-v2-ad-b0kla__form-group--full-width">
                                                         <label htmlFor="parentCategorySelect" className="mg-v2-ad-b0kla__form-label">
-                                                            상위 카테고리 *
+                                                            {CCM_UI.LABEL_PARENT_CATEGORY}
                                                         </label>
                                                         <CustomSelect
                                                             className="mg-v2-ad-b0kla__custom-select"
@@ -802,7 +720,7 @@ const CommonCodeManagement = () => {
                                                                 parentCodeGroup: getParentCodeGroupForSubcategory(selectedGroup) || '',
                                                                 parentCodeValue: v
                                                             })}
-                                                            placeholder="상위 카테고리를 선택하세요"
+                                                            placeholder={CCM_UI.PLACEHOLDER_PARENT_CATEGORY}
                                                             disabled={loading || parentCategorySelectOptions.length === 0}
                                                         />
                                                     </div>
@@ -810,19 +728,19 @@ const CommonCodeManagement = () => {
                                             )}
                                             <div className="mg-v2-ad-b0kla__form-row">
                                                 <div className="mg-v2-ad-b0kla__form-group">
-                                                    <label htmlFor="codeDescription" className="mg-v2-ad-b0kla__form-label">설명</label>
+                                                    <label htmlFor="codeDescription" className="mg-v2-ad-b0kla__form-label">{CCM_UI.LABEL_DESCRIPTION}</label>
                                                     <textarea
                                                         id="codeDescription"
                                                         value={ newCodeData.codeDescription }
                                                         onChange={ (e) => setNewCodeData({ ...newCodeData, codeDescription: e.target.value })}
-                                                        placeholder="코드에 대한 설명을 입력하세요."
+                                                        placeholder={CCM_UI.PLACEHOLDER_DESCRIPTION}
                                                         className="mg-v2-ad-b0kla__form-textarea"
                                                     />
                                                 </div>
                                             </div>
                                             <div className="mg-v2-ad-b0kla__form-row">
                                                 <div className="mg-v2-ad-b0kla__form-group">
-                                                    <label htmlFor="sortOrder" className="mg-v2-ad-b0kla__form-label">정렬 순서</label>
+                                                    <label htmlFor="sortOrder" className="mg-v2-ad-b0kla__form-label">{CCM_UI.LABEL_SORT_ORDER}</label>
                                                     <input
                                                         id="sortOrder"
                                                         type="number"
@@ -839,7 +757,7 @@ const CommonCodeManagement = () => {
                                                         checked={ newCodeData.isActive }
                                                         onChange={ (e) => setNewCodeData({ ...newCodeData, isActive: e.target.checked })}
                                                     />
-                                                    <label htmlFor="isActiveCheckbox" className="mg-v2-ad-b0kla__form-label" style={{ cursor: 'pointer' }}>활성 상태</label>
+                                                    <label htmlFor="isActiveCheckbox" className="mg-v2-ad-b0kla__form-label" style={{ cursor: 'pointer' }}>{CCM_UI.LABEL_ACTIVE_STATE}</label>
                                                 </div>
                                             </div>
                                             <div className="mg-v2-ad-b0kla__form-actions">
@@ -855,7 +773,7 @@ const CommonCodeManagement = () => {
                                                     onClick={handleCancelForm}
                                                     preventDoubleClick={false}
                                                 >
-                                                    취소
+                                                    {CCM_UI.BTN_CANCEL}
                                                 </MGButton>
                                                 <MGButton
                                                     type="submit"
@@ -870,7 +788,7 @@ const CommonCodeManagement = () => {
                                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                     preventDoubleClick={false}
                                                 >
-                                                    {editingCode ? '수정' : '추가'}
+                                                    {editingCode ? CCM_UI.BTN_SUBMIT_EDIT : CCM_UI.BTN_SUBMIT_ADD}
                                                 </MGButton>
                                             </div>
                                         </form>
@@ -878,32 +796,32 @@ const CommonCodeManagement = () => {
                                 )}
 
                                 {loading && groupCodes.length === 0 ? (
-                                    <div style={{ textAlign: 'center', padding: 'var(--mg-spacing-xl)', color: 'var(--ad-b0kla-text-secondary)' }}>로딩중...</div>
+                                    <div style={{ textAlign: 'center', padding: 'var(--mg-spacing-xl)', color: 'var(--ad-b0kla-text-secondary)' }}>{CCM_UI.LOADING}</div>
                                 ) : (
                                     <table className="mg-v2-ad-b0kla__data-table">
                                         <thead>
                                             <tr>
-                                                <th>코드 라벨</th>
-                                                <th>코드 값</th>
-                                                {showParentColumn && <th>상위 카테고리</th>}
-                                                <th>상태</th>
-                                                <th>정렬</th>
-                                                <th>설명</th>
-                                                <th style={{ width: '120px', textAlign: 'center' }}>관리</th>
+                                                <th>{CCM_UI.COL_CODE_LABEL}</th>
+                                                <th>{CCM_UI.COL_CODE_VALUE}</th>
+                                                {showParentColumn && <th>{CCM_UI.COL_PARENT_CATEGORY}</th>}
+                                                <th>{CCM_UI.COL_STATUS}</th>
+                                                <th>{CCM_UI.COL_SORT}</th>
+                                                <th>{CCM_UI.COL_DESCRIPTION}</th>
+                                                <th style={{ width: '120px', textAlign: 'center' }}>{CCM_UI.COL_MANAGE}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {groupCodes.length === 0 ? (
                                                 <tr>
                                                     <td colSpan={tableColSpan} style={{ textAlign: 'center', color: 'var(--ad-b0kla-text-secondary)', padding: 'var(--mg-spacing-xl)' }}>
-                                                        등록된 세부 코드가 없습니다.
+                                                        {CCM_UI.EMPTY_NO_CODES}
                                                     </td>
                                                 </tr>
                                             ) : (
                                                 groupCodes.map(code => (
                                                     <tr key={code.id} style={{ opacity: code.isActive ? 1 : 0.6 }}>
-                                                        <td style={{ fontWeight: 500 }}>{toDisplayString(code.codeLabel, '—')}</td>
-                                                        <td><code style={{ fontSize: '12px', background: 'var(--mg-gray-100)', padding: '2px 4px', borderRadius: '4px' }}>{toDisplayString(code.codeValue, '—')}</code></td>
+                                                        <td style={{ fontWeight: 500 }}>{toDisplayString(code.codeLabel, CCM_UI.DISPLAY_EMPTY)}</td>
+                                                        <td><code style={{ fontSize: '12px', background: 'var(--mg-gray-100)', padding: '2px 4px', borderRadius: '4px' }}>{toDisplayString(code.codeValue, CCM_UI.DISPLAY_EMPTY)}</code></td>
                                                         {showParentColumn && (
                                                             <td style={{ color: 'var(--ad-b0kla-text-secondary)' }}>
                                                                 {resolveParentCategoryLabel(code)}
@@ -911,12 +829,12 @@ const CommonCodeManagement = () => {
                                                         )}
                                                         <td>
                                                             <span className={`mg-v2-badge ${code.isActive ? 'mg-v2-badge--active' : 'mg-v2-badge--inactive'}`}>
-                                                                {code.isActive ? '활성' : '비활성'}
+                                                                {code.isActive ? CCM_UI.STATUS_ACTIVE : CCM_UI.STATUS_INACTIVE}
                                                             </span>
                                                         </td>
-                                                        <td>{toDisplayString(code.sortOrder, '—')}</td>
+                                                        <td>{toDisplayString(code.sortOrder, CCM_UI.DISPLAY_EMPTY)}</td>
                                                         <td style={{ color: 'var(--ad-b0kla-text-secondary)' }}>
-                                                            {code.codeDescription ? toDisplayString(code.codeDescription, '—') : '—'}
+                                                            {code.codeDescription ? toDisplayString(code.codeDescription, CCM_UI.DISPLAY_EMPTY) : CCM_UI.DISPLAY_EMPTY}
                                                         </td>
                                                         <td style={{ textAlign: 'center' }}>
                                                             <div className="mg-v2-ad-b0kla__code-actions" style={{ justifyContent: 'center' }}>
@@ -932,11 +850,11 @@ const CommonCodeManagement = () => {
                                                                     loading={loading}
                                                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                                     onClick={() => handleEditCode(code)}
-                                                                    title="수정"
+                                                                    title={CCM_UI.BTN_EDIT}
                                                                     style={{ color: 'var(--ad-b0kla-green)' }}
                                                                     preventDoubleClick={false}
                                                                 >
-                                                                    수정
+                                                                    {CCM_UI.BTN_EDIT}
                                                                 </MGButton>
                                                                 <MGButton
                                                                     type="button"
@@ -950,11 +868,11 @@ const CommonCodeManagement = () => {
                                                                     loading={loading}
                                                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                                     onClick={() => handleToggleStatus(code.id, code.isActive)}
-                                                                    title={code.isActive ? '비활성화' : '활성화'}
+                                                                    title={code.isActive ? CCM_UI.ACTION_DEACTIVATE : CCM_UI.ACTION_ACTIVATE}
                                                                     style={{ color: code.isActive ? 'var(--mg-warning-500)' : 'var(--ad-b0kla-green)' }}
                                                                     preventDoubleClick={false}
                                                                 >
-                                                                    {code.isActive ? '비활성화' : '활성화'}
+                                                                    {code.isActive ? CCM_UI.ACTION_DEACTIVATE : CCM_UI.ACTION_ACTIVATE}
                                                                 </MGButton>
                                                                 <MGButton
                                                                     type="button"
@@ -968,11 +886,11 @@ const CommonCodeManagement = () => {
                                                                     loading={loading}
                                                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                                     onClick={() => handleDeleteCode(code.id)}
-                                                                    title="삭제"
+                                                                    title={CCM_UI.BTN_DELETE}
                                                                     style={{ color: 'var(--mg-error-500)' }}
                                                                     preventDoubleClick={false}
                                                                 >
-                                                                    삭제
+                                                                    {CCM_UI.BTN_DELETE}
                                                                 </MGButton>
                                                             </div>
                                                         </td>

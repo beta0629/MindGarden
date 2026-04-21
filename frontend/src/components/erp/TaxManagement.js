@@ -138,7 +138,7 @@ const TaxManagement = () => {
                 />
                 </div>
                 {loading ? (
-                    <div className="erp-initial-fetch-inline" role="status" aria-live="polite">
+                    <div className="erp-initial-fetch-inline" role="status" aria-live="polite" aria-busy="true">
                         <UnifiedLoading type="inline" text="세금 데이터를 불러오는 중..." />
                     </div>
                 ) : (

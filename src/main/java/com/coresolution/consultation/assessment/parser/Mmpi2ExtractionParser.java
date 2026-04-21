@@ -34,6 +34,24 @@ public class Mmpi2ExtractionParser {
             "Hs", "D", "Hy", "Pd", "Mf", "Pa", "Pt", "Sc", "Ma", "Si"
     };
 
+    /** 원점수 라인·분리 구간 탐지용 리터럴 */
+    private static final String MMPI2_RAW_LINE_KR = "원점수";
+    private static final String MMPI2_RAW_LINE_KR_SPACED = "원 점수";
+    private static final String MMPI2_RAW_LINE_RAW_SCORE = "Raw Score";
+    private static final String MMPI2_RAW_LINE_RAW_SCORE_COMPACT = "RawScore";
+    private static final String MMPI2_RAW_LINE_RAW = "Raw";
+    /** splitRawAndTScoreLine: "Raw" 단독과 구분 (뒤에 공백 포함) */
+    private static final String MMPI2_RAW_LINE_RAW_PREFIX = "Raw ";
+
+    /** 전체규준·T점수 라인·분리 구간 탐지용 리터럴 */
+    private static final String MMPI2_T_LINE_NORM_KR = "전체규준";
+    private static final String MMPI2_T_LINE_NORM_KR_SPACED = "전체 규준";
+    private static final String MMPI2_T_LINE_T_SCORE_KR = "T점수";
+    private static final String MMPI2_T_LINE_T_SCORE_KR_SPACED = "T 점수";
+    private static final String MMPI2_T_LINE_NORM_T_COMPACT = "전체규준T";
+    private static final String MMPI2_T_LINE_NORM_T_SPACED = "전체규준 T";
+    private static final String MMPI2_T_LINE_T_SCORE_HYPHEN = "T-점수";
+
     /**
      * PDF에서 추출한 텍스트에서 MMPI-2 메트릭 파싱.
      *
@@ -63,18 +81,19 @@ public class Mmpi2ExtractionParser {
      * 원점수 라인 패턴: "원점수", "Raw Score", "Raw", "RawScore", "원 점수"
      */
     private static boolean isRawScoreLine(String line) {
-        return line.contains("원점수") || line.contains("원 점수")
-                || line.contains("Raw Score") || line.contains("RawScore") || line.contains("Raw");
+        return line.contains(MMPI2_RAW_LINE_KR) || line.contains(MMPI2_RAW_LINE_KR_SPACED)
+                || line.contains(MMPI2_RAW_LINE_RAW_SCORE) || line.contains(MMPI2_RAW_LINE_RAW_SCORE_COMPACT)
+                || line.contains(MMPI2_RAW_LINE_RAW);
     }
 
     /**
      * 전체규준 T 라인 패턴: "전체규준", "전체 규준", "T점수", "T 점수", "전체규준T", "전체규준 T", "T-점수"
      */
     private static boolean isTScoreLine(String line) {
-        return line.contains("전체규준") || line.contains("전체 규준")
-                || line.contains("T점수") || line.contains("T 점수")
-                || line.contains("전체규준T") || line.contains("전체규준 T")
-                || line.contains("T-점수");
+        return line.contains(MMPI2_T_LINE_NORM_KR) || line.contains(MMPI2_T_LINE_NORM_KR_SPACED)
+                || line.contains(MMPI2_T_LINE_T_SCORE_KR) || line.contains(MMPI2_T_LINE_T_SCORE_KR_SPACED)
+                || line.contains(MMPI2_T_LINE_NORM_T_COMPACT) || line.contains(MMPI2_T_LINE_NORM_T_SPACED)
+                || line.contains(MMPI2_T_LINE_T_SCORE_HYPHEN);
     }
 
     /**
@@ -135,16 +154,16 @@ public class Mmpi2ExtractionParser {
      */
     private static String[] splitRawAndTScoreLine(String line) {
         int rawIdx = -1;
-        if (line.contains("원점수")) rawIdx = line.indexOf("원점수");
-        else if (line.contains("Raw Score")) rawIdx = line.indexOf("Raw Score");
-        else if (line.contains("RawScore")) rawIdx = line.indexOf("RawScore");
-        else if (line.contains("Raw ")) rawIdx = line.indexOf("Raw ");
+        if (line.contains(MMPI2_RAW_LINE_KR)) rawIdx = line.indexOf(MMPI2_RAW_LINE_KR);
+        else if (line.contains(MMPI2_RAW_LINE_RAW_SCORE)) rawIdx = line.indexOf(MMPI2_RAW_LINE_RAW_SCORE);
+        else if (line.contains(MMPI2_RAW_LINE_RAW_SCORE_COMPACT)) rawIdx = line.indexOf(MMPI2_RAW_LINE_RAW_SCORE_COMPACT);
+        else if (line.contains(MMPI2_RAW_LINE_RAW_PREFIX)) rawIdx = line.indexOf(MMPI2_RAW_LINE_RAW_PREFIX);
 
         int tIdx = -1;
-        if (line.contains("전체규준 T")) tIdx = line.indexOf("전체규준 T");
-        else if (line.contains("전체규준T")) tIdx = line.indexOf("전체규준T");
-        else if (line.contains("전체규준")) tIdx = line.indexOf("전체규준");
-        else if (line.contains("T점수")) tIdx = line.indexOf("T점수");
+        if (line.contains(MMPI2_T_LINE_NORM_T_SPACED)) tIdx = line.indexOf(MMPI2_T_LINE_NORM_T_SPACED);
+        else if (line.contains(MMPI2_T_LINE_NORM_T_COMPACT)) tIdx = line.indexOf(MMPI2_T_LINE_NORM_T_COMPACT);
+        else if (line.contains(MMPI2_T_LINE_NORM_KR)) tIdx = line.indexOf(MMPI2_T_LINE_NORM_KR);
+        else if (line.contains(MMPI2_T_LINE_T_SCORE_KR)) tIdx = line.indexOf(MMPI2_T_LINE_T_SCORE_KR);
 
         if (rawIdx >= 0 && tIdx > rawIdx) {
             return new String[]{line.substring(rawIdx, tIdx).trim(), line.substring(tIdx).trim()};

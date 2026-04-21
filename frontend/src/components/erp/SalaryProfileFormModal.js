@@ -11,19 +11,18 @@ import './SalaryProfileFormModal.css';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
+import {
+  SPFM,
+  SPFM_GRADE_KO_FALLBACK,
+  SPFM_GRADE_TABLE_FALLBACK_ROWS,
+  SPFM_OPTION_TYPE_FALLBACK,
+  SPFM_OPTION_TYPE_LABELS,
+  SPFM_SALARY_TYPE_FALLBACK
+} from '../../constants/salaryProfileFormModalStrings';
 
 const getProfileUrl = (consultantId) => `${SALARY_API_ENDPOINTS.PROFILES}/${consultantId}`;
 
-/** 급여 옵션 유형 코드 → 한글 라벨 (옵션 유형 선택 드롭다운 표시용) */
-const SALARY_OPTION_TYPE_LABELS = {
-  FAMILY_CONSULTATION: '가족상담',
-  INITIAL_CONSULTATION: '초기상담',
-  WEEKEND_CONSULTATION: '주말상담',
-  ONLINE_CONSULTATION: '온라인상담',
-  PHONE_CONSULTATION: '전화상담',
-  TRAUMA_CONSULTATION: '트라우마상담'
-};
-const getOptionTypeLabel = (opt) => (opt && (opt.codeLabel || opt.codeName || SALARY_OPTION_TYPE_LABELS[opt.codeValue])) || (opt && opt.codeValue ? SALARY_OPTION_TYPE_LABELS[opt.codeValue] || opt.codeValue : '옵션 유형 선택');
+const getOptionTypeLabel = (opt) => (opt && (opt.codeLabel || opt.codeName || SPFM_OPTION_TYPE_LABELS[opt.codeValue])) || (opt && opt.codeValue ? SPFM_OPTION_TYPE_LABELS[opt.codeValue] || opt.codeValue : SPFM.OPTION_TYPE_PLACEHOLDER);
 
 const SalaryProfileFormModal = ({ 
     isOpen, 
@@ -65,13 +64,7 @@ const SalaryProfileFormModal = ({
         } catch (error) {
             console.error('등급 한글명 조회 실패:', error);
             // 기본값 반환
-            const defaultMap = {
-                'CONSULTANT_JUNIOR': '주니어 상담사',
-                'CONSULTANT_SENIOR': '시니어 상담사',
-                'CONSULTANT_EXPERT': '엑스퍼트 상담사',
-                'CONSULTANT_MASTER': '마스터 상담사'
-            };
-            return defaultMap[grade] || grade;
+            return SPFM_GRADE_KO_FALLBACK[grade] || grade;
         }
     };
 
@@ -89,8 +82,8 @@ const SalaryProfileFormModal = ({
     // 등급별 옵션 자동 추가
     const getGradeOptions = (grade) => {
         const baseOptions = [
-            { type: 'FAMILY_CONSULTATION', amount: 3000, name: '가족상담' },
-            { type: 'INITIAL_CONSULTATION', amount: 5000, name: '초기상담' }
+            { type: 'FAMILY_CONSULTATION', amount: 3000, name: SPFM_OPTION_TYPE_LABELS.FAMILY_CONSULTATION },
+            { type: 'INITIAL_CONSULTATION', amount: 5000, name: SPFM_OPTION_TYPE_LABELS.INITIAL_CONSULTATION }
         ];
 
         const gradeMultiplier = {
@@ -121,9 +114,9 @@ const SalaryProfileFormModal = ({
         const additionalAmount = (multiplier - 1) * 2000;
         
         if (additionalAmount > 0) {
-            return `등급별 추가 금액: +${additionalAmount.toLocaleString()}원 (기본 + ${additionalAmount}원)`;
+            return SPFM.GRADE_OPTION_DESC_EXTRA(additionalAmount);
         }
-        return '기본 옵션 금액';
+        return SPFM.GRADE_OPTION_DESC_BASE;
     };
 
     // 공통 코드에서 등급 정보 로드 (API 응답: { data: { codes: [...] } } 또는 { codes: [...] } 또는 배열)
@@ -136,8 +129,8 @@ const SalaryProfileFormModal = ({
             const list = Array.isArray(rawList) ? rawList : null;
             if (list && list.length > 0) {
                 const baseOptions = [
-                    { type: 'FAMILY_CONSULTATION', name: '가족상담', baseAmount: 3000 },
-                    { type: 'INITIAL_CONSULTATION', name: '초기상담', baseAmount: 5000 }
+                    { type: 'FAMILY_CONSULTATION', name: SPFM_OPTION_TYPE_LABELS.FAMILY_CONSULTATION, baseAmount: 3000 },
+                    { type: 'INITIAL_CONSULTATION', name: SPFM_OPTION_TYPE_LABELS.INITIAL_CONSULTATION, baseAmount: 5000 }
                 ];
                 const mapped = list.map(grade => {
                     const extraData = (() => { try { return JSON.parse(grade.extraData || '{}'); } catch { return {}; } })();
@@ -168,22 +161,10 @@ const SalaryProfileFormModal = ({
                 return;
             }
             // API가 빈 목록이거나 응답 형식이 다르면 폴백 사용
-            const fallbackData = [
-                { code: 'CONSULTANT_JUNIOR', name: '주니어', baseSalary: 30000, multiplier: 1, level: 1, options: [{ type: 'FAMILY_CONSULTATION', name: '가족상담', amount: 3000 }, { type: 'INITIAL_CONSULTATION', name: '초기상담', amount: 5000 }] },
-                { code: 'CONSULTANT_SENIOR', name: '시니어', baseSalary: 35000, multiplier: 2, level: 2, options: [{ type: 'FAMILY_CONSULTATION', name: '가족상담', amount: 3600 }, { type: 'INITIAL_CONSULTATION', name: '초기상담', amount: 6000 }] },
-                { code: 'CONSULTANT_EXPERT', name: '엑스퍼트', baseSalary: 40000, multiplier: 3, level: 3, options: [{ type: 'FAMILY_CONSULTATION', name: '가족상담', amount: 4200 }, { type: 'INITIAL_CONSULTATION', name: '초기상담', amount: 7000 }] },
-                { code: 'CONSULTANT_MASTER', name: '마스터', baseSalary: 45000, multiplier: 4, level: 4, options: [{ type: 'FAMILY_CONSULTATION', name: '가족상담', amount: 4800 }, { type: 'INITIAL_CONSULTATION', name: '초기상담', amount: 8000 }] }
-            ];
-            setGradeTableData(fallbackData);
+            setGradeTableData(SPFM_GRADE_TABLE_FALLBACK_ROWS);
         } catch (error) {
             console.error('등급 정보 로드 실패:', error);
-            const fallbackData = [
-                { code: 'CONSULTANT_JUNIOR', name: '주니어', baseSalary: 30000, multiplier: 1, level: 1, options: [{ type: 'FAMILY_CONSULTATION', name: '가족상담', amount: 3000 }, { type: 'INITIAL_CONSULTATION', name: '초기상담', amount: 5000 }] },
-                { code: 'CONSULTANT_SENIOR', name: '시니어', baseSalary: 35000, multiplier: 2, level: 2, options: [{ type: 'FAMILY_CONSULTATION', name: '가족상담', amount: 3600 }, { type: 'INITIAL_CONSULTATION', name: '초기상담', amount: 6000 }] },
-                { code: 'CONSULTANT_EXPERT', name: '엑스퍼트', baseSalary: 40000, multiplier: 3, level: 3, options: [{ type: 'FAMILY_CONSULTATION', name: '가족상담', amount: 4200 }, { type: 'INITIAL_CONSULTATION', name: '초기상담', amount: 7000 }] },
-                { code: 'CONSULTANT_MASTER', name: '마스터', baseSalary: 45000, multiplier: 4, level: 4, options: [{ type: 'FAMILY_CONSULTATION', name: '가족상담', amount: 4800 }, { type: 'INITIAL_CONSULTATION', name: '초기상담', amount: 8000 }] }
-            ];
-            setGradeTableData(fallbackData);
+            setGradeTableData(SPFM_GRADE_TABLE_FALLBACK_ROWS);
         }
     };
 
@@ -278,10 +259,7 @@ const SalaryProfileFormModal = ({
             if (Array.isArray(salaryTypeList) && salaryTypeList.length > 0) {
                 setSalaryTypes(salaryTypeList);
             } else {
-                setSalaryTypes([
-                    { codeValue: 'FREELANCE', codeLabel: '프리랜서' },
-                    { codeValue: 'REGULAR', codeLabel: '정규직' }
-                ]);
+                setSalaryTypes(SPFM_SALARY_TYPE_FALLBACK);
             }
 
             // 옵션 유형 로드 (동일 응답 형식)
@@ -292,19 +270,11 @@ const SalaryProfileFormModal = ({
             if (Array.isArray(optionTypeList) && optionTypeList.length > 0) {
                 setOptionTypes(optionTypeList);
             } else {
-                const hardcodedOptions = [
-                    { codeValue: 'FAMILY_CONSULTATION', codeName: '가족상담', codeLabel: '가족상담', codeDescription: '가족상담 시 추가 급여' },
-                    { codeValue: 'INITIAL_CONSULTATION', codeName: '초기상담', codeLabel: '초기상담', codeDescription: '초기상담 시 추가 급여' },
-                    { codeValue: 'WEEKEND_CONSULTATION', codeName: '주말상담', codeLabel: '주말상담', codeDescription: '주말상담 시 추가 급여' },
-                    { codeValue: 'ONLINE_CONSULTATION', codeName: '온라인상담', codeLabel: '온라인상담', codeDescription: '온라인상담 시 추가 급여' },
-                    { codeValue: 'PHONE_CONSULTATION', codeName: '전화상담', codeLabel: '전화상담', codeDescription: '전화상담 시 추가 급여' },
-                    { codeValue: 'TRAUMA_CONSULTATION', codeName: '트라우마상담', codeLabel: '트라우마상담', codeDescription: '트라우마상담 시 추가 급여' }
-                ];
-                setOptionTypes(hardcodedOptions);
+                setOptionTypes(SPFM_OPTION_TYPE_FALLBACK);
             }
         } catch (error) {
             console.error('초기 데이터 로드 실패:', error);
-            showNotification('데이터를 불러오는데 실패했습니다.', 'error');
+            showNotification(SPFM.TOAST_LOAD_FAILED, 'error');
         } finally {
             setInitialLoading(false);
         }
@@ -353,15 +323,15 @@ const SalaryProfileFormModal = ({
             );
             const ok = response && (response.success === true || (response.data != null && response.success !== false));
             if (ok) {
-                showNotification('상담사 등급이 업데이트되었습니다.', 'success');
+                showNotification(SPFM.TOAST_GRADE_UPDATED, 'success');
                 consultant.grade = newGrade;
             } else {
-                const msg = (response && response.message) ? response.message : '등급 업데이트에 실패했습니다.';
+                const msg = (response && response.message) ? response.message : SPFM.TOAST_GRADE_UPDATE_FAILED;
                 showNotification(msg, 'error');
             }
         } catch (error) {
             console.error('등급 업데이트 실패:', error);
-            const msg = error?.response?.data?.message || error?.message || '등급 업데이트에 실패했습니다.';
+            const msg = error?.response?.data?.message || error?.message || SPFM.TOAST_GRADE_UPDATE_FAILED;
             showNotification(msg, 'error');
         }
     };
@@ -408,19 +378,19 @@ const SalaryProfileFormModal = ({
             // 사업자 등록 시 필수 필드 검사
             if (formData.isBusinessRegistered) {
                 if (!formData.businessRegistrationNumber) {
-                    showNotification('사업자 등록번호를 입력해주세요.', 'error');
+                    showNotification(SPFM.TOAST_BIZ_NO_REQUIRED, 'error');
                     setSaving(false);
                     return;
                 }
                 
                 if (!validateBusinessRegistrationNumber(formData.businessRegistrationNumber)) {
-                    showNotification('사업자 등록번호 형식이 올바르지 않습니다. (예: 123-45-67890)', 'error');
+                    showNotification(SPFM.TOAST_BIZ_NO_INVALID, 'error');
                     setSaving(false);
                     return;
                 }
                 
                 if (!formData.businessName) {
-                    showNotification('사업자명을 입력해주세요.', 'error');
+                    showNotification(SPFM.TOAST_BIZ_NAME_REQUIRED, 'error');
                     setSaving(false);
                     return;
                 }
@@ -437,15 +407,15 @@ const SalaryProfileFormModal = ({
                 : await StandardizedApi.post(SALARY_API_ENDPOINTS.PROFILES, profileData);
 
             if (response && response.success) {
-                showNotification(isUpdate ? '급여 프로필이 수정되었습니다.' : '급여 프로필이 성공적으로 생성되었습니다.', 'success');
+                showNotification(isUpdate ? SPFM.TOAST_PROFILE_UPDATED : SPFM.TOAST_PROFILE_CREATED, 'success');
                 onSave(response.data);
                 onClose();
             } else {
-                showNotification(response?.message || (isUpdate ? '급여 프로필 수정에 실패했습니다.' : '급여 프로필 생성에 실패했습니다.'), 'error');
+                showNotification(response?.message || (isUpdate ? SPFM.TOAST_PROFILE_UPDATE_FAILED : SPFM.TOAST_PROFILE_CREATE_FAILED), 'error');
             }
         } catch (error) {
             console.error(existingProfileId ? '급여 프로필 수정 실패' : '급여 프로필 생성 실패', error);
-            showNotification(existingProfileId ? '급여 프로필 수정에 실패했습니다.' : '급여 프로필 생성에 실패했습니다.', 'error');
+            showNotification(existingProfileId ? SPFM.TOAST_PROFILE_UPDATE_FAILED : SPFM.TOAST_PROFILE_CREATE_FAILED, 'error');
         } finally {
             setSaving(false);
         }
@@ -459,63 +429,65 @@ const SalaryProfileFormModal = ({
             onClose={onClose}
             title={toDisplayString(
                 existingProfileId
-                    ? `급여 프로필 수정 - ${consultant.name}`
-                    : `급여 프로필 생성 - ${consultant.name}`
+                    ? `${SPFM.MODAL_TITLE_EDIT_PREFIX}${consultant.name}`
+                    : `${SPFM.MODAL_TITLE_CREATE_PREFIX}${consultant.name}`
             )}
             size="large"
             className="mg-v2-ad-b0kla salary-profile-modal-content"
         >
             <div className="salary-profile-form">
                 {initialLoading ? (
-                    <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+                    <div role="status" aria-live="polite" aria-busy="true">
+                      <UnifiedLoading type="inline" text={SPFM.LOADING_INLINE} />
+                    </div>
                 ) : (
                 <>
                 {/* 기본 정보 */}
                 <div className="salary-profile-form__section consultant-info-section">
-                        <h4 className="consultant-info-title">상담사 정보</h4>
-                        <p className="consultant-info-item"><strong>이름:</strong> <ErpSafeText value={consultant.name} /></p>
-                        <p className="consultant-info-item"><strong>현재 등급:</strong> <ErpSafeText value={gradeLabel || ((formData.grade || consultant.grade) ? '조회 중...' : '')} /></p>
+                        <h4 className="consultant-info-title">{SPFM.SECTION_CONSULTANT_INFO}</h4>
+                        <p className="consultant-info-item"><strong>{SPFM.LABEL_NAME}</strong> <ErpSafeText value={consultant.name} /></p>
+                        <p className="consultant-info-item"><strong>{SPFM.LABEL_CURRENT_GRADE}</strong> <ErpSafeText value={gradeLabel || ((formData.grade || consultant.grade) ? SPFM.GRADE_LOADING : '')} /></p>
                         <p className="consultant-info-item">
-                            <strong>기본 급여:</strong>{' '}
+                            <strong>{SPFM.LABEL_BASE_SALARY_INFO}</strong>{' '}
                             {displayBaseSalary != null ? (
                                 <ErpSafeNumber value={displayBaseSalary} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                             ) : (
-                                <ErpSafeText value="—" />
+                                <ErpSafeText value={SPFM.EM_DASH} />
                             )}
                         </p>
                     </div>
 
                     {/* 상담사 등급 선택 */}
                     <div className="salary-profile-form__section consultant-profile-form-item">
-                        <label className="consultant-profile-form-label">상담사 등급</label>
+                        <label className="consultant-profile-form-label">{SPFM.LABEL_CONSULTANT_GRADE}</label>
                         <BadgeSelect
                             className="mg-v2-form-badge-select consultant-profile-form-select"
                             value={formData.grade}
                             onChange={(val) => handleGradeChange(val)}
                             options={[
-                                { value: '', label: '상담사 등급 선택' },
+                                { value: '', label: SPFM.GRADE_SELECT_LABEL },
                                 ...gradeTableData.map(grade => ({
                                     value: grade.code,
-                                    label: `${toDisplayString(grade.name)} (${grade.baseSalary.toLocaleString()}원)`
+                                    label: `${toDisplayString(grade.name)} (${grade.baseSalary.toLocaleString()}${SPFM.CURRENCY_UNIT})`
                                 }))
                             ]}
-                            placeholder="상담사 등급 선택"
+                            placeholder={SPFM.GRADE_SELECT_LABEL}
                         />
                         <p className="consultant-profile-form-help">
-                            등급을 변경하면 기본 급여와 옵션 금액이 자동으로 업데이트됩니다.
+                            {SPFM.GRADE_CHANGE_HELP}
                         </p>
                     </div>
 
                     {/* 등급표 */}
                     <div className="salary-profile-form__section consultant-profile-form-item">
-                        <label className="consultant-profile-form-label">상담사 등급표</label>
+                        <label className="consultant-profile-form-label">{SPFM.LABEL_GRADE_TABLE}</label>
                         <div className="grade-table-container">
                             <div className="grade-table-header">
-                                <div>등급</div>
-                                <div className="grade-table-cell--right">기본급여</div>
-                                <div className="grade-table-cell--right">가족상담</div>
-                                <div className="grade-table-cell--right">초기상담</div>
-                                <div className="grade-table-cell--right">추가금액</div>
+                                <div>{SPFM.TABLE_COL_GRADE}</div>
+                                <div className="grade-table-cell--right">{SPFM.TABLE_COL_BASE_SALARY}</div>
+                                <div className="grade-table-cell--right">{SPFM.TABLE_COL_FAMILY}</div>
+                                <div className="grade-table-cell--right">{SPFM.TABLE_COL_INITIAL}</div>
+                                <div className="grade-table-cell--right">{SPFM.TABLE_COL_EXTRA}</div>
                             </div>
                             
                             {gradeTableData.map((grade, index) => (
@@ -524,7 +496,7 @@ const SalaryProfileFormModal = ({
                                         <ErpSafeText value={grade.name} />
                                         {grade.code === formData.grade && (
                                             <span className="grade-selected-badge">
-                                                선택됨
+                                                {SPFM.BADGE_SELECTED}
                                             </span>
                                         )}
                                     </div>
@@ -545,7 +517,7 @@ const SalaryProfileFormModal = ({
                                     </div>
                                     <div className={`grade-table-cell--right ${grade.multiplier > 1 ? 'grade-table-cell--highlight' : ''}`}>
                                         {grade.multiplier > 1 ? (
-                                            <ErpSafeText value={`+${((grade.multiplier - 1) * 2000).toLocaleString()}원`} />
+                                            <ErpSafeText value={`+${((grade.multiplier - 1) * 2000).toLocaleString()}${SPFM.CURRENCY_UNIT}`} />
                                         ) : (
                                             <ErpSafeText value="-" />
                                         )}
@@ -554,62 +526,62 @@ const SalaryProfileFormModal = ({
                             ))}
                             
                             <div className="grade-table-notice">
-                                <strong>등급별 급여 체계:</strong><br/>
-                                • 기본 급여: 등급별 차등 지급<br/>
-                                • 옵션 금액: 등급이 올라갈수록 2,000원씩 추가<br/>
-                                • 주니어: 기본 옵션 금액<br/>
-                                • 시니어 이상: 기본 + (등급-1) × 2,000원
+                                <strong>{SPFM.GRADE_NOTICE_TITLE}</strong><br/>
+                                {SPFM.GRADE_NOTICE_LINE1}<br/>
+                                {SPFM.GRADE_NOTICE_LINE2}<br/>
+                                {SPFM.GRADE_NOTICE_LINE3}<br/>
+                                {SPFM.GRADE_NOTICE_LINE4}
                             </div>
                         </div>
                     </div>
 
                     {/* 급여 유형 */}
                     <div className="salary-profile-form__section consultant-profile-form-item">
-                        <label className="consultant-profile-form-label">급여 유형</label>
+                        <label className="consultant-profile-form-label">{SPFM.LABEL_SALARY_TYPE}</label>
                         <BadgeSelect
                             className="mg-v2-form-badge-select consultant-profile-form-select"
                             value={formData.salaryType}
                             onChange={(val) => handleInputChange('salaryType', val)}
                             options={[
-                                { value: '', label: '급여 유형 선택' },
+                                { value: '', label: SPFM.SALARY_TYPE_PLACEHOLDER },
                                 ...salaryTypes.map(type => ({
                                     value: type.codeValue,
                                     label: toDisplayString(type.codeLabel || type.codeValue)
                                 }))
                             ]}
-                            placeholder="급여 유형 선택"
+                            placeholder={SPFM.SALARY_TYPE_PLACEHOLDER}
                         />
                     </div>
 
                     {/* 기본 급여 */}
                     <div className="salary-profile-form__section consultant-profile-form-item">
-                        <label className="consultant-profile-form-label">기본 급여 (원)</label>
+                        <label className="consultant-profile-form-label">{SPFM.LABEL_BASE_SALARY_INPUT}</label>
                         <input
                             type="number"
                             className="consultant-profile-form-input"
                             value={formData.baseSalary}
                             onChange={(e) => handleInputChange('baseSalary', parseInt(e.target.value) || 0)}
-                            placeholder="기본 급여를 입력하세요"
+                            placeholder={SPFM.PLACEHOLDER_BASE_SALARY}
                         />
                     </div>
 
                     {/* 사업자 등록 여부 (프리랜서만) */}
                     {formData.salaryType === 'FREELANCE' && (
                         <div className="salary-profile-form__section consultant-profile-form-item">
-                            <label className="consultant-profile-form-label">사업자 등록 여부</label>
+                            <label className="consultant-profile-form-label">{SPFM.LABEL_BUSINESS_REG}</label>
                             <BadgeSelect
                                 className="mg-v2-form-badge-select consultant-profile-form-select"
                                 value={formData.isBusinessRegistered ? 'true' : 'false'}
                                 onChange={(val) => handleInputChange('isBusinessRegistered', val === 'true')}
                                 options={[
-                                    { value: 'false', label: '일반 프리랜서 (3.3% 원천징수만)' },
-                                    { value: 'true', label: '사업자 등록 프리랜서 (3.3% 원천징수 + 10% 부가세)' }
+                                    { value: 'false', label: SPFM.BUSINESS_REG_OPTION_GENERAL },
+                                    { value: 'true', label: SPFM.BUSINESS_REG_OPTION_REGISTERED }
                                 ]}
-                                placeholder="선택하세요"
+                                placeholder={SPFM.PLACEHOLDER_SELECT}
                             />
                             <div className="tax-info-text">
-                                • 일반 프리랜서: 원천징수 3.3%만 적용<br/>
-                                • 사업자 등록: 원천징수 3.3% + 부가세 10% 적용
+                                {SPFM.TAX_INFO_GENERAL_LINE}<br/>
+                                {SPFM.TAX_INFO_BUSINESS_LINE}
                             </div>
                         </div>
                     )}
@@ -618,29 +590,29 @@ const SalaryProfileFormModal = ({
                     {formData.salaryType === 'FREELANCE' && formData.isBusinessRegistered && (
                         <>
                             <div className="salary-profile-form__section consultant-profile-form-item">
-                                <label className="consultant-profile-form-label">사업자 등록번호 *</label>
+                                <label className="consultant-profile-form-label">{SPFM.LABEL_BIZ_REG_NO}</label>
                                 <input
                                     type="text"
                                     className="consultant-profile-form-input"
                                     value={formData.businessRegistrationNumber}
                                     onChange={(e) => handleInputChange('businessRegistrationNumber', e.target.value)}
-                                    placeholder="123-45-67890"
+                                    placeholder={SPFM.PLACEHOLDER_BIZ_REG_NO}
                                 />
                                 <div className="tax-info-text">
-                                    사업자 등록번호를 입력하세요 (예: 123-45-67890)
+                                    {SPFM.HELP_BIZ_REG_NO}
                                 </div>
                             </div>
                             <div className="salary-profile-form__section consultant-profile-form-item">
-                                <label className="consultant-profile-form-label">사업자명 *</label>
+                                <label className="consultant-profile-form-label">{SPFM.LABEL_BIZ_NAME}</label>
                                 <input
                                     type="text"
                                     className="consultant-profile-form-input"
                                     value={formData.businessName}
                                     onChange={(e) => handleInputChange('businessName', e.target.value)}
-                                    placeholder="사업자명을 입력하세요"
+                                    placeholder={SPFM.PLACEHOLDER_BIZ_NAME}
                                 />
                                 <div className="tax-info-text">
-                                    사업자 등록증에 기재된 사업자명을 입력하세요
+                                    {SPFM.HELP_BIZ_NAME}
                                 </div>
                             </div>
                         </>
@@ -648,12 +620,12 @@ const SalaryProfileFormModal = ({
 
                     {/* 계약 조건 */}
                     <div className="salary-profile-form__section consultant-profile-form-item consultant-profile-form-item--full-width">
-                        <label className="consultant-profile-form-label">계약 조건</label>
+                        <label className="consultant-profile-form-label">{SPFM.LABEL_CONTRACT}</label>
                         <textarea
                             className="consultant-profile-form-textarea"
                             value={formData.contractTerms}
                             onChange={(e) => handleInputChange('contractTerms', e.target.value)}
-                            placeholder="계약 조건을 입력하세요"
+                            placeholder={SPFM.PLACEHOLDER_CONTRACT}
                             rows="3"
                         />
                     </div>
@@ -661,7 +633,7 @@ const SalaryProfileFormModal = ({
                     {/* 급여 옵션 */}
                     <div className="salary-profile-form__section consultant-profile-form-item consultant-profile-form-item--full-width">
                         <div className="option-header">
-                            <label className="consultant-profile-form-label">급여 옵션 (등급별 자동 추가됨)</label>
+                            <label className="consultant-profile-form-label">{SPFM.LABEL_SALARY_OPTIONS}</label>
                             <MGButton
                                 type="button"
                                 variant="secondary"
@@ -671,7 +643,7 @@ const SalaryProfileFormModal = ({
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={addOption}
                             >
-                                + 옵션 추가
+                                {SPFM.BTN_ADD_OPTION}
                             </MGButton>
                         </div>
                         <p className="option-description">
@@ -686,13 +658,13 @@ const SalaryProfileFormModal = ({
                                         value={option.type}
                                         onChange={(val) => handleOptionChange(index, 'type', val)}
                                         options={[
-                                            { value: '', label: '옵션 유형 선택' },
+                                            { value: '', label: SPFM.OPTION_TYPE_PLACEHOLDER },
                                             ...optionTypes.map(opt => ({
                                                 value: opt.codeValue,
                                                 label: toDisplayString(getOptionTypeLabel(opt))
                                             }))
                                         ]}
-                                        placeholder="옵션 유형 선택"
+                                        placeholder={SPFM.OPTION_TYPE_PLACEHOLDER}
                                     />
                                 </div>
                                 <div className="option-item-field">
@@ -701,7 +673,7 @@ const SalaryProfileFormModal = ({
                                         className="consultant-profile-form-input"
                                         value={option.amount}
                                         onChange={(e) => handleOptionChange(index, 'amount', parseInt(e.target.value) || 0)}
-                                        placeholder="금액"
+                                        placeholder={SPFM.PLACEHOLDER_AMOUNT}
                                     />
                                 </div>
                                 <div className="option-item-field">
@@ -710,7 +682,7 @@ const SalaryProfileFormModal = ({
                                         className="consultant-profile-form-input"
                                         value={option.name}
                                         onChange={(e) => handleOptionChange(index, 'name', e.target.value)}
-                                        placeholder="옵션명"
+                                        placeholder={SPFM.PLACEHOLDER_OPTION_NAME}
                                     />
                                 </div>
                                 <MGButton
@@ -722,7 +694,7 @@ const SalaryProfileFormModal = ({
                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     onClick={() => removeOption(index)}
                                 >
-                                    삭제
+                                    {SPFM.BTN_DELETE}
                                 </MGButton>
                             </div>
                         ))}
@@ -738,7 +710,7 @@ const SalaryProfileFormModal = ({
                         onClick={onClose}
                         disabled={saving || initialLoading}
                     >
-                        취소
+                        {SPFM.BTN_CANCEL}
                     </MGButton>
                     <MGButton
                         type="button"
@@ -749,7 +721,7 @@ const SalaryProfileFormModal = ({
                         loading={saving}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
-                        저장
+                        {SPFM.BTN_SAVE}
                     </MGButton>
                 </div>
                 </>

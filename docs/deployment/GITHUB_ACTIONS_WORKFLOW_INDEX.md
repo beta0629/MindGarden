@@ -34,7 +34,9 @@
 
 ---
 
-## 루트 워크플로 요약 (`.github/workflows/*.yml` 26개)
+## 루트 워크플로 요약 (`.github/workflows/*.yml` 31개)
+
+표는 배포·CI 중심 열거이며, 전체 워크플로 목록은 `.github/workflows/` 디렉터리를 참조한다.
 
 ### 정적 사이트 SSH / 재사용
 
@@ -68,6 +70,7 @@
 |------|------|-------------|-------------|----------|------|
 | `code-quality-check.yml` | 코드 품질 | PR/push main·develop, dispatch | — | — | |
 | `e2e-trinity-build-smoke.yml` | Trinity 빌드 스모크 | PR/push main·develop, paths `frontend-trinity/**` 등, `workflow_dispatch` | — | — | `frontend-trinity`에서 `npm ci` → `npm run build:ci` (`ESLINT_NO_DEV_ERRORS=true next build`). Playwright 없음. Secrets 불필요. |
+| [`e2e-erp-smoke.yml`](../../.github/workflows/e2e-erp-smoke.yml) | ERP 라우트 정적 검증(`npm run verify:erp`) + Playwright 리다이렉트·스모크(로그인 불필요, `tests/e2e/tests/erp/` 일부) | PR `main`/`develop`, paths: `frontend/src/components/erp/**`, `frontend/src/App.js`, `tests/e2e/tests/erp/**`, `tests/e2e/playwright.config.ts`, `frontend/scripts/verify-erp-navigate-targets.mjs`, `frontend/scripts/verify-erp-menu-items-sync.mjs`, `frontend/src/components/dashboard-v2/constants/menuItems.js`, `frontend/package.json`, `workflow_dispatch` | — | — | Secrets 불필요. 상세 시나리오·QA 연계: `docs/planning/ERP_TEST_SCENARIOS.md`, `docs/project-management/ONGOING_WORK_MASTER_PROGRESS_CHECKLIST.md` QA-02. |
 | `ci-bi-protection.yml` | CI/BI 보호 | PR/push main·develop | — | — | |
 | `ops-frontend.yml` | Ops 프론트 CI | push/PR `frontend-ops/**` | — | — | |
 | `ops-backend.yml` | Ops 백엔드 CI | push/PR `backend-ops/**` | — | — | |

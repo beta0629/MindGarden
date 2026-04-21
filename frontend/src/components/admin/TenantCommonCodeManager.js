@@ -45,6 +45,13 @@ import {
     isSubcategoryCodeGroup
 } from '../../utils/commonCodeParentGroups';
 import { toDisplayString } from '../../utils/safeDisplay';
+import {
+    TENANT_COMMON_CODE_GROUP_KO_FALLBACK,
+    TENANT_COMMON_CODE_MSG,
+    TENANT_COMMON_CODE_UI,
+    formatTenantCommonCodeCreateFailure,
+    formatTenantCommonCodeQuickPackageDescription
+} from '../../constants/tenantCommonCodeManagerStrings';
 
 const TENANT_COMMON_CODE_TITLE_ID = 'tenant-common-code-title';
 
@@ -110,7 +117,7 @@ const TenantCommonCodeManager = () => {
                 setParentCategoryOptions([]);
             }
         } catch (err) {
-            console.error('상위 카테고리 옵션 로드 오류:', err);
+            console.error(TENANT_COMMON_CODE_MSG.LOG_PARENT_OPTIONS_LOAD, err);
             setParentCategoryOptions([]);
         } finally {
             setParentOptionsLoading(false);
@@ -141,11 +148,11 @@ const TenantCommonCodeManager = () => {
             if (response.success) {
                 setCodeGroups(response.data || []);
             } else {
-                setError(response.message || '코드 그룹 조회 실패');
+                setError(response.message || TENANT_COMMON_CODE_MSG.ERR_CODE_GROUPS_FETCH_FALLBACK);
             }
         } catch (err) {
-            console.error('코드 그룹 조회 오류:', err);
-            setError('코드 그룹을 불러오는 중 오류가 발생했습니다.');
+            console.error(TENANT_COMMON_CODE_MSG.LOG_CODE_GROUPS_FETCH, err);
+            setError(TENANT_COMMON_CODE_MSG.ERR_CODE_GROUPS_LOAD);
         } finally {
             setLoading(false);
         }
@@ -162,11 +169,11 @@ const TenantCommonCodeManager = () => {
             if (response.success) {
                 setCodes(response.data || []);
             } else {
-                setError(response.message || '코드 조회 실패');
+                setError(response.message || TENANT_COMMON_CODE_MSG.ERR_CODES_FETCH_FALLBACK);
             }
         } catch (err) {
-            console.error('코드 조회 오류:', err);
-            setError('코드를 불러오는 중 오류가 발생했습니다.');
+            console.error(TENANT_COMMON_CODE_MSG.LOG_CODES_FETCH, err);
+            setError(TENANT_COMMON_CODE_MSG.ERR_CODES_LOAD);
         } finally {
             setLoading(false);
         }
@@ -235,7 +242,7 @@ const TenantCommonCodeManager = () => {
         const gn = selectedGroup?.groupName || selectedGroup;
         if (isSubcategoryCodeGroup(gn)) {
             if (!formData.parentCodeValue || !String(formData.parentCodeValue).trim()) {
-                notificationManager.error('상위 카테고리를 선택하세요.');
+                notificationManager.error(TENANT_COMMON_CODE_MSG.ERR_SELECT_PARENT_CATEGORY);
                 return;
             }
         }
@@ -264,13 +271,15 @@ const TenantCommonCodeManager = () => {
             if (response.success) {
                 setShowModal(false);
                 loadCodes(selectedGroup.groupName);
-                notificationManager.success(modalMode === 'create' ? '코드가 생성되었습니다.' : '코드가 수정되었습니다.');
+                notificationManager.success(modalMode === 'create'
+                    ? TENANT_COMMON_CODE_MSG.SUCCESS_CODE_CREATED
+                    : TENANT_COMMON_CODE_MSG.SUCCESS_CODE_UPDATED);
             } else {
-                setError(response.message || '작업 실패');
+                setError(response.message || TENANT_COMMON_CODE_MSG.ERR_OPERATION_FALLBACK);
             }
         } catch (err) {
-            console.error('코드 저장 오류:', err);
-            setError('코드 저장 중 오류가 발생했습니다.');
+            console.error(TENANT_COMMON_CODE_MSG.LOG_CODE_SAVE, err);
+            setError(TENANT_COMMON_CODE_MSG.ERR_CODE_SAVE);
         } finally {
             setLoading(false);
         }
@@ -281,7 +290,7 @@ const TenantCommonCodeManager = () => {
      */
     const handleDeleteCode = async(codeId) => {
         const confirmed = await new Promise((resolve) => {
-            notificationManager.confirm('정말 삭제하시겠습니까?', resolve);
+            notificationManager.confirm(TENANT_COMMON_CODE_MSG.CONFIRM_DELETE, resolve);
         });
         if (!confirmed) {
             return;
@@ -293,13 +302,13 @@ const TenantCommonCodeManager = () => {
             const response = await deleteTenantCode(codeId);
             if (response.success) {
                 loadCodes(selectedGroup.groupName);
-                notificationManager.success('코드가 삭제되었습니다.');
+                notificationManager.success(TENANT_COMMON_CODE_MSG.SUCCESS_CODE_DELETED);
             } else {
-                setError(response.message || '삭제 실패');
+                setError(response.message || TENANT_COMMON_CODE_MSG.ERR_DELETE_FALLBACK);
             }
         } catch (err) {
-            console.error('코드 삭제 오류:', err);
-            setError('코드 삭제 중 오류가 발생했습니다.');
+            console.error(TENANT_COMMON_CODE_MSG.LOG_CODE_DELETE, err);
+            setError(TENANT_COMMON_CODE_MSG.ERR_CODE_DELETE);
         } finally {
             setLoading(false);
         }
@@ -316,11 +325,11 @@ const TenantCommonCodeManager = () => {
             if (response.success) {
                 loadCodes(selectedGroup.groupName);
             } else {
-                setError(response.message || '상태 변경 실패');
+                setError(response.message || TENANT_COMMON_CODE_MSG.ERR_TOGGLE_FALLBACK);
             }
         } catch (err) {
-            console.error('상태 변경 오류:', err);
-            setError('상태 변경 중 오류가 발생했습니다.');
+            console.error(TENANT_COMMON_CODE_MSG.LOG_TOGGLE, err);
+            setError(TENANT_COMMON_CODE_MSG.ERR_TOGGLE);
         } finally {
             setLoading(false);
         }
@@ -330,13 +339,13 @@ const TenantCommonCodeManager = () => {
      * 상담 패키지 빠른 생성
      */
     const handleQuickCreatePackage = () => {
-        const packageName = prompt('패키지명을 입력하세요:');
+        const packageName = prompt(TENANT_COMMON_CODE_MSG.PROMPT_PACKAGE_NAME);
         if (!packageName) return;
 
-        const price = prompt('금액을 입력하세요 (원):');
+        const price = prompt(TENANT_COMMON_CODE_MSG.PROMPT_PRICE_WON);
         if (!price) return;
 
-        const sessions = prompt('회기 수를 입력하세요:');
+        const sessions = prompt(TENANT_COMMON_CODE_MSG.PROMPT_SESSIONS);
         if (!sessions) return;
 
         createConsultationPackage({
@@ -344,115 +353,24 @@ const TenantCommonCodeManager = () => {
             price: parseInt(price, 10),
             duration: 50,
             sessions: parseInt(sessions, 10),
-            description: `${packageName} (${sessions}회기)`
+            description: formatTenantCommonCodeQuickPackageDescription(packageName, sessions)
         })
             .then(response => {
                 if (response.success) {
                     loadCodes('CONSULTATION_PACKAGE');
-                    notificationManager.success('상담 패키지가 생성되었습니다.');
+                    notificationManager.success(TENANT_COMMON_CODE_MSG.SUCCESS_PACKAGE_CREATED);
                 } else {
-                    notificationManager.error(`생성 실패: ${response.message}`);
+                    notificationManager.error(formatTenantCommonCodeCreateFailure(response.message));
                 }
             })
             .catch(err => {
-                console.error('패키지 생성 오류:', err);
-                notificationManager.error('패키지 생성 중 오류가 발생했습니다.');
+                console.error(TENANT_COMMON_CODE_MSG.LOG_PACKAGE_CREATE, err);
+                notificationManager.error(TENANT_COMMON_CODE_MSG.ERR_PACKAGE_CREATE);
             });
     };
 
     const convertGroupNameToKorean = (groupName) => {
-        const koreanMappings = {
-            'USER_ROLE': '사용자역할',
-            'USER_STATUS': '사용자상태',
-            'USER_GRADE': '사용자등급',
-            'CONSULTANT_GRADE': '상담사등급',
-            'CLIENT_STATUS': '내담자상태',
-            'GENDER': '성별',
-            'RESPONSIBILITY': '담당분야',
-            'SPECIALTY': '전문분야',
-            
-            'STATUS': '상태',
-            'PRIORITY': '우선순위',
-            'MAPPING_STATUS': '매핑상태',
-            'ROLE': '역할',
-            'PERMISSION': '권한',
-            'ROLE_PERMISSION': '역할권한',
-            
-            'PAYMENT_METHOD': '결제방법',
-            'PAYMENT_STATUS': '결제상태',
-            'PAYMENT_PROVIDER': '결제제공자',
-            'SALARY_TYPE': '급여유형',
-            'SALARY_PAY_DAY': '급여지급일',
-            'SALARY_OPTION_TYPE': '급여옵션유형',
-            'CONSULTANT_GRADE_SALARY': '상담사등급급여',
-            'FREELANCE_BASE_RATE': '프리랜서기본요율',
-            'BUDGET_CATEGORY': '예산카테고리',
-            'BUDGET_STATUS': '예산상태',
-            
-            'CONSULTATION_PACKAGE': '상담패키지',
-            'CONSULTATION_STATUS': '상담상태',
-            'CONSULTATION_TYPE': '상담유형',
-            'CONSULTATION_METHOD': '상담방법',
-            'CONSULTATION_LOCATION': '상담장소',
-            'CONSULTATION_SESSION': '상담세션',
-            'CONSULTATION_FEE': '상담료',
-            'CONSULTATION_MODE': '상담모드',
-            'SCHEDULE_STATUS': '스케줄상태',
-            'SCHEDULE_TYPE': '스케줄유형',
-            'SCHEDULE_FILTER': '스케줄필터',
-            'SCHEDULE_SORT': '스케줄정렬',
-            'SESSION_PACKAGE': '회기패키지',
-            'PACKAGE_TYPE': '패키지유형',
-            'ASSESSMENT_TYPE': '평가유형',
-            
-            'PURCHASE_STATUS': '구매상태',
-            'PURCHASE_CATEGORY': '구매카테고리',
-            'FINANCIAL_CATEGORY': '재무카테고리',
-            'TAX_CATEGORY': '세무카테고리',
-            'TAX_CALCULATION': '세금계산',
-            'VAT_APPLICABLE': '부가세적용',
-            'EXPENSE_CATEGORY': '지출카테고리',
-            'EXPENSE_SUBCATEGORY': '지출하위카테고리',
-            'INCOME_CATEGORY': '수입카테고리',
-            'INCOME_SUBCATEGORY': '수입하위카테고리',
-            'ITEM_CATEGORY': '항목카테고리',
-            'TRANSACTION_TYPE': '거래유형',
-            
-            'VACATION_TYPE': '휴가유형',
-            'VACATION_STATUS': '휴가상태',
-            
-            'REPORT_PERIOD': '보고서기간',
-            'YEAR_RANGE': '년도범위',
-            'MONTH_RANGE': '월범위',
-            'DATE_RANGE': '날짜범위',
-            'DATE_RANGE_FILTER': '날짜범위필터',
-            'CHART_TYPE_FILTER': '차트유형필터',
-            
-            'MENU': '메뉴',
-            'MENU_CATEGORY': '메뉴카테고리',
-            'ADMIN_MENU': '관리자메뉴',
-            'CLIENT_MENU': '내담자메뉴',
-            'CONSULTANT_MENU': '상담사메뉴',
-            'HQ_ADMIN_MENU': '관리자메뉴',
-            'BRANCH_SUPER_ADMIN_MENU': '지점수퍼관리자메뉴',
-            'COMMON_MENU': '공통메뉴',
-            
-            'APPROVAL_STATUS': '승인상태',
-            'BANK': '은행',
-            'CURRENCY': '통화',
-            'LANGUAGE': '언어',
-            'TIMEZONE': '시간대',
-            'ADDRESS_TYPE': '주소유형',
-            'FILE_TYPE': '파일유형',
-            'MESSAGE_TYPE': '메시지유형',
-            'NOTIFICATION_TYPE': '알림유형',
-            'NOTIFICATION_CHANNEL': '알림채널',
-            'DURATION': '기간',
-            'SORT_OPTION': '정렬옵션',
-            'PRIORITY_LEVEL': '우선순위레벨'
-        };
-        
-        return koreanMappings[groupName] || groupName;
+        return TENANT_COMMON_CODE_GROUP_KO_FALLBACK[groupName] || groupName;
     };
 
     const getFilteredCodeGroups = () => {
@@ -497,13 +415,13 @@ const TenantCommonCodeManager = () => {
     };
 
     return (
-        <AdminCommonLayout title="테넌트 공통코드">
+        <AdminCommonLayout title={TENANT_COMMON_CODE_UI.LAYOUT_TITLE}>
             <div className="mg-v2-ad-b0kla">
                 <div className="mg-v2-ad-b0kla__container">
-                    <ContentArea ariaLabel="테넌트 공통코드 관리 본문">
+                    <ContentArea ariaLabel={TENANT_COMMON_CODE_UI.CONTENT_ARIA_LABEL}>
                         <ContentHeader
-                            title="테넌트 공통코드 관리"
-                            subtitle="상담 패키지, 결제 방법, 전문 분야 등 테넌트 전용 코드를 관리합니다."
+                            title={TENANT_COMMON_CODE_UI.HEADER_TITLE}
+                            subtitle={TENANT_COMMON_CODE_UI.HEADER_SUBTITLE}
                             titleId={TENANT_COMMON_CODE_TITLE_ID}
                         />
                         <main aria-labelledby={TENANT_COMMON_CODE_TITLE_ID}>

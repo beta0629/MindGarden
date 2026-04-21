@@ -525,7 +525,7 @@ const SalaryManagement = () => {
             >
             <div className="mg-v2-ad-b0kla salary-management__main">
             {showInitialInlineLoad ? (
-              <div className="salary-management__initial-load" role="status" aria-live="polite">
+              <div className="salary-management__initial-load" role="status" aria-live="polite" aria-busy="true">
                 <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
               </div>
             ) : (
@@ -733,7 +733,9 @@ const SalaryManagement = () => {
                     </div>
                   )}
                   {loading ? (
-                      <p className="salary-management__loading-text">데이터를 불러오는 중...</p>
+                      <div className="salary-management__loading-text-wrap" role="status" aria-live="polite" aria-busy="true">
+                        <p className="salary-management__loading-text">데이터를 불러오는 중...</p>
+                      </div>
                     ) : consultants.length === 0 ? (
                       <p className="salary-profile-block__empty-state">상담사 데이터가 없습니다.</p>
                     ) : salaryProfiles.length > 0 ? (
@@ -1152,7 +1154,12 @@ const SalaryManagement = () => {
           </ContentArea>
 
       {showLoadingOverlay && (
-        <div className="salary-management-loading-overlay" aria-hidden>
+        <div
+          className="salary-management-loading-overlay"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
           <UnifiedLoading type="inline" text="로딩 중..." />
         </div>
       )}

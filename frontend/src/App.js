@@ -539,12 +539,10 @@ function AppContent() {
             <Route path="/admin/academy" element={<AcademyDashboard />} />
             <Route path="/academy/register" element={<AcademyRegister />} />
             <Route path="/admin/schedules" element={
-              <AdminCommonLayout title="스케줄">
-                <AdminSchedulesPage
-                  userRole={user?.role || 'ADMIN'}
-                  userId={user?.id}
-                />
-              </AdminCommonLayout>
+              <AdminSchedulesPage
+                userRole={user?.role || 'ADMIN'}
+                userId={user?.id}
+              />
             } />
             <Route path="/admin/statistics" element={
               <AdminCommonLayout title="통계">

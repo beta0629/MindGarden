@@ -12,6 +12,22 @@ import csrfTokenManager from './csrfTokenManager';
 import { getDefaultApiHeaders } from './apiHeaders';
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
 import { redirectToLoginPageOnce } from './sessionRedirect';
+import {
+  AJAX_PARSE_RESPONSE_FAILED,
+  AJAX_TENANT_INFO_MISSING_RELOGIN,
+  AJAX_ACCESS_DENIED_DEFAULT,
+  AJAX_SERVER_ERROR_SHORT,
+  AJAX_REQUEST_ERROR_SHORT,
+  AJAX_POST_REQUEST_FAILED,
+  AJAX_POST_FORMDATA_FAILED,
+  AJAX_BAD_REQUEST_400_DEFAULT,
+  AJAX_ERROR_WITH_CODE_PREFIX,
+  AJAX_DELETE_REQUEST_FAILED,
+  AJAX_FILE_UPLOAD_FAILED,
+  buildAjaxSubdomainLoginMessage,
+  buildAjaxLoginHttpErrorMessage,
+  buildAjaxTestLoginHttpErrorMessage
+} from '../constants/ajaxUserMessages';
 
 /**
  * 공통 AJAX 유틸리티
@@ -156,7 +172,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
           jsonData = JSON.parse(text);
         } catch (parseError) {
           console.error('JSON 파싱 오류:', parseError, 'Response text:', text);
-          throw new Error('응답 데이터를 파싱할 수 없습니다.');
+          throw new Error(AJAX_PARSE_RESPONSE_FAILED);
         }
       } else {
         // 빈 응답인 경우
@@ -184,7 +200,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
                                    errorMessage.includes('로그인이 필요');
 
           if (isTenantIdError) {
-            const err = new Error(errorMessage || '테넌트 정보가 없습니다. 다시 로그인해 주세요.');
+            const err = new Error(errorMessage || AJAX_TENANT_INFO_MISSING_RELOGIN);
             err.status = 400;
             err.response = { data: errorData };
             const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -227,7 +243,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       if (response.status === 403) {
         const serverMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
           ? String(jsonData.message)
-          : '접근 권한이 없습니다.';
+          : AJAX_ACCESS_DENIED_DEFAULT;
         const error = new Error(serverMessage);
         error.status = 403;
         error.response = { data: jsonData };
@@ -239,11 +255,11 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       }
       // 500 오류도 서버 오류이므로 에러 처리
       if (response.status >= 500) {
-        handleError(new Error('서버 오류'), response.status);
+        handleError(new Error(AJAX_SERVER_ERROR_SHORT), response.status);
       }
       // 기타 4xx 오류는 클라이언트 오류이므로 에러 처리
       if (response.status >= 400) {
-        handleError(new Error('요청 오류'), response.status);
+        handleError(new Error(AJAX_REQUEST_ERROR_SHORT), response.status);
       }
     }
 
@@ -379,7 +395,7 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
       }
       
       // 표준화 2025-12-08: 에러 응답에서 메시지 추출
-      let errorMessage = 'POST 요청 실패';
+      let errorMessage = AJAX_POST_REQUEST_FAILED;
       if (jsonData && typeof jsonData === 'object') {
         if (jsonData.message) {
           errorMessage = jsonData.message;
@@ -561,14 +577,14 @@ export const apiPostFormData = async(endpoint, formData, options = {}) => {
 
       // 400 Bad Request: 서버 메시지가 있으면 그대로 전달 (원인 파악용)
       if (response.status === 400) {
-        const msg = serverMessage || (errorCode ? `오류: ${errorCode}` : '요청이 잘못되었습니다. (400)');
+        const msg = serverMessage || (errorCode ? `${AJAX_ERROR_WITH_CODE_PREFIX}${errorCode}` : AJAX_BAD_REQUEST_400_DEFAULT);
         const err = new Error(msg);
         err.status = 400;
         err.response = { data: errorBody };
         throw err;
       }
 
-      handleError(new Error('POST FormData 요청 실패'), response.status);
+      handleError(new Error(AJAX_POST_FORMDATA_FAILED), response.status);
     }
 
     return await response.json();
@@ -595,7 +611,7 @@ export const apiDelete = async(endpoint, options = {}) => {
         return null; // 리다이렉트됨
       }
       
-      handleError(new Error('DELETE 요청 실패'), response.status);
+      handleError(new Error(AJAX_DELETE_REQUEST_FAILED), response.status);
     }
 
     // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출. data가 null/undefined면 전체 객체 반환(성공 여부 판단용)
@@ -636,7 +652,7 @@ export const apiUpload = async(endpoint, formData, options = {}) => {
         return null; // 리다이렉트됨
       }
       
-      handleError(new Error('파일 업로드 실패'), response.status);
+      handleError(new Error(AJAX_FILE_UPLOAD_FAILED), response.status);
     }
 
     return await response.json();
@@ -676,7 +692,7 @@ export const authAPI = {
             errorCode === 'TENANT_REQUIRED' ||
             errorCode === 'TENANT_ID_REQUIRED') {
           const host = window.location.hostname;
-          const friendlyMessage = `서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
+          const friendlyMessage = buildAjaxSubdomainLoginMessage(host);
           console.error('⚠️ 로그인 실패 - 서브도메인 없음:', friendlyMessage);
           const subdomainError = new Error(friendlyMessage);
           subdomainError.isSubdomainError = true;
@@ -684,7 +700,7 @@ export const authAPI = {
         }
         
         console.error('로그인 실패 응답:', responseData);
-        throw new Error(`HTTP ${response.status}: ${JSON.stringify(responseData)}`);
+        throw new Error(buildAjaxLoginHttpErrorMessage(response.status, responseData));
       }
       
       return responseData;
@@ -741,7 +757,7 @@ export const testLogin = async() => {
     });
     
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(buildAjaxTestLoginHttpErrorMessage(response.status));
     }
     
     const data = await response.json();

@@ -52,22 +52,62 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import './IntegratedFinanceDashboard.css';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
+import {
+  EXPENSE_CATEGORY_LABELS,
+  IFS_ACCESSIBILITY,
+  IFS_ACTIVE_LABEL,
+  IFS_BALANCE_SHEET_STATUS,
+  IFS_CASH_FLOW_SECTION,
+  IFS_DISPLAY,
+  IFS_ERRORS,
+  IFS_FALLBACK,
+  IFS_FINANCIAL_STATEMENTS,
+  IFS_HEADER_ACTIONS,
+  IFS_INPUT_PLACEHOLDER,
+  IFS_JOURNAL_ENTRY_STATUS,
+  IFS_JOURNAL_HELP,
+  IFS_LOADING,
+  IFS_MODAL_TITLE,
+  IFS_NOTIFICATIONS,
+  IFS_OVERVIEW,
+  IFS_REPORT,
+  IFS_SETTLEMENT_ROW_STATUS,
+  IFS_TABLE_CELL,
+  INCOME_CATEGORY_LABELS,
+  INTEGRATED_FINANCE_PAGE,
+  INTEGRATED_FINANCE_TAB_ITEMS
+} from '../../constants/integratedFinanceDashboardStrings';
 
 const INTEGRATED_FINANCE_TITLE_ID = 'integrated-finance-title';
 
-/** 수입·지출 관리 pill 탭 정의 (로딩/성공 동일 목록) */
-const INTEGRATED_FINANCE_TAB_ITEMS = [
-  { key: 'overview', label: '개요' },
-  { key: 'journal-entries', label: '거래 정리' },
-  { key: 'ledgers', label: '계정별 내역' },
-  { key: 'balance-sheet', label: '자산·부채 현황' },
-  { key: 'income-statement', label: '손익 현황' },
-  { key: 'cash-flow', label: '현금 흐름' },
-  { key: 'settlement', label: '정산' },
-  { key: 'daily', label: '일간 리포트' },
-  { key: 'monthly', label: '월간 리포트' },
-  { key: 'yearly', label: '연간 리포트' }
-];
+const integratedFinanceTabLabel = (key) =>
+  INTEGRATED_FINANCE_TAB_ITEMS.find((t) => t.key === key)?.label ?? '';
+
+const formatJournalEntryStatus = (status) => {
+  if (status === 'DRAFT') {
+    return IFS_JOURNAL_ENTRY_STATUS.DRAFT;
+  }
+  if (status === 'APPROVED') {
+    return IFS_JOURNAL_ENTRY_STATUS.APPROVED;
+  }
+  if (status === 'POSTED') {
+    return IFS_JOURNAL_ENTRY_STATUS.POSTED;
+  }
+  return status;
+};
+
+const formatSettlementRowStatus = (status) => {
+  if (status === 'PENDING') {
+    return IFS_SETTLEMENT_ROW_STATUS.PENDING;
+  }
+  if (status === 'APPROVED') {
+    return IFS_SETTLEMENT_ROW_STATUS.APPROVED;
+  }
+  if (status === 'PAID') {
+    return IFS_SETTLEMENT_ROW_STATUS.PAID;
+  }
+  return status;
+};
 
 // 공통 유틸리티 함수들
 const formatCurrency = (amount) => {
@@ -79,39 +119,6 @@ const formatCurrency = (amount) => {
 
 const formatNumber = (num) => {
   return new Intl.NumberFormat('ko-KR').format(num);
-};
-
-/** 지출 카테고리 코드 → 한글 라벨 (개요 탭 지출 카드 표시용, FinancialCommonCodeInitializer와 동기화) */
-const EXPENSE_CATEGORY_LABELS = {
-  SALARY: '급여',
-  RENT: '임대료',
-  UTILITY: '관리비',
-  OFFICE_SUPPLIES: '사무용품',
-  TAX: '세금',
-  MARKETING: '마케팅',
-  EQUIPMENT: '장비',
-  SOFTWARE: '소프트웨어',
-  CONSULTING: '컨설팅',
-  OTHER: '기타',
-  CONSULTATION: '상담료',
-  CONSULTATION_REFUND: '상담료환불',
-  CONSULTATION_PARTIAL_REFUND: '상담 부분환불',
-  OFFICE_RENT: '사무실임대료',
-  STATIONERY: '문구류',
-  ONLINE_ADS: '온라인광고',
-  INCOME_TAX: '소득세',
-  VAT: '부가가치세',
-  CORPORATE_TAX: '법인세',
-  기타: '기타'
-};
-
-/** 수입 카테고리 코드 → 한글 라벨 */
-const INCOME_CATEGORY_LABELS = {
-  CONSULTATION: '상담료',
-  상담료: '상담료',
-  PACKAGE: '패키지',
-  OTHER: '기타수입',
-  기타: '기타수입'
 };
 
 const getExpenseCategoryLabel = (code) => EXPENSE_CATEGORY_LABELS[code] || code;
@@ -320,7 +327,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         
         if (!hasIntegratedFinancePermission) {
           console.log('❌ 통합재무관리 접근 권한 없음');
-          setError('수입·지출 관리 접근 권한이 없습니다.');
+          setError(IFS_ERRORS.NO_PERMISSION);
           setLoading(false);
           permissionCheckedRef.current = true;
           return;
@@ -343,7 +350,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
       await fetchDashboardData();
     } catch (err) {
       console.error('컴포넌트 초기화 실패:', err);
-      setError('초기화 중 오류가 발생했습니다.');
+      setError(IFS_ERRORS.INIT_FAILED);
       setLoading(false);
     }
   };
@@ -383,7 +390,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         return;
       }
 
-      setError('데이터를 불러오는 중 오류가 발생했습니다.');
+      setError(IFS_ERRORS.LOAD_FAILED);
     } finally {
       if (!silent) {
         setLoading(false);
@@ -399,8 +406,8 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   const renderIntegratedFinanceHeaderSlot = (actionsDisabled) => (
     <ContentHeader
-      title="수입·지출 관리"
-      subtitle="거래·손익·정산을 한곳에서"
+      title={INTEGRATED_FINANCE_PAGE.TITLE}
+      subtitle={INTEGRATED_FINANCE_PAGE.SUBTITLE}
       titleId={INTEGRATED_FINANCE_TITLE_ID}
       actions={(
         <div className="mg-dashboard-header-right mg-dashboard-header-right--content-header">
@@ -408,7 +415,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             variant="danger"
             size="small"
             onClick={() => setShowQuickExpenseForm(true)}
-            title="빠른 지출"
+            title={IFS_HEADER_ACTIONS.QUICK_EXPENSE}
             className={buildErpMgButtonClassName({
               variant: 'danger',
               size: 'sm',
@@ -419,13 +426,13 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={actionsDisabled}
           >
-            빠른 지출
+            {IFS_HEADER_ACTIONS.QUICK_EXPENSE}
           </MGButton>
           <MGButton
             variant="success"
             size="small"
             onClick={() => setShowTransactionForm(true)}
-            title="거래 등록"
+            title={IFS_HEADER_ACTIONS.REGISTER_ENTRY}
             className={buildErpMgButtonClassName({
               variant: 'success',
               size: 'sm',
@@ -436,7 +443,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={actionsDisabled}
           >
-            거래 등록
+            {IFS_HEADER_ACTIONS.REGISTER_ENTRY}
           </MGButton>
           <MGButton
             variant="primary"
@@ -444,7 +451,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             onClick={() => {
               navigate('/erp/financial');
             }}
-            title="상세 내역 보기"
+            title={IFS_HEADER_ACTIONS.VIEW_FINANCIAL_DETAIL}
             className={buildErpMgButtonClassName({
               variant: 'primary',
               size: 'sm',
@@ -455,7 +462,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={actionsDisabled}
           >
-            상세 내역
+            {IFS_HEADER_ACTIONS.FINANCIAL_DETAIL_SHORT}
           </MGButton>
         </div>
       )}
@@ -498,16 +505,16 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   if (error) {
     return (
-      <AdminCommonLayout title="수입·지출 관리">
-        <ContentArea ariaLabel="수입·지출 관리 본문">
+      <AdminCommonLayout title={INTEGRATED_FINANCE_PAGE.TITLE}>
+        <ContentArea ariaLabel={IFS_ACCESSIBILITY.CONTENT_BODY}>
           <ContentHeader
-            title="수입·지출 관리"
-            subtitle="거래·손익·정산을 한곳에서"
+            title={INTEGRATED_FINANCE_PAGE.TITLE}
+            subtitle={INTEGRATED_FINANCE_PAGE.SUBTITLE}
             titleId={INTEGRATED_FINANCE_TITLE_ID}
           />
           <section aria-labelledby={INTEGRATED_FINANCE_TITLE_ID} className="mg-dashboard-content">
             <div className="error-container">
-              <SafeErrorDisplay error={error} variant="inline" prefix="오류: " />
+              <SafeErrorDisplay error={error} variant="inline" prefix={IFS_DISPLAY.ERROR_PREFIX} />
             </div>
           </section>
         </ContentArea>
@@ -516,13 +523,13 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   }
 
   return (
-    <AdminCommonLayout title="수입·지출 관리">
-      <ContentArea ariaLabel="수입·지출 관리 본문">
+    <AdminCommonLayout title={INTEGRATED_FINANCE_PAGE.TITLE}>
+      <ContentArea ariaLabel={IFS_ACCESSIBILITY.CONTENT_BODY}>
         <ErpPageShell
           className="mg-dashboard-content"
           headerSlot={renderIntegratedFinanceHeaderSlot(loading)}
           tabsSlot={renderIntegratedFinanceTabsSlot(loading)}
-          mainAriaLabel="수입·지출 관리 탭 본문"
+          mainAriaLabel={IFS_ACCESSIBILITY.TAB_MAIN}
         >
           <div
             className="integrated-finance-content"
@@ -530,14 +537,14 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             aria-labelledby={INTEGRATED_FINANCE_TITLE_ID}
           >
             {loading ? (
-              <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
-                <UnifiedLoading type="inline" text="데이터를 불러오는 중…" />
+              <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
+                <UnifiedLoading type="inline" text={IFS_DISPLAY.LOADING_DATA} />
               </div>
             ) : (
               <>
                 <div className="mg-w-full mg-mb-md">
                   <ErpFilterToolbar
-                    ariaLabel="수입·지출 도구"
+                    ariaLabel={IFS_ACCESSIBILITY.TOOLBAR}
                     secondaryRow={(
                       <div className="integrated-finance__toolbar-actions">
                         <MGButton
@@ -551,9 +558,9 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                           onClick={handleSilentDashboardRefresh}
                           loading={silentListRefreshing}
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          aria-label="데이터 새로고침"
+                          aria-label={IFS_ACCESSIBILITY.REFRESH}
                         >
-                          데이터 새로고침
+                          {IFS_ACCESSIBILITY.REFRESH}
                         </MGButton>
                       </div>
                     )}
@@ -606,8 +613,8 @@ const OverviewTab = ({ data }) => {
   if (!data) {
     return (
       <ErpEmptyState
-        title="데이터가 없습니다"
-        description="재무 개요를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요."
+        title={IFS_OVERVIEW.EMPTY_TITLE}
+        description={IFS_OVERVIEW.EMPTY_DESC}
       />
     );
   }
@@ -621,14 +628,14 @@ const OverviewTab = ({ data }) => {
 
   const getIncomeDescription = () => {
     const categories = Object.keys(incomeByCategory);
-    if (categories.length === 0) return '상담료, 기타수입';
+    if (categories.length === 0) return IFS_OVERVIEW.INCOME_DESC_FALLBACK;
     const labels = categories.map(getIncomeCategoryLabel);
     return [...new Set(labels)].join(', ');
   };
 
   const getExpenseDescription = () => {
     const categories = Object.keys(expenseByCategory);
-    if (categories.length === 0) return '급여, 임대료, 관리비, 세금';
+    if (categories.length === 0) return IFS_OVERVIEW.EXPENSE_DESC_FALLBACK;
     const labels = categories.map(getExpenseCategoryLabel);
     return [...new Set(labels)].join(', ');
   };
@@ -645,30 +652,30 @@ const OverviewTab = ({ data }) => {
   return (
     <div className="integrated-finance-overview">
       <DashboardSection
-        title="재무 개요"
+        title={IFS_OVERVIEW.SECTION_FINANCIAL}
         icon={<BarChart3 size={24} />}
       >
         <div className="mg-dashboard-stats">
           <ErpKpiStatCard
-            title="총 아이템 수"
+            title={IFS_OVERVIEW.KPI_TOTAL_ITEMS}
             value={data.erpStats?.totalItems || 0}
             formatType={ERP_NUMBER_FORMAT.COUNT}
-            trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: '등록된 비품 수' }}
+            trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: IFS_OVERVIEW.TREND_REGISTERED_ITEMS }}
           />
           <ErpKpiStatCard
-            title="승인 대기 요청"
+            title={IFS_OVERVIEW.KPI_PENDING_APPROVALS}
             value={data.erpStats?.pendingRequests || 0}
             formatType={ERP_NUMBER_FORMAT.COUNT}
-            trend={{ direction: ERP_KPI_TREND_DIRECTION.DOWN, label: '관리자 승인 대기' }}
+            trend={{ direction: ERP_KPI_TREND_DIRECTION.DOWN, label: IFS_OVERVIEW.TREND_ADMIN_PENDING }}
           />
           <ErpKpiStatCard
-            title="총 주문 수"
+            title={IFS_OVERVIEW.KPI_TOTAL_ORDERS}
             value={data.erpStats?.totalOrders || 0}
             formatType={ERP_NUMBER_FORMAT.COUNT}
-            trend={{ direction: ERP_KPI_TREND_DIRECTION.UP, label: '완료된 구매 주문' }}
+            trend={{ direction: ERP_KPI_TREND_DIRECTION.UP, label: IFS_OVERVIEW.TREND_COMPLETED_ORDERS }}
           />
           <ErpKpiStatCard
-            title="예산 사용률"
+            title={IFS_OVERVIEW.KPI_BUDGET_USAGE}
             value={budgetPctParsed}
             formatType={ERP_NUMBER_FORMAT.PERCENT}
             trend={{
@@ -680,33 +687,33 @@ const OverviewTab = ({ data }) => {
       </DashboardSection>
 
       <DashboardSection
-        title="매핑시스템 연동 상태"
+        title={IFS_OVERVIEW.SECTION_MAPPING}
         icon={<BarChart3 size={24} />}
       >
         <div className="mg-dashboard-stats">
           <ErpKpiStatCard
-            title="매핑 입금확인 수입"
-            value={financialData.incomeByCategory?.CONSULTATION ?? financialData.incomeByCategory?.['상담료'] ?? 0}
+            title={IFS_OVERVIEW.KPI_MAPPING_DEPOSIT_INCOME}
+            value={financialData.incomeByCategory?.CONSULTATION ?? financialData.incomeByCategory?.[IFS_OVERVIEW.ROW_KEY_INCOME_CONSULT] ?? 0}
             formatType={ERP_NUMBER_FORMAT.CURRENCY}
             variant={ERP_KPI_STAT_VARIANT.PRIMARY}
           />
           <ErpKpiStatCard
-            title="매핑 환불처리 지출"
-            value={financialData.expenseByCategory?.CONSULTATION ?? financialData.expenseByCategory?.['기타'] ?? 0}
+            title={IFS_OVERVIEW.KPI_MAPPING_REFUND_EXPENSE}
+            value={financialData.expenseByCategory?.CONSULTATION ?? financialData.expenseByCategory?.[IFS_OVERVIEW.ROW_KEY_EXPENSE_OTHER] ?? 0}
             formatType={ERP_NUMBER_FORMAT.CURRENCY}
             variant={ERP_KPI_STAT_VARIANT.WARNING}
           />
           <ErpKpiStatCard
-            title="총 연동 거래 건수"
+            title={IFS_OVERVIEW.KPI_MAPPING_TX_TOTAL}
             value={financialData.transactionCount || 0}
             formatType={ERP_NUMBER_FORMAT.COUNT}
           />
           <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue integrated-finance-mapping-cta">
             <div className="mg-v2-ad-b0kla__chart-title integrated-finance-mapping-cta__title">
-              실시간 연동
+              {IFS_OVERVIEW.MAPPING_LIVE_TITLE}
             </div>
             <div className="mg-v2-ad-b0kla__chart-desc">
-              매핑 ↔ ERP 자동 동기화
+              {IFS_OVERVIEW.MAPPING_CTA_SUBTITLE}
             </div>
             <MGButton
               variant="outline"
@@ -721,37 +728,37 @@ const OverviewTab = ({ data }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => navigate('/admin/mapping-management')}
             >
-              매핑시스템 확인
+              {IFS_OVERVIEW.MAPPING_CTA_BUTTON}
             </MGButton>
           </div>
         </div>
       </DashboardSection>
 
       <DashboardSection
-        title="수입/지출 요약"
+        title={IFS_OVERVIEW.SECTION_SUMMARY}
         icon={<BarChart3 size={24} />}
       >
         <div className="mg-v2-erp-dashboard-kpi-grid mg-v2-erp-dashboard-kpi-grid--summary">
           <ErpKpiStatCard
-            title="수입"
+            title={IFS_OVERVIEW.LABEL_INCOME}
             value={totalIncome}
             formatType={ERP_NUMBER_FORMAT.CURRENCY}
             variant={ERP_KPI_STAT_VARIANT.PRIMARY}
             trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: getIncomeDescription() }}
           />
           <ErpKpiStatCard
-            title="지출"
+            title={IFS_OVERVIEW.LABEL_EXPENSE}
             value={totalExpense}
             formatType={ERP_NUMBER_FORMAT.CURRENCY}
             variant={ERP_KPI_STAT_VARIANT.WARNING}
             trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: getExpenseDescription() }}
           />
           <ErpKpiStatCard
-            title="순이익"
+            title={IFS_OVERVIEW.LABEL_NET_PROFIT}
             value={netProfit}
             formatType={ERP_NUMBER_FORMAT.CURRENCY}
             variant={netProfit >= 0 ? ERP_KPI_STAT_VARIANT.PRIMARY : ERP_KPI_STAT_VARIANT.WARNING}
-            trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: '수입 − 지출 · 손익 현황 탭에서 항목별 비용 확인' }}
+            trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: IFS_OVERVIEW.NET_PROFIT_TREND_HINT }}
           />
         </div>
       </DashboardSection>
@@ -777,7 +784,7 @@ const BalanceSheetTab = () => {
     } catch (err) {
       console.error('Balance sheet fetch error:', err);
       setError(err);
-      notificationManager.show('대차대조표를 불러오는데 실패했습니다.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.BALANCE_SHEET_LOAD_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -799,13 +806,13 @@ const BalanceSheetTab = () => {
   if (loading) {
     return (
       <div>
-        <DashboardSection title="대차대조표" icon={<PieChart size={24} />}>
+        <DashboardSection title={IFS_FINANCIAL_STATEMENTS.BALANCE_SHEET} icon={<PieChart size={24} />}>
           <div className="mg-v2-mb-md">
-            <label className="mg-v2-label">기준일자</label>
+            <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.AS_OF_DATE}</label>
             <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
           </div>
-          <div className="finance-statement-panel" role="status" aria-live="polite">
-            <UnifiedLoading type="inline" text="데이터를 불러오는 중…" />
+          <div className="finance-statement-panel" role="status" aria-live="polite" aria-busy="true">
+            <UnifiedLoading type="inline" text={IFS_DISPLAY.LOADING_DATA} />
           </div>
         </DashboardSection>
       </div>
@@ -815,14 +822,14 @@ const BalanceSheetTab = () => {
   if (error) {
     return (
       <div>
-        <DashboardSection title="대차대조표" icon={<PieChart size={24} />}>
+        <DashboardSection title={IFS_FINANCIAL_STATEMENTS.BALANCE_SHEET} icon={<PieChart size={24} />}>
           <div className="mg-v2-mb-md">
-            <label className="mg-v2-label">기준일자</label>
+            <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.AS_OF_DATE}</label>
             <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
           </div>
           <ErpEmptyState
-            title="데이터를 불러오지 못했습니다"
-            description="일시적인 오류일 수 있습니다. 아래 버튼으로 다시 시도해 주세요."
+            title={IFS_FINANCIAL_STATEMENTS.LOAD_ERROR_TITLE}
+            description={IFS_FINANCIAL_STATEMENTS.LOAD_ERROR_DESC}
             actionSlot={
               <MGButton
                 variant="primary"
@@ -836,7 +843,7 @@ const BalanceSheetTab = () => {
                 loading={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                다시 불러오기
+                {IFS_FINANCIAL_STATEMENTS.RETRY}
               </MGButton>
             }
           />
@@ -848,14 +855,14 @@ const BalanceSheetTab = () => {
   if (emptyState) {
     return (
       <div>
-        <DashboardSection title="대차대조표" icon={<PieChart size={24} />}>
+        <DashboardSection title={IFS_FINANCIAL_STATEMENTS.BALANCE_SHEET} icon={<PieChart size={24} />}>
           <div className="mg-v2-mb-md">
-            <label className="mg-v2-label">기준일자</label>
+            <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.AS_OF_DATE}</label>
             <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
           </div>
           <ErpEmptyState
-            title="해당 기간 데이터가 없습니다"
-            description="선택한 기준일자에 등록된 내역이 없습니다."
+            title={IFS_FINANCIAL_STATEMENTS.NO_DATA_TITLE}
+            description={IFS_FINANCIAL_STATEMENTS.NO_DATA_DESC_AS_OF}
           />
         </DashboardSection>
       </div>
@@ -873,9 +880,9 @@ const BalanceSheetTab = () => {
 
   return (
     <div>
-      <DashboardSection title="대차대조표" icon={<PieChart size={24} />}>
+      <DashboardSection title={IFS_FINANCIAL_STATEMENTS.BALANCE_SHEET} icon={<PieChart size={24} />}>
         <div className="mg-v2-mb-md">
-          <label className="mg-v2-label">기준일자</label>
+          <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.AS_OF_DATE}</label>
           <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
         </div>
         <p className="mg-v2-caption integrated-finance-balance-sheet-hint integrated-finance-caption-box">
@@ -896,7 +903,7 @@ const BalanceSheetTab = () => {
               <div className="balance-sheet-items">
                 {assetsItems.length > 0 ? assetsItems.map((item, idx) => (
                   <div key={item.accountId ?? idx} className="balance-sheet-item">
-                    <ErpSafeText value={item.accountName} fallback="계정" />
+                    <ErpSafeText value={item.accountName} fallback={IFS_FALLBACK.ACCOUNT_NAME} />
                     {': '}
                     <ErpSafeNumber value={item.balance ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </div>
@@ -917,7 +924,7 @@ const BalanceSheetTab = () => {
               <div className="balance-sheet-items">
                 {liabilitiesItems.length > 0 ? liabilitiesItems.map((item, idx) => (
                   <div key={item.accountId ?? idx} className="balance-sheet-item">
-                    <ErpSafeText value={item.accountName} fallback="계정" />
+                    <ErpSafeText value={item.accountName} fallback={IFS_FALLBACK.ACCOUNT_NAME} />
                     {': '}
                     <ErpSafeNumber value={item.balance ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </div>
@@ -938,7 +945,7 @@ const BalanceSheetTab = () => {
               <div className="balance-sheet-items">
                 {equityItems.length > 0 ? equityItems.map((item, idx) => (
                   <div key={item.accountId ?? idx} className="balance-sheet-item">
-                    <ErpSafeText value={item.accountName} fallback="계정" />
+                    <ErpSafeText value={item.accountName} fallback={IFS_FALLBACK.ACCOUNT_NAME} />
                     {': '}
                     <ErpSafeNumber value={item.balance ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </div>
@@ -952,7 +959,9 @@ const BalanceSheetTab = () => {
           </div>
         </div>
         <div className={`mg-v2-ad-b0kla__card balance-sheet-card balance-verification-card ${isBalanced ? 'mg-v2-ad-b0kla__card-accent' : 'mg-v2-ad-b0kla__card-accent--orange'}`}>
-          <h4 className="balance-sheet-card-title">{isBalanced ? '대차대조표 균형' : '대차대조표 불균형'}</h4>
+          <h4 className="balance-sheet-card-title">
+            {isBalanced ? IFS_BALANCE_SHEET_STATUS.BALANCED : IFS_BALANCE_SHEET_STATUS.UNBALANCED}
+          </h4>
           <div className="balance-sheet-items balance-verification-content">
             자산 총계:{' '}
             <strong>
@@ -1002,7 +1011,7 @@ const IncomeStatementTab = () => {
     } catch (err) {
       console.error('Income statement fetch error:', err);
       setError(err);
-      notificationManager.show('손익계산서를 불러오는데 실패했습니다.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.INCOME_STATEMENT_LOAD_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -1024,21 +1033,21 @@ const IncomeStatementTab = () => {
   if (loading) {
     return (
       <div>
-        <DashboardSection title="손익계산서" icon={<BarChart3 size={24} />}>
+        <DashboardSection title={IFS_FINANCIAL_STATEMENTS.INCOME_STATEMENT} icon={<BarChart3 size={24} />}>
           <div className="mg-v2-mb-md">
             <div className="mg-v2-form-row">
               <div className="mg-v2-form-group">
-                <label className="mg-v2-label">시작일</label>
+                <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.START_DATE}</label>
                 <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mg-v2-input" />
               </div>
               <div className="mg-v2-form-group">
-                <label className="mg-v2-label">종료일</label>
+                <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.END_DATE}</label>
                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mg-v2-input" />
               </div>
             </div>
           </div>
-          <div className="finance-statement-panel" role="status" aria-live="polite">
-            <UnifiedLoading type="inline" text="데이터를 불러오는 중…" />
+          <div className="finance-statement-panel" role="status" aria-live="polite" aria-busy="true">
+            <UnifiedLoading type="inline" text={IFS_DISPLAY.LOADING_DATA} />
           </div>
         </DashboardSection>
       </div>
@@ -1048,22 +1057,22 @@ const IncomeStatementTab = () => {
   if (error) {
     return (
       <div>
-        <DashboardSection title="손익계산서" icon={<BarChart3 size={24} />}>
+        <DashboardSection title={IFS_FINANCIAL_STATEMENTS.INCOME_STATEMENT} icon={<BarChart3 size={24} />}>
           <div className="mg-v2-mb-md">
             <div className="mg-v2-form-row">
               <div className="mg-v2-form-group">
-                <label className="mg-v2-label">시작일</label>
+                <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.START_DATE}</label>
                 <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mg-v2-input" />
               </div>
               <div className="mg-v2-form-group">
-                <label className="mg-v2-label">종료일</label>
+                <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.END_DATE}</label>
                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mg-v2-input" />
               </div>
             </div>
           </div>
           <ErpEmptyState
-            title="데이터를 불러오지 못했습니다"
-            description="일시적인 오류일 수 있습니다. 아래 버튼으로 다시 시도해 주세요."
+            title={IFS_FINANCIAL_STATEMENTS.LOAD_ERROR_TITLE}
+            description={IFS_FINANCIAL_STATEMENTS.LOAD_ERROR_DESC}
             actionSlot={
               <MGButton
                 variant="primary"
@@ -1077,7 +1086,7 @@ const IncomeStatementTab = () => {
                 loading={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                다시 불러오기
+                {IFS_FINANCIAL_STATEMENTS.RETRY}
               </MGButton>
             }
           />
@@ -1089,22 +1098,22 @@ const IncomeStatementTab = () => {
   if (emptyState) {
     return (
       <div>
-        <DashboardSection title="손익계산서" icon={<BarChart3 size={24} />}>
+        <DashboardSection title={IFS_FINANCIAL_STATEMENTS.INCOME_STATEMENT} icon={<BarChart3 size={24} />}>
           <div className="mg-v2-mb-md">
             <div className="mg-v2-form-row">
               <div className="mg-v2-form-group">
-                <label className="mg-v2-label">시작일</label>
+                <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.START_DATE}</label>
                 <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mg-v2-input" />
               </div>
               <div className="mg-v2-form-group">
-                <label className="mg-v2-label">종료일</label>
+                <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.END_DATE}</label>
                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mg-v2-input" />
               </div>
             </div>
           </div>
           <ErpEmptyState
-            title="해당 기간 데이터가 없습니다"
-            description="선택한 기간에 등록된 내역이 없습니다."
+            title={IFS_FINANCIAL_STATEMENTS.NO_DATA_TITLE}
+            description={IFS_FINANCIAL_STATEMENTS.NO_DATA_DESC_PERIOD}
           />
         </DashboardSection>
       </div>
@@ -1119,18 +1128,18 @@ const IncomeStatementTab = () => {
 
   return (
     <div>
-      <DashboardSection title="손익계산서" icon={<BarChart3 size={24} />}>
+      <DashboardSection title={IFS_FINANCIAL_STATEMENTS.INCOME_STATEMENT} icon={<BarChart3 size={24} />}>
         <p className="mg-v2-caption integrated-finance-caption--lead">
           비용·수익 항목별 내역은 아래 카드에서 확인할 수 있습니다. (ERP 원장 기준)
         </p>
         <div className="mg-v2-mb-md">
           <div className="mg-v2-form-row">
             <div className="mg-v2-form-group">
-              <label className="mg-v2-label">시작일</label>
+              <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.START_DATE}</label>
               <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mg-v2-input" />
             </div>
             <div className="mg-v2-form-group">
-              <label className="mg-v2-label">종료일</label>
+              <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.END_DATE}</label>
               <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mg-v2-input" />
             </div>
           </div>
@@ -1150,7 +1159,7 @@ const IncomeStatementTab = () => {
               {revenueItems.length > 0 ? revenueItems.map((item, idx) => (
                 <div key={item.accountId ?? idx} className="income-statement-item">
                   <span>
-                    <ErpSafeText value={item.accountName} fallback="계정" />
+                    <ErpSafeText value={item.accountName} fallback={IFS_FALLBACK.ACCOUNT_NAME} />
                     :
                   </span>
                   <span className="income-statement-item-value">
@@ -1177,7 +1186,7 @@ const IncomeStatementTab = () => {
               {expensesItems.length > 0 ? expensesItems.map((item, idx) => (
                 <div key={item.accountId ?? idx} className="income-statement-item">
                   <span>
-                    <ErpSafeText value={item.accountName} fallback="계정" />
+                    <ErpSafeText value={item.accountName} fallback={IFS_FALLBACK.ACCOUNT_NAME} />
                     :
                   </span>
                   <span className="income-statement-item-value">
@@ -1270,7 +1279,7 @@ const CashFlowStatementTab = () => {
       setCashFlowData(mapped);
     } catch (err) {
       console.error('Cash flow statement fetch error:', err);
-      notificationManager.show('현금흐름표를 불러오는데 실패했습니다.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.CASH_FLOW_LOAD_FAILED, 'error');
       setCashFlowData(null);
     } finally {
       setLoading(false);
@@ -1279,8 +1288,8 @@ const CashFlowStatementTab = () => {
 
   if (loading) {
     return (
-      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
-        <UnifiedLoading type="inline" text="현금흐름표를 불러오는 중..." />
+      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
+        <UnifiedLoading type="inline" text={IFS_LOADING.CASH_FLOW} />
       </div>
     );
   }
@@ -1288,13 +1297,13 @@ const CashFlowStatementTab = () => {
   return (
     <div>
       <DashboardSection
-        title="현금흐름표"
+        title={IFS_CASH_FLOW_SECTION.DASHBOARD_TITLE}
         icon={<TrendingUp size={24} />}
       >
       <div className="mg-v2-mb-md">
         <div className="mg-v2-form-row">
           <div className="mg-v2-form-group">
-            <label className="mg-v2-label">시작일</label>
+            <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.START_DATE}</label>
             <input
               type="date"
               value={startDate}
@@ -1303,7 +1312,7 @@ const CashFlowStatementTab = () => {
             />
           </div>
           <div className="mg-v2-form-group">
-            <label className="mg-v2-label">종료일</label>
+            <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.END_DATE}</label>
             <input
               type="date"
               value={endDate}
@@ -1425,7 +1434,7 @@ const DailyReportTab = ({ period }) => {
         setReportData(result);
       }
     } catch (err) {
-      setError('일간 리포트를 불러오는 중 오류가 발생했습니다.');
+      setError(IFS_ERRORS.DAILY_REPORT_FETCH);
       console.error('Daily report fetch error:', err);
     } finally {
       setLoading(false);
@@ -1434,8 +1443,8 @@ const DailyReportTab = ({ period }) => {
 
   if (loading) {
     return (
-      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
-        <UnifiedLoading type="inline" text="일간 리포트 데이터를 불러오는 중..." />
+      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
+        <UnifiedLoading type="inline" text={IFS_LOADING.DAILY_REPORT} />
       </div>
     );
   }
@@ -1443,7 +1452,7 @@ const DailyReportTab = ({ period }) => {
   if (error) {
     return (
       <ErpEmptyState
-        title="리포트를 불러오지 못했습니다"
+        title={IFS_REPORT.EMPTY_TITLE}
         actionSlot={<SafeErrorDisplay error={error} variant="inline" />}
       />
     );
@@ -1452,7 +1461,7 @@ const DailyReportTab = ({ period }) => {
   return (
     <div>
       <DashboardSection
-        title="일간 재무 리포트"
+        title={IFS_REPORT.DAILY_SECTION_TITLE}
         icon={<Calendar size={24} />}
       >
       
@@ -1563,7 +1572,7 @@ const MonthlyReportTab = ({ period }) => {
         setReportData(result);
       }
     } catch (err) {
-      setError('월간 리포트를 불러오는 중 오류가 발생했습니다.');
+      setError(IFS_ERRORS.MONTHLY_REPORT_FETCH);
       console.error('Monthly report fetch error:', err);
     } finally {
       setLoading(false);
@@ -1595,13 +1604,13 @@ const MonthlyReportTab = ({ period }) => {
   };
 
   const formatMonthYear = (year, month) => {
-    return `${year}년 ${month}월`;
+    return `${year}${IFS_REPORT.YEAR_SUFFIX} ${month}${IFS_REPORT.MONTH_SUFFIX}`;
   };
 
   if (loading) {
     return (
-      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
-        <UnifiedLoading type="inline" text="월간 리포트 데이터를 불러오는 중..." />
+      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
+        <UnifiedLoading type="inline" text={IFS_LOADING.MONTHLY_REPORT} />
       </div>
     );
   }
@@ -1609,7 +1618,7 @@ const MonthlyReportTab = ({ period }) => {
   if (error) {
     return (
       <ErpEmptyState
-        title="리포트를 불러오지 못했습니다"
+        title={IFS_REPORT.EMPTY_TITLE}
         actionSlot={<SafeErrorDisplay error={error} variant="inline" />}
       />
     );
@@ -1627,11 +1636,14 @@ const MonthlyReportTab = ({ period }) => {
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handlePreviousMonth}
-              title="이전 달"
+              title={IFS_REPORT.TOOLTIP_PREV_MONTH}
             >
-              이전
+              {IFS_REPORT.BTN_PREV}
             </MGButton>
-            <span>월간 재무 리포트 - {formatMonthYear(currentMonth.year, currentMonth.month)}</span>
+            <span>
+              {IFS_REPORT.MONTHLY_HEADING}
+              {formatMonthYear(currentMonth.year, currentMonth.month)}
+            </span>
             <MGButton
               variant="outline"
               size="small"
@@ -1639,9 +1651,9 @@ const MonthlyReportTab = ({ period }) => {
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleNextMonth}
-              title="다음 달"
+              title={IFS_REPORT.TOOLTIP_NEXT_MONTH}
             >
-              다음
+              {IFS_REPORT.BTN_NEXT}
             </MGButton>
           </div>
         }
@@ -1753,7 +1765,7 @@ const YearlyReportTab = ({ period }) => {
         setReportData(result);
       }
     } catch (err) {
-      setError('년간 리포트를 불러오는 중 오류가 발생했습니다.');
+      setError(IFS_ERRORS.YEARLY_REPORT_FETCH);
       console.error('Yearly report fetch error:', err);
     } finally {
       setLoading(false);
@@ -1770,8 +1782,8 @@ const YearlyReportTab = ({ period }) => {
 
   if (loading) {
     return (
-      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
-        <UnifiedLoading type="inline" text="년간 리포트 데이터를 불러오는 중..." />
+      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
+        <UnifiedLoading type="inline" text={IFS_LOADING.YEARLY_REPORT} />
       </div>
     );
   }
@@ -1779,7 +1791,7 @@ const YearlyReportTab = ({ period }) => {
   if (error) {
     return (
       <ErpEmptyState
-        title="리포트를 불러오지 못했습니다"
+        title={IFS_REPORT.EMPTY_TITLE}
         actionSlot={<SafeErrorDisplay error={error} variant="inline" />}
       />
     );
@@ -1797,11 +1809,15 @@ const YearlyReportTab = ({ period }) => {
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handlePreviousYear}
-              title="전년도"
+              title={IFS_REPORT.TOOLTIP_PREV_YEAR}
             >
-              이전
+              {IFS_REPORT.BTN_PREV}
             </MGButton>
-            <span>년간 재무 리포트 - {currentYear}년</span>
+            <span>
+              {IFS_REPORT.YEARLY_HEADING}
+              {currentYear}
+              {IFS_REPORT.YEAR_SUFFIX}
+            </span>
             <MGButton
               variant="outline"
               size="small"
@@ -1809,9 +1825,9 @@ const YearlyReportTab = ({ period }) => {
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleNextYear}
-              title="다음 년도"
+              title={IFS_REPORT.TOOLTIP_NEXT_YEAR}
             >
-              다음
+              {IFS_REPORT.BTN_NEXT}
             </MGButton>
           </div>
         }
@@ -1894,7 +1910,7 @@ const JournalEntriesTab = () => {
       }
     } catch (err) {
       console.error('Journal entries fetch error:', err);
-      notificationManager.show('거래 목록을 불러오는데 실패했습니다.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.JOURNAL_LIST_LOAD_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -1904,12 +1920,12 @@ const JournalEntriesTab = () => {
     try {
       const result = await StandardizedApi.put(ERP_API.JOURNAL_ENTRY_APPROVE(id), {});
       if (!isApiEnvelopeFailure(result)) {
-        notificationManager.show('거래가 반영되었습니다.', 'success');
+        notificationManager.show(IFS_NOTIFICATIONS.JOURNAL_POST_SUCCESS, 'success');
         fetchJournalEntries();
       }
     } catch (err) {
       console.error('Approve error:', err);
-      notificationManager.show('거래 반영에 실패했습니다. 다시 시도해 주세요.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.JOURNAL_POST_FAILED, 'error');
     }
   };
 
@@ -1917,26 +1933,26 @@ const JournalEntriesTab = () => {
     try {
       const result = await StandardizedApi.put(ERP_API.JOURNAL_ENTRY_POST(id), {});
       if (!isApiEnvelopeFailure(result)) {
-        notificationManager.show('거래가 반영되었습니다.', 'success');
+        notificationManager.show(IFS_NOTIFICATIONS.JOURNAL_POST_SUCCESS, 'success');
         fetchJournalEntries();
       }
     } catch (err) {
       console.error('Post error:', err);
-      notificationManager.show('거래 반영에 실패했습니다. 다시 시도해 주세요.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.JOURNAL_POST_FAILED, 'error');
     }
   };
 
   if (loading) {
     return (
-      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
-        <UnifiedLoading type="inline" text="거래 목록을 불러오는 중..." />
+      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
+        <UnifiedLoading type="inline" text={IFS_LOADING.JOURNAL_LIST} />
       </div>
     );
   }
 
   return (
     <section className="mg-v2-section">
-      <DashboardSection title="거래 정리" icon={<Receipt size={20} />}>
+      <DashboardSection title={integratedFinanceTabLabel('journal-entries')} icon={<Receipt size={20} />}>
         {/* 분개 설명 섹션 */}
         <div className="mg-v2-mb-md integrated-finance-journal-help">
           {/* 로컬 도움말 토글(비동기 재조회 아님) — loading 미부여 */}
@@ -1955,7 +1971,7 @@ const JournalEntriesTab = () => {
             onClick={() => setShowHelp(!showHelp)}
             preventDoubleClick={false}
           >
-            <span>{showHelp ? '거래 정리란? (접기)' : '거래 정리란? (펼치기)'}</span>
+            <span>{showHelp ? IFS_JOURNAL_HELP.EXPANDED : IFS_JOURNAL_HELP.COLLAPSED}</span>
           </MGButton>
           {showHelp && (
             <div className="integrated-finance-journal-help-body">
@@ -1993,11 +2009,11 @@ const JournalEntriesTab = () => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setShowCreateModal(true)}
           >
-            거래 등록
+            {IFS_HEADER_ACTIONS.REGISTER_ENTRY}
           </MGButton>
         </div>
         <div className="mg-v2-table-container">
-          <table className="mg-table" data-label="거래 목록">
+          <table className="mg-table" data-label={IFS_TABLE_CELL.ENTRY_LIST}>
             <thead>
               <tr>
                 <th>거래번호</th>
@@ -2018,18 +2034,16 @@ const JournalEntriesTab = () => {
               ) : (
                 entries.map(entry => (
                   <tr key={entry.id}>
-                    <td data-label="거래번호">{entry.entryNumber}</td>
-                    <td data-label="기준일자">{entry.entryDate}</td>
-                    <td data-label="차변합계">{formatCurrency(entry.totalDebit || 0)}</td>
-                    <td data-label="대변합계">{formatCurrency(entry.totalCredit || 0)}</td>
-                    <td data-label="상태">
+                    <td data-label={IFS_TABLE_CELL.ENTRY_NUMBER}>{entry.entryNumber}</td>
+                    <td data-label={IFS_FINANCIAL_STATEMENTS.AS_OF_DATE}>{entry.entryDate}</td>
+                    <td data-label={IFS_TABLE_CELL.TOTAL_DEBIT}>{formatCurrency(entry.totalDebit || 0)}</td>
+                    <td data-label={IFS_TABLE_CELL.TOTAL_CREDIT}>{formatCurrency(entry.totalCredit || 0)}</td>
+                    <td data-label={IFS_TABLE_CELL.STATUS}>
                       <span className={`mg-v2-badge mg-v2-badge--${entry.entryStatus?.toLowerCase() || 'default'}`}>
-                        {entry.entryStatus === 'DRAFT' ? '초안' : 
-                         entry.entryStatus === 'APPROVED' ? '승인됨' : 
-                         entry.entryStatus === 'POSTED' ? '반영 완료' : entry.entryStatus}
+                        {formatJournalEntryStatus(entry.entryStatus)}
                       </span>
                     </td>
-                    <td data-label="작업">
+                    <td data-label={IFS_TABLE_CELL.ACTION}>
                       <div className={COMMON_CSS_CLASSES.ACTION_BUTTONS}>
                         <MGButton
                           variant="outline"
@@ -2114,7 +2128,7 @@ const LedgersTab = () => {
         setAccountList(Array.isArray(list) ? list : []);
       } catch (err) {
         console.error('계좌 목록 로드 실패:', err);
-        notificationManager.show('계좌 목록을 불러오는데 실패했습니다.', 'error');
+        notificationManager.show(IFS_NOTIFICATIONS.BANK_ACCOUNTS_LOAD_FAILED, 'error');
       }
     };
     loadAccounts();
@@ -2146,7 +2160,7 @@ const LedgersTab = () => {
       }
     } catch (err) {
       console.error('Ledger fetch error:', err);
-      notificationManager.show('계정별 내역을 불러오는데 실패했습니다.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.LEDGERS_LOAD_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -2154,14 +2168,14 @@ const LedgersTab = () => {
 
   return (
     <section className="mg-v2-section">
-      <DashboardSection title="계정별 내역" icon={<BookOpen size={20} />}>
+      <DashboardSection title={integratedFinanceTabLabel('ledgers')} icon={<BookOpen size={20} />}>
         <div className="mg-v2-form-group mg-v2-mb-md">
           <div className="mg-v2-flex mg-v2-gap-sm integrated-finance-flex-wrap">
             <select
               className="mg-v2-input"
               value={selectedAccountId ?? ''}
               onChange={(e) => setSelectedAccountId(e.target.value ? Number.parseInt(e.target.value, 10) : null)}
-              aria-label="계좌 선택"
+              aria-label={IFS_ACCESSIBILITY.SELECT_BANK_ACCOUNT}
             >
               <option value="">계좌를 선택하세요</option>
               {accountList.map((acc) => (
@@ -2173,14 +2187,14 @@ const LedgersTab = () => {
             <input
               type="date"
               className="mg-v2-input"
-              placeholder="시작일"
+              placeholder={IFS_FINANCIAL_STATEMENTS.START_DATE}
               value={periodStart}
               onChange={(e) => setPeriodStart(e.target.value)}
             />
             <input
               type="date"
               className="mg-v2-input"
-              placeholder="종료일"
+              placeholder={IFS_FINANCIAL_STATEMENTS.END_DATE}
               value={periodEnd}
               onChange={(e) => setPeriodEnd(e.target.value)}
             />
@@ -2200,7 +2214,7 @@ const LedgersTab = () => {
         
         {ledgers.length > 0 ? (
           <div className="mg-v2-table-container">
-            <table className="mg-table" data-label="계정별 내역">
+            <table className="mg-table" data-label={IFS_TABLE_CELL.LEDGER_LIST}>
               <thead>
                 <tr>
                   <th>계정과목</th>
@@ -2219,13 +2233,13 @@ const LedgersTab = () => {
                     className="integrated-finance-table-row--clickable"
                     onClick={() => { setSelectedLedger(ledger); setShowLedgerDetailModal(true); }}
                   >
-                    <td data-label="계정과목">{ledger.accountId}</td>
-                    <td data-label="기간 시작">{ledger.periodStart}</td>
-                    <td data-label="기간 종료">{ledger.periodEnd}</td>
-                    <td data-label="기초잔액">{formatCurrency(ledger.openingBalance || 0)}</td>
-                    <td data-label="차변합계">{formatCurrency(ledger.totalDebit || 0)}</td>
-                    <td data-label="대변합계">{formatCurrency(ledger.totalCredit || 0)}</td>
-                    <td data-label="기말잔액">{formatCurrency(ledger.closingBalance || 0)}</td>
+                    <td data-label={IFS_TABLE_CELL.ACCOUNT_SUBJECT}>{ledger.accountId}</td>
+                    <td data-label={IFS_TABLE_CELL.PERIOD_START}>{ledger.periodStart}</td>
+                    <td data-label={IFS_TABLE_CELL.PERIOD_END}>{ledger.periodEnd}</td>
+                    <td data-label={IFS_TABLE_CELL.OPENING_BALANCE}>{formatCurrency(ledger.openingBalance || 0)}</td>
+                    <td data-label={IFS_TABLE_CELL.TOTAL_DEBIT}>{formatCurrency(ledger.totalDebit || 0)}</td>
+                    <td data-label={IFS_TABLE_CELL.TOTAL_CREDIT}>{formatCurrency(ledger.totalCredit || 0)}</td>
+                    <td data-label={IFS_TABLE_CELL.CLOSING_BALANCE}>{formatCurrency(ledger.closingBalance || 0)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -2275,7 +2289,7 @@ const SettlementTab = () => {
       }
     } catch (err) {
       console.error('Settlement rules fetch error:', err);
-      notificationManager.show('정산 규칙을 불러오는데 실패했습니다.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.SETTLEMENT_RULES_LOAD_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -2290,7 +2304,7 @@ const SettlementTab = () => {
       }
     } catch (err) {
       console.error('Settlements fetch error:', err);
-      notificationManager.show('정산 결과를 불러오는데 실패했습니다.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.SETTLEMENT_RESULTS_LOAD_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -2303,12 +2317,12 @@ const SettlementTab = () => {
         {}
       );
       if (!isApiEnvelopeFailure(result)) {
-        notificationManager.show('정산이 계산되었습니다.', 'success');
+        notificationManager.show(IFS_NOTIFICATIONS.SETTLEMENT_CALC_SUCCESS, 'success');
         fetchSettlements();
       }
     } catch (err) {
       console.error('Calculate error:', err);
-      notificationManager.show('정산 계산에 실패했습니다.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.SETTLEMENT_CALC_FAILED, 'error');
     }
   };
 
@@ -2316,15 +2330,15 @@ const SettlementTab = () => {
 
   if (loading) {
     return (
-      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
-        <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+      <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
+        <UnifiedLoading type="inline" text={IFS_LOADING.GENERIC} />
       </div>
     );
   }
 
   return (
     <section className="mg-v2-section">
-      <DashboardSection title="정산" icon={<Calculator size={20} />}>
+      <DashboardSection title={integratedFinanceTabLabel('settlement')} icon={<Calculator size={20} />}>
         <div className="mg-v2-tabs">
           <MGButton
             type="button"
@@ -2367,7 +2381,7 @@ const SettlementTab = () => {
               </MGButton>
             </div>
             <div className="mg-v2-table-container">
-              <table className="mg-table" data-label="정산 규칙 목록">
+              <table className="mg-table" data-label={IFS_TABLE_CELL.RULE_LIST}>
               <thead>
                 <tr>
                   <th>규칙명</th>
@@ -2387,16 +2401,16 @@ const SettlementTab = () => {
                 ) : (
                   rules.map(rule => (
                     <tr key={rule.id}>
-                      <td data-label="규칙명">{rule.ruleName}</td>
-                      <td data-label="업종 유형">{rule.businessType}</td>
-                      <td data-label="정산 유형">{rule.settlementType}</td>
-                      <td data-label="계산 방법">{rule.calculationMethod}</td>
-                      <td data-label="활성화">
+                      <td data-label={IFS_TABLE_CELL.RULE_NAME}>{rule.ruleName}</td>
+                      <td data-label={IFS_TABLE_CELL.BUSINESS_TYPE}>{rule.businessType}</td>
+                      <td data-label={IFS_TABLE_CELL.SETTLEMENT_TYPE}>{rule.settlementType}</td>
+                      <td data-label={IFS_TABLE_CELL.CALC_METHOD}>{rule.calculationMethod}</td>
+                      <td data-label={IFS_TABLE_CELL.ACTIVATION}>
                         <span className={`mg-v2-badge ${rule.isActive ? 'mg-v2-badge--success' : 'mg-v2-badge--secondary'}`}>
-                          {rule.isActive ? '활성' : '비활성'}
+                          {rule.isActive ? IFS_ACTIVE_LABEL.ACTIVE : IFS_ACTIVE_LABEL.INACTIVE}
                         </span>
                       </td>
-                      <td data-label="작업">
+                      <td data-label={IFS_TABLE_CELL.ACTION}>
                         <MGButton
                           variant="outline"
                           size="small"
@@ -2424,7 +2438,7 @@ const SettlementTab = () => {
                 <input
                   type="text"
                   className="mg-v2-input"
-                  placeholder="정산 기간 (예: 202512)"
+                  placeholder={IFS_INPUT_PLACEHOLDER.SETTLEMENT_PERIOD}
                   value={settlementPeriod}
                   onChange={(e) => setSettlementPeriod(e.target.value)}
                 />
@@ -2445,7 +2459,7 @@ const SettlementTab = () => {
             </div>
             
             <div className="mg-v2-table-container">
-              <table className="mg-table" data-label="정산 결과 목록">
+              <table className="mg-table" data-label={IFS_TABLE_CELL.RESULT_LIST}>
                 <thead>
                   <tr>
                     <th>정산번호</th>
@@ -2468,20 +2482,18 @@ const SettlementTab = () => {
                   ) : (
                     settlements.map(settlement => (
                       <tr key={settlement.id}>
-                        <td data-label="정산번호">{settlement.settlementNumber}</td>
-                        <td data-label="정산기간">{settlement.settlementPeriod}</td>
-                        <td data-label="총매출">{formatCurrency(settlement.totalRevenue || 0)}</td>
-                        <td data-label="수수료">{formatCurrency(settlement.commissionAmount || 0)}</td>
-                        <td data-label="로열티">{formatCurrency(settlement.royaltyAmount || 0)}</td>
-                        <td data-label="순정산액">{formatCurrency(settlement.netSettlementAmount || 0)}</td>
-                        <td data-label="상태">
+                        <td data-label={IFS_TABLE_CELL.SETTLEMENT_NUMBER}>{settlement.settlementNumber}</td>
+                        <td data-label={IFS_TABLE_CELL.SETTLEMENT_PERIOD}>{settlement.settlementPeriod}</td>
+                        <td data-label={IFS_TABLE_CELL.TOTAL_REVENUE}>{formatCurrency(settlement.totalRevenue || 0)}</td>
+                        <td data-label={IFS_TABLE_CELL.COMMISSION}>{formatCurrency(settlement.commissionAmount || 0)}</td>
+                        <td data-label={IFS_TABLE_CELL.ROYALTY}>{formatCurrency(settlement.royaltyAmount || 0)}</td>
+                        <td data-label={IFS_TABLE_CELL.NET_SETTLEMENT}>{formatCurrency(settlement.netSettlementAmount || 0)}</td>
+                        <td data-label={IFS_TABLE_CELL.STATUS}>
                           <span className={`mg-v2-badge mg-v2-badge--${settlement.status?.toLowerCase() || 'default'}`}>
-                            {settlement.status === 'PENDING' ? '대기중' : 
-                             settlement.status === 'APPROVED' ? '승인됨' : 
-                             settlement.status === 'PAID' ? '지급완료' : settlement.status}
+                            {formatSettlementRowStatus(settlement.status)}
                           </span>
                         </td>
-                        <td data-label="작업">
+                        <td data-label={IFS_TABLE_CELL.ACTION}>
                           {settlement.status === 'PENDING' && (
                             <MGButton
                               variant="success"
@@ -2493,11 +2505,11 @@ const SettlementTab = () => {
                                 try {
                                   const result = await StandardizedApi.post(ERP_API.SETTLEMENT_APPROVE(settlement.id), {});
                                   if (!isApiEnvelopeFailure(result)) {
-                                    notificationManager.show('정산이 승인되었습니다.', 'success');
+                                    notificationManager.show(IFS_NOTIFICATIONS.SETTLEMENT_APPROVE_SUCCESS, 'success');
                                     fetchSettlements();
                                   }
                                 } catch (err) {
-                                  notificationManager.show('정산 승인에 실패했습니다.', 'error');
+                                  notificationManager.show(IFS_NOTIFICATIONS.SETTLEMENT_APPROVE_FAILED, 'error');
                                 }
                               }}
                             >
@@ -2545,7 +2557,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
       }
     } catch (err) {
       console.error('Entry detail fetch error:', err);
-      notificationManager.show('거래 정보를 불러오는데 실패했습니다.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.ENTRY_DETAIL_LOAD_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -2556,15 +2568,15 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
       <UnifiedModal
         isOpen={true}
         onClose={onClose}
-        title="거래 상세"
+        title={IFS_MODAL_TITLE.ENTRY_DETAIL}
         size="large"
         backdropClick={true}
         className="mg-v2-ad-b0kla"
       >
         <div aria-busy={loading}>
         {loading ? (
-          <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
-            <UnifiedLoading type="inline" text="거래 정보를 불러오는 중..." />
+          <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
+            <UnifiedLoading type="inline" text={IFS_LOADING.ENTRY_DETAIL} />
           </div>
         ) : entryDetail ? (
           <div className="mg-v2-form-group">
@@ -2573,16 +2585,14 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
               <div className="mg-v2-text">{entryDetail.entryNumber}</div>
             </div>
             <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">기준일자</label>
+              <label className="mg-v2-label">{IFS_FINANCIAL_STATEMENTS.AS_OF_DATE}</label>
               <div className="mg-v2-text">{entryDetail.entryDate}</div>
             </div>
             <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">상태</label>
+              <label className="mg-v2-label">{IFS_TABLE_CELL.STATUS}</label>
               <div className="mg-v2-text">
                 <span className={`mg-v2-badge mg-v2-badge--${entryDetail.entryStatus?.toLowerCase() || 'default'}`}>
-                  {entryDetail.entryStatus === 'DRAFT' ? '초안' :
-                   entryDetail.entryStatus === 'APPROVED' ? '승인됨' :
-                   entryDetail.entryStatus === 'POSTED' ? '반영 완료' : entryDetail.entryStatus}
+                  {formatJournalEntryStatus(entryDetail.entryStatus)}
                 </span>
               </div>
             </div>
@@ -2590,7 +2600,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
               <div className="mg-v2-mb-md">
                 <label className="mg-v2-label">거래 라인</label>
                 <div className="mg-v2-table-container">
-                  <table className="mg-table" data-label="거래 라인 목록">
+                  <table className="mg-table" data-label={IFS_TABLE_CELL.LINE_LIST}>
                     <thead>
                       <tr>
                         <th>계정</th>
@@ -2602,10 +2612,10 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
                     <tbody>
                       {entryDetail.lines.map((line, idx) => (
                         <tr key={idx}>
-                          <td data-label="계정">{line.accountName || line.accountId}</td>
-                          <td data-label="차변">{formatCurrency(line.debitAmount || 0)}</td>
-                          <td data-label="대변">{formatCurrency(line.creditAmount || 0)}</td>
-                          <td data-label="설명">{line.description || '-'}</td>
+                          <td data-label={IFS_TABLE_CELL.ACCOUNT}>{line.accountName || line.accountId}</td>
+                          <td data-label={IFS_TABLE_CELL.DEBIT}>{formatCurrency(line.debitAmount || 0)}</td>
+                          <td data-label={IFS_TABLE_CELL.CREDIT}>{formatCurrency(line.creditAmount || 0)}</td>
+                          <td data-label={IFS_TABLE_CELL.DESCRIPTION}>{line.description || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -2680,7 +2690,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
         setAccountTypes(Array.isArray(raw) ? raw : []);
       } catch (err) {
         if (!cancelled) {
-          setAccountTypesError(err?.message || '계정과목 목록을 불러올 수 없습니다.');
+          setAccountTypesError(err?.message || IFS_ERRORS.ACCOUNT_TYPES_FETCH);
           setAccountTypes([]);
         }
       } finally {
@@ -2711,7 +2721,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
     if (lines.length > 2) {
       setLines(lines.filter((_, i) => i !== index));
     } else {
-      notificationManager.show('최소 2개의 라인이 필요합니다.', 'warning');
+      notificationManager.show(IFS_NOTIFICATIONS.JOURNAL_MIN_TWO_LINES, 'warning');
     }
   };
 
@@ -2761,7 +2771,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
 
   const handleSubmit = async() => {
     if (!validateForm()) {
-      notificationManager.show('입력 정보를 확인해주세요.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.FORM_VALIDATE_ERROR, 'error');
       return;
     }
 
@@ -2783,15 +2793,15 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
       const result = await StandardizedApi.post(ERP_API.JOURNAL_ENTRIES, requestData);
 
       if (isApiEnvelopeFailure(result)) {
-        notificationManager.show(result.message || '거래 등록에 실패했습니다. 다시 시도해 주세요.', 'error');
+        notificationManager.show(result.message || IFS_NOTIFICATIONS.JOURNAL_CREATE_FAILED, 'error');
       } else {
-        notificationManager.show('거래가 등록되었습니다.', 'success');
+        notificationManager.show(IFS_NOTIFICATIONS.JOURNAL_CREATE_SUCCESS, 'success');
         onRefresh();
         onClose();
       }
     } catch (err) {
       console.error('Create entry error:', err);
-      notificationManager.show('거래 등록에 실패했습니다. 다시 시도해 주세요.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.JOURNAL_CREATE_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -2804,7 +2814,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
     <UnifiedModal
       isOpen={true}
       onClose={onClose}
-      title="거래 등록"
+      title={IFS_MODAL_TITLE.ENTRY_CREATE}
       size="large"
       backdropClick={true}
       className="mg-v2-ad-b0kla"
@@ -2844,7 +2854,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
           <input
             type="text"
             className="mg-v2-input"
-            placeholder="거래 내용을 입력하세요"
+            placeholder={IFS_INPUT_PLACEHOLDER.ENTRY_DESCRIPTION}
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
@@ -2875,7 +2885,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
             </div>
           )}
           <div className="mg-v2-table-container">
-            <table className="mg-table" data-label="거래 라인 입력">
+            <table className="mg-table" data-label={IFS_TABLE_CELL.LINE_INPUT}>
               <thead>
                 <tr>
                   <th>계정과목</th>
@@ -2888,7 +2898,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
               <tbody>
                 {lines.map((line, index) => (
                   <tr key={index}>
-                    <td data-label="계정과목">
+                    <td data-label={IFS_TABLE_CELL.ACCOUNT_SUBJECT}>
                       <select
                         className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_accountId`] ? 'mg-v2-input-error' : ''}`}
                         value={line.accountId}
@@ -2906,7 +2916,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
                         <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_accountId`]}</div>
                       )}
                     </td>
-                    <td data-label="차변">
+                    <td data-label={IFS_TABLE_CELL.DEBIT}>
                       <input
                         type="number"
                         className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
@@ -2915,7 +2925,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
                         onChange={(e) => handleLineChange(index, 'debitAmount', e.target.value)}
                       />
                     </td>
-                    <td data-label="대변">
+                    <td data-label={IFS_TABLE_CELL.CREDIT}>
                       <input
                         type="number"
                         className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
@@ -2927,16 +2937,16 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
                         <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_amount`]}</div>
                       )}
                     </td>
-                    <td data-label="설명">
+                    <td data-label={IFS_TABLE_CELL.DESCRIPTION}>
                       <input
                         type="text"
                         className="mg-v2-input mg-v2-input-sm"
-                        placeholder="설명"
+                        placeholder={IFS_INPUT_PLACEHOLDER.LINE_DESCRIPTION}
                         value={line.description}
                         onChange={(e) => handleLineChange(index, 'description', e.target.value)}
                       />
                     </td>
-                    <td data-label="작업">
+                    <td data-label={IFS_TABLE_CELL.ACTION}>
                       {lines.length > 2 && (
                         <MGButton
                           variant="danger"
@@ -3050,7 +3060,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
 
   const handleSubmit = async() => {
     if (!validateForm()) {
-      notificationManager.show('입력 정보를 확인해주세요.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.FORM_VALIDATE_ERROR, 'error');
       return;
     }
 
@@ -3068,15 +3078,18 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
       const result = await StandardizedApi.post(ERP_API.SETTLEMENT_RULES, requestData);
 
       if (isApiEnvelopeFailure(result)) {
-        notificationManager.show(result.message || '정산 규칙 저장에 실패했습니다.', 'error');
+        notificationManager.show(result.message || IFS_NOTIFICATIONS.SETTLEMENT_RULE_SAVE_FAILED, 'error');
       } else {
-        notificationManager.show(rule ? '정산 규칙이 수정되었습니다.' : '정산 규칙이 생성되었습니다.', 'success');
+        notificationManager.show(
+          rule ? IFS_NOTIFICATIONS.SETTLEMENT_RULE_UPDATED : IFS_NOTIFICATIONS.SETTLEMENT_RULE_CREATED,
+          'success'
+        );
         onRefresh();
         onClose();
       }
     } catch (err) {
       console.error('Settlement rule save error:', err);
-      notificationManager.show('정산 규칙 저장에 실패했습니다.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.SETTLEMENT_RULE_SAVE_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -3086,7 +3099,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
     <UnifiedModal
       isOpen={true}
       onClose={onClose}
-      title={rule ? '정산 규칙 수정' : '정산 규칙 생성'}
+      title={rule ? IFS_MODAL_TITLE.SETTLEMENT_RULE_EDIT : IFS_MODAL_TITLE.SETTLEMENT_RULE_CREATE}
       size="medium"
       backdropClick={true}
       className="mg-v2-ad-b0kla"
@@ -3099,7 +3112,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
           <input
             type="text"
             className={`mg-v2-input ${errors.ruleName ? 'mg-v2-input-error' : ''}`}
-            placeholder="정산 규칙명을 입력하세요"
+            placeholder={IFS_INPUT_PLACEHOLDER.SETTLEMENT_RULE_NAME}
             value={formData.ruleName}
             onChange={(e) => setFormData({ ...formData, ruleName: e.target.value })}
           />
@@ -3253,7 +3266,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
     <UnifiedModal
       isOpen={true}
       onClose={onClose}
-      title="계정별 내역 상세"
+      title={IFS_MODAL_TITLE.LEDGER_DETAIL}
       size="large"
       backdropClick={true}
       className="mg-v2-ad-b0kla"
@@ -3288,12 +3301,12 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">관련 거래 내역</label>
           {loadingEntries ? (
-            <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
-              <UnifiedLoading type="inline" text="거래 내역을 불러오는 중..." />
+            <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
+              <UnifiedLoading type="inline" text={IFS_LOADING.LEDGER_ENTRIES} />
             </div>
           ) : journalEntries.length > 0 ? (
             <div className="mg-v2-table-container">
-              <table className="mg-table" data-label="거래 내역 목록">
+              <table className="mg-table" data-label={IFS_TABLE_CELL.HISTORY_LIST}>
                 <thead>
                   <tr>
                     <th>거래번호</th>
@@ -3308,11 +3321,11 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
                     const line = entry.lines?.find(l => l.accountId === ledger.accountId);
                     return line ? (
                       <tr key={entry.id}>
-                        <td data-label="거래번호">{entry.entryNumber}</td>
-                        <td data-label="기준일자">{entry.entryDate}</td>
-                        <td data-label="차변">{formatCurrency(line.debitAmount || 0)}</td>
-                        <td data-label="대변">{formatCurrency(line.creditAmount || 0)}</td>
-                        <td data-label="설명">{line.description || entry.description || '-'}</td>
+                        <td data-label={IFS_TABLE_CELL.ENTRY_NUMBER}>{entry.entryNumber}</td>
+                        <td data-label={IFS_FINANCIAL_STATEMENTS.AS_OF_DATE}>{entry.entryDate}</td>
+                        <td data-label={IFS_TABLE_CELL.DEBIT}>{formatCurrency(line.debitAmount || 0)}</td>
+                        <td data-label={IFS_TABLE_CELL.CREDIT}>{formatCurrency(line.creditAmount || 0)}</td>
+                        <td data-label={IFS_TABLE_CELL.DESCRIPTION}>{line.description || entry.description || '-'}</td>
                       </tr>
                     ) : null;
                   })}
@@ -3374,7 +3387,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
         setAccountTypes(Array.isArray(raw) ? raw : []);
       } catch (err) {
         if (!cancelled) {
-          setAccountTypesError(err?.message || '계정과목 목록을 불러올 수 없습니다.');
+          setAccountTypesError(err?.message || IFS_ERRORS.ACCOUNT_TYPES_FETCH);
           setAccountTypes([]);
         }
       } finally {
@@ -3405,7 +3418,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
     if (lines.length > 2) {
       setLines(lines.filter((_, i) => i !== index));
     } else {
-      notificationManager.show('최소 2개의 라인이 필요합니다.', 'warning');
+      notificationManager.show(IFS_NOTIFICATIONS.JOURNAL_MIN_TWO_LINES, 'warning');
     }
   };
 
@@ -3455,7 +3468,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
 
   const handleSubmit = async() => {
     if (!validateForm()) {
-      notificationManager.show('입력 정보를 확인해주세요.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.FORM_VALIDATE_ERROR, 'error');
       return;
     }
 
@@ -3477,15 +3490,15 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
       const result = await StandardizedApi.put(ERP_API.JOURNAL_ENTRY_UPDATE(entry.id), requestData);
 
       if (isApiEnvelopeFailure(result)) {
-        notificationManager.show(result.message || '거래 수정에 실패했습니다. 다시 시도해 주세요.', 'error');
+        notificationManager.show(result.message || IFS_NOTIFICATIONS.JOURNAL_UPDATE_FAILED, 'error');
       } else {
-        notificationManager.show('거래가 수정되었습니다.', 'success');
+        notificationManager.show(IFS_NOTIFICATIONS.JOURNAL_UPDATE_SUCCESS, 'success');
         onRefresh();
         onClose();
       }
     } catch (err) {
       console.error('Update entry error:', err);
-      notificationManager.show('거래 수정에 실패했습니다. 다시 시도해 주세요.', 'error');
+      notificationManager.show(IFS_NOTIFICATIONS.JOURNAL_UPDATE_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -3498,7 +3511,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
     <UnifiedModal
       isOpen={true}
       onClose={onClose}
-      title="거래 수정"
+      title={IFS_MODAL_TITLE.ENTRY_EDIT}
       size="large"
       backdropClick={true}
       className="mg-v2-ad-b0kla"
@@ -3528,7 +3541,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
           <input
             type="text"
             className="mg-v2-input"
-            placeholder="거래 내용을 입력하세요"
+            placeholder={IFS_INPUT_PLACEHOLDER.ENTRY_DESCRIPTION}
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
@@ -3559,7 +3572,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
             </div>
           )}
           <div className="mg-v2-table-container">
-            <table className="mg-table" data-label="거래 라인 입력">
+            <table className="mg-table" data-label={IFS_TABLE_CELL.LINE_INPUT}>
               <thead>
                 <tr>
                   <th>계정과목</th>
@@ -3572,7 +3585,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
               <tbody>
                 {lines.map((line, index) => (
                   <tr key={index}>
-                    <td data-label="계정과목">
+                    <td data-label={IFS_TABLE_CELL.ACCOUNT_SUBJECT}>
                       <select
                         className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_accountId`] ? 'mg-v2-input-error' : ''}`}
                         value={line.accountId}
@@ -3590,7 +3603,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
                         <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_accountId`]}</div>
                       )}
                     </td>
-                    <td data-label="차변">
+                    <td data-label={IFS_TABLE_CELL.DEBIT}>
                       <input
                         type="number"
                         className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
@@ -3599,7 +3612,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
                         onChange={(e) => handleLineChange(index, 'debitAmount', e.target.value)}
                       />
                     </td>
-                    <td data-label="대변">
+                    <td data-label={IFS_TABLE_CELL.CREDIT}>
                       <input
                         type="number"
                         className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
@@ -3611,16 +3624,16 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
                         <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_amount`]}</div>
                       )}
                     </td>
-                    <td data-label="설명">
+                    <td data-label={IFS_TABLE_CELL.DESCRIPTION}>
                       <input
                         type="text"
                         className="mg-v2-input mg-v2-input-sm"
-                        placeholder="설명"
+                        placeholder={IFS_INPUT_PLACEHOLDER.LINE_DESCRIPTION}
                         value={line.description}
                         onChange={(e) => handleLineChange(index, 'description', e.target.value)}
                       />
                     </td>
-                    <td data-label="작업">
+                    <td data-label={IFS_TABLE_CELL.ACTION}>
                       {lines.length > 2 && (
                         <MGButton
                           variant="danger"

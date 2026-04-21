@@ -159,12 +159,13 @@ explore·병렬 Task에서 나온 후속 위임 메모(원문 SSOT는 각 트랙
 | 구분 | 반영 내용 | 참조 |
 |------|-----------|------|
 | CI / QA | `code-quality-check.yml`에서 **`mvn test` 실패 시 job 실패**로 전파. Checkstyle·SpotBugs는 레거시 대량 위반으로 **아직 `|| true` 유지**(엄격화는 별도 에픽) | [CI_CODE_QUALITY_AND_MVN_GATE.md](../../guides/testing/CI_CODE_QUALITY_AND_MVN_GATE.md) |
+| CI / QA | `GITHUB_ACTIONS_WORKFLOW_INDEX.md`에 루트 워크플로 **31개** 요약·**`e2e-erp-smoke.yml`** CI 표·각주; [ONGOING_WORK_MASTER_PROGRESS_CHECKLIST.md](../ONGOING_WORK_MASTER_PROGRESS_CHECKLIST.md) QA-02·최종 갱신과 동기 | [GITHUB_ACTIONS_WORKFLOW_INDEX.md](../../deployment/GITHUB_ACTIONS_WORKFLOW_INDEX.md) |
 | 프론트 CI | `deploy-frontend-dev.yml` Node **20**으로 prod와 메이저 통일 | `.github/workflows/deploy-frontend-dev.yml` |
 | OPS | `prod-health-snapshot.sh`에 `journalctl`·`memory-alert` tail + 마스킹, `README` 환경변수 | `scripts/ops/README.md`, [OPS_HEALTH_DISK_LOG_BATCH_ORCHESTRATION.md](../2026-04-02/OPS_HEALTH_DISK_LOG_BATCH_ORCHESTRATION.md) |
 | DB | Flyway 코어 vs Ops 이중 트랙 SSOT 문서 신규 | [FLYWAY_CORE_VS_OPS_TRACKS.md](../../deployment/FLYWAY_CORE_VS_OPS_TRACKS.md) |
 | ERP P4 | 환불 블록 UnifiedLoading, TaxManagement·SalaryConfigModal·RefundHistoryTableBlock MGButton 정합 | `frontend/src/components/erp/**` (해당 브랜치 기준) |
 
-**미완(다음 배치)**: Checkstyle·SpotBugs **엄격 게이트**(워크플로 `|| true` 제거)는 레거시 위반 정리 에픽 후. SEC-01 인프라, UI-01 표 정합, Flyway **실제 DB·운영 값** 정합은 팀·explore 후속.
+**미완(다음 배치)**: 루트 워크플로 인덱스는 §9 부록으로 이관됨(목록·표 본문은 위 표 참조). Checkstyle·SpotBugs **엄격 게이트**(워크플로 `|| true` 제거)는 레거시 위반 정리 에픽 후. SEC-01 인프라, UI-01 표 정합, Flyway **실제 DB·운영 값** 정합은 팀·explore 후속. `check-hardcoding-enhanced.js`는 **exit 0이나 경고 대량**(ONGOING OPS-02 증적·`test-reports/hardcoding/*.json`) — 운영 게이트에서 **경고 0**을 요구하면 **core-coder 에픽**으로 리포트 기준·우선순위 합의 후 처리한다.
 
 ---
 
@@ -176,3 +177,5 @@ explore·병렬 Task에서 나온 후속 위임 메모(원문 SSOT는 각 트랙
 | 2026-04-16 | §8 병렬 위임 산출(2026-04-16) 추가 — explore·병렬 Task 후속 메모 |
 | 2026-04-17 | §8 QA·DEV 문구 갱신, §9 완료 부록·워크플로·문서 링크 추가 |
 | 2026-04-17 | §9: `env.dev.example` Flyway 주석·CI 가이드 동기화. Checkstyle/SpotBugs 엄격화 시도 후 레거시 대량 위반으로 워크플로 **`|| true` 유지**·문서에 현행 명시 |
+| 2026-04-17 | §9 워크플로 인덱스·ERP 스모크 반영 |
+| 2026-04-17 | §9 미완·하드코딩 에픽 문구 |

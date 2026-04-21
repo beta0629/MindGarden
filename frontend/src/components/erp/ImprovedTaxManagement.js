@@ -411,8 +411,12 @@ const ImprovedTaxManagement = () => {
             </div>
           }
         >
-          <div className="im-tax-mgmt__shell-body">
-            {loading && <UnifiedLoading type="inline" text="로딩 중..." />}
+          <div className="im-tax-mgmt__shell-body" aria-busy={loading}>
+            {loading && (
+              <div role="status" aria-live="polite" aria-busy="true">
+                <UnifiedLoading type="inline" text="로딩 중..." />
+              </div>
+            )}
 
             {error && (
               <div className="im-tax-mgmt__error-block erp-error">

@@ -49,6 +49,7 @@ const RefundHistoryTableBlock = ({
     <section
       className="refund-management__table-block"
       aria-labelledby="refund-history-heading"
+      aria-busy={isLoadingReflect}
     >
       <h2 id="refund-history-heading" className="sr-only">
         환불 이력 목록

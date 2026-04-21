@@ -2,7 +2,7 @@
  * DepositPendingList - 입금 확인 대기 목록 스타일
  */
 .deposit-pending-list {
-  background: var(--mg-bg-surface, #fff);
+  background: var(--mg-bg-surface, var(--mg-bg-card));
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   padding: var(--mg-spacing-md, 12px);
@@ -17,7 +17,7 @@
 .deposit-pending-list__title {
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--mg-text-primary, #2d3748);
+  color: var(--mg-text-primary, var(--mg-gray-900));
   margin: 0;
 }
 
@@ -33,7 +33,7 @@
   align-items: center;
   gap: var(--mg-spacing-sm, 8px);
   padding: var(--mg-spacing-sm, 8px) 0;
-  border-bottom: 1px solid var(--mg-border-light, #e5e7eb);
+  border-bottom: 1px solid var(--mg-border-light, var(--mg-gray-100));
 }
 
 .deposit-pending-list__item:last-child {
@@ -50,7 +50,7 @@
 
 .deposit-pending-list__name {
   font-weight: 500;
-  color: var(--mg-text-primary, #2d3748);
+  color: var(--mg-text-primary, var(--mg-gray-900));
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -59,7 +59,7 @@
 
 .deposit-pending-list__amount {
   font-size: 0.85rem;
-  color: var(--mg-text-secondary, #64748b);
+  color: var(--mg-text-secondary, var(--mg-gray-600));
   white-space: nowrap;
 }
 

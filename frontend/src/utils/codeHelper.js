@@ -1,4 +1,30 @@
 import { apiGet } from './ajax';
+import {
+  AVAILABILITY_AVAILABLE_LABEL,
+  AVAILABILITY_BUSY_LABEL,
+  AVAILABILITY_UNAVAILABLE_LABEL,
+  AVAILABILITY_VACATION_LABEL,
+  CONSULTANT_CLIENT_COUNT_SUFFIX,
+  CONSULTANT_CONTACT_EMAIL_NONE,
+  CONSULTANT_CONTACT_PHONE_NONE,
+  CONSULTANT_EXPERIENCE_NONE,
+  CONSULTANT_INFO_NONE,
+  CONSULTANT_SESSION_COUNT_SUFFIX,
+  CONSULTANT_YEAR_SUFFIX,
+  MAPPING_STATUS_KOREAN_NAME_ASYNC_MAP,
+  MAPPING_STATUS_KOREAN_NAME_SYNC_MAP,
+  MASK_ENCRYPTED_DISPLAY_FALLBACK,
+  SPECIALTY_DEFAULT_ICON,
+  SPECIALTY_KOREAN_NAME_MAP,
+  SPECIALTY_NOT_SET_LABEL,
+  USER_GRADE_ICON_FALLBACK_ASYNC,
+  USER_GRADE_ICON_FALLBACK_SYNC,
+  USER_GRADE_ICON_MAP,
+  USER_GRADE_KOREAN_DEFAULT,
+  USER_GRADE_KOREAN_NAME_MAP,
+  USER_STATUS_KOREAN_NAME_ASYNC_MAP,
+  USER_STATUS_KOREAN_NAME_SYNC_MAP
+} from '../constants/codeHelperStrings';
 
 /**
  * 하드코딩된 값들을 동적으로 처리하기 위한 헬퍼 함수들
@@ -25,7 +51,7 @@ const ENCRYPTED_BASE64_MIN_LENGTH = 32;
  * @param {string} fallback - 암호문일 때 반환할 대체 문자열
  * @returns {string}
  */
-export const maskEncryptedDisplay = (value, fallback = '—') => {
+export const maskEncryptedDisplay = (value, fallback = MASK_ENCRYPTED_DISPLAY_FALLBACK) => {
   if (value == null || value === '') return fallback;
   const s = String(value).trim();
   if (s.startsWith('legacy::')) return fallback;
@@ -409,53 +435,14 @@ export const getUserStatusKoreanName = async(status) => {
         console.error('사용자 상태 한글명 조회 실패:', error);
     }
     
-    const defaultStatusMap = {
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'ACTIVE': '활성',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'INACTIVE': '비활성',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'SUSPENDED': '일시정지',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'COMPLETED': '완료',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'PENDING': '대기중',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'APPROVED': '승인됨',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'REJECTED': '거부됨',
-        'PAYMENT_CONFIRMED': '결제확인',
-        'PAYMENT_PENDING': '결제대기',
-        'PAYMENT_REJECTED': '결제거부',
-        'TERMINATED': '종료됨'
-    };
-    
-    return defaultStatusMap[status] || status;
+    return USER_STATUS_KOREAN_NAME_ASYNC_MAP[status] || status;
 };
 
 /**
  * 사용자 상태 한글명 조회 (동기 버전 - 기본값만 사용)
  */
 export const getUserStatusKoreanNameSync = (status) => {
-    const defaultStatusMap = {
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'ACTIVE': '활성',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'INACTIVE': '비활성',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'PENDING': '대기',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'SUSPENDED': '정지',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'DELETED': '삭제됨',
-        'PENDING_APPROVAL': '승인대기',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'APPROVED': '승인됨',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'REJECTED': '거부됨'
-    };
-    
-    return defaultStatusMap[status] || status;
+    return USER_STATUS_KOREAN_NAME_SYNC_MAP[status] || status;
 };
 
 /**
@@ -474,54 +461,14 @@ export const getUserGradeKoreanName = async(grade) => {
         console.error('사용자 등급 한글명 조회 실패:', error);
     }
     
-    const defaultGradeMap = {
-        'CLIENT_BRONZE': '브론즈',
-        'CLIENT_SILVER': '실버',
-        'CLIENT_GOLD': '골드',
-        'CLIENT_PLATINUM': '플래티넘',
-        'CLIENT_DIAMOND': '다이아몬드',
-        'BRONZE': '브론즈',
-        'SILVER': '실버',
-        'GOLD': '골드',
-        'PLATINUM': '플래티넘',
-        'DIAMOND': '다이아몬드',
-        'CONSULTANT_JUNIOR': '주니어',
-        'CONSULTANT_SENIOR': '시니어',
-        'CONSULTANT_EXPERT': '전문가',
-        'JUNIOR': '주니어',
-        'SENIOR': '시니어',
-        'EXPERT': '전문가',
-        'ADMIN': '관리자'
-    };
-    
-    return defaultGradeMap[grade] || grade || '브론즈';
+    return USER_GRADE_KOREAN_NAME_MAP[grade] || grade || USER_GRADE_KOREAN_DEFAULT;
 };
 
 /**
  * 사용자 등급 한글명 조회 (동기 버전 - 기본값만 사용)
  */
 export const getUserGradeKoreanNameSync = (grade) => {
-    const defaultGradeMap = {
-        'CLIENT_BRONZE': '브론즈',
-        'CLIENT_SILVER': '실버',
-        'CLIENT_GOLD': '골드',
-        'CLIENT_PLATINUM': '플래티넘',
-        'CLIENT_DIAMOND': '다이아몬드',
-        'BRONZE': '브론즈',
-        'SILVER': '실버',
-        'GOLD': '골드',
-        'PLATINUM': '플래티넘',
-        'DIAMOND': '다이아몬드',
-        'CONSULTANT_JUNIOR': '주니어',
-        'CONSULTANT_SENIOR': '시니어',
-        'CONSULTANT_EXPERT': '전문가',
-        'JUNIOR': '주니어',
-        'SENIOR': '시니어',
-        'EXPERT': '전문가',
-        'ADMIN': '관리자'
-    };
-    
-    return defaultGradeMap[grade] || grade || '브론즈';
+    return USER_GRADE_KOREAN_NAME_MAP[grade] || grade || USER_GRADE_KOREAN_DEFAULT;
 };
 
 /**
@@ -540,54 +487,14 @@ export const getUserGradeIcon = async(grade) => {
         console.error('사용자 등급 아이콘 조회 실패:', error);
     }
     
-    const defaultGradeIconMap = {
-        'CLIENT_BRONZE': '🥉',
-        'CLIENT_SILVER': '🥈',
-        'CLIENT_GOLD': '🥇',
-        'CLIENT_PLATINUM': '💎',
-        'CLIENT_DIAMOND': '💠',
-        'BRONZE': '🥉',
-        'SILVER': '🥈',
-        'GOLD': '🥇',
-        'PLATINUM': '💎',
-        'DIAMOND': '💠',
-        'CONSULTANT_JUNIOR': '⭐',
-        'CONSULTANT_SENIOR': '⭐⭐',
-        'CONSULTANT_EXPERT': '⭐⭐⭐',
-        'JUNIOR': '⭐',
-        'SENIOR': '⭐⭐',
-        'EXPERT': '⭐⭐⭐',
-        'ADMIN': '👑'
-    };
-    
-    return defaultGradeIconMap[grade] || '🥉';
+    return USER_GRADE_ICON_MAP[grade] || USER_GRADE_ICON_FALLBACK_ASYNC;
 };
 
 /**
  * 사용자 등급 아이콘 조회 (동기 버전 - 기본값만 사용)
  */
 export const getUserGradeIconSync = (grade) => {
-    const defaultGradeIconMap = {
-        'CLIENT_BRONZE': '🥉',
-        'CLIENT_SILVER': '🥈',
-        'CLIENT_GOLD': '🥇',
-        'CLIENT_PLATINUM': '💎',
-        'CLIENT_DIAMOND': '💠',
-        'BRONZE': '🥉',
-        'SILVER': '🥈',
-        'GOLD': '🥇',
-        'PLATINUM': '💎',
-        'DIAMOND': '💠',
-        'CONSULTANT_JUNIOR': '⭐',
-        'CONSULTANT_SENIOR': '⭐⭐',
-        'CONSULTANT_EXPERT': '⭐⭐⭐',
-        'JUNIOR': '⭐',
-        'SENIOR': '⭐⭐',
-        'EXPERT': '⭐⭐⭐',
-        'ADMIN': '👑'
-    };
-    
-    return defaultGradeIconMap[grade] || '👤';
+    return USER_GRADE_ICON_MAP[grade] || USER_GRADE_ICON_FALLBACK_SYNC;
 };
 
 /**
@@ -624,44 +531,14 @@ export const getMappingStatusKoreanName = async(status) => {
         console.error('매칭 상태 한글명 조회 실패:', error);
     }
     
-    const defaultMappingStatusMap = {
-        'PENDING_PAYMENT': '결제 대기',
-        'PAYMENT_CONFIRMED': '결제 확인',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'ACTIVE': '활성',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'INACTIVE': '비활성',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'SUSPENDED': '일시정지',
-        'TERMINATED': '종료됨',
-        'SESSIONS_EXHAUSTED': '회기 소진'
-    };
-    
-    return defaultMappingStatusMap[status] || status;
+    return MAPPING_STATUS_KOREAN_NAME_ASYNC_MAP[status] || status;
 };
 
 /**
  * 매칭 상태 한글명 조회 (동기 버전 - 기본값만 사용)
  */
 export const getMappingStatusKoreanNameSync = (status) => {
-    const defaultMappingStatusMap = {
-        'PENDING_PAYMENT': '결제 대기',
-        'PAYMENT_CONFIRMED': '결제 확인',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'ACTIVE': '활성',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'INACTIVE': '비활성',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'SUSPENDED': '일시정지',
-        'TERMINATED': '종료됨',
-        'SESSIONS_EXHAUSTED': '회기 소진',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'PENDING': '대기',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'COMPLETED': '완료'
-    };
-    
-    return defaultMappingStatusMap[status] || status;
+    return MAPPING_STATUS_KOREAN_NAME_SYNC_MAP[status] || status;
 };
 
 /**
@@ -669,35 +546,14 @@ export const getMappingStatusKoreanNameSync = (status) => {
  */
 export const getSpecialtyKoreanName = (code) => {
     if (!code || code.trim() === '') {
-        return '미설정';
+        return SPECIALTY_NOT_SET_LABEL;
     }
     
     if (code.match(/[가-힣]/)) {
         return code;
     }
     
-    const specialtyMap = {
-        'DEPRESSION': '우울증',
-        'ANXIETY': '불안장애',
-        'TRAUMA': '트라우마',
-        'STRESS': '스트레스',
-        'RELATIONSHIP': '관계상담',
-        'FAMILY': '가족상담',
-        'COUPLE': '부부상담',
-        'CHILD': '아동상담',
-        'TEEN': '청소년상담',
-        'ADOLESCENT': '청소년상담',
-        'ADDICTION': '중독',
-        'EATING': '섭식장애',
-        'SLEEP': '수면장애',
-        'ANGER': '분노조절',
-        'GRIEF': '상실',
-        'SELF_ESTEEM': '자존감',
-        'CAREER': '진로상담',
-        'FAMIL': '가족상담' // FAMILY의 축약형 처리
-    };
-    
-    return specialtyMap[code] || code;
+    return SPECIALTY_KOREAN_NAME_MAP[code] || code;
 };
 
 /**
@@ -738,7 +594,7 @@ export const getSpecialtyFromCommonCode = async(codeValue) => {
         codeValue: codeValue,
         koreanName: getSpecialtyKoreanName(codeValue),
         description: '',
-        icon: '🎯'
+        icon: SPECIALTY_DEFAULT_ICON
     };
 };
 
@@ -796,18 +652,18 @@ export const truncateSpecialtyText = (specialties, maxLength = 50) => {
  */
 export const getFormattedExperience = (consultant) => {
     if (consultant?.yearsOfExperience) {
-        return `${consultant.yearsOfExperience}년`;
+        return `${consultant.yearsOfExperience}${CONSULTANT_YEAR_SUFFIX}`;
     }
     if (consultant?.experience) {
         return consultant.experience;
     }
     if (consultant?.careerYears) {
-        return `${consultant.careerYears}년`;
+        return `${consultant.careerYears}${CONSULTANT_YEAR_SUFFIX}`;
     }
     if (consultant?.workExperience) {
-        return `${consultant.workExperience}년`;
+        return `${consultant.workExperience}${CONSULTANT_YEAR_SUFFIX}`;
     }
-    return '경력 정보 없음';
+    return CONSULTANT_EXPERIENCE_NONE;
 };
 
 /**
@@ -819,8 +675,8 @@ export const getFormattedExperience = (consultant) => {
  */
 export const getFormattedContact = (consultant) => {
     return {
-        email: consultant?.email || consultant?.emailAddress || '이메일 정보 없음',
-        phone: consultant?.phone || consultant?.phoneNumber || consultant?.mobile || '전화번호 정보 없음'
+        email: consultant?.email || consultant?.emailAddress || CONSULTANT_CONTACT_EMAIL_NONE,
+        phone: consultant?.phone || consultant?.phoneNumber || consultant?.mobile || CONSULTANT_CONTACT_PHONE_NONE
     };
 };
 
@@ -836,7 +692,7 @@ export const getFormattedConsultationCount = (consultant) => {
                   consultant?.consultationCount || 
                   consultant?.totalSessions || 
                   consultant?.sessionCount || 0;
-    return `${count}회`;
+    return `${count}${CONSULTANT_SESSION_COUNT_SUFFIX}`;
 };
 
 /**
@@ -856,7 +712,7 @@ export const getFormattedRegistrationDate = (consultant) => {
     if (consultant?.joinDate) {
         return new Date(consultant.joinDate).toLocaleDateString('ko-KR');
     }
-    return '정보 없음';
+    return CONSULTANT_INFO_NONE;
 };
 
 /**
@@ -868,7 +724,7 @@ export const getFormattedRegistrationDate = (consultant) => {
  */
 export const getFormattedCurrentClients = (consultant) => {
     const count = consultant?.currentClients || 0;
-    return `${count}명`;
+    return `${count}${CONSULTANT_CLIENT_COUNT_SUFFIX}`;
 };
 
 /**
@@ -885,16 +741,16 @@ export const getFormattedAvailability = (consultant) => {
     let text, color;
     
     if (isOnVacation) {
-        text = '휴무';
+        text = AVAILABILITY_VACATION_LABEL;
         color = 'var(--mg-error-500)';
     } else if (!consultant?.available) {
-        text = '상담 불가';
+        text = AVAILABILITY_UNAVAILABLE_LABEL;
         color = '#6b7280';
     } else if (consultant?.busy) {
-        text = '상담 중';
+        text = AVAILABILITY_BUSY_LABEL;
         color = 'var(--mg-warning-500)';
     } else {
-        text = '상담 가능';
+        text = AVAILABILITY_AVAILABLE_LABEL;
         color = 'var(--mg-success-500)';
     }
     

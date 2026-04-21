@@ -36,7 +36,11 @@ const RefundFilters = ({
   silentListRefreshing = false
 }) => {
   return (
-    <section className="mg-v2-erp-refund-panel" aria-labelledby="refund-filters-title">
+    <section
+      className="mg-v2-erp-refund-panel"
+      aria-labelledby="refund-filters-title"
+      aria-busy={silentListRefreshing}
+    >
       <CardContainer className="mg-v2-erp-refund-panel__card">
         <h3 id="refund-filters-title" className="mg-h4">
           필터 및 제어

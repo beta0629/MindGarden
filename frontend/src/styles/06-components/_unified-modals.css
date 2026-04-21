@@ -265,14 +265,14 @@
 
 /* 세션 연장: 테넌트 primary/배경 토큰과 무관하게 항상 대비 확보 (운영 가시성) */
 .session-idle-warning-modal.mg-modal .mg-modal__actions button[data-testid='session-idle-extend'] {
-  background-color: var(--mg-success-500, #16a34a);
-  color: var(--mg-white, #ffffff);
+  background-color: var(--mg-success-500);
+  color: var(--mg-white);
   border-color: transparent;
 }
 
 .session-idle-warning-modal.mg-modal .mg-modal__actions button[data-testid='session-idle-extend']:hover:not(:disabled):not(.mg-button--loading) {
-  background-color: var(--mg-success-600, #15803d);
-  color: var(--mg-white, #ffffff);
+  background-color: var(--mg-success-600);
+  color: var(--mg-white);
 }
 
 .session-idle-warning-modal.mg-modal .mg-modal__actions button[data-testid='session-idle-extend'] .mg-button__text {
@@ -283,14 +283,14 @@
  * 중복 로그인: primary 텍스트가 전역 mg-v2-button--primary(color: 배경 토큰)와 겹쳐 운영에서 안 보이는 이슈 방지
  */
 .duplicate-login-modal.mg-modal .mg-modal__actions button[data-testid='duplicate-login-confirm'] {
-  background-color: var(--mg-primary-color, var(--mg-primary-500, var(--mg-layout-sidebar-active-bg, #3d5246)));
-  color: var(--mg-color-text-on-primary, var(--mg-white, #ffffff));
+  background-color: var(--mg-primary-color, var(--mg-primary-500, var(--mg-layout-sidebar-active-bg)));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
   border-color: transparent;
 }
 
 .duplicate-login-modal.mg-modal .mg-modal__actions button[data-testid='duplicate-login-confirm']:hover:not(:disabled):not(.mg-button--loading) {
-  background-color: var(--mg-primary-light, var(--mg-primary-400, #4a6354));
-  color: var(--mg-color-text-on-primary, var(--mg-white, #ffffff));
+  background-color: var(--mg-primary-light, var(--mg-primary-400));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
 }
 
 .duplicate-login-modal.mg-modal .mg-modal__actions button[data-testid='duplicate-login-confirm'] .mg-button__text {

@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.core.util.StatusCodeHelper;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
@@ -127,14 +128,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 표준화 2025-12-08: 이메일만 입력받고 userId, password, name 자동 생성
         String email = request.getEmail();
         if (email == null || email.trim().isEmpty()) {
-            throw new IllegalArgumentException("이메일은 필수입니다.");
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_EMAIL_REQUIRED);
         }
         email = email.trim().toLowerCase();
         
         String tenantId = getTenantIdOrNull();
         if (tenantId == null) {
             log.warn("⚠️ TenantContext에 tenantId가 없습니다. 세션에서 조회 시도...");
-            throw new IllegalStateException("테넌트 정보가 없습니다. 관리자에게 문의하세요.");
+            throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_TENANT_INFO_MISSING);
         }
         
         // 1. 테넌트별 고유한 userId 자동 생성 (표준화 2025-12-08)
@@ -161,7 +162,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String localPart = email.split("@")[0];
             name = localPart.replaceAll("[^a-zA-Z0-9가-힣]", "");
             if (name.isEmpty()) {
-                name = "상담사";
+                name = AdminServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME;
             }
         }
         name = name.trim();
@@ -340,7 +341,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String tenantId = getTenantIdOrNull();
         if (tenantId == null) {
             log.warn("⚠️ TenantContext에 tenantId가 없습니다. 세션에서 조회 시도...");
-            throw new IllegalStateException("테넌트 정보가 없습니다. 관리자에게 문의하세요.");
+            throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_TENANT_INFO_MISSING);
         }
 
         String rawEmail = request.getEmail();
@@ -531,14 +532,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public User registerStaff(StaffRegistrationRequest request) {
         String email = request.getEmail();
         if (email == null || email.trim().isEmpty()) {
-            throw new IllegalArgumentException("이메일은 필수입니다.");
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_EMAIL_REQUIRED);
         }
         email = email.trim().toLowerCase();
 
         String tenantId = getTenantIdOrNull();
         if (tenantId == null) {
             log.warn("TenantContext에 tenantId가 없습니다.");
-            throw new IllegalStateException("테넌트 정보가 없습니다. 관리자에게 문의하세요.");
+            throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_TENANT_INFO_MISSING);
         }
 
         String userId = userIdGenerator.generateUniqueUserId(email, tenantId);
@@ -755,7 +756,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             tenantId = TenantContextHolder.getTenantId();
         }
         if (tenantId == null || tenantId.isEmpty()) {
-            throw new IllegalStateException("테넌트는 필수입니다. tenantId 없이 상담료 수입 거래를 생성할 수 없습니다. MappingID=" + mapping.getId());
+            throw new IllegalStateException(String.format(
+                    AdminServiceUserFacingMessages.MSG_TENANT_REQUIRED_CONSULTATION_INCOME_FMT, mapping.getId()));
         }
         final String tenantIdForCallback = tenantId;
         try {
@@ -1326,7 +1328,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 String tenantIdForTx = getTenantIdFromMapping(savedMapping);
                 if (tenantIdForTx == null) tenantIdForTx = getTenantIdOrNull();
                 if (tenantIdForTx == null || tenantIdForTx.isEmpty()) {
-                    throw new IllegalStateException("테넌트는 필수입니다. MappingID=" + mappingId);
+                    throw new IllegalStateException(String.format(
+                            AdminServiceUserFacingMessages.MSG_TENANT_REQUIRED_MAPPING_ID_FMT, mappingId));
                 }
                 runInNewTransaction(tenantIdForTx, () -> createAdditionalSessionIncomeTransaction(savedMapping, effectiveAmount));
                 log.info("💚 입금 확인 ERP 거래 생성 완료 (추가 매칭): MappingID={}, Amount={}", mappingId, effectiveAmount);
@@ -1344,7 +1347,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String tenantIdForProc = getTenantIdFromMapping(savedMapping);
             if (tenantIdForProc == null) tenantIdForProc = getTenantIdOrNull();
             if (tenantIdForProc == null || tenantIdForProc.isEmpty()) {
-                throw new IllegalStateException("테넌트는 필수입니다. ERP 매핑 정보 동기화를 수행할 수 없습니다. MappingID=" + mappingId);
+                throw new IllegalStateException(String.format(
+                        AdminServiceUserFacingMessages.MSG_TENANT_REQUIRED_ERP_MAPPING_SYNC_FMT, mappingId));
             }
             runInNewTransaction(tenantIdForProc, () -> {
                 log.info("🔄 입금 확인 완료, ERP 매핑 정보 동기화 프로시저 호출: mappingId={}", mappingId);
@@ -1461,10 +1465,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         String tenantId = getTenantId();
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
-                .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다: " + mappingId));
+                .orElseThrow(() -> new RuntimeException(String.format(
+                        AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND_WITH_ID_FMT, mappingId)));
         
         if (userRepository.findByTenantIdAndId(tenantId, requesterId).isEmpty()) {
-            throw new RuntimeException("요청자를 찾을 수 없습니다: " + requesterId);
+            throw new RuntimeException(String.format(
+                    AdminServiceUserFacingMessages.MSG_REQUESTER_NOT_FOUND_FMT, requesterId));
         }
         
         log.info("✅ 회기 추가 요청 생성 완료 - SessionExtensionService를 통해 처리됩니다.");
@@ -1602,7 +1608,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return statistics;
         } catch (Exception e) {
             log.error("❌ 회기관리 통계 조회 실패: {}", e.getMessage(), e);
-            throw new RuntimeException("회기관리 통계 조회에 실패했습니다.", e);
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_SESSION_STATS_QUERY_FAILED, e);
         }
     }
 
@@ -1630,7 +1636,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     .collect(Collectors.toList());
         } catch (Exception e) {
             log.error("❌ 회기관리 목록 조회 실패: {}", e.getMessage(), e);
-            throw new RuntimeException("회기관리 목록 조회에 실패했습니다.", e);
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_SESSION_LIST_QUERY_FAILED, e);
         }
     }
 
@@ -2199,7 +2205,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             
         } catch (Exception e) {
             log.error("❌ 통합 내담자 데이터 조회 실패", e);
-            throw new RuntimeException("통합 내담자 데이터 조회에 실패했습니다: " + e.getMessage(), e);
+            throw new RuntimeException(String.format(
+                    AdminServiceUserFacingMessages.MSG_INTEGRATED_CLIENT_DATA_QUERY_FAILED_FMT, e.getMessage()), e);
         }
     }
 
@@ -2223,14 +2230,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public User updateConsultant(Long id, ConsultantRegistrationRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException("요청 본문이 없습니다.");
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_REQUEST_BODY_MISSING);
         }
 
         Consultant consultant = consultantRepository.findByTenantIdAndId(getTenantId(), id)
                 .orElseThrow(() -> new EntityNotFoundException("상담사", id));
 
         if (consultant.getRole() != UserRole.CONSULTANT) {
-            throw new IllegalArgumentException("해당 사용자는 상담사가 아닙니다.");
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_USER_NOT_CONSULTANT);
         }
 
         // null/blank 시 기존 값 유지 (빈 문자열 저장으로 인한 NOT NULL 등 제약 500 방지)
@@ -2330,7 +2337,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public Client updateClient(Long id, ClientRegistrationRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException("요청 본문이 없습니다.");
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_REQUEST_BODY_MISSING);
         }
 
         String tenantIdForClient = getTenantId();
@@ -2338,7 +2345,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .orElseThrow(() -> new EntityNotFoundException("내담자", id));
 
         if (clientUser.getRole() != UserRole.CLIENT) {
-            throw new IllegalArgumentException("해당 사용자는 내담자가 아닙니다.");
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_USER_NOT_CLIENT);
         }
 
         if (request.getName() != null && !request.getName().trim().isEmpty()) {
@@ -2606,10 +2613,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         String tenantId = getTenantId();
         User consultant = userRepository.findByTenantIdAndId(tenantId, id)
-                .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_CONSULTANT_NOT_FOUND));
         
         if (consultant.getRole() != UserRole.CONSULTANT) {
-            throw new RuntimeException("상담사가 아닌 사용자는 삭제할 수 없습니다.");
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_CANNOT_DELETE_NON_CONSULTANT);
         }
         
         List<ConsultantClientMapping> activeMappings = mappingRepository
@@ -2618,8 +2625,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (!activeMappings.isEmpty()) {
             log.warn("⚠️ 상담사에게 {} 개의 활성 매칭이 있습니다. 다른 상담사로 이전이 필요합니다.", activeMappings.size());
             throw new RuntimeException(String.format(
-                "상담사에게 %d 개의 활성 매칭이 있습니다. 먼저 다른 상담사로 이전 처리해주세요.", 
-                activeMappings.size()));
+                    AdminServiceUserFacingMessages.MSG_CONSULTANT_ACTIVE_MAPPINGS_TRANSFER_FMT,
+                    activeMappings.size()));
         }
         
         List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
@@ -2627,8 +2634,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (!futureSchedules.isEmpty()) {
             log.warn("⚠️ 상담사에게 {} 개의 예정된 스케줄이 있습니다. 다른 상담사로 이전이 필요합니다.", futureSchedules.size());
             throw new RuntimeException(String.format(
-                "상담사에게 %d 개의 예정된 스케줄이 있습니다. 먼저 다른 상담사로 이전 처리해주세요.", 
-                futureSchedules.size()));
+                    AdminServiceUserFacingMessages.MSG_CONSULTANT_FUTURE_SCHEDULES_TRANSFER_FMT,
+                    futureSchedules.size()));
         }
         
         consultant.setIsActive(false);
@@ -2645,21 +2652,23 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String tenantId = getTenantId();
         
         User consultantToDelete = userRepository.findByTenantIdAndId(tenantId, consultantId)
-                .orElseThrow(() -> new RuntimeException("삭제할 상담사를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException(
+                        AdminServiceUserFacingMessages.MSG_CONSULTANT_TO_DELETE_NOT_FOUND));
         
         User transferToConsultant = userRepository.findByTenantIdAndId(tenantId, transferToConsultantId)
-                .orElseThrow(() -> new RuntimeException("이전 대상 상담사를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException(
+                        AdminServiceUserFacingMessages.MSG_TRANSFER_TARGET_CONSULTANT_NOT_FOUND));
         
         if (consultantToDelete.getRole() != UserRole.CONSULTANT) {
-            throw new RuntimeException("삭제 대상이 상담사가 아닙니다.");
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_DELETE_TARGET_NOT_CONSULTANT);
         }
         
         if (transferToConsultant.getRole() != UserRole.CONSULTANT) {
-            throw new RuntimeException("이전 대상이 상담사가 아닙니다.");
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_TRANSFER_TARGET_NOT_CONSULTANT);
         }
         
         if (!transferToConsultant.getIsActive()) {
-            throw new RuntimeException("이전 대상 상담사가 비활성 상태입니다.");
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_TRANSFER_TARGET_CONSULTANT_INACTIVE);
         }
         
         String terminatedStatus = getMappingStatusCode("TERMINATED");
@@ -2782,15 +2791,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String tenantId = getTenantId();
         
         User consultant = userRepository.findByTenantIdAndId(tenantId, consultantId)
-                .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_CONSULTANT_NOT_FOUND));
         
         if (consultant.getRole() != UserRole.CONSULTANT) {
-            throw new RuntimeException("상담사가 아닌 사용자입니다.");
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_NOT_CONSULTANT_USER);
         }
         
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantId(tenantId).stream()
-                .filter(mapping -> mapping.getConsultant().getId().equals(consultantId))
+            .filter(mapping -> mapping.getConsultant().getId().equals(consultantId))
                 .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
                 .collect(Collectors.toList());
         
@@ -2879,15 +2888,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String tenantId = getTenantId();
         
         User client = userRepository.findByTenantIdAndId(tenantId, id)
-                .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_CLIENT_NOT_FOUND));
         
         if (client.getRole() != UserRole.CLIENT) {
-            throw new RuntimeException("내담자가 아닌 사용자는 삭제할 수 없습니다.");
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_CANNOT_DELETE_NON_CLIENT);
         }
         
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantId(tenantId).stream()
-                .filter(mapping -> mapping.getClient().getId().equals(id))
+            .filter(mapping -> mapping.getClient().getId().equals(id))
                 .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
                 .collect(Collectors.toList());
         
@@ -2904,8 +2913,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     mappingsWithRemainingSessions.size(), totalRemainingSessions);
             
             throw new RuntimeException(String.format(
-                "내담자에게 %d 개의 활성 매칭에서 총 %d 회기가 남아있습니다. 회기 소진 또는 환불 처리 후 삭제해주세요.", 
-                mappingsWithRemainingSessions.size(), totalRemainingSessions));
+                    AdminServiceUserFacingMessages.MSG_CLIENT_ACTIVE_MAPPINGS_REMAINING_SESSIONS_FMT,
+                    mappingsWithRemainingSessions.size(), totalRemainingSessions));
         }
         
         String pendingPaymentStatus = getPaymentStatusCode("PENDING");
@@ -2916,8 +2925,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (!pendingPaymentMappings.isEmpty()) {
             log.warn("⚠️ 내담자에게 {} 개의 결제 대기 중인 매칭이 있습니다.", pendingPaymentMappings.size());
             throw new RuntimeException(String.format(
-                "내담자에게 %d 개의 결제 대기 중인 매칭이 있습니다. 결제 처리 완료 후 삭제해주세요.", 
-                pendingPaymentMappings.size()));
+                    AdminServiceUserFacingMessages.MSG_CLIENT_PENDING_PAYMENT_MAPPINGS_FMT,
+                    pendingPaymentMappings.size()));
         }
         
         List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndClientIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
@@ -2943,8 +2952,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
             
             throw new RuntimeException(String.format(
-                "내담자에게 %d 개의 예정된 스케줄이 있습니다. 회기 소진, 환불 처리, 또는 스케줄 완료 후 다시 시도해주세요.", 
-                activeSchedules.size()));
+                    AdminServiceUserFacingMessages.MSG_CLIENT_FUTURE_SCHEDULES_FMT,
+                    activeSchedules.size()));
         }
         
         List<Schedule> allFutureSchedules = scheduleRepository.findByTenantIdAndClientIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
@@ -2989,15 +2998,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🔍 내담자 삭제 가능 여부 확인: ID={}", clientId);
         
         User client = userRepository.findByTenantIdAndId(tenantId, clientId)
-                .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_CLIENT_NOT_FOUND));
         
         if (client.getRole() != UserRole.CLIENT) {
-            throw new RuntimeException("내담자가 아닌 사용자입니다.");
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_NOT_CLIENT_USER);
         }
         
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantId(tenantId).stream()
-                .filter(mapping -> mapping.getClient().getId().equals(clientId))
+            .filter(mapping -> mapping.getClient().getId().equals(clientId))
                 .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
                 .collect(Collectors.toList());
         
@@ -3105,13 +3114,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String tenantId = getTenantId();
         
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, id)
-                .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         Hibernate.initialize(mapping.getConsultant());
         Hibernate.initialize(mapping.getClient());
         
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         if (mapping.getStatus().name().equals(terminatedStatus)) {
-            throw new RuntimeException("이미 종료된 매칭입니다.");
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_ALREADY_TERMINATED);
         }
         
         int refundedSessions = mapping.getRemainingSessions();
@@ -3220,13 +3229,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🔧 부분 환불 처리 시작: ID={}, 환불회기={}, 사유={}", id, refundSessions, reason);
         
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
-                .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         Hibernate.initialize(mapping.getConsultant());
         Hibernate.initialize(mapping.getClient());
         
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         if (mapping.getStatus().name().equals(terminatedStatus)) {
-            throw new RuntimeException("이미 종료된 매칭입니다.");
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_ALREADY_TERMINATED);
         }
         
         Map<String, Object> lastAddedPackage = getLastAddedPackageInfo(mapping);
@@ -3238,13 +3247,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 lastAddedSessions, lastAddedPrice, lastAddedPackageName);
         
         if (refundSessions <= 0) {
-            throw new RuntimeException("환불 회기수는 1 이상이어야 합니다.");
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_REFUND_SESSIONS_AT_LEAST_ONE);
         }
         
         if (refundSessions > mapping.getRemainingSessions()) {
             throw new RuntimeException(String.format(
-                "환불 요청 회기수(%d)가 남은 회기수(%d)보다 많습니다.", 
-                refundSessions, mapping.getRemainingSessions()));
+                    AdminServiceUserFacingMessages.MSG_REFUND_SESSIONS_EXCEED_REMAINING_FMT,
+                    refundSessions, mapping.getRemainingSessions()));
         }
         
         if (mapping.getPaymentDate() != null) {
@@ -3256,8 +3265,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.warn("⚠️ 청약 철회 기간 초과: 결제일={}, 현재일={}, 경과일수={}일", 
                         paymentDate.toLocalDate(), now.toLocalDate(), daysSincePayment);
                 throw new RuntimeException(String.format(
-                    "청약 철회 기간이 초과되었습니다. 결제일로부터 %d일이 경과했습니다. (15일 이내만 환불 가능)", 
-                    daysSincePayment));
+                        AdminServiceUserFacingMessages.MSG_COOLING_OFF_PERIOD_EXCEEDED_FMT,
+                        daysSincePayment));
             } else {
                 log.info("✅ 청약 철회 기간 내 환불: 결제일={}, 경과일수={}일 (15일 이내)", 
                         paymentDate.toLocalDate(), daysSincePayment);
@@ -3286,7 +3295,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     mapping.getPackagePrice(), mapping.getTotalSessions(), refundSessions, refundAmount);
         } else {
             log.warn("❌ 환불 금액 계산 불가: 패키지 가격 정보 없음");
-            throw new RuntimeException("환불 금액을 계산할 수 없습니다. 패키지 가격 정보가 없습니다.");
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_REFUND_AMOUNT_CALCULATION_IMPOSSIBLE);
         }
         
         log.info("💰 부분 환불 금액 계산 완료: 환불회기={}, 계산방식={}, 환불금액={}원", 
@@ -4187,7 +4196,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             
         } catch (Exception e) {
             log.error("❌ ERP 환불 데이터 전송 중 오류: MappingID={}", mapping.getId(), e);
-            throw new RuntimeException("ERP 환불 데이터 전송 실패: " + e.getMessage());
+            throw new RuntimeException(String.format(
+                    AdminServiceUserFacingMessages.MSG_ERP_REFUND_SEND_FAILED_FMT, e.getMessage()));
         }
     }
 
@@ -4489,18 +4499,19 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         String tenantId = getTenantId();
         ConsultantClientMapping currentMapping = mappingRepository.findByTenantIdAndId(tenantId, request.getCurrentMappingId())
-                .orElseThrow(() -> new RuntimeException("기존 매칭을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException(
+                        AdminServiceUserFacingMessages.MSG_EXISTING_MAPPING_NOT_FOUND));
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (currentMapping.getStatus() != ConsultantClientMapping.MappingStatus.ACTIVE) {
-            throw new RuntimeException("활성 상태의 매칭만 상담사를 변경할 수 있습니다.");
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_TRANSFER_CONSULTANT_ACTIVE_MAPPING_ONLY);
         }
         
         User newConsultant = userRepository.findByTenantIdAndId(tenantId, request.getNewConsultantId())
-                .orElseThrow(() -> new RuntimeException("새 상담사를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_NEW_CONSULTANT_NOT_FOUND));
         
         if (newConsultant.getRole() != UserRole.CONSULTANT) {
-            throw new RuntimeException("상담사가 아닌 사용자입니다.");
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_NOT_CONSULTANT_USER);
         }
         
         String transferReason = String.format("상담사 변경: %s -> %s. 사유: %s", 
@@ -4551,7 +4562,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public List<ConsultantClientMapping> getTransferHistory(Long clientId) {
         String tenantId = getTenantId();
         User client = userRepository.findByTenantIdAndId(tenantId, clientId)
-                .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_CLIENT_NOT_FOUND));
         
         return mappingRepository.findByTenantIdAndClient(tenantId, client).stream()
                 .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED)
@@ -4568,7 +4579,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String tenantId = getTenantId();
             
             userRepository.findByTenantIdAndId(tenantId, consultantId)
-                    .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
+                    .orElseThrow(() -> new RuntimeException(String.format(
+                            AdminServiceUserFacingMessages.MSG_CONSULTANT_NOT_FOUND_WITH_ID_FMT, consultantId)));
             
             List<Schedule> schedules = scheduleRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
             
@@ -5045,7 +5057,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             
         } catch (Exception e) {
             log.error("❌ 스케줄 통계 조회 실패: {}", e.getMessage(), e);
-            throw new RuntimeException("스케줄 통계 조회 중 오류가 발생했습니다: " + e.getMessage(), e);
+            throw new RuntimeException(String.format(
+                    AdminServiceUserFacingMessages.MSG_SCHEDULE_STATS_QUERY_FAILED_FMT, e.getMessage()), e);
         }
     }
     
@@ -5117,7 +5130,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             
         } catch (Exception e) {
             log.error("❌ 스케줄 통계 조회 실패 (지점별): {}", e.getMessage(), e);
-            throw new RuntimeException("스케줄 통계 조회 중 오류가 발생했습니다: " + e.getMessage(), e);
+            throw new RuntimeException(String.format(
+                    AdminServiceUserFacingMessages.MSG_SCHEDULE_STATS_QUERY_FAILED_FMT, e.getMessage()), e);
         }
     }
     
@@ -5304,7 +5318,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 return candidate;
             }
         }
-        throw new IllegalStateException("합성 이메일을 할당하지 못했습니다. 관리자에게 문의하세요.");
+        throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_SYNTHETIC_EMAIL_ALLOCATION_FAILED);
     }
 
      /**
@@ -5404,7 +5418,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return savedUser;
         } catch (Exception e) {
             log.error("❌ 사용자 역할 변경 중 오류 발생: {}", e.getMessage(), e);
-            throw new RuntimeException("사용자 역할 변경에 실패했습니다: " + e.getMessage());
+            throw new RuntimeException(String.format(
+                    AdminServiceUserFacingMessages.MSG_USER_ROLE_CHANGE_FAILED_FMT, e.getMessage()));
         }
     }
     
@@ -6244,13 +6259,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     private void validateClientUserTenantIntegrity(User savedUser, String expectedTenantId) {
         if (savedUser == null || savedUser.getId() == null) {
-            throw new IllegalStateException("내담자 사용자 저장에 실패했습니다. users.id가 없습니다.");
+            throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_CLIENT_USER_SAVE_FAILED_NO_USER_ID);
         }
         if (expectedTenantId == null || expectedTenantId.isBlank()) {
-            throw new IllegalStateException("내담자 저장 tenantId가 비어 있습니다.");
+            throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_CLIENT_SAVE_TENANT_ID_EMPTY);
         }
         if (savedUser.getTenantId() == null || savedUser.getTenantId().isBlank()) {
-            throw new IllegalStateException("users.tenant_id가 비어 있어 clients 저장을 중단합니다.");
+            throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_USERS_TENANT_ID_EMPTY_CLIENT_SAVE_ABORT);
         }
         if (!expectedTenantId.equals(savedUser.getTenantId())) {
             throw new IllegalStateException(

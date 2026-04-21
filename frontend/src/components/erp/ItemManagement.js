@@ -300,7 +300,7 @@ const ItemManagement = () => {
               mainAriaLabel="아이템 관리 목록 및 본문"
             >
             {showInitialInlineLoad ? (
-              <div className="item-management__initial-load" role="status" aria-live="polite">
+              <div className="item-management__initial-load" role="status" aria-live="polite" aria-busy="true">
                 <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
               </div>
             ) : (

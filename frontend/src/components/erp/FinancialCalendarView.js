@@ -211,7 +211,7 @@ const FinancialCalendarView = () => {
         </div>
 
         {loading ? (
-          <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite">
+          <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
             <UnifiedLoading type="inline" text="달력 데이터를 불러오는 중..." />
           </div>
         ) : (

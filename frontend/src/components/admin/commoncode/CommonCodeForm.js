@@ -1,26 +1,33 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { apiGet } from '../../../utils/ajax';
+import StandardizedApi from '../../../utils/standardizedApi';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './CommonCodeForm.css';
 
+/** @type {string} 폼·actions submit 연결용 id (DOM 한 곳) */
+const COMMON_CODE_FORM_DOM_ID = 'common-code-form-root';
+
 /**
- * 공통코드 폼 컴포넌트
-/**
- * - 공통코드 생성/수정을 위한 모달 폼
-/**
- * - 유효성 검사 및 에러 처리 포함
-/**
- * 
-/**
+ * 공통코드 폼 컴포넌트 — 공통코드 생성/수정용 모달 폼
+ *
  * @author Core Solution
-/**
  * @version 1.0.0
-/**
  * @since 2024-12-19
  */
-const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
+const CommonCodeForm = ({
+    code,
+    codeGroups = [],
+    onSubmit,
+    onClose,
+    isOpen = true,
+    title: titleProp
+}) => {
+    const resolvedTitle = titleProp != null && titleProp !== ''
+        ? titleProp
+        : (code ? '공통코드 수정' : '새 공통코드 추가');
+
     const [formData, setFormData] = useState({
         codeGroup: '',
         codeValue: '',
@@ -34,21 +41,18 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
         icon: '',
         colorCode: ''
     });
-    
-    // 패키지 전용 필드 (CONSULTATION_PACKAGE 그룹일 때만 사용)
+
     const [packageSessions, setPackageSessions] = useState(20);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    // 공통 코드 그룹 옵션 상태
+
     const [commonCodeGroupOptions, setCommonCodeGroupOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
 
-    // 공통 코드 그룹 로드
     const loadCommonCodeGroupOptions = useCallback(async() => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/v1/common-codes?codeGroup=COMMON_CODE_GROUP');
+            const response = await StandardizedApi.get('/api/v1/common-codes', { codeGroup: 'COMMON_CODE_GROUP' });
             if (response && response.length > 0) {
                 setCommonCodeGroupOptions(response.map(code => ({
                     value: code.codeValue,
@@ -60,14 +64,12 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
             }
         } catch (error) {
             console.error('공통 코드 그룹 옵션 로드 실패:', error);
-            // 실패 시 기본값 설정
             setCommonCodeGroupOptions([
                 { value: 'PACKAGE_TYPE', label: '패키지 유형', icon: '📦', color: 'var(--mg-primary-500)', description: '상담 패키지 유형' },
                 { value: 'PAYMENT_METHOD', label: '결제 방법', icon: '💳', color: 'var(--mg-success-500)', description: '결제 수단' },
                 { value: 'RESPONSIBILITY', label: '책임', icon: '👤', color: 'var(--mg-warning-500)', description: '책임 및 역할' },
                 { value: 'CONSULTATION_TYPE', label: '상담 유형', icon: '💬', color: 'var(--mg-purple-500)', description: '상담의 유형' },
                 { value: 'GENDER', label: '성별', icon: '⚧', color: 'var(--mg-error-500)', description: '사용자 성별' },
-                // 표준화 2025-12-05: CSS 변수 사용 (fallback 색상값)
                 { value: 'ROLE', label: '역할', icon: '👑', color: 'var(--mg-info-500)', description: '사용자 역할' },
                 { value: 'STATUS', label: '상태', icon: '🔄', color: 'var(--mg-warning-500)', description: '일반적인 상태' },
                 { value: 'PRIORITY', label: '우선순위', icon: '⚡', color: 'var(--mg-error-500)', description: '우선순위 구분' },
@@ -79,7 +81,6 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
         }
     }, []);
 
-    // 편집 모드일 때 기존 데이터 로드
     useEffect(() => {
         if (code) {
             setFormData({
@@ -93,8 +94,7 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                 parentCodeValue: code.parentCodeValue || '',
                 extraData: code.extraData || ''
             });
-            
-            // CONSULTATION_PACKAGE 그룹일 때 회기 수 파싱
+
             if (code.codeGroup === 'CONSULTATION_PACKAGE' && code.extraData) {
                 try {
                     const extraData = JSON.parse(code.extraData);
@@ -107,12 +107,10 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
         }
     }, [code]);
 
-    // 공통 코드 그룹 옵션 로드
     useEffect(() => {
         loadCommonCodeGroupOptions();
     }, [loadCommonCodeGroupOptions]);
 
-    // 폼 데이터 변경 핸들러
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
@@ -120,7 +118,6 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
             [name]: type === 'checkbox' ? checked : value
         }));
 
-        // 에러 클리어
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -129,7 +126,6 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
         }
     };
 
-    // 유효성 검사
     const validateForm = () => {
         const newErrors = {};
 
@@ -155,17 +151,15 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // 폼 제출 핸들러
     const handleSubmit = async(e) => {
         e.preventDefault();
-        
+
         if (!validateForm()) {
             return;
         }
 
         setIsSubmitting(true);
         try {
-            // CONSULTATION_PACKAGE 그룹일 때 회기 수를 extraData에 포함
             const submitData = formData.codeGroup === 'CONSULTATION_PACKAGE'
                 ? { ...formData, extraData: JSON.stringify({ sessions: packageSessions }) }
                 : { ...formData };
@@ -178,32 +172,63 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
         }
     };
 
+    const formBusy = loadingCodes || isSubmitting;
 
     return (
-        <div className="common-code-form-overlay">
-            <div className="common-code-form-modal">
-                <div className="form-header">
-                    <h3>{code ? '공통코드 수정' : '새 공통코드 추가'}</h3>
-                    <MGButton 
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={resolvedTitle}
+            size="large"
+            variant="form"
+            className="mg-v2-ad-b0kla"
+            backdropClick={!isSubmitting}
+            showCloseButton
+            loading={isSubmitting}
+            actions={(
+                <>
+                    <MGButton
                         type="button"
-                        variant="outline"
-                        size="small"
+                        variant="secondary"
                         className={buildErpMgButtonClassName({
-                            variant: 'outline',
-                            size: 'sm',
+                            variant: 'secondary',
+                            size: 'md',
                             loading: false,
-                            className: 'close-btn'
+                            className: 'btn btn-secondary'
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onClose}
-                        preventDoubleClick={false}
-                        aria-label="닫기"
+                        disabled={isSubmitting}
                     >
-                        <i className="bi bi-x" />
+                        취소
                     </MGButton>
-                </div>
-
-                <form onSubmit={handleSubmit} className="common-code-form">
+                    <MGButton
+                        type="submit"
+                        form={COMMON_CODE_FORM_DOM_ID}
+                        variant="primary"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: isSubmitting,
+                            className: 'btn btn-primary'
+                        })}
+                        disabled={isSubmitting}
+                        loading={isSubmitting}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    >
+                        {code ? '수정' : '생성'}
+                    </MGButton>
+                </>
+            )}
+        >
+            <div className="mg-v2-modal-body">
+                <form
+                    id={COMMON_CODE_FORM_DOM_ID}
+                    onSubmit={handleSubmit}
+                    className="common-code-form"
+                    aria-busy={formBusy}
+                    aria-live="polite"
+                >
                     <div className="form-row">
                         <div className="form-group">
                             <label htmlFor="codeGroup">
@@ -225,8 +250,8 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                                         {commonCodeGroupOptions.map(option => (
                                             <option key={option.value} value={option.value}>
                                                 {[toDisplayString(option.icon, ''), toDisplayString(option.label)]
-                                                  .filter((s) => s !== '')
-                                                  .join(' ')}
+                                                    .filter((s) => s !== '')
+                                                    .join(' ')}
                                             </option>
                                         ))}
                                         {codeGroups.filter(group => !commonCodeGroupOptions.some(opt => opt.value === group)).map(group => (
@@ -318,7 +343,7 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                                 </div>
                             )}
                         </div>
-                        
+
                         <div className="form-group">
                             <label htmlFor="icon">아이콘</label>
                             <input
@@ -335,22 +360,23 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                                 이모지나 유니코드 문자를 입력하세요 (최대 10자)
                             </small>
                         </div>
-                        
+
                         <div className="form-group">
-                            <label htmlFor="colorCode">색상 코드</label>
+                            <label htmlFor="colorCodePicker">색상 코드</label>
                             <div className="color-input-group">
-                                {/* 표준화 2025-12-05: CSS 변수 사용 (fallback) */}
                                 <input
                                     type="color"
-                                    id="colorCode"
-                                    name="colorCode"
-                                    value={formData.colorCode || 'var(--mg-gray-500)'}
-                                    onChange={handleChange}
+                                    id="colorCodePicker"
+                                    value={/^#[0-9A-Fa-f]{6}$/i.test(formData.colorCode || '') ? formData.colorCode : '#6b7280'}
+                                    onChange={(e) => {
+                                        setFormData(prev => ({ ...prev, colorCode: e.target.value }));
+                                    }}
                                     className="form-control color-picker"
                                 />
-                                {/* 표준화 2025-12-05: CSS 변수 사용 권장 */}
                                 <input
                                     type="text"
+                                    id="colorCode"
+                                    name="colorCode"
                                     value={formData.colorCode}
                                     onChange={handleChange}
                                     className="form-control color-text"
@@ -405,7 +431,6 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                         </div>
                     </div>
 
-                    {/* CONSULTATION_PACKAGE 그룹일 때 회기 수 입력 필드 */}
                     {formData.codeGroup === 'CONSULTATION_PACKAGE' && (
                         <div className="form-group">
                             <label htmlFor="packageSessions">회기 수</label>
@@ -413,7 +438,7 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                                 type="number"
                                 id="packageSessions"
                                 value={packageSessions}
-                                onChange={(e) => setPackageSessions(parseInt(e.target.value) || 20)}
+                                onChange={(e) => setPackageSessions(parseInt(e.target.value, 10) || 20)}
                                 className="form-control"
                                 min="1"
                                 max="100"
@@ -443,42 +468,9 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                             </small>
                         )}
                     </div>
-
-                    <div className="form-actions">
-                        <MGButton 
-                            type="button" 
-                            variant="secondary"
-                            className={buildErpMgButtonClassName({
-                                variant: 'secondary',
-                                size: 'md',
-                                loading: false,
-                                className: 'btn btn-secondary'
-                            })}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            onClick={onClose}
-                            disabled={isSubmitting}
-                        >
-                            취소
-                        </MGButton>
-                        <MGButton 
-                            type="submit" 
-                            variant="primary"
-                            className={buildErpMgButtonClassName({
-                                variant: 'primary',
-                                size: 'md',
-                                loading: isSubmitting,
-                                className: 'btn btn-primary'
-                            })}
-                            disabled={isSubmitting}
-                            loading={isSubmitting}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        >
-                            {code ? '수정' : '생성'}
-                        </MGButton>
-                    </div>
                 </form>
             </div>
-        </div>
+        </UnifiedModal>
     );
 };
 

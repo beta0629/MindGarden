@@ -6,7 +6,7 @@
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  gap: var(--mg-spacing-sm, var(--cs-spacing-sm, 0.5rem));
+  gap: var(--mg-spacing-sm);
 }
 
 .mg-v2-erp-filter-toolbar__primary,
@@ -18,8 +18,7 @@
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  gap: var(--mg-spacing-sm, var(--cs-spacing-sm, 0.5rem))
-    var(--mg-spacing-md, var(--cs-spacing-md, 1rem));
+  gap: var(--mg-spacing-sm) var(--mg-spacing-md);
 }
 
 .mg-v2-erp-filter-toolbar__expanded {
@@ -30,7 +29,7 @@
 
 /* 기간 셀렉트 — 인라인 min-width 대체 */
 .mg-v2-erp-filter-toolbar__period-select {
-  min-width: calc(var(--mg-spacing-md, var(--cs-spacing-md, 1rem)) * 6);
+  min-width: calc(var(--mg-spacing-md) * 6);
   max-width: 100%;
 }
 
@@ -42,8 +41,8 @@
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  gap: var(--mg-spacing-xs, var(--cs-spacing-xs, 0.25rem));
-  margin-top: var(--mg-spacing-xs, var(--cs-spacing-xs, 0.25rem));
+  gap: var(--mg-spacing-xs);
+  margin-top: var(--mg-spacing-xs);
 }
 
 .mg-v2-erp-filter-toolbar__date-input--start,
@@ -54,18 +53,17 @@
 
 .mg-v2-erp-filter-toolbar__date-separator {
   flex-shrink: 0;
-  color: var(--mg-color-text-secondary, var(--mg-gray-600));
+  color: var(--mg-text-secondary);
 }
 
 @media (max-width: 768px) {
   .mg-v2-erp-filter-toolbar {
-    gap: var(--mg-spacing-xs, var(--cs-spacing-xs, 0.25rem));
+    gap: var(--mg-spacing-xs);
   }
 
   .mg-v2-erp-filter-toolbar__primary,
   .mg-v2-erp-filter-toolbar__secondary {
-    gap: var(--mg-spacing-xs, var(--cs-spacing-xs, 0.25rem))
-      var(--mg-spacing-sm, var(--cs-spacing-sm, 0.5rem));
+    gap: var(--mg-spacing-xs) var(--mg-spacing-sm);
   }
 }
 

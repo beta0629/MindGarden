@@ -45,6 +45,7 @@ const RefundFilterBlock = ({
     <section
       className="refund-management__filter-block mg-w-full mg-mb-md"
       aria-labelledby="refund-filter-block-heading"
+      aria-busy={silentListRefreshing}
     >
       <h2 id="refund-filter-block-heading" className="sr-only">
         조회 조건 및 액션

@@ -27,7 +27,7 @@ const ErpFinanceAdminSyncCard = ({
   onInitTenantErp,
   onBackfillJournalEntries
 }) => (
-  <div className="mg-v2-ad-b0kla__card erp-finance-sync">
+  <div className="mg-v2-ad-b0kla__card erp-finance-sync" aria-busy={initLoading || backfillLoading}>
     <h2 className="mg-v2-ad-b0kla__section-title">
       <Settings2 size={20} aria-hidden className="erp-finance-sync__title-icon" />
       데이터 동기화

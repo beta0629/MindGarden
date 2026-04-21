@@ -17,13 +17,11 @@
 
 ### 1.2 E2E (Playwright)
 
-- **위치**: `tests/e2e/tests/` — `auth.spec.ts`, `admin/branch-management.spec.ts`, `admin/psych-assessments-after-login.spec.ts`, `consultant/consultant-dashboard.spec.ts` 등.
-- **ERP 전용 스펙**: **없음**. ERP 메뉴 접근 → 목록 → 등록/수정 시나리오는 미구현.
+ERP 관련 Playwright 스펙은 `tests/e2e/tests/erp/`에 있으며, 예로 `erp-legacy-path-redirects.spec.ts`(로그인 없이 레거시 경로 → 정규 경로 리다이렉트), `erp-approval-hub-redirect.spec.ts`(승인 허브 라우트·리다이렉트 및 일부 로그인 시나리오), `erp-menu-and-list.spec.ts`(ERP 권한 사용자로 대시보드·구매·재무·예산·아이템 등 화면 진입)가 있다. 일반 인증·관리자·상담사 등 비ERP 스펙은 상위 `tests/e2e/tests/`의 `auth.spec.ts`, `admin/`, `consultant/` 등에 그대로 둔다. GitHub Actions `.github/workflows/e2e-erp-smoke.yml`는 `frontend`에서 `npm run verify:erp`를 실행한 뒤, Chromium으로 `erp-legacy-path-redirects.spec.ts` 전체와 `erp-approval-hub-redirect.spec.ts`를 `--grep "super-approvals"`로 **일부만** 돌린다. 따라서 로그인·백엔드 API에 의존하는 `erp-menu-and-list.spec.ts` 전체와 승인 허브의 admin 로드 케이스 등은 **스모크 워크플로에 포함되지 않을 수 있다**. 전 로그인형 ERP E2E를 CI에서 보려면 별도 워크플로 또는 수동 실행으로 해당 스펙을 추가해야 한다.
 
 ### 1.3 결론
 
-- ERP **메뉴 접근 → 목록 조회 → 일부 등록/수정** 플로우를 다루는 E2E 또는 API 통합 테스트는 **현재 없음**.
-- 아래 시나리오는 신규 테스트 추가 시 참고용 시나리오 문서이며, 구현 시 `docs/standards/TESTING_STANDARD.md` 및 `docs/planning/ERP_TENANT_ISOLATION_SCENARIOS.md`와 함께 사용할 것.
+“ERP 전용 E2E가 없다”는 과거 서술은 더 이상 맞지 않으며, 리다이렉트·승인·메뉴/목록 조회까지 저장소에 스펙이 존재한다. 다만 PR 스모크는 정적 `verify:erp`와 제한된 Playwright 실행만 보장하므로, 문서 §3 표의 모든 행이 매번 CI에서 검증된다고 읽어서는 안 된다. API 통합(API-1~11)과 표에서 다루는 등록/수정·권한 부정 시나리오(E2E-8·9 등)는 여전히 구현·보강 대상일 수 있다. 아래 §2·§3은 확장·정합 시 참고용이며, 구현 시 `docs/standards/TESTING_STANDARD.md` 및 `docs/planning/ERP_TENANT_ISOLATION_SCENARIOS.md`와 함께 사용한다.
 
 ---
 
@@ -51,7 +49,7 @@
 
 ## 3. E2E 테스트 시나리오 (제안)
 
-**환경**: Playwright, `tests/e2e/tests/` 하위에 `erp/` 디렉토리 및 `erp-menu-and-list.spec.ts` 등 추가 권장. baseURL 설정에 따라 로그인 후 진행.
+**환경**: Playwright, 구현 스펙은 `tests/e2e/tests/erp/`(`erp-menu-and-list.spec.ts` 등). baseURL·백엔드 가용 여부에 따라 로그인 후 케이스는 실패할 수 있음.
 
 | ID | 시나리오 | Given | When | Then |
 |----|----------|-------|------|------|
@@ -65,6 +63,8 @@
 | E2E-8 | 구매요청 등록 플로우(있을 경우) | `/erp/purchase-requests` 화면 | 새 구매요청 작성 → 제출 | 성공 시 목록에 반영 또는 성공 메시지 |
 | E2E-9 | ERP 권한 없을 때 메뉴 비노출 또는 접근 거부 | 로그인(ERP_ACCESS 없는 사용자) | LNB 확인 또는 `/erp/dashboard` 직접 이동 | ERP 메뉴 비노출 또는 403/리다이렉트/권한 메시지 |
 
+**각주 (표 ID ↔ `erp-menu-and-list.spec.ts` 테스트 제목)**: ¹ 동일 ID `E2E-7`로는 어드민 통합 재무(`/admin/erp/financial`) 접근·탭 시나리오가 구현되어 있어, 본 표의 “아이템 등록” 서술과 불일치한다. ² `E2E-8`에 해당하는 이름의 테스트는 현재 해당 스펙에 없다. ³ `E2E-9`에 해당하는 이름의 테스트는 현재 해당 스펙에 없다.
+
 **구현 시 참고**: `docs/standards/TESTING_STANDARD.md` E2E 섹션, `tests/e2e/playwright.config.ts` baseURL. 테스트 데이터는 동적 생성, 하드코딩 ID 금지.
 
 ---
@@ -75,8 +75,8 @@
    - **위치**: `src/test/java/com/coresolution/consultation/integration/erp/` (예: `ErpControllerIntegrationTest.java`).
    - **내용**: 위 API-1 ~ API-11 시나리오를 `@DisplayName`과 Given-When-Then으로 구현. 테넌트 격리는 `ERP_TENANT_ISOLATION_SCENARIOS.md`의 T-ITEM-1~T-NO-6와 연계 가능.
 2. **E2E 테스트**
-   - **위치**: `tests/e2e/tests/erp/erp-menu-and-list.spec.ts` (또는 시나리오별 파일 분리).
-   - **내용**: E2E-1 ~ E2E-9. 로그인 픽스처는 기존 `auth.spec.ts` 또는 공통 픽스처 활용.
+   - **위치**: `tests/e2e/tests/erp/` (`erp-menu-and-list.spec.ts`, `erp-legacy-path-redirects.spec.ts`, `erp-approval-hub-redirect.spec.ts` 등).
+   - **내용**: E2E-1 ~ E2E-9(상기 각주·CI 스모크 범위 참고). 로그인 픽스처는 `helpers/erpAuth` 등 공통 모듈 활용.
 3. **실제 코드 작성**: core-coder 또는 별도 태스크에서 진행. core-tester는 시나리오 문서·체크리스트 제공만 수행.
 
 ---

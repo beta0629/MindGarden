@@ -1,0 +1,81 @@
+/* TenantCommonCodeManager — B0KlA 보조 스타일 (공통코드 관리와 동일 토큰 계열) */
+
+.mg-v2-ad-b0kla__tenant-common-root {
+    width: 100%;
+}
+
+.mg-v2-ad-b0kla__tenant-common-root .mg-codes-description {
+    font-size: var(--mg-font-size-sm, 0.875rem);
+    color: var(--ad-b0kla-text-secondary);
+    margin: calc(-1 * var(--mg-spacing-sm)) 0 var(--mg-spacing-md) 0;
+}
+
+.mg-v2-ad-b0kla__tenant-error {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-sm);
+    padding: var(--mg-spacing-md);
+    margin-bottom: var(--mg-spacing-lg);
+    border: 1px solid var(--ad-b0kla-border);
+    border-radius: var(--ad-b0kla-radius-sm);
+    background: var(--ad-b0kla-bg);
+    color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla__tenant-error-icon {
+    flex-shrink: 0;
+}
+
+.mg-v2-ad-b0kla__tenant-code-cards-grid {
+    display: grid;
+    gap: var(--mg-spacing-lg);
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+    .mg-v2-ad-b0kla__tenant-code-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .mg-v2-ad-b0kla__tenant-code-cards-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.mg-v2-ad-b0kla__tenant-code-card.mg-card {
+    border: 1px solid var(--ad-b0kla-border);
+    border-radius: var(--ad-b0kla-radius-sm);
+    box-shadow: var(--ad-b0kla-shadow);
+    background: var(--ad-b0kla-card-bg);
+}
+
+.mg-v2-ad-b0kla__tenant-code-card .mg-code-value {
+    background: var(--ad-b0kla-green-bg);
+    color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla__tenant-code-card .mg-code-name {
+    color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla__tenant-code-card .mg-code-card__label {
+    color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla__tenant-code-card .mg-code-card__value {
+    color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla__tenant-code-card .mg-code-card__header,
+.mg-v2-ad-b0kla__tenant-code-card .mg-code-card__actions {
+    border-color: var(--ad-b0kla-border);
+}
+
+.mg-v2-ad-b0kla__form-hint {
+    display: block;
+    font-size: var(--mg-font-size-sm, 0.875rem);
+    color: var(--ad-b0kla-text-secondary);
+    margin-top: var(--mg-spacing-xs);
+}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 import { Users, Link2, Calendar, ClipboardList, Mail, Phone } from 'lucide-react';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -43,11 +44,13 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 import { CONSULTANT_COMP_SPECIALTY } from '../../constants/consultantComprehensiveStrings';
+import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 
 /** ContentHeader / 본문 main aria-labelledby 연동 */
 const CONSULTANT_COMP_MGMT_TITLE_ID = 'consultant-comprehensive-management-title';
 
 const ConsultantComprehensiveManagement = ({ embedded = false }) => {
+    const navigate = useNavigate();
     const [consultants, setConsultants] = useState([]);
     const [selectedConsultant, setSelectedConsultant] = useState(null);
     const [mappings, setMappings] = useState([]);
@@ -1967,14 +1970,24 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 >
                                     {CONSULTANT_COMP_SPECIALTY.BTN_REFRESH_CODES}
                                 </MGButton>
-                                <a
-                                    href={`/admin/tenant-common-codes?group=${CONSULTANT_COMP_SPECIALTY.TENANT_CODE_GROUP}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="mg-v2-specialty-manage-link"
+                                <MGButton
+                                    type="button"
+                                    variant="outline"
+                                    size="small"
+                                    preventDoubleClick={false}
+                                    className={buildErpMgButtonClassName({
+                                        variant: 'outline',
+                                        size: 'sm',
+                                        loading: false,
+                                        className: 'mg-v2-button--compact'
+                                    })}
+                                    onClick={() => {
+                                        setShowModal(false);
+                                        navigate(`${ADMIN_ROUTES.TENANT_COMMON_CODES}?group=${CONSULTANT_COMP_SPECIALTY.TENANT_CODE_GROUP}`);
+                                    }}
                                 >
-                                    {CONSULTANT_COMP_SPECIALTY.LINK_MANAGE_COMMON_CODES}
-                                </a>
+                                    {CONSULTANT_COMP_SPECIALTY.BTN_OPEN_TENANT_COMMON_CODES}
+                                </MGButton>
                             </span>
                         </div>
                         <div className="mg-v2-form-help mg-v2-form-help--secondary">

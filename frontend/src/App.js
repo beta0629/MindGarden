@@ -93,6 +93,7 @@ import PgApprovalManagement from './components/ops/PgApprovalManagement';
 import AdminLayout from './components/layout/AdminLayout';
 import TenantCommonCodeManager from './components/admin/TenantCommonCodeManager';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import { ADMIN_NESTED_SEGMENTS } from './constants/adminRoutes';
 import { MypageRedirect, SettingsRedirect } from './components/common/MypageSettingsRedirects';
 import SessionGuard from './components/common/SessionGuard';
 import { SessionProvider, useSession } from './contexts/SessionContext';
@@ -396,7 +397,7 @@ function AppContent() {
               }
             >
               <Route index element={<Navigate to="/admin/common-codes" replace />} />
-              <Route path="tenant-common-codes" element={<TenantCommonCodeManager />} />
+              <Route path={ADMIN_NESTED_SEGMENTS.TENANT_COMMON_CODES} element={<TenantCommonCodeManager />} />
               <Route path="package-pricing/new" element={<PackagePricingDetailPage isNew />} />
               <Route path="package-pricing/:id" element={<PackagePricingDetailPage />} />
               <Route path="package-pricing" element={<PackagePricingListPage />} />

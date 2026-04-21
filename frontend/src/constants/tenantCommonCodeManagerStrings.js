@@ -146,10 +146,51 @@ export function formatTenantCommonCodeQuickPackageDescription(packageName, sessi
   return `${packageName} (${sessions}회기)`;
 }
 
-/** 레이아웃·헤더 */
+/** 레이아웃·헤더·본문 UI */
 export const TENANT_COMMON_CODE_UI = {
   LAYOUT_TITLE: '테넌트 공통코드',
   CONTENT_ARIA_LABEL: '테넌트 공통코드 관리 본문',
   HEADER_TITLE: '테넌트 공통코드 관리',
-  HEADER_SUBTITLE: '상담 패키지, 결제 방법, 전문 분야 등 테넌트 전용 코드를 관리합니다.'
+  HEADER_SUBTITLE: '상담 패키지, 결제 방법, 전문 분야 등 테넌트 전용 코드를 관리합니다.',
+  GROUP_LIST_TITLE: '코드 그룹',
+  SEARCH_PLACEHOLDER: '코드 그룹 검색...',
+  LOADING: '불러오는 중...',
+  EMPTY_SELECT_TITLE: '코드 그룹을 선택하세요',
+  EMPTY_SELECT_DESC: '좌측 목록에서 그룹을 선택하면 우측에서 코드를 관리할 수 있습니다.',
+  EMPTY_NO_CODES: '등록된 코드가 없습니다.',
+  BTN_QUICK_PACKAGE: '빠른 패키지 생성',
+  BTN_ADD_CODE: '코드 추가',
+  BTN_FIRST_ADD: '첫 코드 추가하기',
+  STATUS_ACTIVE: '활성',
+  STATUS_INACTIVE: '비활성',
+  BTN_EDIT: '수정',
+  BTN_DELETE: '삭제',
+  FIELD_PARENT_CATEGORY: '상위 카테고리',
+  FIELD_DESCRIPTION: '설명',
+  FIELD_AMOUNT: '금액',
+  FIELD_SORT_ORDER: '순서',
+  MODAL_TITLE_CREATE: '코드 추가',
+  MODAL_TITLE_EDIT: '코드 수정',
+  MODAL_BTN_CANCEL: '취소',
+  MODAL_BTN_SUBMIT_CREATE: '생성',
+  MODAL_BTN_SUBMIT_EDIT: '수정',
+  FORM_LABEL_CODE_GROUP: '코드 그룹',
+  FORM_LABEL_CODE_VALUE: '코드 값 *',
+  FORM_LABEL_CODE_NAME: '코드명 *',
+  FORM_LABEL_PARENT_CATEGORY: '상위 카테고리 *',
+  FORM_LABEL_KOREAN_NAME: '한글명',
+  FORM_LABEL_DESCRIPTION: '설명',
+  FORM_LABEL_SORT_ORDER: '정렬 순서',
+  FORM_LABEL_ACTIVE: '활성 상태',
+  FORM_LABEL_EXTRA_JSON: '추가 데이터 (JSON)',
+  FORM_PLACEHOLDER_CODE_VALUE: '예: PACKAGE_001',
+  FORM_PLACEHOLDER_CODE_NAME: '예: 기본 10회기 패키지',
+  FORM_PLACEHOLDER_PARENT: '상위 카테고리를 선택하세요',
+  FORM_PLACEHOLDER_KOREAN: '코드명과 동일하게 입력 (선택)',
+  FORM_PLACEHOLDER_DESCRIPTION: '코드에 대한 설명을 입력하세요',
+  FORM_HELP_EXTRA_JSON:
+    '상담 패키지·평가 유형의 경우 금액(price), 기간(duration), 회기(sessions) 등을 JSON 형식으로 입력하세요.',
+  DISPLAY_DASH: '—',
+  CURRENCY_WON_SUFFIX: '원',
+  AMOUNT_EMPTY: '-'
 };

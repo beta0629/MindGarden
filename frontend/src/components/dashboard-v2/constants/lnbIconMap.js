@@ -17,6 +17,7 @@ const LNB_ICON_MAP = {
   Settings: 'SETTINGS',
   Users: 'USERS',
   FileText: 'FILE_TEXT',
+  Tag: 'TAG',
   Calendar: 'CALENDAR',
   MessageCircle: 'MESSAGE_CIRCLE',
   CreditCard: 'CREDIT_CARD',

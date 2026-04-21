@@ -42,6 +42,7 @@ import './ProfileCard.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
+import { CONSULTANT_COMP_SPECIALTY } from '../../constants/consultantComprehensiveStrings';
 
 /** ContentHeader / 본문 main aria-labelledby 연동 */
 const CONSULTANT_COMP_MGMT_TITLE_ID = 'consultant-comprehensive-management-title';
@@ -1945,9 +1946,39 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     )}
                     <div className="mg-v2-form-group">
                         <label id="consultant-specialty-label" className="mg-v2-form-label">전문분야</label>
-                        <div className="mg-v2-form-help">
-                            <span>💡</span>
-                            <span>여러 개의 전문분야를 선택할 수 있습니다.</span>
+                        <div className="mg-v2-form-help mg-v2-specialty-help-row">
+                            <span className="mg-v2-specialty-help-row__hint">
+                                <span aria-hidden="true">💡</span>
+                                <span>여러 개의 전문분야를 선택할 수 있습니다.</span>
+                            </span>
+                            <span className="mg-v2-specialty-help-row__actions">
+                                <MGButton
+                                    type="button"
+                                    variant="outline"
+                                    size="small"
+                                    preventDoubleClick={false}
+                                    className={buildErpMgButtonClassName({
+                                        variant: 'outline',
+                                        size: 'sm',
+                                        loading: false,
+                                        className: 'mg-v2-button--compact'
+                                    })}
+                                    onClick={() => loadSpecialtyCodes()}
+                                >
+                                    {CONSULTANT_COMP_SPECIALTY.BTN_REFRESH_CODES}
+                                </MGButton>
+                                <a
+                                    href={`/admin/tenant-common-codes?group=${CONSULTANT_COMP_SPECIALTY.TENANT_CODE_GROUP}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="mg-v2-specialty-manage-link"
+                                >
+                                    {CONSULTANT_COMP_SPECIALTY.LINK_MANAGE_COMMON_CODES}
+                                </a>
+                            </span>
+                        </div>
+                        <div className="mg-v2-form-help mg-v2-form-help--secondary">
+                            {CONSULTANT_COMP_SPECIALTY.HELP_MANAGE_VIA_TENANT_CODES}
                         </div>
                         <div className="mg-v2-specialty-tags" role="group" aria-labelledby="consultant-specialty-label">
                             {specialtyCodes.map((opt) => {

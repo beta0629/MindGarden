@@ -1240,12 +1240,23 @@
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
   gap: var(--spacing-md);
   padding: 16px 24px;
   border-top: 1px solid var(--mg-gray-200);
   background: var(--ad-b0kla-card-bg);
+}
+
+/* 푸터 버튼: 콘텐츠 너비만 사용 (래퍼 100% + primary만 과도하게 넓어지는 레이아웃 방지) */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-button,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > button,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-btn,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-modal__button {
+  flex: 0 0 auto;
+  width: auto;
 }
 
 /* mg-modal__body 내부 폼·입력 B0KlA */

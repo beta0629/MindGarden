@@ -535,7 +535,7 @@ const ScheduleDetailModal = ({
             );
         }
         return (
-            <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: 'flex-end' }}>
+            <>
                 {isStatus(resolveStatusForActions(displayData), 'BOOKED') && (
                     <>
                         {canRescheduleByRole && (
@@ -693,7 +693,7 @@ const ScheduleDetailModal = ({
                         </MGButton>
                     );
                 })()}
-            </div>
+            </>
         );
     };
 

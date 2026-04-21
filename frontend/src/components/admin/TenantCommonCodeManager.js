@@ -22,7 +22,8 @@
  * @since 2025-12-03
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
@@ -56,6 +57,8 @@ import {
 const TENANT_COMMON_CODE_TITLE_ID = 'tenant-common-code-title';
 
 const TenantCommonCodeManager = () => {
+    const [, setSearchParams] = useSearchParams();
+    const urlGroupInitialisedRef = useRef(false);
     const [codeGroups, setCodeGroups] = useState([]);
     const [selectedGroup, setSelectedGroup] = useState(null);
     const [codes, setCodes] = useState([]);
@@ -79,22 +82,6 @@ const TenantCommonCodeManager = () => {
     });
     const [parentCategoryOptions, setParentCategoryOptions] = useState([]);
     const [parentOptionsLoading, setParentOptionsLoading] = useState(false);
-
-    // 초기 로드: 코드 그룹 목록 조회
-    useEffect(() => {
-        const init = async() => {
-            await loadCodeGroupMetadata();
-            loadCodeGroups();
-        };
-        init();
-    }, []);
-
-    // 선택된 그룹 변경 시 코드 목록 조회
-    useEffect(() => {
-        if (selectedGroup) {
-            loadCodes(selectedGroup.groupName);
-        }
-    }, [selectedGroup]);
 
     const loadParentCategoryOptions = useCallback(async(groupName) => {
         const parentGroup = getParentCodeGroupForSubcategory(groupName);
@@ -140,13 +127,22 @@ const TenantCommonCodeManager = () => {
 /**
      * 코드 그룹 목록 로드
      */
-    const loadCodeGroups = async() => {
+    const loadCodeGroups = useCallback(async() => {
         try {
             setLoading(true);
             setError(null);
             const response = await getTenantCodeGroups();
             if (response.success) {
-                setCodeGroups(response.data || []);
+                const groups = response.data || [];
+                setCodeGroups(groups);
+                const q = new URLSearchParams(window.location.search).get('group');
+                if (q && !urlGroupInitialisedRef.current) {
+                    const hit = groups.find((g) => (g.groupName || g) === q);
+                    if (hit) {
+                        setSelectedGroup(hit);
+                        urlGroupInitialisedRef.current = true;
+                    }
+                }
             } else {
                 setError(response.message || TENANT_COMMON_CODE_MSG.ERR_CODE_GROUPS_FETCH_FALLBACK);
             }
@@ -156,7 +152,23 @@ const TenantCommonCodeManager = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    // 초기 로드: 코드 그룹 목록 조회
+    useEffect(() => {
+        const init = async() => {
+            await loadCodeGroupMetadata();
+            loadCodeGroups();
+        };
+        init();
+    }, [loadCodeGroups]);
+
+    // 선택된 그룹 변경 시 코드 목록 조회
+    useEffect(() => {
+        if (selectedGroup) {
+            loadCodes(selectedGroup.groupName);
+        }
+    }, [selectedGroup]);
 
 /**
      * 특정 그룹의 코드 목록 로드
@@ -186,6 +198,12 @@ const TenantCommonCodeManager = () => {
         setSelectedGroup(group);
         setCodes([]);
         setError(null);
+        const gn = group?.groupName || group;
+        if (gn) {
+            setSearchParams({ group: gn }, { replace: true });
+        } else {
+            setSearchParams({}, { replace: true });
+        }
     };
 
 /**

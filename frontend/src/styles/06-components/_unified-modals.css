@@ -70,6 +70,8 @@
 .mg-modal__actions .mg-v2-button,
 .mg-modal__actions .mg-btn,
 .mg-modal__actions .mg-modal__button {
+  flex: 0 0 auto;
+  width: auto;
   min-width: 112px;
   min-height: 40px;
   box-sizing: border-box;

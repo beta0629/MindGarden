@@ -1241,7 +1241,8 @@
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  /* 일정 상세 등 3버튼 푸터: flex-end 시 좌측 빈 영역이 커 보임 → 그룹 가운데 정렬 */
+  justify-content: center;
   align-items: center;
   gap: var(--spacing-md);
   padding: 16px 24px;

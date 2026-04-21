@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-17 — UI-01 `/admin/schedules` `App.js` 이중 `AdminCommonLayout` 제거·`AdminSchedulesPage` 페이지 내 레이아웃(UserManagement 패턴); UI-02 `CommonCodeForm` `UnifiedModal`·그룹 `StandardizedApi`; ERP-P4-01 `FinancialManagement` 로딩 `aria-busy`·`role="status"`; QA-02 `ERP_TEST_SCENARIOS` §1.2~1.3·§3·§4를 `tests/e2e/tests/erp/`·`e2e-erp-smoke.yml` 기준 정합; [GITHUB_ACTIONS_WORKFLOW_INDEX](../deployment/GITHUB_ACTIONS_WORKFLOW_INDEX.md) — 루트 워크플로 31개·`e2e-erp-smoke.yml` 행·비고 각주 반영 · OPS-02: `check-hardcoding-enhanced.js` exit 0·에러 0·경고 ~5250·`test-reports/hardcoding/hardcoding-report-*.json`  
+**최종 갱신**: 2026-04-21 — 사용자 대면 문자열·시드 상수화 배치 **`de1f410a7`** (`develop`·`main`): Admin/Erp/Consultation/UserProfile/OAuth2/Compliance/재무 시드·온보딩 시드·관리자 FE(`StaffManagement`·`DashboardFormModal`·`MenuPermissionManagement`) 상수 모듈. **잔여·다음 배치 SSOT**: [USER_FACING_STRINGS_AND_HARDCODE_NEXT_BATCH.md](./2026-04-21/USER_FACING_STRINGS_AND_HARDCODE_NEXT_BATCH.md) (`AdminServiceImpl` 3차 이후, FE 분리 컴포넌트, 하드코드 리포트 커밋 정책, SEC-01 온보딩 잔여). (이전 2026-04-17 갱신: UI-01·UI-02·ERP-P4-01·QA-02·워크플로 인덱스·OPS-02 하드코딩 스캔.)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 **UI/QA 비고**: LEGACY-ADMIN-MGMT-GRID·AUTH-UNIFIED·B0KLA 에러 토큰은 각각 `core-coder`/위임 산출물 전제로 두고, 본 체크리스트는 진행도·`ERP_FINANCIAL_HUB_SMOKE`(번호 38~39 등) 스모크 연계만 기록한다. **관리 카드 숨김 SSOT**(`ADMIN-HIDE-CARDS-SSOT`, `HIDE_ADMIN_CARD_IDS` 상수 파일)는 위임 산출물·스모크 문서 「중복 생략」과 정합한다.
@@ -409,3 +409,4 @@
 | 2026-04-10 | **ERP-P4-02**: `BudgetManagement`·`AdminApprovalDashboard` `aria-busy` — core-tester 문서 동기 후 `AdminApprovalDashboard` 모달 본문 `aria-busy={processing}` 추가·비고 정합 |
 | 2026-04-10 | **ERP-P4-02** (병렬 위임 후 정합): `IntegratedFinanceDashboard.js` 분개 상세·등록·수정 모달 `aria-busy` 반영(core-coder)·**core-tester** 병렬 레이스로 잘못 들어간 「IFD 미반영」 문구 제거·비고·변경 이력 반영 |
 | 2026-04-10 | **ERP-P4-02**: `SuperAdminApprovalDashboard.js`·`ConsultantProfileModal.js` `aria-busy` — 비고·커밋 `a7322cc4e` 정합(직전 푸시만 반영·문서 누락 보완) |
+| 2026-04-21 | **문구·시드 상수화** `de1f410a7` develop·main — 잔여·다음 배치: [USER_FACING_STRINGS_AND_HARDCODE_NEXT_BATCH.md](./2026-04-21/USER_FACING_STRINGS_AND_HARDCODE_NEXT_BATCH.md) |

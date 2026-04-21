@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.constant.compliance.ComplianceDashboardSampleContent;
+import com.coresolution.consultation.constant.compliance.ComplianceServiceErrorMessages;
 import com.coresolution.consultation.repository.PersonalDataAccessLogRepository;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +64,7 @@ public class ComplianceService {
             
         } catch (Exception e) {
             log.error("개인정보 처리 현황 조회 실패: {}", e.getMessage(), e);
-            result.put("error", "개인정보 처리 현황 조회에 실패했습니다.");
+            result.put("error", ComplianceServiceErrorMessages.MSG_PERSONAL_DATA_PROCESSING_STATUS_QUERY_FAILED);
         }
         
         return result;
@@ -77,50 +79,8 @@ public class ComplianceService {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 개인정보 처리 목적별 위험도 평가
-            Map<String, Object> riskAssessment = Map.of(
-                "userManagement", Map.of(
-                    "purpose", "회원가입 및 서비스 이용",
-                    "riskLevel", "중간",
-                    "dataTypes", List.of("이름", "이메일", "전화번호", "주소"),
-                    "retentionPeriod", "회원 탈퇴 시까지",
-                    "protectionMeasures", List.of("암호화", "접근 제어", "로그 관리")
-                ),
-                "consultationService", Map.of(
-                    "purpose", "상담 서비스 제공",
-                    "riskLevel", "높음",
-                    "dataTypes", List.of("상담 내용", "상담 일지", "개인정보"),
-                    "retentionPeriod", "상담 완료 후 5년",
-                    "protectionMeasures", List.of("의료정보 암호화", "접근 권한 관리", "비밀유지 의무")
-                ),
-                "paymentProcessing", Map.of(
-                    "purpose", "결제 및 환불 처리",
-                    "riskLevel", "높음",
-                    "dataTypes", List.of("결제 정보", "카드번호", "금융 거래 내역"),
-                    "retentionPeriod", "거래 완료 후 5년",
-                    "protectionMeasures", List.of("결제 정보 암호화", "PCI DSS 준수", "접근 로그 관리")
-                ),
-                "salaryManagement", Map.of(
-                    "purpose", "급여 계산 및 세금 처리",
-                    "riskLevel", "중간",
-                    "dataTypes", List.of("급여 정보", "세금 정보", "근로자 정보"),
-                    "retentionPeriod", "급여 지급 후 3년",
-                    "protectionMeasures", List.of("급여 정보 암호화", "접근 권한 관리", "감사 로그")
-                )
-            );
-            
-            // 전체 위험도 평가
-            Map<String, Object> overallAssessment = Map.of(
-                "overallRiskLevel", "중간",
-                "complianceStatus", "부분 준수",
-                "improvementAreas", List.of(
-                    "개인정보 처리방침 보완",
-                    "개인정보 영향평가 정기 실시",
-                    "개인정보보호 교육 강화",
-                    "개인정보 침해사고 대응체계 구축"
-                ),
-                "nextAssessmentDate", LocalDateTime.now().plusMonths(6)
-            );
+            Map<String, Object> riskAssessment = ComplianceDashboardSampleContent.riskAssessment();
+            Map<String, Object> overallAssessment = ComplianceDashboardSampleContent.overallImpactAssessment();
             
             result.put("riskAssessment", riskAssessment);
             result.put("overallAssessment", overallAssessment);
@@ -129,7 +89,7 @@ public class ComplianceService {
             
         } catch (Exception e) {
             log.error("개인정보 영향평가 조회 실패: {}", e.getMessage(), e);
-            result.put("error", "개인정보 영향평가 조회에 실패했습니다.");
+            result.put("error", ComplianceServiceErrorMessages.MSG_PERSONAL_DATA_IMPACT_ASSESSMENT_QUERY_FAILED);
         }
         
         return result;
@@ -144,49 +104,8 @@ public class ComplianceService {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 침해사고 대응 절차
-            Map<String, Object> responseProcedures = Map.of(
-                "step1", Map.of(
-                    "title", "침해사고 발견 및 신고",
-                    "timeframe", "발견 즉시",
-                    "responsible", "개인정보보호책임자",
-                    "actions", List.of("침해사고 신고", "초기 대응팀 구성", "피해 범위 파악")
-                ),
-                "step2", Map.of(
-                    "title", "개인정보보호위원회 신고",
-                    "timeframe", "발견 후 24시간 이내",
-                    "responsible", "개인정보보호책임자",
-                    "actions", List.of("신고서 작성", "위원회 신고", "추가 조치 안내")
-                ),
-                "step3", Map.of(
-                    "title", "피해자 통지",
-                    "timeframe", "발견 후 5일 이내",
-                    "responsible", "대응팀",
-                    "actions", List.of("피해자 식별", "통지서 작성", "피해자 통지")
-                ),
-                "step4", Map.of(
-                    "title", "원인 분석 및 재발방지",
-                    "timeframe", "침해사고 발생 후 30일 이내",
-                    "responsible", "기술팀",
-                    "actions", List.of("원인 분석", "보안 강화", "재발방지 대책 수립")
-                )
-            );
-            
-            // 대응팀 구성
-            Map<String, Object> responseTeam = Map.of(
-                "teamLeader", "개인정보보호책임자",
-                "members", List.of(
-                    "기술팀장 (보안 담당)",
-                    "법무팀장 (법적 대응)",
-                    "마케팅팀장 (소통 담당)",
-                    "개발팀장 (기술적 대응)"
-                ),
-                "contactInfo", Map.of(
-                    "emergency", "02-1234-5678",
-                    "email", "privacy@mindgarden.co.kr",
-                    "address", "서울시 강남구 테헤란로 123"
-                )
-            );
+            Map<String, Object> responseProcedures = ComplianceDashboardSampleContent.breachResponseProcedures();
+            Map<String, Object> responseTeam = ComplianceDashboardSampleContent.breachResponseTeam();
             
             result.put("responseProcedures", responseProcedures);
             result.put("responseTeam", responseTeam);
@@ -195,7 +114,7 @@ public class ComplianceService {
             
         } catch (Exception e) {
             log.error("개인정보 침해사고 대응 현황 조회 실패: {}", e.getMessage(), e);
-            result.put("error", "개인정보 침해사고 대응 현황 조회에 실패했습니다.");
+            result.put("error", ComplianceServiceErrorMessages.MSG_PERSONAL_DATA_BREACH_RESPONSE_STATUS_QUERY_FAILED);
         }
         
         return result;
@@ -266,7 +185,7 @@ public class ComplianceService {
             
         } catch (Exception e) {
             log.error("개인정보보호 교육 현황 조회 실패: {}", e.getMessage(), e);
-            result.put("error", "개인정보보호 교육 현황 조회에 실패했습니다.");
+            result.put("error", ComplianceServiceErrorMessages.MSG_PERSONAL_DATA_PROTECTION_EDUCATION_STATUS_QUERY_FAILED);
         }
         
         return result;
@@ -331,7 +250,7 @@ public class ComplianceService {
             
         } catch (Exception e) {
             log.error("개인정보 처리방침 현황 조회 실패: {}", e.getMessage(), e);
-            result.put("error", "개인정보 처리방침 현황 조회에 실패했습니다.");
+            result.put("error", ComplianceServiceErrorMessages.MSG_PERSONAL_DATA_PROCESSING_POLICY_STATUS_QUERY_FAILED);
         }
         
         return result;
@@ -378,7 +297,7 @@ public class ComplianceService {
             
         } catch (Exception e) {
             log.error("컴플라이언스 종합 현황 조회 실패: {}", e.getMessage(), e);
-            result.put("error", "컴플라이언스 종합 현황 조회에 실패했습니다.");
+            result.put("error", ComplianceServiceErrorMessages.MSG_COMPLIANCE_OVERALL_STATUS_QUERY_FAILED);
         }
         
         return result;

@@ -13,6 +13,7 @@ import com.coresolution.consultation.dto.FinancialTransactionRequest;
 import com.coresolution.consultation.dto.FinancialTransactionResponse;
 import com.coresolution.consultation.entity.Budget;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
+import com.coresolution.consultation.constant.erp.ErpServiceUserFacingMessages;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.entity.Item;
 import com.coresolution.consultation.entity.PurchaseOrder;
@@ -121,7 +122,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         String tenantId = getTenantId();
         log.info("테넌트별 아이템 수정: tenantId={}, id={}", tenantId, id);
         Item existingItem = itemRepository.findByTenantIdAndIdAndActive(tenantId, id)
-                .orElseThrow(() -> new RuntimeException("아이템을 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_ITEM_NOT_FOUND_FMT, id)));
         
         existingItem.setName(item.getName());
         existingItem.setDescription(item.getDescription());
@@ -140,7 +142,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         String tenantId = getTenantId();
         log.info("테넌트별 아이템 삭제: tenantId={}, id={}", tenantId, id);
         Item item = itemRepository.findByTenantIdAndIdAndActive(tenantId, id)
-                .orElseThrow(() -> new RuntimeException("아이템을 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_ITEM_NOT_FOUND_FMT, id)));
         
         item.setIsDeleted(true);
         item.setDeletedAt(LocalDateTime.now());
@@ -154,7 +157,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         String tenantId = getTenantId();
         log.info("테넌트별 아이템 재고 업데이트: tenantId={}, id={}, quantity={}", tenantId, id, quantity);
         Item item = itemRepository.findByTenantIdAndIdAndActive(tenantId, id)
-                .orElseThrow(() -> new RuntimeException("아이템을 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_ITEM_NOT_FOUND_FMT, id)));
         
         item.setStockQuantity(quantity);
         itemRepository.save(item);
@@ -169,10 +173,12 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         log.info("구매 요청 생성: tenantId={}, requesterId={}, itemId={}, quantity={}", tenantId, requesterId, itemId, quantity);
         
         User requester = userService.findActiveById(requesterId)
-                .orElseThrow(() -> new RuntimeException("요청자를 찾을 수 없습니다: " + requesterId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_REQUESTER_NOT_FOUND_FMT, requesterId)));
         
         Item item = itemRepository.findByTenantIdAndIdAndActive(tenantId, itemId)
-                .orElseThrow(() -> new RuntimeException("아이템을 찾을 수 없습니다: " + itemId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_ITEM_NOT_FOUND_FMT, itemId)));
         
         BigDecimal totalAmount = item.getUnitPrice().multiply(BigDecimal.valueOf(quantity));
         
@@ -236,14 +242,17 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         log.info("관리자 승인: tenantId={}, requestId={}, adminId={}", tenantId, requestId, adminId);
         
         PurchaseRequest request = purchaseRequestRepository.findByTenantIdAndIdWithDetails(tenantId, requestId)
-                .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + requestId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_PURCHASE_REQUEST_NOT_FOUND_FMT, requestId)));
         
         User admin = userService.findActiveById(adminId)
-                .orElseThrow(() -> new RuntimeException("관리자를 찾을 수 없습니다: " + adminId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_ADMIN_NOT_FOUND_FMT, adminId)));
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (request.getStatus() != PurchaseRequest.PurchaseRequestStatus.PENDING) {
-            throw new RuntimeException("승인할 수 없는 상태입니다: " + request.getStatus());
+            throw new RuntimeException(String.format(
+                    ErpServiceUserFacingMessages.MSG_CANNOT_APPROVE_STATUS_FMT, request.getStatus()));
         }
         
         request.setStatus(PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED);
@@ -262,14 +271,17 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         log.info("관리자 거부: tenantId={}, requestId={}, adminId={}", tenantId, requestId, adminId);
         
         PurchaseRequest request = purchaseRequestRepository.findByTenantIdAndIdWithDetails(tenantId, requestId)
-                .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + requestId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_PURCHASE_REQUEST_NOT_FOUND_FMT, requestId)));
         
         User admin = userService.findActiveById(adminId)
-                .orElseThrow(() -> new RuntimeException("관리자를 찾을 수 없습니다: " + adminId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_ADMIN_NOT_FOUND_FMT, adminId)));
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (request.getStatus() != PurchaseRequest.PurchaseRequestStatus.PENDING) {
-            throw new RuntimeException("거부할 수 없는 상태입니다: " + request.getStatus());
+            throw new RuntimeException(String.format(
+                    ErpServiceUserFacingMessages.MSG_CANNOT_REJECT_STATUS_FMT, request.getStatus()));
         }
         
         request.setStatus(PurchaseRequest.PurchaseRequestStatus.ADMIN_REJECTED);
@@ -288,13 +300,16 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         log.info("수퍼 관리자 승인: tenantId={}, requestId={}, superAdminId={}", tenantId, requestId, superAdminId);
         
         PurchaseRequest request = purchaseRequestRepository.findByTenantIdAndIdWithDetails(tenantId, requestId)
-                .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + requestId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_PURCHASE_REQUEST_NOT_FOUND_FMT, requestId)));
         
         User superAdmin = userService.findActiveById(superAdminId)
-                .orElseThrow(() -> new RuntimeException("수퍼 관리자를 찾을 수 없습니다: " + superAdminId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_SUPER_ADMIN_NOT_FOUND_FMT, superAdminId)));
         
         if (request.getStatus() != PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED) {
-            throw new RuntimeException("승인할 수 없는 상태입니다: " + request.getStatus());
+            throw new RuntimeException(String.format(
+                    ErpServiceUserFacingMessages.MSG_CANNOT_APPROVE_STATUS_FMT, request.getStatus()));
         }
         
         // 표준화 2025-12-05: HQ_MASTER_APPROVED → ADMIN_APPROVED로 통합
@@ -322,13 +337,16 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         log.info("수퍼 관리자 거부: tenantId={}, requestId={}, superAdminId={}", tenantId, requestId, superAdminId);
         
         PurchaseRequest request = purchaseRequestRepository.findByTenantIdAndIdWithDetails(tenantId, requestId)
-                .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + requestId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_PURCHASE_REQUEST_NOT_FOUND_FMT, requestId)));
         
         User superAdmin = userService.findActiveById(superAdminId)
-                .orElseThrow(() -> new RuntimeException("수퍼 관리자를 찾을 수 없습니다: " + superAdminId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_SUPER_ADMIN_NOT_FOUND_FMT, superAdminId)));
         
         if (request.getStatus() != PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED) {
-            throw new RuntimeException("거부할 수 없는 상태입니다: " + request.getStatus());
+            throw new RuntimeException(String.format(
+                    ErpServiceUserFacingMessages.MSG_CANNOT_REJECT_STATUS_FMT, request.getStatus()));
         }
         
         // 표준화 2025-12-05: HQ_MASTER_REJECTED → ADMIN_REJECTED로 통합
@@ -348,15 +366,17 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         log.info("구매 요청 취소: tenantId={}, requestId={}, requesterId={}", tenantId, requestId, requesterId);
         
         PurchaseRequest request = purchaseRequestRepository.findByTenantIdAndIdWithDetails(tenantId, requestId)
-                .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + requestId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_PURCHASE_REQUEST_NOT_FOUND_FMT, requestId)));
         
         if (!request.getRequester().getId().equals(requesterId)) {
-            throw new RuntimeException("본인의 구매 요청만 취소할 수 있습니다");
+            throw new RuntimeException(ErpServiceUserFacingMessages.MSG_ONLY_OWN_PURCHASE_REQUEST_CANCEL);
         }
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (request.getStatus() != PurchaseRequest.PurchaseRequestStatus.PENDING) {
-            throw new RuntimeException("취소할 수 없는 상태입니다: " + request.getStatus());
+            throw new RuntimeException(String.format(
+                    ErpServiceUserFacingMessages.MSG_CANNOT_CANCEL_STATUS_FMT, request.getStatus()));
         }
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -373,14 +393,17 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         log.info("구매 주문 생성: tenantId={}, requestId={}, purchaserId={}", tenantId, requestId, purchaserId);
         
         PurchaseRequest request = purchaseRequestRepository.findByTenantIdAndIdWithDetails(tenantId, requestId)
-                .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + requestId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_PURCHASE_REQUEST_NOT_FOUND_FMT, requestId)));
         
         User purchaser = userService.findActiveById(purchaserId)
-                .orElseThrow(() -> new RuntimeException("구매자를 찾을 수 없습니다: " + purchaserId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_PURCHASER_NOT_FOUND_FMT, purchaserId)));
         
         // 표준화 2025-12-05: HQ_MASTER_APPROVED → ADMIN_APPROVED로 통합
         if (request.getStatus() != PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED) {
-            throw new RuntimeException("승인된 구매 요청만 주문할 수 있습니다: " + request.getStatus());
+            throw new RuntimeException(String.format(
+                    ErpServiceUserFacingMessages.MSG_ONLY_APPROVED_PURCHASE_ORDER_FMT, request.getStatus()));
         }
         
         PurchaseOrder purchaseOrder = PurchaseOrder.builder()
@@ -454,7 +477,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         log.info("주문 상태 업데이트: tenantId={}, orderId={}, status={}", tenantId, orderId, status);
         
         PurchaseOrder order = purchaseOrderRepository.findByTenantIdAndIdWithDetails(tenantId, orderId)
-                .orElseThrow(() -> new RuntimeException("구매 주문을 찾을 수 없습니다: " + orderId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_PURCHASE_ORDER_NOT_FOUND_FMT, orderId)));
         
         order.setStatus(status);
         purchaseOrderRepository.save(order);
@@ -468,7 +492,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         log.info("배송 완료 처리: tenantId={}, orderId={}", tenantId, orderId);
         
         PurchaseOrder order = purchaseOrderRepository.findByTenantIdAndIdWithDetails(tenantId, orderId)
-                .orElseThrow(() -> new RuntimeException("구매 주문을 찾을 수 없습니다: " + orderId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_PURCHASE_ORDER_NOT_FOUND_FMT, orderId)));
         
         order.setStatus(PurchaseOrder.PurchaseOrderStatus.DELIVERED);
         order.setDeliveredAt(LocalDateTime.now());
@@ -531,7 +556,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         String tenantId = getTenantId();
         log.info("예산 수정: tenantId={}, id={}", tenantId, id);
         Budget existingBudget = budgetRepository.findByTenantIdAndIdWithManager(tenantId, id)
-                .orElseThrow(() -> new RuntimeException("예산을 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_BUDGET_NOT_FOUND_FMT, id)));
         
         existingBudget.setName(budget.getName());
         existingBudget.setDescription(budget.getDescription());
@@ -550,7 +576,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         String tenantId = getTenantId();
         log.info("예산 삭제: tenantId={}, id={}", tenantId, id);
         Budget budget = budgetRepository.findByTenantIdAndIdWithManager(tenantId, id)
-                .orElseThrow(() -> new RuntimeException("예산을 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_BUDGET_NOT_FOUND_FMT, id)));
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         budget.setStatus(Budget.BudgetStatus.INACTIVE);
@@ -565,10 +592,12 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         log.info("예산 사용: tenantId={}, budgetId={}, amount={}", tenantId, budgetId, amount);
         
         Budget budget = budgetRepository.findByTenantIdAndIdWithManager(tenantId, budgetId)
-                .orElseThrow(() -> new RuntimeException("예산을 찾을 수 없습니다: " + budgetId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_BUDGET_NOT_FOUND_FMT, budgetId)));
         
         if (budget.getRemainingBudget().compareTo(amount) < 0) {
-            throw new RuntimeException("예산이 부족합니다. 남은 예산: " + budget.getRemainingBudget());
+            throw new RuntimeException(String.format(
+                    ErpServiceUserFacingMessages.MSG_BUDGET_INSUFFICIENT_REMAINING_FMT, budget.getRemainingBudget()));
         }
         
         budget.setUsedBudget(budget.getUsedBudget().add(amount));
@@ -585,7 +614,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         log.info("예산 환불: tenantId={}, budgetId={}, amount={}", tenantId, budgetId, amount);
         
         Budget budget = budgetRepository.findByTenantIdAndIdWithManager(tenantId, budgetId)
-                .orElseThrow(() -> new RuntimeException("예산을 찾을 수 없습니다: " + budgetId));
+                .orElseThrow(() -> new RuntimeException(
+                        String.format(ErpServiceUserFacingMessages.MSG_BUDGET_NOT_FOUND_FMT, budgetId)));
         
         budget.setUsedBudget(budget.getUsedBudget().subtract(amount));
         budget.setRemainingBudget(budget.getTotalBudget().subtract(budget.getUsedBudget()));
@@ -928,7 +958,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
             
         } catch (Exception e) {
             log.error("❌ 재무 대시보드 데이터 조회 실패: tenantId={}, 오류={}", tenantId, e.getMessage(), e);
-            throw new RuntimeException("재무 대시보드 데이터 조회에 실패했습니다: " + e.getMessage());
+            throw new RuntimeException(String.format(
+                    ErpServiceUserFacingMessages.MSG_FINANCE_DASHBOARD_QUERY_FAILED_FMT, e.getMessage()));
         }
         
         return dashboardData;
@@ -971,7 +1002,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         } catch (Exception e) {
             log.error("❌ 재무 대시보드 데이터 조회 실패: tenantId={}, 기간={}~{}, 오류={}", 
                     tenantId, startDate, endDate, e.getMessage(), e);
-            throw new RuntimeException("재무 대시보드 데이터 조회에 실패했습니다: " + e.getMessage());
+            throw new RuntimeException(String.format(
+                    ErpServiceUserFacingMessages.MSG_FINANCE_DASHBOARD_QUERY_FAILED_FMT, e.getMessage()));
         }
         
         return dashboardData;
@@ -1010,7 +1042,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
             
         } catch (Exception e) {
             log.error("❌ 재무 통계 조회 실패: tenantId={}, 오류={}", tenantId, e.getMessage(), e);
-            throw new RuntimeException("재무 통계 조회에 실패했습니다: " + e.getMessage());
+            throw new RuntimeException(String.format(
+                    ErpServiceUserFacingMessages.MSG_FINANCE_STATS_QUERY_FAILED_FMT, e.getMessage()));
         }
         
         return statistics;

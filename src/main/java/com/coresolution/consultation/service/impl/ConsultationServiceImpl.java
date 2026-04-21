@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.consultation.ConsultationServiceUserFacingMessages;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.entity.Client;
@@ -175,7 +176,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             }
             Consultation existingConsultation = consultationRepository
                     .findByTenantIdAndId(resolveTenantId, consultation.getId())
-                    .orElseThrow(() -> new RuntimeException("상담을 찾을 수 없습니다: " + consultation.getId()));
+                    .orElseThrow(() -> new RuntimeException(String.format(
+                            ConsultationServiceUserFacingMessages.MSG_CONSULTATION_NOT_FOUND_FMT,
+                            consultation.getId())));
             
             if (existingConsultation.getTenantId() != null) {
                 accessControlService.validateTenantAccess(existingConsultation.getTenantId());
@@ -197,7 +200,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             String resolveTenantId = TenantContextHolder.getRequiredTenantId();
             Consultation existingConsultation = consultationRepository
                     .findByTenantIdAndId(resolveTenantId, id)
-                    .orElseThrow(() -> new RuntimeException("상담을 찾을 수 없습니다: " + id));
+                    .orElseThrow(() -> new RuntimeException(String.format(
+                            ConsultationServiceUserFacingMessages.MSG_CONSULTATION_NOT_FOUND_FMT, id)));
             
             if (existingConsultation.getTenantId() != null) {
                 accessControlService.validateTenantAccess(existingConsultation.getTenantId());
@@ -280,7 +284,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             String resolveTenantId = TenantContextHolder.getRequiredTenantId();
             Consultation consultation = consultationRepository
                     .findByTenantIdAndId(resolveTenantId, id)
-                    .orElseThrow(() -> new RuntimeException("상담을 찾을 수 없습니다: " + id));
+                    .orElseThrow(() -> new RuntimeException(String.format(
+                            ConsultationServiceUserFacingMessages.MSG_CONSULTATION_NOT_FOUND_FMT, id)));
             
             if (consultation.getTenantId() != null) {
                 accessControlService.validateTenantAccess(consultation.getTenantId());
@@ -306,7 +311,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                 .setParameter("id", id)
                 .getResultStream()
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("상담을 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> new RuntimeException(String.format(
+                        ConsultationServiceUserFacingMessages.MSG_CONSULTATION_NOT_FOUND_FMT, id)));
         
         consultation.setIsDeleted(false);
         consultation.setDeletedAt(null);
@@ -334,7 +340,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     public Optional<Consultation> findActiveById(Long id) {
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
-            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
+            throw new IllegalStateException(ConsultationServiceUserFacingMessages.MSG_TENANT_ID_REQUIRED_NO_CONTEXT);
         }
         return findByIdAndTenant(tenantId, id)
                 .filter(c -> !c.getIsDeleted());
@@ -343,7 +349,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     @Override
     public Consultation findActiveByIdOrThrow(Long id) {
         return findActiveById(id)
-                .orElseThrow(() -> new RuntimeException("활성 상담을 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> new RuntimeException(String.format(
+                        ConsultationServiceUserFacingMessages.MSG_ACTIVE_CONSULTATION_NOT_FOUND_FMT, id)));
     }
     
     @Override
@@ -781,7 +788,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
         } catch (Exception e) {
             log.error("상담 평가 등록 실패: consultationId={}, error={}", consultationId, e.getMessage(), e);
-            throw new RuntimeException("상담 평가 등록에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_REVIEW_CREATE_FAILED, e);
         }
     }
     
@@ -816,7 +823,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
         } catch (Exception e) {
             log.error("상담 평가 수정 실패: consultationId={}, error={}", consultationId, e.getMessage(), e);
-            throw new RuntimeException("상담 평가 수정에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_REVIEW_UPDATE_FAILED, e);
         }
     }
     
@@ -916,7 +923,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
         } catch (Exception e) {
             log.error("상담 노트 추가 실패: consultationId={}, error={}", consultationId, e.getMessage(), e);
-            throw new RuntimeException("상담 노트 추가에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_NOTE_ADD_FAILED, e);
         }
     }
     
@@ -927,7 +934,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         try {
             String noteTenantId = TenantContextHolder.getRequiredTenantId();
             Note noteEntity = noteRepository.findByTenantIdAndId(noteTenantId, noteId)
-                .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다: " + noteId));
+                .orElseThrow(() -> new RuntimeException(String.format(
+                        ConsultationServiceUserFacingMessages.MSG_NOTE_NOT_FOUND_FMT, noteId)));
             
             noteEntity.updateNote(note);
             noteRepository.save(noteEntity);
@@ -936,7 +944,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
         } catch (Exception e) {
             log.error("상담 노트 수정 실패: noteId={}, error={}", noteId, e.getMessage(), e);
-            throw new RuntimeException("상담 노트 수정에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_NOTE_UPDATE_FAILED, e);
         }
     }
     
@@ -947,7 +955,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         try {
             String noteTenantId = TenantContextHolder.getRequiredTenantId();
             Note noteEntity = noteRepository.findByTenantIdAndId(noteTenantId, noteId)
-                .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다: " + noteId));
+                .orElseThrow(() -> new RuntimeException(String.format(
+                        ConsultationServiceUserFacingMessages.MSG_NOTE_NOT_FOUND_FMT, noteId)));
             
             noteEntity.softDelete();
             noteRepository.save(noteEntity);
@@ -956,7 +965,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
         } catch (Exception e) {
             log.error("상담 노트 삭제 실패: noteId={}, error={}", noteId, e.getMessage(), e);
-            throw new RuntimeException("상담 노트 삭제에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_NOTE_DELETE_FAILED, e);
         }
     }
     
@@ -1134,7 +1143,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                 String tenantId = TenantContextHolder.getRequiredTenantId();
                 // 긴급 요청: 소프트 삭제된 내담자도 동일 clientId로 행이 있으면 존재 검증만 통과(상담 생성 정책·복구는 변경 없음)
                 Client client = clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, clientId)
-                    .orElseThrow(() -> new RuntimeException("클라이언트를 찾을 수 없습니다: " + clientId));
+                    .orElseThrow(() -> new RuntimeException(String.format(
+                            ConsultationServiceUserFacingMessages.MSG_CLIENT_NOT_FOUND_FMT, clientId)));
                 consultation.setClientId(clientId);
                 log.info("긴급 상담 요청 - 클라이언트 정보 확인: clientId={}, name={}", clientId, client.getName());
             } catch (Exception e) {
@@ -1152,7 +1162,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
         } catch (Exception e) {
             log.error("긴급 상담 요청 실패: clientId={}, error={}", clientId, e.getMessage(), e);
-            throw new RuntimeException("긴급 상담 요청에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_EMERGENCY_REQUEST_FAILED, e);
         }
     }
     
@@ -1166,12 +1176,13 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put("consultationId", consultationId);
             variables.put("emergencyReason", emergencyReason);
-            variables.put("alertMessage", "긴급 상담 요청이 접수되었습니다. 즉시 확인해주세요.");
+            variables.put("alertMessage",
+                    ConsultationServiceUserFacingMessages.ALERT_EMERGENCY_CONSULTATION_REQUEST_RECEIVED);
             
             EmailResponse response = emailService.sendTemplateEmail(
                     EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
                     "admin@mindgarden.com", // 관리자 이메일
-                    "관리자",
+                    ConsultationServiceUserFacingMessages.EMAIL_DISPLAY_NAME_ADMIN,
                     variables
             );
             
@@ -1201,7 +1212,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             try {
                 String tenantId = TenantContextHolder.getRequiredTenantId();
                 Consultant consultant = consultantRepository.findByTenantIdAndId(tenantId, consultantId)
-                    .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
+                    .orElseThrow(() -> new RuntimeException(String.format(
+                            ConsultationServiceUserFacingMessages.MSG_CONSULTANT_NOT_FOUND_FMT, consultantId)));
                 consultation.setConsultantId(consultantId);
                 log.info("긴급 상담 할당 - 상담사 정보 확인: consultantId={}, name={}", consultantId, consultant.getName());
             } catch (Exception e) {
@@ -1220,7 +1232,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         } catch (Exception e) {
             log.error("긴급 상담 할당 실패: consultationId={}, consultantId={}, error={}", 
                     consultationId, consultantId, e.getMessage(), e);
-            throw new RuntimeException("긴급 상담 할당에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_EMERGENCY_ASSIGN_FAILED, e);
         }
     }
     
@@ -1234,12 +1246,13 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put("consultationId", consultationId);
             variables.put("consultantId", consultantId);
-            variables.put("alertMessage", "긴급 상담이 할당되었습니다. 즉시 확인해주세요.");
+            variables.put("alertMessage",
+                    ConsultationServiceUserFacingMessages.ALERT_EMERGENCY_CONSULTATION_ASSIGNED);
             
             EmailResponse response = emailService.sendTemplateEmail(
                     EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
                     "consultant@mindgarden.com", // 상담사 이메일
-                    "상담사",
+                    ConsultationServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME,
                     variables
             );
             
@@ -1291,7 +1304,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         } catch (Exception e) {
             log.error("긴급 상담 우선순위 조정 실패: consultationId={}, priority={}, error={}", 
                     consultationId, priority, e.getMessage(), e);
-            throw new RuntimeException("긴급 상담 우선순위 조정에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_EMERGENCY_PRIORITY_ADJUST_FAILED, e);
         }
     }
     
@@ -1660,7 +1673,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
         } catch (Exception e) {
             log.error("상담 품질 평가 실패: consultationId={}, error={}", consultationId, e.getMessage(), e);
-            throw new RuntimeException("상담 품질 평가에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_QUALITY_EVALUATION_FAILED, e);
         }
     }
     
@@ -1904,7 +1917,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
         } catch (Exception e) {
             log.error("상담 비용 할인 적용 실패: consultationId={}, error={}", consultationId, e.getMessage(), e);
-            throw new RuntimeException("상담 비용 할인 적용에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_CONSULTATION_DISCOUNT_APPLY_FAILED, e);
         }
     }
     
@@ -1945,7 +1958,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
         } catch (Exception e) {
             log.error("상담 비용 정산 실패: consultationId={}, error={}", consultationId, e.getMessage(), e);
-            throw new RuntimeException("상담 비용 정산에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_CONSULTATION_SETTLEMENT_FAILED, e);
         }
     }
     
@@ -1958,7 +1971,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
             String clientEmail = "client@example.com"; // UserService를 통한 실제 클라이언트 이메일 조회 필요
-            String clientName = "클라이언트"; // UserService를 통한 실제 클라이언트 이름 조회 필요
+            String clientName = ConsultationServiceUserFacingMessages.EMAIL_PLACEHOLDER_CLIENT_NAME; // UserService를 통한 실제 클라이언트 이름 조회 필요
             
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, clientName);
@@ -1968,7 +1981,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put(EmailConstants.VAR_APPOINTMENT_DATE, consultation.getConsultationDate() != null ? consultation.getConsultationDate().toString() : "");
             variables.put(EmailConstants.VAR_APPOINTMENT_TIME, consultation.getStartTime() != null ? consultation.getStartTime().toString() : "");
-            variables.put(EmailConstants.VAR_CONSULTANT_NAME, "상담사"); // 실제 상담사 이름 조회 필요
+            variables.put(EmailConstants.VAR_CONSULTANT_NAME,
+                    ConsultationServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME); // 실제 상담사 이름 조회 필요
             
             EmailResponse response = emailService.sendTemplateEmail(
                     EmailConstants.TEMPLATE_APPOINTMENT_CONFIRMATION,
@@ -1996,7 +2010,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
             String clientEmail = "client@example.com"; // 실제 클라이언트 이메일 조회 필요
-            String clientName = "클라이언트"; // 실제 클라이언트 이름 조회 필요
+            String clientName = ConsultationServiceUserFacingMessages.EMAIL_PLACEHOLDER_CLIENT_NAME; // 실제 클라이언트 이름 조회 필요
             
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, clientName);
@@ -2006,7 +2020,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put(EmailConstants.VAR_APPOINTMENT_DATE, consultation.getConsultationDate() != null ? consultation.getConsultationDate().toString() : "");
             variables.put(EmailConstants.VAR_APPOINTMENT_TIME, consultation.getStartTime() != null ? consultation.getStartTime().toString() : "");
-            variables.put(EmailConstants.VAR_CONSULTANT_NAME, "상담사"); // 실제 상담사 이름 조회 필요
+            variables.put(EmailConstants.VAR_CONSULTANT_NAME,
+                    ConsultationServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME); // 실제 상담사 이름 조회 필요
             
             EmailResponse response = emailService.sendTemplateEmail(
                     EmailConstants.TEMPLATE_APPOINTMENT_REMINDER,
@@ -2034,7 +2049,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
             String clientEmail = "client@example.com"; // 실제 클라이언트 이메일 조회 필요
-            String clientName = "클라이언트"; // 실제 클라이언트 이름 조회 필요
+            String clientName = ConsultationServiceUserFacingMessages.EMAIL_PLACEHOLDER_CLIENT_NAME; // 실제 클라이언트 이름 조회 필요
             
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, clientName);
@@ -2044,9 +2059,11 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put(EmailConstants.VAR_APPOINTMENT_DATE, consultation.getConsultationDate() != null ? consultation.getConsultationDate().toString() : "");
             variables.put(EmailConstants.VAR_APPOINTMENT_TIME, consultation.getStartTime() != null ? consultation.getStartTime().toString() : "");
-            variables.put(EmailConstants.VAR_CONSULTANT_NAME, "상담사"); // 실제 상담사 이름 조회 필요
+            variables.put(EmailConstants.VAR_CONSULTANT_NAME,
+                    ConsultationServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME); // 실제 상담사 이름 조회 필요
             variables.put("changeType", changeType);
-            variables.put("changeMessage", "상담 일정이 " + changeType + "되었습니다.");
+            variables.put("changeMessage", String.format(
+                    ConsultationServiceUserFacingMessages.MSG_CONSULTATION_SCHEDULE_CHANGE_FMT, changeType));
             
             EmailResponse response = emailService.sendTemplateEmail(
                     EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
@@ -2074,7 +2091,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
             String clientEmail = "client@example.com"; // 실제 클라이언트 이메일 조회 필요
-            String clientName = "클라이언트"; // 실제 클라이언트 이름 조회 필요
+            String clientName = ConsultationServiceUserFacingMessages.EMAIL_PLACEHOLDER_CLIENT_NAME; // 실제 클라이언트 이름 조회 필요
             
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, clientName);
@@ -2084,8 +2101,10 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put(EmailConstants.VAR_APPOINTMENT_DATE, consultation.getConsultationDate() != null ? consultation.getConsultationDate().toString() : "");
             variables.put(EmailConstants.VAR_APPOINTMENT_TIME, consultation.getStartTime() != null ? consultation.getStartTime().toString() : "");
-            variables.put(EmailConstants.VAR_CONSULTANT_NAME, "상담사"); // 실제 상담사 이름 조회 필요
-            variables.put("completionMessage", "상담이 성공적으로 완료되었습니다. 감사합니다.");
+            variables.put(EmailConstants.VAR_CONSULTANT_NAME,
+                    ConsultationServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME); // 실제 상담사 이름 조회 필요
+            variables.put("completionMessage",
+                    ConsultationServiceUserFacingMessages.MSG_CONSULTATION_COMPLETED_THANK_YOU);
             
             EmailResponse response = emailService.sendTemplateEmail(
                     EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
@@ -2253,7 +2272,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         } catch (Exception e) {
             log.error("상담 데이터 백업 실패: startDate={}, endDate={}, error={}", 
                     startDate, endDate, e.getMessage(), e);
-            throw new RuntimeException("상담 데이터 백업에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_CONSULTATION_DATA_BACKUP_FAILED, e);
         }
     }
     
@@ -2266,12 +2285,14 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             java.io.File backupDirFile = new java.io.File(backupDir);
             
             if (!backupDirFile.exists()) {
-                throw new RuntimeException("백업 디렉토리가 존재하지 않습니다: " + backupDir);
+                throw new RuntimeException(String.format(
+                        ConsultationServiceUserFacingMessages.MSG_BACKUP_DIRECTORY_NOT_EXISTS_FMT, backupDir));
             }
             
             java.io.File[] backupFiles = backupDirFile.listFiles((dir, name) -> name.contains(backupId));
             if (backupFiles == null || backupFiles.length == 0) {
-                throw new RuntimeException("백업 파일을 찾을 수 없습니다: " + backupId);
+                throw new RuntimeException(String.format(
+                        ConsultationServiceUserFacingMessages.MSG_BACKUP_FILE_NOT_FOUND_FMT, backupId));
             }
             
             java.io.File backupFile = backupFiles[0];
@@ -2317,7 +2338,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
         } catch (Exception e) {
             log.error("상담 데이터 복원 실패: backupId={}, error={}", backupId, e.getMessage(), e);
-            throw new RuntimeException("상담 데이터 복원에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_CONSULTATION_DATA_RESTORE_FAILED, e);
         }
     }
     
@@ -2376,7 +2397,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         } catch (Exception e) {
             log.error("상담 데이터 아카이브 실패: beforeDate={}, error={}", 
                     beforeDate, e.getMessage(), e);
-            throw new RuntimeException("상담 데이터 아카이브에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_CONSULTATION_DATA_ARCHIVE_FAILED, e);
         }
     }
     
@@ -2406,7 +2427,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         } catch (Exception e) {
             log.error("상담 데이터 정리 실패: beforeDate={}, error={}", 
                     beforeDate, e.getMessage(), e);
-            throw new RuntimeException("상담 데이터 정리에 실패했습니다.", e);
+            throw new RuntimeException(ConsultationServiceUserFacingMessages.MSG_CONSULTATION_DATA_CLEANUP_FAILED, e);
         }
     }
     

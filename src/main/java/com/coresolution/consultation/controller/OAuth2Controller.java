@@ -11,6 +11,7 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.oauth.OAuth2UserFacingMessages;
 import com.coresolution.consultation.dto.SocialLoginResponse;
 import com.coresolution.consultation.dto.SocialUserInfo;
 import com.coresolution.consultation.entity.User;
@@ -787,11 +788,11 @@ public class OAuth2Controller extends BaseApiController {
                 } else if (isLocalProfile && isLocalhost) {
                     // 로컬 프로파일이지만 기본 테넌트가 설정되지 않은 경우
                     log.warn("로컬 환경에서 테넌트 정보가 없습니다. local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.");
-                    return badRequest("테넌트 정보가 없습니다. 로컬 환경에서는 local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.",
+                    return badRequest(OAuth2UserFacingMessages.MSG_TENANT_INFO_MISSING_LOCAL,
                             "TENANT_REQUIRED");
                 } else {
                     // 개발/운영 환경에서는 서브도메인 필수
-                    return badRequest("테넌트 정보가 없습니다. 반드시 서브도메인으로 접속 후 소셜 로그인을 진행해주세요.",
+                    return badRequest(OAuth2UserFacingMessages.MSG_TENANT_INFO_MISSING_SUBDOMAIN,
                             "TENANT_REQUIRED");
                 }
             }
@@ -906,7 +907,8 @@ public class OAuth2Controller extends BaseApiController {
             return success(data);
         } catch (Exception e) {
             log.error("카카오 OAuth2 인증 URL 생성 실패", e);
-            throw new RuntimeException("카카오 OAuth2 인증 URL 생성에 실패했습니다: " + e.getMessage());
+            throw new RuntimeException(String.format(
+                    OAuth2UserFacingMessages.MSG_KAKAO_OAUTH_AUTH_URL_FAILED_FMT, e.getMessage()));
         }
     }
 
@@ -948,11 +950,11 @@ public class OAuth2Controller extends BaseApiController {
                 } else if (isLocalProfile && isLocalhost) {
                     // 로컬 프로파일이지만 기본 테넌트가 설정되지 않은 경우
                     log.warn("로컬 환경에서 테넌트 정보가 없습니다. local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.");
-                    return badRequest("테넌트 정보가 없습니다. 로컬 환경에서는 local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.",
+                    return badRequest(OAuth2UserFacingMessages.MSG_TENANT_INFO_MISSING_LOCAL,
                             "TENANT_REQUIRED");
                 } else {
                     // 개발/운영 환경에서는 서브도메인 필수
-                    return badRequest("테넌트 정보가 없습니다. 반드시 서브도메인으로 접속 후 소셜 로그인을 진행해주세요.",
+                    return badRequest(OAuth2UserFacingMessages.MSG_TENANT_INFO_MISSING_SUBDOMAIN,
                             "TENANT_REQUIRED");
                 }
             }
@@ -1079,7 +1081,8 @@ public class OAuth2Controller extends BaseApiController {
             return success(data);
         } catch (Exception e) {
             log.error("네이버 OAuth2 인증 URL 생성 실패", e);
-            throw new RuntimeException("네이버 OAuth2 인증 URL 생성에 실패했습니다: " + e.getMessage());
+            throw new RuntimeException(String.format(
+                    OAuth2UserFacingMessages.MSG_NAVER_OAUTH_AUTH_URL_FAILED_FMT, e.getMessage()));
         }
     }
 
@@ -1103,7 +1106,7 @@ public class OAuth2Controller extends BaseApiController {
             String redirectTenantId = resolveTenantIdForRedirect(session, state);
             String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
-                    + URLEncoder.encode("인증코드없음", StandardCharsets.UTF_8) + "&provider=NAVER")
+                    + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_NO_AUTH_CODE, StandardCharsets.UTF_8) + "&provider=NAVER")
                     .build();
         }
 
@@ -1129,7 +1132,8 @@ public class OAuth2Controller extends BaseApiController {
             String redirectTenantId = resolveTenantIdForRedirect(session, state);
             String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
-                    + URLEncoder.encode("보안검증실패", StandardCharsets.UTF_8) + "&provider=NAVER")
+                    + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_SECURITY_VERIFICATION_FAILED,
+                                                    StandardCharsets.UTF_8) + "&provider=NAVER")
                     .build();
         }
 
@@ -1207,7 +1211,7 @@ public class OAuth2Controller extends BaseApiController {
                             .header("Location",
                                     frontendUrl + "/login?error="
                                             + URLEncoder.encode(
-                                                    "테넌트가 등록되지 않았습니다. 먼저 테넌트 등록을 진행해주세요.",
+                                                    OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED,
                                                     StandardCharsets.UTF_8)
                                             + "&provider=NAVER")
                             .build();
@@ -1233,7 +1237,7 @@ public class OAuth2Controller extends BaseApiController {
                 return ResponseEntity.status(302)
                         .header("Location",
                                 frontendUrl + "/login?error="
-                                        + URLEncoder.encode("테넌트가 등록되지 않았습니다. 먼저 테넌트 등록을 진행해주세요.",
+                                        + URLEncoder.encode(OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED,
                                                 StandardCharsets.UTF_8)
                                         + "&provider=NAVER")
                         .build();
@@ -1338,7 +1342,7 @@ public class OAuth2Controller extends BaseApiController {
                 String redirectTenantId = resolveTenantIdForRedirect(session, state);
                 String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                 return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
-                        + URLEncoder.encode("시스템오류", StandardCharsets.UTF_8) + "&provider=NAVER")
+                        + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_SYSTEM_ERROR, StandardCharsets.UTF_8) + "&provider=NAVER")
                         .build();
             }
 
@@ -1469,7 +1473,8 @@ public class OAuth2Controller extends BaseApiController {
                         return ResponseEntity.status(302)
                                 .header("Location",
                                         frontendUrl + "/login?error="
-                                                + URLEncoder.encode("이메일 제공 동의가 필요합니다.",
+                                                + URLEncoder.encode(
+                                                        OAuth2UserFacingMessages.MSG_EMAIL_CONSENT_REQUIRED,
                                                         StandardCharsets.UTF_8)
                                                 + "&provider=NAVER")
                                 .build();
@@ -1545,7 +1550,7 @@ public class OAuth2Controller extends BaseApiController {
                                     .build();
                         } else {
                             response = SocialLoginResponse.builder().success(false)
-                                    .message("사용자를 찾을 수 없습니다.").build();
+                                    .message(OAuth2UserFacingMessages.MSG_USER_NOT_FOUND).build();
                         }
                     } else {
                         response = SocialLoginResponse.builder().success(true).requiresSignup(true)
@@ -1615,7 +1620,7 @@ public class OAuth2Controller extends BaseApiController {
                                                 .build();
                             } else {
                                 response = SocialLoginResponse.builder().success(false)
-                                        .message("사용자를 찾을 수 없습니다.").build();
+                                        .message(OAuth2UserFacingMessages.MSG_USER_NOT_FOUND).build();
                             }
                         } else {
                             response = SocialLoginResponse.builder().success(true)
@@ -1638,7 +1643,7 @@ public class OAuth2Controller extends BaseApiController {
                     String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                     String errorMessage =
                             authException.getMessage() != null ? authException.getMessage()
-                                    : "인증 처리 중 오류가 발생했습니다";
+                                    : OAuth2UserFacingMessages.MSG_AUTH_PROCESSING_FAILED;
                     log.warn("네이버 로그인 오류 발생 - tenant-aware 리다이렉트: frontendUrl={}, error={}",
                             frontendUrl, errorMessage);
                     return ResponseEntity.status(302)
@@ -1727,7 +1732,7 @@ public class OAuth2Controller extends BaseApiController {
                     return ResponseEntity.status(302)
                             .header("Location",
                                     frontendUrl + "/login?error="
-                                            + URLEncoder.encode("사용자 정보를 가져올 수 없습니다.",
+                                            + URLEncoder.encode(OAuth2UserFacingMessages.MSG_USER_INFO_UNAVAILABLE,
                                                     StandardCharsets.UTF_8)
                                             + "&provider=NAVER")
                             .build();
@@ -1746,7 +1751,7 @@ public class OAuth2Controller extends BaseApiController {
                         return ResponseEntity.status(302)
                                 .header("Location",
                                         frontendUrl + "/mypage?error="
-                                                + URLEncoder.encode("세션만료", StandardCharsets.UTF_8)
+                                                + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_SESSION_EXPIRED, StandardCharsets.UTF_8)
                                                 + "&provider=NAVER")
                                 .build();
                     }
@@ -1766,7 +1771,7 @@ public class OAuth2Controller extends BaseApiController {
                             return ResponseEntity.status(302)
                                     .header("Location",
                                             frontendUrl + "/mypage?error="
-                                                    + URLEncoder.encode("연동실패",
+                                                    + URLEncoder.encode(OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED,
                                                             StandardCharsets.UTF_8)
                                                     + "&provider=NAVER")
                                     .build();
@@ -1790,7 +1795,8 @@ public class OAuth2Controller extends BaseApiController {
                         return ResponseEntity.status(302)
                                 .header("Location",
                                         frontendUrl + "/mypage?success="
-                                                + URLEncoder.encode("연동완료", StandardCharsets.UTF_8)
+                                                + URLEncoder.encode(OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_COMPLETE,
+                                                        StandardCharsets.UTF_8)
                                                 + "&provider=NAVER")
                                 .build();
                     } catch (Exception e) {
@@ -1800,7 +1806,7 @@ public class OAuth2Controller extends BaseApiController {
                         return ResponseEntity.status(302)
                                 .header("Location",
                                         frontendUrl + "/mypage?error="
-                                                + URLEncoder.encode("연동실패", StandardCharsets.UTF_8)
+                                                + URLEncoder.encode(OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED, StandardCharsets.UTF_8)
                                                 + "&provider=NAVER")
                                 .build();
                     }
@@ -1820,7 +1826,7 @@ public class OAuth2Controller extends BaseApiController {
 
                     // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장 (이메일 로그인과 동일)
                     User user = loadUserByTenantScopedId(userInfo.getId(), session, state)
-                            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                            .orElseThrow(() -> new RuntimeException(OAuth2UserFacingMessages.MSG_USER_NOT_FOUND));
                     // 세션에 완전한 User 객체 저장
                     SessionUtils.setCurrentUser(session, user);
 
@@ -1895,22 +1901,10 @@ public class OAuth2Controller extends BaseApiController {
                         log.info("Deep Link 세션 ID: {}", sessionId);
 
                         // HTML 페이지 생성 (iOS Safari 보안 정책으로 버튼 포함, 자동 시도도 함께)
-                        String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>"
-                                + "<title>로그인 처리 중...</title>"
-                                + "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
-                                + "<style>body{font-family:Arial,sans-serif;text-align:center;padding:50px;background:#f5f5f5;}"
-                                + "h1{color:#333;}button{background:#03C75A;color:white;border:none;padding:15px 30px;font-size:16px;border-radius:5px;cursor:pointer;margin-top:20px;}"
-                                + "button:hover{background:#02B350;}</style>" + "</head><body>"
-                                + "<h1>로그인 처리 중...</h1>" + "<p>아래 버튼을 눌러 앱을 열어주세요.</p>"
-                                + "<button id='openAppBtn' onclick=\"window.location.href='"
-                                + deepLinkUrl.replace("'", "\\'") + "'\">앱 열기</button>" + "<script>"
-                                + "var deepLink = '" + deepLinkUrl.replace("'", "\\'") + "';"
-                                + "// 자동 시도 (실패할 수 있음)" + "setTimeout(function(){"
-                                + "  window.location.href = deepLink;" + "}, 1000);"
-                                + "// 버튼 클릭으로도 시도"
-                                + "document.getElementById('openAppBtn').addEventListener('click', function(){"
-                                + "  window.location.href = deepLink;" + "});" + "</script>"
-                                + "</body></html>";
+                        String escapedDeepLink = deepLinkUrl.replace("'", "\\'");
+                        String html = OAuth2UserFacingMessages.buildDeepLinkLandingHtml(
+                                OAuth2UserFacingMessages.HTML_DEEP_LINK_PAGE_NAVER_TEMPLATE,
+                                escapedDeepLink);
 
                         return ResponseEntity.ok()
                                 .header("Content-Type", "text/html; charset=UTF-8").body(html);
@@ -1998,7 +1992,7 @@ public class OAuth2Controller extends BaseApiController {
             String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302)
                     .header("Location", frontendUrl + "/login?error="
-                            + URLEncoder.encode("처리실패", StandardCharsets.UTF_8) + "&provider=NAVER")
+                            + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_PROCESS_FAILED, StandardCharsets.UTF_8) + "&provider=NAVER")
                     .build();
         }
     }
@@ -2012,8 +2006,10 @@ public class OAuth2Controller extends BaseApiController {
                 com.coresolution.core.context.TenantContextHolder.getTenantId());
         String signupUrl = frontendUrl + "/login?" + "signup=required" + "&provider=kakao"
                 + "&email=" + URLEncoder.encode("test@example.com", StandardCharsets.UTF_8)
-                + "&name=" + URLEncoder.encode("테스트사용자", StandardCharsets.UTF_8) + "&nickname="
-                + URLEncoder.encode("테스트닉네임", StandardCharsets.UTF_8)
+                + "&name=" + URLEncoder.encode(OAuth2UserFacingMessages.OAUTH_TEST_SIGNUP_DISPLAY_NAME,
+                        StandardCharsets.UTF_8) + "&nickname="
+                + URLEncoder.encode(OAuth2UserFacingMessages.OAUTH_TEST_SIGNUP_DISPLAY_NICKNAME,
+                        StandardCharsets.UTF_8)
                 + "&providerUserId="
                 + URLEncoder.encode("test_sns_provider_user_id", StandardCharsets.UTF_8);
 
@@ -2043,7 +2039,7 @@ public class OAuth2Controller extends BaseApiController {
             String redirectTenantId = resolveTenantIdForRedirect(session, state);
             String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
-                    + URLEncoder.encode("인증코드없음", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                    + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_NO_AUTH_CODE, StandardCharsets.UTF_8) + "&provider=KAKAO")
                     .build();
         }
 
@@ -2069,7 +2065,8 @@ public class OAuth2Controller extends BaseApiController {
             String redirectTenantId = resolveTenantIdForRedirect(session, state);
             String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
-                    + URLEncoder.encode("보안검증실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                    + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_SECURITY_VERIFICATION_FAILED,
+                                                    StandardCharsets.UTF_8) + "&provider=KAKAO")
                     .build();
         }
 
@@ -2118,7 +2115,7 @@ public class OAuth2Controller extends BaseApiController {
                             .header("Location",
                                     frontendUrl + "/login?error="
                                             + URLEncoder.encode(
-                                                    "테넌트가 등록되지 않았습니다. 먼저 테넌트 등록을 진행해주세요.",
+                                                    OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED,
                                                     StandardCharsets.UTF_8)
                                             + "&provider=KAKAO")
                             .build();
@@ -2135,7 +2132,7 @@ public class OAuth2Controller extends BaseApiController {
                 return ResponseEntity.status(302)
                         .header("Location",
                                 frontendUrl + "/login?error="
-                                        + URLEncoder.encode("테넌트가 등록되지 않았습니다. 먼저 테넌트 등록을 진행해주세요.",
+                                        + URLEncoder.encode(OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED,
                                                 StandardCharsets.UTF_8)
                                         + "&provider=KAKAO")
                         .build();
@@ -2247,7 +2244,7 @@ public class OAuth2Controller extends BaseApiController {
                 String redirectTenantId = resolveTenantIdForRedirect(session, state);
                 String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                 return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
-                        + URLEncoder.encode("시스템오류", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                        + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_SYSTEM_ERROR, StandardCharsets.UTF_8) + "&provider=KAKAO")
                         .build();
             }
 
@@ -2280,7 +2277,8 @@ public class OAuth2Controller extends BaseApiController {
                     return ResponseEntity.status(302)
                             .header("Location",
                                     frontendUrl + "/login?error="
-                                            + URLEncoder.encode("이메일 제공 동의가 필요합니다.",
+                                            + URLEncoder.encode(
+                                                    OAuth2UserFacingMessages.MSG_EMAIL_CONSENT_REQUIRED,
                                                     StandardCharsets.UTF_8)
                                             + "&provider=KAKAO")
                             .build();
@@ -2331,11 +2329,11 @@ public class OAuth2Controller extends BaseApiController {
 
                 if (existingUserId == null) {
                     response =
-                            SocialLoginResponse.builder().success(false).message("간편 회원가입이 필요합니다.")
+                            SocialLoginResponse.builder().success(false).message(OAuth2UserFacingMessages.MSG_SIGNUP_REQUIRED)
                                     .requiresSignup(true).socialUserInfo(socialUserInfo).build();
                 } else {
                     User user = loadUserByTenantScopedId(existingUserId, session, state)
-                            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                            .orElseThrow(() -> new RuntimeException(OAuth2UserFacingMessages.MSG_USER_NOT_FOUND));
 
                     // Phase 3: 확장된 JWT 토큰 생성 (tenantId, branchId, permissions 포함)
                     // 권한 조회 시 예외 발생해도 빈 리스트 반환 (트랜잭션 롤백 오류 방지)
@@ -2362,7 +2360,7 @@ public class OAuth2Controller extends BaseApiController {
                                                     : "/default-avatar.svg");
 
                     response = SocialLoginResponse.builder().success(true)
-                            .message("카카오 계정으로 로그인되었습니다.").accessToken(jwtToken)
+                            .message(OAuth2UserFacingMessages.MSG_KAKAO_ACCOUNT_LOGGED_IN).accessToken(jwtToken)
                             .refreshToken(refreshToken)
                             .userInfo(SocialLoginResponse.UserInfo.builder().id(user.getId())
                                     .email(user.getEmail()).name(user.getName())
@@ -2387,7 +2385,8 @@ public class OAuth2Controller extends BaseApiController {
                     String redirectTenantId = resolveTenantIdForRedirect(session, state);
                     String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                     String errorMessage =
-                            e.getMessage() != null ? e.getMessage() : "인증 처리 중 오류가 발생했습니다";
+                            e.getMessage() != null ? e.getMessage()
+                                    : OAuth2UserFacingMessages.MSG_AUTH_PROCESSING_FAILED;
                     return ResponseEntity.status(302)
                             .header("Location",
                                     frontendUrl + "/login?error="
@@ -2409,7 +2408,7 @@ public class OAuth2Controller extends BaseApiController {
                     return ResponseEntity.status(302)
                             .header("Location",
                                     frontendUrl + "/login?error="
-                                            + URLEncoder.encode("사용자 정보를 가져올 수 없습니다.",
+                                            + URLEncoder.encode(OAuth2UserFacingMessages.MSG_USER_INFO_UNAVAILABLE,
                                                     StandardCharsets.UTF_8)
                                             + "&provider=KAKAO")
                             .build();
@@ -2428,7 +2427,7 @@ public class OAuth2Controller extends BaseApiController {
                         return ResponseEntity.status(302)
                                 .header("Location",
                                         frontendUrl + "/mypage?error="
-                                                + URLEncoder.encode("세션만료", StandardCharsets.UTF_8)
+                                                + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_SESSION_EXPIRED, StandardCharsets.UTF_8)
                                                 + "&provider=KAKAO")
                                 .build();
                     }
@@ -2447,7 +2446,7 @@ public class OAuth2Controller extends BaseApiController {
                             return ResponseEntity.status(302)
                                     .header("Location",
                                             frontendUrl + "/mypage?error="
-                                                    + URLEncoder.encode("연동실패",
+                                                    + URLEncoder.encode(OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED,
                                                             StandardCharsets.UTF_8)
                                                     + "&provider=KAKAO")
                                     .build();
@@ -2471,7 +2470,8 @@ public class OAuth2Controller extends BaseApiController {
                         return ResponseEntity.status(302)
                                 .header("Location",
                                         frontendUrl + "/mypage?success="
-                                                + URLEncoder.encode("연동완료", StandardCharsets.UTF_8)
+                                                + URLEncoder.encode(OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_COMPLETE,
+                                                        StandardCharsets.UTF_8)
                                                 + "&provider=KAKAO")
                                 .build();
                     } catch (Exception e) {
@@ -2481,7 +2481,7 @@ public class OAuth2Controller extends BaseApiController {
                         return ResponseEntity.status(302)
                                 .header("Location",
                                         frontendUrl + "/mypage?error="
-                                                + URLEncoder.encode("연동실패", StandardCharsets.UTF_8)
+                                                + URLEncoder.encode(OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED, StandardCharsets.UTF_8)
                                                 + "&provider=KAKAO")
                                 .build();
                     }
@@ -2501,7 +2501,7 @@ public class OAuth2Controller extends BaseApiController {
 
                     // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장 (이메일 로그인과 동일)
                     User user = loadUserByTenantScopedId(userInfo.getId(), session, state)
-                            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                            .orElseThrow(() -> new RuntimeException(OAuth2UserFacingMessages.MSG_USER_NOT_FOUND));
                     // 세션에 완전한 User 객체 저장
                     SessionUtils.setCurrentUser(session, user);
 
@@ -2547,22 +2547,10 @@ public class OAuth2Controller extends BaseApiController {
                         log.info("Deep Link 세션 ID: {}", sessionId);
 
                         // HTML 페이지 생성 (iOS Safari 보안 정책으로 버튼 포함, 자동 시도도 함께)
-                        String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>"
-                                + "<title>로그인 처리 중...</title>"
-                                + "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
-                                + "<style>body{font-family:Arial,sans-serif;text-align:center;padding:50px;background:#f5f5f5;}"
-                                + "h1{color:#333;}button{background:#FEE500;color:#000;border:none;padding:15px 30px;font-size:16px;border-radius:5px;cursor:pointer;margin-top:20px;font-weight:bold;}"
-                                + "button:hover{background:#FDD835;}</style>" + "</head><body>"
-                                + "<h1>로그인 처리 중...</h1>" + "<p>아래 버튼을 눌러 앱을 열어주세요.</p>"
-                                + "<button id='openAppBtn' onclick=\"window.location.href='"
-                                + deepLinkUrl.replace("'", "\\'") + "'\">앱 열기</button>" + "<script>"
-                                + "var deepLink = '" + deepLinkUrl.replace("'", "\\'") + "';"
-                                + "// 자동 시도 (실패할 수 있음)" + "setTimeout(function(){"
-                                + "  window.location.href = deepLink;" + "}, 1000);"
-                                + "// 버튼 클릭으로도 시도"
-                                + "document.getElementById('openAppBtn').addEventListener('click', function(){"
-                                + "  window.location.href = deepLink;" + "});" + "</script>"
-                                + "</body></html>";
+                        String escapedDeepLink = deepLinkUrl.replace("'", "\\'");
+                        String html = OAuth2UserFacingMessages.buildDeepLinkLandingHtml(
+                                OAuth2UserFacingMessages.HTML_DEEP_LINK_PAGE_KAKAO_TEMPLATE,
+                                escapedDeepLink);
 
                         return ResponseEntity.ok()
                                 .header("Content-Type", "text/html; charset=UTF-8").body(html);
@@ -2668,7 +2656,8 @@ public class OAuth2Controller extends BaseApiController {
             }
         } catch (Exception e) {
             log.error("카카오 OAuth2 콜백 처리 실패: {}", e.getMessage(), e);
-            String errorMessage = e.getMessage() != null ? e.getMessage() : "처리실패";
+            String errorMessage = e.getMessage() != null ? e.getMessage()
+                    : OAuth2UserFacingMessages.ERR_LOGIN_PROCESS_FAILED;
             String redirectTenantId = resolveTenantIdForRedirect(session, state);
             String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
@@ -2696,7 +2685,7 @@ public class OAuth2Controller extends BaseApiController {
             if (userIdStr == null || userIdStr.isEmpty()) {
                 log.error("모바일 OAuth2 콜백 - userId가 없습니다.");
                 return ResponseEntity.status(400)
-                        .body(Map.of("success", false, "message", "사용자 ID가 필요합니다."));
+                        .body(Map.of("success", false, "message", OAuth2UserFacingMessages.MSG_USER_ID_REQUIRED));
             }
 
             Long userId;
@@ -2705,12 +2694,13 @@ public class OAuth2Controller extends BaseApiController {
             } catch (NumberFormatException e) {
                 log.error("모바일 OAuth2 콜백 - userId 파싱 실패: {}", userIdStr);
                 return ResponseEntity.status(400)
-                        .body(Map.of("success", false, "message", "잘못된 사용자 ID입니다."));
+                        .body(Map.of("success", false, "message", OAuth2UserFacingMessages.MSG_INVALID_USER_ID));
             }
 
             // 사용자 정보 조회 (테넌트 결합: 세션·Holder·로컬 폴백만 허용)
             User user = loadUserByTenantScopedId(userId, session, null)
-                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: userId=" + userId));
+                    .orElseThrow(() -> new RuntimeException(String.format(
+                            OAuth2UserFacingMessages.MSG_USER_NOT_FOUND_USER_ID_FMT, userId)));
 
             // 세션 생성 또는 기존 세션 사용
             if (sessionId != null && !sessionId.isEmpty()) {
@@ -2764,10 +2754,11 @@ public class OAuth2Controller extends BaseApiController {
             data.put("sessionId", session.getId());
             data.put("user", userInfo);
 
-            return success("로그인 성공", data);
+            return success(OAuth2UserFacingMessages.MSG_LOGIN_SUCCESS, data);
         } catch (Exception e) {
             log.error("모바일 OAuth2 콜백 처리 실패", e);
-            throw new RuntimeException("예상치 못한 오류가 발생했습니다: " + e.getMessage());
+            throw new RuntimeException(String.format(OAuth2UserFacingMessages.MSG_UNEXPECTED_ERROR_FMT,
+                    e.getMessage()));
         }
     }
 
@@ -2832,14 +2823,16 @@ public class OAuth2Controller extends BaseApiController {
 
             if (provider == null || accessToken == null) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("success", false, "message", "provider와 accessToken이 필요합니다."));
+                        .body(Map.of("success", false, "message",
+                                OAuth2UserFacingMessages.MSG_PROVIDER_AND_ACCESS_TOKEN_REQUIRED));
             }
 
             // OAuth2 서비스 가져오기
             OAuth2Service oauth2Service = oauth2FactoryService.getOAuth2Service(provider);
             if (oauth2Service == null) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("success", false, "message", "지원하지 않는 소셜 플랫폼입니다."));
+                        .body(Map.of("success", false, "message",
+                                OAuth2UserFacingMessages.MSG_UNSUPPORTED_SOCIAL_PLATFORM));
             }
 
             // accessToken으로 사용자 정보 조회
@@ -2872,7 +2865,7 @@ public class OAuth2Controller extends BaseApiController {
                             "❌ 네이티브 SDK - TenantContextHolder에 tenantId가 없어 사용자 조회 불가: email={} (테넌트 등록 필요)",
                             socialUserInfo.getEmail());
                     return ResponseEntity.badRequest().body(Map.of("success", false, "message",
-                            "테넌트가 등록되지 않았습니다. 먼저 테넌트 등록을 진행해주세요."));
+                            OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED));
                 }
             }
 
@@ -2885,12 +2878,12 @@ public class OAuth2Controller extends BaseApiController {
                                         : "",
                                 "provider", provider, "socialId",
                                 socialUserInfo.getProviderUserId()),
-                        "message", "간편 회원가입이 필요합니다."));
+                        "message", OAuth2UserFacingMessages.MSG_SIGNUP_REQUIRED));
             }
 
             // 기존 사용자 로그인
             User user = loadUserByTenantScopedId(existingUserId, session, null)
-                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                    .orElseThrow(() -> new RuntimeException(OAuth2UserFacingMessages.MSG_USER_NOT_FOUND));
             // 세션에 사용자 정보 저장 (다른 메서드와 동일한 방식 사용)
             SessionUtils.setCurrentUser(session, user);
 
@@ -2965,11 +2958,13 @@ public class OAuth2Controller extends BaseApiController {
                             "role", user.getRole().name(), "profileImageUrl",
                             user.getProfileImageUrl() != null ? user.getProfileImageUrl() : ""),
                     "accessToken", jwtToken, "refreshToken", refreshToken, "sessionId",
-                    session.getId(), "message", "로그인 성공"));
+                    session.getId(), "message", OAuth2UserFacingMessages.MSG_LOGIN_SUCCESS));
         } catch (Exception e) {
             log.error("네이티브 SDK 로그인 오류:", e);
             return ResponseEntity.status(500).body(
-                    Map.of("success", false, "message", "로그인 처리 중 오류가 발생했습니다: " + e.getMessage()));
+                    Map.of("success", false, "message",
+                            String.format(OAuth2UserFacingMessages.MSG_NATIVE_LOGIN_FAILED_FMT,
+                                    e.getMessage())));
         }
     }
 

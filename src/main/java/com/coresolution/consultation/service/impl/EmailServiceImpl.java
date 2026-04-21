@@ -245,7 +245,7 @@ public class EmailServiceImpl implements EmailService {
                     .emailId(emailId)
                     .status(EmailConstants.STATUS_FAILED)
                     .success(false)
-                    .message("이메일 발송 상태를 찾을 수 없습니다.")
+                    .message(EmailConstants.ERROR_EMAIL_STATUS_NOT_FOUND)
                     .build();
         }
         
@@ -273,7 +273,7 @@ public class EmailServiceImpl implements EmailService {
                     .emailId(emailId)
                     .status(EmailConstants.STATUS_FAILED)
                     .success(false)
-                    .message("재발송할 이메일을 찾을 수 없습니다.")
+                    .message(EmailConstants.ERROR_EMAIL_RESEND_NOT_FOUND)
                     .build();
         }
         
@@ -294,7 +294,7 @@ public class EmailServiceImpl implements EmailService {
         if (EmailConstants.STATUS_PENDING.equals(response.getStatus())) {
             response.setStatus(EmailConstants.STATUS_FAILED);
             response.setSuccess(false);
-            response.setMessage("이메일 발송이 취소되었습니다.");
+            response.setMessage(EmailConstants.SUCCESS_EMAIL_SEND_CANCELLED);
             emailStatusMap.put(emailId, response);
             
             log.info("이메일 발송 취소 완료: emailId={}", emailId);
@@ -312,19 +312,19 @@ public class EmailServiceImpl implements EmailService {
         EmailResponse response = emailStatusMap.get(emailId);
         if (response == null) {
             log.warn("재시도할 이메일을 찾을 수 없습니다: emailId={}", emailId);
-            return createErrorResponse(null, "이메일을 찾을 수 없습니다.");
+            return createErrorResponse(null, EmailConstants.ERROR_EMAIL_NOT_FOUND);
         }
         
         if (response.getRetryCount() >= EmailConstants.MAX_RETRY_ATTEMPTS) {
             log.warn("최대 재시도 횟수 초과: emailId={}, retryCount={}", emailId, response.getRetryCount());
-            return createErrorResponse(null, "최대 재시도 횟수를 초과했습니다.");
+            return createErrorResponse(null, EmailConstants.ERROR_EMAIL_MAX_RETRY_EXCEEDED);
         }
         
         // 재시도 로직 (실제 구현에서는 원본 요청 정보를 저장해두고 재사용)
         response.setRetryCount(response.getRetryCount() + 1);
         response.setStatus(EmailConstants.STATUS_PENDING);
         response.setSuccess(false);
-        response.setMessage("이메일 발송 재시도 중...");
+        response.setMessage(EmailConstants.SUCCESS_EMAIL_RETRY_IN_PROGRESS);
         
         emailStatusMap.put(emailId, response);
         
@@ -553,7 +553,7 @@ public class EmailServiceImpl implements EmailService {
                     .toEmail(request.getToEmail())
                     .subject(request.getSubject())
                     .errorCode("MESSAGING_ERROR")
-                    .errorMessage("이메일 메시지 생성 실패: " + e.getMessage())
+                    .errorMessage(EmailConstants.ERROR_EMAIL_MESSAGE_BUILD_FAILED + e.getMessage())
                     .build();
                     
         } catch (Exception e) {
@@ -568,7 +568,7 @@ public class EmailServiceImpl implements EmailService {
                     .toEmail(request.getToEmail())
                     .subject(request.getSubject())
                     .errorCode("SEND_ERROR")
-                    .errorMessage("이메일 발송 중 오류 발생: " + e.getMessage())
+                    .errorMessage(EmailConstants.ERROR_EMAIL_SEND_RUNTIME_FAILED + e.getMessage())
                     .build();
         }
     }

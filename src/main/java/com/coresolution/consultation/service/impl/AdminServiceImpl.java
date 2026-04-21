@@ -559,7 +559,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String localPart = email.split("@")[0];
             name = localPart.replaceAll("[^a-zA-Z0-9가-힣]", "");
             if (name.isEmpty()) {
-                name = "사무원";
+                name = AdminServiceUserFacingMessages.DEFAULT_STAFF_DISPLAY_NAME;
             }
         }
         name = name.trim();
@@ -608,10 +608,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 표준화 2025-12-05: tenantId 필터링 필수 (BaseTenantAwareService 상속으로 자동 처리)
         String tenantId = getTenantId();
         User consultant = userRepository.findByTenantIdAndId(tenantId, dto.getConsultantId())
-                .orElseThrow(() -> new RuntimeException("Consultant not found"));
-        
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_CONSULTANT_NOT_FOUND));
+
         User clientUser = userRepository.findByTenantIdAndId(tenantId, dto.getClientId())
-                .orElseThrow(() -> new RuntimeException("Client not found"));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_CLIENT_NOT_FOUND));
 
         // 표준화 2025-12-06: 브랜치 코드 사용 금지 - branchCode는 null로 설정
         String branchCode = null;
@@ -685,7 +685,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 신규 매칭: 입금 확인 전까지 사용 가능 회기는 0 (입금 확인 시 confirmDeposit에서 채움)
         mapping.setRemainingSessions(0);
         mapping.setUsedSessions(0);
-        mapping.setPackageName(dto.getPackageName() != null ? dto.getPackageName() : "기본 패키지");
+        mapping.setPackageName(dto.getPackageName() != null ? dto.getPackageName()
+                : AdminServiceUserFacingMessages.DEFAULT_PACKAGE_NAME);
         mapping.setPackagePrice(dto.getPackagePrice() != null ? dto.getPackagePrice() : 0L);
         mapping.setPaymentMethod(dto.getPaymentMethod());
         mapping.setPaymentReference(dto.getPaymentReference());
@@ -706,7 +707,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference, Long paymentAmount) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
-                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         
         if (paymentAmount != null && mapping.getPackagePrice() != null) {
             if (!paymentAmount.equals(mapping.getPackagePrice())) {
@@ -846,15 +847,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         BigDecimal grossAmountBd = BigDecimal.valueOf(accurateAmount);
         TaxCalculationUtil.TaxCalculationResult consultationTax =
                 TaxCalculationUtil.calculateTaxFromPayment(grossAmountBd);
-        String incomeDescription = String.format("상담료 입금 확인 - %s (%s) [정확한금액: %,d원]",
-                mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
-                mapping.getPaymentMethod() != null ? mapping.getPaymentMethod() : "미지정",
+        String incomeDescription = String.format(AdminServiceUserFacingMessages.DESC_INCOME_DEPOSIT_CONFIRM_FMT,
+                mapping.getPackageName() != null ? mapping.getPackageName()
+                        : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME,
+                mapping.getPaymentMethod() != null ? mapping.getPaymentMethod()
+                        : AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED,
                 accurateAmount);
-        incomeDescription = incomeDescription + String.format(" [부가세 분리: 공급가 %,d원, 부가세 %,d원]",
+        incomeDescription = incomeDescription + String.format(AdminServiceUserFacingMessages.DESC_TAX_SPLIT_SUFFIX_FMT,
                 consultationTax.getAmountExcludingTax().longValue(),
                 consultationTax.getVatAmount().longValue());
         if (withholdingTax.compareTo(BigDecimal.ZERO) > 0) {
-            incomeDescription = incomeDescription + String.format(" [사업소득 원천징수 3.3%% 예정 %,d원(부가세와 별개)]",
+            incomeDescription = incomeDescription + String.format(AdminServiceUserFacingMessages.DESC_WITHHOLDING_SUFFIX_FMT,
                     withholdingTax.longValue());
         }
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
@@ -873,7 +876,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(true)
                 .remarks(withholdingTax.compareTo(BigDecimal.ZERO) > 0
-                        ? "원천징수(사업소득 3.3%) 예정액. 부가세(VAT) 금액과 혼동 금지."
+                        ? AdminServiceUserFacingMessages.REMARKS_WITHHOLDING_VS_VAT_NOTE
                         : null)
                 .build();
         
@@ -896,7 +899,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (mapping.getPaymentAmount() != null && !accurateAmount.equals(mapping.getPaymentAmount())) {
             amountManagementService.recordAmountChange(mapping.getId(), 
                 mapping.getPaymentAmount(), accurateAmount, 
-                "ERP 연동 시 정확한 패키지 가격 적용", "SYSTEM_AUTO");
+                AdminServiceUserFacingMessages.AMOUNT_CHANGE_REASON_ERP_ACCURATE_PACKAGE, "SYSTEM_AUTO");
         }
         
         log.info("✅ [중앙화] 상담료 수입 거래 생성 완료: MappingID={}, AccurateAmount={}원", 
@@ -943,17 +946,20 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         BigDecimal grossAdditionalBd = BigDecimal.valueOf(transactionAmount);
         TaxCalculationUtil.TaxCalculationResult additionalTax =
                 TaxCalculationUtil.calculateTaxFromPayment(grossAdditionalBd);
-        String additionalDescription = String.format("추가 회기 상담료 입금 확인 - %s (%d회 추가, %s) [추가금액: %,d원]",
-                mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
+        String additionalDescription = String.format(AdminServiceUserFacingMessages.DESC_ADDITIONAL_SESSION_INCOME_FMT,
+                mapping.getPackageName() != null ? mapping.getPackageName()
+                        : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME,
                 additionalSessions,
-                mapping.getPaymentMethod() != null ? mapping.getPaymentMethod() : "미지정",
+                mapping.getPaymentMethod() != null ? mapping.getPaymentMethod()
+                        : AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED,
                 transactionAmount);
-        additionalDescription = additionalDescription + String.format(" [부가세 분리: 공급가 %,d원, 부가세 %,d원]",
+        additionalDescription = additionalDescription + String.format(
+                AdminServiceUserFacingMessages.DESC_TAX_SPLIT_SUFFIX_FMT,
                 additionalTax.getAmountExcludingTax().longValue(),
                 additionalTax.getVatAmount().longValue());
         if (withholdingAdditional.compareTo(BigDecimal.ZERO) > 0) {
             additionalDescription = additionalDescription + String.format(
-                    " [사업소득 원천징수 3.3%% 예정 %,d원(부가세와 별개)]",
+                    AdminServiceUserFacingMessages.DESC_WITHHOLDING_SUFFIX_FMT,
                     withholdingAdditional.longValue());
         }
 
@@ -972,7 +978,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .tenantId(tenantIdForAdditional)
                 .taxIncluded(true)
                 .remarks(withholdingAdditional.compareTo(BigDecimal.ZERO) > 0
-                        ? "원천징수(사업소득 3.3%) 예정액. 부가세(VAT) 금액과 혼동 금지."
+                        ? AdminServiceUserFacingMessages.REMARKS_WITHHOLDING_VS_VAT_NOTE
                         : null)
                 .build();
         
@@ -1047,11 +1053,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         BigDecimal grossRefundBd = BigDecimal.valueOf(refundAmount);
         TaxCalculationUtil.TaxCalculationResult refundTax =
                 TaxCalculationUtil.calculateTaxFromPayment(grossRefundBd);
-        String refundDescription = String.format("상담료 환불 - %s (%d회기 환불, 사유: %s)",
-                mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
+        String refundDescription = String.format(AdminServiceUserFacingMessages.DESC_CONSULTATION_REFUND_FMT,
+                mapping.getPackageName() != null ? mapping.getPackageName()
+                        : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME,
                 refundedSessions,
-                reason != null ? reason : "관리자 처리");
-        refundDescription = refundDescription + String.format(" [부가세 분리: 공급가 %,d원, 부가세 %,d원]",
+                reason != null ? reason : AdminServiceUserFacingMessages.DEFAULT_REFUND_REASON_ADMIN_PROCESS);
+        refundDescription = refundDescription + String.format(AdminServiceUserFacingMessages.DESC_TAX_SPLIT_SUFFIX_FMT,
                 refundTax.getAmountExcludingTax().longValue(),
                 refundTax.getVatAmount().longValue());
         
@@ -1106,13 +1113,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         TaxCalculationUtil.TaxCalculationResult partialRefundTax =
                 TaxCalculationUtil.calculateTaxFromPayment(grossPartialBd);
         String partialRefundDescription = String.format(
-                "상담료 부분 환불 - %s (%d회기 부분 환불, 사유: %s) [남은회기: %d회]",
-                mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
+                AdminServiceUserFacingMessages.DESC_CONSULTATION_PARTIAL_REFUND_FMT,
+                mapping.getPackageName() != null ? mapping.getPackageName()
+                        : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME,
                 refundSessions,
-                reason != null ? reason : "관리자 처리",
+                reason != null ? reason : AdminServiceUserFacingMessages.DEFAULT_REFUND_REASON_ADMIN_PROCESS,
                 mapping.getRemainingSessions() - refundSessions);
         partialRefundDescription = partialRefundDescription + String.format(
-                " [부가세 분리: 공급가 %,d원, 부가세 %,d원]",
+                AdminServiceUserFacingMessages.DESC_TAX_SPLIT_SUFFIX_FMT,
                 partialRefundTax.getAmountExcludingTax().longValue(),
                 partialRefundTax.getVatAmount().longValue());
         
@@ -1164,7 +1172,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
-                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         
         mapping.confirmPayment(paymentMethod, paymentReference);
         
@@ -1258,9 +1266,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("RECEIVABLES") // 미수금 거래 타입
                 .amount(java.math.BigDecimal.valueOf(accurateAmount))
-                .description(String.format("상담료 결제 확인 (미수금) - %s (%s) [금액: %,d원]", 
-                    mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
-                    mapping.getPaymentMethod() != null ? mapping.getPaymentMethod() : "미지정",
+                .description(String.format(AdminServiceUserFacingMessages.DESC_RECEIVABLES_ON_PAYMENT_CONFIRM_FMT, 
+                    mapping.getPackageName() != null ? mapping.getPackageName()
+                            : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME,
+                    mapping.getPaymentMethod() != null ? mapping.getPaymentMethod()
+                            : AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED,
                     accurateAmount))
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
@@ -1294,7 +1304,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public ConsultantClientMapping confirmDeposit(Long mappingId, String depositReference) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
-                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
 
         mapping.confirmDeposit(depositReference);
 
@@ -1357,7 +1367,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     savedMapping.getPackageName(),
                     savedMapping.getPackagePrice() != null ? savedMapping.getPackagePrice().doubleValue() : 0.0,
                     savedMapping.getTotalSessions() != null ? savedMapping.getTotalSessions() : 0,
-                    "입금확인"
+                    AdminServiceUserFacingMessages.ERP_MAPPING_PROCEDURE_ACTION_DEPOSIT_CONFIRMED
                 );
                 if (Boolean.TRUE.equals(procedureResult.get("success"))) {
                     log.info("✅ ERP 매핑 정보 동기화 완료: mappingId={}, message={}", mappingId, procedureResult.get("message"));
@@ -1381,7 +1391,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public ConsultantClientMapping approveMapping(Long mappingId, String adminName) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
-                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         
         mapping.approveByAdmin(adminName);
 
@@ -1402,7 +1412,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public ConsultantClientMapping rejectMapping(Long mappingId, String reason) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
-                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
@@ -1422,7 +1432,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public ConsultantClientMapping useSession(Long mappingId) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
-                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         
         mapping.useSession();
         
@@ -1444,7 +1454,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.warn("⚠️ 즉시 회기 추가 사용됨 - 워크플로우를 통한 회기 추가를 권장합니다. mappingId={}", mappingId);
         
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
-                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         
         mapping.addSessions(additionalSessions, packageName, packagePrice);
         
@@ -1769,7 +1779,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String tenantId = getTenantIdOrNull();
         if (tenantId == null || tenantId.isEmpty()) {
             log.error("❌ tenantId가 설정되지 않았습니다. 상담사 목록을 조회할 수 없습니다.");
-            throw new IllegalStateException("Tenant ID is required but not set in current context");
+            throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_TENANT_ID_REQUIRED_IN_CONTEXT);
         }
         log.info("✅ tenantId 확인: {}", tenantId);
         List<Consultant> consultants = consultantRepository.findActiveConsultantsByTenantId(tenantId);
@@ -2234,7 +2244,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         Consultant consultant = consultantRepository.findByTenantIdAndId(getTenantId(), id)
-                .orElseThrow(() -> new EntityNotFoundException("상담사", id));
+                .orElseThrow(() -> new EntityNotFoundException(AdminServiceUserFacingMessages.ENTITY_LABEL_CONSULTANT, id));
 
         if (consultant.getRole() != UserRole.CONSULTANT) {
             throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_USER_NOT_CONSULTANT);
@@ -2317,7 +2327,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public User updateConsultantGrade(Long id, String grade) {
         User consultant = userRepository.findByTenantIdAndId(getTenantId(), id)
-                .orElseThrow(() -> new RuntimeException("Consultant not found"));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_CONSULTANT_NOT_FOUND));
         
         consultant.setGrade(grade);
         consultant.setLastGradeUpdate(LocalDateTime.now());
@@ -2342,7 +2352,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         String tenantIdForClient = getTenantId();
         User clientUser = userRepository.findByTenantIdAndId(tenantIdForClient, id)
-                .orElseThrow(() -> new EntityNotFoundException("내담자", id));
+                .orElseThrow(() -> new EntityNotFoundException(AdminServiceUserFacingMessages.ENTITY_LABEL_CLIENT, id));
 
         if (clientUser.getRole() != UserRole.CLIENT) {
             throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_USER_NOT_CLIENT);
@@ -2508,7 +2518,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Transactional
     public ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingCreateRequest dto, String updatedBy) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
-                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         
         log.info("🔄 매핑 정보 수정: id={}, packageName={}, packagePrice={}, totalSessions={}", 
                 id, dto.getPackageName(), dto.getPackagePrice(), dto.getTotalSessions());
@@ -2857,19 +2867,22 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         StringBuilder message = new StringBuilder();
         if (activeMappings.isEmpty() && futureSchedules.isEmpty()) {
-            message.append("해당 상담사는 안전하게 삭제할 수 있습니다.");
+            message.append(AdminServiceUserFacingMessages.MSG_CONSULTANT_CAN_DELETE_SAFELY);
         } else {
-            message.append("다음 사유로 인해 다른 상담사로 이전이 필요합니다:\n");
+            message.append(AdminServiceUserFacingMessages.MSG_CONSULTANT_DELETE_NEED_TRANSFER_INTRO);
             if (!activeMappings.isEmpty()) {
-                message.append("• 활성 매칭: ").append(activeMappings.size()).append("개\n");
+                message.append(String.format(AdminServiceUserFacingMessages.MSG_BULLET_CONSULTANT_ACTIVE_MAPPINGS_FMT,
+                        activeMappings.size()));
             }
             if (todayScheduleCount > 0) {
-                message.append("• 오늘 스케줄: ").append(todayScheduleCount).append("개\n");
+                message.append(String.format(AdminServiceUserFacingMessages.MSG_BULLET_CONSULTANT_TODAY_SCHEDULE_FMT,
+                        todayScheduleCount));
             }
             if (!futureSchedules.isEmpty()) {
                 long futureOnlyCount = futureSchedules.size() - todayScheduleCount;
                 if (futureOnlyCount > 0) {
-                    message.append("• 향후 스케줄: ").append(futureOnlyCount).append("개");
+                    message.append(String.format(AdminServiceUserFacingMessages.MSG_BULLET_CONSULTANT_FUTURE_SCHEDULE_FMT,
+                            futureOnlyCount));
                 }
             }
         }
@@ -3074,19 +3087,22 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         StringBuilder message = new StringBuilder();
         if (canDeleteDirectly) {
-            message.append("해당 내담자는 안전하게 삭제할 수 있습니다.");
+            message.append(AdminServiceUserFacingMessages.MSG_CLIENT_CAN_DELETE_SAFELY);
         } else {
-            message.append("다음 사유로 인해 삭제할 수 없습니다:\n");
+            message.append(AdminServiceUserFacingMessages.MSG_CLIENT_DELETE_BLOCKED_INTRO);
             if (!mappingsWithRemainingSessions.isEmpty()) {
                 int totalSessions = mappingsWithRemainingSessions.stream()
                         .mapToInt(ConsultantClientMapping::getRemainingSessions).sum();
-                message.append("• 남은 회기: ").append(totalSessions).append("회\n");
+                message.append(String.format(AdminServiceUserFacingMessages.MSG_BULLET_CLIENT_REMAINING_SESSIONS_FMT,
+                        totalSessions));
             }
             if (!pendingPaymentMappings.isEmpty()) {
-                message.append("• 결제 대기: ").append(pendingPaymentMappings.size()).append("개\n");
+                message.append(String.format(AdminServiceUserFacingMessages.MSG_BULLET_CLIENT_PENDING_PAYMENT_FMT,
+                        pendingPaymentMappings.size()));
             }
             if (!futureSchedules.isEmpty()) {
-                message.append("• 예정 스케줄: ").append(futureSchedules.size()).append("개");
+                message.append(String.format(AdminServiceUserFacingMessages.MSG_BULLET_CLIENT_FUTURE_SCHEDULE_FMT,
+                        futureSchedules.size()));
             }
         }
         result.put("message", message.toString());
@@ -3100,7 +3116,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public void deleteMapping(Long id) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
-                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
         mapping.setTerminatedAt(LocalDateTime.now());
@@ -3964,11 +3980,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * 환불 설명에서 환불 사유 추출
      */
     private String extractRefundReasonFromDescription(String description) {
-        if (description == null) return "기타";
+        if (description == null) {
+            return AdminServiceUserFacingMessages.REFUND_REASON_FALLBACK_ETC;
+        }
         
         try {
-            if (description.contains("사유: ")) {
-                String[] parts = description.split("사유: ");
+            if (description.contains(AdminServiceUserFacingMessages.REFUND_DESCRIPTION_REASON_LABEL_PREFIX)) {
+                String[] parts = description.split(AdminServiceUserFacingMessages.REFUND_DESCRIPTION_REASON_LABEL_PREFIX);
                 if (parts.length > 1) {
                     String reason = parts[1].split(" \\[")[0]; // " [" 이전까지만 추출
                     return reason.trim();
@@ -3977,7 +3995,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         } catch (Exception e) {
             log.warn("환불 사유 추출 실패: {}", description);
         }
-        return "기타";
+        return AdminServiceUserFacingMessages.REFUND_REASON_FALLBACK_ETC;
     }
     
 
@@ -5187,7 +5205,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             result.put("reminderMessagesSent", reminderSentCount);
             result.put("consultantsNotified", consultantIdsWithReminder.size());
             result.put("consultantIds", consultantIdsWithReminder);
-            result.put("message", String.format("스케줄 %d개가 완료 처리되었고, 상담일지 미작성 상담사 %d명에게 알림이 발송되었습니다.", 
+            result.put("message", String.format(AdminServiceUserFacingMessages.MSG_SCHEDULE_AUTO_COMPLETE_SUCCESS_FMT, 
                 completedCount, consultantIdsWithReminder.size()));
             
             log.info("✅ 스케줄 자동 완료 처리 완료: 완료 {}개, 알림 발송 {}개", completedCount, reminderSentCount);
@@ -5197,7 +5215,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.error("❌ 스케줄 자동 완료 처리 실패", e);
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("success", false);
-            errorResult.put("message", "스케줄 자동 완료 처리에 실패했습니다: " + e.getMessage());
+            errorResult.put("message", String.format(AdminServiceUserFacingMessages.MSG_SCHEDULE_AUTO_COMPLETE_FAILED_FMT,
+                    e.getMessage()));
             return errorResult;
         }
     }
@@ -5224,16 +5243,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 return;
             }
             
-            String title = "상담일지 작성 안내";
+            String title = AdminServiceUserFacingMessages.MSG_CONSULTATION_DIARY_REMINDER_TITLE;
             String content = String.format(
-                "안녕하세요. %s에 진행된 상담의 상담일지를 아직 작성하지 않으셨습니다.\n\n" +
-                "상담일지는 상담의 질 향상과 내담자 관리에 매우 중요합니다.\n" +
-                "빠른 시일 내에 상담일지를 작성해 주시기 바랍니다.\n\n" +
-                "상담 정보:\n" +
-                "- 상담일: %s\n" +
-                "- 상담시간: %s ~ %s\n" +
-                "- 내담자: %s\n\n" +
-                "감사합니다.",
+                AdminServiceUserFacingMessages.MSG_CONSULTATION_DIARY_REMINDER_BODY_FMT,
                 schedule.getDate(),
                 schedule.getDate(),
                 schedule.getStartTime(),
@@ -5477,7 +5489,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     
                     for (ConsultantClientMapping mapping : toDelete) {
                         mapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
-                        mapping.setNotes("중복 매칭 통합으로 종료됨");
+                        mapping.setNotes(AdminServiceUserFacingMessages.NOTES_DUPLICATE_MAPPING_MERGE_TERMINATED);
                         mappingRepository.save(mapping);
                         deletedCount++;
                     }
@@ -5492,7 +5504,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             result.put("success", true);
             result.put("mergedCount", mergedCount);
             result.put("deletedCount", deletedCount);
-            result.put("message", String.format("중복 매칭 통합 완료: %d개 그룹 통합, %d개 매칭 종료", 
+            result.put("message", String.format(AdminServiceUserFacingMessages.MSG_DUPLICATE_MAPPING_MERGE_SUCCESS_FMT, 
                 mergedCount, deletedCount));
             
             log.info("✅ 중복 매칭 통합 완료: {}개 그룹 통합, {}개 매칭 종료", mergedCount, deletedCount);
@@ -5633,7 +5645,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         } catch (Exception e) {
             log.error("❌ 상담사별 휴가 통계 조회 실패: {}", e.getMessage(), e);
             result.put("success", false);
-            result.put("message", "휴가 통계 조회에 실패했습니다: " + e.getMessage());
+            result.put("message", String.format(AdminServiceUserFacingMessages.MSG_VACATION_STATS_QUERY_FAILED_FMT,
+                    e.getMessage()));
         }
         
         return result;
@@ -5725,7 +5738,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         } catch (Exception e) {
             log.error("❌ 지점별 상담사 휴가 통계 조회 실패: {}", e.getMessage(), e);
             result.put("success", false);
-            result.put("message", "지점별 휴가 통계 조회에 실패했습니다: " + e.getMessage());
+            result.put("message", String.format(AdminServiceUserFacingMessages.MSG_VACATION_STATS_BY_BRANCH_FAILED_FMT,
+                    e.getMessage()));
         }
         
         return result;
@@ -6092,7 +6106,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 if (line.contains("[추가 매칭]")) {
                     result.put("sessions", 10); // 기본 패키지 회기수
                     result.put("price", mapping.getPackagePrice() != null ? mapping.getPackagePrice() : 0L);
-                    result.put("packageName", mapping.getPackageName() != null ? mapping.getPackageName() : "추가 패키지");
+                    result.put("packageName", mapping.getPackageName() != null ? mapping.getPackageName()
+                            : AdminServiceUserFacingMessages.PACKAGE_NAME_ADDITIONAL_FALLBACK);
                     log.info("📦 추가 매칭 정보 발견: {}", line);
                     break;
                 }
@@ -6132,7 +6147,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         result.put("price", estimatedPrice);
                     }
                     
-                    result.put("packageName", estimatedLastPackage + "회 패키지 (추정)");
+                    result.put("packageName", String.format(
+                            AdminServiceUserFacingMessages.PACKAGE_NAME_ESTIMATED_SESSIONS_FMT, estimatedLastPackage));
                     
                     log.info("📦 표준 패키지 단위로 추정: 총회기수={}, 추정최근패키지={}회", 
                             totalSessions, estimatedLastPackage);

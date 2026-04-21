@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.userprofile.UserProfileServiceUserFacingMessages;
 import com.coresolution.consultation.dto.ConsultantApplicationRequest;
 import com.coresolution.consultation.dto.UserProfileResponse;
 import com.coresolution.consultation.dto.UserProfileUpdateRequest;
@@ -49,7 +50,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private User requireUserInCurrentTenant(Long userId) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return userRepository.findByTenantIdAndId(tenantId, userId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            .orElseThrow(() -> new RuntimeException(UserProfileServiceUserFacingMessages.MSG_USER_NOT_FOUND));
     }
     
     @Override
@@ -103,16 +104,16 @@ public class UserProfileServiceImpl implements UserProfileService {
             if (request.getRequestedRole() != null && !request.getRequestedRole().equals(user.getRole())) {
                 if (isValidRoleTransition(user.getRole(), request.getRequestedRole())) {
                     if (UserRole.CONSULTANT.equals(request.getRequestedRole()) && !checkConsultantEligibility(userId)) {
-                        throw new RuntimeException("상담사 자격 요건을 충족하지 못합니다.");
+                        throw new RuntimeException(UserProfileServiceUserFacingMessages.MSG_CONSULTANT_ELIGIBILITY_NOT_MET);
                     } else if (UserRole.ADMIN.equals(request.getRequestedRole()) && !checkAdminEligibility(userId)) {
-                        throw new RuntimeException("관리자 자격 요건을 충족하지 못합니다.");
+                        throw new RuntimeException(UserProfileServiceUserFacingMessages.MSG_ADMIN_ELIGIBILITY_NOT_MET);
                     }
                     
                     user.setRole(request.getRequestedRole());
                     log.info("사용자 역할 변경: userId={}, oldRole={}, newRole={}", 
                             userId, user.getRole(), request.getRequestedRole());
                 } else {
-                    throw new RuntimeException("유효하지 않은 역할 변경입니다.");
+                    throw new RuntimeException(UserProfileServiceUserFacingMessages.MSG_INVALID_ROLE_TRANSITION);
                 }
             }
             
@@ -135,7 +136,7 @@ public class UserProfileServiceImpl implements UserProfileService {
             
         } catch (Exception e) {
             log.error("유저 프로필 업데이트 중 오류 발생: userId={}, error={}", userId, e.getMessage(), e);
-            throw new RuntimeException("프로필 업데이트 중 오류가 발생했습니다: " + e.getMessage(), e);
+            throw new RuntimeException(UserProfileServiceUserFacingMessages.MSG_PROFILE_UPDATE_ERROR_PREFIX + e.getMessage(), e);
         }
     }
     
@@ -154,12 +155,12 @@ public class UserProfileServiceImpl implements UserProfileService {
             
             // 역할 변경 가능 여부 확인
             if (!isValidRoleTransition(user.getRole(), newRole)) {
-                throw new RuntimeException("유효하지 않은 역할 변경입니다.");
+                throw new RuntimeException(UserProfileServiceUserFacingMessages.MSG_INVALID_ROLE_TRANSITION);
             }
             
             // 상담사로 변경하는 경우 자격 요건 확인
             if (UserRole.CONSULTANT.equals(newRole) && !checkConsultantEligibility(userId)) {
-                throw new RuntimeException("상담사 자격 요건을 충족하지 못합니다.");
+                throw new RuntimeException(UserProfileServiceUserFacingMessages.MSG_CONSULTANT_ELIGIBILITY_NOT_MET);
             }
             
             user.setRole(newRole);
@@ -234,13 +235,21 @@ public class UserProfileServiceImpl implements UserProfileService {
     private String calculateAgeGroup(LocalDate birthDate) {
         int age = Period.between(birthDate, LocalDate.now()).getYears();
         
-        if (age < 20) return "10대";
-        else if (age < 30) return "20대";
-        else if (age < 40) return "30대";
-        else if (age < 50) return "40대";
-        else if (age < 60) return "50대";
-        else if (age < 70) return "60대";
-        else return "70대 이상";
+        if (age < 20) {
+            return UserProfileServiceUserFacingMessages.AGE_GROUP_TEENS;
+        } else if (age < 30) {
+            return UserProfileServiceUserFacingMessages.AGE_GROUP_20S;
+        } else if (age < 40) {
+            return UserProfileServiceUserFacingMessages.AGE_GROUP_30S;
+        } else if (age < 50) {
+            return UserProfileServiceUserFacingMessages.AGE_GROUP_40S;
+        } else if (age < 60) {
+            return UserProfileServiceUserFacingMessages.AGE_GROUP_50S;
+        } else if (age < 70) {
+            return UserProfileServiceUserFacingMessages.AGE_GROUP_60S;
+        } else {
+            return UserProfileServiceUserFacingMessages.AGE_GROUP_70_PLUS;
+        }
     }
     
     /**
@@ -266,51 +275,79 @@ public class UserProfileServiceImpl implements UserProfileService {
         StringBuilder roleInfo = new StringBuilder();
 
         if (request.getPreferredCounselingArea() != null) {
-            roleInfo.append("상담선호분야: ").append(request.getPreferredCounselingArea()).append("\n");
+            roleInfo.append(UserProfileServiceUserFacingMessages.MEMO_KEY_PREFERRED_COUNSELING_AREA)
+                .append(UserProfileServiceUserFacingMessages.MEMO_KEY_VALUE_SEPARATOR)
+                .append(request.getPreferredCounselingArea()).append("\n");
         }
         if (request.getPreferredCounselingMethod() != null) {
-            roleInfo.append("상담선호방식: ").append(request.getPreferredCounselingMethod()).append("\n");
+            roleInfo.append(UserProfileServiceUserFacingMessages.MEMO_KEY_PREFERRED_COUNSELING_METHOD)
+                .append(UserProfileServiceUserFacingMessages.MEMO_KEY_VALUE_SEPARATOR)
+                .append(request.getPreferredCounselingMethod()).append("\n");
         }
         if (request.getCounselingNeeds() != null) {
-            roleInfo.append("상담받고싶은내용: ").append(request.getCounselingNeeds()).append("\n");
+            roleInfo.append(UserProfileServiceUserFacingMessages.MEMO_KEY_COUNSELING_NEEDS)
+                .append(UserProfileServiceUserFacingMessages.MEMO_KEY_VALUE_SEPARATOR)
+                .append(request.getCounselingNeeds()).append("\n");
         }
 
         if (appendConsultantLikeMemo) {
             if (request.getSpecialty() != null) {
-                roleInfo.append("전문분야: ").append(request.getSpecialty()).append("\n");
+                roleInfo.append(UserProfileServiceUserFacingMessages.MEMO_KEY_SPECIALTY)
+                    .append(UserProfileServiceUserFacingMessages.MEMO_KEY_VALUE_SEPARATOR)
+                    .append(request.getSpecialty()).append("\n");
             }
             if (request.getQualifications() != null) {
-                roleInfo.append("자격증: ").append(request.getQualifications()).append("\n");
+                roleInfo.append(UserProfileServiceUserFacingMessages.MEMO_KEY_QUALIFICATIONS)
+                    .append(UserProfileServiceUserFacingMessages.MEMO_KEY_VALUE_SEPARATOR)
+                    .append(request.getQualifications()).append("\n");
             }
             if (request.getExperience() != null) {
-                roleInfo.append("경력: ").append(request.getExperience()).append("\n");
+                roleInfo.append(UserProfileServiceUserFacingMessages.MEMO_KEY_EXPERIENCE)
+                    .append(UserProfileServiceUserFacingMessages.MEMO_KEY_VALUE_SEPARATOR)
+                    .append(request.getExperience()).append("\n");
             }
             if (request.getAvailableTime() != null) {
-                roleInfo.append("상담가능시간: ").append(request.getAvailableTime()).append("\n");
+                roleInfo.append(UserProfileServiceUserFacingMessages.MEMO_KEY_AVAILABLE_TIME)
+                    .append(UserProfileServiceUserFacingMessages.MEMO_KEY_VALUE_SEPARATOR)
+                    .append(request.getAvailableTime()).append("\n");
             }
             if (request.getDetailedIntroduction() != null) {
-                roleInfo.append("상세자기소개: ").append(request.getDetailedIntroduction()).append("\n");
+                roleInfo.append(UserProfileServiceUserFacingMessages.MEMO_KEY_DETAILED_INTRO)
+                    .append(UserProfileServiceUserFacingMessages.MEMO_KEY_VALUE_SEPARATOR)
+                    .append(request.getDetailedIntroduction()).append("\n");
             }
             if (request.getEducation() != null) {
-                roleInfo.append("학력: ").append(request.getEducation()).append("\n");
+                roleInfo.append(UserProfileServiceUserFacingMessages.MEMO_KEY_EDUCATION)
+                    .append(UserProfileServiceUserFacingMessages.MEMO_KEY_VALUE_SEPARATOR)
+                    .append(request.getEducation()).append("\n");
             }
             if (request.getAwards() != null) {
-                roleInfo.append("수상경력: ").append(request.getAwards()).append("\n");
+                roleInfo.append(UserProfileServiceUserFacingMessages.MEMO_KEY_AWARDS)
+                    .append(UserProfileServiceUserFacingMessages.MEMO_KEY_VALUE_SEPARATOR)
+                    .append(request.getAwards()).append("\n");
             }
             if (request.getResearch() != null) {
-                roleInfo.append("연구실적: ").append(request.getResearch()).append("\n");
+                roleInfo.append(UserProfileServiceUserFacingMessages.MEMO_KEY_RESEARCH)
+                    .append(UserProfileServiceUserFacingMessages.MEMO_KEY_VALUE_SEPARATOR)
+                    .append(request.getResearch()).append("\n");
             }
         }
 
         if (user.getRole() != null && user.getRole().isAdmin()) {
             if (request.getAssignedTasks() != null) {
-                roleInfo.append("담당업무: ").append(request.getAssignedTasks()).append("\n");
+                roleInfo.append(UserProfileServiceUserFacingMessages.MEMO_KEY_ASSIGNED_TASKS)
+                    .append(UserProfileServiceUserFacingMessages.MEMO_KEY_VALUE_SEPARATOR)
+                    .append(request.getAssignedTasks()).append("\n");
             }
             if (request.getManagementScope() != null) {
-                roleInfo.append("관리권한범위: ").append(request.getManagementScope()).append("\n");
+                roleInfo.append(UserProfileServiceUserFacingMessages.MEMO_KEY_MANAGEMENT_SCOPE)
+                    .append(UserProfileServiceUserFacingMessages.MEMO_KEY_VALUE_SEPARATOR)
+                    .append(request.getManagementScope()).append("\n");
             }
             if (request.getDepartment() != null) {
-                roleInfo.append("부서/팀: ").append(request.getDepartment()).append("\n");
+                roleInfo.append(UserProfileServiceUserFacingMessages.MEMO_KEY_DEPARTMENT)
+                    .append(UserProfileServiceUserFacingMessages.MEMO_KEY_VALUE_SEPARATOR)
+                    .append(request.getDepartment()).append("\n");
             }
         }
 
@@ -483,9 +520,9 @@ public class UserProfileServiceImpl implements UserProfileService {
             }
         }
 
-        String preferredCounselingArea = memoLines.get("상담선호분야");
-        String preferredCounselingMethod = memoLines.get("상담선호방식");
-        String counselingNeeds = memoLines.get("상담받고싶은내용");
+        String preferredCounselingArea = memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_PREFERRED_COUNSELING_AREA);
+        String preferredCounselingMethod = memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_PREFERRED_COUNSELING_METHOD);
+        String counselingNeeds = memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_COUNSELING_NEEDS);
 
         String specialtyOut = null;
         String qualificationsOut = null;
@@ -507,14 +544,14 @@ public class UserProfileServiceImpl implements UserProfileService {
             awardsOut = c.getAwardsAchievements();
             researchOut = c.getResearchPublications();
         } else {
-            specialtyOut = firstNonBlank(memoLines.get("전문분야"), user.getSpecialization());
-            qualificationsOut = memoLines.get("자격증");
-            experienceOut = memoLines.get("경력");
-            availableTimeOut = memoLines.get("상담가능시간");
-            detailedIntroOut = memoLines.get("상세자기소개");
-            educationOut = memoLines.get("학력");
-            awardsOut = memoLines.get("수상경력");
-            researchOut = memoLines.get("연구실적");
+            specialtyOut = firstNonBlank(memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_SPECIALTY), user.getSpecialization());
+            qualificationsOut = memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_QUALIFICATIONS);
+            experienceOut = memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_EXPERIENCE);
+            availableTimeOut = memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_AVAILABLE_TIME);
+            detailedIntroOut = memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_DETAILED_INTRO);
+            educationOut = memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_EDUCATION);
+            awardsOut = memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_AWARDS);
+            researchOut = memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_RESEARCH);
         }
 
         log.info("🖼️ UserProfileResponse 빌드: userId={}, profileImageType={}, hasImage={}",
@@ -551,9 +588,9 @@ public class UserProfileServiceImpl implements UserProfileService {
             .awards(awardsOut)
             .research(researchOut)
             .hourlyRate(null)
-            .assignedTasks(memoLines.get("담당업무"))
-            .managementScope(memoLines.get("관리권한범위"))
-            .department(memoLines.get("부서/팀"))
+            .assignedTasks(memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_ASSIGNED_TASKS))
+            .managementScope(memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_MANAGEMENT_SCOPE))
+            .department(memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_DEPARTMENT))
             .isEmailVerified(user.getIsEmailVerified())
             .isActive(user.getIsActive())
             .lastLoginAt(user.getLastLoginAt())
@@ -652,7 +689,8 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     private String[] parseKoreanAddress(String fullAddress) {
         if (fullAddress == null) {
-            return new String[] {"기타", "기타", "기타"};
+            String fb = UserProfileServiceUserFacingMessages.ADDRESS_FALLBACK_DISTRICT;
+            return new String[] {fb, fb, fb};
         }
         String normalized = fullAddress.replaceAll("\\s+", " ").trim();
         String[] tokens = normalized.split(" ");
@@ -668,11 +706,14 @@ public class UserProfileServiceImpl implements UserProfileService {
             }
             return new String[] { province, city, district.toString() };
         } else if (tokens.length == 2) {
-            return new String[] { tokens[0], tokens[1], "기타" };
+            String fb = UserProfileServiceUserFacingMessages.ADDRESS_FALLBACK_DISTRICT;
+            return new String[] {tokens[0], tokens[1], fb};
         } else if (tokens.length == 1) {
-            return new String[] { tokens[0], "기타", "기타" };
+            String fb = UserProfileServiceUserFacingMessages.ADDRESS_FALLBACK_DISTRICT;
+            return new String[] {tokens[0], fb, fb};
         }
-        return new String[] {"기타", "기타", "기타"};
+        String fb = UserProfileServiceUserFacingMessages.ADDRESS_FALLBACK_DISTRICT;
+        return new String[] {fb, fb, fb};
     }
     
     /**
@@ -715,19 +756,19 @@ public class UserProfileServiceImpl implements UserProfileService {
     private String getNextStepMessage(User user) {
         if (UserRole.CLIENT.equals(user.getRole())) {
             if (user.getGender() == null || user.getBirthDate() == null) {
-                return "성별과 생년월일을 추가로 입력해주세요.";
+                return UserProfileServiceUserFacingMessages.MSG_NEXT_STEP_CLIENT_GENDER_BIRTH;
             } else if (user.getProfileImageUrl() == null) {
-                return "프로필 이미지를 추가해주세요.";
+                return UserProfileServiceUserFacingMessages.MSG_NEXT_STEP_CLIENT_PROFILE_IMAGE;
             } else {
-                return "상담 선호도와 상담사 신청을 위한 추가 정보를 등록해주세요.";
+                return UserProfileServiceUserFacingMessages.MSG_NEXT_STEP_CLIENT_PREFERENCES;
             }
         } else if (UserRole.CONSULTANT.equals(user.getRole())) {
-            return "상담사 프로필을 더 자세히 작성해주세요.";
+            return UserProfileServiceUserFacingMessages.MSG_NEXT_STEP_CONSULTANT_PROFILE;
         } else if (UserRole.ADMIN.equals(user.getRole())) {
-            return "관리자 프로필을 더 자세히 작성해주세요.";
+            return UserProfileServiceUserFacingMessages.MSG_NEXT_STEP_ADMIN_PROFILE;
         }
         
-        return "프로필이 완성되었습니다.";
+        return UserProfileServiceUserFacingMessages.MSG_PROFILE_COMPLETE;
     }
     
     @Override
@@ -743,30 +784,39 @@ public class UserProfileServiceImpl implements UserProfileService {
             // 1. 현재 역할이 내담자인지 확인
             if (!UserRole.CLIENT.equals(user.getRole())) {
                 result.put("success", false);
-                result.put("message", "내담자만 상담사로 신청할 수 있습니다.");
+                result.put("message", UserProfileServiceUserFacingMessages.MSG_APPLY_CONSULTANT_ONLY_CLIENT);
                 return result;
             }
             
             // 2. 상담사 자격 요건 확인
             if (!checkConsultantEligibility(userId)) {
                 result.put("success", false);
-                result.put("message", "상담사 자격 요건을 충족하지 못합니다. 이메일 인증 및 기본 프로필 정보를 완성해주세요.");
+                result.put("message", UserProfileServiceUserFacingMessages.MSG_CONSULTANT_ELIGIBILITY_NOT_MET_DETAILED);
                 result.put("requirements", getConsultantRequirements(user));
                 return result;
             }
             
             // 3. 상담사 신청 정보를 메모에 저장
             StringBuilder applicationInfo = new StringBuilder();
-            applicationInfo.append("\n=== 상담사 신청 정보 ===\n");
-            applicationInfo.append("신청일: ").append(java.time.LocalDateTime.now()).append("\n");
-            applicationInfo.append("신청 사유: ").append(request.getApplicationReason() != null ? request.getApplicationReason() : "미입력").append("\n");
-            applicationInfo.append("관련 경험: ").append(request.getExperience() != null ? request.getExperience() : "미입력").append("\n");
-            applicationInfo.append("보유 자격증: ").append(request.getCertifications() != null ? request.getCertifications() : "미입력").append("\n");
-            applicationInfo.append("전문 분야: ").append(request.getSpecialty() != null ? request.getSpecialty() : "미입력").append("\n");
-            applicationInfo.append("자기소개: ").append(request.getIntroduction() != null ? request.getIntroduction() : "미입력").append("\n");
-            applicationInfo.append("연락처: ").append(request.getContactInfo() != null ? request.getContactInfo() : "미입력").append("\n");
-            applicationInfo.append("희망 상담 시간: ").append(request.getPreferredHours() != null ? request.getPreferredHours() : "미입력").append("\n");
-            applicationInfo.append("추가 메모: ").append(request.getAdditionalNotes() != null ? request.getAdditionalNotes() : "미입력").append("\n");
+            String notEntered = UserProfileServiceUserFacingMessages.VALUE_NOT_ENTERED;
+            applicationInfo.append(UserProfileServiceUserFacingMessages.APPLICATION_INFO_HEADER);
+            applicationInfo.append(UserProfileServiceUserFacingMessages.APPLICATION_DATE_LABEL).append(java.time.LocalDateTime.now()).append("\n");
+            applicationInfo.append(UserProfileServiceUserFacingMessages.APPLICATION_REASON_LABEL)
+                .append(request.getApplicationReason() != null ? request.getApplicationReason() : notEntered).append("\n");
+            applicationInfo.append(UserProfileServiceUserFacingMessages.APPLICATION_RELATED_EXPERIENCE_LABEL)
+                .append(request.getExperience() != null ? request.getExperience() : notEntered).append("\n");
+            applicationInfo.append(UserProfileServiceUserFacingMessages.APPLICATION_CERTIFICATIONS_LABEL)
+                .append(request.getCertifications() != null ? request.getCertifications() : notEntered).append("\n");
+            applicationInfo.append(UserProfileServiceUserFacingMessages.APPLICATION_SPECIALTY_LABEL)
+                .append(request.getSpecialty() != null ? request.getSpecialty() : notEntered).append("\n");
+            applicationInfo.append(UserProfileServiceUserFacingMessages.APPLICATION_INTRO_LABEL)
+                .append(request.getIntroduction() != null ? request.getIntroduction() : notEntered).append("\n");
+            applicationInfo.append(UserProfileServiceUserFacingMessages.APPLICATION_CONTACT_LABEL)
+                .append(request.getContactInfo() != null ? request.getContactInfo() : notEntered).append("\n");
+            applicationInfo.append(UserProfileServiceUserFacingMessages.APPLICATION_PREFERRED_HOURS_LABEL)
+                .append(request.getPreferredHours() != null ? request.getPreferredHours() : notEntered).append("\n");
+            applicationInfo.append(UserProfileServiceUserFacingMessages.APPLICATION_ADDITIONAL_NOTES_LABEL)
+                .append(request.getAdditionalNotes() != null ? request.getAdditionalNotes() : notEntered).append("\n");
             
             // 기존 메모에 추가
             String existingMemo = user.getMemo() != null ? user.getMemo() : "";
@@ -781,7 +831,7 @@ public class UserProfileServiceImpl implements UserProfileService {
             log.info("상담사 신청 완료: userId={}, newRole={}", userId, user.getRole());
             
             result.put("success", true);
-            result.put("message", "상담사 신청이 완료되었습니다. 관리자 승인 후 상담사로 활동하실 수 있습니다.");
+            result.put("message", UserProfileServiceUserFacingMessages.MSG_CONSULTANT_APPLICATION_SUCCESS);
             result.put("userId", userId);
             result.put("newRole", user.getRole().getDisplayName());
             result.put("applicationDate", java.time.LocalDateTime.now());
@@ -791,7 +841,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         } catch (Exception e) {
             log.error("상담사 신청 중 오류 발생: userId={}, error={}", userId, e.getMessage(), e);
             result.put("success", false);
-            result.put("message", "상담사 신청 중 오류가 발생했습니다: " + e.getMessage());
+            result.put("message", UserProfileServiceUserFacingMessages.MSG_CONSULTANT_APPLICATION_ERROR_PREFIX + e.getMessage());
             return result;
         }
     }

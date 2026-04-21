@@ -37,6 +37,14 @@ import {
     batchUpdateMenuPermissions
 } from '../../utils/menuPermissionApi';
 import MenuPermissionManagementUI from '../ui/MenuPermissionManagementUI';
+import {
+    MENU_PERM_BUTTON,
+    MENU_PERM_CONFIRM,
+    MENU_PERM_MOCK_ROLES,
+    MENU_PERM_MSG,
+    MENU_PERM_PAGE,
+    MENU_PERM_TOAST
+} from '../../constants/menuPermissionManagementStrings';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 
@@ -75,17 +83,10 @@ const MenuPermissionManagement = () => {
             // const response = await axios.get('/api/v1/tenant/roles');
             
             // 임시 데이터
-            const mockRoles = [
-                { tenantRoleId: '1', nameKo: '관리자', nameEn: 'ADMIN' },
-                { tenantRoleId: '2', nameKo: '사무원', nameEn: 'STAFF' },
-                { tenantRoleId: '3', nameKo: '상담사', nameEn: 'CONSULTANT' },
-                { tenantRoleId: '4', nameKo: '내담자', nameEn: 'CLIENT' }
-            ];
-            
-            setRoles(mockRoles);
+            setRoles([...MENU_PERM_MOCK_ROLES]);
         } catch (err) {
             console.error('역할 조회 오류:', err);
-            setError('역할 목록을 불러오는 중 오류가 발생했습니다.');
+            setError(MENU_PERM_MSG.ERR_LOAD_ROLES);
         } finally {
             setLoading(false);
         }
@@ -104,11 +105,11 @@ const MenuPermissionManagement = () => {
             if (response.success) {
                 setMenuPermissions(response.data || []);
             } else {
-                setError(response.message || '메뉴 권한 조회 실패');
+                setError(response.message || MENU_PERM_MSG.QUERY_FAIL);
             }
         } catch (err) {
             console.error('메뉴 권한 조회 오류:', err);
-            setError('메뉴 권한을 불러오는 중 오류가 발생했습니다.');
+            setError(MENU_PERM_MSG.ERR_LOAD_MENU_PERM);
         } finally {
             setLoading(false);
         }
@@ -154,13 +155,13 @@ const MenuPermissionManagement = () => {
             });
 
             if (!response.success) {
-                setError(response.message || '권한 변경 실패');
+                setError(response.message || MENU_PERM_MSG.PERM_CHANGE_FAIL);
                 // 롤백
                 fetchMenuPermissions(selectedRole.tenantRoleId);
             }
         } catch (err) {
             console.error('권한 변경 오류:', err);
-            setError('권한 변경 중 오류가 발생했습니다.');
+            setError(MENU_PERM_MSG.ERR_PERM_CHANGE);
             // 롤백
             fetchMenuPermissions(selectedRole.tenantRoleId);
         }
@@ -171,7 +172,7 @@ const MenuPermissionManagement = () => {
      */
     const handleBatchSave = async() => {
         const confirmed = await new Promise((resolve) => {
-            notificationManager.confirm('변경사항을 저장하시겠습니까?', resolve);
+            notificationManager.confirm(MENU_PERM_CONFIRM.BATCH_SAVE, resolve);
         });
         if (!confirmed) {
             return;
@@ -195,27 +196,27 @@ const MenuPermissionManagement = () => {
             const response = await batchUpdateMenuPermissions(selectedRole.tenantRoleId, requests);
 
             if (response.success) {
-                notificationManager.success('저장되었습니다.');
+                notificationManager.success(MENU_PERM_TOAST.SAVED);
                 fetchMenuPermissions(selectedRole.tenantRoleId);
             } else {
-                setError(response.message || '저장 실패');
+                setError(response.message || MENU_PERM_MSG.SAVE_FAIL);
             }
         } catch (err) {
             console.error('일괄 저장 오류:', err);
-            setError('저장 중 오류가 발생했습니다.');
+            setError(MENU_PERM_MSG.ERR_SAVE);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <AdminCommonLayout title="메뉴 권한 관리">
+        <AdminCommonLayout title={MENU_PERM_PAGE.TITLE}>
             <div className="mg-v2-ad-b0kla mg-v2-menu-permission-management">
                 <div className="mg-v2-ad-b0kla__container">
-                    <ContentArea ariaLabel="메뉴 권한 관리 본문">
+                    <ContentArea ariaLabel={MENU_PERM_PAGE.ARIA_MAIN}>
                         <ContentHeader
-                            title="메뉴 권한 관리"
-                            subtitle="역할별 메뉴·LNB 접근 권한을 설정하고 저장합니다."
+                            title={MENU_PERM_PAGE.TITLE}
+                            subtitle={MENU_PERM_PAGE.SUBTITLE}
                             titleId="menu-permission-management-title"
                             actions={
                                 selectedRole ? (
@@ -226,7 +227,7 @@ const MenuPermissionManagement = () => {
                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                         preventDoubleClick={true}
                                     >
-                                        변경사항 저장
+                                        {MENU_PERM_BUTTON.SAVE_CHANGES}
                                     </MGButton>
                                 ) : null
                             }
@@ -234,7 +235,7 @@ const MenuPermissionManagement = () => {
                         <main aria-labelledby="menu-permission-management-title">
                             {loading && !selectedRole ? (
                                 <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
-                                    <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+                                    <UnifiedLoading type="inline" text={MENU_PERM_PAGE.LOADING} />
                                 </div>
                             ) : (
                                 <MenuPermissionManagementUI

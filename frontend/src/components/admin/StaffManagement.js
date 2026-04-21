@@ -25,6 +25,20 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import { showSuccess, showError } from '../../utils/notification';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
+import {
+  STAFF_MGMT_ARIA,
+  STAFF_MGMT_BUTTON,
+  STAFF_MGMT_FORM_LABEL,
+  STAFF_MGMT_HELP,
+  STAFF_MGMT_MASK,
+  STAFF_MGMT_MODAL,
+  STAFF_MGMT_MSG,
+  STAFF_MGMT_PAGE,
+  STAFF_MGMT_PLACEHOLDER,
+  STAFF_MGMT_ROLE_LABELS,
+  STAFF_MGMT_STATUS,
+  STAFF_MGMT_TABLE
+} from '../../constants/staffManagementStrings';
 import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete';
 import ProfileImageInput from '../common/ProfileImageInput';
 import Avatar from '../common/Avatar';
@@ -43,14 +57,6 @@ const API_STAFF_REGISTER = '/api/v1/admin/staff';
 const basicProfileEndpoint = (userId) => `/api/v1/admin/user-management/${userId}/basic-profile`;
 const ROLE_STAFF = 'STAFF';
 
-/** 역할 표시명 (백엔드 UserRole displayName과 동일) */
-const ROLE_DISPLAY_NAMES = {
-  ADMIN: '관리자',
-  STAFF: '사무원',
-  CONSULTANT: '상담사',
-  CLIENT: '내담자'
-};
-
 /** 스태프로 지정 모달 내부 목록 (인지 복잡도 분리) */
 const AddStaffModalContent = ({ list = [], searchTerm, onSearch, roleOf, onAssign, assigning }) => {
   const filtered = useMemo(() => {
@@ -65,16 +71,20 @@ const AddStaffModalContent = ({ list = [], searchTerm, onSearch, roleOf, onAssig
   }, [list, searchTerm]);
 
   if (list.length === 0 && !searchTerm) {
-    return <p className="mg-v2-mapping-list-block__empty-desc">스태프로 지정할 수 있는 사용자가 없습니다.</p>;
+    return <p className="mg-v2-mapping-list-block__empty-desc">{STAFF_MGMT_MSG.ASSIGN_LIST_EMPTY}</p>;
   }
   return (
     <>
       <div className="mg-modal__form-group">
-        <SearchInput value={searchTerm} onChange={onSearch} placeholder="이름, 이메일, 전화번호로 검색..." />
+        <SearchInput
+          value={searchTerm}
+          onChange={onSearch}
+          placeholder={STAFF_MGMT_PLACEHOLDER.SEARCH_NAME_EMAIL_PHONE}
+        />
       </div>
       <div className="mg-v2-client-list-block" style={{ maxHeight: '320px', overflowY: 'auto' }}>
         {filtered.length === 0 ? (
-          <p className="mg-v2-mapping-list-block__empty-desc">검색 결과가 없습니다.</p>
+          <p className="mg-v2-mapping-list-block__empty-desc">{STAFF_MGMT_MSG.SEARCH_EMPTY}</p>
         ) : (
           <div className="mg-v2-mapping-list-block__grid">
             {filtered.map((u) => (
@@ -87,12 +97,12 @@ const AddStaffModalContent = ({ list = [], searchTerm, onSearch, roleOf, onAssig
                     size={48}
                   />
                   <div className="mg-v2-profile-card__info">
-                    <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(u.name, '이름')}</h3>
+                    <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(u.name, STAFF_MGMT_MASK.NAME)}</h3>
                     <div className="mg-v2-profile-card__contact">
                       <span className="mg-v2-profile-card__email">
-                        <Mail size={12} /> {maskEncryptedDisplay(u.email, '이메일')}
+                        <Mail size={12} /> {maskEncryptedDisplay(u.email, STAFF_MGMT_MASK.EMAIL)}
                       </span>
-                      <span className="mg-v2-profile-card__badges">{ROLE_DISPLAY_NAMES[roleOf(u)] || roleOf(u)}</span>
+                      <span className="mg-v2-profile-card__badges">{STAFF_MGMT_ROLE_LABELS[roleOf(u)] || roleOf(u)}</span>
                     </div>
                   </div>
                 </div>
@@ -112,7 +122,7 @@ const AddStaffModalContent = ({ list = [], searchTerm, onSearch, roleOf, onAssig
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
                   >
-                    스태프로 지정
+                    {STAFF_MGMT_BUTTON.ASSIGN_STAFF}
                   </MGButton>
                 </div>
               </div>
@@ -164,7 +174,7 @@ const StaffManagement = ({ embedded = false }) => {
   const [staffEditSubmitting, setStaffEditSubmitting] = useState(false);
 
   const normalizeStaffPhoneForEdit = useCallback((p) => {
-    if (p == null || String(p).trim() === '' || String(p).trim() === '전화번호 없음') return '';
+    if (p == null || String(p).trim() === '' || String(p).trim() === STAFF_MGMT_MASK.PHONE_NONE) return '';
     return String(p).trim();
   }, []);
 
@@ -180,8 +190,8 @@ const StaffManagement = ({ embedded = false }) => {
     (staff) => {
       if (!staff?.id) return;
       setStaffEditForm({
-        name: maskEncryptedDisplay(staff.name, '이름') || '',
-        email: maskEncryptedDisplay(staff.email, '이메일') || '',
+        name: maskEncryptedDisplay(staff.name, STAFF_MGMT_MASK.NAME) || '',
+        email: maskEncryptedDisplay(staff.email, STAFF_MGMT_MASK.EMAIL) || '',
         phone: normalizeStaffPhoneForEdit(staff.phone)
       });
       setStaffEditModal({ open: true, staff });
@@ -213,7 +223,7 @@ const StaffManagement = ({ embedded = false }) => {
     } catch (err) {
       console.error('스태프 목록 조회 실패:', err);
       setStaffList([]);
-      showError('사용자 목록을 불러오는데 실패했습니다.');
+      showError(STAFF_MGMT_MSG.ERR_LOAD_USER_LIST);
     } finally {
       setLoading(false);
     }
@@ -240,7 +250,7 @@ const StaffManagement = ({ embedded = false }) => {
       setAddStaffModal((prev) => ({ ...prev, nonStaffUsers: nonStaff, loading: false }));
     } catch (err) {
       console.error('사용자 목록 조회 실패:', err);
-      showError('사용자 목록을 불러오는데 실패했습니다.');
+      showError(STAFF_MGMT_MSG.ERR_LOAD_USER_LIST);
       setAddStaffModal((prev) => ({ ...prev, loading: false, nonStaffUsers: [] }));
     }
   }, []);
@@ -334,15 +344,15 @@ const StaffManagement = ({ embedded = false }) => {
         const response = await StandardizedApi.post(API_STAFF_REGISTER, payload);
         const user = response?.data ?? response;
         if (user && (user.id || user.email)) {
-          showSuccess('스태프가 성공적으로 등록되었습니다.');
+          showSuccess(STAFF_MGMT_MSG.TOAST_STAFF_REGISTERED);
           closeCreateStaffModal();
           loadUsers();
         } else {
-          throw new Error('등록에 실패했습니다.');
+          throw new Error(STAFF_MGMT_MSG.ERR_REGISTER_FAILED);
         }
       } catch (err) {
         console.error('스태프 등록 실패:', err);
-        showError(err.message || err.response?.data?.message || '스태프 등록 중 오류가 발생했습니다.');
+        showError(err.message || err.response?.data?.message || STAFF_MGMT_MSG.ERR_STAFF_REGISTER_PROCESS);
       } finally {
         setCreateStaffModal((prev) => ({ ...prev, submitting: false }));
       }
@@ -358,15 +368,15 @@ const StaffManagement = ({ embedded = false }) => {
         const endpoint = `${API_USER_MANAGEMENT}/${user.id}/role?newRole=${encodeURIComponent(ROLE_STAFF)}`;
         const response = await StandardizedApi.put(endpoint, {});
         if (response && response.success !== false) {
-          showSuccess(response.message || '스태프로 지정되었습니다.');
+          showSuccess(response.message || STAFF_MGMT_MSG.TOAST_ASSIGNED_DEFAULT);
           closeAddStaffModal();
           loadUsers();
         } else {
-          throw new Error(response?.message || '스태프 지정에 실패했습니다.');
+          throw new Error(response?.message || STAFF_MGMT_MSG.ERR_ASSIGN_FAILED);
         }
       } catch (err) {
         console.error('스태프 지정 실패:', err);
-        showError(err.message || '스태프 지정 중 오류가 발생했습니다.');
+        showError(err.message || STAFF_MGMT_MSG.ERR_ASSIGN_PROCESS);
       } finally {
         setAddStaffModal((prev) => ({ ...prev, assignSubmitting: false }));
       }
@@ -417,15 +427,15 @@ const StaffManagement = ({ embedded = false }) => {
       const endpoint = `${API_USER_MANAGEMENT}/${user.id}/role?newRole=${encodeURIComponent(selectedNewRole)}`;
       const response = await StandardizedApi.put(endpoint, {});
       if (response && response.success !== false) {
-        showSuccess(response.message || '역할이 변경되었습니다.');
+        showSuccess(response.message || STAFF_MGMT_MSG.TOAST_ROLE_CHANGED);
         handleCloseRoleChange();
         loadUsers();
       } else {
-        throw new Error(response?.message || '역할 변경에 실패했습니다.');
+        throw new Error(response?.message || STAFF_MGMT_MSG.ERR_ROLE_FAILED);
       }
     } catch (err) {
       console.error('역할 변경 실패:', err);
-      showError(err.message || '역할 변경 중 오류가 발생했습니다.');
+      showError(err.message || STAFF_MGMT_MSG.ERR_ROLE_PROCESS);
     } finally {
       setRoleChangeSubmitting(false);
     }
@@ -437,11 +447,11 @@ const StaffManagement = ({ embedded = false }) => {
     const name = (staffEditForm.name || '').trim();
     const email = (staffEditForm.email || '').trim();
     if (!name) {
-      showError('이름을 입력해 주세요.');
+      showError(STAFF_MGMT_MSG.VAL_NAME_REQUIRED);
       return;
     }
     if (!email) {
-      showError('이메일을 입력해 주세요.');
+      showError(STAFF_MGMT_MSG.VAL_EMAIL_REQUIRED);
       return;
     }
     setStaffEditSubmitting(true);
@@ -452,15 +462,15 @@ const StaffManagement = ({ embedded = false }) => {
         phone: (staffEditForm.phone || '').trim()
       });
       if (response && response.success !== false) {
-        showSuccess(response.message || '사용자 정보가 수정되었습니다.');
+        showSuccess(response.message || STAFF_MGMT_MSG.TOAST_PROFILE_UPDATED);
         closeStaffEdit();
         await loadUsers();
       } else {
-        throw new Error(response?.message || '수정에 실패했습니다.');
+        throw new Error(response?.message || STAFF_MGMT_MSG.ERR_UPDATE_FAILED);
       }
     } catch (err) {
       console.error('스태프 기본 정보 수정 실패:', err);
-      showError(err.message || '정보 수정 중 오류가 발생했습니다.');
+      showError(err.message || STAFF_MGMT_MSG.ERR_UPDATE_PROCESS);
     } finally {
       setStaffEditSubmitting(false);
     }
@@ -484,7 +494,7 @@ const StaffManagement = ({ embedded = false }) => {
           onClick={stop}
           onKeyDown={stop}
           role="group"
-          aria-label="스태프 작업"
+          aria-label={STAFF_MGMT_ARIA.STAFF_ACTIONS}
         >
           <MGButton
             type="button"
@@ -494,7 +504,7 @@ const StaffManagement = ({ embedded = false }) => {
             onClick={() => openStaffDetail(staff)}
             preventDoubleClick={false}
           >
-            상세
+            {STAFF_MGMT_BUTTON.DETAIL}
           </MGButton>
           <MGButton
             type="button"
@@ -504,7 +514,7 @@ const StaffManagement = ({ embedded = false }) => {
             onClick={() => openStaffEdit(staff)}
             preventDoubleClick={false}
           >
-            수정
+            {STAFF_MGMT_BUTTON.EDIT}
           </MGButton>
           <MGButton
             type="button"
@@ -514,7 +524,7 @@ const StaffManagement = ({ embedded = false }) => {
             onClick={() => handleOpenRoleChange(staff)}
             preventDoubleClick={false}
           >
-            역할 변경
+            {STAFF_MGMT_BUTTON.ROLE_CHANGE}
           </MGButton>
         </div>
       );
@@ -529,21 +539,21 @@ const StaffManagement = ({ embedded = false }) => {
   if (loading && staffList.length === 0) {
     if (embedded) {
       return (
-        <ContentArea ariaLabel="스태프 관리 본문">
+        <ContentArea ariaLabel={STAFF_MGMT_PAGE.ARIA_MAIN}>
           <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+            <UnifiedLoading type="inline" text={STAFF_MGMT_PAGE.LOADING} variant="pulse" />
           </div>
         </ContentArea>
       );
     }
     return (
-      <ContentArea ariaLabel="스태프 관리 본문">
+      <ContentArea ariaLabel={STAFF_MGMT_PAGE.ARIA_MAIN}>
         <ContentHeader
-          title="스태프 관리"
-          subtitle="스태프(사무원) 목록 조회, 상세·기본 정보 수정 및 역할 변경"
+          title={STAFF_MGMT_PAGE.TITLE}
+          subtitle={STAFF_MGMT_PAGE.SUBTITLE}
         />
         <div aria-busy="true" aria-live="polite">
-          <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+          <UnifiedLoading type="inline" text={STAFF_MGMT_PAGE.LOADING} variant="pulse" />
         </div>
       </ContentArea>
     );
@@ -551,11 +561,11 @@ const StaffManagement = ({ embedded = false }) => {
 
   return (
     <>
-      <ContentArea ariaLabel="스태프 관리 본문">
+      <ContentArea ariaLabel={STAFF_MGMT_PAGE.ARIA_MAIN}>
         {!embedded && (
           <ContentHeader
-            title="스태프 관리"
-            subtitle="스태프(사무원) 목록 조회, 상세·기본 정보 수정 및 역할 변경"
+            title={STAFF_MGMT_PAGE.TITLE}
+            subtitle={STAFF_MGMT_PAGE.SUBTITLE}
           />
         )}
 
@@ -566,8 +576,8 @@ const StaffManagement = ({ embedded = false }) => {
               <Users size={24} />
             </div>
             <div className="mg-v2-mapping-kpi-section__info">
-              <span className="mg-v2-mapping-kpi-section__label">총 스태프</span>
-              <span className="mg-v2-mapping-kpi-section__value">{staffList.length}명</span>
+              <span className="mg-v2-mapping-kpi-section__label">{STAFF_MGMT_PAGE.KPI_TOTAL}</span>
+              <span className="mg-v2-mapping-kpi-section__value">{staffList.length}{STAFF_MGMT_PAGE.KPI_UNIT}</span>
             </div>
           </div>
         </div>
@@ -579,7 +589,7 @@ const StaffManagement = ({ embedded = false }) => {
             <SearchInput
               value={searchTerm}
               onChange={handleSearch}
-              placeholder="이름, 이메일, 전화번호로 검색..."
+              placeholder={STAFF_MGMT_PLACEHOLDER.SEARCH_NAME_EMAIL_PHONE}
             />
           </div>
           <div className="mg-v2-mapping-search-section__chips">
@@ -592,7 +602,7 @@ const StaffManagement = ({ embedded = false }) => {
               disabled={loading}
               preventDoubleClick={false}
             >
-              새 스태프 등록
+              {STAFF_MGMT_BUTTON.NEW_STAFF}
             </MGButton>
             <MGButton
               type="button"
@@ -603,7 +613,7 @@ const StaffManagement = ({ embedded = false }) => {
               disabled={loading}
               preventDoubleClick={false}
             >
-              스태프로 지정
+              {STAFF_MGMT_BUTTON.ASSIGN_STAFF}
             </MGButton>
             <MGButton
               type="button"
@@ -621,7 +631,7 @@ const StaffManagement = ({ embedded = false }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
-새로고침
+{STAFF_MGMT_BUTTON.REFRESH}
             </MGButton>
           </div>
         </div>
@@ -631,12 +641,12 @@ const StaffManagement = ({ embedded = false }) => {
         <ContentSection noCard className="mg-v2-mapping-list-block">
           <ContentCard className="mg-v2-mapping-list-block__card">
             <div className="mg-v2-mapping-list-block__header">
-              <div className="mg-v2-mapping-list-block__title">스태프 목록</div>
+              <div className="mg-v2-mapping-list-block__title">{STAFF_MGMT_PAGE.LIST_HEADING}</div>
               <ViewModeToggle
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
                 className="mg-v2-mapping-list-block__toggle"
-                ariaLabel="목록 보기 전환"
+                ariaLabel={STAFF_MGMT_ARIA.VIEW_MODE_TOGGLE}
               />
             </div>
             {filteredStaff.length === 0 ? (
@@ -645,10 +655,10 @@ const StaffManagement = ({ embedded = false }) => {
                   <User size={48} />
                 </div>
                 <h3 className="mg-v2-mapping-list-block__empty-title">
-                  {staffList.length === 0 ? '등록된 스태프가 없습니다' : '검색 결과가 없습니다'}
+                  {staffList.length === 0 ? STAFF_MGMT_PAGE.EMPTY_NO_STAFF_TITLE : STAFF_MGMT_PAGE.EMPTY_NO_SEARCH_TITLE}
                 </h3>
                 <p className="mg-v2-mapping-list-block__empty-desc">
-                  {staffList.length === 0 ? '기존 사용자를 스태프(사무원)로 역할 변경할 수 있습니다.' : '다른 검색어로 시도해 보세요.'}
+                  {staffList.length === 0 ? STAFF_MGMT_PAGE.EMPTY_NO_STAFF_DESC : STAFF_MGMT_PAGE.EMPTY_NO_SEARCH_DESC}
                 </p>
               </div>
             ) : viewMode === 'largeCard' ? (
@@ -663,22 +673,22 @@ const StaffManagement = ({ embedded = false }) => {
                       size={48}
                     />
                     <div className="mg-v2-profile-card__info">
-                      <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(staff.name, '이름')}</h3>
+                      <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(staff.name, STAFF_MGMT_MASK.NAME)}</h3>
                       <div className="mg-v2-profile-card__contact">
                         <span className="mg-v2-profile-card__email">
-                          <Mail size={12} /> {maskEncryptedDisplay(staff.email, '이메일')}
+                          <Mail size={12} /> {maskEncryptedDisplay(staff.email, STAFF_MGMT_MASK.EMAIL)}
                         </span>
                         <span className="mg-v2-profile-card__phone">
-                          <Phone size={12} /> {maskEncryptedDisplay(staff.phone, '전화번호 없음')}
+                          <Phone size={12} /> {maskEncryptedDisplay(staff.phone, STAFF_MGMT_MASK.PHONE_NONE)}
                         </span>
                       </div>
                     </div>
                     <div className="mg-v2-profile-card__badges">
                       <StatusBadge variant={staff.role === 'ADMIN' ? 'info' : 'neutral'}>
-                        {ROLE_DISPLAY_NAMES[staff.role] || staff.role}
+                        {STAFF_MGMT_ROLE_LABELS[staff.role] || staff.role}
                       </StatusBadge>
                       <StatusBadge variant={staff.isActive ? 'success' : 'neutral'}>
-                        {staff.isActive ? '활성' : '비활성'}
+                        {staff.isActive ? STAFF_MGMT_STATUS.ACTIVE : STAFF_MGMT_STATUS.INACTIVE}
                       </StatusBadge>
                     </div>
                   </div>
@@ -707,18 +717,18 @@ const StaffManagement = ({ embedded = false }) => {
                         size={36}
                       />
                       <div className="mg-v2-profile-card__info">
-                        <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(staff.name, '이름')}</h3>
+                        <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(staff.name, STAFF_MGMT_MASK.NAME)}</h3>
                         <div className="mg-v2-profile-card__contact">
-                          <span className="mg-v2-profile-card__email"><Mail size={12} /> {maskEncryptedDisplay(staff.email, '이메일')}</span>
-                          <span className="mg-v2-profile-card__phone"><Phone size={12} /> {maskEncryptedDisplay(staff.phone, '전화번호 없음')}</span>
+                          <span className="mg-v2-profile-card__email"><Mail size={12} /> {maskEncryptedDisplay(staff.email, STAFF_MGMT_MASK.EMAIL)}</span>
+                          <span className="mg-v2-profile-card__phone"><Phone size={12} /> {maskEncryptedDisplay(staff.phone, STAFF_MGMT_MASK.PHONE_NONE)}</span>
                         </div>
                       </div>
                       <div className="mg-v2-profile-card__badges">
                         <StatusBadge variant={staff.role === 'ADMIN' ? 'info' : 'neutral'}>
-                          {ROLE_DISPLAY_NAMES[staff.role] || staff.role}
+                          {STAFF_MGMT_ROLE_LABELS[staff.role] || staff.role}
                         </StatusBadge>
                         <StatusBadge variant={staff.isActive ? 'success' : 'neutral'}>
-                          {staff.isActive ? '활성' : '비활성'}
+                          {staff.isActive ? STAFF_MGMT_STATUS.ACTIVE : STAFF_MGMT_STATUS.INACTIVE}
                         </StatusBadge>
                       </div>
                     </div>
@@ -731,19 +741,19 @@ const StaffManagement = ({ embedded = false }) => {
             ) : (
               <ListTableView
                 columns={[
-                  { key: 'name', label: '이름' },
-                  { key: 'email', label: '이메일' },
-                  { key: 'role', label: '역할' },
-                  { key: 'isActive', label: '상태' },
-                  { key: '_actions', label: '작업' }
+                  { key: 'name', label: STAFF_MGMT_TABLE.COL_NAME },
+                  { key: 'email', label: STAFF_MGMT_TABLE.COL_EMAIL },
+                  { key: 'role', label: STAFF_MGMT_TABLE.COL_ROLE },
+                  { key: 'isActive', label: STAFF_MGMT_TABLE.COL_STATUS },
+                  { key: '_actions', label: STAFF_MGMT_TABLE.COL_ACTIONS }
                 ]}
                 data={filteredStaff}
                 renderCell={(key, item) => {
                   if (key === '_actions') return renderStaffActionBar(item, { table: true });
-                  if (key === 'role') return ROLE_DISPLAY_NAMES[item.role] || item.role;
-                  if (key === 'isActive') return item.isActive ? '활성' : '비활성';
-                  if (key === 'name') return maskEncryptedDisplay(item.name, '이름');
-                  if (key === 'email') return maskEncryptedDisplay(item.email, '이메일');
+                  if (key === 'role') return STAFF_MGMT_ROLE_LABELS[item.role] || item.role;
+                  if (key === 'isActive') return item.isActive ? STAFF_MGMT_STATUS.ACTIVE : STAFF_MGMT_STATUS.INACTIVE;
+                  if (key === 'name') return maskEncryptedDisplay(item.name, STAFF_MGMT_MASK.NAME);
+                  if (key === 'email') return maskEncryptedDisplay(item.email, STAFF_MGMT_MASK.EMAIL);
                   const v = item[key];
                   return v != null ? String(v) : '-';
                 }}
@@ -758,7 +768,7 @@ const StaffManagement = ({ embedded = false }) => {
       <UnifiedModal
         isOpen={staffDetailModal.open}
         onClose={closeStaffDetail}
-        title="스태프 상세"
+        title={STAFF_MGMT_MODAL.DETAIL_TITLE}
         subtitle={staffDetailModal.staff
           ? `${toDisplayString(staffDetailModal.staff.name)} · ${toDisplayString(staffDetailModal.staff.email)}`
           : ''}
@@ -772,34 +782,34 @@ const StaffManagement = ({ embedded = false }) => {
             onClick={closeStaffDetail}
             preventDoubleClick={false}
           >
-            닫기
+            {STAFF_MGMT_BUTTON.CLOSE}
           </MGButton>
         }
       >
         {staffDetailModal.staff && (
           <div className="mg-v2-modal-body mg-v2-form" style={{ display: 'grid', gap: '12px' }}>
             <div>
-              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>이름</div>
-              <SafeText tag="div">{maskEncryptedDisplay(staffDetailModal.staff.name, '이름')}</SafeText>
+              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_MASK.NAME}</div>
+              <SafeText tag="div">{maskEncryptedDisplay(staffDetailModal.staff.name, STAFF_MGMT_MASK.NAME)}</SafeText>
             </div>
             <div>
-              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>이메일</div>
-              <SafeText tag="div">{maskEncryptedDisplay(staffDetailModal.staff.email, '이메일')}</SafeText>
+              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_MASK.EMAIL}</div>
+              <SafeText tag="div">{maskEncryptedDisplay(staffDetailModal.staff.email, STAFF_MGMT_MASK.EMAIL)}</SafeText>
             </div>
             <div>
-              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>전화번호</div>
-              <SafeText tag="div">{maskEncryptedDisplay(staffDetailModal.staff.phone, '전화번호 없음')}</SafeText>
+              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_FORM_LABEL.PHONE}</div>
+              <SafeText tag="div">{maskEncryptedDisplay(staffDetailModal.staff.phone, STAFF_MGMT_MASK.PHONE_NONE)}</SafeText>
             </div>
             <div>
-              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>역할</div>
-              <div>{ROLE_DISPLAY_NAMES[staffDetailModal.staff.role] || staffDetailModal.staff.role}</div>
+              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_FORM_LABEL.ROLE}</div>
+              <div>{STAFF_MGMT_ROLE_LABELS[staffDetailModal.staff.role] || staffDetailModal.staff.role}</div>
             </div>
             <div>
-              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>상태</div>
-              <div>{staffDetailModal.staff.isActive ? '활성' : '비활성'}</div>
+              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_FORM_LABEL.STATUS}</div>
+              <div>{staffDetailModal.staff.isActive ? STAFF_MGMT_STATUS.ACTIVE : STAFF_MGMT_STATUS.INACTIVE}</div>
             </div>
             <div>
-              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>등록일</div>
+              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_FORM_LABEL.CREATED_AT}</div>
               <div>
                 {staffDetailModal.staff.createdAt
                   ? new Date(staffDetailModal.staff.createdAt).toLocaleString('ko-KR')
@@ -808,7 +818,7 @@ const StaffManagement = ({ embedded = false }) => {
             </div>
             {(staffDetailModal.staff.address || staffDetailModal.staff.addressDetail || staffDetailModal.staff.postalCode) && (
               <div>
-                <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>주소</div>
+                <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_FORM_LABEL.ADDRESS}</div>
                 <SafeText tag="div">
                   {[
                     toDisplayString(staffDetailModal.staff.postalCode, ''),
@@ -825,8 +835,8 @@ const StaffManagement = ({ embedded = false }) => {
       <UnifiedModal
         isOpen={staffEditModal.open}
         onClose={closeStaffEdit}
-        title="스태프 정보 수정"
-        subtitle="이름·이메일·전화번호만 변경할 수 있습니다. 역할은 역할 변경에서 수정하세요."
+        title={STAFF_MGMT_MODAL.EDIT_TITLE}
+        subtitle={STAFF_MGMT_MODAL.EDIT_SUBTITLE}
         size="medium"
         variant="form"
         loading={staffEditSubmitting}
@@ -840,7 +850,7 @@ const StaffManagement = ({ embedded = false }) => {
               disabled={staffEditSubmitting}
               preventDoubleClick={false}
             >
-              취소
+              {STAFF_MGMT_BUTTON.CANCEL}
             </MGButton>
             <MGButton
               type="button"
@@ -852,13 +862,13 @@ const StaffManagement = ({ embedded = false }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
-              저장
+              {STAFF_MGMT_BUTTON.SAVE}
             </MGButton>
           </>
         }
       >
         <div className="mg-modal__form-group">
-          <label htmlFor="staff-edit-name" className="mg-modal__label">이름 *</label>
+          <label htmlFor="staff-edit-name" className="mg-modal__label">{STAFF_MGMT_FORM_LABEL.NAME_REQUIRED}</label>
           <input
             id="staff-edit-name"
             name="name"
@@ -870,7 +880,7 @@ const StaffManagement = ({ embedded = false }) => {
           />
         </div>
         <div className="mg-modal__form-group">
-          <label htmlFor="staff-edit-email" className="mg-modal__label">이메일 *</label>
+          <label htmlFor="staff-edit-email" className="mg-modal__label">{STAFF_MGMT_FORM_LABEL.EMAIL_REQUIRED}</label>
           <input
             id="staff-edit-email"
             name="email"
@@ -883,7 +893,7 @@ const StaffManagement = ({ embedded = false }) => {
           />
         </div>
         <div className="mg-modal__form-group">
-          <label htmlFor="staff-edit-phone" className="mg-modal__label">전화번호</label>
+          <label htmlFor="staff-edit-phone" className="mg-modal__label">{STAFF_MGMT_FORM_LABEL.PHONE}</label>
           <input
             id="staff-edit-phone"
             name="phone"
@@ -891,7 +901,7 @@ const StaffManagement = ({ embedded = false }) => {
             value={staffEditForm.phone}
             onChange={handleStaffEditFieldChange}
             disabled={staffEditSubmitting}
-            placeholder="비우면 전화번호 없음으로 저장"
+            placeholder={STAFF_MGMT_PLACEHOLDER.EDIT_PHONE_CLEAR}
             autoComplete="tel"
           />
         </div>
@@ -900,7 +910,7 @@ const StaffManagement = ({ embedded = false }) => {
       <UnifiedModal
         isOpen={roleChangeModal.open}
         onClose={handleCloseRoleChange}
-        title="역할 변경"
+        title={STAFF_MGMT_MODAL.ROLE_TITLE}
         subtitle={roleChangeModal.user
           ? `${toDisplayString(roleChangeModal.user.name)} (${toDisplayString(roleChangeModal.user.email)})`
           : ''}
@@ -917,7 +927,7 @@ const StaffManagement = ({ embedded = false }) => {
               disabled={roleChangeSubmitting}
               preventDoubleClick={false}
             >
-              취소
+              {STAFF_MGMT_BUTTON.CANCEL}
             </MGButton>
             <MGButton
               type="button"
@@ -929,14 +939,14 @@ const StaffManagement = ({ embedded = false }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
-              확인
+              {STAFF_MGMT_BUTTON.CONFIRM}
             </MGButton>
           </>
         }
       >
         <div className="mg-modal__form-group">
           <label htmlFor="staff-role-select" className="mg-modal__label">
-            새 역할
+            {STAFF_MGMT_MODAL.LABEL_NEW_ROLE}
           </label>
           <select
             id="staff-role-select"
@@ -945,13 +955,13 @@ const StaffManagement = ({ embedded = false }) => {
             onChange={(e) => setSelectedNewRole(e.target.value)}
             disabled={roleChangeSubmitting}
           >
-            <option value="">역할 선택</option>
+            <option value="">{STAFF_MGMT_MODAL.ROLE_SELECT_PLACEHOLDER}</option>
             {roles.map((role) => {
               const code = typeof role === 'string' ? role : role?.name || role;
               if (!code) return null;
               return (
                 <option key={code} value={code}>
-                  {ROLE_DISPLAY_NAMES[code] || code}
+                  {STAFF_MGMT_ROLE_LABELS[code] || code}
                 </option>
               );
             })}
@@ -962,8 +972,8 @@ const StaffManagement = ({ embedded = false }) => {
       <UnifiedModal
         isOpen={addStaffModal.open}
         onClose={closeAddStaffModal}
-        title="스태프로 지정"
-        subtitle="사용자를 스태프(사무원)로 지정합니다. 목록에서 선택 후 버튼을 누르세요."
+        title={STAFF_MGMT_MODAL.ASSIGN_TITLE}
+        subtitle={STAFF_MGMT_MODAL.ASSIGN_SUBTITLE}
         size="medium"
         variant="form"
         loading={addStaffModal.loading}
@@ -975,12 +985,12 @@ const StaffManagement = ({ embedded = false }) => {
             onClick={closeAddStaffModal}
             preventDoubleClick={false}
           >
-            닫기
+            {STAFF_MGMT_BUTTON.CLOSE}
           </MGButton>
         }
       >
         {addStaffModal.loading ? (
-          <UnifiedLoading type="block" text="사용자 목록 불러오는 중..." variant="pulse" />
+          <UnifiedLoading type="block" text={STAFF_MGMT_MODAL.LOADING_USERS} variant="pulse" />
         ) : (
           <AddStaffModalContent
             list={addStaffModal.nonStaffUsers}
@@ -996,8 +1006,8 @@ const StaffManagement = ({ embedded = false }) => {
       <UnifiedModal
         isOpen={createStaffModal.open}
         onClose={closeCreateStaffModal}
-        title="새 스태프 등록"
-        subtitle="내담자·상담사와 동일한 양식으로 사무원(스태프) 계정을 생성합니다."
+        title={STAFF_MGMT_MODAL.CREATE_TITLE}
+        subtitle={STAFF_MGMT_MODAL.CREATE_SUBTITLE}
         size="large"
         variant="form"
         className="mg-v2-ad-b0kla"
@@ -1012,7 +1022,7 @@ const StaffManagement = ({ embedded = false }) => {
               disabled={createStaffModal.submitting}
               preventDoubleClick={false}
             >
-              취소
+              {STAFF_MGMT_BUTTON.CANCEL}
             </MGButton>
             <MGButton
               type="button"
@@ -1024,7 +1034,7 @@ const StaffManagement = ({ embedded = false }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
-              등록
+              {STAFF_MGMT_BUTTON.REGISTER}
             </MGButton>
           </>
         }
@@ -1032,7 +1042,7 @@ const StaffManagement = ({ embedded = false }) => {
         <div className="mg-v2-modal-body">
           <form onSubmit={handleCreateStaffSubmit} className="mg-v2-form">
             <div className="mg-v2-info-box mg-v2-ad-b0kla-info-box">
-              <p className="mg-v2-info-text">비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.</p>
+              <p className="mg-v2-info-text">{STAFF_MGMT_HELP.PASSWORD_AUTO_INFO}</p>
             </div>
             <ProfileImageInput
               value={createForm.profileImageUrl || ''}
@@ -1041,19 +1051,19 @@ const StaffManagement = ({ embedded = false }) => {
               cropSize={400}
               maxSize={512}
               quality={0.85}
-              helpText="이미지 파일만 가능, 최대 2MB (리사이즈·크롭 적용)"
+              helpText={STAFF_MGMT_HELP.PROFILE_IMAGE}
             />
             <div className="mg-v2-form-group">
               <div className="mg-v2-form-row mg-v2-form-row--two" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
                 <div className="mg-v2-form-group">
-                  <label htmlFor="staff-rrnFirst6" className="mg-v2-form-label">주민번호 앞 6자리 (선택)</label>
+                  <label htmlFor="staff-rrnFirst6" className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.RRN_FIRST_OPTIONAL}</label>
                   <input
                     type="text"
                     id="staff-rrnFirst6"
                     name="rrnFirst6"
                     value={createForm.rrnFirst6}
                     onChange={handleCreateFormChange}
-                    placeholder="900101"
+                    placeholder={STAFF_MGMT_PLACEHOLDER.RRN_FIRST6}
                     maxLength={6}
                     inputMode="numeric"
                     className="mg-v2-form-input"
@@ -1061,14 +1071,14 @@ const StaffManagement = ({ embedded = false }) => {
                   />
                 </div>
                 <div className="mg-v2-form-group">
-                  <label htmlFor="staff-rrnLast1" className="mg-v2-form-label">주민번호 뒤 1자리 (선택)</label>
+                  <label htmlFor="staff-rrnLast1" className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.RRN_LAST_OPTIONAL}</label>
                   <input
                     type="text"
                     id="staff-rrnLast1"
                     name="rrnLast1"
                     value={createForm.rrnLast1}
                     onChange={handleCreateFormChange}
-                    placeholder="1"
+                    placeholder={STAFF_MGMT_PLACEHOLDER.RRN_LAST1}
                     maxLength={1}
                     inputMode="numeric"
                     className="mg-v2-form-input"
@@ -1078,34 +1088,34 @@ const StaffManagement = ({ embedded = false }) => {
               </div>
             </div>
             <div className="mg-v2-form-group">
-              <label htmlFor="staff-name" className="mg-v2-form-label">이름 *</label>
+              <label htmlFor="staff-name" className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.NAME_REQUIRED}</label>
               <input
                 type="text"
                 id="staff-name"
                 name="name"
                 value={createForm.name}
                 onChange={handleCreateFormChange}
-                placeholder="이름을 입력하세요"
+                placeholder={STAFF_MGMT_PLACEHOLDER.CREATE_NAME}
                 className="mg-v2-form-input"
                 required
                 disabled={createStaffModal.submitting}
               />
             </div>
             <div className="mg-v2-form-group">
-              <label htmlFor="staff-phone" className="mg-v2-form-label">전화번호</label>
+              <label htmlFor="staff-phone" className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.PHONE}</label>
               <input
                 type="tel"
                 id="staff-phone"
                 name="phone"
                 value={createForm.phone}
                 onChange={handleCreateFormChange}
-                placeholder="010-1234-5678"
+                placeholder={STAFF_MGMT_PLACEHOLDER.CREATE_PHONE}
                 className="mg-v2-form-input"
                 disabled={createStaffModal.submitting}
               />
             </div>
             <div className="mg-v2-form-group">
-              <label htmlFor="staff-address-input" className="mg-v2-form-label">주소 검색</label>
+              <label htmlFor="staff-address-input" className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.ADDRESS_SEARCH}</label>
               <div className="mg-v2-address-search-row" style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <MGButton
                   type="button"
@@ -1124,13 +1134,13 @@ const StaffManagement = ({ embedded = false }) => {
                         }
                       }).open();
                     } else {
-                      showError('주소 검색 서비스를 불러올 수 없습니다.');
+                      showError(STAFF_MGMT_MSG.ERR_ADDRESS_API);
                     }
                   }}
                   disabled={createStaffModal.submitting}
                   preventDoubleClick={false}
                 >
-                  주소 검색
+                  {STAFF_MGMT_BUTTON.ADDRESS_SEARCH}
                 </MGButton>
                 <input
                   id="staff-address-input"
@@ -1139,32 +1149,32 @@ const StaffManagement = ({ embedded = false }) => {
                   className="mg-v2-form-input"
                   style={{ flex: 1, minWidth: '200px' }}
                   value={createForm.address}
-                  placeholder="주소 검색 버튼을 눌러 주소를 입력하세요."
+                  placeholder={STAFF_MGMT_PLACEHOLDER.CREATE_ADDRESS}
                 />
               </div>
             </div>
             <div className="mg-v2-form-group">
-              <label htmlFor="staff-addressDetail" className="mg-v2-form-label">상세 주소</label>
+              <label htmlFor="staff-addressDetail" className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.ADDRESS_DETAIL}</label>
               <input
                 type="text"
                 id="staff-addressDetail"
                 name="addressDetail"
                 value={createForm.addressDetail}
                 onChange={handleCreateFormChange}
-                placeholder="동, 호수, 상세 주소를 입력하세요."
+                placeholder={STAFF_MGMT_PLACEHOLDER.CREATE_ADDRESS_DETAIL}
                 className="mg-v2-form-input"
                 disabled={createStaffModal.submitting}
               />
             </div>
             <div className="mg-v2-form-group">
-              <label htmlFor="staff-postalCode" className="mg-v2-form-label">우편번호</label>
+              <label htmlFor="staff-postalCode" className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.POSTAL}</label>
               <input
                 type="text"
                 id="staff-postalCode"
                 name="postalCode"
                 value={createForm.postalCode}
                 onChange={handleCreateFormChange}
-                placeholder="00000"
+                placeholder={STAFF_MGMT_PLACEHOLDER.CREATE_POSTAL}
                 maxLength={5}
                 className="mg-v2-form-input"
                 disabled={createStaffModal.submitting}
@@ -1179,7 +1189,7 @@ const StaffManagement = ({ embedded = false }) => {
                     name="email"
                     value={createForm.email}
                     onChange={handleCreateFormChange}
-                    placeholder="example@email.com"
+                    placeholder={STAFF_MGMT_PLACEHOLDER.CREATE_EMAIL}
                     required
                     disabled={createStaffModal.submitting}
                     autocompleteMode="datalist"
@@ -1213,18 +1223,18 @@ const StaffManagement = ({ embedded = false }) => {
               )}
             </div>
             <div className="mg-v2-form-group">
-              <label htmlFor="staff-password" className="mg-v2-form-label">비밀번호</label>
+              <label htmlFor="staff-password" className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.PASSWORD}</label>
               <input
                 type="password"
                 id="staff-password"
                 name="password"
                 value={createForm.password}
                 onChange={handleCreateFormChange}
-                placeholder="비밀번호를 입력하지 않으면 자동 생성됩니다"
+                placeholder={STAFF_MGMT_PLACEHOLDER.CREATE_PASSWORD}
                 className="mg-v2-form-input"
                 disabled={createStaffModal.submitting}
               />
-              <small className="mg-v2-form-help">비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.</small>
+              <small className="mg-v2-form-help">{STAFF_MGMT_HELP.PASSWORD_HINT}</small>
             </div>
           </form>
         </div>

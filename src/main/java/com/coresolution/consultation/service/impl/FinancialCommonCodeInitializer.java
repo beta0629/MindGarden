@@ -1,8 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
 
-import com.coresolution.consultation.entity.CommonCode;
-import com.coresolution.consultation.repository.CommonCodeRepository;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
@@ -11,10 +9,14 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import com.coresolution.consultation.constant.financial.FinancialCommonCodeSeedStrings;
+import com.coresolution.consultation.entity.CommonCode;
+import com.coresolution.consultation.repository.CommonCodeRepository;
+
 /**
  * 재무 거래 관련 공통 코드 초기화 서비스
  * ApplicationReadyEvent를 사용하여 데이터베이스 연결 풀이 완전히 초기화된 후 실행
- * 
+ *
  * @author MindGarden
  * @version 1.0.0
  * @since 2024-12-19
@@ -47,19 +49,19 @@ public class FinancialCommonCodeInitializer {
 
         // 1. 거래 유형 (INCOME, EXPENSE)
         initializeTransactionTypes();
-        
+
         // 2. 수입 카테고리
         initializeIncomeCategories();
-        
+
         // 3. 지출 카테고리
         initializeExpenseCategories();
-        
+
         // 4. 수입 세부 항목
         initializeIncomeSubcategories();
-        
+
         // 5. 지출 세부 항목
         initializeExpenseSubcategories();
-        
+
         // 6. 부가세 적용 여부
         initializeVatCategories();
 
@@ -83,9 +85,9 @@ public class FinancialCommonCodeInitializer {
                 commonCodeRepository.save(CommonCode.builder()
                         .codeGroup(codeGroup)
                         .codeValue("LIABILITY")
-                        .codeLabel("환불부채")
-                        .koreanName("환불부채")
-                        .codeDescription("환불부채 계정 (대차대조표 부채)")
+                        .codeLabel(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_LIABILITY_DISPLAY)
+                        .koreanName(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_LIABILITY_DISPLAY)
+                        .codeDescription(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_LIABILITY_DESCRIPTION)
                         .sortOrder(4)
                         .isActive(true)
                         .build());
@@ -96,9 +98,9 @@ public class FinancialCommonCodeInitializer {
                 commonCodeRepository.save(CommonCode.builder()
                         .codeGroup(codeGroup)
                         .codeValue("VAT_PAYABLE")
-                        .codeLabel("부가세 예수금")
-                        .koreanName("부가세 예수금")
-                        .codeDescription("부가세 예수·부채 계정 (대차대조표)")
+                        .codeLabel(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_VAT_PAYABLE_DISPLAY)
+                        .koreanName(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_VAT_PAYABLE_DISPLAY)
+                        .codeDescription(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_VAT_PAYABLE_DESCRIPTION)
                         .sortOrder(5)
                         .isActive(true)
                         .build());
@@ -109,9 +111,9 @@ public class FinancialCommonCodeInitializer {
                 commonCodeRepository.save(CommonCode.builder()
                         .codeGroup(codeGroup)
                         .codeValue("WITHHOLDING_PAYABLE")
-                        .codeLabel("원천징수 예수금")
-                        .koreanName("원천징수 예수금")
-                        .codeDescription("원천징수 예수금·부채 계정 (대차대조표)")
+                        .codeLabel(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_WITHHOLDING_PAYABLE_DISPLAY)
+                        .koreanName(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_WITHHOLDING_PAYABLE_DISPLAY)
+                        .codeDescription(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_WITHHOLDING_PAYABLE_DESCRIPTION)
                         .sortOrder(6)
                         .isActive(true)
                         .build());
@@ -127,9 +129,9 @@ public class FinancialCommonCodeInitializer {
         commonCodeRepository.save(CommonCode.builder()
                 .codeGroup(codeGroup)
                 .codeValue("REVENUE")
-                .codeLabel("수익")
-                .koreanName("수익")
-                .codeDescription("수익 계정 (손익계산서)")
+                .codeLabel(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_REVENUE_DISPLAY)
+                .koreanName(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_REVENUE_DISPLAY)
+                .codeDescription(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_REVENUE_DESCRIPTION)
                 .sortOrder(1)
                 .isActive(true)
                 .build());
@@ -137,9 +139,9 @@ public class FinancialCommonCodeInitializer {
         commonCodeRepository.save(CommonCode.builder()
                 .codeGroup(codeGroup)
                 .codeValue("EXPENSE")
-                .codeLabel("비용")
-                .koreanName("비용")
-                .codeDescription("비용 계정 (손익계산서)")
+                .codeLabel(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_EXPENSE_DISPLAY)
+                .koreanName(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_EXPENSE_DISPLAY)
+                .codeDescription(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_EXPENSE_DESCRIPTION)
                 .sortOrder(2)
                 .isActive(true)
                 .build());
@@ -147,9 +149,9 @@ public class FinancialCommonCodeInitializer {
         commonCodeRepository.save(CommonCode.builder()
                 .codeGroup(codeGroup)
                 .codeValue("CASH")
-                .codeLabel("현금")
-                .koreanName("현금")
-                .codeDescription("현금/자산 계정 (대차대조표·현금흐름)")
+                .codeLabel(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_CASH_DISPLAY)
+                .koreanName(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_CASH_DISPLAY)
+                .codeDescription(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_CASH_DESCRIPTION)
                 .sortOrder(3)
                 .isActive(true)
                 .build());
@@ -157,9 +159,9 @@ public class FinancialCommonCodeInitializer {
         commonCodeRepository.save(CommonCode.builder()
                 .codeGroup(codeGroup)
                 .codeValue("LIABILITY")
-                .codeLabel("환불부채")
-                .koreanName("환불부채")
-                .codeDescription("환불부채 계정 (대차대조표 부채)")
+                .codeLabel(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_LIABILITY_DISPLAY)
+                .koreanName(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_LIABILITY_DISPLAY)
+                .codeDescription(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_LIABILITY_DESCRIPTION)
                 .sortOrder(4)
                 .isActive(true)
                 .build());
@@ -167,9 +169,9 @@ public class FinancialCommonCodeInitializer {
         commonCodeRepository.save(CommonCode.builder()
                 .codeGroup(codeGroup)
                 .codeValue("VAT_PAYABLE")
-                .codeLabel("부가세 예수금")
-                .koreanName("부가세 예수금")
-                .codeDescription("부가세 예수·부채 계정 (대차대조표)")
+                .codeLabel(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_VAT_PAYABLE_DISPLAY)
+                .koreanName(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_VAT_PAYABLE_DISPLAY)
+                .codeDescription(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_VAT_PAYABLE_DESCRIPTION)
                 .sortOrder(5)
                 .isActive(true)
                 .build());
@@ -177,9 +179,9 @@ public class FinancialCommonCodeInitializer {
         commonCodeRepository.save(CommonCode.builder()
                 .codeGroup(codeGroup)
                 .codeValue("WITHHOLDING_PAYABLE")
-                .codeLabel("원천징수 예수금")
-                .koreanName("원천징수 예수금")
-                .codeDescription("원천징수 예수금·부채 계정 (대차대조표)")
+                .codeLabel(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_WITHHOLDING_PAYABLE_DISPLAY)
+                .koreanName(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_WITHHOLDING_PAYABLE_DISPLAY)
+                .codeDescription(FinancialCommonCodeSeedStrings.ERP_ACCOUNT_TYPE_WITHHOLDING_PAYABLE_DESCRIPTION)
                 .sortOrder(6)
                 .isActive(true)
                 .build());
@@ -193,7 +195,7 @@ public class FinancialCommonCodeInitializer {
      */
     private void initializeTransactionTypes() {
         String codeGroup = "TRANSACTION_TYPE";
-        
+
         // 기존 코드가 있는지 확인
         if (commonCodeRepository.countByCodeGroup(codeGroup) > 0) {
             log.info("거래 유형 코드가 이미 존재합니다.");
@@ -203,8 +205,8 @@ public class FinancialCommonCodeInitializer {
         commonCodeRepository.save(CommonCode.builder()
                 .codeGroup(codeGroup)
                 .codeValue("INCOME")
-                .codeLabel("수입")
-                .codeDescription("수입 거래")
+                .codeLabel(FinancialCommonCodeSeedStrings.TRANSACTION_TYPE_INCOME_DISPLAY)
+                .codeDescription(FinancialCommonCodeSeedStrings.TRANSACTION_TYPE_INCOME_DESCRIPTION)
                 .sortOrder(1)
                 .isActive(true)
                 .build());
@@ -212,8 +214,8 @@ public class FinancialCommonCodeInitializer {
         commonCodeRepository.save(CommonCode.builder()
                 .codeGroup(codeGroup)
                 .codeValue("EXPENSE")
-                .codeLabel("지출")
-                .codeDescription("지출 거래")
+                .codeLabel(FinancialCommonCodeSeedStrings.TRANSACTION_TYPE_EXPENSE_DISPLAY)
+                .codeDescription(FinancialCommonCodeSeedStrings.TRANSACTION_TYPE_EXPENSE_DESCRIPTION)
                 .sortOrder(2)
                 .isActive(true)
                 .build());
@@ -226,16 +228,19 @@ public class FinancialCommonCodeInitializer {
      */
     private void initializeIncomeCategories() {
         String codeGroup = "INCOME_CATEGORY";
-        
+
         if (commonCodeRepository.countByCodeGroup(codeGroup) > 0) {
             log.info("수입 카테고리 코드가 이미 존재합니다.");
             return;
         }
 
         String[][] incomeCategories = {
-            {"CONSULTATION", "상담료", "상담 서비스 수익"},
-            {"PACKAGE", "패키지", "상담 패키지 판매 수익"},
-            {"OTHER", "기타수입", "기타 수입 항목"}
+            {"CONSULTATION", FinancialCommonCodeSeedStrings.INCOME_CATEGORY_CONSULTATION_DISPLAY,
+                    FinancialCommonCodeSeedStrings.INCOME_CATEGORY_CONSULTATION_DESCRIPTION},
+            {"PACKAGE", FinancialCommonCodeSeedStrings.INCOME_CATEGORY_PACKAGE_DISPLAY,
+                    FinancialCommonCodeSeedStrings.INCOME_CATEGORY_PACKAGE_DESCRIPTION},
+            {"OTHER", FinancialCommonCodeSeedStrings.INCOME_CATEGORY_OTHER_DISPLAY,
+                    FinancialCommonCodeSeedStrings.INCOME_CATEGORY_OTHER_DESCRIPTION}
         };
 
         for (int i = 0; i < incomeCategories.length; i++) {
@@ -257,23 +262,33 @@ public class FinancialCommonCodeInitializer {
      */
     private void initializeExpenseCategories() {
         String codeGroup = "EXPENSE_CATEGORY";
-        
+
         if (commonCodeRepository.countByCodeGroup(codeGroup) > 0) {
             log.info("지출 카테고리 코드가 이미 존재합니다.");
             return;
         }
 
         String[][] expenseCategories = {
-            {"SALARY", "급여", "직원 급여"},
-            {"RENT", "임대료", "사무실 임대료"},
-            {"UTILITY", "관리비", "시설 관리비"},
-            {"OFFICE_SUPPLIES", "사무용품", "사무용품 구매"},
-            {"TAX", "세금", "각종 세금"},
-            {"MARKETING", "마케팅", "마케팅 비용"},
-            {"EQUIPMENT", "장비", "장비 구매"},
-            {"SOFTWARE", "소프트웨어", "소프트웨어 라이선스"},
-            {"CONSULTING", "컨설팅", "외부 컨설팅 비용"},
-            {"OTHER", "기타잡비", "기타 지출 항목"}
+            {"SALARY", FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_SALARY_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_SALARY_DESCRIPTION},
+            {"RENT", FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_RENT_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_RENT_DESCRIPTION},
+            {"UTILITY", FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_UTILITY_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_UTILITY_DESCRIPTION},
+            {"OFFICE_SUPPLIES", FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_OFFICE_SUPPLIES_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_OFFICE_SUPPLIES_DESCRIPTION},
+            {"TAX", FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_TAX_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_TAX_DESCRIPTION},
+            {"MARKETING", FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_MARKETING_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_MARKETING_DESCRIPTION},
+            {"EQUIPMENT", FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_EQUIPMENT_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_EQUIPMENT_DESCRIPTION},
+            {"SOFTWARE", FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_SOFTWARE_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_SOFTWARE_DESCRIPTION},
+            {"CONSULTING", FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_CONSULTING_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_CONSULTING_DESCRIPTION},
+            {"OTHER", FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_OTHER_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_OTHER_DESCRIPTION}
         };
 
         for (int i = 0; i < expenseCategories.length; i++) {
@@ -295,19 +310,28 @@ public class FinancialCommonCodeInitializer {
      */
     private void initializeIncomeSubcategories() {
         String codeGroup = "INCOME_SUBCATEGORY";
-        
+
         if (commonCodeRepository.countByCodeGroup(codeGroup) > 0) {
             log.info("수입 세부 항목 코드가 이미 존재합니다.");
             return;
         }
 
         String[][] incomeSubcategories = {
-            {"INDIVIDUAL_CONSULTATION", "개인상담", "개인 상담 서비스", "CONSULTATION"},
-            {"GROUP_CONSULTATION", "그룹상담", "그룹 상담 서비스", "CONSULTATION"},
-            {"ADDITIONAL_CONSULTATION", "추가상담", "추가 회기 상담 서비스", "CONSULTATION"},
-            {"BASIC_PACKAGE", "기본패키지", "기본 상담 패키지", "PACKAGE"},
-            {"PREMIUM_PACKAGE", "프리미엄패키지", "프리미엄 상담 패키지", "PACKAGE"},
-            {"OTHER_INCOME", "기타수입", "기타 수입 항목", "OTHER"}
+            {"INDIVIDUAL_CONSULTATION",
+                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_INDIVIDUAL_CONSULTATION_DISPLAY,
+                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_INDIVIDUAL_CONSULTATION_DESCRIPTION, "CONSULTATION"},
+            {"GROUP_CONSULTATION",
+                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_GROUP_CONSULTATION_DISPLAY,
+                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_GROUP_CONSULTATION_DESCRIPTION, "CONSULTATION"},
+            {"ADDITIONAL_CONSULTATION",
+                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_ADDITIONAL_CONSULTATION_DISPLAY,
+                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_ADDITIONAL_CONSULTATION_DESCRIPTION, "CONSULTATION"},
+            {"BASIC_PACKAGE", FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_BASIC_PACKAGE_DISPLAY,
+                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_BASIC_PACKAGE_DESCRIPTION, "PACKAGE"},
+            {"PREMIUM_PACKAGE", FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_PREMIUM_PACKAGE_DISPLAY,
+                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_PREMIUM_PACKAGE_DESCRIPTION, "PACKAGE"},
+            {"OTHER_INCOME", FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_OTHER_INCOME_DISPLAY,
+                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_OTHER_INCOME_DESCRIPTION, "OTHER"}
         };
 
         for (int i = 0; i < incomeSubcategories.length; i++) {
@@ -331,32 +355,51 @@ public class FinancialCommonCodeInitializer {
      */
     private void initializeExpenseSubcategories() {
         String codeGroup = "EXPENSE_SUBCATEGORY";
-        
+
         if (commonCodeRepository.countByCodeGroup(codeGroup) > 0) {
             log.info("지출 세부 항목 코드가 이미 존재합니다.");
             return;
         }
 
         String[][] expenseSubcategories = {
-            {"CONSULTANT_SALARY", "상담사급여", "상담사 급여", "SALARY"},
-            {"ADMIN_SALARY", "관리자급여", "관리자 급여", "SALARY"},
-            {"OFFICE_RENT", "사무실임대료", "사무실 임대료", "RENT"},
-            {"MAINTENANCE_FEE", "시설관리비", "시설 관리비", "UTILITY"},
-            {"ELECTRICITY", "전기요금", "전기 요금", "UTILITY"},
-            {"WATER", "수도요금", "수도 요금", "UTILITY"},
-            {"STATIONERY", "문구류", "사무용 문구류", "OFFICE_SUPPLIES"},
-            {"PRINTING", "인쇄비", "인쇄 관련 비용", "OFFICE_SUPPLIES"},
-            {"INCOME_TAX", "소득세", "소득세", "TAX"},
-            {"VAT", "부가가치세", "부가가치세", "TAX"},
-            {"CORPORATE_TAX", "법인세", "법인세", "TAX"},
-            {"ONLINE_ADS", "온라인광고", "온라인 광고비", "MARKETING"},
-            {"OFFLINE_ADS", "오프라인광고", "오프라인 광고비", "MARKETING"},
-            {"COMPUTER", "컴퓨터장비", "컴퓨터 장비", "EQUIPMENT"},
-            {"FURNITURE", "가구", "사무용 가구", "EQUIPMENT"},
-            {"LICENSE", "소프트웨어라이선스", "소프트웨어 라이선스", "SOFTWARE"},
-            {"EXTERNAL_CONSULTING", "외부컨설팅", "외부 컨설팅", "CONSULTING"},
-            {"CONSULTATION_REFUND", "상담료환불", "상담료 환불", "CONSULTATION"},
-            {"OTHER_EXPENSE", "기타", "기타 지출", "OTHER"}
+            {"CONSULTANT_SALARY", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_CONSULTANT_SALARY_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_CONSULTANT_SALARY_DESCRIPTION, "SALARY"},
+            {"ADMIN_SALARY", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_ADMIN_SALARY_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_ADMIN_SALARY_DESCRIPTION, "SALARY"},
+            {"OFFICE_RENT", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_OFFICE_RENT_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_OFFICE_RENT_DESCRIPTION, "RENT"},
+            {"MAINTENANCE_FEE", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_MAINTENANCE_FEE_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_MAINTENANCE_FEE_DESCRIPTION, "UTILITY"},
+            {"ELECTRICITY", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_ELECTRICITY_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_ELECTRICITY_DESCRIPTION, "UTILITY"},
+            {"WATER", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_WATER_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_WATER_DESCRIPTION, "UTILITY"},
+            {"STATIONERY", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_STATIONERY_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_STATIONERY_DESCRIPTION, "OFFICE_SUPPLIES"},
+            {"PRINTING", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_PRINTING_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_PRINTING_DESCRIPTION, "OFFICE_SUPPLIES"},
+            {"INCOME_TAX", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_INCOME_TAX_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_INCOME_TAX_DESCRIPTION, "TAX"},
+            {"VAT", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_VAT_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_VAT_DESCRIPTION, "TAX"},
+            {"CORPORATE_TAX", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_CORPORATE_TAX_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_CORPORATE_TAX_DESCRIPTION, "TAX"},
+            {"ONLINE_ADS", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_ONLINE_ADS_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_ONLINE_ADS_DESCRIPTION, "MARKETING"},
+            {"OFFLINE_ADS", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_OFFLINE_ADS_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_OFFLINE_ADS_DESCRIPTION, "MARKETING"},
+            {"COMPUTER", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_COMPUTER_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_COMPUTER_DESCRIPTION, "EQUIPMENT"},
+            {"FURNITURE", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_FURNITURE_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_FURNITURE_DESCRIPTION, "EQUIPMENT"},
+            {"LICENSE", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_LICENSE_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_LICENSE_DESCRIPTION, "SOFTWARE"},
+            {"EXTERNAL_CONSULTING", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_EXTERNAL_CONSULTING_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_EXTERNAL_CONSULTING_DESCRIPTION, "CONSULTING"},
+            {"CONSULTATION_REFUND", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_CONSULTATION_REFUND_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_CONSULTATION_REFUND_DESCRIPTION, "CONSULTATION"},
+            {"OTHER_EXPENSE", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_OTHER_EXPENSE_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_OTHER_EXPENSE_DESCRIPTION, "OTHER"}
         };
 
         for (int i = 0; i < expenseSubcategories.length; i++) {
@@ -380,7 +423,7 @@ public class FinancialCommonCodeInitializer {
      */
     private void initializeVatCategories() {
         String codeGroup = "VAT_APPLICABLE";
-        
+
         if (commonCodeRepository.countByCodeGroup(codeGroup) > 0) {
             log.info("부가세 적용 여부 코드가 이미 존재합니다.");
             return;
@@ -389,8 +432,8 @@ public class FinancialCommonCodeInitializer {
         commonCodeRepository.save(CommonCode.builder()
                 .codeGroup(codeGroup)
                 .codeValue("APPLICABLE")
-                .codeLabel("부가세 적용")
-                .codeDescription("부가세가 적용되는 항목")
+                .codeLabel(FinancialCommonCodeSeedStrings.VAT_APPLICABLE_YES_DISPLAY)
+                .codeDescription(FinancialCommonCodeSeedStrings.VAT_APPLICABLE_YES_DESCRIPTION)
                 .sortOrder(1)
                 .isActive(true)
                 .build());
@@ -398,8 +441,8 @@ public class FinancialCommonCodeInitializer {
         commonCodeRepository.save(CommonCode.builder()
                 .codeGroup(codeGroup)
                 .codeValue("NOT_APPLICABLE")
-                .codeLabel("부가세 미적용")
-                .codeDescription("부가세가 적용되지 않는 항목 (급여 등)")
+                .codeLabel(FinancialCommonCodeSeedStrings.VAT_APPLICABLE_NO_DISPLAY)
+                .codeDescription(FinancialCommonCodeSeedStrings.VAT_APPLICABLE_NO_DESCRIPTION)
                 .sortOrder(2)
                 .isActive(true)
                 .build());

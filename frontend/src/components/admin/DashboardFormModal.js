@@ -26,6 +26,22 @@ import WidgetConfigModal from './WidgetConfigModal';
 import ModernDashboardEditor from './ModernDashboardEditor';
 import './DashboardFormModal.css';
 import { toDisplayString } from '../../utils/safeDisplay';
+import {
+  DASHBOARD_FORM_ASSIGNMENT_REASON_AUTO,
+  DASHBOARD_FORM_BUTTON,
+  DASHBOARD_FORM_ERR_THROW,
+  DASHBOARD_FORM_FORM,
+  DASHBOARD_FORM_MODAL,
+  DASHBOARD_FORM_MSG,
+  DASHBOARD_FORM_NAME_EN_SUFFIX,
+  DASHBOARD_FORM_NAME_KO_SUFFIX,
+  DASHBOARD_FORM_ROLE_KEY,
+  DASHBOARD_FORM_TYPE_OPTION,
+  DASHBOARD_FORM_VAL,
+  DASHBOARD_FORM_WIDGET_GUIDE,
+  DASHBOARD_FORM_WIDGET_TITLE,
+  dashboardFormConfirmDeleteRole
+} from '../../constants/dashboardFormModalStrings';
 
 // 대시보드 설정을 JSON 문자열로 변환하는 유틸리티 함수
 const stringifyDashboardConfig = (config) => {
@@ -198,7 +214,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
           if (filteredRoles.length === 0) {
             console.warn('⚠️ 생성 가능한 역할이 없습니다.');
             notificationManager.show(
-              '생성 가능한 역할이 없습니다. 모든 역할에 대시보드가 이미 존재합니다. 새로운 역할을 먼저 생성해주세요.',
+              DASHBOARD_FORM_MSG.NO_CREATABLE_ROLES,
               'warning'
             );
           }
@@ -209,7 +225,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       }
     } catch (error) {
       console.error('❌ 테넌트 역할 목록 로드 실패:', error);
-      notificationManager.show('역할 목록을 불러오는 중 오류가 발생했습니다.', 'error');
+      notificationManager.show(DASHBOARD_FORM_MSG.ERR_LOAD_ROLES, 'error');
       setTenantRoles([]);
     } finally {
       setLoadingRoles(false);
@@ -244,7 +260,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       }
     } catch (error) {
       console.error('❌ 역할 템플릿 목록 로드 실패:', error);
-      notificationManager.show('역할 템플릿 목록을 불러오는 중 오류가 발생했습니다.', 'error');
+      notificationManager.show(DASHBOARD_FORM_MSG.ERR_LOAD_ROLE_TEMPLATES, 'error');
       setRoleTemplates([]);
     } finally {
       setLoadingTemplates(false);
@@ -254,12 +270,12 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   // 역할 추가 (템플릿 기반, 이름 커스터마이징 가능)
   const handleAddRole = async() => {
     if (!selectedTemplateId) {
-      notificationManager.show('템플릿을 선택해주세요.', 'warning');
+      notificationManager.show(DASHBOARD_FORM_MSG.WARN_SELECT_TEMPLATE, 'warning');
       return;
     }
 
     if (!newRoleName || newRoleName.trim() === '') {
-      notificationManager.show('역할 이름을 입력해주세요.', 'warning');
+      notificationManager.show(DASHBOARD_FORM_MSG.WARN_ENTER_ROLE_NAME, 'warning');
       return;
     }
 
@@ -269,7 +285,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       const tenantId = user?.tenantId;
       
       if (!tenantId) {
-        throw new Error('테넌트 ID가 없습니다.');
+        throw new Error(DASHBOARD_FORM_ERR_THROW.TENANT_ID_MISSING);
       }
 
       // 템플릿 정보 가져오기
@@ -296,7 +312,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          notificationManager.show('역할이 추가되었습니다.', 'success');
+          notificationManager.show(DASHBOARD_FORM_MSG.TOAST_ROLE_ADDED, 'success');
           setShowAddRoleModal(false);
           setSelectedTemplateId('');
           setNewRoleName('');
@@ -305,15 +321,15 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
           // 역할 목록 새로고침
           await loadTenantRoles();
         } else {
-          throw new Error(result.message || '역할 추가 실패');
+          throw new Error(result.message || DASHBOARD_FORM_MSG.ERR_ROLE_ADD_FALLBACK);
         }
       } else {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || '역할 추가 실패');
+        throw new Error(errorData.message || DASHBOARD_FORM_MSG.ERR_ROLE_ADD_FALLBACK);
       }
     } catch (error) {
       console.error('❌ 역할 추가 실패:', error);
-      notificationManager.show(error.message || '역할 추가 중 오류가 발생했습니다.', 'error');
+      notificationManager.show(error.message || DASHBOARD_FORM_MSG.ERR_ROLE_ADD_PROCESS, 'error');
     } finally {
       setLoading(false);
     }
@@ -322,7 +338,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   // 역할 제거
   const handleDeleteRole = async(tenantRoleId, roleName) => {
     const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm(`"${roleName}" 역할을 삭제하시겠습니까?\n\n주의: 이 역할에 할당된 사용자가 있으면 삭제할 수 없습니다.`, resolve);
+      notificationManager.confirm(dashboardFormConfirmDeleteRole(roleName), resolve);
     });
     if (!confirmed) {
       return;
@@ -334,7 +350,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       const tenantId = user?.tenantId;
       
       if (!tenantId) {
-        throw new Error('테넌트 ID가 없습니다.');
+        throw new Error(DASHBOARD_FORM_ERR_THROW.TENANT_ID_MISSING);
       }
 
       const response = await csrfTokenManager.delete(`/api/v1/tenant/roles/${tenantRoleId}`);
@@ -342,19 +358,19 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          notificationManager.show('역할이 삭제되었습니다.', 'success');
+          notificationManager.show(DASHBOARD_FORM_MSG.TOAST_ROLE_DELETED, 'success');
           // 역할 목록 새로고침
           await loadTenantRoles();
         } else {
-          throw new Error(result.message || '역할 삭제 실패');
+          throw new Error(result.message || DASHBOARD_FORM_MSG.ERR_ROLE_DELETE_FALLBACK);
         }
       } else {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || '역할 삭제 실패');
+        throw new Error(errorData.message || DASHBOARD_FORM_MSG.ERR_ROLE_DELETE_FALLBACK);
       }
     } catch (error) {
       console.error('❌ 역할 삭제 실패:', error);
-      notificationManager.show(error.message || '역할 삭제 중 오류가 발생했습니다.', 'error');
+      notificationManager.show(error.message || DASHBOARD_FORM_MSG.ERR_ROLE_DELETE_PROCESS, 'error');
     } finally {
       setLoading(false);
     }
@@ -527,63 +543,67 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     };
 
     // 역할별 기본 위젯 설정 (Fallback)
-    if (roleKey.includes('STUDENT') || roleKey.includes('학생')) {
+    if (roleKey.includes('STUDENT') || roleKey.includes(DASHBOARD_FORM_ROLE_KEY.STUDENT)) {
       // 학생: 일정, 알림
       defaultConfig.widgets = [
         {
           id: `schedule-${Date.now()}`,
           type: 'schedule',
-          title: '내 일정',
+          title: DASHBOARD_FORM_WIDGET_TITLE.MY_SCHEDULE,
           position: { x: 0, y: 0 },
           size: { width: 2, height: 1 }
         },
         {
           id: `notification-${Date.now()}`,
           type: 'notification',
-          title: '알림',
+          title: DASHBOARD_FORM_WIDGET_TITLE.NOTIFICATION,
           position: { x: 2, y: 0 },
           size: { width: 1, height: 1 }
         }
       ];
-    } else if (roleKey.includes('TEACHER') || roleKey.includes('선생님') || roleKey.includes('교사')) {
+    } else if (
+      roleKey.includes('TEACHER')
+      || roleKey.includes(DASHBOARD_FORM_ROLE_KEY.TEACHER_ALT1)
+      || roleKey.includes(DASHBOARD_FORM_ROLE_KEY.TEACHER_ALT2)
+    ) {
       // 선생님: 일정, 통계
       defaultConfig.widgets = [
         {
           id: `schedule-${Date.now()}`,
           type: 'schedule',
-          title: '일정',
+          title: DASHBOARD_FORM_WIDGET_TITLE.SCHEDULE,
           position: { x: 0, y: 0 },
           size: { width: 2, height: 1 }
         },
         {
           id: `summary-statistics-${Date.now()}`,
           type: 'summary-statistics',
-          title: '통계',
+          title: DASHBOARD_FORM_WIDGET_TITLE.STATS,
           position: { x: 2, y: 0 },
           size: { width: 1, height: 1 }
         }
       ];
-    } else if (roleKey.includes('ADMIN') || roleKey.includes('관리자')) {
+    } else if (roleKey.includes('ADMIN') || roleKey.includes(DASHBOARD_FORM_ROLE_KEY.ADMIN)) {
       // 관리자: 환영, 통계, 활동 목록
       defaultConfig.widgets = [
         {
           id: `welcome-${Date.now()}`,
           type: 'welcome',
-          title: '환영합니다',
+          title: DASHBOARD_FORM_WIDGET_TITLE.WELCOME,
           position: { x: 0, y: 0 },
           size: { width: 3, height: 1 }
         },
         {
           id: `summary-statistics-${Date.now()}`,
           type: 'summary-statistics',
-          title: '통계 요약',
+          title: DASHBOARD_FORM_WIDGET_TITLE.STATS_SUMMARY,
           position: { x: 0, y: 1 },
           size: { width: 3, height: 1 }
         },
         {
           id: `activity-list-${Date.now()}`,
           type: 'activity-list',
-          title: '최근 활동',
+          title: DASHBOARD_FORM_WIDGET_TITLE.RECENT_ACTIVITY,
           position: { x: 0, y: 2 },
           size: { width: 3, height: 1 }
         }
@@ -594,14 +614,14 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         {
           id: `welcome-${Date.now()}`,
           type: 'welcome',
-          title: '환영합니다',
+          title: DASHBOARD_FORM_WIDGET_TITLE.WELCOME,
           position: { x: 0, y: 0 },
           size: { width: 2, height: 1 }
         },
         {
           id: `summary-statistics-${Date.now()}`,
           type: 'summary-statistics',
-          title: '통계',
+          title: DASHBOARD_FORM_WIDGET_TITLE.STATS,
           position: { x: 2, y: 0 },
           size: { width: 1, height: 1 }
         }
@@ -625,9 +645,9 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         if (selectedRole) {
           // 즉시 대시보드 이름과 타입 설정 (비동기 위젯 로드 전에)
           newData.dashboardType = selectedRole.templateCode || selectedRole.roleCode || selectedRole.code || selectedRole.nameKo || selectedRole.name || 'DEFAULT';
-          newData.dashboardNameKo = `${selectedRole.nameKo || selectedRole.name || ''} 대시보드`;
+          newData.dashboardNameKo = `${selectedRole.nameKo || selectedRole.name || ''}${DASHBOARD_FORM_NAME_KO_SUFFIX}`;
           newData.dashboardName = newData.dashboardNameKo;
-          newData.dashboardNameEn = `${selectedRole.nameEn || selectedRole.name || ''} Dashboard`;
+          newData.dashboardNameEn = `${selectedRole.nameEn || selectedRole.name || ''}${DASHBOARD_FORM_NAME_EN_SUFFIX}`;
           
           // 메타 시스템: RoleTemplate의 default_widgets_json 사용
           getDefaultWidgetsForRole(selectedRole).then(defaultConfig => {
@@ -796,14 +816,14 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     // 수정 모드에서는 tenantRoleId가 이미 설정되어 있어야 함
     if (!isEditMode && !formData.tenantRoleId) {
       console.warn('⚠️ 생성 모드: tenantRoleId가 없음');
-      newErrors.tenantRoleId = '역할을 선택해주세요.';
+      newErrors.tenantRoleId = DASHBOARD_FORM_VAL.SELECT_ROLE;
     } else if (isEditMode && !formData.tenantRoleId) {
       console.warn('⚠️ 수정 모드: tenantRoleId가 없음 (기존 데이터에서 가져와야 함)');
       // 수정 모드에서는 dashboard에서 가져오기
       if (dashboard && dashboard.tenantRoleId) {
         setFormData(prev => ({ ...prev, tenantRoleId: dashboard.tenantRoleId }));
       } else {
-        newErrors.tenantRoleId = '대시보드 역할 정보를 찾을 수 없습니다.';
+        newErrors.tenantRoleId = DASHBOARD_FORM_VAL.DASHBOARD_ROLE_MISSING;
       }
     } else if (formData.tenantRoleId) {
       // 선택된 역할이 실제로 존재하는지 확인 (수정 모드에서는 모든 역할 목록에 없을 수 있으므로 완화)
@@ -814,7 +834,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
             selectedId: formData.tenantRoleId, 
             availableRoles: tenantRoles.map(r => ({ id: r.tenantRoleId, name: r.nameKo }))
           });
-          newErrors.tenantRoleId = '선택된 역할이 유효하지 않습니다. 모달을 닫고 다시 열어주세요.';
+          newErrors.tenantRoleId = DASHBOARD_FORM_VAL.ROLE_INVALID_REOPEN;
         }
       }
     }
@@ -825,17 +845,17 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       if (formData.tenantRoleId) {
         const selectedRole = tenantRoles.find(role => role.tenantRoleId === formData.tenantRoleId);
         if (selectedRole) {
-          const autoName = `${selectedRole.nameKo || selectedRole.name || ''} 대시보드`;
+          const autoName = `${selectedRole.nameKo || selectedRole.name || ''}${DASHBOARD_FORM_NAME_KO_SUFFIX}`;
           setFormData(prev => ({
             ...prev,
             dashboardNameKo: autoName,
             dashboardName: autoName
           }));
         } else {
-          newErrors.dashboardNameKo = '대시보드 이름을 입력해주세요.';
+          newErrors.dashboardNameKo = DASHBOARD_FORM_VAL.ENTER_DASHBOARD_NAME;
         }
       } else {
-        newErrors.dashboardNameKo = '역할을 먼저 선택해주세요.';
+        newErrors.dashboardNameKo = DASHBOARD_FORM_VAL.SELECT_ROLE_FIRST;
       }
     }
 
@@ -856,7 +876,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       try {
         JSON.parse(formData.dashboardConfig);
       } catch (e) {
-        newErrors.dashboardConfig = '올바른 JSON 형식이 아닙니다.';
+        newErrors.dashboardConfig = DASHBOARD_FORM_VAL.INVALID_JSON;
       }
     }
 
@@ -890,7 +910,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     
     if (!validationResult) {
       console.error('❌ 유효성 검사 실패:', errors);
-      notificationManager.show('입력한 정보를 확인해주세요.', 'warning');
+      notificationManager.show(DASHBOARD_FORM_MSG.VAL_CHECK_INPUT, 'warning');
       return;
     }
 
@@ -1001,7 +1021,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   // branchId 제거됨 - 브랜치 코드 제거 정책에 따라 테넌트 ID만 사용
                   effectiveFrom: new Date().toISOString().split('T')[0],
                   effectiveTo: null, // 무기한
-                  assignmentReason: '대시보드 생성 시 자동 할당'
+                  assignmentReason: DASHBOARD_FORM_ASSIGNMENT_REASON_AUTO
                 };
                 
                 const assignResponse = await csrfTokenManager.post(
@@ -1013,39 +1033,39 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   const assignResult = await assignResponse.json();
                   if (assignResult.success) {
                     notificationManager.show(
-                      '대시보드가 생성되었고, 현재 계정에 역할이 할당되었습니다. 대시보드를 바로 확인할 수 있습니다.',
+                      DASHBOARD_FORM_MSG.TOAST_CREATED_WITH_ROLE,
                       'success'
                     );
                   } else {
                     console.warn('⚠️ 역할 할당 실패:', assignResult.message);
                     notificationManager.show(
-                      '대시보드가 생성되었습니다. 역할 할당은 실패했습니다. 수동으로 역할을 할당해주세요.',
+                      DASHBOARD_FORM_MSG.TOAST_CREATED_ROLE_ASSIGN_FAILED,
                       'warning'
                     );
                   }
                 } else {
                   console.warn('⚠️ 역할 할당 HTTP 에러:', assignResponse.status);
                   notificationManager.show(
-                    '대시보드가 생성되었습니다. 역할 할당은 실패했습니다. 수동으로 역할을 할당해주세요.',
+                    DASHBOARD_FORM_MSG.TOAST_CREATED_ROLE_ASSIGN_FAILED,
                     'warning'
                   );
                 }
               } else {
                 notificationManager.show(
-                  '대시보드가 생성되었습니다. 역할 할당을 위해 로그인 정보를 확인할 수 없습니다.',
+                  DASHBOARD_FORM_MSG.TOAST_CREATED_ROLE_ASSIGN_NO_SESSION,
                   'warning'
                 );
               }
             } catch (assignError) {
               console.error('❌ 역할 할당 중 오류:', assignError);
               notificationManager.show(
-                '대시보드가 생성되었습니다. 역할 할당 중 오류가 발생했습니다. 수동으로 역할을 할당해주세요.',
+                DASHBOARD_FORM_MSG.TOAST_CREATED_ROLE_ASSIGN_ERROR,
                 'warning'
               );
             }
           } else {
             notificationManager.show(
-              isEditMode ? '대시보드가 수정되었습니다.' : '대시보드가 생성되었습니다.',
+              isEditMode ? DASHBOARD_FORM_MSG.TOAST_DASHBOARD_UPDATED : DASHBOARD_FORM_MSG.TOAST_DASHBOARD_CREATED,
               'success'
             );
           }
@@ -1056,7 +1076,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
           onClose();
         } else {
           // 백엔드에서 반환한 에러 메시지 사용
-          const errorMessage = result.message || result.error || '대시보드 저장 실패';
+          const errorMessage = result.message || result.error || DASHBOARD_FORM_MSG.ERR_SAVE_FALLBACK;
           throw new Error(errorMessage);
         }
       } else {
@@ -1065,26 +1085,26 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         console.error('❌ 대시보드 저장 HTTP 에러:', { status: response.status, errorData });
         
         // 백엔드 에러 메시지 추출
-        let errorMessage = '대시보드 저장 중 오류가 발생했습니다.';
+        let errorMessage = DASHBOARD_FORM_MSG.ERR_SAVE_PROCESS;
         if (errorData.message) {
           errorMessage = errorData.message;
         } else if (errorData.error) {
           errorMessage = errorData.error;
         } else if (response.status === 400) {
-          errorMessage = '입력한 정보를 확인해주세요.';
+          errorMessage = DASHBOARD_FORM_MSG.VAL_CHECK_INPUT;
         } else if (response.status === 409) {
-          errorMessage = '해당 역할에 이미 대시보드가 존재합니다.';
+          errorMessage = DASHBOARD_FORM_MSG.ERR_CONFLICT_DASHBOARD;
         } else if (response.status === 403) {
-          errorMessage = '접근 권한이 없습니다.';
+          errorMessage = DASHBOARD_FORM_MSG.ERR_FORBIDDEN;
         } else if (response.status === 404) {
-          errorMessage = '대시보드를 찾을 수 없습니다.';
+          errorMessage = DASHBOARD_FORM_MSG.ERR_NOT_FOUND_DASHBOARD;
         }
         
         throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('❌ 대시보드 저장 실패:', error);
-      notificationManager.show(error.message || '대시보드 저장 중 오류가 발생했습니다.', 'error');
+      notificationManager.show(error.message || DASHBOARD_FORM_MSG.ERR_SAVE_PROCESS, 'error');
     } finally {
       setLoading(false);
     }
@@ -1092,18 +1112,18 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
   // 대시보드 타입 옵션
   const dashboardTypeOptions = [
-    { value: 'STUDENT', label: '학생' },
-    { value: 'TEACHER', label: '선생님' },
-    { value: 'ADMIN', label: '관리자' },
-    { value: 'CLIENT', label: '내담자' },
-    { value: 'CONSULTANT', label: '상담사' },
-    { value: 'PRINCIPAL', label: '원장' },
-    { value: 'DEFAULT', label: '기본' }
+    { value: 'STUDENT', label: DASHBOARD_FORM_TYPE_OPTION.STUDENT },
+    { value: 'TEACHER', label: DASHBOARD_FORM_TYPE_OPTION.TEACHER },
+    { value: 'ADMIN', label: DASHBOARD_FORM_TYPE_OPTION.ADMIN },
+    { value: 'CLIENT', label: DASHBOARD_FORM_TYPE_OPTION.CLIENT },
+    { value: 'CONSULTANT', label: DASHBOARD_FORM_TYPE_OPTION.CONSULTANT },
+    { value: 'PRINCIPAL', label: DASHBOARD_FORM_TYPE_OPTION.PRINCIPAL },
+    { value: 'DEFAULT', label: DASHBOARD_FORM_TYPE_OPTION.DEFAULT }
   ];
 
   if (!isOpen) return null;
 
-  const mainModalTitle = isEditMode ? '대시보드 수정' : '새 대시보드 생성';
+  const mainModalTitle = isEditMode ? DASHBOARD_FORM_MODAL.TITLE_EDIT : DASHBOARD_FORM_MODAL.TITLE_CREATE;
 
   const mainModalActions = !loadingRoles ? (
     <>
@@ -1121,7 +1141,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         disabled={loading}
         preventDoubleClick={true}
       >
-        취소
+        {DASHBOARD_FORM_BUTTON.CANCEL}
       </MGButton>
       <MGButton
         type="button"
@@ -1154,7 +1174,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         preventDoubleClick={true}
         loading={loading}
       >
-        {isEditMode ? '수정' : '생성'}
+        {isEditMode ? DASHBOARD_FORM_BUTTON.SAVE_EDIT : DASHBOARD_FORM_BUTTON.SAVE_CREATE}
       </MGButton>
     </>
   ) : null;
@@ -1176,7 +1196,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       >
           {loadingRoles ? (
             <div className="loading-container">
-              <div className="mg-loading">로딩중...</div>
+              <div className="mg-loading">{DASHBOARD_FORM_MODAL.LOADING}</div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="dashboard-form">
@@ -1184,7 +1204,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
               <div className="form-group">
                 <div className="mg-form-label-row">
                   <label htmlFor="tenantRoleId" className="form-label mg-form-label-inline">
-                    역할 <span className="required">*</span>
+                    {DASHBOARD_FORM_FORM.ROLE_LABEL} <span className="required">*</span>
                   </label>
                   {!isEditMode && (
                     <MGButton
@@ -1201,7 +1221,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       disabled={loading || loadingRoles}
                     >
-                      역할 추가
+                      {DASHBOARD_FORM_BUTTON.ADD_ROLE}
                     </MGButton>
                   )}
                 </div>
@@ -1213,14 +1233,14 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   disabled={isEditMode || loading || loadingRoles}
                   required
                 >
-                  <option value="">역할을 선택해주세요</option>
+                  <option value="">{DASHBOARD_FORM_FORM.ROLE_PLACEHOLDER}</option>
                   {tenantRoles.length === 0 && !loadingRoles ? (
                     <option value="" disabled>
-                      생성 가능한 역할이 없습니다. (모든 역할에 대시보드가 이미 존재합니다)
+                      {DASHBOARD_FORM_FORM.ROLE_EMPTY_NO_DASHBOARD}
                     </option>
                   ) : tenantRoles.length === 0 && loadingRoles ? (
                     <option value="" disabled>
-                      역할 목록을 불러오는 중...
+                      {DASHBOARD_FORM_FORM.ROLE_LOADING}
                     </option>
                   ) : (
                     tenantRoles.map(role => (
@@ -1243,11 +1263,11 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                         disabled={loading}
                       />
                       <span className="mg-text-sm">
-                        대시보드 생성 후 현재 계정에 이 역할 자동 할당
+                        {DASHBOARD_FORM_FORM.ASSIGN_ROLE_AFTER_CREATE}
                       </span>
                     </label>
                     <small className="form-help mg-block mg-mt-xs mg-text-tertiary">
-                      체크하면 대시보드 생성 후 바로 확인할 수 있습니다.
+                      {DASHBOARD_FORM_FORM.ASSIGN_ROLE_HELP}
                     </small>
                   </div>
                 )}
@@ -1255,7 +1275,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   <div className="mg-role-management">
                     <details>
                       <summary className="mg-role-management-summary">
-                        역할 관리
+                        {DASHBOARD_FORM_FORM.ROLE_MANAGE}
                       </summary>
                       <div className="mg-role-list">
                         {tenantRoles.map(role => (
@@ -1274,9 +1294,9 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                               })}
                               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                               disabled={loading}
-                              title="역할 삭제"
+                              title={DASHBOARD_FORM_FORM.DELETE_ROLE_TITLE}
                             >
-                              삭제
+                              {DASHBOARD_FORM_BUTTON.DELETE}
                             </MGButton>
                           </div>
                         ))}
@@ -1289,10 +1309,10 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
               {/* 대시보드 이름 (한글) - 자동 생성, 수정 가능 */}
               <div className="form-group">
                 <label htmlFor="dashboardNameKo" className="form-label">
-                  대시보드 이름
+                  {DASHBOARD_FORM_FORM.DASHBOARD_NAME}
                   {!isEditMode && (
                     <span className="form-help mg-ml-sm mg-text-xs mg-text-tertiary mg-font-normal">
-                      (역할 선택 시 자동 생성)
+                      {DASHBOARD_FORM_FORM.DASHBOARD_NAME_AUTO_HINT}
                     </span>
                   )}
                 </label>
@@ -1302,7 +1322,11 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   value={formData.dashboardNameKo}
                   onChange={(e) => handleChange('dashboardNameKo', e.target.value)}
                   className={`form-input ${errors.dashboardNameKo ? 'error' : ''}`}
-                  placeholder={formData.tenantRoleId ? "역할을 선택하면 자동으로 생성됩니다" : "역할을 먼저 선택해주세요"}
+                  placeholder={
+                    formData.tenantRoleId
+                      ? DASHBOARD_FORM_FORM.DASHBOARD_NAME_PH_AUTO
+                      : DASHBOARD_FORM_FORM.DASHBOARD_NAME_PH_SELECT_ROLE_FIRST
+                  }
                   disabled={loading || (!isEditMode && !formData.tenantRoleId)}
                   required
                   autoComplete="off"
@@ -1312,7 +1336,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 )}
                 {!isEditMode && formData.tenantRoleId && !formData.dashboardNameKo && (
                   <small className="form-help mg-text-success">
-                    ✅ 역할 선택 시 자동으로 이름이 생성됩니다
+                    {DASHBOARD_FORM_FORM.DASHBOARD_NAME_AUTO_SUCCESS}
                   </small>
                 )}
               </div>
@@ -1320,7 +1344,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
               {/* 대시보드 이름 (영문) - 자동 생성, 선택적 */}
               <div className="form-group mg-hidden">
                 <label htmlFor="dashboardNameEn" className="form-label">
-                  대시보드 이름 (영문)
+                  {DASHBOARD_FORM_FORM.DASHBOARD_NAME_EN}
                 </label>
                 <input
                   type="text"
@@ -1336,7 +1360,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
               {/* 대시보드 타입 - 자동 설정, 숨김 */}
               <div className="form-group mg-hidden">
                 <label htmlFor="dashboardType" className="form-label">
-                  대시보드 타입
+                  {DASHBOARD_FORM_FORM.DASHBOARD_TYPE}
                 </label>
                 <select
                   id="dashboardType"
@@ -1345,7 +1369,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   className={`form-input ${errors.dashboardType ? 'error' : ''}`}
                   disabled={loading}
                 >
-                  <option value="">타입을 선택해주세요</option>
+                  <option value="">{DASHBOARD_FORM_FORM.TYPE_PLACEHOLDER}</option>
                   {dashboardTypeOptions.map(option => (
                     <option key={option.value} value={option.value}>
                       {toDisplayString(option.label)}
@@ -1361,20 +1385,20 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
               <div className="form-group">
                 <details className="mg-advanced-settings">
                   <summary className="mg-advanced-settings-summary">
-                    ⚙️ 고급 설정 (선택사항)
+                    {DASHBOARD_FORM_FORM.ADVANCED_SUMMARY}
                   </summary>
                   <div className="mg-advanced-settings-content">
                     {/* 설명 */}
                     <div className="form-group">
                       <label htmlFor="description" className="form-label">
-                        설명
+                        {DASHBOARD_FORM_FORM.DESCRIPTION}
                       </label>
                       <textarea
                         id="description"
                         value={formData.description}
                         onChange={(e) => handleChange('description', e.target.value)}
                         className="form-input"
-                        placeholder="대시보드에 대한 설명을 입력해주세요 (선택사항)"
+                        placeholder={DASHBOARD_FORM_FORM.DESCRIPTION_PLACEHOLDER}
                         rows="3"
                         disabled={loading}
                       />
@@ -1383,7 +1407,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                     {/* 표시 순서 */}
                     <div className="form-group">
                       <label htmlFor="displayOrder" className="form-label">
-                        표시 순서
+                        {DASHBOARD_FORM_FORM.DISPLAY_ORDER}
                       </label>
                       <input
                         type="number"
@@ -1394,7 +1418,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                         min="0"
                         disabled={loading}
                       />
-                      <small className="form-help">숫자가 작을수록 먼저 표시됩니다. (기본값: 0)</small>
+                      <small className="form-help">{DASHBOARD_FORM_FORM.DISPLAY_ORDER_HELP}</small>
                     </div>
                   </div>
                 </details>
@@ -1409,7 +1433,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                     onChange={(e) => handleChange('isActive', e.target.checked)}
                     disabled={loading}
                   />
-                  <span>활성화</span>
+                  <span>{DASHBOARD_FORM_FORM.IS_ACTIVE}</span>
                 </label>
                 <label className="checkbox-label">
                   <input
@@ -1418,9 +1442,9 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                     onChange={(e) => handleChange('isDefault', e.target.checked)}
                     disabled={loading || isEditMode}
                   />
-                  <span>기본 대시보드</span>
+                  <span>{DASHBOARD_FORM_FORM.IS_DEFAULT}</span>
                   {isEditMode && (
-                    <small className="form-help">기본 대시보드는 수정 시 변경할 수 없습니다.</small>
+                    <small className="form-help">{DASHBOARD_FORM_FORM.IS_DEFAULT_EDIT_HELP}</small>
                   )}
                 </label>
               </div>
@@ -1428,19 +1452,19 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
               {/* 대시보드 설정 */}
               <div className="form-group">
                 <label className="form-label">
-                  위젯 설정
+                  {DASHBOARD_FORM_FORM.WIDGET_SETTINGS}
                   <span className="form-help mg-ml-sm mg-text-xs mg-text-tertiary mg-font-normal">
-                    (드래그 앤 드롭으로 쉽게 편집)
+                    {DASHBOARD_FORM_FORM.WIDGET_SETTINGS_HELP}
                   </span>
                 </label>
                 
                 {/* 편집 헤더 (탭 제거) */}
                 <div className="mg-v2-edit-header">
                   <h3 className="mg-v2-section-title">
-                    ⚡ 위젯 편집
+                    {DASHBOARD_FORM_FORM.WIDGET_EDIT_TITLE}
                   </h3>
                   <p className="mg-v2-section-subtitle">
-                    위젯을 클릭으로 추가하고 드래그로 배치하세요
+                    {DASHBOARD_FORM_FORM.WIDGET_EDIT_SUBTITLE}
                   </p>
                 </div>
 
@@ -1449,12 +1473,28 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                     {parsedConfig ? (
                         <div className="mg-v2-editor-complete">
                           <div className="mg-v2-editor-guide">
-                            <h4 className="mg-v2-guide-title">💡 사용 방법</h4>
+                            <h4 className="mg-v2-guide-title">{DASHBOARD_FORM_FORM.WIDGET_GUIDE_TITLE}</h4>
                             <ul className="mg-v2-guide-list">
-                              <li>위젯을 <strong>클릭</strong>하여 추가</li>
-                              <li>위젯을 <strong>드래그</strong>하여 위치 변경</li>
-                              <li><strong>🗑️ 버튼</strong>으로 위젯 삭제</li>
-                              <li><strong>⚙️ 버튼</strong>으로 위젯 설정</li>
+                              <li>
+                                {DASHBOARD_FORM_WIDGET_GUIDE.CLICK.before}
+                                <strong>{DASHBOARD_FORM_WIDGET_GUIDE.CLICK.strong}</strong>
+                                {DASHBOARD_FORM_WIDGET_GUIDE.CLICK.after}
+                              </li>
+                              <li>
+                                {DASHBOARD_FORM_WIDGET_GUIDE.DRAG.before}
+                                <strong>{DASHBOARD_FORM_WIDGET_GUIDE.DRAG.strong}</strong>
+                                {DASHBOARD_FORM_WIDGET_GUIDE.DRAG.after}
+                              </li>
+                              <li>
+                                {DASHBOARD_FORM_WIDGET_GUIDE.DELETE.before}
+                                <strong>{DASHBOARD_FORM_WIDGET_GUIDE.DELETE.strong}</strong>
+                                {DASHBOARD_FORM_WIDGET_GUIDE.DELETE.after}
+                              </li>
+                              <li>
+                                {DASHBOARD_FORM_WIDGET_GUIDE.CONFIG.before}
+                                <strong>{DASHBOARD_FORM_WIDGET_GUIDE.CONFIG.strong}</strong>
+                                {DASHBOARD_FORM_WIDGET_GUIDE.CONFIG.after}
+                              </li>
                             </ul>
                           </div>
                           
@@ -1466,7 +1506,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                         </div>
                     ) : (
                       <div className="mg-v2-loading-placeholder">
-                        <p>위젯 설정을 불러오는 중...</p>
+                        <p>{DASHBOARD_FORM_FORM.WIDGET_GUIDE_LOADING}</p>
                       </div>
                     )}
                 </div>
@@ -1492,7 +1532,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         <UnifiedModal
           isOpen={true}
           onClose={handleCloseAddRoleModal}
-          title="역할 추가"
+          title={DASHBOARD_FORM_MODAL.TITLE_ADD_ROLE}
           size="medium"
           variant="form"
           className="mg-v2-ad-b0kla mg-add-role-modal"
@@ -1516,7 +1556,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 disabled={loading}
                 preventDoubleClick={false}
               >
-                취소
+                {DASHBOARD_FORM_BUTTON.CANCEL}
               </MGButton>
               <MGButton
                 type="button"
@@ -1533,20 +1573,20 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 loading={loading}
                 preventDoubleClick={false}
               >
-                {loading ? '추가 중...' : '역할 추가'}
+                {loading ? DASHBOARD_FORM_BUTTON.ADD_ROLE_LOADING : DASHBOARD_FORM_BUTTON.ADD_ROLE_SUBMIT}
               </MGButton>
             </>
           }
         >
           {loadingTemplates ? (
             <div className="loading-container">
-              <div className="mg-loading">로딩중...</div>
+              <div className="mg-loading">{DASHBOARD_FORM_MODAL.LOADING}</div>
             </div>
           ) : (
             <>
               <div className="form-group">
                 <label htmlFor="roleTemplate" className="form-label">
-                  역할 템플릿 선택 <span className="required">*</span>
+                  {DASHBOARD_FORM_FORM.ROLE_TEMPLATE_LABEL} <span className="required">*</span>
                 </label>
                 <select
                   id="roleTemplate"
@@ -1563,10 +1603,10 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   className="form-input"
                   disabled={loading}
                 >
-                  <option value="">템플릿을 선택해주세요</option>
+                  <option value="">{DASHBOARD_FORM_FORM.TEMPLATE_PLACEHOLDER}</option>
                   {roleTemplates.length === 0 ? (
                     <option value="" disabled>
-                      사용 가능한 템플릿이 없습니다.
+                      {DASHBOARD_FORM_FORM.TEMPLATE_EMPTY}
                     </option>
                   ) : (
                     roleTemplates.map(template => (
@@ -1579,13 +1619,13 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   )}
                 </select>
                 <small className="form-help">
-                  템플릿을 선택하면 해당 템플릿의 권한과 기본 위젯 설정이 자동으로 적용됩니다.
+                  {DASHBOARD_FORM_FORM.TEMPLATE_HELP}
                 </small>
               </div>
 
               <div className="form-group">
                 <label htmlFor="newRoleName" className="form-label">
-                  역할 이름 (한글) <span className="required">*</span>
+                  {DASHBOARD_FORM_FORM.NEW_ROLE_NAME_KO} <span className="required">*</span>
                 </label>
                 <input
                   type="text"
@@ -1593,18 +1633,18 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   value={newRoleName}
                   onChange={(e) => setNewRoleName(e.target.value)}
                   className="form-input"
-                  placeholder="예: 원장, 상담사, 보조강사 등"
+                  placeholder={DASHBOARD_FORM_FORM.NEW_ROLE_NAME_KO_PLACEHOLDER}
                   disabled={loading}
                   required
                 />
                 <small className="form-help">
-                  템플릿 선택 시 자동으로 채워지지만, 원하는 이름으로 변경할 수 있습니다.
+                  {DASHBOARD_FORM_FORM.NEW_ROLE_NAME_KO_HELP}
                 </small>
               </div>
 
               <div className="form-group">
                 <label htmlFor="newRoleNameEn" className="form-label">
-                  역할 이름 (영문)
+                  {DASHBOARD_FORM_FORM.NEW_ROLE_NAME_EN}
                 </label>
                 <input
                   type="text"
@@ -1619,14 +1659,14 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
               <div className="form-group">
                 <label htmlFor="newRoleDescription" className="form-label">
-                  설명
+                  {DASHBOARD_FORM_FORM.DESCRIPTION}
                 </label>
                 <textarea
                   id="newRoleDescription"
                   value={newRoleDescription}
                   onChange={(e) => setNewRoleDescription(e.target.value)}
                   className="form-input"
-                  placeholder="역할에 대한 설명을 입력해주세요 (선택사항)"
+                  placeholder={DASHBOARD_FORM_FORM.ROLE_DESC_PLACEHOLDER}
                   rows="3"
                   disabled={loading}
                 />

@@ -88,6 +88,15 @@ public final class EmailConstants {
     public static final String ERROR_EMAIL_SERVICE_UNAVAILABLE = "이메일 서비스를 사용할 수 없습니다.";
     public static final String ERROR_EMAIL_ATTACHMENT_TOO_LARGE = "첨부파일이 너무 큽니다.";
     public static final String ERROR_EMAIL_RATE_LIMIT_EXCEEDED = "이메일 발송 한도를 초과했습니다.";
+    public static final String ERROR_EMAIL_STATUS_NOT_FOUND = "이메일 발송 상태를 찾을 수 없습니다.";
+    public static final String ERROR_EMAIL_RESEND_NOT_FOUND = "재발송할 이메일을 찾을 수 없습니다.";
+    public static final String ERROR_EMAIL_NOT_FOUND = "이메일을 찾을 수 없습니다.";
+    public static final String ERROR_EMAIL_MAX_RETRY_EXCEEDED = "최대 재시도 횟수를 초과했습니다.";
+    public static final String ERROR_EMAIL_MESSAGE_BUILD_FAILED = "이메일 메시지 생성 실패: ";
+    public static final String ERROR_EMAIL_SEND_RUNTIME_FAILED = "이메일 발송 중 오류 발생: ";
+    
+    public static final String SUCCESS_EMAIL_SEND_CANCELLED = "이메일 발송이 취소되었습니다.";
+    public static final String SUCCESS_EMAIL_RETRY_IN_PROGRESS = "이메일 발송 재시도 중...";
     
     // === 이메일 발송 제한 ===
     public static final int MAX_RECIPIENTS_PER_EMAIL = 50;

@@ -122,6 +122,123 @@ public final class AdminServiceUserFacingMessages {
 
     public static final String MSG_NEW_CONSULTANT_NOT_FOUND = "새 상담사를 찾을 수 없습니다.";
 
+    /** EntityNotFoundException 등에서 사용하는 엔티티 유형 표시명(상담사) */
+    public static final String ENTITY_LABEL_CONSULTANT = "상담사";
+
+    /** EntityNotFoundException 등에서 사용하는 엔티티 유형 표시명(내담자) */
+    public static final String ENTITY_LABEL_CLIENT = "내담자";
+
+    /** 스태프 등록 시 이름 미입력·이메일 로컬 파트 비어 있을 때 기본 표시명 */
+    public static final String DEFAULT_STAFF_DISPLAY_NAME = "사무원";
+
+    public static final String MSG_TENANT_ID_REQUIRED_IN_CONTEXT =
+            "현재 컨텍스트에 테넌트 ID가 설정되어 있지 않습니다.";
+
+    // --- 삭제 가능 여부 안내 (checkConsultantDeletionStatus / checkClientDeletionStatus) ---
+
+    public static final String MSG_CONSULTANT_CAN_DELETE_SAFELY = "해당 상담사는 안전하게 삭제할 수 있습니다.";
+
+    public static final String MSG_CONSULTANT_DELETE_NEED_TRANSFER_INTRO =
+            "다음 사유로 인해 다른 상담사로 이전이 필요합니다:\n";
+
+    public static final String MSG_BULLET_CONSULTANT_ACTIVE_MAPPINGS_FMT = "• 활성 매칭: %d개\n";
+
+    public static final String MSG_BULLET_CONSULTANT_TODAY_SCHEDULE_FMT = "• 오늘 스케줄: %d개\n";
+
+    public static final String MSG_BULLET_CONSULTANT_FUTURE_SCHEDULE_FMT = "• 향후 스케줄: %d개";
+
+    public static final String MSG_CLIENT_CAN_DELETE_SAFELY = "해당 내담자는 안전하게 삭제할 수 있습니다.";
+
+    public static final String MSG_CLIENT_DELETE_BLOCKED_INTRO = "다음 사유로 인해 삭제할 수 없습니다:\n";
+
+    public static final String MSG_BULLET_CLIENT_REMAINING_SESSIONS_FMT = "• 남은 회기: %d회\n";
+
+    public static final String MSG_BULLET_CLIENT_PENDING_PAYMENT_FMT = "• 결제 대기: %d개\n";
+
+    public static final String MSG_BULLET_CLIENT_FUTURE_SCHEDULE_FMT = "• 예정 스케줄: %d개";
+
+    // --- API result message / 토스트 ---
+
+    public static final String MSG_SCHEDULE_AUTO_COMPLETE_SUCCESS_FMT =
+            "스케줄 %d개가 완료 처리되었고, 상담일지 미작성 상담사 %d명에게 알림이 발송되었습니다.";
+
+    public static final String MSG_SCHEDULE_AUTO_COMPLETE_FAILED_FMT =
+            "스케줄 자동 완료 처리에 실패했습니다: %s";
+
+    public static final String MSG_DUPLICATE_MAPPING_MERGE_SUCCESS_FMT =
+            "중복 매칭 통합 완료: %d개 그룹 통합, %d개 매칭 종료";
+
+    public static final String MSG_VACATION_STATS_QUERY_FAILED_FMT = "휴가 통계 조회에 실패했습니다: %s";
+
+    public static final String MSG_VACATION_STATS_BY_BRANCH_FAILED_FMT =
+            "지점별 휴가 통계 조회에 실패했습니다: %s";
+
+    // --- 상담일지 독려 메시지 ---
+
+    public static final String MSG_CONSULTATION_DIARY_REMINDER_TITLE = "상담일지 작성 안내";
+
+    public static final String MSG_CONSULTATION_DIARY_REMINDER_BODY_FMT =
+            "안녕하세요. %s에 진행된 상담의 상담일지를 아직 작성하지 않으셨습니다.\n\n"
+                    + "상담일지는 상담의 질 향상과 내담자 관리에 매우 중요합니다.\n"
+                    + "빠른 시일 내에 상담일지를 작성해 주시기 바랍니다.\n\n"
+                    + "상담 정보:\n"
+                    + "- 상담일: %s\n"
+                    + "- 상담시간: %s ~ %s\n"
+                    + "- 내담자: %s\n\n"
+                    + "감사합니다.";
+
+    // --- ERP·재무 거래 설명·비고 (사용자·회계 열람용) ---
+
+    public static final String DEFAULT_PACKAGE_NAME = "기본 패키지";
+
+    public static final String FALLBACK_PACKAGE_DISPLAY_NAME = "상담 패키지";
+
+    public static final String PAYMENT_METHOD_UNSPECIFIED = "미지정";
+
+    public static final String DESC_INCOME_DEPOSIT_CONFIRM_FMT =
+            "상담료 입금 확인 - %s (%s) [정확한금액: %,d원]";
+
+    public static final String DESC_TAX_SPLIT_SUFFIX_FMT =
+            " [부가세 분리: 공급가 %,d원, 부가세 %,d원]";
+
+    public static final String DESC_WITHHOLDING_SUFFIX_FMT =
+            " [사업소득 원천징수 3.3%% 예정 %,d원(부가세와 별개)]";
+
+    public static final String REMARKS_WITHHOLDING_VS_VAT_NOTE =
+            "원천징수(사업소득 3.3%) 예정액. 부가세(VAT) 금액과 혼동 금지.";
+
+    public static final String AMOUNT_CHANGE_REASON_ERP_ACCURATE_PACKAGE =
+            "ERP 연동 시 정확한 패키지 가격 적용";
+
+    public static final String DESC_ADDITIONAL_SESSION_INCOME_FMT =
+            "추가 회기 상담료 입금 확인 - %s (%d회 추가, %s) [추가금액: %,d원]";
+
+    public static final String DESC_CONSULTATION_REFUND_FMT =
+            "상담료 환불 - %s (%d회기 환불, 사유: %s)";
+
+    public static final String DESC_CONSULTATION_PARTIAL_REFUND_FMT =
+            "상담료 부분 환불 - %s (%d회기 부분 환불, 사유: %s) [남은회기: %d회]";
+
+    public static final String DEFAULT_REFUND_REASON_ADMIN_PROCESS = "관리자 처리";
+
+    public static final String DESC_RECEIVABLES_ON_PAYMENT_CONFIRM_FMT =
+            "상담료 결제 확인 (미수금) - %s (%s) [금액: %,d원]";
+
+    /** ERP 매핑 동기화 프로시저에 전달하는 처리 구분 표시 */
+    public static final String ERP_MAPPING_PROCEDURE_ACTION_DEPOSIT_CONFIRMED = "입금확인";
+
+    public static final String NOTES_DUPLICATE_MAPPING_MERGE_TERMINATED = "중복 매칭 통합으로 종료됨";
+
+    public static final String PACKAGE_NAME_ADDITIONAL_FALLBACK = "추가 패키지";
+
+    public static final String PACKAGE_NAME_ESTIMATED_SESSIONS_FMT = "%d회 패키지 (추정)";
+
+    /** 환불 설명 파싱·표시 기본값 */
+    public static final String REFUND_REASON_FALLBACK_ETC = "기타";
+
+    /** {@code extractRefundReasonFromDescription} 등에서 사용하는 접두사 (기존 설명 형식과 동일해야 함) */
+    public static final String REFUND_DESCRIPTION_REASON_LABEL_PREFIX = "사유: ";
+
     private AdminServiceUserFacingMessages() {
     }
 }

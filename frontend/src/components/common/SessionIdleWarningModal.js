@@ -163,11 +163,11 @@ const SessionIdleWarningModal = () => {
           {/* 연장을 먼저 두고 세로 스택에서도 상단에 주요 액션이 오도록 함 (가로 배치 시에도 flex-end로 오른쪽 정렬) */}
           <MGButton
             type="button"
-            variant="primary"
+            variant="success"
             size="medium"
             onClick={handleExtend}
             preventDoubleClick={false}
-            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+            className={buildErpMgButtonClassName({ variant: 'success', size: 'md', loading: false })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             data-testid="session-idle-extend"
           >

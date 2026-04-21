@@ -7,6 +7,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   padding: var(--mg-spacing-md, 12px);
   margin-bottom: var(--mg-spacing-md, 16px);
+  min-width: 0;
 }
 
 .schedule-pending-list__header {
@@ -27,9 +28,10 @@
 }
 
 .schedule-pending-list__item {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--mg-spacing-sm, 8px);
   padding: var(--mg-spacing-sm, 8px) 0;
   border-bottom: 1px solid var(--mg-border-light, #e5e7eb);
 }
@@ -39,17 +41,37 @@
 }
 
 .schedule-pending-list__info {
+  min-width: 0;
   display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-xs, 4px);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
 }
 
 .schedule-pending-list__name {
   font-weight: 500;
   color: var(--mg-text-primary, #2d3748);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .schedule-pending-list__consultant {
   font-size: 0.85rem;
   color: var(--mg-text-secondary, #64748b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.schedule-pending-list__confirm-btn.mg-button {
+  flex-shrink: 0;
+  min-width: auto !important;
+  width: auto;
+  min-height: 30px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
 }

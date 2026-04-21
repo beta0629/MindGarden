@@ -120,6 +120,7 @@ const DuplicateLoginModal = () => {
             onClick={handleCancel}
             disabled={confirmLoading}
             preventDoubleClick={false}
+            data-testid="duplicate-login-cancel"
           >
             <XCircle size={20} className="mg-v2-icon-inline" />
             취소
@@ -136,6 +137,7 @@ const DuplicateLoginModal = () => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleConfirm}
             preventDoubleClick={false}
+            data-testid="duplicate-login-confirm"
           >
             <Check size={20} className="mg-v2-icon-inline" />
             기존 세션 종료하고 로그인

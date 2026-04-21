@@ -40,7 +40,8 @@ const SchedulePendingList = ({ items = [], onScheduleRegister }) => {
               className={buildErpMgButtonClassName({
                 variant: 'primary',
                 size: 'sm',
-                loading: false
+                loading: false,
+                className: 'schedule-pending-list__confirm-btn'
               })}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => onScheduleRegister && onScheduleRegister(item)}

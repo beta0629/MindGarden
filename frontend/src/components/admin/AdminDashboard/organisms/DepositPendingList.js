@@ -40,7 +40,8 @@ const DepositPendingList = ({ items = [], onDepositConfirm }) => {
               className={buildErpMgButtonClassName({
                 variant: 'primary',
                 size: 'sm',
-                loading: false
+                loading: false,
+                className: 'deposit-pending-list__confirm-btn'
               })}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => onDepositConfirm && onDepositConfirm(item)}

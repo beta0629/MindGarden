@@ -78,12 +78,14 @@
 }
 
 /*
- * 모달 푸터 primary: UnifiedModal은 포털로 body에 그려져 로그인 폼 스코프 밖이라
- * .mg-button--primary + .mg-v2-button 조합이 전역 토큰과 겹치며 대비가 깨짐 → 토큰으로 고정 (UnifiedLogin.css 폼 블록과 동일 계열).
+ * 모달 푸터 primary: 포털로 body에 그려져 로그인/전역 토큰 스코프 밖.
+ * 전역 .mg-v2-button--primary(color: var(--color-background-primary)) 등이
+ * MGButton(.mg-button--primary)보다 늦게 적용되면 라벨 대비가 깨짐 → 푸터 범위에서만 토큰으로 고정.
+ * (.mg-v2-button 유무와 무관: ERP buildErpMgButtonClassName·TaxDetailsModal의 mg-v2-button--primary 병행 모두)
  */
-.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button,
-.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button:hover:not(.mg-button--disabled):not(.mg-button--loading),
-.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button:active:not(.mg-button--disabled):not(.mg-button--loading) {
+.mg-modal__actions .mg-button.mg-button--primary,
+.mg-modal__actions .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal__actions .mg-button.mg-button--primary:active:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-primary-color, var(--mg-primary-500));
   background: var(--mg-primary-color, var(--mg-primary-500));
   color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
@@ -91,19 +93,37 @@
   box-shadow: none;
 }
 
-.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+.mg-modal__actions .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-primary-light, var(--mg-primary-400));
   background: var(--mg-primary-light, var(--mg-primary-400));
   color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
 }
 
-.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button .mg-button__text {
+.mg-modal__actions .mg-button.mg-button--primary .mg-button__text {
   color: inherit;
 }
 
-.mg-modal__actions .mg-button.mg-button--primary.mg-button--loading.mg-v2-button {
+.mg-modal__actions .mg-button.mg-button--primary.mg-button--loading {
   background-color: var(--mg-primary-color, var(--mg-primary-500)) !important;
   color: var(--mg-color-text-on-primary, var(--color-text-on-primary)) !important;
+}
+
+/* MGButton 미사용: mg-v2 primary 단독 버튼/링크(푸터 한정) */
+.mg-modal__actions button.mg-v2-button.mg-v2-button--primary:not(.mg-button),
+.mg-modal__actions button.mg-v2-button.mg-v2-button-primary:not(.mg-button),
+.mg-modal__actions a.mg-v2-button.mg-v2-button--primary:not(.mg-button),
+.mg-modal__actions a.mg-v2-button.mg-v2-button-primary:not(.mg-button) {
+  background-color: var(--mg-primary-color, var(--mg-primary-500));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+}
+
+.mg-modal__actions button.mg-v2-button.mg-v2-button--primary:not(.mg-button):hover:not(:disabled),
+.mg-modal__actions button.mg-v2-button.mg-v2-button-primary:not(.mg-button):hover:not(:disabled),
+.mg-modal__actions a.mg-v2-button.mg-v2-button--primary:not(.mg-button):hover:not(:disabled),
+.mg-modal__actions a.mg-v2-button.mg-v2-button-primary:not(.mg-button):hover:not(:disabled) {
+  background-color: var(--mg-primary-light, var(--mg-primary-400));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
 }
 
 /* 
@@ -243,6 +263,40 @@
   color: var(--mg-v2-color-warning-700, var(--mg-warning-600));
 }
 
+/* 세션 연장: 테넌트 primary/배경 토큰과 무관하게 항상 대비 확보 (운영 가시성) */
+.session-idle-warning-modal.mg-modal .mg-modal__actions button[data-testid='session-idle-extend'] {
+  background-color: var(--mg-success-500, #16a34a);
+  color: var(--mg-white, #ffffff);
+  border-color: transparent;
+}
+
+.session-idle-warning-modal.mg-modal .mg-modal__actions button[data-testid='session-idle-extend']:hover:not(:disabled):not(.mg-button--loading) {
+  background-color: var(--mg-success-600, #15803d);
+  color: var(--mg-white, #ffffff);
+}
+
+.session-idle-warning-modal.mg-modal .mg-modal__actions button[data-testid='session-idle-extend'] .mg-button__text {
+  color: inherit;
+}
+
+/*
+ * 중복 로그인: primary 텍스트가 전역 mg-v2-button--primary(color: 배경 토큰)와 겹쳐 운영에서 안 보이는 이슈 방지
+ */
+.duplicate-login-modal.mg-modal .mg-modal__actions button[data-testid='duplicate-login-confirm'] {
+  background-color: var(--mg-primary-color, var(--mg-primary-500, var(--mg-layout-sidebar-active-bg, #3d5246)));
+  color: var(--mg-color-text-on-primary, var(--mg-white, #ffffff));
+  border-color: transparent;
+}
+
+.duplicate-login-modal.mg-modal .mg-modal__actions button[data-testid='duplicate-login-confirm']:hover:not(:disabled):not(.mg-button--loading) {
+  background-color: var(--mg-primary-light, var(--mg-primary-400, #4a6354));
+  color: var(--mg-color-text-on-primary, var(--mg-white, #ffffff));
+}
+
+.duplicate-login-modal.mg-modal .mg-modal__actions button[data-testid='duplicate-login-confirm'] .mg-button__text {
+  color: inherit;
+}
+
 /*
  * 푸터 안전 레이아웃: 좁은 폭·긴 라벨에서 액션이 잘리지 않도록
  * (중복 로그인·세션 만료 경고 등 공통 — DuplicateLoginModal, SessionIdleWarningModal)
@@ -284,12 +338,34 @@
     min-width: 112px;
   }
 
-  /* 세션 만료: DOM 순서는 연장→로그아웃(모바일에서 연장이 위). 가로에서는 로그아웃·연장 순 */
-  .session-idle-warning-modal.mg-modal .mg-modal__actions [data-testid='session-idle-logout'] {
-    order: 1;
+  /*
+   * 세션 만료 임박: 넓은 화면에서도 푸터는 세로 전체 폭 유지(연장·로그아웃 동시 노출).
+   * 운영에서 가로+order 조합 시 연장(primary)이 토큰/클리핑으로 보이지 않는 사례 방지.
+   */
+  .session-idle-warning-modal.mg-modal.mg-modal--footer-safe .mg-modal__actions {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
   }
 
-  .session-idle-warning-modal.mg-modal .mg-modal__actions [data-testid='session-idle-extend'] {
-    order: 2;
+  .session-idle-warning-modal.mg-modal.mg-modal--footer-safe .mg-modal__actions .mg-button {
+    width: 100%;
+    max-width: 100%;
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  /* 중복 로그인: 세션 경고와 동일하게 넓은 화면에서도 푸터 세로 스택으로 두 버튼 동시 노출 */
+  .duplicate-login-modal.mg-modal.mg-modal--footer-safe .mg-modal__actions {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .duplicate-login-modal.mg-modal.mg-modal--footer-safe .mg-modal__actions .mg-button {
+    width: 100%;
+    max-width: 100%;
+    flex: 0 0 auto;
+    min-width: 0;
   }
 }

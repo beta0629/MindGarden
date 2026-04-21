@@ -12,6 +12,14 @@
   margin-top: 1rem;
 }
 
+.mg-dashboard-pipeline-detail > .deposit-pending-list,
+.mg-dashboard-pipeline-detail > .schedule-pending-list {
+  flex: 1 1 280px;
+  min-width: min(100%, 260px);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .mg-dashboard-layout {
   /* 파이프라인 전용 토큰 */
   --mg-pipeline-primary: #4b745c;

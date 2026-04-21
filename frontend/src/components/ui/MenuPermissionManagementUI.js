@@ -26,6 +26,7 @@
 import React from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGCard from '../common/MGCard';
+import { MENU_PERM_LOCATION, MENU_PERM_UI } from '../../constants/menuPermissionManagementStrings';
 import './MenuPermissionManagementUI.css';
 
 const MenuPermissionManagementUI = ({
@@ -41,14 +42,7 @@ const MenuPermissionManagementUI = ({
 /**
      * 위치명 한글 변환
      */
-    const getLocationName = (location) => {
-        const names = {
-            'DASHBOARD': '일반 대시보드',
-            'ADMIN_ONLY': '관리자 전용',
-            'BOTH': '양쪽 모두'
-        };
-        return names[location] || location;
-    };
+    const getLocationName = (location) => MENU_PERM_LOCATION[location] || location;
 
 /**
      * 권한 부여 가능 여부 확인
@@ -79,9 +73,9 @@ const MenuPermissionManagementUI = ({
             <div className="mg-content">
                 {/* 좌측: 역할 목록 */}
                 <div className="mg-sidebar">
-                    <h3 className="mg-sidebar-title">역할 선택</h3>
+                    <h3 className="mg-sidebar-title">{MENU_PERM_UI.SIDEBAR_ROLE_TITLE}</h3>
                     {loading && !selectedRole ? (
-                        <UnifiedLoading type="inline" text="로딩 중..." />
+                        <UnifiedLoading type="inline" text={MENU_PERM_UI.LOADING_INLINE} />
                     ) : (
                         <ul className="mg-role-list">
                             {roles.map(role => (
@@ -106,14 +100,16 @@ const MenuPermissionManagementUI = ({
                     {selectedRole ? (
                         <>
                             <div className="mg-role-header">
-                                <h3 className="mg-role-title">{selectedRole.nameKo || selectedRole.nameEn} 역할의 메뉴 권한</h3>
+                                <h3 className="mg-role-title">
+                                    {(selectedRole.nameKo || selectedRole.nameEn) + MENU_PERM_UI.ROLE_MENU_TITLE_SUFFIX}
+                                </h3>
                                 <p className="mg-role-description">
-                                    이 역할에 부여할 메뉴 접근 권한을 설정하세요.
+                                    {MENU_PERM_UI.ROLE_DESCRIPTION}
                                 </p>
                             </div>
 
                             {loading ? (
-                                <UnifiedLoading type="inline" text="로딩 중..." />
+                                <UnifiedLoading type="inline" text={MENU_PERM_UI.LOADING_INLINE} />
                             ) : (
                                 <>
                                     <div className="mg-permission-cards-grid">
@@ -155,7 +151,7 @@ const MenuPermissionManagementUI = ({
                                                                         disabled={!canGrant}
                                                                         className="mg-checkbox"
                                                                     />
-                                                                    <span>조회</span>
+                                                                    <span>{MENU_PERM_UI.PERM_VIEW}</span>
                                                                 </label>
                                                             </div>
                                                             <div className="mg-permission-item">
@@ -167,7 +163,7 @@ const MenuPermissionManagementUI = ({
                                                                         disabled={!menu.canView || !canGrant}
                                                                         className="mg-checkbox"
                                                                     />
-                                                                    <span>생성</span>
+                                                                    <span>{MENU_PERM_UI.PERM_CREATE}</span>
                                                                 </label>
                                                             </div>
                                                             <div className="mg-permission-item">
@@ -179,7 +175,7 @@ const MenuPermissionManagementUI = ({
                                                                         disabled={!menu.canView || !canGrant}
                                                                         className="mg-checkbox"
                                                                     />
-                                                                    <span>수정</span>
+                                                                    <span>{MENU_PERM_UI.PERM_UPDATE}</span>
                                                                 </label>
                                                             </div>
                                                             <div className="mg-permission-item">
@@ -191,7 +187,7 @@ const MenuPermissionManagementUI = ({
                                                                         disabled={!menu.canView || !canGrant}
                                                                         className="mg-checkbox"
                                                                     />
-                                                                    <span>삭제</span>
+                                                                    <span>{MENU_PERM_UI.PERM_DELETE}</span>
                                                                 </label>
                                                             </div>
                                                         </div>
@@ -204,11 +200,11 @@ const MenuPermissionManagementUI = ({
                                     <div className="mg-help-text">
                                         <i className="bi bi-info-circle mg-help-icon" />
                                         <div className="mg-help-content">
-                                            <p className="mg-help-title">권한 부여 규칙:</p>
+                                            <p className="mg-help-title">{MENU_PERM_UI.HELP_TITLE}</p>
                                             <ul className="mg-help-list">
-                                                <li>최소 요구 역할보다 낮은 역할에게는 권한을 부여할 수 없습니다.</li>
-                                                <li>조회 권한이 없으면 생성/수정/삭제 권한을 부여할 수 없습니다.</li>
-                                                <li>ADMIN 역할은 모든 메뉴에 접근할 수 있습니다.</li>
+                                                <li>{MENU_PERM_UI.HELP_RULE_MIN_ROLE}</li>
+                                                <li>{MENU_PERM_UI.HELP_RULE_VIEW_FIRST}</li>
+                                                <li>{MENU_PERM_UI.HELP_RULE_ADMIN}</li>
                                             </ul>
                                         </div>
                                     </div>
@@ -218,7 +214,7 @@ const MenuPermissionManagementUI = ({
                     ) : (
                         <div className="mg-empty-state">
                             <i className="bi bi-shield-lock mg-empty-icon" />
-                            <p className="mg-empty-text">좌측에서 역할을 선택하세요</p>
+                            <p className="mg-empty-text">{MENU_PERM_UI.EMPTY_SELECT_ROLE}</p>
                         </div>
                     )}
                 </div>

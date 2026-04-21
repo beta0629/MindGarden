@@ -1,5 +1,9 @@
 package com.coresolution.consultation.constant.admin;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * {@code AdminService}에서 사용자에게 노출될 수 있는 메시지·표시명 문자열.
  *
@@ -238,6 +242,65 @@ public final class AdminServiceUserFacingMessages {
 
     /** {@code extractRefundReasonFromDescription} 등에서 사용하는 접두사 (기존 설명 형식과 동일해야 함) */
     public static final String REFUND_DESCRIPTION_REASON_LABEL_PREFIX = "사유: ";
+
+    /** 전문분야 코드가 비었을 때 API 표시명 */
+    public static final String DISPLAY_SPECIALTY_NOT_SET = "미설정";
+
+    /** 복호화 실패 시 API에 노출되는 전화번호 등 표시 */
+    public static final String DISPLAY_DECRYPTION_FAILED = "복호화 실패";
+
+    /** 이름 등을 알 수 없을 때 (환불·통계 응답 등) */
+    public static final String DISPLAY_NAME_UNKNOWN = "알 수 없음";
+
+    public static final String MSG_REFUND_MATCHING_INFO_MISSING = "매칭 정보 없음";
+
+    /** 통계 등에서 기간 미지정 시 레이블 */
+    public static final String STATS_PERIOD_LABEL_ALL = "전체";
+
+    /**
+     * 영문 전문분야 코드 → 한글 표시명 (관리 화면·API 통일).
+     */
+    public static final Map<String, String> SPECIALTY_CODE_TO_KOREAN_DISPLAY_NAME;
+
+    /** 휴가 유형 분류·통계 map 키 (API 응답과 동일) */
+    public static final String VACATION_CATEGORY_ANNUAL = "연차";
+
+    public static final String VACATION_CATEGORY_HALF_DAY = "반차";
+
+    public static final String VACATION_CATEGORY_QUARTER_DAY = "반반차";
+
+    public static final String VACATION_CATEGORY_PERSONAL = "개인사정";
+
+    public static final String VACATION_CATEGORY_SICK = "병가";
+
+    /** 스케줄 목록에서 비활성 상담사 표시 접미사 */
+    public static final String SCHEDULE_CONSULTANT_NAME_DELETED_SUFFIX = " (삭제됨)";
+
+    /** 환불 사유 표준화 시 테스트용 고정 라벨 */
+    public static final String REFUND_REASON_TEST_LABEL = "환불테스트";
+
+    static {
+        Map<String, String> specialty = new HashMap<>();
+        specialty.put("DEPRESSION", "우울증");
+        specialty.put("ANXIETY", "불안장애");
+        specialty.put("TRAUMA", "트라우마");
+        specialty.put("STRESS", "스트레스");
+        specialty.put("RELATIONSHIP", "관계상담");
+        specialty.put("FAMILY", "가족상담");
+        specialty.put("COUPLE", "부부상담");
+        specialty.put("CHILD", "아동상담");
+        specialty.put("TEEN", "청소년상담");
+        specialty.put("ADOLESCENT", "청소년상담");
+        specialty.put("ADDICTION", "중독");
+        specialty.put("EATING", "섭식장애");
+        specialty.put("SLEEP", "수면장애");
+        specialty.put("ANGER", "분노조절");
+        specialty.put("GRIEF", "상실");
+        specialty.put("SELF_ESTEEM", "자존감");
+        specialty.put("CAREER", "진로상담");
+        specialty.put("FAMIL", "가족상담");
+        SPECIALTY_CODE_TO_KOREAN_DISPLAY_NAME = Collections.unmodifiableMap(specialty);
+    }
 
     private AdminServiceUserFacingMessages() {
     }

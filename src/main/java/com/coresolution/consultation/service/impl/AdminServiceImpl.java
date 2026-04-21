@@ -1666,7 +1666,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     log.info("🔓 상담사 전화번호 복호화 완료: {}", maskPhone(decryptedPhone));
                 } catch (Exception e) {
                     log.error("❌ 상담사 전화번호 복호화 실패: {}", e.getMessage());
-                    consultant.setPhone("복호화 실패");
+                    consultant.setPhone(AdminServiceUserFacingMessages.DISPLAY_DECRYPTION_FAILED);
                 }
             }
         });
@@ -1707,7 +1707,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         log.info("🔓 상담사 전화번호 복호화 완료: {}", maskPhone(decryptedPhone));
                     } catch (Exception e) {
                         log.error("❌ 상담사 전화번호 복호화 실패: {}", e.getMessage());
-                        decryptedPhone = "복호화 실패";
+                        decryptedPhone = AdminServiceUserFacingMessages.DISPLAY_DECRYPTION_FAILED;
                     }
                 }
                 consultantData.put("phone", decryptedPhone);
@@ -1809,7 +1809,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                             decryptedPhone = encryptionUtil.decrypt(consultant.getPhone());
                         } catch (Exception e) {
                             log.error("❌ 상담사 전화번호 복호화 실패: {}", e.getMessage());
-                            decryptedPhone = "복호화 실패";
+                            decryptedPhone = AdminServiceUserFacingMessages.DISPLAY_DECRYPTION_FAILED;
                         }
                     }
                     consultantData.put("phone", decryptedPhone);
@@ -1922,34 +1922,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     private String getSpecialtyNameByCode(String code) {
         if (code == null || code.trim().isEmpty()) {
-            return "미설정";
+            return AdminServiceUserFacingMessages.DISPLAY_SPECIALTY_NOT_SET;
         }
-        
+
         if (code.matches(".*[가-힣].*")) {
             return code;
         }
-        
-        Map<String, String> specialtyMap = new HashMap<>();
-        specialtyMap.put("DEPRESSION", "우울증");
-        specialtyMap.put("ANXIETY", "불안장애");
-        specialtyMap.put("TRAUMA", "트라우마");
-        specialtyMap.put("STRESS", "스트레스");
-        specialtyMap.put("RELATIONSHIP", "관계상담");
-        specialtyMap.put("FAMILY", "가족상담");
-        specialtyMap.put("COUPLE", "부부상담");
-        specialtyMap.put("CHILD", "아동상담");
-        specialtyMap.put("TEEN", "청소년상담");
-        specialtyMap.put("ADOLESCENT", "청소년상담"); // ADOLESCENT 추가
-        specialtyMap.put("ADDICTION", "중독");
-        specialtyMap.put("EATING", "섭식장애");
-        specialtyMap.put("SLEEP", "수면장애");
-        specialtyMap.put("ANGER", "분노조절");
-        specialtyMap.put("GRIEF", "상실");
-        specialtyMap.put("SELF_ESTEEM", "자존감");
-        specialtyMap.put("CAREER", "진로상담"); // CAREER 추가
-        specialtyMap.put("FAMIL", "가족상담"); // FAMILY의 축약형 처리
-        
-        return specialtyMap.getOrDefault(code, code);
+
+        return AdminServiceUserFacingMessages.SPECIALTY_CODE_TO_KOREAN_DISPLAY_NAME.getOrDefault(code, code);
     }
     
      /**
@@ -3479,7 +3459,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         ConsultantClientMapping mapping = transaction.getRelatedEntityId() != null
                             ? mappingRepository.findByTenantIdAndId(tenantId, transaction.getRelatedEntityId()).orElse(null)
                             : null;
-                        return mapping != null ? mapping.getConsultant().getName() : "알 수 없음";
+                        return mapping != null ? mapping.getConsultant().getName()
+                                : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
                     },
                     Collectors.collectingAndThen(
                         Collectors.toList(),
@@ -3551,7 +3532,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .collect(Collectors.groupingBy(
                     mapping -> {
                         String notes = mapping.getNotes();
-                        String rawReason = "기타";
+                        String rawReason = AdminServiceUserFacingMessages.REFUND_REASON_FALLBACK_ETC;
                         if (notes != null && notes.contains("강제 종료]")) {
                             String[] parts = notes.split("강제 종료] ");
                             if (parts.length > 1) {
@@ -3594,7 +3575,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     refund.put("terminatedAt", mapping.getTerminatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
                     
                     String notes = mapping.getNotes();
-                    String reason = "기타";
+                    String reason = AdminServiceUserFacingMessages.REFUND_REASON_FALLBACK_ETC;
                     if (notes != null && notes.contains("강제 종료]")) {
                         String[] parts = notes.split("강제 종료] ");
                         if (parts.length > 1) {
@@ -3629,13 +3610,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         refund.put("reason", reason);
                     } else {
                         refund.put("mappingId", transaction.getRelatedEntityId());
-                        refund.put("clientName", "알 수 없음");
-                        refund.put("consultantName", "알 수 없음");
-                        refund.put("packageName", "알 수 없음");
+                        refund.put("clientName", AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
+                        refund.put("consultantName", AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
+                        refund.put("packageName", AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
                         refund.put("refundedSessions", 0);
                         refund.put("refundAmount", transaction.getAmount().longValue());
                         refund.put("terminatedAt", transaction.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-                        refund.put("reason", "매칭 정보 없음");
+                        refund.put("reason", AdminServiceUserFacingMessages.MSG_REFUND_MATCHING_INFO_MISSING);
                     }
                     
                     return refund;
@@ -3725,9 +3706,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         refund.put("standardizedReason", standardizeRefundReason(reason));
                     } else {
                         refund.put("mappingId", transaction.getRelatedEntityId());
-                        refund.put("clientName", "알 수 없음");
-                        refund.put("consultantName", "알 수 없음");
-                        refund.put("packageName", "알 수 없음");
+                        refund.put("clientName", AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
+                        refund.put("consultantName", AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
+                        refund.put("packageName", AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
                         refund.put("originalAmount", 0);
                         refund.put("totalSessions", 0);
                         refund.put("usedSessions", 0);
@@ -3737,8 +3718,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         refund.put("branchCode", null); // 표준화 2025-12-07: 브랜치 개념 제거됨
                         refund.put("erpStatus", "SENT");
                         refund.put("erpReference", "ERP_UNKNOWN_" + transaction.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
-                        refund.put("refundReason", "매칭 정보 없음");
-                        refund.put("standardizedReason", "기타");
+                        refund.put("refundReason", AdminServiceUserFacingMessages.MSG_REFUND_MATCHING_INFO_MISSING);
+                        refund.put("standardizedReason", AdminServiceUserFacingMessages.REFUND_REASON_FALLBACK_ETC);
                     }
                     
                     return refund;
@@ -3770,7 +3751,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     refund.put("erpReference", "ERP_" + mapping.getId() + "_" + mapping.getTerminatedAt().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
                     
                     String notes = mapping.getNotes();
-                    String reason = "기타";
+                    String reason = AdminServiceUserFacingMessages.REFUND_REASON_FALLBACK_ETC;
                     if (notes != null && notes.contains("강제 종료]")) {
                         String[] parts = notes.split("강제 종료] ");
                         if (parts.length > 1) {
@@ -3864,17 +3845,20 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     
                     if (mapping != null) {
                         refund.put("mappingId", mapping.getId());
-                        refund.put("consultantName", mapping.getConsultant() != null ? mapping.getConsultant().getName() : "알 수 없음");
-                        refund.put("clientName", mapping.getClient() != null ? mapping.getClient().getName() : "알 수 없음");
-                        refund.put("packageName", mapping.getPackageName() != null ? mapping.getPackageName() : "알 수 없음");
+                        refund.put("consultantName", mapping.getConsultant() != null ? mapping.getConsultant().getName()
+                                : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
+                        refund.put("clientName", mapping.getClient() != null ? mapping.getClient().getName()
+                                : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
+                        refund.put("packageName", mapping.getPackageName() != null ? mapping.getPackageName()
+                                : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
                         refund.put("refundedSessions", extractRefundSessionsFromDescription(transaction.getDescription()));
                         refund.put("refundAmount", transaction.getAmount().longValue());
                         refund.put("terminatedAt", transaction.getTransactionDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
                     } else {
                         refund.put("mappingId", transaction.getRelatedEntityId());
-                        refund.put("consultantName", "알 수 없음");
-                        refund.put("clientName", "알 수 없음");
-                        refund.put("packageName", "알 수 없음");
+                        refund.put("consultantName", AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
+                        refund.put("clientName", AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
+                        refund.put("packageName", AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
                         refund.put("refundedSessions", extractRefundSessionsFromDescription(transaction.getDescription()));
                         refund.put("refundAmount", transaction.getAmount().longValue());
                         refund.put("terminatedAt", transaction.getTransactionDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
@@ -3891,16 +3875,19 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .map(mapping -> {
                     Map<String, Object> refund = new HashMap<>();
                     refund.put("mappingId", mapping.getId());
-                    refund.put("consultantName", mapping.getConsultant() != null ? mapping.getConsultant().getName() : "알 수 없음");
-                    refund.put("clientName", mapping.getClient() != null ? mapping.getClient().getName() : "알 수 없음");
-                    refund.put("packageName", mapping.getPackageName() != null ? mapping.getPackageName() : "알 수 없음");
+                    refund.put("consultantName", mapping.getConsultant() != null ? mapping.getConsultant().getName()
+                            : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
+                    refund.put("clientName", mapping.getClient() != null ? mapping.getClient().getName()
+                            : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
+                    refund.put("packageName", mapping.getPackageName() != null ? mapping.getPackageName()
+                            : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
                     refund.put("refundedSessions", mapping.getTotalSessions() - mapping.getUsedSessions());
                     refund.put("refundAmount", mapping.getPackagePrice() != null ? 
                         ((mapping.getPackagePrice() * (mapping.getTotalSessions() - mapping.getUsedSessions())) / mapping.getTotalSessions()) : 0L);
                     refund.put("terminatedAt", mapping.getTerminatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
                     
                     String notes = mapping.getNotes();
-                    String reason = "기타";
+                    String reason = AdminServiceUserFacingMessages.REFUND_REASON_FALLBACK_ETC;
                     if (notes != null && notes.contains("강제 종료]")) {
                         String[] parts = notes.split("강제 종료] ");
                         if (parts.length > 1) {
@@ -4117,7 +4104,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     private String standardizeRefundReason(String rawReason) {
         if (rawReason == null || rawReason.trim().isEmpty()) {
-            return "기타";
+            return AdminServiceUserFacingMessages.REFUND_REASON_FALLBACK_ETC;
         }
         
         try {
@@ -4165,11 +4152,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.error("환불 사유 공통 코드 조회 실패: rawReason={}", rawReason, e);
         }
         
-        if (rawReason.toLowerCase().contains("환불테스트")) {
-            return "환불테스트";
+        if (rawReason.toLowerCase().contains(
+                AdminServiceUserFacingMessages.REFUND_REASON_TEST_LABEL.toLowerCase())) {
+            return AdminServiceUserFacingMessages.REFUND_REASON_TEST_LABEL;
         }
         
-        return "기타";
+        return AdminServiceUserFacingMessages.REFUND_REASON_FALLBACK_ETC;
     }
 
      /**
@@ -4344,7 +4332,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 createCommonCode("REFUND_REASON", "RELOCATION", "이사/이전", "{\"keywords\":\"이사,이전,거리\"}", 6);
                 createCommonCode("REFUND_REASON", "FINANCIAL_DIFFICULTY", "경제적 어려움", "{\"keywords\":\"경제,재정,돈\"}", 7);
                 createCommonCode("REFUND_REASON", "ADMIN_DECISION", "관리자 결정", "{\"keywords\":\"관리자,결정,정책\"}", 8);
-                createCommonCode("REFUND_REASON", "OTHER", "기타", "{\"keywords\":\"기타,etc\"}", 9);
+                createCommonCode("REFUND_REASON", "OTHER", AdminServiceUserFacingMessages.REFUND_REASON_FALLBACK_ETC,
+                        "{\"keywords\":\"기타,etc\"}", 9);
                 
                 log.info("✅ REFUND_REASON 공통 코드 생성 완료");
             }
@@ -4621,15 +4610,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                 if (clientUser != null) {
                                     scheduleMap.put("clientName", clientUser.getName());
                                 } else {
-                                    scheduleMap.put("clientName", "미지정");
+                                    scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                                 }
                             } catch (Exception e) {
                                 log.warn("내담자 정보 조회 실패: clientId={}, error={}", schedule.getClientId(), e.getMessage());
-                                scheduleMap.put("clientName", "미지정");
+                                scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                             }
                         } else {
                             scheduleMap.put("clientId", null);
-                            scheduleMap.put("clientName", "미지정");
+                            scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                         }
                         
                         return scheduleMap;
@@ -4692,7 +4681,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         consultantEmail = encryptionUtil.safeDecrypt(consultant.getEmail());
                     }
                     if (consultantName == null || consultantName.trim().isEmpty()) {
-                        consultantName = consultant.getName() != null ? consultant.getName() : "알 수 없음";
+                        consultantName = consultant.getName() != null ? consultant.getName()
+                                : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
                     }
 
                     Map<String, Object> consultantStats = new HashMap<>();
@@ -4706,7 +4696,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     consultantStats.put("totalCount", totalCount);
                     consultantStats.put("completionRate", totalCount > 0 ? 
                         Math.round((double) completedCount / totalCount * 100) : 0);
-                    consultantStats.put("period", period != null ? period : "전체");
+                    consultantStats.put("period", period != null ? period : AdminServiceUserFacingMessages.STATS_PERIOD_LABEL_ALL);
                     consultantStats.put("startDate", startDate.toString());
                     consultantStats.put("endDate", endDate.toString());
                     
@@ -4891,7 +4881,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         consultantEmail = encryptionUtil.safeDecrypt(consultant.getEmail());
                     }
                     if (consultantName == null || consultantName.trim().isEmpty()) {
-                        consultantName = consultant.getName() != null ? consultant.getName() : "알 수 없음";
+                        consultantName = consultant.getName() != null ? consultant.getName()
+                                : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
                     }
 
                     Map<String, Object> consultantStats = new HashMap<>();
@@ -4906,7 +4897,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     consultantStats.put("totalCount", totalCount);
                     consultantStats.put("completionRate", totalCount > 0 ? 
                         Math.round((double) completedCount / totalCount * 100) : 0);
-                    consultantStats.put("period", period != null ? period : "전체");
+                    consultantStats.put("period", period != null ? period : AdminServiceUserFacingMessages.STATS_PERIOD_LABEL_ALL);
                     consultantStats.put("startDate", startDate.toString());
                     consultantStats.put("endDate", endDate.toString());
                     
@@ -4961,19 +4952,20 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                     scheduleMap.put("consultantName", consultant.getName());
                                     scheduleMap.put("consultantEmail", consultant.getEmail());
                                 } else if (consultant != null && !consultant.getIsActive()) {
-                                    scheduleMap.put("consultantName", consultant.getName() + " (삭제됨)");
+                                    scheduleMap.put("consultantName", consultant.getName()
+                                            + AdminServiceUserFacingMessages.SCHEDULE_CONSULTANT_NAME_DELETED_SUFFIX);
                                     scheduleMap.put("consultantEmail", consultant.getEmail());
                                 } else {
-                                    scheduleMap.put("consultantName", "미지정");
+                                    scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                                     scheduleMap.put("consultantEmail", "");
                                 }
                             } catch (Exception e) {
                                 log.warn("상담사 정보 조회 실패: consultantId={}, error={}", schedule.getConsultantId(), e.getMessage());
-                                scheduleMap.put("consultantName", "미지정");
+                                scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                                 scheduleMap.put("consultantEmail", "");
                             }
                         } else {
-                            scheduleMap.put("consultantName", "미지정");
+                            scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                             scheduleMap.put("consultantEmail", "");
                         }
                         
@@ -4985,17 +4977,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                     scheduleMap.put("clientName", clientUser.getName());
                                     scheduleMap.put("clientEmail", clientUser.getEmail());
                                 } else {
-                                    scheduleMap.put("clientName", "미지정");
+                                    scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                                     scheduleMap.put("clientEmail", "");
                                 }
                             } catch (Exception e) {
                                 log.warn("내담자 정보 조회 실패: clientId={}, error={}", schedule.getClientId(), e.getMessage());
-                                scheduleMap.put("clientName", "미지정");
+                                scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                                 scheduleMap.put("clientEmail", "");
                             }
                         } else {
                             scheduleMap.put("clientId", null);
-                            scheduleMap.put("clientName", "미지정");
+                            scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                             scheduleMap.put("clientEmail", "");
                         }
                         
@@ -5854,16 +5846,24 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 }
             }
             
-            if (!vacationByType.containsKey("연차")) vacationByType.put("연차", 0);
-            if (!vacationByType.containsKey("반차")) vacationByType.put("반차", 0);
-            if (!vacationByType.containsKey("반반차")) vacationByType.put("반반차", 0);
-            if (!vacationByType.containsKey("개인사정")) vacationByType.put("개인사정", 0);
+            if (!vacationByType.containsKey(AdminServiceUserFacingMessages.VACATION_CATEGORY_ANNUAL)) {
+                vacationByType.put(AdminServiceUserFacingMessages.VACATION_CATEGORY_ANNUAL, 0);
+            }
+            if (!vacationByType.containsKey(AdminServiceUserFacingMessages.VACATION_CATEGORY_HALF_DAY)) {
+                vacationByType.put(AdminServiceUserFacingMessages.VACATION_CATEGORY_HALF_DAY, 0);
+            }
+            if (!vacationByType.containsKey(AdminServiceUserFacingMessages.VACATION_CATEGORY_QUARTER_DAY)) {
+                vacationByType.put(AdminServiceUserFacingMessages.VACATION_CATEGORY_QUARTER_DAY, 0);
+            }
+            if (!vacationByType.containsKey(AdminServiceUserFacingMessages.VACATION_CATEGORY_PERSONAL)) {
+                vacationByType.put(AdminServiceUserFacingMessages.VACATION_CATEGORY_PERSONAL, 0);
+            }
             
         } catch (Exception e) {
             log.error("휴가 유형별 개수 조회 실패: consultantId={}", consultantId, e);
-            vacationByType.put("연차", 0);
-            vacationByType.put("병가", 0);
-            vacationByType.put("개인사정", 0);
+            vacationByType.put(AdminServiceUserFacingMessages.VACATION_CATEGORY_ANNUAL, 0);
+            vacationByType.put(AdminServiceUserFacingMessages.VACATION_CATEGORY_SICK, 0);
+            vacationByType.put(AdminServiceUserFacingMessages.VACATION_CATEGORY_PERSONAL, 0);
         }
         
         return vacationByType;
@@ -5908,16 +5908,24 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             
             log.info("📊 최종 휴가 유형별 일수: {}", vacationDaysByType);
             
-            if (!vacationDaysByType.containsKey("연차")) vacationDaysByType.put("연차", 0.0);
-            if (!vacationDaysByType.containsKey("반차")) vacationDaysByType.put("반차", 0.0);
-            if (!vacationDaysByType.containsKey("반반차")) vacationDaysByType.put("반반차", 0.0);
-            if (!vacationDaysByType.containsKey("개인사정")) vacationDaysByType.put("개인사정", 0.0);
+            if (!vacationDaysByType.containsKey(AdminServiceUserFacingMessages.VACATION_CATEGORY_ANNUAL)) {
+                vacationDaysByType.put(AdminServiceUserFacingMessages.VACATION_CATEGORY_ANNUAL, 0.0);
+            }
+            if (!vacationDaysByType.containsKey(AdminServiceUserFacingMessages.VACATION_CATEGORY_HALF_DAY)) {
+                vacationDaysByType.put(AdminServiceUserFacingMessages.VACATION_CATEGORY_HALF_DAY, 0.0);
+            }
+            if (!vacationDaysByType.containsKey(AdminServiceUserFacingMessages.VACATION_CATEGORY_QUARTER_DAY)) {
+                vacationDaysByType.put(AdminServiceUserFacingMessages.VACATION_CATEGORY_QUARTER_DAY, 0.0);
+            }
+            if (!vacationDaysByType.containsKey(AdminServiceUserFacingMessages.VACATION_CATEGORY_PERSONAL)) {
+                vacationDaysByType.put(AdminServiceUserFacingMessages.VACATION_CATEGORY_PERSONAL, 0.0);
+            }
             
         } catch (Exception e) {
             log.error("휴가 유형별 일수 조회 실패: consultantId={}", consultantId, e);
-            vacationDaysByType.put("연차", 0.0);
-            vacationDaysByType.put("병가", 0.0);
-            vacationDaysByType.put("개인사정", 0.0);
+            vacationDaysByType.put(AdminServiceUserFacingMessages.VACATION_CATEGORY_ANNUAL, 0.0);
+            vacationDaysByType.put(AdminServiceUserFacingMessages.VACATION_CATEGORY_SICK, 0.0);
+            vacationDaysByType.put(AdminServiceUserFacingMessages.VACATION_CATEGORY_PERSONAL, 0.0);
         }
         
         return vacationDaysByType;
@@ -5959,7 +5967,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     private String mapVacationTypeToCategory(String vacationType) {
         if (vacationType == null) {
-            return "연차";
+            return AdminServiceUserFacingMessages.VACATION_CATEGORY_ANNUAL;
         }
         
         String type = vacationType.toUpperCase();
@@ -5969,33 +5977,35 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             case "MORNING_HALF_2":
             case "AFTERNOON_HALF_1":
             case "AFTERNOON_HALF_2":
-                return "반반차";
+                return AdminServiceUserFacingMessages.VACATION_CATEGORY_QUARTER_DAY;
                 
             case "MORNING":
             case "AFTERNOON":
             case "MORNING_HALF_DAY":
             case "AFTERNOON_HALF_DAY":
-                return "반차";
+                return AdminServiceUserFacingMessages.VACATION_CATEGORY_HALF_DAY;
                 
             case "CUSTOM_TIME":
-                return "개인사정";
+                return AdminServiceUserFacingMessages.VACATION_CATEGORY_PERSONAL;
                 
             case "ALL_DAY":
             case "FULL_DAY":
-                return "연차";
+                return AdminServiceUserFacingMessages.VACATION_CATEGORY_ANNUAL;
         }
         
-        if (vacationType.contains("반반차") || vacationType.contains("HALF_1") || vacationType.contains("HALF_2")) {
-            return "반반차";
-        } else if (vacationType.contains("반차") || vacationType.contains("오전") || vacationType.contains("오후")) {
-            return "반차";
+        if (vacationType.contains(AdminServiceUserFacingMessages.VACATION_CATEGORY_QUARTER_DAY)
+                || vacationType.contains("HALF_1") || vacationType.contains("HALF_2")) {
+            return AdminServiceUserFacingMessages.VACATION_CATEGORY_QUARTER_DAY;
+        } else if (vacationType.contains(AdminServiceUserFacingMessages.VACATION_CATEGORY_HALF_DAY)
+                || vacationType.contains("오전") || vacationType.contains("오후")) {
+            return AdminServiceUserFacingMessages.VACATION_CATEGORY_HALF_DAY;
         } else if (vacationType.contains("개인") || vacationType.contains("사용자") || vacationType.contains("CUSTOM")) {
-            return "개인사정";
+            return AdminServiceUserFacingMessages.VACATION_CATEGORY_PERSONAL;
         } else if (vacationType.contains("종일") || vacationType.contains("하루") || vacationType.contains("ALL") || vacationType.contains("FULL")) {
-            return "연차";
+            return AdminServiceUserFacingMessages.VACATION_CATEGORY_ANNUAL;
         }
         
-        return "연차";
+        return AdminServiceUserFacingMessages.VACATION_CATEGORY_ANNUAL;
     }
     
      /**

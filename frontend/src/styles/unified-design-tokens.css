@@ -5324,13 +5324,13 @@ body {
     flex-wrap: wrap;
 }
 
-/* 상태 배지 */
+/* 상태 배지 — 타원(pill/full-radius) 미사용, 직사각형 모서리만 (B0KlA·DS 정합) */
 .mg-status-badge {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-xs);
     padding: var(--spacing-xs) var(--spacing-md);
-    border-radius: var(--radius-full, 50%);
+    border-radius: var(--radius-sm, 0.5rem);
     background: var(--mint-green, var(--mg-mint-green));
     color: var(--cs-gray-800);
     font-size: var(--font-size-xs);

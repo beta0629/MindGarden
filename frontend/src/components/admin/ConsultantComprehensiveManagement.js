@@ -43,7 +43,7 @@ import './ProfileCard.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
-import { CONSULTANT_COMP_SPECIALTY } from '../../constants/consultantComprehensiveStrings';
+import { CONSULTANT_COMP_SPECIALTY, CONSULTANT_COMP_PASSWORD_RESET } from '../../constants/consultantComprehensiveStrings';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 
 /** ContentHeader / 본문 main aria-labelledby 연동 */
@@ -1250,9 +1250,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                         setShowPasswordResetModal(true);
                                                                     }}
                                                                     preventDoubleClick={true}
-                                                                    title="비밀번호 초기화"
+                                                                    title={CONSULTANT_COMP_PASSWORD_RESET.BTN_TITLE}
                                                                 >
-                                                                    비밀번호 초기화
+                                                                    {CONSULTANT_COMP_PASSWORD_RESET.BTN_LABEL}
                                                                 </MGButton>
                                                                 <MGButton
                                                                     variant="danger"
@@ -1497,9 +1497,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                         setShowPasswordResetModal(true);
                                                                     }}
                                                                     preventDoubleClick={true}
-                                                                    title="비밀번호 초기화"
+                                                                    title={CONSULTANT_COMP_PASSWORD_RESET.BTN_TITLE}
                                                                 >
-                                                                    비밀번호 초기화
+                                                                    {CONSULTANT_COMP_PASSWORD_RESET.BTN_LABEL}
                                                                 </MGButton>
                                                                 <MGButton
                                                                     variant="danger"
@@ -2066,6 +2066,21 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         onClick={handleCloseModal}
                     >
                         닫기
+                    </MGButton>
+                    <MGButton
+                        type="button"
+                        variant="secondary"
+                        size="small"
+                        preventDoubleClick={true}
+                        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                        title={CONSULTANT_COMP_PASSWORD_RESET.BTN_TITLE}
+                        onClick={() => {
+                            if (!selectedConsultant) return;
+                            setPasswordResetConsultant(selectedConsultant);
+                            setShowPasswordResetModal(true);
+                        }}
+                    >
+                        {CONSULTANT_COMP_PASSWORD_RESET.BTN_LABEL}
                     </MGButton>
                     <MGButton
                         type="button"

@@ -4,6 +4,7 @@ import Avatar from '../../common/Avatar';
 import { SmallCardGrid, ListTableView, StatusBadge } from '../../common';
 import SafeText from '../../common/SafeText';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, maskEncryptedDisplay } from '../../../utils/codeHelper';
+import { formatKoreanMobileForDisplay } from '../../../utils/koreanMobilePhone';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import '../ProfileCard.css';
 
@@ -113,7 +114,9 @@ const ClientOverviewTab = ({
                                 <SafeText>{maskEncryptedDisplay(client.email, '이메일')}</SafeText>
                             </span>
                             <span className="mg-v2-profile-card__phone">
-                                <SafeText>{maskEncryptedDisplay(client.phone, '전화번호')}</SafeText>
+                                <SafeText>
+                                    {formatKoreanMobileForDisplay(maskEncryptedDisplay(client.phone, '전화번호'))}
+                                </SafeText>
                             </span>
                         </div>
                     </div>
@@ -191,7 +194,11 @@ const ClientOverviewTab = ({
                         </h3>
                         <div className="mg-v2-profile-card__contact">
                             <span className="mg-v2-profile-card__email"><SafeText>{maskEncryptedDisplay(client.email, '이메일')}</SafeText></span>
-                            <span className="mg-v2-profile-card__phone"><SafeText>{maskEncryptedDisplay(client.phone, '전화번호')}</SafeText></span>
+                            <span className="mg-v2-profile-card__phone">
+                                <SafeText>
+                                    {formatKoreanMobileForDisplay(maskEncryptedDisplay(client.phone, '전화번호'))}
+                                </SafeText>
+                            </span>
                         </div>
                     </div>
                     <div className="mg-v2-profile-card__badges">

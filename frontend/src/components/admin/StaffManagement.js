@@ -24,6 +24,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { showSuccess, showError } from '../../utils/notification';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
+import { formatKoreanMobileForDisplay } from '../../utils/koreanMobilePhone';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
 import {
   STAFF_MGMT_ARIA,
@@ -679,7 +680,7 @@ const StaffManagement = ({ embedded = false }) => {
                           <Mail size={12} /> {maskEncryptedDisplay(staff.email, STAFF_MGMT_MASK.EMAIL)}
                         </span>
                         <span className="mg-v2-profile-card__phone">
-                          <Phone size={12} /> {maskEncryptedDisplay(staff.phone, STAFF_MGMT_MASK.PHONE_NONE)}
+                          <Phone size={12} /> {formatKoreanMobileForDisplay(maskEncryptedDisplay(staff.phone, STAFF_MGMT_MASK.PHONE_NONE))}
                         </span>
                       </div>
                     </div>
@@ -720,7 +721,7 @@ const StaffManagement = ({ embedded = false }) => {
                         <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(staff.name, STAFF_MGMT_MASK.NAME)}</h3>
                         <div className="mg-v2-profile-card__contact">
                           <span className="mg-v2-profile-card__email"><Mail size={12} /> {maskEncryptedDisplay(staff.email, STAFF_MGMT_MASK.EMAIL)}</span>
-                          <span className="mg-v2-profile-card__phone"><Phone size={12} /> {maskEncryptedDisplay(staff.phone, STAFF_MGMT_MASK.PHONE_NONE)}</span>
+                          <span className="mg-v2-profile-card__phone"><Phone size={12} /> {formatKoreanMobileForDisplay(maskEncryptedDisplay(staff.phone, STAFF_MGMT_MASK.PHONE_NONE))}</span>
                         </div>
                       </div>
                       <div className="mg-v2-profile-card__badges">
@@ -798,7 +799,7 @@ const StaffManagement = ({ embedded = false }) => {
             </div>
             <div>
               <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_FORM_LABEL.PHONE}</div>
-              <SafeText tag="div">{maskEncryptedDisplay(staffDetailModal.staff.phone, STAFF_MGMT_MASK.PHONE_NONE)}</SafeText>
+              <SafeText tag="div">{formatKoreanMobileForDisplay(maskEncryptedDisplay(staffDetailModal.staff.phone, STAFF_MGMT_MASK.PHONE_NONE))}</SafeText>
             </div>
             <div>
               <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_FORM_LABEL.ROLE}</div>

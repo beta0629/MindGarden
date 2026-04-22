@@ -4,6 +4,8 @@
  * React에서 자주 사용하는 헬퍼 함수들
  */
 
+import { formatKoreanMobileForDisplay } from './koreanMobilePhone';
+
 // 날짜 포맷팅
 export const formatDate = (date, format = 'YYYY-MM-DD') => {
   if (!date) return '';
@@ -52,19 +54,8 @@ export const getRelativeTime = (date) => {
   return `${diffYears}년 전`;
 };
 
-// 전화번호 포맷팅 (010-1234-5678)
-export const formatPhoneNumber = (phone) => {
-  if (!phone) return '';
-  
-  const cleaned = phone.replace(/\D/g, '');
-  const match = cleaned.match(/^(\d{3})(\d{4})(\d{4})$/);
-  
-  if (match) {
-    return `${match[1]}-${match[2]}-${match[3]}`;
-  }
-  
-  return phone;
-};
+// 전화번호 표시 포맷 — `koreanMobilePhone.formatKoreanMobileForDisplay` 위임(SSOT)
+export const formatPhoneNumber = (phone) => formatKoreanMobileForDisplay(phone);
 
 // 이메일 유효성 검사
 export const isValidEmail = (email) => {

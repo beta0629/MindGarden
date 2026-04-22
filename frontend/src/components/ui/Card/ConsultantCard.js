@@ -8,6 +8,7 @@ import Avatar from '../../common/Avatar';
 import { getConsultantRatingInfo } from '../../../utils/ratingHelper';
 import { getFormattedCurrentClients, getFormattedExperience } from '../../../utils/codeHelper';
 import { formatCurrency } from '../../../utils/formatUtils';
+import { formatKoreanMobileForDisplay } from '../../../utils/koreanMobilePhone';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
@@ -197,7 +198,7 @@ const ConsultantCard = ({
                     
                     <div className="mg-consultant-card__detail-item">
                         <Phone size={16} />
-                        <span>{toDisplayString(consultant.phone, '전화번호 없음')}</span>
+                        <span>{formatKoreanMobileForDisplay(consultant.phone) || '전화번호 없음'}</span>
                     </div>
                     
                     <div className="mg-consultant-card__detail-item">
@@ -332,7 +333,7 @@ const ConsultantCard = ({
                     </div>
                     <div className="mg-consultant-card__info-row">
                         <Phone size={14} />
-                        <span>{toDisplayString(consultant.phone, '전화번호 없음')}</span>
+                        <span>{formatKoreanMobileForDisplay(consultant.phone) || '전화번호 없음'}</span>
                     </div>
                 </div>
                 

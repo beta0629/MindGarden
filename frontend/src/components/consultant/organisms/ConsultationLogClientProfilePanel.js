@@ -2,6 +2,7 @@ import React from 'react';
 import SafeText from '../../common/SafeText';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
+import { formatKoreanMobileForDisplay } from '../../../utils/koreanMobilePhone';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
 import {
@@ -52,7 +53,10 @@ const ConsultationLogClientProfilePanel = ({
       else if (gradeLabel) gradeStatus = gradeLabel;
       else if (statusLabel) gradeStatus = statusLabel;
 
-      const displayPhone = hideContactDetail ? '—' : toDisplayString(client.phone ?? client.phoneNumber ?? client.mobile, '—');
+      const rawPhone = client.phone ?? client.phoneNumber ?? client.mobile;
+      const displayPhone = hideContactDetail
+        ? '—'
+        : (formatKoreanMobileForDisplay(rawPhone) || toDisplayString(rawPhone, '—'));
       const displayGender = hideContactDetail ? '—' : (client.gender === 'MALE' ? '남성' : client.gender === 'FEMALE' ? '여성' : client.gender || '—');
       const displayAddress = hideContactDetail
         ? '—'

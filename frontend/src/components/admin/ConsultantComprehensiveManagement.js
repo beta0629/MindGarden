@@ -40,6 +40,7 @@ import './mapping-management/organisms/MappingListBlock.css';
 import './mapping-management/MappingManagementPage.css';
 import './ConsultantManagementPage.css';
 import './ProfileCard.css';
+import { formatKoreanMobileForDisplay } from '../../utils/koreanMobilePhone';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
@@ -1189,7 +1190,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                         <Mail size={12} /> <SafeText>{consultant.email}</SafeText>
                                                                     </span>
                                                                     <span className="mg-v2-profile-card__phone">
-                                                                        <Phone size={12} /> <SafeText fallback="전화번호 없음">{consultant.phone}</SafeText>
+                                                                        <Phone size={12} /> <SafeText fallback="전화번호 없음">{formatKoreanMobileForDisplay(consultant.phone)}</SafeText>
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -1294,7 +1295,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                 <h3 className="mg-v2-profile-card__name"><SafeText fallback="이름 없음">{consultant.name}</SafeText></h3>
                                                                 <div className="mg-v2-profile-card__contact">
                                                                     <span className="mg-v2-profile-card__email"><Mail size={12} /> <SafeText>{consultant.email}</SafeText></span>
-                                                                    <span className="mg-v2-profile-card__phone"><Phone size={12} /> <SafeText fallback="전화번호 없음">{consultant.phone}</SafeText></span>
+                                                                    <span className="mg-v2-profile-card__phone"><Phone size={12} /> <SafeText fallback="전화번호 없음">{formatKoreanMobileForDisplay(consultant.phone)}</SafeText></span>
                                                                 </div>
                                                             </div>
                                                             <div className="mg-v2-profile-card__badges">
@@ -1436,7 +1437,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                         <Mail size={12} /> <SafeText>{consultant.email}</SafeText>
                                                                     </span>
                                                                     <span className="mg-v2-profile-card__phone">
-                                                                        <Phone size={12} /> <SafeText fallback="전화번호 없음">{consultant.phone}</SafeText>
+                                                                        <Phone size={12} /> <SafeText fallback="전화번호 없음">{formatKoreanMobileForDisplay(consultant.phone)}</SafeText>
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -1541,7 +1542,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                 <h3 className="mg-v2-profile-card__name"><SafeText fallback="이름 없음">{consultant.name}</SafeText></h3>
                                                                 <div className="mg-v2-profile-card__contact">
                                                                     <span className="mg-v2-profile-card__email"><Mail size={12} /> <SafeText>{consultant.email}</SafeText></span>
-                                                                    <span className="mg-v2-profile-card__phone"><Phone size={12} /> <SafeText fallback="전화번호 없음">{consultant.phone}</SafeText></span>
+                                                                    <span className="mg-v2-profile-card__phone"><Phone size={12} /> <SafeText fallback="전화번호 없음">{formatKoreanMobileForDisplay(consultant.phone)}</SafeText></span>
                                                                 </div>
                                                             </div>
                                                             <div className="mg-v2-profile-card__badges">

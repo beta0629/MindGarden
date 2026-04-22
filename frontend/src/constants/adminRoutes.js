@@ -12,10 +12,6 @@
 /**
  * {@link ADMIN_ROUTES} 중 `/admin` 부모 아래의 상대 path (슬래시 없음)
  */
-export const ADMIN_NESTED_SEGMENTS = {
-    TENANT_COMMON_CODES: 'tenant-common-codes'
-};
-
 export const ADMIN_ROUTES = {
     /** 어드민 메인 대시보드 (B0KlA) */
     DASHBOARD: '/admin/dashboard',
@@ -35,8 +31,8 @@ export const ADMIN_ROUTES = {
     /** 상담일지 조회 */
     CONSULTATION_LOGS: '/admin/consultation-logs',
     COMMON_CODES: '/admin/common-codes',
-    /** 테넌트 전용 공통코드 (마스터–디테일) */
-    TENANT_COMMON_CODES: `/admin/${ADMIN_NESTED_SEGMENTS.TENANT_COMMON_CODES}`,
+    /** 테넌트 전용 공통코드 — `App.js` 중첩 Route는 `path="tenant-common-codes"` 문자열(verify-quick-action-routes.mjs) */
+    TENANT_COMMON_CODES: '/admin/tenant-common-codes',
     /** 패키지 요금(가격) 관리 */
     PACKAGE_PRICING: '/admin/package-pricing',
     /** 통합 알림·메시지 관리 (단일 페이지) */

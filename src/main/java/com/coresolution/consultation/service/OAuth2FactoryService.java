@@ -112,6 +112,8 @@ public class OAuth2FactoryService {
             
             if (response.isSuccess()) {
                 log.info("{} OAuth2 인증 성공", provider);
+            } else if (response.isRequiresPhoneAccountSelection()) {
+                log.info("{} OAuth2 전화 계정 선택 필요", provider);
             } else {
                 log.error("{} OAuth2 인증 실패: {}", provider, response.getMessage());
             }

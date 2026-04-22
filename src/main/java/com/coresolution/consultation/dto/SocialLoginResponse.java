@@ -62,6 +62,17 @@ public class SocialLoginResponse {
      * 계정 통합 필요 여부
      */
     private boolean requiresAccountIntegration;
+
+    /**
+     * 동일 전화에 관리자·상담사·스태프·내담자 등 서로 다른 역할이 2종 이상 있어 사용자가 계정을 고르기 전에는 소셜 연동하지 않는다.
+     */
+    @lombok.Builder.Default
+    private boolean requiresPhoneAccountSelection = false;
+
+    /**
+     * {@link #requiresPhoneAccountSelection} 일 때만 설정. 완료 API·미리보기에 사용.
+     */
+    private String phoneAccountSelectionToken;
     
     /**
      * 사용자 정보 DTO

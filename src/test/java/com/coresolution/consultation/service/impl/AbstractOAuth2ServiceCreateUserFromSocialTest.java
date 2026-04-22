@@ -1,10 +1,12 @@
 package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.OAuthExistingUserResolution;
 import com.coresolution.consultation.dto.SocialUserInfo;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.User;
@@ -195,8 +197,8 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
     }
 
     @Test
-    @DisplayName("findExistingUserIdForSocialLinkOrLogin: 전화가 이메일보다 우선하고, 전화 일치 시 해당 사용자를 반환한다")
-    void findExistingUserIdForSocialLinkOrLogin_phonePreferredOverEmail() {
+    @DisplayName("resolveExistingUserForSocialLinkOrLogin: 전화가 이메일보다 우선하고, 전화 일치 시 이메일 조회를 하지 않는다")
+    void resolveExistingUserForSocialLinkOrLogin_phonePreferredOverEmail() {
         SocialUserInfo socialUserInfo = SocialUserInfo.builder()
             .providerUserId("sns-new-1")
             .email("sns-email@provider.com")
@@ -214,32 +216,21 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
         phoneUser.setId(500L);
         phoneUser.setCreatedAt(LocalDateTime.now());
 
-        User emailUser = User.builder()
-            .userId("email-user")
-            .email("other@tenant.com")
-            .password("p")
-            .name("n2")
-            .role(UserRole.CLIENT)
-            .build();
-        emailUser.setId(501L);
-        emailUser.setCreatedAt(LocalDateTime.now());
-
         when(userService.findAllUsersMatchingPhoneInCurrentTenant(eq("01011112222")))
             .thenReturn(Collections.singletonList(phoneUser));
-        when(userService.findAllUsersMatchingEmailInCurrentTenant(eq("sns-email@provider.com")))
-            .thenReturn(Collections.singletonList(emailUser));
 
-        Long found = oauth2Service.findExistingUserIdForSocialLinkOrLogin(socialUserInfo);
+        OAuthExistingUserResolution found =
+            oauth2Service.resolveExistingUserForSocialLinkOrLogin(socialUserInfo);
 
-        assertThat(found).isEqualTo(500L);
-        InOrder order = inOrder(userService);
-        order.verify(userService).findAllUsersMatchingPhoneInCurrentTenant(eq("01011112222"));
-        order.verify(userService).findAllUsersMatchingEmailInCurrentTenant(eq("sns-email@provider.com"));
+        assertThat(found.getExistingUserId()).isEqualTo(500L);
+        assertThat(found.isRequiresPhoneAccountSelection()).isFalse();
+        verify(userService).findAllUsersMatchingPhoneInCurrentTenant(eq("01011112222"));
+        verify(userService, never()).findAllUsersMatchingEmailInCurrentTenant(anyString());
     }
 
     @Test
-    @DisplayName("findExistingUserIdForSocialLinkOrLogin: 전화 미일치 시 이메일로 조회한다")
-    void findExistingUserIdForSocialLinkOrLogin_fallsBackToEmailWhenNoPhoneMatch() {
+    @DisplayName("resolveExistingUserForSocialLinkOrLogin: 전화 미일치 시 이메일로 조회한다")
+    void resolveExistingUserForSocialLinkOrLogin_fallsBackToEmailWhenNoPhoneMatch() {
         SocialUserInfo socialUserInfo = SocialUserInfo.builder()
             .providerUserId("sns-new-2")
             .email("only@email.com")
@@ -260,10 +251,162 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
         when(userService.findAllUsersMatchingEmailInCurrentTenant(eq("only@email.com")))
             .thenReturn(Collections.singletonList(emailUser));
 
-        Long found = oauth2Service.findExistingUserIdForSocialLinkOrLogin(socialUserInfo);
+        OAuthExistingUserResolution found =
+            oauth2Service.resolveExistingUserForSocialLinkOrLogin(socialUserInfo);
 
-        assertThat(found).isEqualTo(600L);
+        assertThat(found.getExistingUserId()).isEqualTo(600L);
         verify(userService, never()).findAllUsersMatchingPhoneInCurrentTenant(anyString());
+    }
+
+    @Test
+    @DisplayName("resolveExistingUserForSocialLinkOrLogin: 동일 전화에 상담사·내담자가 있으면 선택 필요(이메일 폴백 없음)")
+    void resolveExistingUserForSocialLinkOrLogin_phoneAmbiguousConsultantAndClient() {
+        SocialUserInfo socialUserInfo = SocialUserInfo.builder()
+            .providerUserId("sns-new-3")
+            .email("overlap@provider.com")
+            .phone("010-2222-3333")
+            .build();
+        socialUserInfo.normalizeData();
+
+        User consultant = User.builder()
+            .userId("c1")
+            .email("c@t.com")
+            .password("p")
+            .name("n")
+            .role(UserRole.CONSULTANT)
+            .build();
+        consultant.setId(801L);
+        consultant.setCreatedAt(LocalDateTime.now());
+
+        User client = User.builder()
+            .userId("cl1")
+            .email("cl@t.com")
+            .password("p")
+            .name("n2")
+            .role(UserRole.CLIENT)
+            .build();
+        client.setId(802L);
+        client.setCreatedAt(LocalDateTime.now());
+
+        when(userService.findAllUsersMatchingPhoneInCurrentTenant(eq("01022223333")))
+            .thenReturn(Arrays.asList(consultant, client));
+
+        OAuthExistingUserResolution res = oauth2Service.resolveExistingUserForSocialLinkOrLogin(socialUserInfo);
+
+        assertThat(res.isRequiresPhoneAccountSelection()).isTrue();
+        assertThat(res.getPhoneMatchCandidateUserIds()).containsExactlyInAnyOrder(801L, 802L);
+        assertThat(res.getExistingUserId()).isNull();
+        verify(userService, never()).findAllUsersMatchingEmailInCurrentTenant(anyString());
+    }
+
+    @Test
+    @DisplayName("resolveExistingUserForSocialLinkOrLogin: 동일 전화에 관리자·상담사·내담자가 있으면 선택 필요")
+    void resolveExistingUserForSocialLinkOrLogin_phoneAmbiguousAdminConsultantAndClient() {
+        SocialUserInfo socialUserInfo = SocialUserInfo.builder()
+            .providerUserId("sns-new-4")
+            .email("triple@provider.com")
+            .phone("010-5555-6666")
+            .build();
+        socialUserInfo.normalizeData();
+
+        User admin = User.builder()
+            .userId("adm1")
+            .email("a@t.com")
+            .password("p")
+            .name("na")
+            .role(UserRole.ADMIN)
+            .build();
+        admin.setId(901L);
+        admin.setCreatedAt(LocalDateTime.now());
+
+        User consultant = User.builder()
+            .userId("c2")
+            .email("c@t.com")
+            .password("p")
+            .name("nc")
+            .role(UserRole.CONSULTANT)
+            .build();
+        consultant.setId(902L);
+        consultant.setCreatedAt(LocalDateTime.now());
+
+        User client = User.builder()
+            .userId("cl2")
+            .email("cl@t.com")
+            .password("p")
+            .name("ncl")
+            .role(UserRole.CLIENT)
+            .build();
+        client.setId(903L);
+        client.setCreatedAt(LocalDateTime.now());
+
+        when(userService.findAllUsersMatchingPhoneInCurrentTenant(eq("01055556666")))
+            .thenReturn(Arrays.asList(admin, consultant, client));
+
+        OAuthExistingUserResolution res = oauth2Service.resolveExistingUserForSocialLinkOrLogin(socialUserInfo);
+
+        assertThat(res.isRequiresPhoneAccountSelection()).isTrue();
+        assertThat(res.getPhoneMatchCandidateUserIds()).containsExactlyInAnyOrder(901L, 902L, 903L);
+        assertThat(res.getExistingUserId()).isNull();
+        verify(userService, never()).findAllUsersMatchingEmailInCurrentTenant(anyString());
+    }
+
+    @Test
+    @DisplayName("resolveExistingUserForSocialLinkOrLogin: 동일 전화에 내담자만 2명이면 자동 1명 확정")
+    void resolveExistingUserForSocialLinkOrLogin_phoneTwoClients_autoSelectOne() {
+        SocialUserInfo socialUserInfo = SocialUserInfo.builder()
+            .providerUserId("sns-new-5")
+            .email("two-cli@p.com")
+            .phone("010-6666-7777")
+            .build();
+        socialUserInfo.normalizeData();
+
+        User client1 = User.builder()
+            .userId("cl-a")
+            .email("a@t.com")
+            .password("p")
+            .name("n1")
+            .role(UserRole.CLIENT)
+            .build();
+        client1.setId(1001L);
+        client1.setCreatedAt(LocalDateTime.now().minusDays(1));
+
+        User client2 = User.builder()
+            .userId("cl-b")
+            .email("b@t.com")
+            .password("p")
+            .name("n2")
+            .role(UserRole.CLIENT)
+            .build();
+        client2.setId(1002L);
+        client2.setCreatedAt(LocalDateTime.now());
+
+        when(userService.findAllUsersMatchingPhoneInCurrentTenant(eq("01066667777")))
+            .thenReturn(Arrays.asList(client1, client2));
+
+        OAuthExistingUserResolution res = oauth2Service.resolveExistingUserForSocialLinkOrLogin(socialUserInfo);
+
+        assertThat(res.isRequiresPhoneAccountSelection()).isFalse();
+        assertThat(res.getExistingUserId()).isNotNull();
+        verify(userService, never()).findAllUsersMatchingEmailInCurrentTenant(anyString());
+    }
+
+    @Test
+    @DisplayName("resolveExistingUserForSocialLinkOrLogin(oauthAccountLinkMode=true): 전화·이메일 매칭을 하지 않는다")
+    void resolveExistingUserForSocialLinkOrLogin_linkMode_skipsPhoneAndEmail() {
+        SocialUserInfo socialUserInfo = SocialUserInfo.builder()
+            .providerUserId("sns-link-only")
+            .email("only@email.com")
+            .phone("010-7777-8888")
+            .build();
+        socialUserInfo.normalizeData();
+
+        OAuthExistingUserResolution res =
+            oauth2Service.resolveExistingUserForSocialLinkOrLogin(socialUserInfo, true);
+
+        assertThat(res.getExistingUserId()).isNull();
+        assertThat(res.isRequiresPhoneAccountSelection()).isFalse();
+        verify(userService, never()).findAllUsersMatchingPhoneInCurrentTenant(anyString());
+        verify(userService, never()).findAllUsersMatchingEmailInCurrentTenant(anyString());
     }
 
     @Test

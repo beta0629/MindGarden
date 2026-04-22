@@ -11,7 +11,15 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.oauth.OAuthAccountSelectionUserFacingStrings;
 import com.coresolution.consultation.constant.oauth.OAuth2UserFacingMessages;
+import com.coresolution.consultation.dto.OAuthAccountSelectionCompleteData;
+import com.coresolution.consultation.dto.OAuthAccountSelectionCompleteRequest;
+import com.coresolution.consultation.dto.OAuthAccountSelectionPreviewItem;
+import com.coresolution.consultation.dto.OAuthAccountSelectionPreviewRequest;
+import com.coresolution.consultation.dto.OAuthAccountSelectionPreviewResponse;
+import com.coresolution.consultation.dto.OAuthExistingUserResolution;
+import com.coresolution.consultation.dto.OAuthPhoneAccountSelectionClaims;
 import com.coresolution.consultation.dto.SocialLoginResponse;
 import com.coresolution.consultation.dto.SocialUserInfo;
 import com.coresolution.consultation.entity.User;
@@ -23,7 +31,9 @@ import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
+import com.coresolution.core.dto.ApiResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -135,6 +145,67 @@ public class OAuth2Controller extends BaseApiController {
         }
     }
 
+    private String buildAccountSelectionOptionLabel(User user) {
+        if (user == null || user.getId() == null) {
+            return "";
+        }
+        if (user.getRole() == null) {
+            return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_OTHER_FMT, "USER",
+                user.getId());
+        }
+        switch (user.getRole()) {
+            case CONSULTANT:
+                return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_CONSULTANT_FMT,
+                    user.getId());
+            case CLIENT:
+                return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_CLIENT_FMT, user.getId());
+            case ADMIN:
+                return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_ADMIN_FMT, user.getId());
+            case STAFF:
+                return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_STAFF_FMT, user.getId());
+            default:
+                return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_OTHER_FMT,
+                    user.getRole().name(), user.getId());
+        }
+    }
+
+    /**
+     * 동일 전화에 서로 다른 역할(관리자·상담사·스태프·내담자)이 공존할 때 프론트 계정 선택 화면으로 리다이렉트한다. 소셜 연동은 하지 않는다.
+     */
+    private ResponseEntity<?> redirectOAuthPhoneAccountSelection(HttpServletRequest request,
+            HttpSession session, String state, String providerUpper, SocialUserInfo socialUserInfo,
+            OAuthExistingUserResolution resolution) {
+        String selectionTenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        if (selectionTenantId == null || selectionTenantId.isBlank()) {
+            selectionTenantId = resolveTenantIdForRedirect(session, state);
+        }
+        if (selectionTenantId == null || selectionTenantId.isBlank()) {
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+            return ResponseEntity.status(302)
+                .header("Location",
+                    frontendUrl + "/login?error="
+                        + URLEncoder.encode(OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED,
+                            StandardCharsets.UTF_8)
+                        + "&provider=" + URLEncoder.encode(providerUpper, StandardCharsets.UTF_8))
+                .build();
+        }
+        String token = jwtService.generateOAuthPhoneAccountSelectionToken(selectionTenantId, providerUpper,
+            socialUserInfo.getProviderUserId(), resolution.getPhoneMatchCandidateUserIds(), socialUserInfo);
+        String redirectTenantId = resolveTenantIdForRedirect(session, state);
+        if (redirectTenantId == null || redirectTenantId.isBlank()) {
+            redirectTenantId = selectionTenantId;
+        }
+        String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+        String q = "success=true&accountSelection=required&selectionToken="
+            + URLEncoder.encode(token, StandardCharsets.UTF_8) + "&provider="
+            + URLEncoder.encode(providerUpper, StandardCharsets.UTF_8) + "&tenantId="
+            + URLEncoder.encode(selectionTenantId, StandardCharsets.UTF_8);
+        String location = frontendUrl + "/auth/oauth2/callback?" + q;
+        logOAuthRedirectLocationSummary("OAuth phone account selection", location);
+        return ResponseEntity.status(302).header("Location", location).build();
+    }
+
     /**
      * authorize 단계의 mode를 세션에 반영합니다. 기본(파라미터 없음)은 연동 모드 잔존 방지를 위해 세션 키를 제거합니다.
      *
@@ -183,6 +254,51 @@ public class OAuth2Controller extends BaseApiController {
             return raw != null ? String.valueOf(raw).trim() : null;
         }
         return fromRequest;
+    }
+
+    /**
+     * 콜백에서 사용할 OAuth mode를 세션에서 읽기만 합니다(소비하지 않음). {@link #consumeOAuth2EffectiveMode} 전에 링크 모드 분기용.
+     *
+     * @param session HTTP 세션
+     * @param requestMode 콜백 쿼리 파라미터 mode
+     * @param sessionAttrKey provider별 세션 키
+     * @return 정규화된 mode 문자열, 없으면 null
+     */
+    private String peekOAuth2EffectiveMode(HttpSession session, String requestMode, String sessionAttrKey) {
+        String fromRequest =
+                requestMode != null && !requestMode.isBlank() ? requestMode.trim() : null;
+        if (fromRequest != null) {
+            return fromRequest;
+        }
+        if (session != null) {
+            Object raw = session.getAttribute(sessionAttrKey);
+            return raw != null ? String.valueOf(raw).trim() : null;
+        }
+        return null;
+    }
+
+    private boolean isOAuth2CallbackLinkMode(HttpSession session, String requestMode, String sessionAttrKey) {
+        String peek = peekOAuth2EffectiveMode(session, requestMode, sessionAttrKey);
+        return OAUTH2_MODE_LINK.equalsIgnoreCase(peek != null ? peek : "");
+    }
+
+    /**
+     * 마이페이지 SNS 연동 콜백에서 세션 사용자 + SNS 식별자만 담은 성공 응답(로그인 JWT 없음).
+     *
+     * @param sessionUser 현재 로그인 사용자
+     * @param socialUserInfo 정규화된 SNS 프로필
+     * @return 소셜 로그인 응답 형태(후속 분기에서 linkSocialAccountToUser 호출)
+     */
+    private SocialLoginResponse buildSocialLoginResponseForMyPageOAuthLink(User sessionUser,
+            SocialUserInfo socialUserInfo) {
+        return SocialLoginResponse.builder().success(true).requiresSignup(false)
+                .userInfo(SocialLoginResponse.UserInfo.builder().id(sessionUser.getId())
+                        .email(sessionUser.getEmail()).name(sessionUser.getName())
+                        .nickname(sessionUser.getNickname())
+                        .role(sessionUser.getRole() != null ? sessionUser.getRole().getValue() : null)
+                        .profileImageUrl(sessionUser.getProfileImageUrl())
+                        .providerUserId(socialUserInfo.getProviderUserId()).build())
+                .build();
     }
 
     /**
@@ -1404,6 +1520,8 @@ public class OAuth2Controller extends BaseApiController {
             SocialLoginResponse response;
             try {
                 OAuth2Service naverService = oauth2FactoryService.getOAuth2Service("NAVER");
+                final boolean isNaverOAuthAccountLinkMode =
+                        isOAuth2CallbackLinkMode(session, mode, SESSION_ATTR_OAUTH2_NAVER_MODE);
                 if (callbackRedirectUri != null
                         && naverService instanceof com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl) {
                     com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl naverServiceImpl =
@@ -1515,13 +1633,36 @@ public class OAuth2Controller extends BaseApiController {
                     socialUserInfo.setAccessToken(accessToken);
                     socialUserInfo.normalizeData();
 
-                    Long existingUserId = naverService.findExistingUserIdForSocialLinkOrLogin(
-                            socialUserInfo);
-                    if (existingUserId != null) {
+                    OAuthExistingUserResolution resolution =
+                        naverService.resolveExistingUserForSocialLinkOrLogin(socialUserInfo,
+                            isNaverOAuthAccountLinkMode);
+                    if (resolution.isRequiresPhoneAccountSelection() && !isNaverOAuthAccountLinkMode) {
+                        return redirectOAuthPhoneAccountSelection(request, session, state, "NAVER",
+                            socialUserInfo, resolution);
+                    }
+                    Long existingUserId = resolution.getExistingUserId();
+                    if (existingUserId != null && !isNaverOAuthAccountLinkMode) {
                         linkSocialAccountSafely(naverService, existingUserId, socialUserInfo);
                     }
 
-                    if (existingUserId != null) {
+                    if (isNaverOAuthAccountLinkMode) {
+                        User sessionUser = SessionUtils.getCurrentUser(session);
+                        if (sessionUser == null) {
+                            String frontendUrl =
+                                    getTenantAwareFrontendBaseUrlForSnsLinkRedirect(request, session, state, null);
+                            return ResponseEntity.status(302).header("Location",
+                                    buildMypageOAuthLinkLocation(frontendUrl, false, "NAVER",
+                                        OAuth2UserFacingMessages.ERR_LOGIN_SESSION_EXPIRED)).build();
+                        }
+                        if (existingUserId != null && !existingUserId.equals(sessionUser.getId())) {
+                            String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(request, session,
+                                state, sessionUser);
+                            return ResponseEntity.status(302).header("Location",
+                                buildMypageOAuthLinkLocation(frontendUrl, false, "NAVER",
+                                    OAuth2UserFacingMessages.ERR_SOCIAL_ALREADY_LINKED_TO_OTHER_ACCOUNT)).build();
+                        }
+                        response = buildSocialLoginResponseForMyPageOAuthLink(sessionUser, socialUserInfo);
+                    } else if (existingUserId != null) {
                         User existingUser =
                                 loadUserByTenantScopedId(existingUserId, session, state)
                                         .orElse(null);
@@ -1565,6 +1706,8 @@ public class OAuth2Controller extends BaseApiController {
                 // catch 블록에서도 callbackRedirectUri를 사용하여 재시도
                 try {
                     OAuth2Service naverService = oauth2FactoryService.getOAuth2Service("NAVER");
+                    final boolean isNaverOAuthAccountLinkModeRetry =
+                            isOAuth2CallbackLinkMode(session, mode, SESSION_ATTR_OAUTH2_NAVER_MODE);
                     if (callbackRedirectUri != null
                             && naverService instanceof com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl) {
                         com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl naverServiceImpl =
@@ -1578,9 +1721,16 @@ public class OAuth2Controller extends BaseApiController {
                         socialUserInfo.normalizeData();
                         Long existingUserId = null;
                         try {
-                            existingUserId = naverService.findExistingUserIdForSocialLinkOrLogin(
-                                    socialUserInfo);
-                            if (existingUserId != null) {
+                            OAuthExistingUserResolution resolution =
+                                naverService.resolveExistingUserForSocialLinkOrLogin(socialUserInfo,
+                                    isNaverOAuthAccountLinkModeRetry);
+                            if (resolution.isRequiresPhoneAccountSelection()
+                                    && !isNaverOAuthAccountLinkModeRetry) {
+                                return redirectOAuthPhoneAccountSelection(request, session, state,
+                                    "NAVER", socialUserInfo, resolution);
+                            }
+                            existingUserId = resolution.getExistingUserId();
+                            if (existingUserId != null && !isNaverOAuthAccountLinkModeRetry) {
                                 linkSocialAccountSafely(naverService, existingUserId, socialUserInfo);
                             }
                         } catch (Exception findUserException) {
@@ -1588,7 +1738,26 @@ public class OAuth2Controller extends BaseApiController {
                                     findUserException.getMessage());
                         }
                         // 사용자 처리 로직
-                        if (existingUserId != null) {
+                        if (isNaverOAuthAccountLinkModeRetry) {
+                            User sessionUser = SessionUtils.getCurrentUser(session);
+                            if (sessionUser == null) {
+                                String frontendUrl =
+                                        getTenantAwareFrontendBaseUrlForSnsLinkRedirect(request, session, state,
+                                            null);
+                                return ResponseEntity.status(302).header("Location",
+                                    buildMypageOAuthLinkLocation(frontendUrl, false, "NAVER",
+                                        OAuth2UserFacingMessages.ERR_LOGIN_SESSION_EXPIRED)).build();
+                            }
+                            if (existingUserId != null && !existingUserId.equals(sessionUser.getId())) {
+                                String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(request, session,
+                                    state, sessionUser);
+                                return ResponseEntity.status(302).header("Location",
+                                    buildMypageOAuthLinkLocation(frontendUrl, false, "NAVER",
+                                        OAuth2UserFacingMessages.ERR_SOCIAL_ALREADY_LINKED_TO_OTHER_ACCOUNT))
+                                    .build();
+                            }
+                            response = buildSocialLoginResponseForMyPageOAuthLink(sessionUser, socialUserInfo);
+                        } else if (existingUserId != null) {
                             User existingUser =
                                     loadUserByTenantScopedId(existingUserId, session, state)
                                             .orElse(null);
@@ -1649,6 +1818,29 @@ public class OAuth2Controller extends BaseApiController {
 
             log.info("네이버 OAuth2 응답: success={}, requiresSignup={}, message={}",
                     response.isSuccess(), response.isRequiresSignup(), response.getMessage());
+
+            if (response.isRequiresPhoneAccountSelection()) {
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+                if (tenantId == null || tenantId.isBlank()) {
+                    tenantId = redirectTenantId;
+                }
+                String tok = response.getPhoneAccountSelectionToken();
+                if (tok == null || tok.isBlank()) {
+                    return ResponseEntity.status(302)
+                        .header("Location",
+                            frontendUrl + "/login?error="
+                                + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_SYSTEM_ERROR,
+                                    StandardCharsets.UTF_8) + "&provider=NAVER")
+                        .build();
+                }
+                String q = "success=true&accountSelection=required&selectionToken="
+                    + URLEncoder.encode(tok, StandardCharsets.UTF_8) + "&provider=NAVER&tenantId="
+                    + URLEncoder.encode(tenantId != null ? tenantId : "", StandardCharsets.UTF_8);
+                return ResponseEntity.status(302).header("Location", frontendUrl + "/auth/oauth2/callback?" + q)
+                    .build();
+            }
 
             if (response.isSuccess()) {
                 // 회원가입이 필요한 경우 처리 (카카오와 동일한 방식)
@@ -2249,17 +2441,43 @@ public class OAuth2Controller extends BaseApiController {
                 socialUserInfo.setAccessToken(accessToken);
                 socialUserInfo.normalizeData();
 
+                final boolean isKakaoOAuthAccountLinkMode =
+                        isOAuth2CallbackLinkMode(session, mode, SESSION_ATTR_OAUTH2_KAKAO_MODE);
                 Long existingUserId = null;
                 try {
-                    existingUserId = kakaoService.findExistingUserIdForSocialLinkOrLogin(socialUserInfo);
+                    OAuthExistingUserResolution resolution =
+                        kakaoService.resolveExistingUserForSocialLinkOrLogin(socialUserInfo,
+                            isKakaoOAuthAccountLinkMode);
+                    if (resolution.isRequiresPhoneAccountSelection() && !isKakaoOAuthAccountLinkMode) {
+                        return redirectOAuthPhoneAccountSelection(request, session, state, "KAKAO",
+                            socialUserInfo, resolution);
+                    }
+                    existingUserId = resolution.getExistingUserId();
                 } catch (Exception e) {
                     log.warn("⚠️ 카카오 기존 사용자 조회 실패: {}", e.getMessage());
                 }
-                if (existingUserId != null) {
+                if (existingUserId != null && !isKakaoOAuthAccountLinkMode) {
                     linkSocialAccountSafely(kakaoService, existingUserId, socialUserInfo);
                 }
 
-                if (existingUserId == null) {
+                if (isKakaoOAuthAccountLinkMode) {
+                    User sessionUser = SessionUtils.getCurrentUser(session);
+                    if (sessionUser == null) {
+                        String frontendUrl =
+                                getTenantAwareFrontendBaseUrlForSnsLinkRedirect(request, session, state, null);
+                        return ResponseEntity.status(302).header("Location",
+                            buildMypageOAuthLinkLocation(frontendUrl, false, "KAKAO",
+                                OAuth2UserFacingMessages.ERR_LOGIN_SESSION_EXPIRED)).build();
+                    }
+                    if (existingUserId != null && !existingUserId.equals(sessionUser.getId())) {
+                        String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(request, session,
+                            state, sessionUser);
+                        return ResponseEntity.status(302).header("Location",
+                            buildMypageOAuthLinkLocation(frontendUrl, false, "KAKAO",
+                                OAuth2UserFacingMessages.ERR_SOCIAL_ALREADY_LINKED_TO_OTHER_ACCOUNT)).build();
+                    }
+                    response = buildSocialLoginResponseForMyPageOAuthLink(sessionUser, socialUserInfo);
+                } else if (existingUserId == null) {
                     response =
                             SocialLoginResponse.builder().success(false).message(OAuth2UserFacingMessages.MSG_SIGNUP_REQUIRED)
                                     .requiresSignup(true).socialUserInfo(socialUserInfo).build();
@@ -2327,6 +2545,29 @@ public class OAuth2Controller extends BaseApiController {
                                             + "&provider=KAKAO")
                             .build();
                 }
+            }
+
+            if (response.isRequiresPhoneAccountSelection()) {
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+                if (tenantId == null || tenantId.isBlank()) {
+                    tenantId = redirectTenantId;
+                }
+                String tok = response.getPhoneAccountSelectionToken();
+                if (tok == null || tok.isBlank()) {
+                    return ResponseEntity.status(302)
+                        .header("Location",
+                            frontendUrl + "/login?error="
+                                + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_SYSTEM_ERROR,
+                                    StandardCharsets.UTF_8) + "&provider=KAKAO")
+                        .build();
+                }
+                String q = "success=true&accountSelection=required&selectionToken="
+                    + URLEncoder.encode(tok, StandardCharsets.UTF_8) + "&provider=KAKAO&tenantId="
+                    + URLEncoder.encode(tenantId != null ? tenantId : "", StandardCharsets.UTF_8);
+                return ResponseEntity.status(302).header("Location", frontendUrl + "/auth/oauth2/callback?" + q)
+                    .build();
             }
 
             if (response.isSuccess()) {
@@ -2715,6 +2956,120 @@ public class OAuth2Controller extends BaseApiController {
     }
 
     /**
+     * OAuth 전화 계정 선택 미리보기(POST 전용, 토큰은 바디).
+     */
+    @PostMapping("/oauth2/account-selection-preview")
+    public ResponseEntity<ApiResponse<OAuthAccountSelectionPreviewResponse>> oauthAccountSelectionPreview(
+            @RequestBody OAuthAccountSelectionPreviewRequest requestBody) {
+        String previousTenant = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        try {
+            if (requestBody == null || requestBody.getSelectionToken() == null
+                || requestBody.getSelectionToken().isBlank()) {
+                return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(OAuth2UserFacingMessages.ERR_OAUTH_SELECTION_TOKEN_INVALID));
+            }
+            OAuthPhoneAccountSelectionClaims claims;
+            try {
+                claims = jwtService.parseOAuthPhoneAccountSelectionToken(requestBody.getSelectionToken());
+            } catch (Exception e) {
+                log.debug("OAuth selection token parse failed: {}", e.getMessage());
+                return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(OAuth2UserFacingMessages.ERR_OAUTH_SELECTION_TOKEN_INVALID));
+            }
+            if (previousTenant == null || !previousTenant.equals(claims.getTenantId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED));
+            }
+            com.coresolution.core.context.TenantContextHolder.setTenantId(claims.getTenantId());
+            List<OAuthAccountSelectionPreviewItem> items = new java.util.ArrayList<>();
+            for (Long uid : claims.getAllowedUserIds()) {
+                User u = userRepository.findByTenantIdAndId(claims.getTenantId(), uid).orElse(null);
+                if (u == null) {
+                    continue;
+                }
+                String roleStr = u.getRole() != null ? u.getRole().name() : "";
+                items.add(OAuthAccountSelectionPreviewItem.builder().userId(u.getId()).role(roleStr)
+                    .roleDisplayLabel(OAuthAccountSelectionUserFacingStrings.roleDisplayLabel(u.getRole()))
+                    .dashboardGuide(OAuthAccountSelectionUserFacingStrings.dashboardGuideForRole(u.getRole()))
+                    .optionLabel(buildAccountSelectionOptionLabel(u)).build());
+            }
+            OAuthAccountSelectionPreviewResponse resp = OAuthAccountSelectionPreviewResponse.builder()
+                .provider(claims.getProvider()).candidates(items).build();
+            return success(resp);
+        } finally {
+            if (previousTenant != null && !previousTenant.isBlank()) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(previousTenant);
+            } else {
+                com.coresolution.core.context.TenantContextHolder.clear();
+            }
+        }
+    }
+
+    /**
+     * OAuth 전화 계정 선택 완료: 소셜 연동 후 로그인 JWT 발급.
+     */
+    @PostMapping("/oauth2/complete-account-selection")
+    public ResponseEntity<ApiResponse<OAuthAccountSelectionCompleteData>> oauthCompleteAccountSelection(
+            @RequestBody OAuthAccountSelectionCompleteRequest requestBody) {
+        String previousTenant = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        try {
+            if (requestBody == null || requestBody.getSelectionToken() == null
+                || requestBody.getSelectionToken().isBlank() || requestBody.getSelectedUserId() == null) {
+                return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(OAuth2UserFacingMessages.ERR_OAUTH_SELECTION_TOKEN_INVALID));
+            }
+            OAuthPhoneAccountSelectionClaims claims;
+            try {
+                claims = jwtService.parseOAuthPhoneAccountSelectionToken(requestBody.getSelectionToken());
+            } catch (Exception e) {
+                log.debug("OAuth selection token parse failed: {}", e.getMessage());
+                return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(OAuth2UserFacingMessages.ERR_OAUTH_SELECTION_TOKEN_INVALID));
+            }
+            if (previousTenant == null || !previousTenant.equals(claims.getTenantId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED));
+            }
+            if (!claims.getAllowedUserIds().contains(requestBody.getSelectedUserId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(OAuth2UserFacingMessages.ERR_OAUTH_SELECTION_USER_NOT_ALLOWED));
+            }
+            com.coresolution.core.context.TenantContextHolder.setTenantId(claims.getTenantId());
+            OAuth2Service oauth2Service = oauth2FactoryService.getOAuth2Service(claims.getProvider());
+            SocialUserInfo socialUserInfo = claims.toSocialUserInfo();
+            oauth2Service.linkSocialAccountToUser(requestBody.getSelectedUserId(), socialUserInfo);
+            User user = userRepository.findByTenantIdAndId(claims.getTenantId(), requestBody.getSelectedUserId())
+                .orElseThrow(() -> new RuntimeException(OAuth2UserFacingMessages.MSG_USER_NOT_FOUND));
+            java.util.List<String> permissions;
+            try {
+                permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
+            } catch (Exception e) {
+                log.warn("권한 조회 실패 (빈 리스트): userId={}, err={}", user.getId(), e.getMessage());
+                permissions = new java.util.ArrayList<>();
+            }
+            String accessToken = jwtService.generateToken(user, permissions);
+            String refreshToken = jwtService.generateRefreshToken(user);
+            OAuthAccountSelectionCompleteData data = OAuthAccountSelectionCompleteData.builder()
+                .accessToken(accessToken).refreshToken(refreshToken).userId(user.getId()).email(user.getEmail())
+                .name(user.getName()).nickname(user.getNickname())
+                .role(user.getRole() != null ? user.getRole().getValue() : null)
+                .profileImageUrl(user.getProfileImageUrl()).tenantId(user.getTenantId())
+                .providerUserId(claims.getProviderUserId()).build();
+            return success(data);
+        } catch (RuntimeException e) {
+            log.error("OAuth 계정 선택 완료 처리 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(
+                String.format(OAuth2UserFacingMessages.MSG_UNEXPECTED_ERROR_FMT, e.getMessage())));
+        } finally {
+            if (previousTenant != null && !previousTenant.isBlank()) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(previousTenant);
+            } else {
+                com.coresolution.core.context.TenantContextHolder.clear();
+            }
+        }
+    }
+
+    /**
      * 네이티브 SDK 로그인 (모바일 앱 전용) Deep Link 없이 accessToken으로 직접 로그인
      */
     @PostMapping("/social-login")
@@ -2773,7 +3128,17 @@ public class OAuth2Controller extends BaseApiController {
                         OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED));
             }
 
-            Long existingUserId = oauth2Service.findExistingUserIdForSocialLinkOrLogin(socialUserInfo);
+            OAuthExistingUserResolution resolution =
+                oauth2Service.resolveExistingUserForSocialLinkOrLogin(socialUserInfo);
+            if (resolution.isRequiresPhoneAccountSelection()) {
+                String token = jwtService.generateOAuthPhoneAccountSelectionToken(tenantIdForNative,
+                    provider, socialUserInfo.getProviderUserId(),
+                    resolution.getPhoneMatchCandidateUserIds(), socialUserInfo);
+                return ResponseEntity.ok(Map.of("success", false, "requiresPhoneAccountSelection", true,
+                    "selectionToken", token, "tenantId", tenantIdForNative, "provider", provider, "message",
+                    OAuth2UserFacingMessages.MSG_PHONE_ACCOUNT_SELECTION_REQUIRED));
+            }
+            Long existingUserId = resolution.getExistingUserId();
             if (existingUserId != null) {
                 linkSocialAccountSafely(oauth2Service, existingUserId, socialUserInfo);
             }

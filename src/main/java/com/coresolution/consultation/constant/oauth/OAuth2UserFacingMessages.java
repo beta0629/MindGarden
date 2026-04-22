@@ -44,6 +44,12 @@ public final class OAuth2UserFacingMessages {
 
     public static final String ERR_ACCOUNT_LINK_COMPLETE = "연동완료";
 
+    /**
+     * 마이페이지 연동 시 해당 SNS가 이미 다른 사용자 계정에 연결되어 있는 경우.
+     */
+    public static final String ERR_SOCIAL_ALREADY_LINKED_TO_OTHER_ACCOUNT =
+            "이미 다른 계정에 연결된 소셜 계정입니다.";
+
     public static final String ERR_LOGIN_PROCESS_FAILED = "처리실패";
 
     public static final String MSG_SIGNUP_REQUIRED = "간편 회원가입이 필요합니다.";
@@ -66,6 +72,13 @@ public final class OAuth2UserFacingMessages {
     public static final String MSG_KAKAO_ACCOUNT_LOGGED_IN = "카카오 계정으로 로그인되었습니다.";
 
     public static final String MSG_LOGIN_SUCCESS = "로그인 성공";
+
+    public static final String MSG_PHONE_ACCOUNT_SELECTION_REQUIRED =
+            "동일한 휴대폰으로 등록된 계정이 여러 개입니다. 연결할 계정을 선택해주세요.";
+
+    public static final String ERR_OAUTH_SELECTION_TOKEN_INVALID = "계정 선택 토큰이 유효하지 않습니다.";
+
+    public static final String ERR_OAUTH_SELECTION_USER_NOT_ALLOWED = "선택한 계정은 이 로그인에 허용되지 않습니다.";
 
     public static final String OAUTH_TEST_SIGNUP_DISPLAY_NAME = "테스트사용자";
 

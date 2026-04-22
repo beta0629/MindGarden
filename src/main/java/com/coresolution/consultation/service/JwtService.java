@@ -2,11 +2,16 @@ package com.coresolution.consultation.service;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import com.coresolution.consultation.constant.oauth.OAuthJwtClaimKeys;
+import com.coresolution.consultation.constant.oauth.OAuthJwtClaimValues;
+import com.coresolution.consultation.dto.OAuthPhoneAccountSelectionClaims;
+import com.coresolution.consultation.dto.SocialUserInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -38,6 +43,10 @@ public class JwtService {
     
     @Value("${jwt.refresh-expiration:604800000}") // 7일 (밀리초)
     private long refreshExpiration;
+
+    /** OAuth 전화 계정 선택용 단기 JWT TTL (밀리초). 기본 10분. */
+    @Value("${jwt.oauth-phone-account-selection-ttl-ms:600000}")
+    private long oauthPhoneAccountSelectionTtlMs;
     
     /**
      * 사용자 이메일로부터 JWT 토큰 생성 (기본 메서드 - 하위 호환성 유지)
@@ -440,5 +449,105 @@ public class JwtService {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * 동일 전화에 상담사·내담자가 공존할 때 계정 선택용 단기 JWT를 발급한다.
+     * SNS 액세스 토큰은 URL에 넣지 않고 클레임에만 담는다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param provider KAKAO / NAVER 등
+     * @param providerUserId SNS 사용자 ID
+     * @param allowedUserIds 선택 허용 사용자 PK 목록
+     * @param socialUserInfo SNS 프로필(연동 저장용)
+     * @return 서명된 JWT
+     */
+    public String generateOAuthPhoneAccountSelectionToken(String tenantId, String provider,
+            String providerUserId, List<Long> allowedUserIds, SocialUserInfo socialUserInfo) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(OAuthJwtClaimKeys.PURPOSE, OAuthJwtClaimValues.PURPOSE_OAUTH_PHONE_ACCOUNT_SELECTION);
+        claims.put(OAuthJwtClaimKeys.TENANT_ID, tenantId);
+        claims.put(OAuthJwtClaimKeys.PROVIDER, provider);
+        claims.put(OAuthJwtClaimKeys.PROVIDER_USER_ID, providerUserId);
+        claims.put(OAuthJwtClaimKeys.ALLOWED_USER_IDS, allowedUserIds);
+        if (socialUserInfo != null) {
+            if (socialUserInfo.getAccessToken() != null) {
+                claims.put(OAuthJwtClaimKeys.SNS_ACCESS_TOKEN, socialUserInfo.getAccessToken());
+            }
+            if (socialUserInfo.getEmail() != null) {
+                claims.put(OAuthJwtClaimKeys.SNS_EMAIL, socialUserInfo.getEmail());
+            }
+            if (socialUserInfo.getName() != null) {
+                claims.put(OAuthJwtClaimKeys.SNS_NAME, socialUserInfo.getName());
+            }
+            if (socialUserInfo.getNickname() != null) {
+                claims.put(OAuthJwtClaimKeys.SNS_NICKNAME, socialUserInfo.getNickname());
+            }
+            if (socialUserInfo.getPhone() != null) {
+                claims.put(OAuthJwtClaimKeys.SNS_PHONE, socialUserInfo.getPhone());
+            }
+            if (socialUserInfo.getProfileImageUrl() != null) {
+                claims.put(OAuthJwtClaimKeys.SNS_PROFILE_IMAGE_URL, socialUserInfo.getProfileImageUrl());
+            }
+        }
+        return buildToken(claims, "oauth-phone-account-selection", oauthPhoneAccountSelectionTtlMs);
+    }
+
+    /**
+     * 계정 선택 JWT 파싱 및 purpose 검증.
+     *
+     * @param jwtToken JWT 문자열
+     * @return 클레임 DTO
+     * @throws IllegalArgumentException purpose 불일치·필수 클레임 누락
+     */
+    public OAuthPhoneAccountSelectionClaims parseOAuthPhoneAccountSelectionToken(String jwtToken) {
+        Claims claims = extractAllClaims(jwtToken);
+        String purpose = claims.get(OAuthJwtClaimKeys.PURPOSE, String.class);
+        if (!OAuthJwtClaimValues.PURPOSE_OAUTH_PHONE_ACCOUNT_SELECTION.equals(purpose)) {
+            throw new IllegalArgumentException("Invalid OAuth selection token purpose");
+        }
+        String tenantId = claims.get(OAuthJwtClaimKeys.TENANT_ID, String.class);
+        String provider = claims.get(OAuthJwtClaimKeys.PROVIDER, String.class);
+        String providerUserId = claims.get(OAuthJwtClaimKeys.PROVIDER_USER_ID, String.class);
+        if (tenantId == null || tenantId.isBlank() || provider == null || provider.isBlank()
+                || providerUserId == null || providerUserId.isBlank()) {
+            throw new IllegalArgumentException("Missing required OAuth selection claims");
+        }
+        List<Long> allowed = readLongIdList(claims.get(OAuthJwtClaimKeys.ALLOWED_USER_IDS));
+        if (allowed == null || allowed.isEmpty()) {
+            throw new IllegalArgumentException("allowedUserIds missing");
+        }
+        return OAuthPhoneAccountSelectionClaims.builder()
+            .tenantId(tenantId)
+            .provider(provider)
+            .providerUserId(providerUserId)
+            .allowedUserIds(allowed)
+            .snsAccessToken(claims.get(OAuthJwtClaimKeys.SNS_ACCESS_TOKEN, String.class))
+            .snsEmail(claims.get(OAuthJwtClaimKeys.SNS_EMAIL, String.class))
+            .snsName(claims.get(OAuthJwtClaimKeys.SNS_NAME, String.class))
+            .snsNickname(claims.get(OAuthJwtClaimKeys.SNS_NICKNAME, String.class))
+            .snsPhone(claims.get(OAuthJwtClaimKeys.SNS_PHONE, String.class))
+            .snsProfileImageUrl(claims.get(OAuthJwtClaimKeys.SNS_PROFILE_IMAGE_URL, String.class))
+            .build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Long> readLongIdList(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        if (raw instanceof List) {
+            List<?> list = (List<?>) raw;
+            List<Long> out = new ArrayList<>(list.size());
+            for (Object o : list) {
+                if (o instanceof Number) {
+                    out.add(((Number) o).longValue());
+                } else if (o != null) {
+                    out.add(Long.parseLong(o.toString()));
+                }
+            }
+            return out;
+        }
+        return null;
     }
 }

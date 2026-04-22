@@ -28,7 +28,9 @@ import {
   MYPAGE_TAB_ORDER,
   MYPAGE_TAB_LABELS,
   MYPAGE_TAB_KEYS,
-  getSocialProviderLabel
+  getSocialProviderLabel,
+  MYPAGE_SOCIAL_LINK_DEFAULT_ERROR,
+  MYPAGE_SOCIAL_LINK_DEFAULT_SUCCESS
 } from '../../constants/mypageUi';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -213,36 +215,43 @@ const MyPage = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    let linkStatus = urlParams.get('link');
-    const provider = urlParams.get('provider');
-    let message = urlParams.get('message');
-    const legacySuccessParam = urlParams.get('success');
+    let linkStatus = searchParams.get('link');
+    const provider = searchParams.get('provider');
+    const message = searchParams.get('message');
+    const legacySuccessParam = searchParams.get('success');
 
-    // 레거시: 백엔드가 /mypage?success=연동완료&provider= 형태로내던 경우 (link·message 없음)
     if (!linkStatus && legacySuccessParam && provider
         && (provider === 'KAKAO' || provider === 'NAVER')) {
       linkStatus = 'success';
-      message = message || legacySuccessParam;
     }
 
-    if (linkStatus && provider && message) {
-      if (linkStatus === 'success') {
-        notificationManager.show(
-          `${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동이 완료되었습니다.`,
-          'success'
-        );
-        loadSocialAccounts();
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } else if (linkStatus === 'error') {
-        notificationManager.show(
-          `${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동 실패: ${message}`,
-          'error'
-        );
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
+    if (!linkStatus || !provider) {
+      return;
     }
-  }, [loadSocialAccounts]);
+
+    const providerLabel = getSocialProviderLabel(provider);
+    const messageTrimmed = message != null ? String(message).trim() : '';
+    const legacyTrimmed = legacySuccessParam != null ? String(legacySuccessParam).trim() : '';
+
+    if (linkStatus === 'success') {
+      const text = messageTrimmed.length > 0
+        ? messageTrimmed
+        : (legacyTrimmed.length > 0 ? legacyTrimmed : MYPAGE_SOCIAL_LINK_DEFAULT_SUCCESS(providerLabel));
+      notificationManager.show(text, 'success');
+      loadSocialAccounts();
+    } else if (linkStatus === 'error') {
+      const text = messageTrimmed.length > 0
+        ? `${providerLabel} 계정 연동 실패: ${messageTrimmed}`
+        : MYPAGE_SOCIAL_LINK_DEFAULT_ERROR(providerLabel);
+      notificationManager.show(text, 'error');
+    }
+
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      ['tab', 'link', 'provider', 'message', 'success'].forEach((key) => next.delete(key));
+      return next;
+    }, { replace: true });
+  }, [loadSocialAccounts, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (activeTab === MYPAGE_TAB_KEYS.SOCIAL) {

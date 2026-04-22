@@ -40,6 +40,13 @@ export const getSocialProviderLabel = (provider) => {
   return provider || '소셜';
 };
 
+/** 마이페이지 소셜 연동 콜백 URL에 message가 없을 때 토스트 기본 문구 */
+export const MYPAGE_SOCIAL_LINK_DEFAULT_SUCCESS = (providerLabel) =>
+  `${providerLabel} 계정 연동이 완료되었습니다.`;
+
+export const MYPAGE_SOCIAL_LINK_DEFAULT_ERROR = (providerLabel) =>
+  `${providerLabel} 계정 연동에 실패했습니다.`;
+
 export const ROLE_DISPLAY_LABELS = {
   CLIENT: '내담자',
   CONSULTANT: '상담사',

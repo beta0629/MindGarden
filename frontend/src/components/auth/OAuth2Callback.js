@@ -11,6 +11,19 @@ import AccountIntegrationModal from './AccountIntegrationModal';
 import TenantSelection from './TenantSelection';
 import { API_BASE_URL } from '../../constants/api';
 import { toDisplayString } from '../../utils/safeDisplay';
+import StandardizedApi from '../../utils/standardizedApi';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import {
+  OAUTH_ACCOUNT_SELECTION_PREVIEW_PATH,
+  OAUTH_ACCOUNT_SELECTION_COMPLETE_PATH
+} from '../../constants/oauthAccountSelectionConstants';
+import {
+  OAUTH_ACCOUNT_SELECTION_STRINGS,
+  buildOAuthAccountSelectionCandidatePrimaryLine,
+  buildOAuthAccountSelectionCandidateSecondaryLine
+} from '../../constants/oauthAccountSelectionStrings';
 
 /** OAuth2 리다이렉트 error 쿼리 표시 상한 (민감·과다 노출 완화) */
 const OAUTH2_ERROR_QUERY_DISPLAY_MAX_LEN = 200;
@@ -18,14 +31,69 @@ const OAUTH2_ERROR_QUERY_DISPLAY_MAX_LEN = 200;
 const OAuth2Callback = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, checkSession } = useSession();
+  const { login, checkSession, testLogin } = useSession();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showIntegrationModal, setShowIntegrationModal] = useState(false);
+  const [showPhoneAccountSelectionModal, setShowPhoneAccountSelectionModal] = useState(false);
+  const [phoneAccountCandidates, setPhoneAccountCandidates] = useState([]);
+  const [phoneSelectionToken, setPhoneSelectionToken] = useState(null);
+  const [phoneSelectionTenantId, setPhoneSelectionTenantId] = useState(null);
+  const [phoneSelectionProvider, setPhoneSelectionProvider] = useState(null);
+  const [phoneSelectedUserId, setPhoneSelectedUserId] = useState('');
+  const [phoneAccountSelectionLoading, setPhoneAccountSelectionLoading] = useState(false);
   const [showTenantSelection, setShowTenantSelection] = useState(false);
   const [accessibleTenants, setAccessibleTenants] = useState([]);
   const [socialUserData, setSocialUserData] = useState(null);
+
+  const handlePhoneAccountSelectionConfirm = async() => {
+    if (!phoneSelectionToken || !phoneSelectedUserId || !phoneSelectionTenantId) {
+      return;
+    }
+    setPhoneAccountSelectionLoading(true);
+    try {
+      const raw = await StandardizedApi.post(
+        OAUTH_ACCOUNT_SELECTION_COMPLETE_PATH,
+        {
+          selectionToken: phoneSelectionToken,
+          selectedUserId: parseInt(phoneSelectedUserId, 10)
+        },
+        { headers: { 'X-Tenant-Id': phoneSelectionTenantId } }
+      );
+      const data =
+        raw && typeof raw === 'object' && 'success' in raw && 'data' in raw ? raw.data : raw;
+      if (!raw?.success || !data?.accessToken) {
+        throw new Error(OAUTH_ACCOUNT_SELECTION_STRINGS.COMPLETE_FAILED);
+      }
+      const userInfo = {
+        id: data.userId,
+        email: data.email,
+        name: data.name,
+        nickname: data.nickname,
+        role: data.role,
+        profileImageUrl: data.profileImageUrl,
+        tenantId: data.tenantId,
+        provider: phoneSelectionProvider
+      };
+      await testLogin(userInfo, {
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken
+      });
+      setShowPhoneAccountSelectionModal(false);
+      notificationManager.show(`${phoneSelectionProvider} 소셜 로그인에 성공했습니다!`, 'success');
+      const authResponse = { success: true, user: userInfo, currentTenantRole: null };
+      await redirectToDynamicDashboard(authResponse, navigate);
+    } catch (e) {
+      console.error(e);
+      notificationManager.show(
+        e?.message || OAUTH_ACCOUNT_SELECTION_STRINGS.COMPLETE_FAILED,
+        'error'
+      );
+    } finally {
+      setPhoneAccountSelectionLoading(false);
+    }
+  };
 
   useEffect(() => {
     const handleOAuth2Callback = async() => {
@@ -93,6 +161,50 @@ const OAuth2Callback = () => {
           setError('OAuth2 제공자 정보를 찾을 수 없습니다.');
           notificationManager.show('OAuth2 제공자 정보를 찾을 수 없습니다.', 'error');
           setTimeout(() => navigate('/login'), 3000);
+          return;
+        }
+
+        const accountSelection = searchParams.get('accountSelection');
+        const selectionToken = searchParams.get('selectionToken');
+        if (
+          oauthSucceeded &&
+          accountSelection === 'required' &&
+          selectionToken &&
+          tenantId
+        ) {
+          setPhoneSelectionToken(selectionToken);
+          setPhoneSelectionTenantId(tenantId);
+          setPhoneSelectionProvider(provider);
+          try {
+            const previewRaw = await StandardizedApi.post(
+              OAUTH_ACCOUNT_SELECTION_PREVIEW_PATH,
+              { selectionToken },
+              { headers: { 'X-Tenant-Id': tenantId } }
+            );
+            const preview =
+              previewRaw &&
+              typeof previewRaw === 'object' &&
+              'success' in previewRaw &&
+              'data' in previewRaw
+                ? previewRaw.data
+                : previewRaw;
+            if (!previewRaw?.success || !preview?.candidates?.length) {
+              throw new Error(OAUTH_ACCOUNT_SELECTION_STRINGS.LOAD_PREVIEW_FAILED);
+            }
+            setPhoneAccountCandidates(preview.candidates);
+            setPhoneSelectedUserId(String(preview.candidates[0].userId));
+            setShowPhoneAccountSelectionModal(true);
+            notificationManager.show(OAUTH_ACCOUNT_SELECTION_STRINGS.MODAL_TITLE, 'info');
+          } catch (previewErr) {
+            console.error('OAuth 계정 선택 미리보기 실패:', previewErr);
+            const msg =
+              previewErr?.message || OAUTH_ACCOUNT_SELECTION_STRINGS.LOAD_PREVIEW_FAILED;
+            setError(msg);
+            notificationManager.show(msg, 'error');
+            setTimeout(() => navigate('/login'), 3000);
+          } finally {
+            setIsProcessing(false);
+          }
           return;
         }
         
@@ -377,6 +489,70 @@ const OAuth2Callback = () => {
   }
   
   // 테넌트 선택 화면 표시
+  if (showPhoneAccountSelectionModal && phoneAccountCandidates.length > 0) {
+    return (
+      <UnifiedModal
+        isOpen
+        onClose={() => {
+          if (!phoneAccountSelectionLoading) {
+            navigate('/login');
+          }
+        }}
+        title={OAUTH_ACCOUNT_SELECTION_STRINGS.MODAL_TITLE}
+        subtitle={OAUTH_ACCOUNT_SELECTION_STRINGS.MODAL_SUBTITLE}
+        size="medium"
+        variant="confirm"
+        showCloseButton={!phoneAccountSelectionLoading}
+        backdropClick={!phoneAccountSelectionLoading}
+        loading={phoneAccountSelectionLoading}
+        actions={(
+          <MGButton
+            type="button"
+            variant="primary"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: phoneAccountSelectionLoading
+            })}
+            onClick={handlePhoneAccountSelectionConfirm}
+            disabled={phoneAccountSelectionLoading || !phoneSelectedUserId}
+            loading={phoneAccountSelectionLoading}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            preventDoubleClick
+          >
+            {OAUTH_ACCOUNT_SELECTION_STRINGS.CONFIRM}
+          </MGButton>
+        )}
+      >
+        <div className="mg-v2-radio-group">
+          {phoneAccountCandidates.map((c) => {
+            const secondaryLine = buildOAuthAccountSelectionCandidateSecondaryLine(c);
+            return (
+              <label key={c.userId} className="mg-v2-radio-option">
+                <input
+                  type="radio"
+                  className="mg-v2-radio"
+                  name="oauthPhoneAccount"
+                  value={String(c.userId)}
+                  checked={phoneSelectedUserId === String(c.userId)}
+                  onChange={() => setPhoneSelectedUserId(String(c.userId))}
+                />
+                <div className="mg-v2-radio-content">
+                  <span className="mg-v2-radio-label">
+                    {buildOAuthAccountSelectionCandidatePrimaryLine(c)}
+                  </span>
+                  {secondaryLine ? (
+                    <span className="mg-v2-text-secondary">{secondaryLine}</span>
+                  ) : null}
+                </div>
+              </label>
+            );
+          })}
+        </div>
+      </UnifiedModal>
+    );
+  }
+
   if (showTenantSelection) {
     return (
       <TenantSelection

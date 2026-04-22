@@ -125,3 +125,11 @@ tmp_error_tail*.txt
 # 로컬 산출물만 숨기려면 필요 시 아래 주석 해제.
 # tests/e2e/test-results/
 # tests/e2e/test-reports/
+
+# 로컬/CI 산출물 — 저장소 비추적
+test-reports/hardcoding/*.json
+tests/e2e/test-reports/**
+!tests/e2e/test-reports/.gitkeep
+temp/cache/
+temp/backups/
+temp/onboarding-backup-*/

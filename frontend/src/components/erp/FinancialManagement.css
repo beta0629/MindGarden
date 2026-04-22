@@ -71,6 +71,34 @@
   line-height: var(--mg-line-height-snug, 1.4);
 }
 
+/* 거래 탭 2행: 검색 넓게, 액션은 오른쪽 고정 폭 */
+.erp-system .mg-financial-filter-secondary {
+  align-items: flex-end;
+}
+
+.erp-system .mg-financial-filter-secondary .mg-financial-filter-search {
+  flex: 1 1 50%;
+  min-width: min(100%, 14rem);
+  max-width: 100%;
+}
+
+@media (min-width: 960px) {
+  .erp-system .mg-financial-filter-secondary .mg-financial-filter-search {
+    flex: 1 1 65%;
+    min-width: 22rem;
+  }
+}
+
+.erp-system .mg-financial-filter-secondary .mg-financial-filter-search .mg-v2-form-select {
+  width: 100%;
+  min-width: 0;
+}
+
+.erp-system .mg-financial-filter-secondary .mg-financial-filter-actions {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
 /* 월별 세금 요약: 신고·납부 참고 안내 */
 .mg-financial-tax-filing-notice {
   margin: 0 0 var(--spacing-md);

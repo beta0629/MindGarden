@@ -85,7 +85,6 @@ import {
   FM_FILTER,
   FM_FILTER_TX_TYPE_OPTIONS,
   FM_FILTER_CATEGORY_OPTIONS,
-  FM_FILTER_RELATED_ENTITY_OPTIONS,
   FM_LOADING,
   FM_RETRY,
   FM_TAX_SUMMARY,
@@ -379,6 +378,34 @@ const parseDateRangeFromSearch = (search) => {
 };
 
 /**
+ * 거래 검색(플레이스홀더: 상담사명·내담자명·설명 등).
+ * Admin 재무 목록 API는 search 파라미터를 사용하지 않으므로 클라이언트에서만 필터한다.
+ *
+ * @param {Record<string, unknown>} transaction
+ * @param {string} searchLower trim·toLowerCase 된 검색어; 빈 문자열이면 항상 true
+ * @returns {boolean}
+ */
+const financialTransactionMatchesSearchText = (transaction, searchLower) => {
+  if (!searchLower) {
+    return true;
+  }
+  const vals = [
+    transaction?.description,
+    transaction?.category,
+    transaction?.subcategory,
+    transaction?.consultantName,
+    transaction?.clientName,
+    transaction?.mappingPackageName,
+    transaction?.mappingStatusDisplay,
+    transaction?.mappingPaymentStatusDisplay,
+    transaction?.remarks,
+    transaction?.transactionTypeDisplayName,
+    transaction?.statusDisplayName
+  ];
+  return vals.some((v) => v != null && String(v).toLowerCase().includes(searchLower));
+};
+
+/**
  * ERP 재무 관리 페이지
  * 재무 거래 및 회계 관리
  */
@@ -401,7 +428,6 @@ const FinancialManagement = () => {
   const [filters, setFilters] = useState({
     transactionType: 'ALL', // ALL, INCOME, EXPENSE
     category: 'ALL', // ALL, CONSULTATION, SALARY, etc.
-    relatedEntityType: 'ALL', // ALL, CONSULTANT_CLIENT_MAPPING, PAYMENT, etc.
     dateRange: parseDateRangeFromSearch(location.search), // ALL, TODAY, WEEK, MONTH, CUSTOM
     /** 월간(MONTH) 조회 월 — YYYY-MM */
     monthYm: parseMonthFromSearch(location.search) || getCurrentMonthYm(),
@@ -451,8 +477,6 @@ const FinancialManagement = () => {
   const [transactionViewMode, setTransactionViewMode] = useState('card');
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
-  
   const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
     transaction: null
@@ -613,7 +637,6 @@ const FinancialManagement = () => {
       if (endDate) params.endDate = endDate;
       if (filters.transactionType !== 'ALL') params.transactionType = filters.transactionType;
       if (filters.category !== 'ALL') params.category = filters.category;
-      if (filters.relatedEntityType !== 'ALL') params.relatedEntityType = filters.relatedEntityType;
       if (filters.searchText) params.search = filters.searchText;
       if (user?.branchCode) params.branchCode = user.branchCode;
 
@@ -625,11 +648,9 @@ const FinancialManagement = () => {
         let filteredTransactions = response || [];
         
         if (filters.searchText) {
-          const searchLower = filters.searchText.toLowerCase();
-          filteredTransactions = filteredTransactions.filter(transaction => 
-            transaction.description?.toLowerCase().includes(searchLower) ||
-            transaction.category?.toLowerCase().includes(searchLower) ||
-            transaction.subcategory?.toLowerCase().includes(searchLower)
+          const searchLower = filters.searchText.trim().toLowerCase();
+          filteredTransactions = filteredTransactions.filter((transaction) =>
+            financialTransactionMatchesSearchText(transaction, searchLower)
           );
         }
         
@@ -648,11 +669,9 @@ const FinancialManagement = () => {
           let filteredTransactions = response.data || [];
 
           if (filters.searchText) {
-            const searchLower = filters.searchText.toLowerCase();
-            filteredTransactions = filteredTransactions.filter(transaction => 
-              transaction.description?.toLowerCase().includes(searchLower) ||
-              transaction.category?.toLowerCase().includes(searchLower) ||
-              transaction.subcategory?.toLowerCase().includes(searchLower)
+            const searchLower = filters.searchText.trim().toLowerCase();
+            filteredTransactions = filteredTransactions.filter((transaction) =>
+              financialTransactionMatchesSearchText(transaction, searchLower)
             );
           }
           
@@ -1432,8 +1451,8 @@ const FinancialManagement = () => {
                       </div>
                     )}
                     secondaryRow={(
-                      <div className="mg-v2-filter-grid mg-v2-filter-grid--row2">
-                        <div className="mg-v2-form-group">
+                      <div className="mg-v2-filter-grid mg-v2-filter-grid--row2 mg-financial-filter-secondary">
+                        <div className="mg-v2-form-group mg-financial-filter-search">
                           <label className="mg-v2-form-label" htmlFor="financial-filter-search">
                             {FM_FILTER.SEARCH}
                           </label>
@@ -1449,22 +1468,6 @@ const FinancialManagement = () => {
                           />
                         </div>
                         <div className="mg-v2-form-group mg-financial-filter-actions">
-                          <MGButton
-                            type="button"
-                            variant="secondary"
-                            size="small"
-                            className={buildErpMgButtonClassName({
-                              variant: 'secondary',
-                              size: 'sm',
-                              loading: false
-                            })}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            onClick={() => setShowAdvancedFilter((v) => !v)}
-                            disabled={silentListRefreshing}
-                            preventDoubleClick={false}
-                          >
-                            {showAdvancedFilter ? FM_FILTER.ADVANCED_TOGGLE_COLLAPSE : FM_FILTER.ADVANCED_TOGGLE_EXPAND}
-                          </MGButton>
                           {/* 필터 상태만 초기화(전역 재조회 트리거 아님) — loading 미부여 */}
                           <MGButton
                             type="button"
@@ -1480,7 +1483,6 @@ const FinancialManagement = () => {
                               setFilters({
                                 transactionType: 'ALL',
                                 category: 'ALL',
-                                relatedEntityType: 'ALL',
                                 dateRange: 'MONTH',
                                 monthYm: getCurrentMonthYm(),
                                 startDate: '',
@@ -1510,34 +1512,6 @@ const FinancialManagement = () => {
                         </div>
                       </div>
                     )}
-                    expandedSlot={showAdvancedFilter ? (
-                      <div className="mg-v2-form-group">
-                        <span className="mg-v2-form-label">{FM_FILTER.RELATED_TYPE}</span>
-                        <div className="mg-v2-tag-group">
-                          {FM_FILTER_RELATED_ENTITY_OPTIONS.map((opt) => (
-                            <MGButton
-                              key={opt.value}
-                              type="button"
-                              variant="outline"
-                              size="small"
-                              className={buildErpMgButtonClassName({
-                                variant: 'outline',
-                                size: 'sm',
-                                loading: false,
-                                className: `mg-v2-tag ${filters.relatedEntityType === opt.value ? 'mg-v2-tag--selected' : ''}`
-                              })}
-                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                              onClick={() =>
-                                setFilters((prev) => ({ ...prev, relatedEntityType: opt.value }))
-                              }
-                              preventDoubleClick={false}
-                            >
-                              {opt.label}
-                            </MGButton>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
                   />
                   </div>
                 ) : null

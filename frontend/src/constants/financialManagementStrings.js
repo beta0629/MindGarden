@@ -116,11 +116,8 @@ export const FM_FILTER = {
   CATEGORY: '카테고리',
   SEARCH: '검색',
   SEARCH_PLACEHOLDER: '상담사명, 내담자명, 설명 검색...',
-  ADVANCED_TOGGLE_EXPAND: '고급 필터 펼치기',
-  ADVANCED_TOGGLE_COLLAPSE: '고급 필터 접기',
   RESET: '필터 초기화',
-  SUBMIT: '검색',
-  RELATED_TYPE: '연동 유형'
+  SUBMIT: '검색'
 };
 
 export const FM_FILTER_TX_TYPE_OPTIONS = [
@@ -137,15 +134,6 @@ export const FM_FILTER_CATEGORY_OPTIONS = [
   { value: 'UTILITY', label: '관리비' },
   { value: 'OFFICE_SUPPLIES', label: '사무용품' },
   { value: 'OTHER', label: '기타' }
-];
-
-export const FM_FILTER_RELATED_ENTITY_OPTIONS = [
-  { value: 'ALL', label: '전체' },
-  { value: 'CONSULTANT_CLIENT_MAPPING', label: '매핑연동' },
-  { value: 'CONSULTANT_CLIENT_MAPPING_REFUND', label: '환불처리' },
-  { value: 'PAYMENT', label: '결제' },
-  { value: 'SALARY_CALCULATION', label: '급여' },
-  { value: 'PURCHASE_REQUEST', label: '구매' }
 ];
 
 export const FM_LOADING = {

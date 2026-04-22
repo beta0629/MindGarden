@@ -5,6 +5,7 @@ import java.util.Map;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSocialAccount;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
+import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
@@ -112,24 +113,47 @@ public class ClientSocialAccountController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("테넌트를 확인할 수 없습니다.");
         }
 
+        final String providerKey = SocialProvider.normalize(provider);
+
         if (accountId != null) {
-            // accountId로 직접 조회
+            // accountId + tenant (표준)
             var optional = userSocialAccountRepository.findByTenantIdAndId(tenantId, accountId);
             if (optional.isPresent()) {
                 socialAccount = optional.get();
-                // 본인의 계정인지 확인
                 if (!socialAccount.getUser().getId().equals(currentUser.getId())) {
-                    log.error("❌ 다른 사용자의 소셜 계정에 접근 시도: userId={}, accountId={}", 
+                    log.error("❌ 다른 사용자의 소셜 계정에 접근 시도: userId={}, accountId={}",
                         currentUser.getId(), accountId);
                     throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
                 }
+            } else {
+                // 프로필 GET(/profile/social-accounts)은 userId만 필터하므로, 행의 tenant_id가 비어 있거나
+                // 세션 tenant와 불일치해도 목록에는 나올 수 있음 → PK + 소유자만 검증해 해제 허용
+                var byId = userSocialAccountRepository.findById(accountId);
+                if (byId.isPresent()) {
+                    UserSocialAccount candidate = byId.get();
+                    if (candidate.getUser() != null
+                        && candidate.getUser().getId().equals(currentUser.getId())
+                        && !Boolean.TRUE.equals(candidate.getIsDeleted())) {
+                        socialAccount = candidate;
+                        log.info("🔧 소셜 계정 해제: tenant PK 조회 실패 후 id+소유자로 매칭 accountId={}", accountId);
+                    }
+                }
             }
-        } else if (provider != null) {
-            // provider로 조회 - 사용자 객체로 조회
+        }
+        if (socialAccount == null && providerKey != null) {
+            // accountId 미전달 또는 위 조회 실패 시 provider로 재시도 (else-if 금지: accountId 경로 실패 후에도 실행)
             var optional = userSocialAccountRepository.findByTenantIdAndUserAndProviderAndIsDeletedFalse(
-                tenantId, currentUser, provider);
+                tenantId, currentUser, providerKey);
             if (optional.isPresent()) {
                 socialAccount = optional.get();
+            }
+        }
+        if (socialAccount == null && providerKey != null) {
+            // tenant_id 불일치·NULL 행: 소유자 + provider만으로 조회 (프로필 GET과 동일하게 목록에 보이는 행 해제)
+            var optional = userSocialAccountRepository.findActiveByUserIdAndProvider(currentUser.getId(), providerKey);
+            if (optional.isPresent()) {
+                socialAccount = optional.get();
+                log.info("🔧 소셜 계정 해제: findActiveByUserIdAndProvider로 매칭 provider={}", providerKey);
             }
         }
 

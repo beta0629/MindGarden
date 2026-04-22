@@ -105,6 +105,14 @@ public interface UserSocialAccountRepository extends JpaRepository<UserSocialAcc
     @Query("SELECT usa FROM UserSocialAccount usa WHERE usa.tenantId = :tenantId AND usa.user = :user AND usa.provider = :provider AND usa.isDeleted = false")
     Optional<UserSocialAccount> findByTenantIdAndUserAndProviderAndIsDeletedFalse(
         @Param("tenantId") String tenantId, @Param("user") com.coresolution.consultation.entity.User user, @Param("provider") String provider);
+
+    /**
+     * 테넌트 컬럼이 비어 있거나 세션 tenant와 불일치하는 레거시 행 해제용.
+     * 소유자(user PK) + provider + 미삭제만 검증한다.
+     */
+    @Query("SELECT usa FROM UserSocialAccount usa WHERE usa.user.id = :userId AND usa.provider = :provider AND usa.isDeleted = false")
+    Optional<UserSocialAccount> findActiveByUserIdAndProvider(
+        @Param("userId") Long userId, @Param("provider") String provider);
     
     /**
      * 사용자로 소셜 계정 목록 조회 (tenantId 필터링)

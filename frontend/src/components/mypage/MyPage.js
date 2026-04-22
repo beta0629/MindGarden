@@ -419,7 +419,7 @@ const MyPage = () => {
     try {
       await mypageApi.unlinkSocialAccount(provider, accountId);
       notificationManager.show('소셜 계정 연동이 해제되었습니다.', 'success');
-      loadSocialAccounts();
+      await loadSocialAccounts();
     } catch (error) {
       console.error('소셜 계정 연동 해제 실패:', error);
       notificationManager.show(`연동 해제에 실패했습니다: ${error.message}`, 'error');

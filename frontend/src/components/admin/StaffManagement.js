@@ -8,7 +8,7 @@
  * @since 2026-03-05
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { User, Users, Mail, Phone } from 'lucide-react';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -24,7 +24,8 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { showSuccess, showError } from '../../utils/notification';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
-import { formatKoreanMobileForDisplay } from '../../utils/koreanMobilePhone';
+import { formatKoreanMobileForDisplay, isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../utils/koreanMobilePhone';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
 import {
   STAFF_MGMT_ARIA,
@@ -41,6 +42,7 @@ import {
   STAFF_MGMT_TABLE
 } from '../../constants/staffManagementStrings';
 import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete';
+import KoreanMobileDuplicateField from '../common/molecules/KoreanMobileDuplicateField';
 import ProfileImageInput from '../common/ProfileImageInput';
 import Avatar from '../common/Avatar';
 import '../../styles/unified-design-tokens.css';
@@ -168,6 +170,9 @@ const StaffManagement = ({ embedded = false }) => {
   });
   const [staffEmailCheckStatus, setStaffEmailCheckStatus] = useState(null);
   const [isCheckingStaffEmail, setIsCheckingStaffEmail] = useState(false);
+  const [staffPhoneCheckStatus, setStaffPhoneCheckStatus] = useState(null);
+  const [isCheckingStaffPhone, setIsCheckingStaffPhone] = useState(false);
+  const staffEditPhoneBaselineRef = useRef('');
   const [viewMode, setViewMode] = useState('largeCard'); // 'largeCard' | 'smallCard' | 'list'
   const [staffDetailModal, setStaffDetailModal] = useState({ open: false, staff: null });
   const [staffEditModal, setStaffEditModal] = useState({ open: false, staff: null });
@@ -190,11 +195,16 @@ const StaffManagement = ({ embedded = false }) => {
   const openStaffEdit = useCallback(
     (staff) => {
       if (!staff?.id) return;
+      const phoneEdit = normalizeStaffPhoneForEdit(staff.phone);
       setStaffEditForm({
         name: maskEncryptedDisplay(staff.name, STAFF_MGMT_MASK.NAME) || '',
         email: maskEncryptedDisplay(staff.email, STAFF_MGMT_MASK.EMAIL) || '',
-        phone: normalizeStaffPhoneForEdit(staff.phone)
+        phone: phoneEdit
       });
+      staffEditPhoneBaselineRef.current = phoneEdit
+        ? normalizeKoreanMobileDigits(phoneEdit)
+        : '';
+      setStaffPhoneCheckStatus(null);
       setStaffEditModal({ open: true, staff });
     },
     [normalizeStaffPhoneForEdit]
@@ -204,11 +214,16 @@ const StaffManagement = ({ embedded = false }) => {
     setStaffEditModal({ open: false, staff: null });
     setStaffEditForm({ name: '', email: '', phone: '' });
     setStaffEditSubmitting(false);
+    setStaffPhoneCheckStatus(null);
+    staffEditPhoneBaselineRef.current = '';
   }, []);
 
   const handleStaffEditFieldChange = useCallback((e) => {
     const { name, value } = e.target;
     setStaffEditForm((prev) => ({ ...prev, [name]: value }));
+    if (name === 'phone') {
+      setStaffPhoneCheckStatus(null);
+    }
   }, []);
 
   const loadUsers = useCallback(async() => {
@@ -267,6 +282,7 @@ const StaffManagement = ({ embedded = false }) => {
       rrnFirst6: '', rrnLast1: '', address: '', addressDetail: '', postalCode: ''
     });
     setStaffEmailCheckStatus(null);
+    setStaffPhoneCheckStatus(null);
     setCreateStaffModal({ open: true, submitting: false });
   }, []);
 
@@ -277,12 +293,14 @@ const StaffManagement = ({ embedded = false }) => {
       rrnFirst6: '', rrnLast1: '', address: '', addressDetail: '', postalCode: ''
     });
     setStaffEmailCheckStatus(null);
+    setStaffPhoneCheckStatus(null);
   }, []);
 
   const handleCreateFormChange = useCallback((e) => {
     const { name, value } = e.target;
     setCreateForm((prev) => ({ ...prev, [name]: value }));
     if (name === 'email') setStaffEmailCheckStatus(null);
+    if (name === 'phone') setStaffPhoneCheckStatus(null);
   }, []);
 
   const handleStaffEmailDuplicateCheck = useCallback(async() => {
@@ -299,7 +317,7 @@ const StaffManagement = ({ embedded = false }) => {
     setIsCheckingStaffEmail(true);
     setStaffEmailCheckStatus('checking');
     try {
-      const response = await StandardizedApi.get('/api/v1/admin/duplicate-check/email', { email });
+      const response = await StandardizedApi.get(API_ENDPOINTS.ADMIN.DUPLICATE_CHECK.EMAIL, { email });
       if (response && typeof response.isDuplicate === 'boolean') {
         if (response.isDuplicate) {
           setStaffEmailCheckStatus('duplicate');
@@ -319,6 +337,47 @@ const StaffManagement = ({ embedded = false }) => {
     }
   }, [createForm.email]);
 
+  const handleStaffPhoneDuplicateCheck = useCallback(async() => {
+    const raw = staffEditModal.open
+      ? (staffEditForm.phone || '')
+      : (createForm.phone || '');
+    const normalized = normalizeKoreanMobileDigits(String(raw).trim());
+    if (!normalized || !isValidKoreanMobileDigits(normalized)) {
+      showError(VALIDATION_MESSAGES.INVALID_PHONE);
+      setStaffPhoneCheckStatus(null);
+      return;
+    }
+    setIsCheckingStaffPhone(true);
+    try {
+      const params = { phone: normalized };
+      if (staffEditModal.open && staffEditModal.staff?.id) {
+        params.excludeUserId = staffEditModal.staff.id;
+      }
+      const response = await StandardizedApi.get(API_ENDPOINTS.ADMIN.DUPLICATE_CHECK.PHONE, params);
+      if (response && typeof response.isDuplicate === 'boolean') {
+        if (response.isDuplicate === false && response.available === false) {
+          setStaffPhoneCheckStatus(null);
+          showError(response.message || VALIDATION_MESSAGES.INVALID_PHONE);
+          return;
+        }
+        if (response.isDuplicate) {
+          setStaffPhoneCheckStatus('duplicate');
+          showError(VALIDATION_MESSAGES.PHONE_EXISTS);
+        } else {
+          setStaffPhoneCheckStatus('available');
+          showSuccess(VALIDATION_MESSAGES.PHONE_AVAILABLE);
+        }
+      } else {
+        setStaffPhoneCheckStatus(null);
+      }
+    } catch (err) {
+      setStaffPhoneCheckStatus(null);
+      showError(VALIDATION_MESSAGES.PHONE_DUPLICATE_CHECK_ERROR);
+    } finally {
+      setIsCheckingStaffPhone(false);
+    }
+  }, [createForm.phone, staffEditForm.phone, staffEditModal.open, staffEditModal.staff?.id]);
+
   const handleCreateStaffSubmit = useCallback(
     async(e) => {
       e.preventDefault();
@@ -326,6 +385,11 @@ const StaffManagement = ({ embedded = false }) => {
       const name = (createForm.name || '').trim();
       if (!email) {
         showError(VALIDATION_MESSAGES.REQUIRED_EMAIL);
+        return;
+      }
+      const phoneNorm = normalizeKoreanMobileDigits((createForm.phone || '').trim());
+      if (phoneNorm && isValidKoreanMobileDigits(phoneNorm) && staffPhoneCheckStatus !== 'available') {
+        showError(VALIDATION_MESSAGES.PHONE_DUPLICATE_CHECK_REQUIRED);
         return;
       }
       setCreateStaffModal((prev) => ({ ...prev, submitting: true }));
@@ -358,7 +422,7 @@ const StaffManagement = ({ embedded = false }) => {
         setCreateStaffModal((prev) => ({ ...prev, submitting: false }));
       }
     },
-    [createForm, closeCreateStaffModal, loadUsers]
+    [createForm, closeCreateStaffModal, loadUsers, staffPhoneCheckStatus]
   );
 
   const handleAssignAsStaff = useCallback(
@@ -455,6 +519,13 @@ const StaffManagement = ({ embedded = false }) => {
       showError(STAFF_MGMT_MSG.VAL_EMAIL_REQUIRED);
       return;
     }
+    const phoneNorm = normalizeKoreanMobileDigits((staffEditForm.phone || '').trim());
+    const baseline = staffEditPhoneBaselineRef.current || '';
+    if (phoneNorm && isValidKoreanMobileDigits(phoneNorm) && phoneNorm !== baseline
+        && staffPhoneCheckStatus !== 'available') {
+      showError(VALIDATION_MESSAGES.PHONE_DUPLICATE_CHECK_REQUIRED);
+      return;
+    }
     setStaffEditSubmitting(true);
     try {
       const response = await StandardizedApi.put(basicProfileEndpoint(staff.id), {
@@ -475,7 +546,7 @@ const StaffManagement = ({ embedded = false }) => {
     } finally {
       setStaffEditSubmitting(false);
     }
-  }, [staffEditModal, staffEditForm, closeStaffEdit, loadUsers]);
+  }, [staffEditModal, staffEditForm, closeStaffEdit, loadUsers, staffPhoneCheckStatus]);
 
   const renderStaffActionBar = useCallback(
     (staff, { compact = false } = {}) => {
@@ -893,19 +964,31 @@ const StaffManagement = ({ embedded = false }) => {
             autoComplete="email"
           />
         </div>
-        <div className="mg-modal__form-group">
-          <label htmlFor="staff-edit-phone" className="mg-modal__label">{STAFF_MGMT_FORM_LABEL.PHONE}</label>
-          <input
-            id="staff-edit-phone"
-            name="phone"
-            className="mg-v2-form-input"
-            value={staffEditForm.phone}
-            onChange={handleStaffEditFieldChange}
-            disabled={staffEditSubmitting}
-            placeholder={STAFF_MGMT_PLACEHOLDER.EDIT_PHONE_CLEAR}
-            autoComplete="tel"
-          />
-        </div>
+        <KoreanMobileDuplicateField
+          containerClassName="mg-modal__form-group"
+          labelClassName="mg-modal__label"
+          label={STAFF_MGMT_FORM_LABEL.PHONE}
+          id="staff-edit-phone"
+          name="phone"
+          value={staffEditForm.phone}
+          onChange={handleStaffEditFieldChange}
+          onBlur={(e) => {
+            const raw = String(e.target.value ?? '').trim();
+            const n = raw ? normalizeKoreanMobileDigits(raw) : '';
+            setStaffEditForm((prev) => (prev.phone === n ? prev : { ...prev, phone: n }));
+          }}
+          onDuplicateClick={handleStaffPhoneDuplicateCheck}
+          isCheckingDuplicate={isCheckingStaffPhone}
+          duplicateButtonDataAction="staff-edit-phone-duplicate"
+          duplicateButtonLabel={VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
+          checkStatus={staffPhoneCheckStatus === 'duplicate' ? 'duplicate' : staffPhoneCheckStatus === 'available' ? 'available' : null}
+          messageDuplicate={VALIDATION_MESSAGES.PHONE_EXISTS}
+          messageAvailable={VALIDATION_MESSAGES.PHONE_AVAILABLE}
+          disabled={staffEditSubmitting}
+          duplicateDisabled={staffEditSubmitting}
+          placeholder={STAFF_MGMT_PLACEHOLDER.EDIT_PHONE_CLEAR}
+          autoComplete="tel"
+        />
       </UnifiedModal>
 
       <UnifiedModal
@@ -1102,19 +1185,28 @@ const StaffManagement = ({ embedded = false }) => {
                 disabled={createStaffModal.submitting}
               />
             </div>
-            <div className="mg-v2-form-group">
-              <label htmlFor="staff-phone" className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.PHONE}</label>
-              <input
-                type="tel"
-                id="staff-phone"
-                name="phone"
-                value={createForm.phone}
-                onChange={handleCreateFormChange}
-                placeholder={STAFF_MGMT_PLACEHOLDER.CREATE_PHONE}
-                className="mg-v2-form-input"
-                disabled={createStaffModal.submitting}
-              />
-            </div>
+            <KoreanMobileDuplicateField
+              label={STAFF_MGMT_FORM_LABEL.PHONE}
+              id="staff-phone"
+              name="phone"
+              value={createForm.phone}
+              onChange={handleCreateFormChange}
+              onBlur={(e) => {
+                const raw = String(e.target.value ?? '').trim();
+                const n = raw ? normalizeKoreanMobileDigits(raw) : '';
+                setCreateForm((prev) => (prev.phone === n ? prev : { ...prev, phone: n }));
+              }}
+              onDuplicateClick={handleStaffPhoneDuplicateCheck}
+              isCheckingDuplicate={isCheckingStaffPhone}
+              duplicateButtonDataAction="staff-create-phone-duplicate"
+              duplicateButtonLabel={VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
+              checkStatus={staffPhoneCheckStatus === 'duplicate' ? 'duplicate' : staffPhoneCheckStatus === 'available' ? 'available' : null}
+              messageDuplicate={VALIDATION_MESSAGES.PHONE_EXISTS}
+              messageAvailable={VALIDATION_MESSAGES.PHONE_AVAILABLE}
+              disabled={createStaffModal.submitting}
+              duplicateDisabled={createStaffModal.submitting}
+              placeholder={STAFF_MGMT_PLACEHOLDER.CREATE_PHONE}
+            />
             <div className="mg-v2-form-group">
               <label htmlFor="staff-address-input" className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.ADDRESS_SEARCH}</label>
               <div className="mg-v2-address-search-row" style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>

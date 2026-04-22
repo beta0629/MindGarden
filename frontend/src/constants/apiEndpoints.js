@@ -64,6 +64,11 @@ export const API_ENDPOINTS = {
       TODAY_STATS: '/api/v1/admin/today-stats',
       PENDING_DEPOSIT_STATS: '/api/v1/admin/pending-deposit-stats',
       SYSTEM_STATUS: '/api/v1/admin/system-status'
+    },
+
+    DUPLICATE_CHECK: {
+      EMAIL: '/api/v1/admin/duplicate-check/email',
+      PHONE: '/api/v1/admin/duplicate-check/phone'
     }
   },
   

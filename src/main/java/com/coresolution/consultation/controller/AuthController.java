@@ -922,36 +922,32 @@ public class AuthController extends BaseApiController {
     @PostMapping("/sms/send")
     public ResponseEntity<ApiResponse<Map<String, Object>>> sendSmsCode(@RequestBody Map<String, String> request) {
         String phoneNumber = request.get("phoneNumber");
-        log.info("SMS 인증 코드 전송 요청: {}", phoneNumber);
-        
-        // 휴대폰 번호 유효성 검사
-        if (phoneNumber == null || !phoneNumber.matches("^01[0-9]{8,9}$")) {
-            throw new IllegalArgumentException("올바른 휴대폰 번호를 입력해주세요.");
-        }
+        String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
+        log.info("SMS 인증 코드 전송 요청: {}", normalizedPhone);
         
         // 실제 SMS 발송 서비스 연동
         String verificationCode = String.format("%06d", (int)(Math.random() * 1000000));
         
         // 실제 SMS 서비스 연동 구현
-        log.info("SMS 발송 시뮬레이션: {} -> 인증코드: {}", phoneNumber, verificationCode);
+        log.info("SMS 발송 시뮬레이션: {} -> 인증코드: {}", normalizedPhone, verificationCode);
         
         // SMS 서비스 연동 로직
         // 1. SMS 서비스 API 호출 (실제 구현)
-        boolean smsSent = sendSmsMessage(phoneNumber, verificationCode);
+        boolean smsSent = sendSmsMessage(normalizedPhone, verificationCode);
         
         if (smsSent) {
             // 2. 메모리에 인증 코드 저장 (5분 만료)
             // Redis 연동 비활성화 - 메모리 저장 사용
-            log.info("메모리에 인증 코드 저장: {} -> {} (5분 만료)", phoneNumber, verificationCode);
+            log.info("메모리에 인증 코드 저장: {} -> {} (5분 만료)", normalizedPhone, verificationCode);
             
             // 메모리 저장 로직 구현 (ConcurrentHashMap 사용)
-            verificationCodes.put(phoneNumber, verificationCode);
-            verificationTimes.put(phoneNumber, System.currentTimeMillis());
-            log.info("메모리에 인증 코드 저장 완료: {} -> {} (5분 만료)", phoneNumber, verificationCode);
+            verificationCodes.put(normalizedPhone, verificationCode);
+            verificationTimes.put(normalizedPhone, System.currentTimeMillis());
+            log.info("메모리에 인증 코드 저장 완료: {} -> {} (5분 만료)", normalizedPhone, verificationCode);
             
-            log.info("SMS 발송 성공: {}", phoneNumber);
+            log.info("SMS 발송 성공: {}", normalizedPhone);
         } else {
-            log.error("SMS 발송 실패: {}", phoneNumber);
+            log.error("SMS 발송 실패: {}", normalizedPhone);
             throw new RuntimeException("SMS 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
         }
         
@@ -971,16 +967,11 @@ public class AuthController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> verifySmsCode(@RequestBody Map<String, String> request) {
         String phoneNumber = request.get("phoneNumber");
         String verificationCode = request.get("verificationCode");
-        log.info("SMS 인증 코드 검증 요청: {} - {}", phoneNumber, verificationCode);
-        
-        // 입력값 유효성 검사
-        if (phoneNumber == null || verificationCode == null) {
+        if (verificationCode == null) {
             throw new IllegalArgumentException("휴대폰 번호와 인증 코드를 입력해주세요.");
         }
-        
-        if (!phoneNumber.matches("^01[0-9]{8,9}$")) {
-            throw new IllegalArgumentException("올바른 휴대폰 번호를 입력해주세요.");
-        }
+        String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
+        log.info("SMS 인증 코드 검증 요청: {} - {}", normalizedPhone, verificationCode);
         
         if (!verificationCode.matches("^[0-9]{6}$")) {
             throw new IllegalArgumentException("6자리 인증 코드를 입력해주세요.");
@@ -991,13 +982,13 @@ public class AuthController extends BaseApiController {
         
         // 메모리에서 인증 코드 조회
         String storedCode = null;
-        log.info("메모리에서 인증 코드 조회: {}", phoneNumber);
+        log.info("메모리에서 인증 코드 조회: {}", normalizedPhone);
         
         // 메모리 저장소에서 조회 로직 구현
-        storedCode = verificationCodes.get(phoneNumber);
+        storedCode = verificationCodes.get(normalizedPhone);
         if (storedCode != null) {
             // 만료 시간 확인 (5분)
-            Long storedTime = verificationTimes.get(phoneNumber);
+            Long storedTime = verificationTimes.get(normalizedPhone);
             if (storedTime != null) {
                 long currentTime = System.currentTimeMillis();
                 long timeDiff = currentTime - storedTime;
@@ -1005,52 +996,52 @@ public class AuthController extends BaseApiController {
                 
                 if (timeDiff > fiveMinutesInMillis) {
                     // 만료된 경우 메모리에서 제거
-                    verificationCodes.remove(phoneNumber);
-                    verificationTimes.remove(phoneNumber);
+                    verificationCodes.remove(normalizedPhone);
+                    verificationTimes.remove(normalizedPhone);
                     storedCode = null;
-                    log.info("메모리에서 만료된 인증 코드 제거: {}", phoneNumber);
+                    log.info("메모리에서 만료된 인증 코드 제거: {}", normalizedPhone);
                 } else {
-                    log.info("메모리에서 인증 코드 조회 성공: {} -> {}", phoneNumber, storedCode);
+                    log.info("메모리에서 인증 코드 조회 성공: {} -> {}", normalizedPhone, storedCode);
                 }
             } else {
                 storedCode = null;
-                log.warn("메모리에서 인증 코드 시간 정보 없음: {}", phoneNumber);
+                log.warn("메모리에서 인증 코드 시간 정보 없음: {}", normalizedPhone);
             }
         } else {
-            log.info("메모리에서 인증 코드 없음: {}", phoneNumber);
+            log.info("메모리에서 인증 코드 없음: {}", normalizedPhone);
         }
         
         if (verificationCode.length() == 6 && verificationCode.matches("^[0-9]+$")) {
             if (storedCode != null) {
                 isValid = storedCode.equals(verificationCode);
-                log.info("메모리에서 인증 코드 검증: {} -> {}", phoneNumber, isValid);
+                log.info("메모리에서 인증 코드 검증: {} -> {}", normalizedPhone, isValid);
             } else {
                 // 메모리에 코드가 없는 경우 테스트용으로 성공 처리
                 isValid = true;
-                log.info("메모리에 코드 없음 - 테스트용 인증 성공: {}", phoneNumber);
+                log.info("메모리에 코드 없음 - 테스트용 인증 성공: {}", normalizedPhone);
             }
             
             if (isValid) {
                 // 인증 성공 시 메모리에서 코드 삭제
-                verificationCodes.remove(phoneNumber);
-                verificationTimes.remove(phoneNumber);
-                log.info("메모리에서 인증 코드 삭제 완료: {}", phoneNumber);
-                log.info("SMS 인증 코드 검증 성공: {}", phoneNumber);
+                verificationCodes.remove(normalizedPhone);
+                verificationTimes.remove(normalizedPhone);
+                log.info("메모리에서 인증 코드 삭제 완료: {}", normalizedPhone);
+                log.info("SMS 인증 코드 검증 성공: {}", normalizedPhone);
             } else {
-                log.warn("SMS 인증 코드 불일치: {}", phoneNumber);
+                log.warn("SMS 인증 코드 불일치: {}", normalizedPhone);
             }
         } else {
-            log.warn("SMS 인증 코드 형식 오류: {}", phoneNumber);
+            log.warn("SMS 인증 코드 형식 오류: {}", normalizedPhone);
         }
         
         if (isValid) {
-            log.info("SMS 인증 성공: {}", phoneNumber);
+            log.info("SMS 인증 성공: {}", normalizedPhone);
             Map<String, Object> data = new HashMap<>();
             data.put("message", "인증이 완료되었습니다.");
-            data.put("phoneNumber", phoneNumber);
+            data.put("phoneNumber", normalizedPhone);
             return success(data);
         } else {
-            log.warn("SMS 인증 실패: {} - {}", phoneNumber, verificationCode);
+            log.warn("SMS 인증 실패: {} - {}", normalizedPhone, verificationCode);
             throw new IllegalArgumentException("인증 코드가 올바르지 않습니다.");
         }
     }

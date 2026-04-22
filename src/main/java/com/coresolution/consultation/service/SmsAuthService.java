@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Random;
 import com.coresolution.consultation.config.SmsProperties;
 import com.coresolution.consultation.service.sms.SmsProvider;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +27,9 @@ public class SmsAuthService {
      * @return 발송된 인증번호 (테스트 모드에서는 고정값)
      */
     public String sendVerificationCode(String phoneNumber) {
+        String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
         log.info("📱 SMS 인증번호 발송 요청 - 전화번호: {}, SMS 활성화: {}, 테스트 모드: {}", 
-                phoneNumber, smsProperties.isEnabled(), smsProperties.isTestMode());
+                normalizedPhone, smsProperties.isEnabled(), smsProperties.isTestMode());
         
         if (!smsProperties.isAvailable()) {
             log.warn("⚠️ SMS 인증이 비활성화되어 있습니다. 설정을 확인해주세요.");
@@ -43,7 +45,7 @@ public class SmsAuthService {
         } else {
             // 실제 모드: 랜덤 인증번호 생성 및 실제 SMS 발송
             verificationCode = generateVerificationCode();
-            boolean sent = sendActualSms(phoneNumber, verificationCode);
+            boolean sent = sendActualSms(normalizedPhone, verificationCode);
             
             if (!sent) {
                 log.error("❌ SMS 발송 실패");
@@ -64,8 +66,9 @@ public class SmsAuthService {
      * @return 검증 성공 여부
      */
     public boolean verifyCode(String phoneNumber, String inputCode, String sentCode) {
+        String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
         log.info("🔍 SMS 인증번호 검증 - 전화번호: {}, 입력: {}, 발송: {}", 
-                phoneNumber, inputCode, sentCode);
+                normalizedPhone, inputCode, sentCode);
         
         if (inputCode == null || sentCode == null) {
             log.warn("⚠️ 인증번호가 null입니다.");

@@ -63,6 +63,7 @@ import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.RrnValidationUtil;
 import com.coresolution.consultation.util.VehiclePlateText;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
@@ -180,7 +181,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String encryptedPhone = null;
             if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
                 encryptedPhone = encryptionUtil.safeEncrypt(request.getPhone());
-                log.info("🔐 관리자 상담사 등록 시 전화번호 암호화 완료: {}", maskPhone(request.getPhone()));
+                log.info("🔐 관리자 상담사 등록 시 전화번호 암호화 완료: {}", PhoneLogMasking.maskForLog(request.getPhone()));
             }
             log.info("🔐 관리자 상담사 등록 시 이름, 이메일 암호화 완료");
             
@@ -259,7 +260,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String encryptedPhone = null;
             if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
                 encryptedPhone = encryptionUtil.safeEncrypt(request.getPhone());
-                log.info("🔐 관리자 상담사 등록 시 전화번호 암호화 완료: {}", maskPhone(request.getPhone()));
+                log.info("🔐 관리자 상담사 등록 시 전화번호 암호화 완료: {}", PhoneLogMasking.maskForLog(request.getPhone()));
             }
             log.info("🔐 관리자 상담사 등록 시 이름, 이메일 암호화 완료");
             
@@ -408,7 +409,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     name = ClientRegistrationConstants.DEFAULT_CLIENT_DISPLAY_NAME;
                 }
             } else {
-                name = maskPhone(normalizedPhoneDigits);
+                name = PhoneLogMasking.maskForLog(normalizedPhoneDigits);
                 if (name == null || name.length() < 4) {
                     name = ClientRegistrationConstants.DEFAULT_CLIENT_DISPLAY_NAME;
                 }
@@ -422,7 +423,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String encryptedPhone = null;
         if (hasPhone) {
             encryptedPhone = encryptionUtil.safeEncrypt(normalizedPhoneDigits);
-            log.info("🔐 관리자 내담자 등록 시 전화번호 암호화 완료: {}", maskPhone(normalizedPhoneDigits));
+            log.info("🔐 관리자 내담자 등록 시 전화번호 암호화 완료: {}", PhoneLogMasking.maskForLog(normalizedPhoneDigits));
         }
         log.info("🔐 관리자 내담자 등록 시 이름, 이메일 암호화 완료");
         
@@ -568,7 +569,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String encryptedEmail = encryptionUtil.safeEncrypt(email);
         String encryptedPhone = null;
         if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
-            encryptedPhone = encryptionUtil.safeEncrypt(request.getPhone());
+            String normalizedPhoneDigits = LoginIdentifierUtils.normalizeKoreanMobileDigits(request.getPhone());
+            if (!LoginIdentifierUtils.isValidKoreanMobileDigits(normalizedPhoneDigits)) {
+                throw new IllegalArgumentException(ClientRegistrationConstants.MSG_INVALID_PHONE);
+            }
+            if (userService.existsPhoneDuplicate(normalizedPhoneDigits, tenantId, null)) {
+                throw new IllegalArgumentException(ClientRegistrationConstants.MSG_DUPLICATE_PHONE);
+            }
+            encryptedPhone = encryptionUtil.safeEncrypt(normalizedPhoneDigits);
         }
 
         User staffUser = User.builder()
@@ -1663,7 +1671,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 try {
                     String decryptedPhone = encryptionUtil.decrypt(consultant.getPhone());
                     consultant.setPhone(decryptedPhone);
-                    log.info("🔓 상담사 전화번호 복호화 완료: {}", maskPhone(decryptedPhone));
+                    log.info("🔓 상담사 전화번호 복호화 완료: {}", PhoneLogMasking.maskForLog(decryptedPhone));
                 } catch (Exception e) {
                     log.error("❌ 상담사 전화번호 복호화 실패: {}", e.getMessage());
                     consultant.setPhone(AdminServiceUserFacingMessages.DISPLAY_DECRYPTION_FAILED);
@@ -1704,7 +1712,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 if (consultant.getPhone() != null && !consultant.getPhone().trim().isEmpty()) {
                     try {
                         decryptedPhone = encryptionUtil.decrypt(consultant.getPhone());
-                        log.info("🔓 상담사 전화번호 복호화 완료: {}", maskPhone(decryptedPhone));
+                        log.info("🔓 상담사 전화번호 복호화 완료: {}", PhoneLogMasking.maskForLog(decryptedPhone));
                     } catch (Exception e) {
                         log.error("❌ 상담사 전화번호 복호화 실패: {}", e.getMessage());
                         decryptedPhone = AdminServiceUserFacingMessages.DISPLAY_DECRYPTION_FAILED;
@@ -4689,7 +4697,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     consultantStats.put("consultantId", consultant.getId());
                     consultantStats.put("consultantName", consultantName);
                     consultantStats.put("consultantEmail", consultantEmail != null ? consultantEmail : consultant.getEmail());
-                    consultantStats.put("consultantPhone", maskPhone(consultant.getPhone()));
+                    consultantStats.put("consultantPhone", PhoneLogMasking.maskForLog(consultant.getPhone()));
                     consultantStats.put("specialization", consultant.getSpecialization());
                     consultantStats.put("grade", consultant.getGrade());
                     consultantStats.put("completedCount", completedCount);
@@ -4889,7 +4897,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     consultantStats.put("consultantId", consultant.getId());
                     consultantStats.put("consultantName", consultantName);
                     consultantStats.put("consultantEmail", consultantEmail != null ? consultantEmail : consultant.getEmail());
-                    consultantStats.put("consultantPhone", maskPhone(consultant.getPhone()));
+                    consultantStats.put("consultantPhone", PhoneLogMasking.maskForLog(consultant.getPhone()));
                     consultantStats.put("specialization", consultant.getSpecialization());
                     consultantStats.put("grade", consultant.getGrade());
                     consultantStats.put("branchCode", null); // 표준화 2025-12-07: 브랜치 개념 제거됨
@@ -5323,21 +5331,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
         }
         throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_SYNTHETIC_EMAIL_ALLOCATION_FAILED);
-    }
-
-     /**
-     * 전화번호 마스킹
-     */
-    private String maskPhone(String phone) {
-        if (phone == null || phone.length() < 4) {
-            return phone;
-        }
-        
-        if (phone.length() <= 8) {
-            return phone.substring(0, 3) + "****";
-        }
-        
-        return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
     }
 
     /**

@@ -4,6 +4,7 @@ import java.util.List;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.PhoneLogMasking;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -66,7 +67,7 @@ public class PhoneMigrationService {
                     
                     migratedCount++;
                     log.info("✅ 사용자 ID {}: 전화번호 암호화 완료 ({} -> 암호화됨)", 
-                        user.getId(), maskPhone(originalPhone));
+                        user.getId(), PhoneLogMasking.maskForLog(originalPhone));
                     
                 } catch (Exception e) {
                     errorCount++;
@@ -112,7 +113,7 @@ public class PhoneMigrationService {
                     log.debug("👤 사용자 ID {}: 암호화된 전화번호", user.getId());
                 } else {
                     plainTextCount++;
-                    log.info("👤 사용자 ID {}: 평문 전화번호 - {}", user.getId(), maskPhone(phone));
+                    log.info("👤 사용자 ID {}: 평문 전화번호 - {}", user.getId(), PhoneLogMasking.maskForLog(phone));
                 }
             }
             
@@ -149,21 +150,6 @@ public class PhoneMigrationService {
         }
         
         return true;
-    }
-    
-    /**
-     * 전화번호 마스킹
-     */
-    private String maskPhone(String phone) {
-        if (phone == null || phone.length() < 4) {
-            return phone;
-        }
-        
-        if (phone.length() <= 8) {
-            return phone.substring(0, 3) + "****";
-        }
-        
-        return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
     }
     
     /**

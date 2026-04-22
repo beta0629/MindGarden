@@ -52,6 +52,11 @@ export const AUTH_API = {
   // 중복 로그인 확인
   CONFIRM_DUPLICATE_LOGIN: '/api/v1/auth/confirm-duplicate-login',
 
+  /** 회원가입·프로필 등 휴대폰 중복 조회 (쿼리: phone) */
+  DUPLICATE_CHECK_PHONE: '/api/v1/auth/duplicate-check/phone',
+  /** 회원가입 등 이메일 중복 조회 (쿼리: email) */
+  DUPLICATE_CHECK_EMAIL: '/api/v1/auth/duplicate-check/email',
+
   /** PasswordManagementController — 세션 사용자 비밀번호 변경 */
   PASSWORD_CHANGE: '/api/v1/auth/password/change',
   /** PasswordManagementController — 재설정 이메일 요청 */

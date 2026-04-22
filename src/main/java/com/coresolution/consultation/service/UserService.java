@@ -342,6 +342,16 @@ public interface UserService extends BaseService<User, Long> {
      * @return 유효한 휴대폰 숫자열이고 동일 번호가 있으면 true
      */
     boolean existsPhoneDuplicateForPublicSignup(String normalizedDigits, String tenantIdOrNull);
+
+    /**
+     * 휴대폰 번호 중복 여부(복호화·정규화 비교 단일 진입). 테넌트 ID가 있으면 해당 테넌트만, 없으면 전역 스캔.
+     *
+     * @param normalizedDigits     {@link com.coresolution.consultation.util.LoginIdentifierUtils#normalizeKoreanMobileDigits(String)} 결과
+     * @param tenantIdOrNull       테넌트 ID, 없으면 전역(레거시 호환)
+     * @param excludeUserIdOrNull  제외할 사용자 PK(마이페이지 등 본인 유지)
+     * @return 유효한 휴대 번호이고 다른 사용자와 중복이면 true
+     */
+    boolean existsPhoneDuplicate(String normalizedDigits, String tenantIdOrNull, Long excludeUserIdOrNull);
     
     // ==================== 특수 조회 메서드 ====================
     

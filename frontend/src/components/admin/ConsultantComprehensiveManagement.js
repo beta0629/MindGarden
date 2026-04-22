@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { Users, Link2, Calendar, ClipboardList, Mail, Phone } from 'lucide-react';
@@ -22,6 +22,7 @@ import { getCommonCodes } from '../../utils/commonCodeApi';
 import { sessionManager } from '../../utils/sessionManager';
 import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete';
 import ProfileImageInput from '../common/ProfileImageInput';
+import KoreanMobileDuplicateField from '../common/molecules/KoreanMobileDuplicateField';
 import Avatar from '../common/Avatar';
 import PasswordResetModal from './PasswordResetModal';
 import { showSuccess, showError } from '../../utils/notification';
@@ -40,12 +41,13 @@ import './mapping-management/organisms/MappingListBlock.css';
 import './mapping-management/MappingManagementPage.css';
 import './ConsultantManagementPage.css';
 import './ProfileCard.css';
-import { formatKoreanMobileForDisplay } from '../../utils/koreanMobilePhone';
+import { formatKoreanMobileForDisplay, isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../utils/koreanMobilePhone';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 import { CONSULTANT_COMP_SPECIALTY, CONSULTANT_COMP_PASSWORD_RESET } from '../../constants/consultantComprehensiveStrings';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 
 /** ContentHeader / 본문 main aria-labelledby 연동 */
 const CONSULTANT_COMP_MGMT_TITLE_ID = 'consultant-comprehensive-management-title';
@@ -87,6 +89,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking', 'duplicate', 'available', null
     const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+    const [consultantPhoneCheckStatus, setConsultantPhoneCheckStatus] = useState(null);
+    const [isCheckingConsultantPhone, setIsCheckingConsultantPhone] = useState(false);
+    const consultantEditPhoneBaselineRef = useRef('');
     const [modalSubmitLoading, setModalSubmitLoading] = useState(false);
     const [deleteConfirmLoading, setDeleteConfirmLoading] = useState(false);
     const [viewMode, setViewMode] = useState('smallCard'); // 'largeCard' | 'smallCard' | 'list' — 기본: 컴팩트(작은 카드)
@@ -568,6 +573,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
     const handleOpenModal = useCallback((type, consultant = null) => {
         setModalType(type);
+        setConsultantPhoneCheckStatus(null);
         
         // 모달이 열릴 때 전문분야 코드 로드 (최신 데이터 보장)
         loadSpecialtyCodes();
@@ -581,6 +587,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 } else if (consultant.specialty) {
                     specialties = [consultant.specialty];
                 }
+                consultantEditPhoneBaselineRef.current = normalizeKoreanMobileDigits(
+                    String(consultant.phone ?? '')
+                );
                 setFormData({
                     name: consultant.name || '',
                     email: consultant.email || '',
@@ -599,6 +608,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 });
             }
         } else if (type === 'create') {
+            consultantEditPhoneBaselineRef.current = '';
             setFormData({
                 name: '',
                 email: '',
@@ -624,6 +634,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         setShowModal(false);
         setModalType('view');
         setSelectedConsultant(null);
+        setConsultantPhoneCheckStatus(null);
+        consultantEditPhoneBaselineRef.current = '';
         setFormData({
             name: '',
             email: '',
@@ -654,6 +666,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             if (name === 'email') {
                 setEmailCheckStatus(null);
             }
+            if (name === 'phone') {
+                setConsultantPhoneCheckStatus(null);
+            }
         }, []);
     
     const handleEmailDuplicateCheck = useCallback(async() => {
@@ -678,7 +693,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         setEmailCheckStatus('checking');
         
         try {
-            const response = await apiGet(`/api/v1/admin/duplicate-check/email?email=${encodeURIComponent(email)}`);
+            const response = await apiGet(`${API_ENDPOINTS.ADMIN.DUPLICATE_CHECK.EMAIL}?email=${encodeURIComponent(email)}`);
             console.log('📧 이메일 중복 확인 응답:', response);
             
             if (response && typeof response.isDuplicate === 'boolean') {
@@ -709,6 +724,56 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             setIsCheckingEmail(false);
         }
     }, [formData.email]);
+
+    const handleConsultantPhoneDuplicateCheck = useCallback(async() => {
+        const raw = String(formData.phone ?? '').trim();
+        const normalized = normalizeKoreanMobileDigits(raw);
+        if (!normalized || !isValidKoreanMobileDigits(normalized)) {
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: { message: VALIDATION_MESSAGES.INVALID_PHONE, type: 'warning' }
+            }));
+            setConsultantPhoneCheckStatus(null);
+            return;
+        }
+        setIsCheckingConsultantPhone(true);
+        try {
+            const params = { phone: normalized };
+            if (modalType === 'edit' && selectedConsultant?.id) {
+                params.excludeUserId = selectedConsultant.id;
+            }
+            const response = await StandardizedApi.get(API_ENDPOINTS.ADMIN.DUPLICATE_CHECK.PHONE, params);
+            if (response && typeof response.isDuplicate === 'boolean') {
+                if (response.isDuplicate === false && response.available === false) {
+                    setConsultantPhoneCheckStatus(null);
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: response.message || VALIDATION_MESSAGES.INVALID_PHONE, type: 'warning' }
+                    }));
+                    return;
+                }
+                if (response.isDuplicate) {
+                    setConsultantPhoneCheckStatus('duplicate');
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: VALIDATION_MESSAGES.PHONE_EXISTS, type: 'error' }
+                    }));
+                } else {
+                    setConsultantPhoneCheckStatus('available');
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: VALIDATION_MESSAGES.PHONE_AVAILABLE, type: 'success' }
+                    }));
+                }
+            } else {
+                setConsultantPhoneCheckStatus(null);
+            }
+        } catch (error) {
+            console.error('휴대폰 중복 확인 오류:', error);
+            setConsultantPhoneCheckStatus(null);
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: { message: VALIDATION_MESSAGES.PHONE_DUPLICATE_CHECK_ERROR, type: 'error' }
+            }));
+        } finally {
+            setIsCheckingConsultantPhone(false);
+        }
+    }, [formData.phone, modalType, selectedConsultant?.id]);
 
     const handleSpecialtyTagClick = useCallback((codeValue) => {
         setFormData(prev => {
@@ -963,8 +1028,24 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     }));
                     return;
                 }
+                const phoneNorm = normalizeKoreanMobileDigits(String(formData.phone ?? '').trim());
+                if (phoneNorm && isValidKoreanMobileDigits(phoneNorm) && consultantPhoneCheckStatus !== 'available') {
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: VALIDATION_MESSAGES.PHONE_DUPLICATE_CHECK_REQUIRED, type: 'warning' }
+                    }));
+                    return;
+                }
                 result = await createConsultant(formData);
             } else if (modalType === 'edit') {
+                const phoneNorm = normalizeKoreanMobileDigits(String(formData.phone ?? '').trim());
+                const baseline = consultantEditPhoneBaselineRef.current || '';
+                if (phoneNorm && isValidKoreanMobileDigits(phoneNorm) && phoneNorm !== baseline
+                        && consultantPhoneCheckStatus !== 'available') {
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: VALIDATION_MESSAGES.PHONE_DUPLICATE_CHECK_REQUIRED, type: 'warning' }
+                    }));
+                    return;
+                }
                 result = await updateConsultant(selectedConsultant.id, formData, selectedConsultant);
             } else if (modalType === 'delete') {
                 result = await deleteConsultant(selectedConsultant.id);
@@ -981,7 +1062,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         } finally {
             setModalSubmitLoading(false);
         }
-    }, [modalType, formData, selectedConsultant, emailCheckStatus, createConsultant, updateConsultant, deleteConsultant, handleCloseModal]);
+    }, [modalType, formData, selectedConsultant, emailCheckStatus, consultantPhoneCheckStatus, createConsultant, updateConsultant, deleteConsultant, handleCloseModal]);
 
     const stats = getOverallStats();
     const consultantFilterOptions = useMemo(() => {
@@ -1795,17 +1876,28 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             required
                         />
                     </div>
-                    <div className="mg-v2-form-group">
-                        <label className="mg-v2-form-label">전화번호</label>
-                        <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone || ''}
-                            onChange={handleFormChange}
-                            placeholder="전화번호를 입력하세요 (선택사항)"
-                            className="mg-v2-form-input"
-                        />
-                    </div>
+                    <KoreanMobileDuplicateField
+                        id="consultant-phone"
+                        name="phone"
+                        label="전화번호"
+                        value={formData.phone || ''}
+                        onChange={handleFormChange}
+                        onDuplicateClick={handleConsultantPhoneDuplicateCheck}
+                        isCheckingDuplicate={isCheckingConsultantPhone}
+                        duplicateButtonDataAction="consultant-modal-phone-duplicate-check"
+                        duplicateButtonLabel={VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
+                        checkStatus={consultantPhoneCheckStatus === 'duplicate' ? 'duplicate' : consultantPhoneCheckStatus === 'available' ? 'available' : null}
+                        messageDuplicate={VALIDATION_MESSAGES.PHONE_EXISTS}
+                        messageAvailable={VALIDATION_MESSAGES.PHONE_AVAILABLE}
+                        placeholder="전화번호를 입력하세요 (선택사항)"
+                        maxLength={13}
+                        autoComplete="tel"
+                        onBlur={(e) => {
+                            const raw = String(e.target.value ?? '').trim();
+                            const n = raw ? normalizeKoreanMobileDigits(raw) : '';
+                            setFormData((prev) => (prev.phone === n ? prev : { ...prev, phone: n }));
+                        }}
+                    />
                     <div className="mg-v2-form-group">
                         <label htmlFor="consultant-grade" className="mg-v2-form-label">등급</label>
                         <select
@@ -2095,7 +2187,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 </>
             );
         }
-        const isCreateSubmitDisabled = modalType === 'create' && (formData.email != null && String(formData.email).trim() !== '') && emailCheckStatus !== 'available';
+        const emailTrimmed = formData.email != null ? String(formData.email).trim() : '';
+        const phoneNorm = normalizeKoreanMobileDigits(String(formData.phone ?? '').trim());
+        const phoneNeedCheck = phoneNorm && isValidKoreanMobileDigits(phoneNorm);
+        const isCreateSubmitDisabled = modalType === 'create' && (
+            (emailTrimmed !== '' && emailCheckStatus !== 'available')
+            || (phoneNeedCheck && consultantPhoneCheckStatus !== 'available')
+        );
         return (
             <>
                 <MGButton

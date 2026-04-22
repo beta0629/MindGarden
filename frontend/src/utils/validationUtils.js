@@ -39,25 +39,13 @@ export const validateEmail = (email) => {
 };
 
 /**
- * 전화번호 유효성 검증 (한국 형식)
-/**
+ * 한국 전화번호(유선·휴대) 혼합 정규식 검증.
+ * 패턴은 지역번호·휴대(01x) 등을 함께 허용한다.
+ * 휴대전화번호만 검증할 때는 `koreanMobilePhone.js`의
+ * `normalizeKoreanMobileDigits`와 `isValidKoreanMobileDigits`(SSOT)를 사용한다.
+ *
  * @param {string} phone - 검증할 전화번호
-/**
- * @returns {boolean} 유효한 전화번호면 true, 그렇지 않으면 false
-/**
- * 
-/**
- * @example
-/**
- * validatePhone('010-1234-5678') // true
-/**
- * validatePhone('010 1234 5678') // true
-/**
- * validatePhone('01012345678') // true
-/**
- * validatePhone('02-123-4567') // true
-/**
- * validatePhone('1234') // false
+ * @returns {boolean} 유효한 전화번호이면 true, 그렇지 않으면 false
  */
 export const validatePhone = (phone) => {
   if (!phone || typeof phone !== 'string') {

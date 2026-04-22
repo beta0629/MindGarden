@@ -9,6 +9,7 @@ import java.util.Map;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
+import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -71,7 +72,7 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
         }
         
         try {
-            log.info("📤 카카오 알림톡 발송 시작: 수신자={}, 템플릿={}", maskPhoneNumber(phoneNumber), templateCode);
+            log.info("📤 카카오 알림톡 발송 시작: 수신자={}, 템플릿={}", PhoneLogMasking.maskForLog(phoneNumber), templateCode);
             
             // 알림톡 API 요청 데이터 구성
             Map<String, Object> requestData = new HashMap<>();
@@ -94,15 +95,15 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
             boolean success = sendToKakaoApi(request);
             
             if (success) {
-                log.info("✅ 카카오 알림톡 발송 성공: 수신자={}, 템플릿={}", maskPhoneNumber(phoneNumber), templateCode);
+                log.info("✅ 카카오 알림톡 발송 성공: 수신자={}, 템플릿={}", PhoneLogMasking.maskForLog(phoneNumber), templateCode);
             } else {
-                log.warn("⚠️ 카카오 알림톡 발송 실패: 수신자={}, 템플릿={}", maskPhoneNumber(phoneNumber), templateCode);
+                log.warn("⚠️ 카카오 알림톡 발송 실패: 수신자={}, 템플릿={}", PhoneLogMasking.maskForLog(phoneNumber), templateCode);
             }
             
             return success;
             
         } catch (Exception e) {
-            log.error("❌ 카카오 알림톡 발송 중 오류: 수신자={}, 템플릿={}", maskPhoneNumber(phoneNumber), templateCode, e);
+            log.error("❌ 카카오 알림톡 발송 중 오류: 수신자={}, 템플릿={}", PhoneLogMasking.maskForLog(phoneNumber), templateCode, e);
             return false;
         }
     }
@@ -456,20 +457,5 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
                 codeLabel != null ? codeLabel.length() : 0, e);
             // 예외 발생해도 서버 시작은 계속되도록 함
         }
-    }
-    
-    /**
-     * 전화번호 마스킹
-     */
-    private String maskPhoneNumber(String phoneNumber) {
-        if (phoneNumber == null || phoneNumber.length() < 4) {
-            return phoneNumber;
-        }
-        
-        if (phoneNumber.length() <= 8) {
-            return phoneNumber.substring(0, 3) + "****";
-        }
-        
-        return phoneNumber.substring(0, 3) + "****" + phoneNumber.substring(phoneNumber.length() - 4);
     }
 }

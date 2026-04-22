@@ -138,6 +138,15 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_TENANT_ID_REQUIRED_IN_CONTEXT =
             "현재 컨텍스트에 테넌트 ID가 설정되어 있지 않습니다.";
 
+    /** GET /api/v1/admin/duplicate-check/phone — 정규화 후 휴대폰 형식 불일치(빈 값 포함) */
+    public static final String MSG_DUPLICATE_CHECK_PHONE_INVALID = "올바른 휴대폰 번호를 입력해주세요.";
+
+    /** GET /api/v1/admin/duplicate-check/phone — 테넌트 내 이미 사용 중 */
+    public static final String MSG_DUPLICATE_CHECK_PHONE_IN_USE = "이미 사용 중인 휴대폰 번호입니다.";
+
+    /** GET /api/v1/admin/duplicate-check/phone — 사용 가능 */
+    public static final String MSG_DUPLICATE_CHECK_PHONE_AVAILABLE = "사용 가능한 휴대폰 번호입니다.";
+
     // --- 삭제 가능 여부 안내 (checkConsultantDeletionStatus / checkClientDeletionStatus) ---
 
     public static final String MSG_CONSULTANT_CAN_DELETE_SAFELY = "해당 상담사는 안전하게 삭제할 수 있습니다.";

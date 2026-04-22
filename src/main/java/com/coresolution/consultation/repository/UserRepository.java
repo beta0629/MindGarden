@@ -185,6 +185,12 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false")
     List<User> findByTenantId(@Param("tenantId") String tenantId);
+
+    /**
+     * 테넌트 소속 사용자 전체(삭제 행 포함). 전화 중복 등 암호화 컬럼 비교 시 소프트삭제 행까지 스캔할 때만 사용.
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId")
+    List<User> findAllByTenantIdIncludingDeleted(@Param("tenantId") String tenantId);
     
     /**
      * 역할별 사용자 조회 (tenantId 필터링)

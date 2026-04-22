@@ -16,6 +16,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.service.ConsultantService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
@@ -84,16 +85,6 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     protected List<Consultant> findEntitiesByTenantAndBranch(String tenantId, Long branchId) {
         // 표준화 2025-12-06: deprecated 메서드 대체 - branchId는 더 이상 사용하지 않음
         return consultantRepository.findAllByTenantId(tenantId);
-    }
-    
-    /**
-     * 전화번호 마스킹 처리
-     */
-    private String maskPhone(String phone) {
-        if (phone == null || phone.length() < 4) {
-            return "***";
-        }
-        return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
     }
     
     
@@ -390,7 +381,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
                 try {
                     String decryptedPhone = encryptionUtil.decrypt(consultant.getPhone());
                     consultant.setPhone(decryptedPhone);
-                    log.info("🔓 상담사 전화번호 복호화 완료: {}", maskPhone(decryptedPhone));
+                    log.info("🔓 상담사 전화번호 복호화 완료: {}", PhoneLogMasking.maskForLog(decryptedPhone));
                 } catch (Exception e) {
                     log.error("❌ 상담사 전화번호 복호화 실패: {}", e.getMessage());
                     consultant.setPhone("복호화 실패");

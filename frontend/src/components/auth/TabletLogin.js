@@ -25,6 +25,7 @@ import { TABLET_LOGIN_CSS } from '../../constants/css';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { formatPhoneNumber } from '../../utils/common';
 import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
 import {
   LOGIN_CREDENTIALS_MISMATCH_MESSAGE,
@@ -271,12 +272,6 @@ const TabletLogin = () => {
     if (value.length <= 11) {
       setPhoneNumber(value);
     }
-  };
-
-  const formatPhoneNumber = (phone) => {
-    if (phone.length <= 3) return phone;
-    if (phone.length <= 7) return `${phone.slice(0, 3)}-${phone.slice(3)}`;
-    return `${phone.slice(0, 3)}-${phone.slice(3, 7)}-${phone.slice(7)}`;
   };
 
   const sendVerificationCode = async() => {

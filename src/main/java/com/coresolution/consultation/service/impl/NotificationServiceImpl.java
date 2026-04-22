@@ -15,6 +15,7 @@ import com.coresolution.consultation.service.KakaoAlimTalkService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.SmsAuthService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -342,7 +343,7 @@ public class NotificationServiceImpl implements NotificationService {
      */
     private boolean sendSms(String phoneNumber, String message) {
         try {
-            log.info("📱 SMS 발송: {}", maskPhoneNumber(phoneNumber));
+            log.info("📱 SMS 발송: {}", PhoneLogMasking.maskForLog(phoneNumber));
             
             // SmsAuthService를 통한 SMS 발송
             if (!smsAuthService.isSmsAuthEnabled()) {
@@ -521,21 +522,6 @@ public class NotificationServiceImpl implements NotificationService {
             case DEPOSIT_PENDING_REMINDER: return "#dc3545";
             default: return "#6c757d";
         }
-    }
-    
-    /**
-     * 전화번호 마스킹
-     */
-    private String maskPhoneNumber(String phoneNumber) {
-        if (phoneNumber == null || phoneNumber.length() < 4) {
-            return phoneNumber;
-        }
-        
-        if (phoneNumber.length() <= 8) {
-            return phoneNumber.substring(0, 3) + "****";
-        }
-        
-        return phoneNumber.substring(0, 3) + "****" + phoneNumber.substring(phoneNumber.length() - 4);
     }
     
     @Override

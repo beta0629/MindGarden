@@ -21,6 +21,7 @@ import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
@@ -99,7 +100,7 @@ public class UserServiceImpl implements UserService {
             // 전화번호 암호화 (새 사용자 등록 시)
             if (user.getPhone() != null && !user.getPhone().trim().isEmpty()) {
                 user.setPhone(encryptionUtil.encrypt(user.getPhone()));
-                log.info("🔐 새 사용자 전화번호 암호화 완료: {}", maskPhone(user.getPhone()));
+                log.info("🔐 새 사용자 전화번호 암호화 완료: {}", PhoneLogMasking.maskForLog(user.getPhone()));
             }
         }
         user.setUpdatedAt(LocalDateTime.now());
@@ -297,6 +298,14 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public boolean isDuplicateExcludingIdAll(Long excludeId, String fieldName, Object fieldValue, boolean includeDeleted) {
+        if (fieldName != null && "phone".equalsIgnoreCase(fieldName) && fieldValue instanceof String rawPhone) {
+            String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(rawPhone);
+            if (!LoginIdentifierUtils.isValidKoreanMobileDigits(normalized)) {
+                return false;
+            }
+            String tenantId = TenantContextHolder.getTenantId();
+            return existsPhoneDuplicateInternal(normalized, tenantId, excludeId, includeDeleted);
+        }
         return userRepository.isDuplicateExcludingIdAll(excludeId, fieldName, fieldValue, includeDeleted);
     }
     
@@ -479,13 +488,35 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean existsPhoneDuplicateForPublicSignup(String normalizedDigits, String tenantIdOrNull) {
+        return existsPhoneDuplicate(normalizedDigits, tenantIdOrNull, null);
+    }
+
+    @Override
+    public boolean existsPhoneDuplicate(String normalizedDigits, String tenantIdOrNull, Long excludeUserIdOrNull) {
+        return existsPhoneDuplicateInternal(normalizedDigits, tenantIdOrNull, excludeUserIdOrNull, false);
+    }
+
+    /**
+     * 휴대폰 중복 단일 구현. 테넌트 스코프 시 {@code includeDeleted}에 따라 활성만 또는 삭제 포함 전체를 스캔한다.
+     */
+    private boolean existsPhoneDuplicateInternal(
+            String normalizedDigits,
+            String tenantIdOrNull,
+            Long excludeUserIdOrNull,
+            boolean includeDeletedUsersInTenant) {
         if (normalizedDigits == null || normalizedDigits.isEmpty()
                 || !LoginIdentifierUtils.isValidKoreanMobileDigits(normalizedDigits)) {
             return false;
         }
         if (StringUtils.hasText(tenantIdOrNull)) {
-            List<User> users = userRepository.findByTenantId(tenantIdOrNull.trim());
+            String tid = tenantIdOrNull.trim();
+            List<User> users = includeDeletedUsersInTenant
+                    ? userRepository.findAllByTenantIdIncludingDeleted(tid)
+                    : userRepository.findByTenantId(tid);
             for (User u : users) {
+                if (excludeUserIdOrNull != null && excludeUserIdOrNull.equals(u.getId())) {
+                    continue;
+                }
                 if (userPhoneMatchesNormalizedDigits(u, normalizedDigits)) {
                     return true;
                 }
@@ -494,6 +525,9 @@ public class UserServiceImpl implements UserService {
         }
         List<User> globalCandidates = userRepository.findAllWithNonBlankPhone();
         for (User u : globalCandidates) {
+            if (excludeUserIdOrNull != null && excludeUserIdOrNull.equals(u.getId())) {
+                continue;
+            }
             if (userPhoneMatchesNormalizedDigits(u, normalizedDigits)) {
                 return true;
             }
@@ -1184,18 +1218,4 @@ public class UserServiceImpl implements UserService {
                && password.length() == 60;
     }
     
-    /**
-     * 전화번호 마스킹
-     */
-    private String maskPhone(String phone) {
-        if (phone == null || phone.length() < 4) {
-            return phone;
-        }
-        
-        if (phone.length() <= 8) {
-            return phone.substring(0, 3) + "****";
-        }
-        
-        return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
-    }
 }

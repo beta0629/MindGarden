@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Users, Calendar } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import ProfileImageInput from '../../common/ProfileImageInput';
 import MgEmailFieldWithAutocomplete from '../../common/MgEmailFieldWithAutocomplete';
+import KoreanMobileDuplicateField from '../../common/molecules/KoreanMobileDuplicateField';
 import StandardizedApi from '../../../utils/standardizedApi';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import BadgeSelect from '../../common/BadgeSelect';
@@ -15,6 +16,7 @@ import SafeText from '../../common/SafeText';
 import { formatConsultantGenderLabel, getConsultantAgeYears } from '../../../utils/consultantHelper';
 import { getUserGradeKoreanNameSync } from '../../../utils/codeHelper';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../../utils/koreanMobilePhone';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentKpiRow from '../../dashboard-v2/content/ContentKpiRow';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
@@ -45,11 +47,24 @@ const ClientModal = ({
 }) => {
     const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking', 'duplicate', 'available', null
     const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+    const [phoneCheckStatus, setPhoneCheckStatus] = useState(null);
+    const [isCheckingPhone, setIsCheckingPhone] = useState(false);
     const [vehiclePlateError, setVehiclePlateError] = useState('');
     const [clientSummary, setClientSummary] = useState(null);
     const [summaryLoading, setSummaryLoading] = useState(false);
     const clientRef = useRef(client);
     clientRef.current = client;
+
+    const editClientPhoneBaseline = useMemo(() => {
+        if (type !== 'edit' || !client?.id) {
+            return '';
+        }
+        return normalizeKoreanMobileDigits(String(client.phone ?? ''));
+    }, [type, client?.id, client?.phone]);
+
+    useEffect(() => {
+        setPhoneCheckStatus(null);
+    }, [type, client?.id]);
 
     useEffect(() => {
       const c = clientRef.current;
@@ -169,7 +184,60 @@ const ClientModal = ({
         if (name === 'email') {
             setEmailCheckStatus(null);
         }
+        if (name === 'phone') {
+            setPhoneCheckStatus(null);
+        }
     };
+
+    const handleClientPhoneDuplicateCheck = useCallback(async() => {
+        const raw = String(formData.phone ?? '').trim();
+        const normalized = normalizeKoreanMobileDigits(raw);
+        if (!normalized || !isValidKoreanMobileDigits(normalized)) {
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: { message: VALIDATION_MESSAGES.INVALID_PHONE, type: 'warning' }
+            }));
+            setPhoneCheckStatus(null);
+            return;
+        }
+        setIsCheckingPhone(true);
+        try {
+            const params = { phone: normalized };
+            if (type === 'edit' && client?.id) {
+                params.excludeUserId = client.id;
+            }
+            const response = await StandardizedApi.get(API_ENDPOINTS.ADMIN.DUPLICATE_CHECK.PHONE, params);
+            if (response && typeof response.isDuplicate === 'boolean') {
+                if (response.isDuplicate === false && response.available === false) {
+                    setPhoneCheckStatus(null);
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: response.message || VALIDATION_MESSAGES.INVALID_PHONE, type: 'warning' }
+                    }));
+                    return;
+                }
+                if (response.isDuplicate) {
+                    setPhoneCheckStatus('duplicate');
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: VALIDATION_MESSAGES.PHONE_EXISTS, type: 'error' }
+                    }));
+                } else {
+                    setPhoneCheckStatus('available');
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: VALIDATION_MESSAGES.PHONE_AVAILABLE, type: 'success' }
+                    }));
+                }
+            } else {
+                setPhoneCheckStatus(null);
+            }
+        } catch (error) {
+            console.error('휴대폰 중복 확인 오류:', error);
+            setPhoneCheckStatus(null);
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: { message: VALIDATION_MESSAGES.PHONE_DUPLICATE_CHECK_ERROR, type: 'error' }
+            }));
+        } finally {
+            setIsCheckingPhone(false);
+        }
+    }, [formData.phone, type, client?.id]);
     
     const handleEmailDuplicateCheck = async() => {
         const email = formData.email?.trim();
@@ -193,7 +261,7 @@ const ClientModal = ({
         setEmailCheckStatus('checking');
         
         try {
-            const response = await StandardizedApi.get('/api/v1/admin/duplicate-check/email', { email });
+            const response = await StandardizedApi.get(API_ENDPOINTS.ADMIN.DUPLICATE_CHECK.EMAIL, { email });
             console.log('📧 이메일 중복 확인 응답:', response);
             
             if (response && typeof response.isDuplicate === 'boolean') {
@@ -233,6 +301,21 @@ const ClientModal = ({
             return undefined;
         }
         setVehiclePlateError('');
+        const phoneNorm = normalizeKoreanMobileDigits(String(formData.phone ?? '').trim());
+        if (phoneNorm && isValidKoreanMobileDigits(phoneNorm)) {
+            if (type === 'create' && phoneCheckStatus !== 'available') {
+                window.dispatchEvent(new CustomEvent('showNotification', {
+                    detail: { message: VALIDATION_MESSAGES.PHONE_DUPLICATE_CHECK_REQUIRED, type: 'warning' }
+                }));
+                return undefined;
+            }
+            if (type === 'edit' && phoneNorm !== editClientPhoneBaseline && phoneCheckStatus !== 'available') {
+                window.dispatchEvent(new CustomEvent('showNotification', {
+                    detail: { message: VALIDATION_MESSAGES.PHONE_DUPLICATE_CHECK_REQUIRED, type: 'warning' }
+                }));
+                return undefined;
+            }
+        }
         return onSave(formData);
     };
 
@@ -449,24 +532,37 @@ const ClientModal = ({
                         readOnly={type === 'view'}
                     />
                 </div>
-                <div className="mg-v2-form-group">
-                    <label htmlFor="phone" className="mg-v2-form-label">휴대폰 번호</label>
-                    <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={safeFormData.phone}
-                        onChange={handleInputChange}
-                        placeholder="010-1234-5678"
-                        className="mg-v2-form-input"
-                        readOnly={type === 'view'}
-                    />
-                    {type === 'create' && (
+                <KoreanMobileDuplicateField
+                    mode={type === 'view' ? 'inputOnly' : 'withDuplicate'}
+                    label="휴대폰 번호"
+                    id="phone"
+                    name="phone"
+                    value={safeFormData.phone}
+                    onChange={handleInputChange}
+                    onBlur={type === 'view' ? undefined : (e) => {
+                        const raw = String(e.target.value ?? '').trim();
+                        const n = raw ? normalizeKoreanMobileDigits(raw) : '';
+                        setFormData((prev) => (prev.phone === n ? prev : { ...prev, phone: n }));
+                    }}
+                    onDuplicateClick={type === 'view' ? undefined : handleClientPhoneDuplicateCheck}
+                    isCheckingDuplicate={isCheckingPhone}
+                    duplicateButtonDataAction="client-modal-phone-duplicate-check"
+                    duplicateButtonLabel={VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
+                    checkStatus={type === 'view' ? null
+                        : (phoneCheckStatus === 'duplicate' ? 'duplicate' : phoneCheckStatus === 'available' ? 'available' : null)}
+                    messageDuplicate={VALIDATION_MESSAGES.PHONE_EXISTS}
+                    messageAvailable={VALIDATION_MESSAGES.PHONE_AVAILABLE}
+                    disabled={type === 'view'}
+                    duplicateDisabled={type === 'view'}
+                    placeholder="010-1234-5678"
+                    readOnly={type === 'view'}
+                >
+                    {type === 'create' ? (
                         <small className="mg-v2-form-help">
                             {VALIDATION_MESSAGES.HELP_EMAIL_OR_PHONE_ONE_REQUIRED}
                         </small>
-                    )}
-                </div>
+                    ) : null}
+                </KoreanMobileDuplicateField>
                 <div className="mg-v2-form-group">
                     <label htmlFor="client-vehiclePlate" className="mg-v2-form-label">차량번호 (선택)</label>
                     <input

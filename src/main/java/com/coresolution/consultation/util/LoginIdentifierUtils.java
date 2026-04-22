@@ -1,5 +1,7 @@
 package com.coresolution.consultation.util;
 
+import com.coresolution.consultation.constant.ClientRegistrationConstants;
+
 /**
  * 표준 로그인 식별자(이메일 또는 휴대폰) 정규화·판별 유틸.
  *
@@ -101,5 +103,23 @@ public final class LoginIdentifierUtils {
             throw new IllegalArgumentException("올바른 이메일 또는 휴대폰 번호를 입력해주세요.");
         }
         return p;
+    }
+
+    /**
+     * SMS 발송·검증 등 휴대폰 전용 API의 공통 전처리. 정규화된 숫자열만 반환.
+     *
+     * @param raw 원본 입력
+     * @return {@link #normalizeKoreanMobileDigits(String)} 후 {@link #isValidKoreanMobileDigits(String)} 통과 값
+     * @throws IllegalArgumentException 빈 값 또는 휴대폰 형식 아님
+     */
+    public static String normalizeAndValidateKoreanMobileForSms(String raw) {
+        if (raw == null || raw.trim().isEmpty()) {
+            throw new IllegalArgumentException("전화번호를 입력해주세요.");
+        }
+        String normalized = normalizeKoreanMobileDigits(raw);
+        if (!isValidKoreanMobileDigits(normalized)) {
+            throw new IllegalArgumentException(ClientRegistrationConstants.MSG_INVALID_PHONE);
+        }
+        return normalized;
     }
 }

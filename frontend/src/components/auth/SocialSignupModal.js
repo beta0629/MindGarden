@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatPhoneNumber, isValidEmail, isValidPassword } from '../../utils/common';
+import {
+  isValidKoreanMobileDigits,
+  normalizeKoreanMobileDigits
+} from '../../utils/koreanMobilePhone';
 import { userAPI } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import PrivacyConsentModal from '../common/PrivacyConsentModal';
@@ -190,9 +194,10 @@ const SocialSignupModal = ({
         newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
       }
 
-      if (!formData.phone.trim()) {
+      const phoneDigits = normalizeKoreanMobileDigits(formData.phone);
+      if (!phoneDigits) {
         newErrors.phone = '휴대폰 번호를 입력해주세요.';
-      } else if (formData.phone.replace(/\D/g, '').length !== 11) {
+      } else if (!isValidKoreanMobileDigits(phoneDigits)) {
         newErrors.phone = '휴대폰 번호는 11자리여야 합니다.';
       }
     }

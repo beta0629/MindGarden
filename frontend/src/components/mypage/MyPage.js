@@ -34,6 +34,7 @@ import {
 } from '../../constants/mypageUi';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { formatPhoneNumber } from '../../utils/common';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './MyPageRenewal.css';
@@ -117,18 +118,6 @@ const MyPage = () => {
     }
     return null;
   }, [sessionUser]);
-
-  const formatPhoneNumber = (phone) => {
-    if (!phone) return '';
-    const numbers = phone.replace(/[^0-9]/g, '');
-    if (numbers.length <= 3) {
-      return numbers;
-    }
-    if (numbers.length <= 7) {
-      return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
-    }
-    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
-  };
 
   const setTabInUrl = useCallback(
     (tab) => {

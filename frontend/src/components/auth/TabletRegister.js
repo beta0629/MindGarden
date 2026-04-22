@@ -9,9 +9,11 @@ import {
   WRONG_PATH_MESSAGE,
   WRONG_PATH_REDIRECT_DELAY_MS
 } from '../../utils/subdomainUtils';
+import { AUTH_API } from '../../constants/api';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
 import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../utils/koreanMobilePhone';
 import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete';
+import KoreanMobileDuplicateField from '../common/molecules/KoreanMobileDuplicateField';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -84,7 +86,9 @@ const TabletRegister = () => {
     const trimmed = email?.trim();
     if (!trimmed) return null;
     try {
-      const response = await apiGet(`/api/v1/auth/duplicate-check/email?email=${encodeURIComponent(trimmed)}`);
+      const response = await apiGet(
+        `${AUTH_API.DUPLICATE_CHECK_EMAIL}?email=${encodeURIComponent(trimmed)}`
+      );
       if (response && typeof response.isDuplicate === 'boolean') {
         return response.isDuplicate;
       }
@@ -134,7 +138,7 @@ const TabletRegister = () => {
     if (!isValidKoreanMobileDigits(normalized)) return null;
     try {
       const response = await apiGet(
-        `/api/v1/auth/duplicate-check/phone?phone=${encodeURIComponent(normalized)}`
+        `${AUTH_API.DUPLICATE_CHECK_PHONE}?phone=${encodeURIComponent(normalized)}`
       );
       if (response && typeof response.isDuplicate === 'boolean') {
         return response.isDuplicate;
@@ -431,6 +435,7 @@ const TabletRegister = () => {
                   type="button"
                   variant="secondary"
                   onClick={handleEmailDuplicateCheck}
+                  data-action="register-public-email-duplicate-check"
                   disabled={isCheckingEmail || !formData.email?.trim()}
                   className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: isCheckingEmail })} mg-v2-button mg-v2-button-secondary mg-v2-auth-email-check-btn`}
                   loading={isCheckingEmail}
@@ -511,50 +516,38 @@ const TabletRegister = () => {
               </div>
             </div>
 
-            <div className="mg-v2-form-group">
-              <label htmlFor="phone" className="mg-v2-form-label">휴대폰 번호 *</label>
-              <div className="mg-v2-form-email-row">
-                <div className="mg-v2-form-email-row__input-wrap">
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    className={`mg-v2-form-input ${errors.phone ? 'mg-v2-input error' : ''}`}
-                    placeholder="010-0000-0000"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    onBlur={() => {
-                      const phone = formData.phone?.trim();
-                      const normalized = phone ? normalizeKoreanMobileDigits(phone) : '';
-                      if (phone && isValidKoreanMobileDigits(normalized)) {
-                        handlePhoneDuplicateCheck();
-                      }
-                    }}
-                    required
-                    maxLength="13"
-                  />
-                </div>
-                <MGButton
-                  type="button"
-                  variant="secondary"
-                  onClick={handlePhoneDuplicateCheck}
-                  disabled={isCheckingPhone || !formData.phone?.trim()}
-                  className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: isCheckingPhone })} mg-v2-button mg-v2-button-secondary mg-v2-auth-email-check-btn`}
-                  loading={isCheckingPhone}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  preventDoubleClick={false}
-                >
-                  {VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
-                </MGButton>
-              </div>
-              {phoneCheckStatus === 'duplicate' && (
-                <small className="mg-v2-form-help mg-v2-form-help--error">{VALIDATION_MESSAGES.PHONE_EXISTS}</small>
-              )}
-              {phoneCheckStatus === 'available' && (
-                <small className="mg-v2-form-help mg-v2-form-help--success">{VALIDATION_MESSAGES.PHONE_AVAILABLE}</small>
-              )}
-              {errors.phone && <span className="mg-v2-error-text">{errors.phone}</span>}
-            </div>
+            <KoreanMobileDuplicateField
+              label="휴대폰 번호 *"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              placeholder="010-0000-0000"
+              maxLength={13}
+              required
+              inputClassName={`mg-v2-form-input ${errors.phone ? 'mg-v2-input error' : ''}`}
+              onBlur={() => {
+                const phone = formData.phone?.trim();
+                const normalized = phone ? normalizeKoreanMobileDigits(phone) : '';
+                if (phone && isValidKoreanMobileDigits(normalized)) {
+                  handlePhoneDuplicateCheck();
+                }
+              }}
+              onDuplicateClick={handlePhoneDuplicateCheck}
+              isCheckingDuplicate={isCheckingPhone}
+              duplicateButtonDataAction="register-public-phone-duplicate-check"
+              duplicateButtonLabel={VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
+              checkStatus={
+                phoneCheckStatus === 'duplicate'
+                  ? 'duplicate'
+                  : phoneCheckStatus === 'available'
+                    ? 'available'
+                    : null
+              }
+              messageDuplicate={VALIDATION_MESSAGES.PHONE_EXISTS}
+              messageAvailable={VALIDATION_MESSAGES.PHONE_AVAILABLE}
+              errorText={errors.phone || ''}
+            />
 
             <div className="mg-v2-checkbox-group">
               <input

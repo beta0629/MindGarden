@@ -43,6 +43,9 @@ import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -55,6 +58,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -66,6 +70,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.util.StringUtils;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -1769,6 +1774,62 @@ public class AdminController extends BaseApiController {
         log.info("✅ 이메일 중복 확인 완료: email={}, isDuplicate={}, tenantId={}", email, isDuplicate, tenantId);
         
         return success(result);
+    }
+
+    /**
+     * 휴대폰 중복 확인 (스태프·내담자·상담사 등록/수정용)
+     * GET /api/v1/admin/duplicate-check/phone?phone={phone}&excludeUserId={optional}
+     */
+    @GetMapping("/duplicate-check/phone")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> checkPhoneDuplicate(
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) Long excludeUserId,
+            HttpSession session) {
+        log.info("🔍 휴대폰 중복 확인 요청");
+
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser != null) {
+                tenantId = currentUser.getTenantId();
+            }
+        }
+
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("⚠️ 테넌트 ID를 찾을 수 없습니다.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("테넌트 정보를 찾을 수 없습니다."));
+        }
+
+        String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(phone != null ? phone : "");
+        Map<String, Object> result = new HashMap<>();
+        result.put("phone", normalized);
+
+        if (!StringUtils.hasText(normalized) || !LoginIdentifierUtils.isValidKoreanMobileDigits(normalized)) {
+            result.put("isDuplicate", false);
+            result.put("available", false);
+            result.put("message", AdminServiceUserFacingMessages.MSG_DUPLICATE_CHECK_PHONE_INVALID);
+            return success(result);
+        }
+
+        String previousTenant = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        try {
+            com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+            boolean isDuplicate = userService.isDuplicateExcludingId(excludeUserId, "phone", normalized);
+            result.put("isDuplicate", isDuplicate);
+            result.put("available", !isDuplicate);
+            result.put("message", isDuplicate
+                    ? AdminServiceUserFacingMessages.MSG_DUPLICATE_CHECK_PHONE_IN_USE
+                    : AdminServiceUserFacingMessages.MSG_DUPLICATE_CHECK_PHONE_AVAILABLE);
+            log.info("✅ 휴대폰 중복 확인 완료: isDuplicate={}, tenantId={}", isDuplicate, tenantId);
+            return success(result);
+        } finally {
+            if (previousTenant != null) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(previousTenant);
+            } else {
+                com.coresolution.core.context.TenantContextHolder.clear();
+            }
+        }
     }
 
     /**

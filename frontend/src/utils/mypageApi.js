@@ -20,6 +20,24 @@ function resolveProfilePutEndpoint(userRole, userId) {
   return PROFILE_API.ADMIN.UPDATE_INFO();
 }
 
+/**
+ * OAuth2 authorize JSON: ApiResponse { success, data: { authUrl, redirectUrl } } 또는 평면 객체.
+ * (최상위 data.authUrl 미사용 시 window.location에 객체가 들어가 빈 화면이 되는 것을 방지)
+ */
+function extractOAuthAuthorizeUrl(json) {
+  if (!json || typeof json !== 'object') {
+    return null;
+  }
+  const inner =
+    Object.prototype.hasOwnProperty.call(json, 'data') &&
+    json.data !== null &&
+    typeof json.data === 'object'
+      ? json.data
+      : json;
+  const u = inner.authUrl || inner.redirectUrl;
+  return typeof u === 'string' && u.trim().length > 0 ? u.trim() : null;
+}
+
 const mypageApi = {
   // 마이페이지 정보 조회
   getMyPageInfo: async() => {
@@ -121,8 +139,12 @@ const mypageApi = {
       const contentType = response.headers.get('content-type');
 
       if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
-        return data.authUrl || data.redirectUrl || data;
+        const json = await response.json();
+        const url = extractOAuthAuthorizeUrl(json);
+        if (url) {
+          return url;
+        }
+        throw new Error('OAuth 인증 URL이 응답에 없습니다.');
       }
       const url = await response.text();
       return url;
@@ -150,8 +172,12 @@ const mypageApi = {
       const contentType = response.headers.get('content-type');
 
       if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
-        return data.redirectUrl || data;
+        const json = await response.json();
+        const url = extractOAuthAuthorizeUrl(json);
+        if (url) {
+          return url;
+        }
+        throw new Error('OAuth 로그인 URL이 응답에 없습니다.');
       }
       const url = await response.text();
       return url;

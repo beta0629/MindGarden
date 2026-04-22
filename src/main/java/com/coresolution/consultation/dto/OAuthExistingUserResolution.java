@@ -7,8 +7,8 @@ import lombok.Value;
 
 /**
  * 소셜 로그인/연동 전 기존 사용자 매칭 결과.
- * 동일 테넌트·동일 정규화 전화에 관리자·상담사·스태프·내담자 중 서로 다른 역할이 2종 이상이면
- * {@link #requiresPhoneAccountSelection} 이 true이다.
+ * 동일 테넌트·동일 정규화 전화 또는 동일 정규화 이메일에 관리자·상담사·스태프·내담자 중 서로 다른 역할이 2종 이상이면
+ * {@link #requiresPhoneAccountSelection} 이 true이다(JWT purpose·필드명은 전화 선택과 공용).
  *
  * @author CoreSolution
  * @since 2026-04-22
@@ -23,7 +23,7 @@ public class OAuthExistingUserResolution {
     Long existingUserId;
 
     /**
-     * 전화 매칭만 애매한 경우 true. 이 경우 이메일 폴백을 하지 않는다.
+     * 전화 또는 이메일 매칭에서 역할 혼재로 사용자 선택이 필요한 경우 true.
      */
     boolean requiresPhoneAccountSelection;
 
@@ -66,9 +66,9 @@ public class OAuthExistingUserResolution {
     }
 
     /**
-     * 전화 후보 중 역할이 2종 이상 섞여 사용자 선택이 필요하다.
+     * 전화 또는 이메일 후보 중 역할이 2종 이상 섞여 사용자 선택이 필요하다.
      *
-     * @param candidateUserIds 후보 사용자 PK(테넌트·전화 일치 전체)
+     * @param candidateUserIds 후보 사용자 PK(테넌트·식별자 일치 전체)
      */
     public static OAuthExistingUserResolution phoneAmbiguous(List<Long> candidateUserIds) {
         return OAuthExistingUserResolution.builder()

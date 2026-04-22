@@ -347,6 +347,13 @@ public class MyPageServiceImpl implements MyPageService {
         return "소셜 계정이 성공적으로 연동되었습니다.";
     }
 
+    /**
+     * 스텁 응답만 반환합니다. 실제 연동 해제 API·테넌트 격리·소셜 행 삭제의 SSOT는
+     * {@link com.coresolution.consultation.controller.ClientSocialAccountController} 를 참고하십시오.
+     *
+     * @deprecated 운영·화면에서는 ClientSocialAccountController 경로를 사용하십시오.
+     */
+    @Deprecated
     @Override
     public String unlinkSocialAccount(Long userId, String socialType) {
         log.info("🔧 소셜 계정 연동 해제: {} - {}", userId, socialType);

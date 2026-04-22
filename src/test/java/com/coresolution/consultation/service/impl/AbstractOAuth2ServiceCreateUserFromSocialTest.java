@@ -229,6 +229,47 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
     }
 
     @Test
+    @DisplayName("resolveExistingUserForSocialLinkOrLogin: 전화 없음·동일 정규화 이메일에 상담사·내담자면 선택 필요(전화 선택 플로우 재사용)")
+    void resolveExistingUserForSocialLinkOrLogin_emailAmbiguousConsultantAndClient_noPhone() {
+        SocialUserInfo socialUserInfo = SocialUserInfo.builder()
+            .providerUserId("sns-email-ambiguous-1")
+            .email("Shared@Tenant.Com")
+            .phone(null)
+            .build();
+        socialUserInfo.normalizeData();
+
+        User consultant = User.builder()
+            .userId("ec1")
+            .email("c@t.com")
+            .password("p")
+            .name("n")
+            .role(UserRole.CONSULTANT)
+            .build();
+        consultant.setId(1201L);
+        consultant.setCreatedAt(LocalDateTime.now());
+
+        User client = User.builder()
+            .userId("ecl1")
+            .email("cl@t.com")
+            .password("p")
+            .name("n2")
+            .role(UserRole.CLIENT)
+            .build();
+        client.setId(1202L);
+        client.setCreatedAt(LocalDateTime.now());
+
+        when(userService.findAllUsersMatchingEmailInCurrentTenant(eq("shared@tenant.com")))
+            .thenReturn(Arrays.asList(consultant, client));
+
+        OAuthExistingUserResolution res = oauth2Service.resolveExistingUserForSocialLinkOrLogin(socialUserInfo);
+
+        assertThat(res.isRequiresPhoneAccountSelection()).isTrue();
+        assertThat(res.getPhoneMatchCandidateUserIds()).containsExactlyInAnyOrder(1201L, 1202L);
+        assertThat(res.getExistingUserId()).isNull();
+        verify(userService, never()).findAllUsersMatchingPhoneInCurrentTenant(anyString());
+    }
+
+    @Test
     @DisplayName("resolveExistingUserForSocialLinkOrLogin: 전화 미일치 시 이메일로 조회한다")
     void resolveExistingUserForSocialLinkOrLogin_fallsBackToEmailWhenNoPhoneMatch() {
         SocialUserInfo socialUserInfo = SocialUserInfo.builder()

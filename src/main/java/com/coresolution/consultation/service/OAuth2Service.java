@@ -42,7 +42,8 @@ public interface OAuth2Service {
      * 카카오·네이버 등 공통: 테넌트 내 기존 사용자 매칭(연동/콜백/SDK 경로 동일 분기).
      * 매칭 순서: (1) tenantId+provider+providerUserId (2) SNS 전화(한국 패턴) (3) tenantId+정규화 이메일.
      * (2)에서 동일 전화에 서로 다른 역할(관리자·상담사·스태프·내담자)이 2종 이상이면
-     * {@link OAuthExistingUserResolution#isRequiresPhoneAccountSelection()} 이 true이며 이메일 폴백은 하지 않는다.
+     * {@link OAuthExistingUserResolution#isRequiresPhoneAccountSelection()} 이 true이며 (3)으로 폴백하지 않는다.
+     * (3)에서 동일 정규화 이메일에 동일 기준으로 역할이 2종 이상이면 동일 플래그·후보 목록으로 계정 선택이 필요하다.
      * 소셜 계정 행을 생성하지 않는다 — 매칭 후 {@link #linkSocialAccountToUser} 등에서 연동한다.
      *
      * @param socialUserInfo 정규화된 {@link SocialUserInfo}

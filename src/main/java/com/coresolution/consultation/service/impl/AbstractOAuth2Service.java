@@ -45,6 +45,7 @@ import lombok.RequiredArgsConstructor;
  * SNS 이메일은 어드민 등록 이메일과 다를 수 있어 (b)를 (c)보다 우선한다.
  * (b)는 전화 미제공·비한국 휴대패턴이면 스킵된다. 동일 전화에 관리자·상담사·스태프·내담자 중 서로 다른 역할이 2종 이상이면
  * (b)에서 자동 선택하지 않고 계정 선택 플로우로 넘긴다(동일 역할만 여러 명이면 우선순위로 1명 확정).
+ * (c)에서도 동일 정규화 이메일에 위 역할 집합 기준 서로 다른 역할이 2종 이상이면 동일 계정 선택 플로우로 넘긴다.
  * (a)(b)(c) 모두 실패 시에만 간편가입 플로우.
  *
  * @author MindGarden
@@ -56,7 +57,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractOAuth2Service.class);
 
-    /** 전화 매칭 시 역할 종류가 2개 이상이면 계정 선택 플로우로 보낼 역할 집합(null 제외). */
+    /** 전화·이메일 매칭 시 역할 종류가 2개 이상이면 계정 선택 플로우로 보낼 역할 집합(null 제외). */
     private static final Set<UserRole> OAUTH_PHONE_ACCOUNT_SELECTION_ROLES =
             Collections.unmodifiableSet(EnumSet.of(UserRole.ADMIN, UserRole.CONSULTANT, UserRole.STAFF,
                     UserRole.CLIENT));
@@ -248,7 +249,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         if (oauthAccountLinkMode) {
             return OAuthExistingUserResolution.noMatch();
         }
-        PhoneProfileResolution phone = resolvePhoneMatchForOAuthProfile(socialUserInfo.getPhone());
+        ProfileMultiMatchResolution phone = resolvePhoneMatchForOAuthProfile(socialUserInfo.getPhone());
         if (phone.requiresSelection()) {
             return OAuthExistingUserResolution.phoneAmbiguous(phone.getCandidateUserIds());
         }
@@ -256,9 +257,12 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
             logIfEmailWouldMatchDifferentUser(socialUserInfo, phone.getSelectedUserId());
             return OAuthExistingUserResolution.unique(phone.getSelectedUserId(), true);
         }
-        Long byEmail = findExistingUserByEmail(socialUserInfo.getEmail());
-        if (byEmail != null) {
-            return OAuthExistingUserResolution.unique(byEmail, true);
+        ProfileMultiMatchResolution email = resolveEmailMatchForOAuthProfile(socialUserInfo.getEmail());
+        if (email.requiresSelection()) {
+            return OAuthExistingUserResolution.phoneAmbiguous(email.getCandidateUserIds());
+        }
+        if (email.getSelectedUserId() != null) {
+            return OAuthExistingUserResolution.unique(email.getSelectedUserId(), true);
         }
         return OAuthExistingUserResolution.noMatch();
     }
@@ -291,33 +295,30 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     }
 
     /**
-     * SNS 전화번호와 동일한 테넌트 내 사용자 PK(한국 휴대 패턴만).
+     * 전화·이메일 공통: 후보 다수 시 역할 혼재 여부에 따라 선택 필요 또는 단일 PK 자동 확정.
      */
-    /**
-     * 전화 매칭 결과(애매하면 선택 필요, 단일·동측 다수는 자동 PK).
-     */
-    private static final class PhoneProfileResolution {
+    private static final class ProfileMultiMatchResolution {
         private final boolean requiresSelection;
         private final List<Long> candidateUserIds;
         private final Long selectedUserId;
 
-        private PhoneProfileResolution(boolean requiresSelection, List<Long> candidateUserIds,
+        private ProfileMultiMatchResolution(boolean requiresSelection, List<Long> candidateUserIds,
                 Long selectedUserId) {
             this.requiresSelection = requiresSelection;
             this.candidateUserIds = candidateUserIds;
             this.selectedUserId = selectedUserId;
         }
 
-        static PhoneProfileResolution none() {
-            return new PhoneProfileResolution(false, Collections.emptyList(), null);
+        static ProfileMultiMatchResolution none() {
+            return new ProfileMultiMatchResolution(false, Collections.emptyList(), null);
         }
 
-        static PhoneProfileResolution requiresSelection(List<Long> candidateUserIds) {
-            return new PhoneProfileResolution(true, candidateUserIds, null);
+        static ProfileMultiMatchResolution requiresSelection(List<Long> candidateUserIds) {
+            return new ProfileMultiMatchResolution(true, candidateUserIds, null);
         }
 
-        static PhoneProfileResolution auto(Long userId) {
-            return new PhoneProfileResolution(false, Collections.emptyList(), userId);
+        static ProfileMultiMatchResolution auto(Long userId) {
+            return new ProfileMultiMatchResolution(false, Collections.emptyList(), userId);
         }
 
         boolean requiresSelection() {
@@ -333,17 +334,17 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         }
     }
 
-    private PhoneProfileResolution resolvePhoneMatchForOAuthProfile(String phone) {
+    private ProfileMultiMatchResolution resolvePhoneMatchForOAuthProfile(String phone) {
         if (phone == null) {
-            return PhoneProfileResolution.none();
+            return ProfileMultiMatchResolution.none();
         }
         String trimmed = phone.trim();
         if (!StringUtils.hasText(trimmed)) {
-            return PhoneProfileResolution.none();
+            return ProfileMultiMatchResolution.none();
         }
         String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(trimmed);
         if (!LoginIdentifierUtils.isValidKoreanMobileDigits(normalized)) {
-            return PhoneProfileResolution.none();
+            return ProfileMultiMatchResolution.none();
         }
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("전화번호로 사용자 찾기: tenantId={}, digitsLen={}", tenantId, normalized.length());
@@ -351,10 +352,10 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
             List<User> users = userService.findAllUsersMatchingPhoneInCurrentTenant(normalized);
             if (users == null || users.isEmpty()) {
                 log.info("전화번호로 사용자를 찾지 못함: tenantId={}", tenantId);
-                return PhoneProfileResolution.none();
+                return ProfileMultiMatchResolution.none();
             }
             if (users.size() == 1) {
-                return PhoneProfileResolution.auto(users.get(0).getId());
+                return ProfileMultiMatchResolution.auto(users.get(0).getId());
             }
             long distinctRolesAmongSelectionSet = users.stream()
                     .map(User::getRole)
@@ -365,13 +366,53 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
                 List<Long> ids = users.stream().map(User::getId).collect(Collectors.toList());
                 log.info("전화번호 매칭 애매(서로 다른 역할 {}종·후보 {}명): tenantId={}",
                     Long.valueOf(distinctRolesAmongSelectionSet), Integer.valueOf(ids.size()), tenantId);
-                return PhoneProfileResolution.requiresSelection(ids);
+                return ProfileMultiMatchResolution.requiresSelection(ids);
             }
             User selected = selectBestMatchingUser(users);
-            return selected != null ? PhoneProfileResolution.auto(selected.getId()) : PhoneProfileResolution.none();
+            return selected != null ? ProfileMultiMatchResolution.auto(selected.getId()) : ProfileMultiMatchResolution.none();
         } catch (Exception e) {
             log.error("전화번호로 사용자 찾기 중 오류: {}", e.getMessage(), e);
-            return PhoneProfileResolution.none();
+            return ProfileMultiMatchResolution.none();
+        }
+    }
+
+    /**
+     * SNS 정규화 이메일과 동일한 테넌트 내 사용자 목록 매칭. 전화 분기와 동일한 역할 혼재 규칙으로 선택 필요 여부를 판단한다.
+     *
+     * @param email SNS 프로필 이메일(정규화 전 원문도 허용 — {@link com.coresolution.consultation.service.UserService}가 테넌트 내 일치 규칙 처리)
+     */
+    private ProfileMultiMatchResolution resolveEmailMatchForOAuthProfile(String email) {
+        String normalizedEmail = SocialProvider.normalizeEmail(email);
+        if (!StringUtils.hasText(normalizedEmail)) {
+            return ProfileMultiMatchResolution.none();
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("이메일로 사용자 매칭(OAuth): tenantId={}", tenantId);
+        try {
+            List<User> users = userService.findAllUsersMatchingEmailInCurrentTenant(email);
+            if (users == null || users.isEmpty()) {
+                log.info("이메일로 사용자를 찾지 못함: tenantId={}", tenantId);
+                return ProfileMultiMatchResolution.none();
+            }
+            if (users.size() == 1) {
+                return ProfileMultiMatchResolution.auto(users.get(0).getId());
+            }
+            long distinctRolesAmongSelectionSet = users.stream()
+                    .map(User::getRole)
+                    .filter(r -> r != null && OAUTH_PHONE_ACCOUNT_SELECTION_ROLES.contains(r))
+                    .distinct()
+                    .count();
+            if (distinctRolesAmongSelectionSet >= 2) {
+                List<Long> ids = users.stream().map(User::getId).collect(Collectors.toList());
+                log.info("이메일 매칭 애매(서로 다른 역할 {}종·후보 {}명): tenantId={}",
+                    Long.valueOf(distinctRolesAmongSelectionSet), Integer.valueOf(ids.size()), tenantId);
+                return ProfileMultiMatchResolution.requiresSelection(ids);
+            }
+            User selected = selectBestMatchingUser(users);
+            return selected != null ? ProfileMultiMatchResolution.auto(selected.getId()) : ProfileMultiMatchResolution.none();
+        } catch (Exception e) {
+            log.error("이메일로 사용자 찾기 중 오류: {}", e.getMessage(), e);
+            return ProfileMultiMatchResolution.none();
         }
     }
 
@@ -379,7 +420,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
      * SNS 전화번호와 동일한 테넌트 내 사용자 PK(한국 휴대 패턴만). 상담사·내담자 동시 매칭 시 null.
      */
     protected Long findExistingUserByPhoneForOAuth(String phone) {
-        PhoneProfileResolution r = resolvePhoneMatchForOAuthProfile(phone);
+        ProfileMultiMatchResolution r = resolvePhoneMatchForOAuthProfile(phone);
         if (r.requiresSelection()) {
             return null;
         }
@@ -394,55 +435,11 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
      * 3. 같은 역할이면 가장 최근에 생성된 계정 우선
      */
     protected Long findExistingUserByEmail(String email) {
-        log.info("이메일로 사용자 찾기: email={}", email);
-        String tenantId = TenantContextHolder.getRequiredTenantId();
-        String normalizedEmail = SocialProvider.normalizeEmail(email);
-        if (!StringUtils.hasText(normalizedEmail)) {
-            log.info("이메일 정규화 결과 비어 있어 조회를 생략합니다.");
+        ProfileMultiMatchResolution r = resolveEmailMatchForOAuthProfile(email);
+        if (r.requiresSelection()) {
             return null;
         }
-        
-        try {
-            // 같은 이메일로 여러 계정이 있을 수 있음 — 평문·암호화 저장 모두 UserService에서 동일 규칙으로 수집
-            List<User> users = userService.findAllUsersMatchingEmailInCurrentTenant(email);
-            
-            if (users == null || users.isEmpty()) {
-                log.info("이메일로 사용자를 찾지 못함: email={}, tenantId={}", normalizedEmail, tenantId);
-                return null;
-            }
-            
-            log.info("이메일로 찾은 사용자 수: email={}, tenantId={}, count={}", normalizedEmail, tenantId, users.size());
-            
-            // 여러 계정이 있는 경우 가장 적절한 계정 선택
-            User selectedUser = selectBestMatchingUser(users);
-            
-            if (selectedUser != null) {
-                log.info("선택된 사용자 정보: id={}, email={}, role={}, isActive={}, createdAt={}", 
-                        selectedUser.getId(), selectedUser.getEmail(), selectedUser.getRole(), 
-                        selectedUser.getIsActive(), selectedUser.getCreatedAt());
-                
-                // 여러 계정이 있는 경우 경고 로그
-                if (users.size() > 1) {
-                    log.warn("⚠️ 같은 이메일로 {}개의 계정이 발견됨. 가장 적절한 계정 선택: userId={}, role={}, isActive={}", 
-                            users.size(), selectedUser.getId(), selectedUser.getRole(), selectedUser.getIsActive());
-                    // 모든 계정 정보 로깅
-                    for (User user : users) {
-                        log.info("  - 계정: userId={}, role={}, isActive={}, createdAt={}", 
-                                user.getId(), user.getRole(), user.getIsActive(), user.getCreatedAt());
-                    }
-                }
-                
-                return selectedUser.getId();
-            }
-            
-            log.warn("이메일로 사용자를 찾았지만 선택할 수 없음: email={}, tenantId={}, count={}", 
-                    normalizedEmail, tenantId, users.size());
-            return null;
-            
-        } catch (Exception e) {
-            log.error("이메일로 사용자 찾기 중 오류 발생: email={}, error={}", normalizedEmail, e.getMessage(), e);
-            return null;
-        }
+        return r.getSelectedUserId();
     }
     
     /**

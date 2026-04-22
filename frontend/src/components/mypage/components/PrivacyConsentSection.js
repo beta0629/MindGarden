@@ -30,7 +30,7 @@ const PrivacyConsentSection = () => {
   const loadConsentStatus = useCallback(async() => {
     try {
       setLoading(true);
-      const result = await StandardizedApi.get('/api/privacy-consent/status');
+      const result = await StandardizedApi.get('/api/v1/privacy-consent/status');
       if (result?.success && result.data) {
         setConsentStatus(result.data);
       } else if (result && typeof result === 'object' && 'privacyConsent' in result) {
@@ -46,7 +46,7 @@ const PrivacyConsentSection = () => {
   const updateConsentStatus = async(consentData) => {
     try {
       setUpdating(true);
-      const result = await StandardizedApi.post('/api/privacy-consent/update', consentData);
+      const result = await StandardizedApi.post('/api/v1/privacy-consent/update', consentData);
       if (result && result.success !== false) {
         await loadConsentStatus();
         notificationManager.show('개인정보 동의 상태가 업데이트되었습니다.', 'info');

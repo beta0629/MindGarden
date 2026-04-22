@@ -93,6 +93,31 @@ const MyPage = () => {
 
   const visibleTabs = MYPAGE_TAB_ORDER.filter((key) => MYPAGE_TAB_SET.has(key));
 
+  const resolveMypageSessionUser = useCallback(async() => {
+    let resolved = sessionManager.getUser() || sessionUser;
+    if (resolved) {
+      return resolved;
+    }
+    await sessionManager.checkSession(true);
+    resolved = sessionManager.getUser() || sessionUser;
+    if (resolved) {
+      return resolved;
+    }
+    const raw = localStorage.getItem('userInfo');
+    if (!raw) {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && parsed.id != null) {
+        return parsed;
+      }
+    } catch (parseError) {
+      console.error('userInfo 파싱 오류:', parseError);
+    }
+    return null;
+  }, [sessionUser]);
+
   const formatPhoneNumber = (phone) => {
     if (!phone) return '';
     const numbers = phone.replace(/[^0-9]/g, '');
@@ -122,7 +147,7 @@ const MyPage = () => {
 
   const loadUserInfo = useCallback(async() => {
     try {
-      const currentUser = sessionManager.getUser() || sessionUser;
+      const currentUser = await resolveMypageSessionUser();
       if (!currentUser) {
         throw new Error('세션에 사용자 정보가 없습니다');
       }
@@ -138,7 +163,7 @@ const MyPage = () => {
       }
     } catch (error) {
       console.error('사용자 정보 로드 실패:', error);
-      const currentUser = sessionManager.getUser() || sessionUser;
+      const currentUser = await resolveMypageSessionUser();
       if (currentUser) {
         const formDataToSet = {
           userId: pickSessionProfileNameForForm(currentUser),
@@ -169,11 +194,11 @@ const MyPage = () => {
         setFormData(normalizeProfileFormNameField(formDataToSet));
       }
     }
-  }, [sessionUser]);
+  }, [resolveMypageSessionUser]);
 
   const loadSocialAccounts = useCallback(async() => {
     try {
-      const currentUser = sessionManager.getUser() || sessionUser;
+      const currentUser = await resolveMypageSessionUser();
       if (!currentUser) {
         setSocialAccounts([]);
         return;
@@ -186,10 +211,10 @@ const MyPage = () => {
       console.error('소셜 계정 정보 로드 실패:', error);
       setSocialAccounts([]);
     }
-  }, [sessionUser]);
+  }, [resolveMypageSessionUser]);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem('userInfo');
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);

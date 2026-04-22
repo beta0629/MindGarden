@@ -258,7 +258,13 @@ export const SessionProvider = ({ children }) => {
     }
   }, []); // 의존성 배열을 빈 배열로 설정 (stateRef 사용으로 무한루프 방지)
 
-  // 로그인 함수 (API 호출 포함)
+  /**
+   * 이메일+비밀번호 로그인 전용. {@code authAPI.login} → {@code POST /api/v1/auth/login}.
+   * OAuth/SNS 콜백 등 비밀번호가 없는 흐름은 {@code testLogin}(토큰·유저 주입) 또는 {@code checkSession}을 사용한다.
+   *
+   * @param {Object} loginData 로그인 요청 본문
+   * @returns {Promise<Object>} 성공·실패·중복확인 요청 등 API 결과 형태
+   */
   const login = async(loginData) => {
     try {
       dispatch({ type: SessionActionTypes.SET_LOADING, payload: true });

@@ -58,6 +58,7 @@
 - **서브에이전트 활용**: [SUBAGENT_USAGE.md](./standards/SUBAGENT_USAGE.md)
 
 ### Troubleshooting (장애·분석)
+- [OAuth2 콜백 후 `auth/login` 400·비밀번호 요구](./troubleshooting/OAUTH2_CALLBACK_AUTH_LOGIN_400_PASSWORD_REQUIRED.md) — `SessionContext.login` 오용 분기, `testLogin` 패턴 정렬
 - [개발 서버 기동 실패 분석](./troubleshooting/DEV_SERVER_STARTUP_FAILURE_ANALYSIS.md)
 - [심리검사 tenantId 이슈](./troubleshooting/PSYCH_PAGE_TENANT_ID_ISSUE.md)
 - [심리검사 AI 필수 섹션 누락·파싱 분석](./troubleshooting/PSYCH_AI_MISSING_REQUIRED_SECTIONS_PRECISE_ANALYSIS.md), [서버 로그 분석](./troubleshooting/PSYCH_AI_MISSING_REQUIRED_SECTIONS_SERVER_LOG_ANALYSIS.md)

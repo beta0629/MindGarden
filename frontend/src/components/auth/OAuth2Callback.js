@@ -31,7 +31,7 @@ const OAUTH2_ERROR_QUERY_DISPLAY_MAX_LEN = 200;
 const OAuth2Callback = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, checkSession, testLogin } = useSession();
+  const { checkSession, testLogin } = useSession();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
@@ -115,6 +115,8 @@ const OAuth2Callback = () => {
         const profileImageUrl = searchParams.get('profileImageUrl');
         const providerUserId = searchParams.get('providerUserId'); // 추가: SNS 사용자 ID
         const tenantId = searchParams.get('tenantId'); // 서브도메인에서 추출한 tenant_id
+        const oauthAccessToken = searchParams.get('accessToken');
+        const oauthRefreshToken = searchParams.get('refreshToken');
         // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         const branchId = searchParams.get('branchId');
         const branchName = searchParams.get('branchName');
@@ -337,10 +339,10 @@ const OAuth2Callback = () => {
             return;
           }
           
-          // 중앙 세션에 사용자 정보 설정
-          const loginSuccess = await login(userInfo, {
-            accessToken: 'oauth2_token',
-            refreshToken: 'oauth2_refresh_token'
+          // 중앙 세션에 사용자 정보 설정 (비밀번호 로그인 API 호출 없음)
+          const loginSuccess = await testLogin(userInfo, {
+            accessToken: oauthAccessToken || 'oauth2_token',
+            refreshToken: oauthRefreshToken || 'oauth2_refresh_token'
           });
           console.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo);
           

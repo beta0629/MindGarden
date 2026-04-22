@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.SocialUserInfo;
 import com.coresolution.consultation.entity.Client;
@@ -13,6 +14,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
+import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
@@ -53,12 +55,19 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
     private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
     private PasswordService passwordService;
+    @Mock
+    private UserService userService;
 
     private TestOAuth2Service oauth2Service;
 
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId("tenant-oauth-ut");
+        lenient().when(userSocialAccountRepository.findByTenantId(anyString())).thenReturn(Collections.emptyList());
+        lenient().when(
+            userSocialAccountRepository.findByTenantIdAndProviderAndProviderUserIdAndIsDeletedFalse(
+                anyString(), anyString(), anyString())
+        ).thenReturn(Optional.empty());
         lenient().when(passwordService.encodeSecret(anyString())).thenAnswer(inv -> "ENC(" + inv.getArgument(0) + ")");
         oauth2Service = new TestOAuth2Service(
             userRepository,
@@ -67,7 +76,8 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
             jwtService,
             dynamicPermissionService,
             encryptionUtil,
-            passwordService
+            passwordService,
+            userService
         );
     }
 
@@ -142,20 +152,20 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
         existing.setId(55L);
         existing.setCreatedAt(LocalDateTime.now());
 
-        when(userRepository.findAllByTenantIdAndEmail("tenant-oauth-ut", "a@b.com"))
+        when(userService.findAllUsersMatchingEmailInCurrentTenant("A@B.Com"))
             .thenReturn(Collections.singletonList(existing));
 
         Long found = oauth2Service.exposeFindExistingUserByEmail("A@B.Com");
 
         assertThat(found).isEqualTo(55L);
-        verify(userRepository).findAllByTenantIdAndEmail("tenant-oauth-ut", "a@b.com");
+        verify(userService).findAllUsersMatchingEmailInCurrentTenant("A@B.Com");
     }
 
     @Test
     @DisplayName("findExistingUserByEmail: 빈 이메일이면 저장소를 호출하지 않는다")
     void findExistingUserByEmail_blankEmail_skipsRepository() {
         assertThat(oauth2Service.exposeFindExistingUserByEmail("  ")).isNull();
-        verify(userRepository, never()).findAllByTenantIdAndEmail(anyString(), anyString());
+        verify(userService, never()).findAllUsersMatchingEmailInCurrentTenant(anyString());
     }
 
     @Test
@@ -184,6 +194,116 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
         verify(encryptionUtil).safeEncrypt(eq("oauth@test.com"));
     }
 
+    @Test
+    @DisplayName("findExistingUserIdForSocialLinkOrLogin: 전화가 이메일보다 우선하고, 전화 일치 시 해당 사용자를 반환한다")
+    void findExistingUserIdForSocialLinkOrLogin_phonePreferredOverEmail() {
+        SocialUserInfo socialUserInfo = SocialUserInfo.builder()
+            .providerUserId("sns-new-1")
+            .email("sns-email@provider.com")
+            .phone("010-1111-2222")
+            .build();
+        socialUserInfo.normalizeData();
+
+        User phoneUser = User.builder()
+            .userId("phone-user")
+            .email("admin@tenant.com")
+            .password("p")
+            .name("n")
+            .role(UserRole.CLIENT)
+            .build();
+        phoneUser.setId(500L);
+        phoneUser.setCreatedAt(LocalDateTime.now());
+
+        User emailUser = User.builder()
+            .userId("email-user")
+            .email("other@tenant.com")
+            .password("p")
+            .name("n2")
+            .role(UserRole.CLIENT)
+            .build();
+        emailUser.setId(501L);
+        emailUser.setCreatedAt(LocalDateTime.now());
+
+        when(userService.findAllUsersMatchingPhoneInCurrentTenant(eq("01011112222")))
+            .thenReturn(Collections.singletonList(phoneUser));
+        when(userService.findAllUsersMatchingEmailInCurrentTenant(eq("sns-email@provider.com")))
+            .thenReturn(Collections.singletonList(emailUser));
+
+        Long found = oauth2Service.findExistingUserIdForSocialLinkOrLogin(socialUserInfo);
+
+        assertThat(found).isEqualTo(500L);
+        InOrder order = inOrder(userService);
+        order.verify(userService).findAllUsersMatchingPhoneInCurrentTenant(eq("01011112222"));
+        order.verify(userService).findAllUsersMatchingEmailInCurrentTenant(eq("sns-email@provider.com"));
+    }
+
+    @Test
+    @DisplayName("findExistingUserIdForSocialLinkOrLogin: 전화 미일치 시 이메일로 조회한다")
+    void findExistingUserIdForSocialLinkOrLogin_fallsBackToEmailWhenNoPhoneMatch() {
+        SocialUserInfo socialUserInfo = SocialUserInfo.builder()
+            .providerUserId("sns-new-2")
+            .email("only@email.com")
+            .phone(null)
+            .build();
+        socialUserInfo.normalizeData();
+
+        User emailUser = User.builder()
+            .userId("email-only")
+            .email("only@email.com")
+            .password("p")
+            .name("n")
+            .role(UserRole.CLIENT)
+            .build();
+        emailUser.setId(600L);
+        emailUser.setCreatedAt(LocalDateTime.now());
+
+        when(userService.findAllUsersMatchingEmailInCurrentTenant(eq("only@email.com")))
+            .thenReturn(Collections.singletonList(emailUser));
+
+        Long found = oauth2Service.findExistingUserIdForSocialLinkOrLogin(socialUserInfo);
+
+        assertThat(found).isEqualTo(600L);
+        verify(userService, never()).findAllUsersMatchingPhoneInCurrentTenant(anyString());
+    }
+
+    @Test
+    @DisplayName("findExistingUserByPhoneForOAuth는 정규화된 숫자열로 전화 매칭을 조회한다")
+    void findExistingUserByPhoneForOAuth_passesNormalizedDigitsToUserService() {
+        User phoneUser = User.builder()
+            .userId("u-phone")
+            .email("a@b.com")
+            .password("p")
+            .name("n")
+            .role(UserRole.CLIENT)
+            .build();
+        phoneUser.setId(700L);
+        phoneUser.setCreatedAt(LocalDateTime.now());
+
+        when(userService.findAllUsersMatchingPhoneInCurrentTenant(eq("01033334444")))
+            .thenReturn(Collections.singletonList(phoneUser));
+
+        Long found = oauth2Service.exposeFindExistingUserByPhoneForOAuth("  010-3333-4444  ");
+
+        assertThat(found).isEqualTo(700L);
+        verify(userService).findAllUsersMatchingPhoneInCurrentTenant(eq("01033334444"));
+    }
+
+    @Test
+    @DisplayName("SocialUserInfo.normalizeData: 전화는 trim 후 정규화한다")
+    void socialUserInfo_normalizeData_trimsAndNormalizesPhone() {
+        SocialUserInfo info = SocialUserInfo.builder().phone("  010-9999-8888  ").build();
+        info.normalizeData();
+        assertThat(info.getPhone()).isEqualTo("01099998888");
+    }
+
+    @Test
+    @DisplayName("SocialUserInfo.normalizeData: 공백만 있는 전화는 null로 둔다")
+    void socialUserInfo_normalizeData_blankPhoneBecomesNull() {
+        SocialUserInfo info = SocialUserInfo.builder().phone("   ").build();
+        info.normalizeData();
+        assertThat(info.getPhone()).isNull();
+    }
+
     private static class TestOAuth2Service extends AbstractOAuth2Service {
         TestOAuth2Service(
             UserRepository userRepository,
@@ -192,10 +312,11 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
             JwtService jwtService,
             DynamicPermissionService dynamicPermissionService,
             PersonalDataEncryptionUtil encryptionUtil,
-            PasswordService passwordService
+            PasswordService passwordService,
+            UserService userService
         ) {
             super(userRepository, clientRepository, userSocialAccountRepository, jwtService, dynamicPermissionService,
-                encryptionUtil, passwordService);
+                encryptionUtil, passwordService, userService);
         }
 
         @Override
@@ -220,6 +341,10 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
 
         Long exposeFindExistingUserByEmail(String email) {
             return findExistingUserByEmail(email);
+        }
+
+        Long exposeFindExistingUserByPhoneForOAuth(String phone) {
+            return findExistingUserByPhoneForOAuth(phone);
         }
     }
 }

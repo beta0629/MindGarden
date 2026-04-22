@@ -16,6 +16,8 @@ import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.OAuth2Service;
+import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
@@ -29,7 +31,14 @@ import lombok.RequiredArgsConstructor;
 /**
  * OAuth2 서비스 추상 클래스
  * 모든 소셜 플랫폼이 공통으로 사용할 로직 구현
- * 
+ * <p>
+ * 기존 테넌트 사용자(어드민 등록 내담자·상담사 등) 매칭 우선순위(카카오·네이버 동일):
+ * (a) {@code tenantId}+provider+providerUserId 기존 {@code user_social_accounts} 연동,
+ * (b) SNS가 휴대폰을 제공·동의한 경우에 한해 {@code tenantId} 내 정규화 휴대폰({@code User.phone} 복호화 비교),
+ * (c) {@code tenantId}+정규화 이메일({@code User.email} 평문 저장·암호화 저장 복호화 비교 동일).
+ * SNS 이메일은 어드민 등록 이메일과 다를 수 있어 (b)를 (c)보다 우선한다.
+ * (b)는 전화 미제공·비한국 휴대패턴이면 스킵되며, (a)(b)(c) 모두 실패 시에만 간편가입 플로우.
+ *
  * @author MindGarden
  * @version 1.0.0
  * @since 2024-12-19
@@ -46,6 +55,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     protected final DynamicPermissionService dynamicPermissionService;
     protected final PersonalDataEncryptionUtil encryptionUtil;
     protected final PasswordService passwordService;
+    protected final UserService userService;
 
 
     @Override
@@ -63,34 +73,42 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
             // 3. 데이터 표준화
             socialUserInfo.normalizeData();
             
-            // 4. 기존 사용자 확인
-            log.info("기존 사용자 확인 시작: provider={}, providerUserId={}, email={}", 
-                    getProviderName(), socialUserInfo.getProviderUserId(), socialUserInfo.getEmail());
-            
-            // 1. providerUserId로 사용자 찾기
+            // 4. 기존 사용자 확인 (매칭 우선순위는 클래스 JavaDoc 참고)
+            log.info("기존 사용자 확인 시작: provider={}, providerUserId={}, email={}, phone={}",
+                    getProviderName(), socialUserInfo.getProviderUserId(), socialUserInfo.getEmail(),
+                    socialUserInfo.getPhone() != null ? "(있음)" : "(없음)");
+
             Long existingUserId = findExistingUserByProviderId(socialUserInfo.getProviderUserId());
-            
-            // 2. providerUserId로 찾지 못한 경우, 이메일로 사용자 찾기 (소셜 계정의 경우)
+            boolean needSocialRowFromProfileMatch = false;
             if (existingUserId == null) {
-                log.info("providerUserId로 사용자를 찾지 못함. 이메일로 추가 검색 시도");
-                existingUserId = findExistingUserByEmail(socialUserInfo.getEmail());
-                
+                log.info("providerUserId로 사용자를 찾지 못함. 전화번호로 추가 검색 시도");
+                existingUserId = findExistingUserByPhoneForOAuth(socialUserInfo.getPhone());
                 if (existingUserId != null) {
-                    log.info("이메일로 기존 사용자 발견: userId={}", existingUserId);
-                    // 기존 사용자의 소셜 계정 정보 업데이트 또는 새로 생성
-                    updateOrCreateSocialAccount(existingUserId, socialUserInfo);
-                } else {
-                    // 3. 이메일로도 사용자를 찾지 못한 경우, 간편 회원가입 필요
-                    log.info("이메일로도 사용자를 찾지 못함. 간편 회원가입 필요");
-                    return SocialLoginResponse.builder()
-                        .success(false)
-                        .message("간편 회원가입이 필요합니다.")
-                        .requiresSignup(true) // 회원가입 필요 플래그
-                        .socialUserInfo(socialUserInfo) // 소셜 사용자 정보 포함
-                        .build();
+                    needSocialRowFromProfileMatch = true;
+                    logIfEmailWouldMatchDifferentUser(socialUserInfo, existingUserId);
                 }
             }
-            
+            if (existingUserId == null) {
+                log.info("전화번호로 사용자를 찾지 못함. 이메일로 추가 검색 시도");
+                existingUserId = findExistingUserByEmail(socialUserInfo.getEmail());
+                if (existingUserId != null) {
+                    needSocialRowFromProfileMatch = true;
+                }
+            }
+            if (existingUserId != null && needSocialRowFromProfileMatch) {
+                log.info("프로필(전화/이메일)로 기존 사용자 발견: userId={}, 소셜 계정 연동 처리", existingUserId);
+                updateOrCreateSocialAccount(existingUserId, socialUserInfo);
+            }
+            if (existingUserId == null) {
+                log.info("기존 사용자를 찾지 못함. 간편 회원가입 필요");
+                return SocialLoginResponse.builder()
+                    .success(false)
+                    .message("간편 회원가입이 필요합니다.")
+                    .requiresSignup(true)
+                    .socialUserInfo(socialUserInfo)
+                    .build();
+            }
+
             log.info("기존 사용자 확인 결과: existingUserId={}", existingUserId);
             
             User user;
@@ -202,13 +220,85 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         
         return result;
     }
+
+    @Override
+    public Long findExistingUserIdForSocialLinkOrLogin(SocialUserInfo socialUserInfo) {
+        if (socialUserInfo == null) {
+            return null;
+        }
+        Long id = findExistingUserByProviderId(socialUserInfo.getProviderUserId());
+        if (id != null) {
+            return id;
+        }
+        id = findExistingUserByPhoneForOAuth(socialUserInfo.getPhone());
+        if (id != null) {
+            logIfEmailWouldMatchDifferentUser(socialUserInfo, id);
+            return id;
+        }
+        return findExistingUserByEmail(socialUserInfo.getEmail());
+    }
+
+    /**
+     * 전화 매칭이 우선되어 이메일 매칭을 쓰지 않을 때, SNS 이메일이 다른 사용자와 맞닿는 경우 한 줄로 남긴다.
+     *
+     * @param socialUserInfo 소셜 프로필(정규화된 이메일·전화)
+     * @param userIdFromPhone 전화로 확정된 사용자 PK
+     */
+    private void logIfEmailWouldMatchDifferentUser(SocialUserInfo socialUserInfo, Long userIdFromPhone) {
+        if (userIdFromPhone == null || socialUserInfo == null) {
+            return;
+        }
+        String normalizedEmail = SocialProvider.normalizeEmail(socialUserInfo.getEmail());
+        if (!StringUtils.hasText(normalizedEmail)) {
+            return;
+        }
+        Long emailUserId = findExistingUserByEmail(socialUserInfo.getEmail());
+        if (emailUserId != null && !emailUserId.equals(userIdFromPhone)) {
+            log.debug(
+                "OAuth 매칭: 전화로 userId={} 확정, SNS 이메일은 다른 사용자 userId={}와 일치(이메일 매칭은 스킵)",
+                userIdFromPhone,
+                emailUserId
+            );
+        }
+    }
+
+    /**
+     * SNS 전화번호와 동일한 테넌트 내 사용자 PK(한국 휴대 패턴만).
+     */
+    protected Long findExistingUserByPhoneForOAuth(String phone) {
+        if (phone == null) {
+            return null;
+        }
+        String trimmed = phone.trim();
+        if (!StringUtils.hasText(trimmed)) {
+            return null;
+        }
+        String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(trimmed);
+        if (!LoginIdentifierUtils.isValidKoreanMobileDigits(normalized)) {
+            return null;
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("전화번호로 사용자 찾기: tenantId={}, digitsLen={}", tenantId, normalized.length());
+        try {
+            List<User> users = userService.findAllUsersMatchingPhoneInCurrentTenant(normalized);
+            if (users == null || users.isEmpty()) {
+                log.info("전화번호로 사용자를 찾지 못함: tenantId={}", tenantId);
+                return null;
+            }
+            User selected = selectBestMatchingUser(users);
+            return selected != null ? selected.getId() : null;
+        } catch (Exception e) {
+            log.error("전화번호로 사용자 찾기 중 오류: {}", e.getMessage(), e);
+            return null;
+        }
+    }
     
     /**
      * 이메일로 기존 사용자 찾기 (소셜 계정의 경우)
      * 같은 이메일로 여러 계정이 있는 경우, 가장 적절한 계정 선택:
      * 1. 활성 상태인 계정 우선
-     * 2. 가장 최근에 생성된 계정 우선
-     * 3. 역할 우선순위: CLIENT > CONSULTANT > ADMIN > 기타
+     * 2. 역할 우선순위: ADMIN > CONSULTANT > STAFF > CLIENT > 기타 (동일 테넌트·이메일 시 운영·상담 역할 우선)
+     * 3. 같은 역할이면 가장 최근에 생성된 계정 우선
      */
     protected Long findExistingUserByEmail(String email) {
         log.info("이메일로 사용자 찾기: email={}", email);
@@ -220,8 +310,8 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         }
         
         try {
-            // 같은 이메일로 여러 계정이 있을 수 있으므로 모두 조회
-            List<User> users = userRepository.findAllByTenantIdAndEmail(tenantId, normalizedEmail);
+            // 같은 이메일로 여러 계정이 있을 수 있음 — 평문·암호화 저장 모두 UserService에서 동일 규칙으로 수집
+            List<User> users = userService.findAllUsersMatchingEmailInCurrentTenant(email);
             
             if (users == null || users.isEmpty()) {
                 log.info("이메일로 사용자를 찾지 못함: email={}, tenantId={}", normalizedEmail, tenantId);
@@ -266,8 +356,8 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
      * 여러 사용자 중 가장 적절한 사용자 선택
      * 우선순위:
      * 1. 활성 상태인 계정 우선
-     * 2. 역할 우선순위: CLIENT > CONSULTANT > ADMIN > 기타
-     * 3. 가장 최근에 생성된 계정 우선
+     * 2. 역할 우선순위: ADMIN > CONSULTANT > STAFF > CLIENT > 기타
+     * 3. 같은 역할이면 가장 최근에 생성된 계정 우선
      */
     private User selectBestMatchingUser(List<User> users) {
         if (users == null || users.isEmpty()) {
@@ -285,7 +375,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         
         List<User> candidates = activeUsers.isEmpty() ? users : activeUsers;
         
-        // 2. 역할 우선순위로 정렬: CLIENT > CONSULTANT > ADMIN > 기타
+        // 2. 역할 우선순위로 정렬: ADMIN > CONSULTANT > STAFF > CLIENT > 기타
         candidates.sort((u1, u2) -> {
             int priority1 = getRolePriority(u1.getRole());
             int priority2 = getRolePriority(u2.getRole());
@@ -314,13 +404,13 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         }
         
         switch (role) {
-            case CLIENT:
+            case ADMIN:
                 return 1;
             case CONSULTANT:
                 return 2;
-            case ADMIN:
-                return 3;
             case STAFF:
+                return 3;
+            case CLIENT:
                 return 4;
             default:
                 return 999;
@@ -566,6 +656,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     }
     
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void linkSocialAccountToUser(Long userId, SocialUserInfo socialUserInfo) {
         updateOrCreateSocialAccount(userId, socialUserInfo);
     }

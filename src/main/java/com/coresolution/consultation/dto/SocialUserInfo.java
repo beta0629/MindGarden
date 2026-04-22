@@ -2,6 +2,7 @@ package com.coresolution.consultation.dto;
 
 import java.time.LocalDate;
 import java.util.Locale;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.SocialProvider;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -106,10 +107,7 @@ public class SocialUserInfo {
      * 소셜 계정 정보를 표준화된 형태로 변환
      */
     public void normalizeData() {
-        // 이메일이 없는 경우 처리
-        if (this.email == null || this.email.trim().isEmpty()) {
-            this.email = this.providerUserId + "@" + this.provider.toLowerCase() + ".social";
-        }
+        // 이메일 미제공 시 가짜 주소를 넣지 않음 — OAuth 매칭·가입 분기에서 실제 이메일·전화만 사용
         
         // 이름이 없는 경우 닉네임으로 대체
         if ((this.name == null || this.name.trim().isEmpty()) && this.nickname != null) {
@@ -135,7 +133,17 @@ public class SocialUserInfo {
 
         if (this.email != null) {
             String trimmedEmail = this.email.trim();
-            this.email = trimmedEmail.isEmpty() ? trimmedEmail : trimmedEmail.toLowerCase(Locale.ROOT);
+            this.email = trimmedEmail.isEmpty() ? null : trimmedEmail.toLowerCase(Locale.ROOT);
+        }
+
+        if (this.phone != null) {
+            String trimmedPhone = this.phone.trim();
+            if (trimmedPhone.isEmpty()) {
+                this.phone = null;
+            } else {
+                String digits = LoginIdentifierUtils.normalizeKoreanMobileDigits(trimmedPhone);
+                this.phone = digits.isEmpty() ? null : digits;
+            }
         }
 
         this.provider = SocialProvider.normalize(this.provider);

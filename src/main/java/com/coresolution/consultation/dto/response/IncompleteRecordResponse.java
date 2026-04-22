@@ -22,6 +22,8 @@ import lombok.NoArgsConstructor;
 public class IncompleteRecordResponse {
     
     private Long scheduleId;
+    /** 내담자 사용자 ID(일정 기준). 없으면 null. */
+    private Long clientId;
     private String clientName;
     private LocalDate sessionDate;
     private Long elapsedHours;

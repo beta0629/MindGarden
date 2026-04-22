@@ -116,7 +116,8 @@ const ConsultantRecords = () => {
   };
 
   const handleWriteRecord = (recordId) => {
-    navigate(`/consultant/consultation-record/${recordId}`);
+    setModalRecordId(recordId);
+    setModalOpen(true);
   };
 
   const handleNavigateSchedule = () => {

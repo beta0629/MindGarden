@@ -1,5 +1,6 @@
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page } from '@playwright/test';
+import { getMindGardenWebLogin } from '../helpers/erpAuth';
 
 /**
  * 인증 E2E (UnifiedLogin: 단일 식별자 필드 name="email", API body email)
@@ -8,7 +9,7 @@ import { test, expect, Page } from '@playwright/test';
  *   cd tests/e2e && npx playwright test tests/auth.spec.ts --project=chromium
  *
  * 환경 변수:
- *   TEST_USERNAME / TEST_PASSWORD — 이메일 로그인(기본 스모크)
+ *   E2E_TEST_EMAIL / E2E_TEST_PASSWORD (권장) 또는 TEST_USERNAME / TEST_PASSWORD — SSOT: `.cursor/skills/core-solution-testing/SKILL.md`
  *   E2E_LOGIN_PHONE / E2E_LOGIN_PASSWORD — 휴대폰 번호 로그인(P0). 미설정 시 스킵(CI 안정).
  *   API가 아직 휴대폰을 거부하면 스펙이 실패할 수 있음 → 코더 API 반영 후 재실행.
  */
@@ -47,9 +48,7 @@ async function submitLogin(page: Page): Promise<void> {
 }
 
 test.describe('인증 테스트', () => {
-  const TEST_USERNAME =
-    envTrim('TEST_USERNAME') ?? 'superadmin@mindgarden.com';
-  const TEST_PASSWORD = envTrim('TEST_PASSWORD') ?? 'admin123';
+  const { username: TEST_USERNAME, password: TEST_PASSWORD } = getMindGardenWebLogin();
 
   test('이메일 로그인 성공 (회귀)', async ({ page }: { page: Page }) => {
     await page.goto('/login');

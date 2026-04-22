@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
 import org.slf4j.Logger;
@@ -382,6 +384,41 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<User> findAllUsersMatchingEmailInCurrentTenant(String email) {
+        String normalizedEmail = SocialProvider.normalizeEmail(email);
+        if (!StringUtils.hasText(normalizedEmail)) {
+            return Collections.emptyList();
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<User> byPlain = userRepository.findAllByTenantIdAndEmail(tenantId, normalizedEmail);
+        if (byPlain != null && !byPlain.isEmpty()) {
+            return new ArrayList<>(byPlain);
+        }
+        List<User> matches = new ArrayList<>();
+        for (User u : userRepository.findByTenantId(tenantId)) {
+            try {
+                String decrypted = encryptionUtil.safeDecrypt(u.getEmail());
+                String decNorm = SocialProvider.normalizeEmail(decrypted);
+                if (normalizedEmail.equals(decNorm)) {
+                    matches.add(u);
+                }
+            } catch (Exception e) {
+                log.trace("findAllUsersMatchingEmailInCurrentTenant: 이메일 비교 스킵 userId={}", u.getId());
+            }
+        }
+        return matches;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<User> findAllUsersMatchingPhoneInCurrentTenant(String rawPhone) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(rawPhone);
+        return findAllUsersMatchingNormalizedPhoneInTenant(normalized, tenantId);
+    }
+
+    @Override
     public Optional<User> findByLoginPrincipal(String loginPrincipal) {
         if (loginPrincipal == null || loginPrincipal.isEmpty()) {
             return Optional.empty();
@@ -393,23 +430,30 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
+     * 테넌트 내 사용자 전화번호를 복호화·정규화하여 일치하는 모든 행(DB 암호화 저장 대응).
+     */
+    private List<User> findAllUsersMatchingNormalizedPhoneInTenant(String normalizedDigits, String tenantId) {
+        if (normalizedDigits == null || normalizedDigits.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("findAllUsersMatchingNormalizedPhoneInTenant: tenantId 없음 — 조회 생략");
+            return Collections.emptyList();
+        }
+        List<User> matches = new ArrayList<>();
+        for (User u : userRepository.findByTenantId(tenantId)) {
+            if (userPhoneMatchesNormalizedDigits(u, normalizedDigits)) {
+                matches.add(u);
+            }
+        }
+        return matches;
+    }
+
+    /**
      * 테넌트 내 사용자 전화번호를 복호화·정규화하여 일치 여부로 조회한다(DB 암호화 비결정적 저장 대응).
      */
     private Optional<User> findByNormalizedPhoneInTenant(String normalizedDigits, String tenantId) {
-        if (normalizedDigits == null || normalizedDigits.isEmpty()) {
-            return Optional.empty();
-        }
-        if (tenantId == null || tenantId.isEmpty()) {
-            log.warn("findByNormalizedPhoneInTenant: tenantId 없음 — 조회 생략");
-            return Optional.empty();
-        }
-        List<User> users = userRepository.findByTenantId(tenantId);
-        for (User u : users) {
-            if (userPhoneMatchesNormalizedDigits(u, normalizedDigits)) {
-                return Optional.of(u);
-            }
-        }
-        return Optional.empty();
+        return findAllUsersMatchingNormalizedPhoneInTenant(normalizedDigits, tenantId).stream().findFirst();
     }
 
     /**

@@ -19,7 +19,6 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.OAuth2FactoryService;
 import com.coresolution.consultation.service.OAuth2Service;
 import com.coresolution.consultation.service.UserSessionService;
-import com.coresolution.consultation.util.DashboardRedirectUtil;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -67,7 +66,7 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:${KAKAO_REDIRECT_URI:}}")
     private String kakaoRedirectUri;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.scope:profile_nickname,account_email}")
+    @Value("${spring.security.oauth2.client.registration.kakao.scope:profile_nickname,account_email,phone_number}")
     private String kakaoScope;
 
     @Value("${spring.security.oauth2.client.registration.naver.client-id:${security.oauth2.client.registration.naver.client-id:vTKNlxYKIfo1uCCXaDfk}}")
@@ -76,7 +75,7 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:${NAVER_REDIRECT_URI:}}")
     private String naverRedirectUri;
 
-    @Value("${spring.security.oauth2.client.registration.naver.scope:name,email}")
+    @Value("${spring.security.oauth2.client.registration.naver.scope:name,email,mobile}")
     private String naverScope;
 
     @Value("${spring.security.oauth2.client.callback.kakao-path:/api/auth/kakao/callback}")
@@ -115,6 +114,25 @@ public class OAuth2Controller extends BaseApiController {
     @PostConstruct
     public void init() {
         log.info("🔧 OAuth2Controller 초기화 - frontendBaseUrl: {}", frontendBaseUrl);
+    }
+
+    /**
+     * 콜백 분기 등 컨트롤러 전용 경로에서 서비스 계층과 동일하게 user_social_accounts 연동을 저장한다.
+     *
+     * @param oauth2Service 제공자별 서비스
+     * @param userId 매칭된 사용자 PK
+     * @param socialUserInfo SNS 프로필
+     */
+    private void linkSocialAccountSafely(OAuth2Service oauth2Service, Long userId,
+            SocialUserInfo socialUserInfo) {
+        if (oauth2Service == null || userId == null || socialUserInfo == null) {
+            return;
+        }
+        try {
+            oauth2Service.linkSocialAccountToUser(userId, socialUserInfo);
+        } catch (Exception e) {
+            log.warn("소셜 연동 저장 중 오류(로그인 플로우는 계속): userId={}, msg={}", userId, e.getMessage());
+        }
     }
 
     /**
@@ -565,21 +583,57 @@ public class OAuth2Controller extends BaseApiController {
     }
 
     /**
-     * 웹 대시보드 OAuth 성공 리다이렉트 쿼리스트링. 프로필 이미지(URL/data URL)는 Location 헤더 길이 한도·민감도 때문에 제외하며,
-     * 세션 및 current-user API로 조회한다.
+     * 웹 OAuth 로그인 성공 후 프론트 공통 콜백({@code /auth/oauth2/callback})용 쿼리.
+     * {@code success=true}는 {@code OAuth2Callback}과 정합. 프로필 이미지는 Location 길이·민감도상 제외.
      *
      * @param user 로그인 사용자
      * @param provider SNS 제공자 식별 문자열
-     * @return {@code oauth=success&userId=...} 형태의 쿼리 (선행 {@code ?} 없음)
+     * @param tenantIdForQuery 세션·헤더 정합용 테넌트 ID(없으면 생략)
+     * @param providerUserIdOrNull SNS 측 사용자 ID(없으면 생략)
+     * @return 선행 {@code ?} 없는 쿼리스트링
      */
-    private String buildOAuthWebSuccessQueryString(User user, String provider) {
-        return "oauth=success" + "&userId=" + user.getId() + "&email="
-                + URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8) + "&name="
-                + URLEncoder.encode(user.getName(), StandardCharsets.UTF_8) + "&nickname="
-                + URLEncoder.encode(
-                        user.getNickname() != null ? user.getNickname() : "",
-                        StandardCharsets.UTF_8)
-                + "&role=" + user.getRole() + "&provider=" + provider;
+    private String buildOAuthWebCallbackQueryString(User user, String provider, String tenantIdForQuery,
+            String providerUserIdOrNull) {
+        String email = user.getEmail() != null ? user.getEmail() : "";
+        String name = user.getName() != null ? user.getName() : "";
+        String nickname = user.getNickname() != null ? user.getNickname() : "";
+        String roleValue = user.getRole() != null ? user.getRole().getValue() : "";
+        StringBuilder sb = new StringBuilder();
+        sb.append("success=true");
+        sb.append("&userId=").append(user.getId());
+        sb.append("&email=").append(URLEncoder.encode(email, StandardCharsets.UTF_8));
+        sb.append("&name=").append(URLEncoder.encode(name, StandardCharsets.UTF_8));
+        sb.append("&nickname=").append(URLEncoder.encode(nickname, StandardCharsets.UTF_8));
+        sb.append("&role=").append(URLEncoder.encode(roleValue, StandardCharsets.UTF_8));
+        sb.append("&provider=").append(URLEncoder.encode(provider, StandardCharsets.UTF_8));
+        if (tenantIdForQuery != null && !tenantIdForQuery.isBlank()) {
+            sb.append("&tenantId=").append(URLEncoder.encode(tenantIdForQuery.trim(), StandardCharsets.UTF_8));
+        }
+        if (providerUserIdOrNull != null && !providerUserIdOrNull.isBlank()) {
+            sb.append("&providerUserId=").append(
+                    URLEncoder.encode(providerUserIdOrNull.trim(), StandardCharsets.UTF_8));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 마이페이지 소셜 연동(link) 콜백 URL. 프론트 {@code MyPage}는 {@code link=success|error}, {@code message}, {@code provider}를 사용한다.
+     *
+     * @param frontendBase 테넌트별 프론트 베이스 URL
+     * @param ok 연동 성공 여부
+     * @param providerUpper 예: NAVER, KAKAO
+     * @param message 사용자에게 표시할 메시지(비어 있으면 상수 기본값)
+     */
+    private String buildMypageOAuthLinkLocation(String frontendBase, boolean ok, String providerUpper,
+            String message) {
+        String resolved = message;
+        if (resolved == null || resolved.isBlank()) {
+            resolved = ok ? OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_COMPLETE
+                    : OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED;
+        }
+        return frontendBase + "/mypage?tab=social&link=" + (ok ? "success" : "error") + "&message="
+                + URLEncoder.encode(resolved, StandardCharsets.UTF_8) + "&provider="
+                + URLEncoder.encode(providerUpper, StandardCharsets.UTF_8);
     }
 
     /**
@@ -1461,71 +1515,10 @@ public class OAuth2Controller extends BaseApiController {
                     socialUserInfo.setAccessToken(accessToken);
                     socialUserInfo.normalizeData();
 
-                    // 이메일은 필수 정책: SNS에서 이메일이 내려오지 않으면 진행 불가 (알림으로 유도)
-                    if (socialUserInfo.getEmail() == null
-                            || socialUserInfo.getEmail().trim().isEmpty()) {
-                        log.warn(
-                                "⚠️ 네이버 OAuth2 - 이메일이 제공되지 않아 로그인 진행 불가. email=null/empty, providerUserId={}",
-                                socialUserInfo.getProviderUserId());
-                        String redirectTenantId = resolveTenantIdForRedirect(session, state);
-                        String frontendUrl =
-                                getTenantAwareFrontendBaseUrl(request, redirectTenantId);
-                        return ResponseEntity.status(302)
-                                .header("Location",
-                                        frontendUrl + "/login?error="
-                                                + URLEncoder.encode(
-                                                        OAuth2UserFacingMessages.MSG_EMAIL_CONSENT_REQUIRED,
-                                                        StandardCharsets.UTF_8)
-                                                + "&provider=NAVER")
-                                .build();
-                    }
-
-                    // 기존 사용자 확인 (카카오와 동일한 방식)
-                    Long existingUserId = null;
-
-                    // tenant ID가 설정되어 있으면 findExistingUserByProviderId 사용
-                    String currentTenantId =
-                            com.coresolution.core.context.TenantContextHolder.getTenantId();
-                    if (currentTenantId != null && !currentTenantId.isEmpty()) {
-                        try {
-                            existingUserId = naverServiceImpl.findExistingUserByProviderId(
-                                    socialUserInfo.getProviderUserId());
-                            if (existingUserId == null && socialUserInfo.getEmail() != null) {
-                                existingUserId = naverServiceImpl
-                                        .findExistingUserByProviderId(socialUserInfo.getEmail());
-                            }
-                        } catch (Exception e) {
-                            log.warn("⚠️ findExistingUserByProviderId 호출 실패 (tenant ID 있음): {}",
-                                    e.getMessage());
-                        }
-                    }
-
-                    // tenant ID가 없거나 findExistingUserByProviderId로 찾지 못한 경우, 이메일로 조회
-                    // 이메일 로그인과 동일하게 TenantContextHolder의 tenantId 사용
-                    if (existingUserId == null && socialUserInfo.getEmail() != null) {
-                        String tenantIdForLookup =
-                                com.coresolution.core.context.TenantContextHolder.getTenantId();
-                        if (tenantIdForLookup != null && !tenantIdForLookup.isEmpty()) {
-                            // TenantContextHolder에 tenantId가 있으면 정확한 사용자 조회 (이메일 로그인과 동일)
-                            Optional<User> userOptional = userRepository.findByTenantIdAndEmail(
-                                    tenantIdForLookup, socialUserInfo.getEmail());
-                            if (userOptional.isPresent()) {
-                                existingUserId = userOptional.get().getId();
-                                log.info(
-                                        "✅ 이메일로 사용자 조회 성공 (tenantId 사용): email={}, tenantId={}, userId={}",
-                                        socialUserInfo.getEmail(), tenantIdForLookup,
-                                        existingUserId);
-                            } else {
-                                log.warn("⚠️ 이메일로 사용자 조회 실패 (tenantId 사용): email={}, tenantId={}",
-                                        socialUserInfo.getEmail(), tenantIdForLookup);
-                            }
-                        } else {
-                            // TenantContextHolder에 tenantId가 없으면 오류 처리
-                            log.error(
-                                    "❌ 네이버 OAuth2 - TenantContextHolder에 tenantId가 없어 사용자 조회 불가: email={}",
-                                    socialUserInfo.getEmail());
-                            // 오류는 상위 catch 블록에서 처리되므로 여기서는 로그만 남김
-                        }
+                    Long existingUserId = naverService.findExistingUserIdForSocialLinkOrLogin(
+                            socialUserInfo);
+                    if (existingUserId != null) {
+                        linkSocialAccountSafely(naverService, existingUserId, socialUserInfo);
                     }
 
                     if (existingUserId != null) {
@@ -1583,14 +1576,12 @@ public class OAuth2Controller extends BaseApiController {
                         socialUserInfo.setProvider("NAVER");
                         socialUserInfo.setAccessToken(accessToken);
                         socialUserInfo.normalizeData();
-                        // 기존 사용자 확인 (예외 발생해도 계속 진행)
                         Long existingUserId = null;
                         try {
-                            existingUserId = naverServiceImpl.findExistingUserByProviderId(
-                                    socialUserInfo.getProviderUserId());
-                            if (existingUserId == null && socialUserInfo.getEmail() != null) {
-                                existingUserId = naverServiceImpl
-                                        .findExistingUserByProviderId(socialUserInfo.getEmail());
+                            existingUserId = naverService.findExistingUserIdForSocialLinkOrLogin(
+                                    socialUserInfo);
+                            if (existingUserId != null) {
+                                linkSocialAccountSafely(naverService, existingUserId, socialUserInfo);
                             }
                         } catch (Exception findUserException) {
                             log.warn("기존 사용자 확인 중 오류 발생 (계속 진행): {}",
@@ -1750,9 +1741,8 @@ public class OAuth2Controller extends BaseApiController {
                                 session, state, null);
                         return ResponseEntity.status(302)
                                 .header("Location",
-                                        frontendUrl + "/mypage?error="
-                                                + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_SESSION_EXPIRED, StandardCharsets.UTF_8)
-                                                + "&provider=NAVER")
+                                        buildMypageOAuthLinkLocation(frontendUrl, false, "NAVER",
+                                                OAuth2UserFacingMessages.ERR_LOGIN_SESSION_EXPIRED))
                                 .build();
                     }
 
@@ -1770,10 +1760,8 @@ public class OAuth2Controller extends BaseApiController {
                                     request, session, state, currentUser);
                             return ResponseEntity.status(302)
                                     .header("Location",
-                                            frontendUrl + "/mypage?error="
-                                                    + URLEncoder.encode(OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED,
-                                                            StandardCharsets.UTF_8)
-                                                    + "&provider=NAVER")
+                                            buildMypageOAuthLinkLocation(frontendUrl, false, "NAVER",
+                                                    OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED))
                                     .build();
                         }
                         socialUserInfo.setProviderUserId(naverProviderUserId);
@@ -1794,10 +1782,8 @@ public class OAuth2Controller extends BaseApiController {
                                 session, state, currentUser);
                         return ResponseEntity.status(302)
                                 .header("Location",
-                                        frontendUrl + "/mypage?success="
-                                                + URLEncoder.encode(OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_COMPLETE,
-                                                        StandardCharsets.UTF_8)
-                                                + "&provider=NAVER")
+                                        buildMypageOAuthLinkLocation(frontendUrl, true, "NAVER",
+                                                OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_COMPLETE))
                                 .build();
                     } catch (Exception e) {
                         log.error("네이버 계정 연동 실패", e);
@@ -1805,9 +1791,8 @@ public class OAuth2Controller extends BaseApiController {
                                 session, state, currentUser);
                         return ResponseEntity.status(302)
                                 .header("Location",
-                                        frontendUrl + "/mypage?error="
-                                                + URLEncoder.encode(OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED, StandardCharsets.UTF_8)
-                                                + "&provider=NAVER")
+                                        buildMypageOAuthLinkLocation(frontendUrl, false, "NAVER",
+                                                OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED))
                                 .build();
                     }
                 } else {
@@ -1873,8 +1858,6 @@ public class OAuth2Controller extends BaseApiController {
                     log.info("네이버 OAuth2 로그인 성공 - 리다이렉트에 사용할 tenantId: tenantId={}, user.tenantId={}", 
                             tenantId, user.getTenantId());
                     String frontendUrl = getTenantAwareFrontendBaseUrl(request, tenantId);
-                    String baseRedirectUrl =
-                            DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
 
                     // provider 정보 가져오기
                     String provider = "UNKNOWN";
@@ -1883,9 +1866,9 @@ public class OAuth2Controller extends BaseApiController {
                         provider = response.getSocialAccountInfo().getProvider();
                     }
 
-                    // 사용자 정보를 URL 파라미터로 전달 (세션 복원용; 대용량 profileImage는 제외)
-                    String redirectUrl =
-                            baseRedirectUrl + "?" + buildOAuthWebSuccessQueryString(user, provider);
+                    String providerUserIdForCallback = userInfo.getProviderUserId();
+                    String redirectUrl = frontendUrl + "/auth/oauth2/callback?"
+                            + buildOAuthWebCallbackQueryString(user, provider, tenantId, providerUserIdForCallback);
 
                     // 모바일 클라이언트인 경우 Deep Link로 리다이렉트
                     if ("mobile".equals(savedClientType)) {
@@ -2266,65 +2249,14 @@ public class OAuth2Controller extends BaseApiController {
                 socialUserInfo.setAccessToken(accessToken);
                 socialUserInfo.normalizeData();
 
-                // 이메일은 필수 정책: SNS에서 이메일이 내려오지 않으면 진행 불가 (알림으로 유도)
-                if (socialUserInfo.getEmail() == null
-                        || socialUserInfo.getEmail().trim().isEmpty()) {
-                    log.warn(
-                            "⚠️ 카카오 OAuth2 - 이메일이 제공되지 않아 로그인 진행 불가. email=null/empty, providerUserId={}",
-                            socialUserInfo.getProviderUserId());
-                    String redirectTenantId = resolveTenantIdForRedirect(session, state);
-                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
-                    return ResponseEntity.status(302)
-                            .header("Location",
-                                    frontendUrl + "/login?error="
-                                            + URLEncoder.encode(
-                                                    OAuth2UserFacingMessages.MSG_EMAIL_CONSENT_REQUIRED,
-                                                    StandardCharsets.UTF_8)
-                                            + "&provider=KAKAO")
-                            .build();
-                }
-
-                // 기존 사용자 확인
                 Long existingUserId = null;
-
-                // tenant ID가 설정되어 있으면 findExistingUserByProviderId 사용
-                String currentTenantId =
-                        com.coresolution.core.context.TenantContextHolder.getTenantId();
-                if (currentTenantId != null && !currentTenantId.isEmpty()) {
-                    try {
-                        existingUserId = kakaoServiceImpl
-                                .findExistingUserByProviderId(socialUserInfo.getProviderUserId());
-                    } catch (Exception e) {
-                        log.warn("⚠️ findExistingUserByProviderId 호출 실패 (tenant ID 있음): {}",
-                                e.getMessage());
-                    }
+                try {
+                    existingUserId = kakaoService.findExistingUserIdForSocialLinkOrLogin(socialUserInfo);
+                } catch (Exception e) {
+                    log.warn("⚠️ 카카오 기존 사용자 조회 실패: {}", e.getMessage());
                 }
-
-                // tenant ID가 없거나 findExistingUserByProviderId로 찾지 못한 경우, 이메일로 조회
-                // 이메일 로그인과 동일하게 TenantContextHolder의 tenantId 사용
-                if (existingUserId == null && socialUserInfo.getEmail() != null) {
-                    String tenantIdForLookup =
-                            com.coresolution.core.context.TenantContextHolder.getTenantId();
-                    if (tenantIdForLookup != null && !tenantIdForLookup.isEmpty()) {
-                        // TenantContextHolder에 tenantId가 있으면 정확한 사용자 조회 (이메일 로그인과 동일)
-                        Optional<User> userOptional = userRepository.findByTenantIdAndEmail(
-                                tenantIdForLookup, socialUserInfo.getEmail());
-                        if (userOptional.isPresent()) {
-                            existingUserId = userOptional.get().getId();
-                            log.info(
-                                    "✅ 이메일로 사용자 조회 성공 (tenantId 사용): email={}, tenantId={}, userId={}",
-                                    socialUserInfo.getEmail(), tenantIdForLookup, existingUserId);
-                        } else {
-                            log.warn("⚠️ 이메일로 사용자 조회 실패 (tenantId 사용): email={}, tenantId={}",
-                                    socialUserInfo.getEmail(), tenantIdForLookup);
-                        }
-                    } else {
-                        // TenantContextHolder에 tenantId가 없으면 오류 처리
-                        log.error(
-                                "❌ 카카오 OAuth2 - TenantContextHolder에 tenantId가 없어 사용자 조회 불가: email={}",
-                                socialUserInfo.getEmail());
-                        // 오류는 상위 catch 블록에서 처리되므로 여기서는 로그만 남김
-                    }
+                if (existingUserId != null) {
+                    linkSocialAccountSafely(kakaoService, existingUserId, socialUserInfo);
                 }
 
                 if (existingUserId == null) {
@@ -2426,9 +2358,8 @@ public class OAuth2Controller extends BaseApiController {
                                 session, state, null);
                         return ResponseEntity.status(302)
                                 .header("Location",
-                                        frontendUrl + "/mypage?error="
-                                                + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_SESSION_EXPIRED, StandardCharsets.UTF_8)
-                                                + "&provider=KAKAO")
+                                        buildMypageOAuthLinkLocation(frontendUrl, false, "KAKAO",
+                                                OAuth2UserFacingMessages.ERR_LOGIN_SESSION_EXPIRED))
                                 .build();
                     }
 
@@ -2445,10 +2376,8 @@ public class OAuth2Controller extends BaseApiController {
                                     request, session, state, currentUser);
                             return ResponseEntity.status(302)
                                     .header("Location",
-                                            frontendUrl + "/mypage?error="
-                                                    + URLEncoder.encode(OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED,
-                                                            StandardCharsets.UTF_8)
-                                                    + "&provider=KAKAO")
+                                            buildMypageOAuthLinkLocation(frontendUrl, false, "KAKAO",
+                                                    OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED))
                                     .build();
                         }
                         socialUserInfo.setProviderUserId(kakaoProviderUserId);
@@ -2469,10 +2398,8 @@ public class OAuth2Controller extends BaseApiController {
                                 session, state, currentUser);
                         return ResponseEntity.status(302)
                                 .header("Location",
-                                        frontendUrl + "/mypage?success="
-                                                + URLEncoder.encode(OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_COMPLETE,
-                                                        StandardCharsets.UTF_8)
-                                                + "&provider=KAKAO")
+                                        buildMypageOAuthLinkLocation(frontendUrl, true, "KAKAO",
+                                                OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_COMPLETE))
                                 .build();
                     } catch (Exception e) {
                         log.error("카카오 계정 연동 실패", e);
@@ -2480,9 +2407,8 @@ public class OAuth2Controller extends BaseApiController {
                                 session, state, currentUser);
                         return ResponseEntity.status(302)
                                 .header("Location",
-                                        frontendUrl + "/mypage?error="
-                                                + URLEncoder.encode(OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED, StandardCharsets.UTF_8)
-                                                + "&provider=KAKAO")
+                                        buildMypageOAuthLinkLocation(frontendUrl, false, "KAKAO",
+                                                OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED))
                                 .build();
                     }
                 } else {
@@ -2572,15 +2498,13 @@ public class OAuth2Controller extends BaseApiController {
                     log.info("카카오 OAuth2 로그인 성공 - 리다이렉트에 사용할 tenantId: tenantId={}, user.tenantId={}", 
                             tenantId, user.getTenantId());
                     String frontendUrl = getTenantAwareFrontendBaseUrl(request, tenantId);
-                    String baseRedirectUrl =
-                            DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
 
                     // provider 정보 가져오기
                     String provider = "KAKAO";
 
-                    // 사용자 정보를 URL 파라미터로 전달 (세션 복원용; 대용량 profileImage는 제외)
-                    String redirectUrl =
-                            baseRedirectUrl + "?" + buildOAuthWebSuccessQueryString(user, provider);
+                    String providerUserIdForCallback = userInfo.getProviderUserId();
+                    String redirectUrl = frontendUrl + "/auth/oauth2/callback?"
+                            + buildOAuthWebCallbackQueryString(user, provider, tenantId, providerUserIdForCallback);
 
                     // 세션 쿠키 설정을 명시적으로 추가
                     String sessionId = session.getId();
@@ -2841,32 +2765,17 @@ public class OAuth2Controller extends BaseApiController {
             socialUserInfo.setAccessToken(accessToken);
             socialUserInfo.normalizeData();
 
-            // 기존 사용자 확인
-            Long existingUserId =
-                    oauth2Service.findExistingUserByProviderId(socialUserInfo.getProviderUserId());
+            String tenantIdForNative =
+                    com.coresolution.core.context.TenantContextHolder.getTenantId();
+            if (tenantIdForNative == null || tenantIdForNative.isEmpty()) {
+                log.error("❌ 네이티브 SDK - TenantContextHolder에 tenantId가 없어 사용자 조회 불가");
+                return ResponseEntity.badRequest().body(Map.of("success", false, "message",
+                        OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED));
+            }
 
-            if (existingUserId == null && socialUserInfo.getEmail() != null) {
-                // 이메일로도 확인 (이메일 로그인과 동일하게 TenantContextHolder의 tenantId 사용)
-                String tenantIdForLookup =
-                        com.coresolution.core.context.TenantContextHolder.getTenantId();
-                if (tenantIdForLookup != null && !tenantIdForLookup.isEmpty()) {
-                    // TenantContextHolder에 tenantId가 있으면 정확한 사용자 조회 (이메일 로그인과 동일)
-                    Optional<User> userOptional = userRepository
-                            .findByTenantIdAndEmail(tenantIdForLookup, socialUserInfo.getEmail());
-                    if (userOptional.isPresent()) {
-                        existingUserId = userOptional.get().getId();
-                        log.info(
-                                "✅ 네이티브 SDK - 이메일로 사용자 조회 성공 (tenantId 사용): email={}, tenantId={}, userId={}",
-                                socialUserInfo.getEmail(), tenantIdForLookup, existingUserId);
-                    }
-                } else {
-                    // TenantContextHolder에 tenantId가 없으면 오류 처리 (테넌트 등록 필요)
-                    log.error(
-                            "❌ 네이티브 SDK - TenantContextHolder에 tenantId가 없어 사용자 조회 불가: email={} (테넌트 등록 필요)",
-                            socialUserInfo.getEmail());
-                    return ResponseEntity.badRequest().body(Map.of("success", false, "message",
-                            OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED));
-                }
+            Long existingUserId = oauth2Service.findExistingUserIdForSocialLinkOrLogin(socialUserInfo);
+            if (existingUserId != null) {
+                linkSocialAccountSafely(oauth2Service, existingUserId, socialUserInfo);
             }
 
             if (existingUserId == null) {

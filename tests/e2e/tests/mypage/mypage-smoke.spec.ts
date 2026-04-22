@@ -8,6 +8,7 @@
  */
 // @ts-ignore
 import { test, expect, Page } from '@playwright/test';
+import { getMindGardenWebLogin } from '../helpers/erpAuth';
 
 const REACT_130_OR_INVALID_CHILD =
   /Minified React error #130|Objects are not valid as a React child|invariant=130/i;
@@ -36,10 +37,7 @@ async function loginWithEnv(page: Page, username: string, password: string) {
 }
 
 test.describe('마이페이지 스모크', () => {
-  const username =
-    ((process as any).env.TEST_USERNAME as string) || 'superadmin@mindgarden.com';
-  const password =
-    ((process as any).env.TEST_PASSWORD as string) || 'admin123';
+  const { username, password } = getMindGardenWebLogin();
 
   let collectedErrors: string[] = [];
 

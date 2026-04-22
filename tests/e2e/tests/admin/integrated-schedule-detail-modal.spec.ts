@@ -1,17 +1,13 @@
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page, Locator } from '@playwright/test';
+import { getMindGardenWebLogin } from '../../helpers/erpAuth';
 
 /**
  * 통합 스케줄(/admin/integrated-schedule) — 캘린더 일정 클릭 시 일정 상세 UnifiedModal 배경이
  * 투명(var 순환 참조 등)으로 깨지지 않는지 검증 (design token 회귀).
  */
 
-const TEST_USERNAME =
-  ((process as unknown as { env: NodeJS.ProcessEnv }).env.TEST_USERNAME as string) ||
-  'superadmin@mindgarden.com';
-const TEST_PASSWORD =
-  ((process as unknown as { env: NodeJS.ProcessEnv }).env.TEST_PASSWORD as string) ||
-  'admin123';
+const { username: TEST_USERNAME, password: TEST_PASSWORD } = getMindGardenWebLogin();
 
 /** computed background-color가 완전 투명이 아닌지 */
 function backgroundHasVisibleFill(cssColor: string): boolean {

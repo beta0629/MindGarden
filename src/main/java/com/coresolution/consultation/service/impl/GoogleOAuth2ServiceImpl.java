@@ -6,6 +6,7 @@ import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.JwtService;
+import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
@@ -53,9 +54,10 @@ public class GoogleOAuth2ServiceImpl extends AbstractOAuth2Service {
             JwtService jwtService,
             com.coresolution.consultation.service.DynamicPermissionService dynamicPermissionService,
             PersonalDataEncryptionUtil encryptionUtil,
-            PasswordService passwordService) {
+            PasswordService passwordService,
+            UserService userService) {
         super(userRepository, clientRepository, userSocialAccountRepository, jwtService,
-            dynamicPermissionService, encryptionUtil, passwordService);
+            dynamicPermissionService, encryptionUtil, passwordService, userService);
         this.restTemplate = restTemplate;
     }
     

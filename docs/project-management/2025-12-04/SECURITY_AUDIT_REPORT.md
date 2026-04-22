@@ -99,7 +99,7 @@ security:
   jwt:
     secret: ${SECURITY_JWT_SECRET:local-dev-secret-change-me-please-use-a-stronger-one}
   ops:
-    username: ${OPS_ADMIN_USERNAME:superadmin@mindgarden.com}
+    username: ${OPS_ADMIN_USERNAME:ops_core}
     password: ${OPS_ADMIN_PASSWORD:admin123}
 ```
 

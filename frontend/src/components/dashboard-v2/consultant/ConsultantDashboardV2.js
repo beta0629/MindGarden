@@ -397,9 +397,12 @@ const ConsultantDashboardV2 = ({ user }) => {
 
       if (incompleteRes.status === 'fulfilled' && incompleteRes.value) {
         const data = incompleteRes.value;
+        const list = Array.isArray(data.records)
+          ? data.records
+          : (Array.isArray(data.schedules) ? data.schedules : []);
         setIncompleteRecords({
-          count: data.count ?? 0,
-          schedules: data.schedules ?? []
+          count: data.count ?? list.length ?? 0,
+          schedules: list
         });
       }
 
@@ -439,13 +442,39 @@ const ConsultantDashboardV2 = ({ user }) => {
     navigate(`/consultant/consultation-records?scheduleId=${scheduleId}`);
   };
 
+  const normalizeIncompleteSessionDate = (entry) => {
+    const raw = entry?.sessionDate ?? entry?.consultationDate;
+    if (raw == null || raw === '') return '';
+    if (typeof raw === 'string') return raw.split('T')[0];
+    if (Array.isArray(raw) && raw.length >= 3) {
+      const y = raw[0];
+      const m = String(raw[1] ?? 1).padStart(2, '0');
+      const d = String(raw[2] ?? 1).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+    return '';
+  };
+
   const handleIncompleteRecordsAction = () => {
     if (incompleteRecords.schedules.length > 0) {
       const firstSchedule = incompleteRecords.schedules[0];
+      const sid = firstSchedule.scheduleId;
+      if (sid == null || sid === '') {
+        navigate('/consultant/consultation-records?filter=incomplete');
+        return;
+      }
+      const sessionDateStr = normalizeIncompleteSessionDate(firstSchedule);
+      const rawClientId = firstSchedule.clientId;
+      const clientIdParsed = rawClientId != null && rawClientId !== ''
+        ? (typeof rawClientId === 'number' ? rawClientId : parseInt(String(rawClientId), 10))
+        : null;
       setSelectedSchedule({
-        id: firstSchedule.scheduleId,
+        id: sid != null ? `schedule-${sid}` : '',
+        consultantId: user?.id,
+        clientId: Number.isFinite(clientIdParsed) ? clientIdParsed : undefined,
         clientName: firstSchedule.clientName,
-        sessionDate: firstSchedule.consultationDate
+        sessionDate: sessionDateStr || undefined,
+        sessionNumber: firstSchedule.sessionNumber
       });
       setShowConsultationLogModal(true);
     } else {

@@ -49,7 +49,7 @@
 - **일자**: 2026-04-17
 - **와이어 반영**: `CLIENT_DASHBOARD_RENEWAL_WIREFRAME_MARKUP.html` 기준으로 `ClientDashboard.js` 섹션 순서 재구성(환영 → 다음 액션·일정 → KPI 3 → 핵심 블록 → 결제 요약 → 빠른 메뉴). 무드·장식 PNG 미사용. 스펙 `CLIENT_DASHBOARD_RENEWAL_SCREEN_SPEC_v1.md` §7과 병행 정리.
 - **프론트 빌드**: `frontend`에서 `npm run build` 성공(로컬 검증).
-- **테스트 게이트 (`core-tester`)**: `npm run test:client -- --project=chromium` 실행 시 **`TEST_CLIENT_USERNAME` / `TEST_CLIENT_PASSWORD` 미설정이면 스펙 전체 스킵** — **Pass 판정은 자격 증명 설정 후 재실행** 필요.
+- **테스트 게이트 (`core-tester`)**: `npm run test:client -- --project=chromium` — 내담자 스모크는 `tests/e2e/helpers/erpAuth.ts`의 **`getClientWebLogin()`** SSOT를 따르며, 환경 변수가 없을 때 기본 **`01086322121` / `godgod826!`** 로 로그인한다. CI·스테이징에서는 Secrets로 `TEST_CLIENT_*` 또는 `E2E_CLIENT_*`로 덮어쓴다.
 - **freeze 예정**: 스펙 v1.1 회의 확정 후 문서 고정·PR 트레이서빌리티 연결.
 - **비고**: `CORE_PLANNER_DELEGATION_ORDER.md`, `COMMON_DISPLAY_BOUNDARY_MEETING_20260322.md` 준수. 제거된 대시보드 위젯(`ClientMessageSection` 등)은 `CommonDashboard` 등 다른 경로에서 계속 사용 가능.
 

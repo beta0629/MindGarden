@@ -14,6 +14,7 @@
  */
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page } from '@playwright/test';
+import { getMindGardenWebLogin } from '../../helpers/erpAuth';
 
 const REACT_130_OR_INVALID_CHILD =
   /Minified React error #130|Objects are not valid as a React child|invariant=130/i;
@@ -45,10 +46,7 @@ async function assertNotBlankScreen(page: Page) {
 }
 
 test.describe('테넌트 프로필 페이지 — ADMIN/STAFF 접근·탭 스모크', () => {
-  const TEST_USERNAME =
-    ((process as any).env.TEST_USERNAME as string) || 'superadmin@mindgarden.com';
-  const TEST_PASSWORD =
-    ((process as any).env.TEST_PASSWORD as string) || 'admin123';
+  const { username: TEST_USERNAME, password: TEST_PASSWORD } = getMindGardenWebLogin();
 
   let collectedErrors: string[] = [];
 

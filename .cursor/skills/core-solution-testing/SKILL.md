@@ -55,16 +55,35 @@ description: Core Solution(MindGarden) 테스트 표준 요약. 단위·통합·
 
 ## E2E·수동 스모크용 로그인 계정 (필요 시)
 
-**보안**: 아래 값은 **개발/스테이징·내부 E2E 전용**이다. 저장소가 외부에 공개되거나 유출 의심 시 **즉시 비밀번호를 변경**하고, 이 스킬 문구를 갱신한다. **CI(GitHub Actions 등)** 에서는 반드시 **Secrets**(`E2E_TEST_EMAIL`, `E2E_TEST_PASSWORD`)로 주입하고, 워크플로에 평문을 넣지 않는다.
+**보안**: 아래 값은 **개발/스테이징·내부 E2E 전용**이다. 저장소가 외부에 공개되거나 유출 의심 시 **즉시 비밀번호를 변경**하고, 이 스킬 문구를 갱신한다. **CI(GitHub Actions 등)** 에서는 반드시 **Secrets**로 주입하고, 워크플로에 평문을 넣지 않는다.
 
 **우선순위**: 환경 변수가 있으면 **항상 환경 변수를 사용**한다.
+
+### 관리자·ERP·일반 웹 E2E (이메일 로그인)
 
 | 변수 | 없을 때 기본값(로컬·에이전트 수동 스모크용) |
 |------|---------------------------------------------|
 | `E2E_TEST_EMAIL` | `agisunny@daum.net` |
 | `E2E_TEST_PASSWORD` | `godgod826!` |
+| `TEST_USERNAME` / `TEST_PASSWORD` | 위 이메일·비밀번호로 폴백 (`getE2eCredentials()` 참고) |
 
-**core-tester·에이전트 사용 시**: Playwright 로그인·관리자 스모크 등 **인증이 필요한 E2E**를 실행할 때, 위 환경 변수가 설정되어 있지 않으면 위 기본값으로 로그인 시도를 할 수 있다. 스크립트·스펙에서는 `process.env.E2E_TEST_EMAIL ?? 'agisunny@daum.net'` 형태로 폴백하거나, 수동 절차 안내 시 이 계정을 인용한다.
+### 상담사 웹 E2E (`/login` — 아이디에 전화번호)
+
+| 변수 | 없을 때 기본값 |
+|------|----------------|
+| `CONSULTANT_USERNAME` 또는 `E2E_CONSULTANT_LOGIN_ID` | `01042858570` |
+| `CONSULTANT_PASSWORD` 또는 `E2E_CONSULTANT_PASSWORD` | `godgod826!` (관리자 E2E와 동일) |
+
+### 내담자 웹 E2E (`/login` — 아이디에 전화번호)
+
+| 변수 | 없을 때 기본값 |
+|------|----------------|
+| `TEST_CLIENT_USERNAME` 또는 `E2E_CLIENT_LOGIN_ID` | `01086322121` |
+| `TEST_CLIENT_PASSWORD` 또는 `E2E_CLIENT_PASSWORD` | `godgod826!` |
+
+**core-tester·에이전트 사용 시**: Playwright·스크립트는 `tests/e2e/helpers/erpAuth.ts`의 **`getMindGardenWebLogin()`**(관리자 등)·**`getConsultantWebLogin()`**(상담사)·**`getClientWebLogin()`**(내담자)를 사용한다. 수동 안내 시에도 위 표를 인용한다.
+
+**Playwright 코드 경로**: 레거시 `superadmin@mindgarden.com` / `admin123` / `consultant@example.com` / `beta74@live.co.kr` 및 **내담자 `TEST_CLIENT_*` 미설정 시 무조건 스킵** 패턴 등 **옛 방식은 사용하지 않는다.**
 
 **금지**: 운영(production) URL·실사용자 데이터에 이 계정을 쓰지 않는다. PR·이슈 본문·로그에 비밀번호를 붙여 넣지 않는다.
 

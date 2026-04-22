@@ -105,6 +105,7 @@ class ConsultantDashboardServiceImplTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(schedule.getId(), result.get(0).getScheduleId());
+        assertEquals(TEST_CLIENT_ID, result.get(0).getClientId());
         assertEquals("홍길동", result.get(0).getClientName());
         assertEquals(schedule.getDate(), result.get(0).getSessionDate());
         

@@ -12,8 +12,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.ConsultationRecordDraftResponse;
+import com.coresolution.consultation.dto.ConsultationRecordDraftSaveRequest;
 import com.coresolution.consultation.dto.ScheduleCreateRequest;
 import com.coresolution.consultation.dto.ScheduleResponse;
+import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Schedule;
@@ -22,6 +25,7 @@ import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
+import com.coresolution.consultation.service.ConsultationRecordDraftService;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.ScheduleService;
@@ -45,6 +49,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +72,7 @@ public class ScheduleController extends BaseApiController {
     private final ScheduleService scheduleService;
     private final AdminService adminService;
     private final ConsultationRecordService consultationRecordService;
+    private final ConsultationRecordDraftService consultationRecordDraftService;
     private final CommonCodeService commonCodeService;
     private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
     private final ConsultantAvailabilityService consultantAvailabilityService;
@@ -883,6 +889,121 @@ public class ScheduleController extends BaseApiController {
             consultationRecordService.updateConsultationRecord(recordId, recordData);
         
         return updated("상담일지가 성공적으로 수정되었습니다.", updatedRecord);
+    }
+
+    /**
+     * 상담일지 서버 초안 조회 (자동저장용, 확정 consultation_records 와 분리).
+     * GET /api/v1/schedules/consultation-records/draft?consultationId=schedule-30&amp;consultantId=41
+     *
+     * @param consultationId 상담(스케줄) ID 또는 schedule- 접두 형식
+     * @param consultantId 상담사 ID
+     * @param session HTTP 세션
+     * @param request HTTP 요청 (X-Tenant-Id 보완용)
+     * @return 초안 또는 hasDraft=false
+     */
+    @GetMapping("/consultation-records/draft")
+    public ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> getConsultationRecordDraft(
+            @RequestParam String consultationId,
+            @RequestParam Long consultantId,
+            HttpSession session,
+            HttpServletRequest request) {
+
+        ensureTenantContextFromSession(session);
+        supplementTenantIdFromHeader(request);
+        String tenantIdVal = TenantContextHolder.getTenantId();
+        if (tenantIdVal == null || tenantIdVal.isEmpty()) {
+            log.warn("테넌트 정보 없음 - 상담일지 초안 조회 거부");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+        }
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+        assertConsultationDraftAccess(currentUser, consultantId);
+        Long consultationIdLong = parseScheduleConsultationId(consultationId);
+        ConsultationRecordDraftResponse body = consultationRecordDraftService
+                .getDraft(tenantIdVal, consultationIdLong, consultantId)
+                .orElse(ConsultationRecordDraftResponse.empty(consultationIdLong, consultantId));
+        return success(body);
+    }
+
+    /**
+     * 상담일지 서버 초안 저장(upsert).
+     * PUT /api/v1/schedules/consultation-records/draft?consultationId=schedule-30&amp;consultantId=41
+     *
+     * @param consultationId 상담(스케줄) ID 또는 schedule- 접두 형식
+     * @param consultantId 상담사 ID
+     * @param body 저장 본문
+     * @param session HTTP 세션
+     * @param request HTTP 요청
+     * @return 저장된 초안
+     */
+    @PutMapping("/consultation-records/draft")
+    public ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> putConsultationRecordDraft(
+            @RequestParam String consultationId,
+            @RequestParam Long consultantId,
+            @RequestBody ConsultationRecordDraftSaveRequest body,
+            HttpSession session,
+            HttpServletRequest request) {
+
+        ensureTenantContextFromSession(session);
+        supplementTenantIdFromHeader(request);
+        String tenantIdVal = TenantContextHolder.getTenantId();
+        if (tenantIdVal == null || tenantIdVal.isEmpty()) {
+            log.warn("테넌트 정보 없음 - 상담일지 초안 저장 거부");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+        }
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+        assertConsultationDraftAccess(currentUser, consultantId);
+        Long consultationIdLong = parseScheduleConsultationId(consultationId);
+        ConsultationRecordDraftResponse saved = consultationRecordDraftService.upsertDraft(
+                tenantIdVal,
+                consultationIdLong,
+                consultantId,
+                body != null ? body.getPayloadJson() : null,
+                body != null ? body.getExpectedVersion() : null);
+        return updated("상담일지 초안이 저장되었습니다.", saved);
+    }
+
+    private void supplementTenantIdFromHeader(HttpServletRequest request) {
+        if (TenantContextHolder.getTenantId() != null && !TenantContextHolder.getTenantId().isEmpty()) {
+            return;
+        }
+        if (request == null) {
+            return;
+        }
+        String headerTenant = request.getHeader("X-Tenant-Id");
+        if (headerTenant != null && !headerTenant.isEmpty()) {
+            TenantContextHolder.setTenantId(headerTenant);
+        }
+    }
+
+    private void assertConsultationDraftAccess(User currentUser, Long consultantId) {
+        if (!canRegisterOrModifyOthersSchedule(currentUser.getRole())
+                && !currentUser.getId().equals(consultantId)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "다른 상담사의 상담일지 초안에 접근할 권한이 없습니다.");
+        }
+    }
+
+    private Long parseScheduleConsultationId(String consultationId) {
+        if (consultationId == null || consultationId.isBlank()) {
+            throw new ValidationException("consultationId", consultationId, "consultationId는 필수입니다.");
+        }
+        String trimmed = consultationId.trim();
+        try {
+            if (trimmed.startsWith("schedule-")) {
+                return Long.valueOf(trimmed.replace("schedule-", ""));
+            }
+            return Long.valueOf(trimmed);
+        } catch (NumberFormatException ex) {
+            throw new ValidationException("consultationId", trimmed, "consultationId 형식이 올바르지 않습니다.");
+        }
     }
 
     /**

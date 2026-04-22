@@ -61,9 +61,13 @@ IncompleteRecordsAlert.propTypes = {
   count: PropTypes.number.isRequired,
   schedules: PropTypes.arrayOf(
     PropTypes.shape({
-      scheduleId: PropTypes.number.isRequired,
+      scheduleId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+      clientId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
       clientName: PropTypes.string.isRequired,
-      consultationDate: PropTypes.string.isRequired
+      sessionDate: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
+      consultationDate: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
+      elapsedHours: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+      sessionNumber: PropTypes.number
     })
   ),
   onAction: PropTypes.func.isRequired,

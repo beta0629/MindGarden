@@ -39,7 +39,7 @@
 
 ### 3.1 테넌트·사용자
 
-- **이미 있는 개발 계정 사용**: 관리자(superadmin) 또는 ERP_ACCESS 권한이 부여된 사용자로 로그인하면 `tenantId`는 세션/헤더로 전달됨.
+- **이미 있는 개발 계정 사용**: `.cursor/skills/core-solution-testing/SKILL.md`의 E2E 계정(또는 ERP_ACCESS 권한이 부여된 관리자 사용자)으로 로그인하면 `tenantId`는 세션/헤더로 전달됨.
 - **신규 테넌트가 필요할 때**:  
   - 테넌트 생성 API 또는 관리 화면에서 테넌트 생성 후, 해당 테넌트에 ERP 권한이 있는 사용자로 로그인.
 

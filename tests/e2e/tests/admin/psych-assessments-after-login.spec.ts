@@ -1,15 +1,16 @@
 // @ts-ignore
 import { test, expect } from '@playwright/test';
+import { getMindGardenWebLogin } from '../../helpers/erpAuth';
 
 /**
  * 재로그인 후 심리검사 최근 업로드 목록 노출 확인
  * - 새 세션으로 로그인 → /admin/psych-assessments 이동 → 목록 영역이 정상 노출되는지 검증
- * 기본 계정: beta74@live.co.kr / 12345678 (개발 서버용). 덮어쓰기: TEST_USERNAME, TEST_PASSWORD
+ * 기본 계정: SSOT `.cursor/skills/core-solution-testing/SKILL.md` (agisunny@daum.net / godgod826!)
+ * 덮어쓰기: E2E_TEST_EMAIL·E2E_TEST_PASSWORD 또는 TEST_USERNAME·TEST_PASSWORD
  * 실행: npm run test:dev (개발 서버) 또는 BASE_URL=... npx playwright test ...
  */
 test.describe('재로그인 후 심리검사 목록', () => {
-  const TEST_USERNAME = (process as any).env.TEST_USERNAME || 'beta74@live.co.kr';
-  const TEST_PASSWORD = (process as any).env.TEST_PASSWORD || '12345678';
+  const { username: TEST_USERNAME, password: TEST_PASSWORD } = getMindGardenWebLogin();
 
   test('새로 로그인 후 심리검사 페이지에서 최근 업로드 블록이 보인다', async ({ page }) => {
     // 1) 로그인 페이지에서 새로 로그인 (세션 새로 시작)

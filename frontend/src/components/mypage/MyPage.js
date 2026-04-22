@@ -214,9 +214,17 @@ const MyPage = () => {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const linkStatus = urlParams.get('link');
+    let linkStatus = urlParams.get('link');
     const provider = urlParams.get('provider');
-    const message = urlParams.get('message');
+    let message = urlParams.get('message');
+    const legacySuccessParam = urlParams.get('success');
+
+    // 레거시: 백엔드가 /mypage?success=연동완료&provider= 형태로내던 경우 (link·message 없음)
+    if (!linkStatus && legacySuccessParam && provider
+        && (provider === 'KAKAO' || provider === 'NAVER')) {
+      linkStatus = 'success';
+      message = message || legacySuccessParam;
+    }
 
     if (linkStatus && provider && message) {
       if (linkStatus === 'success') {

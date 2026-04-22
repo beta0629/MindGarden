@@ -157,8 +157,9 @@ import { test, expect } from '@playwright/test';
 test('새 기능 테스트', async ({ page }) => {
   // 자동 로그인
   await page.goto('/login');
-  await page.fill('input[name="username"]', 'superadmin@mindgarden.com');
-  await page.fill('input[name="password"]', 'admin123');
+  // SSOT: `.cursor/skills/core-solution-testing/SKILL.md` — E2E_TEST_EMAIL / E2E_TEST_PASSWORD 또는 TEST_USERNAME / TEST_PASSWORD
+  await page.fill('input[name="username"]', process.env.E2E_TEST_EMAIL || process.env.TEST_USERNAME || 'agisunny@daum.net');
+  await page.fill('input[name="password"]', process.env.E2E_TEST_PASSWORD || process.env.TEST_PASSWORD || 'godgod826!');
   await page.click('button[type="submit"]');
   
   // 테스트 실행

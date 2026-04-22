@@ -35,6 +35,8 @@ const OAuth2Callback = () => {
         // URL 파라미터에서 정보 추출
         const searchParams = new URLSearchParams(location.search);
         const success = searchParams.get('success');
+        const oauthLegacy = searchParams.get('oauth');
+        const oauthSucceeded = success === 'true' || oauthLegacy === 'success';
         const provider = searchParams.get('provider');
         const userId = searchParams.get('userId');
         const email = searchParams.get('email');
@@ -78,7 +80,7 @@ const OAuth2Callback = () => {
           return;
         }
         
-        if (!success || success !== 'true') {
+        if (!oauthSucceeded) {
           console.error('❌ OAuth2 성공 플래그가 없습니다');
           setError('OAuth2 인증이 완료되지 않았습니다.');
           notificationManager.show('OAuth2 인증이 완료되지 않았습니다.', 'error');
@@ -198,6 +200,7 @@ const OAuth2Callback = () => {
             role: role,
             profileImageUrl: profileImageUrl,
             provider: provider,
+            ...(tenantId ? { tenantId } : {}),
             // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
             branchId: branchId ? parseInt(branchId) : null,
             branchName: branchName,

@@ -30,6 +30,23 @@ public interface UserService extends BaseService<User, Long> {
     Optional<User> findByEmail(String email);
 
     /**
+     * 현재 테넌트에서 정규화 이메일과 일치하는 모든 사용자(평문 DB값·암호화 저장 복호화 비교).
+     * 소셜 로그인 등 동일 이메일 다계정 시 후보 목록용.
+     *
+     * @param email 원본 또는 정규화 전 이메일
+     * @return 일치 사용자 목록(없으면 빈 목록)
+     */
+    List<User> findAllUsersMatchingEmailInCurrentTenant(String email);
+
+    /**
+     * 현재 테넌트에서 SNS 등에서 받은 전화(raw 또는 숫자열)와 동일한 번호를 가진 모든 사용자.
+     *
+     * @param rawPhone 원본 전화 문자열
+     * @return 일치 사용자 목록(없으면 빈 목록)
+     */
+    List<User> findAllUsersMatchingPhoneInCurrentTenant(String rawPhone);
+
+    /**
      * 로그인 식별자로 현재 테넌트 내 사용자 조회(이메일 또는 정규화된 휴대폰 숫자열).
      *
      * @param loginPrincipal {@link com.coresolution.consultation.util.LoginIdentifierUtils#normalizeForPasswordLogin(String)} 결과 권장

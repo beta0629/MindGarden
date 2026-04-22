@@ -1,13 +1,13 @@
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page } from '@playwright/test';
+import { getMindGardenWebLogin } from '../../helpers/erpAuth';
 
 /**
  * 관리자 - 지점 관리 테스트
  * 화면 입력 없이 자동으로 지점 CRUD를 테스트합니다
  */
 test.describe('관리자 - 지점 관리', () => {
-  const TEST_USERNAME = ((process as any).env.TEST_USERNAME as string) || 'superadmin@mindgarden.com';
-  const TEST_PASSWORD = ((process as any).env.TEST_PASSWORD as string) || 'admin123';
+  const { username: TEST_USERNAME, password: TEST_PASSWORD } = getMindGardenWebLogin();
 
   test.beforeEach(async ({ page }: { page: Page }) => {
     // 각 테스트 전 자동 로그인

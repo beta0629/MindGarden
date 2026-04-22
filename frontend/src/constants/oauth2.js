@@ -78,6 +78,13 @@ export const getOAuth2Config = (provider) => {
   }
 };
 
+/** 로그인 화면 소셜·간편가입 후 안내 문구 */
+export const OAUTH2_LOGIN_UI = {
+  POST_SIGNUP_CALLOUT_TITLE: '회원가입이 완료되었습니다',
+  POST_SIGNUP_CALLOUT_BODY: '가입 시 설정한 비밀번호로 로그인하면 서비스를 이용할 수 있습니다.',
+  POST_SIGNUP_PRIMARY_CTA: '로그인 계속하기'
+};
+
 export default {
   KAKAO_OAUTH2_CONFIG,
   NAVER_OAUTH2_CONFIG,

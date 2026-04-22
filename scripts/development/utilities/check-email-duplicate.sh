@@ -1,8 +1,8 @@
 #!/bin/bash
 # 이메일 중복 확인 스크립트
-# 사용법: ./check-email-duplicate.sh beta74@live.co.kr
+# 사용법: ./check-email-duplicate.sh agisunny@daum.net
 
-EMAIL="${1:-beta74@live.co.kr}"
+EMAIL="${1:-agisunny@daum.net}"
 EMAIL_LOWER=$(echo "$EMAIL" | tr '[:upper:]' '[:lower:]')
 
 echo "=========================================="

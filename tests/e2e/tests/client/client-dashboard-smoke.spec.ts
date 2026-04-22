@@ -1,11 +1,11 @@
 /**
  * 내담자 대시보드 스모크: `/client/dashboard` 진입·헤딩·콘솔 오류 수집
  *
- * 자격 증명: `TEST_CLIENT_USERNAME` · `TEST_CLIENT_PASSWORD` 가 **모두** 설정된 경우에만 로그인 후 검증한다.
- * (내담자 전용 계정; 관리자/상담사 계정과 혼용하지 않음)
+ * 자격 증명 SSOT: `tests/e2e/helpers/erpAuth.ts` · `loginClientWeb()` — 기본 `01086322121` / `godgod826!`
+ * 덮어쓰기: `TEST_CLIENT_USERNAME`·`TEST_CLIENT_PASSWORD` 또는 `E2E_CLIENT_LOGIN_ID`·`E2E_CLIENT_PASSWORD`
  *
  * 로컬 실행 예:
- *   cd tests/e2e && BASE_URL=http://localhost:3000 TEST_CLIENT_USERNAME=... TEST_CLIENT_PASSWORD=... npm run test:client
+ *   cd tests/e2e && BASE_URL=http://localhost:3000 npm run test:client
  *
  * 리뉴얼 UI testid (`ClientDashboard.js`):
  * - `client-dashboard-quick-menu`, `client-dashboard-quick-menu-section` (빠른 메뉴).
@@ -14,6 +14,7 @@
  */
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page } from '@playwright/test';
+import { loginClientWeb } from '../../helpers/erpAuth';
 
 const REACT_130_OR_INVALID_CHILD =
   /Minified React error #130|Objects are not valid as a React child|invariant=130/i;
@@ -30,34 +31,13 @@ function attachRuntimeErrorCollectors(page: Page, bucket: string[]) {
   });
 }
 
-async function loginClientWithEnv(page: Page, username: string, password: string) {
-  await page.goto('/login');
-  await page.fill(
-    'input[name="username"], input[type="email"], input[placeholder*="아이디"], input[placeholder*="이메일"]',
-    username
-  );
-  await page.fill('input[name="password"], input[type="password"]', password);
-  await page.click('button[type="submit"], button:has-text("로그인"), button:has-text("Login")');
-  await page.waitForURL(/\/client\/dashboard/, { timeout: 20_000 });
-}
-
 test.describe('내담자 대시보드 스모크', () => {
-  const username = ((process as any).env.TEST_CLIENT_USERNAME as string | undefined)?.trim();
-  const password = (process as any).env.TEST_CLIENT_PASSWORD as string | undefined;
-
   let collectedErrors: string[] = [];
 
-  test.beforeEach(async ({ page }: { page: Page }, testInfo) => {
-    if (!username || !password) {
-      testInfo.skip(
-        true,
-        'TEST_CLIENT_USERNAME / TEST_CLIENT_PASSWORD 를 모두 설정한 뒤 실행하세요.'
-      );
-      return;
-    }
+  test.beforeEach(async ({ page }: { page: Page }) => {
     collectedErrors = [];
     attachRuntimeErrorCollectors(page, collectedErrors);
-    await loginClientWithEnv(page, username, password);
+    await loginClientWeb(page, test.info());
   });
 
   test('/client/dashboard 에서 대시보드 문구가 보이고 런타임 오류가 없다', async ({

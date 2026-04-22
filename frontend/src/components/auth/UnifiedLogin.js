@@ -30,6 +30,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
 import { googleLogin, kakaoLogin, naverLogin } from '../../utils/socialLogin';
+import { OAUTH2_LOGIN_UI } from '../../constants/oauth2';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -212,6 +213,13 @@ const UnifiedLogin = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
+  useEffect(() => {
+    const q = new URLSearchParams(location.search);
+    if (q.get('signup') === 'success' && q.get('email')) {
+      setFormData((prev) => ({ ...prev, email: q.get('email') }));
+    }
+  }, [location.search]);
+
   // useSession에서 사용자 정보가 감지되면, 실제 세션(200) 검증 후에만 리다이렉트
   useEffect(() => {
     const q = new URLSearchParams(location.search);
@@ -289,6 +297,15 @@ const UnifiedLogin = () => {
     const provider = searchParams.get('provider');
     const signupRequired = searchParams.get('signup');
     const error = searchParams.get('error');
+
+    const oauthLegacy = searchParams.get('oauth');
+    if (oauthLegacy === 'success' && provider) {
+      const mapped = new URLSearchParams(location.search);
+      mapped.delete('oauth');
+      mapped.set('success', 'true');
+      navigate(`/auth/oauth2/callback?${mapped.toString()}`, { replace: true });
+      return;
+    }
 
     // OAuth 오류 처리 (서브도메인 없음 등)
     if (error) {
@@ -720,6 +737,44 @@ const UnifiedLogin = () => {
               <h1 className="mg-v2-login-title">환영합니다</h1>
               <p className="mg-v2-login-subtitle">CoreSolution 서비스에 로그인하세요.</p>
             </div>
+
+            {new URLSearchParams(location.search).get('signup') === 'success' && (
+              <section className="mg-v2-field" aria-labelledby="oauth-post-signup-title">
+                <h2 id="oauth-post-signup-title" className="mg-v2-label">
+                  {OAUTH2_LOGIN_UI.POST_SIGNUP_CALLOUT_TITLE}
+                </h2>
+                <p className="mg-v2-text-secondary mg-v2-text-sm">
+                  {OAUTH2_LOGIN_UI.POST_SIGNUP_CALLOUT_BODY}
+                </p>
+                <MGButton
+                  type="button"
+                  variant="primary"
+                  className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  preventDoubleClick={false}
+                  onClick={() => {
+                    const q = new URLSearchParams(location.search);
+                    const em = q.get('email');
+                    const next = em
+                      ? `/login?email=${encodeURIComponent(em)}`
+                      : '/login';
+                    window.history.replaceState({}, document.title, next);
+                    notificationManager.show(
+                      '비밀번호를 입력한 뒤 로그인해 주세요.',
+                      'info'
+                    );
+                    setTimeout(() => {
+                      const el = document.getElementById('password');
+                      if (el) {
+                        el.focus();
+                      }
+                    }, 0);
+                  }}
+                >
+                  {OAUTH2_LOGIN_UI.POST_SIGNUP_PRIMARY_CTA}
+                </MGButton>
+              </section>
+            )}
 
             {/* ID/PW 로그인 폼 */}
             <form onSubmit={handleSubmit} className="mg-v2-login-form">

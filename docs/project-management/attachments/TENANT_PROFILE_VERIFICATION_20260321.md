@@ -31,7 +31,7 @@
 
 ```bash
 cd tests/e2e
-BASE_URL=http://localhost:3000 TEST_USERNAME=superadmin@mindgarden.com TEST_PASSWORD=admin123 \
+BASE_URL=http://localhost:3000 E2E_TEST_EMAIL=agisunny@daum.net E2E_TEST_PASSWORD="<core-solution-testing 스킬 문서 값>" \
   npx playwright test tests/admin/tenant-profile.spec.ts --project=chromium --config=playwright.manual.config.ts
 ```
 

@@ -6,6 +6,7 @@ import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.JwtService;
+import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
@@ -51,9 +52,10 @@ public class KakaoOAuth2ServiceImpl extends AbstractOAuth2Service {
             JwtService jwtService,
             com.coresolution.consultation.service.DynamicPermissionService dynamicPermissionService,
             PersonalDataEncryptionUtil encryptionUtil,
-            PasswordService passwordService) {
+            PasswordService passwordService,
+            UserService userService) {
         super(userRepository, clientRepository, userSocialAccountRepository, jwtService,
-            dynamicPermissionService, encryptionUtil, passwordService);
+            dynamicPermissionService, encryptionUtil, passwordService, userService);
         this.restTemplate = restTemplate;
     }
     
@@ -104,18 +106,21 @@ public class KakaoOAuth2ServiceImpl extends AbstractOAuth2Service {
     @Override
     protected SocialUserInfo convertToSocialUserInfo(Map<String, Object> rawUserInfo) {
         Map<String, Object> kakaoAccount = (Map<String, Object>) rawUserInfo.get("kakao_account");
-        Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
-        
+        Map<String, Object> profile = kakaoAccount != null
+            ? (Map<String, Object>) kakaoAccount.get("profile") : null;
+        String phoneNumber = kakaoAccount != null ? (String) kakaoAccount.get("phone_number") : null;
+
         return SocialUserInfo.builder()
             .providerUserId(rawUserInfo.get("id").toString())
-            .email((String) kakaoAccount.get("email"))
-            .name((String) profile.get("nickname"))
-            .nickname((String) profile.get("nickname"))
-            .profileImageUrl((String) profile.get("profile_image_url"))
-            .accountType((String) kakaoAccount.get("account_type"))
-            .ageRange((String) kakaoAccount.get("age_range"))
-            .gender((String) kakaoAccount.get("gender"))
-            .birthday((String) kakaoAccount.get("birthday"))
+            .email(kakaoAccount != null ? (String) kakaoAccount.get("email") : null)
+            .name(profile != null ? (String) profile.get("nickname") : null)
+            .nickname(profile != null ? (String) profile.get("nickname") : null)
+            .profileImageUrl(profile != null ? (String) profile.get("profile_image_url") : null)
+            .accountType(kakaoAccount != null ? (String) kakaoAccount.get("account_type") : null)
+            .ageRange(kakaoAccount != null ? (String) kakaoAccount.get("age_range") : null)
+            .gender(kakaoAccount != null ? (String) kakaoAccount.get("gender") : null)
+            .birthday(kakaoAccount != null ? (String) kakaoAccount.get("birthday") : null)
+            .phone(phoneNumber)
             .build();
     }
 

@@ -68,6 +68,7 @@ public class ConsultantDashboardServiceImpl implements ConsultantDashboardServic
                 
                 return IncompleteRecordResponse.builder()
                     .scheduleId(schedule.getId())
+                    .clientId(schedule.getClientId())
                     .clientName(clientName)
                     .sessionDate(schedule.getDate())
                     .elapsedHours(elapsedHours)

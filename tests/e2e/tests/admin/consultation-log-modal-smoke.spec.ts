@@ -1,5 +1,6 @@
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page } from '@playwright/test';
+import { getMindGardenWebLogin } from '../../helpers/erpAuth';
 
 /**
  * 상담일지 모달(ConsultationLogModal) 스모크 — 어드민 ConsultationLogView 경로
@@ -7,8 +8,9 @@ import { test, expect, Page } from '@playwright/test';
  * - 아코디언 트리거 id: consultation-log-accordion-profile-trigger, consultation-log-accordion-precautions-trigger
  *
  * 실행 예:
- *   cd tests/e2e && BASE_URL=http://localhost:3000 TEST_USERNAME=... TEST_PASSWORD=... \
+ *   cd tests/e2e && BASE_URL=http://localhost:3000 E2E_TEST_EMAIL=... E2E_TEST_PASSWORD=... \
  *     npx playwright test tests/admin/consultation-log-modal-smoke.spec.ts --project=chromium
+ *   (또는 TEST_USERNAME / TEST_PASSWORD — 우선순위는 스펙 내 상수 참고, SSOT: `.cursor/skills/core-solution-testing/SKILL.md`)
  *
  * 목록에 일지가 없으면 페이지 로드만 검증하고 모달 단계는 주석(annotation) 후 종료합니다.
  *
@@ -46,10 +48,26 @@ async function assertAccordionToggle(page: Page, triggerSelector: string) {
   );
 }
 
+/**
+ * `frontend/src/utils/consultationLogLocalDraft.js` 의 KEY_PREFIX 및
+ * `buildConsultationLogDraftStorageKey` 결과 키와 동일한 접두어.
+ */
+const CONSULTATION_LOG_LOCAL_DRAFT_KEY_PREFIX = 'mg.cl.localDraft';
+
+async function pageHasConsultationLogLocalDraftKey(page: Page): Promise<boolean> {
+  return page.evaluate((prefix) => {
+    for (let i = 0; i < window.localStorage.length; i += 1) {
+      const k = window.localStorage.key(i);
+      if (k !== null && k.startsWith(prefix)) {
+        return true;
+      }
+    }
+    return false;
+  }, CONSULTATION_LOG_LOCAL_DRAFT_KEY_PREFIX);
+}
+
 test.describe('관리자 — 상담일지 모달·아코디언 스모크', () => {
-  const TEST_USERNAME =
-    ((process as any).env.TEST_USERNAME as string) || 'superadmin@mindgarden.com';
-  const TEST_PASSWORD = ((process as any).env.TEST_PASSWORD as string) || 'admin123';
+  const { username: TEST_USERNAME, password: TEST_PASSWORD } = getMindGardenWebLogin();
 
   test('상담일지 조회 페이지 로드 및(데이터 있을 때) 모달·아코디언 토글', async ({
     page,
@@ -89,6 +107,18 @@ test.describe('관리자 — 상담일지 모달·아코디언 스모크', () =>
     await expect(dialog).toBeVisible({ timeout: 25000 });
     await expect(dialog.locator('.mg-v2-consultation-log-modal')).toBeVisible();
 
+    const clientCondition = dialog.locator('textarea[name="clientCondition"]');
+    await expect(clientCondition).toBeVisible({ timeout: 25000 });
+    await clientCondition.fill('e2e-phase1-local-draft');
+
+    // CONSULTATION_LOG_LOCAL_AUTOSAVE_DEBOUNCE_MS = 5000 — 폴링으로 대기(waitForTimeout 지양)
+    await expect
+      .poll(async () => pageHasConsultationLogLocalDraftKey(page), {
+        timeout: 20_000,
+        intervals: [400, 800, 1200, 1600],
+      })
+      .toBe(true);
+
     await assertAccordionToggle(
       page,
       '#consultation-log-accordion-profile-trigger'
@@ -98,7 +128,14 @@ test.describe('관리자 — 상담일지 모달·아코디언 스모크', () =>
       '#consultation-log-accordion-precautions-trigger'
     );
 
-    await page.locator('.mg-modal__close[aria-label="닫기"]').click();
+    await page.locator('.mg-modal__close[aria-label="닫기"]').first().click();
+    const unsavedCloseDialog = page.getByRole('dialog', { name: /작성 중인 내용/ });
+    try {
+      await expect(unsavedCloseDialog).toBeVisible({ timeout: 3500 });
+      await unsavedCloseDialog.getByRole('button', { name: '닫기', exact: true }).click();
+    } catch {
+      // 로컬 초안 flush 후 더티 없음이면 미저장 확인 없이 바로 닫힐 수 있음
+    }
     await expect(dialog).toBeHidden({ timeout: 10000 });
   });
 });

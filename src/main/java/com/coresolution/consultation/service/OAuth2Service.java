@@ -36,6 +36,17 @@ public interface OAuth2Service {
      * @return 기존 사용자 ID (없으면 null)
      */
     Long findExistingUserByProviderId(String providerUserId);
+
+    /**
+     * 카카오·네이버 등 공통: 테넌트 내 기존 사용자 PK 조회(연동/콜백/SDK 경로 동일 분기).
+     * 매칭 순서: (1) tenantId+provider+providerUserId (2) tenantId+정규화 이메일 (DB 평문·암호화 복호화 동일 방식)
+     * (3) SNS가 전화를 제공하고 동의된 경우 tenantId 내 정규화 휴대폰 번호.
+     * 이 메서드는 소셜 계정 행을 생성하지 않는다 — 매칭 후 {@link #linkSocialAccountToUser} 등에서 연동한다.
+     *
+     * @param socialUserInfo 정규화된 {@link SocialUserInfo}
+     * @return 사용자 PK 또는 null
+     */
+    Long findExistingUserIdForSocialLinkOrLogin(SocialUserInfo socialUserInfo);
     
     /**
      * 소셜 계정으로 신규 사용자 생성

@@ -116,7 +116,6 @@ export const FM_FILTER = {
   CATEGORY: '카테고리',
   SEARCH: '검색',
   SEARCH_PLACEHOLDER: '상담사명, 내담자명, 설명 검색...',
-  RESET: '필터 초기화',
   SUBMIT: '검색'
 };
 

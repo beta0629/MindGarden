@@ -1468,33 +1468,6 @@ const FinancialManagement = () => {
                           />
                         </div>
                         <div className="mg-v2-form-group mg-financial-filter-actions">
-                          {/* 필터 상태만 초기화(전역 재조회 트리거 아님) — loading 미부여 */}
-                          <MGButton
-                            type="button"
-                            variant="outline"
-                            size="small"
-                            className={buildErpMgButtonClassName({
-                              variant: 'outline',
-                              size: 'sm',
-                              loading: silentListRefreshing
-                            })}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            onClick={() =>
-                              setFilters({
-                                transactionType: 'ALL',
-                                category: 'ALL',
-                                dateRange: 'MONTH',
-                                monthYm: getCurrentMonthYm(),
-                                startDate: '',
-                                endDate: '',
-                                searchText: ''
-                              })
-                            }
-                            disabled={silentListRefreshing}
-                            preventDoubleClick={false}
-                          >
-                            {FM_FILTER.RESET}
-                          </MGButton>
                           <MGButton
                             variant="primary"
                             size="small"

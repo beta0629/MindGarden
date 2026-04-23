@@ -1315,7 +1315,7 @@
 .mg-header .mg-header__mobile-menu-button.mg-button {
   background: none;
   border: none;
-  color: inherit;
+  color: var(--color-text-primary);
   min-height: unset;
   padding: var(--spacing-sm);
   border-radius: var(--border-radius-md);
@@ -1328,7 +1328,7 @@
 .mg-header .mg-header__notification.mg-button {
   background: none;
   border: none;
-  color: inherit;
+  color: var(--mg-gray-600);
   min-height: unset;
   padding: var(--spacing-sm);
   border-radius: var(--border-radius-md);
@@ -1341,7 +1341,7 @@
 .mg-header .mg-header__user-button.mg-button {
   background: none;
   border: none;
-  color: inherit;
+  color: var(--color-text-primary);
   min-height: unset;
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--mg-border-radius-lg);

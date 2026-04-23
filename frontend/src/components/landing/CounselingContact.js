@@ -5,7 +5,8 @@
 import React, { useState } from 'react';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import MGCard from '../../components/common/MGCard'; // 임시 비활성화
+import './CounselingContact.css';
+
 const CounselingContact = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -36,7 +37,7 @@ const CounselingContact = () => {
         </p>
         
         <div className="counseling-contact__content">
-          <div className="mg-card" variant="glass" padding="large" className="counseling-contact__form-card">
+          <div className="mg-card mg-card--glass mg-card--padding-large counseling-contact__form-card">
             <h3>상담 문의하기</h3>
             <form onSubmit={handleSubmit} className="counseling-contact__form">
               <div className="counseling-contact__form-group">
@@ -90,7 +91,12 @@ const CounselingContact = () => {
                 type="submit"
                 variant="primary"
                 size="large"
-                className={buildErpMgButtonClassName({ variant: 'primary', size: 'lg', loading: false })}
+                className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'lg',
+                    loading: false,
+                    className: 'counseling-contact__cta'
+                })}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 문의하기
@@ -99,7 +105,7 @@ const CounselingContact = () => {
           </div>
           
           <div className="counseling-contact__info">
-            <div className="mg-card" variant="glass" padding="large">
+            <div className="mg-card mg-card--glass mg-card--padding-large">
               <h3>연락처 정보</h3>
               <div className="counseling-contact__info-item">
                 <strong>전화:</strong> 02-1234-5678

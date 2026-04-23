@@ -19,6 +19,7 @@
   width: 100%;
   min-width: 0;
   gap: var(--mg-spacing-sm) var(--mg-spacing-md);
+  overflow: visible; /* 필터 영역·버튼 포커스 링이 상위에 잘리지 않도록 */
 }
 
 .mg-v2-erp-filter-toolbar__expanded {

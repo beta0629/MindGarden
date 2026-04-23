@@ -22,8 +22,9 @@
 .mg-v2-ad-b0kla .mg-v2-button-primary:hover:not(:disabled),
 .mg-v2-ad-b0kla .mg-v2-button--primary:hover:not(:disabled),
 .mg-v2-ad-b0kla .mg-button--primary:hover:not(:disabled) {
-  background: var(--ad-b0kla-green);
-  opacity: 0.9;
+  background: var(--mg-success-700);
+  color: var(--mg-white);
+  opacity: 1;
 }
 
 .mg-v2-ad-b0kla .mg-v2-button-outline {
@@ -47,8 +48,9 @@
 
 .mg-v2-ad-b0kla .mg-v2-button-success:hover:not(:disabled),
 .mg-v2-ad-b0kla .mg-v2-button--success:hover:not(:disabled) {
-  background: var(--ad-b0kla-green);
-  opacity: 0.9;
+  background: var(--mg-success-700);
+  color: var(--mg-white);
+  opacity: 1;
 }
 
 /* ===== 아토믹 배지 (매칭 목록 상태 등) B0KlA 토큰 ===== */
@@ -87,7 +89,9 @@
 
 .mg-v2-ad-b0kla .mg-v2-button-danger:hover:not(:disabled),
 .mg-v2-ad-b0kla .mg-v2-button--danger:hover:not(:disabled) {
-  opacity: 0.9;
+  background: var(--mg-error-700);
+  color: var(--mg-white);
+  opacity: 1;
 }
 
 /* 활성 상태 매핑 행/카드: 환불 버튼 가시성 강화 (리스트 mg-v2-button--danger, 테이블 mg-v2-button-danger 동일 적용) */
@@ -921,7 +925,7 @@ a.mg-v2-ad-b0kla__admin-card,
 a.mg-v2-ad-b0kla__admin-card:link,
 a.mg-v2-ad-b0kla__admin-card:visited {
   text-decoration: none;
-  color: inherit;
+  color: var(--ad-b0kla-text-primary, var(--mg-color-text-primary));
   width: 100%;
   min-width: 0;
   max-width: 100%;
@@ -929,7 +933,7 @@ a.mg-v2-ad-b0kla__admin-card:visited {
 }
 
 a.mg-v2-ad-b0kla__admin-card:hover {
-  color: inherit;
+  color: var(--ad-b0kla-text-primary, var(--mg-color-text-primary));
 }
 
 /* 관리 기능 그리드: 비동기 액션 카드(plain button, MGButton 미사용) */
@@ -947,7 +951,7 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button) {
   line-height: inherit;
   font-size: inherit;
   background: var(--ad-b0kla-card-bg);
-  color: inherit;
+  color: var(--ad-b0kla-text-primary, var(--mg-color-text-primary));
   border: 1px solid var(--ad-b0kla-border);
   border-radius: 16px;
   box-shadow: none;
@@ -961,7 +965,7 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: var(--ad-b0kla-shadow);
   background: var(--ad-b0kla-card-bg);
-  color: inherit;
+  color: var(--ad-b0kla-text-primary, var(--mg-color-text-primary));
 }
 
 button.mg-v2-ad-b0kla__admin-card:not(.mg-button):focus-visible {
@@ -1546,7 +1550,10 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
 }
 
 .mg-v2-ad-b0kla .mg-v2-specialty-tag--selected:hover {
-  opacity: 0.9;
+  background: var(--mg-success-700);
+  border-color: var(--mg-success-700);
+  color: var(--mg-white);
+  opacity: 1;
 }
 
 /* G8-B8a: MGButton 병합 — 전문분야 태그 */
@@ -1574,7 +1581,10 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
 }
 
 .mg-v2-ad-b0kla .mg-v2-specialty-tag.mg-button.mg-button--outline.mg-v2-specialty-tag--selected:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  opacity: 0.9;
+  background: var(--mg-success-700);
+  border-color: var(--mg-success-700);
+  color: var(--mg-white);
+  opacity: 1;
 }
 
 /* B0KlA 카드 악센트 바 (좌측 4px) - 섹션 제목용 */

@@ -12,8 +12,9 @@ import './CounselingHero.css';
 const CounselingHero = () => {
   return (
     <section className="counseling-hero">
-      {/* 수채화 배경 */}
-      <div className="counseling-hero__background" />
+      <div className="counseling-hero__background-wrap" aria-hidden>
+        <div className="counseling-hero__background" />
+      </div>
 
       {/* 콘텐츠 */}
       <div className="counseling-hero__container">

@@ -91,6 +91,12 @@
   gap: 24px;
 }
 
+/* MGButton.css 전역 overflow:hidden — 포커스 링·라벨이 잘리는 현상 완화(로그인 폼/소셜만) */
+.mg-v2-login-form-wrapper .mg-button,
+.mg-v2-login-social .mg-button {
+  overflow: visible;
+}
+
 /* 타이포그래피 */
 .mg-v2-login-title {
   font-size: 28px;

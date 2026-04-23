@@ -279,7 +279,8 @@
 .mg-v2-button-group {
   display: inline-flex;
   border-radius: var(--mg-v2-spacing-xs);
-  overflow: hidden;
+  /* overflow: hidden 은 :focus-visible 링·일부 박스섀도가 잘림 — 윤곽은 자식 border-radius로 유지 */
+  overflow: visible;
 }
 
 .mg-v2-button-group .mg-v2-button {

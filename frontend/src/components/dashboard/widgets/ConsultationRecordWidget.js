@@ -1,3 +1,5 @@
+// CommonDashboard는 본 파일을 사용. WidgetRegistry는 ./consultation/ConsultationRecordWidget.js를 사용한다.
+// 스타일 변경 시 ./ConsultationRecordWidget.css와 ./consultation/ConsultationRecordWidget.css를 함께 점검할 것.
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 

@@ -57,6 +57,39 @@
   border-color: var(--ad-b0kla-green);
 }
 
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button-primary:disabled,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-button--primary:disabled,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button-primary.mg-button--disabled,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-button--primary.mg-button--disabled {
+  background: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-card-bg);
+  border: none;
+  opacity: var(--opacity-disabled-strong, 0.45);
+  cursor: not-allowed;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button-outline:disabled,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-button--outline:disabled,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button-outline.mg-button--disabled,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-button--outline.mg-button--disabled {
+  color: var(--ad-b0kla-green);
+  border-color: var(--ad-b0kla-green);
+  opacity: var(--opacity-disabled-strong, 0.45);
+  cursor: not-allowed;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button-primary:focus-visible,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-button--primary:focus-visible {
+  outline: var(--border-width-medium, 2px) solid var(--ad-b0kla-green);
+  outline-offset: var(--spacing-xs, 0.125rem);
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button-outline:focus-visible,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-button--outline:focus-visible {
+  outline: var(--border-width-medium, 2px) solid var(--ad-b0kla-green);
+  outline-offset: var(--spacing-xs, 0.125rem);
+}
+
 /* 입금 확인 모달(compact): 바디 높이 제한 */
 .mg-modal.mg-v2-ad-b0kla.mg-v2-deposit-modal .mg-modal__body {
   max-height: min(55vh, 420px);

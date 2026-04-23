@@ -55,6 +55,89 @@
   align-items: center;
 }
 
+/*
+ * 랜딩 UnifiedHeader: 투명(on-dark) ↔ 스크롤 후 기본 헤더(on-light).
+ * mg-v2-btn-text/primary와 mg-v2-button-* 중첩 대비 깨짐 방지 — 헤더 액션 네비에만 스코프.
+ */
+.mg-header__actions .mg-v2-homepage-nav .mg-button.mg-v2-button {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* on-dark — .mg-header--transparent + 히어로 */
+.mg-header--transparent .mg-v2-homepage-nav .mg-button.mg-button--outline {
+  background-color: transparent;
+  color: var(--mg-white);
+  border-color: var(--mg-white);
+}
+
+.mg-header--transparent .mg-v2-homepage-nav .mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+}
+
+.mg-header--transparent .mg-v2-homepage-nav .mg-button.mg-button--outline:active:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+}
+
+.mg-header--transparent .mg-v2-homepage-nav .mg-button.mg-button--primary {
+  background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+}
+
+.mg-header--transparent .mg-v2-homepage-nav .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-primary-light, var(--mg-primary-600));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+}
+
+.mg-header--transparent .mg-v2-homepage-nav .mg-button.mg-button--primary:active:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-primary-dark, var(--mg-primary-700));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+}
+
+/* on-light — 스크롤 후 variant=default */
+.mg-header:not(.mg-header--transparent) .mg-v2-homepage-nav .mg-button.mg-button--outline {
+  background-color: transparent;
+  color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+  border-color: var(--mg-color-border-main, var(--mg-layout-header-border));
+}
+
+.mg-header:not(.mg-header--transparent) .mg-v2-homepage-nav .mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+}
+
+.mg-header:not(.mg-header--transparent) .mg-v2-homepage-nav .mg-button.mg-button--outline:active:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+}
+
+.mg-header:not(.mg-header--transparent) .mg-v2-homepage-nav .mg-button.mg-button--primary {
+  background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+}
+
+.mg-header:not(.mg-header--transparent) .mg-v2-homepage-nav .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-primary-light, var(--mg-primary-600));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+}
+
+.mg-header:not(.mg-header--transparent) .mg-v2-homepage-nav .mg-button.mg-button--primary:active:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-primary-dark, var(--mg-primary-700));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+}
+
 /* Buttons */
 .mg-v2-btn-text {
   background: none;

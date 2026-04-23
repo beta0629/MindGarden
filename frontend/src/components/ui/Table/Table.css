@@ -140,6 +140,12 @@
   max-width: 200px;
 }
 
+/* 셀·페이지네이션 내 버튼: 전역 .mg-button overflow 대비(포커스·라벨) */
+.mg-v2-table-desktop .mg-v2-table-body td .mg-button,
+.mg-v2-table-pagination .mg-v2-table-pagination-button {
+  overflow: visible;
+}
+
 .mg-v2-table-cell--center {
   text-align: center;
 }

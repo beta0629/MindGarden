@@ -198,3 +198,26 @@
     flex-direction: column;
   }
 }
+
+/* MGButton( mg-button + mg-v2-* ) 병행 시 본문/폼 color 상속·대비 정합 */
+.social-signup-modal .social-signup-modal__password-toggle.mg-v2-button-outline,
+.social-signup-modal .social-signup-modal__password-toggle.mg-button--outline,
+.social-signup-modal .social-signup-modal__consent-open.mg-v2-button-outline,
+.social-signup-modal .social-signup-modal__consent-open.mg-button--outline {
+  color: var(--color-text-secondary);
+}
+
+.social-signup-modal .social-signup-modal__password-toggle:hover:not(:disabled),
+.social-signup-modal .social-signup-modal__consent-open:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.social-signup-modal .social-signup-modal__action-btn.mg-v2-button-primary,
+.social-signup-modal .social-signup-modal__action-btn.mg-button--primary {
+  color: var(--mg-white);
+}
+
+.social-signup-modal .social-signup-modal__action-btn.mg-v2-button-secondary,
+.social-signup-modal .social-signup-modal__action-btn.mg-button--secondary {
+  color: var(--mg-color-text-on-primary, var(--mg-white));
+}

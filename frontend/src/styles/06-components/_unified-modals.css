@@ -110,6 +110,41 @@
   color: var(--mg-color-text-on-primary, var(--color-text-on-primary)) !important;
 }
 
+/* 푸터 secondary/outline: 전역 mg-v2 토큰 캐스케이드로 라벨·배경 대비가 깨지는 경우 토큰으로 고정 */
+.mg-modal__actions .mg-button.mg-button--secondary {
+  background-color: var(--mg-color-secondary-main, var(--cs-secondary-500));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.mg-modal__actions .mg-button.mg-button--secondary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-secondary-light, var(--cs-secondary-600));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+}
+
+.mg-modal__actions .mg-button.mg-button--secondary .mg-button__text,
+.mg-modal__actions .mg-button.mg-button--outline .mg-button__text {
+  color: inherit;
+}
+
+.mg-modal__actions .mg-button.mg-button--outline {
+  background-color: transparent;
+  color: var(--mg-color-primary-main, var(--mg-primary-500));
+  border-color: var(--mg-color-border-main, var(--mg-border-color));
+  box-shadow: none;
+}
+
+.mg-modal__actions .mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-primary-color, var(--mg-primary-500));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+}
+
+.mg-modal__actions .mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) .mg-button__text {
+  color: inherit;
+}
+
 /* MGButton 미사용: mg-v2 primary 단독 버튼/링크(푸터 한정) */
 .mg-modal__actions button.mg-v2-button.mg-v2-button--primary:not(.mg-button),
 .mg-modal__actions button.mg-v2-button.mg-v2-button-primary:not(.mg-button),

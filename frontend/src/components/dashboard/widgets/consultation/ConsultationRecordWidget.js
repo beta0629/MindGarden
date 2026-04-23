@@ -1,3 +1,5 @@
+// WidgetRegistry는 본 파일을 사용. CommonDashboard는 ../ConsultationRecordWidget.js를 사용한다.
+// 스타일 변경 시 ./ConsultationRecordWidget.css와 ../ConsultationRecordWidget.css를 함께 점검할 것.
 /**
  * Consultation Record Widget - 표준화된 위젯
 /**

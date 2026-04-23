@@ -73,6 +73,33 @@
   padding: var(--spacing-6);
   border-top: 0.5px solid var(--ios-system-gray6);
   background: var(--ios-bg-secondary);
+  overflow: visible; /* 푸터 버튼 포커스·그림자 클리핑 방지 */
+}
+
+/* iOS 시트 푸터: MGButton(mg-v2 + mg-button) 병행 시 대비 */
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__actions .mg-v2-button-primary,
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__actions .mg-button--primary {
+  color: var(--mg-white);
+  border-color: var(--ios-blue);
+  background: var(--ios-blue);
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__actions .mg-v2-button-primary:hover:not(:disabled),
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__actions .mg-button--primary:hover:not(:disabled) {
+  color: var(--mg-white);
+  filter: brightness(0.95);
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__actions .mg-v2-button-outline,
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__actions .mg-button--outline {
+  color: var(--ios-blue);
+  border-color: var(--ios-blue);
+  background: transparent;
+}
+
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__actions .mg-v2-button-secondary,
+.mg-modal-overlay[data-iphone17-modal='true'] .mg-modal__actions .mg-button--secondary {
+  color: var(--mg-white);
 }
 
 /* variant: content */

@@ -129,25 +129,29 @@
 }
 
 .record-view-btn.mg-button {
-  width: 32px;
-  height: 32px;
+  width: var(--mg-touch-target-min, 2.75rem);
+  height: var(--mg-touch-target-min, 2.75rem);
+  min-width: var(--mg-touch-target-min, 2.75rem);
+  min-height: var(--mg-touch-target-min, 2.75rem);
   padding: 0;
-  min-height: unset;
-  border: none;
+  border: 1px solid var(--cs-border-secondary);
   border-radius: var(--cs-radius-xs);
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--cs-glass-primary-20);
-  color: var(--cs-primary-500);
+  color: var(--cs-primary-600);
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  box-shadow: var(--cs-shadow-xs);
 }
 
 .record-view-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--cs-primary-500);
+  background: var(--cs-primary-600);
   color: var(--cs-white);
+  border-color: var(--cs-primary-700);
+  box-shadow: var(--cs-shadow-sm);
 }
 
 .view-icon {

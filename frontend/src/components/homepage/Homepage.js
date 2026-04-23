@@ -115,8 +115,7 @@ const Homepage = () => {
                     className={buildErpMgButtonClassName({
                       variant: 'outline',
                       size: 'md',
-                      loading: false,
-                      className: 'mg-v2-btn-text'
+                      loading: false
                     })}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={handleLogin}
@@ -130,8 +129,7 @@ const Homepage = () => {
                     className={buildErpMgButtonClassName({
                       variant: 'primary',
                       size: 'md',
-                      loading: false,
-                      className: 'mg-v2-btn-primary'
+                      loading: false
                     })}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={handleRegister}

@@ -138,6 +138,7 @@
     position: relative;
     display: flex;
     align-items: center;
+    overflow: visible; /* 배지·포커스 링이 헤더 그리드에 잘리지 않도록 */
 }
 
 .notification-button {
@@ -170,6 +171,26 @@
     border-color: var(--olive-green);
     transform: scale(1.05);
     box-shadow: var(--shadow-sm);
+}
+
+/* MGButton + ERP mg-v2-* 병행 시 상위 color / outline 기본값이 덮어쓰는 경우 대비 */
+.simple-layout .notification-button.mg-button--outline,
+.simple-layout .notification-button.mg-v2-button-outline {
+    color: var(--cocoa);
+    border-color: var(--light-beige);
+    background: var(--light-cream);
+}
+
+.simple-layout .notification-button.mg-button--outline:hover:not(:disabled),
+.simple-layout .notification-button.mg-v2-button-outline:hover:not(:disabled) {
+    color: var(--cocoa);
+    border-color: var(--olive-green);
+    background: var(--cream);
+}
+
+.simple-layout .notification-button .mg-button__text,
+.simple-layout .notification-button .notification-button__label {
+    color: inherit;
 }
 
 /* 알림 개수: dashboard-v2 NotificationBadge 사용, 위치만 기존과 동일하게 */

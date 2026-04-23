@@ -3,6 +3,8 @@
 **일자**: 2026-04-17  
 **상위 문서**: `BUTTON_VISIBILITY_A11Y_PARALLEL_BATCH.md`
 
+**전수 점검(2026-04-23)**: [코드 인벤토리](./BUTTON_VISIBILITY_FULL_AUDIT_CODE_INVENTORY.md) · [테스트 매트릭스](./BUTTON_VISIBILITY_FULL_AUDIT_TEST_MATRIX.md)
+
 ---
 
 ## 1. 병렬 위임 구성

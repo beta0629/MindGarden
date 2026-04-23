@@ -64,11 +64,15 @@
   text-overflow: clip;
 }
 
-/* on-dark — .mg-header--transparent + 히어로 */
+/*
+ * 투명 헤더 + 히어로: 상단은 밝은 그라데이션/흰 띠인 구간이 많아
+ * outline만 흰 글자·흰 테두리면 배경과 구분이 사라짐 → primary 톤으로 통일(대비 보장).
+ * 어두운 히어로 중앙에서도 진녹색 라벨은 WCAG상 읽기 가능한 편.
+ */
 .mg-header--transparent .mg-v2-homepage-nav .mg-button.mg-button--outline {
   background-color: transparent;
-  color: var(--mg-white);
-  border-color: var(--mg-white);
+  color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+  border-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
 }
 
 .mg-header--transparent .mg-v2-homepage-nav .mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {

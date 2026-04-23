@@ -651,3 +651,8 @@ class SessionManager {
 
 // 싱글톤 인스턴스
 export const sessionManager = new SessionManager();
+
+// apiHeaders·대시보드 등 동기 경로에서 window.sessionManager를 참조함
+if (typeof window !== 'undefined') {
+  window.sessionManager = sessionManager;
+}

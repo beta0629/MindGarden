@@ -4,8 +4,10 @@
  *
  * Smoke (core-tester): 로그인 후 GET /api/v1/auth/session-info 응답에
  * maxInactiveInterval, lastAccessedTime, serverNow 포함 확인 →
- * 만료 약 1분 전 모달 표시 → 연장 시 세션 갱신(checkSession(true))·모달 닫힘 →
+ * 만료 `SESSION_IDLE_WARNING_MS` 전 모달 표시 → 연장 시 세션 갱신(checkSession(true))·모달 닫힘 →
  * 로그아웃 시 SessionContext.logout 재사용.
+ * 남은 시간은 `lastAccessedTime`(ms) + `maxInactiveInterval`(s)×1000 만료 시각 기준이며,
+ * 서버 `ApiResponse`는 sessionManager에서 `data` 언랩됨(미언랩 시 toSafeNumber가 -1로 떨어져 타이머가 비활성).
  *
  * 표시 경계: COMMON_DISPLAY_BOUNDARY_MEETING_20260322 — 본문은 정적 문구·SafeText, API 숫자 필드는 toSafeNumber.
  *
@@ -74,6 +76,7 @@ const SessionIdleWarningModal = () => {
         ? toSafeNumber(sessionInfo.serverNow, Date.now())
         : Date.now();
     const offsetMs = serverNow - Date.now();
+    // lastAccessedTime(ms) + maxInactiveInterval(s) — AuthController.putHttpSessionTimingFields
     const expiryMs = lastAcc + maxSec * 1000;
 
     const tick = () => {
@@ -121,6 +124,7 @@ const SessionIdleWarningModal = () => {
       ? toSafeNumber(sessionInfo.serverNow, Date.now())
       : Date.now();
     const offsetMs = serverNow - Date.now();
+    // Servlet: getLastAccessedTime=ms, getMaxInactiveInterval=초 (AuthController.putHttpSessionTimingFields)
     const expiryMs = lastAcc + maxSec * 1000;
     const warnAtMs = expiryMs - SESSION_IDLE_WARNING_MS;
     const delayMs = Math.max(0, warnAtMs - (Date.now() + offsetMs));

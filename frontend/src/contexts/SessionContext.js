@@ -423,7 +423,7 @@ export const SessionProvider = ({ children }) => {
     }
   };
 
-  // 주기적 세션 체크 (30초마다)
+  // 주기적 세션 체크 (SESSION_CHECK_INTERVAL, 현재 5분)
   useEffect(() => {
     // 로그인 페이지에서는 세션 체크 안 함
     const currentPath = window.location.pathname;
@@ -453,7 +453,13 @@ export const SessionProvider = ({ children }) => {
 
   // 서블릿 세션 lastAccessedTime은 HTTP 요청 시에만 갱신되어 입력만으로는 연장되지 않았음; 스로틀된 checkSession(true)로 갱신한다.
   useEffect(() => {
-    const onActivity = () => {
+    const onActivity = (event) => {
+      // 세션 만료 임박 모달: pointerdown(capture)이 버튼 click보다 먼저 실행되어
+      // checkSession(true)가 연장 클릭과 경쟁하고, 만료 직전 401이면 redirectToLogin이 먼저 타는 경우가 있음.
+      const t = event && event.target;
+      if (t && typeof t.closest === 'function' && t.closest('.session-idle-warning-modal')) {
+        return;
+      }
       const path = window.location.pathname;
       if (isSessionPublicPath(path)) {
         return;

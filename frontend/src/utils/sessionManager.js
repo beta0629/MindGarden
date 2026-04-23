@@ -13,6 +13,20 @@ import {
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
 import { redirectToLoginPageOnce } from './sessionRedirect';
 
+/**
+ * current-user / session-info 등: `{ success, data }` 래퍼면 `data`만 사용.
+ * 평면이면 그대로 반환. 래퍼를 벗기지 못하면 타이밍 필드가 비어 idle 모달이 동작하지 않을 수 있음.
+ *
+ * @param {unknown} body
+ * @returns {unknown}
+ */
+function unwrapApiResponseData(body) {
+  if (body && typeof body === 'object' && 'success' in body && 'data' in body) {
+    return body.data;
+  }
+  return body;
+}
+
 class SessionManager {
   constructor() {
     this.user = null;
@@ -198,10 +212,7 @@ class SessionManager {
 
       if (userResponse.ok) {
         const userResponseData = await userResponse.json();
-        // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
-        const newUser = (userResponseData && typeof userResponseData === 'object' && 'success' in userResponseData && 'data' in userResponseData)
-          ? userResponseData.data
-          : userResponseData;
+        const newUser = unwrapApiResponseData(userResponseData);
 
         // 기존 사용자 정보가 있으면 role/permissionGroupCodes 보존 (서버 미반환 시)
         if (this.user) {
@@ -231,10 +242,7 @@ class SessionManager {
           });
           if (sessionResponse.ok) {
             const sessionResponseData = await sessionResponse.json();
-            // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
-            this.sessionInfo = (sessionResponseData && typeof sessionResponseData === 'object' && 'success' in sessionResponseData && 'data' in sessionResponseData)
-              ? sessionResponseData.data
-              : sessionResponseData;
+            this.sessionInfo = unwrapApiResponseData(sessionResponseData);
             console.log('✅ 세션 정보도 로드 완료:', this.sessionInfo);
           }
         } catch (sessionError) {

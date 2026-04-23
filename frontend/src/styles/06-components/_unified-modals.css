@@ -317,6 +317,33 @@
 }
 
 /*
+ * 세션 연장 모달 — 로그아웃(outline): 푸터 공통 규칙이 테넌트 primary를 배경으로 쓸 때
+ * 배경·글자가 동시에 밝아져 호버 시 버튼이 사라진 것처럼 보이는 이슈 방지 (회색 토큰으로 고정)
+ */
+.session-idle-warning-modal.mg-modal .mg-modal__actions button[data-testid='session-idle-logout'] {
+  background-color: var(--mg-white);
+  color: var(--mg-gray-900);
+  border: 1px solid var(--mg-gray-400);
+  box-shadow: none;
+}
+
+.session-idle-warning-modal.mg-modal .mg-modal__actions button[data-testid='session-idle-logout']:hover:not(:disabled):not(.mg-button--loading) {
+  background-color: var(--mg-gray-100);
+  color: var(--mg-gray-900);
+  border-color: var(--mg-gray-500);
+  box-shadow: none;
+}
+
+.session-idle-warning-modal.mg-modal .mg-modal__actions button[data-testid='session-idle-logout']:focus-visible {
+  outline: 2px solid var(--mg-gray-500);
+  outline-offset: 2px;
+}
+
+.session-idle-warning-modal.mg-modal .mg-modal__actions button[data-testid='session-idle-logout'] .mg-button__text {
+  color: inherit;
+}
+
+/*
  * 중복 로그인: primary 텍스트가 전역 mg-v2-button--primary(color: 배경 토큰)와 겹쳐 운영에서 안 보이는 이슈 방지
  */
 .duplicate-login-modal.mg-modal .mg-modal__actions button[data-testid='duplicate-login-confirm'] {

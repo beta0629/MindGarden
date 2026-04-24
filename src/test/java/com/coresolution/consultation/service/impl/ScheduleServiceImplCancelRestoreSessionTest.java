@@ -6,6 +6,7 @@ import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatu
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
+import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import org.junit.jupiter.api.AfterEach;
@@ -65,6 +66,9 @@ class ScheduleServiceImplCancelRestoreSessionTest {
     private com.coresolution.consultation.service.ConsultationMessageService consultationMessageService;
     @Mock
     private com.coresolution.core.service.DashboardIntegrationService dashboardIntegrationService;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private ScheduleServiceImpl scheduleService;

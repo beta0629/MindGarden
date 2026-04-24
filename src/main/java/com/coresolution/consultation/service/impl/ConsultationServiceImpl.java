@@ -18,6 +18,7 @@ import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.Consultation;
 import com.coresolution.consultation.entity.Note;
 import com.coresolution.consultation.entity.Review;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.BaseRepository;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
@@ -25,8 +26,11 @@ import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.NoteRepository;
 import com.coresolution.consultation.repository.QualityEvaluationRepository;
 import com.coresolution.consultation.repository.ReviewRepository;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ConsultationService;
 import com.coresolution.consultation.service.EmailService;
+import com.coresolution.consultation.service.NotificationService;
+import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import com.coresolution.core.util.StatusCodeHelper;
@@ -84,6 +88,15 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Autowired
     private StatusCodeHelper statusCodeHelper;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private NotificationService notificationService;
+    
+    @Autowired
+    private UserPersonalDataCacheService userPersonalDataCacheService;
     
     @PersistenceContext
     private EntityManager entityManager;
@@ -547,6 +560,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         Consultation savedConsultation = save(consultation);
         
         sendConsultationChangeNotification(consultationId, "취소");
+        trySendConsultationCancelledExternalChannels(savedConsultation);
         
         return savedConsultation;
     }
@@ -554,6 +568,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     @Override
     public Consultation rescheduleConsultation(Long consultationId, LocalDateTime newDateTime) {
         Consultation consultation = findActiveByIdOrThrow(consultationId);
+        LocalDate previousDate = consultation.getConsultationDate();
+        LocalTime previousStart = consultation.getStartTime();
         consultation.setConsultationDate(newDateTime.toLocalDate());
         consultation.setStartTime(newDateTime.toLocalTime());
         consultation.setStatus("RESCHEDULED");
@@ -563,6 +579,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         Consultation savedConsultation = save(consultation);
         
         sendConsultationChangeNotification(consultationId, "일정 변경");
+        trySendConsultationRescheduledExternalChannels(savedConsultation, previousDate, previousStart);
         
         return savedConsultation;
     }
@@ -1999,6 +2016,114 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
         } catch (Exception e) {
             log.error("상담 예약 확인 알림 발송 중 오류: consultationId={}, error={}", consultationId, e.getMessage(), e);
+        } finally {
+            trySendConsultationConfirmedExternalChannels(consultationId);
+        }
+    }
+    
+    private String formatConsultationSlotForAlimTalk(LocalDate date, LocalTime start) {
+        if (date == null) {
+            return "";
+        }
+        if (start == null) {
+            return date.toString();
+        }
+        return date.toString() + " " + start;
+    }
+    
+    private String resolveConsultantDisplayNameForAlimTalk(String tenantId, Long consultantId) {
+        if (consultantId == null || tenantId == null || tenantId.isEmpty()) {
+            return ConsultationServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME;
+        }
+        try {
+            Optional<Consultant> consultantOpt = consultantRepository.findByTenantIdAndId(tenantId, consultantId);
+            if (consultantOpt.isEmpty()) {
+                return ConsultationServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME;
+            }
+            Consultant consultant = consultantOpt.get();
+            try {
+                Map<String, String> decrypted = userPersonalDataCacheService.getDecryptedUserData(consultant);
+                if (decrypted != null && decrypted.get("name") != null && !decrypted.get("name").isEmpty()) {
+                    return decrypted.get("name");
+                }
+            } catch (Exception e) {
+                log.warn("상담사명 복호화 실패: consultantId={}, {}", consultantId, e.getMessage());
+            }
+            return consultant.getName() != null ? consultant.getName()
+                : ConsultationServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME;
+        } catch (Exception e) {
+            log.warn("상담사 표시명 조회 실패: consultantId={}", consultantId, e);
+            return ConsultationServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME;
+        }
+    }
+    
+    /**
+     * 상담 확정 후 카카오 알림톡→SMS 등 {@link NotificationService} 경로(비차단).
+     * TODO(§1 회의): 수신자 매트릭스·멱등·트랜잭션 커밋 후 비동기 발송 여부 확정.
+     */
+    private void trySendConsultationConfirmedExternalChannels(Long consultationId) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("상담 확정 알림: TenantContext 비어 있음, 발송 생략 consultationId={}", consultationId);
+            return;
+        }
+        try {
+            Consultation consultation = findActiveByIdOrThrow(consultationId);
+            User client = userRepository.findByTenantIdAndId(tenantId, consultation.getClientId()).orElse(null);
+            if (client == null) {
+                log.warn("상담 확정 알림: 내담자 User 미조회 consultationId={}, clientId={}",
+                    consultationId, consultation.getClientId());
+                return;
+            }
+            String consultantName = resolveConsultantDisplayNameForAlimTalk(tenantId, consultation.getConsultantId());
+            String dateStr = consultation.getConsultationDate() != null ? consultation.getConsultationDate().toString() : "";
+            String timeStr = consultation.getStartTime() != null ? consultation.getStartTime().toString() : "";
+            // 제품 정책: 예약 확정 시 이메일 템플릿과 알림톡/SMS 폴백을 병행할 수 있음(§1 수신 동의·채널 정책 확정 후 조정).
+            notificationService.sendConsultationConfirmed(client, consultantName, dateStr, timeStr);
+        } catch (Exception e) {
+            log.warn("상담 확정 알림 발송 실패(본 처리 롤백 없음): consultationId={}, {}", consultationId, e.getMessage());
+        }
+    }
+    
+    private void trySendConsultationRescheduledExternalChannels(Consultation consultation,
+            LocalDate previousDate, LocalTime previousStart) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("일정 변경 알림: TenantContext 비어 있음, 발송 생략 consultationId={}", consultation.getId());
+            return;
+        }
+        try {
+            User client = userRepository.findByTenantIdAndId(tenantId, consultation.getClientId()).orElse(null);
+            if (client == null) {
+                return;
+            }
+            String consultantName = resolveConsultantDisplayNameForAlimTalk(tenantId, consultation.getConsultantId());
+            String oldSlot = formatConsultationSlotForAlimTalk(previousDate, previousStart);
+            String newSlot = formatConsultationSlotForAlimTalk(consultation.getConsultationDate(), consultation.getStartTime());
+            notificationService.sendScheduleChanged(client, consultantName, oldSlot, newSlot);
+        } catch (Exception e) {
+            log.warn("일정 변경 알림 발송 실패(본 처리 롤백 없음): consultationId={}, {}",
+                consultation.getId(), e.getMessage());
+        }
+    }
+    
+    private void trySendConsultationCancelledExternalChannels(Consultation consultation) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("상담 취소 알림: TenantContext 비어 있음, 발송 생략 consultationId={}", consultation.getId());
+            return;
+        }
+        try {
+            User client = userRepository.findByTenantIdAndId(tenantId, consultation.getClientId()).orElse(null);
+            if (client == null) {
+                return;
+            }
+            String consultantName = resolveConsultantDisplayNameForAlimTalk(tenantId, consultation.getConsultantId());
+            String slot = formatConsultationSlotForAlimTalk(consultation.getConsultationDate(), consultation.getStartTime());
+            notificationService.sendConsultationCancelled(client, consultantName, slot);
+        } catch (Exception e) {
+            log.warn("상담 취소 알림 발송 실패(본 처리 롤백 없음): consultationId={}, {}",
+                consultation.getId(), e.getMessage());
         }
     }
     

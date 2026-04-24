@@ -29,6 +29,7 @@ import com.coresolution.consultation.repository.VacationRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultationMessageService;
+import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SessionSyncService;
@@ -79,6 +80,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final ConsultationRecordRepository consultationRecordRepository;
     private final PlSqlScheduleValidationService plSqlScheduleValidationService;
     private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
+    private final NotificationService notificationService;
     
     public ScheduleServiceImpl(
             ScheduleRepository scheduleRepository,
@@ -97,7 +99,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             com.coresolution.core.service.DashboardIntegrationService dashboardIntegrationService,
             ConsultationRecordRepository consultationRecordRepository,
             PlSqlScheduleValidationService plSqlScheduleValidationService,
-            com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService) {
+            com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService,
+            NotificationService notificationService) {
         super(scheduleRepository, accessControlService);
         this.scheduleRepository = scheduleRepository;
         this.mappingRepository = mappingRepository;
@@ -115,6 +118,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.consultationRecordRepository = consultationRecordRepository;
         this.plSqlScheduleValidationService = plSqlScheduleValidationService;
         this.userPersonalDataCacheService = userPersonalDataCacheService;
+        this.notificationService = notificationService;
     }
     
     
@@ -585,7 +589,67 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             "[관리자 확정] " + adminNote;
         schedule.setDescription(newDescription);
         
-        return scheduleRepository.save(schedule);
+        Schedule saved = scheduleRepository.save(schedule);
+        tryDispatchScheduleConfirmedExternalNotification(saved);
+        return saved;
+    }
+    
+    /**
+     * 관리자 예약 확정 후 내담자에게 알림톡→SMS 폴백(비차단). 테넌트 컨텍스트가 없으면 생략.
+     * TODO(§1 회의): 수신자 매트릭스·멱등 키·트랜잭션 커밋 후 비동기 발송 여부 확정.
+     */
+    private void tryDispatchScheduleConfirmedExternalNotification(Schedule schedule) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("예약 확정 알림: TenantContext 비어 있음, 발송 생략 scheduleId={}", schedule.getId());
+            return;
+        }
+        if (schedule.getClientId() == null) {
+            log.debug("예약 확정 알림: clientId 없음 scheduleId={}", schedule.getId());
+            return;
+        }
+        try {
+            User client = findUserByTenantContext(schedule.getTenantId(), schedule.getClientId()).orElse(null);
+            if (client == null) {
+                log.warn("예약 확정 알림: 내담자 User 미조회 scheduleId={}, clientId={}",
+                    schedule.getId(), schedule.getClientId());
+                return;
+            }
+            String consultantName = resolveConsultantDisplayNameForAlimTalk(schedule);
+            String dateStr = schedule.getDate() != null ? schedule.getDate().toString() : "";
+            String timeStr;
+            if (schedule.getStartTime() != null && schedule.getEndTime() != null) {
+                timeStr = schedule.getStartTime() + "-" + schedule.getEndTime();
+            } else if (schedule.getStartTime() != null) {
+                timeStr = schedule.getStartTime().toString();
+            } else {
+                timeStr = "";
+            }
+            // 제품 정책: 인앱·이메일 등 기존 안내와 병행될 수 있음(채널 단일화는 §1 정책 확정 후).
+            notificationService.sendConsultationConfirmed(client, consultantName, dateStr, timeStr);
+        } catch (Exception e) {
+            log.warn("예약 확정 알림 발송 실패(본 처리 롤백 없음): scheduleId={}, {}", schedule.getId(), e.getMessage());
+        }
+    }
+    
+    private String resolveConsultantDisplayNameForAlimTalk(Schedule schedule) {
+        if (schedule.getConsultantId() == null) {
+            return "상담사";
+        }
+        try {
+            User consultant = findUserByTenantContext(schedule.getTenantId(), schedule.getConsultantId()).orElse(null);
+            if (consultant == null) {
+                return "상담사";
+            }
+            Map<String, String> decrypted = userPersonalDataCacheService.getDecryptedUserData(consultant);
+            if (decrypted != null && decrypted.get("name") != null && !decrypted.get("name").isEmpty()) {
+                return decrypted.get("name");
+            }
+            return consultant.getName() != null ? consultant.getName() : "상담사";
+        } catch (Exception e) {
+            log.warn("예약 확정 알림: 상담사명 조회 실패 scheduleId={}", schedule.getId(), e);
+            return "상담사";
+        }
     }
 
     @Override

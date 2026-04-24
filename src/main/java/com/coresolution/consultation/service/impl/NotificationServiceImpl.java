@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.entity.Alert;
 import com.coresolution.consultation.entity.CommonCode;
@@ -34,6 +35,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
+    
+    private static final String CODE_GROUP_ALIMTALK_BIZ_TEMPLATE_CODE = "ALIMTALK_BIZ_TEMPLATE_CODE";
     
     private final KakaoAlimTalkService kakaoAlimTalkService;
     private final CommonCodeRepository commonCodeRepository;
@@ -139,6 +142,12 @@ public class NotificationServiceImpl implements NotificationService {
     }
     
     @Override
+    public boolean sendConsultationCancelled(User user, String consultantName, String cancelledReservationDateTime) {
+        return sendNotification(user, NotificationType.CONSULTATION_CANCELLED, NotificationPriority.HIGH,
+            consultantName, cancelledReservationDateTime);
+    }
+    
+    @Override
     public boolean sendConsultationReminder(User user, String consultantName, String consultationTime) {
         return sendNotification(user, NotificationType.CONSULTATION_REMINDER, NotificationPriority.HIGH, 
                               consultantName, consultationTime);
@@ -232,6 +241,13 @@ public class NotificationServiceImpl implements NotificationService {
                     alimTalkParams.put("consultationTime", params[1]);
                 }
                 break;
+            
+            case CONSULTATION_CANCELLED:
+                if (params.length >= 2) {
+                    alimTalkParams.put("consultantName", params[0]);
+                    alimTalkParams.put("cancelledDateTime", params[1]);
+                }
+                break;
                 
             case REFUND_COMPLETED:
                 if (params.length >= 2) {
@@ -271,12 +287,39 @@ public class NotificationServiceImpl implements NotificationService {
     }
     
     /**
+     * 카카오 비즈 템플릿 코드: 테넌트·코어 공통코드 ALIMTALK_BIZ_TEMPLATE_CODE의 codeLabel,
+     * 없으면 내부 {@link NotificationType} 이름과 동일하게 사용.
+     */
+    private String resolveAlimTalkBizTemplateCode(NotificationType type) {
+        try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId != null && !tenantId.isEmpty()) {
+                Optional<CommonCode> tenantRow = commonCodeRepository.findTenantCodeByGroupAndValue(
+                    tenantId, CODE_GROUP_ALIMTALK_BIZ_TEMPLATE_CODE, type.name());
+                if (tenantRow.isPresent() && tenantRow.get().getCodeLabel() != null
+                        && !tenantRow.get().getCodeLabel().isBlank()) {
+                    return tenantRow.get().getCodeLabel().trim();
+                }
+            }
+            Optional<CommonCode> coreRow = commonCodeRepository.findCoreCodeByGroupAndValue(
+                CODE_GROUP_ALIMTALK_BIZ_TEMPLATE_CODE, type.name());
+            if (coreRow.isPresent() && coreRow.get().getCodeLabel() != null
+                    && !coreRow.get().getCodeLabel().isBlank()) {
+                return coreRow.get().getCodeLabel().trim();
+            }
+        } catch (Exception e) {
+            log.debug("ALIMTALK_BIZ_TEMPLATE_CODE 조회 실패, 내부 키 사용: type={}, {}", type.name(), e.getMessage());
+        }
+        return type.name();
+    }
+    
+    /**
      * 카카오 알림톡 발송
      */
     private boolean sendKakaoAlimTalk(String phoneNumber, NotificationType type, Map<String, String> params) {
         try {
-            String templateCode = type.name(); // CONSULTATION_CONFIRMED 등
-            return kakaoAlimTalkService.sendAlimTalk(phoneNumber, templateCode, params);
+            String apiTemplateCode = resolveAlimTalkBizTemplateCode(type);
+            return kakaoAlimTalkService.sendAlimTalk(phoneNumber, apiTemplateCode, type.name(), params);
         } catch (Exception e) {
             log.error("카카오 알림톡 발송 실패", e);
             return false;
@@ -321,6 +364,7 @@ public class NotificationServiceImpl implements NotificationService {
         switch (type) {
             case CONSULTATION_CONFIRMED: return "[마인드가든] 상담 확정 안내";
             case CONSULTATION_REMINDER: return "[마인드가든] 상담 리마인더";
+            case CONSULTATION_CANCELLED: return "[마인드가든] 상담 예약 취소 안내";
             case REFUND_COMPLETED: return "[마인드가든] 환불 완료 안내";
             case SCHEDULE_CHANGED: return "[마인드가든] 상담 일정 변경 안내";
             case PAYMENT_COMPLETED: return "[마인드가든] 결제 완료 안내";
@@ -446,6 +490,7 @@ public class NotificationServiceImpl implements NotificationService {
         switch (type) {
             case CONSULTATION_CONFIRMED: return "상담이 확정되었습니다";
             case CONSULTATION_REMINDER: return "상담 리마인더";
+            case CONSULTATION_CANCELLED: return "상담 예약이 취소되었습니다";
             case REFUND_COMPLETED: return "환불이 완료되었습니다";
             case SCHEDULE_CHANGED: return "일정이 변경되었습니다";
             case PAYMENT_COMPLETED: return "결제가 완료되었습니다";
@@ -467,6 +512,10 @@ public class NotificationServiceImpl implements NotificationService {
                 return String.format("1시간 후 상담이 예정되어 있습니다. 상담사: %s, 시간: %s", 
                     params.length > 0 ? params[0] : "상담사", 
                     params.length > 1 ? params[1] : "시간");
+            case CONSULTATION_CANCELLED:
+                return String.format("상담 예약이 취소되었습니다. 상담사: %s, 일시: %s",
+                    params.length > 0 ? params[0] : "상담사",
+                    params.length > 1 ? params[1] : "일시");
             case REFUND_COMPLETED:
                 return String.format("환불이 완료되었습니다. 환불 회기: %s회", 
                     params.length > 0 ? params[0] : "0");
@@ -501,6 +550,7 @@ public class NotificationServiceImpl implements NotificationService {
         switch (type) {
             case CONSULTATION_CONFIRMED: return "bi-check-circle-fill";
             case CONSULTATION_REMINDER: return "bi-clock-fill";
+            case CONSULTATION_CANCELLED: return "bi-x-circle-fill";
             case REFUND_COMPLETED: return "bi-cash-coin";
             case SCHEDULE_CHANGED: return "bi-calendar-event";
             case PAYMENT_COMPLETED: return "bi-credit-card-fill";
@@ -516,6 +566,7 @@ public class NotificationServiceImpl implements NotificationService {
         switch (type) {
             case CONSULTATION_CONFIRMED: return "#28a745";
             case CONSULTATION_REMINDER: return "#ffc107";
+            case CONSULTATION_CANCELLED: return "#6c757d";
             case REFUND_COMPLETED: return "#17a2b8";
             case SCHEDULE_CHANGED: return "#fd7e14";
             case PAYMENT_COMPLETED: return "#007bff";

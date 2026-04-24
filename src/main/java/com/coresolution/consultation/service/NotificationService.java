@@ -28,6 +28,7 @@ public interface NotificationService {
     enum NotificationType {
         CONSULTATION_CONFIRMED,  // 상담 확정
         CONSULTATION_REMINDER,   // 상담 리마인더
+        CONSULTATION_CANCELLED, // 상담(예약) 취소
         REFUND_COMPLETED,       // 환불 완료
         SCHEDULE_CHANGED,       // 일정 변경
         PAYMENT_COMPLETED,      // 결제 완료
@@ -56,6 +57,16 @@ public interface NotificationService {
      * @return 발송 성공 여부
      */
     boolean sendConsultationConfirmed(User user, String consultantName, String consultationDate, String consultationTime);
+    
+    /**
+     * 상담(예약) 취소 알림
+     *
+     * @param user 내담자
+     * @param consultantName 상담사 표시명
+     * @param cancelledReservationDateTime 취소된 예약 일시 요약(한 줄)
+     * @return 발송 성공 여부
+     */
+    boolean sendConsultationCancelled(User user, String consultantName, String cancelledReservationDateTime);
     
     /**
      * 상담 리마인더 알림 (1시간 전)

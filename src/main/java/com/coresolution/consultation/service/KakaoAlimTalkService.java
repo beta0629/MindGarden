@@ -15,11 +15,23 @@ public interface KakaoAlimTalkService {
      * 알림톡 발송
      * 
      * @param phoneNumber 수신자 전화번호
-     * @param templateCode 템플릿 코드
+     * @param templateCode 카카오 API용 템플릿 코드(비즈코드가 내부 키와 다를 수 있음)
      * @param templateParams 템플릿 파라미터
      * @return 발송 성공 여부
      */
     boolean sendAlimTalk(String phoneNumber, String templateCode, Map<String, String> templateParams);
+    
+    /**
+     * 알림톡 발송 — API 템플릿 코드와 공통코드(ALIMTALK_TEMPLATE) 조회용 논리 키를 분리할 때 사용.
+     *
+     * @param phoneNumber 수신자 전화번호
+     * @param apiTemplateCode 카카오 비즈 API 요청 templateCode
+     * @param contentTemplateKey {@code ALIMTALK_TEMPLATE.codeValue} 조회 키(보통 NotificationType 이름). null/공백이면 apiTemplateCode 사용
+     * @param templateParams 템플릿 파라미터
+     * @return 발송 성공 여부
+     */
+    boolean sendAlimTalk(String phoneNumber, String apiTemplateCode, String contentTemplateKey,
+            Map<String, String> templateParams);
     
     /**
      * 상담 예약 확정 알림

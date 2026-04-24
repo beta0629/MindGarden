@@ -2,7 +2,7 @@
 
 **목적**: 예약 **확정·변경·(선형) 취소**와 연동된 **카카오 알림톡(비즈메시지)** 구현을 **누락 없이** 진행하기 위한 단일 체크리스트.  
 **주관**: `core-planner` — 구현·패치는 `core-coder`, 검증 게이트는 `core-tester` (`docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`).  
-**최종 갱신**: 2026-04-23 — §2~§4 explore·designer·component-manager 병렬 산출 반영
+**최종 갱신**: 2026-04-23 — §2~§4 1차 병렬 + §7 2차(core-planner·deployer·tester·coder) 산출 반영(§10)
 
 **연계 문서**
 
@@ -169,12 +169,13 @@
 
 ## 5. 구현 게이트 (core-coder — 체크리스트만; 완료 시 ☑)
 
-- [ ] 서비스 레이어 **후킹**(컨트롤러 직접 발송 지양), **트랜잭션 커밋 후** 발송 여부 반영
-- [ ] `NotificationServiceImpl` / `KakaoAlimTalkServiceImpl` 연계·**템플릿 파라미터** 매핑
-- [ ] **테넌트별** 템플릿/채널 매핑 저장소(설정·DB)와 하드코딩 **금지**
-- [ ] 로그 **전화번호 마스킹**·에러 시 민감정보 미출력
-- [ ] 멱등/중복 방지(§1 결정 반영)
-- [ ] `NOTIFICATION_SYSTEM_STANDARD.md`와 충돌 없음
+- [x] 서비스 레이어 **후킹** — `ConsultationServiceImpl`·`ScheduleServiceImpl.confirmSchedule`에서 `NotificationService` 비차단 호출(2차 병렬 코더)
+- [ ] **트랜잭션 커밋 후** 발송(비동기/outbox) — 코드 주석 TODO, §1 확정 후
+- [x] `NotificationServiceImpl` / `KakaoAlimTalkServiceImpl` 연계·`buildAlimTalkParams` 확장·`CONSULTATION_CANCELLED` 등
+- [x] 비즈 템플릿 코드: 공통코드 그룹 **`ALIMTALK_BIZ_TEMPLATE_CODE`** 매핑(없으면 `NotificationType.name()` 폴백) — 하드코딩 URL·시크릿 없음
+- [x] 로그 **전화번호 마스킹**·발송 실패가 본 트랜잭션 롤백 유발하지 않도록 try/catch
+- [ ] 멱등/중복 방지(§1 결정 반영) — P1
+- [ ] `NOTIFICATION_SYSTEM_STANDARD.md`와 **전수** 정합 리뷰 — 코더·리뷰어 확인
 
 ---
 
@@ -194,12 +195,17 @@
 | A | **explore** | 예약 확정·변경·취소·Notification 관계·프론트 API·TenantContext | ☑ §2 |
 | B | **core-designer** | 변수표·역할별 문안·동의 화면·실패 시 UX | ☑ §3 |
 | C | **core-component-manager** | 설정 UI 경로·중복 분석·부착안 A/B/C | ☑ §4 |
+| D | **core-planner** | §1 권장 기본안·`core-coder` 위임 프롬프트·테스터·배포 bullet | ☑ §10.1 |
+| E | **core-deployer** | `kakao.alimtalk.*` Secrets·환경별 simulation·journalctl·롤백 | ☑ §10.2 |
+| F | **core-tester** | 검증 매트릭스·시나리오 12·게이트 문구·회귀 이메일 | ☑ §10.3 |
+| G | **core-coder** | P0 연동·`ALIMTALK_BIZ_TEMPLATE_CODE`·스케줄/상담 확정·취소 알림·단위 테스트 | ☑ 워킹트리(커밋 전) |
 
 **다음 순서(병렬 종료 후 직렬)**
 
-1. `core-planner` 취합 → P0 범위·템플릿 코드 확정  
-2. `core-coder` 구현 위임(§5)  
-3. `core-tester` → `core-deployer`
+1. §1 회의 확정(또는 권장안 채택) → 공통코드·비즈 템플릿 실값 반영  
+2. **`core-tester`** 전 매트릭스·(가능 시) 통합/E2E — `CORE_PLANNER_DELEGATION_ORDER` 게이트  
+3. **`core-deployer`** Secrets·프로파일·운영 점검  
+4. 잔여: `ConsultantServiceImpl` 스tub 경로·멱등·야간 큐(P1)
 
 ---
 
@@ -216,3 +222,38 @@
 
 - 배치·회의가 있을 때마다 **본 문서**의 해당 ☑·요약을 갱신한다.
 - `ONGOING_WORK_MASTER_PROGRESS_CHECKLIST.md`의 **병렬 블록 표**에 `RESV-ALIM-*` 행을 두고, 상태·커밋·잔여 링크를 그쪽에도 한 줄 동기화한다.
+
+---
+
+## 10. 병렬 위임 2차 산출 (core-planner · core-deployer · core-tester · core-coder)
+
+### 10.1 core-planner — §1 권장 기본안(요약)
+
+- **P0**: 상담 **확정** 우선; 스케줄 관리자 확정 연동 포함 가능. 변경·취소 알림톡 확장은 **P1** 권장.  
+- **수신자**: P0는 **내담자·상담사** on; 관리자는 P1.  
+- **템플릿 코드**: 운영 진실은 비즈센터 코드 → `resolveTemplateCode(tenantId, event)` 계층 권장; 개발은 enum 폴백 허용.  
+- **야간**: 즉시 커밋 + 발송은 시간대 가드 또는 지연 큐; MVP는 skip+로그.  
+- **멱등**: P1에서 DB 유니크; P0는 최소 가드.  
+- **위임 프롬프트**: 플래너 산출에 `core-coder`용 복붙 블록 포함(저장소 외부 채팅에 보관 가능).  
+- **게이트**: `CORE_PLANNER_DELEGATION_ORDER.md` — **테스터 통과 전 배치 완료 금지**.
+
+### 10.2 core-deployer — 배포·Secrets(요약)
+
+- YAML: `kakao.alimtalk.enabled`, `simulation-mode`, `api-key`, `sender-key`, `api-url`.  
+- Secrets 제안: `DEV_KAKAO_ALIMTALK_API_KEY`, `DEV_KAKAO_ALIMTALK_SENDER_KEY`, `PRODUCTION_*` 동형.  
+- 실발송 게이트: 템플릿 검수·QA 번호 스모크·롤백(`simulation-mode=true` 또는 `enabled=false`).  
+- 점검: `journalctl -u <unit> --no-pager | grep -E '알림톡|시뮬레이션|KakaoAlimTalk|bizmsg'` (Bearer·원번호 grep 금지).  
+- `DEPLOYMENT_STANDARD.md`: 환경 분리·Actions·헬스·롤백 원칙 준수.
+
+### 10.3 core-tester — 검증 매트릭스(요약)
+
+- 레벨: 단위(`NotificationServiceImpl`, `KakaoAlimTalkServiceImpl`, 연동 후 `ConsultationServiceImpl`) / 통합(MockMvc) / (선택) E2E.  
+- 시나리오: 확정·스케줄 변경·tenant 누락·폴백·옵트아웃·전화 없음·`ScheduleServiceImpl` 갭 회귀·취소·멱등(구현 시) 등 12건(플래너 산출본 참고).  
+- **회귀**: 기존 **이메일** 발송 경로 유지.  
+- 게이트 문구: 코더 배치 완료 보고 = **본 매트릭스 + 회귀 통과 후**만.
+
+### 10.4 core-coder — 구현 착수 결과(로컬)
+
+- **변경**: `KakaoAlimTalkService` 오버로드, `KakaoAlimTalkServiceImpl`, `NotificationService`/`Impl`, `ConsultationServiceImpl`, `ScheduleServiceImpl`, 테스트 3종 + `ScheduleServiceImplConfirmScheduleAlimTalkTest` 신규.  
+- **검증**: `mvn -Dtest=ScheduleServiceImplConfirmScheduleAlimTalkTest,ScheduleServiceImplCancelRestoreSessionTest,ScheduleServiceImplUpcomingTest test` 통과.  
+- **잔여 TODO**: §1 미결(실 템플릿 코드·야간·멱등·커밋 후 비동기), `ConsultantServiceImpl` 스tub 제외.

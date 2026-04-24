@@ -3,7 +3,7 @@
 **목적**: 여러 트랙(ERP·공통 UI·보안·검증)이 동시에 진행될 때 **일이 끝나지 않는 느낌**을 줄이고, **전체에서 진행도를 한곳**에서 파악한다.  
 **갱신 주기**: 배치(또는 PR)가 끝날 때마다 담당자가 이 문서만 갱신한다. (세부 설계는 각 전용 문서에 둔다.)
 
-**최종 갱신**: 2026-04-23 — **예약 × 카카오 알림톡** 오케스트레이션 체크리스트·병렬 위임 착수: [RESERVATION_KAKAO_ALIMTALK_ORCHESTRATION_CHECKLIST.md](./2026-04-23/RESERVATION_KAKAO_ALIMTALK_ORCHESTRATION_CHECKLIST.md) (`RESV-ALIM-P0` explore·designer·component-manager → 이후 coder·tester). (직전 2026-04-21: 사용자 대면 문자열·시드 **`de1f410a7`** — 잔여 [USER_FACING_STRINGS_AND_HARDCODE_NEXT_BATCH.md](./2026-04-21/USER_FACING_STRINGS_AND_HARDCODE_NEXT_BATCH.md).)  
+**최종 갱신**: 2026-04-23 — **RESV-ALIM-P0** 2차 병렬(planner·deployer·tester·coder) 산출 → 체크리스트 [§10](./2026-04-23/RESERVATION_KAKAO_ALIMTALK_ORCHESTRATION_CHECKLIST.md); 백엔드 연동 **커밋·테스터 게이트** 잔여. (직전: 예약 알림톡 체크리스트 1차 `5cfdcebe0`·`0704b4037`.) (2026-04-21 잔여: [USER_FACING_STRINGS_AND_HARDCODE_NEXT_BATCH.md](./2026-04-21/USER_FACING_STRINGS_AND_HARDCODE_NEXT_BATCH.md).)  
 **주관**: core-planner(오케스트레이션) — 구현은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`·위임 순서 준수.
 
 **UI/QA 비고**: LEGACY-ADMIN-MGMT-GRID·AUTH-UNIFIED·B0KLA 에러 토큰은 각각 `core-coder`/위임 산출물 전제로 두고, 본 체크리스트는 진행도·`ERP_FINANCIAL_HUB_SMOKE`(번호 38~39 등) 스모크 연계만 기록한다. **관리 카드 숨김 SSOT**(`ADMIN-HIDE-CARDS-SSOT`, `HIDE_ADMIN_CARD_IDS` 상수 파일)는 위임 산출물·스모크 문서 「중복 생략」과 정합한다.
@@ -73,7 +73,7 @@
 | **G8-B17b** | **G-01** — `BaseButton`·`BaseCard`·`ErpButton`·`LoadingSpinnerDemo`·`IconExamples`·`DashboardLayout` JSDoc → `MGButton` | core-coder | ☑ | `develop` · `12e0b6f61` (2026-04-11) |
 | **G8-B18** | **G-01** — 미참조 `AdminDashboard_backup.js`·`UnifiedScheduleComponent_backup.js` 삭제 + 관련 문서 2건 보정 | core-coder | ☑ | `develop` · `77ac0f292` (2026-04-11) |
 | **P4-GLOBAL** | `frontend/src/components` 전역 `<MGButton` + `erpMgButtonProps`(`buildErpMgButtonClassName`, `ERP_MG_BUTTON_LOADING_TEXT`) 적용 완료 | core-coder | ☑ | 스모크 문서 `docs/guides/testing/ERP_FINANCIAL_HUB_SMOKE.md` 상단 안내 참고 · 일자 2026-04-15 |
-| **RESV-ALIM-P0** | 예약 확정·변경 × 카카오 알림톡 — 체크리스트·인벤토리·문구·중복 UI 제안 | explore·designer·component-manager ☑ → **core-planner 취합·§1 결정** → core-coder → core-tester | 🔄 | 문서 반영 `5cfdcebe0` · [체크리스트](./2026-04-23/RESERVATION_KAKAO_ALIMTALK_ORCHESTRATION_CHECKLIST.md) |
+| **RESV-ALIM-P0** | 예약 × 알림톡 — 1차 explore·designer·component-manager ☑ + **2차** planner·deployer·tester·coder 병렬 산출 → **core-tester 전 매트릭스·§1 확정** 잔여 | 🔄 코더 워킹트리 반영 후 커밋·전체 테스트 게이트 | 🔄 | [체크리스트](./2026-04-23/RESERVATION_KAKAO_ALIMTALK_ORCHESTRATION_CHECKLIST.md) §7·§10 |
 
 **G7-B3 파일**: `consultant/ClientInfoModal.js`, `ClientDetailModal.js`, `MessageSendModal.js`, `EventModal.js`, `ConsultationLogModal.js`, `ConsultationRecordView.js`, `ConsultantAvailability.js`, `records/ConsultantRecordListBlock.js`
 

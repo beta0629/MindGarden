@@ -61,6 +61,12 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
     
     @Override
     public boolean sendAlimTalk(String phoneNumber, String templateCode, Map<String, String> templateParams) {
+        return sendAlimTalk(phoneNumber, templateCode, null, templateParams);
+    }
+    
+    @Override
+    public boolean sendAlimTalk(String phoneNumber, String apiTemplateCode, String contentTemplateKey,
+            Map<String, String> templateParams) {
         if (!alimTalkEnabled) {
             log.info("📱 알림톡 비활성화 상태 - SMS로 대체 발송 권장");
             return false;
@@ -72,14 +78,18 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
         }
         
         try {
-            log.info("📤 카카오 알림톡 발송 시작: 수신자={}, 템플릿={}", PhoneLogMasking.maskForLog(phoneNumber), templateCode);
+            String contentKey = (contentTemplateKey != null && !contentTemplateKey.isBlank())
+                ? contentTemplateKey.trim()
+                : apiTemplateCode;
+            log.info("📤 카카오 알림톡 발송 시작: 수신자={}, 템플릿(api)={}, contentKey={}",
+                PhoneLogMasking.maskForLog(phoneNumber), apiTemplateCode, contentKey);
             
             // 알림톡 API 요청 데이터 구성
             Map<String, Object> requestData = new HashMap<>();
             requestData.put("senderKey", senderKey);
-            requestData.put("templateCode", templateCode);
+            requestData.put("templateCode", apiTemplateCode);
             requestData.put("recipientNo", phoneNumber);
-            requestData.put("content", buildMessageContent(templateCode, templateParams));
+            requestData.put("content", buildMessageContent(contentKey, templateParams));
             requestData.put("templateParameter", templateParams);
             requestData.put("requestDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             
@@ -95,15 +105,15 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
             boolean success = sendToKakaoApi(request);
             
             if (success) {
-                log.info("✅ 카카오 알림톡 발송 성공: 수신자={}, 템플릿={}", PhoneLogMasking.maskForLog(phoneNumber), templateCode);
+                log.info("✅ 카카오 알림톡 발송 성공: 수신자={}, 템플릿={}", PhoneLogMasking.maskForLog(phoneNumber), apiTemplateCode);
             } else {
-                log.warn("⚠️ 카카오 알림톡 발송 실패: 수신자={}, 템플릿={}", PhoneLogMasking.maskForLog(phoneNumber), templateCode);
+                log.warn("⚠️ 카카오 알림톡 발송 실패: 수신자={}, 템플릿={}", PhoneLogMasking.maskForLog(phoneNumber), apiTemplateCode);
             }
             
             return success;
             
         } catch (Exception e) {
-            log.error("❌ 카카오 알림톡 발송 중 오류: 수신자={}, 템플릿={}", PhoneLogMasking.maskForLog(phoneNumber), templateCode, e);
+            log.error("❌ 카카오 알림톡 발송 중 오류: 수신자={}, 템플릿={}", PhoneLogMasking.maskForLog(phoneNumber), apiTemplateCode, e);
             return false;
         }
     }
@@ -276,6 +286,16 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
                     params.getOrDefault("consultantName", "상담사"),
                     params.getOrDefault("oldDateTime", "미정"),
                     params.getOrDefault("newDateTime", "미정")
+                );
+            
+            case "CONSULTATION_CANCELLED":
+                return String.format(
+                    "[마인드가든] 상담 예약이 취소 처리되었습니다.\n\n" +
+                    "👩‍⚕️ 상담사: %s\n" +
+                    "📅 예약 일시: %s\n\n" +
+                    "자세한 내용은 앱에서 확인해 주세요.",
+                    params.getOrDefault("consultantName", "상담사"),
+                    params.getOrDefault("cancelledDateTime", "미정")
                 );
                 
             default:

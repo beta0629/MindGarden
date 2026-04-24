@@ -12,7 +12,7 @@ CREATE PROCEDURE SyncAllMappings(
     OUT p_message TEXT,
     OUT p_sync_results JSON
 )
-BEGIN
+proc: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_total_mappings INT DEFAULT 0;
     DECLARE v_valid_mappings INT DEFAULT 0;
@@ -21,9 +21,9 @@ BEGIN
     DECLARE done INT DEFAULT FALSE;
     
     DECLARE v_mapping_id BIGINT DEFAULT 0;
-    DECLARE v_validation_code INT;
-    DECLARE v_validation_message VARCHAR(500);
-    DECLARE v_validation_json JSON;
+    DECLARE v_val_success BOOLEAN;
+    DECLARE v_val_message TEXT;
+    DECLARE v_val_json JSON;
     DECLARE v_consultant_id BIGINT;
     DECLARE v_client_id BIGINT;
     DECLARE v_actual_used INT DEFAULT 0;
@@ -54,7 +54,7 @@ BEGIN
         SET p_message = '테넌트 ID는 필수입니다.';
         SET p_sync_results = JSON_OBJECT('error', '테넌트 ID가 필요합니다.');
         ROLLBACK;
-        LEAVE;
+        LEAVE proc;
     END IF;
     
     -- 2. 전체 매핑 수 조회 (테넌트 격리)
@@ -73,16 +73,16 @@ BEGIN
             LEAVE read_loop;
         END IF;
         
-        -- 무결성 검증 (테넌트 격리)
+        -- 무결성 검증 (테넌트 격리) — ValidateMappingIntegrity(IN,IN,OUT BOOLEAN,OUT TEXT,OUT JSON)
         CALL ValidateMappingIntegrity(
             v_mapping_id,
             p_tenant_id,
-            v_validation_code,
-            v_validation_message,
-            v_validation_json
+            v_val_success,
+            v_val_message,
+            v_val_json
         );
         
-        IF v_validation_code = 0 THEN
+        IF v_val_success THEN
             SET v_valid_mappings = v_valid_mappings + 1;
         ELSE
             SET v_invalid_mappings = v_invalid_mappings + 1;
@@ -134,8 +134,8 @@ BEGIN
     SET p_message = CONCAT('전체 동기화 완료. 총 ', v_total_mappings, '개 매핑 중 ', v_valid_mappings, '개 유효, ', v_fixed_mappings, '개 수정');
     
     COMMIT;
-    
-END //
+
+END proc //
 
 DELIMITER ;
 

@@ -2,11 +2,14 @@ package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import com.coresolution.consultation.entity.ErpSyncLog;
 import com.coresolution.consultation.repository.ErpSyncLogRepository;
 import com.coresolution.consultation.service.PlSqlStatisticsService;
 import com.coresolution.consultation.service.StatisticsSchedulerService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.service.TenantService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +33,7 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
     
     private final PlSqlStatisticsService plSqlStatisticsService;
     private final ErpSyncLogRepository erpSyncLogRepository;
+    private final TenantService tenantService;
     
      /**
      * 일별 통계 자동 업데이트 스케줄러
@@ -149,7 +153,7 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         log.info("🔔 성과 모니터링 자동 실행 시작: targetDate={}", yesterday);
         
         try {
-            int alertCount = plSqlStatisticsService.performDailyPerformanceMonitoring(yesterday);
+            int alertCount = runPerformanceMonitoringForAllActiveTenants(yesterday);
             LocalDateTime endTime = LocalDateTime.now();
             
             ErpSyncLog syncLog = ErpSyncLog.builder()
@@ -202,7 +206,7 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
             
             String performanceResult = plSqlStatisticsService.updateAllConsultantPerformance(targetDate);
             
-            int alertCount = plSqlStatisticsService.performDailyPerformanceMonitoring(targetDate);
+            int alertCount = runPerformanceMonitoringForAllActiveTenants(targetDate);
             
             String result = String.format(
                 "수동 통계 업데이트 완료 - 일별통계: %s, 성과업데이트: %s, 생성된알림: %d개",
@@ -249,5 +253,40 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
      */
     private int getConsultantCount(LocalDate date) {
         return 1;
+    }
+
+    /**
+     * 스케줄/수동 경로: 스레드에 테넌트 컨텍스트가 없을 수 있으므로
+     * 활성 테넌트별로 {@link TenantContextHolder}를 설정한 뒤
+     * {@link PlSqlStatisticsService#performDailyPerformanceMonitoring} 호출.
+     *
+     * @param targetDate 모니터링 기준일
+     * @return 전 테넌트에서 생성·집계된 알림 수 합
+     */
+    private int runPerformanceMonitoringForAllActiveTenants(LocalDate targetDate) {
+        List<String> tenantIds = tenantService.getAllActiveTenantIds();
+        if (tenantIds.isEmpty()) {
+            log.warn("활성 테넌트가 없어 일일 성과 모니터링을 생략합니다: targetDate={}", targetDate);
+            return 0;
+        }
+        long startedMs = System.currentTimeMillis();
+        int totalAlerts = 0;
+        int failedTenants = 0;
+        for (String tenantId : tenantIds) {
+            try {
+                TenantContextHolder.setTenantId(tenantId);
+                totalAlerts += plSqlStatisticsService.performDailyPerformanceMonitoring(targetDate);
+            } catch (Exception e) {
+                failedTenants++;
+                log.error("테넌트별 성과 모니터링 실패: tenantId={}, targetDate={}, error={}", tenantId,
+                    targetDate, e.getMessage(), e);
+            } finally {
+                TenantContextHolder.clear();
+            }
+        }
+        long elapsedMs = System.currentTimeMillis() - startedMs;
+        log.info("일일 성과 모니터링(테넌트 루프) 요약: targetDate={}, tenantCount={}, failedTenants={}, totalAlerts={}, elapsedMs={}",
+            targetDate, tenantIds.size(), failedTenants, totalAlerts, elapsedMs);
+        return totalAlerts;
     }
 }

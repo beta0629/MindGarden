@@ -1,13 +1,7 @@
--- =====================================================
--- 상담일지 미작성 알림 PL/SQL 프로시저
--- =====================================================
-
-DELIMITER //
-
-SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
-
+-- P1-3: 상담일지 미작성 알림 프로시저(p_tenant_id). 원본: src/main/resources/sql/procedures/consultation_record_alert_procedures.sql
+DELIMITER $$
 -- 1. 상담일지 미작성 확인 및 알림 생성 프로시저 (테넌트 격리: p_tenant_id)
-DROP PROCEDURE IF EXISTS CheckMissingConsultationRecords//
+DROP PROCEDURE IF EXISTS CheckMissingConsultationRecords$$
 CREATE PROCEDURE CheckMissingConsultationRecords(
     IN p_check_date DATE,
     IN p_tenant_id VARCHAR(100),
@@ -134,10 +128,10 @@ BEGIN
     SET p_message = CONCAT('상담일지 미작성 확인 완료. 미작성: ', v_missing_count, '건, 알림 생성: ', v_alerts_created, '건');
 
     COMMIT;
-END//
+END$$
 
 -- 2. 상담일지 미작성 알림 조회 프로시저 (테넌트 격리: p_tenant_id)
-DROP PROCEDURE IF EXISTS GetMissingConsultationRecordAlerts//
+DROP PROCEDURE IF EXISTS GetMissingConsultationRecordAlerts$$
 CREATE PROCEDURE GetMissingConsultationRecordAlerts(
     IN p_tenant_id VARCHAR(100),
     IN p_start_date DATE,
@@ -202,10 +196,10 @@ BEGIN
     IF p_total_count = 0 THEN
         SET p_message = '상담일지 미작성 알림이 없습니다.';
     END IF;
-END//
+END$$
 
 -- 3. 상담일지 작성 완료시 알림 해제 프로시저
-DROP PROCEDURE IF EXISTS ResolveConsultationRecordAlert//
+DROP PROCEDURE IF EXISTS ResolveConsultationRecordAlert$$
 CREATE PROCEDURE ResolveConsultationRecordAlert(
     IN p_consultation_id BIGINT,
     IN p_resolved_by VARCHAR(100),
@@ -250,10 +244,10 @@ BEGIN
         SET p_message = CONCAT('상담일지 미작성 알림이 성공적으로 해제되었습니다. (', v_updated_count, '건)');
         COMMIT;
     END IF;
-END//
+END$$
 
 -- 4. 상담일지 미작성 통계 조회 프로시저 (Java: p_tenant_id, p_check_date — 테넌트 격리)
-DROP PROCEDURE IF EXISTS GetConsultationRecordMissingStatistics//
+DROP PROCEDURE IF EXISTS GetConsultationRecordMissingStatistics$$
 CREATE PROCEDURE GetConsultationRecordMissingStatistics(
     IN p_tenant_id VARCHAR(100),
     IN p_check_date DATE,
@@ -327,10 +321,10 @@ BEGIN
     GROUP BY u.id, u.name;
 
     SET p_consultant_breakdown = v_consultant_breakdown;
-END//
+END$$
 
 -- 5. 상담일지 미작성 알림 자동 생성 스케줄러 프로시저 (호출 시 테넌트 컨텍스트: p_tenant_id)
-DROP PROCEDURE IF EXISTS AutoCreateMissingConsultationRecordAlerts//
+DROP PROCEDURE IF EXISTS AutoCreateMissingConsultationRecordAlerts$$
 CREATE PROCEDURE AutoCreateMissingConsultationRecordAlerts(
     IN p_tenant_id VARCHAR(100),
     IN p_days_back INT,
@@ -383,6 +377,5 @@ BEGIN
     SET p_message = CONCAT('상담일지 미작성 알림 자동 생성 완료. 처리된 날짜: ', v_processed_days, '일, 생성된 알림: ', v_total_alerts_created, '건');
 
     COMMIT;
-END//
-
+END$$
 DELIMITER ;

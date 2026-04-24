@@ -219,7 +219,8 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
     
     @Override
     public Map<String, Object> autoCreateMissingConsultationRecordAlerts(int daysBack) {
-        log.info("🤖 상담일지 미작성 알림 자동 생성: {}일 전까지", daysBack);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("🤖 상담일지 미작성 알림 자동 생성: tenantId={}, daysBack={}", tenantId, daysBack);
         
         try {
             // UTF-8 인코딩 설정
@@ -229,6 +230,7 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
                 .withProcedureName("AutoCreateMissingConsultationRecordAlerts");
             
             MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("p_tenant_id", tenantId)
                 .addValue("p_days_back", daysBack);
             
             Map<String, Object> result = jdbcCall.execute(params);

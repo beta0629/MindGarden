@@ -1,9 +1,11 @@
 package com.coresolution.consultation.service.impl;
 
+import java.sql.Types;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.sql.DataSource;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
@@ -11,6 +13,9 @@ import com.coresolution.consultation.service.PlSqlMappingSyncService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
     
     private final JdbcTemplate jdbcTemplate;
+    private final DataSource dataSource;
     private final AccountingService accountingService;
     private final FinancialTransactionRepository financialTransactionRepository;
     
@@ -203,41 +209,53 @@ public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
         // 테넌트 ID 및 동기화자 가져오기
         String tenantId = TenantContextHolder.getRequiredTenantId();
         String syncedBy = TenantContextHolder.getTenantId(); // TODO: 실제 사용자 ID로 변경 필요
-        
+
+        // 배포 정합: 운영 DB에서 SHOW CREATE PROCEDURE SyncAllMappings; 로 시그니처
+        // (IN p_tenant_id, IN p_synced_by, OUT p_success, OUT p_message, OUT p_sync_results) 여부 확인
         try {
             Map<String, Object> result = new HashMap<>();
-            
-            // PL/SQL 프로시저 호출 (표준화된 파라미터 순서)
-            jdbcTemplate.update(
-                "CALL SyncAllMappings(?, ?, @p_success, @p_message, @p_sync_results)",
-                tenantId, syncedBy
-            );
-            
-            // 결과 조회
-            Boolean success = jdbcTemplate.queryForObject("SELECT @p_success", Boolean.class);
-            String message = jdbcTemplate.queryForObject("SELECT @p_message", String.class);
-            String syncResultsJson = jdbcTemplate.queryForObject("SELECT @p_sync_results", String.class);
-            
+            setUtf8Encoding();
+
+            SimpleJdbcCall jdbcCall = new SimpleJdbcCall(dataSource)
+                .withProcedureName("SyncAllMappings")
+                .withoutProcedureColumnMetaDataAccess()
+                .declareParameters(
+                    new SqlParameter("p_tenant_id", Types.VARCHAR),
+                    new SqlParameter("p_synced_by", Types.VARCHAR),
+                    new SqlOutParameter("p_success", Types.BOOLEAN),
+                    new SqlOutParameter("p_message", Types.VARCHAR),
+                    new SqlOutParameter("p_sync_results", Types.LONGVARCHAR)
+                );
+
+            Map<String, Object> in = new HashMap<>();
+            in.put("p_tenant_id", tenantId);
+            in.put("p_synced_by", syncedBy);
+            Map<String, Object> out = jdbcCall.execute(in);
+
+            Boolean success = (Boolean) out.get("p_success");
+            String message = (String) out.get("p_message");
+            String syncResultsJson = (String) out.get("p_sync_results");
+
             result.put("success", success != null && success);
             result.put("message", message);
             result.put("syncResults", syncResultsJson);
-            
+
             if (success != null && success) {
                 log.info("✅ PL/SQL 전체 매핑 동기화 완료: {}", message);
             } else {
                 log.warn("⚠️ PL/SQL 전체 매핑 동기화 실패: Message={}", message);
             }
-            
+
             return result;
-            
+
         } catch (Exception e) {
             log.error("❌ PL/SQL 전체 매핑 동기화 중 오류: {}", e.getMessage(), e);
-            
+
             Map<String, Object> result = new HashMap<>();
             result.put("success", false);
             result.put("message", "PL/SQL 전체 매핑 동기화 중 오류 발생: " + e.getMessage());
             result.put("error", e.getMessage());
-            
+
             return result;
         }
     }

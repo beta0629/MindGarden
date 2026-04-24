@@ -20,6 +20,7 @@ const LNB_ICON_MAP = {
   Tag: 'TAG',
   Calendar: 'CALENDAR',
   MessageCircle: 'MESSAGE_CIRCLE',
+  MessageSquare: 'MESSAGE_SQUARE',
   CreditCard: 'CREDIT_CARD',
   ShoppingCart: 'SHOPPING_CART',
   DollarSign: 'DOLLAR_SIGN',

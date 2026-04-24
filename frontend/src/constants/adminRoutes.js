@@ -44,6 +44,8 @@ export const ADMIN_ROUTES = {
     BRANDING: '/admin/branding',
     /** 테넌트 카카오 알림톡 비시크릿 설정(템플릿 코드·키 참조) */
     KAKAO_ALIMTALK_SETTINGS: '/admin/kakao-alimtalk-settings',
+    /** 테넌트 SMS 비시크릿 설정(프로바이더·발신번호·키 참조) */
+    TENANT_SMS_SETTINGS: '/admin/tenant-sms-settings',
     /** PG 설정 승인(운영) — 백엔드 `OpsPermissionUtils.requireAdminOrOps()` 정합; STAFF 제외 */
     PG_OPS_APPROVAL: '/admin/ops/pg-approval',
     /** @deprecated redirect to NOTIFICATIONS */

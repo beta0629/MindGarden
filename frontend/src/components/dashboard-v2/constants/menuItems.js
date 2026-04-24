@@ -52,6 +52,7 @@ const DEFAULT_MENU_ITEMS = [
       { to: ADMIN_ROUTES.PACKAGE_PRICING, icon: 'PACKAGE', label: '패키지 요금 관리', end: true },
       { to: '/tenant/pg-configurations', icon: 'CREDIT_CARD', label: 'PG 설정', end: true },
       { to: ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS, icon: 'MESSAGE_CIRCLE', label: '카카오 알림톡', end: true },
+      { to: ADMIN_ROUTES.TENANT_SMS_SETTINGS, icon: 'MESSAGE_SQUARE', label: '문자 메시지(SMS)', end: true },
       { to: ADMIN_ROUTES.PG_OPS_APPROVAL, icon: 'SHIELD_CHECK', label: 'PG 승인(운영)', end: true },
       { to: '/admin/compliance', icon: 'FILE_TEXT', label: '컴플라이언스', end: true }
     ]

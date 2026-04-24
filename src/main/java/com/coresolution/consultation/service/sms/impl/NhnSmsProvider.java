@@ -1,7 +1,9 @@
 package com.coresolution.consultation.service.sms.impl;
 
-import com.coresolution.consultation.config.SmsProperties;
+import com.coresolution.consultation.dto.TenantSmsEffectiveCredentials;
+import com.coresolution.consultation.service.TenantSmsSettingsService;
 import com.coresolution.consultation.service.sms.SmsProvider;
+import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
@@ -34,7 +36,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class NhnSmsProvider implements SmsProvider {
     
-    private final SmsProperties smsProperties;
+    private final TenantSmsSettingsService tenantSmsSettingsService;
     private final RestTemplate restTemplate;
     
     private static final String NHN_SMS_API_URL = "https://sens.apigw.ntruss.com/sms/v2/services/%s/messages";
@@ -44,7 +46,10 @@ public class NhnSmsProvider implements SmsProvider {
     public boolean sendSms(String phoneNumber, String message) {
         log.info("📤 NHN Cloud SMS 발송 시작: phoneNumber={}", phoneNumber);
         
-        if (!isConfigured()) {
+        TenantSmsEffectiveCredentials creds = tenantSmsSettingsService.getEffectiveCredentials(
+            TenantContextHolder.getTenantId());
+        
+        if (!isConfigured(creds)) {
             log.error("❌ NHN Cloud SMS 설정이 완료되지 않았습니다.");
             return false;
         }
@@ -58,7 +63,7 @@ public class NhnSmsProvider implements SmsProvider {
             }
             
             // API URL 구성
-            String serviceId = smsProperties.getApiKey(); // NHN에서는 serviceId를 apiKey로 사용
+            String serviceId = creds.apiKey(); // NHN에서는 serviceId를 apiKey로 사용
             String url = String.format(NHN_SMS_API_URL, serviceId);
             
             // 요청 본문 구성
@@ -66,12 +71,12 @@ public class NhnSmsProvider implements SmsProvider {
             requestBody.put("type", "SMS");
             requestBody.put("contentType", "COMM");
             requestBody.put("countryCode", "82");
-            requestBody.put("from", smsProperties.getSenderNumber());
+            requestBody.put("from", creds.senderNumber());
             requestBody.put("content", message);
             requestBody.put("messages", List.of(Map.of("to", normalizedPhoneNumber)));
             
             // HTTP 헤더 구성
-            HttpHeaders headers = createHeaders(url, "POST");
+            HttpHeaders headers = createHeaders(url, "POST", creds);
             
             // HTTP 요청 발송
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
@@ -101,26 +106,32 @@ public class NhnSmsProvider implements SmsProvider {
     
     @Override
     public boolean isConfigured() {
-        return smsProperties.getApiKey() != null && !smsProperties.getApiKey().isEmpty() &&
-               smsProperties.getApiSecret() != null && !smsProperties.getApiSecret().isEmpty() &&
-               smsProperties.getSenderNumber() != null && !smsProperties.getSenderNumber().isEmpty();
+        TenantSmsEffectiveCredentials creds = tenantSmsSettingsService.getEffectiveCredentials(
+            TenantContextHolder.getTenantId());
+        return isConfigured(creds);
+    }
+
+    private static boolean isConfigured(TenantSmsEffectiveCredentials creds) {
+        return creds.apiKey() != null && !creds.apiKey().isEmpty()
+            && creds.apiSecret() != null && !creds.apiSecret().isEmpty()
+            && creds.senderNumber() != null && !creds.senderNumber().isEmpty();
     }
     
     /**
      * NHN Cloud SMS API 인증 헤더 생성
      */
-    private HttpHeaders createHeaders(String url, String method) {
+    private HttpHeaders createHeaders(String url, String method, TenantSmsEffectiveCredentials creds) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("charset", "UTF-8");
         
         try {
             long timestamp = System.currentTimeMillis();
-            String accessKey = smsProperties.getApiKey();
-            String secretKey = smsProperties.getApiSecret();
+            String accessKey = creds.apiKey();
+            String secretKey = creds.apiSecret();
             
             // 서명 생성
-            String signature = generateSignature(secretKey, timestamp, method, url);
+            String signature = generateSignature(secretKey, timestamp, method, url, accessKey);
             
             headers.set("x-ncp-apigw-timestamp", String.valueOf(timestamp));
             headers.set("x-ncp-iam-access-key", accessKey);
@@ -136,10 +147,10 @@ public class NhnSmsProvider implements SmsProvider {
     /**
      * NHN Cloud SMS API 서명 생성
      */
-    private String generateSignature(String secretKey, long timestamp, String method, String url) 
+    private String generateSignature(String secretKey, long timestamp, String method, String url, String accessKey)
             throws NoSuchAlgorithmException, InvalidKeyException {
         
-        String message = method + " " + url + "\n" + timestamp + "\n" + smsProperties.getApiKey();
+        String message = method + " " + url + "\n" + timestamp + "\n" + accessKey;
         
         Mac mac = Mac.getInstance(HMAC_ALGORITHM);
         SecretKeySpec secretKeySpec = new SecretKeySpec(

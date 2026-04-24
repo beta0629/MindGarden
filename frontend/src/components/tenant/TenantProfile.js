@@ -40,7 +40,7 @@ import {
   TENANT_PROFILE_KAKAO_ALIMTALK_LABEL,
   TENANT_PROFILE_KAKAO_ALIMTALK_SETTINGS_BUTTON,
   TENANT_PROFILE_SMS_CHANNEL_LABEL,
-  TENANT_PROFILE_SMS_SETTINGS_PENDING_MESSAGE
+  TENANT_PROFILE_SMS_SETTINGS_BUTTON
 } from '../../constants/tenantProfileStrings';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -72,7 +72,7 @@ const TenantProfile = () => {
 
   const tenantId = sessionInfo?.tenantId || user?.tenantId;
   const canRenameTenant = canEditTenantDisplayName(user);
-  const canOpenKakaoAlimtalkSettings = hasAnyRole(['ADMIN', 'STAFF']);
+  const canOpenAdminNotificationSettings = hasAnyRole(['ADMIN', 'STAFF']);
 
   useEffect(() => {
     if (sessionLoading) {
@@ -448,7 +448,7 @@ const TenantProfile = () => {
                       <div className="mg-v2-tenant-profile__field">
                         <label>{TENANT_PROFILE_KAKAO_ALIMTALK_LABEL}</label>
                         <div>
-                          {canOpenKakaoAlimtalkSettings ? (
+                          {canOpenAdminNotificationSettings ? (
                             <MGButton
                               type="button"
                               variant="outline"
@@ -470,9 +470,26 @@ const TenantProfile = () => {
                       </div>
                       <div className="mg-v2-tenant-profile__field">
                         <label>{TENANT_PROFILE_SMS_CHANNEL_LABEL}</label>
-                        <p className="no-data">
-                          <SafeText>{TENANT_PROFILE_SMS_SETTINGS_PENDING_MESSAGE}</SafeText>
-                        </p>
+                        <div>
+                          {canOpenAdminNotificationSettings ? (
+                            <MGButton
+                              type="button"
+                              variant="outline"
+                              size="medium"
+                              className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'md',
+                                loading: false
+                              })}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                              onClick={() => navigate(ADMIN_ROUTES.TENANT_SMS_SETTINGS)}
+                              data-testid="tenant-profile-sms-settings"
+                              preventDoubleClick={false}
+                            >
+                              {TENANT_PROFILE_SMS_SETTINGS_BUTTON}
+                            </MGButton>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
                   </ContentSection>

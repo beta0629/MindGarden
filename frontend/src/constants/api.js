@@ -206,12 +206,16 @@ export const ADMIN_API = {
   GET_SYSTEM_LOGS: '/api/v1/admin/system/logs',
 
   /** 테넌트 카카오 알림톡 비시크릿 설정 (GET/PUT 동일 경로) */
-  KAKAO_ALIMTALK_SETTINGS: '/api/v1/admin/kakao-alimtalk-settings'
+  KAKAO_ALIMTALK_SETTINGS: '/api/v1/admin/kakao-alimtalk-settings',
+
+  /** 테넌트 SMS 비시크릿 설정 (GET/PUT 동일 경로) */
+  TENANT_SMS_SETTINGS: '/api/v1/admin/tenant-sms-settings'
 };
 
 /** 페이지·훅에서 `API.KAKAO_ALIMTALK_SETTINGS` 형태로 참조 (ADMIN_API와 동일 경로) */
 export const API = {
-  KAKAO_ALIMTALK_SETTINGS: ADMIN_API.KAKAO_ALIMTALK_SETTINGS
+  KAKAO_ALIMTALK_SETTINGS: ADMIN_API.KAKAO_ALIMTALK_SETTINGS,
+  TENANT_SMS_SETTINGS: ADMIN_API.TENANT_SMS_SETTINGS
 };
 
 // 스케줄 관련 API (중앙화) (표준화 2025-12-05: /api/v1/ 경로 적용)

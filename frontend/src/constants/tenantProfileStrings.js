@@ -14,5 +14,4 @@ export const TENANT_PROFILE_KAKAO_ALIMTALK_SETTINGS_BUTTON = '카카오 알림�
 
 export const TENANT_PROFILE_SMS_CHANNEL_LABEL = '문자(SMS)';
 
-export const TENANT_PROFILE_SMS_SETTINGS_PENDING_MESSAGE =
-  '테넌트 문자(SMS) 설정은 준비 중입니다.';
+export const TENANT_PROFILE_SMS_SETTINGS_BUTTON = '문자 메시지(SMS) 설정';

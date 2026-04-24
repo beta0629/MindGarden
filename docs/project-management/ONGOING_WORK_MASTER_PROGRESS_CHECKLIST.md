@@ -73,7 +73,7 @@
 | **G8-B17b** | **G-01** — `BaseButton`·`BaseCard`·`ErpButton`·`LoadingSpinnerDemo`·`IconExamples`·`DashboardLayout` JSDoc → `MGButton` | core-coder | ☑ | `develop` · `12e0b6f61` (2026-04-11) |
 | **G8-B18** | **G-01** — 미참조 `AdminDashboard_backup.js`·`UnifiedScheduleComponent_backup.js` 삭제 + 관련 문서 2건 보정 | core-coder | ☑ | `develop` · `77ac0f292` (2026-04-11) |
 | **P4-GLOBAL** | `frontend/src/components` 전역 `<MGButton` + `erpMgButtonProps`(`buildErpMgButtonClassName`, `ERP_MG_BUTTON_LOADING_TEXT`) 적용 완료 | core-coder | ☑ | 스모크 문서 `docs/guides/testing/ERP_FINANCIAL_HUB_SMOKE.md` 상단 안내 참고 · 일자 2026-04-15 |
-| **RESV-ALIM-P0** | 예약 확정·변경 × 카카오 알림톡 — 체크리스트·인벤토리·문구·중복 UI 제안 | explore · core-designer · core-component-manager → 이후 core-coder · core-tester | 🔄 | [RESERVATION_KAKAO_ALIMTALK_ORCHESTRATION_CHECKLIST.md](./2026-04-23/RESERVATION_KAKAO_ALIMTALK_ORCHESTRATION_CHECKLIST.md) §7 |
+| **RESV-ALIM-P0** | 예약 확정·변경 × 카카오 알림톡 — 체크리스트·인벤토리·문구·중복 UI 제안 | explore·designer·component-manager ☑ → **core-planner 취합·§1 결정** → core-coder → core-tester | 🔄 | 문서 반영 `5cfdcebe0` · [체크리스트](./2026-04-23/RESERVATION_KAKAO_ALIMTALK_ORCHESTRATION_CHECKLIST.md) |
 
 **G7-B3 파일**: `consultant/ClientInfoModal.js`, `ClientDetailModal.js`, `MessageSendModal.js`, `EventModal.js`, `ConsultationLogModal.js`, `ConsultationRecordView.js`, `ConsultantAvailability.js`, `records/ConsultantRecordListBlock.js`
 

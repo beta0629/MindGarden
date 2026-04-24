@@ -42,6 +42,8 @@ export const ADMIN_ROUTES = {
     SYSTEM_CONFIG: '/admin/system-config',
     /** 테넌트 브랜딩(로고·파비콘 등) */
     BRANDING: '/admin/branding',
+    /** 테넌트 카카오 알림톡 비시크릿 설정(템플릿 코드·키 참조) */
+    KAKAO_ALIMTALK_SETTINGS: '/admin/kakao-alimtalk-settings',
     /** PG 설정 승인(운영) — 백엔드 `OpsPermissionUtils.requireAdminOrOps()` 정합; STAFF 제외 */
     PG_OPS_APPROVAL: '/admin/ops/pg-approval',
     /** @deprecated redirect to NOTIFICATIONS */

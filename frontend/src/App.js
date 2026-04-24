@@ -54,6 +54,7 @@ const AdminDashboardV2 = lazy(() => import('./components/dashboard-v2/AdminDashb
 const ClientDashboard = lazy(() => import('./components/client/ClientDashboard'));
 const CommonDashboard = lazy(() => import('./components/dashboard/CommonDashboard'));
 const ConsultantDashboardV2 = lazy(() => import('./components/dashboard-v2/consultant/ConsultantDashboardV2'));
+const AdminKakaoAlimtalkSettingsPage = lazy(() => import('./components/admin/AdminKakaoAlimtalkSettingsPage'));
 import UnifiedNotification from './components/common/UnifiedNotification';
 import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
@@ -122,6 +123,7 @@ import SecurityMonitoringDashboard from './components/admin/SecurityMonitoringDa
 import ApiPerformanceMonitoring from './components/admin/ApiPerformanceMonitoring';
 import PackagePricingListPage from './components/admin/package-pricing/pages/PackagePricingListPage';
 import PackagePricingDetailPage from './components/admin/package-pricing/pages/PackagePricingDetailPage';
+import { ADMIN_ROUTES } from './constants/adminRoutes';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -526,6 +528,11 @@ function AppContent() {
             <Route path="/admin/reports" element={<Navigate to="/admin/consultation-logs" replace />} />
             <Route path="/admin/backup" element={<Navigate to="/admin/system-config" replace />} />
             <Route path="/admin/system-config" element={<SystemConfigManagement />} />
+            <Route path={ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminKakaoAlimtalkSettingsPage />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/ops/pg-approval" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
                 <PgApprovalManagement />

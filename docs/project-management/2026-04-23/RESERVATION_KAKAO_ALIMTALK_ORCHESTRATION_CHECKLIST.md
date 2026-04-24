@@ -2,7 +2,7 @@
 
 **목적**: 예약 **확정·변경·(선형) 취소**와 연동된 **카카오 알림톡(비즈메시지)** 구현을 **누락 없이** 진행하기 위한 단일 체크리스트.  
 **주관**: `core-planner` — 구현·패치는 `core-coder`, 검증 게이트는 `core-tester` (`docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`).  
-**최종 갱신**: 2026-04-23 — §11 테넌트 DB·온보딩 기획(core-planner) 반영
+**최종 갱신**: 2026-04-24 — §11.8~§11.13 병렬(explore·designer·coder·tester·deployer) 산출 반영
 
 **연계 문서**
 
@@ -301,16 +301,60 @@
 - **옵션 B**: 신규 `TenantNotificationSettings` — **`AdminCommonLayout`**·B0KlA.  
 - **권한**: 기본은 **OPS/플랫폼 관리자**가 시크릿·ref 관리, 테넌트 관리자는 **비시크릿**만(정책은 §1에서 확정).
 
-### 11.6 서브에이전트 위임(다음 배치)
+### 11.6 서브에이전트 위임(3차 병렬, 2026-04-24)
 
-| 담당 | 내용 |
-|------|------|
-| **explore** | 기존 `system_config` / 테넌트 설정 테이블·엔티티 유무 인벤토리 |
-| **core-designer** | 설정 화면 IA·문구·에러·B0KlA |
-| **core-coder** | Flyway·Entity·Repository·`resolveTemplateCode` DB 조회·Admin API·캐시 |
-| **core-tester** | 테넌트 A/B 격리·DB 미존재 폴백·로그 시크릿 노출 없음 |
-| **core-deployer** | 마이그레이션 순서·Secrets ref·롤백·전역-only 복귀 |
+| 담당 | 내용 | 반영 |
+|------|------|------|
+| **explore** | `common_codes`·`system_config`·`Tenant.settings_json`·`tenant_pg_configurations` 등 인벤토리 | §11.8 |
+| **core-designer** | 옵션 B 권장·IA·문구·권한 표 | §11.9 |
+| **core-coder** | `tenant_kakao_alimtalk_settings` Flyway·엔티티·서비스·Admin API·`NotificationServiceImpl` resolve | §11.13 |
+| **core-tester** | 검증 매트릭스·시나리오·게이트·회귀 목록 | §11.10 |
+| **core-deployer** | Flyway 순서·롤백·Secrets·체크리스트 | §11.11 |
 
 ### 11.7 표준 문서 연계
 
 - `docs/standards/NOTIFICATION_SYSTEM_STANDARD.md`에 **“테넌트 DB 설정·우선순위”** 절을 추가하고, 상세 절차는 **tenant-guides** 링크로 연결하는 것을 권장한다.
+
+### 11.8 인벤토리 결과 (explore)
+
+- **재사용 1순위 — `common_codes`**: `ALIMTALK_TEMPLATE`, `ALIMTALK_CONFIG`, `ALIMTALK_BIZ_TEMPLATE_CODE` 등 — `tenantId` 있음, 현 `NotificationServiceImpl`·`KakaoAlimTalkServiceImpl`과 직접 정렬.  
+- **재사용 2순위 — `system_config`**: 키·값·`is_encrypted`, `tenant_id` 유니크.  
+- **보조 — `tenants.settings_json`**: JSON 통합은 가능하나 스키마·감사는 약함.  
+- **패턴 참고 — `tenant_pg_configurations`**: 암호화·승인·이력 precedent.  
+- **explore 권고**: 신규 전용 테이블 **필수 아님**(상기로 1차 충족 가능).  
+- **구현 결정(§11.13)과의 차이**: 코더는 SSOT §11.3 문구대로 **`tenant_kakao_alimtalk_settings` 단일 테이블**을 우선 구현함 — 운영/기획에서 **공통코드만 쓸지** 합의 시 마이그레이션·흡수 검토.
+
+### 11.9 UI 기획 확정 (core-designer)
+
+- **권장**: **옵션 B** — 신규 `TenantNotificationSettings`(또는 동등 라우트) + `AdminCommonLayout`·B0KlA. 메뉴: `관리자 > 알림·연동 > 카카오 알림톡(테넌트)` (온보딩과 정합).  
+- **IA**: 섹션 (1) 알림톡 ON/OFF (2) 이벤트별 템플릿 코드 (3) 시뮬·환경 안내 (4) ref·시크릿(OPS).  
+- **권한**: 테넌트 슈퍼 — ON/OFF·템플릿; OPS — ref·시뮬 오버라이드.  
+- **문구·에러**: 템플릿 미검수·403·빈 상태 초안은 디자이너 산출본(채팅) 참고.
+
+### 11.10 검증 게이트 (core-tester)
+
+- 단위·통합·API 레벨 표; 시나리오 8~10(테넌트 A/B 겹침 없음, DB 없을 때 공통 폴백, 빈 문자열 정책 placeholder, PUT 403, 로그 시크릿 없음 등).  
+- **회귀**: `ScheduleServiceImplConfirmScheduleAlimTalkTest`, `ScheduleServiceImplUpcomingTest`, `ScheduleServiceImplCancelRestoreSessionTest` 등 **green** 유지.  
+- **게이트 문장**: 「테넌트별 카카오 알림톡 DB 설정·resolve·403·시크릿 비노출이 `core-tester` 검증 및 예약 알림톡 회귀를 통과하기 전에는 배치 완료로 보지 않는다.」(`CORE_PLANNER_DELEGATION_ORDER.md`)
+
+### 11.11 배포·롤백 (core-deployer)
+
+- 순서: Flyway up → 앱 재기동 → 설정(ref-only) 입력 → 실발송 스모크.  
+- 롤백: 스키마 down **또는** 기능 플래그로 발송 차단(저위험).  
+- Secrets: DB에는 ref; CI·서버 env와 교차 테넌트 참조 방지; 로테이션 절차.  
+- 표준: `DEPLOYMENT_STANDARD.md`, `PRE_PRODUCTION_GO_LIVE_CHECKLIST.md` 준수.
+
+### 11.12 표준 문서 보강(잔여)
+
+- `NOTIFICATION_SYSTEM_STANDARD.md` 본문에 **「테넌트 DB·우선순위」** 독립 절 추가는 **코어 문서 배치**로 잔여(현재는 참조 링크만 존재).
+
+### 11.13 구현 스냅샷 (core-coder, 2026-04-24)
+
+- **Flyway**: `V20260424_003__tenant_kakao_alimtalk_settings.sql`  
+- **엔티티·리포지토리·서비스**: `TenantKakaoAlimtalkSettings*`, `TenantKakaoAlimtalkSettingsServiceImpl`  
+- **DTO**: `TenantKakaoAlimtalkSettingsResponse`, `TenantKakaoAlimtalkSettingsUpdateRequest`  
+- **API**: `AdminTenantKakaoAlimtalkSettingsController` — `GET`/`PUT /api/v1/admin/kakao-alimtalk-settings`, `TenantContextHolder`, `@PreAuthorize(ADMIN|STAFF)`  
+- **연동**: `NotificationServiceImpl.resolveAlimTalkBizTemplateCode` — **DB 컬럼 → `ALIMTALK_BIZ_TEMPLATE_CODE` → enum.name()**; 알림 사용 여부는 행 없으면 기본 허용, 있으면 `alimtalk_enabled`.  
+- **테스트**: `TenantKakaoAlimtalkSettingsServiceImplTest`  
+- **검증 실행**: `mvn -Dtest=TenantKakaoAlimtalkSettingsServiceImplTest,ScheduleServiceImplConfirmScheduleAlimTalkTest test` 통과.  
+- **TODO**: ref→실제 시크릿 해석·`KakaoAlimTalkServiceImpl` 연동; explore 권고대로 **공통코드만**으로 통합할지 회의.

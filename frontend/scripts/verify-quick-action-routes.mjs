@@ -48,6 +48,14 @@ for (const m of app.matchAll(/\bpath=["']([^"']+)["']/g)) {
     appPaths.add(`/admin/${p}`);
   }
 }
+for (const m of app.matchAll(/\bpath=\{ADMIN_ROUTES\.(\w+)\}/g)) {
+  const key = m[1];
+  if (!Object.hasOwn(routeMap, key)) {
+    console.error(`❌ App.js: 알 수 없는 ADMIN_ROUTES.${key}`);
+    process.exit(1);
+  }
+  appPaths.add(routeMap[key]);
+}
 
 const profileNavPaths = new Set([
   '/client/mypage',

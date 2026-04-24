@@ -15,6 +15,7 @@ import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.SmsAuthService;
+import com.coresolution.consultation.service.TenantKakaoAlimtalkSettingsService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
@@ -45,6 +46,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final EmailService emailService;
     private final AlertRepository alertRepository;
     private final PersonalDataEncryptionUtil encryptionUtil;
+    private final TenantKakaoAlimtalkSettingsService tenantKakaoAlimtalkSettingsService;
     
     @Override
     public boolean sendNotification(User user, NotificationType notificationType, NotificationPriority priority, String... params) {
@@ -69,7 +71,7 @@ public class NotificationServiceImpl implements NotificationService {
             switch (priority) {
                 case HIGH:
                     // 1순위: 카카오 알림톡
-                    if (kakaoEnabled && phoneNumber != null && kakaoAlimTalkService.isServiceAvailable()) {
+                    if (kakaoEnabled && phoneNumber != null && isAlimTalkChannelAvailable()) {
                         Map<String, String> alimTalkParams = buildAlimTalkParams(notificationType, params);
                         boolean success = sendKakaoAlimTalk(phoneNumber, notificationType, alimTalkParams);
                         if (success) {
@@ -101,7 +103,7 @@ public class NotificationServiceImpl implements NotificationService {
                     }
                     
                     // 2순위: 카카오 알림톡 대체 발송
-                    if (kakaoEnabled && phoneNumber != null && kakaoAlimTalkService.isServiceAvailable()) {
+                    if (kakaoEnabled && phoneNumber != null && isAlimTalkChannelAvailable()) {
                         Map<String, String> alimTalkParams = buildAlimTalkParams(notificationType, params);
                         boolean success = sendKakaoAlimTalk(phoneNumber, notificationType, alimTalkParams);
                         if (success) {
@@ -287,13 +289,42 @@ public class NotificationServiceImpl implements NotificationService {
     }
     
     /**
-     * 카카오 비즈 템플릿 코드: 테넌트·코어 공통코드 ALIMTALK_BIZ_TEMPLATE_CODE의 codeLabel,
-     * 없으면 내부 {@link NotificationType} 이름과 동일하게 사용.
+     * 전역 {@code kakao.alimtalk.*} 가용성 + 테넌트 DB {@code alimtalk_enabled}
+     * (설정 행 없으면 true, §11.4 전역 상속).
+     *
+     * @return 알림톡 채널 시도 가능 여부
+     */
+    private boolean isAlimTalkChannelAvailable() {
+        if (!kakaoAlimTalkService.isServiceAvailable()) {
+            return false;
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return true;
+        }
+        return tenantKakaoAlimtalkSettingsService.isAlimTalkEnabledForTenant(tenantId);
+    }
+    
+    /**
+     * 비즈 템플릿 코드 결정 우선순위 (§11.4, {@code tenant_kakao_alimtalk_settings} §11.3 SSOT):
+     * <ol>
+     *   <li>테넌트 DB 설정 테이블의 해당 알림 유형 컬럼이 비어있지 않으면 그 값</li>
+     *   <li>공통코드 ALIMTALK_BIZ_TEMPLATE_CODE (테넌트 행 → 코어 행, codeLabel)</li>
+     *   <li>{@link NotificationType#name()}</li>
+     * </ol>
+     *
+     * @param type 알림 유형
+     * @return 카카오 API용 템플릿 코드
      */
     private String resolveAlimTalkBizTemplateCode(NotificationType type) {
         try {
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId != null && !tenantId.isEmpty()) {
+                Optional<String> fromSettingsTable = tenantKakaoAlimtalkSettingsService.findBizTemplateCodeOverride(
+                    tenantId, type);
+                if (fromSettingsTable.isPresent()) {
+                    return fromSettingsTable.get();
+                }
                 Optional<CommonCode> tenantRow = commonCodeRepository.findTenantCodeByGroupAndValue(
                     tenantId, CODE_GROUP_ALIMTALK_BIZ_TEMPLATE_CODE, type.name());
                 if (tenantRow.isPresent() && tenantRow.get().getCodeLabel() != null

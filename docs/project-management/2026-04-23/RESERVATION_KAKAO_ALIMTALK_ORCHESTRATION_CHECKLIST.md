@@ -2,13 +2,14 @@
 
 **목적**: 예약 **확정·변경·(선형) 취소**와 연동된 **카카오 알림톡(비즈메시지)** 구현을 **누락 없이** 진행하기 위한 단일 체크리스트.  
 **주관**: `core-planner` — 구현·패치는 `core-coder`, 검증 게이트는 `core-tester` (`docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`).  
-**최종 갱신**: 2026-04-23 — §2~§4 1차 병렬 + §7 2차(core-planner·deployer·tester·coder) 산출 반영(§10)
+**최종 갱신**: 2026-04-23 — §11 테넌트 DB·온보딩 기획(core-planner) 반영
 
 **연계 문서**
 
 | 문서 | 용도 |
 |------|------|
 | `docs/standards/NOTIFICATION_SYSTEM_STANDARD.md` | 알림 채널·우선순위·표준 |
+| [`docs/tenant-guides/kakao-alimtalk-tenant-onboarding.md`](../../tenant-guides/kakao-alimtalk-tenant-onboarding.md) | **타 테넌트·운영자** 카카오 알림톡 등록·설정 절차(온보딩) |
 | `docs/project-management/ONGOING_WORK_MASTER_PROGRESS_CHECKLIST.md` | 전체 진행도·병렬 블록 표 |
 | 본 문서 §7 병렬 위임 결과 | explore / designer / component-manager 산출 요약(채움) |
 
@@ -31,6 +32,12 @@
 - [ ] **환경**: `simulation-mode` 유지 환경 / 실발송 허용 환경 구분(GitHub Secrets·`application-*.yml`)
 - [ ] **실패 폴백**: 알림톡 실패 시 SMS 등 기존 `NotificationServiceImpl` 경로와의 정합
 - [ ] **멱등·중복 방지**: 동일 `reservationId`+이벤트+수신자 창 내 재발송 방지 키 설계 여부
+- [ ] **테넌트별 DB 설정**: 테이블(또는 기존 테넌트 설정 확장)명·`tenant_id` 유니크·1테넌트당 행 수(단일 vs 이벤트별)
+- [ ] **DB vs 전역 우선순위**: 비시크릿 필드(템플릿 코드·on/off 등)는 **DB 우선·미설정 시 `application.yml`/공통코드 폴백** 규칙 확정
+- [ ] **시크릿 저장**: `api_key`/`sender_key` **DB 평문 금지** — KMS·Secrets Manager·**참조 ID(`secret_ref`)만 DB** 등 팀 표준 확정
+- [ ] **설정 UI·권한**: 누가 입력하는지(OPS vs 테넌트 슈퍼관리자)·화면 위치(`SystemConfigManagement` 확장 vs 신규 페이지)
+- [ ] **캐시·무효화**: 테넌트 설정 조회 캐시 TTL 또는 저장 API 시 무효화
+- [ ] **문서 SSOT**: 온보딩은 [tenant-guides/kakao-alimtalk-tenant-onboarding.md](../../tenant-guides/kakao-alimtalk-tenant-onboarding.md), 표준은 `NOTIFICATION_SYSTEM_STANDARD.md`에 링크 절만 보강할지
 
 ---
 
@@ -257,3 +264,53 @@
 - **변경**: `KakaoAlimTalkService` 오버로드, `KakaoAlimTalkServiceImpl`, `NotificationService`/`Impl`, `ConsultationServiceImpl`, `ScheduleServiceImpl`, 테스트 3종 + `ScheduleServiceImplConfirmScheduleAlimTalkTest` 신규.  
 - **검증**: `mvn -Dtest=ScheduleServiceImplConfirmScheduleAlimTalkTest,ScheduleServiceImplCancelRestoreSessionTest,ScheduleServiceImplUpcomingTest test` 통과.  
 - **잔여 TODO**: §1 미결(실 템플릿 코드·야간·멱등·커밋 후 비동기), `ConsultantServiceImpl` 스tub 제외.
+
+---
+
+## 11. 테넌트별 카카오 알림톡 DB 설정·등록 기획 (core-planner, 2026-04-23)
+
+### 11.1 목표
+
+- 알림톡 관련 **비즈니스 설정**(템플릿 코드·테넌트 on/off 등)을 **`tenant_id` 단위로 DB에 저장**한다.  
+- **전역 `kakao.alimtalk.*`**(및 Secrets)와의 **우선순위**를 문서·코드에서 동일하게 해석한다.  
+- **다른 테넌트·운영자**가 따라 할 수 있도록 등록 절차는 **[온보딩 가이드](../../tenant-guides/kakao-alimtalk-tenant-onboarding.md)**에 둔다.
+
+### 11.2 P0 / P1 (요구 범위)
+
+| 구분 | 내용 |
+|------|------|
+| **P0** | 테넌트별 알림톡 **사용 여부**; 이벤트별 **비즈 템플릿 코드** 매핑(검수 완료 코드); DB·전역 **우선순위**; **시크릿 비평문**(ref만); 감사 컬럼 |
+| **P1** | 발신 프로필 메타·폴백/야간 정책 **오버라이드**·시뮬레이션 권한·템플릿 버전 메타·캐시 정책 |
+
+### 11.3 데이터 모델(초안)
+
+- **테이블 후보**: `tenant_kakao_alimtalk_settings` 또는 기존 테넌트 설정 테이블에 `channel_type = KAKAO_ALIMTALK` 행.  
+- **제약**: `tenant_id` **NOT NULL**; **UNIQUE**(`tenant_id`) 또는 UNIQUE(`tenant_id`, `event_type`).  
+- **컬럼 예**: `alimtalk_enabled`, `simulation_mode_override`(nullable), `template_code_*`(varchar nullable), `kakao_api_key_ref` / `kakao_sender_key_ref`(varchar — **Secrets alias만**).  
+- **민감정보**: API 키·sender 키 **평문 DB 저장 금지** — 팀 표준(KMS·Secrets Manager·환경 주입)과 **DB ref** 조합.
+
+### 11.4 전역 vs DB 우선순위(제안)
+
+- **시크릿**: 항상 Secrets/KMS; DB에는 **참조 ID**만.  
+- **템플릿 코드·on/off·(P1)야간/폴백**: **유효한 DB 값 우선**, 없으면 전역 YAML·공통코드(`ALIMTALK_BIZ_TEMPLATE_CODE` 등)·enum 폴백.  
+- **“빈 값” 의미**: 필드별로 **전역 상속** vs **발송 중단** 중 하나로 표준화(회의에서 확정).
+
+### 11.5 UI·권한(제안)
+
+- **옵션 A**: 기존 `SystemConfigManagement` 등에 **“카카오 알림톡(테넌트)”** 섹션.  
+- **옵션 B**: 신규 `TenantNotificationSettings` — **`AdminCommonLayout`**·B0KlA.  
+- **권한**: 기본은 **OPS/플랫폼 관리자**가 시크릿·ref 관리, 테넌트 관리자는 **비시크릿**만(정책은 §1에서 확정).
+
+### 11.6 서브에이전트 위임(다음 배치)
+
+| 담당 | 내용 |
+|------|------|
+| **explore** | 기존 `system_config` / 테넌트 설정 테이블·엔티티 유무 인벤토리 |
+| **core-designer** | 설정 화면 IA·문구·에러·B0KlA |
+| **core-coder** | Flyway·Entity·Repository·`resolveTemplateCode` DB 조회·Admin API·캐시 |
+| **core-tester** | 테넌트 A/B 격리·DB 미존재 폴백·로그 시크릿 노출 없음 |
+| **core-deployer** | 마이그레이션 순서·Secrets ref·롤백·전역-only 복귀 |
+
+### 11.7 표준 문서 연계
+
+- `docs/standards/NOTIFICATION_SYSTEM_STANDARD.md`에 **“테넌트 DB 설정·우선순위”** 절을 추가하고, 상세 절차는 **tenant-guides** 링크로 연결하는 것을 권장한다.

@@ -14,6 +14,8 @@ MindGarden 프로젝트의 통합 알림 시스템 표준입니다.
 - [API 설계 표준](./API_DESIGN_STANDARD.md)
 - [에러 처리 표준](./ERROR_HANDLING_STANDARD.md)
 - [디자인 중앙화 표준](./DESIGN_CENTRALIZATION_STANDARD.md)
+- [테넌트 카카오 알림톡 온보딩](../tenant-guides/kakao-alimtalk-tenant-onboarding.md) — 지점·OPS 등록 절차
+- [예약·알림톡 오케스트레이션 체크리스트 §11](../project-management/2026-04-23/RESERVATION_KAKAO_ALIMTALK_ORCHESTRATION_CHECKLIST.md) — 테넌트 DB·우선순위·위임 매트릭스
 
 ### 구현 위치
 - **프론트엔드**: `frontend/src/components/common/UnifiedNotification.js`

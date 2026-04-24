@@ -336,6 +336,7 @@
 - 단위·통합·API 레벨 표; 시나리오 8~10(테넌트 A/B 겹침 없음, DB 없을 때 공통 폴백, 빈 문자열 정책 placeholder, PUT 403, 로그 시크릿 없음 등).  
 - **회귀**: `ScheduleServiceImplConfirmScheduleAlimTalkTest`, `ScheduleServiceImplUpcomingTest`, `ScheduleServiceImplCancelRestoreSessionTest` 등 **green** 유지.  
 - **게이트 문장**: 「테넌트별 카카오 알림톡 DB 설정·resolve·403·시크릿 비노출이 `core-tester` 검증 및 예약 알림톡 회귀를 통과하기 전에는 배치 완료로 보지 않는다.」(`CORE_PLANNER_DELEGATION_ORDER.md`)
+- **검증 실행 기록 (2026-04-24, core-tester)**: `NotificationServiceImplAlimtalkTemplateResolveTest`로 `resolveAlimTalkBizTemplateCode`와 동일한 우선순위(테넌트 DB 오버라이드 → 테넌트 `ALIMTALK_BIZ_TEMPLATE_CODE` → 코어 동일 그룹 → `NotificationType.name()`)를 `KakaoAlimTalkService.sendAlimTalk`의 API 템플릿 인자로 간접 검증함. 회귀로 `TenantKakaoAlimtalkSettingsServiceImplTest`, `ScheduleServiceImplConfirmScheduleAlimTalkTest`, `ScheduleServiceImplUpcomingTest`, `ScheduleServiceImplCancelRestoreSessionTest`를 한 번에 실행해 통과 확인. 전 저장소 `mvn -q test` 전수는 본 세션에서 완료 로그 미확인(장시간·exit 1)으로 **전수 통과는 미확정**; Admin API·403·시크릿 비노출·E2E는 병렬 담당·범위 밖.
 
 ### 11.11 배포·롤백 (core-deployer)
 

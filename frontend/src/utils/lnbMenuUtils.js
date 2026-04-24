@@ -19,6 +19,7 @@ export function mergeSupplementalAdminLnbItems(items) {
     return items;
   }
   const supplemental = [
+    { to: ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS, icon: 'MESSAGE_CIRCLE', label: '카카오 알림톡', end: true },
     { to: ADMIN_ROUTES.BRANDING, icon: 'IMAGE', label: '브랜딩', end: true }
   ];
   return items.map((item) => {

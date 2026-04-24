@@ -34,13 +34,28 @@ import {
   TENANT_DISPLAY_NAME_MAX_LENGTH,
   canEditTenantDisplayName
 } from '../../constants/tenantApi';
+import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import {
+  TENANT_PROFILE_NOTIFICATIONS_SECTION_TITLE,
+  TENANT_PROFILE_KAKAO_ALIMTALK_LABEL,
+  TENANT_PROFILE_KAKAO_ALIMTALK_SETTINGS_BUTTON,
+  TENANT_PROFILE_SMS_CHANNEL_LABEL,
+  TENANT_PROFILE_SMS_SETTINGS_PENDING_MESSAGE
+} from '../../constants/tenantProfileStrings';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './TenantProfile.css';
 
 const TenantProfile = () => {
   const navigate = useNavigate();
-  const { user, sessionInfo, isLoggedIn, isLoading: sessionLoading, checkSession } = useSession();
+  const {
+    user,
+    sessionInfo,
+    isLoggedIn,
+    isLoading: sessionLoading,
+    checkSession,
+    hasAnyRole
+  } = useSession();
   const [loading, setLoading] = useState(true);
   const [tenantInfo, setTenantInfo] = useState(null);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -57,6 +72,7 @@ const TenantProfile = () => {
 
   const tenantId = sessionInfo?.tenantId || user?.tenantId;
   const canRenameTenant = canEditTenantDisplayName(user);
+  const canOpenKakaoAlimtalkSettings = hasAnyRole(['ADMIN', 'STAFF']);
 
   useEffect(() => {
     if (sessionLoading) {
@@ -423,6 +439,40 @@ const TenantProfile = () => {
                       <div className="mg-v2-tenant-profile__field">
                         <label>상태</label>
                         <div>{renderStatusBadge(tenantInfo.status)}</div>
+                      </div>
+                    </div>
+                  </ContentSection>
+
+                  <ContentSection title={TENANT_PROFILE_NOTIFICATIONS_SECTION_TITLE}>
+                    <div className="mg-v2-tenant-profile__grid">
+                      <div className="mg-v2-tenant-profile__field">
+                        <label>{TENANT_PROFILE_KAKAO_ALIMTALK_LABEL}</label>
+                        <div>
+                          {canOpenKakaoAlimtalkSettings ? (
+                            <MGButton
+                              type="button"
+                              variant="outline"
+                              size="medium"
+                              className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'md',
+                                loading: false
+                              })}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                              onClick={() => navigate(ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS)}
+                              data-testid="tenant-profile-kakao-alimtalk-settings"
+                              preventDoubleClick={false}
+                            >
+                              {TENANT_PROFILE_KAKAO_ALIMTALK_SETTINGS_BUTTON}
+                            </MGButton>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="mg-v2-tenant-profile__field">
+                        <label>{TENANT_PROFILE_SMS_CHANNEL_LABEL}</label>
+                        <p className="no-data">
+                          <SafeText>{TENANT_PROFILE_SMS_SETTINGS_PENDING_MESSAGE}</SafeText>
+                        </p>
                       </div>
                     </div>
                   </ContentSection>

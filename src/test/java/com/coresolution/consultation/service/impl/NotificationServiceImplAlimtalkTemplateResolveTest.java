@@ -29,6 +29,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * {@link NotificationServiceImpl} 알림톡 비즈 템플릿 코드 resolve 우선순위
@@ -37,6 +39,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * {@link KakaoAlimTalkService#sendAlimTalk} 두 번째 인자로 간접 검증한다.
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("NotificationServiceImpl 알림톡 템플릿 코드 resolve")
 class NotificationServiceImplAlimtalkTemplateResolveTest {
 

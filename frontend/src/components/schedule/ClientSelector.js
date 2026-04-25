@@ -33,19 +33,6 @@ const ClientSelector = ({
     const [loadingHistory, setLoadingHistory] = useState({});
     const [clientMappings, setClientMappings] = useState({});
     const [loadingMappings, setLoadingMappings] = useState({});
-    const [isMobile, setIsMobile] = useState(false);
-
-    useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth <= 768);
-        };
-        
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
-
 /**
      * 컴포넌트 마운트 시 모든 내담자의 매핑 정보 일괄 로드
      */
@@ -416,10 +403,12 @@ const ClientSelector = ({
                             onClick={() => handleClientClick(client)}
                             selected={isSelected}
                             draggable={isAvailable}
-                            variant={isMobile ? 'mobile-simple' : 'detailed'}
+                            variant="detailed"
                             showActions={true}
                             showProgress={true}
                             className={!isAvailable ? 'mg-client-card--unavailable' : ''}
+                            scheduleClientSelectMode
+                            selectDisabled={!isAvailable}
                         />
                     );
                 })}

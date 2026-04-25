@@ -221,7 +221,7 @@
   align-content: start;
   overflow-y: auto;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--ad-b0kla-radius-sm, 12px);
+  gap: var(--cs-spacing-md);
 }
 
 .mg-v2-ad-b0kla .mg-v2-ad-client-step__empty .mg-v2-btn--primary,
@@ -248,6 +248,7 @@
 
 .mg-v2-ad-b0kla .mg-client-card:hover {
   border-color: var(--ad-b0kla-green);
+  box-shadow: var(--ad-b0kla-shadow-hover);
 }
 
 .mg-v2-ad-b0kla .mg-client-card.mg-client-card--selected {
@@ -296,6 +297,31 @@
   font-weight: 600;
 }
 
+/* B0KlA 내담자 선택 카드(§4·§7): 패딩·메타 간격·이름 말줄임 — .mg-v2-ad-b0kla 스코프만 */
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card--detailed.mg-client-card--b0kla-select {
+  padding: var(--cs-spacing-md) var(--cs-spacing-lg);
+}
+
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card--b0kla-select .mg-client-card__details {
+  gap: var(--cs-spacing-sm);
+}
+
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card--b0kla-select .mg-client-card__name--large {
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card--b0kla-select .mg-client-card__actions {
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--cs-spacing-sm);
+}
+
 .mg-v2-ad-b0kla .mg-client-card__detail-item,
 .mg-v2-ad-b0kla .mg-client-card__consultant-label,
 .mg-v2-ad-b0kla .mg-client-card__consultant-name {
@@ -308,16 +334,17 @@
   font-weight: 600;
 }
 
+/* §5 진행중: 채움 배지 + on-success 전경 / §5 대기중: 연한 배경 + 진한 본문색 */
 .mg-v2-ad-b0kla .mg-client-card__status-badge--active {
-  background: var(--ad-b0kla-green-bg);
-  color: var(--ad-b0kla-green);
+  background: var(--ad-b0kla-green);
+  color: var(--mg-white);
   font-size: 0.75rem;
   font-weight: 500;
 }
 
 .mg-v2-ad-b0kla .mg-client-card__status-badge--default {
-  background: var(--ad-b0kla-blue-bg, var(--mg-gray-100));
-  color: var(--ad-b0kla-blue, var(--ad-b0kla-text-secondary));
+  background: var(--ad-b0kla-blue-bg);
+  color: var(--mg-primary-600);
   font-size: 0.75rem;
   font-weight: 500;
 }
@@ -339,6 +366,20 @@
 .mg-v2-ad-b0kla .mg-client-card .mg-button-primary:hover:not(:disabled),
 .mg-v2-ad-b0kla .mg-client-card .mg-button.mg-button-primary:hover {
   opacity: 0.9;
+}
+
+/* §6 CTA 포커스 링(토큰) — 카드는 탭스톱 아님·버튼만 포커스 */
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card .mg-client-card__select-cta:focus-visible {
+  outline: var(--focus-ring-width) solid var(--mg-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card .mg-button-primary:disabled,
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card .mg-button-primary.mg-button--disabled {
+  background: var(--mg-gray-100);
+  color: var(--ad-b0kla-placeholder);
+  opacity: 1;
+  border: none;
 }
 
 .mg-v2-ad-b0kla .mg-client-card--unavailable {

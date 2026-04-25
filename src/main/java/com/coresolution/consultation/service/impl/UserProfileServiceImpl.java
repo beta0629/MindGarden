@@ -18,7 +18,9 @@ import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserProfileService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final ConsultantRepository consultantRepository;
     private final UserAddressRepository userAddressRepository;
     private final PersonalDataEncryptionUtil encryptionUtil;
+    private final NotificationChannelPreferenceResolutionService notificationChannelPreferenceResolutionService;
 
     /**
      * 현재 테넌트 컨텍스트와 PK로 활성 사용자를 조회합니다.
@@ -52,11 +55,54 @@ public class UserProfileServiceImpl implements UserProfileService {
         return userRepository.findByTenantIdAndId(tenantId, userId)
             .orElseThrow(() -> new RuntimeException(UserProfileServiceUserFacingMessages.MSG_USER_NOT_FOUND));
     }
+
+    /**
+     * {@code /api/v1/users/profile/{userId}} 조회·수정 시 호출자가 대상에 접근 가능한지 검증합니다.
+     *
+     * @param targetUserId 조회·수정 대상 사용자 PK
+     * @param write        수정 요청이면 true
+     */
+    private void assertUserProfileTenantScopedAccess(Long targetUserId, boolean write) {
+        User caller = SessionUtils.getCurrentUser(null);
+        if (caller == null || caller.getId() == null) {
+            throw new AccessDeniedException(UserProfileServiceUserFacingMessages.MSG_LOGIN_REQUIRED_FOR_PROFILE);
+        }
+        if (caller.getId().equals(targetUserId)) {
+            return;
+        }
+        UserRole role = caller.getRole();
+        if (role == null) {
+            throw new AccessDeniedException(UserProfileServiceUserFacingMessages.MSG_ROLE_REQUIRED_FOR_PROFILE);
+        }
+        if (role.isClient() || role.isConsultant()) {
+            throw new AccessDeniedException(UserProfileServiceUserFacingMessages.MSG_CANNOT_ACCESS_OTHER_USER_PROFILE);
+        }
+        if (write && !role.isAdmin()) {
+            throw new AccessDeniedException(UserProfileServiceUserFacingMessages.MSG_ONLY_ADMIN_CAN_EDIT_OTHER_PROFILE);
+        }
+    }
+
+    private boolean resolveNotificationChannelEditableByCaller(User target) {
+        if (target.getRole() == null
+            || (!UserRole.CLIENT.equals(target.getRole()) && !UserRole.CONSULTANT.equals(target.getRole()))) {
+            return false;
+        }
+        User caller = SessionUtils.getCurrentUser(null);
+        if (caller == null || caller.getId() == null) {
+            return false;
+        }
+        if (caller.getId().equals(target.getId())) {
+            return true;
+        }
+        UserRole cr = caller.getRole();
+        return cr != null && cr.isAdmin();
+    }
     
     @Override
     @Transactional(rollbackFor = Exception.class)
     public UserProfileResponse updateUserProfile(Long userId, UserProfileUpdateRequest request) {
         try {
+            assertUserProfileTenantScopedAccess(userId, true);
             User user = requireUserInCurrentTenant(userId);
             
             log.info("유저 프로필 업데이트 시작: userId={}", userId);
@@ -121,6 +167,13 @@ public class UserProfileServiceImpl implements UserProfileService {
             saveRoleSpecificInfo(user, request);
 
             upsertPrimaryAddressIfRequested(userId, request);
+
+            if (request.getNotificationChannelPreference() != null
+                && (UserRole.CLIENT.equals(user.getRole()) || UserRole.CONSULTANT.equals(user.getRole()))) {
+                String normalized = notificationChannelPreferenceResolutionService.normalizeIncomingPreference(
+                    request.getNotificationChannelPreference(), user.getTenantId());
+                user.setNotificationChannelPreference(normalized);
+            }
             
             user = userRepository.save(user);
             log.info("유저 프로필 업데이트 완료: userId={}", userId);
@@ -142,8 +195,9 @@ public class UserProfileServiceImpl implements UserProfileService {
     
     @Override
     public UserProfileResponse getUserProfile(Long userId) {
+        assertUserProfileTenantScopedAccess(userId, false);
         User user = requireUserInCurrentTenant(userId);
-        
+
         return buildUserProfileResponse(user);
     }
     
@@ -557,6 +611,9 @@ public class UserProfileServiceImpl implements UserProfileService {
         log.info("🖼️ UserProfileResponse 빌드: userId={}, profileImageType={}, hasImage={}",
             user.getId(), profileImageType, user.getProfileImageUrl() != null);
 
+        NotificationChannelPreferenceResolutionService.NotificationChannelProfileSnapshot channelSnap =
+            notificationChannelPreferenceResolutionService.buildProfileSnapshot(user);
+
         return UserProfileResponse.builder()
             .userId(user.getId())
             .email(encryptionUtil.safeDecrypt(user.getEmail()))
@@ -603,6 +660,12 @@ public class UserProfileServiceImpl implements UserProfileService {
             .currentProfileStep(calculateProfileStep(user))
             .needsRoleSpecificInfo(needsRoleSpecificInfo(user))
             .nextStepMessage(getNextStepMessage(user))
+            .notificationChannelPreference(channelSnap.notificationChannelPreference())
+            .tenantNotificationChannelKakaoAvailable(channelSnap.tenantNotificationChannelKakaoAvailable())
+            .tenantNotificationChannelSmsAvailable(channelSnap.tenantNotificationChannelSmsAvailable())
+            .tenantDefaultNotificationChannelHint(channelSnap.tenantDefaultNotificationChannelHint())
+            .notificationChannelPreferenceUiAdjusted(channelSnap.notificationChannelPreferenceUiAdjusted())
+            .notificationChannelPreferenceEditableByCaller(resolveNotificationChannelEditableByCaller(user))
             .build();
     }
 

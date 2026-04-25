@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.constant.NotificationChannelPreferenceCode;
+import com.coresolution.consultation.constant.NotificationPhysicalChannel;
 import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.entity.Alert;
 import com.coresolution.consultation.entity.CommonCode;
@@ -27,6 +29,15 @@ import lombok.extern.slf4j.Slf4j;
  * 통합 알림 서비스 구현
  * - 사용자 설정에 따른 알림 방식 자동 선택
  * - 카카오 알림톡 → SMS → 이메일 순서로 대체 발송
+ * <p>
+ * Phase1 채널 라우팅 우선순위(요약): {@code users.notification_channel_preference}가
+ * {@link NotificationChannelPreferenceCode#TENANT_DEFAULT}일 때는 기존과 같이
+ * {@link NotificationPriority}(HIGH/MEDIUM)별 1·2순위를 적용한다.
+ * {@code KAKAO}/{@code SMS} 명시 시 해당 채널을 먼저 시도하고, 테넌트 인프라·레거시
+ * {@code notification_preferences}(sms_disabled, kakao 문자열 등)로 채널 시도가 불가하면
+ * {@link NotificationChannelPreferenceCode#TENANT_DEFAULT}와 동일한 순서로 폴백한다
+ * ({@link NotificationChannelPreferenceResolutionService}).
+ * </p>
  * 
  * @author MindGarden
  * @version 1.0.0
@@ -47,6 +58,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final AlertRepository alertRepository;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final TenantKakaoAlimtalkSettingsService tenantKakaoAlimtalkSettingsService;
+    private final NotificationChannelPreferenceResolutionService channelPreferenceResolutionService;
     
     @Override
     public boolean sendNotification(User user, NotificationType notificationType, NotificationPriority priority, String... params) {
@@ -59,9 +71,6 @@ public class NotificationServiceImpl implements NotificationService {
             log.info("📤 통합 알림 발송: 사용자={}, 타입={}, 우선순위={}", 
                 user.getName(), notificationType, priority);
             
-            // 사용자 알림 설정 확인
-            boolean kakaoEnabled = isKakaoAlimTalkEnabled(user);
-            boolean smsEnabled = isSmsEnabled(user);
             boolean emailEnabled = isEmailEnabled(user);
             
             // 전화번호 복호화
@@ -70,46 +79,9 @@ public class NotificationServiceImpl implements NotificationService {
             // 우선순위에 따른 알림 발송
             switch (priority) {
                 case HIGH:
-                    // 1순위: 카카오 알림톡
-                    if (kakaoEnabled && phoneNumber != null && isAlimTalkChannelAvailable()) {
-                        Map<String, String> alimTalkParams = buildAlimTalkParams(notificationType, params);
-                        boolean success = sendKakaoAlimTalk(phoneNumber, notificationType, alimTalkParams);
-                        if (success) {
-                            log.info("✅ 카카오 알림톡 발송 성공: {}", user.getName());
-                            return true;
-                        }
-                    }
-                    
-                    // 2순위: SMS 대체 발송
-                    if (smsEnabled && phoneNumber != null) {
-                        String smsMessage = buildSmsMessage(notificationType, params);
-                        boolean success = sendSms(phoneNumber, smsMessage);
-                        if (success) {
-                            log.info("✅ SMS 대체 발송 성공: {}", user.getName());
-                            return true;
-                        }
-                    }
-                    break;
-                    
                 case MEDIUM:
-                    // 1순위: SMS
-                    if (smsEnabled && phoneNumber != null) {
-                        String smsMessage = buildSmsMessage(notificationType, params);
-                        boolean success = sendSms(phoneNumber, smsMessage);
-                        if (success) {
-                            log.info("✅ SMS 발송 성공: {}", user.getName());
-                            return true;
-                        }
-                    }
-                    
-                    // 2순위: 카카오 알림톡 대체 발송
-                    if (kakaoEnabled && phoneNumber != null && isAlimTalkChannelAvailable()) {
-                        Map<String, String> alimTalkParams = buildAlimTalkParams(notificationType, params);
-                        boolean success = sendKakaoAlimTalk(phoneNumber, notificationType, alimTalkParams);
-                        if (success) {
-                            log.info("✅ 카카오 알림톡 대체 발송 성공: {}", user.getName());
-                            return true;
-                        }
+                    if (dispatchByResolvedChannelOrder(user, notificationType, priority, phoneNumber, params)) {
+                        return true;
                     }
                     break;
                     
@@ -179,6 +151,41 @@ public class NotificationServiceImpl implements NotificationService {
         return sendNotification(user, NotificationType.DEPOSIT_PENDING_REMINDER, NotificationPriority.HIGH, 
                               String.valueOf(mappingId), clientName, consultantName, 
                               String.format("%,d", packagePrice), String.valueOf(hoursElapsed));
+    }
+
+    /**
+     * 단일 resolve: 선호·테넌트 인프라·레거시 {@code notification_preferences}를 반영한 순서로 알림톡·SMS 시도.
+     *
+     * @param user             수신 사용자
+     * @param notificationType 알림 유형
+     * @param priority         HIGH 또는 MEDIUM
+     * @param phoneNumber      복호화된 전화번호
+     * @param params           템플릿 인자
+     * @return 한 채널이라도 성공하면 true
+     */
+    private boolean dispatchByResolvedChannelOrder(User user, NotificationType notificationType,
+            NotificationPriority priority, String phoneNumber, String... params) {
+        NotificationChannelPreferenceCode pref = NotificationChannelPreferenceCode.fromStored(
+            user.getNotificationChannelPreference());
+        String tenantId = TenantContextHolder.getTenantId();
+        List<NotificationPhysicalChannel> order = channelPreferenceResolutionService.resolveDeliveryOrder(
+            pref, priority, isKakaoAlimTalkEnabled(user), isSmsEnabled(user), tenantId);
+        for (NotificationPhysicalChannel ch : order) {
+            if (ch == NotificationPhysicalChannel.KAKAO && phoneNumber != null) {
+                Map<String, String> alimTalkParams = buildAlimTalkParams(notificationType, params);
+                if (sendKakaoAlimTalk(phoneNumber, notificationType, alimTalkParams)) {
+                    log.info("✅ 카카오 알림톡 발송 성공: {}", user.getName());
+                    return true;
+                }
+            } else if (ch == NotificationPhysicalChannel.SMS && phoneNumber != null) {
+                String smsMessage = buildSmsMessage(notificationType, params);
+                if (sendSms(phoneNumber, smsMessage)) {
+                    log.info("✅ SMS 발송 성공: {}", user.getName());
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     
     /**
@@ -286,23 +293,6 @@ public class NotificationServiceImpl implements NotificationService {
         }
         
         return alimTalkParams;
-    }
-    
-    /**
-     * 전역 {@code kakao.alimtalk.*} 가용성 + 테넌트 DB {@code alimtalk_enabled}
-     * (설정 행 없으면 true, §11.4 전역 상속).
-     *
-     * @return 알림톡 채널 시도 가능 여부
-     */
-    private boolean isAlimTalkChannelAvailable() {
-        if (!kakaoAlimTalkService.isServiceAvailable()) {
-            return false;
-        }
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
-            return true;
-        }
-        return tenantKakaoAlimtalkSettingsService.isAlimTalkEnabledForTenant(tenantId);
     }
     
     /**

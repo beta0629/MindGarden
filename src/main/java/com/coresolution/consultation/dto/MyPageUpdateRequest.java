@@ -30,4 +30,7 @@ public class MyPageUpdateRequest {
     private String address;          // 시/도 + 구/군 + 동/읍/면 (기본 주소 문자열)
     private String addressDetail;    // 상세 주소
     private Boolean isPrimary;       // 기본 주소로 설정 여부
+
+    /** 알림 수신 채널 선호: TENANT_DEFAULT | KAKAO | SMS */
+    private String notificationChannelPreference;
 }

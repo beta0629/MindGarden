@@ -127,6 +127,8 @@ class AdminServiceImplConfirmDepositApproveTest {
     @Mock
     private ClientStatsService clientStatsService;
     @Mock
+    private NotificationChannelPreferenceResolutionService notificationChannelPreferenceResolutionService;
+    @Mock
     private PasswordResetService passwordResetService;
     @Mock
     private UserIdGenerator userIdGenerator;
@@ -187,6 +189,7 @@ class AdminServiceImplConfirmDepositApproveTest {
                 userPersonalDataCacheService,
                 consultantStatsService,
                 clientStatsService,
+                notificationChannelPreferenceResolutionService,
                 passwordResetService,
                 noopTransactionManager,
                 userIdGenerator,

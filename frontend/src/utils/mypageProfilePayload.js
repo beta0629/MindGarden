@@ -1,3 +1,4 @@
+import { NOTIFICATION_CHANNEL_PREFERENCE_VALUE } from '../constants/notificationChannelPreference';
 import { isConsultantUserProfileRole } from '../constants/mypageProfileRoles';
 
 /**
@@ -118,6 +119,9 @@ function buildSessionMyPagePayload(data) {
   const payload = {
     ...buildIdentityAndAddressPayload(data)
   };
+  if (data.notificationChannelPreference != null && data.notificationChannelPreference !== '') {
+    payload.notificationChannelPreference = data.notificationChannelPreference;
+  }
   const img = data.profileImage;
   if (img && typeof img === 'string' && img !== '/default-avatar.svg') {
     payload.profileImage = img;
@@ -142,6 +146,9 @@ function buildConsultantUserProfilePayload(data) {
   const img = data.profileImage;
   if (img && typeof img === 'string' && img !== '/default-avatar.svg') {
     payload.profileImageUrl = img;
+  }
+  if (data.notificationChannelPreference != null && data.notificationChannelPreference !== '') {
+    payload.notificationChannelPreference = data.notificationChannelPreference;
   }
   return stripUndefinedDeep(payload);
 }
@@ -182,7 +189,13 @@ function mapMyPageResponseToForm(response) {
     education: '',
     awards: '',
     research: '',
-    hourlyRate: null
+    hourlyRate: null,
+    notificationChannelPreference:
+      response.notificationChannelPreference || NOTIFICATION_CHANNEL_PREFERENCE_VALUE.TENANT_DEFAULT,
+    tenantNotificationChannelKakaoAvailable: response.tenantNotificationChannelKakaoAvailable,
+    tenantNotificationChannelSmsAvailable: response.tenantNotificationChannelSmsAvailable,
+    tenantDefaultNotificationChannelHint: response.tenantDefaultNotificationChannelHint,
+    notificationChannelPreferenceUiAdjusted: response.notificationChannelPreferenceUiAdjusted
   };
 }
 
@@ -210,7 +223,13 @@ function mapUserProfileResponseToForm(response) {
     education: response.education || '',
     awards: response.awards || '',
     research: response.research || '',
-    hourlyRate: response.hourlyRate ?? null
+    hourlyRate: response.hourlyRate ?? null,
+    notificationChannelPreference:
+      response.notificationChannelPreference || NOTIFICATION_CHANNEL_PREFERENCE_VALUE.TENANT_DEFAULT,
+    tenantNotificationChannelKakaoAvailable: response.tenantNotificationChannelKakaoAvailable,
+    tenantNotificationChannelSmsAvailable: response.tenantNotificationChannelSmsAvailable,
+    tenantDefaultNotificationChannelHint: response.tenantDefaultNotificationChannelHint,
+    notificationChannelPreferenceUiAdjusted: response.notificationChannelPreferenceUiAdjusted
   };
 }
 

@@ -58,3 +58,7 @@
   font-weight: 600;
   color: var(--ad-b0kla-title-color);
 }
+
+.mg-v2-client-modal__notification-channel {
+  margin-top: var(--mg-spacing-md, 1rem);
+}

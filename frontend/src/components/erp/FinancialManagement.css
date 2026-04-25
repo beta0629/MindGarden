@@ -71,6 +71,35 @@
   line-height: var(--mg-line-height-snug, 1.4);
 }
 
+.mg-financial-search-scope-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-sm, var(--spacing-sm));
+  margin-bottom: var(--mg-spacing-xs, var(--spacing-xs));
+}
+
+.mg-financial-search-scope-badge {
+  font-size: var(--mg-font-size-caption, var(--font-size-sm));
+  color: var(--mg-color-text-secondary);
+  border: 1px solid var(--mg-color-border-main);
+  background: var(--mg-color-surface-main);
+}
+
+.mg-financial-search-scope-hint {
+  margin: 0 0 var(--mg-spacing-xs, var(--spacing-xs));
+  font-size: var(--mg-font-size-caption, var(--font-size-sm));
+  color: var(--mg-color-text-secondary);
+  line-height: var(--mg-line-height-snug, 1.4);
+}
+
+.mg-financial-pagination-meta {
+  margin: var(--mg-spacing-sm, var(--spacing-sm)) 0 0;
+  font-size: var(--mg-font-size-caption, var(--font-size-sm));
+  color: var(--mg-color-text-secondary);
+  line-height: var(--mg-line-height-snug, 1.4);
+}
+
 /* 거래 탭 2행: 검색 넓게, 액션은 오른쪽 고정 폭 */
 .erp-system .mg-financial-filter-secondary {
   align-items: flex-end;

@@ -65,6 +65,9 @@ public class ConsultantRegistrationRequest {
     /** 상태 (ACTIVE, INACTIVE, PENDING 등). 수정/등록 시 User.isActive 매핑에 사용 */
     private String status;
 
+    /** 알림 수신 채널 선호. 관리자 통합 수정 시에만 적용; ADMIN만 변경 가능. */
+    private String notificationChannelPreference;
+
     /** 프로필 사진 (base64 data URL, 최대 2MB, 리사이즈·크롭 적용) */
     private String profileImageUrl;
 

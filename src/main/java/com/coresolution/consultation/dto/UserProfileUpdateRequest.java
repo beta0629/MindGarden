@@ -113,4 +113,8 @@ public class UserProfileUpdateRequest {
     
     // 추가 정보 등록 단계 (1: 기본정보, 2: 역할별추가정보, 3: 완료)
     private Integer profileStep;
+
+    /** 알림 수신 채널 선호: TENANT_DEFAULT | KAKAO | SMS (내담자·상담사만 적용) */
+    @Size(max = 32, message = "알림 채널 선호 값이 너무 깁니다.")
+    private String notificationChannelPreference;
 }

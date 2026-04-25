@@ -9,6 +9,7 @@ import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -21,7 +22,8 @@ import org.springframework.stereotype.Repository;
  * @since 2025-01-11
  */
 @Repository
-public interface FinancialTransactionRepository extends JpaRepository<FinancialTransaction, Long> {
+public interface FinancialTransactionRepository extends JpaRepository<FinancialTransaction, Long>,
+        JpaSpecificationExecutor<FinancialTransaction> {
 
     /**
      * 테넌트 ID와 거래 PK로 비삭제 건만 조회 (테넌트 격리)

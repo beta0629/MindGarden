@@ -48,9 +48,20 @@ import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 import { CONSULTANT_COMP_SPECIALTY, CONSULTANT_COMP_PASSWORD_RESET } from '../../constants/consultantComprehensiveStrings';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import NotificationChannelPreferenceSection from '../mypage/components/NotificationChannelPreferenceSection';
+import { NOTIFICATION_CHANNEL_PREFERENCE_VALUE } from '../../constants/notificationChannelPreference';
 
 /** ContentHeader / 본문 main aria-labelledby 연동 */
 const CONSULTANT_COMP_MGMT_TITLE_ID = 'consultant-comprehensive-management-title';
+
+const CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS = {
+  notificationChannelPreference: 'TENANT_DEFAULT',
+  tenantNotificationChannelKakaoAvailable: undefined,
+  tenantNotificationChannelSmsAvailable: undefined,
+  tenantDefaultNotificationChannelHint: undefined,
+  notificationChannelPreferenceUiAdjusted: undefined,
+  notificationChannelPreferenceEditableByCaller: true
+};
 
 const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const navigate = useNavigate();
@@ -82,7 +93,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         addressDetail: '',
         postalCode: '',
         qualifications: '',
-        workHistory: ''
+        workHistory: '',
+        ...CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
     });
     const [specialtyCodes, setSpecialtyCodes] = useState([]);
     const [gradeOptions, setGradeOptions] = useState([]);
@@ -604,7 +616,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     addressDetail: consultant.addressDetail || '',
                     postalCode: consultant.postalCode || '',
                     qualifications: consultant.certification || '',
-                    workHistory: consultant.workHistory || ''
+                    workHistory: consultant.workHistory || '',
+                    ...CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
                 });
             }
         } else if (type === 'create') {
@@ -624,7 +637,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 addressDetail: '',
                 postalCode: '',
                 qualifications: '',
-                workHistory: ''
+                workHistory: '',
+                ...CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
             });
         }
         setShowModal(true);
@@ -651,9 +665,44 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             addressDetail: '',
             postalCode: '',
             qualifications: '',
-            workHistory: ''
+            workHistory: '',
+            ...CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
     }, []);
+
+    useEffect(() => {
+        if (!showModal || !selectedConsultant?.id) {
+            return undefined;
+        }
+        if (modalType !== 'view' && modalType !== 'edit') {
+            return undefined;
+        }
+        let cancelled = false;
+        (async() => {
+            try {
+                const profile = await StandardizedApi.get(`/api/v1/users/profile/${selectedConsultant.id}`);
+                if (cancelled || !profile) {
+                    return;
+                }
+                setFormData((prev) => ({
+                    ...prev,
+                    notificationChannelPreference:
+                        profile.notificationChannelPreference || NOTIFICATION_CHANNEL_PREFERENCE_VALUE.TENANT_DEFAULT,
+                    tenantNotificationChannelKakaoAvailable: profile.tenantNotificationChannelKakaoAvailable,
+                    tenantNotificationChannelSmsAvailable: profile.tenantNotificationChannelSmsAvailable,
+                    tenantDefaultNotificationChannelHint: profile.tenantDefaultNotificationChannelHint,
+                    notificationChannelPreferenceUiAdjusted: profile.notificationChannelPreferenceUiAdjusted,
+                    notificationChannelPreferenceEditableByCaller:
+                        profile.notificationChannelPreferenceEditableByCaller !== false
+                }));
+            } catch (err) {
+                console.debug('상담사 알림 채널 선호 로드 생략:', err);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [showModal, selectedConsultant?.id, modalType]);
 
     const handleFormChange = useCallback((e) => { 
             const { name, value } = e.target;
@@ -941,6 +990,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             };
             if (rrnFirst6) requestPayload.rrnFirst6 = rrnFirst6;
             if (rrnLast1) requestPayload.rrnLast1 = rrnLast1;
+            if (data.notificationChannelPreference != null
+                && String(data.notificationChannelPreference).trim() !== '') {
+                requestPayload.notificationChannelPreference =
+                    String(data.notificationChannelPreference).trim();
+            }
             const response = await apiPut(`/api/v1/admin/consultants/${id}`, requestPayload);
             // apiPut은 ApiResponse의 data만 반환하므로 success는 response.success가 아닌 반환값 유무/형식으로 판단
             const isSuccess = response != null && (response.success === true || response.id != null);
@@ -1779,6 +1833,24 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                         )}
                                     </div>
                                 </div>
+                                {selectedConsultant.id ? (
+                                    <div className="mg-v2-client-modal__notification-channel">
+                                        <NotificationChannelPreferenceSection
+                                            subjectRole="CONSULTANT"
+                                            isEditing={false}
+                                            readOnlyDueToPolicy
+                                            preferenceValue={
+                                                formData.notificationChannelPreference
+                                                || NOTIFICATION_CHANNEL_PREFERENCE_VALUE.TENANT_DEFAULT
+                                            }
+                                            tenantKakaoAvailable={formData.tenantNotificationChannelKakaoAvailable}
+                                            tenantSmsAvailable={formData.tenantNotificationChannelSmsAvailable}
+                                            tenantDefaultHint={formData.tenantDefaultNotificationChannelHint}
+                                            preferenceUiAdjusted={formData.notificationChannelPreferenceUiAdjusted}
+                                            onPreferenceChange={() => {}}
+                                        />
+                                    </div>
+                                ) : null}
                             </div>
                         </div>
                     )}
@@ -2142,6 +2214,30 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             </div>
                         </>
                     )}
+                    {modalType === 'edit' && selectedConsultant?.id ? (
+                        <div className="mg-v2-client-modal__notification-channel">
+                            <NotificationChannelPreferenceSection
+                                subjectRole="CONSULTANT"
+                                isEditing
+                                readOnlyDueToPolicy={formData.notificationChannelPreferenceEditableByCaller === false}
+                                readOnlyHintI18nKey="admin.userProfile.notificationChannel.staffReadOnlyHint"
+                                preferenceValue={
+                                    formData.notificationChannelPreference
+                                    || NOTIFICATION_CHANNEL_PREFERENCE_VALUE.TENANT_DEFAULT
+                                }
+                                tenantKakaoAvailable={formData.tenantNotificationChannelKakaoAvailable}
+                                tenantSmsAvailable={formData.tenantNotificationChannelSmsAvailable}
+                                tenantDefaultHint={formData.tenantDefaultNotificationChannelHint}
+                                preferenceUiAdjusted={formData.notificationChannelPreferenceUiAdjusted}
+                                onPreferenceChange={(e) => {
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        notificationChannelPreference: e.target.value
+                                    }));
+                                }}
+                            />
+                        </div>
+                    ) : null}
                 </form>
             </div>
         );

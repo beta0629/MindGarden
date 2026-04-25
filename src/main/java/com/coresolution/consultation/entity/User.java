@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.coresolution.consultation.constant.NotificationChannelPreferenceCode;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.converter.UserRoleConverter;
 import jakarta.persistence.CascadeType;
@@ -255,6 +256,14 @@ public class User extends BaseEntity {
      */
     @Column(name = "notification_preferences", columnDefinition = "TEXT")
     private String notificationPreferences;
+
+    /**
+     * 알림 수신 채널 선호(Phase1). 레거시 {@link #notificationPreferences}·소셜 플래그와 병행 시
+     * 발송 라우팅 우선순위는 {@code NotificationServiceImpl} 주석을 따른다.
+     */
+    @Column(name = "notification_channel_preference", nullable = false, length = 32)
+    @Builder.Default
+    private String notificationChannelPreference = NotificationChannelPreferenceCode.TENANT_DEFAULT.name();
     
     /**
      * 테마 설정 (client, consultant, admin)

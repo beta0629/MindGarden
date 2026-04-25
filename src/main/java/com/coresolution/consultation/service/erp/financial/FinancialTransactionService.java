@@ -60,6 +60,23 @@ public interface FinancialTransactionService {
      * 기간별 목록 조회
      */
     Page<FinancialTransactionResponse> getTransactionsByDateRange(LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    /**
+     * 재무 거래 목록 조회(테넌트 컨텍스트 필수): 기간·거래유형·카테고리를 조합해 페이징합니다.
+     * transactionType·category가 null·빈값·ALL이면 해당 축은 필터하지 않습니다.
+     * 기간이 null이면 날짜 축 필터를 적용하지 않습니다.
+     *
+     * @param transactionType 거래 유형 이름(예: INCOME), null/ALL이면 전체
+     * @param category        카테고리 코드; 상담료(CONSULTATION) 필터는 레거시 카테고리까지 포함
+     * @param startDate       시작일(포함), null이면 하한 없음
+     * @param endDate         종료일(포함), null이면 상한 없음
+     * @param pageable        페이징
+     * @return 거래 응답 페이지
+     * @author CoreSolution
+     * @since 2026-04-25
+     */
+    Page<FinancialTransactionResponse> getTransactionsFiltered(String transactionType, String category,
+            LocalDate startDate, LocalDate endDate, Pageable pageable);
     
     /**
      * 승인 대기 거래 목록 조회

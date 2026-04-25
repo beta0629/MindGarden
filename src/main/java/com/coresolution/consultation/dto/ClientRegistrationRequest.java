@@ -73,6 +73,9 @@ public class ClientRegistrationRequest {
     private String status;
     
     private String registeredBy;
+
+    /** 알림 수신 채널 선호(TENANT_DEFAULT|KAKAO|SMS). 관리자 통합 수정 시에만 적용; ADMIN만 변경 가능. */
+    private String notificationChannelPreference;
     
     /** 프로필 사진 (base64 data URL, 최대 2MB, 리사이즈·크롭 적용) */
     private String profileImageUrl;

@@ -20,6 +20,8 @@ import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../..
 import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentKpiRow from '../../dashboard-v2/content/ContentKpiRow';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
+import NotificationChannelPreferenceSection from '../../mypage/components/NotificationChannelPreferenceSection';
+import { NOTIFICATION_CHANNEL_PREFERENCE_VALUE } from '../../../constants/notificationChannelPreference';
 import './ClientModal.css';
 
 /** GET with-stats 및 목록 스냅샷 필드에 맞춘 KPI 라벨(완료율 등 오해 소지 필드는 표시하지 않음) */
@@ -141,6 +143,37 @@ const ClientModal = ({
         cancelled = true;
       };
     }, [type, client?.id, setFormData]);
+
+    useEffect(() => {
+      if (!client?.id || (type !== 'view' && type !== 'edit')) {
+        return undefined;
+      }
+      let cancelled = false;
+      (async() => {
+        try {
+          const profile = await StandardizedApi.get(`/api/v1/users/profile/${client.id}`);
+          if (cancelled || !profile) {
+            return;
+          }
+          setFormData((prev) => ({
+            ...prev,
+            notificationChannelPreference:
+              profile.notificationChannelPreference || NOTIFICATION_CHANNEL_PREFERENCE_VALUE.TENANT_DEFAULT,
+            tenantNotificationChannelKakaoAvailable: profile.tenantNotificationChannelKakaoAvailable,
+            tenantNotificationChannelSmsAvailable: profile.tenantNotificationChannelSmsAvailable,
+            tenantDefaultNotificationChannelHint: profile.tenantDefaultNotificationChannelHint,
+            notificationChannelPreferenceUiAdjusted: profile.notificationChannelPreferenceUiAdjusted,
+            notificationChannelPreferenceEditableByCaller:
+              profile.notificationChannelPreferenceEditableByCaller !== false
+          }));
+        } catch (err) {
+          console.debug('내담자 알림 채널 선호 로드 생략:', err);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [client?.id, type, setFormData]);
 
     const summaryKpiItems = useMemo(() => {
       if (!clientSummary) {
@@ -755,6 +788,32 @@ const ClientModal = ({
                         className="mg-v2-form-badge-select"
                     />
                 </div>
+                {(type === 'view' || type === 'edit') && client?.id ? (
+                    <div className="mg-v2-client-modal__notification-channel">
+                        <NotificationChannelPreferenceSection
+                            subjectRole="CLIENT"
+                            isEditing={type === 'edit'}
+                            readOnlyDueToPolicy={
+                                type === 'view' || formData.notificationChannelPreferenceEditableByCaller === false
+                            }
+                            readOnlyHintI18nKey="admin.userProfile.notificationChannel.staffReadOnlyHint"
+                            preferenceValue={
+                                formData.notificationChannelPreference
+                                || NOTIFICATION_CHANNEL_PREFERENCE_VALUE.TENANT_DEFAULT
+                            }
+                            tenantKakaoAvailable={formData.tenantNotificationChannelKakaoAvailable}
+                            tenantSmsAvailable={formData.tenantNotificationChannelSmsAvailable}
+                            tenantDefaultHint={formData.tenantDefaultNotificationChannelHint}
+                            preferenceUiAdjusted={formData.notificationChannelPreferenceUiAdjusted}
+                            onPreferenceChange={(e) => {
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    notificationChannelPreference: e.target.value
+                                }));
+                            }}
+                        />
+                    </div>
+                ) : null}
                 <ContentSection title="상담 정보" noCard className="mg-v2-client-modal__subsection">
                     <div className="mg-v2-form-group">
                         <label htmlFor="client-consultationPurpose" className="mg-v2-form-label">상담 목적</label>

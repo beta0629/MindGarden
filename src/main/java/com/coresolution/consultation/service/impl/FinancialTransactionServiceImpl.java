@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import jakarta.persistence.criteria.Predicate;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.FinancialDashboardResponse;
@@ -36,6 +37,7 @@ import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -302,6 +304,75 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         log.info("✅ 재무 거래 기간별 조회 완료: tenantId={}, 기간={}~{}, 총 {}건", tenantId, startDate, endDate, transactions.getTotalElements());
         
         return transactions.map(this::convertToResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<FinancialTransactionResponse> getTransactionsFiltered(String transactionType, String category,
+            LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        String tenantId = getTenantIdOrNull();
+        log.info("🏢 재무 거래 필터 조회: tenantId={}, 유형={}, 카테고리={}, 기간={}~{}",
+                tenantId, transactionType, category, startDate, endDate);
+        if (tenantId == null || tenantId.isBlank()) {
+            log.warn("⚠️ 재무 거래 필터 조회: tenantId 없음 — 빈 페이지 반환");
+            return Page.empty(pageable);
+        }
+
+        FinancialTransaction.TransactionType typeEnum = parseTransactionTypeFilter(transactionType);
+        Specification<FinancialTransaction> spec =
+                buildTransactionListSpecification(tenantId, startDate, endDate, typeEnum, category);
+
+        Page<FinancialTransaction> transactions = financialTransactionRepository.findAll(spec, pageable);
+        log.info("✅ 재무 거래 필터 조회 완료: tenantId={}, 총 {}건", tenantId, transactions.getTotalElements());
+        return transactions.map(this::convertToResponse);
+    }
+
+    private static FinancialTransaction.TransactionType parseTransactionTypeFilter(String transactionType) {
+        if (transactionType == null || transactionType.isBlank()) {
+            return null;
+        }
+        String trimmed = transactionType.trim();
+        if ("ALL".equalsIgnoreCase(trimmed)) {
+            return null;
+        }
+        try {
+            return FinancialTransaction.TransactionType.valueOf(trimmed.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("유효하지 않은 거래 유형입니다: " + trimmed, ex);
+        }
+    }
+
+    private Specification<FinancialTransaction> buildTransactionListSpecification(String tenantId,
+            LocalDate startDate, LocalDate endDate,
+            FinancialTransaction.TransactionType transactionType,
+            String categoryFilter) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("tenantId"), tenantId));
+            predicates.add(cb.isFalse(root.get("isDeleted")));
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("transactionDate"), startDate));
+            }
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("transactionDate"), endDate));
+            }
+            if (transactionType != null) {
+                predicates.add(cb.equal(root.get("transactionType"), transactionType));
+            }
+            if (categoryFilter != null && !categoryFilter.isBlank() && !"ALL".equalsIgnoreCase(categoryFilter.trim())) {
+                if (FinancialTransactionConstants.isConsultationCategory(categoryFilter)) {
+                    predicates.add(root.get("category").in(Arrays.asList(
+                            FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE,
+                            FinancialTransactionConstants.CATEGORY_CONSULTATION_LEGACY)));
+                } else {
+                    predicates.add(cb.equal(root.get("category"), categoryFilter.trim()));
+                }
+            }
+            if (query != null) {
+                query.orderBy(cb.desc(root.get("transactionDate")), cb.desc(root.get("createdAt")));
+            }
+            return cb.and(predicates.toArray(Predicate[]::new));
+        };
     }
     
     @Override

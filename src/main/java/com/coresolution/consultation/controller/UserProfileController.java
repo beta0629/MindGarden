@@ -8,6 +8,7 @@ import com.coresolution.consultation.dto.UserProfileResponse;
 import com.coresolution.consultation.dto.UserProfileUpdateRequest;
 import com.coresolution.consultation.service.UserProfileService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,6 +45,8 @@ public class UserProfileController {
         try {
             UserProfileResponse response = userProfileService.getUserProfile(userId);
             return ResponseEntity.ok(response);
+        } catch (AccessDeniedException e) {
+            throw e;
         } catch (Exception e) {
             log.error("유저 프로필 조회 중 오류 발생: userId={}, error={}", userId, e.getMessage(), e);
             return ResponseEntity.badRequest().build();
@@ -62,6 +65,8 @@ public class UserProfileController {
             log.info("유저 프로필 업데이트 요청: userId={}", userId);
             UserProfileResponse response = userProfileService.updateUserProfile(userId, request);
             return ResponseEntity.ok(response);
+        } catch (AccessDeniedException e) {
+            throw e;
         } catch (Exception e) {
             log.error("유저 프로필 업데이트 중 오류 발생: userId={}, error={}", userId, e.getMessage(), e);
             return ResponseEntity.badRequest().build();

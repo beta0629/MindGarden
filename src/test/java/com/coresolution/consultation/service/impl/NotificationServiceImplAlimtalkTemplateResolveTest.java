@@ -1,13 +1,19 @@
 package com.coresolution.consultation.service.impl;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.coresolution.consultation.constant.NotificationChannelPreferenceCode;
+import com.coresolution.consultation.constant.NotificationPhysicalChannel;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.AlertRepository;
@@ -64,17 +70,44 @@ class NotificationServiceImplAlimtalkTemplateResolveTest {
     @Mock
     private TenantKakaoAlimtalkSettingsService tenantKakaoAlimtalkSettingsService;
 
+    @Mock
+    private NotificationChannelPreferenceResolutionService channelPreferenceResolutionService;
+
     @InjectMocks
     private NotificationServiceImpl notificationService;
 
     @BeforeEach
     void setTenant() {
         TenantContextHolder.setTenantId(TENANT_ID);
+        lenient().when(channelPreferenceResolutionService.resolveDeliveryOrder(
+                any(NotificationChannelPreferenceCode.class),
+                any(NotificationPriority.class),
+                anyBoolean(),
+                anyBoolean(),
+                nullable(String.class)))
+            .thenReturn(List.of(NotificationPhysicalChannel.KAKAO));
     }
 
     @AfterEach
     void clearTenant() {
         TenantContextHolder.clear();
+    }
+
+    @Test
+    @DisplayName("발송 시 resolveDeliveryOrder에 사용자 저장 선호(SMS)가 전달된다")
+    void sendNotification_passesStoredSmsPreferenceToChannelResolver() {
+        stubAlimTalkChannelAndSendOk();
+        User user = kakaoUserWithPhone();
+        user.setNotificationChannelPreference("SMS");
+
+        notificationService.sendNotification(user, TYPE, NotificationPriority.HIGH, "c", "2026-05-01", "10:00");
+
+        verify(channelPreferenceResolutionService).resolveDeliveryOrder(
+            eq(NotificationChannelPreferenceCode.SMS),
+            eq(NotificationPriority.HIGH),
+            eq(true),
+            eq(true),
+            eq(TENANT_ID));
     }
 
     @Test

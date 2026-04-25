@@ -89,7 +89,12 @@ const MyPage = () => {
     education: '',
     awards: '',
     research: '',
-    hourlyRate: null
+    hourlyRate: null,
+    notificationChannelPreference: 'TENANT_DEFAULT',
+    tenantNotificationChannelKakaoAvailable: undefined,
+    tenantNotificationChannelSmsAvailable: undefined,
+    tenantDefaultNotificationChannelHint: undefined,
+    notificationChannelPreferenceUiAdjusted: undefined
   });
 
   const visibleTabs = MYPAGE_TAB_ORDER.filter((key) => MYPAGE_TAB_SET.has(key));
@@ -177,7 +182,12 @@ const MyPage = () => {
           education: '',
           awards: '',
           research: '',
-          hourlyRate: null
+          hourlyRate: null,
+          notificationChannelPreference: 'TENANT_DEFAULT',
+          tenantNotificationChannelKakaoAvailable: undefined,
+          tenantNotificationChannelSmsAvailable: undefined,
+          tenantDefaultNotificationChannelHint: undefined,
+          notificationChannelPreferenceUiAdjusted: undefined
         };
         setUser(currentUser);
         setFormData(normalizeProfileFormNameField(formDataToSet));
@@ -306,13 +316,30 @@ const MyPage = () => {
       };
     }
 
+    if (response) {
+      dataAfterSave = {
+        ...dataAfterSave,
+        notificationChannelPreference:
+          response.notificationChannelPreference ?? dataAfterSave.notificationChannelPreference,
+        tenantNotificationChannelKakaoAvailable: response.tenantNotificationChannelKakaoAvailable,
+        tenantNotificationChannelSmsAvailable: response.tenantNotificationChannelSmsAvailable,
+        tenantDefaultNotificationChannelHint: response.tenantDefaultNotificationChannelHint,
+        notificationChannelPreferenceUiAdjusted: response.notificationChannelPreferenceUiAdjusted
+      };
+    }
+
     setUser((prev) => {
       if (!isConsultantUserProfileRole(currentUser.role)) {
         return {
           ...prev,
           ...response,
           profileImage: nextProfileImage,
-          profileImageType: dataToUpdate.profileImageType || response.profileImageType
+          profileImageType: dataToUpdate.profileImageType || response.profileImageType,
+          notificationChannelPreference: response.notificationChannelPreference,
+          tenantNotificationChannelKakaoAvailable: response.tenantNotificationChannelKakaoAvailable,
+          tenantNotificationChannelSmsAvailable: response.tenantNotificationChannelSmsAvailable,
+          tenantDefaultNotificationChannelHint: response.tenantDefaultNotificationChannelHint,
+          notificationChannelPreferenceUiAdjusted: response.notificationChannelPreferenceUiAdjusted
         };
       }
       if (!response) {
@@ -340,7 +367,12 @@ const MyPage = () => {
         education: response.education,
         awards: response.awards,
         research: response.research,
-        hourlyRate: response.hourlyRate
+        hourlyRate: response.hourlyRate,
+        notificationChannelPreference: response.notificationChannelPreference,
+        tenantNotificationChannelKakaoAvailable: response.tenantNotificationChannelKakaoAvailable,
+        tenantNotificationChannelSmsAvailable: response.tenantNotificationChannelSmsAvailable,
+        tenantDefaultNotificationChannelHint: response.tenantDefaultNotificationChannelHint,
+        notificationChannelPreferenceUiAdjusted: response.notificationChannelPreferenceUiAdjusted
       };
     });
 

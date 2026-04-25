@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.MyPageResponse;
 import com.coresolution.consultation.dto.MyPageUpdateRequest;
 import com.coresolution.consultation.entity.User;
@@ -27,6 +28,7 @@ public class MyPageServiceImpl implements MyPageService {
     private final PasswordService passwordService;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserAddressRepository userAddressRepository;
+    private final NotificationChannelPreferenceResolutionService notificationChannelPreferenceResolutionService;
 
     /**
      * 현재 테넌트 컨텍스트와 PK로 사용자를 조회합니다.
@@ -131,6 +133,9 @@ public class MyPageServiceImpl implements MyPageService {
             userId, 
             finalProfileImageUrl != null ? finalProfileImageUrl.substring(0, Math.min(50, finalProfileImageUrl.length())) + "..." : "null",
             profileImageType);
+
+        NotificationChannelPreferenceResolutionService.NotificationChannelProfileSnapshot channelSnap =
+            notificationChannelPreferenceResolutionService.buildProfileSnapshot(user);
         
         return MyPageResponse.builder()
                 .id(user.getId())
@@ -156,6 +161,11 @@ public class MyPageServiceImpl implements MyPageService {
                 .isEmailVerified(user.getIsEmailVerified())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
+                .notificationChannelPreference(channelSnap.notificationChannelPreference())
+                .tenantNotificationChannelKakaoAvailable(channelSnap.tenantNotificationChannelKakaoAvailable())
+                .tenantNotificationChannelSmsAvailable(channelSnap.tenantNotificationChannelSmsAvailable())
+                .tenantDefaultNotificationChannelHint(channelSnap.tenantDefaultNotificationChannelHint())
+                .notificationChannelPreferenceUiAdjusted(channelSnap.notificationChannelPreferenceUiAdjusted())
                 .build();
     }
 
@@ -218,6 +228,13 @@ public class MyPageServiceImpl implements MyPageService {
             
             // Base64 이미지 저장 (TEXT 컬럼으로 저장 가능)
             user.setProfileImageUrl(request.getProfileImage());
+        }
+
+        if (request.getNotificationChannelPreference() != null
+            && (UserRole.CLIENT.equals(user.getRole()) || UserRole.CONSULTANT.equals(user.getRole()))) {
+            String normalized = notificationChannelPreferenceResolutionService.normalizeIncomingPreference(
+                request.getNotificationChannelPreference(), user.getTenantId());
+            user.setNotificationChannelPreference(normalized);
         }
         
         User updatedUser = userRepository.save(user);

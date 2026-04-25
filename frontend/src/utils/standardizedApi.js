@@ -25,7 +25,8 @@ class StandardizedApi {
      * GET 요청 (표준화)
      * @param {string} endpoint API 엔드포인트 (예: '/api/v1/admin/consultants/with-stats')
      * @param {Object} params 쿼리 파라미터
-     * @param {Object} options 추가 옵션
+     * @param {Object} options 추가 옵션 (apiGet으로 전달). unwrapApiEnvelope가 false이면
+     *                  success·data·totalPages 등 전체 JSON 객체를 반환합니다.
      * @returns {Promise<any>} API 응답 데이터
      */
     static async get(endpoint, params = {}, options = {}) {

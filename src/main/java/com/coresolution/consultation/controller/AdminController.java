@@ -2882,19 +2882,38 @@ public class AdminController extends BaseApiController {
                 return ResponseEntity.status(401).body(response);
             }
 
-            // 표준화 원칙: SessionUtils.getTenantId() 사용
             String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId == null || tenantId.isBlank()) {
+                log.warn("❌ 재무 거래 목록: tenantId 없음 userId={}", currentUser.getId());
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "테넌트 정보가 없습니다. 관리자에게 문의하세요.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
             log.info("👤 현재 사용자: 이메일={}, 역할={}, tenantId={}", currentUser.getEmail(),
                     currentUser.getRole(), tenantId);
 
-            org.springframework.data.domain.Pageable pageable = PaginationUtils.createPageable(page, size);
-            org.springframework.data.domain.Page<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions;
-            if (startDate != null && !startDate.isBlank() && endDate != null && !endDate.isBlank()) {
-                transactions = financialTransactionService.getTransactionsByDateRange(
-                        LocalDate.parse(startDate), LocalDate.parse(endDate), pageable);
-            } else {
-                transactions = financialTransactionService.getTransactions(pageable);
+            LocalDate parsedStart = null;
+            LocalDate parsedEnd = null;
+            if (StringUtils.hasText(startDate) && StringUtils.hasText(endDate)) {
+                try {
+                    parsedStart = LocalDate.parse(startDate.trim());
+                    parsedEnd = LocalDate.parse(endDate.trim());
+                } catch (Exception ex) {
+                    log.warn("❌ 재무 거래 목록: 날짜 파싱 실패 startDate={} endDate={}", startDate, endDate);
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", false);
+                    response.put("message", "시작일·종료일 형식이 올바르지 않습니다.");
+                    return ResponseEntity.badRequest().body(response);
+                }
             }
+
+            org.springframework.data.domain.Pageable pageable = PaginationUtils.createPageable(page, size);
+            org.springframework.data.domain.Page<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions =
+                    financialTransactionService.getTransactionsFiltered(
+                            transactionType, category, parsedStart, parsedEnd, pageable);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -2909,6 +2928,12 @@ public class AdminController extends BaseApiController {
 
             return ResponseEntity.ok(response);
 
+        } catch (IllegalArgumentException e) {
+            log.warn("❌ 재무 거래 목록 조회: 잘못된 요청 {}", e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             log.error("❌ 재무 거래 목록 조회 실패: {}", e.getMessage(), e);
 

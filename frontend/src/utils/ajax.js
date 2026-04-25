@@ -141,6 +141,7 @@ const handleError = (error, status) => {
 // GET 요청
 export const apiGet = async(endpoint, params = {}, options = {}) => {
   try {
+    const { unwrapApiEnvelope: unwrapApiEnvelopeOption, headers: optionHeaders, ...fetchOptions } = options;
     // endpoint가 이미 전체 URL인지 확인 (http:// 또는 https://로 시작)
     const isFullUrl = endpoint.startsWith('http://') || endpoint.startsWith('https://');
     
@@ -152,14 +153,14 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       ? (queryString ? `${endpoint}?${queryString}` : endpoint)
       : (queryString ? `${apiBaseUrl}${endpoint}?${queryString}` : `${apiBaseUrl}${endpoint}`);
     
-    const headers = { ...getDefaultHeaders(), ...options.headers };
+    const headers = { ...getDefaultHeaders(), ...optionHeaders };
     console.log('📤 API GET 요청:', { url, headers: { ...headers, 'Authorization': headers['Authorization'] ? 'Bearer ***' : undefined, 'X-Tenant-Id': headers['X-Tenant-Id'] } });
     
     const response = await fetch(url, {
       method: 'GET',
       headers,
       credentials: 'include', // 세션 쿠키 포함
-      ...options
+      ...fetchOptions
     });
 
     // 응답 본문이 비어있는 경우 처리
@@ -263,8 +264,10 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       }
     }
 
+    const shouldUnwrapApiEnvelope = unwrapApiEnvelopeOption !== false;
     // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출. data가 null/undefined면 전체 객체 반환(성공 여부 판단용)
-    if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
+    // unwrapApiEnvelope === false 이면 totalPages 등 메타가 필요한 호출에서 전체 래퍼를 반환
+    if (shouldUnwrapApiEnvelope && jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
       const { data } = jsonData;
       if (data !== null && data !== undefined) {
         return data;

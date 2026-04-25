@@ -42,4 +42,10 @@ public class MyPageResponse {
     private Boolean isEmailVerified;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    private String notificationChannelPreference;
+    private Boolean tenantNotificationChannelKakaoAvailable;
+    private Boolean tenantNotificationChannelSmsAvailable;
+    private String tenantDefaultNotificationChannelHint;
+    private Boolean notificationChannelPreferenceUiAdjusted;
 }

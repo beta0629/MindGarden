@@ -379,7 +379,7 @@ const parseDateRangeFromSearch = (search) => {
 
 /**
  * 거래 검색(플레이스홀더: 상담사명·내담자명·설명 등).
- * Admin 재무 목록 API는 search 파라미터를 사용하지 않으므로 클라이언트에서만 필터한다.
+ * 목록 API는 검색 쿼리를 받지 않으며, 불러온 현재 페이지 행에만 아래 필터를 적용한다(화면 배지·보조문구 참고).
  *
  * @param {Record<string, unknown>} transaction
  * @param {string} searchLower trim·toLowerCase 된 검색어; 빈 문자열이면 항상 true
@@ -437,6 +437,8 @@ const FinancialManagement = () => {
   });
 
   const dateRangeQueryStrippedRef = useRef(false);
+  const skipPaginationLoadRef = useRef(false);
+  const prevFiltersKeyRef = useRef(null);
 
   useEffect(() => {
     if (dateRangeQueryStrippedRef.current) {
@@ -551,19 +553,33 @@ const FinancialManagement = () => {
 
   useEffect(() => {
     if (!sessionLoading && isLoggedIn && user?.id) {
+      if (skipPaginationLoadRef.current) {
+        skipPaginationLoadRef.current = false;
+        return;
+      }
       loadData();
     }
   }, [sessionLoading, isLoggedIn, user?.id, activeTab, pagination.currentPage]);
 
   useEffect(() => {
-    if (!sessionLoading && isLoggedIn && user?.id && activeTab === 'transactions') {
-      const timeoutId = setTimeout(() => {
-        setPagination(prev => ({ ...prev, currentPage: 0 })); // 첫 페이지로 리셋
-        loadData({ silent: true });
-      }, 300); // 디바운싱
-      
-      return () => clearTimeout(timeoutId);
+    if (sessionLoading || !isLoggedIn || !user?.id || activeTab !== 'transactions') {
+      return undefined;
     }
+    const key = JSON.stringify(filters);
+    if (prevFiltersKeyRef.current === null) {
+      prevFiltersKeyRef.current = key;
+      return undefined;
+    }
+    if (prevFiltersKeyRef.current === key) {
+      return undefined;
+    }
+    const timeoutId = setTimeout(() => {
+      skipPaginationLoadRef.current = true;
+      setPagination((prev) => ({ ...prev, currentPage: 0 }));
+      loadData({ silent: true, transactionPage: 0 });
+      prevFiltersKeyRef.current = key;
+    }, 300);
+    return () => clearTimeout(timeoutId);
   }, [filters, sessionLoading, isLoggedIn, user?.id, activeTab]);
 
   const loadData = async(options = {}) => {
@@ -578,7 +594,9 @@ const FinancialManagement = () => {
 
       switch (activeTab) {
         case 'transactions':
-          await loadTransactions();
+          await loadTransactions(
+            typeof options.transactionPage === 'number' ? { page: options.transactionPage } : {}
+          );
           break;
         case 'dashboard':
           await loadDashboard();
@@ -626,79 +644,63 @@ const FinancialManagement = () => {
     }
   };
 
-  const loadTransactions = async() => {
+  const loadTransactions = async(txOptions = {}) => {
     try {
+      const pageForRequest = typeof txOptions.page === 'number' ? txOptions.page : pagination.currentPage;
       const { startDate, endDate } = getDateRangeForFilter();
       const params = {
-        page: pagination.currentPage,
+        page: pageForRequest,
         size: pagination.size
       };
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
       if (filters.transactionType !== 'ALL') params.transactionType = filters.transactionType;
       if (filters.category !== 'ALL') params.category = filters.category;
-      if (filters.searchText) params.search = filters.searchText;
-      if (user?.branchCode) params.branchCode = user.branchCode;
 
-      const response = await StandardizedApi.get('/api/v1/admin/financial-transactions', params);
+      const envelope = await StandardizedApi.get(
+        '/api/v1/admin/financial-transactions',
+        params,
+        { unwrapApiEnvelope: false }
+      );
 
-      // apiGet이 {success, data} 형태면 data만 반환하므로, 배열인지 객체인지 확인
-      if (Array.isArray(response)) {
-        // apiGet이 data 배열만 반환한 경우
-        let filteredTransactions = response || [];
-        
-        if (filters.searchText) {
-          const searchLower = filters.searchText.trim().toLowerCase();
+      if (!envelope || typeof envelope !== 'object') {
+        setError(FM_ERRORS.TX_LIST);
+        return;
+      }
+
+      if (envelope.success === false) {
+        const errorMessage = envelope?.message || FM_ERRORS.TX_LIST;
+        console.error('API 오류:', errorMessage, envelope);
+        setError(errorMessage);
+        if (envelope?.redirectToLogin) {
+          console.error('세션 만료 — 로그인 화면으로 이동');
+          redirectToLoginPageOnce();
+        }
+        return;
+      }
+
+      const rows = Array.isArray(envelope.data) ? envelope.data : [];
+      let filteredTransactions = rows;
+      if (filters.searchText) {
+        const searchLower = filters.searchText.trim().toLowerCase();
+        if (searchLower) {
           filteredTransactions = filteredTransactions.filter((transaction) =>
             financialTransactionMatchesSearchText(transaction, searchLower)
           );
         }
-        
-        setTransactions(filteredTransactions);
-        setPagination(prev => ({
-          ...prev,
-          totalPages: 1,
-          totalElements: filteredTransactions.length
-        }));
-        
-        setError(null);
-        await calculateDashboardStats(filteredTransactions);
-      } else if (response && typeof response === 'object') {
-        // apiGet이 전체 응답 객체를 반환한 경우
-        if (response.success) {
-          let filteredTransactions = response.data || [];
-
-          if (filters.searchText) {
-            const searchLower = filters.searchText.trim().toLowerCase();
-            filteredTransactions = filteredTransactions.filter((transaction) =>
-              financialTransactionMatchesSearchText(transaction, searchLower)
-            );
-          }
-          
-          setTransactions(filteredTransactions);
-          setPagination(prev => ({
-            ...prev,
-            totalPages: response.totalPages || 0,
-            totalElements: response.totalCount || 0
-          }));
-          
-          setError(null);
-          await calculateDashboardStats(filteredTransactions);
-        } else {
-          // 실제 API 에러인 경우
-          const errorMessage = response?.message || FM_ERRORS.TX_LIST;
-          console.error('API 오류:', errorMessage, response);
-          setError(errorMessage);
-          
-          if (response?.redirectToLogin) {
-            console.error('세션 만료 — 로그인 화면으로 이동');
-            redirectToLoginPageOnce();
-            return;
-          }
-        }
-      } else {
-        setError(FM_ERRORS.TX_LIST);
       }
+
+      setTransactions(filteredTransactions);
+      setPagination((prev) => ({
+        ...prev,
+        currentPage: typeof envelope.currentPage === 'number' ? envelope.currentPage : pageForRequest,
+        totalPages: typeof envelope.totalPages === 'number' ? envelope.totalPages : prev.totalPages,
+        totalElements: typeof envelope.totalCount === 'number' ? envelope.totalCount : prev.totalElements,
+        size: typeof envelope.size === 'number' ? envelope.size : prev.size
+      }));
+
+      setError(null);
+      await calculateDashboardStats(filteredTransactions);
     } catch (err) {
       console.error('재무 거래 로드 실패:', err);
       
@@ -1453,9 +1455,18 @@ const FinancialManagement = () => {
                     secondaryRow={(
                       <div className="mg-v2-filter-grid mg-v2-filter-grid--row2 mg-financial-filter-secondary">
                         <div className="mg-v2-form-group mg-financial-filter-search">
-                          <label className="mg-v2-form-label" htmlFor="financial-filter-search">
-                            {FM_FILTER.SEARCH}
-                          </label>
+                          <div className="mg-financial-search-scope-row">
+                            <label className="mg-v2-form-label" htmlFor="financial-filter-search">
+                              {FM_FILTER.SEARCH}
+                            </label>
+                            <span
+                              className="mg-v2-ad-b0kla__pill mg-financial-search-scope-badge"
+                              role="note"
+                            >
+                              {FM_FILTER.SEARCH_SCOPE_BADGE}
+                            </span>
+                          </div>
+                          <p className="mg-financial-search-scope-hint">{FM_FILTER.SEARCH_SCOPE_HINT}</p>
                           <input
                             id="financial-filter-search"
                             type="text"
@@ -1842,6 +1853,9 @@ const FinancialManagement = () => {
                   {/* 페이지네이션 */}
                   {pagination.totalPages > 1 && (
                     <div className="mg-financial-pagination-wrap">
+                      {filters.searchText.trim() ? (
+                        <p className="mg-financial-pagination-meta">{FM_PAGINATION.SERVER_TOTAL_HINT}</p>
+                      ) : null}
                       <nav>
                         <ul className="pagination">
                           <li className={`page-item ${pagination.currentPage === 0 ? 'disabled' : ''}`}>

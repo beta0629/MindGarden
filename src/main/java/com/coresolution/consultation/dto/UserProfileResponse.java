@@ -94,4 +94,21 @@ public class UserProfileResponse {
     
     // 역할별 추가 정보 등록 필요 여부
     private boolean needsRoleSpecificInfo;
+
+    // --- 알림 수신 채널 선호(Phase1, 내담자·상담사 중심) ---
+    /** DB 저장값: TENANT_DEFAULT | KAKAO | SMS */
+    private String notificationChannelPreference;
+    /** 테넌트 알림톡 인프라 사용 가능 여부 */
+    private Boolean tenantNotificationChannelKakaoAvailable;
+    /** 테넌트 SMS 인프라 사용 가능 여부 */
+    private Boolean tenantNotificationChannelSmsAvailable;
+    /** HIGH 우선순위 기준 테넌트 기본 1순위 힌트(KAKAO|SMS|NONE) */
+    private String tenantDefaultNotificationChannelHint;
+    /** 저장값이 테넌트와 충돌해 UI에서 테넌트 기본으로 안내할 때 true */
+    private Boolean notificationChannelPreferenceUiAdjusted;
+    /**
+     * 호출자 기준으로 알림 채널 선호 UI를 수정할 수 있는지(본인 내담자·상담사 또는 동일 테넌트 ADMIN이 타인 CLIENT/CONSULTANT 수정 시).
+     * STAFF가 타인을 조회한 경우 false.
+     */
+    private Boolean notificationChannelPreferenceEditableByCaller;
 }

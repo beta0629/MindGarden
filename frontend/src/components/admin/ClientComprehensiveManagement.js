@@ -40,6 +40,15 @@ const CLIENT_KPI_ICON_SIZE = 24;
 /** ContentHeader / 본문 main aria-labelledby 연동 */
 const CLIENT_COMP_MGMT_TITLE_ID = 'client-comprehensive-management-title';
 
+const CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS = {
+  notificationChannelPreference: 'TENANT_DEFAULT',
+  tenantNotificationChannelKakaoAvailable: undefined,
+  tenantNotificationChannelSmsAvailable: undefined,
+  tenantDefaultNotificationChannelHint: undefined,
+  notificationChannelPreferenceUiAdjusted: undefined,
+  notificationChannelPreferenceEditableByCaller: true
+};
+
 /**
  * 내담자 종합관리 메인 컴포넌트
 /**
@@ -98,7 +107,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         consultationPurpose: '',
         consultationHistory: '',
         emergencyContact: '',
-        emergencyPhone: ''
+        emergencyPhone: '',
+        ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
     });
     useEffect(() => {
         formDataRef.current = formData;
@@ -300,7 +310,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             consultationPurpose: client.consultationPurpose || '',
             consultationHistory: client.consultationHistory || '',
             emergencyContact: client.emergencyContact || '',
-            emergencyPhone: client.emergencyPhone || ''
+            emergencyPhone: client.emergencyPhone || '',
+            ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
         setShowModal(true);
     }, []);
@@ -350,7 +361,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             consultationPurpose: '',
             consultationHistory: '',
             emergencyContact: '',
-            emergencyPhone: ''
+            emergencyPhone: '',
+            ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
         setShowModal(true);
     }, []);
@@ -378,7 +390,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             consultationPurpose: client.consultationPurpose || '',
             consultationHistory: client.consultationHistory || '',
             emergencyContact: client.emergencyContact || '',
-            emergencyPhone: client.emergencyPhone || ''
+            emergencyPhone: client.emergencyPhone || '',
+            ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
         setShowModal(true);
     }, []);
@@ -444,7 +457,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             consultationPurpose: '',
             consultationHistory: '',
             emergencyContact: '',
-            emergencyPhone: ''
+            emergencyPhone: '',
+            ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
     }, []);
 
@@ -811,6 +825,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                     if (dataToUse.postalCode != null) payload.postalCode = dataToUse.postalCode.trim();
                                     if (dataToUse.rrnFirst6?.trim()) payload.rrnFirst6 = dataToUse.rrnFirst6.trim();
                                     if (dataToUse.rrnLast1?.trim()) payload.rrnLast1 = dataToUse.rrnLast1.trim();
+                                    if (dataToUse.notificationChannelPreference != null
+                                        && String(dataToUse.notificationChannelPreference).trim() !== '') {
+                                        payload.notificationChannelPreference =
+                                            String(dataToUse.notificationChannelPreference).trim();
+                                    }
                                     let response;
                                     if (modalType === 'create') {
                                         console.log('🔧 내담자 등록 시작:', { ...payload, profileImageUrl: payload.profileImageUrl ? '(base64)' : undefined });

@@ -13,6 +13,16 @@ public final class UserProfileServiceUserFacingMessages {
 
     public static final String MSG_USER_NOT_FOUND = "사용자를 찾을 수 없습니다.";
 
+    public static final String MSG_LOGIN_REQUIRED_FOR_PROFILE = "프로필 접근을 위해 로그인이 필요합니다.";
+
+    public static final String MSG_ROLE_REQUIRED_FOR_PROFILE = "역할 정보가 없어 프로필에 접근할 수 없습니다.";
+
+    public static final String MSG_CANNOT_ACCESS_OTHER_USER_PROFILE = "타인 프로필에 접근할 수 없습니다.";
+
+    public static final String MSG_ONLY_ADMIN_CAN_EDIT_OTHER_PROFILE = "관리자만 타인 프로필을 수정할 수 있습니다.";
+
+    public static final String MSG_STAFF_CANNOT_SET_NOTIFICATION_CHANNEL = "알림 채널 선호는 관리자만 변경할 수 있습니다.";
+
     public static final String MSG_CONSULTANT_ELIGIBILITY_NOT_MET = "상담사 자격 요건을 충족하지 못합니다.";
 
     public static final String MSG_ADMIN_ELIGIBILITY_NOT_MET = "관리자 자격 요건을 충족하지 못합니다.";

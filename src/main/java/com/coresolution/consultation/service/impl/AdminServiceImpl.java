@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.core.util.StatusCodeHelper;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
+import com.coresolution.consultation.constant.userprofile.UserProfileServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
@@ -66,6 +67,7 @@ import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.RrnValidationUtil;
 import com.coresolution.consultation.util.VehiclePlateText;
+import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import com.coresolution.core.domain.UserRoleAssignment;
 import com.coresolution.core.context.TenantContextHolder;
@@ -77,6 +79,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import com.coresolution.core.security.PasswordService;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -118,6 +121,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final UserPersonalDataCacheService userPersonalDataCacheService;
     private final ConsultantStatsService consultantStatsService;
     private final ClientStatsService clientStatsService;
+    private final NotificationChannelPreferenceResolutionService notificationChannelPreferenceResolutionService;
     private final PasswordResetService passwordResetService;
     private final org.springframework.transaction.PlatformTransactionManager transactionManager;
     private final com.coresolution.consultation.service.UserIdGenerator userIdGenerator;
@@ -2296,6 +2300,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             consultant.setIsActive("ACTIVE".equalsIgnoreCase(request.getStatus().trim()));
         }
 
+        applyManagedUserNotificationPreferenceIfRequested(consultant, request.getNotificationChannelPreference());
+
         User savedConsultant = consultantRepository.save(consultant);
 
         // 표준화 2025-12-08: 사용자 정보 업데이트 시 캐시 무효화
@@ -2330,6 +2336,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         consultantStatsService.evictAllConsultantStatsCache();
 
         return saved;
+    }
+
+    /**
+     * 통합 사용자 관리(내담자·상담사)에서 알림 채널 선호를 반영합니다. 값이 있으면 ADMIN만 적용 가능합니다.
+     *
+     * @param targetUser           수정 대상 사용자
+     * @param preferenceRequested  요청 선호 코드(빈 값이면 무시)
+     */
+    private void applyManagedUserNotificationPreferenceIfRequested(User targetUser, String preferenceRequested) {
+        if (preferenceRequested == null || preferenceRequested.isBlank()) {
+            return;
+        }
+        User caller = SessionUtils.getCurrentUser(null);
+        if (caller == null || caller.getRole() == null || !caller.getRole().isAdmin()) {
+            throw new AccessDeniedException(UserProfileServiceUserFacingMessages.MSG_STAFF_CANNOT_SET_NOTIFICATION_CHANNEL);
+        }
+        if (!UserRole.CLIENT.equals(targetUser.getRole()) && !UserRole.CONSULTANT.equals(targetUser.getRole())) {
+            return;
+        }
+        String normalized = notificationChannelPreferenceResolutionService.normalizeIncomingPreference(
+            preferenceRequested.trim(), targetUser.getTenantId());
+        targetUser.setNotificationChannelPreference(normalized);
     }
 
     @Override
@@ -2390,6 +2418,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (request.getStatus() != null && !request.getStatus().trim().isEmpty()) {
             clientUser.setIsActive("ACTIVE".equalsIgnoreCase(request.getStatus().trim()));
         }
+
+        applyManagedUserNotificationPreferenceIfRequested(clientUser, request.getNotificationChannelPreference());
 
         User savedUser = userRepository.saveAndFlush(clientUser);
         validateClientUserTenantIntegrity(savedUser, tenantIdForClient);

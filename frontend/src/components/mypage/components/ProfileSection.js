@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ProfileImageUpload from './ProfileImageUpload';
+import NotificationChannelPreferenceSection from './NotificationChannelPreferenceSection';
 import AddressInput from './AddressInput';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { sessionManager } from '../../../utils/sessionManager';
@@ -378,6 +379,22 @@ const ProfileSection = ({
                 }));
               }}
               isEditing={isEditing}
+            />
+
+            <NotificationChannelPreferenceSection
+              subjectRole={role}
+              isEditing={isEditing}
+              preferenceValue={formData.notificationChannelPreference || 'TENANT_DEFAULT'}
+              tenantKakaoAvailable={user?.tenantNotificationChannelKakaoAvailable}
+              tenantSmsAvailable={user?.tenantNotificationChannelSmsAvailable}
+              tenantDefaultHint={user?.tenantDefaultNotificationChannelHint}
+              preferenceUiAdjusted={user?.notificationChannelPreferenceUiAdjusted}
+              onPreferenceChange={(e) => {
+                onFormDataChange((prev) => ({
+                  ...prev,
+                  notificationChannelPreference: e.target.value
+                }));
+              }}
             />
           </fieldset>
 

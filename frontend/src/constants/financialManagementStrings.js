@@ -116,6 +116,8 @@ export const FM_FILTER = {
   CATEGORY: '카테고리',
   SEARCH: '검색',
   SEARCH_PLACEHOLDER: '상담사명, 내담자명, 설명 검색...',
+  SEARCH_SCOPE_BADGE: '이 목록에서만 검색',
+  SEARCH_SCOPE_HINT: '다른 페이지에 있을 수 있는 거래는 다음 페이지를 눌러 확인하세요.',
   SUBMIT: '검색'
 };
 
@@ -186,7 +188,8 @@ export const FM_CARD_LABELS = {
 
 export const FM_PAGINATION = {
   PREV: '이전',
-  NEXT: '다음'
+  NEXT: '다음',
+  SERVER_TOTAL_HINT: '아래 페이지 수는 기간·유형·카테고리 조건 기준입니다. 검색어는 불러온 목록 안에서만 적용됩니다.'
 };
 
 export const FM_DASHBOARD = {

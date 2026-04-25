@@ -1,0 +1,46 @@
+/* 알림 채널 선호 — 디자인 토큰만 사용 (SCREEN_SPEC §8) */
+
+.mg-mypage-notification-channel__radiogroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-12, 12px);
+}
+
+.mg-mypage-notification-channel__option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-4, 4px);
+  padding: var(--mg-spacing-12, 12px) var(--mg-spacing-16, 16px);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md, 12px);
+  background-color: var(--mg-color-surface-main);
+  cursor: pointer;
+}
+
+.mg-mypage-notification-channel__option--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.mg-mypage-notification-channel__option-head {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-8, 8px);
+}
+
+.mg-mypage-notification-channel__option-desc {
+  font-size: var(--mg-font-size-sm, 13px);
+  color: var(--mg-color-text-secondary);
+  margin: 0;
+  padding-inline-start: calc(var(--mg-spacing-16, 16px) + var(--mg-spacing-8, 8px));
+}
+
+.mg-mypage-notification-channel__hint {
+  font-size: var(--mg-font-size-sm, 13px);
+  color: var(--mg-color-text-secondary);
+  margin: 0;
+}
+
+.mg-mypage-notification-channel__hint--warn {
+  color: var(--mg-warning-600);
+}

@@ -311,6 +311,7 @@
 - **Flyway 코어 vs Ops 트랙**: [../deployment/FLYWAY_CORE_VS_OPS_TRACKS.md](../deployment/FLYWAY_CORE_VS_OPS_TRACKS.md)
 - **원칙**: 이 파일은 **진행도·상태만** 담는다. 설계 상세·페이즈 정의는 **ERP 마스터 플랜** 등 원문에 둔다.
 - **이중 관리 방지**: 세부 체크리스트가 이미 있는 주제(예: 공통화 병렬 체크리스트)는 **세부 문서에서 ID를 완료 처리**하고, 이 마스터 표에서는 **트랙 단위 상태**만 맞춘다.
+- **NCP-PREF(알림 채널 선호)**: 🔄 배치 2차 병렬 — Phase D 부분 완료(마이페이지·resolve)·Phase E 진행 — SSOT·상태 블록: [NOTIFICATION_CHANNEL_PREFERENCE_PLAN.md](./2026-04-24/NOTIFICATION_CHANNEL_PREFERENCE_PLAN.md) 「배치 2차(병렬)」.
 
 ---
 
@@ -318,6 +319,7 @@
 
 | 날짜 | 변경 내용 |
 |------|-----------|
+| 2026-04-24 | **NCP-PREF** 한 줄 트랙 포인터 추가(알림 채널 선호·배치 2차 병렬 상태는 전용 계획서 SSOT). |
 | 2026-04-21 | OPS-02 비고 압축. |
 | 2026-04-17 | 진행률 스냅샷 구역 5·OPS-02 메모 보강 |
 | 2026-04-17 | **OPS-02** 하드코딩 스캔 증적: `node scripts/design-system/css-tools/check-hardcoding-enhanced.js` exit 0·에러 0·경고 ~5250·리포트 `test-reports/hardcoding/hardcoding-report-*.json` · CI `code-quality-check.yml` 동일 step 기준 job 실패 아님(경고 0 게이트 시 별도 에픽) |

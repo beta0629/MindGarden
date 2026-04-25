@@ -94,14 +94,26 @@ const checkSessionAndRedirect = async(response) => {
       try {
         const sessionResponse = await fetch(verifyUrl, {
           credentials: 'include',
-          method: 'GET'
+          method: 'GET',
+          mode: 'cors',
+          headers: getDefaultHeaders()
         });
-        if (!sessionResponse.ok) {
+        if (sessionResponse.ok) {
+          console.log('🔐 세션 있음 - 리다이렉트 스킵 (권한 문제일 수 있음)');
+          return false;
+        }
+        const verifyStatus = sessionResponse.status;
+        if (verifyStatus >= 500) {
+          console.warn('🔐 세션 재확인 current-user 서버 오류:', verifyStatus);
+          notifyTransientNetworkIssue();
+          return false;
+        }
+        if (verifyStatus === 401) {
           console.log('🔐 세션 없음 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
           redirectToLoginPageOnce();
           return true;
         }
-        console.log('🔐 세션 있음 - 리다이렉트 스킵 (권한 문제일 수 있음)');
+        console.log('🔐 세션 재확인 실패(리다이렉트 없음):', verifyStatus);
         return false;
       } catch (sessionError) {
         lastVerifyError = sessionError;

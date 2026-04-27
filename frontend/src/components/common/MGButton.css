@@ -274,6 +274,7 @@
 
 .mg-button__text {
   white-space: nowrap;
+  color: inherit;
 }
 
 /* ui/Button 래퍼 — 아이콘 + 텍스트 */

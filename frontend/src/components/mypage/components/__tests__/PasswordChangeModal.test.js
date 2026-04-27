@@ -1,5 +1,7 @@
 /**
  * PasswordChangeModal 회귀 테스트 — 비밀번호 정책 힌트·클라이언트 검증·제출 버튼 DOM 가시성
+ * MG 모달 primary "빈 박스" 회귀 방지: jsdom은 외부 CSS를 완전 적용하지 않아 getComputedStyle(배경 채움)은
+ * 불안정하므로, 역할+접근 가능한 이름+`mg-v2-button-primary` 등 DOM 클래스 계약으로 primary를 검증한다.
  * @see docs/standards/TESTING_STANDARD.md
  */
 import React from 'react';
@@ -74,6 +76,9 @@ describe('PasswordChangeModal', () => {
     const submitBtn = within(dialog).getByRole('button', { name: '비밀번호 변경' });
 
     expect(submitBtn).toBeVisible();
+    expect(submitBtn).toHaveClass('mg-v2-button', 'mg-v2-button-primary');
+    expect(submitBtn).not.toHaveClass('mg-v2-button-outline');
+    expect(within(dialog).getByRole('button', { name: '취소' })).toHaveClass('mg-v2-button-outline');
     expect(submitBtn).toBeDisabled();
 
     await userEvent.type(within(dialog).getByLabelText('현재 비밀번호'), 'Oldpass1@');

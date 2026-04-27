@@ -585,17 +585,6 @@
   margin-top: var(--mg-spacing-md);
 }
 
-/* 비밀번호 모달: primary 라벨이 오버플로/클립에 가려지지 않도록 */
-.mg-mypage-password-form__actions .mg-button.mg-v2-button {
-  overflow: visible;
-}
-
-.mg-mypage-password-form__actions .mg-button.mg-v2-button .mg-button__content,
-.mg-mypage-password-form__actions .mg-button.mg-v2-button .mg-button__text {
-  position: relative;
-  z-index: 1;
-}
-
 @media (max-width: 28rem) {
   .mg-mypage-password-form__actions {
     flex-direction: column-reverse;

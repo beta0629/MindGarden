@@ -11,16 +11,21 @@
   transition: box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
 }
 
-/* variant: primary (BEM -- + ERP P4 단일 하이픈 클래스 병행) */
+/* variant: primary (BEM -- + ERP P4 단일 하이픈 클래스 병행)
+ * 글자색은 배경 톤(--mg-color-background-main 등) 금지 → primary 위 텍스트 SSOT */
 .mg-v2-button--primary,
 .mg-v2-button-primary {
+  background-color: var(--mg-color-primary-main, var(--mg-primary-500));
   background: var(--mg-color-primary-main, var(--mg-primary-500));
-  color: var(--mg-color-background-main, var(--mg-white));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary, var(--mg-white)));
   border: none;
   box-shadow: none;
 }
 .mg-v2-button--primary:hover:not(:disabled),
 .mg-v2-button-primary:hover:not(:disabled) {
+  background-color: var(--mg-color-primary-light, var(--mg-primary-400));
+  background: var(--mg-color-primary-light, var(--mg-primary-400));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary, var(--mg-white)));
   box-shadow: var(--mg-button-hover-shadow);
 }
 

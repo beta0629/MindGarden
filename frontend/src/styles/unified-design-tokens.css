@@ -11183,7 +11183,7 @@ body {
 .mg-v2-button--primary {
     border: none;
     background-color: var(--color-primary);
-    color: var(--color-background-primary);
+    color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
 }
 
 .mg-v2-button--secondary {
@@ -11210,15 +11210,16 @@ body {
 }
 
 .mg-v2-button-primary {
-    background-color: var(--color-primary);
-    color: white;
+    background-color: var(--mg-color-primary-main, var(--color-primary));
+    color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
     border: none;
 }
 
 .mg-v2-button-primary:hover:not(:disabled) {
-    background-color: var(--cs-primary-700);
+    background-color: var(--mg-color-primary-light, var(--cs-primary-700));
+    color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    box-shadow: var(--mg-button-hover-shadow, var(--cs-shadow-soft));
 }
 
 .mg-v2-button-secondary {

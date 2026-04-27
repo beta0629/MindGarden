@@ -1,5 +1,5 @@
 /**
- * PasswordResetModal 회귀 테스트 — 정책 힌트 노출·클라이언트 검증 메시지
+ * PasswordResetModal 회귀 테스트 — 정책 힌트 노출·클라이언트 검증 메시지·primary 버튼 클래스 계약
  * @see docs/standards/TESTING_STANDARD.md
  */
 import React from 'react';
@@ -62,8 +62,8 @@ describe('PasswordResetModal', () => {
         onConfirm={jest.fn()}
       />
     );
-    expect(
-      within(screen.getByRole('dialog')).getByRole('button', { name: '비밀번호 초기화' })
-    ).toBeVisible();
+    const submitBtn = within(screen.getByRole('dialog')).getByRole('button', { name: '비밀번호 초기화' });
+    expect(submitBtn).toBeVisible();
+    expect(submitBtn).toHaveClass('mg-v2-button-primary');
   });
 });

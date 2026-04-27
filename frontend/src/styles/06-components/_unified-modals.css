@@ -79,15 +79,23 @@
   text-overflow: clip;
 }
 
+/* 본문 폼 액션: MGButton overflow:hidden + mg-v2 이중 클래스 시 전역 mg-v2 primary 토큰과 캐스케이드 겹침 대비 */
+.mg-modal__body .mg-button.mg-v2-button {
+  overflow: visible;
+  text-overflow: clip;
+}
+
 /*
  * 모달 푸터 primary: 포털로 body에 그려져 로그인/전역 토큰 스코프 밖.
- * 전역 .mg-v2-button--primary(color: var(--color-background-primary)) 등이
- * MGButton(.mg-button--primary)보다 늦게 적용되면 라벨 대비가 깨짐 → 푸터 범위에서만 토큰으로 고정.
+ * 전역 mg-v2 primary가 배경 톤을 글자색으로 쓰거나 후행 시트가 덮으면 라벨 대비가 깨짐 → 푸터에서 토큰 고정.
  * (.mg-v2-button 유무와 무관: ERP buildErpMgButtonClassName·TaxDetailsModal의 mg-v2-button--primary 병행 모두)
  */
 .mg-modal__actions .mg-button.mg-button--primary,
+.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button-primary,
 .mg-modal__actions .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
-.mg-modal__actions .mg-button.mg-button--primary:active:not(.mg-button--disabled):not(.mg-button--loading) {
+.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button-primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal__actions .mg-button.mg-button--primary:active:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button-primary:active:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-primary-color, var(--mg-primary-500));
   background: var(--mg-primary-color, var(--mg-primary-500));
   color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
@@ -95,17 +103,20 @@
   box-shadow: none;
 }
 
-.mg-modal__actions .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+.mg-modal__actions .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button-primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-primary-light, var(--mg-primary-400));
   background: var(--mg-primary-light, var(--mg-primary-400));
   color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
 }
 
-.mg-modal__actions .mg-button.mg-button--primary .mg-button__text {
+.mg-modal__actions .mg-button.mg-button--primary .mg-button__text,
+.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button-primary .mg-button__text {
   color: inherit;
 }
 
-.mg-modal__actions .mg-button.mg-button--primary.mg-button--loading {
+.mg-modal__actions .mg-button.mg-button--primary.mg-button--loading,
+.mg-modal__actions .mg-button.mg-button--primary.mg-v2-button-primary.mg-button--loading {
   background-color: var(--mg-primary-color, var(--mg-primary-500)) !important;
   color: var(--mg-color-text-on-primary, var(--color-text-on-primary)) !important;
 }
@@ -113,11 +124,14 @@
 /*
  * 모달 본문 primary: 푸터와 동일 계약. 포털이 document.body라 본문 폼(비밀번호 변경 등)은
  * .mg-modal__actions 범위 밖 → [data-tenant-id] .mg-button--primary 배경만 오버라이드 시 라벨 대비 깨짐 방지.
- * 선택자 특이도: .mg-modal__body + .mg-button.mg-button--primary (푸터 블록과 동일 3클래스급).
+ * buildErpMgButtonClassName의 mg-v2-button-primary 병행 시 특이도 보강(4클래스).
  */
 .mg-modal__body .mg-button.mg-button--primary,
+.mg-modal__body .mg-button.mg-button--primary.mg-v2-button-primary,
 .mg-modal__body .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
-.mg-modal__body .mg-button.mg-button--primary:active:not(.mg-button--disabled):not(.mg-button--loading) {
+.mg-modal__body .mg-button.mg-button--primary.mg-v2-button-primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal__body .mg-button.mg-button--primary:active:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal__body .mg-button.mg-button--primary.mg-v2-button-primary:active:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-primary-color, var(--mg-primary-500));
   background: var(--mg-primary-color, var(--mg-primary-500));
   color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
@@ -125,17 +139,20 @@
   box-shadow: none;
 }
 
-.mg-modal__body .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+.mg-modal__body .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal__body .mg-button.mg-button--primary.mg-v2-button-primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-primary-light, var(--mg-primary-400));
   background: var(--mg-primary-light, var(--mg-primary-400));
   color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
 }
 
-.mg-modal__body .mg-button.mg-button--primary .mg-button__text {
+.mg-modal__body .mg-button.mg-button--primary .mg-button__text,
+.mg-modal__body .mg-button.mg-button--primary.mg-v2-button-primary .mg-button__text {
   color: inherit;
 }
 
-.mg-modal__body .mg-button.mg-button--primary.mg-button--loading {
+.mg-modal__body .mg-button.mg-button--primary.mg-button--loading,
+.mg-modal__body .mg-button.mg-button--primary.mg-v2-button-primary.mg-button--loading {
   background-color: var(--mg-primary-color, var(--mg-primary-500)) !important;
   color: var(--mg-color-text-on-primary, var(--color-text-on-primary)) !important;
 }

@@ -481,7 +481,10 @@ export const apiPut = async(endpoint, data = {}, options = {}) => {
       const serverMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
         ? String(jsonData.message)
         : getErrorMessage(response.status);
-      throw new Error(serverMessage);
+      const err = new Error(serverMessage);
+      err.status = response.status;
+      err.response = { data: jsonData };
+      throw err;
     }
 
     // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출. data가 null/undefined면 전체 객체 반환(성공 여부 판단용)

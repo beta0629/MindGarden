@@ -201,7 +201,7 @@ class StandardizedApi {
     static handleError(error, endpoint, method) {
         let err;
         if (error.status === 400) {
-            err = new Error(`잘못된 요청입니다: ${endpoint}`);
+            err = new Error(error.message || `잘못된 요청입니다: ${endpoint}`);
         } else if (error.status === 401) {
             err = new Error('인증이 필요합니다. 다시 로그인해주세요.');
         } else if (error.status === 403) {
@@ -214,6 +214,9 @@ class StandardizedApi {
             return error;
         }
         if (error.status != null) err.status = error.status;
+        if (error.response != null) {
+            err.response = error.response;
+        }
         return err;
     }
 }

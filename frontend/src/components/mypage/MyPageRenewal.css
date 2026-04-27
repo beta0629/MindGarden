@@ -580,9 +580,31 @@
 .mg-mypage-password-form__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--mg-spacing-sm);
+  gap: var(--mg-spacing-md);
   justify-content: flex-end;
   margin-top: var(--mg-spacing-md);
+}
+
+/* 비밀번호 모달: primary 라벨이 오버플로/클립에 가려지지 않도록 */
+.mg-mypage-password-form__actions .mg-button.mg-v2-button {
+  overflow: visible;
+}
+
+.mg-mypage-password-form__actions .mg-button.mg-v2-button .mg-button__content,
+.mg-mypage-password-form__actions .mg-button.mg-v2-button .mg-button__text {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 28rem) {
+  .mg-mypage-password-form__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .mg-mypage-password-form__actions .mg-button.mg-v2-button {
+    width: 100%;
+  }
 }
 
 .mg-mypage-password-form__actions--center {

@@ -22,6 +22,10 @@ import ContentKpiRow from '../../dashboard-v2/content/ContentKpiRow';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import NotificationChannelPreferenceSection from '../../mypage/components/NotificationChannelPreferenceSection';
 import { NOTIFICATION_CHANNEL_PREFERENCE_VALUE } from '../../../constants/notificationChannelPreference';
+import {
+    LOGIN_PASSWORD_FIELD_PLACEHOLDER,
+    LOGIN_PASSWORD_POLICY_HINT_ONE_LINE
+} from '../../../constants/passwordPolicyUi';
 import './ClientModal.css';
 
 /** GET with-stats 및 목록 스냅샷 필드에 맞춘 KPI 라벨(완료율 등 오해 소지 필드는 표시하지 않음) */
@@ -743,11 +747,11 @@ const ClientModal = ({
                             name="password"
                             value={safeFormData.password}
                             onChange={handleInputChange}
-                            placeholder="정책 준수 자동 비밀번호(수정 가능)"
+                            placeholder={LOGIN_PASSWORD_FIELD_PLACEHOLDER}
                             className="mg-v2-form-input"
                         />
                         <small className="mg-v2-form-help">
-                            영문 대·소문자, 숫자, {'@$!%*?&'} 각 1자 이상, 연속·동일 3자 반복 불가. 비우면 임시 비밀번호로 등록됩니다.
+                            {LOGIN_PASSWORD_POLICY_HINT_ONE_LINE} 비우면 임시 비밀번호로 등록됩니다.
                         </small>
                     </div>
                 )}

@@ -427,7 +427,6 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             }
         } catch (error) {
             console.error('❌ 비밀번호 초기화 실패:', error);
-            showError(`비밀번호 초기화 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`);
             throw error;
         }
     }, [passwordResetClient]);

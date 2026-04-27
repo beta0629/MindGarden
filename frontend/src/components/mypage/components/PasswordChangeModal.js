@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AUTH_API } from '../../../constants/api';
+import {
+  getFirstLoginPasswordViolationMessage,
+  getPasswordPolicyApiErrorMessage,
+  LOGIN_PASSWORD_POLICY_HINT_ONE_LINE
+} from '../../../constants/passwordPolicyUi';
 import StandardizedApi from '../../../utils/standardizedApi';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
@@ -20,6 +25,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     confirmPassword: { isValid: true, message: '' }
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [showPassword, setShowPassword] = useState({
     current: false,
     new: false,
@@ -41,27 +47,15 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
         if (!value.trim()) {
           isValid = false;
           message = '새 비밀번호를 입력해주세요.';
-        } else if (value.length < 8) {
-          isValid = false;
-          message = '비밀번호는 최소 8자 이상이어야 합니다.';
-        } else if (value.length > 128) {
-          isValid = false;
-          message = '비밀번호는 최대 128자 이하여야 합니다.';
-        } else if (!/[A-Z]/.test(value)) {
-          isValid = false;
-          message = '비밀번호는 최소 1개의 대문자를 포함해야 합니다.';
-        } else if (!/[a-z]/.test(value)) {
-          isValid = false;
-          message = '비밀번호는 최소 1개의 소문자를 포함해야 합니다.';
-        } else if (!/[0-9]/.test(value)) {
-          isValid = false;
-          message = '비밀번호는 최소 1개의 숫자를 포함해야 합니다.';
-        } else if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value)) {
-          isValid = false;
-          message = '비밀번호는 최소 1개의 특수문자를 포함해야 합니다.';
-        } else if (value === currentPassword) {
-          isValid = false;
-          message = '새 비밀번호는 현재 비밀번호와 달라야 합니다.';
+        } else {
+          const policyMsg = getFirstLoginPasswordViolationMessage(value);
+          if (policyMsg) {
+            isValid = false;
+            message = policyMsg;
+          } else if (value === currentPassword) {
+            isValid = false;
+            message = '새 비밀번호는 현재 비밀번호와 달라야 합니다.';
+          }
         }
         break;
       case 'confirmPassword':
@@ -97,6 +91,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
       new: false,
       confirm: false
     });
+    setSubmitError('');
   }, [isOpen, tempPassword]);
 
   useEffect(() => {
@@ -141,6 +136,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setSubmitError('');
     try {
       const result = await StandardizedApi.post(AUTH_API.PASSWORD_CHANGE, {
         currentPassword: formData.currentPassword,
@@ -152,14 +148,15 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
         onSuccess?.();
         onClose();
       } else {
-        notificationManager.show(
-          (result && result.message) || '비밀번호 변경에 실패했습니다.',
-          'error'
-        );
+        const msg = (result && result.message) || '비밀번호 변경에 실패했습니다.';
+        setSubmitError(msg);
+        notificationManager.show(msg, 'error');
       }
     } catch (error) {
       console.error('비밀번호 변경 오류:', error);
-      notificationManager.show('비밀번호 변경 중 오류가 발생했습니다.', 'error');
+      const msg = getPasswordPolicyApiErrorMessage(error);
+      setSubmitError(msg);
+      notificationManager.show(msg, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -276,7 +273,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
             </p>
           ) : null}
           <p className="mg-mypage-password-form__hint">
-            8자 이상, 대·소문자·숫자·특수문자 포함, 현재 비밀번호와 달라야 합니다.
+            {`${LOGIN_PASSWORD_POLICY_HINT_ONE_LINE} 변경 시 현재 비밀번호와 달라야 합니다.`}
           </p>
         </div>
 
@@ -321,6 +318,12 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
             </p>
           ) : null}
         </div>
+
+        {submitError ? (
+          <p className="mg-mypage-password-form__error" role="alert">
+            <SafeText>{submitError}</SafeText>
+          </p>
+        ) : null}
 
         <div className="mg-mypage-password-form__actions">
           <MGButton

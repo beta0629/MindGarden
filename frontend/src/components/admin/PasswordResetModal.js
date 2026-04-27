@@ -1,4 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+    getFirstLoginPasswordViolationMessage,
+    getPasswordPolicyApiErrorMessage,
+    LOGIN_PASSWORD_FIELD_PLACEHOLDER,
+    LOGIN_PASSWORD_POLICY_HINT_ONE_LINE
+} from '../../constants/passwordPolicyUi';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -17,17 +23,27 @@ const PasswordResetModal = ({
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
+    const [submitError, setSubmitError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const validatePassword = () => {
+    useEffect(() => {
+        setNewPassword('');
+        setConfirmPassword('');
+        setShowPassword(false);
+        setErrors({});
+        setSubmitError('');
+    }, [user?.id]);
+
+    const validatePassword = useCallback(() => {
         const newErrors = {};
 
         if (!newPassword || newPassword.trim().length === 0) {
             newErrors.newPassword = '새 비밀번호를 입력해주세요.';
-        } else if (newPassword.length < 8) {
-            newErrors.newPassword = '비밀번호는 최소 8자 이상이어야 합니다.';
-        } else if (!/(?=.*[a-zA-Z])(?=.*[0-9])/.test(newPassword)) {
-            newErrors.newPassword = '비밀번호는 영문과 숫자를 포함해야 합니다.';
+        } else {
+            const policyMsg = getFirstLoginPasswordViolationMessage(newPassword);
+            if (policyMsg) {
+                newErrors.newPassword = policyMsg;
+            }
         }
 
         if (!confirmPassword || confirmPassword.trim().length === 0) {
@@ -38,16 +54,20 @@ const PasswordResetModal = ({
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    };
+    }, [newPassword, confirmPassword]);
 
     const handleSubmit = async(e) => {
         e.preventDefault();
+        setSubmitError('');
 
         if (!validatePassword()) return;
 
         setIsSubmitting(true);
         try {
             await onConfirm(newPassword);
+        } catch (error) {
+            console.error('비밀번호 초기화 요청 오류:', error);
+            setSubmitError(getPasswordPolicyApiErrorMessage(error));
         } finally {
             setIsSubmitting(false);
         }
@@ -97,7 +117,7 @@ const PasswordResetModal = ({
                     <strong>{userName}</strong> {userTypeLabel}의 비밀번호를 초기화합니다.
                 </p>
                 <p className="mg-v2-info-text">
-                    새 비밀번호는 최소 8자 이상이며, 영문과 숫자를 포함해야 합니다.
+                    {LOGIN_PASSWORD_POLICY_HINT_ONE_LINE}
                 </p>
             </div>
 
@@ -106,6 +126,11 @@ const PasswordResetModal = ({
                 className="mg-v2-form admin-password-reset-form"
                 onSubmit={handleSubmit}
             >
+                {submitError ? (
+                    <p className="mg-v2-form-error mg-v2-form-error--submit" role="alert">
+                        {submitError}
+                    </p>
+                ) : null}
                 <div className="mg-v2-form-group">
                     <label htmlFor="newPassword" className="mg-v2-form-label">
                         새 비밀번호
@@ -118,11 +143,12 @@ const PasswordResetModal = ({
                             value={newPassword}
                             onChange={(e) => {
                                 setNewPassword(e.target.value);
+                                setSubmitError('');
                                 if (errors.newPassword) {
                                     setErrors(prev => ({ ...prev, newPassword: null }));
                                 }
                             }}
-                            placeholder="새 비밀번호를 입력하세요"
+                            placeholder={LOGIN_PASSWORD_FIELD_PLACEHOLDER}
                             autoComplete="new-password"
                         />
                         <MGButton
@@ -135,7 +161,7 @@ const PasswordResetModal = ({
                             aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                             preventDoubleClick={false}
                         >
-                            {showPassword ? '비��번호 ��기기'.replace('비��번호 ', '') : '비��번호 보기'.replace('비��번호 ', '')}
+                            {showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                         </MGButton>
                     </div>
                     {errors.newPassword && (
@@ -157,6 +183,7 @@ const PasswordResetModal = ({
                             value={confirmPassword}
                             onChange={(e) => {
                                 setConfirmPassword(e.target.value);
+                                setSubmitError('');
                                 if (errors.confirmPassword) {
                                     setErrors(prev => ({ ...prev, confirmPassword: null }));
                                 }
@@ -174,7 +201,7 @@ const PasswordResetModal = ({
                             aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                             preventDoubleClick={false}
                         >
-                            {showPassword ? '비��번호 ��기기'.replace('비��번호 ', '') : '비��번호 보기'.replace('비��번호 ', '')}
+                            {showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                         </MGButton>
                     </div>
                     {errors.confirmPassword && (

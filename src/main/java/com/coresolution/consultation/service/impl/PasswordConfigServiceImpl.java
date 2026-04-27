@@ -41,7 +41,7 @@ public class PasswordConfigServiceImpl implements PasswordConfigService {
         
         // 기본값 설정
         policy.put("minLength", getConfigIntValue(PASSWORD_POLICY_GROUP, "MIN_LENGTH", 8));
-        policy.put("maxLength", getConfigIntValue(PASSWORD_POLICY_GROUP, "MAX_LENGTH", 128));
+        policy.put("maxLength", getConfigIntValue(PASSWORD_POLICY_GROUP, "MAX_LENGTH", 100));
         policy.put("requireUppercase", getConfigBooleanValue(PASSWORD_POLICY_GROUP, "REQUIRE_UPPERCASE", true));
         policy.put("requireLowercase", getConfigBooleanValue(PASSWORD_POLICY_GROUP, "REQUIRE_LOWERCASE", true));
         policy.put("requireDigits", getConfigBooleanValue(PASSWORD_POLICY_GROUP, "REQUIRE_DIGITS", true));
@@ -136,7 +136,10 @@ public class PasswordConfigServiceImpl implements PasswordConfigService {
         messages.put("uppercaseRequired", getConfigValue(PASSWORD_POLICY_GROUP, "MSG_UPPERCASE_REQUIRED", "비밀번호는 최소 1개의 대문자를 포함해야 합니다."));
         messages.put("lowercaseRequired", getConfigValue(PASSWORD_POLICY_GROUP, "MSG_LOWERCASE_REQUIRED", "비밀번호는 최소 1개의 소문자를 포함해야 합니다."));
         messages.put("digitRequired", getConfigValue(PASSWORD_POLICY_GROUP, "MSG_DIGIT_REQUIRED", "비밀번호는 최소 1개의 숫자를 포함해야 합니다."));
-        messages.put("specialRequired", getConfigValue(PASSWORD_POLICY_GROUP, "MSG_SPECIAL_REQUIRED", "비밀번호는 최소 1개의 특수문자를 포함해야 합니다."));
+        messages.put("specialRequired", getConfigValue(PASSWORD_POLICY_GROUP, "MSG_SPECIAL_REQUIRED",
+            "비밀번호는 특수문자(@$!%*?&)를 최소 1개 포함해야 합니다."));
+        messages.put("invalidCharacters", getConfigValue(PASSWORD_POLICY_GROUP, "MSG_INVALID_CHARACTERS",
+            "비밀번호에 허용되지 않은 문자가 포함되어 있습니다. 특수문자는 @$!%*?&만 사용할 수 있습니다."));
         messages.put("consecutiveForbidden", getConfigValue(PASSWORD_POLICY_GROUP, "MSG_CONSECUTIVE_FORBIDDEN", "비밀번호에 연속된 3개 이상의 문자는 사용할 수 없습니다."));
         messages.put("repeatedForbidden", getConfigValue(PASSWORD_POLICY_GROUP, "MSG_REPEATED_FORBIDDEN", "비밀번호에 동일한 문자가 3개 이상 연속으로 사용될 수 없습니다."));
         messages.put("commonPattern", getConfigValue(PASSWORD_POLICY_GROUP, "MSG_COMMON_PATTERN", "일반적인 패턴의 비밀번호는 사용할 수 없습니다."));

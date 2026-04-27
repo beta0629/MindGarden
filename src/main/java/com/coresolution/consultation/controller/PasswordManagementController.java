@@ -133,9 +133,12 @@ public class PasswordManagementController {
             // 새 비밀번호 검증
             Map<String, Object> validationResult = passwordValidationService.validatePassword(request.getNewPassword());
             if (!(Boolean) validationResult.get("isValid")) {
+                @SuppressWarnings("unchecked")
+                Map<String, String> errMap = (Map<String, String>) validationResult.get("errors");
+                String detail = firstPasswordPolicyMessage(errMap);
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
-                    "message", "비밀번호가 정책을 만족하지 않습니다.",
+                    "message", detail != null ? detail : "비밀번호가 정책을 만족하지 않습니다.",
                     "errors", validationResult.get("errors")
                 ));
             }
@@ -177,7 +180,13 @@ public class PasswordManagementController {
                 "success", true,
                 "message", "비밀번호가 성공적으로 변경되었습니다."
             ));
-            
+
+        } catch (PasswordService.InvalidPasswordException e) {
+            log.warn("비밀번호 변경 정책 거절: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
         } catch (Exception e) {
             log.error("❌ 비밀번호 변경 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(500).body(Map.of(
@@ -237,9 +246,12 @@ public class PasswordManagementController {
             // 새 비밀번호 검증
             Map<String, Object> validationResult = passwordValidationService.validatePassword(request.getNewPassword());
             if (!(Boolean) validationResult.get("isValid")) {
+                @SuppressWarnings("unchecked")
+                Map<String, String> errMap = (Map<String, String>) validationResult.get("errors");
+                String detail = firstPasswordPolicyMessage(errMap);
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
-                    "message", "비밀번호가 정책을 만족하지 않습니다.",
+                    "message", detail != null ? detail : "비밀번호가 정책을 만족하지 않습니다.",
                     "errors", validationResult.get("errors")
                 ));
             }
@@ -269,6 +281,12 @@ public class PasswordManagementController {
                 ));
             }
             
+        } catch (PasswordService.InvalidPasswordException e) {
+            log.warn("비밀번호 재설정 정책 거절: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
         } catch (Exception e) {
             log.error("❌ 비밀번호 재설정 확인 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(500).body(Map.of(
@@ -276,5 +294,12 @@ public class PasswordManagementController {
                 "message", "비밀번호 재설정 중 오류가 발생했습니다."
             ));
         }
+    }
+
+    private static String firstPasswordPolicyMessage(Map<String, String> errors) {
+        if (errors == null || errors.isEmpty()) {
+            return null;
+        }
+        return errors.values().iterator().next();
     }
 }

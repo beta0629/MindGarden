@@ -15,6 +15,7 @@ import com.coresolution.consultation.service.UserAddressService;
 import com.coresolution.consultation.service.PasswordValidationService;
 import com.coresolution.consultation.service.UserProfileService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.core.security.PasswordService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -379,9 +380,12 @@ public class AdminUserController {
             // 비밀번호 정책 검증
             Map<String, Object> validationResult = passwordValidationService.validatePassword(newPassword);
             if (!Boolean.TRUE.equals(validationResult.get("isValid"))) {
+                @SuppressWarnings("unchecked")
+                Map<String, String> errMap = (Map<String, String>) validationResult.get("errors");
+                String detail = firstPasswordErrorMessage(errMap);
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
-                errorResponse.put("message", "비밀번호가 정책을 만족하지 않습니다.");
+                errorResponse.put("message", detail != null ? detail : "비밀번호가 정책을 만족하지 않습니다.");
                 errorResponse.put("errors", validationResult.get("errors"));
                 return ResponseEntity.badRequest().body(errorResponse);
             }
@@ -400,7 +404,13 @@ public class AdminUserController {
             successResponse.put("userId", userId);
             
             return ResponseEntity.ok(successResponse);
-            
+
+        } catch (PasswordService.InvalidPasswordException e) {
+            log.warn("비밀번호 초기화 정책 거절: userId={}, message={}", userId, e.getMessage());
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         } catch (Exception e) {
             log.error("❌ 사용자 비밀번호 초기화 중 오류 발생: userId={}, error={}", 
                     userId, e.getMessage(), e);
@@ -475,7 +485,14 @@ public class AdminUserController {
     }
     
     // ==================== Private Helper Methods ====================
-    
+
+    private static String firstPasswordErrorMessage(Map<String, String> errors) {
+        if (errors == null || errors.isEmpty()) {
+            return null;
+        }
+        return errors.values().iterator().next();
+    }
+
     /**
      * 사용자 주소 정보 조회
      */

@@ -10,9 +10,9 @@ import com.coresolution.consultation.entity.UserAddress;
 import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MyPageService;
+import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
-import com.coresolution.core.security.PasswordService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MyPageServiceImpl implements MyPageService {
 
     private final UserRepository userRepository;
-    private final PasswordService passwordService;
+    private final UserService userService;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserAddressRepository userAddressRepository;
     private final NotificationChannelPreferenceResolutionService notificationChannelPreferenceResolutionService;
@@ -337,12 +337,10 @@ public class MyPageServiceImpl implements MyPageService {
     @Override
     public String changePassword(Long userId, String newPassword) {
         log.info("🔧 비밀번호 변경: {}", userId);
-        
-        User user = requireUserInCurrentTenant(userId);
 
-        user.setPassword(passwordService.encodePassword(newPassword));
-        userRepository.save(user);
-        
+        requireUserInCurrentTenant(userId);
+        userService.changePassword(userId, newPassword);
+
         return "비밀번호가 성공적으로 변경되었습니다.";
     }
 

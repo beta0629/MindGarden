@@ -1345,11 +1345,34 @@ public interface UserRepository extends BaseRepository<User, Long> {
     Page<User> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, Pageable pageable);
 
     /**
-     * 비밀번호만 안전하게 업데이트 (엔티티 평문 저장 방지)
+     * 비밀번호만 안전하게 업데이트 (임시 비밀번호 발급 등). {@link User#changePassword(String)} 정책 미적용.
      * clearAutomatically = true: JPQL UPDATE 후 영속성 컨텍스트를 초기화해
      * decryptUserPersonalData()로 dirty 상태가 된 엔티티의 flush가 새 비밀번호를 덮어쓰는 것을 방지
+     *
+     * @param id        사용자 PK
+     * @param tenantId  테넌트 ID (격리·오갱신 방지)
+     * @param password  인코딩된 비밀번호
+     * @param updatedAt 갱신 시각
      */
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE User u SET u.password = :password, u.updatedAt = :updatedAt WHERE u.id = :id")
-    void updatePassword(@Param("id") Long id, @Param("password") String password, @Param("updatedAt") LocalDateTime updatedAt);
+    @Query("UPDATE User u SET u.password = :password, u.updatedAt = :updatedAt "
+        + "WHERE u.id = :id AND u.tenantId = :tenantId")
+    void updatePassword(@Param("id") Long id, @Param("tenantId") String tenantId, @Param("password") String password,
+        @Param("updatedAt") LocalDateTime updatedAt);
+
+    /**
+     * 사용자가 비밀번호 변경을 완료한 경우: {@link User#changePassword(String)}와 동일 정책
+     * (비밀번호, isPasswordChanged=true, 재설정 토큰·만료 시각 null, updatedAt).
+     *
+     * @param id        사용자 PK
+     * @param tenantId  테넌트 ID
+     * @param password  인코딩된 비밀번호
+     * @param updatedAt 갱신 시각
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE User u SET u.password = :password, u.updatedAt = :updatedAt, u.isPasswordChanged = true, "
+        + "u.passwordResetToken = null, u.passwordResetExpiresAt = null "
+        + "WHERE u.id = :id AND u.tenantId = :tenantId")
+    void updatePasswordCompletingCredentialChange(@Param("id") Long id, @Param("tenantId") String tenantId,
+        @Param("password") String password, @Param("updatedAt") LocalDateTime updatedAt);
 }

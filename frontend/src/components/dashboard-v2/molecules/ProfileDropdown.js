@@ -15,7 +15,11 @@ import { useBranding } from '../../../hooks/useBranding';
 import { getCustomLogoSrc } from '../../../utils/brandingUtils';
 import { getTenantGnbLabel, DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenantDisplayName';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
-import { getMypagePathForRole, getSettingsPathForRole } from '../../../utils/roleMypageSettingsPaths';
+import {
+  getMypagePathForRole,
+  getSettingsPathForRole,
+  shouldShowProfileDropdownSettings
+} from '../../../utils/roleMypageSettingsPaths';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import GnbDropdownPortal from './GnbDropdownPortal';
@@ -113,6 +117,7 @@ const ProfileDropdown = ({ onLogout }) => {
   const userEmail = user.email || '';
   const userRole = user.role || '';
   const roleLabel = ROLE_LABELS[userRole] || userRole;
+  const showSettingsItem = shouldShowProfileDropdownSettings(userRole);
 
   return (
     <div className="mg-v2-profile-dropdown" ref={dropdownRef}>
@@ -169,16 +174,18 @@ const ProfileDropdown = ({ onLogout }) => {
           >
             <span>내 정보</span>
           </MGButton>
-          <MGButton
-            type="button"
-            variant="outline"
-            preventDoubleClick={false}
-            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-v2-profile-menu-item' })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={() => handleMenuClick('settings')}
-          >
-            <span>설정</span>
-          </MGButton>
+          {showSettingsItem && (
+            <MGButton
+              type="button"
+              variant="outline"
+              preventDoubleClick={false}
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-v2-profile-menu-item' })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={() => handleMenuClick('settings')}
+            >
+              <span>설정</span>
+            </MGButton>
+          )}
           <MGButton
             type="button"
             variant="outline"

@@ -110,6 +110,36 @@
   color: var(--mg-color-text-on-primary, var(--color-text-on-primary)) !important;
 }
 
+/*
+ * 모달 본문 primary: 푸터와 동일 계약. 포털이 document.body라 본문 폼(비밀번호 변경 등)은
+ * .mg-modal__actions 범위 밖 → [data-tenant-id] .mg-button--primary 배경만 오버라이드 시 라벨 대비 깨짐 방지.
+ * 선택자 특이도: .mg-modal__body + .mg-button.mg-button--primary (푸터 블록과 동일 3클래스급).
+ */
+.mg-modal__body .mg-button.mg-button--primary,
+.mg-modal__body .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal__body .mg-button.mg-button--primary:active:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-primary-color, var(--mg-primary-500));
+  background: var(--mg-primary-color, var(--mg-primary-500));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.mg-modal__body .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-primary-light, var(--mg-primary-400));
+  background: var(--mg-primary-light, var(--mg-primary-400));
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
+}
+
+.mg-modal__body .mg-button.mg-button--primary .mg-button__text {
+  color: inherit;
+}
+
+.mg-modal__body .mg-button.mg-button--primary.mg-button--loading {
+  background-color: var(--mg-primary-color, var(--mg-primary-500)) !important;
+  color: var(--mg-color-text-on-primary, var(--color-text-on-primary)) !important;
+}
+
 /* 푸터 secondary/outline: 전역 mg-v2 토큰 캐스케이드로 라벨·배경 대비가 깨지는 경우 토큰으로 고정 */
 .mg-modal__actions .mg-button.mg-button--secondary {
   background-color: var(--mg-color-secondary-main, var(--cs-secondary-500));

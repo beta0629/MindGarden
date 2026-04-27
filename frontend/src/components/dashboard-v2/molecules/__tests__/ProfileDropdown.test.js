@@ -125,5 +125,21 @@ describe('ProfileDropdown', () => {
 
       expect(onLogout).toHaveBeenCalled();
     });
+
+    it('상담사는 설정 메뉴가 보이지 않는다', async() => {
+      sessionState.user = { ...defaultUser, role: 'CONSULTANT' };
+      render(<ProfileDropdown />);
+      await userEvent.click(screen.getByRole('button', { expanded: false }));
+      expect(screen.getByText('내 정보')).toBeInTheDocument();
+      expect(screen.queryByText('설정')).not.toBeInTheDocument();
+    });
+
+    it('내담자는 설정 메뉴가 보이지 않는다', async() => {
+      sessionState.user = { ...defaultUser, role: 'CLIENT' };
+      render(<ProfileDropdown />);
+      await userEvent.click(screen.getByRole('button', { expanded: false }));
+      expect(screen.getByText('내 정보')).toBeInTheDocument();
+      expect(screen.queryByText('설정')).not.toBeInTheDocument();
+    });
   });
 });

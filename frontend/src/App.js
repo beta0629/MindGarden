@@ -451,9 +451,17 @@ function AppContent() {
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
             
-            {/* 테넌트 프로필/설정 라우트 */}
-            <Route path="/tenant/profile" element={<TenantProfile />} />
-            <Route path="/tenant/settings" element={<TenantProfile />} />
+            {/* 테넌트 프로필/설정 — 내담자·상담사 접근 불가 (ADMIN/STAFF만) */}
+            <Route path="/tenant/profile" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <TenantProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/tenant/settings" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <TenantProfile />
+              </ProtectedRoute>
+            } />
             {/* PG 설정 라우트 (P1: 단수 경로 리다이렉트) */}
             <Route path="/tenant/pg-configuration" element={<Navigate to="/tenant/pg-configurations" replace />} />
             <Route path="/tenant/pg-configurations" element={<PgConfigurationList />} />

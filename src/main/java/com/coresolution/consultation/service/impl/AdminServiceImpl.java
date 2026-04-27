@@ -2260,9 +2260,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             consultant.setProfileImageUrl(request.getProfileImageUrl().trim());
         }
 
-        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+        boolean consultantPasswordChange = request.getPassword() != null && !request.getPassword().trim().isEmpty();
+        if (consultantPasswordChange) {
             log.info("🔧 상담사 비밀번호 변경: ID={}", id);
-            consultant.setPassword(passwordService.encodePassword(request.getPassword()));
             consultant.setUpdatedAt(LocalDateTime.now());
             consultant.setVersion(consultant.getVersion() + 1);
         }
@@ -2303,6 +2303,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         applyManagedUserNotificationPreferenceIfRequested(consultant, request.getNotificationChannelPreference());
 
         User savedConsultant = consultantRepository.save(consultant);
+
+        if (consultantPasswordChange) {
+            userService.changePassword(id, request.getPassword().trim());
+            savedConsultant = userRepository.findByTenantIdAndId(getTenantId(), id)
+                    .orElseThrow(() -> new EntityNotFoundException(AdminServiceUserFacingMessages.ENTITY_LABEL_CONSULTANT, id));
+        }
 
         // 표준화 2025-12-08: 사용자 정보 업데이트 시 캐시 무효화
         if (savedConsultant.getTenantId() != null) {

@@ -158,7 +158,10 @@ public class UserServiceImpl implements UserService {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         User existingUser = userRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + id));
-        
+
+        boolean passwordChangeRequested = updateData.getPassword() != null;
+        String plainNewPassword = passwordChangeRequested ? updateData.getPassword() : null;
+
         if (updateData.getName() != null) {
             existingUser.setName(updateData.getName());
         }
@@ -174,14 +177,17 @@ public class UserServiceImpl implements UserService {
         if (updateData.getGrade() != null) {
             existingUser.setGrade(updateData.getGrade());
         }
-        if (updateData.getPassword() != null) {
-            existingUser.setPassword(passwordService.encodePassword(updateData.getPassword()));
-        }
-        
+
         existingUser.setUpdatedAt(LocalDateTime.now());
         existingUser.setVersion(existingUser.getVersion() + 1);
-        
-        return userRepository.save(existingUser);
+
+        User savedUser = userRepository.save(existingUser);
+
+        if (passwordChangeRequested) {
+            this.changePassword(id, plainNewPassword);
+            return findActiveByIdOrThrow(id);
+        }
+        return savedUser;
     }
 
     @Override
@@ -944,15 +950,16 @@ public class UserServiceImpl implements UserService {
     @Override
     public void changePassword(Long userId, String oldPassword, String newPassword) {
         User user = findActiveByIdOrThrow(userId);
-        if (!passwordService.matches(oldPassword, user.getPassword())) {
+        if (oldPassword != null && !passwordService.matches(oldPassword, user.getPassword())) {
             throw new RuntimeException("기존 비밀번호가 일치하지 않습니다.");
         }
-        
-        // 현재 테넌트의 비밀번호만 변경
+
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         String hashedPassword = passwordService.encodePassword(newPassword);
-        userRepository.updatePassword(user.getId(), hashedPassword, LocalDateTime.now());
-        
-        log.info("비밀번호 변경 완료: email={}, userId={}", 
+        userRepository.updatePasswordCompletingCredentialChange(user.getId(), tenantId, hashedPassword,
+            LocalDateTime.now());
+
+        log.info("비밀번호 변경 완료: email={}, userId={}",
             user.getEmail(), userId);
     }
     
@@ -963,7 +970,9 @@ public class UserServiceImpl implements UserService {
         
         // 임시 비밀번호 생성 및 설정
         String tempPassword = generateTempPassword();
-        userRepository.updatePassword(user.getId(), passwordService.encodeSecret(tempPassword), LocalDateTime.now());
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        userRepository.updatePassword(user.getId(), tenantId, passwordService.encodeSecret(tempPassword),
+            LocalDateTime.now());
         
         // 이메일로 임시 비밀번호 발송
         try {
@@ -1123,12 +1132,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public void changePassword(Long userId, String newPassword) {
         User user = findActiveByIdOrThrow(userId);
-        
-        // 현재 테넌트의 비밀번호만 변경
+
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         String hashedPassword = passwordService.encodePassword(newPassword);
-        userRepository.updatePassword(user.getId(), hashedPassword, LocalDateTime.now());
-        
-        log.info("비밀번호 변경 완료: email={}, userId={}", 
+        userRepository.updatePasswordCompletingCredentialChange(user.getId(), tenantId, hashedPassword,
+            LocalDateTime.now());
+
+        log.info("비밀번호 변경 완료: email={}, userId={}",
             user.getEmail(), userId);
     }
     

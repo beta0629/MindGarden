@@ -53,3 +53,18 @@ export function getSettingsPathForRole(role) {
   }
   return '/admin/mypage?tab=settings';
 }
+
+/**
+ * GNB 프로필 드롭다운 「설정」 표시 여부.
+ * 내담자·상담사는 테넌트/조직 설정 경로에 갈 수 없도록 메뉴를 숨긴다.
+ *
+ * @param {string|null|undefined} role 세션 user.role
+ * @returns {boolean}
+ */
+export function shouldShowProfileDropdownSettings(role) {
+  if (!role) {
+    return false;
+  }
+  const r = String(role).toUpperCase();
+  return r !== 'CLIENT' && r !== 'CONSULTANT';
+}

@@ -11,8 +11,8 @@ import com.coresolution.consultation.repository.PasswordResetTokenRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.PasswordResetService;
+import com.coresolution.consultation.service.UserService;
 import com.coresolution.core.context.TenantContextHolder;
-import com.coresolution.core.security.PasswordService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +35,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final PasswordResetTokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
-    private final PasswordService passwordService;
+    private final UserService userService;
     
     @Value("${app.password-reset.token-expiry-hours:24}")
     private int tokenExpiryHours;
@@ -201,12 +201,8 @@ public class PasswordResetServiceImpl implements PasswordResetService {
                 return false;
             }
             
-            // 비밀번호 암호화 및 업데이트
-            String encodedPassword = passwordService.encodePassword(newPassword);
-            user.setPassword(encodedPassword);
-            user.setIsPasswordChanged(true); // 비밀번호 변경 완료
-            user.setUpdatedAt(LocalDateTime.now());
-            userRepository.save(user);
+            // 관리자/마이페이지 경로와 동일: JPQL 완료용 UPDATE (해시·플래그·reset 필드 null)
+            userService.changePassword(user.getId(), newPassword);
             
             // 토큰을 사용됨으로 표시
             resetToken.markAsUsed();

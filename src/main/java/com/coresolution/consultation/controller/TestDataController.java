@@ -777,7 +777,8 @@ public class TestDataController {
                 
                 String newHash = passwordService.encodeSecret(newPassword);
                 log.info("🔑 새로운 비밀번호 해시: {}", newHash.substring(0, 20) + "...");
-                
+                // 개발 전용: 운영 비밀번호 완료 정책(updatePasswordCompletingCredentialChange) 미적용.
+                // 엔티티 직접 저장으로 테넌트 필터 우회 시나리오만 유지한다.
                 user.setPassword(newHash);
                 user.setUpdatedAt(LocalDateTime.now());
                 user.setVersion(user.getVersion() + 1);

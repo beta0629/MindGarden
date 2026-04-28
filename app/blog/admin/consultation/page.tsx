@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ConsultationNotifyEmailsCard from '@/components/admin/ConsultationNotifyEmailsCard';
 
 interface ConsultationInquiry {
   id: number;
@@ -257,6 +258,8 @@ export default function ConsultationAdminPage() {
               </Link>
             </div>
           </div>
+
+          <ConsultationNotifyEmailsCard />
 
           {/* 상태 필터 */}
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>

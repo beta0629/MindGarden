@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { getConsultationAdminNotifyRecipientEmails } from '@/lib/consultationNotifyRecipients';
 
 export type ConsultationAdminMailPayload = {
   inquiryId: number;
@@ -18,7 +19,8 @@ export type ConsultationAdminMailPayload = {
  * - 로컬: `src/main/resources/application-local.yml` → `spring.mail.*`
  * - 운영: `src/main/resources/application-prod.yml` → `production.mail`의 `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`
  */
-function resolveSmtpConfig() {
+/** SMTP만 (수신자는 DB·env에서 별도 조회) */
+function resolveSmtpCredentials() {
   const host =
     process.env.SMTP_HOST ||
     process.env.MAIL_HOST ||
@@ -47,14 +49,6 @@ function resolveSmtpConfig() {
     process.env.SMTP_FROM ||
     process.env.SPRING_MAIL_USERNAME ||
     user;
-  const toRaw =
-    process.env.CONSULTATION_ADMIN_NOTIFY_EMAILS ||
-    process.env.ADMIN_NOTIFY_EMAILS ||
-    '';
-  const to = toRaw
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
   const secure =
     process.env.SMTP_SECURE === 'true' ||
     process.env.SMTP_SECURE === '1' ||
@@ -65,8 +59,7 @@ function resolveSmtpConfig() {
       ? false
       : !secure && port !== 25;
 
-  const enabled = Boolean(host && user && pass && to.length > 0);
-  return { host, port, user, pass, from, to, secure, requireTLS, enabled };
+  return { host, port, user, pass, from, secure, requireTLS };
 }
 
 function inquiryTypeLabel(code: string): string {
@@ -135,30 +128,34 @@ function buildBodies(data: ConsultationAdminMailPayload): { text: string; html: 
 export async function sendConsultationAdminNotify(
   data: ConsultationAdminMailPayload
 ): Promise<void> {
-  const cfg = resolveSmtpConfig();
-  if (!cfg.enabled) {
-    if (!cfg.host) {
+  const cred = resolveSmtpCredentials();
+  const to = await getConsultationAdminNotifyRecipientEmails();
+  const enabled = Boolean(cred.host && cred.user && cred.pass && to.length > 0);
+  if (!enabled) {
+    if (!cred.host) {
       console.warn(
         '[mail] SMTP 미설정(SMTP_HOST, SMTP_USERNAME/SMTP_USER, SMTP_PASSWORD). ~/mindGarden 의 application-local.yml / application-prod.yml 과 동일 값을 .env 에 넣으면 발송됩니다.'
       );
-    } else if (!cfg.to.length) {
-      console.warn('[mail] CONSULTATION_ADMIN_NOTIFY_EMAILS 미설정으로 관리자 알림을 건너뜁니다.');
+    } else if (!to.length) {
+      console.warn(
+        '[mail] 알림 수신자 없음: /admin/consultation 에서 수신 이메일을 등록하거나 CONSULTATION_ADMIN_NOTIFY_EMAILS(.env)를 설정하세요.'
+      );
     }
     return;
   }
 
   const transporter = nodemailer.createTransport({
-    host: cfg.host,
-    port: cfg.port,
-    secure: cfg.secure,
-    auth: { user: cfg.user, pass: cfg.pass },
-    ...(!cfg.secure && cfg.requireTLS ? { requireTLS: true as const } : {}),
+    host: cred.host,
+    port: cred.port,
+    secure: cred.secure,
+    auth: { user: cred.user, pass: cred.pass },
+    ...(!cred.secure && cred.requireTLS ? { requireTLS: true as const } : {}),
   });
 
   const { text, html } = buildBodies(data);
   await transporter.sendMail({
-    from: cfg.from,
-    to: cfg.to.join(', '),
+    from: cred.from,
+    to: to.join(', '),
     subject: `[마인드가든] 새 상담 문의 #${data.inquiryId}`,
     text,
     html,

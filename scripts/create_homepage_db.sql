@@ -101,3 +101,10 @@ CREATE TABLE IF NOT EXISTS banners (
   INDEX idx_datetime_range (start_datetime, end_datetime),
   INDEX idx_priority (priority)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 사이트 설정 (상담 알림 수신 이메일 등)
+CREATE TABLE IF NOT EXISTS homepage_settings (
+  setting_key VARCHAR(64) NOT NULL PRIMARY KEY,
+  setting_value MEDIUMTEXT NOT NULL,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

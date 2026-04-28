@@ -74,3 +74,7 @@ cd /Users/mind/mindGarden && mvn -q -DskipTests compile
 ---
 
 **갱신**: 문서·스크립트 경로가 바뀌면 이 파일과 `ERP_FINANCIAL_HUB_SMOKE.md`를 함께 맞춘다.
+
+**구현·테스트 단계 직전**: [IMPLEMENTATION_TEST_PHASE_RUNBOOK.md](./IMPLEMENTATION_TEST_PHASE_RUNBOOK.md) — 컴파일·단위·lint·Jest·Playwright 순서.
+
+**배포 직후 검증**(무중단·스테이징/운영 컷오버 시): [ZERO_DOWNTIME_POST_DEPLOY_CHECKLIST.md](../guides/testing/ZERO_DOWNTIME_POST_DEPLOY_CHECKLIST.md).

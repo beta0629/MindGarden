@@ -6,6 +6,8 @@
 
 **관련(인프라·Nginx)**: [SEC-01 공개 API 엣지 레이트리밋 가이드](NGINX_RATE_LIMIT_PUBLIC_API.md) · [SEC-01 공개 온보딩 엣지·운영 역할](SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md)
 
+**무중단(SSOT)**: [무중단 갭·로드맵 — 현재 파이프라인·Go-Live 정합](ZERO_DOWNTIME_GAP_AND_ROADMAP.md)
+
 ---
 
 ## 운영 통합 배포 (단일 진입점)

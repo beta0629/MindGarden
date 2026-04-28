@@ -44,6 +44,8 @@ SMS_API_KEY=
 SMS_API_SECRET=
 SMS_SENDER_NUMBER=
 
+# 블루그린(듀얼 systemd) 사용 시: 포트는 각 유닛의 Environment=SERVER_PORT 로만 두고, 여기서는 비워 두는 것을 권장.
+# 단일 mindgarden.service 만 쓸 때만 필요 시 설정.
 SERVER_PORT=
 SPRING_PROFILES_ACTIVE=
 

@@ -1,0 +1,34 @@
+# MindGarden Core API — 블루그린 upstream 예시 (단일 호스트·이중 포트)
+#
+# 운영 SSOT: blue=8080, green=8081 (`deployment/systemd/mindgarden-core-*.service.example`,
+# `.github/workflows/deploy-production.yml` SSH 블록과 동일).
+# GitHub Actions는 헬스 통과 후 **단일 server 줄**로 `/etc/nginx/snippets/mindgarden-core-backend-upstream.conf` 를 덮어쓴다.
+# 수동·weight 기반 운영 시 아래처럼 두 줄을 쓸 수 있으나, upstream **이름**은 vhost와 같아야 한다.
+#
+# 포함 위치: `http { }` 컨텍스트(예: `/etc/nginx/snippets/mindgarden-core-backend-upstream.conf` 로 복사;
+#            `core-solution-prod.conf` 의 `include` 보다 앞서 로드되도록 배치).
+#
+# ZERO_DOWNTIME_GAP_AND_ROADMAP.md 부록과 정합: 정적 root(/var/www/mindgarden/frontend 등)는 그대로 두고
+# /api/, /actuator/, /oauth2/, /login/oauth2/ 만 `proxy_pass http://mindgarden_core_backend;` 로 통일한다.
+#
+# 활성 슬롯만 트래픽 받기(예시 중 하나만 선택):
+#  A) 비활성 server 줄을 주석 처리
+#  B) 비활성에 weight=0; 활성에 weight=1
+#  C) standby 에 backup 지시어
+#
+# 실제 포트는 systemd 유닛의 SERVER_PORT 와 일치시킬 것 (blue 8080 / green 8081).
+
+upstream mindgarden_core_backend {
+    server 127.0.0.1:8080 weight=1 max_fails=3 fail_timeout=30s;
+    server 127.0.0.1:8081 weight=0 max_fails=3 fail_timeout=30s;
+}
+
+# server 블록에서 사용 예:
+#   location /api/ {
+#       proxy_pass http://mindgarden_core_backend;
+#       proxy_set_header Host $host;
+#       proxy_set_header X-Real-IP $remote_addr;
+#       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#       proxy_set_header X-Forwarded-Proto $scheme;
+#       proxy_http_version 1.1;
+#   }

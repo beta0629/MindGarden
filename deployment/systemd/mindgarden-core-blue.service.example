@@ -1,0 +1,33 @@
+# MindGarden Core 운영 — 블루 슬롯 (예시)
+# 복사: sudo cp mindgarden-core-blue.service.example /etc/systemd/system/mindgarden-core-blue.service
+#       sudo systemctl daemon-reload
+#
+# 공통 비밀·URL·DB 등: EnvironmentFile=/etc/mindgarden/prod.env (서버에서만 채움, 저장소에 실값 금지)
+# 포트만 본 유닛에서 분리: SERVER_PORT (Spring: application.yml server.port ${SERVER_PORT:8080})
+#
+# JAR·디렉터리는 deploy-production.yml 과 정합: /var/www/mindgarden/releases/blue/app.jar
+# 레거시 mindgarden.service 와 병행하지 말 것.
+
+[Unit]
+Description=MindGarden Core API (production blue slot)
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=mindgarden
+Group=mindgarden
+WorkingDirectory=/var/www/mindgarden/releases/blue
+EnvironmentFile=/etc/mindgarden/prod.env
+Environment=SERVER_PORT=8080
+# prod.env에 SERVER_PORT가 있으면 본 줄이 우선(슬롯 고정). 블루그린 시 prod.env의 SERVER_PORT는 비우는 것을 권장.
+ExecStart=/usr/bin/java -Xms1g -Xmx4g -XX:+UseG1GC -jar app.jar
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=180
+TimeoutStopSec=120
+SyslogIdentifier=mindgarden-core-blue
+StandardOutput=append:/var/log/mindgarden/core-blue.log
+StandardError=append:/var/log/mindgarden/core-blue-error.log
+
+[Install]
+WantedBy=multi-user.target

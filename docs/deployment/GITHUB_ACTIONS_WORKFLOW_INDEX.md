@@ -6,7 +6,7 @@
 
 **관련(인프라·Nginx)**: [SEC-01 공개 API 엣지 레이트리밋 가이드](NGINX_RATE_LIMIT_PUBLIC_API.md) · [SEC-01 공개 온보딩 엣지·운영 역할](SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md)
 
-**무중단(SSOT)**: [무중단 갭·로드맵 — 현재 파이프라인·Go-Live 정합](ZERO_DOWNTIME_GAP_AND_ROADMAP.md)
+**무중단(SSOT)**: [무중단 갭·로드맵 — 현재 파이프라인·Go-Live 정합](ZERO_DOWNTIME_GAP_AND_ROADMAP.md) · Core 블루그린(예시·systemd·Nginx 스니펫): [deployment/README-BLUEGREEN.md](../../deployment/README-BLUEGREEN.md)
 
 ---
 
@@ -59,7 +59,7 @@
 | `deploy-backend-dev.yml` | 코어 백엔드 개발 | `develop`+세분 paths | — / `deploy-production.yml` | — | 온보딩 경로 제외 |
 | `deploy-onboarding-dev.yml` | 온보딩 개발 | `develop`+paths | — | — | |
 | `deploy-nginx-dev.yml` | Nginx 설정 개발 | `develop`+`config/nginx/**` | — | — | |
-| `deploy-production.yml` | 코어 운영 통합 | `workflow_dispatch` | — | — | `deploy_ref` 가드 |
+| `deploy-production.yml` | 코어 운영 통합 | `main` push(코어 Java 온보딩 제외·`pom`·`db/migration`·`deployment/application-production.yml`·`sql/**`·`database/schema/**`·`config/nginx/**`·해당 workflow), `workflow_dispatch`(`deploy_ref`, main 가드) | — | — | 백엔드: **블루그린**(비활성 슬롯 기동·헬스·Nginx upstream 스니펫·`reload`) — [PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md](./PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md). push 시 checkout `github.sha` |
 | `deploy-ops-backend-prod.yml` | Ops 백엔드 운영 | `main`+paths, dispatch | — | — | |
 | `deploy-procedures-dev.yml` | 표준 프로시저 개발 | `develop`+DB paths | [`deploy-procedures-prod.yml`](../../.github/workflows/deploy-procedures-prod.yml) | — | |
 | `deploy-procedures-prod.yml` | 표준 프로시저 운영 | `workflow_dispatch` | 상위와 쌍 | — | **개발 서버 SSH → 그 서버에서 mysql로 개발 DB(`DEV_DB_*`) 적용** — 운영 앱→개발 DB 3306 직접 연결 아님. |

@@ -14,7 +14,7 @@
 
 ## 1. 현재 방식 요약 (저장소 기준)
 
-- **Core 운영 (`deploy-production.yml`)**: `workflow_dispatch`, ref는 `main`만. GitHub에서 Maven·프론트 빌드 후 SSH로 `PRODUCTION_HOST` 등 Secrets 경유. 서버 스크립트에서 **`mindgarden.service` 중지** → JAR·프론트·설정/Nginx 설정 SCP → 표준 프로시저(조건부) → **`systemctl` 재시작·대기** → 로컬 `actuator/health`·포트 등 검증.
+- **Core 운영 (`deploy-production.yml`)**: `main` push(paths·온보딩 제외 Java 등) 및 `workflow_dispatch`(`deploy_ref`는 `main`만). GitHub에서 Maven·프론트 빌드 후 SSH로 `PRODUCTION_HOST` 등 Secrets 경유. **백엔드**: 비활성 슬롯 JAR 반영 → `mindgarden-core-{blue,green}.service` 재시작 → localhost `actuator/health` → **Nginx upstream 스니펫** 갱신 → `nginx -t`·`reload` → `active-backend` 갱신(레거시 `mindgarden.service` 전면 stop 패턴은 제거). 상세: [PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md](./PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md).
 - **Core 개발 백엔드 (`deploy-backend-dev.yml`)**: `develop` push(paths) 또는 dispatch. **`mindgarden-dev.service` 중지** → 백업 → JAR·유틸·systemd 업로드 → **재시작** → `localhost:8080/actuator/health` 재시도; 기동 실패 시 **최신 JAR 백업으로 롤백** 시도.
 - **정적 사이트 SSH 공통 (`reusable-static-site-ssh-deploy.yml`)**: 원격 `/var/www/backups/...`에 **기존 `remote_html_dir` tar 백업** → **동일 `remote_html_dir`에 SCP 덮어쓰기** → 권한·`index.html` 존재 확인 → (선택) `nginx -t` 후 **원격에서 `curl` 헬스**(문서화된 공개 URL은 [GITHUB_ACTIONS_WORKFLOW_INDEX.md](./GITHUB_ACTIONS_WORKFLOW_INDEX.md) 표 참고).
 - **운영 통합 (`deploy-unified-production.yml`)**: `workflow_dispatch`로 `deploy-production`·Trinity/Ops 프론트·Ops 백엔드·프로시저 워크플로를 **순차 디스패치 + `gh run watch`**. 무중단을 추가하지 않고 **실행 순서만 오케스트레이션**한다.
@@ -26,7 +26,7 @@
 
 | 영역 | 판정 | 근거(단계·잡명 수준) |
 |------|------|----------------------|
-| **Core 백엔드 운영** | **No** | `deploy-production.yml` — `🚀 서버 배포` 스크립트 내 **`sudo systemctl stop mindgarden.service`**, 이후 파일 반영; `🔄 서비스 재시작`에서 **다시 stop → sleep → start**. 이중 인스턴스·소켓 핸드오프·LB 대상 전환 없음. |
+| **Core 백엔드 운영** | **Partial** (BG 저장소 반영 후) | `deploy-production.yml` — 단일 `mindgarden.service` stop/start 제거. **이중 JVM**(blue/green 포트)·**upstream 스니펫 + reload** 로 트래픽 전환. 다만 **DB Flyway·호환 expand/contract**·**프론트 원자 스왑**은 여전히 별도 합의·절차 필요 → 완전 무중단 아님. |
 | **Core 백엔드 개발** | **No** (복구는 Partial) | `deploy-backend-dev.yml` — `🚀 개발 서버 배포 준비`에서 **stop**, `🔄 개발 서버 서비스 재시작`에서 **stop/start**; 무중단 아님. **Partial**: 기동 실패 시 **이전 JAR 복사·재시작** 롤백 분기 존재. |
 | **정적 프론트(재사용 SSH)** | **No~Partial** | `reusable-static-site-ssh-deploy.yml` — **`📤 정적 파일 업로드 SCP`**가 **동일 루트에 overwrite**; 원자적 디렉터리 스왑(예: `release` → `current` symlink 전환) 없음. **Partial**: 배포 전 **tar 백업**, 배포 후 **헬스 URL curl**. |
 | **통합 운영 오케스트레이션** | **No** | `deploy-unified-production.yml` — `orchestrate` 잡이 하위 워크플로를 **순차 실행**할 뿐, 트래픽 드레인/카나리/BG 없음. |
@@ -88,6 +88,7 @@
 ## 참조 링크 (저장소 내)
 
 - [GITHUB_ACTIONS_WORKFLOW_INDEX.md](./GITHUB_ACTIONS_WORKFLOW_INDEX.md)  
+- [PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md](./PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md)  
 - [PRE_PRODUCTION_GO_LIVE_CHECKLIST.md](../운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md)  
 - [`core-solution-deployment` 스킬](../../.cursor/skills/core-solution-deployment/SKILL.md)  
 - 워크플로: `deploy-production.yml`, `deploy-backend-dev.yml`, `deploy-unified-production.yml`, `reusable-static-site-ssh-deploy.yml`
@@ -101,3 +102,5 @@
 3. 링크 교체 후에는 [NGINX_RATE_LIMIT_PUBLIC_API.md](./NGINX_RATE_LIMIT_PUBLIC_API.md)·[SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md](./SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md) 관례대로 **`nginx -t` 후 `reload`**를 두는 것이 저장소 정합과 맞다.  
 4. 정적 서빙은 **짧은 구간 구버전 노출** 가능성이 있어 스왑만으로 즉시 전면 전환을 가정하지 말고 **`reload`·드레인**을 절차에 넣을 것.  
 5. 운영 측 실제 `sites-enabled` 트리와 저장소 샘플이 다를 수 있으므로 반영 전 **`nginx -t`**로 문법·중복 `server_name` 등을 확인한다([BETA74_NGINX_HTTPS_APEX.md](./BETA74_NGINX_HTTPS_APEX.md) 등).
+6. **Core 백엔드 블루그린**(단일 호스트·이중 포트): `upstream mindgarden_core_backend` 는 **`/etc/nginx/snippets/mindgarden-core-backend-upstream.conf`** 에만 두고, Actions는 헬스 통과 후 해당 파일만 갱신한 뒤 **`nginx -t` + `reload`** 한다. 저장소 `config/nginx/snippets/` 의 기본값은 **개발·문서용**이며, 트래픽 포트는 운영 서버의 스니펫·`/etc/mindgarden/active-backend` 가 SSOT이다([PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md](./PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md)).
+6. **Core API 블루그린(단일 호스트·듀얼 포트)**: 정적 `root`는 유지하고 API·actuator·OAuth 경로만 `upstream` 으로 두 백엔드 중 활성 슬롯에 프록시하는 패턴은 저장소 예시 [deployment/README-BLUEGREEN.md](../../deployment/README-BLUEGREEN.md)·`config/nginx/snippets/upstream-mindgarden-core-api-bluegreen.conf.example`·`deployment/systemd/mindgarden-core-*.service.example` 를 참고한다(위 1~5항과 모순 없음).

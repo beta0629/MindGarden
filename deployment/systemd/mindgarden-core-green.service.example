@@ -1,0 +1,30 @@
+# MindGarden Core 운영 — 그린 슬롯 (예시)
+# 복사: sudo cp mindgarden-core-green.service.example /etc/systemd/system/mindgarden-core-green.service
+#       sudo systemctl daemon-reload
+#
+# 공통: EnvironmentFile=/etc/mindgarden/prod.env
+# JAR: /var/www/mindgarden/releases/green/app.jar (deploy-production SSH 블록과 동일)
+# 그린 전용 포트만 본 유닛에서 지정.
+
+[Unit]
+Description=MindGarden Core API (production green slot)
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=mindgarden
+Group=mindgarden
+WorkingDirectory=/var/www/mindgarden/releases/green
+EnvironmentFile=/etc/mindgarden/prod.env
+Environment=SERVER_PORT=8081
+ExecStart=/usr/bin/java -Xms1g -Xmx4g -XX:+UseG1GC -jar app.jar
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=180
+TimeoutStopSec=120
+SyslogIdentifier=mindgarden-core-green
+StandardOutput=append:/var/log/mindgarden/core-green.log
+StandardError=append:/var/log/mindgarden/core-green-error.log
+
+[Install]
+WantedBy=multi-user.target

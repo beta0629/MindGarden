@@ -1,5 +1,9 @@
 name: 🚀 Core Solution 운영 배포
 #
+# 백엔드(배포 슬롯): 단일 호스트 블루그린 — 비활성 슬롯에 JAR 반영 → 기동·localhost 헬스 →
+# /etc/nginx/snippets/mindgarden-core-backend-upstream.conf 갱신 → nginx -t && reload → /etc/mindgarden/active-backend 갱신.
+# 레거시 mindgarden.service 전면 stop 은 사용하지 않음. 1회 마이그레이션: docs/deployment/PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md
+#
 # OAuth가 apex(예: core-solution.co.kr) 콜백이고 SPA가 테넌트 서브도메인이면,
 # 서버 EnvironmentFile 등에 SESSION_COOKIE_DOMAIN=core-solution.co.kr 를 넣는다(비밀 아님, RFC 6265 선행 점 없음).
 # 예시: deployment/mindgarden.prod-env.example — 앱 재시작 후 브라우저에서 JSESSIONID Domain 확인.
@@ -9,9 +13,36 @@ name: 🚀 Core Solution 운영 배포
 # 없으면 Notice 후 스킵 — 별도 「표준화 프로시저 배포 (운영 MySQL)」 워크플로도 계속 사용 가능.
 
 on:
-  # 운영 배포는 수동 실행만 가능 (자동 배포 비활성화)
-  # push:
-  #   branches: [ main ]
+  push:
+    branches: [ main ]
+    paths:
+      # 코어솔루션 관련 Java 코드 (온보딩 제외) — deploy-backend-dev.yml 과 동일
+      - 'src/main/java/com/coresolution/core/domain/**'
+      - '!src/main/java/com/coresolution/core/domain/onboarding/**'
+      - 'src/main/java/com/coresolution/core/repository/**'
+      - '!src/main/java/com/coresolution/core/repository/onboarding/**'
+      - 'src/main/java/com/coresolution/core/service/**'
+      - '!src/main/java/com/coresolution/core/service/Onboarding*.java'
+      - '!src/main/java/com/coresolution/core/service/impl/Onboarding*.java'
+      - 'src/main/java/com/coresolution/core/controller/**'
+      - '!src/main/java/com/coresolution/core/controller/Onboarding*.java'
+      - 'src/main/java/com/coresolution/core/controller/dto/**'
+      - '!src/main/java/com/coresolution/core/controller/dto/Onboarding*.java'
+      - 'src/main/java/com/coresolution/core/dto/**'
+      - 'src/main/java/com/coresolution/core/security/**'
+      - 'src/main/java/com/coresolution/core/context/**'
+      - 'src/main/java/com/coresolution/core/constant/**'
+      - 'src/main/java/com/coresolution/core/config/**'
+      - 'src/main/java/com/coresolution/consultation/**'
+      - 'src/main/resources/application.yml'
+      - 'src/main/resources/application-dev.yml'
+      - 'src/main/resources/db/migration/**'
+      - 'pom.xml'
+      - 'deployment/application-production.yml'
+      - 'sql/**'
+      - 'database/schema/**'
+      - 'config/nginx/**'
+      - '.github/workflows/deploy-production.yml'
   workflow_dispatch:
     inputs:
       deploy_ref:
@@ -26,7 +57,8 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: 🛡️ 운영 배포 ref 가드 (main만 허용)
+    - name: 🛡️ 운영 배포 ref 가드 (dispatch만, main만 허용)
+      if: github.event_name == 'workflow_dispatch'
       env:
         DEPLOY_REF: ${{ github.event.inputs.deploy_ref || 'main' }}
       run: |
@@ -37,12 +69,18 @@ jobs:
 
     - name: 📌 배포 대상 ref 출력
       run: |
-        echo "선택된 배포 ref: ${{ github.event.inputs.deploy_ref || 'main' }}"
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "선택된 배포 ref: ${{ github.event.inputs.deploy_ref || 'main' }}"
+        else
+          echo "push 이벤트 체크아웃 SHA: ${{ github.sha }}"
+        fi
 
     - name: 📥 코드 체크아웃
       uses: actions/checkout@v4
       with:
-        ref: ${{ github.event.inputs.deploy_ref || 'main' }}
+        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_ref || 'main') || github.sha }}
+        # push 시 전체 히스토리(0): github.event.before..sha diff 에 필요. 숫자 0 은 &&/|| 에서 falsy 이므로 문자열 사용.
+        fetch-depth: ${{ github.event_name == 'push' && '0' || '1' }}
 
     - name: ☕ Java 17 설정
       uses: actions/setup-java@v4
@@ -92,11 +130,16 @@ jobs:
           echo "config_changed=true" >> $GITHUB_OUTPUT
           echo "sql_procedures_changed=true" >> $GITHUB_OUTPUT
         else
-          # 자동 실행 시: 변경된 파일만 감지
-          git diff --name-only HEAD~1 HEAD > /tmp/changed_files.txt || echo "" > /tmp/changed_files.txt
+          # push: 이전 푸시 SHA와 현재 SHA 비교 (단일 커밋 checkout에서도 동작하도록 fetch-depth: 0)
+          BEFORE="${{ github.event.before }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            git diff --name-only HEAD~1 HEAD > /tmp/changed_files.txt 2>/dev/null || git show --name-only --pretty=format: HEAD | sed '/^$/d' > /tmp/changed_files.txt
+          else
+            git diff --name-only "$BEFORE" "${{ github.sha }}" > /tmp/changed_files.txt || echo "" > /tmp/changed_files.txt
+          fi
           
-          # 백엔드 변경 감지 (Java 소스, pom.xml 등)
-          if grep -qE "^(src/|pom\.xml|\.github/workflows/deploy-production\.yml)" /tmp/changed_files.txt; then
+          # 백엔드 변경 감지 (Java 소스, pom, 운영 설정·스키마 경로 등)
+          if grep -qE "^(src/|pom\.xml|deployment/application-production\.yml|\.github/workflows/deploy-production\.yml|sql/|database/schema/)" /tmp/changed_files.txt; then
             echo "✅ 백엔드 변경 감지됨"
             echo "backend_changed=true" >> $GITHUB_OUTPUT
           else
@@ -172,8 +215,8 @@ jobs:
           # 배포 디렉토리로 이동
           cd /var/www/mindgarden
           
-          # 서비스 중지
-          sudo systemctl stop mindgarden.service
+          # 블루그린: 트래픽 유지 — 레거시 mindgarden.service 는 여기서 중지하지 않음(전환 절차는 CUTOVER 문서).
+          mkdir -p releases/incoming releases/blue releases/green backups
           
           # 백업 생성
           if [ -f app.jar ]; then
@@ -236,7 +279,7 @@ jobs:
         port: 22
         timeout: 120s
         source: "target/consultation-management-system-1.0.0.jar"
-        target: "/var/www/mindgarden/"
+        target: "/var/www/mindgarden/releases/incoming/"
         strip_components: 1
         overwrite: true
         
@@ -493,15 +536,15 @@ jobs:
         
     # prod.env 존재 시 SESSION_COOKIE_DOMAIN 미설정 → 테넌트 서브도메인에서 세션 쿠키 불일치·401 가능.
     # 운영 담당: /etc/mindgarden/prod.env 에 SESSION_COOKIE_DOMAIN=core-solution.co.kr (RFC 6265, 선행 점 없음) — deployment/mindgarden.prod-env.example 과 동일.
-    - name: 🔄 서비스 재시작
+    - name: 🔄 블루그린 백엔드·Nginx 적용
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
         port: 22
-        timeout: 60s
-        command_timeout: 5m
+        timeout: 120s
+        command_timeout: 20m
         script: |
           cd /var/www/mindgarden
           
@@ -520,57 +563,121 @@ jobs:
             fi
           fi
           
-          # JAR 파일명 변경
-          if [ -f consultation-management-system-1.0.0.jar ]; then
-            mv consultation-management-system-1.0.0.jar app.jar
-          fi
+          BACKEND_CHANGED="${{ steps.changed-files.outputs.backend_changed }}"
+          ACTIVE_FILE=/etc/mindgarden/active-backend
+          UPSTREAM_SNIP=/etc/nginx/snippets/mindgarden-core-backend-upstream.conf
+          # systemd 유닛명은 deployment/systemd/mindgarden-core-{blue,green}.service.example 과 동일
+          UNIT_BLUE=mindgarden-core-blue.service
+          UNIT_GREEN=mindgarden-core-green.service
           
-          # 권한 설정
-          chmod +x app.jar
+          if [ "$BACKEND_CHANGED" = "true" ]; then
+            echo "🔵🟢 백엔드 변경 있음 — 블루그린 슬롯 배포"
+            if sudo systemctl is-active --quiet mindgarden.service 2>/dev/null; then
+              echo "::error::레거시 mindgarden.service 가 동작 중입니다. 운영 1회: BG 유닛 설치·최초 active·스니펫 후 mindgarden.service disable/stop — docs/deployment/PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md"
+              exit 1
+            fi
+            ACTIVE=$(sudo cat "$ACTIVE_FILE" 2>/dev/null | tr -d '\r\n' | awk '{print tolower($0)}')
+            if [ -z "$ACTIVE" ]; then
+              ACTIVE=blue
+              echo "blue" | sudo tee "$ACTIVE_FILE" > /dev/null
+              echo "::notice::active-backend 없음 — blue 로 초기화했습니다(최초 기동)."
+            fi
+            if [ "$ACTIVE" != "blue" ] && [ "$ACTIVE" != "green" ]; then
+              echo "::error::${ACTIVE_FILE} 값은 blue 또는 green 만 허용됩니다. 현재: $ACTIVE"
+              exit 1
+            fi
+            if [ "$ACTIVE" = "blue" ]; then
+              INACTIVE=green
+              INACTIVE_PORT=8081
+              ACTIVE_PORT=8080
+              INACTIVE_UNIT=$UNIT_GREEN
+            else
+              INACTIVE=blue
+              INACTIVE_PORT=8080
+              ACTIVE_PORT=8081
+              INACTIVE_UNIT=$UNIT_BLUE
+            fi
+            PREVIOUS_ACTIVE="$ACTIVE"
+            echo "📌 현재 트래픽 슬롯: $ACTIVE (포트 $ACTIVE_PORT) → 배포 대상(비활성): $INACTIVE (포트 $INACTIVE_PORT, $INACTIVE_UNIT)"
           
-          # 서비스 재시작
-          echo "🔄 서비스 재시작..."
-          sudo systemctl stop mindgarden.service || true
-          sleep 5
-          sudo systemctl start mindgarden.service
-          echo "⏳ 애플리케이션 시작 대기 중 (30초)..."
-          sleep 30
+            INCOMING=/var/www/mindgarden/releases/incoming/consultation-management-system-1.0.0.jar
+            if [ ! -f "$INCOMING" ]; then
+              echo "::error::업로드된 JAR 없음: $INCOMING (SCP 경로 확인)"
+              exit 1
+            fi
+            sudo cp "$INCOMING" "/var/www/mindgarden/releases/${INACTIVE}/app.jar"
+            sudo chown mindgarden:mindgarden "/var/www/mindgarden/releases/${INACTIVE}/app.jar"
+            sudo chmod 0755 "/var/www/mindgarden/releases/${INACTIVE}/app.jar"
+            sudo rm -f "$INCOMING"
           
-          # 서비스 상태 확인
-          echo "🔍 서비스 상태 확인..."
-          sudo systemctl status mindgarden.service --no-pager | head -10
+            echo "🔄 비활성 슬롯 서비스 재시작: $INACTIVE_UNIT"
+            sudo systemctl restart "$INACTIVE_UNIT" || true
+            sleep 10
+            if ! sudo systemctl is-active --quiet "$INACTIVE_UNIT"; then
+              echo "::error::비활성 슬롯 기동 실패 — Nginx 전환 생략. journalctl -u $INACTIVE_UNIT -n 80"
+              sudo systemctl status "$INACTIVE_UNIT" --no-pager -l | head -40 || true
+              sudo journalctl -u "$INACTIVE_UNIT" --no-pager -n 80 || true
+              exit 1
+            fi
           
-          # 서비스 활성화 상태 확인
-          if sudo systemctl is-active --quiet mindgarden.service; then
-            echo "✅ 서비스 정상 시작됨"
-            # 서비스 상태 상세 출력
-            sudo systemctl status mindgarden.service --no-pager -l | head -20
+            echo "🏥 비활성 슬롯 localhost 헬스 (${INACTIVE_PORT}/actuator/health)"
+            HEALTH_OK=0
+            for i in 1 2 3 4 5 6 7 8 9 10; do
+              if curl -fsS "http://127.0.0.1:${INACTIVE_PORT}/actuator/health" >/dev/null 2>&1; then
+                echo "✅ 헬스 통과 (시도 $i)"
+                curl -sS "http://127.0.0.1:${INACTIVE_PORT}/actuator/health" | head -c 400 || true
+                echo ""
+                HEALTH_OK=1
+                break
+              fi
+              echo "⏳ 헬스 대기... ($i/10)"
+              sleep 6
+            done
+            if [ "$HEALTH_OK" != "1" ]; then
+              echo "::error::비활성 슬롯 헬스 실패 — upstream 전환 안 함. 필요 시: sudo journalctl -u $INACTIVE_UNIT -n 120"
+              exit 1
+            fi
+          
+            echo "🌐 Nginx upstream 을 비활성 슬롯 포트로 전환 (reload 만, 방화벽 미변경)"
+            sudo mkdir -p /etc/nginx/snippets
+            {
+              echo 'upstream mindgarden_core_backend {'
+              echo "    server 127.0.0.1:${INACTIVE_PORT};"
+              echo '    keepalive 32;'
+              echo '}'
+            } | sudo tee "$UPSTREAM_SNIP" > /dev/null
+          
+            echo "$INACTIVE" | sudo tee "$ACTIVE_FILE" > /dev/null
+            echo "✅ active-backend → $INACTIVE (트래픽은 이제 포트 $INACTIVE_PORT)"
+          
+            # 선택: 구 슬롯 JVM 중지(메모리 회수). 빠른 Nginx 롤백을 원하면 주석 유지.
+            # echo "선택적 구 슬롯 중지: sudo systemctl stop mindgarden-core-${PREVIOUS_ACTIVE}.service"
           else
-            echo "❌ 서비스 시작 실패 - 재시도..."
-            echo "📋 서비스 상태 상세:"
-            sudo systemctl status mindgarden.service --no-pager -l
-            echo ""
-            echo "📋 서비스 로그:"
-            sudo journalctl -u mindgarden.service --no-pager -n 30
-            sudo systemctl restart mindgarden.service
-            sleep 30
-            echo "⏳ 재시작 후 대기 완료"
+            echo "⏭️ 백엔드 변경 없음 — 블루그린 슬롯·upstream 전환 스킵"
           fi
           
-          # Nginx 설정 업데이트 (통합 설정 파일)
+          # Nginx 통합 vhost (upstream 스니펫은 백엔드 배포 시 갱신; 없으면 최초 기본값 생성)
           if [ -f /var/www/mindgarden/core-solution-prod.conf ]; then
-            echo "🌐 Nginx 통합 설정 업데이트 중..."
+            echo "🌐 Nginx 통합 설정 적용 (nginx -t 후 reload 만)"
+            sudo mkdir -p /etc/nginx/snippets
+            if [ ! -f "$UPSTREAM_SNIP" ]; then
+              echo "::warning::upstream 스니펫 없음 — 기본 8080 생성(최초 서버 또는 마이그레이션)"
+              {
+                echo 'upstream mindgarden_core_backend {'
+                echo '    server 127.0.0.1:8080;'
+                echo '    keepalive 32;'
+                echo '}'
+              } | sudo tee "$UPSTREAM_SNIP" > /dev/null
+            fi
             sudo cp /var/www/mindgarden/core-solution-prod.conf /etc/nginx/sites-available/core-solution
             sudo ln -sf /etc/nginx/sites-available/core-solution /etc/nginx/sites-enabled/core-solution
-            echo "✅ 통합 설정 파일 적용 완료"
-            
-            # Nginx 설정 테스트
-            if sudo nginx -t; then
+            if sudo nginx -t 2>&1; then
               sudo systemctl reload nginx
-              echo "✅ Nginx 설정 업데이트 완료"
+              echo "✅ Nginx reload 완료"
             else
-              echo "⚠️ Nginx 설정 오류 - 수동 확인 필요"
-              sudo nginx -t
+              echo "::error::nginx -t 실패 — 설정 롤백 필요"
+              sudo nginx -t || true
+              exit 1
             fi
           fi
           
@@ -731,46 +838,49 @@ jobs:
         script: |
           echo "🏥 헬스체크 시작..."
           
-          # 60초 대기 후 헬스체크 (애플리케이션 초기화 시간 확보)
-          echo "⏳ 애플리케이션 초기화 대기 중 (60초)..."
-          sleep 60
+          echo "⏳ 애플리케이션 안정화 대기 (45초)..."
+          sleep 45
           
-          # 서비스 상태 확인
-          echo "🔍 서비스 상태 확인..."
-          if sudo systemctl is-active --quiet mindgarden.service; then
-            echo "✅ 서비스 정상 실행 중"
+          ACTIVE_FILE=/etc/mindgarden/active-backend
+          ACTIVE=$(sudo cat "$ACTIVE_FILE" 2>/dev/null | tr -d '\r\n' | awk '{print tolower($0)}')
+          if [ -z "$ACTIVE" ]; then ACTIVE=blue; fi
+          if [ "$ACTIVE" = "green" ]; then ACTIVE_PORT=8081; ACTIVE_UNIT=mindgarden-core-green.service; else ACTIVE_PORT=8080; ACTIVE_UNIT=mindgarden-core-blue.service; fi
+          
+          echo "🔍 트래픽 슬롯: $ACTIVE → 포트 $ACTIVE_PORT ($ACTIVE_UNIT)"
+          if sudo systemctl is-active --quiet mindgarden.service 2>/dev/null; then
+            echo "⚠️ 레거시 mindgarden.service 동작 중 — 헬스는 레거시 기준(8080)으로 폴백"
+            ACTIVE_PORT=8080
+            ACTIVE_UNIT=mindgarden.service
+          fi
+          
+          if sudo systemctl is-active --quiet "$ACTIVE_UNIT"; then
+            echo "✅ 슬롯 서비스 정상 실행 중 ($ACTIVE_UNIT)"
           else
-            echo "❌ 서비스 실행 실패"
-            echo "📋 서비스 상태 상세:"
-            sudo systemctl status mindgarden.service --no-pager -l
-            echo ""
-            echo "📋 최근 서비스 로그:"
-            sudo journalctl -u mindgarden.service --no-pager -n 50
+            echo "❌ 슬롯 서비스 비활성: $ACTIVE_UNIT"
+            sudo systemctl status "$ACTIVE_UNIT" --no-pager -l | head -40 || true
+            sudo journalctl -u "$ACTIVE_UNIT" --no-pager -n 50 || true
             exit 1
           fi
           
-          # 포트 리스닝 확인
-          echo "🔍 포트 8080 리스닝 확인..."
-          if netstat -tlnp 2>/dev/null | grep -q ":8080 " || ss -tlnp 2>/dev/null | grep -q ":8080 "; then
-            echo "✅ 포트 8080 리스닝 중"
+          echo "🔍 포트 ${ACTIVE_PORT} 리스닝 확인..."
+          if netstat -tlnp 2>/dev/null | grep -q ":${ACTIVE_PORT} " || ss -tlnp 2>/dev/null | grep -q ":${ACTIVE_PORT} "; then
+            echo "✅ 포트 ${ACTIVE_PORT} 리스닝 중"
           else
-            echo "❌ 포트 8080 리스닝 안 됨"
-            echo "📋 서비스 로그 확인:"
-            sudo journalctl -u mindgarden.service --no-pager -n 100 | tail -50
+            echo "❌ 포트 ${ACTIVE_PORT} 리스닝 안 됨"
+            sudo journalctl -u "$ACTIVE_UNIT" --no-pager -n 80 | tail -50 || true
           fi
           
-          # Flyway / DB 마이그레이션 실행 여부 확인 (journal + 선택적 flyway_schema_history)
-          echo "🔍 Flyway·DB 마이그레이션 확인 (최근 기동 구간)..."
-          sudo journalctl -u mindgarden.service --since "25 minutes ago" --no-pager \
+          echo "🔍 Flyway·DB 마이그레이션 확인 (최근 기동 구간, $ACTIVE_UNIT)..."
+          sudo journalctl -u "$ACTIVE_UNIT" --since "25 minutes ago" --no-pager \
             | grep -iE 'flyway|Flyway|schema_history|Migrating schema|Successfully applied|Validate failed' \
             | tail -40 || true
-          if sudo journalctl -u mindgarden.service --since "25 minutes ago" --no-pager | grep -qi flyway; then
+          if sudo journalctl -u "$ACTIVE_UNIT" --since "25 minutes ago" --no-pager | grep -qi flyway; then
             echo "✅ 최근 로그에 Flyway 관련 메시지 존재 (위 로그 참고)"
           else
             echo "⚠️ 최근 25분 journal에 Flyway 키워드 없음 — SPRING_FLYWAY_ENABLED=false 이거나 로그 레벨·기동 전 구간일 수 있음"
           fi
           if command -v mysql >/dev/null 2>&1; then
-            for kv in $(systemctl show mindgarden.service -p Environment --value | tr ' ' '\n' | grep '^DB_'); do
+            for kv in $(systemctl show "$ACTIVE_UNIT" -p Environment --value | tr ' ' '\n' | grep '^DB_'); do
               export "$kv" 2>/dev/null || true
             done
             DBN="${DB_NAME:-core_solution}"
@@ -778,7 +888,7 @@ jobs:
             DBP="${DB_PASSWORD:-}"
             DBH="${DB_HOST:-localhost}"
             if [ -n "$DBP" ]; then
-              echo "🔍 flyway_schema_history 최신 5건 (mindgarden.service Environment 의 DB_* 사용)..."
+              echo "🔍 flyway_schema_history 최신 5건 ($ACTIVE_UNIT Environment 의 DB_* 사용)..."
               if mysql -h "$DBH" -u "$DBU" -p"$DBP" "$DBN" -e "SHOW TABLES LIKE 'flyway_schema_history';" 2>/dev/null | grep -q flyway_schema_history; then
                 mysql -h "$DBH" -u "$DBU" -p"$DBP" "$DBN" -e \
                   "SELECT installed_rank, version, description, success, installed_on FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 5;" 2>/dev/null \
@@ -791,12 +901,11 @@ jobs:
             fi
           fi
           
-          # HTTP 헬스체크 (재시도 3회)
-          echo "🔍 HTTP 헬스체크 시작..."
+          echo "🔍 HTTP 헬스체크 (트래픽 슬롯 포트 ${ACTIVE_PORT})..."
           for i in {1..3}; do
-            if curl -f -s http://localhost:8080/actuator/health > /dev/null 2>&1; then
+            if curl -f -s "http://127.0.0.1:${ACTIVE_PORT}/actuator/health" > /dev/null 2>&1; then
               echo "✅ HTTP 헬스체크 통과 (시도 $i)"
-              curl -s http://localhost:8080/actuator/health | head -10
+              curl -s "http://127.0.0.1:${ACTIVE_PORT}/actuator/health" | head -10
               break
             else
               echo "⏳ HTTP 헬스체크 재시도 중... (시도 $i/3)"
@@ -804,22 +913,17 @@ jobs:
                 sleep 10
               else
                 echo "❌ HTTP 헬스체크 실패 (3회 시도 후 실패)"
-                echo "📋 서비스 로그 최근 100줄:"
-                sudo journalctl -u mindgarden.service --no-pager -n 100 | tail -50
-                echo ""
-                echo "📋 애플리케이션 로그 확인:"
+                sudo journalctl -u "$ACTIVE_UNIT" --no-pager -n 100 | tail -50 || true
                 if [ -f /var/www/mindgarden/logs/mindgarden-prod.log ]; then
                   tail -50 /var/www/mindgarden/logs/mindgarden-prod.log
                 fi
-                echo ""
                 echo "⚠️ HTTP 헬스체크 실패했지만 배포는 계속 진행됩니다."
               fi
             fi
           done
           
-          # 프론트엔드(SPA 엔트리) 확인 — 백엔드 8080 직접 (localhost:80은 vhost에 따라 오탐)
-          # curl -f 는 4xx 시 실패라 TENANT_ID_REQUIRED 400 등에서 오탐됨 → HTTP 코드로 판정
-          fe_code=$(curl -sS -o /dev/null -w '%{http_code}' -m 15 http://127.0.0.1:8080/login 2>/dev/null || echo "000")
+          # 프론트엔드(SPA 엔트리) 확인 — 트래픽 슬롯 포트 직접
+          fe_code=$(curl -sS -o /dev/null -w '%{http_code}' -m 15 "http://127.0.0.1:${ACTIVE_PORT}/login" 2>/dev/null || echo "000")
           if echo "$fe_code" | grep -qE '^(200|301|302|303|304)$'; then
             echo "✅ 프론트엔드 엔트리(/login) 응답 정상 (HTTP $fe_code)"
           else
@@ -839,19 +943,22 @@ jobs:
           echo "=================================="
           
           echo ""
-          echo "1. 서비스 상태:"
-          sudo systemctl status mindgarden.service --no-pager -l | head -30
+          echo "1. 서비스 상태 (블루·그린):"
+          sudo systemctl status mindgarden-core-blue.service --no-pager -l | head -20 || true
+          sudo systemctl status mindgarden-core-green.service --no-pager -l | head -20 || true
+          sudo systemctl status mindgarden.service --no-pager -l | head -15 || true
           
           echo ""
-          echo "2. 서비스 로그 (최근 50줄):"
-          sudo journalctl -u mindgarden.service --no-pager -n 50
+          echo "2. 서비스 로그 (최근 50줄, blue / green):"
+          sudo journalctl -u mindgarden-core-blue.service --no-pager -n 25 || true
+          sudo journalctl -u mindgarden-core-green.service --no-pager -n 25 || true
           
           echo ""
-          echo "3. 포트 리스닝 확인:"
+          echo "3. 포트 리스닝 확인 (8080·8081):"
           if command -v netstat &> /dev/null; then
-            netstat -tlnp 2>/dev/null | grep 8080 || echo "포트 8080 리스닝 안 됨"
+            netstat -tlnp 2>/dev/null | grep -E ':8080|:8081' || echo "8080/8081 리스닝 없음"
           elif command -v ss &> /dev/null; then
-            ss -tlnp 2>/dev/null | grep 8080 || echo "포트 8080 리스닝 안 됨"
+            ss -tlnp 2>/dev/null | grep -E ':8080|:8081' || echo "8080/8081 리스닝 없음"
           else
             echo "netstat 또는 ss 명령어 없음"
           fi
@@ -871,14 +978,11 @@ jobs:
           fi
           
           echo ""
-          echo "6. JAR 파일 확인:"
-          if [ -f /var/www/mindgarden/app.jar ]; then
-            ls -lh /var/www/mindgarden/app.jar
-          else
-            echo "JAR 파일 없음: /var/www/mindgarden/app.jar"
-            echo "디렉토리 내용:"
-            ls -lh /var/www/mindgarden/ | head -10
-          fi
+          echo "6. JAR 파일 확인 (슬롯 + 레거시):"
+          ls -lh /var/www/mindgarden/releases/blue/app.jar 2>/dev/null || echo "blue JAR 없음"
+          ls -lh /var/www/mindgarden/releases/green/app.jar 2>/dev/null || echo "green JAR 없음"
+          ls -lh /var/www/mindgarden/app.jar 2>/dev/null || echo "레거시 app.jar 없음"
+          echo "active-backend:"; sudo cat /etc/mindgarden/active-backend 2>/dev/null || echo "(없음)"
           
           echo ""
           echo "7. 환경 변수 확인:"
@@ -933,7 +1037,8 @@ jobs:
           echo "💿 디스크 사용량:"
           df -h /var/www/mindgarden
           echo ""
-          echo "🔧 서비스 상태:"
-          sudo systemctl is-active mindgarden.service
+          echo "🔧 서비스 상태 (블루·그린):"
+          sudo systemctl is-active mindgarden-core-blue.service 2>/dev/null || echo "blue: n/a"
+          sudo systemctl is-active mindgarden-core-green.service 2>/dev/null || echo "green: n/a"
           
           echo "✅ 메모리 정리 완료!"

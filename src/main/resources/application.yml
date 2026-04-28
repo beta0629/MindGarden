@@ -1,4 +1,4 @@
-# 통합 상담관리 시스템 설정 파일
+# 통합 상담관리 시스템 설정 파일 
 # Spring Boot 3.x + Hibernate 6.x + MySQL 8.x
 
 spring:

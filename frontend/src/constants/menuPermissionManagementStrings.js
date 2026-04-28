@@ -34,28 +34,60 @@ export const MENU_PERM_BUTTON = {
   SAVE_CHANGES: '변경사항 저장'
 };
 
-/** 메뉴 위치(LNB/대시보드) 표시명 — MenuPermissionManagementUI */
+/**
+ * 메뉴 위치(LNB/대시보드) 표시명 — MenuPermissionManagementUI
+ * (MENU_PERM_PAGE / MENU_PERM_BUTTON 과 동일하게 주제별 export)
+ */
 export const MENU_PERM_LOCATION = {
   DASHBOARD: '일반 대시보드',
   ADMIN_ONLY: '관리자 전용',
-  BOTH: '양쪽 모두'
+  BOTH: '양쪽 모두',
+  UNKNOWN: '기타'
 };
 
-/** MenuPermissionManagementUI 전용 사용자 노출 문구 */
-export const MENU_PERM_UI = {
-  SIDEBAR_ROLE_TITLE: '역할 선택',
-  LOADING_INLINE: '로딩 중...',
-  ROLE_MENU_TITLE_SUFFIX: ' 역할의 메뉴 권한',
-  ROLE_DESCRIPTION: '이 역할에 부여할 메뉴 접근 권한을 설정하세요.',
-  PERM_VIEW: '조회',
-  PERM_CREATE: '생성',
-  PERM_UPDATE: '수정',
-  PERM_DELETE: '삭제',
-  HELP_TITLE: '권한 부여 규칙:',
-  HELP_RULE_MIN_ROLE: '최소 요구 역할보다 낮은 역할에게는 권한을 부여할 수 없습니다.',
-  HELP_RULE_VIEW_FIRST: '조회 권한이 없으면 생성/수정/삭제 권한을 부여할 수 없습니다.',
-  HELP_RULE_ADMIN: 'ADMIN 역할은 모든 메뉴에 접근할 수 있습니다.',
-  EMPTY_SELECT_ROLE: '좌측에서 역할을 선택하세요'
+/** 좌측 역할 목록 — MenuPermissionManagementUI */
+export const MENU_PERM_SIDEBAR = {
+  TITLE: '역할 선택'
+};
+
+/** 선택 역할 패널 헤더 — MenuPermissionManagementUI */
+export const MENU_PERM_ROLE_PANEL = {
+  MENU_TITLE_SUFFIX: ' 역할의 메뉴 권한',
+  DESCRIPTION: '이 역할에 부여할 메뉴 접근 권한을 설정하세요.'
+};
+
+/** 권한 체크박스 라벨 — MenuPermissionManagementUI */
+export const MENU_PERM_ACCESS = {
+  VIEW: '조회',
+  CREATE: '생성',
+  UPDATE: '수정',
+  DELETE: '삭제'
+};
+
+/** 안내 문구 — MenuPermissionManagementUI */
+export const MENU_PERM_HELP = {
+  TITLE: '권한 부여 규칙:',
+  RULE_MIN_ROLE: '최소 요구 역할보다 낮은 역할에게는 권한을 부여할 수 없습니다.',
+  RULE_VIEW_FIRST: '조회 권한이 없으면 생성/수정/삭제 권한을 부여할 수 없습니다.',
+  RULE_ADMIN: 'ADMIN 역할은 모든 메뉴에 접근할 수 있습니다.'
+};
+
+/** 빈 상태 — MenuPermissionManagementUI */
+export const MENU_PERM_EMPTY = {
+  SELECT_ROLE: '좌측에서 역할을 선택하세요'
+};
+
+/** 인라인 로딩 — MenuPermissionManagementUI (컨테이너는 MENU_PERM_PAGE.LOADING 사용) */
+export const MENU_PERM_LOADING = {
+  INLINE: '로딩 중...'
+};
+
+/** 역할 코드별 계층 레벨 — 권한 부여 가능 여부 비교용 */
+export const MENU_PERM_ROLE_LEVEL = {
+  ADMIN: 4,
+  STAFF: 3,
+  CONSULTANT: 2,
+  CLIENT: 1
 };
 
 /** TODO 제거 전 임시 목업 — 역할 표시명 */

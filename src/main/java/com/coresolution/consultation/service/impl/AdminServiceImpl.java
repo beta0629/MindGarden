@@ -645,8 +645,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     existingMapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
                 }
                 existingMapping.setTerminatedAt(LocalDateTime.now());
-                existingMapping.setNotes((existingMapping.getNotes() != null ? existingMapping.getNotes() + "\n" : "") + 
-                    "새로운 매칭 생성으로 인한 자동 종료 - 회기 자동 소진");
+                existingMapping.setNotes((existingMapping.getNotes() != null ? existingMapping.getNotes() + "\n" : "")
+                        + AdminServiceUserFacingMessages.NOTES_AUTO_TERMINATED_ON_NEW_MAPPING);
                 
                 int remainingSessions = existingMapping.getRemainingSessions();
                 if (remainingSessions > 0) {
@@ -3184,9 +3184,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setTerminatedAt(LocalDateTime.now());
         
         String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
-        String terminationNote = String.format("[%s 강제 종료] %s (환불: %d회기, %,d원)", 
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), 
-                reason != null ? reason : "관리자 요청",
+        String terminationNote = String.format(AdminServiceUserFacingMessages.NOTES_FORCE_TERMINATION_LINE_FMT,
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                reason != null ? reason : AdminServiceUserFacingMessages.DEFAULT_MAPPING_NOTE_REASON_ADMIN_REQUEST,
                 refundedSessions,
                 refundAmount);
         
@@ -3223,9 +3223,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     
                     String cancelledStatus = getScheduleStatusCode("CANCELLED");
                     schedule.setStatus(ScheduleStatus.valueOf(cancelledStatus));
-                    schedule.setNotes(schedule.getNotes() != null ? 
-                        schedule.getNotes() + "\n[환불 처리로 인한 자동 취소] " + reason :
-                        "[환불 처리로 인한 자동 취소] " + reason);
+                    schedule.setNotes(schedule.getNotes() != null
+                            ? schedule.getNotes() + "\n" + AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL + reason
+                            : AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL + reason);
                     schedule.setUpdatedAt(LocalDateTime.now());
                     scheduleRepository.save(schedule);
                     cancelledScheduleCount++;
@@ -3367,9 +3367,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setTotalSessions(mapping.getTotalSessions() - refundSessions);
         
         String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
-        String refundNote = String.format("[부분 환불] %s - 사유: %s, 환불 회기: %d회, 환불 금액: %,d원, 남은 회기: %d회", 
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), 
-                reason != null ? reason : "관리자 요청",
+        String refundNote = String.format(AdminServiceUserFacingMessages.NOTES_PARTIAL_REFUND_LINE_FMT,
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                reason != null ? reason : AdminServiceUserFacingMessages.DEFAULT_MAPPING_NOTE_REASON_ADMIN_REQUEST,
                 refundSessions,
                 refundAmount,
                 mapping.getRemainingSessions());

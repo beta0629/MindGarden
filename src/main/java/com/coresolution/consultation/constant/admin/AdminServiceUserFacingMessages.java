@@ -242,6 +242,29 @@ public final class AdminServiceUserFacingMessages {
 
     public static final String NOTES_DUPLICATE_MAPPING_MERGE_TERMINATED = "중복 매칭 통합으로 종료됨";
 
+    /** 신규 매칭 생성 시 기존 매칭 자동 종료로 매칭 notes에 append되는 문구 */
+    public static final String NOTES_AUTO_TERMINATED_ON_NEW_MAPPING =
+            "새로운 매칭 생성으로 인한 자동 종료 - 회기 자동 소진";
+
+    /**
+     * 강제 종료 매칭 notes 한 줄 (인자: 일시 문자열, 사유, 환불 회기, 환불 금액).
+     */
+    public static final String NOTES_FORCE_TERMINATION_LINE_FMT =
+            "[%s 강제 종료] %s (환불: %d회기, %,d원)";
+
+    /** 강제 종료·부분 환불 노트 등에서 사유 미입력 시 기본 표시 */
+    public static final String DEFAULT_MAPPING_NOTE_REASON_ADMIN_REQUEST = "관리자 요청";
+
+    /**
+     * 부분 환불 매칭 notes 한 줄 (인자: 일시, 사유, 환불 회기, 환불 금액, 남은 회기).
+     */
+    public static final String NOTES_PARTIAL_REFUND_LINE_FMT =
+            "[부분 환불] %s - 사유: %s, 환불 회기: %d회, 환불 금액: %,d원, 남은 회기: %d회";
+
+    /** 환불 처리로 스케줄 자동 취소 시 notes 접두 (뒤에 사유 문자열 연결) */
+    public static final String SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL =
+            "[환불 처리로 인한 자동 취소] ";
+
     public static final String PACKAGE_NAME_ADDITIONAL_FALLBACK = "추가 패키지";
 
     public static final String PACKAGE_NAME_ESTIMATED_SESSIONS_FMT = "%d회 패키지 (추정)";

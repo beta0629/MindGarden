@@ -122,8 +122,8 @@ tmp/
 tmp_error_tail*.txt
 
 # Playwright E2E 로컬 리포트: test-reports 등이 저장소에 커밋되는 정책이면 무시 패턴을 켜지 말 것(충돌).
-# 로컬 산출물만 숨기려면 필요 시 아래 주석 해제.
-# tests/e2e/test-results/
+# 로컬 산출물 — trace·last-run 등은 커밋하지 않음(USER_FACING·팀 정책과 정합).
+tests/e2e/test-results/
 # tests/e2e/test-reports/
 
 # 로컬/CI 산출물 — 저장소 비추적

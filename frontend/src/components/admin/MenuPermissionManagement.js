@@ -28,7 +28,6 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import {
@@ -246,7 +245,6 @@ const MenuPermissionManagement = () => {
                                     error={error}
                                     onRoleSelect={handleRoleSelect}
                                     onPermissionChange={handlePermissionChange}
-                                    onBatchSave={handleBatchSave}
                                 />
                             )}
                         </main>

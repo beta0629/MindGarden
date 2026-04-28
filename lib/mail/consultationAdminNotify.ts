@@ -97,7 +97,24 @@ function contactMethodLabel(code: string): string {
   return map[code] ?? code;
 }
 
-function buildBodies(data: ConsultationAdminMailPayload): { text: string; html: string } {
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/** 메일 클라이언트에서 로고 로드용 절대 URL (원격 이미지 차단 시 alt만 표시) */
+function consultationMailPublicOrigin(): string {
+  const raw =
+    process.env.MAIL_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'https://m-garden.co.kr';
+  return raw.replace(/\/+$/, '');
+}
+
+function buildPlainTextBody(data: ConsultationAdminMailPayload): string {
   const lines = [
     `접수 번호: ${data.inquiryId}`,
     `이름: ${data.name}`,
@@ -112,14 +129,90 @@ function buildBodies(data: ConsultationAdminMailPayload): { text: string; html: 
     data.preferredTime ? `희망 시간: ${data.preferredTime}` : null,
     data.message ? `메모:\n${data.message}` : null,
   ].filter(Boolean) as string[];
+  return lines.join('\n');
+}
 
-  const text = lines.join('\n');
-  const htmlBody = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-  const html = `<pre style="font-family:system-ui,sans-serif;font-size:14px;line-height:1.5">${htmlBody}</pre>`;
-  return { text, html };
+function rowHtml(label: string, value: string | null | undefined): string {
+  if (value == null || value === '') return '';
+  const v = escapeHtml(value);
+  return `<tr>
+  <td style="padding:10px 14px;border-bottom:1px solid #e8ebe8;width:132px;vertical-align:top;font-size:13px;color:#5c6570;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;">${escapeHtml(label)}</td>
+  <td style="padding:10px 14px;border-bottom:1px solid #e8ebe8;font-size:14px;color:#1a1f1a;font-weight:600;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;">${v}</td>
+</tr>`;
+}
+
+function buildHtmlEmail(data: ConsultationAdminMailPayload): string {
+  const origin = consultationMailPublicOrigin();
+  const logoUrl =
+    process.env.MAIL_LOGO_URL || `${origin}/assets/images/logo/logo.png`;
+  const rows = [
+    rowHtml('접수 번호', String(data.inquiryId)),
+    rowHtml('이름', data.name),
+    rowHtml('전화', data.phone),
+    data.email ? rowHtml('이메일', data.email) : '',
+    rowHtml('선호 연락', contactMethodLabel(data.preferredContactMethod)),
+    rowHtml('문의 유형', inquiryTypeLabel(data.inquiryType)),
+    data.referralSource
+      ? rowHtml('유입 경로', referralSourceLabel(data.referralSource))
+      : '',
+    data.preferredDate ? rowHtml('희망 날짜', data.preferredDate) : '',
+    data.preferredTime ? rowHtml('희망 시간', data.preferredTime) : '',
+  ].join('');
+
+  const memoBlock =
+    data.message && data.message.trim()
+      ? `<tr><td colspan="2" style="padding:16px 14px 8px;font-size:13px;color:#5c6570;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;">메모</td></tr>
+<tr><td colspan="2" style="padding:0 14px 16px;font-size:14px;color:#1a1f1a;line-height:1.55;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;white-space:pre-wrap;">${escapeHtml(data.message.trim())}</td></tr>`
+      : '';
+
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background-color:#eef1ee;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#eef1ee;padding:24px 12px;">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(26,31,26,0.08);">
+<tr>
+  <td bgcolor="#5a8f3f" style="background:linear-gradient(135deg,#5a8f3f 0%,#4a7a34 100%);padding:22px 24px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="vertical-align:middle;">
+          <img src="${escapeHtml(logoUrl)}" width="140" height="" alt="마인드가든" style="display:block;max-width:140px;height:auto;border:0;" />
+        </td>
+        <td align="right" style="vertical-align:middle;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;">
+          <div style="font-size:11px;letter-spacing:0.06em;color:rgba(255,255,255,0.9);text-transform:uppercase;">MindGarden</div>
+          <div style="font-size:17px;font-weight:700;color:#ffffff;margin-top:4px;">새 상담 문의</div>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+  <td style="padding:8px 0 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+      ${rows}
+      ${memoBlock}
+    </table>
+  </td>
+</tr>
+<tr>
+  <td style="padding:18px 20px 22px;font-size:12px;line-height:1.5;color:#7a8478;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;border-top:1px solid #e8ebe8;">
+    홈페이지 상담 예약 폼에서 접수된 내용입니다. 빠른 연락 부탁드립니다.<br/>
+    <span style="color:#9aa399;">이 메일은 발신 전용입니다.</span>
+  </td>
+</tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+function buildBodies(data: ConsultationAdminMailPayload): { text: string; html: string } {
+  return {
+    text: buildPlainTextBody(data),
+    html: buildHtmlEmail(data),
+  };
 }
 
 /**

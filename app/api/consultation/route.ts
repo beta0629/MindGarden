@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDbConnection } from '@/lib/db';
+import { sendConsultationAdminNotify } from '@/lib/mail/consultationAdminNotify';
 
 // 상담 문의 저장
 export async function POST(request: NextRequest) {
@@ -74,9 +75,23 @@ export async function POST(request: NextRequest) {
       ]
     );
 
+    const insertId = Number((result as { insertId?: number }).insertId);
+    void sendConsultationAdminNotify({
+      inquiryId: insertId,
+      name,
+      phone,
+      email: email || null,
+      preferredContactMethod,
+      inquiryType,
+      referralSource: referralSource || null,
+      message: message || null,
+      preferredDate: preferredDate || null,
+      preferredTime: preferredTime || null,
+    }).catch((err) => console.error('[mail] consultation admin notify failed:', err));
+
     return NextResponse.json({
       success: true,
-      id: (result as any).insertId,
+      id: insertId,
       message: '상담 문의가 접수되었습니다. 빠른 시일 내에 연락드리겠습니다.',
     });
   } catch (error) {

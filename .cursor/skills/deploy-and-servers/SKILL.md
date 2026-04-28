@@ -137,7 +137,7 @@ pm2 restart homepage-dev
 - **도메인 연동**: 위 nginx 파일만 **추가**했고, `sites-available`·기존 블록은 **수정하지 않음**. `nginx.conf`는 `conf.d`를 `sites-enabled`보다 먼저 include하므로, 동일 `server_name`(m-garden.co.kr, www)에 대해 이 프록시가 **410 Gone** 등 후속 중복 블록보다 우선한다. (중복 경고는 무시되는 쪽이 후속 블록.)
 - SSL은 기존 Let’s Encrypt 인증서 경로 `/etc/letsencrypt/live/m-garden.co.kr/` 사용.
 - 레포 예시(백업·재현용): `docs/nginx-m-garden-homepage-nextjs.conf.example`
-- **운영 배포**: 서버에 `.env` 또는 `.env.production`을 두고(템플릿 `/.env.production.example`), DB는 개발과 **동일 계정·비밀번호**, **`DB_HOST` 만 운영 DB 주소**(같은 장비면 `127.0.0.1`)로 설정. 이후 `cd /var/www/homepage && bash scripts/deploy-production.sh`.
+- **운영 환경 변수**: `ecosystem.homepage.config.cjs`가 **`/var/www/homepage/.env`만** 읽어 PM2에 주입한다(`.env.production`은 이 앱 PM2 경로에서 사용하지 않음). 로컬에서 채울 때는 레포의 `.env.production.example`을 참고해 서버에 **`.env` 한 파일**로 복사·편집하면 된다. DB는 개발과 **동일 계정·비밀번호**, **`DB_HOST` 만 운영 DB 주소**(같은 장비면 `127.0.0.1`)로 설정. 이후 `cd /var/www/homepage && bash scripts/deploy-production.sh`.
 - 비밀번호·개인키는 저장소/문서에 적지 않는다.
 
 ---

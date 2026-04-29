@@ -1052,8 +1052,8 @@
 }
 
 .mg-v2-ad-b0kla .mg-v2-consultation-log-modal .mg-v2-badge-select .mg-v2-badge-select__item.mg-v2-button-outline.mg-v2-badge-select__item--selected:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-color-primary-light, #4a6354);
-  border-color: var(--mg-color-primary-light, #4a6354);
+  background-color: var(--mg-color-primary-light, var(--mg-success-600));
+  border-color: var(--mg-color-primary-light, var(--mg-success-600));
   color: var(--mg-color-text-on-primary, var(--mg-white));
   box-shadow: var(--cs-shadow-soft);
 }
@@ -1279,6 +1279,11 @@
   margin-bottom: 0;
 }
 
+/*
+ * UnifiedModal .mg-modal__actions: flex·gap·정렬·배경은 본 블록이 전역 B0KlA 푸터 기준.
+ * border·padding 토큰은 AdminDashboardB0KlA.css 동선택자와 중복될 수 있음(로드 순서에 따름).
+ * 일정 상세 동일 열 폭은 반드시 .schedule-detail-modal__footer-actions(직계)에서만 적용.
+ */
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions {
   display: flex;
   flex-wrap: wrap;
@@ -1286,7 +1291,7 @@
   justify-content: center;
   align-items: center;
   gap: var(--spacing-md);
-  padding: 16px 24px;
+  padding: var(--mg-spacing-lg) var(--mg-spacing-xl);
   border-top: 1px solid var(--mg-gray-200);
   background: var(--ad-b0kla-card-bg);
 }
@@ -1299,6 +1304,31 @@
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-modal__button {
   flex: 0 0 auto;
   width: auto;
+}
+
+/* 일정 상세·확인 서브모달: actions 단일 직계 래퍼 — Fragment 다중 자식 시 flex가 버튼마다 나뉘는 현상 방지 */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* 버튼 행: N열 동일 폭(:has 미지원 브라우저는 세로 스택에 가깝게 보일 수 있음) */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions:has(.mg-button) {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--spacing-md);
+  align-items: stretch;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions:has(.mg-button) .mg-button,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions:has(.mg-button) > button {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  flex: none;
+  box-sizing: border-box;
 }
 
 /* mg-modal__body 내부 폼·입력 B0KlA */
@@ -2081,7 +2111,11 @@ textarea.mg-v2-textarea {
 
 /* 일정 상세 모달 — 「상세 | 특이사항」 탭 가시성 (_unified-modals 본문 primary 대비) */
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   margin-bottom: var(--mg-space-3);
   padding: 0.35rem;
@@ -2090,24 +2124,26 @@ textarea.mg-v2-textarea {
   border-radius: var(--ad-b0kla-radius-sm, 8px);
 }
 
-/* tablist: MGButton 기본 min-width:fit-content 때문에 flex 1:1이 깨질 수 있어 grid로 동일 폭 고정 */
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs__track {
+/* tablist: 직계 track만 지정해 중첩 MGButton에 영향 없음. MGButton min-width 대응으로 grid 동일 폭 */
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track {
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: stretch;
   gap: var(--mg-space-2);
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   box-sizing: border-box;
 }
 
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs__track > .mg-button {
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track > .mg-button {
   width: 100% !important;
   min-width: 0 !important;
   max-width: none !important;
   box-sizing: border-box;
 }
 
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs__track > .mg-button .mg-button__content {
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track > .mg-button .mg-button__content {
   justify-content: center;
 }
 
@@ -2127,14 +2163,14 @@ textarea.mg-v2-textarea {
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs .mg-button.mg-button--primary,
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs .mg-button.mg-button--primary.mg-v2-button-primary {
   background: var(--ad-b0kla-green);
-  color: #fff;
+  color: var(--mg-color-text-on-primary, var(--mg-white));
   border-color: transparent;
-  box-shadow: 0 2px 8px rgba(61, 82, 70, 0.28);
+  box-shadow: var(--cs-shadow-soft);
 }
 
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--mg-success-700);
-  color: #fff;
+  color: var(--mg-color-text-on-primary, var(--mg-white));
 }
 
 

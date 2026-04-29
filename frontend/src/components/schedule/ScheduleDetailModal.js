@@ -236,8 +236,8 @@ const ScheduleDetailModal = ({
             showCloseButton={!loading}
             loading={loading}
             className="mg-v2-ad-b0kla"
-            actions={
-                <>
+            actions={(
+                <div className="schedule-detail-modal__footer-actions">
                     <MGButton
                         type="button"
                         variant="outline"
@@ -270,8 +270,8 @@ const ScheduleDetailModal = ({
                     >
                         예, 취소합니다
                     </MGButton>
-                </>
-            }
+                </div>
+            )}
         >
             <p>정말로 이 예약을 취소하시겠습니까?</p>
         </UnifiedModal>
@@ -292,8 +292,8 @@ const ScheduleDetailModal = ({
             showCloseButton={!loading}
             loading={loading}
             className="mg-v2-ad-b0kla"
-            actions={
-                <>
+            actions={(
+                <div className="schedule-detail-modal__footer-actions">
                     <MGButton
                         type="button"
                         variant="outline"
@@ -326,8 +326,8 @@ const ScheduleDetailModal = ({
                     >
                         확정
                     </MGButton>
-                </>
-            }
+                </div>
+            )}
         >
             <p>내담자의 입금을 확인하셨습니까?</p>
             <div className="mg-form-group">
@@ -725,7 +725,11 @@ const ScheduleDetailModal = ({
                 backdropClick={true}
                 showCloseButton={true}
                 className="mg-v2-ad-b0kla"
-                actions={renderMainActions()}
+                actions={(
+                    <div className="schedule-detail-modal__footer-actions">
+                        {renderMainActions()}
+                    </div>
+                )}
             >
                 {showNotesTab ? (
                     <div className="schedule-detail-modal__tabs">

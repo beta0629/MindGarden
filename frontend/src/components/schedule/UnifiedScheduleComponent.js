@@ -728,6 +728,8 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
 
         const scheduleData = {
             id: event.extendedProps.id,
+            scheduleId: event.extendedProps.id,
+            mappingId: event.extendedProps.mappingId ?? undefined,
             title: event.title,
             consultantName: consultantName,
             clientName: clientName,

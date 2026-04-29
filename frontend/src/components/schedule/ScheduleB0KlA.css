@@ -2090,9 +2090,10 @@ textarea.mg-v2-textarea {
   border-radius: var(--ad-b0kla-radius-sm, 8px);
 }
 
-/* tablist는 직계 자식이 탭만 있도록 별도 행(공백 텍스트 flex 항목 방지 + 동일 폭) */
+/* tablist: MGButton 기본 min-width:fit-content 때문에 flex 1:1이 깨질 수 있어 grid로 동일 폭 고정 */
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs__track {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: stretch;
   gap: var(--mg-space-2);
   width: 100%;
@@ -2100,10 +2101,14 @@ textarea.mg-v2-textarea {
 }
 
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs__track > .mg-button {
-  flex: 1 1 0 !important;
+  width: 100% !important;
   min-width: 0 !important;
-  width: auto !important;
   max-width: none !important;
+  box-sizing: border-box;
+}
+
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs__track > .mg-button .mg-button__content {
+  justify-content: center;
 }
 
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs .mg-button.mg-button--outline {

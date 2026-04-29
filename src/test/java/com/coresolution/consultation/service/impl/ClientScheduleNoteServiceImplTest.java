@@ -76,12 +76,12 @@ class ClientScheduleNoteServiceImplTest {
     @DisplayName("P4: STAFF는 includeDeleted=true여도 삭제분 조회 플래그가 repository에 전달되지 않음(false)")
     void listNotes_staffCannotForceIncludeDeleted() {
         when(scheduleRepository.findById(10L)).thenReturn(Optional.of(schedule(10L, TENANT_A, 5L)));
-        when(clientScheduleNoteRepository.listBySchedule(eq(TENANT_A), eq(10L), eq(false)))
+        when(clientScheduleNoteRepository.listByClient(eq(TENANT_A), eq(5L), eq(false)))
                 .thenReturn(List.of());
 
         service.listNotes(TENANT_A, null, 10L, null, true, user(99L, UserRole.STAFF));
 
-        verify(clientScheduleNoteRepository).listBySchedule(TENANT_A, 10L, false);
+        verify(clientScheduleNoteRepository).listByClient(TENANT_A, 5L, false);
     }
 
     @Test
@@ -155,6 +155,32 @@ class ClientScheduleNoteServiceImplTest {
                 () -> service.update(TENANT_A, noteId,
                         ClientScheduleNoteUpdateRequest.builder().title("x").build(),
                         user(1L, UserRole.ADMIN)));
+    }
+
+    @Test
+    @DisplayName("일정에 clientId가 있으면 listByClient로 동일 내담자·타 일정 특이사항까지 조회")
+    void listNotes_scheduleWithClientId_usesListByClient() {
+        long clientId = 77L;
+        when(scheduleRepository.findById(20L)).thenReturn(Optional.of(schedule(20L, TENANT_A, clientId)));
+        ClientScheduleNote otherSchedule = note(1L, TENANT_A, 19L);
+        otherSchedule.setClientId(clientId);
+        otherSchedule.setResolvedAt(null);
+        otherSchedule.setCreatedAt(LocalDateTime.of(2026, 4, 5, 10, 0));
+        when(clientScheduleNoteRepository.listByClient(TENANT_A, clientId, false)).thenReturn(List.of(otherSchedule));
+
+        Map<String, Object> out = service.listNotes(TENANT_A, null, 20L, null, false, user(1L, UserRole.ADMIN));
+
+        verify(clientScheduleNoteRepository).listByClient(TENANT_A, clientId, false);
+        assertThat(out.get("totalCount")).isEqualTo(1);
+        assertThat(out.get("unresolvedCount")).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("목록: 요청 clientId가 일정의 내담자와 다르면 IllegalArgumentException")
+    void listNotes_scheduleClientIdMismatch_throws() {
+        when(scheduleRepository.findById(21L)).thenReturn(Optional.of(schedule(21L, TENANT_A, 77L)));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.listNotes(TENANT_A, 99L, 21L, null, false, user(1L, UserRole.ADMIN)));
     }
 
     @Test

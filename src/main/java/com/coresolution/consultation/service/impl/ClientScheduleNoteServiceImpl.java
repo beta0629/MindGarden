@@ -65,17 +65,34 @@ public class ClientScheduleNoteServiceImpl implements ClientScheduleNoteService 
         boolean showDeleted = includeDeleted && canViewDeletedList(currentUser);
         List<ClientScheduleNote> rows;
         if (scheduleId != null) {
-            requireScheduleInTenant(tenantId, scheduleId);
-            rows = clientScheduleNoteRepository.listBySchedule(tenantId, scheduleId, showDeleted);
-            if (clientId != null) {
-                rows = rows.stream()
-                        .filter(n -> n.getClientId() == null || clientId.equals(n.getClientId()))
-                        .collect(Collectors.toList());
+            Schedule schedule = requireScheduleInTenant(tenantId, scheduleId);
+            if (clientId != null && schedule.getClientId() != null && !Objects.equals(clientId, schedule.getClientId())) {
+                throw new IllegalArgumentException("clientId가 일정의 내담자와 일치하지 않습니다.");
             }
-            if (mappingId != null) {
-                rows = rows.stream()
-                        .filter(n -> n.getMappingId() == null || mappingId.equals(n.getMappingId()))
-                        .collect(Collectors.toList());
+            /*
+             * 동일 내담자의 다른 예약(일정)에서 남긴 미해소 특이사항을 다음 일정에서도 보려면
+             * scheduleId 단독 조회(listBySchedule)만으로는 부족함 → 일정에 clientId가 있으면 내담자 기준 목록 사용.
+             */
+            Long effectiveClientId = schedule.getClientId() != null ? schedule.getClientId() : clientId;
+            if (effectiveClientId != null) {
+                rows = clientScheduleNoteRepository.listByClient(tenantId, effectiveClientId, showDeleted);
+                if (mappingId != null) {
+                    rows = rows.stream()
+                            .filter(n -> n.getMappingId() == null || mappingId.equals(n.getMappingId()))
+                            .collect(Collectors.toList());
+                }
+            } else {
+                rows = clientScheduleNoteRepository.listBySchedule(tenantId, scheduleId, showDeleted);
+                if (clientId != null) {
+                    rows = rows.stream()
+                            .filter(n -> n.getClientId() == null || clientId.equals(n.getClientId()))
+                            .collect(Collectors.toList());
+                }
+                if (mappingId != null) {
+                    rows = rows.stream()
+                            .filter(n -> n.getMappingId() == null || mappingId.equals(n.getMappingId()))
+                            .collect(Collectors.toList());
+                }
             }
         } else if (clientId != null) {
             rows = clientScheduleNoteRepository.listByClient(tenantId, clientId, showDeleted);

@@ -1536,10 +1536,11 @@
   cursor: not-allowed;
 }
 
-/* G8-B7b: MGButton + B0KlA schedule modal 액션 (네이티브 .mg-v2-btn--* 와 시각 정합) */
+/* G8-B7b: MGButton + B0KlA schedule modal 액션 (네이티브 .mg-v2-btn--* 와 시각 정합)
+ * --mg-primary-500 이 밝게 잡히면 본문「등록」등이 백색처럼 보임 → B0KlA 녹 고정 */
 .mg-v2-ad-b0kla .mg-button.mg-v2-btn--primary {
-  background: var(--mg-primary-500);
-  color: var(--mg-white);
+  background: var(--ad-b0kla-green);
+  color: #fff;
   border: none;
   border-radius: 10px;
   min-height: 44px;
@@ -1549,7 +1550,24 @@
 }
 
 .mg-v2-ad-b0kla .mg-button.mg-v2-btn--primary:hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--mg-primary-600);
+  background: var(--mg-success-700);
+  color: #fff;
+}
+
+.mg-v2-ad-b0kla .mg-button.mg-v2-btn--primary .mg-button__content,
+.mg-v2-ad-b0kla .mg-button.mg-v2-btn--primary .mg-button__text {
+  color: #fff;
+}
+
+/* 모달 본문 내 특이사항 폼 등록·수정 저장: 캐스케이드 최후방 */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-ad-modal__section .mg-button.mg-button--primary.mg-v2-btn--primary {
+  background: var(--ad-b0kla-green);
+  color: #fff;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-ad-modal__section .mg-button.mg-button--primary.mg-v2-btn--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-success-700);
+  color: #fff;
 }
 
 .mg-v2-ad-b0kla .mg-button.mg-v2-btn--outline {
@@ -2059,6 +2077,40 @@ textarea.mg-v2-textarea {
   margin: 0 0 var(--spacing-md) 0;
   padding-left: var(--spacing-lg);
   font-size: var(--font-size-sm, 0.875rem);
+}
+
+/* 일정 상세 모달 — 「상세 | 특이사항」 탭 가시성 (_unified-modals 본문 primary 대비) */
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs {
+  padding: 0.35rem;
+  background: var(--ad-b0kla-green-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm, 8px);
+}
+
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs .mg-button.mg-button--outline {
+  font-weight: 600;
+  border-width: 2px;
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-green);
+  background: var(--ad-b0kla-card-bg);
+}
+
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs .mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+}
+
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs .mg-button.mg-button--primary,
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs .mg-button.mg-button--primary.mg-v2-button-primary {
+  background: var(--ad-b0kla-green);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(61, 82, 70, 0.28);
+}
+
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-success-700);
+  color: #fff;
 }
 
 

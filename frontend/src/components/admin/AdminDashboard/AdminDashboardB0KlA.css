@@ -1377,6 +1377,34 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
   box-sizing: border-box;
 }
 
+/*
+ * 모달 본문 primary: _unified-modals.css 의 .mg-modal__body .mg-button--primary 가
+ * B0KlA(.mg-v2-ad-b0kla .mg-button--primary)보다 구체적으로 이겨, --mg-primary-color 가
+ * 카드 배경과 비슷하면 CTA가 사라져 보임(DateActionModal「상담 일정 등록」 등).
+ */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary.mg-v2-button-primary {
+  background: var(--ad-b0kla-green);
+  color: #fff;
+  border-color: transparent;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary.mg-v2-button-primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-success-700);
+  color: #fff;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-button__content,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-button__text,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-v2-text-lg {
+  color: #fff;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-v2-text-secondary {
+  color: rgba(255, 255, 255, 0.92);
+}
+
 /* 안내 박스 (💡 비밀번호 미입력 시 임시 비밀번호 등) */
 .mg-v2-ad-b0kla-info-box,
 .mg-modal.mg-v2-ad-b0kla .mg-v2-info-box.mg-v2-ad-b0kla-info-box {

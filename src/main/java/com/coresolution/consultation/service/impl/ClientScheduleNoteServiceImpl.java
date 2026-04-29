@@ -149,7 +149,8 @@ public class ClientScheduleNoteServiceImpl implements ClientScheduleNoteService 
             entity.setBody(request.getBody());
         }
         if (request.getPromiseDate() != null) {
-            entity.setPromiseDate(parsePromiseDate(request.getPromiseDate()));
+            String pd = request.getPromiseDate().trim();
+            entity.setPromiseDate(pd.isEmpty() ? null : parsePromiseDate(pd));
         }
         if (request.getAmount() != null) {
             entity.setAmount(request.getAmount());

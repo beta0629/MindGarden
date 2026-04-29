@@ -7,12 +7,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientScheduleNoteCreateRequest;
+import com.coresolution.consultation.dto.ClientScheduleNoteResponse;
 import com.coresolution.consultation.dto.ClientScheduleNoteUpdateRequest;
 import com.coresolution.consultation.entity.ClientScheduleNote;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -166,9 +168,51 @@ class ClientScheduleNoteServiceImplTest {
 
         Map<String, Object> out = service.listNotes(TENANT_A, null, null, mid, false, user(1L, UserRole.ADMIN));
 
-        assertThat(out).containsKeys("notes", "totalCount");
+        assertThat(out).containsKeys("notes", "totalCount", "unresolvedCount");
         assertThat(out.get("totalCount")).isEqualTo(0);
+        assertThat(out.get("unresolvedCount")).isEqualTo(0L);
         verify(clientScheduleNoteRepository).listByMapping(TENANT_A, mid, false);
+    }
+
+    @Test
+    @DisplayName("목록: unresolvedCount 및 미해소 우선 정렬")
+    void listNotes_unresolvedCount_andOrder() {
+        when(scheduleRepository.findById(12L)).thenReturn(Optional.of(schedule(12L, TENANT_A, null)));
+        ClientScheduleNote resolvedFirst = note(10L, TENANT_A, 12L);
+        resolvedFirst.setResolvedAt(LocalDateTime.of(2026, 4, 1, 12, 0));
+        resolvedFirst.setCreatedAt(LocalDateTime.of(2026, 3, 1, 10, 0));
+        ClientScheduleNote open = note(11L, TENANT_A, 12L);
+        open.setResolvedAt(null);
+        open.setCreatedAt(LocalDateTime.of(2026, 3, 2, 10, 0));
+        when(clientScheduleNoteRepository.listBySchedule(TENANT_A, 12L, false)).thenReturn(List.of(resolvedFirst, open));
+
+        Map<String, Object> out = service.listNotes(TENANT_A, null, 12L, null, false, user(1L, UserRole.ADMIN));
+
+        assertThat(out.get("unresolvedCount")).isEqualTo(1L);
+        assertThat(out.get("totalCount")).isEqualTo(2);
+        @SuppressWarnings("unchecked")
+        List<ClientScheduleNoteResponse> notes = (List<ClientScheduleNoteResponse>) out.get("notes");
+        assertThat(notes.get(0).getId()).isEqualTo("11");
+        assertThat(notes.get(1).getId()).isEqualTo("10");
+    }
+
+    @Test
+    @DisplayName("수정: resolved=true 시 resolvedAt 설정")
+    void update_resolvedTrue_setsResolvedAt() {
+        Long noteId = 800L;
+        ClientScheduleNote row = note(noteId, TENANT_A, 9L);
+        row.setCreatedBy(1L);
+        row.setResolvedAt(null);
+        when(clientScheduleNoteRepository.findById(noteId)).thenReturn(Optional.of(row));
+        when(clientScheduleNoteRepository.save(any(ClientScheduleNote.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        service.update(TENANT_A, noteId,
+                ClientScheduleNoteUpdateRequest.builder().resolved(true).build(),
+                user(1L, UserRole.ADMIN));
+
+        ArgumentCaptor<ClientScheduleNote> cap = ArgumentCaptor.forClass(ClientScheduleNote.class);
+        verify(clientScheduleNoteRepository).save(cap.capture());
+        assertThat(cap.getValue().getResolvedAt()).isNotNull();
     }
 
     @Test

@@ -1,6 +1,9 @@
 package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class ClientScheduleNoteServiceImpl implements ClientScheduleNoteService {
+
+    /** 미해소 우선 → 약속일(빠른 순) → 등록일(오래된 순, 누적) → 해소됨 하단 */
+    private static final Comparator<ClientScheduleNote> NOTE_DISPLAY_ORDER =
+            Comparator.comparing((ClientScheduleNote n) -> n.getResolvedAt() != null)
+                    .thenComparing(ClientScheduleNote::getPromiseDate, Comparator.nullsLast(Comparator.naturalOrder()))
+                    .thenComparing(ClientScheduleNote::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
 
     private final ClientScheduleNoteRepository clientScheduleNoteRepository;
     private final ScheduleRepository scheduleRepository;
@@ -74,12 +83,16 @@ public class ClientScheduleNoteServiceImpl implements ClientScheduleNoteService 
             requireMappingInTenant(tenantId, mappingId);
             rows = clientScheduleNoteRepository.listByMapping(tenantId, mappingId, showDeleted);
         }
+        rows = new ArrayList<>(rows);
+        rows.sort(NOTE_DISPLAY_ORDER);
+        long unresolvedCount = rows.stream().filter(n -> n.getResolvedAt() == null).count();
         List<ClientScheduleNoteResponse> dtos = rows.stream()
                 .map(ClientScheduleNoteResponse::fromEntity)
                 .collect(Collectors.toList());
         Map<String, Object> out = new HashMap<>();
         out.put("notes", dtos);
         out.put("totalCount", dtos.size());
+        out.put("unresolvedCount", unresolvedCount);
         return out;
     }
 
@@ -157,6 +170,13 @@ public class ClientScheduleNoteServiceImpl implements ClientScheduleNoteService 
         }
         if (request.getCurrency() != null) {
             entity.setCurrency(request.getCurrency().trim());
+        }
+        if (request.getResolved() != null) {
+            if (Boolean.TRUE.equals(request.getResolved())) {
+                entity.setResolvedAt(LocalDateTime.now());
+            } else {
+                entity.setResolvedAt(null);
+            }
         }
         entity.setUpdatedBy(currentUser != null ? currentUser.getId() : null);
         ClientScheduleNote saved = clientScheduleNoteRepository.save(entity);

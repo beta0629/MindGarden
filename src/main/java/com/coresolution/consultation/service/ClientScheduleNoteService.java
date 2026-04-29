@@ -24,7 +24,7 @@ public interface ClientScheduleNoteService {
      * @param mappingId 매칭(선택)
      * @param includeDeleted 삭제 포함(ADMIN만 true 허용)
      * @param currentUser 호출자
-     * @return notes, totalCount 맵
+     * @return notes, totalCount, unresolvedCount(미해소 건수) 맵
      */
     Map<String, Object> listNotes(
             String tenantId,

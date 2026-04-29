@@ -15,12 +15,14 @@ import {
 
 /**
  * 일정 상세 모달 내부 — 내담자 특이사항(지속 메모) CRUD. adminNote와 분리.
+ * 미해소(resolvedAt 없음)는 상단에 누적 표시, 해소 후에도 목록 하단에 보관.
  *
  * @param {object} props
  * @param {object} props.scheduleData UnifiedScheduleComponent가 넘기는 선택 일정
  * @param {object|null} props.user 세션 사용자
+ * @param {(summary: { unresolvedCount: number, totalCount: number }) => void} [props.onSummaryChange] 부모 탭 배지 등
  */
-const ScheduleClientNotesSection = ({ scheduleData, user }) => {
+const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => {
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState([]);
   const [noteTypeOptions, setNoteTypeOptions] = useState([]);
@@ -99,6 +101,14 @@ const ScheduleClientNotesSection = ({ scheduleData, user }) => {
     loadNotes();
   }, [loadNotes]);
 
+  useEffect(() => {
+    if (typeof onSummaryChange !== 'function') {
+      return;
+    }
+    const unresolved = notes.filter((n) => !n.resolvedAt).length;
+    onSummaryChange({ unresolvedCount: unresolved, totalCount: notes.length });
+  }, [notes, onSummaryChange]);
+
   const resetForm = () => {
     setFormTitle('');
     setFormBody('');
@@ -117,6 +127,36 @@ const ScheduleClientNotesSection = ({ scheduleData, user }) => {
       return String(note.createdBy) === String(user.id);
     }
     return false;
+  };
+
+  const isUnresolved = (n) => !n?.resolvedAt;
+
+  const isPromiseOverdue = (n) => {
+    if (!isUnresolved(n) || !n?.promiseDate) return false;
+    const d = String(n.promiseDate).trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${y}-${m}-${day}`;
+    return d < todayStr;
+  };
+
+  const handleResolve = async(note, resolved) => {
+    if (!canEditNote(note)) return;
+    setLoading(true);
+    try {
+      await StandardizedApi.put(`${CLIENT_SCHEDULE_NOTE_API}/${note.id}`, { resolved });
+      notificationManager.success(resolved ? '해소 처리되었습니다.' : '다시 미해소로 표시합니다.');
+      if (editingId === note.id) resetForm();
+      await loadNotes();
+    } catch (err) {
+      console.error('특이사항 해소 상태 변경 실패:', err);
+      notificationManager.error(err?.message || '처리에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async(e) => {
@@ -224,7 +264,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user }) => {
       <p className="mg-v2-text-secondary" style={{ marginBottom: 'var(--mg-space-3)' }}>
         <SafeText>
           {toDisplayString(
-            '입금 확인용 메모와 별도로, 약속·후속 조치 등 지속 관리가 필요한 내용을 기록합니다.',
+            '입금 확인용 메모와 별도로, 약속·후속 조치 등 지속 관리가 필요한 내용을 기록합니다. 미해소 건은 위에 누적되며, 해소 처리 후에도 아래에 보관됩니다.',
             ''
           )}
         </SafeText>
@@ -236,80 +276,155 @@ const ScheduleClientNotesSection = ({ scheduleData, user }) => {
         </p>
       ) : null}
 
-      <ul className="mg-v2-list-unstyled" style={{ marginBottom: 'var(--mg-space-4)' }}>
-        {notes.map((n) => (
-          <li
-            key={String(n.id)}
-            className="mg-v2-card mg-v2-card--flat"
-            style={{
-              marginBottom: 'var(--mg-space-3)',
-              padding: 'var(--mg-space-3)',
-              border: '1px solid var(--mg-border-subtle)'
-            }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: 'var(--mg-space-2)' }}>
-              <SafeText>{toDisplayString(n.title, '')}</SafeText>
-            </div>
-            <div className="mg-v2-text-secondary" style={{ fontSize: 'var(--mg-font-size-sm)' }}>
-              <SafeText>
-                {toDisplayString(
-                  `${n.noteType || ''}${n.promiseDate ? ` · 약속일 ${n.promiseDate}` : ''}`,
-                  ''
-                )}
-              </SafeText>
-            </div>
-            {n.body ? (
-              <div style={{ marginTop: 'var(--mg-space-2)' }}>
-                <SafeText>{toDisplayString(n.body, '')}</SafeText>
+      {(() => {
+        const open = notes.filter((n) => isUnresolved(n));
+        const done = notes.filter((n) => !isUnresolved(n));
+        const cardBase = {
+          marginBottom: 'var(--mg-space-3)',
+          padding: 'var(--mg-space-3)',
+          border: '1px solid var(--mg-border-subtle)'
+        };
+        const renderItem = (n) => {
+          const overdue = isPromiseOverdue(n);
+          const resolved = !isUnresolved(n);
+          return (
+            <li
+              key={String(n.id)}
+              className="mg-v2-card mg-v2-card--flat"
+              style={{
+                ...cardBase,
+                borderLeft: overdue ? '4px solid var(--ad-b0kla-orange)' : cardBase.border,
+                opacity: resolved ? 0.88 : 1,
+                background: resolved ? 'var(--ad-b0kla-green-bg)' : undefined
+              }}
+            >
+              <div style={{ fontWeight: 600, marginBottom: 'var(--mg-space-2)', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                <SafeText>{toDisplayString(n.title, '')}</SafeText>
+                {overdue ? (
+                  <span className="mg-v2-badge warning" style={{ fontSize: '12px' }}>
+                    약속일 경과
+                  </span>
+                ) : null}
+                {resolved ? (
+                  <span className="mg-v2-badge secondary" style={{ fontSize: '12px' }}>
+                    해소됨
+                  </span>
+                ) : null}
               </div>
-            ) : null}
-            {canEditNote(n) ? (
-              <div style={{ marginTop: 'var(--mg-space-3)', display: 'flex', gap: 'var(--mg-space-2)' }}>
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  size="small"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'sm',
-                    loading: false,
-                    className: 'mg-v2-btn--outline'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  preventDoubleClick={false}
-                  onClick={() => handleEdit(n)}
-                  disabled={loading}
-                >
-                  수정
-                </MGButton>
-                <MGButton
-                  type="button"
-                  variant="danger"
-                  size="small"
-                  className={buildErpMgButtonClassName({
-                    variant: 'danger',
-                    size: 'sm',
-                    loading: false,
-                    className: 'mg-v2-schedule-detail-btn--danger'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  preventDoubleClick={false}
-                  onClick={() => handleDelete(n)}
-                  disabled={loading}
-                >
-                  삭제
-                </MGButton>
+              <div className="mg-v2-text-secondary" style={{ fontSize: 'var(--mg-font-size-sm)' }}>
+                <SafeText>
+                  {toDisplayString(
+                    `${n.noteType || ''}${n.promiseDate ? ` · 약속일 ${n.promiseDate}` : ''}`,
+                    ''
+                  )}
+                </SafeText>
               </div>
+              {n.body ? (
+                <div style={{ marginTop: 'var(--mg-space-2)' }}>
+                  <SafeText>{toDisplayString(n.body, '')}</SafeText>
+                </div>
+              ) : null}
+              {canEditNote(n) ? (
+                <div style={{ marginTop: 'var(--mg-space-3)', display: 'flex', flexWrap: 'wrap', gap: 'var(--mg-space-2)' }}>
+                  {isUnresolved(n) ? (
+                    <MGButton
+                      type="button"
+                      variant="primary"
+                      size="small"
+                      className={buildErpMgButtonClassName({
+                        variant: 'primary',
+                        size: 'sm',
+                        loading: false,
+                        className: 'mg-v2-btn--primary'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      preventDoubleClick={false}
+                      onClick={() => handleResolve(n, true)}
+                      disabled={loading}
+                    >
+                      해소
+                    </MGButton>
+                  ) : (
+                    <MGButton
+                      type="button"
+                      variant="outline"
+                      size="small"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading: false,
+                        className: 'mg-v2-btn--outline'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      preventDoubleClick={false}
+                      onClick={() => handleResolve(n, false)}
+                      disabled={loading}
+                    >
+                      다시 열기
+                    </MGButton>
+                  )}
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    size="small"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'mg-v2-btn--outline'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    preventDoubleClick={false}
+                    onClick={() => handleEdit(n)}
+                    disabled={loading}
+                  >
+                    수정
+                  </MGButton>
+                  <MGButton
+                    type="button"
+                    variant="danger"
+                    size="small"
+                    className={buildErpMgButtonClassName({
+                      variant: 'danger',
+                      size: 'sm',
+                      loading: false,
+                      className: 'mg-v2-schedule-detail-btn--danger'
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    preventDoubleClick={false}
+                    onClick={() => handleDelete(n)}
+                    disabled={loading}
+                  >
+                    삭제
+                  </MGButton>
+                </div>
+              ) : null}
+            </li>
+          );
+        };
+        return (
+          <div style={{ marginBottom: 'var(--mg-space-4)' }}>
+            <div className="section-title" style={{ fontSize: '15px', marginBottom: 'var(--mg-space-2)' }}>
+              미해소 ({open.length})
+            </div>
+            {open.length === 0 && !loading ? (
+              <p className="mg-v2-text-secondary" style={{ marginBottom: 'var(--mg-space-3)' }}>
+                <SafeText>{toDisplayString('미해소 특이사항이 없습니다.', '')}</SafeText>
+              </p>
+            ) : (
+              <ul className="mg-v2-list-unstyled">{open.map(renderItem)}</ul>
+            )}
+            {done.length > 0 ? (
+              <>
+                <div className="section-title" style={{ fontSize: '15px', margin: 'var(--mg-space-4) 0 var(--mg-space-2)' }}>
+                  해소됨 ({done.length})
+                </div>
+                <ul className="mg-v2-list-unstyled">{done.map(renderItem)}</ul>
+              </>
             ) : null}
-          </li>
-        ))}
-      </ul>
-
-      {notes.length === 0 && !loading ? (
-        <p className="mg-v2-text-secondary" style={{ marginBottom: 'var(--mg-space-3)' }}>
-          <SafeText>{toDisplayString('등록된 특이사항이 없습니다.', '')}</SafeText>
-        </p>
-      ) : null}
+          </div>
+        );
+      })()}
 
       <form onSubmit={handleSubmit} className="mg-v2-form-stack">
         <div className="mg-form-group">

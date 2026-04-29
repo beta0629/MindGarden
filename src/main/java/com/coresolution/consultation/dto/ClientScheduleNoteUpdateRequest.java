@@ -33,4 +33,9 @@ public class ClientScheduleNoteUpdateRequest {
 
     @Size(max = 10)
     private String currency;
+
+    /**
+     * true: 해소 처리(현재 시각 기록), false: 미해소로 되돌림, null: 변경 없음.
+     */
+    private Boolean resolved;
 }

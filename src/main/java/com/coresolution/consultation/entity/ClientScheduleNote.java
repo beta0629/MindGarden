@@ -2,6 +2,7 @@ package com.coresolution.consultation.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
@@ -53,6 +54,10 @@ public class ClientScheduleNote extends BaseEntity {
 
     @Column(name = "promise_date")
     private LocalDate promiseDate;
+
+    /** 해소(처리 완료) 시각. null이면 미해소 — 목록 상단 누적 표시. */
+    @Column(name = "resolved_at")
+    private LocalDateTime resolvedAt;
 
     @Column(name = "amount", precision = 19, scale = 4)
     private BigDecimal amount;

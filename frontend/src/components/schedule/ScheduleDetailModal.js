@@ -49,6 +49,8 @@ const ScheduleDetailModal = ({
     const [localScheduleOverride, setLocalScheduleOverride] = useState(null);
     /** 상세 | 특이사항 (통합 스케줄 SSOT, 휴가·내담자 포털에서는 탭 미노출) */
     const [activeDetailTab, setActiveDetailTab] = useState('detail');
+    /** 특이사항 미해소 건수(탭 배지) — ScheduleClientNotesSection 콜백 */
+    const [clientNotesUnresolvedCount, setClientNotesUnresolvedCount] = useState(0);
 
     const isClient = RoleUtils.isClient(user);
 
@@ -144,7 +146,13 @@ const ScheduleDetailModal = ({
 
     useEffect(() => {
         setActiveDetailTab('detail');
+        setClientNotesUnresolvedCount(0);
     }, [isOpen, scheduleData?.id]);
+
+    const handleClientNotesSummary = useCallback((summary) => {
+        const n = summary?.unresolvedCount;
+        setClientNotesUnresolvedCount(typeof n === 'number' && !Number.isNaN(n) ? n : 0);
+    }, []);
 
     /**
      * 예약 취소 처리 (TDZ 방지: renderCancelConfirm에서 참조)
@@ -720,54 +728,58 @@ const ScheduleDetailModal = ({
                 actions={renderMainActions()}
             >
                 {showNotesTab ? (
-                    <div
-                        className="schedule-detail-modal__tabs"
-                        style={{
-                            display: 'flex',
-                            gap: 'var(--mg-space-2)',
-                            marginBottom: 'var(--mg-space-3)'
-                        }}
-                        role="tablist"
-                        aria-label="일정 상세 보기"
-                    >
-                        <MGButton
-                            type="button"
-                            variant={activeDetailTab === 'detail' ? 'primary' : 'outline'}
-                            className={buildErpMgButtonClassName({
-                                variant: activeDetailTab === 'detail' ? 'primary' : 'outline',
-                                size: 'sm',
-                                loading: false,
-                                className: activeDetailTab === 'detail' ? 'mg-v2-btn--primary' : 'mg-v2-btn--outline'
-                            })}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            preventDoubleClick={false}
-                            onClick={() => setActiveDetailTab('detail')}
-                            aria-selected={activeDetailTab === 'detail'}
-                            role="tab"
+                    <div className="schedule-detail-modal__tabs">
+                        <div
+                            className="schedule-detail-modal__tabs__track"
+                            role="tablist"
+                            aria-label="일정 상세 보기"
                         >
-                            상세
-                        </MGButton>
-                        <MGButton
-                            type="button"
-                            variant={activeDetailTab === 'notes' ? 'primary' : 'outline'}
-                            className={buildErpMgButtonClassName({
-                                variant: activeDetailTab === 'notes' ? 'primary' : 'outline',
-                                size: 'sm',
-                                loading: false,
-                                className: activeDetailTab === 'notes' ? 'mg-v2-btn--primary' : 'mg-v2-btn--outline'
-                            })}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            preventDoubleClick={false}
-                            onClick={() => setActiveDetailTab('notes')}
-                            aria-selected={activeDetailTab === 'notes'}
-                            role="tab"
-                        >
-                            특이사항
-                        </MGButton>
+                            <MGButton
+                                type="button"
+                                variant={activeDetailTab === 'detail' ? 'primary' : 'outline'}
+                                className={buildErpMgButtonClassName({
+                                    variant: activeDetailTab === 'detail' ? 'primary' : 'outline',
+                                    size: 'sm',
+                                    loading: false,
+                                    className: activeDetailTab === 'detail' ? 'mg-v2-btn--primary' : 'mg-v2-btn--outline'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                preventDoubleClick={false}
+                                onClick={() => setActiveDetailTab('detail')}
+                                aria-selected={activeDetailTab === 'detail'}
+                                role="tab"
+                            >
+                                상세
+                            </MGButton>
+                            <MGButton
+                                type="button"
+                                variant={activeDetailTab === 'notes' ? 'primary' : 'outline'}
+                                className={buildErpMgButtonClassName({
+                                    variant: activeDetailTab === 'notes' ? 'primary' : 'outline',
+                                    size: 'sm',
+                                    loading: false,
+                                    className: activeDetailTab === 'notes' ? 'mg-v2-btn--primary' : 'mg-v2-btn--outline'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                preventDoubleClick={false}
+                                onClick={() => setActiveDetailTab('notes')}
+                                aria-selected={activeDetailTab === 'notes'}
+                                role="tab"
+                            >
+                                특이사항
+                                {clientNotesUnresolvedCount > 0
+                                    ? ` (${clientNotesUnresolvedCount})`
+                                    : ''}
+                            </MGButton>
+                        </div>
                     </div>
                 ) : null}
                 {effectiveTab === 'notes' ? (
-                    <ScheduleClientNotesSection scheduleData={displayData} user={user} />
+                    <ScheduleClientNotesSection
+                        scheduleData={displayData}
+                        user={user}
+                        onSummaryChange={handleClientNotesSummary}
+                    />
                 ) : (
                 <div className="mg-v2-ad-modal__section">
                             <div className="section-title">상담 정보</div>

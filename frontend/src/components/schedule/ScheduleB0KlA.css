@@ -2081,10 +2081,29 @@ textarea.mg-v2-textarea {
 
 /* 일정 상세 모달 — 「상세 | 특이사항」 탭 가시성 (_unified-modals 본문 primary 대비) */
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: var(--mg-space-3);
   padding: 0.35rem;
   background: var(--ad-b0kla-green-bg);
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius-sm, 8px);
+}
+
+/* tablist는 직계 자식이 탭만 있도록 별도 행(공백 텍스트 flex 항목 방지 + 동일 폭) */
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs__track {
+  display: flex;
+  align-items: stretch;
+  gap: var(--mg-space-2);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs__track > .mg-button {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: none !important;
 }
 
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs .mg-button.mg-button--outline {

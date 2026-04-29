@@ -31,6 +31,7 @@ public class ClientScheduleNoteResponse {
     private String title;
     private String body;
     private String promiseDate;
+    private String resolvedAt;
     private String amount;
     private String currency;
     private String createdBy;
@@ -61,6 +62,7 @@ public class ClientScheduleNoteResponse {
                 .title(entity.getTitle())
                 .body(entity.getBody())
                 .promiseDate(formatDate(entity.getPromiseDate()))
+                .resolvedAt(formatDateTime(entity.getResolvedAt()))
                 .amount(formatAmount(entity.getAmount()))
                 .currency(entity.getCurrency())
                 .createdBy(toStr(entity.getCreatedBy()))

@@ -12,13 +12,15 @@ import {
   SCHEDULE_CLIENT_NOTE_TYPE_GROUP,
   DEFAULT_NOTE_TYPE_CODE
 } from '../../constants/clientScheduleNoteConstants';
+import { CALENDAR_EXTENDED_TYPE_VACATION } from '../../constants/schedule';
 
 /**
  * 일정 상세 모달 내부 — 내담자 특이사항(지속 메모) CRUD. adminNote와 분리.
  * 미해소(resolvedAt 없음)는 상단에 누적 표시, 해소 후에도 목록 하단에 보관.
  *
  * @param {object} props
- * @param {object} props.scheduleData UnifiedScheduleComponent가 넘기는 선택 일정
+ * @param {object} props.scheduleData 선택 일정 — `scheduleId`·`id`는 DB `schedules` PK(숫자)만 유효.
+ *   휴가 블록은 `scheduleId: null`·`calendarEventType: 'vacation'`이며 `id`는 캘린더용 문자열이므로 노트 앵커로 쓰지 않음.
  * @param {object|null} props.user 세션 사용자
  * @param {(summary: { unresolvedCount: number, totalCount: number }) => void} [props.onSummaryChange] 부모 탭 배지 등
  */
@@ -32,19 +34,23 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
   const [formPromiseDate, setFormPromiseDate] = useState('');
   const [editingId, setEditingId] = useState(null);
 
-  const scheduleIdRaw = scheduleData?.scheduleId ?? scheduleData?.id;
-  const scheduleId =
-    scheduleIdRaw != null && scheduleIdRaw !== '' && !Number.isNaN(Number(scheduleIdRaw))
-      ? Number(scheduleIdRaw)
-      : null;
-  const clientId =
-    scheduleData?.clientId != null && scheduleData.clientId !== ''
-      ? Number(scheduleData.clientId)
-      : null;
-  const mappingId =
-    scheduleData?.mappingId != null && scheduleData.mappingId !== ''
-      ? Number(scheduleData.mappingId)
-      : null;
+  const hasOwnScheduleId = scheduleData != null && Object.hasOwn(scheduleData, 'scheduleId');
+  const scheduleIdRaw = hasOwnScheduleId ? scheduleData.scheduleId : (scheduleData?.id ?? null);
+
+  const normalizeNoteAnchorLong = (raw) => {
+    if (raw == null || raw === '') return null;
+    if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+    const s = String(raw).trim();
+    if (/^\d+$/.test(s)) {
+      const n = Number(s);
+      return Number.isSafeInteger(n) ? n : null;
+    }
+    return null;
+  };
+
+  const scheduleId = normalizeNoteAnchorLong(scheduleIdRaw);
+  const clientId = normalizeNoteAnchorLong(scheduleData?.clientId);
+  const mappingId = normalizeNoteAnchorLong(scheduleData?.mappingId);
 
   const canUseApi = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
   const hasAnchor = scheduleId != null || clientId != null || mappingId != null;
@@ -120,6 +126,10 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
       setFormNoteType(DEFAULT_NOTE_TYPE_CODE);
     }
   };
+
+  if (scheduleData?.calendarEventType === CALENDAR_EXTENDED_TYPE_VACATION) {
+    return null;
+  }
 
   const canEditNote = (note) => {
     if (RoleUtils.isAdmin(user)) return true;
@@ -269,6 +279,17 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
           )}
         </SafeText>
       </p>
+
+      {clientId == null && (
+        <div className="mg-v2-alert warning" style={{ marginBottom: 'var(--mg-space-3)', padding: 'var(--mg-space-2)', background: 'var(--mg-warning-100)', color: 'var(--mg-warning-800)', borderRadius: 'var(--mg-border-radius-sm)', border: '1px solid var(--mg-warning-300)' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--mg-space-2)' }}>
+            <span role="img" aria-label="warning" style={{ fontSize: 'var(--font-size-lg)' }}>⚠️</span>
+            <SafeText>
+              {toDisplayString('내담자가 연결되지 않은 일정입니다. 작성된 특이사항은 이 일정(또는 매칭) 정보에만 한정하여 보관됩니다.', '')}
+            </SafeText>
+          </div>
+        </div>
+      )}
 
       {loading && notes.length === 0 ? (
         <p className="mg-v2-text-secondary">

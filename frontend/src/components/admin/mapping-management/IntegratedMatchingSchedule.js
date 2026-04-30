@@ -41,6 +41,8 @@ import {
 
 const IntegratedMatchingSchedule = () => {
   const { user } = useSession();
+  /** 통합 스케줄 캘린더·등록 모달: 세션 역할 전달(STAFF 등). 미로그인 시에만 ADMIN 폴백 */
+  const calendarUserRole = user?.role || 'ADMIN';
   const [mappings, setMappings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
@@ -361,7 +363,7 @@ const IntegratedMatchingSchedule = () => {
         <main className="integrated-schedule__calendar-wrapper integrated-schedule__calendar-wrapper--integrated" data-layout-context="integrated-schedule">
           <div className="integrated-schedule__calendar-content">
             <UnifiedScheduleComponent
-              userRole="ADMIN"
+              userRole={calendarUserRole}
               userId={user?.id ?? undefined}
               refetchTrigger={refetchTrigger}
               onDropFromExternal={handleDropFromExternal}
@@ -380,8 +382,8 @@ const IntegratedMatchingSchedule = () => {
           onClose={handleScheduleModalClose}
           selectedDate={selectedDateForModal}
           selectedInfo={null}
-          userRole="ADMIN"
-          userId={null}
+          userRole={calendarUserRole}
+          userId={user?.id ?? undefined}
           onScheduleCreated={handleScheduleCreated}
           preFilledMapping={preFilledMapping}
         />

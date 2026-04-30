@@ -2204,23 +2204,21 @@ textarea.mg-v2-textarea {
   color: var(--mg-color-text-main, var(--mg-text-primary));
 }
 
-/* 일정 상세 모달 — 「상세 | 특이사항」 탭 가시성 (_unified-modals 본문 primary 대비) */
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs {
+/* 일정 상세 — B0KlA 세그먼트(외곽 패딩 제거·트랙에만 패널: 모달 본문과 이중 여백 방지) */
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  margin-bottom: var(--mg-space-3);
-  padding: 0.35rem;
-  background: var(--ad-b0kla-green-bg);
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm, 8px);
+  margin: 0 0 var(--mg-space-3);
+  padding: 0;
+  background: transparent;
+  border: none;
 }
 
-/* tablist: 직계 track만 지정. 전역/순서 이슈로 flex가 덮이는 경우 대비 grid는 !important */
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track {
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
   align-items: stretch;
@@ -2229,21 +2227,25 @@ textarea.mg-v2-textarea {
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
+  padding: var(--mg-space-2);
+  background: var(--ad-b0kla-green-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm, 8px);
 }
 
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track > .mg-button {
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button {
   width: 100% !important;
   min-width: 0 !important;
   max-width: none !important;
   box-sizing: border-box;
 }
 
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track > .mg-button .mg-button__content {
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button .mg-button__content {
   justify-content: center;
 }
 
 /* 탭: 선택/비선택 동일 2px solid 박스 (mg-v2-btn--primary 의 border:none 덮어씀) */
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track > .mg-button.mg-button--outline {
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--outline {
   font-weight: 600;
   border-style: solid;
   border-width: 2px;
@@ -2252,14 +2254,14 @@ textarea.mg-v2-textarea {
   background: var(--ad-b0kla-card-bg);
 }
 
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track > .mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--ad-b0kla-green-bg);
   color: var(--ad-b0kla-green);
 }
 
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary,
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary.mg-v2-button-primary,
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary.mg-v2-btn--primary {
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary,
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary.mg-v2-button-primary,
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary.mg-v2-btn--primary {
   background: var(--ad-b0kla-green);
   color: var(--mg-color-text-on-primary, var(--mg-white));
   border-style: solid;
@@ -2268,15 +2270,32 @@ textarea.mg-v2-textarea {
   box-shadow: var(--cs-shadow-soft);
 }
 
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary.mg-v2-btn--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary.mg-v2-btn--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--mg-success-700);
   color: var(--mg-color-text-on-primary, var(--mg-white));
 }
 
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track > .mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading),
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track > .mg-button:active:not(.mg-button--disabled):not(.mg-button--loading) {
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:active:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: none;
+}
+
+/* 일정 상세 푸터: B0KlA __modal-actions 마커(푸터 패딩은 상위 .mg-modal__actions와 단일화) */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .mg-v2-ad-b0kla__modal-actions.schedule-detail-modal__footer-actions {
+  box-sizing: border-box;
+}
+
+/* 입금 확인(adminNote) vs 지속 특이사항 탭 — 상세 탭 안내 */
+.schedule-detail-modal__persist-note-hint {
+  margin-bottom: var(--mg-space-3);
+  padding: var(--mg-space-3);
+  border-radius: var(--mg-radius-md, 8px);
+  border: 1px solid var(--mg-gray-200);
+  background-color: var(--mg-gray-50);
+  color: var(--mg-color-text-secondary, var(--mg-text-secondary));
+  font-size: var(--mg-font-size-sm, var(--font-size-sm));
+  line-height: 1.5;
 }
 
 /* 일정 상세 고도화 - 요약 스트립 및 당사자 카드 */

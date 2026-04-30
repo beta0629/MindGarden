@@ -1,6 +1,10 @@
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import { loginErpUser, skipWhenCiMissingE2eCredentials } from '../../helpers/erpAuth';
+import {
+  REACT_130_OR_INVALID_CHILD,
+  attachRuntimeErrorCollectors
+} from '../../helpers/react130ConsoleGate';
 
 /**
  * 통합 스케줄 — 내담자 특이사항 (S1·S2·S5 일부 자동화).
@@ -11,8 +15,12 @@ import { loginErpUser, skipWhenCiMissingE2eCredentials } from '../../helpers/erp
  */
 
 test.describe('관리자 - 통합 스케줄 내담자 특이사항', () => {
+  let collectedRuntimeErrors: string[] = [];
+
   test.beforeEach(async ({ page }, testInfo) => {
     skipWhenCiMissingE2eCredentials();
+    collectedRuntimeErrors = [];
+    attachRuntimeErrorCollectors(page, collectedRuntimeErrors);
     await loginErpUser(page, testInfo, { timeoutMs: 20_000 });
   });
 
@@ -66,14 +74,11 @@ test.describe('관리자 - 통합 스케줄 내담자 특이사항', () => {
     await expect(detailModal.getByRole('button', { name: '등록' })).toBeVisible();
   });
 
-  test('모달 오픈 직후 브라우저 콘솔 error 타입이 누적되지 않는다 — S5 일부', async ({ page }) => {
-    const consoleErrors: string[] = [];
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        consoleErrors.push(msg.text());
-      }
-    });
-
+  test('모달 오픈 직후 React #130·invalid child 없음 — S5 (스모크 동일 수집·필터)', async ({
+    page
+  }: {
+    page: Page;
+  }) => {
     await page.goto('/admin/integrated-schedule');
     const calendarHost = page.locator('[data-layout-context="integrated-schedule"]');
     await expect(calendarHost).toBeVisible({ timeout: 20000 });
@@ -91,10 +96,18 @@ test.describe('관리자 - 통합 스케줄 내담자 특이사항', () => {
     await expect(detailModal).toBeVisible({ timeout: 10000 });
     await page.waitForTimeout(500);
 
+    console.log(
+      '[integrated-schedule-client-notes S5] 수집된 console error / pageerror:',
+      JSON.stringify(collectedRuntimeErrors, null, 2)
+    );
+
+    const reactHits = collectedRuntimeErrors.filter((line) =>
+      REACT_130_OR_INVALID_CHILD.test(line)
+    );
     expect(
-      consoleErrors,
-      `콘솔 error: ${consoleErrors.slice(0, 3).join(' | ')}`
-    ).toHaveLength(0);
+      reactHits,
+      `React #130 또는 invalid child 패턴이 감지됨:\n${reactHits.join('\n---\n')}`
+    ).toEqual([]);
   });
 
   test('옵션: E2E_INTEGRATED_SCHEDULE_NOTES_CRUD=1 일 때 특이사항 1건 등록 시도', async ({

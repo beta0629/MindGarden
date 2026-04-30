@@ -223,6 +223,9 @@ export const FILTER_OPTIONS = {
   CANCELLED: 'cancelled'
 };
 
+/** FullCalendar extendedProps.type / 모달 calendarEventType — 휴가(예약 DB PK 아님) SSOT */
+export const CALENDAR_EXTENDED_TYPE_VACATION = FILTER_OPTIONS.VACATION;
+
 export const FILTER_OPTION_LABELS = {
   [FILTER_OPTIONS.ALL]: '전체',
   [FILTER_OPTIONS.TODAY]: '오늘',

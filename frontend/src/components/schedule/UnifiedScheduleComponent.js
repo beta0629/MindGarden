@@ -22,8 +22,13 @@ import {
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
+import { CALENDAR_EXTENDED_TYPE_VACATION } from '../../constants/schedule';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
+
+/** 캘린더 관리자 권한(통합 스케줄 STAFF 동기화): 로드·필터·날짜 액션·재예약 */
+const isAdminLikeScheduleUserRole = (role) =>
+  role === 'ADMIN' || role === 'BRANCH_SUPER_ADMIN' || role === 'STAFF';
 
 /**
  * 스케줄 관리 컨테이너 컴포넌트
@@ -212,7 +217,7 @@ const UnifiedScheduleComponent = ({
             textColor: 'var(--mg-white)',
             className: 'vacation-event',
             extendedProps: {
-                type: 'vacation',
+                type: CALENDAR_EXTENDED_TYPE_VACATION,
                 vacationType: type,
                 reason: reason,
                 date: date,
@@ -321,8 +326,8 @@ const UnifiedScheduleComponent = ({
     }, []);
 
     const loadSchedules = useCallback(async() => {
-        // 관리자·지점수퍼관리자는 userId 없이도 전체 조회 가능
-        const isAdmin = userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN';
+        // 관리자·스텝·지점수퍼관리자는 userId 없이도 전체 조회 가능
+        const isAdmin = isAdminLikeScheduleUserRole(userRole);
         
         // 관리자가 아니면서 userId가 없으면 로드하지 않음
         if (!isAdmin && !userId) {
@@ -342,8 +347,8 @@ const UnifiedScheduleComponent = ({
                 url = `/api/v1/schedules/consultant/${userId}`;
                 console.log('🔍 상담사 자신의 스케줄만 조회:', userId);
             }
-            // 관리자는 관리자 API 사용
-            else if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
+            // 관리자·스텝은 관리자 API 사용
+            else if (isAdminLikeScheduleUserRole(userRole)) {
                 url = '/api/v1/schedules/admin';
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
@@ -573,7 +578,7 @@ const UnifiedScheduleComponent = ({
 
     // 부모에서 refetchTrigger 변경 시 스케줄만 재로드 (통합 스케줄 화면에서 저장 후 캘린더 갱신)
     useEffect(() => {
-        if (refetchTrigger != null && refetchTrigger > 0 && (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userId)) {
+        if (refetchTrigger != null && refetchTrigger > 0 && (isAdminLikeScheduleUserRole(userRole) || userId)) {
             loadSchedules();
         }
     }, [refetchTrigger, userRole, userId, loadSchedules]);
@@ -584,10 +589,10 @@ const UnifiedScheduleComponent = ({
         // 표준화 2025-12-08: 성능 개선 - 병렬 로딩 적용
         const loadData = async() => {
             const promises = [];
-            const isAdmin = userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN';
+            const isAdmin = isAdminLikeScheduleUserRole(userRole);
 
             // 스케줄 로드 (필수)
-            // 관리자는 userId 없이도 로드 가능
+            // 관리자·스텝은 userId 없이도 로드 가능
             if (isAdmin || userId) {
                 promises.push(loadSchedules());
             }
@@ -632,8 +637,8 @@ const UnifiedScheduleComponent = ({
             return;
         }
         
-        // 관리자는 스케줄/휴가 선택 모달 표시
-        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
+        // 관리자·스텝은 스케줄/휴가 선택 모달 표시
+        if (isAdminLikeScheduleUserRole(userRole)) {
             if (isPastDate) {
                 notificationManager.warning('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다. 기존 스케줄을 클릭하여 조회하실 수 있습니다.');
                 return;
@@ -668,7 +673,7 @@ const UnifiedScheduleComponent = ({
         
         const { event } = info;
         
-        if (event.extendedProps.type === 'vacation') {
+        if (event.extendedProps.type === CALENDAR_EXTENDED_TYPE_VACATION) {
             console.log('🏖️ 휴가 이벤트 클릭');
             
             let { consultantName } = event.extendedProps;
@@ -685,8 +690,12 @@ const UnifiedScheduleComponent = ({
                 opt.value === 'VACATION' || opt.label?.includes('휴가')
             )?.value || 'VACATION'; // fallback (공통코드 미로드 시)
             
+            const consultantIdVal = event.extendedProps.consultantId;
             const scheduleData = {
-                id: event.extendedProps.consultantId,
+                id: event.id,
+                scheduleId: null,
+                consultantId: consultantIdVal != null && consultantIdVal !== '' ? consultantIdVal : undefined,
+                calendarEventType: CALENDAR_EXTENDED_TYPE_VACATION,
                 title: event.title,
                 consultantName: consultantName,
                 clientName: '휴가',
@@ -980,7 +989,7 @@ const UnifiedScheduleComponent = ({
                 />
             )}
 
-            {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
+            {isAdminLikeScheduleUserRole(userRole) && (
                 <RescheduleScheduleModal
                     isOpen={isRescheduleModalOpen}
                     onClose={handleRescheduleModalClose}

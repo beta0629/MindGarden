@@ -1,6 +1,6 @@
 # E2E (Playwright)
 
-`tests/e2e/tests/**/*.spec.ts` — 주로 ERP·관리자 흐름. 루트에서 `cd tests/e2e && npx playwright install --with-deps chromium` 후 `npx playwright test` (프로젝트·경로는 팀 표준 스크립트가 있으면 그에 따름).
+`tests/e2e/tests/**/*.spec.ts` — 주로 ERP·관리자 흐름. 루트에서 `cd tests/e2e && npx playwright install --with-deps chromium` 후 `npx playwright test` (프로젝트·경로는 팀 표준 스크립트가 있으면 그에 따름). 일부 관리자 스모크는 **콘솔 게이트**: React **#130**·**invalid child** 문자열만 실패로 간주하고 그 외 `console.error` 노이즈는 무시한다. 수집·필터 SSOT: [`helpers/react130ConsoleGate.ts`](./helpers/react130ConsoleGate.ts) (`admin-dashboard-lnb-console-smoke`, `integrated-schedule-client-notes` S5).
 
 설정 SSOT: [`playwright.config.ts`](./playwright.config.ts) (`BASE_URL`, 로컬 시 `webServer`로 `frontend`의 `npm start`).
 
@@ -25,6 +25,10 @@ BASE_URL=<프론트 URL>   # playwright.config.ts 기본과 동일하게
 
 대안: `TEST_USERNAME` + `TEST_PASSWORD` 쌍을 함께 설정.
 5. **타임아웃 시 점검 순서**: (1) 8080·인증 API (2) `BASE_URL`·3000·`webServer` (3) 자격 증명·ERP 권한 (4) `/api/v1/auth` 등 네트워크·trace — 수동 스모크와의 교차는 [`docs/guides/testing/ERP_FINANCIAL_HUB_SMOKE.md`](../../docs/guides/testing/ERP_FINANCIAL_HUB_SMOKE.md) **E2E 선행 조건** 절과 동일 블록(중복 정의 최소화).
+
+### E2E_INTEGRATED_SCHEDULE_NOTES_CRUD
+
+통합 스케줄(`/admin/integrated-schedule`)에서 일정 클릭 → `ScheduleDetailModal`의 **상세 | 특이사항** 탭, 휴가 이벤트 시 특이사항 비노출, 특이사항 CRUD·모달 UI 스모크는 `tests/e2e/tests/admin/integrated-schedule-*.spec.ts`에 모은다. 자격·기동은 위 절과 동일.
 
 ## 레거시 안내
 

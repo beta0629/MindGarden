@@ -10,6 +10,7 @@ import { apiGet, apiPut } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import notificationManager from '../../utils/notification';
 import { normalizeScheduleListPayload } from '../../utils/apiResponseNormalize';
+import { CALENDAR_EXTENDED_TYPE_VACATION } from '../../constants/schedule';
 
 import ScheduleCalendarHeader from './ScheduleCalendar/ScheduleCalendarHeader';
 import ScheduleCalendarLegend from './ScheduleCalendar/ScheduleCalendarLegend';
@@ -412,9 +413,12 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         if (event.extendedProps) {
             const eventStart = event.start instanceof Date ? event.start : new Date(event.start);
             const eventEnd = event.end instanceof Date ? event.end : new Date(event.end);
-            
+            const isVacationBlock = event.extendedProps.type === CALENDAR_EXTENDED_TYPE_VACATION;
+            const schedulePk = event.extendedProps.id;
+
             scheduleData = {
                 id: event.id,
+                scheduleId: isVacationBlock ? null : schedulePk,
                 consultantId: event.extendedProps.consultantId,
                 consultantName: event.extendedProps.consultantName,
                 clientId: event.extendedProps.clientId,
@@ -423,6 +427,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 statusCode: event.extendedProps.status,
                 statusKorean: event.extendedProps.statusKorean,
                 type: event.extendedProps.type,
+                calendarEventType: isVacationBlock ? CALENDAR_EXTENDED_TYPE_VACATION : undefined,
                 consultationType: event.extendedProps.consultationType || event.extendedProps.type,
                 consultationTypeCode: event.extendedProps.consultationType,
                 description: event.extendedProps.description,

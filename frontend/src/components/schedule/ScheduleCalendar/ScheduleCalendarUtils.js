@@ -10,6 +10,8 @@
  * @since 2024-12-19
  */
 
+import { CALENDAR_EXTENDED_TYPE_VACATION } from '../../../constants/schedule';
+
 /**
  * 시간 포맷팅 함수
  */
@@ -114,7 +116,7 @@ export const convertVacationToEvent = (vacationData, consultantId, date) => {
             clientName: null,
             status: 'VACATION',
             statusKorean: '휴가',
-            type: 'vacation',
+            type: CALENDAR_EXTENDED_TYPE_VACATION,
             consultationType: null,
             description: vacationData.reason || '휴가'
         }

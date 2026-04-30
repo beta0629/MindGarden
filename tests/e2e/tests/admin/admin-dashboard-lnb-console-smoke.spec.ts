@@ -14,25 +14,10 @@ import {
   loginErpUser,
   skipWhenCiMissingE2eCredentials
 } from '../../helpers/erpAuth';
-
-const REACT_130_OR_INVALID_CHILD =
-  /Minified React error #130|Objects are not valid as a React child|invariant=130/i;
-
-/**
- * `integrated-schedule-client-notes.spec.ts` S5와 동일하게 console `error`·`pageerror`를 버킷에 적재하고,
- * 아래 테스트에서는 React #130·invalid child 패턴만 실패 조건으로 필터한다(다른 경로의 기존 콘솔 노이즈와 구분).
- */
-function attachRuntimeErrorCollectors(page: Page, bucket: string[]) {
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') {
-      bucket.push(`[console.error] ${msg.text()}`);
-    }
-  });
-  page.on('pageerror', (err) => {
-    const stack = err.stack ? '\n' + err.stack : '';
-    bucket.push('[pageerror] ' + err.message + stack);
-  });
-}
+import {
+  REACT_130_OR_INVALID_CHILD,
+  attachRuntimeErrorCollectors
+} from '../../helpers/react130ConsoleGate';
 
 /** SPA에서 의미 있는 본문 영역이 보이고 body가 완전 공백이 아닌지 확인 */
 async function assertNotBlankScreen(page: Page) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { apiPut } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
@@ -14,6 +14,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import { toDisplayString } from '../../utils/safeDisplay';
 import { useNavigate } from 'react-router-dom';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import { CALENDAR_EXTENDED_TYPE_VACATION } from '../../constants/schedule';
 import ClientSummaryField from '../consultant/molecules/ClientSummaryField';
 import StatusBadge from '../common/StatusBadge';
 import ScheduleClientNotesSection from './ScheduleClientNotesSection';
@@ -242,7 +243,7 @@ const ScheduleDetailModal = ({
                 opt.value === 'CANCELLED' || opt.label?.includes('취소')
             );
             const statusCode = cancelledStatusOption?.value ?? 'CANCELLED';
-            const response = await apiPut(`/api/v1/schedules/${scheduleData.id}`, {
+            const response = await StandardizedApi.put(`/api/v1/schedules/${scheduleData.id}`, {
                 status: statusCode,
                 description: '사용자에 의해 취소됨'
             });
@@ -273,9 +274,11 @@ const ScheduleDetailModal = ({
         setLoading(true);
         try {
             console.log('✅ 예약 확정 요청:', scheduleData.id);
-            const response = await apiPut(`/api/v1/schedules/${scheduleData.id}/confirm?userRole=ADMIN`, {
-                adminNote: adminNote || '입금 확인 완료'
-            });
+            const confirmRole = encodeURIComponent(user?.role || 'ADMIN');
+            const response = await StandardizedApi.put(
+                `/api/v1/schedules/${scheduleData.id}/confirm?userRole=${confirmRole}`,
+                { adminNote: adminNote || '입금 확인 완료' }
+            );
             if (response != null) {
                 notificationManager.success('예약이 확정되었습니다.');
                 onScheduleUpdated?.();
@@ -408,7 +411,7 @@ const ScheduleDetailModal = ({
         >
             <p>내담자의 입금을 확인하셨습니까?</p>
             <div className="mg-form-group">
-                <label className="mg-v2-label">관리자 메모 (선택사항):</label>
+                <label className="mg-v2-label">입금 확인 메모 (선택, 예약 확정 시에만 저장)</label>
                 <textarea
                     value={adminNote}
                     onChange={(e) => setAdminNote(e.target.value)}
@@ -473,16 +476,15 @@ const ScheduleDetailModal = ({
     };
 
 /**
-     * 휴가 이벤트 여부 확인
+     * 휴가 이벤트 여부 — FullCalendar `extendedProps.type === 'vacation'` 와 동일 SSOT
+     * (모달에는 extendedProps 없음 → `calendarEventType` 또는 레거시 `type` 필드로 전달)
      */
     const isVacationEvent = () => {
-        const vacationStatus = scheduleStatusOptions.find(opt => 
-            opt.value === 'VACATION' || opt.label?.includes('휴가')
-        );
-
-        return isStatus(resolveStatusForActions(displayData), vacationStatus) ||
-               displayData.consultationType === 'VACATION' ||
-               displayData.scheduleType === 'VACATION';
+        const dd = localScheduleOverride ?? scheduleData;
+        if (!dd) return false;
+        if (dd.calendarEventType === CALENDAR_EXTENDED_TYPE_VACATION) return true;
+        if (dd.type === CALENDAR_EXTENDED_TYPE_VACATION) return true;
+        return false;
     };
 
 /**
@@ -512,7 +514,7 @@ const ScheduleDetailModal = ({
             setLoading(true);
             console.log('📝 스케줄 상태 변경:', scheduleData.id, newStatus);
 
-            const response = await apiPut(`/api/v1/schedules/${scheduleData.id}`, {
+            const response = await StandardizedApi.put(`/api/v1/schedules/${scheduleData.id}`, {
                 status: newStatus
             });
 
@@ -840,13 +842,13 @@ const ScheduleDetailModal = ({
                 closeOnEscape={!partyQuickView}
                 className="mg-v2-ad-b0kla"
                 actions={(
-                    <div className="schedule-detail-modal__footer-actions">
+                    <div className="schedule-detail-modal__footer-actions mg-v2-ad-b0kla__modal-actions">
                         {renderMainActions()}
                     </div>
                 )}
             >
                 {showNotesTab ? (
-                    <div className="schedule-detail-modal__tabs">
+                    <div className="schedule-detail-modal__tabs mg-v2-ad-b0kla__segmented-control">
                         <div
                             className="schedule-detail-modal__tabs__track"
                             role="tablist"
@@ -855,12 +857,12 @@ const ScheduleDetailModal = ({
                             <MGButton
                                 type="button"
                                 variant={activeDetailTab === 'detail' ? 'primary' : 'outline'}
-                                className={buildErpMgButtonClassName({
+                                className={`${buildErpMgButtonClassName({
                                     variant: activeDetailTab === 'detail' ? 'primary' : 'outline',
                                     size: 'sm',
                                     loading: false,
                                     className: activeDetailTab === 'detail' ? 'mg-v2-btn--primary' : 'mg-v2-btn--outline'
-                                })}
+                                })} mg-v2-ad-b0kla__segmented-item`.trim()}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick={false}
                                 onClick={() => setActiveDetailTab('detail')}
@@ -872,12 +874,12 @@ const ScheduleDetailModal = ({
                             <MGButton
                                 type="button"
                                 variant={activeDetailTab === 'notes' ? 'primary' : 'outline'}
-                                className={buildErpMgButtonClassName({
+                                className={`${buildErpMgButtonClassName({
                                     variant: activeDetailTab === 'notes' ? 'primary' : 'outline',
                                     size: 'sm',
                                     loading: false,
                                     className: activeDetailTab === 'notes' ? 'mg-v2-btn--primary' : 'mg-v2-btn--outline'
-                                })}
+                                })} mg-v2-ad-b0kla__segmented-item`.trim()}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick={false}
                                 onClick={() => setActiveDetailTab('notes')}
@@ -900,6 +902,16 @@ const ScheduleDetailModal = ({
                     />
                 ) : (
                 <div className="mg-v2-ad-modal__section">
+                    {showNotesTab ? (
+                        <div className="schedule-detail-modal__persist-note-hint" role="note">
+                            <SafeText>
+                                {toDisplayString(
+                                    '예약 확정 시 여기서 입력하는 메모는 입금 확인용(일회)입니다. 약속·후속 조치 등 지속 관리는 상단의 특이사항 탭에서 기록합니다.',
+                                    ''
+                                )}
+                            </SafeText>
+                        </div>
+                    ) : null}
                     <div className="schedule-detail-modal__summary-strip">
                         <div className="schedule-detail-modal__summary-item">
                             <span className="schedule-detail-modal__summary-label">상태</span>

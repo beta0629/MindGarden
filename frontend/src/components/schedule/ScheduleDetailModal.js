@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { apiPut } from '../../utils/ajax';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
@@ -17,6 +17,14 @@ import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import ClientSummaryField from '../consultant/molecules/ClientSummaryField';
 import StatusBadge from '../common/StatusBadge';
 import ScheduleClientNotesSection from './ScheduleClientNotesSection';
+import SchedulePartyQuickViewModal from './molecules/SchedulePartyQuickViewModal';
+
+/** 일정 상세·중첩 요약·확인 모달 z-index (부모 < 요약 < 확인) */
+const SCHEDULE_DETAIL_Z_INDEX_MAIN = 1040;
+const SCHEDULE_DETAIL_Z_INDEX_PARTY_QUICK = 1140;
+const SCHEDULE_DETAIL_Z_INDEX_CONFIRM = 1240;
+/** 요약에서 비어 있음 표시 */
+const SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER = '\u2014';
 
 /**
  * 스케줄 상세 정보 및 관리 모달
@@ -56,8 +64,29 @@ const ScheduleDetailModal = ({
     const [activeDetailTab, setActiveDetailTab] = useState('detail');
     /** 특이사항 미해소 건수(탭 배지) — ScheduleClientNotesSection 콜백 */
     const [clientNotesUnresolvedCount, setClientNotesUnresolvedCount] = useState(0);
+    /** ADMIN/STAFF: 내담자·상담사 읽기 전용 요약(중첩 UnifiedModal 1겹) */
+    const [partyQuickView, setPartyQuickView] = useState(null);
+    const clientPartyTriggerRef = useRef(null);
+    const consultantPartyTriggerRef = useRef(null);
+    const partyQuickViewRef = useRef(null);
 
     const isClient = RoleUtils.isClient(user);
+
+    useEffect(() => {
+        partyQuickViewRef.current = partyQuickView;
+    }, [partyQuickView]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setPartyQuickView(null);
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (showCancelConfirm || showConfirmModal || loading) {
+            setPartyQuickView(null);
+        }
+    }, [showCancelConfirm, showConfirmModal, loading]);
 
     /** 코드값/한글 라벨 모두 고려해 공통코드 value로 정규화 */
     const getStatusCodeValue = (codeOrLabel) => {
@@ -159,6 +188,49 @@ const ScheduleDetailModal = ({
         setClientNotesUnresolvedCount(typeof n === 'number' && !Number.isNaN(n) ? n : 0);
     }, []);
 
+    const handlePartyQuickViewClose = useCallback((opts) => {
+        const skipFocusRestore = opts?.skipFocusRestore === true;
+        const v = partyQuickViewRef.current;
+        setPartyQuickView(null);
+        if (!skipFocusRestore) {
+            queueMicrotask(() => {
+                if (v === 'client') {
+                    clientPartyTriggerRef.current?.focus();
+                } else if (v === 'consultant') {
+                    consultantPartyTriggerRef.current?.focus();
+                }
+            });
+        }
+    }, []);
+
+    const handleOpenUserManagementFromParty = useCallback((type) => {
+        handlePartyQuickViewClose({ skipFocusRestore: true });
+        navigate(`${ADMIN_ROUTES.USER_MANAGEMENT}?type=${type}`);
+    }, [handlePartyQuickViewClose, navigate]);
+
+    const partyNameParse = useMemo(() => {
+        const dd = localScheduleOverride ?? scheduleData;
+        if (!dd) {
+            return { parsedClientName: '', parsedConsultantName: '' };
+        }
+        let parsedConsultantName = dd.consultantName;
+        let parsedClientName = dd.clientName;
+
+        if ((!parsedConsultantName || parsedConsultantName === '상담사 정보 없음' || parsedConsultantName === 'undefined') &&
+            (!parsedClientName || parsedClientName === '내담자 정보 없음' || parsedClientName === 'undefined')) {
+            const titleStr = toDisplayString(dd.title, '');
+            if (titleStr && titleStr.includes(' - ')) {
+                const names = titleStr.split(' - ');
+                if (names.length === 2) {
+                    parsedConsultantName = names[0].trim();
+                    parsedClientName = names[1].trim();
+                }
+            }
+        }
+
+        return { parsedClientName, parsedConsultantName };
+    }, [localScheduleOverride, scheduleData]);
+
     /**
      * 예약 취소 처리 (TDZ 방지: renderCancelConfirm에서 참조)
      */
@@ -236,7 +308,7 @@ const ScheduleDetailModal = ({
             title="예약 취소 확인"
             size="large"
             variant="confirm"
-            zIndex={1100}
+            zIndex={SCHEDULE_DETAIL_Z_INDEX_CONFIRM}
             backdropClick={!loading}
             showCloseButton={!loading}
             loading={loading}
@@ -292,7 +364,7 @@ const ScheduleDetailModal = ({
             title="예약 확정"
             size="large"
             variant="confirm"
-            zIndex={1100}
+            zIndex={SCHEDULE_DETAIL_Z_INDEX_CONFIRM}
             backdropClick={!loading}
             showCloseButton={!loading}
             loading={loading}
@@ -363,6 +435,7 @@ const ScheduleDetailModal = ({
                     loading={true}
                     showCloseButton={false}
                     backdropClick={false}
+                    zIndex={SCHEDULE_DETAIL_Z_INDEX_MAIN}
                     className="mg-v2-ad-b0kla"
                 />
                 {showCancelConfirm && renderCancelConfirm()}
@@ -509,6 +582,60 @@ const ScheduleDetailModal = ({
     const displayData = localScheduleOverride ?? scheduleData;
     const statusForDisplay = resolveStatusForActions(displayData) ?? displayData.status;
     const showNotesTab = !isVacationEvent() && (RoleUtils.isAdmin(user) || RoleUtils.isStaff(user));
+    const canPartyQuickSummary = showNotesTab;
+    const { parsedClientName, parsedConsultantName } = partyNameParse;
+
+    const buildPartySummaryRows = (kind) => {
+        const dash = SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER;
+        const datePart = toDisplayString(
+            displayData.sessionDate || displayData.date || displayData.apiDate,
+            ''
+        ).trim();
+        const timePart = `${toDisplayString(displayData.startTime, '').trim()}–${toDisplayString(displayData.endTime, '').trim()}`.trim();
+        const dateTimeLine = [datePart, timePart].filter(Boolean).join(' ') || dash;
+        const statusLine = toDisplayString(convertStatusToKorean(statusForDisplay), dash);
+        const typeLine = displayData.consultationTypeCode
+            ? toDisplayString(convertConsultationTypeToKorean(displayData.consultationTypeCode), dash)
+            : toDisplayString(displayData.consultationType, dash);
+
+        if (kind === 'client') {
+            return [
+                { label: '이름', value: toDisplayString(parsedClientName, dash) },
+                { label: '사용자 ID', value: toDisplayString(displayData.clientId, dash) },
+                {
+                    label: '연락처',
+                    value: toDisplayString(
+                        displayData.clientPhone || displayData.clientMobile || displayData.phone,
+                        dash
+                    )
+                },
+                {
+                    label: '이메일',
+                    value: toDisplayString(displayData.clientEmail || displayData.email, dash)
+                },
+                { label: '일정 상태', value: statusLine },
+                { label: '상담 유형', value: typeLine },
+                { label: '일시', value: dateTimeLine }
+            ];
+        }
+
+        return [
+            { label: '이름', value: toDisplayString(parsedConsultantName, dash) },
+            { label: '사용자 ID', value: toDisplayString(displayData.consultantId, dash) },
+            {
+                label: '연락처',
+                value: toDisplayString(displayData.consultantPhone, dash)
+            },
+            {
+                label: '이메일',
+                value: toDisplayString(displayData.consultantEmail, dash)
+            },
+            { label: '일정 상태', value: statusLine },
+            { label: '상담 유형', value: typeLine },
+            { label: '일시', value: dateTimeLine }
+        ];
+    };
+
     const effectiveTab = showNotesTab && activeDetailTab === 'notes' ? 'notes' : 'detail';
 
     const renderMainActions = () => {
@@ -709,6 +836,8 @@ const ScheduleDetailModal = ({
                 size="large"
                 backdropClick={true}
                 showCloseButton={true}
+                zIndex={SCHEDULE_DETAIL_Z_INDEX_MAIN}
+                closeOnEscape={!partyQuickView}
                 className="mg-v2-ad-b0kla"
                 actions={(
                     <div className="schedule-detail-modal__footer-actions">
@@ -800,63 +929,64 @@ const ScheduleDetailModal = ({
                         )}
                     </div>
 
-                    {!isVacationEvent() && (() => {
-                        let parsedConsultantName = displayData.consultantName;
-                        let parsedClientName = displayData.clientName;
-                        
-                        if ((!parsedConsultantName || parsedConsultantName === '상담사 정보 없음' || parsedConsultantName === 'undefined') &&
-                            (!parsedClientName || parsedClientName === '내담자 정보 없음' || parsedClientName === 'undefined')) {
-                            const titleStr = toDisplayString(displayData.title, '');
-                            if (titleStr && titleStr.includes(' - ')) {
-                                const names = titleStr.split(' - ');
-                                if (names.length === 2) {
-                                    parsedConsultantName = names[0].trim();
-                                    parsedClientName = names[1].trim();
-                                }
-                            }
-                        }
-                        
-                        return (
+                    {!isVacationEvent() && (
                             <div className="schedule-detail-modal__parties">
-                                <div className="schedule-detail-modal__party-card">
-                                    <div className="schedule-detail-modal__party-label">내담자</div>
-                                    <div className="schedule-detail-modal__party-name"><SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText></div>
-                                    {displayData.clientId ? (
-                                        <button 
-                                            type="button" 
-                                            className="schedule-detail-modal__party-link"
-                                            onClick={() => {
-                                                onClose();
-                                                navigate(`${ADMIN_ROUTES.USER_MANAGEMENT}?type=client`);
-                                            }}
-                                        >
-                                            회원 관리로 이동
-                                        </button>
-                                    ) : (
-                                        <span className="schedule-detail-modal__party-link schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
-                                    )}
-                                </div>
-                                <div className="schedule-detail-modal__party-card">
-                                    <div className="schedule-detail-modal__party-label">상담사</div>
-                                    <div className="schedule-detail-modal__party-name"><SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText></div>
-                                    {displayData.consultantId ? (
-                                        <button 
-                                            type="button" 
-                                            className="schedule-detail-modal__party-link"
-                                            onClick={() => {
-                                                onClose();
-                                                navigate(`${ADMIN_ROUTES.USER_MANAGEMENT}?type=consultant`);
-                                            }}
-                                        >
-                                            회원 관리로 이동
-                                        </button>
-                                    ) : (
-                                        <span className="schedule-detail-modal__party-link schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
-                                    )}
-                                </div>
+                                {canPartyQuickSummary && displayData.clientId ? (
+                                    <button
+                                        ref={clientPartyTriggerRef}
+                                        type="button"
+                                        className="schedule-detail-modal__party-card schedule-detail-modal__party-card--trigger"
+                                        onClick={() => setPartyQuickView('client')}
+                                        aria-haspopup="dialog"
+                                        aria-expanded={partyQuickView === 'client'}
+                                        aria-label={`내담자 요약 열기, ${toDisplayString(parsedClientName, '내담자')}`}
+                                    >
+                                        <div className="schedule-detail-modal__party-label">내담자</div>
+                                        <div className="schedule-detail-modal__party-name">
+                                            <SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText>
+                                        </div>
+                                        <span className="schedule-detail-modal__party-card-hint">요약 보기</span>
+                                    </button>
+                                ) : (
+                                    <div className="schedule-detail-modal__party-card">
+                                        <div className="schedule-detail-modal__party-label">내담자</div>
+                                        <div className="schedule-detail-modal__party-name">
+                                            <SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText>
+                                        </div>
+                                        {canPartyQuickSummary ? (
+                                            <span className="schedule-detail-modal__party-link schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
+                                        ) : null}
+                                    </div>
+                                )}
+                                {canPartyQuickSummary && displayData.consultantId ? (
+                                    <button
+                                        ref={consultantPartyTriggerRef}
+                                        type="button"
+                                        className="schedule-detail-modal__party-card schedule-detail-modal__party-card--trigger"
+                                        onClick={() => setPartyQuickView('consultant')}
+                                        aria-haspopup="dialog"
+                                        aria-expanded={partyQuickView === 'consultant'}
+                                        aria-label={`상담사 요약 열기, ${toDisplayString(parsedConsultantName, '상담사')}`}
+                                    >
+                                        <div className="schedule-detail-modal__party-label">상담사</div>
+                                        <div className="schedule-detail-modal__party-name">
+                                            <SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText>
+                                        </div>
+                                        <span className="schedule-detail-modal__party-card-hint">요약 보기</span>
+                                    </button>
+                                ) : (
+                                    <div className="schedule-detail-modal__party-card">
+                                        <div className="schedule-detail-modal__party-label">상담사</div>
+                                        <div className="schedule-detail-modal__party-name">
+                                            <SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText>
+                                        </div>
+                                        {canPartyQuickSummary ? (
+                                            <span className="schedule-detail-modal__party-link schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
+                                        ) : null}
+                                    </div>
+                                )}
                             </div>
-                        );
-                    })()}
+                    )}
 
                     <div className="section-content schedule-detail-modal__detail-rows">
                         <ClientSummaryField label="이벤트" className="schedule-detail-modal__detail-row">
@@ -874,7 +1004,19 @@ const ScheduleDetailModal = ({
 
             {showCancelConfirm && renderCancelConfirm()}
             {showConfirmModal && renderConfirmModal()}
-            
+
+            {canPartyQuickSummary && partyQuickView ? (
+                <SchedulePartyQuickViewModal
+                    isOpen
+                    onClose={() => handlePartyQuickViewClose()}
+                    title={partyQuickView === 'client' ? '내담자 요약' : '상담사 요약'}
+                    zIndex={SCHEDULE_DETAIL_Z_INDEX_PARTY_QUICK}
+                    rows={buildPartySummaryRows(partyQuickView)}
+                    userManagementType={partyQuickView}
+                    onOpenInUserManagement={handleOpenUserManagementFromParty}
+                />
+            ) : null}
+
             {/* 상담일지 작성 모달은 부모 컴포넌트에서 관리 */}
         </>
     );

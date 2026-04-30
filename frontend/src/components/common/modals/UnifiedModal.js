@@ -54,6 +54,7 @@ const UnifiedModal = ({
   className = '',
   actions = null,
   loading = false,
+  closeOnEscape = true,
   closeButtonDataTestId,
   ...props 
 }) => {
@@ -74,22 +75,29 @@ const UnifiedModal = ({
   }, [isOpen, setSessionModalOpen]);
 
   useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !closeOnEscape) {
+      return undefined;
+    }
     const handleEscape = (e) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose?.();
       }
     };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
-
+    document.addEventListener('keydown', handleEscape);
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, closeOnEscape]);
 
   const handleBackdropClick = (e) => {
     if (backdropClick && e.target === e.currentTarget) {

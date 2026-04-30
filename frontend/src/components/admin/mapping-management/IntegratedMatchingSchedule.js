@@ -27,56 +27,17 @@ import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
 import './IntegratedMatchingSchedule.css';
 import { toDisplayString } from '../../../utils/safeDisplay';
-
-/** 스케줄 등록 가능한 매칭 상태 (입금 확인 후 스케줄 등록·드래그 허용) */
-const SCHEDULABLE_STATUSES = new Set(['PAYMENT_CONFIRMED', 'DEPOSIT_PENDING', 'ACTIVE']);
-const canScheduleForMapping = (mapping) =>
-  mapping?.status && SCHEDULABLE_STATUSES.has(mapping.status);
-
-/** 신규 매칭 판별: createdAt 최근 N일 이내. 운영 피드백으로 14일 등 조정 가능. */
-const NEW_DAYS = 7;
-/** 신규 매칭 필터 기간 표기 (NEW_DAYS 기반) */
-function getNewDaysLabel(days) {
-  if (days === 1) return '1일';
-  if (days === 7) return '7일';
-  if (days === 14) return '2주';
-  if (days === 30) return '30일';
-  return `${days}일`;
-}
-const NEW_DAYS_LABEL = getNewDaysLabel(NEW_DAYS);
-const VIEW_FILTER_NEW_LABEL = `신규 매칭 (${NEW_DAYS_LABEL})`;
-
-/** 좌측 목록 보기 필터: 신규 매칭(기본) | 회기 남은 매칭 | 전체 */
-const VIEW_FILTER_NEW = 'new';
-const VIEW_FILTER_REMAINING = 'remaining';
-const VIEW_FILTER_ALL = 'all';
-
-/** 매칭 정렬/신규 판별용 날짜 반환 (createdAt → assignedAt → startDate fallback) */
-const getMappingDate = (m) => {
-  const raw = m.createdAt ?? m.assignedAt ?? m.startDate;
-  if (!raw) return 0;
-  const d = new Date(raw);
-  return Number.isNaN(d.getTime()) ? 0 : d.getTime();
-};
-
-/** 신규 매칭중: 회기 소진·종료됨 제외 */
-const ONGOING_EXCLUDED_STATUSES = new Set(['SESSIONS_EXHAUSTED', 'TERMINATED']);
-const isOngoingMapping = (m) =>
-  m?.status && !ONGOING_EXCLUDED_STATUSES.has(m.status);
-
-/** 상태별 필터 옵션 (value: 'ongoing' = 신규 매칭중, value: '' = 전체) */
-const STATUS_FILTER_OPTIONS = [
-  { value: 'ongoing', label: '신규 매칭중' },
-  { value: '', label: '전체' },
-  { value: 'PENDING_PAYMENT', label: '결제 대기' },
-  { value: 'PAYMENT_CONFIRMED', label: '결제 확인' },
-  { value: 'DEPOSIT_PENDING', label: '승인 대기' },
-  { value: 'ACTIVE', label: '활성' },
-  { value: 'INACTIVE', label: '비활성' },
-  { value: 'TERMINATED', label: '종료됨' },
-  { value: 'SESSIONS_EXHAUSTED', label: '회기 소진' },
-  { value: 'SUSPENDED', label: '일시정지' }
-];
+import {
+  NEW_DAYS,
+  VIEW_FILTER_NEW,
+  VIEW_FILTER_REMAINING,
+  VIEW_FILTER_ALL,
+  VIEW_FILTER_NEW_LABEL,
+  STATUS_FILTER_OPTIONS,
+  canScheduleForMapping,
+  isOngoingMapping,
+  getMappingDate
+} from './constants/integratedScheduleSidebarFilterConstants';
 
 const IntegratedMatchingSchedule = () => {
   const { user } = useSession();
@@ -267,6 +228,7 @@ const IntegratedMatchingSchedule = () => {
           <div className="integrated-schedule__content">
         <aside className="integrated-schedule__sidebar">
           <h2 className="integrated-schedule__sidebar-title">매칭 목록</h2>
+          {/* Task C: 필터 통합 후보 — MappingFilterSection + UnifiedFilterSearch(quickFilterOptions·filters 계약 정렬 시 이 블록 치환) */}
           <fieldset className="integrated-schedule__filter" aria-label="매칭 목록 보기 필터">
             <legend className="integrated-schedule__filter-legend">보기</legend>
             <label className={`integrated-schedule__filter-label ${viewFilter === VIEW_FILTER_NEW ? 'integrated-schedule__filter-label--selected' : ''}`}>

@@ -13,6 +13,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../
 import MappingPaymentModal from '../../mapping/MappingPaymentModal';
 import MappingDepositModal from '../../mapping/MappingDepositModal';
 import { ActionButton, StatusBadge } from '../../../common';
+import MappingMatchActions from '../molecules/MappingMatchActions';
 import './MappingListRow.css';
 
 const formatDate = (dateString) => {
@@ -143,34 +144,18 @@ const MappingListRow = ({
             상세
           </ActionButton>
         )}
-        {mapping.status === 'PENDING_PAYMENT' && (
-          <ActionButton
-            variant="success"
-            size="small"
-            onClick={() => setShowPaymentModal(true)}
-          >
-            결제 확인
-          </ActionButton>
-        )}
-        {mapping.status === 'PAYMENT_CONFIRMED' && (
-          <ActionButton
-            variant="primary"
-            size="small"
-            onClick={() => setShowDepositModal(true)}
-          >
-            입금 확인
-          </ActionButton>
-        )}
-        {mapping.status === 'DEPOSIT_PENDING' && onApprove && (
-          <ActionButton
-            variant="success"
-            size="small"
-            onClick={() => handleCriticalAction(() => onApprove(mapping.id))}
-            disabled={processing}
-          >
-            승인
-          </ActionButton>
-        )}
+        <MappingMatchActions
+          mapping={mapping}
+          onPayment={() => setShowPaymentModal(true)}
+          onDeposit={() => setShowDepositModal(true)}
+          onApprove={
+            onApprove
+              ? (mappingId) => handleCriticalAction(() => onApprove(mappingId))
+              : undefined
+          }
+          disabled={processing}
+          loading={processing}
+        />
         {onEdit && (
           <ActionButton
             variant="outline"

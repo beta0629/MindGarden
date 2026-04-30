@@ -293,20 +293,20 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
               className="mg-v2-card mg-v2-card--flat"
               style={{
                 ...cardBase,
-                borderLeft: overdue ? '4px solid var(--ad-b0kla-orange)' : cardBase.border,
+                borderLeft: overdue ? 'var(--spacing-xs) solid var(--ad-b0kla-orange)' : cardBase.border,
                 opacity: resolved ? 0.88 : 1,
                 background: resolved ? 'var(--ad-b0kla-green-bg)' : undefined
               }}
             >
-              <div style={{ fontWeight: 600, marginBottom: 'var(--mg-space-2)', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+              <div style={{ fontWeight: 600, marginBottom: 'var(--mg-space-2)', display: 'flex', flexWrap: 'wrap', gap: 'var(--mg-space-2)', alignItems: 'center' }}>
                 <SafeText>{toDisplayString(n.title, '')}</SafeText>
                 {overdue ? (
-                  <span className="mg-v2-badge warning" style={{ fontSize: '12px' }}>
+                  <span className="mg-v2-badge warning" style={{ fontSize: 'var(--font-size-xs)' }}>
                     약속일 경과
                   </span>
                 ) : null}
                 {resolved ? (
-                  <span className="mg-v2-badge secondary" style={{ fontSize: '12px' }}>
+                  <span className="mg-v2-badge secondary" style={{ fontSize: 'var(--font-size-xs)' }}>
                     해소됨
                   </span>
                 ) : null}
@@ -404,7 +404,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
         };
         return (
           <div style={{ marginBottom: 'var(--mg-space-4)' }}>
-            <div className="section-title" style={{ fontSize: '15px', marginBottom: 'var(--mg-space-2)' }}>
+            <div className="section-title" style={{ fontSize: 'var(--font-size-base)', marginBottom: 'var(--mg-space-2)' }}>
               미해소 ({open.length})
             </div>
             {open.length === 0 && !loading ? (
@@ -416,7 +416,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
             )}
             {done.length > 0 ? (
               <>
-                <div className="section-title" style={{ fontSize: '15px', margin: 'var(--mg-space-4) 0 var(--mg-space-2)' }}>
+                <div className="section-title" style={{ fontSize: 'var(--font-size-base)', margin: 'var(--mg-space-4) 0 var(--mg-space-2)' }}>
                   해소됨 ({done.length})
                 </div>
                 <ul className="mg-v2-list-unstyled">{done.map(renderItem)}</ul>

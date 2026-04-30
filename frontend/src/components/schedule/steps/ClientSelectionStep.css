@@ -41,7 +41,7 @@
     background: var(--ad-b0kla-card-bg, var(--mg-gray-50));
     border: 1px solid var(--ad-b0kla-border, var(--mg-gray-200));
     border-radius: var(--ad-b0kla-radius-sm, 12px);
-    box-shadow: var(--ad-b0kla-shadow, 0 1px 3px rgba(0, 0, 0, 0.06));
+    box-shadow: var(--ad-b0kla-shadow);
 }
 
 .mg-v2-ad-client-step__consultant-label {
@@ -149,14 +149,14 @@
 
 .schedule-modal .step-header h4 {
     margin: 0 0 var(--spacing-sm, 0.75rem) 0;
-    color: var(--color-text-primary, #1D1D1F);
+    color: var(--color-text-primary, var(--mg-text-primary));
     font-size: var(--font-size-xl, 1.25rem);
     font-weight: var(--font-weight-semibold, 600);
 }
 
 .schedule-modal .step-description {
     margin: 0;
-    color: var(--color-text-secondary, #424245);
+    color: var(--color-text-secondary, var(--mg-text-secondary));
     font-size: var(--font-size-sm, 0.875rem);
     line-height: 1.4;
 }
@@ -221,10 +221,10 @@
 .no-clients-message {
     text-align: center;
     padding: var(--spacing-xl, 2rem) var(--spacing-lg, 1.5rem);
-    background: var(--color-warning-light, #FFF3CD);
+    background: var(--color-warning-light, var(--cs-warning-50));
     border-radius: var(--border-radius-md, 12px);
     border: 2px solid var(--color-warning, var(--mg-warning-500));
-    box-shadow: var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.08));
+    box-shadow: var(--shadow-glass, var(--shadow-default));
     backdrop-filter: var(--ios-backdrop-blur-sm);
     -webkit-backdrop-filter: var(--ios-backdrop-blur-sm);
     margin: var(--spacing-md, 1rem) 0;
@@ -238,14 +238,14 @@
 
 .no-clients-message h4 {
     margin: 0 0 var(--spacing-sm, 0.75rem) 0;
-    color: var(--color-warning-dark, #856404);
+    color: var(--color-warning-dark, var(--cs-warning-800));
     font-size: var(--font-size-lg, 1.125rem);
     font-weight: var(--font-weight-semibold, 600);
 }
 
 .no-clients-message p {
     margin: 0 0 var(--spacing-lg, 1.5rem) 0;
-    color: var(--color-warning-dark, #856404);
+    color: var(--color-warning-dark, var(--cs-warning-800));
     font-size: var(--font-size-sm, 0.875rem);
     line-height: 1.5;
     max-width: 400px;
@@ -272,7 +272,7 @@
     align-items: center;
     justify-content: center;
     gap: var(--spacing-sm, 0.75rem);
-    box-shadow: var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.08));
+    box-shadow: var(--shadow-glass, var(--shadow-default));
     backdrop-filter: var(--ios-backdrop-blur-sm);
     -webkit-backdrop-filter: var(--ios-backdrop-blur-sm);
 }
@@ -284,9 +284,9 @@
 }
 
 .mapping-actions .mg-btn--primary:hover {
-    background-color: var(--color-primary-hover, #0056CC);
+    background-color: var(--color-primary-hover, var(--cs-blue-700));
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lg, 0 4px 12px rgba(0, 122, 255, 0.3));
+    box-shadow: var(--shadow-lg, var(--cs-shadow-md));
 }
 
 /* 스크롤바 스타일 */
@@ -295,15 +295,15 @@
 }
 
 .client-selection-step::-webkit-scrollbar-track {
-    background: var(--color-bg-accent, #E8E8ED);
+    background: var(--color-bg-accent, var(--mg-gray-200));
     border-radius: var(--border-radius-sm, 6px);
 }
 
 .client-selection-step::-webkit-scrollbar-thumb {
-    background: var(--color-border-accent, #A1A1A6);
+    background: var(--color-border-accent, var(--mg-gray-400));
     border-radius: var(--border-radius-sm, 6px);
 }
 
 .client-selection-step::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text-muted, #8E8E93);
+    background: var(--color-text-muted, var(--mg-gray-500));
 }

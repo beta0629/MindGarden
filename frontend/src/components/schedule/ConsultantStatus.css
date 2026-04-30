@@ -16,18 +16,18 @@
     align-items: flex-start;
     gap: 15px;
     padding: var(--spacing-lg);
-    border: 2px solid var(--color-border-secondary, #E8E8ED);
+    border: 2px solid var(--color-border-secondary, var(--mg-gray-200));
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
     min-height: 120px;
-    background: var(--color-bg-primary, #FAFAFA);
+    background: var(--color-bg-primary, var(--mg-gray-50));
 }
 
 .consultant-status-card:hover {
     border-color: var(--color-success, var(--mg-success-500));
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+    box-shadow: 0 4px 15px var(--mg-success-200);
 }
 
 .consultant-status-avatar {
@@ -40,7 +40,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--color-primary, var(--mg-primary-500)), var(--color-primary-hover, #0056CC));
+    background: linear-gradient(135deg, var(--color-primary, var(--mg-primary-500)), var(--color-primary-hover, var(--cs-blue-700)));
     color: var(--color-text-inverse, var(--mg-white));
     font-weight: 600;
 }
@@ -83,25 +83,25 @@
 .consultant-status-name {
     font-size: var(--font-size-base);
     font-weight: 600;
-    color: var(--color-text-primary, #1D1D1F);
+    color: var(--color-text-primary, var(--mg-text-primary));
     margin-bottom: 2px;
 }
 
 .consultant-status-email {
     font-size: var(--font-size-xs);
-    color: var(--color-text-secondary, #424245);
+    color: var(--color-text-secondary, var(--mg-text-secondary));
     margin-bottom: 2px;
 }
 
 .consultant-status-phone {
     font-size: var(--font-size-xs);
-    color: var(--color-text-secondary, #424245);
+    color: var(--color-text-secondary, var(--mg-text-secondary));
     margin-bottom: 2px;
 }
 
 .consultant-status-specialty {
     font-size: var(--font-size-xs);
-    color: var(--color-text-secondary, #424245);
+    color: var(--color-text-secondary, var(--mg-text-secondary));
     margin-bottom: 4px;
 }
 
@@ -120,22 +120,22 @@
 
 .consultant-status-badge[data-status="available"] {
     background-color: var(--status-success-bg);
-    color: #065f46;
+    color: var(--cs-success-800);
 }
 
 .consultant-status-badge[data-status="busy"] {
     background-color: var(--status-warning-bg);
-    color: #92400e;
+    color: var(--cs-warning-800);
 }
 
 .consultant-status-badge[data-status="unavailable"] {
     background-color: var(--status-error-bg);
-    color: #991b1b;
+    color: var(--cs-error-800);
 }
 
 .consultant-status-date {
     font-size: var(--font-size-xs);
-    color: #9ca3af;
+    color: var(--cs-secondary-400);
 }
 
 
@@ -149,7 +149,7 @@
     justify-content: center;
     padding: var(--spacing-md);
     font-size: var(--font-size-sm);
-    color: var(--color-text-secondary, #424245);
+    color: var(--color-text-secondary, var(--mg-text-secondary));
     text-align: center;
 }
 
@@ -158,5 +158,5 @@
 }
 
 .consultant-status-empty {
-    color: #9ca3af;
+    color: var(--cs-secondary-400);
 }

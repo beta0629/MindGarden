@@ -42,7 +42,7 @@
 .mg-v2-time-slot-item--selected {
   border-color: var(--mg-success-500);
   background-color: var(--mg-success-50);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 4px 12px var(--cs-success-200);
   transform: translateY(-2px);
   font-weight: 600;
 }
@@ -63,7 +63,7 @@
   border-color: var(--mg-primary-500);
   background-color: var(--mg-primary-50);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 4px 8px var(--cs-primary-200);
 }
 
 /* 시간 슬롯 아이콘 스타일 */

@@ -1573,7 +1573,7 @@
  * --mg-primary-500 이 밝게 잡히면 본문「등록」등이 백색처럼 보임 → B0KlA 녹 고정 */
 .mg-v2-ad-b0kla .mg-button.mg-v2-btn--primary {
   background: var(--ad-b0kla-green);
-  color: #fff;
+  color: var(--mg-white);
   border: none;
   border-radius: 10px;
   min-height: 44px;
@@ -1584,23 +1584,23 @@
 
 .mg-v2-ad-b0kla .mg-button.mg-v2-btn--primary:hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--mg-success-700);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .mg-v2-ad-b0kla .mg-button.mg-v2-btn--primary .mg-button__content,
 .mg-v2-ad-b0kla .mg-button.mg-v2-btn--primary .mg-button__text {
-  color: #fff;
+  color: var(--mg-white);
 }
 
 /* 모달 본문 내 특이사항 폼 등록·수정 저장: 캐스케이드 최후방 */
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-ad-modal__section .mg-button.mg-button--primary.mg-v2-btn--primary {
   background: var(--ad-b0kla-green);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-ad-modal__section .mg-button.mg-button--primary.mg-v2-btn--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--mg-success-700);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .mg-v2-ad-b0kla .mg-button.mg-v2-btn--outline {
@@ -2110,6 +2110,72 @@ textarea.mg-v2-textarea {
   margin: 0 0 var(--spacing-md) 0;
   padding-left: var(--spacing-lg);
   font-size: var(--font-size-sm, 0.875rem);
+}
+
+/* 일정 상세 — 본문 행·푸터 메시지(토큰·클래스, 인라인 스타일 대체) */
+.schedule-detail-modal__admin-note-input {
+  width: 100%;
+  min-height: 5rem;
+  margin-top: var(--mg-space-2);
+  padding: var(--mg-space-2) var(--mg-space-3);
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-300));
+  border-radius: var(--ad-b0kla-radius-sm, var(--mg-radius-md));
+  box-sizing: border-box;
+}
+
+.schedule-detail-modal__footer-msg {
+  width: 100%;
+  text-align: center;
+}
+
+.schedule-detail-modal__footer-msg--client {
+  color: var(--mg-color-text-secondary, var(--mg-text-secondary));
+}
+
+.schedule-detail-modal__footer-msg-lead {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--ad-b0kla-green, var(--mg-primary-500));
+  margin: 0;
+}
+
+.schedule-detail-modal__footer-msg-sub {
+  font-size: var(--font-size-xs, 0.8125rem);
+  color: var(--mg-color-text-secondary, var(--mg-text-secondary));
+  margin: var(--spacing-xs) 0 0;
+}
+
+.schedule-detail-modal__footer-msg-lead--neutral {
+  color: var(--mg-color-text-main, var(--mg-text-primary));
+  font-weight: 500;
+  margin: 0;
+}
+
+.schedule-detail-modal__detail-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-space-3);
+}
+
+.schedule-detail-modal__detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.schedule-detail-modal__detail-row--bordered {
+  padding-top: var(--mg-space-2);
+  border-top: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+}
+
+.schedule-detail-modal__detail-label {
+  color: var(--mg-color-text-secondary, var(--mg-text-secondary));
+  font-weight: 500;
+}
+
+.schedule-detail-modal__detail-value {
+  font-weight: 600;
+  color: var(--mg-color-text-main, var(--mg-text-primary));
 }
 
 /* 일정 상세 모달 — 「상세 | 특이사항」 탭 가시성 (_unified-modals 본문 primary 대비) */

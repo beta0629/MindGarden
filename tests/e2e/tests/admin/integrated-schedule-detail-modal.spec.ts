@@ -1,13 +1,13 @@
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
-import { test, expect, Page, Locator } from '@playwright/test';
-import { getMindGardenWebLogin } from '../../helpers/erpAuth';
+import { test, expect, Locator } from '@playwright/test';
+import { loginErpUser } from '../../helpers/erpAuth';
 
 /**
  * 통합 스케줄(/admin/integrated-schedule) — 캘린더 일정 클릭 시 일정 상세 UnifiedModal 배경이
  * 투명(var 순환 참조 등)으로 깨지지 않는지 검증 (design token 회귀).
+ *
+ * 로그인: `loginErpUser` — `UNIFIED_LOGIN_IDENTIFIER_SELECTOR`·제출 흐름은 `helpers/erpAuth.ts` SSOT.
  */
-
-const { username: TEST_USERNAME, password: TEST_PASSWORD } = getMindGardenWebLogin();
 
 /** computed background-color가 완전 투명이 아닌지 */
 function backgroundHasVisibleFill(cssColor: string): boolean {
@@ -19,14 +19,6 @@ function backgroundHasVisibleFill(cssColor: string): boolean {
   );
   if (m) return Number.parseFloat(m[1]) > 0;
   return true;
-}
-
-async function adminLogin(page: Page): Promise<void> {
-  await page.goto('/login');
-  await page.fill('input[name="username"], input[type="email"]', TEST_USERNAME);
-  await page.fill('input[name="password"], input[type="password"]', TEST_PASSWORD);
-  await page.click('button[type="submit"], button:has-text("로그인")');
-  await page.waitForURL(/dashboard|admin|home/, { timeout: 15000 });
 }
 
 async function assertModalBodyNotTransparent(modal: Locator): Promise<void> {
@@ -46,8 +38,8 @@ async function assertModalBodyNotTransparent(modal: Locator): Promise<void> {
 }
 
 test.describe('관리자 - 통합 스케줄 일정 상세 모달 배경', () => {
-  test.beforeEach(async ({ page }) => {
-    await adminLogin(page);
+  test.beforeEach(async ({ page }, testInfo) => {
+    await loginErpUser(page, testInfo, { timeoutMs: 25_000 });
   });
 
   test('캘린더 일정 클릭 시 일정 상세 UnifiedModal 바디 배경이 투명이 아니다', async ({

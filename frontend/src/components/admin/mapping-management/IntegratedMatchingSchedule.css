@@ -257,7 +257,7 @@
 
 .integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
   background-color: var(--ad-b0kla-green, var(--mg-color-primary-main, var(--mg-primary-500)));
-  color: var(--mg-white, #ffffff);
+  color: var(--mg-white);
 }
 
 .integrated-schedule__status-btn.mg-button.mg-button--outline.mg-v2-button-outline {
@@ -312,15 +312,15 @@
 
 .integrated-schedule__filter-label:has(input:checked),
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected {
-  background-color: var(--mg-color-primary-main, #3D5246);
-  color: var(--mg-color-primary-inverse, #FAF9F7);
+  background-color: var(--mg-color-primary-main, var(--ad-b0kla-green));
+  color: var(--mg-color-primary-inverse, var(--ad-b0kla-card-bg));
   font-weight: 600;
 }
 
 .integrated-schedule__filter-label:has(input:checked):hover,
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected:hover {
-  background-color: var(--mg-color-primary-dark, #2d3d34);
-  color: var(--mg-color-primary-inverse, #FAF9F7);
+  background-color: var(--mg-color-primary-dark, var(--mg-success-700));
+  color: var(--mg-color-primary-inverse, var(--ad-b0kla-card-bg));
 }
 
 .integrated-schedule__filter-text {

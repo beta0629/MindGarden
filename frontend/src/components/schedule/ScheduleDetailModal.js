@@ -336,8 +336,7 @@ const ScheduleDetailModal = ({
                     value={adminNote}
                     onChange={(e) => setAdminNote(e.target.value)}
                     placeholder="입금 확인 완료"
-                    className="mg-v2-textarea mg-v2-input"
-                    style={{ width: '100%', minHeight: '80px', marginTop: '8px', padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', boxSizing: 'border-box' }}
+                    className="mg-v2-textarea mg-v2-input schedule-detail-modal__admin-note-input"
                 />
             </div>
         </UnifiedModal>
@@ -529,11 +528,11 @@ const ScheduleDetailModal = ({
     const renderMainActions = () => {
         if (isVacationEvent()) {
             return (
-                <div style={{ width: '100%', textAlign: 'center' }}>
-                    <p style={{ fontSize: '14px', color: 'var(--mg-primary-500)', fontWeight: 600 }}>
+                <div className="schedule-detail-modal__footer-msg">
+                    <p className="schedule-detail-modal__footer-msg-lead">
                         🏖️ 이 이벤트는 상담사의 휴가입니다.
                     </p>
-                    <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+                    <p className="schedule-detail-modal__footer-msg-sub">
                         해당 시간대에는 상담이 불가능합니다.
                     </p>
                 </div>
@@ -541,11 +540,11 @@ const ScheduleDetailModal = ({
         }
         if (isClient) {
             return (
-                <div style={{ width: '100%', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                    <p style={{ fontSize: '14px', fontWeight: 500 }}>
+                <div className="schedule-detail-modal__footer-msg schedule-detail-modal__footer-msg--client">
+                    <p className="schedule-detail-modal__footer-msg-lead schedule-detail-modal__footer-msg-lead--neutral">
                         📅 예약 정보를 확인하실 수 있습니다.
                     </p>
-                    <p style={{ fontSize: '13px', marginTop: '4px' }}>
+                    <p className="schedule-detail-modal__footer-msg-sub">
                         예약 변경이 필요하신 경우 상담사에게 문의해주세요.
                     </p>
                 </div>
@@ -787,10 +786,10 @@ const ScheduleDetailModal = ({
                 ) : (
                 <div className="mg-v2-ad-modal__section">
                             <div className="section-title">상담 정보</div>
-                            <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>이벤트</span>
-                                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}><SafeText>{displayData.title}</SafeText></span>
+                            <div className="section-content schedule-detail-modal__detail-rows">
+                                <div className="schedule-detail-modal__detail-row">
+                                    <span className="schedule-detail-modal__detail-label">이벤트</span>
+                                    <span className="schedule-detail-modal__detail-value"><SafeText>{displayData.title}</SafeText></span>
                                 </div>
                     
                     {!isVacationEvent() && (() => {
@@ -811,13 +810,13 @@ const ScheduleDetailModal = ({
                         
                         return (
                             <>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>상담사</span>
-                                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}><SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText></span>
+                                <div className="schedule-detail-modal__detail-row">
+                                    <span className="schedule-detail-modal__detail-label">상담사</span>
+                                    <span className="schedule-detail-modal__detail-value"><SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText></span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>내담자</span>
-                                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}><SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText></span>
+                                <div className="schedule-detail-modal__detail-row">
+                                    <span className="schedule-detail-modal__detail-label">내담자</span>
+                                    <span className="schedule-detail-modal__detail-value"><SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText></span>
                                 </div>
                             </>
                         );
@@ -825,32 +824,30 @@ const ScheduleDetailModal = ({
                     
                     {isVacationEvent() ? (
                         <>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>휴가 사유</span>
-                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}><SafeText fallback="사유 없음">{displayData.description ?? displayData.reason}</SafeText></span>
+                            <div className="schedule-detail-modal__detail-row">
+                                <span className="schedule-detail-modal__detail-label">휴가 사유</span>
+                                <span className="schedule-detail-modal__detail-value"><SafeText fallback="사유 없음">{displayData.description ?? displayData.reason}</SafeText></span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>휴가 유형</span>
-                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}><SafeText>{getVacationTypeDisplay(displayData.vacationType)}</SafeText></span>
+                            <div className="schedule-detail-modal__detail-row">
+                                <span className="schedule-detail-modal__detail-label">휴가 유형</span>
+                                <span className="schedule-detail-modal__detail-value"><SafeText>{getVacationTypeDisplay(displayData.vacationType)}</SafeText></span>
                             </div>
                         </>
                     ) : (
-                        <>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>상담 유형</span>
-                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}><SafeText>{convertConsultationTypeToKorean(displayData.consultationType)}</SafeText></span>
-                            </div>
-                        </>
+                        <div className="schedule-detail-modal__detail-row">
+                            <span className="schedule-detail-modal__detail-label">상담 유형</span>
+                            <span className="schedule-detail-modal__detail-value"><SafeText>{convertConsultationTypeToKorean(displayData.consultationType)}</SafeText></span>
+                        </div>
                     )}
                     
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>시간</span>
-                        <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                    <div className="schedule-detail-modal__detail-row">
+                        <span className="schedule-detail-modal__detail-label">시간</span>
+                        <span className="schedule-detail-modal__detail-value">
                             <SafeText>{displayData.startTime}</SafeText> - <SafeText>{displayData.endTime}</SafeText>
                         </span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid var(--color-border)' }}>
-                        <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>상태</span>
+                    <div className="schedule-detail-modal__detail-row schedule-detail-modal__detail-row--bordered">
+                        <span className="schedule-detail-modal__detail-label">상태</span>
                         <span className={`mg-v2-badge mg-v2-badge-${getStatusColorClass(getStatusCodeValue(statusForDisplay))}`}>
                             <SafeText>{convertStatusToKorean(statusForDisplay)}</SafeText>
                         </span>

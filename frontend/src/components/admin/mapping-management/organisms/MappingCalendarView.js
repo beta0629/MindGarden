@@ -20,7 +20,7 @@ const MappingCalendarView = ({
     return mappings.map((mapping) => {
       // startDate가 없으면 createdAt을 사용. 그것도 없으면 오늘 날짜.
       const dateStr = mapping.startDate || mapping.createdAt || new Date().toISOString();
-      const statusColor = getStatusColor ? getStatusColor(mapping.status) : 'var(--ad-b0kla-blue, #6d9dc5)';
+      const statusColor = getStatusColor ? getStatusColor(mapping.status) : 'var(--ad-b0kla-blue)';
       
       return {
         id: mapping.id,

@@ -20,9 +20,9 @@
   gap: 1rem;
   padding: 1rem 1.25rem;
   background: var(--ad-b0kla-card-bg, var(--mg-white));
-  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius-sm, 12px);
-  box-shadow: var(--ad-b0kla-shadow, 0 4px 12px rgba(0, 0, 0, 0.04));
+  box-shadow: var(--ad-b0kla-shadow);
   transition: all 0.2s;
   text-align: left;
   width: 100%;
@@ -30,8 +30,8 @@
 }
 
 .mg-v2-mapping-kpi-section__card:hover {
-  border-color: var(--ad-b0kla-green, #4b745c);
-  box-shadow: 0 6px 20px rgba(75, 116, 92, 0.12);
+  border-color: var(--ad-b0kla-green);
+  box-shadow: var(--ad-b0kla-shadow-hover);
 }
 
 /* KPI 좌측 아이콘 웰은 비버튼, 우측 라벨·값만 MGButton(텍스트) */
@@ -79,23 +79,23 @@
 }
 
 .mg-v2-mapping-kpi-section__icon--green {
-  background: var(--ad-b0kla-green-bg, #ebf2ee);
-  color: var(--ad-b0kla-green, #4b745c);
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
 }
 
 .mg-v2-mapping-kpi-section__icon--orange {
-  background: var(--ad-b0kla-orange-bg, #fcf3ed);
-  color: var(--ad-b0kla-orange, #e8a87c);
+  background: var(--ad-b0kla-orange-bg);
+  color: var(--ad-b0kla-orange);
 }
 
 .mg-v2-mapping-kpi-section__icon--blue {
-  background: var(--ad-b0kla-blue-bg, #f0f5f9);
-  color: var(--ad-b0kla-blue, #6d9dc5);
+  background: var(--ad-b0kla-blue-bg);
+  color: var(--ad-b0kla-blue);
 }
 
 .mg-v2-mapping-kpi-section__icon--gray {
-  background: #edf2f7;
-  color: #4a5568;
+  background: var(--cs-slate-100);
+  color: var(--cs-slate-600);
 }
 
 .mg-v2-mapping-kpi-section__info {
@@ -106,11 +106,11 @@
 
 .mg-v2-mapping-kpi-section__label {
   font-size: 12px;
-  color: var(--ad-b0kla-text-secondary, #64748b);
+  color: var(--ad-b0kla-text-secondary);
 }
 
 .mg-v2-mapping-kpi-section__value {
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--ad-b0kla-title-color, #2d3748);
+  color: var(--ad-b0kla-title-color);
 }

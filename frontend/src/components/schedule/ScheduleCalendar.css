@@ -5,6 +5,7 @@
     padding: 20px;
     background-color: var(--mg-white);
     min-height: 100vh;
+    animation: fadeIn 0.3s ease-out;
 }
 
 /* 헤더 스타일 */
@@ -191,32 +192,32 @@
 
 .mg-v2-event-status-available {
     background-color: var(--status-success);
-    color: white;
+    color: var(--mg-white);
 }
 
 .mg-v2-event-status-booked {
     background-color: var(--color-primary);
-    color: white;
+    color: var(--mg-white);
 }
 
 .mg-v2-event-status-confirmed {
     background-color: var(--status-info);
-    color: white;
+    color: var(--mg-white);
 }
 
 .mg-v2-event-status-vacation {
     background-color: var(--status-warning);
-    color: #212529;
+    color: var(--mg-gray-900);
 }
 
 .mg-v2-event-status-completed {
     background-color: var(--color-secondary);
-    color: white;
+    color: var(--mg-white);
 }
 
 .mg-v2-event-status-cancelled {
     background-color: var(--status-error);
-    color: white;
+    color: var(--mg-white);
 }
 
 .mg-v2-calendar-day-header {
@@ -253,6 +254,7 @@
     max-height: 80vh;
     display: flex;
     flex-direction: column;
+    animation: fadeIn 0.3s ease-out;
 }
 
 .mg-v2-mobile-zoom-header {
@@ -403,7 +405,7 @@
 .fc-button {
     background: var(--mg-color-primary);
     border-color: var(--mg-color-primary);
-    color: white;
+    color: var(--mg-white);
     border-radius: var(--mg-border-radius-sm);
     padding: 8px 16px;
     font-size: 0.9rem;
@@ -545,14 +547,6 @@
         opacity: 1;
         transform: translateY(0);
     }
-}
-
-.mg-v2-schedule-calendar {
-    animation: fadeIn 0.3s ease-out;
-}
-
-.mg-v2-mobile-zoom-modal {
-    animation: fadeIn 0.3s ease-out;
 }
 
 /* 로딩 상태 */

@@ -21,7 +21,7 @@
     margin-bottom: 8px;
     font-size: var(--font-size-sm);
     font-weight: 600;
-    color: #374151;
+    color: var(--cs-secondary-700);
 }
 
 .refresh-btn {
@@ -35,7 +35,7 @@
 }
 
 .refresh-btn:hover {
-    background-color: #f3f4f6;
+    background-color: var(--cs-secondary-100);
     transform: rotate(180deg);
 }
 
@@ -50,28 +50,28 @@
     flex-direction: column;
     align-items: center;
     padding: 12px 8px;
-    background-color: #f8fafc;
+    background-color: var(--cs-slate-50);
     border-radius: 8px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--cs-slate-200);
     transition: all 0.2s ease;
 }
 
 .stat-item:hover {
-    background-color: #f1f5f9;
-    border-color: #cbd5e1;
+    background-color: var(--cs-slate-100);
+    border-color: var(--cs-slate-300);
 }
 
 .stat-value {
     font-size: var(--font-size-xxl);
     font-weight: bold;
-    color: #1e40af;
+    color: var(--cs-primary-800);
     line-height: 1;
     margin-bottom: 4px;
 }
 
 .stat-label {
     font-size: var(--font-size-xs);
-    color: #64748b;
+    color: var(--cs-slate-500);
     text-align: center;
     line-height: 1.2;
 }

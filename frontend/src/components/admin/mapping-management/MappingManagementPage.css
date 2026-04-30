@@ -8,7 +8,7 @@
 .mg-v2-mapping-header-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--mg-spacing-sm);
   padding: 0.75rem 1.25rem;
   font-size: 14px;
   font-weight: 600;
@@ -19,19 +19,19 @@
 }
 
 .mg-v2-mapping-header-btn--primary {
-  background: var(--ad-b0kla-green, #4b745c);
-  color: #fff;
+  background: var(--ad-b0kla-green);
+  color: var(--mg-white);
 }
 
 .mg-v2-mapping-header-btn--primary:hover {
-  background: #3d5f4c;
+  background: var(--mg-success-700);
   transform: translateY(-1px);
 }
 
 /* G8-B8a: MGButton 병합 — 헤더 등록 버튼 */
 .mg-v2-mapping-header-btn.mg-button.mg-button--primary {
-  background: var(--ad-b0kla-green, #4b745c);
-  color: #fff;
+  background: var(--ad-b0kla-green);
+  color: var(--mg-white);
   border: none;
 }
 

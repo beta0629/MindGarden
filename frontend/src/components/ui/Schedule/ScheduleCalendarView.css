@@ -23,9 +23,9 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    background-color: #FAF9F7;
+    background-color: var(--cs-brown-50);
     border-radius: 6px;
-    border: 1px solid #D4CFC8;
+    border: 1px solid var(--cs-brown-300);
     border-left-width: 4px;
     border-left-style: solid;
     padding: 6px 8px;
@@ -38,7 +38,7 @@
 
 .mg-v2-ad-calendar-event:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--cs-shadow-soft);
     z-index: 10;
 }
 
@@ -51,23 +51,23 @@
 }
 .mg-v2-ad-calendar-event--past:hover {
     transform: none;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--cs-shadow-sm-multi);
     opacity: 0.75;
     filter: grayscale(35%);
 }
 .mg-v2-ad-calendar-event--past.mg-v2-ad-calendar-event--compact:hover {
     transform: none;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--cs-shadow-sm-multi);
 }
 
 /* 취소된 예약: 별도 표기 (일반/완료와 시각적 구분) */
 .mg-v2-ad-calendar-event--cancelled {
-    border-left-color: var(--mg-error-500, #dc3545) !important;
-    background-color: var(--mg-gray-100, #f5f5f5);
+    border-left-color: var(--mg-error-500) !important;
+    background-color: var(--mg-gray-100);
 }
 .mg-v2-ad-calendar-event--cancelled .mg-v2-ad-calendar-event__client {
     text-decoration: line-through;
-    color: var(--mg-gray-600, #6b7280);
+    color: var(--mg-gray-600);
 }
 .mg-v2-ad-calendar-event__badge--cancelled {
     flex-shrink: 0;
@@ -75,8 +75,8 @@
     font-weight: 700;
     padding: 1px 4px;
     border-radius: 4px;
-    background-color: var(--mg-error-500, #dc3545);
-    color: var(--mg-white, #fff);
+    background-color: var(--mg-error-500);
+    color: var(--mg-white);
     text-decoration: none;
 }
 .mg-v2-ad-calendar-event--compact .mg-v2-ad-calendar-event__badge--cancelled {
@@ -94,7 +94,7 @@
 
 .mg-v2-ad-calendar-event--compact:hover {
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--cs-shadow-soft);
 }
 
 .mg-v2-ad-calendar-event--compact .mg-v2-ad-calendar-event__time {
@@ -106,7 +106,7 @@
 .mg-v2-ad-calendar-event--compact .mg-v2-ad-calendar-event__client {
     font-size: 11px;
     font-weight: 600;
-    color: #2C2C2C;
+    color: var(--mg-color-text-main, var(--mg-gray-800));
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -122,13 +122,13 @@
 .mg-v2-ad-calendar-event__time {
     font-size: 11px;
     font-weight: 600;
-    color: #5C6B61;
+    color: var(--mg-color-text-secondary, var(--mg-gray-600));
 }
 
 .mg-v2-ad-calendar-event__status {
     font-size: 10px;
     font-weight: 500;
-    color: #8B7355;
+    color: var(--cs-brown-700);
     display: flex;
     align-items: center;
     gap: 2px;
@@ -152,18 +152,18 @@
 .mg-v2-ad-calendar-event__client {
     font-size: 13px;
     font-weight: 700;
-    color: #2C2C2C;
+    color: var(--mg-color-text-main, var(--mg-gray-800));
 }
 
 .mg-v2-ad-calendar-event__consultant {
     font-size: 11px;
-    color: #6B7F72;
+    color: var(--mg-color-text-secondary, var(--mg-gray-600));
 }
 
 /* 휴가 이벤트 스타일 */
 .mg-v2-ad-calendar-event--vacation {
     background-color: var(--mg-gray-100);
-    border: 1px dashed #D4CFC8;
+    border: 1px dashed var(--cs-brown-300);
     border-left-width: 1px;
     min-height: auto;
     flex-direction: row;
@@ -174,7 +174,7 @@
 
 .mg-v2-ad-calendar-event--vacation:hover {
     transform: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--cs-shadow-xs);
     background-color: var(--mg-white);
 }
 
@@ -186,5 +186,5 @@
 .mg-v2-ad-calendar-event--vacation .mg-v2-ad-calendar-event__client {
     font-size: 12px;
     font-weight: 600;
-    color: #495057;
+    color: var(--color-secondary-dark);
 }

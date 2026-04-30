@@ -206,6 +206,24 @@
 - [ ] 기존 **예약 확정·취소·상담일지** 플로우 **회귀** (동일 모달 내)
 - [ ] 하드코딩 스캔·린트·백엔드 테스트(해당 시) CI 통과
 
+### 12.1 Phase B 검증 표 (B1~B7, 커밋 `3aa6f6947` 기준)
+
+| ID | §12 대응 항목 | 검증 방법(이번 배치) | 결과(2026-04-30) | 비고 |
+|----|---------------|----------------------|------------------|------|
+| **B1** | 일반 예약 → 상세 모달 특이사항 CRUD·새로고침 지속성 | E2E: `integrated-schedule-client-notes`·옵션 CRUD 스펙; 수동 동일 | **미실행** | Playwright 전부 `loginErpUser` 후 URL 전환 타임아웃(`/login` 고정). **블로커**: 백엔드(8080)·프록시·`E2E_*` 자격 또는 API 응답 실패 추정. CRUD 자동화는 `E2E_INTEGRATED_SCHEDULE_NOTES_CRUD=1` 시에만 DB 기록. |
+| **B2** | 휴가 이벤트 → 특이사항 CRUD 미노출·비활성 | 수동 또는 휴가 일정이 앞선 캘린더 데이터 + E2E 스킵 메시지 확인 | **미실행** | 동일 로그인 블로커. 스펙은 탭 없으면 스킵(README·스펙 주석과 정합). |
+| **B3** | `clientId` 없음 시 P1 동작·메시지 | 수동·테스트 데이터 | **미실행** | 전용 E2E 없음; 데이터 준비 필요. |
+| **B4** | 타 테넌트·타 사용자 권한 403/404 | 수동·보안/통합 테스트 | **미실행** | 본 E2E 스위트 범위 밖. |
+| **B5** | 콘솔 #130·크리티컬 0, 네트워크 비정상 패턴 없음 | E2E S5·`react130ConsoleGate`; LNB 콘솔 스모크 | **미실행** | 로그인 단계에서 중단. 게이트 구현은 `tests/e2e/helpers/react130ConsoleGate.ts`(커밋 포함). |
+| **B6** | 예약 확정·취소·상담일지 등 동일 모달 회귀 | 수동 스모크 | **미실행** | 자동 스펙 없음. |
+| **B7** | 하드코딩 스캔·린트·CI | 커밋 훅·CI | **부분** | 로컬 훅: `schedule.js` 완료색 hex → `var(--mg-secondary-400)`; `react130ConsoleGate.ts`는 `#130` 오탐 방지용 이스케이프 조합으로 정리됨(동일 런타임 매칭). CI 전체 녹색은 본 실행에서 미확인. |
+
+**Playwright(권장 명령, chromium)**: `cd tests/e2e && npx playwright test tests/admin/integrated-schedule-client-notes.spec.ts tests/admin/integrated-schedule-detail-modal.spec.ts tests/admin/admin-dashboard-lnb-console-smoke.spec.ts --project=chromium` → **6 failed**(원인 공통: 로그인 후 화면 전환 타임아웃, `erpAuth` 안내: API 기동·`BASE_URL`·프록시·자격 확인).
+
+**옵션 `E2E_INTEGRATED_SCHEDULE_NOTES_CRUD=1`**: 이번 실행에서는 로그인 실패로 CRUD 본문 미도달; 기동·자격 확보 후만 선택 실행(DB 특이사항 행 생성).
+
+**코더 후속(하드코딩 경고, 운영 게이트 전)**: 상기 B7·코드 반영 완료. 추가 스캔 경고 시 동일 원칙(토큰·E2E 헬퍼에 `#`+3~6 hex 리터럴 금지)으로 정리.
+
 ---
 
 ## 실행 요청문 (호출자용 요약)

@@ -1296,39 +1296,42 @@
   background: var(--ad-b0kla-card-bg);
 }
 
-/* 푸터 버튼: 콘텐츠 너비만 사용 (래퍼 100% + primary만 과도하게 넓어지는 레이아웃 방지) */
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-button,
+/*
+ * 푸터 직계 버튼(래퍼 없는 레거시): 콘텐츠 너비.
+ * schedule-detail-modal__footer-actions 안 버튼은 아래 그리드 블록에서 width:100%로 덮음.
+ */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .mg-button,
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions > button,
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button,
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-btn,
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-modal__button {
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .mg-v2-button,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .mg-btn,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .mg-modal__button {
   flex: 0 0 auto;
   width: auto;
 }
 
-/* 일정 상세·확인 서브모달: actions 단일 직계 래퍼 — Fragment 다중 자식 시 flex가 버튼마다 나뉘는 현상 방지 */
+/* 일정 상세·확인 서브모달: actions 직계 래퍼 — :has() 미지원 환경에서도 동일 열 유지 */
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions {
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-/* 버튼 행: N열 동일 폭(:has 미지원 브라우저는 세로 스택에 가깝게 보일 수 있음) */
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions:has(.mg-button) {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: minmax(0, 1fr) !important;
   gap: var(--spacing-md);
   align-items: stretch;
-}
-
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions:has(.mg-button) .mg-button,
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions:has(.mg-button) > button {
   width: 100%;
   min-width: 0;
-  max-width: none;
-  flex: none;
   box-sizing: border-box;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions > .mg-button,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions > button {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  flex: none !important;
+  box-sizing: border-box;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions > .mg-button .mg-button__content {
+  justify-content: center;
 }
 
 /* mg-modal__body 내부 폼·입력 B0KlA */

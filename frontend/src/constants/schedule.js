@@ -44,7 +44,7 @@ export const STATUS_COLORS = {
   [STATUS.CONFIRMED]: 'var(--mg-info-500)',    // 청록색
   [STATUS.VACATION]: 'var(--mg-warning-500)',     // 노란색
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  [STATUS.COMPLETED]: '#b8b8b8',    // 연한 회색 (완료된 상태)
+  [STATUS.COMPLETED]: 'var(--mg-secondary-400)',    // 완료·비활성 톤 (디자인 토큰)
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [STATUS.CANCELLED]: 'var(--mg-error-500)'     // 빨간색
 };

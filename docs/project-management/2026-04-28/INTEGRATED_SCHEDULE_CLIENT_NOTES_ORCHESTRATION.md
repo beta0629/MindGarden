@@ -27,6 +27,7 @@
 - API는 **`/api/v1/`** 하위, **`tenantId` 필수**, ADMIN/STAFF 쓰기(삭제·타인 메모 수정 권한은 9절 결정에 따름).
 - UI는 **Admin B0KlA**, **`UnifiedModal`** 표준에 정합(상세 모달 **내부 탭 또는 단일 본문 확장** 권장, 불필요한 2중 모달 지양).
 - **core-tester**: 아래 12절 체크리스트 전부 통과, 콘솔 #130·크리티컬 0건.
+- **네트워크(§12·B5 정합)**: 통합 스케줄·특이사항 검증 구간에서 **의도치 않은 4xx/5xx 네트워크 패턴 없음**(의도된 권한·유효성 응답은 제외).
 - **[운영 반영 체크리스트](docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md)** 및 하드코딩 게이트.
 
 ---
@@ -217,6 +218,8 @@
 | **B5** | 콘솔 #130·크리티컬 0, 네트워크 비정상 패턴 없음 | E2E S5·`react130ConsoleGate`; LNB 콘솔 스모크 | **미실행** | 로그인 단계에서 중단. 게이트 구현은 `tests/e2e/helpers/react130ConsoleGate.ts`(커밋 포함). |
 | **B6** | 예약 확정·취소·상담일지 등 동일 모달 회귀 | 수동 스모크 | **미실행** | 자동 스펙 없음. |
 | **B7** | 하드코딩 스캔·린트·CI | 커밋 훅·CI | **부분** | 로컬 훅: `schedule.js` 완료색 hex → `var(--mg-secondary-400)`; `react130ConsoleGate.ts`는 `#130` 오탐 방지용 이스케이프 조합으로 정리됨(동일 런타임 매칭). CI 전체 녹색은 본 실행에서 미확인. |
+
+**미실행 행·재시도 전제(2026-04-30 core-tester 재확인)**: `localhost:3000` HTTP 200 확인, **`localhost:8080` 미기동**, **`E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` 미설정** → README 권장 3스펙은 **이번에 재실행하지 않음**(이전 기록: 로그인 후 전환 타임아웃 등 **6 failed** 참고). 다음 갱신: API **8080** + 프론트 **3000** + [`tests/e2e/README.md`](../../../tests/e2e/README.md)의 `E2E_TEST_*` 준비 후 동일 명령으로 `npx playwright test` 실행해 B1~B5 **결과** 열을 갱신. 문서·**PR 설명**에는 Node/npm·Playwright 설치·`BASE_URL`·자격·**8080+3000 동시 기동**을 **환경 전제**로 명시할 것. 구현 머지 전 12절은 [위임 순서·테스터 게이트](docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md)에 따라 **core-tester** 통과를 전제로 한다.
 
 **Playwright(권장 명령, chromium)**: `cd tests/e2e && npx playwright test tests/admin/integrated-schedule-client-notes.spec.ts tests/admin/integrated-schedule-detail-modal.spec.ts tests/admin/admin-dashboard-lnb-console-smoke.spec.ts --project=chromium` → **6 failed**(원인 공통: 로그인 후 화면 전환 타임아웃, `erpAuth` 안내: API 기동·`BASE_URL`·프록시·자격 확인).
 

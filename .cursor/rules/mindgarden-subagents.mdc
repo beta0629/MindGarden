@@ -19,6 +19,13 @@ alwaysApply: true
 - 디자인·시안 → **`core-designer`** / 마크업만 → **`core-publisher`**.
 - **배포·CI/CD·GitHub Actions 트리거·운영/개발 반영 절차** → **`core-deployer`**. 저장소 워크플로 기준으로만 짧게 안내한다.
 
+### 디자인·비주얼 변경 배치 — Task 모델 (권장)
+
+- **UI·레이아웃·시각 스펙·와이어·마크업**이 중심인 위임(`core-designer`, `core-publisher`, 또는 이 둘과 병렬되는 **디자인 변경 전용** 배치)에는 Cursor **Task** 호출 시 **`model: "gemini-3.1-pro"`** 를 명시하는 것을 **권장**한다. (제공자 일시 오류 시 한 번 재시도.)
+- **오케스트레이션 문서**: `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`에 동일 권장이 정리되어 있다.
+- **스킬**: `/core-solution-design-handoff`, `/core-solution-planning`, `/core-solution-publisher`에 반영.
+- `core-coder`·`core-tester`는 과제 성격에 따라 기본 모델을 두고, 사용자가 **「디자인 변경과 같은 배치에서 제미나이」**라고 명시한 경우에만 동일 모델을 태스크별로 지정한다.
+
 서브에이전트 정의는 저장소 **`/.cursor/agents/*.md`** 를 따른다.
 
 ### 배포 주제 시 메인 어시스턴트 행동

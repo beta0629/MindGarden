@@ -43,6 +43,20 @@
 
 ---
 
+## Task 모델 — 디자인·비주얼 변경 배치 (권장)
+
+**기획(core-planner)이 서브에이전트를 배정할 때**, 아래는 **UI·레이아웃·시각 스펙·HTML 마크업**이 작업의 중심인 경우에 적용한다.
+
+| 서브에이전트 | Task `model` 권장 |
+|--------------|-------------------|
+| **core-designer** | `gemini-3.1-pro` |
+| **core-publisher** | `gemini-3.1-pro` |
+| **core-coder** / **core-tester** | 과제 기본 모델. 사용자가 디자인 변경과 **동일 배치에서** 제미나이 지정 시에만 태스크별로 `gemini-3.1-pro` 가능. |
+
+**메인·플래너**는 위임 프롬프트에 `model: "gemini-3.1-pro"` 를 넣어 Task를 호출한다. 상세는 스킬 **`/core-solution-design-handoff`**, **`/core-solution-planning`**, **`.cursor/rules/mindgarden-subagents.mdc`** 와 정합한다.
+
+---
+
 ## 사용자 강제 규칙 (필수)
 
 | 규칙 | 내용 |

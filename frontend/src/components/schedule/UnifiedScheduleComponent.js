@@ -513,6 +513,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
                             editable: !isCompleted,
                             extendedProps: {
                                 id: schedule.id,
+                                mappingId: schedule.mappingId || schedule.scheduleMappingId || schedule.mapping_id || schedule.schedule_mapping_id || undefined,
                                 consultantId: schedule.consultantId,
                                 consultantName: schedule.consultantName,
                                 clientId: schedule.clientId,

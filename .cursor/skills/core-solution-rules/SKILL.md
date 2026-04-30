@@ -62,6 +62,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 - **generalPurpose** 서브에이전트: 복합 연구·다단계 작업, **문서 작성·정리** 시 /core-solution-documentation 스킬과 함께 사용.
 - **서버 상태·긴급 복구**: 개발·운영 서버 상태·에러 로그 확인, 긴급 복구(백업 복원·재시작), 원인 분석 후 core-coder 즉시 조치는 **shell** → **core-debugger** → **core-coder** 순서로 진행. `/core-solution-server-status` 스킬 적용.
 - **UI/레이아웃·비주얼 작업**: **core-designer(설계)** → **core-publisher(HTML 마크업)** → **core-coder(JSX·로직·스타일)** 순서. `docs/standards/SUBAGENT_USAGE.md` 참고.
+- **디자인·비주얼 변경 Task 모델**: `core-designer`·`core-publisher` Task 호출 시 **`model: "gemini-3.1-pro"`** 권장. `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`, `.cursor/rules/mindgarden-subagents.mdc`, `/core-solution-design-handoff` 참고.
 
 ## 사용할 스킬
 

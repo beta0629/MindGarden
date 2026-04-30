@@ -50,6 +50,10 @@ description: 디자이너(core-designer) 설계 산출물 형식·코더 전달 
 - `docs/standards/DESIGN_CENTRALIZATION_STANDARD.md` — 토큰·중앙화 원칙
 - `frontend/src/styles/unified-design-tokens.css` — 사용 가능한 `var(--mg-*)` 목록
 
+## Task 모델 (디자인 계열 위임 시)
+
+**core-designer** Task를 띄울 때는 Cursor Task 인자에 **`model: "gemini-3.1-pro"`** 를 명시하는 것을 **권장**한다. (레이아웃·토큰·시각 스펙·와이어 중심 작업에 맞춤.) 메인·기획 오케스트레이션은 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md` 및 `.cursor/rules/mindgarden-subagents.mdc`와 동일 정책을 따른다.
+
 ## 규칙
 
 - **단일 소스**: `mindgarden-design-system.pen`, `unified-design-tokens.css`, `AdminDashboardB0KlA.css`에 정의된 토큰만 사용. 새 색·간격이 필요하면 먼저 토큰 추가를 제안하고, 승인 전까지 기존 토큰으로 대체.

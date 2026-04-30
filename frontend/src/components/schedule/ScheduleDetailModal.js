@@ -12,6 +12,10 @@ import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { useNavigate } from 'react-router-dom';
+import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import ClientSummaryField from '../consultant/molecules/ClientSummaryField';
+import StatusBadge from '../common/StatusBadge';
 import ScheduleClientNotesSection from './ScheduleClientNotesSection';
 
 /**
@@ -39,6 +43,7 @@ const ScheduleDetailModal = ({
     onConsultationLogOpen
 }) => {
     const { user } = useSession();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -395,25 +400,6 @@ const ScheduleDetailModal = ({
     };
 
 /**
-     * 상태값에 따른 색상 클래스 반환
-     */
-    const getStatusColorClass = (status) => {
-        const statusMap = {
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            'BOOKED': 'info',
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            'CONFIRMED': 'success',
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            'COMPLETED': 'secondary',
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            'CANCELLED': 'danger',
-            'VACATION': 'warning',
-            'AVAILABLE': 'success'
-        };
-        return statusMap[status] || 'secondary';
-    };
-
-    /**
      * 휴가 이벤트 여부 확인
      */
     const isVacationEvent = () => {
@@ -785,13 +771,35 @@ const ScheduleDetailModal = ({
                     />
                 ) : (
                 <div className="mg-v2-ad-modal__section">
-                            <div className="section-title">상담 정보</div>
-                            <div className="section-content schedule-detail-modal__detail-rows">
-                                <div className="schedule-detail-modal__detail-row">
-                                    <span className="schedule-detail-modal__detail-label">이벤트</span>
-                                    <span className="schedule-detail-modal__detail-value"><SafeText>{displayData.title}</SafeText></span>
-                                </div>
-                    
+                    <div className="schedule-detail-modal__summary-strip">
+                        <div className="schedule-detail-modal__summary-item">
+                            <span className="schedule-detail-modal__summary-label">상태</span>
+                            <StatusBadge status={getStatusCodeValue(statusForDisplay)}>
+                                <SafeText>{convertStatusToKorean(statusForDisplay)}</SafeText>
+                            </StatusBadge>
+                        </div>
+                        <div className="schedule-detail-modal__summary-item">
+                            <span className="schedule-detail-modal__summary-label">유형</span>
+                            <span className="schedule-detail-modal__summary-value">
+                                <SafeText>{isVacationEvent() ? getVacationTypeDisplay(displayData.vacationType) : convertConsultationTypeToKorean(displayData.consultationType)}</SafeText>
+                            </span>
+                        </div>
+                        <div className="schedule-detail-modal__summary-item">
+                            <span className="schedule-detail-modal__summary-label">시간</span>
+                            <span className="schedule-detail-modal__summary-value">
+                                <SafeText>{displayData.startTime}</SafeText> - <SafeText>{displayData.endTime}</SafeText>
+                            </span>
+                        </div>
+                        {showNotesTab && (
+                            <div className="schedule-detail-modal__summary-item">
+                                <span className="schedule-detail-modal__summary-label">특이사항</span>
+                                <span className="schedule-detail-modal__summary-value">
+                                    <SafeText>{clientNotesUnresolvedCount}건 미해소</SafeText>
+                                </span>
+                            </div>
+                        )}
+                    </div>
+
                     {!isVacationEvent() && (() => {
                         let parsedConsultantName = displayData.consultantName;
                         let parsedClientName = displayData.clientName;
@@ -809,51 +817,58 @@ const ScheduleDetailModal = ({
                         }
                         
                         return (
-                            <>
-                                <div className="schedule-detail-modal__detail-row">
-                                    <span className="schedule-detail-modal__detail-label">상담사</span>
-                                    <span className="schedule-detail-modal__detail-value"><SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText></span>
+                            <div className="schedule-detail-modal__parties">
+                                <div className="schedule-detail-modal__party-card">
+                                    <div className="schedule-detail-modal__party-label">내담자</div>
+                                    <div className="schedule-detail-modal__party-name"><SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText></div>
+                                    {displayData.clientId ? (
+                                        <button 
+                                            type="button" 
+                                            className="schedule-detail-modal__party-link"
+                                            onClick={() => {
+                                                onClose();
+                                                navigate(`${ADMIN_ROUTES.USER_MANAGEMENT}?type=client`);
+                                            }}
+                                        >
+                                            회원 관리로 이동
+                                        </button>
+                                    ) : (
+                                        <span className="schedule-detail-modal__party-link schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
+                                    )}
                                 </div>
-                                <div className="schedule-detail-modal__detail-row">
-                                    <span className="schedule-detail-modal__detail-label">내담자</span>
-                                    <span className="schedule-detail-modal__detail-value"><SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText></span>
+                                <div className="schedule-detail-modal__party-card">
+                                    <div className="schedule-detail-modal__party-label">상담사</div>
+                                    <div className="schedule-detail-modal__party-name"><SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText></div>
+                                    {displayData.consultantId ? (
+                                        <button 
+                                            type="button" 
+                                            className="schedule-detail-modal__party-link"
+                                            onClick={() => {
+                                                onClose();
+                                                navigate(`${ADMIN_ROUTES.USER_MANAGEMENT}?type=consultant`);
+                                            }}
+                                        >
+                                            회원 관리로 이동
+                                        </button>
+                                    ) : (
+                                        <span className="schedule-detail-modal__party-link schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
+                                    )}
                                 </div>
-                            </>
+                            </div>
                         );
                     })()}
-                    
-                    {isVacationEvent() ? (
-                        <>
-                            <div className="schedule-detail-modal__detail-row">
-                                <span className="schedule-detail-modal__detail-label">휴가 사유</span>
-                                <span className="schedule-detail-modal__detail-value"><SafeText fallback="사유 없음">{displayData.description ?? displayData.reason}</SafeText></span>
-                            </div>
-                            <div className="schedule-detail-modal__detail-row">
-                                <span className="schedule-detail-modal__detail-label">휴가 유형</span>
-                                <span className="schedule-detail-modal__detail-value"><SafeText>{getVacationTypeDisplay(displayData.vacationType)}</SafeText></span>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="schedule-detail-modal__detail-row">
-                            <span className="schedule-detail-modal__detail-label">상담 유형</span>
-                            <span className="schedule-detail-modal__detail-value"><SafeText>{convertConsultationTypeToKorean(displayData.consultationType)}</SafeText></span>
-                        </div>
-                    )}
-                    
-                    <div className="schedule-detail-modal__detail-row">
-                        <span className="schedule-detail-modal__detail-label">시간</span>
-                        <span className="schedule-detail-modal__detail-value">
-                            <SafeText>{displayData.startTime}</SafeText> - <SafeText>{displayData.endTime}</SafeText>
-                        </span>
+
+                    <div className="section-content schedule-detail-modal__detail-rows">
+                        <ClientSummaryField label="이벤트" className="schedule-detail-modal__detail-row">
+                            <SafeText>{displayData.title}</SafeText>
+                        </ClientSummaryField>
+                        {isVacationEvent() && (
+                            <ClientSummaryField label="휴가 사유" className="schedule-detail-modal__detail-row">
+                                <SafeText fallback="사유 없음">{displayData.description ?? displayData.reason}</SafeText>
+                            </ClientSummaryField>
+                        )}
                     </div>
-                    <div className="schedule-detail-modal__detail-row schedule-detail-modal__detail-row--bordered">
-                        <span className="schedule-detail-modal__detail-label">상태</span>
-                        <span className={`mg-v2-badge mg-v2-badge-${getStatusColorClass(getStatusCodeValue(statusForDisplay))}`}>
-                            <SafeText>{convertStatusToKorean(statusForDisplay)}</SafeText>
-                        </span>
-                    </div>
-                            </div>
-                        </div>
+                </div>
                 )}
             </UnifiedModal>
 

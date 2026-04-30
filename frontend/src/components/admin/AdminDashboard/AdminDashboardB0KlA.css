@@ -1360,7 +1360,7 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
 }
 
 /* B0KlA 모달 푸터: border·padding 기본값. flex·gap·justify·배경 전역 보강은 ScheduleB0KlA.css
- * (.mg-modal.mg-v2-ad-b0kla .mg-modal__actions) 참조. 동일 열 그리드는 Schedule 쪽
+ * (.mg-modal.mg-v2-ad-b0kla .mg-modal__actions) 참조. 일정 상세 동일 열·정렬은 Schedule 쪽
  * .schedule-detail-modal__footer-actions 만 적용. */
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions {
   border-top: 1px solid var(--ad-b0kla-border);

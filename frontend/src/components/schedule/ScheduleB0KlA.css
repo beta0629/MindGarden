@@ -1311,7 +1311,7 @@
 
 /*
  * 푸터 직계 버튼(래퍼 없는 레거시): 콘텐츠 너비.
- * schedule-detail-modal__footer-actions 안 버튼은 아래 그리드 블록에서 width:100%로 덮음.
+ * schedule-detail-modal__footer-actions 안 버튼은 아래 flex 블록에서 flex·min-height로 정렬.
  */
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .mg-button,
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions > button,
@@ -1322,24 +1322,31 @@
   width: auto;
 }
 
-/* 일정 상세·확인 서브모달: actions 직계 래퍼 — :has() 미지원 환경에서도 동일 열 유지 */
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions {
-  display: grid !important;
-  grid-auto-flow: column !important;
-  grid-auto-columns: minmax(0, 1fr) !important;
-  gap: var(--spacing-md);
+/* 일정 상세·확인 서브모달: actions 직계 래퍼 — flex로 세로 중앙·동일 min-height(Admin 40px보다 구체적) */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .mg-v2-ad-b0kla__modal-actions.schedule-detail-modal__footer-actions {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
   align-items: stretch;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
   width: 100%;
   min-width: 0;
+  align-self: stretch;
   box-sizing: border-box;
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions > .mg-button,
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions > button {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  flex: none !important;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+  min-height: 44px;
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   box-sizing: border-box;
 }
 
@@ -1352,7 +1359,9 @@
  * 호버 translateY(-1px) 로 인한 세로 체감 단차 완화(모달 푸터 한정).
  */
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions > .mg-button.mg-v2-btn--primary {
+  /* outline 1px와 박스 모델 맞춤(탭 세그먼트 2px는 상단 블록 전용) */
   border: 1px solid transparent;
+  box-sizing: border-box;
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions > .mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading),
@@ -2219,8 +2228,8 @@ textarea.mg-v2-textarea {
 }
 
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
+  display: flex !important;
+  flex-direction: row;
   align-items: stretch;
   gap: var(--mg-space-2);
   width: 100%;
@@ -2234,9 +2243,13 @@ textarea.mg-v2-textarea {
 }
 
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: none !important;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  max-width: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   box-sizing: border-box;
 }
 
@@ -2252,6 +2265,7 @@ textarea.mg-v2-textarea {
   border-color: var(--ad-b0kla-green);
   color: var(--ad-b0kla-green);
   background: var(--ad-b0kla-card-bg);
+  box-sizing: border-box;
 }
 
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
@@ -2268,6 +2282,7 @@ textarea.mg-v2-textarea {
   border-width: 2px;
   border-color: transparent;
   box-shadow: var(--cs-shadow-soft);
+  box-sizing: border-box;
 }
 
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
@@ -2281,10 +2296,7 @@ textarea.mg-v2-textarea {
   transform: none;
 }
 
-/* 일정 상세 푸터: B0KlA __modal-actions 마커(푸터 패딩은 상위 .mg-modal__actions와 단일화) */
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .mg-v2-ad-b0kla__modal-actions.schedule-detail-modal__footer-actions {
-  box-sizing: border-box;
-}
+/* 일정 상세 푸터: __modal-actions 마커는 위 .schedule-detail-modal__footer-actions flex 블록과 동일 규칙으로 병합됨 */
 
 /* 입금 확인(adminNote) vs 지속 특이사항 탭 — 상세 탭 안내 */
 .schedule-detail-modal__persist-note-hint {

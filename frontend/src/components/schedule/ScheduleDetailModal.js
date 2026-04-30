@@ -19,6 +19,7 @@ import ClientSummaryField from '../consultant/molecules/ClientSummaryField';
 import StatusBadge from '../common/StatusBadge';
 import ScheduleClientNotesSection from './ScheduleClientNotesSection';
 import SchedulePartyQuickViewModal from './molecules/SchedulePartyQuickViewModal';
+import { applyPartyPiiPolicy } from '../../utils/partyPiiDisplay';
 
 /** 일정 상세·중첩 요약·확인 모달 z-index (부모 < 요약 < 확인) */
 const SCHEDULE_DETAIL_Z_INDEX_MAIN = 1040;
@@ -601,19 +602,22 @@ const ScheduleDetailModal = ({
             : toDisplayString(displayData.consultationType, dash);
 
         if (kind === 'client') {
+            const clientPhoneRaw =
+                displayData.clientPhone || displayData.clientMobile || displayData.phone;
+            const clientEmailRaw = displayData.clientEmail || displayData.email;
             return [
                 { label: '이름', value: toDisplayString(parsedClientName, dash) },
                 { label: '사용자 ID', value: toDisplayString(displayData.clientId, dash) },
                 {
                     label: '연락처',
                     value: toDisplayString(
-                        displayData.clientPhone || displayData.clientMobile || displayData.phone,
+                        applyPartyPiiPolicy(clientPhoneRaw, 'phone', user),
                         dash
                     )
                 },
                 {
                     label: '이메일',
-                    value: toDisplayString(displayData.clientEmail || displayData.email, dash)
+                    value: toDisplayString(applyPartyPiiPolicy(clientEmailRaw, 'email', user), dash)
                 },
                 { label: '일정 상태', value: statusLine },
                 { label: '상담 유형', value: typeLine },
@@ -626,11 +630,17 @@ const ScheduleDetailModal = ({
             { label: '사용자 ID', value: toDisplayString(displayData.consultantId, dash) },
             {
                 label: '연락처',
-                value: toDisplayString(displayData.consultantPhone, dash)
+                value: toDisplayString(
+                    applyPartyPiiPolicy(displayData.consultantPhone, 'phone', user),
+                    dash
+                )
             },
             {
                 label: '이메일',
-                value: toDisplayString(displayData.consultantEmail, dash)
+                value: toDisplayString(
+                    applyPartyPiiPolicy(displayData.consultantEmail, 'email', user),
+                    dash
+                )
             },
             { label: '일정 상태', value: statusLine },
             { label: '상담 유형', value: typeLine },

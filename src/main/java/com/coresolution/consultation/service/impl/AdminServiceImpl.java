@@ -2038,6 +2038,39 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         return phone;
     }
 
+    /**
+     * 스케줄 목록용: 내담자/상담사 전화·이메일 복호화(캐시 우선).
+     */
+    private String resolveScheduleUserPhoneForList(User user) {
+        if (user == null) {
+            return "";
+        }
+        Map<String, String> decrypted = userPersonalDataCacheService.getDecryptedUserData(user);
+        String phone = decrypted != null ? decrypted.get("phone") : null;
+        if (phone == null || phone.isBlank()) {
+            phone = encryptionUtil.safeDecrypt(user.getPhone());
+        }
+        if (phone == null || phone.isBlank()) {
+            return "";
+        }
+        String formatted = formatPhoneNumber(phone);
+        return formatted != null ? formatted : "";
+    }
+
+    private String resolveScheduleUserEmailForList(User user) {
+        if (user == null) {
+            return "";
+        }
+        Map<String, String> decrypted = userPersonalDataCacheService.getDecryptedUserData(user);
+        if (decrypted != null && decrypted.get("email") != null && !decrypted.get("email").isBlank()) {
+            return decrypted.get("email");
+        }
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            return "";
+        }
+        return encryptionUtil.safeDecrypt(user.getEmail());
+    }
+
     @Override
     public List<Client> getAllClients() {
         String tenantId = getTenantIdOrNull();
@@ -4647,22 +4680,60 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         scheduleMap.put("status", schedule.getStatus());
                         scheduleMap.put("notes", schedule.getNotes());
                         
+                        scheduleMap.put("consultantId", schedule.getConsultantId());
+                        if (schedule.getConsultantId() != null) {
+                            try {
+                                User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null);
+                                if (consultant != null && consultant.getIsActive()) {
+                                    scheduleMap.put("consultantName", consultant.getName());
+                                    scheduleMap.put("consultantEmail", resolveScheduleUserEmailForList(consultant));
+                                    scheduleMap.put("consultantPhone", resolveScheduleUserPhoneForList(consultant));
+                                } else if (consultant != null && !consultant.getIsActive()) {
+                                    scheduleMap.put("consultantName", consultant.getName()
+                                            + AdminServiceUserFacingMessages.SCHEDULE_CONSULTANT_NAME_DELETED_SUFFIX);
+                                    scheduleMap.put("consultantEmail", resolveScheduleUserEmailForList(consultant));
+                                    scheduleMap.put("consultantPhone", resolveScheduleUserPhoneForList(consultant));
+                                } else {
+                                    scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
+                                    scheduleMap.put("consultantEmail", "");
+                                    scheduleMap.put("consultantPhone", "");
+                                }
+                            } catch (Exception e) {
+                                log.warn("상담사 정보 조회 실패: consultantId={}, error={}", schedule.getConsultantId(), e.getMessage());
+                                scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
+                                scheduleMap.put("consultantEmail", "");
+                                scheduleMap.put("consultantPhone", "");
+                            }
+                        } else {
+                            scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
+                            scheduleMap.put("consultantEmail", "");
+                            scheduleMap.put("consultantPhone", "");
+                        }
+
                         if (schedule.getClientId() != null) {
                             scheduleMap.put("clientId", schedule.getClientId());
                             try {
                                 User clientUser = userRepository.findByTenantIdAndId(tenantId, schedule.getClientId()).orElse(null);
                                 if (clientUser != null) {
                                     scheduleMap.put("clientName", clientUser.getName());
+                                    scheduleMap.put("clientEmail", resolveScheduleUserEmailForList(clientUser));
+                                    scheduleMap.put("clientPhone", resolveScheduleUserPhoneForList(clientUser));
                                 } else {
                                     scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
+                                    scheduleMap.put("clientEmail", "");
+                                    scheduleMap.put("clientPhone", "");
                                 }
                             } catch (Exception e) {
                                 log.warn("내담자 정보 조회 실패: clientId={}, error={}", schedule.getClientId(), e.getMessage());
                                 scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
+                                scheduleMap.put("clientEmail", "");
+                                scheduleMap.put("clientPhone", "");
                             }
                         } else {
                             scheduleMap.put("clientId", null);
                             scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
+                            scheduleMap.put("clientEmail", "");
+                            scheduleMap.put("clientPhone", "");
                         }
                         
                         return scheduleMap;
@@ -4994,23 +5065,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                 User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null);
                                 if (consultant != null && consultant.getIsActive()) {
                                     scheduleMap.put("consultantName", consultant.getName());
-                                    scheduleMap.put("consultantEmail", consultant.getEmail());
+                                    scheduleMap.put("consultantEmail", resolveScheduleUserEmailForList(consultant));
+                                    scheduleMap.put("consultantPhone", resolveScheduleUserPhoneForList(consultant));
                                 } else if (consultant != null && !consultant.getIsActive()) {
                                     scheduleMap.put("consultantName", consultant.getName()
                                             + AdminServiceUserFacingMessages.SCHEDULE_CONSULTANT_NAME_DELETED_SUFFIX);
-                                    scheduleMap.put("consultantEmail", consultant.getEmail());
+                                    scheduleMap.put("consultantEmail", resolveScheduleUserEmailForList(consultant));
+                                    scheduleMap.put("consultantPhone", resolveScheduleUserPhoneForList(consultant));
                                 } else {
                                     scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                                     scheduleMap.put("consultantEmail", "");
+                                    scheduleMap.put("consultantPhone", "");
                                 }
                             } catch (Exception e) {
                                 log.warn("상담사 정보 조회 실패: consultantId={}, error={}", schedule.getConsultantId(), e.getMessage());
                                 scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                                 scheduleMap.put("consultantEmail", "");
+                                scheduleMap.put("consultantPhone", "");
                             }
                         } else {
                             scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                             scheduleMap.put("consultantEmail", "");
+                            scheduleMap.put("consultantPhone", "");
                         }
                         
                         if (schedule.getClientId() != null) {
@@ -5019,20 +5095,24 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                 User clientUser = userRepository.findByTenantIdAndId(tenantId, schedule.getClientId()).orElse(null);
                                 if (clientUser != null) {
                                     scheduleMap.put("clientName", clientUser.getName());
-                                    scheduleMap.put("clientEmail", clientUser.getEmail());
+                                    scheduleMap.put("clientEmail", resolveScheduleUserEmailForList(clientUser));
+                                    scheduleMap.put("clientPhone", resolveScheduleUserPhoneForList(clientUser));
                                 } else {
                                     scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                                     scheduleMap.put("clientEmail", "");
+                                    scheduleMap.put("clientPhone", "");
                                 }
                             } catch (Exception e) {
                                 log.warn("내담자 정보 조회 실패: clientId={}, error={}", schedule.getClientId(), e.getMessage());
                                 scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                                 scheduleMap.put("clientEmail", "");
+                                scheduleMap.put("clientPhone", "");
                             }
                         } else {
                             scheduleMap.put("clientId", null);
                             scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                             scheduleMap.put("clientEmail", "");
+                            scheduleMap.put("clientPhone", "");
                         }
                         
                         return scheduleMap;

@@ -2124,10 +2124,10 @@ textarea.mg-v2-textarea {
   border-radius: var(--ad-b0kla-radius-sm, 8px);
 }
 
-/* tablist: 직계 track만 지정해 중첩 MGButton에 영향 없음. MGButton min-width 대응으로 grid 동일 폭 */
+/* tablist: 직계 track만 지정. 전역/순서 이슈로 flex가 덮이는 경우 대비 grid는 !important */
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs > .schedule-detail-modal__tabs__track {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
   align-items: stretch;
   gap: var(--mg-space-2);
   width: 100%;

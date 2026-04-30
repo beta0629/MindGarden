@@ -1,4 +1,5 @@
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
+import { test as playwrightTest } from '@playwright/test';
 import type { Page, TestInfo } from '@playwright/test';
 
 /**
@@ -54,10 +55,13 @@ const DEFAULT_CLIENT_LOGIN_ID = '01086322121';
 
 /**
  * UnifiedLogin 등 단일 식별자 입력란 (이메일·전화·레거시 name=username).
- * `frontend/src/components/auth/UnifiedLogin.js` 는 `name="email"` 사용.
+ * `frontend/src/components/auth/UnifiedLogin.js`: `id="email"`, `name="email"`, `type="text"` (type=email 아님).
  */
 export const UNIFIED_LOGIN_IDENTIFIER_SELECTOR =
-  'input[name="username"], input[type="email"], input[name="email"], input[placeholder*="아이디"], input[placeholder*="이메일"]';
+  'input[name="email"], input#email, input[name="username"], input[type="email"], input[placeholder*="아이디"], input[placeholder*="이메일"]';
+
+const UNIFIED_LOGIN_PASSWORD_SELECTOR =
+  'input[name="password"], input#password, input[type="password"]';
 
 /**
  * `frontend/src/constants/loginDisplay.js` LOGIN_CREDENTIALS_MISMATCH_MESSAGE 에 포함되는 문구.
@@ -192,6 +196,29 @@ export function getE2eCredentials(): { email: string; password: string } {
 }
 
 /**
+ * CI Secrets 등에 명시된 E2E 자격만 사용할 때 true.
+ * 로컬 기본값(erpAuth DEFAULT_*) 없이 이메일·비밀번호 쌍이 환경 변수로만 주어진 경우.
+ */
+export function hasE2eCredentialsFromEnv(): boolean {
+  const pairE2e = Boolean(trimEnv('E2E_TEST_EMAIL') && trimEnv('E2E_TEST_PASSWORD'));
+  const pairLegacy = Boolean(trimEnv('TEST_USERNAME') && trimEnv('TEST_PASSWORD'));
+  return pairE2e || pairLegacy;
+}
+
+/**
+ * GitHub Actions 등 CI에서 Secrets 미설정 시 로그인 실패 대신 스킵(노이즈 감소).
+ * 스펙 `beforeEach` 맨 앞에서 호출.
+ */
+export function skipWhenCiMissingE2eCredentials(): void {
+  if (process.env.CI !== 'true') return;
+  if (hasE2eCredentialsFromEnv()) return;
+  playwrightTest.skip(
+    true,
+    'CI: E2E_TEST_EMAIL·E2E_TEST_PASSWORD(또는 TEST_USERNAME·TEST_PASSWORD)를 Secrets에 설정하세요. tests/e2e/README.md 참고.'
+  );
+}
+
+/**
  * MindGarden 웹 로그인 폼용(아이디 필드에 이메일 입력).
  * `superadmin@mindgarden.com` 등 레거시 폴백 없음 — SSOT는 `getE2eCredentials()`와 동일.
  */
@@ -249,12 +276,14 @@ export async function loginErpUser(
   const { email, password } = getE2eCredentials();
   const timeoutMs = options?.timeoutMs ?? 25_000;
 
-  await page.goto('/login');
-  await page.fill(UNIFIED_LOGIN_IDENTIFIER_SELECTOR, email);
-  await page.fill('input[name="password"], input[type="password"]', password);
-  await page.click(
-    'button[type="submit"], button:has-text("로그인"), button:has-text("Login")'
-  );
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  const idField = page.locator(UNIFIED_LOGIN_IDENTIFIER_SELECTOR).first();
+  await idField.waitFor({ state: 'visible', timeout: 15_000 });
+  await idField.fill(email);
+  const pwField = page.locator(UNIFIED_LOGIN_PASSWORD_SELECTOR).first();
+  await pwField.waitFor({ state: 'visible', timeout: 10_000 });
+  await pwField.fill(password);
+  await clickUnifiedLoginSubmit(page);
 
   try {
     await page.waitForURL(isPostLoginPath, {
@@ -268,8 +297,18 @@ export async function loginErpUser(
   await page.waitForLoadState('domcontentloaded').catch(() => {});
 }
 
-const UNIFIED_LOGIN_SUBMIT_SELECTOR =
-  'button[type="submit"], button:has-text("로그인"), button:has-text("Login")';
+/** UnifiedLogin: 주 제출은 텍스트 정확히 `로그인`(소셜 `카카오 로그인` 등과 구분). */
+async function clickUnifiedLoginSubmit(page: Page): Promise<void> {
+  const primary = page.getByRole('button', { name: '로그인', exact: true });
+  if ((await primary.count()) > 0) {
+    await primary.click();
+    return;
+  }
+  await page
+    .locator('button[type="submit"], button:has-text("Login")')
+    .first()
+    .click();
+}
 
 /**
  * 내담자 `/login` → `/client/dashboard`. 실패 시 자격 증명 불일치 UI가 있으면 명시적으로 안내한다.
@@ -282,10 +321,14 @@ export async function loginClientWeb(
   const { username, password } = getClientWebLogin();
   const timeoutMs = options?.timeoutMs ?? 20_000;
 
-  await page.goto('/login');
-  await page.fill(UNIFIED_LOGIN_IDENTIFIER_SELECTOR, username);
-  await page.fill('input[name="password"], input[type="password"]', password);
-  await page.click(UNIFIED_LOGIN_SUBMIT_SELECTOR);
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  const idField = page.locator(UNIFIED_LOGIN_IDENTIFIER_SELECTOR).first();
+  await idField.waitFor({ state: 'visible', timeout: 15_000 });
+  await idField.fill(username);
+  const pwField = page.locator(UNIFIED_LOGIN_PASSWORD_SELECTOR).first();
+  await pwField.waitFor({ state: 'visible', timeout: 10_000 });
+  await pwField.fill(password);
+  await clickUnifiedLoginSubmit(page);
 
   try {
     await page.waitForURL((u) => /\/client\/dashboard/.test(u.pathname), {
@@ -310,10 +353,14 @@ export async function loginConsultantWeb(
   const { username, password } = getConsultantWebLogin();
   const timeoutMs = options?.timeoutMs ?? 20_000;
 
-  await page.goto('/login');
-  await page.fill(UNIFIED_LOGIN_IDENTIFIER_SELECTOR, username);
-  await page.fill('input[name="password"], input[type="password"]', password);
-  await page.click(UNIFIED_LOGIN_SUBMIT_SELECTOR);
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  const idField = page.locator(UNIFIED_LOGIN_IDENTIFIER_SELECTOR).first();
+  await idField.waitFor({ state: 'visible', timeout: 15_000 });
+  await idField.fill(username);
+  const pwField = page.locator(UNIFIED_LOGIN_PASSWORD_SELECTOR).first();
+  await pwField.waitFor({ state: 'visible', timeout: 10_000 });
+  await pwField.fill(password);
+  await clickUnifiedLoginSubmit(page);
 
   try {
     await page.waitForURL((u) => /\/consultant\/dashboard/i.test(u.pathname), {

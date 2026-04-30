@@ -1,6 +1,6 @@
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Locator } from '@playwright/test';
-import { loginErpUser } from '../../helpers/erpAuth';
+import { loginErpUser, skipWhenCiMissingE2eCredentials } from '../../helpers/erpAuth';
 
 /**
  * 통합 스케줄(/admin/integrated-schedule) — 캘린더 일정 클릭 시 일정 상세 UnifiedModal 배경이
@@ -39,6 +39,7 @@ async function assertModalBodyNotTransparent(modal: Locator): Promise<void> {
 
 test.describe('관리자 - 통합 스케줄 일정 상세 모달 배경', () => {
   test.beforeEach(async ({ page }, testInfo) => {
+    skipWhenCiMissingE2eCredentials();
     await loginErpUser(page, testInfo, { timeoutMs: 25_000 });
   });
 

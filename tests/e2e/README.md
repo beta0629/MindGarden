@@ -12,6 +12,18 @@ Playwright가 **로그인 URL·navigation 타임아웃**으로 실패할 때 아
 2. **기동**: 백엔드 API **8080** + 프론트 **3000**이 함께 기동되고, 프론트 API 베이스가 **8080**과 맞는지 확인한다.
 3. **로그인 환경 변수**: `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` 최우선, 없으면 `TEST_USERNAME` / `TEST_PASSWORD` 폴백(값은 Secrets·로컬 전용 env에만).
 4. **계정**: **ERP 권한**이 있는 관리자(또는 동일 역할) 계정.
+
+### CI(GitHub Actions 등) 필수
+
+로그인·관리자 스모크가 **스킵되지 않고** 통과하려면 Secrets(또는 env)에 아래를 넣는다. 미설정 시 `helpers/erpAuth.ts`의 `skipWhenCiMissingE2eCredentials()`가 있는 스펙은 전체를 건너뛴다.
+
+```bash
+E2E_TEST_EMAIL=<관리자 이메일>
+E2E_TEST_PASSWORD=<비밀번호>
+BASE_URL=<프론트 URL>   # playwright.config.ts 기본과 동일하게
+```
+
+대안: `TEST_USERNAME` + `TEST_PASSWORD` 쌍을 함께 설정.
 5. **타임아웃 시 점검 순서**: (1) 8080·인증 API (2) `BASE_URL`·3000·`webServer` (3) 자격 증명·ERP 권한 (4) `/api/v1/auth` 등 네트워크·trace — 수동 스모크와의 교차는 [`docs/guides/testing/ERP_FINANCIAL_HUB_SMOKE.md`](../../docs/guides/testing/ERP_FINANCIAL_HUB_SMOKE.md) **E2E 선행 조건** 절과 동일 블록(중복 정의 최소화).
 
 ## 레거시 안내

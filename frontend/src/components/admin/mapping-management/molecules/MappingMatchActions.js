@@ -29,9 +29,16 @@ const MappingMatchActions = ({
   const { status, id } = mapping;
   const btnExtra = ['mg-v2-mapping-match-actions__btn', buttonClassName].filter(Boolean).join(' ');
 
+  const showPayment = status === 'PENDING_PAYMENT' && onPayment;
+  const showDeposit = status === 'PAYMENT_CONFIRMED' && onDeposit;
+  const showApprove = status === 'DEPOSIT_PENDING' && onApprove;
+  if (!showPayment && !showDeposit && !showApprove) {
+    return null;
+  }
+
   return (
-    <>
-      {status === 'PENDING_PAYMENT' && onPayment && (
+    <div className="mg-v2-mapping-match-actions" data-testid="mapping-match-actions">
+      {showPayment && (
         <MGButton
           type="button"
           variant="success"
@@ -51,7 +58,7 @@ const MappingMatchActions = ({
           결제 확인
         </MGButton>
       )}
-      {status === 'PAYMENT_CONFIRMED' && onDeposit && (
+      {showDeposit && (
         <MGButton
           type="button"
           variant="primary"
@@ -71,7 +78,7 @@ const MappingMatchActions = ({
           입금 확인
         </MGButton>
       )}
-      {status === 'DEPOSIT_PENDING' && onApprove && (
+      {showApprove && (
         <MGButton
           type="button"
           variant="success"
@@ -92,7 +99,7 @@ const MappingMatchActions = ({
           승인
         </MGButton>
       )}
-    </>
+    </div>
   );
 };
 

@@ -123,6 +123,8 @@ tmp_error_tail*.txt
 
 # Playwright E2E 로컬 리포트: test-reports 등이 저장소에 커밋되는 정책이면 무시 패턴을 켜지 말 것(충돌).
 # 로컬 산출물 — trace·last-run 등은 커밋하지 않음(USER_FACING·팀 정책과 정합).
+# 루트에서 `npx playwright test` 실행 시 생성되는 기본 outputDir(test-results/) — tests/e2e/ 외에도 무시
+/test-results/
 tests/e2e/test-results/
 # tests/e2e/test-reports/
 

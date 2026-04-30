@@ -10,11 +10,18 @@
  */
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page } from '@playwright/test';
-import { getMindGardenWebLogin } from '../../helpers/erpAuth';
+import {
+  loginErpUser,
+  skipWhenCiMissingE2eCredentials
+} from '../../helpers/erpAuth';
 
 const REACT_130_OR_INVALID_CHILD =
   /Minified React error #130|Objects are not valid as a React child|invariant=130/i;
 
+/**
+ * `integrated-schedule-client-notes.spec.ts` S5와 동일하게 console `error`·`pageerror`를 버킷에 적재하고,
+ * 아래 테스트에서는 React #130·invalid child 패턴만 실패 조건으로 필터한다(다른 경로의 기존 콘솔 노이즈와 구분).
+ */
 function attachRuntimeErrorCollectors(page: Page, bucket: string[]) {
   page.on('console', (msg) => {
     if (msg.type() === 'error') {
@@ -25,14 +32,6 @@ function attachRuntimeErrorCollectors(page: Page, bucket: string[]) {
     const stack = err.stack ? '\n' + err.stack : '';
     bucket.push('[pageerror] ' + err.message + stack);
   });
-}
-
-async function adminLogin(page: Page, username: string, password: string) {
-  await page.goto('/login');
-  await page.fill('input[name="username"], input[type="email"]', username);
-  await page.fill('input[name="password"], input[type="password"]', password);
-  await page.click('button[type="submit"], button:has-text("로그인")');
-  await page.waitForURL(/dashboard|admin|home/, { timeout: 10000 });
 }
 
 /** SPA에서 의미 있는 본문 영역이 보이고 body가 완전 공백이 아닌지 확인 */
@@ -66,14 +65,13 @@ async function gotoAdminPathOptional403(
 }
 
 test.describe('관리자 — 대시보드 및 LNB 경로 콘솔 스모크 (React #130 감지)', () => {
-  const { username: TEST_USERNAME, password: TEST_PASSWORD } = getMindGardenWebLogin();
-
   let collectedErrors: string[] = [];
 
-  test.beforeEach(async ({ page }: { page: Page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
+    skipWhenCiMissingE2eCredentials();
     collectedErrors = [];
     attachRuntimeErrorCollectors(page, collectedErrors);
-    await adminLogin(page, TEST_USERNAME, TEST_PASSWORD);
+    await loginErpUser(page, testInfo, { timeoutMs: 25_000 });
   });
 
   test('대시보드 → 사용자(컨설턴트) → 매핑관리 → 공통코드 순회 및 콘솔 검사', async ({
@@ -89,6 +87,7 @@ test.describe('관리자 — 대시보드 및 LNB 경로 콘솔 스모크 (React
     const paths = [
       '/admin/user-management?type=consultant',
       '/admin/mapping-management',
+      '/admin/integrated-schedule',
       '/admin/common-codes',
     ];
 
@@ -96,6 +95,11 @@ test.describe('관리자 — 대시보드 및 LNB 경로 콘솔 스모크 (React
       const outcome = await gotoAdminPathOptional403(page, path);
       if (outcome === 'skipped') {
         continue;
+      }
+      if (path === '/admin/integrated-schedule') {
+        const calendarHost = page.locator('[data-layout-context="integrated-schedule"]');
+        await expect(calendarHost).toBeVisible({ timeout: 20_000 });
+        await page.waitForTimeout(500);
       }
       await assertNotBlankScreen(page);
     }

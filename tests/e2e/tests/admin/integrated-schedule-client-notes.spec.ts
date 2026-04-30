@@ -1,6 +1,6 @@
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect } from '@playwright/test';
-import { loginErpUser } from '../../helpers/erpAuth';
+import { loginErpUser, skipWhenCiMissingE2eCredentials } from '../../helpers/erpAuth';
 
 /**
  * 통합 스케줄 — 내담자 특이사항 (S1·S2·S5 일부 자동화).
@@ -12,6 +12,7 @@ import { loginErpUser } from '../../helpers/erpAuth';
 
 test.describe('관리자 - 통합 스케줄 내담자 특이사항', () => {
   test.beforeEach(async ({ page }, testInfo) => {
+    skipWhenCiMissingE2eCredentials();
     await loginErpUser(page, testInfo, { timeoutMs: 20_000 });
   });
 

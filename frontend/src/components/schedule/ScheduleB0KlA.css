@@ -558,6 +558,12 @@
   overflow: visible;
 }
 
+/* 통합 스케줄만: 월간 셀 내 이벤트 간격(다른 스케줄 페이지 fc-daygrid 회귀 최소화) */
+.integrated-schedule__calendar-wrapper--integrated .fc-daygrid-day-events .fc-event {
+  margin-top: var(--mg-spacing-xs) !important;
+  margin-bottom: var(--mg-spacing-xs) !important;
+}
+
 .mg-v2-ad-b0kla .fc-timegrid-slot-label {
   color: var(--ad-b0kla-text-secondary);
 }

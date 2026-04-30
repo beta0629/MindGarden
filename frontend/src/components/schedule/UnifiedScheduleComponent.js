@@ -49,7 +49,8 @@ const UnifiedScheduleComponent = ({
   userId,
   refetchTrigger,
   onDropFromExternal,
-  hideScheduleTitle = false
+  hideScheduleTitle = false,
+  integratedMonthEventLayout = false
 }) => {
     console.log('📅 UnifiedScheduleComponent 렌더링:', { userRole, userId });
     
@@ -905,6 +906,7 @@ const UnifiedScheduleComponent = ({
                 onEventClick={handleEventClick}
                 onEventDrop={handleEventDrop}
                 onExternalEventReceive={onDropFromExternal}
+                integratedMonthEventLayout={integratedMonthEventLayout}
             />
 
             {/* 모달들 */}
@@ -996,7 +998,8 @@ UnifiedScheduleComponent.propTypes = {
   userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   refetchTrigger: PropTypes.number,
   onDropFromExternal: PropTypes.func,
-  hideScheduleTitle: PropTypes.bool
+  hideScheduleTitle: PropTypes.bool,
+  integratedMonthEventLayout: PropTypes.bool
 };
 
 export default UnifiedScheduleComponent;

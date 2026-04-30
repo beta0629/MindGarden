@@ -18,7 +18,8 @@ const ScheduleCalendarView = ({
     onDateClick,
     onEventClick,
     onEventDrop,
-    onExternalEventReceive
+    onExternalEventReceive,
+    integratedMonthEventLayout = false
 }) => {
     const calendarRef = useRef(null);
     const calendarWrapperRef = useRef(null);
@@ -117,15 +118,23 @@ const ScheduleCalendarView = ({
         const statusKorean = toDisplayString(extendedProps.statusKorean, '상태 없음');
         const borderColor = event.backgroundColor || 'var(--mg-primary-500)';
 
-        // 월간 뷰: 컴팩트 렌더링 (시간 + 내담자명만)
+        // 월간 뷰: 컴팩트 렌더링 (시간 + 내담자명만). 통합 스케줄은 좌측 Dot + 텍스트(전면 fill 완화).
         if (isMonthView) {
             const fullTooltip = `${clientName} · ${consultantName} · ${statusKorean}`;
+            const integratedMod = integratedMonthEventLayout ? ' mg-v2-ad-calendar-event--integrated-month' : '';
             return (
                 <div
-                    className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact${pastClass}${cancelledClass}`.trim()}
+                    className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact${integratedMod}${pastClass}${cancelledClass}`.trim()}
                     title={fullTooltip}
-                    style={{ borderLeftColor: borderColor }}
+                    style={integratedMonthEventLayout ? undefined : { borderLeftColor: borderColor }}
                 >
+                    {integratedMonthEventLayout && (
+                        <span
+                            className="mg-v2-ad-calendar-event__dot"
+                            style={{ backgroundColor: borderColor }}
+                            aria-hidden="true"
+                        />
+                    )}
                     <span className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</span>
                     <span className="mg-v2-ad-calendar-event__client">{clientName}</span>
                     {isCancelled && (

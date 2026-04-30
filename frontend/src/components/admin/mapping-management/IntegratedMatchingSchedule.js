@@ -356,7 +356,7 @@ const IntegratedMatchingSchedule = () => {
                   }
                   return (
                     <li className="integrated-schedule__empty">
-                      {emptyMessage}
+                      {toDisplayString(emptyMessage)}
                     </li>
                   );
                 }
@@ -404,6 +404,7 @@ const IntegratedMatchingSchedule = () => {
               refetchTrigger={refetchTrigger}
               onDropFromExternal={handleDropFromExternal}
               hideScheduleTitle
+              integratedMonthEventLayout
             />
           </div>
         </main>

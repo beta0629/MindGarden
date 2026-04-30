@@ -126,17 +126,17 @@
   border-radius: 2px;
 }
 
-/* 필터: 세그먼트 컨트롤(pill) 형태 */
+/* 필터: 세그먼트 컨트롤(pill) 형태 — 정보 밀도 상향(간격·패딩 축소, 터치 최소 영역 유지) */
 .integrated-schedule__filter {
-  margin: 0 0 var(--mg-spacing-20, 20px);
-  padding: var(--mg-spacing-2, 2px);
+  margin: 0 0 var(--mg-spacing-sm);
+  padding: var(--mg-spacing-xs);
   min-inline-size: unset;
   display: flex;
   align-items: stretch;
   gap: 0;
   flex-shrink: 0;
-  background-color: var(--mg-color-surface-sub, var(--mg-gray-100));
-  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  background-color: var(--mg-color-surface-sub);
+  border: 1px solid var(--mg-color-border-main);
   border-radius: var(--mg-radius-md, 10px);
   width: fit-content;
 }
@@ -162,20 +162,20 @@
 .integrated-schedule__status-btns {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--mg-spacing-6, 6px);
+  gap: var(--mg-spacing-xs);
 }
 
 .integrated-schedule__status-btn {
   display: inline-flex;
   align-items: center;
-  gap: var(--mg-spacing-6, 6px);
-  padding: var(--mg-spacing-6, 6px) var(--mg-spacing-10, 10px);
-  min-height: 36px;
-  font-size: 13px;
+  gap: var(--mg-spacing-xs);
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  min-height: var(--touch-target-min);
+  font-size: var(--font-size-sm);
   font-weight: 500;
-  color: var(--mg-color-text-secondary, var(--mg-gray-600));
-  background-color: var(--mg-color-surface-main, var(--mg-white));
-  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  color: var(--mg-color-text-secondary);
+  background-color: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
   border-radius: var(--mg-radius-sm, 8px);
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
@@ -283,12 +283,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--mg-spacing-6, 6px);
-  padding: var(--mg-spacing-8, 8px) var(--mg-spacing-14, 14px);
-  min-height: 40px;
-  font-size: 14px;
+  gap: var(--mg-spacing-xs);
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  min-height: var(--touch-target-min);
+  font-size: var(--font-size-sm);
   font-weight: 500;
-  color: var(--mg-color-text-secondary, var(--mg-gray-600));
+  color: var(--mg-color-text-secondary);
   cursor: pointer;
   user-select: none;
   border-radius: var(--mg-radius-sm, 8px);
@@ -341,10 +341,15 @@
 }
 
 .integrated-schedule__empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--mg-spacing-xl);
   text-align: center;
-  padding: var(--mg-spacing-24);
+  padding: var(--mg-spacing-md);
   color: var(--mg-color-text-secondary);
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 
 /* 매칭 카드 (사이드바 전용) - CardContainer가 시각 스타일 담당, li는 리스트 레이아웃만 */
@@ -361,6 +366,8 @@
   gap: var(--mg-spacing-12);
   min-height: 172px;
   font-size: var(--mg-font-size-base, 1rem);
+  background-color: var(--mg-color-surface-main);
+  border-color: var(--mg-color-border-main);
 }
 
 .integrated-schedule__sidebar .mg-v2-card-actions {
@@ -400,6 +407,54 @@
   flex: 1;
   min-height: 0;
   height: 100%;
+}
+
+/* 통합 스케줄 전용: 월간 이벤트 Dot + 텍스트(좌 Dot·우 텍스트, 말줄임). 다른 라우트 FullCalendar와 분리 */
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+  min-height: auto;
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  background-color: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-left-width: 1px;
+  box-shadow: none;
+}
+
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month:hover {
+  box-shadow: var(--cs-shadow-sm-multi);
+}
+
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event__dot {
+  flex-shrink: 0;
+  width: var(--mg-spacing-sm);
+  height: var(--mg-spacing-sm);
+  min-width: var(--mg-spacing-sm);
+  border-radius: var(--mg-radius-full);
+  align-self: center;
+}
+
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__time {
+  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--mg-color-text-secondary);
+}
+
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__client {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__badge--cancelled {
+  flex-shrink: 0;
 }
 
 @media (max-width: var(--mg-breakpoint-lg, 1024px)) {

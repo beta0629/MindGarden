@@ -1,13 +1,11 @@
 import React from 'react';
 import { ICONS } from '../../constants/icons';
-
-const XCircleIcon = ICONS.X_CIRCLE;
-const FileTextIcon = ICONS.FILE_TEXT;
-const UmbrellaIcon = ICONS.UMBRELLA;
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+
+const XCircleIcon = ICONS.X_CIRCLE;
 
 /**
  * 날짜 액션 선택 모달 컴포넌트
@@ -82,7 +80,6 @@ const DateActionModal = ({
             onClick={onScheduleClick}
             preventDoubleClick={false}
           >
-            <FileTextIcon size={24} className="mg-v2-icon-inline--lg" />
             <div className="mg-v2-text-left mg-v2-flex-1">
               <div className="mg-v2-text-lg mg-v2-font-semibold">상담 일정 등록</div>
               <div className="mg-v2-text-sm mg-v2-text-secondary">상담사와 내담자의 상담 일정을 등록합니다</div>
@@ -103,7 +100,6 @@ const DateActionModal = ({
             onClick={onVacationClick}
             preventDoubleClick={false}
           >
-            <UmbrellaIcon size={24} className="mg-v2-icon-inline--lg" />
             <div className="mg-v2-text-left mg-v2-flex-1">
               <div className="mg-v2-text-lg mg-v2-font-semibold">휴가 등록</div>
               <div className="mg-v2-text-sm mg-v2-text-secondary">상담사의 휴가를 등록합니다</div>

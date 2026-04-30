@@ -27,6 +27,7 @@ import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserIdGenerator;
+import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
@@ -123,6 +124,8 @@ class AdminServiceImplConfirmDepositApproveTest {
     @Mock
     private UserPersonalDataCacheService userPersonalDataCacheService;
     @Mock
+    private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
+    @Mock
     private ConsultantStatsService consultantStatsService;
     @Mock
     private ClientStatsService clientStatsService;
@@ -187,6 +190,7 @@ class AdminServiceImplConfirmDepositApproveTest {
                 userRoleQueryService,
                 statusCodeHelper,
                 userPersonalDataCacheService,
+                scheduleListUserFieldsResolver,
                 consultantStatsService,
                 clientStatsService,
                 notificationChannelPreferenceResolutionService,

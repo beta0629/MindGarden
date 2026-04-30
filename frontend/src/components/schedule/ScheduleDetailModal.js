@@ -11,7 +11,7 @@ import '../../styles/main.css';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { toDisplayString } from '../../utils/safeDisplay';
+import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import { useNavigate } from 'react-router-dom';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { CALENDAR_EXTENDED_TYPE_VACATION } from '../../constants/schedule';
@@ -926,7 +926,7 @@ const ScheduleDetailModal = ({
                         <div className="schedule-detail-modal__summary-item">
                             <span className="schedule-detail-modal__summary-label">상태</span>
                             <StatusBadge status={getStatusCodeValue(statusForDisplay)}>
-                                <SafeText>{convertStatusToKorean(statusForDisplay)}</SafeText>
+                                {toDisplayString(convertStatusToKorean(statusForDisplay), SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER)}
                             </StatusBadge>
                         </div>
                         <div className="schedule-detail-modal__summary-item">
@@ -945,7 +945,11 @@ const ScheduleDetailModal = ({
                             <div className="schedule-detail-modal__summary-item">
                                 <span className="schedule-detail-modal__summary-label">특이사항</span>
                                 <span className="schedule-detail-modal__summary-value">
-                                    <SafeText>{clientNotesUnresolvedCount}건 미해소</SafeText>
+                                    <SafeText>
+                                        {toSafeNumber(clientNotesUnresolvedCount, 0) > 0
+                                            ? `${toSafeNumber(clientNotesUnresolvedCount, 0)}건 미해소`
+                                            : '없음'}
+                                    </SafeText>
                                 </span>
                             </div>
                         )}

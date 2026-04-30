@@ -26,8 +26,13 @@ public class ScheduleResponse {
     private Long id;
     private Long consultantId;
     private String consultantName;
+    /** 관리자 통합 캘린더 등 목록용 상담사 연락처(복호화·포맷 정책은 Admin 목록과 동일). */
+    private String consultantPhone;
+    private String consultantEmail;
     private Long clientId;
     private String clientName;
+    private String clientPhone;
+    private String clientEmail;
     private LocalDate date;
     private LocalTime startTime;
     private LocalTime endTime;

@@ -48,6 +48,7 @@ import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.AmountManagementService;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultantRatingService;
@@ -119,6 +120,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final UserRoleQueryService userRoleQueryService;
     private final StatusCodeHelper statusCodeHelper;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
+    private final ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
     private final ConsultantStatsService consultantStatsService;
     private final ClientStatsService clientStatsService;
     private final NotificationChannelPreferenceResolutionService notificationChannelPreferenceResolutionService;
@@ -2009,66 +2011,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         return true;
     }
 
-     /**
-     * 전화번호 하이픈 포맷팅
-     /**
-     * 01012345678 -> 010-1234-5678
-     */
-    private String formatPhoneNumber(String phone) {
-        if (phone == null || phone.trim().isEmpty()) {
-            return phone;
-        }
-        
-        String numbers = phone.replaceAll("[^0-9]", "");
-        
-        if (numbers.length() == 11 && numbers.startsWith("01")) {
-            return numbers.substring(0, 3) + "-" + numbers.substring(3, 7) + "-" + numbers.substring(7);
-        }
-        else if (numbers.length() == 10) {
-            if (numbers.startsWith("02")) {
-                return numbers.substring(0, 2) + "-" + numbers.substring(2, 6) + "-" + numbers.substring(6);
-            } else {
-                return numbers.substring(0, 3) + "-" + numbers.substring(3, 6) + "-" + numbers.substring(6);
-            }
-        }
-        else if (numbers.length() == 8) {
-            return numbers.substring(0, 4) + "-" + numbers.substring(4);
-        }
-        
-        return phone;
-    }
-
     /**
      * 스케줄 목록용: 내담자/상담사 전화·이메일 복호화(캐시 우선).
+     * {@link ScheduleListUserFieldsResolver}에 위임.
      */
     private String resolveScheduleUserPhoneForList(User user) {
-        if (user == null) {
-            return "";
-        }
-        Map<String, String> decrypted = userPersonalDataCacheService.getDecryptedUserData(user);
-        String phone = decrypted != null ? decrypted.get("phone") : null;
-        if (phone == null || phone.isBlank()) {
-            phone = encryptionUtil.safeDecrypt(user.getPhone());
-        }
-        if (phone == null || phone.isBlank()) {
-            return "";
-        }
-        String formatted = formatPhoneNumber(phone);
-        return formatted != null ? formatted : "";
+        return scheduleListUserFieldsResolver.resolvePhoneForScheduleList(user);
     }
 
     private String resolveScheduleUserEmailForList(User user) {
-        if (user == null) {
-            return "";
-        }
-        Map<String, String> decrypted = userPersonalDataCacheService.getDecryptedUserData(user);
-        if (decrypted != null && decrypted.get("email") != null && !decrypted.get("email").isBlank()) {
-            return decrypted.get("email");
-        }
-        if (user.getEmail() == null || user.getEmail().isBlank()) {
-            return "";
-        }
-        return encryptionUtil.safeDecrypt(user.getEmail());
+        return scheduleListUserFieldsResolver.resolveEmailForScheduleList(user);
     }
 
     @Override
@@ -2113,7 +2065,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 if (phone == null || phone.trim().isEmpty()) {
                     phone = "-"; // SNS 가입자는 전화번호가 없을 수 있음
                 } else {
-                    phone = formatPhoneNumber(phone);
+                    phone = scheduleListUserFieldsResolver.formatPhoneNumber(phone);
                 }
                 client.setPhone(phone);
                 
@@ -2165,7 +2117,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 if (phone == null || phone.trim().isEmpty()) {
                     phone = "-"; // SNS 가입자는 전화번호가 없을 수 있음
                 } else {
-                    phone = formatPhoneNumber(phone);
+                    phone = scheduleListUserFieldsResolver.formatPhoneNumber(phone);
                 }
                 clientData.put("phone", phone);
                 

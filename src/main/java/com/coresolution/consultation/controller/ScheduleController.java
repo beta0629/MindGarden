@@ -28,6 +28,8 @@ import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultationRecordDraftService;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
+import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -78,7 +80,7 @@ public class ScheduleController extends BaseApiController {
     private final ConsultantAvailabilityService consultantAvailabilityService;
     private final DynamicPermissionService dynamicPermissionService;
     private final com.coresolution.consultation.repository.UserRepository userRepository;
-    private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
+    private final ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
     private final com.coresolution.consultation.service.ConsultantDashboardService consultantDashboardService;
 
     /**
@@ -1524,8 +1526,12 @@ public class ScheduleController extends BaseApiController {
      * 표준화 2025-12-08: UserPersonalDataCacheService를 사용하여 복호화된 이름 사용
      */
     private ScheduleResponse convertToScheduleResponse(Schedule schedule) {
-        String consultantName = "알 수 없음";
-        String clientName = "알 수 없음";
+        String consultantName = AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
+        String clientName = AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
+        String consultantPhone = "";
+        String consultantEmail = "";
+        String clientPhone = "";
+        String clientEmail = "";
         String tenantId = schedule.getTenantId();
         if (tenantId == null || tenantId.isEmpty()) {
             tenantId = TenantContextHolder.getTenantId();
@@ -1539,28 +1545,18 @@ public class ScheduleController extends BaseApiController {
             if (schedule.getConsultantId() != null && tenantId != null && !tenantId.isEmpty()) {
                 User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null);
                 if (consultant != null) {
-                    // 표준화 2025-12-08: 개인정보 캐시 서비스를 사용하여 복호화된 데이터 사용
-                    Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(consultant);
-                    if (decryptedData != null && decryptedData.get("name") != null) {
-                        consultantName = decryptedData.get("name");
-                    } else {
-                        log.warn("⚠️ 상담사 개인정보 캐시 없음: consultantId={}", consultant.getId());
-                        consultantName = "알 수 없음";
-                    }
+                    consultantName = scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(consultant);
+                    consultantPhone = scheduleListUserFieldsResolver.resolvePhoneForScheduleList(consultant);
+                    consultantEmail = scheduleListUserFieldsResolver.resolveEmailForScheduleList(consultant);
                 }
             }
-            
+
             if (schedule.getClientId() != null && tenantId != null && !tenantId.isEmpty()) {
                 User client = userRepository.findByTenantIdAndId(tenantId, schedule.getClientId()).orElse(null);
                 if (client != null) {
-                    // 표준화 2025-12-08: 개인정보 캐시 서비스를 사용하여 복호화된 데이터 사용
-                    Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(client);
-                    if (decryptedData != null && decryptedData.get("name") != null) {
-                        clientName = decryptedData.get("name");
-                    } else {
-                        log.warn("⚠️ 내담자 개인정보 캐시 없음: clientId={}", client.getId());
-                        clientName = "알 수 없음";
-                    }
+                    clientName = scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(client);
+                    clientPhone = scheduleListUserFieldsResolver.resolvePhoneForScheduleList(client);
+                    clientEmail = scheduleListUserFieldsResolver.resolveEmailForScheduleList(client);
                 }
             }
         } catch (Exception e) {
@@ -1572,8 +1568,12 @@ public class ScheduleController extends BaseApiController {
             .id(schedule.getId())
             .consultantId(schedule.getConsultantId())
             .consultantName(consultantName)
+            .consultantPhone(consultantPhone)
+            .consultantEmail(consultantEmail)
             .clientId(schedule.getClientId())
             .clientName(clientName)
+            .clientPhone(clientPhone)
+            .clientEmail(clientEmail)
             .date(schedule.getDate())
             .startTime(schedule.getStartTime())
             .endTime(schedule.getEndTime())

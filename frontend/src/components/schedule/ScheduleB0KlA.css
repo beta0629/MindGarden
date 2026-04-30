@@ -2231,7 +2231,7 @@ textarea.mg-v2-textarea {
   display: flex !important;
   flex-direction: row;
   align-items: stretch;
-  gap: var(--mg-space-2);
+  gap: 0;
   width: 100%;
   min-width: 0;
   max-width: 100%;
@@ -2243,6 +2243,8 @@ textarea.mg-v2-textarea {
 }
 
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button {
+  position: relative;
+  z-index: 0;
   flex: 1 1 0;
   min-width: 0;
   min-height: 44px;
@@ -2251,6 +2253,38 @@ textarea.mg-v2-textarea {
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+}
+
+/* 세그먼트: 외곽만 radius, 인접 경계는 -2px로 테두리 이중선 제거 */
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:first-child {
+  border-top-left-radius: var(--ad-b0kla-radius-sm, 8px);
+  border-bottom-left-radius: var(--ad-b0kla-radius-sm, 8px);
+}
+
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:last-child {
+  border-top-right-radius: var(--ad-b0kla-radius-sm, 8px);
+  border-bottom-right-radius: var(--ad-b0kla-radius-sm, 8px);
+}
+
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:first-child:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:not(:first-child) {
+  margin-left: -2px;
+}
+
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:last-child:not(:first-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:not(:first-child):not(:last-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button .mg-button__content {
@@ -2276,6 +2310,7 @@ textarea.mg-v2-textarea {
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary,
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary.mg-v2-button-primary,
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary.mg-v2-btn--primary {
+  z-index: 1;
   background: var(--ad-b0kla-green);
   color: var(--mg-color-text-on-primary, var(--mg-white));
   border-style: solid;

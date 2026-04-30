@@ -24,18 +24,38 @@
 }
 
 .mg-v2-status-badge.mg-v2-badge--neutral {
-  background-color: var(--mg-badge-status-neutral-bg);
-  color: var(--mg-badge-status-neutral-text);
+  /* 통합 스케줄 등 B0KlA 카드에서 토큰·상속 꼬임 시에도 대비 유지 */
+  --_status-badge-neutral-fg: var(--mg-badge-status-neutral-text, var(--mg-gray-900, var(--cs-secondary-900)));
+  background-color: var(--mg-badge-status-neutral-bg, var(--mg-gray-200, var(--cs-secondary-200)));
+  color: var(--_status-badge-neutral-fg);
+  font-weight: 700;
+}
+
+.mg-v2-status-badge.mg-v2-badge--neutral span {
+  color: var(--_status-badge-neutral-fg);
 }
 
 .mg-v2-status-badge.mg-v2-badge--danger {
-  background-color: var(--mg-badge-status-danger-bg);
-  color: var(--mg-badge-status-danger-text);
+  --_status-badge-danger-fg: var(--mg-badge-status-danger-text, var(--mg-error-900));
+  background-color: var(--mg-badge-status-danger-bg, var(--mg-error-200));
+  color: var(--_status-badge-danger-fg);
+  font-weight: 700;
+}
+
+.mg-v2-status-badge.mg-v2-badge--danger span {
+  color: var(--_status-badge-danger-fg);
 }
 
 .mg-v2-status-badge.mg-v2-badge--info {
-  background-color: var(--mg-badge-status-info-bg);
-  color: var(--mg-badge-status-info-text);
+  /* 토큰 미주입·모달 내 span 캐스케이드에도 대비 유지 (info-200 배경 + 진한 글자) */
+  --_status-badge-info-fg: var(--mg-badge-status-info-text, var(--mg-info-900, var(--cs-blue-900)));
+  background-color: var(--mg-badge-status-info-bg, var(--mg-info-200, var(--cs-blue-200)));
+  color: var(--_status-badge-info-fg);
+  font-weight: 700;
+}
+
+.mg-v2-status-badge.mg-v2-badge--info span {
+  color: var(--_status-badge-info-fg);
 }
 
 /* 레거시 BEM 모디파이어 (--active 등): variant와 동일 스펙으로 매핑, Phase 3에서 StatusBadge 컴포넌트로 전환 후 제거 가능 */
@@ -45,8 +65,9 @@
 }
 
 .mg-v2-status-badge--inactive {
-  background-color: var(--mg-badge-status-neutral-bg);
-  color: var(--mg-badge-status-neutral-text);
+  background-color: var(--mg-badge-status-neutral-bg, var(--mg-gray-200));
+  color: var(--mg-badge-status-neutral-text, var(--mg-gray-900));
+  font-weight: 700;
 }
 
 .mg-v2-status-badge--pending {
@@ -65,8 +86,9 @@
 }
 
 .mg-v2-status-badge--default {
-  background-color: var(--mg-badge-status-neutral-bg);
-  color: var(--mg-badge-status-neutral-text);
+  background-color: var(--mg-badge-status-neutral-bg, var(--mg-gray-200));
+  color: var(--mg-badge-status-neutral-text, var(--mg-gray-900));
+  font-weight: 700;
 }
 
 /* variant 이름 별칭 (AdminDashboardB0KlA 등 스코프 오버레이 호환) */
@@ -81,6 +103,7 @@
 }
 
 .mg-v2-status-badge--neutral {
-  background-color: var(--mg-badge-status-neutral-bg);
-  color: var(--mg-badge-status-neutral-text);
+  background-color: var(--mg-badge-status-neutral-bg, var(--mg-gray-200));
+  color: var(--mg-badge-status-neutral-text, var(--mg-gray-900));
+  font-weight: 700;
 }

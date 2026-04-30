@@ -59,6 +59,13 @@
   margin: 0;
 }
 
+/* 통합 스케줄 등: 페이지 ContentHeader와 이중 타이틀 방지 — 툴바만 */
+.mg-v2-ad-b0kla .mg-v2-schedule-header--no-title {
+  justify-content: flex-end;
+  margin-bottom: var(--mg-spacing-md);
+  padding-bottom: var(--mg-spacing-sm);
+}
+
 .mg-v2-ad-b0kla .mg-v2-schedule-header__actions {
   display: flex;
   align-items: center;

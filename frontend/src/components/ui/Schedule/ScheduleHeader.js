@@ -17,14 +17,21 @@ const ScheduleHeader = ({
   selectedConsultantId,
   loadingConsultants,
   onConsultantChange,
-  onRefresh
+  onRefresh,
+  hideTitle = false
 }) => {
+  const headerClassName = hideTitle
+    ? 'mg-v2-schedule-header mg-v2-schedule-header--no-title'
+    : 'mg-v2-schedule-header';
+
   return (
-    <div className="mg-v2-schedule-header">
-      <div className="mg-v2-schedule-header__title">
-        <Calendar size={20} className="mg-v2-schedule-header__icon" />
-        <h2 className="mg-v2-schedule-title">스케줄 관리</h2>
-      </div>
+    <div className={headerClassName}>
+      {!hideTitle && (
+        <div className="mg-v2-schedule-header__title">
+          <Calendar size={20} className="mg-v2-schedule-header__icon" />
+          <h2 className="mg-v2-schedule-title">스케줄 관리</h2>
+        </div>
+      )}
       <div className="mg-v2-schedule-header__actions">
         {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
           <select
@@ -77,7 +84,8 @@ ScheduleHeader.propTypes = {
   selectedConsultantId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   loadingConsultants: PropTypes.bool,
   onConsultantChange: PropTypes.func,
-  onRefresh: PropTypes.func
+  onRefresh: PropTypes.func,
+  hideTitle: PropTypes.bool
 };
 
 export default ScheduleHeader;

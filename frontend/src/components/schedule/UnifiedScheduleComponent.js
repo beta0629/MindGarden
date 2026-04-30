@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { useSearchParams } from 'react-router-dom';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ScheduleModal from './ScheduleModal';
@@ -43,7 +44,13 @@ import './ScheduleB0KlA.css';
  */
 /** refetchTrigger: 부모에서 변경 시 캘린더 데이터 재로드(통합 스케줄 화면 등) */
 /** onDropFromExternal: (date, mappingPayload) => void — 외부 매칭 카드 드롭 시 호출(통합 스케줄 화면) */
-const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFromExternal }) => {
+const UnifiedScheduleComponent = ({
+  userRole,
+  userId,
+  refetchTrigger,
+  onDropFromExternal,
+  hideScheduleTitle = false
+}) => {
     console.log('📅 UnifiedScheduleComponent 렌더링:', { userRole, userId });
     
     // ========== 상태 관리 ==========
@@ -414,6 +421,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
                         editable: !isCompleted,
                         extendedProps: {
                             id: schedule.id,
+                            mappingId: schedule.mappingId || schedule.scheduleMappingId || schedule.mapping_id || schedule.schedule_mapping_id || undefined,
                             consultantId: schedule.consultantId,
                             consultantName: schedule.consultantName,
                             clientId: schedule.clientId,
@@ -876,6 +884,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
                 loadingConsultants={loadingConsultants}
                 onConsultantChange={handleConsultantChange}
                 onRefresh={forceRefresh}
+                hideTitle={hideScheduleTitle}
             />
 
             <ScheduleLegend
@@ -980,6 +989,14 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
             )}
         </div>
     );
+};
+
+UnifiedScheduleComponent.propTypes = {
+  userRole: PropTypes.string.isRequired,
+  userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  refetchTrigger: PropTypes.number,
+  onDropFromExternal: PropTypes.func,
+  hideScheduleTitle: PropTypes.bool
 };
 
 export default UnifiedScheduleComponent;

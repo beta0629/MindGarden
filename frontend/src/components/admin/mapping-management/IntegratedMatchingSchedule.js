@@ -403,6 +403,7 @@ const IntegratedMatchingSchedule = () => {
               userId={user?.id ?? undefined}
               refetchTrigger={refetchTrigger}
               onDropFromExternal={handleDropFromExternal}
+              hideScheduleTitle
             />
           </div>
         </main>

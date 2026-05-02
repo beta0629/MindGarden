@@ -14,7 +14,7 @@ import { useNotification } from '../../../contexts/NotificationContext';
 import { useSession } from '../../../contexts/SessionContext';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { getConsultationMessagesListPath } from '../../../utils/consultationMessagesApi';
-import { toDisplayString } from '../../../utils/safeDisplay';
+import { toDisplayString, htmlToPlainText } from '../../../utils/safeDisplay';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
@@ -241,7 +241,7 @@ const NotificationDropdown = () => {
 
   const sliceContentPreview = (content) => {
     if (content == null) return '';
-    const s = toDisplayString(content, '');
+    const s = toDisplayString(htmlToPlainText(content), '');
     return s.length > 30 ? `${s.slice(0, 30)}…` : s;
   };
 
@@ -536,9 +536,9 @@ const NotificationDropdown = () => {
           }
         >
           <div className="mg-v2-notification-modal-content">
-            <p className="mg-v2-notification-item__message">
-              {toDisplayString(selectedItem.data?.content, '내용이 없습니다.')}
-            </p>
+            <div className="mg-v2-notification-item__message mg-v2-notification-item__message--modal-body">
+              {toDisplayString(htmlToPlainText(selectedItem.data?.content), '내용이 없습니다.')}
+            </div>
           </div>
         </UnifiedModal>
       )}

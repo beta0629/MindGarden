@@ -25,6 +25,36 @@ export function toDisplayString(value, fallback = '—') {
 }
 
 /**
+ * HTML이 섞인 알림·리치텍스트 문자열을 표시용 플레인 텍스트로 변환한다.
+ * `<template>` 파싱으로 스크립트는 비활성(inert) 처리된다.
+ * @param {*} value
+ * @returns {string}
+ */
+export function htmlToPlainText(value) {
+  if (value == null || value === '') return '';
+  const raw = typeof value === 'string' ? value : toDisplayString(value, '');
+  if (raw === '') return '';
+  const normalized = raw
+    .replaceAll(/<\s*br\s*\/?>/gi, '\n')
+    .replaceAll(/<\/\s*(p|div|h[1-6]|li|tr|section|article|ul|ol)\s*>/gi, '\n');
+  if (typeof document !== 'undefined') {
+    try {
+      const tpl = document.createElement('template');
+      tpl.innerHTML = normalized;
+      const text = tpl.content.textContent || '';
+      return text
+        .replaceAll('\u00a0', ' ')
+        .replaceAll(/[ \t]+\n/g, '\n')
+        .replaceAll(/\n{3,}/g, '\n\n')
+        .trim();
+    } catch {
+      // ignore
+    }
+  }
+  return normalized.replaceAll(/<[^>]+>/g, ' ').replaceAll(/\s+/g, ' ').trim();
+}
+
+/**
  * 에러·예외·API 오류 객체를 사용자-facing 한 줄 문자열로
  * @param {*} error
  * @param {string} [fallback]

@@ -211,6 +211,20 @@
   text-overflow: ellipsis;
 }
 
+/* GNB 알림 상세 모달: HTML 제거 후 본문 전체·줄바꿈 표시 */
+.mg-v2-notification-modal-content .mg-v2-notification-item__message--modal-body {
+  display: block;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
+  overflow: visible;
+  white-space: pre-line;
+  text-overflow: clip;
+  max-width: 100%;
+  line-height: 1.55;
+  color: var(--mg-color-text-main, var(--mg-gray-900));
+  font-size: var(--mg-font-size-sm, 0.9375rem);
+}
+
 .mg-v2-notification-empty {
   padding: 40px 20px;
   text-align: center;

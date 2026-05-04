@@ -1,6 +1,7 @@
 import { CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY } from '../../constants/schedule';
 import {
   buildKrPublicHolidayFullCalendarEvents,
+  getKrPublicHolidayNameForLocalDate,
   KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS
 } from '../krPublicHolidays';
 
@@ -47,6 +48,11 @@ describe('krPublicHolidays', () => {
     const events = buildKrPublicHolidayFullCalendarEvents();
     const may5 = events.find((e) => e.start === '2025-05-05');
     expect(may5?.title).toBe('어린이날·부처님오신날');
+  });
+
+  it('getKrPublicHolidayNameForLocalDate는 로컬 달력 일 기준으로 공휴일명을 반환한다', () => {
+    expect(getKrPublicHolidayNameForLocalDate(new Date(2026, 4, 5))).toBe('어린이날');
+    expect(getKrPublicHolidayNameForLocalDate(new Date(2026, 4, 6))).toBeNull();
   });
 
   it('모듈 상수는 빌드 결과와 동일 길이·참조 안정성(스케줄 병합용)', () => {

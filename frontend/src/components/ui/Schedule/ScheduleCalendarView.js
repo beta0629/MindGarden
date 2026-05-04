@@ -14,6 +14,7 @@ import {
   parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount
 } from '../../../constants/schedule';
+import { getKrPublicHolidayNameForLocalDate } from '../../../utils/krPublicHolidays';
 import './ScheduleCalendarView.css';
 
 /**
@@ -69,9 +70,17 @@ const ScheduleCalendarView = ({
         };
     }, [updateCalendarSize]);
 
+    /** 로컬 날짜가 KR 공휴일 표에 있으면 셀에 표식(배경 이벤트 미렌더 시에도 월간 가시성 확보) */
+    const dayCellClassNamesForKrHoliday = useCallback((arg) => (
+      getKrPublicHolidayNameForLocalDate(arg.date) ? ['mg-v2-ad-calendar-day--kr-public-holiday'] : []
+    ), []);
+
     // 지난 일정 판별 함수
     const eventClassNames = (arg) => {
         if (arg.event.display === 'background') {
+            if (arg.event.extendedProps?.type === CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY) {
+                return ['mg-v2-ad-calendar-event--kr-public-holiday-bg'];
+            }
             return [];
         }
         const eventDate = new Date(arg.event.start);
@@ -245,6 +254,7 @@ const ScheduleCalendarView = ({
                 moreLinkClick="popover"
                 weekends={true}
                 events={events}
+                dayCellClassNames={dayCellClassNamesForKrHoliday}
                 eventClassNames={eventClassNames}
                 eventContent={renderEventContent}
                 dateClick={onDateClick}

@@ -117,6 +117,17 @@ const KR_PUBLIC_HOLIDAYS_BY_ISO = {
 
 const HOLIDAY_BG_CLASS = 'mg-v2-ad-calendar-event--kr-public-holiday-bg';
 
+/** FullCalendar `dayCellClassNames` 등 — 로컬 달력 일(브라우저 TZ) 기준 ISO 키 조회 */
+export function getKrPublicHolidayNameForLocalDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return null;
+  }
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return KR_PUBLIC_HOLIDAYS_BY_ISO[`${y}-${m}-${d}`] || null;
+}
+
 /**
  * FullCalendar 이벤트 소스용 — 배경 레이어(display background), 비상호작용.
  * @returns {Array<object>}

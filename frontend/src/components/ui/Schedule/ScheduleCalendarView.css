@@ -199,6 +199,16 @@
     z-index: 0;
 }
 
+/* 공휴일: dayCellClassNames — fc-bg-event 미삽입·레이아웃 이슈 시에도 월간 셀에 표시 */
+.mg-v2-schedule-calendar-view .fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-frame {
+    background-color: color-mix(in srgb, var(--mg-color-primary-main) 12%, var(--mg-color-background-main));
+}
+
+.mg-v2-schedule-calendar-view .fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-number {
+    color: var(--mg-color-primary-main);
+    font-weight: 600;
+}
+
 .mg-v2-schedule-calendar-view .fc-daygrid-day-events {
     position: relative;
     z-index: 1;

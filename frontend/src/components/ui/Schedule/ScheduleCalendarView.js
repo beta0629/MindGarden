@@ -77,7 +77,10 @@ const ScheduleCalendarView = ({
       getKrPublicHolidayNameForLocalDate(arg.date) ? ['mg-v2-ad-calendar-day--kr-public-holiday'] : []
     ), []);
 
-    /** 월간 뷰: 배경 이벤트에는 제목이 안 그려져 공휴일명 배지를 셀 하단에 주입(FC dayCell 훅) */
+    /**
+     * 월간 뷰: 배경 이벤트에는 제목이 안 그려져 공휴일명 배지 주입(FC dayCell 훅).
+     * frame 말단+absolute는 day-events/bg보다 아래에 깔리거나 스크롤에 묻히므로 day-top(일자 아래)에 배치.
+     */
     const handleDayCellDidMount = useCallback((info) => {
         if (info.view?.type !== 'dayGridMonth') {
             return;
@@ -86,8 +89,8 @@ const ScheduleCalendarView = ({
         if (!holidayName) {
             return;
         }
-        const frame = info.el.querySelector('.fc-daygrid-day-frame');
-        if (!frame || frame.querySelector(`.${KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS}`)) {
+        const dayTop = info.el.querySelector('.fc-daygrid-day-top');
+        if (!dayTop || dayTop.querySelector(`.${KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS}`)) {
             return;
         }
         const badge = document.createElement('div');
@@ -95,7 +98,7 @@ const ScheduleCalendarView = ({
         const text = toDisplayString(holidayName, '');
         badge.textContent = text;
         badge.title = text;
-        frame.appendChild(badge);
+        dayTop.appendChild(badge);
     }, []);
 
     const handleDayCellWillUnmount = useCallback((info) => {

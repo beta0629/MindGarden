@@ -239,17 +239,12 @@
     z-index: 1;
 }
 
-/* 월간 공휴일명: 배경 이벤트는 제목 미표시 → 셀 하단 배지(토큰·ellipsis) */
-.mg-v2-schedule-calendar-view .fc-daygrid-day-frame {
-    position: relative;
-}
-
-.mg-v2-schedule-calendar-view .fc-daygrid-day-frame .mg-v2-ad-calendar-day-holiday-badge {
+/* 월간 공휴일명: day-top 일반 흐름(절대배치 금지 — 이벤트·bg z-index에 가려짐) */
+.mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-holiday-badge {
     box-sizing: border-box;
-    position: absolute;
-    left: var(--mg-spacing-xs, 4px);
-    right: var(--mg-spacing-xs, 4px);
-    bottom: var(--mg-spacing-xs, 4px);
+    display: block;
+    width: 100%;
+    margin-top: 2px;
     padding: 2px var(--mg-spacing-xs, 4px);
     border-radius: var(--cs-radius-sm, 4px);
     font-size: var(--cs-text-xs, 0.6875rem);
@@ -259,7 +254,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     pointer-events: none;
-    z-index: 2;
     text-align: center;
     background-color: color-mix(
         in srgb,

@@ -17,6 +17,8 @@ import {
 import { getKrPublicHolidayNameForLocalDate } from '../../../utils/krPublicHolidays';
 import './ScheduleCalendarView.css';
 
+const KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS = 'mg-v2-ad-calendar-day-holiday-badge';
+
 /**
  * 스케줄 캘린더 뷰 컴포넌트 (Presentational)
  * - 아토믹 디자인 기반 이벤트 배지
@@ -74,6 +76,31 @@ const ScheduleCalendarView = ({
     const dayCellClassNamesForKrHoliday = useCallback((arg) => (
       getKrPublicHolidayNameForLocalDate(arg.date) ? ['mg-v2-ad-calendar-day--kr-public-holiday'] : []
     ), []);
+
+    /** 월간 뷰: 배경 이벤트에는 제목이 안 그려져 공휴일명 배지를 셀 하단에 주입(FC dayCell 훅) */
+    const handleDayCellDidMount = useCallback((info) => {
+        if (info.view?.type !== 'dayGridMonth') {
+            return;
+        }
+        const holidayName = getKrPublicHolidayNameForLocalDate(info.date);
+        if (!holidayName) {
+            return;
+        }
+        const frame = info.el.querySelector('.fc-daygrid-day-frame');
+        if (!frame || frame.querySelector(`.${KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS}`)) {
+            return;
+        }
+        const badge = document.createElement('div');
+        badge.className = KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS;
+        const text = toDisplayString(holidayName, '');
+        badge.textContent = text;
+        badge.title = text;
+        frame.appendChild(badge);
+    }, []);
+
+    const handleDayCellWillUnmount = useCallback((info) => {
+        info.el.querySelector(`.${KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS}`)?.remove();
+    }, []);
 
     // 지난 일정 판별 함수
     const eventClassNames = (arg) => {
@@ -255,6 +282,8 @@ const ScheduleCalendarView = ({
                 weekends={true}
                 events={events}
                 dayCellClassNames={dayCellClassNamesForKrHoliday}
+                dayCellDidMount={handleDayCellDidMount}
+                dayCellWillUnmount={handleDayCellWillUnmount}
                 eventClassNames={eventClassNames}
                 eventContent={renderEventContent}
                 dateClick={onDateClick}

@@ -51,7 +51,9 @@ describe('krPublicHolidays', () => {
   });
 
   it('getKrPublicHolidayNameForLocalDate는 로컬 달력 일 기준으로 공휴일명을 반환한다', () => {
+    expect(getKrPublicHolidayNameForLocalDate(new Date(2026, 4, 1))).toBe('근로자의 날');
     expect(getKrPublicHolidayNameForLocalDate(new Date(2026, 4, 5))).toBe('어린이날');
+    expect(getKrPublicHolidayNameForLocalDate(new Date(2026, 4, 24))).toBe('부처님오신날');
     expect(getKrPublicHolidayNameForLocalDate(new Date(2026, 4, 6))).toBeNull();
   });
 

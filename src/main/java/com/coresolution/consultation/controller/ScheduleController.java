@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ScheduleStatus;
@@ -82,6 +83,7 @@ public class ScheduleController extends BaseApiController {
     private final com.coresolution.consultation.repository.UserRepository userRepository;
     private final ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
     private final com.coresolution.consultation.service.ConsultantDashboardService consultantDashboardService;
+    private final com.coresolution.consultation.repository.ClientScheduleNoteRepository clientScheduleNoteRepository;
 
     /**
      * 테넌트 컨텍스트가 비어 있을 때 세션 사용자의 tenantId로 보완 (상담사 대시보드 등).
@@ -322,7 +324,7 @@ public class ScheduleController extends BaseApiController {
         if (startDate != null && endDate != null) {
             List<Schedule> scheduleList = scheduleService.findSchedulesByUserRoleAndDateBetween(consultantId, UserRole.CONSULTANT.name(), startDate, endDate);
             schedules = scheduleList.stream()
-                .map(schedule -> convertToScheduleResponse(schedule))
+                .map(schedule -> convertToScheduleResponse(schedule, 0))
                 .collect(java.util.stream.Collectors.toList());
         } else {
             schedules = scheduleService.findSchedulesWithNamesByUserRole(consultantId, UserRole.CONSULTANT.name());
@@ -1124,8 +1126,9 @@ public class ScheduleController extends BaseApiController {
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
             HttpSession session) {
-        log.info("📅 관리자 스케줄 조회 요청 시작: consultantId={}, status={}, startDate={}, endDate={}", 
-                consultantId, status, startDate, endDate);
+        ensureTenantContextFromSession(session);
+        log.info("📅 관리자 스케줄 조회 요청 시작: consultantId={}, status={}, startDate={}, endDate={}, tenantId={}", 
+                consultantId, status, startDate, endDate, TenantContextHolder.getTenantId());
         
         User currentUser = SessionUtils.getCurrentUser(session);
         log.info("🔍 현재 사용자 확인: userId={}, role={}, userId={}", 
@@ -1181,9 +1184,13 @@ public class ScheduleController extends BaseApiController {
                 .filter(schedule -> schedule.getDate().isBefore(end) || schedule.getDate().isEqual(end))
                 .collect(Collectors.toList());
         }
-        
+
+        String tenantId = TenantContextHolder.getTenantId();
+        Map<Long, Integer> unresolvedByScheduleId = buildUnresolvedClientNoteCountByScheduleId(tenantId, schedules);
+
         List<ScheduleResponse> scheduleResponses = schedules.stream()
-            .map(this::convertToScheduleResponse)
+            .map(s -> convertToScheduleResponse(s,
+                    unresolvedByScheduleId.getOrDefault(s.getId(), 0)))
             .collect(Collectors.toList());
         
         Map<String, Object> data = new HashMap<>();
@@ -1522,10 +1529,47 @@ public class ScheduleController extends BaseApiController {
     }
     
     /**
-     * Schedule 엔티티를 ScheduleResponse로 변환하는 헬퍼 메서드
-     * 표준화 2025-12-08: UserPersonalDataCacheService를 사용하여 복호화된 이름 사용
+     * 스케줄 ID별 미해소 특이사항 건수(테넌트 스코프, 단일 집계 쿼리).
+     *
+     * @param tenantId 테넌트(없으면 빈 맵)
+     * @param schedules 대상 스케줄 목록
+     * @return scheduleId → 건수
      */
-    private ScheduleResponse convertToScheduleResponse(Schedule schedule) {
+    private Map<Long, Integer> buildUnresolvedClientNoteCountByScheduleId(String tenantId, List<Schedule> schedules) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("⚠️ 미해소 특이사항 집계 생략: tenantId 없음");
+            return Map.of();
+        }
+        List<Long> scheduleIds = schedules.stream()
+                .map(Schedule::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (scheduleIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Object[]> rows = clientScheduleNoteRepository.countUnresolvedByScheduleIdsGrouped(tenantId, scheduleIds);
+        Map<Long, Integer> out = new HashMap<>();
+        for (Object[] row : rows) {
+            if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
+                continue;
+            }
+            long sid = ((Number) row[0]).longValue();
+            int cnt = ((Number) row[1]).intValue();
+            if (cnt > 0) {
+                out.put(sid, cnt);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Schedule 엔티티를 ScheduleResponse로 변환(미해소 특이사항 건수 포함).
+     *
+     * @param schedule 스케줄
+     * @param clientScheduleNotesUnresolvedCount 0 이상, 관리자 목록 외 기본 0
+     */
+    private ScheduleResponse convertToScheduleResponse(Schedule schedule, int clientScheduleNotesUnresolvedCount) {
         String consultantName = AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
         String clientName = AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
         String consultantPhone = "";
@@ -1585,6 +1629,7 @@ public class ScheduleController extends BaseApiController {
             .notes(schedule.getNotes())
             .createdAt(schedule.getCreatedAt())
             .updatedAt(schedule.getUpdatedAt())
+            .clientScheduleNotesUnresolvedCount(Math.max(0, clientScheduleNotesUnresolvedCount))
             .build();
     }
 }

@@ -1,7 +1,7 @@
 # 통합 스케줄 — 내담자 특이사항·메모 CRUD 오케스트레이션
 
 **작성일**: 2026-04-28  
-**개정**: 2026-04-28 (코드 앵커 검증·정책 보강·구현·검증 체크리스트 추가)  
+**개정**: 2026-05-04 (§10·§12.2: 월간 미해소 인디케이터 1차 구현 문서 동기화) · 2026-04-28 (코드 앵커 검증·정책 보강·구현·검증 체크리스트 추가)  
 **주관**: core-planner  
 **상태**: **구현 준비** (코드 변경은 **core-coder** 위임, 검증은 **core-tester**)
 
@@ -19,7 +19,7 @@
 |------|------|
 | **In (1차)** | 통합 스케줄 UI 앵커(`IntegratedMatchingSchedule.js` → `UnifiedScheduleComponent` → 이벤트 클릭 시 **`ScheduleDetailModal`**)에서 **내담자 맥락의 특이사항** CRUD, 멀티테넌트·역할(ADMIN/STAFF), 표시 경계·React #130 준수, 운영 반영 전 하드코딩·게이트. 신규 API는 프론트에서 **`StandardizedApi`** 로만 호출(스케줄 도메인 내 `ajax` 혼용 지양). |
 | **Out (1차)** | 내담자 포털(본인) 노출, 결제/ERP 자동 연동, 푸시·알림 전용 채널, 일반 `AdminSchedulesPage` 전면 개편. |
-| **Phase 2 (후보)** | 약속일 임박·미이행 **배지/캘린더 인디케이터**, “이번 주 약속” **필터**, 대시보드 위젯 등은 별도 스펙으로 분리 가능(아래 10절). |
+| **Phase 2 (후보)** | 통합 스케줄 **월간** 미해소 **도트·건수 표시(1차)**는 §12.2·10절 정리대로 **본 에픽에 동기화**됨. 그 외 **전역 배지·주간/일간 동등 강화·“이번 주 약속” 필터·대시보드 위젯** 등은 별도 스펙(아래 10절). |
 
 ### 성공 기준
 
@@ -116,6 +116,7 @@
 ## 5. API·백엔드 개요
 
 - **베이스**: `/api/v1/`, 프론트는 **`StandardizedApi`**.
+- **관리자 스케줄 목록(통합 월간 등)**: `GET /api/v1/schedules/admin` 응답의 **`clientScheduleNotesUnresolvedCount`**(§12.2)로 일정별 미해소 특이사항 건수를 내려준다.
 - **테넌트**: 모든 경로·쿼리·바디에 tenant 격리.
 - **권한**: ADMIN/STAFF; **타인 작성 메모 수정/삭제** 허용 여부는 제품 정책으로 단일 선택(9절).
 - **예시(초안)**  
@@ -155,6 +156,7 @@
 |------|-----------|
 | 통합 스케줄 페이지 | `frontend/src/components/admin/mapping-management/IntegratedMatchingSchedule.js` |
 | 캘린더·이벤트 클릭 | `frontend/src/components/schedule/UnifiedScheduleComponent.js` — `handleEventClick` → `setIsDetailModalOpen(true)` |
+| 월간 미해소 인디케이터(1차) | `frontend/src/components/ui/Schedule/ScheduleCalendarView.js` — `integratedMonthEventLayout`·`clientScheduleNotesUnresolvedCount`·§12.2 |
 | 스케줄 상세 모달 | `frontend/src/components/schedule/ScheduleDetailModal.js` — 이미 **`UnifiedModal`**, B0KlA, `toDisplayString` / `SafeText` 사용 |
 | 신규 등록 모달 | `frontend/src/components/schedule/ScheduleModal.js` — **이벤트 클릭 CRUD 앵커 아님** |
 | 기존 `adminNote` | `ScheduleDetailModal` 내 **예약 확정(입금 확인)** 플로우용 — 신규 특이사항과 **혼동 금지** |
@@ -175,7 +177,8 @@
 
 ## 10. Phase 2 후보 (본 문서 범위 밖, 별도 에픽 가능)
 
-- 캘린더에 **미처리 약속** 도트/배지.
+- **월간 Dot = 1차 범위**: 통합 스케줄 월간 뷰에서 `clientScheduleNotesUnresolvedCount`로 **미해소 N건**을 표시하는 인디케이터는 **1차 구현·§12.2**에 반영됨(취소·휴가 이벤트는 강조 제외). 아래는 그 **외 확장**만 해당한다.
+- 캘린더 **다중 타입 배지·주간/일간 뷰 동등 UX·임박 알림 연동** 등 추가 인디케이터.
 - 특이사항 **“이번 주 만기” 필터** 또는 사이드 요약.
 - 알림·슬랙 등은 별도 스펙.
 
@@ -226,6 +229,13 @@
 **옵션 `E2E_INTEGRATED_SCHEDULE_NOTES_CRUD=1`**: 이번 실행에서는 로그인 실패로 CRUD 본문 미도달; 기동·자격 확보 후만 선택 실행(DB 특이사항 행 생성).
 
 **코더 후속(하드코딩 경고, 운영 게이트 전)**: 상기 B7·코드 반영 완료. 추가 스캔 경고 시 동일 원칙(토큰·E2E 헬퍼에 `#`+3~6 hex 리터럴 금지)으로 정리.
+
+### 12.2 월간 캘린더 미해소 인디케이터 (1차 구현, 코드 기준 동기화)
+
+- **목표**: 통합 스케줄 **월간** 캘린더에서 해당 일정에 **미해소(미처리) 내담자 특이사항**이 있음을 한눈에 알 수 있게 한다.
+- **API 계약**: `GET /api/v1/schedules/admin` 응답 `ScheduleResponse`에 **`clientScheduleNotesUnresolvedCount`** (0 이상 정수) 포함; 집계는 `ClientScheduleNoteRepository.countUnresolvedByScheduleIdsGrouped` 기준(`tenantId` + `scheduleId IN` + `resolvedAt IS NULL` + `isDeleted=false`).
+- **UI**: `ScheduleCalendarView`에서 레이아웃이 **`integratedMonthEventLayout`**일 때, 위 카운트가 0보다 크면 이벤트에 클래스 **`mg-v2-ad-calendar-event--client-notes-unresolved`**를 부여하고, 툴팁·`aria` 등에 **` · 미해소 N건`** 형태로 노출한다. **취소·휴가** 이벤트는 이 강조 규칙에서 **제외**한다.
+- **위임**: 필드·집계·표시 로직 변경·회귀는 **core-coder**; 월간 뷰에서 위 조건(숫자 0/양수, 취소·휴가 제외, 접근성 문구) 검증은 **core-tester**(§12·필요 시 E2E/수동 시나리오에 한 줄 추가).
 
 ---
 

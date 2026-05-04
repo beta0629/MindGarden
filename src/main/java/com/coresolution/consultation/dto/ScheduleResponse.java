@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Builder.Default;
 
 /**
  * 스케줄 응답 DTO
@@ -46,7 +47,13 @@ public class ScheduleResponse {
     private Long consultationId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
+
+    /**
+     * 해당 스케줄에 연결된 내담자 특이사항 중 미해소({@code resolvedAt} 없음) 건수. 항상 0 이상.
+     */
+    @Default
+    private int clientScheduleNotesUnresolvedCount = 0;
+
     /**
      * Schedule 엔티티를 ScheduleResponse로 변환
      * 상담 유형을 한글로 변환
@@ -67,6 +74,7 @@ public class ScheduleResponse {
                 .clientId(schedule.getClientId())
                 .createdAt(schedule.getCreatedAt())
                 .updatedAt(schedule.getUpdatedAt())
+                .clientScheduleNotesUnresolvedCount(0)
                 .build();
     }
     
@@ -93,6 +101,7 @@ public class ScheduleResponse {
                 .description(dto.getDescription())
                 .consultationId(dto.getConsultationId())
                 .clientId(dto.getClientId())
+                .clientScheduleNotesUnresolvedCount(0)
                 .build();
     }
     
@@ -124,6 +133,7 @@ public class ScheduleResponse {
                 .notes(dto.getNotes())
                 .createdAt(dto.getCreatedAt())
                 .updatedAt(dto.getUpdatedAt())
+                .clientScheduleNotesUnresolvedCount(0)
                 .build();
     }
 }

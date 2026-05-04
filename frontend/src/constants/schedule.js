@@ -226,6 +226,24 @@ export const FILTER_OPTIONS = {
 /** FullCalendar extendedProps.type / 모달 calendarEventType — 휴가(예약 DB PK 아님) SSOT */
 export const CALENDAR_EXTENDED_TYPE_VACATION = FILTER_OPTIONS.VACATION;
 
+/**
+ * GET /api/v1/schedules/admin 등 ScheduleResponse·FullCalendar extendedProps 공통 필드명.
+ * 미해소(resolvedAt 없음) 내담자 특이사항 건수 — 항상 0 이상 정수.
+ */
+export const CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD = 'clientScheduleNotesUnresolvedCount';
+
+/**
+ * @param {*} raw API 또는 extendedProps 값
+ * @returns {number} 0 이상 정수(비정상·null은 0)
+ */
+export function parseClientScheduleNotesUnresolvedCount(raw) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 1) {
+    return 0;
+  }
+  return Math.floor(Math.min(n, Number.MAX_SAFE_INTEGER));
+}
+
 export const FILTER_OPTION_LABELS = {
   [FILTER_OPTIONS.ALL]: '전체',
   [FILTER_OPTIONS.TODAY]: '오늘',

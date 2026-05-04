@@ -1,5 +1,6 @@
 package com.coresolution.consultation.repository;
 
+import java.util.Collection;
 import java.util.List;
 import com.coresolution.consultation.entity.ClientScheduleNote;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -36,4 +37,18 @@ public interface ClientScheduleNoteRepository extends JpaRepository<ClientSchedu
             @Param("tenantId") String tenantId,
             @Param("mid") Long mappingId,
             @Param("inc") boolean includeDeleted);
+
+    /**
+     * 스케줄별 미해소(resolvedAt 없음)·미삭제 특이사항 건수. IN 일괄 조회(N+1 방지).
+     *
+     * @param tenantId 테넌트
+     * @param scheduleIds 스케줄 PK 목록(비어 있으면 호출부에서 생략)
+     * @return [scheduleId, count] 행 목록
+     */
+    @Query("SELECT n.scheduleId, COUNT(n) FROM ClientScheduleNote n WHERE n.tenantId = :tenantId "
+            + "AND n.scheduleId IN :scheduleIds AND n.isDeleted = false AND n.resolvedAt IS NULL "
+            + "AND n.scheduleId IS NOT NULL GROUP BY n.scheduleId")
+    List<Object[]> countUnresolvedByScheduleIdsGrouped(
+            @Param("tenantId") String tenantId,
+            @Param("scheduleIds") Collection<Long> scheduleIds);
 }

@@ -22,7 +22,11 @@ import {
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
-import { CALENDAR_EXTENDED_TYPE_VACATION } from '../../constants/schedule';
+import {
+  CALENDAR_EXTENDED_TYPE_VACATION,
+  CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD,
+  parseClientScheduleNotesUnresolvedCount
+} from '../../constants/schedule';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 
@@ -441,7 +445,10 @@ const UnifiedScheduleComponent = ({
                             statusKorean: convertStatusToKorean(schedule.status),
                             type: schedule.scheduleType,
                             consultationType: schedule.consultationType,
-                            description: schedule.description
+                            description: schedule.description,
+                            [CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]: parseClientScheduleNotesUnresolvedCount(
+                                schedule[CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]
+                            )
                         }
                     };
                 }).filter(event => event !== null); // null 제거
@@ -546,7 +553,10 @@ const UnifiedScheduleComponent = ({
                                 statusKorean: convertStatusToKorean(schedule.status),
                                 type: schedule.scheduleType,
                                 consultationType: schedule.consultationType,
-                                description: schedule.description
+                                description: schedule.description,
+                                [CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]: parseClientScheduleNotesUnresolvedCount(
+                                    schedule[CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]
+                                )
                             }
                         };
                     }).filter(event => event !== null); // null 제거

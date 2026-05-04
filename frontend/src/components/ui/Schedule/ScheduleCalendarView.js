@@ -5,6 +5,12 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import {
+  CALENDAR_EXTENDED_TYPE_VACATION,
+  CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD,
+  STATUS,
+  parseClientScheduleNotesUnresolvedCount
+} from '../../../constants/schedule';
 import './ScheduleCalendarView.css';
 
 /**
@@ -102,7 +108,7 @@ const ScheduleCalendarView = ({
         const cancelledClass = isCancelled ? ' mg-v2-ad-calendar-event--cancelled' : '';
 
         // 휴가 이벤트 렌더링 (월간/주간/일간 모두 기존 방식 유지)
-        if (extendedProps.type === 'vacation') {
+        if (extendedProps.type === CALENDAR_EXTENDED_TYPE_VACATION) {
             const vacTitle = toDisplayString(event.title, '휴무');
             return (
                 <div className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--vacation${pastClass}`.trim()} title={vacTitle}>
@@ -117,21 +123,40 @@ const ScheduleCalendarView = ({
         const consultantName = toDisplayString(extendedProps.consultantName, '');
         const statusKorean = toDisplayString(extendedProps.statusKorean, '상태 없음');
         const borderColor = event.backgroundColor || 'var(--mg-primary-500)';
+        const clientScheduleNotesUnresolvedCount = parseClientScheduleNotesUnresolvedCount(
+            extendedProps?.[CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]
+        );
+        const isVacationScheduleRow =
+            extendedProps?.type === CALENDAR_EXTENDED_TYPE_VACATION
+            || extendedProps?.status === STATUS.VACATION;
+        const showUnresolvedMonthIndicator =
+            integratedMonthEventLayout
+            && isMonthView
+            && !isCancelled
+            && !isVacationScheduleRow
+            && clientScheduleNotesUnresolvedCount > 0;
+        const unresolvedTitleSuffix = showUnresolvedMonthIndicator
+            ? ` · 미해소 ${clientScheduleNotesUnresolvedCount}건`
+            : '';
 
         // 월간 뷰: 컴팩트 렌더링 (시간 + 내담자명만). 통합 스케줄은 좌측 Dot + 텍스트(전면 fill 완화).
         if (isMonthView) {
-            const fullTooltip = `${clientName} · ${consultantName} · ${statusKorean}`;
+            const fullTooltip = `${clientName} · ${consultantName} · ${statusKorean}${unresolvedTitleSuffix}`;
             const integratedMod = integratedMonthEventLayout ? ' mg-v2-ad-calendar-event--integrated-month' : '';
+            const unresolvedMod = showUnresolvedMonthIndicator
+                ? ' mg-v2-ad-calendar-event--client-notes-unresolved'
+                : '';
             return (
                 <div
-                    className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact${integratedMod}${pastClass}${cancelledClass}`.trim()}
+                    className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact${integratedMod}${unresolvedMod}${pastClass}${cancelledClass}`.trim()}
                     title={fullTooltip}
+                    aria-label={fullTooltip}
                     style={integratedMonthEventLayout ? undefined : { borderLeftColor: borderColor }}
                 >
                     {integratedMonthEventLayout && (
                         <span
                             className="mg-v2-ad-calendar-event__dot"
-                            style={{ backgroundColor: borderColor }}
+                            style={showUnresolvedMonthIndicator ? undefined : { backgroundColor: borderColor }}
                             aria-hidden="true"
                         />
                     )}

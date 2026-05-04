@@ -1,14 +1,14 @@
 import { toDisplayString } from '../../../utils/safeDisplay';
+import {
+    KR_PUBLIC_HOLIDAY_LEGEND_DISCLAIMER,
+    KR_PUBLIC_HOLIDAY_LEGEND_LABEL
+} from '../../../constants/schedule';
 
 /**
  * 스케줄 범례 컴포넌트 (Presentational)
-/**
  * - 순수 UI 컴포넌트
-/**
  * - 비즈니스 로직 없음
-/**
  * - props로 데이터를 받음
-/**
  * - 주요 상태만 간소화하여 표시
  */
 const ScheduleLegend = ({
@@ -32,10 +32,17 @@ const ScheduleLegend = ({
     
     return (
         <div className="mg-v2-schedule-legend mg-v2-ad-b0kla">
+            <div className="mg-v2-legend-section mg-v2-legend-section--kr-public-holiday">
+                <div className="mg-v2-legend-title">{toDisplayString(KR_PUBLIC_HOLIDAY_LEGEND_LABEL)}</div>
+                <div className="mg-v2-legend-kr-ph-row">
+                    <span className="mg-v2-legend-kr-ph-swatch" aria-hidden="true" />
+                    <p className="mg-v2-legend-kr-ph-disclaimer">{toDisplayString(KR_PUBLIC_HOLIDAY_LEGEND_DISCLAIMER)}</p>
+                </div>
+            </div>
             {/* 상담사가 있을 때만 표시 */}
             {activeConsultants.length > 0 && (
                 <div className="mg-v2-legend-section">
-                    <div className="mg-v2-legend-title">👥 상담사</div>
+                    <div className="mg-v2-legend-title">상담사</div>
                     <div className="mg-v2-legend-items mg-v2-consultant-legend">
                         {activeConsultants.map((consultant, index) => (
                             <div key={`consultant-${consultant.id}-${index}`} className="mg-v2-legend-item">
@@ -56,7 +63,7 @@ const ScheduleLegend = ({
             {/* 주요 상태만 표시 - 오른쪽에 위치 */}
             {mainStatuses.length > 0 && (
                 <div className="mg-v2-legend-section mg-v2-legend-section-right">
-                    <div className="mg-v2-legend-title">📋 주요 상태</div>
+                    <div className="mg-v2-legend-title">주요 상태</div>
                     <div className="mg-v2-legend-items">
                         {mainStatuses.map((option, index) => (
                             <div key={option.value || `status-${index}`} className="mg-v2-legend-item">

@@ -182,7 +182,7 @@
 }
 
 .integrated-schedule__status-btn:hover {
-  color: var(--mg-color-text-main, var(--mg-gray-900));
+  color: var(--mg-color-text-main);
   border-color: var(--mg-color-primary-main, var(--mg-primary-500));
 }
 
@@ -194,15 +194,15 @@
 
 /* B0KlA .mg-v2-ad-b0kla .mg-v2-button-outline(0,2,0)이 비선택 칩 배경·테두리를 덮는 경우 — 루트가 .mg-v2-ad-b0kla.integrated-schedule 동시 부여 */
 .mg-v2-ad-b0kla.integrated-schedule .integrated-schedule__status-btn.mg-button.mg-button--outline.mg-v2-button-outline:not(.integrated-schedule__status-btn--selected) {
-  background-color: var(--mg-color-surface-main, var(--mg-white));
-  color: var(--mg-color-text-secondary, var(--mg-gray-600));
-  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  background-color: var(--mg-color-surface-main);
+  color: var(--mg-color-text-secondary);
+  border: 1px solid var(--mg-color-border-main);
 }
 
 .mg-v2-ad-b0kla.integrated-schedule .integrated-schedule__status-btn.mg-button.mg-button--outline.mg-v2-button-outline:not(.integrated-schedule__status-btn--selected):hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  color: var(--mg-color-text-main, var(--mg-gray-900));
+  color: var(--mg-color-text-main);
   border-color: var(--mg-color-primary-main, var(--mg-primary-500));
-  background-color: var(--mg-color-surface-main, var(--mg-white));
+  background-color: var(--mg-color-surface-main);
   transform: none;
   box-shadow: none;
 }
@@ -248,11 +248,11 @@
   justify-content: center;
   min-width: 20px;
   padding: 2px 6px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   border-radius: var(--mg-radius-full, 9999px);
-  background-color: var(--mg-color-surface-sub, var(--mg-gray-200));
-  color: var(--mg-color-text-secondary, var(--mg-gray-600));
+  background-color: var(--mg-color-surface-sub);
+  color: var(--mg-color-text-secondary);
 }
 
 .integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
@@ -296,7 +296,7 @@
 }
 
 .integrated-schedule__filter-label:hover {
-  color: var(--mg-color-text-main, var(--mg-gray-900));
+  color: var(--mg-color-text-main);
 }
 
 .integrated-schedule__filter-label input {
@@ -414,12 +414,15 @@
   flex-direction: row;
   align-items: center;
   gap: var(--mg-spacing-xs);
-  min-height: auto;
-  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  min-height: var(--cs-spacing-lg, 1.5rem);
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
   background-color: var(--mg-color-surface-main);
   border: 1px solid var(--mg-color-border-main);
   border-left-width: 1px;
   box-shadow: none;
+  position: relative;
+  z-index: 2;
+  isolation: isolate;
 }
 
 .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month:hover {
@@ -465,6 +468,37 @@
   width: var(--mg-spacing-md);
   height: var(--mg-spacing-md);
   min-width: var(--mg-spacing-md);
+}
+
+/* 이 일정 직결 미해소는 없으나, 내담자 전체 미해소만 있는 경우(옵션 C) */
+.integrated-schedule__calendar-wrapper--integrated
+  .mg-v2-ad-calendar-event--integrated-month.mg-v2-ad-calendar-event--client-notes-client-wide
+  .mg-v2-ad-calendar-event__dot {
+  background-color: var(--mg-info-500) !important;
+  width: var(--mg-spacing-sm);
+  height: var(--mg-spacing-sm);
+  min-width: var(--mg-spacing-sm);
+  box-shadow: 0 0 0 2px var(--mg-info-100);
+}
+
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event__unresolved-icon {
+  flex-shrink: 0;
+  color: var(--mg-warning-500, var(--mg-color-accent-warning));
+  margin-left: auto;
+  cursor: help;
+}
+
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event__unresolved-icon--client-wide {
+  color: var(--mg-info-500);
+}
+
+/* 공휴일(참고) 배경: Dot·일정보다 뒤 — 토큰·레이어만 */
+.integrated-schedule__calendar-wrapper--integrated .fc-daygrid-day-bg .fc-bg-event.mg-v2-ad-calendar-event--kr-public-holiday-bg {
+  z-index: 0;
+}
+
+.integrated-schedule__calendar-wrapper--integrated .fc-daygrid-day-events {
+  z-index: 1;
 }
 
 @media (max-width: var(--mg-breakpoint-lg, 1024px)) {

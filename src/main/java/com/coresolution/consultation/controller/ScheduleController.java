@@ -324,7 +324,7 @@ public class ScheduleController extends BaseApiController {
         if (startDate != null && endDate != null) {
             List<Schedule> scheduleList = scheduleService.findSchedulesByUserRoleAndDateBetween(consultantId, UserRole.CONSULTANT.name(), startDate, endDate);
             schedules = scheduleList.stream()
-                .map(schedule -> convertToScheduleResponse(schedule, 0))
+                .map(schedule -> convertToScheduleResponse(schedule, 0, 0))
                 .collect(java.util.stream.Collectors.toList());
         } else {
             schedules = scheduleService.findSchedulesWithNamesByUserRole(consultantId, UserRole.CONSULTANT.name());
@@ -1187,10 +1187,14 @@ public class ScheduleController extends BaseApiController {
 
         String tenantId = TenantContextHolder.getTenantId();
         Map<Long, Integer> unresolvedByScheduleId = buildUnresolvedClientNoteCountByScheduleId(tenantId, schedules);
+        Map<Long, Integer> unresolvedByClientId = buildUnresolvedClientNoteCountByClientId(tenantId, schedules);
 
         List<ScheduleResponse> scheduleResponses = schedules.stream()
             .map(s -> convertToScheduleResponse(s,
-                    unresolvedByScheduleId.getOrDefault(s.getId(), 0)))
+                    unresolvedByScheduleId.getOrDefault(s.getId(), 0),
+                    s.getClientId() != null
+                            ? unresolvedByClientId.getOrDefault(s.getClientId(), 0)
+                            : 0))
             .collect(Collectors.toList());
         
         Map<String, Object> data = new HashMap<>();
@@ -1564,12 +1568,51 @@ public class ScheduleController extends BaseApiController {
     }
 
     /**
+     * 내담자 ID별 미해소 특이사항 건수(테넌트 스코프, 단일 집계 쿼리).
+     *
+     * @param tenantId 테넌트(없으면 빈 맵)
+     * @param schedules 대상 스케줄 목록(각 행의 clientId로 집계)
+     * @return clientId → 건수
+     */
+    private Map<Long, Integer> buildUnresolvedClientNoteCountByClientId(String tenantId, List<Schedule> schedules) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("⚠️ 내담자 기준 미해소 특이사항 집계 생략: tenantId 없음");
+            return Map.of();
+        }
+        List<Long> clientIds = schedules.stream()
+                .map(Schedule::getClientId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (clientIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Object[]> rows = clientScheduleNoteRepository.countUnresolvedByClientIdsGrouped(tenantId, clientIds);
+        Map<Long, Integer> out = new HashMap<>();
+        for (Object[] row : rows) {
+            if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
+                continue;
+            }
+            long cid = ((Number) row[0]).longValue();
+            int cnt = ((Number) row[1]).intValue();
+            if (cnt > 0) {
+                out.put(cid, cnt);
+            }
+        }
+        return out;
+    }
+
+    /**
      * Schedule 엔티티를 ScheduleResponse로 변환(미해소 특이사항 건수 포함).
      *
      * @param schedule 스케줄
-     * @param clientScheduleNotesUnresolvedCount 0 이상, 관리자 목록 외 기본 0
+     * @param clientScheduleNotesUnresolvedCount 해당 일정(schedule_id)에 직결된 미해소 건수, 0 이상
+     * @param clientScheduleNotesClientWideUnresolvedCount 해당 내담자 전체 미해소 건수, clientId 없으면 0
      */
-    private ScheduleResponse convertToScheduleResponse(Schedule schedule, int clientScheduleNotesUnresolvedCount) {
+    private ScheduleResponse convertToScheduleResponse(
+            Schedule schedule,
+            int clientScheduleNotesUnresolvedCount,
+            int clientScheduleNotesClientWideUnresolvedCount) {
         String consultantName = AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
         String clientName = AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
         String consultantPhone = "";
@@ -1630,6 +1673,7 @@ public class ScheduleController extends BaseApiController {
             .createdAt(schedule.getCreatedAt())
             .updatedAt(schedule.getUpdatedAt())
             .clientScheduleNotesUnresolvedCount(Math.max(0, clientScheduleNotesUnresolvedCount))
+            .clientScheduleNotesClientWideUnresolvedCount(Math.max(0, clientScheduleNotesClientWideUnresolvedCount))
             .build();
     }
 }

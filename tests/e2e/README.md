@@ -30,6 +30,13 @@ BASE_URL=<프론트 URL>   # playwright.config.ts 기본과 동일하게
 
 통합 스케줄(`/admin/integrated-schedule`)에서 일정 클릭 → `ScheduleDetailModal`의 **상세 | 특이사항** 탭, 휴가 이벤트 시 특이사항 비노출, 특이사항 CRUD·모달 UI 스모크는 `tests/e2e/tests/admin/integrated-schedule-*.spec.ts`에 모은다. 자격·기동은 위 절과 동일.
 
+### GitHub Actions: `e2e-integrated-schedule-smoke` · `integrated-schedule-client-notes.spec.ts`
+
+- 워크플로: [`.github/workflows/e2e-integrated-schedule-smoke.yml`](../../.github/workflows/e2e-integrated-schedule-smoke.yml). 스펙: [`tests/admin/integrated-schedule-client-notes.spec.ts`](./tests/admin/integrated-schedule-client-notes.spec.ts).
+- **시크릿 게이트는 `e2e-consultation-log-smoke`와 동일**: `E2E_TEST_EMAIL` 또는 `E2E_ADMIN_USERNAME`이 비어 있지 않을 때만 Node·npm·Playwright 스텝이 돈다. 없으면 이후 스텝 생략·잡은 녹색(포크 PR 등).
+- CI에서 `BASE_URL`은 `E2E_BASE_URL` 우선, 없으면 `http://localhost:3000` → 로컬호스트면 `playwright.config.ts`의 `webServer`로 **프론트(3000)만** 뜬다. **8080 백엔드 기동은 이 워크플로에 없음** — 의미 있는 통과는 API·로그인이 이미 열린 URL(self-hosted·스테이징 등) 전제.
+- 로컬: `skipWhenLocalBackend8080Down()`이 **CI가 아닐 때만** 8080을 프로브하므로, 로컬 재현은 8080+3000(또는 README의 기동 절) 후 동일 스펙 실행.
+
 ## 레거시 안내
 
 과거 `e2e-tests` 디렉터리 안내가 있었다면 폐기하고, 본 `tests/e2e` 트리·위 `playwright.config.ts`를 기준으로 한다.

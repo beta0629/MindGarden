@@ -4,7 +4,7 @@
  * - 내담자/상담사/스태프 등록 모달 공통 구조 회귀 방지
  */
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import ClientModal from '../ClientModal';
 
 jest.mock('../../../../utils/standardizedApi', () => ({
@@ -39,18 +39,25 @@ const defaultProps = {
   userStatusOptions: []
 };
 
+/** 휴대폰 행(KoreanMobileDuplicateField)도 동일 클래스를 쓰므로, 이메일 필드로 행을 특정한다. */
+function getEmailFormRow() {
+  const input = screen.getByPlaceholderText(/example@email\.com/i);
+  const row = input.closest('.mg-v2-form-email-row');
+  expect(row).toBeInTheDocument();
+  return row;
+}
+
 describe('ClientModal 이메일 폼 구조', () => {
   it('이메일 행에 .mg-v2-form-email-row가 렌더된다', () => {
     render(<ClientModal {...defaultProps} />);
-    const row = document.querySelector('.mg-v2-form-email-row');
-    expect(row).toBeInTheDocument();
+    expect(getEmailFormRow()).toHaveClass('mg-v2-form-email-row');
   });
 
   it('이메일 행 내부에 래퍼 .mg-v2-form-email-row__input-wrap가 있어야 레이아웃이 깨지지 않는다', () => {
     render(<ClientModal {...defaultProps} />);
-    const wrap = document.querySelector('.mg-v2-form-email-row__input-wrap');
+    const row = getEmailFormRow();
+    const wrap = row.querySelector('.mg-v2-form-email-row__input-wrap');
     expect(wrap).toBeInTheDocument();
-    const row = document.querySelector('.mg-v2-form-email-row');
     expect(row).toContainElement(wrap);
   });
 
@@ -59,13 +66,14 @@ describe('ClientModal 이메일 폼 구조', () => {
     const input = screen.getByPlaceholderText(/example@email\.com/i);
     expect(input).toBeInTheDocument();
     expect(input).toHaveAttribute('type', 'email');
-    const wrap = document.querySelector('.mg-v2-form-email-row__input-wrap');
+    const wrap = input.closest('.mg-v2-form-email-row__input-wrap');
+    expect(wrap).toBeInTheDocument();
     expect(wrap).toContainElement(input);
   });
 
-  it('create 타입일 때 중복확인 버튼이 있다', () => {
+  it('create 타입일 때 이메일 행에 중복확인 버튼이 있다', () => {
     render(<ClientModal {...defaultProps} />);
-    const button = screen.getByRole('button', { name: /중복확인/i });
-    expect(button).toBeInTheDocument();
+    const button = within(getEmailFormRow()).getByRole('button', { name: /중복확인/i });
+    expect(button).toHaveAttribute('data-action', 'email-duplicate-check');
   });
 });

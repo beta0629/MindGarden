@@ -55,6 +55,13 @@ public class ScheduleResponse {
     private int clientScheduleNotesUnresolvedCount = 0;
 
     /**
+     * 해당 내담자({@code clientId}) 기준 미해소 특이사항 전체 건수(다른 일정·매칭 포함).
+     * {@code clientId}가 없으면 0.
+     */
+    @Default
+    private int clientScheduleNotesClientWideUnresolvedCount = 0;
+
+    /**
      * Schedule 엔티티를 ScheduleResponse로 변환
      * 상담 유형을 한글로 변환
      */
@@ -75,6 +82,7 @@ public class ScheduleResponse {
                 .createdAt(schedule.getCreatedAt())
                 .updatedAt(schedule.getUpdatedAt())
                 .clientScheduleNotesUnresolvedCount(0)
+                .clientScheduleNotesClientWideUnresolvedCount(0)
                 .build();
     }
     
@@ -102,6 +110,7 @@ public class ScheduleResponse {
                 .consultationId(dto.getConsultationId())
                 .clientId(dto.getClientId())
                 .clientScheduleNotesUnresolvedCount(0)
+                .clientScheduleNotesClientWideUnresolvedCount(0)
                 .build();
     }
     
@@ -134,6 +143,7 @@ public class ScheduleResponse {
                 .createdAt(dto.getCreatedAt())
                 .updatedAt(dto.getUpdatedAt())
                 .clientScheduleNotesUnresolvedCount(0)
+                .clientScheduleNotesClientWideUnresolvedCount(0)
                 .build();
     }
 }

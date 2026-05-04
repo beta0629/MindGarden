@@ -226,11 +226,25 @@ export const FILTER_OPTIONS = {
 /** FullCalendar extendedProps.type / 모달 calendarEventType — 휴가(예약 DB PK 아님) SSOT */
 export const CALENDAR_EXTENDED_TYPE_VACATION = FILTER_OPTIONS.VACATION;
 
+/** FullCalendar extendedProps.type — 한국 공휴일(참고·비클릭·배경 레이어, DB PK 없음) */
+export const CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY = 'kr_public_holiday';
+
+/** 통합·관리 스케줄 범례 라벨 */
+export const KR_PUBLIC_HOLIDAY_LEGEND_LABEL = '공휴일(참고)';
+
+/** 통합·관리 스케줄 범례 법적 고지 1문장 */
+export const KR_PUBLIC_HOLIDAY_LEGEND_DISCLAIMER =
+  '표시는 참고용이며, 실제 휴무·급여 적용은 관공서·고용노동부 고시 및 내규를 확인하세요.';
+
 /**
  * GET /api/v1/schedules/admin 등 ScheduleResponse·FullCalendar extendedProps 공통 필드명.
  * 미해소(resolvedAt 없음) 내담자 특이사항 건수 — 항상 0 이상 정수.
  */
 export const CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD = 'clientScheduleNotesUnresolvedCount';
+
+/** 동일 내담자 기준 전체 미해소 건수(다른 일정·매칭 포함). GET /api/v1/schedules/admin ScheduleResponse. */
+export const CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD =
+  'clientScheduleNotesClientWideUnresolvedCount';
 
 /**
  * @param {*} raw API 또는 extendedProps 값
@@ -242,6 +256,11 @@ export function parseClientScheduleNotesUnresolvedCount(raw) {
     return 0;
   }
   return Math.floor(Math.min(n, Number.MAX_SAFE_INTEGER));
+}
+
+/** {@link parseClientScheduleNotesUnresolvedCount} 와 동일 파싱(필드명만 구분). */
+export function parseClientScheduleNotesClientWideUnresolvedCount(raw) {
+  return parseClientScheduleNotesUnresolvedCount(raw);
 }
 
 export const FILTER_OPTION_LABELS = {

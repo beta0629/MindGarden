@@ -279,6 +279,23 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
           )}
         </SafeText>
       </p>
+      {scheduleData && (
+        (scheduleData.clientScheduleNotesUnresolvedCount > 0 || scheduleData.clientScheduleNotesClientWideUnresolvedCount > 0) ? (
+          <div className="mg-v2-alert info" style={{ marginBottom: 'var(--mg-space-3)', padding: 'var(--mg-space-2)', background: 'var(--mg-info-100)', color: 'var(--mg-info-800)', borderRadius: 'var(--mg-border-radius-sm)', border: '1px solid var(--mg-info-300)' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--mg-space-2)' }}>
+              <span role="img" aria-label="info" style={{ fontSize: 'var(--font-size-lg)' }}>ℹ️</span>
+              <div>
+                {scheduleData.clientScheduleNotesUnresolvedCount > 0 && (
+                  <div><SafeText>{toDisplayString(`이 일정 직결 미해소: ${scheduleData.clientScheduleNotesUnresolvedCount}건`, '')}</SafeText></div>
+                )}
+                {scheduleData.clientScheduleNotesClientWideUnresolvedCount > 0 && (
+                  <div><SafeText>{toDisplayString(`내담자 전체 미해소: ${scheduleData.clientScheduleNotesClientWideUnresolvedCount}건`, '')}</SafeText></div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : null
+      )}
 
       {clientId == null && (
         <div className="mg-v2-alert warning" style={{ marginBottom: 'var(--mg-space-3)', padding: 'var(--mg-space-2)', background: 'var(--mg-warning-100)', color: 'var(--mg-warning-800)', borderRadius: 'var(--mg-border-radius-sm)', border: '1px solid var(--mg-warning-300)' }}>

@@ -3,12 +3,15 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, AlertCircle, Info } from 'lucide-react';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import {
+  CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
   CALENDAR_EXTENDED_TYPE_VACATION,
+  CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD,
   CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD,
   STATUS,
+  parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount
 } from '../../../constants/schedule';
 import './ScheduleCalendarView.css';
@@ -68,6 +71,9 @@ const ScheduleCalendarView = ({
 
     // 지난 일정 판별 함수
     const eventClassNames = (arg) => {
+        if (arg.event.display === 'background') {
+            return [];
+        }
         const eventDate = new Date(arg.event.start);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -97,9 +103,19 @@ const ScheduleCalendarView = ({
         }
     };
 
+    const handleEventDidMount = (info) => {
+        if (info.event.extendedProps?.type === CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY) {
+            info.el.setAttribute('aria-hidden', 'true');
+            info.el.setAttribute('tabIndex', '-1');
+        }
+    };
+
     // 이벤트 커스텀 렌더링 (카드 형태)
     const renderEventContent = (eventInfo) => {
         const { event } = eventInfo;
+        if (event.display === 'background') {
+            return null;
+        }
         const { extendedProps } = event;
         const isMonthView = eventInfo.view?.type === 'dayGridMonth';
         const isPastOrCompleted = isEventPastOrCompleted(event);
@@ -123,8 +139,11 @@ const ScheduleCalendarView = ({
         const consultantName = toDisplayString(extendedProps.consultantName, '');
         const statusKorean = toDisplayString(extendedProps.statusKorean, '상태 없음');
         const borderColor = event.backgroundColor || 'var(--mg-primary-500)';
-        const clientScheduleNotesUnresolvedCount = parseClientScheduleNotesUnresolvedCount(
+        const scheduleNotesUnresolvedCount = parseClientScheduleNotesUnresolvedCount(
             extendedProps?.[CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]
+        );
+        const clientWideNotesUnresolvedCount = parseClientScheduleNotesClientWideUnresolvedCount(
+            extendedProps?.[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
         );
         const isVacationScheduleRow =
             extendedProps?.type === CALENDAR_EXTENDED_TYPE_VACATION
@@ -134,34 +153,53 @@ const ScheduleCalendarView = ({
             && isMonthView
             && !isCancelled
             && !isVacationScheduleRow
-            && clientScheduleNotesUnresolvedCount > 0;
-        const unresolvedTitleSuffix = showUnresolvedMonthIndicator
-            ? ` · 미해소 ${clientScheduleNotesUnresolvedCount}건`
-            : '';
+            && (scheduleNotesUnresolvedCount > 0 || clientWideNotesUnresolvedCount > 0);
+        let unresolvedTitleSuffix = '';
+        if (showUnresolvedMonthIndicator) {
+            if (scheduleNotesUnresolvedCount > 0 && clientWideNotesUnresolvedCount > 0) {
+                unresolvedTitleSuffix =
+                    ` · 이 일정 미해소 ${scheduleNotesUnresolvedCount}건 · 내담자 전체 ${clientWideNotesUnresolvedCount}건`;
+            } else if (scheduleNotesUnresolvedCount > 0) {
+                unresolvedTitleSuffix = ` · 미해소 ${scheduleNotesUnresolvedCount}건`;
+            } else {
+                unresolvedTitleSuffix = ` · 내담자 미해소 ${clientWideNotesUnresolvedCount}건`;
+            }
+        }
 
         // 월간 뷰: 컴팩트 렌더링 (시간 + 내담자명만). 통합 스케줄은 좌측 Dot + 텍스트(전면 fill 완화).
         if (isMonthView) {
             const fullTooltip = `${clientName} · ${consultantName} · ${statusKorean}${unresolvedTitleSuffix}`;
+            const integratedMonthLabel =
+                `${eventInfo.timeText} · ${clientName} · ${statusKorean}${unresolvedTitleSuffix}`;
             const integratedMod = integratedMonthEventLayout ? ' mg-v2-ad-calendar-event--integrated-month' : '';
-            const unresolvedMod = showUnresolvedMonthIndicator
+            const unresolvedMod = scheduleNotesUnresolvedCount > 0
                 ? ' mg-v2-ad-calendar-event--client-notes-unresolved'
-                : '';
+                : (clientWideNotesUnresolvedCount > 0 ? ' mg-v2-ad-calendar-event--client-notes-client-wide' : '');
+            const dotMonthStyle = integratedMonthEventLayout
+                ? (showUnresolvedMonthIndicator ? undefined : { backgroundColor: borderColor })
+                : undefined;
             return (
                 <div
                     className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact${integratedMod}${unresolvedMod}${pastClass}${cancelledClass}`.trim()}
-                    title={fullTooltip}
-                    aria-label={fullTooltip}
+                    title={integratedMonthEventLayout ? integratedMonthLabel : fullTooltip}
+                    aria-label={integratedMonthEventLayout ? integratedMonthLabel : fullTooltip}
                     style={integratedMonthEventLayout ? undefined : { borderLeftColor: borderColor }}
                 >
                     {integratedMonthEventLayout && (
                         <span
                             className="mg-v2-ad-calendar-event__dot"
-                            style={showUnresolvedMonthIndicator ? undefined : { backgroundColor: borderColor }}
+                            style={dotMonthStyle}
                             aria-hidden="true"
                         />
                     )}
                     <span className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</span>
                     <span className="mg-v2-ad-calendar-event__client">{clientName}</span>
+                    {showUnresolvedMonthIndicator && scheduleNotesUnresolvedCount > 0 && (
+                        <AlertCircle className="mg-v2-ad-calendar-event__unresolved-icon" size={14} aria-hidden="true" />
+                    )}
+                    {showUnresolvedMonthIndicator && scheduleNotesUnresolvedCount === 0 && clientWideNotesUnresolvedCount > 0 && (
+                        <Info className="mg-v2-ad-calendar-event__unresolved-icon mg-v2-ad-calendar-event__unresolved-icon--client-wide" size={14} aria-hidden="true" />
+                    )}
                     {isCancelled && (
                         <span className="mg-v2-ad-calendar-event__badge mg-v2-ad-calendar-event__badge--cancelled" aria-label="취소">취소</span>
                     )}
@@ -221,7 +259,8 @@ const ScheduleCalendarView = ({
                 slotDuration="00:30:00"
                 scrollTime="09:00:00"
                 scrollTimeReset={false}
-                allDaySlot={false}
+                allDaySlot={true}
+                eventDidMount={handleEventDidMount}
                 businessHours={{
                     daysOfWeek: [1, 2, 3, 4, 5], // 월-금
                     startTime: '09:00',

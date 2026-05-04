@@ -51,4 +51,18 @@ public interface ClientScheduleNoteRepository extends JpaRepository<ClientSchedu
     List<Object[]> countUnresolvedByScheduleIdsGrouped(
             @Param("tenantId") String tenantId,
             @Param("scheduleIds") Collection<Long> scheduleIds);
+
+    /**
+     * 내담자별 미해소 특이사항 건수(다른 일정·매칭 포함). IN 일괄 조회(N+1 방지).
+     *
+     * @param tenantId 테넌트
+     * @param clientIds 내담자 PK 목록(비어 있으면 호출부에서 생략)
+     * @return [clientId, count] 행 목록
+     */
+    @Query("SELECT n.clientId, COUNT(n) FROM ClientScheduleNote n WHERE n.tenantId = :tenantId "
+            + "AND n.clientId IN :clientIds AND n.isDeleted = false AND n.resolvedAt IS NULL "
+            + "AND n.clientId IS NOT NULL GROUP BY n.clientId")
+    List<Object[]> countUnresolvedByClientIdsGrouped(
+            @Param("tenantId") String tenantId,
+            @Param("clientIds") Collection<Long> clientIds);
 }

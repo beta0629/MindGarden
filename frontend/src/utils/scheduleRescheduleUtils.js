@@ -5,6 +5,8 @@
  * @since 2026-04-02
  */
 
+import { CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY } from '../constants/schedule';
+
 /** API·input[type=time] 공통 HH:mm 길이 */
 const HM_LEN = 5;
 
@@ -53,6 +55,9 @@ export function hasConsultantScheduleTimeOverlap(events, excludeEventId, consult
   const newEndMs = newEnd.getTime();
   return events.some((e) => {
     if (String(e.id) === String(excludeEventId)) {
+      return false;
+    }
+    if (e.extendedProps?.type === CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY) {
       return false;
     }
     const otherConsultantId = e.extendedProps?.consultantId;

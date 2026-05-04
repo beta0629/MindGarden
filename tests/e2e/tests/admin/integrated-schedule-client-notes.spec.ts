@@ -1,6 +1,10 @@
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page } from '@playwright/test';
-import { loginErpUser, skipWhenCiMissingE2eCredentials } from '../../helpers/erpAuth';
+import {
+  loginErpUser,
+  skipWhenCiMissingE2eCredentials,
+  skipWhenLocalBackend8080Down
+} from '../../helpers/erpAuth';
 import {
   REACT_130_OR_INVALID_CHILD,
   attachRuntimeErrorCollectors
@@ -19,9 +23,23 @@ test.describe('관리자 - 통합 스케줄 내담자 특이사항', () => {
 
   test.beforeEach(async ({ page }, testInfo) => {
     skipWhenCiMissingE2eCredentials();
+    await skipWhenLocalBackend8080Down();
     collectedRuntimeErrors = [];
     attachRuntimeErrorCollectors(page, collectedRuntimeErrors);
     await loginErpUser(page, testInfo, { timeoutMs: 20_000 });
+  });
+
+  test('통합 스케줄 범례에 한국 공휴일(참고) 안내가 노출된다 — P2 스모크', async ({ page }) => {
+    await page.goto('/admin/integrated-schedule');
+    const calendarHost = page.locator('[data-layout-context="integrated-schedule"]');
+    await expect(calendarHost).toBeVisible({ timeout: 20000 });
+
+    const krPhLegend = calendarHost.locator('.mg-v2-legend-section--kr-public-holiday');
+    await expect(krPhLegend).toBeVisible({ timeout: 15000 });
+    await expect(krPhLegend.getByText('공휴일(참고)', { exact: true })).toBeVisible();
+    await expect(
+      krPhLegend.getByText(/참고용이며.*고시/, { exact: false })
+    ).toBeVisible();
   });
 
   test('통합 스케줄에서 일정 클릭 시 일정 상세 모달이 열린다', async ({ page }) => {
@@ -72,6 +90,32 @@ test.describe('관리자 - 통합 스케줄 내담자 특이사항', () => {
     await notesTab.click();
     await expect(detailModal.locator('#schedule-note-title')).toBeVisible({ timeout: 8000 });
     await expect(detailModal.getByRole('button', { name: '등록' })).toBeVisible();
+  });
+
+  test('미해소 아이콘이 있는 일정 클릭 시 특이사항 탭 배너 노출 — Phase 1.1', async ({ page }) => {
+    await page.goto('/admin/integrated-schedule');
+    const calendarHost = page.locator('[data-layout-context="integrated-schedule"]');
+    await expect(calendarHost).toBeVisible({ timeout: 20000 });
+
+    const unresolvedEvent = calendarHost.locator('.fc .fc-event').filter({ has: page.locator('.mg-v2-ad-calendar-event__unresolved-icon') }).first();
+    await unresolvedEvent.waitFor({ state: 'visible', timeout: 25000 }).catch(() => undefined);
+    if ((await unresolvedEvent.count()) === 0) {
+      test.skip(true, '미해소 아이콘이 있는 일정 없음');
+    }
+
+    await unresolvedEvent.click();
+    const detailModal = page
+      .getByRole('dialog')
+      .filter({ has: page.getByRole('heading', { name: '일정 상세' }) });
+    await expect(detailModal).toBeVisible({ timeout: 10000 });
+
+    const notesTab = detailModal.getByRole('tab', { name: '특이사항' });
+    if ((await notesTab.count()) === 0) {
+      test.skip(true, '첫 일정이 휴가이거나 특이사항 탭 미노출(9절 P2 등) — 다른 일정으로 수동 확인하세요.');
+    }
+
+    await notesTab.click();
+    await expect(detailModal.getByText(/직결|내담자 전체|건/)).toBeVisible({ timeout: 10000 });
   });
 
   test('모달 오픈 직후 React #130·invalid child 없음 — S5 (스모크 동일 수집·필터)', async ({
@@ -144,6 +188,39 @@ test.describe('관리자 - 통합 스케줄 내담자 특이사항', () => {
     await detailModal.getByRole('button', { name: '등록' }).click();
     await expect(detailModal.getByText(title, { exact: false }).first()).toBeVisible({
       timeout: 15000,
+    });
+  });
+
+  test('Phase 1.1: 미해소 아이콘이 있는 월간 일정 클릭 시 특이사항 탭 요약 배너 노출', async ({
+    page,
+  }) => {
+    await page.goto('/admin/integrated-schedule');
+    const calendarHost = page.locator('[data-layout-context="integrated-schedule"]');
+    await expect(calendarHost).toBeVisible({ timeout: 20000 });
+
+    const unresolvedEvent = calendarHost
+      .locator('.fc .fc-event')
+      .filter({ has: page.locator('.mg-v2-ad-calendar-event__unresolved-icon') })
+      .first();
+    await unresolvedEvent.waitFor({ state: 'visible', timeout: 25000 }).catch(() => undefined);
+    if ((await unresolvedEvent.count()) === 0) {
+      test.skip(true, '미해소 아이콘이 표시된 일정이 없어 Phase 1.1 검증을 건너뜁니다.');
+    }
+
+    await unresolvedEvent.click();
+    const detailModal = page
+      .getByRole('dialog')
+      .filter({ has: page.getByRole('heading', { name: '일정 상세' }) });
+    await expect(detailModal).toBeVisible({ timeout: 10000 });
+
+    const notesTab = detailModal.getByRole('tab', { name: '특이사항' });
+    if ((await notesTab.count()) === 0) {
+      test.skip(true, '특이사항 탭이 없어 검증을 건너뜁니다.');
+    }
+    await notesTab.click();
+
+    await expect(detailModal.getByText(/직결|내담자 전체|건/).first()).toBeVisible({
+      timeout: 10000,
     });
   });
 });

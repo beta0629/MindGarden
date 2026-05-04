@@ -425,21 +425,59 @@
 
 
 .mg-v2-ad-b0kla .mg-v2-legend-title {
-  color: var(--ad-b0kla-title-color);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--mg-color-text-main, var(--ad-b0kla-title-color));
 }
 
 .mg-v2-ad-b0kla .mg-v2-legend-item {
   background: var(--ad-b0kla-bg);
-  border: 1px solid var(--ad-b0kla-border);
-  color: var(--ad-b0kla-text-secondary);
+  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
+  color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary));
 }
 
 .mg-v2-ad-b0kla .mg-v2-legend-text {
-  color: var(--ad-b0kla-title-color);
+  color: var(--mg-color-text-main, var(--ad-b0kla-title-color));
 }
 
 .mg-v2-ad-b0kla .mg-v2-legend-more {
-  color: var(--ad-b0kla-text-secondary);
+  color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary));
+}
+
+.mg-v2-ad-b0kla .mg-v2-legend-section--kr-public-holiday {
+  flex-basis: 100%;
+  width: 100%;
+  min-width: 0;
+}
+
+.mg-v2-ad-b0kla .mg-v2-legend-kr-ph-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-spacing-sm, var(--spacing-sm));
+  margin-top: var(--mg-spacing-xs, var(--spacing-xs));
+}
+
+.mg-v2-ad-b0kla .mg-v2-legend-kr-ph-swatch {
+  flex-shrink: 0;
+  width: var(--mg-spacing-sm, var(--spacing-sm));
+  min-height: var(--mg-spacing-lg, var(--spacing-lg));
+  margin-top: 0;
+  border-radius: var(--ad-b0kla-radius-sm);
+  background-color: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-left-width: var(--mg-spacing-xs, var(--spacing-xs));
+  border-left-style: solid;
+  border-left-color: var(--mg-color-primary-main);
+}
+
+.mg-v2-ad-b0kla .mg-v2-legend-kr-ph-disclaimer {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  line-height: var(--line-height-normal, 1.45);
+  color: var(--color-text-muted, var(--mg-color-text-secondary));
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal, 400);
 }
 
 /* ===== FullCalendar B0KlA 오버라이드 ===== */

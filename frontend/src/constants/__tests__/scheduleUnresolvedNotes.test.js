@@ -1,5 +1,7 @@
 import {
+  CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD,
   CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD,
+  parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount
 } from '../schedule';
 
@@ -21,5 +23,15 @@ describe('parseClientScheduleNotesUnresolvedCount', () => {
 
   it('필드명 SSOT 상수 정의', () => {
     expect(CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD).toBe('clientScheduleNotesUnresolvedCount');
+    expect(CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD).toBe(
+      'clientScheduleNotesClientWideUnresolvedCount'
+    );
+  });
+});
+
+describe('parseClientScheduleNotesClientWideUnresolvedCount', () => {
+  it('일정 직결 파서와 동일 규칙', () => {
+    expect(parseClientScheduleNotesClientWideUnresolvedCount(2)).toBe(2);
+    expect(parseClientScheduleNotesClientWideUnresolvedCount(0)).toBe(0);
   });
 });

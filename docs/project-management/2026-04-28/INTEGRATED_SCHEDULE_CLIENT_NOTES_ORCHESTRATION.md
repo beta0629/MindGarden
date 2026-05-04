@@ -1,7 +1,7 @@
 # 통합 스케줄 — 내담자 특이사항·메모 CRUD 오케스트레이션
 
 **작성일**: 2026-04-28  
-**개정**: 2026-05-04 (§10·§12.2: 월간 미해소 인디케이터 1차 구현 문서 동기화) · 2026-04-28 (코드 앵커 검증·정책 보강·구현·검증 체크리스트 추가)  
+**개정**: 2026-05-05 (§12.1 표 B8 비고: [e2e-integrated-schedule-smoke.yml](../../../.github/workflows/e2e-integrated-schedule-smoke.yml)·PR paths 변경 시 해당 job 실행) · 2026-05-04 (§13 CI 연결 단계: 병렬 준비·실행·참조 워크플로·완료 보고 경로) · 2026-05-04 (§1 범위 표: [KR 공휴일 SSOT](./INTEGRATED_SCHEDULE_KR_HOLIDAYS_ORCHESTRATION.md) 교차 링크) · 2026-05-04 (§10·§12.2: 월간 미해소 인디케이터 1차 구현 문서 동기화) · 2026-04-28 (코드 앵커 검증·정책 보강·구현·검증 체크리스트 추가)  
 **주관**: core-planner  
 **상태**: **구현 준비** (코드 변경은 **core-coder** 위임, 검증은 **core-tester**)
 
@@ -19,6 +19,7 @@
 |------|------|
 | **In (1차)** | 통합 스케줄 UI 앵커(`IntegratedMatchingSchedule.js` → `UnifiedScheduleComponent` → 이벤트 클릭 시 **`ScheduleDetailModal`**)에서 **내담자 맥락의 특이사항** CRUD, 멀티테넌트·역할(ADMIN/STAFF), 표시 경계·React #130 준수, 운영 반영 전 하드코딩·게이트. 신규 API는 프론트에서 **`StandardizedApi`** 로만 호출(스케줄 도메인 내 `ajax` 혼용 지양). |
 | **Out (1차)** | 내담자 포털(본인) 노출, 결제/ERP 자동 연동, 푸시·알림 전용 채널, 일반 `AdminSchedulesPage` 전면 개편. |
+| **KR 공휴일(SSOT)** | 캘린더 **관공서 공휴일 배경 레이어**(P2)·연도·소스·확장 위임 → [INTEGRATED_SCHEDULE_KR_HOLIDAYS_ORCHESTRATION.md](./INTEGRATED_SCHEDULE_KR_HOLIDAYS_ORCHESTRATION.md). |
 | **Phase 2 (후보)** | 통합 스케줄 **월간** 미해소 **도트·건수 표시(1차)**는 §12.2·10절 정리대로 **본 에픽에 동기화**됨. 그 외 **전역 배지·주간/일간 동등 강화·“이번 주 약속” 필터·대시보드 위젯** 등은 별도 스펙(아래 10절). |
 
 ### 성공 기준
@@ -210,7 +211,7 @@
 - [ ] 기존 **예약 확정·취소·상담일지** 플로우 **회귀** (동일 모달 내)
 - [ ] 하드코딩 스캔·린트·백엔드 테스트(해당 시) CI 통과
 
-### 12.1 Phase B 검증 표 (B1~B7, 커밋 `3aa6f6947` 기준)
+### 12.1 Phase B 검증 표 (B1~B8, 커밋 `3aa6f6947` 기준)
 
 | ID | §12 대응 항목 | 검증 방법(이번 배치) | 결과(2026-04-30) | 비고 |
 |----|---------------|----------------------|------------------|------|
@@ -221,8 +222,10 @@
 | **B5** | 콘솔 #130·크리티컬 0, 네트워크 비정상 패턴 없음 | E2E S5·`react130ConsoleGate`; LNB 콘솔 스모크 | **미실행** | 로그인 단계에서 중단. 게이트 구현은 `tests/e2e/helpers/react130ConsoleGate.ts`(커밋 포함). |
 | **B6** | 예약 확정·취소·상담일지 등 동일 모달 회귀 | 수동 스모크 | **미실행** | 자동 스펙 없음. |
 | **B7** | 하드코딩 스캔·린트·CI | 커밋 훅·CI | **부분** | 로컬 훅: `schedule.js` 완료색 hex → `var(--mg-secondary-400)`; `react130ConsoleGate.ts`는 `#130` 오탐 방지용 이스케이프 조합으로 정리됨(동일 런타임 매칭). CI 전체 녹색은 본 실행에서 미확인. |
+| **B8** | Phase 1.1 E2E | `integrated-schedule-client-notes.spec.ts`의 `Phase 1.1: 미해소 아이콘이 있는 월간 일정 클릭 시 특이사항 탭 요약 배너 노출` 테스트; 미해소 아이콘 일정 없으면 스킵. | **로컬·환경 의존** | `erpAuth.skipWhenLocalBackend8080Down()`: 로컬(비 CI)에서 **8080 TCP 불가 시 beforeEach에서 스킵** → 연쇄 fail 완화. 8080+3000+README 자격 충족 후 재실행 시 통과·데이터 없음 스킵으로 **결과 열 갱신**. CI: [`.github/workflows/e2e-integrated-schedule-smoke.yml`](../../../.github/workflows/e2e-integrated-schedule-smoke.yml) — PR `paths` 변경 시 해당 job 실행. **2026-05-05**: core-tester — `ScheduleLegend.test.js` 추가·`build:ci`/관련 Jest 통과. E2E는 환경 미충족 시 전부 스킵 가능 유지. |
 
-**미실행 행·재시도 전제(2026-04-30 core-tester 재확인)**: `localhost:3000` HTTP 200 확인, **`localhost:8080` 미기동**, **`E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` 미설정** → README 권장 3스펙은 **이번에 재실행하지 않음**(이전 기록: 로그인 후 전환 타임아웃 등 **6 failed** 참고). 다음 갱신: API **8080** + 프론트 **3000** + [`tests/e2e/README.md`](../../../tests/e2e/README.md)의 `E2E_TEST_*` 준비 후 동일 명령으로 `npx playwright test` 실행해 B1~B5 **결과** 열을 갱신. 문서·**PR 설명**에는 Node/npm·Playwright 설치·`BASE_URL`·자격·**8080+3000 동시 기동**을 **환경 전제**로 명시할 것. 구현 머지 전 12절은 [위임 순서·테스터 게이트](docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md)에 따라 **core-tester** 통과를 전제로 한다.
+**미실행 행·재시도 전제(2026-04-30 core-tester 재확인)**: `localhost:3000` HTTP 200 확인, **`localhost:8080` 미기동**, **`E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` 미설정** → README 권장 3스펙은 **이번에 재실행하지 않음**(이전 기록: 로그인 후 전환 타임아웃 등 **6 failed** 참고). 다음 갱신: API **8080** + 프론트 **3000** + [`tests/e2e/README.md`](../../../tests/e2e/README.md)의 `E2E_TEST_*` 준비 후 동일 명령으로 `npx playwright test` 실행해 B1~B5, B8 **결과** 열을 갱신. 문서·**PR 설명**에는 Node/npm·Playwright 설치·`BASE_URL`·자격·**8080+3000 동시 기동**을 **환경 전제**로 명시할 것. 구현 머지 전 12절은 [위임 순서·테스터 게이트](docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md)에 따라 **core-tester** 통과를 전제로 한다.
+**2026-05-04 추가**: B8(Phase 1.1 E2E) 항목도 다음 core-tester 재실행 시 함께 검증한다.
 
 **Playwright(권장 명령, chromium)**: `cd tests/e2e && npx playwright test tests/admin/integrated-schedule-client-notes.spec.ts tests/admin/integrated-schedule-detail-modal.spec.ts tests/admin/admin-dashboard-lnb-console-smoke.spec.ts --project=chromium` → **6 failed**(원인 공통: 로그인 후 화면 전환 타임아웃, `erpAuth` 안내: API 기동·`BASE_URL`·프록시·자격 확인).
 
@@ -233,9 +236,44 @@
 ### 12.2 월간 캘린더 미해소 인디케이터 (1차 구현, 코드 기준 동기화)
 
 - **목표**: 통합 스케줄 **월간** 캘린더에서 해당 일정에 **미해소(미처리) 내담자 특이사항**이 있음을 한눈에 알 수 있게 한다.
-- **API 계약**: `GET /api/v1/schedules/admin` 응답 `ScheduleResponse`에 **`clientScheduleNotesUnresolvedCount`** (0 이상 정수) 포함; 집계는 `ClientScheduleNoteRepository.countUnresolvedByScheduleIdsGrouped` 기준(`tenantId` + `scheduleId IN` + `resolvedAt IS NULL` + `isDeleted=false`).
-- **UI**: `ScheduleCalendarView`에서 레이아웃이 **`integratedMonthEventLayout`**일 때, 위 카운트가 0보다 크면 이벤트에 클래스 **`mg-v2-ad-calendar-event--client-notes-unresolved`**를 부여하고, 툴팁·`aria` 등에 **` · 미해소 N건`** 형태로 노출한다. **취소·휴가** 이벤트는 이 강조 규칙에서 **제외**한다.
+- **API 계약 (옵션 C, 이원 필드)**:
+  - **`clientScheduleNotesUnresolvedCount`**: 해당 **일정 PK(`schedule_id`)에 직결**된 미해소 건수. 집계: `ClientScheduleNoteRepository.countUnresolvedByScheduleIdsGrouped` (`tenantId` + `scheduleId IN` + `resolvedAt IS NULL` + `isDeleted=false`).
+  - **`clientScheduleNotesClientWideUnresolvedCount`**: 해당 **내담자(`clientId`) 기준 전체** 미해소 건수(다른 일정·매칭 포함). 집계: `countUnresolvedByClientIdsGrouped` (`tenantId` + `clientId IN` + 동일 미해소·미삭제 조건). `clientId` 없으면 0.
+- **UI**: `ScheduleCalendarView` + **`integratedMonthEventLayout`**일 때, **직결 건수 > 0**이면 클래스 **`mg-v2-ad-calendar-event--client-notes-unresolved`**(경고 Dot) 및 툴팁 **` · 미해소 N건`** 또는 **` · 이 일정 미해소 N건 · 내담자 전체 M건`**. **직결 0·내담자 전체만 > 0**이면 **`mg-v2-ad-calendar-event--client-notes-client-wide`**(정보 톤 Dot) 및 **` · 내담자 미해소 M건`**. **취소·휴가**는 제외.
 - **위임**: 필드·집계·표시 로직 변경·회귀는 **core-coder**; 월간 뷰에서 위 조건(숫자 0/양수, 취소·휴가 제외, 접근성 문구) 검증은 **core-tester**(§12·필요 시 E2E/수동 시나리오에 한 줄 추가).
+
+### 12.3 Phase 1.1 (2026 배치)
+
+- **월간 통합 레이아웃 아이콘**: 월간 뷰에서 lucide `AlertCircle`(일정 직결 우선) 및 `Info`(내담자 전체만) 우측 아이콘 표시.
+- **CSS 클래스**: `mg-v2-ad-calendar-event__unresolved-icon` 등 적용 (경로: `frontend/src/components/admin/mapping-management/IntegratedMatchingSchedule.css` 등).
+- **모달 상단 요약**: `ScheduleClientNotesSection` 상단에 "직결 N건 / 내담자 전체 M건" 요약 정보 노출.
+- **데이터 전달**: `UnifiedScheduleComponent`의 `handleEventClick` 로직에서 `scheduleData`에 이원 카운트(`clientScheduleNotesUnresolvedCount`, `clientScheduleNotesClientWideUnresolvedCount`) 전달.
+
+---
+
+## 13. CI 연결 단계
+
+통합 스케줄 관련 E2E를 CI에 연결할 때 **준비와 실행을 두 묶음**으로 나눈다. **YAML 예시는 본 문서에 적지 않는다**(플래너는 분배·경로만; 워크플로 본문은 **core-coder**).
+
+**한계(한 문장)**: 통합 스케줄 스펙이 **8080(백엔드) 없으면 스킵**하는 식이면, CI 환경에서 해당 단계가 건너뛰어져 잡이 **항상 녹색**일 수 있고, 그 경우 녹색이 **실제 통합 스케줄 회귀 통과**를 의미하지 않을 수 있다.
+
+### 13.1 1단계(병렬 준비)
+
+- **explore**: E2E·워크플로가 의존하는 **스펙·스킵 조건·헬퍼·README** 경로를 정리한다.
+- **core-deployer**: `.github/workflows/`에 둘 **워크플로 초안**(트리거·job 구성). **`.github/workflows/e2e-consultation-log-smoke.yml`**의 **시크릿 게이트**·**fork 안전** 패턴을 **명시적으로 참조**해 설계한다.
+- **본 문서 갱신**: 본 파일 §13 및 [KR 공휴일 SSOT](./INTEGRATED_SCHEDULE_KR_HOLIDAYS_ORCHESTRATION.md) §7에 동일 단계·경로를 맞춘다.
+
+### 13.2 2단계(병렬 실행)
+
+- **core-coder**: **`.github/workflows/e2e-integrated-schedule-smoke.yml`** 를 **신규**로 두거나 **기존 워크플로를 확장**한다(파일 본문은 코더 산출).
+- **core-tester**: 로컬 재현 절차와 **문서상 시크릿 매트릭스**(README·워크플로와 불일치 없게)를 갱신·검증한다.
+
+### 13.3 완료 보고 시 경로(bullet)
+
+- `docs/project-management/2026-04-28/INTEGRATED_SCHEDULE_CLIENT_NOTES_ORCHESTRATION.md`
+- `docs/project-management/2026-04-28/INTEGRATED_SCHEDULE_KR_HOLIDAYS_ORCHESTRATION.md`
+- `.github/workflows/e2e-integrated-schedule-smoke.yml` (코더 산출·존재 시)
+- `.github/workflows/e2e-consultation-log-smoke.yml` (시크릿 게이트·fork 안전 **참조 전용**)
 
 ---
 

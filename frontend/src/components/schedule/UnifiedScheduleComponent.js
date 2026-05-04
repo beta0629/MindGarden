@@ -23,10 +23,14 @@ import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
 import {
+  CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
   CALENDAR_EXTENDED_TYPE_VACATION,
+  CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD,
   CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD,
+  parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount
 } from '../../constants/schedule';
+import { KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS } from '../../utils/krPublicHolidays';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 
@@ -448,7 +452,11 @@ const UnifiedScheduleComponent = ({
                             description: schedule.description,
                             [CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]: parseClientScheduleNotesUnresolvedCount(
                                 schedule[CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]
-                            )
+                            ),
+                            [CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]:
+                                parseClientScheduleNotesClientWideUnresolvedCount(
+                                    schedule[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
+                                )
                         }
                     };
                 }).filter(event => event !== null); // null 제거
@@ -556,7 +564,11 @@ const UnifiedScheduleComponent = ({
                                 description: schedule.description,
                                 [CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]: parseClientScheduleNotesUnresolvedCount(
                                     schedule[CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]
-                                )
+                                ),
+                                [CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]:
+                                    parseClientScheduleNotesClientWideUnresolvedCount(
+                                        schedule[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
+                                    )
                             }
                         };
                     }).filter(event => event !== null); // null 제거
@@ -574,7 +586,11 @@ const UnifiedScheduleComponent = ({
             // 성능 개선: 불필요한 API 호출 제거
             const vacationEvents = [];
 
-            const allEvents = [...scheduleEvents, ...vacationEvents];
+            const allEvents = [
+                ...scheduleEvents,
+                ...vacationEvents,
+                ...KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS
+            ];
             setEvents(allEvents);
             console.log('📅 모든 이벤트 데이터 로드 완료:', allEvents);
         } catch (error) {
@@ -692,6 +708,10 @@ const UnifiedScheduleComponent = ({
         console.log('📋 이벤트 클릭:', info.event.title);
         
         const { event } = info;
+
+        if (event.extendedProps?.type === CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY) {
+            return;
+        }
         
         if (event.extendedProps.type === CALENDAR_EXTENDED_TYPE_VACATION) {
             console.log('🏖️ 휴가 이벤트 클릭');
@@ -789,7 +809,9 @@ const UnifiedScheduleComponent = ({
             date: sessionDateStr || undefined,
             apiDate: sessionDateStr || undefined,
             apiStartTime: apiStartHm,
-            apiEndTime: apiEndHm
+            apiEndTime: apiEndHm,
+            [CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]: event.extendedProps[CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD],
+            [CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]: event.extendedProps[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
         };
 
         setSelectedSchedule(scheduleData);
@@ -800,6 +822,12 @@ const UnifiedScheduleComponent = ({
         console.log('🔄 이벤트 이동:', info.event.title);
         
         const { event } = info;
+
+        if (event.extendedProps?.type === CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY) {
+            info.revert();
+            return;
+        }
+
         const status = event.extendedProps?.status;
 
         // 완료된 스케줄은 드래그 이동 불가

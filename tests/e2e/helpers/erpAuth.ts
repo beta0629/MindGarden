@@ -1,6 +1,14 @@
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
-import { test as playwrightTest } from '@playwright/test';
+import { test as playwrightTest, request as playwrightApiRequest } from '@playwright/test';
 import type { Page, TestInfo } from '@playwright/test';
+
+/**
+ * 로컬 E2E 전제: Spring API가 이 베이스 URL에서 수신한다.
+ * 포트·호스트 문자열은 본 상수만 사용한다. 기동 순서·환경: `tests/e2e/README.md`.
+ */
+export const LOCAL_E2E_BACKEND_API_BASE_URL = 'http://localhost:8080';
+
+const LOCAL_BACKEND_PROBE_TIMEOUT_MS = 2500;
 
 /**
  * 로그인 후 허용 경로 prefix (frontend/src/App.js, frontend/src/utils/dashboardUtils.js).
@@ -216,6 +224,54 @@ export function skipWhenCiMissingE2eCredentials(): void {
     true,
     'CI: E2E_TEST_EMAIL·E2E_TEST_PASSWORD(또는 TEST_USERNAME·TEST_PASSWORD)를 Secrets에 설정하세요. tests/e2e/README.md 참고.'
   );
+}
+
+function isLocalBackendProbeUnreachableError(err: unknown): boolean {
+  if (!(err instanceof Error)) {
+    return /ECONNREFUSED|ETIMEDOUT|timeout|timed out|ERR_CONNECTION_REFUSED/i.test(
+      String(err)
+    );
+  }
+  if (err.name === 'TimeoutError') {
+    return true;
+  }
+  const msg = err.message;
+  if (/timeout|timed out/i.test(msg)) {
+    return true;
+  }
+  if (/ECONNREFUSED|ETIMEDOUT|ERR_CONNECTION_REFUSED|connect ECONNREFUSED/i.test(msg)) {
+    return true;
+  }
+  const code = (err as NodeJS.ErrnoException).code;
+  return code === 'ECONNREFUSED' || code === 'ETIMEDOUT';
+}
+
+/**
+ * 로컬에서 백엔드(8080) 미기동 시 연쇄 실패 대신 스킵.
+ * `CI=true`일 때는 호출하지 않음(프로브 없음, CI는 README·Secrets 전제로 실패 유지).
+ */
+export async function skipWhenLocalBackend8080Down(): Promise<void> {
+  if (process.env.CI === 'true') {
+    return;
+  }
+  const ctx = await playwrightApiRequest.newContext({
+    timeout: LOCAL_BACKEND_PROBE_TIMEOUT_MS,
+  });
+  try {
+    await ctx.get(LOCAL_E2E_BACKEND_API_BASE_URL, {
+      timeout: LOCAL_BACKEND_PROBE_TIMEOUT_MS,
+    });
+  } catch (err) {
+    if (!isLocalBackendProbeUnreachableError(err)) {
+      throw err;
+    }
+    playwrightTest.skip(
+      true,
+      `로컬 백엔드(${LOCAL_E2E_BACKEND_API_BASE_URL})에 연결할 수 없습니다. API(8080) 기동 후 재실행하세요. tests/e2e/README.md 기동 절 참고.`
+    );
+  } finally {
+    await ctx.dispose();
+  }
 }
 
 /**

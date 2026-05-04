@@ -36,7 +36,7 @@
 
 ---
 
-## 루트 워크플로 요약 (`.github/workflows/*.yml` 32개)
+## 루트 워크플로 요약 (`.github/workflows/*.yml` 33개)
 
 표는 배포·CI 중심 열거이며, 전체 워크플로 목록은 `.github/workflows/` 디렉터리를 참조한다.
 
@@ -60,7 +60,9 @@
 | `deploy-onboarding-dev.yml` | 온보딩 개발 | `develop`+paths | — | — | |
 | `deploy-nginx-dev.yml` | Nginx 설정 개발 | `develop`+`config/nginx/**` | — | — | |
 | `deploy-production.yml` | 코어 운영 통합 | `main` push(코어 Java 온보딩 제외·`pom`·`db/migration`·`deployment/application-production.yml`·`sql/**`·`database/schema/**`·`config/nginx/**`·해당 workflow), `workflow_dispatch`(`deploy_ref`, main 가드) | — | — | 백엔드: **블루그린**(비활성 슬롯 기동·헬스·Nginx upstream 스니펫·`reload`) — [PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md](./PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md). push 시 checkout `github.sha` |
+| `deploy-frontend-prod.yml` | Core CRA 프론트만 운영 정적 배포 | `main`+`frontend/**`, dispatch(`deploy_ref`, main 가드) | — | — | JAR·DB 없이 SPA만 갱신; `deploy-production`과 별도 |
 | `deploy-ops-backend-prod.yml` | Ops 백엔드 운영 | `main`+paths, dispatch | — | — | |
+| `deploy-procedures-production-mysql.yml` | 운영 MySQL 표준 프로시저 단독 적용 | `workflow_dispatch`+입력 `confirm=CONFIRM` | — | — | `deploy-procedures-prod`(개발 SSH·DEV_DB)와 역할 분리 |
 | `deploy-procedures-dev.yml` | 표준 프로시저 개발 | `develop`+DB paths | [`deploy-procedures-prod.yml`](../../.github/workflows/deploy-procedures-prod.yml) | — | |
 | `deploy-procedures-prod.yml` | 표준 프로시저 운영 | `workflow_dispatch` | 상위와 쌍 | — | **개발 서버 SSH → 그 서버에서 mysql로 개발 DB(`DEV_DB_*`) 적용** — 운영 앱→개발 DB 3306 직접 연결 아님. |
 | `deploy-dev.yml` | 통합 개발 배포 | `workflow_dispatch`만 | — | — | **DEPRECATED** (주석·푸시 비활성) |
@@ -74,15 +76,19 @@
 | `e2e-trinity-build-smoke.yml` | Trinity 빌드 스모크 | PR/push main·develop, paths `frontend-trinity/**` 등, `workflow_dispatch` | — | — | `frontend-trinity`에서 `npm ci` → `npm run build:ci` (`ESLINT_NO_DEV_ERRORS=true next build`). Playwright 없음. Secrets 불필요. |
 | [`e2e-erp-smoke.yml`](../../.github/workflows/e2e-erp-smoke.yml) | ERP 라우트 정적 검증(`npm run verify:erp`) + Playwright 리다이렉트·스모크(로그인 불필요, `tests/e2e/tests/erp/` 일부) | PR `main`/`develop`, paths: `frontend/src/components/erp/**`, `frontend/src/App.js`, `tests/e2e/tests/erp/**`, `tests/e2e/playwright.config.ts`, `frontend/scripts/verify-erp-navigate-targets.mjs`, `frontend/scripts/verify-erp-menu-items-sync.mjs`, `frontend/src/components/dashboard-v2/constants/menuItems.js`, `frontend/package.json`, `workflow_dispatch` | — | — | Secrets 불필요. 상세 시나리오·QA 연계: `docs/planning/ERP_TEST_SCENARIOS.md`, `docs/project-management/ONGOING_WORK_MASTER_PROGRESS_CHECKLIST.md` QA-02. |
 | [`e2e-consultation-log-smoke.yml`](../../.github/workflows/e2e-consultation-log-smoke.yml) | 상담일지 모달 어드민 스모크(`tests/e2e/tests/admin/consultation-log-modal-smoke.spec.ts`, Chromium) | PR `main`/`develop` + paths(스펙·playwright 설정·`ConsultationLogModal`·로컬 자동저장 훅·드래프트 어댑터·`consultationLogAutosave*` 상수), `workflow_dispatch` | — | — | **백엔드·로그인 전제 — 워크플로에 백엔드 기동 없음.** 잡 조건: `secrets.E2E_TEST_EMAIL` 또는 `secrets.E2E_ADMIN_USERNAME` 중 하나(`.cursor/skills/core-solution-testing/SKILL.md` 권장: `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD`). 선택 `E2E_BASE_URL`. `BASE_URL` 기본 `http://localhost:3000`. |
+| [`e2e-integrated-schedule-smoke.yml`](../../.github/workflows/e2e-integrated-schedule-smoke.yml) | 통합 스케줄 내담자 특이사항·공휴일 범례 스모크(`tests/e2e/tests/admin/integrated-schedule-client-notes.spec.ts`, Chromium) | PR `main`/`develop` + paths(스펙·playwright·`erpAuth`·`react130ConsoleGate`·`IntegratedMatchingSchedule`·`UnifiedScheduleComponent`·캘린더/범례·`ScheduleDetailModal`·`ScheduleClientNotesSection`·`schedule` 상수·`krPublicHolidays`·`scheduleRescheduleUtils` 등), `workflow_dispatch` | — | — | 상담일지 스모크와 동형: 시크릿 없으면 이후 스텝 스킵·잡 성공. `E2E_TEST_EMAIL` 또는 `E2E_ADMIN_USERNAME` + 비밀번호. 선택 `E2E_BASE_URL`. |
 | `ci-bi-protection.yml` | CI/BI 보호 | PR/push main·develop | — | — | |
 | `ops-frontend.yml` | Ops 프론트 CI | push/PR `frontend-ops/**` | — | — | |
 | `ops-backend.yml` | Ops 백엔드 CI | push/PR `backend-ops/**` | — | — | |
 | `ssl-auto-renewal-check.yml` | SSL 갱신 점검 | `workflow_dispatch`(dev/prod 선택) | — | — | |
 | `check-dev-server-logs.yml` | 개발 서버 로그 | `workflow_dispatch` | — | — | |
+| `ops-health-snapshot.yml` | 운영 코어·OPS 헬스·디스크 등 읽기 전용 스냅샷 | `workflow_dispatch`, `schedule`(UTC 0·12시) | — | — | 배포 워크플로에서 호출하지 않음 |
 | `fix-procedure-direct.yml` | 프로시저 직수정 | `workflow_dispatch` | — | — | |
 | `fix-production-db.yml` | 운영 DB 수정(확인 입력) | `workflow_dispatch` | — | — | 수동·위험 작업 |
 | `emergency-db-cleanup.yml` | 긴급 DB 정리 | `workflow_dispatch` | — | — | |
 | `diagnose-onboarding-issues.yml` | 온보딩 진단 | `workflow_dispatch` | — | — | |
+
+**Playwright(E2E) CI 범위(배포·게이트 관점)**: `npx playwright test`를 호출하는 워크플로는 **`e2e-erp-smoke.yml`**, **`e2e-consultation-log-smoke.yml`**, **`e2e-integrated-schedule-smoke.yml`** 세 개다. 통합 스케줄·클라이언트 노트·공휴일 범례 회귀는 **`e2e-integrated-schedule-smoke.yml`** 의 paths·시크릿 게이트 하에서 PR에 한해 실행된다(시크릿 없으면 스킵·성공). 기획·오케스트레이션 전용 문서(`INTEGRATED_SCHEDULE_*_ORCHESTRATION.md` 등)는 플래너 경로로 관리하며, 본 인덱스는 워크플로 사실만 기록한다.
 
 ---
 

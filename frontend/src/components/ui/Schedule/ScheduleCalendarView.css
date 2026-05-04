@@ -63,11 +63,11 @@
 /* 취소된 예약: 별도 표기 (일반/완료와 시각적 구분) */
 .mg-v2-ad-calendar-event--cancelled {
     border-left-color: var(--mg-error-500) !important;
-    background-color: var(--mg-gray-100);
+    background-color: var(--mg-color-surface-sub);
 }
 .mg-v2-ad-calendar-event--cancelled .mg-v2-ad-calendar-event__client {
     text-decoration: line-through;
-    color: var(--mg-gray-600);
+    color: var(--mg-color-text-secondary);
 }
 .mg-v2-ad-calendar-event__badge--cancelled {
     flex-shrink: 0;
@@ -99,14 +99,14 @@
 
 .mg-v2-ad-calendar-event--compact .mg-v2-ad-calendar-event__time {
     flex-shrink: 0;
-    font-size: 10px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
 }
 
 .mg-v2-ad-calendar-event--compact .mg-v2-ad-calendar-event__client {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
     font-weight: 600;
-    color: var(--mg-color-text-main, var(--mg-gray-800));
+    color: var(--mg-color-text-main);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -120,9 +120,9 @@
 }
 
 .mg-v2-ad-calendar-event__time {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
     font-weight: 600;
-    color: var(--mg-color-text-secondary, var(--mg-gray-600));
+    color: var(--mg-color-text-secondary);
 }
 
 .mg-v2-ad-calendar-event__status {
@@ -152,17 +152,17 @@
 .mg-v2-ad-calendar-event__client {
     font-size: 13px;
     font-weight: 700;
-    color: var(--mg-color-text-main, var(--mg-gray-800));
+    color: var(--mg-color-text-main);
 }
 
 .mg-v2-ad-calendar-event__consultant {
-    font-size: 11px;
-    color: var(--mg-color-text-secondary, var(--mg-gray-600));
+    font-size: var(--font-size-xs);
+    color: var(--mg-color-text-secondary);
 }
 
 /* 휴가 이벤트 스타일 */
 .mg-v2-ad-calendar-event--vacation {
-    background-color: var(--mg-gray-100);
+    background-color: var(--mg-color-surface-sub);
     border: 1px dashed var(--cs-brown-300);
     border-left-width: 1px;
     min-height: auto;
@@ -187,4 +187,24 @@
     font-size: 12px;
     font-weight: 600;
     color: var(--color-secondary-dark);
+}
+
+/* 한국 공휴일(참고): FullCalendar background 레이어 — 일정·Dot보다 뒤(최하단), 토큰만 */
+.mg-v2-schedule-calendar-view .fc .fc-bg-event.mg-v2-ad-calendar-event--kr-public-holiday-bg {
+    background-color: var(--mg-color-surface-main);
+    border-left: var(--mg-spacing-xs, var(--spacing-xs)) solid var(--mg-color-primary-main);
+    margin: 0;
+    opacity: 0.62;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.mg-v2-schedule-calendar-view .fc-daygrid-day-events {
+    position: relative;
+    z-index: 1;
+}
+
+.mg-v2-schedule-calendar-view .fc-timegrid-col-events {
+    position: relative;
+    z-index: 1;
 }

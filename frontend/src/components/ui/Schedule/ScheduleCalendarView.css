@@ -196,7 +196,7 @@
  */
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc .fc-bg-event.mg-v2-ad-calendar-event--kr-public-holiday-bg {
     background-color: var(--mg-color-surface-main);
-    border-left: var(--mg-spacing-xs, var(--spacing-xs)) solid var(--mg-color-primary-main);
+    border-left: var(--mg-spacing-xs, var(--spacing-xs)) solid var(--mg-color-primary-main, var(--color-primary-main, var(--mg-primary-500)));
     margin: 0;
     opacity: 0.72;
     pointer-events: none;
@@ -206,22 +206,22 @@
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday {
     background-color: color-mix(
         in srgb,
-        var(--mg-color-primary-main) 22%,
+        var(--mg-color-primary-main, var(--color-primary-main, var(--mg-primary-500))) 22%,
         var(--mg-color-background-main, var(--mg-color-surface-main))
     ) !important;
-    box-shadow: inset var(--mg-spacing-xs, 4px) 0 0 0 var(--mg-color-primary-main) !important;
+    box-shadow: inset var(--mg-spacing-xs, 4px) 0 0 0 var(--mg-color-primary-main, var(--color-primary-main, var(--mg-primary-500))) !important;
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday a.fc-daygrid-day-number,
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-number {
-    color: var(--mg-color-primary-main) !important;
+    color: var(--mg-color-primary-main, var(--color-primary-main, var(--mg-primary-500))) !important;
     font-weight: 700;
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday:hover {
     background-color: color-mix(
         in srgb,
-        var(--mg-color-primary-main) 28%,
+        var(--mg-color-primary-main, var(--color-primary-main, var(--mg-primary-500))) 28%,
         var(--mg-color-background-main, var(--mg-color-surface-main))
     ) !important;
 }

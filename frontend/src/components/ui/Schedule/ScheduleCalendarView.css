@@ -194,7 +194,7 @@
     background-color: var(--mg-color-surface-main);
     border-left: var(--mg-spacing-xs, var(--spacing-xs)) solid var(--mg-color-primary-main);
     margin: 0;
-    opacity: 0.62;
+    opacity: 0.72;
     pointer-events: none;
     z-index: 0;
 }

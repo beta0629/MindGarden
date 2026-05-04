@@ -26,6 +26,18 @@ describe('krPublicHolidays', () => {
     });
     expect(신정.classNames).toContain('mg-v2-ad-calendar-event--kr-public-holiday-bg');
 
+    const 근로자의날 = byStart['2026-05-01'];
+    expect(근로자의날).toMatchObject({
+      id: 'kr-ph-2026-05-01',
+      title: '근로자의 날',
+      display: 'background',
+      extendedProps: {
+        type: CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
+        holidayName: '근로자의 날'
+      }
+    });
+    expect(근로자의날.classNames).toContain('mg-v2-ad-calendar-event--kr-public-holiday-bg');
+
     const 어린이날 = byStart['2026-05-05'];
     expect(어린이날.title).toBe('어린이날');
     expect(어린이날.extendedProps.type).toBe(CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY);

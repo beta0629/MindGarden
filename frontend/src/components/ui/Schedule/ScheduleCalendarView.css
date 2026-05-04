@@ -199,14 +199,34 @@
     z-index: 0;
 }
 
-/* 공휴일: dayCellClassNames — fc-bg-event 미삽입·레이아웃 이슈 시에도 월간 셀에 표시 */
-.mg-v2-schedule-calendar-view .fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-frame {
-    background-color: color-mix(in srgb, var(--mg-color-primary-main) 12%, var(--mg-color-background-main));
+/*
+ * 공휴일: dayCellClassNames — B0KlA가 td.fc-daygrid-day에 card-bg를 직접 깔아 frame 틴트만으로는 거의 안 보임.
+ * .mg-v2-ad-b0kla(부모)까지 포함해 특이도를 올리고, td 배경 + inset 띠(범례 스와치와 동일 계열)로 가시성 확보.
+ */
+.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday {
+    background-color: color-mix(
+        in srgb,
+        var(--mg-color-primary-main) 22%,
+        var(--mg-color-background-main, var(--mg-color-surface-main))
+    ) !important;
+    box-shadow: inset var(--mg-spacing-xs, 4px) 0 0 0 var(--mg-color-primary-main);
 }
 
-.mg-v2-schedule-calendar-view .fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-number {
-    color: var(--mg-color-primary-main);
-    font-weight: 600;
+.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-number {
+    color: var(--mg-color-primary-main) !important;
+    font-weight: 700;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday:hover {
+    background-color: color-mix(
+        in srgb,
+        var(--mg-color-primary-main) 28%,
+        var(--mg-color-background-main, var(--mg-color-surface-main))
+    ) !important;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-frame {
+    background-color: transparent;
 }
 
 .mg-v2-schedule-calendar-view .fc-daygrid-day-events {

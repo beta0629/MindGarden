@@ -492,14 +492,7 @@
   color: var(--mg-info-500);
 }
 
-/* 공휴일(참고) 배경: Dot·일정보다 뒤 — 토큰·레이어만 */
-.integrated-schedule__calendar-wrapper--integrated .fc-daygrid-day-bg .fc-bg-event.mg-v2-ad-calendar-event--kr-public-holiday-bg {
-  z-index: 0;
-}
-
-.integrated-schedule__calendar-wrapper--integrated .fc-daygrid-day-events {
-  z-index: 1;
-}
+/* 공휴일·daygrid 레이어(z-index 등): ScheduleCalendarView.css — [data-calendar-skin="integrated"] .mg-v2-schedule-calendar-view 하위로만 정의(SSOT) */
 
 @media (max-width: var(--mg-breakpoint-lg, 1024px)) {
   .integrated-schedule__sidebar {

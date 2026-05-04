@@ -1,7 +1,7 @@
 # 통합 스케줄 — 한국 공휴일 레이어 SSOT·후속 분배
 
 **작성일**: 2026-05-04  
-**개정**: 2026-05-04 (§7 CI 연결 단계: 분배·참조 워크플로·완료 보고 경로)  
+**개정**: 2026-05-04 (§6.1 캘린더 CSS 아키텍처 교차 링크) · 2026-05-04 (§7 CI 연결 단계: 분배·참조 워크플로·완료 보고 경로)  
 **주관**: core-planner  
 **상태**: **P2 구현 완료** — 캘린더 배경 레이어·표시 경계는 코드·테스트 산출물 기준. **연도·소스 전환**은 본 문서 체크리스트 후 **core-coder → core-tester → (필요 시) core-deployer** 순으로 위임.
 
@@ -58,6 +58,10 @@
 ## 6. 교차 참고
 
 - 통합 스케줄 **내담자 특이사항** 오케스트레이션: [INTEGRATED_SCHEDULE_CLIENT_NOTES_ORCHESTRATION.md](./INTEGRATED_SCHEDULE_CLIENT_NOTES_ORCHESTRATION.md) (캘린더·모달 맥락; 공휴일은 본 SSOT). **CI 연결 단계** 상세·완료 보고 경로는 동 문서 §13과 본 문서 §7을 함께 본다.
+
+### 6.1 FullCalendar 스타일·스코프·토큰 (데이터 SSOT와 분리)
+
+- **시각·CSS 충돌·단일 스코프·`!important` 정책**은 데이터 본 문서가 아니라 **[INTEGRATED_SCHEDULE_CALENDAR_CSS_ARCHITECTURE_ORCHESTRATION.md](./INTEGRATED_SCHEDULE_CALENDAR_CSS_ARCHITECTURE_ORCHESTRATION.md)** 에서 주관한다. **한 줄**: 공휴일 **이벤트/맵 SSOT는 본 문서**, **셀·색·특이도 전쟁은 동 문서 §2–§5**에서 정리·위임한다.
 
 ---
 

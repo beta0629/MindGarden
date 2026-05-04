@@ -360,7 +360,11 @@ const IntegratedMatchingSchedule = () => {
           )}
         </aside>
 
-        <main className="integrated-schedule__calendar-wrapper integrated-schedule__calendar-wrapper--integrated" data-layout-context="integrated-schedule">
+        <main
+          className="integrated-schedule__calendar-wrapper integrated-schedule__calendar-wrapper--integrated"
+          data-layout-context="integrated-schedule"
+          data-calendar-skin="integrated"
+        >
           <div className="integrated-schedule__calendar-content">
             <UnifiedScheduleComponent
               userRole={calendarUserRole}

@@ -1,7 +1,7 @@
 # 통합 스케줄 — 내담자 특이사항·메모 CRUD 오케스트레이션
 
 **작성일**: 2026-04-28  
-**개정**: 2026-05-05 (§12.1 표 B8 비고: [e2e-integrated-schedule-smoke.yml](../../../.github/workflows/e2e-integrated-schedule-smoke.yml)·PR paths 변경 시 해당 job 실행) · 2026-05-04 (§13 CI 연결 단계: 병렬 준비·실행·참조 워크플로·완료 보고 경로) · 2026-05-04 (§1 범위 표: [KR 공휴일 SSOT](./INTEGRATED_SCHEDULE_KR_HOLIDAYS_ORCHESTRATION.md) 교차 링크) · 2026-05-04 (§10·§12.2: 월간 미해소 인디케이터 1차 구현 문서 동기화) · 2026-04-28 (코드 앵커 검증·정책 보강·구현·검증 체크리스트 추가)  
+**개정**: 2026-05-04 (§1.1 [캘린더 CSS 아키텍처](./INTEGRATED_SCHEDULE_CALENDAR_CSS_ARCHITECTURE_ORCHESTRATION.md) 교차 링크: 스코프·토큰·공휴일 시각 위임) · 2026-05-05 (§12.1 표 B8 비고: [e2e-integrated-schedule-smoke.yml](../../../.github/workflows/e2e-integrated-schedule-smoke.yml)·PR paths 변경 시 해당 job 실행) · 2026-05-04 (§13 CI 연결 단계: 병렬 준비·실행·참조 워크플로·완료 보고 경로) · 2026-05-04 (§1 범위 표: [KR 공휴일 SSOT](./INTEGRATED_SCHEDULE_KR_HOLIDAYS_ORCHESTRATION.md) 교차 링크) · 2026-05-04 (§10·§12.2: 월간 미해소 인디케이터 1차 구현 문서 동기화) · 2026-04-28 (코드 앵커 검증·정책 보강·구현·검증 체크리스트 추가)  
 **주관**: core-planner  
 **상태**: **구현 준비** (코드 변경은 **core-coder** 위임, 검증은 **core-tester**)
 
@@ -20,6 +20,7 @@
 | **In (1차)** | 통합 스케줄 UI 앵커(`IntegratedMatchingSchedule.js` → `UnifiedScheduleComponent` → 이벤트 클릭 시 **`ScheduleDetailModal`**)에서 **내담자 맥락의 특이사항** CRUD, 멀티테넌트·역할(ADMIN/STAFF), 표시 경계·React #130 준수, 운영 반영 전 하드코딩·게이트. 신규 API는 프론트에서 **`StandardizedApi`** 로만 호출(스케줄 도메인 내 `ajax` 혼용 지양). |
 | **Out (1차)** | 내담자 포털(본인) 노출, 결제/ERP 자동 연동, 푸시·알림 전용 채널, 일반 `AdminSchedulesPage` 전면 개편. |
 | **KR 공휴일(SSOT)** | 캘린더 **관공서 공휴일 배경 레이어**(P2)·연도·소스·확장 위임 → [INTEGRATED_SCHEDULE_KR_HOLIDAYS_ORCHESTRATION.md](./INTEGRATED_SCHEDULE_KR_HOLIDAYS_ORCHESTRATION.md). |
+| **§1.1 캘린더 CSS·시각** | FullCalendar **다파일 충돌·스코프·토큰·`!important`** 는 데이터 SSOT와 분리 → [INTEGRATED_SCHEDULE_CALENDAR_CSS_ARCHITECTURE_ORCHESTRATION.md](./INTEGRATED_SCHEDULE_CALENDAR_CSS_ARCHITECTURE_ORCHESTRATION.md) (문제 요약·소스 맵·위임 순서·완료 조건). |
 | **Phase 2 (후보)** | 통합 스케줄 **월간** 미해소 **도트·건수 표시(1차)**는 §12.2·10절 정리대로 **본 에픽에 동기화**됨. 그 외 **전역 배지·주간/일간 동등 강화·“이번 주 약속” 필터·대시보드 위젯** 등은 별도 스펙(아래 10절). |
 
 ### 성공 기준

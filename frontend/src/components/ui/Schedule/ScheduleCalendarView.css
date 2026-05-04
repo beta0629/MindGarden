@@ -189,8 +189,8 @@
     color: var(--color-secondary-dark);
 }
 
-/* 한국 공휴일(참고): FullCalendar background 레이어 — 일정·Dot보다 뒤(최하단), 토큰만 */
-.mg-v2-schedule-calendar-view .fc .fc-bg-event.mg-v2-ad-calendar-event--kr-public-holiday-bg {
+/* 한국 공휴일(참고): FullCalendar background 레이어 — 통합 스케줄 스킨에서만 적용([data-calendar-skin="integrated"]) */
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar-view .fc .fc-bg-event.mg-v2-ad-calendar-event--kr-public-holiday-bg {
     background-color: var(--mg-color-surface-main);
     border-left: var(--mg-spacing-xs, var(--spacing-xs)) solid var(--mg-color-primary-main);
     margin: 0;
@@ -201,35 +201,35 @@
 
 /*
  * 공휴일: dayCellClassNames — B0KlA가 td.fc-daygrid-day에 card-bg를 직접 깔아 frame 틴트만으로는 거의 안 보임.
- * .mg-v2-ad-b0kla(부모)까지 포함해 특이도를 올리고, td 배경 + inset 띠(범례 스와치와 동일 계열)로 가시성 확보.
+ * 통합 스킨 하에서만 td 배경 + inset 띠(범례 스와치와 동일 계열)로 가시성 확보.
  */
-.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday {
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday {
     background-color: color-mix(
         in srgb,
         var(--mg-color-primary-main) 22%,
         var(--mg-color-background-main, var(--mg-color-surface-main))
-    ) !important;
+    );
     box-shadow: inset var(--mg-spacing-xs, 4px) 0 0 0 var(--mg-color-primary-main);
 }
 
-.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-number {
-    color: var(--mg-color-primary-main) !important;
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-number {
+    color: var(--mg-color-primary-main);
     font-weight: 700;
 }
 
-.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday:hover {
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday:hover {
     background-color: color-mix(
         in srgb,
         var(--mg-color-primary-main) 28%,
         var(--mg-color-background-main, var(--mg-color-surface-main))
-    ) !important;
+    );
 }
 
-.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-frame {
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar-view .fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-frame {
     background-color: transparent;
 }
 
-.mg-v2-schedule-calendar-view .fc-daygrid-day-events {
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar-view .fc-daygrid-day-events {
     position: relative;
     z-index: 1;
 }

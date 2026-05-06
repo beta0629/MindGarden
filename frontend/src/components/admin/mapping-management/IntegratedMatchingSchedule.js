@@ -38,6 +38,10 @@ import {
   isOngoingMapping,
   getMappingDate
 } from './constants/integratedScheduleSidebarFilterConstants';
+import {
+  assertExternalMappingDropAllowed,
+  assertDropDateNotPast
+} from '../../../utils/scheduleExternalDropGuards';
 
 const IntegratedMatchingSchedule = () => {
   const { user } = useSession();
@@ -127,22 +131,18 @@ const IntegratedMatchingSchedule = () => {
   }, [viewFilter, filteredMappings.length, scheduleableCount, mappings]);
 
   const handleDropFromExternal = (date, mappingPayload) => {
-    if (!mappingPayload?.consultantId || !mappingPayload?.clientId) {
-      notificationManager.error('매칭 정보가 올바르지 않습니다.');
+    const mappingCheck = assertExternalMappingDropAllowed(mappingPayload);
+    if (!mappingCheck.ok) {
+      if (mappingCheck.kind === 'invalid_payload') {
+        notificationManager.error(mappingCheck.userMessage);
+      } else {
+        notificationManager.warning(mappingCheck.userMessage);
+      }
       return;
     }
-    if (!canScheduleForMapping(mappingPayload)) {
-      notificationManager.warning('활성(ACTIVE) 매칭이면서 남은 회기가 있을 때만 스케줄 등록이 가능합니다.');
-      return;
-    }
-    // 과거 날짜 드롭 차단: 자정 기준 날짜만 비교
-    const dropDate = date instanceof Date ? date : new Date(date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dropDateOnly = new Date(dropDate);
-    dropDateOnly.setHours(0, 0, 0, 0);
-    if (dropDateOnly.getTime() < today.getTime()) {
-      notificationManager.warning('과거 날짜에는 예약할 수 없습니다.');
+    const dateCheck = assertDropDateNotPast(date);
+    if (!dateCheck.ok) {
+      notificationManager.warning(dateCheck.userMessage);
       return;
     }
     setPreFilledMapping({
@@ -389,6 +389,7 @@ const IntegratedMatchingSchedule = () => {
           userRole={calendarUserRole}
           userId={user?.id ?? undefined}
           onScheduleCreated={handleScheduleCreated}
+          onScheduleCreateFailed={loadMappings}
           preFilledMapping={preFilledMapping}
         />
       )}

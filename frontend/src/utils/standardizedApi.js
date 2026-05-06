@@ -209,7 +209,14 @@ class StandardizedApi {
         } else if (error.status === 404) {
             err = new Error(`요청한 리소스를 찾을 수 없습니다: ${endpoint}`);
         } else if (error.status >= 500) {
-            err = new Error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            const serverOrAjaxMessage =
+                error.message != null && String(error.message).trim()
+                    ? String(error.message).trim()
+                    : '';
+            err = new Error(
+                serverOrAjaxMessage
+                    || '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+            );
         } else {
             return error;
         }

@@ -1,0 +1,75 @@
+import {
+  assertExternalMappingDropAllowed,
+  assertDropDateNotPast,
+  EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE,
+  EXTERNAL_DROP_NOT_SCHEDULEABLE_MESSAGE,
+  EXTERNAL_DROP_PAST_DATE_MESSAGE
+} from '../scheduleExternalDropGuards';
+
+describe('scheduleExternalDropGuards', () => {
+  describe('assertExternalMappingDropAllowed', () => {
+    it('returns invalid_payload when consultantId is missing', () => {
+      const r = assertExternalMappingDropAllowed({
+        clientId: 'c1',
+        status: 'ACTIVE',
+        remainingSessions: 2
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('invalid_payload');
+      expect(r.userMessage).toBe(EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE);
+    });
+
+    it('returns invalid_payload when clientId is missing', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        status: 'ACTIVE',
+        remainingSessions: 2
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('invalid_payload');
+    });
+
+    it('returns not_scheduleable for ACTIVE with 0 remaining sessions', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'ACTIVE',
+        remainingSessions: 0
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('not_scheduleable');
+      expect(r.userMessage).toBe(EXTERNAL_DROP_NOT_SCHEDULEABLE_MESSAGE);
+    });
+
+    it('returns ok for ACTIVE with remaining sessions', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'ACTIVE',
+        remainingSessions: 1
+      });
+      expect(r).toEqual({ ok: true });
+    });
+  });
+
+  describe('assertDropDateNotPast', () => {
+    it('returns past_date for a date before today (midnight)', () => {
+      const r = assertDropDateNotPast(new Date('2000-01-01'));
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('past_date');
+      expect(r.userMessage).toBe(EXTERNAL_DROP_PAST_DATE_MESSAGE);
+    });
+
+    it('accepts ISO string same as Date for past', () => {
+      const r = assertDropDateNotPast('1999-06-15');
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('past_date');
+    });
+
+    it('returns ok for future date', () => {
+      const future = new Date();
+      future.setDate(future.getDate() + 14);
+      expect(assertDropDateNotPast(future)).toEqual({ ok: true });
+    });
+  });
+});

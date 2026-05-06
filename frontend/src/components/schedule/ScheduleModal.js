@@ -30,6 +30,7 @@ import { toDisplayString } from '../../utils/safeDisplay';
  */
 /**
  * @param {Object} [preFilledMapping] - 매칭 통합 화면에서 전달 시 상담사/내담자 자동 채움. { consultantId, clientId, consultantName?, clientName? }
+ * @param {() => void} [onScheduleCreateFailed] - 생성 실패 시(통합 화면 등) 부모 목록 갱신용
  */
 const ScheduleModalNew = ({
     isOpen,
@@ -39,6 +40,7 @@ const ScheduleModalNew = ({
     userRole,
     userId,
     onScheduleCreated,
+    onScheduleCreateFailed,
     preFilledMapping
 }) => {
     const [selectedConsultant, setSelectedConsultant] = useState(null);
@@ -174,7 +176,37 @@ const ScheduleModalNew = ({
             handleClose();
         } catch (error) {
             console.error('스케줄 생성 오류:', error);
-            notificationManager.error(error.message || '스케줄 생성 중 오류가 발생했습니다.');
+            const body = error?.response?.data;
+            const fromBody =
+                body && typeof body === 'object'
+                    ? (typeof body.message === 'string' && body.message.trim()
+                        ? body.message.trim()
+                        : (typeof body.error === 'string' && body.error.trim()
+                            ? body.error.trim()
+                            : ''))
+                    : '';
+            const fromMessage =
+                typeof error?.message === 'string' && error.message.trim()
+                    ? error.message.trim()
+                    : '';
+            const displayMessage =
+                fromBody || fromMessage || '스케줄 생성 중 오류가 발생했습니다.';
+            notificationManager.error(displayMessage);
+            if (
+                displayMessage.includes('회기') ||
+                displayMessage.includes('매칭')
+            ) {
+                notificationManager.warning(
+                    '목록을 새로고침한 뒤 다시 시도해 보세요.'
+                );
+            }
+            if (preFilledMapping && typeof onScheduleCreateFailed === 'function') {
+                try {
+                    onScheduleCreateFailed();
+                } catch (cbErr) {
+                    console.error('onScheduleCreateFailed:', cbErr);
+                }
+            }
         } finally {
             setLoading(false);
         }

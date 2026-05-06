@@ -412,6 +412,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (hasTimeConflict(consultantId, date, startTime, endTime, null)) {
             throw new RuntimeException("해당 시간대에 이미 스케줄이 존재합니다.");
         }
+
+        // createConsultantScheduleWithType과 동일: 저장 전 매칭·회기 사전 검증 (스케줄 행 없음)
+        if (!validateMappingForSchedule(consultantId, clientId)) {
+            throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
+        }
+        if (!validateRemainingSessions(consultantId, clientId)) {
+            throw new RuntimeException("사용 가능한 회기가 없습니다.");
+        }
         
         Schedule schedule = new Schedule();
         schedule.setConsultantId(consultantId);
@@ -439,16 +447,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("✅ 스케줄 저장 완료: id={}, tenantId={}, isDeleted={}", 
                 savedSchedule.getId(), savedSchedule.getTenantId(), savedSchedule.getIsDeleted());
         
-        // 표준화 2025-12-08: useSessionForMapping 실패해도 스케줄 저장은 유지
-        try {
-            useSessionForMapping(consultantId, clientId);
-            log.info("✅ 회기 사용 처리 완료: consultantId={}, clientId={}", consultantId, clientId);
-        } catch (Exception e) {
-            log.error("❌ 회기 사용 처리 실패 (스케줄은 저장됨): consultantId={}, clientId={}, error={}", 
-                    consultantId, clientId, e.getMessage(), e);
-            // 스케줄 저장은 이미 완료되었으므로 예외를 다시 던지지 않음
-            // 필요시 별도 알림이나 로깅만 수행
-        }
+        // 사전 검증 통과 후 회기 차감. 본 클래스 @Transactional 범위에서 실패 시 스케줄 저장까지 롤백.
+        // 사전 검증 직후 다른 요청이 회기를 소모하는 레이스는 별도(낙관적 락 등) — Phase 2 검토.
+        useSessionForMapping(consultantId, clientId);
+        log.info("✅ 회기 사용 처리 완료: consultantId={}, clientId={}", consultantId, clientId);
         
         log.info("✅ 상담사 스케줄 생성 완료 (상담유형 포함): ID {}, 상담유형: {}", savedSchedule.getId(), consultationType);
         return savedSchedule;

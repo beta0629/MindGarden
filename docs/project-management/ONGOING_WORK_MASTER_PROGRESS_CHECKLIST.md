@@ -236,7 +236,7 @@
 
 | ID | 항목 | 상태 | 비고 |
 |----|------|------|------|
-| SEC-01 | 공개 온보딩 API 보강 (Rate limit·쿨다운·CAPTCHA·모니터링) | 🔄 | **`TODO_ONBOARDING_PUBLIC_API_HARDENING`**: 레이트리밋·이메일 쿨다운·온보딩 CAPTCHA(백엔드·Trinity)·Micrometer·문서 ☑; 체크리스트 **후속**(다른 공개 `POST` CAPTCHA·제품·스키마) ☐. **엣지** `limit_req`·WAF·Grafana 알람·실서버 Nginx는 인프라 트랙 — `NGINX_RATE_LIMIT_PUBLIC_API.md`·`deploy-nginx-dev.yml` |
+| SEC-01 | 공개 온보딩 API 보강 (Rate limit·쿨다운·CAPTCHA·모니터링) | 🔄 | **`TODO_ONBOARDING_PUBLIC_API_HARDENING`**: 레이트리밋·이메일 쿨다운·온보딩 CAPTCHA(백엔드·Trinity)·Micrometer·문서 ☑; 앱 레이어 계정연동 경로 전용 429 JSON 메시지·로깅·단위 테스트 추가(2026-05-06). 체크리스트 **후속**(다른 공개 `POST` CAPTCHA·제품·스키마) ☐. **엣지** `limit_req`·WAF·Grafana 알람·실서버 Nginx는 인프라 트랙 — `NGINX_RATE_LIMIT_PUBLIC_API.md`·`deploy-nginx-dev.yml` |
 
 ---
 
@@ -299,7 +299,7 @@
 |------|-------------------|------|
 | 1. ERP | 0 / 5 (세부는 표 참고) | B1~B7·MGButton 배치 ☑; **P4-GLOBAL** 전역 `erpMgButtonProps` ☑ (2026-04-15); **B7** 최근 거래·수입·지출 차트 organisms ☑; KPI 요약 `ErpIncomeExpenseSummarySection` ☑; **P4-01** `FinancialManagement` 로딩 a11y 보강(2026-04-17); P4-03 정렬·P4-04 잔여 화면 🔄 |
 | 2. 공통 UI | 1 / 4 (UI-04 ☑, UI-01~03 🔄) | 상담일지 CL-B1 반영; 2026-04-17 `/admin/schedules` 레이아웃·`CommonCodeForm` 모달 |
-| 3. 보안 | (진행형) | SEC-01 🔄 (`TODO_ONBOARDING` 체크 대부분 ☑·후속 공개 POST·엣지 잔여) |
+| 3. 보안 | (진행형) | SEC-01 🔄 (2026-05-06 계정연동 공개 POST 429 JSON·로깅·단위 테스트 반영; `TODO_ONBOARDING` 체크 대부분 ☑·후속 CAPTCHA·공개 POST·엣지 잔여) |
 | 4. 검증 | (진행형) | QA-01 배치별, QA-02 🔄 (`e2e-erp-smoke`·시나리오 문서 경로 정합 2026-04-17); [GITHUB_ACTIONS_WORKFLOW_INDEX.md](../deployment/GITHUB_ACTIONS_WORKFLOW_INDEX.md) — CI 표에 ERP 스모크 워크플로 등록됨 |
 | 5. 운영 | 0 / 2 | [OPS_HANDOFF_QUICKLINKS.md](../운영반영/OPS_HANDOFF_QUICKLINKS.md) 문서 존재 ☑ · **실행**(배포 전 `PRE_PRODUCTION` 체크)은 배치별 · OPS-01 🔄 · OPS-02 하드코딩 스캔 증적은 §5 표 OPS-02 비고 참조(`check-hardcoding-enhanced.js` exit 0·경고 ~5250·`test-reports/hardcoding/`) |
 
@@ -320,6 +320,7 @@
 
 | 날짜 | 변경 내용 |
 |------|-----------|
+| 2026-05-06 | SEC-01 동기: 구역 3 비고·진행률 스냅샷 — [`TODO_ONBOARDING_PUBLIC_API_HARDENING.md`](./2026-03-31/TODO_ONBOARDING_PUBLIC_API_HARDENING.md); `3efe8c55f`. |
 | 2026-04-28 | 병렬 블록 **ZERO-DT-01** 행·최종 갱신에 무중단 SSOT 링크(`ZERO_DOWNTIME_GAP_AND_ROADMAP`·`ZERO_DOWNTIME_POST_DEPLOY_CHECKLIST`) 반영. |
 | 2026-04-24 | **NCP-PREF** 한 줄 트랙 포인터 추가(알림 채널 선호·배치 2차 병렬 상태는 전용 계획서 SSOT). |
 | 2026-04-21 | OPS-02 비고 압축. |

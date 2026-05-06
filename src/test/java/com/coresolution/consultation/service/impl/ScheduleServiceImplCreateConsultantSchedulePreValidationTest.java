@@ -169,4 +169,53 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
 
         verify(scheduleRepository, never()).save(any(Schedule.class));
     }
+
+    @Test
+    @DisplayName("7인자 오버로드: 매칭 없음 시 저장하지 않고 유효한 매칭 메시지로 실패")
+    void createConsultantSchedule_sevenArgs_noMapping_doesNotSave() {
+        stubConflictCheckAndAutoComplete();
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
+                .thenReturn(Collections.emptyList());
+
+        LocalDate date = LocalDate.of(2026, 6, 12);
+        LocalTime start = LocalTime.of(10, 0);
+        LocalTime end = LocalTime.of(11, 0);
+
+        assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID, date, start, end, "제목", "설명"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("유효한 매칭");
+
+        verify(scheduleRepository, never()).save(any(Schedule.class));
+    }
+
+    @Test
+    @DisplayName("7인자 오버로드: ACTIVE이나 남은 회기 0이면 저장하지 않고 사용 가능한 회기 메시지로 실패")
+    void createConsultantSchedule_sevenArgs_noRemainingSessions_doesNotSave() {
+        stubConflictCheckAndAutoComplete();
+
+        User consultant = new User();
+        consultant.setId(CONSULTANT_ID);
+        User client = new User();
+        client.setId(CLIENT_ID);
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setConsultant(consultant);
+        mapping.setClient(client);
+        mapping.setRemainingSessions(0);
+        mapping.setStatus(MappingStatus.ACTIVE);
+
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
+                .thenReturn(List.of(mapping));
+
+        LocalDate date = LocalDate.of(2026, 6, 13);
+        LocalTime start = LocalTime.of(15, 0);
+        LocalTime end = LocalTime.of(16, 0);
+
+        assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID, date, start, end, "제목", "설명"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("사용 가능한 회기");
+
+        verify(scheduleRepository, never()).save(any(Schedule.class));
+    }
 }

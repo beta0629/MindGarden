@@ -372,6 +372,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (hasTimeConflict(consultantId, date, startTime, endTime, null)) {
             throw new RuntimeException("해당 시간대에 이미 스케줄이 존재합니다.");
         }
+
+        // 10인자 오버로드와 동일: 저장 전 매칭·회기 사전 검증
+        if (!validateMappingForSchedule(consultantId, clientId)) {
+            throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
+        }
+        if (!validateRemainingSessions(consultantId, clientId)) {
+            throw new RuntimeException("사용 가능한 회기가 없습니다.");
+        }
         
         Schedule schedule = new Schedule();
         schedule.setConsultantId(consultantId);

@@ -20,6 +20,7 @@ import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/cont
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 import './SchedulePage.css';
+import { USER_ROLES } from '../../constants/roles';
 
 const SchedulePage = ({ user: propUser }) => {
   const { user: sessionUser, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
@@ -47,10 +48,22 @@ const SchedulePage = ({ user: propUser }) => {
   }, [displayUser, sessionLoading]);
 
   /**
-   * 권한 확인 (동적 권한 시스템 사용)
+   * 스케줄 페이지 조회 권한. 상담사는 역할만으로 진입 가능.
+   * REGISTER_SCHEDULER 미부여여도 SCHEDULE_MODIFY 등 스케줄 권한이 있으면 진입 가능.
    */
   const hasSchedulePermission = () => {
-    return hasPermission('REGISTER_SCHEDULER') || userRole === 'CONSULTANT';
+    if (userRole === USER_ROLES.CONSULTANT) {
+      return true;
+    }
+    if (userRole === USER_ROLES.CLIENT) {
+      return false;
+    }
+    return (
+      hasPermission('REGISTER_SCHEDULER')
+      || hasPermission('SCHEDULE_MODIFY')
+      || hasPermission('SCHEDULE_MANAGE')
+      || hasPermission('ACCESS_SCHEDULE_MANAGEMENT')
+    );
   };
 
   /**

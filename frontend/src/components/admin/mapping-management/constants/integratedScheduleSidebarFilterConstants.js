@@ -1,6 +1,9 @@
 /**
  * 통합 스케줄(/admin/integrated-schedule) 좌측 사이드바 필터 상수 SSOT
  *
+ * `canScheduleForMapping`은 백엔드 `ScheduleServiceImpl#createConsultantSchedule`의
+ * 저장 전 검증(`validateMappingForSchedule` ACTIVE 전제, `validateRemainingSessions`)과 정합한다.
+ *
  * @author CoreSolution
  * @since 2026-04-30
  */
@@ -39,11 +42,25 @@ export const STATUS_FILTER_OPTIONS = [
   { value: 'SUSPENDED', label: '일시정지' }
 ];
 
-/** 스케줄 등록 가능한 매칭 상태 */
-export const SCHEDULABLE_STATUSES = new Set(['PAYMENT_CONFIRMED', 'DEPOSIT_PENDING', 'ACTIVE']);
+const ACTIVE_MAPPING_STATUS = 'ACTIVE';
 
+const normalizedRemainingSessions = (mapping) => {
+  const raw = mapping?.remainingSessions;
+  if (raw == null) {
+    return 0;
+  }
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : 0;
+};
+
+/**
+ * 드래그·일정 생성 UI 허용 여부 (API 사전 검증과 동일 조건).
+ *
+ * @param {object} [mapping] - 매칭 DTO
+ * @returns {boolean} ACTIVE이고 남은 회기가 1 이상일 때만 true
+ */
 export const canScheduleForMapping = (mapping) =>
-  Boolean(mapping?.status && SCHEDULABLE_STATUSES.has(mapping.status));
+  mapping?.status === ACTIVE_MAPPING_STATUS && normalizedRemainingSessions(mapping) > 0;
 
 export const ONGOING_EXCLUDED_STATUSES = new Set(['SESSIONS_EXHAUSTED', 'TERMINATED']);
 

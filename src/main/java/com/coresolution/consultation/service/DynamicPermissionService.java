@@ -91,7 +91,7 @@ public interface DynamicPermissionService {
     // ==================== 추가 권한 체크 메서드들 ====================
     
     /**
-     * 스케줄러 등록 권한 확인
+     * 스케줄 신규 생성(등록) 권한. ADMIN·STAFF만 true. CONSULTANT·CLIENT는 DB 권한과 무관하게 false.
      */
     boolean canRegisterScheduler(UserRole userRole);
     

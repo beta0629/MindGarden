@@ -429,15 +429,21 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
     @Override
     public boolean canRegisterScheduler(UserRole userRole) {
         try {
-            // 관리자 및 사무원만 스케줄 등록 가능
-            if (userRole != null && (userRole.isAdmin() || userRole.isStaff())) {
+            if (userRole == null) {
+                return false;
+            }
+            // 상담사·내담자는 DB role_permissions로 우회 불가 (신규 스케줄 생성 불가)
+            if (userRole.isConsultant() || userRole.isClient()) {
+                log.debug("상담사/내담자: 스케줄 신규 생성 불가, 역할={}", userRole);
+                return false;
+            }
+            // 관리자 및 사무원만 스케줄 신규 등록 가능
+            if (userRole.isAdmin() || userRole.isStaff()) {
                 log.debug("관리자/사무원 역할: 스케줄러 등록 권한 허용, 역할={}", userRole);
                 return true;
             }
-
-            // 그 외 역할은 권한 체크
-            log.debug("스케줄러 등록 권한 확인: 역할={}", userRole);
-            return hasPermission(userRole.name(), "ACCESS_SCHEDULE_MANAGEMENT");
+            log.debug("스케줄 신규 생성: 허용 역할 아님, 역할={}", userRole);
+            return false;
         } catch (Exception e) {
             log.error("스케줄러 등록 권한 확인 실패: 역할={}", userRole, e);
             return false;

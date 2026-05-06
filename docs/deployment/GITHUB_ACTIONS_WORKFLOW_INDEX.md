@@ -72,7 +72,7 @@
 
 | 파일 | 역할 | 트리거 요약 | dev/prod 쌍 | reusable | 비고 |
 |------|------|-------------|-------------|----------|------|
-| `code-quality-check.yml` | 코드 품질 | PR/push main·develop, dispatch | — | — | |
+| `code-quality-check.yml` | 코드 품질 | PR/push `main`·`develop`, `workflow_dispatch`; **`paths` 없음** → `frontend/**`만 바뀐 PR/push도 동일 실행 | — | — | [`code-quality-check.yml`](../../.github/workflows/code-quality-check.yml) |
 | `e2e-trinity-build-smoke.yml` | Trinity 빌드 스모크 | PR/push main·develop, paths `frontend-trinity/**` 등, `workflow_dispatch` | — | — | `frontend-trinity`에서 `npm ci` → `npm run build:ci` (`ESLINT_NO_DEV_ERRORS=true next build`). Playwright 없음. Secrets 불필요. |
 | [`e2e-erp-smoke.yml`](../../.github/workflows/e2e-erp-smoke.yml) | ERP 라우트 정적 검증(`npm run verify:erp`) + Playwright 리다이렉트·스모크(로그인 불필요, `tests/e2e/tests/erp/` 일부) | PR `main`/`develop`, paths: `frontend/src/components/erp/**`, `frontend/src/App.js`, `tests/e2e/tests/erp/**`, `tests/e2e/playwright.config.ts`, `frontend/scripts/verify-erp-navigate-targets.mjs`, `frontend/scripts/verify-erp-menu-items-sync.mjs`, `frontend/src/components/dashboard-v2/constants/menuItems.js`, `frontend/package.json`, `workflow_dispatch` | — | — | Secrets 불필요. 상세 시나리오·QA 연계: `docs/planning/ERP_TEST_SCENARIOS.md`, `docs/project-management/ONGOING_WORK_MASTER_PROGRESS_CHECKLIST.md` QA-02. |
 | [`e2e-consultation-log-smoke.yml`](../../.github/workflows/e2e-consultation-log-smoke.yml) | 상담일지 모달 어드민 스모크(`tests/e2e/tests/admin/consultation-log-modal-smoke.spec.ts`, Chromium) | PR `main`/`develop` + paths(스펙·playwright 설정·`ConsultationLogModal`·로컬 자동저장 훅·드래프트 어댑터·`consultationLogAutosave*` 상수), `workflow_dispatch` | — | — | **백엔드·로그인 전제 — 워크플로에 백엔드 기동 없음.** 잡 조건: `secrets.E2E_TEST_EMAIL` 또는 `secrets.E2E_ADMIN_USERNAME` 중 하나(`.cursor/skills/core-solution-testing/SKILL.md` 권장: `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD`). 선택 `E2E_BASE_URL`. `BASE_URL` 기본 `http://localhost:3000`. |
@@ -88,7 +88,7 @@
 | `emergency-db-cleanup.yml` | 긴급 DB 정리 | `workflow_dispatch` | — | — | |
 | `diagnose-onboarding-issues.yml` | 온보딩 진단 | `workflow_dispatch` | — | — | |
 
-**Playwright(E2E) CI 범위(배포·게이트 관점)**: `npx playwright test`를 호출하는 워크플로는 **`e2e-erp-smoke.yml`**, **`e2e-consultation-log-smoke.yml`**, **`e2e-integrated-schedule-smoke.yml`** 세 개다. 통합 스케줄·클라이언트 노트·공휴일 범례 회귀는 **`e2e-integrated-schedule-smoke.yml`** 의 paths·시크릿 게이트 하에서 PR에 한해 실행된다(시크릿 없으면 스킵·성공). 기획·오케스트레이션 전용 문서(`INTEGRATED_SCHEDULE_*_ORCHESTRATION.md` 등)는 플래너 경로로 관리하며, 본 인덱스는 워크플로 사실만 기록한다.
+**Playwright(E2E) CI 범위(배포·게이트 관점)**: `npx playwright test`를 호출하는 워크플로는 **`e2e-erp-smoke.yml`**, **`e2e-consultation-log-smoke.yml`**, **`e2e-integrated-schedule-smoke.yml`** 세 개다. 통합 스케줄·클라이언트 노트·공휴일 범례 회귀는 **`e2e-integrated-schedule-smoke.yml`** 의 paths·시크릿 게이트 하에서 PR에 한해 실행된다(시크릿 없으면 스킵·성공). 해당 PR `paths`는 워크플로 파일에 열거된 경로로 한정되므로, 동일 기능 영역이라도 `ScheduleModal`·`standardizedApi`·`schedule*Guards` 등 **목록에 없는 파일만** 변경한 PR에서는 이 E2E가 트리거되지 않을 수 있다(백엔드 전용 paths 워크플로에 끼어드는 것은 아님). 기획·오케스트레이션 전용 문서(`INTEGRATED_SCHEDULE_*_ORCHESTRATION.md` 등)는 플래너 경로로 관리하며, 본 인덱스는 워크플로 사실만 기록한다.
 
 ---
 

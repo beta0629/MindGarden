@@ -4,6 +4,8 @@
 
 설정 SSOT: [`playwright.config.ts`](./playwright.config.ts) (`BASE_URL`, 로컬 시 `webServer`로 `frontend`의 `npm start`).
 
+**로컬 회귀 — 스펙 경로**: `cd tests/e2e` 후 `npx playwright test`의 인자는 `testDir`(./tests) 기준이므로 `tests/admin/…spec.ts` 형태다. 저장소 루트에서 `tests/e2e/tests/admin/…`처럼 중복 prefix를 붙이면 파일을 찾지 못한다. 예: `npx playwright test tests/admin/integrated-schedule-detail-modal.spec.ts tests/admin/integrated-schedule-client-notes.spec.ts --project=chromium`.
+
 ## ERP / 관리자 로그인 스펙
 
 Playwright가 **로그인 URL·navigation 타임아웃**으로 실패할 때 아래를 먼저 본다. 자격 증명은 [`docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`](../../docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md) 보안 원칙에 따라 **문서·PR에 평문 금지**(변수명·Secrets·로컬 env만). 우선순위·기본값은 [`.cursor/skills/core-solution-testing/SKILL.md`](../../.cursor/skills/core-solution-testing/SKILL.md)·[`helpers/erpAuth.ts`](./helpers/erpAuth.ts) SSOT.

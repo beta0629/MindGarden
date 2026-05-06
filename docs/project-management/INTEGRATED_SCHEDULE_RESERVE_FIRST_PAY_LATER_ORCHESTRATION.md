@@ -191,9 +191,9 @@
 - **스케줄 신규 생성**: **ADMIN·STAFF**만 가능하다. 백엔드는 `DynamicPermissionServiceImpl`의 `canRegisterScheduler`로 판정하고, 프론트는 `SchedulePage`·`ScheduleCalendarView`에서 **editable / droppable** 구성이 위 판정과 **정합**하도록 맞춘다.
 - **CONSULTANT**: **기존 일정 이동·편집**은 가능하나, **외부 드롭으로 신규 일정을 만들 수는 없다**(신규 생성 경로 차단).
 
-### 11.2 `createConsultantSchedule`(10인자 경로)·트랜잭션
+### 11.2 `createConsultantSchedule`(7·10인자)·사전 검증·트랜잭션
 
-- **`createConsultantSchedule`(10인자 경로)**: 저장 전 **`validateMappingForSchedule`**·**`validateRemainingSessions`**를 호출한다. 실패 시 예외로 처리하고, 해당 경로는 **`@Transactional`** 범위에서 롤백된다.
+- **`createConsultantSchedule`**: **7인자·10인자** 모두 저장 직전에 **`validateMappingForSchedule`**와 **`validateRemainingSessions`**를 호출한다(두 시그니처 경로에 동일한 사전 검증이 적용된다). 실패 시 예외로 처리하고, 해당 경로는 **`@Transactional`** 범위에서 롤백된다.
 
 ### 11.3 `canScheduleForMapping`(프론트)와 잔여 회기
 
@@ -210,17 +210,18 @@
 | 프론트 캘린더 | `frontend/src/components/ui/Schedule/ScheduleCalendarView.js` |
 | 프론트 스케줄 페이지 | `frontend/src/components/schedule/SchedulePage.js` |
 | 프론트 사이드바 필터 상수 | `frontend/src/components/admin/mapping-management/constants/integratedScheduleSidebarFilterConstants.js` |
-| 단위 테스트(존재 시) | `DynamicPermissionServiceImplCanRegisterSchedulerTest.java`, `ScheduleServiceImplCreateConsultantSchedulePreValidationTest.java` |
+| 단위 테스트(존재 시) | `DynamicPermissionServiceImplCanRegisterSchedulerTest.java`, `ScheduleServiceImplCreateConsultantSchedulePreValidationTest.java`, `frontend/src/utils/__tests__/scheduleRoleGuards.test.js` |
 
 ### 다음 위임 순서(짧은 표)
 
+**완료·진행 반영(요약)**: ADR 초안(`docs/adr/` 0001~0003)·SEC-01 일부(공개 API·권한·레이트 리밋 등 배치 범위)·통합 스케줄 권한·`createConsultantSchedule` 사전검증·캘린더·사이드바·관련 단위 테스트 정합은 이미 반영된 것으로 본다.
+
 | Step | 담당 | 내용 |
 |:----:|------|------|
-| **2** | `core-coder` | ADR 본문(채택·보류·Proposed 정리) |
-| **3** | `core-tester` | 회귀·§4 게이트 |
-| **4** | `core-coder` | SEC-01(보안·검증 항목 — 배치 정의에 따름) |
-| **5** | `core-tester` | SEC-01 검증 |
-| **6** | `core-deployer` | 배포·워크플로·반영 확인 |
+| **1** | `core-coder` | `ScheduleModal`(또는 동등 제출 경로)에서 서버 검증 실패 시 사용자 메시지·복구 동선 정리; `onExternalEventReceive`(또는 외부 이벤트 수신) 호출부 **공통 검증·에러 처리** 일관화(중복 제거) |
+| **2** | `core-tester` | Playwright **공개 API** 스모크; 통합 스케줄 주요 경로 스모크·§4 Phase 1~2 보강 |
+| **3** | PO | ADR 0001~0003 검토·채택·보류·Proposed 유지 결정 |
+| **4** | `core-deployer` | CI·`paths` 트리거·워크플로만 점검(운영 배포 지시는 별도 티켓 시) |
 
 ---
 

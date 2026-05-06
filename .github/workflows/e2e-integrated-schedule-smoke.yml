@@ -10,22 +10,31 @@ on:
   pull_request:
     branches: [main, develop]
     paths:
-      - 'tests/e2e/tests/admin/integrated-schedule-client-notes.spec.ts'
-      - 'tests/e2e/playwright.config.ts'
+      # tests/e2e
       - 'tests/e2e/helpers/erpAuth.ts'
       - 'tests/e2e/helpers/react130ConsoleGate.ts'
-      - 'frontend/src/components/admin/mapping-management/IntegratedMatchingSchedule.js'
+      - 'tests/e2e/playwright.config.ts'
+      - 'tests/e2e/tests/admin/integrated-schedule-client-notes.spec.ts'
+      - 'tests/e2e/tests/admin/integrated-schedule-detail-modal.spec.ts'
+      - 'tests/e2e/tests/admin/integrated-schedule-external-drop-guard-smoke.spec.ts'
+      # frontend
+      - 'frontend/src/components/admin/mapping-management/constants/integratedScheduleSidebarFilterConstants.js'
       - 'frontend/src/components/admin/mapping-management/IntegratedMatchingSchedule.css'
-      - 'frontend/src/components/schedule/UnifiedScheduleComponent.js'
+      - 'frontend/src/components/admin/mapping-management/IntegratedMatchingSchedule.js'
       - 'frontend/src/components/schedule/ScheduleB0KlA.css'
-      - 'frontend/src/components/schedule/ScheduleDetailModal.js'
       - 'frontend/src/components/schedule/ScheduleClientNotesSection.js'
-      - 'frontend/src/components/ui/Schedule/ScheduleCalendarView.js'
+      - 'frontend/src/components/schedule/ScheduleDetailModal.js'
+      - 'frontend/src/components/schedule/ScheduleModal.js'
+      - 'frontend/src/components/schedule/UnifiedScheduleComponent.js'
       - 'frontend/src/components/ui/Schedule/ScheduleCalendarView.css'
+      - 'frontend/src/components/ui/Schedule/ScheduleCalendarView.js'
       - 'frontend/src/components/ui/Schedule/ScheduleLegend.js'
       - 'frontend/src/constants/schedule.js'
       - 'frontend/src/utils/krPublicHolidays.js'
+      - 'frontend/src/utils/scheduleExternalDropGuards.js'
       - 'frontend/src/utils/scheduleRescheduleUtils.js'
+      - 'frontend/src/utils/scheduleRoleGuards.js'
+      - 'frontend/src/utils/standardizedApi.js'
   workflow_dispatch:
 
 jobs:
@@ -85,4 +94,9 @@ jobs:
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
           TEST_USERNAME: ${{ secrets.E2E_TEST_EMAIL != '' && secrets.E2E_TEST_EMAIL || secrets.E2E_ADMIN_USERNAME }}
           TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD != '' && secrets.E2E_TEST_PASSWORD || secrets.E2E_ADMIN_PASSWORD }}
-        run: npx playwright test tests/admin/integrated-schedule-client-notes.spec.ts --project=chromium
+        run: |
+          npx playwright test \
+            tests/admin/integrated-schedule-client-notes.spec.ts \
+            tests/admin/integrated-schedule-detail-modal.spec.ts \
+            tests/admin/integrated-schedule-external-drop-guard-smoke.spec.ts \
+            --project=chromium

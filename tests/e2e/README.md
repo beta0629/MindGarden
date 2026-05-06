@@ -6,6 +6,10 @@
 
 **로컬 회귀 — 스펙 경로**: `cd tests/e2e` 후 `npx playwright test`의 인자는 `testDir`(./tests) 기준이므로 `tests/admin/…spec.ts` 형태다. 저장소 루트에서 `tests/e2e/tests/admin/…`처럼 중복 prefix를 붙이면 파일을 찾지 못한다. 예: `npx playwright test tests/admin/integrated-schedule-detail-modal.spec.ts tests/admin/integrated-schedule-client-notes.spec.ts --project=chromium`.
 
+**로컬 API(8080) 미기동**: `skipWhenLocalBackend8080Down()`가 있는 스펙은 전부 스킵되고, 없는 스펙(예: `integrated-schedule-detail-modal`)은 로그인 단계에서 타임아웃·실패할 수 있다 — 의미 있는 회귀는 8080+3000 기동 후 실행.
+
+- **SEC-01 (Playwright 후속)**: 공개 API·레이트리밋 등 H2/로컬 단일 스택에서 재현이 어려운 구간은 백엔드 단위·통합 테스트를 우선하고, E2E는 스테이징·자격 증명 Secrets가 갖춰진 환경에서만 보강한다.
+
 ## ERP / 관리자 로그인 스펙
 
 Playwright가 **로그인 URL·navigation 타임아웃**으로 실패할 때 아래를 먼저 본다. 자격 증명은 [`docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`](../../docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md) 보안 원칙에 따라 **문서·PR에 평문 금지**(변수명·Secrets·로컬 env만). 우선순위·기본값은 [`.cursor/skills/core-solution-testing/SKILL.md`](../../.cursor/skills/core-solution-testing/SKILL.md)·[`helpers/erpAuth.ts`](./helpers/erpAuth.ts) SSOT.

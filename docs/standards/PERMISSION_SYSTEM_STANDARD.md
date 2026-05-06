@@ -502,7 +502,7 @@ public ResponseEntity<?> registerConsultant(
 
 **공개 온보딩·계정 연동 API가 CSRF 예외인 이유(요약)**: 해당 경로는 `SecurityConfig` 의 `ignoringRequestMatchers` 등으로 CSRF 검증이 적용되지 않는다. 로그인 세션이 없거나 메일 링크·토큰 기반 흐름에서 호출되어 **브라우저가 SameSite 쿠키 + CSRF 토큰으로 남용을 막는 전제**가 성립하지 않는다. 이러한 **공개 POST** 에는 아래 앱·엣지 보완을 **반드시** 적용한다.
 
-- **앱 레이어**: `mindgarden.security.*` 설정에 따른 보호(예: 계정 연동 이메일 쿨다운·일일 상한)와 **`RateLimitingFilter`** 로 IP 기준 429 응답.
+- **앱 레이어**: `mindgarden.security.*` 설정에 따른 보호(예: 계정 연동 이메일 쿨다운·일일 상한)와 **`RateLimitingFilter`** 로 IP 기준 429 응답. JSON 본문의 `message` 는 차단 사유별로 구분된다(계정 연동 접두·온보딩 생성 경로·로그인 등).
 - **엣지(선택)**: Nginx `limit_req`·WAF 등으로 동일 경로에 대한 추가 상한(이중 방어). 저장소 가이드: [Nginx 공개 API 레이트리밋](../deployment/NGINX_RATE_LIMIT_PUBLIC_API.md).
 
 설정 키 예: `mindgarden.security.account-integration.*`, `mindgarden.security.rate-limit.*`.

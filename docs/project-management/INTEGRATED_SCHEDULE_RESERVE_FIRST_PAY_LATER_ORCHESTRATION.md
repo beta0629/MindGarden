@@ -139,7 +139,9 @@
 | **6** | 배포 | Phase 5 퇴장 | §5 블록 D3 완료 | core-deployer |
 | **7** | 릴리스·회고 | Phase 6 완료 | 릴리스 노트·잔여 리스크 1페이지 | core-planner |
 
-위임 순서·직접 수정 금지·테스터 필수는 [`docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`](./CORE_PLANNER_DELEGATION_ORDER.md)를 따른다.
+**현재 Phase 추정(ADR·`core-coder`·`core-tester` 동기화용)**: 통합 스케줄 권한·`createConsultantSchedule` 사전검증·캘린더·사이드바 필터·관련 단위 테스트가 동일 배치에 있으면 §7 표상 **Phase 4~5 경계**(구현 완료 후보 → §4 테스트 게이트)로 본다.
+
+위임 순서·직접 수정 금지·테스터 필수는 [`docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`](./CORE_PLANNER_DELEGATION_ORDER.md)를 따른다(코드 변경이 수반되면 **`core-tester` 게이트** Green 전까지 배치 완료로 보지 않음).
 
 ---
 
@@ -177,6 +179,48 @@
 | [`docs/adr/adr-0001-scheduling-eligibility-vs-payment-deposit-gating.md`](../adr/adr-0001-scheduling-eligibility-vs-payment-deposit-gating.md) | 예약 가능·자격과 결제·입금 게이팅 경계 |
 | [`docs/adr/adr-0002-session-remaining-and-mapping-status-transitions.md`](../adr/adr-0002-session-remaining-and-mapping-status-transitions.md) | 세션 잔여와 매핑·상태 전이 |
 | [`docs/adr/adr-0003-integrated-schedule-multissot-orchestration-boundaries.md`](../adr/adr-0003-integrated-schedule-multissot-orchestration-boundaries.md) | 통합 일정 멀티슬롯 오케스트레이션 책임 경계 |
+
+---
+
+## 11. 구현 스냅샷(엔지니어링 기준)
+
+본 절은 **당시점 코드·UI와 문서(SSOT)를 맞추기 위한 사실 스냅샷**이다. 제품·계약·운영 최종 확정은 PO·법무·회계와 별도이며, **PO·법무 미확정 사항은 ADR 상태 Proposed로 남긴다.**
+
+### 11.1 역할·스케줄 생성·캘린더 상호작용
+
+- **스케줄 신규 생성**: **ADMIN·STAFF**만 가능하다. 백엔드는 `DynamicPermissionServiceImpl`의 `canRegisterScheduler`로 판정하고, 프론트는 `SchedulePage`·`ScheduleCalendarView`에서 **editable / droppable** 구성이 위 판정과 **정합**하도록 맞춘다.
+- **CONSULTANT**: **기존 일정 이동·편집**은 가능하나, **외부 드롭으로 신규 일정을 만들 수는 없다**(신규 생성 경로 차단).
+
+### 11.2 `createConsultantSchedule`(10인자 경로)·트랜잭션
+
+- **`createConsultantSchedule`(10인자 경로)**: 저장 전 **`validateMappingForSchedule`**·**`validateRemainingSessions`**를 호출한다. 실패 시 예외로 처리하고, 해당 경로는 **`@Transactional`** 범위에서 롤백된다.
+
+### 11.3 `canScheduleForMapping`(프론트)와 잔여 회기
+
+- 프론트 **`canScheduleForMapping`**: 매핑이 **ACTIVE**이고 **`remainingSessions > 0`**일 때 스케줄 가능으로 본다.
+- 백엔드 **`validateRemainingSessions`**와 위 프론트 조건은 **동일 전제(잔여·매핑 유효성)** 를 쓰도록 정합한다.
+
+### 11.4 관련 소스·테스트 경로(참조 목록)
+
+| 구분 | 경로·클래스명 |
+|------|----------------|
+| 백엔드 권한 | `src/main/java/com/coresolution/consultation/service/DynamicPermissionService.java` |
+| 백엔드 권한 구현 | `src/main/java/com/coresolution/consultation/service/impl/DynamicPermissionServiceImpl.java` |
+| 백엔드 일정 생성·검증 | `src/main/java/com/coresolution/consultation/service/impl/ScheduleServiceImpl.java` |
+| 프론트 캘린더 | `frontend/src/components/ui/Schedule/ScheduleCalendarView.js` |
+| 프론트 스케줄 페이지 | `frontend/src/components/schedule/SchedulePage.js` |
+| 프론트 사이드바 필터 상수 | `frontend/src/components/admin/mapping-management/constants/integratedScheduleSidebarFilterConstants.js` |
+| 단위 테스트(존재 시) | `DynamicPermissionServiceImplCanRegisterSchedulerTest.java`, `ScheduleServiceImplCreateConsultantSchedulePreValidationTest.java` |
+
+### 다음 위임 순서(짧은 표)
+
+| Step | 담당 | 내용 |
+|:----:|------|------|
+| **2** | `core-coder` | ADR 본문(채택·보류·Proposed 정리) |
+| **3** | `core-tester` | 회귀·§4 게이트 |
+| **4** | `core-coder` | SEC-01(보안·검증 항목 — 배치 정의에 따름) |
+| **5** | `core-tester` | SEC-01 검증 |
+| **6** | `core-deployer` | 배포·워크플로·반영 확인 |
 
 ---
 

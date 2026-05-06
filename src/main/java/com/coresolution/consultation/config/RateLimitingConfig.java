@@ -223,18 +223,25 @@ public class RateLimitingConfig {
             throws IOException {
             recordRateLimitBlocked(request);
 
+            String requestPath = request.getRequestURI();
+            String blockReason = resolveBlockReason(request);
+            log.warn("HTTP 429 rate limit exceeded: uri={}, reason={}", requestPath, blockReason);
+
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType("application/json;charset=UTF-8");
 
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
 
-            String requestPath = request.getRequestURI();
             if (isLoginRateLimitPath(requestPath)) {
                 errorResponse.put("message", "로그인 시도 횟수가 초과되었습니다. 잠시 후 다시 시도해주세요.");
                 errorResponse.put("retryAfter", LOGIN_COOLDOWN_MINUTES * 60);
             } else if (isOnboardingCreatePublicRequest(request)) {
                 errorResponse.put("message", "온보딩 생성 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+                errorResponse.put("retryAfter", 60);
+            } else if (isAccountIntegrationPublicPath(requestPath)) {
+                errorResponse.put("message",
+                    "계정 연동·이메일 인증 API 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
                 errorResponse.put("retryAfter", 60);
             } else {
                 errorResponse.put("message", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");

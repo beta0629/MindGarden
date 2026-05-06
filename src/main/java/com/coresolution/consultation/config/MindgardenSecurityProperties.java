@@ -46,12 +46,13 @@ public class MindgardenSecurityProperties {
     public static class RateLimit {
 
         /**
-         * {@link #integrationPathPrefix} 하위 공개 POST 등에 대한 IP당 분당 허용 요청 수
+         * {@link #integrationPathPrefix} 로 시작하는 요청 URI에 대한 IP당 분당 허용 요청 수.
+         * {@link RateLimitingConfig.RateLimitingFilter} 는 HTTP 메서드를 구분하지 않고 접두 일치 시 카운트한다.
          */
         private int integrationRequestsPerMinute = 20;
 
         /**
-         * 민감 경로(계정 연동 공개 API) URI 접두사
+         * 민감 경로(계정 연동 공개 API) URI 접두사 — {@code HttpServletRequest#getRequestURI()} 기준 {@code startsWith}
          */
         private String integrationPathPrefix = "/api/v1/accounts/integration/";
 

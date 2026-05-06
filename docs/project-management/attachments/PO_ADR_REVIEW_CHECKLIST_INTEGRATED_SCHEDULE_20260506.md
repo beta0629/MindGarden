@@ -14,6 +14,13 @@
 | ADR-0003 | [`docs/adr/adr-0003-integrated-schedule-multissot-orchestration-boundaries.md`](../../adr/adr-0003-integrated-schedule-multissot-orchestration-boundaries.md) |
 | 오케스트레이션 SSOT | [`docs/project-management/INTEGRATED_SCHEDULE_RESERVE_FIRST_PAY_LATER_ORCHESTRATION.md`](../INTEGRATED_SCHEDULE_RESERVE_FIRST_PAY_LATER_ORCHESTRATION.md) |
 
+## 0. 사용자(PO) 결정 요약 (2026-05-06)
+
+- **입금 미확인 건**: **가예약** 1건을 등록해 두고, **입금 완료 또는 카드 결제** 시 **상태값 변동**과 함께 **완료 처리**로 이어지는 흐름을 채택한다.
+- **그 외**: 본 문서·오케스트레이션·엔지니어링 **권장 절차**에 따른다(`REVIEW_RESERVE_PAY_RECEIVABLES_SESSION_20260506.md` §6, §5 위임 줄 참고).
+
+---
+
 ## 검토 표
 
 | ADR ID | 검토 질문 (3~5) | 결정 (채택 / 보류 / 수정 요청) |

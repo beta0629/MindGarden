@@ -225,4 +225,25 @@
 
 ---
 
+## 12. PO 결정(가예약·입금/카드 후 완료)
+
+**PO 결정(반영)**: 입금 확인 **전**에 **가예약** 1건을 등록해 두고, **입금 완료 또는 카드 결제** 시 **상태값 변동** 후 **완료 처리**로 이어지게 한다. 실행·검증·문서 갱신의 나머지 절차는 본 문서 **§4**(테스터 게이트), [`docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`](./CORE_PLANNER_DELEGATION_ORDER.md)의 **`core-debugger` → `core-coder` → `core-tester`** 권장 순서, [`docs/adr/`](../adr/) ADR, [`docs/debug/DEPOSIT_ERP_REFUND_FLOW_ANALYSIS.md`](../debug/DEPOSIT_ERP_REFUND_FLOW_ANALYSIS.md)와의 정합을 따른다.
+
+**구현 전제와의 간극**: 현재 엔지니어링 스냅샷(§11.3)은 매핑 **ACTIVE** 및 **`remainingSessions > 0`** 를 스케줄 가능 전제로 둔다. 가예약은 “결제·입금 전 슬롯 홀드”이므로 동일 전제만으로는 표현·검증이 부족하며, **신규 도메인 상태(또는 부가 플래그)·허용 전이 표·API 응답 계약**(생성·확정·만료·취소)이 별도로 정의·구현되어야 한다. 용어·회계·ERP 경계는 리뷰·체크리스트와 교차 검토한다: [`attachments/REVIEW_RESERVE_PAY_RECEIVABLES_SESSION_20260506.md`](./attachments/REVIEW_RESERVE_PAY_RECEIVABLES_SESSION_20260506.md) §6, [`attachments/PO_ADR_REVIEW_CHECKLIST_INTEGRATED_SCHEDULE_20260506.md`](./attachments/PO_ADR_REVIEW_CHECKLIST_INTEGRATED_SCHEDULE_20260506.md) §0.
+
+**분해 Phase(부록)**: 가예약 전용 Phase 0~4(목적·입장·퇴장·담당)는 [`attachments/PRESERVE_PAY_TENTATIVE_BOOKING_PHASES_20260506.md`](./attachments/PRESERVE_PAY_TENTATIVE_BOOKING_PHASES_20260506.md)에 둔다.
+
+**다음 `core-coder` 위임 시 파일 힌트(경로만, 8개 이내)**
+
+- `src/main/java/com/coresolution/consultation/service/impl/ScheduleServiceImpl.java`
+- `src/main/java/com/coresolution/consultation/service/impl/DynamicPermissionServiceImpl.java`
+- `frontend/src/components/schedule/ScheduleModal.js`
+- `frontend/src/components/schedule/SchedulePage.js`
+- `frontend/src/components/ui/Schedule/ScheduleCalendarView.js`
+- `frontend/src/components/admin/mapping-management/IntegratedMatchingSchedule.js`
+- `frontend/src/utils/scheduleRoleGuards.js`
+- `docs/debug/DEPOSIT_ERP_REFUND_FLOW_ANALYSIS.md`
+
+---
+
 *본 문서는 오케스트레이션·분배용 SSOT이며, 최종 법·회계·ERP 정책은 담당 부서와 외부 시스템 규정을 따른다.*

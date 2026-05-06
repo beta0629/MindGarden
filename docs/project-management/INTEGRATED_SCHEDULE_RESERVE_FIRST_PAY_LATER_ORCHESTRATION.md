@@ -165,4 +165,17 @@
 
 ---
 
+## 10. ADR 디렉터리 (부록)
+
+채택·진행 중인 ADR 본문과 인덱스는 `docs/adr/`에 둔다. 아래는 본 오케스트레이션과 직접 연결된 기록이다.
+
+| 문서 | 용도 |
+|------|------|
+| [`docs/adr/README.md`](../adr/README.md) | ADR-0001~0003 요약 표·상태·본 문서(SSOT) 링크 |
+| [`docs/adr/adr-0001-scheduling-eligibility-vs-payment-deposit-gating.md`](../adr/adr-0001-scheduling-eligibility-vs-payment-deposit-gating.md) | 예약 가능·자격과 결제·입금 게이팅 경계 |
+| [`docs/adr/adr-0002-session-remaining-and-mapping-status-transitions.md`](../adr/adr-0002-session-remaining-and-mapping-status-transitions.md) | 세션 잔여와 매핑·상태 전이 |
+| [`docs/adr/adr-0003-integrated-schedule-multissot-orchestration-boundaries.md`](../adr/adr-0003-integrated-schedule-multissot-orchestration-boundaries.md) | 통합 일정 멀티슬롯 오케스트레이션 책임 경계 |
+
+---
+
 *본 문서는 오케스트레이션·분배용 SSOT이며, 최종 법·회계·ERP 정책은 담당 부서와 외부 시스템 규정을 따른다.*

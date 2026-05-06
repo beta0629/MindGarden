@@ -21,6 +21,7 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 import './SchedulePage.css';
 import { USER_ROLES } from '../../constants/roles';
+import { canRegisterSchedulerByRoleString } from '../../utils/scheduleRoleGuards';
 
 const SchedulePage = ({ user: propUser }) => {
   const { user: sessionUser, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
@@ -67,11 +68,10 @@ const SchedulePage = ({ user: propUser }) => {
   };
 
   /**
-   * 관리자 권한 확인 (동적 권한 시스템 사용)
+   * 스케줄 신규 등록·전역 뷰(관리자형) UX — 역할 문자열 기준.
+   * REGISTER_SCHEDULER 동적 권한과 별개로 STAFF 등은 백엔드 canRegisterScheduler와 동일하게 허용.
    */
-  const isAdmin = () => {
-    return hasPermission('REGISTER_SCHEDULER');
-  };
+  const isScheduleRegisterActor = () => canRegisterSchedulerByRoleString(userRole);
 
   if (loading || sessionLoading) {
     return (
@@ -145,7 +145,7 @@ const SchedulePage = ({ user: propUser }) => {
         subtitle="전체 상담사 및 내담자의 일정을 한눈에 확인하고 관리하세요."
       />
       
-      {isAdmin() && (
+      {isScheduleRegisterActor() && (
         <div className="mg-v2-mb-lg">
           <TodayStats />
         </div>
@@ -159,14 +159,14 @@ const SchedulePage = ({ user: propUser }) => {
               <UnifiedScheduleComponent 
                 user={displayUser}
                 userRole={userRole}
-                userId={isAdmin() ? 0 : userId}
+                userId={isScheduleRegisterActor() ? 0 : userId}
               />
             </div>
           </ContentSection>
         </div>
 
         {/* 우측 통계/현황 영역 (사이드바) */}
-        {isAdmin() && (
+        {isScheduleRegisterActor() && (
           <div className="mg-v2-schedule-grid__sidebar">
             <ContentSection title="상담사 현황" noCard={true}>
               <ConsultantStatus />

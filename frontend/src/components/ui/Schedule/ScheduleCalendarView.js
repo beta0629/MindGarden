@@ -147,6 +147,10 @@ const ScheduleCalendarView = ({
         return isPast || isCompleted;
     };
 
+    /**
+     * 외부 카드 드롭 수신: FullCalendar는 날짜·페이로드 전달만 한다.
+     * onExternalEventReceive 쪽 비즈니스 검증(매칭·회기 등)은 부모·통합 화면 책임이다.
+     */
     const handleEventReceive = (info) => {
         if (onExternalEventReceive && info.event) {
             const date = info.event.start;

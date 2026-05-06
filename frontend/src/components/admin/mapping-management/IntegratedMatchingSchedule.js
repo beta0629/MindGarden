@@ -132,7 +132,7 @@ const IntegratedMatchingSchedule = () => {
       return;
     }
     if (!canScheduleForMapping(mappingPayload)) {
-      notificationManager.warning('결제가 완료된 매칭만 스케줄 등록이 가능합니다.');
+      notificationManager.warning('활성(ACTIVE) 매칭이면서 남은 회기가 있을 때만 스케줄 등록이 가능합니다.');
       return;
     }
     // 과거 날짜 드롭 차단: 자정 기준 날짜만 비교

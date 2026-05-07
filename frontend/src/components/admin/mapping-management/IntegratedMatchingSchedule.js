@@ -7,7 +7,7 @@
  * @since 2025-02-25
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 import { useSession } from '../../../contexts/SessionContext';
@@ -58,7 +58,6 @@ const IntegratedMatchingSchedule = () => {
   const [paymentModalMapping, setPaymentModalMapping] = useState(null);
   const [depositModalMapping, setDepositModalMapping] = useState(null);
   const [approveProcessing, setApproveProcessing] = useState(false);
-  const sidebarListRef = useRef(null);
 
   const loadMappings = useCallback(async() => {
     setLoading(true);
@@ -117,17 +116,6 @@ const IntegratedMatchingSchedule = () => {
     if (value === '') return byView.length;
     return byView.filter((m) => m.status === value).length;
   };
-
-  /** 스케줄 가능(드래그 가능) 카드 수 — 결제/입금/승인 후 목록 갱신 시 Draggable 재바인딩 */
-  const scheduleableCount = filteredMappings.filter((m) => canScheduleForMapping(m)).length;
-
-  useEffect(() => {
-    if (!sidebarListRef.current || filteredMappings.length === 0) return;
-    const draggable = new Draggable(sidebarListRef.current, {
-      itemSelector: '.integrated-schedule__card.fc-event'
-    });
-    return () => draggable.destroy();
-  }, [viewFilter, filteredMappings.length, scheduleableCount, mappings]);
 
   const handleDropFromExternal = (date, mappingPayload) => {
     const mappingCheck = assertExternalMappingDropAllowed(mappingPayload);
@@ -318,7 +306,6 @@ const IntegratedMatchingSchedule = () => {
             <UnifiedLoading type="inline" text="매칭 목록 불러오는 중..." />
           ) : (
             <ul
-              ref={sidebarListRef}
               className="integrated-schedule__list"
               aria-label="매칭 목록"
             >

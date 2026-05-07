@@ -2,6 +2,7 @@ package com.coresolution.consultation.repository;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Collection;
 import java.util.List;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
@@ -247,6 +248,19 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      */
     @Deprecated
     List<Schedule> findByConsultantIdAndClientIdAndDateGreaterThanEqual(Long consultantId, Long clientId, LocalDate date);
+
+    /**
+     * 지정일(포함) 이후, 점유 상태인 상담 일정이 있는 (상담사 ID, 내담자 ID) 쌍 목록.
+     * 통합 스케줄 매칭 카드 «일정 등록» 중복 방지와 {@link ScheduleStatus#occupiesTimeForConflictCheck()} 정합.
+     */
+    @Query("SELECT s.consultantId, s.clientId FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.date >= :fromDate AND s.status IN :statuses "
+            + "AND s.consultantId IS NOT NULL AND s.clientId IS NOT NULL "
+            + "GROUP BY s.consultantId, s.clientId")
+    List<Object[]> findConsultantClientPairsOccupyingSchedulesOnOrAfter(
+            @Param("tenantId") String tenantId,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("statuses") Collection<ScheduleStatus> statuses);
 
     // ==================== 시간 충돌 검사 ====================
     // 점유 상태: ScheduleServiceImpl.hasTimeConflict·ScheduleStatus#occupiesTimeForConflictCheck 와 동일 의미(Booked/확정 + 레거시 IN_PROGRESS).

@@ -4,12 +4,15 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -2215,6 +2218,32 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         } catch (Exception e) {
             System.err.println("매칭 목록 조회 실패 (빈 목록 반환): " + e.getMessage());
             return new java.util.ArrayList<>();
+        }
+    }
+
+    @Override
+    public Set<String> getConsultantClientKeysWithOccupyingSchedulesOnOrAfter(String tenantId,
+            LocalDate fromDate) {
+        if (tenantId == null || tenantId.isEmpty() || fromDate == null) {
+            return Collections.emptySet();
+        }
+        try {
+            List<ScheduleStatus> occupying = List.of(
+                    ScheduleStatus.BOOKED,
+                    ScheduleStatus.TENTATIVE_PENDING_PAYMENT,
+                    ScheduleStatus.CONFIRMED);
+            List<Object[]> rows = scheduleRepository.findConsultantClientPairsOccupyingSchedulesOnOrAfter(
+                    tenantId, fromDate, occupying);
+            Set<String> keys = new HashSet<>();
+            for (Object[] row : rows) {
+                if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
+                    keys.add(row[0].toString() + "_" + row[1].toString());
+                }
+            }
+            return keys;
+        } catch (Exception e) {
+            log.warn("getConsultantClientKeysWithOccupyingSchedulesOnOrAfter 실패: {}", e.getMessage());
+            return Collections.emptySet();
         }
     }
 

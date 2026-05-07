@@ -56,6 +56,26 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(canScheduleForMapping({ status: 'ACTIVE', remainingSessions: 0 })).toBe(true);
     });
 
+    it('hasUpcomingConsultationSchedule true이면 점유 일정 있어 false', () => {
+      expect(
+        canScheduleForMapping({
+          status: 'ACTIVE',
+          remainingSessions: 3,
+          hasUpcomingConsultationSchedule: true
+        })
+      ).toBe(false);
+    });
+
+    it('hasUpcomingConsultationSchedule false이면 기존 규칙 유지', () => {
+      expect(
+        canScheduleForMapping({
+          status: 'ACTIVE',
+          remainingSessions: 2,
+          hasUpcomingConsultationSchedule: false
+        })
+      ).toBe(true);
+    });
+
     it('PAYMENT_CONFIRMED이면 false', () => {
       expect(canScheduleForMapping({ status: 'PAYMENT_CONFIRMED', remainingSessions: 5 })).toBe(false);
     });

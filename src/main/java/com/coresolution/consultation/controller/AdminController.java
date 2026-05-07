@@ -991,6 +991,11 @@ public class AdminController extends BaseApiController {
 
         log.info("🔍 매칭 목록 조회 완료 - 총 {}개", mappings.size());
 
+        LocalDate occupyingScheduleFromDate = LocalDate.now();
+        Set<String> consultantClientKeysWithOccupyingSchedules =
+                adminService.getConsultantClientKeysWithOccupyingSchedulesOnOrAfter(tenantId,
+                        occupyingScheduleFromDate);
+
         List<Map<String, Object>> mappingData = mappings.stream().map(mapping -> {
             Map<String, Object> data = new java.util.HashMap<>();
             try {
@@ -1048,6 +1053,12 @@ public class AdminController extends BaseApiController {
                 data.put("createdAt", mapping.getCreatedAt());
                 data.put("startDate", mapping.getStartDate());
                 data.put("endDate", mapping.getEndDate());
+
+                Long cid = (Long) data.get("consultantId");
+                Long clid = (Long) data.get("clientId");
+                boolean hasUpcomingConsultationSchedule = cid != null && clid != null
+                        && consultantClientKeysWithOccupyingSchedules.contains(cid + "_" + clid);
+                data.put("hasUpcomingConsultationSchedule", hasUpcomingConsultationSchedule);
             } catch (Exception e) {
                 log.warn("매칭 ID {} 정보 추출 실패: {}", mapping.getId(), e.getMessage());
                 data.put("id", mapping.getId());
@@ -1059,6 +1070,7 @@ public class AdminController extends BaseApiController {
                 data.put("paymentStatus", "ERROR");
                 data.put("assignedAt", null);
                 data.put("createdAt", mapping.getCreatedAt());
+                data.put("hasUpcomingConsultationSchedule", false);
             }
             return data;
         }).collect(java.util.stream.Collectors.toList());

@@ -5,7 +5,8 @@
  *   `validateRemainingSessions`와 정합 (ACTIVE + 남은 회기 1 이상).
  * - `canTentativeBeforeDepositScheduleForMapping`: 가예약 — `validateMappingForTentativeBeforeDepositSchedule`과 정합
  *   (ACTIVE만. 승인 대기 DEPOSIT_PENDING은 캘린더 드롭·가예약 불가).
- * - `canScheduleForMapping`: 드래그·일정 생성 진입 허용 = 위 둘 중 하나.
+ * - `canScheduleForMapping`: GET /api/v1/admin/mappings 의 `hasUpcomingConsultationSchedule` 가 true이면
+ *   false (당일 이후 예약·확정·가예약 점유 시 «일정 등록» 숨김). 그 외에는 확정 예약 또는 가예약 경로 중 하나.
  *
  * @author CoreSolution
  * @since 2026-04-30
@@ -81,13 +82,23 @@ export const canTentativeBeforeDepositScheduleForMapping = (mapping) => {
 };
 
 /**
- * 통합 스케줄 사이드바 드래그·모달 진입 허용 (확정 예약 또는 가예약 경로).
+ * 통합 스케줄 사이드바 «일정 등록» 허용 (백엔드 `hasUpcomingConsultationSchedule` 와 조합).
  *
- * @param {object} [mapping] - 매칭 DTO
+ * @param {object} [mapping] - 매칭 DTO (`hasUpcomingConsultationSchedule` 선택)
  * @returns {boolean}
  */
-export const canScheduleForMapping = (mapping) =>
-  canConfirmedScheduleForMapping(mapping) || canTentativeBeforeDepositScheduleForMapping(mapping);
+export const canScheduleForMapping = (mapping) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return false;
+  }
+  if (mapping.hasUpcomingConsultationSchedule === true) {
+    return false;
+  }
+  return (
+    canConfirmedScheduleForMapping(mapping) ||
+    canTentativeBeforeDepositScheduleForMapping(mapping)
+  );
+};
 
 export const ONGOING_EXCLUDED_STATUSES = new Set(['SESSIONS_EXHAUSTED', 'TERMINATED']);
 

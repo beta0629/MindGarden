@@ -1,7 +1,9 @@
 package com.coresolution.consultation.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
@@ -69,6 +71,12 @@ public interface AdminService {
      * 모든 매칭 조회
      */
     List<ConsultantClientMapping> getAllMappings();
+
+    /**
+     * 상담사·내담자 쌍 중 {@code fromDate}(포함) 이후 점유 상담 일정이 있는 쌍의 키 집합
+     * ({@code consultantId + "_" + clientId}). 통합 스케줄 «일정 등록» 중복 진입 방지용.
+     */
+    Set<String> getConsultantClientKeysWithOccupyingSchedulesOnOrAfter(String tenantId, LocalDate fromDate);
 
     /**
      * 상담사 정보 수정

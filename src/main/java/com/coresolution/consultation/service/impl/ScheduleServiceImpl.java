@@ -934,7 +934,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 입금 전 가예약: 동일 테넌트에서 상담사·내담자 쌍에 대한 매핑이 ACTIVE 또는 DEPOSIT_PENDING 인 경우 통과.
+     * 입금 전 가예약: 동일 테넌트에서 상담사·내담자 쌍에 대한 매핑이 {@link MappingStatus#ACTIVE} 인 경우만 통과.
+     * {@code DEPOSIT_PENDING}(승인 대기)은 관리자 승인 전이므로 일정 생성·드롭 경로에서 제외한다.
      *
      * @param consultantId 상담사 사용자 ID
      * @param clientId 내담자 사용자 ID
@@ -944,13 +945,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.debug("🔗 가예약 매칭 검증: 상담사 {}, 내담자 {}", consultantId, clientId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
 
-        for (MappingStatus status : List.of(MappingStatus.ACTIVE, MappingStatus.DEPOSIT_PENDING)) {
-            List<ConsultantClientMapping> mappings = mappingRepository.findByTenantIdAndStatus(tenantId, status);
-            for (ConsultantClientMapping mapping : mappings) {
-                if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)) {
-                    log.debug("가예약 허용 매칭: status={}, mappingId={}", status, mapping.getId());
-                    return true;
-                }
+        List<ConsultantClientMapping> mappings = mappingRepository.findByTenantIdAndStatus(tenantId,
+                MappingStatus.ACTIVE);
+        for (ConsultantClientMapping mapping : mappings) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)) {
+                log.debug("가예약 허용 매칭: status=ACTIVE, mappingId={}", mapping.getId());
+                return true;
             }
         }
         log.warn("가예약 매칭 검증 실패: tenantId={}, 상담사 {}, 내담자 {}", tenantId, consultantId, clientId);

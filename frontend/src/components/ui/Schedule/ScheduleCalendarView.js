@@ -53,7 +53,9 @@ const ScheduleCalendarView = ({
     onEventDrop,
     onExternalEventReceive,
     integratedMonthEventLayout = false,
-    calendarSkin
+    calendarSkin,
+    /** 통합 스케줄(사이드바→캘린더)만: 기존 일정 블록 드래그 이동 비활성화, 외부 드롭은 유지 */
+    disableCalendarEventDrag = false
 }) => {
     const calendarRef = useRef(null);
     const calendarWrapperRef = useRef(null);
@@ -364,9 +366,9 @@ const ScheduleCalendarView = ({
                 eventContent={renderEventContent}
                 dateClick={onDateClick}
                 eventClick={onEventClick}
-                eventDrop={onEventDrop}
+                eventDrop={disableCalendarEventDrag ? undefined : onEventDrop}
                 eventReceive={handleEventReceive}
-                editable={isScheduleCalendarEditableRole(userRole)}
+                editable={!disableCalendarEventDrag && isScheduleCalendarEditableRole(userRole)}
                 droppable={isScheduleDropAdminRole(userRole)}
                 height="100%"
                 slotMinTime="08:00:00"

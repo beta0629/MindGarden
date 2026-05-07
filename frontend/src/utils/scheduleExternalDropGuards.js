@@ -10,7 +10,7 @@ import { canScheduleForMapping } from '../components/admin/mapping-management/co
 export const EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE = '매칭 정보가 올바르지 않습니다.';
 
 export const EXTERNAL_DROP_NOT_SCHEDULEABLE_MESSAGE =
-  '활성(ACTIVE) 또는 승인 대기(DEPOSIT_PENDING) 매칭만 스케줄 등록이 가능합니다. 회기가 없으면 가예약(입금 전)으로 등록하세요.';
+  '활성(ACTIVE) 매칭만 스케줄 등록이 가능합니다. 승인 대기 매칭은 승인 후 이용하세요. 회기가 없으면 가예약(입금 전)으로 등록할 수 있습니다.';
 
 export const EXTERNAL_DROP_PAST_DATE_MESSAGE = '과거 날짜에는 예약할 수 없습니다.';
 

@@ -4,7 +4,7 @@
  * - `canConfirmedScheduleForMapping`: 확정 예약(회기 차감) — 백엔드 `validateMappingForSchedule` +
  *   `validateRemainingSessions`와 정합 (ACTIVE + 남은 회기 1 이상).
  * - `canTentativeBeforeDepositScheduleForMapping`: 가예약 — `validateMappingForTentativeBeforeDepositSchedule`과 정합
- *   (ACTIVE 또는 DEPOSIT_PENDING).
+ *   (ACTIVE만. 승인 대기 DEPOSIT_PENDING은 캘린더 드롭·가예약 불가).
  * - `canScheduleForMapping`: 드래그·일정 생성 진입 허용 = 위 둘 중 하나.
  *
  * @author CoreSolution
@@ -77,7 +77,7 @@ export const canConfirmedScheduleForMapping = (mapping) =>
  */
 export const canTentativeBeforeDepositScheduleForMapping = (mapping) => {
   const s = mapping?.status;
-  return s === MAPPING_STATUS_ACTIVE || s === MAPPING_STATUS_DEPOSIT_PENDING;
+  return s === MAPPING_STATUS_ACTIVE;
 };
 
 /**

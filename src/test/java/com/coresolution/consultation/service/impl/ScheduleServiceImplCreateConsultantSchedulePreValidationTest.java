@@ -224,24 +224,22 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
     }
 
     @Test
-    @DisplayName("가예약: DEPOSIT_PENDING 매핑이면 저장·TENTATIVE_PENDING_PAYMENT·회기 동기화 없음")
-    void createConsultantSchedule_tentative_depositPending_savesWithoutSessionUsage() {
+    @DisplayName("가예약: ACTIVE(회기 0)이면 저장·TENTATIVE_PENDING_PAYMENT·회기 동기화 없음")
+    void createConsultantSchedule_tentative_activeZeroRemaining_savesWithoutSessionUsage() {
         stubConflictCheckAndAutoComplete();
 
         User consultant = new User();
         consultant.setId(CONSULTANT_ID);
         User client = new User();
         client.setId(CLIENT_ID);
-        ConsultantClientMapping pending = new ConsultantClientMapping();
-        pending.setConsultant(consultant);
-        pending.setClient(client);
-        pending.setRemainingSessions(0);
-        pending.setStatus(MappingStatus.DEPOSIT_PENDING);
+        ConsultantClientMapping active = new ConsultantClientMapping();
+        active.setConsultant(consultant);
+        active.setClient(client);
+        active.setRemainingSessions(0);
+        active.setStatus(MappingStatus.ACTIVE);
 
         when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
-                .thenReturn(Collections.emptyList());
-        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.DEPOSIT_PENDING))
-                .thenReturn(List.of(pending));
+                .thenReturn(List.of(active));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(invocation -> {
             Schedule s = invocation.getArgument(0);
             s.setId(777L);
@@ -263,12 +261,40 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
     }
 
     @Test
-    @DisplayName("가예약: ACTIVE·DEPOSIT_PENDING 매핑 모두 없으면 저장하지 않음")
+    @DisplayName("가예약: DEPOSIT_PENDING만 있으면 저장하지 않음 (승인 전)")
+    void createConsultantSchedule_tentative_onlyDepositPending_doesNotSave() {
+        stubConflictCheckAndAutoComplete();
+
+        User consultant = new User();
+        consultant.setId(CONSULTANT_ID);
+        User client = new User();
+        client.setId(CLIENT_ID);
+        ConsultantClientMapping pending = new ConsultantClientMapping();
+        pending.setConsultant(consultant);
+        pending.setClient(client);
+        pending.setRemainingSessions(1);
+        pending.setStatus(MappingStatus.DEPOSIT_PENDING);
+
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
+                .thenReturn(Collections.emptyList());
+
+        LocalDate date = LocalDate.of(2026, 7, 3);
+        LocalTime start = LocalTime.of(11, 0);
+        LocalTime end = LocalTime.of(12, 0);
+
+        assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID, date, start, end, "제목", "설명", "VIDEO", null, true))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("가예약");
+
+        verify(scheduleRepository, never()).save(any(Schedule.class));
+    }
+
+    @Test
+    @DisplayName("가예약: ACTIVE 매핑이 없으면 저장하지 않음")
     void createConsultantSchedule_tentative_noEligibleMapping_doesNotSave() {
         stubConflictCheckAndAutoComplete();
         when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
-                .thenReturn(Collections.emptyList());
-        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.DEPOSIT_PENDING))
                 .thenReturn(Collections.emptyList());
 
         LocalDate date = LocalDate.of(2026, 7, 2);

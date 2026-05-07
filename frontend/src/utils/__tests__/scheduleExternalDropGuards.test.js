@@ -39,14 +39,16 @@ describe('scheduleExternalDropGuards', () => {
       expect(r).toEqual({ ok: true });
     });
 
-    it('returns ok for DEPOSIT_PENDING with remaining 0', () => {
+    it('returns not_scheduleable for DEPOSIT_PENDING (승인 대기)', () => {
       const r = assertExternalMappingDropAllowed({
         consultantId: 'x',
         clientId: 'y',
         status: 'DEPOSIT_PENDING',
         remainingSessions: 0
       });
-      expect(r).toEqual({ ok: true });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('not_scheduleable');
+      expect(r.userMessage).toBe(EXTERNAL_DROP_NOT_SCHEDULEABLE_MESSAGE);
     });
 
     it('returns ok for ACTIVE with remaining sessions', () => {

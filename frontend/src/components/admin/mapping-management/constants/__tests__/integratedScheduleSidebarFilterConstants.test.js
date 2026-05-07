@@ -32,10 +32,10 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(canTentativeBeforeDepositScheduleForMapping({ status: MAPPING_STATUS_ACTIVE })).toBe(true);
     });
 
-    it('DEPOSIT_PENDING이면 true', () => {
+    it('DEPOSIT_PENDING이면 false (승인 전 가예약 불가)', () => {
       expect(
         canTentativeBeforeDepositScheduleForMapping({ status: MAPPING_STATUS_DEPOSIT_PENDING })
-      ).toBe(true);
+      ).toBe(false);
     });
 
     it('PAYMENT_CONFIRMED이면 false', () => {
@@ -48,8 +48,8 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(canScheduleForMapping({ status: 'ACTIVE', remainingSessions: 1 })).toBe(true);
     });
 
-    it('DEPOSIT_PENDING이면 remaining과 무관하게 true (가예약)', () => {
-      expect(canScheduleForMapping({ status: 'DEPOSIT_PENDING', remainingSessions: 0 })).toBe(true);
+    it('DEPOSIT_PENDING이면 remaining과 무관하게 false', () => {
+      expect(canScheduleForMapping({ status: 'DEPOSIT_PENDING', remainingSessions: 0 })).toBe(false);
     });
 
     it('ACTIVE + remaining 0이면 가예약만 가능하므로 true', () => {

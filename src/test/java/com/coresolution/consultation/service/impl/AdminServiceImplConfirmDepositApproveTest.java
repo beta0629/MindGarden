@@ -25,6 +25,7 @@ import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
+import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserIdGenerator;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
@@ -139,6 +140,8 @@ class AdminServiceImplConfirmDepositApproveTest {
     private UserService userService;
     @Mock
     private ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
+    @Mock
+    private ScheduleService scheduleService;
 
     /** JDBC 없이 TransactionTemplate(REQUIRES_NEW) 콜백만 수행 */
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
@@ -198,7 +201,8 @@ class AdminServiceImplConfirmDepositApproveTest {
                 noopTransactionManager,
                 userIdGenerator,
                 userService,
-                consultantSalaryProfileRepository);
+                consultantSalaryProfileRepository,
+                scheduleService);
         adminService = Mockito.spy(real);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
@@ -226,6 +230,7 @@ class AdminServiceImplConfirmDepositApproveTest {
         verify(mappingRepository).save(any(ConsultantClientMapping.class));
         verify(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
         verify(storedProcedureService).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
+        verify(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
     }
 
     @Test
@@ -244,6 +249,7 @@ class AdminServiceImplConfirmDepositApproveTest {
 
         assertNotNull(result);
         verify(mappingRepository).save(any(ConsultantClientMapping.class));
+        verify(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
     }
 
     @Test
@@ -260,6 +266,7 @@ class AdminServiceImplConfirmDepositApproveTest {
         assertNotNull(result);
         verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
         verify(adminService, never()).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
+        verify(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
     }
 
     @Test
@@ -296,6 +303,7 @@ class AdminServiceImplConfirmDepositApproveTest {
         m.setPaymentReference("PAY-REF");
         m.setPaymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED);
         m.setStatus(ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED);
+        m.setTenantId(TEST_TENANT_ID);
         return m;
     }
 
@@ -318,6 +326,7 @@ class AdminServiceImplConfirmDepositApproveTest {
         m.setPaymentReference("PAY-REF");
         m.setPaymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED);
         m.setStatus(ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED);
+        m.setTenantId(TEST_TENANT_ID);
         return m;
     }
 
@@ -339,6 +348,7 @@ class AdminServiceImplConfirmDepositApproveTest {
         m.setRemainingSessions(10);
         m.setStatus(ConsultantClientMapping.MappingStatus.DEPOSIT_PENDING);
         m.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+        m.setTenantId(TEST_TENANT_ID);
         return m;
     }
 }

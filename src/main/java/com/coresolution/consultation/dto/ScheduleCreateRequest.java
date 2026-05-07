@@ -43,6 +43,12 @@ public class ScheduleCreateRequest {
     
     @Builder.Default
     private String consultationType = "INDIVIDUAL";
+
+    /**
+     * 입금 전 가예약(선점) 생성. true이면 ADMIN/STAFF만 허용(canRegisterScheduler)하며
+     * 매핑 ACTIVE 또는 DEPOSIT_PENDING 검증·회기 미차감 경로. null/false면 기존 일반 예약과 동일.
+     */
+    private Boolean tentativeBeforeDeposit;
     
     /**
      * ScheduleCreateDto에서 ScheduleCreateRequest로 변환 (하위 호환성)

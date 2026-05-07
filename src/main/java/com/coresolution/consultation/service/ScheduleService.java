@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.dto.ScheduleResponse;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Schedule;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -56,16 +57,37 @@ public interface ScheduleService {
     // ==================== 상담사별 스케줄 관리 ====================
     
     /**
-     * 상담사 스케줄 등록 (매핑 상태 검증 포함)
+     * 상담사 스케줄 등록 (매핑 상태 검증 포함). {@code tentativeBeforeDeposit} false와 동일.
      */
-    Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date, 
-                                    LocalTime startTime, LocalTime endTime, String title, String description);
-    
+    default Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date,
+            LocalTime startTime, LocalTime endTime, String title, String description) {
+        return createConsultantSchedule(consultantId, clientId, date, startTime, endTime, title, description, false);
+    }
+
     /**
-     * 상담사 스케줄 등록 (상담 유형 포함)
+     * 상담사 스케줄 등록 (매핑·회기 검증 분기 포함).
+     *
+     * @param tentativeBeforeDeposit true면 입금 전 가예약(ACTIVE 또는 DEPOSIT_PENDING 매핑, 회기 차감 생략)
      */
-    Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date, 
-                                    LocalTime startTime, LocalTime endTime, String title, String description, String consultationType, String branchCode);
+    Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date,
+            LocalTime startTime, LocalTime endTime, String title, String description, boolean tentativeBeforeDeposit);
+
+    /**
+     * 상담사 스케줄 등록 (상담 유형 포함). {@code tentativeBeforeDeposit} false와 동일.
+     */
+    default Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date,
+            LocalTime startTime, LocalTime endTime, String title, String description, String consultationType,
+            String branchCode) {
+        return createConsultantSchedule(consultantId, clientId, date, startTime, endTime, title, description,
+                consultationType, branchCode, false);
+    }
+
+    /**
+     * 상담사 스케줄 등록 (상담 유형·가예약 플래그 포함)
+     */
+    Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date,
+            LocalTime startTime, LocalTime endTime, String title, String description, String consultationType,
+            String branchCode, boolean tentativeBeforeDeposit);
     
     /**
      * 상담사 스케줄 등록 (상담 유형 기반, 자동 종료 시간 계산)
@@ -342,6 +364,17 @@ public interface ScheduleService {
      * 시간이 지난 확정된 스케줄을 자동으로 완료 처리
      */
     void autoCompleteExpiredSchedules();
+
+    /**
+     * 입금(현금) 확인 직후: 해당 매핑 상담사·내담자 쌍의 {@code TENTATIVE_PENDING_PAYMENT} 일정을
+     * {@code BOOKED}로 바꾸고, 일정 건수만큼 {@link #createConsultantSchedule} 비가예약 경로와 동일하게
+     * 매핑 회기 차감·세션 동기화를 수행한다. 호출 스레드의 테넌트 컨텍스트가 유효해야 한다.
+     *
+     * @param mapping 입금 확인 처리된 매핑 (consultant·client·tenantId·id 필수)
+     * @author CoreSolution
+     * @since 2026-05-06
+     */
+    void finalizeTentativeSchedulesAfterDepositConfirmed(ConsultantClientMapping mapping);
     
     /**
      * 특정 스케줄이 시간이 지났는지 확인

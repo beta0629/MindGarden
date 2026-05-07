@@ -1,8 +1,11 @@
 /**
  * 통합 스케줄(/admin/integrated-schedule) 좌측 사이드바 필터 상수 SSOT
  *
- * `canScheduleForMapping`은 백엔드 `ScheduleServiceImpl#createConsultantSchedule`의
- * 저장 전 검증(`validateMappingForSchedule` ACTIVE 전제, `validateRemainingSessions`)과 정합한다.
+ * - `canConfirmedScheduleForMapping`: 확정 예약(회기 차감) — 백엔드 `validateMappingForSchedule` +
+ *   `validateRemainingSessions`와 정합 (ACTIVE + 남은 회기 1 이상).
+ * - `canTentativeBeforeDepositScheduleForMapping`: 가예약 — `validateMappingForTentativeBeforeDepositSchedule`과 정합
+ *   (ACTIVE 또는 DEPOSIT_PENDING).
+ * - `canScheduleForMapping`: 드래그·일정 생성 진입 허용 = 위 둘 중 하나.
  *
  * @author CoreSolution
  * @since 2026-04-30
@@ -42,7 +45,11 @@ export const STATUS_FILTER_OPTIONS = [
   { value: 'SUSPENDED', label: '일시정지' }
 ];
 
-const ACTIVE_MAPPING_STATUS = 'ACTIVE';
+/** 백엔드 `ConsultantClientMapping.MappingStatus` 문자열과 동일 */
+export const MAPPING_STATUS_ACTIVE = 'ACTIVE';
+
+/** 백엔드 `ConsultantClientMapping.MappingStatus` — 입금 확인 후 승인 대기 */
+export const MAPPING_STATUS_DEPOSIT_PENDING = 'DEPOSIT_PENDING';
 
 const normalizedRemainingSessions = (mapping) => {
   const raw = mapping?.remainingSessions;
@@ -54,13 +61,33 @@ const normalizedRemainingSessions = (mapping) => {
 };
 
 /**
- * 드래그·일정 생성 UI 허용 여부 (API 사전 검증과 동일 조건).
+ * 확정 예약(회기 차감) 가능 여부.
  *
  * @param {object} [mapping] - 매칭 DTO
- * @returns {boolean} ACTIVE이고 남은 회기가 1 이상일 때만 true
+ * @returns {boolean}
+ */
+export const canConfirmedScheduleForMapping = (mapping) =>
+  mapping?.status === MAPPING_STATUS_ACTIVE && normalizedRemainingSessions(mapping) > 0;
+
+/**
+ * 입금 전 가예약 등록 가능 매핑 여부 (회기 0이어도 허용).
+ *
+ * @param {object} [mapping] - 매칭 DTO
+ * @returns {boolean}
+ */
+export const canTentativeBeforeDepositScheduleForMapping = (mapping) => {
+  const s = mapping?.status;
+  return s === MAPPING_STATUS_ACTIVE || s === MAPPING_STATUS_DEPOSIT_PENDING;
+};
+
+/**
+ * 통합 스케줄 사이드바 드래그·모달 진입 허용 (확정 예약 또는 가예약 경로).
+ *
+ * @param {object} [mapping] - 매칭 DTO
+ * @returns {boolean}
  */
 export const canScheduleForMapping = (mapping) =>
-  mapping?.status === ACTIVE_MAPPING_STATUS && normalizedRemainingSessions(mapping) > 0;
+  canConfirmedScheduleForMapping(mapping) || canTentativeBeforeDepositScheduleForMapping(mapping);
 
 export const ONGOING_EXCLUDED_STATUSES = new Set(['SESSIONS_EXHAUSTED', 'TERMINATED']);
 

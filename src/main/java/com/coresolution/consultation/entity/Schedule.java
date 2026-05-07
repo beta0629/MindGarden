@@ -48,7 +48,7 @@ public class Schedule extends BaseEntity {
     private LocalTime endTime;
     
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 32)
     private ScheduleStatus status = ScheduleStatus.AVAILABLE;
     
     @Size(max = 100, message = "일정 유형은 100자 이하여야 합니다.")

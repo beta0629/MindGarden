@@ -59,6 +59,7 @@ import com.coresolution.consultation.service.erp.financial.FinancialTransactionS
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
+import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
@@ -129,6 +130,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final com.coresolution.consultation.service.UserIdGenerator userIdGenerator;
     private final UserService userService;
     private final ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
+    private final ScheduleService scheduleService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -1339,6 +1341,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
+
+        finalizeTentativeBookingsAfterDepositPhase4b(savedMapping);
 
         try {
             boolean isAdditionalMapping = savedMapping.getNotes() != null
@@ -6360,6 +6364,19 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     + ", actual=" + savedUser.getTenantId()
             );
         }
+    }
+
+    /**
+     * Phase 4b: 입금(현금) 확인 직후 해당 매핑 상담사·내담자 쌍의 가예약 일정을 확정하고 회기 차감.
+     * {@link ScheduleService#finalizeTentativeSchedulesAfterDepositConfirmed(ConsultantClientMapping)}에 위임한다.
+     *
+     * @param mapping 입금 확인된 매핑
+     */
+    private void finalizeTentativeBookingsAfterDepositPhase4b(ConsultantClientMapping mapping) {
+        if (mapping == null) {
+            return;
+        }
+        scheduleService.finalizeTentativeSchedulesAfterDepositConfirmed(mapping);
     }
 
     /**

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.Vacation;
@@ -363,24 +365,29 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
 
     @Override
-    public Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date, 
-                                          LocalTime startTime, LocalTime endTime, String title, String description) {
-        log.info("📅 상담사 스케줄 생성: 상담사 {}, 내담자 {}, 날짜 {}", consultantId, clientId, date);
-        
-        
-        
+    public Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date,
+            LocalTime startTime, LocalTime endTime, String title, String description, boolean tentativeBeforeDeposit) {
+        log.info("📅 상담사 스케줄 생성: 상담사 {}, 내담자 {}, 날짜 {}, 가예약={}", consultantId, clientId, date,
+                tentativeBeforeDeposit);
+
         if (hasTimeConflict(consultantId, date, startTime, endTime, null)) {
             throw new RuntimeException("해당 시간대에 이미 스케줄이 존재합니다.");
         }
 
-        // 10인자 오버로드와 동일: 저장 전 매칭·회기 사전 검증
-        if (!validateMappingForSchedule(consultantId, clientId)) {
-            throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
+        if (tentativeBeforeDeposit) {
+            if (!validateMappingForTentativeBeforeDepositSchedule(consultantId, clientId)) {
+                throw new RuntimeException(
+                        "상담사와 내담자 간 활성 또는 입금 대기 매칭이 없어 가예약을 등록할 수 없습니다.");
+            }
+        } else {
+            if (!validateMappingForSchedule(consultantId, clientId)) {
+                throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
+            }
+            if (!validateRemainingSessions(consultantId, clientId)) {
+                throw new RuntimeException("사용 가능한 회기가 없습니다.");
+            }
         }
-        if (!validateRemainingSessions(consultantId, clientId)) {
-            throw new RuntimeException("사용 가능한 회기가 없습니다.");
-        }
-        
+
         Schedule schedule = new Schedule();
         schedule.setConsultantId(consultantId);
         schedule.setClientId(clientId);
@@ -390,13 +397,19 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setTitle(title);
         schedule.setDescription(description);
         schedule.setScheduleType("CONSULTATION");
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        schedule.setStatus(ScheduleStatus.BOOKED);
-        
+        schedule.setStatus(tentativeBeforeDeposit ? ScheduleStatus.TENTATIVE_PENDING_PAYMENT : ScheduleStatus.BOOKED);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null) {
+            schedule.setTenantId(tenantId);
+        }
+        schedule.setIsDeleted(false);
+
         Schedule savedSchedule = scheduleRepository.save(schedule);
-        
-        useSessionForMapping(consultantId, clientId);
-        
+
+        if (!tentativeBeforeDeposit) {
+            useSessionForMapping(consultantId, clientId);
+        }
+
         log.info("✅ 상담사 스케줄 생성 완료: ID {}", savedSchedule.getId());
         return savedSchedule;
     }
@@ -406,29 +419,35 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
      */
     @Override
-    public Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date, 
-                                          LocalTime startTime, LocalTime endTime, String title, String description, String consultationType, String branchCode) {
+    public Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date,
+            LocalTime startTime, LocalTime endTime, String title, String description, String consultationType,
+            String branchCode, boolean tentativeBeforeDeposit) {
         // 표준화 2025-12-06: branchCode 무시
         if (branchCode != null) {
             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
         }
         String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
-        log.info("📅 상담사 스케줄 생성 (상담유형 포함): 상담사 {}, 내담자 {}, 날짜 {}, 상담유형 {}, tenantId={}", consultantId, clientId, date, consultationType, tenantId);
-        
-        
-        
+        log.info("📅 상담사 스케줄 생성 (상담유형 포함): 상담사 {}, 내담자 {}, 날짜 {}, 상담유형 {}, tenantId={}, 가예약={}",
+                consultantId, clientId, date, consultationType, tenantId, tentativeBeforeDeposit);
+
         if (hasTimeConflict(consultantId, date, startTime, endTime, null)) {
             throw new RuntimeException("해당 시간대에 이미 스케줄이 존재합니다.");
         }
 
-        // createConsultantScheduleWithType과 동일: 저장 전 매칭·회기 사전 검증 (스케줄 행 없음)
-        if (!validateMappingForSchedule(consultantId, clientId)) {
-            throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
+        if (tentativeBeforeDeposit) {
+            if (!validateMappingForTentativeBeforeDepositSchedule(consultantId, clientId)) {
+                throw new RuntimeException(
+                        "상담사와 내담자 간 활성 또는 입금 대기 매칭이 없어 가예약을 등록할 수 없습니다.");
+            }
+        } else {
+            if (!validateMappingForSchedule(consultantId, clientId)) {
+                throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
+            }
+            if (!validateRemainingSessions(consultantId, clientId)) {
+                throw new RuntimeException("사용 가능한 회기가 없습니다.");
+            }
         }
-        if (!validateRemainingSessions(consultantId, clientId)) {
-            throw new RuntimeException("사용 가능한 회기가 없습니다.");
-        }
-        
+
         Schedule schedule = new Schedule();
         schedule.setConsultantId(consultantId);
         schedule.setClientId(clientId);
@@ -438,28 +457,26 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setTitle(title);
         schedule.setDescription(description);
         schedule.setScheduleType("CONSULTATION");
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        schedule.setStatus(ScheduleStatus.BOOKED);
-        schedule.setConsultationType(consultationType); // 상담 유형 설정
-        schedule.setBranchCode(null); // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
-        
-        // 표준화 2025-12-08: tenantId와 isDeleted 명시적 설정 (캘린더 조회 시 필터링을 위해 필수)
+        schedule.setStatus(tentativeBeforeDeposit ? ScheduleStatus.TENTATIVE_PENDING_PAYMENT : ScheduleStatus.BOOKED);
+        schedule.setConsultationType(consultationType);
+        schedule.setBranchCode(null);
+
         schedule.setTenantId(tenantId);
         schedule.setIsDeleted(false);
-        
-        log.info("📅 스케줄 엔티티 생성: tenantId={}, isDeleted={}, consultantId={}, clientId={}, date={}", 
+
+        log.info("📅 스케줄 엔티티 생성: tenantId={}, isDeleted={}, consultantId={}, clientId={}, date={}",
                 tenantId, schedule.getIsDeleted(), consultantId, clientId, date);
-        
+
         Schedule savedSchedule = scheduleRepository.save(schedule);
-        
-        log.info("✅ 스케줄 저장 완료: id={}, tenantId={}, isDeleted={}", 
+
+        log.info("✅ 스케줄 저장 완료: id={}, tenantId={}, isDeleted={}",
                 savedSchedule.getId(), savedSchedule.getTenantId(), savedSchedule.getIsDeleted());
-        
-        // 사전 검증 통과 후 회기 차감. 본 클래스 @Transactional 범위에서 실패 시 스케줄 저장까지 롤백.
-        // 사전 검증 직후 다른 요청이 회기를 소모하는 레이스는 별도(낙관적 락 등) — Phase 2 검토.
-        useSessionForMapping(consultantId, clientId);
-        log.info("✅ 회기 사용 처리 완료: consultantId={}, clientId={}", consultantId, clientId);
-        
+
+        if (!tentativeBeforeDeposit) {
+            useSessionForMapping(consultantId, clientId);
+            log.info("✅ 회기 사용 처리 완료: consultantId={}, clientId={}", consultantId, clientId);
+        }
+
         log.info("✅ 상담사 스케줄 생성 완료 (상담유형 포함): ID {}, 상담유형: {}", savedSchedule.getId(), consultationType);
         return savedSchedule;
     }
@@ -505,6 +522,82 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("✅ 상담사 스케줄 생성 완료 (유형 기반): ID {}, 상담 유형: {}, 시간: {} - {}", 
                 savedSchedule.getId(), consultationType.getDisplayName(), startTime, endTime);
         return savedSchedule;
+    }
+
+    /**
+     * 입금 확인 후 가예약 일정 확정 및 지정 매핑에 대한 회기 차감·동기화.
+     * {@link #useSessionForMapping}은 ACTIVE 매핑만 조회하므로, 입금 직후 {@code DEPOSIT_PENDING}인 매핑은
+     * 본 메서드의 {@link #useSessionForSpecificMapping}으로 동일한 차감·동기화 경로를 탄다.
+     */
+    @Override
+    public void finalizeTentativeSchedulesAfterDepositConfirmed(ConsultantClientMapping mapping) {
+        if (mapping == null || mapping.getId() == null) {
+            return;
+        }
+        if (mapping.getConsultant() == null || mapping.getClient() == null) {
+            log.warn("finalizeTentativeSchedulesAfterDepositConfirmed: consultant/client 없음, mappingId={}",
+                    mapping.getId());
+            return;
+        }
+        String tenantId = mapping.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = TenantContextHolder.getRequiredTenantId();
+        }
+        Long consultantUserId = mapping.getConsultant().getId();
+        Long clientUserId = mapping.getClient().getId();
+        List<Schedule> tentatives = scheduleRepository
+                .findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
+                        tenantId, consultantUserId, clientUserId, ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        if (tentatives.isEmpty()) {
+            log.debug("finalizeTentativeSchedulesAfterDepositConfirmed: 가예약 일정 없음, mappingId={}",
+                    mapping.getId());
+            return;
+        }
+        tentatives.sort(Comparator.comparing(Schedule::getDate).thenComparing(Schedule::getStartTime));
+        log.info("finalizeTentativeSchedulesAfterDepositConfirmed: 가예약 {}건 확정 처리, mappingId={}",
+                tentatives.size(), mapping.getId());
+        for (Schedule schedule : tentatives) {
+            schedule.setStatus(ScheduleStatus.BOOKED);
+            scheduleRepository.save(schedule);
+            useSessionForSpecificMapping(tenantId, mapping.getId(), consultantUserId, clientUserId);
+        }
+    }
+
+    /**
+     * 지정 매핑 ID에 대해 회기 1회 사용 및 동기화 ({@link #useSessionForMapping} 내부와 동일 처리).
+     * 입금 확인 직후 매핑이 DEPOSIT_PENDING인 경우에도 허용한다.
+     */
+    private void useSessionForSpecificMapping(String tenantId, Long mappingId, Long consultantUserId,
+            Long clientUserId) {
+        log.debug("매핑 단건 회기 사용: mappingId={}, 상담사 {}, 내담자 {}", mappingId, consultantUserId, clientUserId);
+        ConsultantClientMapping freshMapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
+                .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
+        if (freshMapping.getConsultant() == null || freshMapping.getClient() == null) {
+            throw new IllegalStateException("매핑에 상담사 또는 내담자가 없습니다: " + mappingId);
+        }
+        if (!freshMapping.getConsultant().getId().equals(consultantUserId)
+                || !freshMapping.getClient().getId().equals(clientUserId)) {
+            throw new IllegalStateException(
+                    "일정의 상담사·내담자와 매핑이 일치하지 않습니다. mappingId=" + mappingId);
+        }
+        MappingStatus mappingStatus = freshMapping.getStatus();
+        if (mappingStatus != MappingStatus.ACTIVE && mappingStatus != MappingStatus.DEPOSIT_PENDING) {
+            throw new IllegalStateException(
+                    "가예약 확정 시 회기 차감은 활성·입금대기 매핑에서만 가능합니다. mappingId="
+                            + mappingId + ", status=" + mappingStatus);
+        }
+        log.info("매핑 회기 차감: mappingId={}, totalSessions={}, usedSessions={}, remainingSessions={}",
+                freshMapping.getId(), freshMapping.getTotalSessions(),
+                freshMapping.getUsedSessions(), freshMapping.getRemainingSessions());
+        freshMapping.useSession();
+        mappingRepository.save(freshMapping);
+        try {
+            sessionSyncService.syncAfterSessionUsage(mappingId, consultantUserId, clientUserId);
+            log.info("회기 사용 후 동기화 완료: mappingId={}", mappingId);
+        } catch (Exception syncError) {
+            log.error("회기 사용 후 동기화 실패: mappingId={}, error={}",
+                    mappingId, syncError.getMessage(), syncError);
+        }
     }
 
     @Override
@@ -825,21 +918,52 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public boolean validateMappingForSchedule(Long consultantId, Long clientId) {
         log.debug("🔗 매칭 상태 검증: 상담사 {}, 내담자 {}", consultantId, clientId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        
+
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            tenantId, ConsultantClientMapping.MappingStatus.ACTIVE);
-        
+            tenantId, MappingStatus.ACTIVE);
+
         for (ConsultantClientMapping mapping : activeMappings) {
-            if (mapping.getConsultant().getId().equals(consultantId) && 
-                mapping.getClient().getId().equals(clientId)) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)) {
                 log.debug("유효한 매칭 발견: ID {}", mapping.getId());
                 return true;
             }
         }
-        
+
         log.warn("유효한 매칭을 찾을 수 없음: 상담사 {}, 내담자 {}", consultantId, clientId);
         return false;
+    }
+
+    /**
+     * 입금 전 가예약: 동일 테넌트에서 상담사·내담자 쌍에 대한 매핑이 ACTIVE 또는 DEPOSIT_PENDING 인 경우 통과.
+     *
+     * @param consultantId 상담사 사용자 ID
+     * @param clientId 내담자 사용자 ID
+     * @return 허용되면 true
+     */
+    private boolean validateMappingForTentativeBeforeDepositSchedule(Long consultantId, Long clientId) {
+        log.debug("🔗 가예약 매칭 검증: 상담사 {}, 내담자 {}", consultantId, clientId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+
+        for (MappingStatus status : List.of(MappingStatus.ACTIVE, MappingStatus.DEPOSIT_PENDING)) {
+            List<ConsultantClientMapping> mappings = mappingRepository.findByTenantIdAndStatus(tenantId, status);
+            for (ConsultantClientMapping mapping : mappings) {
+                if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)) {
+                    log.debug("가예약 허용 매칭: status={}, mappingId={}", status, mapping.getId());
+                    return true;
+                }
+            }
+        }
+        log.warn("가예약 매칭 검증 실패: tenantId={}, 상담사 {}, 내담자 {}", tenantId, consultantId, clientId);
+        return false;
+    }
+
+    private boolean mappingMatchesConsultantClientPair(ConsultantClientMapping mapping, Long consultantId,
+            Long clientId) {
+        if (mapping == null || mapping.getConsultant() == null || mapping.getClient() == null) {
+            return false;
+        }
+        return mapping.getConsultant().getId().equals(consultantId)
+                && mapping.getClient().getId().equals(clientId);
     }
 
     @Override

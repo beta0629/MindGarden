@@ -2177,6 +2177,31 @@ textarea.mg-v2-textarea {
   resize: vertical;
 }
 
+.mg-v2-ad-b0kla .mg-v2-ad-details-step__tentative-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, 4px);
+  margin-top: var(--mg-spacing-sm, 8px);
+  padding-top: var(--mg-spacing-sm, 8px);
+  border-top: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-details-step__tentative-label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-spacing-sm, 8px);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .mg-v2-ad-details-step__tentative-hint {
+  margin: 0;
+  font-size: var(--font-size-xs, 0.8125rem);
+  color: var(--mg-warning-600);
+  line-height: 1.45;
+}
+
 /* 예약 변경 모달 — 에러 요약 */
 .mg-v2-reschedule-modal__errors {
   color: var(--mg-error-500);

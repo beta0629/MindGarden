@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @version 1.0.0
  * @since 2025-12-05
  */
-@SpringBootTest
+@SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @ActiveProfiles("test")
 // MySQL 통합 테스트: application-test.yml + SPRING_DATASOURCE_PASSWORD(및 필요 시 SPRING_DATASOURCE_URL) 필수. 저장소에 원격 호스트·비밀번호 없음.
 @TestPropertySource(properties = {

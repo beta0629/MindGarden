@@ -15,4 +15,10 @@
 | **3** | UX·모달(차단·다음 동선·입금/카드 안내) | Phase 2 퇴장 | UnifiedModal·토큰·접근성 포함 시안·스펙 확정 | **core-designer** (필요 시 **core-publisher**: 마크업만) |
 | **4** | 구현 + 테스트 게이트 | Phase 3 퇴장 | PR 머지 후보 + 상위 SSOT §4 테스트 블록 Phase N까지 Green | **core-coder**, **core-tester** |
 
+### § 보강 — Phase 4 세분(4a / 4b)
+
+- **4a**: 일정 생성 API·서비스에서 `tentativeBeforeDeposit` 분기, 매핑 `ACTIVE` | `DEPOSIT_PENDING`, 회기 검증·차감 생략, `ScheduleStatus` 가예약 값.
+- **4b**: 입금·결제 확정(`confirmDeposit` 등) 이후 `TENTATIVE` → `BOOKED`, 회기 차감·동기화 — 트랜잭션·ERP는 `DEPOSIT_ERP` 및 디버거 갭 문서와 연계.
+- **참고**: [DEBUG_TENTATIVE_BOOKING_GAP_20260506.md](./DEBUG_TENTATIVE_BOOKING_GAP_20260506.md), [TEST_MATRIX_TENTATIVE_BOOKING_20260506.md](./TEST_MATRIX_TENTATIVE_BOOKING_20260506.md), [DESIGN_TENTATIVE_BOOKING_UX_SPEC_20260506.md](./DESIGN_TENTATIVE_BOOKING_UX_SPEC_20260506.md).
+
 **상위 문서 링크**: [REVIEW_RESERVE_PAY_RECEIVABLES_SESSION_20260506.md](./REVIEW_RESERVE_PAY_RECEIVABLES_SESSION_20260506.md) §6, [PO_ADR_REVIEW_CHECKLIST_INTEGRATED_SCHEDULE_20260506.md](./PO_ADR_REVIEW_CHECKLIST_INTEGRATED_SCHEDULE_20260506.md) §0.

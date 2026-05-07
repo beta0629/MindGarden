@@ -615,6 +615,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 onClose={handleModalClose}
                 selectedDate={selectedDate}
                 selectedInfo={selectedInfo}
+                userRole={currentUserRole}
+                userId={currentUserId}
                 currentUser={currentUser}
                 currentUserRole={currentUserRole}
                 currentUserId={currentUserId}

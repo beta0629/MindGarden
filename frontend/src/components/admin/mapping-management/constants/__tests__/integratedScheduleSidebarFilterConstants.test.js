@@ -1,38 +1,69 @@
-import { canScheduleForMapping } from '../integratedScheduleSidebarFilterConstants';
+import {
+  canConfirmedScheduleForMapping,
+  canScheduleForMapping,
+  canTentativeBeforeDepositScheduleForMapping,
+  MAPPING_STATUS_ACTIVE,
+  MAPPING_STATUS_DEPOSIT_PENDING
+} from '../integratedScheduleSidebarFilterConstants';
 
-describe('integratedScheduleSidebarFilterConstants — canScheduleForMapping', () => {
-  it('returns true for ACTIVE with remainingSessions > 0', () => {
-    expect(canScheduleForMapping({ status: 'ACTIVE', remainingSessions: 3 })).toBe(true);
-    expect(canScheduleForMapping({ status: 'ACTIVE', remainingSessions: 1 })).toBe(true);
+describe('integratedScheduleSidebarFilterConstants', () => {
+  describe('canConfirmedScheduleForMapping', () => {
+    it('ACTIVE이고 remainingSessions > 0이면 true', () => {
+      expect(canConfirmedScheduleForMapping({ status: MAPPING_STATUS_ACTIVE, remainingSessions: 3 })).toBe(
+        true
+      );
+    });
+
+    it('ACTIVE인데 remainingSessions 0이면 false', () => {
+      expect(canConfirmedScheduleForMapping({ status: MAPPING_STATUS_ACTIVE, remainingSessions: 0 })).toBe(
+        false
+      );
+    });
+
+    it('DEPOSIT_PENDING이면 false (확정 예약만)', () => {
+      expect(
+        canConfirmedScheduleForMapping({ status: MAPPING_STATUS_DEPOSIT_PENDING, remainingSessions: 2 })
+      ).toBe(false);
+    });
   });
 
-  it('returns false for PAYMENT_CONFIRMED even with remaining sessions', () => {
-    expect(
-      canScheduleForMapping({ status: 'PAYMENT_CONFIRMED', remainingSessions: 5 })
-    ).toBe(false);
+  describe('canTentativeBeforeDepositScheduleForMapping', () => {
+    it('ACTIVE이면 true', () => {
+      expect(canTentativeBeforeDepositScheduleForMapping({ status: MAPPING_STATUS_ACTIVE })).toBe(true);
+    });
+
+    it('DEPOSIT_PENDING이면 true', () => {
+      expect(
+        canTentativeBeforeDepositScheduleForMapping({ status: MAPPING_STATUS_DEPOSIT_PENDING })
+      ).toBe(true);
+    });
+
+    it('PAYMENT_CONFIRMED이면 false', () => {
+      expect(canTentativeBeforeDepositScheduleForMapping({ status: 'PAYMENT_CONFIRMED' })).toBe(false);
+    });
   });
 
-  it('returns false for DEPOSIT_PENDING', () => {
-    expect(canScheduleForMapping({ status: 'DEPOSIT_PENDING', remainingSessions: 2 })).toBe(
-      false
-    );
-  });
+  describe('canScheduleForMapping', () => {
+    it('ACTIVE + remaining > 0이면 true', () => {
+      expect(canScheduleForMapping({ status: 'ACTIVE', remainingSessions: 1 })).toBe(true);
+    });
 
-  it('returns false for ACTIVE when remainingSessions is 0, null, or undefined', () => {
-    expect(canScheduleForMapping({ status: 'ACTIVE', remainingSessions: 0 })).toBe(false);
-    expect(canScheduleForMapping({ status: 'ACTIVE', remainingSessions: null })).toBe(false);
-    expect(canScheduleForMapping({ status: 'ACTIVE' })).toBe(false);
-  });
+    it('DEPOSIT_PENDING이면 remaining과 무관하게 true (가예약)', () => {
+      expect(canScheduleForMapping({ status: 'DEPOSIT_PENDING', remainingSessions: 0 })).toBe(true);
+    });
 
-  it('returns false for ACTIVE when remainingSessions is not a finite number', () => {
-    expect(canScheduleForMapping({ status: 'ACTIVE', remainingSessions: Number.NaN })).toBe(
-      false
-    );
-  });
+    it('ACTIVE + remaining 0이면 가예약만 가능하므로 true', () => {
+      expect(canScheduleForMapping({ status: 'ACTIVE', remainingSessions: 0 })).toBe(true);
+    });
 
-  it('returns false when mapping is missing or has no status', () => {
-    expect(canScheduleForMapping(undefined)).toBe(false);
-    expect(canScheduleForMapping(null)).toBe(false);
-    expect(canScheduleForMapping({})).toBe(false);
+    it('PAYMENT_CONFIRMED이면 false', () => {
+      expect(canScheduleForMapping({ status: 'PAYMENT_CONFIRMED', remainingSessions: 5 })).toBe(false);
+    });
+
+    it('mapping 없으면 false', () => {
+      expect(canScheduleForMapping(undefined)).toBe(false);
+      expect(canScheduleForMapping(null)).toBe(false);
+      expect(canScheduleForMapping({})).toBe(false);
+    });
   });
 });

@@ -348,14 +348,19 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <!-- *IntegrationTest.java 는 **/*Test.java 로도 매칭되나, 스캐너/환경 차이 대비 명시.
+                         **/Test*.java 는 TestDocumentationIps 등 비-테스트 유틸까지 포함하므로 넣지 않음. -->
                     <includes>
                         <include>**/*Test.java</include>
                         <include>**/*Tests.java</include>
+                        <include>**/*TestCase.java</include>
+                        <include>**/*IntegrationTest.java</include>
                     </includes>
                     <!-- 테스트 실패 시에도 빌드 계속 진행 (선택적) -->
                     <testFailureIgnore>false</testFailureIgnore>
                     <!-- 테스트 타임아웃 설정 (초) -->
                     <forkCount>1</forkCount>
+                    <!-- false: SpringBootTest·Mockito 인라인 mock 재사용 시 Metaspace/NoClassDefFound 방지 -->
                     <reuseForks>false</reuseForks>
                 </configuration>
             </plugin>

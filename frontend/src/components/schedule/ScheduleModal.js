@@ -16,6 +16,11 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { canRegisterSchedulerByRoleString } from '../../utils/scheduleRoleGuards';
+import {
+  MAPPING_STATUS_DEPOSIT_PENDING,
+  MAPPING_STATUS_ACTIVE
+} from '../admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
 
 /**
  * 새로운 디자인의 스케줄 생성 모달 컴포넌트
@@ -54,6 +59,7 @@ const ScheduleModalNew = ({
     const [step, setStep] = useState(1); // 1: 상담사 선택, 2: 내담자 선택, 3: 시간 선택, 4: 세부사항
     const [consultationTypeOptions, setConsultationTypeOptions] = useState([]);
     const [durationOptions, setDurationOptions] = useState([]);
+    const [tentativeBeforeDeposit, setTentativeBeforeDeposit] = useState(false);
 
     const handleCodeOptionsLoaded = useCallback(({ consultationTypeOptions: c, durationOptions: d }) => {
         setConsultationTypeOptions(c);
@@ -102,6 +108,24 @@ const ScheduleModalNew = ({
             setStep(1);
         }
     }, [isOpen, preFilledMapping?.consultantId, preFilledMapping?.clientId]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+        if (!preFilledMapping?.consultantId) {
+            setTentativeBeforeDeposit(false);
+            return;
+        }
+        const st = preFilledMapping.mappingStatus;
+        const rem = Number(preFilledMapping.remainingSessions);
+        const remOk = Number.isFinite(rem) ? rem : 0;
+        if (st === MAPPING_STATUS_DEPOSIT_PENDING || (st === MAPPING_STATUS_ACTIVE && remOk <= 0)) {
+            setTentativeBeforeDeposit(true);
+        } else {
+            setTentativeBeforeDeposit(false);
+        }
+    }, [isOpen, preFilledMapping]);
 
     const getDurationFromCode = (durationCode) => {
         if (!durationCode) return 60;
@@ -169,6 +193,10 @@ const ScheduleModalNew = ({
                 consultationType: consultationType
             };
 
+            if (canRegisterSchedulerByRoleString(userRole)) {
+                scheduleData.tentativeBeforeDeposit = Boolean(tentativeBeforeDeposit);
+            }
+
             const response = await StandardizedApi.post('/api/v1/schedules/consultant', scheduleData);
             
             notificationManager.success(response?.message || '스케줄이 성공적으로 생성되었습니다!');
@@ -229,6 +257,7 @@ const ScheduleModalNew = ({
         setTitle('');
         setDescription('');
         setConsultationType('INDIVIDUAL');
+        setTentativeBeforeDeposit(false);
     };
 
     const handleClose = () => {
@@ -448,6 +477,31 @@ const ScheduleModalNew = ({
                                             <span className="mg-v2-ad-details-summary__value"><SafeText>{convertConsultationTypeToKorean(consultationType)}</SafeText></span>
                                         </div>
                                     </div>
+                                    {canRegisterSchedulerByRoleString(userRole) && (
+                                        <div className="mg-v2-ad-details-step__tentative-row">
+                                            <label
+                                                className="mg-v2-ad-details-step__tentative-label"
+                                                htmlFor="schedule-tentative-before-deposit"
+                                            >
+                                                <input
+                                                    id="schedule-tentative-before-deposit"
+                                                    type="checkbox"
+                                                    checked={tentativeBeforeDeposit}
+                                                    onChange={(e) => setTentativeBeforeDeposit(e.target.checked)}
+                                                    disabled={loading}
+                                                />
+                                                <span>
+                                                    <SafeText>입금 전 가예약 (회기 차감 없음)</SafeText>
+                                                </span>
+                                            </label>
+                                            <p className="mg-v2-ad-details-step__tentative-hint" role="note">
+                                                <SafeText>
+                                                    활성 또는 입금 대기 매칭에서만 가능합니다. 결제·입금이 확정되면
+                                                    일정이 확정되고 회기가 차감됩니다.
+                                                </SafeText>
+                                            </p>
+                                        </div>
+                                    )}
                                     <div className="mg-v2-ad-details-step__form-group">
                                         <label className="mg-v2-ad-details-step__label" htmlFor="schedule-title">제목</label>
                                         <input

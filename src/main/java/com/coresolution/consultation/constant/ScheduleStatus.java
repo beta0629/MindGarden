@@ -11,6 +11,8 @@ public enum ScheduleStatus {
     
     AVAILABLE("가능", "#28a745", "✅"),           // 예약 가능한 시간대
     BOOKED("예약됨", "#007bff", "📅"),           // 상담 예약됨
+    /** 입금·결제 전 가예약(선점). DESIGN: 결제 대기 (가예약). Phase 4b에서 BOOKED·회기 차감으로 전환 예정. */
+    TENTATIVE_PENDING_PAYMENT("결제 대기 (가예약)", "#fd7e14", "⏳"),
     CONFIRMED("확정됨", "#17a2b8", "✅"),         // 상담 확정됨
     VACATION("휴가", "#ffc107", "🏖️"),           // 휴가로 인한 비활성
     COMPLETED("완료", "#b8b8b8", "✅"),          // 상담 완료 (연한 회색)
@@ -44,7 +46,7 @@ public enum ScheduleStatus {
     
     // 활성 상태인지 확인 (예약 가능하거나 예약된 상태)
     public boolean isActive() {
-        return this == AVAILABLE || this == BOOKED || this == CONFIRMED;
+        return this == AVAILABLE || this == BOOKED || this == TENTATIVE_PENDING_PAYMENT || this == CONFIRMED;
     }
     
     // 완료된 상태인지 확인
@@ -70,6 +72,6 @@ public enum ScheduleStatus {
      * @return 예약 점유로 간주하면 true
      */
     public boolean occupiesTimeForConflictCheck() {
-        return this == BOOKED || this == CONFIRMED;
+        return this == BOOKED || this == TENTATIVE_PENDING_PAYMENT || this == CONFIRMED;
     }
 }

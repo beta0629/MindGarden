@@ -149,7 +149,9 @@ const IntegratedMatchingSchedule = () => {
       consultantId: mappingPayload.consultantId,
       clientId: mappingPayload.clientId,
       consultantName: mappingPayload.consultantName || '상담사',
-      clientName: mappingPayload.clientName || '내담자'
+      clientName: mappingPayload.clientName || '내담자',
+      mappingStatus: mappingPayload.status,
+      remainingSessions: mappingPayload.remainingSessions
     });
     setSelectedDateForModal(date instanceof Date ? date : new Date(date));
     setScheduleModalOpen(true);
@@ -334,7 +336,8 @@ const IntegratedMatchingSchedule = () => {
                       clientId: mapping.clientId,
                       consultantName: mapping.consultantName || '상담사',
                       clientName: mapping.clientName || '내담자',
-                      status: mapping.status
+                      status: mapping.status,
+                      remainingSessions: mapping.remainingSessions
                     }
                   };
                   return (

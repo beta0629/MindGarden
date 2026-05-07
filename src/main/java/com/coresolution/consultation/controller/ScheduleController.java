@@ -346,10 +346,11 @@ public class ScheduleController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> createConsultantSchedule(
             @RequestBody ScheduleCreateRequest request, HttpSession session) {
         
-        log.info("📅 상담사 스케줄 생성 요청: 상담사 {}, 내담자 {}, 날짜 {}, 시간 {} - {}, 상담유형 {}", 
-                request.getConsultantId(), request.getClientId(), 
+        boolean tentativeBeforeDeposit = Boolean.TRUE.equals(request.getTentativeBeforeDeposit());
+        log.info("📅 상담사 스케줄 생성 요청: 상담사 {}, 내담자 {}, 날짜 {}, 시간 {} - {}, 상담유형 {}, 가예약={}",
+                request.getConsultantId(), request.getClientId(),
                 request.getDate(), request.getStartTime(), request.getEndTime(),
-                request.getConsultationType());
+                request.getConsultationType(), tentativeBeforeDeposit);
         
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
@@ -364,7 +365,11 @@ public class ScheduleController extends BaseApiController {
         
         UserRole userRole = currentUser.getRole();
         boolean hasPermission = dynamicPermissionService.canRegisterScheduler(userRole);
-        
+        // 가예약(tentativeBeforeDeposit)은 ADMIN/STAFF만 — canRegisterScheduler와 동일(상담사·내담자 거절).
+        if (tentativeBeforeDeposit && !hasPermission) {
+            log.warn("❌ 가예약 등록 권한 없음: role={}", userRole);
+            throw new org.springframework.security.access.AccessDeniedException("가예약 일정은 관리자·사무원만 등록할 수 있습니다.");
+        }
         if (!hasPermission) {
             log.warn("❌ 스케줄 등록 권한 없음: role={}, roleName={}", userRole, userRole.name());
             throw new org.springframework.security.access.AccessDeniedException("스케줄 등록 권한이 없습니다.");
@@ -408,7 +413,8 @@ public class ScheduleController extends BaseApiController {
             request.getTitle(),
             request.getDescription(),
             request.getConsultationType(),
-            null // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+            null, // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+            tentativeBeforeDeposit
         );
         
         Map<String, Object> data = Map.of("scheduleId", schedule.getId());

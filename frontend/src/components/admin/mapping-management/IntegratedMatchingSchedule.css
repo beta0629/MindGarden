@@ -354,10 +354,15 @@
 
 /* 매칭 카드 (사이드바 전용) - CardContainer가 시각 스타일 담당, li는 리스트 레이아웃만 */
 .integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card,
-.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card.fc-event {
+.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card--scheduleable {
   flex-shrink: 0;
   list-style: none;
   width: 100%;
+}
+
+.integrated-schedule__sidebar .integrated-schedule__btn-schedule-from-card {
+  width: 100%;
+  margin-bottom: var(--mg-spacing-xs, 4px);
 }
 
 .integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card .mg-v2-card-container {

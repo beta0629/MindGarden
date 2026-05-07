@@ -1,14 +1,13 @@
 /**
  * IntegratedMatchingSchedule - 매칭·스케줄 통합 원스톱 화면
  * 좌: 매칭 목록(실 API /api/v1/admin/mappings), 우: 스케줄 캘린더(실 API)
- * 카드 드래그 → 캘린더 드롭 시 ScheduleModal 상담사·내담자 Pre-filled로 오픈
+ * 매칭 카드 «일정 등록» → ScheduleModal 상담사·내담자 Pre-filled(캘린더로의 드래그는 사용하지 않음)
  *
  * @author Core Solution
  * @since 2025-02-25
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Draggable } from '@fullcalendar/interaction';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 import { useSession } from '../../../contexts/SessionContext';
@@ -155,6 +154,19 @@ const IntegratedMatchingSchedule = () => {
     });
     setSelectedDateForModal(date instanceof Date ? date : new Date(date));
     setScheduleModalOpen(true);
+  };
+
+  /** 사이드바 카드 «일정 등록» — 캘린더 드래그 대신 버튼으로만 모달 진입 */
+  const handleOpenScheduleFromCard = (mapping) => {
+    const mappingPayload = {
+      consultantId: mapping.consultantId,
+      clientId: mapping.clientId,
+      consultantName: mapping.consultantName,
+      clientName: mapping.clientName,
+      status: mapping.status,
+      remainingSessions: mapping.remainingSessions
+    };
+    handleDropFromExternal(new Date(), mappingPayload);
   };
 
   const handleMappingCreated = () => {
@@ -326,38 +338,27 @@ const IntegratedMatchingSchedule = () => {
                     </li>
                   );
                 }
-                return filteredMappings.map((mapping) => {
-                  const eventData = {
-                    id: `mapping-${mapping.id}`,
-                    title: mapping.clientName || '내담자',
-                    extendedProps: {
-                      mappingId: mapping.id,
-                      consultantId: mapping.consultantId,
-                      clientId: mapping.clientId,
-                      consultantName: mapping.consultantName || '상담사',
-                      clientName: mapping.clientName || '내담자',
-                      status: mapping.status,
-                      remainingSessions: mapping.remainingSessions
-                    }
-                  };
-                  return (
+                return filteredMappings.map((mapping) => (
                     <li
                       key={mapping.id}
-                      className={`integrated-schedule__card ${canScheduleForMapping(mapping) ? 'fc-event' : ''}`}
-                      data-event={canScheduleForMapping(mapping) ? JSON.stringify(eventData) : undefined}
+                      className={`integrated-schedule__card${
+                        canScheduleForMapping(mapping) ? ' integrated-schedule__card--scheduleable' : ''
+                      }`}
                     >
                       <MappingScheduleCard
                         mapping={mapping}
-                        eventData={eventData}
-                        isDraggable={canScheduleForMapping(mapping)}
+                        onScheduleFromCard={
+                          canScheduleForMapping(mapping)
+                            ? () => handleOpenScheduleFromCard(mapping)
+                            : undefined
+                        }
                         onPayment={setPaymentModalMapping}
                         onDeposit={setDepositModalMapping}
                         onApprove={handleApprove}
                         approveProcessing={approveProcessing}
                       />
                     </li>
-                  );
-                });
+                  ));
               })()}
             </ul>
           )}
@@ -373,10 +374,11 @@ const IntegratedMatchingSchedule = () => {
               userRole={calendarUserRole}
               userId={user?.id ?? undefined}
               refetchTrigger={refetchTrigger}
-              onDropFromExternal={handleDropFromExternal}
               hideScheduleTitle
               integratedMonthEventLayout
               calendarSkin="integrated"
+              disableCalendarEventDrag
+              acceptExternalCalendarDrops={false}
             />
           </div>
         </main>

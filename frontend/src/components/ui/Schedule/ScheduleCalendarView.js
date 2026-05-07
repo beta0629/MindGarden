@@ -55,7 +55,9 @@ const ScheduleCalendarView = ({
     integratedMonthEventLayout = false,
     calendarSkin,
     /** 통합 스케줄(사이드바→캘린더)만: 기존 일정 블록 드래그 이동 비활성화, 외부 드롭은 유지 */
-    disableCalendarEventDrag = false
+    disableCalendarEventDrag = false,
+    /** false면 FullCalendar 외부 드롭(사이드바 카드 등) 비활성 */
+    acceptExternalCalendarDrops = true
 }) => {
     const calendarRef = useRef(null);
     const calendarWrapperRef = useRef(null);
@@ -367,9 +369,9 @@ const ScheduleCalendarView = ({
                 dateClick={onDateClick}
                 eventClick={onEventClick}
                 eventDrop={disableCalendarEventDrag ? undefined : onEventDrop}
-                eventReceive={handleEventReceive}
+                eventReceive={acceptExternalCalendarDrops ? handleEventReceive : undefined}
                 editable={!disableCalendarEventDrag && isScheduleCalendarEditableRole(userRole)}
-                droppable={isScheduleDropAdminRole(userRole)}
+                droppable={acceptExternalCalendarDrops && isScheduleDropAdminRole(userRole)}
                 height="100%"
                 slotMinTime="08:00:00"
                 slotMaxTime="20:00:00"

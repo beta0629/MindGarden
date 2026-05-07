@@ -64,8 +64,20 @@ const UnifiedScheduleComponent = ({
   onDropFromExternal,
   hideScheduleTitle = false,
   integratedMonthEventLayout = false,
-  calendarSkin
+  calendarSkin,
+  /** 명시 시 우선. 미지정이면 `onDropFromExternal` 존재 여부로 통합 스케줄 잠금 추론 */
+  disableCalendarEventDrag: disableCalendarEventDragProp,
+  acceptExternalCalendarDrops: acceptExternalCalendarDropsProp
 }) => {
+    const resolvedDisableCalendarEventDrag =
+        disableCalendarEventDragProp !== undefined && disableCalendarEventDragProp !== null
+            ? Boolean(disableCalendarEventDragProp)
+            : typeof onDropFromExternal === 'function';
+    const resolvedAcceptExternalCalendarDrops =
+        acceptExternalCalendarDropsProp !== undefined && acceptExternalCalendarDropsProp !== null
+            ? Boolean(acceptExternalCalendarDropsProp)
+            : true;
+
     console.log('📅 UnifiedScheduleComponent 렌더링:', { userRole, userId });
     
     // ========== 상태 관리 ==========
@@ -1066,7 +1078,9 @@ UnifiedScheduleComponent.propTypes = {
   onDropFromExternal: PropTypes.func,
   hideScheduleTitle: PropTypes.bool,
   integratedMonthEventLayout: PropTypes.bool,
-  calendarSkin: PropTypes.oneOf(['integrated'])
+  calendarSkin: PropTypes.oneOf(['integrated']),
+  disableCalendarEventDrag: PropTypes.bool,
+  acceptExternalCalendarDrops: PropTypes.bool
 };
 
 export default UnifiedScheduleComponent;

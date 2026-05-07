@@ -8,16 +8,39 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { CardActionGroup as CommonCardActionGroup } from '../../../../common';
+import MGButton from '../../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../../erp/common/erpMgButtonProps';
 import MappingMatchActions from '../../molecules/MappingMatchActions';
 
 const CardActionGroup = ({
   mapping,
+  onScheduleFromCard,
   onPayment,
   onDeposit,
   onApprove,
   approveProcessing
 }) => (
   <CommonCardActionGroup>
+    {onScheduleFromCard && (
+      <MGButton
+        type="button"
+        variant="secondary"
+        size="small"
+        className={buildErpMgButtonClassName({
+          variant: 'secondary',
+          size: 'sm',
+          loading: false,
+          className: 'integrated-schedule__btn-schedule-from-card'
+        })}
+        loading={false}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={onScheduleFromCard}
+        aria-label="일정 등록"
+        preventDoubleClick={false}
+      >
+        일정 등록
+      </MGButton>
+    )}
     <MappingMatchActions
       mapping={mapping}
       onPayment={onPayment}
@@ -43,6 +66,7 @@ CardActionGroup.propTypes = {
 
 CardActionGroup.defaultProps = {
   mapping: null,
+  onScheduleFromCard: null,
   onPayment: null,
   onDeposit: null,
   onApprove: null,

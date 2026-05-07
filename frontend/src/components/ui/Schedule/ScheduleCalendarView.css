@@ -220,13 +220,67 @@
     background-color: transparent !important;
 }
 
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day .fc-daygrid-day-frame {
+    position: relative;
+}
+
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-frame {
     background-color: transparent;
+}
+
+/* 배경 이벤트 하네스가 플로우를 잡지 않도록: 일자(day-top)가 항상 위·가로 공간 확보 */
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-bg-harness {
+    pointer-events: none;
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-events {
     position: relative;
     z-index: 1;
+}
+
+/*
+ * 통합 월간: 일자(«5일») 한 줄 + 공휴일 배지는 다음 줄 전폭.
+ * (day-top 가로 플렉스에서 배지가 100% 너비를 같이 끌어가며 일자 링크가 극단적으로 좁아지는 현상 방지)
+ */
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: flex-end;
+    align-items: flex-start;
+    align-content: flex-start;
+    gap: var(--mg-spacing-xs, 4px);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top a.fc-daygrid-day-number,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .fc-daygrid-day-number {
+    display: inline-block;
+    flex: 0 0 auto;
+    order: 0;
+    white-space: nowrap;
+    writing-mode: horizontal-tb;
+    word-break: keep-all;
+    overflow-wrap: normal;
+    width: max-content;
+    max-width: 100%;
+    line-height: 1.2;
+    text-decoration: none;
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-substitute-eve-badge {
+    flex: 1 0 100%;
+    order: 2;
+    max-width: 100%;
 }
 
 /*
@@ -249,8 +303,11 @@
     ) !important;
 }
 
-/* 통합: 공휴일명·대체 전날 배지 — 배경은 중립, 제목만 붉은 톤 */
+/* 통합: 공휴일명·대체 전날 배지 — day-top에서 전폭 줄(일자 위 한 줄 확보), 내부는 세로 스택 */
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-holiday-badge {
+    flex: 1 0 100%;
+    order: 1;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
     align-items: stretch;

@@ -5,6 +5,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.coresolution.consultation.constant.DocumentationIpConstants;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.Test;
@@ -35,7 +37,7 @@ class RateLimitingFilterPublicApiTest {
 
         MockHttpServletRequest first = new MockHttpServletRequest("POST",
             "/api/v1/accounts/integration/send-verification-code");
-        first.setRemoteAddr("192.0.2.10");
+        first.setRemoteAddr(DocumentationIpConstants.RFC5737_TEST_NET_1_EXAMPLE);
         MockHttpServletResponse firstResponse = new MockHttpServletResponse();
         filter.doFilterInternal(first, firstResponse, chain);
         verify(chain).doFilter(first, firstResponse);
@@ -43,7 +45,7 @@ class RateLimitingFilterPublicApiTest {
 
         MockHttpServletRequest second = new MockHttpServletRequest("POST",
             "/api/v1/accounts/integration/send-verification-code");
-        second.setRemoteAddr("192.0.2.10");
+        second.setRemoteAddr(DocumentationIpConstants.RFC5737_TEST_NET_1_EXAMPLE);
         MockHttpServletResponse secondResponse = new MockHttpServletResponse();
         filter.doFilterInternal(second, secondResponse, chain);
 

@@ -191,30 +191,23 @@
 
 /*
  * 통합 스킨: 공휴일 + 월간 주말 틴트 SSOT(한 블록).
- * 우선순위: 공휴일(.mg-v2-ad-calendar-day--kr-public-holiday) > 토·일 틴트(FC .fc-day-sat / .fc-day-sun, :not 공휴일)).
- * B0KlA·FC 테마·번들 순서로 color가 밀릴 수 있어 DOM 체인 + !important.
+ * 공휴일 색 강조는 «날짜 숫자·배지 텍스트» 중심(셀 전체 배경·좌측 세로 강조 없음).
+ * 우선순위: 공휴일 셀은 배경 투명 → 비공휴일 토·일만 주말 틴트.
  * 오케스트레이션 INTEGRATED_SCHEDULE_CALENDAR_CSS_ARCHITECTURE_ORCHESTRATION.md §4.2 예외 1블록.
  */
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc .fc-bg-event.mg-v2-ad-calendar-event--kr-public-holiday-bg {
-    background-color: color-mix(
-        in srgb,
-        var(--mg-error-500) 28%,
-        var(--mg-color-surface-main, var(--mg-color-background-main, var(--mg-white)))
-    );
-    border-left: var(--mg-spacing-sm, var(--spacing-sm, 8px)) solid var(--mg-error-500);
+    /* 날짜만 붉게: 전일 배경 레이어는 비가시(데이터·포커스는 유지) */
+    background-color: transparent !important;
+    border-left: none;
     margin: 0;
-    opacity: 1;
+    opacity: 0;
     pointer-events: none;
     z-index: 0;
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday {
-    background-color: color-mix(
-        in srgb,
-        var(--mg-error-500) 36%,
-        var(--mg-color-background-main, var(--mg-color-surface-main))
-    ) !important;
-    box-shadow: inset var(--mg-spacing-sm, 6px) 0 0 0 var(--mg-error-500) !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday a.fc-daygrid-day-number,
@@ -224,11 +217,7 @@
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday:hover {
-    background-color: color-mix(
-        in srgb,
-        var(--mg-error-500) 46%,
-        var(--mg-color-background-main, var(--mg-color-surface-main))
-    ) !important;
+    background-color: transparent !important;
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-frame {
@@ -260,20 +249,21 @@
     ) !important;
 }
 
-/* 통합: 공휴일명·대체 전날 배지(글로벌 primary 배지보다 상위 체인으로 덮어씀) */
+/* 통합: 공휴일명·대체 전날 배지 — 배경은 중립, 제목만 붉은 톤 */
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-holiday-badge {
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 1px;
-    background-color: color-mix(in srgb, var(--mg-error-500) 18%, var(--mg-color-surface-main, var(--mg-white)));
-    color: var(--mg-error-600, var(--mg-error-500));
-    border: 1px solid color-mix(in srgb, var(--mg-error-500) 38%, transparent);
+    background-color: var(--mg-color-surface-main, var(--mg-white));
+    color: var(--mg-color-text-main, inherit);
+    border: 1px solid var(--mg-color-border-main, rgba(0, 0, 0, 0.08));
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-holiday-badge__name {
     font-weight: var(--cs-font-semibold, 600);
     min-width: 0;
+    color: var(--mg-error-600, var(--mg-error-500));
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-holiday-badge__eve-hint {

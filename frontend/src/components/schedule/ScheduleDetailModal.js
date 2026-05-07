@@ -93,7 +93,15 @@ const ScheduleDetailModal = ({
     /** 코드값/한글 라벨 모두 고려해 공통코드 value로 정규화 */
     const getStatusCodeValue = (codeOrLabel) => {
         if (codeOrLabel == null || codeOrLabel === '') return codeOrLabel;
-        const knownCodes = ['BOOKED', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'VACATION', 'AVAILABLE'];
+        const knownCodes = [
+            'BOOKED',
+            'CONFIRMED',
+            'COMPLETED',
+            'CANCELLED',
+            'VACATION',
+            'AVAILABLE',
+            'TENTATIVE_PENDING_PAYMENT'
+        ];
         if (knownCodes.includes(String(codeOrLabel).trim())) return String(codeOrLabel).trim();
         const byValue = scheduleStatusOptions.find(opt => opt.value === codeOrLabel);
         if (byValue) return byValue.value;
@@ -101,6 +109,9 @@ const ScheduleDetailModal = ({
         if (byLabel) return byLabel.value;
         if (typeof codeOrLabel === 'string') {
             if (/취소|취소됨/.test(codeOrLabel)) return 'CANCELLED';
+            if (/가예약|TENTATIVE_PENDING_PAYMENT|결제\s*대기\s*\(가예약\)/.test(codeOrLabel)) {
+                return 'TENTATIVE_PENDING_PAYMENT';
+            }
             if (/예약|예약됨/.test(codeOrLabel)) return 'BOOKED';
             if (/완료|완료됨/.test(codeOrLabel)) return 'COMPLETED';
             if (/확정|확정됨/.test(codeOrLabel)) return 'CONFIRMED';
@@ -472,7 +483,15 @@ const ScheduleDetailModal = ({
         const byLabel = scheduleStatusOptions.find(opt => opt.label === status);
         if (byLabel && byLabel.label) return byLabel.label;
         const code = getStatusCodeValue(status);
-        const fallbackMap = { CANCELLED: '취소됨', BOOKED: '예약됨', COMPLETED: '완료됨', CONFIRMED: '확정됨', VACATION: '휴가', AVAILABLE: '가능' };
+        const fallbackMap = {
+            CANCELLED: '취소됨',
+            BOOKED: '예약됨',
+            COMPLETED: '완료됨',
+            CONFIRMED: '확정됨',
+            VACATION: '휴가',
+            AVAILABLE: '가능',
+            TENTATIVE_PENDING_PAYMENT: '결제 대기 (가예약)'
+        };
         return fallbackMap[code] || status || '알 수 없음';
     };
 
@@ -650,6 +669,12 @@ const ScheduleDetailModal = ({
 
     const effectiveTab = showNotesTab && activeDetailTab === 'notes' ? 'notes' : 'detail';
 
+    /** 입금 전 가예약(TENTATIVE_PENDING_PAYMENT)은 예약됨(BOOKED)과 동일한 관리 액션(변경·확정·취소) */
+    const isBookedOrTentativePending = () => {
+        const s = resolveStatusForActions(displayData);
+        return isStatus(s, 'BOOKED') || isStatus(s, 'TENTATIVE_PENDING_PAYMENT');
+    };
+
     const renderMainActions = () => {
         if (isVacationEvent()) {
             return (
@@ -677,7 +702,7 @@ const ScheduleDetailModal = ({
         }
         return (
             <>
-                {isStatus(resolveStatusForActions(displayData), 'BOOKED') && (
+                {isBookedOrTentativePending() && (
                     <>
                         {canRescheduleByRole && (
                             <MGButton

@@ -480,6 +480,19 @@
   font-weight: var(--font-weight-normal, 400);
 }
 
+.mg-v2-ad-b0kla .mg-v2-schedule-legend--calendar-skin-integrated .mg-v2-legend-kr-ph-swatch {
+  border-left-color: var(--mg-error-500);
+}
+
+.mg-v2-ad-b0kla .mg-v2-legend-weekend-holiday-note {
+  margin: var(--mg-spacing-xs, 0.25rem) 0 0 0;
+  width: 100%;
+  line-height: var(--line-height-normal, 1.45);
+  color: var(--mg-color-text-secondary, var(--color-text-muted));
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal, 400);
+}
+
 /* ===== FullCalendar B0KlA 오버라이드 ===== */
 .mg-v2-ad-b0kla .mg-v2-schedule-calendar-view,
 .mg-v2-ad-b0kla .mg-v2-ad-b0kla-fc-wrapper {

@@ -14,11 +14,18 @@ import {
   parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount
 } from '../../../constants/schedule';
-import { getKrPublicHolidayNameForLocalDate } from '../../../utils/krPublicHolidays';
+import {
+  getKrPublicHolidayNameForLocalDate,
+  getKrSubstituteHolidayEveHintForLocalDate
+} from '../../../utils/krPublicHolidays';
 import { USER_ROLES } from '../../../constants/roles';
 import './ScheduleCalendarView.css';
 
 const KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS = 'mg-v2-ad-calendar-day-holiday-badge';
+const KR_SUBSTITUTE_EVE_DAY_BADGE_CLASS = 'mg-v2-ad-calendar-day-substitute-eve-badge';
+const SUBSTITUTE_EVE_DAY_CELL_CLASS = 'mg-v2-ad-calendar-day--kr-substitute-eve';
+const WEEKEND_SAT_DAY_CELL_CLASS = 'mg-v2-ad-calendar-day--weekend-sat';
+const WEEKEND_SUN_DAY_CELL_CLASS = 'mg-v2-ad-calendar-day--weekend-sun';
 
 /** 통합 스케줄 외부 카드 드롭 등 «신규 생성» UX — 관리자형만 */
 const SCHEDULE_DROP_ADMIN_ROLES = new Set([
@@ -45,7 +52,8 @@ const ScheduleCalendarView = ({
     onEventClick,
     onEventDrop,
     onExternalEventReceive,
-    integratedMonthEventLayout = false
+    integratedMonthEventLayout = false,
+    calendarSkin
 }) => {
     const calendarRef = useRef(null);
     const calendarWrapperRef = useRef(null);
@@ -86,10 +94,32 @@ const ScheduleCalendarView = ({
         };
     }, [updateCalendarSize]);
 
-    /** 로컬 날짜가 KR 공휴일 표에 있으면 셀에 표식(배경 이벤트 미렌더 시에도 월간 가시성 확보) */
-    const dayCellClassNamesForKrHoliday = useCallback((arg) => (
-      getKrPublicHolidayNameForLocalDate(arg.date) ? ['mg-v2-ad-calendar-day--kr-public-holiday'] : []
-    ), []);
+    /**
+     * 로컬 날짜가 KR 공휴일 표에 있으면 셀에 표식.
+     * 통합 스킨일 때만 익일「대체」공휴일 전날 클래스(배지·스타일 정합).
+     */
+    const dayCellClassNamesForKrHoliday = useCallback((arg) => {
+      const list = [];
+      const holidayName = getKrPublicHolidayNameForLocalDate(arg.date);
+      if (holidayName) {
+        list.push('mg-v2-ad-calendar-day--kr-public-holiday');
+      }
+      if (calendarSkin === 'integrated') {
+        if (getKrSubstituteHolidayEveHintForLocalDate(arg.date)) {
+          list.push(SUBSTITUTE_EVE_DAY_CELL_CLASS);
+        }
+        if (arg.view?.type === 'dayGridMonth' && !holidayName) {
+          const dow = arg.date.getDay();
+          if (dow === 6) {
+            list.push(WEEKEND_SAT_DAY_CELL_CLASS);
+          }
+          if (dow === 0) {
+            list.push(WEEKEND_SUN_DAY_CELL_CLASS);
+          }
+        }
+      }
+      return list;
+    }, [calendarSkin]);
 
     /**
      * 월간 뷰: 배경 이벤트에는 제목이 안 그려져 공휴일명 배지 주입(FC dayCell 훅).
@@ -99,24 +129,49 @@ const ScheduleCalendarView = ({
         if (info.view?.type !== 'dayGridMonth') {
             return;
         }
-        const holidayName = getKrPublicHolidayNameForLocalDate(info.date);
-        if (!holidayName) {
-            return;
-        }
         const dayTop = info.el.querySelector('.fc-daygrid-day-top');
-        if (!dayTop || dayTop.querySelector(`.${KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS}`)) {
+        if (!dayTop) {
             return;
         }
-        const badge = document.createElement('div');
-        badge.className = KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS;
-        const text = toDisplayString(holidayName, '');
-        badge.textContent = text;
-        badge.title = text;
-        dayTop.appendChild(badge);
-    }, []);
+        const isIntegrated = calendarSkin === 'integrated';
+        const holidayName = getKrPublicHolidayNameForLocalDate(info.date);
+        const eveHint = isIntegrated ? getKrSubstituteHolidayEveHintForLocalDate(info.date) : null;
+
+        if (holidayName && !dayTop.querySelector(`.${KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS}`)) {
+            const badge = document.createElement('div');
+            badge.className = KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS;
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'mg-v2-ad-calendar-day-holiday-badge__name';
+            const safeName = toDisplayString(holidayName, '');
+            nameSpan.textContent = safeName;
+            badge.appendChild(nameSpan);
+            if (eveHint) {
+                const hintSpan = document.createElement('span');
+                hintSpan.className = 'mg-v2-ad-calendar-day-holiday-badge__eve-hint';
+                hintSpan.textContent = toDisplayString(eveHint.hintLine, '');
+                badge.appendChild(hintSpan);
+                badge.title =
+                    `${toDisplayString(eveHint.hintLine, '')} (${toDisplayString(eveHint.nextHolidayName, '')})`;
+            } else {
+                badge.title = safeName;
+            }
+            dayTop.appendChild(badge);
+            return;
+        }
+
+        if (!holidayName && eveHint && !dayTop.querySelector(`.${KR_SUBSTITUTE_EVE_DAY_BADGE_CLASS}`)) {
+            const eveBadge = document.createElement('div');
+            eveBadge.className = KR_SUBSTITUTE_EVE_DAY_BADGE_CLASS;
+            eveBadge.textContent = toDisplayString(eveHint.hintLine, '');
+            eveBadge.title =
+                `${toDisplayString(eveHint.hintLine, '')} (${toDisplayString(eveHint.nextHolidayName, '')})`;
+            dayTop.appendChild(eveBadge);
+        }
+    }, [calendarSkin]);
 
     const handleDayCellWillUnmount = useCallback((info) => {
         info.el.querySelector(`.${KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS}`)?.remove();
+        info.el.querySelector(`.${KR_SUBSTITUTE_EVE_DAY_BADGE_CLASS}`)?.remove();
     }, []);
 
     // 지난 일정 판별 함수

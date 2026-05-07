@@ -63,7 +63,8 @@ const UnifiedScheduleComponent = ({
   refetchTrigger,
   onDropFromExternal,
   hideScheduleTitle = false,
-  integratedMonthEventLayout = false
+  integratedMonthEventLayout = false,
+  calendarSkin
 }) => {
     console.log('📅 UnifiedScheduleComponent 렌더링:', { userRole, userId });
     
@@ -955,6 +956,7 @@ const UnifiedScheduleComponent = ({
                 events={events}
                 scheduleStatusOptions={scheduleStatusOptions}
                 getConsultantColor={getConsultantColor}
+                calendarSkin={calendarSkin}
             />
 
             {loading && (
@@ -969,6 +971,7 @@ const UnifiedScheduleComponent = ({
                 onEventDrop={handleEventDrop}
                 onExternalEventReceive={onDropFromExternal}
                 integratedMonthEventLayout={integratedMonthEventLayout}
+                calendarSkin={calendarSkin}
             />
 
             {/* 모달들 */}
@@ -1061,7 +1064,8 @@ UnifiedScheduleComponent.propTypes = {
   refetchTrigger: PropTypes.number,
   onDropFromExternal: PropTypes.func,
   hideScheduleTitle: PropTypes.bool,
-  integratedMonthEventLayout: PropTypes.bool
+  integratedMonthEventLayout: PropTypes.bool,
+  calendarSkin: PropTypes.oneOf(['integrated'])
 };
 
 export default UnifiedScheduleComponent;

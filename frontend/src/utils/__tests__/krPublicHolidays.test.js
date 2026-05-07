@@ -2,7 +2,9 @@ import { CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY } from '../../constants/schedu
 import {
   buildKrPublicHolidayFullCalendarEvents,
   getKrPublicHolidayNameForLocalDate,
-  KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS
+  getKrSubstituteHolidayEveHintForLocalDate,
+  KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS,
+  KR_SUBSTITUTE_HOLIDAY_EVE_HINT_PRIMARY
 } from '../krPublicHolidays';
 
 describe('krPublicHolidays', () => {
@@ -62,5 +64,24 @@ describe('krPublicHolidays', () => {
     const b = buildKrPublicHolidayFullCalendarEvents();
     expect(a.length).toBe(b.length);
     expect(a.length).toBeGreaterThan(50);
+  });
+
+  it('getKrSubstituteHolidayEveHintForLocalDate: 익일 공휴일명에 「대체」가 있을 때만 전날 힌트', () => {
+    const may24 = getKrSubstituteHolidayEveHintForLocalDate(new Date(2026, 4, 24));
+    expect(may24).not.toBeNull();
+    expect(may24.hintLine).toBe(KR_SUBSTITUTE_HOLIDAY_EVE_HINT_PRIMARY);
+    expect(may24.nextHolidayName).toContain('대체');
+
+    const mar1 = getKrSubstituteHolidayEveHintForLocalDate(new Date(2026, 2, 1));
+    expect(mar1).not.toBeNull();
+    expect(mar1.nextHolidayName).toContain('대체');
+
+    expect(getKrSubstituteHolidayEveHintForLocalDate(new Date(2026, 1, 28))).toBeNull();
+    expect(getKrSubstituteHolidayEveHintForLocalDate(new Date(2026, 4, 23))).toBeNull();
+    expect(getKrSubstituteHolidayEveHintForLocalDate(new Date(2026, 4, 10))).toBeNull();
+  });
+
+  it('getKrSubstituteHolidayEveHintForLocalDate: 무효 날짜는 null', () => {
+    expect(getKrSubstituteHolidayEveHintForLocalDate(new Date(Number.NaN))).toBeNull();
   });
 });

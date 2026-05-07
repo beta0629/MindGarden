@@ -117,6 +117,34 @@ const KR_PUBLIC_HOLIDAYS_BY_ISO = {
 
 const HOLIDAY_BG_CLASS = 'mg-v2-ad-calendar-event--kr-public-holiday-bg';
 
+/** 공휴일명에 포함 시 익일이 법정 대체 휴무로 간주(표 참고용) */
+const KR_HOLIDAY_NAME_SUBSTITUTE_TOKEN = '대체';
+
+/** `getKrSubstituteHolidayEveHintForLocalDate` 안내 1줄(SSOT) */
+export const KR_SUBSTITUTE_HOLIDAY_EVE_HINT_PRIMARY = '내일 대체공휴일';
+
+/**
+ * 통합 캘린더 월간: 익일 공휴일명에 「대체」가 포함될 때만 전날 안내용.
+ * 법정 절기가 일요일 등으로 밀린 경우 표의 익일 라벨(예: 대체공휴일)을 그대로 따름.
+ *
+ * @param {Date} date 로컬 기준 달력 일
+ * @returns {{ hintLine: string, nextHolidayName: string } | null}
+ */
+export function getKrSubstituteHolidayEveHintForLocalDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return null;
+  }
+  const next = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+  const nextHolidayName = getKrPublicHolidayNameForLocalDate(next);
+  if (!nextHolidayName?.includes(KR_HOLIDAY_NAME_SUBSTITUTE_TOKEN)) {
+    return null;
+  }
+  return {
+    hintLine: KR_SUBSTITUTE_HOLIDAY_EVE_HINT_PRIMARY,
+    nextHolidayName
+  };
+}
+
 /** FullCalendar `dayCellClassNames` 등 — 로컬 달력 일(브라우저 TZ) 기준 ISO 키 조회 */
 export function getKrPublicHolidayNameForLocalDate(date) {
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) {

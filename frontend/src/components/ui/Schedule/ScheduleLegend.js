@@ -1,7 +1,8 @@
 import { toDisplayString } from '../../../utils/safeDisplay';
 import {
     KR_PUBLIC_HOLIDAY_LEGEND_DISCLAIMER,
-    KR_PUBLIC_HOLIDAY_LEGEND_LABEL
+    KR_PUBLIC_HOLIDAY_LEGEND_LABEL,
+    SCHEDULE_LEGEND_INTEGRATED_WEEKEND_HOLIDAY_NOTE
 } from '../../../constants/schedule';
 
 /**
@@ -15,7 +16,8 @@ const ScheduleLegend = ({
     consultants,
     events,
     scheduleStatusOptions,
-    getConsultantColor
+    getConsultantColor,
+    calendarSkin
 }) => {
     // 실제 스케줄이 있는 상담사만 필터링 (최대 5명까지만 표시)
     const activeConsultants = consultants
@@ -31,13 +33,22 @@ const ScheduleLegend = ({
     ) || [];
     
     return (
-        <div className="mg-v2-schedule-legend mg-v2-ad-b0kla">
+        <div
+            className={`mg-v2-schedule-legend mg-v2-ad-b0kla${
+                calendarSkin === 'integrated' ? ' mg-v2-schedule-legend--calendar-skin-integrated' : ''
+            }`}
+        >
             <div className="mg-v2-legend-section mg-v2-legend-section--kr-public-holiday">
                 <div className="mg-v2-legend-title">{toDisplayString(KR_PUBLIC_HOLIDAY_LEGEND_LABEL)}</div>
                 <div className="mg-v2-legend-kr-ph-row">
                     <span className="mg-v2-legend-kr-ph-swatch" aria-hidden="true" />
                     <p className="mg-v2-legend-kr-ph-disclaimer">{toDisplayString(KR_PUBLIC_HOLIDAY_LEGEND_DISCLAIMER)}</p>
                 </div>
+                {calendarSkin === 'integrated' && (
+                    <p className="mg-v2-legend-weekend-holiday-note">
+                        {toDisplayString(SCHEDULE_LEGEND_INTEGRATED_WEEKEND_HOLIDAY_NOTE)}
+                    </p>
+                )}
             </div>
             {/* 상담사가 있을 때만 표시 */}
             {activeConsultants.length > 0 && (

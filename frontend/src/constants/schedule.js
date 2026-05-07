@@ -236,6 +236,10 @@ export const KR_PUBLIC_HOLIDAY_LEGEND_LABEL = '공휴일(참고)';
 export const KR_PUBLIC_HOLIDAY_LEGEND_DISCLAIMER =
   '표시는 참고용이며, 실제 휴무·급여 적용은 관공서·고용노동부 고시 및 내규를 확인하세요.';
 
+/** 통합 스케줄(`data-calendar-skin="integrated"`) 월간 달력: 주말 틴트·공휴일 색 우선순위 안내 */
+export const SCHEDULE_LEGEND_INTEGRATED_WEEKEND_HOLIDAY_NOTE =
+  '월간: 토요일은 연한 파랑·일요일은 연한 붉은 틴트, 공휴일은 붉은 계열(겹치면 공휴일 우선).';
+
 /**
  * GET /api/v1/schedules/admin 등 ScheduleResponse·FullCalendar extendedProps 공통 필드명.
  * 미해소(resolvedAt 없음) 내담자 특이사항 건수 — 항상 0 이상 정수.

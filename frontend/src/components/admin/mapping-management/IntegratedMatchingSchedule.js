@@ -376,6 +376,7 @@ const IntegratedMatchingSchedule = () => {
               onDropFromExternal={handleDropFromExternal}
               hideScheduleTitle
               integratedMonthEventLayout
+              calendarSkin="integrated"
             />
           </div>
         </main>

@@ -4,7 +4,10 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ScheduleLegend from '../ScheduleLegend';
-import { KR_PUBLIC_HOLIDAY_LEGEND_LABEL } from '../../../../constants/schedule';
+import {
+  KR_PUBLIC_HOLIDAY_LEGEND_LABEL,
+  SCHEDULE_LEGEND_INTEGRATED_WEEKEND_HOLIDAY_NOTE
+} from '../../../../constants/schedule';
 
 const minimalProps = () => ({
   consultants: [],
@@ -23,5 +26,10 @@ describe('ScheduleLegend', () => {
     expect(root).toBeTruthy();
     const text = root.textContent || '';
     expect(/\p{Extended_Pictographic}/u.test(text)).toBe(false);
+  });
+
+  test('calendarSkin=integrated일 때 주말·공휴일 색 안내 문구가 보인다', () => {
+    render(<ScheduleLegend {...minimalProps()} calendarSkin="integrated" />);
+    expect(screen.getByText(SCHEDULE_LEGEND_INTEGRATED_WEEKEND_HOLIDAY_NOTE)).toBeInTheDocument();
   });
 });

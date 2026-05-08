@@ -41,7 +41,7 @@ const AI_PROVIDERS = [
 const OPENAI_MODEL_PRESETS_FALLBACK = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
 
 /** Gemini 목록 미불러온 경우 입력란 datalist용 최소 프리셋 (사용 가능한 모델만 보려면 '목록 불러오기' 권장) */
-const GEMINI_MODEL_PRESETS_FALLBACK = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+const GEMINI_MODEL_PRESETS_FALLBACK = ['gemini-2.5-flash', 'gemini-3.1-pro', 'gemini-1.5-pro'];
 
 const initialProviderState = (defaultUrl, defaultModel) => ({
   apiKey: '',

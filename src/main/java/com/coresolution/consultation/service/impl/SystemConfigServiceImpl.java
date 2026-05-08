@@ -143,7 +143,8 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     );
     private static final Map<String, String> DEFAULT_MODEL = Map.of(
             "openai", "gpt-4o-mini",
-            "gemini", "gemini-2.0-flash",
+            // Google: gemini-2.0-flash 는 신규 키에서 404 — 비어 있을 때는 2.5-flash 권장
+            "gemini", "gemini-2.5-flash",
             "claude", "claude-3-5-sonnet-20241022",
             "replicate", ""
     );

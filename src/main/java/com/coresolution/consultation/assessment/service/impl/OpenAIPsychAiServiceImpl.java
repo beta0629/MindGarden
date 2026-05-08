@@ -113,7 +113,8 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         }
     }
 
-    private static final String GEMINI_FALLBACK_MODEL = "gemini-2.0-flash";
+    /** 404 시 재시도용. 2.0-flash 는 신규 API 사용자에게 비가용( Google NOT_FOUND ). */
+    private static final String GEMINI_FALLBACK_MODEL = "gemini-2.5-flash";
     private static final String GEMINI_DEFAULT_URL = "https://generativelanguage.googleapis.com/v1beta";
     private static final String OPENAI_FALLBACK_MODEL = "gpt-4o-mini";
 

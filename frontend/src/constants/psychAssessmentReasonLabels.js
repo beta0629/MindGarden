@@ -8,6 +8,8 @@ export const PSYCH_ASSESSMENT_REASON_LABELS = {
   no_metrics: '자동으로 읽은 점수가 없어 AI 해석을 건너뛰었습니다. 원본을 확인한 뒤 다시 시도해 주세요.',
   tci_no_text: 'TCI 보고서에서 글자를 찾지 못했습니다. 텍스트가 있는 PDF인지 확인해 주세요.',
   tci_parse_partial: 'TCI 점수 일부만 읽혔습니다. 전체 페이지가 포함된 선명한 파일로 다시 올려 주세요.',
+  tci_layout_unmatched:
+    'TCI 문서는 감지됐으나 점수 표를 자동으로 읽지 못했습니다. 텍스트 선택 가능한 PDF·선명한 스캔으로 다시 시도하거나 재추출해 주세요.',
   mmpi_no_text: 'MMPI 보고서에서 텍스트를 찾지 못했습니다.',
   mmpi_parse_partial: 'MMPI 점수 일부만 읽혔습니다.',
   ocr_unconfigured: '이미지 인식(OCR) 설정이 되어 있지 않습니다. 관리자에게 문의하거나 PDF로 올려 주세요.',

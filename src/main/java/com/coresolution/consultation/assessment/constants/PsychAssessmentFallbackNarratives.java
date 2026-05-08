@@ -33,6 +33,9 @@ public final class PsychAssessmentFallbackNarratives {
             case PsychAssessmentExtractionReasonCodes.TCI_PARSE_PARTIAL ->
                     "- TCI 보고서 일부만 인식되었습니다. 표·백분위 줄이 잘린 경우 점수가 빠질 수 있습니다.\n"
                             + "- 전체 페이지가 포함된 원본에 가깝게 다시 업로드해 주세요.\n";
+            case PsychAssessmentExtractionReasonCodes.TCI_LAYOUT_UNMATCHED ->
+                    "- TCI로 보이는 글자는 있으나, 자동 파서가 익숙한 **점수 표 형식**(백분위·원점수 등)을 찾지 못했습니다. 이미지 전용 PDF이거나 표가 깨져 있을 수 있습니다.\n"
+                            + "- 텍스트를 드래그해 선택할 수 있는 PDF로 올리거나, 스캔 품질을 높인 뒤 **재추출**해 주세요. 기관 고유 양식은 개발에 **기준 PDF 샘플**을 전달하면 파서를 맞출 수 있습니다.\n";
             case PsychAssessmentExtractionReasonCodes.MMPI_NO_TEXT ->
                     "- MMPI 보고서에서 텍스트를 찾지 못했습니다. 이미지 PDF인 경우 OCR 설정이 필요할 수 있습니다.\n";
             case PsychAssessmentExtractionReasonCodes.MMPI_PARSE_PARTIAL ->

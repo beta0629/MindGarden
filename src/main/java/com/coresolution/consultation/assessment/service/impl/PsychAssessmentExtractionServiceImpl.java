@@ -232,7 +232,10 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
             return parsed;
         }
         if (TciExtractionParser.looksLikeTciReport(plainText)) {
-            return tciJsonEmptyReason(PsychAssessmentExtractionReasonCodes.TCI_PARSE_PARTIAL);
+            log.info(
+                    "TCI 본문은 감지되었으나 척도 파싱 실패(metrics=0): documentId={}, textLen={}",
+                    doc.getId(), plainText.length());
+            return tciJsonEmptyReason(PsychAssessmentExtractionReasonCodes.TCI_LAYOUT_UNMATCHED);
         }
         return tciJsonEmptyReason(PsychAssessmentExtractionReasonCodes.TCI_NO_TEXT);
     }

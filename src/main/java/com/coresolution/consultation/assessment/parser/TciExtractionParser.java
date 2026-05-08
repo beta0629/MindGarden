@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -443,7 +444,9 @@ public class TciExtractionParser {
         if (plainText == null) {
             return "";
         }
-        return plainText.replace("\r\n", "\n").replace('\r', '\n')
+        String cr = plainText.replace("\r\n", "\n").replace('\r', '\n')
                 .replace('\u00A0', ' ').replace('\u3000', ' ');
+        // PDF 일부 양식: 전각 영문·숫자(Ｔ, Ｒａｗ 등) → 호환 문자로 합쳐 패턴 매칭
+        return Normalizer.normalize(cr, Normalizer.Form.NFKC);
     }
 }

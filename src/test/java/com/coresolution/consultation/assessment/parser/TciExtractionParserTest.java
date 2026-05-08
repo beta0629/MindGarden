@@ -93,6 +93,24 @@ class TciExtractionParserTest {
     }
 
     @Test
+    void parseFullwidthLatinHeader_normalizesNfkcAndExtractsMetrics() {
+        // PDFBox가 열 헤더를 전각 라틴(Ｔ U+FF34)으로 뽑는 경우
+        String text = "TCI 기질·성격\n"
+                + "백분위\tＴ\t점수\t원천\n"
+                + "탐색성\t45\t52\t20\n"
+                + "우려성\t50\t50\t15\n"
+                + "보상의존\t55\t48\t18\n"
+                + "지속성\t40\t45\t22\n"
+                + "자율성\t60\t55\t25\n"
+                + "연대감\t35\t40\t10\n"
+                + "자기초월\t50\t50\t20\n"
+                + "유형: LHL\n";
+        assertTrue(TciExtractionParser.hasScoreTableSignals(text));
+        String json = TciExtractionParser.parse(text);
+        assertNotNull(json);
+    }
+
+    @Test
     void looksLikeTciReport_trueForFixture() throws Exception {
         var res = new ClassPathResource("psych-assessment/tci-sample-fake.txt");
         String text = res.getContentAsString(StandardCharsets.UTF_8);

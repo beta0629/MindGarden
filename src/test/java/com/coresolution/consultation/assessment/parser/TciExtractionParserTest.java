@@ -156,4 +156,36 @@ class TciExtractionParserTest {
         assertNotNull(json);
         assertFalse(TciExtractionParser.isPartialResult(json));
     }
+
+    @Test
+    void parseMaumsarangAdultInterpretiveNarrativeFixture_extractsSevenPercentiles() throws Exception {
+        var res = new ClassPathResource("psych-assessment/tci-maumsarang-adult-interpretive-synthetic.txt");
+        String text = res.getContentAsString(StandardCharsets.UTF_8);
+        assertTrue(TciExtractionParser.isMaumsarangAdultInterpretiveLayout(text));
+        assertFalse(TciExtractionParser.hasScoreTableSignals(text),
+                () -> TciExtractionParser.diagnosticSummary(text));
+        String json = TciExtractionParser.parse(text);
+        assertNotNull(json);
+        JsonNode root = MAPPER.readTree(json);
+        assertEquals(7, root.path("metrics").size());
+        assertEquals("HHL", root.path("personalityTypeCode").asText());
+        assertEquals(67.0, root.path("metrics").get(0).path("percentile").asDouble());
+        assertEquals(22.0, root.path("metrics").get(1).path("percentile").asDouble());
+        assertEquals(55.0, root.path("metrics").get(2).path("percentile").asDouble());
+        assertEquals(40.0, root.path("metrics").get(3).path("percentile").asDouble());
+        assertEquals(50.0, root.path("metrics").get(4).path("percentile").asDouble());
+        assertEquals(48.0, root.path("metrics").get(5).path("percentile").asDouble());
+        assertEquals(72.0, root.path("metrics").get(6).path("percentile").asDouble());
+        for (int i = 0; i < 7; i++) {
+            assertFalse(root.path("metrics").get(i).has("rawScore"), "원천 없음");
+            assertFalse(root.path("metrics").get(i).has("tScore"), "T 없음");
+        }
+    }
+
+    @Test
+    void isMaumsarangAdultInterpretiveLayout_falseWithoutBrand() throws Exception {
+        var res = new ClassPathResource("psych-assessment/tci-sample-fake.txt");
+        String text = res.getContentAsString(StandardCharsets.UTF_8);
+        assertFalse(TciExtractionParser.isMaumsarangAdultInterpretiveLayout(text));
+    }
 }

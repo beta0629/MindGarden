@@ -8,6 +8,7 @@ import org.springframework.util.StringUtils;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -67,12 +68,15 @@ public class TciExtractionParser {
     private static final List<ScaleSpec> SCALE_SPECS = List.of(
             new ScaleSpec("NS", "탐색성(기질)", new String[]{"탐색성", "호기심", "자극추구", "NS"}),
             new ScaleSpec("HA", "우려성(기질)", new String[]{"우려성", "불안성", "위험회피", "HA"}),
-            new ScaleSpec("RD", "보상의존성(기질)", new String[]{"보상의존", "사회적민감성", "애착", "RD"}),
+            new ScaleSpec("RD", "보상의존성(기질)", new String[]{"보상의존", "사회적 민감성", "사회적민감성", "애착", "RD"}),
             new ScaleSpec("P", "인내력(기질)", new String[]{"인내력", "끈기", "고집", "P"}),
             new ScaleSpec("SD", "자율성(성격)", new String[]{"자율성", "자기지향", "SD"}),
             new ScaleSpec("C", "연대감(성격)", new String[]{"연대감", "협력성", "타인중심", "C"}),
-            new ScaleSpec("ST", "자기초월(성격)", new String[]{"자기초월", "초월", "ST"})
+            new ScaleSpec("ST", "자기초월(성격)", new String[]{"자기 초월", "자기초월", "초월", "ST"})
     );
+
+    /** 마음사랑 성인 해석상담 서술형: 키워드~백분위 거리가 길 수 있음 */
+    private static final int MAUMSARANG_KEYWORD_WINDOW = 4000;
 
     /**
      * PDF/OCR 평문에서 TCI 메트릭 JSON 생성.
@@ -108,10 +112,19 @@ public class TciExtractionParser {
     }
 
     private static ParseResult parseInternal(String text) {
+        boolean maumsarangNarrative = isMaumsarangAdultInterpretiveReport(text)
+                && !hasScoreTableHeaderSignals(text);
+        Map<Integer, MetricHit> intervalHits =
+                maumsarangNarrative ? matchPercentilesByKeywordIntervals(text) : Map.of();
+        int defaultWindow = maumsarangNarrative ? MAUMSARANG_KEYWORD_WINDOW : 420;
         List<Map<String, Object>> metrics = new ArrayList<>();
         Set<String> seenCodes = new LinkedHashSet<>();
-        for (ScaleSpec spec : SCALE_SPECS) {
-            MetricHit hit = findMetricForScale(text, spec);
+        for (int i = 0; i < SCALE_SPECS.size(); i++) {
+            ScaleSpec spec = SCALE_SPECS.get(i);
+            MetricHit hit = intervalHits.get(i);
+            if (hit == null) {
+                hit = findMetricForScale(text, spec, defaultWindow);
+            }
             if (hit != null && !seenCodes.contains(spec.scaleCode())) {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("scaleCode", spec.scaleCode());
@@ -136,17 +149,108 @@ public class TciExtractionParser {
         return new ParseResult(metrics, typeCode);
     }
 
+    /**
+     * 마음사랑 성인용 TCI 해석상담 보고서(서술형·표 비전제) 레이아웃 여부.
+     * 상용 문장 복제 없이 제목·기관명 조합으로만 판별한다.
+     *
+     * @param plainText PDFBox 등 추출 평문
+     * @return 해석상담·보고서·성인용 및 기관 신호가 함께 있으면 true
+     */
+    public static boolean isMaumsarangAdultInterpretiveLayout(String plainText) {
+        if (!StringUtils.hasText(plainText)) {
+            return false;
+        }
+        return isMaumsarangAdultInterpretiveReport(normalizeExtractedPlainText(plainText));
+    }
+
+    /**
+     * 정규화된 평문 기준. {@link #parse(String)} 내부와 동일 조건.
+     */
+    private static boolean isMaumsarangAdultInterpretiveReport(String normalizedText) {
+        if (!StringUtils.hasText(normalizedText)) {
+            return false;
+        }
+        if (!(normalizedText.contains("해석상담") && normalizedText.contains("보고서")
+                && normalizedText.contains("성인용"))) {
+            return false;
+        }
+        if (indexOfIgnoreCase(normalizedText, "마음사랑") >= 0) {
+            return true;
+        }
+        if (indexOfIgnoreCase(normalizedText, "maumsarang") >= 0) {
+            return true;
+        }
+        return normalizedText.replaceAll("\\s+", "").contains("마음사랑");
+    }
+
+    private record PercentileOccurrence(int start, double percentile, String cutoffTag) {
+    }
+
+    private record ScaleAnchor(int specIndex, int pos) {
+    }
+
+    /**
+     * 서술형 보고서: 각 척도 키워드(최초 출현) 구간 안의 첫 "백분위 숫자 (수준)" 줄에 매핑.
+     */
+    private static Map<Integer, MetricHit> matchPercentilesByKeywordIntervals(String text) {
+        List<ScaleAnchor> anchors = new ArrayList<>();
+        for (int i = 0; i < SCALE_SPECS.size(); i++) {
+            ScaleSpec spec = SCALE_SPECS.get(i);
+            int best = Integer.MAX_VALUE;
+            for (String kw : spec.keywordsKo()) {
+                int p = findKeywordPosition(text, kw);
+                if (p >= 0) {
+                    best = Math.min(best, p);
+                }
+            }
+            if (best != Integer.MAX_VALUE) {
+                anchors.add(new ScaleAnchor(i, best));
+            }
+        }
+        if (anchors.isEmpty()) {
+            return Map.of();
+        }
+        anchors.sort(Comparator.comparingInt(ScaleAnchor::pos));
+        List<PercentileOccurrence> occurrences = findAllPercentileLineOccurrences(text);
+        Map<Integer, MetricHit> out = new LinkedHashMap<>();
+        for (int s = 0; s < anchors.size(); s++) {
+            int from = anchors.get(s).pos;
+            int to = s + 1 < anchors.size() ? anchors.get(s + 1).pos : text.length();
+            int specIndex = anchors.get(s).specIndex();
+            for (PercentileOccurrence occ : occurrences) {
+                if (occ.start() >= from && occ.start() < to) {
+                    Double raw = findOptionalRaw(text.substring(from, Math.min(text.length(), to)));
+                    Double t = findOptionalT(text.substring(from, Math.min(text.length(), to)));
+                    out.put(specIndex, new MetricHit(raw, occ.percentile(), t, occ.cutoffTag()));
+                    break;
+                }
+            }
+        }
+        return out;
+    }
+
+    private static List<PercentileOccurrence> findAllPercentileLineOccurrences(String text) {
+        List<PercentileOccurrence> list = new ArrayList<>();
+        Matcher matcher = PERCENTILE_LINE.matcher(text);
+        while (matcher.find()) {
+            double p = Double.parseDouble(matcher.group(1));
+            String level = normalizeLevel(matcher.group(2));
+            list.add(new PercentileOccurrence(matcher.start(), p, level));
+        }
+        return list;
+    }
+
     private record MetricHit(Double rawScore, Double percentile, Double tScore, String cutoffTag) {
     }
 
-    private static MetricHit findMetricForScale(String text, ScaleSpec spec) {
+    private static MetricHit findMetricForScale(String text, ScaleSpec spec, int keywordWindowChars) {
         int bestPos = Integer.MAX_VALUE;
         String window = null;
         for (String kw : spec.keywordsKo()) {
             int idx = findKeywordPosition(text, kw);
             if (idx >= 0 && idx < bestPos) {
                 bestPos = idx;
-                int end = Math.min(text.length(), idx + 420);
+                int end = Math.min(text.length(), idx + keywordWindowChars);
                 window = text.substring(idx, end);
             }
         }

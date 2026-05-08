@@ -86,6 +86,13 @@ class TciExtractionParserTest {
     }
 
     @Test
+    void hasScoreTableSignals_trueWhenOnlyStandardDotNotStandardSoo() {
+        // dev 로그: hasPercentileWord=true, hasRawOrT=false — '표준점' 단독 열 등
+        assertTrue(TciExtractionParser.hasScoreTableSignals(
+                "TCI\n백분위\t표준점\t원천점수\n"));
+    }
+
+    @Test
     void looksLikeTciReport_trueForFixture() throws Exception {
         var res = new ClassPathResource("psych-assessment/tci-sample-fake.txt");
         String text = res.getContentAsString(StandardCharsets.UTF_8);

@@ -10,7 +10,7 @@
 
 import React, { forwardRef, useImperativeHandle, useMemo, useState, useEffect } from 'react';
 import { useWidget } from '../../../../hooks/useWidget';
-import { RoleUtils } from '../../../../constants/roles';
+import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import notificationManager from '../../../../utils/notification';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import PsychKpiSection from '../../../admin/psych-assessment/organisms/PsychKpiSection';
@@ -21,6 +21,7 @@ import UnifiedModal from '../../../common/modals/UnifiedModal';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import UnifiedLoading from '../../../common/UnifiedLoading';
+import { toErrorMessage } from '../../../../utils/safeDisplay';
 import '../../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentAdminWidget.css';
 
@@ -31,12 +32,16 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [optimisticDocuments, setOptimisticDocuments] = useState([]);
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportDocumentId, setReportDocumentId] = useState(null);
   const [reportContent, setReportContent] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [generatingReportDocumentId, setGeneratingReportDocumentId] = useState(null);
   const [retryLoading, setRetryLoading] = useState(false);
 
-  const isAdminUser = RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER');
+  const isAdminUser =
+    RoleUtils.isAdmin(user) ||
+    RoleUtils.hasRole(user, 'HQ_MASTER') ||
+    RoleUtils.hasRole(user, USER_ROLES.STAFF);
 
   const widgetWithDataSource = useMemo(() => {
     const dataSource = {
@@ -223,6 +228,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
 
   const handleViewReport = async(documentId) => {
     if (!documentId) return;
+    setReportDocumentId(documentId);
     setReportLoading(true);
     setReportContent(null);
     setReportModalOpen(true);
@@ -239,9 +245,10 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
         setReportContent(null);
         notificationManager.show('아직 생성된 리포트가 없습니다. "리포트 생성" 버튼을 눌러 주세요.', 'info');
       } else {
-        notificationManager.show(e?.message || '리포트를 불러오지 못했습니다.', 'error');
+        notificationManager.show(toErrorMessage(e, '리포트를 불러오지 못했습니다.'), 'error');
       }
       setReportModalOpen(false);
+      setReportDocumentId(null);
     } finally {
       setReportLoading(false);
     }
@@ -258,7 +265,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
   if (error) {
     return (
       <div className="psych-assessment-admin-widget psych-assessment-admin-widget--error">
-        <p className="mg-text-muted">{error}</p>
+        <p className="mg-text-muted">{toErrorMessage(error, '오류가 발생했습니다.')}</p>
         <MGButton
           type="button"
           variant="outline"
@@ -314,13 +321,29 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
 
       <UnifiedModal
         isOpen={reportModalOpen}
-        onClose={() => setReportModalOpen(false)}
+        onClose={() => {
+          setReportDocumentId(null);
+          setReportModalOpen(false);
+        }}
         title="AI 분석 결과"
         size="large"
         showCloseButton
         className="mg-v2-ad-b0kla"
       >
-        <PsychAiReportModalContent loading={reportLoading} reportContent={reportContent} />
+        <PsychAiReportModalContent
+          loading={reportLoading}
+          reportContent={reportContent}
+          reportDocumentId={reportDocumentId}
+          onRegenerateReport={handleGenerateReport}
+          regenerateLoading={
+            generatingReportDocumentId != null &&
+            String(generatingReportDocumentId) === String(reportDocumentId)
+          }
+          regenerateDisabled={
+            generatingReportDocumentId != null &&
+            String(generatingReportDocumentId) !== String(reportDocumentId)
+          }
+        />
       </UnifiedModal>
     </div>
   );

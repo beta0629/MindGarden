@@ -8,6 +8,7 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import { toDisplayString } from '../../../../utils/safeDisplay';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
 import { ViewModeToggle } from '../../../common';
@@ -68,14 +69,14 @@ const PsychDocumentListBlock = ({
         <tbody>
           {documents.map((d) => (
             <tr key={d.documentId}>
-              <td data-label="검사">{d.assessmentType || '-'}</td>
+              <td data-label="검사">{toDisplayString(d.assessmentType, '-')}</td>
               <td data-label="상태">
                 <span className={`mg-v2-badge ${getStatusVariant(d.status)}`}>
-                  {d.status || '-'}
+                  {toDisplayString(d.status, '-')}
                 </span>
               </td>
-              <td data-label="파일">{d.originalFilename || '파일명 없음'}</td>
-              <td data-label="생성">{d.createdAt || '-'}</td>
+              <td data-label="파일">{toDisplayString(d.originalFilename, '파일명 없음')}</td>
+              <td data-label="생성">{toDisplayString(d.createdAt, '-')}</td>
               <td data-label="액션">
                 {onViewReport && (
                   <MGButton
@@ -128,13 +129,15 @@ const PsychDocumentListBlock = ({
       {documents.map((d) => (
         <div key={d.documentId} className="mg-v2-psych-document-list-block__card-item">
           <div className="mg-v2-psych-document-list-block__card-header">
-            <span className="mg-v2-psych-document-list-block__card-type">{d.assessmentType || '-'}</span>
+            <span className="mg-v2-psych-document-list-block__card-type">{toDisplayString(d.assessmentType, '-')}</span>
             <span className={`mg-v2-badge ${getStatusVariant(d.status)}`}>
-              {d.status || '-'}
+              {toDisplayString(d.status, '-')}
             </span>
           </div>
-          <p className="mg-v2-psych-document-list-block__card-filename">{d.originalFilename || '파일명 없음'}</p>
-          <p className="mg-v2-psych-document-list-block__card-date">{d.createdAt || '-'}</p>
+          <p className="mg-v2-psych-document-list-block__card-filename">
+            {toDisplayString(d.originalFilename, '파일명 없음')}
+          </p>
+          <p className="mg-v2-psych-document-list-block__card-date">{toDisplayString(d.createdAt, '-')}</p>
           <div className="mg-v2-psych-document-list-block__card-actions">
             {onViewReport && (
               <MGButton

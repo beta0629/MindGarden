@@ -10,3 +10,37 @@
   max-height: 70vh;
   overflow: auto;
 }
+
+.mg-v2-psych-ai-report-alert {
+  padding: var(--mg-spacing-3, 0.75rem) var(--mg-spacing-4, 1rem);
+  margin-bottom: var(--mg-spacing-4, 1rem);
+  border-radius: var(--mg-radius-md, 0.5rem);
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  line-height: var(--mg-line-height-normal, 1.5);
+}
+
+.mg-v2-psych-ai-report-alert--info {
+  background: var(--mg-neutral-50);
+  border: 1px solid var(--mg-neutral-200);
+  color: var(--mg-neutral-800);
+}
+
+.mg-v2-psych-ai-report-alert--warning {
+  background: var(--mg-warning-50);
+  border: 1px solid var(--mg-warning-300);
+  color: var(--mg-warning-800);
+}
+
+.mg-v2-psych-ai-report-alert--danger {
+  background: var(--cs-error-50);
+  border: 1px solid var(--cs-error-200);
+  color: var(--cs-error-800);
+}
+
+.mg-v2-psych-ai-report-alert__actions {
+  margin-top: var(--mg-spacing-3, 0.75rem);
+}
+
+.mg-v2-psych-ai-report-alert__hint {
+  margin: 0 0 var(--mg-spacing-2, 0.5rem);
+}

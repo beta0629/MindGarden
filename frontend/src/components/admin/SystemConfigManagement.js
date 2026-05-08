@@ -31,14 +31,14 @@ import './AdminDashboard/AdminDashboardB0KlA.css';
 import './SystemConfigManagement.css';
 
 const AI_PROVIDERS = [
-  { id: 'openai', label: 'OpenAI', keyPrefix: 'OPENAI', defaultUrl: 'https://api.openai.com/v1/chat/completions', defaultModel: 'gpt-3.5-turbo' },
+  { id: 'openai', label: 'OpenAI', keyPrefix: 'OPENAI', defaultUrl: 'https://api.openai.com/v1/chat/completions', defaultModel: 'gpt-4o-mini' },
   { id: 'gemini', label: 'Gemini', keyPrefix: 'GEMINI', defaultUrl: '', defaultModel: 'gemini-3.1-pro' },
   { id: 'claude', label: 'Claude', keyPrefix: 'CLAUDE', defaultUrl: '', defaultModel: 'claude-3-5-sonnet-20241022' },
   { id: 'replicate', label: 'Replicate', keyPrefix: 'REPLICATE', defaultUrl: '', defaultModel: '' }
 ];
 
 /** OpenAI 목록 미불러온 경우 입력란 datalist용 최소 프리셋 (사용 가능한 모델만 보려면 '목록 불러오기' 권장) */
-const OPENAI_MODEL_PRESETS_FALLBACK = ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo'];
+const OPENAI_MODEL_PRESETS_FALLBACK = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
 
 /** Gemini 목록 미불러온 경우 입력란 datalist용 최소 프리셋 (사용 가능한 모델만 보려면 '목록 불러오기' 권장) */
 const GEMINI_MODEL_PRESETS_FALLBACK = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
@@ -125,7 +125,7 @@ const SystemConfigManagement = () => {
           openai: {
             apiKey: openaiRes.apiKey || '',
             apiUrl: openaiRes.apiUrl || 'https://api.openai.com/v1/chat/completions',
-            model: openaiRes.model || 'gpt-3.5-turbo'
+            model: openaiRes.model || 'gpt-4o-mini'
           }
         }));
       }

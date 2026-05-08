@@ -8,13 +8,15 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { toDisplayString } from '../../../../utils/safeDisplay';
 import './PsychReportMarkdownBlock.css';
 
 const PsychReportMarkdownBlock = ({ content }) => {
-  if (content == null || content === '') return null;
+  const safe = toDisplayString(content, '');
+  if (safe === '') return null;
   return (
     <div className="mg-v2-psych-report-markdown-block">
-      <pre className="mg-v2-psych-report-markdown-block__content">{content}</pre>
+      <pre className="mg-v2-psych-report-markdown-block__content">{safe}</pre>
     </div>
   );
 };

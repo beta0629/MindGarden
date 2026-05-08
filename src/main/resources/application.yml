@@ -154,6 +154,9 @@ mindgarden:
       # Trinity 공개 POST /api/v1/onboarding/requests 전용 (ops 경로 제외)
       onboarding-create-requests-per-minute: 5
       onboarding-create-path: /api/v1/onboarding/requests
+      # 공개 온보딩 접두(GET 검사 등). POST+onboarding-create-path 정확 일치는 위 버킷만 적용(중복 카운트 방지)
+      onboarding-public-path-prefix: /api/v1/onboarding/
+      onboarding-public-requests-per-minute: 30
 
 # JWT 설정 (프로파일별 설정에서 기본값 제공)
 jwt:
@@ -345,7 +348,7 @@ openai:
   api:
     key: ${OPENAI_API_KEY}
     url: ${OPENAI_API_URL:https://api.openai.com/v1/chat/completions}
-  model: ${OPENAI_MODEL:gpt-3.5-turbo}  # gpt-3.5-turbo 또는 gpt-4
+  model: ${OPENAI_MODEL:gpt-4o-mini}  # 기본: gpt-4o-mini(품질·비용 균형). 필요 시 gpt-4o 등으로 OPENAI_MODEL 오버라이드
 
 # Claude AI 설정 (향후 지원)
 #claude:

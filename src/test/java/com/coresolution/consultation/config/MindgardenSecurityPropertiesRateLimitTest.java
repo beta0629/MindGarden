@@ -20,6 +20,8 @@ class MindgardenSecurityPropertiesRateLimitTest {
         MindgardenSecurityProperties.RateLimit rateLimit = new MindgardenSecurityProperties.RateLimit();
         assertThat(rateLimit.getOnboardingCreateRequestsPerMinute()).isEqualTo(5);
         assertThat(rateLimit.getOnboardingCreatePath()).isEqualTo("/api/v1/onboarding/requests");
+        assertThat(rateLimit.getOnboardingPublicPathPrefix()).isEqualTo("/api/v1/onboarding/");
+        assertThat(rateLimit.getOnboardingPublicRequestsPerMinute()).isEqualTo(30);
     }
 
     @Test
@@ -35,6 +37,22 @@ class MindgardenSecurityPropertiesRateLimitTest {
             MindgardenSecurityProperties props = context.getBean(MindgardenSecurityProperties.class);
             assertThat(props.getRateLimit().getOnboardingCreateRequestsPerMinute()).isEqualTo(7);
             assertThat(props.getRateLimit().getOnboardingCreatePath()).isEqualTo("/custom/onboarding/requests");
+        });
+    }
+
+    @Test
+    void bindsOnboardingPublicPropertiesFromEnvironment() {
+        ApplicationContextRunner runner = new ApplicationContextRunner()
+            .withUserConfiguration(TestMindgardenSecurityPropertiesConfig.class)
+            .withPropertyValues(
+                "mindgarden.security.rate-limit.onboarding-public-path-prefix=/pub/onboarding/",
+                "mindgarden.security.rate-limit.onboarding-public-requests-per-minute=40");
+
+        runner.run(context -> {
+            assertThat(context).hasSingleBean(MindgardenSecurityProperties.class);
+            MindgardenSecurityProperties props = context.getBean(MindgardenSecurityProperties.class);
+            assertThat(props.getRateLimit().getOnboardingPublicPathPrefix()).isEqualTo("/pub/onboarding/");
+            assertThat(props.getRateLimit().getOnboardingPublicRequestsPerMinute()).isEqualTo(40);
         });
     }
 

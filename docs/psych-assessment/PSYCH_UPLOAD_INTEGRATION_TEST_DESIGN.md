@@ -74,6 +74,15 @@
 - **필요**: 소형 PDF 1개 (매직 바이트 `%PDF-` 만족, 텍스트 1페이지 이상). 기존 `PsychAssessmentMmpiExtractionIntegrationTest`는 로컬 절대 경로(`/Users/mind/Downloads/mmpi_이혁진.pdf`) 사용.
 - **권장**: `src/test/resources/psych-assessment/sample-mmpi.pdf` (또는 `sample.pdf`)에 **테스트 전용 소형 PDF** 배치. 바이너리 커밋 시 용량 최소화(예: 1페이지, 수십 KB). 없으면 테스트에서 `Assume.assumeTrue(Files.isRegularFile(samplePdf))`로 리소스 없을 때 스킵.
 
+### 4.1.1 (선택) TCI·MMPI 기준 PDF 회귀
+
+- **경로**: `src/test/resources/psych-assessment/tci-baseline.pdf`, `mmpi-baseline.pdf` — **저장소에 필수 커밋하지 않음**. 로컬 또는 CI 아티팩트로만 두고, 있을 때만 `PsychAssessmentBaselinePdfRegressionIntegrationTest`가 실행된다. 없으면 `Assume`으로 녹색 스킵.
+- **플레이스홀더 메시지**: `[TCI_BASELINE_PDF]`, `[MMPI_BASELINE_PDF]` (core-tester 시나리오·검색용).
+
+TCI 기준 PDF는 사용자가 제공한 최신 양식을 canonical로 삼되, 저작권 또는 개인정보 이슈로 원본 PDF를 커밋할 수 없으면 저장소에는 배치하지 않는다. 이 경우 로컬/CI 보안 아티팩트로 `tci-baseline.pdf`를 주입하거나, 사용자와 합의한 비식별·합성 PDF를 별도 fixture로 둔다.
+
+합성 PDF도 어렵다면 PDFBox 평문에서 민감 정보와 상용 해석 문구를 제거한 짧은 텍스트 fixture, 또는 `TciExtractionParser` 산출 metrics JSON만 golden으로 둘 수 있다. 이때 golden에는 척도 코드, 원점수/T점수/백분위 같은 구조화 수치만 포함하고 문항·상용 해석 문구는 복제하지 않는다.
+
 ### 4.2 이미지 (JPEG/PNG)
 
 - **필요**: 테스트용 소형 이미지 1~3장.  

@@ -1,5 +1,6 @@
 package com.coresolution.consultation.assessment.service.impl;
 
+import com.coresolution.consultation.assessment.constants.PsychAssessmentFallbackNarratives;
 import com.coresolution.consultation.assessment.entity.PsychAssessmentDocument;
 import com.coresolution.consultation.assessment.entity.PsychAssessmentExtraction;
 import com.coresolution.consultation.assessment.entity.PsychAssessmentMetric;
@@ -63,7 +64,9 @@ public class PsychAssessmentReportServiceImpl implements PsychAssessmentReportSe
 
         List<PsychAssessmentMetric> metrics = metricRepository.findByTenantIdAndDocumentId(tenantId, documentId);
 
-        String baseMarkdown = buildRuleBasedMarkdown(metrics);
+        String extractionReason = readExtractionReasonCode(extraction.getExtractedJson());
+        String baseMarkdown = buildRuleBasedMarkdown(metrics, doc.getAssessmentType(),
+                extractionReason, extraction.getExtractedJson());
 
         // 실제 LLM: 심리검사 전용 프롬프트/출력(JSON) 사용
         var aiInputs = metrics == null ? List.<PsychAiService.MetricInput>of() : metrics.stream()
@@ -95,30 +98,69 @@ public class PsychAssessmentReportServiceImpl implements PsychAssessmentReportSe
         return reportRepository.save(report).getId();
     }
 
-    private String buildRuleBasedMarkdown(List<PsychAssessmentMetric> metrics) {
+    private String readExtractionReasonCode(String extractedJson) {
+        if (!StringUtils.hasText(extractedJson)) {
+            return null;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(extractedJson);
+            JsonNode r = root.get("reason");
+            if (r != null && r.isTextual()) {
+                String s = r.asText();
+                return StringUtils.hasText(s) ? s : null;
+            }
+        } catch (Exception e) {
+            log.debug("extractedJson reason 파싱 실패: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    private String buildRuleBasedMarkdown(List<PsychAssessmentMetric> metrics,
+            PsychAssessmentType assessmentType,
+            String extractionReasonCode,
+            String extractedJson) {
         StringBuilder sb = new StringBuilder();
         sb.append("## 요약\n");
         if (metrics == null || metrics.isEmpty()) {
-            sb.append("- 추출된 지표가 없어 해석을 생성할 수 없습니다. 원문 품질/양식 확인이 필요합니다.\n\n");
-            sb.append("## 다음 조치\n");
+            sb.append(PsychAssessmentFallbackNarratives.markdownForEmptyMetrics(assessmentType, extractionReasonCode));
+            sb.append("\n## 다음 조치\n");
             sb.append("- 스캔 품질 개선 또는 템플릿 등록 후 재추출을 권장합니다.\n");
             return sb.toString();
         }
 
-        sb.append("- 주요 척도 수: ").append(metrics.size()).append("\n\n");
+        sb.append("- 주요 척도 수: ").append(metrics.size()).append("\n");
+        appendTciPersonalityTypeLine(sb, assessmentType, extractedJson);
+        sb.append("\n");
         sb.append("## 주요 지표\n");
-        for (int i = 0; i < Math.min(metrics.size(), 15); i++) {
+        for (int i = 0; i < Math.min(metrics.size(), 20); i++) {
             PsychAssessmentMetric m = metrics.get(i);
             sb.append("- ").append(m.getScaleCode())
                     .append(" (").append(m.getScaleLabel() != null ? m.getScaleLabel() : "label").append(")")
                     .append(": T=").append(m.getTScore() != null ? m.getTScore() : "NA")
                     .append(", P=").append(m.getPercentile() != null ? m.getPercentile() : "NA")
+                    .append(", 원점수=").append(m.getRawScore() != null ? m.getRawScore() : "NA")
                     .append("\n");
         }
         sb.append("\n## 권고\n");
         sb.append("- 결과는 단일 검사로 확정되지 않으며, 면담/관찰/병력과 함께 종합 해석이 필요합니다.\n");
         sb.append("- 위험 신호가 의심될 경우 즉시 전문가 평가/안전계획 수립을 권장합니다.\n");
         return sb.toString();
+    }
+
+    private void appendTciPersonalityTypeLine(StringBuilder sb, PsychAssessmentType assessmentType,
+            String extractedJson) {
+        if (assessmentType != PsychAssessmentType.TCI || !StringUtils.hasText(extractedJson)) {
+            return;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(extractedJson);
+            JsonNode code = root.get("personalityTypeCode");
+            if (code != null && code.isTextual() && StringUtils.hasText(code.asText())) {
+                sb.append("- 문서에서 추출한 성격 차원 유형 코드(참고): ").append(code.asText()).append("\n");
+            }
+        } catch (Exception ignored) {
+            // skip
+        }
     }
 
     /**

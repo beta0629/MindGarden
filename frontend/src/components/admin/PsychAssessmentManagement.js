@@ -22,14 +22,21 @@ import PsychAiReportModalContent from './psych-assessment/organisms/PsychAiRepor
 import UnifiedModal from '../common/modals/UnifiedModal';
 import ComingSoon from '../common/ComingSoon';
 import { useSession } from '../../contexts/SessionContext';
-import { RoleUtils } from '../../constants/roles';
+import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import notificationManager from '../../utils/notification';
 import StandardizedApi from '../../utils/standardizedApi';
+import { toErrorMessage } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentManagementPage.css';
 
 const CLIENTS_WITH_MAPPING_URL = '/api/v1/admin/clients/with-mapping-info';
+
+/** 심리검사 AI: 테넌트 관리(ADMIN)·본사 마스터·사무원(STAFF) — 백엔드는 isAuthenticated만 요구 */
+const canAccessPsychAssessmentAdmin = (u) =>
+  RoleUtils.isAdmin(u) ||
+  RoleUtils.hasRole(u, 'HQ_MASTER') ||
+  RoleUtils.hasRole(u, USER_ROLES.STAFF);
 
 const PsychAssessmentManagement = ({ user: propUser }) => {
   const { user: sessionUser } = useSession();
@@ -46,6 +53,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   const [optimisticDocuments, setOptimisticDocuments] = useState([]);
   /** AI 리포트 보기 모달 */
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportDocumentId, setReportDocumentId] = useState(null);
   const [reportContent, setReportContent] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [generatingReportDocumentId, setGeneratingReportDocumentId] = useState(null);
@@ -235,6 +243,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
 
   const handleViewReport = async(documentId) => {
     if (!documentId) return;
+    setReportDocumentId(documentId);
     setReportLoading(true);
     setReportContent(null);
     setReportModalOpen(true);
@@ -251,19 +260,20 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
         setReportContent(null);
         notificationManager.show('아직 생성된 리포트가 없습니다. "리포트 생성" 버튼을 눌러 주세요.', 'info');
       } else {
-        notificationManager.show(e?.message || '리포트를 불러오지 못했습니다.', 'error');
+        notificationManager.show(toErrorMessage(e, '리포트를 불러오지 못했습니다.'), 'error');
       }
       setReportModalOpen(false);
+      setReportDocumentId(null);
     } finally {
       setReportLoading(false);
     }
   };
 
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+  if (!canAccessPsychAssessmentAdmin(user)) {
     return (
       <ComingSoon
         title="접근 권한이 없습니다"
-        description="관리자 권한이 필요합니다."
+        description="관리자 또는 사무원(STAFF) 권한이 필요합니다."
       />
     );
   }
@@ -347,13 +357,29 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
 
         <UnifiedModal
           isOpen={reportModalOpen}
-          onClose={() => setReportModalOpen(false)}
+          onClose={() => {
+            setReportDocumentId(null);
+            setReportModalOpen(false);
+          }}
           title="AI 분석 결과"
           size="large"
           showCloseButton
           className="mg-v2-ad-b0kla"
         >
-          <PsychAiReportModalContent loading={reportLoading} reportContent={reportContent} />
+          <PsychAiReportModalContent
+            loading={reportLoading}
+            reportContent={reportContent}
+            reportDocumentId={reportDocumentId}
+            onRegenerateReport={handleGenerateReport}
+            regenerateLoading={
+              generatingReportDocumentId != null &&
+              String(generatingReportDocumentId) === String(reportDocumentId)
+            }
+            regenerateDisabled={
+              generatingReportDocumentId != null &&
+              String(generatingReportDocumentId) !== String(reportDocumentId)
+            }
+          />
         </UnifiedModal>
       </>
     </AdminCommonLayout>

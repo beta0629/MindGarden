@@ -122,7 +122,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     
     @Override
     public String getOpenAIModel() {
-        String defaultModel = "gpt-3.5-turbo";
+        String defaultModel = "gpt-4o-mini";
         String value = getConfigValue("OPENAI_MODEL", defaultModel);
         return (value != null && !value.isBlank()) ? value : defaultModel;
     }
@@ -142,7 +142,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
             "replicate", ""
     );
     private static final Map<String, String> DEFAULT_MODEL = Map.of(
-            "openai", "gpt-3.5-turbo",
+            "openai", "gpt-4o-mini",
             "gemini", "gemini-2.0-flash",
             "claude", "claude-3-5-sonnet-20241022",
             "replicate", ""

@@ -1,6 +1,7 @@
 package com.coresolution.consultation.entity;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,7 +39,7 @@ public class OpenAIUsageLog {
     private String requestType;
     
     /**
-     * 사용된 모델 (gpt-3.5-turbo, gpt-4 등)
+     * 사용된 모델 (gpt-4o-mini, gpt-4o 등)
      */
     @Column(length = 50)
     private String model;
@@ -106,16 +107,32 @@ public class OpenAIUsageLog {
     }
     
     /**
-     * 비용 계산 (gpt-3.5-turbo 기준)
-     * Input: $0.0015 / 1K tokens
-     * Output: $0.002 / 1K tokens
+     * 예상 비용(USD). 모델명 기준 대략 단가(공식 요금 변동 가능).
+     * 미식별 시 서비스 기본에 맞춰 gpt-4o-mini급 단가를 사용합니다.
      */
     public void calculateCost() {
-        if (promptTokens != null && completionTokens != null) {
-            double inputCost = (promptTokens / 1000.0) * 0.0015;
-            double outputCost = (completionTokens / 1000.0) * 0.002;
-            this.estimatedCost = inputCost + outputCost;
+        if (promptTokens == null || completionTokens == null) {
+            return;
         }
+        String m = model != null ? model.toLowerCase(Locale.ROOT) : "";
+        double inputPer1k;
+        double outputPer1k;
+        if (m.contains("gpt-4o-mini")) {
+            inputPer1k = 0.00015;
+            outputPer1k = 0.0006;
+        } else if (m.contains("gpt-4o")) {
+            inputPer1k = 0.0025;
+            outputPer1k = 0.01;
+        } else if (m.contains("gpt-3.5")) {
+            inputPer1k = 0.0005;
+            outputPer1k = 0.0015;
+        } else {
+            inputPer1k = 0.00015;
+            outputPer1k = 0.0006;
+        }
+        double inputCost = (promptTokens / 1000.0) * inputPer1k;
+        double outputCost = (completionTokens / 1000.0) * outputPer1k;
+        this.estimatedCost = inputCost + outputCost;
     }
 }
 

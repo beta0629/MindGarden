@@ -28,6 +28,18 @@ public class TesseractOcrService {
     private String tessDataPath;
 
     /**
+     * tessdata 경로가 설정되어 있는지(빈 OCR 결과와 구분용).
+     *
+     * @return application 설정 또는 TESSDATA_PREFIX 환경 변수가 비어 있지 않으면 true
+     */
+    public boolean isTesseractDatapathConfigured() {
+        if (StringUtils.hasText(tessDataPath)) {
+            return true;
+        }
+        return StringUtils.hasText(System.getenv("TESSDATA_PREFIX"));
+    }
+
+    /**
      * 이미지 InputStream에서 텍스트 추출.
      *
      * @param imageStream 이미지 바이트 스트림 (JPG, PNG 등)

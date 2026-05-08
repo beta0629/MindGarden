@@ -93,7 +93,7 @@ PERSONAL_DATA_ENCRYPTION_IV: "test-iv-16-chars"
 
 OPENAI_API_KEY: "test-openai-key"
 OPENAI_API_URL: "https://api.openai.com/v1"
-OPENAI_MODEL: "gpt-3.5-turbo"
+OPENAI_MODEL: "gpt-4o-mini"
 
 email:
   block-all-outbound: true

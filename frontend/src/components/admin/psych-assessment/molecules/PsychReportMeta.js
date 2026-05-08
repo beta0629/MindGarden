@@ -8,13 +8,16 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { toDisplayString } from '../../../../utils/safeDisplay';
 import './PsychReportMeta.css';
 
 const PsychReportMeta = ({ modelName, createdAt }) => {
-  if (!modelName && !createdAt) return null;
+  const modelSafe = toDisplayString(modelName, '');
+  const createdSafe = toDisplayString(createdAt, '');
+  if (!modelSafe && !createdSafe) return null;
   const parts = [];
-  if (modelName) parts.push(`모델: ${modelName}`);
-  if (createdAt) parts.push(`생성: ${createdAt}`);
+  if (modelSafe) parts.push(`모델: ${modelSafe}`);
+  if (createdSafe) parts.push(`생성: ${createdSafe}`);
   return (
     <p className="mg-v2-psych-report-meta">
       {parts.join(' · ')}

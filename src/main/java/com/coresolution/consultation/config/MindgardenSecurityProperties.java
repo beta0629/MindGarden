@@ -67,6 +67,19 @@ public class MindgardenSecurityProperties {
          * 컨텍스트 경로를 쓰는 배포에서는 전체 URI에 맞게 설정한다.
          */
         private String onboardingCreatePath = "/api/v1/onboarding/requests";
+
+        /**
+         * 공개 온보딩 조회·중복 검사 등({@code GET} email-check, subdomain-check, public requests 등)에 대한 URI 접두.
+         * {@code HttpServletRequest#getRequestURI()} 기준 {@code startsWith}.
+         * {@link #onboardingCreatePath} 와 정확히 일치하는 {@code POST} 는 별도(더 엄격한) 버킷만 적용되어 이 접두 규칙에서는 제외된다.
+         */
+        private String onboardingPublicPathPrefix = "/api/v1/onboarding/";
+
+        /**
+         * {@link #onboardingPublicPathPrefix} 로 시작하는 요청(단, {@code POST}+{@link #onboardingCreatePath} 정확 일치 제외)에 대한 IP당 분당 허용 요청 수.
+         * 기본 30은 스팸·스캔 완화와 정상 사용자 경험 사이 균형값이며, 트래픽 패턴에 따라 운영에서 조정한다.
+         */
+        private int onboardingPublicRequestsPerMinute = 30;
     }
 
     @Data

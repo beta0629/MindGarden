@@ -163,7 +163,10 @@ public class PsychAssessmentController extends BaseApiController {
                         reportSummary = md.length() > summaryMaxLen ? md.substring(0, summaryMaxLen).trim() + "…" : md.trim();
                         summarySection = extractMarkdownSection(md, "## 요약");
                         recommendationSection = extractMarkdownSection(md, "## 권고");
-                        keyFindings = extractMarkdownSection(md, "## 주요 소견");
+                        keyFindings = extractMarkdownSection(md, "## 임상 척도");
+                        if (keyFindings == null) {
+                            keyFindings = extractMarkdownSection(md, "## 주요 소견");
+                        }
                     }
                     return PsychAssessmentDocumentListItem.builder()
                             .documentId(d.getId())

@@ -24,7 +24,7 @@ public class PsychAssessmentDocumentListItem {
     private String summarySection;
     /** 리포트 마크다운 내 "## 권고" 섹션 본문 (있을 경우만) */
     private String recommendationSection;
-    /** 리포트 마크다운 내 "## 주요 소견" 섹션 본문 — 핵심 해석 (있을 경우만) */
+    /** 리포트 마크다운 내 "## 임상 척도" 섹션 본문(없으면 레거시 "## 주요 소견") — 핵심 해석 */
     private String keyFindings;
 }
 

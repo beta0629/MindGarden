@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS system_config (
 INSERT INTO system_config (config_key, config_value, description, category, is_encrypted, created_by) VALUES
 ('OPENAI_API_KEY', '', 'OpenAI API 키', 'AI', TRUE, 'SYSTEM'),
 ('OPENAI_API_URL', 'https://api.openai.com/v1/chat/completions', 'OpenAI API URL', 'AI', FALSE, 'SYSTEM'),
-('OPENAI_MODEL', 'gpt-3.5-turbo', 'OpenAI 모델명', 'AI', FALSE, 'SYSTEM'),
+('OPENAI_MODEL', 'gpt-4o-mini', 'OpenAI 모델명', 'AI', FALSE, 'SYSTEM'),
 ('OPENAI_MAX_TOKENS', '1000', 'OpenAI 최대 토큰 수', 'AI', FALSE, 'SYSTEM'),
 ('OPENAI_TEMPERATURE', '0.7', 'OpenAI 창의성 설정', 'AI', FALSE, 'SYSTEM'),
 ('WELLNESS_AUTO_SEND_ENABLED', 'true', '웰니스 자동 발송 활성화', 'WELLNESS', FALSE, 'SYSTEM'),

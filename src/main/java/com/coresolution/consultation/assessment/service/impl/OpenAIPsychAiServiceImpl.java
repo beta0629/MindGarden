@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class OpenAIPsychAiServiceImpl implements PsychAiService {
 
-    private static final String PROMPT_VERSION = "psych-prompt-v1";
+    private static final String PROMPT_VERSION = "psych-prompt-v3-designer-headings-20260508";
     private static final int MAX_TOKENS = 4096;
     private static final double TEMPERATURE = 0.3;
     private static final int MIN_EVIDENCE_HIGHLIGHTS = 1;
@@ -58,6 +58,14 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
     public AiResult generateKoreanReport(PsychAssessmentType assessmentType, List<MetricInput> metrics, String baseMarkdown) {
         String tenantId = TenantContextHolder.getTenantId();
 
+        if (metrics == null || metrics.isEmpty()) {
+            return new AiResult(
+                    baseMarkdown,
+                    buildEvidenceJson("skipped", "no_metrics", true),
+                    "rule-only",
+                    PROMPT_VERSION);
+        }
+
         String providerId = systemConfigService.getAiDefaultProvider();
         String apiKey = systemConfigService.getApiKeyForProvider(providerId);
         String apiUrl = systemConfigService.getApiUrlForProvider(providerId);
@@ -69,7 +77,7 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         }
 
         try {
-            String systemPrompt = buildSystemPrompt();
+            String systemPrompt = buildSystemPrompt(assessmentType);
             String userPrompt = buildUserPrompt(assessmentType, metrics, baseMarkdown);
 
             log.info("Psych AI report generation start: provider={}, model={}, metricsCount={}",
@@ -92,7 +100,7 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
                 return new AiResult(baseMarkdown, "{\"ai\":\"failed\",\"reason\":\"empty_response\"}", model, PROMPT_VERSION);
             }
 
-            return parseAndValidateAiOutput(content, baseMarkdown, model, metrics);
+            return parseAndValidateAiOutput(content, baseMarkdown, model, metrics, assessmentType);
 
         } catch (Exception e) {
             log.error("Psych AI report generation failed: tenantId={}, type={}, provider={}, model={}, error={}",
@@ -284,7 +292,8 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         return trimmed;
     }
 
-    private AiResult parseAndValidateAiOutput(String content, String baseMarkdown, String model, List<MetricInput> metrics) {
+    private AiResult parseAndValidateAiOutput(String content, String baseMarkdown, String model,
+            List<MetricInput> metrics, PsychAssessmentType assessmentType) {
         // 모델 출력은 JSON 문자열로 고정(리포트 + evidence)
         // GPT/Gemini가 ```json ... ``` 형태로 감싸거나 앞뒤에 설명을 붙이는 경우 추출
         String trimmed = extractJsonFromContent(content);
@@ -301,11 +310,12 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
 
         try {
                 JsonNode out = objectMapper.readTree(trimmed);
-                Validation validation = validateModelOutput(out, metrics);
+                Validation validation = validateModelOutput(out, metrics, assessmentType);
                 if (!validation.ok) {
                     log.warn("Psych AI validation failed: reason={}, contentLen={}", validation.reason, trimmed.length());
                     String reportMd = out.path("reportMarkdown").asText("");
-                    boolean sectionsOk = StringUtils.hasText(reportMd) && hasRequiredSections(reportMd);
+                    boolean sectionsOk = StringUtils.hasText(reportMd)
+                            && hasRequiredSections(reportMd, assessmentType);
                     if (sectionsOk && isEvidenceOnlyFailure(validation.reason)) {
                         log.info("Psych AI: evidence validation failed but reportMarkdown accepted (reason={})", validation.reason);
                         JsonNode evNode = out.path("evidence");
@@ -369,38 +379,24 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
                 || reason.startsWith("hallucinated_scaleCode");
     }
 
-    /** ##/### 요약, ##/### 권고 등 마크다운 헤딩 변형 허용. BOM·공백·전각·줄바꿈·영문 헤더 fallback 대응 */
-    private boolean hasRequiredSections(String reportMarkdown) {
-        if (!StringUtils.hasText(reportMarkdown)) return false;
-        String normalized = reportMarkdown
-                .replace("\uFEFF", "")
-                .replace("\r", "")
-                .replace("\u00A0", " ")
-                .replace("\u3000", " ");
-        // 1) 줄 시작 + #(들) + (공백/줄바꿈 포함) + 요약/권고 (DOTALL로 줄바꿈 허용)
-        Pattern summaryLineStart = Pattern.compile("^\\s*[#＃]+[\\s\\S]*?요약", Pattern.MULTILINE | Pattern.UNICODE_CASE);
-        Pattern recommendationLineStart = Pattern.compile("^\\s*[#＃]+[\\s\\S]*?권고", Pattern.MULTILINE | Pattern.UNICODE_CASE);
-        if (summaryLineStart.matcher(normalized).find() && recommendationLineStart.matcher(normalized).find()) {
-            return true;
+    /**
+     * 필수 섹션: 요약·권고는 {@link PsychAiReportSectionChecks#hasSummaryAndRecommendationHeadings(String)}로 완화 검증.
+     * TCI/MMPI는 디자이너 표에 맞춘 헤딩 순서를 {@link PsychAiReportSectionChecks}에서 추가 검증한다.
+     */
+    private boolean hasRequiredSections(String reportMarkdown, PsychAssessmentType assessmentType) {
+        if (!PsychAiReportSectionChecks.hasSummaryAndRecommendationHeadings(reportMarkdown)) {
+            return false;
         }
-        // 2) 한 줄/중간: [#＃]+ ... 요약/권고
-        Pattern summaryAnywhere = Pattern.compile("[#＃]+[\\s\\S]*?요약", Pattern.UNICODE_CASE);
-        Pattern recommendationAnywhere = Pattern.compile("[#＃]+[\\s\\S]*?권고", Pattern.UNICODE_CASE);
-        if (summaryAnywhere.matcher(normalized).find() && recommendationAnywhere.matcher(normalized).find()) {
-            return true;
+        if (assessmentType == PsychAssessmentType.TCI) {
+            return PsychAiReportSectionChecks.hasTciDesignerHeadingsInOrder(reportMarkdown);
         }
-        // 3) 키워드 fallback: 요약·권고(권고사항) 또는 영문 Summary·Recommendation
-        if (normalized.contains("요약") && (normalized.contains("권고") || normalized.contains("권고사항"))) {
-            return true;
+        if (assessmentType == PsychAssessmentType.MMPI) {
+            return PsychAiReportSectionChecks.hasMmpiDesignerHeadingsInOrder(reportMarkdown);
         }
-        String lower = normalized.toLowerCase(java.util.Locale.ROOT);
-        if (lower.contains("summary") && (lower.contains("recommendation") || lower.contains("recommendations"))) {
-            return true;
-        }
-        return false;
+        return true;
     }
 
-    private Validation validateModelOutput(JsonNode out, List<MetricInput> metrics) {
+    private Validation validateModelOutput(JsonNode out, List<MetricInput> metrics, PsychAssessmentType assessmentType) {
         if (out == null || out.isMissingNode() || !out.isObject()) {
             return new Validation(false, "invalid_json_root");
         }
@@ -410,8 +406,7 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
             return new Validation(false, "missing_report_markdown");
         }
 
-        // 섹션 최소 요건(오판 방어: ##/### 요약, ##/### 권고 등 변형 허용)
-        if (!hasRequiredSections(reportMarkdown)) {
+        if (!hasRequiredSections(reportMarkdown, assessmentType)) {
             String preview = reportMarkdown.length() > 500 ? reportMarkdown.substring(0, 500) + "..." : reportMarkdown;
             log.warn("Psych AI missing_required_sections: reportMarkdown preview (len={}): {}", reportMarkdown.length(), preview);
             return new Validation(false, "missing_required_sections");
@@ -492,30 +487,78 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
-    private String buildSystemPrompt() {
+    private String buildSystemPrompt(PsychAssessmentType assessmentType) {
+        if (assessmentType == PsychAssessmentType.TCI) {
+            return buildTciSystemPrompt();
+        }
+        return buildMmpiSystemPrompt();
+    }
+
+    private String buildMmpiSystemPrompt() {
         return """
-너는 임상심리 평가 보조 AI이다. 목적은 상담에 도움이 되도록 검사 결과를 해석하고, 상담자가 면담에서 참고할 소견과 질문을 제안하는 것이다. 반드시 한국어로만 작성한다.
+너는 임상심리 평가 보조 AI이다. MMPI 계열 결과를 바탕으로 상담자가 면담에서 참고할 해석·소견·면담 탐색 포인트를 제안한다. 반드시 한국어로만 작성한다.
+
 원칙:
-- 확정 진단/법적 결론을 내리지 않는다.
-- 수치/척도명은 입력으로 주어진 값만 사용한다(추측 금지).
-- 위험 신호(자/타해 등)는 ‘가능성’ 수준으로 표기하고 즉시 전문가 평가/안전계획을 권고한다.
-- 문장마다 근거를 남길 수 있도록 evidence를 구조화한다.
+- 확정 진단·질병명 확정·법적 결론을 내리지 않는다.
+- 수치·T점수·척도 코드·타당도 지표는 입력 지표에 나온 값만 인용한다(추측·보간 금지).
+- 특정 기관의 상용 해석 보고서 문장을 복제하거나 표절하지 말고, 구조와 수치에만 근거해 독자적으로 서술한다(저작권·원문 복제 금지).
+- 위험 신호(자/타해 등)는 가능성 수준으로 표기하고, 필요 시 즉시 전문가 평가·안전계획을 권한다.
+- evidence.highlights는 최소 1개이며, 각 highlight의 basedOn.scaleCode는 입력 지표의 scaleCode 중 하나여야 한다.
 
 출력은 반드시 JSON 단일 객체로만 반환한다. (마크다운 코드펜스 금지, 설명문 없이 JSON만)
 
-형식 통일(필수):
-- reportMarkdown 필드에는 반드시 다음 두 개의 마크다운 헤딩을 정확히 포함한다.
-  1) 줄 맨 앞에 "## 요약" (공백 없이 ## 다음 한 칸 띄고 요약)
-  2) 줄 맨 앞에 "## 권고" (공백 없이 ## 다음 한 칸 띄고 권고)
-- "권고사항", "Recommendations" 등 다른 표현 사용 금지. 반드시 "## 요약", "## 권고"만 사용한다.
-- JSON은 한 줄이어도 되고 줄바꿈 있어도 되나, 문자열 값 안의 따옴표·중괄호는 이스케이프해야 한다.
+reportMarkdown 필드에는 다음 마크다운 헤딩을 **반드시** 이 순서로 포함한다(표기·순서 정확히):
+1) ## 요약
+2) ## 타당도
+3) ## 임상 척도
+4) ## 재구성 척도
+5) ## 강점 및 자원
+6) ## 권고
+
+입력에 해당 척도가 없으면 해당 섹션에서 ‘지표에 없음’을 한 문장으로 명시하고 과장하지 않는다.
 
 스키마:
 {
-  "reportMarkdown": "## 요약\\n\\n...(내용)\\n\\n## 권고\\n\\n...(내용)",
+  "reportMarkdown": "## 요약\\n\\n...\\n\\n## 타당도\\n\\n...",
   "evidence": {
     "highlights": [
-      {"text":"...", "basedOn":[{"scaleCode":"...", "tScore":.., "percentile":..}], "notes":"..."}
+      {"text":"...", "basedOn":[{"scaleCode":"F", "tScore":55, "percentile":null}], "notes":"..."}
+    ],
+    "quality": {"templateMatched": false, "needsReview": true}
+  }
+}
+""";
+    }
+
+    private String buildTciSystemPrompt() {
+        return """
+너는 임상심리 평가 보조 AI이다. TCI(기질·성격검사) 결과를 바탕으로, 상담자가 참고할 수 있는 해석상담 보고서 톤의 한국어 서술을 작성한다. 반드시 한국어로만 작성한다.
+
+원칙:
+- 확정 진단·질병명 확정·법적 결론을 내리지 않는다.
+- 수치·백분위·척도 코드는 입력 지표에 나온 값만 인용한다(추측·보간 금지).
+- 특정 기관의 상용 해석 보고서 문장을 복제하거나 표절하지 말고, 구조와 수치에만 근거해 독자적으로 서술한다(저작권·원문 복제 금지).
+- 존댓말·리포터형 서술을 사용하되 2인칭 혼용은 자연스러운 범위로 허용한다.
+- 위험 신호는 가능성 수준으로 표기하고, 필요 시 전문가 상담을 권한다.
+
+출력은 반드시 JSON 단일 객체로만 반환한다. (마크다운 코드펜스 금지, 설명문 없이 JSON만)
+
+reportMarkdown 필드에는 다음 마크다운 헤딩을 **반드시** 이 순서로 포함한다(표기 정확히):
+1) ## 요약
+2) ## 검사 개요
+3) ## 기질·성격 프로필
+4) ## 점수 해석
+5) ## 상담 시 고려
+6) ## 권고
+
+evidence.highlights는 최소 1개이며, 각 highlight의 basedOn.scaleCode는 입력 지표의 scaleCode 중 하나여야 한다.
+
+스키마:
+{
+  "reportMarkdown": "## 요약\\n\\n...\\n\\n## 검사 개요\\n\\n...",
+  "evidence": {
+    "highlights": [
+      {"text":"...", "basedOn":[{"scaleCode":"NS", "percentile":45, "tScore":null}], "notes":"..."}
     ],
     "quality": {"templateMatched": false, "needsReview": true}
   }
@@ -524,8 +567,15 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
     }
 
     private String buildUserPrompt(PsychAssessmentType type, List<MetricInput> metrics, String baseMarkdown) {
+        if (type == PsychAssessmentType.TCI) {
+            return buildTciUserPrompt(metrics, baseMarkdown);
+        }
+        return buildMmpiUserPrompt(metrics, baseMarkdown);
+    }
+
+    private String buildMmpiUserPrompt(List<MetricInput> metrics, String baseMarkdown) {
         StringBuilder sb = new StringBuilder();
-        sb.append("검사 종류: ").append(type.name()).append("\n");
+        sb.append("검사 종류: MMPI\n");
         sb.append("아래는 규칙 기반 요약(초안)이다. 이걸 바탕으로 상담에 도움이 되도록 해석을 보강하라.\n\n");
         sb.append(baseMarkdown).append("\n\n");
         sb.append("추출된 지표 목록(JSON):\n");
@@ -536,13 +586,38 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         }
         sb.append("\n\n");
         sb.append("요구사항:\n");
-        sb.append("- reportMarkdown에는 반드시 헤딩 \"## 요약\", \"## 권고\"를 정확히 포함한다(다른 표기 금지).\n");
-        sb.append("- ## 요약: 전체 요약(2~3문장)\n");
-        sb.append("- ## 주요 소견: T점수 상승 척도별로 임상적 의미를 해석. 상담 시 주목할 점 구체 작성.\n");
-        sb.append("- ## 주의(타당도): VRIN, TRIN, F 등 타당도 척도 해석. 검사 신뢰도 평가.\n");
-        sb.append("- ## 권고: 면담/추적 평가/전문가 의뢰 등 권고(헤딩은 반드시 \"## 권고\"로만)\n");
-        sb.append("- ## 추적 질문: 상담자가 면담에서 탐색할 구체적 질문 3~5개 제안\n");
-        sb.append("- evidence: reportMarkdown 핵심 문장(최소 3개)에 근거 지표(scaleCode/tScore) 연결\n");
+        sb.append("- reportMarkdown: 시스템 프롬프트에 명시된 6개 헤딩(## 요약 … ## 권고) 순서를 지킨다.\n");
+        sb.append("- ## 요약: 전체 요약(2~3문장), 타당도·임상 패턴의 방향만 언급(단정 금지).\n");
+        sb.append("- ## 타당도: VRIN, TRIN, F·Fp·Fs 등 입력에 있는 타당도 지표만으로 신뢰도·응답 경향을 서술.\n");
+        sb.append("- ## 임상 척도: T점수가 상승한 척도 위주로 임상적 ‘가능성’ 수준 해석, 상담 시 주목점.\n");
+        sb.append("- ## 재구성 척도: RC 등 입력에 있으면 해석, 없으면 ‘해당 지표 없음’ 한 문장.\n");
+        sb.append("- ## 강점 및 자원: 상대적으로 낮은 임상상·회복 자원·면담에서 활용할 강점(입력 근거).\n");
+        sb.append("- ## 권고: 면담·추적 평가·전문가 의뢰 등 권고 + 필요 시 면담 탐색 질문 3~5개를 본문에 포함.\n");
+        sb.append("- evidence.highlights: 핵심 문장별 basedOn에 scaleCode와 tScore 또는 percentile 연결(최소 1개).\n");
+        sb.append("- 한국어만, 출력은 JSON만(코드블록 없이)\n");
+        return sb.toString();
+    }
+
+    private String buildTciUserPrompt(List<MetricInput> metrics, String baseMarkdown) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("검사 종류: TCI (기질·성격검사)\n");
+        sb.append("아래 초안은 자동 추출 지표를 요약한 것이다. 해석상담 보고서 스타일로 다단락 서술을 작성하라.\n\n");
+        sb.append(baseMarkdown).append("\n\n");
+        sb.append("추출된 지표 목록(JSON):\n");
+        try {
+            sb.append(objectMapper.writeValueAsString(metrics));
+        } catch (Exception e) {
+            sb.append("[]");
+        }
+        sb.append("\n\n");
+        sb.append("요구사항:\n");
+        sb.append("- reportMarkdown: 시스템 프롬프트에 명시된 6개 헤딩(## 요약 … ## 권고) 순서를 지킨다.\n");
+        sb.append("- ## 검사 개요: 검사 목적·해석 범위를 한 문단으로 안내(과장 금지).\n");
+        sb.append("- ## 기질·성격 프로필: NS·HA·RD·P 및 SD·C·ST 등 입력 척도의 패턴을 통합 서술.\n");
+        sb.append("- ## 점수 해석: 백분위·수준(낮음/보통/높음 등 입력 cutoffTag)이 있으면 반드시 반영.\n");
+        sb.append("- ## 상담 시 고려: 면담 태도·추가 확인 포인트(가설 수준).\n");
+        sb.append("- ## 권고: 전문가 상담·추적 검사 등 일반적 권고(단정 금지).\n");
+        sb.append("- evidence.highlights: 핵심 문장별 basedOn에 scaleCode와 percentile 또는 tScore를 연결(최소 1개).\n");
         sb.append("- 한국어만, 출력은 JSON만(코드블록 없이)\n");
         return sb.toString();
     }

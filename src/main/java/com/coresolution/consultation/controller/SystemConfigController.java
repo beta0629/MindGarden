@@ -281,7 +281,7 @@ public class SystemConfigController {
                 ? body.get("model").trim()
                 : systemConfigService.getOpenAIModel();
         if (model == null || model.isBlank()) {
-            model = "gpt-3.5-turbo";
+            model = "gpt-4o-mini";
         }
         String defaultOpenAiUrl = "https://api.openai.com/v1/chat/completions";
         RestTemplate rest = new RestTemplate();

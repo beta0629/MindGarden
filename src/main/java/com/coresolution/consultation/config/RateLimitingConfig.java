@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Rate Limiting 설정. 로그인 시도·계정 연동 공개 API·Trinity 공개 온보딩 생성 POST 등 민감 경로에만 IP 기준 제한을 적용합니다.
+ * Rate Limiting 설정. 로그인 시도·계정 연동 공개 API·Trinity 공개 온보딩({@code /api/v1/onboarding/} 접두 조회 등)·온보딩 생성 POST 등 민감 경로에만 IP 기준 제한을 적용합니다.
  * 전역 {@code /api/*} 단일 상한(기존 사실상 비활성 값)은 제거되었습니다.
  *
  * @author MindGarden
@@ -59,12 +59,14 @@ public class RateLimitingConfig {
         private static final String RATE_KEY_SUFFIX_LOGIN = "_login";
         private static final String RATE_KEY_SUFFIX_INTEGRATION = "_integration";
         private static final String RATE_KEY_SUFFIX_ONBOARDING_CREATE = "_onboarding_create";
+        private static final String RATE_KEY_SUFFIX_ONBOARDING_PUBLIC = "_onboarding_public";
 
         private static final String METRIC_RATE_LIMIT_BLOCKED = "mindgarden.rate_limit.blocked";
         private static final String TAG_REASON = "reason";
         private static final String REASON_LOGIN = "login";
         private static final String REASON_INTEGRATION = "integration";
         private static final String REASON_ONBOARDING_CREATE = "onboarding_create";
+        private static final String REASON_ONBOARDING_PUBLIC = "onboarding_public";
         private static final String REASON_UNKNOWN = "unknown";
 
         private static final int MAX_LOGIN_ATTEMPTS = 999999;
@@ -107,7 +109,8 @@ public class RateLimitingConfig {
             String requestPath = request.getRequestURI();
             return isLoginRateLimitPath(requestPath)
                 || isAccountIntegrationPublicPath(requestPath)
-                || isOnboardingCreatePublicRequest(request);
+                || isOnboardingCreatePublicRequest(request)
+                || isOnboardingPublicRateLimitRequest(request);
         }
 
         private boolean isLoginRateLimitPath(String requestPath) {
@@ -131,6 +134,25 @@ public class RateLimitingConfig {
             return configured != null && configured.equals(request.getRequestURI());
         }
 
+        /**
+         * 공개 온보딩 접두({@link MindgardenSecurityProperties.RateLimit#getOnboardingPublicPathPrefix()}) 일치 시.
+         * {@code POST} 이고 URI가 {@link MindgardenSecurityProperties.RateLimit#getOnboardingCreatePath()} 와 정확히 같으면 제외(전용 버킷만 사용).
+         */
+        private boolean isOnboardingPublicRateLimitRequest(HttpServletRequest request) {
+            String path = request.getRequestURI();
+            String prefix = properties.getRateLimit().getOnboardingPublicPathPrefix();
+            if (prefix == null || prefix.isEmpty() || !path.startsWith(prefix)) {
+                return false;
+            }
+            if ("POST".equalsIgnoreCase(request.getMethod())) {
+                String createPath = properties.getRateLimit().getOnboardingCreatePath();
+                if (createPath != null && createPath.equals(path)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         private boolean isAllowed(String clientIp, HttpServletRequest request) {
             String requestPath = request.getRequestURI();
             if (isLoginRateLimitPath(requestPath)) {
@@ -141,6 +163,9 @@ public class RateLimitingConfig {
             }
             if (isOnboardingCreatePublicRequest(request)) {
                 return isOnboardingCreateAllowed(clientIp);
+            }
+            if (isOnboardingPublicRateLimitRequest(request)) {
+                return isOnboardingPublicAllowed(clientIp);
             }
             return true;
         }
@@ -180,6 +205,13 @@ public class RateLimitingConfig {
             return info == null || info.getCount() < maxPerMinute;
         }
 
+        private boolean isOnboardingPublicAllowed(String clientIp) {
+            String key = clientIp + RATE_KEY_SUFFIX_ONBOARDING_PUBLIC;
+            RequestInfo info = requestCounts.get(key);
+            int maxPerMinute = properties.getRateLimit().getOnboardingPublicRequestsPerMinute();
+            return info == null || info.getCount() < maxPerMinute;
+        }
+
         private void incrementRequestCount(String clientIp, HttpServletRequest request) {
             String requestPath = request.getRequestURI();
             if (isLoginRateLimitPath(requestPath)) {
@@ -207,6 +239,15 @@ public class RateLimitingConfig {
                     requestCounts.put(key, onboardingInfo);
                 } else {
                     onboardingInfo.increment();
+                }
+            } else if (isOnboardingPublicRateLimitRequest(request)) {
+                String key = clientIp + RATE_KEY_SUFFIX_ONBOARDING_PUBLIC;
+                RequestInfo publicInfo = requestCounts.get(key);
+                if (publicInfo == null) {
+                    publicInfo = new RequestInfo();
+                    requestCounts.put(key, publicInfo);
+                } else {
+                    publicInfo.increment();
                 }
             }
         }
@@ -242,6 +283,9 @@ public class RateLimitingConfig {
             } else if (isAccountIntegrationPublicPath(requestPath)) {
                 errorResponse.put("message",
                     "계정 연동·이메일 인증 API 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+                errorResponse.put("retryAfter", 60);
+            } else if (isOnboardingPublicRateLimitRequest(request)) {
+                errorResponse.put("message", "온보딩 공개 API 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
                 errorResponse.put("retryAfter", 60);
             } else {
                 errorResponse.put("message", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
@@ -282,6 +326,9 @@ public class RateLimitingConfig {
             }
             if (isOnboardingCreatePublicRequest(request)) {
                 return REASON_ONBOARDING_CREATE;
+            }
+            if (isOnboardingPublicRateLimitRequest(request)) {
+                return REASON_ONBOARDING_PUBLIC;
             }
             return REASON_UNKNOWN;
         }

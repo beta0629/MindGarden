@@ -93,6 +93,31 @@ class TciExtractionParserTest {
     }
 
     @Test
+    void parseSplitKoreanScoreLabelHeaderFixture_extractsSevenScales() throws Exception {
+        var res = new ClassPathResource("psych-assessment/tci-sample-split-korean-score-labels-fake.txt");
+        String text = res.getContentAsString(StandardCharsets.UTF_8);
+        assertTrue(TciExtractionParser.hasScoreTableSignals(text),
+                () -> TciExtractionParser.diagnosticSummary(text));
+        String json = TciExtractionParser.parse(text);
+        assertNotNull(json);
+        JsonNode root = MAPPER.readTree(json);
+        assertEquals(7, root.path("metrics").size());
+        assertEquals("HHL", root.path("personalityTypeCode").asText());
+    }
+
+    @Test
+    void parseStdScoreColumnFixture_extractsSevenScales() throws Exception {
+        var res = new ClassPathResource("psych-assessment/tci-sample-std-score-column-fake.txt");
+        String text = res.getContentAsString(StandardCharsets.UTF_8);
+        assertTrue(TciExtractionParser.hasScoreTableSignals(text));
+        String json = TciExtractionParser.parse(text);
+        assertNotNull(json);
+        JsonNode root = MAPPER.readTree(json);
+        assertEquals(7, root.path("metrics").size());
+        assertEquals("HLH", root.path("personalityTypeCode").asText());
+    }
+
+    @Test
     void parseFullwidthLatinHeader_normalizesNfkcAndExtractsMetrics() {
         // PDFBox가 열 헤더를 전각 라틴(Ｔ U+FF34)으로 뽑는 경우
         String text = "TCI 기질·성격\n"

@@ -26,6 +26,8 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -71,6 +73,18 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
     public void enqueueExtraction(Long documentId) {
         // @Async 스레드에는 TenantContext가 없으므로 호출 스레드에서 tenantId를 넘겨 비동기에서 설정
         String tenantId = TenantContextHolder.getRequiredTenantId();
+        // 업로드 트랜잭션 커밋 전에 @Async가 실행되면 문서 미커밋으로 조회 실패할 수 있음 → 커밋 후에만 실행
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            final String tenantIdAfterCommit = tenantId;
+            final Long documentIdAfterCommit = documentId;
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    runner.processAsync(tenantIdAfterCommit, documentIdAfterCommit);
+                }
+            });
+            return;
+        }
         runner.processAsync(tenantId, documentId);
     }
 

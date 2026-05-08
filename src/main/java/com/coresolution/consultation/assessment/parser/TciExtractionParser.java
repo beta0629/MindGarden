@@ -48,9 +48,11 @@ public class TciExtractionParser {
             "(?i)백\\s*분위|Percentile|P\\.\\s*R\\.|(?<![A-Za-z0-9가-힣_])PR(?![A-Za-z가-힣])");
     /** 일부 기관 PDF: '표준점' 단독, T분포·원천 등 (상용 문장 복제 없이 헤더 토큰만) */
     private static final Pattern RAW_OR_T_HEADER_SIGNAL = Pattern.compile(
-            "(?i)(?:원\\s*점수|원천\\s*점수|원천점수|표준점수|표준\\s*점(?!수)|표준점(?![수])"
-                    + "|T\\s*점수|T\\s*[- ]?score|T\\s*분포\\s*점수|T\\s*분포"
-                    + "|(?<![A-Za-z])Raw(?![A-Za-z]))");
+            "(?i)(?:원\\s*점\\s*수|원\\s*점수|원천\\s*점\\s*수|원천\\s*점수|원천점수"
+                    + "|표준\\s*점\\s*수|표준점수|표준\\s*점(?!수)|표준점(?![수])"
+                    + "|T\\s*점\\s*수|T\\s*점수|T\\s*[- ]?score|T\\s*분포\\s*점수|T\\s*분포"
+                    + "|변환\\s*점수|변환점수"
+                    + "|(?<![A-Za-z])Std\\.?\\s*Score|(?<![A-Za-z])Raw(?![A-Za-z]))");
     private static final Pattern INTEGER_PATTERN = Pattern.compile("\\d+");
     private static final Pattern TYPE_CODE_LETTERS = Pattern.compile("(?<![A-Za-z가-힣])([LH]{3})(?![A-Za-z가-힣])");
     private static final Pattern TYPE_NEAR_LABEL = Pattern.compile(
@@ -329,9 +331,10 @@ public class TciExtractionParser {
     }
 
     private static final Pattern RAW_SCORE_NEAR_LABEL = Pattern.compile(
-            "(?i)(?:원\\s*점수|원천\\s*점수|원천점수|(?<![A-Za-z])Raw(?![A-Za-z]))\\s*[:：]?\\s*(\\d+)");
+            "(?i)(?:원\\s*점\\s*수|원\\s*점수|원천\\s*점\\s*수|원천\\s*점수|원천점수"
+                    + "|(?<![A-Za-z])Raw(?![A-Za-z]))\\s*[:：]?\\s*(\\d+)");
     private static final Pattern T_SCORE_LABELED = Pattern.compile(
-            "(?i)(?:T\\s*점수|T\\s*[- ]?score|T\\s*분포\\s*점수|T\\s*분포)\\s*[:：]?\\s*(\\d+)");
+            "(?i)(?:T\\s*점\\s*수|T\\s*점수|T\\s*[- ]?score|T\\s*분포\\s*점수|T\\s*분포)\\s*[:：]?\\s*(\\d+)");
     private static final Pattern T_SCORE_FALLBACK = Pattern.compile("T\\s*[:：]?\\s*(\\d{2,3})");
 
     private static Double findOptionalRaw(String window) {

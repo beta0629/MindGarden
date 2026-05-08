@@ -1,0 +1,11 @@
+기질 및 성격검사 (TCI) — 합성: 영문 Std Score 열
+Scale	Raw	Std Score	Percentile
+NS	18	55	64
+HA	12	43	28
+RD	20	58	72
+P	15	51	55
+SD	22	60	78
+C	19	54	61
+ST	9	44	31
+
+성격 유형 코드: HLH

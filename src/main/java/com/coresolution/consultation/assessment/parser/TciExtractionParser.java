@@ -35,9 +35,18 @@ public class TciExtractionParser {
     /** 기대 척도 수(기질 4 + 성격 3) */
     private static final int EXPECTED_SCALE_COUNT = 7;
 
+    /** 백분위·Percentile·P.R.·PR(단독 열) 등 — 값·괄호 설명 캡처 */
     private static final Pattern PERCENTILE_LINE = Pattern.compile(
-            "백분위\\s*[:：]?\\s*(\\d+)\\s*\\(([^)]+)\\)");
-    private static final Pattern PERCENTILE_INLINE = Pattern.compile("백분위\\s*[:：]?\\s*(\\d+)");
+            "(?i)(?:백\\s*분위|Percentile|P\\.\\s*R\\.|(?<![A-Za-z0-9가-힣_])PR(?![A-Za-z가-힣]))"
+                    + "\\s*[:：]?\\s*(\\d+)\\s*\\(([^)]+)\\)");
+    private static final Pattern PERCENTILE_INLINE = Pattern.compile(
+            "(?i)(?:백\\s*분위|Percentile|P\\.\\s*R\\.|(?<![A-Za-z0-9가-힣_])PR(?![A-Za-z가-힣]))"
+                    + "\\s*[:：]?\\s*(\\d+)");
+    /** 본문·헤더 묶음에서 표 신호 탐지(단일 진실) */
+    private static final Pattern PERCENTILE_HEADER_SIGNAL = Pattern.compile(
+            "(?i)백\\s*분위|Percentile|P\\.\\s*R\\.|(?<![A-Za-z0-9가-힣_])PR(?![A-Za-z가-힣])");
+    private static final Pattern RAW_OR_T_HEADER_SIGNAL = Pattern.compile(
+            "(?i)(?:원\\s*점수|표준점수|T\\s*점수|T\\s*[- ]?score|(?<![A-Za-z])Raw(?![A-Za-z]))");
     private static final Pattern INTEGER_PATTERN = Pattern.compile("\\d+");
     private static final Pattern TYPE_CODE_LETTERS = Pattern.compile("(?<![A-Za-z가-힣])([LH]{3})(?![A-Za-z가-힣])");
     private static final Pattern TYPE_NEAR_LABEL = Pattern.compile(
@@ -70,7 +79,7 @@ public class TciExtractionParser {
             log.debug("TciExtractionParser: plainText 비어 있음");
             return null;
         }
-        String normalized = plainText.replace('\u00A0', ' ').replace('\u3000', ' ');
+        String normalized = normalizeExtractedPlainText(plainText);
         ParseResult result = parseInternal(normalized);
         if (result.metrics().isEmpty()) {
             log.debug("TciExtractionParser: metrics 없음, textLen={}", plainText.length());
@@ -131,7 +140,7 @@ public class TciExtractionParser {
             int idx = findKeywordPosition(text, kw);
             if (idx >= 0 && idx < bestPos) {
                 bestPos = idx;
-                int end = Math.min(text.length(), idx + 280);
+                int end = Math.min(text.length(), idx + 420);
                 window = text.substring(idx, end);
             }
         }
@@ -223,22 +232,29 @@ public class TciExtractionParser {
     }
 
     private static boolean hasTciScoreTableHeader(String text) {
-        return text.contains("백분위")
-                && (text.contains("원점수") || text.contains("표준점수") || text.contains("T점수")
-                || text.contains("T 점수"));
+        return hasScoreTableSignals(text);
     }
 
     private static boolean hasNearbyPercentileHeader(String[] lines, int currentIndex) {
         int start = Math.max(0, currentIndex - 10);
         int end = Math.min(lines.length - 1, currentIndex + 1);
+        StringBuilder joined = new StringBuilder();
         for (int i = start; i <= end; i++) {
-            String line = lines[i];
-            if (line.contains("백분위") && (line.contains("원점수") || line.contains("표준점수")
-                    || line.contains("T점수") || line.contains("T 점수"))) {
-                return true;
-            }
+            joined.append(' ').append(lines[i]);
         }
-        return false;
+        return hasScoreTableHeaderSignals(joined.toString());
+    }
+
+    /**
+     * 한 줄 또는 인접 줄을 이어붙인 문자열에 표 헤더 신호(백분위류 + 원점수/T류)가 모두 있는지.
+     * {@link #hasScoreTableSignals(String)} 과 동일 패턴을 사용한다.
+     */
+    private static boolean hasScoreTableHeaderSignals(String textChunk) {
+        if (!StringUtils.hasText(textChunk)) {
+            return false;
+        }
+        return PERCENTILE_HEADER_SIGNAL.matcher(textChunk).find()
+                && RAW_OR_T_HEADER_SIGNAL.matcher(textChunk).find();
     }
 
     private static boolean containsScaleKeyword(String line, ScaleSpec spec) {
@@ -308,8 +324,14 @@ public class TciExtractionParser {
         return t.length() > 12 ? t.substring(0, 12) : t;
     }
 
+    private static final Pattern RAW_SCORE_NEAR_LABEL = Pattern.compile(
+            "(?i)(?:원\\s*점수|(?<![A-Za-z])Raw(?![A-Za-z]))\\s*[:：]?\\s*(\\d+)");
+    private static final Pattern T_SCORE_LABELED = Pattern.compile(
+            "(?i)(?:T\\s*점수|T\\s*[- ]?score)\\s*[:：]?\\s*(\\d+)");
+    private static final Pattern T_SCORE_FALLBACK = Pattern.compile("T\\s*[:：]?\\s*(\\d{2,3})");
+
     private static Double findOptionalRaw(String window) {
-        Matcher m = Pattern.compile("원점수\\s*[:：]?\\s*(\\d+)").matcher(window);
+        Matcher m = RAW_SCORE_NEAR_LABEL.matcher(window);
         if (m.find()) {
             return Double.parseDouble(m.group(1));
         }
@@ -317,11 +339,11 @@ public class TciExtractionParser {
     }
 
     private static Double findOptionalT(String window) {
-        Matcher m = Pattern.compile("T\\s*점수\\s*[:：]?\\s*(\\d+)").matcher(window);
+        Matcher m = T_SCORE_LABELED.matcher(window);
         if (m.find()) {
             return Double.parseDouble(m.group(1));
         }
-        m = Pattern.compile("T\\s*[:：]?\\s*(\\d{2,3})").matcher(window);
+        m = T_SCORE_FALLBACK.matcher(window);
         if (m.find()) {
             return Double.parseDouble(m.group(1));
         }
@@ -370,6 +392,34 @@ public class TciExtractionParser {
     }
 
     /**
+     * 점수 표 파서가 기대하는 헤더 신호(백분위 + 원점수/표준점수/T)가 평문에 있는지.
+     * 드래그 가능 PDF여도 표 용어가 다르면 false가 될 수 있다.
+     */
+    public static boolean hasScoreTableSignals(String plainText) {
+        if (!StringUtils.hasText(plainText)) {
+            return false;
+        }
+        String t = normalizeExtractedPlainText(plainText);
+        return hasScoreTableHeaderSignals(t);
+    }
+
+    /**
+     * PDFBox 평문 진단 한 줄(본문 전체·점수 값 미기록, 민감도 낮춤).
+     */
+    public static String diagnosticSummary(String plainText) {
+        if (!StringUtils.hasText(plainText)) {
+            return "empty";
+        }
+        String n = normalizeExtractedPlainText(plainText);
+        boolean pctWord = PERCENTILE_HEADER_SIGNAL.matcher(n).find();
+        boolean rawOrT = RAW_OR_T_HEADER_SIGNAL.matcher(n).find();
+        return String.format(Locale.ROOT,
+                "len=%d, scoreTableSignals=%b, looksLikeTci=%b, hasPercentileWord=%b, hasRawOrT=%b, has탐색성=%b, has우려성=%b",
+                n.length(), hasScoreTableSignals(n), looksLikeTciReport(n), pctWord, rawOrT,
+                n.contains("탐색성"), n.contains("우려성"));
+    }
+
+    /**
      * 본문에 TCI/기질·성격 보고서로 추정되는 토큰이 있는지.
      */
     public static boolean looksLikeTciReport(String plainText) {
@@ -381,5 +431,16 @@ public class TciExtractionParser {
                 || t.contains("TCI")
                 || t.contains("자율성") && t.contains("연대감")
                 || t.contains("해석상담") && t.contains("보고서");
+    }
+
+    /**
+     * PDFBox 등 추출 평문 공백·개행 정규화.
+     */
+    private static String normalizeExtractedPlainText(String plainText) {
+        if (plainText == null) {
+            return "";
+        }
+        return plainText.replace("\r\n", "\n").replace('\r', '\n')
+                .replace('\u00A0', ' ').replace('\u3000', ' ');
     }
 }

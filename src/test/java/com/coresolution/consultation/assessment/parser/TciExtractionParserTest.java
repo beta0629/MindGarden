@@ -57,6 +57,35 @@ class TciExtractionParserTest {
     }
 
     @Test
+    void parseMixedEnKoTableHeaderFixture_extractsSevenScales() throws Exception {
+        var res = new ClassPathResource("psych-assessment/tci-sample-mixed-en-ko-table-fake.txt");
+        String text = res.getContentAsString(StandardCharsets.UTF_8);
+        assertTrue(TciExtractionParser.hasScoreTableSignals(text));
+        String json = TciExtractionParser.parse(text);
+        assertNotNull(json);
+        JsonNode root = MAPPER.readTree(json);
+        assertEquals(7, root.path("metrics").size());
+        assertEquals("HLH", root.path("personalityTypeCode").asText());
+    }
+
+    @Test
+    void parseSpacedPercentileAndEnglishLabelsFixture_extractsMetrics() throws Exception {
+        var res = new ClassPathResource("psych-assessment/tci-sample-spaced-percentile-block-fake.txt");
+        String text = res.getContentAsString(StandardCharsets.UTF_8);
+        assertTrue(TciExtractionParser.hasScoreTableSignals(text));
+        String json = TciExtractionParser.parse(text);
+        assertNotNull(json);
+        JsonNode root = MAPPER.readTree(json);
+        assertEquals(7, root.path("metrics").size());
+        assertEquals("LHL", root.path("personalityTypeCode").asText());
+        JsonNode ns = root.path("metrics").get(0);
+        assertEquals("NS", ns.path("scaleCode").asText());
+        assertEquals(45.0, ns.path("percentile").asDouble());
+        assertEquals(20.0, ns.path("rawScore").asDouble());
+        assertEquals(52.0, ns.path("tScore").asDouble());
+    }
+
+    @Test
     void looksLikeTciReport_trueForFixture() throws Exception {
         var res = new ClassPathResource("psych-assessment/tci-sample-fake.txt");
         String text = res.getContentAsString(StandardCharsets.UTF_8);

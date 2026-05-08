@@ -233,8 +233,8 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
         }
         if (TciExtractionParser.looksLikeTciReport(plainText)) {
             log.info(
-                    "TCI 본문은 감지되었으나 척도 파싱 실패(metrics=0): documentId={}, textLen={}",
-                    doc.getId(), plainText.length());
+                    "TCI 본문은 감지되었으나 척도 파싱 실패(metrics=0): documentId={}, {}",
+                    doc.getId(), TciExtractionParser.diagnosticSummary(plainText));
             return tciJsonEmptyReason(PsychAssessmentExtractionReasonCodes.TCI_LAYOUT_UNMATCHED);
         }
         return tciJsonEmptyReason(PsychAssessmentExtractionReasonCodes.TCI_NO_TEXT);

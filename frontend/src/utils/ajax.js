@@ -559,19 +559,18 @@ export const apiPatch = async(endpoint, data = {}, options = {}) => {
   }
 };
 
-// POST 요청 (FormData)
+// POST 요청 (FormData) — 운영(prod)은 CSRF 활성화이므로 X-XSRF-TOKEN 필수 (csrfTokenManager.fetchWithCsrfMultipart)
 export const apiPostFormData = async(endpoint, formData, options = {}) => {
   try {
-    const headers = { ...options.headers };
-    // FormData를 사용할 때는 Content-Type을 자동으로 설정하도록 제거
-    delete headers['Content-Type'];
-    
-    const response = await fetch(endpoint, {
+    const mergedHeaders = { ...getDefaultHeaders(), ...(options.headers || {}) };
+    delete mergedHeaders['Content-Type'];
+    delete mergedHeaders['content-type'];
+
+    const response = await csrfTokenManager.fetchWithCsrfMultipart(endpoint, {
       method: 'POST',
-      headers: { ...getDefaultHeaders(), ...headers },
       body: formData,
-      credentials: 'include', // 세션 쿠키 포함
-      ...options
+      headers: mergedHeaders,
+      credentials: 'include'
     });
 
     if (!response.ok) {

@@ -119,23 +119,54 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
     private static final String OPENAI_FALLBACK_MODEL = "gpt-4o-mini";
 
     private String callGeminiApiWithFallback(String apiKey, String baseUrl, String model, String systemPrompt, String userPrompt) {
+        String modelId = normalizeGeminiModelId(model);
+        if (!StringUtils.hasText(modelId)) {
+            throw new IllegalArgumentException("Gemini model id is empty after normalize");
+        }
+        if (model != null && model.contains("models/")) {
+            log.info("Psych AI Gemini model id normalized for URL: raw={} -> {}", model, modelId);
+        }
         try {
-            return callGeminiApi(apiKey, baseUrl, model, systemPrompt, userPrompt);
+            return callGeminiApi(apiKey, baseUrl, modelId, systemPrompt, userPrompt);
         } catch (Exception e) {
-            String msg = e.getMessage() != null ? e.getMessage() : "";
-            if (!msg.contains("404")) {
+            if (!isGeminiModelNotFoundOrUnsupported(e)) {
                 throw e;
             }
-            if (!GEMINI_FALLBACK_MODEL.equals(model)) {
-                log.info("Psych AI Gemini 404 (model={}), retrying with {}", model, GEMINI_FALLBACK_MODEL);
+            if (!GEMINI_FALLBACK_MODEL.equals(modelId)) {
+                log.info("Psych AI Gemini model not found (model={}), retrying with {}", modelId, GEMINI_FALLBACK_MODEL);
                 return callGeminiApi(apiKey, baseUrl, GEMINI_FALLBACK_MODEL, systemPrompt, userPrompt);
             }
             if (!GEMINI_DEFAULT_URL.equals(baseUrl)) {
-                log.info("Psych AI Gemini 404 with fallback model, retrying with default URL");
+                log.info("Psych AI Gemini model not found with fallback model, retrying with default URL");
                 return callGeminiApi(apiKey, GEMINI_DEFAULT_URL, GEMINI_FALLBACK_MODEL, systemPrompt, userPrompt);
             }
             throw e;
         }
+    }
+
+    /**
+     * UI/복사 시 {@code models/gemini-3.1-pro-preview} 처럼 접두사가 붙으면 URL 이 {@code .../models/models/...} 가 되어 404.
+     */
+    private static String normalizeGeminiModelId(String model) {
+        if (!StringUtils.hasText(model)) {
+            return "";
+        }
+        String m = model.trim();
+        if (m.startsWith("models/")) {
+            m = m.substring("models/".length()).trim();
+        }
+        return m;
+    }
+
+    private static boolean isGeminiModelNotFoundOrUnsupported(Exception e) {
+        if (e instanceof HttpClientErrorException he) {
+            int sc = he.getStatusCode().value();
+            if (sc == 404) {
+                return true;
+            }
+        }
+        String msg = e.getMessage() != null ? e.getMessage() : "";
+        return msg.contains("404") || msg.contains("NOT_FOUND") || msg.contains("\"status\": \"NOT_FOUND\"");
     }
 
     private String callGeminiApi(String apiKey, String baseUrl, String model, String systemPrompt, String userPrompt) {

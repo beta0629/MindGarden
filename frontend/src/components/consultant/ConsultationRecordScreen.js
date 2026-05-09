@@ -10,6 +10,7 @@ import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
 import SafeText from '../common/SafeText';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
+import PsychClientContextSummaryBlock from '../psych-context/organisms/PsychClientContextSummaryBlock';
 
 /**
  * 상담일지 작성 화면
@@ -34,9 +35,6 @@ const ConsultationRecordScreen = () => {
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [completionStatusOptions, setCompletionStatusOptions] = useState([]);
   const [loadingCompletionCodes, setLoadingCompletionCodes] = useState(false);
-  const [psychReports, setPsychReports] = useState([]);
-  const [loadingPsychReports, setLoadingPsychReports] = useState(false);
-
   const loadPriorityCodes = useCallback(async() => {
     try {
       setLoadingCodes(true);
@@ -369,19 +367,6 @@ const ConsultationRecordScreen = () => {
               if (clientData) setClient(clientData);
             }
           }
-          try {
-            setLoadingPsychReports(true);
-            const psychRes = await apiGet(`/api/v1/assessments/psych/documents/by-client/${consultationData.clientId}`);
-            if (psychRes && psychRes.data && Array.isArray(psychRes.data)) {
-              setPsychReports(psychRes.data);
-            } else {
-              setPsychReports([]);
-            }
-          } catch (e) {
-            setPsychReports([]);
-          } finally {
-            setLoadingPsychReports(false);
-          }
         }
         
         try {
@@ -627,37 +612,7 @@ const ConsultationRecordScreen = () => {
         </div>
       </div>
 
-      {/* 심리검사 리포트 영역 */}
-      <div className="mg-v2-card mg-mb-lg" style={{ borderLeft: '4px solid var(--mg-color-secondary-main, #5C6B61)' }}>
-        <h2 className="mg-h3 mg-mb-md mg-flex mg-align-center mg-gap-sm">
-          📋 심리검사 리포트
-        </h2>
-        {loadingPsychReports ? (
-          <p className="mg-v2-text-sm mg-v2-color-text-secondary">로딩 중...</p>
-        ) : psychReports.length === 0 ? (
-          <p className="mg-v2-text-sm mg-v2-color-text-secondary">등록된 심리검사 리포트가 없습니다.</p>
-        ) : (
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {psychReports.map((doc) => (
-              <li key={doc.documentId}>
-                <a
-                  href={`/admin/psych-assessment?documentId=${doc.documentId}`}
-                  style={{ color: 'var(--mg-color-primary-main)', fontWeight: 600, textDecoration: 'none' }}
-                  onMouseOver={(e) => { e.target.style.textDecoration = 'underline'; }}
-                  onMouseOut={(e) => { e.target.style.textDecoration = 'none'; }}
-                >
-                  {doc.originalFilename || `심리검사 문서 #${doc.documentId}`}
-                </a>
-                {doc.reportSummary && (
-                  <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)', margin: '4px 0 0', lineHeight: 1.4 }}>
-                    {doc.reportSummary}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <PsychClientContextSummaryBlock clientId={consultation?.clientId} variant="section" />
 
       {/* 상담일지 작성 폼 */}
       <div style={styles.formCard}>

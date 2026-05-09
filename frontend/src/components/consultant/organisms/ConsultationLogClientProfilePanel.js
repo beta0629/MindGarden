@@ -10,7 +10,7 @@ import {
   isMemoEditableInContextProfileTier
 } from '../../../constants/clientProfileContext';
 import ClientSummaryField from '../molecules/ClientSummaryField';
-import ConsultationLogPsychSummaryPanel from './ConsultationLogPsychSummaryPanel';
+import PsychClientContextSummaryBlock from '../../psych-context/organisms/PsychClientContextSummaryBlock';
 
 const TRIGGER_ID = 'consultation-log-accordion-profile-trigger';
 const PANEL_ID = 'consultation-log-accordion-profile-panel';
@@ -28,8 +28,7 @@ const ConsultationLogClientProfilePanel = ({
   visibilityTier,
   loading,
   hasValidScheduleClientId,
-  psychDocuments,
-  loadingPsych,
+  psychClientId,
   memoDraft,
   onMemoChange,
   memoDirty
@@ -133,15 +132,7 @@ const ConsultationLogClientProfilePanel = ({
               )}
             </section>
           )}
-          {(psychDocuments.length > 0 || loadingPsych) && (
-            <div className="mg-v2-consultation-log-modal__psych-summary">
-              <h3 className="mg-v2-message-title mg-v2-consultation-log-modal__psych-title">심리검사 요약</h3>
-              <ConsultationLogPsychSummaryPanel
-                psychDocuments={psychDocuments}
-                loadingPsych={loadingPsych}
-              />
-            </div>
-          )}
+          <PsychClientContextSummaryBlock clientId={psychClientId} variant="compact" />
         </>
       );
     }

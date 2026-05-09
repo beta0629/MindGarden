@@ -117,6 +117,7 @@ import AdminMessages from './components/admin/AdminMessages';
 import AdminNotificationsPage from './components/admin/AdminNotificationsPage';
 import SystemConfigManagement from './components/admin/SystemConfigManagement';
 import PsychAssessmentManagement from './components/admin/PsychAssessmentManagement';
+import PsychAssessmentLegacyRedirect from './components/admin/PsychAssessmentLegacyRedirect';
 import BrandingManagementPage from './pages/BrandingManagementPage';
 import CacheMonitoringDashboard from './components/admin/CacheMonitoringDashboard';
 import UnifiedHeader from './components/common/UnifiedHeader';
@@ -552,7 +553,8 @@ function AppContent() {
                 <PgApprovalManagement />
               </ProtectedRoute>
             } />
-            <Route path="/admin/psych-assessments" element={<PsychAssessmentManagement user={user} />} />
+            <Route path="/admin/psych-assessment" element={<PsychAssessmentLegacyRedirect />} />
+            <Route path={ADMIN_ROUTES.PSYCH_ASSESSMENTS} element={<PsychAssessmentManagement user={user} />} />
             <Route path="/admin/branding" element={<BrandingManagementPage />} />
             <Route path="/admin/messages" element={<Navigate to="/admin/notifications" replace />} />
             

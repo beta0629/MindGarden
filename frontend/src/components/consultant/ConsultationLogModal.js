@@ -105,9 +105,6 @@ const ConsultationLogModal = ({
   const [completionStatusOptions, setCompletionStatusOptions] = useState([]);
   const [loadingCompletionCodes, setLoadingCompletionCodes] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
-  /** 심리검사 문서 목록 — clientId 있을 때만 로드 */
-  const [psychDocuments, setPsychDocuments] = useState([]);
-  const [loadingPsych, setLoadingPsych] = useState(false);
   /** 중요 코멘트 수집: 내담자 notes, 일정 notes, 이전 일지 특이사항 등 */
   const [importantComments, setImportantComments] = useState([]);
   const [accordionProfileOpen, setAccordionProfileOpen] = useState(true);
@@ -330,6 +327,22 @@ const ConsultationLogModal = ({
     return !Number.isNaN(n);
   }, [scheduleData?.clientId]);
 
+  /** 심리 요약 API용 내담자 ID (프로필·일정·일지 레코드 중 최우선 스칼라) */
+  const psychHookClientId = useMemo(() => {
+    if (client?.id != null && String(client.id).trim() !== '') {
+      const n = Number(client.id);
+      return Number.isNaN(n) ? null : n;
+    }
+    if (consultationRecord?.clientId != null && String(consultationRecord.clientId).trim() !== '') {
+      const n = Number(consultationRecord.clientId);
+      return Number.isNaN(n) ? null : n;
+    }
+    const raw = scheduleData?.clientId;
+    if (raw == null || raw === '') return null;
+    const n = typeof raw === 'number' ? raw : parseInt(String(raw), 10);
+    return Number.isNaN(n) ? null : n;
+  }, [client?.id, consultationRecord?.clientId, scheduleData?.clientId]);
+
   const riskLevels = priorityOptions;
 
   const goalAchievementLevels = [
@@ -442,7 +455,6 @@ const ConsultationLogModal = ({
       setClient(null);
       setConsultationRecord(null);
       setImportantComments([]);
-      setPsychDocuments([]);
 
       let record = null;
       if (isAdmin) {
@@ -483,16 +495,6 @@ const ConsultationLogModal = ({
               phone: record.clientPhone || ''
             } 
           });
-        }
-        setLoadingPsych(true);
-        try {
-          const psychRes = await apiGet(`/api/v1/assessments/psych/documents/by-client/${cId}`);
-          const list = Array.isArray(psychRes) ? psychRes : (psychRes?.data && Array.isArray(psychRes.data) ? psychRes.data : []);
-          setPsychDocuments(list);
-        } catch (e) {
-          setPsychDocuments([]);
-        } finally {
-          setLoadingPsych(false);
         }
       }
 
@@ -555,7 +557,6 @@ const ConsultationLogModal = ({
       setClientWithStats(null);
       setClient(null);
       setImportantComments([]);
-      setPsychDocuments([]);
 
       const rawClientId = scheduleData?.clientId;
       const clientId = (rawClientId != null && rawClientId !== '') ? (typeof rawClientId === 'number' ? (Number.isNaN(rawClientId) ? null : rawClientId) : (() => { const n = parseInt(rawClientId, 10); return Number.isNaN(n) ? null : n; })()) : null;
@@ -581,17 +582,6 @@ const ConsultationLogModal = ({
               console.warn('내담자 fallback 조회 실패:', e);
             }
           }
-        }
-
-        setLoadingPsych(true);
-        try {
-          const psychRes = await apiGet(`/api/v1/assessments/psych/documents/by-client/${clientId}`);
-          const list = Array.isArray(psychRes) ? psychRes : (psychRes?.data && Array.isArray(psychRes.data) ? psychRes.data : []);
-          setPsychDocuments(list);
-        } catch (e) {
-          setPsychDocuments([]);
-        } finally {
-          setLoadingPsych(false);
         }
       }
 
@@ -1052,8 +1042,7 @@ const ConsultationLogModal = ({
                       visibilityTier={clientWithStats?.visibilityTier}
                       loading={loading}
                       hasValidScheduleClientId={hasValidScheduleClientId}
-                      psychDocuments={psychDocuments}
-                      loadingPsych={loadingPsych}
+                      psychClientId={psychHookClientId}
                       memoDraft={memoDraft}
                       onMemoChange={handleMemoChange}
                       memoDirty={memoDirty}

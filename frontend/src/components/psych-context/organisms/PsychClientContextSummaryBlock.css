@@ -1,0 +1,90 @@
+/* TCI/MMPI 내담자 맥락 요약 — 디자인 토큰만 사용 */
+
+.mg-v2-psych-context-summary--section {
+  background-color: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 16px;
+  padding: var(--mg-space-lg, 24px);
+  margin-bottom: var(--mg-space-lg, 24px);
+}
+
+.mg-v2-psych-context-summary--section .mg-v2-psych-context-summary__accent-title {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-space-sm, 12px);
+  margin: 0 0 var(--mg-space-md, 16px);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-psych-context-summary__accent-bar {
+  width: 4px;
+  min-height: 1.25em;
+  border-radius: 2px;
+  background-color: var(--mg-color-primary-main);
+  flex-shrink: 0;
+}
+
+.mg-v2-psych-context-summary__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-space-md, 12px);
+}
+
+.mg-v2-psych-context-summary__row-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-space-xs, 8px);
+}
+
+.mg-v2-psych-context-summary__type-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-psych-context-summary__meta {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-v2-psych-context-summary__link {
+  font-weight: 600;
+  color: var(--mg-color-primary-main);
+  text-decoration: none;
+}
+
+.mg-v2-psych-context-summary__link:hover,
+.mg-v2-psych-context-summary__link:focus-visible {
+  text-decoration: underline;
+}
+
+.mg-v2-psych-context-summary__summary-line {
+  font-size: 14px;
+  color: var(--mg-color-text-secondary);
+  margin: var(--mg-space-xs, 8px) 0 0;
+  line-height: 1.4;
+}
+
+.mg-v2-psych-context-summary--compact {
+  margin-top: var(--mg-space-md, 16px);
+}
+
+.mg-v2-psych-context-summary--client-modal {
+  margin-top: var(--mg-space-md, 16px);
+}
+
+.mg-v2-psych-context-summary--compact .mg-v2-psych-context-summary__accent-title {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-space-sm, 12px);
+  margin: 0 0 var(--mg-space-sm, 12px);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+}

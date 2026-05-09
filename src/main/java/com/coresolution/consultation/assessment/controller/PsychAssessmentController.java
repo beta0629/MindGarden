@@ -6,9 +6,12 @@ import com.coresolution.consultation.assessment.dto.PsychAssessmentReportViewDto
 import com.coresolution.consultation.assessment.repository.PsychAssessmentReportRepository;
 import com.coresolution.consultation.assessment.model.PsychAssessmentDocumentStatus;
 import com.coresolution.consultation.assessment.model.PsychAssessmentType;
+import com.coresolution.consultation.assessment.dto.PsychAssessmentClientSummaryDto;
 import com.coresolution.consultation.assessment.service.PsychAssessmentIngestService;
+import com.coresolution.consultation.assessment.service.PsychAssessmentClientSummaryService;
 import com.coresolution.consultation.assessment.repository.PsychAssessmentDocumentRepository;
 import com.coresolution.consultation.assessment.entity.PsychAssessmentDocument;
+import com.coresolution.consultation.assessment.support.PsychAssessmentMarkdownSections;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.context.TenantContextHolder;
@@ -39,6 +42,7 @@ public class PsychAssessmentController extends BaseApiController {
     private final com.coresolution.consultation.assessment.service.PsychAssessmentStatsService statsService;
     private final PsychAssessmentDocumentRepository documentRepository;
     private final PsychAssessmentReportRepository reportRepository;
+    private final PsychAssessmentClientSummaryService clientSummaryService;
 
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
@@ -161,11 +165,11 @@ public class PsychAssessmentController extends BaseApiController {
                     if (reportOpt.isPresent() && reportOpt.get().getReportMarkdown() != null) {
                         String md = reportOpt.get().getReportMarkdown();
                         reportSummary = md.length() > summaryMaxLen ? md.substring(0, summaryMaxLen).trim() + "…" : md.trim();
-                        summarySection = extractMarkdownSection(md, "## 요약");
-                        recommendationSection = extractMarkdownSection(md, "## 권고");
-                        keyFindings = extractMarkdownSection(md, "## 임상 척도");
+                        summarySection = PsychAssessmentMarkdownSections.extractSection(md, "## 요약");
+                        recommendationSection = PsychAssessmentMarkdownSections.extractSection(md, "## 권고");
+                        keyFindings = PsychAssessmentMarkdownSections.extractSection(md, "## 임상 척도");
                         if (keyFindings == null) {
-                            keyFindings = extractMarkdownSection(md, "## 주요 소견");
+                            keyFindings = PsychAssessmentMarkdownSections.extractSection(md, "## 주요 소견");
                         }
                     }
                     return PsychAssessmentDocumentListItem.builder()
@@ -188,32 +192,16 @@ public class PsychAssessmentController extends BaseApiController {
     }
 
     /**
-     * 마크다운에서 지정한 헤더(예: "## 요약") 다음 본문을 추출한다.
-     * 헤더 줄 다음부터 다음 "## "로 시작하는 줄 직전 또는 문자열 끝까지 반환.
-     *
-     * @param markdown 전체 리포트 마크다운
-     * @param sectionHeader "## 요약", "## 권고" 등
-     * @return 해당 섹션 본문(trim), 없으면 null
+     * 상담일지·내담자 UI용: 노출 조건을 만족하는 심리 데이터 존재 여부 및 문서 목록(SSOT).
      */
-    private static String extractMarkdownSection(String markdown, String sectionHeader) {
-        if (markdown == null || sectionHeader == null) {
-            return null;
-        }
-        int start = markdown.indexOf(sectionHeader);
-        if (start < 0) {
-            return null;
-        }
-        int contentStart = markdown.indexOf('\n', start);
-        if (contentStart < 0) {
-            return null;
-        }
-        contentStart++;
-        int nextSection = markdown.indexOf("\n## ", contentStart);
-        String content = nextSection < 0
-                ? markdown.substring(contentStart)
-                : markdown.substring(contentStart, nextSection);
-        String trimmed = content.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+    @GetMapping("/clients/{clientId}/summary")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "내담자 심리검사 요약", description = "TCI/MMPI 중 노출 가능 문서·유형(hasPsychData, typesPresent)을 반환합니다.")
+    public ResponseEntity<ApiResponse<PsychAssessmentClientSummaryDto>> clientPsychSummary(
+            @PathVariable Long clientId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        PsychAssessmentClientSummaryDto dto = clientSummaryService.buildClientSummary(tenantId, clientId);
+        return success(dto);
     }
 }
 

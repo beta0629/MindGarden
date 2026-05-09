@@ -18,6 +18,7 @@ import { getUserGradeKoreanNameSync } from '../../../utils/codeHelper';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../../utils/koreanMobilePhone';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
+import PsychClientContextSummaryBlock from '../../psych-context/organisms/PsychClientContextSummaryBlock';
 import ContentKpiRow from '../../dashboard-v2/content/ContentKpiRow';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import NotificationChannelPreferenceSection from '../../mypage/components/NotificationChannelPreferenceSection';
@@ -947,6 +948,9 @@ const ClientModal = ({
         >
             <div className="mg-v2-modal-body">
                 {renderSummaryStrip()}
+                {(type === 'view' || type === 'edit') && client?.id ? (
+                  <PsychClientContextSummaryBlock clientId={client.id} variant="clientModal" />
+                ) : null}
                 {type === 'delete' ? renderDeleteContent() : renderFormContent()}
             </div>
         </UnifiedModal>

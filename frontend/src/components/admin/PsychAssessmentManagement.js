@@ -8,7 +8,8 @@
  * @since 2026-02-27
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -41,6 +42,8 @@ const canAccessPsychAssessmentAdmin = (u) =>
 const PsychAssessmentManagement = ({ user: propUser }) => {
   const { user: sessionUser } = useSession();
   const user = propUser || sessionUser;
+  const location = useLocation();
+  const psychDeepLinkSearchHandledRef = useRef(null);
 
   const [uploadType, setUploadType] = useState('TCI');
   const [uploadFiles, setUploadFiles] = useState([]);
@@ -86,6 +89,34 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
     }
   }, [user?.id]);
 
+  const handleViewReport = useCallback(async(documentId) => {
+    if (!documentId) return;
+    setReportDocumentId(documentId);
+    setReportLoading(true);
+    setReportContent(null);
+    setReportModalOpen(true);
+    try {
+      const res = await StandardizedApi.get(`/api/v1/assessments/psych/documents/${documentId}/report`);
+      const data = res?.data ?? res;
+      if (data?.reportMarkdown != null) {
+        setReportContent(data);
+      } else {
+        setReportContent({ reportMarkdown: '(내용 없음)', modelName: '', createdAt: '' });
+      }
+    } catch (e) {
+      if (e?.status === 404 || e?.response?.status === 404) {
+        setReportContent(null);
+        notificationManager.show('아직 생성된 리포트가 없습니다. "리포트 생성" 버튼을 눌러 주세요.', 'info');
+      } else {
+        notificationManager.show(toErrorMessage(e, '리포트를 불러오지 못했습니다.'), 'error');
+      }
+      setReportModalOpen(false);
+      setReportDocumentId(null);
+    } finally {
+      setReportLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     const loadClients = async() => {
@@ -116,6 +147,24 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
       setLoading(false);
     }
   }, [user?.id, loadStatsAndRecent]);
+
+  useEffect(() => {
+    if (!user?.id || !canAccessPsychAssessmentAdmin(user)) {
+      return undefined;
+    }
+    const params = new URLSearchParams(location.search || '');
+    const docId = params.get('documentId');
+    if (!docId || !/^\d+$/.test(String(docId).trim())) {
+      return undefined;
+    }
+    const searchKey = location.search || '';
+    if (psychDeepLinkSearchHandledRef.current === searchKey) {
+      return undefined;
+    }
+    psychDeepLinkSearchHandledRef.current = searchKey;
+    handleViewReport(Number(docId));
+    return undefined;
+  }, [location.search, handleViewReport, user]);
 
   // 서버 목록에 반영된 문서는 낙관적 목록에서 제거 (documentId 기준)
   useEffect(() => {
@@ -238,34 +287,6 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
       notificationManager.show(e?.message || '리포트 생성에 실패했습니다.', 'error');
     } finally {
       setGeneratingReportDocumentId(null);
-    }
-  };
-
-  const handleViewReport = async(documentId) => {
-    if (!documentId) return;
-    setReportDocumentId(documentId);
-    setReportLoading(true);
-    setReportContent(null);
-    setReportModalOpen(true);
-    try {
-      const res = await StandardizedApi.get(`/api/v1/assessments/psych/documents/${documentId}/report`);
-      const data = res?.data ?? res;
-      if (data?.reportMarkdown != null) {
-        setReportContent(data);
-      } else {
-        setReportContent({ reportMarkdown: '(내용 없음)', modelName: '', createdAt: '' });
-      }
-    } catch (e) {
-      if (e?.status === 404 || e?.response?.status === 404) {
-        setReportContent(null);
-        notificationManager.show('아직 생성된 리포트가 없습니다. "리포트 생성" 버튼을 눌러 주세요.', 'info');
-      } else {
-        notificationManager.show(toErrorMessage(e, '리포트를 불러오지 못했습니다.'), 'error');
-      }
-      setReportModalOpen(false);
-      setReportDocumentId(null);
-    } finally {
-      setReportLoading(false);
     }
   };
 

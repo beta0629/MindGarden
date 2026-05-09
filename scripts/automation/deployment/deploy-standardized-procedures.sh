@@ -111,6 +111,11 @@ done
 echo ""
 echo "📥 서버에서 프로시저 배포 중..."
 
+# MySQL 8: root 등으로 만들어진 프로시저는 일반 계정이 DROP 할 수 없음(1227 SYSTEM_USER).
+# 이 경우 PROD_DB_ROUTINE_ADMIN_* 로만 같은 SQL 파일을 재시도한다.
+ROUTINE_ADMIN_USER="${PROD_DB_ROUTINE_ADMIN_USER:-}"
+ROUTINE_ADMIN_PASS="${PROD_DB_ROUTINE_ADMIN_PASSWORD:-}"
+
 # SSH로 접속하여 프로시저 배포 (한 건이라도 mysql 실패 시 비정상 종료 → CI 실패)
 ssh "$SERVER_USER@$SERVER" bash << ENDSSH
 set -euo pipefail
@@ -119,8 +124,10 @@ DB_HOST="$DB_HOST"
 DB_USER="$DB_USER"
 DB_PASS="$DB_PASS"
 DB_NAME="$DB_NAME"
+ROUTINE_ADMIN_USER="$ROUTINE_ADMIN_USER"
+ROUTINE_ADMIN_PASS="$ROUTINE_ADMIN_PASS"
 # 비밀번호는 CI 로컬에서 heredoc 전개 시 원격 스크립트에 포함됨(기존 -p 와 동일 수준). 클라이언트 경고 회피용.
-export MYSQL_PWD="$DB_PASS"
+export MYSQL_PWD="\$DB_PASS"
 trap 'unset MYSQL_PWD 2>/dev/null || true' EXIT
 
 proc_failed=0
@@ -133,9 +140,24 @@ for proc in ${PROCEDURES[@]}; do
         if mysql -h "\$DB_HOST" -u "\$DB_USER" "\$DB_NAME" < "\$file" >"\$log" 2>&1; then
             echo "✅ \$proc 배포 완료"
         else
-            echo "❌ \$proc 배포 실패"
+            echo "❌ \$proc 배포 실패 (1차: \$DB_USER)"
             cat "\$log"
-            proc_failed=1
+            if grep -qE '1227|SYSTEM_USER' "\$log" && [ -n "\${ROUTINE_ADMIN_USER:-}" ]; then
+                echo "::notice::1227(SYSTEM_USER) → 관리 계정으로 재시도: \$proc"
+                export MYSQL_PWD="\$ROUTINE_ADMIN_PASS"
+                if mysql -h "\$DB_HOST" -u "\$ROUTINE_ADMIN_USER" "\$DB_NAME" < "\$file" >"\${log}.admin" 2>&1; then
+                    echo "✅ \$proc 배포 완료 (관리 계정 재시도)"
+                    export MYSQL_PWD="\$DB_PASS"
+                else
+                    echo "❌ \$proc 관리 계정 재시도도 실패"
+                    cat "\${log}.admin"
+                    export MYSQL_PWD="\$DB_PASS"
+                    proc_failed=1
+                fi
+            else
+                export MYSQL_PWD="\$DB_PASS"
+                proc_failed=1
+            fi
         fi
     else
         echo "⚠️  원격에 없음(스킵): \$file"
@@ -143,7 +165,7 @@ for proc in ${PROCEDURES[@]}; do
 done
 
 if [ "\$proc_failed" -ne 0 ]; then
-    echo "::error::표준 프로시저 mysql 적용이 하나 이상 실패했습니다. DB 계정·호스트·GRANT(특히 DROP/CREATE ROUTINE, MySQL 8 SYSTEM_USER)·PRODUCTION_DB_HOST(동일 서버면 127.0.0.1 권장)를 확인하세요."
+    echo "::error::표준 프로시저 mysql 적용이 하나 이상 실패했습니다. MySQL 8에서 기존 루틴이 root 등 SYSTEM_USER 이면 GitHub Secret PRODUCTION_DB_PROCEDURE_USER(·PASSWORD) 에 DROP 가능 계정을 넣으세요. 동일 서버 DB면 PRODUCTION_DB_HOST=127.0.0.1 권장."
     exit 1
 fi
 

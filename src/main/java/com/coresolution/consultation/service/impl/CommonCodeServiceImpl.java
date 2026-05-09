@@ -59,23 +59,28 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Override
     @Transactional(readOnly = true)
     public List<CommonCode> getCommonCodesByGroup(String codeGroup) {
-        log.info("🔍 코드 그룹별 공통코드 조회: {}", codeGroup);
-        return commonCodeRepository.findByCodeGroupOrderBySortOrderAsc(codeGroup);
+        log.info("🔍 코드 그룹별 공통코드 조회 (테넌트+코어 폴백, 활성): {}", codeGroup);
+        return getCodesByGroupWithCurrentTenant(codeGroup);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<CommonCode> getActiveCommonCodesByGroup(String codeGroup) {
-        log.info("🔍 활성 코드 그룹별 공통코드 조회: {}", codeGroup);
-        return commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc(codeGroup);
+        log.info("🔍 활성 코드 그룹별 공통코드 조회 (테넌트+코어 폴백): {}", codeGroup);
+        return getCodesByGroupWithCurrentTenant(codeGroup);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getActiveCodesByGroup(String codeGroup) {
-        log.info("🔍 활성 코드 그룹별 공통코드 조회 (Map 형태): {}", codeGroup);
-        List<CommonCode> codes = commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc(codeGroup);
-        
+        log.info("🔍 활성 코드 그룹별 공통코드 조회 (Map 형태, 테넌트+코어 폴백): {}", codeGroup);
+        return toActiveCodeMapList(getCodesByGroupWithCurrentTenant(codeGroup));
+    }
+
+    /**
+     * 활성 공통코드 엔티티 목록을 ERP·통계 등에서 쓰는 Map 스키마로 변환한다.
+     */
+    private List<Map<String, Object>> toActiveCodeMapList(List<CommonCode> codes) {
         return codes.stream().map(code -> {
             Map<String, Object> codeMap = new HashMap<>();
             codeMap.put("id", code.getId());

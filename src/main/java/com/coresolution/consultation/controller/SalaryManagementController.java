@@ -489,7 +489,7 @@ public class SalaryManagementController extends BaseApiController {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
         List<Map<String, Object>> optionTypes = toValueLabelList(
-            commonCodeService.getActiveCodesByGroup("SALARY_OPTION_TYPE"));
+            commonCodeService.getCodesByGroupWithCurrentTenant("SALARY_OPTION_TYPE"));
         return success("급여 옵션 유형을 조회했습니다.", optionTypes);
     }
 
@@ -506,7 +506,7 @@ public class SalaryManagementController extends BaseApiController {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
         List<Map<String, Object>> grades = toValueLabelList(
-            commonCodeService.getActiveCodesByGroup("CONSULTANT_GRADE"));
+            commonCodeService.getCodesByGroupWithCurrentTenant("CONSULTANT_GRADE"));
         return success("상담사 등급을 조회했습니다.", grades);
     }
 
@@ -523,7 +523,7 @@ public class SalaryManagementController extends BaseApiController {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
         List<Map<String, Object>> salaryTypes = toValueLabelList(
-            commonCodeService.getActiveCodesByGroup("SALARY_TYPE"));
+            commonCodeService.getCodesByGroupWithCurrentTenant("SALARY_TYPE"));
         return success("급여 유형 코드를 조회했습니다.", salaryTypes);
     }
 
@@ -539,7 +539,8 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
-        List<Map<String, Object>> codeMaps = commonCodeService.getActiveCodesByGroup("SALARY_CONFIG");
+        List<Map<String, Object>> codeMaps =
+            mapCommonCodesToActiveMaps(commonCodeService.getCodesByGroupWithCurrentTenant("SALARY_CONFIG"));
         Map<String, Object> configs = new HashMap<>();
         for (Map<String, Object> m : codeMaps) {
             String codeValue = (String) m.get("codeValue");
@@ -552,12 +553,30 @@ public class SalaryManagementController extends BaseApiController {
         return success("급여 설정을 조회했습니다.", configs);
     }
 
-    private List<Map<String, Object>> toValueLabelList(List<Map<String, Object>> codeMaps) {
-        return codeMaps.stream()
-            .map(m -> Map.<String, Object>of(
-                "value", m.getOrDefault("codeValue", ""),
-                "label", m.getOrDefault("codeLabel", "")
-            ))
+    /**
+     * 활성 공통코드 Map 형태(id, codeValue, codeLabel, codeDescription, sortOrder, parent*) — 급여 설정 응답과 동일 스키마.
+     */
+    private List<Map<String, Object>> mapCommonCodesToActiveMaps(List<CommonCode> codes) {
+        return codes.stream().map(code -> {
+            Map<String, Object> codeMap = new HashMap<>();
+            codeMap.put("id", code.getId());
+            codeMap.put("codeValue", code.getCodeValue());
+            codeMap.put("codeLabel", code.getCodeLabel());
+            codeMap.put("codeDescription", code.getCodeDescription());
+            codeMap.put("sortOrder", code.getSortOrder());
+            codeMap.put("parentCodeGroup", code.getParentCodeGroup());
+            codeMap.put("parentCodeValue", code.getParentCodeValue());
+            return codeMap;
+        }).collect(Collectors.toList());
+    }
+
+    private List<Map<String, Object>> toValueLabelList(List<CommonCode> codes) {
+        return codes.stream()
+            .map(code -> {
+                String value = code.getCodeValue() != null ? code.getCodeValue() : "";
+                String label = code.getCodeLabel() != null ? code.getCodeLabel() : "";
+                return Map.<String, Object>of("value", value, "label", label);
+            })
             .collect(Collectors.toList());
     }
     

@@ -11,6 +11,7 @@ name: 🚀 Core Solution 운영 배포
 # 표준 프로시저 통합: PRODUCTION_DB_PASSWORD 가 있으면 본 워크플로에서
 # deploy-standardized-procedures.sh prod(DEPLOY_TARGET=production_mysql) 를 서비스 재시작 전에 실행합니다.
 # 없으면 Notice 후 스킵 — 별도 「표준화 프로시저 배포 (운영 MySQL)」 워크플로도 계속 사용 가능.
+# DB 계정: 기본 PRODUCTION_DB_USER=mindgarden(미설정 시). DDL·DROP ROUTINE 은 PRODUCTION_DB_PROCEDURE_USER 등 별도 시크릿 권장.
 
 on:
   push:
@@ -499,9 +500,18 @@ jobs:
           export PROD_SERVER_USER="$U_SECRET"
         fi
         export PROD_DB_HOST="$DB_HOST_RESOLVED"
-        export PROD_DB_PASSWORD="${{ secrets.PRODUCTION_DB_PASSWORD }}"
+        PROC_USER="${{ secrets.PRODUCTION_DB_PROCEDURE_USER }}"
+        PROC_PASS="${{ secrets.PRODUCTION_DB_PROCEDURE_PASSWORD }}"
         DU="${{ secrets.PRODUCTION_DB_USER }}"
-        export PROD_DB_USER="${DU:-mindgarden_prod}"
+        DP="${{ secrets.PRODUCTION_DB_PASSWORD }}"
+        if [ -n "$PROC_USER" ]; then
+          export PROD_DB_USER="$PROC_USER"
+          export PROD_DB_PASSWORD="${PROC_PASS:-$DP}"
+          echo "::notice::PRODUCTION_DB_PROCEDURE_USER 로 표준 프로시저만 적용합니다."
+        else
+          export PROD_DB_USER="${DU:-mindgarden}"
+          export PROD_DB_PASSWORD="$DP"
+        fi
         DN="${{ secrets.PRODUCTION_DB_NAME }}"
         export PROD_DB_NAME="${DN:-core_solution}"
         export DEPLOY_TARGET=production_mysql

@@ -13,7 +13,7 @@ if [ "$ENV" = "prod" ]; then
     SERVER="beta74.cafe24.com"
     SERVER_USER="beta74"
     DB_HOST="beta74.cafe24.com"
-    DB_USER="mindgarden_prod"
+    DB_USER="mindgarden"
     DB_PASS="${MINDGARDEN_PROD_DB_PASSWORD:-}"  # 환경 변수에서 가져오기
     DB_NAME="core_solution"
     echo "🚀 운영 환경 프로시저 배포 시작..."

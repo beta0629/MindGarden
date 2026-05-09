@@ -6,7 +6,7 @@ set -e
 
 # 운영 환경 설정
 PROD_DB_HOST="${PROD_DB_HOST:-beta74.cafe24.com}"
-PROD_DB_USER="${PROD_DB_USER:-mindgarden_prod}"
+PROD_DB_USER="${PROD_DB_USER:-mindgarden}"
 PROD_DB_PASS="${PROD_DB_PASSWORD}"
 PROD_DB_NAME="${PROD_DB_NAME:-core_solution}"
 BACKUP_DIR="/tmp/procedure_backup_$(date +%Y%m%d_%H%M%S)"

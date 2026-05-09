@@ -99,7 +99,9 @@ echo "📤 프로시저 파일 업로드 중..."
 for proc in "${PROCEDURES[@]}"; do
     file="${PROCEDURES_DEPLOY_DIR}/${proc}_deploy.sql"
     if [ -f "$file" ]; then
-        scp "$file" "$SERVER_USER@$SERVER:/tmp/${proc}_deploy.sql" 2>&1 | grep -v "Warning" || true
+        if ! scp "$file" "$SERVER_USER@$SERVER:/tmp/${proc}_deploy.sql"; then
+            fail "SCP 실패: ${proc}_deploy.sql → ${SERVER_USER}@${SERVER}:/tmp/"
+        fi
         echo "✅ ${proc}_deploy.sql 업로드 완료"
     else
         echo "⚠️  파일을 찾을 수 없습니다: $file"
@@ -109,35 +111,52 @@ done
 echo ""
 echo "📥 서버에서 프로시저 배포 중..."
 
-# SSH로 접속하여 프로시저 배포
+# SSH로 접속하여 프로시저 배포 (한 건이라도 mysql 실패 시 비정상 종료 → CI 실패)
 ssh "$SERVER_USER@$SERVER" bash << ENDSSH
-set -e
+set -euo pipefail
 
 DB_HOST="$DB_HOST"
 DB_USER="$DB_USER"
 DB_PASS="$DB_PASS"
 DB_NAME="$DB_NAME"
+# 비밀번호는 CI 로컬에서 heredoc 전개 시 원격 스크립트에 포함됨(기존 -p 와 동일 수준). 클라이언트 경고 회피용.
+export MYSQL_PWD="$DB_PASS"
+trap 'unset MYSQL_PWD 2>/dev/null || true' EXIT
 
-# 각 프로시저 배포 (DELIMITER 사용)
+proc_failed=0
+# 각 프로시저 배포 (배포용 SQL에 DELIMITER 포함)
 for proc in ${PROCEDURES[@]}; do
     file="/tmp/\${proc}_deploy.sql"
     if [ -f "\$file" ]; then
         echo "배포 중: \$proc"
-        mysql -h "\$DB_HOST" -u "\$DB_USER" -p"\$DB_PASS" "\$DB_NAME" < "\$file" 2>&1 | grep -v "Warning: Using a password" || true
-
-        if [ \${PIPESTATUS[0]} -eq 0 ]; then
+        log="/tmp/mysql_deploy_\${proc}.log"
+        if mysql -h "\$DB_HOST" -u "\$DB_USER" "\$DB_NAME" < "\$file" >"\$log" 2>&1; then
             echo "✅ \$proc 배포 완료"
         else
             echo "❌ \$proc 배포 실패"
+            cat "\$log"
+            proc_failed=1
         fi
+    else
+        echo "⚠️  원격에 없음(스킵): \$file"
     fi
 done
 
+if [ "\$proc_failed" -ne 0 ]; then
+    echo "::error::표준 프로시저 mysql 적용이 하나 이상 실패했습니다. DB 계정·호스트·GRANT(특히 DROP/CREATE ROUTINE, MySQL 8 SYSTEM_USER)·PRODUCTION_DB_HOST(동일 서버면 127.0.0.1 권장)를 확인하세요."
+    exit 1
+fi
+
 echo ""
-echo "🔍 배포된 프로시저 확인..."
-mysql -h "\$DB_HOST" -u "\$DB_USER" -p"\$DB_PASS" "\$DB_NAME" -e "SELECT ROUTINE_NAME FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = '\$DB_NAME' AND ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME IN ('CheckTimeConflict', 'GetRefundableSessions', 'GetRefundStatistics', 'ValidateIntegratedAmount', 'GetConsolidatedFinancialData') ORDER BY ROUTINE_NAME;" 2>&1 | grep -v "Warning\|ROUTINE_NAME"
+echo "🔍 DB 연결·스키마 확인..."
+vlog="/tmp/mysql_deploy_verify.log"
+if ! mysql -h "\$DB_HOST" -u "\$DB_USER" "\$DB_NAME" -e "SELECT DATABASE() AS current_schema, COUNT(*) AS procedure_count FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = 'PROCEDURE';" >"\$vlog" 2>&1; then
+    cat "\$vlog"
+    exit 1
+fi
+cat "\$vlog"
 
 ENDSSH
 
 echo ""
-echo "✅ 프로시저 배포 완료!"
+echo "✅ 프로시저 배포 완료 (모든 mysql 단계 성공)"

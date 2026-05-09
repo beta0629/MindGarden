@@ -17,7 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * PL/SQL 급여관리 서비스 구현체
- * 
+ * <p>운영 반영: 급여 관련 표준 프로시저를 DB에 먼저 배포한 뒤, 앱 재기동 필요 여부는 운영 체크리스트에 따른다.</p>
+ *
  * @author MindGarden
  * @version 1.0.0
  * @since 2025-09-25

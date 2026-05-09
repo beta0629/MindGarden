@@ -463,7 +463,7 @@ BEGIN
         INTO v_completed_consultations, v_total_hours
         FROM schedules s
         WHERE s.consultant_id = p_consultant_id 
-        AND DATE(s.start_time) BETWEEN p_period_start AND p_period_end
+        AND s.date BETWEEN p_period_start AND p_period_end
         AND s.is_deleted = FALSE;
         
         SET p_consultation_count = v_completed_consultations;
@@ -2517,7 +2517,7 @@ BEGIN
             INTO v_total_consultations, v_completed_consultations, v_total_hours
             FROM schedules s
             WHERE s.consultant_id = p_consultant_id 
-            AND DATE(s.start_time) BETWEEN p_period_start AND p_period_end
+            AND s.date BETWEEN p_period_start AND p_period_end
             AND s.is_deleted = FALSE;
             
             -- 3. 급여 계산

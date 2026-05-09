@@ -2,6 +2,7 @@
 -- 통합 급여 계산 프로시저 (표준화 버전)
 -- 운영 반영: 앱은 본 시그니처(5 IN + 7 OUT)를 기대합니다. 구버전(4 IN + 7 OUT)만 있으면 JDBC OUT 등록 오류가 납니다.
 -- 배포: 저장소 `.github/workflows/deploy-procedures-production-mysql.yml` 또는 `database/schema/procedures_standardized/deploy_standardized_procedures.sh` 로 동일 본문을 적용하세요.
+-- schedules 기간: 상담 일자는 date(DATE); start_time/end_time은 TIME(6)만 저장 → 기간은 s.date BETWEEN ...
 -- =====================================================
 DELIMITER //
 
@@ -193,7 +194,7 @@ BEGIN
                     FROM schedules s
                     WHERE s.consultant_id = p_consultant_id 
                       AND s.tenant_id = p_tenant_id
-                      AND DATE(s.start_time) BETWEEN p_period_start AND p_period_end
+                      AND s.date BETWEEN p_period_start AND p_period_end
                       AND s.is_deleted = FALSE;
                     
                     -- 6. 급여 계산

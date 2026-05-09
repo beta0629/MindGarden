@@ -28,6 +28,9 @@
 - `src/main/java/com/coresolution/consultation/service/impl/SalaryBatchServiceImpl.java` (getCalculationPeriod 사용)
 - `database/schema/procedures_standardized/ProcessMonthlySalaryBatch_standardized.sql` (v_period_start, v_period_end)
 
+**schedules 컬럼 모델(급여·집계)**  
+`core_solution.schedules`에서 상담 **달력일**은 `date`(DATE) 컬럼에 있다. `start_time`/`end_time`은 TIME(6)만 저장된다. MySQL에서 TIME 전용 컬럼에 `DATE(start_time)`를 적용하면 **실제 상담일과 다른 날짜**가 나올 수 있으므로, 급여 미리보기·통합 급여 계산 등 프로시저의 기간 조건은 **`s.date BETWEEN p_period_start AND p_period_end`**(동등한 `date` 기준 조건)을 사용한다.
+
 ---
 
 ### 1.2 등급(grade)·회기(session) 수 반영
@@ -37,7 +40,7 @@
 | **등급 저장** | `users.grade` | 상담사 등급. `ProcessIntegratedSalaryCalculation` 에서만 조회됨. |
 | **등급별 요율** | 프로시저 내부 | **표준화 프로시저** (`CalculateSalaryPreview_standardized.sql`, `ProcessIntegratedSalaryCalculation_standardized.sql`): `v_grade_rate DECIMAL(10,2) DEFAULT 30000` 고정. **common_codes `FREELANCE_BASE_RATE` 미사용.** |
 | **등급별 요율(레거시)** | `integrated_salary_erp_system.sql`, `salary_management_procedures.sql` | `FREELANCE_BASE_RATE` + `code_value = CONCAT(v_grade, '_RATE')` 로 등급별 요율 조회, 없으면 30000. |
-| **회기 수** | 프로시저 | `schedules` 테이블에서 `DATE(s.start_time) BETWEEN p_period_start AND p_period_end` 로 기간 내 스케줄 건수·완료 건수·총 시간 조회. `completed_consultations`(완료 상담 건수)가 회기 수로 사용됨. |
+| **회기 수** | 프로시저 | `schedules` 테이블에서 `s.date BETWEEN p_period_start AND p_period_end` 로 기간 내 스케줄을 한 뒤, `status = 'COMPLETED'` 등으로 완료 건수·총 시간을 집계. `completed_consultations`(완료 상담 건수)가 회기 수로 사용됨. |
 
 - **프리랜서**: `v_consultation_earnings = v_completed_consultations * v_grade_rate`, `p_gross_salary = v_consultation_earnings`.
 - **정규직**: `v_hourly_earnings = v_total_hours * v_hourly_rate`, `p_gross_salary = v_base_salary + v_hourly_earnings`.

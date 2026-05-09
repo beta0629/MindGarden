@@ -4,6 +4,7 @@
 --   1–4 IN: consultant_id, period_start, period_end, tenant_id
 --   5–10 OUT: success, message, gross_salary, net_salary, tax_amount, consultation_count
 -- (구버전 3 IN + tenant_id 없음이면 PlSqlSalaryManagementServiceImpl 과 불일치 → OUT 바인딩 오류)
+-- 기간 필터: 상담 일자는 schedules.date(DATE). start_time/end_time은 TIME(6)만 저장되므로 DATE(start_time) 기반 기간 비교 금지.
 -- =====================================================
 DELIMITER //
 
@@ -166,7 +167,7 @@ BEGIN
         FROM schedules s
         WHERE s.consultant_id = p_consultant_id 
           AND s.tenant_id = p_tenant_id
-          AND DATE(s.start_time) BETWEEN p_period_start AND p_period_end
+          AND s.date BETWEEN p_period_start AND p_period_end
           AND s.is_deleted = FALSE;
         
         SET p_consultation_count = v_completed_consultations;

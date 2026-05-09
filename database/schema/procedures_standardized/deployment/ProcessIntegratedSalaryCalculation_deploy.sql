@@ -1,5 +1,6 @@
 -- =====================================================
 -- 통합 급여 계산 프로시저 (표준화 버전)
+-- schedules 기간: 상담 일자는 date(DATE); start_time/end_time은 TIME(6)만 저장 → 기간은 s.date BETWEEN ...
 -- =====================================================
 DELIMITER //
 
@@ -191,7 +192,7 @@ BEGIN
                     FROM schedules s
                     WHERE s.consultant_id = p_consultant_id 
                       AND s.tenant_id = p_tenant_id
-                      AND DATE(s.start_time) BETWEEN p_period_start AND p_period_end
+                      AND s.date BETWEEN p_period_start AND p_period_end
                       AND s.is_deleted = FALSE;
                     
                     -- 6. 급여 계산

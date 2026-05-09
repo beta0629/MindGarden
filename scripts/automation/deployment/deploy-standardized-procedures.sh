@@ -112,9 +112,10 @@ echo ""
 echo "📥 서버에서 프로시저 배포 중..."
 
 # MySQL 8: root 등으로 만들어진 프로시저는 일반 계정이 DROP 할 수 없음(1227 SYSTEM_USER).
-# 이 경우 PROD_DB_ROUTINE_ADMIN_* 로만 같은 SQL 파일을 재시도한다.
+# 재시도 순서: PROD_DB_ROUTINE_ADMIN_* → PROD_DB_ROUTINE_FALLBACK_ROOT_PASSWORD(root) → root + 앱 DB 비밀번호(127.0.0.1·DB_HOST).
 ROUTINE_ADMIN_USER="${PROD_DB_ROUTINE_ADMIN_USER:-}"
 ROUTINE_ADMIN_PASS="${PROD_DB_ROUTINE_ADMIN_PASSWORD:-}"
+ROUTINE_FALLBACK_ROOT_PASS="${PROD_DB_ROUTINE_FALLBACK_ROOT_PASSWORD:-}"
 
 # SSH로 접속하여 프로시저 배포 (한 건이라도 mysql 실패 시 비정상 종료 → CI 실패)
 ssh "$SERVER_USER@$SERVER" bash << ENDSSH
@@ -126,6 +127,7 @@ DB_PASS="$DB_PASS"
 DB_NAME="$DB_NAME"
 ROUTINE_ADMIN_USER="$ROUTINE_ADMIN_USER"
 ROUTINE_ADMIN_PASS="$ROUTINE_ADMIN_PASS"
+ROUTINE_FALLBACK_ROOT_PASS="$ROUTINE_FALLBACK_ROOT_PASS"
 # 비밀번호는 CI 로컬에서 heredoc 전개 시 원격 스크립트에 포함됨(기존 -p 와 동일 수준). 클라이언트 경고 회피용.
 export MYSQL_PWD="\$DB_PASS"
 trap 'unset MYSQL_PWD 2>/dev/null || true' EXIT
@@ -142,20 +144,46 @@ for proc in ${PROCEDURES[@]}; do
         else
             echo "❌ \$proc 배포 실패 (1차: \$DB_USER)"
             cat "\$log"
-            if grep -qE '1227|SYSTEM_USER' "\$log" && [ -n "\${ROUTINE_ADMIN_USER:-}" ]; then
-                echo "::notice::1227(SYSTEM_USER) → 관리 계정으로 재시도: \$proc"
-                export MYSQL_PWD="\$ROUTINE_ADMIN_PASS"
-                if mysql -h "\$DB_HOST" -u "\$ROUTINE_ADMIN_USER" "\$DB_NAME" < "\$file" >"\${log}.admin" 2>&1; then
-                    echo "✅ \$proc 배포 완료 (관리 계정 재시도)"
+            if grep -qE '1227|SYSTEM_USER' "\$log"; then
+                retry_ok=0
+                if [ -n "\${ROUTINE_ADMIN_USER:-}" ]; then
+                    echo "::notice::1227(SYSTEM_USER) → PRODUCTION_DB_PROCEDURE_USER 로 재시도: \$proc"
+                    export MYSQL_PWD="\$ROUTINE_ADMIN_PASS"
+                    if mysql -h "\$DB_HOST" -u "\$ROUTINE_ADMIN_USER" "\$DB_NAME" < "\$file" >"\${log}.admin" 2>&1; then
+                        retry_ok=1
+                    else
+                        cat "\${log}.admin"
+                    fi
                     export MYSQL_PWD="\$DB_PASS"
+                fi
+                if [ "\$retry_ok" -eq 0 ] && [ -n "\${ROUTINE_FALLBACK_ROOT_PASS:-}" ]; then
+                    echo "::notice::1227(SYSTEM_USER) → root(PRODUCTION_MYSQL_ROOT_PASSWORD) 로 재시도: \$proc"
+                    export MYSQL_PWD="\$ROUTINE_FALLBACK_ROOT_PASS"
+                    for rh in 127.0.0.1 "\$DB_HOST"; do
+                        if mysql -h "\$rh" -u root "\$DB_NAME" < "\$file" >"\${log}.root.\${rh}" 2>&1; then
+                            retry_ok=1
+                            break
+                        fi
+                    done
+                    export MYSQL_PWD="\$DB_PASS"
+                fi
+                if [ "\$retry_ok" -eq 0 ]; then
+                    echo "::notice::1227(SYSTEM_USER) → root + 앱 DB 비밀번호 동일 가정(127.0.0.1·DB_HOST) 재시도: \$proc"
+                    export MYSQL_PWD="\$DB_PASS"
+                    for rh in 127.0.0.1 "\$DB_HOST"; do
+                        if mysql -h "\$rh" -u root "\$DB_NAME" < "\$file" >"\${log}.rootpw.\${rh}" 2>&1; then
+                            retry_ok=1
+                            break
+                        fi
+                    done
+                    export MYSQL_PWD="\$DB_PASS"
+                fi
+                if [ "\$retry_ok" -eq 1 ]; then
+                    echo "✅ \$proc 배포 완료 (SYSTEM_USER 재시도)"
                 else
-                    echo "❌ \$proc 관리 계정 재시도도 실패"
-                    cat "\${log}.admin"
-                    export MYSQL_PWD="\$DB_PASS"
                     proc_failed=1
                 fi
             else
-                export MYSQL_PWD="\$DB_PASS"
                 proc_failed=1
             fi
         fi
@@ -165,7 +193,7 @@ for proc in ${PROCEDURES[@]}; do
 done
 
 if [ "\$proc_failed" -ne 0 ]; then
-    echo "::error::표준 프로시저 mysql 적용이 하나 이상 실패했습니다. MySQL 8에서 기존 루틴이 root 등 SYSTEM_USER 이면 GitHub Secret PRODUCTION_DB_PROCEDURE_USER(·PASSWORD) 에 DROP 가능 계정을 넣으세요. 동일 서버 DB면 PRODUCTION_DB_HOST=127.0.0.1 권장."
+    echo "::error::표준 프로시저 mysql 적용이 하나 이상 실패했습니다. MySQL 8 SYSTEM_USER(1227)이면: (1) Secret PRODUCTION_DB_PROCEDURE_USER·PASSWORD (2) PRODUCTION_MYSQL_ROOT_PASSWORD (3) 로컬 MySQL에서 root 비밀번호가 앱 DB와 동일한 경우 자동 root 재시도. PRODUCTION_DB_HOST=127.0.0.1 권장."
     exit 1
 fi
 

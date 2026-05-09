@@ -11,7 +11,7 @@ name: 🚀 Core Solution 운영 배포
 # 표준 프로시저 통합: PRODUCTION_DB_PASSWORD 가 있으면 본 워크플로에서
 # deploy-standardized-procedures.sh prod(DEPLOY_TARGET=production_mysql) 를 서비스 재시작 전에 실행합니다.
 # 없으면 Notice 후 스킵 — 별도 「표준화 프로시저 배포 (운영 MySQL)」 워크플로도 계속 사용 가능.
-# DB 계정: 기본 PRODUCTION_DB_USER=mindgarden. 1227(SYSTEM_USER) 시만 PRODUCTION_DB_PROCEDURE_* 재시도.
+# DB 계정: 기본 PRODUCTION_DB_USER=mindgarden. 1227 시 PRODUCTION_DB_PROCEDURE_* → PRODUCTION_MYSQL_ROOT_PASSWORD → root+앱비번.
 
 on:
   push:
@@ -510,6 +510,11 @@ jobs:
           export PROD_DB_ROUTINE_ADMIN_USER="$PROC_ADMIN"
           export PROD_DB_ROUTINE_ADMIN_PASSWORD="${PROC_ADMIN_PASS:-$DP}"
           echo "::notice::PRODUCTION_DB_PROCEDURE_* 는 ERROR 1227(SYSTEM_USER) 시에만 재시도용입니다."
+        fi
+        ROOT_PW="${{ secrets.PRODUCTION_MYSQL_ROOT_PASSWORD }}"
+        if [ -n "$ROOT_PW" ]; then
+          export PROD_DB_ROUTINE_FALLBACK_ROOT_PASSWORD="$ROOT_PW"
+          echo "::notice::PRODUCTION_MYSQL_ROOT_PASSWORD 가 설정되어 1227 시 root 재시도에 사용됩니다."
         fi
         DN="${{ secrets.PRODUCTION_DB_NAME }}"
         export PROD_DB_NAME="${DN:-core_solution}"

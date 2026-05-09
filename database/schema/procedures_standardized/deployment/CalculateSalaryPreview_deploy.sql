@@ -33,6 +33,7 @@ BEGIN
     DECLARE v_consultation_earnings DECIMAL(15,2) DEFAULT 0;
     DECLARE v_hourly_earnings DECIMAL(15,2) DEFAULT 0;
     DECLARE v_grade VARCHAR(20) DEFAULT NULL;
+    DECLARE v_freelance_rate_code VARCHAR(50) DEFAULT NULL;
     DECLARE v_grade_rate DECIMAL(10,2) DEFAULT 30000;
     DECLARE v_consultant_count INT DEFAULT 0;
     
@@ -132,13 +133,20 @@ BEGIN
       AND csp.is_active = TRUE
     LIMIT 1;
     
-    -- 프리랜서 등급별 요율: common_codes FREELANCE_BASE_RATE, code_value = {grade}_RATE (없으면 30000)
+    -- 프리랜서 등급별 요율: FREELANCE_BASE_RATE (users.grade CONSULTANT_* ↔ JUNIOR_RATE 등)
     IF v_salary_type = 'FREELANCE' AND v_grade IS NOT NULL AND v_grade != '' THEN
+        SET v_freelance_rate_code = CASE TRIM(v_grade)
+            WHEN 'CONSULTANT_JUNIOR' THEN 'JUNIOR_RATE'
+            WHEN 'CONSULTANT_SENIOR' THEN 'SENIOR_RATE'
+            WHEN 'CONSULTANT_EXPERT' THEN 'EXPERT_RATE'
+            WHEN 'CONSULTANT_MASTER' THEN 'MASTER_RATE'
+            ELSE CONCAT(TRIM(v_grade), '_RATE')
+        END;
         SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(10,2)) INTO v_grade_rate
         FROM common_codes cc
         WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
           AND cc.code_group = 'FREELANCE_BASE_RATE'
-          AND cc.code_value = CONCAT(TRIM(v_grade), '_RATE')
+          AND cc.code_value = v_freelance_rate_code
           AND cc.is_active = TRUE
           AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
         ORDER BY cc.tenant_id IS NULL ASC

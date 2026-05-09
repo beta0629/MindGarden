@@ -35,11 +35,18 @@ export const getCommonCodes = async(groupCode, useCache = true) => {
         try {
             codes = await getCommonCodesStandard(groupCode);
         } catch (error) {
-            console.warn('표준화된 API 조회 실패, 기존 API 사용:', error);
-            // 하위 호환성: 기존 API 사용
-            const response = await apiGet(`/api/common-codes/${groupCode}`);
-            if (Array.isArray(response)) {
-                codes = response;
+            console.warn('표준화된 API 조회 실패, v1 폴백 시도:', error);
+            try {
+                const response = await apiGet('/api/v1/common-codes', { codeGroup: groupCode });
+                if (response && Array.isArray(response.codes)) {
+                    codes = response.codes;
+                } else if (Array.isArray(response)) {
+                    codes = response;
+                } else if (response && response.success && response.data && Array.isArray(response.data.codes)) {
+                    codes = response.data.codes;
+                }
+            } catch (e2) {
+                console.warn('v1 공통코드 폴백도 실패:', e2);
             }
         }
         
@@ -87,18 +94,35 @@ export const getGradeSalaryMap = async() => {
     try {
         const codes = await getCommonCodes('FREELANCE_BASE_RATE');
         const salaryMap = {};
-        
+        /** DB 공통코드 code_value(JUNIOR_RATE 등) → User.grade(CONSULTANT_JUNIOR 등) */
+        const FREELANCE_RATE_CODE_TO_CONSULTANT_GRADE = {
+            JUNIOR_RATE: 'CONSULTANT_JUNIOR',
+            SENIOR_RATE: 'CONSULTANT_SENIOR',
+            EXPERT_RATE: 'CONSULTANT_EXPERT',
+            MASTER_RATE: 'CONSULTANT_MASTER'
+        };
+
         codes.forEach(code => {
             try {
                 const extraData = JSON.parse(code.extraData || '{}');
-                if (extraData.rate) {
-                    salaryMap[code.codeValue] = extraData.rate;
+                const rate = extraData.rate;
+                if (rate == null || rate === '') {
+                    return;
+                }
+                const num = Number(rate);
+                if (Number.isNaN(num)) {
+                    return;
+                }
+                salaryMap[code.codeValue] = num;
+                const gradeKey = FREELANCE_RATE_CODE_TO_CONSULTANT_GRADE[code.codeValue];
+                if (gradeKey) {
+                    salaryMap[gradeKey] = num;
                 }
             } catch (e) {
                 console.warn(`등급 급여 파싱 실패 (${code.codeValue}):`, e);
             }
         });
-        
+
         return salaryMap;
     } catch (error) {
         console.error('등급별 급여 조회 실패:', error);

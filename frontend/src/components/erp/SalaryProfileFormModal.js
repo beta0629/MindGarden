@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
+import { getCommonCodes } from '../../utils/commonCodeApi';
 import { SALARY_API_ENDPOINTS, getConsultantGradeUpdateUrl } from '../../constants/salaryConstants';
 import { showNotification } from '../../utils/notification';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
@@ -119,15 +120,12 @@ const SalaryProfileFormModal = ({
         return SPFM.GRADE_OPTION_DESC_BASE;
     };
 
-    // 공통 코드에서 등급 정보 로드 (API 응답: { data: { codes: [...] } } 또는 { codes: [...] } 또는 배열)
+    // 공통 코드에서 등급 정보 로드 (테넌트 격리 그룹은 getCommonCodes → /common-codes/tenant)
     const loadGradeTableData = async() => {
         try {
-            const response = await StandardizedApi.get('/api/v1/common-codes', {
-              codeGroup: 'CONSULTANT_GRADE'
-            });
-            const rawList = (response && response.data && response.data.codes) || (response && response.codes) || (Array.isArray(response) ? response : null);
-            const list = Array.isArray(rawList) ? rawList : null;
-            if (list && list.length > 0) {
+            const rawList = await getCommonCodes('CONSULTANT_GRADE');
+            const list = Array.isArray(rawList) ? rawList : [];
+            if (list.length > 0) {
                 const baseOptions = [
                     { type: 'FAMILY_CONSULTATION', name: SPFM_OPTION_TYPE_LABELS.FAMILY_CONSULTATION, baseAmount: 3000 },
                     { type: 'INITIAL_CONSULTATION', name: SPFM_OPTION_TYPE_LABELS.INITIAL_CONSULTATION, baseAmount: 5000 }
@@ -251,22 +249,14 @@ const SalaryProfileFormModal = ({
             setInitialLoading(true);
             console.log('🔍 급여 프로필 폼 초기 데이터 로드 시작');
             
-            // 급여 유형 로드 (공통코드 응답: { data: { codes: [...] } } 또는 { codes: [...] } 또는 배열)
-            const salaryTypeResponse = await StandardizedApi.get('/api/v1/common-codes', {
-              codeGroup: 'SALARY_TYPE'
-            });
-            const salaryTypeList = (salaryTypeResponse?.data?.codes) ?? (salaryTypeResponse?.codes) ?? (Array.isArray(salaryTypeResponse) ? salaryTypeResponse : null);
+            const salaryTypeList = await getCommonCodes('SALARY_TYPE');
             if (Array.isArray(salaryTypeList) && salaryTypeList.length > 0) {
                 setSalaryTypes(salaryTypeList);
             } else {
                 setSalaryTypes(SPFM_SALARY_TYPE_FALLBACK);
             }
 
-            // 옵션 유형 로드 (동일 응답 형식)
-            const optionTypeResponse = await StandardizedApi.get('/api/v1/common-codes', {
-              codeGroup: 'SALARY_OPTION_TYPE'
-            });
-            const optionTypeList = (optionTypeResponse?.data?.codes) ?? (optionTypeResponse?.codes) ?? (Array.isArray(optionTypeResponse) ? optionTypeResponse : null);
+            const optionTypeList = await getCommonCodes('SALARY_OPTION_TYPE');
             if (Array.isArray(optionTypeList) && optionTypeList.length > 0) {
                 setOptionTypes(optionTypeList);
             } else {

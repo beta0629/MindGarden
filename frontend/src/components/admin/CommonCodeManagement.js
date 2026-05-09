@@ -176,13 +176,8 @@ const CommonCodeManagement = () => {
         }
         try {
             const codes = await getCommonCodes(parentGroup);
-            if (codes && codes.length > 0) {
-                setParentCategoryCodes(codes.filter((c) => c.isActive !== false));
-            } else {
-                const response = await apiGet(`/api/common-codes/${parentGroup}`);
-                const list = response && response.length > 0 ? response : [];
-                setParentCategoryCodes(list.filter((c) => c.isActive !== false));
-            }
+            const list = Array.isArray(codes) ? codes : [];
+            setParentCategoryCodes(list.filter((c) => c.isActive !== false));
         } catch (error) {
             console.error('상위 카테고리 코드 로드 오류:', error);
             setParentCategoryCodes([]);
@@ -193,15 +188,11 @@ const CommonCodeManagement = () => {
         try {
             setLoading(true);
             const codes = await getCommonCodes(groupName);
-            if (codes && codes.length > 0) {
+            if (Array.isArray(codes)) {
                 setGroupCodes(codes);
             } else {
-                const response = await apiGet(`/api/common-codes/${groupName}`);
-                if (response && response.length > 0) {
-                    setGroupCodes(response);
-                } else {
-                    notificationManager.error(formatCommonCodeManagementGroupCodesLoadError(groupName));
-                }
+                setGroupCodes([]);
+                notificationManager.error(formatCommonCodeManagementGroupCodesLoadError(groupName));
             }
         } catch (error) {
             console.error('그룹 코드 로드 오류:', error);

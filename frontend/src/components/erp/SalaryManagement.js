@@ -20,6 +20,7 @@ import {
   TAX_BREAKDOWN_LABELS
 } from '../../constants/salaryConstants';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
+import { getCommonCodes } from '../../utils/commonCodeApi';
 import { showNotification } from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import ConsultantProfileModal from './ConsultantProfileModal';
@@ -200,20 +201,9 @@ const SalaryManagement = () => {
 
   const loadPayDayOptions = async() => {
     try {
-      const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.COMMON_CODES, {
-        codeGroup: 'SALARY_PAY_DAY'
-      });
-      let list = [];
-      if (Array.isArray(response)) {
-        list = response;
-      } else if (response && Array.isArray(response.codes)) {
-        list = response.codes;
-      } else if (response?.data && Array.isArray(response.data.codes)) {
-        list = response.data.codes;
-      } else if (response?.data && Array.isArray(response.data)) {
-        list = response.data;
-      }
-      setPayDayOptions(list.length > 0 ? list : SALARY_PAY_DAY_FALLBACK_OPTIONS);
+      const list = await getCommonCodes('SALARY_PAY_DAY');
+      const normalized = Array.isArray(list) ? list : [];
+      setPayDayOptions(normalized.length > 0 ? normalized : SALARY_PAY_DAY_FALLBACK_OPTIONS);
     } catch (error) {
       console.error('급여일 옵션 로드 실패:', error);
       setPayDayOptions(SALARY_PAY_DAY_FALLBACK_OPTIONS);

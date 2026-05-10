@@ -206,11 +206,13 @@ public class SalaryManagementController extends BaseApiController {
         dto.put("calculationPeriodEnd", calc.getCalculationPeriodEnd());
         dto.put("baseSalary", calc.getBaseSalary() != null ? calc.getBaseSalary() : BigDecimal.ZERO);
         dto.put("totalHoursWorked", calc.getTotalHoursWorked());
-        dto.put("hourlyEarnings", calc.getHourlyEarnings() != null ? calc.getHourlyEarnings() : BigDecimal.ZERO);
+        BigDecimal hourlyEarnings = calc.getHourlyEarnings() != null ? calc.getHourlyEarnings() : BigDecimal.ZERO;
+        dto.put("hourlyEarnings", hourlyEarnings);
         dto.put("totalConsultations", calc.getTotalConsultations());
         dto.put("completedConsultations", calc.getCompletedConsultations());
         dto.put("consultationCount", calc.getCompletedConsultations());
-        dto.put("commissionEarnings", calc.getCommissionEarnings() != null ? calc.getCommissionEarnings() : BigDecimal.ZERO);
+        BigDecimal commissionEarnings = calc.getCommissionEarnings() != null ? calc.getCommissionEarnings() : BigDecimal.ZERO;
+        dto.put("commissionEarnings", commissionEarnings);
         dto.put("bonusEarnings", calc.getBonusEarnings() != null ? calc.getBonusEarnings() : BigDecimal.ZERO);
         dto.put("deductions", calc.getDeductions() != null ? calc.getDeductions() : BigDecimal.ZERO);
         dto.put("grossSalary", calc.getGrossSalary() != null ? calc.getGrossSalary() : BigDecimal.ZERO);
@@ -221,13 +223,8 @@ public class SalaryManagementController extends BaseApiController {
         dto.put("approvedAt", calc.getApprovedAt());
         dto.put("paidAt", calc.getPaidAt());
         dto.put("branchCode", calc.getBranchCode());
-        BigDecimal optionSalary = BigDecimal.ZERO;
-        if (calc.getCommissionEarnings() != null && calc.getCommissionEarnings().compareTo(BigDecimal.ZERO) > 0) {
-            optionSalary = calc.getCommissionEarnings();
-        } else if (calc.getHourlyEarnings() != null && calc.getHourlyEarnings().compareTo(BigDecimal.ZERO) > 0) {
-            optionSalary = calc.getHourlyEarnings();
-        }
-        dto.put("optionSalary", optionSalary);
+        // 가변 급여(프리랜서 상담료·정규직 시급 등)는 commission XOR hourly가 아니라 합산(미리보기 base+variable 소계와 동일)
+        dto.put("optionSalary", commissionEarnings.add(hourlyEarnings));
         dto.put("taxAmount", calc.getDeductions() != null ? calc.getDeductions() : BigDecimal.ZERO);
         if (calc.getConsultant() != null) {
             dto.put("consultantId", calc.getConsultant().getId());

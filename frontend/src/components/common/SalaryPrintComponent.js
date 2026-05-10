@@ -1,5 +1,6 @@
 import React from 'react';
 import PrintComponent from './PrintComponent';
+import { SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL } from '../../constants/salaryConstants';
 
 /**
  * 급여 계산서 프린트 컴포넌트
@@ -35,13 +36,31 @@ const SalaryPrintComponent = ({
     return <div>급여 데이터가 없습니다.</div>;
   }
 
-  const formatCurrency = (amount) => {
-    if (!amount) return '0원';
-    return `${new Intl.NumberFormat('ko-KR').format(amount)}원`;
+  const toNum = (value) => {
+    if (value == null || value === '') {
+      return 0;
+    }
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
   };
 
-  const taxAmount = (salaryData.totalSalary || 0) - (salaryData.totalSalary - (salaryData.taxAmount || 0));
-  const netSalary = (salaryData.totalSalary || 0) - (salaryData.taxAmount || 0);
+  const formatCurrency = (amount) => {
+    const n = toNum(amount);
+    if (!n) {
+      return '0원';
+    }
+    return `${new Intl.NumberFormat('ko-KR').format(n)}원`;
+  };
+
+  const bonusEarnings = toNum(salaryData.bonusEarnings);
+  const grossPreTax =
+    salaryData.grossSalary != null && salaryData.grossSalary !== ''
+      ? toNum(salaryData.grossSalary)
+      : toNum(salaryData.totalSalary);
+  const netSalary =
+    salaryData.netSalary != null && salaryData.netSalary !== ''
+      ? toNum(salaryData.netSalary)
+      : toNum(salaryData.totalSalary) - toNum(salaryData.taxAmount);
 
   return (
     <PrintComponent
@@ -136,9 +155,16 @@ const SalaryPrintComponent = ({
             <td>{formatCurrency(salaryData.optionSalary)}</td>
             <td>추가 옵션</td>
           </tr>
+          {bonusEarnings > 0 && (
+            <tr>
+              <td className="label">{SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL}</td>
+              <td>+{formatCurrency(bonusEarnings)}</td>
+              <td>-</td>
+            </tr>
+          )}
           <tr className="total-row">
             <td className="label">총 급여 (세전)</td>
-            <td>{formatCurrency(salaryData.totalSalary)}</td>
+            <td>{formatCurrency(grossPreTax)}</td>
             <td>-</td>
           </tr>
           {includeTaxDetails && (

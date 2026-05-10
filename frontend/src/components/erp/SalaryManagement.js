@@ -412,8 +412,17 @@ const SalaryManagement = () => {
     }
   }, [selectedPeriod]);
 
+  /** API BigDecimal·문자열 대응; 미리보기·내역 금액 표시 공통 */
+  const toSalaryNumber = (value) => {
+    if (value == null || value === '') {
+      return 0;
+    }
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  };
+
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(amount);
+    return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(toSalaryNumber(amount));
   };
 
   /** 최초 로드 중·상담사 목록 없음: 본문은 인라인 로더만(헤더·탭은 유지). 이후 동일 조건은 세금 조회 등과 겹치지 않도록 fetch 완료 후에는 사용하지 않음. */
@@ -992,13 +1001,26 @@ const SalaryManagement = () => {
                             <span>기본 급여</span>
                             <span>{formatCurrency(calculation.baseSalary)}</span>
                           </div>
+                          {/* 옵션 급여: commission+hourly 합산(API optionSalary). 총 세전·실지급은 서버 grossSalary·netSalary 우선 */}
                           <div className="salary-management__detail-row">
                             <span>옵션 급여</span>
                             <span>{formatCurrency(calculation.optionSalary)}</span>
                           </div>
+                          {toSalaryNumber(calculation.bonusEarnings) > 0 && (
+                            <div className="salary-management__detail-row">
+                              <span>{SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL}</span>
+                              <span>+{formatCurrency(calculation.bonusEarnings)}</span>
+                            </div>
+                          )}
                           <div className="salary-management__detail-row">
                             <span>총 급여 (세전)</span>
-                            <span>{formatCurrency(calculation.baseSalary + calculation.optionSalary)}</span>
+                            <span>
+                              {formatCurrency(
+                                calculation.grossSalary != null && calculation.grossSalary !== ''
+                                  ? calculation.grossSalary
+                                  : calculation.totalSalary
+                              )}
+                            </span>
                           </div>
                           {calculation.taxAmount != null && (
                             <div className="salary-management__detail-row salary-management__detail-row--tax">
@@ -1008,7 +1030,13 @@ const SalaryManagement = () => {
                           )}
                           <div className="salary-management__detail-row salary-management__detail-row--total">
                             <span>실지급액 (세후)</span>
-                            <span>{formatCurrency(calculation.totalSalary - (calculation.taxAmount || 0))}</span>
+                            <span>
+                              {formatCurrency(
+                                calculation.netSalary != null && calculation.netSalary !== ''
+                                  ? calculation.netSalary
+                                  : toSalaryNumber(calculation.totalSalary) - toSalaryNumber(calculation.taxAmount)
+                              )}
+                            </span>
                           </div>
                           <div className="salary-management__detail-row">
                             <span>상담 건수</span>

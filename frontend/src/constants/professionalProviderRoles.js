@@ -187,8 +187,36 @@ export function mapTenantCommonCodesToGradeSelectOptions(rows) {
 }
 
 /**
- * 통합 공통코드(테넌트 우선·코어 폴백)로 전문가 유형 셀렉트 옵션을 조회합니다.
- * 통합 결과가 비면 {@link TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH} 로 재시도합니다.
+ * 여러 API에서 받은 공통코드 행을 codeValue 기준으로 병합합니다(나중 배열이 같은 키를 덮어씀).
+ *
+ * @param {...Array<*>} codeRowLists
+ * @returns {Array<Record<string, *>>}
+ */
+export function mergeProfessionalProviderTypeCodeRows(...codeRowLists) {
+  const byValue = new Map();
+  for (const rows of codeRowLists) {
+    if (!Array.isArray(rows)) {
+      continue;
+    }
+    for (const raw of rows) {
+      const n = normalizeTenantCommonCodeRow(raw);
+      if (n?.codeValue == null) {
+        continue;
+      }
+      const key = String(n.codeValue).trim();
+      if (!key) {
+        continue;
+      }
+      const prev = byValue.get(key);
+      byValue.set(key, prev ? { ...prev, ...n } : n);
+    }
+  }
+  return [...byValue.values()];
+}
+
+/**
+ * 통합 공통코드(getCommonCodes)와 테넌트 그룹 API 행을 병합한 뒤 셀렉트 옵션을 만듭니다.
+ * DB에 V20260510_002만 적용된 테넌트는 통합·테넌트 모두 1행일 수 있어, 서버 시드(Flyway) 보강이 필요할 수 있습니다.
  *
  * @param {Object} [deps]
  * @param {typeof getCommonCodes} [deps.getCommonCodes] 기본: commonCodeApi.getCommonCodes
@@ -201,27 +229,24 @@ export async function fetchProfessionalProviderTypeSelectOptions(deps = {}) {
   const resolveGetCommonCodes = deps.getCommonCodes ?? getCommonCodes;
   const resolveStandardizedGet = deps.standardizedApiGet ?? ((path) => StandardizedApi.get(path));
 
-  let mergedList = [];
+  let integrated = [];
   try {
     const codes = await resolveGetCommonCodes(PROFESSIONAL_PROVIDER_TYPE_CODE_GROUP);
-    mergedList = Array.isArray(codes) ? codes : [];
+    integrated = Array.isArray(codes) ? codes : [];
   } catch {
-    mergedList = [];
+    integrated = [];
   }
 
-  let options = mapTenantProfessionalTypeCodesToOptions(mergedList);
-  if (options.length > 0) {
-    return options;
-  }
-
+  let tenantRows = [];
   try {
     const res = await resolveStandardizedGet(TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH);
-    const rows = extractTenantCommonCodeGroupList(res);
-    options = mapTenantProfessionalTypeCodesToOptions(rows);
+    tenantRows = extractTenantCommonCodeGroupList(res);
   } catch {
-    options = [];
+    tenantRows = [];
   }
-  return options;
+
+  const merged = mergeProfessionalProviderTypeCodeRows(integrated, tenantRows);
+  return mapTenantProfessionalTypeCodesToOptions(merged);
 }
 
 /** 레거시: 역할 문자열이 전문가 계열인지 (프론트 표시용). */

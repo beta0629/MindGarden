@@ -11,6 +11,7 @@ import {
   mapTenantProfessionalTypeCodesToOptions,
   mapTenantCommonCodesToGradeSelectOptions,
   normalizeTenantCommonCodeRow,
+  mergeProfessionalProviderTypeCodeRows,
   fetchProfessionalProviderTypeSelectOptions,
   TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH
 } from '../professionalProviderRoles';
@@ -71,18 +72,29 @@ describe('professionalProviderRoles', () => {
     expect(g).toEqual([{ codeValue: 'G1', codeLabel: '1급', sortOrder: 1 }]);
   });
 
-  test('fetchProfessionalProviderTypeSelectOptions prefers integrated getCommonCodes', async () => {
+  test('mergeProfessionalProviderTypeCodeRows dedupes by codeValue later wins', () => {
+    const merged = mergeProfessionalProviderTypeCodeRows(
+      [{ codeValue: 'A', codeLabel: '첫', sortOrder: 1, isActive: true }],
+      [{ codeValue: 'A', codeLabel: '덮어쓴', sortOrder: 1, isActive: true }]
+    );
+    expect(merged).toHaveLength(1);
+    expect(merged[0].codeLabel).toBe('덮어쓴');
+  });
+
+  test('fetchProfessionalProviderTypeSelectOptions merges integrated and tenant lists', async () => {
     const getCommonCodes = jest.fn().mockResolvedValue([
-      { codeValue: 'PLAY_THERAPIST', codeLabel: '플레이', sortOrder: 2, isActive: true },
-      { codeValue: 'DEFAULT_COUNSELOR', codeLabel: '상담사', sortOrder: 1, isActive: true }
+      { codeValue: 'PLAY_THERAPY', codeLabel: '놀이', sortOrder: 10, isActive: true },
+      { codeValue: 'DEFAULT_COUNSELOR', codeLabel: '상담사', sortOrder: 0, isActive: true }
     ]);
-    const standardizedApiGet = jest.fn();
+    const standardizedApiGet = jest.fn().mockResolvedValue({
+      codes: [{ codeValue: 'SPEECH_THERAPY', codeLabel: '언어', sortOrder: 20, isActive: true }]
+    });
     const opts = await fetchProfessionalProviderTypeSelectOptions({
       getCommonCodes,
       standardizedApiGet
     });
-    expect(standardizedApiGet).not.toHaveBeenCalled();
-    expect(opts.map((o) => o.value)).toEqual(['DEFAULT_COUNSELOR', 'PLAY_THERAPIST']);
+    expect(standardizedApiGet).toHaveBeenCalledWith(TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH);
+    expect(opts.map((o) => o.value)).toEqual(['DEFAULT_COUNSELOR', 'PLAY_THERAPY', 'SPEECH_THERAPY']);
   });
 
   test('fetchProfessionalProviderTypeSelectOptions falls back to tenant group path', async () => {

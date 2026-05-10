@@ -24,6 +24,7 @@ import com.coresolution.consultation.service.ConsultantStatsService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
+import com.coresolution.consultation.service.ProfessionalProviderTypeService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.StoredProcedureService;
@@ -142,6 +143,8 @@ class AdminServiceImplConfirmDepositApproveTest {
     private ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
     @Mock
     private ScheduleService scheduleService;
+    @Mock
+    private ProfessionalProviderTypeService professionalProviderTypeService;
 
     /** JDBC 없이 TransactionTemplate(REQUIRES_NEW) 콜백만 수행 */
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
@@ -202,7 +205,8 @@ class AdminServiceImplConfirmDepositApproveTest {
                 userIdGenerator,
                 userService,
                 consultantSalaryProfileRepository,
-                scheduleService);
+                scheduleService,
+                professionalProviderTypeService);
         adminService = Mockito.spy(real);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }

@@ -12,11 +12,18 @@
  * @since 2025-11-29
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
+import {
+  TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH,
+  extractTenantProfessionalTypeList,
+  mapTenantProfessionalTypeCodesToOptions,
+  DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
+  FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL
+} from '../../../../constants/professionalProviderRoles';
 import { useNotification } from '../../../../contexts/NotificationContext';
 import { validateEmail, validatePhone } from '../../../../utils/validationUtils';
 import { generateMgLoginPassword } from '../../../../utils/generateMgLoginPassword';
@@ -46,11 +53,42 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     specialization: '',
     qualifications: '',
     workHistory: '',
-    notes: ''
+    notes: '',
+    professionalTypeCode: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE
   });
   const [validationErrors, setValidationErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [professionalTypeOptions, setProfessionalTypeOptions] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await StandardizedApi.get(TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH);
+        if (cancelled) {
+          return;
+        }
+        const rows = extractTenantProfessionalTypeList(res);
+        const opts = mapTenantProfessionalTypeCodesToOptions(rows);
+        setProfessionalTypeOptions(opts);
+        if (opts.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            professionalTypeCode: prev.professionalTypeCode || opts[0].value
+          }));
+        }
+      } catch (e) {
+        console.error('전문가 유형 공통코드 로드 실패:', e);
+        if (!cancelled) {
+          setProfessionalTypeOptions([]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // 관리자/상담사만 사용 가능
   if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
@@ -176,7 +214,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
       password: formData.password,
       name: formData.name?.trim(),
       phone: formData.phone?.trim(),
-      role: 'CONSULTANT',
+      professionalTypeCode: formData.professionalTypeCode || DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
       ...(formData.rrnFirst6?.trim() && { rrnFirst6: formData.rrnFirst6.trim() }),
       ...(formData.rrnLast1?.trim() && { rrnLast1: formData.rrnLast1.trim() }),
       ...(formData.address && { address: formData.address.trim() }),
@@ -219,7 +257,8 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
       specialization: '',
       qualifications: '',
       workHistory: '',
-      notes: ''
+      notes: '',
+      professionalTypeCode: professionalTypeOptions[0]?.value || DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE
     });
     setValidationErrors({});
   };
@@ -348,6 +387,27 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                         {getFieldError('name')}
                       </div>
                     )}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="professionalTypeCode" className="form-label">
+                      전문가 유형 <span className="required">*</span>
+                    </label>
+                    <select
+                      id="professionalTypeCode"
+                      name="professionalTypeCode"
+                      value={formData.professionalTypeCode || DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE}
+                      onChange={handleInputChange}
+                      required
+                      className="form-control"
+                    >
+                      {(professionalTypeOptions.length > 0
+                        ? professionalTypeOptions
+                        : [{ value: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE, label: FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL, sortOrder: 0 }]
+                      ).map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="form-group">

@@ -1,6 +1,7 @@
 package com.coresolution.consultation.repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
@@ -912,6 +913,50 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch = :branch AND u.role = :role AND u.isDeleted = false ORDER BY u.userId")
     List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUserId(@Param("tenantId") String tenantId, @Param("branch") com.coresolution.consultation.entity.Branch branch, @Param("role") UserRole role);
+
+    /**
+     * 지점·역할 다중(전문가 등) 조회 (tenantId 필터링)
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch = :branch AND u.role IN :roles AND u.isDeleted = false ORDER BY u.userId")
+    List<User> findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(@Param("tenantId") String tenantId,
+            @Param("branch") com.coresolution.consultation.entity.Branch branch,
+            @Param("roles") Collection<UserRole> roles);
+
+    /**
+     * 테넌트·역할 다중·활성 사용자 조회
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role IN :roles AND u.isActive = true AND u.isDeleted = false")
+    List<User> findByTenantIdAndRolesInAndIsActiveTrueAndIsDeletedFalse(@Param("tenantId") String tenantId,
+            @Param("roles") Collection<UserRole> roles);
+
+    /**
+     * 테넌트·역할 다중·미삭제 사용자 조회
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role IN :roles AND u.isDeleted = false")
+    List<User> findByTenantIdAndRolesInAndIsDeletedFalse(@Param("tenantId") String tenantId,
+            @Param("roles") Collection<UserRole> roles);
+
+    /**
+     * 지점별 전문가 등 역할 수 (복수 역할)
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.role IN :roles AND u.isDeleted = false")
+    long countByTenantIdAndBranchIdAndRolesInAndIsDeletedFalse(@Param("tenantId") String tenantId,
+            @Param("branchId") Long branchId,
+            @Param("roles") Collection<UserRole> roles);
+
+    /**
+     * 테넌트별 역할 다중·미삭제 수
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.role IN :roles AND u.isDeleted = false")
+    long countByTenantIdAndRolesInAndIsDeletedFalse(@Param("tenantId") String tenantId,
+            @Param("roles") Collection<UserRole> roles);
+
+    /**
+     * 테넌트별 역할 다중·활성·미삭제 수
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.role IN :roles AND u.isActive = true AND u.isDeleted = false")
+    long countByTenantIdAndRolesInAndIsActiveTrueAndIsDeletedFalse(@Param("tenantId") String tenantId,
+            @Param("roles") Collection<UserRole> roles);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
@@ -1064,6 +1109,16 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false ORDER BY u.userId")
     List<User> findByTenantIdAndRole(@Param("tenantId") String tenantId, @Param("role") UserRole role);
+
+    /**
+     * 상담 겸직이 활성화된 관리자 목록 (스케줄·상담사 목록에 전문가로 포함).
+     *
+     * @param tenantId 테넌트 ID
+     * @return 활성 ADMIN 중 counseling_enabled 가 true 인 사용자
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = com.coresolution.consultation.constant.UserRole.ADMIN "
+            + "AND u.counselingEnabled = true AND u.isActive = true AND u.isDeleted = false ORDER BY u.id")
+    List<User> findCounselingEnabledAdminsByTenantId(@Param("tenantId") String tenantId);
 
     /**
      * 내담자 등급 자동 승급 배치용: 활성 내담자만 id 순 페이징.

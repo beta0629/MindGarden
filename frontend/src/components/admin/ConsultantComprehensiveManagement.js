@@ -54,6 +54,13 @@ import {
     LOGIN_PASSWORD_FIELD_PLACEHOLDER,
     LOGIN_PASSWORD_POLICY_HINT_ONE_LINE
 } from '../../constants/passwordPolicyUi';
+import {
+    TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH,
+    extractTenantProfessionalTypeList,
+    mapTenantProfessionalTypeCodesToOptions,
+    DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
+    FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL
+} from '../../constants/professionalProviderRoles';
 
 /** ContentHeader / 본문 main aria-labelledby 연동 */
 const CONSULTANT_COMP_MGMT_TITLE_ID = 'consultant-comprehensive-management-title';
@@ -78,6 +85,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilters, setActiveFilters] = useState({});
     const [userStatusOptions, setUserStatusOptions] = useState([]);
+    const [professionalTypeOptions, setProfessionalTypeOptions] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState('view');
     const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
@@ -87,6 +95,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         email: '',
         password: '',
         phone: '',
+        professionalTypeCode: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
         status: 'ACTIVE',
         specialty: [],
         profileImageUrl: '',
@@ -111,6 +120,29 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [modalSubmitLoading, setModalSubmitLoading] = useState(false);
     const [deleteConfirmLoading, setDeleteConfirmLoading] = useState(false);
     const [viewMode, setViewMode] = useState('smallCard'); // 'largeCard' | 'smallCard' | 'list' — 기본: 컴팩트(작은 카드)
+
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await StandardizedApi.get(TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH);
+                if (cancelled) {
+                    return;
+                }
+                const rows = extractTenantProfessionalTypeList(res);
+                const opts = mapTenantProfessionalTypeCodesToOptions(rows);
+                setProfessionalTypeOptions(opts);
+            } catch (e) {
+                console.error('전문가 유형 공통코드 로드 실패:', e);
+                if (!cancelled) {
+                    setProfessionalTypeOptions([]);
+                }
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     const loadConsultants = useCallback(async() => {
         try {
@@ -179,6 +211,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         email: consultantEntity.email,
                         phone: consultantEntity.phone,
                         role: consultantEntity.role,
+                        professionalProviderTypeCode: consultantEntity.professionalProviderTypeCode,
                         isActive: consultantEntity.isActive,
                         profileImageUrl: consultantEntity.profileImageUrl,
                         specialty: consultantEntity.specialty,
@@ -610,6 +643,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     name: consultant.name || '',
                     email: consultant.email || '',
                     phone: consultant.phone || '',
+                    professionalTypeCode: consultant.professionalProviderTypeCode || DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
                     status: consultant.status || 'ACTIVE',
                     specialty: specialties,
                     profileImageUrl: consultant.profileImageUrl || '',
@@ -631,6 +665,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 email: '',
                 password: generateMgLoginPassword(),
                 phone: '',
+                professionalTypeCode: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
                 status: 'ACTIVE',
                 specialty: [],
                 profileImageUrl: '',
@@ -659,6 +694,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             email: '',
             password: '',
             phone: '',
+            professionalTypeCode: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
             status: 'ACTIVE',
             specialty: [],
             profileImageUrl: '',
@@ -984,6 +1020,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 email: emailVal === '' ? (existing?.email ?? '') : emailVal,
                 phone: phoneVal === '' ? (existing?.phone ?? '') : phoneVal,
                 specialization,
+                professionalTypeCode: data.professionalTypeCode != null && String(data.professionalTypeCode).trim() !== ''
+                    ? String(data.professionalTypeCode).trim()
+                    : undefined,
                 profileImageUrl: (data.profileImageUrl != null && data.profileImageUrl !== '') ? data.profileImageUrl : (existing?.profileImageUrl ?? undefined),
                 grade: data.grade != null && String(data.grade).trim() !== '' ? String(data.grade).trim() : undefined,
                 address: data.address != null ? data.address.trim() : undefined,
@@ -1903,6 +1942,26 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         quality={0.85}
                         helpText="이미지 파일만 가능, 최대 2MB (리사이즈·크롭 적용)"
                     />
+                    {(modalType === 'create' || modalType === 'edit') && (
+                        <div className="mg-v2-form-group">
+                            <label htmlFor="consultant-professional-type" className="mg-v2-form-label">전문가 유형 *</label>
+                            <select
+                                id="consultant-professional-type"
+                                name="professionalTypeCode"
+                                value={formData.professionalTypeCode || DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE}
+                                onChange={handleFormChange}
+                                className="mg-v2-form-input"
+                                required
+                            >
+                                {(professionalTypeOptions.length > 0
+                                    ? professionalTypeOptions
+                                    : [{ value: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE, label: FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL, sortOrder: 0 }]
+                                ).map((opt) => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                     {/* 공통 순서: 1. 주민번호 2. 이름 3. 전화번호 4. 주소 → 나머지 */}
                     <div className="mg-v2-form-group">
                         {modalType === 'edit' && (

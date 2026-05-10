@@ -14,6 +14,18 @@ public final class AdminServiceUserFacingMessages {
 
     public static final String MSG_EMAIL_REQUIRED = "이메일은 필수입니다.";
 
+    /** 관리자 전문가 등록 시 role 값이 상담사·놀이·언어 외인 경우 (레거시 API) */
+    public static final String MSG_INVALID_PROFESSIONAL_REGISTRATION_ROLE =
+            "등록 가능한 역할은 상담사(CONSULTANT), 놀이치료(PLAY_THERAPIST), 언어치료(SPEECH_THERAPIST)만 허용됩니다.";
+
+    /** professionalTypeCode 가 테넌트 PROFESSIONAL_PROVIDER_TYPE 에 없거나 비활성인 경우 */
+    public static final String MSG_INVALID_PROFESSIONAL_PROVIDER_TYPE_CODE =
+            "유효한 전문가 유형(professionalTypeCode)이 아닙니다. 테넌트 공통코드 PROFESSIONAL_PROVIDER_TYPE의 활성 행만 선택할 수 있습니다.";
+
+    /** 상담 겸직 플래그를 ADMIN이 아닌 사용자에 설정하려 한 경우 */
+    public static final String MSG_COUNSELING_ENABLED_ADMIN_ONLY =
+            "상담 겸직 설정은 관리자(ADMIN) 계정에만 적용할 수 있습니다.";
+
     public static final String MSG_TENANT_INFO_MISSING = "테넌트 정보가 없습니다. 관리자에게 문의하세요.";
 
     /** 이메일 로컬 파트가 비었을 때 상담사 등록 시 사용하는 기본 표시명. */

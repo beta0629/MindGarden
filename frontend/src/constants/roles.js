@@ -1,5 +1,5 @@
 /**
- * 사용자 역할 상수 정의 (ADMIN, STAFF, CONSULTANT, CLIENT 4개만 사용)
+ * 사용자 역할 상수 정의 (ADMIN, STAFF, 전문가 3종, CLIENT)
  *
  * @author Core Solution
  * @version 2.0.0
@@ -7,11 +7,13 @@
  * @updated 2026-02 - 4역할만 사용 (BRANCH_*, HQ_*, TENANT_ADMIN 등 제거)
  */
 
-/** 표준 역할 4개만 */
+/** 표준 역할 (관리·사무·내담자 + 전문가 유형) */
 export const USER_ROLES = {
   ADMIN: 'ADMIN',
   STAFF: 'STAFF',
   CONSULTANT: 'CONSULTANT',
+  PLAY_THERAPIST: 'PLAY_THERAPIST',
+  SPEECH_THERAPIST: 'SPEECH_THERAPIST',
   CLIENT: 'CLIENT'
 };
 
@@ -53,7 +55,14 @@ export const RoleUtils = {
    */
   isBranchAdmin: (user) => user?.role && ADMIN_ROLES.includes(user.role),
 
-  isConsultant: (user) => !!user?.role && user.role === USER_ROLES.CONSULTANT,
+  isConsultant: (user) => {
+    const r = user?.role;
+    return !!r && (
+      r === USER_ROLES.CONSULTANT ||
+      r === USER_ROLES.PLAY_THERAPIST ||
+      r === USER_ROLES.SPEECH_THERAPIST
+    );
+  },
   isClient: (user) => !!user?.role && user.role === USER_ROLES.CLIENT,
   isStaff: (user) => !!user?.role && user.role === USER_ROLES.STAFF,
 

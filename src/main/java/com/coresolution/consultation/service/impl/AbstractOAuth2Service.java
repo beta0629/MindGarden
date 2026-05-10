@@ -497,6 +497,8 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
             case ADMIN:
                 return 1;
             case CONSULTANT:
+            case PLAY_THERAPIST:
+            case SPEECH_THERAPIST:
                 return 2;
             case STAFF:
                 return 3;

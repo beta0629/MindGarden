@@ -56,6 +56,8 @@ public class DashboardRedirectUtil {
             case CLIENT:
                 return "/client/dashboard";
             case CONSULTANT:
+            case PLAY_THERAPIST:
+            case SPEECH_THERAPIST:
                 return "/consultant/dashboard";
             case STAFF:
                 return "/staff/dashboard";
@@ -89,6 +91,8 @@ public class DashboardRedirectUtil {
             case CLIENT:
                 return "내담자 대시보드";
             case CONSULTANT:
+            case PLAY_THERAPIST:
+            case SPEECH_THERAPIST:
                 return "상담사 대시보드";
             case STAFF:
                 return "사무원 대시보드";

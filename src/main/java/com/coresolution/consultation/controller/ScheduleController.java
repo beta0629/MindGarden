@@ -570,7 +570,7 @@ public class ScheduleController extends BaseApiController {
         log.info("📊 오늘의 스케줄 통계 조회 요청: 역할 {}, 테넌트 ID(파라미터): {}, tenantContext={}", userRole, tenantId, TenantContextHolder.getTenantId());
         
         Map<String, Object> statistics;
-        boolean isConsultantSelf = userRole != null && UserRole.fromString(userRole) == UserRole.CONSULTANT;
+        boolean isConsultantSelf = userRole != null && UserRole.fromString(userRole).isProfessionalProvider();
 
         if (isConsultantSelf) {
             // 상담사 본인 대시보드: 로그인만 확인, STATISTICS_VIEW 불필요

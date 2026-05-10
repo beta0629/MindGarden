@@ -389,7 +389,7 @@ public class TestDataController {
 
             var allUsers = userRepository.findAll();
             var consultants = allUsers.stream()
-                .filter(user -> user.getRole() != null && user.getRole() == UserRole.CONSULTANT)
+                .filter(user -> user.getRole() != null && user.getRole().isProfessionalProvider())
                 .toList();
             var clients = clientRepository.findAll();
             
@@ -543,7 +543,7 @@ public class TestDataController {
 
             var allUsers = userRepository.findAll();
             var consultants = allUsers.stream()
-                .filter(user -> user.getRole() != null && user.getRole() == UserRole.CONSULTANT)
+                .filter(user -> user.getRole() != null && user.getRole().isProfessionalProvider())
                 .toList();
             var clients = clientRepository.findAll();
             

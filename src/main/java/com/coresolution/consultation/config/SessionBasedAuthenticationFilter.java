@@ -422,8 +422,13 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         switch (user.getRole()) {
             case ADMIN:
                 authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                if (Boolean.TRUE.equals(user.getCounselingEnabled())) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_CONSULTANT"));
+                }
                 break;
             case CONSULTANT:
+            case PLAY_THERAPIST:
+            case SPEECH_THERAPIST:
                 authorities.add(new SimpleGrantedAuthority("ROLE_CONSULTANT"));
                 break;
             case CLIENT:

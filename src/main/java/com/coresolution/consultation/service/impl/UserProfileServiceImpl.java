@@ -149,7 +149,8 @@ public class UserProfileServiceImpl implements UserProfileService {
             // 역할 변경 요청 처리
             if (request.getRequestedRole() != null && !request.getRequestedRole().equals(user.getRole())) {
                 if (isValidRoleTransition(user.getRole(), request.getRequestedRole())) {
-                    if (UserRole.CONSULTANT.equals(request.getRequestedRole()) && !checkConsultantEligibility(userId)) {
+                    if (request.getRequestedRole() != null && request.getRequestedRole().isProfessionalProvider()
+                            && !checkConsultantEligibility(userId)) {
                         throw new RuntimeException(UserProfileServiceUserFacingMessages.MSG_CONSULTANT_ELIGIBILITY_NOT_MET);
                     } else if (UserRole.ADMIN.equals(request.getRequestedRole()) && !checkAdminEligibility(userId)) {
                         throw new RuntimeException(UserProfileServiceUserFacingMessages.MSG_ADMIN_ELIGIBILITY_NOT_MET);
@@ -213,7 +214,7 @@ public class UserProfileServiceImpl implements UserProfileService {
             }
             
             // 상담사로 변경하는 경우 자격 요건 확인
-            if (UserRole.CONSULTANT.equals(newRole) && !checkConsultantEligibility(userId)) {
+            if (newRole != null && newRole.isProfessionalProvider() && !checkConsultantEligibility(userId)) {
                 throw new RuntimeException(UserProfileServiceUserFacingMessages.MSG_CONSULTANT_ELIGIBILITY_NOT_MET);
             }
             
@@ -467,11 +468,10 @@ public class UserProfileServiceImpl implements UserProfileService {
         
         // 역할 전환 규칙 정의
         if (UserRole.CLIENT.equals(currentRole)) {
-            // 내담자 → 상담사/관리자 가능
-            return UserRole.CONSULTANT.equals(newRole) || 
-                   (newRole.isAdmin());
-        } else if (UserRole.CONSULTANT.equals(currentRole)) {
-            // 상담사 → 관리자 가능
+            // 내담자 → 전문가/관리자 가능
+            return newRole != null && (newRole.isProfessionalProvider() || newRole.isAdmin());
+        } else if (currentRole != null && currentRole.isProfessionalProvider()) {
+            // 전문가 → 관리자 가능
             return newRole.isAdmin();
         } else if (currentRole.isAdmin()) {
             // 관리자 → 다른 관리자 역할로 전환 가능 (역할 상승 제한 없음)
@@ -507,7 +507,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         
         // 4. 상담사 경험 또는 관리 경험 필요
         // 현재는 간단하게 상담사 역할이었던 경우만 허용
-        return UserRole.CONSULTANT.equals(user.getRole());
+        return user.getRole() != null && user.getRole().isProfessionalProvider();
     }
     
     /**

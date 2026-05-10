@@ -154,7 +154,9 @@ public class BranchManagementController {
             statistics.put("tenantId", tenantId);
             statistics.put("totalUsers", activeUsers.size());
             statistics.put("clients", activeUsers.stream().filter(u -> u.getRole() == com.coresolution.consultation.constant.UserRole.CLIENT).count());
-            statistics.put("consultants", activeUsers.stream().filter(u -> u.getRole() == com.coresolution.consultation.constant.UserRole.CONSULTANT).count());
+            statistics.put("consultants", activeUsers.stream()
+                    .filter(u -> u.getRole() != null && u.getRole().isProfessionalProvider())
+                    .count());
             statistics.put("admins", activeUsers.stream().filter(u -> adminRoles.contains(u.getRole().name())).count());
             statistics.put("activeUsers", activeUsers.size());
             statistics.put("inactiveUsers", allUsers.size() - activeUsers.size());

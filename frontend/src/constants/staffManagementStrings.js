@@ -52,17 +52,20 @@ export const STAFF_MGMT_MSG = {
   TOAST_PROFILE_UPDATED: '사용자 정보가 수정되었습니다.',
   ERR_UPDATE_FAILED: '수정에 실패했습니다.',
   ERR_UPDATE_PROCESS: '정보 수정 중 오류가 발생했습니다.',
-  ERR_ADDRESS_API: '주소 검색 서비스를 불러올 수 없습니다.'
+  ERR_ADDRESS_API: '주소 검색 서비스를 불러올 수 없습니다.',
+  ERR_LOAD_ADMIN_COUNSELING: '관리자 상담 겸직 정보를 불러오지 못했습니다.',
+  ERR_SAVE_ADMIN_COUNSELING: '상담 겸직 설정을 저장하지 못했습니다.',
+  TOAST_ADMIN_COUNSELING_SAVED: '상담 겸직 설정이 저장되었습니다.'
 };
 
 export const STAFF_MGMT_PAGE = {
   TITLE: '스태프 관리',
-  SUBTITLE: '스태프(사무원) 목록 조회, 상세·기본 정보 수정 및 역할 변경',
+  SUBTITLE: '스태프(사무원)·관리자 계정을 조회하고, 관리자의 상담 일정 겸직 여부를 설정할 수 있습니다.',
   ARIA_MAIN: '스태프 관리 본문',
   LOADING: '데이터를 불러오는 중...',
-  KPI_TOTAL: '총 스태프',
+  KPI_TOTAL: '총 인원',
   KPI_UNIT: '명',
-  LIST_HEADING: '스태프 목록',
+  LIST_HEADING: '스태프·관리자 목록',
   EMPTY_NO_STAFF_TITLE: '등록된 스태프가 없습니다',
   EMPTY_NO_SEARCH_TITLE: '검색 결과가 없습니다',
   EMPTY_NO_STAFF_DESC: '기존 사용자를 스태프(사무원)로 역할 변경할 수 있습니다.',
@@ -124,6 +127,7 @@ export const STAFF_MGMT_FORM_LABEL = {
   STATUS: '상태',
   CREATED_AT: '등록일',
   ADDRESS: '주소',
+  COUNSELING_DUAL_ROLE: '상담 겸직',
   RRN_FIRST_OPTIONAL: '주민번호 앞 6자리 (선택)',
   RRN_LAST_OPTIONAL: '주민번호 뒤 1자리 (선택)',
   ADDRESS_SEARCH: '주소 검색',
@@ -135,5 +139,12 @@ export const STAFF_MGMT_FORM_LABEL = {
 export const STAFF_MGMT_HELP = {
   PASSWORD_AUTO_INFO: '비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.',
   PROFILE_IMAGE: '이미지 파일만 가능, 최대 2MB (리사이즈·크롭 적용)',
-  PASSWORD_HINT: '비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.'
+  PASSWORD_HINT: '비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.',
+  ADMIN_COUNSELING_DUAL_ROLE: '원장/관리자가 상담 일정에도 배정됩니다.'
+};
+
+/** 관리자(ADMIN) 상담 겸직(counselingEnabled) UI */
+export const STAFF_MGMT_COUNSELING = {
+  LOADING_HINT: '설정을 불러오는 중…',
+  TOGGLE_LABEL: '상담 일정에 배정합니다'
 };

@@ -93,6 +93,19 @@ public class User extends BaseEntity {
     @jakarta.persistence.Convert(converter = UserRoleConverter.class)
     @Column(name = "role", nullable = false, length = 20)
     private UserRole role = UserRole.CLIENT;
+
+    /**
+     * 테넌트 공통코드 {@code PROFESSIONAL_PROVIDER_TYPE}의 code_value. null이면 기본 상담사 유형으로 간주.
+     */
+    @Column(name = "professional_provider_type_code", length = 64)
+    private String professionalProviderTypeCode;
+
+    /**
+     * 원장(ADMIN)이 상담 일정·전문가 업무 경로를 겸직하는지 여부.
+     */
+    @Column(name = "counseling_enabled", nullable = false)
+    @Builder.Default
+    private Boolean counselingEnabled = false;
     
     @Column(name = "grade", length = 30)
     private String grade;
@@ -448,6 +461,18 @@ public class User extends BaseEntity {
     
     public void setRole(UserRole role) {
         this.role = role;
+    }
+
+    /**
+     * 스케줄·전문가 목록 등에서 상담사 계열로 취급할지 여부.
+     *
+     * @return 전문가 역할이거나 ADMIN+상담 겸직이면 true
+     */
+    public boolean resolvesAsProfessionalProvider() {
+        if (role != null && role.isProfessionalProvider()) {
+            return true;
+        }
+        return UserRole.ADMIN.equals(role) && Boolean.TRUE.equals(counselingEnabled);
     }
     
     public String getGrade() {

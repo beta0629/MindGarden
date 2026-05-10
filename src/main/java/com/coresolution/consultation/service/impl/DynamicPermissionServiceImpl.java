@@ -299,7 +299,8 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
 
         // 주요 권한들을 미리 캐시에 로드 (ADMIN, STAFF, CONSULTANT, CLIENT)
         List<String> commonRoles = List.of(UserRole.ADMIN.name(), UserRole.STAFF.name(),
-                UserRole.CONSULTANT.name(), UserRole.CLIENT.name());
+                UserRole.CONSULTANT.name(), UserRole.PLAY_THERAPIST.name(), UserRole.SPEECH_THERAPIST.name(),
+                UserRole.CLIENT.name());
         List<String> commonPermissions =
                 List.of("ACCESS_ERP_DASHBOARD", "ACCESS_INTEGRATED_FINANCE",
                         "ACCESS_ADMIN_DASHBOARD", "MANAGE_USERS", "VIEW_ALL_BRANCHES");

@@ -506,7 +506,8 @@ public class StatisticsServiceImpl implements StatisticsService {
                 return;
             }
             
-            List<User> consultants = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
+            List<User> consultants = userRepository.findByTenantIdAndRolesInAndIsActiveTrueAndIsDeletedFalse(tenantId,
+                    UserRole.getProfessionalProviderRoles());
 
             for (User consultant : consultants) {
                 try {
@@ -809,7 +810,8 @@ public class StatisticsServiceImpl implements StatisticsService {
             long totalClients = userRepository.countByRole(tenantId, UserRole.CLIENT);
             statistics.put("totalClients", totalClients);
             
-            long totalConsultants = userRepository.countByRole(tenantId, UserRole.CONSULTANT);
+            long totalConsultants = userRepository.countByTenantIdAndRolesInAndIsDeletedFalse(tenantId,
+                    UserRole.getProfessionalProviderRoles());
             statistics.put("totalConsultants", totalConsultants);
             
             long totalSessions = scheduleRepository.count();
@@ -851,8 +853,12 @@ public class StatisticsServiceImpl implements StatisticsService {
             double clientGrowth = lastYearClients > 0 ? (double) (currentClients - lastYearClients) / lastYearClients * 100 : 0;
             trends.put("clientGrowth", Math.round(clientGrowth * 10.0) / 10.0);
             
-            long currentConsultants = userRepository.countByTenantIdAndCreatedAtAfterAndRole(tenantId, lastYear.atStartOfDay(), UserRole.CONSULTANT);
-            long lastYearConsultants = userRepository.countByTenantIdAndCreatedAtBeforeAndRole(tenantId, lastYear.atStartOfDay(), UserRole.CONSULTANT);
+            long currentConsultants = UserRole.getProfessionalProviderRoles().stream()
+                    .mapToLong(r -> userRepository.countByTenantIdAndCreatedAtAfterAndRole(tenantId, lastYear.atStartOfDay(), r))
+                    .sum();
+            long lastYearConsultants = UserRole.getProfessionalProviderRoles().stream()
+                    .mapToLong(r -> userRepository.countByTenantIdAndCreatedAtBeforeAndRole(tenantId, lastYear.atStartOfDay(), r))
+                    .sum();
             double consultantGrowth = lastYearConsultants > 0 ? (double) (currentConsultants - lastYearConsultants) / lastYearConsultants * 100 : 0;
             trends.put("consultantGrowth", Math.round(consultantGrowth * 10.0) / 10.0);
             

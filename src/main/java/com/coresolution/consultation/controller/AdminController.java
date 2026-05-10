@@ -17,6 +17,7 @@ import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
+import com.coresolution.consultation.dto.CounselingEnabledUpdateRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.entity.Client;
@@ -2725,6 +2726,30 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     * 관리자(ADMIN) 계정 상담 겸직 플래그 설정
+     */
+    @PutMapping("/users/{userId}/counseling-enabled")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateCounselingEnabled(
+            @PathVariable Long userId,
+            @RequestBody @Valid CounselingEnabledUpdateRequest body,
+            HttpSession session) {
+        log.info("🔧 상담 겸직 플래그 변경: userId={}, counselingEnabled={}", userId, body.isCounselingEnabled());
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || !currentUser.getRole().isAdmin()) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+        }
+
+        User updatedUser = adminService.updateCounselingEnabled(userId, body.isCounselingEnabled());
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", updatedUser.getId());
+        data.put("counselingEnabled", Boolean.TRUE.equals(updatedUser.getCounselingEnabled()));
+
+        return updated("상담 겸직 설정이 반영되었습니다.", data);
+    }
+
+    /**
      * 사용자 상세 정보 조회
      */
     @GetMapping("/users/{id}")
@@ -2754,6 +2779,8 @@ public class AdminController extends BaseApiController {
         userData.put("isActive", user.getIsActive() != null ? user.getIsActive() : false);
         userData.put("createdAt",
                 user.getCreatedAt() != null ? user.getCreatedAt().toString() : "");
+        userData.put("counselingEnabled", Boolean.TRUE.equals(user.getCounselingEnabled()));
+        userData.put("professionalProviderTypeCode", user.getProfessionalProviderTypeCode());
 
         log.info("✅ 사용자 상세 정보 조회 완료: {}({})", user.getName(), user.getRole());
 
@@ -2823,9 +2850,14 @@ public class AdminController extends BaseApiController {
                 return "Client";
             case CONSULTANT:
                 return "Consultant";
+            case PLAY_THERAPIST:
+                return "PlayTherapist";
+            case SPEECH_THERAPIST:
+                return "SpeechTherapist";
             case ADMIN:
                 return "Admin";
-            // Deprecated roles removed - use ADMIN instead
+            case STAFF:
+                return "Staff";
             default:
                 return role.name();
         }

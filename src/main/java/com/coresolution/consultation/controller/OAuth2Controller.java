@@ -11,6 +11,7 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.oauth.OAuthAccountSelectionUserFacingStrings;
 import com.coresolution.consultation.constant.oauth.OAuth2UserFacingMessages;
 import com.coresolution.consultation.dto.OAuthAccountSelectionCompleteData;
@@ -155,6 +156,8 @@ public class OAuth2Controller extends BaseApiController {
         }
         switch (user.getRole()) {
             case CONSULTANT:
+            case PLAY_THERAPIST:
+            case SPEECH_THERAPIST:
                 return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_CONSULTANT_FMT,
                     user.getId());
             case CLIENT:

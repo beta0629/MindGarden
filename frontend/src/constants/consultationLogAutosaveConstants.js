@@ -23,3 +23,6 @@ export const CONSULTATION_LOG_LOCAL_AUTOSAVE_MAX_INTERVAL_MS = 60 * 1000;
 
 /** 상담일지 서버 초안(세션·X-Tenant-Id) API 경로 — 쿼리: consultationId, consultantId */
 export const CONSULTATION_LOG_SERVER_DRAFT_API_PATH = '/api/v1/schedules/consultation-records/draft';
+
+/** 내담자 상태(clientCondition) — 백엔드 ConsultationRecord @Size(max) 와 동일 */
+export const CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH = 2000;

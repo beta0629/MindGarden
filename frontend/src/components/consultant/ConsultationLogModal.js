@@ -11,6 +11,7 @@ import ConfirmModal from '../common/ConfirmModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import { CONSULTATION_LOG_AUTOSAVE_STRINGS } from '../../constants/consultationLogAutosaveStrings';
+import { CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH } from '../../constants/consultationLogAutosaveConstants';
 import {
   removeConsultationLogLocalDraft,
   writeConsultationLogLocalDraft
@@ -56,6 +57,68 @@ const normalizeGoalAchievementForForm = (raw) => {
 const normalizeRiskAssessmentForForm = (raw) => {
   if (raw == null || String(raw).trim() === '') return 'LOW';
   return String(raw).trim().toUpperCase();
+};
+
+const CONSULTATION_LOG_API_VALIDATION_ERROR_CODES = new Set(['CONSTRAINT_VIOLATION', 'BEAN_VALIDATION_ERROR']);
+
+/**
+ * ErrorResponse.details — "field: message, field2: message2" (콤마+공백 구분) 파싱.
+ *
+ * @param {unknown} details
+ * @returns {Record<string, string>}
+ */
+const parseApiValidationDetailsToFieldMap = (details) => {
+  const result = {};
+  if (details == null || typeof details !== 'string') {
+    return result;
+  }
+  const trimmed = details.trim();
+  if (!trimmed) {
+    return result;
+  }
+  trimmed.split(', ').forEach((segment) => {
+    const idx = segment.indexOf(': ');
+    if (idx <= 0) {
+      return;
+    }
+    const field = segment.slice(0, idx).trim();
+    const msg = segment.slice(idx + 2).trim();
+    if (field) {
+      result[field] = msg;
+    }
+  });
+  return result;
+};
+
+/**
+ * 400 + CONSTRAINT_VIOLATION / BEAN_VALIDATION_ERROR 시 필드 오류 반영 및 토스트용 문구 반환.
+ *
+ * @param {unknown} error
+ * @param {function} setValidationErrors validationErrors setState
+ * @returns {string|null} 알림 메시지; 일반 오류면 null
+ */
+const applyConsultationLogApiValidationErrors = (error, setValidationErrors) => {
+  const status = error?.status;
+  const data = error?.response?.data;
+  if (status !== 400 || !data || typeof data !== 'object') {
+    return null;
+  }
+  const code = data.errorCode;
+  if (!CONSULTATION_LOG_API_VALIDATION_ERROR_CODES.has(code)) {
+    return null;
+  }
+  const fieldMap = parseApiValidationDetailsToFieldMap(data.details);
+  const keys = Object.keys(fieldMap);
+  if (keys.length > 0) {
+    setValidationErrors((prev) => ({ ...prev, ...fieldMap }));
+  }
+  if (keys.length === 1) {
+    return fieldMap[keys[0]];
+  }
+  if (keys.length > 1) {
+    return `${fieldMap[keys[0]]} · ${keys.length - 1}개 필드 추가 확인`;
+  }
+  return toDisplayString(data.message, '');
 };
 
 /**
@@ -722,6 +785,8 @@ const ConsultationLogModal = ({
     
     if (!formData.clientCondition || formData.clientCondition.trim() === '') {
       errors.clientCondition = '내담자 상태를 입력해주세요';
+    } else if (String(formData.clientCondition).length > CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH) {
+      errors.clientCondition = `내담자 상태는 ${CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH}자 이하로 입력해주세요`;
     }
     
     if (!formData.mainIssues || formData.mainIssues.trim() === '') {
@@ -809,7 +874,15 @@ const ConsultationLogModal = ({
       }
     } catch (error) {
       console.error('저장 오류:', error);
-      notificationManager.show('저장 중 오류가 발생했습니다.', 'error');
+      const validationToast = applyConsultationLogApiValidationErrors(error, setValidationErrors);
+      if (validationToast != null) {
+        notificationManager.show(
+          toDisplayString(validationToast, '저장 중 오류가 발생했습니다.'),
+          'error'
+        );
+      } else {
+        notificationManager.show(toErrorMessage(error, '저장 중 오류가 발생했습니다.'), 'error');
+      }
     } finally {
       setSaving(false);
     }
@@ -873,7 +946,15 @@ const ConsultationLogModal = ({
       }
     } catch (error) {
       console.error('완료 처리 오류:', error);
-      notificationManager.show('완료 처리 중 오류가 발생했습니다.', 'error');
+      const validationToast = applyConsultationLogApiValidationErrors(error, setValidationErrors);
+      if (validationToast != null) {
+        notificationManager.show(
+          toDisplayString(validationToast, '완료 처리 중 오류가 발생했습니다.'),
+          'error'
+        );
+      } else {
+        notificationManager.show(toErrorMessage(error, '완료 처리 중 오류가 발생했습니다.'), 'error');
+      }
     } finally {
       setSaving(false);
     }

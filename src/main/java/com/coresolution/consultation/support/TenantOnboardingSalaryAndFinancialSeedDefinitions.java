@@ -188,6 +188,9 @@ import static com.coresolution.consultation.constant.onboarding.TenantOnboarding
 import static com.coresolution.consultation.constant.onboarding.TenantOnboardingSalaryAndFinancialSeedStrings.SALARY_TYPE_REGULAR_DESCRIPTION;
 import static com.coresolution.consultation.constant.onboarding.TenantOnboardingSalaryAndFinancialSeedStrings.SALARY_TYPE_REGULAR_DISPLAY;
 import static com.coresolution.consultation.constant.onboarding.TenantOnboardingSalaryAndFinancialSeedStrings.SALARY_TYPE_REGULAR_EXTRA_DATA;
+import static com.coresolution.consultation.constant.onboarding.TenantOnboardingSalaryAndFinancialSeedStrings.SPECIAL_SUPPORT_SALARY_DEFAULT_DESCRIPTION;
+import static com.coresolution.consultation.constant.onboarding.TenantOnboardingSalaryAndFinancialSeedStrings.SPECIAL_SUPPORT_SALARY_DEFAULT_DISPLAY;
+import static com.coresolution.consultation.constant.onboarding.TenantOnboardingSalaryAndFinancialSeedStrings.SPECIAL_SUPPORT_SALARY_DEFAULT_EXTRA_DATA;
 import static com.coresolution.consultation.constant.financial.FinancialCommonCodeSeedStrings.TRANSACTION_TYPE_EXPENSE_DESCRIPTION;
 import static com.coresolution.consultation.constant.financial.FinancialCommonCodeSeedStrings.TRANSACTION_TYPE_EXPENSE_DISPLAY;
 import static com.coresolution.consultation.constant.financial.FinancialCommonCodeSeedStrings.TRANSACTION_TYPE_INCOME_DESCRIPTION;
@@ -200,6 +203,8 @@ import static com.coresolution.consultation.constant.financial.FinancialCommonCo
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import com.coresolution.consultation.constant.SpecialSupportSalaryConstants;
 
 /**
  * 온보딩 시 신규 테넌트에 삽입할 급여·ERP 공통코드 시드 정의.
@@ -421,6 +426,15 @@ public final class TenantOnboardingSalaryAndFinancialSeedDefinitions {
                 FREELANCE_BASE_RATE_MASTER_DISPLAY,
                 FREELANCE_BASE_RATE_MASTER_DESCRIPTION,
                 FREELANCE_BASE_RATE_MASTER_EXTRA_DATA, 4,
+                null, null));
+
+        rows.add(new SeedRow(SpecialSupportSalaryConstants.CODE_GROUP,
+                SpecialSupportSalaryConstants.CODE_VALUE_DEFAULT,
+                SPECIAL_SUPPORT_SALARY_DEFAULT_DISPLAY,
+                SPECIAL_SUPPORT_SALARY_DEFAULT_DISPLAY,
+                SPECIAL_SUPPORT_SALARY_DEFAULT_DESCRIPTION,
+                SPECIAL_SUPPORT_SALARY_DEFAULT_EXTRA_DATA,
+                1,
                 null, null));
 
         // --- FinancialCommonCodeInitializer (테넌트 ERP 최소 세트) ---

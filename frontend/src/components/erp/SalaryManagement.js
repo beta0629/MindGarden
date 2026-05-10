@@ -16,6 +16,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import {
   SALARY_API_ENDPOINTS,
   SALARY_PAY_DAY_FALLBACK_OPTIONS,
+  SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL,
   TAX_BREAKDOWN_ORDER,
   TAX_BREAKDOWN_LABELS
 } from '../../constants/salaryConstants';
@@ -266,6 +267,7 @@ const SalaryManagement = () => {
           netSalary: data?.netSalary ?? 0,
           taxAmount: data?.taxAmount ?? 0,
           consultationCount: data?.consultationCount ?? 0,
+          specialSupportAmount: data?.specialSupportAmount ?? 0,
           calculatedAt: new Date().toISOString()
         });
         loadSalaryCalculations(selectedConsultant.id);
@@ -877,6 +879,16 @@ const SalaryManagement = () => {
                             <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">총 급여</span>
                             <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">{formatCurrency(previewResult.grossSalary)}</span>
                           </div>
+                          {Number(previewResult.specialSupportAmount) > 0 && (
+                            <div className="salary-calc-block__preview-card-item">
+                              <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">
+                                {SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL}
+                              </span>
+                              <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">
+                                +{formatCurrency(previewResult.specialSupportAmount)}
+                              </span>
+                            </div>
+                          )}
                           <div className="salary-calc-block__preview-card-item">
                             <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">세금·공제</span>
                             <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">-{formatCurrency(previewResult.taxAmount)}</span>

@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -56,8 +57,11 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
         
         try {
             int paramCount = countProcessIntegratedSalaryCalculationParameters();
-            if (paramCount == 12) {
+            if (paramCount == 13) {
                 result.putAll(executeProcessIntegratedSalaryCalculationStandard(
+                        consultantId, periodStart, periodEnd, tenantId, triggeredBy));
+            } else if (paramCount == 12) {
+                result.putAll(executeProcessIntegratedSalaryCalculationStandard12Out(
                         consultantId, periodStart, periodEnd, tenantId, triggeredBy));
             } else if (paramCount == 11) {
                 log.warn("⚠️ ProcessIntegratedSalaryCalculation 구버전(11파라미터, p_tenant_id 없음). 표준 프로시저 배포를 권장합니다.");
@@ -69,9 +73,18 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                             consultantId, periodStart, periodEnd, tenantId, triggeredBy));
                 } catch (SQLException ex) {
                     if (shouldLogProcessIntegratedSalarySignatureMismatch(ex)) {
-                        log.warn("파라미터 개수 미확인 상태에서 표준 호출 실패, 구버전(11) 재시도: {}", ex.getMessage());
-                        result.putAll(executeProcessIntegratedSalaryCalculationLegacy11(
-                                consultantId, periodStart, periodEnd, triggeredBy));
+                        log.warn("파라미터 개수 미확인 상태에서 표준(13) 호출 실패, 12OUT·11레거시 순 재시도: {}", ex.getMessage());
+                        try {
+                            result.putAll(executeProcessIntegratedSalaryCalculationStandard12Out(
+                                    consultantId, periodStart, periodEnd, tenantId, triggeredBy));
+                        } catch (SQLException ex12) {
+                            if (shouldLogProcessIntegratedSalarySignatureMismatch(ex12)) {
+                                result.putAll(executeProcessIntegratedSalaryCalculationLegacy11(
+                                        consultantId, periodStart, periodEnd, triggeredBy));
+                            } else {
+                                throw ex12;
+                            }
+                        }
                     } else {
                         throw ex;
                     }
@@ -102,10 +115,50 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
     }
 
     /**
-     * 표준 12파라미터: 5 IN(마지막 p_tenant_id, p_triggered_by) + 7 OUT.
-     * 구버전 11파라미터: {@code integrated_salary_erp_system.sql} — 4 IN + 7 OUT(첫 OUT은 ordinal 5).
+     * 표준 13파라미터: 5 IN + 8 OUT(마지막 p_special_support_amount).
+     * DB가 아직 12파라미터(특별지원금 OUT 없음)면 {@link #executeProcessIntegratedSalaryCalculationStandard12Out} 사용.
      */
     private Map<String, Object> executeProcessIntegratedSalaryCalculationStandard(
+            Long consultantId,
+            LocalDate periodStart,
+            LocalDate periodEnd,
+            String tenantId,
+            String triggeredBy) throws SQLException {
+        Map<String, Object> result = new HashMap<>();
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+                CallableStatement stmt = connection.prepareCall(
+                        "{CALL ProcessIntegratedSalaryCalculation(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            setConnectionUtf8mb4(connection);
+            stmt.setLong(1, consultantId);
+            stmt.setDate(2, java.sql.Date.valueOf(periodStart));
+            stmt.setDate(3, java.sql.Date.valueOf(periodEnd));
+            stmt.setString(4, tenantId);
+            stmt.setString(5, triggeredBy);
+            stmt.registerOutParameter(6, Types.BIGINT);
+            stmt.registerOutParameter(7, Types.DECIMAL);
+            stmt.registerOutParameter(8, Types.DECIMAL);
+            stmt.registerOutParameter(9, Types.DECIMAL);
+            stmt.registerOutParameter(10, Types.BIGINT);
+            stmt.registerOutParameter(11, Types.BOOLEAN);
+            stmt.registerOutParameter(12, Types.VARCHAR);
+            stmt.registerOutParameter(13, Types.DECIMAL);
+            stmt.execute();
+            result.put("calculationId", stmt.getLong(6));
+            result.put("grossSalary", stmt.getBigDecimal(7));
+            result.put("netSalary", stmt.getBigDecimal(8));
+            result.put("taxAmount", stmt.getBigDecimal(9));
+            result.put("erpSyncId", stmt.getLong(10));
+            result.put("success", stmt.getBoolean(11));
+            result.put("message", stmt.getString(12));
+            result.put("specialSupportAmount", stmt.getBigDecimal(13));
+        }
+        return result;
+    }
+
+    /**
+     * 12파라미터(5 IN + 7 OUT): 특별지원금 OUT 없음. 응답 {@code specialSupportAmount}=0.
+     */
+    private Map<String, Object> executeProcessIntegratedSalaryCalculationStandard12Out(
             Long consultantId,
             LocalDate periodStart,
             LocalDate periodEnd,
@@ -136,6 +189,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             result.put("erpSyncId", stmt.getLong(10));
             result.put("success", stmt.getBoolean(11));
             result.put("message", stmt.getString(12));
+            result.put("specialSupportAmount", BigDecimal.ZERO);
         }
         return result;
     }
@@ -169,6 +223,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             result.put("erpSyncId", stmt.getLong(9));
             result.put("success", stmt.getBoolean(10));
             result.put("message", stmt.getString(11));
+            result.put("specialSupportAmount", BigDecimal.ZERO);
         }
         return result;
     }
@@ -212,7 +267,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                     + "ORDER BY ORDINAL_POSITION";
             List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
             log.error(
-                    "ProcessIntegratedSalaryCalculation 시그니처 진단: information_schema.PARAMETERS (기대 1-5 IN, 6-12 OUT 표준): rows={}",
+                    "ProcessIntegratedSalaryCalculation 시그니처 진단: information_schema.PARAMETERS (기대 1-5 IN, 6-13 OUT 표준): rows={}",
                     rows);
         } catch (Exception ex) {
             log.warn("프로시저 파라미터 진단 조회 실패: error={}", ex.getMessage(), ex);
@@ -377,14 +432,14 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
     }
     
     /**
-     * 급여 미리보기. 표준 시그니처는 {@code CalculateSalaryPreview_standardized.sql} 과 동일(10파라미터).
-     * 운영에 구버전(3 IN + 6 OUT, 총 9파라미터·OUT 순서 상이)이 남은 경우 JDBC 단에서 분기한다.
+     * 급여 미리보기. 표준 시그니처는 {@code CalculateSalaryPreview_standardized.sql} 과 동일(11파라미터, 특별지원금 OUT).
+     * 운영에 구버전(10·9파라미터)이 남은 경우 JDBC 단에서 분기한다.
      * 배포 시 GitHub {@code PRODUCTION_DB_NAME} 과 앱 JDBC 스키마가 다르면 프로시저만 갱신되지 않을 수 있다.
      *
      * @param consultantId 상담사 ID
      * @param periodStart  기간 시작
      * @param periodEnd    기간 종료
-     * @return success, message, grossSalary, netSalary, taxAmount, consultationCount
+     * @return success, message, grossSalary, netSalary, taxAmount, consultationCount, specialSupportAmount
      */
     @Override
     public Map<String, Object> calculateSalaryPreview(Long consultantId, LocalDate periodStart, LocalDate periodEnd) {
@@ -402,13 +457,23 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                 result.putAll(executeCalculateSalaryPreviewLegacy9(consultantId, periodStart, periodEnd));
             } else if (paramCount == 10) {
                 result.putAll(executeCalculateSalaryPreviewStandard(consultantId, periodStart, periodEnd, tenantId));
+            } else if (paramCount == 11) {
+                result.putAll(executeCalculateSalaryPreviewStandard11(consultantId, periodStart, periodEnd, tenantId));
             } else if (paramCount < 0) {
                 try {
-                    result.putAll(executeCalculateSalaryPreviewStandard(consultantId, periodStart, periodEnd, tenantId));
+                    result.putAll(executeCalculateSalaryPreviewStandard11(consultantId, periodStart, periodEnd, tenantId));
                 } catch (SQLException ex) {
                     if (shouldLogCalculateSalaryPreviewSignatureMismatch(ex)) {
-                        log.warn("파라미터 개수 미확인 상태에서 표준 호출 실패, 구버전(9) 재시도: {}", ex.getMessage());
-                        result.putAll(executeCalculateSalaryPreviewLegacy9(consultantId, periodStart, periodEnd));
+                        log.warn("파라미터 개수 미확인 상태에서 표준(11) 호출 실패, 10·9 순 재시도: {}", ex.getMessage());
+                        try {
+                            result.putAll(executeCalculateSalaryPreviewStandard(consultantId, periodStart, periodEnd, tenantId));
+                        } catch (SQLException ex10) {
+                            if (shouldLogCalculateSalaryPreviewSignatureMismatch(ex10)) {
+                                result.putAll(executeCalculateSalaryPreviewLegacy9(consultantId, periodStart, periodEnd));
+                            } else {
+                                throw ex10;
+                            }
+                        }
                     } else {
                         throw ex;
                     }
@@ -440,7 +505,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
     /**
      * 현재 스키마의 CalculateSalaryPreview 파라미터 행 수 (information_schema).
      *
-     * @return 9·10 등, 조회 실패 시 -1
+     * @return 9·10·11 등, 조회 실패 시 -1
      */
     private int countCalculateSalaryPreviewParameters() {
         try {
@@ -489,6 +554,40 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             result.put("netSalary", stmt.getBigDecimal(8));
             result.put("taxAmount", stmt.getBigDecimal(9));
             result.put("consultationCount", stmt.getInt(10));
+            result.put("specialSupportAmount", BigDecimal.ZERO);
+        }
+        return result;
+    }
+
+    /**
+     * 표준 11파라미터: 4 IN + 7 OUT(마지막 특별지원금).
+     */
+    private Map<String, Object> executeCalculateSalaryPreviewStandard11(
+            Long consultantId, LocalDate periodStart, LocalDate periodEnd, String tenantId) throws SQLException {
+        Map<String, Object> result = new HashMap<>();
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+                CallableStatement stmt = connection.prepareCall(
+                        "{CALL CalculateSalaryPreview(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            setConnectionUtf8mb4(connection);
+            stmt.setLong(1, consultantId);
+            stmt.setDate(2, java.sql.Date.valueOf(periodStart));
+            stmt.setDate(3, java.sql.Date.valueOf(periodEnd));
+            stmt.setString(4, tenantId);
+            stmt.registerOutParameter(5, Types.BOOLEAN);
+            stmt.registerOutParameter(6, Types.VARCHAR);
+            stmt.registerOutParameter(7, Types.DECIMAL);
+            stmt.registerOutParameter(8, Types.DECIMAL);
+            stmt.registerOutParameter(9, Types.DECIMAL);
+            stmt.registerOutParameter(10, Types.INTEGER);
+            stmt.registerOutParameter(11, Types.DECIMAL);
+            stmt.execute();
+            result.put("success", stmt.getBoolean(5));
+            result.put("message", stmt.getString(6));
+            result.put("grossSalary", stmt.getBigDecimal(7));
+            result.put("netSalary", stmt.getBigDecimal(8));
+            result.put("taxAmount", stmt.getBigDecimal(9));
+            result.put("consultationCount", stmt.getInt(10));
+            result.put("specialSupportAmount", stmt.getBigDecimal(11));
         }
         return result;
     }
@@ -520,6 +619,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             result.put("consultationCount", stmt.getInt(7));
             result.put("success", stmt.getBoolean(8));
             result.put("message", stmt.getString(9));
+            result.put("specialSupportAmount", BigDecimal.ZERO);
         }
         return result;
     }
@@ -566,7 +666,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                     + "ORDER BY ORDINAL_POSITION";
             List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
             log.error(
-                    "CalculateSalaryPreview 시그니처 진단: information_schema.PARAMETERS (기대 1-4 IN, 5-10 OUT): rows={}",
+                    "CalculateSalaryPreview 시그니처 진단: information_schema.PARAMETERS (기대 1-4 IN, 5-11 OUT): rows={}",
                     rows);
         } catch (Exception ex) {
             log.warn("프로시저 파라미터 진단 조회 실패: error={}", ex.getMessage(), ex);

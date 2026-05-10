@@ -1,6 +1,6 @@
 -- =====================================================
 -- 통합 급여 계산 프로시저 (표준화 버전)
--- 운영 반영: 앱은 본 시그니처(5 IN + 7 OUT)를 기대합니다. 구버전(4 IN + 7 OUT)만 있으면 JDBC OUT 등록 오류가 납니다.
+-- 운영 반영: 표준 시그니처 5 IN + 8 OUT (특별지원금 OUT 포함). 구버전 12파라미터는 PlSqlSalaryManagementServiceImpl 레거시 분기.
 -- 배포: 저장소 `.github/workflows/deploy-procedures-production-mysql.yml` 또는 `database/schema/procedures_standardized/deploy_standardized_procedures.sh` 로 동일 본문을 적용하세요.
 -- schedules 기간: 상담 일자는 date(DATE); start_time/end_time은 TIME(6)만 저장 → 기간은 s.date BETWEEN ...
 -- =====================================================
@@ -20,7 +20,8 @@ CREATE PROCEDURE ProcessIntegratedSalaryCalculation(
     OUT p_tax_amount DECIMAL(15,2),
     OUT p_erp_sync_id BIGINT,
     OUT p_success BOOLEAN,
-    OUT p_message TEXT
+    OUT p_message TEXT,
+    OUT p_special_support_amount DECIMAL(15,2)
 )
 BEGIN
     DECLARE v_error_message VARCHAR(500);
@@ -40,6 +41,13 @@ BEGIN
     DECLARE v_calculation_exists INT DEFAULT 0;
     DECLARE v_calculation_period VARCHAR(20);
     DECLARE v_consultant_count INT DEFAULT 0;
+    DECLARE v_tax_base_gross DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_ss_extra_json TEXT;
+    DECLARE v_ss_unit_amount DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_ss_min_sessions INT DEFAULT 10;
+    DECLARE v_ss_total DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_require_paid BOOLEAN DEFAULT TRUE;
+    DECLARE v_paid_flag_txt VARCHAR(32);
     
     -- 세금 관련 변수
     DECLARE v_withholding_tax DECIMAL(5,4) DEFAULT 0.033;  -- 3.3% 원천징수
@@ -70,6 +78,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_erp_sync_id = NULL;
+        SET p_special_support_amount = 0;
     END;
     
     START TRANSACTION;
@@ -83,6 +92,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_erp_sync_id = NULL;
+        SET p_special_support_amount = 0;
         ROLLBACK;
     ELSEIF p_consultant_id IS NULL OR p_consultant_id <= 0 THEN
         SET p_success = FALSE;
@@ -92,6 +102,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_erp_sync_id = NULL;
+        SET p_special_support_amount = 0;
         ROLLBACK;
     ELSEIF p_period_start IS NULL OR p_period_end IS NULL OR p_period_start > p_period_end THEN
         SET p_success = FALSE;
@@ -101,6 +112,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_erp_sync_id = NULL;
+        SET p_special_support_amount = 0;
         ROLLBACK;
     ELSE
         -- 2. 상담사 존재 여부 확인 (테넌트 격리)
@@ -120,6 +132,7 @@ BEGIN
             SET p_net_salary = 0;
             SET p_tax_amount = 0;
             SET p_erp_sync_id = NULL;
+            SET p_special_support_amount = 0;
             ROLLBACK;
         ELSE
             -- 기본값 설정
@@ -143,6 +156,7 @@ BEGIN
                 SET p_net_salary = 0;
                 SET p_tax_amount = 0;
                 SET p_erp_sync_id = NULL;
+                SET p_special_support_amount = 0;
                 ROLLBACK;
             ELSE
                 -- 4. 급여 프로필 및 사용자 정보 조회 (테넌트 격리)
@@ -167,6 +181,7 @@ BEGIN
                     SET p_net_salary = 0;
                     SET p_tax_amount = 0;
                     SET p_erp_sync_id = NULL;
+                    SET p_special_support_amount = 0;
                     ROLLBACK;
                 ELSE
                     -- 프리랜서 등급별 요율: FREELANCE_BASE_RATE (users.grade CONSULTANT_* ↔ JUNIOR_RATE 등)
@@ -276,6 +291,60 @@ BEGIN
                     END IF;
                     
                     SET p_net_salary = p_gross_salary - p_tax_amount;
+                    SET v_tax_base_gross = p_gross_salary;
+                    
+                    -- 7b. 특별지원금 (common_codes + 매핑별 월 1회; 세금 산출 base는 v_tax_base_gross 유지)
+                    SET v_ss_total = 0;
+                    SET p_special_support_amount = 0;
+                    SELECT cc.extra_data INTO v_ss_extra_json
+                    FROM common_codes cc
+                    WHERE cc.code_group = 'SPECIAL_SUPPORT_SALARY'
+                      AND cc.code_value = 'DEFAULT'
+                      AND cc.is_active = TRUE
+                      AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+                      AND (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+                    ORDER BY cc.tenant_id IS NULL ASC
+                    LIMIT 1;
+                    
+                    IF v_ss_extra_json IS NOT NULL AND v_ss_extra_json <> '' THEN
+                        SET v_ss_unit_amount = CAST(JSON_UNQUOTE(JSON_EXTRACT(v_ss_extra_json, '$.amount')) AS DECIMAL(15,2));
+                        SET v_ss_min_sessions = CAST(JSON_UNQUOTE(JSON_EXTRACT(v_ss_extra_json, '$.minSessions')) AS UNSIGNED);
+                        IF v_ss_min_sessions IS NULL OR v_ss_min_sessions <= 0 THEN
+                            SET v_ss_min_sessions = 10;
+                        END IF;
+                        SET v_paid_flag_txt = LOWER(IFNULL(JSON_UNQUOTE(JSON_EXTRACT(v_ss_extra_json, '$.requirePaidConfirmation')), 'true'));
+                        IF v_paid_flag_txt IN ('0', 'false', 'no') THEN
+                            SET v_require_paid = FALSE;
+                        ELSE
+                            SET v_require_paid = TRUE;
+                        END IF;
+                    ELSE
+                        SET v_ss_unit_amount = 0;
+                    END IF;
+                    
+                    IF v_ss_unit_amount IS NOT NULL AND v_ss_unit_amount > 0 THEN
+                        SELECT COALESCE(SUM(
+                            CASE
+                                WHEN sp.id IS NOT NULL THEN 0
+                                WHEN m.total_sessions < v_ss_min_sessions THEN 0
+                                WHEN v_require_paid = TRUE AND m.payment_status NOT IN ('CONFIRMED', 'PAY', 'DEP', 'APPROVED') THEN 0
+                                ELSE v_ss_unit_amount
+                            END
+                        ), 0) INTO v_ss_total
+                        FROM consultant_client_mappings m
+                        LEFT JOIN special_support_monthly_payouts sp
+                          ON sp.tenant_id = p_tenant_id
+                         AND sp.consultant_id = p_consultant_id
+                         AND sp.client_id = m.client_id
+                         AND sp.salary_year_month = DATE_FORMAT(p_period_start, '%Y-%m')
+                        WHERE m.tenant_id = p_tenant_id
+                          AND m.consultant_id = p_consultant_id
+                          AND m.is_deleted = FALSE;
+                    END IF;
+                    
+                    SET p_special_support_amount = IFNULL(v_ss_total, 0);
+                    SET p_gross_salary = p_gross_salary + p_special_support_amount;
+                    SET p_net_salary = p_net_salary + p_special_support_amount;
                     
                     -- 8. 급여 계산 데이터 저장 (테넌트 격리)
                     INSERT INTO salary_calculations (
@@ -314,7 +383,7 @@ BEGIN
                         v_total_consultations, 
                         v_completed_consultations,
                         v_consultation_earnings, 
-                        0, 
+                        IFNULL(v_ss_total, 0), 
                         p_tax_amount, 
                         p_gross_salary, 
                         p_net_salary, 
@@ -331,6 +400,32 @@ BEGIN
                     SET p_calculation_id = LAST_INSERT_ID();
                     SET p_erp_sync_id = NULL;
                     
+                    IF IFNULL(v_ss_total, 0) > 0 AND p_calculation_id IS NOT NULL AND v_ss_unit_amount > 0 THEN
+                        INSERT INTO special_support_monthly_payouts (
+                            tenant_id, consultant_id, client_id, salary_year_month, amount, salary_calculation_id, created_at
+                        )
+                        SELECT
+                            p_tenant_id,
+                            p_consultant_id,
+                            m.client_id,
+                            DATE_FORMAT(p_period_start, '%Y-%m'),
+                            v_ss_unit_amount,
+                            p_calculation_id,
+                            NOW()
+                        FROM consultant_client_mappings m
+                        LEFT JOIN special_support_monthly_payouts sp
+                          ON sp.tenant_id = p_tenant_id
+                         AND sp.consultant_id = p_consultant_id
+                         AND sp.client_id = m.client_id
+                         AND sp.salary_year_month = DATE_FORMAT(p_period_start, '%Y-%m')
+                        WHERE m.tenant_id = p_tenant_id
+                          AND m.consultant_id = p_consultant_id
+                          AND m.is_deleted = FALSE
+                          AND sp.id IS NULL
+                          AND m.total_sessions >= v_ss_min_sessions
+                          AND (v_require_paid = FALSE OR m.payment_status IN ('CONFIRMED', 'PAY', 'DEP', 'APPROVED'));
+                    END IF;
+                    
                     -- 9. 세목별 세금 내역 salary_tax_calculations INSERT (2차 세금 연동)
                     IF v_withholding_amount > 0 THEN
                         INSERT INTO salary_tax_calculations (
@@ -338,7 +433,7 @@ BEGIN
                             base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
                         ) VALUES (
                             p_tenant_id, p_calculation_id, 'WITHHOLDING_TAX', '원천징수', v_withholding_tax,
-                            p_gross_salary, p_gross_salary, v_withholding_amount, '프리랜서 원천징수 3.3%', TRUE, NOW(), NOW()
+                            v_tax_base_gross, v_tax_base_gross, v_withholding_amount, '프리랜서 원천징수 3.3%', TRUE, NOW(), NOW()
                         );
                     END IF;
                     IF v_local_income_tax > 0 THEN
@@ -358,7 +453,7 @@ BEGIN
                             base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
                         ) VALUES (
                             p_tenant_id, p_calculation_id, 'VAT', '부가세', v_vat,
-                            p_gross_salary, p_gross_salary, v_vat_amount, '사업자 부가세 10%', TRUE, NOW(), NOW()
+                            v_tax_base_gross, v_tax_base_gross, v_vat_amount, '사업자 부가세 10%', TRUE, NOW(), NOW()
                         );
                     END IF;
                     IF v_income_tax_amount > 0 THEN
@@ -367,7 +462,7 @@ BEGIN
                             base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
                         ) VALUES (
                             p_tenant_id, p_calculation_id, 'INCOME_TAX', '소득세', v_income_tax_rate,
-                            p_gross_salary, p_gross_salary, v_income_tax_amount, '정규직 소득세', TRUE, NOW(), NOW()
+                            v_tax_base_gross, v_tax_base_gross, v_income_tax_amount, '정규직 소득세', TRUE, NOW(), NOW()
                         );
                     END IF;
                     IF v_4insurance_amount > 0 THEN
@@ -377,7 +472,7 @@ BEGIN
                         ) VALUES (
                             p_tenant_id, p_calculation_id, 'FOUR_INSURANCE', '4대보험',
                             (v_pension_rate + v_health_rate + v_longterm_rate + v_employment_rate),
-                            p_gross_salary, p_gross_salary, v_4insurance_amount, '국민연금·건강·장기요양·고용보험', TRUE, NOW(), NOW()
+                            v_tax_base_gross, v_tax_base_gross, v_4insurance_amount, '국민연금·건강·장기요양·고용보험', TRUE, NOW(), NOW()
                         );
                     END IF;
                     

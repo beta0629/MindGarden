@@ -17,9 +17,12 @@ import {
   SALARY_API_ENDPOINTS,
   SALARY_PAY_DAY_FALLBACK_OPTIONS,
   SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL,
+  SALARY_PREVIEW_CONSULTATION_FEE_LABEL,
+  SALARY_PREVIEW_PRE_TAX_TOTAL_LABEL,
   TAX_BREAKDOWN_ORDER,
   TAX_BREAKDOWN_LABELS
 } from '../../constants/salaryConstants';
+import { buildSalaryCalculationComponentRows } from '../../utils/salaryCalculationDisplay';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { showNotification } from '../../utils/notification';
@@ -268,6 +271,8 @@ const SalaryManagement = () => {
           taxAmount: data?.taxAmount ?? 0,
           consultationCount: data?.consultationCount ?? 0,
           specialSupportAmount: data?.specialSupportAmount ?? 0,
+          consultationGrossSalary: data?.consultationGrossSalary,
+          taxableGrossSalary: data?.taxableGrossSalary,
           calculatedAt: new Date().toISOString()
         });
         loadSalaryCalculations(selectedConsultant.id);
@@ -430,6 +435,12 @@ const SalaryManagement = () => {
     loading && consultants.length === 0 && !consultantsInitialFetchDone;
   /** 초기 인라인과 중복되지 않는 전역 로딩 오버레이(계산·탭 데이터 로드 등). silent 새로고침은 loading을 켜지 않음. */
   const showLoadingOverlay = loading && !showInitialInlineLoad;
+
+  const previewFreelanceSpecialSupportBreakdown =
+    previewResult != null
+    && previewResult.consultationGrossSalary != null
+    && previewResult.consultationGrossSalary !== ''
+    && toSalaryNumber(previewResult.specialSupportAmount) > 0;
 
   return (
     <AdminCommonLayout title="급여 관리">
@@ -884,11 +895,46 @@ const SalaryManagement = () => {
                           </p>
                         )}
                         <div className="salary-calc-block__preview-summary">
-                          <div className="salary-calc-block__preview-card-item">
-                            <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">총 급여</span>
-                            <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">{formatCurrency(previewResult.grossSalary)}</span>
-                          </div>
-                          {Number(previewResult.specialSupportAmount) > 0 && (
+                          {previewFreelanceSpecialSupportBreakdown ? (
+                            <>
+                              <div className="salary-calc-block__preview-card-item">
+                                <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">
+                                  {SALARY_PREVIEW_CONSULTATION_FEE_LABEL}
+                                </span>
+                                <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">
+                                  {formatCurrency(previewResult.consultationGrossSalary)}
+                                </span>
+                              </div>
+                              <div className="salary-calc-block__preview-card-item">
+                                <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">
+                                  {SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL}
+                                </span>
+                                <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">
+                                  +{formatCurrency(previewResult.specialSupportAmount)}
+                                </span>
+                              </div>
+                              <div className="salary-calc-block__preview-card-item">
+                                <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">
+                                  {SALARY_PREVIEW_PRE_TAX_TOTAL_LABEL}
+                                </span>
+                                <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">
+                                  {formatCurrency(
+                                    previewResult.taxableGrossSalary != null && previewResult.taxableGrossSalary !== ''
+                                      ? previewResult.taxableGrossSalary
+                                      : toSalaryNumber(previewResult.consultationGrossSalary)
+                                          + toSalaryNumber(previewResult.specialSupportAmount)
+                                  )}
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="salary-calc-block__preview-card-item">
+                              <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">총 급여</span>
+                              <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">{formatCurrency(previewResult.grossSalary)}</span>
+                            </div>
+                          )}
+                          {!previewFreelanceSpecialSupportBreakdown
+                            && Number(previewResult.specialSupportAmount) > 0 && (
                             <div className="salary-calc-block__preview-card-item">
                               <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">
                                 {SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL}
@@ -997,15 +1043,12 @@ const SalaryManagement = () => {
                           </span>
                         </div>
                         <div className="salary-calc-block__card-details">
-                          <div className="salary-management__detail-row">
-                            <span>기본 급여</span>
-                            <span>{formatCurrency(calculation.baseSalary)}</span>
-                          </div>
-                          {/* 옵션 급여: commission+hourly 합산(API optionSalary). 총 세전·실지급은 서버 grossSalary·netSalary 우선 */}
-                          <div className="salary-management__detail-row">
-                            <span>옵션 급여</span>
-                            <span>{formatCurrency(calculation.optionSalary)}</span>
-                          </div>
+                          {buildSalaryCalculationComponentRows(calculation, toSalaryNumber).map((row, idx) => (
+                            <div key={`${row.label}-${idx}`} className="salary-management__detail-row">
+                              <span>{row.label}</span>
+                              <span>{formatCurrency(row.amount)}</span>
+                            </div>
+                          ))}
                           {toSalaryNumber(calculation.bonusEarnings) > 0 && (
                             <div className="salary-management__detail-row">
                               <span>{SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL}</span>

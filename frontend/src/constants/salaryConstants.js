@@ -214,6 +214,20 @@ export const SALARY_PAY_DAY_FALLBACK_OPTIONS = [
 /** 급여 미리보기 카드: 특별지원금(공통코드 SPECIAL_SUPPORT_SALARY) 한 줄 라벨 */
 export const SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL = '특별지원금';
 
+/** 프리랜서 미리보기: 상담료(등급 요율×건수)만 표시할 때 라벨 */
+export const SALARY_PREVIEW_CONSULTATION_FEE_LABEL = '상담료';
+
+/** 프리랜서 미리보기: 상담료+특별지원 합(세전 과세표준) */
+export const SALARY_PREVIEW_PRE_TAX_TOTAL_LABEL = '세전 합계';
+
+/** 급여 계산 내역·인쇄: 기본·가변 구분 라벨 */
+export const SALARY_CALC_DETAIL_BASE_LABEL = '기본 급여';
+export const SALARY_CALC_DETAIL_OPTION_LABEL = '옵션 급여';
+export const SALARY_CALC_DETAIL_CONSULTATION_LABEL = '상담(건당) 급여';
+export const SALARY_CALC_DETAIL_HOURLY_LABEL = '시간당 급여';
+/** DB에 기본·건당 급여가 동일 금액으로 중복 저장된 경우 한 줄로 합침 */
+export const SALARY_CALC_DETAIL_MERGED_DEDUP_LABEL = '급여 산정액';
+
 export const SALARY_DEFAULTS = {
   PAY_DAY_CODE: 'TENTH',
   CURRENCY: 'KRW',

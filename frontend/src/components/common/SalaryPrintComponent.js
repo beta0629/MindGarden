@@ -1,6 +1,7 @@
 import React from 'react';
 import PrintComponent from './PrintComponent';
 import { SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL } from '../../constants/salaryConstants';
+import { buildSalaryCalculationComponentRows } from '../../utils/salaryCalculationDisplay';
 
 /**
  * 급여 계산서 프린트 컴포넌트
@@ -145,16 +146,13 @@ const SalaryPrintComponent = ({
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td className="label">기본 급여</td>
-            <td>{formatCurrency(salaryData.baseSalary)}</td>
-            <td>상담 {salaryData.consultationCount || 0}건</td>
-          </tr>
-          <tr>
-            <td className="label">옵션 급여</td>
-            <td>{formatCurrency(salaryData.optionSalary)}</td>
-            <td>추가 옵션</td>
-          </tr>
+          {buildSalaryCalculationComponentRows(salaryData, toNum).map((row, idx) => (
+            <tr key={`${row.label}-${idx}`}>
+              <td className="label">{row.label}</td>
+              <td>{formatCurrency(row.amount)}</td>
+              <td>{idx === 0 ? `상담 ${salaryData.consultationCount || 0}건` : '-'}</td>
+            </tr>
+          ))}
           {bonusEarnings > 0 && (
             <tr>
               <td className="label">{SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL}</td>

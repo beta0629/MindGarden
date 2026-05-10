@@ -65,6 +65,7 @@ BEGIN
     DECLARE v_vat_amount DECIMAL(15,2) DEFAULT 0;
     DECLARE v_local_income_tax DECIMAL(15,2) DEFAULT 0;
     DECLARE v_4insurance_amount DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_freelance_taxable DECIMAL(15,2) DEFAULT 0;  -- 프리랜서 원천·부가세 과세표준(상담료+특별지원금)
     
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -238,62 +239,7 @@ BEGIN
                         SET v_consultation_earnings = 0;
                     END IF;
                     
-                    -- 7. 세금 및 공제 계산
-                    SET p_tax_amount = 0;
-                    SET v_withholding_amount = 0;
-                    SET v_vat_amount = 0;
-                    SET v_local_income_tax = 0;
-                    SET v_income_tax_amount = 0;
-                    SET v_4insurance_amount = 0;
-                    
-                    IF v_salary_type = 'FREELANCE' THEN
-                        -- 프리랜서 세금 계산
-                        -- 1) 원천징수 3.3% (모든 프리랜서)
-                        SET v_withholding_amount = p_gross_salary * v_withholding_tax;
-                        SET p_tax_amount = p_tax_amount + v_withholding_amount;
-                        -- 지방소득세: 원천징수의 10%
-                        SET v_local_income_tax = ROUND(v_withholding_amount * 0.10, 0);
-                        SET p_tax_amount = p_tax_amount + v_local_income_tax;
-                        
-                        -- 2) 부가세 10% (사업자 등록 프리랜서만)
-                        IF v_is_business_registered = TRUE THEN
-                            SET v_vat_amount = p_gross_salary * v_vat;
-                            SET p_tax_amount = p_tax_amount + v_vat_amount;
-                        END IF;
-                        
-                    ELSEIF v_salary_type = 'REGULAR' THEN
-                        -- 정규직 세금 및 공제 계산
-                        -- 1) 소득세 (소득 구간별 차등 적용)
-                        SET v_income_tax_rate = CASE
-                            WHEN p_gross_salary <= 1200000 THEN 0.06      -- 6% (120만원 이하)
-                            WHEN p_gross_salary <= 4600000 THEN 0.15      -- 15% (120만원 초과 ~ 460만원)
-                            WHEN p_gross_salary <= 8800000 THEN 0.24      -- 24% (460만원 초과 ~ 880만원)
-                            WHEN p_gross_salary <= 15000000 THEN 0.35     -- 35% (880만원 초과 ~ 1500만원)
-                            WHEN p_gross_salary <= 30000000 THEN 0.38     -- 38% (1500만원 초과 ~ 3000만원)
-                            WHEN p_gross_salary <= 50000000 THEN 0.40     -- 40% (3000만원 초과 ~ 5000만원)
-                            ELSE 0.42                                     -- 42% (5000만원 초과)
-                        END;
-                        
-                        SET v_income_tax_amount = p_gross_salary * v_income_tax_rate;
-                        SET p_tax_amount = p_tax_amount + v_income_tax_amount;
-                        -- 지방소득세: 소득세의 10%
-                        SET v_local_income_tax = ROUND(v_income_tax_amount * 0.10, 0);
-                        SET p_tax_amount = p_tax_amount + v_local_income_tax;
-                        
-                        -- 2) 4대보험 (연봉 1,200만원 이상 시)
-                        IF p_gross_salary * 12 >= 12000000 THEN
-                            SET v_4insurance_amount = (p_gross_salary * v_pension_rate) + 
-                                                    (p_gross_salary * v_health_rate) + 
-                                                    (p_gross_salary * v_longterm_rate) + 
-                                                    (p_gross_salary * v_employment_rate);
-                            SET p_tax_amount = p_tax_amount + v_4insurance_amount;
-                        END IF;
-                    END IF;
-                    
-                    SET p_net_salary = p_gross_salary - p_tax_amount;
-                    SET v_tax_base_gross = p_gross_salary;
-                    
-                    -- 7b. 특별지원금 (common_codes + 매핑별 월 1회; 세금 산출 base는 v_tax_base_gross 유지)
+                    -- 6b. 특별지원금 산출 (세금 전; 프리랜서 과세표준에 합산)
                     SET v_ss_total = 0;
                     SET p_special_support_amount = 0;
                     SELECT cc.extra_data INTO v_ss_extra_json
@@ -341,10 +287,69 @@ BEGIN
                           AND m.consultant_id = p_consultant_id
                           AND m.is_deleted = FALSE;
                     END IF;
-                    
                     SET p_special_support_amount = IFNULL(v_ss_total, 0);
-                    SET p_gross_salary = p_gross_salary + p_special_support_amount;
-                    SET p_net_salary = p_net_salary + p_special_support_amount;
+                    
+                    -- 7. 세금 및 공제 계산
+                    SET p_tax_amount = 0;
+                    SET v_withholding_amount = 0;
+                    SET v_vat_amount = 0;
+                    SET v_local_income_tax = 0;
+                    SET v_income_tax_amount = 0;
+                    SET v_4insurance_amount = 0;
+                    
+                    IF v_salary_type = 'FREELANCE' THEN
+                        -- 프리랜서 세금 계산 (과세표준 = 상담료 + 특별지원금)
+                        SET v_freelance_taxable = p_gross_salary + IFNULL(v_ss_total, 0);
+                        -- 1) 원천징수 3.3% (모든 프리랜서)
+                        SET v_withholding_amount = v_freelance_taxable * v_withholding_tax;
+                        SET p_tax_amount = p_tax_amount + v_withholding_amount;
+                        -- 지방소득세: 원천징수의 10%
+                        SET v_local_income_tax = ROUND(v_withholding_amount * 0.10, 0);
+                        SET p_tax_amount = p_tax_amount + v_local_income_tax;
+                        
+                        -- 2) 부가세 10% (사업자 등록 프리랜서만)
+                        IF v_is_business_registered = TRUE THEN
+                            SET v_vat_amount = v_freelance_taxable * v_vat;
+                            SET p_tax_amount = p_tax_amount + v_vat_amount;
+                        END IF;
+                        
+                    ELSEIF v_salary_type = 'REGULAR' THEN
+                        -- 정규직 세금 및 공제 계산
+                        -- 1) 소득세 (소득 구간별 차등 적용)
+                        SET v_income_tax_rate = CASE
+                            WHEN p_gross_salary <= 1200000 THEN 0.06      -- 6% (120만원 이하)
+                            WHEN p_gross_salary <= 4600000 THEN 0.15      -- 15% (120만원 초과 ~ 460만원)
+                            WHEN p_gross_salary <= 8800000 THEN 0.24      -- 24% (460만원 초과 ~ 880만원)
+                            WHEN p_gross_salary <= 15000000 THEN 0.35     -- 35% (880만원 초과 ~ 1500만원)
+                            WHEN p_gross_salary <= 30000000 THEN 0.38     -- 38% (1500만원 초과 ~ 3000만원)
+                            WHEN p_gross_salary <= 50000000 THEN 0.40     -- 40% (3000만원 초과 ~ 5000만원)
+                            ELSE 0.42                                     -- 42% (5000만원 초과)
+                        END;
+                        
+                        SET v_income_tax_amount = p_gross_salary * v_income_tax_rate;
+                        SET p_tax_amount = p_tax_amount + v_income_tax_amount;
+                        -- 지방소득세: 소득세의 10%
+                        SET v_local_income_tax = ROUND(v_income_tax_amount * 0.10, 0);
+                        SET p_tax_amount = p_tax_amount + v_local_income_tax;
+                        
+                        -- 2) 4대보험 (연봉 1,200만원 이상 시)
+                        IF p_gross_salary * 12 >= 12000000 THEN
+                            SET v_4insurance_amount = (p_gross_salary * v_pension_rate) + 
+                                                    (p_gross_salary * v_health_rate) + 
+                                                    (p_gross_salary * v_longterm_rate) + 
+                                                    (p_gross_salary * v_employment_rate);
+                            SET p_tax_amount = p_tax_amount + v_4insurance_amount;
+                        END IF;
+                    END IF;
+                    
+                    IF v_salary_type = 'FREELANCE' THEN
+                        SET v_tax_base_gross = v_freelance_taxable;
+                    ELSE
+                        SET v_tax_base_gross = p_gross_salary;
+                    END IF;
+                    
+                    SET p_net_salary = p_gross_salary + IFNULL(v_ss_total, 0) - p_tax_amount;
+                    SET p_gross_salary = p_gross_salary + IFNULL(v_ss_total, 0);
                     
                     -- 8. 급여 계산 데이터 저장 (테넌트 격리)
                     INSERT INTO salary_calculations (

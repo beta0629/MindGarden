@@ -10,7 +10,9 @@ import {
   extractTenantProfessionalTypeList,
   mapTenantProfessionalTypeCodesToOptions,
   mapTenantCommonCodesToGradeSelectOptions,
-  normalizeTenantCommonCodeRow
+  normalizeTenantCommonCodeRow,
+  fetchProfessionalProviderTypeSelectOptions,
+  TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH
 } from '../professionalProviderRoles';
 
 describe('professionalProviderRoles', () => {
@@ -67,5 +69,50 @@ describe('professionalProviderRoles', () => {
       { codeValue: 'G1', codeLabel: '1급', sortOrder: 1, isActive: true }
     ]);
     expect(g).toEqual([{ codeValue: 'G1', codeLabel: '1급', sortOrder: 1 }]);
+  });
+
+  test('fetchProfessionalProviderTypeSelectOptions prefers integrated getCommonCodes', async () => {
+    const getCommonCodes = jest.fn().mockResolvedValue([
+      { codeValue: 'PLAY_THERAPIST', codeLabel: '플레이', sortOrder: 2, isActive: true },
+      { codeValue: 'DEFAULT_COUNSELOR', codeLabel: '상담사', sortOrder: 1, isActive: true }
+    ]);
+    const standardizedApiGet = jest.fn();
+    const opts = await fetchProfessionalProviderTypeSelectOptions({
+      getCommonCodes,
+      standardizedApiGet
+    });
+    expect(standardizedApiGet).not.toHaveBeenCalled();
+    expect(opts.map((o) => o.value)).toEqual(['DEFAULT_COUNSELOR', 'PLAY_THERAPIST']);
+  });
+
+  test('fetchProfessionalProviderTypeSelectOptions falls back to tenant group path', async () => {
+    const getCommonCodes = jest.fn().mockResolvedValue([]);
+    const standardizedApiGet = jest.fn().mockResolvedValue({
+      codes: [
+        { codeValue: 'SPEECH_THERAPIST', codeLabel: '언어', sortOrder: 1, isActive: true }
+      ]
+    });
+    const opts = await fetchProfessionalProviderTypeSelectOptions({
+      getCommonCodes,
+      standardizedApiGet
+    });
+    expect(standardizedApiGet).toHaveBeenCalledWith(TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH);
+    expect(opts).toEqual([{ value: 'SPEECH_THERAPIST', label: '언어', sortOrder: 1 }]);
+  });
+
+  test('fetchProfessionalProviderTypeSelectOptions uses tenant when integrated yields only inactive', async () => {
+    const getCommonCodes = jest.fn().mockResolvedValue([
+      { codeValue: 'X', codeLabel: '비활성', sortOrder: 1, isActive: false }
+    ]);
+    const standardizedApiGet = jest.fn().mockResolvedValue({
+      data: [{ code_value: 'T1', korean_name: '테넌트전용', sort_order: 1, is_active: true }]
+    });
+    const opts = await fetchProfessionalProviderTypeSelectOptions({
+      getCommonCodes,
+      standardizedApiGet
+    });
+    expect(standardizedApiGet).toHaveBeenCalled();
+    expect(opts.map((o) => o.value)).toEqual(['T1']);
+    expect(opts[0].label).toBe('테넌트전용');
   });
 });

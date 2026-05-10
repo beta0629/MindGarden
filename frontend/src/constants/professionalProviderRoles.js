@@ -7,6 +7,8 @@
  */
 
 import { toDisplayString } from '../utils/safeDisplay';
+import { getCommonCodes } from '../utils/commonCodeApi';
+import StandardizedApi from '../utils/standardizedApi';
 
 /** 테넌트 공통코드 그룹명 (백엔드와 동일). */
 export const PROFESSIONAL_PROVIDER_TYPE_CODE_GROUP = 'PROFESSIONAL_PROVIDER_TYPE';
@@ -182,6 +184,44 @@ export function mapTenantCommonCodesToGradeSelectOptions(rows) {
     codeLabel: o.label,
     sortOrder: o.sortOrder
   }));
+}
+
+/**
+ * 통합 공통코드(테넌트 우선·코어 폴백)로 전문가 유형 셀렉트 옵션을 조회합니다.
+ * 통합 결과가 비면 {@link TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH} 로 재시도합니다.
+ *
+ * @param {Object} [deps]
+ * @param {typeof getCommonCodes} [deps.getCommonCodes] 기본: commonCodeApi.getCommonCodes
+ * @param {(path: string) => Promise<*>} [deps.standardizedApiGet] 기본: StandardizedApi.get
+ * @returns {Promise<{ value: string, label: string, sortOrder: number }[]>}
+ * @author CoreSolution
+ * @since 2026-05-11
+ */
+export async function fetchProfessionalProviderTypeSelectOptions(deps = {}) {
+  const resolveGetCommonCodes = deps.getCommonCodes ?? getCommonCodes;
+  const resolveStandardizedGet = deps.standardizedApiGet ?? ((path) => StandardizedApi.get(path));
+
+  let mergedList = [];
+  try {
+    const codes = await resolveGetCommonCodes(PROFESSIONAL_PROVIDER_TYPE_CODE_GROUP);
+    mergedList = Array.isArray(codes) ? codes : [];
+  } catch {
+    mergedList = [];
+  }
+
+  let options = mapTenantProfessionalTypeCodesToOptions(mergedList);
+  if (options.length > 0) {
+    return options;
+  }
+
+  try {
+    const res = await resolveStandardizedGet(TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH);
+    const rows = extractTenantCommonCodeGroupList(res);
+    options = mapTenantProfessionalTypeCodesToOptions(rows);
+  } catch {
+    options = [];
+  }
+  return options;
 }
 
 /** 레거시: 역할 문자열이 전문가 계열인지 (프론트 표시용). */

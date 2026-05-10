@@ -18,11 +18,9 @@ import { useNavigate } from 'react-router-dom';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import {
-  TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH,
-  extractTenantProfessionalTypeList,
-  mapTenantProfessionalTypeCodesToOptions,
   DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
-  FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL
+  FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL,
+  fetchProfessionalProviderTypeSelectOptions
 } from '../../../../constants/professionalProviderRoles';
 import { useNotification } from '../../../../contexts/NotificationContext';
 import { validateEmail, validatePhone } from '../../../../utils/validationUtils';
@@ -65,12 +63,10 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await StandardizedApi.get(TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH);
+        const opts = await fetchProfessionalProviderTypeSelectOptions();
         if (cancelled) {
           return;
         }
-        const rows = extractTenantProfessionalTypeList(res);
-        const opts = mapTenantProfessionalTypeCodesToOptions(rows);
         setProfessionalTypeOptions(opts);
         if (opts.length > 0) {
           setFormData((prev) => ({

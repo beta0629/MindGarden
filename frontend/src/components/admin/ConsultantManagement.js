@@ -12,10 +12,8 @@ import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 import StandardizedApi from '../../utils/standardizedApi';
 import {
     DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
-    extractTenantProfessionalTypeList,
     FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL,
-    mapTenantProfessionalTypeCodesToOptions,
-    TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH
+    fetchProfessionalProviderTypeSelectOptions
 } from '../../constants/professionalProviderRoles';
 import { CONSULTANT_COMP_PROFESSIONAL_TYPE_FORM } from '../../constants/consultantComprehensiveStrings';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -71,12 +69,11 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         let cancelled = false;
         (async () => {
             try {
-                const res = await StandardizedApi.get(TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH);
+                const opts = await fetchProfessionalProviderTypeSelectOptions();
                 if (cancelled) {
                     return;
                 }
-                const rows = extractTenantProfessionalTypeList(res);
-                setProfessionalTypeOptions(mapTenantProfessionalTypeCodesToOptions(rows));
+                setProfessionalTypeOptions(opts);
             } catch (e) {
                 console.error('전문가 유형 공통코드 로드 실패:', e);
                 if (!cancelled) {

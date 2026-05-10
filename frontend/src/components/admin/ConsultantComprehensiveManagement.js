@@ -55,13 +55,12 @@ import {
     LOGIN_PASSWORD_POLICY_HINT_ONE_LINE
 } from '../../constants/passwordPolicyUi';
 import {
-    TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH,
     TENANT_CONSULTANT_GRADE_CODES_PATH,
     extractTenantCommonCodeGroupList,
-    mapTenantProfessionalTypeCodesToOptions,
     mapTenantCommonCodesToGradeSelectOptions,
     DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
-    FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL
+    FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL,
+    fetchProfessionalProviderTypeSelectOptions
 } from '../../constants/professionalProviderRoles';
 
 /** ContentHeader / 본문 main aria-labelledby 연동 */
@@ -126,9 +125,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const loadProfessionalTypeCodes = useCallback(async() => {
         const fetchOnce = async() => {
             await sessionManager.checkSession(true);
-            const res = await StandardizedApi.get(TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH);
-            const rows = extractTenantCommonCodeGroupList(res);
-            return mapTenantProfessionalTypeCodesToOptions(rows);
+            return fetchProfessionalProviderTypeSelectOptions();
         };
         try {
             let opts = await fetchOnce();

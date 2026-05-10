@@ -69,17 +69,17 @@ BEGIN
     
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
-        ROLLBACK;
         GET DIAGNOSTICS CONDITION 1
             v_error_message = MESSAGE_TEXT;
         SET p_success = FALSE;
-        SET p_message = CONCAT('급여 계산 중 오류 발생: ', v_error_message);
+        SET p_message = CONCAT('급여 계산 중 오류 발생: ', IFNULL(v_error_message, '알 수 없는 DB 오류'));
         SET p_calculation_id = NULL;
         SET p_gross_salary = 0;
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_erp_sync_id = NULL;
         SET p_special_support_amount = 0;
+        ROLLBACK;
     END;
     
     START TRANSACTION;
@@ -373,10 +373,11 @@ BEGIN
                         total_salary,
                         status, 
                         calculated_at, 
+                        calculated_by,
                         tenant_id,
                         created_at, 
-                        created_by,
                         updated_at,
+                        version,
                         is_deleted
                     ) VALUES (
                         p_consultant_id, 
@@ -397,10 +398,11 @@ BEGIN
                         p_gross_salary,
                         'CALCULATED', 
                         NOW(), 
+                        p_triggered_by,
                         p_tenant_id,
                         NOW(), 
-                        p_triggered_by,
                         NOW(),
+                        0,
                         FALSE
                     );
                     

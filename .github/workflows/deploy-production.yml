@@ -12,6 +12,7 @@ name: 🚀 Core Solution 운영 배포
 # deploy-standardized-procedures.sh prod(DEPLOY_TARGET=production_mysql) 를 서비스 재시작 전에 실행합니다.
 # 없으면 Notice 후 스킵 — 별도 「표준화 프로시저 배포 (운영 MySQL)」 워크플로도 계속 사용 가능.
 # DB 계정: 기본 PRODUCTION_DB_USER=mindgarden. 1227 시 PRODUCTION_DB_PROCEDURE_* → PRODUCTION_MYSQL_ROOT_PASSWORD → root+앱비번.
+# push 트리거: 본 파일 변경만으로도 코어 운영 배포 워크플로가 실행됨(paths에 포함).
 
 on:
   push:

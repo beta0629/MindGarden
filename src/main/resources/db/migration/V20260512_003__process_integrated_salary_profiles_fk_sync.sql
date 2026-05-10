@@ -1,12 +1,14 @@
+-- ProcessIntegratedSalaryCalculation: salary_profiles FK + collation utf8mb4_unicode_ci 정합.
+
 -- =====================================================
 -- 통합 급여 계산 프로시저 (표준화 버전)
 -- 운영 반영: 표준 시그니처 5 IN + 8 OUT (특별지원금 OUT 포함). 구버전 12파라미터는 PlSqlSalaryManagementServiceImpl 레거시 분기.
 -- 배포: 저장소 `.github/workflows/deploy-procedures-production-mysql.yml` 또는 `database/schema/procedures_standardized/deploy_standardized_procedures.sh` 로 동일 본문을 적용하세요.
 -- schedules 기간: 상담 일자는 date(DATE); start_time/end_time은 TIME(6)만 저장 → 기간은 s.date BETWEEN ...
 -- =====================================================
-DELIMITER //
+DELIMITER $$
 
-DROP PROCEDURE IF EXISTS ProcessIntegratedSalaryCalculation //
+DROP PROCEDURE IF EXISTS ProcessIntegratedSalaryCalculation $$
 
 CREATE PROCEDURE ProcessIntegratedSalaryCalculation(
     IN p_consultant_id BIGINT,
@@ -535,7 +537,7 @@ BEGIN
         END IF;
     END IF;
     
-END //
+END $$
 
 DELIMITER ;
 

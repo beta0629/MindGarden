@@ -26,6 +26,8 @@ CREATE PROCEDURE ProcessIntegratedSalaryCalculation(
 BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_salary_profile_id BIGINT DEFAULT NULL;
+    -- salary_calculations.salary_profile_id FK → salary_profiles(id). consultant_salary_profiles.id 와 다름.
+    DECLARE v_fk_salary_profile_id BIGINT DEFAULT NULL;
     DECLARE v_salary_type VARCHAR(50);
     DECLARE v_base_salary DECIMAL(15,2) DEFAULT 0;
     DECLARE v_hourly_rate DECIMAL(10,2) DEFAULT 0;
@@ -187,6 +189,47 @@ BEGIN
                     SET p_special_support_amount = 0;
                     ROLLBACK;
                 ELSE
+                    -- salary_profiles PK 조회·없으면 consultant_salary_profiles 기준으로 1행 생성 (FK 충족)
+                    SET v_fk_salary_profile_id = NULL;
+                    SELECT sp.id INTO v_fk_salary_profile_id
+                    FROM salary_profiles sp
+                    WHERE sp.tenant_id COLLATE utf8mb4_unicode_ci = p_tenant_id COLLATE utf8mb4_unicode_ci
+                      AND sp.profile_name COLLATE utf8mb4_unicode_ci =
+                          CONCAT('CSP_LINK_', CAST(v_salary_profile_id AS CHAR)) COLLATE utf8mb4_unicode_ci
+                      AND (sp.is_deleted = FALSE OR sp.is_deleted IS NULL)
+                    LIMIT 1;
+
+                    IF v_fk_salary_profile_id IS NULL THEN
+                        INSERT INTO salary_profiles (
+                            profile_name,
+                            description,
+                            base_salary,
+                            hourly_rate,
+                            commission_rate,
+                            bonus_rate,
+                            is_active,
+                            tenant_id,
+                            created_at,
+                            updated_at,
+                            is_deleted,
+                            version
+                        ) VALUES (
+                            CONCAT('CSP_LINK_', v_salary_profile_id) COLLATE utf8mb4_unicode_ci,
+                            'consultant_salary_profiles 동기화(급여 확정)',
+                            v_base_salary,
+                            v_hourly_rate,
+                            NULL,
+                            NULL,
+                            TRUE,
+                            p_tenant_id,
+                            NOW(),
+                            NOW(),
+                            FALSE,
+                            0
+                        );
+                        SET v_fk_salary_profile_id = LAST_INSERT_ID();
+                    END IF;
+
                     -- 프리랜서 등급별 요율: FREELANCE_BASE_RATE (users.grade CONSULTANT_* ↔ JUNIOR_RATE 등)
                     IF v_salary_type = 'FREELANCE' AND v_grade IS NOT NULL AND v_grade != '' THEN
                         SET v_freelance_rate_code = CASE TRIM(v_grade)
@@ -381,7 +424,7 @@ BEGIN
                         is_deleted
                     ) VALUES (
                         p_consultant_id, 
-                        v_salary_profile_id, 
+                        v_fk_salary_profile_id, 
                         v_calculation_period, 
                         p_period_start, 
                         p_period_end,

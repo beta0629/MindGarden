@@ -135,7 +135,7 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         when(callableStatement.getBigDecimal(8)).thenReturn(BigDecimal.ZERO);
         when(callableStatement.getBigDecimal(9)).thenReturn(BigDecimal.ZERO);
         when(callableStatement.getLong(10)).thenReturn(0L);
-        when(callableStatement.getBoolean(11)).thenReturn(false);
+        when(callableStatement.getObject(11)).thenReturn(Boolean.FALSE);
         when(callableStatement.getString(12)).thenReturn(null);
         when(callableStatement.getBigDecimal(13)).thenReturn(BigDecimal.ZERO);
 
@@ -166,7 +166,7 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
     }
 
     private void stubCalculateSalaryPreviewOut11() throws Exception {
-        when(callableStatement.getBoolean(5)).thenReturn(true);
+        when(callableStatement.getObject(5)).thenReturn(Boolean.TRUE);
         when(callableStatement.getString(6)).thenReturn("ok");
         when(callableStatement.getBigDecimal(7)).thenReturn(new BigDecimal("100000"));
         when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("90000"));
@@ -176,7 +176,7 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
     }
 
     private void stubCalculateSalaryPreviewOut10() throws Exception {
-        when(callableStatement.getBoolean(5)).thenReturn(true);
+        when(callableStatement.getObject(5)).thenReturn(Boolean.TRUE);
         when(callableStatement.getString(6)).thenReturn("ok");
         when(callableStatement.getBigDecimal(7)).thenReturn(new BigDecimal("200000"));
         when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("180000"));
@@ -190,7 +190,7 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("250000"));
         when(callableStatement.getBigDecimal(9)).thenReturn(new BigDecimal("50000"));
         when(callableStatement.getLong(10)).thenReturn(2002L);
-        when(callableStatement.getBoolean(11)).thenReturn(true);
+        when(callableStatement.getObject(11)).thenReturn(Boolean.TRUE);
         when(callableStatement.getString(12)).thenReturn("integrated-ok");
         when(callableStatement.getBigDecimal(13)).thenReturn(new BigDecimal("88888.00"));
     }
@@ -201,7 +201,7 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("70000"));
         when(callableStatement.getBigDecimal(9)).thenReturn(new BigDecimal("10000"));
         when(callableStatement.getLong(10)).thenReturn(4004L);
-        when(callableStatement.getBoolean(11)).thenReturn(true);
+        when(callableStatement.getObject(11)).thenReturn(Boolean.TRUE);
         when(callableStatement.getString(12)).thenReturn("twelve-out");
     }
 }

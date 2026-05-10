@@ -121,7 +121,7 @@ BEGIN
         FROM users
         WHERE id = p_consultant_id 
           AND tenant_id = p_tenant_id
-          AND role = 'CONSULTANT'
+          AND role IN ('CONSULTANT', 'PLAY_THERAPIST', 'SPEECH_THERAPIST')
           AND is_active = TRUE
           AND is_deleted = FALSE;
         
@@ -151,7 +151,9 @@ BEGIN
             
             IF v_calculation_exists > 0 THEN
                 SET p_success = FALSE;
-                SET p_message = '이미 해당 기간의 급여 계산이 존재합니다.';
+                SET p_message = CONCAT(
+                    '동일 상담사·동일 월(', v_calculation_period,
+                    ')에 급여 확정이 이미 있습니다. 중복 확정은 불가합니다.');
                 SET p_calculation_id = NULL;
                 SET p_gross_salary = 0;
                 SET p_net_salary = 0;

@@ -173,7 +173,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             result.put("netSalary", stmt.getBigDecimal(8));
             result.put("taxAmount", stmt.getBigDecimal(9));
             result.put("erpSyncId", stmt.getLong(10));
-            result.put("success", stmt.getBoolean(11));
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 11));
             result.put("message", stmt.getString(12));
             result.put("specialSupportAmount", stmt.getBigDecimal(13));
         }
@@ -212,7 +212,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             result.put("netSalary", stmt.getBigDecimal(8));
             result.put("taxAmount", stmt.getBigDecimal(9));
             result.put("erpSyncId", stmt.getLong(10));
-            result.put("success", stmt.getBoolean(11));
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 11));
             result.put("message", stmt.getString(12));
             result.put("specialSupportAmount", BigDecimal.ZERO);
         }
@@ -246,7 +246,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             result.put("netSalary", stmt.getBigDecimal(7));
             result.put("taxAmount", stmt.getBigDecimal(8));
             result.put("erpSyncId", stmt.getLong(9));
-            result.put("success", stmt.getBoolean(10));
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 10));
             result.put("message", stmt.getString(11));
             result.put("specialSupportAmount", BigDecimal.ZERO);
         }
@@ -322,7 +322,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             stmt.execute();
             
             // 결과 추출
-            result.put("success", stmt.getBoolean(3));
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 3));
             result.put("message", stmt.getString(4));
             
             log.info("✅ PL/SQL 급여 승인 완료: Success={}", result.get("success"));
@@ -360,7 +360,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             stmt.execute();
             
             // 결과 추출
-            result.put("success", stmt.getBoolean(3));
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 3));
             result.put("message", stmt.getString(4));
             
             log.info("✅ PL/SQL 급여 지급 완료: Success={}", result.get("success"));
@@ -419,7 +419,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             stmt.execute();
             
             // 결과 추출
-            result.put("success", stmt.getBoolean(4));
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 4));
             result.put("message", stmt.getString(5));
             result.put("totalCalculations", stmt.getInt(6));
             result.put("totalGrossSalary", stmt.getBigDecimal(7));
@@ -557,6 +557,29 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
     }
 
     /**
+     * MySQL BOOLEAN OUT이 TINYINT 등으로 반환될 때 {@link CallableStatement#getBoolean(int)}만으로는
+     * 누락될 수 있어 {@link CallableStatement#getObject(int)}로 읽는다.
+     *
+     * @param stmt  실행 완료된 CallableStatement
+     * @param index 1-based OUT 파라미터 인덱스
+     * @return true에 해당하면 true
+     */
+    private static boolean readMysqlProcedureBooleanOut(CallableStatement stmt, int index) throws SQLException {
+        Object v = stmt.getObject(index);
+        if (v == null) {
+            return false;
+        }
+        if (v instanceof Boolean) {
+            return (Boolean) v;
+        }
+        if (v instanceof Number) {
+            return ((Number) v).intValue() != 0;
+        }
+        String s = String.valueOf(v).trim();
+        return "1".equals(s) || "true".equalsIgnoreCase(s);
+    }
+
+    /**
      * 표준 10파라미터: 4 IN(마지막 tenant_id) + 6 OUT(success, message, gross, net, tax, count).
      */
     private Map<String, Object> executeCalculateSalaryPreviewStandard(
@@ -577,7 +600,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             stmt.registerOutParameter(9, Types.DECIMAL);
             stmt.registerOutParameter(10, Types.INTEGER);
             stmt.execute();
-            result.put("success", stmt.getBoolean(5));
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 5));
             result.put("message", stmt.getString(6));
             result.put("grossSalary", stmt.getBigDecimal(7));
             result.put("netSalary", stmt.getBigDecimal(8));
@@ -610,7 +633,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             stmt.registerOutParameter(10, Types.INTEGER);
             stmt.registerOutParameter(11, Types.DECIMAL);
             stmt.execute();
-            result.put("success", stmt.getBoolean(5));
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 5));
             result.put("message", stmt.getString(6));
             result.put("grossSalary", stmt.getBigDecimal(7));
             result.put("netSalary", stmt.getBigDecimal(8));
@@ -646,7 +669,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             result.put("netSalary", stmt.getBigDecimal(5));
             result.put("taxAmount", stmt.getBigDecimal(6));
             result.put("consultationCount", stmt.getInt(7));
-            result.put("success", stmt.getBoolean(8));
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 8));
             result.put("message", stmt.getString(9));
             result.put("specialSupportAmount", BigDecimal.ZERO);
         }

@@ -374,7 +374,30 @@ class SalaryManagementControllerIntegrationTest {
                             .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").exists())
                     .andExpect(jsonPath("$.message").value("급여 계산 확정에 실패했습니다."));
+        }
+
+        @Test
+        @DisplayName("I-API-14c: POST /confirm success=false·프로시저 한글 메시지 → 400, 동일 문구 반환")
+        void postConfirm_failureWithProcedureMessage_returns400WithProcedureMessage() throws Exception {
+            String korean = "동일 상담사·동일 월(2026-04)에 급여 확정이 이미 있습니다. 중복 확정은 불가합니다.";
+            Map<String, Object> failed = new HashMap<>();
+            failed.put("success", false);
+            failed.put("message", korean);
+            when(plSqlSalaryManagementService.processIntegratedSalaryCalculation(
+                    eq(22L), any(LocalDate.class), any(LocalDate.class), any()))
+                    .thenReturn(failed);
+
+            mockMvc.perform(post("/api/v1/admin/salary/confirm")
+                            .param("consultantId", "22")
+                            .param("periodStart", "2026-04-01")
+                            .param("periodEnd", "2026-04-30")
+                            .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
+                            .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value(korean));
         }
 
         @Test

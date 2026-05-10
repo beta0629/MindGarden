@@ -115,7 +115,7 @@ BEGIN
     FROM users
     WHERE id = p_consultant_id 
       AND tenant_id = p_tenant_id
-      AND role = 'CONSULTANT'
+      AND role IN ('CONSULTANT', 'PLAY_THERAPIST', 'SPEECH_THERAPIST')
       AND is_active = TRUE
       AND is_deleted = FALSE;
     

@@ -17,3 +17,14 @@ export const CONSULTANT_COMP_PASSWORD_RESET = {
     BTN_LABEL: '비밀번호 초기화',
     BTN_TITLE: '비밀번호 초기화'
 };
+
+/**
+ * 전문가 유형(PROFESSIONAL_PROVIDER_TYPE) — 레거시 ConsultantManagement 등 폼·목록 라벨 SSOT
+ *
+ * @author CoreSolution
+ * @since 2026-05-11
+ */
+export const CONSULTANT_COMP_PROFESSIONAL_TYPE_FORM = {
+    LABEL_REQUIRED: '전문가 유형 *',
+    LIST_CAPTION: '전문가 유형'
+};

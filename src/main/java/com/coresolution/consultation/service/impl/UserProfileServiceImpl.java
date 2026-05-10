@@ -628,6 +628,7 @@ public class UserProfileServiceImpl implements UserProfileService {
             .ageGroup(user.getAgeGroup())
             .role(user.getRole())
             .grade(user.getGrade())
+            .professionalProviderTypeCode(user.getProfessionalProviderTypeCode())
             .experiencePoints(user.getExperiencePoints())
             .totalConsultations(user.getTotalConsultations())
             .profileImageUrl(user.getProfileImageUrl())

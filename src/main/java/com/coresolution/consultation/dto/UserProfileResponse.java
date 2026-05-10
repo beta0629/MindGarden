@@ -42,6 +42,8 @@ public class UserProfileResponse {
     private String ageGroup;
     private com.coresolution.consultation.constant.UserRole role;
     private String grade;
+    /** {@code users.professional_provider_type_code} (전문가 유형 공통코드 값). */
+    private String professionalProviderTypeCode;
     private Long experiencePoints;
     private Integer totalConsultations;
     private String profileImageUrl;

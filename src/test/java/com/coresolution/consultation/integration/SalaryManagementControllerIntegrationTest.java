@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -353,6 +354,27 @@ class SalaryManagementControllerIntegrationTest {
                             .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true));
+        }
+
+        @Test
+        @DisplayName("I-API-14b: POST /confirm success=false·message=null → 400, 응답 message 비어 있지 않음")
+        void postConfirm_failureNullProcedureMessage_returns400WithNonEmptyMessage() throws Exception {
+            Map<String, Object> failed = new HashMap<>();
+            failed.put("success", false);
+            failed.put("message", null);
+            when(plSqlSalaryManagementService.processIntegratedSalaryCalculation(
+                    eq(1L), any(LocalDate.class), any(LocalDate.class), any()))
+                    .thenReturn(failed);
+
+            mockMvc.perform(post("/api/v1/admin/salary/confirm")
+                            .param("consultantId", "1")
+                            .param("periodStart", "2025-06-01")
+                            .param("periodEnd", "2025-06-30")
+                            .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
+                            .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("급여 계산 확정에 실패했습니다."));
         }
 
         @Test

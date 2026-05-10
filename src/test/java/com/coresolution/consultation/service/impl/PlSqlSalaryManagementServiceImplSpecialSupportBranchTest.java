@@ -124,6 +124,30 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
     }
 
     @Test
+    @DisplayName("ProcessIntegrated: success=false·p_message=null이면 기본 실패 문구로 채움")
+    void processIntegrated_whenFailureWithNullMessage_fillsDefaultUserMessage() throws Exception {
+        when(jdbcTemplate.queryForObject(
+                argThat((String sql) -> sql.contains("ProcessIntegratedSalaryCalculation") && sql.contains("COUNT")),
+                eq(Integer.class)))
+                .thenReturn(13);
+        when(callableStatement.getLong(6)).thenReturn(0L);
+        when(callableStatement.getBigDecimal(7)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getBigDecimal(8)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getBigDecimal(9)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getLong(10)).thenReturn(0L);
+        when(callableStatement.getBoolean(11)).thenReturn(false);
+        when(callableStatement.getString(12)).thenReturn(null);
+        when(callableStatement.getBigDecimal(13)).thenReturn(BigDecimal.ZERO);
+
+        Map<String, Object> result = service.processIntegratedSalaryCalculation(5L,
+                LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 31), "tester");
+
+        assertThat(result.get("success")).isEqualTo(false);
+        assertThat(result.get("message")).isInstanceOf(String.class);
+        assertThat((String) result.get("message")).isNotBlank();
+    }
+
+    @Test
     @DisplayName("ProcessIntegratedSalaryCalculation 12파라미터: specialSupportAmount는 0")
     void processIntegrated_whenTwelveParams_specialSupportAmountZero() throws Exception {
         when(jdbcTemplate.queryForObject(

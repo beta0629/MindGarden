@@ -40,6 +40,22 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             "표준 ProcessIntegratedSalaryCalculation 프로시저 배포가 필요할 수 있습니다 "
                     + "(deploy-procedures-production-mysql.yml 또는 deploy_standardized_procedures.sh).";
 
+    /** DB OUT p_message가 NULL일 때 사용자에게 전달할 통합 확정 실패 문구 */
+    private static final String DEFAULT_INTEGRATED_CALC_FAILURE_USER_MESSAGE =
+            "급여 계산 확정에 실패했습니다. 자세한 사유가 없으면 같은 기간 중복 확정 여부를 확인해 주세요.";
+
+    private static final String DEFAULT_PREVIEW_FAILURE_USER_MESSAGE =
+            "급여 계산 미리보기에 실패했습니다. DB에서 사유를 반환하지 않았습니다.";
+
+    private static final String DEFAULT_APPROVE_FAILURE_USER_MESSAGE =
+            "급여 승인에 실패했습니다. DB에서 사유를 반환하지 않았습니다.";
+
+    private static final String DEFAULT_PAY_FAILURE_USER_MESSAGE =
+            "급여 지급에 실패했습니다. DB에서 사유를 반환하지 않았습니다.";
+
+    private static final String DEFAULT_STATISTICS_FAILURE_USER_MESSAGE =
+            "급여 통계 조회에 실패했습니다. DB에서 사유를 반환하지 않았습니다.";
+
     private final JdbcTemplate jdbcTemplate;
     
     @Override
@@ -110,7 +126,16 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                 result.put("message", "급여 계산 중 오류가 발생했습니다: " + e.getMessage());
             }
         }
-        
+
+        ensureUserFacingMessageWhenProcedureFailed(result, DEFAULT_INTEGRATED_CALC_FAILURE_USER_MESSAGE);
+        if (!Boolean.TRUE.equals(result.get("success"))) {
+            Object calcIdObj = result.get("calculationId");
+            long calcId = calcIdObj instanceof Number num ? num.longValue() : -1L;
+            if (calcId == 0L) {
+                log.info("ProcessIntegratedSalaryCalculation: calculationId=0·금액 0은 프로시저 거부(중복 확정 등)일 수 있음.");
+            }
+        }
+
         return result;
     }
 
@@ -307,7 +332,8 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             result.put("success", false);
             result.put("message", "급여 승인 중 오류가 발생했습니다: " + e.getMessage());
         }
-        
+
+        ensureUserFacingMessageWhenProcedureFailed(result, DEFAULT_APPROVE_FAILURE_USER_MESSAGE);
         return result;
     }
     
@@ -344,7 +370,8 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             result.put("success", false);
             result.put("message", "급여 지급 중 오류가 발생했습니다: " + e.getMessage());
         }
-        
+
+        ensureUserFacingMessageWhenProcedureFailed(result, DEFAULT_PAY_FAILURE_USER_MESSAGE);
         return result;
     }
     
@@ -409,7 +436,8 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             result.put("success", false);
             result.put("message", "급여 통계 조회 중 오류가 발생했습니다: " + e.getMessage());
         }
-        
+
+        ensureUserFacingMessageWhenProcedureFailed(result, DEFAULT_STATISTICS_FAILURE_USER_MESSAGE);
         return result;
     }
     
@@ -499,6 +527,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                 result.put("message", "급여 미리보기 중 오류가 발생했습니다: " + e.getMessage());
             }
         }
+        ensureUserFacingMessageWhenProcedureFailed(result, DEFAULT_PREVIEW_FAILURE_USER_MESSAGE);
         return result;
     }
 
@@ -670,6 +699,32 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                     rows);
         } catch (Exception ex) {
             log.warn("프로시저 파라미터 진단 조회 실패: error={}", ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * success가 true가 아닌데 message가 null이거나 공백이면 사용자용 기본 문구를 넣는다.
+     *
+     * @param result                 프로시저 결과 맵
+     * @param defaultWhenBlankOrNull 실패 시 message가 비어 있을 때 사용할 문구
+     */
+    private static void ensureUserFacingMessageWhenProcedureFailed(
+            Map<String, Object> result,
+            String defaultWhenBlankOrNull) {
+        if (Boolean.TRUE.equals(result.get("success"))) {
+            return;
+        }
+        Object raw = result.get("message");
+        String text;
+        if (raw == null) {
+            text = null;
+        } else if (raw instanceof String str) {
+            text = str;
+        } else {
+            text = String.valueOf(raw);
+        }
+        if (text == null || text.isBlank()) {
+            result.put("message", defaultWhenBlankOrNull);
         }
     }
 }

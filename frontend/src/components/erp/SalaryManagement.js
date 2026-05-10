@@ -19,6 +19,7 @@ import {
   SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL,
   SALARY_PREVIEW_CONSULTATION_FEE_LABEL,
   SALARY_PREVIEW_PRE_TAX_TOTAL_LABEL,
+  SALARY_CALC_DETAIL_TAX_DEDUCTIONS_LABEL,
   TAX_BREAKDOWN_ORDER,
   TAX_BREAKDOWN_LABELS
 } from '../../constants/salaryConstants';
@@ -1067,7 +1068,7 @@ const SalaryManagement = () => {
                           </div>
                           {calculation.taxAmount != null && (
                             <div className="salary-management__detail-row salary-management__detail-row--tax">
-                              <span>원천징수 (3.3%)</span>
+                              <span>{SALARY_CALC_DETAIL_TAX_DEDUCTIONS_LABEL}</span>
                               <span>-{formatCurrency(calculation.taxAmount)}</span>
                             </div>
                           )}

@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 /**
- * 프리랜서(사업소득) 원천징수 3.3% 계산.
+ * 프리랜서(사업소득) 원천징수 계산. 적용율 3.3%는 국세 3%와 지방세 0.3%를 합산한 비율(별도 가산 없음).
  * <p>
  * 부가세(VAT) 계산과 별도이며, 저장 시 {@link com.coresolution.consultation.entity.erp.financial.FinancialTransaction#getWithholdingTaxAmount()}에
  * 원천징수 예정액을 기록합니다({@code taxAmount}는 VAT 전용).
@@ -15,7 +15,7 @@ import java.math.RoundingMode;
  */
 public final class FreelanceWithholdingTaxUtil {
 
-    /** 사업소득 원천징수율 (3.3%) */
+    /** 사업소득 원천징수 합산율(국세 3% + 지방세 0.3% = 3.3%) */
     public static final BigDecimal FREELANCE_WITHHOLDING_RATE = new BigDecimal("0.033");
 
     /** 급여 프로필 {@code salaryType} 값 — 프리랜서 */

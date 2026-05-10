@@ -133,12 +133,25 @@ export const TAX_BREAKDOWN_ORDER = [
 ];
 
 export const TAX_BREAKDOWN_LABELS = {
-  withholdingTax: '원천징수세',
-  localIncomeTax: '지방소득세',
+  withholdingTax: '국세·지방세(원천징수, 합계 3.3%)',
+  localIncomeTax: '지방소득세(정규직 등)',
   vat: '부가가치세',
   incomeTax: '소득세',
   nationalPension: '국민연금',
   fourInsurance: '4대보험'
+};
+
+/**
+ * salary_tax_calculations.tax_type 및 세금 내역 API 한글 표시
+ * 사업소득 원천징수: 국세 3% + 지방세 0.3% = 합계 3.3%(원 미만 절사는 별도 유틸 규칙)
+ */
+export const SALARY_TAX_ROW_TYPE_LABELS = {
+  WITHHOLDING_TAX: '원천징수(국세 3%, 지방세 0.3%, 합계 3.3%)',
+  LOCAL_INCOME_TAX: '지방소득세(정규직 등)',
+  VAT: '부가가치세',
+  INCOME_TAX: '소득세',
+  FOUR_INSURANCE: '4대보험',
+  ADDITIONAL_TAX: '추가세금'
 };
 
 export const SALARY_CSS_CLASSES = {
@@ -227,6 +240,9 @@ export const SALARY_CALC_DETAIL_CONSULTATION_LABEL = '상담(건당) 급여';
 export const SALARY_CALC_DETAIL_HOURLY_LABEL = '시간당 급여';
 /** DB에 기본·건당 급여가 동일 금액으로 중복 저장된 경우 한 줄로 합침 */
 export const SALARY_CALC_DETAIL_MERGED_DEDUP_LABEL = '급여 산정액';
+
+/** 급여 계산 내역: 통합 확정 시 원천징수 외 지방소득세 등이 포함될 수 있음 */
+export const SALARY_CALC_DETAIL_TAX_DEDUCTIONS_LABEL = '세금·공제';
 
 export const SALARY_DEFAULTS = {
   PAY_DAY_CODE: 'TENTH',

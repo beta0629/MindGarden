@@ -9,7 +9,7 @@ export const FINANCIAL_AMOUNT_STACK_LABEL_TOTAL = '승인·청구 총액(거래 
 export const FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY = '공급가액';
 export const FINANCIAL_AMOUNT_STACK_LABEL_VAT = '부가세(VAT)';
 /** 사업소득 원천징수 예정 — 스택 4번 */
-export const FINANCIAL_WITHHOLDING_TAX_LABEL = '원천징수(3.3%) 예정';
+export const FINANCIAL_WITHHOLDING_TAX_LABEL = '원천징수 예정(국세 3%, 지방세 0.3%, 합계 3.3%)';
 /** 수입·taxIncluded=true 거래 금액 옆 배지 */
 export const FINANCIAL_TAX_INCLUDED_LABEL = '부가세 포함가';
 export const FINANCIAL_CARD_MERCHANT_FEE_LABEL = '카드 가맹점 수수료';

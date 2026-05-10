@@ -10,7 +10,8 @@ import StandardizedApi from '../../utils/standardizedApi';
 import {
   SALARY_API_ENDPOINTS,
   TAX_BREAKDOWN_ORDER,
-  TAX_BREAKDOWN_LABELS
+  TAX_BREAKDOWN_LABELS,
+  SALARY_TAX_ROW_TYPE_LABELS
 } from '../../constants/salaryConstants';
 import { showNotification } from '../../utils/notification';
 import { Calculator, Receipt, Settings } from 'lucide-react';
@@ -102,12 +103,12 @@ const TaxManagement = () => {
     };
 
     const taxTypes = [
-        { value: 'WITHHOLDING_TAX', label: '원천징수', colorKey: 'primary' },
-        { value: 'VAT', label: '부가세', colorKey: 'success' },
-        { value: 'INCOME_TAX', label: '소득세', colorKey: 'error' },
-        { value: 'FOUR_INSURANCE', label: '4대보험', colorKey: 'info' },
-        { value: 'LOCAL_INCOME_TAX', label: '지방소득세', colorKey: 'neutral' },
-        { value: 'ADDITIONAL_TAX', label: '추가세금', colorKey: 'warning' }
+        { value: 'WITHHOLDING_TAX', label: SALARY_TAX_ROW_TYPE_LABELS.WITHHOLDING_TAX, colorKey: 'primary' },
+        { value: 'VAT', label: SALARY_TAX_ROW_TYPE_LABELS.VAT, colorKey: 'success' },
+        { value: 'INCOME_TAX', label: SALARY_TAX_ROW_TYPE_LABELS.INCOME_TAX, colorKey: 'error' },
+        { value: 'FOUR_INSURANCE', label: SALARY_TAX_ROW_TYPE_LABELS.FOUR_INSURANCE, colorKey: 'info' },
+        { value: 'LOCAL_INCOME_TAX', label: SALARY_TAX_ROW_TYPE_LABELS.LOCAL_INCOME_TAX, colorKey: 'neutral' },
+        { value: 'ADDITIONAL_TAX', label: SALARY_TAX_ROW_TYPE_LABELS.ADDITIONAL_TAX, colorKey: 'warning' }
     ];
 
     return (

@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Receipt, User, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
 import UnifiedModal from './modals/UnifiedModal';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import { SALARY_CSS_CLASSES, SALARY_MESSAGES, TAX_TYPE_LABELS, SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
+import {
+  SALARY_CSS_CLASSES,
+  SALARY_MESSAGES,
+  SALARY_TAX_ROW_TYPE_LABELS,
+  TAX_TYPE_LABELS,
+  SALARY_API_ENDPOINTS
+} from '../../constants/salaryConstants';
 import StandardizedApi from '../../utils/standardizedApi';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
@@ -74,9 +80,8 @@ const TaxDetailsModal = ({
   }, [isOpen, calculationId]);
 
   // 세금 유형 한글 변환
-  const getTaxTypeLabel = (taxType) => {
-    return TAX_TYPE_LABELS[taxType] || taxType;
-  };
+  const getTaxTypeLabel = (taxType) =>
+    SALARY_TAX_ROW_TYPE_LABELS[taxType] || TAX_TYPE_LABELS[taxType] || taxType;
 
   // 금액 포맷팅
   const formatAmount = (amount) => {

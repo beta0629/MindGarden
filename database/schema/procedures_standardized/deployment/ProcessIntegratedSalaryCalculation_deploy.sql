@@ -348,9 +348,7 @@ BEGIN
                         -- 1) 원천징수 3.3% (모든 프리랜서)
                         SET v_withholding_amount = v_freelance_taxable * v_withholding_tax;
                         SET p_tax_amount = p_tax_amount + v_withholding_amount;
-                        -- 지방소득세: 원천징수의 10%
-                        SET v_local_income_tax = ROUND(v_withholding_amount * 0.10, 0);
-                        SET p_tax_amount = p_tax_amount + v_local_income_tax;
+                        -- 원천징수율 3.3% = 국세·지방 합산(별도 10% 가산 없음)
                         
                         -- 2) 부가세 10% (사업자 등록 프리랜서만)
                         IF v_is_business_registered = TRUE THEN
@@ -486,7 +484,7 @@ BEGIN
                             base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
                         ) VALUES (
                             p_tenant_id, p_calculation_id, 'WITHHOLDING_TAX', '원천징수', v_withholding_tax,
-                            v_tax_base_gross, v_tax_base_gross, v_withholding_amount, '프리랜서 원천징수 3.3%', TRUE, NOW(), NOW()
+                            v_tax_base_gross, v_tax_base_gross, v_withholding_amount, '프리랜서 원천징수(국세 3%, 지방세 0.3%, 합계 3.3%)', TRUE, NOW(), NOW()
                         );
                     END IF;
                     IF v_local_income_tax > 0 THEN
@@ -497,7 +495,7 @@ BEGIN
                             p_tenant_id, p_calculation_id, 'LOCAL_INCOME_TAX', '지방소득세', 0.10,
                             IF(v_withholding_amount > 0, v_withholding_amount, v_income_tax_amount),
                             IF(v_withholding_amount > 0, v_withholding_amount, v_income_tax_amount),
-                            v_local_income_tax, '원천징수/소득세의 10%', TRUE, NOW(), NOW()
+                            v_local_income_tax, '정규직 지방소득세(소득세의 10%)', TRUE, NOW(), NOW()
                         );
                     END IF;
                     IF v_vat_amount > 0 THEN

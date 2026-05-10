@@ -259,4 +259,4 @@ export const FM_DETAIL_MODAL = {
 };
 
 export const FM_WITHHOLDING_DETAIL_HINT =
-  '(입금 총액 대비 사업소득 원천징수 예정, 부가세와 별개)';
+  '(입금 총액 대비 사업소득 원천징수 예정: 국세 3%, 지방세 0.3%, 합계 3.3%. 부가세와 별개)';

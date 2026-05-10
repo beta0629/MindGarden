@@ -793,8 +793,8 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
     }
 
     /**
-     * Freelance preview: add special support to taxable gross, recompute withholding 3.3pct and optional VAT 10pct,
-     * and align taxAmount and netSalary (idempotent when DB procedure already matches).
+     * Freelance preview: add special support to taxable gross, recompute withholding 3.3pct only
+     * (rate already includes national + local components), optional VAT 10pct for business-registered profiles.
      */
     private void applyFreelancePreviewTotalsWithSpecialSupport(
             Long consultantId, String tenantId, Map<String, Object> result) {

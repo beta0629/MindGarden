@@ -1,6 +1,7 @@
 import React from 'react';
 import { FileText } from 'lucide-react';
 import BadgeSelect from '../../common/BadgeSelect';
+import { CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH } from '../../../constants/consultationLogAutosaveConstants';
 
 /**
  * 상담일지 작성 폼 — 상담 내용 슈퍼블록(안 B) + 추가 기록 그리드
@@ -42,6 +43,7 @@ const ConsultationLogFormPanel = ({
             name="clientCondition"
             value={formData.clientCondition}
             onChange={handleInputChange}
+            maxLength={CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH}
             placeholder="내담자의 현재 상태를 기록해주세요."
             className={[
               'mg-v2-input',

@@ -53,7 +53,7 @@ public class ConsultationRecord extends BaseEntity {
     @Column(name = "session_number")
     private Integer sessionNumber; // 상담 세션 번호
     
-    @Size(max = 1000, message = "내담자 상태는 1000자 이하여야 합니다.")
+    @Size(max = 2000, message = "내담자 상태는 2000자 이하여야 합니다.")
     @Column(name = "client_condition", columnDefinition = "TEXT")
     private String clientCondition; // 내담자 현재 상태
     

@@ -2,8 +2,11 @@ package com.coresolution.consultation.exception;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import com.coresolution.core.dto.ErrorResponse;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -15,6 +18,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.core.NestedExceptionUtils;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -139,6 +143,67 @@ public class GlobalExceptionHandler {
         );
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * Bean Validation 위반 상세 문자열 — MethodArgumentNotValidException과 동일 형식(field: message, 콤마 구분).
+     *
+     * @param violations 제약 위반 집합
+     * @return 상세 문자열
+     */
+    private static String buildDetailsFromConstraintViolations(Set<ConstraintViolation<?>> violations) {
+        return violations.stream()
+            .map(v -> {
+                String path = v.getPropertyPath() != null ? v.getPropertyPath().toString() : "";
+                String field = path;
+                int lastDot = path.lastIndexOf('.');
+                if (lastDot >= 0 && lastDot < path.length() - 1) {
+                    field = path.substring(lastDot + 1);
+                }
+                String msg = v.getMessage() != null ? v.getMessage() : "";
+                return field + ": " + msg;
+            })
+            .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * jakarta.validation.ConstraintViolationException (엔티티 검증 등)
+     * HTTP 400, {@code CONSTRAINT_VIOLATION}.
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(
+            ConstraintViolationException e, HttpServletRequest request) {
+        String details = buildDetailsFromConstraintViolations(e.getConstraintViolations());
+        log.warn("Constraint violation: {}", details);
+        ErrorResponse error = ErrorResponse.of(
+            "입력 데이터 검증에 실패했습니다.",
+            "CONSTRAINT_VIOLATION",
+            HttpStatus.BAD_REQUEST.value(),
+            details
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * JPA flush 등으로 {@link ConstraintViolationException}이 트랜잭션 래퍼에 싸여 전달되는 경우.
+     * root cause가 {@link ConstraintViolationException}이면 위와 동일하게 HTTP 400 처리.
+     */
+    @ExceptionHandler(TransactionSystemException.class)
+    public ResponseEntity<ErrorResponse> handleTransactionSystemException(
+            TransactionSystemException e, HttpServletRequest request) {
+        Throwable root = NestedExceptionUtils.getMostSpecificCause(e);
+        if (root instanceof ConstraintViolationException cve) {
+            return handleConstraintViolation(cve, request);
+        }
+        log.error("Transaction system error (non-constraint): {}", e.getMessage(), e);
+        ErrorResponse error = ErrorResponse.of(
+            "트랜잭션 처리 중 오류가 발생했습니다.",
+            "TRANSACTION_SYSTEM_ERROR",
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
     
     /**

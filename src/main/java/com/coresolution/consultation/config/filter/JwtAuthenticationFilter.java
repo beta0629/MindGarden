@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.JwtService;
@@ -222,14 +223,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         switch (user.getRole()) {
             case ADMIN:
                 authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_ADMIN));
+                if (Boolean.TRUE.equals(user.getCounselingEnabled())) {
+                    authorities.add(new SimpleGrantedAuthority(
+                            SecurityRoleConstants.ROLE_PREFIX + com.coresolution.consultation.constant.UserRole.CONSULTANT.name()));
+                }
                 break;
             case STAFF:
                 authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_ADMIN));
                 authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_OPS));
                 break;
             case CONSULTANT:
+            case PLAY_THERAPIST:
+            case SPEECH_THERAPIST:
                 authorities.add(new SimpleGrantedAuthority(
                         SecurityRoleConstants.ROLE_PREFIX + user.getRole().name()));
+                if (user.getRole() != UserRole.CONSULTANT) {
+                    authorities.add(new SimpleGrantedAuthority(
+                            SecurityRoleConstants.ROLE_PREFIX + UserRole.CONSULTANT.name()));
+                }
                 break;
             case CLIENT:
                 authorities.add(new SimpleGrantedAuthority(

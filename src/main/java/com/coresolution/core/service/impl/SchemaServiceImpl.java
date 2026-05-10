@@ -1,5 +1,4 @@
 package com.coresolution.core.service.impl;
-import com.coresolution.core.context.TenantContextHolder;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -10,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-@Transactional(readOnly = true)
 public class SchemaServiceImpl implements SchemaService {
     
     private final SchemaRepository schemaRepository;
@@ -40,6 +39,14 @@ public class SchemaServiceImpl implements SchemaService {
     }
     
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
+    public int countBaseTables(String schemaName) {
+        String targetSchema = schemaName != null ? schemaName : defaultSchemaName;
+        return schemaRepository.countBaseTables(targetSchema);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
     public List<SchemaTable> getAllTables(String schemaName) {
         log.debug("모든 테이블 정보 조회: schemaName={}", schemaName);
         String targetSchema = schemaName != null ? schemaName : defaultSchemaName;
@@ -47,6 +54,7 @@ public class SchemaServiceImpl implements SchemaService {
     }
     
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
     public SchemaTable getTable(String schemaName, String tableName) {
         log.debug("특정 테이블 정보 조회: schemaName={}, tableName={}", schemaName, tableName);
         String targetSchema = schemaName != null ? schemaName : defaultSchemaName;
@@ -54,6 +62,7 @@ public class SchemaServiceImpl implements SchemaService {
     }
     
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
     public List<String> getTableNames(String schemaName) {
         log.debug("테이블 목록 조회: schemaName={}", schemaName);
         String targetSchema = schemaName != null ? schemaName : defaultSchemaName;
@@ -64,6 +73,7 @@ public class SchemaServiceImpl implements SchemaService {
     }
     
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
     public List<SchemaTable> getTenantTables(String schemaName, String tenantId) {
         log.debug("테넌트별 테이블 조회: schemaName={}, tenantId={}", schemaName, tenantId);
         String targetSchema = schemaName != null ? schemaName : defaultSchemaName;
@@ -77,6 +87,7 @@ public class SchemaServiceImpl implements SchemaService {
     }
     
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
     public List<SchemaTable> getModuleTables(String schemaName, String modulePrefix) {
         log.debug("모듈별 테이블 조회: schemaName={}, modulePrefix={}", schemaName, modulePrefix);
         String targetSchema = schemaName != null ? schemaName : defaultSchemaName;

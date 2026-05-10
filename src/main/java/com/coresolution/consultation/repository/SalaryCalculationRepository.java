@@ -35,14 +35,20 @@ public interface SalaryCalculationRepository extends BaseRepository<SalaryCalcul
             SalaryCalculation.SalaryStatus status, LocalDate startDate, LocalDate endDate);
 
     /**
-     * 테넌트·상담사별 급여 계산 조회 (테넌트 격리 필수)
+     * 테넌트·상담사별 급여 계산 조회 (테넌트 격리 필수, consultant·salaryProfile fetch — OSIV 비활성 시 컨트롤러/직렬화용)
      *
      * @param tenantId     테넌트 ID
      * @param consultantId 상담사 ID
      * @return 해당 테넌트·상담사의 급여 계산 목록 (최신순)
      */
+    @Query("SELECT sc FROM SalaryCalculation sc "
+        + "LEFT JOIN FETCH sc.consultant "
+        + "LEFT JOIN FETCH sc.salaryProfile "
+        + "WHERE sc.tenantId = :tenantId AND sc.consultant.id = :consultantId "
+        + "ORDER BY sc.calculatedAt DESC")
     List<SalaryCalculation> findByTenantIdAndConsultant_IdOrderByCalculatedAtDesc(
-            String tenantId, Long consultantId);
+        @Param("tenantId") String tenantId,
+        @Param("consultantId") Long consultantId);
 
     /**
      * ID로 급여 계산 조회 (consultant fetch join, 세금 상세 등에서 NPE 방지)
@@ -84,17 +90,18 @@ public interface SalaryCalculationRepository extends BaseRepository<SalaryCalcul
             LocalDate endDate);
 
     /**
-     * 테넌트·상태·기간별 급여 계산 조회 (consultant fetch join, getTopPerformers NPE 방지)
+     * 테넌트·상태·기간별 급여 계산 조회 (consultant·salaryProfile fetch — OSIV 비활성 시 API 직렬화·getTopPerformers용)
      *
      * @param tenantId   테넌트 ID
      * @param status     급여 상태
      * @param startDate  기간 시작
      * @param endDate    기간 종료
-     * @return 해당 테넌트의 기간 내 급여 계산 목록 (consultant 로딩됨)
+     * @return 해당 테넌트의 기간 내 급여 계산 목록 (연관 로딩됨)
      */
-    @Query("SELECT sc FROM SalaryCalculation sc LEFT JOIN FETCH sc.consultant " +
-           "WHERE sc.tenantId = :tenantId AND sc.status = :status " +
-           "AND sc.calculationPeriodStart BETWEEN :startDate AND :endDate")
+    @Query("SELECT sc FROM SalaryCalculation sc "
+        + "LEFT JOIN FETCH sc.consultant LEFT JOIN FETCH sc.salaryProfile "
+        + "WHERE sc.tenantId = :tenantId AND sc.status = :status "
+        + "AND sc.calculationPeriodStart BETWEEN :startDate AND :endDate")
     List<SalaryCalculation> findByTenantIdAndStatusAndCalculationPeriodStartBetweenWithConsultant(
             @Param("tenantId") String tenantId,
             @Param("status") SalaryCalculation.SalaryStatus status,
@@ -165,4 +172,13 @@ public interface SalaryCalculationRepository extends BaseRepository<SalaryCalcul
      */
     @Query("SELECT sc.id, u.name FROM SalaryCalculation sc JOIN User u ON sc.consultant.id = u.id WHERE sc.updatedAt < ?1")
     List<Object[]> findExpiredSalariesForDestruction(java.time.LocalDateTime cutoffDate);
+
+    /**
+     * 테넌트별 만료된 급여 데이터 조회 (스케줄 파기용, 상담사 사용자 tenant 기준)
+     */
+    @Query("SELECT sc.id, u.name FROM SalaryCalculation sc JOIN User u ON sc.consultant.id = u.id "
+        + "WHERE u.tenantId = :tenantId AND sc.updatedAt < :cutoffDate")
+    List<Object[]> findExpiredSalariesForDestructionByTenantId(
+        @Param("tenantId") String tenantId,
+        @Param("cutoffDate") java.time.LocalDateTime cutoffDate);
 }

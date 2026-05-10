@@ -205,10 +205,11 @@ public class WellnessNotificationScheduler {
         try {
             // CLIENT와 CONSULTANT 사용자 조회
             List<User> clientUsers = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CLIENT);
-            List<User> consultantUsers = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
+            List<User> consultantUsers = userRepository.findByTenantIdAndRolesInAndIsActiveTrueAndIsDeletedFalse(tenantId,
+                    UserRole.getProfessionalProviderRoles());
             
             log.debug("👥 CLIENT 사용자 수: {}", clientUsers.size());
-            log.debug("👥 CONSULTANT 사용자 수: {}", consultantUsers.size());
+            log.debug("👥 전문가(상담·치료) 사용자 수: {}", consultantUsers.size());
             
             int createdCount = 0;
             
@@ -226,7 +227,7 @@ public class WellnessNotificationScheduler {
                 }
             }
             
-            log.debug("✅ 읽음 상태 생성 완료: {}개 사용자 (CLIENT + CONSULTANT)", createdCount);
+            log.debug("✅ 읽음 상태 생성 완료: {}개 사용자 (CLIENT + 전문가)", createdCount);
             
         } catch (Exception e) {
             log.error("❌ 읽음 상태 생성 중 오류 발생", e);

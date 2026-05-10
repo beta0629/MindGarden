@@ -1,7 +1,9 @@
 /**
- * 스태프 계정 관리 (목록 조회·상세·기본 정보 수정·역할 변경)
- * - GET user-management 후 role=STAFF 필터, B0KlA·ContentArea 구조
- * - 기본 정보 수정: PUT /api/v1/admin/user-management/{id}/basic-profile (이름·이메일·전화, 서버 암호화)
+ * 스태프·관리자 계정 관리 (목록 조회·상세·기본 정보 수정·역할 변경)
+ * - GET user-management: role=STAFF 및 role=ADMIN 병합 목록
+ * - 관리자(ADMIN) 상세: GET /api/v1/admin/users/{id}로 상담 겸직(counselingEnabled) 표시,
+ *   PUT /api/v1/admin/users/{id}/counseling-enabled 갱신 (CONSULTANT_MANAGE 권한)
+ * - 기본 정보 수정: PUT /api/v1/admin/user-management/{id}/basic-profile
  * - 역할 변경: UnifiedModal + GET roles, PUT .../role?newRole=...
  *
  * @author Core Solution
@@ -30,6 +32,7 @@ import { VALIDATION_MESSAGES } from '../../constants/messages';
 import {
   STAFF_MGMT_ARIA,
   STAFF_MGMT_BUTTON,
+  STAFF_MGMT_COUNSELING,
   STAFF_MGMT_FORM_LABEL,
   STAFF_MGMT_HELP,
   STAFF_MGMT_MASK,
@@ -41,12 +44,14 @@ import {
   STAFF_MGMT_STATUS,
   STAFF_MGMT_TABLE
 } from '../../constants/staffManagementStrings';
+import { fetchUserPermissions, hasPermission, PERMISSIONS } from '../../utils/permissionUtils';
 import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete';
 import KoreanMobileDuplicateField from '../common/molecules/KoreanMobileDuplicateField';
 import ProfileImageInput from '../common/ProfileImageInput';
 import Avatar from '../common/Avatar';
 import '../../styles/unified-design-tokens.css';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { useSession } from '../../contexts/SessionContext';
 import './ClientComprehensiveManagement/ClientModal.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
@@ -59,6 +64,20 @@ const API_ROLES = '/api/v1/admin/user-management/roles';
 const API_STAFF_REGISTER = '/api/v1/admin/staff';
 const basicProfileEndpoint = (userId) => `/api/v1/admin/user-management/${userId}/basic-profile`;
 const ROLE_STAFF = 'STAFF';
+const ROLE_ADMIN = 'ADMIN';
+const adminUserDetailPath = (userId) => `/api/v1/admin/users/${userId}`;
+const adminCounselingEnabledPath = (userId) => `/api/v1/admin/users/${userId}/counseling-enabled`;
+
+/** AdminUserController 목록 응답 → 사용자 배열 */
+const parseUserManagementListPayload = (response) => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+  if (response?.data && Array.isArray(response.data)) {
+    return response.data;
+  }
+  return [];
+};
 
 /** 스태프로 지정 모달 내부 목록 (인지 복잡도 분리) */
 const AddStaffModalContent = ({ list = [], searchTerm, onSearch, roleOf, onAssign, assigning }) => {
@@ -146,6 +165,7 @@ AddStaffModalContent.propTypes = {
 };
 
 const StaffManagement = ({ embedded = false }) => {
+  const { hasRole } = useSession();
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -178,6 +198,20 @@ const StaffManagement = ({ embedded = false }) => {
   const [staffEditModal, setStaffEditModal] = useState({ open: false, staff: null });
   const [staffEditForm, setStaffEditForm] = useState({ name: '', email: '', phone: '' });
   const [staffEditSubmitting, setStaffEditSubmitting] = useState(false);
+  const [userPermissions, setUserPermissions] = useState([]);
+  const [counselingDetail, setCounselingDetail] = useState({
+    loading: false,
+    enabled: null,
+    saving: false
+  });
+
+  const canConsultantManage = hasPermission(userPermissions, PERMISSIONS.CONSULTANT_MANAGE);
+  /** API updateCounselingEnabled는 세션 역할 ADMIN만 허용 */
+  const canEditAdminCounselingDual = canConsultantManage && hasRole('ADMIN');
+
+  useEffect(() => {
+    fetchUserPermissions(setUserPermissions);
+  }, []);
 
   const normalizeStaffPhoneForEdit = useCallback((p) => {
     if (p == null || String(p).trim() === '' || String(p).trim() === STAFF_MGMT_MASK.PHONE_NONE) return '';
@@ -190,6 +224,7 @@ const StaffManagement = ({ embedded = false }) => {
 
   const closeStaffDetail = useCallback(() => {
     setStaffDetailModal({ open: false, staff: null });
+    setCounselingDetail({ loading: false, enabled: null, saving: false });
   }, []);
 
   const openStaffEdit = useCallback(
@@ -229,13 +264,40 @@ const StaffManagement = ({ embedded = false }) => {
   const loadUsers = useCallback(async() => {
     setLoading(true);
     try {
-      const response = await StandardizedApi.get(API_USER_MANAGEMENT, {
-        includeInactive: true,
-        role: ROLE_STAFF
+      const [staffPayload, adminPayload] = await Promise.all([
+        StandardizedApi.get(API_USER_MANAGEMENT, {
+          includeInactive: true,
+          role: ROLE_STAFF
+        }),
+        StandardizedApi.get(API_USER_MANAGEMENT, {
+          includeInactive: true,
+          role: ROLE_ADMIN
+        })
+      ]);
+      const staffArr = parseUserManagementListPayload(staffPayload);
+      const adminArr = parseUserManagementListPayload(adminPayload);
+      const normRole = (u) => (typeof u.role === 'string' ? u.role : u.role?.name) || '';
+      const roleSortRank = (r) => {
+        if (r === ROLE_ADMIN) return 0;
+        if (r === ROLE_STAFF) return 1;
+        return 9;
+      };
+      const byId = new Map();
+      [...adminArr, ...staffArr].forEach((u) => {
+        if (u?.id != null) {
+          byId.set(u.id, u);
+        }
       });
-      // 응답이 배열이거나 { data: 배열 } 형태일 수 있어 배열 직접 처리
-      const list = Array.isArray(response) ? response : (response?.data && Array.isArray(response.data) ? response.data : []);
-      setStaffList(list);
+      const merged = [...byId.values()].sort((a, b) => {
+        const ra = normRole(a);
+        const rb = normRole(b);
+        const d = roleSortRank(ra) - roleSortRank(rb);
+        if (d !== 0) {
+          return d;
+        }
+        return String(a.name || '').localeCompare(String(b.name || ''), 'ko');
+      });
+      setStaffList(merged);
     } catch (err) {
       console.error('스태프 목록 조회 실패:', err);
       setStaffList([]);
@@ -467,6 +529,69 @@ const StaffManagement = ({ embedded = false }) => {
   const roleOf = useCallback(
     (u) => (u == null ? '' : (typeof u.role === 'string' ? u.role : u.role?.name) || ''),
     []
+  );
+
+  useEffect(() => {
+    if (!staffDetailModal.open || !staffDetailModal.staff) {
+      return undefined;
+    }
+    const st = staffDetailModal.staff;
+    if (roleOf(st) !== ROLE_ADMIN || !canEditAdminCounselingDual) {
+      setCounselingDetail({ loading: false, enabled: null, saving: false });
+      return undefined;
+    }
+    let cancelled = false;
+    setCounselingDetail((prev) => ({ ...prev, loading: true, enabled: null }));
+    (async() => {
+      try {
+        const data = await StandardizedApi.get(adminUserDetailPath(st.id));
+        if (cancelled) return;
+        setCounselingDetail({
+          loading: false,
+          enabled: Boolean(data?.counselingEnabled),
+          saving: false
+        });
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) {
+          setCounselingDetail({ loading: false, enabled: null, saving: false });
+          showError(STAFF_MGMT_MSG.ERR_LOAD_ADMIN_COUNSELING);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [staffDetailModal.open, staffDetailModal.staff, canEditAdminCounselingDual, roleOf]);
+
+  const handleAdminCounselingToggle = useCallback(
+    async(e) => {
+      const st = staffDetailModal.staff;
+      if (!st?.id || roleOf(st) !== ROLE_ADMIN || !canEditAdminCounselingDual) return;
+      const next = e.target.checked;
+      setCounselingDetail((prev) => ({ ...prev, saving: true }));
+      try {
+        const res = await StandardizedApi.put(adminCounselingEnabledPath(st.id), {
+          counselingEnabled: next
+        });
+        const raw = res?.counselingEnabled ?? res?.data?.counselingEnabled;
+        const enabled = typeof raw === 'boolean' ? raw : next;
+        setCounselingDetail({ loading: false, enabled, saving: false });
+        showSuccess(STAFF_MGMT_MSG.TOAST_ADMIN_COUNSELING_SAVED);
+        await loadUsers();
+        const refreshed = await StandardizedApi.get(adminUserDetailPath(st.id));
+        setCounselingDetail({
+          loading: false,
+          enabled: Boolean(refreshed?.counselingEnabled),
+          saving: false
+        });
+      } catch (err) {
+        console.error(err);
+        setCounselingDetail((prev) => ({ ...prev, saving: false }));
+        showError(err.message || STAFF_MGMT_MSG.ERR_SAVE_ADMIN_COUNSELING);
+      }
+    },
+    [staffDetailModal.staff, roleOf, canEditAdminCounselingDual, loadUsers]
   );
 
   const handleOpenRoleChange = useCallback(
@@ -859,29 +984,51 @@ const StaffManagement = ({ embedded = false }) => {
         }
       >
         {staffDetailModal.staff && (
-          <div className="mg-v2-modal-body mg-v2-form" style={{ display: 'grid', gap: '12px' }}>
+          <div className="mg-v2-modal-body mg-v2-form mg-v2-form-grid">
             <div>
-              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_MASK.NAME}</div>
+              <div className="mg-v2-form-label">{STAFF_MGMT_MASK.NAME}</div>
               <SafeText tag="div">{maskEncryptedDisplay(staffDetailModal.staff.name, STAFF_MGMT_MASK.NAME)}</SafeText>
             </div>
             <div>
-              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_MASK.EMAIL}</div>
+              <div className="mg-v2-form-label">{STAFF_MGMT_MASK.EMAIL}</div>
               <SafeText tag="div">{maskEncryptedDisplay(staffDetailModal.staff.email, STAFF_MGMT_MASK.EMAIL)}</SafeText>
             </div>
             <div>
-              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_FORM_LABEL.PHONE}</div>
+              <div className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.PHONE}</div>
               <SafeText tag="div">{formatKoreanMobileForDisplay(maskEncryptedDisplay(staffDetailModal.staff.phone, STAFF_MGMT_MASK.PHONE_NONE))}</SafeText>
             </div>
             <div>
-              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_FORM_LABEL.ROLE}</div>
+              <div className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.ROLE}</div>
               <div>{STAFF_MGMT_ROLE_LABELS[staffDetailModal.staff.role] || staffDetailModal.staff.role}</div>
             </div>
+            {roleOf(staffDetailModal.staff) === ROLE_ADMIN && canEditAdminCounselingDual && (
+              <div>
+                <div className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.COUNSELING_DUAL_ROLE}</div>
+                <p className="mg-v2-form-help">{STAFF_MGMT_HELP.ADMIN_COUNSELING_DUAL_ROLE}</p>
+                {counselingDetail.loading ? (
+                  <p className="mg-v2-text-secondary">{STAFF_MGMT_COUNSELING.LOADING_HINT}</p>
+                ) : (
+                  <label className="mg-v2-form-checkbox" htmlFor="staff-detail-admin-counseling-enabled">
+                    <input
+                      id="staff-detail-admin-counseling-enabled"
+                      type="checkbox"
+                      role="switch"
+                      aria-checked={Boolean(counselingDetail.enabled)}
+                      checked={Boolean(counselingDetail.enabled)}
+                      onChange={handleAdminCounselingToggle}
+                      disabled={counselingDetail.saving}
+                    />
+                    <span>{STAFF_MGMT_COUNSELING.TOGGLE_LABEL}</span>
+                  </label>
+                )}
+              </div>
+            )}
             <div>
-              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_FORM_LABEL.STATUS}</div>
+              <div className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.STATUS}</div>
               <div>{staffDetailModal.staff.isActive ? STAFF_MGMT_STATUS.ACTIVE : STAFF_MGMT_STATUS.INACTIVE}</div>
             </div>
             <div>
-              <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_FORM_LABEL.CREATED_AT}</div>
+              <div className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.CREATED_AT}</div>
               <div>
                 {staffDetailModal.staff.createdAt
                   ? new Date(staffDetailModal.staff.createdAt).toLocaleString('ko-KR')
@@ -890,7 +1037,7 @@ const StaffManagement = ({ embedded = false }) => {
             </div>
             {(staffDetailModal.staff.address || staffDetailModal.staff.addressDetail || staffDetailModal.staff.postalCode) && (
               <div>
-                <div className="mg-v2-form-label" style={{ marginBottom: 4 }}>{STAFF_MGMT_FORM_LABEL.ADDRESS}</div>
+                <div className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.ADDRESS}</div>
                 <SafeText tag="div">
                   {[
                     toDisplayString(staffDetailModal.staff.postalCode, ''),

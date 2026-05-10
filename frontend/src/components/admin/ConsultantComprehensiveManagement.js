@@ -54,6 +54,14 @@ import {
     LOGIN_PASSWORD_FIELD_PLACEHOLDER,
     LOGIN_PASSWORD_POLICY_HINT_ONE_LINE
 } from '../../constants/passwordPolicyUi';
+import {
+    TENANT_CONSULTANT_GRADE_CODES_PATH,
+    extractTenantCommonCodeGroupList,
+    mapTenantCommonCodesToGradeSelectOptions,
+    DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
+    FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL,
+    fetchProfessionalProviderTypeSelectOptions
+} from '../../constants/professionalProviderRoles';
 
 /** ContentHeader / 본문 main aria-labelledby 연동 */
 const CONSULTANT_COMP_MGMT_TITLE_ID = 'consultant-comprehensive-management-title';
@@ -78,6 +86,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilters, setActiveFilters] = useState({});
     const [userStatusOptions, setUserStatusOptions] = useState([]);
+    const [professionalTypeOptions, setProfessionalTypeOptions] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState('view');
     const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
@@ -87,6 +96,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         email: '',
         password: '',
         phone: '',
+        professionalTypeCode: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
         status: 'ACTIVE',
         specialty: [],
         profileImageUrl: '',
@@ -111,6 +121,92 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [modalSubmitLoading, setModalSubmitLoading] = useState(false);
     const [deleteConfirmLoading, setDeleteConfirmLoading] = useState(false);
     const [viewMode, setViewMode] = useState('smallCard'); // 'largeCard' | 'smallCard' | 'list' — 기본: 컴팩트(작은 카드)
+
+    const loadProfessionalTypeCodes = useCallback(async() => {
+        const fetchOnce = async() => {
+            await sessionManager.checkSession(true);
+            return fetchProfessionalProviderTypeSelectOptions();
+        };
+        try {
+            let opts = await fetchOnce();
+            if (opts.length === 0) {
+                await new Promise((resolve) => setTimeout(resolve, 450));
+                opts = await fetchOnce();
+            }
+            setProfessionalTypeOptions(opts);
+            if (opts.length === 0) {
+                showError('전문가 유형 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.');
+            }
+        } catch (e) {
+            console.error('전문가 유형 공통코드 로드 실패:', e);
+            try {
+                await new Promise((resolve) => setTimeout(resolve, 450));
+                const opts = await fetchOnce();
+                setProfessionalTypeOptions(opts);
+                if (opts.length === 0) {
+                    showError('전문가 유형 목록을 불러오지 못했습니다.');
+                }
+            } catch (retryError) {
+                console.error('전문가 유형 공통코드 재시도 실패:', retryError);
+                setProfessionalTypeOptions([]);
+                showError('전문가 유형 목록을 불러오지 못했습니다.');
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        loadProfessionalTypeCodes();
+    }, [loadProfessionalTypeCodes]);
+
+    const loadConsultantGradeCodes = useCallback(async() => {
+        try {
+            await sessionManager.checkSession(true);
+            let list = [];
+            const codes = await getCommonCodes('CONSULTANT_GRADE');
+            list = Array.isArray(codes) ? codes : [];
+            if (list.length === 0) {
+                const raw = await StandardizedApi.get(TENANT_CONSULTANT_GRADE_CODES_PATH);
+                list = extractTenantCommonCodeGroupList(raw);
+            }
+            if (list.length === 0) {
+                await new Promise((resolve) => setTimeout(resolve, 400));
+                await sessionManager.checkSession(true);
+                const raw2 = await StandardizedApi.get(TENANT_CONSULTANT_GRADE_CODES_PATH);
+                list = extractTenantCommonCodeGroupList(raw2);
+            }
+            let options = mapTenantCommonCodesToGradeSelectOptions(list);
+            if (options.length === 0 && list.length > 0) {
+                options = list
+                    .map((c) => ({
+                        codeValue: c.codeValue || c.code_value || c.value,
+                        codeLabel: c.codeLabel || c.code_label || c.koreanName || c.korean_name || c.codeValue
+                    }))
+                    .filter((o) => o.codeValue);
+            }
+            if (options.length > 0) {
+                setGradeOptions(options);
+                return;
+            }
+            setGradeOptions([
+                { codeValue: 'CONSULTANT_JUNIOR', codeLabel: '주니어 상담사' },
+                { codeValue: 'CONSULTANT_SENIOR', codeLabel: '시니어 상담사' },
+                { codeValue: 'CONSULTANT_EXPERT', codeLabel: '엑스퍼트 상담사' },
+                { codeValue: 'CONSULTANT_MASTER', codeLabel: '마스터 상담사' }
+            ]);
+        } catch (error) {
+            console.error('상담사 등급 공통코드 로드 실패:', error);
+            setGradeOptions([
+                { codeValue: 'CONSULTANT_JUNIOR', codeLabel: '주니어 상담사' },
+                { codeValue: 'CONSULTANT_SENIOR', codeLabel: '시니어 상담사' },
+                { codeValue: 'CONSULTANT_EXPERT', codeLabel: '엑스퍼트 상담사' },
+                { codeValue: 'CONSULTANT_MASTER', codeLabel: '마스터 상담사' }
+            ]);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadConsultantGradeCodes();
+    }, [loadConsultantGradeCodes]);
 
     const loadConsultants = useCallback(async() => {
         try {
@@ -179,6 +275,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         email: consultantEntity.email,
                         phone: consultantEntity.phone,
                         role: consultantEntity.role,
+                        professionalProviderTypeCode: consultantEntity.professionalProviderTypeCode,
                         isActive: consultantEntity.isActive,
                         profileImageUrl: consultantEntity.profileImageUrl,
                         specialty: consultantEntity.specialty,
@@ -436,12 +533,14 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             });
 
             console.log('✅ 전체 데이터 로딩 완료');
+            void loadProfessionalTypeCodes();
+            void loadConsultantGradeCodes();
         } catch (error) {
             console.error('❌ 전체 데이터 로딩 오류:', error);
         } finally {
             setLoading(false);
         }
-    }, [loadConsultants, loadMappings, loadSchedules, loadSpecialtyCodes]);
+    }, [loadConsultants, loadMappings, loadSchedules, loadSpecialtyCodes, loadProfessionalTypeCodes, loadConsultantGradeCodes]);
 
     useEffect(() => {
         // SessionGuard가 먼저 세션을 체크할 시간을 주기 위해 약간의 지연
@@ -510,29 +609,6 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         loadStatusCodes();
     }, []);
 
-    // 상담사 등급 공통코드 로드 (CONSULTANT_GRADE)
-    useEffect(() => {
-        const loadGradeCodes = async() => {
-            try {
-                const codes = await getCommonCodes('CONSULTANT_GRADE');
-                const list = Array.isArray(codes) ? codes : [];
-                setGradeOptions(list.map(c => ({
-                    codeValue: c.codeValue || c.value,
-                    codeLabel: c.codeLabel || c.codeName || c.label || c.codeValue
-                })));
-            } catch (error) {
-                console.error('상담사 등급 공통코드 로드 실패:', error);
-                setGradeOptions([
-                    { codeValue: 'CONSULTANT_JUNIOR', codeLabel: '주니어 상담사' },
-                    { codeValue: 'CONSULTANT_SENIOR', codeLabel: '시니어 상담사' },
-                    { codeValue: 'CONSULTANT_EXPERT', codeLabel: '엑스퍼트 상담사' },
-                    { codeValue: 'CONSULTANT_MASTER', codeLabel: '마스터 상담사' }
-                ]);
-            }
-        };
-        loadGradeCodes();
-    }, []);
-    
     const getFilteredConsultants = useMemo(() => {
         let filtered = consultants;
 
@@ -585,15 +661,19 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         setSelectedConsultant(consultant);
         setModalType('view');
         setShowModal(true);
-    }, []);
+        void loadProfessionalTypeCodes();
+        void loadConsultantGradeCodes();
+    }, [loadProfessionalTypeCodes, loadConsultantGradeCodes]);
 
     const handleOpenModal = useCallback((type, consultant = null) => {
         setModalType(type);
         setConsultantPhoneCheckStatus(null);
         
-        // 모달이 열릴 때 전문분야 코드 로드 (최신 데이터 보장)
+        // 모달이 열릴 때 전문분야·전문가 유형·등급 코드 로드 (테넌트 준비 후 최신 데이터)
         loadSpecialtyCodes();
-        
+        void loadProfessionalTypeCodes();
+        void loadConsultantGradeCodes();
+
         if (consultant) {
             setSelectedConsultant(consultant);
             if (type === 'edit') {
@@ -610,6 +690,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     name: consultant.name || '',
                     email: consultant.email || '',
                     phone: consultant.phone || '',
+                    professionalTypeCode: consultant.professionalProviderTypeCode || DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
                     status: consultant.status || 'ACTIVE',
                     specialty: specialties,
                     profileImageUrl: consultant.profileImageUrl || '',
@@ -631,6 +712,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 email: '',
                 password: generateMgLoginPassword(),
                 phone: '',
+                professionalTypeCode: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
                 status: 'ACTIVE',
                 specialty: [],
                 profileImageUrl: '',
@@ -646,7 +728,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             });
         }
         setShowModal(true);
-    }, [loadSpecialtyCodes]);
+    }, [loadSpecialtyCodes, loadProfessionalTypeCodes, loadConsultantGradeCodes]);
 
     const handleCloseModal = useCallback(() => {
         setShowModal(false);
@@ -659,6 +741,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             email: '',
             password: '',
             phone: '',
+            professionalTypeCode: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
             status: 'ACTIVE',
             specialty: [],
             profileImageUrl: '',
@@ -688,17 +771,28 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 if (cancelled || !profile) {
                     return;
                 }
-                setFormData((prev) => ({
-                    ...prev,
-                    notificationChannelPreference:
-                        profile.notificationChannelPreference || NOTIFICATION_CHANNEL_PREFERENCE_VALUE.TENANT_DEFAULT,
-                    tenantNotificationChannelKakaoAvailable: profile.tenantNotificationChannelKakaoAvailable,
-                    tenantNotificationChannelSmsAvailable: profile.tenantNotificationChannelSmsAvailable,
-                    tenantDefaultNotificationChannelHint: profile.tenantDefaultNotificationChannelHint,
-                    notificationChannelPreferenceUiAdjusted: profile.notificationChannelPreferenceUiAdjusted,
-                    notificationChannelPreferenceEditableByCaller:
-                        profile.notificationChannelPreferenceEditableByCaller !== false
-                }));
+                const profileType =
+                    profile.professionalProviderTypeCode ?? profile.professional_provider_type_code;
+                setFormData((prev) => {
+                    const merged = {
+                        ...prev,
+                        notificationChannelPreference:
+                            profile.notificationChannelPreference || NOTIFICATION_CHANNEL_PREFERENCE_VALUE.TENANT_DEFAULT,
+                        tenantNotificationChannelKakaoAvailable: profile.tenantNotificationChannelKakaoAvailable,
+                        tenantNotificationChannelSmsAvailable: profile.tenantNotificationChannelSmsAvailable,
+                        tenantDefaultNotificationChannelHint: profile.tenantDefaultNotificationChannelHint,
+                        notificationChannelPreferenceUiAdjusted: profile.notificationChannelPreferenceUiAdjusted,
+                        notificationChannelPreferenceEditableByCaller:
+                            profile.notificationChannelPreferenceEditableByCaller !== false
+                    };
+                    if (profile.grade != null && String(profile.grade).trim() !== '') {
+                        merged.grade = String(profile.grade).trim();
+                    }
+                    if (profileType != null && String(profileType).trim() !== '') {
+                        merged.professionalTypeCode = String(profileType).trim();
+                    }
+                    return merged;
+                });
             } catch (err) {
                 console.debug('상담사 알림 채널 선호 로드 생략:', err);
             }
@@ -984,6 +1078,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 email: emailVal === '' ? (existing?.email ?? '') : emailVal,
                 phone: phoneVal === '' ? (existing?.phone ?? '') : phoneVal,
                 specialization,
+                professionalTypeCode: data.professionalTypeCode != null && String(data.professionalTypeCode).trim() !== ''
+                    ? String(data.professionalTypeCode).trim()
+                    : undefined,
                 profileImageUrl: (data.profileImageUrl != null && data.profileImageUrl !== '') ? data.profileImageUrl : (existing?.profileImageUrl ?? undefined),
                 grade: data.grade != null && String(data.grade).trim() !== '' ? String(data.grade).trim() : undefined,
                 address: data.address != null ? data.address.trim() : undefined,
@@ -1903,6 +2000,26 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         quality={0.85}
                         helpText="이미지 파일만 가능, 최대 2MB (리사이즈·크롭 적용)"
                     />
+                    {(modalType === 'create' || modalType === 'edit') && (
+                        <div className="mg-v2-form-group">
+                            <label htmlFor="consultant-professional-type" className="mg-v2-form-label">전문가 유형 *</label>
+                            <select
+                                id="consultant-professional-type"
+                                name="professionalTypeCode"
+                                value={formData.professionalTypeCode || DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE}
+                                onChange={handleFormChange}
+                                className="mg-v2-form-input"
+                                required
+                            >
+                                {(professionalTypeOptions.length > 0
+                                    ? professionalTypeOptions
+                                    : [{ value: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE, label: FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL, sortOrder: 0 }]
+                                ).map((opt) => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                     {/* 공통 순서: 1. 주민번호 2. 이름 3. 전화번호 4. 주소 → 나머지 */}
                     <div className="mg-v2-form-group">
                         {modalType === 'edit' && (

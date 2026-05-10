@@ -213,11 +213,12 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public List<SalaryCalculation> getSalaryCalculations(LocalDate startDate, LocalDate endDate) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📋 급여 계산 목록 조회: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
-        
-        return salaryCalculationRepository.findByTenantIdAndStatusAndCalculationPeriodStartBetween(
+
+        return salaryCalculationRepository.findByTenantIdAndStatusAndCalculationPeriodStartBetweenWithConsultant(
                 tenantId, SalaryCalculation.SalaryStatus.CALCULATED, startDate, endDate);
     }
     
@@ -339,10 +340,11 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
      * 상담사별 급여 계산 내역 조회 (테넌트 격리 적용)
      */
     @Override
+    @Transactional(readOnly = true)
     public List<SalaryCalculation> getSalaryCalculations(Long consultantId) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("💰 상담사별 급여 계산 조회: ConsultantId={}, tenantId={}", consultantId, tenantId);
-        
+
         return salaryCalculationRepository.findByTenantIdAndConsultant_IdOrderByCalculatedAtDesc(
                 tenantId, consultantId);
     }

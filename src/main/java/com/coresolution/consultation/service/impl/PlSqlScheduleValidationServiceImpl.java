@@ -1,15 +1,22 @@
 package com.coresolution.consultation.service.impl;
 
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Time;
+import java.sql.Types;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
 import com.coresolution.core.context.TenantContextHolder;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -22,10 +29,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class PlSqlScheduleValidationServiceImpl implements PlSqlScheduleValidationService {
-    
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+
+    private final JdbcTemplate jdbcTemplate;
     
     @Override
     public Map<String, Object> validateConsultationRecordBeforeCompletion(
@@ -68,47 +75,68 @@ public class PlSqlScheduleValidationServiceImpl implements PlSqlScheduleValidati
     
     @Override
     public Map<String, Object> createConsultationRecordReminder(
-            Long scheduleId, Long consultantId, Long clientId, 
+            Long scheduleId, Long consultantId, Long clientId,
             LocalDate sessionDate, String title) {
-        
-        log.info("📤 PL/SQL 상담일지 미작성 알림 생성: 스케줄 ID={}, 상담사 ID={}, 제목={}", 
+
+        log.info("📤 PL/SQL 상담일지 미작성 알림 생성: 스케줄 ID={}, 상담사 ID={}, 제목={}",
                 scheduleId, consultantId, title);
-        
-        // 테넌트 ID 및 생성자 가져오기
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
         String createdBy = TenantContextHolder.getTenantId(); // TODO: 실제 사용자 ID로 변경 필요
-        
-        try {
-            SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
-                .withProcedureName("CreateConsultationRecordReminder");
-            
-            Map<String, Object> params = new HashMap<>();
-            params.put("p_schedule_id", scheduleId);
-            params.put("p_consultant_id", consultantId);
-            params.put("p_client_id", clientId);
-            params.put("p_session_date", sessionDate);
-            params.put("p_session_time", "00:00:00");
-            params.put("p_title", title);
-            params.put("p_tenant_id", tenantId);
-            params.put("p_created_by", createdBy);
-            
-            Map<String, Object> result = jdbcCall.execute(params);
-            
+
+        if (!isRoutineDeployed("CreateConsultationRecordReminder")) {
+            log.warn("CreateConsultationRecordReminder 저장 프로시저가 없어 알림 생성을 건너뜁니다.");
+            return reminderSkippedResponse();
+        }
+
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+                CallableStatement stmt = connection.prepareCall(
+                        "{CALL CreateConsultationRecordReminder(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            setConnectionUtf8mb4(connection);
+            stmt.setLong(1, scheduleId);
+            stmt.setLong(2, consultantId);
+            if (clientId == null) {
+                stmt.setNull(3, Types.BIGINT);
+            } else {
+                stmt.setLong(3, clientId);
+            }
+            stmt.setDate(4, java.sql.Date.valueOf(sessionDate));
+            stmt.setTime(5, Time.valueOf(LocalTime.MIDNIGHT));
+            stmt.setString(6, title);
+            stmt.setString(7, tenantId);
+            stmt.setString(8, createdBy != null ? createdBy : tenantId);
+            stmt.registerOutParameter(9, Types.BOOLEAN);
+            stmt.registerOutParameter(10, Types.VARCHAR);
+            stmt.registerOutParameter(11, Types.BIGINT);
+            stmt.execute();
+
+            boolean success = readMysqlProcedureBooleanOut(stmt, 9);
+            String message = stmt.getString(10);
+            long reminderId = stmt.getLong(11);
+            if (stmt.wasNull()) {
+                reminderId = 0L;
+            }
+
             Map<String, Object> response = new HashMap<>();
-            response.put("reminderId", result.get("p_reminder_id"));
-            response.put("message", result.get("p_message"));
-            response.put("success", true);
-            
+            response.put("reminderId", reminderId);
+            response.put("message", message);
+            response.put("success", success);
+
             log.info("✅ PL/SQL 상담일지 알림 생성 완료: 결과={}", response);
             return response;
-            
+        } catch (SQLException e) {
+            log.warn("CreateConsultationRecordReminder 호출 실패: {}", e.getMessage());
+            return reminderFailureResponse(e.getMessage());
+        } catch (InvalidDataAccessApiUsageException e) {
+            log.warn("CreateConsultationRecordReminder 시그니처/메타데이터 오류: {}", e.getMessage());
+            return reminderSkippedResponse();
         } catch (Exception e) {
+            if (isJdbcSignatureAmbiguity(e)) {
+                log.warn("CreateConsultationRecordReminder 호출 생략(시그니처 불명): {}", e.getMessage());
+                return reminderSkippedResponse();
+            }
             log.error("❌ PL/SQL 상담일지 알림 생성 실패: {}", e.getMessage(), e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("reminderId", 0L);
-            errorResponse.put("message", "상담일지 알림 생성 중 오류가 발생했습니다: " + e.getMessage());
-            errorResponse.put("success", false);
-            return errorResponse;
+            return reminderFailureResponse(e.getMessage());
         }
     }
     
@@ -205,6 +233,81 @@ public class PlSqlScheduleValidationServiceImpl implements PlSqlScheduleValidati
             errorResponse.put("success", false);
             return errorResponse;
         }
+    }
+
+    private void setConnectionUtf8mb4(Connection connection) throws SQLException {
+        try (java.sql.Statement st = connection.createStatement()) {
+            st.execute("SET character_set_client = utf8mb4");
+            st.execute("SET character_set_connection = utf8mb4");
+            st.execute("SET character_set_results = utf8mb4");
+        }
+    }
+
+    /**
+     * 현재 스키마에 저장 프로시저가 존재하는지 확인한다.
+     *
+     * @param routineName information_schema.routines.routine_name (대소문자 무시)
+     * @return 존재하면 true
+     */
+    private boolean isRoutineDeployed(String routineName) {
+        try {
+            String sql = "SELECT COUNT(*) FROM information_schema.routines "
+                    + "WHERE routine_schema = DATABASE() AND routine_type = 'PROCEDURE' "
+                    + "AND UPPER(routine_name) = UPPER(?)";
+            Integer c = jdbcTemplate.queryForObject(sql, Integer.class, routineName);
+            return c != null && c > 0;
+        } catch (Exception e) {
+            log.warn("프로시저 존재 여부 조회 실패 routine={}: {}", routineName, e.getMessage());
+            return false;
+        }
+    }
+
+    private static Map<String, Object> reminderSkippedResponse() {
+        Map<String, Object> r = new HashMap<>();
+        r.put("reminderId", 0L);
+        r.put("message", null);
+        r.put("success", false);
+        return r;
+    }
+
+    private static Map<String, Object> reminderFailureResponse(String detail) {
+        Map<String, Object> r = new HashMap<>();
+        r.put("reminderId", 0L);
+        r.put("message", detail != null ? detail : "알림 생성 실패");
+        r.put("success", false);
+        return r;
+    }
+
+    /**
+     * MySQL BOOLEAN OUT이 TINYINT 등으로 반환될 때 {@link CallableStatement#getBoolean(int)}만으로는
+     * 누락될 수 있어 {@link CallableStatement#getObject(int)}로 읽는다.
+     */
+    private static boolean readMysqlProcedureBooleanOut(CallableStatement stmt, int index) throws SQLException {
+        Object v = stmt.getObject(index);
+        if (v == null) {
+            return false;
+        }
+        if (v instanceof Boolean) {
+            return (Boolean) v;
+        }
+        if (v instanceof Number) {
+            return ((Number) v).intValue() != 0;
+        }
+        String s = String.valueOf(v).trim();
+        return "1".equals(s) || "true".equalsIgnoreCase(s);
+    }
+
+    private static boolean isJdbcSignatureAmbiguity(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            String m = t.getMessage();
+            if (m != null && m.contains("Unable to determine the correct call signature")) {
+                return true;
+            }
+            if (m != null && m.contains("no procedure/function/signature")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

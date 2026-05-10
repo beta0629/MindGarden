@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.salary.PlSqlSalaryProcedureUserFacingMessages;
 import com.coresolution.consultation.dto.CommonCodeDto;
 import com.coresolution.consultation.dto.ConsultantSalaryProfileRequest;
 import com.coresolution.consultation.dto.ConsultantSalaryProfileResponse;
@@ -355,7 +356,8 @@ public class SalaryManagementController extends BaseApiController {
             consultantId, periodStart, periodEnd
         );
         if (!Boolean.TRUE.equals(result.get("success"))) {
-            throw new ValidationException((String) result.getOrDefault("message", "급여 계산 미리보기에 실패했습니다."));
+            throw new ValidationException(
+                    userFacingMessageFromProcedureResult(result, "급여 계산 미리보기에 실패했습니다."));
         }
         return success("급여 계산 미리보기가 완료되었습니다.", result);
     }
@@ -384,7 +386,9 @@ public class SalaryManagementController extends BaseApiController {
             consultantId, periodStart, periodEnd, currentUser.getName()
         );
         if (!Boolean.TRUE.equals(result.get("success"))) {
-            throw new ValidationException((String) result.getOrDefault("message", "급여 계산 확정에 실패했습니다."));
+            throw new ValidationException(
+                    userFacingMessageFromProcedureResult(result,
+                            PlSqlSalaryProcedureUserFacingMessages.INTEGRATED_CALC_FAILURE_WHEN_DB_SILENT));
         }
         return success("급여 계산이 확정되었습니다.", result);
     }
@@ -407,7 +411,8 @@ public class SalaryManagementController extends BaseApiController {
             calculationId, currentUser.getName()
         );
         if (!Boolean.TRUE.equals(result.get("success"))) {
-            throw new ValidationException(String.valueOf(result.getOrDefault("message", "급여 승인에 실패했습니다.")));
+            throw new ValidationException(
+                    userFacingMessageFromProcedureResult(result, "급여 승인에 실패했습니다."));
         }
         return success("급여 승인이 완료되었습니다.", result);
     }
@@ -430,7 +435,8 @@ public class SalaryManagementController extends BaseApiController {
             calculationId, currentUser.getName()
         );
         if (!Boolean.TRUE.equals(result.get("success"))) {
-            throw new ValidationException(String.valueOf(result.getOrDefault("message", "급여 지급에 실패했습니다.")));
+            throw new ValidationException(
+                    userFacingMessageFromProcedureResult(result, "급여 지급에 실패했습니다."));
         }
         return success("급여 지급이 완료되었습니다.", result);
     }
@@ -672,5 +678,26 @@ public class SalaryManagementController extends BaseApiController {
             log.info("급여 설정 생성 완료: {}", configType);
         }
         return success("급여 설정이 저장되었습니다.");
+    }
+
+    /**
+     * PL/SQL 등 프로시저 결과 Map의 {@code message}를 사용자 표시용 문자열로 만든다.
+     * {@link Map#getOrDefault(Object, Object)}는 키가 있어도 값이 {@code null}이면 기본값 대신 {@code null}을 반환한다.
+     *
+     * @param result         프로시저 결과 맵
+     * @param defaultMessage message가 null이거나 공백일 때 사용할 문구
+     * @return 비-null·비공백(트림 기준) 사용자 메시지
+     */
+    private static String userFacingMessageFromProcedureResult(Map<String, Object> result, String defaultMessage) {
+        Object raw = result.get("message");
+        if (raw == null) {
+            return defaultMessage;
+        }
+        if (raw instanceof String str) {
+            String s = str.trim();
+            return s.isEmpty() ? defaultMessage : s;
+        }
+        String s = String.valueOf(raw).trim();
+        return s.isEmpty() ? defaultMessage : s;
     }
 }

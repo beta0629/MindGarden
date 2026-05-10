@@ -391,6 +391,15 @@ public interface AdminService {
      * 사용자 역할 변경
      */
     User changeUserRole(Long userId, String newRole);
+
+    /**
+     * 관리자(ADMIN) 계정의 상담 겸직(counseling_enabled) 플래그를 설정합니다.
+     *
+     * @param userId 사용자 PK
+     * @param counselingEnabled 겸직 여부
+     * @return 저장된 사용자
+     */
+    User updateCounselingEnabled(Long userId, boolean counselingEnabled);
     
     /**
      * 중복 매칭 통합

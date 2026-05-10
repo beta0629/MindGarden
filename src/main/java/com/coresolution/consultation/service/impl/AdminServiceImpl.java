@@ -25,6 +25,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
+import com.coresolution.consultation.dto.ResolvedProfessionalRegistration;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
@@ -61,6 +62,7 @@ import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
+import com.coresolution.consultation.service.ProfessionalProviderTypeService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.StoredProcedureService;
@@ -134,6 +136,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final UserService userService;
     private final ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
     private final ScheduleService scheduleService;
+    private final ProfessionalProviderTypeService professionalProviderTypeService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -149,7 +152,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.warn("⚠️ TenantContext에 tenantId가 없습니다. 세션에서 조회 시도...");
             throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_TENANT_INFO_MISSING);
         }
-        
+
+        ResolvedProfessionalRegistration resolved = professionalProviderTypeService.resolve(
+                tenantId, request.getProfessionalTypeCode(), request.getRole());
+        UserRole registrationRole = resolved.userRole();
+        String professionalProviderTypeCode = resolved.professionalProviderTypeCode();
+
         // 1. 테넌트별 고유한 userId 자동 생성 (표준화 2025-12-08)
         String userId = userIdGenerator.generateUniqueUserId(email, tenantId);
         log.info("✅ 테넌트별 상담사 사용자 ID 자동 생성 완료: email={}, tenantId={}, userId={}", 
@@ -205,6 +213,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             consultant.setIsPasswordChanged(!isTempPassword); // 임시 비밀번호인 경우 false, 사용자 입력 비밀번호인 경우 true
             consultant.setSpecialization(request.getSpecialization());
             consultant.setTenantId(tenantId); // 테넌트 ID 설정
+            consultant.setRole(registrationRole);
+            consultant.setProfessionalProviderTypeCode(professionalProviderTypeCode);
             if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
                 consultant.setProfileImageUrl(request.getProfileImageUrl().trim());
             }
@@ -223,7 +233,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
             User savedConsultant = userRepository.save(consultant);
             
-            createUserRoleAssignment(savedConsultant, tenantId, UserRole.CONSULTANT);
+            createUserRoleAssignment(savedConsultant, tenantId, registrationRole);
             
             // 표준화 2025-12-08: 상담사 등록 시 캐시에 복호화 데이터 저장 (성능 최적화)
             try {
@@ -282,11 +292,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             consultant.setPassword(isTempPassword ? passwordService.encodeSecret(password) : passwordService.encodePassword(password));
             consultant.setName(encryptedName); // 자동 생성된 이름 사용
             consultant.setPhone(encryptedPhone);
-            consultant.setRole(UserRole.CONSULTANT);
+            consultant.setRole(registrationRole);
             consultant.setIsActive(true);
             consultant.setIsPasswordChanged(!isTempPassword); // 임시 비밀번호인 경우 false, 사용자 입력 비밀번호인 경우 true
             consultant.setTenantId(tenantId); // 테넌트 ID 설정
-            
+            consultant.setProfessionalProviderTypeCode(professionalProviderTypeCode);
+
             consultant.setSpecialty(request.getSpecialization());
             consultant.setCertification(request.getQualifications());
             if (request.getWorkHistory() != null && !request.getWorkHistory().trim().isEmpty()) {
@@ -308,7 +319,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.info("✅ 상담사 등록 성공: id={}, userId={}, tenantId={}", 
                     savedConsultant.getId(), savedConsultant.getUserId(), savedConsultant.getTenantId());
             
-            createUserRoleAssignment(savedConsultant, tenantId, UserRole.CONSULTANT);
+            createUserRoleAssignment(savedConsultant, tenantId, registrationRole);
             
             // 표준화 2025-12-08: 상담사 등록 시 캐시에 복호화 데이터 저장 (성능 최적화)
             try {
@@ -1671,13 +1682,159 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
     }
 
+    /**
+     * 상담사(Consultant) + 상담 겸직 관리자(ADMIN) 병합 목록.
+     */
+    private List<User> mergeConsultantActorsForTenant(String tenantId) {
+        List<User> out = new ArrayList<>();
+        for (Consultant c : consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId)) {
+            out.add(c);
+        }
+        for (User admin : userRepository.findCounselingEnabledAdminsByTenantId(tenantId)) {
+            boolean dup = out.stream().anyMatch(u -> u.getId() != null && u.getId().equals(admin.getId()));
+            if (!dup) {
+                out.add(admin);
+            }
+        }
+        return out;
+    }
+
+    private static final int COUNSELING_ADMIN_DEFAULT_MAX_CLIENTS = 20;
+
+    private Map<String, Object> buildCounselingAdminConsultantSpecialtyRow(User admin, String tenantId,
+            Map<String, Map<String, String>> gradeStyles) {
+        Map<String, Object> consultantData = new HashMap<>();
+        consultantData.put("id", admin.getId());
+        consultantData.put("name", admin.getName());
+        consultantData.put("email", admin.getEmail());
+        String decryptedPhone = null;
+        if (admin.getPhone() != null && !admin.getPhone().trim().isEmpty()) {
+            try {
+                decryptedPhone = encryptionUtil.decrypt(admin.getPhone());
+                log.info("🔓 상담 겸직 관리자 전화번호 복호화 완료: {}", PhoneLogMasking.maskForLog(decryptedPhone));
+            } catch (Exception e) {
+                log.error("❌ 상담 겸직 관리자 전화번호 복호화 실패: {}", e.getMessage());
+                decryptedPhone = AdminServiceUserFacingMessages.DISPLAY_DECRYPTION_FAILED;
+            }
+        }
+        consultantData.put("phone", decryptedPhone);
+        consultantData.put("role", admin.getRole());
+        consultantData.put("isActive", admin.getIsActive());
+        consultantData.put("branchCode", null);
+        consultantData.put("createdAt", admin.getCreatedAt());
+        consultantData.put("updatedAt", admin.getUpdatedAt());
+        String grade = admin.getGrade() != null ? admin.getGrade() : "CONSULTANT_JUNIOR";
+        Map<String, String> style = gradeStyles.getOrDefault(grade, Map.of("color", "#6b7280", "icon", "⭐"));
+        consultantData.put("gradeColor", style.get("color"));
+        consultantData.put("gradeIcon", style.get("icon"));
+        consultantData.put("grade", grade);
+        long actualCurrentClients = mappingRepository.countByConsultantIdAndStatusIn(
+                tenantId,
+                admin.getId(),
+                List.of(ConsultantClientMapping.MappingStatus.ACTIVE, ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED));
+        consultantData.put("currentClients", (int) actualCurrentClients);
+        consultantData.put("maxClients", COUNSELING_ADMIN_DEFAULT_MAX_CLIENTS);
+        consultantData.put("totalClients", 0);
+        consultantData.put("totalConsultations",
+                admin.getTotalConsultations() != null ? admin.getTotalConsultations() : 0);
+        consultantData.put("averageRating", 0.0);
+        consultantData.put("totalRatings", 0);
+        consultantData.put("yearsOfExperience", 0);
+        consultantData.put("isAvailable", Boolean.TRUE);
+        String specialization = admin.getSpecialization();
+        if (specialization != null && !specialization.trim().isEmpty()) {
+            consultantData.put("specialization", specialization);
+            consultantData.put("specializationDetails", getSpecializationDetailsFromDB(specialization));
+        } else {
+            consultantData.put("specialization", null);
+            consultantData.put("specializationDetails", new ArrayList<>());
+        }
+        consultantData.put("professionalProviderTypeCode", admin.getProfessionalProviderTypeCode());
+        return consultantData;
+    }
+
+    private Map<String, Object> buildCounselingAdminConsultantVacationRow(User admin, String tenantId, String date,
+            Map<String, Object> allVacations) {
+        Map<String, Object> consultantData = new HashMap<>();
+        consultantData.put("id", admin.getId());
+        Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(admin);
+        if (decryptedData != null) {
+            consultantData.put("name", decryptedData.get("name"));
+            consultantData.put("email", decryptedData.get("email"));
+            consultantData.put("phone", decryptedData.get("phone"));
+        } else {
+            log.warn("⚠️ 상담 겸직 관리자 개인정보 캐시 없음, 직접 복호화: userId={}", admin.getId());
+            consultantData.put("name", encryptionUtil.safeDecrypt(admin.getName()));
+            consultantData.put("email", encryptionUtil.safeDecrypt(admin.getEmail()));
+            String decryptedPhone = null;
+            if (admin.getPhone() != null && !admin.getPhone().trim().isEmpty()) {
+                try {
+                    decryptedPhone = encryptionUtil.decrypt(admin.getPhone());
+                } catch (Exception e) {
+                    log.error("❌ 상담 겸직 관리자 전화번호 복호화 실패: {}", e.getMessage());
+                    decryptedPhone = AdminServiceUserFacingMessages.DISPLAY_DECRYPTION_FAILED;
+                }
+            }
+            consultantData.put("phone", decryptedPhone);
+        }
+        consultantData.put("role", admin.getRole());
+        consultantData.put("isActive", admin.getIsActive());
+        consultantData.put("branchCode", null);
+        consultantData.put("createdAt", admin.getCreatedAt());
+        consultantData.put("updatedAt", admin.getUpdatedAt());
+        consultantData.put("profileImageUrl", admin.getProfileImageUrl());
+        long actualCurrentClients = mappingRepository.countByConsultantIdAndStatusIn(
+                tenantId,
+                admin.getId(),
+                List.of(ConsultantClientMapping.MappingStatus.ACTIVE, ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED));
+        consultantData.put("currentClients", (int) actualCurrentClients);
+        consultantData.put("maxClients", COUNSELING_ADMIN_DEFAULT_MAX_CLIENTS);
+        consultantData.put("totalClients", 0);
+        consultantData.put("totalConsultations",
+                admin.getTotalConsultations() != null ? admin.getTotalConsultations() : 0);
+        consultantData.put("averageRating", 0.0);
+        consultantData.put("totalRatings", 0);
+        consultantData.put("yearsOfExperience", 0);
+        consultantData.put("isAvailable", Boolean.TRUE);
+        String specialization = admin.getSpecialization();
+        if (specialization != null && !specialization.trim().isEmpty()) {
+            consultantData.put("specialization", specialization);
+            consultantData.put("specializationDetails", getSpecializationDetailsFromDB(specialization));
+        } else {
+            consultantData.put("specialization", null);
+            consultantData.put("specializationDetails", new ArrayList<>());
+        }
+        String consultantId = admin.getId().toString();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> consultantVacations = (Map<String, Object>) allVacations.get(consultantId);
+        if (consultantVacations != null && consultantVacations.containsKey(date)) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> vacationInfo = (Map<String, Object>) consultantVacations.get(date);
+            consultantData.put("isOnVacation", true);
+            consultantData.put("vacationType", vacationInfo.get("type"));
+            consultantData.put("vacationReason", vacationInfo.get("reason"));
+            consultantData.put("vacationStartTime", vacationInfo.get("startTime"));
+            consultantData.put("vacationEndTime", vacationInfo.get("endTime"));
+            consultantData.put("vacationConsultantName", vacationInfo.get("consultantName"));
+            consultantData.put("busy", true);
+            consultantData.put("isVacation", true);
+        } else {
+            consultantData.put("isOnVacation", false);
+            consultantData.put("vacationType", null);
+            consultantData.put("vacationReason", null);
+            consultantData.put("vacationStartTime", null);
+            consultantData.put("vacationEndTime", null);
+            consultantData.put("busy", false);
+            consultantData.put("isVacation", false);
+        }
+        consultantData.put("professionalProviderTypeCode", admin.getProfessionalProviderTypeCode());
+        return consultantData;
+    }
+
     @Override
     public List<User> getAllConsultants() {
         String tenantId = getTenantId();
-        List<Consultant> consultantEntities = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
-        List<User> consultants = consultantEntities.stream()
-                .map(consultant -> (User) consultant)
-                .collect(Collectors.toList());
+        List<User> consultants = mergeConsultantActorsForTenant(tenantId);
         
         consultants.forEach(consultant -> {
             if (consultant.getPhone() != null && !consultant.getPhone().trim().isEmpty()) {
@@ -1714,7 +1871,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.warn("상담사 등급 스타일 조회 실패, 기본값 사용: {}", e.getMessage());
         }
         
-        return consultants.stream()
+        List<Map<String, Object>> rows = consultants.stream()
             .map(consultant -> {
                 Map<String, Object> consultantData = new HashMap<>();
                 consultantData.put("id", consultant.getId());
@@ -1783,10 +1940,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     consultantData.put("specialization", null);
                     consultantData.put("specializationDetails", new ArrayList<>());
                 }
-                
+                consultantData.put("professionalProviderTypeCode", consultant.getProfessionalProviderTypeCode());
+
                 return consultantData;
             })
             .collect(Collectors.toList());
+        for (User admin : userRepository.findCounselingEnabledAdminsByTenantId(tenantId)) {
+            if (Boolean.TRUE.equals(admin.getIsActive())) {
+                rows.add(buildCounselingAdminConsultantSpecialtyRow(admin, tenantId, gradeStyles));
+            }
+        }
+        return rows;
     }
     
      /**
@@ -1807,7 +1971,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         Map<String, Object> allVacations = consultantAvailabilityService.getAllConsultantsVacations(date);
         
-        return consultants.stream()
+        List<Map<String, Object>> rows = consultants.stream()
             .map(consultant -> {
                 Map<String, Object> consultantData = new HashMap<>();
                 consultantData.put("id", consultant.getId());
@@ -1881,7 +2045,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     consultantData.put("specialization", null);
                     consultantData.put("specializationDetails", new ArrayList<>());
                 }
-                
+                consultantData.put("professionalProviderTypeCode", consultant.getProfessionalProviderTypeCode());
+
                 String consultantId = consultant.getId().toString();
                 @SuppressWarnings("unchecked")
                 Map<String, Object> consultantVacations = (Map<String, Object>) allVacations.get(consultantId);
@@ -1912,6 +2077,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 return consultantData;
             })
             .collect(Collectors.toList());
+        for (User admin : userRepository.findCounselingEnabledAdminsByTenantId(tenantId)) {
+            if (Boolean.TRUE.equals(admin.getIsActive())) {
+                rows.add(buildCounselingAdminConsultantVacationRow(admin, tenantId, date, allVacations));
+            }
+        }
+        return rows;
     }
     
      /**
@@ -2256,7 +2427,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         Consultant consultant = consultantRepository.findByTenantIdAndId(getTenantId(), id)
                 .orElseThrow(() -> new EntityNotFoundException(AdminServiceUserFacingMessages.ENTITY_LABEL_CONSULTANT, id));
 
-        if (consultant.getRole() != UserRole.CONSULTANT) {
+        if (consultant.getRole() == null || !consultant.getRole().isProfessionalProvider()) {
             throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_USER_NOT_CONSULTANT);
         }
 
@@ -2311,6 +2482,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         if (request.getGrade() != null) {
             consultant.setGrade(request.getGrade().trim().isEmpty() ? null : request.getGrade().trim());
+        }
+
+        if (request.getProfessionalTypeCode() != null && !request.getProfessionalTypeCode().trim().isEmpty()) {
+            ResolvedProfessionalRegistration r = professionalProviderTypeService.resolve(
+                    getTenantId(), request.getProfessionalTypeCode().trim(), consultant.getRole().name());
+            consultant.setProfessionalProviderTypeCode(r.professionalProviderTypeCode());
+            consultant.setRole(r.userRole());
         }
 
         // 상태 반영: request.getStatus()가 null/empty가 아니면 ACTIVE→true, 그 외→false
@@ -2376,7 +2554,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (caller == null || caller.getRole() == null || !caller.getRole().isAdmin()) {
             throw new AccessDeniedException(UserProfileServiceUserFacingMessages.MSG_STAFF_CANNOT_SET_NOTIFICATION_CHANNEL);
         }
-        if (!UserRole.CLIENT.equals(targetUser.getRole()) && !UserRole.CONSULTANT.equals(targetUser.getRole())) {
+        if (!UserRole.CLIENT.equals(targetUser.getRole())
+                && (targetUser.getRole() == null || !targetUser.getRole().isProfessionalProvider())) {
             return;
         }
         String normalized = notificationChannelPreferenceResolutionService.normalizeIncomingPreference(
@@ -2667,7 +2846,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         User consultant = userRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_CONSULTANT_NOT_FOUND));
         
-        if (consultant.getRole() != UserRole.CONSULTANT) {
+        if (consultant.getRole() == null || !consultant.getRole().isProfessionalProvider()) {
             throw new RuntimeException(AdminServiceUserFacingMessages.MSG_CANNOT_DELETE_NON_CONSULTANT);
         }
         
@@ -2711,11 +2890,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .orElseThrow(() -> new RuntimeException(
                         AdminServiceUserFacingMessages.MSG_TRANSFER_TARGET_CONSULTANT_NOT_FOUND));
         
-        if (consultantToDelete.getRole() != UserRole.CONSULTANT) {
+        if (consultantToDelete.getRole() == null || !consultantToDelete.getRole().isProfessionalProvider()) {
             throw new RuntimeException(AdminServiceUserFacingMessages.MSG_DELETE_TARGET_NOT_CONSULTANT);
         }
         
-        if (transferToConsultant.getRole() != UserRole.CONSULTANT) {
+        if (transferToConsultant.getRole() == null || !transferToConsultant.getRole().isProfessionalProvider()) {
             throw new RuntimeException(AdminServiceUserFacingMessages.MSG_TRANSFER_TARGET_NOT_CONSULTANT);
         }
         
@@ -2845,7 +3024,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         User consultant = userRepository.findByTenantIdAndId(tenantId, consultantId)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_CONSULTANT_NOT_FOUND));
         
-        if (consultant.getRole() != UserRole.CONSULTANT) {
+        if (consultant.getRole() == null || !consultant.getRole().isProfessionalProvider()) {
             throw new RuntimeException(AdminServiceUserFacingMessages.MSG_NOT_CONSULTANT_USER);
         }
         
@@ -4579,7 +4758,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         User newConsultant = userRepository.findByTenantIdAndId(tenantId, request.getNewConsultantId())
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_NEW_CONSULTANT_NOT_FOUND));
         
-        if (newConsultant.getRole() != UserRole.CONSULTANT) {
+        if (newConsultant.getRole() == null || !newConsultant.getRole().isProfessionalProvider()) {
             throw new RuntimeException(AdminServiceUserFacingMessages.MSG_NOT_CONSULTANT_USER);
         }
         
@@ -4741,10 +4920,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
             String tenantId = getTenantId();
             
-            List<Consultant> consultantEntities = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
-            List<User> consultants = consultantEntities.stream()
-                    .map(consultant -> (User) consultant)
-                    .collect(Collectors.toList());
+            List<User> consultants = mergeConsultantActorsForTenant(tenantId);
             
             List<Map<String, Object>> statistics = new ArrayList<>();
             
@@ -4830,7 +5006,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.warn("⚠️ getConsultationMonthlyTrend: tenantId 없음");
                 return new ArrayList<>();
             }
-            List<Consultant> consultants = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
+            List<User> consultants = mergeConsultantActorsForTenant(tenantId);
             List<Map<String, Object>> monthlyData = new ArrayList<>();
             LocalDate now = LocalDate.now();
             LocalDate yearStart = LocalDate.of(now.getYear(), 1, 1);
@@ -4841,7 +5017,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
                 if (monthEnd.isAfter(now)) monthEnd = now;
                 int sum = 0;
-                for (Consultant consultant : consultants) {
+                for (User consultant : consultants) {
                     sum += getCompletedScheduleCount(consultant.getId(), monthStart, monthEnd);
                 }
                 long bookedSum = scheduleRepository.countByStatusAndDateBetween(
@@ -4870,14 +5046,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.warn("⚠️ getConsultationWeeklyTrend: tenantId 없음");
                 return new ArrayList<>();
             }
-            List<Consultant> consultants = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
+            List<User> consultants = mergeConsultantActorsForTenant(tenantId);
             List<Map<String, Object>> weeklyData = new ArrayList<>();
             LocalDate now = LocalDate.now();
             for (int i = lastWeeks - 1; i >= 0; i--) {
                 LocalDate weekEnd = now.minusWeeks(i);
                 LocalDate weekStart = weekEnd.minusDays(6);
                 int sum = 0;
-                for (Consultant consultant : consultants) {
+                for (User consultant : consultants) {
                     sum += getCompletedScheduleCount(consultant.getId(), weekStart, weekEnd);
                 }
                 long bookedSum = scheduleRepository.countByStatusAndDateBetween(
@@ -4935,7 +5111,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             List<User> consultants;
             try {
                 Branch branch = branchService.getBranchByCode(branchCode);
-                consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(tenantId, branch, UserRole.CONSULTANT);
+                consultants = userRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(tenantId, branch,
+                        UserRole.getProfessionalProviderRoles());
                 consultants = consultants.stream()
                     .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                     .collect(Collectors.toList());
@@ -5520,6 +5697,19 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     AdminServiceUserFacingMessages.MSG_USER_ROLE_CHANGE_FAILED_FMT, e.getMessage()));
         }
     }
+
+    @Override
+    @Transactional
+    public User updateCounselingEnabled(Long userId, boolean counselingEnabled) {
+        String tenantId = getTenantId();
+        User user = userRepository.findByTenantIdAndId(tenantId, userId)
+                .orElseThrow(() -> new EntityNotFoundException("사용자", userId));
+        if (user.getRole() != UserRole.ADMIN) {
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_COUNSELING_ENABLED_ADMIN_ONLY);
+        }
+        user.setCounselingEnabled(counselingEnabled);
+        return userRepository.save(user);
+    }
     
     @Override
     public Map<String, Object> mergeDuplicateMappings() {
@@ -5675,7 +5865,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 return new HashMap<>();
             }
             
-            List<User> activeConsultants = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
+            List<User> activeConsultants = userRepository.findByTenantIdAndRolesInAndIsActiveTrueAndIsDeletedFalse(
+                    tenantId, UserRole.getProfessionalProviderRoles());
             log.info("👥 활성 상담사 수: {}명", activeConsultants.size());
             
             List<Map<String, Object>> consultantStats = new ArrayList<>();
@@ -5763,7 +5954,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             } else {
                 try {
                     Branch branch = branchService.getBranchByCode(branchCode);
-                    activeConsultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(tenantId, branch, UserRole.CONSULTANT);
+                    activeConsultants = userRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(tenantId,
+                            branch, UserRole.getProfessionalProviderRoles());
                     activeConsultants = activeConsultants.stream()
                         .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                         .collect(Collectors.toList());
@@ -6162,10 +6354,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
     }
     
-     /**
-     * UserRole을 TenantRole name_en으로 매핑
-     /**
-     * 실제 TenantRole name_en과 일치시켜야 함
+    /**
+     * UserRole을 TenantRole name_en으로 매핑. 실제 TenantRole name_en과 일치시켜야 함.
+     *
+     * @param userRole 사용자 역할
+     * @return TenantRole 영문명
      */
     private String mapUserRoleToTenantRoleNameEn(UserRole userRole) {
         if (userRole == null) {
@@ -6176,6 +6369,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             case ADMIN:
                 return "Director";
             case CONSULTANT:
+            case PLAY_THERAPIST:
+            case SPEECH_THERAPIST:
                 return "Counselor";
             case CLIENT:
                 return "Client";

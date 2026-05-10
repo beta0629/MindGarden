@@ -67,7 +67,8 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
         List<Long> createdScheduleIds = new ArrayList<>();
         
         try {
-            List<User> consultants = userRepository.findByTenantIdAndRole(tenantId, UserRole.CONSULTANT);
+            List<User> consultants = userRepository.findByTenantIdAndRolesInAndIsDeletedFalse(tenantId,
+                    UserRole.getProfessionalProviderRoles());
             consultants = consultants.stream()
                 .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                 .collect(java.util.stream.Collectors.toList());

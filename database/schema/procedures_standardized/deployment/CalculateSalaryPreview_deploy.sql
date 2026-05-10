@@ -2,7 +2,7 @@
 -- 급여 미리보기 계산 프로시저 (표준화 버전)
 -- JDBC CallableStatement 위치 = information_schema.PARAMETERS.ORDINAL_POSITION
 --   1–4 IN: consultant_id, period_start, period_end, tenant_id
---   5–10 OUT: success, message, gross_salary, net_salary, tax_amount, consultation_count
+--   5–11 OUT: success, message, gross_salary, net_salary, tax_amount, consultation_count, special_support_amount
 -- (구버전 3 IN + tenant_id 없음이면 PlSqlSalaryManagementServiceImpl 과 불일치 → OUT 바인딩 오류)
 -- 기간 필터: 상담 일자는 schedules.date(DATE). start_time/end_time은 TIME(6)만 저장되므로 DATE(start_time) 기반 기간 비교 금지.
 -- =====================================================
@@ -20,7 +20,8 @@ CREATE PROCEDURE CalculateSalaryPreview(
     OUT p_gross_salary DECIMAL(15,2),
     OUT p_net_salary DECIMAL(15,2),
     OUT p_tax_amount DECIMAL(15,2),
-    OUT p_consultation_count INT
+    OUT p_consultation_count INT,
+    OUT p_special_support_amount DECIMAL(15,2)
 )
 BEGIN
     DECLARE v_error_message VARCHAR(500);
@@ -36,6 +37,12 @@ BEGIN
     DECLARE v_freelance_rate_code VARCHAR(50) DEFAULT NULL;
     DECLARE v_grade_rate DECIMAL(10,2) DEFAULT 30000;
     DECLARE v_consultant_count INT DEFAULT 0;
+    DECLARE v_ss_extra_json TEXT;
+    DECLARE v_ss_unit_amount DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_ss_min_sessions INT DEFAULT 10;
+    DECLARE v_ss_total DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_require_paid BOOLEAN DEFAULT TRUE;
+    DECLARE v_paid_flag_txt VARCHAR(32);
     
     -- 세금 관련 변수
     DECLARE v_withholding_tax DECIMAL(5,4) DEFAULT 0.033;  -- 3.3% 원천징수
@@ -52,6 +59,7 @@ BEGIN
     DECLARE v_withholding_amount DECIMAL(15,2) DEFAULT 0;
     DECLARE v_vat_amount DECIMAL(15,2) DEFAULT 0;
     DECLARE v_4insurance_amount DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_freelance_taxable DECIMAL(15,2) DEFAULT 0;  -- 프리랜서 원천징수·부가세 과세표준(상담료+특별지원금)
     
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -63,6 +71,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_consultation_count = 0;
+        SET p_special_support_amount = 0;
     END;
 
     main: BEGIN
@@ -75,6 +84,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_consultation_count = 0;
+        SET p_special_support_amount = 0;
         LEAVE main;
     END IF;
     
@@ -85,6 +95,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_consultation_count = 0;
+        SET p_special_support_amount = 0;
         LEAVE main;
     END IF;
     
@@ -95,6 +106,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_consultation_count = 0;
+        SET p_special_support_amount = 0;
         LEAVE main;
     END IF;
     
@@ -103,7 +115,7 @@ BEGIN
     FROM users
     WHERE id = p_consultant_id 
       AND tenant_id = p_tenant_id
-      AND role = 'CONSULTANT'
+      AND role IN ('CONSULTANT', 'PLAY_THERAPIST', 'SPEECH_THERAPIST')
       AND is_active = TRUE
       AND is_deleted = FALSE;
     
@@ -114,6 +126,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_consultation_count = 0;
+        SET p_special_support_amount = 0;
         LEAVE main;
     END IF;
     
@@ -133,7 +146,8 @@ BEGIN
       AND csp.is_active = TRUE
     LIMIT 1;
     
-    -- 프리랜서 등급별 요율: FREELANCE_BASE_RATE (users.grade CONSULTANT_* ↔ JUNIOR_RATE 등)
+    -- 프리랜서 등급별 요율: common_codes FREELANCE_BASE_RATE
+    -- users.grade 는 CONSULTANT_* 이고 code_value 는 JUNIOR_RATE 등 (CONCAT(grade,'_RATE') 불일치 시 3만 폴백 방지)
     IF v_salary_type = 'FREELANCE' AND v_grade IS NOT NULL AND v_grade != '' THEN
         SET v_freelance_rate_code = CASE TRIM(v_grade)
             WHEN 'CONSULTANT_JUNIOR' THEN 'JUNIOR_RATE'
@@ -165,6 +179,7 @@ BEGIN
         SET p_net_salary = 0;
         SET p_tax_amount = 0;
         SET p_consultation_count = 0;
+        SET p_special_support_amount = 0;
         LEAVE main;
     ELSE
         -- 4. 상담 통계 조회 (테넌트 격리)
@@ -198,7 +213,57 @@ BEGIN
             SET v_consultation_earnings = 0;
         END IF;
         
-        -- 6. 세금 및 공제 계산
+        -- 6. 특별지원금 산출 (세금 전; 프리랜서는 상담료+특별지원 합계에 원천징수·부가세 적용)
+        SET v_ss_total = 0;
+        SET p_special_support_amount = 0;
+        SELECT cc.extra_data INTO v_ss_extra_json
+        FROM common_codes cc
+        WHERE cc.code_group = 'SPECIAL_SUPPORT_SALARY'
+          AND cc.code_value = 'DEFAULT'
+          AND cc.is_active = TRUE
+          AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+          AND (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+        ORDER BY cc.tenant_id IS NULL ASC
+        LIMIT 1;
+        
+        IF v_ss_extra_json IS NOT NULL AND v_ss_extra_json <> '' THEN
+            SET v_ss_unit_amount = CAST(JSON_UNQUOTE(JSON_EXTRACT(v_ss_extra_json, '$.amount')) AS DECIMAL(15,2));
+            SET v_ss_min_sessions = CAST(JSON_UNQUOTE(JSON_EXTRACT(v_ss_extra_json, '$.minSessions')) AS UNSIGNED);
+            IF v_ss_min_sessions IS NULL OR v_ss_min_sessions <= 0 THEN
+                SET v_ss_min_sessions = 10;
+            END IF;
+            SET v_paid_flag_txt = LOWER(IFNULL(JSON_UNQUOTE(JSON_EXTRACT(v_ss_extra_json, '$.requirePaidConfirmation')), 'true'));
+            IF v_paid_flag_txt IN ('0', 'false', 'no') THEN
+                SET v_require_paid = FALSE;
+            ELSE
+                SET v_require_paid = TRUE;
+            END IF;
+        ELSE
+            SET v_ss_unit_amount = 0;
+        END IF;
+        
+        IF v_ss_unit_amount IS NOT NULL AND v_ss_unit_amount > 0 THEN
+            SELECT COALESCE(SUM(
+                CASE
+                    WHEN sp.id IS NOT NULL THEN 0
+                    WHEN m.total_sessions < v_ss_min_sessions THEN 0
+                    WHEN v_require_paid = TRUE AND m.payment_status NOT IN ('CONFIRMED', 'PAY', 'DEP', 'APPROVED') THEN 0
+                    ELSE v_ss_unit_amount
+                END
+            ), 0) INTO v_ss_total
+            FROM consultant_client_mappings m
+            LEFT JOIN special_support_monthly_payouts sp
+              ON sp.tenant_id = p_tenant_id
+             AND sp.consultant_id = p_consultant_id
+             AND sp.mapping_id = m.id
+             AND sp.salary_year_month = DATE_FORMAT(p_period_start, '%Y-%m')
+            WHERE m.tenant_id = p_tenant_id
+              AND m.consultant_id = p_consultant_id
+              AND m.is_deleted = FALSE;
+        END IF;
+        SET p_special_support_amount = IFNULL(v_ss_total, 0);
+        
+        -- 7. 세금 및 공제 계산
         SET p_tax_amount = 0;
         SET v_withholding_amount = 0;
         SET v_vat_amount = 0;
@@ -206,14 +271,15 @@ BEGIN
         SET v_4insurance_amount = 0;
         
         IF v_salary_type = 'FREELANCE' THEN
-            -- 프리랜서 세금 계산
+            -- 프리랜서 세금 계산 (과세표준 = 상담료 OUT p_gross_salary + 특별지원금)
+            SET v_freelance_taxable = p_gross_salary + IFNULL(v_ss_total, 0);
             -- 1) 원천징수 3.3% (모든 프리랜서)
-            SET v_withholding_amount = p_gross_salary * v_withholding_tax;
+            SET v_withholding_amount = v_freelance_taxable * v_withholding_tax;
             SET p_tax_amount = p_tax_amount + v_withholding_amount;
             
             -- 2) 부가세 10% (사업자 등록 프리랜서만)
             IF v_is_business_registered = TRUE THEN
-                SET v_vat_amount = p_gross_salary * v_vat;
+                SET v_vat_amount = v_freelance_taxable * v_vat;
                 SET p_tax_amount = p_tax_amount + v_vat_amount;
             END IF;
             
@@ -243,7 +309,8 @@ BEGIN
             END IF;
         END IF;
         
-        SET p_net_salary = p_gross_salary - p_tax_amount;
+        -- 실지급액 = 상담료 + 특별지원금 - 세금·공제 (총 급여 OUT p_gross_salary 는 상담료만 유지)
+        SET p_net_salary = p_gross_salary + IFNULL(v_ss_total, 0) - p_tax_amount;
     END IF;
 
     END main;

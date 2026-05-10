@@ -31,6 +31,20 @@ public class SchemaRepository {
     }
     
     /**
+     * BASE TABLE 개수만 조회 (컬럼·인덱스·FK 없음)
+     */
+    public int countBaseTables(String schemaName) {
+        String sql = """
+            SELECT COUNT(*)
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_SCHEMA = ?
+                AND TABLE_TYPE = 'BASE TABLE'
+            """;
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, schemaName);
+        return count != null ? count : 0;
+    }
+
+    /**
      * 테이블 목록 조회
      */
     public List<SchemaTable> getTables(String schemaName) {

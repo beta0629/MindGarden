@@ -486,7 +486,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             throw new ValidationException("사용자가 해당 지점에 소속되어 있지 않습니다.");
         }
         
-        if (user.getRole() == com.coresolution.consultation.constant.UserRole.CONSULTANT && !isConsultantCapacityAvailable(toBranchId)) {
+        if (user.getRole() != null && user.getRole().isProfessionalProvider() && !isConsultantCapacityAvailable(toBranchId)) {
             throw new ValidationException("목표 지점의 상담사 수용 인원을 초과했습니다.");
         } else if (user.getRole() == com.coresolution.consultation.constant.UserRole.CLIENT && !isClientCapacityAvailable(toBranchId)) {
             throw new ValidationException("목표 지점의 내담자 수용 인원을 초과했습니다.");
@@ -508,8 +508,8 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             return new ArrayList<>();
         }
         Branch branch = findActiveByIdOrThrow(branchId);
-        return userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(
-                tenantId, branch, UserRole.CONSULTANT);
+        return userRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(
+                tenantId, branch, UserRole.getProfessionalProviderRoles());
     }
     
     @Override
@@ -910,8 +910,10 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             long totalUsers = userRepository.count();
             long activeUsers = userRepository.countByIsActiveTrueAndIsDeletedFalse(tenantId);
             
-            long totalConsultants = userRepository.countByRoleAndIsDeletedFalse(tenantId, UserRole.CONSULTANT);
-            long activeConsultants = userRepository.countByRoleAndIsActiveTrueAndIsDeletedFalse(tenantId, UserRole.CONSULTANT);
+            long totalConsultants = userRepository.countByTenantIdAndRolesInAndIsDeletedFalse(tenantId,
+                    UserRole.getProfessionalProviderRoles());
+            long activeConsultants = userRepository.countByTenantIdAndRolesInAndIsActiveTrueAndIsDeletedFalse(tenantId,
+                    UserRole.getProfessionalProviderRoles());
             long totalClients = userRepository.countByRoleAndIsDeletedFalse(tenantId, UserRole.CLIENT);
             long activeClients = userRepository.countByRoleAndIsActiveTrueAndIsDeletedFalse(tenantId, UserRole.CLIENT);
             
@@ -952,7 +954,8 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
                     String tenantId = TenantContextHolder.getTenantId();
                     long userCount = tenantId != null ? userRepository.countByBranchIdAndIsDeletedFalse(tenantId, branch.getId()) : 0;
                     long activeUserCount = tenantId != null ? userRepository.countByBranchIdAndIsActiveTrueAndIsDeletedFalse(tenantId, branch.getId()) : 0;
-                    long consultantCount = tenantId != null ? userRepository.countByBranchIdAndRoleAndIsDeletedFalse(tenantId, branch.getId(), UserRole.CONSULTANT) : 0;
+                    long consultantCount = tenantId != null ? userRepository.countByTenantIdAndBranchIdAndRolesInAndIsDeletedFalse(
+                            tenantId, branch.getId(), UserRole.getProfessionalProviderRoles()) : 0;
                     long clientCount = tenantId != null ? userRepository.countByBranchIdAndRoleAndIsDeletedFalse(tenantId, branch.getId(), UserRole.CLIENT) : 0;
                     
                     branchStats.put("totalUsers", userCount);

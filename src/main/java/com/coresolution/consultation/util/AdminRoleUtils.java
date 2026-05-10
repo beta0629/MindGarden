@@ -111,7 +111,7 @@ public class AdminRoleUtils {
      * @return 상담사 역할이면 true, 아니면 false
      */
     public static boolean isConsultant(User user) {
-        return user != null && user.getRole() == UserRole.CONSULTANT;
+        return user != null && user.getRole() != null && user.getRole().isProfessionalProvider();
     }
     
     /**
@@ -131,7 +131,7 @@ public class AdminRoleUtils {
      * @return 상담사 역할이면 true, 아니면 false
      */
     public static boolean isConsultant(UserRole role) {
-        return role == UserRole.CONSULTANT;
+        return role != null && role.isProfessionalProvider();
     }
     
     /**

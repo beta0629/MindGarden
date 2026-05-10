@@ -328,6 +328,20 @@ public class OnboardingConstants {
     public static final int TENANT_COMMON_CODE_DEFAULT_SORT_ORDER = 0;
 
     public static final String TENANT_COMMON_CODE_GROUP_ROLE = "ROLE";
+
+    /** 테넌트 전문가 표시·분류용 공통코드 그룹 (유형별 extra_data.systemAuthorityRole 로 JWT 묶음 결정). */
+    public static final String TENANT_COMMON_CODE_GROUP_PROFESSIONAL_PROVIDER_TYPE = "PROFESSIONAL_PROVIDER_TYPE";
+
+    /** 시드: 기본 상담사 유형 code_value */
+    public static final String TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_DEFAULT = "DEFAULT_COUNSELOR";
+
+    public static final String TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_DEFAULT = "상담사";
+
+    public static final String TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_DEFAULT = "테넌트 기본 전문가 유형(상담)";
+
+    /** 시드: extra_data (systemAuthorityRole, isDefault, sortOrder). */
+    public static final String TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_DEFAULT =
+            "{\"systemAuthorityRole\":\"CONSULTANT\",\"isDefault\":true,\"sortOrder\":0}";
     public static final String TENANT_BUSINESS_TYPE_CONSULTATION = "CONSULTATION";
     public static final String TENANT_BUSINESS_TYPE_COUNSELING = "COUNSELING";
     public static final String TENANT_BUSINESS_TYPE_ACADEMY = "ACADEMY";

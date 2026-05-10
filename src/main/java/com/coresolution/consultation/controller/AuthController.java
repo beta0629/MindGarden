@@ -1806,8 +1806,8 @@ public class AuthController extends BaseApiController {
             return "Director"; // 실제 TenantRole name_en
         }
         
-        // 상담사 계열 -> Counselor
-        if (role == UserRole.CONSULTANT) {
+        // 상담사·치료 전문가 계열 -> Counselor
+        if (role != null && role.isProfessionalProvider()) {
             return "Counselor"; // 실제 TenantRole name_en
         }
         

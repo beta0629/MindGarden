@@ -176,11 +176,16 @@ public class PermissionCheckUtils {
         switch (user.getRole()) {
             case ADMIN:
                 authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"));
+                if (Boolean.TRUE.equals(user.getCounselingEnabled())) {
+                    authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_CONSULTANT"));
+                }
                 break;
             case STAFF:
                 authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"));
                 break;
             case CONSULTANT:
+            case PLAY_THERAPIST:
+            case SPEECH_THERAPIST:
                 authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_CONSULTANT"));
                 break;
             case CLIENT:

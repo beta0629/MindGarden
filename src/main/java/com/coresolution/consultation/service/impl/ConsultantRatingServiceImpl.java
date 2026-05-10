@@ -567,7 +567,8 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
 
             Map<String, Object> stats = new HashMap<>();
 
-            List<User> consultants = userRepository.findByTenantIdAndRole(tenantId, UserRole.CONSULTANT);
+            List<User> consultants = userRepository.findByTenantIdAndRolesInAndIsDeletedFalse(tenantId,
+                    UserRole.getProfessionalProviderRoles());
             List<User> branchConsultants = consultants.stream()
                 .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                 .collect(Collectors.toList());
@@ -645,7 +646,8 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 return new ArrayList<>();
             }
             
-            List<User> consultants = userRepository.findByTenantIdAndRole(tenantId, UserRole.CONSULTANT);
+            List<User> consultants = userRepository.findByTenantIdAndRolesInAndIsDeletedFalse(tenantId,
+                    UserRole.getProfessionalProviderRoles());
             List<User> branchConsultants = consultants.stream()
                 .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                 .collect(Collectors.toList());

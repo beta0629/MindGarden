@@ -2078,6 +2078,16 @@ public class OnboardingServiceImpl implements OnboardingService {
                     OnboardingConstants.TENANT_SEED_DESC_MS_SESSIONS_EXHAUSTED, null,
                     OnboardingConstants.TENANT_SEED_SORT_MAPPING_STATUS_7, createdByValue);
 
+            // 전문가 유형(테넌트별 표시·분류): 기본 상담사 1건
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_PROFESSIONAL_PROVIDER_TYPE,
+                    OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_DEFAULT,
+                    OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_DEFAULT,
+                    OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_DEFAULT,
+                    OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_DEFAULT,
+                    OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_DEFAULT,
+                    OnboardingConstants.TENANT_COMMON_CODE_DEFAULT_SORT_ORDER, createdByValue);
+
             // 급여·ERP 필수 공통코드 (테넌트 행; 코어 폴백만 가정하지 않음). 시드 정의 동기화:
             // TenantOnboardingSalaryAndFinancialSeedDefinitions
             for (TenantOnboardingSalaryAndFinancialSeedDefinitions.SeedRow row : TenantOnboardingSalaryAndFinancialSeedDefinitions

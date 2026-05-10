@@ -96,6 +96,14 @@ public interface PaymentRepository extends BaseRepository<Payment, Long> {
      */
     @Query("SELECT p.id, p.method FROM Payment p WHERE p.updatedAt < ?1")
     List<Object[]> findExpiredPaymentsForDestruction(LocalDateTime cutoffDate);
+
+    /**
+     * 테넌트별 만료된 결제 데이터 조회 (스케줄 파기용, tenantId 필터링)
+     */
+    @Query("SELECT p.id, p.method FROM Payment p WHERE p.tenantId = :tenantId AND p.updatedAt < :cutoffDate")
+    List<Object[]> findExpiredPaymentsForDestructionByTenantId(
+        @Param("tenantId") String tenantId,
+        @Param("cutoffDate") LocalDateTime cutoffDate);
     
     /**
      * 결제 상태로 결제 목록 조회

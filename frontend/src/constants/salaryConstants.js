@@ -211,6 +211,9 @@ export const SALARY_PAY_DAY_FALLBACK_OPTIONS = [
   { codeValue: 'LAST_DAY', codeLabel: '매월 말일' }
 ];
 
+/** 급여 미리보기 카드: 특별지원금(공통코드 SPECIAL_SUPPORT_SALARY) 한 줄 라벨 */
+export const SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL = '특별지원금';
+
 export const SALARY_DEFAULTS = {
   PAY_DAY_CODE: 'TENTH',
   CURRENCY: 'KRW',

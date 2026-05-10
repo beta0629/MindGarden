@@ -3,12 +3,15 @@ package com.coresolution.consultation.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import com.coresolution.consultation.entity.PersonalDataAccessLog;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.PersonalDataAccessLogRepository;
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.service.TenantService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,9 +35,16 @@ public class PersonalDataDestructionService {
     private final ConsultationRecordRepository consultationRecordRepository;
     private final PaymentRepository paymentRepository;
     private final SalaryCalculationRepository salaryCalculationRepository;
+    private final TenantService tenantService;
     
     /**
-     * 만료된 개인정보 자동 파기 (매일 새벽 3시 실행)
+     * 만료된 개인정보 자동 파기 (매일 새벽 3시 실행).
+     * <p>
+     * 스케줄 스레드에는 HTTP 테넌트 컨텍스트가 없으므로, {@link TenantService#getAllActiveTenantIds()}로
+     * 활성 테넌트를 조회한 뒤 테넌트마다 {@link TenantContextHolder#setTenantId(String)} 후 파기 단계를 수행한다.
+     * </p>
+     * <p>수동 검증: 활성 테넌트 2개 이상 환경에서 스케줄 실행 후 로그에 테넌트별 처리·ERROR 없음,
+     * 비어 있으면 {@code 활성 테넌트 없음} INFO 한 줄만 확인.</p>
      */
     @Scheduled(cron = "0 0 3 * * ?")
     @Transactional
@@ -42,33 +52,51 @@ public class PersonalDataDestructionService {
         log.info("🔄 만료된 개인정보 자동 파기 시작");
         
         try {
+            List<String> activeTenantIds = tenantService.getAllActiveTenantIds();
+            if (activeTenantIds.isEmpty()) {
+                log.info("만료 개인정보 자동 파기: 활성 테넌트 없음 — 전체 스킵");
+                return;
+            }
+            
             int totalDestroyed = 0;
+            for (String tenantId : activeTenantIds) {
+                try {
+                    TenantContextHolder.setTenantId(tenantId);
+                    int tenantTotal = 0;
+                    tenantTotal += destroyExpiredUserData();
+                    tenantTotal += destroyExpiredConsultationData();
+                    tenantTotal += destroyExpiredPaymentData();
+                    tenantTotal += destroyExpiredSalaryData();
+                    tenantTotal += destroyExpiredAccessLogs();
+                    totalDestroyed += tenantTotal;
+                    log.debug("만료 개인정보 파기(테넌트): tenantId={}, 건수={}", tenantId, tenantTotal);
+                } catch (Exception e) {
+                    log.error("❌ 테넌트별 개인정보 자동 파기 실패: tenantId={}, {}", tenantId, e.getMessage(), e);
+                } finally {
+                    TenantContextHolder.clear();
+                }
+            }
             
-            // 1. 회원 탈퇴 후 1년 경과된 사용자 데이터 파기
-            int userDataDestroyed = destroyExpiredUserData();
-            totalDestroyed += userDataDestroyed;
-            
-            // 2. 상담 완료 후 5년 경과된 상담 기록 파기
-            int consultationDataDestroyed = destroyExpiredConsultationData();
-            totalDestroyed += consultationDataDestroyed;
-            
-            // 3. 거래 완료 후 5년 경과된 결제 데이터 파기
-            int paymentDataDestroyed = destroyExpiredPaymentData();
-            totalDestroyed += paymentDataDestroyed;
-            
-            // 4. 급여 지급 후 3년 경과된 급여 데이터 파기
-            int salaryDataDestroyed = destroyExpiredSalaryData();
-            totalDestroyed += salaryDataDestroyed;
-            
-            // 5. 개인정보 접근 로그 파기 (1년 경과)
-            int accessLogDestroyed = destroyExpiredAccessLogs();
-            totalDestroyed += accessLogDestroyed;
-            
-            log.info("✅ 만료된 개인정보 자동 파기 완료: 총 {}건 파기", totalDestroyed);
+            log.info("✅ 만료된 개인정보 자동 파기 완료: 총 {}건 파기, 테넌트 수={}", totalDestroyed, activeTenantIds.size());
             
         } catch (Exception e) {
             log.error("❌ 만료된 개인정보 자동 파기 실패: {}", e.getMessage(), e);
         }
+    }
+    
+    /**
+     * 파기 단계별 조회에 사용할 테넌트 ID. 스케줄 외 직접 호출 시 컨텍스트가 없으면 스킵(INFO 한 줄).
+     *
+     * @param scopeLabel 로그용 구분 (예: 사용자, 상담)
+     * @return 테넌트 ID
+     */
+    private Optional<String> resolveTenantIdForDestruction(String scopeLabel) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            log.info("개인정보 파기 스킵({}): 테넌트 컨텍스트 없음", scopeLabel);
+            return Optional.empty();
+        }
+        return Optional.of(tenantId);
     }
     
     /**
@@ -79,8 +107,13 @@ public class PersonalDataDestructionService {
         try {
             LocalDateTime cutoffDate = LocalDateTime.now().minusYears(1);
             
-            // 회원 탈퇴 후 1년 경과된 사용자 조회
-            List<Object[]> expiredUsers = userRepository.findExpiredUsersForDestruction(cutoffDate);
+            Optional<String> tenantId = resolveTenantIdForDestruction("사용자");
+            if (tenantId.isEmpty()) {
+                return 0;
+            }
+            
+            // 회원 탈퇴 후 1년 경과된 사용자 조회 (테넌트 격리)
+            List<Object[]> expiredUsers = userRepository.findExpiredUsersForDestructionByTenantId(tenantId.get(), cutoffDate);
             
             int destroyedCount = 0;
             for (Object[] user : expiredUsers) {
@@ -120,14 +153,13 @@ public class PersonalDataDestructionService {
         try {
             LocalDateTime cutoffDate = LocalDateTime.now().minusYears(5);
             
-            String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
-            if (tenantId == null) {
-                log.error("❌ tenantId가 설정되지 않았습니다");
+            Optional<String> tenantId = resolveTenantIdForDestruction("상담기록");
+            if (tenantId.isEmpty()) {
                 return 0;
             }
             
             // 상담 완료 후 5년 경과된 상담 기록 조회
-            List<Object[]> expiredRecords = consultationRecordRepository.findExpiredRecordsForDestruction(tenantId, cutoffDate);
+            List<Object[]> expiredRecords = consultationRecordRepository.findExpiredRecordsForDestruction(tenantId.get(), cutoffDate);
             
             int destroyedCount = 0;
             for (Object[] record : expiredRecords) {
@@ -167,8 +199,13 @@ public class PersonalDataDestructionService {
         try {
             LocalDateTime cutoffDate = LocalDateTime.now().minusYears(5);
             
-            // 거래 완료 후 5년 경과된 결제 데이터 조회
-            List<Object[]> expiredPayments = paymentRepository.findExpiredPaymentsForDestruction(cutoffDate);
+            Optional<String> tenantId = resolveTenantIdForDestruction("결제");
+            if (tenantId.isEmpty()) {
+                return 0;
+            }
+            
+            // 거래 완료 후 5년 경과된 결제 데이터 조회 (테넌트 격리)
+            List<Object[]> expiredPayments = paymentRepository.findExpiredPaymentsForDestructionByTenantId(tenantId.get(), cutoffDate);
             
             int destroyedCount = 0;
             for (Object[] payment : expiredPayments) {
@@ -208,8 +245,14 @@ public class PersonalDataDestructionService {
         try {
             LocalDateTime cutoffDate = LocalDateTime.now().minusYears(3);
             
-            // 급여 지급 후 3년 경과된 급여 데이터 조회
-            List<Object[]> expiredSalaries = salaryCalculationRepository.findExpiredSalariesForDestruction(cutoffDate);
+            Optional<String> tenantId = resolveTenantIdForDestruction("급여");
+            if (tenantId.isEmpty()) {
+                return 0;
+            }
+            
+            // 급여 지급 후 3년 경과된 급여 데이터 조회 (상담사 소속 테넌트 기준)
+            List<Object[]> expiredSalaries =
+                salaryCalculationRepository.findExpiredSalariesForDestructionByTenantId(tenantId.get(), cutoffDate);
             
             int destroyedCount = 0;
             for (Object[] salary : expiredSalaries) {
@@ -249,8 +292,13 @@ public class PersonalDataDestructionService {
         try {
             LocalDateTime cutoffDate = LocalDateTime.now().minusYears(1);
             
-            // 1년 경과된 접근 로그 삭제
-            long deletedCount = personalDataAccessLogRepository.deleteByAccessTimeBefore(cutoffDate);
+            Optional<String> tenantId = resolveTenantIdForDestruction("접근로그");
+            if (tenantId.isEmpty()) {
+                return 0;
+            }
+            
+            // 1년 경과된 접근 로그 삭제 (테넌트 격리)
+            long deletedCount = personalDataAccessLogRepository.deleteByTenantIdAndAccessTimeBefore(tenantId.get(), cutoffDate);
             
             log.info("만료된 접근 로그 파기 완료: {}건", deletedCount);
             return (int) deletedCount;

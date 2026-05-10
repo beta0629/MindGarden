@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.CustomUserDetails;
 import com.coresolution.consultation.service.UserService;
@@ -11,7 +12,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Spring Security UserDetailsService 구현체
@@ -46,13 +48,20 @@ public class CustomUserDetailsService implements UserDetailsService {
                 throw new UsernameNotFoundException("비활성화된 사용자입니다: " + email);
             }
             
+            List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+            if (user.getRole() != null && user.getRole().isProfessionalProvider()
+                    && user.getRole() != UserRole.CONSULTANT) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_CONSULTANT"));
+            }
+
             // 커스텀 UserDetails 객체 생성
             // getUsername()은 email을 반환 (Spring Security 인증 호환성)
             CustomUserDetails userDetails = new CustomUserDetails(
                 user.getUserId(),  // userId
                 user.getEmail(),   // email
                 user.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole())),
+                authorities,
                 true,  // accountNonExpired
                 true,  // accountNonLocked
                 true,  // credentialsNonExpired

@@ -14,6 +14,14 @@ import java.util.List;
 public interface SchemaService {
     
     /**
+     * 스키마 내 BASE TABLE 개수 (INFORMATION_SCHEMA 단일 조회, ERD 파이프라인 사전 점검용)
+     *
+     * @param schemaName 대상 스키마명
+     * @return 테이블 개수
+     */
+    int countBaseTables(String schemaName);
+
+    /**
      * 모든 테이블 정보 조회
      */
     List<SchemaTable> getAllTables(String schemaName);

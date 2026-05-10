@@ -41,8 +41,10 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         
         // 표준화 2025-12-05: enum 활용
         UserRole role = UserRole.fromString(userRole);
-        if (role == UserRole.CONSULTANT) {
+        if (role != null && role.isProfessionalProvider()) {
             targetTypes.add(UserRole.CONSULTANT.name());
+            targetTypes.add(UserRole.PLAY_THERAPIST.name());
+            targetTypes.add(UserRole.SPEECH_THERAPIST.name());
         } else if (role == UserRole.CLIENT) {
             targetTypes.add(UserRole.CLIENT.name());
         }

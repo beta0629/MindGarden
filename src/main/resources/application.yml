@@ -220,6 +220,9 @@ server:
       charset: UTF-8
       force: true
     session:
+      # 비활성 만료(슬라이딩). JSESSIONID 쿠키 max-age와 불일치 시 브라우저가 먼저 쿠키를 폐기해
+      # 활성 사용자도 무세션·로그인 리다이렉트가 발생할 수 있음 → cookie.max-age는 두지 않음.
+      timeout: ${HTTP_SESSION_MAX_INACTIVE:8h}
       cookie:
         http-only: true
         # OAuth 콜백이 apex(예: core-solution.co.kr)이고 프론트가 테넌트 서브도메인(mindgarden.*)인 경우,
@@ -234,7 +237,6 @@ server:
         # - local 프로파일은 application-local.yml에서 secure=false로 오버라이드됩니다.
         secure: true
         same-site: lax
-        max-age: 3600  # 1시간
   compression:
     enabled: true
     mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
@@ -320,7 +322,8 @@ consultation:
     name: "통합 상담관리 시스템"
     version: "1.0.0"
     max-clients-per-consultant: 20
-    session-timeout: 30
+    # 분 단위 참고값(UI/문서). 실제 세션 수명은 server.servlet.session.timeout(기본 8h) 및 SessionConstants와 정합.
+    session-timeout: 480
     notification:
       enabled: true
       real-time: true

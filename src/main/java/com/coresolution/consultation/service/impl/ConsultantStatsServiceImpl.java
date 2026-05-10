@@ -296,6 +296,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         consultantMap.put("phone", phone);
         
         consultantMap.put("role", consultant.getRole() != null ? consultant.getRole().name() : null);
+        consultantMap.put("professionalProviderTypeCode", consultant.getProfessionalProviderTypeCode());
         consultantMap.put("status", Boolean.TRUE.equals(consultant.getIsActive()) ? "ACTIVE" : "INACTIVE");
         consultantMap.put("isActive", consultant.getIsActive());
         consultantMap.put("isDeleted", consultant.getIsDeleted());

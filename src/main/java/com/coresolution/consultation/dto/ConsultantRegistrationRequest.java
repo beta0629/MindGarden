@@ -49,6 +49,11 @@ public class ConsultantRegistrationRequest {
 
     private String role;
 
+    /**
+     * 테넌트 공통코드 {@code PROFESSIONAL_PROVIDER_TYPE}의 code_value. 미지정 시 기본 유형 또는 레거시 {@link #role}로 보완.
+     */
+    private String professionalTypeCode;
+
     private String specialization;
 
     /** 자격증 — consultants.certification 매핑 */
@@ -105,6 +110,7 @@ public class ConsultantRegistrationRequest {
             .qualifications(dto.getQualifications())
             .workHistory(null)
             .role(dto.getRole())
+            .professionalTypeCode(null)
             .specialization(dto.getSpecialization())
             .notes(dto.getNotes())
             .branchCode(null) // 표준화 2025-12-07: 브랜치 개념 제거됨

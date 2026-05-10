@@ -1088,10 +1088,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return new ArrayList<>();
         }
         
-        if (isAdminRole(userRole)) {
+        if (scheduleAdminSeesAllTenant(userId, userRole)) {
             log.info("👑 관리자 권한으로 모든 스케줄 조회");
             return scheduleRepository.findByTenantId(tenantId);
-        } else if (isConsultantRole(userRole)) {
+        } else if (scheduleUsesConsultantOwnScope(userId, userRole)) {
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 조회: {}", userId);
             return scheduleRepository.findByTenantIdAndConsultantId(tenantId, userId);
         } else {
@@ -1107,9 +1107,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         autoCompleteExpiredSchedules();
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        if (isAdminRole(userRole)) {
+        if (scheduleAdminSeesAllTenant(userId, userRole)) {
             return scheduleRepository.findByTenantIdAndDate(tenantId, date);
-        } else if (isConsultantRole(userRole)) {
+        } else if (scheduleUsesConsultantOwnScope(userId, userRole)) {
             return scheduleRepository.findByTenantIdAndConsultantIdAndDate(tenantId, userId, date);
         } else {
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
@@ -1123,9 +1123,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         autoCompleteExpiredSchedules();
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        if (isAdminRole(userRole)) {
+        if (scheduleAdminSeesAllTenant(userId, userRole)) {
             return scheduleRepository.findByTenantIdAndDateBetween(tenantId, startDate, endDate);
-        } else if (isConsultantRole(userRole)) {
+        } else if (scheduleUsesConsultantOwnScope(userId, userRole)) {
             return scheduleRepository.findByTenantIdAndConsultantIdAndDateBetween(tenantId, userId, startDate, endDate);
         } else {
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
@@ -1636,6 +1636,31 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
     }
 
+    private boolean adminCounselingOwnSchedulesOnly(Long userId, String userRole) {
+        if (userId == null || userRole == null) {
+            return false;
+        }
+        UserRole r = UserRole.fromString(userRole);
+        if (r != UserRole.ADMIN) {
+            return false;
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return false;
+        }
+        return userRepository.findByTenantIdAndId(tenantId, userId)
+                .map(u -> Boolean.TRUE.equals(u.getCounselingEnabled()))
+                .orElse(false);
+    }
+
+    private boolean scheduleAdminSeesAllTenant(Long userId, String userRole) {
+        return isAdminRole(userRole) && !adminCounselingOwnSchedulesOnly(userId, userRole);
+    }
+
+    private boolean scheduleUsesConsultantOwnScope(Long userId, String userRole) {
+        return isConsultantRole(userRole) || adminCounselingOwnSchedulesOnly(userId, userRole);
+    }
+
      /**
      * 권한 기반 스케줄 조회 (상담사 이름 포함)
      */
@@ -1647,10 +1672,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
         List<Schedule> schedules;
-        if (isAdminRole(userRole)) {
+        if (scheduleAdminSeesAllTenant(userId, userRole)) {
             log.info("👑 관리자 권한으로 모든 스케줄 조회");
             schedules = scheduleRepository.findByTenantId(tenantId);
-        } else if (isConsultantRole(userRole)) {
+        } else if (scheduleUsesConsultantOwnScope(userId, userRole)) {
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 조회: {}", userId);
             schedules = scheduleRepository.findByTenantIdAndConsultantId(tenantId, userId);
         } else if (getRoleCodeFromCommonCode(UserRole.CLIENT.name()).equals(userRole)) {
@@ -1684,10 +1709,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Page<Schedule> schedulePage;
-        if (isAdminRole(userRole)) {
+        if (scheduleAdminSeesAllTenant(userId, userRole)) {
             log.info("👑 관리자 권한으로 모든 스케줄 페이지네이션 조회");
             schedulePage = scheduleRepository.findByTenantId(tenantId, pageable);
-        } else if (isConsultantRole(userRole)) {
+        } else if (scheduleUsesConsultantOwnScope(userId, userRole)) {
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
             schedulePage = scheduleRepository.findByTenantIdAndConsultantId(tenantId, userId, pageable);
         } else if (getRoleCodeFromCommonCode(UserRole.CLIENT.name()).equals(userRole)) {
@@ -1708,10 +1733,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
         List<Vacation> vacations;
-        if (isAdminRole(userRole)) {
+        if (scheduleAdminSeesAllTenant(userId, userRole)) {
             // 표준화 2025-12-06: 테넌트 필터링 필수
             vacations = vacationRepository.findByTenantIdAndIsDeletedFalseOrderByVacationDateAsc(tenantId);
-        } else if (isConsultantRole(userRole)) {
+        } else if (scheduleUsesConsultantOwnScope(userId, userRole)) {
             // 표준화 2025-12-06: 테넌트 필터링 필수
             vacations = vacationRepository.findByTenantIdAndConsultantIdAndIsDeletedFalseOrderByVacationDateAsc(tenantId, userId);
         } else {
@@ -2102,8 +2127,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             Branch branch = branchRepository.findByTenantIdAndId(tenantId, branchId)
                 .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
             
-            List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(
-                tenantId, branch, com.coresolution.consultation.constant.UserRole.CONSULTANT);
+            List<User> consultants = userRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(
+                tenantId, branch, UserRole.getProfessionalProviderRoles());
             if (consultants.isEmpty()) {
                 log.warn("지점에 상담사가 없습니다: branchId={}", branchId);
                 return new ArrayList<>();
@@ -2216,8 +2241,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             Branch branch = branchRepository.findByTenantIdAndId(tenantId, branchId)
                 .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
             
-            List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(
-                tenantId, branch, com.coresolution.consultation.constant.UserRole.CONSULTANT);
+            List<User> consultants = userRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(
+                tenantId, branch, UserRole.getProfessionalProviderRoles());
             
             Map<String, Object> status = new HashMap<>();
             status.put("branchId", branchId);

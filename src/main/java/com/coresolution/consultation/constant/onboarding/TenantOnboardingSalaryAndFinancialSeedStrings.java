@@ -268,4 +268,14 @@ public final class TenantOnboardingSalaryAndFinancialSeedStrings {
 
     public static final String FREELANCE_BASE_RATE_MASTER_EXTRA_DATA =
             "{\"rate\": 45000, \"grade\": \"CONSULTANT_MASTER\", \"duration\": 50, \"level\": 4}";
+
+    // --- SPECIAL_SUPPORT_SALARY (CalculateSalaryPreview / ProcessIntegratedSalaryCalculation) ---
+
+    public static final String SPECIAL_SUPPORT_SALARY_DEFAULT_DISPLAY = "특별지원금 설정";
+
+    public static final String SPECIAL_SUPPORT_SALARY_DEFAULT_DESCRIPTION =
+            "매핑별 월 1회 한도 특별지원금. extra_data: amount, minSessions, requirePaidConfirmation";
+
+    public static final String SPECIAL_SUPPORT_SALARY_DEFAULT_EXTRA_DATA =
+            "{\"amount\":10000,\"minSessions\":10,\"requirePaidConfirmation\":true}";
 }

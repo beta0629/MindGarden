@@ -57,13 +57,9 @@ public class SchemaChangeErdRegenerationServiceImpl implements SchemaChangeErdRe
         String targetSchema = schemaName != null ? schemaName : defaultSchemaName;
 
         try {
-            // 현재 스키마 정보 조회
-            List<String> currentTables = schemaService.getAllTables(targetSchema).stream()
-                    .map(table -> table.getTableName())
-                    .sorted()
-                    .collect(Collectors.toList());
-
-            log.info("📊 현재 스키마 테이블 수: {}", currentTables.size());
+            // 전체 메타(getIndexes 등)는 ERD 생성 단계에서만 수행 — REQUIRES_NEW와 이중으로 묶이지 않음
+            int tableCount = schemaService.countBaseTables(targetSchema);
+            log.info("📊 현재 스키마 테이블 수: {}", tableCount);
 
             // TODO: 이전 스키마 스냅샷과 비교하여 변경사항 감지
             // 현재는 항상 재생성하도록 구현 (향후 스키마 스냅샷 비교 로직 추가)
@@ -78,8 +74,19 @@ public class SchemaChangeErdRegenerationServiceImpl implements SchemaChangeErdRe
 
             return regeneratedCount + 1; // 전체 시스템 ERD 포함
 
+        } catch (RuntimeException e) {
+            log.error(
+                    "스키마 변경 감지 및 ERD 재생성 실패: schema={}, {}: {}",
+                    targetSchema,
+                    e.getClass().getSimpleName(),
+                    e.getMessage());
+            throw e;
         } catch (Exception e) {
-            log.error("❌ 스키마 변경 감지 및 ERD 재생성 실패: {}", e.getMessage(), e);
+            log.error(
+                    "스키마 변경 감지 및 ERD 재생성 실패: schema={}, {}: {}",
+                    targetSchema,
+                    e.getClass().getSimpleName(),
+                    e.getMessage());
             throw new RuntimeException("스키마 변경 감지 및 ERD 재생성 실패", e);
         }
     }

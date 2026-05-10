@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +29,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.salary.PlSqlSalaryProcedureUserFacingMessages;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.SalaryTaxCalculation;
@@ -353,6 +355,51 @@ class SalaryManagementControllerIntegrationTest {
                             .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true));
+        }
+
+        @Test
+        @DisplayName("I-API-14b: POST /confirm success=false·message=null → 400, 응답 message 비어 있지 않음")
+        void postConfirm_failureNullProcedureMessage_returns400WithNonEmptyMessage() throws Exception {
+            Map<String, Object> failed = new HashMap<>();
+            failed.put("success", false);
+            failed.put("message", null);
+            when(plSqlSalaryManagementService.processIntegratedSalaryCalculation(
+                    eq(1L), any(LocalDate.class), any(LocalDate.class), any()))
+                    .thenReturn(failed);
+
+            mockMvc.perform(post("/api/v1/admin/salary/confirm")
+                            .param("consultantId", "1")
+                            .param("periodStart", "2025-06-01")
+                            .param("periodEnd", "2025-06-30")
+                            .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
+                            .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").exists())
+                    .andExpect(jsonPath("$.message")
+                            .value(PlSqlSalaryProcedureUserFacingMessages.INTEGRATED_CALC_FAILURE_WHEN_DB_SILENT));
+        }
+
+        @Test
+        @DisplayName("I-API-14c: POST /confirm success=false·프로시저 한글 메시지 → 400, 동일 문구 반환")
+        void postConfirm_failureWithProcedureMessage_returns400WithProcedureMessage() throws Exception {
+            String korean = "동일 상담사·동일 월(2026-04)에 급여 확정이 이미 있습니다. 중복 확정은 불가합니다.";
+            Map<String, Object> failed = new HashMap<>();
+            failed.put("success", false);
+            failed.put("message", korean);
+            when(plSqlSalaryManagementService.processIntegratedSalaryCalculation(
+                    eq(22L), any(LocalDate.class), any(LocalDate.class), any()))
+                    .thenReturn(failed);
+
+            mockMvc.perform(post("/api/v1/admin/salary/confirm")
+                            .param("consultantId", "22")
+                            .param("periodStart", "2026-04-01")
+                            .param("periodEnd", "2026-04-30")
+                            .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
+                            .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value(korean));
         }
 
         @Test

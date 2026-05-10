@@ -11,6 +11,8 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.oauth.OAuthAccountSelectionUserFacingStrings;
 import com.coresolution.consultation.constant.oauth.OAuth2UserFacingMessages;
 import com.coresolution.consultation.dto.OAuthAccountSelectionCompleteData;
@@ -155,6 +157,8 @@ public class OAuth2Controller extends BaseApiController {
         }
         switch (user.getRole()) {
             case CONSULTANT:
+            case PLAY_THERAPIST:
+            case SPEECH_THERAPIST:
                 return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_CONSULTANT_FMT,
                     user.getId());
             case CLIENT:
@@ -2014,8 +2018,7 @@ public class OAuth2Controller extends BaseApiController {
                     session.setAttribute("SPRING_SECURITY_CONTEXT",
                             SecurityContextHolder.getContext());
 
-                    // 세션 무효화 시간 설정 (1시간)
-                    session.setMaxInactiveInterval(3600);
+                    session.setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS);
 
                     log.info(
                             "네이버 OAuth2 로그인 성공: userId={}, role={}, profileImageSummary={}, clientType={}",
@@ -2090,8 +2093,9 @@ public class OAuth2Controller extends BaseApiController {
                     // 프론트엔드에서 이 쿠키를 사용하여 세션을 복원
                     String sessionId = session.getId();
                     String cookieValue = String.format(
-                            "JSESSIONID=%s; Path=/; SameSite=None; Max-Age=3600; Secure; HttpOnly=false",
-                            sessionId);
+                            "JSESSIONID=%s; Path=/; SameSite=None; Max-Age=%d; Secure; HttpOnly=false",
+                            sessionId,
+                            SessionConstants.SESSION_TIMEOUT_SECONDS);
 
                     log.info("세션 쿠키 설정: {}", cookieValue);
                     logOAuthRedirectLocationSummary("네이버 웹 OAuth", redirectUrl);
@@ -2679,8 +2683,7 @@ public class OAuth2Controller extends BaseApiController {
                     session.setAttribute("SPRING_SECURITY_CONTEXT",
                             SecurityContextHolder.getContext());
 
-                    // 세션 무효화 시간 설정 (1시간)
-                    session.setMaxInactiveInterval(3600);
+                    session.setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS);
 
                     log.info(
                             "카카오 OAuth2 로그인 성공: userId={}, role={}, profileImageSummary={}, clientType={}",
@@ -2750,8 +2753,9 @@ public class OAuth2Controller extends BaseApiController {
                     // 세션 쿠키 설정을 명시적으로 추가
                     String sessionId = session.getId();
                     String cookieValue = String.format(
-                            "JSESSIONID=%s; Path=/; SameSite=None; Max-Age=3600; Secure; HttpOnly=false",
-                            sessionId);
+                            "JSESSIONID=%s; Path=/; SameSite=None; Max-Age=%d; Secure; HttpOnly=false",
+                            sessionId,
+                            SessionConstants.SESSION_TIMEOUT_SECONDS);
 
                     log.info("세션 쿠키 설정: {}", cookieValue);
                     logOAuthRedirectLocationSummary("카카오 웹 OAuth", redirectUrl);
@@ -2902,8 +2906,7 @@ public class OAuth2Controller extends BaseApiController {
             // 세션에 SecurityContext 저장
             session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
-            // 세션 무효화 시간 설정 (1시간)
-            session.setMaxInactiveInterval(3600);
+            session.setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS);
 
             log.info("모바일 OAuth2 콜백 - 세션 설정 완료: userId={}, role={}, sessionId={}", user.getId(),
                     user.getRole(), session.getId());
@@ -3172,8 +3175,7 @@ public class OAuth2Controller extends BaseApiController {
             // 세션에 SecurityContext 저장 (명시적으로 - 다른 메서드와 동일)
             session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
-            // 세션 무효화 시간 설정 (1시간)
-            session.setMaxInactiveInterval(3600);
+            session.setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS);
 
             // UserSession 엔티티 생성 (데이터베이스에 저장하여 SessionBasedAuthenticationFilter에서 조회 가능하도록)
             // 모바일 앱은 중복 로그인 체크를 우회하여 항상 새 세션을 생성

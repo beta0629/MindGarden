@@ -620,6 +620,11 @@ jobs:
               exit 1
             fi
             sudo cp "$INCOMING" "/var/www/mindgarden/releases/${INACTIVE}/app.jar"
+            # systemd 유닛(deployment/systemd/mindgarden-core-*.service.example)은 User=Group=mindgarden 고정
+            if ! getent group mindgarden >/dev/null 2>&1 || ! getent passwd mindgarden >/dev/null 2>&1; then
+              echo "::error::운영 호스트에 그룹/사용자 mindgarden 이 없어 chown·systemd(User=mindgarden)가 실패합니다. SSH로 1회 생성 후 재배포: sudo groupadd -f mindgarden; sudo useradd -r -g mindgarden -d /var/www/mindgarden -s /usr/sbin/nologin mindgarden; sudo mkdir -p /var/log/mindgarden; sudo chown -R mindgarden:mindgarden /var/www/mindgarden/releases/blue /var/www/mindgarden/releases/green /var/log/mindgarden — docs/deployment/PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md"
+              exit 1
+            fi
             sudo chown mindgarden:mindgarden "/var/www/mindgarden/releases/${INACTIVE}/app.jar"
             sudo chmod 0755 "/var/www/mindgarden/releases/${INACTIVE}/app.jar"
             sudo rm -f "$INCOMING"

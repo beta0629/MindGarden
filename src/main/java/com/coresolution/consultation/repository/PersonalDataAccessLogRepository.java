@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.entity.PersonalDataAccessLog;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -94,6 +95,7 @@ public interface PersonalDataAccessLogRepository extends JpaRepository<PersonalD
     /**
      * 테넌트별 특정 시간 이전의 로그 삭제 (tenantId 필터링)
      */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM PersonalDataAccessLog p WHERE p.tenantId = :tenantId AND p.accessTime < :cutoffDate")
     long deleteByTenantIdAndAccessTimeBefore(@Param("tenantId") String tenantId, @Param("cutoffDate") LocalDateTime cutoffDate);
     

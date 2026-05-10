@@ -172,4 +172,13 @@ public interface SalaryCalculationRepository extends BaseRepository<SalaryCalcul
      */
     @Query("SELECT sc.id, u.name FROM SalaryCalculation sc JOIN User u ON sc.consultant.id = u.id WHERE sc.updatedAt < ?1")
     List<Object[]> findExpiredSalariesForDestruction(java.time.LocalDateTime cutoffDate);
+
+    /**
+     * 테넌트별 만료된 급여 데이터 조회 (스케줄 파기용, 상담사 사용자 tenant 기준)
+     */
+    @Query("SELECT sc.id, u.name FROM SalaryCalculation sc JOIN User u ON sc.consultant.id = u.id "
+        + "WHERE u.tenantId = :tenantId AND sc.updatedAt < :cutoffDate")
+    List<Object[]> findExpiredSalariesForDestructionByTenantId(
+        @Param("tenantId") String tenantId,
+        @Param("cutoffDate") java.time.LocalDateTime cutoffDate);
 }

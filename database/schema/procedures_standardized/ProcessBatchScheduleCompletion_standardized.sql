@@ -22,6 +22,7 @@ BEGIN
     DECLARE v_session_date DATE;
     DECLARE v_has_record BOOLEAN;
     DECLARE v_validation_message TEXT;
+    DECLARE v_reminder_success BOOLEAN DEFAULT FALSE;
     DECLARE v_reminder_id BIGINT;
     DECLARE v_reminder_message TEXT;
     DECLARE v_completed BOOLEAN;
@@ -100,16 +101,17 @@ BEGIN
         ELSE
             -- 상담일지 미작성 리마인더 생성 (테넌트 격리)
             CALL CreateConsultationRecordReminder(
-                v_schedule_id, 
-                v_consultant_id, 
-                0, 
+                v_schedule_id,
+                v_consultant_id,
+                0,
                 v_session_date,
-                '00:00:00', 
+                '00:00:00',
                 '상담일지 미작성',
                 p_tenant_id,
                 p_processed_by,
-                v_reminder_id, 
-                v_reminder_message
+                v_reminder_success,
+                v_reminder_message,
+                v_reminder_id
             );
             
             SET p_reminder_count = p_reminder_count + 1;

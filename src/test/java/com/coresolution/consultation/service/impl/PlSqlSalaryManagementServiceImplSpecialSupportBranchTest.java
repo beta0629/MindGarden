@@ -12,6 +12,10 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
 import com.coresolution.core.context.TenantContextHolder;
@@ -62,6 +66,7 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         when(connection.prepareCall(anyString())).thenReturn(callableStatement);
         when(connection.createStatement()).thenReturn(utf8Statement);
         lenient().when(utf8Statement.execute(anyString())).thenReturn(false);
+        lenient().when(jdbcTemplate.queryForList(anyString(), anyString())).thenReturn(Collections.emptyList());
         service = new PlSqlSalaryManagementServiceImpl(jdbcTemplate);
     }
 
@@ -103,6 +108,33 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         assertThat(result)
                 .containsEntry("success", true)
                 .containsEntry("specialSupportAmount", BigDecimal.ZERO);
+    }
+
+    @Test
+    @DisplayName("ProcessIntegrated: information_schema 메타 사용 시 OUT 순서가 달라도 이름으로 message·success 매핑")
+    void processIntegrated_whenMetadataOutTailOrderDiffers_mapsByParameterName() throws Exception {
+        when(jdbcTemplate.queryForList(
+                argThat((String sql) -> sql.contains("information_schema.PARAMETERS")
+                        && sql.contains("ORDINAL_POSITION")
+                        && sql.contains("SPECIFIC_NAME")),
+                eq("ProcessIntegratedSalaryCalculation")))
+                .thenReturn(processIntegratedMetadataRowsWithSwappedTailOuts());
+        when(callableStatement.getLong(6)).thenReturn(1001L);
+        when(callableStatement.getBigDecimal(7)).thenReturn(new BigDecimal("300000"));
+        when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("250000"));
+        when(callableStatement.getBigDecimal(9)).thenReturn(new BigDecimal("50000"));
+        when(callableStatement.getLong(10)).thenReturn(2002L);
+        when(callableStatement.getBigDecimal(11)).thenReturn(new BigDecimal("88888.00"));
+        when(callableStatement.getObject(12)).thenReturn(Boolean.TRUE);
+        when(callableStatement.getString(13)).thenReturn("meta-path-ok");
+
+        Map<String, Object> result = service.processIntegratedSalaryCalculation(99L,
+                LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 31), "tester");
+
+        assertThat(result)
+                .containsEntry("success", true)
+                .containsEntry("message", "meta-path-ok")
+                .containsEntry("specialSupportAmount", new BigDecimal("88888.00"));
     }
 
     @Test
@@ -193,6 +225,36 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         when(callableStatement.getObject(11)).thenReturn(Boolean.TRUE);
         when(callableStatement.getString(12)).thenReturn("integrated-ok");
         when(callableStatement.getBigDecimal(13)).thenReturn(new BigDecimal("88888.00"));
+    }
+
+    /**
+     * 표준 이름을 유지하되 OUT 꼬리만 순서 변경: 11=특별지원, 12=성공, 13=메시지(고정 인덱스 가정이 틀어진 DB를 시뮬레이션).
+     */
+    private static List<Map<String, Object>> processIntegratedMetadataRowsWithSwappedTailOuts() {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        rows.add(metaRow(1, "IN", "p_consultant_id", "bigint"));
+        rows.add(metaRow(2, "IN", "p_period_start", "date"));
+        rows.add(metaRow(3, "IN", "p_period_end", "date"));
+        rows.add(metaRow(4, "IN", "p_tenant_id", "varchar"));
+        rows.add(metaRow(5, "IN", "p_triggered_by", "varchar"));
+        rows.add(metaRow(6, "OUT", "p_calculation_id", "bigint"));
+        rows.add(metaRow(7, "OUT", "p_gross_salary", "decimal"));
+        rows.add(metaRow(8, "OUT", "p_net_salary", "decimal"));
+        rows.add(metaRow(9, "OUT", "p_tax_amount", "decimal"));
+        rows.add(metaRow(10, "OUT", "p_erp_sync_id", "bigint"));
+        rows.add(metaRow(11, "OUT", "p_special_support_amount", "decimal"));
+        rows.add(metaRow(12, "OUT", "p_success", "tinyint"));
+        rows.add(metaRow(13, "OUT", "p_message", "varchar"));
+        return rows;
+    }
+
+    private static Map<String, Object> metaRow(int ord, String mode, String name, String dataType) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("ORDINAL_POSITION", ord);
+        m.put("PARAMETER_MODE", mode);
+        m.put("PARAMETER_NAME", name);
+        m.put("DATA_TYPE", dataType);
+        return m;
     }
 
     private void stubProcessIntegratedOut12() throws Exception {

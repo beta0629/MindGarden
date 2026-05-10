@@ -6,9 +6,16 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.salary.PlSqlSalaryProcedureUserFacingMessages;
 import com.coresolution.consultation.service.PlSqlSalaryManagementService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -40,10 +47,6 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             "표준 ProcessIntegratedSalaryCalculation 프로시저 배포가 필요할 수 있습니다 "
                     + "(deploy-procedures-production-mysql.yml 또는 deploy_standardized_procedures.sh).";
 
-    /** DB OUT p_message가 NULL일 때 사용자에게 전달할 통합 확정 실패 문구 */
-    private static final String DEFAULT_INTEGRATED_CALC_FAILURE_USER_MESSAGE =
-            "급여 계산 확정에 실패했습니다. 자세한 사유가 없으면 같은 기간 중복 확정 여부를 확인해 주세요.";
-
     private static final String DEFAULT_PREVIEW_FAILURE_USER_MESSAGE =
             "급여 계산 미리보기에 실패했습니다. DB에서 사유를 반환하지 않았습니다.";
 
@@ -72,48 +75,66 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
         Map<String, Object> result = new HashMap<>();
         
         try {
-            int paramCount = countProcessIntegratedSalaryCalculationParameters();
-            if (paramCount == 13) {
-                result.putAll(executeProcessIntegratedSalaryCalculationStandard(
-                        consultantId, periodStart, periodEnd, tenantId, triggeredBy));
-            } else if (paramCount == 12) {
-                result.putAll(executeProcessIntegratedSalaryCalculationStandard12Out(
-                        consultantId, periodStart, periodEnd, tenantId, triggeredBy));
-            } else if (paramCount == 11) {
-                log.warn("⚠️ ProcessIntegratedSalaryCalculation 구버전(11파라미터, p_tenant_id 없음). 표준 프로시저 배포를 권장합니다.");
-                result.putAll(executeProcessIntegratedSalaryCalculationLegacy11(
-                        consultantId, periodStart, periodEnd, triggeredBy));
-            } else if (paramCount < 0) {
+            List<ProcedureParameterMeta> procedureMeta =
+                    loadRoutineParametersFromInformationSchema("ProcessIntegratedSalaryCalculation");
+            if (isCompleteProcessIntegratedProcedureMetadata(procedureMeta)) {
                 try {
+                    result.putAll(executeProcessIntegratedSalaryCalculationWithMetadata(
+                            procedureMeta, consultantId, periodStart, periodEnd, tenantId, triggeredBy));
+                    logProcedureIntegratedOutDiagnosticsIfFailedWithBlankMessage(result, procedureMeta);
+                    log.info("✅ PL/SQL 통합 급여 계산 완료(메타데이터 매핑): CalculationID={}, GrossSalary={}, NetSalary={}",
+                            result.get("calculationId"), result.get("grossSalary"), result.get("netSalary"));
+                } catch (SQLException dynamicEx) {
+                    log.warn("ProcessIntegratedSalaryCalculation 메타데이터 기반 호출 실패, 개수 분기로 폴백: {}",
+                            dynamicEx.getMessage());
+                    logProcessIntegratedSalaryParameterDiagnostics(dynamicEx);
+                    result.clear();
+                }
+            }
+            if (result.isEmpty()) {
+                int paramCount = countProcessIntegratedSalaryCalculationParameters();
+                if (paramCount == 13) {
                     result.putAll(executeProcessIntegratedSalaryCalculationStandard(
                             consultantId, periodStart, periodEnd, tenantId, triggeredBy));
-                } catch (SQLException ex) {
-                    if (shouldLogProcessIntegratedSalarySignatureMismatch(ex)) {
-                        log.warn("파라미터 개수 미확인 상태에서 표준(13) 호출 실패, 12OUT·11레거시 순 재시도: {}", ex.getMessage());
-                        try {
-                            result.putAll(executeProcessIntegratedSalaryCalculationStandard12Out(
-                                    consultantId, periodStart, periodEnd, tenantId, triggeredBy));
-                        } catch (SQLException ex12) {
-                            if (shouldLogProcessIntegratedSalarySignatureMismatch(ex12)) {
-                                result.putAll(executeProcessIntegratedSalaryCalculationLegacy11(
-                                        consultantId, periodStart, periodEnd, triggeredBy));
-                            } else {
-                                throw ex12;
+                } else if (paramCount == 12) {
+                    result.putAll(executeProcessIntegratedSalaryCalculationStandard12Out(
+                            consultantId, periodStart, periodEnd, tenantId, triggeredBy));
+                } else if (paramCount == 11) {
+                    log.warn("⚠️ ProcessIntegratedSalaryCalculation 구버전(11파라미터, p_tenant_id 없음). 표준 프로시저 배포를 권장합니다.");
+                    result.putAll(executeProcessIntegratedSalaryCalculationLegacy11(
+                            consultantId, periodStart, periodEnd, triggeredBy));
+                } else if (paramCount < 0) {
+                    try {
+                        result.putAll(executeProcessIntegratedSalaryCalculationStandard(
+                                consultantId, periodStart, periodEnd, tenantId, triggeredBy));
+                    } catch (SQLException ex) {
+                        if (shouldLogProcessIntegratedSalarySignatureMismatch(ex)) {
+                            log.warn("파라미터 개수 미확인 상태에서 표준(13) 호출 실패, 12OUT·11레거시 순 재시도: {}", ex.getMessage());
+                            try {
+                                result.putAll(executeProcessIntegratedSalaryCalculationStandard12Out(
+                                        consultantId, periodStart, periodEnd, tenantId, triggeredBy));
+                            } catch (SQLException ex12) {
+                                if (shouldLogProcessIntegratedSalarySignatureMismatch(ex12)) {
+                                    result.putAll(executeProcessIntegratedSalaryCalculationLegacy11(
+                                            consultantId, periodStart, periodEnd, triggeredBy));
+                                } else {
+                                    throw ex12;
+                                }
                             }
+                        } else {
+                            throw ex;
                         }
-                    } else {
-                        throw ex;
                     }
+                } else {
+                    log.error("❌ ProcessIntegratedSalaryCalculation 파라미터 개수 비정상: count={}", paramCount);
+                    result.put("success", false);
+                    result.put("message",
+                            "ProcessIntegratedSalaryCalculation 프로시저 정의를 확인할 수 없습니다(parameters=" + paramCount + ").");
+                    return result;
                 }
-            } else {
-                log.error("❌ ProcessIntegratedSalaryCalculation 파라미터 개수 비정상: count={}", paramCount);
-                result.put("success", false);
-                result.put("message",
-                        "ProcessIntegratedSalaryCalculation 프로시저 정의를 확인할 수 없습니다(parameters=" + paramCount + ").");
-                return result;
+                log.info("✅ PL/SQL 통합 급여 계산 완료: CalculationID={}, GrossSalary={}, NetSalary={}",
+                        result.get("calculationId"), result.get("grossSalary"), result.get("netSalary"));
             }
-            log.info("✅ PL/SQL 통합 급여 계산 완료: CalculationID={}, GrossSalary={}, NetSalary={}", 
-                    result.get("calculationId"), result.get("grossSalary"), result.get("netSalary"));
         } catch (SQLException e) {
             log.error("❌ PL/SQL 통합 급여 계산 오류", e);
             logProcessIntegratedSalaryParameterDiagnostics(e);
@@ -127,13 +148,10 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             }
         }
 
-        ensureUserFacingMessageWhenProcedureFailed(result, DEFAULT_INTEGRATED_CALC_FAILURE_USER_MESSAGE);
-        if (!Boolean.TRUE.equals(result.get("success"))) {
-            Object calcIdObj = result.get("calculationId");
-            long calcId = calcIdObj instanceof Number num ? num.longValue() : -1L;
-            if (calcId == 0L) {
-                log.info("ProcessIntegratedSalaryCalculation: calculationId=0·금액 0은 프로시저 거부(중복 확정 등)일 수 있음.");
-            }
+        ensureUserFacingMessageWhenProcedureFailed(result,
+                PlSqlSalaryProcedureUserFacingMessages.INTEGRATED_CALC_FAILURE_WHEN_DB_SILENT);
+        if (!Boolean.TRUE.equals(result.get("success")) && result.get("calculationId") == null) {
+            log.info("ProcessIntegratedSalaryCalculation: calculationId가 NULL이면 중복 확정·검증 거절 등으로 미생성된 경우일 수 있습니다.");
         }
 
         return result;
@@ -168,11 +186,11 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             stmt.registerOutParameter(12, Types.VARCHAR);
             stmt.registerOutParameter(13, Types.DECIMAL);
             stmt.execute();
-            result.put("calculationId", stmt.getLong(6));
+            result.put("calculationId", getNullableLong(stmt, 6));
             result.put("grossSalary", stmt.getBigDecimal(7));
             result.put("netSalary", stmt.getBigDecimal(8));
             result.put("taxAmount", stmt.getBigDecimal(9));
-            result.put("erpSyncId", stmt.getLong(10));
+            result.put("erpSyncId", getNullableLong(stmt, 10));
             result.put("success", readMysqlProcedureBooleanOut(stmt, 11));
             result.put("message", stmt.getString(12));
             result.put("specialSupportAmount", stmt.getBigDecimal(13));
@@ -207,11 +225,11 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             stmt.registerOutParameter(11, Types.BOOLEAN);
             stmt.registerOutParameter(12, Types.VARCHAR);
             stmt.execute();
-            result.put("calculationId", stmt.getLong(6));
+            result.put("calculationId", getNullableLong(stmt, 6));
             result.put("grossSalary", stmt.getBigDecimal(7));
             result.put("netSalary", stmt.getBigDecimal(8));
             result.put("taxAmount", stmt.getBigDecimal(9));
-            result.put("erpSyncId", stmt.getLong(10));
+            result.put("erpSyncId", getNullableLong(stmt, 10));
             result.put("success", readMysqlProcedureBooleanOut(stmt, 11));
             result.put("message", stmt.getString(12));
             result.put("specialSupportAmount", BigDecimal.ZERO);
@@ -241,16 +259,249 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             stmt.registerOutParameter(10, Types.BOOLEAN);
             stmt.registerOutParameter(11, Types.VARCHAR);
             stmt.execute();
-            result.put("calculationId", stmt.getLong(5));
+            result.put("calculationId", getNullableLong(stmt, 5));
             result.put("grossSalary", stmt.getBigDecimal(6));
             result.put("netSalary", stmt.getBigDecimal(7));
             result.put("taxAmount", stmt.getBigDecimal(8));
-            result.put("erpSyncId", stmt.getLong(9));
+            result.put("erpSyncId", getNullableLong(stmt, 9));
             result.put("success", readMysqlProcedureBooleanOut(stmt, 10));
             result.put("message", stmt.getString(11));
             result.put("specialSupportAmount", BigDecimal.ZERO);
         }
         return result;
+    }
+
+    /**
+     * information_schema에 기록된 저장 프로시저 파라미터 한 행.
+     *
+     * @param ordinal   1-based JDBC 순번
+     * @param mode      IN / OUT / INOUT
+     * @param name      파라미터명(예: p_message)
+     * @param dataType  DATA_TYPE 열 값
+     */
+    private record ProcedureParameterMeta(int ordinal, String mode, String name, String dataType) {
+    }
+
+    /**
+     * 현재 스키마의 저장 프로시저 파라미터를 이름·순서와 함께 조회한다.
+     *
+     * @param routineName ROUTINES.SPECIFIC_NAME 과 동일한 프로시저명
+     * @return ORDINAL_POSITION 순 정렬 목록, 조회 실패 시 빈 목록
+     */
+    private List<ProcedureParameterMeta> loadRoutineParametersFromInformationSchema(String routineName) {
+        try {
+            String sql = "SELECT ORDINAL_POSITION, PARAMETER_MODE, PARAMETER_NAME, DATA_TYPE "
+                    + "FROM information_schema.PARAMETERS "
+                    + "WHERE SPECIFIC_SCHEMA = DATABASE() AND SPECIFIC_NAME = ? "
+                    + "ORDER BY ORDINAL_POSITION";
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, routineName);
+            if (rows == null || rows.isEmpty()) {
+                return Collections.emptyList();
+            }
+            List<ProcedureParameterMeta> list = new ArrayList<>(rows.size());
+            for (Map<String, Object> row : rows) {
+                Object ordObj = row.get("ORDINAL_POSITION");
+                if (ordObj == null) {
+                    continue;
+                }
+                int ordinal = ((Number) ordObj).intValue();
+                String mode = Objects.toString(row.get("PARAMETER_MODE"), "").trim();
+                String name = row.get("PARAMETER_NAME") != null
+                        ? String.valueOf(row.get("PARAMETER_NAME")).trim()
+                        : "";
+                String dataType = row.get("DATA_TYPE") != null
+                        ? String.valueOf(row.get("DATA_TYPE")).trim()
+                        : "";
+                list.add(new ProcedureParameterMeta(ordinal, mode, name, dataType));
+            }
+            return list;
+        } catch (Exception e) {
+            log.warn("information_schema.PARAMETERS 조회 실패 routine={}: {}", routineName, e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    private static String normalizeMysqlParameterName(String name) {
+        if (name == null) {
+            return "";
+        }
+        return name.trim().toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * ProcessIntegratedSalaryCalculation 에 대해 information_schema 기반 동적 호출을 쓸 수 있는지 판별한다.
+     * 파라미터명이 누락되었거나 개수가 11·12·13이 아니면 false.
+     *
+     * @param rows 조회된 메타데이터
+     * @return 동적 JDBC 호출 가능 여부
+     */
+    private boolean isCompleteProcessIntegratedProcedureMetadata(List<ProcedureParameterMeta> rows) {
+        if (rows == null || rows.isEmpty()) {
+            return false;
+        }
+        int n = rows.size();
+        if (n != 11 && n != 12 && n != 13) {
+            return false;
+        }
+        Set<String> names = rows.stream()
+                .map(r -> normalizeMysqlParameterName(r.name()))
+                .collect(Collectors.toSet());
+        if (names.stream().anyMatch(String::isEmpty)) {
+            return false;
+        }
+        Set<String> required = Set.of(
+                "p_consultant_id", "p_period_start", "p_period_end", "p_triggered_by",
+                "p_calculation_id", "p_gross_salary", "p_net_salary", "p_tax_amount",
+                "p_erp_sync_id", "p_success", "p_message");
+        if (!names.containsAll(required)) {
+            return false;
+        }
+        if (n == 13) {
+            return names.contains("p_tenant_id") && names.contains("p_special_support_amount");
+        }
+        if (n == 12) {
+            return names.contains("p_tenant_id") && !names.contains("p_special_support_amount");
+        }
+        return !names.contains("p_tenant_id") && !names.contains("p_special_support_amount");
+    }
+
+    private Map<String, Object> executeProcessIntegratedSalaryCalculationWithMetadata(
+            List<ProcedureParameterMeta> rows,
+            Long consultantId,
+            LocalDate periodStart,
+            LocalDate periodEnd,
+            String tenantId,
+            String triggeredBy) throws SQLException {
+        Map<String, Object> result = new HashMap<>();
+        int total = rows.size();
+        StringBuilder call = new StringBuilder("{CALL ProcessIntegratedSalaryCalculation(");
+        for (int i = 0; i < total; i++) {
+            if (i > 0) {
+                call.append(", ");
+            }
+            call.append("?");
+        }
+        call.append(")}");
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+                CallableStatement stmt = connection.prepareCall(call.toString())) {
+            setConnectionUtf8mb4(connection);
+            for (ProcedureParameterMeta r : rows) {
+                if ("IN".equalsIgnoreCase(r.mode())) {
+                    bindProcessIntegratedInParameter(stmt, r, consultantId, periodStart, periodEnd, tenantId, triggeredBy);
+                } else if ("OUT".equalsIgnoreCase(r.mode()) || "INOUT".equalsIgnoreCase(r.mode())) {
+                    stmt.registerOutParameter(r.ordinal(), mapMysqlDataTypeToJdbcTypeForOut(r.dataType()));
+                }
+            }
+            stmt.execute();
+            for (ProcedureParameterMeta r : rows) {
+                if ("IN".equalsIgnoreCase(r.mode())) {
+                    continue;
+                }
+                if (!"OUT".equalsIgnoreCase(r.mode()) && !"INOUT".equalsIgnoreCase(r.mode())) {
+                    continue;
+                }
+                String nm = normalizeMysqlParameterName(r.name());
+                int o = r.ordinal();
+                switch (nm) {
+                    case "p_calculation_id" -> result.put("calculationId", getNullableLong(stmt, o));
+                    case "p_gross_salary" -> result.put("grossSalary", stmt.getBigDecimal(o));
+                    case "p_net_salary" -> result.put("netSalary", stmt.getBigDecimal(o));
+                    case "p_tax_amount" -> result.put("taxAmount", stmt.getBigDecimal(o));
+                    case "p_erp_sync_id" -> result.put("erpSyncId", getNullableLong(stmt, o));
+                    case "p_success" -> result.put("success", readMysqlProcedureBooleanOut(stmt, o));
+                    case "p_message" -> result.put("message", stmt.getString(o));
+                    case "p_special_support_amount" -> result.put("specialSupportAmount", stmt.getBigDecimal(o));
+                    default -> {
+                        // 알 수 없는 OUT은 무시 (향후 확장 호환)
+                    }
+                }
+            }
+            if (!result.containsKey("specialSupportAmount")) {
+                result.put("specialSupportAmount", BigDecimal.ZERO);
+            }
+        }
+        return result;
+    }
+
+    private void bindProcessIntegratedInParameter(
+            CallableStatement stmt,
+            ProcedureParameterMeta r,
+            Long consultantId,
+            LocalDate periodStart,
+            LocalDate periodEnd,
+            String tenantId,
+            String triggeredBy) throws SQLException {
+        String nm = normalizeMysqlParameterName(r.name());
+        int o = r.ordinal();
+        switch (nm) {
+            case "p_consultant_id" -> stmt.setLong(o, consultantId);
+            case "p_period_start" -> stmt.setDate(o, java.sql.Date.valueOf(periodStart));
+            case "p_period_end" -> stmt.setDate(o, java.sql.Date.valueOf(periodEnd));
+            case "p_tenant_id" -> stmt.setString(o, tenantId);
+            case "p_triggered_by" -> stmt.setString(o, triggeredBy);
+            default -> throw new SQLException("ProcessIntegratedSalaryCalculation 알 수 없는 IN 파라미터: " + r.name());
+        }
+    }
+
+    private static int mapMysqlDataTypeToJdbcTypeForOut(String dataType) {
+        if (dataType == null || dataType.isEmpty()) {
+            return Types.VARCHAR;
+        }
+        switch (dataType.toUpperCase(Locale.ROOT)) {
+            case "BIGINT":
+                return Types.BIGINT;
+            case "INT":
+            case "INTEGER":
+                return Types.INTEGER;
+            case "DECIMAL":
+            case "NUMERIC":
+                return Types.DECIMAL;
+            case "DATE":
+                return Types.DATE;
+            case "DATETIME":
+            case "TIMESTAMP":
+                return Types.TIMESTAMP;
+            case "TINYINT":
+            case "BIT":
+                return Types.TINYINT;
+            case "LONGTEXT":
+            case "MEDIUMTEXT":
+            case "TEXT":
+                return Types.LONGVARCHAR;
+            case "CHAR":
+            case "VARCHAR":
+            default:
+                return Types.VARCHAR;
+        }
+    }
+
+    private void logProcedureIntegratedOutDiagnosticsIfFailedWithBlankMessage(
+            Map<String, Object> result,
+            List<ProcedureParameterMeta> meta) {
+        if (Boolean.TRUE.equals(result.get("success"))) {
+            return;
+        }
+        Object raw = result.get("message");
+        String text = raw instanceof String s ? s : raw == null ? null : String.valueOf(raw);
+        if (text != null && !text.isBlank()) {
+            return;
+        }
+        log.error(
+                "ProcessIntegratedSalaryCalculation 실패인데 p_message가 비어 있음. OUT 매핑·프로시저 본문을 확인하세요. meta={}",
+                meta);
+    }
+
+    /**
+     * BIGINT OUT이 SQL NULL일 때 {@link CallableStatement#getLong(int)}의 0과 구분한다.
+     *
+     * @param stmt  실행 완료 CallableStatement
+     * @param index 1-based OUT 인덱스
+     * @return NULL이면 null, 아니면 박싱 Long
+     * @throws SQLException JDBC 오류
+     */
+    private static Long getNullableLong(CallableStatement stmt, int index) throws SQLException {
+        long v = stmt.getLong(index);
+        return stmt.wasNull() ? null : v;
     }
 
     private int countProcessIntegratedSalaryCalculationParameters() {

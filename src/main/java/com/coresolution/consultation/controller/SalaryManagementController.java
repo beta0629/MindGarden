@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.salary.PlSqlSalaryProcedureUserFacingMessages;
 import com.coresolution.consultation.dto.CommonCodeDto;
 import com.coresolution.consultation.dto.ConsultantSalaryProfileRequest;
 import com.coresolution.consultation.dto.ConsultantSalaryProfileResponse;
@@ -386,7 +387,8 @@ public class SalaryManagementController extends BaseApiController {
         );
         if (!Boolean.TRUE.equals(result.get("success"))) {
             throw new ValidationException(
-                    userFacingMessageFromProcedureResult(result, "급여 계산 확정에 실패했습니다."));
+                    userFacingMessageFromProcedureResult(result,
+                            PlSqlSalaryProcedureUserFacingMessages.INTEGRATED_CALC_FAILURE_WHEN_DB_SILENT));
         }
         return success("급여 계산이 확정되었습니다.", result);
     }

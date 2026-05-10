@@ -29,6 +29,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.salary.PlSqlSalaryProcedureUserFacingMessages;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.SalaryTaxCalculation;
@@ -375,7 +376,8 @@ class SalaryManagementControllerIntegrationTest {
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.message").exists())
-                    .andExpect(jsonPath("$.message").value("급여 계산 확정에 실패했습니다."));
+                    .andExpect(jsonPath("$.message")
+                            .value(PlSqlSalaryProcedureUserFacingMessages.INTEGRATED_CALC_FAILURE_WHEN_DB_SILENT));
         }
 
         @Test

@@ -217,8 +217,11 @@ public class SessionManager {
             if (lastActivityTime instanceof LocalDateTime) {
                 LocalDateTime lastActivity = (LocalDateTime) lastActivityTime;
                 LocalDateTime now = LocalDateTime.now();
-                
-                if (lastActivity.plusSeconds(SessionConstants.SESSION_TIMEOUT_SECONDS).isBefore(now)) {
+                int maxInactive = session.getMaxInactiveInterval();
+                if (maxInactive <= 0) {
+                    maxInactive = SessionConstants.SESSION_TIMEOUT_SECONDS;
+                }
+                if (lastActivity.plusSeconds(maxInactive).isBefore(now)) {
                     log.info("세션이 만료되었습니다: userId={}", userId);
                     return false;
                 }

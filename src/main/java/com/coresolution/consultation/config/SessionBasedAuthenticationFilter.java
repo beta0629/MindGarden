@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSession;
 import com.coresolution.consultation.repository.UserRepository;
@@ -320,9 +321,8 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                         String sessionId = session.getId();
                         log.info("🔍 현재 세션 ID: {}", sessionId);
                         
-                        // 세션 만료 시간 설정 (1시간)
-                        session.setMaxInactiveInterval(3600);
-                        log.info("🔍 세션 만료 시간 설정: 3600초");
+                        session.setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS);
+                        log.info("🔍 세션 만료 시간 설정: {}초", SessionConstants.SESSION_TIMEOUT_SECONDS);
                     }
                     
                     log.info("✅ 세션 기반 인증 성공: 사용자={}, 역할={}, tenantId={}", user.getEmail(), user.getRole(), user.getTenantId());

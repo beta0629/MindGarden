@@ -144,14 +144,14 @@ public final class SessionConstants {
     // ===== 세션 관리 관련 상수 =====
     
     /**
-     * 세션 타임아웃 (초)
+     * HTTP 세션 비활성 타임아웃 (초). {@code server.servlet.session.timeout} 기본값(8h)과 맞출 것.
      */
-    public static final int SESSION_TIMEOUT_SECONDS = 1800; // 30분
-    
+    public static final int SESSION_TIMEOUT_SECONDS = 8 * 60 * 60;
+
     /**
-     * 비즈니스 세션 타임아웃 (초)
+     * 비즈니스 세션에서 요구하는 비활성 하한(초). 로그인 세션과 동일하게 두어 {@link #SESSION_TIMEOUT_SECONDS}와 정합.
      */
-    public static final int BUSINESS_SESSION_TIMEOUT_SECONDS = 3600; // 1시간
+    public static final int BUSINESS_SESSION_TIMEOUT_SECONDS = SESSION_TIMEOUT_SECONDS;
     
     /**
      * 세션 갱신 간격 (초)

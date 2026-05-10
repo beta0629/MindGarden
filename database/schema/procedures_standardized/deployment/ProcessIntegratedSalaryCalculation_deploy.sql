@@ -281,7 +281,7 @@ BEGIN
                         LEFT JOIN special_support_monthly_payouts sp
                           ON sp.tenant_id = p_tenant_id
                          AND sp.consultant_id = p_consultant_id
-                         AND sp.client_id = m.client_id
+                         AND sp.mapping_id = m.id
                          AND sp.salary_year_month = DATE_FORMAT(p_period_start, '%Y-%m')
                         WHERE m.tenant_id = p_tenant_id
                           AND m.consultant_id = p_consultant_id
@@ -407,12 +407,13 @@ BEGIN
                     
                     IF IFNULL(v_ss_total, 0) > 0 AND p_calculation_id IS NOT NULL AND v_ss_unit_amount > 0 THEN
                         INSERT INTO special_support_monthly_payouts (
-                            tenant_id, consultant_id, client_id, salary_year_month, amount, salary_calculation_id, created_at
+                            tenant_id, consultant_id, client_id, mapping_id, salary_year_month, amount, salary_calculation_id, created_at
                         )
                         SELECT
                             p_tenant_id,
                             p_consultant_id,
                             m.client_id,
+                            m.id,
                             DATE_FORMAT(p_period_start, '%Y-%m'),
                             v_ss_unit_amount,
                             p_calculation_id,
@@ -421,7 +422,7 @@ BEGIN
                         LEFT JOIN special_support_monthly_payouts sp
                           ON sp.tenant_id = p_tenant_id
                          AND sp.consultant_id = p_consultant_id
-                         AND sp.client_id = m.client_id
+                         AND sp.mapping_id = m.id
                          AND sp.salary_year_month = DATE_FORMAT(p_period_start, '%Y-%m')
                         WHERE m.tenant_id = p_tenant_id
                           AND m.consultant_id = p_consultant_id

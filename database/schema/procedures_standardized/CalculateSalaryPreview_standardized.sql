@@ -255,7 +255,7 @@ BEGIN
             LEFT JOIN special_support_monthly_payouts sp
               ON sp.tenant_id = p_tenant_id
              AND sp.consultant_id = p_consultant_id
-             AND sp.client_id = m.client_id
+             AND sp.mapping_id = m.id
              AND sp.salary_year_month = DATE_FORMAT(p_period_start, '%Y-%m')
             WHERE m.tenant_id = p_tenant_id
               AND m.consultant_id = p_consultant_id

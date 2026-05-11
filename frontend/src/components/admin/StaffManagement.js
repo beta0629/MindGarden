@@ -24,6 +24,7 @@ import { ViewModeToggle, SmallCardGrid, ListTableView, StatusBadge, SafeText } f
 import { SearchInput } from '../dashboard-v2/atoms';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { ProfileCard } from '../ui/Card';
 import { showSuccess, showError } from '../../utils/notification';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { formatKoreanMobileForDisplay, isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../utils/koreanMobilePhone';
@@ -861,78 +862,50 @@ const StaffManagement = ({ embedded = false }) => {
             ) : viewMode === 'largeCard' ? (
               <div className="mg-v2-mapping-list-block__grid">
                 {filteredStaff.map((staff) => (
-                <div key={staff.id} className="mg-v2-profile-card">
-                  <div className="mg-v2-profile-card__header">
-                    <Avatar
-                      profileImageUrl={staff.profileImageUrl}
-                      displayName={toDisplayString(staff.name)}
-                      className="mg-v2-profile-card__avatar"
-                      size={48}
-                    />
-                    <div className="mg-v2-profile-card__info">
-                      <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(staff.name, STAFF_MGMT_MASK.NAME)}</h3>
-                      <div className="mg-v2-profile-card__contact">
-                        <span className="mg-v2-profile-card__email">
-                          <Mail size={12} /> {maskEncryptedDisplay(staff.email, STAFF_MGMT_MASK.EMAIL)}
-                        </span>
-                        <span className="mg-v2-profile-card__phone">
-                          <Phone size={12} /> {formatKoreanMobileForDisplay(maskEncryptedDisplay(staff.phone, STAFF_MGMT_MASK.PHONE_NONE))}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mg-v2-profile-card__badges">
-                      <StatusBadge variant={staff.role === 'ADMIN' ? 'info' : 'neutral'}>
+                  <ProfileCard
+                    key={staff.id}
+                    variant="list"
+                    avatar={{ profileImageUrl: staff.profileImageUrl, displayName: toDisplayString(staff.name), size: 48 }}
+                    name={maskEncryptedDisplay(staff.name, STAFF_MGMT_MASK.NAME)}
+                    contactInfo={{
+                      email: <><Mail size={12} /> {maskEncryptedDisplay(staff.email, STAFF_MGMT_MASK.EMAIL)}</>,
+                      phone: <><Phone size={12} /> {formatKoreanMobileForDisplay(maskEncryptedDisplay(staff.phone, STAFF_MGMT_MASK.PHONE_NONE))}</>
+                    }}
+                    badges={[
+                      <StatusBadge key="role" variant={staff.role === 'ADMIN' ? 'info' : 'neutral'}>
                         {STAFF_MGMT_ROLE_LABELS[staff.role] || staff.role}
-                      </StatusBadge>
-                      <StatusBadge variant={staff.isActive ? 'success' : 'neutral'}>
+                      </StatusBadge>,
+                      <StatusBadge key="status" variant={staff.isActive ? 'success' : 'neutral'}>
                         {staff.isActive ? STAFF_MGMT_STATUS.ACTIVE : STAFF_MGMT_STATUS.INACTIVE}
                       </StatusBadge>
-                    </div>
-                  </div>
-                  <div className="mg-v2-profile-card__footer">
-                    {renderStaffActionBar(staff)}
-                  </div>
-                </div>
-              ))}
-            </div>
+                    ]}
+                    renderActions={() => renderStaffActionBar(staff)}
+                  />
+                ))}
+              </div>
             ) : viewMode === 'smallCard' ? (
               <SmallCardGrid>
                 {filteredStaff.map((staff) => (
-                  <div
+                  <ProfileCard
                     key={staff.id}
-                    className="mg-v2-profile-card mg-v2-profile-card--compact"
+                    variant="compact"
+                    avatar={{ profileImageUrl: staff.profileImageUrl, displayName: toDisplayString(staff.name), size: 36 }}
+                    name={maskEncryptedDisplay(staff.name, STAFF_MGMT_MASK.NAME)}
+                    contactInfo={{
+                      email: <><Mail size={12} /> {maskEncryptedDisplay(staff.email, STAFF_MGMT_MASK.EMAIL)}</>,
+                      phone: <><Phone size={12} /> {formatKoreanMobileForDisplay(maskEncryptedDisplay(staff.phone, STAFF_MGMT_MASK.PHONE_NONE))}</>
+                    }}
+                    badges={[
+                      <StatusBadge key="role" variant={staff.role === 'ADMIN' ? 'info' : 'neutral'}>
+                        {STAFF_MGMT_ROLE_LABELS[staff.role] || staff.role}
+                      </StatusBadge>,
+                      <StatusBadge key="status" variant={staff.isActive ? 'success' : 'neutral'}>
+                        {staff.isActive ? STAFF_MGMT_STATUS.ACTIVE : STAFF_MGMT_STATUS.INACTIVE}
+                      </StatusBadge>
+                    ]}
                     onClick={() => openStaffDetail(staff)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStaffDetail(staff); } }}
-                  >
-                    <div className="mg-v2-profile-card__header">
-                      <Avatar
-                        profileImageUrl={staff.profileImageUrl}
-                        displayName={toDisplayString(staff.name)}
-                        className="mg-v2-profile-card__avatar"
-                        size={36}
-                      />
-                      <div className="mg-v2-profile-card__info">
-                        <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(staff.name, STAFF_MGMT_MASK.NAME)}</h3>
-                        <div className="mg-v2-profile-card__contact">
-                          <span className="mg-v2-profile-card__email"><Mail size={12} /> {maskEncryptedDisplay(staff.email, STAFF_MGMT_MASK.EMAIL)}</span>
-                          <span className="mg-v2-profile-card__phone"><Phone size={12} /> {formatKoreanMobileForDisplay(maskEncryptedDisplay(staff.phone, STAFF_MGMT_MASK.PHONE_NONE))}</span>
-                        </div>
-                      </div>
-                      <div className="mg-v2-profile-card__badges">
-                        <StatusBadge variant={staff.role === 'ADMIN' ? 'info' : 'neutral'}>
-                          {STAFF_MGMT_ROLE_LABELS[staff.role] || staff.role}
-                        </StatusBadge>
-                        <StatusBadge variant={staff.isActive ? 'success' : 'neutral'}>
-                          {staff.isActive ? STAFF_MGMT_STATUS.ACTIVE : STAFF_MGMT_STATUS.INACTIVE}
-                        </StatusBadge>
-                      </div>
-                    </div>
-                    <div className="mg-v2-profile-card__inline-actions">
-                      {renderStaffActionBar(staff, { compact: true })}
-                    </div>
-                  </div>
+                    renderActions={() => renderStaffActionBar(staff, { compact: true })}
+                  />
                 ))}
               </SmallCardGrid>
             ) : (

@@ -136,7 +136,7 @@ class EmailServiceImplTest {
     }
 
     @Test
-    @DisplayName("급여 계산 메일 본문: 기본+건당+특별지원+총액(gross) 시나리오")
+    @DisplayName("급여 계산 메일 본문: 기본+상담(회기수)+특별지원+총액(gross) 시나리오")
     void createSalaryCalculationEmailContent_baseCommissionBonusGross() {
         Map<String, Object> data = new HashMap<>();
         data.put("baseSalary", 40000L);
@@ -158,7 +158,7 @@ class EmailServiceImplTest {
 
         assertTrue(html.contains("기본 급여"));
         assertTrue(html.contains("40,000원"));
-        assertTrue(html.contains("상담(건당) 급여"));
+        assertTrue(html.contains("상담(회기수) 급여"));
         assertTrue(html.contains("120,000원"));
         assertFalse(html.contains("옵션 급여"), "시급·커미션 동시 양수가 아니면 옵션 급여 라벨 없음");
         assertTrue(html.contains("특별지원금"));

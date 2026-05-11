@@ -80,7 +80,7 @@ class SalaryCalculationStatementRowsTest {
     }
 
     @Test
-    @DisplayName("baseSalary 양수·가변 분리 시 기본 급여 + 상담(건당) 급여")
+    @DisplayName("baseSalary 양수·가변 분리 시 기본 급여 + 상담(회기수) 급여")
     void pretaxComponents_baseAndConsultationSeparate() {
         Map<String, Object> m = new HashMap<>();
         m.put("baseSalary", 40000L);

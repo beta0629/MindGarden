@@ -25,7 +25,7 @@ public final class SalaryCalculationStatementRows {
     public static final String LABEL_OPTION = "옵션 급여";
 
     /** {@code salaryConstants.SALARY_CALC_DETAIL_CONSULTATION_LABEL} */
-    public static final String LABEL_CONSULTATION = "상담(건당) 급여";
+    public static final String LABEL_CONSULTATION = "상담(회기수) 급여";
 
     /** {@code salaryConstants.SALARY_CALC_DETAIL_HOURLY_LABEL} */
     public static final String LABEL_HOURLY = "시간당 급여";

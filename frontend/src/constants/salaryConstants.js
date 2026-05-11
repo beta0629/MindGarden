@@ -236,9 +236,9 @@ export const SALARY_PREVIEW_PRE_TAX_TOTAL_LABEL = '세전 합계';
 /** 급여 계산 내역·인쇄: 기본·가변 구분 라벨 */
 export const SALARY_CALC_DETAIL_BASE_LABEL = '기본 급여';
 export const SALARY_CALC_DETAIL_OPTION_LABEL = '옵션 급여';
-export const SALARY_CALC_DETAIL_CONSULTATION_LABEL = '상담(건당) 급여';
+export const SALARY_CALC_DETAIL_CONSULTATION_LABEL = '상담(회기수) 급여';
 export const SALARY_CALC_DETAIL_HOURLY_LABEL = '시간당 급여';
-/** DB에 기본·건당 급여가 동일 금액으로 중복 저장된 경우 한 줄로 합침 */
+/** DB에 기본·상담(회기수) 급여가 동일 금액으로 중복 저장된 경우 한 줄로 합침 */
 export const SALARY_CALC_DETAIL_MERGED_DEDUP_LABEL = '급여 산정액';
 
 /** 급여 계산 내역: 통합 확정 시 원천징수 외 지방소득세 등이 포함될 수 있음 */

@@ -1,3 +1,4 @@
+import { User, Calendar, Users, MessageSquare } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { SmallCardGrid, ListTableView, StatusBadge } from '../../common';
@@ -85,6 +86,12 @@ const ClientOverviewTab = ({
         );
     };
 
+    const resolveClientStatus = (clientStatus) => {
+        if (clientStatus === 'ACTIVE') return 'active';
+        if (clientStatus === 'INACTIVE') return 'inactive';
+        return 'pending';
+    };
+
     const renderClientCard = (client) => {
         const statusKorean = getUserStatusKoreanNameSync(client?.status);
         const gradeKorean = getUserGradeKoreanNameSync(client.grade);
@@ -105,21 +112,25 @@ const ClientOverviewTab = ({
                     <StatusBadge key="status" status={client?.status}>{statusKorean}</StatusBadge>,
                     <span key="grade" className="mg-v2-grade-badge"><SafeText>{gradeKorean}</SafeText></span>
                 ]}
+                status={resolveClientStatus(client?.status)}
+                riskLevel={client.riskLevel?.toLowerCase()}
                 statsItems={[
                     {
                         label: '성별',
+                        icon: <User size={14} />,
                         value: client.gender === 'MALE' ? '남성' : client.gender === 'FEMALE' ? '여성' : (
                             <SafeText fallback="-">{client.gender}</SafeText>
                         )
                     },
                     {
                         label: '등록일',
+                        icon: <Calendar size={14} />,
                         value: client.createdAt
                             ? new Date(client.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
                             : '-'
                     },
-                    { label: '매칭 수', value: clientMappings.length },
-                    { label: '상담 수', value: clientConsultations.length }
+                    { label: '매칭 수', icon: <Users size={14} />, value: clientMappings.length },
+                    { label: '상담 수', icon: <MessageSquare size={14} />, value: clientConsultations.length }
                 ]}
                 extraInfo={
                     client.notes && !toDisplayString(client.notes, '').startsWith('legacy::')

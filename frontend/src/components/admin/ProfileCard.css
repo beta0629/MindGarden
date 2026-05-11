@@ -1,6 +1,8 @@
 /* mg-v2-profile-card (통합 상담사/내담자 카드 스펙) */
 
 .mg-v2-profile-card {
+  position: relative;
+  overflow: hidden;
   background: var(--color-surface, #ffffff);
   border: 1px solid var(--color-border-light, #e5e7eb);
   border-radius: var(--radius-lg, 16px);
@@ -351,3 +353,63 @@
 .mg-v2-client-actions--table.mg-v2-profile-card__actions {
   justify-content: flex-end;
 }
+
+/* 좌측 상태 스트라이프 */
+.mg-v2-profile-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background-color: transparent;
+  border-radius: var(--radius-lg, 16px) 0 0 var(--radius-lg, 16px);
+}
+.mg-v2-profile-card--status-active::before { background-color: var(--mg-success-500); }
+.mg-v2-profile-card--status-inactive::before { background-color: var(--mg-gray-400); }
+.mg-v2-profile-card--status-urgent::before { background-color: var(--mg-error-500); }
+.mg-v2-profile-card--status-pending::before { background-color: var(--mg-warning-500); }
+
+/* 아바타 래퍼 + 인디케이터 */
+.mg-v2-profile-card__avatar-wrapper {
+  position: relative; display: inline-flex; flex-shrink: 0;
+}
+.mg-v2-profile-card__status-indicator {
+  position: absolute; bottom: 2px; right: 2px;
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 2px solid var(--color-surface, #ffffff);
+  z-index: 2;
+}
+.mg-v2-profile-card__status-indicator--online { background-color: var(--mg-success-500); }
+.mg-v2-profile-card__status-indicator--offline { background-color: var(--mg-gray-400); }
+
+/* 통계 아이콘 헤더 */
+.mg-v2-profile-card__stat-header {
+  display: flex; align-items: center; gap: 4px;
+}
+.mg-v2-profile-card__stat-icon {
+  color: var(--color-text-secondary, #4b5563); display: flex; align-items: center;
+}
+
+/* 미니 진행률 바 */
+.mg-v2-profile-card__progress { width: 100%; margin-top: var(--spacing-sm, 8px); }
+.mg-v2-profile-card__progress-bar {
+  height: 4px; background-color: var(--mg-gray-200, #e5e7eb);
+  border-radius: 2px; overflow: hidden;
+}
+.mg-v2-profile-card__progress-fill {
+  height: 100%; background-color: var(--mg-primary-500);
+  border-radius: 2px; transition: width 0.3s ease;
+}
+
+/* 위험도 뱃지 */
+.mg-v2-profile-card__risk-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 12px;
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.mg-v2-profile-card__risk-badge--high { background: var(--mg-error-100); color: var(--mg-error-600); }
+.mg-v2-profile-card__risk-badge--medium { background: var(--mg-warning-100); color: var(--mg-warning-700); }
+.mg-v2-profile-card__risk-badge--low { background: var(--mg-success-100); color: var(--mg-success-600); }
+
+/* INACTIVE 카드 전체 톤 다운 */
+.mg-v2-profile-card--status-inactive { opacity: 0.75; }
+.mg-v2-profile-card--status-inactive:hover { opacity: 1; }

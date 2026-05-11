@@ -158,6 +158,7 @@ const SalaryManagement = () => {
           specialtyDetails: c.specialtyDetails,
           specialization: c.specialization,
           specializationDetails: c.specializationDetails,
+          professionalProviderTypeCode: c.professionalProviderTypeCode,
           yearsOfExperience: c.yearsOfExperience,
           maxClients: c.maxClients,
           currentClients: item.currentClients,

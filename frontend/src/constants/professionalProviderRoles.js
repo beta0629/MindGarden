@@ -249,6 +249,37 @@ export async function fetchProfessionalProviderTypeSelectOptions(deps = {}) {
   return mapTenantProfessionalTypeCodesToOptions(merged);
 }
 
+/**
+ * 전문가 유형 코드 → 한글 라벨 정적 매핑 (공통코드 PROFESSIONAL_PROVIDER_TYPE 기반).
+ * API 응답 없이도 카드·뱃지 등에서 즉시 표시 가능한 폴백 라벨.
+ *
+ * @author CoreSolution
+ * @since 2026-05-11
+ */
+export const PROFESSIONAL_PROVIDER_TYPE_LABELS = {
+  DEFAULT_COUNSELOR: '상담사',
+  PLAY_THERAPY: '놀이치료',
+  SPEECH_THERAPY: '언어치료'
+};
+
+/**
+ * 전문가 유형 코드를 한글 라벨로 변환합니다.
+ * 매핑에 없거나 null/undefined이면 null을 반환합니다.
+ *
+ * @param {string|null|undefined} code professionalProviderTypeCode
+ * @returns {string|null}
+ */
+export function getProfessionalProviderTypeLabel(code) {
+  if (code == null) {
+    return null;
+  }
+  const trimmed = String(code).trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  return PROFESSIONAL_PROVIDER_TYPE_LABELS[trimmed] || null;
+}
+
 /** 레거시: 역할 문자열이 전문가 계열인지 (프론트 표시용). */
 export function isProfessionalProviderRole(role) {
   if (role == null) {

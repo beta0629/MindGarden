@@ -5079,6 +5079,26 @@ body {
   cursor: pointer;
 }
 
+/* Consultant Card — 전문가 유형 배지 */
+.mg-consultant-card__expert-type {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-xxs, 2px) var(--spacing-sm, 8px);
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 500;
+  line-height: 1.4;
+  border-radius: var(--mg-radius-sm, 4px);
+  background: var(--mg-primary-100);
+  color: var(--mg-primary-700);
+  white-space: nowrap;
+  margin-top: var(--spacing-xxs, 2px);
+}
+
+.mg-consultant-card__expert-type--small {
+  font-size: 0.6875rem;
+  padding: 1px var(--spacing-xs, 4px);
+}
+
 /* ============================================
    Client Card Mobile Simple
    ============================================ */

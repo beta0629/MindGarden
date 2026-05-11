@@ -10,6 +10,7 @@ import { getFormattedCurrentClients, getFormattedExperience } from '../../../uti
 import { formatCurrency } from '../../../utils/formatUtils';
 import { formatKoreanMobileForDisplay } from '../../../utils/koreanMobilePhone';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { getProfessionalProviderTypeLabel } from '../../../constants/professionalProviderRoles';
 
 /**
  * 공통 상담사 카드 컴포넌트
@@ -40,6 +41,8 @@ const ConsultantCard = ({
     
     // 평점 정보 계산
     const ratingInfo = getConsultantRatingInfo(consultant);
+    
+    const expertTypeLabel = getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode);
 /**
      * 가용성 상태에 따른 클래스명 반환
      */
@@ -124,6 +127,9 @@ const ConsultantCard = ({
             <div className="mg-consultant-card__info">
                 <div className="mg-consultant-card__header">
                     <h4 className="mg-consultant-card__name">{toDisplayString(consultant.name)}</h4>
+                    {expertTypeLabel && (
+                        <span className="mg-consultant-card__expert-type">{expertTypeLabel}</span>
+                    )}
                     <div className="mg-consultant-card__status" style={{ '--availability-color': getAvailabilityColor() }}>
                         <span>{getAvailabilityText()}</span>
                     </div>
@@ -172,6 +178,9 @@ const ConsultantCard = ({
             {/* 상담사 정보 */}
             <div className="mg-consultant-card__info">
                 <h4 className="mg-consultant-card__name mg-consultant-card__name--large">{toDisplayString(consultant.name)}</h4>
+                {expertTypeLabel && (
+                    <span className="mg-consultant-card__expert-type">{expertTypeLabel}</span>
+                )}
                 
                 {/* 평점 섹션 */}
                 <div className="mg-consultant-card__rating-section">
@@ -314,6 +323,9 @@ const ConsultantCard = ({
             
             <div className="mg-consultant-card__content-mobile">
                 <h4 className="mg-consultant-card__name mg-consultant-card__name--mobile">{toDisplayString(consultant.name)}</h4>
+                {expertTypeLabel && (
+                    <span className="mg-consultant-card__expert-type">{expertTypeLabel}</span>
+                )}
                 
                 <div className="mg-consultant-card__rating-mobile">
                     <div className="mg-consultant-card__rating-item">
@@ -435,6 +447,9 @@ const ConsultantCard = ({
 
             <div className="mg-consultant-card__info mg-consultant-card__info--schedule-select">
                 <h4 className="mg-consultant-card__name mg-consultant-card__name--schedule-select">{toDisplayString(consultant.name)}</h4>
+                {expertTypeLabel && (
+                    <span className="mg-consultant-card__expert-type">{expertTypeLabel}</span>
+                )}
 
                 <div className="mg-consultant-card__specialty-inline">
                     <SpecialtyDisplay
@@ -503,6 +518,9 @@ const ConsultantCard = ({
                     <h4 className="mg-consultant-card__name mg-consultant-card__name--salary-profile" id={profileNameId}>
                         {toDisplayString(consultant.name)}
                     </h4>
+                    {expertTypeLabel && (
+                        <span className="mg-consultant-card__expert-type">{expertTypeLabel}</span>
+                    )}
                     <div className="mg-consultant-card__meta mg-consultant-card__meta--salary-profile">
                         {toDisplayString(consultant.email, '—')}
                     </div>
@@ -577,6 +595,9 @@ const ConsultantCard = ({
             
             <div className="mg-consultant-card__info mg-consultant-card__info--mobile-simple">
                 <h4 className="mg-consultant-card__name mg-consultant-card__name--mobile-simple">{toDisplayString(consultant.name)}</h4>
+                {expertTypeLabel && (
+                    <span className="mg-consultant-card__expert-type mg-consultant-card__expert-type--small">{expertTypeLabel}</span>
+                )}
                 
                 <div className="mg-consultant-card__meta mg-consultant-card__meta--mobile-simple">
                     <div className="mg-consultant-card__rating mg-consultant-card__rating--mobile-simple">

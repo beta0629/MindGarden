@@ -242,6 +242,13 @@
             <version>3.0.3</version>
         </dependency>
 
+        <!-- 급여 export Excel(.xlsx) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.5</version>
+        </dependency>
+
         <!-- Tess4J (이미지 OCR - Tesseract for Java) -->
         <dependency>
             <groupId>net.sourceforge.tess4j</groupId>

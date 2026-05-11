@@ -13,6 +13,7 @@ import com.coresolution.consultation.constant.salary.PlSqlSalaryProcedureUserFac
 import com.coresolution.consultation.dto.CommonCodeDto;
 import com.coresolution.consultation.dto.ConsultantSalaryProfileRequest;
 import com.coresolution.consultation.dto.ConsultantSalaryProfileResponse;
+import com.coresolution.consultation.dto.SalaryExportRequest;
 import com.coresolution.consultation.dto.TaxCalculateRequest;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
@@ -26,6 +27,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.PlSqlSalaryManagementService;
+import com.coresolution.consultation.service.SalaryExportService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.consultation.service.SalaryScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
@@ -66,7 +68,70 @@ public class SalaryManagementController extends BaseApiController {
     private final CommonCodeService commonCodeService;
     private final DynamicPermissionService dynamicPermissionService;
     private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
+
+    private final SalaryExportService salaryExportService;
     
+    /**
+     * 급여 계산 PDF 출력 (data URL 다운로드 링크).
+     */
+    @PostMapping("/export/pdf")
+    public ResponseEntity<?> exportSalaryPdf(
+            @RequestBody @Valid SalaryExportRequest request,
+            HttpSession session) {
+        requireUserAndTenantForSalaryExport(session);
+        ResponseEntity<?> permissionResponse =
+                PermissionCheckUtils.checkPermission(session, "SALARY_MANAGE", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new ForbiddenException("급여 관리 권한이 없습니다.");
+        }
+        Map<String, String> payload = salaryExportService.exportPdf(request);
+        return success("급여 PDF를 생성했습니다.", payload);
+    }
+
+    /**
+     * 급여 계산 Excel(.xlsx) 출력.
+     */
+    @PostMapping("/export/excel")
+    public ResponseEntity<?> exportSalaryExcel(
+            @RequestBody @Valid SalaryExportRequest request,
+            HttpSession session) {
+        requireUserAndTenantForSalaryExport(session);
+        ResponseEntity<?> permissionResponse =
+                PermissionCheckUtils.checkPermission(session, "SALARY_MANAGE", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new ForbiddenException("급여 관리 권한이 없습니다.");
+        }
+        Map<String, String> payload = salaryExportService.exportExcel(request);
+        return success("급여 Excel 파일을 생성했습니다.", payload);
+    }
+
+    /**
+     * 급여 계산 CSV(UTF-8 BOM) 출력.
+     */
+    @PostMapping("/export/csv")
+    public ResponseEntity<?> exportSalaryCsv(
+            @RequestBody @Valid SalaryExportRequest request,
+            HttpSession session) {
+        requireUserAndTenantForSalaryExport(session);
+        ResponseEntity<?> permissionResponse =
+                PermissionCheckUtils.checkPermission(session, "SALARY_MANAGE", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new ForbiddenException("급여 관리 권한이 없습니다.");
+        }
+        Map<String, String> payload = salaryExportService.exportCsv(request);
+        return success("급여 CSV 파일을 생성했습니다.", payload);
+    }
+
+    private void requireUserAndTenantForSalaryExport(HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new UnauthorizedException("로그인이 필요합니다. 세션을 확인해 주세요.");
+        }
+        if (currentUser.getTenantId() != null) {
+            TenantContextHolder.setTenantId(currentUser.getTenantId());
+        }
+    }
+
     /**
      * 개별 급여 프로필 조회
      */

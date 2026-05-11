@@ -38,6 +38,7 @@ import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.PlSqlSalaryManagementService;
+import com.coresolution.consultation.service.SalaryExportService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.consultation.service.SalaryScheduleService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -77,6 +78,9 @@ class SalaryManagementControllerIntegrationTest {
 
     @MockBean
     private CommonCodeService commonCodeService;
+
+    @MockBean
+    private SalaryExportService salaryExportService;
 
     private User adminUserWithTenant() {
         User user = new User();
@@ -412,6 +416,51 @@ class SalaryManagementControllerIntegrationTest {
                             .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
                             .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
                     .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("I-API-17: POST /export/pdf 인증 없음 → 401")
+        void postExportPdf_withoutSession_returns401() throws Exception {
+            mockMvc.perform(post("/api/v1/admin/salary/export/pdf")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(Map.of("calculationId", 1L))))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("I-API-18: POST /export/pdf SALARY_MANAGE 없음 → 403")
+        void postExportPdf_withoutPermission_returns403() throws Exception {
+            when(dynamicPermissionService.hasPermission(any(User.class), eq("SALARY_MANAGE")))
+                    .thenReturn(false);
+
+            mockMvc.perform(post("/api/v1/admin/salary/export/pdf")
+                            .sessionAttr(SessionConstants.USER_OBJECT, consultantUserNoSalaryPermission())
+                            .sessionAttr(SessionConstants.TENANT_ID, TENANT_A)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(Map.of("calculationId", 1L))))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("I-API-19: POST /export/pdf 정상 → 200, data.downloadUrl·filename")
+        void postExportPdf_valid_returns200WithEnvelope() throws Exception {
+            when(salaryExportService.exportPdf(any())).thenReturn(Map.of(
+                    "downloadUrl", "data:application/pdf;base64,JVBERi0xLjQKJeLjz9M=",
+                    "filename", "salary_calculation_1_2025-06-01_test.pdf"));
+
+            mockMvc.perform(post("/api/v1/admin/salary/export/pdf")
+                            .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
+                            .sessionAttr(SessionConstants.TENANT_ID, TENANT_A)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(Map.of(
+                                    "calculationId", 1L,
+                                    "format", "PDF",
+                                    "includeTaxDetails", true))))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.downloadUrl")
+                            .value(org.hamcrest.Matchers.startsWith("data:application/pdf;base64,")))
+                    .andExpect(jsonPath("$.data.filename").value(org.hamcrest.Matchers.containsString("salary_calculation")));
         }
 
         @Test

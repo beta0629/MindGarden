@@ -283,54 +283,6 @@ const ConsultationLogFormPanel = ({
         />
       </div>
 
-      <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-        <label className="mg-v2-label" htmlFor="consultation-log-goal-details">목표 달성 세부사항</label>
-        <textarea
-          id="consultation-log-goal-details"
-          name="goalAchievementDetails"
-          value={formData.goalAchievementDetails}
-          onChange={handleInputChange}
-          placeholder="목표 달성에 대한 구체적인 내용을 기록해주세요."
-          className="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__textarea"
-        />
-      </div>
-
-      <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-        <label className="mg-v2-label" htmlFor="consultation-log-observations">상담사 관찰</label>
-        <textarea
-          id="consultation-log-observations"
-          name="consultantObservations"
-          value={formData.consultantObservations}
-          onChange={handleInputChange}
-          placeholder="내담자에 대한 관찰 내용을 기록해주세요."
-          className="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__textarea"
-        />
-      </div>
-
-      <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-        <label className="mg-v2-label" htmlFor="consultation-log-assessment">상담사 평가</label>
-        <textarea
-          id="consultation-log-assessment"
-          name="consultantAssessment"
-          value={formData.consultantAssessment}
-          onChange={handleInputChange}
-          placeholder="전문적인 관점에서의 평가를 기록해주세요."
-          className="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__textarea"
-        />
-      </div>
-
-      <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-        <label className="mg-v2-label" htmlFor="consultation-log-special">특별 고려사항 (다음 상담 시 주의사항)</label>
-        <textarea
-          id="consultation-log-special"
-          name="specialConsiderations"
-          value={formData.specialConsiderations}
-          onChange={handleInputChange}
-          placeholder="다음 상담 시 참고할 특이사항, 주의사항을 기록해주세요. (내담자 메모·일정 메모와 함께 상단에 표시됩니다)"
-          className="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__textarea"
-        />
-      </div>
-
       <div className="mg-v2-form-group">
         <label className="mg-v2-label" htmlFor="consultation-log-family">가족 관계</label>
         <textarea

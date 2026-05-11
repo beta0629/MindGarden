@@ -691,11 +691,38 @@ const ConsultationLogModal = ({
             followUpDueDate: record.followUpDueDate || ''
           });
         } else {
+          let autoFillData = {};
+          if (clientId) {
+            try {
+              const prevEndpoint = isAdmin
+                ? `/api/v1/admin/consultation-records?clientId=${clientId}&page=0&size=1`
+                : `/api/v1/schedules/consultation-records?clientId=${clientId}&page=0&size=1`;
+              const prevRecords = await apiGet(prevEndpoint);
+              const prevList = prevRecords?.content
+                ?? prevRecords?.data?.content
+                ?? prevRecords?.records
+                ?? prevRecords?.data?.records
+                ?? [];
+              if (prevList.length > 0) {
+                const latest = prevList[0];
+                autoFillData = {
+                  ...(latest.familyRelationships ? { familyRelationships: latest.familyRelationships } : {}),
+                  ...(latest.socialSupport ? { socialSupport: latest.socialSupport } : {}),
+                  ...(latest.medicalInformation ? { medicalInformation: latest.medicalInformation } : {})
+                };
+              }
+            } catch (err) {
+              console.warn('이전 상담일지 오토필 조회 실패:', err);
+            }
+          }
           setFormData(prev => ({
             ...prev,
             sessionDate: getSessionDateFromSchedule(scheduleData),
             sessionDurationMinutes: 60,
-            isSessionCompleted: true
+            isSessionCompleted: true,
+            ...Object.fromEntries(
+              Object.entries(autoFillData).filter(([key]) => !prev[key])
+            )
           }));
         }
       } catch (error) {

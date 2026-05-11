@@ -60,7 +60,8 @@ import {
     mapTenantCommonCodesToGradeSelectOptions,
     DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
     FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL,
-    fetchProfessionalProviderTypeSelectOptions
+    fetchProfessionalProviderTypeSelectOptions,
+    getProfessionalProviderTypeLabel
 } from '../../constants/professionalProviderRoles';
 
 /** ContentHeader / 본문 main aria-labelledby 연동 */
@@ -1438,6 +1439,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                         </span>
                                                                     );
                                                                 })()}
+                                                                {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode) && (
+                                                                    <span className="mg-consultant-card__expert-type">
+                                                                        {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode)}
+                                                                    </span>
+                                                                )}
                                                                 <StatusBadge status={consultant.status || 'ACTIVE'}><SafeText>{getStatusLabel(consultant.status || 'ACTIVE')}</SafeText></StatusBadge>
                                                             </div>
                                                         </div>
@@ -1538,6 +1544,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     const { label, level } = getConsultantBadgeDisplay(consultant);
                                                                     return <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}><SafeText>{label}</SafeText></span>;
                                                                 })()}
+                                                                {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode) && (
+                                                                    <span className="mg-consultant-card__expert-type mg-consultant-card__expert-type--small">
+                                                                        {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode)}
+                                                                    </span>
+                                                                )}
                                                                 <StatusBadge status={consultant.status || 'ACTIVE'}><SafeText>{getStatusLabel(consultant.status || 'ACTIVE')}</SafeText></StatusBadge>
                                                             </div>
                                                         </div>
@@ -1548,6 +1559,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                             <ListTableView
                                                 columns={[
                                                     { key: 'name', label: '이름' },
+                                                    { key: 'professionalProviderTypeCode', label: '전문가 유형' },
                                                     { key: 'email', label: '이메일' },
                                                     { key: 'status', label: '상태' },
                                                     { key: 'createdAt', label: '가입일', hideOnMobile: true },
@@ -1555,6 +1567,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 ]}
                                                 data={getFilteredConsultants}
                                                 renderCell={(key, item) => {
+                                                    if (key === 'professionalProviderTypeCode') return getProfessionalProviderTypeLabel(item.professionalProviderTypeCode) || '-';
                                                     if (key === 'status') return getStatusLabel(item.status || 'ACTIVE');
                                                     if (key === 'createdAt') return item.createdAt ? new Date(item.createdAt).toLocaleDateString('ko-KR') : '-';
                                                     if (key === 'currentClients') return item.currentClients != null ? `${item.currentClients}명` : '-';
@@ -1685,6 +1698,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                         </span>
                                                                     );
                                                                 })()}
+                                                                {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode) && (
+                                                                    <span className="mg-consultant-card__expert-type">
+                                                                        {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode)}
+                                                                    </span>
+                                                                )}
                                                                 <StatusBadge status={consultant.status || 'ACTIVE'}><SafeText>{getStatusLabel(consultant.status || 'ACTIVE')}</SafeText></StatusBadge>
                                                             </div>
                                                         </div>
@@ -1785,6 +1803,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     const { label, level } = getConsultantBadgeDisplay(consultant);
                                                                     return <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}><SafeText>{label}</SafeText></span>;
                                                                 })()}
+                                                                {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode) && (
+                                                                    <span className="mg-consultant-card__expert-type mg-consultant-card__expert-type--small">
+                                                                        {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode)}
+                                                                    </span>
+                                                                )}
                                                                 <StatusBadge status={consultant.status || 'ACTIVE'}><SafeText>{getStatusLabel(consultant.status || 'ACTIVE')}</SafeText></StatusBadge>
                                                             </div>
                                                         </div>
@@ -1795,6 +1818,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                             <ListTableView
                                                 columns={[
                                                     { key: 'name', label: '이름' },
+                                                    { key: 'professionalProviderTypeCode', label: '전문가 유형' },
                                                     { key: 'email', label: '이메일' },
                                                     { key: 'status', label: '상태' },
                                                     { key: 'createdAt', label: '가입일', hideOnMobile: true },
@@ -1802,6 +1826,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 ]}
                                                 data={getFilteredConsultants}
                                                 renderCell={(key, item) => {
+                                                    if (key === 'professionalProviderTypeCode') return getProfessionalProviderTypeLabel(item.professionalProviderTypeCode) || '-';
                                                     if (key === 'status') return getStatusLabel(item.status || 'ACTIVE');
                                                     if (key === 'createdAt') return item.createdAt ? new Date(item.createdAt).toLocaleDateString('ko-KR') : '-';
                                                     if (key === 'currentClients') return item.currentClients != null ? `${item.currentClients}명` : '-';

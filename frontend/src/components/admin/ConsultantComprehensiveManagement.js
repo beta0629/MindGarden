@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { Users, Link2, Calendar, ClipboardList, Mail, Phone } from 'lucide-react';
+import { Users, Link2, Calendar, ClipboardList } from 'lucide-react';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -24,6 +24,7 @@ import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete
 import ProfileImageInput from '../common/ProfileImageInput';
 import KoreanMobileDuplicateField from '../common/molecules/KoreanMobileDuplicateField';
 import Avatar from '../common/Avatar';
+import ConsultantCard from '../ui/Card/ConsultantCard';
 import PasswordResetModal from './PasswordResetModal';
 import { showSuccess, showError } from '../../utils/notification';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
@@ -32,7 +33,7 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
 import { SearchInput } from '../dashboard-v2/atoms';
-import { ViewModeToggle, SmallCardGrid, ListTableView, StatusBadge } from '../common';
+import { ViewModeToggle, SmallCardGrid, ListTableView } from '../common';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
@@ -41,7 +42,7 @@ import './mapping-management/organisms/MappingListBlock.css';
 import './mapping-management/MappingManagementPage.css';
 import './ConsultantManagementPage.css';
 import './ProfileCard.css';
-import { formatKoreanMobileForDisplay, isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../utils/koreanMobilePhone';
+import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../utils/koreanMobilePhone';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
@@ -1408,75 +1409,21 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                         ) : viewMode === 'largeCard' ? (
                                             <div className="mg-v2-mapping-list-block__grid">
                                                 {getFilteredConsultants.map((consultant) => (
-                                                    <div
+                                                    <ConsultantCard
                                                         key={consultant.id}
-                                                        className="mg-v2-profile-card"
-                                                        onClick={() => handleConsultantSelect(consultant)}
-                                                    >
-                                                        <div className="mg-v2-profile-card__header">
-                                                            <Avatar
-                                                                profileImageUrl={consultant.profileImageUrl}
-                                                                displayName={toDisplayString(consultant.name)}
-                                                                className="mg-v2-profile-card__avatar"
-                                                            />
-                                                            <div className="mg-v2-profile-card__info">
-                                                                <h3 className="mg-v2-profile-card__name"><SafeText fallback="이름 없음">{consultant.name}</SafeText></h3>
-                                                                <div className="mg-v2-profile-card__contact">
-                                                                    <span className="mg-v2-profile-card__email">
-                                                                        <Mail size={12} /> <SafeText>{consultant.email}</SafeText>
-                                                                    </span>
-                                                                    <span className="mg-v2-profile-card__phone">
-                                                                        <Phone size={12} /> <SafeText fallback="전화번호 없음">{formatKoreanMobileForDisplay(consultant.phone)}</SafeText>
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="mg-v2-profile-card__badges">
-                                                                {(() => {
-                                                                    const { label, level } = getConsultantBadgeDisplay(consultant);
-                                                                    return (
-                                                                        <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}>
-                                                                            <SafeText>{label}</SafeText>
-                                                                        </span>
-                                                                    );
-                                                                })()}
-                                                                {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode) && (
-                                                                    <span className="mg-consultant-card__expert-type">
-                                                                        {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode)}
-                                                                    </span>
-                                                                )}
-                                                                <StatusBadge status={consultant.status || 'ACTIVE'}><SafeText>{getStatusLabel(consultant.status || 'ACTIVE')}</SafeText></StatusBadge>
-                                                            </div>
-                                                        </div>
-                                                        <div className="mg-v2-profile-card__body">
-                                                            <div className="mg-v2-profile-card__stats-grid">
-                                                                <div className="mg-v2-profile-card__stat-item">
-                                                                    <span className="mg-v2-profile-card__stat-label">가입일</span>
-                                                                    <span className="mg-v2-profile-card__stat-value"><SafeText fallback="-">{consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : null}</SafeText></span>
-                                                                </div>
-                                                                <div className="mg-v2-profile-card__stat-item">
-                                                                    <span className="mg-v2-profile-card__stat-label">총 클라이언트</span>
-                                                                    <span className="mg-v2-profile-card__stat-value">{toDisplayString(consultant.currentClients ?? 0)}명</span>
-                                                                </div>
-                                                                <div className="mg-v2-profile-card__stat-item">
-                                                                    {/* 3단 그리드 여백용 */}
-                                                                </div>
-                                                            </div>
-                                                            {consultant.specialty && (
-                                                                <div className="mg-v2-profile-card__extra-info">
-                                                                    <span className="mg-v2-profile-card__extra-label">전문분야:</span>
-                                                                    <span className="mg-v2-profile-card__extra-value"><SafeText>{consultant.specialty}</SafeText></span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="mg-v2-profile-card__footer">
-                                                            <div className="mg-v2-profile-card__actions">
+                                                        variant="admin-list"
+                                                        consultant={consultant}
+                                                        badgeInfo={getConsultantBadgeDisplay(consultant)}
+                                                        onCardClick={() => handleConsultantSelect(consultant)}
+                                                        renderActions={(c) => (
+                                                            <>
                                                                 <MGButton
                                                                     variant="primary"
                                                                     size="small"
                                                                     className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        handleOpenModal('edit', consultant);
+                                                                        handleOpenModal('edit', c);
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
@@ -1488,7 +1435,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        setPasswordResetConsultant(consultant);
+                                                                        setPasswordResetConsultant(c);
                                                                         setShowPasswordResetModal(true);
                                                                     }}
                                                                     preventDoubleClick={true}
@@ -1502,57 +1449,28 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        setSelectedConsultant(consultant);
+                                                                        setSelectedConsultant(c);
                                                                         setShowDeleteConfirm(true);
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
                                                                     삭제
                                                                 </MGButton>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                            </>
+                                                        )}
+                                                    />
                                                 ))}
                                             </div>
                                         ) : viewMode === 'smallCard' ? (
                                             <SmallCardGrid>
                                                 {getFilteredConsultants.map((consultant) => (
-                                                    <div
+                                                    <ConsultantCard
                                                         key={consultant.id}
-                                                        className="mg-v2-profile-card mg-v2-profile-card--compact"
-                                                        onClick={() => handleConsultantSelect(consultant)}
-                                                        role="button"
-                                                        tabIndex={0}
-                                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleConsultantSelect(consultant); } }}
-                                                    >
-                                                        <div className="mg-v2-profile-card__header">
-                                                            <Avatar
-                                                                profileImageUrl={consultant.profileImageUrl}
-                                                                displayName={toDisplayString(consultant.name)}
-                                                                className="mg-v2-profile-card__avatar"
-                                                                size={36}
-                                                            />
-                                                            <div className="mg-v2-profile-card__info">
-                                                                <h3 className="mg-v2-profile-card__name"><SafeText fallback="이름 없음">{consultant.name}</SafeText></h3>
-                                                                <div className="mg-v2-profile-card__contact">
-                                                                    <span className="mg-v2-profile-card__email"><Mail size={12} /> <SafeText>{consultant.email}</SafeText></span>
-                                                                    <span className="mg-v2-profile-card__phone"><Phone size={12} /> <SafeText fallback="전화번호 없음">{formatKoreanMobileForDisplay(consultant.phone)}</SafeText></span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="mg-v2-profile-card__badges">
-                                                                {(() => {
-                                                                    const { label, level } = getConsultantBadgeDisplay(consultant);
-                                                                    return <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}><SafeText>{label}</SafeText></span>;
-                                                                })()}
-                                                                {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode) && (
-                                                                    <span className="mg-consultant-card__expert-type mg-consultant-card__expert-type--small">
-                                                                        {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode)}
-                                                                    </span>
-                                                                )}
-                                                                <StatusBadge status={consultant.status || 'ACTIVE'}><SafeText>{getStatusLabel(consultant.status || 'ACTIVE')}</SafeText></StatusBadge>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                        variant="admin-compact"
+                                                        consultant={consultant}
+                                                        badgeInfo={getConsultantBadgeDisplay(consultant)}
+                                                        onCardClick={() => handleConsultantSelect(consultant)}
+                                                    />
                                                 ))}
                                             </SmallCardGrid>
                                         ) : (
@@ -1667,75 +1585,21 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                         ) : viewMode === 'largeCard' ? (
                                             <div className="mg-v2-mapping-list-block__grid">
                                                 {getFilteredConsultants.map((consultant) => (
-                                                    <div
+                                                    <ConsultantCard
                                                         key={consultant.id}
-                                                        className="mg-v2-profile-card"
-                                                        onClick={() => handleConsultantSelect(consultant)}
-                                                    >
-                                                        <div className="mg-v2-profile-card__header">
-                                                            <Avatar
-                                                                profileImageUrl={consultant.profileImageUrl}
-                                                                displayName={toDisplayString(consultant.name)}
-                                                                className="mg-v2-profile-card__avatar"
-                                                            />
-                                                            <div className="mg-v2-profile-card__info">
-                                                                <h3 className="mg-v2-profile-card__name"><SafeText fallback="이름 없음">{consultant.name}</SafeText></h3>
-                                                                <div className="mg-v2-profile-card__contact">
-                                                                    <span className="mg-v2-profile-card__email">
-                                                                        <Mail size={12} /> <SafeText>{consultant.email}</SafeText>
-                                                                    </span>
-                                                                    <span className="mg-v2-profile-card__phone">
-                                                                        <Phone size={12} /> <SafeText fallback="전화번호 없음">{formatKoreanMobileForDisplay(consultant.phone)}</SafeText>
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="mg-v2-profile-card__badges">
-                                                                {(() => {
-                                                                    const { label, level } = getConsultantBadgeDisplay(consultant);
-                                                                    return (
-                                                                        <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}>
-                                                                            <SafeText>{label}</SafeText>
-                                                                        </span>
-                                                                    );
-                                                                })()}
-                                                                {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode) && (
-                                                                    <span className="mg-consultant-card__expert-type">
-                                                                        {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode)}
-                                                                    </span>
-                                                                )}
-                                                                <StatusBadge status={consultant.status || 'ACTIVE'}><SafeText>{getStatusLabel(consultant.status || 'ACTIVE')}</SafeText></StatusBadge>
-                                                            </div>
-                                                        </div>
-                                                        <div className="mg-v2-profile-card__body">
-                                                            <div className="mg-v2-profile-card__stats-grid">
-                                                                <div className="mg-v2-profile-card__stat-item">
-                                                                    <span className="mg-v2-profile-card__stat-label">가입일</span>
-                                                                    <span className="mg-v2-profile-card__stat-value"><SafeText fallback="-">{consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : null}</SafeText></span>
-                                                                </div>
-                                                                <div className="mg-v2-profile-card__stat-item">
-                                                                    <span className="mg-v2-profile-card__stat-label">총 클라이언트</span>
-                                                                    <span className="mg-v2-profile-card__stat-value">{toDisplayString(consultant.currentClients ?? 0)}명</span>
-                                                                </div>
-                                                                <div className="mg-v2-profile-card__stat-item">
-                                                                    {/* 3단 그리드 여백용 */}
-                                                                </div>
-                                                            </div>
-                                                            {consultant.specialty && (
-                                                                <div className="mg-v2-profile-card__extra-info">
-                                                                    <span className="mg-v2-profile-card__extra-label">전문분야:</span>
-                                                                    <span className="mg-v2-profile-card__extra-value"><SafeText>{consultant.specialty}</SafeText></span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="mg-v2-profile-card__footer">
-                                                            <div className="mg-v2-profile-card__actions">
+                                                        variant="admin-list"
+                                                        consultant={consultant}
+                                                        badgeInfo={getConsultantBadgeDisplay(consultant)}
+                                                        onCardClick={() => handleConsultantSelect(consultant)}
+                                                        renderActions={(c) => (
+                                                            <>
                                                                 <MGButton
                                                                     variant="primary"
                                                                     size="small"
                                                                     className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        handleOpenModal('edit', consultant);
+                                                                        handleOpenModal('edit', c);
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
@@ -1747,7 +1611,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        setPasswordResetConsultant(consultant);
+                                                                        setPasswordResetConsultant(c);
                                                                         setShowPasswordResetModal(true);
                                                                     }}
                                                                     preventDoubleClick={true}
@@ -1761,57 +1625,28 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        setSelectedConsultant(consultant);
+                                                                        setSelectedConsultant(c);
                                                                         setShowDeleteConfirm(true);
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
                                                                     삭제
                                                                 </MGButton>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                            </>
+                                                        )}
+                                                    />
                                                 ))}
                                             </div>
                                         ) : viewMode === 'smallCard' ? (
                                             <SmallCardGrid>
                                                 {getFilteredConsultants.map((consultant) => (
-                                                    <div
+                                                    <ConsultantCard
                                                         key={consultant.id}
-                                                        className="mg-v2-profile-card mg-v2-profile-card--compact"
-                                                        onClick={() => handleConsultantSelect(consultant)}
-                                                        role="button"
-                                                        tabIndex={0}
-                                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleConsultantSelect(consultant); } }}
-                                                    >
-                                                        <div className="mg-v2-profile-card__header">
-                                                            <Avatar
-                                                                profileImageUrl={consultant.profileImageUrl}
-                                                                displayName={toDisplayString(consultant.name)}
-                                                                className="mg-v2-profile-card__avatar"
-                                                                size={36}
-                                                            />
-                                                            <div className="mg-v2-profile-card__info">
-                                                                <h3 className="mg-v2-profile-card__name"><SafeText fallback="이름 없음">{consultant.name}</SafeText></h3>
-                                                                <div className="mg-v2-profile-card__contact">
-                                                                    <span className="mg-v2-profile-card__email"><Mail size={12} /> <SafeText>{consultant.email}</SafeText></span>
-                                                                    <span className="mg-v2-profile-card__phone"><Phone size={12} /> <SafeText fallback="전화번호 없음">{formatKoreanMobileForDisplay(consultant.phone)}</SafeText></span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="mg-v2-profile-card__badges">
-                                                                {(() => {
-                                                                    const { label, level } = getConsultantBadgeDisplay(consultant);
-                                                                    return <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}><SafeText>{label}</SafeText></span>;
-                                                                })()}
-                                                                {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode) && (
-                                                                    <span className="mg-consultant-card__expert-type mg-consultant-card__expert-type--small">
-                                                                        {getProfessionalProviderTypeLabel(consultant.professionalProviderTypeCode)}
-                                                                    </span>
-                                                                )}
-                                                                <StatusBadge status={consultant.status || 'ACTIVE'}><SafeText>{getStatusLabel(consultant.status || 'ACTIVE')}</SafeText></StatusBadge>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                        variant="admin-compact"
+                                                        consultant={consultant}
+                                                        badgeInfo={getConsultantBadgeDisplay(consultant)}
+                                                        onCardClick={() => handleConsultantSelect(consultant)}
+                                                    />
                                                 ))}
                                             </SmallCardGrid>
                                         ) : (

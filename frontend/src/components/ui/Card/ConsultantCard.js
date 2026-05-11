@@ -5,11 +5,14 @@ import ConsultantDetailModal from '../ConsultantDetailModal';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Avatar from '../../common/Avatar';
+import SafeText from '../../common/SafeText';
+import StatusBadge from '../../common/StatusBadge';
 import { getConsultantRatingInfo } from '../../../utils/ratingHelper';
 import { getFormattedCurrentClients, getFormattedExperience } from '../../../utils/codeHelper';
 import { formatCurrency } from '../../../utils/formatUtils';
 import { formatKoreanMobileForDisplay } from '../../../utils/koreanMobilePhone';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { getStatusLabel } from '../../../utils/colorUtils';
 import { getProfessionalProviderTypeLabel } from '../../../constants/professionalProviderRoles';
 
 /**
@@ -25,7 +28,7 @@ const ConsultantCard = ({
     onClick,
     selected = false,
     draggable = false,
-    variant = 'detailed', // 'compact', 'detailed', 'mobile', 'mobile-simple', 'schedule-select', 'salary-profile'
+    variant = 'detailed', // 'compact', 'detailed', 'mobile', 'mobile-simple', 'schedule-select', 'salary-profile', 'admin-list', 'admin-compact'
     showActions = true,
     className = '',
     // salary-profile 전용
@@ -35,7 +38,9 @@ const ConsultantCard = ({
     renderActions,
     onCardClick,
     compact: salaryProfileCompact = false,
-    nameId
+    nameId,
+    // admin-list / admin-compact 전용
+    badgeInfo
 }) => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     
@@ -571,6 +576,143 @@ const ConsultantCard = ({
         );
     };
 
+    /** admin-list: 관리자 목록 카드 (largeCard 뷰 대체) */
+    const renderAdminListCard = () => {
+        const resolvedBadgeInfo = badgeInfo || { label: '—', level: 'junior' };
+        return (
+            <div
+                className={`mg-consultant-card mg-consultant-card--admin-list ${className}`}
+                onClick={() => onCardClick && onCardClick(consultant)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (onCardClick) onCardClick(consultant);
+                    }
+                }}
+                aria-label={`${toDisplayString(consultant.name)} 상담사 상세 보기`}
+            >
+                <div className="mg-consultant-card__header-section">
+                    <Avatar
+                        profileImageUrl={consultant.profileImageUrl}
+                        displayName={toDisplayString(consultant.name)}
+                        className="mg-consultant-card__avatar"
+                    />
+                    <div className="mg-consultant-card__info-group">
+                        <h4 className="mg-consultant-card__name">
+                            <SafeText fallback="이름 없음">{consultant.name}</SafeText>
+                        </h4>
+                        <div className="mg-consultant-card__contact">
+                            <span className="mg-consultant-card__contact-item">
+                                <Mail size={12} /> <SafeText>{consultant.email}</SafeText>
+                            </span>
+                            <span className="mg-consultant-card__contact-item">
+                                <Phone size={12} /> <SafeText fallback="전화번호 없음">{formatKoreanMobileForDisplay(consultant.phone)}</SafeText>
+                            </span>
+                        </div>
+                    </div>
+                    <div className="mg-consultant-card__badge-group">
+                        <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${resolvedBadgeInfo.level}`}>
+                            <SafeText>{resolvedBadgeInfo.label}</SafeText>
+                        </span>
+                        {expertTypeLabel && (
+                            <span className="mg-consultant-card__expert-type">
+                                {expertTypeLabel}
+                            </span>
+                        )}
+                        <StatusBadge status={consultant.status || 'ACTIVE'}>
+                            <SafeText>{getStatusLabel(consultant.status || 'ACTIVE')}</SafeText>
+                        </StatusBadge>
+                    </div>
+                </div>
+                <div className="mg-consultant-card__body-section">
+                    <div className="mg-consultant-card__stats-grid">
+                        <div className="mg-consultant-card__stat-item">
+                            <span className="mg-consultant-card__stat-label">가입일</span>
+                            <span className="mg-consultant-card__stat-value">
+                                <SafeText fallback="-">{consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : null}</SafeText>
+                            </span>
+                        </div>
+                        <div className="mg-consultant-card__stat-item">
+                            <span className="mg-consultant-card__stat-label">총 클라이언트</span>
+                            <span className="mg-consultant-card__stat-value">{toDisplayString(consultant.currentClients ?? 0)}명</span>
+                        </div>
+                        <div className="mg-consultant-card__stat-item" />
+                    </div>
+                    {consultant.specialty && (
+                        <div className="mg-consultant-card__specialty">
+                            <span className="mg-consultant-card__specialty-label">전문분야:</span>
+                            <span className="mg-consultant-card__specialty-value"><SafeText>{consultant.specialty}</SafeText></span>
+                        </div>
+                    )}
+                </div>
+                {renderActions && (
+                    <div className="mg-consultant-card__footer-section">
+                        <div className="mg-consultant-card__actions mg-consultant-card__actions--admin">
+                            {renderActions(consultant)}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    /** admin-compact: 관리자 컴팩트 카드 (smallCard 뷰 대체) */
+    const renderAdminCompactCard = () => {
+        const resolvedBadgeInfo = badgeInfo || { label: '—', level: 'junior' };
+        return (
+            <div
+                className={`mg-consultant-card mg-consultant-card--admin-compact ${className}`}
+                onClick={() => onCardClick && onCardClick(consultant)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (onCardClick) onCardClick(consultant);
+                    }
+                }}
+                aria-label={`${toDisplayString(consultant.name)} 상담사 상세 보기`}
+            >
+                <div className="mg-consultant-card__header-section">
+                    <Avatar
+                        profileImageUrl={consultant.profileImageUrl}
+                        displayName={toDisplayString(consultant.name)}
+                        className="mg-consultant-card__avatar"
+                        size={36}
+                    />
+                    <div className="mg-consultant-card__info-group">
+                        <h4 className="mg-consultant-card__name">
+                            <SafeText fallback="이름 없음">{consultant.name}</SafeText>
+                        </h4>
+                        <div className="mg-consultant-card__contact">
+                            <span className="mg-consultant-card__contact-item">
+                                <Mail size={12} /> <SafeText>{consultant.email}</SafeText>
+                            </span>
+                            <span className="mg-consultant-card__contact-item">
+                                <Phone size={12} /> <SafeText fallback="전화번호 없음">{formatKoreanMobileForDisplay(consultant.phone)}</SafeText>
+                            </span>
+                        </div>
+                    </div>
+                    <div className="mg-consultant-card__badge-group">
+                        <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${resolvedBadgeInfo.level}`}>
+                            <SafeText>{resolvedBadgeInfo.label}</SafeText>
+                        </span>
+                        {expertTypeLabel && (
+                            <span className="mg-consultant-card__expert-type mg-consultant-card__expert-type--small">
+                                {expertTypeLabel}
+                            </span>
+                        )}
+                        <StatusBadge status={consultant.status || 'ACTIVE'}>
+                            <SafeText>{getStatusLabel(consultant.status || 'ACTIVE')}</SafeText>
+                        </StatusBadge>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     // 모바일 간단 카드 렌더링 (스케줄 모달용)
     const renderMobileSimpleCard = () => (
         <div
@@ -639,13 +781,19 @@ const ConsultantCard = ({
                 return renderScheduleSelectCard();
             case 'salary-profile':
                 return renderSalaryProfileCard();
+            case 'admin-list':
+                return renderAdminListCard();
+            case 'admin-compact':
+                return renderAdminCompactCard();
             case 'detailed':
             default:
                 return renderDetailedCard();
         }
     };
 
-    const showDetailModalForVariant = variant !== 'salary-profile';
+    const showDetailModalForVariant = variant !== 'salary-profile'
+        && variant !== 'admin-list'
+        && variant !== 'admin-compact';
 
     return (
         <>

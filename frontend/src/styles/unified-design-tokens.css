@@ -5100,6 +5100,284 @@ body {
 }
 
 /* ============================================
+   Admin List Card (mg-v2-profile-card 대체)
+   ============================================ */
+.mg-consultant-card--admin-list {
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border-light, #e5e7eb);
+  border-radius: var(--radius-lg, 16px);
+  padding: var(--spacing-lg, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md, 16px);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  backdrop-filter: none;
+  box-shadow: none;
+  min-height: auto;
+  overflow: visible;
+}
+
+.mg-consultant-card--admin-list:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: var(--color-border-focus, #3b82f6);
+  background: var(--color-surface, #ffffff);
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__header-section {
+  display: flex;
+  gap: var(--spacing-md, 16px);
+  align-items: flex-start;
+  position: relative;
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__avatar {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__info-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__name {
+  margin: 0;
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, #111827);
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__contact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__contact-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__badge-group {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs, 4px);
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__body-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm, 8px);
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__stat-label {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__stat-value {
+  font-size: var(--font-size-md, 1rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-primary, #111827);
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__specialty {
+  margin-top: var(--spacing-sm, 8px);
+  padding-top: var(--spacing-sm, 8px);
+  border-top: 1px dashed var(--color-border-light, #e5e7eb);
+  line-height: 1.5;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #4b5563);
+  display: flex;
+  gap: 8px;
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__specialty-label {
+  font-weight: var(--font-weight-medium, 500);
+  white-space: nowrap;
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__specialty-value {
+  word-break: break-word;
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__footer-section {
+  margin-top: auto;
+  padding-top: var(--spacing-md, 16px);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__actions--admin {
+  display: flex;
+  gap: var(--spacing-sm, 8px);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* Admin List Card 버튼: ProfileCard.css 버튼 스타일 매칭 */
+.mg-consultant-card--admin-list .mg-consultant-card__actions--admin .mg-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 0.875rem;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__actions--admin .mg-button--primary {
+  background: var(--ad-b0kla-green);
+  color: #fff;
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__actions--admin .mg-button--primary:hover:not(:disabled):not(.mg-button--disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__actions--admin .mg-button--secondary {
+  background: var(--ad-b0kla-bg);
+  color: var(--ad-b0kla-title-color);
+  border: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__actions--admin .mg-button--secondary:hover:not(:disabled):not(.mg-button--disabled) {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-green);
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__actions--admin .mg-button--danger {
+  background: var(--mg-error-500);
+  color: #fff;
+}
+
+.mg-consultant-card--admin-list .mg-consultant-card__actions--admin .mg-button--danger:hover:not(:disabled):not(.mg-button--disabled) {
+  background: var(--mg-error-600, #dc2626);
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+/* ============================================
+   Admin Compact Card (smallCard 대체)
+   ============================================ */
+.mg-consultant-card--admin-compact {
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border-light, #e5e7eb);
+  border-radius: var(--radius-lg, 16px);
+  padding: var(--mg-spacing-12, 0.75rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-8, 0.5rem);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  backdrop-filter: none;
+  box-shadow: none;
+  min-height: auto;
+  min-width: 0;
+  overflow: visible;
+}
+
+.mg-consultant-card--admin-compact:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: var(--color-border-focus, #3b82f6);
+  background: var(--color-surface, #ffffff);
+}
+
+.mg-consultant-card--admin-compact .mg-consultant-card__header-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-8, 0.5rem);
+  align-items: flex-start;
+}
+
+.mg-consultant-card--admin-compact .mg-consultant-card__avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.mg-consultant-card--admin-compact .mg-consultant-card__info-group {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mg-consultant-card--admin-compact .mg-consultant-card__name {
+  margin: 0;
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, #111827);
+}
+
+.mg-consultant-card--admin-compact .mg-consultant-card__contact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.mg-consultant-card--admin-compact .mg-consultant-card__contact-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mg-consultant-card--admin-compact .mg-consultant-card__badge-group {
+  flex-basis: 100%;
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-4, 0.25rem);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mg-consultant-card--admin-compact .mg-v2-consultant-level-badge {
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+.mg-consultant-card--admin-compact .mg-consultant-card__badge-group > * {
+  font-size: 10px;
+  padding: 2px 6px;
+}
+
+/* ============================================
    Client Card Mobile Simple
    ============================================ */
 .mg-client-card--mobile-simple {

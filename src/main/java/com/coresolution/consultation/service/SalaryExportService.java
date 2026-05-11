@@ -23,15 +23,15 @@ public interface SalaryExportService {
      * Excel(.xlsx)보내기.
      *
      * @param request 계산 ID·옵션
-     * @return downloadUrl, filename
+     * @return downloadUrl, filename, (이메일 발송 시) emailSent 등
      */
-    Map<String, String> exportExcel(SalaryExportRequest request);
+    Map<String, Object> exportExcel(SalaryExportRequest request);
 
     /**
      * CSV(UTF-8 BOM)보내기.
      *
      * @param request 계산 ID·옵션
-     * @return downloadUrl, filename
+     * @return downloadUrl, filename, (이메일 발송 시) emailSent 등
      */
-    Map<String, String> exportCsv(SalaryExportRequest request);
+    Map<String, Object> exportCsv(SalaryExportRequest request);
 }

@@ -34,7 +34,7 @@ public final class SalaryExportConstants {
 
     public static final String RESPONSE_KEY_FILENAME = "filename";
 
-    /** PDF export 시 이메일 발송 여부({@code notifyConsultantByEmail} 요청 시에만 설정) */
+    /** export(PDF/Excel/CSV) 시 이메일 발송 여부({@code notifyConsultantByEmail} 요청 시에만 설정) */
     public static final String RESPONSE_KEY_EMAIL_SENT = "emailSent";
 
     /** 이메일 미발송·차단 시 사용자 표시용 메시지 */

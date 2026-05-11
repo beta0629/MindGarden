@@ -12,7 +12,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from './MGButton';
 
 /**
- * 급여 출력 모달. PDF 선택 시 상담사 등록 이메일로 발송 옵션 제공.
+ * 급여 출력 모달. 모든 출력 형식에서 상담사 등록 이메일로 발송 옵션 제공.
  *
  * @param {Object} props
  * @param {boolean} props.isOpen
@@ -32,6 +32,7 @@ const SalaryExportModal = ({
   const [includeTaxDetails, setIncludeTaxDetails] = useState(true);
   const [includeCalculationDetails, setIncludeCalculationDetails] = useState(true);
   const [sendEmail, setSendEmail] = useState(false);
+  const [includeAttachment, setIncludeAttachment] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -46,7 +47,6 @@ const SalaryExportModal = ({
     setError(null);
 
     try {
-      const isPdf = selectedFormat === EXPORT_FORMAT.PDF;
       const exportData = {
         calculationId: salaryData.id,
         format: selectedFormat,
@@ -55,7 +55,8 @@ const SalaryExportModal = ({
         consultantName,
         period,
         emailAddress: null,
-        notifyConsultantByEmail: isPdf && sendEmail
+        notifyConsultantByEmail: sendEmail,
+        includeAttachmentInEmail: sendEmail && includeAttachment
       };
 
       const exportEndpoint =
@@ -77,7 +78,7 @@ const SalaryExportModal = ({
           document.body.removeChild(link);
         }
 
-        if (isPdf && sendEmail) {
+        if (sendEmail) {
           if (data.emailSent === true) {
             const masked = data.recipientEmail;
             const lines = [
@@ -246,13 +247,7 @@ const SalaryExportModal = ({
                       name="format"
                       value={format}
                       checked={selectedFormat === format}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setSelectedFormat(v);
-                        if (v !== EXPORT_FORMAT.PDF) {
-                          setSendEmail(false);
-                        }
-                      }}
+                      onChange={(e) => setSelectedFormat(e.target.value)}
                     />
                     <span>{EXPORT_FORMAT_LABELS[format]}</span>
                   </label>
@@ -285,29 +280,39 @@ const SalaryExportModal = ({
               </div>
             </div>
 
-            {/* PDF만 상담사 등록 이메일 발송 */}
+            {/* 상담사 등록 이메일 발송 */}
             <div style={{ marginBottom: '20px' }}>
               <label style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                cursor: selectedFormat === EXPORT_FORMAT.PDF ? 'pointer' : 'not-allowed',
-                marginBottom: '10px',
-                opacity: selectedFormat === EXPORT_FORMAT.PDF ? 1 : 0.55
+                cursor: 'pointer',
+                marginBottom: '10px'
               }}
               >
                 <input
                   type="checkbox"
                   checked={sendEmail}
-                  disabled={selectedFormat !== EXPORT_FORMAT.PDF}
                   onChange={(e) => setSendEmail(e.target.checked)}
                 />
-                <span>상담사 등록 이메일로 계산서 발송 (PDF만)</span>
+                <span>상담사 등록 이메일로 계산서 발송</span>
               </label>
-              {selectedFormat !== EXPORT_FORMAT.PDF && (
-                <p style={{ fontSize: 'var(--font-size-xs)', margin: '4px 0 0 24px' }}>
-                  PDF를 선택하면 상담사 DB에 등록된 이메일로 발송할 수 있습니다.
-                </p>
+              {sendEmail && (
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  marginLeft: '24px'
+                }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={includeAttachment}
+                    onChange={(e) => setIncludeAttachment(e.target.checked)}
+                  />
+                  <span>첨부 파일 포함</span>
+                </label>
               )}
             </div>
           </div>

@@ -85,7 +85,7 @@ public class SalaryExportServiceImpl implements SalaryExportService {
         payload.put(SalaryExportConstants.RESPONSE_KEY_FILENAME, filename);
 
         if (Boolean.TRUE.equals(request.getNotifyConsultantByEmail())) {
-            appendPdfEmailPayload(calc, request, consultantDisplayName, bytes, filename, payload);
+            appendEmailPayload(calc, request, consultantDisplayName, bytes, filename, payload);
         }
 
         return payload;
@@ -93,32 +93,44 @@ public class SalaryExportServiceImpl implements SalaryExportService {
 
     @Override
     @Transactional(readOnly = true)
-    public Map<String, String> exportExcel(SalaryExportRequest request) {
+    public Map<String, Object> exportExcel(SalaryExportRequest request) {
         SalaryCalculation calc = loadCalculationForCurrentTenant(request.getCalculationId());
         Map<String, Object> taxDetails = resolveTaxDetails(request, calc.getId());
         String consultantDisplayName = resolveConsultantDisplayName(calc, request);
         byte[] bytes = buildXlsx(calc, taxDetails, request, consultantDisplayName);
         String filename = buildFilename(calc, "xlsx", consultantDisplayName);
-        return Map.of(
-                SalaryExportConstants.RESPONSE_KEY_DOWNLOAD_URL,
-                SalaryExportConstants.DATA_URI_PREFIX_XLSX + Base64.getEncoder().encodeToString(bytes),
-                SalaryExportConstants.RESPONSE_KEY_FILENAME,
-                filename);
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put(SalaryExportConstants.RESPONSE_KEY_DOWNLOAD_URL,
+                SalaryExportConstants.DATA_URI_PREFIX_XLSX + Base64.getEncoder().encodeToString(bytes));
+        payload.put(SalaryExportConstants.RESPONSE_KEY_FILENAME, filename);
+
+        if (Boolean.TRUE.equals(request.getNotifyConsultantByEmail())) {
+            appendEmailPayload(calc, request, consultantDisplayName, bytes, filename, payload);
+        }
+
+        return payload;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Map<String, String> exportCsv(SalaryExportRequest request) {
+    public Map<String, Object> exportCsv(SalaryExportRequest request) {
         SalaryCalculation calc = loadCalculationForCurrentTenant(request.getCalculationId());
         Map<String, Object> taxDetails = resolveTaxDetails(request, calc.getId());
         String consultantDisplayName = resolveConsultantDisplayName(calc, request);
         byte[] bytes = buildCsv(calc, taxDetails, request, consultantDisplayName);
         String filename = buildFilename(calc, "csv", consultantDisplayName);
-        return Map.of(
-                SalaryExportConstants.RESPONSE_KEY_DOWNLOAD_URL,
-                SalaryExportConstants.DATA_URI_PREFIX_CSV + Base64.getEncoder().encodeToString(bytes),
-                SalaryExportConstants.RESPONSE_KEY_FILENAME,
-                filename);
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put(SalaryExportConstants.RESPONSE_KEY_DOWNLOAD_URL,
+                SalaryExportConstants.DATA_URI_PREFIX_CSV + Base64.getEncoder().encodeToString(bytes));
+        payload.put(SalaryExportConstants.RESPONSE_KEY_FILENAME, filename);
+
+        if (Boolean.TRUE.equals(request.getNotifyConsultantByEmail())) {
+            appendEmailPayload(calc, request, consultantDisplayName, bytes, filename, payload);
+        }
+
+        return payload;
     }
 
     private Map<String, Object> buildSalaryDataMapForEmail(SalaryCalculation calc) {
@@ -190,13 +202,14 @@ public class SalaryExportServiceImpl implements SalaryExportService {
     }
 
     /**
-     * PDF 이메일 발송: 상담사 등록 이메일만 사용한다. 요청 {@code emailAddress}는 사용하지 않는다.
+     * 이메일 발송 공통: 상담사 등록 이메일만 사용한다. 요청 {@code emailAddress}는 사용하지 않는다.
+     * {@code request.isIncludeAttachment()}가 false이면 첨부 없이 급여 요약 본문만 발송한다.
      */
-    private void appendPdfEmailPayload(
+    private void appendEmailPayload(
             SalaryCalculation calc,
             SalaryExportRequest request,
             String consultantDisplayName,
-            byte[] bytes,
+            byte[] fileBytes,
             String filename,
             Map<String, Object> payload) {
         User consultant = calc.getConsultant();
@@ -216,13 +229,17 @@ public class SalaryExportServiceImpl implements SalaryExportService {
         }
         Map<String, Object> salaryData = buildSalaryDataMapForEmail(calc);
         String period = resolvePeriodForEmail(calc, request);
+
+        byte[] attachmentBytes = request.isIncludeAttachment() ? fileBytes : null;
+        String attachmentFilename = request.isIncludeAttachment() ? filename : null;
+
         EmailResponse emailResponse = emailService.sendSalaryCalculationEmailWithResponse(
                 to,
                 consultantDisplayName,
                 period,
                 salaryData,
-                bytes,
-                filename);
+                attachmentBytes,
+                attachmentFilename);
         payload.put(SalaryExportConstants.RESPONSE_KEY_EMAIL_SENT, emailResponse.isSuccess());
         if (emailResponse.isSuccess()) {
             String masked = maskEmailForResponse(to);

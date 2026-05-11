@@ -362,15 +362,15 @@ public class MockEmailServiceImpl implements EmailService {
     @Override
     public boolean sendSalaryCalculationEmail(String toEmail, String consultantName,
             String period, Map<String, Object> salaryData,
-            byte[] pdfAttachment, String attachmentFilename) {
-        return sendSalaryCalculationEmailWithResponse(toEmail, consultantName, period, salaryData, pdfAttachment, attachmentFilename)
+            byte[] attachment, String attachmentFilename) {
+        return sendSalaryCalculationEmailWithResponse(toEmail, consultantName, period, salaryData, attachment, attachmentFilename)
                 .isSuccess();
     }
 
     @Override
     public EmailResponse sendSalaryCalculationEmailWithResponse(String toEmail, String consultantName,
             String period, Map<String, Object> salaryData,
-            byte[] pdfAttachment, String attachmentFilename) {
+            byte[] attachment, String attachmentFilename) {
         log.info("Mock 급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
         String subject = String.format("[mindgarden] %s 급여 계산서 - %s", consultantName, period);
         String content = "Mock 급여 계산서 이메일 내용";
@@ -381,11 +381,19 @@ public class MockEmailServiceImpl implements EmailService {
                 .content(content)
                 .type("HTML")
                 .templateType("SALARY_CALCULATION");
-        if (pdfAttachment != null && pdfAttachment.length > 0 && StringUtils.hasText(attachmentFilename)) {
+        if (attachment != null && attachment.length > 0 && StringUtils.hasText(attachmentFilename)) {
+            String mimeType = "application/octet-stream";
+            if (attachmentFilename.toLowerCase().endsWith(".pdf")) {
+                mimeType = "application/pdf";
+            } else if (attachmentFilename.toLowerCase().endsWith(".xlsx")) {
+                mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            } else if (attachmentFilename.toLowerCase().endsWith(".csv")) {
+                mimeType = "text/csv";
+            }
             builder.binaryAttachments(List.of(EmailAttachmentPart.builder()
                     .filename(attachmentFilename)
-                    .content(pdfAttachment)
-                    .mimeType("application/pdf")
+                    .content(attachment)
+                    .mimeType(mimeType)
                     .build()));
         }
         return sendEmail(builder.build());

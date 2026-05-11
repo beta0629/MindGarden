@@ -1123,19 +1123,19 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public boolean sendSalaryCalculationEmail(String toEmail, String consultantName,
             String period, Map<String, Object> salaryData,
-            byte[] pdfAttachment, String attachmentFilename) {
-        return sendSalaryCalculationEmailWithResponse(toEmail, consultantName, period, salaryData, pdfAttachment, attachmentFilename)
+            byte[] attachment, String attachmentFilename) {
+        return sendSalaryCalculationEmailWithResponse(toEmail, consultantName, period, salaryData, attachment, attachmentFilename)
                 .isSuccess();
     }
 
     @Override
     public EmailResponse sendSalaryCalculationEmailWithResponse(String toEmail, String consultantName,
             String period, Map<String, Object> salaryData,
-            byte[] pdfAttachment, String attachmentFilename) {
+            byte[] attachment, String attachmentFilename) {
         try {
             log.info("급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
             EmailRequest request = buildSalaryCalculationEmailRequest(
-                    toEmail, consultantName, period, salaryData, pdfAttachment, attachmentFilename);
+                    toEmail, consultantName, period, salaryData, attachment, attachmentFilename);
             return sendEmail(request);
         } catch (Exception e) {
             log.error("급여 계산서 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
@@ -1151,7 +1151,7 @@ public class EmailServiceImpl implements EmailService {
 
     private EmailRequest buildSalaryCalculationEmailRequest(String toEmail, String consultantName,
             String period, Map<String, Object> salaryData,
-            byte[] pdfAttachment, String attachmentFilename) {
+            byte[] attachment, String attachmentFilename) {
         Map<String, Object> variables = enrichTemplateVariables(salaryData);
         String subject = String.format("[{{companyName}}] %s 급여 계산서 - %s", consultantName, period);
         subject = applyTemplateVariables(subject, variables);
@@ -1167,14 +1167,35 @@ public class EmailServiceImpl implements EmailService {
                         "consultantName", consultantName,
                         "period", period,
                         "salaryData", salaryData));
-        if (pdfAttachment != null && pdfAttachment.length > 0 && StringUtils.hasText(attachmentFilename)) {
+        if (attachment != null && attachment.length > 0 && StringUtils.hasText(attachmentFilename)) {
+            String mimeType = resolveMimeType(attachmentFilename);
             builder.binaryAttachments(List.of(EmailAttachmentPart.builder()
                     .filename(attachmentFilename)
-                    .content(pdfAttachment)
-                    .mimeType("application/pdf")
+                    .content(attachment)
+                    .mimeType(mimeType)
                     .build()));
         }
         return builder.build();
+    }
+
+    /**
+     * 파일 확장자에서 MIME 타입을 추론한다.
+     */
+    private static String resolveMimeType(String filename) {
+        if (!StringUtils.hasText(filename)) {
+            return "application/octet-stream";
+        }
+        String lower = filename.toLowerCase();
+        if (lower.endsWith(".pdf")) {
+            return "application/pdf";
+        }
+        if (lower.endsWith(".xlsx")) {
+            return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        }
+        if (lower.endsWith(".csv")) {
+            return "text/csv";
+        }
+        return "application/octet-stream";
     }
     
     @Override

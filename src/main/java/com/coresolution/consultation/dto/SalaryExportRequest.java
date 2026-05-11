@@ -30,7 +30,20 @@ public class SalaryExportRequest {
     private String emailAddress;
 
     /**
-     * true이면 PDF 생성 후 상담사(User) 등록 이메일(복호화)로 발송한다. {@code emailAddress}는 무시된다.
+     * true이면 파일 생성 후 상담사(User) 등록 이메일(복호화)로 발송한다. {@code emailAddress}는 무시된다.
      */
     private Boolean notifyConsultantByEmail;
+
+    /**
+     * 이메일 발송 시 생성된 파일을 첨부할지 여부. 기본 true(null이면 true 취급).
+     * false이면 급여 요약 본문만 발송하고 파일은 첨부하지 않는다.
+     */
+    private Boolean includeAttachmentInEmail;
+
+    /**
+     * {@code includeAttachmentInEmail}이 null이면 true(기존 호환).
+     */
+    public boolean isIncludeAttachment() {
+        return !Boolean.FALSE.equals(includeAttachmentInEmail);
+    }
 }

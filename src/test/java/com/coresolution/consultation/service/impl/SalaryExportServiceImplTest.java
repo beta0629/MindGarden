@@ -314,6 +314,156 @@ class SalaryExportServiceImplTest {
     }
 
     @Test
+    @DisplayName("exportExcel: notifyConsultantByEmail이면 이메일 발송")
+    void exportExcel_notifyConsultant_callsEmail() {
+        User consultant = new User();
+        consultant.setName("엑셀상담사");
+        consultant.setEmail("enc-mail");
+        SalaryProfile profile = new SalaryProfile();
+        SalaryCalculation calc = SalaryCalculation.builder()
+                .consultant(consultant)
+                .salaryProfile(profile)
+                .calculationPeriodStart(LocalDate.of(2025, 6, 1))
+                .calculationPeriodEnd(LocalDate.of(2025, 6, 30))
+                .totalConsultations(0)
+                .completedConsultations(1)
+                .baseSalary(new BigDecimal("500000"))
+                .grossSalary(new BigDecimal("500000"))
+                .deductions(BigDecimal.ZERO)
+                .netSalary(new BigDecimal("500000"))
+                .totalSalary(new BigDecimal("500000"))
+                .hourlyEarnings(BigDecimal.ZERO)
+                .commissionEarnings(BigDecimal.ZERO)
+                .status(SalaryCalculation.SalaryStatus.CALCULATED)
+                .calculatedAt(LocalDateTime.now())
+                .build();
+        calc.setId(50L);
+        calc.setTenantId(TENANT);
+
+        when(salaryCalculationRepository.findByIdWithConsultant(50L)).thenReturn(Optional.of(calc));
+        when(userPersonalDataCacheService.getDecryptedUserData(any(User.class)))
+                .thenReturn(Map.of("name", "엑셀상담사", "email", "excel@example.com"));
+        when(emailService.sendSalaryCalculationEmailWithResponse(
+                eq("excel@example.com"), eq("엑셀상담사"), anyString(), anyMap(), any(), anyString()))
+                .thenReturn(EmailResponse.builder().success(true).message("ok").build());
+
+        SalaryExportRequest request = new SalaryExportRequest();
+        request.setCalculationId(50L);
+        request.setIncludeTaxDetails(false);
+        request.setIncludeCalculationDetails(true);
+        request.setNotifyConsultantByEmail(true);
+
+        Map<String, Object> result = salaryExportService.exportExcel(request);
+
+        assertNotNull(result.get(SalaryExportConstants.RESPONSE_KEY_DOWNLOAD_URL));
+        assertTrue(result.get(SalaryExportConstants.RESPONSE_KEY_DOWNLOAD_URL).toString()
+                .startsWith(SalaryExportConstants.DATA_URI_PREFIX_XLSX));
+        assertEquals(true, result.get(SalaryExportConstants.RESPONSE_KEY_EMAIL_SENT));
+        verify(emailService).sendSalaryCalculationEmailWithResponse(
+                eq("excel@example.com"), eq("엑셀상담사"), anyString(), anyMap(), any(), anyString());
+    }
+
+    @Test
+    @DisplayName("exportCsv: notifyConsultantByEmail이면 이메일 발송")
+    void exportCsv_notifyConsultant_callsEmail() {
+        User consultant = new User();
+        consultant.setName("CSV상담사");
+        consultant.setEmail("enc-mail");
+        SalaryProfile profile = new SalaryProfile();
+        SalaryCalculation calc = SalaryCalculation.builder()
+                .consultant(consultant)
+                .salaryProfile(profile)
+                .calculationPeriodStart(LocalDate.of(2025, 7, 1))
+                .calculationPeriodEnd(LocalDate.of(2025, 7, 31))
+                .totalConsultations(0)
+                .completedConsultations(3)
+                .baseSalary(new BigDecimal("300000"))
+                .grossSalary(new BigDecimal("300000"))
+                .deductions(BigDecimal.ZERO)
+                .netSalary(new BigDecimal("300000"))
+                .totalSalary(new BigDecimal("300000"))
+                .hourlyEarnings(BigDecimal.ZERO)
+                .commissionEarnings(BigDecimal.ZERO)
+                .status(SalaryCalculation.SalaryStatus.CALCULATED)
+                .calculatedAt(LocalDateTime.now())
+                .build();
+        calc.setId(51L);
+        calc.setTenantId(TENANT);
+
+        when(salaryCalculationRepository.findByIdWithConsultant(51L)).thenReturn(Optional.of(calc));
+        when(userPersonalDataCacheService.getDecryptedUserData(any(User.class)))
+                .thenReturn(Map.of("name", "CSV상담사", "email", "csv@example.com"));
+        when(emailService.sendSalaryCalculationEmailWithResponse(
+                eq("csv@example.com"), eq("CSV상담사"), anyString(), anyMap(), any(), anyString()))
+                .thenReturn(EmailResponse.builder().success(true).message("ok").build());
+
+        SalaryExportRequest request = new SalaryExportRequest();
+        request.setCalculationId(51L);
+        request.setIncludeTaxDetails(false);
+        request.setIncludeCalculationDetails(true);
+        request.setNotifyConsultantByEmail(true);
+
+        Map<String, Object> result = salaryExportService.exportCsv(request);
+
+        assertNotNull(result.get(SalaryExportConstants.RESPONSE_KEY_DOWNLOAD_URL));
+        assertTrue(result.get(SalaryExportConstants.RESPONSE_KEY_DOWNLOAD_URL).toString()
+                .startsWith(SalaryExportConstants.DATA_URI_PREFIX_CSV));
+        assertEquals(true, result.get(SalaryExportConstants.RESPONSE_KEY_EMAIL_SENT));
+        verify(emailService).sendSalaryCalculationEmailWithResponse(
+                eq("csv@example.com"), eq("CSV상담사"), anyString(), anyMap(), any(), anyString());
+    }
+
+    @Test
+    @DisplayName("exportPdf: includeAttachmentInEmail=false이면 첨부 없이 이메일 발송")
+    void exportPdf_noAttachment_sendsEmailWithoutFile() {
+        User consultant = new User();
+        consultant.setName("테스트");
+        consultant.setEmail("enc-mail");
+        SalaryProfile profile = new SalaryProfile();
+        SalaryCalculation calc = SalaryCalculation.builder()
+                .consultant(consultant)
+                .salaryProfile(profile)
+                .calculationPeriodStart(LocalDate.of(2025, 8, 1))
+                .calculationPeriodEnd(LocalDate.of(2025, 8, 31))
+                .totalConsultations(0)
+                .completedConsultations(1)
+                .baseSalary(new BigDecimal("200000"))
+                .grossSalary(new BigDecimal("200000"))
+                .deductions(BigDecimal.ZERO)
+                .netSalary(new BigDecimal("200000"))
+                .totalSalary(new BigDecimal("200000"))
+                .hourlyEarnings(BigDecimal.ZERO)
+                .commissionEarnings(BigDecimal.ZERO)
+                .status(SalaryCalculation.SalaryStatus.CALCULATED)
+                .calculatedAt(LocalDateTime.now())
+                .build();
+        calc.setId(52L);
+        calc.setTenantId(TENANT);
+
+        when(salaryCalculationRepository.findByIdWithConsultant(52L)).thenReturn(Optional.of(calc));
+        when(salaryManagementService.getTaxDetails(52L)).thenReturn(Map.of());
+        when(userPersonalDataCacheService.getDecryptedUserData(any(User.class)))
+                .thenReturn(Map.of("name", "테스트", "email", "noattach@example.com"));
+        when(emailService.sendSalaryCalculationEmailWithResponse(
+                eq("noattach@example.com"), eq("테스트"), anyString(), anyMap(), any(), any()))
+                .thenReturn(EmailResponse.builder().success(true).message("ok").build());
+
+        SalaryExportRequest request = new SalaryExportRequest();
+        request.setCalculationId(52L);
+        request.setIncludeTaxDetails(true);
+        request.setIncludeCalculationDetails(true);
+        request.setNotifyConsultantByEmail(true);
+        request.setIncludeAttachmentInEmail(false);
+
+        Map<String, Object> result = salaryExportService.exportPdf(request);
+
+        assertEquals(true, result.get(SalaryExportConstants.RESPONSE_KEY_EMAIL_SENT));
+        verify(emailService).sendSalaryCalculationEmailWithResponse(
+                eq("noattach@example.com"), eq("테스트"), anyString(), anyMap(),
+                eq((byte[]) null), eq((String) null));
+    }
+
+    @Test
     @DisplayName("maskEmailForResponse: 로컬 2자 초과 시 앞 2자+마스킹")
     void maskEmailForResponse_masksLocalPart() {
         assertEquals("ab***@example.com", SalaryExportServiceImpl.maskEmailForResponse("abc@example.com"));

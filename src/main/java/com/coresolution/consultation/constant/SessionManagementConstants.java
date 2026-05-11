@@ -18,8 +18,9 @@ public final class SessionManagementConstants {
     
     /**
      * 기본 세션 타임아웃 (분)
+     * SessionConstants.SESSION_TIMEOUT_SECONDS (8h) 및 application.yml server.servlet.session.timeout (8h)과 정합
      */
-    public static final int DEFAULT_SESSION_TIMEOUT_MINUTES = 30;
+    public static final int DEFAULT_SESSION_TIMEOUT_MINUTES = 480;
     
     /**
      * 최대 동시 세션 수 (사용자당)

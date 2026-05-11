@@ -17,8 +17,8 @@ const SESSION_KEYS = {
   SESSION_EXPIRY: 'sessionExpiry'
 };
 
-// 세션 만료 시간 (24시간)
-const SESSION_DURATION = 24 * 60 * 60 * 1000;
+// 세션 만료 시간 (8시간) — server.servlet.session.timeout(8h)과 정합
+const SESSION_DURATION = 8 * 60 * 60 * 1000;
 
 /**
  * 세션 초기화

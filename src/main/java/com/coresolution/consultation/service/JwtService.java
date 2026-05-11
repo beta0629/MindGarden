@@ -38,7 +38,7 @@ public class JwtService {
     @Value("${jwt.secret:}")
     private String secretKey;
     
-    @Value("${jwt.expiration:86400000}") // 24시간 (밀리초)
+    @Value("${jwt.expiration:3600000}") // 1시간 (밀리초) — application.yml jwt.expiration과 정합
     private long jwtExpiration;
     
     @Value("${jwt.refresh-expiration:604800000}") // 7일 (밀리초)

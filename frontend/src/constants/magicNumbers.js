@@ -18,7 +18,7 @@ export const TIME_CONSTANTS = {
   // 특정 시간 간격
   LOGIN_CHECK_DELAY: 5000,
   PERIODIC_CHECK_INTERVAL: 30000,
-  SESSION_TIMEOUT: 30 * 60 * 1000, // 30분
+  SESSION_TIMEOUT: 8 * 60 * 60 * 1000, // 8시간 — server.servlet.session.timeout(8h)과 정합
   AUTO_SAVE_INTERVAL: 2000,
   DEBOUNCE_DELAY: 300,
   THROTTLE_DELAY: 100,
@@ -176,7 +176,7 @@ export const SECURITY_CONSTANTS = {
   LOCKOUT_DURATION: 30 * 60 * 1000, // 30분
   
   // 세션 관련
-  SESSION_TIMEOUT: 60 * 60 * 1000, // 60분
+  SESSION_TIMEOUT: 8 * 60 * 60 * 1000, // 8시간 — server.servlet.session.timeout(8h)과 정합
   SESSION_EXTENSION_TIME: 5 * 60 * 1000 // 5분
 };
 

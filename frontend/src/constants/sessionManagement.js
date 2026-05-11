@@ -195,7 +195,7 @@ export const SUCCESS_MESSAGES = {
 export const DEFAULTS = {
   ITEMS_PER_PAGE: 10,
   MAX_RECENT_MAPPINGS: 6,
-  SESSION_TIMEOUT: 30000, // 30초
+  POLLING_INTERVAL: 30000, // 30초 — UI 폴링 간격 (세션 만료 시간이 아님)
   RETRY_COUNT: 3
 };
 

@@ -105,11 +105,11 @@ public class OpsAuthController extends BaseApiController {
         claims.put("actorId", userId);
         claims.put("actorRole", opsAdminRole);
         
-        // Ops Portal 토큰은 24시간 유효 (기본 JWT 만료 시간 사용)
+        // Ops Portal 토큰은 1시간 유효 (ops-backend JWT 만료 시간과 정합)
         String token = jwtService.generateToken(claims, userId);
         
-        // 만료 시간 계산 (24시간 = 86400초)
-        Instant expiresAt = Instant.now().plusSeconds(86400);
+        // 만료 시간 계산 (1시간 = 3600초)
+        Instant expiresAt = Instant.now().plusSeconds(3600);
         
         log.info("Ops Portal 로그인 성공: userId={}, role={}", userId, opsAdminRole);
         

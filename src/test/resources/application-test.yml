@@ -85,7 +85,7 @@ management:
       enabled: false
 
 JWT_SECRET: "test-jwt-secret-key-for-integration-test-only-minimum-32-characters-required"
-JWT_EXPIRATION: 86400000
+JWT_EXPIRATION: 3600000  # 운영(1h)과 정합 — 이전 값 86400000(24h)
 JWT_REFRESH_EXPIRATION: 604800000
 
 PERSONAL_DATA_ENCRYPTION_KEY: "test-encryption-key-32-characters-long-required"

@@ -65,8 +65,8 @@ export const EXISTING_SESSION_CHECK_DELAY = 500; // OAuth2 콜백 후 세션 쿠
 // 정기 세션 확인 간격 (밀리초)
 export const PERIODIC_SESSION_CHECK_INTERVAL = 10 * 60 * 1000; // 10분
 
-// 세션 만료 시간 (밀리초)
-export const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24시간
+// 세션 만료 시간 (밀리초) — server.servlet.session.timeout(8h)과 정합
+export const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8시간
 
 // 세션 키 상수
 export const SESSION_KEYS = {

@@ -42,6 +42,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
     
     private final SessionBasedAuthenticationFilter sessionBasedAuthenticationFilter;
+    private final SessionCookieRenewalFilter sessionCookieRenewalFilter;
     @Autowired
     private Environment environment;
     
@@ -50,9 +51,11 @@ public class SecurityConfig {
     
     public SecurityConfig(
             SessionBasedAuthenticationFilter sessionBasedAuthenticationFilter,
+            SessionCookieRenewalFilter sessionCookieRenewalFilter,
             TenantContextFilter tenantContextFilter,
             JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.sessionBasedAuthenticationFilter = sessionBasedAuthenticationFilter;
+        this.sessionCookieRenewalFilter = sessionCookieRenewalFilter;
         this.tenantContextFilter = tenantContextFilter;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
@@ -82,7 +85,10 @@ public class SecurityConfig {
             // SessionBasedAuthenticationFilter를 Spring Security 필터 체인에 추가
             // (UsernamePasswordAuthenticationFilter 이전에 실행되도록 설정)
             .addFilterBefore(sessionBasedAuthenticationFilter, 
-                org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+                org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
+            
+            // SessionCookieRenewalFilter: 인증 완료 후 JSESSIONID 쿠키 Max-Age 슬라이딩 갱신
+            .addFilterAfter(sessionCookieRenewalFilter, SessionBasedAuthenticationFilter.class);
         
         // 환경별 보안 설정
         if (isProductionEnvironment()) {

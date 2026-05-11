@@ -267,9 +267,9 @@ server:
     session:
       cookie:
         http-only: false  # 프론트엔드에서 접근 가능하도록 false로 변경
-        secure: false  # HTTP 환경이므로 false로 설정 (HTTPS 적용 후 true로 변경)
+        secure: false  # 운영 systemd에서 SERVER_SERVLET_SESSION_COOKIE_SECURE=true로 오버라이드됨
         same-site: none  # OAuth2 콜백 완전 호환을 위해 none으로 변경
-        max-age: 3600  # 1시간
+        max-age: ${HTTP_SESSION_MAX_INACTIVE:8h}  # application.yml과 동일한 placeholder (기본 8시간)
         path: /  # 전체 경로에서 쿠키 사용
   # 프로덕션용 에러 페이지 설정
   error:

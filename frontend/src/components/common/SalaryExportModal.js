@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from './modals/UnifiedModal';
 import {
@@ -8,55 +8,32 @@ import {
   SALARY_API_ENDPOINTS
 } from '../../constants/salaryConstants';
 import StandardizedApi from '../../utils/standardizedApi';
-import { useSession } from '../../contexts/SessionContext';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 
 /**
- * 급여 출력 모달 컴포넌트
- * 
-/**
- * @param {Object} props - 컴포넌트 props
-/**
- * @param {boolean} props.isOpen - 모달 열림 상태
-/**
- * @param {Function} props.onClose - 모달 닫기 함수
-/**
- * @param {Object} props.salaryData - 급여 데이터
-/**
- * @param {string} props.consultantName - 상담사 이름
-/**
- * @param {string} props.period - 계산 기간
-/**
- * @author Core Solution
-/**
- * @version 1.0.0
-/**
- * @since 2025-01-11
+ * 급여 출력 모달. PDF 선택 시 상담사 등록 이메일로 발송 옵션 제공.
+ *
+ * @param {Object} props
+ * @param {boolean} props.isOpen
+ * @param {Function} props.onClose
+ * @param {Object} props.salaryData
+ * @param {string} props.consultantName
+ * @param {string} props.period
  */
-const SalaryExportModal = ({ 
-  isOpen, 
-  onClose, 
-  salaryData, 
-  consultantName, 
-  period 
+const SalaryExportModal = ({
+  isOpen,
+  onClose,
+  salaryData,
+  consultantName,
+  period
 }) => {
-  const { user } = useSession();
   const [selectedFormat, setSelectedFormat] = useState(EXPORT_FORMAT.PDF);
   const [includeTaxDetails, setIncludeTaxDetails] = useState(true);
   const [includeCalculationDetails, setIncludeCalculationDetails] = useState(true);
-  const [emailAddress, setEmailAddress] = useState('');
   const [sendEmail, setSendEmail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // 모달이 열릴 때 사용자 이메일 자동 설정
-  useEffect(() => {
-    if (isOpen && user?.email) {
-      setEmailAddress(user.email);
-      setSendEmail(true);
-    }
-  }, [isOpen, user?.email]);
 
   // 출력 실행
   const handleExport = async() => {
@@ -69,6 +46,7 @@ const SalaryExportModal = ({
     setError(null);
 
     try {
+      const isPdf = selectedFormat === EXPORT_FORMAT.PDF;
       const exportData = {
         calculationId: salaryData.id,
         format: selectedFormat,
@@ -76,7 +54,8 @@ const SalaryExportModal = ({
         includeCalculationDetails,
         consultantName,
         period,
-        emailAddress: sendEmail ? emailAddress : null
+        emailAddress: null,
+        notifyConsultantByEmail: isPdf && sendEmail
       };
 
       const exportEndpoint =
@@ -98,16 +77,22 @@ const SalaryExportModal = ({
           document.body.removeChild(link);
         }
 
-        if (selectedFormat === EXPORT_FORMAT.PDF && sendEmail && emailAddress) {
+        if (isPdf && sendEmail) {
           if (data.emailSent === true) {
-            notificationManager.show(
-              `${SALARY_MESSAGES.EXPORT_SUCCESS}\n${SALARY_MESSAGES.EMAIL_SENT_SUCCESS}\n수신자: ${emailAddress}`,
-              'success'
-            );
+            const masked = data.recipientEmail;
+            const lines = [
+              SALARY_MESSAGES.EXPORT_SUCCESS,
+              SALARY_MESSAGES.EMAIL_SENT_SUCCESS,
+              '상담사 등록 메일로 발송되었습니다.'
+            ];
+            if (masked) {
+              lines.push(`(${masked})`);
+            }
+            notificationManager.show(lines.join('\n'), 'success');
           } else if (data.emailSent === false) {
             const reason = data.emailMessage ? `\n${data.emailMessage}` : '';
             notificationManager.show(
-              `${SALARY_MESSAGES.EXPORT_SUCCESS}\n이메일 발송에 실패했습니다.${reason}`,
+              `${SALARY_MESSAGES.EXPORT_SUCCESS}\n이메일을 보내지 못했습니다.${reason}`,
               'warning'
             );
           } else {
@@ -131,12 +116,6 @@ const SalaryExportModal = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  // 이메일 유효성 검사
-  const isEmailValid = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
   };
 
   return (
@@ -174,9 +153,7 @@ const SalaryExportModal = ({
               className: 'mg-v2-btn mg-v2-btn--primary'
             })}
             onClick={handleExport}
-            disabled={
-              loading || (sendEmail && (!emailAddress || !isEmailValid(emailAddress)))
-            }
+            disabled={loading}
             variant="primary"
             loading={loading}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
@@ -269,7 +246,13 @@ const SalaryExportModal = ({
                       name="format"
                       value={format}
                       checked={selectedFormat === format}
-                      onChange={(e) => setSelectedFormat(e.target.value)}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setSelectedFormat(v);
+                        if (v !== EXPORT_FORMAT.PDF) {
+                          setSendEmail(false);
+                        }
+                      }}
                     />
                     <span>{EXPORT_FORMAT_LABELS[format]}</span>
                   </label>
@@ -302,44 +285,29 @@ const SalaryExportModal = ({
               </div>
             </div>
 
-            {/* 이메일 발송 옵션 */}
+            {/* PDF만 상담사 등록 이메일 발송 */}
             <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: '10px' }}>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: selectedFormat === EXPORT_FORMAT.PDF ? 'pointer' : 'not-allowed',
+                marginBottom: '10px',
+                opacity: selectedFormat === EXPORT_FORMAT.PDF ? 1 : 0.55
+              }}
+              >
                 <input
                   type="checkbox"
                   checked={sendEmail}
+                  disabled={selectedFormat !== EXPORT_FORMAT.PDF}
                   onChange={(e) => setSendEmail(e.target.checked)}
                 />
-                <span>이메일로 발송</span>
+                <span>상담사 등록 이메일로 계산서 발송 (PDF만)</span>
               </label>
-              
-              {sendEmail && (
-                <div style={{ marginTop: '10px' }}>
-                  <input
-                    type="email"
-                    placeholder="이메일 주소를 입력하세요"
-                    value={emailAddress}
-                    onChange={(e) => setEmailAddress(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d1d5db -> var(--mg-custom-d1d5db)
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      fontSize: 'var(--font-size-sm)'
-                    }}
-                  />
-                  {emailAddress && !isEmailValid(emailAddress) && (
-                    <p style={{
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dc2626 -> var(--mg-custom-dc2626)
-                      color: '#dc2626',
-                      fontSize: 'var(--font-size-xs)',
-                      marginTop: '4px'
-                    }}>
-                      올바른 이메일 주소를 입력해주세요.
-                    </p>
-                  )}
-                </div>
+              {selectedFormat !== EXPORT_FORMAT.PDF && (
+                <p style={{ fontSize: 'var(--font-size-xs)', margin: '4px 0 0 24px' }}>
+                  PDF를 선택하면 상담사 DB에 등록된 이메일로 발송할 수 있습니다.
+                </p>
               )}
             </div>
           </div>

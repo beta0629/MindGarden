@@ -34,11 +34,21 @@ public final class SalaryExportConstants {
 
     public static final String RESPONSE_KEY_FILENAME = "filename";
 
-    /** PDF export 시 이메일 발송 여부(요청에 {@code emailAddress}가 있을 때만 설정) */
+    /** PDF export 시 이메일 발송 여부({@code notifyConsultantByEmail} 요청 시에만 설정) */
     public static final String RESPONSE_KEY_EMAIL_SENT = "emailSent";
 
     /** 이메일 미발송·차단 시 사용자 표시용 메시지 */
     public static final String RESPONSE_KEY_EMAIL_MESSAGE = "emailMessage";
+
+    /** 발송 성공 시에만 설정. 마스킹된 수신 주소(예: {@code ab***@example.com}) */
+    public static final String RESPONSE_KEY_RECIPIENT_EMAIL = "recipientEmail";
+
+    /** 상담사 이메일 부재·상담사 미연결 */
+    public static final String EMAIL_MESSAGE_NO_CONSULTANT_EMAIL = "상담사 이메일이 등록되어 있지 않습니다.";
+
+    /** 복호화 값이 이메일 형식이 아님 */
+    public static final String EMAIL_MESSAGE_INVALID_CONSULTANT_EMAIL =
+            "상담사 등록 이메일 형식이 올바르지 않아 발송할 수 없습니다.";
 
     /** 급여 세금 상세 API 응답과 동일 키 (getTaxDetails) */
     public static final String TAX_PAYLOAD_KEY_TAX_DETAILS = "taxDetails";

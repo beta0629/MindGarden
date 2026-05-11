@@ -30,11 +30,39 @@
   max-height: 90vh;
   overflow: hidden;
   width: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+/*
+ * UnifiedModal 크기 변형: unified-design-tokens 레거시 .mg-modal 패딩·overflow-y 제거.
+ * 간격은 mg-modal__header / __body / __actions 에서만 적용.
+ */
+.mg-modal.mg-modal--auto,
+.mg-modal.mg-modal--small,
+.mg-modal.mg-modal--medium,
+.mg-modal.mg-modal--large,
+.mg-modal.mg-modal--fullscreen {
+  padding: 0;
+  overflow: hidden;
+}
+
+.mg-modal.mg-modal--auto,
+.mg-modal.mg-modal--small,
+.mg-modal.mg-modal--medium,
+.mg-modal.mg-modal--large {
+  min-height: 0;
+}
+
+.mg-modal__header {
+  flex-shrink: 0;
 }
 
 .mg-modal__body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: var(--spacing-lg, 1.5rem);
   width: 100%;
   min-width: 0;
@@ -47,6 +75,35 @@
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* --------------------------------------------------------------------------
+ * UnifiedModal 로딩 오버레이 (main.css 체인에 포함; B0KlA class 없이 패널 전체 덮음)
+ * -------------------------------------------------------------------------- */
+.mg-modal__loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-modal-content, 10002);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  box-sizing: border-box;
+  pointer-events: auto;
+  background: var(--cs-glass-strong, var(--color-white, var(--mg-white)));
+  backdrop-filter: var(--ios-backdrop-blur-md, blur(8px));
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-md, blur(8px));
+}
+
+.mg-modal--loading .mg-modal__body,
+.mg-modal--loading .mg-modal__actions {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.mg-modal--loading .mg-modal__header {
+  opacity: 0.85;
+  pointer-events: none;
 }
 
 /* B0KlA 모달 본문: min-width: 0으로 인한 이메일 행 입력란 수축 방지 (내담자/상담사/스태프 등록·수정 모달) */
@@ -221,13 +278,6 @@
   flex: 0 0 auto !important;
 }
 
-.mg-modal.mg-modal--auto .mg-modal__body {
-  flex: 0 0 auto !important;
-  min-height: 0 !important;
-  height: auto !important;
-  max-height: calc(90vh - 140px) !important; /* 헤더, 푸터 높이 제외 */
-}
-
 /*
  * small / medium / large 모달도 콘텐츠 높이에 맞춤 (위·아래 여백 최소화)
  * 테마(.mg-v2-ad-b0kla)와 결합돼도 100vh로 늘어나지 않도록 동일 캡슐화 적용
@@ -248,13 +298,15 @@
   width: 90%;
 }
 
+/* 본문만 스크롤, 푸터(mg-modal__actions)는 max-height(90vh) 안에 고정 */
+.mg-modal.mg-modal--auto .mg-modal__body,
 .mg-modal.mg-modal--small .mg-modal__body,
 .mg-modal.mg-modal--medium .mg-modal__body,
 .mg-modal.mg-modal--large .mg-modal__body {
-  flex: 0 0 auto !important;
-  min-height: 0 !important;
-  height: auto !important;
-  max-height: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* fullscreen: 500px 등 기본 max-width 덮어서 전체 화면 사용 (상담일지 등 참고 자료용) */

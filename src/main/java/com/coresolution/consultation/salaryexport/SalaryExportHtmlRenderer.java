@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.coresolution.consultation.constant.salary.SalaryExportConstants;
+import com.coresolution.consultation.constant.salary.SalaryTaxTypeDisplayLabels;
 import com.coresolution.consultation.dto.SalaryExportRequest;
 import com.coresolution.consultation.entity.SalaryCalculation;
 
@@ -32,11 +33,28 @@ public final class SalaryExportHtmlRenderer {
             SalaryCalculation calc,
             Map<String, Object> taxDetails,
             SalaryExportRequest request) {
-        String consultant = resolveConsultantName(calc, request);
+        return buildSalaryExportXhtml(calc, taxDetails, request, null);
+    }
+
+    /**
+     * 급여·세금 요약 XHTML을 생성한다. {@code consultantDisplayName}이 비어 있으면 요청·엔티티 기본 규칙으로 보완한다.
+     *
+     * @param calc                    급여 계산
+     * @param taxDetails              세금 상세(비어 있으면 생략)
+     * @param request                 포함 옵션
+     * @param consultantDisplayName   표시용 상담사명(서비스에서 복호화·요청 우선 적용 후 전달, null 가능)
+     * @return XHTML 문자열
+     */
+    public static String buildSalaryExportXhtml(
+            SalaryCalculation calc,
+            Map<String, Object> taxDetails,
+            SalaryExportRequest request,
+            String consultantDisplayName) {
+        String consultant = resolveConsultantNameForDisplay(calc, request, consultantDisplayName);
         String period = resolvePeriodLabel(calc, request);
         StringBuilder body = new StringBuilder(4096);
         body.append("<div class=\"header\"><h1>급여 계산서</h1><p class=\"muted\">MindGarden</p></div>");
-        body.append("<table class=\"kv\">");
+        body.append("<table class=\"kv\"><tbody>");
         appendRow(body, "계산 ID", String.valueOf(calc.getId()));
         appendRow(body, "상담사", consultant);
         appendRow(body, "기간", period);
@@ -64,17 +82,17 @@ public final class SalaryExportHtmlRenderer {
             int completed = calc.getCompletedConsultations() != null ? calc.getCompletedConsultations() : 0;
             appendRow(body, SalaryCalculationStatementRows.LABEL_CONSULTATION_COUNT, completed + "건");
         }
-        body.append("</table>");
+        body.append("</tbody></table>");
 
         if (Boolean.FALSE.equals(request.getIncludeTaxDetails()) || taxDetails == null || taxDetails.isEmpty()) {
             return wrapDocument(body.toString());
         }
 
         body.append("<h2 class=\"section\">세금 요약</h2>");
-        body.append("<table class=\"kv\">");
+        body.append("<table class=\"kv\"><tbody>");
         appendRow(body, "세금 기준 총지급", formatAmount(asBigDecimal(taxDetails.get("grossSalary"))));
         appendRow(body, "세금 기준 실수령", formatAmount(asBigDecimal(taxDetails.get("netSalary"))));
-        body.append("</table>");
+        body.append("</tbody></table>");
 
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> details =
@@ -83,8 +101,10 @@ public final class SalaryExportHtmlRenderer {
             body.append("<h2 class=\"section\">세금 항목</h2>");
             body.append("<table class=\"grid\"><thead><tr><th>세목</th><th class=\"num\">금액</th></tr></thead><tbody>");
             for (Map<String, Object> row : details) {
+                String taxTypeCode = Objects.toString(row.get(SalaryExportConstants.TAX_ROW_KEY_TAX_TYPE), "");
+                String taxTypeLabel = SalaryTaxTypeDisplayLabels.labelForTaxType(taxTypeCode);
                 body.append("<tr><td>")
-                        .append(xmlEscape(Objects.toString(row.get(SalaryExportConstants.TAX_ROW_KEY_TAX_TYPE), "")))
+                        .append(xmlEscape(taxTypeLabel))
                         .append("</td><td class=\"num\">")
                         .append(xmlEscape(formatAmount(asBigDecimal(row.get(SalaryExportConstants.TAX_ROW_KEY_TAX_AMOUNT)))))
                         .append("</td></tr>");
@@ -95,7 +115,16 @@ public final class SalaryExportHtmlRenderer {
         return wrapDocument(body.toString());
     }
 
-    private static String resolveConsultantName(SalaryCalculation calc, SalaryExportRequest request) {
+    /**
+     * 서비스에서 전달한 표시명이 있으면 우선하고, 없으면 요청 평문·엔티티 원문 순으로 보완한다(복호화는 서비스 책임).
+     */
+    private static String resolveConsultantNameForDisplay(
+            SalaryCalculation calc,
+            SalaryExportRequest request,
+            String consultantDisplayName) {
+        if (consultantDisplayName != null) {
+            return consultantDisplayName.isBlank() ? "" : consultantDisplayName.trim();
+        }
         if (request.getConsultantName() != null && !request.getConsultantName().isBlank()) {
             return request.getConsultantName().trim();
         }
@@ -131,15 +160,18 @@ public final class SalaryExportHtmlRenderer {
                 + "<html xmlns=\"http://www.w3.org/1999/xhtml\">"
                 + "<head><meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=UTF-8\"/>"
                 + "<style type=\"text/css\"><![CDATA["
-                + "body{font-family:'Noto Sans KR',sans-serif;font-size:11pt;color:#111;margin:24pt;}"
-                + "h1{font-size:16pt;margin:0 0 8pt 0;}"
-                + "h2.section{font-size:13pt;margin:16pt 0 8pt 0;border-bottom:1pt solid #ccc;padding-bottom:4pt;}"
+                + "body{font-family:SalaryExportKorean,sans-serif;font-size:11pt;color:#111;margin:24pt;}"
+                + "h1{font-size:16pt;margin:0 0 8pt 0;font-family:SalaryExportKorean,sans-serif;}"
+                + "h2.section{font-size:13pt;margin:16pt 0 8pt 0;border-bottom:1pt solid #ccc;padding-bottom:4pt;"
+                + "font-family:SalaryExportKorean,sans-serif;}"
+                + ".header,.header h1,.header p{font-family:SalaryExportKorean,sans-serif;}"
                 + ".muted{color:#555;font-size:9pt;}"
                 + "table.kv{width:100%;border-collapse:collapse;margin-bottom:12pt;}"
-                + "table.kv th,table.kv td{border:1pt solid #ddd;padding:6pt;text-align:left;vertical-align:top;}"
+                + "table.kv th,table.kv td{border:1pt solid #ddd;padding:6pt;text-align:left;vertical-align:top;"
+                + "font-family:SalaryExportKorean,sans-serif;}"
                 + "table.kv th{width:32%;background:#f7f7f7;font-weight:600;}"
                 + "table.grid{width:100%;border-collapse:collapse;}"
-                + "table.grid th,table.grid td{border:1pt solid #ddd;padding:6pt;}"
+                + "table.grid th,table.grid td{border:1pt solid #ddd;padding:6pt;font-family:SalaryExportKorean,sans-serif;}"
                 + "table.grid thead th{background:#f0f0f0;}"
                 + ".num{text-align:right;font-variant-numeric:tabular-nums;}"
                 + "]]></style></head><body>"

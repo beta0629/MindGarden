@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
- * 급여 출력(보내기) 요청 본문. 프론트 {@code SalaryExportModal}과 동일 필드.
+ * 급여 출력(보내기) 요청 본문. 프론트 {@code SalaryExportModal}과 동일 필드(이메일 발송은 {@code notifyConsultantByEmail}).
  *
  * @author CoreSolution
  * @since 2026-05-11
@@ -26,5 +26,11 @@ public class SalaryExportRequest {
 
     private String period;
 
+    /** 하위 호환·미사용: PDF 이메일 발송 주소는 상담사 DB 이메일만 사용한다. */
     private String emailAddress;
+
+    /**
+     * true이면 PDF 생성 후 상담사(User) 등록 이메일(복호화)로 발송한다. {@code emailAddress}는 무시된다.
+     */
+    private Boolean notifyConsultantByEmail;
 }

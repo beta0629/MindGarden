@@ -451,15 +451,18 @@ class SalaryManagementControllerIntegrationTest {
             pdfPayload.put("emailMessage", "이 시스템에서는 이메일 발송을 사용하지 않습니다.");
             when(salaryExportService.exportPdf(any())).thenReturn(pdfPayload);
 
+            Map<String, Object> exportBody = new HashMap<>();
+            exportBody.put("calculationId", 1L);
+            exportBody.put("format", "PDF");
+            exportBody.put("includeTaxDetails", true);
+            exportBody.put("notifyConsultantByEmail", false);
+            exportBody.put("emailAddress", null);
+
             mockMvc.perform(post("/api/v1/admin/salary/export/pdf")
                             .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
                             .sessionAttr(SessionConstants.TENANT_ID, TENANT_A)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(Map.of(
-                                    "calculationId", 1L,
-                                    "format", "PDF",
-                                    "includeTaxDetails", true,
-                                    "emailAddress", "payroll@example.com"))))
+                            .content(objectMapper.writeValueAsString(exportBody)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.downloadUrl")

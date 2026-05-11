@@ -105,20 +105,7 @@
   flex: 0 1 auto;
 }
 
-/* 로딩 오버레이 */
-.mg-modal.mg-v2-ad-b0kla .mg-modal__loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--cs-glass-strong);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  border-radius: inherit;
-}
+/* 로딩 오버레이: 전역 _unified-modals.css 의 .mg-modal__loading-overlay 사용 */
 
 /* B0KlA 컨텍스트 - 토큰은 dashboard-tokens-extension.css에 정의됨 */
 

@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.pdf.BaseFont;
@@ -39,10 +41,23 @@ public final class SalaryExportFlyingSaucerPdfRenderer {
     public static byte[] renderToPdfBytes(String xhtml) {
         try {
             String fontPath = resolveFontPathOnDisk();
+            String fontUri = Path.of(fontPath).toUri().toString();
+            Path parent = Path.of(fontPath).getParent();
+            String baseUri = parent != null ? parent.toUri().toString() : "";
+            /*
+             * CSS font-family:SalaryExportKorean 와 addFont 를 동일 계열로 맞춘다.
+             * @font-face 의 file: URI 로 Flying Saucer 가 글리프를 찾도록 한다(미지정 시 한글 공란 PDF).
+             */
+            String fontFaceBlock = "<style type=\"text/css\"><![CDATA[\n"
+                    + "@font-face{font-family:SalaryExportKorean;src:url(\""
+                    + Matcher.quoteReplacement(fontUri)
+                    + "\");font-weight:normal;font-style:normal;}\n"
+                    + "]]></style>";
+            String document = injectAfterHeadOpen(xhtml, fontFaceBlock);
             try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
                 ITextRenderer renderer = new ITextRenderer();
                 renderer.getFontResolver().addFont(fontPath, BaseFont.IDENTITY_H, true);
-                renderer.setDocumentFromString(xhtml, null);
+                renderer.setDocumentFromString(document, baseUri);
                 renderer.layout();
                 renderer.createPDF(baos);
                 return baos.toByteArray();
@@ -77,5 +92,17 @@ public final class SalaryExportFlyingSaucerPdfRenderer {
                 return cachedFontAbsolutePath;
             }
         }
+    }
+
+    private static String injectAfterHeadOpen(String xhtml, String injection) {
+        if (xhtml == null || injection == null) {
+            return xhtml;
+        }
+        Matcher m = Pattern.compile("(?i)<head[^>]*>").matcher(xhtml);
+        if (m.find()) {
+            int end = m.end();
+            return xhtml.substring(0, end) + injection + xhtml.substring(end);
+        }
+        return injection + xhtml;
     }
 }

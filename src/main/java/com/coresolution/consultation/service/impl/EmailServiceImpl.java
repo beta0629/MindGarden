@@ -15,10 +15,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.dto.EmailAttachmentPart;
 import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.dto.EmailResponse;
+import com.coresolution.consultation.salaryexport.SalaryCalculationStatementRows;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.service.CommonCodeService;
@@ -1292,49 +1296,119 @@ public class EmailServiceImpl implements EmailService {
     // ==================== 급여 이메일 템플릿 ====================
     
     private String createSalaryCalculationEmailContent(String consultantName, String period, Map<String, Object> salaryData) {
-        String template = getSalaryCalculationTemplate();
-        
-        return template
-                .replace("{{consultantName}}", consultantName)
-                .replace("{{period}}", period)
-                .replace("{{baseSalary}}", formatAmount(salaryData.get("baseSalary")))
-                .replace("{{optionSalary}}", formatAmount(salaryData.get("optionSalary")))
-                .replace("{{totalSalary}}", formatAmount(salaryData.get("totalSalary")))
-                .replace("{{taxAmount}}", formatAmount(salaryData.get("taxAmount")))
-                .replace("{{netSalary}}", formatAmount(salaryData.get("netSalary")))
-                .replace("{{consultationCount}}", String.valueOf(salaryData.get("consultationCount")))
-                .replace("{{supportEmail}}", EmailConstants.SUPPORT_EMAIL);
+        String html = getSalaryCalculationTemplate();
+        Map<String, Object> vars = new java.util.HashMap<>();
+        if (salaryData != null) {
+            vars.putAll(salaryData);
+        }
+        vars.put("consultantName", consultantName);
+        vars.put("period", period);
+        vars.put("supportEmail", EmailConstants.SUPPORT_EMAIL);
+        vars.put("salaryRowsHtml", buildSalaryStatementTableRowsHtml(salaryData));
+        Map<String, Object> enriched = enrichTemplateVariables(vars);
+        return applyTemplateVariables(html, enriched);
+    }
+
+    /**
+     * 급여 내역 테이블 행 HTML(ERP 카드·프론트 {@code buildSalaryCalculationComponentRows}와 동일 규칙).
+     *
+     * @param salaryData 급여 맵
+     * @return {@code <tr>...</tr>} 연결 문자열
+     */
+    private String buildSalaryStatementTableRowsHtml(Map<String, Object> salaryData) {
+        final String tdLabel = "padding: 8px; border-bottom: 1px solid #EAEAEA;";
+        final String tdValue = "padding: 8px; border-bottom: 1px solid #EAEAEA; text-align: right;";
+        final String tdValueTax = tdValue + " color: #D32F2F;";
+        final String tdValueNet = tdValue + " color: #3D5246; font-weight: bold;";
+        final String trNetBg = "<tr style=\"background-color: #F2EDE8;\">";
+
+        StringBuilder sb = new StringBuilder(1024);
+        for (SalaryCalculationStatementRows.LabelAmount row : SalaryCalculationStatementRows.buildPretaxComponentRows(salaryData)) {
+            appendSalaryEmailRow(sb, row.label(), formatAmount(toWholeLong(row.amount())) + "원", tdLabel, tdValue);
+        }
+        BigDecimal bonus = SalaryCalculationStatementRows.resolveBonusEarnings(salaryData);
+        if (bonus.compareTo(BigDecimal.ZERO) > 0) {
+            appendSalaryEmailRow(sb, SalaryCalculationStatementRows.LABEL_SPECIAL_SUPPORT,
+                    "+" + formatAmount(toWholeLong(bonus)) + "원", tdLabel, tdValue);
+        }
+        BigDecimal gross = SalaryCalculationStatementRows.resolveGrossPreTaxDisplay(salaryData);
+        appendSalaryEmailRow(sb, SalaryCalculationStatementRows.LABEL_GROSS_PRETAX,
+                formatAmount(toWholeLong(gross)) + "원", tdLabel, tdValue);
+
+        BigDecimal tax = SalaryCalculationStatementRows.resolveTaxOrDeductions(salaryData);
+        if (tax.compareTo(BigDecimal.ZERO) > 0) {
+            appendSalaryEmailRow(sb, SalaryCalculationStatementRows.LABEL_TAX_DEDUCTIONS,
+                    "-" + formatAmount(toWholeLong(tax)) + "원", tdLabel, tdValueTax);
+        }
+
+        BigDecimal net = SalaryCalculationStatementRows.resolveNetSalaryDisplay(salaryData);
+        sb.append(trNetBg);
+        appendSalaryEmailRowCells(sb, SalaryCalculationStatementRows.LABEL_NET,
+                formatAmount(toWholeLong(net)) + "원", tdLabel, tdValueNet);
+        sb.append("</tr>");
+
+        int consultations = SalaryCalculationStatementRows.resolveConsultationCount(salaryData);
+        final String tdLabelLast = "padding: 8px;";
+        final String tdValueLast = "padding: 8px; text-align: right;";
+        appendSalaryEmailRow(sb, SalaryCalculationStatementRows.LABEL_CONSULTATION_COUNT,
+                consultations + "건", tdLabelLast, tdValueLast);
+        return sb.toString();
+    }
+
+    private static void appendSalaryEmailRow(StringBuilder sb, String label, String valueHtml,
+            String tdLabelStyle, String tdValueStyle) {
+        sb.append("<tr>");
+        appendSalaryEmailRowCells(sb, label, valueHtml, tdLabelStyle, tdValueStyle);
+        sb.append("</tr>");
+    }
+
+    private static void appendSalaryEmailRowCells(StringBuilder sb, String label, String valueHtml,
+            String tdLabelStyle, String tdValueStyle) {
+        sb.append("<td style=\"").append(tdLabelStyle).append("\"><strong>")
+                .append(label)
+                .append(":</strong></td><td style=\"")
+                .append(tdValueStyle)
+                .append("\">")
+                .append(valueHtml)
+                .append("</td>");
+    }
+
+    private static long toWholeLong(BigDecimal v) {
+        if (v == null) {
+            return 0L;
+        }
+        return v.setScale(0, RoundingMode.HALF_UP).longValue();
     }
     
     private String createSalaryApprovalEmailContent(String consultantName, String period, String approvedAmount) {
         String template = getSalaryApprovalTemplate();
-        
-        return template
-                .replace("{{consultantName}}", consultantName)
-                .replace("{{period}}", period)
-                .replace("{{approvedAmount}}", approvedAmount)
-                .replace("{{supportEmail}}", EmailConstants.SUPPORT_EMAIL);
+        Map<String, Object> vars = enrichTemplateVariables(new HashMap<>());
+        vars.put("consultantName", consultantName);
+        vars.put("period", period);
+        vars.put("approvedAmount", approvedAmount);
+        vars.put("supportEmail", EmailConstants.SUPPORT_EMAIL);
+        return applyTemplateVariables(template, vars);
     }
     
     private String createSalaryPaymentEmailContent(String consultantName, String period, String paidAmount, String payDate) {
         String template = getSalaryPaymentTemplate();
-        
-        return template
-                .replace("{{consultantName}}", consultantName)
-                .replace("{{period}}", period)
-                .replace("{{paidAmount}}", paidAmount)
-                .replace("{{payDate}}", payDate)
-                .replace("{{supportEmail}}", EmailConstants.SUPPORT_EMAIL);
+        Map<String, Object> vars = enrichTemplateVariables(new HashMap<>());
+        vars.put("consultantName", consultantName);
+        vars.put("period", period);
+        vars.put("paidAmount", paidAmount);
+        vars.put("payDate", payDate);
+        vars.put("supportEmail", EmailConstants.SUPPORT_EMAIL);
+        return applyTemplateVariables(template, vars);
     }
     
     private String createTaxReportEmailContent(String consultantName, String period, Map<String, Object> taxData) {
         String template = getTaxReportTemplate();
-        
-        return template
-                .replace("{{consultantName}}", consultantName)
-                .replace("{{period}}", period)
-                .replace("{{totalTaxAmount}}", formatAmount(taxData.get("totalTaxAmount")))
-                .replace("{{supportEmail}}", EmailConstants.SUPPORT_EMAIL);
+        Map<String, Object> vars = enrichTemplateVariables(taxData != null ? new HashMap<>(taxData) : new HashMap<>());
+        vars.put("consultantName", consultantName);
+        vars.put("period", period);
+        vars.put("totalTaxAmount", formatAmount(taxData != null ? taxData.get("totalTaxAmount") : null));
+        vars.put("supportEmail", EmailConstants.SUPPORT_EMAIL);
+        return applyTemplateVariables(template, vars);
     }
     
     private String getSalaryCalculationTemplate() {
@@ -1349,30 +1423,9 @@ public class EmailServiceImpl implements EmailService {
             <div style="background-color: #FAF9F7; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="color: #3D5246; margin: 0 0 12px 0; font-size: 16px;">급여 내역</h3>
                 <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #444444;">
-                    <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA;"><strong>기본 급여:</strong></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA; text-align: right;">{{baseSalary}}원</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA;"><strong>옵션 급여:</strong></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA; text-align: right;">{{optionSalary}}원</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA;"><strong>총 급여 (세전):</strong></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA; text-align: right;">{{totalSalary}}원</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA;"><strong>세금:</strong></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA; text-align: right; color: #D32F2F;">-{{taxAmount}}원</td>
-                    </tr>
-                    <tr style="background-color: #F2EDE8;">
-                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA;"><strong>실지급액 (세후):</strong></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #EAEAEA; text-align: right; color: #3D5246; font-weight: bold;">{{netSalary}}원</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px;"><strong>상담 건수:</strong></td>
-                        <td style="padding: 8px; text-align: right;">{{consultationCount}}건</td>
-                    </tr>
+                    <tbody>
+                    {{salaryRowsHtml}}
+                    </tbody>
                 </table>
             </div>
             """;
@@ -1443,8 +1496,10 @@ public class EmailServiceImpl implements EmailService {
                 .replace("{{content}}", content);
     }
 
-        private String formatAmount(Object amount) {
-        if (amount == null) return "0";
+    private String formatAmount(Object amount) {
+        if (amount == null) {
+            return "0";
+        }
         try {
             return String.format("%,d", Long.parseLong(amount.toString()));
         } catch (NumberFormatException e) {

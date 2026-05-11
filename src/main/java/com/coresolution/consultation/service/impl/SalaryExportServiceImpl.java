@@ -126,12 +126,23 @@ public class SalaryExportServiceImpl implements SalaryExportService {
         BigDecimal hourly = calc.getHourlyEarnings() != null ? calc.getHourlyEarnings() : BigDecimal.ZERO;
         BigDecimal commission = calc.getCommissionEarnings() != null ? calc.getCommissionEarnings() : BigDecimal.ZERO;
         m.put("baseSalary", toWholeWonLong(calc.getBaseSalary()));
+        m.put("commissionEarnings", toWholeWonLong(commission));
+        m.put("hourlyEarnings", toWholeWonLong(hourly));
         m.put("optionSalary", toWholeWonLong(hourly.add(commission)));
+        m.put("bonusEarnings", toWholeWonLong(calc.getBonusEarnings()));
+        if (calc.getGrossSalary() != null) {
+            m.put("grossSalary", toWholeWonLong(calc.getGrossSalary()));
+        }
         m.put("totalSalary", toWholeWonLong(calc.getTotalSalary()));
-        m.put("taxAmount", toWholeWonLong(calc.getDeductions()));
-        m.put("netSalary", toWholeWonLong(calc.getNetSalary()));
+        BigDecimal deductions = calc.getDeductions() != null ? calc.getDeductions() : BigDecimal.ZERO;
+        m.put("deductions", toWholeWonLong(deductions));
+        m.put("taxAmount", toWholeWonLong(deductions));
+        if (calc.getNetSalary() != null) {
+            m.put("netSalary", toWholeWonLong(calc.getNetSalary()));
+        }
         int consultations = calc.getCompletedConsultations() != null ? calc.getCompletedConsultations() : 0;
         m.put("consultationCount", consultations);
+        m.put("completedConsultations", consultations);
         return m;
     }
 

@@ -44,13 +44,25 @@ public final class SalaryExportHtmlRenderer {
         if (Boolean.FALSE.equals(request.getIncludeCalculationDetails())) {
             appendRow(body, "계산 상세", "요청에 따라 생략되었습니다.");
         } else {
-            appendRow(body, "기본급", formatAmount(calc.getBaseSalary()));
-            appendRow(body, "총 급여", formatAmount(calc.getTotalSalary()));
-            appendRow(body, "총 지급(과세 전)", formatAmount(calc.getGrossSalary()));
-            appendRow(body, "공제", formatAmount(calc.getDeductions()));
-            appendRow(body, "실수령", formatAmount(calc.getNetSalary()));
-            appendRow(body, "시급 소득", formatAmount(calc.getHourlyEarnings()));
-            appendRow(body, "커미션", formatAmount(calc.getCommissionEarnings()));
+            for (SalaryCalculationStatementRows.LabelAmount row : SalaryCalculationStatementRows.buildPretaxComponentRows(calc)) {
+                appendRow(body, row.label(), formatAmount(row.amount()));
+            }
+            BigDecimal bonus = calc.getBonusEarnings() != null ? calc.getBonusEarnings() : BigDecimal.ZERO;
+            if (bonus.compareTo(BigDecimal.ZERO) > 0) {
+                appendRow(body, SalaryCalculationStatementRows.LABEL_SPECIAL_SUPPORT, "+" + formatAmount(bonus));
+            }
+            appendRow(body, SalaryCalculationStatementRows.LABEL_GROSS_PRETAX,
+                    formatAmount(SalaryCalculationStatementRows.resolveGrossPreTaxDisplay(calc)));
+            BigDecimal deductions = calc.getDeductions() != null ? calc.getDeductions() : BigDecimal.ZERO;
+            if (deductions.compareTo(BigDecimal.ZERO) > 0) {
+                appendRow(body, SalaryCalculationStatementRows.LABEL_TAX_DEDUCTIONS, "-" + formatAmount(deductions));
+            }
+            BigDecimal netDisplay = calc.getNetSalary() != null
+                    ? calc.getNetSalary()
+                    : nz(calc.getTotalSalary()).subtract(deductions);
+            appendRow(body, SalaryCalculationStatementRows.LABEL_NET, formatAmount(netDisplay));
+            int completed = calc.getCompletedConsultations() != null ? calc.getCompletedConsultations() : 0;
+            appendRow(body, SalaryCalculationStatementRows.LABEL_CONSULTATION_COUNT, completed + "건");
         }
         body.append("</table>");
 
@@ -158,6 +170,10 @@ public final class SalaryExportHtmlRenderer {
             return "";
         }
         return v.stripTrailingZeros().toPlainString();
+    }
+
+    private static BigDecimal nz(BigDecimal v) {
+        return v != null ? v : BigDecimal.ZERO;
     }
 
     private static BigDecimal asBigDecimal(Object o) {

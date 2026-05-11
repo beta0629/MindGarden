@@ -84,7 +84,7 @@ public class SalaryManagementController extends BaseApiController {
         if (permissionResponse != null) {
             throw new ForbiddenException("급여 관리 권한이 없습니다.");
         }
-        Map<String, String> payload = salaryExportService.exportPdf(request);
+        Map<String, Object> payload = salaryExportService.exportPdf(request);
         return success("급여 PDF를 생성했습니다.", payload);
     }
 

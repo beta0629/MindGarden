@@ -15,11 +15,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.coresolution.consultation.ConsultationManagementApplication;
+import com.coresolution.consultation.constant.ProfessionalProviderTypeConstants;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.entity.Client;
+import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -48,6 +51,9 @@ class ConsultantClientRegistrationIntegrationTest {
     @Autowired
     private ConsultantRepository consultantRepository;
 
+    @Autowired
+    private CommonCodeRepository commonCodeRepository;
+
     private String tenantId;
 
     @BeforeEach
@@ -63,6 +69,20 @@ class ConsultantClientRegistrationIntegrationTest {
                 .build();
         tenantRepository.save(tenant);
         TenantContextHolder.setTenantId(tenantId);
+
+        // 상담사 등록 시 ProfessionalProviderTypeService 가 요구하는 테넌트 기본 유형
+        CommonCode defaultProfessionalType = new CommonCode();
+        defaultProfessionalType.setTenantId(tenantId);
+        defaultProfessionalType.setCodeGroup(ProfessionalProviderTypeConstants.CODE_GROUP);
+        defaultProfessionalType.setCodeValue(ProfessionalProviderTypeConstants.DEFAULT_TYPE_CODE_VALUE);
+        defaultProfessionalType.setCodeLabel("기본 상담사");
+        defaultProfessionalType.setKoreanName("기본 상담사");
+        defaultProfessionalType.setSortOrder(0);
+        defaultProfessionalType.setIsActive(true);
+        defaultProfessionalType.setIsDeleted(false);
+        defaultProfessionalType.setExtraData(
+                "{\"systemAuthorityRole\":\"CONSULTANT\",\"isDefault\":true}");
+        commonCodeRepository.save(defaultProfessionalType);
     }
 
     @AfterEach

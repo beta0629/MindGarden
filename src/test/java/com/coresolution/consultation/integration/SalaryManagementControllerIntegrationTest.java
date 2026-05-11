@@ -444,9 +444,12 @@ class SalaryManagementControllerIntegrationTest {
         @Test
         @DisplayName("I-API-19: POST /export/pdf 정상 → 200, data.downloadUrl·filename")
         void postExportPdf_valid_returns200WithEnvelope() throws Exception {
-            when(salaryExportService.exportPdf(any())).thenReturn(Map.of(
-                    "downloadUrl", "data:application/pdf;base64,JVBERi0xLjQKJeLjz9M=",
-                    "filename", "salary_calculation_1_2025-06-01_test.pdf"));
+            Map<String, Object> pdfPayload = new HashMap<>();
+            pdfPayload.put("downloadUrl", "data:application/pdf;base64,JVBERi0xLjQKJeLjz9M=");
+            pdfPayload.put("filename", "salary_calculation_1_2025-06-01_test.pdf");
+            pdfPayload.put("emailSent", false);
+            pdfPayload.put("emailMessage", "이 시스템에서는 이메일 발송을 사용하지 않습니다.");
+            when(salaryExportService.exportPdf(any())).thenReturn(pdfPayload);
 
             mockMvc.perform(post("/api/v1/admin/salary/export/pdf")
                             .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
@@ -455,12 +458,15 @@ class SalaryManagementControllerIntegrationTest {
                             .content(objectMapper.writeValueAsString(Map.of(
                                     "calculationId", 1L,
                                     "format", "PDF",
-                                    "includeTaxDetails", true))))
+                                    "includeTaxDetails", true,
+                                    "emailAddress", "payroll@example.com"))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.downloadUrl")
                             .value(org.hamcrest.Matchers.startsWith("data:application/pdf;base64,")))
-                    .andExpect(jsonPath("$.data.filename").value(org.hamcrest.Matchers.containsString("salary_calculation")));
+                    .andExpect(jsonPath("$.data.filename").value(org.hamcrest.Matchers.containsString("salary_calculation")))
+                    .andExpect(jsonPath("$.data.emailSent").value(false))
+                    .andExpect(jsonPath("$.data.emailMessage").exists());
         }
 
         @Test

@@ -79,6 +79,11 @@ public class EmailRequest {
      * 첨부파일 목록
      */
     private List<String> attachments;
+
+    /**
+     * 파일 경로 대신 메모리 첨부(PDF 등).
+     */
+    private List<EmailAttachmentPart> binaryAttachments;
     
     /**
      * 이메일 우선순위

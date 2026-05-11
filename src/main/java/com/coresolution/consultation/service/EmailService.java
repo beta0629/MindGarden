@@ -82,9 +82,23 @@ public interface EmailService {
     /**
      * 급여 계산서 이메일 발송
      */
-    boolean sendSalaryCalculationEmail(String toEmail, String consultantName, 
-                                     String period, Map<String, Object> salaryData, 
-                                     String attachmentPath);
+    boolean sendSalaryCalculationEmail(String toEmail, String consultantName,
+            String period, Map<String, Object> salaryData,
+            String attachmentPath);
+
+    /**
+     * 급여 계산서 이메일 발송(PDF 바이트 첨부). {@code pdfAttachment}가 비어 있으면 본문만 발송.
+     */
+    boolean sendSalaryCalculationEmail(String toEmail, String consultantName,
+            String period, Map<String, Object> salaryData,
+            byte[] pdfAttachment, String attachmentFilename);
+
+    /**
+     * 급여 계산서 이메일 발송 상세 응답(export 등에서 메시지 반영용).
+     */
+    EmailResponse sendSalaryCalculationEmailWithResponse(String toEmail, String consultantName,
+            String period, Map<String, Object> salaryData,
+            byte[] pdfAttachment, String attachmentFilename);
     
     /**
      * 급여 승인 이메일 발송

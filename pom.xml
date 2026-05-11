@@ -249,6 +249,13 @@
             <version>5.2.5</version>
         </dependency>
 
+        <!-- 급여 PDF: UTF-8 HTML → PDF (OpenPDF, Apache PDFBox 3와 클래스패스 충돌 없음; -openpdf 아티팩트는 pom relocation 전용) -->
+        <dependency>
+            <groupId>org.xhtmlrenderer</groupId>
+            <artifactId>flying-saucer-pdf</artifactId>
+            <version>9.4.0</version>
+        </dependency>
+
         <!-- Tess4J (이미지 OCR - Tesseract for Java) -->
         <dependency>
             <groupId>net.sourceforge.tess4j</groupId>

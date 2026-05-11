@@ -34,6 +34,12 @@ public final class SalaryExportConstants {
 
     public static final String RESPONSE_KEY_FILENAME = "filename";
 
+    /** PDF export 시 이메일 발송 여부(요청에 {@code emailAddress}가 있을 때만 설정) */
+    public static final String RESPONSE_KEY_EMAIL_SENT = "emailSent";
+
+    /** 이메일 미발송·차단 시 사용자 표시용 메시지 */
+    public static final String RESPONSE_KEY_EMAIL_MESSAGE = "emailMessage";
+
     /** 급여 세금 상세 API 응답과 동일 키 (getTaxDetails) */
     public static final String TAX_PAYLOAD_KEY_TAX_DETAILS = "taxDetails";
 

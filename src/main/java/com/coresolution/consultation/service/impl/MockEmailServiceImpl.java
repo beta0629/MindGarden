@@ -12,6 +12,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.EmailConstants;
+import com.coresolution.consultation.dto.EmailAttachmentPart;
 import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.service.EmailService;
@@ -352,31 +353,42 @@ public class MockEmailServiceImpl implements EmailService {
     }
     
     @Override
-    public boolean sendSalaryCalculationEmail(String toEmail, String consultantName, 
-                                            String period, Map<String, Object> salaryData, 
-                                            String attachmentPath) {
-        try {
-            log.info("Mock 급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
-            
-            String subject = String.format("[mindgarden] %s 급여 계산서 - %s", consultantName, period);
-            String content = "Mock 급여 계산서 이메일 내용";
-            
-            EmailRequest request = EmailRequest.builder()
-                    .toEmail(toEmail)
-                    .toName(consultantName)
-                    .subject(subject)
-                    .content(content)
-                    .type("HTML")
-                    .templateType("SALARY_CALCULATION")
-                    .build();
-            
-            EmailResponse response = sendEmail(request);
-            return response.isSuccess();
-            
-        } catch (Exception e) {
-            log.error("Mock 급여 계산서 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
-            return false;
+    public boolean sendSalaryCalculationEmail(String toEmail, String consultantName,
+            String period, Map<String, Object> salaryData,
+            String attachmentPath) {
+        return sendSalaryCalculationEmail(toEmail, consultantName, period, salaryData, (byte[]) null, null);
+    }
+
+    @Override
+    public boolean sendSalaryCalculationEmail(String toEmail, String consultantName,
+            String period, Map<String, Object> salaryData,
+            byte[] pdfAttachment, String attachmentFilename) {
+        return sendSalaryCalculationEmailWithResponse(toEmail, consultantName, period, salaryData, pdfAttachment, attachmentFilename)
+                .isSuccess();
+    }
+
+    @Override
+    public EmailResponse sendSalaryCalculationEmailWithResponse(String toEmail, String consultantName,
+            String period, Map<String, Object> salaryData,
+            byte[] pdfAttachment, String attachmentFilename) {
+        log.info("Mock 급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+        String subject = String.format("[mindgarden] %s 급여 계산서 - %s", consultantName, period);
+        String content = "Mock 급여 계산서 이메일 내용";
+        EmailRequest.EmailRequestBuilder builder = EmailRequest.builder()
+                .toEmail(toEmail)
+                .toName(consultantName)
+                .subject(subject)
+                .content(content)
+                .type("HTML")
+                .templateType("SALARY_CALCULATION");
+        if (pdfAttachment != null && pdfAttachment.length > 0 && StringUtils.hasText(attachmentFilename)) {
+            builder.binaryAttachments(List.of(EmailAttachmentPart.builder()
+                    .filename(attachmentFilename)
+                    .content(pdfAttachment)
+                    .mimeType("application/pdf")
+                    .build()));
         }
+        return sendEmail(builder.build());
     }
     
     @Override

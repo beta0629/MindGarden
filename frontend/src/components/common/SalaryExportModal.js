@@ -98,8 +98,25 @@ const SalaryExportModal = ({
           document.body.removeChild(link);
         }
 
-        if (sendEmail && emailAddress) {
-          notificationManager.show(`${SALARY_MESSAGES.EMAIL_SENT_SUCCESS}\n수신자: ${emailAddress}`, 'info');
+        if (selectedFormat === EXPORT_FORMAT.PDF && sendEmail && emailAddress) {
+          if (data.emailSent === true) {
+            notificationManager.show(
+              `${SALARY_MESSAGES.EXPORT_SUCCESS}\n${SALARY_MESSAGES.EMAIL_SENT_SUCCESS}\n수신자: ${emailAddress}`,
+              'success'
+            );
+          } else if (data.emailSent === false) {
+            const reason = data.emailMessage ? `\n${data.emailMessage}` : '';
+            notificationManager.show(
+              `${SALARY_MESSAGES.EXPORT_SUCCESS}\n이메일 발송에 실패했습니다.${reason}`,
+              'warning'
+            );
+          } else {
+            notificationManager.show(SALARY_MESSAGES.EXPORT_SUCCESS, 'success');
+            notificationManager.show(
+              '이메일 발송 여부를 확인할 수 없습니다. 서버 응답을 확인해 주세요.',
+              'info'
+            );
+          }
         } else {
           notificationManager.show(SALARY_MESSAGES.EXPORT_SUCCESS, 'success');
         }

@@ -5,31 +5,32 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import com.coresolution.consultation.constant.salary.SalaryExportConstants;
+import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.dto.SalaryExportRequest;
 import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
+import com.coresolution.consultation.salaryexport.SalaryExportFlyingSaucerPdfRenderer;
+import com.coresolution.consultation.salaryexport.SalaryExportHtmlRenderer;
+import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.SalaryExportService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -38,7 +39,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 급여 계산 단건 export. PDF는 Type1(라틴)만 안전 표시, 한글은 Excel/CSV에 반영.
+ * 급여 계산 단건 export. PDF는 UTF-8 XHTML + Flying Saucer(OpenPDF) + classpath 한글 폰트.
  *
  * @author CoreSolution
  * @since 2026-05-11
@@ -48,28 +49,48 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class SalaryExportServiceImpl implements SalaryExportService {
 
-    private static final float PDF_MARGIN = 50f;
-
-    private static final float PDF_LINE_HEIGHT = 14f;
-
-    private static final int PDF_MAX_LINES_FIRST_PAGE = 48;
-
     private final SalaryCalculationRepository salaryCalculationRepository;
 
     private final SalaryManagementService salaryManagementService;
 
+    private final EmailService emailService;
+
     @Override
     @Transactional(readOnly = true)
-    public Map<String, String> exportPdf(SalaryExportRequest request) {
+    public Map<String, Object> exportPdf(SalaryExportRequest request) {
         SalaryCalculation calc = loadCalculationForCurrentTenant(request.getCalculationId());
         Map<String, Object> taxDetails = resolveTaxDetails(request, calc.getId());
-        byte[] bytes = buildPdf(calc, taxDetails, request);
+        String xhtml = SalaryExportHtmlRenderer.buildSalaryExportXhtml(calc, taxDetails, request);
+        byte[] bytes = SalaryExportFlyingSaucerPdfRenderer.renderToPdfBytes(xhtml);
         String filename = buildFilename(calc, "pdf");
-        return Map.of(
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put(
                 SalaryExportConstants.RESPONSE_KEY_DOWNLOAD_URL,
-                SalaryExportConstants.DATA_URI_PREFIX_PDF + Base64.getEncoder().encodeToString(bytes),
-                SalaryExportConstants.RESPONSE_KEY_FILENAME,
-                filename);
+                SalaryExportConstants.DATA_URI_PREFIX_PDF + Base64.getEncoder().encodeToString(bytes));
+        payload.put(SalaryExportConstants.RESPONSE_KEY_FILENAME, filename);
+
+        if (StringUtils.hasText(request.getEmailAddress())) {
+            Map<String, Object> salaryData = buildSalaryDataMapForEmail(calc);
+            String period = resolvePeriodForEmail(calc, request);
+            String consultantName = resolveConsultantNameForEmail(calc, request);
+            EmailResponse emailResponse = emailService.sendSalaryCalculationEmailWithResponse(
+                    request.getEmailAddress().trim(),
+                    consultantName,
+                    period,
+                    salaryData,
+                    bytes,
+                    filename);
+            payload.put(SalaryExportConstants.RESPONSE_KEY_EMAIL_SENT, emailResponse.isSuccess());
+            if (!emailResponse.isSuccess()) {
+                String msg = StringUtils.hasText(emailResponse.getErrorMessage())
+                        ? emailResponse.getErrorMessage()
+                        : emailResponse.getMessage();
+                payload.put(SalaryExportConstants.RESPONSE_KEY_EMAIL_MESSAGE, msg != null ? msg : "이메일 발송에 실패했습니다.");
+            }
+        }
+
+        return payload;
     }
 
     @Override
@@ -98,6 +119,47 @@ public class SalaryExportServiceImpl implements SalaryExportService {
                 SalaryExportConstants.DATA_URI_PREFIX_CSV + Base64.getEncoder().encodeToString(bytes),
                 SalaryExportConstants.RESPONSE_KEY_FILENAME,
                 filename);
+    }
+
+    private Map<String, Object> buildSalaryDataMapForEmail(SalaryCalculation calc) {
+        Map<String, Object> m = new HashMap<>();
+        BigDecimal hourly = calc.getHourlyEarnings() != null ? calc.getHourlyEarnings() : BigDecimal.ZERO;
+        BigDecimal commission = calc.getCommissionEarnings() != null ? calc.getCommissionEarnings() : BigDecimal.ZERO;
+        m.put("baseSalary", toWholeWonLong(calc.getBaseSalary()));
+        m.put("optionSalary", toWholeWonLong(hourly.add(commission)));
+        m.put("totalSalary", toWholeWonLong(calc.getTotalSalary()));
+        m.put("taxAmount", toWholeWonLong(calc.getDeductions()));
+        m.put("netSalary", toWholeWonLong(calc.getNetSalary()));
+        int consultations = calc.getCompletedConsultations() != null ? calc.getCompletedConsultations() : 0;
+        m.put("consultationCount", consultations);
+        return m;
+    }
+
+    private static long toWholeWonLong(BigDecimal v) {
+        if (v == null) {
+            return 0L;
+        }
+        return v.setScale(0, RoundingMode.HALF_UP).longValue();
+    }
+
+    private static String resolvePeriodForEmail(SalaryCalculation calc, SalaryExportRequest request) {
+        if (request.getPeriod() != null && !request.getPeriod().isBlank()) {
+            return request.getPeriod().trim();
+        }
+        if (calc.getCalculationPeriodStart() != null && calc.getCalculationPeriodEnd() != null) {
+            return calc.getCalculationPeriodStart() + " ~ " + calc.getCalculationPeriodEnd();
+        }
+        return "";
+    }
+
+    private static String resolveConsultantNameForEmail(SalaryCalculation calc, SalaryExportRequest request) {
+        if (request.getConsultantName() != null && !request.getConsultantName().isBlank()) {
+            return request.getConsultantName().trim();
+        }
+        if (calc.getConsultant() != null && calc.getConsultant().getName() != null) {
+            return calc.getConsultant().getName();
+        }
+        return "";
     }
 
     private Map<String, Object> resolveTaxDetails(SalaryExportRequest request, Long calculationId) {
@@ -129,99 +191,6 @@ public class SalaryExportServiceImpl implements SalaryExportService {
                 ? calc.getCalculationPeriodStart().toString()
                 : "period";
         return SalaryExportConstants.FILENAME_PREFIX + calc.getId() + "_" + periodPart + "_" + consultant + "." + ext;
-    }
-
-    private byte[] buildPdf(SalaryCalculation calc, Map<String, Object> taxDetails, SalaryExportRequest request) {
-        List<String> lines = buildExportTextLines(calc, taxDetails, request, true);
-        try (PDDocument document = new PDDocument()) {
-            PDType1Font font = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-            PDPage page = new PDPage(PDRectangle.A4);
-            document.addPage(page);
-            float y = page.getMediaBox().getHeight() - PDF_MARGIN;
-            int lineIndex = 0;
-            try (PDPageContentStream stream = new PDPageContentStream(document, page)) {
-                stream.beginText();
-                stream.setFont(font, 11);
-                stream.newLineAtOffset(PDF_MARGIN, y);
-                for (String line : lines) {
-                    if (lineIndex >= PDF_MAX_LINES_FIRST_PAGE) {
-                        break;
-                    }
-                    String safe = sanitizeForWinAnsiPdf(line);
-                    stream.showText(safe);
-                    stream.newLineAtOffset(0, -PDF_LINE_HEIGHT);
-                    lineIndex++;
-                }
-                stream.endText();
-            }
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            document.save(baos);
-            return baos.toByteArray();
-        } catch (IOException e) {
-            log.error("급여 PDF 생성 실패 calculationId={}", calc.getId(), e);
-            throw new IllegalStateException("급여 PDF 생성에 실패했습니다.", e);
-        }
-    }
-
-    /**
-     * PDF Type1 / WinAnsi 안전 구간(대략 라틴·숫자)만 허용.
-     */
-    private static String sanitizeForWinAnsiPdf(String s) {
-        if (s == null) {
-            return "";
-        }
-        StringBuilder b = new StringBuilder(Math.min(s.length(), 200));
-        for (int i = 0; i < s.length() && b.length() < 200; i++) {
-            char c = s.charAt(i);
-            if (c >= 32 && c <= 126) {
-                b.append(c);
-            } else {
-                b.append('?');
-            }
-        }
-        return b.toString();
-    }
-
-    private List<String> buildExportTextLines(
-            SalaryCalculation calc,
-            Map<String, Object> taxDetails,
-            SalaryExportRequest request,
-            boolean asciiLabels) {
-        List<String> lines = new ArrayList<>();
-        if (asciiLabels) {
-            lines.add("MindGarden Salary export (PDF: Latin labels only; use Excel/CSV for Korean)");
-        }
-        lines.add("calculationId=" + calc.getId());
-        if (calc.getCalculationPeriodStart() != null && calc.getCalculationPeriodEnd() != null) {
-            lines.add("period=" + calc.getCalculationPeriodStart() + ".." + calc.getCalculationPeriodEnd());
-        }
-        lines.add("status=" + (calc.getStatus() != null ? calc.getStatus().name() : ""));
-        if (Boolean.FALSE.equals(request.getIncludeCalculationDetails())) {
-            lines.add("(calculation detail rows omitted by request)");
-            return lines;
-        }
-        lines.add("baseSalary=" + formatAmount(calc.getBaseSalary()));
-        lines.add("grossSalary=" + formatAmount(calc.getGrossSalary()));
-        lines.add("deductions=" + formatAmount(calc.getDeductions()));
-        lines.add("netSalary=" + formatAmount(calc.getNetSalary()));
-        lines.add("totalSalary=" + formatAmount(calc.getTotalSalary()));
-        lines.add("hourlyEarnings=" + formatAmount(calc.getHourlyEarnings()));
-        lines.add("commissionEarnings=" + formatAmount(calc.getCommissionEarnings()));
-        if (taxDetails != null && !taxDetails.isEmpty()) {
-            lines.add("--- tax summary ---");
-            lines.add("grossSalary(tax)=" + formatAmount(asBigDecimal(taxDetails.get("grossSalary"))));
-            lines.add("netSalary(tax)=" + formatAmount(asBigDecimal(taxDetails.get("netSalary"))));
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> details =
-                    (List<Map<String, Object>>) taxDetails.get(SalaryExportConstants.TAX_PAYLOAD_KEY_TAX_DETAILS);
-            if (details != null) {
-                for (Map<String, Object> row : details) {
-                    lines.add("tax " + row.get(SalaryExportConstants.TAX_ROW_KEY_TAX_TYPE) + "="
-                            + formatAmount(asBigDecimal(row.get(SalaryExportConstants.TAX_ROW_KEY_TAX_AMOUNT))));
-                }
-            }
-        }
-        return lines;
     }
 
     private byte[] buildXlsx(SalaryCalculation calc, Map<String, Object> taxDetails, SalaryExportRequest request) {

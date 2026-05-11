@@ -78,6 +78,11 @@ public class EmailSendRequest {
      * 첨부파일 목록
      */
     private List<String> attachments;
+
+    /**
+     * 파일 경로 대신 메모리 첨부.
+     */
+    private List<EmailAttachmentPart> binaryAttachments;
     
     /**
      * 이메일 우선순위
@@ -125,6 +130,7 @@ public class EmailSendRequest {
             .templateType(this.templateType)
             .templateVariables(this.templateVariables)
             .attachments(this.attachments)
+            .binaryAttachments(this.binaryAttachments)
             .priority(this.priority)
             .sendImmediately(this.sendImmediately)
             .scheduledTime(this.scheduledTime)

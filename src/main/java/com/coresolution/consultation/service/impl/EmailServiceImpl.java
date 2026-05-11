@@ -1,5 +1,9 @@
 package com.coresolution.consultation.service.impl;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +16,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.EmailConstants;
+import com.coresolution.consultation.dto.EmailAttachmentPart;
 import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.service.EmailService;
@@ -21,6 +26,8 @@ import com.coresolution.consultation.entity.CommonCode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -493,6 +500,32 @@ public class EmailServiceImpl implements EmailService {
         }
         return false;
     }
+
+    private void addEmailAttachments(MimeMessageHelper helper, EmailRequest request) throws MessagingException {
+        if (request.getAttachments() != null) {
+            for (String path : request.getAttachments()) {
+                if (!StringUtils.hasText(path)) {
+                    continue;
+                }
+                java.io.File file = new java.io.File(path.trim());
+                if (!file.isFile()) {
+                    log.warn("이메일 첨부 경로가 유효한 파일이 아닙니다: {}", path);
+                    continue;
+                }
+                helper.addAttachment(file.getName(), new FileSystemResource(file));
+            }
+        }
+        if (request.getBinaryAttachments() != null) {
+            for (EmailAttachmentPart part : request.getBinaryAttachments()) {
+                if (part == null || part.getContent() == null || part.getContent().length == 0) {
+                    continue;
+                }
+                String name = StringUtils.hasText(part.getFilename()) ? part.getFilename() : "attachment";
+                String contentType = StringUtils.hasText(part.getMimeType()) ? part.getMimeType() : "application/octet-stream";
+                helper.addAttachment(name, new ByteArrayResource(part.getContent()), contentType);
+            }
+        }
+    }
     
     private EmailResponse sendEmailInternal(EmailRequest request, String emailId) {
         try {
@@ -517,6 +550,8 @@ public class EmailServiceImpl implements EmailService {
             // 내용 설정 (HTML 또는 TEXT)
             boolean isHtml = "HTML".equalsIgnoreCase(request.getType());
             helper.setText(request.getContent(), isHtml);
+
+            addEmailAttachments(helper, request);
             
             // 회신 주소 설정
             String replyTo = StringUtils.hasText(request.getReplyTo()) ? 
@@ -1060,39 +1095,82 @@ public class EmailServiceImpl implements EmailService {
     // ==================== 급여 관련 이메일 ====================
     
     @Override
-    public boolean sendSalaryCalculationEmail(String toEmail, String consultantName, 
-                                            String period, Map<String, Object> salaryData, 
-                                            String attachmentPath) {
+    public boolean sendSalaryCalculationEmail(String toEmail, String consultantName,
+            String period, Map<String, Object> salaryData,
+            String attachmentPath) {
+        byte[] attachmentBytes = null;
+        String attachmentFilename = null;
+        if (StringUtils.hasText(attachmentPath)) {
+            Path p = Paths.get(attachmentPath.trim());
+            if (Files.isRegularFile(p)) {
+                try {
+                    attachmentBytes = Files.readAllBytes(p);
+                    attachmentFilename = p.getFileName().toString();
+                } catch (IOException e) {
+                    log.warn("급여 계산서 첨부 파일 읽기 실패: {}", attachmentPath, e);
+                }
+            } else {
+                log.warn("급여 계산서 첨부 경로가 파일이 아닙니다: {}", attachmentPath);
+            }
+        }
+        return sendSalaryCalculationEmail(toEmail, consultantName, period, salaryData, attachmentBytes, attachmentFilename);
+    }
+
+    @Override
+    public boolean sendSalaryCalculationEmail(String toEmail, String consultantName,
+            String period, Map<String, Object> salaryData,
+            byte[] pdfAttachment, String attachmentFilename) {
+        return sendSalaryCalculationEmailWithResponse(toEmail, consultantName, period, salaryData, pdfAttachment, attachmentFilename)
+                .isSuccess();
+    }
+
+    @Override
+    public EmailResponse sendSalaryCalculationEmailWithResponse(String toEmail, String consultantName,
+            String period, Map<String, Object> salaryData,
+            byte[] pdfAttachment, String attachmentFilename) {
         try {
             log.info("급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
-            
-            Map<String, Object> variables = enrichTemplateVariables(salaryData);
-            String subject = String.format("[{{companyName}}] %s 급여 계산서 - %s", consultantName, period);
-            subject = applyTemplateVariables(subject, variables); // variables에 companyName 보강
-            String content = createSalaryCalculationEmailContent(consultantName, period, salaryData);
-            
-            EmailRequest request = EmailRequest.builder()
-                    .toEmail(toEmail)
-                    .toName(consultantName)
-                    .subject(subject)
-                    .content(content)
-                    .type("HTML")
-                    .templateType("SALARY_CALCULATION")
-                    .templateVariables(Map.of(
-                        "consultantName", consultantName,
-                        "period", period,
-                        "salaryData", salaryData
-                    ))
-                    .attachments(attachmentPath != null ? List.of(attachmentPath) : null)
-                    .build();
-            
-            EmailResponse response = sendEmail(request);
-            return response.isSuccess();
-            
+            EmailRequest request = buildSalaryCalculationEmailRequest(
+                    toEmail, consultantName, period, salaryData, pdfAttachment, attachmentFilename);
+            return sendEmail(request);
         } catch (Exception e) {
             log.error("급여 계산서 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
-            return false;
+            return createErrorResponse(
+                    EmailRequest.builder()
+                            .toEmail(toEmail)
+                            .subject(String.format("%s 급여 계산서", consultantName))
+                            .content("급여 계산서 이메일 처리 중 오류가 발생했습니다.")
+                            .build(),
+                    e.getMessage() != null ? e.getMessage() : "급여 계산서 이메일 구성에 실패했습니다.");
         }
+    }
+
+    private EmailRequest buildSalaryCalculationEmailRequest(String toEmail, String consultantName,
+            String period, Map<String, Object> salaryData,
+            byte[] pdfAttachment, String attachmentFilename) {
+        Map<String, Object> variables = enrichTemplateVariables(salaryData);
+        String subject = String.format("[{{companyName}}] %s 급여 계산서 - %s", consultantName, period);
+        subject = applyTemplateVariables(subject, variables);
+        String content = createSalaryCalculationEmailContent(consultantName, period, salaryData);
+        EmailRequest.EmailRequestBuilder builder = EmailRequest.builder()
+                .toEmail(toEmail)
+                .toName(consultantName)
+                .subject(subject)
+                .content(content)
+                .type("HTML")
+                .templateType("SALARY_CALCULATION")
+                .templateVariables(Map.of(
+                        "consultantName", consultantName,
+                        "period", period,
+                        "salaryData", salaryData));
+        if (pdfAttachment != null && pdfAttachment.length > 0 && StringUtils.hasText(attachmentFilename)) {
+            builder.binaryAttachments(List.of(EmailAttachmentPart.builder()
+                    .filename(attachmentFilename)
+                    .content(pdfAttachment)
+                    .mimeType("application/pdf")
+                    .build()));
+        }
+        return builder.build();
     }
     
     @Override

@@ -1,0 +1,179 @@
+package com.coresolution.consultation.salaryexport;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import com.coresolution.consultation.constant.salary.SalaryExportConstants;
+import com.coresolution.consultation.dto.SalaryExportRequest;
+import com.coresolution.consultation.entity.SalaryCalculation;
+
+/**
+ * 급여 export용 UTF-8 XHTML 문자열 생성 (Flying Saucer 입력).
+ *
+ * @author CoreSolution
+ * @since 2026-05-11
+ */
+public final class SalaryExportHtmlRenderer {
+
+    private SalaryExportHtmlRenderer() {
+    }
+
+    /**
+     * 급여·세금 요약 XHTML을 생성한다.
+     *
+     * @param calc       급여 계산
+     * @param taxDetails 세금 상세(비어 있으면 생략)
+     * @param request    포함 옵션
+     * @return XHTML 문자열
+     */
+    public static String buildSalaryExportXhtml(
+            SalaryCalculation calc,
+            Map<String, Object> taxDetails,
+            SalaryExportRequest request) {
+        String consultant = resolveConsultantName(calc, request);
+        String period = resolvePeriodLabel(calc, request);
+        StringBuilder body = new StringBuilder(4096);
+        body.append("<div class=\"header\"><h1>급여 계산서</h1><p class=\"muted\">MindGarden</p></div>");
+        body.append("<table class=\"kv\">");
+        appendRow(body, "계산 ID", String.valueOf(calc.getId()));
+        appendRow(body, "상담사", consultant);
+        appendRow(body, "기간", period);
+        appendRow(body, "상태", calc.getStatus() != null ? calc.getStatus().name() : "");
+        if (Boolean.FALSE.equals(request.getIncludeCalculationDetails())) {
+            appendRow(body, "계산 상세", "요청에 따라 생략되었습니다.");
+        } else {
+            appendRow(body, "기본급", formatAmount(calc.getBaseSalary()));
+            appendRow(body, "총 급여", formatAmount(calc.getTotalSalary()));
+            appendRow(body, "총 지급(과세 전)", formatAmount(calc.getGrossSalary()));
+            appendRow(body, "공제", formatAmount(calc.getDeductions()));
+            appendRow(body, "실수령", formatAmount(calc.getNetSalary()));
+            appendRow(body, "시급 소득", formatAmount(calc.getHourlyEarnings()));
+            appendRow(body, "커미션", formatAmount(calc.getCommissionEarnings()));
+        }
+        body.append("</table>");
+
+        if (Boolean.FALSE.equals(request.getIncludeTaxDetails()) || taxDetails == null || taxDetails.isEmpty()) {
+            return wrapDocument(body.toString());
+        }
+
+        body.append("<h2 class=\"section\">세금 요약</h2>");
+        body.append("<table class=\"kv\">");
+        appendRow(body, "세금 기준 총지급", formatAmount(asBigDecimal(taxDetails.get("grossSalary"))));
+        appendRow(body, "세금 기준 실수령", formatAmount(asBigDecimal(taxDetails.get("netSalary"))));
+        body.append("</table>");
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> details =
+                (List<Map<String, Object>>) taxDetails.get(SalaryExportConstants.TAX_PAYLOAD_KEY_TAX_DETAILS);
+        if (details != null && !details.isEmpty()) {
+            body.append("<h2 class=\"section\">세금 항목</h2>");
+            body.append("<table class=\"grid\"><thead><tr><th>세목</th><th class=\"num\">금액</th></tr></thead><tbody>");
+            for (Map<String, Object> row : details) {
+                body.append("<tr><td>")
+                        .append(xmlEscape(Objects.toString(row.get(SalaryExportConstants.TAX_ROW_KEY_TAX_TYPE), "")))
+                        .append("</td><td class=\"num\">")
+                        .append(xmlEscape(formatAmount(asBigDecimal(row.get(SalaryExportConstants.TAX_ROW_KEY_TAX_AMOUNT)))))
+                        .append("</td></tr>");
+            }
+            body.append("</tbody></table>");
+        }
+
+        return wrapDocument(body.toString());
+    }
+
+    private static String resolveConsultantName(SalaryCalculation calc, SalaryExportRequest request) {
+        if (request.getConsultantName() != null && !request.getConsultantName().isBlank()) {
+            return request.getConsultantName().trim();
+        }
+        if (calc.getConsultant() != null && calc.getConsultant().getName() != null) {
+            return calc.getConsultant().getName();
+        }
+        return "";
+    }
+
+    private static String resolvePeriodLabel(SalaryCalculation calc, SalaryExportRequest request) {
+        if (request.getPeriod() != null && !request.getPeriod().isBlank()) {
+            return request.getPeriod().trim();
+        }
+        if (calc.getCalculationPeriodStart() != null && calc.getCalculationPeriodEnd() != null) {
+            return calc.getCalculationPeriodStart() + " ~ " + calc.getCalculationPeriodEnd();
+        }
+        if (calc.getCalculationPeriodStart() != null) {
+            return calc.getCalculationPeriodStart().toString();
+        }
+        return "";
+    }
+
+    private static void appendRow(StringBuilder body, String label, String value) {
+        body.append("<tr><th>")
+                .append(xmlEscape(label))
+                .append("</th><td>")
+                .append(xmlEscape(value != null ? value : ""))
+                .append("</td></tr>");
+    }
+
+    private static String wrapDocument(String innerBody) {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<html xmlns=\"http://www.w3.org/1999/xhtml\">"
+                + "<head><meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=UTF-8\"/>"
+                + "<style type=\"text/css\"><![CDATA["
+                + "body{font-family:'Noto Sans KR',sans-serif;font-size:11pt;color:#111;margin:24pt;}"
+                + "h1{font-size:16pt;margin:0 0 8pt 0;}"
+                + "h2.section{font-size:13pt;margin:16pt 0 8pt 0;border-bottom:1pt solid #ccc;padding-bottom:4pt;}"
+                + ".muted{color:#555;font-size:9pt;}"
+                + "table.kv{width:100%;border-collapse:collapse;margin-bottom:12pt;}"
+                + "table.kv th,table.kv td{border:1pt solid #ddd;padding:6pt;text-align:left;vertical-align:top;}"
+                + "table.kv th{width:32%;background:#f7f7f7;font-weight:600;}"
+                + "table.grid{width:100%;border-collapse:collapse;}"
+                + "table.grid th,table.grid td{border:1pt solid #ddd;padding:6pt;}"
+                + "table.grid thead th{background:#f0f0f0;}"
+                + ".num{text-align:right;font-variant-numeric:tabular-nums;}"
+                + "]]></style></head><body>"
+                + innerBody
+                + "</body></html>";
+    }
+
+    private static String xmlEscape(String s) {
+        if (s == null || s.isEmpty()) {
+            return "";
+        }
+        StringBuilder b = new StringBuilder(s.length() + 16);
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '&' -> b.append("&amp;");
+                case '<' -> b.append("&lt;");
+                case '>' -> b.append("&gt;");
+                case '"' -> b.append("&quot;");
+                default -> b.append(c);
+            }
+        }
+        return b.toString();
+    }
+
+    private static String formatAmount(BigDecimal v) {
+        if (v == null) {
+            return "";
+        }
+        return v.stripTrailingZeros().toPlainString();
+    }
+
+    private static BigDecimal asBigDecimal(Object o) {
+        if (o == null) {
+            return null;
+        }
+        if (o instanceof BigDecimal bd) {
+            return bd;
+        }
+        if (o instanceof Number n) {
+            return BigDecimal.valueOf(n.doubleValue());
+        }
+        try {
+            return new BigDecimal(o.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+}

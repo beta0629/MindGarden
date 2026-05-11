@@ -17,7 +17,7 @@ public interface SalaryExportService {
      * @param request 계산 ID·옵션
      * @return downloadUrl, filename
      */
-    Map<String, String> exportPdf(SalaryExportRequest request);
+    Map<String, Object> exportPdf(SalaryExportRequest request);
 
     /**
      * Excel(.xlsx)보내기.

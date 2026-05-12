@@ -13,7 +13,6 @@ import axios, {
   InternalAxiosRequestConfig,
 } from 'axios';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useTenantStore } from '../stores/useTenantStore';
 import { AUTH_API } from './endpoints';
@@ -27,14 +26,10 @@ const getBaseUrl = (): string => {
   }
 
   if (__DEV__) {
-    return Platform.select({
-      android: 'http://10.0.2.2:8080',
-      ios: 'http://localhost:8080',
-      default: 'http://localhost:8080',
-    }) as string;
+    return 'https://dev.core-solution.co.kr';
   }
 
-  return 'https://api.mindgarden.co.kr';
+  return 'https://core-solution.co.kr';
 };
 
 const apiClient: AxiosInstance = axios.create({

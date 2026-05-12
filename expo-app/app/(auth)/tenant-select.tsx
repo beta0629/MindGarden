@@ -1,11 +1,12 @@
 /**
  * 테넌트 선택 화면
- * 기관 코드 직접 입력 + QR 스캔 + 최근 사용한 기관 목록
+ * 서버에서 활성 테넌트 목록을 가져와 카드 리스트로 표시
+ * 검색 필터 + QR 스캔 지원
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-05-12
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,65 +16,94 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
+  RefreshControl,
 } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, FadeInDown, SlideInDown } from 'react-native-reanimated';
-import { Building2, QrCode, ChevronRight, X } from 'lucide-react-native';
+import { Building2, QrCode, ChevronRight, X, Search, RefreshCw } from 'lucide-react-native';
 import { useTheme } from '../../src/theme';
 import { fontSize as fontSizeTokens } from '../../src/theme/typography';
 import { useTenantStore } from '../../src/stores/useTenantStore';
 import { apiGet } from '../../src/api/client';
 import { TENANT_API } from '../../src/api/endpoints';
 
-interface TenantVerifyResponse {
+interface TenantInfo {
   tenantId: string;
-  tenantName: string;
-  tenantCode: string;
+  name: string;
+  businessType: string;
+  subdomain: string;
+}
+
+interface TenantListResponse {
+  success: boolean;
+  data: {
+    tenants: TenantInfo[];
+    count: number;
+  };
+}
+
+interface TenantBySubdomainResponse {
+  success: boolean;
+  data: {
+    tenant: TenantInfo | null;
+    found: boolean;
+    message?: string;
+  };
 }
 
 export default function TenantSelectScreen() {
   const theme = useTheme();
-  const { setTenant, recentTenants } = useTenantStore();
+  const { setTenant } = useTenantStore();
 
-  const [code, setCode] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [tenants, setTenants] = useState<TenantInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [showScanner, setShowScanner] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
 
-  const verifyTenantCode = useCallback(
-    async (tenantCode: string) => {
-      if (!tenantCode.trim()) {
-        setErrorMessage('기관 코드를 입력해주세요.');
-        return;
-      }
+  const filteredTenants = useMemo(() => {
+    if (!searchQuery.trim()) return tenants;
+    const query = searchQuery.trim().toLowerCase();
+    return tenants.filter(
+      (t) =>
+        t.name.toLowerCase().includes(query) ||
+        t.subdomain.toLowerCase().includes(query),
+    );
+  }, [tenants, searchQuery]);
 
+  const fetchTenants = useCallback(async (showRefreshIndicator = false) => {
+    if (showRefreshIndicator) {
+      setIsRefreshing(true);
+    } else {
       setIsLoading(true);
-      setErrorMessage(null);
+    }
+    setErrorMessage(null);
 
-      try {
-        const response = await apiGet<TenantVerifyResponse>(TENANT_API.VERIFY, {
-          code: tenantCode.trim(),
-        });
+    try {
+      const response = await apiGet<TenantListResponse>(TENANT_API.LIST_ACTIVE);
+      const body = response as unknown as TenantListResponse;
+      setTenants(body?.data?.tenants ?? []);
+    } catch {
+      setErrorMessage('기관 목록을 불러올 수 없습니다.');
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
 
-        if (response?.tenantId && response?.tenantName) {
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          setTenant(tenantCode.trim(), response.tenantId, response.tenantName);
-          router.replace('/(auth)/login' as Href);
-        } else {
-          setErrorMessage('유효하지 않은 기관 코드입니다.');
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        }
-      } catch {
-        setErrorMessage('기관 코드를 확인할 수 없습니다. 다시 시도해주세요.');
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      } finally {
-        setIsLoading(false);
-      }
+  useEffect(() => {
+    fetchTenants();
+  }, [fetchTenants]);
+
+  const handleTenantSelect = useCallback(
+    async (tenant: TenantInfo) => {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setTenant(tenant.subdomain, tenant.tenantId, tenant.name);
+      router.replace('/(auth)/login' as Href);
     },
     [setTenant],
   );
@@ -81,13 +111,36 @@ export default function TenantSelectScreen() {
   const handleQrScan = useCallback(
     async (data: string) => {
       setShowScanner(false);
-      const tenantCode = data.replace(/^mindgarden:\/\/tenant\//, '').trim();
-      if (tenantCode) {
-        setCode(tenantCode);
-        await verifyTenantCode(tenantCode);
+      const tenantCode = data.replace(/^coresolution:\/\/tenant\//, '').trim();
+      if (!tenantCode) return;
+
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const response = await apiGet<TenantBySubdomainResponse>(
+          TENANT_API.BY_SUBDOMAIN,
+          { subdomain: tenantCode },
+        );
+        const body = response as unknown as TenantBySubdomainResponse;
+        const tenantData = body?.data?.tenant;
+
+        if (body?.data?.found && tenantData?.tenantId && tenantData?.name) {
+          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          setTenant(tenantCode, tenantData.tenantId, tenantData.name);
+          router.replace('/(auth)/login' as Href);
+        } else {
+          setErrorMessage('QR 코드의 기관 정보를 확인할 수 없습니다.');
+          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+      } catch {
+        setErrorMessage('QR 코드 인증에 실패했습니다. 다시 시도해주세요.');
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      } finally {
+        setIsLoading(false);
       }
     },
-    [verifyTenantCode],
+    [setTenant],
   );
 
   const openScanner = async () => {
@@ -101,11 +154,108 @@ export default function TenantSelectScreen() {
     setShowScanner(true);
   };
 
-  const handleRecentTenantSelect = (recentCode: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setCode(recentCode);
-    verifyTenantCode(recentCode);
+  const renderListContent = () => {
+    if (isLoading && !isRefreshing) {
+      return (
+        <View style={styles.centerState}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.stateText, { color: theme.colors.textSecondary }]}>
+            기관 목록을 불러오는 중...
+          </Text>
+        </View>
+      );
+    }
+
+    if (errorMessage && tenants.length === 0) {
+      return (
+        <View style={styles.centerState}>
+          <Text style={[styles.errorText, { color: theme.colors.error }]}>
+            {errorMessage}
+          </Text>
+          <Pressable
+            style={[styles.retryButton, { borderColor: theme.colors.primary }]}
+            onPress={() => fetchTenants()}
+            accessibilityLabel="다시 시도"
+            accessibilityRole="button"
+          >
+            <RefreshCw size={16} color={theme.colors.primary} />
+            <Text style={[styles.retryButtonText, { color: theme.colors.primary }]}>
+              다시 시도
+            </Text>
+          </Pressable>
+        </View>
+      );
+    }
+
+    const emptyMessage = searchQuery.trim()
+      ? '검색 결과가 없습니다.'
+      : '등록된 기관이 없습니다.';
+
+    return (
+      <FlatList
+        data={filteredTenants}
+        keyExtractor={(tenant) => tenant.tenantId}
+        renderItem={renderTenantCard}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={() => fetchTenants(true)}
+            tintColor={theme.colors.primary}
+          />
+        }
+        ListEmptyComponent={
+          <View style={styles.centerState}>
+            <Text style={[styles.stateText, { color: theme.colors.textSecondary }]}>
+              {emptyMessage}
+            </Text>
+          </View>
+        }
+      />
+    );
   };
+
+  const renderTenantCard = useCallback(
+    ({ item, index }: { item: TenantInfo; index: number }) => (
+      <Animated.View entering={FadeInDown.delay(index * 60).duration(400)}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.tenantCard,
+            {
+              backgroundColor: pressed ? theme.colors.primaryLight ?? theme.colors.bgSub : theme.colors.surface,
+              ...theme.shadows.sm,
+            },
+          ]}
+          onPress={() => handleTenantSelect(item)}
+          accessibilityLabel={`${item.name} 기관 선택`}
+          accessibilityRole="button"
+        >
+          <View
+            style={[styles.tenantIconWrapper, { backgroundColor: theme.colors.primaryLight ?? theme.colors.bgSub }]}
+          >
+            <Building2 size={22} color={theme.colors.primary} />
+          </View>
+          <View style={styles.tenantInfo}>
+            <Text
+              style={[styles.tenantName, { color: theme.colors.textMain }]}
+              numberOfLines={1}
+            >
+              {item.name}
+            </Text>
+            <Text
+              style={[styles.tenantSubdomain, { color: theme.colors.textTertiary }]}
+              numberOfLines={1}
+            >
+              {item.subdomain}
+            </Text>
+          </View>
+          <ChevronRight size={18} color={theme.colors.textTertiary} />
+        </Pressable>
+      </Animated.View>
+    ),
+    [theme, handleTenantSelect],
+  );
 
   if (showScanner) {
     return (
@@ -134,10 +284,7 @@ export default function TenantSelectScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: theme.colors.bgMain }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
       <Animated.View entering={FadeIn.duration(600)} style={styles.content}>
         <View style={styles.header}>
           <Animated.Text
@@ -145,7 +292,7 @@ export default function TenantSelectScreen() {
             style={[styles.logo, { color: theme.colors.primary }]}
             accessibilityRole="header"
           >
-            MindGarden
+            CoreSolution
           </Animated.Text>
           <Animated.Text
             entering={FadeInDown.delay(200).duration(500)}
@@ -157,55 +304,45 @@ export default function TenantSelectScreen() {
 
         <Animated.View
           entering={SlideInDown.delay(300).duration(500)}
-          style={[styles.card, { backgroundColor: theme.colors.surface, ...theme.shadows.md }]}
+          style={styles.listSection}
         >
-          <View style={styles.inputGroup}>
-            <View
-              style={[
-                styles.inputContainer,
-                { borderColor: errorMessage ? theme.colors.error : theme.colors.border },
-              ]}
-            >
-              <Building2 size={20} color={theme.colors.textTertiary} />
-              <TextInput
-                style={[styles.input, { color: theme.colors.textMain }]}
-                placeholder="기관 코드를 입력하세요"
-                placeholderTextColor={theme.colors.textTertiary}
-                value={code}
-                onChangeText={(text) => {
-                  setCode(text);
-                  setErrorMessage(null);
-                }}
-                autoCapitalize="none"
-                autoCorrect={false}
-                returnKeyType="go"
-                onSubmitEditing={() => verifyTenantCode(code)}
-                accessibilityLabel="기관 코드 입력"
-              />
-            </View>
-            {Boolean(errorMessage) && (
-              <Text style={[styles.errorText, { color: theme.colors.error }]}>
-                {errorMessage}
-              </Text>
+          <View
+            style={[
+              styles.searchContainer,
+              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+            ]}
+          >
+            <Search size={18} color={theme.colors.textTertiary} />
+            <TextInput
+              style={[styles.searchInput, { color: theme.colors.textMain }]}
+              placeholder="기관명 또는 서브도메인 검색"
+              placeholderTextColor={theme.colors.textTertiary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="search"
+              accessibilityLabel="기관 검색"
+            />
+            {searchQuery.length > 0 && (
+              <Pressable
+                onPress={() => setSearchQuery('')}
+                accessibilityLabel="검색어 지우기"
+                accessibilityRole="button"
+                hitSlop={8}
+              >
+                <X size={16} color={theme.colors.textTertiary} />
+              </Pressable>
             )}
           </View>
 
-          <Pressable
-            style={[styles.primaryButton, { backgroundColor: theme.colors.primary }]}
-            onPress={() => verifyTenantCode(code)}
-            disabled={isLoading}
-            accessibilityLabel="기관 코드 확인"
-            accessibilityRole="button"
-          >
-            {isLoading ? (
-              <ActivityIndicator color={theme.colors.textOnPrimary} />
-            ) : (
-              <Text style={[styles.primaryButtonText, { color: theme.colors.textOnPrimary }]}>
-                확인
-              </Text>
-            )}
-          </Pressable>
+          {renderListContent()}
+        </Animated.View>
 
+        <Animated.View
+          entering={FadeInDown.delay(500).duration(400)}
+          style={styles.qrSection}
+        >
           <View style={styles.dividerRow}>
             <View style={[styles.dividerLine, { backgroundColor: theme.colors.divider }]} />
             <Text style={[styles.dividerText, { color: theme.colors.textTertiary }]}>
@@ -222,43 +359,12 @@ export default function TenantSelectScreen() {
           >
             <QrCode size={20} color={theme.colors.primary} />
             <Text style={[styles.qrButtonText, { color: theme.colors.primary }]}>
-              QR 코드 스캔
+              QR 코드로 기관 연결
             </Text>
           </Pressable>
         </Animated.View>
-
-        {recentTenants.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(500).duration(400)} style={styles.recentSection}>
-            <Text style={[styles.recentTitle, { color: theme.colors.textSecondary }]}>
-              최근 사용한 기관
-            </Text>
-            <FlatList
-              data={recentTenants}
-              keyExtractor={(item) => item.code}
-              scrollEnabled={false}
-              renderItem={({ item }) => (
-                <Pressable
-                  style={[styles.recentItem, { backgroundColor: theme.colors.surface }]}
-                  onPress={() => handleRecentTenantSelect(item.code)}
-                  accessibilityLabel={`${item.name} 선택`}
-                  accessibilityRole="button"
-                >
-                  <View>
-                    <Text style={[styles.recentName, { color: theme.colors.textMain }]}>
-                      {item.name}
-                    </Text>
-                    <Text style={[styles.recentCode, { color: theme.colors.textTertiary }]}>
-                      {item.code}
-                    </Text>
-                  </View>
-                  <ChevronRight size={18} color={theme.colors.textTertiary} />
-                </Pressable>
-              )}
-            />
-          </Animated.View>
-        )}
       </Animated.View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -268,12 +374,13 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
     paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 24,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 28,
   },
   logo: {
     fontSize: fontSizeTokens['3xl'],
@@ -284,47 +391,91 @@ const styles = StyleSheet.create({
     fontSize: fontSizeTokens.base,
     fontWeight: '400',
   },
-  card: {
-    borderRadius: 16,
-    padding: 24,
+  listSection: {
+    flex: 1,
   },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  inputContainer: {
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 10,
     gap: 10,
+    marginBottom: 12,
   },
-  input: {
+  searchInput: {
     flex: 1,
-    fontSize: fontSizeTokens.base,
+    fontSize: fontSizeTokens.sm,
     fontWeight: '400',
+    paddingVertical: 0,
   },
-  errorText: {
-    fontSize: fontSizeTokens.xs,
-    marginTop: 6,
-    marginLeft: 4,
+  listContent: {
+    paddingBottom: 8,
+    gap: 8,
   },
-  primaryButton: {
+  tenantCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: 12,
-    paddingVertical: 14,
+    padding: 14,
+    gap: 12,
+  },
+  tenantIconWrapper: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
   },
-  primaryButtonText: {
-    fontSize: fontSizeTokens.base,
+  tenantInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  tenantName: {
+    fontSize: fontSizeTokens.sm,
     fontWeight: '600',
+  },
+  tenantSubdomain: {
+    fontSize: fontSizeTokens.xs,
+    fontWeight: '400',
+  },
+  centerState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+    gap: 12,
+  },
+  stateText: {
+    fontSize: fontSizeTokens.sm,
+    fontWeight: '400',
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: fontSizeTokens.sm,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 6,
+  },
+  retryButtonText: {
+    fontSize: fontSizeTokens.sm,
+    fontWeight: '500',
+  },
+  qrSection: {
+    paddingTop: 8,
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 16,
+    marginBottom: 12,
   },
   dividerLine: {
     flex: 1,
@@ -346,30 +497,6 @@ const styles = StyleSheet.create({
   qrButtonText: {
     fontSize: fontSizeTokens.sm,
     fontWeight: '500',
-  },
-  recentSection: {
-    marginTop: 24,
-  },
-  recentTitle: {
-    fontSize: fontSizeTokens.sm,
-    fontWeight: '500',
-    marginBottom: 10,
-  },
-  recentItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
-  },
-  recentName: {
-    fontSize: fontSizeTokens.sm,
-    fontWeight: '500',
-  },
-  recentCode: {
-    fontSize: fontSizeTokens.xs,
-    marginTop: 2,
   },
   scannerContainer: {
     flex: 1,

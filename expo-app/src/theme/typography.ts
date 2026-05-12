@@ -86,9 +86,9 @@ export const textStyles = {
  */
 export async function loadFonts(): Promise<void> {
   await Font.loadAsync({
-    [fontFamily.regular]: require('../../assets/fonts/Pretendard-Regular.ttf'),
-    [fontFamily.medium]: require('../../assets/fonts/Pretendard-Medium.ttf'),
-    [fontFamily.semibold]: require('../../assets/fonts/Pretendard-SemiBold.ttf'),
-    [fontFamily.bold]: require('../../assets/fonts/Pretendard-Bold.ttf'),
+    [fontFamily.regular]: require('../../assets/fonts/Pretendard-Regular.otf'),
+    [fontFamily.medium]: require('../../assets/fonts/Pretendard-Medium.otf'),
+    [fontFamily.semibold]: require('../../assets/fonts/Pretendard-SemiBold.otf'),
+    [fontFamily.bold]: require('../../assets/fonts/Pretendard-Bold.otf'),
   });
 }

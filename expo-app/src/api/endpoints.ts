@@ -22,7 +22,8 @@ export const AUTH_API = {
 } as const;
 
 export const TENANT_API = {
-  VERIFY: '/api/v1/tenants/verify',
+  LIST_ACTIVE: '/api/v1/auth/tenant/list-active',
+  BY_SUBDOMAIN: '/api/v1/auth/tenant/by-subdomain',
 } as const;
 
 export const USER_API = {

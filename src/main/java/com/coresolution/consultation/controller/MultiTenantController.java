@@ -177,6 +177,41 @@ public class MultiTenantController extends BaseApiController {
     }
     
     /**
+     * 활성 테넌트 목록 조회 (로그인 전에도 사용 가능)
+     * GET /api/v1/auth/tenant/list-active
+     * 네이티브 앱·모바일 웹에서 로그인 전 기관(테넌트) 선택 시 사용
+     * subdomain이 null인 테넌트는 제외
+     *
+     * @return 활성 테넌트 목록
+     * @since 2026-05-13
+     */
+    @GetMapping("/list-active")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getActiveTenants() {
+        log.info("활성 테넌트 목록 조회 요청");
+        
+        List<Tenant> activeTenants = tenantRepository.findAllActive();
+        
+        List<Map<String, Object>> tenantList = activeTenants.stream()
+            .filter(tenant -> tenant.getSubdomain() != null)
+            .map(tenant -> {
+                Map<String, Object> tenantMap = new HashMap<>();
+                tenantMap.put("tenantId", tenant.getTenantId());
+                tenantMap.put("subdomain", tenant.getSubdomain());
+                tenantMap.put("name", tenant.getName());
+                tenantMap.put("businessType", tenant.getBusinessType());
+                return tenantMap;
+            })
+            .collect(Collectors.toList());
+        
+        Map<String, Object> data = new HashMap<>();
+        data.put("tenants", tenantList);
+        data.put("count", tenantList.size());
+        
+        log.info("활성 테넌트 목록 조회 완료: count={}", tenantList.size());
+        return success(data);
+    }
+    
+    /**
      * 서브도메인으로 테넌트 정보 조회 (로그인 전에도 사용 가능)
      * GET /api/v1/auth/tenant/by-subdomain?subdomain={subdomain}
      * 

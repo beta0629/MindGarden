@@ -97,8 +97,9 @@ const ClientWellnessRenewal = () => {
     <div className="client-wellness">
       {/* 감정 일기 섹션 */}
       <section aria-label="오늘의 기분 기록">
-        <article
+        <div
           className="client-wellness__mood-card"
+          role="button"
           onClick={() => navigate('/client/mood-journal')}
           tabIndex={0}
           onKeyDown={(e) => e.key === 'Enter' && navigate('/client/mood-journal')}
@@ -125,7 +126,7 @@ const ClientWellnessRenewal = () => {
           <p className="client-wellness__mood-cta">
             탭하여 감정 일기를 작성해보세요
           </p>
-        </article>
+        </div>
       </section>
 
       {/* 자가 심리검사 섹션 */}
@@ -135,9 +136,10 @@ const ClientWellnessRenewal = () => {
           {SELF_ASSESSMENTS.map((test) => {
             const IconComp = test.IconComp;
             return (
-              <article
+              <div
                 key={test.key}
                 className="client-wellness__test-card"
+                role="button"
                 onClick={() => navigate(`/client/self-assessment?type=${test.key}`)}
                 tabIndex={0}
                 onKeyDown={(e) =>
@@ -157,7 +159,7 @@ const ClientWellnessRenewal = () => {
                   className="client-wellness__test-arrow"
                   aria-hidden
                 />
-              </article>
+              </div>
             );
           })}
         </div>
@@ -168,9 +170,10 @@ const ClientWellnessRenewal = () => {
         <h2 className="client-wellness__section-title">마음챙김 가이드</h2>
         <div className="client-wellness__guide-grid">
           {GUIDE_ITEMS.map((item) => (
-            <article
+            <div
               key={item.key}
               className="client-wellness__guide-card"
+              role="button"
               onClick={() => navigate('/client/mindfulness-guide')}
               tabIndex={0}
               onKeyDown={(e) =>
@@ -179,7 +182,7 @@ const ClientWellnessRenewal = () => {
             >
               <div className="client-wellness__guide-icon">{item.emoji}</div>
               <h3 className="client-wellness__guide-name">{item.name}</h3>
-            </article>
+            </div>
           ))}
         </div>
       </section>
@@ -190,9 +193,10 @@ const ClientWellnessRenewal = () => {
         {healingContent.length > 0 ? (
           <div className="client-wellness__feed-list">
             {healingContent.map((item, idx) => (
-              <article
+              <div
                 key={item.id || idx}
                 className="client-wellness__feed-card"
+                role="button"
                 onClick={() =>
                   navigate(`/client/wellness/${item.id || idx}`)
                 }
@@ -211,7 +215,7 @@ const ClientWellnessRenewal = () => {
                 <p className="client-wellness__feed-summary">
                   {item.summary || item.content?.substring(0, 80) || ''}
                 </p>
-              </article>
+              </div>
             ))}
           </div>
         ) : (

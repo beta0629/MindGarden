@@ -69,7 +69,7 @@ const ClientCard = ({ client, onClick }) => {
   const badge = STATUS_BADGE_MAP[status] || { label: status, className: '' };
 
   return (
-    <article
+    <div
       className="cr-client-card"
       onClick={() => onClick?.(client)}
       role="button"
@@ -96,7 +96,7 @@ const ClientCard = ({ client, onClick }) => {
         </span>
       </div>
       <ChevronRight size={18} className="cr-client-card__action" />
-    </article>
+    </div>
   );
 };
 

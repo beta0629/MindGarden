@@ -186,9 +186,10 @@ const SelfAssessment = () => {
             {SELECT_CARDS.map((card) => {
               const IconComp = card.IconComp;
               return (
-                <article
+                <div
                   key={card.key}
                   className="self-assess__select-card"
+                  role="button"
                   onClick={() => handleSelectType(card.key)}
                   tabIndex={0}
                   onKeyDown={(e) => e.key === 'Enter' && handleSelectType(card.key)}
@@ -201,7 +202,7 @@ const SelfAssessment = () => {
                     <p className="self-assess__select-desc">{card.desc}</p>
                   </div>
                   <ChevronRight size={20} color="var(--mg-warm-gray-400)" aria-hidden />
-                </article>
+                </div>
               );
             })}
           </div>

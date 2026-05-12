@@ -353,6 +353,7 @@ const ConsultantScheduleRenewal = () => {
               onClick={() => setSelectedDate(new Date(date))}
               role="option"
               aria-selected={isSelected}
+              tabIndex={-1}
               aria-label={`${date.getMonth() + 1}월 ${date.getDate()}일 ${DAY_NAMES[date.getDay()]}요일`}
             >
               <span className="cr-schedule__day-name">{DAY_NAMES[date.getDay()]}</span>
@@ -390,7 +391,7 @@ const ConsultantScheduleRenewal = () => {
                 <span className="cr-schedule__timeline-time">
                   {formatTime(schedule.startTime)}
                 </span>
-                <article
+                <div
                   className={`cr-schedule-detail ${getBorderClass(status)}`}
                   onClick={() => setSelectedSchedule(schedule)}
                   role="button"
@@ -442,7 +443,7 @@ const ConsultantScheduleRenewal = () => {
                       </button>
                     </div>
                   )}
-                </article>
+                </div>
               </div>
             );
           })}

@@ -152,8 +152,9 @@ const ClientHomeRenewal = () => {
       {/* 다음 상담 카운트다운 카드 */}
       {nextConsultation ? (
         <section aria-label="다음 상담">
-          <article
+          <div
             className="client-home__hero-card"
+            role="button"
             onClick={() => navigate('/client/session-management')}
             tabIndex={0}
             onKeyDown={(e) => e.key === 'Enter' && navigate('/client/session-management')}
@@ -184,7 +185,7 @@ const ClientHomeRenewal = () => {
             >
               상세 보기 <ChevronRight size={16} />
             </button>
-          </article>
+          </div>
         </section>
       ) : (
         <section aria-label="다음 상담">
@@ -207,8 +208,9 @@ const ClientHomeRenewal = () => {
 
       {/* 오늘의 기분 기록 카드 */}
       <section aria-label="오늘의 기분">
-        <article
+        <div
           className="client-home__mood-card"
+          role="button"
           onClick={() => navigate('/client/mood-journal')}
           tabIndex={0}
           onKeyDown={(e) => e.key === 'Enter' && navigate('/client/mood-journal')}
@@ -235,14 +237,15 @@ const ClientHomeRenewal = () => {
           <div className="client-home__mood-cta">
             감정 일기 작성하기 <ChevronRight size={16} />
           </div>
-        </article>
+        </div>
       </section>
 
       {/* 오늘의 웰니스 팁 */}
       <section aria-label="오늘의 웰니스 팁">
         {wellnessTip ? (
-          <article
+          <div
             className="client-home__wellness-card"
+            role="button"
             onClick={() => navigate('/client/wellness-hub')}
             tabIndex={0}
             onKeyDown={(e) => e.key === 'Enter' && navigate('/client/wellness-hub')}
@@ -255,10 +258,11 @@ const ClientHomeRenewal = () => {
               {wellnessTip.summary || wellnessTip.content?.substring(0, 60) || '오늘 하루도 힘내세요'}
             </p>
             <Sparkles size={40} className="client-home__wellness-icon" aria-hidden />
-          </article>
+          </div>
         ) : (
-          <article
+          <div
             className="client-home__wellness-card"
+            role="button"
             onClick={() => navigate('/client/wellness-hub')}
             tabIndex={0}
             onKeyDown={(e) => e.key === 'Enter' && navigate('/client/wellness-hub')}
@@ -269,7 +273,7 @@ const ClientHomeRenewal = () => {
               오늘 하루, 나를 위한 시간을 가져보세요.
             </p>
             <Sparkles size={40} className="client-home__wellness-icon" aria-hidden />
-          </article>
+          </div>
         )}
       </section>
 

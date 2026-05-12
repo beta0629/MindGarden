@@ -109,7 +109,7 @@ const ScheduleCard = ({ schedule, onOpenLog, onDetail }) => {
   const sessionType = schedule.sessionType || schedule.consultationType || '';
 
   return (
-    <article
+    <div
       className="cr-schedule-card"
       onClick={() => onDetail?.(schedule)}
       role="button"
@@ -143,12 +143,12 @@ const ScheduleCard = ({ schedule, onOpenLog, onDetail }) => {
           </button>
         )}
       </div>
-    </article>
+    </div>
   );
 };
 
 const UrgentClientCard = ({ client, onClick }) => (
-  <article
+  <div
     className="cr-urgent-card"
     onClick={() => onClick?.(client)}
     role="button"
@@ -163,7 +163,7 @@ const UrgentClientCard = ({ client, onClick }) => (
       <div className="cr-urgent-card__reason">{client.reason || client.alertMessage || '위험 지표 감지'}</div>
     </div>
     <AlertTriangle size={20} className="cr-urgent-card__indicator" />
-  </article>
+  </div>
 );
 
 const QuickActionButton = ({ icon: Icon, label, onClick }) => (

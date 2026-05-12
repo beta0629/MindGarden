@@ -207,7 +207,7 @@ const ClientBookingRenewal = () => {
             const cId = c.id || c.consultantId;
             const selected = selectedConsultant && (selectedConsultant.id || selectedConsultant.consultantId) === cId;
             return (
-              <article
+              <div
                 key={cId}
                 className={`client-booking__consultant-card ${
                   selected ? 'client-booking__consultant-card--selected' : ''
@@ -245,7 +245,7 @@ const ClientBookingRenewal = () => {
                 {c.introduction && (
                   <p className="client-booking__consultant-intro">{c.introduction}</p>
                 )}
-              </article>
+              </div>
             );
           })}
         </div>

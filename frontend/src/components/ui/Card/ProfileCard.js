@@ -12,7 +12,7 @@ import '../../admin/ProfileCard.css';
  * @author Core Solution
  * @since 2026-05-11
  */
-const ProfileCard = ({
+const ProfileCard = React.forwardRef(({
   variant = 'list',
   avatar,
   name,
@@ -26,8 +26,9 @@ const ProfileCard = ({
   status,
   isOnline,
   progress,
-  riskLevel
-}) => {
+  riskLevel,
+  ...restProps
+}, ref) => {
   const isCompact = variant === 'compact';
   const resolvedAvatarSize = avatar?.size ?? (isCompact ? 36 : 48);
 
@@ -106,7 +107,7 @@ const ProfileCard = ({
 
   if (isCompact) {
     return (
-      <div className={rootClassName} {...interactionProps}>
+      <div ref={ref} className={rootClassName} {...interactionProps} {...restProps}>
         {headerNode}
         {renderActions && (
           <div className="mg-v2-profile-card__inline-actions">
@@ -118,7 +119,7 @@ const ProfileCard = ({
   }
 
   return (
-    <div className={rootClassName} {...interactionProps}>
+    <div ref={ref} className={rootClassName} {...interactionProps} {...restProps}>
       {headerNode}
 
       {hasBody && (
@@ -165,7 +166,9 @@ const ProfileCard = ({
       )}
     </div>
   );
-};
+});
+
+ProfileCard.displayName = 'ProfileCard';
 
 ProfileCard.propTypes = {
   /** 카드 변형: list(대형), compact(소형) */

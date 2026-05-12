@@ -2459,64 +2459,35 @@ textarea.mg-v2-textarea {
   margin-bottom: var(--mg-space-4, 1.5rem);
 }
 
-.schedule-detail-modal__party-card {
+/* ProfileCard compact 를 parties 컨테이너 안에서 flex: 1 로 균등 분배 */
+.schedule-detail-modal__parties > .mg-v2-profile-card {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: var(--mg-space-3, 1rem);
-  background-color: var(--mg-white);
-  border: 1px solid var(--mg-gray-200);
+  min-width: 0;
   border-radius: var(--mg-radius-md, 8px);
-  box-sizing: border-box;
 }
 
-.schedule-detail-modal__party-label {
+/* 역할 라벨 배지 (내담자/상담사) */
+.schedule-detail-modal__party-role-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
   font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 500;
   color: var(--mg-text-secondary);
-  margin-bottom: var(--mg-space-1, 0.25rem);
-  font-weight: 500;
-}
-
-.schedule-detail-modal__party-name {
-  font-size: var(--font-size-base, 1rem);
-  color: var(--mg-text-primary);
-  font-weight: 600;
-  margin-bottom: var(--mg-space-2, 0.5rem);
-}
-
-.schedule-detail-modal__party-link {
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--mg-primary-500);
-  background: transparent;
-  border: none;
-  padding: 0;
-  text-align: left;
-  cursor: pointer;
-  text-decoration: underline;
-  font-weight: 500;
-}
-
-.schedule-detail-modal__party-link:hover {
-  color: var(--mg-primary-600);
+  background: var(--mg-gray-100, #f3f4f6);
+  border-radius: 9999px;
+  white-space: nowrap;
 }
 
 .schedule-detail-modal__party-link--disabled {
+  font-size: var(--font-size-xs, 0.75rem);
   color: var(--mg-text-disabled, var(--mg-gray-400));
-  text-decoration: none;
   cursor: default;
 }
 
-/* 내담자·상담사 카드 → 요약(ADMIN/STAFF, ID 있음) */
+/* 클릭 가능한 party 카드 — 호버·포커스 피드백 */
 .schedule-detail-modal__party-card--trigger {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  width: 100%;
-  margin: 0;
-  font: inherit;
-  text-align: left;
   cursor: pointer;
-  box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -2534,7 +2505,6 @@ textarea.mg-v2-textarea {
   font-size: var(--font-size-xs, 0.75rem);
   color: var(--mg-text-secondary);
   font-weight: 500;
-  margin-top: var(--mg-space-1, 0.25rem);
 }
 
 /* SchedulePartyQuickViewModal (medium 요약) */

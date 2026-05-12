@@ -19,6 +19,7 @@ import ClientSummaryField from '../consultant/molecules/ClientSummaryField';
 import StatusBadge from '../common/StatusBadge';
 import ScheduleClientNotesSection from './ScheduleClientNotesSection';
 import SchedulePartyQuickViewModal from './molecules/SchedulePartyQuickViewModal';
+import { ProfileCard } from '../ui/Card';
 import { applyPartyPiiPolicy } from '../../utils/partyPiiDisplay';
 
 /** 일정 상세·중첩 요약·확인 모달 z-index (부모 < 요약 < 확인) */
@@ -983,58 +984,58 @@ const ScheduleDetailModal = ({
                     {!isVacationEvent() && (
                             <div className="schedule-detail-modal__parties">
                                 {canPartyQuickSummary && displayData.clientId ? (
-                                    <button
+                                    <ProfileCard
                                         ref={clientPartyTriggerRef}
-                                        type="button"
-                                        className="schedule-detail-modal__party-card schedule-detail-modal__party-card--trigger"
+                                        variant="compact"
+                                        avatar={{ displayName: parsedClientName }}
+                                        name={<SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText>}
+                                        badges={<span className="schedule-detail-modal__party-role-label">내담자</span>}
                                         onClick={() => setPartyQuickView('client')}
+                                        className="schedule-detail-modal__party-card--trigger"
                                         aria-haspopup="dialog"
                                         aria-expanded={partyQuickView === 'client'}
                                         aria-label={`내담자 요약 열기, ${toDisplayString(parsedClientName, '내담자')}`}
-                                    >
-                                        <div className="schedule-detail-modal__party-label">내담자</div>
-                                        <div className="schedule-detail-modal__party-name">
-                                            <SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText>
-                                        </div>
-                                        <span className="schedule-detail-modal__party-card-hint">요약 보기</span>
-                                    </button>
+                                        renderActions={() => (
+                                            <span className="schedule-detail-modal__party-card-hint">요약 보기</span>
+                                        )}
+                                    />
                                 ) : (
-                                    <div className="schedule-detail-modal__party-card">
-                                        <div className="schedule-detail-modal__party-label">내담자</div>
-                                        <div className="schedule-detail-modal__party-name">
-                                            <SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText>
-                                        </div>
-                                        {canPartyQuickSummary ? (
-                                            <span className="schedule-detail-modal__party-link schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
-                                        ) : null}
-                                    </div>
+                                    <ProfileCard
+                                        variant="compact"
+                                        avatar={{ displayName: parsedClientName }}
+                                        name={<SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText>}
+                                        badges={<span className="schedule-detail-modal__party-role-label">내담자</span>}
+                                        renderActions={canPartyQuickSummary ? () => (
+                                            <span className="schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
+                                        ) : undefined}
+                                    />
                                 )}
                                 {canPartyQuickSummary && displayData.consultantId ? (
-                                    <button
+                                    <ProfileCard
                                         ref={consultantPartyTriggerRef}
-                                        type="button"
-                                        className="schedule-detail-modal__party-card schedule-detail-modal__party-card--trigger"
+                                        variant="compact"
+                                        avatar={{ displayName: parsedConsultantName }}
+                                        name={<SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText>}
+                                        badges={<span className="schedule-detail-modal__party-role-label">상담사</span>}
                                         onClick={() => setPartyQuickView('consultant')}
+                                        className="schedule-detail-modal__party-card--trigger"
                                         aria-haspopup="dialog"
                                         aria-expanded={partyQuickView === 'consultant'}
                                         aria-label={`상담사 요약 열기, ${toDisplayString(parsedConsultantName, '상담사')}`}
-                                    >
-                                        <div className="schedule-detail-modal__party-label">상담사</div>
-                                        <div className="schedule-detail-modal__party-name">
-                                            <SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText>
-                                        </div>
-                                        <span className="schedule-detail-modal__party-card-hint">요약 보기</span>
-                                    </button>
+                                        renderActions={() => (
+                                            <span className="schedule-detail-modal__party-card-hint">요약 보기</span>
+                                        )}
+                                    />
                                 ) : (
-                                    <div className="schedule-detail-modal__party-card">
-                                        <div className="schedule-detail-modal__party-label">상담사</div>
-                                        <div className="schedule-detail-modal__party-name">
-                                            <SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText>
-                                        </div>
-                                        {canPartyQuickSummary ? (
-                                            <span className="schedule-detail-modal__party-link schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
-                                        ) : null}
-                                    </div>
+                                    <ProfileCard
+                                        variant="compact"
+                                        avatar={{ displayName: parsedConsultantName }}
+                                        name={<SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText>}
+                                        badges={<span className="schedule-detail-modal__party-role-label">상담사</span>}
+                                        renderActions={canPartyQuickSummary ? () => (
+                                            <span className="schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
+                                        ) : undefined}
+                                    />
                                 )}
                             </div>
                     )}

@@ -5,8 +5,9 @@
  *   `validateRemainingSessions`와 정합 (ACTIVE + 남은 회기 1 이상).
  * - `canTentativeBeforeDepositScheduleForMapping`: 가예약 — `validateMappingForTentativeBeforeDepositSchedule`과 정합
  *   (ACTIVE만. 승인 대기 DEPOSIT_PENDING은 캘린더 드롭·가예약 불가).
- * - `canScheduleForMapping`: GET /api/v1/admin/mappings 의 `hasUpcomingConsultationSchedule` 가 true이면
- *   false (당일 이후 예약·확정·가예약 점유 시 «일정 등록» 숨김). 그 외에는 확정 예약 또는 가예약 경로 중 하나.
+ * - `canScheduleForMapping`: remainingSessions > 0이면 드래그 허용, 0이면 불가.
+ *   남은 회기수만큼 다중 스케줄 생성을 허용하며, 확정 예약 또는 가예약 경로 중 하나를 만족해야 함.
+ * - `isPaymentConfirmed`: PENDING_PAYMENT 이전 상태는 결제 미확인으로 차단.
  *
  * @author CoreSolution
  * @since 2026-04-30
@@ -52,7 +53,30 @@ export const MAPPING_STATUS_ACTIVE = 'ACTIVE';
 /** 백엔드 `ConsultantClientMapping.MappingStatus` — 입금 확인 후 승인 대기 */
 export const MAPPING_STATUS_DEPOSIT_PENDING = 'DEPOSIT_PENDING';
 
-const normalizedRemainingSessions = (mapping) => {
+/** 백엔드 `ConsultantClientMapping.MappingStatus` — 결제 대기 (미확인) */
+export const MAPPING_STATUS_PENDING_PAYMENT = 'PENDING_PAYMENT';
+
+/** 백엔드 `ConsultantClientMapping.MappingStatus` — 결제 확인 완료 */
+export const MAPPING_STATUS_PAYMENT_CONFIRMED = 'PAYMENT_CONFIRMED';
+
+/**
+ * 결제 확인 이후 상태 집합.
+ * PENDING_PAYMENT 만 결제 미확인. 그 외(PAYMENT_CONFIRMED, DEPOSIT_PENDING, ACTIVE 등)는 확인 완료 간주.
+ */
+const PAYMENT_UNCONFIRMED_STATUSES = new Set([MAPPING_STATUS_PENDING_PAYMENT]);
+
+/**
+ * 매칭이 결제 확인을 완료한 상태인지 판별.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isPaymentConfirmed = (mapping) => {
+  if (!mapping?.status) return false;
+  return !PAYMENT_UNCONFIRMED_STATUSES.has(mapping.status);
+};
+
+export const normalizedRemainingSessions = (mapping) => {
   const raw = mapping?.remainingSessions;
   if (raw == null) {
     return 0;
@@ -82,16 +106,28 @@ export const canTentativeBeforeDepositScheduleForMapping = (mapping) => {
 };
 
 /**
- * 통합 스케줄 사이드바 «일정 등록» 허용 (백엔드 `hasUpcomingConsultationSchedule` 와 조합).
+ * 통합 스케줄 사이드바 «일정 등록» 허용 — remainingSessions 기반 다중 스케줄 허용.
  *
- * @param {object} [mapping] - 매칭 DTO (`hasUpcomingConsultationSchedule` 선택)
+ * 제약조건:
+ * 1. 결제 확인(PENDING_PAYMENT 이후)이 완료되어야 함
+ * 2. 남은 회기(remainingSessions)가 1 이상이어야 함
+ * 3. 확정 예약 또는 가예약 경로 중 하나를 만족
+ *
+ * 남은 회기가 있는 한 이미 등록된 스케줄이 있어도 추가 스케줄 생성 가능.
+ * 모든 회기가 소진(remainingSessions === 0)되면 드래그·등록 차단.
+ * 일정 취소 시 remainingSessions가 복원되어 다시 등록 가능.
+ *
+ * @param {object} [mapping] - 매칭 DTO
  * @returns {boolean}
  */
 export const canScheduleForMapping = (mapping) => {
   if (!mapping || typeof mapping !== 'object') {
     return false;
   }
-  if (mapping.hasUpcomingConsultationSchedule === true) {
+  if (!isPaymentConfirmed(mapping)) {
+    return false;
+  }
+  if (normalizedRemainingSessions(mapping) <= 0) {
     return false;
   }
   return (

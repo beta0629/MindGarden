@@ -2,6 +2,8 @@ import {
   assertExternalMappingDropAllowed,
   assertDropDateNotPast,
   EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE,
+  EXTERNAL_DROP_PAYMENT_NOT_CONFIRMED_MESSAGE,
+  EXTERNAL_DROP_NO_REMAINING_SESSIONS_MESSAGE,
   EXTERNAL_DROP_NOT_SCHEDULEABLE_MESSAGE,
   EXTERNAL_DROP_PAST_DATE_MESSAGE
 } from '../scheduleExternalDropGuards';
@@ -29,14 +31,28 @@ describe('scheduleExternalDropGuards', () => {
       expect(r.kind).toBe('invalid_payload');
     });
 
-    it('returns ok for ACTIVE with 0 remaining sessions (가예약 경로)', () => {
+    it('returns payment_not_confirmed for PENDING_PAYMENT', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        remainingSessions: 5
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('payment_not_confirmed');
+      expect(r.userMessage).toBe(EXTERNAL_DROP_PAYMENT_NOT_CONFIRMED_MESSAGE);
+    });
+
+    it('returns no_remaining_sessions for ACTIVE with 0 sessions', () => {
       const r = assertExternalMappingDropAllowed({
         consultantId: 'x',
         clientId: 'y',
         status: 'ACTIVE',
         remainingSessions: 0
       });
-      expect(r).toEqual({ ok: true });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('no_remaining_sessions');
+      expect(r.userMessage).toBe(EXTERNAL_DROP_NO_REMAINING_SESSIONS_MESSAGE);
     });
 
     it('returns not_scheduleable for DEPOSIT_PENDING (승인 대기)', () => {
@@ -44,7 +60,7 @@ describe('scheduleExternalDropGuards', () => {
         consultantId: 'x',
         clientId: 'y',
         status: 'DEPOSIT_PENDING',
-        remainingSessions: 0
+        remainingSessions: 3
       });
       expect(r.ok).toBe(false);
       expect(r.kind).toBe('not_scheduleable');

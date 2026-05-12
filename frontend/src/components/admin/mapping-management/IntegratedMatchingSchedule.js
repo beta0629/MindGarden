@@ -130,6 +130,11 @@ const IntegratedMatchingSchedule = () => {
   }, [viewFilter, filteredMappings.length, scheduleableCount, mappings]);
 
   const handleDropFromExternal = (date, mappingPayload) => {
+    const dateCheck = assertDropDateNotPast(date);
+    if (!dateCheck.ok) {
+      notificationManager.warning(dateCheck.userMessage);
+      return;
+    }
     const mappingCheck = assertExternalMappingDropAllowed(mappingPayload);
     if (!mappingCheck.ok) {
       if (mappingCheck.kind === 'invalid_payload') {
@@ -137,11 +142,6 @@ const IntegratedMatchingSchedule = () => {
       } else {
         notificationManager.warning(mappingCheck.userMessage);
       }
-      return;
-    }
-    const dateCheck = assertDropDateNotPast(date);
-    if (!dateCheck.ok) {
-      notificationManager.warning(dateCheck.userMessage);
       return;
     }
     setPreFilledMapping({

@@ -2,8 +2,12 @@ import {
   canConfirmedScheduleForMapping,
   canScheduleForMapping,
   canTentativeBeforeDepositScheduleForMapping,
+  isPaymentConfirmed,
+  normalizedRemainingSessions,
   MAPPING_STATUS_ACTIVE,
-  MAPPING_STATUS_DEPOSIT_PENDING
+  MAPPING_STATUS_DEPOSIT_PENDING,
+  MAPPING_STATUS_PENDING_PAYMENT,
+  MAPPING_STATUS_PAYMENT_CONFIRMED
 } from '../integratedScheduleSidebarFilterConstants';
 
 describe('integratedScheduleSidebarFilterConstants', () => {
@@ -39,7 +43,45 @@ describe('integratedScheduleSidebarFilterConstants', () => {
     });
 
     it('PAYMENT_CONFIRMED이면 false', () => {
-      expect(canTentativeBeforeDepositScheduleForMapping({ status: 'PAYMENT_CONFIRMED' })).toBe(false);
+      expect(canTentativeBeforeDepositScheduleForMapping({ status: MAPPING_STATUS_PAYMENT_CONFIRMED })).toBe(false);
+    });
+  });
+
+  describe('isPaymentConfirmed', () => {
+    it('PENDING_PAYMENT이면 false (결제 미확인)', () => {
+      expect(isPaymentConfirmed({ status: MAPPING_STATUS_PENDING_PAYMENT })).toBe(false);
+    });
+
+    it('PAYMENT_CONFIRMED이면 true', () => {
+      expect(isPaymentConfirmed({ status: MAPPING_STATUS_PAYMENT_CONFIRMED })).toBe(true);
+    });
+
+    it('ACTIVE이면 true', () => {
+      expect(isPaymentConfirmed({ status: MAPPING_STATUS_ACTIVE })).toBe(true);
+    });
+
+    it('DEPOSIT_PENDING이면 true', () => {
+      expect(isPaymentConfirmed({ status: MAPPING_STATUS_DEPOSIT_PENDING })).toBe(true);
+    });
+
+    it('status 없으면 false', () => {
+      expect(isPaymentConfirmed(null)).toBe(false);
+      expect(isPaymentConfirmed({})).toBe(false);
+    });
+  });
+
+  describe('normalizedRemainingSessions', () => {
+    it('숫자 그대로 반환', () => {
+      expect(normalizedRemainingSessions({ remainingSessions: 5 })).toBe(5);
+    });
+
+    it('null/undefined → 0', () => {
+      expect(normalizedRemainingSessions({ remainingSessions: null })).toBe(0);
+      expect(normalizedRemainingSessions({})).toBe(0);
+    });
+
+    it('문자열 숫자도 변환', () => {
+      expect(normalizedRemainingSessions({ remainingSessions: '3' })).toBe(3);
     });
   });
 
@@ -52,18 +94,22 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(canScheduleForMapping({ status: 'DEPOSIT_PENDING', remainingSessions: 0 })).toBe(false);
     });
 
-    it('ACTIVE + remaining 0이면 가예약만 가능하므로 true', () => {
-      expect(canScheduleForMapping({ status: 'ACTIVE', remainingSessions: 0 })).toBe(true);
+    it('ACTIVE + remaining 0이면 회기 부족으로 false', () => {
+      expect(canScheduleForMapping({ status: 'ACTIVE', remainingSessions: 0 })).toBe(false);
     });
 
-    it('hasUpcomingConsultationSchedule true이면 점유 일정 있어 false', () => {
+    it('PENDING_PAYMENT이면 결제 미확인으로 false', () => {
+      expect(canScheduleForMapping({ status: 'PENDING_PAYMENT', remainingSessions: 5 })).toBe(false);
+    });
+
+    it('hasUpcomingConsultationSchedule true여도 remainingSessions > 0이면 true (다중 스케줄 허용)', () => {
       expect(
         canScheduleForMapping({
           status: 'ACTIVE',
           remainingSessions: 3,
           hasUpcomingConsultationSchedule: true
         })
-      ).toBe(false);
+      ).toBe(true);
     });
 
     it('hasUpcomingConsultationSchedule false이면 기존 규칙 유지', () => {
@@ -76,7 +122,7 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       ).toBe(true);
     });
 
-    it('PAYMENT_CONFIRMED이면 false', () => {
+    it('PAYMENT_CONFIRMED이면 false (ACTIVE만 스케줄 가능)', () => {
       expect(canScheduleForMapping({ status: 'PAYMENT_CONFIRMED', remainingSessions: 5 })).toBe(false);
     });
 

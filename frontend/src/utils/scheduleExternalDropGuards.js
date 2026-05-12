@@ -5,17 +5,28 @@
  * @since 2026-05-06
  */
 
-import { canScheduleForMapping } from '../components/admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
+import {
+  canScheduleForMapping,
+  isPaymentConfirmed,
+  normalizedRemainingSessions
+} from '../components/admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
 
 export const EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE = '매칭 정보가 올바르지 않습니다.';
 
+export const EXTERNAL_DROP_PAYMENT_NOT_CONFIRMED_MESSAGE =
+  '결제 확인이 완료된 매칭만 일정을 등록할 수 있습니다. 결제 확인 후 다시 시도해 주세요.';
+
+export const EXTERNAL_DROP_NO_REMAINING_SESSIONS_MESSAGE =
+  '남은 회기가 없어 일정을 등록할 수 없습니다. 회기를 추가한 후 다시 시도해 주세요.';
+
 export const EXTERNAL_DROP_NOT_SCHEDULEABLE_MESSAGE =
-  '활성(ACTIVE) 매칭만 스케줄 등록이 가능합니다. 승인 대기 매칭은 승인 후 이용하세요. 회기가 없으면 가예약(입금 전)으로 등록할 수 있습니다.';
+  '활성(ACTIVE) 매칭만 스케줄 등록이 가능합니다. 승인 대기 매칭은 승인 후 이용하세요.';
 
 export const EXTERNAL_DROP_PAST_DATE_MESSAGE = '과거 날짜에는 예약할 수 없습니다.';
 
 /**
- * 사이드바 매칭 카드 → 캘린더 드롭 시 매칭 페이로드 허용 여부
+ * 사이드바 매칭 카드 → 캘린더 드롭 시 매칭 페이로드 허용 여부.
+ * 실패 시 kind 로 원인을 세분화하여 UI 알림 메시지를 다르게 표시한다.
  *
  * @param {object} [mappingPayload] - consultantId, clientId, status, remainingSessions 등
  * @returns {{ ok: true } | { ok: false, kind: string, userMessage: string }}
@@ -26,6 +37,20 @@ export function assertExternalMappingDropAllowed(mappingPayload) {
       ok: false,
       kind: 'invalid_payload',
       userMessage: EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE
+    };
+  }
+  if (!isPaymentConfirmed(mappingPayload)) {
+    return {
+      ok: false,
+      kind: 'payment_not_confirmed',
+      userMessage: EXTERNAL_DROP_PAYMENT_NOT_CONFIRMED_MESSAGE
+    };
+  }
+  if (normalizedRemainingSessions(mappingPayload) <= 0) {
+    return {
+      ok: false,
+      kind: 'no_remaining_sessions',
+      userMessage: EXTERNAL_DROP_NO_REMAINING_SESSIONS_MESSAGE
     };
   }
   if (!canScheduleForMapping(mappingPayload)) {

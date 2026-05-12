@@ -198,7 +198,7 @@
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc .fc-bg-event.mg-v2-ad-calendar-event--kr-public-holiday-bg {
     /* 날짜만 붉게: 전일 배경 레이어는 비가시(데이터·포커스는 유지) */
     background-color: transparent !important;
-    border-left: none;
+    border: none !important;
     margin: 0;
     opacity: 0;
     pointer-events: none;
@@ -207,7 +207,9 @@
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday {
     background-color: transparent !important;
+    border-color: var(--fc-border-color, var(--ad-b0kla-border)) !important;
     box-shadow: none !important;
+    outline: none !important;
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday a.fc-daygrid-day-number,
@@ -218,6 +220,7 @@
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday:hover {
     background-color: transparent !important;
+    border-color: var(--fc-border-color, var(--ad-b0kla-border)) !important;
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day .fc-daygrid-day-frame {

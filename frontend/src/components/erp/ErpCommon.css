@@ -1227,8 +1227,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: var(--mg-spacing-xs, 6px) var(--mg-spacing-lg, 18px);
-  border-radius: var(--border-radius-full, 9999px);
+  padding: var(--mg-spacing-xs, 6px) var(--mg-spacing-lg, 18px) !important;
+  border-radius: 9999px !important;
   font-size: var(--badge-font-size, var(--mg-font-sm, 0.875rem));
   font-weight: var(--badge-font-weight, var(--mg-font-medium, 500));
   line-height: 1;
@@ -1268,8 +1268,8 @@
   background: var(--mg-color-surface-main);
   color: var(--mg-color-text-secondary);
   border: 1px solid var(--mg-color-border-main);
-  border-radius: var(--border-radius-full, 9999px);
-  padding: var(--mg-spacing-xs, 6px) var(--mg-spacing-lg, 18px);
+  border-radius: 9999px !important;
+  padding: var(--mg-spacing-xs, 6px) var(--mg-spacing-lg, 18px) !important;
 }
 
 .mg-v2-ad-b0kla .mg-erp-filter-badge.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-erp-filter-badge--selected):hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
@@ -1284,8 +1284,8 @@
   background: var(--mg-primary-500);
   color: var(--mg-color-surface-main);
   border-color: var(--mg-primary-500);
-  border-radius: var(--border-radius-full, 9999px);
-  padding: var(--mg-spacing-xs, 6px) var(--mg-spacing-lg, 18px);
+  border-radius: 9999px !important;
+  padding: var(--mg-spacing-xs, 6px) var(--mg-spacing-lg, 18px) !important;
 }
 
 .mg-v2-ad-b0kla .mg-erp-filter-badge.mg-button.mg-button--outline.mg-v2-button-outline.mg-erp-filter-badge--selected:hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {

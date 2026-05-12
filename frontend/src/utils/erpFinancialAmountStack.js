@@ -8,8 +8,10 @@ import { toSafeNumber } from './safeDisplay';
 export const FINANCIAL_AMOUNT_STACK_LABEL_TOTAL = '승인·청구 총액(거래 금액)';
 export const FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY = '공급가액';
 export const FINANCIAL_AMOUNT_STACK_LABEL_VAT = '부가세(VAT)';
-/** 사업소득 원천징수 예정 — 스택 4번 */
-export const FINANCIAL_WITHHOLDING_TAX_LABEL = '원천징수 예정(국세 3%, 지방세 0.3%, 합계 3.3%)';
+/** 사업소득 원천징수 예정 — 스택 4번 (카드 라벨용 짧은 텍스트) */
+export const FINANCIAL_WITHHOLDING_TAX_LABEL = '원천징수 예정(3.3%)';
+/** 원천징수 상세 비율 — 툴팁·상세 모달용 */
+export const FINANCIAL_WITHHOLDING_TAX_DETAIL = '국세 3%, 지방세 0.3%, 합계 3.3%';
 /** 수입·taxIncluded=true 거래 금액 옆 배지 */
 export const FINANCIAL_TAX_INCLUDED_LABEL = '부가세 포함가';
 export const FINANCIAL_CARD_MERCHANT_FEE_LABEL = '카드 가맹점 수수료';
@@ -144,6 +146,37 @@ export function formatKrw(amount) {
 }
 
 /**
+ * 거래 금액 부호 접두사. EXPENSE 유형이면 마이너스(-), INCOME이면 플러스(+).
+ * @param {Object|null|undefined} transaction
+ * @returns {string} '+' | '-' | ''
+ */
+export function getAmountSignPrefix(transaction) {
+  if (!transaction) {
+    return '';
+  }
+  if (transaction.transactionType === 'EXPENSE') {
+    return '-';
+  }
+  const n = toSafeNumber(transaction.amount);
+  return n >= 0 ? '+' : '';
+}
+
+/**
+ * 거래 금액 CSS 클래스(success/danger) 판별. EXPENSE 유형이면 항상 danger.
+ * @param {Object|null|undefined} transaction
+ * @returns {boolean} true면 success(양수/수입), false면 danger(음수/지출)
+ */
+export function isAmountPositiveDisplay(transaction) {
+  if (!transaction) {
+    return true;
+  }
+  if (transaction.transactionType === 'EXPENSE') {
+    return false;
+  }
+  return toSafeNumber(transaction.amount) >= 0;
+}
+
+/**
  * 카드 정산 등 선택 필드: 없으면 대시(—).
  * @param {unknown} amount
  * @returns {string}
@@ -172,6 +205,32 @@ export function shouldShowIncomeWithholdingTax(transaction) {
     return false;
   }
   return true;
+}
+
+/**
+ * 비용(지출) 유형 거래에서 부가세(VAT) 행 표시 여부.
+ * EXPENSE 유형이면 부가세 행을 숨긴다.
+ * @param {Object|null|undefined} transaction
+ * @returns {boolean}
+ */
+export function shouldShowVatRow(transaction) {
+  if (!transaction) {
+    return false;
+  }
+  return transaction.transactionType !== 'EXPENSE';
+}
+
+/**
+ * 비용(지출) 유형 거래에서 카드 실입금 행 표시 여부.
+ * EXPENSE 유형이면 카드 실입금 행을 숨긴다. 카드 수수료는 유지.
+ * @param {Object|null|undefined} transaction
+ * @returns {boolean}
+ */
+export function shouldShowCardNetDepositRow(transaction) {
+  if (!transaction) {
+    return false;
+  }
+  return transaction.transactionType !== 'EXPENSE';
 }
 
 /**

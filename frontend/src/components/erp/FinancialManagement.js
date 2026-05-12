@@ -14,6 +14,10 @@ import {
   getDisplaySupplyAmount,
   getDisplayVatAmount,
   shouldShowCardSettlementSection,
+  shouldShowVatRow,
+  shouldShowCardNetDepositRow,
+  getAmountSignPrefix,
+  isAmountPositiveDisplay,
   formatKrw,
   formatOptionalKrw,
   shouldShowIncomeWithholdingTax,
@@ -69,7 +73,7 @@ import {
   FM_TRANSACTION_VIEW_MODE_OPTIONS,
   FM_TX_TABLE_LABELS,
   FM_TX_TYPE,
-  FM_CATEGORY_DISPLAY,
+  getCategoryDisplayLabel,
   FM_ERRORS,
   FM_TOAST,
   fmToastDeleteFailed,
@@ -133,6 +137,7 @@ const TRANSACTION_TABLE_COLUMNS = [
 function renderAmountStackSupplyAndVatRows(transaction, layout) {
   const supply = formatOptionalKrw(getDisplaySupplyAmount(transaction));
   const vat = formatOptionalKrw(getDisplayVatAmount(transaction));
+  const showVat = shouldShowVatRow(transaction);
   if (layout === 'compact') {
     return (
       <>
@@ -140,10 +145,12 @@ function renderAmountStackSupplyAndVatRows(transaction, layout) {
           <span className="mg-financial-transaction-card__withholding-label">{FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY}</span>
           <span className="mg-financial-transaction-card__withholding-amount">{supply}</span>
         </div>
-        <div className="mg-financial-transaction-card__compact-line mg-financial-transaction-card__compact-line--amount-stack">
-          <span className="mg-financial-transaction-card__withholding-label">{FINANCIAL_AMOUNT_STACK_LABEL_VAT}</span>
-          <span className="mg-financial-transaction-card__withholding-amount">{vat}</span>
-        </div>
+        {showVat && (
+          <div className="mg-financial-transaction-card__compact-line mg-financial-transaction-card__compact-line--amount-stack">
+            <span className="mg-financial-transaction-card__withholding-label">{FINANCIAL_AMOUNT_STACK_LABEL_VAT}</span>
+            <span className="mg-financial-transaction-card__withholding-amount">{vat}</span>
+          </div>
+        )}
       </>
     );
   }
@@ -154,10 +161,12 @@ function renderAmountStackSupplyAndVatRows(transaction, layout) {
           <span className="mg-financial-transaction-card__label">{FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY}</span>
           <span>{supply}</span>
         </div>
-        <div className="mg-financial-transaction-card__field">
-          <span className="mg-financial-transaction-card__label">{FINANCIAL_AMOUNT_STACK_LABEL_VAT}</span>
-          <span>{vat}</span>
-        </div>
+        {showVat && (
+          <div className="mg-financial-transaction-card__field">
+            <span className="mg-financial-transaction-card__label">{FINANCIAL_AMOUNT_STACK_LABEL_VAT}</span>
+            <span>{vat}</span>
+          </div>
+        )}
       </>
     );
   }
@@ -167,9 +176,11 @@ function renderAmountStackSupplyAndVatRows(transaction, layout) {
         <div>
           <strong>{FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY}:</strong> {supply}
         </div>
-        <div>
-          <strong>{FINANCIAL_AMOUNT_STACK_LABEL_VAT}:</strong> {vat}
-        </div>
+        {showVat && (
+          <div>
+            <strong>{FINANCIAL_AMOUNT_STACK_LABEL_VAT}:</strong> {vat}
+          </div>
+        )}
       </>
     );
   }
@@ -179,10 +190,12 @@ function renderAmountStackSupplyAndVatRows(transaction, layout) {
         <span className="mg-financial-transaction-table__amount-stack-label">{FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY}</span>
         <span>{supply}</span>
       </div>
-      <div className="mg-financial-transaction-table__amount-stack-meta">
-        <span className="mg-financial-transaction-table__amount-stack-label">{FINANCIAL_AMOUNT_STACK_LABEL_VAT}</span>
-        <span>{vat}</span>
-      </div>
+      {showVat && (
+        <div className="mg-financial-transaction-table__amount-stack-meta">
+          <span className="mg-financial-transaction-table__amount-stack-label">{FINANCIAL_AMOUNT_STACK_LABEL_VAT}</span>
+          <span>{vat}</span>
+        </div>
+      )}
     </>
   );
 }
@@ -246,6 +259,7 @@ function renderAmountStackCardSettlementRows(transaction, layout) {
   }
   const fee = formatOptionalKrw(transaction.cardMerchantFeeAmount);
   const net = formatOptionalKrw(transaction.cardNetDepositAmount);
+  const showNetDeposit = shouldShowCardNetDepositRow(transaction);
   if (layout === 'compact') {
     return (
       <>
@@ -253,10 +267,12 @@ function renderAmountStackCardSettlementRows(transaction, layout) {
           <span className="mg-financial-transaction-card__withholding-label">{FINANCIAL_CARD_MERCHANT_FEE_LABEL}</span>
           <span className="mg-financial-transaction-card__withholding-amount">{fee}</span>
         </div>
-        <div className="mg-financial-transaction-card__compact-line">
-          <span className="mg-financial-transaction-card__withholding-label">{FINANCIAL_CARD_NET_DEPOSIT_LABEL}</span>
-          <span className="mg-financial-transaction-card__withholding-amount">{net}</span>
-        </div>
+        {showNetDeposit && (
+          <div className="mg-financial-transaction-card__compact-line">
+            <span className="mg-financial-transaction-card__withholding-label">{FINANCIAL_CARD_NET_DEPOSIT_LABEL}</span>
+            <span className="mg-financial-transaction-card__withholding-amount">{net}</span>
+          </div>
+        )}
       </>
     );
   }
@@ -267,10 +283,12 @@ function renderAmountStackCardSettlementRows(transaction, layout) {
           <span className="mg-financial-transaction-card__label">{FINANCIAL_CARD_MERCHANT_FEE_LABEL}</span>
           <span>{fee}</span>
         </div>
-        <div className="mg-financial-transaction-card__field">
-          <span className="mg-financial-transaction-card__label">{FINANCIAL_CARD_NET_DEPOSIT_LABEL}</span>
-          <span>{net}</span>
-        </div>
+        {showNetDeposit && (
+          <div className="mg-financial-transaction-card__field">
+            <span className="mg-financial-transaction-card__label">{FINANCIAL_CARD_NET_DEPOSIT_LABEL}</span>
+            <span>{net}</span>
+          </div>
+        )}
       </>
     );
   }
@@ -280,9 +298,11 @@ function renderAmountStackCardSettlementRows(transaction, layout) {
         <div>
           <strong>{FINANCIAL_CARD_MERCHANT_FEE_LABEL}:</strong> {fee}
         </div>
-        <div>
-          <strong>{FINANCIAL_CARD_NET_DEPOSIT_LABEL}:</strong> {net}
-        </div>
+        {showNetDeposit && (
+          <div>
+            <strong>{FINANCIAL_CARD_NET_DEPOSIT_LABEL}:</strong> {net}
+          </div>
+        )}
       </>
     );
   }
@@ -292,10 +312,12 @@ function renderAmountStackCardSettlementRows(transaction, layout) {
         <span className="mg-financial-transaction-table__amount-stack-label">{FINANCIAL_CARD_MERCHANT_FEE_LABEL}</span>
         <span>{fee}</span>
       </div>
-      <div className="mg-financial-transaction-table__amount-stack-meta">
-        <span className="mg-financial-transaction-table__amount-stack-label">{FINANCIAL_CARD_NET_DEPOSIT_LABEL}</span>
-        <span>{net}</span>
-      </div>
+      {showNetDeposit && (
+        <div className="mg-financial-transaction-table__amount-stack-meta">
+          <span className="mg-financial-transaction-table__amount-stack-label">{FINANCIAL_CARD_NET_DEPOSIT_LABEL}</span>
+          <span>{net}</span>
+        </div>
+      )}
     </>
   );
 }
@@ -1071,7 +1093,7 @@ const FinancialManagement = () => {
       case 'category':
         return (
           <ErpSafeText fallback="-">
-            {transaction.category === 'CONSULTATION' ? FM_CATEGORY_DISPLAY.CONSULTATION : transaction.category}
+            {getCategoryDisplayLabel(transaction.category)}
           </ErpSafeText>
         );
       case 'amount':
@@ -1080,12 +1102,12 @@ const FinancialManagement = () => {
             <div className="mg-financial-transaction-table__amount-cell">
               <span
                 className={
-                  amountNum >= 0
+                  isAmountPositiveDisplay(transaction)
                     ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
                     : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
                 }
               >
-                {amountNum >= 0 ? '+' : ''}
+                {getAmountSignPrefix(transaction)}
                 {formatKrw(transaction.amount)}
               </span>
               {shouldShowIncomeTaxIncludedLabel(transaction) && (
@@ -1762,7 +1784,7 @@ const FinancialManagement = () => {
                                 </span>
                                 <span className="mg-financial-transaction-card__compact-category">
                                   <ErpSafeText fallback="-">
-                                    {transaction.category === 'CONSULTATION' ? FM_CATEGORY_DISPLAY.CONSULTATION : transaction.category}
+                                    {getCategoryDisplayLabel(transaction.category)}
                                   </ErpSafeText>
                                 </span>
                                 <span className="mg-financial-transaction-card__compact-sep" aria-hidden>
@@ -1771,12 +1793,12 @@ const FinancialManagement = () => {
                                 <span className="mg-financial-transaction-card__compact-amount-group">
                                   <span
                                     className={
-                                      toSafeNumber(transaction.amount) >= 0
+                                      isAmountPositiveDisplay(transaction)
                                         ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
                                         : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
                                     }
                                   >
-                                    {toSafeNumber(transaction.amount) >= 0 ? '+' : ''}
+                                    {getAmountSignPrefix(transaction)}
                                     {formatKrw(transaction.amount)}
                                   </span>
                                   {shouldShowIncomeTaxIncludedLabel(transaction) && (
@@ -1810,7 +1832,7 @@ const FinancialManagement = () => {
                                 <span className="mg-financial-transaction-card__label">{FM_CARD_LABELS.CATEGORY}</span>
                                 <span>
                                   <ErpSafeText fallback="-">
-                                    {transaction.category === 'CONSULTATION' ? FM_CATEGORY_DISPLAY.CONSULTATION : transaction.category}
+                                    {getCategoryDisplayLabel(transaction.category)}
                                   </ErpSafeText>
                                 </span>
                               </div>
@@ -1819,12 +1841,12 @@ const FinancialManagement = () => {
                                 <span className="mg-financial-transaction-card__amount-with-badge">
                                   <span
                                     className={
-                                      toSafeNumber(transaction.amount) >= 0
+                                      isAmountPositiveDisplay(transaction)
                                         ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
                                         : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
                                     }
                                   >
-                                    {toSafeNumber(transaction.amount) >= 0 ? '+' : ''}
+                                    {getAmountSignPrefix(transaction)}
                                     {formatKrw(transaction.amount)}
                                   </span>
                                   {shouldShowIncomeTaxIncludedLabel(transaction) && (
@@ -2294,7 +2316,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           </div>
           <div>
             <strong>{FM_DETAIL_MODAL.LABEL_CATEGORY}</strong>{' '}
-            <ErpSafeText fallback="-">{transaction.category === 'CONSULTATION' ? FM_CATEGORY_DISPLAY.CONSULTATION : transaction.category}</ErpSafeText>
+            <ErpSafeText fallback="-">{getCategoryDisplayLabel(transaction.category)}</ErpSafeText>
           </div>
           <div>
             <strong>{FINANCIAL_AMOUNT_STACK_LABEL_TOTAL}:</strong>{' '}

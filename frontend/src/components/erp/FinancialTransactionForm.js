@@ -19,6 +19,8 @@ import {
   getDisplayVatAmount,
   getDisplayWithholdingTaxAmount,
   shouldShowCardSettlementSection,
+  shouldShowVatRow,
+  shouldShowCardNetDepositRow,
   shouldShowIncomeWithholdingTax,
   FINANCIAL_AMOUNT_STACK_LABEL_TOTAL,
   FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY,
@@ -500,14 +502,16 @@ const FinancialTransactionForm = ({
                   <ErpSafeText value={formatOptionalKrw(getDisplaySupplyAmount(initialTransaction))} />
                 </span>
               </div>
-              <div className="financial-transaction-form-readonly-row">
-                <span className="financial-transaction-form-readonly-label">
-                  <ErpSafeText value={FINANCIAL_AMOUNT_STACK_LABEL_VAT} />
-                </span>
-                <span className="financial-transaction-form-readonly-value">
-                  <ErpSafeText value={formatOptionalKrw(getDisplayVatAmount(initialTransaction))} />
-                </span>
-              </div>
+              {shouldShowVatRow(initialTransaction) && (
+                <div className="financial-transaction-form-readonly-row">
+                  <span className="financial-transaction-form-readonly-label">
+                    <ErpSafeText value={FINANCIAL_AMOUNT_STACK_LABEL_VAT} />
+                  </span>
+                  <span className="financial-transaction-form-readonly-value">
+                    <ErpSafeText value={formatOptionalKrw(getDisplayVatAmount(initialTransaction))} />
+                  </span>
+                </div>
+              )}
               {shouldShowIncomeWithholdingTax(initialTransaction) && (
                 <div className="financial-transaction-form-readonly-row">
                   <span className="financial-transaction-form-readonly-label">
@@ -532,7 +536,7 @@ const FinancialTransactionForm = ({
                   </span>
                 </div>
               )}
-              {initialTransaction.cardNetDepositAmount != null && (
+              {initialTransaction.cardNetDepositAmount != null && shouldShowCardNetDepositRow(initialTransaction) && (
                 <div className="financial-transaction-form-readonly-row">
                   <span className="financial-transaction-form-readonly-label">
                     <ErpSafeText value={FINANCIAL_CARD_NET_DEPOSIT_LABEL} />

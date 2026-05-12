@@ -883,7 +883,11 @@
   font-size: var(--mg-font-sm);
   color: var(--mg-text-secondary);
   font-weight: var(--mg-font-medium);
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mg-financial-transaction-card__category {
@@ -1007,6 +1011,10 @@
 .mg-financial-transaction-card__withholding-label {
   color: var(--mg-text-secondary);
   font-size: var(--mg-font-sm);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mg-financial-transaction-card__withholding-amount {

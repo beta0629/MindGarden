@@ -54,8 +54,30 @@ export const FM_TX_TYPE = {
 };
 
 export const FM_CATEGORY_DISPLAY = {
-  CONSULTATION: '상담료'
+  CONSULTATION: '상담료',
+  CONSULTATION_FEE: '상담료',
+  SALARY: '급여',
+  RENT: '임대료',
+  UTILITY: '관리비',
+  MANAGEMENT_FEE: '관리비',
+  OFFICE_SUPPLIES: '사무용품',
+  TAX: '세금',
+  PURCHASE: '구매',
+  PAYMENT: '결제',
+  OTHER: '기타'
 };
+
+/**
+ * 카테고리 코드를 한글 라벨로 변환. 매핑에 없으면 원본 코드를 반환한다.
+ * @param {string|null|undefined} category
+ * @returns {string}
+ */
+export function getCategoryDisplayLabel(category) {
+  if (!category) {
+    return '-';
+  }
+  return FM_CATEGORY_DISPLAY[category] || category;
+}
 
 export const FM_ERRORS = {
   DATA_LOAD: '데이터를 불러오는 중 오류가 발생했습니다.',

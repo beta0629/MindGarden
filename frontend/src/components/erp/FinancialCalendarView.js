@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
+import { getCategoryDisplayLabel } from '../../constants/financialManagementStrings';
 import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT, ErpFilterToolbar, useErpSilentRefresh } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
@@ -383,11 +384,7 @@ const FinancialCalendarView = () => {
                       </div>
                       <div className="mg-financial-calendar-detail-item-category">
                         <ErpSafeText
-                          value={
-                            transaction.category === 'CONSULTATION'
-                              ? '상담료'
-                              : transaction.category
-                          }
+                          value={getCategoryDisplayLabel(transaction.category)}
                           fallback="—"
                         />{' '}
                         - <ErpSafeText value={transaction.subcategory} fallback="" />

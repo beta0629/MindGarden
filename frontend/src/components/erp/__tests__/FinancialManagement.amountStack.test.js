@@ -8,6 +8,10 @@ import {
   getDisplayVatAmount,
   legacyWithholdingAmountProbablyInTaxField,
   shouldShowCardSettlementSection,
+  shouldShowVatRow,
+  shouldShowCardNetDepositRow,
+  getAmountSignPrefix,
+  isAmountPositiveDisplay,
   formatKrw,
   formatOptionalKrw,
   shouldShowIncomeWithholdingTax,
@@ -195,6 +199,67 @@ describe('FinancialManagement 금액 스택 SSOT', () => {
     it('null/빈값은 대시(—)', () => {
       expect(formatOptionalKrw(null)).toBe('—');
       expect(formatOptionalKrw('')).toBe('—');
+    });
+  });
+
+  describe('shouldShowVatRow — 비용(EXPENSE) 유형 부가세 숨김', () => {
+    it('EXPENSE 유형이면 VAT 행 숨김', () => {
+      expect(shouldShowVatRow({ transactionType: 'EXPENSE', taxAmount: 13000 })).toBe(false);
+    });
+
+    it('INCOME 유형이면 VAT 행 표시', () => {
+      expect(shouldShowVatRow({ transactionType: 'INCOME', taxAmount: 10000 })).toBe(true);
+    });
+
+    it('null/undefined이면 false', () => {
+      expect(shouldShowVatRow(null)).toBe(false);
+      expect(shouldShowVatRow(undefined)).toBe(false);
+    });
+  });
+
+  describe('shouldShowCardNetDepositRow — 비용(EXPENSE) 유형 카드 실입금 숨김', () => {
+    it('EXPENSE 유형이면 카드 실입금 행 숨김', () => {
+      expect(shouldShowCardNetDepositRow({ transactionType: 'EXPENSE', cardNetDepositAmount: 130000 })).toBe(false);
+    });
+
+    it('INCOME 유형이면 카드 실입금 행 표시', () => {
+      expect(shouldShowCardNetDepositRow({ transactionType: 'INCOME', cardNetDepositAmount: 99000 })).toBe(true);
+    });
+
+    it('null/undefined이면 false', () => {
+      expect(shouldShowCardNetDepositRow(null)).toBe(false);
+    });
+  });
+
+  describe('getAmountSignPrefix — 비용(EXPENSE) 마이너스 부호', () => {
+    it('EXPENSE 유형이면 마이너스(-) 접두사', () => {
+      expect(getAmountSignPrefix({ transactionType: 'EXPENSE', amount: 130000 })).toBe('-');
+    });
+
+    it('INCOME 양수이면 플러스(+) 접두사', () => {
+      expect(getAmountSignPrefix({ transactionType: 'INCOME', amount: 100000 })).toBe('+');
+    });
+
+    it('INCOME 금액 0이면 플러스(+) 접두사', () => {
+      expect(getAmountSignPrefix({ transactionType: 'INCOME', amount: 0 })).toBe('+');
+    });
+
+    it('null이면 빈 문자열', () => {
+      expect(getAmountSignPrefix(null)).toBe('');
+    });
+  });
+
+  describe('isAmountPositiveDisplay — 비용(EXPENSE) CSS 클래스 판별', () => {
+    it('EXPENSE 유형이면 항상 false(danger)', () => {
+      expect(isAmountPositiveDisplay({ transactionType: 'EXPENSE', amount: 130000 })).toBe(false);
+    });
+
+    it('INCOME 양수이면 true(success)', () => {
+      expect(isAmountPositiveDisplay({ transactionType: 'INCOME', amount: 100000 })).toBe(true);
+    });
+
+    it('null이면 true(기본값)', () => {
+      expect(isAmountPositiveDisplay(null)).toBe(true);
     });
   });
 });

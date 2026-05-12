@@ -191,6 +191,89 @@ const ClientCard = ({
                 'aria-label': `${displayName} 내담자 선택`
             };
 
+        if (scheduleSelect) {
+            return (
+                <div {...rootCommon} {...rootA11y} className={`${rootCommon.className} ${getStatusClass() === 'unavailable' ? 'mg-client-card--unavailable' : ''}`}>
+                    <Avatar
+                        profileImageUrl={client.profileImageUrl}
+                        displayName={displayName}
+                        className="mg-client-card__avatar mg-client-card__avatar--large"
+                    />
+
+                    <div className="mg-client-card__info">
+                        <div className="mg-client-card__name-row">
+                            <SafeText tag="h4" className="mg-client-card__name mg-client-card__name--large">{client.name}</SafeText>
+                            <div className={`mg-client-card__status-badge mg-client-card__status-badge--${getStatusClass()}`}>
+                                <span aria-hidden="true">{getStatusIcon()}</span>
+                                <span>{getStatusText()}</span>
+                            </div>
+                        </div>
+
+                        <div className="mg-client-card__details">
+                            <div className="mg-client-card__detail-item">
+                                <Calendar size={14} aria-hidden="true" />
+                                <span>최근 상담: {lastConsultLabel}</span>
+                            </div>
+
+                            <div className="mg-client-card__detail-item">
+                                <TrendingUp size={14} aria-hidden="true" />
+                                <span>총 {sessionInfo.total}회 진행</span>
+                            </div>
+                        </div>
+
+                        {showProgress && (
+                            <div className="mg-client-card__progress-section">
+                                <div className="mg-client-card__progress-header">
+                                    <span>진행률</span>
+                                    <span className="mg-client-card__progress-value">{progressPct}%</span>
+                                </div>
+                                <div className="mg-progress-bar">
+                                    <div className="mg-progress-fill" style={{ '--progress': `${progressPct}%` }} />
+                                </div>
+                            </div>
+                        )}
+
+                        {client.consultantName && (
+                            <div className="mg-client-card__consultant-info">
+                                <div className="mg-client-card__consultant-label">담당 상담사:</div>
+                                <SafeText tag="span" className="mg-client-card__consultant-name">{client.consultantName}</SafeText>
+                            </div>
+                        )}
+                    </div>
+
+                    {showActions && (
+                        <div className="mg-client-card__actions">
+                            <MGButton
+                                className={buildErpMgButtonClassName({
+                                    variant: 'primary',
+                                    size: 'sm',
+                                    loading: false,
+                                    className: 'mg-button mg-button-primary mg-button-sm mg-client-card__select-cta'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                disabled={selectDisabled || getStatusClass() === 'unavailable'}
+                                aria-label={`${displayName} 선택`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleClick();
+                                }}
+                                variant="primary"
+                                size="small"
+                                preventDoubleClick={false}
+                            >
+                                {getStatusClass() === 'unavailable' ? '선택불가' : selected ? (
+                                    <>
+                                        <CheckCircle size={14} aria-hidden="true" style={{ marginRight: '4px' }} />
+                                        선택됨
+                                    </>
+                                ) : '선택하기'}
+                            </MGButton>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         return (
             <div {...rootCommon} {...rootA11y}>
                 <div className={`mg-client-card__status-badge mg-client-card__status-badge--${getStatusClass()}`}>

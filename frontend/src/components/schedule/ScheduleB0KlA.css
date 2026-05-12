@@ -227,7 +227,8 @@
   min-height: 200px;
   align-content: start;
   overflow-y: auto;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: var(--cs-spacing-md);
 }
 
@@ -266,16 +267,17 @@
 
 /* ClientCard 아바타 B0KlA (CLIENT_SELECTION_CARD_AVATAR_SPEC) */
 .mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card.mg-client-card--detailed .mg-client-card__avatar--large {
-  width: 80px;
-  height: 80px;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
   overflow: hidden;
   border-radius: 50%;
   position: relative;
   background: var(--ad-b0kla-green-bg);
   color: var(--ad-b0kla-title-color);
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  margin: 0 auto var(--spacing-md, var(--ad-b0kla-radius-sm, 12px));
+  margin: 0;
 }
 
 .mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card.mg-client-card--detailed .mg-client-card__avatar--large .mg-v2-avatar-img {
@@ -304,29 +306,82 @@
   font-weight: 600;
 }
 
-/* B0KlA 내담자 선택 카드(§4·§7): 패딩·메타 간격·이름 말줄임 — .mg-v2-ad-b0kla 스코프만 */
-.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card--detailed.mg-client-card--b0kla-select {
+/* 스케줄 선택 모드 카드: 수평 레이아웃 */
+.mg-v2-ad-b0kla .mg-client-card--detailed.mg-client-card--b0kla-select {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--cs-spacing-md);
   padding: var(--cs-spacing-md) var(--cs-spacing-lg);
 }
 
-.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card--b0kla-select .mg-client-card__details {
+.mg-v2-ad-b0kla .mg-client-card--b0kla-select .mg-client-card__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
   gap: var(--cs-spacing-sm);
 }
 
-.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card--b0kla-select .mg-client-card__name--large {
+.mg-v2-ad-b0kla .mg-client-card--b0kla-select .mg-client-card__name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--cs-spacing-sm);
+}
+
+.mg-v2-ad-b0kla .mg-client-card--b0kla-select .mg-client-card__name--large {
   max-width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card--b0kla-select .mg-client-card__actions {
-  width: 100%;
+/* 이름 + 상태배지 같은 줄 */
+.mg-v2-ad-b0kla .mg-client-card--b0kla-select .mg-client-card__status-badge {
+  position: static;
+  display: inline-flex;
+  margin: 0;
+}
+
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card--b0kla-select .mg-client-card__details {
+  display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: var(--cs-spacing-sm);
+  gap: var(--cs-spacing-xs, 4px);
+  margin-top: 0;
+}
+
+.mg-v2-ad-b0kla .mg-client-card--b0kla-select .mg-client-card__progress-section {
+  margin-top: 0;
+}
+
+.mg-v2-ad-b0kla .mg-client-card--b0kla-select .mg-progress-bar {
+  height: 4px;
+  background: var(--ad-b0kla-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.mg-v2-ad-b0kla .mg-client-card--b0kla-select .mg-progress-fill {
+  height: 100%;
+  background: var(--ad-b0kla-green);
+  width: var(--progress);
+}
+
+.mg-v2-ad-b0kla .mg-client-card--b0kla-select .mg-client-card__consultant-info {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-sm, 8px);
+  margin-top: var(--cs-spacing-xs, 4px);
+}
+
+/* 선택 버튼: 우측 상단 */
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card--b0kla-select .mg-client-card__actions {
+  flex-shrink: 0;
+  align-self: center;
+  width: auto;
+  margin: 0;
 }
 
 .mg-v2-ad-b0kla .mg-client-card__detail-item,
@@ -390,7 +445,8 @@
 }
 
 .mg-v2-ad-b0kla .mg-client-card--unavailable {
-  opacity: 0.6;
+  filter: grayscale(1);
+  background: var(--mg-gray-50);
 }
 
 .mg-v2-ad-b0kla .mg-client-card--unavailable:hover {

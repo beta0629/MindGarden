@@ -421,6 +421,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 scheduleId: isVacationBlock ? null : schedulePk,
                 consultantId: event.extendedProps.consultantId,
                 consultantName: event.extendedProps.consultantName,
+                consultantSpecialization: event.extendedProps.consultantSpecialization,
                 consultantPhone: event.extendedProps.consultantPhone,
                 consultantEmail: event.extendedProps.consultantEmail,
                 clientId: event.extendedProps.clientId,

@@ -1016,7 +1016,11 @@ const ScheduleDetailModal = ({
                                         variant="compact"
                                         avatar={{ displayName: parsedConsultantName }}
                                         name={<SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText>}
-                                        badges={<span className="schedule-detail-modal__party-role-label">상담사</span>}
+                                        badges={
+                                          <span className="schedule-detail-modal__party-role-label">
+                                            {displayData.consultantSpecialization || '상담사'}
+                                          </span>
+                                        }
                                         onClick={() => setPartyQuickView('consultant')}
                                         className="schedule-detail-modal__party-card--trigger"
                                         aria-haspopup="dialog"
@@ -1031,7 +1035,11 @@ const ScheduleDetailModal = ({
                                         variant="compact"
                                         avatar={{ displayName: parsedConsultantName }}
                                         name={<SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText>}
-                                        badges={<span className="schedule-detail-modal__party-role-label">상담사</span>}
+                                        badges={
+                                          <span className="schedule-detail-modal__party-role-label">
+                                            {displayData.consultantSpecialization || '상담사'}
+                                          </span>
+                                        }
                                         renderActions={canPartyQuickSummary ? () => (
                                             <span className="schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
                                         ) : undefined}

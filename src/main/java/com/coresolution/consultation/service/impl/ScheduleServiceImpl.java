@@ -1836,6 +1836,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      */
     private ScheduleResponse convertToScheduleDto(Schedule schedule) {
         String consultantName = "알 수 없음";
+        String consultantSpecialization = null;
         String clientName = "알 수 없음";
         
         log.info("🔍 스케줄 변환 시작: scheduleId={}, consultantId={}, clientId={}", 
@@ -1851,6 +1852,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 consultantName = consultant.getName();
             } else if (consultant != null && !consultant.getIsActive()) {
                 consultantName = consultant.getName() + " (비활성)";
+            }
+            if (consultant != null) {
+                consultantSpecialization = consultant.getSpecialization();
             }
             
             if (schedule.getClientId() != null) {
@@ -1881,6 +1885,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             .id(schedule.getId())
             .consultantId(schedule.getConsultantId())
             .consultantName(consultantName)
+            .consultantSpecialization(consultantSpecialization)
             .clientId(schedule.getClientId())
             .clientName(clientName)
             .date(schedule.getDate())
@@ -2526,6 +2531,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 .limit(actualLimit)
                 .map(schedule -> {
                     String consultantName = "알 수 없음";
+                    String consultantSpecialization = null;
                     String clientName = "알 수 없음";
                     
                     try {
@@ -2536,6 +2542,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                                 if (decryptedData != null && decryptedData.get("name") != null) {
                                     consultantName = decryptedData.get("name");
                                 }
+                                consultantSpecialization = consultant.getSpecialization();
                             }
                         }
                         
@@ -2561,6 +2568,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                             .id(schedule.getId())
                             .consultantId(schedule.getConsultantId())
                             .consultantName(consultantName)
+                            .consultantSpecialization(consultantSpecialization)
                             .clientId(schedule.getClientId())
                             .clientName(clientName)
                             .date(schedule.getDate())

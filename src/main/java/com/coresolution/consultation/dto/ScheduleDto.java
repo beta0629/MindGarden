@@ -28,6 +28,8 @@ public class ScheduleDto {
     private Long id;
     private Long consultantId;
     private String consultantName;
+    /** 상담사 전문유형(specialization). */
+    private String consultantSpecialization;
     private Long clientId;
     private String clientName;
     private LocalDate date;

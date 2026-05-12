@@ -30,6 +30,8 @@ public class ScheduleResponse {
     /** 관리자 통합 캘린더 등 목록용 상담사 연락처(복호화·포맷 정책은 Admin 목록과 동일). */
     private String consultantPhone;
     private String consultantEmail;
+    /** 상담사 전문유형(specialization). User 엔티티의 specialization 필드에서 조회. */
+    private String consultantSpecialization;
     private Long clientId;
     private String clientName;
     private String clientPhone;
@@ -128,6 +130,7 @@ public class ScheduleResponse {
                 .id(dto.getId())
                 .consultantId(dto.getConsultantId())
                 .consultantName(dto.getConsultantName())
+                .consultantSpecialization(dto.getConsultantSpecialization())
                 .clientId(dto.getClientId())
                 .clientName(dto.getClientName())
                 .date(dto.getDate())

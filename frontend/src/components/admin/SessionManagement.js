@@ -13,7 +13,6 @@ import DashboardSection from '../layout/DashboardSection';
 import StatisticsDashboard from './StatisticsDashboard';
 import SearchFilterSection from './SearchFilterSection';
 import SectionHeader from './SectionHeader';
-import MappingCard from './MappingCard';
 import SessionExtensionModal from './mapping/SessionExtensionModal';
 import SafeText from '../common/SafeText';
 import { ProfileCard } from '../ui/Card';

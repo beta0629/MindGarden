@@ -8,7 +8,7 @@
 
 import React from 'react';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
-import MappingCard from '../../mapping/MappingCard';
+import { MappingCard } from '../../../ui/Card';
 import { ActionButton } from '../../../common';
 import { MAPPING_MESSAGES } from '../../../../constants/mapping';
 import './MappingListSection.css';

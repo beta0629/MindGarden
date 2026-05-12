@@ -16,13 +16,13 @@ const ConsultantStatsCard = ({
   rank,
   consultantName,
   consultantPhone,
-  grade,
-  specialization,
+  gradeLabel,
+  specializationLabel,
   completedCount,
   totalCount,
   completionRate,
-  convertGradeToKorean,
-  convertSpecialtyToKorean
+  className,
+  onClick
 }) => {
   const rankClass = rank <= RANK_TOP_THRESHOLD
     ? 'mg-v2-consultant-rank-top'
@@ -36,7 +36,13 @@ const ConsultantStatsCard = ({
   const rateColorClass = getRateColorClass();
 
   return (
-    <div className="mg-v2-card mg-v2-card-clickable">
+    <div
+      className={`mg-v2-card mg-v2-card-clickable ${className || ''}`}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(e); } } : undefined}
+    >
       <div className="mg-v2-flex mg-align-center mg-justify-between mg-mb-md">
         <div className="mg-v2-consultant-header">
           <div className={`mg-v2-consultant-rank ${rankClass}`}>
@@ -52,8 +58,8 @@ const ConsultantStatsCard = ({
           </div>
         </div>
 
-        <StatusBadge variant={grade ? 'success' : 'neutral'}>
-          {grade ? convertGradeToKorean(grade) : '미설정'}
+        <StatusBadge variant={gradeLabel ? 'success' : 'neutral'}>
+          {gradeLabel || '미설정'}
         </StatusBadge>
       </div>
 
@@ -62,7 +68,7 @@ const ConsultantStatsCard = ({
           전문분야
         </div>
         <div className="mg-v2-specialty-content">
-          {specialization ? convertSpecialtyToKorean(specialization) : '미설정'}
+          {specializationLabel || '미설정'}
         </div>
       </div>
 
@@ -102,19 +108,21 @@ ConsultantStatsCard.propTypes = {
   rank: PropTypes.number.isRequired,
   consultantName: PropTypes.string.isRequired,
   consultantPhone: PropTypes.string,
-  grade: PropTypes.string,
-  specialization: PropTypes.string,
+  gradeLabel: PropTypes.string,
+  specializationLabel: PropTypes.string,
   completedCount: PropTypes.number.isRequired,
   totalCount: PropTypes.number.isRequired,
   completionRate: PropTypes.number.isRequired,
-  convertGradeToKorean: PropTypes.func.isRequired,
-  convertSpecialtyToKorean: PropTypes.func.isRequired
+  className: PropTypes.string,
+  onClick: PropTypes.func
 };
 
 ConsultantStatsCard.defaultProps = {
   consultantPhone: '',
-  grade: null,
-  specialization: null
+  gradeLabel: null,
+  specializationLabel: null,
+  className: '',
+  onClick: undefined
 };
 
 export default ConsultantStatsCard;

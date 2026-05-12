@@ -1,7 +1,7 @@
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import SafeText from '../../common/SafeText';
-import { MappingDetailCard } from '../../ui/Card';
+import { MappingCard } from '../../ui/Card';
 import './ClientMappingTab.css';
 
 /**
@@ -56,8 +56,9 @@ const ClientMappingTab = ({
             {clientMappings.map((mapping) => {
               const consultant = consultants.find((c) => c.id === mapping.consultantId);
               return (
-                <MappingDetailCard
+                <MappingCard
                   key={mapping.id}
+                  variant="compact"
                   consultantName={consultant?.name}
                   {...mapping}
                 />

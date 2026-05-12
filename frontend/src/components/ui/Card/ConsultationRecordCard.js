@@ -16,9 +16,17 @@ const ConsultationRecordCard = ({
   sessionDurationMinutes,
   progressScore,
   consultantObservations,
-  isSessionCompleted
+  isSessionCompleted,
+  className,
+  onClick
 }) => (
-  <div className="mg-v2-card mg-v2-consultation-card">
+  <div
+    className={`mg-v2-card mg-v2-consultation-card ${className || ''}`}
+    onClick={onClick}
+    role={onClick ? 'button' : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(e); } } : undefined}
+  >
     <div className="mg-v2-card-header">
       <div className="mg-v2-consultation-info">
         <h4 className="mg-v2-h4">상담 #{id}</h4>
@@ -54,7 +62,9 @@ ConsultationRecordCard.propTypes = {
   sessionDurationMinutes: PropTypes.number,
   progressScore: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   consultantObservations: PropTypes.string,
-  isSessionCompleted: PropTypes.bool
+  isSessionCompleted: PropTypes.bool,
+  className: PropTypes.string,
+  onClick: PropTypes.func
 };
 
 ConsultationRecordCard.defaultProps = {
@@ -63,7 +73,9 @@ ConsultationRecordCard.defaultProps = {
   sessionDurationMinutes: 0,
   progressScore: null,
   consultantObservations: null,
-  isSessionCompleted: false
+  isSessionCompleted: false,
+  className: '',
+  onClick: undefined
 };
 
 export default ConsultationRecordCard;

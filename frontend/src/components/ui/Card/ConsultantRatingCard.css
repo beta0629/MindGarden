@@ -1,0 +1,68 @@
+/**
+ * ConsultantRatingCard 독립 CSS
+ * mg-v2-consultant-rating-card 네임스페이스
+ *
+ * @author CoreSolution
+ * @since 2026-05-12
+ */
+
+.mg-v2-consultant-rating-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mg-v2-consultant-rating-card__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.mg-v2-consultant-rating-card__avatar--accent {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+}
+
+.mg-v2-consultant-rating-card__data {
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-v2-consultant-rating-card__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-consultant-rating-card__rating-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.mg-v2-consultant-rating-card__rating {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-consultant-rating-card__bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--ad-b0kla-border);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.mg-v2-consultant-rating-card__bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s;
+}

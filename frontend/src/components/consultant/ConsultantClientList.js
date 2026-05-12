@@ -8,7 +8,7 @@ import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import { Users, Info, Search, AlertTriangle, List, CheckCircle, XCircle, Clock, CheckCircle2, PauseCircle } from 'lucide-react';
 import FilterBadge from './molecules/FilterBadge';
-import ClientCard from './molecules/ClientCard';
+import ClientCard from '../ui/Card/ClientCard';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
@@ -356,7 +356,8 @@ const ConsultantClientList = () => {
                   <ClientCard
                     key={client.id}
                     client={client}
-                    onViewDetails={handleViewClient}
+                    onClick={handleViewClient}
+                    variant="detailed"
                   />
                 ))}
               </div>

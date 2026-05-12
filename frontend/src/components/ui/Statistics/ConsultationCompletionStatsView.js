@@ -22,6 +22,11 @@ const ConsultationCompletionStatsView = ({
     convertGradeToKorean,
     convertSpecialtyToKorean
 }) => {
+    const getGradeLabel = (grade) =>
+      grade ? convertGradeToKorean(grade) : null;
+    const getSpecializationLabel = (specialization) =>
+      specialization ? convertSpecialtyToKorean(specialization) : null;
+
     if (loading) {
         return (
             <div className="mg-v2-loading-container">
@@ -130,13 +135,11 @@ const ConsultationCompletionStatsView = ({
                         rank={index + 1}
                         consultantName={stat.consultantName}
                         consultantPhone={stat.consultantPhone}
-                        grade={stat.grade}
-                        specialization={stat.specialization}
+                        gradeLabel={getGradeLabel(stat.grade)}
+                        specializationLabel={getSpecializationLabel(stat.specialization)}
                         completedCount={stat.completedCount}
                         totalCount={stat.totalCount}
                         completionRate={stat.completionRate}
-                        convertGradeToKorean={convertGradeToKorean}
-                        convertSpecialtyToKorean={convertSpecialtyToKorean}
                     />
                 ))}
             </div>

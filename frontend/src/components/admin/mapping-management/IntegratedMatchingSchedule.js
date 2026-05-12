@@ -1,13 +1,14 @@
 /**
  * IntegratedMatchingSchedule - 매칭·스케줄 통합 원스톱 화면
  * 좌: 매칭 목록(실 API /api/v1/admin/mappings), 우: 스케줄 캘린더(실 API)
- * 매칭 카드 «일정 등록» → ScheduleModal 상담사·내담자 Pre-filled(캘린더로의 드래그는 사용하지 않음)
+ * 카드 드래그 → 캘린더 드롭 시 ScheduleModal 상담사·내담자 Pre-filled로 오픈
  *
  * @author Core Solution
  * @since 2025-02-25
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Draggable } from '@fullcalendar/interaction';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 import { useSession } from '../../../contexts/SessionContext';
@@ -58,6 +59,7 @@ const IntegratedMatchingSchedule = () => {
   const [paymentModalMapping, setPaymentModalMapping] = useState(null);
   const [depositModalMapping, setDepositModalMapping] = useState(null);
   const [approveProcessing, setApproveProcessing] = useState(false);
+  const sidebarListRef = useRef(null);
 
   const loadMappings = useCallback(async() => {
     setLoading(true);
@@ -116,6 +118,16 @@ const IntegratedMatchingSchedule = () => {
     if (value === '') return byView.length;
     return byView.filter((m) => m.status === value).length;
   };
+
+  const scheduleableCount = filteredMappings.filter((m) => canScheduleForMapping(m)).length;
+
+  useEffect(() => {
+    if (!sidebarListRef.current || filteredMappings.length === 0) return;
+    const draggable = new Draggable(sidebarListRef.current, {
+      itemSelector: '.integrated-schedule__card.fc-event'
+    });
+    return () => draggable.destroy();
+  }, [viewFilter, filteredMappings.length, scheduleableCount, mappings]);
 
   const handleDropFromExternal = (date, mappingPayload) => {
     const mappingCheck = assertExternalMappingDropAllowed(mappingPayload);
@@ -306,6 +318,7 @@ const IntegratedMatchingSchedule = () => {
             <UnifiedLoading type="inline" text="매칭 목록 불러오는 중..." />
           ) : (
             <ul
+              ref={sidebarListRef}
               className="integrated-schedule__list"
               aria-label="매칭 목록"
             >
@@ -325,17 +338,33 @@ const IntegratedMatchingSchedule = () => {
                     </li>
                   );
                 }
-                return filteredMappings.map((mapping) => (
+                return filteredMappings.map((mapping) => {
+                  const scheduleable = canScheduleForMapping(mapping);
+                  const eventData = {
+                    id: `mapping-${mapping.id}`,
+                    title: mapping.clientName || '내담자',
+                    extendedProps: {
+                      mappingId: mapping.id,
+                      consultantId: mapping.consultantId,
+                      clientId: mapping.clientId,
+                      consultantName: mapping.consultantName || '상담사',
+                      clientName: mapping.clientName || '내담자',
+                      status: mapping.status,
+                      remainingSessions: mapping.remainingSessions
+                    }
+                  };
+                  return (
                     <li
                       key={mapping.id}
-                      className={`integrated-schedule__card${
-                        canScheduleForMapping(mapping) ? ' integrated-schedule__card--scheduleable' : ''
-                      }`}
+                      className={`integrated-schedule__card${scheduleable ? ' fc-event' : ''}`}
+                      data-event={scheduleable ? JSON.stringify(eventData) : undefined}
                     >
                       <MappingScheduleCard
                         mapping={mapping}
+                        eventData={eventData}
+                        isDraggable={scheduleable}
                         onScheduleFromCard={
-                          canScheduleForMapping(mapping)
+                          scheduleable
                             ? () => handleOpenScheduleFromCard(mapping)
                             : undefined
                         }
@@ -345,7 +374,8 @@ const IntegratedMatchingSchedule = () => {
                         approveProcessing={approveProcessing}
                       />
                     </li>
-                  ));
+                  );
+                });
               })()}
             </ul>
           )}
@@ -361,11 +391,10 @@ const IntegratedMatchingSchedule = () => {
               userRole={calendarUserRole}
               userId={user?.id ?? undefined}
               refetchTrigger={refetchTrigger}
+              onDropFromExternal={handleDropFromExternal}
               hideScheduleTitle
               integratedMonthEventLayout
               calendarSkin="integrated"
-              disableCalendarEventDrag
-              acceptExternalCalendarDrops={false}
             />
           </div>
         </main>

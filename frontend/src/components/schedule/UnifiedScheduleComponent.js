@@ -985,7 +985,8 @@ const UnifiedScheduleComponent = ({
                 onExternalEventReceive={onDropFromExternal}
                 integratedMonthEventLayout={integratedMonthEventLayout}
                 calendarSkin={calendarSkin}
-                disableCalendarEventDrag={typeof onDropFromExternal === 'function'}
+                disableCalendarEventDrag={resolvedDisableCalendarEventDrag}
+                acceptExternalCalendarDrops={resolvedAcceptExternalCalendarDrops}
             />
 
             {/* 모달들 */}

@@ -1,6 +1,8 @@
 /**
  * MappingScheduleCard - 매칭 스케줄 카드 (상담사→내담자 + 메타 + 액션 버튼)
  * @param {Object} mapping - 매칭 객체
+ * @param {Object} eventData - 드래그용 이벤트 데이터 (FullCalendar)
+ * @param {boolean} isDraggable - 드래그 가능 여부
  * @param {Function} [onScheduleFromCard] - «일정 등록» 클릭 시 (통합 스케줄 사이드바)
  * @param {Function} onPayment - 결제 확인 핸들러
  * @param {Function} onDeposit - 입금 확인 핸들러
@@ -18,6 +20,8 @@ import './MappingScheduleCard.css';
 
 const MappingScheduleCard = ({
   mapping,
+  eventData,
+  isDraggable,
   onScheduleFromCard,
   onPayment,
   onDeposit,
@@ -54,6 +58,8 @@ MappingScheduleCard.propTypes = {
     clientName: PropTypes.string,
     remainingSessions: PropTypes.number
   }),
+  eventData: PropTypes.object,
+  isDraggable: PropTypes.bool,
   onScheduleFromCard: PropTypes.func,
   onPayment: PropTypes.func,
   onDeposit: PropTypes.func,
@@ -63,6 +69,8 @@ MappingScheduleCard.propTypes = {
 
 MappingScheduleCard.defaultProps = {
   mapping: null,
+  eventData: null,
+  isDraggable: false,
   onScheduleFromCard: null,
   onPayment: null,
   onDeposit: null,

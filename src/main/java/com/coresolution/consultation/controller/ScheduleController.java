@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.ProfessionalProviderTypeConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ConsultationRecordDraftResponse;
@@ -1623,6 +1624,7 @@ public class ScheduleController extends BaseApiController {
         String clientName = AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
         String consultantPhone = "";
         String consultantEmail = "";
+        String consultantProfessionalProviderTypeCode = null;
         String clientPhone = "";
         String clientEmail = "";
         String tenantId = schedule.getTenantId();
@@ -1641,6 +1643,7 @@ public class ScheduleController extends BaseApiController {
                     consultantName = scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(consultant);
                     consultantPhone = scheduleListUserFieldsResolver.resolvePhoneForScheduleList(consultant);
                     consultantEmail = scheduleListUserFieldsResolver.resolveEmailForScheduleList(consultant);
+                    consultantProfessionalProviderTypeCode = resolveProfessionalProviderTypeCode(consultant);
                 }
             }
 
@@ -1661,6 +1664,7 @@ public class ScheduleController extends BaseApiController {
             .id(schedule.getId())
             .consultantId(schedule.getConsultantId())
             .consultantName(consultantName)
+            .consultantProfessionalProviderTypeCode(consultantProfessionalProviderTypeCode)
             .consultantPhone(consultantPhone)
             .consultantEmail(consultantEmail)
             .clientId(schedule.getClientId())
@@ -1681,5 +1685,36 @@ public class ScheduleController extends BaseApiController {
             .clientScheduleNotesUnresolvedCount(Math.max(0, clientScheduleNotesUnresolvedCount))
             .clientScheduleNotesClientWideUnresolvedCount(Math.max(0, clientScheduleNotesClientWideUnresolvedCount))
             .build();
+    }
+
+    /**
+     * 사용자의 역할(UserRole)로부터 전문가 유형 코드를 유추합니다.
+     * DB에 professionalProviderTypeCode가 설정되지 않은 레거시 데이터에 대한 fallback.
+     *
+     * @param user 대상 사용자
+     * @return 전문가 유형 코드, 유추 불가 시 null
+     */
+    private String resolveProfessionalProviderTypeCode(User user) {
+        if (user == null) {
+            return null;
+        }
+        String code = user.getProfessionalProviderTypeCode();
+        if (code != null && !code.trim().isEmpty()) {
+            return code;
+        }
+        UserRole role = user.getRole();
+        if (role == null) {
+            return null;
+        }
+        switch (role) {
+            case CONSULTANT:
+                return ProfessionalProviderTypeConstants.DEFAULT_TYPE_CODE_VALUE;
+            case PLAY_THERAPIST:
+                return ProfessionalProviderTypeConstants.LEGACY_PLAY_TYPE_CODE_VALUE;
+            case SPEECH_THERAPIST:
+                return ProfessionalProviderTypeConstants.LEGACY_SPEECH_TYPE_CODE_VALUE;
+            default:
+                return null;
+        }
     }
 }

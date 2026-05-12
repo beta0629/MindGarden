@@ -1,7 +1,7 @@
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
-import StatusBadge from '../../common/StatusBadge';
 import SafeText from '../../common/SafeText';
+import { ConsultationRecordCard } from '../../ui/Card';
 import './ClientConsultationTab.css';
 
 /**
@@ -20,37 +20,6 @@ const ClientConsultationTab = ({
         acc[consultation.clientId].push(consultation);
         return acc;
     }, {});
-
-    // 상담 이력 카드 (mg-v2-card 패턴)
-    const renderConsultationCard = (consultation) => (
-        <div key={consultation.id} className="mg-v2-card mg-v2-consultation-card">
-            <div className="mg-v2-card-header">
-                <div className="mg-v2-consultation-info">
-                    <h4 className="mg-v2-h4">상담 #{consultation.id}</h4>
-                    <p className="mg-v2-consultation-date">
-{consultation.sessionDate ? new Date(consultation.sessionDate).toLocaleDateString('ko-KR') : '날짜 없음'}
-                    </p>
-                </div>
-                <div className="mg-v2-consultation-status">
-                    <StatusBadge variant={consultation.isSessionCompleted ? 'success' : 'warning'}>
-                        {consultation.isSessionCompleted ? '완료' : '진행중'}
-                    </StatusBadge>
-                </div>
-            </div>
-            <div className="mg-v2-card-content">
-                <div className="mg-v2-consultation-details">
-                    <p><span className="mg-v2-form-label">세션 번호</span> <SafeText fallback="N/A">{consultation.sessionNumber}</SafeText></p>
-                    <p><span className="mg-v2-form-label">상담 시간</span>{consultation.sessionDurationMinutes ?? 0}분</p>
-                    {consultation.progressScore != null && (
-                        <p><span className="mg-v2-form-label">진행 점수</span> <SafeText>{consultation.progressScore}</SafeText></p>
-                    )}
-                    {consultation.consultantObservations && (
-                        <p><span className="mg-v2-form-label">상담 내용</span> <SafeText>{consultation.consultantObservations}</SafeText></p>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
 
     // 내담자별 블록 (스펙: mg-v2-consultation-client-block, __header / __count 별도 행)
     const renderClientBlock = (client) => {
@@ -84,7 +53,9 @@ const ClientConsultationTab = ({
                     </div>
                 ) : (
                     <div className="mg-v2-mapping-list-block__grid">
-                        {clientConsultations.map(renderConsultationCard)}
+                        {clientConsultations.map((c) => (
+                            <ConsultationRecordCard key={c.id} {...c} />
+                        ))}
                     </div>
                 )}
             </div>

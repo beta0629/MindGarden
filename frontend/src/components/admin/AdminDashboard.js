@@ -46,7 +46,7 @@ import SafeText from '../common/SafeText';
 import SystemStatus from './system/SystemStatus';
 import DashboardSection from '../layout/DashboardSection';
 import StatCard from '../ui/Card/StatCard';
-import { ProfileCard } from '../ui/Card';
+import { ProfileCard, ConsultantRatingCard } from '../ui/Card';
 import { API_BASE_URL } from '../../constants/api';
 import SystemTools from './system/SystemTools';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';
@@ -83,7 +83,6 @@ import './AdminDashboard/AdminDashboardB0KlA.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
-import Avatar from '../common/Avatar';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 
@@ -928,29 +927,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     <div className="mg-v2-ad-b0kla__counselor-list">
                         {topConsultantsData.length > 0 ? (
                             topConsultantsData.map((c, i) => (
-                                <div key={i} className="mg-v2-ad-b0kla__counselor-item">
-                                    <Avatar
-                                        profileImageUrl={c.profileImageUrl}
-                                        displayName={c.name}
-                                        className="mg-v2-ad-b0kla__counselor-avatar mg-v2-ad-b0kla__counselor-avatar--green"
-                                    />
-                                    <div className="mg-v2-ad-b0kla__counselor-data">
-                                        <span className="mg-v2-ad-b0kla__counselor-name">
-                                            <SafeText>{c.name}</SafeText>
-                                        </span>
-                                        <div className="mg-v2-ad-b0kla__counselor-rating-row">
-                                            <span className="mg-v2-ad-b0kla__counselor-rating">
-                                                <SafeText>{c.rating}</SafeText>
-                                            </span>
-                                            <div className="mg-v2-ad-b0kla__counselor-bar-track">
-                                                <div
-                                                    className="mg-v2-ad-b0kla__counselor-bar-fill"
-                                                    style={{ width: `${c.barWidth}%`, backgroundColor: c.barColor }}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <ConsultantRatingCard key={i} {...c} />
                             ))
                         ) : (
                             <p className="mg-v2-ad-b0kla__counselor-empty">평가 데이터가 없습니다.</p>

@@ -1,6 +1,6 @@
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
-import { StatusBadge } from '../../common';
+import { ConsultantStatsCard } from '../Card';
 
 /**
  * 상담 완료 통계 뷰 컴포넌트 (Presentational)
@@ -125,70 +125,19 @@ const ConsultationCompletionStatsView = ({
             {/* 상담사별 통계 카드 그리드 */}
             <div className="mg-v2-management-grid mg-mt-lg">
                 {statistics.map((stat, index) => (
-                    <div key={stat.consultantId} className="mg-v2-card mg-v2-card-clickable">
-                        {/* 상담사 헤더 */}
-                        <div className="mg-v2-flex mg-align-center mg-justify-between mg-mb-md">
-                            <div className="mg-v2-consultant-header">
-                                <div className={`mg-v2-consultant-rank ${index < 3 ? 'mg-v2-consultant-rank-top' : 'mg-v2-consultant-rank-normal'}`}>
-                                    {index + 1}
-                                </div>
-                                <div>
-                                    <div className="mg-v2-consultant-name">
-                                        {stat.consultantName}
-                                    </div>
-                                    <div className="mg-v2-consultant-id">
-                                        {stat.consultantPhone}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {/* 등급 설정 상태: 설정됨(success) / 미설정(neutral) */}
-                            <StatusBadge variant={stat.grade ? 'success' : 'neutral'}>
-                                {stat.grade ? convertGradeToKorean(stat.grade) : '미설정'}
-                            </StatusBadge>
-                        </div>
-
-                        {/* 전문분야 */}
-                        <div className="mg-v2-specialty-section">
-                            <div className="mg-v2-specialty-label">
-                                전문분야
-                            </div>
-                            <div className="mg-v2-specialty-content">
-                                {stat.specialization ? convertSpecialtyToKorean(stat.specialization) : '미설정'}
-                            </div>
-                        </div>
-
-                        {/* 통계 정보 */}
-                        <div className="mg-v2-stats-grid">
-                            <div className="mg-v2-stat-item">
-                                <div className="mg-v2-stat-number mg-v2-stat-number-success">
-                                    {stat.completedCount}
-                                </div>
-                                <div className="mg-v2-stat-label">
-                                    완료 건수
-                                </div>
-                            </div>
-                            
-                            <div className="mg-v2-text-center">
-                                <div className="mg-v2-stat-number mg-v2-stat-number-secondary">
-                                    {stat.totalCount}
-                                </div>
-                                <div className="mg-v2-text-xs mg-v2-text-secondary mg-v2-font-weight-medium">
-                                    총 건수
-                                </div>
-                            </div>
-                            
-                            <div className="mg-v2-stat-item">
-                                <div className={`mg-v2-stat-number mg-v2-stat-number-rate ${stat.completionRate >= 80 ? 'mg-v2-stat-number-success' : 
-                                           stat.completionRate >= 60 ? 'mg-v2-stat-number-warning' : 'mg-v2-stat-number-danger'}`}>
-                                    {stat.completionRate}%
-                                </div>
-                                <div className="mg-v2-stat-label">
-                                    완료율
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <ConsultantStatsCard
+                        key={stat.consultantId}
+                        rank={index + 1}
+                        consultantName={stat.consultantName}
+                        consultantPhone={stat.consultantPhone}
+                        grade={stat.grade}
+                        specialization={stat.specialization}
+                        completedCount={stat.completedCount}
+                        totalCount={stat.totalCount}
+                        completionRate={stat.completionRate}
+                        convertGradeToKorean={convertGradeToKorean}
+                        convertSpecialtyToKorean={convertSpecialtyToKorean}
+                    />
                 ))}
             </div>
 

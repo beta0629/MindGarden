@@ -28,8 +28,8 @@ public class ScheduleDto {
     private Long id;
     private Long consultantId;
     private String consultantName;
-    /** 상담사 전문유형(specialization). */
-    private String consultantSpecialization;
+    /** 상담사 전문가 유형(professionalProviderTypeCode). 공통코드 PROFESSIONAL_PROVIDER_TYPE의 code_value. */
+    private String consultantProfessionalProviderTypeCode;
     private Long clientId;
     private String clientName;
     private LocalDate date;

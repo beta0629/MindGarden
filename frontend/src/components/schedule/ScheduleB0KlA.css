@@ -2352,10 +2352,9 @@ textarea.mg-v2-textarea {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  margin: 0 0 var(--mg-space-3);
+  margin: 0 -24px var(--mg-space-3);
   padding: 0;
   background: transparent;
   border: none;
@@ -2370,10 +2369,13 @@ textarea.mg-v2-textarea {
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
-  padding: var(--mg-space-2);
+  padding: 4px 24px;
   background: var(--ad-b0kla-green-bg);
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm, 8px);
+  border-top: 1px solid var(--ad-b0kla-border);
+  border-bottom: 1px solid var(--ad-b0kla-border);
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
 }
 
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button {

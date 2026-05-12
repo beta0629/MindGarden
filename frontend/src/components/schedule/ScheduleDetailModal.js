@@ -21,6 +21,7 @@ import ScheduleClientNotesSection from './ScheduleClientNotesSection';
 import SchedulePartyQuickViewModal from './molecules/SchedulePartyQuickViewModal';
 import { ProfileCard } from '../ui/Card';
 import { applyPartyPiiPolicy } from '../../utils/partyPiiDisplay';
+import { getProfessionalProviderTypeLabel } from '../../constants/professionalProviderRoles';
 
 /** 일정 상세·중첩 요약·확인 모달 z-index (부모 < 요약 < 확인) */
 const SCHEDULE_DETAIL_Z_INDEX_MAIN = 1040;
@@ -1018,7 +1019,7 @@ const ScheduleDetailModal = ({
                                         name={<SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText>}
                                         badges={
                                           <span className="schedule-detail-modal__party-role-label">
-                                            {displayData.consultantSpecialization || '상담사'}
+                                            {getProfessionalProviderTypeLabel(displayData.consultantProfessionalProviderTypeCode) || '상담사'}
                                           </span>
                                         }
                                         onClick={() => setPartyQuickView('consultant')}
@@ -1037,7 +1038,7 @@ const ScheduleDetailModal = ({
                                         name={<SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText>}
                                         badges={
                                           <span className="schedule-detail-modal__party-role-label">
-                                            {displayData.consultantSpecialization || '상담사'}
+                                            {getProfessionalProviderTypeLabel(displayData.consultantProfessionalProviderTypeCode) || '상담사'}
                                           </span>
                                         }
                                         renderActions={canPartyQuickSummary ? () => (

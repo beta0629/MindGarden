@@ -563,7 +563,7 @@ const UnifiedScheduleComponent = ({
                                 mappingId: schedule.mappingId || schedule.scheduleMappingId || schedule.mapping_id || schedule.schedule_mapping_id || undefined,
                                 consultantId: schedule.consultantId,
                                 consultantName: schedule.consultantName,
-                                consultantSpecialization: schedule.consultantSpecialization,
+                                consultantProfessionalProviderTypeCode: schedule.consultantProfessionalProviderTypeCode,
                                 consultantPhone: schedule.consultantPhone,
                                 consultantEmail: schedule.consultantEmail,
                                 clientId: schedule.clientId,

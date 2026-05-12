@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 
 import UnifiedLoading from '../common/UnifiedLoading';
-import Avatar from '../common/Avatar';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { ProfileCard } from '../ui/Card';
 import '../../styles/unified-design-tokens.css';
 /**
  * 상담사용 내담자 섹션 컴포넌트
@@ -212,47 +212,30 @@ const ConsultantClientSection = ({ userId }) => {
         ) : (
           <div className="mg-v2-client-grid">
             {clients.slice(0, 5).map((client, index) => (
-              <div
+              <ProfileCard
                 key={`${client.id}-${index}`}
-                className="mg-v2-client-card"
-                onClick={() => handleClientClick(client.id)}
-              >
-                <div className="mg-v2-client-card-header">
-                  <Avatar
-                    profileImageUrl={client.profileImageUrl}
-                    displayName={toDisplayString(client.name, '내담자')}
-                    className="mg-v2-client-card-avatar"
-                  />
-                  <div className="mg-v2-client-card-info">
-                    <SafeText tag="h4" className="mg-v2-h4" fallback="이름 없음">{client.name}</SafeText>
-                    <p className="mg-v2-text-sm mg-v2-color-text-secondary">
-                      <SafeText fallback="이메일 없음">{client.email}</SafeText>
-                    </p>
-                  </div>
+                variant="list"
+                avatar={{ profileImageUrl: client.profileImageUrl, displayName: toDisplayString(client.name, '내담자') }}
+                name={<SafeText tag="h4" fallback="이름 없음">{client.name}</SafeText>}
+                contactInfo={{ email: <SafeText fallback="이메일 없음">{client.email}</SafeText> }}
+                badges={
                   <span className={`mg-v2-badge ${getStatusClass(client.mappingStatus)}`}>
                     <SafeText>{getStatusText(client.mappingStatus)}</SafeText>
                   </span>
-                </div>
-
-                <div className="mg-v2-stats-grid">
-                  <div className="mg-v2-stat-item">
-                    <div className="mg-v2-stat-label">총 회기</div>
-                    <div className="mg-v2-stat-value">{client.totalSessions || 0}회</div>
-                  </div>
-                  <div className="mg-v2-stat-item">
-                    <div className="mg-v2-stat-label">사용 회기</div>
-                    <div className="mg-v2-stat-value">{client.usedSessions || 0}회</div>
-                  </div>
-                </div>
-
-                <div className="mg-v2-client-card-footer">
-                  
-                  마지막 상담: {client.lastConsultationDate ? 
-                    new Date(client.lastConsultationDate).toLocaleDateString('ko-KR') : 
-                    '없음'
-                  }
-                </div>
-              </div>
+                }
+                statsItems={[
+                  { label: '총 회기', value: `${client.totalSessions || 0}회` },
+                  { label: '사용 회기', value: `${client.usedSessions || 0}회` }
+                ]}
+                extraInfo={
+                  <span>
+                    마지막 상담: {client.lastConsultationDate
+                      ? new Date(client.lastConsultationDate).toLocaleDateString('ko-KR')
+                      : '없음'}
+                  </span>
+                }
+                onClick={() => handleClientClick(client.id)}
+              />
             ))}
           </div>
         )}

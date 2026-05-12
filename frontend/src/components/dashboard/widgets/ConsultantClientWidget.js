@@ -6,7 +6,9 @@ import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
-import Avatar from '../../common/Avatar';
+import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
+import { ProfileCard } from '../../ui/Card';
 import './ConsultantClientWidget.css';
 const ConsultantClientWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -199,53 +201,30 @@ const ConsultantClientWidget = ({ widget, user }) => {
     return (
       <div className="consultant-client-grid">
         {clients.slice(0, 5).map((client, index) => (
-          <div
+          <ProfileCard
             key={`${client.id}-${index}`}
-            className="consultant-client-card"
-            onClick={() => handleClientClick(client.id)}
-          >
-            <div className="consultant-client-card-header">
-              <Avatar
-                profileImageUrl={client.profileImageUrl}
-                displayName={client.name}
-                className="consultant-client-avatar mg-v2-client-card-avatar"
-              />
-              <div className="consultant-client-info">
-                <h4 className="consultant-client-name">
-                  {client.name || '이름 없음'}
-                </h4>
-                <p className="consultant-client-email">
-                  {client.email || '이메일 없음'}
-                </p>
-              </div>
+            variant="list"
+            avatar={{ profileImageUrl: client.profileImageUrl, displayName: toDisplayString(client.name, '내담자') }}
+            name={<SafeText tag="h4" fallback="이름 없음">{client.name}</SafeText>}
+            contactInfo={{ email: <SafeText fallback="이메일 없음">{client.email}</SafeText> }}
+            badges={
               <span className={`consultant-client-status-badge ${getStatusClass(client.mappingStatus)}`}>
-                {getStatusText(client.mappingStatus)}
+                <SafeText>{getStatusText(client.mappingStatus)}</SafeText>
               </span>
-            </div>
-
-            <div className="consultant-client-stats">
-              <div className="consultant-client-stat">
-                <div className="consultant-client-stat-label">총 회기</div>
-                <div className="consultant-client-stat-value">
-                  {client.totalSessions || 0}회
-                </div>
-              </div>
-              <div className="consultant-client-stat">
-                <div className="consultant-client-stat-label">사용 회기</div>
-                <div className="consultant-client-stat-value">
-                  {client.usedSessions || 0}회
-                </div>
-              </div>
-            </div>
-
-            <div className="consultant-client-footer">
-              
-              마지막 상담: {client.lastConsultationDate ? 
-                new Date(client.lastConsultationDate).toLocaleDateString('ko-KR') : 
-                '없음'
-              }
-            </div>
-          </div>
+            }
+            statsItems={[
+              { label: '총 회기', value: `${client.totalSessions || 0}회` },
+              { label: '사용 회기', value: `${client.usedSessions || 0}회` }
+            ]}
+            extraInfo={
+              <span>
+                마지막 상담: {client.lastConsultationDate
+                  ? new Date(client.lastConsultationDate).toLocaleDateString('ko-KR')
+                  : '없음'}
+              </span>
+            }
+            onClick={() => handleClientClick(client.id)}
+          />
         ))}
       </div>
     );

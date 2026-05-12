@@ -5,7 +5,7 @@ import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
-import Avatar from '../common/Avatar';
+import { ProfileCard } from '../ui/Card';
 import './VacationStatistics.css';
 
 /**
@@ -306,29 +306,26 @@ const VacationStatistics = ({ className = "" }) => {
                         {vacationStats.consultantStats.map(consultant => {
                             const consultantColor = getConsultantColor(consultant.consultantId);
                             return (
-                                <div 
-                                    key={consultant.consultantId} 
-                                    className="consultant-card" 
-                                >
-                                    <div className="consultant-info">
-                                        <Avatar
-                                            profileImageUrl={consultant.profileImageUrl}
-                                            displayName={consultant.consultantName}
-                                            className={`consultant-avatar ${consultantColor} mg-v2-consultant-detail-avatar`}
-                                        />
-                                        <div className="consultant-name">{consultant.consultantName}</div>
-                                        <div className="consultant-vacation-info">{consultant.consultantEmail}</div>
-                                    </div>
-                                    <div className="consultant-vacation-details">
-                                        <div className="consultant-vacation-count">
-                                            {typeof consultant.vacationDays === 'number' 
+                                <ProfileCard
+                                    key={consultant.consultantId}
+                                    variant="list"
+                                    avatar={{ profileImageUrl: consultant.profileImageUrl, displayName: consultant.consultantName }}
+                                    name={consultant.consultantName}
+                                    contactInfo={{ email: consultant.consultantEmail }}
+                                    statsItems={[
+                                        {
+                                            label: '휴가일수',
+                                            value: `${typeof consultant.vacationDays === 'number'
                                                 ? consultant.vacationDays.toFixed(1)
-                                                : consultant.vacationDays}일
-                                        </div>
-                                        <div className="vacation-types">
-                                            {consultant.vacationDaysByType && Object.entries(consultant.vacationDaysByType).map(([type, days]) => (
-                                                days > 0 && (
-                                                    <span 
+                                                : consultant.vacationDays}일`
+                                        }
+                                    ]}
+                                    badges={[
+                                        ...(consultant.vacationDaysByType
+                                            ? Object.entries(consultant.vacationDaysByType)
+                                                .filter(([, days]) => days > 0)
+                                                .map(([type, days]) => (
+                                                    <span
                                                         key={type}
                                                         className="type-badge"
                                                         data-bg-color={`${consultantColor}20`}
@@ -338,12 +335,12 @@ const VacationStatistics = ({ className = "" }) => {
                                                     >
                                                         {getVacationTypeKorean(type)} {days.toFixed(1)}일
                                                     </span>
-                                                )
-                                            ))}
-                                            {/* 백업: 가중치 데이터가 없으면 개수로 표시 */}
-                                            {!consultant.vacationDaysByType && consultant.vacationByType && Object.entries(consultant.vacationByType).map(([type, count]) => (
-                                                count > 0 && (
-                                                    <span 
+                                                )) : []),
+                                        ...(!consultant.vacationDaysByType && consultant.vacationByType
+                                            ? Object.entries(consultant.vacationByType)
+                                                .filter(([, count]) => count > 0)
+                                                .map(([type, count]) => (
+                                                    <span
                                                         key={type}
                                                         className="type-badge"
                                                         data-bg-color={`${consultantColor}20`}
@@ -352,14 +349,10 @@ const VacationStatistics = ({ className = "" }) => {
                                                     >
                                                         {getVacationTypeKorean(type)} {count}회
                                                     </span>
-                                                )
-                                            ))}
-                                        </div>
-                                        <div className="last-vacation">
-                                            <span>최근: {formatDate(consultant.lastVacationDate)}</span>
-                                        </div>
-                                    </div>
-                                </div>
+                                                )) : [])
+                                    ]}
+                                    extraInfo={<span>최근: {formatDate(consultant.lastVacationDate)}</span>}
+                                />
                             );
                         })}
                     </div>

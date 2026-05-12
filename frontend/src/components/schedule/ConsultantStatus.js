@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
-import Avatar from '../common/Avatar';
 import { apiGet } from '../../utils/ajax';
+import { ProfileCard } from '../ui/Card';
 import './ConsultantStatus.css';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -193,27 +193,30 @@ const ConsultantStatus = () => {
                     {consultants.map((consultant) => {
                         const { status } = consultant;
                         return (
-                            <div key={consultant.id} className="consultant-status-card">
-                                <Avatar
-                                    profileImageUrl={consultant.profileImageUrl || consultant.profileImage || consultant.socialProfileImage}
-                                    displayName={toDisplayString(consultant.name, '상담사')}
-                                    className="consultant-status-avatar"
-                                />
-                                <div className="consultant-status-info">
-                                    <SafeText tag="div" className="consultant-status-name">{consultant.name}</SafeText>
-                                    <SafeText tag="div" className="consultant-status-email">{consultant.email}</SafeText>
-                                    <SafeText tag="div" className="consultant-status-phone" fallback="전화번호 없음">{consultant.phone}</SafeText>
-                                    <SafeText tag="div" className="consultant-status-specialty" fallback="전문분야 미설정">{consultant.specialty}</SafeText>
-                                    <div className="consultant-status-status">
-                                        <span className="consultant-status-badge" data-status={status.color}>
-                                            <SafeText>{status.text}</SafeText>
-                                        </span>
-                                    </div>
-                                    <div className="consultant-status-date">
-                                        등록일: <SafeText>{consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '-'}</SafeText>
-                                    </div>
-                                </div>
-                            </div>
+                            <ProfileCard
+                                key={consultant.id}
+                                variant="list"
+                                avatar={{
+                                    profileImageUrl: consultant.profileImageUrl || consultant.profileImage || consultant.socialProfileImage,
+                                    displayName: toDisplayString(consultant.name, '상담사')
+                                }}
+                                name={<SafeText tag="div">{consultant.name}</SafeText>}
+                                contactInfo={{
+                                    email: <SafeText>{consultant.email}</SafeText>,
+                                    phone: <SafeText fallback="전화번호 없음">{consultant.phone}</SafeText>
+                                }}
+                                badges={[
+                                    <span className="consultant-status-badge" data-status={status.color} key="status">
+                                        <SafeText>{status.text}</SafeText>
+                                    </span>
+                                ]}
+                                statsItems={[
+                                    { label: '전문분야', value: <SafeText fallback="미설정">{consultant.specialty}</SafeText> }
+                                ]}
+                                extraInfo={
+                                    <div>등록일: <SafeText>{consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '-'}</SafeText></div>
+                                }
+                            />
                         );
                     })}
                 </div>

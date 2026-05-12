@@ -46,7 +46,7 @@ import SafeText from '../common/SafeText';
 import SystemStatus from './system/SystemStatus';
 import DashboardSection from '../layout/DashboardSection';
 import StatCard from '../ui/Card/StatCard';
-import MGCard from '../common/MGCard';
+import { ProfileCard } from '../ui/Card';
 import { API_BASE_URL } from '../../constants/api';
 import SystemTools from './system/SystemTools';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';
@@ -1117,46 +1117,24 @@ const AdminDashboard = ({ user: propUser }) => {
                     {stats.vacationStats?.consultantStats && stats.vacationStats.consultantStats.length > 0 && (
                         <div className="mg-vacation-cards-grid">
                             {stats.vacationStats.consultantStats.slice(0, WIDGET_CONSTANTS.DASHBOARD_LIMITS.MAX_ITEMS).map((consultant) => (
-                                <MGCard 
+                                <ProfileCard
                                     key={consultant.consultantId}
-                                    variant="default"
-                                    className="mg-vacation-card"
+                                    variant="list"
+                                    avatar={{ profileImageUrl: consultant.profileImageUrl, displayName: consultant.consultantName }}
+                                    name={consultant.consultantName}
+                                    contactInfo={{ email: consultant.consultantEmail }}
+                                    statsItems={[
+                                        { label: '휴가일수', value: `${(consultant.vacationDays || 0).toFixed(1)}일` },
+                                        {
+                                            label: '최근 휴가',
+                                            value: consultant.lastVacationDate
+                                                ? new Date(consultant.lastVacationDate).toLocaleDateString('ko-KR')
+                                                : '-',
+                                            icon: <Clock size={14} />
+                                        }
+                                    ]}
                                     onClick={() => navigate(`${ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE}?id=${consultant.consultantId}`)}
-                                >
-                                    <div className="mg-vacation-card__header">
-                                        <div className="mg-flex mg-v2-items-center mg-gap-2">
-                                            <Avatar
-                                                profileImageUrl={consultant.profileImageUrl}
-                                                displayName={consultant.consultantName}
-                                                className="mg-avatar mg-avatar-sm mg-avatar-primary mg-v2-consultant-detail-avatar"
-                                            />
-                                            <div>
-                                                <div className="mg-vacation-card__name">{consultant.consultantName}</div>
-                                                <div className="mg-vacation-card__email">{consultant.consultantEmail}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="mg-vacation-card__body">
-                                        <div className="mg-vacation-card__field">
-                                            <span className="mg-vacation-card__label">휴가일수</span>
-                                            <span className="mg-v2-badge mg-v2-badge-primary">
-                                                {(consultant.vacationDays || 0).toFixed(1)}일
-                                            </span>
-                                        </div>
-                                        <div className="mg-vacation-card__field">
-                                            <span className="mg-vacation-card__label">최근 휴가</span>
-                                            <div className="mg-flex mg-v2-items-center mg-gap-1">
-                                                <Clock size={14} />
-                                                <span>
-                                                    {consultant.lastVacationDate ? 
-                                                        new Date(consultant.lastVacationDate).toLocaleDateString('ko-KR') : 
-                                                        '-'
-                                                    }
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </MGCard>
+                                />
                             ))}
                         </div>
                     )}

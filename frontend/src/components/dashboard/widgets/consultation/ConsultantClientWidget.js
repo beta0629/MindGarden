@@ -20,9 +20,9 @@ import BaseWidget from '../BaseWidget';
 import SafeText from '../../../common/SafeText';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
-import Avatar from '../../../common/Avatar';
 import './ConsultantClientWidget.css';
 import MGButton from '../../../common/MGButton';
+import { ProfileCard } from '../../../ui/Card';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const ConsultantClientWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -96,73 +96,66 @@ const ConsultantClientWidget = ({ widget, user }) => {
       <div className="client-content">
         <div className="client-list">
           {clients.map((client) => (
-            <div key={client.id} className="client-item">
-              <Avatar
-                profileImageUrl={client.profileImageUrl}
-                displayName={toDisplayString(client.name, '내담자')}
-                className="client-avatar"
-              />
-              <div className="client-info">
-                <SafeText tag="div" className="client-name">{client.name}</SafeText>
-                <div className="client-details">
-                  <div className={`client-status ${getStatusClass(client.status)}`}>
-                    {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
-                    {client.status === 'ACTIVE' ? '활성'
-                      : client.status === 'PENDING' ? '대기'
-                        : client.status === 'COMPLETED' ? '완료' : '비활성'}
-                  </div>
-                  {client.lastSessionAt && (
-                    <div className="last-session">
-                      
-                      <span>최근: {formatDate(client.lastSessionAt)}</span>
-                    </div>
-                  )}
-                  {client.sessionCount && (
-                    <div className="session-count">
-                      총 {client.sessionCount}회 상담
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="client-actions">
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  size="small"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'sm',
-                    loading: false,
-                    className: 'action-btn message-btn'
-                  })}
-                  loading={false}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => navigate(`/messages/${client.id}`)}
-                  title="메시지"
-                  preventDoubleClick={false}
-                >
-                  메시지
-                </MGButton>
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  size="small"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'sm',
-                    loading: false,
-                    className: 'action-btn view-btn'
-                  })}
-                  loading={false}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => navigate(`/clients/${client.id}`)}
-                  title="상세보기"
-                  preventDoubleClick={false}
-                >
-                  보기
-                </MGButton>
-              </div>
-            </div>
+            <ProfileCard
+              key={client.id}
+              variant="compact"
+              avatar={{ profileImageUrl: client.profileImageUrl, displayName: toDisplayString(client.name, '내담자') }}
+              name={<SafeText tag="div">{client.name}</SafeText>}
+              badges={[
+                <span key="status" className={`client-status ${getStatusClass(client.status)}`}>
+                  {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
+                  {client.status === 'ACTIVE' ? '활성'
+                    : client.status === 'PENDING' ? '대기'
+                      : client.status === 'COMPLETED' ? '완료' : '비활성'}
+                </span>,
+                client.sessionCount && (
+                  <span key="sessions" className="session-count">
+                    총 {client.sessionCount}회
+                  </span>
+                )
+              ].filter(Boolean)}
+              contactInfo={client.lastSessionAt ? { email: <span>최근: {formatDate(client.lastSessionAt)}</span> } : undefined}
+              renderActions={() => (
+                <>
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    size="small"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'action-btn message-btn'
+                    })}
+                    loading={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={() => navigate(`/messages/${client.id}`)}
+                    title="메시지"
+                    preventDoubleClick={false}
+                  >
+                    메시지
+                  </MGButton>
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    size="small"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm',
+                      loading: false,
+                      className: 'action-btn view-btn'
+                    })}
+                    loading={false}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={() => navigate(`/clients/${client.id}`)}
+                    title="상세보기"
+                    preventDoubleClick={false}
+                  >
+                    보기
+                  </MGButton>
+                </>
+              )}
+            />
           ))}
         </div>
         <div className="client-actions-footer">

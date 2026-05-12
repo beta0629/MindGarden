@@ -15,8 +15,8 @@ import SearchFilterSection from './SearchFilterSection';
 import SectionHeader from './SectionHeader';
 import MappingCard from './MappingCard';
 import SessionExtensionModal from './mapping/SessionExtensionModal';
-import Avatar from '../common/Avatar';
 import SafeText from '../common/SafeText';
+import { ProfileCard } from '../ui/Card';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate, getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import '../../styles/unified-design-tokens.css';
@@ -389,47 +389,47 @@ const SessionManagement = () => {
                                     const usedSessions = mapping.usedSessions || 0;
                                     const clientProfileImageUrl = mapping.client?.profileImageUrl ?? null;
                                     return (
-                                        <div 
-                                            key={mapping.id} 
-                                            className="mg-v2-quick-mapping-card"
+                                        <ProfileCard
+                                            key={mapping.id}
+                                            variant="compact"
+                                            avatar={{
+                                                profileImageUrl: clientProfileImageUrl,
+                                                displayName: toDisplayString(clientName)
+                                            }}
+                                            name={<SafeText>{clientName}</SafeText>}
+                                            contactInfo={{
+                                                email: <SafeText>{consultantName}</SafeText>
+                                            }}
+                                            badges={[
+                                                <span key="sessions" className="mg-v2-badge">
+                                                    <span className="mg-v2-sessions-current mg-v2-sessions-current-danger">{toDisplayString(usedSessions)}</span>
+                                                    <span className="mg-v2-sessions-separator">/</span>
+                                                    <span className="mg-v2-sessions-total mg-v2-sessions-total-primary">{toDisplayString(totalSessions)}</span>
+                                                    <span className="mg-v2-sessions-unit">회기</span>
+                                                </span>
+                                            ]}
+                                            renderActions={() => (
+                                                <MGButton
+                                                    variant="primary"
+                                                    size="small"
+                                                    className={buildErpMgButtonClassName({
+                                                        variant: 'primary',
+                                                        size: 'sm',
+                                                        loading: false,
+                                                        className: 'mg-v2-quick-add-button'
+                                                    })}
+                                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                                    preventDoubleClick={false}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleQuickAdd(mapping);
+                                                    }}
+                                                >
+                                                    회기 추가
+                                                </MGButton>
+                                            )}
                                             onClick={() => handleQuickAdd(mapping)}
-                                        >
-                                            <div className="mg-v2-quick-mapping-info">
-                                                <Avatar
-                                                    profileImageUrl={clientProfileImageUrl}
-                                                    displayName={toDisplayString(clientName)}
-                                                    className="mg-v2-quick-mapping-avatar"
-                                                />
-                                                <div className="mg-v2-quick-mapping-details">
-                                                    <div className="mg-v2-quick-mapping-client"><SafeText>{clientName}</SafeText></div>
-                                                    <div className="mg-v2-quick-mapping-consultant"><SafeText>{consultantName}</SafeText></div>
-                                                    <div className="mg-v2-quick-mapping-sessions">
-                                                        <span className="mg-v2-sessions-current mg-v2-sessions-current-danger">{toDisplayString(usedSessions)}</span>
-                                                        <span className="mg-v2-sessions-separator">/</span>
-                                                        <span className="mg-v2-sessions-total mg-v2-sessions-total-primary">{toDisplayString(totalSessions)}</span>
-                                                        <span className="mg-v2-sessions-unit">회기</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <MGButton
-                                                variant="primary"
-                                                size="small"
-                                                className={buildErpMgButtonClassName({
-                                                    variant: 'primary',
-                                                    size: 'sm',
-                                                    loading: false,
-                                                    className: 'mg-v2-quick-add-button'
-                                                })}
-                                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                                preventDoubleClick={false}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleQuickAdd(mapping);
-                                                }}
-                                            >
-                                                회기 추가
-                                            </MGButton>
-                                        </div>
+                                        />
                                     );
                                 })}
                                 
@@ -485,41 +485,42 @@ const SessionManagement = () => {
                                         );
                                         
                                         return (
-                                            <div key={client.id} className="mg-v2-client-mapping-card">
-                                                <div className="mg-v2-client-info">
-                                                    <Avatar
-                                                        profileImageUrl={client.profileImageUrl}
-                                                        displayName={toDisplayString(client.name)}
-                                                        className="mg-v2-client-avatar"
-                                                    />
-                                                    <div className="mg-v2-client-details">
-                                                        <SafeText className="mg-v2-client-name" tag="div">{client.name}</SafeText>
-                                                        <div className="mg-v2-client-mappings">
-                                                            {clientMappings.length}개 활성 매핑
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <MGButton
-                                                    variant="success"
-                                                    size="small"
-                                                    className={buildErpMgButtonClassName({
-                                                        variant: 'success',
-                                                        size: 'sm',
-                                                        loading: false
-                                                    })}
-                                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                                    disabled={clientMappings.length === 0}
-                                                    title={toDisplayString(clientMappings.length === 0 ? '활성 매핑이 없습니다' : '')}
-                                                    preventDoubleClick={false}
-                                                    onClick={() => {
-                                                        if (clientMappings.length > 0) {
-                                                            handleQuickAdd(clientMappings[0]);
-                                                        }
-                                                    }}
-                                                >
-                                                    회기 추가
-                                                </MGButton>
-                                            </div>
+                                            <ProfileCard
+                                                key={client.id}
+                                                variant="compact"
+                                                avatar={{
+                                                    profileImageUrl: client.profileImageUrl,
+                                                    displayName: toDisplayString(client.name)
+                                                }}
+                                                name={<SafeText tag="div">{client.name}</SafeText>}
+                                                badges={[
+                                                    <span key="mappings" className="mg-v2-badge">
+                                                        {clientMappings.length}개 활성 매핑
+                                                    </span>
+                                                ]}
+                                                renderActions={() => (
+                                                    <MGButton
+                                                        variant="success"
+                                                        size="small"
+                                                        className={buildErpMgButtonClassName({
+                                                            variant: 'success',
+                                                            size: 'sm',
+                                                            loading: false
+                                                        })}
+                                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                                        disabled={clientMappings.length === 0}
+                                                        title={toDisplayString(clientMappings.length === 0 ? '활성 매핑이 없습니다' : '')}
+                                                        preventDoubleClick={false}
+                                                        onClick={() => {
+                                                            if (clientMappings.length > 0) {
+                                                                handleQuickAdd(clientMappings[0]);
+                                                            }
+                                                        }}
+                                                    >
+                                                        회기 추가
+                                                    </MGButton>
+                                                )}
+                                            />
                                         );
                                     })}
                                 </div>

@@ -28,6 +28,7 @@ import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.VacationRepository;
+import com.coresolution.consultation.constant.ProfessionalProviderTypeConstants;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultationMessageService;
@@ -1854,7 +1855,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 consultantName = consultant.getName() + " (비활성)";
             }
             if (consultant != null) {
-                consultantProfessionalProviderTypeCode = consultant.getProfessionalProviderTypeCode();
+                consultantProfessionalProviderTypeCode = resolveProfessionalProviderTypeCode(consultant);
             }
             
             if (schedule.getClientId() != null) {
@@ -1900,6 +1901,37 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             .createdAt(schedule.getCreatedAt())
             .updatedAt(schedule.getUpdatedAt())
             .build();
+    }
+
+    /**
+     * 사용자의 역할(UserRole)로부터 전문가 유형 코드를 유추합니다.
+     * DB에 professionalProviderTypeCode가 설정되지 않은 레거시 데이터에 대한 fallback.
+     *
+     * @param user 대상 사용자
+     * @return 유추된 전문가 유형 코드, 유추 불가 시 null
+     */
+    private String resolveProfessionalProviderTypeCode(User user) {
+        if (user == null) {
+            return null;
+        }
+        String code = user.getProfessionalProviderTypeCode();
+        if (code != null && !code.trim().isEmpty()) {
+            return code;
+        }
+        UserRole role = user.getRole();
+        if (role == null) {
+            return null;
+        }
+        switch (role) {
+            case CONSULTANT:
+                return ProfessionalProviderTypeConstants.DEFAULT_TYPE_CODE_VALUE;
+            case PLAY_THERAPIST:
+                return ProfessionalProviderTypeConstants.LEGACY_PLAY_TYPE_CODE_VALUE;
+            case SPEECH_THERAPIST:
+                return ProfessionalProviderTypeConstants.LEGACY_SPEECH_TYPE_CODE_VALUE;
+            default:
+                return null;
+        }
     }
 
      /**
@@ -2542,7 +2574,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                                 if (decryptedData != null && decryptedData.get("name") != null) {
                                     consultantName = decryptedData.get("name");
                                 }
-                                consultantProfessionalProviderTypeCode = consultant.getProfessionalProviderTypeCode();
+                                consultantProfessionalProviderTypeCode = resolveProfessionalProviderTypeCode(consultant);
                             }
                         }
                         

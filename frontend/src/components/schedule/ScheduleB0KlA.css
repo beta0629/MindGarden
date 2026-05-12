@@ -1411,7 +1411,7 @@
   justify-content: center;
   align-items: center;
   gap: var(--spacing-md);
-  padding: var(--mg-spacing-lg) 24px;
+  padding: var(--mg-spacing-lg, 1rem) 24px;
   border-top: 1px solid var(--mg-gray-200);
   background: var(--ad-b0kla-card-bg);
   width: 100%;

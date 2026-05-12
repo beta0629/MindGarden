@@ -1411,7 +1411,7 @@
   justify-content: center;
   align-items: center;
   gap: var(--spacing-md);
-  padding: var(--mg-spacing-lg, 1rem) 0;
+  padding: var(--mg-spacing-lg, 1rem) var(--spacing-lg, 1.5rem);
   border-top: 1px solid var(--mg-gray-200);
   background: var(--ad-b0kla-card-bg);
   width: 100%;
@@ -2345,19 +2345,6 @@ textarea.mg-v2-textarea {
 .schedule-detail-modal__detail-value {
   font-weight: 600;
   color: var(--mg-color-text-main, var(--mg-text-primary));
-}
-
-/* 일정 상세 모달: 탭이 있을 때 body 좌우 padding 제거 → 탭이 가장자리까지 확장 */
-.mg-modal.mg-v2-ad-b0kla .mg-modal__body:has(> .schedule-detail-modal__tabs) {
-  padding-left: 0;
-  padding-right: 0;
-}
-
-/* 탭 아래 콘텐츠에 좌우 padding 복원 (탭 버튼과 정렬 유지) */
-.mg-modal.mg-v2-ad-b0kla .mg-modal__body:has(> .schedule-detail-modal__tabs) > :not(.schedule-detail-modal__tabs) {
-  padding-left: 24px;
-  padding-right: 24px;
-  box-sizing: border-box;
 }
 
 /* 일정 상세 — B0KlA 세그먼트(트랙에만 배경·테두리) */

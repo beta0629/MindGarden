@@ -20,5 +20,6 @@ export const HIDE_ADMIN_CARD_IDS = new Set([
   'security-monitoring', // 보안 모니터링
   'merge-duplicate-mappings', // 중복 매칭 통합
   'user-management', // 사용자 관리 (관리 기능에서 숨김)
-  'wellness' // 웰니스 알림 관리 (관리 기능에서 숨김)
+  'wellness', // 웰니스 알림 관리 (관리 기능에서 숨김)
+  'schedule-management' // 스케줄 관리 (통합스케줄링 사용)
 ]);

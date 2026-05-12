@@ -1790,13 +1790,15 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             label="매칭 시스템"
             description="상담사와 내담자 매칭을 관리합니다"
           />
-          <AdminMgmtNavCard
-            to={ADMIN_ROUTES.SCHEDULES}
-            icon={Calendar}
-            tone="green"
-            label="스케줄 관리"
-            description="상담 일정을 관리하고 조정합니다"
-          />
+          {!HIDE_ADMIN_CARD_IDS.has('schedule-management') && (
+            <AdminMgmtNavCard
+              to={ADMIN_ROUTES.SCHEDULES}
+              icon={Calendar}
+              tone="green"
+              label="스케줄 관리"
+              description="상담 일정을 관리하고 조정합니다"
+            />
+          )}
           {!HIDE_ADMIN_CARD_IDS.has('user-management') && PermissionChecks.canManageUsers(userPermissions) && (
             <AdminMgmtNavCard
               to={ADMIN_ROUTES.USER_MANAGEMENT}

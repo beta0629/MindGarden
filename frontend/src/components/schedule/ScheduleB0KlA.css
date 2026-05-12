@@ -1411,7 +1411,7 @@
   justify-content: center;
   align-items: center;
   gap: var(--spacing-md);
-  padding: var(--mg-spacing-lg, 1rem) 24px;
+  padding: var(--mg-spacing-lg, 1rem) 0;
   border-top: 1px solid var(--mg-gray-200);
   background: var(--ad-b0kla-card-bg);
   width: 100%;
@@ -2347,7 +2347,20 @@ textarea.mg-v2-textarea {
   color: var(--mg-color-text-main, var(--mg-text-primary));
 }
 
-/* 일정 상세 — B0KlA 세그먼트(외곽 패딩 제거·트랙에만 패널: 모달 본문과 이중 여백 방지) */
+/* 일정 상세 모달: 탭이 있을 때 body 좌우 padding 제거 → 탭이 가장자리까지 확장 */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body:has(> .schedule-detail-modal__tabs) {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* 탭 아래 콘텐츠에 좌우 padding 복원 (탭 버튼과 정렬 유지) */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body:has(> .schedule-detail-modal__tabs) > :not(.schedule-detail-modal__tabs) {
+  padding-left: 24px;
+  padding-right: 24px;
+  box-sizing: border-box;
+}
+
+/* 일정 상세 — B0KlA 세그먼트(트랙에만 배경·테두리) */
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control {
   display: flex;
   flex-direction: column;
@@ -2355,9 +2368,7 @@ textarea.mg-v2-textarea {
   min-width: 0;
   box-sizing: border-box;
   margin-top: 0;
-  margin-right: -24px;
   margin-bottom: var(--mg-space-3, 0.75rem);
-  margin-left: -24px;
   padding: 0;
   background: transparent;
   border: none;
@@ -2372,7 +2383,7 @@ textarea.mg-v2-textarea {
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
-  padding: 4px 24px;
+  padding: 4px 0;
   background: var(--ad-b0kla-green-bg);
   border-top: 1px solid var(--ad-b0kla-border);
   border-bottom: 1px solid var(--ad-b0kla-border);

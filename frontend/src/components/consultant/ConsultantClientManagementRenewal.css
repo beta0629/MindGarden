@@ -1,0 +1,509 @@
+/**
+ * ConsultantClientManagementRenewal — 내담자 관리 리뉴얼
+ * 디자인 토큰만 사용
+ */
+
+.cr-clients {
+  padding-top: var(--mg-spacing-md);
+  padding-bottom: var(--mg-spacing-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+/* 검색·필터 영역 */
+.cr-clients__search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  background-color: var(--mg-consultant-surface);
+  border-radius: var(--mg-radius-xl);
+  box-shadow: var(--mg-shadow-sm);
+}
+
+.cr-clients__search-icon {
+  color: var(--mg-color-text-secondary);
+  flex-shrink: 0;
+}
+
+.cr-clients__search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-main);
+  outline: none;
+  font-family: inherit;
+}
+
+.cr-clients__search-input::placeholder {
+  color: var(--mg-warm-gray-400);
+}
+
+.cr-clients__search-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--mg-color-text-secondary);
+  padding: var(--mg-spacing-xs);
+}
+
+/* 필터 칩 */
+.cr-clients__filter-chips {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  overflow-x: auto;
+  padding: var(--mg-spacing-xs) 0;
+  scrollbar-width: none;
+}
+
+.cr-clients__filter-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.cr-clients__chip {
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 var(--mg-spacing-md);
+  border-radius: var(--mg-radius-full);
+  border: 1px solid var(--mg-color-border-main);
+  background-color: transparent;
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+}
+
+.cr-clients__chip--active {
+  background-color: var(--mg-consultant-primary);
+  border-color: var(--mg-consultant-primary);
+  color: var(--mg-warm-gray-50);
+}
+
+.cr-clients__chip:active {
+  transform: scale(0.97);
+}
+
+/* 결과 카운트 */
+.cr-clients__count {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  padding: 0 var(--mg-spacing-xs);
+}
+
+/* 내담자 카드 목록 */
+.cr-clients__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+/* 내담자 카드 */
+.cr-client-card {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md) var(--mg-spacing-lg);
+  background-color: var(--mg-consultant-surface);
+  border-radius: var(--mg-radius-xl);
+  box-shadow: var(--mg-shadow-sm);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+  animation: cr-client-stagger 0.3s ease-out both;
+}
+
+.cr-client-card:hover {
+  box-shadow: var(--mg-shadow-md);
+  transform: translateY(-2px);
+}
+
+.cr-client-card:active {
+  transform: scale(0.97);
+}
+
+.cr-client-card:nth-child(1) { animation-delay: 0ms; }
+.cr-client-card:nth-child(2) { animation-delay: 50ms; }
+.cr-client-card:nth-child(3) { animation-delay: 50ms; }
+.cr-client-card:nth-child(4) { animation-delay: 100ms; }
+.cr-client-card:nth-child(5) { animation-delay: 100ms; }
+.cr-client-card:nth-child(6) { animation-delay: 150ms; }
+
+.cr-client-card__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--mg-radius-full);
+  background-color: var(--mg-consultant-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-warm-gray-50);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  flex-shrink: 0;
+}
+
+.cr-client-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cr-client-card__name {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cr-client-card__last-session {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin-top: 2px;
+}
+
+.cr-client-card__badges {
+  display: flex;
+  gap: var(--mg-spacing-xs);
+  flex-shrink: 0;
+}
+
+.cr-client-card__badge {
+  font-size: var(--mg-font-size-xs);
+  padding: 2px var(--mg-spacing-sm);
+  border-radius: var(--mg-radius-full);
+  font-weight: var(--mg-font-weight-medium);
+  background-color: var(--mg-warm-gray-100);
+  color: var(--mg-color-text-secondary);
+}
+
+.cr-client-card__badge--active {
+  background-color: var(--mg-color-success);
+  color: var(--mg-warm-gray-50);
+}
+
+.cr-client-card__badge--inactive {
+  background-color: var(--mg-warm-gray-300);
+  color: var(--mg-warm-gray-50);
+}
+
+.cr-client-card__badge--urgent {
+  background-color: var(--mg-color-error);
+  color: var(--mg-warm-gray-50);
+}
+
+.cr-client-card__action {
+  flex-shrink: 0;
+  color: var(--mg-color-text-secondary);
+}
+
+/* 프로필 상세 — 바텀시트 */
+.cr-profile-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background-color: rgba(0, 0, 0, var(--mg-opacity-heavy));
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: cr-overlay-in 0.2s ease-out;
+}
+
+.cr-profile-sheet {
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  background-color: var(--mg-warm-gray-50);
+  border-radius: var(--mg-radius-xl) var(--mg-radius-xl) 0 0;
+  overflow-y: auto;
+  animation: cr-sheet-up 0.3s ease-out;
+}
+
+.cr-profile-sheet__handle {
+  display: flex;
+  justify-content: center;
+  padding: var(--mg-spacing-sm) 0;
+}
+
+.cr-profile-sheet__handle-bar {
+  width: 40px;
+  height: 4px;
+  border-radius: var(--mg-radius-full);
+  background-color: var(--mg-color-border-main);
+}
+
+.cr-profile-sheet__header {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md) var(--mg-spacing-lg);
+}
+
+.cr-profile-sheet__avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--mg-radius-full);
+  background-color: var(--mg-consultant-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-warm-gray-50);
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+.cr-profile-sheet__name {
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+}
+
+.cr-profile-sheet__status {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+/* 프로필 탭 */
+.cr-profile-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--mg-color-border-main);
+  padding: 0 var(--mg-spacing-lg);
+}
+
+.cr-profile-tab {
+  flex: 1;
+  padding: var(--mg-spacing-md) 0;
+  text-align: center;
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.cr-profile-tab--active {
+  color: var(--mg-consultant-primary);
+  border-bottom-color: var(--mg-consultant-primary);
+}
+
+.cr-profile-tab-content {
+  padding: var(--mg-spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+/* 프로필 필드 */
+.cr-profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+}
+
+.cr-profile-field__label {
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-secondary);
+}
+
+.cr-profile-field__value {
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-main);
+}
+
+/* 상담 이력 타임라인 */
+.cr-history-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  padding-left: var(--mg-spacing-lg);
+  border-left: 2px solid var(--mg-color-border-main);
+}
+
+.cr-history-item {
+  position: relative;
+  padding-left: var(--mg-spacing-md);
+}
+
+.cr-history-item::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--mg-spacing-md) * -1 - var(--mg-spacing-lg) + 1px);
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--mg-radius-full);
+  background-color: var(--mg-consultant-primary);
+}
+
+.cr-history-item__date {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.cr-history-item__title {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-main);
+  font-weight: var(--mg-font-weight-medium);
+  margin-top: 2px;
+}
+
+/* 메모·태그 */
+.cr-memo-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.cr-memo-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm);
+}
+
+.cr-memo-tag {
+  padding: var(--mg-spacing-xs) var(--mg-spacing-md);
+  border-radius: var(--mg-radius-full);
+  background-color: var(--mg-warm-gray-100);
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-size-xs);
+  font-weight: var(--mg-font-weight-medium);
+}
+
+.cr-memo-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: var(--mg-spacing-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-font-size-base);
+  font-family: inherit;
+  color: var(--mg-color-text-main);
+  background-color: var(--mg-warm-gray-50);
+  resize: vertical;
+}
+
+.cr-memo-textarea:focus {
+  outline: none;
+  border-color: var(--mg-consultant-primary);
+}
+
+/* 스켈레톤 */
+.cr-clients__skeleton-search {
+  height: 48px;
+  border-radius: var(--mg-radius-xl);
+  background: linear-gradient(
+    90deg,
+    var(--mg-warm-gray-100) 25%,
+    var(--mg-warm-gray-50) 50%,
+    var(--mg-warm-gray-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: cr-shimmer 1.5s ease-in-out infinite;
+}
+
+.cr-clients__skeleton-card {
+  height: 72px;
+  border-radius: var(--mg-radius-xl);
+  background: linear-gradient(
+    90deg,
+    var(--mg-warm-gray-100) 25%,
+    var(--mg-warm-gray-50) 50%,
+    var(--mg-warm-gray-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: cr-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Empty */
+.cr-clients__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-2xl) var(--mg-spacing-md);
+  text-align: center;
+}
+
+.cr-clients__empty-icon {
+  color: var(--mg-color-text-secondary);
+  opacity: 0.5;
+}
+
+.cr-clients__empty-text {
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-secondary);
+}
+
+/* 메시지 보내기 버튼 */
+.cr-profile-sheet__message-btn {
+  width: 100%;
+  height: 48px;
+  margin: var(--mg-spacing-md) var(--mg-spacing-lg);
+  margin-top: 0;
+  border-radius: var(--mg-radius-lg);
+  border: none;
+  background-color: var(--mg-consultant-primary);
+  color: var(--mg-warm-gray-50);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-sm);
+  width: calc(100% - var(--mg-spacing-lg) * 2);
+}
+
+.cr-profile-sheet__message-btn:active {
+  transform: scale(0.97);
+}
+
+/* 애니메이션 */
+@keyframes cr-client-stagger {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cr-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cr-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes cr-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (min-width: 768px) {
+  .cr-clients__list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--mg-spacing-md);
+  }
+}
+
+@media (min-width: 1024px) {
+  .cr-profile-overlay {
+    align-items: center;
+  }
+
+  .cr-profile-sheet {
+    border-radius: var(--mg-radius-xl);
+    max-height: 80vh;
+  }
+}

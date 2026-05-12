@@ -1,0 +1,342 @@
+/**
+ * ConsultantAvailabilityRenewal 스타일
+ * 상담사 테마(그린) — 디자인 토큰만 사용
+ */
+
+.avail-renewal {
+  padding: var(--mg-spacing-md) 0;
+  animation: mg-fade-in 0.3s ease-out;
+}
+
+/* 스켈레톤 로딩 */
+.avail-renewal__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md);
+}
+
+.avail-renewal__skeleton-block {
+  height: 48px;
+  border-radius: var(--mg-radius-lg);
+  background: linear-gradient(90deg,
+    var(--mg-consultant-surface) 25%,
+    var(--mg-color-border-main) 50%,
+    var(--mg-consultant-surface) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+.avail-renewal__skeleton-block--tall {
+  height: 320px;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 섹션 제목 */
+.avail-renewal__section-title {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin-bottom: var(--mg-spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+}
+
+.avail-renewal__section-title svg {
+  color: var(--mg-consultant-primary);
+}
+
+/* 주간 타임블록 그리드 */
+.avail-renewal__week-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+  background: var(--mg-consultant-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-md);
+  box-shadow: var(--mg-shadow-sm);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.avail-renewal__time-header {
+  display: grid;
+  grid-template-columns: 44px repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: var(--mg-spacing-xs);
+}
+
+.avail-renewal__time-header-spacer {
+  width: 44px;
+}
+
+.avail-renewal__day-header {
+  text-align: center;
+  font-size: var(--mg-font-size-xs);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-secondary);
+  padding: var(--mg-spacing-xs) 0;
+}
+
+.avail-renewal__time-row {
+  display: grid;
+  grid-template-columns: 44px repeat(7, 1fr);
+  gap: 2px;
+}
+
+.avail-renewal__time-label {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2px;
+  min-height: 32px;
+}
+
+.avail-renewal__slot {
+  min-height: 32px;
+  border-radius: var(--mg-radius-sm);
+  border: 1px solid var(--mg-color-border-main);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.avail-renewal__slot:active {
+  transform: scale(0.94);
+}
+
+.avail-renewal__slot--active {
+  background-color: var(--mg-consultant-primary);
+  border-color: var(--mg-consultant-primary);
+}
+
+.avail-renewal__slot--active:hover {
+  background-color: var(--mg-consultant-primary-dark);
+}
+
+/* 범위 선택 모드 */
+.avail-renewal__slot--dragging {
+  background-color: var(--mg-consultant-primary-light);
+  border-color: var(--mg-consultant-primary-light);
+  opacity: 0.7;
+}
+
+/* 저장 버튼 */
+.avail-renewal__save-bar {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  margin-top: var(--mg-spacing-lg);
+  padding: var(--mg-spacing-md);
+  background: var(--mg-consultant-surface);
+  border-radius: var(--mg-radius-xl);
+  box-shadow: var(--mg-shadow-sm);
+}
+
+.avail-renewal__btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-md);
+  border: none;
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.avail-renewal__btn:active {
+  transform: scale(0.97);
+}
+
+.avail-renewal__btn--primary {
+  background-color: var(--mg-consultant-primary);
+  color: var(--mg-color-text-on-primary);
+}
+
+.avail-renewal__btn--primary:hover {
+  background-color: var(--mg-consultant-primary-dark);
+}
+
+.avail-renewal__btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.avail-renewal__btn--secondary {
+  background-color: transparent;
+  color: var(--mg-color-text-secondary);
+  border: 1px solid var(--mg-color-border-main);
+}
+
+/* 휴가 섹션 */
+.avail-renewal__vacation-section {
+  margin-top: var(--mg-spacing-xl);
+}
+
+.avail-renewal__vacation-card {
+  background: var(--mg-consultant-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-md);
+  box-shadow: var(--mg-shadow-sm);
+}
+
+.avail-renewal__vacation-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.avail-renewal__input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+}
+
+.avail-renewal__input-label {
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-secondary);
+}
+
+.avail-renewal__input {
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-main);
+  background: transparent;
+  transition: border-color 0.15s ease;
+  outline: none;
+}
+
+.avail-renewal__input:focus {
+  border-color: var(--mg-consultant-primary);
+}
+
+.avail-renewal__date-range {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+}
+
+.avail-renewal__date-range span {
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+}
+
+/* 휴가 목록 */
+.avail-renewal__vacation-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  margin-top: var(--mg-spacing-md);
+}
+
+.avail-renewal__vacation-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-consultant-bg-main);
+  animation: avail-stagger-in 0.3s ease-out both;
+}
+
+.avail-renewal__vacation-item:nth-child(1) { animation-delay: 0ms; }
+.avail-renewal__vacation-item:nth-child(2) { animation-delay: 50ms; }
+.avail-renewal__vacation-item:nth-child(3) { animation-delay: 100ms; }
+.avail-renewal__vacation-item:nth-child(4) { animation-delay: 150ms; }
+
+@keyframes avail-stagger-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.avail-renewal__vacation-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.avail-renewal__vacation-dates {
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+}
+
+.avail-renewal__vacation-reason {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.avail-renewal__vacation-delete {
+  background: none;
+  border: none;
+  padding: var(--mg-spacing-xs);
+  cursor: pointer;
+  color: var(--mg-color-error);
+  border-radius: var(--mg-radius-full);
+  transition: background-color 0.15s ease;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avail-renewal__vacation-delete:hover {
+  background-color: rgba(var(--mg-color-error-rgb), var(--mg-opacity-light));
+}
+
+/* Empty State */
+.avail-renewal__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-spacing-2xl) var(--mg-spacing-md);
+  text-align: center;
+  gap: var(--mg-spacing-md);
+}
+
+.avail-renewal__empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-consultant-bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-consultant-primary-light);
+}
+
+.avail-renewal__empty-text {
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-secondary);
+  line-height: 1.5;
+}
+
+/* 반응형 태블릿 */
+@media (min-width: 768px) {
+  .avail-renewal__save-bar {
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .avail-renewal__date-range {
+    flex-direction: row;
+  }
+}

@@ -1,0 +1,310 @@
+/**
+ * ChatScreen — 공통 채팅 화면 스타일
+ * 역할별 Primary 색상을 CSS 변수로 전달받아 적용
+ */
+
+.mg-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background-color: var(--mg-chat-bg, var(--mg-client-bg-main));
+}
+
+/* 상대 프로필 헤더 */
+.mg-chat__partner-header {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-md);
+  background: var(--mg-chat-surface, var(--mg-client-surface));
+  border-bottom: 1px solid var(--mg-color-border-main);
+}
+
+.mg-chat__partner-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-color-border-main);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.mg-chat__partner-avatar--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+.mg-chat__partner-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mg-chat__partner-name {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+.mg-chat__partner-role {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+/* 메시지 영역 */
+.mg-chat__messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--mg-spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  -webkit-overflow-scrolling: touch;
+}
+
+.mg-chat__messages--loading {
+  align-items: center;
+  justify-content: center;
+}
+
+/* 날짜 구분선 */
+.mg-chat__date-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  margin: var(--mg-spacing-md) 0;
+}
+
+.mg-chat__date-divider::before,
+.mg-chat__date-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--mg-color-border-main);
+}
+
+.mg-chat__date-label {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+  white-space: nowrap;
+}
+
+/* 메시지 버블 래퍼 */
+.mg-chat__bubble-wrap {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--mg-spacing-xs);
+  max-width: 80%;
+}
+
+.mg-chat__bubble-wrap--mine {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.mg-chat__bubble-wrap--theirs {
+  align-self: flex-start;
+}
+
+/* 말풍선 */
+.mg-chat__bubble {
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  font-size: var(--mg-font-size-base);
+  line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.mg-chat__bubble--mine {
+  background: var(--mg-chat-primary, var(--mg-client-primary));
+  opacity: 0.9;
+  color: var(--mg-color-text-on-primary);
+  border-radius: var(--mg-radius-xl) var(--mg-radius-xl) var(--mg-radius-sm) var(--mg-radius-xl);
+}
+
+.mg-chat__bubble--theirs {
+  background: var(--mg-chat-surface, var(--mg-client-surface));
+  color: var(--mg-color-text-main);
+  border-radius: var(--mg-radius-xl) var(--mg-radius-xl) var(--mg-radius-xl) var(--mg-radius-sm);
+  border: 1px solid var(--mg-color-border-main);
+}
+
+/* 메시지 메타 (시간 + 읽음) */
+.mg-chat__meta {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.mg-chat__time {
+  font-size: 0.6875rem;
+  color: var(--mg-color-text-secondary);
+  white-space: nowrap;
+}
+
+.mg-chat__read-status {
+  display: flex;
+  align-items: center;
+  color: var(--mg-chat-primary, var(--mg-client-primary));
+}
+
+.mg-chat__read-status--unread {
+  color: var(--mg-color-text-secondary);
+}
+
+/* 스켈레톤 로딩 */
+.mg-chat__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md);
+}
+
+.mg-chat__skeleton-bubble {
+  height: 40px;
+  border-radius: var(--mg-radius-xl);
+  background: linear-gradient(90deg,
+    var(--mg-warm-gray-100) 25%,
+    var(--mg-warm-gray-50) 50%,
+    var(--mg-warm-gray-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: mg-chat-shimmer 1.5s infinite;
+}
+
+.mg-chat__skeleton-bubble--short {
+  width: 40%;
+}
+
+.mg-chat__skeleton-bubble--medium {
+  width: 60%;
+}
+
+.mg-chat__skeleton-bubble--long {
+  width: 75%;
+  align-self: flex-end;
+}
+
+@keyframes mg-chat-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Empty State */
+.mg-chat__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-xl);
+  text-align: center;
+}
+
+.mg-chat__empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-warm-gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-chat__empty-title {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+.mg-chat__empty-desc {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin: 0;
+}
+
+/* 입력 바 */
+.mg-chat__input-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  background: var(--mg-chat-surface, var(--mg-client-surface));
+  border-top: 1px solid var(--mg-color-border-main);
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.mg-chat__input {
+  flex: 1;
+  min-height: 40px;
+  max-height: 120px;
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-xl);
+  font-size: var(--mg-font-size-base);
+  font-family: var(--mg-font-family-body);
+  resize: none;
+  outline: none;
+  transition: border-color var(--mg-animation-fast);
+  background: var(--mg-warm-gray-50);
+  color: var(--mg-color-text-main);
+}
+
+.mg-chat__input:focus {
+  border-color: var(--mg-chat-primary, var(--mg-client-primary));
+}
+
+.mg-chat__input::placeholder {
+  color: var(--mg-warm-gray-400);
+}
+
+.mg-chat__send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--mg-radius-full);
+  border: none;
+  background: var(--mg-chat-primary, var(--mg-client-primary));
+  color: var(--mg-color-text-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity var(--mg-animation-fast), transform var(--mg-animation-fast);
+  flex-shrink: 0;
+}
+
+.mg-chat__send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mg-chat__send-btn:not(:disabled):active {
+  transform: scale(0.92);
+}
+
+/* 당겨서 새로고침 */
+.mg-chat__pull-indicator {
+  text-align: center;
+  padding: var(--mg-spacing-sm);
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+  .mg-chat__bubble-wrap {
+    max-width: 60%;
+  }
+}

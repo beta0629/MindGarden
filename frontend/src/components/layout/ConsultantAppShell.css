@@ -1,0 +1,136 @@
+/**
+ * ConsultantAppShell 스타일
+ * 상담사 테마 — 그린 톤
+ * 디자인 토큰만 사용
+ */
+
+.mg-app-shell--consultant {
+  --shell-primary: var(--mg-consultant-primary);
+  --shell-bg: var(--mg-consultant-bg-main);
+  --shell-surface: var(--mg-consultant-surface);
+}
+
+.mg-app-shell {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--shell-bg);
+  font-family: var(--mg-font-family-body);
+}
+
+/* 사이드바 — 데스크톱 전용 */
+.mg-app-shell__sidebar {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  background-color: var(--shell-surface);
+  border-right: 1px solid var(--mg-color-border-main);
+  z-index: 1001;
+  flex-direction: column;
+  padding: var(--mg-spacing-lg) 0;
+}
+
+.mg-app-shell__sidebar-logo {
+  padding: 0 var(--mg-spacing-lg);
+  margin-bottom: var(--mg-spacing-xl);
+}
+
+.mg-app-shell__sidebar-logo-text {
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-bold);
+  color: var(--shell-primary);
+}
+
+.mg-app-shell__sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+  padding: 0 var(--mg-spacing-sm);
+}
+
+.mg-app-shell__sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md) var(--mg-spacing-md);
+  border-radius: var(--mg-radius-lg);
+  text-decoration: none;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.mg-app-shell__sidebar-item:hover {
+  background-color: rgba(var(--mg-consultant-primary-rgb), var(--mg-opacity-subtle));
+  color: var(--shell-primary);
+}
+
+.mg-app-shell__sidebar-item--active {
+  background-color: rgba(var(--mg-consultant-primary-rgb), var(--mg-opacity-light));
+  color: var(--shell-primary);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+/* 메인 영역 */
+.mg-app-shell__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.mg-app-shell__content {
+  flex: 1;
+  padding-top: 56px;
+  padding-bottom: 64px;
+  padding-left: var(--mg-spacing-md);
+  padding-right: var(--mg-spacing-md);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 태블릿 */
+@media (min-width: 768px) {
+  .mg-app-shell__content {
+    padding-top: 64px;
+    padding-left: var(--mg-spacing-lg);
+    padding-right: var(--mg-spacing-lg);
+  }
+}
+
+/* 데스크톱 */
+@media (min-width: 1024px) {
+  .mg-app-shell__sidebar {
+    display: flex;
+  }
+
+  .mg-app-shell__main {
+    margin-left: 260px;
+  }
+
+  .mg-app-shell__content {
+    padding-bottom: var(--mg-spacing-xl);
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+/* 화면 전환 애니메이션 */
+.mg-app-shell__content > * {
+  animation: mg-fade-in 0.3s ease-out;
+}
+
+@keyframes mg-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

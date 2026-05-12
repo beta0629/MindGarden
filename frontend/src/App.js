@@ -24,6 +24,10 @@ import FinancialManagement from './components/erp/FinancialManagement';
 import BudgetManagement from './components/erp/BudgetManagement';
 import IntegratedFinanceDashboard from './components/erp/IntegratedFinanceDashboard';
 import ConsultantMessageScreen from './components/consultant/ConsultantMessageScreen';
+import ConsultantDashboardRenewal from './components/consultant/ConsultantDashboardRenewal';
+import ConsultantScheduleRenewal from './components/consultant/ConsultantScheduleRenewal';
+import ConsultantClientManagementRenewal from './components/consultant/ConsultantClientManagementRenewal';
+import ConsultantRecordsRenewal from './components/consultant/ConsultantRecordsRenewal';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
 import SchedulePage from './components/schedule/SchedulePage';
 import AdminSchedulesPage from './components/schedule/AdminSchedulesPage';
@@ -46,6 +50,7 @@ import { DEFAULT_MENU_ITEMS } from './components/dashboard-v2/constants/menuItem
 import AcademyDashboard from './components/academy/AcademyDashboard';
 import AcademyRegister from './components/academy/AcademyRegister';
 // 대시보드 컴포넌트 지연 로드 (로그인 직후 초기화 순서 오류 방지)
+const TenantSelectorNew = lazy(() => import('./components/auth/TenantSelector'));
 const DynamicDashboard = lazy(() => import('./components/dashboard/DynamicDashboard'));
 const DashboardManagement = lazy(() => import('./components/admin/DashboardManagement'));
 const WidgetBasedAdminDashboard = lazy(() => import('./components/admin/WidgetBasedAdminDashboard'));
@@ -79,6 +84,19 @@ import SalaryManagement from './components/erp/SalaryManagement';
 import RefundManagement from './components/erp/RefundManagement';
 import ClientSchedule from './components/client/ClientSchedule';
 import ClientSessionManagement from './components/client/ClientSessionManagement';
+import ClientHomeRenewal from './components/client/ClientHomeRenewal';
+import ClientBookingRenewal from './components/client/ClientBookingRenewal';
+import ClientConsultationsRenewal from './components/client/ClientConsultationsRenewal';
+import ClientWellnessRenewal from './components/client/ClientWellnessRenewal';
+import MoodJournal from './components/client/MoodJournal';
+import SelfAssessment from './components/client/SelfAssessment';
+import ClientSessionPaymentRenewal from './components/client/ClientSessionPaymentRenewal';
+import ConsultantAvailabilityRenewal from './components/consultant/ConsultantAvailabilityRenewal';
+import ConsultantIncomeReport from './components/consultant/ConsultantIncomeReport';
+import MeditationGuide from './components/wellness/MeditationGuide';
+import PsychoEducation from './components/wellness/PsychoEducation';
+import CommunityFeed from './components/community/CommunityFeed';
+import CommunityPostDetail from './components/community/CommunityPostDetail';
 import ClientPaymentHistory from './components/client/ClientPaymentHistory';
 import HelpPage from './components/common/HelpPage';
 import ClientSettings from './components/client/ClientSettings';
@@ -96,10 +114,15 @@ import AdminLayout from './components/layout/AdminLayout';
 import TenantCommonCodeManager from './components/admin/TenantCommonCodeManager';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import { MypageRedirect, SettingsRedirect } from './components/common/MypageSettingsRedirects';
+import ConsultantAppShell from './components/layout/ConsultantAppShell';
+import ClientAppShell from './components/layout/ClientAppShell';
+import MobileLogin from './components/auth/MobileLogin';
 import SessionGuard from './components/common/SessionGuard';
 import { SessionProvider, useSession } from './contexts/SessionContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
+import { ToastProvider } from './contexts/ToastContext';
+import AppToast from './components/common/AppToast';
 import { sessionManager } from './utils/sessionManager';
 import duplicateLoginManager from './utils/duplicateLoginManager';
 import notificationManager from './utils/notification';
@@ -329,6 +352,7 @@ function AppContent() {
           </div>
         )}
         <div className="App">
+          <AppToast />
           <UnifiedNotification type="toast" position="top-right" />
           <Suspense fallback={<div className="mg-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>로딩 중...</div>}>
           <Routes>
@@ -347,6 +371,46 @@ function AppContent() {
             
             {/* 지점별 로그인 라우트 제거됨 - 브랜치 코드 제거 정책 */}
             
+            {/* Phase 1: 모바일 전용 로그인 + 테넌트 선택 */}
+            <Route path="/mobile-login" element={<MobileLogin />} />
+            <Route path="/tenant-select" element={<TenantSelectorNew />} />
+            
+            {/* Phase 1: 상담사 AppShell 레이아웃 (바텀 네비 + 상단 바) */}
+            <Route
+              path="/consultant"
+              element={
+                <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
+                  <ConsultantAppShell />
+                </ProtectedRoute>
+              }
+            >
+              {/* 하위 라우트는 Phase 2A에서 Outlet으로 연결 */}
+            </Route>
+            
+            {/* Phase 1 + 2B: 내담자 AppShell 레이아웃 (바텀 네비 + 상단 바) */}
+            <Route
+              path="/client"
+              element={
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientAppShell />
+                </ProtectedRoute>
+              }
+            >
+              {/* Phase 2B 리뉴얼 화면 — Outlet으로 렌더링 */}
+              <Route index element={<ClientHomeRenewal />} />
+              <Route path="home" element={<ClientHomeRenewal />} />
+              <Route path="booking" element={<ClientBookingRenewal />} />
+              <Route path="consultations" element={<ClientConsultationsRenewal />} />
+              <Route path="wellness-hub" element={<ClientWellnessRenewal />} />
+              <Route path="mood-journal" element={<MoodJournal />} />
+              <Route path="self-assessment" element={<SelfAssessment />} />
+              <Route path="session-payment" element={<ClientSessionPaymentRenewal />} />
+              <Route path="meditation" element={<MeditationGuide />} />
+              <Route path="psycho-education" element={<PsychoEducation />} />
+              <Route path="community" element={<CommunityFeed primaryColor="var(--mg-client-primary)" />} />
+              <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-client-primary)" />} />
+            </Route>
+            
             {/* 일반 대시보드 라우트 (동적 대시보드 우선) */}
             <Route path="/dashboard" element={<DynamicDashboard user={user} />} />
             
@@ -356,7 +420,6 @@ function AppContent() {
                 <ClientDashboard user={user} />
               </ProtectedRoute>
             } />
-            <Route path="/client" element={<Navigate to="/client/dashboard" replace />} />
             <Route path="/consultant/dashboard" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
                 <ConsultantDashboardV2 user={user} />
@@ -382,7 +445,44 @@ function AppContent() {
             <Route path="/mypage" element={<MypageRedirect />} />
             <Route path="/settings" element={<SettingsRedirect />} />
             
-            {/* 상담사 전용 라우트 */}
+            {/* 상담사 리뉴얼 라우트 (ConsultantAppShell) */}
+            <Route path="/consultant/renewal" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
+                <ConsultantAppShell title="홈" />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Navigate to="/consultant/renewal/dashboard" replace />} />
+              <Route path="dashboard" element={<ConsultantDashboardRenewal />} />
+              <Route path="schedule" element={<ConsultantScheduleRenewal />} />
+              <Route path="clients" element={<ConsultantClientManagementRenewal />} />
+              <Route path="consultation-records" element={<ConsultantRecordsRenewal />} />
+              <Route path="availability" element={<ConsultantAvailabilityRenewal />} />
+              <Route path="income-report" element={<ConsultantIncomeReport />} />
+              <Route path="community" element={<CommunityFeed primaryColor="var(--mg-consultant-primary)" />} />
+              <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />} />
+            </Route>
+
+            {/* 상담사 "더보기" 하위 라우트 (웰니스·커뮤니티 접근) */}
+            <Route path="/consultant/more" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
+                <ConsultantAppShell title="더보기" />
+              </ProtectedRoute>
+            }>
+              <Route path="community" element={<CommunityFeed primaryColor="var(--mg-consultant-primary)" />} />
+              <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />} />
+            </Route>
+
+            {/* 내담자 "더보기" 하위 라우트 */}
+            <Route path="/client/more" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                <ClientAppShell title="더보기" />
+              </ProtectedRoute>
+            }>
+              <Route path="community" element={<CommunityFeed primaryColor="var(--mg-client-primary)" />} />
+              <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-client-primary)" />} />
+            </Route>
+
+            {/* 상담사 전용 라우트 (레거시) */}
             <Route path="/consultant/schedule" element={<ConsultantSchedule />} />
             <Route path="/consultant/consultation-record/:consultationId" element={<ConsultationRecordScreen />} />
             <Route path="/consultant/consultation-record-view/:recordId" element={<ConsultationRecordView />} />
@@ -701,9 +801,11 @@ function App() {
     <ThemeProvider>
       <SessionProvider>
         <NotificationProvider>
-          <Router>
-            <AppContent />
-          </Router>
+          <ToastProvider>
+            <Router>
+              <AppContent />
+            </Router>
+          </ToastProvider>
         </NotificationProvider>
       </SessionProvider>
     </ThemeProvider>

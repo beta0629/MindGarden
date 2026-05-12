@@ -1,0 +1,376 @@
+/**
+ * MeditationGuide 스타일
+ * 내담자 테마(코랄) — 디자인 토큰만 사용
+ */
+
+.meditation {
+  padding: var(--mg-spacing-md) 0;
+  animation: mg-fade-in 0.3s ease-out;
+}
+
+/* 스켈레톤 */
+.meditation__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.meditation__skeleton-block {
+  height: 80px;
+  border-radius: var(--mg-radius-xl);
+  background: linear-gradient(90deg,
+    var(--mg-client-surface) 25%,
+    var(--mg-color-border-main) 50%,
+    var(--mg-client-surface) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+.meditation__skeleton-block--tall { height: 200px; }
+
+/* 수련 이력 요약 */
+.meditation__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--mg-spacing-sm);
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.meditation__stat-card {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-md);
+  text-align: center;
+  box-shadow: var(--mg-shadow-sm);
+  animation: med-stagger 0.3s ease-out both;
+}
+
+.meditation__stat-card:nth-child(1) { animation-delay: 0ms; }
+.meditation__stat-card:nth-child(2) { animation-delay: 60ms; }
+.meditation__stat-card:nth-child(3) { animation-delay: 120ms; }
+
+@keyframes med-stagger {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.meditation__stat-value {
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-client-primary);
+  display: block;
+}
+
+.meditation__stat-label {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+  margin-top: 2px;
+}
+
+/* 카테고리 탭 */
+.meditation__categories {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: var(--mg-spacing-md);
+  padding-bottom: var(--mg-spacing-xs);
+}
+
+.meditation__categories::-webkit-scrollbar {
+  display: none;
+}
+
+.meditation__category-chip {
+  flex-shrink: 0;
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-full);
+  background: transparent;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+
+.meditation__category-chip:active {
+  transform: scale(0.95);
+}
+
+.meditation__category-chip--active {
+  background-color: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  border-color: var(--mg-client-primary);
+}
+
+/* 콘텐츠 카드 리스트 */
+.meditation__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.meditation__card {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md);
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-sm);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  animation: med-stagger 0.3s ease-out both;
+}
+
+.meditation__card:active {
+  transform: scale(0.98);
+}
+
+.meditation__card:hover {
+  box-shadow: var(--mg-shadow-md);
+}
+
+.meditation__card-play {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.1s ease;
+}
+
+.meditation__card--playing .meditation__card-play {
+  animation: pulse-play 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-play {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.meditation__card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.meditation__card-title {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meditation__card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+}
+
+.meditation__card-duration {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.meditation__card-tag {
+  font-size: var(--mg-font-size-xs);
+  padding: 1px var(--mg-spacing-sm);
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-client-bg-main);
+  color: var(--mg-client-primary);
+}
+
+.meditation__card-fav {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--mg-color-text-secondary);
+  transition: color 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+
+.meditation__card-fav:active {
+  transform: scale(0.88);
+}
+
+.meditation__card-fav--active {
+  color: var(--mg-color-error);
+}
+
+/* 오디오 플레이어 */
+.meditation__player {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+  margin-bottom: var(--mg-spacing-lg);
+  animation: player-slide-in 0.3s ease-out;
+}
+
+@keyframes player-slide-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.meditation__player-title {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  text-align: center;
+  margin-bottom: var(--mg-spacing-xs);
+}
+
+.meditation__player-category {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  text-align: center;
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.meditation__player-seek {
+  width: 100%;
+  height: 4px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--mg-color-border-main);
+  border-radius: 2px;
+  outline: none;
+  margin-bottom: var(--mg-spacing-xs);
+  cursor: pointer;
+}
+
+.meditation__player-seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-client-primary);
+  cursor: pointer;
+}
+
+.meditation__player-seek::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-client-primary);
+  border: none;
+  cursor: pointer;
+}
+
+.meditation__player-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.meditation__player-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-lg);
+}
+
+.meditation__player-btn {
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.15s ease;
+  box-shadow: var(--mg-shadow-md);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.meditation__player-btn:active {
+  transform: scale(0.92);
+}
+
+.meditation__player-btn--small {
+  width: 40px;
+  height: 40px;
+  background: var(--mg-client-bg-main);
+  color: var(--mg-color-text-main);
+  box-shadow: none;
+}
+
+/* Empty */
+.meditation__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-spacing-2xl) var(--mg-spacing-md);
+  text-align: center;
+  gap: var(--mg-spacing-md);
+}
+
+.meditation__empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-client-bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-client-primary-light);
+}
+
+.meditation__empty-text {
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-secondary);
+}
+
+.meditation__empty-btn {
+  padding: var(--mg-spacing-sm) var(--mg-spacing-lg);
+  border: none;
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-semibold);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.meditation__empty-btn:active {
+  transform: scale(0.97);
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+  .meditation__list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .meditation__player {
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

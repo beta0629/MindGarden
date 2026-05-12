@@ -1,0 +1,379 @@
+/**
+ * MoodJournal 스타일
+ * 감정 일기 — 이모지 5단계 + 태그 + 메모 + 달력 뷰 + 추이 차트
+ */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.mood-journal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-lg);
+  padding: var(--mg-spacing-md);
+  padding-bottom: var(--mg-spacing-2xl);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.mood-journal > section {
+  animation: fadeInUp 0.4s ease-out both;
+}
+.mood-journal > section:nth-child(1) { animation-delay: 0ms; }
+.mood-journal > section:nth-child(2) { animation-delay: 80ms; }
+.mood-journal > section:nth-child(3) { animation-delay: 160ms; }
+
+/* === 기분 기록 카드 === */
+.mood-journal__record-card {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+}
+
+.mood-journal__record-title {
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-lg) 0;
+  text-align: center;
+}
+
+/* 이모지 선택 */
+.mood-journal__emoji-row {
+  display: flex;
+  justify-content: center;
+  gap: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.mood-journal__emoji-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+  background: none;
+  border: 2px solid transparent;
+  border-radius: var(--mg-radius-lg);
+  padding: var(--mg-spacing-sm);
+  cursor: pointer;
+  transition: all 200ms ease;
+  min-width: 52px;
+}
+
+.mood-journal__emoji-btn:hover {
+  background: var(--mg-warm-gray-50);
+}
+
+.mood-journal__emoji-btn--selected {
+  border-color: var(--mg-client-primary);
+  background: rgba(var(--mg-client-primary-rgb), var(--mg-opacity-subtle));
+  animation: scaleBounce 0.3s ease;
+}
+
+.mood-journal__emoji-face {
+  font-size: var(--mg-font-size-5xl);
+  line-height: 1;
+}
+
+.mood-journal__emoji-label {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.mood-journal__emoji-btn--selected .mood-journal__emoji-label {
+  color: var(--mg-client-primary);
+  font-weight: var(--mg-font-weight-medium);
+}
+
+/* 감정 태그 칩 */
+.mood-journal__tags-label {
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+  margin-bottom: var(--mg-spacing-sm);
+}
+
+.mood-journal__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm);
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.mood-journal__tag {
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border-radius: var(--mg-radius-full);
+  border: 1px solid var(--mg-color-border-main);
+  background: transparent;
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-size-sm);
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.mood-journal__tag--selected {
+  background: var(--mg-client-primary);
+  border-color: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+}
+
+/* 메모 입력 */
+.mood-journal__memo-label {
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+  margin-bottom: var(--mg-spacing-sm);
+}
+
+.mood-journal__memo {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+  padding: var(--mg-spacing-md);
+  font-size: var(--mg-font-size-sm);
+  font-family: inherit;
+  resize: vertical;
+  color: var(--mg-color-text-main);
+  background: var(--mg-client-surface);
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.mood-journal__memo::placeholder {
+  color: var(--mg-warm-gray-400);
+}
+
+/* 저장 버튼 */
+.mood-journal__save-btn {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  cursor: pointer;
+  transition: transform 100ms ease;
+}
+
+.mood-journal__save-btn:active {
+  transform: scale(0.97);
+}
+
+.mood-journal__save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* === 감정 달력 (월간 이모지 뷰) === */
+.mood-journal__calendar {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+}
+
+.mood-journal__calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.mood-journal__calendar-title {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+.mood-journal__calendar-nav {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+}
+
+.mood-journal__calendar-nav-btn {
+  background: none;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  cursor: pointer;
+  color: var(--mg-color-text-main);
+  display: flex;
+  align-items: center;
+}
+
+.mood-journal__calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: var(--mg-spacing-sm);
+}
+
+.mood-journal__calendar-weekday {
+  font-size: var(--mg-font-size-xs);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-secondary);
+  padding: var(--mg-spacing-xs) 0;
+}
+
+.mood-journal__calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.mood-journal__calendar-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--mg-radius-md);
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+  position: relative;
+}
+
+.mood-journal__calendar-cell--today {
+  background: rgba(var(--mg-client-primary-rgb), var(--mg-opacity-light));
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-client-primary);
+}
+
+.mood-journal__calendar-cell--other-month {
+  opacity: 0.3;
+}
+
+.mood-journal__calendar-emoji {
+  font-size: var(--mg-font-size-base);
+  line-height: 1;
+}
+
+.mood-journal__calendar-day {
+  font-size: var(--mg-font-size-2xs);
+  margin-top: 1px;
+}
+
+/* === 감정 추이 차트 (간이) === */
+.mood-journal__chart {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+}
+
+.mood-journal__chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.mood-journal__chart-title {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+.mood-journal__chart-tabs {
+  display: flex;
+  gap: var(--mg-spacing-xs);
+}
+
+.mood-journal__chart-tab {
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  border-radius: var(--mg-radius-full);
+  border: 1px solid var(--mg-color-border-main);
+  background: transparent;
+  font-size: var(--mg-font-size-xs);
+  cursor: pointer;
+  color: var(--mg-color-text-secondary);
+}
+
+.mood-journal__chart-tab--active {
+  background: var(--mg-client-primary);
+  border-color: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+}
+
+.mood-journal__chart-area {
+  height: 160px;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--mg-spacing-sm);
+  padding-top: var(--mg-spacing-md);
+}
+
+.mood-journal__chart-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+}
+
+.mood-journal__chart-bar {
+  width: 100%;
+  max-width: 24px;
+  border-radius: var(--mg-radius-sm) var(--mg-radius-sm) 0 0;
+  background: var(--mg-client-primary);
+  transition: height 300ms ease;
+  min-height: 4px;
+}
+
+.mood-journal__chart-label {
+  font-size: var(--mg-font-size-2xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.mood-journal__chart-empty {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+}
+
+/* === 스켈레톤 === */
+.mood-journal__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-lg);
+  padding: var(--mg-spacing-md);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.mood-journal__skeleton-block {
+  border-radius: var(--mg-radius-xl);
+  background: var(--mg-warm-gray-100);
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+.mood-journal__skeleton-record { height: 300px; }
+.mood-journal__skeleton-calendar { height: 280px; }
+.mood-journal__skeleton-chart { height: 200px; }
+
+@media (min-width: 768px) {
+  .mood-journal {
+    padding: var(--mg-spacing-lg);
+  }
+}

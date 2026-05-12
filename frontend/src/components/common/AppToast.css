@@ -1,0 +1,176 @@
+/**
+ * AppToast — 전역 토스트 알림 스타일
+ * 디자인 토큰(var(--mg-*))만 사용.
+ *
+ * @author MindGarden
+ * @since 2026-05-12
+ */
+
+.app-toast-container {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 8px);
+  padding-top: calc(env(safe-area-inset-top, 0px) + var(--mg-spacing-md, 16px));
+  pointer-events: none;
+  width: 100%;
+  max-width: 420px;
+  padding-left: var(--mg-spacing-md, 16px);
+  padding-right: var(--mg-spacing-md, 16px);
+  box-sizing: border-box;
+}
+
+.app-toast {
+  position: relative;
+  width: 100%;
+  background: var(--mg-client-surface, #ffffff);
+  border-radius: var(--mg-radius-lg, 12px);
+  box-shadow: var(--mg-shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.1));
+  overflow: hidden;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 진입 애니메이션 */
+.app-toast--enter {
+  animation: toast-slide-down 300ms ease-out forwards;
+}
+
+/* 퇴장 애니메이션 */
+.app-toast--exit {
+  animation: toast-slide-up 200ms ease-in forwards;
+}
+
+@keyframes toast-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-slide-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+/* 좌측 컬러 바 */
+.app-toast__accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  border-radius: var(--mg-radius-lg, 12px) 0 0 var(--mg-radius-lg, 12px);
+}
+
+.app-toast__accent--success {
+  background: var(--mg-color-success, #81C784);
+}
+
+.app-toast__accent--error {
+  background: var(--mg-color-error, #E57373);
+}
+
+.app-toast__accent--info {
+  background: var(--mg-consultant-primary-light, #6B7F72);
+}
+
+/* 본문 */
+.app-toast__body {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 8px);
+  padding: var(--mg-spacing-md, 16px);
+  padding-left: calc(var(--mg-spacing-md, 16px) + 4px);
+}
+
+.app-toast__icon {
+  flex-shrink: 0;
+}
+
+.app-toast__icon--success {
+  color: var(--mg-color-success, #81C784);
+}
+
+.app-toast__icon--error {
+  color: var(--mg-color-error, #E57373);
+}
+
+.app-toast__icon--info {
+  color: var(--mg-consultant-primary-light, #6B7F72);
+}
+
+.app-toast__message {
+  flex: 1;
+  font-size: var(--mg-font-size-sm, 14px);
+  font-weight: var(--mg-font-weight-medium, 500);
+  color: var(--mg-color-text-main, #1a1a1a);
+  line-height: 1.4;
+}
+
+.app-toast__close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--mg-color-text-secondary, #888);
+  border-radius: var(--mg-radius-sm, 6px);
+  transition: background 150ms ease;
+}
+
+.app-toast__close:hover {
+  background: var(--mg-color-bg-secondary, #f5f5f5);
+}
+
+/* 프로그레스 바 */
+.app-toast__progress-track {
+  height: 3px;
+  background: var(--mg-color-bg-secondary, #f5f5f5);
+}
+
+.app-toast__progress-bar {
+  height: 100%;
+  animation: toast-progress linear forwards;
+}
+
+.app-toast__progress-bar--success {
+  background: var(--mg-color-success, #81C784);
+}
+
+.app-toast__progress-bar--error {
+  background: var(--mg-color-error, #E57373);
+}
+
+.app-toast__progress-bar--info {
+  background: var(--mg-consultant-primary-light, #6B7F72);
+}
+
+@keyframes toast-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}

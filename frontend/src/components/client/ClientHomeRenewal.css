@@ -1,0 +1,462 @@
+/**
+ * ClientHomeRenewal 스타일
+ * 내담자 홈(피드) 리뉴얼 — 코랄·크림 톤 디자인 토큰 전용
+ */
+
+/* 공통 애니메이션 */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes scaleBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.client-home {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-lg);
+  padding: var(--mg-spacing-md);
+  padding-bottom: var(--mg-spacing-2xl);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* 스태거 진입 애니메이션 */
+.client-home > section {
+  animation: fadeInUp 0.4s ease-out both;
+}
+.client-home > section:nth-child(1) { animation-delay: 0ms; }
+.client-home > section:nth-child(2) { animation-delay: 60ms; }
+.client-home > section:nth-child(3) { animation-delay: 120ms; }
+.client-home > section:nth-child(4) { animation-delay: 180ms; }
+.client-home > section:nth-child(5) { animation-delay: 240ms; }
+.client-home > section:nth-child(6) { animation-delay: 300ms; }
+
+/* 당겨서 새로고침 인디케이터 */
+.client-home__pull-indicator {
+  text-align: center;
+  padding: var(--mg-spacing-sm);
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+/* === 카운트다운 히어로 카드 === */
+.client-home__hero-card {
+  background: var(--mg-client-gradient);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  color: var(--mg-color-text-on-primary);
+  box-shadow: var(--mg-shadow-md);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 100ms ease;
+}
+
+.client-home__hero-card:active {
+  transform: scale(0.97);
+}
+
+.client-home__hero-top {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.client-home__hero-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--mg-radius-full);
+  background: rgba(var(--mg-color-white-rgb), 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.client-home__hero-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--mg-radius-full);
+  object-fit: cover;
+}
+
+.client-home__hero-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.client-home__hero-name {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  margin: 0;
+}
+
+.client-home__hero-specialty {
+  font-size: var(--mg-font-size-sm);
+  opacity: 0.85;
+  margin-top: var(--mg-spacing-xs);
+}
+
+.client-home__hero-countdown {
+  font-size: var(--mg-font-size-2xl);
+  font-weight: var(--mg-font-weight-bold);
+  margin-bottom: var(--mg-spacing-sm);
+}
+
+.client-home__hero-datetime {
+  font-size: var(--mg-font-size-sm);
+  opacity: 0.85;
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.client-home__hero-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  background: rgba(var(--mg-color-white-rgb), 0.25);
+  border-radius: var(--mg-radius-full);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  border: none;
+  color: var(--mg-color-text-on-primary);
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background 200ms ease;
+}
+
+.client-home__hero-action:hover {
+  background: rgba(var(--mg-color-white-rgb), 0.35);
+}
+
+/* === 오늘의 기분 기록 카드 === */
+.client-home__mood-card {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+  cursor: pointer;
+  transition: transform 100ms ease;
+}
+
+.client-home__mood-card:active {
+  transform: scale(0.97);
+}
+
+.client-home__mood-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.client-home__mood-title {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+.client-home__mood-emojis {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  justify-content: center;
+}
+
+.client-home__mood-emoji {
+  font-size: var(--mg-font-size-3xl);
+  cursor: pointer;
+  transition: transform 200ms ease;
+  padding: var(--mg-spacing-xs);
+  border-radius: var(--mg-radius-full);
+  border: 2px solid transparent;
+  background: none;
+  line-height: 1;
+}
+
+.client-home__mood-emoji:hover {
+  transform: scale(1.2);
+}
+
+.client-home__mood-emoji--selected {
+  animation: scaleBounce 0.3s ease;
+  border-color: var(--mg-client-primary);
+  background: rgba(var(--mg-client-primary-rgb), var(--mg-opacity-light));
+}
+
+.client-home__mood-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-sm);
+  margin-top: var(--mg-spacing-md);
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-client-primary);
+  font-weight: var(--mg-font-weight-medium);
+}
+
+/* === 웰니스 팁 카드 === */
+.client-home__wellness-card {
+  background: var(--mg-client-primary-light);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 100ms ease;
+}
+
+.client-home__wellness-card:active {
+  transform: scale(0.97);
+}
+
+.client-home__wellness-label {
+  font-size: var(--mg-font-size-xs);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--mg-spacing-sm);
+}
+
+.client-home__wellness-title {
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-sm) 0;
+}
+
+.client-home__wellness-desc {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.client-home__wellness-icon {
+  position: absolute;
+  right: var(--mg-spacing-md);
+  bottom: var(--mg-spacing-md);
+  opacity: 0.3;
+}
+
+/* === 빠른 액션 버튼 === */
+.client-home__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--mg-spacing-md);
+}
+
+.client-home__action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-md) var(--mg-spacing-lg);
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  border: none;
+  cursor: pointer;
+  transition: transform 100ms ease;
+  min-height: 56px;
+}
+
+.client-home__action-btn:active {
+  transform: scale(0.97);
+}
+
+.client-home__action-btn--primary {
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  box-shadow: var(--mg-shadow-md);
+}
+
+.client-home__action-btn--secondary {
+  background: var(--mg-client-surface);
+  color: var(--mg-color-text-main);
+  border: 1px solid var(--mg-color-border-main);
+  box-shadow: var(--mg-shadow-sm);
+}
+
+/* === 최근 활동 요약 === */
+.client-home__activity {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+}
+
+.client-home__section-title {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-md) 0;
+}
+
+.client-home__activity-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.client-home__activity-item {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-sm) 0;
+  border-bottom: 1px solid var(--mg-color-border-main);
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.client-home__activity-item:last-child {
+  border-bottom: none;
+}
+
+.client-home__activity-item:nth-child(1) { animation-delay: 50ms; }
+.client-home__activity-item:nth-child(2) { animation-delay: 100ms; }
+.client-home__activity-item:nth-child(3) { animation-delay: 150ms; }
+
+.client-home__activity-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--mg-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--mg-warm-gray-100);
+  color: var(--mg-color-text-secondary);
+}
+
+.client-home__activity-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.client-home__activity-text {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-main);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.client-home__activity-time {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+  margin-top: 2px;
+}
+
+/* === Empty State === */
+.client-home__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--mg-spacing-xl) var(--mg-spacing-lg);
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  box-shadow: var(--mg-shadow-sm);
+}
+
+.client-home__empty-icon {
+  color: var(--mg-warm-gray-400);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.client-home__empty-title {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-sm) 0;
+}
+
+.client-home__empty-desc {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin: 0 0 var(--mg-spacing-lg) 0;
+  line-height: 1.5;
+}
+
+.client-home__empty-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-sm) var(--mg-spacing-lg);
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  border: none;
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+  transition: transform 100ms ease;
+}
+
+.client-home__empty-cta:active {
+  transform: scale(0.97);
+}
+
+/* === 스켈레톤 로딩 === */
+.client-home__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-lg);
+  padding: var(--mg-spacing-md);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.client-home__skeleton-block {
+  border-radius: var(--mg-radius-xl);
+  background: var(--mg-warm-gray-100);
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+.client-home__skeleton-hero {
+  height: 180px;
+}
+
+.client-home__skeleton-card {
+  height: 100px;
+}
+
+.client-home__skeleton-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--mg-spacing-md);
+}
+
+.client-home__skeleton-btn {
+  height: 56px;
+}
+
+/* === 반응형 === */
+@media (min-width: 768px) {
+  .client-home {
+    padding: var(--mg-spacing-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .client-home {
+    max-width: 680px;
+  }
+}

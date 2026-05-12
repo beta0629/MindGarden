@@ -1,0 +1,93 @@
+/**
+ * BottomNavigation 스타일
+ * 디자인 토큰만 사용 — 하드코딩 색상 금지
+ */
+
+.mg-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 64px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background-color: var(--mg-client-surface);
+  border-top: 1px solid var(--mg-color-border-main);
+  box-shadow: var(--mg-shadow-md);
+}
+
+.mg-bottom-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-xs);
+  min-width: 44px;
+  min-height: 44px;
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  text-decoration: none;
+  color: var(--mg-color-text-secondary);
+  transition: color 0.2s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mg-bottom-nav__item:active {
+  transform: scale(0.97);
+  opacity: 0.8;
+}
+
+.mg-bottom-nav__item--active {
+  color: var(--nav-active-color, var(--mg-consultant-primary));
+}
+
+.mg-bottom-nav__icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.mg-bottom-nav__badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--mg-radius-full);
+  background-color: var(--mg-color-error);
+  color: var(--mg-color-text-on-primary);
+  font-size: var(--mg-font-size-2xs);
+  font-weight: var(--mg-font-weight-semibold);
+  line-height: 16px;
+  text-align: center;
+}
+
+.mg-bottom-nav__dot {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--mg-radius-full);
+  background-color: var(--mg-color-error);
+}
+
+.mg-bottom-nav__label {
+  font-size: var(--mg-font-size-xs);
+  font-weight: var(--mg-font-weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* 데스크톱(1024+): 바텀 네비 숨김 (사이드바로 대체) */
+@media (min-width: 1024px) {
+  .mg-bottom-nav {
+    display: none;
+  }
+}

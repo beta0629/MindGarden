@@ -1091,6 +1091,98 @@
   --will-change-scroll: scroll-position;
   --will-change-transform: transform;
 
+  /* ===== CONSULTANT / CLIENT ROLE-BASED DESIGN TOKENS (Phase 1) ===== */
+  /* 역할별 디자인 토큰 — CONSULTANT_CLIENT_DESIGN_TOKENS.md 기반 */
+  /* 기존 --mg-* 팔레트와 공존, Phase 1 AppShell 이후 컴포넌트에서 사용 */
+
+  /* --- 1. 내담자(Client) 색상 토큰 --- */
+  --mg-client-bg-main: #FAF9F7;
+  --mg-client-surface: #FFFFFF;
+  --mg-client-primary: #E07A5F;
+  --mg-client-primary-light: #F2CC8F;
+  --mg-client-primary-dark: #C06A50;
+  --mg-client-gradient: linear-gradient(to right, #E07A5F, #F2CC8F);
+
+  /* --- 2. 상담사(Consultant) 색상 토큰 --- */
+  --mg-consultant-bg-main: #FAF9F7;
+  --mg-consultant-surface: #F5F3EF;
+  --mg-consultant-primary: #3D5246;
+  --mg-consultant-primary-light: #6B7F72;
+  --mg-consultant-primary-dark: #2A3A31;
+  --mg-consultant-gradient: linear-gradient(to right, #3D5246, #6B7F72);
+
+  /* --- 3. 공통 색상 토큰 (역할 무관) --- */
+  --mg-color-text-main: #2C2C2C;
+  --mg-color-text-secondary: #5C6B61;
+  --mg-color-text-on-primary: #FFFFFF;
+  --mg-color-border-main: #D4CFC8;
+  --mg-color-error: #E57373;
+  --mg-color-success: #81C784;
+  --mg-color-info: #3B82F6;
+
+  /* --- 3-1. RGB 채널 토큰 (rgba 조합용) --- */
+  --mg-client-primary-rgb: 224, 122, 95;
+  --mg-client-primary-light-rgb: 242, 204, 143;
+  --mg-consultant-primary-rgb: 61, 82, 70;
+  --mg-warm-gray-50-rgb: 250, 249, 247;
+  --mg-color-error-rgb: 229, 115, 115;
+  --mg-color-success-rgb: 129, 199, 132;
+  --mg-color-info-rgb: 59, 130, 246;
+  --mg-color-white-rgb: 255, 255, 255;
+
+  /* --- 4. 웜 그레이 스케일 (§3.10 색상 거버넌스 기준) --- */
+  --mg-warm-gray-900: #2C2C2C;
+  --mg-warm-gray-700: #4A4A4A;
+  --mg-warm-gray-500: #7A7A7A;
+  --mg-warm-gray-400: #9E9E9E;
+  --mg-warm-gray-300: #D4CFC8;
+  --mg-warm-gray-100: #F0EDE8;
+  --mg-warm-gray-50: #FAF9F7;
+
+  /* --- 5. 간격 토큰 (기존 --spacing-* 과 공존) --- */
+  --mg-spacing-xs: 4px;
+  --mg-spacing-sm: 8px;
+  --mg-spacing-md: 16px;
+  --mg-spacing-lg: 24px;
+  --mg-spacing-xl: 32px;
+  --mg-spacing-2xl: 48px;
+
+  /* --- 6. 둥근 모서리 토큰 --- */
+  --mg-radius-sm: 4px;
+  --mg-radius-md: 8px;
+  --mg-radius-lg: 12px;
+  --mg-radius-xl: 16px;
+  --mg-radius-full: 9999px;
+
+  /* --- 7. 그림자 토큰 (다단계) --- */
+  --mg-shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --mg-shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+  --mg-shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+  --mg-shadow-xl: 0 20px 25px rgba(0,0,0,0.12);
+
+  /* --- 8. 폰트 사이즈·굵기·패밀리 토큰 --- */
+  --mg-font-size-2xs: 0.625rem;  /* 10px */
+  --mg-font-size-xs: 0.75rem;    /* 12px */
+  --mg-font-size-sm: 0.875rem;   /* 14px */
+  --mg-font-size-base: 1rem;     /* 16px */
+  --mg-font-size-lg: 1.125rem;   /* 18px */
+  --mg-font-size-xl: 1.25rem;    /* 20px */
+  --mg-font-size-2xl: 1.5rem;    /* 24px */
+  --mg-font-size-3xl: 1.75rem;   /* 28px */
+  --mg-font-size-4xl: 2rem;      /* 32px */
+  --mg-font-size-5xl: 2.25rem;   /* 36px */
+  --mg-font-weight-normal: 400;
+  --mg-font-weight-medium: 500;
+  --mg-font-weight-semibold: 600;
+  --mg-font-weight-bold: 700;
+  --mg-font-family-body: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* --- 9. 투명도 토큰 (§3.10 규칙 5) --- */
+  --mg-opacity-subtle: 0.05;
+  --mg-opacity-light: 0.1;
+  --mg-opacity-medium: 0.2;
+  --mg-opacity-heavy: 0.5;
+
 }
 
 /* ===== 테넌트별 브랜딩 오버라이드 ===== */

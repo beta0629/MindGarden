@@ -1,0 +1,354 @@
+/**
+ * ClientSessionPaymentRenewal 스타일
+ * 내담자 테마(코랄) — 디자인 토큰만 사용
+ */
+
+.session-payment {
+  padding: var(--mg-spacing-md) 0;
+  animation: mg-fade-in 0.3s ease-out;
+}
+
+/* 스켈레톤 */
+.session-payment__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.session-payment__skeleton-block {
+  height: 120px;
+  border-radius: var(--mg-radius-xl);
+  background: linear-gradient(90deg,
+    var(--mg-client-surface) 25%,
+    var(--mg-color-border-main) 50%,
+    var(--mg-client-surface) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 잔여 회기 카드 */
+.session-payment__remaining-card {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-lg);
+  margin-bottom: var(--mg-spacing-lg);
+  animation: sp-stagger 0.3s ease-out both;
+}
+
+@keyframes sp-stagger {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.session-payment__progress-ring {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+}
+
+.session-payment__progress-ring svg {
+  width: 80px;
+  height: 80px;
+  transform: rotate(-90deg);
+}
+
+.session-payment__progress-ring circle {
+  fill: none;
+  stroke-width: 6;
+}
+
+.session-payment__progress-bg {
+  stroke: var(--mg-color-border-main);
+}
+
+.session-payment__progress-fill {
+  stroke: var(--mg-client-primary);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease-out;
+}
+
+.session-payment__progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.session-payment__progress-number {
+  display: block;
+  font-size: var(--mg-font-size-2xl);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-client-primary);
+  line-height: 1;
+}
+
+.session-payment__progress-label {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.session-payment__remaining-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+}
+
+.session-payment__remaining-title {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+}
+
+.session-payment__remaining-detail {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+/* 탭 */
+.session-payment__tabs {
+  display: flex;
+  gap: var(--mg-spacing-xs);
+  margin-bottom: var(--mg-spacing-md);
+  border-bottom: 1px solid var(--mg-color-border-main);
+}
+
+.session-payment__tab {
+  flex: 1;
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border: none;
+  background: transparent;
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-secondary);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.session-payment__tab--active {
+  color: var(--mg-client-primary);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+.session-payment__tab--active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--mg-client-primary);
+  border-radius: 1px;
+}
+
+/* 결제 내역 리스트 */
+.session-payment__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.session-payment__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mg-spacing-md);
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-sm);
+  animation: sp-stagger 0.3s ease-out both;
+}
+
+.session-payment__item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.session-payment__item-date {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.session-payment__item-desc {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+}
+
+.session-payment__item-method {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.session-payment__item-right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--mg-spacing-xs);
+}
+
+.session-payment__item-amount {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+}
+
+.session-payment__item-badge {
+  display: inline-block;
+  padding: 2px var(--mg-spacing-sm);
+  border-radius: var(--mg-radius-full);
+  font-size: var(--mg-font-size-xs);
+  font-weight: var(--mg-font-weight-medium);
+}
+
+.session-payment__item-badge--completed {
+  background-color: rgba(var(--mg-color-success-rgb), 0.15);
+  color: var(--mg-color-success);
+}
+
+.session-payment__item-badge--pending {
+  background-color: rgba(var(--mg-client-primary-rgb), 0.15);
+  color: var(--mg-client-primary);
+}
+
+.session-payment__item-badge--failed {
+  background-color: rgba(var(--mg-color-error-rgb), 0.15);
+  color: var(--mg-color-error);
+}
+
+/* 회기 연장 패키지 */
+.session-payment__packages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.session-payment__package-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mg-spacing-md);
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-lg);
+  border: 2px solid transparent;
+  box-shadow: var(--mg-shadow-sm);
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.session-payment__package-card:active {
+  transform: scale(0.98);
+}
+
+.session-payment__package-card--selected {
+  border-color: var(--mg-client-primary);
+}
+
+.session-payment__package-card--popular {
+  position: relative;
+}
+
+.session-payment__package-badge {
+  position: absolute;
+  top: -8px;
+  right: var(--mg-spacing-md);
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  font-size: var(--mg-font-size-xs);
+  font-weight: var(--mg-font-weight-semibold);
+  padding: 2px var(--mg-spacing-sm);
+  border-radius: var(--mg-radius-full);
+}
+
+.session-payment__package-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.session-payment__package-name {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+}
+
+.session-payment__package-sessions {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.session-payment__package-price {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-client-primary);
+}
+
+.session-payment__extend-btn {
+  width: 100%;
+  padding: var(--mg-spacing-md);
+  border: none;
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  cursor: pointer;
+  margin-top: var(--mg-spacing-md);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.session-payment__extend-btn:active {
+  transform: scale(0.97);
+}
+
+.session-payment__extend-btn:hover {
+  background: var(--mg-client-primary-dark);
+}
+
+.session-payment__extend-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Empty */
+.session-payment__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-spacing-2xl) var(--mg-spacing-md);
+  text-align: center;
+  gap: var(--mg-spacing-md);
+}
+
+.session-payment__empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-client-bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-client-primary-light);
+}
+
+.session-payment__empty-text {
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-secondary);
+}

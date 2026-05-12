@@ -1,0 +1,406 @@
+/**
+ * SelfAssessment 스타일
+ * 자가 심리검사 — PHQ-9 / GAD-7 / PSS 문항 UI + 결과 해석
+ */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.self-assess {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* === 상단 정보 === */
+.self-assess__header {
+  padding: var(--mg-spacing-md);
+  padding-bottom: 0;
+}
+
+.self-assess__title {
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-xs) 0;
+}
+
+.self-assess__subtitle {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin: 0 0 var(--mg-spacing-md) 0;
+}
+
+/* 진행 바 */
+.self-assess__progress {
+  height: 4px;
+  background: var(--mg-warm-gray-100);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.self-assess__progress-fill {
+  height: 100%;
+  background: var(--mg-client-primary);
+  border-radius: 2px;
+  transition: width 300ms ease;
+}
+
+/* === 문항 영역 === */
+.self-assess__content {
+  flex: 1;
+  padding: var(--mg-spacing-md);
+  overflow-y: auto;
+}
+
+.self-assess__question-card {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+  margin-bottom: var(--mg-spacing-md);
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.self-assess__question-num {
+  font-size: var(--mg-font-size-xs);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-client-primary);
+  margin-bottom: var(--mg-spacing-sm);
+}
+
+.self-assess__question-text {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-lg) 0;
+  line-height: 1.5;
+}
+
+.self-assess__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.self-assess__option {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-client-surface);
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.self-assess__option:active {
+  transform: scale(0.97);
+}
+
+.self-assess__option--selected {
+  border-color: var(--mg-client-primary);
+  background: rgba(var(--mg-client-primary-rgb), var(--mg-opacity-subtle));
+}
+
+.self-assess__option-score {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--mg-radius-full);
+  border: 2px solid var(--mg-color-border-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--mg-font-size-xs);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-secondary);
+  flex-shrink: 0;
+  transition: all 200ms ease;
+}
+
+.self-assess__option--selected .self-assess__option-score {
+  border-color: var(--mg-client-primary);
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+}
+
+.self-assess__option-text {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-main);
+}
+
+/* === 결과 카드 === */
+.self-assess__result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-spacing-lg);
+  padding: var(--mg-spacing-lg);
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.self-assess__result-score-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--mg-radius-full);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--mg-shadow-lg);
+}
+
+.self-assess__result-score-circle--minimal {
+  background: rgba(var(--mg-color-success-rgb), 0.15);
+  color: var(--mg-color-success);
+}
+
+.self-assess__result-score-circle--mild {
+  background: rgba(var(--mg-client-primary-light-rgb), var(--mg-opacity-medium));
+  color: var(--mg-client-primary-dark);
+}
+
+.self-assess__result-score-circle--moderate {
+  background: rgba(var(--mg-client-primary-rgb), 0.15);
+  color: var(--mg-client-primary);
+}
+
+.self-assess__result-score-circle--severe {
+  background: rgba(var(--mg-color-error-rgb), 0.15);
+  color: var(--mg-color-error);
+}
+
+.self-assess__result-score-num {
+  font-size: var(--mg-font-size-2xl);
+  font-weight: var(--mg-font-weight-bold);
+}
+
+.self-assess__result-score-label {
+  font-size: var(--mg-font-size-xs);
+  margin-top: var(--mg-spacing-xs);
+}
+
+.self-assess__result-card {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+  width: 100%;
+  text-align: center;
+}
+
+.self-assess__result-level {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-sm) 0;
+}
+
+.self-assess__result-desc {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.self-assess__result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  width: 100%;
+}
+
+.self-assess__result-btn {
+  width: 100%;
+  padding: var(--mg-spacing-md);
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+  border: none;
+  transition: transform 100ms ease;
+  text-align: center;
+}
+
+.self-assess__result-btn:active {
+  transform: scale(0.97);
+}
+
+.self-assess__result-btn--primary {
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+}
+
+.self-assess__result-btn--outline {
+  background: transparent;
+  border: 1px solid var(--mg-color-border-main);
+  color: var(--mg-color-text-main);
+}
+
+/* === 검사 선택 화면 === */
+.self-assess__select {
+  padding: var(--mg-spacing-md);
+}
+
+.self-assess__select-title {
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-lg) 0;
+}
+
+.self-assess__select-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.self-assess__select-card {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+  cursor: pointer;
+  transition: transform 100ms ease;
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.self-assess__select-card:active {
+  transform: scale(0.97);
+}
+
+.self-assess__select-card:nth-child(1) { animation-delay: 0ms; }
+.self-assess__select-card:nth-child(2) { animation-delay: 60ms; }
+.self-assess__select-card:nth-child(3) { animation-delay: 120ms; }
+
+.self-assess__select-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--mg-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.self-assess__select-icon--phq9 {
+  background: rgba(var(--mg-client-primary-rgb), var(--mg-opacity-light));
+  color: var(--mg-client-primary);
+}
+
+.self-assess__select-icon--gad7 {
+  background: rgba(var(--mg-client-primary-light-rgb), 0.15);
+  color: var(--mg-client-primary-dark);
+}
+
+.self-assess__select-icon--pss {
+  background: rgba(var(--mg-color-success-rgb), var(--mg-opacity-light));
+  color: var(--mg-color-success);
+}
+
+.self-assess__select-info {
+  flex: 1;
+}
+
+.self-assess__select-name {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+.self-assess__select-desc {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin-top: 2px;
+}
+
+/* === 하단 버튼 === */
+.self-assess__footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--mg-client-surface);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, var(--mg-opacity-subtle));
+  padding: var(--mg-spacing-md);
+  z-index: 10;
+}
+
+.self-assess__footer-btn {
+  width: 100%;
+  height: 56px;
+  border-radius: var(--mg-radius-lg);
+  border: none;
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  cursor: pointer;
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  transition: transform 100ms ease;
+}
+
+.self-assess__footer-btn:active {
+  transform: scale(0.97);
+}
+
+.self-assess__footer-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* === 이력 카드 === */
+.self-assess__history {
+  margin-top: var(--mg-spacing-lg);
+}
+
+.self-assess__history-title {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-md) 0;
+}
+
+.self-assess__history-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.self-assess__history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mg-spacing-md);
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-sm);
+}
+
+.self-assess__history-date {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.self-assess__history-score {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+}
+
+@media (min-width: 768px) {
+  .self-assess__content {
+    padding: var(--mg-spacing-lg);
+  }
+}

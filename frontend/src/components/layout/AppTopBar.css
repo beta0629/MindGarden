@@ -1,0 +1,131 @@
+/**
+ * AppTopBar 스타일
+ * 글래스모피즘 + 반응형
+ * 디자인 토큰만 사용
+ */
+
+.mg-top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 var(--mg-spacing-md);
+  background-color: transparent;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mg-top-bar--scrolled {
+  background-color: rgba(var(--mg-warm-gray-50-rgb), 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--mg-shadow-sm);
+}
+
+.mg-top-bar__left,
+.mg-top-bar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  min-width: 64px;
+}
+
+.mg-top-bar__right {
+  justify-content: flex-end;
+}
+
+.mg-top-bar__title {
+  flex: 1;
+  text-align: center;
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mg-top-bar__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: var(--mg-radius-full);
+  background: transparent;
+  color: var(--mg-color-text-main);
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mg-top-bar__btn:active {
+  transform: scale(0.97);
+  opacity: 0.8;
+}
+
+.mg-top-bar__notification {
+  position: relative;
+}
+
+.mg-top-bar__notification-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--mg-radius-full);
+  background-color: var(--mg-color-error);
+  color: var(--mg-color-text-on-primary);
+  font-size: var(--mg-font-size-2xs);
+  font-weight: var(--mg-font-weight-semibold);
+  line-height: 16px;
+  text-align: center;
+}
+
+.mg-top-bar__profile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mg-top-bar__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--mg-radius-full);
+  object-fit: cover;
+}
+
+.mg-top-bar__avatar--placeholder {
+  display: block;
+  background-color: var(--mg-warm-gray-300);
+}
+
+/* 태블릿/데스크톱 */
+@media (min-width: 768px) {
+  .mg-top-bar {
+    height: 64px;
+    padding: 0 var(--mg-spacing-lg);
+  }
+}
+
+/* 데스크톱: 사이드바 영역 제외 */
+@media (min-width: 1024px) {
+  .mg-top-bar {
+    left: 260px;
+  }
+}

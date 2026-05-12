@@ -1,0 +1,305 @@
+/**
+ * ClientWellnessRenewal 스타일
+ * 웰니스 허브 — 감정 일기 · 자가 검사 · 마음챙김 · 힐링 콘텐츠
+ */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes scaleBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.client-wellness {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-lg);
+  padding: var(--mg-spacing-md);
+  padding-bottom: var(--mg-spacing-2xl);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.client-wellness > section {
+  animation: fadeInUp 0.4s ease-out both;
+}
+.client-wellness > section:nth-child(1) { animation-delay: 0ms; }
+.client-wellness > section:nth-child(2) { animation-delay: 60ms; }
+.client-wellness > section:nth-child(3) { animation-delay: 120ms; }
+.client-wellness > section:nth-child(4) { animation-delay: 180ms; }
+
+/* === 감정 일기 섹션 === */
+.client-wellness__mood-card {
+  background: var(--mg-client-gradient);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+  color: var(--mg-color-text-on-primary);
+  cursor: pointer;
+  transition: transform 100ms ease;
+}
+
+.client-wellness__mood-card:active {
+  transform: scale(0.97);
+}
+
+.client-wellness__mood-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.client-wellness__mood-title {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  margin: 0;
+}
+
+.client-wellness__mood-emojis {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  justify-content: center;
+  margin-bottom: var(--mg-spacing-sm);
+}
+
+.client-wellness__mood-emoji {
+  font-size: var(--mg-font-size-4xl);
+  cursor: pointer;
+  transition: transform 200ms ease;
+  background: none;
+  border: none;
+  padding: var(--mg-spacing-xs);
+  border-radius: var(--mg-radius-full);
+  line-height: 1;
+}
+
+.client-wellness__mood-emoji:hover {
+  transform: scale(1.2);
+}
+
+.client-wellness__mood-emoji--selected {
+  animation: scaleBounce 0.3s ease;
+  background: rgba(var(--mg-color-white-rgb), 0.3);
+}
+
+.client-wellness__mood-cta {
+  text-align: center;
+  font-size: var(--mg-font-size-sm);
+  opacity: 0.85;
+  margin-top: var(--mg-spacing-sm);
+}
+
+/* === 자가 심리검사 섹션 === */
+.client-wellness__section-title {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-md) 0;
+}
+
+.client-wellness__test-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.client-wellness__test-card {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  cursor: pointer;
+  transition: transform 100ms ease;
+}
+
+.client-wellness__test-card:active {
+  transform: scale(0.97);
+}
+
+.client-wellness__test-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--mg-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.client-wellness__test-icon--depression {
+  background: rgba(var(--mg-client-primary-rgb), var(--mg-opacity-light));
+  color: var(--mg-client-primary);
+}
+
+.client-wellness__test-icon--anxiety {
+  background: rgba(var(--mg-client-primary-light-rgb), 0.15);
+  color: var(--mg-client-primary-dark);
+}
+
+.client-wellness__test-icon--stress {
+  background: rgba(var(--mg-color-success-rgb), var(--mg-opacity-light));
+  color: var(--mg-color-success);
+}
+
+.client-wellness__test-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.client-wellness__test-name {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+.client-wellness__test-desc {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin-top: 2px;
+}
+
+.client-wellness__test-arrow {
+  color: var(--mg-warm-gray-400);
+  flex-shrink: 0;
+}
+
+/* === 마음챙김 가이드 === */
+.client-wellness__guide-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--mg-spacing-md);
+}
+
+.client-wellness__guide-card {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+  text-align: center;
+  cursor: pointer;
+  transition: transform 100ms ease;
+}
+
+.client-wellness__guide-card:active {
+  transform: scale(0.97);
+}
+
+.client-wellness__guide-icon {
+  font-size: var(--mg-font-size-4xl);
+  margin-bottom: var(--mg-spacing-sm);
+}
+
+.client-wellness__guide-name {
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+/* === 힐링 콘텐츠 피드 === */
+.client-wellness__feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.client-wellness__feed-card {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+  cursor: pointer;
+  transition: transform 100ms ease;
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.client-wellness__feed-card:active {
+  transform: scale(0.97);
+}
+
+.client-wellness__feed-card:nth-child(1) { animation-delay: 0ms; }
+.client-wellness__feed-card:nth-child(2) { animation-delay: 60ms; }
+.client-wellness__feed-card:nth-child(3) { animation-delay: 120ms; }
+
+.client-wellness__feed-category {
+  font-size: var(--mg-font-size-xs);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-client-primary);
+  margin-bottom: var(--mg-spacing-xs);
+}
+
+.client-wellness__feed-title {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-xs) 0;
+}
+
+.client-wellness__feed-summary {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* === Empty === */
+.client-wellness__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--mg-spacing-xl) var(--mg-spacing-lg);
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  box-shadow: var(--mg-shadow-sm);
+}
+
+.client-wellness__empty-icon {
+  color: var(--mg-warm-gray-400);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.client-wellness__empty-text {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin: 0;
+}
+
+/* === 스켈레톤 === */
+.client-wellness__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-lg);
+  padding: var(--mg-spacing-md);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.client-wellness__skeleton-block {
+  border-radius: var(--mg-radius-xl);
+  background: var(--mg-warm-gray-100);
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+.client-wellness__skeleton-hero { height: 150px; }
+.client-wellness__skeleton-card { height: 80px; }
+
+@media (min-width: 768px) {
+  .client-wellness {
+    padding: var(--mg-spacing-lg);
+  }
+}

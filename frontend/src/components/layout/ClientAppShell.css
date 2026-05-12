@@ -1,0 +1,22 @@
+/**
+ * ClientAppShell 스타일
+ * 내담자 테마 — 코랄·크림 톤
+ * ConsultantAppShell.css의 공통 구조를 공유하며 색상만 오버라이드.
+ * 디자인 토큰만 사용
+ */
+
+.mg-app-shell--client {
+  --shell-primary: var(--mg-client-primary);
+  --shell-bg: var(--mg-client-bg-main);
+  --shell-surface: var(--mg-client-surface);
+}
+
+.mg-app-shell--client .mg-app-shell__sidebar-item:hover {
+  background-color: rgba(var(--mg-client-primary-rgb), var(--mg-opacity-subtle));
+  color: var(--shell-primary);
+}
+
+.mg-app-shell--client .mg-app-shell__sidebar-item--active {
+  background-color: rgba(var(--mg-client-primary-rgb), var(--mg-opacity-light));
+  color: var(--shell-primary);
+}

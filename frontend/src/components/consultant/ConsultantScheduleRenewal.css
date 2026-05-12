@@ -1,0 +1,526 @@
+/**
+ * ConsultantScheduleRenewal — 스케줄 캘린더 리뉴얼
+ * 디자인 토큰만 사용
+ */
+
+.cr-schedule {
+  padding-top: var(--mg-spacing-md);
+  padding-bottom: var(--mg-spacing-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+/* 뷰 전환 탭 */
+.cr-schedule__view-tabs {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  padding: 0 var(--mg-spacing-xs);
+}
+
+.cr-schedule__view-tab {
+  flex: 1;
+  height: 40px;
+  border: none;
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  background-color: transparent;
+  color: var(--mg-color-text-secondary);
+}
+
+.cr-schedule__view-tab--active {
+  background-color: var(--mg-consultant-primary);
+  color: var(--mg-warm-gray-50);
+}
+
+/* 주간 헤더 */
+.cr-schedule__week-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mg-spacing-sm) 0;
+}
+
+.cr-schedule__week-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+}
+
+.cr-schedule__week-nav-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--mg-radius-full);
+  background-color: var(--mg-consultant-surface);
+  color: var(--mg-color-text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.cr-schedule__week-nav-btn:hover {
+  background-color: var(--mg-warm-gray-100);
+}
+
+.cr-schedule__week-label {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+}
+
+.cr-schedule__today-btn {
+  height: 32px;
+  padding: 0 var(--mg-spacing-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  background-color: transparent;
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-consultant-primary);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+}
+
+/* 7일 날짜 바 */
+.cr-schedule__day-bar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--mg-spacing-xs);
+  text-align: center;
+}
+
+.cr-schedule__day-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--mg-spacing-sm) 0;
+  cursor: pointer;
+  border-radius: var(--mg-radius-md);
+  transition: background-color 0.15s ease;
+}
+
+.cr-schedule__day-cell:hover {
+  background-color: var(--mg-warm-gray-100);
+}
+
+.cr-schedule__day-cell--selected {
+  background-color: var(--mg-consultant-primary);
+}
+
+.cr-schedule__day-cell--selected .cr-schedule__day-name,
+.cr-schedule__day-cell--selected .cr-schedule__day-number {
+  color: var(--mg-warm-gray-50);
+}
+
+.cr-schedule__day-cell--today {
+  position: relative;
+}
+
+.cr-schedule__day-cell--today::after {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: var(--mg-radius-full);
+  background-color: var(--mg-consultant-primary);
+  position: absolute;
+  bottom: 4px;
+}
+
+.cr-schedule__day-cell--today.cr-schedule__day-cell--selected::after {
+  background-color: var(--mg-warm-gray-50);
+}
+
+.cr-schedule__day-name {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.cr-schedule__day-number {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+}
+
+.cr-schedule__day-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: var(--mg-radius-full);
+  background-color: var(--mg-consultant-primary);
+}
+
+/* 타임라인 */
+.cr-schedule__timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  position: relative;
+}
+
+.cr-schedule__timeline-line {
+  position: absolute;
+  left: 48px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--mg-color-border-main);
+}
+
+.cr-schedule__timeline-item {
+  display: flex;
+  gap: var(--mg-spacing-md);
+  animation: cr-sched-stagger 0.3s ease-out both;
+}
+
+.cr-schedule__timeline-item:nth-child(1) { animation-delay: 0ms; }
+.cr-schedule__timeline-item:nth-child(2) { animation-delay: 50ms; }
+.cr-schedule__timeline-item:nth-child(3) { animation-delay: 100ms; }
+.cr-schedule__timeline-item:nth-child(4) { animation-delay: 150ms; }
+.cr-schedule__timeline-item:nth-child(5) { animation-delay: 200ms; }
+
+.cr-schedule__timeline-time {
+  width: 48px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-secondary);
+  padding-top: var(--mg-spacing-md);
+}
+
+/* 스케줄 상세 카드 */
+.cr-schedule-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-md);
+  background-color: var(--mg-consultant-surface);
+  border-radius: var(--mg-radius-xl);
+  border-left: 4px solid var(--mg-consultant-primary);
+  box-shadow: var(--mg-shadow-sm);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.cr-schedule-detail:hover {
+  box-shadow: var(--mg-shadow-md);
+  transform: translateY(-2px);
+}
+
+.cr-schedule-detail:active {
+  transform: scale(0.97);
+}
+
+.cr-schedule-detail--completed {
+  border-left-color: var(--mg-color-success);
+  opacity: 0.8;
+}
+
+.cr-schedule-detail--cancelled {
+  border-left-color: var(--mg-color-border-main);
+  opacity: 0.6;
+}
+
+.cr-schedule-detail__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cr-schedule-detail__time-range {
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+}
+
+.cr-schedule-detail__status-badge {
+  font-size: var(--mg-font-size-xs);
+  padding: 2px var(--mg-spacing-sm);
+  border-radius: var(--mg-radius-full);
+  font-weight: var(--mg-font-weight-medium);
+  background-color: var(--mg-warm-gray-100);
+  color: var(--mg-color-text-secondary);
+}
+
+.cr-schedule-detail__status-badge--active {
+  background-color: var(--mg-consultant-primary);
+  color: var(--mg-warm-gray-50);
+}
+
+.cr-schedule-detail__status-badge--completed {
+  background-color: var(--mg-color-success);
+  color: var(--mg-warm-gray-50);
+}
+
+.cr-schedule-detail__client-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+}
+
+.cr-schedule-detail__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--mg-radius-full);
+  background-color: var(--mg-consultant-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-warm-gray-50);
+  font-size: var(--mg-font-size-xs);
+  font-weight: var(--mg-font-weight-semibold);
+  flex-shrink: 0;
+}
+
+.cr-schedule-detail__client-info {
+  flex: 1;
+}
+
+.cr-schedule-detail__client-name {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+}
+
+.cr-schedule-detail__session-type {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.cr-schedule-detail__actions {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  margin-top: var(--mg-spacing-xs);
+}
+
+.cr-schedule-detail__action-btn {
+  flex: 1;
+  height: 36px;
+  border-radius: var(--mg-radius-lg);
+  border: none;
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.cr-schedule-detail__action-btn:active {
+  transform: scale(0.97);
+}
+
+.cr-schedule-detail__action-btn--primary {
+  background-color: var(--mg-consultant-primary);
+  color: var(--mg-warm-gray-50);
+}
+
+.cr-schedule-detail__action-btn--primary:hover {
+  background-color: var(--mg-consultant-primary-dark);
+}
+
+.cr-schedule-detail__action-btn--secondary {
+  background-color: transparent;
+  color: var(--mg-color-text-main);
+  border: 1px solid var(--mg-color-border-main);
+}
+
+/* 바텀시트 모달 */
+.cr-bottomsheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background-color: rgba(0, 0, 0, var(--mg-opacity-heavy));
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: cr-overlay-in 0.2s ease-out;
+}
+
+.cr-bottomsheet {
+  width: 100%;
+  max-width: 600px;
+  max-height: 85vh;
+  background-color: var(--mg-warm-gray-50);
+  border-radius: var(--mg-radius-xl) var(--mg-radius-xl) 0 0;
+  overflow-y: auto;
+  animation: cr-sheet-up 0.3s ease-out;
+}
+
+.cr-bottomsheet__handle {
+  display: flex;
+  justify-content: center;
+  padding: var(--mg-spacing-sm) 0;
+}
+
+.cr-bottomsheet__handle-bar {
+  width: 40px;
+  height: 4px;
+  border-radius: var(--mg-radius-full);
+  background-color: var(--mg-color-border-main);
+}
+
+.cr-bottomsheet__content {
+  padding: 0 var(--mg-spacing-lg) var(--mg-spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.cr-bottomsheet__title {
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+}
+
+.cr-bottomsheet__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+}
+
+.cr-bottomsheet__label {
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-secondary);
+}
+
+.cr-bottomsheet__value {
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-main);
+}
+
+.cr-bottomsheet__actions {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  margin-top: var(--mg-spacing-sm);
+}
+
+.cr-bottomsheet__btn {
+  flex: 1;
+  height: 48px;
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+  border: none;
+  transition: transform 0.1s ease;
+}
+
+.cr-bottomsheet__btn:active {
+  transform: scale(0.97);
+}
+
+.cr-bottomsheet__btn--primary {
+  background-color: var(--mg-consultant-primary);
+  color: var(--mg-warm-gray-50);
+}
+
+.cr-bottomsheet__btn--secondary {
+  background-color: transparent;
+  color: var(--mg-color-text-main);
+  border: 1px solid var(--mg-color-border-main);
+}
+
+/* 스켈레톤 */
+.cr-schedule__skeleton-daybar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--mg-spacing-xs);
+}
+
+.cr-schedule__skeleton-day {
+  height: 56px;
+  border-radius: var(--mg-radius-md);
+  background: linear-gradient(
+    90deg,
+    var(--mg-warm-gray-100) 25%,
+    var(--mg-warm-gray-50) 50%,
+    var(--mg-warm-gray-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: cr-shimmer 1.5s ease-in-out infinite;
+}
+
+.cr-schedule__skeleton-card {
+  height: 100px;
+  border-radius: var(--mg-radius-xl);
+  background: linear-gradient(
+    90deg,
+    var(--mg-warm-gray-100) 25%,
+    var(--mg-warm-gray-50) 50%,
+    var(--mg-warm-gray-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: cr-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Empty */
+.cr-schedule__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-2xl) var(--mg-spacing-md);
+  text-align: center;
+}
+
+.cr-schedule__empty-icon {
+  color: var(--mg-color-text-secondary);
+  opacity: 0.5;
+}
+
+.cr-schedule__empty-text {
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-secondary);
+}
+
+.cr-schedule__empty-cta {
+  height: 40px;
+  padding: 0 var(--mg-spacing-lg);
+  border-radius: var(--mg-radius-lg);
+  border: none;
+  background-color: var(--mg-consultant-primary);
+  color: var(--mg-warm-gray-50);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+}
+
+/* 애니메이션 */
+@keyframes cr-sched-stagger {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cr-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cr-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes cr-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (min-width: 1024px) {
+  .cr-bottomsheet {
+    max-width: 600px;
+    border-radius: var(--mg-radius-xl);
+    margin-bottom: var(--mg-spacing-xl);
+  }
+
+  .cr-bottomsheet-overlay {
+    align-items: center;
+  }
+}

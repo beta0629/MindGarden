@@ -1,0 +1,383 @@
+/**
+ * ClientConsultationsRenewal 스타일
+ * 내 상담 리뉴얼 — 예정/완료 탭 + 평가
+ */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.client-consult {
+  display: flex;
+  flex-direction: column;
+  max-width: 600px;
+  margin: 0 auto;
+  min-height: 100%;
+}
+
+/* === 탭 바 === */
+.client-consult__tabs {
+  display: flex;
+  border-bottom: 1px solid var(--mg-color-border-main);
+  position: sticky;
+  top: 0;
+  background: var(--mg-client-bg-main);
+  z-index: 5;
+}
+
+.client-consult__tab {
+  flex: 1;
+  padding: var(--mg-spacing-md);
+  text-align: center;
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-secondary);
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 200ms ease;
+}
+
+.client-consult__tab--active {
+  color: var(--mg-client-primary);
+  border-bottom-color: var(--mg-client-primary);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+/* === 콘텐츠 === */
+.client-consult__content {
+  flex: 1;
+  padding: var(--mg-spacing-md);
+}
+
+.client-consult__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+/* === 상담 카드 === */
+.client-consult__card {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+  animation: fadeInUp 0.3s ease-out both;
+  transition: transform 100ms ease;
+}
+
+.client-consult__card:active {
+  transform: scale(0.97);
+}
+
+.client-consult__card:nth-child(1) { animation-delay: 0ms; }
+.client-consult__card:nth-child(2) { animation-delay: 60ms; }
+.client-consult__card:nth-child(3) { animation-delay: 120ms; }
+.client-consult__card:nth-child(4) { animation-delay: 180ms; }
+
+.client-consult__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.client-consult__card-badge {
+  display: inline-flex;
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  border-radius: var(--mg-radius-sm);
+  font-size: var(--mg-font-size-xs);
+  font-weight: var(--mg-font-weight-medium);
+}
+
+.client-consult__card-badge--upcoming {
+  background: rgba(var(--mg-client-primary-rgb), var(--mg-opacity-light));
+  color: var(--mg-client-primary);
+}
+
+.client-consult__card-badge--completed {
+  background: rgba(var(--mg-color-success-rgb), var(--mg-opacity-light));
+  color: var(--mg-color-success);
+}
+
+.client-consult__card-badge--cancelled {
+  background: rgba(var(--mg-color-error-rgb), var(--mg-opacity-light));
+  color: var(--mg-color-error);
+}
+
+.client-consult__card-body {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.client-consult__card-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-warm-gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--mg-warm-gray-400);
+}
+
+.client-consult__card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.client-consult__card-name {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+.client-consult__card-time {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin-top: 2px;
+}
+
+.client-consult__card-actions {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+}
+
+.client-consult__card-btn {
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+  border: none;
+  transition: transform 100ms ease;
+}
+
+.client-consult__card-btn:active {
+  transform: scale(0.97);
+}
+
+.client-consult__card-btn--primary {
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+}
+
+.client-consult__card-btn--outline {
+  background: transparent;
+  border: 1px solid var(--mg-color-border-main);
+  color: var(--mg-color-text-main);
+}
+
+.client-consult__card-btn--danger {
+  background: transparent;
+  border: 1px solid var(--mg-color-error);
+  color: var(--mg-color-error);
+}
+
+/* === 날짜 그룹핑 === */
+.client-consult__date-group {
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.client-consult__date-label {
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-secondary);
+  margin-bottom: var(--mg-spacing-sm);
+  padding-left: var(--mg-spacing-xs);
+}
+
+/* === 평가 모달 (바텀시트) === */
+.client-consult__rating-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, var(--mg-opacity-medium));
+  backdrop-filter: blur(10px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.client-consult__rating-sheet {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl) var(--mg-radius-xl) 0 0;
+  padding: var(--mg-spacing-lg);
+  width: 100%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.client-consult__rating-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--mg-warm-gray-300);
+  margin: 0 auto var(--mg-spacing-lg);
+}
+
+.client-consult__rating-title {
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-lg) 0;
+  text-align: center;
+}
+
+.client-consult__rating-stars {
+  display: flex;
+  justify-content: center;
+  gap: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.client-consult__rating-star {
+  cursor: pointer;
+  transition: transform 200ms ease;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.client-consult__rating-star:hover {
+  transform: scale(1.2);
+}
+
+.client-consult__rating-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm);
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.client-consult__rating-tag {
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border-radius: var(--mg-radius-full);
+  border: 1px solid var(--mg-color-border-main);
+  background: transparent;
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-size-sm);
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.client-consult__rating-tag--selected {
+  background: var(--mg-client-primary);
+  border-color: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+}
+
+.client-consult__rating-textarea {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+  padding: var(--mg-spacing-md);
+  font-size: var(--mg-font-size-sm);
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: var(--mg-spacing-lg);
+  color: var(--mg-color-text-main);
+  background: var(--mg-client-surface);
+}
+
+.client-consult__rating-textarea::placeholder {
+  color: var(--mg-warm-gray-400);
+}
+
+.client-consult__rating-submit {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  cursor: pointer;
+  transition: transform 100ms ease;
+}
+
+.client-consult__rating-submit:active {
+  transform: scale(0.97);
+}
+
+.client-consult__rating-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* === Empty State === */
+.client-consult__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--mg-spacing-2xl) var(--mg-spacing-lg);
+}
+
+.client-consult__empty-icon {
+  color: var(--mg-warm-gray-400);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.client-consult__empty-title {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-sm) 0;
+}
+
+.client-consult__empty-desc {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin: 0 0 var(--mg-spacing-lg) 0;
+}
+
+.client-consult__empty-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-sm) var(--mg-spacing-lg);
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  border: none;
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+}
+
+/* === 스켈레톤 === */
+.client-consult__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md);
+}
+
+.client-consult__skeleton-block {
+  border-radius: var(--mg-radius-xl);
+  background: var(--mg-warm-gray-100);
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+  height: 120px;
+}
+
+@media (min-width: 768px) {
+  .client-consult__content {
+    padding: var(--mg-spacing-lg);
+  }
+}

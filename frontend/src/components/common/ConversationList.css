@@ -1,0 +1,261 @@
+/**
+ * ConversationList — 대화 목록 스타일
+ */
+
+.mg-conversations {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--mg-chat-bg, var(--mg-client-bg-main));
+}
+
+.mg-conversations__header {
+  padding: var(--mg-spacing-md);
+  border-bottom: 1px solid var(--mg-color-border-main);
+}
+
+.mg-conversations__search {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  background: var(--mg-warm-gray-100);
+  border-radius: var(--mg-radius-xl);
+  border: 1px solid transparent;
+  transition: border-color var(--mg-animation-fast);
+}
+
+.mg-conversations__search:focus-within {
+  border-color: var(--mg-chat-primary, var(--mg-client-primary));
+}
+
+.mg-conversations__search-icon {
+  color: var(--mg-color-text-secondary);
+  flex-shrink: 0;
+}
+
+.mg-conversations__search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-main);
+  outline: none;
+  font-family: var(--mg-font-family-body);
+}
+
+.mg-conversations__search-input::placeholder {
+  color: var(--mg-warm-gray-400);
+}
+
+/* 대화 목록 리스트 */
+.mg-conversations__list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mg-conversations__item {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md);
+  cursor: pointer;
+  transition: background-color var(--mg-animation-fast);
+  border: none;
+  border-bottom: 1px solid var(--mg-warm-gray-100);
+  text-decoration: none;
+  text-align: left;
+  width: 100%;
+  background: transparent;
+  font-family: var(--mg-font-family-body);
+}
+
+.mg-conversations__item:active {
+  background: var(--mg-warm-gray-100);
+}
+
+.mg-conversations__item--unread {
+  background: rgba(0, 0, 0, var(--mg-opacity-subtle));
+}
+
+/* 아바타 */
+.mg-conversations__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--mg-radius-full);
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--mg-color-border-main);
+}
+
+.mg-conversations__avatar--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-secondary);
+}
+
+/* 콘텐츠 영역 */
+.mg-conversations__content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mg-conversations__top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm);
+}
+
+.mg-conversations__name {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mg-conversations__name--unread {
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+.mg-conversations__time {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mg-conversations__preview {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mg-conversations__preview--unread {
+  color: var(--mg-color-text-main);
+  font-weight: var(--mg-font-weight-medium);
+}
+
+/* 미읽음 뱃지 */
+.mg-conversations__badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-chat-primary, var(--mg-client-primary));
+  color: var(--mg-color-text-on-primary);
+  font-size: 0.6875rem;
+  font-weight: var(--mg-font-weight-semibold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* 스켈레톤 */
+.mg-conversations__skeleton-item {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md);
+}
+
+.mg-conversations__skeleton-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--mg-radius-full);
+  background: linear-gradient(90deg,
+    var(--mg-warm-gray-100) 25%,
+    var(--mg-warm-gray-50) 50%,
+    var(--mg-warm-gray-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: mg-conv-shimmer 1.5s infinite;
+}
+
+.mg-conversations__skeleton-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.mg-conversations__skeleton-line {
+  height: 14px;
+  border-radius: var(--mg-radius-sm);
+  background: linear-gradient(90deg,
+    var(--mg-warm-gray-100) 25%,
+    var(--mg-warm-gray-50) 50%,
+    var(--mg-warm-gray-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: mg-conv-shimmer 1.5s infinite;
+}
+
+.mg-conversations__skeleton-line--short {
+  width: 40%;
+}
+
+.mg-conversations__skeleton-line--long {
+  width: 70%;
+}
+
+@keyframes mg-conv-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Empty State */
+.mg-conversations__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-xl);
+  text-align: center;
+}
+
+.mg-conversations__empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-warm-gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-conversations__empty-title {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+.mg-conversations__empty-desc {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin: 0;
+}
+
+/* 당겨서 새로고침 */
+.mg-conversations__pull-indicator {
+  text-align: center;
+  padding: var(--mg-spacing-sm);
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}

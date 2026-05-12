@@ -1,0 +1,544 @@
+/**
+ * ClientBookingRenewal 스타일
+ * 예약하기 리뉴얼 4단계 스텝 플로우
+ */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes checkBounce {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.client-booking {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* === 스텝 인디케이터 === */
+.client-booking__stepper {
+  padding: var(--mg-spacing-md);
+  padding-bottom: 0;
+}
+
+.client-booking__progress-bar {
+  height: 4px;
+  background: var(--mg-warm-gray-100);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: var(--mg-spacing-sm);
+}
+
+.client-booking__progress-fill {
+  height: 100%;
+  background: var(--mg-client-primary);
+  border-radius: 2px;
+  transition: width 300ms ease;
+}
+
+.client-booking__step-labels {
+  display: flex;
+  justify-content: space-between;
+}
+
+.client-booking__step-label {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-warm-gray-400);
+  font-weight: var(--mg-font-weight-medium);
+  transition: color 200ms ease;
+}
+
+.client-booking__step-label--active {
+  color: var(--mg-client-primary);
+}
+
+.client-booking__step-label--done {
+  color: var(--mg-color-success);
+}
+
+/* === 콘텐츠 영역 === */
+.client-booking__content {
+  flex: 1;
+  padding: var(--mg-spacing-md);
+  overflow-y: auto;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.client-booking__step-title {
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-lg) 0;
+}
+
+/* === Step 1: 상담사 선택 === */
+.client-booking__filter-row {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  overflow-x: auto;
+  padding-bottom: var(--mg-spacing-sm);
+  margin-bottom: var(--mg-spacing-md);
+  -webkit-overflow-scrolling: touch;
+}
+
+.client-booking__filter-chip {
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border-radius: var(--mg-radius-full);
+  border: 1px solid var(--mg-color-border-main);
+  background: transparent;
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.client-booking__filter-chip--active {
+  background: var(--mg-client-primary);
+  border-color: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+}
+
+.client-booking__sort-row {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.client-booking__sort-btn {
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  border: none;
+  background: none;
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+  cursor: pointer;
+  font-weight: var(--mg-font-weight-medium);
+}
+
+.client-booking__sort-btn--active {
+  color: var(--mg-client-primary);
+}
+
+.client-booking__consultant-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.client-booking__consultant-card {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-sm);
+  cursor: pointer;
+  transition: transform 100ms ease, box-shadow 200ms ease;
+  border: 2px solid transparent;
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.client-booking__consultant-card:nth-child(1) { animation-delay: 0ms; }
+.client-booking__consultant-card:nth-child(2) { animation-delay: 60ms; }
+.client-booking__consultant-card:nth-child(3) { animation-delay: 120ms; }
+
+.client-booking__consultant-card:active {
+  transform: scale(0.97);
+}
+
+.client-booking__consultant-card--selected {
+  border-color: var(--mg-client-primary);
+  box-shadow: var(--mg-shadow-md);
+}
+
+.client-booking__consultant-top {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-sm);
+}
+
+.client-booking__consultant-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-warm-gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--mg-warm-gray-400);
+}
+
+.client-booking__consultant-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--mg-radius-full);
+  object-fit: cover;
+}
+
+.client-booking__consultant-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.client-booking__consultant-name {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+.client-booking__consultant-rating {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-client-primary-light);
+  margin-top: 2px;
+}
+
+.client-booking__consultant-rating-count {
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-xs);
+}
+
+.client-booking__consultant-specialty {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin-top: var(--mg-spacing-xs);
+}
+
+.client-booking__consultant-intro {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  line-height: 1.5;
+  margin-top: var(--mg-spacing-sm);
+}
+
+/* === Step 2: 시간 선택 === */
+.client-booking__date-scroll {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  overflow-x: auto;
+  padding-bottom: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-lg);
+  -webkit-overflow-scrolling: touch;
+}
+
+.client-booking__date-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border-radius: var(--mg-radius-lg);
+  border: 1px solid var(--mg-color-border-main);
+  background: var(--mg-client-surface);
+  cursor: pointer;
+  min-width: 56px;
+  transition: all 200ms ease;
+}
+
+.client-booking__date-item--selected {
+  background: var(--mg-client-primary);
+  border-color: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+}
+
+.client-booking__date-weekday {
+  font-size: var(--mg-font-size-xs);
+  margin-bottom: 2px;
+}
+
+.client-booking__date-day {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+.client-booking__time-label {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.client-booking__time-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm);
+}
+
+.client-booking__time-chip {
+  padding: 12px 20px;
+  border-radius: var(--mg-radius-full);
+  border: 1px solid var(--mg-color-border-main);
+  background: transparent;
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.client-booking__time-chip--selected {
+  background: var(--mg-client-primary);
+  border-color: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+}
+
+.client-booking__time-chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* === Step 3: 결제/확인 === */
+.client-booking__summary-card {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.client-booking__summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--mg-spacing-sm) 0;
+  border-bottom: 1px solid var(--mg-color-border-main);
+}
+
+.client-booking__summary-row:last-child {
+  border-bottom: none;
+}
+
+.client-booking__summary-label {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.client-booking__summary-value {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+}
+
+.client-booking__payment-section {
+  margin-top: var(--mg-spacing-lg);
+}
+
+.client-booking__payment-title {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.client-booking__payment-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.client-booking__payment-option {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-client-surface);
+  cursor: pointer;
+  transition: border-color 200ms ease;
+}
+
+.client-booking__payment-option--selected {
+  border-color: var(--mg-client-primary);
+}
+
+.client-booking__payment-radio {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--mg-radius-full);
+  border: 2px solid var(--mg-color-border-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.client-booking__payment-radio--checked {
+  border-color: var(--mg-client-primary);
+}
+
+.client-booking__payment-radio--checked::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-client-primary);
+}
+
+.client-booking__payment-text {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-main);
+}
+
+/* === Step 4: 완료 === */
+.client-booking__complete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--mg-spacing-2xl) var(--mg-spacing-lg);
+  gap: var(--mg-spacing-lg);
+}
+
+.client-booking__check-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-color-success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-color-text-on-primary);
+  animation: checkBounce 0.5s ease-out;
+}
+
+.client-booking__complete-title {
+  font-size: var(--mg-font-size-2xl);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+.client-booking__complete-info {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  box-shadow: var(--mg-shadow-md);
+  width: 100%;
+}
+
+.client-booking__complete-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  width: 100%;
+}
+
+.client-booking__complete-btn {
+  padding: var(--mg-spacing-md);
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+  border: none;
+  transition: transform 100ms ease;
+  text-align: center;
+}
+
+.client-booking__complete-btn:active {
+  transform: scale(0.97);
+}
+
+.client-booking__complete-btn--primary {
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+}
+
+.client-booking__complete-btn--outline {
+  background: transparent;
+  border: 1px solid var(--mg-color-border-main);
+  color: var(--mg-color-text-main);
+}
+
+/* === 하단 고정 버튼 === */
+.client-booking__footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--mg-client-surface);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, var(--mg-opacity-subtle));
+  padding: var(--mg-spacing-md);
+  z-index: 10;
+}
+
+.client-booking__footer-btn {
+  width: 100%;
+  height: 56px;
+  border-radius: var(--mg-radius-lg);
+  border: none;
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  cursor: pointer;
+  transition: transform 100ms ease, opacity 200ms ease;
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+}
+
+.client-booking__footer-btn:active {
+  transform: scale(0.97);
+}
+
+.client-booking__footer-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* === Empty === */
+.client-booking__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--mg-spacing-2xl) var(--mg-spacing-lg);
+  color: var(--mg-color-text-secondary);
+}
+
+.client-booking__empty-icon {
+  color: var(--mg-warm-gray-400);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+/* === 스켈레톤 === */
+.client-booking__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md);
+}
+
+.client-booking__skeleton-block {
+  border-radius: var(--mg-radius-xl);
+  background: var(--mg-warm-gray-100);
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+.client-booking__skeleton-card {
+  height: 120px;
+}
+
+/* === 반응형 === */
+@media (min-width: 768px) {
+  .client-booking {
+    padding: 0 var(--mg-spacing-lg);
+  }
+
+  .client-booking__consultant-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}

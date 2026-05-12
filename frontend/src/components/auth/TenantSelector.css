@@ -1,0 +1,170 @@
+/**
+ * TenantSelector 스타일
+ * 첫 실행 시 기관 코드 입력 화면
+ * 디자인 토큰만 사용
+ */
+
+.mg-tenant-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--mg-spacing-xl) var(--mg-spacing-lg);
+  background-color: var(--mg-client-bg-main);
+  font-family: var(--mg-font-family-body);
+}
+
+.mg-tenant-selector__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: var(--mg-spacing-xl);
+}
+
+.mg-tenant-selector__icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: var(--mg-radius-xl);
+  background-color: var(--mg-warm-gray-100);
+  color: var(--mg-color-text-secondary);
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.mg-tenant-selector__title {
+  font-size: var(--mg-font-size-2xl);
+  font-weight: var(--mg-font-weight-bold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-sm);
+}
+
+.mg-tenant-selector__desc {
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.mg-tenant-selector__form {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.mg-tenant-selector__field {
+  width: 100%;
+}
+
+.mg-tenant-selector__input {
+  width: 100%;
+  height: 52px;
+  padding: 0 var(--mg-spacing-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-font-size-lg);
+  text-align: center;
+  letter-spacing: 2px;
+  color: var(--mg-color-text-main);
+  background-color: var(--mg-client-surface);
+  outline: none;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.mg-tenant-selector__input:focus {
+  border-color: var(--mg-client-primary);
+}
+
+.mg-tenant-selector__input::placeholder {
+  color: var(--mg-warm-gray-400);
+  letter-spacing: normal;
+}
+
+.mg-tenant-selector__error {
+  color: var(--mg-color-error);
+  font-size: var(--mg-font-size-sm);
+  text-align: center;
+  margin: 0;
+}
+
+.mg-tenant-selector__submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-sm);
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: var(--mg-radius-lg);
+  background-color: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mg-tenant-selector__submit:active {
+  transform: scale(0.97);
+  opacity: 0.8;
+}
+
+.mg-tenant-selector__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mg-tenant-selector__divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 360px;
+  margin: var(--mg-spacing-lg) 0;
+  gap: var(--mg-spacing-md);
+}
+
+.mg-tenant-selector__divider::before,
+.mg-tenant-selector__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--mg-color-border-main);
+}
+
+.mg-tenant-selector__divider span {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-tenant-selector__qr-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-sm);
+  width: 100%;
+  max-width: 360px;
+  height: 48px;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  background-color: var(--mg-client-surface);
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-base);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mg-tenant-selector__qr-btn:active {
+  transform: scale(0.97);
+}
+
+.mg-tenant-selector__qr-btn:hover {
+  border-color: var(--mg-color-text-secondary);
+}

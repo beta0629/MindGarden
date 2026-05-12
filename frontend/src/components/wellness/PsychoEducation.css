@@ -1,0 +1,398 @@
+/**
+ * PsychoEducation 스타일
+ * 내담자 테마(코랄) — 디자인 토큰만 사용
+ */
+
+.psycho-edu {
+  padding: var(--mg-spacing-md) 0;
+  animation: mg-fade-in 0.3s ease-out;
+}
+
+/* 스켈레톤 */
+.psycho-edu__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.psycho-edu__skeleton-block {
+  height: 160px;
+  border-radius: var(--mg-radius-xl);
+  background: linear-gradient(90deg,
+    var(--mg-client-surface) 25%,
+    var(--mg-color-border-main) 50%,
+    var(--mg-client-surface) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+/* 추천 섹션 */
+.psycho-edu__recommend {
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.psycho-edu__recommend-title {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.psycho-edu__recommend-badge {
+  display: inline-block;
+  padding: 2px var(--mg-spacing-sm);
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  font-size: var(--mg-font-size-xs);
+  font-weight: var(--mg-font-weight-semibold);
+  margin-left: var(--mg-spacing-sm);
+  vertical-align: middle;
+}
+
+/* 카테고리 탭 */
+.psycho-edu__categories {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: var(--mg-spacing-md);
+  padding-bottom: var(--mg-spacing-xs);
+}
+
+.psycho-edu__categories::-webkit-scrollbar {
+  display: none;
+}
+
+.psycho-edu__category-chip {
+  flex-shrink: 0;
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-full);
+  background: transparent;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+
+.psycho-edu__category-chip:active {
+  transform: scale(0.95);
+}
+
+.psycho-edu__category-chip--active {
+  background-color: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  border-color: var(--mg-client-primary);
+}
+
+/* 카드뉴스 리스트 */
+.psycho-edu__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.psycho-edu__card {
+  position: relative;
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  overflow: hidden;
+  box-shadow: var(--mg-shadow-sm);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  animation: psycho-stagger 0.3s ease-out both;
+}
+
+.psycho-edu__card:active {
+  transform: scale(0.98);
+}
+
+.psycho-edu__card:hover {
+  box-shadow: var(--mg-shadow-md);
+}
+
+@keyframes psycho-stagger {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.psycho-edu__card-image {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.psycho-edu__card-image-icon {
+  color: rgba(var(--mg-color-white-rgb), 0.6);
+  z-index: 1;
+}
+
+.psycho-edu__card-completed {
+  position: absolute;
+  top: var(--mg-spacing-sm);
+  right: var(--mg-spacing-sm);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-color-success);
+  color: var(--mg-color-text-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.psycho-edu__card-body {
+  padding: var(--mg-spacing-md);
+}
+
+.psycho-edu__card-title {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin-bottom: var(--mg-spacing-xs);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.psycho-edu__card-summary {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin-bottom: var(--mg-spacing-sm);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+.psycho-edu__card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.psycho-edu__card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+}
+
+.psycho-edu__card-tag {
+  font-size: var(--mg-font-size-xs);
+  padding: 2px var(--mg-spacing-sm);
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-client-bg-main);
+  color: var(--mg-client-primary);
+}
+
+.psycho-edu__card-time {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.psycho-edu__card-bookmark {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--mg-color-text-secondary);
+  transition: color 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.psycho-edu__card-bookmark:active {
+  transform: scale(0.88);
+}
+
+.psycho-edu__card-bookmark--active {
+  color: var(--mg-client-primary);
+}
+
+/* 상세 뷰 (카드 스와이프) */
+.psycho-edu__detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0, 0, 0, var(--mg-opacity-heavy));
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-spacing-md);
+  animation: overlay-fade-in 0.2s ease-out;
+}
+
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.psycho-edu__detail-card {
+  background: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl);
+  max-width: 480px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--mg-shadow-xl);
+  animation: detail-slide-up 0.3s ease-out;
+}
+
+@keyframes detail-slide-up {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.psycho-edu__detail-header {
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.psycho-edu__detail-close {
+  position: absolute;
+  top: var(--mg-spacing-sm);
+  right: var(--mg-spacing-sm);
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--mg-radius-full);
+  background: rgba(var(--mg-color-white-rgb), 0.8);
+  color: var(--mg-color-text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.psycho-edu__detail-body {
+  padding: var(--mg-spacing-lg);
+}
+
+.psycho-edu__detail-title {
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin-bottom: var(--mg-spacing-sm);
+}
+
+.psycho-edu__detail-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.psycho-edu__detail-content {
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-main);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.psycho-edu__detail-nav {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--mg-spacing-md) var(--mg-spacing-lg);
+  border-top: 1px solid var(--mg-color-border-main);
+}
+
+.psycho-edu__detail-nav-btn {
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  background: transparent;
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-size-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.psycho-edu__detail-nav-btn:hover {
+  background: var(--mg-client-bg-main);
+}
+
+.psycho-edu__detail-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* 인디케이터 */
+.psycho-edu__detail-indicator {
+  display: flex;
+  justify-content: center;
+  gap: var(--mg-spacing-xs);
+  padding: var(--mg-spacing-sm) 0;
+}
+
+.psycho-edu__indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-color-border-main);
+  transition: background-color 0.2s ease, width 0.2s ease;
+}
+
+.psycho-edu__indicator-dot--active {
+  background: var(--mg-client-primary);
+  width: 20px;
+  border-radius: 4px;
+}
+
+/* Empty */
+.psycho-edu__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-spacing-2xl) var(--mg-spacing-md);
+  text-align: center;
+  gap: var(--mg-spacing-md);
+}
+
+.psycho-edu__empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-client-bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-client-primary-light);
+}
+
+.psycho-edu__empty-text {
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-secondary);
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+  .psycho-edu__list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .psycho-edu__list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

@@ -1,0 +1,289 @@
+/**
+ * ConsultantIncomeReport 스타일
+ * 상담사 테마(그린) — 디자인 토큰만 사용
+ */
+
+.income-report {
+  padding: var(--mg-spacing-md) 0;
+  animation: mg-fade-in 0.3s ease-out;
+}
+
+/* 스켈레톤 */
+.income-report__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.income-report__skeleton-card {
+  height: 96px;
+  border-radius: var(--mg-radius-xl);
+  background: linear-gradient(90deg,
+    var(--mg-consultant-surface) 25%,
+    var(--mg-color-border-main) 50%,
+    var(--mg-consultant-surface) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+.income-report__skeleton-chart {
+  height: 200px;
+  border-radius: var(--mg-radius-xl);
+  background: linear-gradient(90deg,
+    var(--mg-consultant-surface) 25%,
+    var(--mg-color-border-main) 50%,
+    var(--mg-consultant-surface) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+/* 월 선택 */
+.income-report__month-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.income-report__month-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-consultant-surface);
+  color: var(--mg-color-text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.income-report__month-btn:active {
+  transform: scale(0.95);
+}
+
+.income-report__month-label {
+  font-size: var(--mg-font-size-lg);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  min-width: 120px;
+  text-align: center;
+}
+
+/* 요약 카드 그리드 */
+.income-report__summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--mg-spacing-sm);
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.income-report__summary-card {
+  background: var(--mg-consultant-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-md);
+  box-shadow: var(--mg-shadow-sm);
+  text-align: center;
+  animation: income-stagger-in 0.3s ease-out both;
+}
+
+.income-report__summary-card:nth-child(1) { animation-delay: 0ms; }
+.income-report__summary-card:nth-child(2) { animation-delay: 80ms; }
+.income-report__summary-card:nth-child(3) { animation-delay: 160ms; }
+
+@keyframes income-stagger-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.income-report__summary-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--mg-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--mg-spacing-sm);
+  background: var(--mg-consultant-bg-main);
+  color: var(--mg-consultant-primary);
+}
+
+.income-report__summary-value {
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin-bottom: 2px;
+}
+
+.income-report__summary-label {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+/* 차트 섹션 */
+.income-report__chart-section {
+  background: var(--mg-consultant-surface);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-md);
+  box-shadow: var(--mg-shadow-sm);
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.income-report__chart-title {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.income-report__bar-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 160px;
+  gap: var(--mg-spacing-xs);
+  padding-top: var(--mg-spacing-sm);
+}
+
+.income-report__bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+  flex: 1;
+}
+
+.income-report__bar {
+  width: 100%;
+  max-width: 32px;
+  border-radius: var(--mg-radius-sm) var(--mg-radius-sm) 0 0;
+  background-color: var(--mg-consultant-primary);
+  transition: height 0.6s ease-out;
+  min-height: 4px;
+  position: relative;
+}
+
+.income-report__bar--current {
+  background-color: var(--mg-consultant-primary);
+}
+
+.income-report__bar--past {
+  background-color: var(--mg-consultant-primary-light);
+}
+
+.income-report__bar-label {
+  font-size: var(--mg-font-size-2xs);
+  color: var(--mg-color-text-secondary);
+  white-space: nowrap;
+}
+
+.income-report__bar-value {
+  font-size: var(--mg-font-size-2xs);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+  white-space: nowrap;
+}
+
+/* 상세 목록 */
+.income-report__detail-section {
+  margin-top: var(--mg-spacing-md);
+}
+
+.income-report__detail-title {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.income-report__detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.income-report__detail-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mg-spacing-md);
+  background: var(--mg-consultant-surface);
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-sm);
+  animation: income-stagger-in 0.3s ease-out both;
+}
+
+.income-report__detail-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.income-report__detail-date {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.income-report__detail-client {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+}
+
+.income-report__detail-right {
+  text-align: right;
+}
+
+.income-report__detail-amount {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-consultant-primary);
+}
+
+.income-report__detail-type {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+/* Empty */
+.income-report__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-spacing-2xl) var(--mg-spacing-md);
+  text-align: center;
+  gap: var(--mg-spacing-md);
+}
+
+.income-report__empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-consultant-bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-consultant-primary-light);
+}
+
+.income-report__empty-text {
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-secondary);
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+  .income-report__summary-grid {
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .income-report__bar-chart {
+    height: 200px;
+  }
+}

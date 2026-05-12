@@ -1,0 +1,114 @@
+/**
+ * MiniPlayer 스타일
+ * 하단 고정 바 (바텀 네비 위) — 반투명 + 블러
+ * 디자인 토큰만 사용
+ */
+
+.mini-player {
+  position: fixed;
+  bottom: 64px;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  padding: 0 var(--mg-spacing-md);
+  background: rgba(var(--mg-color-white-rgb), 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--mg-color-border-main);
+  box-shadow: var(--mg-shadow-md);
+  animation: mini-player-slide-up 0.3s ease-out;
+}
+
+@keyframes mini-player-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.mini-player__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.mini-player__title {
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-player__category {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.mini-player__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+}
+
+.mini-player__btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mini-player__btn:active {
+  transform: scale(0.92);
+}
+
+.mini-player__btn--close {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  color: var(--mg-color-text-secondary);
+}
+
+.mini-player__progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--mg-client-primary);
+  transition: width 0.3s linear;
+}
+
+/* 데스크톱: 바텀 네비 없으므로 하단에 위치 조정 */
+@media (min-width: 1024px) {
+  .mini-player {
+    bottom: 0;
+    left: 260px;
+    max-width: calc(100% - 260px);
+  }
+}
+
+/* safe-area 대응 */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .mini-player {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 1024px) {
+    .mini-player {
+      bottom: env(safe-area-inset-bottom, 0px);
+    }
+  }
+}

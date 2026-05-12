@@ -1,0 +1,167 @@
+/**
+ * NotificationSettings — 알림 설정 화면 스타일
+ */
+
+.mg-notif-settings {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--mg-chat-bg, var(--mg-client-bg-main));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 카테고리 섹션 */
+.mg-notif-settings__section {
+  padding: var(--mg-spacing-md);
+  border-bottom: 1px solid var(--mg-warm-gray-100);
+}
+
+.mg-notif-settings__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mg-spacing-sm) 0;
+}
+
+.mg-notif-settings__section-title {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+}
+
+.mg-notif-settings__section-icon {
+  color: var(--mg-color-text-secondary);
+}
+
+/* 토글 */
+.mg-notif-settings__toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: var(--mg-radius-full);
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--mg-animation-fast);
+  background: var(--mg-warm-gray-300);
+  padding: 0;
+}
+
+.mg-notif-settings__toggle--active {
+  background: var(--mg-chat-primary, var(--mg-client-primary));
+}
+
+.mg-notif-settings__toggle--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mg-notif-settings__toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-color-text-on-primary);
+  box-shadow: var(--mg-shadow-sm);
+  transition: transform var(--mg-animation-fast);
+}
+
+.mg-notif-settings__toggle--active .mg-notif-settings__toggle-knob {
+  transform: translateX(20px);
+}
+
+/* 하위 옵션 */
+.mg-notif-settings__sub-options {
+  padding-left: var(--mg-spacing-lg);
+  margin-top: var(--mg-spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.mg-notif-settings__sub-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mg-spacing-xs) 0;
+}
+
+.mg-notif-settings__sub-label {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+/* 드롭다운 */
+.mg-notif-settings__select {
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-main);
+  background: var(--mg-client-surface);
+  font-family: var(--mg-font-family-body);
+  cursor: pointer;
+  outline: none;
+}
+
+.mg-notif-settings__select:focus {
+  border-color: var(--mg-chat-primary, var(--mg-client-primary));
+}
+
+/* 시간 피커 */
+.mg-notif-settings__time-picker {
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-main);
+  background: var(--mg-client-surface);
+  font-family: var(--mg-font-family-body);
+  cursor: pointer;
+  outline: none;
+}
+
+.mg-notif-settings__time-picker:focus {
+  border-color: var(--mg-chat-primary, var(--mg-client-primary));
+}
+
+/* 비활성화된 항목 (시스템 공지) */
+.mg-notif-settings__section--forced {
+  opacity: 0.7;
+}
+
+.mg-notif-settings__forced-label {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-warm-gray-400);
+  font-style: italic;
+}
+
+/* 저장 확인 토스트 */
+.mg-notif-settings__saved-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--mg-color-text-main);
+  color: var(--mg-color-text-on-primary);
+  padding: var(--mg-spacing-sm) var(--mg-spacing-lg);
+  border-radius: var(--mg-radius-full);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  box-shadow: var(--mg-shadow-lg);
+  z-index: 1000;
+  animation: mg-toast-fade 2s ease forwards;
+}
+
+@keyframes mg-toast-fade {
+  0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}

@@ -1,0 +1,207 @@
+/**
+ * MobileLogin 스타일
+ * 모바일 퍼스트 소셜 로그인 화면
+ * 디자인 토큰만 사용 — 소셜 버튼 색상은 각 플랫폼 가이드라인 준수
+ */
+
+.mg-mobile-login {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--mg-client-bg-main);
+  font-family: var(--mg-font-family-body);
+}
+
+.mg-mobile-login__hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 40vh;
+  min-height: 280px;
+  overflow: hidden;
+}
+
+.mg-mobile-login__gradient-bg {
+  position: absolute;
+  inset: 0;
+  background: var(--mg-client-gradient);
+  opacity: var(--mg-opacity-medium);
+}
+
+.mg-mobile-login__logo-area {
+  position: relative;
+  text-align: center;
+  z-index: 1;
+}
+
+.mg-mobile-login__logo {
+  font-size: var(--mg-font-size-2xl);
+  font-weight: var(--mg-font-weight-bold);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-sm);
+}
+
+.mg-mobile-login__tagline {
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-secondary);
+  margin: 0;
+}
+
+.mg-mobile-login__card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--mg-spacing-xl) var(--mg-spacing-lg);
+  background-color: var(--mg-client-surface);
+  border-radius: var(--mg-radius-xl) var(--mg-radius-xl) 0 0;
+  margin-top: calc(-1 * var(--mg-spacing-lg));
+  position: relative;
+  z-index: 2;
+}
+
+/* 소셜 로그인 버튼 */
+.mg-mobile-login__social-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.mg-mobile-login__social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-sm);
+  width: 100%;
+  height: 56px;
+  border: none;
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mg-mobile-login__social-btn:active {
+  transform: scale(0.97);
+  opacity: 0.8;
+}
+
+/* 카카오: 플랫폼 가이드라인 색상 */
+.mg-mobile-login__social-btn--kakao {
+  background-color: #FEE500;
+  color: #191919;
+}
+
+/* 네이버: 플랫폼 가이드라인 색상 */
+.mg-mobile-login__social-btn--naver {
+  background-color: #03C75A;
+  color: var(--mg-color-text-on-primary);
+}
+
+/* 다른 방법으로 로그인 토글 */
+.mg-mobile-login__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-xs);
+  width: 100%;
+  padding: var(--mg-spacing-md) 0;
+  background: transparent;
+  border: none;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+  cursor: pointer;
+}
+
+/* ID/PW 폼 */
+.mg-mobile-login__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  margin-top: var(--mg-spacing-md);
+  animation: mg-slide-down 0.2s ease-out;
+}
+
+@keyframes mg-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mg-mobile-login__field {
+  width: 100%;
+}
+
+.mg-mobile-login__input {
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--mg-spacing-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-main);
+  background-color: var(--mg-client-bg-main);
+  outline: none;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.mg-mobile-login__input:focus {
+  border-color: var(--mg-client-primary);
+}
+
+.mg-mobile-login__input::placeholder {
+  color: var(--mg-warm-gray-400);
+}
+
+.mg-mobile-login__error {
+  color: var(--mg-color-error);
+  font-size: var(--mg-font-size-sm);
+  margin: 0;
+}
+
+.mg-mobile-login__submit {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: var(--mg-radius-lg);
+  background-color: var(--mg-client-primary);
+  color: var(--mg-color-text-on-primary);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mg-mobile-login__submit:active {
+  transform: scale(0.97);
+  opacity: 0.8;
+}
+
+.mg-mobile-login__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 태블릿/데스크톱 */
+@media (min-width: 768px) {
+  .mg-mobile-login__card {
+    max-width: 440px;
+    margin: calc(-1 * var(--mg-spacing-lg)) auto 0;
+    border-radius: var(--mg-radius-xl);
+    box-shadow: var(--mg-shadow-lg);
+  }
+
+  .mg-mobile-login__hero {
+    flex: 0 0 50vh;
+  }
+}

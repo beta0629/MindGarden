@@ -131,7 +131,7 @@ export default function ConsultantRecords() {
             renderItem={({ item, index }) => (
               <RecordCard
                 clientName={`${item.clientName} 님`}
-                date={item.scheduledDate}
+                date={item.date}
                 time={`${item.startTime} - ${item.endTime}`}
                 isPending
                 index={index}
@@ -167,7 +167,7 @@ export default function ConsultantRecords() {
           renderItem={({ item, index }) => (
             <RecordCard
               clientName={`${item.clientName} 님`}
-              date={item.scheduledDate}
+              date={item.date}
               time={`${item.startTime} - ${item.endTime}`}
               summary={item.summary}
               tags={item.tags}

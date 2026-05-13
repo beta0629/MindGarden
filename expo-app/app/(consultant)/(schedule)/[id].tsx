@@ -32,6 +32,7 @@ import { Badge } from '@/components/atoms/Badge';
 import { SkeletonCard, SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 
 const STATUS_LABEL: Record<string, string> = {
+  BOOKED: '예정',
   SCHEDULED: '예정',
   IN_PROGRESS: '진행중',
   COMPLETED: '완료',
@@ -40,6 +41,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_VARIANT: Record<string, 'info' | 'warning' | 'success' | 'gray' | 'error'> = {
+  BOOKED: 'info',
   SCHEDULED: 'info',
   IN_PROGRESS: 'warning',
   COMPLETED: 'success',
@@ -230,7 +232,7 @@ export default function ConsultantScheduleDetail() {
                     fontSize: theme.fontSize.sm,
                   }}
                 >
-                  {schedule.scheduledDate}
+                  {schedule.date}
                 </Text>
               </View>
               <View
@@ -327,7 +329,7 @@ export default function ConsultantScheduleDetail() {
                     fontSize: theme.fontSize.sm,
                   }}
                 >
-                  {schedule.sessionType}
+                  {schedule.consultationType}
                   {schedule.sessionNumber
                     ? ` (${schedule.sessionNumber}회차)`
                     : ''}
@@ -336,11 +338,11 @@ export default function ConsultantScheduleDetail() {
             </View>
 
             {/* 액션 버튼 */}
-            {schedule.status === 'SCHEDULED' || schedule.status === 'IN_PROGRESS' ? (
+            {schedule.status === 'SCHEDULED' || schedule.status === 'BOOKED' || schedule.status === 'IN_PROGRESS' ? (
               <View
                 style={[styles.actionRow, { marginTop: theme.spacing.lg }]}
               >
-                {schedule.status === 'SCHEDULED' ? (
+                {(schedule.status === 'SCHEDULED' || schedule.status === 'BOOKED') ? (
                   <Pressable
                     onPress={handleStart}
                     disabled={startMutation.isPending}
@@ -464,7 +466,7 @@ export default function ConsultantScheduleDetail() {
                         fontSize: theme.fontSize.sm,
                       }}
                     >
-                      {session.scheduledDate} {session.startTime}
+                      {session.date} {session.startTime}
                     </Text>
                     <Text
                       style={{
@@ -474,7 +476,7 @@ export default function ConsultantScheduleDetail() {
                         marginTop: theme.spacing['2xs'],
                       }}
                     >
-                      {session.sessionType}
+                      {session.consultationType}
                       {session.sessionNumber
                         ? ` · ${session.sessionNumber}회차`
                         : ''}

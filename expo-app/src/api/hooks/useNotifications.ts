@@ -58,11 +58,13 @@ const NOTIFICATION_QUERY_KEYS = {
 export function useNotifications() {
   return useInfiniteQuery({
     queryKey: NOTIFICATION_QUERY_KEYS.list(),
-    queryFn: ({ pageParam }) =>
-      apiGet<NotificationsPage>(NOTIFICATION_API.GET_NOTIFICATIONS, {
+    queryFn: async ({ pageParam }) => {
+      const response = await apiGet<any>(NOTIFICATION_API.GET_NOTIFICATIONS, {
         page: pageParam,
         size: PAGE_SIZE,
-      }),
+      });
+      return (response?.data ?? response) as NotificationsPage;
+    },
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
       lastPage.hasNext ? lastPage.page + 1 : undefined,
@@ -73,8 +75,10 @@ export function useNotifications() {
 export function useUnreadCount() {
   return useQuery<{ count: number }>({
     queryKey: NOTIFICATION_QUERY_KEYS.unreadCount(),
-    queryFn: () =>
-      apiGet<{ count: number }>(NOTIFICATION_API.GET_UNREAD_COUNT),
+    queryFn: async () => {
+      const response = await apiGet<any>(NOTIFICATION_API.GET_UNREAD_COUNT);
+      return response?.data ?? response;
+    },
     staleTime: 1000 * 30,
     refetchInterval: 1000 * 60,
   });

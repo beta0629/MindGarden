@@ -1,6 +1,6 @@
 /**
- * 내담자 탭 레이아웃 — 5탭 바텀 네비게이터
- * 홈 | 예약 | 내 상담 | 웰니스 | 더보기
+ * 내담자 탭 레이아웃 — 4탭 바텀 네비게이터
+ * 홈 | 내 상담 | 웰니스 | 더보기
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -71,10 +71,12 @@ export default function ClientLayout() {
         }}
         listeners={{ tabPress: handleTabPress }}
       />
+      {/* 비즈니스: 내담자 직접 예약 불가 — 관리자가 예약 생성 */}
       <Tabs.Screen
         name="(booking)"
         options={{
           title: '예약',
+          href: null,
           tabBarIcon: ({ color }) => (
             <CalendarPlus size={ICON_SIZE} color={color} />
           ),

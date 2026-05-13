@@ -232,21 +232,21 @@ export default function ConsultantSchedule() {
                 <ScheduleCard
                   time={`${item.startTime} - ${item.endTime}`}
                   clientName={`${item.clientName} 님`}
-                  sessionType={item.sessionType}
+                  sessionType={item.consultationType}
                   status={item.status}
                   index={index}
                   onPress={() =>
                     router.push(`/(consultant)/(schedule)/${item.id}`)
                   }
                   actionLabel={
-                    item.status === 'SCHEDULED'
+                    item.status === 'SCHEDULED' || item.status === 'BOOKED'
                       ? '상담 시작'
                       : item.status === 'IN_PROGRESS'
                         ? '상담 완료'
                         : undefined
                   }
                   onActionPress={
-                    item.status === 'SCHEDULED' || item.status === 'IN_PROGRESS'
+                    item.status === 'SCHEDULED' || item.status === 'BOOKED' || item.status === 'IN_PROGRESS'
                       ? () =>
                           router.push(`/(consultant)/(schedule)/${item.id}`)
                       : undefined

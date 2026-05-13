@@ -85,7 +85,7 @@ export default function SessionsPaymentIndex() {
   } = usePaymentHistory(clientId, activeFilter);
 
   const payments = useMemo(
-    () => paymentPages?.pages.flatMap((p) => p.content) ?? [],
+    () => paymentPages?.pages.flatMap((p) => p.content).filter(Boolean) ?? [],
     [paymentPages],
   );
 
@@ -144,7 +144,8 @@ export default function SessionsPaymentIndex() {
       <FlashList
         data={payments}
         renderItem={renderPaymentItem}
-        keyExtractor={(item) => String(item.id)}
+        keyExtractor={(item, index) => String(item?.id ?? `fallback-${index}`)}
+        estimatedItemSize={80}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         onRefresh={handleRefresh}

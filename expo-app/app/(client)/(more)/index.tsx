@@ -4,7 +4,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { ScrollView, StyleSheet, View, Text } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -14,14 +14,40 @@ import {
   MessageSquare,
   UserCircle,
   Settings,
+  LogOut,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { ProfileCard } from '@/components/molecules/ProfileCard';
 import { MenuListItem } from '@/components/molecules/MenuListItem';
+import { AuthService } from '@/services/AuthService';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 export default function ClientMore() {
   const theme = useTheme();
   const router = useRouter();
+
+  const handleLogout = () => {
+    Alert.alert(
+      '로그아웃',
+      '정말 로그아웃하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '로그아웃',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await AuthService.logout();
+              router.replace('/(auth)/login');
+            } catch {
+              await useAuthStore.getState().logout();
+              router.replace('/(auth)/login');
+            }
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <SafeAreaView
@@ -160,6 +186,33 @@ export default function ClientMore() {
             />
           </View>
         </View>
+
+        <View style={styles.logoutSection}>
+          <Pressable
+            onPress={handleLogout}
+            style={({ pressed }) => [
+              styles.logoutButton,
+              {
+                backgroundColor: pressed ? theme.colors.accentSoft : theme.colors.surface,
+                borderRadius: theme.borderRadius.lg,
+              },
+            ]}
+          >
+            <LogOut size={20} color={theme.colors.error ?? '#E53E3E'} />
+            <Text
+              style={[
+                styles.logoutText,
+                {
+                  color: theme.colors.error ?? '#E53E3E',
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: theme.fontSize.base,
+                },
+              ]}
+            >
+              로그아웃
+            </Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -189,5 +242,20 @@ const styles = StyleSheet.create({
   },
   menuGroup: {
     overflow: 'hidden',
+  },
+  logoutSection: {
+    marginTop: 24,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 8,
+  },
+  logoutText: {
+    lineHeight: 22,
   },
 });

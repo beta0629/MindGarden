@@ -23,12 +23,19 @@ const STATUS_CONFIG: Record<
   string,
   { label: string; variant: 'primary' | 'success' | 'warning' | 'error' | 'gray' }
 > = {
+  BOOKED: { label: '예정', variant: 'primary' },
   SCHEDULED: { label: '예정', variant: 'primary' },
   IN_PROGRESS: { label: '진행중', variant: 'warning' },
   COMPLETED: { label: '완료', variant: 'success' },
   CANCELLED: { label: '취소', variant: 'error' },
   NO_SHOW: { label: '미출석', variant: 'gray' },
 };
+
+function formatTime(time: string | undefined): string {
+  if (!time) return '';
+  const parts = time.split(':');
+  return parts.length >= 2 ? `${parts[0]}:${parts[1]}` : time;
+}
 
 export function ConsultationCard({
   schedule,
@@ -59,7 +66,7 @@ export function ConsultationCard({
             transform: [{ scale: pressed ? 0.98 : 1 }],
           },
         ]}
-        accessibilityLabel={`${schedule.consultantName} 상담, ${schedule.scheduledDate} ${schedule.startTime}`}
+        accessibilityLabel={`${schedule.consultantName ?? '상담사'} 상담, ${schedule.date ?? ''} ${schedule.startTime ?? ''}`}
         accessibilityRole="button"
       >
         <View style={styles.header}>
@@ -81,7 +88,7 @@ export function ConsultationCard({
               }}
               numberOfLines={1}
             >
-              {schedule.consultantName}
+              {schedule.consultantName ?? '-'}
             </Text>
             <View style={styles.metaRow}>
               <Calendar size={14} color={theme.colors.textSecondary} />
@@ -93,9 +100,10 @@ export function ConsultationCard({
                   marginLeft: 4,
                 }}
               >
-                {schedule.scheduledDate}
+                {schedule.date ? schedule.date : '날짜 미정'}
               </Text>
             </View>
+            {(schedule.startTime || schedule.endTime) && (
             <View style={styles.metaRow}>
               <Clock size={14} color={theme.colors.textSecondary} />
               <Text
@@ -106,9 +114,10 @@ export function ConsultationCard({
                   marginLeft: 4,
                 }}
               >
-                {schedule.startTime} - {schedule.endTime}
+                {formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}
               </Text>
             </View>
+            )}
           </View>
         </View>
       </Pressable>

@@ -24,7 +24,14 @@ import { AppTopBar } from '@/components/templates/AppTopBar';
 import { Avatar } from '@/components/atoms/Avatar';
 import { Badge } from '@/components/atoms/Badge';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
+import { EmptyState } from '@/components/atoms/EmptyState';
 import { useConsultationDetail } from '@/api/hooks/useConsultations';
+
+function formatTime(time: string | undefined): string {
+  if (!time) return '';
+  const parts = time.split(':');
+  return parts.length >= 2 ? `${parts[0]}:${parts[1]}` : time;
+}
 
 export default function ClientSessionDetail() {
   const theme = useTheme();
@@ -33,7 +40,7 @@ export default function ClientSessionDetail() {
 
   const { data: detail, isLoading } = useConsultationDetail(id);
 
-  const isScheduled = detail?.status === 'SCHEDULED';
+  const isScheduled = detail?.status === 'SCHEDULED' || detail?.status === 'BOOKED';
   const isCompleted = detail?.status === 'COMPLETED';
 
   const handleCancelRequest = () => {
@@ -69,9 +76,23 @@ export default function ClientSessionDetail() {
     );
   }
 
-  if (!detail) return null;
+  if (!detail) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
+        edges={['top']}
+      >
+        <AppTopBar title="상담 상세" canGoBack />
+        <EmptyState
+          title="상담 정보를 불러올 수 없습니다"
+          description="잠시 후 다시 시도해주세요"
+        />
+      </SafeAreaView>
+    );
+  }
 
   const statusConfig: Record<string, { label: string; variant: 'primary' | 'success' | 'error' | 'gray' }> = {
+    BOOKED: { label: '예정', variant: 'primary' },
     SCHEDULED: { label: '예정', variant: 'primary' },
     IN_PROGRESS: { label: '진행중', variant: 'primary' },
     COMPLETED: { label: '완료', variant: 'success' },
@@ -148,13 +169,13 @@ export default function ClientSessionDetail() {
           <DetailRow
             icon={<Calendar size={16} color={theme.colors.textSecondary} />}
             label="날짜"
-            value={detail.scheduledDate}
+            value={detail.date ?? '날짜 미정'}
             theme={theme}
           />
           <DetailRow
             icon={<Clock size={16} color={theme.colors.textSecondary} />}
             label="시간"
-            value={`${detail.startTime} - ${detail.endTime}`}
+            value={`${formatTime(detail.startTime)} - ${formatTime(detail.endTime)}`}
             theme={theme}
           />
           {detail.location && (
@@ -168,7 +189,7 @@ export default function ClientSessionDetail() {
           <DetailRow
             icon={<FileText size={16} color={theme.colors.textSecondary} />}
             label="상담 유형"
-            value={detail.sessionType}
+            value={detail.consultationType ?? '-'}
             theme={theme}
           />
         </Animated.View>

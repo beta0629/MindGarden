@@ -38,7 +38,7 @@ const initializeNaverSDK = () => {
 
   const consumerKey = process.env.EXPO_PUBLIC_NAVER_CLIENT_ID ?? '';
   const consumerSecret = process.env.EXPO_PUBLIC_NAVER_CLIENT_SECRET ?? '';
-  const appName = 'MindGarden';
+  const appName = 'MindGardenMobileApp';
 
   const initConfig: {
     appName: string;
@@ -52,9 +52,10 @@ const initializeNaverSDK = () => {
   };
 
   if (Platform.OS === 'ios') {
-    initConfig.serviceUrlSchemeIOS = 'mindgarden-naver';
+    initConfig.serviceUrlSchemeIOS = 'naverMindGardenMobileApp';
   }
 
+  console.log('[AuthService] 네이버 SDK 초기화:', JSON.stringify(initConfig));
   NaverLogin.initialize(initConfig);
   naverInitialized = true;
 };
@@ -96,6 +97,7 @@ export const AuthService = {
 
       return { success: false, message: response?.message ?? '카카오 로그인에 실패했습니다.' };
     } catch (error: unknown) {
+      console.error('[AuthService] 카카오 로그인 에러:', JSON.stringify(error, Object.getOwnPropertyNames(error instanceof Error ? error : {}), 2));
       const message =
         error instanceof Error ? error.message : '카카오 로그인 중 오류가 발생했습니다.';
       return { success: false, message };
@@ -111,15 +113,23 @@ export const AuthService = {
       initializeNaverSDK();
 
       const loginResult = await NaverLogin.login();
+      console.log('[AuthService] 네이버 로그인 결과:', JSON.stringify(loginResult));
 
-      let accessToken: string | null = null;
-
-      if (loginResult?.successResponse?.accessToken) {
-        accessToken = loginResult.successResponse.accessToken;
-      }
+      const accessToken = loginResult?.successResponse?.accessToken ?? null;
 
       if (!accessToken) {
-        return { success: false, message: '네이버 로그인 응답에서 토큰을 찾을 수 없습니다.' };
+        const failMsg = (loginResult as any)?.failureResponse?.message ?? '';
+        const isCancel = (loginResult as any)?.failureResponse?.isCancel;
+        console.warn('[AuthService] 네이버 로그인 실패:', failMsg, 'isCancel:', isCancel);
+        if (isCancel) {
+          return { success: false, message: '네이버 로그인이 취소되었습니다.' };
+        }
+        return {
+          success: false,
+          message: failMsg
+            ? `네이버 로그인 실패: ${failMsg}`
+            : '네이버 로그인 응답에서 토큰을 찾을 수 없습니다.',
+        };
       }
 
       let userId: string | null = null;
@@ -166,6 +176,7 @@ export const AuthService = {
 
       return { success: false, message: response?.message ?? '네이버 로그인에 실패했습니다.' };
     } catch (error: unknown) {
+      console.error('[AuthService] 네이버 로그인 에러:', JSON.stringify(error, Object.getOwnPropertyNames(error instanceof Error ? error : {}), 2));
       const message =
         error instanceof Error ? error.message : '네이버 로그인 중 오류가 발생했습니다.';
       return { success: false, message };

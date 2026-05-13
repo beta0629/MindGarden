@@ -67,8 +67,8 @@ export function NotificationCenterScreen() {
   const markAsReadMutation = useMarkAsRead();
   const markAllAsReadMutation = useMarkAllAsRead();
 
-  const notifications = data?.pages.flatMap((page) => page.content) ?? [];
-  const hasUnread = notifications.some((n) => !n.isRead);
+  const notifications = data?.pages.flatMap((page) => page.content).filter(Boolean) ?? [];
+  const hasUnread = notifications.some((n) => n && !n.isRead);
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -140,7 +140,8 @@ export function NotificationCenterScreen() {
       <FlashList
         data={notifications}
         renderItem={renderItem}
-        keyExtractor={(item) => String(item.id)}
+        keyExtractor={(item, index) => String(item?.id ?? `fallback-${index}`)}
+        estimatedItemSize={72}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
         refreshControl={

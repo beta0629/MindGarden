@@ -178,7 +178,7 @@ export default function ConsultantRecordCreate() {
                   marginTop: theme.spacing.xs,
                 }}
               >
-                {schedule.scheduledDate} · {schedule.startTime} -{' '}
+                {schedule.date} · {schedule.startTime} -{' '}
                 {schedule.endTime}
               </Text>
             </View>

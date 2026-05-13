@@ -152,6 +152,55 @@ public class ScheduleController extends BaseApiController {
     }
 
     /**
+     * 스케줄 단건 조회(권한·테넌트 검증, 목록 API와 동일한 userId/userRole 규칙).
+     *
+     * @param id 스케줄 PK
+     * @param userId 요청 사용자 PK
+     * @param userRole 요청 역할(예: CLIENT, CONSULTANT)
+     * @param session HTTP 세션
+     * @return 스케줄 상세 DTO
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ScheduleResponse>> getScheduleDetail(
+            @PathVariable Long id,
+            @RequestParam Long userId,
+            @RequestParam String userRole,
+            HttpSession session) {
+
+        ensureTenantContextFromSession(session);
+        log.info("🔐 스케줄 단건 조회: id={}, userId={}, userRole={}, tenantId={}",
+                id, userId, userRole, TenantContextHolder.getTenantId());
+
+        String tenantIdVal = TenantContextHolder.getTenantId();
+        if (tenantIdVal == null || tenantIdVal.isEmpty()) {
+            log.warn("❌ 테넌트 정보 없음 - 스케줄 단건 조회 거부 (400)");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+        }
+
+        if (userId == null || userRole == null || userRole.isBlank()) {
+            log.error("❌ 필수 파라미터 누락: userId={}, userRole={}", userId, userRole);
+            throw new IllegalArgumentException("필수 파라미터가 누락되었습니다.");
+        }
+
+        Schedule schedule = scheduleService.findById(id);
+        if (!scheduleService.canAccessScheduleDetail(userId, userRole, schedule)) {
+            throw new org.springframework.security.access.AccessDeniedException("해당 스케줄을 조회할 권한이 없습니다.");
+        }
+
+        Map<Long, Integer> unresolvedByScheduleId =
+                buildUnresolvedClientNoteCountByScheduleId(tenantIdVal, List.of(schedule));
+        Map<Long, Integer> unresolvedByClientId =
+                buildUnresolvedClientNoteCountByClientId(tenantIdVal, List.of(schedule));
+        int unresolvedForSchedule = unresolvedByScheduleId.getOrDefault(schedule.getId(), 0);
+        int unresolvedForClient = schedule.getClientId() != null
+                ? unresolvedByClientId.getOrDefault(schedule.getClientId(), 0)
+                : 0;
+        ScheduleResponse dto = convertToScheduleResponse(schedule, unresolvedForSchedule, unresolvedForClient);
+        return success("스케줄 조회 성공", dto);
+    }
+
+    /**
      /**
      * 권한 기반 페이지네이션 스케줄 조회 (상담사 이름 포함)
      * 상담사: 자신의 일정만, 관리자: 모든 일정

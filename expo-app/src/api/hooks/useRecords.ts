@@ -21,7 +21,7 @@ export interface ConsultationRecord {
   consultantId: number;
   clientId: number;
   clientName: string;
-  scheduledDate: string;
+  date: string;
   startTime: string;
   endTime: string;
   summary?: string;
@@ -39,10 +39,10 @@ export interface PendingRecord {
   clientId: number;
   clientName: string;
   clientProfileImageUrl?: string;
-  scheduledDate: string;
+  date: string;
   startTime: string;
   endTime: string;
-  sessionType: string;
+  consultationType: string;
 }
 
 export interface CreateRecordInput {

@@ -45,6 +45,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -1724,6 +1725,32 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         
         return schedulePage.map(this::convertToScheduleDto);
+    }
+
+    /**
+     * {@link #findSchedulesWithNamesByUserRole(Long, String)} 과 동일한 권한 스코프로 단건 접근 가능 여부.
+     *
+     * @param userId 요청 사용자 PK
+     * @param userRole 요청 역할 문자열
+     * @param schedule 이미 테넌트로 조회된 스케줄
+     * @return 허용이면 true
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public boolean canAccessScheduleDetail(Long userId, String userRole, Schedule schedule) {
+        if (userId == null || userRole == null || schedule == null) {
+            return false;
+        }
+        if (scheduleAdminSeesAllTenant(userId, userRole)) {
+            return true;
+        }
+        if (scheduleUsesConsultantOwnScope(userId, userRole)) {
+            return Objects.equals(schedule.getConsultantId(), userId);
+        }
+        if (getRoleCodeFromCommonCode(UserRole.CLIENT.name()).equals(userRole)) {
+            return Objects.equals(schedule.getClientId(), userId);
+        }
+        return false;
     }
 
      /**

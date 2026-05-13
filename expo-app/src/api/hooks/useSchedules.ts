@@ -20,21 +20,27 @@ export interface Schedule {
   clientName: string;
   clientProfileImageUrl?: string;
   consultantName: string;
-  scheduledDate: string;
+  date: string;
   startTime: string;
   endTime: string;
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
-  sessionType: string;
+  status: 'SCHEDULED' | 'BOOKED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+  consultationType: string;
+  scheduleType?: string;
   sessionNumber?: number;
+  title?: string;
+  description?: string;
+  notes?: string;
   memo?: string;
   location?: string;
   contactNumber?: string;
+  consultationId?: number;
 }
 
 export interface ScheduleDetail extends Schedule {
   previousSessions?: Schedule[];
   consultationRecordId?: number;
-  hasRecord: boolean;
+  /** 백엔드 미제공 시 생략 가능 — UI에서는 falsy로 취급 */
+  hasRecord?: boolean;
 }
 
 interface SchedulesParams {

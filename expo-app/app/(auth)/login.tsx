@@ -49,9 +49,9 @@ export default function LoginScreen() {
     await NotificationService.registerToken();
 
     if (role === 'consultant') {
-      router.replace('/(consultant)' as Href);
+      router.replace('/(consultant)/(home)' as Href);
     } else {
-      router.replace('/(client)' as Href);
+      router.replace('/(client)/(home)' as Href);
     }
   };
 
@@ -233,14 +233,13 @@ export default function LoginScreen() {
                   <Mail size={18} color={theme.colors.textTertiary} />
                   <TextInput
                     style={[styles.input, { color: theme.colors.textMain }]}
-                    placeholder="이메일"
+                    placeholder="이메일 또는 휴대폰 번호"
                     placeholderTextColor={theme.colors.textTertiary}
                     value={email}
                     onChangeText={setEmail}
                     autoCapitalize="none"
-                    keyboardType="email-address"
-                    textContentType="emailAddress"
-                    accessibilityLabel="이메일 입력"
+                    keyboardType="default"
+                    accessibilityLabel="이메일 또는 휴대폰 번호 입력"
                   />
                 </View>
                 <View style={[styles.inputContainer, { borderColor: theme.colors.border }]}>

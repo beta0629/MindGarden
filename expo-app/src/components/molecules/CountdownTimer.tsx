@@ -20,16 +20,22 @@ export function CountdownTimer({ targetDate, targetTime }: CountdownTimerProps) 
   const [now, setNow] = useState(new Date());
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const target = parseISO(
-    targetTime ? `${targetDate}T${targetTime}` : `${targetDate}T00:00:00`,
-  );
+  const isValid = !!targetDate;
+  let dateString = '';
+  if (isValid) {
+    dateString = targetTime ? `${targetDate}T${targetTime}` : `${targetDate}T00:00:00`;
+  }
+  const target = isValid ? parseISO(dateString) : new Date(Number.NaN);
 
   useEffect(() => {
+    if (!isValid || Number.isNaN(target.getTime())) return;
     intervalRef.current = setInterval(() => setNow(new Date()), 1000);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, []);
+  }, [isValid]);
+
+  if (!isValid || Number.isNaN(target.getTime())) return null;
 
   const totalSeconds = differenceInSeconds(target, now);
   const daysRemaining = differenceInDays(target, now);

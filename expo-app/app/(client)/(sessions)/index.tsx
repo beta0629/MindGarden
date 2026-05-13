@@ -53,11 +53,20 @@ export default function ClientSessions() {
     isFetchingNextPage,
     refetch,
   } = useClientConsultations({
-    clientId: user?.id ?? 0,
+    clientId: user?.id ?? '',
     status: activeTab,
   });
 
   const consultations = data?.pages.flat() ?? [];
+
+  console.log('[ClientSessions] render', {
+    userId: user?.id,
+    activeTab,
+    isLoading,
+    isFetching,
+    dataPages: data?.pages?.length,
+    consultationsCount: consultations.length,
+  });
 
   const handleTabChange = (tab: TabKey) => {
     if (Platform.OS !== 'web') {
@@ -164,20 +173,15 @@ export default function ClientSessions() {
             }
             description={
               activeTab === 'SCHEDULED'
-                ? '새로운 상담을 예약해보세요'
+                ? '관리자에게 상담 예약을 문의해주세요'
                 : '첫 상담을 시작해보세요'
-            }
-            actionLabel={activeTab === 'SCHEDULED' ? '상담 예약하기' : undefined}
-            onAction={
-              activeTab === 'SCHEDULED'
-                ? () => router.push('/(client)/(booking)')
-                : undefined
             }
           />
         ) : (
           <FlashList
             data={consultations}
             renderItem={renderItem}
+            estimatedItemSize={120}
             contentContainerStyle={styles.listContent}
             onEndReached={handleEndReached}
             onEndReachedThreshold={0.5}

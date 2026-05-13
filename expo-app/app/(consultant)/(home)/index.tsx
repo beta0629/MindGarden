@@ -213,7 +213,7 @@ export default function ConsultantDashboard() {
                 <ScheduleCard
                   time={`${item.startTime} - ${item.endTime}`}
                   clientName={`${item.clientName} 님`}
-                  sessionType={item.sessionType}
+                  sessionType={item.consultationType}
                   status={item.status}
                   index={index}
                   onPress={() =>

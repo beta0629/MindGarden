@@ -174,7 +174,7 @@ export default function ConsultantRecordDetail() {
                   marginTop: theme.spacing.xs,
                 }}
               >
-                {record.scheduledDate} · {record.startTime} - {record.endTime}
+                {record.date} · {record.startTime} - {record.endTime}
               </Text>
             </View>
 

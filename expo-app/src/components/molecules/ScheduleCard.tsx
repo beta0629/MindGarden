@@ -13,7 +13,7 @@ import { useTheme } from '@/theme';
 import type { AppTheme } from '@/theme';
 import { Badge } from '../atoms/Badge';
 
-type ScheduleStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+type ScheduleStatus = 'SCHEDULED' | 'BOOKED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
 
 interface ScheduleCardProps {
   readonly time: string;
@@ -27,6 +27,7 @@ interface ScheduleCardProps {
 }
 
 const STATUS_LABEL: Record<ScheduleStatus, string> = {
+  BOOKED: '예정',
   SCHEDULED: '예정',
   IN_PROGRESS: '진행중',
   COMPLETED: '완료',
@@ -35,6 +36,7 @@ const STATUS_LABEL: Record<ScheduleStatus, string> = {
 };
 
 const STATUS_BADGE_VARIANT: Record<ScheduleStatus, 'info' | 'warning' | 'success' | 'gray' | 'error'> = {
+  BOOKED: 'info',
   SCHEDULED: 'info',
   IN_PROGRESS: 'warning',
   COMPLETED: 'success',
@@ -44,6 +46,7 @@ const STATUS_BADGE_VARIANT: Record<ScheduleStatus, 'info' | 'warning' | 'success
 
 function getAccentColor(status: ScheduleStatus, theme: AppTheme): string {
   const map: Record<ScheduleStatus, string> = {
+    BOOKED: theme.colors.primary,
     SCHEDULED: theme.colors.primary,
     IN_PROGRESS: theme.colors.warning,
     COMPLETED: theme.colors.success,

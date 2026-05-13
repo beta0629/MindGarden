@@ -228,7 +228,17 @@ public interface ScheduleService {
      * 권한 기반 페이지네이션 스케줄 조회 (상담사 이름 포함)
      */
     Page<ScheduleResponse> findSchedulesWithNamesByUserRolePaged(Long userId, String userRole, Pageable pageable);
-    
+
+    /**
+     * {@link #findSchedulesWithNamesByUserRole(Long, String)} 와 동일한 스코프로 단건 스케줄 접근 가능 여부.
+     *
+     * @param userId 요청 사용자 PK
+     * @param userRole 요청 역할 문자열(목록 API와 동일)
+     * @param schedule 테넌트 스코프로 조회된 스케줄
+     * @return 조회 허용이면 true
+     */
+    boolean canAccessScheduleDetail(Long userId, String userRole, Schedule schedule);
+
     // ==================== 지점별 스케줄 관리 ====================
     
     /**

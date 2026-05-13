@@ -17,11 +17,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   ios: {
     supportsTablet: true,
-    bundleIdentifier: 'kr.co.core-solution.mindgarden',
+    bundleIdentifier: 'com.mindgarden.MindGardenMobile',
     infoPlist: {
       NSCameraUsageDescription: 'QR 코드 스캔을 위해 카메라 접근이 필요합니다.',
       NSMicrophoneUsageDescription: '음성 메시지를 위해 마이크 접근이 필요합니다.',
       NSCalendarsUsageDescription: '상담 일정을 기기 캘린더에 추가하기 위해 접근이 필요합니다.',
+      NAVER_CLIENT_ID: process.env.NAVER_CLIENT_ID ?? 'vTKNlxYKIfo1uCCXaDfk',
+      NAVER_CLIENT_SECRET: process.env.NAVER_CLIENT_SECRET ?? 'V_b3omW5pu',
+      NAVER_APP_NAME: 'MindGardenMobileApp',
     },
   },
   android: {
@@ -29,7 +32,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: './assets/images/adaptive-icon.png',
       backgroundColor: '#FAF9F7',
     },
-    package: 'kr.co.coresolution.mindgarden',
+    package: 'com.mindgardenmobile',
     edgeToEdgeEnabled: true,
   },
   web: {
@@ -64,10 +67,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       '@react-native-seoul/naver-login',
       {
-        urlScheme: 'mindgarden-naver',
+        urlScheme: 'naverMindGardenMobileApp',
         consumerKey: process.env.NAVER_CLIENT_ID ?? 'NAVER_CLIENT_ID_HERE',
         consumerSecret: process.env.NAVER_CLIENT_SECRET ?? 'NAVER_CLIENT_SECRET_HERE',
-        appName: 'MindGarden',
+        appName: 'MindGardenMobileApp',
       },
     ],
   ],

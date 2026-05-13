@@ -104,8 +104,10 @@ const PAYMENTS_PAGE_SIZE = 15;
 export function useSessionBalance(clientId: number | undefined) {
   return useQuery<SessionBalance>({
     queryKey: PAYMENT_QUERY_KEYS.balance(clientId!),
-    queryFn: () =>
-      apiGet<SessionBalance>(PAYMENT_API.SESSION_BALANCE, { clientId }),
+    queryFn: async () => {
+      const response = await apiGet<any>(PAYMENT_API.SESSION_BALANCE, { clientId });
+      return response?.data ?? response;
+    },
     enabled: !!clientId,
     staleTime: 1000 * 60 * 3,
   });
@@ -117,13 +119,15 @@ export function usePaymentHistory(
 ) {
   return useInfiniteQuery<PaymentListResponse>({
     queryKey: PAYMENT_QUERY_KEYS.history(clientId!, filter),
-    queryFn: ({ pageParam }) =>
-      apiGet<PaymentListResponse>(PAYMENT_API.GET_PAYMENTS, {
+    queryFn: async ({ pageParam }) => {
+      const response = await apiGet<any>(PAYMENT_API.GET_PAYMENTS, {
         clientId,
         status: filter === 'ALL' ? undefined : filter,
         page: pageParam,
         size: PAYMENTS_PAGE_SIZE,
-      }),
+      });
+      return response?.data ?? response;
+    },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) =>
       lastPage.last ? undefined : allPages.length,
@@ -135,8 +139,10 @@ export function usePaymentHistory(
 export function usePaymentDetail(paymentId: number | undefined) {
   return useQuery<PaymentDetail>({
     queryKey: PAYMENT_QUERY_KEYS.detail(paymentId!),
-    queryFn: () =>
-      apiGet<PaymentDetail>(PAYMENT_API.paymentDetail(paymentId!)),
+    queryFn: async () => {
+      const response = await apiGet<any>(PAYMENT_API.paymentDetail(paymentId!));
+      return response?.data ?? response;
+    },
     enabled: !!paymentId,
     staleTime: 1000 * 60 * 5,
   });
@@ -145,8 +151,10 @@ export function usePaymentDetail(paymentId: number | undefined) {
 export function useSessionUsageHistory(clientId: number | undefined) {
   return useQuery<SessionUsageItem[]>({
     queryKey: PAYMENT_QUERY_KEYS.usage(clientId!),
-    queryFn: () =>
-      apiGet<SessionUsageItem[]>(PAYMENT_API.SESSION_USAGE_HISTORY, { clientId }),
+    queryFn: async () => {
+      const response = await apiGet<any>(PAYMENT_API.SESSION_USAGE_HISTORY, { clientId });
+      return response?.data ?? response;
+    },
     enabled: !!clientId,
     staleTime: 1000 * 60 * 3,
   });

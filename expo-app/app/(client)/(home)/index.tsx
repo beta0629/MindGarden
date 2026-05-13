@@ -3,7 +3,6 @@
  *
  * - 인사 메시지 + 오늘 날짜
  * - 다가오는 상담 카운트다운 카드
- * - "새로운 상담 예약하기" CTA 버튼
  * - 오늘의 웰니스 팁
  * - 최근 활동 요약 (가로 ScrollView)
  * - Pull-to-refresh + 스켈레톤
@@ -13,23 +12,19 @@
  */
 import { useCallback } from 'react';
 import {
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   Calendar,
   Heart,
   TrendingUp,
-  CalendarPlus,
 } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -85,13 +80,6 @@ export default function ClientHome() {
   const upcoming = upcomingQuery.data;
   const dashboard = dashboardQuery.data;
   const tip = tipQuery.data;
-
-  const handleBookingPress = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    router.push('/(client)/(booking)');
-  };
 
   return (
     <SafeAreaView
@@ -170,7 +158,7 @@ export default function ClientHome() {
                 }
               />
               <CountdownTimer
-                targetDate={upcoming.scheduledDate}
+                targetDate={upcoming.date}
                 targetTime={upcoming.startTime}
               />
             </View>
@@ -178,41 +166,10 @@ export default function ClientHome() {
             <View style={styles.section}>
               <EmptyState
                 title="예정된 상담이 없어요"
-                description="새로운 상담을 예약해보세요"
-                actionLabel="새로운 상담 예약하기"
-                onAction={handleBookingPress}
+                description="관리자에게 상담 예약을 문의해주세요"
               />
             </View>
           )}
-        </Animated.View>
-
-        {/* CTA: 새로운 상담 예약 */}
-        <Animated.View entering={FadeInDown.delay(160).springify()} style={styles.section}>
-          <Pressable
-            onPress={handleBookingPress}
-            style={({ pressed }) => [
-              styles.ctaButton,
-              {
-                backgroundColor: theme.colors.primary,
-                borderRadius: theme.borderRadius.lg,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              },
-            ]}
-            accessibilityLabel="새로운 상담 예약하기"
-            accessibilityRole="button"
-          >
-            <CalendarPlus size={20} color={theme.colors.textOnPrimary} />
-            <Text
-              style={{
-                fontFamily: theme.fontFamily.semibold,
-                fontSize: theme.fontSize.base,
-                color: theme.colors.textOnPrimary,
-                marginLeft: 8,
-              }}
-            >
-              새로운 상담 예약하기
-            </Text>
-          </Pressable>
         </Animated.View>
 
         {/* 오늘의 웰니스 팁 */}
@@ -325,13 +282,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginBottom: 12,
-  },
-  ctaButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 52,
-    width: '100%',
   },
   statRow: {
     flexDirection: 'row',

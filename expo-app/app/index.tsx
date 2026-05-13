@@ -50,10 +50,10 @@ export default function AppEntry() {
   }
 
   if (role === 'consultant') {
-    return <Redirect href={'/(consultant)' as Href} />;
+    return <Redirect href={'/(consultant)/(home)' as Href} />;
   }
 
-  return <Redirect href={'/(client)' as Href} />;
+  return <Redirect href={'/(client)/(home)' as Href} />;
 }
 
 const styles = StyleSheet.create({

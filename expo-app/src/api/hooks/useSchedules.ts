@@ -20,6 +20,7 @@ export interface Schedule {
   clientName: string;
   clientProfileImageUrl?: string;
   consultantName: string;
+  consultantProfileImageUrl?: string;
   date: string;
   startTime: string;
   endTime: string;

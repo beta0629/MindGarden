@@ -36,6 +36,10 @@ public class ScheduleResponse {
     private String clientName;
     private String clientPhone;
     private String clientEmail;
+    /** 상담사 프로필 이미지 URL (일반적으로 평문 URL; 앱·웹 아바타용) */
+    private String consultantProfileImageUrl;
+    /** 내담자 프로필 이미지 URL */
+    private String clientProfileImageUrl;
     private LocalDate date;
     private LocalTime startTime;
     private LocalTime endTime;

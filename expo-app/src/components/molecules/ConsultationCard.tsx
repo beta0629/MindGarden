@@ -12,6 +12,7 @@ import { useTheme } from '@/theme';
 import { Avatar } from '../atoms/Avatar';
 import { Badge } from '../atoms/Badge';
 import type { Schedule } from '@/api/hooks/useSchedules';
+import { maskEncryptedDisplay, resolveProfileImageUrlForNative } from '@/utils/displayString';
 
 interface ConsultationCardProps {
   schedule: Schedule;
@@ -52,6 +53,13 @@ export function ConsultationCard({
   };
 
   const statusCfg = STATUS_CONFIG[schedule.status] ?? STATUS_CONFIG['SCHEDULED']!;
+  const consultantLabel = maskEncryptedDisplay(
+    schedule.consultantName,
+    '상담사',
+  );
+  const avatarUri = resolveProfileImageUrlForNative(
+    schedule.consultantProfileImageUrl,
+  );
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).springify()}>
@@ -66,7 +74,7 @@ export function ConsultationCard({
             transform: [{ scale: pressed ? 0.98 : 1 }],
           },
         ]}
-        accessibilityLabel={`${schedule.consultantName ?? '상담사'} 상담, ${schedule.date ?? ''} ${schedule.startTime ?? ''}`}
+        accessibilityLabel={`${consultantLabel} 상담, ${schedule.date ?? ''} ${schedule.startTime ?? ''}`}
         accessibilityRole="button"
       >
         <View style={styles.header}>
@@ -75,8 +83,8 @@ export function ConsultationCard({
 
         <View style={styles.body}>
           <Avatar
-            uri={schedule.clientProfileImageUrl}
-            name={schedule.consultantName}
+            uri={avatarUri || undefined}
+            name={consultantLabel}
             size="md"
           />
           <View style={styles.info}>
@@ -88,7 +96,7 @@ export function ConsultationCard({
               }}
               numberOfLines={1}
             >
-              {schedule.consultantName ?? '-'}
+              {consultantLabel}
             </Text>
             <View style={styles.metaRow}>
               <Calendar size={14} color={theme.colors.textSecondary} />

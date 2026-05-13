@@ -77,6 +77,27 @@ class ScheduleListUserFieldsResolverTest {
     }
 
     @Test
+    @DisplayName("표시명: 캐시 name이 legacy:: 형태면 무시하고 safeDecrypt 폴백")
+    void resolveDisplayName_ignoresLegacyLikeCacheName() {
+        User user = User.builder()
+                .userId("u3")
+                .email("e")
+                .password("p")
+                .name("encNameField")
+                .role(UserRole.CONSULTANT)
+                .isActive(true)
+                .isPasswordChanged(true)
+                .build();
+        Map<String, String> decrypted = new HashMap<>();
+        decrypted.put("name", "legacy::YmFk");
+        when(userPersonalDataCacheService.getDecryptedUserData(user)).thenReturn(decrypted);
+        when(encryptionUtil.safeDecrypt("encNameField")).thenReturn("평문이름");
+
+        assertThat(resolver.resolveDisplayNameForScheduleList(user)).isEqualTo("평문이름");
+        verify(encryptionUtil).safeDecrypt("encNameField");
+    }
+
+    @Test
     @DisplayName("표시명: user null이면 DISPLAY_NAME_UNKNOWN")
     void resolveDisplayName_nullUser_returnsUnknown() {
         assertThat(resolver.resolveDisplayNameForScheduleList(null))

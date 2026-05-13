@@ -34,6 +34,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.NotificationService;
+import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.core.context.TenantContextHolder;
 
@@ -62,6 +63,9 @@ class ScheduleServiceImplUpcomingTest {
 
     @Mock
     private NotificationService notificationService;
+
+    @Mock
+    private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
 
     @InjectMocks
     private ScheduleServiceImpl scheduleService;

@@ -34,6 +34,7 @@ import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
+import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.service.StatisticsService;
@@ -85,6 +86,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final PlSqlScheduleValidationService plSqlScheduleValidationService;
     private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
     private final NotificationService notificationService;
+    private final ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
     
     public ScheduleServiceImpl(
             ScheduleRepository scheduleRepository,
@@ -104,7 +106,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             ConsultationRecordRepository consultationRecordRepository,
             PlSqlScheduleValidationService plSqlScheduleValidationService,
             com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            ScheduleListUserFieldsResolver scheduleListUserFieldsResolver) {
         super(scheduleRepository, accessControlService);
         this.scheduleRepository = scheduleRepository;
         this.mappingRepository = mappingRepository;
@@ -123,6 +126,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.plSqlScheduleValidationService = plSqlScheduleValidationService;
         this.userPersonalDataCacheService = userPersonalDataCacheService;
         this.notificationService = notificationService;
+        this.scheduleListUserFieldsResolver = scheduleListUserFieldsResolver;
     }
     
     
@@ -1865,7 +1869,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private ScheduleResponse convertToScheduleDto(Schedule schedule) {
         String consultantName = "알 수 없음";
         String consultantProfessionalProviderTypeCode = null;
+        String consultantProfileImageUrl = null;
         String clientName = "알 수 없음";
+        String clientProfileImageUrl = null;
         
         log.info("🔍 스케줄 변환 시작: scheduleId={}, consultantId={}, clientId={}", 
                 schedule.getId(), schedule.getConsultantId(), schedule.getClientId());
@@ -1877,9 +1883,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     consultant != null ? consultant.getIsActive() : "null");
             
             if (consultant != null && consultant.getIsActive()) {
-                consultantName = consultant.getName();
+                consultantName = scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(consultant);
+                consultantProfileImageUrl = nullableUserProfileImageUrl(consultant);
             } else if (consultant != null && !consultant.getIsActive()) {
-                consultantName = consultant.getName() + " (비활성)";
+                consultantName = scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(consultant) + " (비활성)";
+                consultantProfileImageUrl = nullableUserProfileImageUrl(consultant);
             }
             if (consultant != null) {
                 consultantProfessionalProviderTypeCode = resolveProfessionalProviderTypeCode(consultant);
@@ -1892,14 +1900,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                         client != null ? client.getIsActive() : "null");
                 
                 if (client != null) {
-                    Map<String, String> decryptedClient = userPersonalDataCacheService.getDecryptedUserData(client);
-                    String decryptedName = decryptedClient.get("name");
-                    String actualName = (decryptedName != null && !decryptedName.isEmpty()) ? decryptedName : client.getName();
-                    
+                    clientProfileImageUrl = nullableUserProfileImageUrl(client);
                     if (client.getIsActive()) {
-                        clientName = actualName;
+                        clientName = scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(client);
                     } else {
-                        clientName = actualName + " (비활성)";
+                        clientName = scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(client) + " (비활성)";
                     }
                 }
             }
@@ -1914,8 +1919,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             .consultantId(schedule.getConsultantId())
             .consultantName(consultantName)
             .consultantProfessionalProviderTypeCode(consultantProfessionalProviderTypeCode)
+            .consultantProfileImageUrl(consultantProfileImageUrl)
             .clientId(schedule.getClientId())
             .clientName(clientName)
+            .clientProfileImageUrl(clientProfileImageUrl)
             .date(schedule.getDate())
             .startTime(schedule.getStartTime())
             .endTime(schedule.getEndTime())
@@ -1928,6 +1935,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             .createdAt(schedule.getCreatedAt())
             .updatedAt(schedule.getUpdatedAt())
             .build();
+    }
+
+    private static String nullableUserProfileImageUrl(User user) {
+        if (user == null || user.getProfileImageUrl() == null) {
+            return null;
+        }
+        String url = user.getProfileImageUrl().trim();
+        return url.isEmpty() ? null : url;
     }
 
     /**

@@ -7,6 +7,7 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.NotificationService;
+import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import org.junit.jupiter.api.AfterEach;
@@ -69,6 +70,9 @@ class ScheduleServiceImplCancelRestoreSessionTest {
 
     @Mock
     private NotificationService notificationService;
+
+    @Mock
+    private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
 
     @InjectMocks
     private ScheduleServiceImpl scheduleService;

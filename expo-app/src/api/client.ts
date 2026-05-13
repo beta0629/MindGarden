@@ -12,28 +12,15 @@ import axios, {
   AxiosRequestConfig,
   InternalAxiosRequestConfig,
 } from 'axios';
-import Constants from 'expo-constants';
+import { getApiBaseUrl } from '@/config/apiBaseUrl';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useTenantStore } from '../stores/useTenantStore';
 import { AUTH_API } from './endpoints';
 
 const API_TIMEOUT = 30000;
 
-const getBaseUrl = (): string => {
-  const extra = Constants.expoConfig?.extra;
-  if (extra?.apiBaseUrl) {
-    return extra.apiBaseUrl as string;
-  }
-
-  if (__DEV__) {
-    return 'https://dev.core-solution.co.kr';
-  }
-
-  return 'https://core-solution.co.kr';
-};
-
 const apiClient: AxiosInstance = axios.create({
-  baseURL: getBaseUrl(),
+  baseURL: getApiBaseUrl(),
   timeout: API_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
@@ -105,7 +92,7 @@ apiClient.interceptors.response.use(
         }
 
         const response = await axios.post(
-          `${getBaseUrl()}${AUTH_API.REFRESH_TOKEN}`,
+          `${getApiBaseUrl()}${AUTH_API.REFRESH_TOKEN}`,
           { refreshToken },
           { headers: { 'Content-Type': 'application/json' } },
         );

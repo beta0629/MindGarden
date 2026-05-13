@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.entity.User;
@@ -18,6 +19,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ScheduleListUserFieldsResolver {
 
+    private static final String LEGACY_ENCRYPTED_PREFIX = "legacy::";
+    private static final Pattern BASE64_CIPHER_LIKE =
+        Pattern.compile("^[A-Za-z0-9+/]+=*$");
+    private static final int ENCRYPTED_BASE64_MIN_LENGTH = 32;
+
     private final UserPersonalDataCacheService userPersonalDataCacheService;
     private final PersonalDataEncryptionUtil encryptionUtil;
 
@@ -33,18 +39,32 @@ public class ScheduleListUserFieldsResolver {
         }
         Map<String, String> decrypted = userPersonalDataCacheService.getDecryptedUserData(user);
         String fromCache = decrypted != null ? decrypted.get("name") : null;
-        if (fromCache != null && !fromCache.isBlank()) {
+        if (fromCache != null && !fromCache.isBlank() && !looksLikeStoredCipher(fromCache)) {
             return fromCache.trim();
         }
         String decryptedName = encryptionUtil.safeDecrypt(user.getName());
-        if (decryptedName != null && !decryptedName.isBlank()) {
+        if (decryptedName != null && !decryptedName.isBlank() && !looksLikeStoredCipher(decryptedName)) {
             return decryptedName.trim();
         }
         String raw = user.getName();
-        if (raw != null && !raw.isBlank()) {
+        if (raw != null && !raw.isBlank() && !looksLikeStoredCipher(raw)) {
             return raw.trim();
         }
         return AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
+    }
+
+    /**
+     * DB에 남은 암호문·복호화 실패 잔여물이 표시명으로 나가지 않도록 판별한다.
+     */
+    private boolean looksLikeStoredCipher(String value) {
+        if (value == null) {
+            return false;
+        }
+        String s = value.trim();
+        if (s.startsWith(LEGACY_ENCRYPTED_PREFIX)) {
+            return true;
+        }
+        return s.length() >= ENCRYPTED_BASE64_MIN_LENGTH && BASE64_CIPHER_LIKE.matcher(s).matches();
     }
 
     /**

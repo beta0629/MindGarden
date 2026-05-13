@@ -26,6 +26,7 @@ import { Badge } from '@/components/atoms/Badge';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { useConsultationDetail } from '@/api/hooks/useConsultations';
+import { maskEncryptedDisplay, resolveProfileImageUrlForNative } from '@/utils/displayString';
 
 function formatTime(time: string | undefined): string {
   if (!time) return '';
@@ -100,6 +101,10 @@ export default function ClientSessionDetail() {
     NO_SHOW: { label: '미출석', variant: 'gray' },
   };
   const status = statusConfig[detail.status] ?? statusConfig['SCHEDULED']!;
+  const consultantLabel = maskEncryptedDisplay(detail.consultantName, '상담사');
+  const consultantAvatarUri = resolveProfileImageUrlForNative(
+    detail.consultantProfileImageUrl,
+  );
 
   return (
     <SafeAreaView
@@ -125,7 +130,11 @@ export default function ClientSessionDetail() {
           ]}
         >
           <View style={styles.profileRow}>
-            <Avatar name={detail.consultantName} size="lg" />
+            <Avatar
+              uri={consultantAvatarUri}
+              name={consultantLabel}
+              size="lg"
+            />
             <View style={styles.profileInfo}>
               <Text
                 style={{
@@ -134,7 +143,7 @@ export default function ClientSessionDetail() {
                   color: theme.colors.textMain,
                 }}
               >
-                {detail.consultantName}
+                {consultantLabel}
               </Text>
               <Badge label={status.label} variant={status.variant} />
             </View>

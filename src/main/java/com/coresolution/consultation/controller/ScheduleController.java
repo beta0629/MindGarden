@@ -1673,6 +1673,8 @@ public class ScheduleController extends BaseApiController {
         String clientName = AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
         String consultantPhone = "";
         String consultantEmail = "";
+        String consultantProfileImageUrl = null;
+        String clientProfileImageUrl = null;
         String consultantProfessionalProviderTypeCode = null;
         String clientPhone = "";
         String clientEmail = "";
@@ -1693,6 +1695,7 @@ public class ScheduleController extends BaseApiController {
                     consultantPhone = scheduleListUserFieldsResolver.resolvePhoneForScheduleList(consultant);
                     consultantEmail = scheduleListUserFieldsResolver.resolveEmailForScheduleList(consultant);
                     consultantProfessionalProviderTypeCode = resolveProfessionalProviderTypeCode(consultant);
+                    consultantProfileImageUrl = nullableUserProfileImageUrl(consultant);
                 }
             }
 
@@ -1702,6 +1705,7 @@ public class ScheduleController extends BaseApiController {
                     clientName = scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(client);
                     clientPhone = scheduleListUserFieldsResolver.resolvePhoneForScheduleList(client);
                     clientEmail = scheduleListUserFieldsResolver.resolveEmailForScheduleList(client);
+                    clientProfileImageUrl = nullableUserProfileImageUrl(client);
                 }
             }
         } catch (Exception e) {
@@ -1716,10 +1720,12 @@ public class ScheduleController extends BaseApiController {
             .consultantProfessionalProviderTypeCode(consultantProfessionalProviderTypeCode)
             .consultantPhone(consultantPhone)
             .consultantEmail(consultantEmail)
+            .consultantProfileImageUrl(consultantProfileImageUrl)
             .clientId(schedule.getClientId())
             .clientName(clientName)
             .clientPhone(clientPhone)
             .clientEmail(clientEmail)
+            .clientProfileImageUrl(clientProfileImageUrl)
             .date(schedule.getDate())
             .startTime(schedule.getStartTime())
             .endTime(schedule.getEndTime())
@@ -1734,6 +1740,14 @@ public class ScheduleController extends BaseApiController {
             .clientScheduleNotesUnresolvedCount(Math.max(0, clientScheduleNotesUnresolvedCount))
             .clientScheduleNotesClientWideUnresolvedCount(Math.max(0, clientScheduleNotesClientWideUnresolvedCount))
             .build();
+    }
+
+    private static String nullableUserProfileImageUrl(User user) {
+        if (user == null || user.getProfileImageUrl() == null) {
+            return null;
+        }
+        String url = user.getProfileImageUrl().trim();
+        return url.isEmpty() ? null : url;
     }
 
     /**

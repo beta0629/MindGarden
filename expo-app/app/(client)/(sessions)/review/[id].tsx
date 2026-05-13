@@ -28,6 +28,7 @@ import { Chip } from '@/components/atoms/Chip';
 import { RatingStars } from '@/components/molecules/RatingStars';
 import { useConsultationDetail } from '@/api/hooks/useConsultations';
 import { useCreateRating } from '@/api/hooks/useRatings';
+import { maskEncryptedDisplay, resolveProfileImageUrlForNative } from '@/utils/displayString';
 
 const REVIEW_TAGS = [
   '따뜻함',
@@ -47,6 +48,11 @@ export default function ClientSessionReview() {
 
   const { data: detail } = useConsultationDetail(id);
   const createRating = useCreateRating();
+
+  const consultantLabel = maskEncryptedDisplay(detail?.consultantName, '상담사');
+  const consultantAvatarUri = resolveProfileImageUrlForNative(
+    detail?.consultantProfileImageUrl,
+  );
 
   const [rating, setRating] = useState(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -111,7 +117,11 @@ export default function ClientSessionReview() {
             entering={FadeInDown.springify()}
             style={styles.profileSection}
           >
-            <Avatar name={detail?.consultantName} size="xl" />
+            <Avatar
+              uri={consultantAvatarUri}
+              name={consultantLabel}
+              size="xl"
+            />
             <Text
               style={{
                 fontFamily: theme.fontFamily.semibold,
@@ -120,7 +130,7 @@ export default function ClientSessionReview() {
                 marginTop: 12,
               }}
             >
-              {detail?.consultantName ?? ''}
+              {consultantLabel}
             </Text>
           </Animated.View>
 

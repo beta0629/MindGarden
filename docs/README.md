@@ -65,6 +65,9 @@
 - [QUICK_WILDCARD_TEST](./troubleshooting/QUICK_WILDCARD_TEST.md)
 
 ### Project Management (프로젝트 관리)
+- **[온라인 결제·카탈로그·체크아웃 기획 (상담료·TCI·MMPI 등)](./project-management/ONLINE_PAYMENT_CATALOG_CHECKOUT_SPEC.md)** — 쇼핑몰형 PLP/PDP·주문·PG·ERP·테넌트·심리검사 fulfillment, 로드맵·위임 배분
+- **[포인트 리워드 — 적립·사용(체크아웃)·환불 기획](./project-management/POINT_REWARD_EARN_AND_REDEEM_SPEC.md)** — hold·멱등·테넌트 정책·ERP 옵션 A/B·어드민·core-designer/coder/tester 배분
+- **[SNS 간편 회원가입 기획·구현 가이드](./project-management/SNS_SIMPLE_SIGNUP_SPEC.md)** — 카카오·네이버 미가입 시 `requiresSignup` 흐름, 약관·비밀번호 정책(A/B/C), 웹·Expo 정합, 위임 순서
 - **[진행 중 작업 — 마스터 진행도 체크리스트 (SSOT)](./project-management/ONGOING_WORK_MASTER_PROGRESS_CHECKLIST.md)** — 멀티 트랙 전체 진행도·상태 한곳 관리. **ERP 완료 후 전역 확대 검토 절차는 동일 문서 섹션 6.**
 - **[ERP 도메인 리뉴얼·고도화 마스터 플랜](./project-management/ERP_DOMAIN_RENEWAL_AND_ENHANCEMENT_PLAN.md)** — 전체 흐름·범위·필요 항목·페이즈(SSOT)
 - [ERP 현황 분석 — DB·로직](./project-management/ERP_CURRENT_STATE_DB_AND_LOGIC_ANALYSIS.md) — 테이블 맵·흐름·진단·개선 후보(마스터 플랜 연계)

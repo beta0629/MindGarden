@@ -108,9 +108,8 @@ export default function ClientMore() {
             <MenuListItem
               icon={UsersIcon}
               title="커뮤니티"
-              subtitle="Phase 3에서 구현 예정"
-              onPress={() => {}}
-              disabled
+              subtitle="게시글 · 댓글"
+              onPress={() => router.push('/(client)/(more)/community')}
             />
           </View>
         </View>
@@ -145,9 +144,8 @@ export default function ClientMore() {
             <MenuListItem
               icon={MessageSquare}
               title="메시지"
-              subtitle="Phase 3에서 구현 예정"
-              onPress={() => {}}
-              disabled
+              subtitle="대화 목록"
+              onPress={() => router.push('/(client)/(more)/messages')}
             />
           </View>
         </View>

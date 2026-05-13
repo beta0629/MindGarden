@@ -422,20 +422,25 @@ export function useUnreadMessageCount() {
   return useQuery<{ count: number }>({
     queryKey: MESSAGE_QUERY_KEYS.unreadCount(userId ?? 0),
     queryFn: async () => {
-      const raw = await apiGet<unknown>(
-        MESSAGE_API.unreadCount(userId!, userType),
-      );
-      const inner = unwrapApiResponse<Record<string, unknown>>(raw);
-      const bag = inner ?? (raw as Record<string, unknown>);
-      const unread =
-        bag && typeof bag === 'object' && 'unreadCount' in bag
-          ? toSafeNumber(bag.unreadCount, 0)
-          : 0;
-      return { count: unread };
+      try {
+        const raw = await apiGet<unknown>(
+          MESSAGE_API.unreadCount(userId!, userType),
+        );
+        const inner = unwrapApiResponse<Record<string, unknown>>(raw);
+        const bag = inner ?? (raw as Record<string, unknown>);
+        const unread =
+          bag && typeof bag === 'object' && 'unreadCount' in bag
+            ? toSafeNumber(bag.unreadCount, 0)
+            : 0;
+        return { count: unread };
+      } catch {
+        return { count: 0 };
+      }
     },
     enabled: !!userId && !!userType,
     staleTime: 1000 * 30,
     refetchInterval: 1000 * 60,
+    retry: false,
   });
 }
 

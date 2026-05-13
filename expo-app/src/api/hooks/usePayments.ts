@@ -45,6 +45,10 @@ export interface PaymentDetail {
   refundable: boolean;
   refundDeadline?: string;
   createdAt: string;
+  /** 매칭 요약 vs PG 결제 상세 */
+  detailKind?: 'MAPPING' | 'PG';
+  /** POST /api/v1/payments/{id}/refund 대상 식별자(PG) */
+  refundApiPaymentId?: string;
 }
 
 export type UsageType = 'USED' | 'CHARGED' | 'REFUNDED';
@@ -291,6 +295,16 @@ function pgPaymentToPaymentDetail(raw: Record<string, unknown>, id: number): Pay
     raw.description != null && String(raw.description).trim() !== ''
       ? String(raw.description)
       : '결제';
+  const refundKey =
+    raw.paymentId ??
+    raw.paymentKey ??
+    raw.orderId ??
+    raw.id ??
+    id;
+  const refundApiPaymentId =
+    refundKey != null && String(refundKey).trim() !== ''
+      ? String(refundKey)
+      : String(id);
   return {
     id: Number(raw.id) || id,
     paymentDate,
@@ -298,8 +312,13 @@ function pgPaymentToPaymentDetail(raw: Record<string, unknown>, id: number): Pay
     description,
     paymentMethod,
     status,
-    refundable: false,
+    refundable: status === 'COMPLETED',
+    refundDeadline:
+      raw.refundDeadline != null ? String(raw.refundDeadline) : undefined,
+    receiptUrl: raw.receiptUrl != null ? String(raw.receiptUrl) : undefined,
     createdAt: createdAt || paymentDate || new Date().toISOString(),
+    detailKind: 'PG',
+    refundApiPaymentId,
   };
 }
 
@@ -340,6 +359,8 @@ function mappingRowToPaymentDetail(m: Record<string, unknown>, mappingId: number
       typeof m.createdAt === 'string'
         ? m.createdAt
         : formatMappingDate(m) || new Date().toISOString(),
+    detailKind: 'MAPPING',
+    refundApiPaymentId: undefined,
   };
 }
 
@@ -456,8 +477,12 @@ export function usePaymentDetail(paymentId: number | undefined) {
     queryFn: async () => {
       const response = await apiGet<any>(PAYMENT_API.paymentDetail(paymentId!));
       const raw = response?.data ?? response;
-      if (raw && typeof raw === 'object') {
-        return raw as PaymentDetail;
+      if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+        const asMap = raw as Record<string, unknown>;
+        if (asMap.detailKind === 'MAPPING' || asMap.detailKind === 'PG') {
+          return raw as PaymentDetail;
+        }
+        return pgPaymentToPaymentDetail(asMap, paymentId!);
       }
       throw new Error('EMPTY');
     },
@@ -554,6 +579,38 @@ export function useRequestExtension() {
   return useMutation({
     mutationFn: (data: RequestExtensionRequest) =>
       apiPost(PAYMENT_API.SESSION_EXTENSIONS, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PAYMENT_QUERY_KEYS.all });
+    },
+  });
+}
+
+export interface RequestPgRefundParams {
+  paymentId: string;
+  amount?: number;
+  reason?: string;
+}
+
+/**
+ * PG 결제 환불 — 서버 {@code POST /api/v1/payments/{paymentId}/refund}
+ *
+ * @author MindGarden
+ * @since 2026-05-13
+ */
+export function useRequestPgRefund() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ paymentId, amount, reason }: RequestPgRefundParams) => {
+      const params: Record<string, string | number> = {};
+      if (amount != null && Number.isFinite(amount)) {
+        params.amount = amount;
+      }
+      if (reason != null && reason.trim() !== '') {
+        params.reason = reason.trim();
+      }
+      await apiPost<unknown>(PAYMENT_API.refund(paymentId), undefined, { params });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PAYMENT_QUERY_KEYS.all });
     },

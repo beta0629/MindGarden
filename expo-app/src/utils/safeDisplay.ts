@@ -7,6 +7,38 @@
  */
 
 /**
+ * 알림·푸시 본문 등에 포함된 HTML 태그를 제거하고 읽기용 평문으로 만든다.
+ * React Native Text에는 HTML 렌더링을 쓰지 않고 평문만 표시한다.
+ */
+export function stripHtmlToPlainText(raw: unknown): string {
+  const s = typeof raw === 'string' ? raw : toDisplayString(raw, '');
+  if (!s) {
+    return '';
+  }
+  let t = s.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ');
+  t = t.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ');
+  t = t.replace(/<br\s*\/?>/gi, '\n');
+  t = t.replace(/<\/p>/gi, '\n');
+  t = t.replace(/<\/h[1-6]>/gi, '\n');
+  t = t.replace(/<\/div>/gi, '\n');
+  t = t.replace(/<[^>]+>/g, ' ');
+  t = t
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => {
+      const code = Number(n);
+      return Number.isFinite(code) && code > 0 ? String.fromCharCode(code) : ' ';
+    });
+  t = t.replace(/[ \t\f\v]+/g, ' ');
+  t = t.replace(/\n\s*\n/g, '\n').trim();
+  return t;
+}
+
+/**
  * @param value 표시할 값
  * @param fallback null/빈값/객체 직렬화 실패 시
  * @returns 안전한 한 줄 문자열

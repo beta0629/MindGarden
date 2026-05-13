@@ -1,6 +1,5 @@
 /**
- * useOffline — 네트워크 상태 감지 훅
- * @react-native-community/netinfo + TanStack Query onlineManager 연동
+ * useOffline — NetInfo + TanStack Query onlineManager + 재연결 동기화
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -8,59 +7,75 @@
 import { useSyncExternalStore } from 'react';
 import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
 import { onlineManager } from '@tanstack/react-query';
+import { queryClient } from '../api/queryClient';
+import { isOfflinePersistedQueryKey } from '../api/offlinePersistPolicy';
 import { BackgroundTaskService } from '../services/BackgroundTaskService';
 import { OfflineQueueService } from '../services/OfflineQueueService';
 
+let netInfoSubscription: (() => void) | null = null;
 let currentState: NetInfoState | null = null;
+/** 직전 이벤트까지 오프라인이었는지(복구 감지용) */
+let lastIsOffline = false;
 const listeners = new Set<() => void>();
 
-function subscribe(callback: () => void): () => void {
-  listeners.add(callback);
+function emit(): void {
+  listeners.forEach((cb) => cb());
+}
 
-  if (listeners.size === 1) {
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      const wasOffline = currentState !== null && !currentState.isConnected;
-      currentState = state;
-      const isOnline = state.isConnected ?? false;
-
-      onlineManager.setOnline(isOnline);
-
-      if (wasOffline && isOnline) {
-        handleReconnect();
-      }
-
-      listeners.forEach((cb) => cb());
+async function onNetworkRestored(): Promise<void> {
+  try {
+    await OfflineQueueService.processQueue();
+    await BackgroundTaskService.runManualSync();
+    await queryClient.invalidateQueries({
+      predicate: (q) => isOfflinePersistedQueryKey(q.queryKey),
     });
-
-    return () => {
-      listeners.delete(callback);
-      if (listeners.size === 0) {
-        unsubscribe();
-      }
-    };
+  } catch {
+    // 다음 복구 시 재시도
   }
+}
 
+function attachNetInfoListener(): void {
+  if (netInfoSubscription != null) {
+    return;
+  }
+  netInfoSubscription = NetInfo.addEventListener((state) => {
+    const isOnline = state.isConnected ?? false;
+    const isOffline = !isOnline;
+
+    onlineManager.setOnline(isOnline);
+
+    if (lastIsOffline && !isOffline) {
+      void onNetworkRestored();
+    }
+    lastIsOffline = isOffline;
+    currentState = state;
+
+    emit();
+  });
+
+  void NetInfo.fetch().then((state) => {
+    currentState = state;
+    lastIsOffline = !(state.isConnected ?? false);
+    onlineManager.setOnline(state.isConnected ?? false);
+    emit();
+  });
+}
+
+function subscribe(callback: () => void): () => void {
+  attachNetInfoListener();
+  listeners.add(callback);
   return () => {
     listeners.delete(callback);
   };
 }
 
 function getSnapshot(): boolean {
-  if (currentState === null) return true;
+  if (currentState === null) return false;
   return !(currentState.isConnected ?? true);
 }
 
 function getServerSnapshot(): boolean {
   return false;
-}
-
-async function handleReconnect(): Promise<void> {
-  try {
-    await OfflineQueueService.processQueue();
-    await BackgroundTaskService.runManualSync();
-  } catch {
-    // 에러 시 다음 reconnect에서 재시도
-  }
 }
 
 export interface OfflineState {
@@ -69,14 +84,10 @@ export interface OfflineState {
 }
 
 /**
- * 네트워크 오프라인 상태를 감지하고 TanStack Query onlineManager와 동기화
+ * 오프라인 여부 (UI 배너 등)
  */
 export function useOffline(): OfflineState {
-  const isOffline = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-  );
+  const isOffline = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   return {
     isOffline,
@@ -85,13 +96,11 @@ export function useOffline(): OfflineState {
 }
 
 /**
- * onlineManager 이벤트 리스너 설정 (루트 레이아웃에서 한 번 호출)
+ * 루트에서 1회 호출: NetInfo 구독 + onlineManager + 재연결 시 큐/쿼리 갱신
  */
-export function setupOnlineManager(): () => void {
-  const unsubscribe = NetInfo.addEventListener((state) => {
-    const isOnline = state.isConnected ?? true;
-    onlineManager.setOnline(isOnline);
-  });
-
-  return unsubscribe;
+export function setupOfflineNetworking(): () => void {
+  attachNetInfoListener();
+  return () => {
+    // 앱 종료까지 유지(이중 구독 방지). 필요 시 netInfoSubscription?.() 확장 가능.
+  };
 }

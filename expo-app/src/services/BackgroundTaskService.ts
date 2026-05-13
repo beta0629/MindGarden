@@ -1,10 +1,11 @@
 /**
  * BackgroundTaskService — 백그라운드 작업 관리
- * expo-background-fetch + expo-task-manager 기반
  *
- * - FCM 토큰 주기적 갱신 (24시간)
- * - 오프라인 큐 처리 (네트워크 복구 시)
- * - 오래된 캐시 정리
+ * **Expo SDK 54**: `expo-background-fetch` + `expo-task-manager`만 사용한다.
+ * 기획서의 `expo-background-task`(SDK 53 시점 언급)와 이중 의존하지 않으며,
+ * 동일 역할을 네이티브 두 벌로 유지할 이유가 없을 때까지 본 스택을 유지한다.
+ *
+ * **iOS**: Background Fetch 실행 시점·간격은 시스템이 정하며 앱이 지정한 최소 간격을 보장하지 않는다.
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -12,14 +13,53 @@
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
 import NetInfo from '@react-native-community/netinfo';
+import { createMMKV } from 'react-native-mmkv';
+import { pruneInactivePersistedQueries } from '../api/queryClient';
 import { NotificationService } from './NotificationService';
 import { OfflineQueueService } from './OfflineQueueService';
 
 const BACKGROUND_TASK_NAME = 'MINDGARDEN_BACKGROUND_SYNC';
 const TOKEN_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000;
-const TOKEN_LAST_REFRESH_KEY = 'bg_last_token_refresh';
+const TOKEN_REFRESH_LOCK_MS = 2 * 60 * 1000;
+const CACHE_PRUNE_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
-let lastTokenRefreshMs = 0;
+const mmkv = createMMKV({ id: 'background-task' });
+const TOKEN_LAST_REFRESH_KEY = 'bg_last_token_refresh';
+const TOKEN_LOCK_UNTIL_KEY = 'bg_token_refresh_lock_until';
+const CACHE_LAST_PRUNE_KEY = 'bg_last_cache_prune';
+
+let registerSingleton: Promise<void> | null = null;
+
+function readLastTokenRefreshMs(): number {
+  return mmkv.getNumber(TOKEN_LAST_REFRESH_KEY) ?? 0;
+}
+
+function writeLastTokenRefreshMs(ts: number): void {
+  mmkv.set(TOKEN_LAST_REFRESH_KEY, ts);
+}
+
+function tryAcquireTokenRefreshLock(): boolean {
+  const until = mmkv.getNumber(TOKEN_LOCK_UNTIL_KEY) ?? 0;
+  const now = Date.now();
+  if (now < until) {
+    return false;
+  }
+  mmkv.set(TOKEN_LOCK_UNTIL_KEY, now + TOKEN_REFRESH_LOCK_MS);
+  return true;
+}
+
+function releaseTokenRefreshLock(): void {
+  mmkv.set(TOKEN_LOCK_UNTIL_KEY, 0);
+}
+
+function shouldRunCachePrune(): boolean {
+  const last = mmkv.getNumber(CACHE_LAST_PRUNE_KEY) ?? 0;
+  return Date.now() - last >= CACHE_PRUNE_INTERVAL_MS;
+}
+
+function markCachePruneDone(): void {
+  mmkv.set(CACHE_LAST_PRUNE_KEY, Date.now());
+}
 
 TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
   try {
@@ -27,23 +67,40 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
     const isConnected = netState.isConnected ?? false;
 
     if (isConnected) {
+      OfflineQueueService.pruneStaleEntries();
       await processOfflineQueue();
-      await refreshTokenIfNeeded();
+      await refreshTokenIfNeeded('background-fetch');
+      if (shouldRunCachePrune()) {
+        pruneInactivePersistedQueries();
+        markCachePruneDone();
+      }
     }
 
     return BackgroundFetch.BackgroundFetchResult.NewData;
-  } catch {
+  } catch (err) {
+    console.warn('[MindGarden][BackgroundSync] task error', err);
     return BackgroundFetch.BackgroundFetchResult.Failed;
   }
 });
 
-async function refreshTokenIfNeeded(): Promise<void> {
+async function refreshTokenIfNeeded(source: string): Promise<void> {
   const now = Date.now();
-  if (now - lastTokenRefreshMs < TOKEN_REFRESH_INTERVAL_MS) return;
+  const lastMs = readLastTokenRefreshMs();
+  if (lastMs > 0 && now - lastMs < TOKEN_REFRESH_INTERVAL_MS) {
+    return;
+  }
 
-  const success = await NotificationService.registerToken();
-  if (success) {
-    lastTokenRefreshMs = now;
+  if (!tryAcquireTokenRefreshLock()) {
+    return;
+  }
+
+  try {
+    const success = await NotificationService.registerToken();
+    if (success) {
+      writeLastTokenRefreshMs(now);
+    }
+  } finally {
+    releaseTokenRefreshLock();
   }
 }
 
@@ -56,33 +113,40 @@ async function processOfflineQueue(): Promise<void> {
 
 export const BackgroundTaskService = {
   /**
-   * 백그라운드 태스크 등록
-   * 앱 시작 시 한 번 호출
+   * 백그라운드 태스크 OS 등록. `app/_layout.tsx`에서 fonts `loaded` 후 한 경로로만 호출.
    */
   async register(): Promise<void> {
-    try {
-      const status = await BackgroundFetch.getStatusAsync();
-      if (
-        status === BackgroundFetch.BackgroundFetchStatus.Denied ||
-        status === BackgroundFetch.BackgroundFetchStatus.Restricted
-      ) {
-        return;
-      }
+    registerSingleton ??= (async () => {
+      try {
+        const status = await BackgroundFetch.getStatusAsync();
+        if (
+          status === BackgroundFetch.BackgroundFetchStatus.Denied ||
+          status === BackgroundFetch.BackgroundFetchStatus.Restricted
+        ) {
+          return;
+        }
 
-      const isRegistered = await TaskManager.isTaskRegisteredAsync(
-        BACKGROUND_TASK_NAME,
-      );
+        const isRegistered = await TaskManager.isTaskRegisteredAsync(
+          BACKGROUND_TASK_NAME,
+        );
 
-      if (!isRegistered) {
-        await BackgroundFetch.registerTaskAsync(BACKGROUND_TASK_NAME, {
-          minimumInterval: 15 * 60,
-          stopOnTerminate: false,
-          startOnBoot: true,
-        });
+        if (!isRegistered) {
+          await BackgroundFetch.registerTaskAsync(BACKGROUND_TASK_NAME, {
+            minimumInterval: 15 * 60,
+            stopOnTerminate: false,
+            startOnBoot: true,
+          });
+        }
+      } catch (err) {
+        if (__DEV__) {
+          console.warn('[MindGarden][BackgroundSync] register skipped', err);
+        }
       }
-    } catch {
-      // 시뮬레이터 등 지원 불가 환경에서 무시
-    }
+    })().finally(() => {
+      registerSingleton = null;
+    });
+
+    await registerSingleton;
   },
 
   /**
@@ -109,7 +173,12 @@ export const BackgroundTaskService = {
     const netState = await NetInfo.fetch();
     if (!netState.isConnected) return;
 
+    OfflineQueueService.pruneStaleEntries();
     await processOfflineQueue();
-    await refreshTokenIfNeeded();
+    await refreshTokenIfNeeded('manual-sync');
+    if (shouldRunCachePrune()) {
+      pruneInactivePersistedQueries();
+      markCachePruneDone();
+    }
   },
 };

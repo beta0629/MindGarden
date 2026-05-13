@@ -19,13 +19,28 @@ import { useNotificationSettingsStore } from '../stores/useNotificationSettingsS
 import { colors } from '../theme/tokens';
 import {
   getScenarioByType,
+  getRouteTemplateForRole,
+  prefixRoleForMoreRoute,
   resolveRoute,
-  resolveRouteForRole,
+  routeMatchesRole,
   type PushScenario,
 } from '../constants/pushScenarios';
 import { showInAppToast } from '../components/organisms/InAppNotificationToast';
+import { stripHtmlToPlainText } from '../utils/safeDisplay';
 
 // TODO(expo-push): Spring에 `/api/v1/mobile/push-token/register`·설정 API가 없으면 4xx 무시·계약만 맞춤 — CONSULTANT_CLIENT_APP_PLAN.md Phase 3 항목 5
+
+function navigateToSystemNotifications(role: 'client' | 'consultant'): void {
+  const path =
+    role === 'consultant'
+      ? '/(consultant)/(more)/notifications'
+      : '/(client)/(more)/notifications';
+  try {
+    router.push(path as Href);
+  } catch {
+    // 잘못된 경로 무시
+  }
+}
 
 /**
  * 푸시 data에서 라우트 파라미터 추출 (id·scheduleId 등 서버 키 편차 흡수)
@@ -44,6 +59,14 @@ function collectPushRouteParams(
   };
 
   const params: Record<string, string | number> = {};
+
+  if (scenario.category === 'record') {
+    const sid = firstString(data.scheduleId, data.consultationId, data.id);
+    if (sid != null) {
+      params.scheduleId = sid;
+    }
+    return params;
+  }
 
   if (
     scenario.category === 'booking' ||
@@ -95,6 +118,14 @@ function resolvePushRouteWithFallback(
   if (!/\{[^}]+\}/.test(route)) {
     return route;
   }
+  if (route.includes('sessions)/review')) {
+    return role === 'consultant'
+      ? '/(consultant)/(schedule)'
+      : '/(client)/(sessions)';
+  }
+  if (route.includes('records)/create')) {
+    return '/(consultant)/(records)';
+  }
   if (scenario.route.includes('sessions-payment')) {
     return role === 'consultant'
       ? '/(consultant)/(more)'
@@ -125,24 +156,24 @@ function resolvePushRouteWithFallback(
 
 /**
  * 포그라운드 알림 핸들러:
- * 설정 카테고리가 on이면 알림 표시, off면 무시
+ * 설정 카테고리가 on이면 OS 리스트 표시, off면 억제
+ * 문서에 없는 type은 system 카테고리로 판단
  */
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
     const type = notification.request.content.data?.type as string | undefined;
     if (type) {
       const scenario = getScenarioByType(type);
-      if (scenario) {
-        const { isEnabled } = useNotificationSettingsStore.getState();
-        if (!isEnabled(scenario.settingsCategory)) {
-          return {
-            shouldShowAlert: false,
-            shouldPlaySound: false,
-            shouldSetBadge: false,
-            shouldShowBanner: false,
-            shouldShowList: false,
-          };
-        }
+      const category = scenario?.settingsCategory ?? 'system';
+      const { isEnabled } = useNotificationSettingsStore.getState();
+      if (!isEnabled(category)) {
+        return {
+          shouldShowAlert: false,
+          shouldPlaySound: false,
+          shouldSetBadge: false,
+          shouldShowBanner: false,
+          shouldShowList: false,
+        };
       }
     }
 
@@ -296,24 +327,33 @@ export const NotificationService = {
       const { title, body, data } = notification.request.content;
       const type = data?.type as string | undefined;
 
-      if (type) {
-        const scenario = getScenarioByType(type);
-        if (scenario) {
-          const { isEnabled } = useNotificationSettingsStore.getState();
-          if (!isEnabled(scenario.settingsCategory)) return;
-        }
+      if (!type) {
+        return;
       }
 
-      const scenario = type ? getScenarioByType(type) : undefined;
+      const scenario = getScenarioByType(type);
+      const { isEnabled } = useNotificationSettingsStore.getState();
+      if (scenario) {
+        if (!isEnabled(scenario.settingsCategory)) return;
+      } else if (!isEnabled('system')) {
+        return;
+      }
+
+      const activeScenario = scenario;
 
       showInAppToast({
         id: generateToastId(),
-        title: title ?? scenario?.title ?? '알림',
-        body: body ?? '',
-        icon: scenario?.icon,
+        title: stripHtmlToPlainText(title ?? activeScenario?.title ?? '알림'),
+        body: stripHtmlToPlainText(body ?? ''),
+        icon: activeScenario?.icon,
         onPress: () => {
-          if (type && data) {
+          const role = useAuthStore.getState().role;
+          if (!role) return;
+          if (!data) return;
+          if (scenario) {
             this.navigateToScreen(type, data as Record<string, unknown>);
+          } else {
+            navigateToSystemNotifications(role);
           }
         },
       });
@@ -322,38 +362,63 @@ export const NotificationService = {
 
   /**
    * 알림 탭 핸들러 (백그라운드/종료 → 앱 오픈 시)
-   * data.type에 따라 PUSH_SCENARIOS에서 route 찾아서 이동
+   * data.type에 따라 라우팅 — 설정 off면 무시
    */
   setupResponseHandler(): Notifications.EventSubscription {
     return Notifications.addNotificationResponseReceivedListener((response) => {
       const { data } = response.notification.request.content;
       const type = data?.type as string | undefined;
+      const role = useAuthStore.getState().role;
 
-      if (type) {
-        this.navigateToScreen(type, data as Record<string, unknown>);
+      if (!role) return;
+
+      if (!type) {
+        navigateToSystemNotifications(role);
+        return;
       }
+
+      const scenario = getScenarioByType(type);
+      const { isEnabled } = useNotificationSettingsStore.getState();
+      if (scenario) {
+        if (!isEnabled(scenario.settingsCategory)) return;
+      } else if (!isEnabled('system')) {
+        return;
+      }
+
+      this.navigateToScreen(type, data as Record<string, unknown>);
     });
   },
 
   /**
    * 알림 type + data 기반 화면 이동
+   * 미등록 type → 시스템 알림(알림 센터) 화면
    */
   navigateToScreen(type: string, data: Record<string, unknown>): void {
-    const scenario = getScenarioByType(type);
-    if (!scenario) return;
-
     const { role } = useAuthStore.getState();
     if (!role) return;
 
+    const scenario = getScenarioByType(type);
+    if (!scenario) {
+      navigateToSystemNotifications(role);
+      return;
+    }
+
     const params = collectPushRouteParams(scenario, data);
-    let route = resolveRoute(scenario.route, params);
-    route = resolveRouteForRole(route, role);
+    const template = getRouteTemplateForRole(scenario, role);
+    let route = resolveRoute(template, params);
+    route = prefixRoleForMoreRoute(route, role);
+
+    if (!routeMatchesRole(route, role)) {
+      navigateToSystemNotifications(role);
+      return;
+    }
+
     route = resolvePushRouteWithFallback(scenario, route, role);
 
     try {
       router.push(route as Href);
     } catch {
-      // 잘못된 경로 무시 — 홈으로 fallback
+      navigateToSystemNotifications(role);
     }
   },
 

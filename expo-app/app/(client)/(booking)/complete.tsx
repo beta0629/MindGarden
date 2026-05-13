@@ -1,20 +1,123 @@
 /**
  * 예약 완료 화면
- * 성공 애니메이션 + 예약 정보 카드
+ * 성공 애니메이션 + 예약 정보 카드 + 기기 캘린더 저장(expo-calendar)
  *
  * @author MindGarden
  * @since 2026-05-12
  */
-import { Pressable, StyleSheet, Text, View, Platform } from 'react-native';
+import { useCallback, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  Platform,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import * as Calendar from 'expo-calendar';
 import Animated, {
   BounceIn,
   FadeInDown,
 } from 'react-native-reanimated';
-import { Check, Calendar, Clock, CalendarCheck } from 'lucide-react-native';
+import { Check, Calendar as CalendarIcon, Clock, CalendarCheck } from 'lucide-react-native';
 import { useTheme } from '@/theme';
+
+function normalizeTimePart(t: string | undefined): string {
+  const v = (t ?? '').trim();
+  if (!v) {
+    return '09:00:00';
+  }
+  if (v.length === 5 && v.includes(':')) {
+    return `${v}:00`;
+  }
+  return v;
+}
+
+function parseBookingRange(
+  dateStr: string | undefined,
+  start: string | undefined,
+  end: string | undefined,
+): { startDate: Date; endDate: Date } | null {
+  const d = (dateStr ?? '').trim();
+  if (!d) {
+    return null;
+  }
+  const startDate = new Date(`${d}T${normalizeTimePart(start)}`);
+  const endDate = new Date(`${d}T${normalizeTimePart(end)}`);
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return null;
+  }
+  if (endDate.getTime() <= startDate.getTime()) {
+    endDate.setTime(startDate.getTime() + 60 * 60 * 1000);
+  }
+  return { startDate, endDate };
+}
+
+type CalendarModule = typeof Calendar & {
+  createEventInCalendarAsync?: (
+    eventData?: Record<string, unknown>,
+    presentationOptions?: Record<string, unknown>,
+  ) => Promise<unknown>;
+};
+
+async function persistBookingToCalendar(opts: {
+  title: string;
+  notes: string;
+  startDate: Date;
+  endDate: Date;
+}): Promise<void> {
+  const Cal = Calendar as CalendarModule;
+  if (typeof Cal.createEventInCalendarAsync === 'function') {
+    try {
+      await Cal.createEventInCalendarAsync({
+        title: opts.title,
+        notes: opts.notes,
+        startDate: opts.startDate,
+        endDate: opts.endDate,
+      });
+      return;
+    } catch {
+      /* OS UI 없거나 취소 시 프로그램 방식으로 재시도 */
+    }
+  }
+
+  const available = await Calendar.isAvailableAsync();
+  if (!available) {
+    throw new Error('UNAVAILABLE');
+  }
+
+  let calendarId: string | null = null;
+  if (Platform.OS === 'ios') {
+    try {
+      const def = await Calendar.getDefaultCalendarAsync();
+      if (def?.allowsModifications) {
+        calendarId = def.id;
+      }
+    } catch {
+      calendarId = null;
+    }
+  }
+  if (!calendarId) {
+    const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+    const picked =
+      calendars.find((c) => c.allowsModifications) ?? calendars[0];
+    calendarId = picked?.id ?? null;
+  }
+  if (!calendarId) {
+    throw new Error('NO_CALENDAR');
+  }
+
+  await Calendar.createEventAsync(calendarId, {
+    title: opts.title,
+    notes: opts.notes,
+    startDate: opts.startDate,
+    endDate: opts.endDate,
+  });
+}
 
 export default function BookingComplete() {
   const theme = useTheme();
@@ -25,6 +128,7 @@ export default function BookingComplete() {
     startTime: string;
     endTime: string;
   }>();
+  const [calendarBusy, setCalendarBusy] = useState(false);
 
   const handleGoHome = () => {
     if (Platform.OS !== 'web') {
@@ -33,12 +137,42 @@ export default function BookingComplete() {
     router.replace('/(client)/(home)');
   };
 
-  const handleAddToCalendar = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  const handleAddToCalendar = useCallback(async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert(
+        '캘린더',
+        '웹에서는 기기 캘린더에 직접 추가할 수 없습니다. 모바일 앱에서 다시 시도해 주세요.',
+      );
+      return;
     }
-    // TODO: Phase 3 — expo-calendar 연동
-  };
+    const range = parseBookingRange(params.date, params.startTime, params.endTime);
+    if (!range) {
+      Alert.alert(
+        '일정을 만들 수 없습니다',
+        '예약 날짜·시간 정보가 올바르지 않습니다. 예약 내역에서 다시 확인해 주세요.',
+      );
+      return;
+    }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setCalendarBusy(true);
+    try {
+      const name = (params.consultantName ?? '상담').trim() || '상담';
+      await persistBookingToCalendar({
+        title: `MindGarden 상담 · ${name}`,
+        notes: '앱에서 예약한 상담 일정입니다.',
+        startDate: range.startDate,
+        endDate: range.endDate,
+      });
+      Alert.alert('캘린더', '일정이 캘린더에 추가되었습니다.');
+    } catch {
+      Alert.alert(
+        '캘린더에 추가하지 못했습니다',
+        '캘린더 접근 권한을 허용했는지, 기본 캘린더가 있는지 확인한 뒤 다시 시도해 주세요.',
+      );
+    } finally {
+      setCalendarBusy(false);
+    }
+  }, [params.consultantName, params.date, params.endTime, params.startTime]);
 
   return (
     <SafeAreaView
@@ -112,7 +246,7 @@ export default function BookingComplete() {
             {params.consultantName} 전문가
           </Text>
           <View style={styles.detailRow}>
-            <Calendar size={16} color={theme.colors.textSecondary} />
+            <CalendarIcon size={16} color={theme.colors.textSecondary} />
             <Text
               style={{
                 fontFamily: theme.fontFamily.regular,
@@ -168,27 +302,35 @@ export default function BookingComplete() {
 
           <Pressable
             onPress={handleAddToCalendar}
+            disabled={calendarBusy}
             style={[
               styles.secondaryButton,
               {
                 borderColor: theme.colors.primary,
                 borderRadius: theme.borderRadius.lg,
+                opacity: calendarBusy ? 0.6 : 1,
               },
             ]}
             accessibilityLabel="캘린더에 추가"
             accessibilityRole="button"
           >
-            <CalendarCheck size={18} color={theme.colors.primary} />
-            <Text
-              style={{
-                fontFamily: theme.fontFamily.semibold,
-                fontSize: theme.fontSize.sm,
-                color: theme.colors.primary,
-                marginLeft: 6,
-              }}
-            >
-              캘린더에 추가
-            </Text>
+            {calendarBusy ? (
+              <ActivityIndicator color={theme.colors.primary} />
+            ) : (
+              <>
+                <CalendarCheck size={18} color={theme.colors.primary} />
+                <Text
+                  style={{
+                    fontFamily: theme.fontFamily.semibold,
+                    fontSize: theme.fontSize.sm,
+                    color: theme.colors.primary,
+                    marginLeft: 6,
+                  }}
+                >
+                  캘린더에 추가
+                </Text>
+              </>
+            )}
           </Pressable>
         </Animated.View>
       </View>

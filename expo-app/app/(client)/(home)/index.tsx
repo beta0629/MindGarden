@@ -12,6 +12,7 @@
  */
 import { useCallback } from 'react';
 import {
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -22,6 +23,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
+  Bell,
   Calendar,
   Heart,
   TrendingUp,
@@ -38,6 +40,7 @@ import { SkeletonCard, SkeletonLoader } from '@/components/atoms/SkeletonLoader'
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useClientDashboard, useUpcomingConsultation } from '@/api/hooks/useConsultations';
+import { useUnreadCount } from '@/api/hooks/useNotifications';
 import { useRandomWellnessTip } from '@/api/hooks/useWellness';
 
 const WARM_MESSAGES = [
@@ -61,6 +64,8 @@ export default function ClientHome() {
   const dashboardQuery = useClientDashboard(user?.id);
   const upcomingQuery = useUpcomingConsultation(user?.id);
   const tipQuery = useRandomWellnessTip();
+  const unreadQuery = useUnreadCount();
+  const unreadCount = unreadQuery.data?.count ?? 0;
 
   const isLoading =
     dashboardQuery.isLoading || upcomingQuery.isLoading;
@@ -69,12 +74,14 @@ export default function ClientHome() {
     dashboardQuery.refetch();
     upcomingQuery.refetch();
     tipQuery.refetch();
-  }, [dashboardQuery, upcomingQuery, tipQuery]);
+    unreadQuery.refetch();
+  }, [dashboardQuery, upcomingQuery, tipQuery, unreadQuery]);
 
   const isRefreshing =
     dashboardQuery.isFetching ||
     upcomingQuery.isFetching ||
-    tipQuery.isFetching;
+    tipQuery.isFetching ||
+    unreadQuery.isFetching;
 
   const today = format(new Date(), 'M월 d일 (EEEE)', { locale: ko });
   const upcoming = upcomingQuery.data;
@@ -86,7 +93,30 @@ export default function ClientHome() {
       style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
       edges={['top']}
     >
-      <AppTopBar title="홈" />
+      <AppTopBar
+        title="홈"
+        rightAction={
+          <Pressable
+            onPress={() => router.push('/(client)/(more)/notifications')}
+            accessibilityRole="button"
+            accessibilityLabel="알림 센터"
+            hitSlop={8}
+            style={styles.topBarIcon}
+          >
+            <View>
+              <Bell size={22} color={theme.colors.textMain} />
+              {unreadCount > 0 ? (
+                <View
+                  style={[
+                    styles.notificationDot,
+                    { backgroundColor: theme.colors.error },
+                  ]}
+                />
+              ) : null}
+            </View>
+          </Pressable>
+        }
+      />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -293,5 +323,19 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 24,
+  },
+  topBarIcon: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });

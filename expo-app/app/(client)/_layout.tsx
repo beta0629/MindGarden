@@ -5,7 +5,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
@@ -16,6 +16,7 @@ import {
   MoreHorizontal,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
+import { useMoreTabUnreadTotal } from '@/hooks/useMoreTabUnreadTotal';
 import { MiniPlayer } from '@/components/organisms/MiniPlayer';
 import { MeditationAudioBridge } from '@/components/organisms/MeditationAudioBridge';
 import { useMeditationStore } from '@/stores/useMeditationStore';
@@ -23,8 +24,11 @@ import { useMeditationStore } from '@/stores/useMeditationStore';
 const ICON_SIZE = 24;
 const BADGE_SIZE = 8;
 
-function UnreadBadge() {
+function UnreadBadge({ visible }: Readonly<{ visible: boolean }>) {
   const theme = useTheme();
+  if (!visible) {
+    return null;
+  }
   return (
     <View style={[styles.badge, { backgroundColor: theme.colors.error }]} />
   );
@@ -32,7 +36,9 @@ function UnreadBadge() {
 
 export default function ClientLayout() {
   const theme = useTheme();
+  const router = useRouter();
   const currentTrack = useMeditationStore((s) => s.currentTrack);
+  const moreTabUnread = useMoreTabUnreadTotal();
 
   const handleTabPress = () => {
     if (Platform.OS !== 'web') {
@@ -112,15 +118,23 @@ export default function ClientLayout() {
             name="(more)"
             options={{
               title: '더보기',
+              /** 알림·하위 화면 스택 유지 시 탭만 눌러도 메뉴로 돌아오게 하기 위해 이탈 시 언마운트 */
+              unmountOnBlur: true,
               tabBarIcon: ({ color }) => (
                 <View>
                   <MoreHorizontal size={ICON_SIZE} color={color} />
-                  <UnreadBadge />
+                  <UnreadBadge visible={moreTabUnread > 0} />
                 </View>
               ),
               tabBarAccessibilityLabel: '더보기 탭',
             }}
-            listeners={{ tabPress: handleTabPress }}
+            listeners={{
+              tabPress: () => {
+                handleTabPress();
+                /** 알림만 열린 스택에서도 더보기 탭을 누르면 메뉴(index)로 */
+                router.navigate('/(client)/(more)');
+              },
+            }}
           />
         </Tabs>
         {currentTrack && <MiniPlayer />}

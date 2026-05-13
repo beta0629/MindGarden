@@ -10,14 +10,19 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import 'react-native-reanimated';
 import { ThemeProvider } from '../src/theme';
 import { useAuthStore } from '../src/stores/useAuthStore';
-import { queryClient, queryPersister } from '../src/api/queryClient';
-import { setupOnlineManager } from '../src/hooks/useOffline';
+import {
+  queryClient,
+  queryPersister,
+  QUERY_PERSIST_MAX_AGE_MS,
+  queryPersistDehydrateOptions,
+} from '../src/api/queryClient';
+import { setupOfflineNetworking } from '../src/hooks/useOffline';
 import { NotificationService } from '../src/services/NotificationService';
 import { BackgroundTaskService } from '../src/services/BackgroundTaskService';
 import { OfflineBanner } from '../src/components/organisms/OfflineBanner';
@@ -41,7 +46,14 @@ export default function RootLayout() {
   });
 
   const role = useAuthStore((s) => s.role);
+  const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  const queryPersistBuster = useMemo(() => {
+    const tenant = user?.tenantId ?? 'no-tenant';
+    const uid = user?.id ?? 'anon';
+    return `${tenant}:${uid}`;
+  }, [user?.tenantId, user?.id]);
 
   useEffect(() => {
     if (error) throw error;
@@ -53,8 +65,14 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  /** 백그라운드 fetch 등록은 로그인과 무관하게 한 경로만(인증 이펙트와 분리) */
   useEffect(() => {
-    const unsubOnline = setupOnlineManager();
+    if (!loaded) return;
+    void BackgroundTaskService.register();
+  }, [loaded]);
+
+  useEffect(() => {
+    const unsubOnline = setupOfflineNetworking();
     return () => {
       unsubOnline();
     };
@@ -65,7 +83,6 @@ export default function RootLayout() {
 
     const { foreground, response } = NotificationService.setupAllHandlers();
     NotificationService.registerToken();
-    BackgroundTaskService.register();
 
     return () => {
       foreground.remove();
@@ -81,7 +98,12 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <PersistQueryClientProvider
         client={queryClient}
-        persistOptions={{ persister: queryPersister }}
+        persistOptions={{
+          persister: queryPersister,
+          maxAge: QUERY_PERSIST_MAX_AGE_MS,
+          buster: queryPersistBuster,
+          dehydrateOptions: queryPersistDehydrateOptions,
+        }}
       >
         <ThemeProvider role={role ?? 'client'}>
           <Stack screenOptions={{ headerShown: false }}>

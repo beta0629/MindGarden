@@ -31,7 +31,11 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { useSessionPaymentDetail, type PaymentStatus } from '@/api/hooks/usePayments';
+import {
+  useSessionPaymentDetail,
+  useRequestPgRefund,
+  type PaymentStatus,
+} from '@/api/hooks/usePayments';
 import { Badge } from '@/components/atoms/Badge';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { EmptyState } from '@/components/atoms/EmptyState';
@@ -70,6 +74,7 @@ export default function PaymentDetailScreen() {
     clientId,
     paymentId,
   );
+  const refundMutation = useRequestPgRefund();
 
   const handleReceiptPress = useCallback(() => {
     if (payment?.receiptUrl) {
@@ -78,24 +83,51 @@ export default function PaymentDetailScreen() {
   }, [payment?.receiptUrl]);
 
   const handleRefundPress = useCallback(() => {
+    if (!payment?.refundApiPaymentId) {
+      return;
+    }
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
     Alert.alert(
       '환불 요청',
-      '정말로 환불을 요청하시겠습니까?\n환불 처리까지 영업일 기준 3~5일이 소요됩니다.',
+      '정말로 환불을 요청하시겠습니까?\n환불 처리까지 영업일 기준 3~5일이 소요될 수 있습니다.',
       [
         { text: '취소', style: 'cancel' },
         {
           text: '환불 요청',
           style: 'destructive',
           onPress: () => {
-            // TODO: 환불 API 연동
+            refundMutation.mutate(
+              {
+                paymentId: payment.refundApiPaymentId!,
+                amount: payment.amount,
+                reason: 'CLIENT_APP_REFUND_REQUEST',
+              },
+              {
+                onSuccess: () => {
+                  Alert.alert(
+                    '접수 완료',
+                    '환불 요청이 접수되었습니다. 처리 결과는 결제 목록·알림에서 확인해 주세요.',
+                  );
+                },
+                onError: (err: unknown) => {
+                  const msg =
+                    err != null &&
+                    typeof err === 'object' &&
+                    'message' in err &&
+                    typeof (err as { message?: string }).message === 'string'
+                      ? (err as { message: string }).message
+                      : '잠시 후 다시 시도해 주세요.';
+                  Alert.alert('환불 요청 실패', msg);
+                },
+              },
+            );
           },
         },
       ],
     );
-  }, []);
+  }, [payment, refundMutation]);
 
   if (isLoading) {
     return (
@@ -261,10 +293,41 @@ export default function PaymentDetailScreen() {
           </Animated.View>
         )}
 
-        {payment.refundable && payment.status === 'COMPLETED' && (
+        {payment.detailKind === 'MAPPING' && payment.status === 'COMPLETED' && (
+          <Animated.View entering={FadeInDown.delay(400).duration(400)}>
+            <View
+              style={[
+                styles.mappingRefundNote,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderRadius: theme.borderRadius.xl,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  color: theme.colors.textSecondary,
+                  fontFamily: theme.fontFamily.regular,
+                  fontSize: theme.fontSize.sm,
+                  lineHeight: 20,
+                  textAlign: 'center',
+                }}
+              >
+                이 내역은 패키지·회기 매칭 요약입니다. 카드 결제 환불은 PG 결제 건에서만 요청할 수 있으며, 회기
+                조정·환불은 센터 정책에 따라 고객센터로 문의해 주세요.
+              </Text>
+            </View>
+          </Animated.View>
+        )}
+
+        {payment.detailKind === 'PG' &&
+          payment.status === 'COMPLETED' &&
+          !!payment.refundApiPaymentId && (
           <Animated.View entering={FadeInDown.delay(400).duration(400)}>
             <Pressable
               onPress={handleRefundPress}
+              disabled={refundMutation.isPending}
               style={({ pressed }) => [
                 styles.refundButton,
                 {
@@ -273,6 +336,7 @@ export default function PaymentDetailScreen() {
                     : theme.colors.surface,
                   borderRadius: theme.borderRadius.xl,
                   borderColor: theme.colors.error,
+                  opacity: refundMutation.isPending ? 0.55 : 1,
                 },
               ]}
               accessibilityRole="button"
@@ -287,7 +351,7 @@ export default function PaymentDetailScreen() {
                   marginLeft: 8,
                 }}
               >
-                환불 요청
+                {refundMutation.isPending ? '처리 중…' : '환불 요청'}
               </Text>
             </Pressable>
             {payment.refundDeadline && (
@@ -445,5 +509,9 @@ const styles = StyleSheet.create({
   refundNotice: {
     textAlign: 'center',
     marginTop: 8,
+  },
+  mappingRefundNote: {
+    padding: 16,
+    borderWidth: 1,
   },
 });

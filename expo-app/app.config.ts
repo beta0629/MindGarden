@@ -20,7 +20,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundleIdentifier: 'com.mindgarden.MindGardenMobile',
     infoPlist: {
       UIBackgroundModes: ['audio'],
-      NSCameraUsageDescription: 'QR 코드 스캔을 위해 카메라 접근이 필요합니다.',
+      NSCameraUsageDescription:
+        'QR 코드 스캔과 프로필 사진 촬영을 위해 카메라 접근이 필요합니다.',
       NSMicrophoneUsageDescription: '음성 메시지를 위해 마이크 접근이 필요합니다.',
       NSCalendarsUsageDescription: '상담 일정을 기기 캘린더에 추가하기 위해 접근이 필요합니다.',
       NAVER_CLIENT_ID: process.env.NAVER_CLIENT_ID ?? 'vTKNlxYKIfo1uCCXaDfk',
@@ -54,11 +55,28 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-camera',
       {
-        cameraPermission: 'QR 코드 스캔을 위해 카메라 접근이 필요합니다.',
+        cameraPermission:
+          'QR 코드 스캔과 프로필 사진 촬영을 위해 카메라 접근이 필요합니다.',
+      },
+    ],
+    [
+      'expo-image-picker',
+      {
+        photosPermission:
+          '프로필 사진을 선택하기 위해 사진 보관함 접근이 필요합니다.',
+        cameraPermission:
+          'QR 코드 스캔과 프로필 사진 촬영을 위해 카메라 접근이 필요합니다.',
       },
     ],
     'expo-font',
     'expo-splash-screen',
+    [
+      'expo-calendar',
+      {
+        calendarPermission:
+          '상담 예약 일정을 기기 캘린더에 저장하기 위해 캘린더 접근이 필요합니다.',
+      },
+    ],
     [
       '@react-native-seoul/kakao-login',
       {

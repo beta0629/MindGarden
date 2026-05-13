@@ -33,6 +33,7 @@ import { Chip } from '@/components/atoms/Chip';
 import { StatCard } from '@/components/atoms/StatCard';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { useMeditationStore } from '@/stores/useMeditationStore';
+import { useMeditationCatalog } from '@/api/hooks/useMeditations';
 import {
   MEDITATION_CATEGORIES,
   MOCK_MEDITATION_TRACKS,
@@ -50,23 +51,28 @@ export default function MeditationMain() {
   >('all');
   const [refreshing, setRefreshing] = useState(false);
 
+  const catalogQuery = useMeditationCatalog();
+  const catalogTracks: MeditationTrack[] =
+    catalogQuery.data?.tracks ?? MOCK_MEDITATION_TRACKS;
+  const catalogSource = catalogQuery.data?.source ?? 'demo';
+
   const { favorites, totalPracticeMinutes, streakDays } = useMeditationStore();
 
   const filteredTracks = useMemo(() => {
-    if (activeCategory === 'all') return MOCK_MEDITATION_TRACKS;
+    if (activeCategory === 'all') return catalogTracks;
     if (activeCategory === 'favorites')
-      return MOCK_MEDITATION_TRACKS.filter((t) => favorites.includes(t.id));
-    return MOCK_MEDITATION_TRACKS.filter((t) => t.category === activeCategory);
-  }, [activeCategory, favorites]);
+      return catalogTracks.filter((t) => favorites.includes(t.id));
+    return catalogTracks.filter((t) => t.category === activeCategory);
+  }, [activeCategory, favorites, catalogTracks]);
 
-  const recommendedTrack = MOCK_MEDITATION_TRACKS.find(
-    (t) => t.id === RECOMMENDED_TRACK_ID,
-  );
+  const recommendedTrack =
+    catalogTracks.find((t) => t.id === RECOMMENDED_TRACK_ID) ?? catalogTracks[0];
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 600);
-  }, []);
+    await catalogQuery.refetch();
+    setRefreshing(false);
+  }, [catalogQuery]);
 
   const navigateToPlayer = (trackId: number) => {
     if (Platform.OS !== 'web') {
@@ -100,7 +106,9 @@ export default function MeditationMain() {
             color: theme.colors.textSecondary,
           }}
         >
-          샘플 목록 · 오디오는 데모 스트림(CC0)입니다. 운영 시 GET /api/v1/meditations 및 CDN으로 교체합니다.
+          {catalogSource === 'api'
+            ? '서버 목록(GET /api/v1/meditations). 오디오 없으면 데모 스트림(CC0)으로 재생됩니다.'
+            : '데모 목록(GET /api/v1/meditations 실패 시 폴백). 오디오는 데모 스트림(CC0)입니다.'}
         </Text>
       </View>
 
@@ -109,7 +117,7 @@ export default function MeditationMain() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={refreshing || catalogQuery.isFetching}
             onRefresh={handleRefresh}
             tintColor={theme.colors.primary}
           />

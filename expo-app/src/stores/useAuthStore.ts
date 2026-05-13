@@ -9,6 +9,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import * as SecureStore from 'expo-secure-store';
 import { createMMKV } from 'react-native-mmkv';
+import { queryClient } from '../api/queryClient';
 
 const SECURE_KEY_ACCESS_TOKEN = 'mg_access_token';
 const SECURE_KEY_REFRESH_TOKEN = 'mg_refresh_token';
@@ -53,6 +54,7 @@ interface AuthState {
   login: (user: User, tokens: Tokens) => Promise<void>;
   logout: () => Promise<void>;
   updateTokens: (tokens: Tokens) => Promise<void>;
+  updateUser: (partial: Partial<User>) => void;
   restoreTokens: () => Promise<void>;
   setLoading: (loading: boolean) => void;
 }
@@ -83,6 +85,7 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         await SecureStore.deleteItemAsync(SECURE_KEY_ACCESS_TOKEN);
         await SecureStore.deleteItemAsync(SECURE_KEY_REFRESH_TOKEN);
+        queryClient.clear();
         set({
           user: null,
           accessToken: null,
@@ -99,6 +102,15 @@ export const useAuthStore = create<AuthState>()(
         set({
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
+        });
+      },
+
+      updateUser: (partial) => {
+        set((state) => {
+          if (state.user == null) {
+            return state;
+          }
+          return { user: { ...state.user, ...partial } };
         });
       },
 

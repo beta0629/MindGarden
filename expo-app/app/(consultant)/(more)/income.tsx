@@ -273,14 +273,10 @@ export default function ConsultantIncome() {
 
   const [currentMonth, setCurrentMonth] = useState(getCurrentMonth);
 
-  const { data: report, isLoading: loadingReport } = useIncomeReport(
-    consultantId,
-    currentMonth,
-  );
-  const { data: details, isLoading: loadingDetails } = useIncomeDetails(
-    consultantId,
-    currentMonth,
-  );
+  const { data: report, isLoading: loadingReport, isError: errorReport, refetch: refetchReport } =
+    useIncomeReport(consultantId, currentMonth);
+  const { data: details, isLoading: loadingDetails, isError: errorDetails, refetch: refetchDetails } =
+    useIncomeDetails(consultantId, currentMonth);
 
   const triggerHaptic = useCallback(() => {
     if (Platform.OS !== 'web') {
@@ -311,6 +307,7 @@ export default function ConsultantIncome() {
   }, [report]);
 
   const isLoading = loadingReport || loadingDetails;
+  const isError = errorReport || errorDetails;
 
   if (isLoading) {
     return (
@@ -328,6 +325,54 @@ export default function ConsultantIncome() {
             <SkeletonLoader height={60} />
             <SkeletonLoader height={60} />
           </View>
+        </View>
+      </>
+    );
+  }
+
+  if (isError || !report) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: true, title: '수입 리포트' }} />
+        <View
+          style={[
+            styles.container,
+            { backgroundColor: theme.colors.bgMain, padding: theme.spacing.lg },
+          ]}
+        >
+          <EmptyState
+            icon={<DollarSign size={32} color={theme.colors.textTertiary} />}
+            title="수입 정보를 불러올 수 없습니다"
+            description="네트워크 상태를 확인한 뒤 다시 시도해 주세요."
+          />
+          <Pressable
+            onPress={() => {
+              refetchReport();
+              refetchDetails();
+            }}
+            style={[
+              styles.retryButton,
+              {
+                marginTop: theme.spacing.lg,
+                backgroundColor: theme.colors.primary,
+                borderRadius: theme.borderRadius.lg,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="다시 시도"
+          >
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.semibold,
+                fontSize: theme.fontSize.base,
+                color: theme.colors.textOnPrimary,
+                textAlign: 'center',
+                paddingVertical: theme.spacing.md,
+              }}
+            >
+              다시 시도
+            </Text>
+          </Pressable>
         </View>
       </>
     );
@@ -608,5 +653,8 @@ const styles = StyleSheet.create({
   },
   detailRight: {
     alignItems: 'flex-end',
+  },
+  retryButton: {
+    overflow: 'hidden',
   },
 });

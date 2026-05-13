@@ -4,7 +4,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -23,6 +23,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Bookmark, Check } from 'lucide-react-native';
 import { createMMKV } from 'react-native-mmkv';
 
+import { usePsychoEducationApiList } from '@/api/hooks/useWellness';
 import { useTheme } from '@/theme';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import {
@@ -59,7 +60,17 @@ export default function PsychoEducationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const articleId = Number(id);
 
-  const article = MOCK_PSYCHO_ARTICLES.find((a) => a.id === articleId);
+  const psychoList = usePsychoEducationApiList();
+  const article = useMemo(() => {
+    if (psychoList.isSuccess && psychoList.data && psychoList.data.length > 0) {
+      const fromApi = psychoList.data.find((a) => a.id === articleId);
+      if (fromApi) {
+        return fromApi;
+      }
+    }
+    return MOCK_PSYCHO_ARTICLES.find((a) => a.id === articleId);
+  }, [psychoList.isSuccess, psychoList.data, articleId]);
+
   const [currentPage, setCurrentPage] = useState(0);
   const [bookmarks, setBookmarks] = useState<number[]>(loadBookmarks);
   const [completedArticles, setCompletedArticles] = useState<number[]>(loadCompleted);

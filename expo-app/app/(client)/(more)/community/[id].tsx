@@ -29,6 +29,7 @@ import {
 
 import { useTheme } from '@/theme';
 import { EmptyState } from '@/components/atoms/EmptyState';
+import { useCommunityPostById } from '@/api/hooks/useCommunity';
 import { useCommunityStore } from '@/stores/useCommunityStore';
 import type { CommunityComment } from '@/constants/communityData';
 
@@ -39,7 +40,6 @@ export default function ClientCommunityDetail() {
   const postId = Number(id);
 
   const {
-    getPostById,
     togglePostLike,
     toggleCommentLike,
     isPostLiked,
@@ -47,7 +47,7 @@ export default function ClientCommunityDetail() {
     addComment,
   } = useCommunityStore();
 
-  const post = getPostById(postId);
+  const post = useCommunityPostById(postId);
   const [commentText, setCommentText] = useState('');
   const inputRef = useRef<TextInput>(null);
 

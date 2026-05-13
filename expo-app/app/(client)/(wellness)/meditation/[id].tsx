@@ -32,10 +32,8 @@ import { fontSize as fontSizeTokens } from '@/theme/typography';
 import { useMeditationPlaybackControls } from '@/contexts/MeditationPlaybackContext';
 import { useMeditationStore } from '@/stores/useMeditationStore';
 import { EmptyState } from '@/components/atoms/EmptyState';
-import {
-  MOCK_MEDITATION_TRACKS,
-  formatPlayerTime,
-} from '@/constants/meditationData';
+import { useMeditationTrackById } from '@/api/hooks/useMeditations';
+import { formatPlayerTime } from '@/constants/meditationData';
 
 const SKIP_SECONDS = 10;
 
@@ -46,7 +44,7 @@ export default function MeditationPlayer() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const trackId = Number(id);
 
-  const track = MOCK_MEDITATION_TRACKS.find((t) => t.id === trackId);
+  const { track, isLoading, refetch, isError } = useMeditationTrackById(trackId);
   const {
     currentTrack,
     isPlaying,
@@ -65,6 +63,27 @@ export default function MeditationPlayer() {
     }
   }, [track, currentTrack?.id, play]);
 
+  if (isLoading && !track) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
+        edges={['top', 'bottom']}
+      >
+        <View style={[styles.flex, { alignItems: 'center', justifyContent: 'center' }]}>
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.regular,
+              fontSize: theme.fontSize.sm,
+              color: theme.colors.textSecondary,
+            }}
+          >
+            불러오는 중...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (!track) {
     return (
       <SafeAreaView
@@ -73,7 +92,15 @@ export default function MeditationPlayer() {
       >
         <EmptyState
           title="명상 콘텐츠를 찾을 수 없습니다"
-          description="목록에서 다른 트랙을 선택해 주세요"
+          description={
+            isError
+              ? '목록을 다시 불러온 뒤 선택해 주세요.'
+              : '목록에서 다른 트랙을 선택해 주세요'
+          }
+          actionLabel="다시 불러오기"
+          onAction={() => {
+            refetch();
+          }}
         />
       </SafeAreaView>
     );

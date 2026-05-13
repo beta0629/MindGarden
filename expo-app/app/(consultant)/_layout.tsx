@@ -5,8 +5,8 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { Tabs } from 'expo-router';
-import { Platform, StyleSheet, View, Text } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
+import { Platform, StyleSheet, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
   Home,
@@ -16,12 +16,16 @@ import {
   MoreHorizontal,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
+import { useMoreTabUnreadTotal } from '@/hooks/useMoreTabUnreadTotal';
 
 const ICON_SIZE = 24;
 const BADGE_SIZE = 8;
 
-function UnreadBadge() {
+function UnreadBadge({ visible }: Readonly<{ visible: boolean }>) {
   const theme = useTheme();
+  if (!visible) {
+    return null;
+  }
   return (
     <View style={[styles.badge, { backgroundColor: theme.colors.error }]} />
   );
@@ -29,6 +33,8 @@ function UnreadBadge() {
 
 export default function ConsultantLayout() {
   const theme = useTheme();
+  const router = useRouter();
+  const moreTabUnread = useMoreTabUnreadTotal();
 
   const handleTabPress = () => {
     if (Platform.OS !== 'web') {
@@ -104,16 +110,21 @@ export default function ConsultantLayout() {
         name="(more)"
         options={{
           title: '더보기',
+          unmountOnBlur: true,
           tabBarIcon: ({ color }) => (
             <View>
               <MoreHorizontal size={ICON_SIZE} color={color} />
-              {/* TODO: 미읽음 알림 카운트 연동 */}
-              <UnreadBadge />
+              <UnreadBadge visible={moreTabUnread > 0} />
             </View>
           ),
           tabBarAccessibilityLabel: '더보기 탭',
         }}
-        listeners={{ tabPress: handleTabPress }}
+        listeners={{
+          tabPress: () => {
+            handleTabPress();
+            router.navigate('/(consultant)/(more)');
+          },
+        }}
       />
     </Tabs>
   );

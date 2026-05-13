@@ -1,6 +1,7 @@
 /**
  * OfflineQueueService — 오프라인 뮤테이션 큐
- * MMKV에 실패한 mutation을 저장하고 네트워크 복구 시 순차 실행
+ * MMKV에 실패한 mutation을 저장하고 네트워크 복구 시 순차 실행.
+ * 복구 시 `useOffline`에서 본 큐 처리 후 TanStack Query 화이트리스트 invalidate로 동기화.
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -11,6 +12,8 @@ import { apiPost, apiPut, apiDelete } from '../api/client';
 const mmkv = createMMKV({ id: 'offline-queue' });
 const QUEUE_KEY = 'pending_mutations';
 const MAX_RETRIES = 3;
+/** 오프라인 큐에 너무 오래 남은 항목 제거(배터리·스토리지 보호, 서버 재시도 의미 희박) */
+const MAX_QUEUE_ENTRY_AGE_MS = 1000 * 60 * 60 * 24 * 30;
 
 export type HttpMethod = 'POST' | 'PUT' | 'DELETE';
 
@@ -53,6 +56,26 @@ function writeQueue(queue: QueuedMutation[]): void {
   mmkv.set(QUEUE_KEY, JSON.stringify(queue));
   queueState = { ...queueState, pendingCount: queue.length };
   notifyListeners();
+}
+
+/**
+ * 생성 시각 기준 오래된 큐 항목만 제거. 최근 항목은 유지.
+ *
+ * @returns 제거된 항목 수
+ */
+function pruneStaleQueueEntries(): number {
+  const queue = readQueue();
+  if (queue.length === 0) return 0;
+  const cutoff = Date.now() - MAX_QUEUE_ENTRY_AGE_MS;
+  const next = queue.filter((m) => {
+    const t = new Date(m.createdAt).getTime();
+    return !Number.isNaN(t) && t >= cutoff;
+  });
+  const removed = queue.length - next.length;
+  if (removed > 0) {
+    writeQueue(next);
+  }
+  return removed;
 }
 
 async function executeMutation(mutation: QueuedMutation): Promise<boolean> {
@@ -166,5 +189,12 @@ export const OfflineQueueService = {
    */
   clear(): void {
     writeQueue([]);
+  },
+
+  /**
+   * 백그라운드·수동 동기화에서 주기 호출 — 오래된 실패 뮤테이션만 정리
+   */
+  pruneStaleEntries(): number {
+    return pruneStaleQueueEntries();
   },
 };

@@ -18,9 +18,9 @@ export default function ConsultantNotifications() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
       <View style={[styles.header, { borderBottomColor: theme.colors.divider }]}>
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => router.replace('/(consultant)/(more)')}
           hitSlop={8}
-          accessibilityLabel="뒤로 가기"
+          accessibilityLabel="더보기 메뉴로"
           accessibilityRole="button"
         >
           <ChevronLeft size={24} color={theme.colors.textMain} />

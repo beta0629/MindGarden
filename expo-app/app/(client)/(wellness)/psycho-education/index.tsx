@@ -29,6 +29,7 @@ import { EmptyState } from '@/components/atoms/EmptyState';
 import {
   PSYCHO_EDUCATION_API_PLACEHOLDER,
   useHealingContents,
+  usePsychoEducationApiList,
 } from '@/api/hooks/useWellness';
 import { toDisplayString } from '@/utils/toDisplayString';
 import {
@@ -63,6 +64,15 @@ export default function PsychoEducationMain() {
   const [refreshing, setRefreshing] = useState(false);
 
   const healingQuery = useHealingContents();
+  const psychoApiQuery = usePsychoEducationApiList();
+
+  const catalogArticles = useMemo(() => {
+    if (psychoApiQuery.isSuccess && psychoApiQuery.data.length > 0) {
+      return psychoApiQuery.data;
+    }
+    return MOCK_PSYCHO_ARTICLES;
+  }, [psychoApiQuery.isSuccess, psychoApiQuery.data]);
+
   const healingArticlePreview = useMemo(() => {
     const list = healingQuery.data ?? [];
     return list
@@ -71,13 +81,13 @@ export default function PsychoEducationMain() {
   }, [healingQuery.data]);
 
   const filteredArticles = useMemo(() => {
-    if (activeCategory === 'all') return MOCK_PSYCHO_ARTICLES;
+    if (activeCategory === 'all') return catalogArticles;
     if (activeCategory === 'bookmarks')
-      return MOCK_PSYCHO_ARTICLES.filter((a) => bookmarks.includes(a.id));
-    return MOCK_PSYCHO_ARTICLES.filter(
+      return catalogArticles.filter((a) => bookmarks.includes(a.id));
+    return catalogArticles.filter(
       (a) => a.category === activeCategory,
     );
-  }, [activeCategory, bookmarks]);
+  }, [activeCategory, bookmarks, catalogArticles]);
 
   const toggleBookmark = useCallback(
     (articleId: number) => {
@@ -93,10 +103,11 @@ export default function PsychoEducationMain() {
     [bookmarks],
   );
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 600);
-  }, []);
+    await Promise.all([healingQuery.refetch(), psychoApiQuery.refetch()]);
+    setRefreshing(false);
+  }, [healingQuery, psychoApiQuery]);
 
   const navigateToDetail = (articleId: number) => {
     if (Platform.OS !== 'web') {
@@ -135,6 +146,32 @@ export default function PsychoEducationMain() {
         </Text>
       </View>
 
+      {psychoApiQuery.isError ? (
+        <View style={{ marginHorizontal: 16, marginBottom: 8 }}>
+          <EmptyState
+            title="심리 교육 서버 목록을 불러오지 못했습니다"
+            description={`${PSYCHO_EDUCATION_API_PLACEHOLDER} 연결을 확인한 뒤 다시 시도해 주세요. 샘플 카드뉴스는 계속 이용할 수 있습니다.`}
+            actionLabel="다시 시도"
+            onAction={() => {
+              void psychoApiQuery.refetch();
+            }}
+          />
+        </View>
+      ) : null}
+
+      {healingQuery.isError ? (
+        <View style={{ marginHorizontal: 16, marginBottom: 8 }}>
+          <EmptyState
+            title="힐링 콘텐츠를 불러오지 못했습니다"
+            description="네트워크 상태를 확인한 뒤 다시 시도해 주세요."
+            actionLabel="다시 시도"
+            onAction={() => {
+              void healingQuery.refetch();
+            }}
+          />
+        </View>
+      ) : null}
+
       {healingQuery.isSuccess && healingArticlePreview.length > 0 ? (
         <View style={{ marginHorizontal: 16, marginBottom: 8 }}>
           <Text
@@ -169,7 +206,7 @@ export default function PsychoEducationMain() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={refreshing || healingQuery.isFetching || psychoApiQuery.isFetching}
             onRefresh={handleRefresh}
             tintColor={theme.colors.primary}
           />

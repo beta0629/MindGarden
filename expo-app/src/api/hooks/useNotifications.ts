@@ -15,7 +15,7 @@ import {
 import { apiGet, apiPost, apiPut } from '../client';
 import { NOTIFICATION_API, PUSH_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
-import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
+import { toDisplayString, toSafeNumber, stripHtmlToPlainText } from '../../utils/safeDisplay';
 
 export type NotificationType =
   | 'SCHEDULE'
@@ -81,8 +81,8 @@ function mapRowToAppNotification(row: Record<string, unknown>): AppNotification 
   return {
     id: toSafeNumber(row.id, 0),
     type: mapNotificationType(row.notificationType),
-    title: toDisplayString(row.title, '알림'),
-    content: toDisplayString(row.content, ''),
+    title: stripHtmlToPlainText(toDisplayString(row.title, '알림')),
+    content: stripHtmlToPlainText(toDisplayString(row.content, '')),
     isRead: Boolean(row.isRead),
     createdAt: toDisplayString(row.createdAt ?? row.publishedAt, ''),
   };
@@ -127,17 +127,22 @@ export function useUnreadCount() {
   return useQuery<{ count: number }>({
     queryKey: NOTIFICATION_QUERY_KEYS.unreadCount(),
     queryFn: async () => {
-      const raw = await apiGet<unknown>(NOTIFICATION_API.GET_UNREAD_COUNT);
-      const inner = unwrapApiResponse<Record<string, unknown>>(raw);
-      const bag = inner ?? (raw as Record<string, unknown>);
-      const count =
-        bag && typeof bag === 'object' && 'unreadCount' in bag
-          ? toSafeNumber(bag.unreadCount, 0)
-          : 0;
-      return { count };
+      try {
+        const raw = await apiGet<unknown>(NOTIFICATION_API.GET_UNREAD_COUNT);
+        const inner = unwrapApiResponse<Record<string, unknown>>(raw);
+        const bag = inner ?? (raw as Record<string, unknown>);
+        const count =
+          bag && typeof bag === 'object' && 'unreadCount' in bag
+            ? toSafeNumber(bag.unreadCount, 0)
+            : 0;
+        return { count };
+      } catch {
+        return { count: 0 };
+      }
     },
     staleTime: 1000 * 30,
     refetchInterval: 1000 * 60,
+    retry: false,
   });
 }
 

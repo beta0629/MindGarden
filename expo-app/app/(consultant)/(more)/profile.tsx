@@ -1,5 +1,17 @@
-import { PlaceholderScreen } from '@/components/atoms/PlaceholderScreen';
+/**
+ * 상담사 프로필
+ *
+ * @author MindGarden
+ * @since 2026-05-13
+ */
+import { MoreAccountProfile } from '@/components/organisms/MoreAccountProfile';
 
 export default function ConsultantProfile() {
-  return <PlaceholderScreen title="프로필 설정" phase="Phase 3" />;
+  return (
+    <MoreAccountProfile
+      roleLabel="상담사"
+      settingsHref="/(consultant)/(more)/settings"
+      notificationSettingsHref="/(consultant)/(more)/notification-settings"
+    />
+  );
 }

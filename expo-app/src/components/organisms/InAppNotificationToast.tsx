@@ -19,10 +19,12 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  AlertTriangle,
   Bell,
   Calendar,
   CalendarX,
   CheckCircle,
+  ClipboardList,
   CreditCard,
   FileText,
   Heart,
@@ -30,7 +32,7 @@ import {
   MessageCircle,
   Play,
   RefreshCw,
-  AlertTriangle,
+  XCircle,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 
@@ -46,18 +48,20 @@ export interface ToastData {
 }
 
 const ICON_MAP: Record<string, typeof Bell> = {
+  AlertTriangle,
+  Bell,
   Calendar,
   CalendarX,
-  Bell,
-  Play,
   CheckCircle,
-  FileText,
+  ClipboardList,
   CreditCard,
-  RefreshCw,
-  AlertTriangle,
-  MessageCircle,
+  FileText,
   Heart,
   Info,
+  MessageCircle,
+  Play,
+  RefreshCw,
+  XCircle,
 };
 
 let showToastGlobal: ((data: ToastData) => void) | null = null;

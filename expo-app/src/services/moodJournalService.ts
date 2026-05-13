@@ -1,0 +1,222 @@
+/**
+ * 감정 일기 — API 우선, 실패 시 MMKV 단일 Mock 레이어
+ *
+ * SSOT: `docs/project-management/EXPO_NATIVE_APP_PLAN.md` Phase 3-B·§13
+ * - CRUD + 통계(주간/월간) + 상담사 공유: `/api/v1/mood-journals`, `/api/v1/mood-journals/stats`
+ *
+ * @author MindGarden
+ * @since 2026-05-13
+ */
+import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { createMMKV } from 'react-native-mmkv';
+import { apiDelete, apiGet, apiPost } from '@/api/client';
+import { MOOD_JOURNAL_API } from '@/api/endpoints';
+import { unwrapApiResponse } from '@/api/unwrapApiResponse';
+import type { EmotionTag, MoodStatPeriod } from '@/constants/moodConstants';
+import { MOOD_STORAGE_KEY, MOOD_EMOJIS } from '@/constants/moodConstants';
+import { toDisplayString } from '@/utils/toDisplayString';
+import { toSafeNumber } from '@/utils/safeDisplay';
+
+const mmkv = createMMKV({ id: MOOD_STORAGE_KEY });
+
+export interface MoodJournalEntry {
+  date: string;
+  moodValue: number;
+  emoji: string;
+  tags: EmotionTag[];
+  memo: string;
+  sharedWithConsultant: boolean;
+  createdAt: string;
+}
+
+export interface MoodStat {
+  date: string;
+  value: number;
+}
+
+function getAllEntriesLocal(): Record<string, MoodJournalEntry> {
+  const raw = mmkv.getString('entries');
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw) as Record<string, MoodJournalEntry>;
+  } catch {
+    return {};
+  }
+}
+
+function saveAllEntriesLocal(entries: Record<string, MoodJournalEntry>) {
+  mmkv.set('entries', JSON.stringify(entries));
+}
+
+function filterMonth(
+  all: Record<string, MoodJournalEntry>,
+  month: string,
+): Record<string, MoodJournalEntry> {
+  const filtered: Record<string, MoodJournalEntry> = {};
+  for (const [date, entry] of Object.entries(all)) {
+    if (date.startsWith(month)) {
+      filtered[date] = entry;
+    }
+  }
+  return filtered;
+}
+
+function normalizeEntry(raw: unknown): MoodJournalEntry | null {
+  if (raw == null || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+  const date = toDisplayString(o.date ?? o.journalDate, '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const moodValue = toSafeNumber(o.moodValue ?? o.mood ?? o.score, 0);
+  const emojiDef = MOOD_EMOJIS.find((m) => m.value === moodValue);
+  const tagsRaw = o.tags ?? o.emotionTags;
+  const tags: EmotionTag[] = Array.isArray(tagsRaw)
+    ? (tagsRaw.filter((t) => typeof t === 'string') as EmotionTag[])
+    : [];
+  return {
+    date,
+    moodValue,
+    emoji: toDisplayString(o.emoji, emojiDef?.emoji ?? '😐'),
+    tags,
+    memo: toDisplayString(o.memo ?? o.note, ''),
+    sharedWithConsultant: Boolean(o.sharedWithConsultant ?? o.shareWithConsultant),
+    createdAt: toDisplayString(o.createdAt ?? o.created_at, new Date().toISOString()),
+  };
+}
+
+function normalizeMonthlyPayload(raw: unknown, month: string): Record<string, MoodJournalEntry> | null {
+  const body = unwrapApiResponse<unknown>(raw) ?? raw;
+  if (body == null) return null;
+  if (Array.isArray(body)) {
+    const out: Record<string, MoodJournalEntry> = {};
+    for (const row of body) {
+      const e = normalizeEntry(row);
+      if (e && e.date.startsWith(month)) out[e.date] = e;
+    }
+    return out;
+  }
+  if (typeof body === 'object') {
+    const o = body as Record<string, unknown>;
+    if (Array.isArray(o.content)) {
+      return normalizeMonthlyPayload(o.content, month);
+    }
+    const out: Record<string, MoodJournalEntry> = {};
+    for (const [k, v] of Object.entries(o)) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(k) && v && typeof v === 'object') {
+        const e = normalizeEntry({ ...(v as object), date: k });
+        if (e) out[k] = e;
+      }
+    }
+    if (Object.keys(out).length > 0) return out;
+  }
+  return null;
+}
+
+export async function fetchMoodJournalMonth(month: string): Promise<Record<string, MoodJournalEntry>> {
+  try {
+    const raw = await apiGet<unknown>(MOOD_JOURNAL_API.GET_MONTHLY, {
+      month,
+    });
+    const normalized = normalizeMonthlyPayload(raw, month);
+    if (normalized != null) {
+      return normalized;
+    }
+  } catch {
+    /* 단일 Mock 레이어: 네트워크·404 시 로컬 */
+  }
+  return filterMonth(getAllEntriesLocal(), month);
+}
+
+export async function fetchMoodJournalDetail(date: string): Promise<MoodJournalEntry | null> {
+  try {
+    const raw = await apiGet<unknown>(MOOD_JOURNAL_API.detail(date));
+    const body = unwrapApiResponse<unknown>(raw) ?? raw;
+    const e = normalizeEntry(body);
+    if (e) return e;
+  } catch {
+    /* fall back */
+  }
+  const all = getAllEntriesLocal();
+  return all[date] ?? null;
+}
+
+export async function createMoodJournalRemote(params: {
+  date: string;
+  moodValue: number;
+  tags: EmotionTag[];
+  memo: string;
+  sharedWithConsultant: boolean;
+}): Promise<MoodJournalEntry> {
+  const emojiDef = MOOD_EMOJIS.find((m) => m.value === params.moodValue);
+  const entry: MoodJournalEntry = {
+    date: params.date,
+    moodValue: params.moodValue,
+    emoji: emojiDef?.emoji ?? '😐',
+    tags: params.tags,
+    memo: params.memo,
+    sharedWithConsultant: params.sharedWithConsultant,
+    createdAt: new Date().toISOString(),
+  };
+  try {
+    await apiPost(MOOD_JOURNAL_API.CREATE, {
+      date: params.date,
+      moodValue: params.moodValue,
+      tags: params.tags,
+      memo: params.memo,
+      sharedWithConsultant: params.sharedWithConsultant,
+    });
+    return entry;
+  } catch {
+    const all = getAllEntriesLocal();
+    all[params.date] = entry;
+    saveAllEntriesLocal(all);
+    return entry;
+  }
+}
+
+export async function deleteMoodJournalRemote(date: string): Promise<void> {
+  try {
+    await apiDelete(MOOD_JOURNAL_API.delete(date));
+  } catch {
+    const all = getAllEntriesLocal();
+    delete all[date];
+    saveAllEntriesLocal(all);
+  }
+}
+
+export async function fetchMoodStats(period: MoodStatPeriod): Promise<MoodStat[]> {
+  try {
+    const raw = await apiGet<unknown>(MOOD_JOURNAL_API.STATS, { period });
+    const body = unwrapApiResponse<unknown>(raw) ?? raw;
+    if (Array.isArray(body)) {
+      const stats = body
+        .map((row) => {
+          if (row == null || typeof row !== 'object') return null;
+          const r = row as Record<string, unknown>;
+          const d = toDisplayString(r.date ?? r.statDate, '');
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
+          return { date: d, value: toSafeNumber(r.value ?? r.moodValue ?? r.score, 0) };
+        })
+        .filter((x): x is MoodStat => x != null);
+      if (stats.length > 0) return stats;
+    }
+  } catch {
+    /* 로컬 계산 */
+  }
+
+  const all = getAllEntriesLocal();
+  const today = new Date();
+  let start: Date;
+  let end: Date;
+  if (period === 'weekly') {
+    start = subDays(today, 6);
+    end = today;
+  } else {
+    start = startOfMonth(today);
+    end = endOfMonth(today);
+  }
+  const days = eachDayOfInterval({ start, end });
+  return days.map((d) => {
+    const key = format(d, 'yyyy-MM-dd');
+    return { date: key, value: all[key]?.moodValue ?? 0 };
+  });
+}

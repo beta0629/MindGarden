@@ -23,6 +23,7 @@ import {
   MessageCircle,
   Plus,
   User,
+  RefreshCw,
 } from 'lucide-react-native';
 
 import { useTheme } from '@/theme';
@@ -40,7 +41,12 @@ import {
 export default function ConsultantCommunityFeed() {
   const theme = useTheme();
   const router = useRouter();
-  const { dataSource } = useCommunityFeed();
+  const {
+    dataSource,
+    refetch,
+    isFetching,
+    lastFetchedAt,
+  } = useCommunityFeed();
   const [activeTab, setActiveTab] = useState<CommunityTab>('all');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -51,10 +57,11 @@ export default function ConsultantCommunityFeed() {
     return posts.filter((p) => p.tab === activeTab);
   }, [activeTab, posts]);
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 600);
-  }, []);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const navigateToDetail = (postId: number) => {
     if (Platform.OS !== 'web') {
@@ -100,8 +107,17 @@ export default function ConsultantCommunityFeed() {
     >
       <AppTopBar title="커뮤니티" canGoBack />
 
-      {dataSource === 'local-sample' ? (
-        <View style={{ paddingHorizontal: 16, paddingBottom: 4 }}>
+      <View
+        style={{
+          marginHorizontal: 16,
+          marginBottom: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+        }}
+      >
+        <View style={{ flex: 1 }}>
           <Text
             style={{
               fontFamily: theme.fontFamily.medium,
@@ -109,11 +125,59 @@ export default function ConsultantCommunityFeed() {
               color: theme.colors.textTertiary,
             }}
           >
-            샘플 피드 · 상담사 칼럼·내담자 후기는 /api/v1/community 연동 후 서버와
-            동기화됩니다.
+            데이터 소스:{' '}
+            {dataSource === 'api'
+              ? '서버(/api/v1/community) + 로컬 전용 글'
+              : '샘플(MMKV)'}
+            {lastFetchedAt > 0
+              ? ` · 동기화 ${new Date(lastFetchedAt).toLocaleTimeString('ko-KR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}`
+              : ''}
+          </Text>
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.regular,
+              fontSize: theme.fontSize['2xs'],
+              color: theme.colors.textTertiary,
+              marginTop: 4,
+            }}
+          >
+            칼럼·후기는 서버 연동 후 동기화됩니다.
           </Text>
         </View>
-      ) : null}
+        <Pressable
+          onPress={() => {
+            void handleRefresh();
+          }}
+          disabled={refreshing || isFetching}
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            borderRadius: theme.borderRadius.lg,
+            backgroundColor: theme.colors.surface,
+            opacity: pressed ? 0.85 : refreshing || isFetching ? 0.6 : 1,
+            ...theme.shadows.sm,
+          })}
+          accessibilityLabel="서버에서 커뮤니티 다시 불러오기"
+          accessibilityRole="button"
+        >
+          <RefreshCw size={16} color={theme.colors.primary} />
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.medium,
+              fontSize: theme.fontSize.xs,
+              color: theme.colors.primary,
+              marginLeft: 6,
+            }}
+          >
+            동기화
+          </Text>
+        </Pressable>
+      </View>
 
       <Animated.View entering={FadeIn.duration(300)}>
         <View style={styles.tabRow}>
@@ -146,7 +210,7 @@ export default function ConsultantCommunityFeed() {
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
-                refreshing={refreshing}
+                refreshing={refreshing || isFetching}
                 onRefresh={handleRefresh}
                 tintColor={theme.colors.primary}
               />

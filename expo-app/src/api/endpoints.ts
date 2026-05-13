@@ -32,6 +32,12 @@ export const USER_API = {
   UPLOAD_PROFILE_IMAGE: '/api/users/profile/image',
 } as const;
 
+/** 웹 mypageProfilePayload와 동일 — 내담자 마이페이지·상담사 사용자 프로필 */
+export const PROFILE_API = {
+  CLIENT_PROFILE: '/api/v1/clients/profile',
+  userProfile: (userId: string | number) => `/api/v1/users/profile/${userId}`,
+} as const;
+
 export const DASHBOARD_API = {
   CLIENT: '/api/v1/dashboard/client',
   CONSULTANT: '/api/v1/dashboard/consultant',
@@ -136,6 +142,9 @@ export const PAYMENT_API = {
   CREATE_PAYMENT: '/api/v1/payments/create',
   SESSION_EXTENSIONS: '/api/v1/admin/session-extensions',
   paymentDetail: (id: string | number) => `/api/v1/payments/${id}`,
+  /** PG 결제 환불 — PaymentController `POST /{paymentId}/refund` */
+  refund: (paymentId: string | number) =>
+    `/api/v1/payments/${encodeURIComponent(String(paymentId))}/refund`,
   SESSION_BALANCE: '/api/v1/payments/session-balance',
   SESSION_USAGE_HISTORY: '/api/v1/payments/session-usage',
   CONFIRM_PAYMENT: '/api/v1/payments/confirm',
@@ -160,10 +169,27 @@ export const SELF_ASSESSMENT_API = {
   SUBMIT: '/api/v1/self-assessments',
 } as const;
 
+/** Phase 3-C §13 EXPO_NATIVE_APP_PLAN — 목록·카테고리·즐겨찾기·수련이력(백엔드 예정) */
+export const MEDITATION_API = {
+  LIST: '/api/v1/meditations',
+} as const;
+
+/** Phase 3-C §13 — 목록·상세·북마크·읽기완료(백엔드 예정) */
+export const PSYCHO_EDUCATION_API = {
+  LIST: '/api/v1/psycho-education',
+  detail: (id: string | number) => `/api/v1/psycho-education/${id}`,
+} as const;
+
+/** Phase 3-C §13 — 게시글 CRUD·좋아요·댓글(백엔드 예정) */
+export const COMMUNITY_API = {
+  LIST: '/api/v1/community',
+} as const;
+
 export const API_ENDPOINTS = {
   AUTH: AUTH_API,
   TENANT: TENANT_API,
   USER: USER_API,
+  PROFILE: PROFILE_API,
   DASHBOARD: DASHBOARD_API,
   SCHEDULE: SCHEDULE_API,
   MESSAGE: MESSAGE_API,
@@ -178,4 +204,7 @@ export const API_ENDPOINTS = {
   INCOME: INCOME_API,
   MOOD_JOURNAL: MOOD_JOURNAL_API,
   SELF_ASSESSMENT: SELF_ASSESSMENT_API,
+  MEDITATION: MEDITATION_API,
+  PSYCHO_EDUCATION: PSYCHO_EDUCATION_API,
+  COMMUNITY: COMMUNITY_API,
 } as const;

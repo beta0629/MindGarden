@@ -1069,6 +1069,32 @@
 - [ ] 반응형 3단 확인
 - [ ] 접근성 기본 검증
 
+### Phase 3 완료 게이트 (Phase 4 착수 전 필수)
+
+> **현재 상태 메모 (Expo `expo-app/`)**: Phase 3 코딩은 일부 반영되었으나, 기획서 체크리스트의 **전 항목이 제품 완성으로 간주되기 전**에는 Phase 4 구현 배치를 열지 않는다. 아래 **잔여·부분 구현**이 남아 있으면 Phase 3 잔여로 `core-coder`에 먼저 위임한다.
+
+| 구분 | 잔여·확인 포인트 (예시) |
+|------|-------------------------|
+| **콘텐츠 API** | 커뮤니티 `local-sample`, 심리교육 전용 API 플레이스홀더, 명상 데모 스트림·`/api/v1/meditations` 미연동 |
+| **화면** | 내담자·상담사 **프로필/설정** `PlaceholderScreen`, 예약 완료 **캘린더** TODO, 환불 API TODO 등 |
+| **푸시** | Spring **푸시 토큰·설정 API** 미구현 시 앱은 계약 정리·TODO 수준 — 12종 **서버·스케줄** 연동은 별도 백엔드 배치 |
+| **검증** | `core-tester` 스모크: §8 Phase 3 체크리스트 + 서브에이전트가 제시한 회귀 항목 통과 후 **Phase 3 완료** 선언 |
+
+위 게이트를 **기획이 승인**하면 Phase 3 체크박스를 갱신하고, 그 다음에만 **Phase 4** `core-coder` 배치를 연다.
+
+### Phase 4 착수 준비 패키지 (위임 순서·복붙용)
+
+**전제**: §8 `TODO — 「마음 날씨」`·`TODO — 「마음 정원」` 항목이 합의되었거나, “MVP 범위”로 감축 항목이 문서에 기록됨.
+
+1. **`core-designer`** (model: `gemini-3.1-pro` 권장) — 마음 날씨 카드·공유 모달·정원 씬·온보딩·애니메이션 감소 옵션 스펙 산출 (`docs/design-system/v2/` 또는 전용 핸드오프 1페이지).
+2. **`core-coder` 병렬 2트랙** (예시):
+   - **4-A 마음 날씨**: 웹 내담자 + `expo-app/` 웰니스·일기 흐름, `GET/POST /api/v1/...` 계약 초안, `X-Tenant-Id`, `COMMON_DISPLAY_BOUNDARY_MEETING_20260322.md` 표시 방어.
+   - **4-B 마음 정원**: 내담자 전용 정원 화면·이벤트(상담 완료·과제) 연동·서버 권위 상태, 비경쟁·주간 상한.
+3. **`core-tester`** — Phase 4 회귀 + Phase 3 회귀 스모크 (`CORE_PLANNER_DELEGATION_ORDER.md` 검증 게이트).
+
+**작업 루트**: 웹 `frontend/src/components/client/` 등 기존 내담자 경로 + `/Users/mind/mindGarden/expo-app/`  
+**참조**: 본 문서 Phase 4 전달 프롬프트, `EXPO_NATIVE_APP_PLAN.md` Phase **3-F / 3-G** 및 §13 API 표.
+
 ---
 
 ## 9. 실행 요청문

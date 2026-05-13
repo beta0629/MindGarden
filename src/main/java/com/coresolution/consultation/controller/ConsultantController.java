@@ -106,7 +106,7 @@ public class ConsultantController extends BaseApiController {
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다."));
         String consultationHours = consultant.getConsultationHours();
         if (consultationHours == null || consultationHours.isBlank()) {
-            consultationHours = "09:00-20:00";
+            consultationHours = "09:00-21:00";
         }
         ConsultantScheduleSettingsDto dto = ConsultantScheduleSettingsDto.builder()
                 .consultationHours(consultationHours)

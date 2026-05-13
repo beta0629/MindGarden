@@ -390,14 +390,14 @@ export const BREAK_TIME_MINUTES = 10;
 
 export const BUSINESS_HOURS = {
   START: '10:00',  // 기본값, 실제로는 서버에서 로딩
-  END: '20:00',    // 기본값, 실제로는 서버에서 로딩
+  END: '21:00',    // 기본값, 실제로는 서버에서 로딩 (20시대 마지막 슬롯 포함)
   LUNCH_START: '12:00',  // 기본값, 실제로는 서버에서 로딩
   LUNCH_END: '13:00'     // 기본값, 실제로는 서버에서 로딩
 };
 
 export const BUSINESS_HOURS_DISPLAY = {
   START: '10:00',  // 기본값, 실제로는 서버에서 로딩
-  END: '20:00',    // 기본값, 실제로는 서버에서 로딩
+  END: '21:00',    // 기본값, 실제로는 서버에서 로딩
   LUNCH: '12:00 - 13:00'  // 기본값, 실제로는 서버에서 로딩
 };
 

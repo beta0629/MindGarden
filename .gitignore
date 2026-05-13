@@ -55,6 +55,7 @@ mobile/android/local.properties
 .env.*
 # 예시만 커밋 (실제 비밀은 .env.local 등)
 !frontend/.env.example
+!expo-app/.env.example
 .env.local
 .env.production
 .env.staging

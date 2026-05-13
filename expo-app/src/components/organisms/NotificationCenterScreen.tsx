@@ -107,8 +107,13 @@ export function NotificationCenterScreen() {
         markAsReadMutation.mutate(notification.id);
       }
       const link = notification.deepLink;
-      if (typeof link === 'string' && link.length > 0) {
-        router.push(link as never);
+      const hasLink = typeof link === 'string' && link.trim().length > 0;
+      if (hasLink) {
+        router.push(link.trim() as never);
+        return;
+      }
+      if (notification.type === 'WELLNESS') {
+        router.push('/(client)/(wellness)' as never);
       }
     },
     [markAsReadMutation, router],

@@ -7,7 +7,44 @@ const appCfgColors = require('./src/theme/tokensAppConfig.cjs') as {
   consultantPrimary: string;
 };
 
-export default ({ config }: ConfigContext): ExpoConfig => ({
+/** EAS 빌드 로그에서 카카오·네이버 키 누락을 한 번에 알림 (빌드는 계속 진행) */
+function warnIfSocialLoginEnvMissingForEasBuild(): void {
+  if (process.env.EAS_BUILD !== 'true') {
+    return;
+  }
+  const issues: string[] = [];
+  const k = process.env.KAKAO_APP_KEY?.trim();
+  if (!k || k === 'KAKAO_APP_KEY_HERE') {
+    issues.push('KAKAO_APP_KEY');
+  }
+  const naverId = process.env.NAVER_CLIENT_ID?.trim();
+  const naverSecret = process.env.NAVER_CLIENT_SECRET?.trim();
+  if (!naverId || naverId === 'NAVER_CLIENT_ID_HERE') {
+    issues.push('NAVER_CLIENT_ID');
+  }
+  if (!naverSecret || naverSecret === 'NAVER_CLIENT_SECRET_HERE') {
+    issues.push('NAVER_CLIENT_SECRET');
+  }
+  const pubId = process.env.EXPO_PUBLIC_NAVER_CLIENT_ID?.trim();
+  const pubSecret = process.env.EXPO_PUBLIC_NAVER_CLIENT_SECRET?.trim();
+  if (!pubId) {
+    issues.push('EXPO_PUBLIC_NAVER_CLIENT_ID');
+  }
+  if (!pubSecret) {
+    issues.push('EXPO_PUBLIC_NAVER_CLIENT_SECRET');
+  }
+  if (issues.length > 0) {
+    // eslint-disable-next-line no-console -- EAS 로그에서 누락 원인 확인용
+    console.warn(
+      `[app.config] EAS 빌드: 카카오·네이버 소셜 로그인용 env 누락 또는 플레이스홀더 → ${issues.join(', ')}. README "소셜 로그인·네이티브 키"의 EAS 시크릿 목록·로컬 .env 항목을 모두 채우세요.`,
+    );
+  }
+}
+
+export default ({ config }: ConfigContext): ExpoConfig => {
+  warnIfSocialLoginEnvMissingForEasBuild();
+
+  return {
   ...config,
   name: 'MindGarden',
   slug: 'mindgarden',
@@ -115,4 +152,5 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     /** JSON 배열 문자열. 비우면 데모 카탈로그(`sessionExtensionCatalog.ts`) 사용 */
     sessionExtensionCatalog: process.env.EXPO_PUBLIC_SESSION_EXTENSION_CATALOG_JSON ?? '',
   },
-});
+};
+};

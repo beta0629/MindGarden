@@ -1,6 +1,6 @@
 /**
  * 예약 완료 화면
- * 성공 애니메이션 + 예약 정보 카드 + 기기 캘린더 저장(expo-calendar, 동적 import — 네이티브 미포함 빌드에서도 화면 로드 가능)
+ * 성공 애니메이션 + 예약 정보 카드 + 기기 캘린더 저장(expo-calendar는 버튼 탭 시에만 동적 import)
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -56,19 +56,39 @@ function parseBookingRange(
   return { startDate, endDate };
 }
 
-/** expo-calendar — Dev Client 네이티브 빌드에만 포함. 동적 import로 로드 시점을 늦춰 Expo Go 등에서 화면 크래시 방지 */
-type ExpoCalendarModule = typeof import('expo-calendar');
+/**
+ * expo-calendar — 네이티브는 Dev Client 빌드에만 포함.
+ * `typeof import('expo-calendar')` 는 Metro가 모듈 그래프에 정적으로 묶어 화면 진입 시
+ * 네이티브를 즉시 로드해 크래시할 수 있어, 타입은 수동 정의 + 동적 import만 사용.
+ */
+type ExpoCalendarEntityTypes = { EVENT: string };
 
-type CalendarModule = ExpoCalendarModule & {
+type ExpoCalendarModuleLike = {
+  EntityTypes: ExpoCalendarEntityTypes;
+  isAvailableAsync: () => Promise<boolean>;
+  getDefaultCalendarAsync: () => Promise<
+    { id: string; allowsModifications: boolean } | undefined
+  >;
+  getCalendarsAsync: (
+    entityType?: string,
+  ) => Promise<Array<{ id: string; allowsModifications: boolean }>>;
+  createEventAsync: (
+    calendarId: string,
+    event: { title: string; notes: string; startDate: Date; endDate: Date },
+  ) => Promise<string>;
+};
+
+type CalendarModule = ExpoCalendarModuleLike & {
   createEventInCalendarAsync?: (
     eventData?: Record<string, unknown>,
     presentationOptions?: Record<string, unknown>,
   ) => Promise<unknown>;
 };
 
-async function loadExpoCalendar(): Promise<ExpoCalendarModule> {
+async function loadExpoCalendar(): Promise<ExpoCalendarModuleLike> {
   try {
-    return await import('expo-calendar');
+    const mod = await import('expo-calendar');
+    return mod as ExpoCalendarModuleLike;
   } catch {
     throw new Error('NATIVE_MODULE_MISSING');
   }

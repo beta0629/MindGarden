@@ -21,18 +21,23 @@ import { router, type Href } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, FadeInDown, SlideInDown } from 'react-native-reanimated';
 import { ChevronDown, ChevronUp, Mail, Lock } from 'lucide-react-native';
-import { useTheme } from '../../src/theme';
-import { fontSize as fontSizeTokens } from '../../src/theme/typography';
-import { useTenantStore } from '../../src/stores/useTenantStore';
-import { useAuthStore } from '../../src/stores/useAuthStore';
-import { AuthService } from '../../src/services/AuthService';
-import { NotificationService } from '../../src/services/NotificationService';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { useTheme } from '@/theme';
+import { fontSize as fontSizeTokens } from '@/theme/typography';
+import { useTenantStore } from '@/stores/useTenantStore';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { AuthService } from '@/services/AuthService';
+import { NotificationService } from '@/services/NotificationService';
 import {
   OAUTH_KAKAO_BACKGROUND,
   OAUTH_KAKAO_FOREGROUND,
   OAUTH_NAVER_BACKGROUND,
   OAUTH_NAVER_FOREGROUND,
-} from '../../src/constants/oauthProviderBrand';
+} from '@/constants/oauthProviderBrand';
+
+function isExpoGoApp(): boolean {
+  return Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+}
 
 export default function LoginScreen() {
   const theme = useTheme();
@@ -44,6 +49,8 @@ export default function LoginScreen() {
   const [showCredentials, setShowCredentials] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const inExpoGo = isExpoGoApp();
 
   const handleLoginSuccess = async () => {
     const { role } = useAuthStore.getState();
@@ -160,11 +167,53 @@ export default function LoginScreen() {
             )}
           </View>
 
+          {inExpoGo && (
+            <View
+              style={[
+                styles.expoGoBanner,
+                {
+                  backgroundColor: theme.colors.primaryLight + '35',
+                  borderColor: theme.colors.primary,
+                },
+              ]}
+              accessibilityRole="alert"
+            >
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.semibold,
+                  fontSize: theme.fontSize.sm,
+                  color: theme.colors.textMain,
+                  marginBottom: 6,
+                }}
+              >
+                Expo Go로 열려 있어요
+              </Text>
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.regular,
+                  fontSize: theme.fontSize.xs,
+                  color: theme.colors.textSecondary,
+                  lineHeight: 18,
+                }}
+              >
+                카카오·네이버는 네이티브 모듈이라 Expo Go에서는 사용할 수 없습니다. 시뮬레이터/폰
+                홈의 MindGarden 앱을 실행하거나, 터미널에서 npx expo run:ios 후 그 앱으로 접속해
+                주세요. 이메일 로그인은 가능합니다.
+              </Text>
+            </View>
+          )}
+
           <Animated.View entering={SlideInDown.delay(300).duration(500)} style={styles.buttonGroup}>
             <Pressable
-              style={[styles.socialButton, { backgroundColor: OAUTH_KAKAO_BACKGROUND }]}
+              style={[
+                styles.socialButton,
+                {
+                  backgroundColor: OAUTH_KAKAO_BACKGROUND,
+                  opacity: inExpoGo ? 0.45 : 1,
+                },
+              ]}
               onPress={handleKakaoLogin}
-              disabled={isLoading}
+              disabled={isLoading || inExpoGo}
               accessibilityLabel="카카오로 로그인"
               accessibilityRole="button"
             >
@@ -178,9 +227,15 @@ export default function LoginScreen() {
             </Pressable>
 
             <Pressable
-              style={[styles.socialButton, { backgroundColor: OAUTH_NAVER_BACKGROUND }]}
+              style={[
+                styles.socialButton,
+                {
+                  backgroundColor: OAUTH_NAVER_BACKGROUND,
+                  opacity: inExpoGo ? 0.45 : 1,
+                },
+              ]}
               onPress={handleNaverLogin}
-              disabled={isLoading}
+              disabled={isLoading || inExpoGo}
               accessibilityLabel="네이버로 로그인"
               accessibilityRole="button"
             >
@@ -319,6 +374,12 @@ const styles = StyleSheet.create({
   tenantName: {
     fontSize: fontSizeTokens.base,
     fontWeight: '500',
+  },
+  expoGoBanner: {
+    marginBottom: 20,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
   },
   buttonGroup: {
     gap: 12,

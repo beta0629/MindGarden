@@ -1,0 +1,22 @@
+---
+description: expo-app Metro·alias·MMKV 작업 시 핸드오프 문서 필수 (반복 루프 방지)
+globs: expo-app/**
+alwaysApply: false
+---
+
+# Expo 앱 — Metro / alias / MMKV
+
+`expo-app/**` 를 건드릴 때 아래를 **작업 전에** 연다. (메인·서브에이전트 공통)
+
+- **`docs/project-management/EXPO_APP_METRO_ALIAS_AND_MMKV_HANDOFF.md`**
+
+## 필수 행동
+
+1. **단일 규칙**: MMKV 브리지는 **`@/lib/getMmkv`** 로만 import. 가짜 패키지명·혼용 금지.
+2. **원인 층 분리**: `tsc` 통과 ≠ Metro 통과. 캐시 의심 시 **`npm run start:clean`** 후 재판단. CI·비대화형 검증은 **`npm run verify:bundle:ci`** (`expo export`); `CI=1 expo start`는 비권장(토큰 프롬프트).
+3. **위임 시**: `core-coder` 프롬프트에 위 핸드오프 문서 경로 + **문서 §5 체크리스트 완료**를 넣는다.
+
+## 금지
+
+- `tsconfig paths`만 믿고 `metro.config.js`를 확인하지 않기
+- 같은 증상에 대해 import 문자열만 반복 변경하기

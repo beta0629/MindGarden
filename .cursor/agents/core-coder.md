@@ -86,6 +86,14 @@ description: 코딩 전용 서브에이전트. Core Solution(MindGarden) 코드 
 - **공통 모듈 우선**: `/core-solution-common-modules` — 새 기능·모달·폼·리스트 구현 시 **공통 모듈을 먼저 검토·사용**. 없으면 추출·공통화 제안은 core-component-manager와 협업.
 - **캡슐화·모듈화**: `/core-solution-encapsulation-modularization` — 작업 단위를 캡슐화·모듈화하고, 동일·유사 코드는 공통 함수·훅·컴포넌트로 추출해 반복 제거. **core-component-manager와 한 팀**: component-manager의 중복 제안·적재적소 배치 제안을 받아 실제 코드 이동·통합·배치를 수행하고, 필요 시 인벤토리·제안서 갱신을 요청한다.
 
+## Expo 네이티브 (`expo-app/`)
+
+`expo-app/` 에서 **Metro**(`metro.config.js`)·**모듈 alias**(`@/`)·**`getMmkv` / MMKV**·번들 `Unable to resolve module` 을 다룰 때는 작업 전에 반드시 읽는다.
+
+- **`docs/project-management/EXPO_APP_METRO_ALIAS_AND_MMKV_HANDOFF.md`** — TS paths와 Metro 분리, 고정 import 규칙, 캐시 절차, **§5 체크리스트**, 금지 사항
+
+위 내용과 충돌하는 임의의 import 우회(가짜 패키지명 등)는 하지 않는다.
+
 ## 공통
 
 - 주석: 한글 가능. 복잡한 로직만 설명하고 당연한 내용은 생략
@@ -96,6 +104,7 @@ description: 코딩 전용 서브에이전트. Core Solution(MindGarden) 코드 
 
 ## 작업 시 체크리스트
 
+0. (해당 시) `expo-app/` Metro·`getMmkv`·`@/` 작업이면 **`EXPO_APP_METRO_ALIAS_AND_MMKV_HANDOFF.md` §5** 를 수행·보고했는가?
 1. 해당 영역(백엔드/프론트) 표준 문서를 다시 확인했는가?
 2. 패키지/디렉토리/파일명이 기존 규칙과 일치하는가?
 3. 네이밍(클래스, 메서드, 변수, 상수)이 표준에 맞는가?

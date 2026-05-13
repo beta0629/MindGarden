@@ -6,28 +6,15 @@
  * @since 2026-05-12
  */
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import * as SecureStore from 'expo-secure-store';
-import { createMMKV } from 'react-native-mmkv';
+import { createZustandMmkvPersistStorage } from '@/lib/getMmkv';
 import { queryClient } from '../api/queryClient';
 
 const SECURE_KEY_ACCESS_TOKEN = 'mg_access_token';
 const SECURE_KEY_REFRESH_TOKEN = 'mg_refresh_token';
 
-const mmkvAuthStorage = createMMKV({ id: 'auth-store' });
-
-const zustandMMKVStorage = createJSONStorage(() => ({
-  getItem: (name: string) => {
-    const value = mmkvAuthStorage.getString(name);
-    return value ?? null;
-  },
-  setItem: (name: string, value: string) => {
-    mmkvAuthStorage.set(name, value);
-  },
-  removeItem: (name: string) => {
-    mmkvAuthStorage.remove(name);
-  },
-}));
+const zustandMMKVStorage = createZustandMmkvPersistStorage('auth-store');
 
 export interface User {
   id: number;

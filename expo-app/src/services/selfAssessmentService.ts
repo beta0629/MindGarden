@@ -8,7 +8,7 @@
  * @author MindGarden
  * @since 2026-05-13
  */
-import { createMMKV } from 'react-native-mmkv';
+import { getMmkv } from '@/lib/getMmkv';
 import { apiGet, apiPost, apiPut } from '@/api/client';
 import { SELF_ASSESSMENT_API } from '@/api/endpoints';
 import { unwrapApiResponse } from '@/api/unwrapApiResponse';
@@ -22,7 +22,7 @@ import {
 import { toDisplayString } from '@/utils/toDisplayString';
 import { toSafeNumber } from '@/utils/safeDisplay';
 
-const mmkv = createMMKV({ id: ASSESSMENT_STORAGE_KEY });
+const mmkv = getMmkv(ASSESSMENT_STORAGE_KEY);
 
 export interface AssessmentResult {
   id: string;

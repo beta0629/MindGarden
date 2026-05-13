@@ -1,5 +1,11 @@
 import { ExpoConfig, ConfigContext } from 'expo/config';
-import { colors } from './src/theme/tokens';
+
+// Node(app.config 평가)는 .ts 모듈을 직접 require하지 못함 → CJS 미러 사용
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const appCfgColors = require('./src/theme/tokensAppConfig.cjs') as {
+  clientBgMain: string;
+  consultantPrimary: string;
+};
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -14,7 +20,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   splash: {
     image: './assets/images/splash-icon.png',
     resizeMode: 'contain',
-    backgroundColor: colors.client.bgMain,
+    backgroundColor: appCfgColors.clientBgMain,
   },
   ios: {
     supportsTablet: true,
@@ -33,7 +39,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
-      backgroundColor: colors.client.bgMain,
+      backgroundColor: appCfgColors.clientBgMain,
     },
     package: 'com.mindgardenmobile',
     edgeToEdgeEnabled: true,
@@ -44,13 +50,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     favicon: './assets/images/favicon.png',
   },
   plugins: [
+    'expo-dev-client',
     'expo-router',
     'expo-secure-store',
     [
       'expo-notifications',
       {
         icon: './assets/images/notification-icon.png',
-        color: colors.consultant.primary,
+        color: appCfgColors.consultantPrimary,
       },
     ],
     [

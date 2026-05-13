@@ -41,6 +41,7 @@ alwaysApply: true
 - `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md` — 위임 순서, **직접 수정 금지**, 테스터 게이트.
 - `docs/project-management/COMMON_DISPLAY_BOUNDARY_MEETING_20260322.md` — React #130·`safeDisplay`·표시 경계.
 - (해당 작업별) `docs/standards/*.md` — 코딩 표준은 **`core-coder`** 프롬프트에 경로를 넣어 전달한다.
+- **`expo-app/`** 에서 Metro·모듈 해석·`@/`·`getMmkv`·`metro.config.js`·`react-native-mmkv` 관련 작업 시: **`docs/project-management/EXPO_APP_METRO_ALIAS_AND_MMKV_HANDOFF.md`** 필독. **`core-coder`** 위임 프롬프트에 이 경로를 넣고 **문서 §5 체크리스트를 완료 조건**에 명시한다. 동일 `Unable to resolve module` 루프 방지: **import 경로만 여러 스타일로 바꾸는 패치 금지** — 문서의 고정 규칙(`@/lib/getMmkv` 단일)과 Metro 층을 먼저 구분한다.
 - **운영(go-live) 반영 전 하드코딩 게이트** — 아래 §17·§1.3을 **`core-coder`** 위임 시 반드시 인용한다.
   - `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17** (검사·완료 조건)
   - `docs/project-management/SETTINGS_PAGES_LAYOUT_UNIFICATION_ORCHESTRATION.md` **§1.3**

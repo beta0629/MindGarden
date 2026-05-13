@@ -44,7 +44,8 @@ export default function ClientWellness() {
   const router = useRouter();
   const today = format(new Date(), 'M월 d일 (EEEE)', { locale: ko });
 
-  const { data: contents, isLoading, isFetching, refetch } = useHealingContents();
+  const { data: contents, isPending, isFetching, refetch } = useHealingContents();
+  const healingFeed = Array.isArray(contents) ? contents : [];
 
   const showComingSoon = (feature: string) => {
     Alert.alert('준비 중', `${feature} 기능은 다음 업데이트에서 만나보실 수 있어요.`);
@@ -190,20 +191,20 @@ export default function ClientWellness() {
             마음챙김 가이드
           </Text>
 
-          {isLoading ? (
+          {isPending ? (
             <View style={styles.feedLoading}>
               {[0, 1, 2].map((i) => (
                 <SkeletonCard key={i} lines={2} />
               ))}
             </View>
-          ) : !contents || contents.length === 0 ? (
+          ) : healingFeed.length === 0 ? (
             <EmptyState
               icon={<Heart size={32} color={theme.colors.textTertiary} />}
               title="콘텐츠 준비 중"
               description="곧 새로운 힐링 콘텐츠가 올라올 예정이에요"
             />
           ) : (
-            contents.map((item, index) => (
+            healingFeed.map((item, index) => (
               <HealingContentCard
                 key={item.id}
                 content={item}

@@ -1,6 +1,6 @@
 /**
  * 예약 완료 화면
- * 성공 애니메이션 + 예약 정보 카드 + 기기 캘린더 저장(expo-calendar)
+ * 성공 애니메이션 + 예약 정보 카드 + 기기 캘린더 저장(expo-calendar, 동적 import — 네이티브 미포함 빌드에서도 화면 로드 가능)
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -18,7 +18,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import * as Calendar from 'expo-calendar';
 import Animated, {
   BounceIn,
   FadeInDown,
@@ -57,12 +56,23 @@ function parseBookingRange(
   return { startDate, endDate };
 }
 
-type CalendarModule = typeof Calendar & {
+/** expo-calendar — Dev Client 네이티브 빌드에만 포함. 동적 import로 로드 시점을 늦춰 Expo Go 등에서 화면 크래시 방지 */
+type ExpoCalendarModule = typeof import('expo-calendar');
+
+type CalendarModule = ExpoCalendarModule & {
   createEventInCalendarAsync?: (
     eventData?: Record<string, unknown>,
     presentationOptions?: Record<string, unknown>,
   ) => Promise<unknown>;
 };
+
+async function loadExpoCalendar(): Promise<ExpoCalendarModule> {
+  try {
+    return await import('expo-calendar');
+  } catch {
+    throw new Error('NATIVE_MODULE_MISSING');
+  }
+}
 
 async function persistBookingToCalendar(opts: {
   title: string;
@@ -70,6 +80,7 @@ async function persistBookingToCalendar(opts: {
   startDate: Date;
   endDate: Date;
 }): Promise<void> {
+  const Calendar = await loadExpoCalendar();
   const Cal = Calendar as CalendarModule;
   if (typeof Cal.createEventInCalendarAsync === 'function') {
     try {
@@ -164,7 +175,15 @@ export default function BookingComplete() {
         endDate: range.endDate,
       });
       Alert.alert('캘린더', '일정이 캘린더에 추가되었습니다.');
-    } catch {
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '';
+      if (msg === 'NATIVE_MODULE_MISSING') {
+        Alert.alert(
+          '캘린더 모듈',
+          '이 빌드에는 기기 캘린더 연동(네이티브)이 포함되어 있지 않습니다. Dev Client로 다시 빌드해 주세요: npx expo run:ios 또는 npx expo run:android',
+        );
+        return;
+      }
       Alert.alert(
         '캘린더에 추가하지 못했습니다',
         '캘린더 접근 권한을 허용했는지, 기본 캘린더가 있는지 확인한 뒤 다시 시도해 주세요.',

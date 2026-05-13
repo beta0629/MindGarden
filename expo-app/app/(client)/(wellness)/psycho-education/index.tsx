@@ -20,7 +20,7 @@ import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Bookmark, Clock, BookOpen } from 'lucide-react-native';
-import { createMMKV } from 'react-native-mmkv';
+import { getMmkv } from '@/lib/getMmkv';
 
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
@@ -40,7 +40,7 @@ import {
   type PsychoArticle,
 } from '@/constants/psychoEducationData';
 
-const mmkv = createMMKV({ id: 'psycho-education' });
+const mmkv = getMmkv('psycho-education');
 
 function loadBookmarks(): number[] {
   try {

@@ -6,17 +6,11 @@
  * @since 2026-05-12
  */
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { createMMKV } from 'react-native-mmkv';
+import { persist } from 'zustand/middleware';
+import { createZustandMmkvPersistStorage } from '@/lib/getMmkv';
 import type { MeditationTrack } from '@/constants/meditationData';
 
-const mmkv = createMMKV({ id: 'meditation-store' });
-
-const zustandMMKVStorage = createJSONStorage(() => ({
-  getItem: (name: string) => mmkv.getString(name) ?? null,
-  setItem: (name: string, value: string) => mmkv.set(name, value),
-  removeItem: (name: string) => mmkv.remove(name),
-}));
+const zustandMMKVStorage = createZustandMmkvPersistStorage('meditation-store');
 
 interface MeditationState {
   currentTrack: MeditationTrack | null;

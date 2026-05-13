@@ -6,23 +6,10 @@
  * @since 2026-05-12
  */
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { createMMKV } from 'react-native-mmkv';
+import { persist } from 'zustand/middleware';
+import { createZustandMmkvPersistStorage } from '@/lib/getMmkv';
 
-const mmkvStorage = createMMKV({ id: 'tenant-store' });
-
-const zustandMMKVStorage = createJSONStorage(() => ({
-  getItem: (name: string) => {
-    const value = mmkvStorage.getString(name);
-    return value ?? null;
-  },
-  setItem: (name: string, value: string) => {
-    mmkvStorage.set(name, value);
-  },
-  removeItem: (name: string) => {
-    mmkvStorage.remove(name);
-  },
-}));
+const zustandMMKVStorage = createZustandMmkvPersistStorage('tenant-store');
 
 interface RecentTenant {
   code: string;

@@ -8,6 +8,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '../client';
 import { HEALING_CONTENT_API } from '../endpoints';
+import { unwrapApiResponse } from '../unwrapApiResponse';
 import { fetchPsychoEducationCatalog } from '@/services/psychoEducationService';
 import type {
   PsychoCatalogSource,
@@ -33,10 +34,19 @@ const WELLNESS_QUERY_KEYS = {
     [...WELLNESS_QUERY_KEYS.all, 'random-tip'] as const,
 };
 
+function normalizeHealingList(data: HealingContent[] | undefined): HealingContent[] {
+  return Array.isArray(data) ? data : [];
+}
+
 export function useHealingContents() {
-  return useQuery<HealingContent[]>({
+  return useQuery({
     queryKey: WELLNESS_QUERY_KEYS.healingContents(),
-    queryFn: () => apiGet<HealingContent[]>(HEALING_CONTENT_API.GET_ALL),
+    queryFn: async () => {
+      const raw = await apiGet<unknown>(HEALING_CONTENT_API.GET_ALL);
+      const list = unwrapApiResponse<HealingContent[]>(raw);
+      return Array.isArray(list) ? list : [];
+    },
+    select: normalizeHealingList,
     staleTime: 1000 * 60 * 10,
   });
 }
@@ -84,10 +94,12 @@ export function useRandomWellnessTip() {
   return useQuery<HealingContent | null>({
     queryKey: WELLNESS_QUERY_KEYS.randomTip(),
     queryFn: async () => {
-      const contents = await apiGet<HealingContent[]>(
+      const raw = await apiGet<unknown>(
         HEALING_CONTENT_API.GET_ALL,
         { size: 10, sort: 'random' },
       );
+      const list = unwrapApiResponse<HealingContent[]>(raw);
+      const contents = Array.isArray(list) ? list : [];
       return contents.length > 0
         ? contents[Math.floor(Math.random() * contents.length)]!
         : null;

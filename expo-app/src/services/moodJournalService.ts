@@ -8,7 +8,7 @@
  * @since 2026-05-13
  */
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
-import { createMMKV } from 'react-native-mmkv';
+import { getMmkv } from '@/lib/getMmkv';
 import { apiDelete, apiGet, apiPost, apiPut } from '@/api/client';
 import { MOOD_JOURNAL_API } from '@/api/endpoints';
 import { unwrapApiResponse } from '@/api/unwrapApiResponse';
@@ -17,7 +17,7 @@ import { MOOD_STORAGE_KEY, MOOD_EMOJIS } from '@/constants/moodConstants';
 import { toDisplayString } from '@/utils/toDisplayString';
 import { toSafeNumber } from '@/utils/safeDisplay';
 
-const mmkv = createMMKV({ id: MOOD_STORAGE_KEY });
+const mmkv = getMmkv(MOOD_STORAGE_KEY);
 
 export interface MoodJournalEntry {
   date: string;

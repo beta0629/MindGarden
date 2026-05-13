@@ -11,10 +11,11 @@ import {
   getProfile as getKakaoProfile,
 } from '@react-native-seoul/kakao-login';
 import NaverLogin from '@react-native-seoul/naver-login';
-import { Platform } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 import { apiPost } from '../api/client';
 import { AUTH_API } from '../api/endpoints';
 import { useAuthStore, User, Tokens } from '../stores/useAuthStore';
+import { isExpoGoApp } from '@/lib/getMmkv';
 
 interface SocialLoginResponse {
   success: boolean;
@@ -33,8 +34,33 @@ interface SocialLoginResponse {
 
 let naverInitialized = false;
 
+function kakaoNativeUnavailableMessage(): string {
+  if (isExpoGoApp()) {
+    return 'Expo Go에서는 카카오 로그인을 사용할 수 없습니다. Development Build(npx expo run:ios 등)로 실행하거나 이메일 로그인을 이용해 주세요.';
+  }
+  return '카카오 로그인 모듈이 연결되어 있지 않습니다. 네이티브로 빌드한 앱에서 다시 시도해 주세요.';
+}
+
+function naverNativeUnavailableMessage(): string {
+  if (isExpoGoApp()) {
+    return 'Expo Go에서는 네이버 로그인을 사용할 수 없습니다. Development Build로 실행하거나 이메일 로그인을 이용해 주세요.';
+  }
+  return '네이버 로그인 모듈이 연결되어 있지 않습니다. 네이티브로 빌드한 앱에서 다시 시도해 주세요.';
+}
+
+function logAuthError(scope: string, error: unknown): void {
+  if (error instanceof Error) {
+    console.error(`[AuthService] ${scope}:`, error.message);
+    return;
+  }
+  console.error(`[AuthService] ${scope}:`, error);
+}
+
 const initializeNaverSDK = () => {
   if (naverInitialized) return;
+  if (NativeModules.RNNaverLogin == null) {
+    return;
+  }
 
   const consumerKey = process.env.EXPO_PUBLIC_NAVER_CLIENT_ID ?? '';
   const consumerSecret = process.env.EXPO_PUBLIC_NAVER_CLIENT_SECRET ?? '';
@@ -60,6 +86,14 @@ const initializeNaverSDK = () => {
   naverInitialized = true;
 };
 
+function isKakaoNativeLinked(): boolean {
+  return NativeModules.RNKakaoLogins != null;
+}
+
+function isNaverNativeLinked(): boolean {
+  return NativeModules.RNNaverLogin != null;
+}
+
 export const AuthService = {
   /**
    * 카카오 로그인
@@ -67,6 +101,10 @@ export const AuthService = {
    */
   async loginWithKakao(): Promise<SocialLoginResponse> {
     try {
+      if (!isKakaoNativeLinked()) {
+        return { success: false, message: kakaoNativeUnavailableMessage() };
+      }
+
       const token = await kakaoSDKLogin();
       const profile = await getKakaoProfile();
 
@@ -97,7 +135,7 @@ export const AuthService = {
 
       return { success: false, message: response?.message ?? '카카오 로그인에 실패했습니다.' };
     } catch (error: unknown) {
-      console.error('[AuthService] 카카오 로그인 에러:', JSON.stringify(error, Object.getOwnPropertyNames(error instanceof Error ? error : {}), 2));
+      logAuthError('카카오 로그인 에러', error);
       const message =
         error instanceof Error ? error.message : '카카오 로그인 중 오류가 발생했습니다.';
       return { success: false, message };
@@ -110,7 +148,18 @@ export const AuthService = {
    */
   async loginWithNaver(): Promise<SocialLoginResponse> {
     try {
+      if (!isNaverNativeLinked()) {
+        return { success: false, message: naverNativeUnavailableMessage() };
+      }
+
       initializeNaverSDK();
+      if (!naverInitialized) {
+        return {
+          success: false,
+          message:
+            '네이버 SDK를 초기화할 수 없습니다. iOS에서는 serviceUrlScheme 설정을 확인해 주세요.',
+        };
+      }
 
       const loginResult = await NaverLogin.login();
       console.log('[AuthService] 네이버 로그인 결과:', JSON.stringify(loginResult));
@@ -176,7 +225,7 @@ export const AuthService = {
 
       return { success: false, message: response?.message ?? '네이버 로그인에 실패했습니다.' };
     } catch (error: unknown) {
-      console.error('[AuthService] 네이버 로그인 에러:', JSON.stringify(error, Object.getOwnPropertyNames(error instanceof Error ? error : {}), 2));
+      logAuthError('네이버 로그인 에러', error);
       const message =
         error instanceof Error ? error.message : '네이버 로그인 중 오류가 발생했습니다.';
       return { success: false, message };
@@ -216,9 +265,9 @@ export const AuthService = {
    */
   async logout(provider?: 'KAKAO' | 'NAVER'): Promise<void> {
     try {
-      if (provider === 'KAKAO') {
+      if (provider === 'KAKAO' && isKakaoNativeLinked()) {
         await kakaoSDKLogout();
-      } else if (provider === 'NAVER') {
+      } else if (provider === 'NAVER' && isNaverNativeLinked()) {
         await NaverLogin.logout();
       }
 

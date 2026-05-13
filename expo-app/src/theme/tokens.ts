@@ -6,6 +6,9 @@
  * @since 2026-05-12
  * @see docs/design-system/v2/CONSULTANT_CLIENT_DESIGN_TOKENS.md
  * @see docs/project-management/CONSULTANT_CLIENT_APP_PLAN.md §3.10
+ *
+ * Expo 정적 설정(`app.config.ts`)은 Node가 본 파일을 직접 import하지 못하므로
+ * 스플래시·알림용 2색은 `tokensAppConfig.cjs`에 동기화해 둔다.
  */
 
 /** 내담자 테마: 따뜻한 코랄·크림 톤 (8색) */

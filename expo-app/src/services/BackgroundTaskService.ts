@@ -13,7 +13,7 @@
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
 import NetInfo from '@react-native-community/netinfo';
-import { createMMKV } from 'react-native-mmkv';
+import { getMmkv } from '@/lib/getMmkv';
 import { pruneInactivePersistedQueries } from '../api/queryClient';
 import { NotificationService } from './NotificationService';
 import { OfflineQueueService } from './OfflineQueueService';
@@ -23,7 +23,7 @@ const TOKEN_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const TOKEN_REFRESH_LOCK_MS = 2 * 60 * 1000;
 const CACHE_PRUNE_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
-const mmkv = createMMKV({ id: 'background-task' });
+const mmkv = getMmkv('background-task');
 const TOKEN_LAST_REFRESH_KEY = 'bg_last_token_refresh';
 const TOKEN_LOCK_UNTIL_KEY = 'bg_token_refresh_lock_until';
 const CACHE_LAST_PRUNE_KEY = 'bg_last_cache_prune';

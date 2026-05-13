@@ -5,21 +5,15 @@
  * @since 2026-05-12
  */
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { createMMKV } from 'react-native-mmkv';
+import { persist } from 'zustand/middleware';
+import { createZustandMmkvPersistStorage } from '@/lib/getMmkv';
 import {
   INITIAL_COMMUNITY_POSTS,
   type CommunityPost,
   type CommunityComment,
 } from '@/constants/communityData';
 
-const mmkv = createMMKV({ id: 'community-store' });
-
-const zustandMMKVStorage = createJSONStorage(() => ({
-  getItem: (name: string) => mmkv.getString(name) ?? null,
-  setItem: (name: string, value: string) => mmkv.set(name, value),
-  removeItem: (name: string) => mmkv.remove(name),
-}));
+const zustandMMKVStorage = createZustandMmkvPersistStorage('community-store');
 
 interface CommunityState {
   posts: CommunityPost[];

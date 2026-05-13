@@ -7,7 +7,7 @@
  */
 import { QueryClient } from '@tanstack/react-query';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import { createMMKV } from 'react-native-mmkv';
+import { getMmkv } from '@/lib/getMmkv';
 import { isOfflinePersistedQueryKey, shouldDehydrateOfflinePersistedQuery } from './offlinePersistPolicy';
 
 const CACHE_GC_TIME = 1000 * 60 * 60 * 24 * 7;
@@ -16,7 +16,7 @@ const CACHE_STALE_TIME = 1000 * 60 * 5;
 /** 비활성 쿼리만 제거(옵저버 0). gcTime(7일)보다 길게 두어 과도한 삭제 방지 */
 const PRUNE_INACTIVE_DATA_MIN_AGE_MS = 1000 * 60 * 60 * 24 * 10;
 
-const mmkv = createMMKV({ id: 'query-cache' });
+const mmkv = getMmkv('query-cache');
 
 /** PersistQueryClient `maxAge` — gcTime과 동일 계열 */
 export const QUERY_PERSIST_MAX_AGE_MS = CACHE_GC_TIME;

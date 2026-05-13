@@ -21,7 +21,7 @@ import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Bookmark, Check } from 'lucide-react-native';
-import { createMMKV } from 'react-native-mmkv';
+import { getMmkv } from '@/lib/getMmkv';
 
 import { usePsychoEducationArticleById, PSYCHO_EDUCATION_API_PLACEHOLDER } from '@/api/hooks/useWellness';
 import { useTheme } from '@/theme';
@@ -31,7 +31,7 @@ import { type PsychoPage } from '@/constants/psychoEducationData';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_PADDING = 24;
 
-const mmkv = createMMKV({ id: 'psycho-education' });
+const mmkv = getMmkv('psycho-education');
 
 function loadBookmarks(): number[] {
   try {

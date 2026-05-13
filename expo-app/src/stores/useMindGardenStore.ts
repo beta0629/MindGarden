@@ -5,8 +5,8 @@
  * @since 2026-05-13
  */
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { createMMKV } from 'react-native-mmkv';
+import { persist } from 'zustand/middleware';
+import { createZustandMmkvPersistStorage } from '@/lib/getMmkv';
 import {
   GARDEN_EVENT_WEIGHTS,
   GARDEN_GROWTH_WEEKLY_POINTS_CAP,
@@ -16,13 +16,7 @@ import {
 import { gardenGrowthLocalEventQueueStub } from '@/services/gardenGrowthEventQueue';
 import type { MindGardenServerState } from '@/types/mindGarden';
 
-const mmkv = createMMKV({ id: 'mind-garden-store' });
-
-const zustandMMKVStorage = createJSONStorage(() => ({
-  getItem: (name: string) => mmkv.getString(name) ?? null,
-  setItem: (name: string, value: string) => mmkv.set(name, value),
-  removeItem: (name: string) => mmkv.remove(name),
-}));
+const zustandMMKVStorage = createZustandMmkvPersistStorage('mind-garden-store');
 
 const MAX_PROCESSED_KEYS = 96;
 

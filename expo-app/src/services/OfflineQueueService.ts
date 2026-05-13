@@ -6,10 +6,10 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { createMMKV } from 'react-native-mmkv';
+import { getMmkv } from '@/lib/getMmkv';
 import { apiPost, apiPut, apiDelete } from '../api/client';
 
-const mmkv = createMMKV({ id: 'offline-queue' });
+const mmkv = getMmkv('offline-queue');
 const QUEUE_KEY = 'pending_mutations';
 const MAX_RETRIES = 3;
 /** 오프라인 큐에 너무 오래 남은 항목 제거(배터리·스토리지 보호, 서버 재시도 의미 희박) */

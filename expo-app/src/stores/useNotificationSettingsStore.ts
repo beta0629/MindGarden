@@ -7,24 +7,11 @@
  * @since 2026-05-12
  */
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { createMMKV } from 'react-native-mmkv';
+import { persist } from 'zustand/middleware';
+import { createZustandMmkvPersistStorage } from '@/lib/getMmkv';
 import type { NotificationSettingsCategory } from '../constants/pushScenarios';
 
-const mmkv = createMMKV({ id: 'notification-settings-store' });
-
-const zustandMMKVStorage = createJSONStorage(() => ({
-  getItem: (name: string) => {
-    const value = mmkv.getString(name);
-    return value ?? null;
-  },
-  setItem: (name: string, value: string) => {
-    mmkv.set(name, value);
-  },
-  removeItem: (name: string) => {
-    mmkv.remove(name);
-  },
-}));
+const zustandMMKVStorage = createZustandMmkvPersistStorage('notification-settings-store');
 
 export interface NotificationSettingsMap {
   schedule: boolean;

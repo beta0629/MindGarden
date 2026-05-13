@@ -29,6 +29,7 @@ import { WellnessCard } from '@/components/molecules/WellnessCard';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { useHealingContents, type HealingContent } from '@/api/hooks/useWellness';
+import { WELLNESS_NON_MEDICAL_DISCLAIMER_KO } from '@/constants/wellnessComplianceCopy';
 
 interface WellnessEntryItem {
   icon: React.ReactNode;
@@ -49,7 +50,7 @@ export default function ClientWellness() {
 
   const ENTRY_ROUTES: Record<string, string | undefined> = {
     '감정 일기': '/(client)/(wellness)/mood-journal',
-    '자가 심리검사': '/(client)/(wellness)/self-assessment',
+    '마음 자가 점검': '/(client)/(wellness)/self-assessment',
     '명상 가이드': '/(client)/(wellness)/meditation',
     '심리 교육': '/(client)/(wellness)/psycho-education',
   };
@@ -71,8 +72,8 @@ export default function ClientWellness() {
     },
     {
       icon: <ClipboardList size={24} color={theme.colors.primary} />,
-      title: '자가 심리검사',
-      description: '마음 상태를 확인해보세요',
+      title: '마음 자가 점검',
+      description: '참고용 설문으로 마음을 살펴봐요',
     },
     {
       icon: <Headphones size={24} color={theme.colors.primary} />,
@@ -129,6 +130,17 @@ export default function ClientWellness() {
             }}
           >
             {today}
+          </Text>
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.regular,
+              fontSize: theme.fontSize['2xs'],
+              color: theme.colors.textTertiary,
+              marginTop: 10,
+              lineHeight: 16,
+            }}
+          >
+            {WELLNESS_NON_MEDICAL_DISCLAIMER_KO}
           </Text>
         </Animated.View>
 

@@ -40,9 +40,12 @@ import {
   useVacations,
   useCreateVacation,
   useDeleteVacation,
+  extractErrorMessage,
+  isValidDate,
   type AvailabilitySlot,
   type Vacation,
 } from '@/api/hooks/useAvailability';
+import { useTenantStore } from '@/stores/useTenantStore';
 
 const DAYS_OF_WEEK = [
   { key: 'MON', full: 'MONDAY', label: '월' },
@@ -127,18 +130,23 @@ const formatDate = (dateStr: string): string => {
 export default function ConsultantAvailability() {
   const theme = useTheme();
   const user = useAuthStore((s) => s.user);
-  const consultantId = user?.id;
+  const role = useAuthStore((s) => s.role);
+  const tenantId = useTenantStore((s) => s.tenantId);
+  const isConsultant = role === 'consultant';
+  const consultantId = isConsultant ? user?.id : undefined;
 
   const {
     data: serverSlots,
     isLoading: loadingSlots,
     isError: slotsError,
+    error: slotsErrorObj,
     refetch: refetchSlots,
   } = useConsultantAvailability(consultantId);
   const {
     data: vacationList,
     isLoading: loadingVacations,
     isError: vacationsError,
+    error: vacationsErrorObj,
     refetch: refetchVacations,
   } = useVacations(consultantId);
 
@@ -195,8 +203,11 @@ export default function ConsultantAvailability() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       Alert.alert('저장 완료', '근무 가능 시간이 저장되었습니다.');
-    } catch {
-      Alert.alert('저장 실패', '근무시간 저장에 실패했습니다.');
+    } catch (err) {
+      Alert.alert(
+        '저장 실패',
+        extractErrorMessage(err, '근무시간 저장에 실패했습니다.'),
+      );
     }
   }, [consultantId, hasChanges, grid, triggerHaptic, updateAvailability]);
 
@@ -208,6 +219,17 @@ export default function ConsultantAvailability() {
 
   const handleAddVacation = useCallback(async () => {
     if (!consultantId || !vacStartDate || !vacEndDate) return;
+    if (!isValidDate(vacStartDate) || !isValidDate(vacEndDate)) {
+      Alert.alert(
+        '입력 확인',
+        '날짜를 YYYY-MM-DD 형식(예: 2026-05-13)으로 입력해 주세요.',
+      );
+      return;
+    }
+    if (vacStartDate > vacEndDate) {
+      Alert.alert('입력 확인', '종료일은 시작일과 같거나 이후여야 합니다.');
+      return;
+    }
     triggerHaptic();
     try {
       await createVacation.mutateAsync({
@@ -219,8 +241,11 @@ export default function ConsultantAvailability() {
       setVacStartDate('');
       setVacEndDate('');
       setVacReason('');
-    } catch {
-      Alert.alert('등록 실패', '휴가 등록에 실패했습니다.');
+    } catch (err) {
+      Alert.alert(
+        '등록 실패',
+        extractErrorMessage(err, '휴가 등록에 실패했습니다.'),
+      );
     }
   }, [consultantId, vacStartDate, vacEndDate, vacReason, triggerHaptic, createVacation]);
 
@@ -235,8 +260,11 @@ export default function ConsultantAvailability() {
             ? vacationDate.slice(0, 10)
             : vacationDate,
         });
-      } catch {
-        Alert.alert('삭제 실패', '휴가 삭제에 실패했습니다.');
+      } catch (err) {
+        Alert.alert(
+          '삭제 실패',
+          extractErrorMessage(err, '휴가 삭제에 실패했습니다.'),
+        );
       }
     },
     [consultantId, deleteVacation],
@@ -245,7 +273,7 @@ export default function ConsultantAvailability() {
   const isLoading = loadingSlots || loadingVacations;
   const loadError = slotsError || vacationsError;
 
-  if (!consultantId) {
+  if (!user) {
     return (
       <>
         <Stack.Screen options={{ headerShown: true, title: '근무 가능 시간' }} />
@@ -260,7 +288,41 @@ export default function ConsultantAvailability() {
     );
   }
 
+  if (!isConsultant || !consultantId) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: true, title: '근무 가능 시간' }} />
+        <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
+          <EmptyState
+            icon={<Clock size={32} color={theme.colors.textTertiary} />}
+            title="상담사만 접근할 수 있습니다"
+            description="상담사 계정으로 로그인한 뒤 다시 시도해 주세요"
+          />
+        </View>
+      </>
+    );
+  }
+
+  if (!tenantId) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: true, title: '근무 가능 시간' }} />
+        <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
+          <EmptyState
+            icon={<Clock size={32} color={theme.colors.textTertiary} />}
+            title="기관 정보가 없습니다"
+            description="기관(테넌트)을 선택한 뒤 다시 시도해 주세요"
+          />
+        </View>
+      </>
+    );
+  }
+
   if (loadError && !isLoading) {
+    const message = extractErrorMessage(
+      slotsErrorObj ?? vacationsErrorObj,
+      '네트워크 상태를 확인한 뒤 다시 시도해 주세요',
+    );
     return (
       <>
         <Stack.Screen options={{ headerShown: true, title: '근무 가능 시간' }} />
@@ -268,7 +330,7 @@ export default function ConsultantAvailability() {
           <EmptyState
             icon={<Clock size={32} color={theme.colors.textTertiary} />}
             title="불러오기에 실패했습니다"
-            description="네트워크 상태를 확인한 뒤 다시 시도해 주세요"
+            description={message}
           />
           <Pressable
             onPress={() => {

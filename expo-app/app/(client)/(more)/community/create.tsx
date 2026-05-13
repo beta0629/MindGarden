@@ -25,6 +25,7 @@ import { ArrowLeft } from 'lucide-react-native';
 
 import { useTheme } from '@/theme';
 import { useCommunityStore } from '@/stores/useCommunityStore';
+import { COMMUNITY_DEMO_LABELS } from '@/constants/communityData';
 
 const ANONYMOUS_NICKNAMES = [
   '익명의 구름', '익명의 바람', '익명의 별', '익명의 달',
@@ -57,7 +58,7 @@ export default function ClientCommunityCreate() {
     const randomIdx = Math.floor(Math.random() * ANONYMOUS_NICKNAMES.length);
     const nickname = isAnonymous
       ? (ANONYMOUS_NICKNAMES[randomIdx] ?? '익명')
-      : '나';
+      : COMMUNITY_DEMO_LABELS.newClientNamedAuthor;
 
     addPost({
       tab: 'reviews',
@@ -70,8 +71,8 @@ export default function ClientCommunityCreate() {
     });
 
     Alert.alert(
-      '게시 완료',
-      '글이 등록되었습니다. 검수 후 게시됩니다.',
+      '기기에 저장됨',
+      '글이 이 기기(MMKV)에만 등록되었습니다. /api/v1/community 연동 후 서버 검수·동기화 흐름이 적용됩니다.',
       [{ text: '확인', onPress: () => router.back() }],
     );
   };

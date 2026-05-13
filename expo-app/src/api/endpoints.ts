@@ -77,8 +77,13 @@ export const NOTIFICATION_API = {
 } as const;
 
 export const PUSH_API = {
+  /** POST 바디: userId, tenantId, token, platform, deviceInfo — Spring 구현 시 `MobilePushTokenController` 등과 정합 */
   REGISTER_TOKEN: '/api/v1/mobile/push-token/register',
   UNREGISTER_TOKEN: '/api/v1/mobile/push-token/unregister',
+  /**
+   * GET/PUT `/api/v1/mobile/push-settings` — 응답·요청 바디: `{ schedule, payment, message, wellness, system }` 불리언.
+   * 저장소(2026-05) 기준 Spring 컨트롤러 미부착 시 404/501 예상 → expo는 로컬(MMKV)로 폴백.
+   */
   GET_SETTINGS: '/api/v1/mobile/push-settings',
   UPDATE_SETTINGS: '/api/v1/mobile/push-settings',
 } as const;

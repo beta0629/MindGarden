@@ -39,6 +39,7 @@ import {
 } from '@/api/hooks/useNotifications';
 import { formatRelativeTime } from '@/utils/dateFormat';
 import { toDisplayString } from '@/utils/safeDisplay';
+import { useTenantStore } from '@/stores/useTenantStore';
 
 const SKELETON_COUNT = 6;
 
@@ -61,6 +62,7 @@ type InboxFilter = 'all' | 'unread';
 export function NotificationCenterScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
   const [filter, setFilter] = useState<InboxFilter>('all');
 
   const {
@@ -71,13 +73,18 @@ export function NotificationCenterScreen() {
     fetchNextPage,
     refetch,
     isRefetching,
+    isError,
   } = useNotifications();
 
   const markAsReadMutation = useMarkAsRead();
   const markAllAsReadMutation = useMarkAllAsRead();
 
-  const flatNotifications =
-    data?.pages.flatMap((page) => page.content).filter(Boolean) ?? [];
+  const flatNotifications = useMemo(() => {
+    if (!tenantId) {
+      return [];
+    }
+    return data?.pages.flatMap((page) => page.content).filter(Boolean) ?? [];
+  }, [tenantId, data?.pages]);
 
   const notifications = useMemo(() => {
     if (filter === 'unread') {
@@ -122,12 +129,52 @@ export function NotificationCenterScreen() {
     [handleNotificationPress],
   );
 
+  if (!tenantId) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
+        <EmptyState
+          icon={<Bell size={32} color={theme.colors.textTertiary} />}
+          title="기관 정보가 필요합니다"
+          description="테넌트를 선택한 뒤 알림을 불러올 수 있습니다"
+        />
+      </View>
+    );
+  }
+
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
         {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
           <SkeletonCard key={i} lines={2} style={styles.skeletonCard} />
         ))}
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
+        <EmptyState
+          icon={<Bell size={32} color={theme.colors.textTertiary} />}
+          title="알림을 불러오지 못했습니다"
+          description="네트워크를 확인한 뒤 다시 시도해 주세요"
+        />
+        <Pressable
+          onPress={() => refetch()}
+          style={styles.retryPressable}
+          accessibilityLabel="다시 시도"
+          accessibilityRole="button"
+        >
+          <Text
+            style={{
+              color: theme.colors.primary,
+              fontFamily: theme.fontFamily.medium,
+              fontSize: theme.fontSize.sm,
+            }}
+          >
+            다시 시도
+          </Text>
+        </Pressable>
       </View>
     );
   }
@@ -347,6 +394,10 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 24,
+  },
+  retryPressable: {
+    alignSelf: 'center',
+    padding: 12,
   },
   skeletonCard: {
     marginHorizontal: 16,

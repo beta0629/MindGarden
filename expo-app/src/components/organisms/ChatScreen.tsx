@@ -6,7 +6,7 @@
  * @since 2026-05-12
  * @since 2026-05-13 — 실 API 스레드·읽음 시도·날짜 구분선·스크롤 하단 정합
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -39,6 +39,7 @@ import {
   useMarkMessageAsRead,
   type Message,
 } from '@/api/hooks/useMessages';
+import { useAuthStore } from '@/stores/useAuthStore';
 import {
   formatMessageTime,
   formatDateSeparator,
@@ -60,6 +61,7 @@ const QUICK_REPLIES = [
 export function ChatScreen({ partnerId }: ChatScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const role = useAuthStore((s) => s.user?.role);
   const [inputText, setInputText] = useState('');
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const inputRef = useRef<TextInput>(null);
@@ -77,10 +79,19 @@ export function ChatScreen({ partnerId }: ChatScreenProps) {
   const sendMessageMutation = useSendMessage();
   const { mutate: markReadMutate } = useMarkMessageAsRead();
 
-  const messages = data?.pages.flatMap((page) => page.content) ?? [];
+  /** API 페이지는 desc(최신→과거) 순 — 화면은 시간순(과거→최신)으로 병합 */
+  const messages = useMemo(
+    () =>
+      (data?.pages ?? [])
+        .slice()
+        .reverse()
+        .flatMap((page) => page.content),
+    [data?.pages],
+  );
 
+  /** Spring `ConsultationMessageController` 의 읽음 API는 MESSAGE_MANAGE 권한 전제 — 내담자는 403 방지를 위해 생략 */
   useEffect(() => {
-    if (!messages.length) {
+    if (!messages.length || role !== 'consultant') {
       return;
     }
     messages.forEach((m) => {
@@ -89,7 +100,7 @@ export function ChatScreen({ partnerId }: ChatScreenProps) {
         markReadMutate(m.id);
       }
     });
-  }, [messages, markReadMutate]);
+  }, [messages, markReadMutate, role]);
 
   useEffect(() => {
     if (isLoading || messages.length === 0) {
@@ -213,6 +224,21 @@ export function ChatScreen({ partnerId }: ChatScreenProps) {
           isFetchingNextPage ? <LoadingIndicator /> : null
         }
       />
+
+      {sendMessageMutation.isError ? (
+        <Text
+          style={{
+            color: theme.colors.error,
+            fontFamily: theme.fontFamily.regular,
+            fontSize: theme.fontSize.xs,
+            paddingHorizontal: 16,
+            paddingVertical: 6,
+          }}
+          accessibilityLiveRegion="polite"
+        >
+          메시지를 보내지 못했습니다. 다시 시도해 주세요.
+        </Text>
+      ) : null}
 
       {showQuickReplies ? (
         <Animated.View

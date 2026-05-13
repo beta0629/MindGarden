@@ -1,11 +1,11 @@
 /**
  * Step 3: 결제/확인
- * 예약 요약 + 결제 방법 선택 + 확정
+ * 예약 요약 + 보유 회기 차감 확정 (잔여 회기는 서버 매칭 API 기준)
  *
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useState } from 'react';
+import { useMemo } from 'react';
 import {
   Alert,
   Pressable,
@@ -17,23 +17,40 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Calendar, Clock, CreditCard, Ticket } from 'lucide-react-native';
+import { Calendar, Clock, Ticket } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
 import { ProgressBar } from '@/components/molecules/ProgressBar';
 import { Avatar } from '@/components/atoms/Avatar';
 import { useCreateBooking } from '@/api/hooks/useBooking';
-
-type PaymentMethod = 'SESSION_DEDUCT' | 'TOSS_PAYMENT';
+import { useSessionBalance, PAYMENT_QUERY_KEYS } from '@/api/hooks/usePayments';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useTenantStore } from '@/stores/useTenantStore';
 
 const STEP_LABELS = ['상담사 선택', '시간 선택', '결제'];
-const REMAINING_SESSIONS = 5;
+
+function extractErrorMessage(error: unknown, fallback: string): string {
+  if (
+    error != null &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof (error as { message?: unknown }).message === 'string'
+  ) {
+    const m = (error as { message: string }).message.trim();
+    if (m !== '') {
+      return m;
+    }
+  }
+  return fallback;
+}
 
 export default function BookingPayment() {
   const theme = useTheme();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const params = useLocalSearchParams<{
     consultantId: string;
     consultantName: string;
@@ -42,24 +59,64 @@ export default function BookingPayment() {
     endTime: string;
   }>();
 
-  const [paymentMethod, setPaymentMethod] =
-    useState<PaymentMethod>('SESSION_DEDUCT');
+  const user = useAuthStore((s) => s.user);
+  const tenantId = useTenantStore((s) => s.tenantId);
+  const clientId = user?.id;
+
+  const { data: balance, isLoading: balanceLoading } = useSessionBalance(clientId);
+  const remainingSessions = balance?.remainingSessions ?? 0;
 
   const createBooking = useCreateBooking();
 
+  const paramsReady = useMemo(() => {
+    const cid = params.consultantId;
+    return (
+      cid != null &&
+      String(cid).trim() !== '' &&
+      params.date != null &&
+      String(params.date).trim() !== '' &&
+      params.startTime != null &&
+      params.endTime != null
+    );
+  }, [params]);
+
   const handleConfirm = async () => {
+    if (!paramsReady) {
+      Alert.alert('예약 정보 없음', '예약 단계를 처음부터 다시 진행해 주세요.');
+      return;
+    }
+    if (!tenantId || String(tenantId).trim() === '') {
+      Alert.alert(
+        '기관 정보 필요',
+        '테넌트(기관)가 선택되지 않았습니다. 로그아웃 후 기관을 다시 선택해 주세요.',
+      );
+      return;
+    }
+    if (clientId == null) {
+      Alert.alert('로그인 필요', '다시 로그인한 뒤 예약을 진행해 주세요.');
+      return;
+    }
+    if (remainingSessions < 1) {
+      Alert.alert(
+        '보유 회기 없음',
+        '잔여 회기가 없습니다. 회기·결제 메뉴에서 패키지를 구매한 뒤 다시 예약해 주세요.',
+      );
+      return;
+    }
+
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     try {
       await createBooking.mutateAsync({
         consultantId: Number(params.consultantId),
-        scheduledDate: params.date,
-        startTime: params.startTime,
-        endTime: params.endTime,
+        scheduledDate: String(params.date),
+        startTime: String(params.startTime),
+        endTime: String(params.endTime),
         sessionType: 'REGULAR',
-        paymentMethod,
+        paymentMethod: 'SESSION_DEDUCT',
       });
+      await queryClient.invalidateQueries({ queryKey: PAYMENT_QUERY_KEYS.all });
       router.push({
         pathname: '/(client)/(booking)/complete',
         params: {
@@ -69,86 +126,26 @@ export default function BookingPayment() {
           endTime: params.endTime,
         },
       });
-    } catch {
-      Alert.alert('예약 실패', '예약 처리 중 문제가 발생했습니다. 다시 시도해주세요.');
+    } catch (e) {
+      const msg = extractErrorMessage(
+        e,
+        '예약 처리 중 문제가 발생했습니다. 다시 시도해 주세요.',
+      );
+      Alert.alert('예약 실패', msg);
     }
   };
 
-  const renderPaymentOption = (
-    method: PaymentMethod,
-    icon: React.ReactNode,
-    title: string,
-    desc: string,
-  ) => {
-    const selected = paymentMethod === method;
-    return (
-      <Pressable
-        onPress={() => {
-          if (Platform.OS !== 'web') {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          }
-          setPaymentMethod(method);
-        }}
-        style={[
-          styles.paymentOption,
-          {
-            backgroundColor: selected
-              ? theme.colors.surfaceAlt
-              : theme.colors.surface,
-            borderColor: selected
-              ? theme.colors.primary
-              : theme.colors.border,
-            borderRadius: theme.borderRadius.xl,
-          },
-        ]}
-        accessibilityLabel={title}
-        accessibilityState={{ selected }}
-      >
-        <View style={styles.paymentLeft}>
-          {icon}
-          <View style={styles.paymentText}>
-            <Text
-              style={{
-                fontFamily: theme.fontFamily.semibold,
-                fontSize: theme.fontSize.base,
-                color: theme.colors.textMain,
-              }}
-            >
-              {title}
-            </Text>
-            <Text
-              style={{
-                fontFamily: theme.fontFamily.regular,
-                fontSize: theme.fontSize.sm,
-                color: theme.colors.textSecondary,
-              }}
-            >
-              {desc}
-            </Text>
-          </View>
-        </View>
-        <View
-          style={[
-            styles.radio,
-            {
-              borderColor: selected
-                ? theme.colors.primary
-                : theme.colors.border,
-            },
-          ]}
-        >
-          {selected && (
-            <View
-              style={[
-                styles.radioDot,
-                { backgroundColor: theme.colors.primary },
-              ]}
-            />
-          )}
-        </View>
-      </Pressable>
-    );
-  };
+  const sessionDeductDesc = balanceLoading
+    ? '잔여 회기를 불러오는 중…'
+    : `잔여 ${remainingSessions}회기`;
+
+  const canConfirm =
+    paramsReady &&
+    !!tenantId &&
+    clientId != null &&
+    !balanceLoading &&
+    remainingSessions >= 1 &&
+    !createBooking.isPending;
 
   return (
     <SafeAreaView
@@ -229,7 +226,7 @@ export default function BookingPayment() {
           </View>
         </Animated.View>
 
-        {/* 결제 방법 */}
+        {/* 결제: 예약 확정은 보유 회기 차감만 지원. 카드 패키지는 회기·결제 메뉴. */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <Text
             style={[
@@ -244,18 +241,72 @@ export default function BookingPayment() {
             결제 방법
           </Text>
 
-          {renderPaymentOption(
-            'SESSION_DEDUCT',
-            <Ticket size={20} color={theme.colors.primary} />,
-            '보유 회기 차감',
-            `잔여 ${REMAINING_SESSIONS}회기`,
-          )}
+          <View
+            style={[
+              styles.paymentOption,
+              {
+                backgroundColor: theme.colors.surfaceAlt,
+                borderColor: theme.colors.primary,
+                borderRadius: theme.borderRadius.xl,
+              },
+            ]}
+            accessibilityLabel="보유 회기 차감"
+            accessibilityRole="text"
+          >
+            <View style={styles.paymentLeft}>
+              <Ticket size={20} color={theme.colors.primary} />
+              <View style={styles.paymentText}>
+                <Text
+                  style={{
+                    fontFamily: theme.fontFamily.semibold,
+                    fontSize: theme.fontSize.base,
+                    color: theme.colors.textMain,
+                  }}
+                >
+                  보유 회기 차감
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: theme.fontFamily.regular,
+                    fontSize: theme.fontSize.sm,
+                    color: theme.colors.textSecondary,
+                  }}
+                >
+                  {sessionDeductDesc}
+                </Text>
+              </View>
+            </View>
+          </View>
 
-          {renderPaymentOption(
-            'TOSS_PAYMENT',
-            <CreditCard size={20} color={theme.colors.primary} />,
-            '토스페이먼츠 결제',
-            'Phase 3-E에서 연동 예정',
+          {remainingSessions < 1 && !balanceLoading && (
+            <Pressable
+              onPress={() =>
+                router.push('/(client)/(more)/sessions-payment/extend')
+              }
+              style={({ pressed }) => [
+                styles.extendHint,
+                {
+                  borderColor: theme.colors.border,
+                  backgroundColor: pressed
+                    ? theme.colors.accentSoft
+                    : theme.colors.surface,
+                  borderRadius: theme.borderRadius.lg,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="회기 연장 및 패키지 구매"
+            >
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: theme.fontSize.sm,
+                  color: theme.colors.primary,
+                  textAlign: 'center',
+                }}
+              >
+                회기가 없으시면 회기 연장·패키지 구매로 이동
+              </Text>
+            </Pressable>
           )}
         </Animated.View>
       </ScrollView>
@@ -273,13 +324,13 @@ export default function BookingPayment() {
       >
         <Pressable
           onPress={handleConfirm}
-          disabled={createBooking.isPending}
+          disabled={!canConfirm}
           style={[
             styles.confirmButton,
             {
-              backgroundColor: createBooking.isPending
-                ? theme.colors.gray[300]
-                : theme.colors.primary,
+              backgroundColor: canConfirm
+                ? theme.colors.primary
+                : theme.colors.gray[300],
               borderRadius: theme.borderRadius.lg,
             },
           ]}
@@ -344,18 +395,11 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     gap: 2,
   },
-  radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  extendHint: {
+    marginTop: 4,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderWidth: 1,
   },
   bottomBar: {
     position: 'absolute',

@@ -1,6 +1,6 @@
 /**
  * 자가 심리검사 TanStack Query 훅
- * `selfAssessmentService` — API 우선, 실패 시 MMKV Mock (§13 `/api/v1/self-assessments`)
+ * `selfAssessmentService` — API 우선, 실패 시 MMKV Mock (`§11.1` 표는 `src/constants/wellnessDataSource.ts`)
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -11,6 +11,7 @@ import {
   fetchAssessmentDetail,
   fetchSelfAssessments,
   submitSelfAssessmentRemote,
+  updateSelfAssessmentShareRemote,
   type AssessmentResult,
 } from '@/services/selfAssessmentService';
 
@@ -75,6 +76,26 @@ export function useSubmitAssessment() {
       });
       queryClient.invalidateQueries({
         queryKey: ASSESSMENT_QUERY_KEYS.detail(data.id),
+      });
+    },
+  });
+}
+
+interface UpdateShareParams {
+  id: string;
+  sharedWithConsultant: boolean;
+}
+
+export function useUpdateAssessmentShare() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, UpdateShareParams>({
+    mutationFn: ({ id, sharedWithConsultant }) =>
+      updateSelfAssessmentShareRemote(id, sharedWithConsultant),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ASSESSMENT_QUERY_KEYS.list() });
+      queryClient.invalidateQueries({
+        queryKey: ASSESSMENT_QUERY_KEYS.detail(variables.id),
       });
     },
   });

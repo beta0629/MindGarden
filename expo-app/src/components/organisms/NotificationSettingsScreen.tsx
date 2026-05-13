@@ -32,6 +32,8 @@ import {
   type NotificationSettings,
 } from '@/api/hooks/useNotifications';
 import { useNotificationSettingsStore } from '@/stores/useNotificationSettingsStore';
+import { useTenantStore } from '@/stores/useTenantStore';
+import { EmptyState } from '@/components/atoms/EmptyState';
 
 interface SettingCategory {
   key: keyof NotificationSettings;
@@ -75,6 +77,7 @@ const SETTING_CATEGORIES: SettingCategory[] = [
 
 export function NotificationSettingsScreen() {
   const theme = useTheme();
+  const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
 
   const { data: settings, isLoading, refetch, isRefetching } = useNotificationSettings();
   const updateMutation = useUpdateNotificationSettings();
@@ -97,6 +100,18 @@ export function NotificationSettingsScreen() {
     },
     [updateMutation, setLocalCategory],
   );
+
+  if (!tenantId) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
+        <EmptyState
+          icon={<Bell size={32} color={theme.colors.textTertiary} />}
+          title="기관 정보가 필요합니다"
+          description="테넌트를 선택한 뒤 알림 설정을 변경할 수 있습니다"
+        />
+      </View>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -140,6 +155,20 @@ export function NotificationSettingsScreen() {
       >
         알림 카테고리
       </Text>
+      {updateMutation.isError ? (
+        <Text
+          style={{
+            color: theme.colors.error,
+            fontFamily: theme.fontFamily.regular,
+            fontSize: theme.fontSize.xs,
+            marginBottom: 8,
+            paddingHorizontal: 4,
+          }}
+          accessibilityLiveRegion="polite"
+        >
+          서버에 저장하지 못했습니다. 아래를 당겨 새로고침해 주세요. 푸시 설정 API가 아직 없으면 이 기기에만 적용됩니다.
+        </Text>
+      ) : null}
       <View
         style={[
           styles.card,

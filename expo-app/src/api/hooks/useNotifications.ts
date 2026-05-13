@@ -15,6 +15,7 @@ import {
 import { apiGet, apiPost, apiPut } from '../client';
 import { NOTIFICATION_API, PUSH_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
+import { useTenantStore } from '../../stores/useTenantStore';
 import { toDisplayString, toSafeNumber, stripHtmlToPlainText } from '../../utils/safeDisplay';
 
 export type NotificationType =
@@ -54,9 +55,10 @@ const PAGE_SIZE = 20;
 
 const NOTIFICATION_QUERY_KEYS = {
   all: ['notifications'],
-  list: () => [...NOTIFICATION_QUERY_KEYS.all, 'list'],
-  unreadCount: () => [...NOTIFICATION_QUERY_KEYS.all, 'unread-count'],
-  settings: () => [...NOTIFICATION_QUERY_KEYS.all, 'settings'],
+  list: (tenantId: string) => [...NOTIFICATION_QUERY_KEYS.all, 'list', tenantId],
+  unreadCount: (tenantId: string) =>
+    [...NOTIFICATION_QUERY_KEYS.all, 'unread-count', tenantId],
+  settings: (tenantId: string) => [...NOTIFICATION_QUERY_KEYS.all, 'settings', tenantId],
 };
 
 /** 백엔드 notification_type → UI 카테고리 */
@@ -77,7 +79,42 @@ function mapNotificationType(raw: unknown): NotificationType {
   return 'SYSTEM';
 }
 
+function pickDeepLink(row: Record<string, unknown>): string | undefined {
+  const direct =
+    toDisplayString(row.deepLink, '') ||
+    toDisplayString(row.actionUrl, '') ||
+    toDisplayString(row.link, '');
+  if (direct) {
+    return direct;
+  }
+  const meta = row.metadata;
+  if (meta && typeof meta === 'object' && meta !== null) {
+    const m = meta as Record<string, unknown>;
+    const fromObj =
+      toDisplayString(m.deepLink, '') ||
+      toDisplayString(m.actionUrl, '') ||
+      toDisplayString(m.href, '');
+    if (fromObj) {
+      return fromObj;
+    }
+  }
+  if (typeof meta === 'string' && meta.trim() !== '') {
+    try {
+      const parsed = JSON.parse(meta) as Record<string, unknown>;
+      return (
+        toDisplayString(parsed.deepLink, '') ||
+        toDisplayString(parsed.actionUrl, '') ||
+        undefined
+      );
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
 function mapRowToAppNotification(row: Record<string, unknown>): AppNotification {
+  const deep = pickDeepLink(row);
   return {
     id: toSafeNumber(row.id, 0),
     type: mapNotificationType(row.notificationType),
@@ -85,13 +122,19 @@ function mapRowToAppNotification(row: Record<string, unknown>): AppNotification 
     content: stripHtmlToPlainText(toDisplayString(row.content, '')),
     isRead: Boolean(row.isRead),
     createdAt: toDisplayString(row.createdAt ?? row.publishedAt, ''),
+    deepLink: deep && deep.length > 0 ? deep : undefined,
   };
 }
 
 export function useNotifications() {
+  const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
+
   return useInfiniteQuery({
-    queryKey: NOTIFICATION_QUERY_KEYS.list(),
+    queryKey: NOTIFICATION_QUERY_KEYS.list(tenantId),
     queryFn: async ({ pageParam }) => {
+      if (!tenantId) {
+        return { content: [], hasNext: false, page: 0, totalCount: 0 };
+      }
       const raw = await apiGet<unknown>(NOTIFICATION_API.GET_NOTIFICATIONS, {
         page: pageParam,
         size: PAGE_SIZE,
@@ -119,14 +162,20 @@ export function useNotifications() {
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
       lastPage.hasNext ? lastPage.page + 1 : undefined,
+    enabled: !!tenantId,
     staleTime: 1000 * 30,
   });
 }
 
 export function useUnreadCount() {
+  const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
+
   return useQuery<{ count: number }>({
-    queryKey: NOTIFICATION_QUERY_KEYS.unreadCount(),
+    queryKey: NOTIFICATION_QUERY_KEYS.unreadCount(tenantId),
     queryFn: async () => {
+      if (!tenantId) {
+        return { count: 0 };
+      }
       try {
         const raw = await apiGet<unknown>(NOTIFICATION_API.GET_UNREAD_COUNT);
         const inner = unwrapApiResponse<Record<string, unknown>>(raw);
@@ -142,6 +191,7 @@ export function useUnreadCount() {
     },
     staleTime: 1000 * 30,
     refetchInterval: 1000 * 60,
+    enabled: !!tenantId,
     retry: false,
   });
 }
@@ -154,10 +204,7 @@ export function useMarkAsRead() {
       apiPost(NOTIFICATION_API.markAsRead(notificationId)),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: NOTIFICATION_QUERY_KEYS.list(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: NOTIFICATION_QUERY_KEYS.unreadCount(),
+        queryKey: NOTIFICATION_QUERY_KEYS.all,
       });
     },
   });
@@ -170,10 +217,7 @@ export function useMarkAllAsRead() {
     mutationFn: () => apiPost(NOTIFICATION_API.MARK_ALL_READ),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: NOTIFICATION_QUERY_KEYS.list(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: NOTIFICATION_QUERY_KEYS.unreadCount(),
+        queryKey: NOTIFICATION_QUERY_KEYS.all,
       });
     },
   });
@@ -205,9 +249,20 @@ function normalizeSettingsPayload(raw: unknown): NotificationSettings | null {
 }
 
 export function useNotificationSettings() {
+  const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
+
   return useQuery<NotificationSettings>({
-    queryKey: NOTIFICATION_QUERY_KEYS.settings(),
+    queryKey: NOTIFICATION_QUERY_KEYS.settings(tenantId),
     queryFn: async () => {
+      if (!tenantId) {
+        return {
+          schedule: true,
+          payment: true,
+          message: true,
+          wellness: true,
+          system: true,
+        };
+      }
       try {
         const raw = await apiGet<unknown>(PUSH_API.GET_SETTINGS);
         const parsed = normalizeSettingsPayload(raw);
@@ -225,6 +280,7 @@ export function useNotificationSettings() {
         system: true,
       };
     },
+    enabled: !!tenantId,
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -237,8 +293,19 @@ export function useUpdateNotificationSettings() {
       apiPut(PUSH_API.UPDATE_SETTINGS, settings),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: NOTIFICATION_QUERY_KEYS.settings(),
+        queryKey: NOTIFICATION_QUERY_KEYS.all,
       });
+    },
+    onError: () => {
+      const tid = useTenantStore.getState().tenantId?.trim() ?? '';
+      queryClient.invalidateQueries({
+        queryKey: NOTIFICATION_QUERY_KEYS.all,
+      });
+      if (tid) {
+        queryClient.invalidateQueries({
+          queryKey: NOTIFICATION_QUERY_KEYS.settings(tid),
+        });
+      }
     },
   });
 }

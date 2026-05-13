@@ -1,0 +1,4 @@
+Pretendard (Pretendard-*.otf in this folder)
+- Source: https://github.com/orioncactus/pretendard
+- License: SIL Open Font License 1.1 (https://scripts.sil.org/OFL)
+- Keep this notice with any redistribution of the font files.

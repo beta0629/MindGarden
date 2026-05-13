@@ -29,7 +29,7 @@ import { EmptyState } from '@/components/atoms/EmptyState';
 import {
   PSYCHO_EDUCATION_API_PLACEHOLDER,
   useHealingContents,
-  usePsychoEducationApiList,
+  usePsychoEducationCatalog,
 } from '@/api/hooks/useWellness';
 import { toDisplayString } from '@/utils/toDisplayString';
 import {
@@ -64,14 +64,14 @@ export default function PsychoEducationMain() {
   const [refreshing, setRefreshing] = useState(false);
 
   const healingQuery = useHealingContents();
-  const psychoApiQuery = usePsychoEducationApiList();
+  const psychoCatalogQuery = usePsychoEducationCatalog();
 
-  const catalogArticles = useMemo(() => {
-    if (psychoApiQuery.isSuccess && psychoApiQuery.data.length > 0) {
-      return psychoApiQuery.data;
-    }
-    return MOCK_PSYCHO_ARTICLES;
-  }, [psychoApiQuery.isSuccess, psychoApiQuery.data]);
+  const catalogArticles = useMemo(
+    () => psychoCatalogQuery.data?.articles ?? MOCK_PSYCHO_ARTICLES,
+    [psychoCatalogQuery.data?.articles],
+  );
+  const psychoSource = psychoCatalogQuery.data?.source ?? 'demo';
+  const psychoFallbackError = psychoCatalogQuery.data?.usedFallbackDueToError ?? false;
 
   const healingArticlePreview = useMemo(() => {
     const list = healingQuery.data ?? [];
@@ -105,9 +105,9 @@ export default function PsychoEducationMain() {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([healingQuery.refetch(), psychoApiQuery.refetch()]);
+    await Promise.all([healingQuery.refetch(), psychoCatalogQuery.refetch()]);
     setRefreshing(false);
-  }, [healingQuery, psychoApiQuery]);
+  }, [healingQuery, psychoCatalogQuery]);
 
   const navigateToDetail = (articleId: number) => {
     if (Platform.OS !== 'web') {
@@ -141,19 +141,24 @@ export default function PsychoEducationMain() {
             color: theme.colors.textSecondary,
           }}
         >
-          샘플 카드뉴스 · 심리 교육 전용 API는 {PSYCHO_EDUCATION_API_PLACEHOLDER}{' '}
-          (예정). 힐링 콘텐츠는 연동 시 아래에 표시됩니다.
+          {psychoSource === 'api'
+            ? `서버 목록(${PSYCHO_EDUCATION_API_PLACEHOLDER}). 북마크·읽기 완료는 이 기기(MMKV)에만 저장됩니다.`
+            : psychoFallbackError
+              ? `서버 목록(${PSYCHO_EDUCATION_API_PLACEHOLDER})을 불러오지 못해 샘플 카드뉴스를 표시합니다. 동기화로 재시도할 수 있습니다.`
+              : `샘플 카드뉴스 · 전용 API ${PSYCHO_EDUCATION_API_PLACEHOLDER}(예정). 서버 연동 시 목록이 바뀝니다.`}
+          {' '}
+          힐링 콘텐츠는 연동 시 아래에 표시됩니다.
         </Text>
       </View>
 
-      {psychoApiQuery.isError ? (
+      {psychoFallbackError ? (
         <View style={{ marginHorizontal: 16, marginBottom: 8 }}>
           <EmptyState
             title="심리 교육 서버 목록을 불러오지 못했습니다"
             description={`${PSYCHO_EDUCATION_API_PLACEHOLDER} 연결을 확인한 뒤 다시 시도해 주세요. 샘플 카드뉴스는 계속 이용할 수 있습니다.`}
             actionLabel="다시 시도"
             onAction={() => {
-              void psychoApiQuery.refetch();
+              void psychoCatalogQuery.refetch();
             }}
           />
         </View>
@@ -206,7 +211,9 @@ export default function PsychoEducationMain() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing || healingQuery.isFetching || psychoApiQuery.isFetching}
+            refreshing={
+              refreshing || healingQuery.isFetching || psychoCatalogQuery.isFetching
+            }
             onRefresh={handleRefresh}
             tintColor={theme.colors.primary}
           />

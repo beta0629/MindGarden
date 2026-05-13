@@ -100,5 +100,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     eas: {
       projectId: 'YOUR_EAS_PROJECT_ID',
     },
+    /** EAS/로컬 빌드 시 env 주입 — 소스에 PG 키 평문 커밋 금지 */
+    tossPaymentsClientKey: process.env.EXPO_PUBLIC_TOSS_PAYMENTS_CLIENT_KEY ?? '',
+    tossPaymentSuccessUrl: process.env.EXPO_PUBLIC_TOSS_PAYMENT_SUCCESS_URL ?? '',
+    tossPaymentFailUrl: process.env.EXPO_PUBLIC_TOSS_PAYMENT_FAIL_URL ?? '',
+    /** JSON 배열 문자열. 비우면 데모 카탈로그(`sessionExtensionCatalog.ts`) 사용 */
+    sessionExtensionCatalog: process.env.EXPO_PUBLIC_SESSION_EXTENSION_CATALOG_JSON ?? '',
   },
 });

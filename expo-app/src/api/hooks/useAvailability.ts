@@ -74,6 +74,30 @@ function unwrapListPayload<T>(raw: unknown): T[] {
   return [];
 }
 
+/** 백엔드/네트워크 에러를 사용자에게 노출 가능한 한 줄 메시지로 변환 */
+export function extractErrorMessage(error: unknown, fallback: string): string {
+  if (error == null) return fallback;
+  if (typeof error === 'string') return error;
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === 'object') {
+    const o = error as Record<string, unknown>;
+    if (typeof o.message === 'string' && o.message) return o.message;
+    if (typeof o.status === 'number' && o.status === 403) {
+      return '권한이 없습니다.';
+    }
+  }
+  return fallback;
+}
+
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+/** YYYY-MM-DD 포맷 + 유효 날짜인지 검증 */
+export function isValidDate(value: string): boolean {
+  if (!DATE_REGEX.test(value)) return false;
+  const d = new Date(`${value}T00:00:00`);
+  return !Number.isNaN(d.getTime());
+}
+
 function normalizeTime(t: unknown): string {
   if (t == null) return '';
   const s = String(t);
@@ -265,6 +289,12 @@ export function useCreateVacation() {
       endDate,
       reason,
     }: CreateVacationRequest) => {
+      if (!isValidDate(startDate) || !isValidDate(endDate)) {
+        throw new Error('휴가 시작일·종료일을 YYYY-MM-DD 형식으로 입력해 주세요.');
+      }
+      if (startDate > endDate) {
+        throw new Error('휴가 종료일은 시작일과 같거나 이후여야 합니다.');
+      }
       const dates = enumerateDatesInclusive(startDate, endDate);
       if (dates.length === 0) {
         throw new Error('유효한 휴가 기간이 아닙니다.');

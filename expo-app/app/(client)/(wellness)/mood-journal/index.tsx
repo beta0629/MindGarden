@@ -2,7 +2,7 @@
  * 감정 일기 메인 화면
  *
  * - 월 네비게이션 + 감정 달력 (이모지 표시)
- * - 감정 추이 바 차트 (주간/월간 토글)
+ * - 감정 추이 꺾은선 차트 (주간/월간 토글, SVG)
  * - "오늘의 기분 기록하기" CTA
  *
  * @author MindGarden
@@ -16,6 +16,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -27,17 +28,19 @@ import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
 import { fontSize as fontSizeTokens } from '@/theme/typography';
 import { AppTopBar } from '@/components/templates/AppTopBar';
+import { LineTrendChart } from '@/components/molecules/LineTrendChart';
 import { useMoodJournals, useMoodStats } from '@/api/hooks/useMoodJournal';
 import {
   WEEKDAYS,
-  MOOD_EMOJIS,
   MOOD_STAT_PERIODS,
   MOOD_STAT_PERIOD_LABELS,
   type MoodStatPeriod,
 } from '@/constants/moodConstants';
 
 const CELL_SIZE = 44;
-const BAR_MAX_HEIGHT = 100;
+const CHART_HEIGHT = 168;
+const screenWidth = Dimensions.get('window').width;
+const MOOD_LINE_CHART_WIDTH = screenWidth - 64;
 
 function getCalendarDays(year: number, month: number) {
   const firstDay = new Date(year, month, 1).getDay();
@@ -103,12 +106,74 @@ export default function MoodJournalIndex() {
 
   const todayStr = format(today, 'yyyy-MM-dd');
 
+  const maxStatValue = 5;
+
+  const chartLabels =
+    stats?.map((s) => format(new Date(s.date), 'M/d')) ?? [];
+  const chartValues = stats?.map((s) => s.value) ?? [];
+  const hasAnyMoodPoint = chartValues.some((v) => v > 0);
+
+  const renderChartBody = () => {
+    if (stats == null) {
+      return (
+        <Text
+          style={{
+            fontFamily: theme.fontFamily.regular,
+            fontSize: theme.fontSize.sm,
+            color: theme.colors.textSecondary,
+            textAlign: 'center',
+            paddingVertical: 24,
+          }}
+        >
+          불러오는 중...
+        </Text>
+      );
+    }
+    if (chartValues.length === 0) {
+      return (
+        <Text
+          style={{
+            fontFamily: theme.fontFamily.regular,
+            fontSize: theme.fontSize.sm,
+            color: theme.colors.textSecondary,
+            textAlign: 'center',
+            paddingVertical: 24,
+          }}
+        >
+          이 기간에 표시할 데이터가 없습니다.
+        </Text>
+      );
+    }
+    return (
+      <>
+        <LineTrendChart
+          values={chartValues}
+          labels={chartLabels}
+          maxValue={maxStatValue}
+          width={MOOD_LINE_CHART_WIDTH}
+          height={CHART_HEIGHT}
+        />
+        {hasAnyMoodPoint ? null : (
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.regular,
+              fontSize: theme.fontSize.xs,
+              color: theme.colors.textTertiary,
+              textAlign: 'center',
+              marginTop: 8,
+            }}
+          >
+            아직 이 기간에 기록이 없어요. 기록하면 추이가 연결됩니다.
+          </Text>
+        )}
+      </>
+    );
+  };
+
   const emojiForDate = (day: number): string | null => {
     const dateStr = format(new Date(calYear, calMonth, day), 'yyyy-MM-dd');
     return entries?.[dateStr]?.emoji ?? null;
   };
-
-  const maxStatValue = 5;
 
   return (
     <SafeAreaView
@@ -312,50 +377,8 @@ export default function MoodJournalIndex() {
             </View>
           </View>
 
-          {/* 바 차트 */}
-          <View style={styles.barChart}>
-            {stats?.map((stat) => {
-              const barHeight =
-                stat.value > 0
-                  ? (stat.value / maxStatValue) * BAR_MAX_HEIGHT
-                  : 4;
-              const dayLabel = format(new Date(stat.date), 'd');
-              const emoji = stat.value > 0
-                ? MOOD_EMOJIS.find((m) => m.value === stat.value)?.emoji
-                : null;
-
-              return (
-                <View key={stat.date} style={styles.barColumn}>
-                  {emoji && (
-                    <Text style={styles.barEmoji}>{emoji}</Text>
-                  )}
-                  <View
-                    style={[
-                      styles.bar,
-                      {
-                        height: barHeight,
-                        backgroundColor:
-                          stat.value > 0
-                            ? theme.colors.primary
-                            : theme.colors.gray[200],
-                        borderRadius: theme.borderRadius.sm,
-                      },
-                    ]}
-                  />
-                  <Text
-                    style={{
-                      fontFamily: theme.fontFamily.regular,
-                      fontSize: theme.fontSize['2xs'],
-                      color: theme.colors.textTertiary,
-                      marginTop: 4,
-                    }}
-                  >
-                    {dayLabel}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
+          {/* 추이 꺾은선 (Phase 3-B: Skia 미도입 시 SVG로 동일 역할) */}
+          <View style={styles.chartBody}>{renderChartBody()}</View>
         </Animated.View>
 
         <View style={styles.bottomSpacer} />
@@ -409,6 +432,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
     padding: 16,
   },
+  chartBody: {
+    alignItems: 'center',
+    minHeight: CHART_HEIGHT + 8,
+  },
   chartHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -424,25 +451,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 9999,
     borderWidth: 1,
-  },
-  barChart: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-around',
-    height: BAR_MAX_HEIGHT + 40,
-  },
-  barColumn: {
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    flex: 1,
-  },
-  barEmoji: {
-    fontSize: fontSizeTokens.xs,
-    marginBottom: 2,
-  },
-  bar: {
-    width: 16,
-    minHeight: 4,
   },
   bottomSpacer: { height: 32 },
 });

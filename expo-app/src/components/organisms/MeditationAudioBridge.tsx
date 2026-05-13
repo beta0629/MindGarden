@@ -13,7 +13,10 @@ import {
   useAudioPlayerStatus,
 } from 'expo-audio';
 
-import { MEDITATION_DEFAULT_STREAM_URI } from '@/constants/meditationData';
+import {
+  MEDITATION_DEFAULT_STREAM_URI,
+  MEDITATION_LOCAL_DEMO_SILENCE,
+} from '@/constants/meditationData';
 import { useMeditationStore } from '@/stores/useMeditationStore';
 import {
   MeditationPlaybackProvider,
@@ -49,7 +52,9 @@ function MeditationAudioBridgeInner({ children }: { children: ReactNode }) {
   const uri =
     currentTrack == null
       ? undefined
-      : currentTrack.audioUri ?? MEDITATION_DEFAULT_STREAM_URI;
+      : currentTrack.audioUri ??
+        MEDITATION_DEFAULT_STREAM_URI ??
+        MEDITATION_LOCAL_DEMO_SILENCE;
   const player = useAudioPlayer(uri, {
     updateInterval: 300,
     downloadFirst: true,

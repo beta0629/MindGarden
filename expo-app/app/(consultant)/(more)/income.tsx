@@ -47,6 +47,8 @@ import {
   type MonthlyIncome,
   type SessionTypeDistribution,
 } from '@/api/hooks/useIncome';
+import { extractErrorMessage } from '@/api/hooks/useAvailability';
+import { useTenantStore } from '@/stores/useTenantStore';
 
 const formatCurrency = (amount: number): string => {
   if (!amount && amount !== 0) return '₩0';
@@ -66,17 +68,20 @@ const formatMonthLabel = (month: string): string => {
 /** 애니메이션 바 차트 개별 막대 */
 function AnimatedBar({
   item,
-  maxIncome,
+  maxValue,
   isCurrent,
   index,
+  showAmount,
 }: {
   readonly item: MonthlyIncome;
-  readonly maxIncome: number;
+  readonly maxValue: number;
   readonly isCurrent: boolean;
   readonly index: number;
+  readonly showAmount: boolean;
 }) {
   const theme = useTheme();
-  const heightPct = maxIncome > 0 ? (item.income / maxIncome) * 100 : 0;
+  const value = showAmount ? item.income : item.sessions;
+  const heightPct = maxValue > 0 ? (value / maxValue) * 100 : 0;
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -90,6 +95,12 @@ function AnimatedBar({
     height: `${Math.max(heightPct * progress.value, 3)}%`,
   }));
 
+  const headerLabel = (() => {
+    if (value <= 0) return '-';
+    if (showAmount) return formatCurrency(item.income);
+    return `${item.sessions}건`;
+  })();
+
   return (
     <View style={styles.barWrapper}>
       <Text
@@ -102,7 +113,7 @@ function AnimatedBar({
         }}
         numberOfLines={1}
       >
-        {item.income > 0 ? formatCurrency(item.income) : '-'}
+        {headerLabel}
       </Text>
       <View style={styles.barTrack}>
         <Animated.View
@@ -136,13 +147,16 @@ function AnimatedBar({
 /** 유형별 분포 수평 바 */
 function TypeDistributionBar({
   item,
-  maxAmount,
+  maxValue,
+  showAmount,
 }: {
   readonly item: SessionTypeDistribution;
-  readonly maxAmount: number;
+  readonly maxValue: number;
+  readonly showAmount: boolean;
 }) {
   const theme = useTheme();
-  const widthPct = maxAmount > 0 ? (item.amount / maxAmount) * 100 : 0;
+  const value = showAmount ? item.amount : item.count;
+  const widthPct = maxValue > 0 ? (value / maxValue) * 100 : 0;
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -155,6 +169,10 @@ function TypeDistributionBar({
   const animatedStyle = useAnimatedStyle(() => ({
     width: `${Math.max(widthPct * progress.value, 5)}%`,
   }));
+
+  const trailingText = showAmount
+    ? `${item.count}건 · ${formatCurrency(item.amount)}`
+    : `${item.count}건`;
 
   return (
     <View style={{ marginBottom: theme.spacing.md }}>
@@ -175,7 +193,7 @@ function TypeDistributionBar({
             color: theme.colors.textSecondary,
           }}
         >
-          {item.count}건 · {formatCurrency(item.amount)}
+          {trailingText}
         </Text>
       </View>
       <View
@@ -200,8 +218,18 @@ function TypeDistributionBar({
 }
 
 /** 상세 내역 리스트 아이템 */
-function DetailListItem({ item, index }: { readonly item: IncomeDetailItem; readonly index: number }) {
+function DetailListItem({
+  item,
+  index,
+  showAmount,
+}: {
+  readonly item: IncomeDetailItem;
+  readonly index: number;
+  readonly showAmount: boolean;
+}) {
   const theme = useTheme();
+
+  const rightLabel = showAmount ? formatCurrency(item.amount) : '완료';
 
   return (
     <Animated.View
@@ -217,7 +245,7 @@ function DetailListItem({ item, index }: { readonly item: IncomeDetailItem; read
         },
       ]}
       accessibilityRole="text"
-      accessibilityLabel={`${item.date} ${item.clientName} ${formatCurrency(item.amount)}`}
+      accessibilityLabel={`${item.date} ${item.clientName} ${rightLabel}`}
     >
       <View style={styles.detailLeft}>
         <Text
@@ -249,7 +277,7 @@ function DetailListItem({ item, index }: { readonly item: IncomeDetailItem; read
             color: theme.colors.primary,
           }}
         >
-          {formatCurrency(item.amount)}
+          {rightLabel}
         </Text>
         <Text
           style={{
@@ -269,14 +297,27 @@ function DetailListItem({ item, index }: { readonly item: IncomeDetailItem; read
 export default function ConsultantIncome() {
   const theme = useTheme();
   const user = useAuthStore((s) => s.user);
-  const consultantId = user?.id;
+  const role = useAuthStore((s) => s.role);
+  const tenantId = useTenantStore((s) => s.tenantId);
+  const isConsultant = role === 'consultant';
+  const consultantId = isConsultant ? user?.id : undefined;
 
   const [currentMonth, setCurrentMonth] = useState(getCurrentMonth);
 
-  const { data: report, isLoading: loadingReport, isError: errorReport, refetch: refetchReport } =
-    useIncomeReport(consultantId, currentMonth);
-  const { data: details, isLoading: loadingDetails, isError: errorDetails, refetch: refetchDetails } =
-    useIncomeDetails(consultantId, currentMonth);
+  const {
+    data: report,
+    isLoading: loadingReport,
+    isError: errorReport,
+    error: reportError,
+    refetch: refetchReport,
+  } = useIncomeReport(consultantId, currentMonth);
+  const {
+    data: details,
+    isLoading: loadingDetails,
+    isError: errorDetails,
+    error: detailsError,
+    refetch: refetchDetails,
+  } = useIncomeDetails(consultantId, currentMonth);
 
   const triggerHaptic = useCallback(() => {
     if (Platform.OS !== 'web') {
@@ -296,18 +337,86 @@ export default function ConsultantIncome() {
     [triggerHaptic],
   );
 
-  const maxIncome = useMemo(() => {
-    if (!report?.monthlyTrend?.length) return 1;
-    return Math.max(...report.monthlyTrend.map((d) => d.income), 1);
-  }, [report]);
+  const incomeAvailable = report?.incomeAvailable ?? false;
 
-  const maxTypeAmount = useMemo(() => {
+  const maxBarValue = useMemo(() => {
+    if (!report?.monthlyTrend?.length) return 1;
+    const values = report.monthlyTrend.map((d) =>
+      incomeAvailable ? d.income : d.sessions,
+    );
+    return Math.max(...values, 1);
+  }, [report, incomeAvailable]);
+
+  const maxTypeValue = useMemo(() => {
     if (!report?.sessionTypeDistribution?.length) return 1;
-    return Math.max(...report.sessionTypeDistribution.map((d) => d.amount), 1);
-  }, [report]);
+    const values = report.sessionTypeDistribution.map((d) =>
+      incomeAvailable ? d.amount : d.count,
+    );
+    return Math.max(...values, 1);
+  }, [report, incomeAvailable]);
 
   const isLoading = loadingReport || loadingDetails;
   const isError = errorReport || errorDetails;
+
+  if (!user) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: true, title: '수입 리포트' }} />
+        <View
+          style={[
+            styles.container,
+            { backgroundColor: theme.colors.bgMain, padding: theme.spacing.lg },
+          ]}
+        >
+          <EmptyState
+            icon={<DollarSign size={32} color={theme.colors.textTertiary} />}
+            title="로그인이 필요합니다"
+            description="상담사 계정으로 로그인한 뒤 다시 시도해 주세요"
+          />
+        </View>
+      </>
+    );
+  }
+
+  if (!isConsultant || !consultantId) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: true, title: '수입 리포트' }} />
+        <View
+          style={[
+            styles.container,
+            { backgroundColor: theme.colors.bgMain, padding: theme.spacing.lg },
+          ]}
+        >
+          <EmptyState
+            icon={<DollarSign size={32} color={theme.colors.textTertiary} />}
+            title="상담사만 접근할 수 있습니다"
+            description="상담사 계정으로 로그인한 뒤 다시 시도해 주세요"
+          />
+        </View>
+      </>
+    );
+  }
+
+  if (!tenantId) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: true, title: '수입 리포트' }} />
+        <View
+          style={[
+            styles.container,
+            { backgroundColor: theme.colors.bgMain, padding: theme.spacing.lg },
+          ]}
+        >
+          <EmptyState
+            icon={<DollarSign size={32} color={theme.colors.textTertiary} />}
+            title="기관 정보가 없습니다"
+            description="기관(테넌트)을 선택한 뒤 다시 시도해 주세요"
+          />
+        </View>
+      </>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -331,6 +440,10 @@ export default function ConsultantIncome() {
   }
 
   if (isError || !report) {
+    const description = extractErrorMessage(
+      reportError ?? detailsError,
+      '네트워크 상태를 확인한 뒤 다시 시도해 주세요.',
+    );
     return (
       <>
         <Stack.Screen options={{ headerShown: true, title: '수입 리포트' }} />
@@ -343,7 +456,7 @@ export default function ConsultantIncome() {
           <EmptyState
             icon={<DollarSign size={32} color={theme.colors.textTertiary} />}
             title="수입 정보를 불러올 수 없습니다"
-            description="네트워크 상태를 확인한 뒤 다시 시도해 주세요."
+            description={description}
           />
           <Pressable
             onPress={() => {
@@ -442,32 +555,57 @@ export default function ConsultantIncome() {
           >
             <StatCard
               icon={DollarSign}
-              value={formatCurrency(report?.totalIncome ?? 0)}
+              value={incomeAvailable ? formatCurrency(report.totalIncome) : '준비 중'}
               label="총 수입"
               index={0}
               accentColor={theme.colors.primary}
             />
             <StatCard
               icon={FileText}
-              value={report?.totalSessions ?? 0}
-              label="상담 건수"
+              value={report.totalSessions}
+              label="완료 상담"
               index={1}
               accentColor={theme.colors.accent}
             />
             <StatCard
               icon={Star}
-              value={
-                report?.avgRating
-                  ? report.avgRating.toFixed(1)
-                  : '-'
-              }
+              value={report.avgRating > 0 ? report.avgRating.toFixed(1) : '-'}
               label="평균 평점"
               index={2}
               accentColor={theme.colors.warning}
             />
           </ScrollView>
 
-          {/* 월별 수입 바 차트 */}
+          {/* 수입 데이터 미제공 안내 (백엔드 결제·정산 API 연동 전) */}
+          {!incomeAvailable && (
+            <Animated.View
+              entering={FadeInDown.delay(150).duration(300)}
+              style={[
+                styles.infoBanner,
+                {
+                  backgroundColor: theme.colors.accentSoft,
+                  borderRadius: theme.borderRadius.lg,
+                  marginTop: theme.spacing.lg,
+                  padding: theme.spacing.md,
+                },
+              ]}
+              accessibilityRole="text"
+              accessibilityLabel="수입 금액은 결제·정산 API 연동 후 표시됩니다"
+            >
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: theme.fontSize.xs,
+                  color: theme.colors.textSecondary,
+                  textAlign: 'center',
+                }}
+              >
+                수입 금액은 결제·정산 연동 후 표시됩니다. 현재는 완료된 상담 건수와 평점만 제공됩니다.
+              </Text>
+            </Animated.View>
+          )}
+
+          {/* 월별 추이 바 차트 (수입 미제공 시 완료 상담 건수 기준) */}
           <Animated.View
             entering={FadeInDown.delay(200).duration(300)}
             style={[
@@ -489,61 +627,62 @@ export default function ConsultantIncome() {
                   { color: theme.colors.textMain, marginLeft: theme.spacing.sm },
                 ]}
               >
-                월별 수입 추이
+                {incomeAvailable ? '월별 수입 추이' : '월별 상담 건수'}
               </Text>
             </View>
             <View style={styles.chartContainer}>
-              {report?.monthlyTrend?.map((item, idx) => (
+              {report.monthlyTrend.map((item, idx) => (
                 <AnimatedBar
                   key={item.month}
                   item={item}
-                  maxIncome={maxIncome}
+                  maxValue={maxBarValue}
                   isCurrent={item.month === currentMonth}
                   index={idx}
+                  showAmount={incomeAvailable}
                 />
               ))}
             </View>
           </Animated.View>
 
           {/* 상담 유형별 분포 */}
-          {report?.sessionTypeDistribution &&
-            report.sessionTypeDistribution.length > 0 && (
-              <Animated.View
-                entering={FadeInDown.delay(300).duration(300)}
-                style={[
-                  styles.chartSection,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderRadius: theme.borderRadius.xl,
-                    padding: theme.spacing.lg,
-                    marginTop: theme.spacing.lg,
-                    ...theme.shadows.sm,
-                  },
-                ]}
-              >
-                <View style={styles.sectionHeader}>
-                  <TrendingUp size={18} color={theme.colors.accent} />
-                  <Text
-                    style={[
-                      theme.textStyles.h3,
-                      {
-                        color: theme.colors.textMain,
-                        marginLeft: theme.spacing.sm,
-                      },
-                    ]}
-                  >
-                    상담 유형별 분포
-                  </Text>
-                </View>
-                {report.sessionTypeDistribution.map((item) => (
-                  <TypeDistributionBar
-                    key={item.type}
-                    item={item}
-                    maxAmount={maxTypeAmount}
-                  />
-                ))}
-              </Animated.View>
-            )}
+          {report.sessionTypeDistribution.length > 0 && (
+            <Animated.View
+              entering={FadeInDown.delay(300).duration(300)}
+              style={[
+                styles.chartSection,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderRadius: theme.borderRadius.xl,
+                  padding: theme.spacing.lg,
+                  marginTop: theme.spacing.lg,
+                  ...theme.shadows.sm,
+                },
+              ]}
+            >
+              <View style={styles.sectionHeader}>
+                <TrendingUp size={18} color={theme.colors.accent} />
+                <Text
+                  style={[
+                    theme.textStyles.h3,
+                    {
+                      color: theme.colors.textMain,
+                      marginLeft: theme.spacing.sm,
+                    },
+                  ]}
+                >
+                  상담 유형별 분포
+                </Text>
+              </View>
+              {report.sessionTypeDistribution.map((item) => (
+                <TypeDistributionBar
+                  key={item.type}
+                  item={item}
+                  maxValue={maxTypeValue}
+                  showAmount={incomeAvailable}
+                />
+              ))}
+            </Animated.View>
+          )}
 
           {/* 상세 내역 */}
           <Animated.View
@@ -564,13 +703,22 @@ export default function ConsultantIncome() {
 
             {details && details.length > 0 ? (
               details.map((item, idx) => (
-                <DetailListItem key={item.id} item={item} index={idx} />
+                <DetailListItem
+                  key={item.id}
+                  item={item}
+                  index={idx}
+                  showAmount={incomeAvailable}
+                />
               ))
             ) : (
               <EmptyState
                 icon={<DollarSign size={32} color={theme.colors.textTertiary} />}
                 title="이번 달 상담 내역이 없습니다"
-                description="상담이 완료되면 수입 내역이 표시됩니다"
+                description={
+                  incomeAvailable
+                    ? '상담이 완료되면 수입 내역이 표시됩니다'
+                    : '상담이 완료되면 상세 내역이 표시됩니다'
+                }
               />
             )}
           </Animated.View>
@@ -656,5 +804,9 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     overflow: 'hidden',
+  },
+  infoBanner: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

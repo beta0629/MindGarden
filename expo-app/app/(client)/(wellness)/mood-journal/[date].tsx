@@ -49,7 +49,8 @@ export default function MoodJournalDetail() {
 
   const handleEdit = () => {
     hapticFeedback();
-    router.push('/(client)/(wellness)/mood-journal/create');
+    if (!date) return;
+    router.push(`/(client)/(wellness)/mood-journal/create?date=${encodeURIComponent(date)}`);
   };
 
   const handleDelete = () => {

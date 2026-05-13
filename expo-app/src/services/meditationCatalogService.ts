@@ -13,6 +13,7 @@ import {
   MOCK_MEDITATION_TRACKS,
   MEDITATION_DEFAULT_STREAM_URI,
   MEDITATION_GRADIENT_MAP,
+  MEDITATION_LOCAL_DEMO_SILENCE,
   type MeditationCategory,
   type MeditationTrack,
 } from '@/constants/meditationData';
@@ -95,13 +96,30 @@ function normalizeTrackList(raw: unknown): MeditationTrack[] | null {
   return out.length > 0 ? out : null;
 }
 
+function resolveFallbackStreamSource(): string | number {
+  if (MEDITATION_DEFAULT_STREAM_URI) {
+    return MEDITATION_DEFAULT_STREAM_URI;
+  }
+  return MEDITATION_LOCAL_DEMO_SILENCE;
+}
+
+function trackHasAudioSource(t: MeditationTrack): boolean {
+  if (t.audioUri == null) {
+    return false;
+  }
+  if (typeof t.audioUri === 'number') {
+    return true;
+  }
+  return t.audioUri.trim().length > 0;
+}
+
 function applyDefaultAudio(tracks: MeditationTrack[]): MeditationTrack[] {
   return tracks.map((t) =>
-    t.audioUri
+    trackHasAudioSource(t)
       ? t
       : {
           ...t,
-          audioUri: MEDITATION_DEFAULT_STREAM_URI,
+          audioUri: resolveFallbackStreamSource(),
         },
   );
 }

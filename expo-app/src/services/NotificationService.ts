@@ -28,8 +28,12 @@ import {
 import { showInAppToast } from '../components/organisms/InAppNotificationToast';
 import { stripHtmlToPlainText } from '../utils/safeDisplay';
 
-// TODO(expo-push): Spring에 `/api/v1/mobile/push-token/register`·설정 API가 없으면 4xx 무시·계약만 맞춤 — CONSULTANT_CLIENT_APP_PLAN.md Phase 3 항목 5
-
+/**
+ * 푸시 백엔드 계약(프론트·Expo 공통, 웹 `PushNotificationService` 동일 경로):
+ * - `POST /api/v1/mobile/push-token/register` · `POST .../unregister` — 바디에 tenantId 포함(멀티테넌트).
+ * - `GET|PUT /api/v1/mobile/push-settings` — 카테고리별 boolean 5종; 이 저장소에는 아직 Java 매핑이 없을 수 있음(404 시 무시).
+ * @see `expo-app/src/api/endpoints.ts` 의 PUSH_API 주석
+ */
 function navigateToSystemNotifications(role: 'client' | 'consultant'): void {
   const path =
     role === 'consultant'

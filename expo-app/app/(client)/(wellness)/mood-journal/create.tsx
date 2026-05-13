@@ -10,7 +10,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -24,7 +24,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   FadeInDown,
@@ -32,16 +32,21 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
 import { fontSize as fontSizeTokens } from '@/theme/typography';
 import { AppTopBar } from '@/components/templates/AppTopBar';
 import { Chip } from '@/components/atoms/Chip';
-import { useCreateMoodJournal } from '@/api/hooks/useMoodJournal';
+import {
+  useCreateMoodJournal,
+  useMoodJournalDetail,
+  useUpdateMoodJournal,
+} from '@/api/hooks/useMoodJournal';
 import { MOOD_EMOJIS, EMOTION_TAGS, type EmotionTag } from '@/constants/moodConstants';
 
 const EMOJI_BUTTON_SIZE = 56;
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 interface EmojiButtonProps {
   readonly emoji: string;
@@ -108,15 +113,37 @@ function EmojiButton({ emoji, label, selected, onPress }: EmojiButtonProps) {
 export default function MoodJournalCreate() {
   const theme = useTheme();
   const router = useRouter();
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const todayLabel = format(new Date(), 'M월 d일 (EEEE)', { locale: ko });
+  const { date: dateParam } = useLocalSearchParams<{ date?: string }>();
+  const editDate =
+    typeof dateParam === 'string' && ISO_DATE.test(dateParam) ? dateParam : undefined;
+  const isEdit = Boolean(editDate);
+  const targetDate =
+    isEdit && editDate ? editDate : format(new Date(), 'yyyy-MM-dd');
+  const dateLabel = format(
+    parseISO(targetDate),
+    'M월 d일 (EEEE)',
+    { locale: ko },
+  );
 
   const [selectedMood, setSelectedMood] = useState(0);
   const [selectedTags, setSelectedTags] = useState<EmotionTag[]>([]);
   const [memo, setMemo] = useState('');
   const [shareWithConsultant, setShareWithConsultant] = useState(false);
 
+  const { data: existing, isLoading: entryLoading } = useMoodJournalDetail(
+    isEdit ? targetDate : '',
+  );
+
   const createMutation = useCreateMoodJournal();
+  const updateMutation = useUpdateMoodJournal();
+
+  useEffect(() => {
+    if (!existing) return;
+    setSelectedMood(existing.moodValue);
+    setSelectedTags([...existing.tags]);
+    setMemo(existing.memo);
+    setShareWithConsultant(existing.sharedWithConsultant);
+  }, [existing]);
 
   const hapticFeedback = useCallback(() => {
     if (Platform.OS !== 'web') {
@@ -138,13 +165,18 @@ export default function MoodJournalCreate() {
     }
     hapticFeedback();
     try {
-      await createMutation.mutateAsync({
-        date: todayStr,
+      const payload = {
+        date: targetDate,
         moodValue: selectedMood,
         tags: selectedTags,
         memo,
         sharedWithConsultant: shareWithConsultant,
-      });
+      };
+      if (isEdit) {
+        await updateMutation.mutateAsync(payload);
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -154,12 +186,60 @@ export default function MoodJournalCreate() {
     }
   };
 
+  if (isEdit && entryLoading) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
+        edges={['top']}
+      >
+        <AppTopBar title="기분 수정" canGoBack />
+        <View style={styles.loadingWrap}>
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.regular,
+              fontSize: theme.fontSize.sm,
+              color: theme.colors.textSecondary,
+            }}
+          >
+            불러오는 중...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isEdit && !existing) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
+        edges={['top']}
+      >
+        <AppTopBar title="기분 수정" canGoBack />
+        <View style={styles.loadingWrap}>
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.regular,
+              fontSize: theme.fontSize.sm,
+              color: theme.colors.textSecondary,
+              textAlign: 'center',
+              paddingHorizontal: 24,
+            }}
+          >
+            이 날짜에 수정할 감정 일기가 없습니다.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const savePending = createMutation.isPending || updateMutation.isPending;
+
   return (
     <SafeAreaView
       style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
       edges={['top']}
     >
-      <AppTopBar title="기분 기록" canGoBack />
+      <AppTopBar title={isEdit ? '기분 수정' : '기분 기록'} canGoBack />
 
       <KeyboardAvoidingView
         style={styles.flex}
@@ -181,7 +261,7 @@ export default function MoodJournalCreate() {
                 marginBottom: 8,
               }}
             >
-              {todayLabel}
+              {dateLabel}
             </Text>
           </Animated.View>
 
@@ -350,13 +430,13 @@ export default function MoodJournalCreate() {
           <Animated.View entering={FadeInDown.delay(400).springify()}>
             <Pressable
               onPress={handleSave}
-              disabled={createMutation.isPending}
+              disabled={savePending}
               style={({ pressed }) => [
                 styles.saveButton,
                 {
                   backgroundColor: theme.colors.primary,
                   borderRadius: theme.borderRadius.xl,
-                  opacity: createMutation.isPending ? 0.6 : 1,
+                  opacity: savePending ? 0.6 : 1,
                   transform: [{ scale: pressed ? 0.97 : 1 }],
                 },
               ]}
@@ -370,7 +450,7 @@ export default function MoodJournalCreate() {
                   color: theme.colors.textOnPrimary,
                 }}
               >
-                {createMutation.isPending ? '저장 중...' : '저장'}
+                {savePending ? '저장 중...' : '저장'}
               </Text>
             </Pressable>
           </Animated.View>
@@ -384,6 +464,12 @@ export default function MoodJournalCreate() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
+  loadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
   flex: { flex: 1 },
   scroll: { paddingHorizontal: 16, paddingTop: 8 },
   section: {

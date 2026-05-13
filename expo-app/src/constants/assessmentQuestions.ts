@@ -1,6 +1,8 @@
 /**
- * 자가 심리검사 문항 데이터 (퍼블릭 도메인)
- * PHQ-9 (우울) / GAD-7 (불안) / PSS (스트레스)
+ * 자가 점검 문항 데이터 (PHQ-9 / GAD-7 / PSS-10)
+ *
+ * 원 도구는 각 저작자·배포 정책에 따른 사용 허락을 전제로 한다. 앱 내 해석·등급 문구는
+ * **참고용 자기 이해**용이며 임상 진단·의료행위·처방을 구성하지 않는다 (`EXPO_NATIVE_APP_PLAN.md` §10.1).
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -86,96 +88,108 @@ export const PSS_REVERSE_ITEMS = [3, 4, 6, 7] as const;
 function interpretPHQ9(score: number): AssessmentInterpretation {
   if (score <= 4) {
     return {
-      level: '정상',
+      level: '참고·낮은 편',
       severity: 'minimal',
-      description: '현재 우울 증상이 거의 없습니다. 건강한 심리 상태를 유지하고 계세요.',
+      description:
+        '응답만 보면 최근 2주간 불편이 크게 느껴지지 않는 편입니다(참고용). 지속 불편이 있으면 전문 상담을 고려하세요.',
     };
   }
   if (score <= 9) {
     return {
-      level: '경미한 우울',
+      level: '경미한 불편 (참고)',
       severity: 'mild',
-      description: '약간의 우울 증상이 있습니다. 자기 돌봄에 신경 쓰시고, 지속되면 전문가 상담을 권합니다.',
+      description:
+        '응답상 불편이 어느 정도 느껴질 수 있습니다. 자기 돌봄을 이어가고, 지속되면 전문 상담을 고려하세요.',
     };
   }
   if (score <= 14) {
     return {
-      level: '중등도 우울',
+      level: '중간 정도 불편 (참고)',
       severity: 'moderate',
-      description: '중등도의 우울 증상이 있습니다. 전문 상담사와 상담을 받아보시는 것을 권합니다.',
+      description:
+        '응답상 불편이 중간 정도로 보입니다(참고용). 전문 상담을 받아보는 것을 권합니다.',
     };
   }
   if (score <= 19) {
     return {
-      level: '중증 우울',
+      level: '높은 불편 (참고)',
       severity: 'severe',
-      description: '중증의 우울 증상이 있습니다. 가능한 빨리 전문가 상담을 받으시길 강력히 권합니다.',
+      description:
+        '응답상 불편이 높게 나타날 수 있습니다(참고용). 가까운 전문 상담·의료기관의 도움을 권합니다.',
     };
   }
   return {
-    level: '심각한 우울',
+    level: '매우 높은 불편 (참고)',
     severity: 'severe',
-    description: '심각한 우울 증상이 있습니다. 즉시 전문가 도움을 받으시기 바랍니다.',
+    description:
+      '응답이 매우 높은 불편을 시사할 수 있습니다(참고용). 전문 상담·의료기관 도움을 받는 것을 권합니다.',
   };
 }
 
 function interpretGAD7(score: number): AssessmentInterpretation {
   if (score <= 4) {
     return {
-      level: '정상',
+      level: '참고·낮은 편',
       severity: 'minimal',
-      description: '현재 불안 증상이 거의 없습니다.',
+      description:
+        '응답만 보면 최근 2주간 불안에 대한 불편이 크게 느껴지지 않는 편입니다(참고용).',
     };
   }
   if (score <= 9) {
     return {
-      level: '경미한 불안',
+      level: '경미한 불편 (참고)',
       severity: 'mild',
-      description: '약간의 불안 증상이 있습니다. 이완 기법이나 호흡법을 시도해보세요.',
+      description:
+        '응답상 어느 정도 불안이 느껴질 수 있습니다. 이완·호흡을 시도하고, 지속되면 전문 상담을 고려하세요.',
     };
   }
   if (score <= 14) {
     return {
-      level: '중등도 불안',
+      level: '중간 정도 불편 (참고)',
       severity: 'moderate',
-      description: '중등도의 불안 증상이 있습니다. 전문 상담을 권합니다.',
+      description:
+        '응답상 불안이 중간 정도로 느껴질 수 있습니다(참고용). 전문 상담을 권합니다.',
     };
   }
   return {
-    level: '심한 불안',
+    level: '높은 불편 (참고)',
     severity: 'severe',
-    description: '심한 불안 증상이 있습니다. 전문가 상담을 강력히 권합니다.',
+    description:
+      '응답상 불안이 높게 느껴질 수 있습니다(참고용). 전문 상담·의료기관 도움을 권합니다.',
   };
 }
 
 function interpretPSS(score: number): AssessmentInterpretation {
   if (score <= 13) {
     return {
-      level: '낮은 스트레스',
+      level: '낮은 스트레스 (참고)',
       severity: 'minimal',
-      description: '스트레스 수준이 낮습니다. 현재 상태를 잘 유지하세요.',
+      description:
+        '응답만 보면 스트레스가 크게 느껴지지 않는 편입니다(참고용). 현재 리듬을 유지하세요.',
     };
   }
   if (score <= 26) {
     return {
       level: '보통 스트레스',
       severity: 'moderate',
-      description: '보통 수준의 스트레스를 경험하고 있습니다. 적절한 스트레스 관리를 권합니다.',
+      description:
+        '응답상 스트레스가 보통 수준으로 느껴질 수 있습니다(참고용). 스트레스 관리와 전문 상담을 고려하세요.',
     };
   }
   return {
     level: '높은 스트레스',
     severity: 'severe',
-    description: '높은 스트레스를 경험하고 있습니다. 전문가 상담을 권합니다.',
+    description:
+      '응답상 스트레스가 높게 느껴질 수 있습니다(참고용). 전문 상담·의료기관 도움을 권합니다.',
   };
 }
 
 export const ASSESSMENTS: Record<AssessmentType, AssessmentDefinition> = {
   PHQ9: {
     type: 'PHQ9',
-    name: 'PHQ-9 우울 검사',
+    name: 'PHQ-9 우울 자가 점검',
     shortName: 'PHQ-9',
-    description: '지난 2주 동안의 우울 증상을 평가합니다.',
+    description: '지난 2주 동안의 기분·행동을 스스로 살펴봅니다(참고용, 진단 아님).',
     questions: PHQ9_QUESTIONS,
     maxScore: 27,
     estimatedMinutes: 3,
@@ -184,9 +198,9 @@ export const ASSESSMENTS: Record<AssessmentType, AssessmentDefinition> = {
   },
   GAD7: {
     type: 'GAD7',
-    name: 'GAD-7 불안 검사',
+    name: 'GAD-7 불안 자가 점검',
     shortName: 'GAD-7',
-    description: '지난 2주 동안의 불안 증상을 평가합니다.',
+    description: '지난 2주 동안의 불안에 대한 느낌을 스스로 살펴봅니다(참고용, 진단 아님).',
     questions: GAD7_QUESTIONS,
     maxScore: 21,
     estimatedMinutes: 2,
@@ -195,9 +209,9 @@ export const ASSESSMENTS: Record<AssessmentType, AssessmentDefinition> = {
   },
   PSS: {
     type: 'PSS',
-    name: 'PSS 스트레스 검사',
+    name: 'PSS 스트레스 자가 점검',
     shortName: 'PSS',
-    description: '지난 한 달 동안의 스트레스 수준을 평가합니다.',
+    description: '지난 한 달 동안의 스트레스를 스스로 살펴봅니다(참고용, 진단 아님).',
     questions: PSS_QUESTIONS,
     maxScore: 40,
     estimatedMinutes: 5,
@@ -207,3 +221,5 @@ export const ASSESSMENTS: Record<AssessmentType, AssessmentDefinition> = {
 } as const;
 
 export const ASSESSMENT_STORAGE_KEY = 'mg_self_assessment';
+
+/** §11.1 데이터 소스 라벨: `WELLNESS_PHASE_3B_DATA_SOURCE` @see src/constants/wellnessDataSource.ts */

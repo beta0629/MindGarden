@@ -1,15 +1,15 @@
 /**
- * 자가 심리검사 — API 우선, 실패 시 MMKV Mock 레이어
+ * 자가 심리검사 — **API 성공 시 서버 데이터만 사용**, **요청 실패(catch) 시에만** MMKV Mock
  *
- * SSOT: `docs/project-management/EXPO_NATIVE_APP_PLAN.md` Phase 3-B·§13
- * - `/api/v1/self-assessments` (검사 실시·결과 저장·이력)
- * 문항 정적 데이터: `src/constants/assessmentQuestions.ts` 유지
+ * SSOT: `docs/project-management/EXPO_NATIVE_APP_PLAN.md` Phase 3-B·§11.1·§13
+ * §11.1 표기: `WELLNESS_PHASE_3B_DATA_SOURCE.selfAssessment` (`src/constants/wellnessDataSource.ts`)
+ * 문항 정적 데이터: `src/constants/assessmentQuestions.ts`
  *
  * @author MindGarden
  * @since 2026-05-13
  */
 import { createMMKV } from 'react-native-mmkv';
-import { apiGet, apiPost } from '@/api/client';
+import { apiGet, apiPost, apiPut } from '@/api/client';
 import { SELF_ASSESSMENT_API } from '@/api/endpoints';
 import { unwrapApiResponse } from '@/api/unwrapApiResponse';
 import {
@@ -113,7 +113,7 @@ export async function fetchSelfAssessments(): Promise<AssessmentResult[]> {
       );
     }
   } catch {
-    /* Mock 레이어 */
+    /* MMKV Mock: 요청 실패 시에만 */
   }
   return getAllResultsLocal().sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -126,8 +126,9 @@ export async function fetchAssessmentDetail(id: string): Promise<AssessmentResul
     const body = unwrapApiResponse<unknown>(raw) ?? raw;
     const r = normalizeResult(body);
     if (r) return r;
+    return null;
   } catch {
-    /* 로컬 */
+    /* MMKV Mock: 요청 실패 시에만 */
   }
   return getAllResultsLocal().find((x) => x.id === id) ?? null;
 }
@@ -161,9 +162,32 @@ export async function submitSelfAssessmentRemote(params: {
     if (r) return r;
     return localResult;
   } catch {
+    /* MMKV Mock: POST 실패 시에만 */
     const all = getAllResultsLocal();
     all.unshift(localResult);
     saveAllResultsLocal(all);
     return localResult;
+  }
+}
+
+/**
+ * 결과 공유 여부 변경 — PUT 본문만 전송 (실패 시 MMKV만 갱신)
+ */
+export async function updateSelfAssessmentShareRemote(
+  id: string,
+  sharedWithConsultant: boolean,
+): Promise<void> {
+  try {
+    await apiPut(SELF_ASSESSMENT_API.detail(id), { sharedWithConsultant });
+  } catch {
+    const all = getAllResultsLocal();
+    const idx = all.findIndex((x) => x.id === id);
+    if (idx >= 0) {
+      const prev = all[idx];
+      if (!prev) return;
+      const next: AssessmentResult = { ...prev, sharedWithConsultant };
+      all[idx] = next;
+      saveAllResultsLocal(all);
+    }
   }
 }

@@ -24,6 +24,7 @@ import { ArrowLeft } from 'lucide-react-native';
 
 import { useTheme } from '@/theme';
 import { useCommunityStore } from '@/stores/useCommunityStore';
+import { COMMUNITY_DEMO_LABELS } from '@/constants/communityData';
 
 export default function ConsultantCommunityCreate() {
   const theme = useTheme();
@@ -50,8 +51,8 @@ export default function ConsultantCommunityCreate() {
 
     addPost({
       tab: 'columns',
-      author: '상담사',
-      specialty: '전문 상담사',
+      author: COMMUNITY_DEMO_LABELS.newConsultantAuthor,
+      specialty: COMMUNITY_DEMO_LABELS.newConsultantSpecialty,
       title: title.trim(),
       body: body.trim(),
       isConsultant: true,
@@ -59,8 +60,8 @@ export default function ConsultantCommunityCreate() {
     });
 
     Alert.alert(
-      '게시 완료',
-      '칼럼이 등록되었습니다.',
+      '기기에 저장됨',
+      '칼럼이 이 기기(MMKV)에만 등록되었습니다. /api/v1/community 연동 후 프로필명·검수 흐름이 적용됩니다.',
       [{ text: '확인', onPress: () => router.back() }],
     );
   };
@@ -182,7 +183,7 @@ export default function ConsultantCommunityCreate() {
                   color: theme.colors.textSecondary,
                 }}
               >
-                상담사 칼럼은 실명으로 게시됩니다.
+                상담사 칼럼은 서버 연동 시 프로필에 등록된 표시명으로 게시됩니다.
               </Text>
               <Text
                 style={{

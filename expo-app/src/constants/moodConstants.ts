@@ -1,6 +1,7 @@
 /**
  * 감정 일기 상수 정의
  * 이모지 5단계, 감정 태그 목록, 점수 매핑
+ * (일상 기록용. 의학적 진단·의료행위를 대체하지 않음 — `EXPO_NATIVE_APP_PLAN.md` §10.1)
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -38,6 +39,8 @@ export const MOOD_SCORE_MAP: Record<number, string> = {
 };
 
 export const MOOD_STORAGE_KEY = 'mg_mood_journal';
+
+/** §11.1 데이터 소스 라벨: `WELLNESS_PHASE_3B_DATA_SOURCE` @see src/constants/wellnessDataSource.ts */
 
 export const MOOD_STAT_PERIODS = ['weekly', 'monthly'] as const;
 export type MoodStatPeriod = (typeof MOOD_STAT_PERIODS)[number];

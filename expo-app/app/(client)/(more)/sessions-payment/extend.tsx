@@ -5,8 +5,9 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -33,32 +34,24 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useTenantStore } from '@/stores/useTenantStore';
 import {
   useSessionBalance,
   useCreatePayment,
 } from '@/api/hooks/usePayments';
 import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
+import {
+  getSessionExtensionPackages,
+  type SessionExtensionPackage,
+} from '@/constants/sessionExtensionCatalog';
+import {
+  getTossPaymentsClientKey,
+  getTossPaymentSuccessUrl,
+  getTossPaymentFailUrl,
+  isTossPaymentsClientKeyConfigured,
+} from '@/config/tossPayments';
 
-interface ExtensionPackage {
-  id: number;
-  name: string;
-  sessions: number;
-  price: number;
-  popular?: boolean;
-  perSession: number;
-}
-
-const PACKAGES: ExtensionPackage[] = [
-  { id: 1, name: '1회 체험', sessions: 1, price: 60000, perSession: 60000 },
-  { id: 2, name: '5회 패키지', sessions: 5, price: 275000, popular: true, perSession: 55000 },
-  { id: 3, name: '10회 패키지', sessions: 10, price: 500000, perSession: 50000 },
-];
-
-const TOSS_CLIENT_KEY = 'test_ck_placeholder';
-const TOSS_SUCCESS_URL = 'mindgarden://payment/success';
-const TOSS_FAIL_URL = 'mindgarden://payment/fail';
-
-type PaymentStep = 'select' | 'payment' | 'success' | 'error';
+type PaymentStep = 'select' | 'payment' | 'success' | 'error' | 'cancelled';
 
 function formatCurrency(amount: number): string {
   return `₩${Number(amount || 0).toLocaleString()}`;
@@ -74,16 +67,23 @@ export default function SessionExtendScreen() {
   const theme = useTheme();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const tenantId = useTenantStore((s) => s.tenantId);
   const clientId = user?.id;
+
+  const packages = useMemo(() => getSessionExtensionPackages(), []);
 
   const [selectedPackageId, setSelectedPackageId] = useState<number | null>(null);
   const [step, setStep] = useState<PaymentStep>('select');
+  const [failDetail, setFailDetail] = useState<string>('');
   const orderIdRef = useRef<string>('');
 
   const { data: balance } = useSessionBalance(clientId);
   const createPayment = useCreatePayment();
 
-  const selectedPackage = PACKAGES.find((p) => p.id === selectedPackageId) ?? null;
+  const selectedPackage =
+    packages.find((p) => p.id === selectedPackageId) ?? null;
+
+  const tossReady = isTossPaymentsClientKeyConfigured();
 
   const handlePackageSelect = useCallback(
     (packageId: number) => {
@@ -96,31 +96,105 @@ export default function SessionExtendScreen() {
   );
 
   const handlePaymentStart = useCallback(() => {
-    if (!selectedPackage || !clientId) return;
+    if (!selectedPackage || !clientId) {
+      return;
+    }
+    if (!tenantId || String(tenantId).trim() === '') {
+      Alert.alert(
+        '기관 정보 필요',
+        '테넌트(기관)가 선택되지 않았습니다. 로그아웃 후 기관을 다시 선택해 주세요.',
+      );
+      return;
+    }
+    if (!tossReady) {
+      Alert.alert(
+        '결제 설정 필요',
+        '토스페이먼츠 클라이언트 키가 설정되지 않았습니다. EAS Secret 또는 EXPO_PUBLIC_TOSS_PAYMENTS_CLIENT_KEY를 설정한 뒤 다시 빌드해 주세요.',
+      );
+      return;
+    }
 
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
     orderIdRef.current = generateOrderId();
+    setFailDetail('');
     setStep('payment');
-  }, [selectedPackage, clientId]);
+  }, [selectedPackage, clientId, tenantId, tossReady]);
 
   const handleWebViewMessage = useCallback(
     async (event: { nativeEvent: { data: string } }) => {
       try {
-        const data = JSON.parse(event.nativeEvent.data);
+        const data = JSON.parse(event.nativeEvent.data) as {
+          status?: string;
+          paymentKey?: string;
+          orderId?: string;
+          amount?: number;
+          message?: string;
+        };
 
         if (data.status === 'success') {
-          if (!clientId || !selectedPackage) return;
+          if (!clientId || !selectedPackage) {
+            return;
+          }
 
-          await createPayment.mutateAsync({
-            clientId,
-            packageId: selectedPackage.id,
-            paymentKey: data.paymentKey,
-            orderId: data.orderId,
-            amount: selectedPackage.price,
-          });
+          const expectedOrderId = orderIdRef.current;
+          if (
+            data.orderId != null &&
+            String(data.orderId) !== String(expectedOrderId)
+          ) {
+            setFailDetail(
+              '결제 주문 번호가 일치하지 않습니다. 중복 결제 여부를 확인한 뒤 고객센터로 문의해 주세요.',
+            );
+            setStep('error');
+            return;
+          }
+
+          if (data.amount != null) {
+            const paid = Number(data.amount);
+            if (
+              !Number.isFinite(paid) ||
+              paid !== selectedPackage.price
+            ) {
+              setFailDetail(
+                '결제 금액이 선택한 패키지와 다릅니다. 환불·재결제가 필요하면 고객센터로 문의해 주세요.',
+              );
+              setStep('error');
+              return;
+            }
+          }
+
+          if (data.paymentKey == null || String(data.paymentKey).trim() === '') {
+            setFailDetail('결제 승인 정보가 없습니다. 다시 시도해 주세요.');
+            setStep('error');
+            return;
+          }
+
+          try {
+            await createPayment.mutateAsync({
+              clientId,
+              packageId: selectedPackage.id,
+              paymentKey: String(data.paymentKey),
+              orderId: data.orderId != null ? String(data.orderId) : expectedOrderId,
+              amount: selectedPackage.price,
+            });
+          } catch (e) {
+            const msg =
+              e != null &&
+              typeof e === 'object' &&
+              'message' in e &&
+              typeof (e as { message?: unknown }).message === 'string'
+                ? String((e as { message: string }).message).trim()
+                : '';
+            setFailDetail(
+              msg !== ''
+                ? msg
+                : '서버에서 결제 확정에 실패했습니다. 결제는 되었을 수 있으니 내역을 확인해 주세요.',
+            );
+            setStep('error');
+            return;
+          }
 
           if (Platform.OS !== 'web') {
             Haptics.notificationAsync(
@@ -128,10 +202,18 @@ export default function SessionExtendScreen() {
             );
           }
           setStep('success');
+        } else if (data.status === 'cancel') {
+          setStep('cancelled');
         } else if (data.status === 'fail') {
+          const msg =
+            data.message != null && String(data.message).trim() !== ''
+              ? String(data.message).trim()
+              : '결제를 완료할 수 없습니다.';
+          setFailDetail(msg);
           setStep('error');
         }
       } catch {
+        setFailDetail('결제 응답을 해석할 수 없습니다. 앱을 다시 실행한 뒤 결제 내역을 확인해 주세요.');
         setStep('error');
       }
     },
@@ -141,21 +223,23 @@ export default function SessionExtendScreen() {
   const handleRetry = useCallback(() => {
     setStep('select');
     setSelectedPackageId(null);
+    setFailDetail('');
   }, []);
 
   const handleDone = useCallback(() => {
     router.back();
   }, [router]);
 
+  const tossClientKey = getTossPaymentsClientKey();
   const tossPaymentHtml = selectedPackage
     ? buildTossPaymentHtml({
-        clientKey: TOSS_CLIENT_KEY,
+        clientKey: tossClientKey,
         amount: selectedPackage.price,
         orderId: orderIdRef.current,
         orderName: `MindGarden ${selectedPackage.name}`,
         customerName: user?.name ?? '내담자',
-        successUrl: TOSS_SUCCESS_URL,
-        failUrl: TOSS_FAIL_URL,
+        successUrl: getTossPaymentSuccessUrl(),
+        failUrl: getTossPaymentFailUrl(),
       })
     : '';
 
@@ -173,13 +257,24 @@ export default function SessionExtendScreen() {
     );
   }
 
+  if (step === 'cancelled') {
+    return (
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: theme.colors.bgMain }]}
+        edges={['bottom']}
+      >
+        <CancelledView onRetry={handleRetry} />
+      </SafeAreaView>
+    );
+  }
+
   if (step === 'error') {
     return (
       <SafeAreaView
         style={[styles.safeArea, { backgroundColor: theme.colors.bgMain }]}
         edges={['bottom']}
       >
-        <ErrorView onRetry={handleRetry} />
+        <ErrorView message={failDetail} onRetry={handleRetry} />
       </SafeAreaView>
     );
   }
@@ -259,6 +354,31 @@ export default function SessionExtendScreen() {
           </View>
         </Animated.View>
 
+        {!tossReady && (
+          <View
+            style={[
+              styles.configBanner,
+              {
+                backgroundColor: theme.colors.surfaceAlt,
+                borderColor: theme.colors.border,
+                borderRadius: theme.borderRadius.lg,
+              },
+            ]}
+          >
+            <Text
+              style={{
+                color: theme.colors.textSecondary,
+                fontFamily: theme.fontFamily.regular,
+                fontSize: theme.fontSize.sm,
+                lineHeight: 20,
+              }}
+            >
+              카드 결제를 쓰려면 빌드 시 EXPO_PUBLIC_TOSS_PAYMENTS_CLIENT_KEY(또는 EAS
+              extra.tossPaymentsClientKey)를 설정해야 합니다. 키는 저장소에 커밋하지 마세요.
+            </Text>
+          </View>
+        )}
+
         <Text
           style={[
             styles.sectionTitle,
@@ -273,7 +393,7 @@ export default function SessionExtendScreen() {
         </Text>
 
         <View style={styles.packageList}>
-          {PACKAGES.map((pkg, index) => (
+          {packages.map((pkg, index) => (
             <PackageCard
               key={pkg.id}
               pkg={pkg}
@@ -354,20 +474,23 @@ export default function SessionExtendScreen() {
       >
         <Pressable
           onPress={handlePaymentStart}
-          disabled={!selectedPackageId || createPayment.isPending}
+          disabled={!selectedPackageId || createPayment.isPending || !tossReady}
           style={({ pressed }) => [
             styles.payButton,
             {
-              backgroundColor: selectedPackageId
-                ? theme.colors.primary
-                : theme.colors.gray[300],
+              backgroundColor:
+                selectedPackageId && tossReady
+                  ? theme.colors.primary
+                  : theme.colors.gray[300],
               borderRadius: theme.borderRadius.lg,
               opacity: pressed ? 0.85 : 1,
             },
           ]}
           accessibilityRole="button"
           accessibilityLabel="결제하고 회기 연장하기"
-          accessibilityState={{ disabled: !selectedPackageId }}
+          accessibilityState={{
+            disabled: !selectedPackageId || createPayment.isPending || !tossReady,
+          }}
         >
           <ShoppingBag size={20} color={theme.colors.textOnPrimary} />
           <Text
@@ -387,7 +510,7 @@ export default function SessionExtendScreen() {
 }
 
 interface PackageCardProps {
-  pkg: ExtensionPackage;
+  pkg: SessionExtensionPackage;
   isSelected: boolean;
   onSelect: (id: number) => void;
   index: number;
@@ -575,7 +698,13 @@ function SuccessView({
   );
 }
 
-function ErrorView({ onRetry }: { onRetry: () => void }) {
+function ErrorView({
+  message,
+  onRetry,
+}: {
+  message?: string;
+  onRetry: () => void;
+}) {
   const theme = useTheme();
 
   return (
@@ -611,7 +740,9 @@ function ErrorView({ onRetry }: { onRetry: () => void }) {
           textAlign: 'center',
         }}
       >
-        결제 처리 중 오류가 발생했습니다.{'\n'}다시 시도해주세요.
+        {message != null && message.trim() !== ''
+          ? message
+          : '결제 처리 중 오류가 발생했습니다.\n다시 시도해 주세요.'}
       </Text>
       <Pressable
         onPress={onRetry}
@@ -633,6 +764,70 @@ function ErrorView({ onRetry }: { onRetry: () => void }) {
           }}
         >
           다시 시도
+        </Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function CancelledView({ onRetry }: { onRetry: () => void }) {
+  const theme = useTheme();
+
+  return (
+    <Animated.View
+      entering={FadeInDown.duration(500).springify()}
+      style={styles.resultContainer}
+    >
+      <View
+        style={[
+          styles.resultIcon,
+          { backgroundColor: `${theme.colors.warning}25` },
+        ]}
+      >
+        <CreditCard size={48} color={theme.colors.warning} />
+      </View>
+      <Text
+        style={{
+          color: theme.colors.textMain,
+          fontFamily: theme.fontFamily.bold,
+          fontSize: theme.fontSize['2xl'],
+          marginTop: 24,
+          textAlign: 'center',
+        }}
+      >
+        결제를 취소했습니다
+      </Text>
+      <Text
+        style={{
+          color: theme.colors.textSecondary,
+          fontFamily: theme.fontFamily.regular,
+          fontSize: theme.fontSize.base,
+          marginTop: 8,
+          textAlign: 'center',
+        }}
+      >
+        처음부터 다시 진행하거나, 다른 결제 수단으로 시도해 주세요.
+      </Text>
+      <Pressable
+        onPress={onRetry}
+        style={[
+          styles.resultButton,
+          {
+            backgroundColor: theme.colors.primary,
+            borderRadius: theme.borderRadius.lg,
+          },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel="돌아가기"
+      >
+        <Text
+          style={{
+            color: theme.colors.textOnPrimary,
+            fontFamily: theme.fontFamily.semibold,
+            fontSize: theme.fontSize.base,
+          }}
+        >
+          돌아가기
         </Text>
       </Pressable>
     </Animated.View>
@@ -670,10 +865,10 @@ function buildTossPaymentHtml(params: TossPaymentParams): string {
   <script>
     (async () => {
       try {
-        const tossPayments = TossPayments("${params.clientKey}");
+        const tossPayments = TossPayments(${JSON.stringify(params.clientKey)});
         const widgets = tossPayments.widgets({ customerKey: "ANONYMOUS" });
 
-        await widgets.setAmount({ currency: "KRW", value: ${params.amount} });
+        await widgets.setAmount({ currency: "KRW", value: ${Number(params.amount)} });
 
         await Promise.all([
           widgets.renderPaymentMethods({
@@ -694,20 +889,25 @@ function buildTossPaymentHtml(params: TossPaymentParams): string {
         button.addEventListener("click", async () => {
           try {
             await widgets.requestPayment({
-              orderId: "${params.orderId}",
-              orderName: "${params.orderName}",
-              customerName: "${params.customerName}",
-              successUrl: "${params.successUrl}",
-              failUrl: "${params.failUrl}",
+              orderId: ${JSON.stringify(params.orderId)},
+              orderName: ${JSON.stringify(params.orderName)},
+              customerName: ${JSON.stringify(params.customerName)},
+              successUrl: ${JSON.stringify(params.successUrl)},
+              failUrl: ${JSON.stringify(params.failUrl)},
             });
           } catch (err) {
-            if (err.code === "USER_CANCEL") return;
-            window.ReactNativeWebView.postMessage(JSON.stringify({ status: "fail", message: err.message }));
+            if (err && err.code === "USER_CANCEL") {
+              window.ReactNativeWebView.postMessage(JSON.stringify({ status: "cancel" }));
+              return;
+            }
+            const msg = err && err.message ? String(err.message) : "결제 요청 실패";
+            window.ReactNativeWebView.postMessage(JSON.stringify({ status: "fail", message: msg }));
           }
         });
       } catch (err) {
         document.body.innerHTML = '<div class="error">결제 위젯을 불러올 수 없습니다.</div>';
-        window.ReactNativeWebView.postMessage(JSON.stringify({ status: "fail", message: err.message }));
+        const msg = err && err.message ? String(err.message) : "위젯 초기화 실패";
+        window.ReactNativeWebView.postMessage(JSON.stringify({ status: "fail", message: msg }));
       }
     })();
   </script>
@@ -722,6 +922,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 100,
+  },
+  configBanner: {
+    marginTop: 12,
+    padding: 12,
+    borderWidth: 1,
   },
   currentBalanceCard: {
     alignItems: 'center',

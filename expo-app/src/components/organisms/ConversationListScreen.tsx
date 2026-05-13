@@ -29,6 +29,7 @@ import {
   type Conversation,
 } from '@/api/hooks/useMessages';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useTenantStore } from '@/stores/useTenantStore';
 import { formatRelativeTime } from '@/utils/dateFormat';
 import { toDisplayString } from '@/utils/safeDisplay';
 
@@ -42,6 +43,7 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
   const theme = useTheme();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
   const [searchQuery, setSearchQuery] = useState('');
   const deferredSearch = useDeferredValue(searchQuery);
 
@@ -57,7 +59,7 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
   } = useConversations(deferredSearch);
 
   const conversations = useMemo(() => {
-    if (!user?.id || !user.role) {
+    if (!tenantId || !user?.id || !user.role) {
       return [];
     }
     const flat =
@@ -70,7 +72,7 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
       return (Number.isNaN(tb) ? 0 : tb) - (Number.isNaN(ta) ? 0 : ta);
     });
     return buildConversationsFromRows(flat, user.role, user.id, deferredSearch);
-  }, [data?.pages, deferredSearch, user?.id, user?.role]);
+  }, [tenantId, data?.pages, deferredSearch, user?.id, user?.role]);
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -96,6 +98,18 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
     ),
     [handleConversationPress],
   );
+
+  if (!tenantId) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
+        <EmptyState
+          icon={<MessageCircle size={32} color={theme.colors.textTertiary} />}
+          title="기관 정보가 필요합니다"
+          description="테넌트를 선택한 뒤 메시지 목록을 불러올 수 있습니다"
+        />
+      </View>
+    );
+  }
 
   if (isLoading) {
     return (

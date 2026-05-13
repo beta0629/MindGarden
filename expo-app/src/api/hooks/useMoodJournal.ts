@@ -1,6 +1,6 @@
 /**
  * 감정 일기 TanStack Query 훅
- * `moodJournalService` — API 우선, 실패 시 MMKV Mock (§13 `/api/v1/mood-journals`)
+ * `moodJournalService` — API 우선, 실패 시 MMKV Mock (`§11.1` 표는 `src/constants/wellnessDataSource.ts`)
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -13,6 +13,7 @@ import {
   fetchMoodJournalDetail,
   fetchMoodJournalMonth,
   fetchMoodStats,
+  updateMoodJournalRemote,
   type MoodJournalEntry,
   type MoodStat,
 } from '@/services/moodJournalService';
@@ -56,6 +57,21 @@ export function useCreateMoodJournal() {
 
   return useMutation<MoodJournalEntry, Error, CreateMoodJournalParams>({
     mutationFn: (params) => createMoodJournalRemote(params),
+    onSuccess: (_data, variables) => {
+      const month = variables.date.substring(0, 7);
+      queryClient.invalidateQueries({ queryKey: MOOD_QUERY_KEYS.monthly(month) });
+      queryClient.invalidateQueries({ queryKey: MOOD_QUERY_KEYS.detail(variables.date) });
+      queryClient.invalidateQueries({ queryKey: MOOD_QUERY_KEYS.stats('weekly') });
+      queryClient.invalidateQueries({ queryKey: MOOD_QUERY_KEYS.stats('monthly') });
+    },
+  });
+}
+
+export function useUpdateMoodJournal() {
+  const queryClient = useQueryClient();
+
+  return useMutation<MoodJournalEntry, Error, CreateMoodJournalParams>({
+    mutationFn: (params) => updateMoodJournalRemote(params),
     onSuccess: (_data, variables) => {
       const month = variables.date.substring(0, 7);
       queryClient.invalidateQueries({ queryKey: MOOD_QUERY_KEYS.monthly(month) });

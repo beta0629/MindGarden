@@ -4,7 +4,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -23,13 +23,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Bookmark, Check } from 'lucide-react-native';
 import { createMMKV } from 'react-native-mmkv';
 
-import { usePsychoEducationApiList } from '@/api/hooks/useWellness';
+import { usePsychoEducationArticleById, PSYCHO_EDUCATION_API_PLACEHOLDER } from '@/api/hooks/useWellness';
 import { useTheme } from '@/theme';
 import { EmptyState } from '@/components/atoms/EmptyState';
-import {
-  MOCK_PSYCHO_ARTICLES,
-  type PsychoPage,
-} from '@/constants/psychoEducationData';
+import { type PsychoPage } from '@/constants/psychoEducationData';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_PADDING = 24;
@@ -60,16 +57,13 @@ export default function PsychoEducationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const articleId = Number(id);
 
-  const psychoList = usePsychoEducationApiList();
-  const article = useMemo(() => {
-    if (psychoList.isSuccess && psychoList.data && psychoList.data.length > 0) {
-      const fromApi = psychoList.data.find((a) => a.id === articleId);
-      if (fromApi) {
-        return fromApi;
-      }
-    }
-    return MOCK_PSYCHO_ARTICLES.find((a) => a.id === articleId);
-  }, [psychoList.isSuccess, psychoList.data, articleId]);
+  const {
+    article,
+    source: psychoSource,
+    usedFallbackDueToError,
+    isLoading,
+    refetch,
+  } = usePsychoEducationArticleById(articleId);
 
   const [currentPage, setCurrentPage] = useState(0);
   const [bookmarks, setBookmarks] = useState<number[]>(loadBookmarks);
@@ -130,6 +124,27 @@ export default function PsychoEducationDetail() {
     });
   }, [article, currentPage, articleId]);
 
+  if (isLoading && !article) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
+        edges={['top', 'bottom']}
+      >
+        <View style={[styles.flex, { alignItems: 'center', justifyContent: 'center' }]}>
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.regular,
+              fontSize: theme.fontSize.sm,
+              color: theme.colors.textSecondary,
+            }}
+          >
+            불러오는 중...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (!article) {
     return (
       <SafeAreaView
@@ -138,11 +153,22 @@ export default function PsychoEducationDetail() {
       >
         <EmptyState
           title="콘텐츠를 찾을 수 없습니다"
-          description="목록에서 다른 글을 선택해 주세요"
+          description="목록에서 다른 글을 선택하거나 다시 불러와 주세요"
+          actionLabel="다시 불러오기"
+          onAction={() => {
+            void refetch();
+          }}
         />
       </SafeAreaView>
     );
   }
+
+  const sourceBanner =
+    psychoSource === 'api'
+      ? '서버에서 불러온 글입니다. 북마크·읽기 완료는 이 기기(MMKV)에만 저장됩니다.'
+      : usedFallbackDueToError
+        ? `서버 목록(${PSYCHO_EDUCATION_API_PLACEHOLDER})을 불러오지 못해 샘플을 표시합니다.`
+        : `샘플 카드뉴스입니다. 서버 연동 후 ${PSYCHO_EDUCATION_API_PLACEHOLDER} 목록으로 바뀝니다.`;
 
   const renderPage = ({ item, index }: { item: PsychoPage; index: number }) => (
     <View style={[styles.page, { width: SCREEN_WIDTH }]}>
@@ -229,6 +255,28 @@ export default function PsychoEducationDetail() {
             />
           </Pressable>
         </Animated.View>
+
+        <View
+          style={{
+            marginHorizontal: 16,
+            marginBottom: 8,
+            paddingVertical: 10,
+            paddingHorizontal: 12,
+            borderRadius: theme.borderRadius.lg,
+            backgroundColor: theme.colors.accentSoft,
+          }}
+          accessibilityRole="text"
+        >
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.medium,
+              fontSize: theme.fontSize.xs,
+              color: theme.colors.textSecondary,
+            }}
+          >
+            {sourceBanner}
+          </Text>
+        </View>
 
         {/* 카드 스와이프 */}
         <Animated.View

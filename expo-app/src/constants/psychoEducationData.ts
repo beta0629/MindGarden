@@ -1,6 +1,8 @@
 /**
  * 심리 교육 콘텐츠 Mock 데이터
  *
+ * 운영 전: 편집·감수·저작권(표절) 검토 및 의료·광고 표현 준수(`EXPO_NATIVE_APP_PLAN.md` §10.1)를 거친 콘텐츠로 교체한다.
+ *
  * @author MindGarden
  * @since 2026-05-12
  */

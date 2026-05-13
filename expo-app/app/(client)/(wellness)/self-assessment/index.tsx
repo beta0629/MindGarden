@@ -28,6 +28,10 @@ import {
   SEVERITY_COLORS,
   type AssessmentType,
 } from '@/constants/assessmentQuestions';
+import {
+  WELLNESS_ASSESSMENT_REFERENCE_FOOTER_KO,
+  WELLNESS_NON_MEDICAL_DISCLAIMER_KO,
+} from '@/constants/wellnessComplianceCopy';
 
 const ICON_MAP: Record<string, React.ComponentType<{ size: number; color: string }>> = {
   heart: Heart,
@@ -132,7 +136,7 @@ function AssessmentCard({ type, index }: AssessmentCardProps) {
                   marginLeft: 4,
                 }}
               >
-                마지막 검사: {lastDateStr}
+                마지막 점검: {lastDateStr}
               </Text>
             </View>
           )}
@@ -161,18 +165,42 @@ export default function SelfAssessmentIndex() {
       style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
       edges={['top']}
     >
-      <AppTopBar title="자가 심리검사" canGoBack />
+      <AppTopBar title="마음 자가 점검" canGoBack />
+
+      <View
+        style={{
+          marginHorizontal: 16,
+          marginTop: 8,
+          padding: 12,
+          borderRadius: theme.borderRadius.lg,
+          backgroundColor: theme.colors.accentSoft,
+        }}
+        accessibilityRole="text"
+      >
+        <Text
+          style={{
+            fontFamily: theme.fontFamily.regular,
+            fontSize: theme.fontSize.xs,
+            color: theme.colors.textSecondary,
+            lineHeight: 18,
+          }}
+        >
+          {WELLNESS_NON_MEDICAL_DISCLAIMER_KO}
+          {'\n\n'}
+          {WELLNESS_ASSESSMENT_REFERENCE_FOOTER_KO}
+        </Text>
+      </View>
 
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* 검사 카드 목록 */}
+        {/* 자가 점검 카드 목록 */}
         {assessmentTypes.map((type, idx) => (
           <AssessmentCard key={type} type={type} index={idx} />
         ))}
 
-        {/* 이전 검사 이력 */}
+        {/* 이전 점검 이력 */}
         <Animated.View
           entering={FadeInDown.delay(400).springify()}
           style={styles.historySection}
@@ -185,13 +213,13 @@ export default function SelfAssessmentIndex() {
               marginBottom: 12,
             }}
           >
-            검사 이력
+            점검 이력
           </Text>
 
           {recentHistory.length === 0 ? (
             <EmptyState
-              title="검사 기록이 없습니다"
-              description="심리검사를 진행하면 여기에 기록이 표시됩니다."
+              title="점검 기록이 없습니다"
+              description="자가 점검을 완료하면 여기에 기록이 표시됩니다."
             />
           ) : (
             recentHistory.map((result) => {

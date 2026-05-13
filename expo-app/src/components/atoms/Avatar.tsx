@@ -1,13 +1,32 @@
 /**
  * Avatar — 프로필 사진 또는 이니셜 표시 atom
  *
+ * API 호스트의 보호된 이미지 URL은 별도 HTTP 요청이므로 Axios 인터셉터가 적용되지 않음.
+ * 동일 API 오리진이면 Bearer·테넌트 헤더를 expo-image source에 포함한다.
+ *
  * @author MindGarden
  * @since 2026-05-12
  */
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View, type ViewStyle, type ImageStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { User } from 'lucide-react-native';
 import { useTheme } from '@/theme';
+import { getApiBaseUrl } from '@/config/apiBaseUrl';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useTenantStore } from '@/stores/useTenantStore';
+
+/** 프로필 이미지가 우리 API와 같은 오리진이면 네이티브 Image 요청에도 인증이 필요할 수 있음 */
+function isSameOriginAsApi(uri: string): boolean {
+  try {
+    const base = getApiBaseUrl().replace(/\/$/, '');
+    const apiOrigin = new URL(base.startsWith('http') ? base : `https://${base}`).origin;
+    const imgOrigin = new URL(uri).origin;
+    return apiOrigin === imgOrigin;
+  } catch {
+    return false;
+  }
+}
 
 type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
 
@@ -19,15 +38,22 @@ const SIZE_MAP: Record<AvatarSize, number> = {
 };
 
 interface AvatarProps {
-  uri?: string | null;
-  name?: string;
-  size?: AvatarSize;
-  style?: ViewStyle;
+  readonly uri?: string | null;
+  readonly name?: string;
+  readonly size?: AvatarSize;
+  readonly style?: ViewStyle;
 }
 
 export function Avatar({ uri, name, size = 'md', style }: AvatarProps) {
   const theme = useTheme();
   const dimension = SIZE_MAP[size];
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const tenantId = useTenantStore((s) => s.tenantId);
+  const [imageLoadFailed, setImageLoadFailed] = useState(false);
+
+  useEffect(() => {
+    setImageLoadFailed(false);
+  }, [uri]);
 
   const containerStyle: ViewStyle = {
     width: dimension,
@@ -38,13 +64,35 @@ export function Avatar({ uri, name, size = 'md', style }: AvatarProps) {
     borderColor: theme.colors.border,
   };
 
-  if (uri) {
+  const imageSource = useMemo(() => {
+    if (!uri || imageLoadFailed) {
+      return null;
+    }
+    const u = String(uri).trim();
+    if (!u) {
+      return null;
+    }
+    const needAuthHeaders = isSameOriginAsApi(u) && !!accessToken;
+    if (needAuthHeaders) {
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${accessToken}`,
+      };
+      if (tenantId) {
+        headers['X-Tenant-Id'] = tenantId;
+      }
+      return { uri: u, headers };
+    }
+    return { uri: u };
+  }, [uri, accessToken, tenantId, imageLoadFailed]);
+
+  if (imageSource) {
     return (
       <Image
-        source={{ uri }}
+        source={imageSource}
         style={[containerStyle as ImageStyle, style as ImageStyle]}
         contentFit="cover"
         transition={200}
+        onError={() => setImageLoadFailed(true)}
         accessibilityLabel={name ? `${name} 프로필 사진` : '프로필 사진'}
       />
     );

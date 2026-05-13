@@ -10,10 +10,9 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
-  Dimensions,
   Platform,
   Pressable,
   StyleSheet,
@@ -39,8 +38,7 @@ import {
   OPTION_LABELS,
   type AssessmentType,
 } from '@/constants/assessmentQuestions';
-
-const SCREEN_WIDTH = Dimensions.get('window').width;
+import { WELLNESS_NON_MEDICAL_DISCLAIMER_KO } from '@/constants/wellnessComplianceCopy';
 
 export default function AssessmentTake() {
   const theme = useTheme();
@@ -51,11 +49,18 @@ export default function AssessmentTake() {
 
   const totalQuestions = definition?.questions.length ?? 0;
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [answers, setAnswers] = useState<number[]>(
-    () => new Array<number>(totalQuestions).fill(-1),
+  const [answers, setAnswers] = useState<number[]>(() =>
+    definition ? new Array(definition.questions.length).fill(-1) : [],
   );
   const [direction, setDirection] = useState<'right' | 'left'>('right');
   const [shareWithConsultant, setShareWithConsultant] = useState(false);
+
+  useEffect(() => {
+    if (!definition) return;
+    setAnswers(new Array(definition.questions.length).fill(-1));
+    setCurrentIdx(0);
+    setDirection('right');
+  }, [assessmentType, definition]);
 
   const submitMutation = useSubmitAssessment();
 
@@ -71,7 +76,7 @@ export default function AssessmentTake() {
         style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
         edges={['top']}
       >
-        <AppTopBar title="검사" canGoBack />
+        <AppTopBar title="자가 점검" canGoBack />
         <View style={styles.center}>
           <Text
             style={{
@@ -80,7 +85,7 @@ export default function AssessmentTake() {
               color: theme.colors.textSecondary,
             }}
           >
-            검사 정보를 찾을 수 없습니다.
+            점검 정보를 찾을 수 없습니다.
           </Text>
         </View>
       </SafeAreaView>
@@ -140,7 +145,7 @@ export default function AssessmentTake() {
         `/(client)/(wellness)/self-assessment/result/${result.id}`,
       );
     } catch {
-      Alert.alert('오류', '검사 제출에 실패했습니다. 다시 시도해주세요.');
+      Alert.alert('오류', '제출에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
@@ -155,6 +160,19 @@ export default function AssessmentTake() {
       <AppTopBar title={definition.shortName} canGoBack />
 
       <View style={styles.content}>
+        <Text
+          style={{
+            fontFamily: theme.fontFamily.regular,
+            fontSize: theme.fontSize['2xs'],
+            color: theme.colors.textTertiary,
+            textAlign: 'center',
+            marginBottom: 10,
+            paddingHorizontal: 12,
+            lineHeight: 16,
+          }}
+        >
+          {WELLNESS_NON_MEDICAL_DISCLAIMER_KO}
+        </Text>
         {/* ProgressBar */}
         <ProgressBar currentStep={currentIdx + 1} totalSteps={totalQuestions} />
 

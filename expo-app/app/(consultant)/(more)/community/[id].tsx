@@ -29,9 +29,12 @@ import {
 
 import { useTheme } from '@/theme';
 import { EmptyState } from '@/components/atoms/EmptyState';
-import { useCommunityPostById } from '@/api/hooks/useCommunity';
+import { useCommunityPostById, useCommunityFeed } from '@/api/hooks/useCommunity';
 import { useCommunityStore } from '@/stores/useCommunityStore';
-import type { CommunityComment } from '@/constants/communityData';
+import {
+  COMMUNITY_DEMO_LABELS,
+  type CommunityComment,
+} from '@/constants/communityData';
 
 export default function ConsultantCommunityDetail() {
   const theme = useTheme();
@@ -46,6 +49,8 @@ export default function ConsultantCommunityDetail() {
     isCommentLiked,
     addComment,
   } = useCommunityStore();
+
+  const { dataSource, isError: feedQueryError } = useCommunityFeed();
 
   const post = useCommunityPostById(postId);
   const [commentText, setCommentText] = useState('');
@@ -81,7 +86,7 @@ export default function ConsultantCommunityDetail() {
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    addComment(postId, '상담사', trimmed);
+    addComment(postId, COMMUNITY_DEMO_LABELS.consultantCommentAuthor, trimmed);
     setCommentText('');
     inputRef.current?.blur();
   };
@@ -104,6 +109,28 @@ export default function ConsultantCommunityDetail() {
 
   const renderHeader = () => (
     <View>
+      <View
+        style={{
+          marginBottom: 12,
+          paddingVertical: 10,
+          paddingHorizontal: 12,
+          borderRadius: theme.borderRadius.lg,
+          backgroundColor: theme.colors.accentSoft,
+        }}
+        accessibilityRole="text"
+      >
+        <Text
+          style={{
+            fontFamily: theme.fontFamily.medium,
+            fontSize: theme.fontSize.xs,
+            color: theme.colors.textSecondary,
+          }}
+        >
+          {feedQueryError || dataSource === 'demo-mmkv'
+            ? '데모·기기 저장(MMKV) 모드입니다. 댓글·좋아요는 이 기기에만 반영되며, 서버 API(/api/v1/community) 연동 후 동기화됩니다.'
+            : '서버 피드를 불러온 상태입니다. 댓글·좋아요는 아직 이 기기(MMKV)에만 저장됩니다.'}
+        </Text>
+      </View>
       <View style={styles.authorRow}>
         <View
           style={[

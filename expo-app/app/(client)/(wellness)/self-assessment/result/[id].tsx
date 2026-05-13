@@ -1,17 +1,26 @@
 /**
- * 검사 결과 화면
+ * 자가 점검 결과 화면
  *
  * - 총점 표시 (큰 숫자 + 원형 프로그레스)
  * - 해석 카드 (심각도별 색상)
  * - "상담사에게 결과 공유" 토글
- * - "다시 검사하기" 버튼
+ * - "다시 점검하기" 버튼
  * - 이전 결과 비교 차트 (있을 때)
  *
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useEffect, useMemo } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+  Dimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -29,16 +38,26 @@ import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
 import { EmptyState } from '@/components/atoms/EmptyState';
+import { LineTrendChart } from '@/components/molecules/LineTrendChart';
 import {
   useAssessmentDetail,
   useSelfAssessments,
+  useUpdateAssessmentShare,
 } from '@/api/hooks/useSelfAssessment';
 import {
   ASSESSMENTS,
   SEVERITY_COLORS,
 } from '@/constants/assessmentQuestions';
+import {
+  WELLNESS_ASSESSMENT_REFERENCE_FOOTER_KO,
+  WELLNESS_NON_MEDICAL_DISCLAIMER_KO,
+} from '@/constants/wellnessComplianceCopy';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const TREND_CHART_WIDTH = SCREEN_WIDTH - 64;
+const TREND_CHART_HEIGHT = 152;
 
 const CIRCLE_SIZE = 140;
 const STROKE_WIDTH = 10;
@@ -135,6 +154,14 @@ export default function AssessmentResult() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: result, isLoading } = useAssessmentDetail(id ?? '');
   const { data: allResults } = useSelfAssessments();
+  const shareMutation = useUpdateAssessmentShare();
+  const [shareOn, setShareOn] = useState(false);
+
+  useEffect(() => {
+    if (result) {
+      setShareOn(result.sharedWithConsultant);
+    }
+  }, [result?.id, result?.sharedWithConsultant]);
 
   const definition = result ? ASSESSMENTS[result.type] : null;
   const severityKey = result
@@ -148,6 +175,37 @@ export default function AssessmentResult() {
       .filter((r) => r.type === result.type && r.id !== result.id)
       .slice(0, 3);
   }, [allResults, result]);
+
+  const trendSeries = useMemo(() => {
+    if (!result || !allResults) {
+      return { values: [] as number[], labels: [] as string[] };
+    }
+    const same = allResults
+      .filter((r) => r.type === result.type)
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      )
+      .slice(-8);
+    return {
+      values: same.map((r) => r.totalScore),
+      labels: same.map((r) => format(parseISO(r.createdAt), 'M/d')),
+    };
+  }, [allResults, result]);
+
+  const handleShareToggle = (value: boolean) => {
+    if (!result?.id) return;
+    const prev = shareOn;
+    setShareOn(value);
+    shareMutation.mutate(
+      { id: result.id, sharedWithConsultant: value },
+      {
+        onError: () => {
+          setShareOn(prev);
+        },
+      },
+    );
+  };
 
   const handleRetake = () => {
     if (!result) return;
@@ -172,7 +230,7 @@ export default function AssessmentResult() {
         style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
         edges={['top']}
       >
-        <AppTopBar title="검사 결과" canGoBack />
+        <AppTopBar title="점검 결과" canGoBack />
         <View style={styles.center}>
           <Text
             style={{
@@ -194,7 +252,7 @@ export default function AssessmentResult() {
         style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
         edges={['top']}
       >
-        <AppTopBar title="검사 결과" canGoBack />
+        <AppTopBar title="점검 결과" canGoBack />
         <EmptyState title="결과를 찾을 수 없습니다" />
       </SafeAreaView>
     );
@@ -205,13 +263,13 @@ export default function AssessmentResult() {
       style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
       edges={['top']}
     >
-      <AppTopBar title="검사 결과" canGoBack />
+      <AppTopBar title="점검 결과" canGoBack />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* 검사 이름 + 날짜 */}
+        {/* 점검 이름 + 날짜 */}
         <Animated.View entering={FadeInDown.springify()} style={styles.headerCenter}>
           <Text
             style={{
@@ -282,6 +340,98 @@ export default function AssessmentResult() {
           </Text>
         </Animated.View>
 
+        {/* 상담사 공유 (결과 화면에서도 변경 가능) */}
+        <Animated.View
+          entering={FadeInDown.delay(240).springify()}
+          style={[
+            styles.shareRow,
+            {
+              backgroundColor: theme.colors.surface,
+              borderRadius: theme.borderRadius.xl,
+              ...theme.shadows.sm,
+            },
+          ]}
+        >
+          <View style={styles.shareTextCol}>
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.semibold,
+                fontSize: theme.fontSize.sm,
+                color: theme.colors.textMain,
+              }}
+            >
+              상담사에게 결과 공유
+            </Text>
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.regular,
+                fontSize: theme.fontSize.xs,
+                color: theme.colors.textSecondary,
+                marginTop: 4,
+              }}
+            >
+              담당 상담사에게 총점·참고 요약을 전달합니다.
+            </Text>
+          </View>
+          <Switch
+            value={shareOn}
+            onValueChange={handleShareToggle}
+            disabled={shareMutation.isPending}
+            trackColor={{
+              false: theme.colors.gray[300],
+              true: theme.colors.primaryLight,
+            }}
+            thumbColor={shareOn ? theme.colors.primary : theme.colors.surface}
+            accessibilityLabel="상담사에게 점검 결과 공유"
+          />
+        </Animated.View>
+
+        {/* 동일 점검 유형 점수 추이 */}
+        {trendSeries.values.length > 0 && definition ? (
+          <Animated.View
+            entering={FadeInDown.delay(280).springify()}
+            style={[
+              styles.trendSection,
+              {
+                backgroundColor: theme.colors.surface,
+                borderRadius: theme.borderRadius.xl,
+                ...theme.shadows.sm,
+              },
+            ]}
+          >
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.semibold,
+                fontSize: theme.fontSize.base,
+                color: theme.colors.textMain,
+                marginBottom: 8,
+              }}
+            >
+              점수 추이
+            </Text>
+            <LineTrendChart
+              values={trendSeries.values}
+              labels={trendSeries.labels}
+              maxValue={definition.maxScore}
+              width={TREND_CHART_WIDTH}
+              height={TREND_CHART_HEIGHT}
+            />
+            {trendSeries.values.length < 2 ? (
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.regular,
+                  fontSize: theme.fontSize.xs,
+                  color: theme.colors.textTertiary,
+                  textAlign: 'center',
+                  marginTop: 6,
+                }}
+              >
+                기록이 쌓이면 추이 선이 연결됩니다.
+              </Text>
+            ) : null}
+          </Animated.View>
+        ) : null}
+
         {/* 이전 결과 비교 */}
         {previousResults.length > 0 && (
           <Animated.View
@@ -303,7 +453,7 @@ export default function AssessmentResult() {
                 marginBottom: 12,
               }}
             >
-              이전 검사 비교
+              이전 점검 비교
             </Text>
             <View style={styles.compareRow}>
               {/* 현재 결과 */}
@@ -386,6 +536,30 @@ export default function AssessmentResult() {
           </Animated.View>
         )}
 
+        <View
+          style={{
+            marginTop: 8,
+            marginBottom: 8,
+            padding: 12,
+            borderRadius: theme.borderRadius.lg,
+            backgroundColor: theme.colors.accentSoft,
+          }}
+          accessibilityRole="text"
+        >
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.regular,
+              fontSize: theme.fontSize.xs,
+              color: theme.colors.textSecondary,
+              lineHeight: 18,
+            }}
+          >
+            {WELLNESS_NON_MEDICAL_DISCLAIMER_KO}
+            {'\n\n'}
+            {WELLNESS_ASSESSMENT_REFERENCE_FOOTER_KO}
+          </Text>
+        </View>
+
         {/* 버튼 그룹 */}
         <Animated.View
           entering={FadeInDown.delay(400).springify()}
@@ -401,7 +575,7 @@ export default function AssessmentResult() {
                 transform: [{ scale: pressed ? 0.97 : 1 }],
               },
             ]}
-            accessibilityLabel="다시 검사하기"
+            accessibilityLabel="다시 점검하기"
             accessibilityRole="button"
           >
             <RotateCcw size={18} color={theme.colors.textOnPrimary} />
@@ -413,7 +587,7 @@ export default function AssessmentResult() {
                 marginLeft: 8,
               }}
             >
-              다시 검사하기
+              다시 점검하기
             </Text>
           </Pressable>
 
@@ -429,7 +603,7 @@ export default function AssessmentResult() {
                 transform: [{ scale: pressed ? 0.97 : 1 }],
               },
             ]}
-            accessibilityLabel="검사 목록으로"
+            accessibilityLabel="점검 목록으로"
             accessibilityRole="button"
           >
             <Text
@@ -439,7 +613,7 @@ export default function AssessmentResult() {
                 color: theme.colors.textMain,
               }}
             >
-              검사 목록으로
+              점검 목록으로
             </Text>
           </Pressable>
         </Animated.View>
@@ -465,6 +639,22 @@ const styles = StyleSheet.create({
   interpretCard: {
     padding: 20,
     borderWidth: 1,
+  },
+  shareRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    marginTop: 16,
+  },
+  shareTextCol: {
+    flex: 1,
+    marginRight: 12,
+  },
+  trendSection: {
+    marginTop: 16,
+    padding: 16,
+    alignItems: 'center',
   },
   compareSection: {
     marginTop: 16,

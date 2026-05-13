@@ -44,7 +44,8 @@ export default function MeditationPlayer() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const trackId = Number(id);
 
-  const { track, isLoading, refetch, isError } = useMeditationTrackById(trackId);
+  const { track, isLoading, refetch, isError, source: catalogSource } =
+    useMeditationTrackById(trackId);
   const {
     currentTrack,
     isPlaying,
@@ -212,11 +213,36 @@ export default function MeditationPlayer() {
               </View>
             </Animated.View>
 
-            <Animated.View
-              entering={FadeInDown.delay(300).springify()}
-              style={styles.infoWrap}
+          <Animated.View
+            entering={FadeInDown.delay(300).springify()}
+            style={styles.infoWrap}
+          >
+            <View
+              style={{
+                alignSelf: 'stretch',
+                marginBottom: 12,
+                paddingVertical: 8,
+                paddingHorizontal: 10,
+                borderRadius: theme.borderRadius.lg,
+                backgroundColor: theme.colors.textOnPrimary + '18',
+              }}
+              accessibilityRole="text"
             >
               <Text
+                style={{
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: theme.fontSize.xs,
+                  color: theme.colors.textOnPrimary,
+                  opacity: 0.9,
+                  textAlign: 'center',
+                }}
+              >
+                {catalogSource === 'api'
+                  ? '서버 카탈로그(GET /api/v1/meditations). 오디오 URL이 없으면 앱에 포함된 무음 데모 클립으로 재생됩니다(실제 가이드 음원은 서버·자사 CDN에 등록).'
+                  : '데모 카탈로그(서버 실패 시 폴백). 오디오는 무음 데모 클립이며, 가이드 음원은 라이선스 확보 후 API·CDN에 연결하세요.'}
+              </Text>
+            </View>
+            <Text
                 style={{
                   fontFamily: theme.fontFamily.bold,
                   fontSize: theme.fontSize['2xl'],

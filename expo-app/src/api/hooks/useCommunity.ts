@@ -16,7 +16,7 @@ import { useCommunityStore } from '@/stores/useCommunityStore';
 import { normalizeCommunityPosts } from '@/utils/communityNormalize';
 import type { CommunityPost } from '@/constants/communityData';
 
-export type CommunityDataSource = 'api' | 'local-sample';
+export type CommunityDataSource = 'api' | 'demo-mmkv';
 
 const COMMUNITY_QUERY_KEYS = {
   all: ['community'] as const,
@@ -64,7 +64,7 @@ export function useCommunityFeed() {
   const posts = useCommunityStore((s) => s.posts);
 
   const dataSource: CommunityDataSource =
-    query.isSuccess && !query.isError && query.data.length > 0 ? 'api' : 'local-sample';
+    query.isSuccess && !query.isError && query.data.length > 0 ? 'api' : 'demo-mmkv';
 
   return {
     posts,

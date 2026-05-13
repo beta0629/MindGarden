@@ -107,8 +107,8 @@ export default function MeditationMain() {
           }}
         >
           {catalogSource === 'api'
-            ? '서버 목록(GET /api/v1/meditations). 오디오 없으면 데모 스트림(CC0)으로 재생됩니다.'
-            : '데모 목록(GET /api/v1/meditations 실패 시 폴백). 오디오는 데모 스트림(CC0)입니다.'}
+            ? '서버 목록(GET /api/v1/meditations). 오디오 URL이 없으면 무음 데모 클립으로 재생됩니다.'
+            : '데모 목록(GET /api/v1/meditations 실패 시 폴백). 오디오는 무음 데모 클립입니다.'}
         </Text>
       </View>
 

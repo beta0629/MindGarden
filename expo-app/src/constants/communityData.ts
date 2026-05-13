@@ -1,6 +1,8 @@
 /**
  * 커뮤니티 Mock 데이터
  *
+ * 데모용 가상 게시물이며 실제 인물·사건과 무관합니다. 운영 시 커뮤니티 정책·저작권·의료광고 표현을 준수한다 (`EXPO_NATIVE_APP_PLAN.md` §10.1).
+ *
  * @author MindGarden
  * @since 2026-05-12
  */
@@ -34,6 +36,15 @@ export const COMMUNITY_TABS: readonly { key: CommunityTab; label: string }[] = [
   { key: 'reviews', label: '내담자 후기' },
   { key: 'columns', label: '상담사 칼럼' },
 ] as const;
+
+/** 로컬 데모·글쓰기 기본 표시 — 실명·실제 프로필과 무관 */
+export const COMMUNITY_DEMO_LABELS = {
+  clientCommentAuthor: '나(이 기기)',
+  consultantCommentAuthor: '상담사(이 기기)',
+  newConsultantAuthor: '상담사(데모)',
+  newConsultantSpecialty: '프로필 연동 시 표시',
+  newClientNamedAuthor: '내담자(데모)',
+} as const;
 
 export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
   {
@@ -83,13 +94,13 @@ export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
   {
     id: 4,
     tab: 'columns',
-    author: '김상담',
-    specialty: '인지행동치료 전문',
+    author: '상담사 A(데모)',
+    specialty: '인지행동 관점 예시',
     title: '스트레스를 관리하는 마인드풀니스',
     body: '일상에서 마인드풀니스를 실천하는 방법에 대해 알려드립니다. 지금 이 순간에 집중하는 것만으로도 스트레스가 크게 줄어듭니다. 마인드풀니스는 특별한 도구가 필요하지 않습니다. 하루 5분, 호흡에 집중하는 것으로 시작해보세요.',
     likes: 45,
     comments: [
-      { id: 4, author: '이마음', body: '좋은 글 감사합니다!', time: '1시간 전', likes: 4 },
+      { id: 4, author: '익명의 들', body: '좋은 글 감사합니다!', time: '1시간 전', likes: 4 },
       { id: 5, author: '익명의 달', body: '매일 실천해보겠습니다.', time: '30분 전', likes: 2 },
     ],
     time: '3시간 전',
@@ -99,8 +110,8 @@ export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
   {
     id: 5,
     tab: 'columns',
-    author: '이마음',
-    specialty: '가족상담 전문',
+    author: '상담사 B(데모)',
+    specialty: '가족상담 관점 예시',
     title: '부모-자녀 관계에서 경계 설정하기',
     body: '건강한 가족관계를 위해서는 서로의 경계를 존중하는 것이 중요합니다. 오늘은 부모-자녀 사이에서 건강한 경계를 설정하는 방법을 이야기해보겠습니다.',
     likes: 31,
@@ -112,8 +123,8 @@ export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
   {
     id: 6,
     tab: 'columns',
-    author: '박치유',
-    specialty: '우울증 전문',
+    author: '상담사 C(데모)',
+    specialty: '기분 장애 관점 예시',
     title: '우울할 때 할 수 있는 작은 일들',
     body: '아무것도 하고 싶지 않은 날, 정말 작은 것부터 시작하면 됩니다. 커튼 열기, 물 한 잔 마시기, 5분만 산책하기 — 이것만으로도 충분합니다.',
     likes: 52,

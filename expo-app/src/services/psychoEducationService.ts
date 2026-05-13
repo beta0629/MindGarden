@@ -10,7 +10,7 @@ import { apiGet } from '@/api/client';
 import { PSYCHO_EDUCATION_API } from '@/api/endpoints';
 import { unwrapApiResponse } from '@/api/unwrapApiResponse';
 import type { PsychoArticle, PsychoCategory, PsychoPage } from '@/constants/psychoEducationData';
-import { PSYCHO_GRADIENT_MAP } from '@/constants/psychoEducationData';
+import { MOCK_PSYCHO_ARTICLES, PSYCHO_GRADIENT_MAP } from '@/constants/psychoEducationData';
 import { toDisplayString } from '@/utils/toDisplayString';
 import { toSafeNumber } from '@/utils/safeDisplay';
 
@@ -114,4 +114,40 @@ export async function fetchPsychoEducationListOrThrow(): Promise<PsychoArticle[]
     throw new Error('INVALID_PSYCHO_RESPONSE');
   }
   return list;
+}
+
+export type PsychoCatalogSource = 'api' | 'demo';
+
+export interface PsychoEducationCatalogState {
+  source: PsychoCatalogSource;
+  articles: PsychoArticle[];
+  /** LIST 호출 실패·파싱 오류 시 true — 샘플로 대체됨 */
+  usedFallbackDueToError: boolean;
+}
+
+/**
+ * `GET /api/v1/psycho-education` 성공·비어 있지 않으면 API, 그 외 샘플(§13 Phase 3-C)
+ */
+export async function fetchPsychoEducationCatalog(): Promise<PsychoEducationCatalogState> {
+  try {
+    const list = await fetchPsychoEducationListOrThrow();
+    if (list.length > 0) {
+      return {
+        source: 'api',
+        articles: list,
+        usedFallbackDueToError: false,
+      };
+    }
+  } catch {
+    return {
+      source: 'demo',
+      articles: [...MOCK_PSYCHO_ARTICLES],
+      usedFallbackDueToError: true,
+    };
+  }
+  return {
+    source: 'demo',
+    articles: [...MOCK_PSYCHO_ARTICLES],
+    usedFallbackDueToError: false,
+  };
 }

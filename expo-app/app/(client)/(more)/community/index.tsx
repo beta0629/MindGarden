@@ -46,6 +46,7 @@ export default function ClientCommunityFeed() {
     refetch,
     isFetching,
     lastFetchedAt,
+    isError: feedQueryError,
   } = useCommunityFeed();
   const [activeTab, setActiveTab] = useState<CommunityTab>('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -127,8 +128,8 @@ export default function ClientCommunityFeed() {
           >
             데이터 소스:{' '}
             {dataSource === 'api'
-              ? '서버(/api/v1/community) + 로컬 전용 글'
-              : '샘플(MMKV)'}
+              ? '서버(/api/v1/community) + 이 기기에만 있는 글'
+              : '데모 샘플 + MMKV(이 기기)'}
             {lastFetchedAt > 0
               ? ` · 동기화 ${new Date(lastFetchedAt).toLocaleTimeString('ko-KR', {
                   hour: '2-digit',
@@ -144,7 +145,7 @@ export default function ClientCommunityFeed() {
               marginTop: 4,
             }}
           >
-            글쓰기는 기기에 저장되며, 서버 연동 후 일괄 동기화됩니다.
+            글·댓글·좋아요는 우선 이 기기(MMKV)에 저장됩니다. 서버 API(/api/v1/community) 연동 후 동기화됩니다.
           </Text>
         </View>
         <Pressable
@@ -178,6 +179,30 @@ export default function ClientCommunityFeed() {
           </Text>
         </Pressable>
       </View>
+
+      {feedQueryError ? (
+        <View
+          style={{
+            marginHorizontal: 16,
+            marginBottom: 8,
+            paddingVertical: 10,
+            paddingHorizontal: 12,
+            borderRadius: theme.borderRadius.lg,
+            backgroundColor: theme.colors.accentSoft,
+          }}
+          accessibilityRole="text"
+        >
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.medium,
+              fontSize: theme.fontSize.xs,
+              color: theme.colors.textSecondary,
+            }}
+          >
+            서버 피드(/api/v1/community)를 불러오지 못했습니다. 아래는 데모 샘플과 이 기기에 저장된 글입니다. 동기화로 다시 시도할 수 있습니다.
+          </Text>
+        </View>
+      ) : null}
 
       {/* 탭 */}
       <Animated.View entering={FadeIn.duration(300)}>

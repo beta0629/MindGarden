@@ -1,15 +1,15 @@
 /**
- * 감정 일기 — API 우선, 실패 시 MMKV 단일 Mock 레이어
+ * 감정 일기 — **API 성공 시 서버 데이터만 사용**, **요청 실패(catch) 시에만** MMKV Mock
  *
- * SSOT: `docs/project-management/EXPO_NATIVE_APP_PLAN.md` Phase 3-B·§13
- * - CRUD + 통계(주간/월간) + 상담사 공유: `/api/v1/mood-journals`, `/api/v1/mood-journals/stats`
+ * SSOT: `docs/project-management/EXPO_NATIVE_APP_PLAN.md` Phase 3-B·§11.1·§13
+ * §11.1 표기: `WELLNESS_PHASE_3B_DATA_SOURCE.moodJournal` (`src/constants/wellnessDataSource.ts`)
  *
  * @author MindGarden
  * @since 2026-05-13
  */
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { createMMKV } from 'react-native-mmkv';
-import { apiDelete, apiGet, apiPost } from '@/api/client';
+import { apiDelete, apiGet, apiPost, apiPut } from '@/api/client';
 import { MOOD_JOURNAL_API } from '@/api/endpoints';
 import { unwrapApiResponse } from '@/api/unwrapApiResponse';
 import type { EmotionTag, MoodStatPeriod } from '@/constants/moodConstants';
@@ -99,6 +99,9 @@ function normalizeMonthlyPayload(raw: unknown, month: string): Record<string, Mo
     if (Array.isArray(o.content)) {
       return normalizeMonthlyPayload(o.content, month);
     }
+    if (Array.isArray(o.journals)) {
+      return normalizeMonthlyPayload(o.journals, month);
+    }
     const out: Record<string, MoodJournalEntry> = {};
     for (const [k, v] of Object.entries(o)) {
       if (/^\d{4}-\d{2}-\d{2}$/.test(k) && v && typeof v === 'object') {
@@ -120,8 +123,10 @@ export async function fetchMoodJournalMonth(month: string): Promise<Record<strin
     if (normalized != null) {
       return normalized;
     }
+    /* 본문은 왔으나 월별 맵으로 해석 불가 → 서버에 해당 월 데이터 없음으로 간주 */
+    return {};
   } catch {
-    /* 단일 Mock 레이어: 네트워크·404 시 로컬 */
+    /* MMKV Mock: 요청 실패 시에만 */
   }
   return filterMonth(getAllEntriesLocal(), month);
 }
@@ -132,8 +137,9 @@ export async function fetchMoodJournalDetail(date: string): Promise<MoodJournalE
     const body = unwrapApiResponse<unknown>(raw) ?? raw;
     const e = normalizeEntry(body);
     if (e) return e;
+    return null;
   } catch {
-    /* fall back */
+    /* MMKV Mock: 요청 실패 시에만 */
   }
   const all = getAllEntriesLocal();
   return all[date] ?? null;
@@ -166,6 +172,42 @@ export async function createMoodJournalRemote(params: {
     });
     return entry;
   } catch {
+    /* MMKV Mock: POST 실패 시에만 */
+    const all = getAllEntriesLocal();
+    all[params.date] = entry;
+    saveAllEntriesLocal(all);
+    return entry;
+  }
+}
+
+export async function updateMoodJournalRemote(params: {
+  date: string;
+  moodValue: number;
+  tags: EmotionTag[];
+  memo: string;
+  sharedWithConsultant: boolean;
+}): Promise<MoodJournalEntry> {
+  const prev = getAllEntriesLocal()[params.date];
+  const emojiDef = MOOD_EMOJIS.find((m) => m.value === params.moodValue);
+  const entry: MoodJournalEntry = {
+    date: params.date,
+    moodValue: params.moodValue,
+    emoji: emojiDef?.emoji ?? '😐',
+    tags: params.tags,
+    memo: params.memo,
+    sharedWithConsultant: params.sharedWithConsultant,
+    createdAt: prev?.createdAt ?? new Date().toISOString(),
+  };
+  try {
+    await apiPut(MOOD_JOURNAL_API.detail(params.date), {
+      moodValue: params.moodValue,
+      tags: params.tags,
+      memo: params.memo,
+      sharedWithConsultant: params.sharedWithConsultant,
+    });
+    return entry;
+  } catch {
+    /* MMKV Mock: PUT 실패 시에만 */
     const all = getAllEntriesLocal();
     all[params.date] = entry;
     saveAllEntriesLocal(all);
@@ -177,30 +219,51 @@ export async function deleteMoodJournalRemote(date: string): Promise<void> {
   try {
     await apiDelete(MOOD_JOURNAL_API.delete(date));
   } catch {
+    /* MMKV Mock: DELETE 실패 시에만 */
     const all = getAllEntriesLocal();
     delete all[date];
     saveAllEntriesLocal(all);
   }
 }
 
+function parseMoodStatRows(rows: unknown[]): MoodStat[] {
+  return rows
+    .map((row) => {
+      if (row == null || typeof row !== 'object') return null;
+      const r = row as Record<string, unknown>;
+      const d = toDisplayString(r.date ?? r.statDate, '');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
+      return { date: d, value: toSafeNumber(r.value ?? r.moodValue ?? r.score, 0) };
+    })
+    .filter((x): x is MoodStat => x != null);
+}
+
+/** 배열(빈 배열 포함)·Page `content` 등 알려진 형태만 파싱. 미식별이면 null */
+function tryParseMoodStatsPayload(raw: unknown): MoodStat[] | null {
+  const body = unwrapApiResponse<unknown>(raw) ?? raw;
+  if (body == null) return null;
+  if (Array.isArray(body)) {
+    return parseMoodStatRows(body);
+  }
+  if (typeof body === 'object') {
+    const o = body as Record<string, unknown>;
+    if (Array.isArray(o.content)) {
+      return tryParseMoodStatsPayload(o.content);
+    }
+  }
+  return null;
+}
+
 export async function fetchMoodStats(period: MoodStatPeriod): Promise<MoodStat[]> {
   try {
     const raw = await apiGet<unknown>(MOOD_JOURNAL_API.STATS, { period });
-    const body = unwrapApiResponse<unknown>(raw) ?? raw;
-    if (Array.isArray(body)) {
-      const stats = body
-        .map((row) => {
-          if (row == null || typeof row !== 'object') return null;
-          const r = row as Record<string, unknown>;
-          const d = toDisplayString(r.date ?? r.statDate, '');
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
-          return { date: d, value: toSafeNumber(r.value ?? r.moodValue ?? r.score, 0) };
-        })
-        .filter((x): x is MoodStat => x != null);
-      if (stats.length > 0) return stats;
+    const parsed = tryParseMoodStatsPayload(raw);
+    if (parsed !== null) {
+      return parsed;
     }
+    /* HTTP 성공이나 본문이 통계 배열이 아님 → MMKV로 동일 기간 재계산 */
   } catch {
-    /* 로컬 계산 */
+    /* MMKV 기반 로컬 계산: 요청 실패 시 */
   }
 
   const all = getAllEntriesLocal();

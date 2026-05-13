@@ -21,15 +21,25 @@ export interface MeditationTrack {
   readonly categoryLabel: string;
   readonly durationSeconds: number;
   readonly gradientColors: readonly [string, string];
-  /** 트랙별 스트림. 없으면 {@link MEDITATION_DEFAULT_STREAM_URI} 사용 */
-  readonly audioUri?: string;
+  /** 트랙별 스트림(HTTPS URL 또는 Metro `require()` 자산 번호). 없으면 폴백 규칙 적용 */
+  readonly audioUri?: string | number;
 }
 
 /**
- * 데모 스트림(CC0). 운영 시 CDN·`/api/v1/meditations` 응답의 `contentUrl`로 교체
+ * 선택적 원격 데모 스트림(자사·라이선스 확보 URL만). 비어 있으면 외부 CDN을 쓰지 않는다.
+ * 운영: `/api/v1/meditations` 등 응답의 `contentUrl` 우선.
  */
-export const MEDITATION_DEFAULT_STREAM_URI =
-  'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3';
+const envDemoStream =
+  typeof process !== 'undefined' &&
+  typeof process.env.EXPO_PUBLIC_MEDITATION_DEMO_STREAM_URL === 'string'
+    ? process.env.EXPO_PUBLIC_MEDITATION_DEMO_STREAM_URL.trim()
+    : '';
+export const MEDITATION_DEFAULT_STREAM_URI: string | undefined =
+  envDemoStream.length > 0 ? envDemoStream : undefined;
+
+/** 무음 짧은 클립 — 리포지토리 내 생성 WAV(제3자 음원 없음). UI·플레이어 데모 폴백용 */
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+export const MEDITATION_LOCAL_DEMO_SILENCE = require('../../assets/audio/demo-silence.wav') as number;
 
 export const MEDITATION_CATEGORIES: readonly {
   key: MeditationCategory | 'favorites';

@@ -4,7 +4,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated';
@@ -16,6 +16,7 @@ import { formatPlayerTime } from '@/constants/meditationData';
 export function MiniPlayer() {
   const theme = useTheme();
   const router = useRouter();
+  const { width: windowWidth } = useWindowDimensions();
   const { currentTrack, isPlaying, currentTime, pause, resume, stop } =
     useMeditationStore();
 
@@ -70,7 +71,7 @@ export function MiniPlayer() {
             styles.progressFill,
             {
               backgroundColor: theme.colors.primary,
-              width: `${progress * 100}%` as any,
+              width: Math.max(0, windowWidth * progress),
             },
           ]}
         />

@@ -21,8 +21,107 @@ import {
   getScenarioByType,
   resolveRoute,
   resolveRouteForRole,
+  type PushScenario,
 } from '../constants/pushScenarios';
 import { showInAppToast } from '../components/organisms/InAppNotificationToast';
+
+// TODO(expo-push): Spring에 `/api/v1/mobile/push-token/register`·설정 API가 없으면 4xx 무시·계약만 맞춤 — CONSULTANT_CLIENT_APP_PLAN.md Phase 3 항목 5
+
+/**
+ * 푸시 data에서 라우트 파라미터 추출 (id·scheduleId 등 서버 키 편차 흡수)
+ */
+function collectPushRouteParams(
+  scenario: PushScenario,
+  data: Record<string, unknown>,
+): Record<string, string | number> {
+  const firstString = (...vals: unknown[]): string | undefined => {
+    for (const v of vals) {
+      if (v != null && String(v).trim() !== '') {
+        return String(v);
+      }
+    }
+    return undefined;
+  };
+
+  const params: Record<string, string | number> = {};
+
+  if (
+    scenario.category === 'booking' ||
+    scenario.category === 'session'
+  ) {
+    const sid = firstString(
+      data.scheduleId,
+      data.consultationId,
+      data.id,
+    );
+    if (sid != null) {
+      params.id = sid;
+    }
+  } else if (scenario.category === 'payment') {
+    const pid = firstString(
+      data.mappingId,
+      data.consultantClientMappingId,
+      data.paymentId,
+      data.id,
+    );
+    if (pid != null) {
+      params.id = pid;
+    }
+  } else {
+    const oid = firstString(
+      data.id,
+      data.conversationId,
+      data.threadId,
+      data.userId,
+    );
+    if (oid != null) {
+      params.id = oid;
+    }
+  }
+
+  const scheduleExtra = firstString(data.scheduleId, data.consultationId);
+  if (scheduleExtra != null && params.id == null) {
+    params.scheduleId = scheduleExtra;
+  }
+
+  return params;
+}
+
+function resolvePushRouteWithFallback(
+  scenario: PushScenario,
+  route: string,
+  role: 'client' | 'consultant',
+): string {
+  if (!/\{[^}]+\}/.test(route)) {
+    return route;
+  }
+  if (scenario.route.includes('sessions-payment')) {
+    return role === 'consultant'
+      ? '/(consultant)/(more)'
+      : '/(client)/(more)/sessions-payment';
+  }
+  if (scenario.route.includes('(sessions)')) {
+    return role === 'consultant'
+      ? '/(consultant)/(schedule)'
+      : '/(client)/(sessions)';
+  }
+  if (scenario.route.includes('(schedule)')) {
+    return '/(consultant)/(schedule)';
+  }
+  if (scenario.route.includes('notifications')) {
+    return role === 'consultant'
+      ? '/(consultant)/(more)/notifications'
+      : '/(client)/(more)/notifications';
+  }
+  if (scenario.route.includes('messages')) {
+    return role === 'consultant'
+      ? '/(consultant)/(more)/messages'
+      : '/(client)/(more)/messages';
+  }
+  return role === 'consultant'
+    ? '/(consultant)/(home)'
+    : '/(client)/(home)';
+}
 
 /**
  * 포그라운드 알림 핸들러:
@@ -246,12 +345,10 @@ export const NotificationService = {
     const { role } = useAuthStore.getState();
     if (!role) return;
 
-    const params: Record<string, string | number> = {};
-    if (data.id) params.id = data.id as string | number;
-    if (data.scheduleId) params.scheduleId = data.scheduleId as string | number;
-
+    const params = collectPushRouteParams(scenario, data);
     let route = resolveRoute(scenario.route, params);
     route = resolveRouteForRole(route, role);
+    route = resolvePushRouteWithFallback(scenario, route, role);
 
     try {
       router.push(route as Href);

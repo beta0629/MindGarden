@@ -79,12 +79,18 @@ function groupByDate(items: SessionUsageItem[]): GroupedUsage[] {
 export default function UsageHistoryScreen() {
   const theme = useTheme();
   const user = useAuthStore((s) => s.user);
-  const clientId = user?.id;
+  const clientId =
+    user?.id != null && !Number.isNaN(Number(user.id))
+      ? Number(user.id)
+      : undefined;
 
-  const { data: usageHistory, isLoading } = useSessionUsageHistory(clientId);
+  const { data, isLoading } = useSessionUsageHistory(clientId);
+
+  const usageHistory = data?.items ?? [];
+  const isDerivedFromMappings = data?.isDerivedFromMappings ?? false;
 
   const groupedData = useMemo(
-    () => groupByDate(usageHistory ?? []),
+    () => groupByDate(usageHistory),
     [usageHistory],
   );
 
@@ -103,7 +109,7 @@ export default function UsageHistoryScreen() {
     );
   }
 
-  if (!usageHistory?.length) {
+  if (!usageHistory.length) {
     return (
       <SafeAreaView
         style={[styles.safeArea, { backgroundColor: theme.colors.bgMain }]}
@@ -111,7 +117,7 @@ export default function UsageHistoryScreen() {
       >
         <EmptyState
           title="사용 이력이 없습니다"
-          description="상담 이용 시 회기 사용 이력이 여기에 표시됩니다"
+          description="상담 이용 시 회기 사용 이력이 여기에 표시됩니다. 결제·매칭 정보가 없으면 여기에 표시할 항목이 없습니다."
         />
       </SafeAreaView>
     );
@@ -126,6 +132,21 @@ export default function UsageHistoryScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {isDerivedFromMappings ? (
+          <View style={{ marginBottom: theme.spacing.md, paddingHorizontal: 4 }}>
+            <Text
+              style={{
+                color: theme.colors.textSecondary,
+                fontFamily: theme.fontFamily.regular,
+                fontSize: theme.fontSize.xs,
+                lineHeight: theme.fontSize.sm * 1.4,
+              }}
+            >
+              서버의 상세 사용 이력이 비어 있어, 회기 매칭 정보를 바탕으로 한 요약만
+              표시합니다.
+            </Text>
+          </View>
+        ) : null}
         {groupedData.map((group, groupIndex) => (
           <Animated.View
             key={group.date}

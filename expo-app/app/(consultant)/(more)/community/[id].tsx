@@ -28,6 +28,7 @@ import {
 } from 'lucide-react-native';
 
 import { useTheme } from '@/theme';
+import { EmptyState } from '@/components/atoms/EmptyState';
 import { useCommunityStore } from '@/stores/useCommunityStore';
 import type { CommunityComment } from '@/constants/communityData';
 
@@ -91,9 +92,10 @@ export default function ConsultantCommunityDetail() {
         style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
         edges={['top', 'bottom']}
       >
-        <Text style={{ color: theme.colors.textMain, padding: 24 }}>
-          게시글을 찾을 수 없습니다.
-        </Text>
+        <EmptyState
+          title="게시글을 찾을 수 없습니다"
+          description="목록으로 돌아가 다른 글을 선택해 주세요"
+        />
       </SafeAreaView>
     );
   }

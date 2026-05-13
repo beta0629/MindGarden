@@ -35,6 +35,12 @@ export function useHealingContents() {
   });
 }
 
+/**
+ * 심리 교육 전용 API는 아직 없음 (`GET /api/v1/psycho-education` 예정).
+ * 카드뉴스 목록·상세는 `MOCK_PSYCHO_ARTICLES` + 로컬 북마크(MMKV)를 사용한다.
+ */
+export const PSYCHO_EDUCATION_API_PLACEHOLDER = '/api/v1/psycho-education' as const;
+
 export function useRandomWellnessTip() {
   return useQuery<HealingContent | null>({
     queryKey: WELLNESS_QUERY_KEYS.randomTip(),

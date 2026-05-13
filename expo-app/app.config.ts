@@ -19,6 +19,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     bundleIdentifier: 'com.mindgarden.MindGardenMobile',
     infoPlist: {
+      UIBackgroundModes: ['audio'],
       NSCameraUsageDescription: 'QR 코드 스캔을 위해 카메라 접근이 필요합니다.',
       NSMicrophoneUsageDescription: '음성 메시지를 위해 마이크 접근이 필요합니다.',
       NSCalendarsUsageDescription: '상담 일정을 기기 캘린더에 추가하기 위해 접근이 필요합니다.',

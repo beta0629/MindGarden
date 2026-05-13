@@ -1,9 +1,10 @@
 /**
  * ChatScreen — 채팅 화면 공용 컴포넌트
- * 상담사/내담자 양쪽에서 재사용
+ * 상담사/내담자 양쪽에서 재사용. 스레드 키 = 상대방 사용자 ID(partnerId)
  *
  * @author MindGarden
  * @since 2026-05-12
+ * @since 2026-05-13 — 실 API 스레드·읽음 시도·날짜 구분선·스크롤 하단 정합
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -15,7 +16,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import * as Haptics from 'expo-haptics';
 import {
   Check,
@@ -35,6 +36,7 @@ import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 import {
   useMessages,
   useSendMessage,
+  useMarkMessageAsRead,
   type Message,
 } from '@/api/hooks/useMessages';
 import {
@@ -42,11 +44,10 @@ import {
   formatDateSeparator,
   isSameDay,
 } from '@/utils/dateFormat';
+import { toDisplayString } from '@/utils/safeDisplay';
 
 interface ChatScreenProps {
-  conversationId: number;
-  receiverId: number;
-  partnerName: string;
+  partnerId: number;
 }
 
 const QUICK_REPLIES = [
@@ -56,16 +57,14 @@ const QUICK_REPLIES = [
   '잠시만요',
 ];
 
-export function ChatScreen({
-  conversationId,
-  receiverId,
-  partnerName,
-}: ChatScreenProps) {
+export function ChatScreen({ partnerId }: ChatScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const [inputText, setInputText] = useState('');
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const inputRef = useRef<TextInput>(null);
+  const listRef = useRef<FlashListRef<Message>>(null);
+  const markedIdsRef = useRef<Set<number>>(new Set());
 
   const {
     data,
@@ -73,28 +72,52 @@ export function ChatScreen({
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useMessages(conversationId);
+  } = useMessages(Number.isFinite(partnerId) ? partnerId : undefined);
 
   const sendMessageMutation = useSendMessage();
+  const { mutate: markReadMutate } = useMarkMessageAsRead();
 
   const messages = data?.pages.flatMap((page) => page.content) ?? [];
 
+  useEffect(() => {
+    if (!messages.length) {
+      return;
+    }
+    messages.forEach((m) => {
+      if (!m.isMine && !m.isRead && !markedIdsRef.current.has(m.id)) {
+        markedIdsRef.current.add(m.id);
+        markReadMutate(m.id);
+      }
+    });
+  }, [messages, markReadMutate]);
+
+  useEffect(() => {
+    if (isLoading || messages.length === 0) {
+      return;
+    }
+    const t = setTimeout(() => {
+      listRef.current?.scrollToEnd({ animated: false });
+    }, 50);
+    return () => clearTimeout(t);
+  }, [isLoading, messages.length, partnerId]);
+
   const handleSend = useCallback(() => {
     const trimmed = inputText.trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      return;
+    }
 
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
     sendMessageMutation.mutate({
-      conversationId,
+      partnerId,
       content: trimmed,
-      receiverId,
     });
     setInputText('');
     setShowQuickReplies(false);
-  }, [inputText, conversationId, receiverId, sendMessageMutation]);
+  }, [inputText, partnerId, sendMessageMutation]);
 
   const handleQuickReply = useCallback(
     (text: string) => {
@@ -102,24 +125,22 @@ export function ChatScreen({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
       sendMessageMutation.mutate({
-        conversationId,
+        partnerId,
         content: text,
-        receiverId,
       });
       setShowQuickReplies(false);
     },
-    [conversationId, receiverId, sendMessageMutation],
+    [partnerId, sendMessageMutation],
   );
 
   const handleRetry = useCallback(
     (message: Message) => {
       sendMessageMutation.mutate({
-        conversationId,
+        partnerId,
         content: message.content,
-        receiverId,
       });
     },
-    [conversationId, receiverId, sendMessageMutation],
+    [partnerId, sendMessageMutation],
   );
 
   const handleEndReached = useCallback(() => {
@@ -130,9 +151,9 @@ export function ChatScreen({
 
   const renderItem = useCallback(
     ({ item, index }: { item: Message; index: number }) => {
-      const prevMessage = messages[index + 1];
+      const olderMessage = messages[index - 1];
       const showDateSeparator =
-        !prevMessage || !isSameDay(item.sentAt, prevMessage.sentAt);
+        !olderMessage || !isSameDay(item.sentAt, olderMessage.sentAt);
 
       return (
         <>
@@ -149,6 +170,23 @@ export function ChatScreen({
     [messages, handleRetry],
   );
 
+  if (!Number.isFinite(partnerId) || partnerId <= 0) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
+        <Text
+          style={{
+            color: theme.colors.textSecondary,
+            fontFamily: theme.fontFamily.regular,
+            fontSize: theme.fontSize.sm,
+            padding: 16,
+          }}
+        >
+          대화 상대 정보가 없습니다.
+        </Text>
+      </View>
+    );
+  }
+
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
@@ -164,6 +202,7 @@ export function ChatScreen({
       keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
     >
       <FlashList
+        ref={listRef}
         data={messages}
         renderItem={renderItem}
         keyExtractor={(item) => String(item.id)}
@@ -260,7 +299,7 @@ export function ChatScreen({
         />
         <Pressable
           onPress={handleSend}
-          disabled={!inputText.trim()}
+          disabled={!inputText.trim() || sendMessageMutation.isPending}
           style={[
             styles.sendButton,
             {
@@ -297,6 +336,7 @@ function MessageBubble({
   const theme = useTheme();
   const isMine = message.isMine;
   const isFailed = message.status === 'FAILED';
+  const body = toDisplayString(message.content, '');
 
   const enterAnimation = isMine
     ? SlideInRight.duration(250)
@@ -346,7 +386,7 @@ function MessageBubble({
             lineHeight: theme.fontSize.sm * 1.5,
           }}
         >
-          {message.content}
+          {body}
         </Text>
       </View>
       <View style={[styles.metaRow, isMine && styles.metaRowRight]}>

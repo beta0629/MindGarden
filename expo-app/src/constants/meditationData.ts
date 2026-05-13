@@ -4,6 +4,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
+import { colors } from '@/theme/tokens';
 
 export type MeditationCategory =
   | 'all'
@@ -20,7 +21,15 @@ export interface MeditationTrack {
   readonly categoryLabel: string;
   readonly durationSeconds: number;
   readonly gradientColors: readonly [string, string];
+  /** 트랙별 스트림. 없으면 {@link MEDITATION_DEFAULT_STREAM_URI} 사용 */
+  readonly audioUri?: string;
 }
+
+/**
+ * 데모 스트림(CC0). 운영 시 CDN·`/api/v1/meditations` 응답의 `contentUrl`로 교체
+ */
+export const MEDITATION_DEFAULT_STREAM_URI =
+  'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3';
 
 export const MEDITATION_CATEGORIES: readonly {
   key: MeditationCategory | 'favorites';
@@ -33,8 +42,6 @@ export const MEDITATION_CATEGORIES: readonly {
   { key: 'nature', label: '자연소리' },
   { key: 'favorites', label: '즐겨찾기' },
 ] as const;
-
-import { colors } from '@/theme/tokens';
 
 export const MEDITATION_GRADIENT_MAP: Record<
   MeditationCategory,

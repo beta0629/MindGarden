@@ -31,7 +31,6 @@ interface MeditationState {
   resume: () => void;
   stop: () => void;
   seek: (time: number) => void;
-  tick: () => void;
   toggleFavorite: (trackId: number) => void;
   isFavorite: (trackId: number) => boolean;
   addPracticeMinutes: (minutes: number) => void;
@@ -52,15 +51,6 @@ export const useMeditationStore = create<MeditationState>()(
       resume: () => set({ isPlaying: true }),
       stop: () => set({ currentTrack: null, isPlaying: false, currentTime: 0 }),
       seek: (time) => set({ currentTime: Math.max(0, time) }),
-      tick: () => {
-        const { currentTrack, currentTime, isPlaying } = get();
-        if (!isPlaying || !currentTrack) return;
-        if (currentTime >= currentTrack.durationSeconds) {
-          set({ isPlaying: false });
-          return;
-        }
-        set({ currentTime: currentTime + 1 });
-      },
       toggleFavorite: (trackId) => {
         const { favorites } = get();
         const next = favorites.includes(trackId)

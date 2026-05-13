@@ -1,11 +1,10 @@
 /**
- * 명상 플레이어 — 오디오 컨트롤 + 진행 바 + 즐겨찾기
- * 실제 오디오 없이 타이머 기반 Mock 재생
+ * 명상 플레이어 — expo-audio(브리지) + 진행 바 + 즐겨찾기
  *
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import {
   Platform,
   Pressable,
@@ -30,7 +29,9 @@ import {
 
 import { useTheme } from '@/theme';
 import { fontSize as fontSizeTokens } from '@/theme/typography';
+import { useMeditationPlaybackControls } from '@/contexts/MeditationPlaybackContext';
 import { useMeditationStore } from '@/stores/useMeditationStore';
+import { EmptyState } from '@/components/atoms/EmptyState';
 import {
   MOCK_MEDITATION_TRACKS,
   formatPlayerTime,
@@ -41,6 +42,7 @@ const SKIP_SECONDS = 10;
 export default function MeditationPlayer() {
   const theme = useTheme();
   const router = useRouter();
+  const playback = useMeditationPlaybackControls();
   const { id } = useLocalSearchParams<{ id: string }>();
   const trackId = Number(id);
 
@@ -52,41 +54,16 @@ export default function MeditationPlayer() {
     play,
     pause,
     resume,
-    stop,
     seek,
-    tick,
     toggleFavorite,
     isFavorite,
-    addPracticeMinutes,
   } = useMeditationStore();
-
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (track && currentTrack?.id !== track.id) {
       play(track);
     }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [track?.id]);
-
-  useEffect(() => {
-    if (isPlaying) {
-      timerRef.current = setInterval(tick, 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isPlaying]);
-
-  useEffect(() => {
-    if (track && currentTime >= track.durationSeconds && currentTime > 0) {
-      addPracticeMinutes(Math.round(track.durationSeconds / 60));
-    }
-  }, [currentTime, track?.durationSeconds]);
+  }, [track, currentTrack?.id, play]);
 
   if (!track) {
     return (
@@ -94,15 +71,17 @@ export default function MeditationPlayer() {
         style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
         edges={['top', 'bottom']}
       >
-        <Text style={{ color: theme.colors.textMain, padding: 24 }}>
-          명상 콘텐츠를 찾을 수 없습니다.
-        </Text>
+        <EmptyState
+          title="명상 콘텐츠를 찾을 수 없습니다"
+          description="목록에서 다른 트랙을 선택해 주세요"
+        />
       </SafeAreaView>
     );
   }
 
   const liked = isFavorite(track.id);
-  const progress = track.durationSeconds > 0 ? currentTime / track.durationSeconds : 0;
+  const progress =
+    track.durationSeconds > 0 ? currentTime / track.durationSeconds : 0;
   const isFinished = currentTime >= track.durationSeconds;
 
   const handlePlayPause = () => {
@@ -110,7 +89,7 @@ export default function MeditationPlayer() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     if (isFinished) {
-      seek(0);
+      void playback?.seekPlaybackTo(0);
       resume();
       return;
     }
@@ -122,14 +101,25 @@ export default function MeditationPlayer() {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    seek(Math.max(0, currentTime - SKIP_SECONDS));
+    const next = Math.max(0, currentTime - SKIP_SECONDS);
+    void playback?.seekPlaybackTo(next);
   };
 
   const handleSkipForward = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    seek(Math.min(track.durationSeconds, currentTime + SKIP_SECONDS));
+    const next = Math.min(track.durationSeconds, currentTime + SKIP_SECONDS);
+    void playback?.seekPlaybackTo(next);
+  };
+
+  const handleSliderComplete = (val: number) => {
+    const next = Math.round(val * track.durationSeconds);
+    if (playback) {
+      void playback.seekPlaybackTo(next);
+    } else {
+      seek(next);
+    }
   };
 
   const handleFavorite = () => {
@@ -155,7 +145,6 @@ export default function MeditationPlayer() {
         style={styles.flex}
       >
         <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
-          {/* 헤더 */}
           <Animated.View entering={FadeIn.duration(300)} style={styles.header}>
             <Pressable
               onPress={handleBack}
@@ -181,7 +170,6 @@ export default function MeditationPlayer() {
             </Pressable>
           </Animated.View>
 
-          {/* 콘텐츠 */}
           <View style={styles.content}>
             <Animated.View
               entering={FadeInDown.delay(200).springify()}
@@ -228,18 +216,14 @@ export default function MeditationPlayer() {
             </Animated.View>
           </View>
 
-          {/* 컨트롤 */}
           <Animated.View
             entering={FadeInUp.delay(400).springify()}
             style={styles.controls}
           >
-            {/* 진행 바 */}
             <View style={styles.sliderWrap}>
               <Slider
                 value={progress}
-                onSlidingComplete={(val) =>
-                  seek(Math.round(val * track.durationSeconds))
-                }
+                onSlidingComplete={handleSliderComplete}
                 minimumValue={0}
                 maximumValue={1}
                 minimumTrackTintColor={theme.colors.textOnPrimary}
@@ -272,7 +256,6 @@ export default function MeditationPlayer() {
               </View>
             </View>
 
-            {/* 재생 버튼 */}
             <View style={styles.btnRow}>
               <Pressable
                 onPress={handleSkipBack}
@@ -328,7 +311,7 @@ export default function MeditationPlayer() {
                     marginTop: 16,
                   }}
                 >
-                  명상을 완료했습니다 🧘
+                  명상을 완료했습니다
                 </Text>
               </Animated.View>
             )}

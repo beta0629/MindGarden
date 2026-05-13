@@ -4,8 +4,9 @@
  *
  * @author MindGarden
  * @since 2026-05-12
+ * @since 2026-05-13 — 전체/안읽음 필터·표시 경계·아이콘 색상 토큰
  */
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Pressable,
   RefreshControl,
@@ -23,9 +24,10 @@ import {
   MessageCircle,
   Settings,
 } from 'lucide-react-native';
-import Animated, { FadeInRight, SlideInLeft } from 'react-native-reanimated';
+import Animated, { FadeInRight } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/theme';
+import type { AppThemeColors } from '@/theme';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import {
@@ -36,23 +38,30 @@ import {
   type NotificationType,
 } from '@/api/hooks/useNotifications';
 import { formatRelativeTime } from '@/utils/dateFormat';
+import { toDisplayString } from '@/utils/safeDisplay';
 
 const SKELETON_COUNT = 6;
 
 const NOTIFICATION_TYPE_ICONS: Record<
   NotificationType,
-  { icon: typeof Bell; color: string }
+  { icon: typeof Bell; colorKey: keyof Pick<
+    AppThemeColors,
+    'primary' | 'success' | 'warning' | 'info' | 'textSecondary'
+  > }
 > = {
-  SCHEDULE: { icon: Calendar, color: 'info' },
-  PAYMENT: { icon: CreditCard, color: 'success' },
-  MESSAGE: { icon: MessageCircle, color: 'primary' },
-  WELLNESS: { icon: Heart, color: 'warning' },
-  SYSTEM: { icon: Settings, color: 'textSecondary' },
+  SCHEDULE: { icon: Calendar, colorKey: 'info' },
+  PAYMENT: { icon: CreditCard, colorKey: 'success' },
+  MESSAGE: { icon: MessageCircle, colorKey: 'primary' },
+  WELLNESS: { icon: Heart, colorKey: 'warning' },
+  SYSTEM: { icon: Settings, colorKey: 'textSecondary' },
 };
+
+type InboxFilter = 'all' | 'unread';
 
 export function NotificationCenterScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const [filter, setFilter] = useState<InboxFilter>('all');
 
   const {
     data,
@@ -67,8 +76,17 @@ export function NotificationCenterScreen() {
   const markAsReadMutation = useMarkAsRead();
   const markAllAsReadMutation = useMarkAllAsRead();
 
-  const notifications = data?.pages.flatMap((page) => page.content).filter(Boolean) ?? [];
-  const hasUnread = notifications.some((n) => n && !n.isRead);
+  const flatNotifications =
+    data?.pages.flatMap((page) => page.content).filter(Boolean) ?? [];
+
+  const notifications = useMemo(() => {
+    if (filter === 'unread') {
+      return flatNotifications.filter((n) => n && !n.isRead);
+    }
+    return flatNotifications;
+  }, [flatNotifications, filter]);
+
+  const hasUnread = flatNotifications.some((n) => n && !n.isRead);
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -81,8 +99,9 @@ export function NotificationCenterScreen() {
       if (!notification.isRead) {
         markAsReadMutation.mutate(notification.id);
       }
-      if (notification.deepLink) {
-        router.push(notification.deepLink as never);
+      const link = notification.deepLink;
+      if (typeof link === 'string' && link.length > 0) {
+        router.push(link as never);
       }
     },
     [markAsReadMutation, router],
@@ -115,7 +134,52 @@ export function NotificationCenterScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
-      {hasUnread ? (
+      <View style={[styles.filterRow, { borderBottomColor: theme.colors.divider }]}>
+        <Pressable
+          onPress={() => setFilter('all')}
+          style={[
+            styles.filterChip,
+            filter === 'all' && { backgroundColor: theme.colors.accentSoft },
+          ]}
+          accessibilityRole="button"
+          accessibilityState={{ selected: filter === 'all' }}
+        >
+          <Text
+            style={{
+              color: filter === 'all' ? theme.colors.primary : theme.colors.textSecondary,
+              fontFamily:
+                filter === 'all' ? theme.fontFamily.semibold : theme.fontFamily.regular,
+              fontSize: theme.fontSize.sm,
+            }}
+          >
+            전체
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => setFilter('unread')}
+          style={[
+            styles.filterChip,
+            filter === 'unread' && { backgroundColor: theme.colors.accentSoft },
+          ]}
+          accessibilityRole="button"
+          accessibilityState={{ selected: filter === 'unread' }}
+        >
+          <Text
+            style={{
+              color:
+                filter === 'unread' ? theme.colors.primary : theme.colors.textSecondary,
+              fontFamily:
+                filter === 'unread'
+                  ? theme.fontFamily.semibold
+                  : theme.fontFamily.regular,
+              fontSize: theme.fontSize.sm,
+            }}
+          >
+            안 읽음
+          </Text>
+        </Pressable>
+      </View>
+      {hasUnread && filter === 'all' ? (
         <View style={[styles.headerRow, { borderBottomColor: theme.colors.divider }]}>
           <Pressable
             onPress={handleMarkAllRead}
@@ -141,7 +205,6 @@ export function NotificationCenterScreen() {
         data={notifications}
         renderItem={renderItem}
         keyExtractor={(item, index) => String(item?.id ?? `fallback-${index}`)}
-        estimatedItemSize={72}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
         refreshControl={
@@ -154,8 +217,12 @@ export function NotificationCenterScreen() {
         ListEmptyComponent={
           <EmptyState
             icon={<Bell size={32} color={theme.colors.textTertiary} />}
-            title="새로운 알림이 없습니다"
-            description="새 알림이 도착하면 여기에 표시됩니다"
+            title={filter === 'unread' ? '안 읽은 알림이 없습니다' : '새로운 알림이 없습니다'}
+            description={
+              filter === 'unread'
+                ? '전체 탭에서 모든 알림을 확인할 수 있습니다'
+                : '새 알림이 도착하면 여기에 표시됩니다'
+            }
           />
         }
         contentContainerStyle={styles.listContent}
@@ -174,9 +241,11 @@ function NotificationItem({ notification, onPress, index }: NotificationItemProp
   const theme = useTheme();
   const typeConfig = NOTIFICATION_TYPE_ICONS[notification.type];
   const IconComponent = typeConfig.icon;
-  const iconColor =
-    theme.colors[typeConfig.color as keyof typeof theme.colors] ??
-    theme.colors.textSecondary;
+  const iconColor = theme.colors[typeConfig.colorKey];
+
+  const title = toDisplayString(notification.title, '알림');
+  const body = toDisplayString(notification.content, '');
+  const timeLabel = formatRelativeTime(notification.createdAt);
 
   return (
     <Animated.View entering={FadeInRight.delay(index * 40).duration(250)}>
@@ -194,7 +263,7 @@ function NotificationItem({ notification, onPress, index }: NotificationItemProp
           },
         ]}
         accessibilityRole="button"
-        accessibilityLabel={`${notification.title}. ${notification.content}`}
+        accessibilityLabel={`${title}. ${body}`}
       >
         {!notification.isRead ? (
           <View
@@ -207,7 +276,7 @@ function NotificationItem({ notification, onPress, index }: NotificationItemProp
             { backgroundColor: theme.colors.accentSoft },
           ]}
         >
-          <IconComponent size={20} color={iconColor as string} />
+          <IconComponent size={20} color={iconColor} />
         </View>
         <View style={styles.itemContent}>
           <Text
@@ -220,7 +289,7 @@ function NotificationItem({ notification, onPress, index }: NotificationItemProp
             }}
             numberOfLines={1}
           >
-            {notification.title}
+            {title}
           </Text>
           <Text
             style={{
@@ -231,7 +300,7 @@ function NotificationItem({ notification, onPress, index }: NotificationItemProp
             }}
             numberOfLines={2}
           >
-            {notification.content}
+            {body}
           </Text>
           <Text
             style={{
@@ -241,7 +310,7 @@ function NotificationItem({ notification, onPress, index }: NotificationItemProp
               marginTop: 4,
             }}
           >
-            {formatRelativeTime(notification.createdAt)}
+            {timeLabel}
           </Text>
         </View>
       </Pressable>
@@ -252,6 +321,18 @@ function NotificationItem({ notification, onPress, index }: NotificationItemProp
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+    borderBottomWidth: 1,
+  },
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
   headerRow: {
     flexDirection: 'row',

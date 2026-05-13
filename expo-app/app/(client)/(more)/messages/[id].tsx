@@ -3,19 +3,33 @@
  *
  * @author MindGarden
  * @since 2026-05-12
+ * @since 2026-05-13 — partnerId·헤더 표시명 쿼리 정합
  */
 import { SafeAreaView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { ChatScreen } from '@/components/organisms/ChatScreen';
+import { toDisplayString } from '@/utils/safeDisplay';
 
 export default function ClientChatScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, partnerName } = useLocalSearchParams<{
+    id: string;
+    partnerName?: string;
+  }>();
 
-  const conversationId = Number(id);
+  const partnerId = Number(id);
+  let decodedName = '';
+  if (typeof partnerName === 'string' && partnerName.length > 0) {
+    try {
+      decodedName = decodeURIComponent(partnerName);
+    } catch {
+      decodedName = partnerName;
+    }
+  }
+  const headerTitle = toDisplayString(decodedName, '상담 대화');
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
@@ -35,15 +49,12 @@ export default function ClientChatScreen() {
             fontSize: theme.fontSize.lg,
             marginLeft: 8,
           }}
+          numberOfLines={1}
         >
-          상담 대화
+          {headerTitle}
         </Text>
       </View>
-      <ChatScreen
-        conversationId={conversationId}
-        receiverId={0}
-        partnerName=""
-      />
+      <ChatScreen partnerId={partnerId} />
     </SafeAreaView>
   );
 }

@@ -8,6 +8,7 @@
 import { useCallback, useEffect } from 'react';
 import {
   Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Switch,
@@ -75,7 +76,7 @@ const SETTING_CATEGORIES: SettingCategory[] = [
 export function NotificationSettingsScreen() {
   const theme = useTheme();
 
-  const { data: settings, isLoading } = useNotificationSettings();
+  const { data: settings, isLoading, refetch, isRefetching } = useNotificationSettings();
   const updateMutation = useUpdateNotificationSettings();
   const setLocalCategory = useNotificationSettingsStore((s) => s.setCategory);
   const setCategoryAll = useNotificationSettingsStore((s) => s.setCategoryAll);
@@ -117,6 +118,15 @@ export function NotificationSettingsScreen() {
     <ScrollView
       style={[styles.container, { backgroundColor: theme.colors.bgMain }]}
       contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefetching}
+          onRefresh={() => {
+            refetch();
+          }}
+          tintColor={theme.colors.primary}
+        />
+      }
     >
       <Text
         style={[

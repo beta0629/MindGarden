@@ -27,6 +27,11 @@ import { AppTopBar } from '@/components/templates/AppTopBar';
 import { Chip } from '@/components/atoms/Chip';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import {
+  PSYCHO_EDUCATION_API_PLACEHOLDER,
+  useHealingContents,
+} from '@/api/hooks/useWellness';
+import { toDisplayString } from '@/utils/toDisplayString';
+import {
   PSYCHO_CATEGORIES,
   MOCK_PSYCHO_ARTICLES,
   type PsychoCategory,
@@ -56,6 +61,14 @@ export default function PsychoEducationMain() {
   >('all');
   const [bookmarks, setBookmarks] = useState<number[]>(loadBookmarks);
   const [refreshing, setRefreshing] = useState(false);
+
+  const healingQuery = useHealingContents();
+  const healingArticlePreview = useMemo(() => {
+    const list = healingQuery.data ?? [];
+    return list
+      .filter((item) => item.type === 'ARTICLE')
+      .slice(0, 3);
+  }, [healingQuery.data]);
 
   const filteredArticles = useMemo(() => {
     if (activeCategory === 'all') return MOCK_PSYCHO_ARTICLES;
@@ -98,6 +111,58 @@ export default function PsychoEducationMain() {
       edges={['top']}
     >
       <AppTopBar title="심리 교육" canGoBack />
+
+      <View
+        style={{
+          marginHorizontal: 16,
+          marginBottom: 8,
+          paddingVertical: 10,
+          paddingHorizontal: 12,
+          borderRadius: theme.borderRadius.lg,
+          backgroundColor: theme.colors.accentSoft,
+        }}
+        accessibilityRole="text"
+      >
+        <Text
+          style={{
+            fontFamily: theme.fontFamily.medium,
+            fontSize: theme.fontSize.xs,
+            color: theme.colors.textSecondary,
+          }}
+        >
+          샘플 카드뉴스 · 심리 교육 전용 API는 {PSYCHO_EDUCATION_API_PLACEHOLDER}{' '}
+          (예정). 힐링 콘텐츠는 연동 시 아래에 표시됩니다.
+        </Text>
+      </View>
+
+      {healingQuery.isSuccess && healingArticlePreview.length > 0 ? (
+        <View style={{ marginHorizontal: 16, marginBottom: 8 }}>
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.semibold,
+              fontSize: theme.fontSize.sm,
+              color: theme.colors.textMain,
+              marginBottom: 6,
+            }}
+          >
+            힐링 콘텐츠에서 가져온 글 (ARTICLE)
+          </Text>
+          {healingArticlePreview.map((row) => (
+            <Text
+              key={row.id}
+              style={{
+                fontFamily: theme.fontFamily.regular,
+                fontSize: theme.fontSize.xs,
+                color: theme.colors.textSecondary,
+                marginBottom: 4,
+              }}
+              numberOfLines={2}
+            >
+              {toDisplayString(row.title, '제목 없음')}
+            </Text>
+          ))}
+        </View>
+      ) : null}
 
       <ScrollView
         contentContainerStyle={styles.scroll}

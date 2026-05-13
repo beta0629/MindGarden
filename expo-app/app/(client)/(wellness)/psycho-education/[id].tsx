@@ -4,7 +4,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -24,6 +24,7 @@ import { ArrowLeft, Bookmark, Check } from 'lucide-react-native';
 import { createMMKV } from 'react-native-mmkv';
 
 import { useTheme } from '@/theme';
+import { EmptyState } from '@/components/atoms/EmptyState';
 import {
   MOCK_PSYCHO_ARTICLES,
   type PsychoPage,
@@ -90,17 +91,6 @@ export default function PsychoEducationDetail() {
     mmkv.set('bookmarks', JSON.stringify(next));
   };
 
-  const markCompleted = () => {
-    if (!isCompleted) {
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      const next = [...completedArticles, articleId];
-      setCompletedArticles(next);
-      mmkv.set('completed', JSON.stringify(next));
-    }
-  };
-
   const handleBack = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -108,23 +98,39 @@ export default function PsychoEducationDetail() {
     router.back();
   };
 
+  useEffect(() => {
+    if (!article) {
+      return;
+    }
+    const lastIndex = article.pages.length - 1;
+    if (currentPage !== lastIndex) {
+      return;
+    }
+    setCompletedArticles((prev) => {
+      if (prev.includes(articleId)) {
+        return prev;
+      }
+      if (Platform.OS !== 'web') {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      const next = [...prev, articleId];
+      mmkv.set('completed', JSON.stringify(next));
+      return next;
+    });
+  }, [article, currentPage, articleId]);
+
   if (!article) {
     return (
       <SafeAreaView
         style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
         edges={['top', 'bottom']}
       >
-        <Text style={{ color: theme.colors.textMain, padding: 24 }}>
-          콘텐츠를 찾을 수 없습니다.
-        </Text>
+        <EmptyState
+          title="콘텐츠를 찾을 수 없습니다"
+          description="목록에서 다른 글을 선택해 주세요"
+        />
       </SafeAreaView>
     );
-  }
-
-  const isLastPage = currentPage === article.pages.length - 1;
-
-  if (isLastPage && !isCompleted) {
-    markCompleted();
   }
 
   const renderPage = ({ item, index }: { item: PsychoPage; index: number }) => (

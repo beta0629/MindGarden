@@ -29,6 +29,7 @@ import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
 import { Chip } from '@/components/atoms/Chip';
 import { EmptyState } from '@/components/atoms/EmptyState';
+import { useCommunityFeed } from '@/api/hooks/useCommunity';
 import { useCommunityStore } from '@/stores/useCommunityStore';
 import {
   COMMUNITY_TABS,
@@ -39,6 +40,7 @@ import {
 export default function ConsultantCommunityFeed() {
   const theme = useTheme();
   const router = useRouter();
+  const { dataSource } = useCommunityFeed();
   const [activeTab, setActiveTab] = useState<CommunityTab>('all');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -97,6 +99,21 @@ export default function ConsultantCommunityFeed() {
       edges={['top']}
     >
       <AppTopBar title="커뮤니티" canGoBack />
+
+      {dataSource === 'local-sample' ? (
+        <View style={{ paddingHorizontal: 16, paddingBottom: 4 }}>
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.medium,
+              fontSize: theme.fontSize.xs,
+              color: theme.colors.textTertiary,
+            }}
+          >
+            샘플 피드 · 상담사 칼럼·내담자 후기는 /api/v1/community 연동 후 서버와
+            동기화됩니다.
+          </Text>
+        </View>
+      ) : null}
 
       <Animated.View entering={FadeIn.duration(300)}>
         <View style={styles.tabRow}>

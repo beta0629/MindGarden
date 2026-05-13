@@ -1,11 +1,12 @@
 /**
  * ConversationListScreen — 대화 목록 공용 컴포넌트
- * 상담사/내담자 양쪽에서 재사용
+ * 상담사/내담자 양쪽에서 재사용. 스레드 라우트 파라미터 = 상대방 사용자 ID
  *
  * @author MindGarden
  * @since 2026-05-12
+ * @since 2026-05-13 — 실 API 집계·검색 지연·오류·표시 경계
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import {
   Pressable,
   RefreshControl,
@@ -24,9 +25,12 @@ import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { SearchBar } from '@/components/molecules/SearchBar';
 import {
   useConversations,
+  buildConversationsFromRows,
   type Conversation,
 } from '@/api/hooks/useMessages';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { formatRelativeTime } from '@/utils/dateFormat';
+import { toDisplayString } from '@/utils/safeDisplay';
 
 interface ConversationListScreenProps {
   basePath: string;
@@ -37,7 +41,9 @@ const SKELETON_COUNT = 5;
 export function ConversationListScreen({ basePath }: ConversationListScreenProps) {
   const theme = useTheme();
   const router = useRouter();
+  const user = useAuthStore((s) => s.user);
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearch = useDeferredValue(searchQuery);
 
   const {
     data,
@@ -47,9 +53,24 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
     fetchNextPage,
     refetch,
     isRefetching,
-  } = useConversations(searchQuery);
+    isError,
+  } = useConversations(deferredSearch);
 
-  const conversations = data?.pages.flatMap((page) => page.content) ?? [];
+  const conversations = useMemo(() => {
+    if (!user?.id || !user.role) {
+      return [];
+    }
+    const flat =
+      data?.pages.flatMap((p) => ('messages' in p ? p.messages : [])) ?? [];
+    flat.sort((a, b) => {
+      const sa = String(a.sentAt ?? a.createdAt ?? '');
+      const sb = String(b.sentAt ?? b.createdAt ?? '');
+      const ta = new Date(sa).getTime();
+      const tb = new Date(sb).getTime();
+      return (Number.isNaN(tb) ? 0 : tb) - (Number.isNaN(ta) ? 0 : ta);
+    });
+    return buildConversationsFromRows(flat, user.role, user.id, deferredSearch);
+  }, [data?.pages, deferredSearch, user?.id, user?.role]);
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -59,7 +80,8 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
 
   const handleConversationPress = useCallback(
     (conversation: Conversation) => {
-      router.push(`${basePath}/${conversation.id}` as never);
+      const name = encodeURIComponent(conversation.partnerName);
+      router.push(`${basePath}/${conversation.id}?partnerName=${name}` as never);
     },
     [router, basePath],
   );
@@ -88,6 +110,41 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
         {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
           <SkeletonCard key={i} lines={2} style={styles.skeletonCard} />
         ))}
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
+        <View style={styles.searchWrapper}>
+          <SearchBar
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="이름으로 검색"
+          />
+        </View>
+        <EmptyState
+          icon={<MessageCircle size={32} color={theme.colors.textTertiary} />}
+          title="목록을 불러오지 못했습니다"
+          description="네트워크를 확인한 뒤 다시 시도해 주세요"
+        />
+        <Pressable
+          onPress={() => refetch()}
+          style={styles.retryPressable}
+          accessibilityLabel="다시 시도"
+          accessibilityRole="button"
+        >
+          <Text
+            style={{
+              color: theme.colors.primary,
+              fontFamily: theme.fontFamily.medium,
+              fontSize: theme.fontSize.sm,
+            }}
+          >
+            다시 시도
+          </Text>
+        </Pressable>
       </View>
     );
   }
@@ -135,6 +192,8 @@ interface ConversationItemProps {
 
 function ConversationItem({ conversation, onPress, index }: ConversationItemProps) {
   const theme = useTheme();
+  const partnerLabel = toDisplayString(conversation.partnerName, '대화');
+  const preview = toDisplayString(conversation.lastMessage, '');
 
   return (
     <Animated.View entering={FadeInRight.delay(index * 50).duration(300)}>
@@ -150,11 +209,11 @@ function ConversationItem({ conversation, onPress, index }: ConversationItemProp
           },
         ]}
         accessibilityRole="button"
-        accessibilityLabel={`${conversation.partnerName}과의 대화. ${conversation.lastMessage}`}
+        accessibilityLabel={`${partnerLabel}과의 대화. ${preview}`}
       >
         <Avatar
           uri={conversation.partnerProfileImageUrl}
-          name={conversation.partnerName}
+          name={partnerLabel}
           size="lg"
         />
         <View style={styles.itemContent}>
@@ -170,7 +229,7 @@ function ConversationItem({ conversation, onPress, index }: ConversationItemProp
               ]}
               numberOfLines={1}
             >
-              {conversation.partnerName}
+              {partnerLabel}
             </Text>
             <Text
               style={[
@@ -197,7 +256,7 @@ function ConversationItem({ conversation, onPress, index }: ConversationItemProp
               ]}
               numberOfLines={1}
             >
-              {conversation.lastMessage}
+              {preview}
             </Text>
             {conversation.unreadCount > 0 ? (
               <View
@@ -243,6 +302,10 @@ const styles = StyleSheet.create({
   skeletonCard: {
     marginHorizontal: 16,
     marginTop: 8,
+  },
+  retryPressable: {
+    alignSelf: 'center',
+    padding: 12,
   },
   itemContainer: {
     flexDirection: 'row',

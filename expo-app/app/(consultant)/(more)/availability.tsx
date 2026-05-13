@@ -129,10 +129,18 @@ export default function ConsultantAvailability() {
   const user = useAuthStore((s) => s.user);
   const consultantId = user?.id;
 
-  const { data: serverSlots, isLoading: loadingSlots } =
-    useConsultantAvailability(consultantId);
-  const { data: vacationList, isLoading: loadingVacations } =
-    useVacations(consultantId);
+  const {
+    data: serverSlots,
+    isLoading: loadingSlots,
+    isError: slotsError,
+    refetch: refetchSlots,
+  } = useConsultantAvailability(consultantId);
+  const {
+    data: vacationList,
+    isLoading: loadingVacations,
+    isError: vacationsError,
+    refetch: refetchVacations,
+  } = useVacations(consultantId);
 
   const updateAvailability = useUpdateAvailability();
   const createVacation = useCreateVacation();
@@ -186,6 +194,7 @@ export default function ConsultantAvailability() {
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
+      Alert.alert('저장 완료', '근무 가능 시간이 저장되었습니다.');
     } catch {
       Alert.alert('저장 실패', '근무시간 저장에 실패했습니다.');
     }
@@ -216,10 +225,16 @@ export default function ConsultantAvailability() {
   }, [consultantId, vacStartDate, vacEndDate, vacReason, triggerHaptic, createVacation]);
 
   const handleDeleteVacation = useCallback(
-    async (vacationId: number) => {
+    async (vacationDate: string) => {
       if (!consultantId) return;
+      const cid = consultantId;
       try {
-        await deleteVacation.mutateAsync({ consultantId, vacationId });
+        await deleteVacation.mutateAsync({
+          consultantId: cid,
+          date: vacationDate.includes('T')
+            ? vacationDate.slice(0, 10)
+            : vacationDate,
+        });
       } catch {
         Alert.alert('삭제 실패', '휴가 삭제에 실패했습니다.');
       }
@@ -228,6 +243,64 @@ export default function ConsultantAvailability() {
   );
 
   const isLoading = loadingSlots || loadingVacations;
+  const loadError = slotsError || vacationsError;
+
+  if (!consultantId) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: true, title: '근무 가능 시간' }} />
+        <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
+          <EmptyState
+            icon={<Clock size={32} color={theme.colors.textTertiary} />}
+            title="로그인이 필요합니다"
+            description="상담사 계정으로 로그인한 뒤 다시 시도해 주세요"
+          />
+        </View>
+      </>
+    );
+  }
+
+  if (loadError && !isLoading) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: true, title: '근무 가능 시간' }} />
+        <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
+          <EmptyState
+            icon={<Clock size={32} color={theme.colors.textTertiary} />}
+            title="불러오기에 실패했습니다"
+            description="네트워크 상태를 확인한 뒤 다시 시도해 주세요"
+          />
+          <Pressable
+            onPress={() => {
+              refetchSlots();
+              refetchVacations();
+            }}
+            style={[
+              styles.bottomButton,
+              {
+                marginHorizontal: theme.spacing.lg,
+                marginTop: theme.spacing.md,
+                backgroundColor: theme.colors.primary,
+                borderRadius: theme.borderRadius.lg,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="다시 시도"
+          >
+            <Text
+              style={{
+                color: theme.colors.textOnPrimary,
+                fontFamily: theme.fontFamily.semibold,
+                fontSize: theme.fontSize.sm,
+              }}
+            >
+              다시 시도
+            </Text>
+          </Pressable>
+        </View>
+      </>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -547,7 +620,7 @@ export default function ConsultantAvailability() {
                           color: theme.colors.textMain,
                         }}
                       >
-                        {formatDate(vac.startDate)} ~ {formatDate(vac.endDate)}
+                        {formatDate(vac.date)}
                       </Text>
                       {vac.reason ? (
                         <Text
@@ -564,7 +637,7 @@ export default function ConsultantAvailability() {
                       ) : null}
                     </View>
                     <Pressable
-                      onPress={() => handleDeleteVacation(vac.id)}
+                      onPress={() => handleDeleteVacation(vac.date)}
                       hitSlop={8}
                       accessibilityLabel="휴가 삭제"
                       accessibilityRole="button"

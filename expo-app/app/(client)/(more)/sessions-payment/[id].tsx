@@ -30,7 +30,8 @@ import {
   User,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { usePaymentDetail, type PaymentStatus } from '@/api/hooks/usePayments';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useSessionPaymentDetail, type PaymentStatus } from '@/api/hooks/usePayments';
 import { Badge } from '@/components/atoms/Badge';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { EmptyState } from '@/components/atoms/EmptyState';
@@ -58,9 +59,17 @@ function formatCurrency(amount: number): string {
 export default function PaymentDetailScreen() {
   const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const user = useAuthStore((s) => s.user);
+  const clientId =
+    user?.id != null && !Number.isNaN(Number(user.id))
+      ? Number(user.id)
+      : undefined;
   const paymentId = id ? Number(id) : undefined;
 
-  const { data: payment, isLoading, isError } = usePaymentDetail(paymentId);
+  const { data: payment, isLoading, isError } = useSessionPaymentDetail(
+    clientId,
+    paymentId,
+  );
 
   const handleReceiptPress = useCallback(() => {
     if (payment?.receiptUrl) {

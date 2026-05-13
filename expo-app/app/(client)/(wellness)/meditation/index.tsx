@@ -82,6 +82,28 @@ export default function MeditationMain() {
     >
       <AppTopBar title="명상 가이드" canGoBack />
 
+      <View
+        style={{
+          marginHorizontal: 16,
+          marginBottom: 8,
+          paddingVertical: 10,
+          paddingHorizontal: 12,
+          borderRadius: theme.borderRadius.lg,
+          backgroundColor: theme.colors.accentSoft,
+        }}
+        accessibilityRole="text"
+      >
+        <Text
+          style={{
+            fontFamily: theme.fontFamily.medium,
+            fontSize: theme.fontSize.xs,
+            color: theme.colors.textSecondary,
+          }}
+        >
+          샘플 목록 · 오디오는 데모 스트림(CC0)입니다. 운영 시 GET /api/v1/meditations 및 CDN으로 교체합니다.
+        </Text>
+      </View>
+
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}

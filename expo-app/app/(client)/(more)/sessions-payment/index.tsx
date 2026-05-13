@@ -1,6 +1,6 @@
 /**
  * 회기·결제 메인 화면
- * 보유 회기 카드 + 결제 내역 (필터·무한스크롤)
+ * 보유 회기 카드 + 결제 내역 (필터·당겨서 새로고침)
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -9,6 +9,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   Platform,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   View,
@@ -28,6 +29,7 @@ import {
   CreditCard,
   History,
   Plus,
+  RotateCcw,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -73,33 +75,63 @@ export default function SessionsPaymentIndex() {
     data: balance,
     isLoading: balanceLoading,
     refetch: refetchBalance,
+    isRefetching: balanceRefetching,
   } = useSessionBalance(clientId);
 
   const {
-    data: paymentPages,
+    data: paymentList,
     isLoading: paymentsLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
     refetch: refetchPayments,
+    isRefetching: paymentsRefetching,
   } = usePaymentHistory(clientId, activeFilter);
 
-  const payments = useMemo(
-    () => paymentPages?.pages.flatMap((p) => p.content).filter(Boolean) ?? [],
-    [paymentPages],
-  );
+  const payments = useMemo(() => {
+    const pl = paymentList as
+      | { content?: PaymentItem[]; pages?: { content?: PaymentItem[] }[] }
+      | undefined;
+    let rows: PaymentItem[] = [];
+    if (pl && Array.isArray(pl.content)) {
+      rows = pl.content;
+    } else if (pl && Array.isArray(pl.pages)) {
+      rows = pl.pages.flatMap((p) =>
+        Array.isArray(p?.content) ? p.content! : [],
+      );
+    }
+    return rows.filter(
+      (x): x is PaymentItem => x != null && typeof x.id === 'number',
+    );
+  }, [paymentList]);
+
+  const emptyPaymentsCopy = useMemo(() => {
+    switch (activeFilter) {
+      case 'REFUNDED':
+        return {
+          title: '환불 내역이 없습니다',
+          description: '환불이 완료된 건이 여기에 표시됩니다. 아래로 당겨 새로고침해 보세요.',
+          icon: 'refund' as const,
+        };
+      case 'COMPLETED':
+        return {
+          title: '결제 완료 내역이 없습니다',
+          description:
+            '입금·결제가 완료된 패키지가 여기에 표시됩니다. 아래로 당겨 새로고침해 보세요.',
+          icon: 'card' as const,
+        };
+      default:
+        return {
+          title: '결제 내역이 없습니다',
+          description:
+            '패키지 결제·회기 연장 내역이 여기에 표시됩니다. 아래로 당겨 새로고침해 보세요.',
+          icon: 'card' as const,
+        };
+    }
+  }, [activeFilter]);
 
   const isLowSessions = (balance?.remainingSessions ?? 0) <= LOW_SESSION_THRESHOLD;
 
   const handleRefresh = useCallback(async () => {
     await Promise.all([refetchBalance(), refetchPayments()]);
   }, [refetchBalance, refetchPayments]);
-
-  const handleLoadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleFilterPress = useCallback((key: PaymentFilter) => {
     if (Platform.OS !== 'web') {
@@ -146,10 +178,13 @@ export default function SessionsPaymentIndex() {
         renderItem={renderPaymentItem}
         keyExtractor={(item, index) => String(item?.id ?? `fallback-${index}`)}
         estimatedItemSize={80}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        onRefresh={handleRefresh}
-        refreshing={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={balanceRefetching || paymentsRefetching}
+            onRefresh={handleRefresh}
+            tintColor={theme.colors.primary}
+          />
+        }
         ListHeaderComponent={
           <View>
             <SessionBalanceCard
@@ -176,18 +211,17 @@ export default function SessionsPaymentIndex() {
             </View>
           ) : (
             <EmptyState
-              icon={<CreditCard size={32} color={theme.colors.textTertiary} />}
-              title="결제 내역이 없습니다"
-              description="상담 예약 시 결제 내역이 여기에 표시됩니다"
+              icon={
+                emptyPaymentsCopy.icon === 'refund' ? (
+                  <RotateCcw size={32} color={theme.colors.textTertiary} />
+                ) : (
+                  <CreditCard size={32} color={theme.colors.textTertiary} />
+                )
+              }
+              title={emptyPaymentsCopy.title}
+              description={emptyPaymentsCopy.description}
             />
           )
-        }
-        ListFooterComponent={
-          isFetchingNextPage ? (
-            <View style={styles.footerLoading}>
-              <SkeletonLoader width="100%" height={60} borderRadius={12} />
-            </View>
-          ) : null
         }
         contentContainerStyle={styles.listContent}
       />

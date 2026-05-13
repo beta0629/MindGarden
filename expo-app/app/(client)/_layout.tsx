@@ -17,6 +17,7 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { MiniPlayer } from '@/components/organisms/MiniPlayer';
+import { MeditationAudioBridge } from '@/components/organisms/MeditationAudioBridge';
 import { useMeditationStore } from '@/stores/useMeditationStore';
 
 const ICON_SIZE = 24;
@@ -40,89 +41,91 @@ export default function ClientLayout() {
   };
 
   return (
-    <View style={styles.root}>
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.gray[400],
-        tabBarStyle: {
-          backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.border,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: {
-          fontFamily: theme.fontFamily.medium,
-          fontSize: theme.fontSize.xs,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="(home)"
-        options={{
-          title: '홈',
-          tabBarIcon: ({ color }) => (
-            <Home size={ICON_SIZE} color={color} />
-          ),
-          tabBarAccessibilityLabel: '홈 탭',
-        }}
-        listeners={{ tabPress: handleTabPress }}
-      />
-      {/* 비즈니스: 내담자 직접 예약 불가 — 관리자가 예약 생성 */}
-      <Tabs.Screen
-        name="(booking)"
-        options={{
-          title: '예약',
-          href: null,
-          tabBarIcon: ({ color }) => (
-            <CalendarPlus size={ICON_SIZE} color={color} />
-          ),
-          tabBarAccessibilityLabel: '예약 탭',
-        }}
-        listeners={{ tabPress: handleTabPress }}
-      />
-      <Tabs.Screen
-        name="(sessions)"
-        options={{
-          title: '내 상담',
-          tabBarIcon: ({ color }) => (
-            <MessageCircle size={ICON_SIZE} color={color} />
-          ),
-          tabBarAccessibilityLabel: '내 상담 탭',
-        }}
-        listeners={{ tabPress: handleTabPress }}
-      />
-      <Tabs.Screen
-        name="(wellness)"
-        options={{
-          title: '웰니스',
-          tabBarIcon: ({ color }) => (
-            <Leaf size={ICON_SIZE} color={color} />
-          ),
-          tabBarAccessibilityLabel: '웰니스 탭',
-        }}
-        listeners={{ tabPress: handleTabPress }}
-      />
-      <Tabs.Screen
-        name="(more)"
-        options={{
-          title: '더보기',
-          tabBarIcon: ({ color }) => (
-            <View>
-              <MoreHorizontal size={ICON_SIZE} color={color} />
-              <UnreadBadge />
-            </View>
-          ),
-          tabBarAccessibilityLabel: '더보기 탭',
-        }}
-        listeners={{ tabPress: handleTabPress }}
-      />
-    </Tabs>
-    {currentTrack && <MiniPlayer />}
-    </View>
+    <MeditationAudioBridge>
+      <View style={styles.root}>
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarActiveTintColor: theme.colors.primary,
+            tabBarInactiveTintColor: theme.colors.gray[400],
+            tabBarStyle: {
+              backgroundColor: theme.colors.surface,
+              borderTopColor: theme.colors.border,
+              borderTopWidth: StyleSheet.hairlineWidth,
+              height: Platform.OS === 'ios' ? 88 : 64,
+              paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+              paddingTop: 8,
+            },
+            tabBarLabelStyle: {
+              fontFamily: theme.fontFamily.medium,
+              fontSize: theme.fontSize.xs,
+            },
+          }}
+        >
+          <Tabs.Screen
+            name="(home)"
+            options={{
+              title: '홈',
+              tabBarIcon: ({ color }) => (
+                <Home size={ICON_SIZE} color={color} />
+              ),
+              tabBarAccessibilityLabel: '홈 탭',
+            }}
+            listeners={{ tabPress: handleTabPress }}
+          />
+          {/* 비즈니스: 내담자 직접 예약 불가 — 관리자가 예약 생성 */}
+          <Tabs.Screen
+            name="(booking)"
+            options={{
+              title: '예약',
+              href: null,
+              tabBarIcon: ({ color }) => (
+                <CalendarPlus size={ICON_SIZE} color={color} />
+              ),
+              tabBarAccessibilityLabel: '예약 탭',
+            }}
+            listeners={{ tabPress: handleTabPress }}
+          />
+          <Tabs.Screen
+            name="(sessions)"
+            options={{
+              title: '내 상담',
+              tabBarIcon: ({ color }) => (
+                <MessageCircle size={ICON_SIZE} color={color} />
+              ),
+              tabBarAccessibilityLabel: '내 상담 탭',
+            }}
+            listeners={{ tabPress: handleTabPress }}
+          />
+          <Tabs.Screen
+            name="(wellness)"
+            options={{
+              title: '웰니스',
+              tabBarIcon: ({ color }) => (
+                <Leaf size={ICON_SIZE} color={color} />
+              ),
+              tabBarAccessibilityLabel: '웰니스 탭',
+            }}
+            listeners={{ tabPress: handleTabPress }}
+          />
+          <Tabs.Screen
+            name="(more)"
+            options={{
+              title: '더보기',
+              tabBarIcon: ({ color }) => (
+                <View>
+                  <MoreHorizontal size={ICON_SIZE} color={color} />
+                  <UnreadBadge />
+                </View>
+              ),
+              tabBarAccessibilityLabel: '더보기 탭',
+            }}
+            listeners={{ tabPress: handleTabPress }}
+          />
+        </Tabs>
+        {currentTrack && <MiniPlayer />}
+      </View>
+    </MeditationAudioBridge>
   );
 }
 

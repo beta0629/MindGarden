@@ -48,21 +48,24 @@ export const SCHEDULE_API = {
 
 export const MESSAGE_API = {
   SEND_MESSAGE: '/api/v1/consultation-messages',
-  conversations: (userId: string | number) =>
-    `/api/v1/consultation-messages/conversations/${userId}`,
-  messages: (conversationId: string | number) =>
-    `/api/v1/consultation-messages/${conversationId}`,
+  /** 내담자 본인 메시지 목록 (Spring Pageable) */
+  clientMessages: (clientId: string | number) =>
+    `/api/v1/consultation-messages/client/${clientId}`,
+  /** 상담사 본인 메시지 목록 */
+  consultantMessages: (consultantId: string | number) =>
+    `/api/v1/consultation-messages/consultant/${consultantId}`,
   markAsRead: (messageId: string | number) =>
     `/api/v1/consultation-messages/${messageId}/read`,
   reply: (messageId: string | number) =>
     `/api/v1/consultation-messages/${messageId}/reply`,
   unreadCount: (userId: string | number, userType: string) =>
-    `/api/v1/consultation-messages/unread-count?userId=${userId}&userType=${userType}`,
+    `/api/v1/consultation-messages/unread-count?userId=${userId}&userType=${encodeURIComponent(userType)}`,
 } as const;
 
 export const NOTIFICATION_API = {
   GET_NOTIFICATIONS: '/api/v1/system-notifications',
   GET_UNREAD_COUNT: '/api/v1/system-notifications/unread-count',
+  MARK_ALL_READ: '/api/v1/system-notifications/read-all',
   detail: (id: string | number) => `/api/v1/system-notifications/${id}`,
   markAsRead: (id: string | number) => `/api/v1/system-notifications/${id}/read`,
 } as const;
@@ -81,14 +84,21 @@ export const CONSULTANT_API = {
     `/api/v1/consultants/${consultantId}/dashboard`,
   consultantAvailability: (consultantId: string | number) =>
     `/api/v1/consultants/${consultantId}/availability`,
+  /** 단일 근무 슬롯 삭제 */
+  consultantAvailabilitySlot: (slotId: string | number) =>
+    `/api/v1/consultants/availability/${slotId}`,
   GET_ALL: '/api/v1/consultants',
 } as const;
 
+/**
+ * 상담사 휴무 — 백엔드 ConsultantAvailabilityController 단수 경로와 일치
+ * GET/POST `/{consultantId}/vacation`, DELETE `/{consultantId}/vacation/{date}`
+ */
 export const VACATION_API = {
   vacations: (consultantId: string | number) =>
-    `/api/v1/consultants/${consultantId}/vacations`,
-  vacationDetail: (consultantId: string | number, vacationId: string | number) =>
-    `/api/v1/consultants/${consultantId}/vacations/${vacationId}`,
+    `/api/v1/consultants/${consultantId}/vacation`,
+  vacationByDate: (consultantId: string | number, date: string) =>
+    `/api/v1/consultants/${consultantId}/vacation/${encodeURIComponent(date)}`,
 } as const;
 
 export const INCOME_API = {
@@ -113,7 +123,15 @@ export const RATING_API = {
   SUBMIT_RATING: '/api/v1/ratings',
 } as const;
 
+/** 내담자 회기·결제는 웹과 동일하게 매칭(ConsultantClientMapping) API를 사용한다 */
+export const ADMIN_CLIENT_API = {
+  MAPPINGS_BY_CLIENT: '/api/v1/admin/mappings/client',
+} as const;
+
 export const PAYMENT_API = {
+  /** PG 결제 건별 목록(결제자 ID). 매칭 기반 회기와 별개일 수 있음 */
+  PAYMENTS_BY_PAYER: (payerId: string | number) =>
+    `/api/v1/payments/payer/${payerId}`,
   GET_PAYMENTS: '/api/v1/payments',
   CREATE_PAYMENT: '/api/v1/payments/create',
   SESSION_EXTENSIONS: '/api/v1/admin/session-extensions',

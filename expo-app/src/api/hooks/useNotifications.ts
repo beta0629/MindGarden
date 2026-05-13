@@ -1,8 +1,10 @@
 /**
- * 알림(Notification) 관련 TanStack Query 커스텀 훅
+ * 시스템 공지(system-notifications) 및 푸시 설정 훅
+ * ApiResponse `{ success, data }` 언래핑
  *
  * @author MindGarden
  * @since 2026-05-12
+ * @since 2026-05-13 — 목록 필드 `notifications` 정합, read-all 경로 상수화
  */
 import {
   useInfiniteQuery,
@@ -12,6 +14,8 @@ import {
 } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPut } from '../client';
 import { NOTIFICATION_API, PUSH_API } from '../endpoints';
+import { unwrapApiResponse } from '../unwrapApiResponse';
+import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 
 export type NotificationType =
   | 'SCHEDULE'
@@ -55,15 +59,62 @@ const NOTIFICATION_QUERY_KEYS = {
   settings: () => [...NOTIFICATION_QUERY_KEYS.all, 'settings'],
 };
 
+/** 백엔드 notification_type → UI 카테고리 */
+function mapNotificationType(raw: unknown): NotificationType {
+  const s = String(raw ?? '').toUpperCase();
+  if (s.includes('PAY') || s.includes('BILL')) {
+    return 'PAYMENT';
+  }
+  if (s.includes('MESSAGE') || s.includes('CHAT')) {
+    return 'MESSAGE';
+  }
+  if (s.includes('WELLNESS') || s.includes('HEAL')) {
+    return 'WELLNESS';
+  }
+  if (s.includes('SCHEDULE') || s.includes('BOOK')) {
+    return 'SCHEDULE';
+  }
+  return 'SYSTEM';
+}
+
+function mapRowToAppNotification(row: Record<string, unknown>): AppNotification {
+  return {
+    id: toSafeNumber(row.id, 0),
+    type: mapNotificationType(row.notificationType),
+    title: toDisplayString(row.title, '알림'),
+    content: toDisplayString(row.content, ''),
+    isRead: Boolean(row.isRead),
+    createdAt: toDisplayString(row.createdAt ?? row.publishedAt, ''),
+  };
+}
+
 export function useNotifications() {
   return useInfiniteQuery({
     queryKey: NOTIFICATION_QUERY_KEYS.list(),
     queryFn: async ({ pageParam }) => {
-      const response = await apiGet<any>(NOTIFICATION_API.GET_NOTIFICATIONS, {
+      const raw = await apiGet<unknown>(NOTIFICATION_API.GET_NOTIFICATIONS, {
         page: pageParam,
         size: PAGE_SIZE,
       });
-      return (response?.data ?? response) as NotificationsPage;
+      const inner = unwrapApiResponse<Record<string, unknown>>(raw);
+      if (!inner) {
+        return { content: [], hasNext: false, page: 0, totalCount: 0 };
+      }
+      const rows = Array.isArray(inner.notifications)
+        ? (inner.notifications as Record<string, unknown>[])
+        : [];
+      const currentPage = toSafeNumber(inner.currentPage, 0);
+      const totalPages = toSafeNumber(inner.totalPages, 0);
+      const hasNext = currentPage + 1 < totalPages;
+      const content = rows
+        .map((r) => mapRowToAppNotification(r))
+        .filter((n) => n.id > 0);
+      return {
+        content,
+        hasNext,
+        page: currentPage,
+        totalCount: toSafeNumber(inner.totalElements, content.length),
+      };
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
@@ -76,8 +127,14 @@ export function useUnreadCount() {
   return useQuery<{ count: number }>({
     queryKey: NOTIFICATION_QUERY_KEYS.unreadCount(),
     queryFn: async () => {
-      const response = await apiGet<any>(NOTIFICATION_API.GET_UNREAD_COUNT);
-      return response?.data ?? response;
+      const raw = await apiGet<unknown>(NOTIFICATION_API.GET_UNREAD_COUNT);
+      const inner = unwrapApiResponse<Record<string, unknown>>(raw);
+      const bag = inner ?? (raw as Record<string, unknown>);
+      const count =
+        bag && typeof bag === 'object' && 'unreadCount' in bag
+          ? toSafeNumber(bag.unreadCount, 0)
+          : 0;
+      return { count };
     },
     staleTime: 1000 * 30,
     refetchInterval: 1000 * 60,
@@ -105,8 +162,7 @@ export function useMarkAllAsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () =>
-      apiPost(`${NOTIFICATION_API.GET_NOTIFICATIONS}/read-all`),
+    mutationFn: () => apiPost(NOTIFICATION_API.MARK_ALL_READ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: NOTIFICATION_QUERY_KEYS.list(),
@@ -118,10 +174,52 @@ export function useMarkAllAsRead() {
   });
 }
 
+function normalizeSettingsPayload(raw: unknown): NotificationSettings | null {
+  const inner = unwrapApiResponse<Record<string, unknown>>(raw);
+  const bag = inner ?? (raw as Record<string, unknown> | null);
+  if (!bag || typeof bag !== 'object') {
+    return null;
+  }
+  const keys = ['schedule', 'payment', 'message', 'wellness', 'system'] as const;
+  const out: Partial<NotificationSettings> = {};
+  for (const k of keys) {
+    if (k in bag) {
+      out[k] = Boolean(bag[k]);
+    }
+  }
+  if (Object.keys(out).length === 0) {
+    return null;
+  }
+  return {
+    schedule: out.schedule ?? true,
+    payment: out.payment ?? true,
+    message: out.message ?? true,
+    wellness: out.wellness ?? true,
+    system: out.system ?? true,
+  };
+}
+
 export function useNotificationSettings() {
   return useQuery<NotificationSettings>({
     queryKey: NOTIFICATION_QUERY_KEYS.settings(),
-    queryFn: () => apiGet<NotificationSettings>(PUSH_API.GET_SETTINGS),
+    queryFn: async () => {
+      try {
+        const raw = await apiGet<unknown>(PUSH_API.GET_SETTINGS);
+        const parsed = normalizeSettingsPayload(raw);
+        if (parsed) {
+          return parsed;
+        }
+      } catch {
+        /* 서버 미구현 시 로컬 기본값 */
+      }
+      return {
+        schedule: true,
+        payment: true,
+        message: true,
+        wellness: true,
+        system: true,
+      };
+    },
     staleTime: 1000 * 60 * 5,
   });
 }

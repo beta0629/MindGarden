@@ -300,12 +300,14 @@ function DetailRow({ icon, label, value, theme }: DetailRowProps) {
     <View style={detailRowStyles.row}>
       {icon}
       <Text
+        numberOfLines={1}
         style={{
           fontFamily: theme.fontFamily.regular,
           fontSize: theme.fontSize.sm,
           color: theme.colors.textTertiary,
           marginLeft: 8,
-          width: 48,
+          minWidth: 88,
+          flexShrink: 0,
         }}
       >
         {label}
@@ -316,6 +318,7 @@ function DetailRow({ icon, label, value, theme }: DetailRowProps) {
           fontSize: theme.fontSize.sm,
           color: theme.colors.textMain,
           flex: 1,
+          flexShrink: 1,
         }}
       >
         {value}

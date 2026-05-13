@@ -912,6 +912,9 @@ export const colors = {
 | **적용 스킬** | `/core-solution-frontend`, `/core-solution-multi-tenant` |
 | **의존** | Phase 3 완료 |
 
+> **기획 정합 (`CONSULTANT_CLIENT_APP_PLAN.md`)**  
+> 웹앱 기획서의 **Phase 4**는 본 문서의 Phase 번호와 다르며, **「마음 날씨」AI 감정 분석·상담사 옵트인 데이터 브릿지**와 **「마음 정원」시각적 성장(게임화, 비경쟁)**을 뜻한다. Expo 반영은 **Phase 3-B(감정 일기)** 이후 **Phase 3-F·3-G**로 병렬 착수하거나, 푸시·오프라인 **Phase 4**와 병렬 배치할 수 있다. 착수 전 TODO는 `CONSULTANT_CLIENT_APP_PLAN.md` §8의 **`TODO — 「마음 날씨」`**, **`TODO — 「마음 정원」`**을 따른다.
+
 **전달 프롬프트**:
 > 푸시 알림과 오프라인 지원을 완성해주세요.
 >
@@ -963,6 +966,8 @@ export const colors = {
 > 3. 내담자 → 감정 일기 기록 → 차트 확인
 > 4. 메시지 전송·수신
 > 5. 오프라인 → 온라인 동기화
+> 6. (해당 기능 구현 시) **마음 날씨** — 짧은 메모 입력 → 키워드·요약 → 상담사 공유 옵트인 → 상담사 측 수신 UI
+> 7. (해당 기능 구현 시) **마음 정원** — 상담 완료·과제 수행 후 정원 성장·상태 유지·비경쟁 UI
 >
 > **디자인 퀄리티 체크리스트** (25항목):
 > - §6.2 전체 항목 검증
@@ -1010,6 +1015,8 @@ export const colors = {
 | **3-C** | `core-coder` | 명상·심리교육·커뮤니티 | ✅ 3-A,B,D,E와 동시 | Phase 2 |
 | **3-D** | `core-coder` | 상담사 P1 (근무시간·수입) | ✅ 3-A~C,E와 동시 | Phase 2-A |
 | **3-E** | `core-coder` | 내담자 결제·회기 | ✅ 3-A~D와 동시 | Phase 2-B |
+| **3-F** | `core-coder` | AI 「마음 날씨」감정 분석 + 상담사 옵트인 브릿지 (`CONSULTANT_CLIENT_APP_PLAN` Phase 4 정합) | ✅ 3-A~E·3-G·Phase 4와 병렬 가능 | Phase 3-B |
+| **3-G** | `core-coder` | **마음 정원** 성장 시각화(게임화, 비경쟁) + 이벤트 연동 (`CONSULTANT_CLIENT_APP_PLAN` Phase 4 정합) | ✅ 3-A~F·Phase 4와 병렬 가능 | Phase 3 |
 | **4** | `core-coder` | 푸시 알림 완성 + 오프라인 | - | Phase 3 |
 | **5** | `core-tester` | 테스트 + 품질 검증 | - | Phase 4 |
 | **6** | `core-deployer` + `core-coder` | 스토어 배포 준비 | - | Phase 5 |
@@ -1022,6 +1029,8 @@ export const colors = {
 | Phase 1 완료 | 로그인 UI·탭 셸·전환 효과 | `core-designer` |
 | Phase 2 완료 | 핵심 화면 비주얼·Empty State·카드 품질 | `core-designer` |
 | Phase 3 완료 | 채팅 UI·플레이어·커뮤니티 폴리시 | `core-designer` |
+| Phase 3-F 완료 | 마음 날씨 카드·동의 모달·프라이버시 카피 | `core-designer` |
+| Phase 3-G 완료 | 정원 씬·성장 단계·온보딩·애니메이션 감소 옵션 | `core-designer` |
 | Phase 5 | 전체 디자인 퀄리티 체크리스트 통과 | `core-tester` |
 
 ---
@@ -1091,9 +1100,25 @@ export const colors = {
 - [ ] 오프라인 모드 기본 동작 (핵심 데이터 읽기)
 - [ ] 네트워크 복구 시 자동 동기화
 
+### Phase 3-F (마음 날씨 AI — `CONSULTANT_CLIENT_APP_PLAN` Phase 4 정합)
+
+> 착수 전 상세 TODO는 `CONSULTANT_CLIENT_APP_PLAN.md` §8 `TODO — 「마음 날씨」(Phase 4 착수 전)` 참조.
+
+- [ ] 짧은 일기·메모 → 감정 키워드·한 줄 요약(참고용 고지)
+- [ ] 상담사 전달 옵트인·철회·감사 로그(테넌트 격리)
+- [ ] 상담사 앱에서 수신 요약 표시(매칭된 내담자만)
+
+### Phase 3-G (마음 정원 — `CONSULTANT_CLIENT_APP_PLAN` Phase 4 정합)
+
+> 착수 전 상세 TODO는 `CONSULTANT_CLIENT_APP_PLAN.md` §8 `TODO — 「마음 정원」(Phase 4 착수 전)` 참조.
+
+- [ ] 상담 완료·과제 등 **이벤트**와 성장치 연동(클라이언트 + 서버 권위 상태)
+- [ ] 정원 화면(시각화)·비경쟁·주간 상한·미접속 페널티 없음
+- [ ] (선택) 마음 날씨와 **장식 테마**만 느슨하게 연동
+
 ### Phase 5 (테스트)
 - [ ] 단위 테스트 커버리지 80%+
-- [ ] E2E 5개 시나리오 통과
+- [ ] E2E 5개 시나리오 통과 + (구현 시) 마음 날씨·공유 + **마음 정원** 시나리오
 - [ ] 디자인 퀄리티 체크리스트 25항목 통과
 - [ ] 색상 하드코딩 grep 0건
 - [ ] 접근성 기본 검증 (VoiceOver/TalkBack)
@@ -1116,6 +1141,8 @@ export const colors = {
 4. 리뷰 통과 후 → **Phase 2-A + 2-B 동시** → `core-coder` 2개 — 상담사·내담자 핵심 화면
 5. Phase 2 완료 후 → `core-designer` — Phase 2 디자인 리뷰
 6. 리뷰 통과 후 → **Phase 3-A ~ 3-E 병렬** → `core-coder` 5개 — P1 기능 + 추가 콘텐츠
+6.5 (선택·`CONSULTANT_CLIENT_APP_PLAN` 웹 Phase 4 정합) → **Phase 3-F** → `core-coder` — AI 「마음 날씨」감정 분석 + 상담사 옵트인 브릿지. **Phase 3-B 이후** 착수 권장, **Phase 3-E·3-G·Phase 4(푸시)와 병렬** 가능
+6.6 (선택·동일 정합) → **Phase 3-G** → `core-coder` — **마음 정원** 성장 시각화(비경쟁). **Phase 3** 내담자 흐름 안정 후 착수 권장, **3-F·Phase 4와 병렬** 가능
 7. Phase 3 완료 후 → **Phase 4** → `core-coder` — 푸시 알림 완성 + 오프라인
 8. Phase 4 완료 후 → **Phase 5** → `core-tester` — 테스트 + 품질 검증
 9. Phase 5 통과 후 → **Phase 6** → `core-deployer` + `core-coder` — 스토어 배포
@@ -1136,6 +1163,8 @@ export const colors = {
 | 심리 교육 | `/api/v1/psycho-education` | 목록·상세·북마크·읽기완료 | 3-C |
 | 커뮤니티 | `/api/v1/community` | 게시글 CRUD·좋아요·댓글·신고·검수 | 3-C |
 | 푸시 토큰 | `/api/v1/mobile/push-token/register` | tenantId 파라미터 추가 (기존 API 확장) | 1-A |
+| 마음 날씨 / 감정 분석 | `/api/v1/...` (계약 TBD) | 텍스트·(선택) 음성 분석, 키워드·요약, 상담사 공유 동의·수신, 감사 로그 | 3-F |
+| 마음 정원 / 성장 상태 | `/api/v1/...` (계약 TBD) | 내담자별 정원 단계·수집 요소·이벤트 로그, 테넌트 격리, 주간 상한 서버 검증 | 3-G |
 
 ---
 

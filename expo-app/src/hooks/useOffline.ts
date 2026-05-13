@@ -12,6 +12,18 @@ import { isOfflinePersistedQueryKey } from '../api/offlinePersistPolicy';
 import { BackgroundTaskService } from '../services/BackgroundTaskService';
 import { OfflineQueueService } from '../services/OfflineQueueService';
 
+/** Wi‑Fi 연결만 있고 실제 인터넷 없음 등 — `isInternetReachable === false`면 오프라인 취급 */
+function isOfflineFromNetState(state: NetInfoState): boolean {
+  const connected = state.isConnected ?? false;
+  if (!connected) {
+    return true;
+  }
+  if (state.isInternetReachable === false) {
+    return true;
+  }
+  return false;
+}
+
 let netInfoSubscription: (() => void) | null = null;
 let currentState: NetInfoState | null = null;
 /** 직전 이벤트까지 오프라인이었는지(복구 감지용) */
@@ -39,15 +51,15 @@ function attachNetInfoListener(): void {
     return;
   }
   netInfoSubscription = NetInfo.addEventListener((state) => {
-    const isOnline = state.isConnected ?? false;
-    const isOffline = !isOnline;
+    const offline = isOfflineFromNetState(state);
+    const isOnline = !offline;
 
     onlineManager.setOnline(isOnline);
 
-    if (lastIsOffline && !isOffline) {
+    if (lastIsOffline && !offline) {
       void onNetworkRestored();
     }
-    lastIsOffline = isOffline;
+    lastIsOffline = offline;
     currentState = state;
 
     emit();
@@ -55,8 +67,9 @@ function attachNetInfoListener(): void {
 
   void NetInfo.fetch().then((state) => {
     currentState = state;
-    lastIsOffline = !(state.isConnected ?? false);
-    onlineManager.setOnline(state.isConnected ?? false);
+    const offline = isOfflineFromNetState(state);
+    lastIsOffline = offline;
+    onlineManager.setOnline(!offline);
     emit();
   });
 }
@@ -71,7 +84,7 @@ function subscribe(callback: () => void): () => void {
 
 function getSnapshot(): boolean {
   if (currentState === null) return false;
-  return !(currentState.isConnected ?? true);
+  return isOfflineFromNetState(currentState);
 }
 
 function getServerSnapshot(): boolean {

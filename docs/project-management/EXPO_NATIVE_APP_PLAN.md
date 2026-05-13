@@ -423,11 +423,15 @@ export const colors = {
 
 ### 6.3 색상 거버넌스 (네이티브 적용)
 
-기존 웹앱의 색상 거버넌스 규칙을 그대로 적용하되, 네이티브 환경에 맞게:
+기존 웹앱의 색상 거버넌스와 동일한 엄격도를 적용한다. **개발 단계에서도 예외 없이**, 화면·컴포넌트·훅 코드에 HEX·RGB 등 색상 리터럴을 두지 않는다.
 
-- **하드코딩 검사**: ESLint 커스텀 룰 또는 grep 스크립트로 `'#[0-9a-fA-F]'` 패턴 검출
-- **토큰 강제**: `theme.colors.client.primary` 형태만 허용, 직접 색상값 사용 금지
-- **PR 게이트**: EAS Build 전 색상 하드코딩 검사 스크립트 실행
+**규범 문서(필수)**: [`docs/standards/EXPO_APP_HARDCODING_AND_COLORS.md`](../standards/EXPO_APP_HARDCODING_AND_COLORS.md)
+
+요약:
+
+- **허용 파일**: 색 HEX는 `expo-app/src/theme/tokens.ts`(SSOT)와, 카카오·네이버 등 **브랜드 고정색 전용** `expo-app/src/constants/oauthProviderBrand.ts` 등에만 둔다.
+- **구현**: `theme.colors.*` 또는 `tokens` import; `app.config.ts`·WebView HTML도 동일하게 토큰·상수만 사용.
+- **검증**: grep·린트·pre-commit·PR 단계에서 위 문서의 체크리스트를 따른다.
 
 ---
 
@@ -1187,10 +1191,21 @@ export const colors = {
 | 자가 심리검사 | `/api/v1/self-assessments` | 검사 실시·결과 저장·이력·통계 | 3-B |
 | 명상 콘텐츠 | `/api/v1/meditations` | 목록·카테고리·즐겨찾기·수련이력 | 3-C |
 | 심리 교육 | `/api/v1/psycho-education` | 목록·상세·북마크·읽기완료 | 3-C |
+| 힐링 콘텐츠 | `/api/v1/healing-contents` | 목록·타입(MEDITATION·ARTICLE 등)·썸네일·기본 정렬 | 3-C |
 | 커뮤니티 | `/api/v1/community` | 게시글 CRUD·좋아요·댓글·신고·검수 | 3-C |
 | 푸시 토큰 | `/api/v1/mobile/push-token/register` | tenantId 파라미터 추가 (기존 API 확장) | 1-A |
 | 마음 날씨 / 감정 분석 | `/api/v1/...` (계약 TBD) | 텍스트·(선택) 음성 분석, 키워드·요약, 상담사 공유 동의·수신, 감사 로그 | 3-F |
 | 마음 정원 / 성장 상태 | `/api/v1/...` (계약 TBD) | 내담자별 정원 단계·수집 요소·이벤트 로그, 테넌트 격리, 주간 상한 서버 검증 | 3-G |
+
+### TODO — 백엔드 구현 (웰니스 심리 교육·힐링, Expo 연동)
+
+> 앱은 위 API가 없을 때 **샘플·폴백**으로 동작한다. 운영·스테이징에서 실서버 목록을 쓰려면 아래를 **Spring 백엔드**에서 구현한다. (`core-coder` 백엔드 배치 시 본 절·`docs/standards/`·`/api/v1/` 표준 준수)
+
+- [x] **`GET /api/v1/psycho-education`** — 구현됨: `PsychoEducationController` + `PsychoEducationServiceImpl`(시드, `TenantContextHolder` 필수). 응답은 `ApiResponse`의 `data`에 배열(`PsychoEducationArticleResponse`).
+- [x] **`GET /api/v1/psycho-education/{id}`** — 구현됨: 동 컨트롤러 `GET /{id}`.
+- [x] **`GET /api/v1/healing-contents`** — 구현됨: `HealingContentsController` + `HealingContentsCatalogServiceImpl`, 내담자·`tenantId` 검증, `SecurityConfig` 경로 등록.
+- [ ] (선택) 북마크·읽기 완료 **서버 동기화**가 필요하면 전용 `POST`/`PUT` 계약을 기획서에 추가한 뒤 구현.
+- [x] **웹 `/api/v1/healing` vs 앱 `/api/v1/healing-contents`** — MVP는 **병행**: 레거시 `HealingContentController` 유지, Expo 전용 목록은 `healing-contents`로 분리(컨트롤러 JavaDoc 참고). 향후 통일·프록시는 별도 아키 결정.
 
 ---
 

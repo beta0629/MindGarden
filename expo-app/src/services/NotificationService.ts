@@ -32,6 +32,11 @@ import { stripHtmlToPlainText } from '../utils/safeDisplay';
  * 푸시 백엔드 계약(프론트·Expo 공통, 웹 `PushNotificationService` 동일 경로):
  * - `POST /api/v1/mobile/push-token/register` · `POST .../unregister` — 바디에 tenantId 포함(멀티테넌트).
  * - `GET|PUT /api/v1/mobile/push-settings` — 카테고리별 boolean 5종; 이 저장소에는 아직 Java 매핑이 없을 수 있음(404 시 무시).
+ *
+ * Spring에 위 API가 없으면 등록은 4xx로 실패할 수 있음 — 앱은 `registerToken` 실패를 삼키고
+ * 로컬 알림 설정(MMKV)만 유지한다. 서버 푸시·스케줄러는 별도 백엔드 배치에서 구현한다.
+ * (`CONSULTANT_CLIENT_APP_PLAN.md` §8, `EXPO_NATIVE_APP_PLAN.md` Phase 4)
+ *
  * @see `expo-app/src/api/endpoints.ts` 의 PUSH_API 주석
  */
 function navigateToSystemNotifications(role: 'client' | 'consultant'): void {
@@ -160,8 +165,9 @@ function resolvePushRouteWithFallback(
 
 /**
  * 포그라운드 알림 핸들러:
- * 설정 카테고리가 on이면 OS 리스트 표시, off면 억제
- * 문서에 없는 type은 system 카테고리로 판단
+ * 설정 카테고리 off면 OS 표시·사운드 억제.
+ * on이면 OS 배너·리스트 없이 사운드·뱃지만 — 본문은 `setupForegroundHandler` 인앱 토스트.
+ * 백그라운드 수신은 OS 알림 트레이(시스템).
  */
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
@@ -181,12 +187,13 @@ Notifications.setNotificationHandler({
       }
     }
 
+    /** OS 배너·리스트 없음 — 인앱 토스트만(`setupForegroundHandler`). 백그라운드는 OS 트레이. */
     return {
       shouldShowAlert: false,
       shouldPlaySound: true,
       shouldSetBadge: true,
       shouldShowBanner: false,
-      shouldShowList: true,
+      shouldShowList: false,
     };
   },
 });
@@ -261,7 +268,7 @@ export const NotificationService = {
 
   /**
    * 푸시 토큰을 서버에 등록
-   * POST /api/v1/mobile/push-token/register
+   * `POST /api/v1/mobile/push-token/register` — Spring 미구현 시 실패·false 반환(앱은 계속 동작).
    */
   async registerToken(): Promise<boolean> {
     try {

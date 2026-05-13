@@ -33,6 +33,7 @@ import {
   Sparkles,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
+import { borderRadius, colors as designColors } from '@/theme/tokens';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
 import {
@@ -845,6 +846,11 @@ interface TossPaymentParams {
 }
 
 function buildTossPaymentHtml(params: TossPaymentParams): string {
+  const bg = designColors.client.bgMain;
+  const err = designColors.common.error;
+  const btnBg = designColors.client.primary;
+  const btnFg = designColors.common.textOnPrimary;
+  const radius = borderRadius.lg;
   return `
 <!DOCTYPE html>
 <html>
@@ -853,10 +859,10 @@ function buildTossPaymentHtml(params: TossPaymentParams): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://js.tosspayments.com/v2/standard"></script>
   <style>
-    body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #FAF9F7; }
+    body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: ${bg}; }
     #payment-widget { min-height: 300px; }
     #agreement-widget { margin-top: 16px; }
-    .error { color: #E57373; text-align: center; padding: 20px; }
+    .error { color: ${err}; text-align: center; padding: 20px; }
   </style>
 </head>
 <body>
@@ -883,7 +889,7 @@ function buildTossPaymentHtml(params: TossPaymentParams): string {
 
         const button = document.createElement("button");
         button.textContent = "결제하기";
-        button.style.cssText = "width:100%;padding:16px;margin-top:24px;background:#E07A5F;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;";
+        button.style.cssText = "width:100%;padding:16px;margin-top:24px;background:${btnBg};color:${btnFg};border:none;border-radius:${radius}px;font-size:16px;font-weight:600;cursor:pointer;";
         document.body.appendChild(button);
 
         button.addEventListener("click", async () => {

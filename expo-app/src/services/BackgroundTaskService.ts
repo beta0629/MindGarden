@@ -61,15 +61,28 @@ function markCachePruneDone(): void {
   mmkv.set(CACHE_LAST_PRUNE_KEY, Date.now());
 }
 
+/** `useOffline`과 동일 기준 — 캡티브 포털 등 `isInternetReachable === false`면 작업 스킵 */
+function hasUsableInternet(
+  state: Awaited<ReturnType<typeof NetInfo.fetch>>,
+): boolean {
+  const connected = state.isConnected ?? false;
+  if (!connected) {
+    return false;
+  }
+  if (state.isInternetReachable === false) {
+    return false;
+  }
+  return true;
+}
+
 TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
   try {
     const netState = await NetInfo.fetch();
-    const isConnected = netState.isConnected ?? false;
 
-    if (isConnected) {
+    if (hasUsableInternet(netState)) {
       OfflineQueueService.pruneStaleEntries();
       await processOfflineQueue();
-      await refreshTokenIfNeeded('background-fetch');
+      await refreshTokenIfNeeded();
       if (shouldRunCachePrune()) {
         pruneInactivePersistedQueries();
         markCachePruneDone();
@@ -83,7 +96,7 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
   }
 });
 
-async function refreshTokenIfNeeded(source: string): Promise<void> {
+async function refreshTokenIfNeeded(): Promise<void> {
   const now = Date.now();
   const lastMs = readLastTokenRefreshMs();
   if (lastMs > 0 && now - lastMs < TOKEN_REFRESH_INTERVAL_MS) {
@@ -171,11 +184,11 @@ export const BackgroundTaskService = {
    */
   async runManualSync(): Promise<void> {
     const netState = await NetInfo.fetch();
-    if (!netState.isConnected) return;
+    if (!hasUsableInternet(netState)) return;
 
     OfflineQueueService.pruneStaleEntries();
     await processOfflineQueue();
-    await refreshTokenIfNeeded('manual-sync');
+    await refreshTokenIfNeeded();
     if (shouldRunCachePrune()) {
       pruneInactivePersistedQueries();
       markCachePruneDone();

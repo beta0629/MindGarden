@@ -27,11 +27,12 @@ import { useTenantStore } from '../../src/stores/useTenantStore';
 import { useAuthStore } from '../../src/stores/useAuthStore';
 import { AuthService } from '../../src/services/AuthService';
 import { NotificationService } from '../../src/services/NotificationService';
-
-const KAKAO_BRAND_COLOR = '#FEE500';
-const KAKAO_TEXT_COLOR = '#191919';
-const NAVER_BRAND_COLOR = '#03C75A';
-const NAVER_TEXT_COLOR = '#FFFFFF';
+import {
+  OAUTH_KAKAO_BACKGROUND,
+  OAUTH_KAKAO_FOREGROUND,
+  OAUTH_NAVER_BACKGROUND,
+  OAUTH_NAVER_FOREGROUND,
+} from '../../src/constants/oauthProviderBrand';
 
 export default function LoginScreen() {
   const theme = useTheme();
@@ -161,32 +162,32 @@ export default function LoginScreen() {
 
           <Animated.View entering={SlideInDown.delay(300).duration(500)} style={styles.buttonGroup}>
             <Pressable
-              style={[styles.socialButton, { backgroundColor: KAKAO_BRAND_COLOR }]}
+              style={[styles.socialButton, { backgroundColor: OAUTH_KAKAO_BACKGROUND }]}
               onPress={handleKakaoLogin}
               disabled={isLoading}
               accessibilityLabel="카카오로 로그인"
               accessibilityRole="button"
             >
               {loadingProvider === 'kakao' ? (
-                <ActivityIndicator color={KAKAO_TEXT_COLOR} />
+                <ActivityIndicator color={OAUTH_KAKAO_FOREGROUND} />
               ) : (
-                <Text style={[styles.socialButtonText, { color: KAKAO_TEXT_COLOR }]}>
+                <Text style={[styles.socialButtonText, { color: OAUTH_KAKAO_FOREGROUND }]}>
                   카카오로 로그인
                 </Text>
               )}
             </Pressable>
 
             <Pressable
-              style={[styles.socialButton, { backgroundColor: NAVER_BRAND_COLOR }]}
+              style={[styles.socialButton, { backgroundColor: OAUTH_NAVER_BACKGROUND }]}
               onPress={handleNaverLogin}
               disabled={isLoading}
               accessibilityLabel="네이버로 로그인"
               accessibilityRole="button"
             >
               {loadingProvider === 'naver' ? (
-                <ActivityIndicator color={NAVER_TEXT_COLOR} />
+                <ActivityIndicator color={OAUTH_NAVER_FOREGROUND} />
               ) : (
-                <Text style={[styles.socialButtonText, { color: NAVER_TEXT_COLOR }]}>
+                <Text style={[styles.socialButtonText, { color: OAUTH_NAVER_FOREGROUND }]}>
                   네이버로 로그인
                 </Text>
               )}

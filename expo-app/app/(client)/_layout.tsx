@@ -118,8 +118,8 @@ export default function ClientLayout() {
             name="(more)"
             options={{
               title: '더보기',
-              /** 알림·하위 화면 스택 유지 시 탭만 눌러도 메뉴로 돌아오게 하기 위해 이탈 시 언마운트 */
-              unmountOnBlur: true,
+              /** 다른 탭으로 이동 시 (more) 내부 스택을 루트로 리셋 — RN Bottom Tabs 공식 옵션 */
+              popToTopOnBlur: true,
               tabBarIcon: ({ color }) => (
                 <View>
                   <MoreHorizontal size={ICON_SIZE} color={color} />

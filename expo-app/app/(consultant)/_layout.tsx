@@ -110,7 +110,7 @@ export default function ConsultantLayout() {
         name="(more)"
         options={{
           title: '더보기',
-          unmountOnBlur: true,
+          popToTopOnBlur: true,
           tabBarIcon: ({ color }) => (
             <View>
               <MoreHorizontal size={ICON_SIZE} color={color} />

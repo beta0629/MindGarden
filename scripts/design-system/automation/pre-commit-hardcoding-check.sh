@@ -11,6 +11,9 @@
 #
 # 참고: tests/e2e/ 아래 *.spec.ts 는 색상 하드코딩 grep을 건너뛴다.
 # E2E 정규식·에러 코드 리터럴(예: React minified error #130)이 3자리 #xxx HEX 패턴과 충돌해 오탐이 나기 때문이다.
+#
+# 참고: Expo 색상 HEX SSOT·브랜드 전용 파일은 docs/standards/EXPO_APP_HARDCODING_AND_COLORS.md 에 따라
+# expo-app/src/theme/tokens.ts, expo-app/src/constants/oauthProviderBrand.ts 는 색상 패턴 스캔을 건너뛴다.
 
 set -e
 
@@ -119,7 +122,13 @@ for FILE in $STAGED_FILES; do
         log_info "색상 스캔 생략 (E2E 스펙): $FILE"
         continue
     fi
-    
+
+    # Expo SSOT·브랜드 색상 전용 파일: HEX 정의 허용 구역 → 색상 하드코딩 패턴 검사 생략
+    if [[ "$FILE" == "expo-app/src/theme/tokens.ts" ]] || [[ "$FILE" == "expo-app/src/constants/oauthProviderBrand.ts" ]]; then
+        log_info "Expo SSOT·브랜드 색: 스캔 생략 — $FILE"
+        continue
+    fi
+
     log_info "검사 중: $FILE"
     
     FILE_VIOLATIONS=0
@@ -164,7 +173,8 @@ for FILE in $STAGED_FILES; do
         log_warning "💡 해결 방법:"
         echo "   1. CSS 변수 사용: var(--mg-primary-500)"
         echo "   2. 통합 디자인 토큰 활용: frontend/src/styles/unified-design-tokens.css"
-        echo "   3. 자동 변환 도구 사용: node scripts/design-system/color-management/convert-hardcoded-colors.js"
+        echo "   3. Expo 앱: 색상 HEX는 expo-app/src/theme/tokens.ts(및 브랜드 expo-app/src/constants/oauthProviderBrand.ts)에만 두고, 그 외는 docs/standards/EXPO_APP_HARDCODING_AND_COLORS.md 기준을 따르세요."
+        echo "   4. 자동 변환 도구 사용: node scripts/design-system/color-management/convert-hardcoded-colors.js"
         echo ""
     fi
 done
@@ -189,6 +199,9 @@ if [ $VIOLATIONS_FOUND -eq 1 ]; then
     echo ""
     echo "  3️⃣  통합 디자인 토큰 참조:"
     echo "     frontend/src/styles/unified-design-tokens.css"
+    echo ""
+    echo "  4️⃣  Expo 앱:"
+    echo "     색상 HEX는 expo-app/src/theme/tokens.ts 및 브랜드 상수 expo-app/src/constants/oauthProviderBrand.ts 에만 두고, 표준은 docs/standards/EXPO_APP_HARDCODING_AND_COLORS.md 를 참고하세요."
     echo ""
     echo "💡 수정 후 다시 커밋해주세요."
     echo ""

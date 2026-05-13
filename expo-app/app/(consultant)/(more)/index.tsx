@@ -16,6 +16,7 @@ import {
   UserCircle,
   Settings,
   LogOut,
+  CloudSun,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { ProfileCard } from '@/components/molecules/ProfileCard';
@@ -116,6 +117,12 @@ export default function ConsultantMore() {
               subtitle="게시글 · 댓글"
               onPress={() => router.push('/(consultant)/(more)/community')}
             />
+            <MenuListItem
+              icon={CloudSun}
+              title="마음 날씨 수신함"
+              subtitle="내담자가 공유한 분석 카드"
+              onPress={() => router.push('/(consultant)/(more)/mind-weather-inbox')}
+            />
           </View>
         </View>
 
@@ -201,12 +208,12 @@ export default function ConsultantMore() {
               },
             ]}
           >
-            <LogOut size={20} color={theme.colors.error ?? '#E53E3E'} />
+            <LogOut size={20} color={theme.colors.error} />
             <Text
               style={[
                 styles.logoutText,
                 {
-                  color: theme.colors.error ?? '#E53E3E',
+                  color: theme.colors.error,
                   fontFamily: theme.fontFamily.medium,
                   fontSize: theme.fontSize.base,
                 },

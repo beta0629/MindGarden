@@ -13,7 +13,9 @@ type Shadow = Pick<
   'shadowColor' | 'shadowOffset' | 'shadowOpacity' | 'shadowRadius' | 'elevation'
 >;
 
-const SHADOW_COLOR = '#000';
+import { colors } from './tokens';
+
+const SHADOW_COLOR = colors.common.shadowSource;
 
 export const shadows = {
   none: {

@@ -196,12 +196,12 @@ export default function ClientMore() {
               },
             ]}
           >
-            <LogOut size={20} color={theme.colors.error ?? '#E53E3E'} />
+            <LogOut size={20} color={theme.colors.error} />
             <Text
               style={[
                 styles.logoutText,
                 {
-                  color: theme.colors.error ?? '#E53E3E',
+                  color: theme.colors.error,
                   fontFamily: theme.fontFamily.medium,
                   fontSize: theme.fontSize.base,
                 },

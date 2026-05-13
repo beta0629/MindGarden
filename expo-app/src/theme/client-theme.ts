@@ -15,6 +15,7 @@ export interface AppThemeColors {
   readonly primaryLight: string;
   readonly primaryDark: string;
   readonly bgMain: string;
+  readonly bgSub: string;
   readonly surface: string;
   readonly surfaceAlt: string;
   readonly accent: string;
@@ -29,6 +30,8 @@ export interface AppThemeColors {
   readonly success: string;
   readonly warning: string;
   readonly info: string;
+  readonly shadowSource: string;
+  readonly modalBackdrop: string;
   readonly gray: typeof colors.gray;
 }
 
@@ -48,6 +51,7 @@ export const clientTheme: AppTheme = {
     primaryLight: colors.client.primaryLight,
     primaryDark: colors.client.primaryDark,
     bgMain: colors.client.bgMain,
+    bgSub: colors.client.bgSub,
     surface: colors.client.surface,
     surfaceAlt: colors.client.surfaceAlt,
     accent: colors.client.accent,

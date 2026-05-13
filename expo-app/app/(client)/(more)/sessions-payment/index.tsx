@@ -177,7 +177,6 @@ export default function SessionsPaymentIndex() {
         data={payments}
         renderItem={renderPaymentItem}
         keyExtractor={(item, index) => String(item?.id ?? `fallback-${index}`)}
-        estimatedItemSize={80}
         refreshControl={
           <RefreshControl
             refreshing={balanceRefetching || paymentsRefetching}

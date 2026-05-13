@@ -14,6 +14,8 @@ const CLIENT_COLORS = {
   primaryLight: '#F2CC8F',
   primaryDark: '#C06A50',
   bgMain: '#FAF9F7',
+  /** 카드·칩 등 메인 배경보다 한 단 낮은 채움 (gray 100과 동일 톤) */
+  bgSub: '#F0EDE8',
   surface: '#FFFFFF',
   surfaceAlt: '#FFF8F0',
   accent: '#81B29A',
@@ -26,6 +28,8 @@ const CONSULTANT_COLORS = {
   primaryLight: '#6B7F72',
   primaryDark: '#2A3A31',
   bgMain: '#FAF9F7',
+  /** 내담자 bgSub와 동일 역할 — 상담사 surfaceAlt 톤에 맞춤 */
+  bgSub: '#EDE9E1',
   surface: '#F5F3EF',
   surfaceAlt: '#EDE9E1',
   accent: '#A4B494',
@@ -44,6 +48,10 @@ const COMMON_COLORS = {
   success: '#81C784',
   warning: '#FFB74D',
   info: '#64B5F6',
+  /** iOS shadowColor 등 — 완전 투명 블랙 오버레이용 */
+  shadowSource: '#000000',
+  /** 모달·바텀 시트 백드롭 — `#000000` + 0x52 alpha (≈0.32) */
+  modalBackdrop: '#00000052',
 } as const;
 
 /** 그레이 스케일 (토큰화) */

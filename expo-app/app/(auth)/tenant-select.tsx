@@ -223,7 +223,7 @@ export default function TenantSelectScreen() {
           style={({ pressed }) => [
             styles.tenantCard,
             {
-              backgroundColor: pressed ? theme.colors.primaryLight ?? theme.colors.bgSub : theme.colors.surface,
+              backgroundColor: pressed ? theme.colors.primaryLight : theme.colors.surface,
               ...theme.shadows.sm,
             },
           ]}

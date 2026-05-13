@@ -181,7 +181,7 @@ export default function ClientSessions() {
           <FlashList
             data={consultations}
             renderItem={renderItem}
-            estimatedItemSize={120}
+            keyExtractor={(item) => String(item.id)}
             contentContainerStyle={styles.listContent}
             onEndReached={handleEndReached}
             onEndReachedThreshold={0.5}

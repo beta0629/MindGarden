@@ -2,7 +2,7 @@
  * 웰니스 메인 화면
  *
  * - "마음 돌봄" 제목 + 오늘 날짜
- * - 4개 진입 카드 (감정 일기, 자가 심리검사, 명상 가이드, 심리 교육)
+ * - 진입 카드 (감정 일기, 자가 심리검사, 명상 가이드, 심리 교육, 마음 정원, 마음 날씨)
  * - 힐링 콘텐츠 카드 피드
  * - Reanimated stagger 진입 애니메이션
  *
@@ -22,6 +22,8 @@ import {
   BookOpen,
   Heart,
   Sparkles,
+  Flower2,
+  CloudSun,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
@@ -53,6 +55,8 @@ export default function ClientWellness() {
     '마음 자가 점검': '/(client)/(wellness)/self-assessment',
     '명상 가이드': '/(client)/(wellness)/meditation',
     '심리 교육': '/(client)/(wellness)/psycho-education',
+    '마음 정원': '/(client)/(wellness)/garden',
+    '마음 날씨': '/(client)/(wellness)/mind-weather',
   };
 
   const handleEntryPress = (title: string) => {
@@ -84,6 +88,16 @@ export default function ClientWellness() {
       icon: <BookOpen size={24} color={theme.colors.primary} />,
       title: '심리 교육',
       description: '마음에 대해 알아보세요',
+    },
+    {
+      icon: <Flower2 size={24} color={theme.colors.primary} />,
+      title: '마음 정원',
+      description: '나만의 성장을 조용히 모아가요',
+    },
+    {
+      icon: <CloudSun size={24} color={theme.colors.primary} />,
+      title: '마음 날씨',
+      description: '짧게 적으면 AI가 감정 키워드를 만들어요',
     },
   ];
 

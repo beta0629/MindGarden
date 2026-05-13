@@ -1,4 +1,5 @@
 import { ExpoConfig, ConfigContext } from 'expo/config';
+import { colors } from './src/theme/tokens';
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -13,7 +14,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   splash: {
     image: './assets/images/splash-icon.png',
     resizeMode: 'contain',
-    backgroundColor: '#FAF9F7',
+    backgroundColor: colors.client.bgMain,
   },
   ios: {
     supportsTablet: true,
@@ -32,7 +33,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
-      backgroundColor: '#FAF9F7',
+      backgroundColor: colors.client.bgMain,
     },
     package: 'com.mindgardenmobile',
     edgeToEdgeEnabled: true,
@@ -49,7 +50,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-notifications',
       {
         icon: './assets/images/notification-icon.png',
-        color: '#3D5246',
+        color: colors.consultant.primary,
       },
     ],
     [

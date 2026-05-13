@@ -31,6 +31,7 @@ import {
   useHealingContents,
   usePsychoEducationCatalog,
 } from '@/api/hooks/useWellness';
+import { HEALING_CONTENT_API } from '@/api/endpoints';
 import { toDisplayString } from '@/utils/toDisplayString';
 import {
   PSYCHO_CATEGORIES,
@@ -132,7 +133,7 @@ export default function PsychoEducationMain() {
           borderRadius: theme.borderRadius.lg,
           backgroundColor: theme.colors.accentSoft,
         }}
-        accessibilityRole="text"
+        accessibilityRole="summary"
       >
         <Text
           style={{
@@ -144,36 +145,75 @@ export default function PsychoEducationMain() {
           {psychoSource === 'api'
             ? `서버 목록(${PSYCHO_EDUCATION_API_PLACEHOLDER}). 북마크·읽기 완료는 이 기기(MMKV)에만 저장됩니다.`
             : psychoFallbackError
-              ? `서버 목록(${PSYCHO_EDUCATION_API_PLACEHOLDER})을 불러오지 못해 샘플 카드뉴스를 표시합니다. 동기화로 재시도할 수 있습니다.`
-              : `샘플 카드뉴스 · 전용 API ${PSYCHO_EDUCATION_API_PLACEHOLDER}(예정). 서버 연동 시 목록이 바뀝니다.`}
+              ? `전용 API(${PSYCHO_EDUCATION_API_PLACEHOLDER})에 연결하지 못해 아래는 샘플 카드뉴스입니다. 서버 연동 후 자동으로 바뀝니다.`
+              : `샘플 카드뉴스 · API ${PSYCHO_EDUCATION_API_PLACEHOLDER}(예정). 서버 연동 시 목록이 바뀝니다.`}
           {' '}
-          힐링 콘텐츠는 연동 시 아래에 표시됩니다.
+          {healingQuery.isSuccess && healingArticlePreview.length > 0
+            ? '힐링에서 가져온 글은 아래에 표시됩니다.'
+            : '힐링 API 연동 전에는 아래 심리 교육 카드만 표시됩니다.'}
         </Text>
-      </View>
-
-      {psychoFallbackError ? (
-        <View style={{ marginHorizontal: 16, marginBottom: 8 }}>
-          <EmptyState
-            title="심리 교육 서버 목록을 불러오지 못했습니다"
-            description={`${PSYCHO_EDUCATION_API_PLACEHOLDER} 연결을 확인한 뒤 다시 시도해 주세요. 샘플 카드뉴스는 계속 이용할 수 있습니다.`}
-            actionLabel="다시 시도"
-            onAction={() => {
+        {(psychoFallbackError || psychoSource === 'demo') && (
+          <Pressable
+            onPress={() => {
               void psychoCatalogQuery.refetch();
             }}
-          />
-        </View>
-      ) : null}
+            style={{ marginTop: 8, alignSelf: 'flex-start' }}
+            accessibilityRole="button"
+            accessibilityLabel="심리 교육 서버 목록 새로고침"
+          >
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.semibold,
+                fontSize: theme.fontSize.xs,
+                color: theme.colors.primary,
+              }}
+            >
+              심리 교육 목록 새로고침
+            </Text>
+          </Pressable>
+        )}
+      </View>
 
       {healingQuery.isError ? (
-        <View style={{ marginHorizontal: 16, marginBottom: 8 }}>
-          <EmptyState
-            title="힐링 콘텐츠를 불러오지 못했습니다"
-            description="네트워크 상태를 확인한 뒤 다시 시도해 주세요."
-            actionLabel="다시 시도"
-            onAction={() => {
+        <View
+          style={{
+            marginHorizontal: 16,
+            marginBottom: 8,
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            borderRadius: theme.borderRadius.md,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.surface,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.regular,
+              fontSize: theme.fontSize.xs,
+              color: theme.colors.textSecondary,
+            }}
+          >
+            {`힐링 API(${HEALING_CONTENT_API.GET_ALL})는 아직 연결되지 않았을 수 있습니다. 아래 심리 교육 카드는 그대로 이용할 수 있습니다.`}
+          </Text>
+          <Pressable
+            onPress={() => {
               void healingQuery.refetch();
             }}
-          />
+            style={{ marginTop: 6, alignSelf: 'flex-start' }}
+            accessibilityRole="button"
+            accessibilityLabel="힐링 콘텐츠 다시 불러오기"
+          >
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.semibold,
+                fontSize: theme.fontSize.xs,
+                color: theme.colors.primary,
+              }}
+            >
+              힐링 다시 시도
+            </Text>
+          </Pressable>
         </View>
       ) : null}
 

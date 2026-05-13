@@ -58,6 +58,7 @@
     - CSS 변수 시스템
     - BEM 네이밍 규칙
     - 테넌트 브랜딩
+    - **Expo(`expo-app/`)**: [Expo 네이티브 앱 하드코딩·색상 표준](./EXPO_APP_HARDCODING_AND_COLORS.md) — 화면 코드에 색상 리터럴 금지, 토큰·브랜드 상수 파일만 허용
 
 11. **[Stored Procedure 표준](./STORED_PROCEDURE_STANDARD.md)** ⭐⭐⭐⭐
     - 프로시저 네이밍

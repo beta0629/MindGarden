@@ -190,6 +190,41 @@ export const COMMUNITY_API = {
   LIST: '/api/v1/community',
 } as const;
 
+/**
+ * Phase 4-B 「마음 정원」— 서버 권위 상태·이벤트 적재 (Spring 미부착 시 404 예상, 클라이언트 MMKV 우선)
+ */
+export const GARDEN_API = {
+  STATE: '/api/v1/clients/me/mind-garden',
+  APPLY_EVENT: '/api/v1/clients/me/mind-garden/events',
+} as const;
+
+/**
+ * Phase 4-A 「마음 날씨」 — `CONSULTANT_CLIENT_APP_PLAN.md` Phase 4 A절.
+ * - 텍스트(또는 후속 음성/STT) → 감정 키워드·한 줄 요약 분석 (참고용·진단 아님)
+ * - 상담사 옵트인 공유는 카드별 토글 엔드포인트로 분리
+ * - 상담사 수신함은 공유 동의된 카드만 노출
+ *
+ * **백엔드 구현 전(Spring 미부착)**: 본 expo-app은 mock 분석 + MMKV 캐시로 폴백한다.
+ * 백엔드 부착 시 본 상수를 그대로 사용해 바인딩만 교체하면 된다.
+ */
+export const MIND_WEATHER_API = {
+  /** POST 바디: `{ text, source: 'mood-journal' | 'memo' | 'voice', sourceRefId? }` → 분석 카드 */
+  ANALYZE: '/api/v1/mind-weather/analyze',
+  /** GET — 본인(내담자) 분석 카드 목록 (Pageable 가능) */
+  LIST: '/api/v1/mind-weather',
+  /** GET — 카드 상세 */
+  detail: (id: string | number) => `/api/v1/mind-weather/${id}`,
+  /**
+   * POST — 옵트인 토글
+   * 바디: `{ shareSummary: boolean, shareOriginal: boolean, consultantId? }`
+   */
+  share: (id: string | number) => `/api/v1/mind-weather/${id}/share`,
+  /** DELETE — 공유 철회(옵트아웃) */
+  unshare: (id: string | number) => `/api/v1/mind-weather/${id}/share`,
+  /** GET — 상담사 수신함(공유 동의된 내담자 카드만) */
+  CONSULTANT_INBOX: '/api/v1/mind-weather/inbox',
+} as const;
+
 export const API_ENDPOINTS = {
   AUTH: AUTH_API,
   TENANT: TENANT_API,
@@ -212,4 +247,6 @@ export const API_ENDPOINTS = {
   MEDITATION: MEDITATION_API,
   PSYCHO_EDUCATION: PSYCHO_EDUCATION_API,
   COMMUNITY: COMMUNITY_API,
+  GARDEN: GARDEN_API,
+  MIND_WEATHER: MIND_WEATHER_API,
 } as const;

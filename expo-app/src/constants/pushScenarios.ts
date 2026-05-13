@@ -1,10 +1,11 @@
 /**
- * 푸시 알림 시나리오 상수 (CONSULTANT_CLIENT_APP_PLAN §3.7 P1–P12)
- * 서버 data.type 문자열과 매핑 — 추가·레거시 type은 SCENARIO_BY_TYPE 별칭으로 조회
+ * 푸시 알림 시나리오 상수 (`CONSULTANT_CLIENT_APP_PLAN.md` 표 §3.7 P1–P12).
+ * 서버 `data.type` 문자열과 매핑. 레거시·타 백엔드 표기는 `PUSH_TYPE_ALIASES`로 정규화.
+ * `payment_refunded`·`record_shared`는 P1–P12 외 확장 타입으로 동일 맵에 등록됨.
  *
  * @author MindGarden
  * @since 2026-05-12
- * @see docs/project-management/CONSULTANT_CLIENT_APP_PLAN.md §3.7
+ * @see docs/project-management/CONSULTANT_CLIENT_APP_PLAN.md (§3.7 푸시 알림 시나리오 상세)
  */
 
 export type PushCategory =
@@ -155,18 +156,59 @@ export const PUSH_SCENARIOS = {
   },
 } as const satisfies Record<string, PushScenario>;
 
-/** 레거시·별칭 서버 type → 위 시나리오 type 문자열 */
+/** 레거시·별칭 서버 type → `PUSH_SCENARIOS` canonical `type` 문자열 */
 export const PUSH_TYPE_ALIASES: Readonly<Record<string, string>> = {
   wellness_reminder: 'mood_reminder',
+  mood_journal_reminder: 'mood_reminder',
   record_pending: 'consultation_record_reminder',
   consultation_record_due: 'consultation_record_reminder',
   missing_record_reminder: 'consultation_record_reminder',
+  appointment_reminder: 'booking_reminder',
+  reservation_reminder: 'booking_reminder',
+  schedule_reminder: 'booking_reminder',
+  consultation_reminder: 'booking_reminder',
+  appointment_confirmed: 'booking_confirmed',
+  booking_created: 'booking_confirmed',
+  reservation_confirmed: 'booking_confirmed',
+  appointment_cancelled: 'booking_cancelled',
+  schedule_cancelled: 'booking_cancelled',
+  reservation_cancelled: 'booking_cancelled',
+  consultation_started: 'session_started',
+  session_start: 'session_started',
+  session_complete: 'session_completed',
+  review_request: 'session_completed',
+  payment_success: 'payment_completed',
+  payment_error: 'payment_failed',
+  payment_declined: 'payment_failed',
+  low_balance: 'session_low',
+  sessions_low: 'session_low',
+  session_balance_low: 'session_low',
+  chat_message: 'new_message',
+  message_received: 'new_message',
+  admin_notice: 'system_notice',
+  maintenance_notice: 'system_notice',
+  service_notice: 'system_notice',
 };
 
+/** 표준 12종(P1–P12)을 기획서 순서대로 — UI·검증용 */
+export const PUSH_SCENARIOS_P1_TO_P12_ORDERED: readonly PushScenario[] = [
+  PUSH_SCENARIOS.BOOKING_REMINDER,
+  PUSH_SCENARIOS.BOOKING_CONFIRMED,
+  PUSH_SCENARIOS.BOOKING_CANCELLED,
+  PUSH_SCENARIOS.SESSION_STARTED,
+  PUSH_SCENARIOS.SESSION_COMPLETED,
+  PUSH_SCENARIOS.PAYMENT_COMPLETED,
+  PUSH_SCENARIOS.PAYMENT_FAILED,
+  PUSH_SCENARIOS.SESSION_LOW,
+  PUSH_SCENARIOS.CONSULTATION_RECORD_REMINDER,
+  PUSH_SCENARIOS.NEW_MESSAGE,
+  PUSH_SCENARIOS.MOOD_REMINDER,
+  PUSH_SCENARIOS.SYSTEM_NOTICE,
+];
+
 /** §3.7 기준 12종 type 목록 (검증·문서용) */
-export const PUSH_SCENARIO_SERVER_TYPES: readonly string[] = Object.values(
-  PUSH_SCENARIOS,
-).map((s) => s.type);
+export const PUSH_SCENARIO_SERVER_TYPES: readonly string[] =
+  PUSH_SCENARIOS_P1_TO_P12_ORDERED.map((s) => s.type);
 
 export type PushScenarioType =
   (typeof PUSH_SCENARIOS)[keyof typeof PUSH_SCENARIOS]['type'];
@@ -190,7 +232,8 @@ const RECORD_SHARED_SCENARIO: PushScenario = {
   settingsCategory: 'schedule',
 };
 
-function canonicalPushType(type: string): string {
+/** 서버에서 온 `data.type`을 `PUSH_SCENARIOS`의 canonical type으로 정규화 */
+export function resolveCanonicalPushType(type: string): string {
   return PUSH_TYPE_ALIASES[type] ?? type;
 }
 
@@ -206,7 +249,7 @@ SCENARIO_BY_TYPE.set('record_shared', RECORD_SHARED_SCENARIO);
  * 서버 알림 type으로 시나리오 조회 (별칭·추가 type 포함)
  */
 export function getScenarioByType(type: string): PushScenario | undefined {
-  return SCENARIO_BY_TYPE.get(canonicalPushType(type));
+  return SCENARIO_BY_TYPE.get(resolveCanonicalPushType(type));
 }
 
 /**

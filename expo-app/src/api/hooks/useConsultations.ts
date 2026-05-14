@@ -4,11 +4,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import {
-  useQuery,
-  useInfiniteQuery,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { apiGet } from '../client';
 import { SCHEDULE_API, DASHBOARD_API } from '../endpoints';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -38,8 +34,7 @@ const CONSULTATION_QUERY_KEYS = {
 const PAGE_SIZE = 20;
 
 export function useClientConsultations(params: ClientConsultationsParams) {
-  const statusFilter =
-    params.status === 'ALL' ? undefined : params.status;
+  const statusFilter = params.status === 'ALL' ? undefined : params.status;
   const hasValidClientId =
     params.clientId != null && params.clientId !== '' && params.clientId !== 0;
 
@@ -54,14 +49,18 @@ export function useClientConsultations(params: ClientConsultationsParams) {
         size: PAGE_SIZE,
       });
 
-      console.log('[useClientConsultations] raw response:', JSON.stringify(response)?.substring(0, 500));
+      console.log(
+        '[useClientConsultations] raw response:',
+        JSON.stringify(response)?.substring(0, 500),
+      );
 
-      const extracted = response?.data?.schedules
-        ?? response?.data?.content
-        ?? (Array.isArray(response?.data) ? response.data : null)
-        ?? response?.schedules
-        ?? response?.content
-        ?? (Array.isArray(response) ? response : []);
+      const extracted =
+        response?.data?.schedules ??
+        response?.data?.content ??
+        (Array.isArray(response?.data) ? response.data : null) ??
+        response?.schedules ??
+        response?.content ??
+        (Array.isArray(response) ? response : []);
       return extracted;
     },
     initialPageParam: 0,
@@ -106,10 +105,7 @@ export function useConsultationDetail(
     },
     staleTime: 1000 * 60 * 5,
     ...options,
-    enabled:
-      (options?.enabled !== false) &&
-      !!consultationId &&
-      authUserId != null,
+    enabled: options?.enabled !== false && !!consultationId && authUserId != null,
   });
 }
 
@@ -117,9 +113,7 @@ export interface UpcomingConsultation extends Schedule {
   daysUntil: number;
 }
 
-export function useUpcomingConsultation(
-  clientId: string | number | undefined,
-) {
+export function useUpcomingConsultation(clientId: string | number | undefined) {
   return useQuery<UpcomingConsultation | null>({
     queryKey: CONSULTATION_QUERY_KEYS.upcoming(clientId!),
     queryFn: async () => {
@@ -132,14 +126,18 @@ export function useUpcomingConsultation(
         sort: 'date,asc',
       });
 
-      console.log('[useUpcomingConsultation] raw response:', JSON.stringify(response)?.substring(0, 500));
+      console.log(
+        '[useUpcomingConsultation] raw response:',
+        JSON.stringify(response)?.substring(0, 500),
+      );
 
-      const schedules = response?.data?.schedules
-        ?? response?.data?.content
-        ?? (Array.isArray(response?.data) ? response.data : null)
-        ?? response?.schedules
-        ?? response?.content
-        ?? (Array.isArray(response) ? response : []);
+      const schedules =
+        response?.data?.schedules ??
+        response?.data?.content ??
+        (Array.isArray(response?.data) ? response.data : null) ??
+        response?.schedules ??
+        response?.content ??
+        (Array.isArray(response) ? response : []);
       return schedules.length > 0 ? schedules[0] : null;
     },
     enabled: !!clientId,
@@ -154,14 +152,15 @@ export interface ClientDashboardData {
   upcomingSchedule: Schedule | null;
 }
 
-export function useClientDashboard(
-  clientId: string | number | undefined,
-) {
+export function useClientDashboard(clientId: string | number | undefined) {
   return useQuery<ClientDashboardData>({
     queryKey: CONSULTATION_QUERY_KEYS.clientDashboard(clientId!),
     queryFn: async () => {
       const response = await apiGet<any>(DASHBOARD_API.CLIENT);
-      console.log('[useClientDashboard] raw response:', JSON.stringify(response)?.substring(0, 500));
+      console.log(
+        '[useClientDashboard] raw response:',
+        JSON.stringify(response)?.substring(0, 500),
+      );
       return response?.data ?? response;
     },
     enabled: !!clientId,

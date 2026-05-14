@@ -27,10 +27,7 @@ export function MoreAccountSettings({
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
 
-  const appVersion =
-    Constants.nativeApplicationVersion ??
-    Constants.expoConfig?.version ??
-    '—';
+  const appVersion = Constants.nativeApplicationVersion ?? Constants.expoConfig?.version ?? '—';
 
   const tenantHint =
     user?.tenantId != null && String(user.tenantId).trim() !== ''
@@ -63,10 +60,7 @@ export function MoreAccountSettings({
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View
           style={[
             styles.infoCard,
@@ -89,8 +83,8 @@ export function MoreAccountSettings({
                 lineHeight: 20,
               }}
             >
-              푸시·이메일 알림은 아래에서 켜고 끌 수 있습니다. OS의 방해 금지·집중 모드 설정도 함께 확인해
-              주세요.
+              푸시·이메일 알림은 아래에서 켜고 끌 수 있습니다. OS의 방해 금지·집중 모드 설정도 함께
+              확인해 주세요.
             </Text>
           </View>
         </View>

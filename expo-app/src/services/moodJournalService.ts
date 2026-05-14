@@ -1,8 +1,12 @@
 /**
- * 감정 일기 — **API 성공 시 서버 데이터만 사용**, **요청 실패(catch) 시에만** MMKV Mock
+ * 감정 일기 — **MMKV 로컬 Mock** + REST (`EXPO_NATIVE_APP_PLAN.md` §11.1·§13 Phase 3-B).
  *
- * SSOT: `docs/project-management/EXPO_NATIVE_APP_PLAN.md` Phase 3-B·§11.1·§13
- * §11.1 표기: `WELLNESS_PHASE_3B_DATA_SOURCE.moodJournal` (`src/constants/wellnessDataSource.ts`)
+ * **원장(Mock vs API)** — 표기: `WELLNESS_PHASE_3B_DATA_SOURCE.moodJournal`:
+ * - **읽기(월·상세·통계)**: `try` 안에서 `apiGet`이 **예외 없이** 끝나고 페이로드를 **알려진 형태로 정규화**할 수 있으면 그 결과만 반환(서버 권위). `catch`에서만 MMKV/로컬 재계산 분기.
+ * - **월별 `fetchMoodJournalMonth`**: HTTP 성공이나 본문을 월 맵으로 해석할 수 없으면 **빈 객체** `{}`(Mock 아님, “해당 월 서버 데이터 없음” 취급).
+ * - **통계 `fetchMoodStats`**: HTTP 성공이나 통계 배열이 아니면 **MMKV 기반 로컬 재계산**(요청 실패와 동일 폴백 경로).
+ * - **쓰기(CUD)**: 원격 성공 시 서버 반영 가정; **catch 시에만** MMKV에 반영.
+ * - **표시 경계**: `normalizeEntry` 등에서 `toDisplayString`·`toSafeNumber`(`COMMON_DISPLAY_BOUNDARY_MEETING_20260322.md`).
  *
  * @author MindGarden
  * @since 2026-05-13
@@ -83,7 +87,10 @@ function normalizeEntry(raw: unknown): MoodJournalEntry | null {
   };
 }
 
-function normalizeMonthlyPayload(raw: unknown, month: string): Record<string, MoodJournalEntry> | null {
+function normalizeMonthlyPayload(
+  raw: unknown,
+  month: string,
+): Record<string, MoodJournalEntry> | null {
   const body = unwrapApiResponse<unknown>(raw) ?? raw;
   if (body == null) return null;
   if (Array.isArray(body)) {
@@ -114,7 +121,9 @@ function normalizeMonthlyPayload(raw: unknown, month: string): Record<string, Mo
   return null;
 }
 
-export async function fetchMoodJournalMonth(month: string): Promise<Record<string, MoodJournalEntry>> {
+export async function fetchMoodJournalMonth(
+  month: string,
+): Promise<Record<string, MoodJournalEntry>> {
   try {
     const raw = await apiGet<unknown>(MOOD_JOURNAL_API.GET_MONTHLY, {
       month,

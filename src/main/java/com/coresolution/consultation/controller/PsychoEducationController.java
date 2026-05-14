@@ -29,8 +29,9 @@ import lombok.extern.slf4j.Slf4j;
  *       누락 시 400을 반환하므로 본 컨트롤러까지 도달하지 못한다.</li>
  * </ul>
  *
- * <p>본 단계의 콘텐츠는 시드(상수)다. 운영 도입 시 DB 기반 Repository로 교체한다
- * (`docs/project-management/EXPO_NATIVE_APP_PLAN.md` §13).</p>
+ * <p>콘텐츠는 테넌트 마스터 DB({@code psycho_education_articles})에서 조회하며,
+ * 노출({@code is_published})·삭제되지 않은 행만 응답한다. 어드민 CRUD는
+ * {@link AdminPsychoEducationContentController} 참조.</p>
  *
  * @author MindGarden
  * @since 2026-05-13

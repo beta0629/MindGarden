@@ -9,12 +9,7 @@ import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import {
-  ArrowDownCircle,
-  ArrowUpCircle,
-  MinusCircle,
-  RotateCcw,
-} from 'lucide-react-native';
+import { ArrowDownCircle, ArrowUpCircle, MinusCircle, RotateCcw } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
 import {
@@ -79,20 +74,14 @@ function groupByDate(items: SessionUsageItem[]): GroupedUsage[] {
 export default function UsageHistoryScreen() {
   const theme = useTheme();
   const user = useAuthStore((s) => s.user);
-  const clientId =
-    user?.id != null && !Number.isNaN(Number(user.id))
-      ? Number(user.id)
-      : undefined;
+  const clientId = user?.id != null && !Number.isNaN(Number(user.id)) ? Number(user.id) : undefined;
 
   const { data, isLoading } = useSessionUsageHistory(clientId);
 
   const usageHistory = data?.items ?? [];
   const isDerivedFromMappings = data?.isDerivedFromMappings ?? false;
 
-  const groupedData = useMemo(
-    () => groupByDate(usageHistory),
-    [usageHistory],
-  );
+  const groupedData = useMemo(() => groupByDate(usageHistory), [usageHistory]);
 
   if (isLoading) {
     return (
@@ -128,10 +117,7 @@ export default function UsageHistoryScreen() {
       style={[styles.safeArea, { backgroundColor: theme.colors.bgMain }]}
       edges={['bottom']}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {isDerivedFromMappings ? (
           <View style={{ marginBottom: theme.spacing.md, paddingHorizontal: 4 }}>
             <Text
@@ -142,8 +128,7 @@ export default function UsageHistoryScreen() {
                 lineHeight: theme.fontSize.sm * 1.4,
               }}
             >
-              서버의 상세 사용 이력이 비어 있어, 회기 매칭 정보를 바탕으로 한 요약만
-              표시합니다.
+              서버의 상세 사용 이력이 비어 있어, 회기 매칭 정보를 바탕으로 한 요약만 표시합니다.
             </Text>
           </View>
         ) : null}
@@ -200,8 +185,7 @@ function UsageTimelineItem({ item, isLast }: UsageTimelineItemProps) {
   const config = USAGE_TYPE_CONFIG[item.type];
   const Icon = config.icon;
 
-  const changeColor =
-    item.type === 'USED' ? theme.colors.error : theme.colors.success;
+  const changeColor = item.type === 'USED' ? theme.colors.error : theme.colors.success;
 
   return (
     <View
@@ -214,22 +198,12 @@ function UsageTimelineItem({ item, isLast }: UsageTimelineItemProps) {
       ]}
     >
       <View style={styles.timelineLeft}>
-        <View
-          style={[
-            styles.iconCircle,
-            { backgroundColor: `${changeColor}15` },
-          ]}
-        >
+        <View style={[styles.iconCircle, { backgroundColor: `${changeColor}15` }]}>
           <Icon size={18} color={changeColor} />
         </View>
 
         {!isLast && (
-          <View
-            style={[
-              styles.timelineLine,
-              { backgroundColor: theme.colors.divider },
-            ]}
-          />
+          <View style={[styles.timelineLine, { backgroundColor: theme.colors.divider }]} />
         )}
       </View>
 
@@ -268,7 +242,8 @@ function UsageTimelineItem({ item, isLast }: UsageTimelineItemProps) {
                 fontSize: theme.fontSize.base,
               }}
             >
-              {config.prefix}{Math.abs(item.sessionChange)}회
+              {config.prefix}
+              {Math.abs(item.sessionChange)}회
             </Text>
             <Badge label={config.label} variant={config.variant} size="sm" />
           </View>

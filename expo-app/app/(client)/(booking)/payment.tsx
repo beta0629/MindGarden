@@ -6,15 +6,7 @@
  * @since 2026-05-12
  */
 import { useMemo } from 'react';
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  Platform,
-} from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -22,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Calendar, Clock, Ticket } from 'lucide-react-native';
 import { useTheme } from '@/theme';
+import { toDisplayString } from '@/utils/safeDisplay';
 import { AppTopBar } from '@/components/templates/AppTopBar';
 import { ProgressBar } from '@/components/molecules/ProgressBar';
 import { Avatar } from '@/components/atoms/Avatar';
@@ -67,6 +60,8 @@ export default function BookingPayment() {
   const remainingSessions = balance?.remainingSessions ?? 0;
 
   const createBooking = useCreateBooking();
+
+  const consultantLabel = toDisplayString(params.consultantName, '상담');
 
   const paramsReady = useMemo(() => {
     const cid = params.consultantId;
@@ -120,17 +115,14 @@ export default function BookingPayment() {
       router.push({
         pathname: '/(client)/(booking)/complete',
         params: {
-          consultantName: params.consultantName,
+          consultantName: consultantLabel,
           date: params.date,
           startTime: params.startTime,
           endTime: params.endTime,
         },
       });
     } catch (e) {
-      const msg = extractErrorMessage(
-        e,
-        '예약 처리 중 문제가 발생했습니다. 다시 시도해 주세요.',
-      );
+      const msg = extractErrorMessage(e, '예약 처리 중 문제가 발생했습니다. 다시 시도해 주세요.');
       Alert.alert('예약 실패', msg);
     }
   };
@@ -148,17 +140,11 @@ export default function BookingPayment() {
     !createBooking.isPending;
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="결제" canGoBack />
       <ProgressBar currentStep={3} totalSteps={3} labels={STEP_LABELS} />
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* 예약 요약 */}
         <Animated.View entering={FadeInDown.springify()}>
           <View
@@ -183,7 +169,7 @@ export default function BookingPayment() {
             </Text>
 
             <View style={styles.summaryRow}>
-              <Avatar name={params.consultantName} size="md" />
+              <Avatar name={consultantLabel} size="md" />
               <Text
                 style={{
                   fontFamily: theme.fontFamily.semibold,
@@ -192,7 +178,7 @@ export default function BookingPayment() {
                   marginLeft: 12,
                 }}
               >
-                {params.consultantName} 전문가
+                {consultantLabel} 전문가
               </Text>
             </View>
 
@@ -280,16 +266,12 @@ export default function BookingPayment() {
 
           {remainingSessions < 1 && !balanceLoading && (
             <Pressable
-              onPress={() =>
-                router.push('/(client)/(more)/sessions-payment/extend')
-              }
+              onPress={() => router.push('/(client)/(more)/sessions-payment/extend')}
               style={({ pressed }) => [
                 styles.extendHint,
                 {
                   borderColor: theme.colors.border,
-                  backgroundColor: pressed
-                    ? theme.colors.accentSoft
-                    : theme.colors.surface,
+                  backgroundColor: pressed ? theme.colors.accentSoft : theme.colors.surface,
                   borderRadius: theme.borderRadius.lg,
                 },
               ]}
@@ -328,9 +310,7 @@ export default function BookingPayment() {
           style={[
             styles.confirmButton,
             {
-              backgroundColor: canConfirm
-                ? theme.colors.primary
-                : theme.colors.gray[300],
+              backgroundColor: canConfirm ? theme.colors.primary : theme.colors.gray[300],
               borderRadius: theme.borderRadius.lg,
             },
           ]}

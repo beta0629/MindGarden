@@ -25,9 +25,8 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useTheme } from '@/theme';
 import { fontSize as fontSizeTokens } from '@/theme/typography';
 import { useTenantStore } from '@/stores/useTenantStore';
-import { useAuthStore } from '@/stores/useAuthStore';
 import { AuthService } from '@/services/AuthService';
-import { NotificationService } from '@/services/NotificationService';
+import { navigateAfterAuthenticated } from '@/utils/navigateAfterAuth';
 import {
   OAUTH_KAKAO_BACKGROUND,
   OAUTH_KAKAO_FOREGROUND,
@@ -53,14 +52,7 @@ export default function LoginScreen() {
   const inExpoGo = isExpoGoApp();
 
   const handleLoginSuccess = async () => {
-    const { role } = useAuthStore.getState();
-    await NotificationService.registerToken();
-
-    if (role === 'consultant') {
-      router.replace('/(consultant)/(home)' as Href);
-    } else {
-      router.replace('/(client)/(home)' as Href);
-    }
+    await navigateAfterAuthenticated();
   };
 
   const handleKakaoLogin = async () => {
@@ -70,11 +62,28 @@ export default function LoginScreen() {
 
     try {
       const result = await AuthService.loginWithKakao();
-      if (result.success) {
+      if (result.kind === 'authenticated') {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         await handleLoginSuccess();
-      } else if (result.requiresSignup) {
-        setErrorMessage('가입되지 않은 계정입니다. 관리자에게 문의해주세요.');
+      } else if (result.kind === 'requiresSignup') {
+        router.push({
+          pathname: '/(auth)/social-signup',
+          params: {
+            provider: 'KAKAO',
+            email: result.socialUserInfo.email,
+            nickname: result.socialUserInfo.nickname,
+            socialId: result.socialUserInfo.providerUserId,
+            profileImageUrl: result.socialUserInfo.profileImageUrl ?? '',
+          },
+        });
+      } else if (result.kind === 'requiresPhoneAccountSelection') {
+        router.push({
+          pathname: '/(auth)/oauth-account-selection',
+          params: {
+            selectionToken: result.selectionToken,
+            provider: 'KAKAO',
+          },
+        });
       } else {
         setErrorMessage(result.message ?? '카카오 로그인에 실패했습니다.');
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -94,11 +103,28 @@ export default function LoginScreen() {
 
     try {
       const result = await AuthService.loginWithNaver();
-      if (result.success) {
+      if (result.kind === 'authenticated') {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         await handleLoginSuccess();
-      } else if (result.requiresSignup) {
-        setErrorMessage('가입되지 않은 계정입니다. 관리자에게 문의해주세요.');
+      } else if (result.kind === 'requiresSignup') {
+        router.push({
+          pathname: '/(auth)/social-signup',
+          params: {
+            provider: 'NAVER',
+            email: result.socialUserInfo.email,
+            nickname: result.socialUserInfo.nickname,
+            socialId: result.socialUserInfo.providerUserId,
+            profileImageUrl: result.socialUserInfo.profileImageUrl ?? '',
+          },
+        });
+      } else if (result.kind === 'requiresPhoneAccountSelection') {
+        router.push({
+          pathname: '/(auth)/oauth-account-selection',
+          params: {
+            selectionToken: result.selectionToken,
+            provider: 'NAVER',
+          },
+        });
       } else {
         setErrorMessage(result.message ?? '네이버 로그인에 실패했습니다.');
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -258,9 +284,7 @@ export default function LoginScreen() {
 
             <View style={styles.dividerRow}>
               <View style={[styles.dividerLine, { backgroundColor: theme.colors.divider }]} />
-              <Text style={[styles.dividerText, { color: theme.colors.textTertiary }]}>
-                또는
-              </Text>
+              <Text style={[styles.dividerText, { color: theme.colors.textTertiary }]}>또는</Text>
               <View style={[styles.dividerLine, { backgroundColor: theme.colors.divider }]} />
             </View>
 
@@ -324,7 +348,10 @@ export default function LoginScreen() {
                     <ActivityIndicator color={theme.colors.textOnPrimary} />
                   ) : (
                     <Text
-                      style={[styles.credentialLoginButtonText, { color: theme.colors.textOnPrimary }]}
+                      style={[
+                        styles.credentialLoginButtonText,
+                        { color: theme.colors.textOnPrimary },
+                      ]}
                     >
                       로그인
                     </Text>

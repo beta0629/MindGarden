@@ -20,13 +20,7 @@ interface StatCardProps {
 
 const ICON_SIZE = 24;
 
-export function StatCard({
-  icon: Icon,
-  value,
-  label,
-  index = 0,
-  accentColor,
-}: StatCardProps) {
+export function StatCard({ icon: Icon, value, label, index = 0, accentColor }: StatCardProps) {
   const theme = useTheme();
   const iconColor = accentColor ?? theme.colors.primary;
 

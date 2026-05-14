@@ -20,6 +20,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @SpringBootTest(classes = ConsultationManagementApplication.class)
 @ActiveProfiles("local")
+@Tag("local-mysql")
 @Transactional
 @DisplayName("PsychAssessment MMPI 추출 통합 테스트")
 class PsychAssessmentMmpiExtractionIntegrationTest {

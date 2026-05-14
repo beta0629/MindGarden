@@ -44,10 +44,7 @@ import {
   useSelfAssessments,
   useUpdateAssessmentShare,
 } from '@/api/hooks/useSelfAssessment';
-import {
-  ASSESSMENTS,
-  SEVERITY_COLORS,
-} from '@/constants/assessmentQuestions';
+import { ASSESSMENTS, SEVERITY_COLORS } from '@/constants/assessmentQuestions';
 import {
   WELLNESS_ASSESSMENT_REFERENCE_FOOTER_KO,
   WELLNESS_NON_MEDICAL_DISCLAIMER_KO,
@@ -164,16 +161,12 @@ export default function AssessmentResult() {
   }, [result?.id, result?.sharedWithConsultant]);
 
   const definition = result ? ASSESSMENTS[result.type] : null;
-  const severityKey = result
-    ? SEVERITY_COLORS[result.interpretation.severity]
-    : 'success';
+  const severityKey = result ? SEVERITY_COLORS[result.interpretation.severity] : 'success';
   const severityColor = theme.colors[severityKey as keyof typeof theme.colors] as string;
 
   const previousResults = useMemo(() => {
     if (!allResults || !result) return [];
-    return allResults
-      .filter((r) => r.type === result.type && r.id !== result.id)
-      .slice(0, 3);
+    return allResults.filter((r) => r.type === result.type && r.id !== result.id).slice(0, 3);
   }, [allResults, result]);
 
   const trendSeries = useMemo(() => {
@@ -182,10 +175,7 @@ export default function AssessmentResult() {
     }
     const same = allResults
       .filter((r) => r.type === result.type)
-      .sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      )
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
       .slice(-8);
     return {
       values: same.map((r) => r.totalScore),
@@ -212,9 +202,7 @@ export default function AssessmentResult() {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    router.replace(
-      `/(client)/(wellness)/self-assessment/take/${result.type}`,
-    );
+    router.replace(`/(client)/(wellness)/self-assessment/take/${result.type}`);
   };
 
   const handleGoBack = () => {
@@ -226,10 +214,7 @@ export default function AssessmentResult() {
 
   if (isLoading) {
     return (
-      <SafeAreaView
-        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-        edges={['top']}
-      >
+      <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
         <AppTopBar title="점검 결과" canGoBack />
         <View style={styles.center}>
           <Text
@@ -248,10 +233,7 @@ export default function AssessmentResult() {
 
   if (!result || !definition) {
     return (
-      <SafeAreaView
-        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-        edges={['top']}
-      >
+      <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
         <AppTopBar title="점검 결과" canGoBack />
         <EmptyState title="결과를 찾을 수 없습니다" />
       </SafeAreaView>
@@ -259,16 +241,10 @@ export default function AssessmentResult() {
   }
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="점검 결과" canGoBack />
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* 점검 이름 + 날짜 */}
         <Animated.View entering={FadeInDown.springify()} style={styles.headerCenter}>
           <Text
@@ -293,10 +269,7 @@ export default function AssessmentResult() {
         </Animated.View>
 
         {/* 원형 프로그레스 + 점수 */}
-        <Animated.View
-          entering={FadeInDown.delay(100).springify()}
-          style={styles.scoreSection}
-        >
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.scoreSection}>
           <ScoreCircle
             score={result.totalScore}
             maxScore={definition.maxScore}
@@ -472,8 +445,7 @@ export default function AssessmentResult() {
                   style={[
                     styles.compareBar,
                     {
-                      height:
-                        (result.totalScore / definition.maxScore) * 60 + 10,
+                      height: (result.totalScore / definition.maxScore) * 60 + 10,
                       backgroundColor: severityColor,
                       borderRadius: theme.borderRadius.sm,
                     },
@@ -491,8 +463,7 @@ export default function AssessmentResult() {
                 </Text>
               </View>
               {previousResults.map((prev) => {
-                const prevSeverityKey =
-                  SEVERITY_COLORS[prev.interpretation.severity];
+                const prevSeverityKey = SEVERITY_COLORS[prev.interpretation.severity];
                 const prevColor = theme.colors[
                   prevSeverityKey as keyof typeof theme.colors
                 ] as string;
@@ -512,8 +483,7 @@ export default function AssessmentResult() {
                       style={[
                         styles.compareBar,
                         {
-                          height:
-                            (prev.totalScore / definition.maxScore) * 60 + 10,
+                          height: (prev.totalScore / definition.maxScore) * 60 + 10,
                           backgroundColor: prevColor + '80',
                           borderRadius: theme.borderRadius.sm,
                         },
@@ -561,10 +531,7 @@ export default function AssessmentResult() {
         </View>
 
         {/* 버튼 그룹 */}
-        <Animated.View
-          entering={FadeInDown.delay(400).springify()}
-          style={styles.buttonGroup}
-        >
+        <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.buttonGroup}>
           <Pressable
             onPress={handleRetake}
             style={({ pressed }) => [

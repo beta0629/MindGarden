@@ -64,16 +64,10 @@ export default function PaymentDetailScreen() {
   const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const user = useAuthStore((s) => s.user);
-  const clientId =
-    user?.id != null && !Number.isNaN(Number(user.id))
-      ? Number(user.id)
-      : undefined;
+  const clientId = user?.id != null && !Number.isNaN(Number(user.id)) ? Number(user.id) : undefined;
   const paymentId = id ? Number(id) : undefined;
 
-  const { data: payment, isLoading, isError } = useSessionPaymentDetail(
-    clientId,
-    paymentId,
-  );
+  const { data: payment, isLoading, isError } = useSessionPaymentDetail(clientId, paymentId);
   const refundMutation = useRequestPgRefund();
 
   const handleReceiptPress = useCallback(() => {
@@ -162,10 +156,7 @@ export default function PaymentDetailScreen() {
       style={[styles.safeArea, { backgroundColor: theme.colors.bgMain }]}
       edges={['bottom']}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.duration(400)}>
           <View
             style={[
@@ -208,27 +199,11 @@ export default function PaymentDetailScreen() {
 
         <Animated.View entering={FadeInDown.delay(100).duration(400)}>
           <SectionCard title="결제 정보">
-            <InfoRow
-              icon={Calendar}
-              label="결제일"
-              value={payment.paymentDate}
-            />
-            <InfoRow
-              icon={CreditCard}
-              label="결제수단"
-              value={payment.paymentMethod}
-            />
-            <InfoRow
-              icon={FileText}
-              label="설명"
-              value={payment.description}
-            />
+            <InfoRow icon={Calendar} label="결제일" value={payment.paymentDate} />
+            <InfoRow icon={CreditCard} label="결제수단" value={payment.paymentMethod} />
+            <InfoRow icon={FileText} label="설명" value={payment.description} />
             {payment.sessionCount != null && (
-              <InfoRow
-                icon={FileText}
-                label="회기 수"
-                value={`${payment.sessionCount}회`}
-              />
+              <InfoRow icon={FileText} label="회기 수" value={`${payment.sessionCount}회`} />
             )}
           </SectionCard>
         </Animated.View>
@@ -237,25 +212,13 @@ export default function PaymentDetailScreen() {
           <Animated.View entering={FadeInDown.delay(200).duration(400)}>
             <SectionCard title="관련 상담 정보">
               {payment.consultantName && (
-                <InfoRow
-                  icon={User}
-                  label="상담사"
-                  value={payment.consultantName}
-                />
+                <InfoRow icon={User} label="상담사" value={payment.consultantName} />
               )}
               {payment.consultationDate && (
-                <InfoRow
-                  icon={Calendar}
-                  label="상담일"
-                  value={payment.consultationDate}
-                />
+                <InfoRow icon={Calendar} label="상담일" value={payment.consultationDate} />
               )}
               {payment.consultationTime && (
-                <InfoRow
-                  icon={Clock}
-                  label="시간"
-                  value={payment.consultationTime}
-                />
+                <InfoRow icon={Clock} label="시간" value={payment.consultationTime} />
               )}
             </SectionCard>
           </Animated.View>
@@ -268,9 +231,7 @@ export default function PaymentDetailScreen() {
               style={({ pressed }) => [
                 styles.receiptButton,
                 {
-                  backgroundColor: pressed
-                    ? theme.colors.accentSoft
-                    : theme.colors.surface,
+                  backgroundColor: pressed ? theme.colors.accentSoft : theme.colors.surface,
                   borderRadius: theme.borderRadius.xl,
                   borderColor: theme.colors.border,
                 },
@@ -314,8 +275,8 @@ export default function PaymentDetailScreen() {
                   textAlign: 'center',
                 }}
               >
-                이 내역은 패키지·회기 매칭 요약입니다. 카드 결제 환불은 PG 결제 건에서만 요청할 수 있으며, 회기
-                조정·환불은 센터 정책에 따라 고객센터로 문의해 주세요.
+                이 내역은 패키지·회기 매칭 요약입니다. 카드 결제 환불은 PG 결제 건에서만 요청할 수
+                있으며, 회기 조정·환불은 센터 정책에 따라 고객센터로 문의해 주세요.
               </Text>
             </View>
           </Animated.View>
@@ -324,64 +285,56 @@ export default function PaymentDetailScreen() {
         {payment.detailKind === 'PG' &&
           payment.status === 'COMPLETED' &&
           !!payment.refundApiPaymentId && (
-          <Animated.View entering={FadeInDown.delay(400).duration(400)}>
-            <Pressable
-              onPress={handleRefundPress}
-              disabled={refundMutation.isPending}
-              style={({ pressed }) => [
-                styles.refundButton,
-                {
-                  backgroundColor: pressed
-                    ? `${theme.colors.error}15`
-                    : theme.colors.surface,
-                  borderRadius: theme.borderRadius.xl,
-                  borderColor: theme.colors.error,
-                  opacity: refundMutation.isPending ? 0.55 : 1,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="환불 요청"
-            >
-              <RotateCcw size={18} color={theme.colors.error} />
-              <Text
-                style={{
-                  color: theme.colors.error,
-                  fontFamily: theme.fontFamily.semibold,
-                  fontSize: theme.fontSize.base,
-                  marginLeft: 8,
-                }}
-              >
-                {refundMutation.isPending ? '처리 중…' : '환불 요청'}
-              </Text>
-            </Pressable>
-            {payment.refundDeadline && (
-              <Text
-                style={[
-                  styles.refundNotice,
+            <Animated.View entering={FadeInDown.delay(400).duration(400)}>
+              <Pressable
+                onPress={handleRefundPress}
+                disabled={refundMutation.isPending}
+                style={({ pressed }) => [
+                  styles.refundButton,
                   {
-                    color: theme.colors.textTertiary,
-                    fontFamily: theme.fontFamily.regular,
-                    fontSize: theme.fontSize.xs,
+                    backgroundColor: pressed ? `${theme.colors.error}15` : theme.colors.surface,
+                    borderRadius: theme.borderRadius.xl,
+                    borderColor: theme.colors.error,
+                    opacity: refundMutation.isPending ? 0.55 : 1,
                   },
                 ]}
+                accessibilityRole="button"
+                accessibilityLabel="환불 요청"
               >
-                환불 가능 기한: {payment.refundDeadline}
-              </Text>
-            )}
-          </Animated.View>
-        )}
+                <RotateCcw size={18} color={theme.colors.error} />
+                <Text
+                  style={{
+                    color: theme.colors.error,
+                    fontFamily: theme.fontFamily.semibold,
+                    fontSize: theme.fontSize.base,
+                    marginLeft: 8,
+                  }}
+                >
+                  {refundMutation.isPending ? '처리 중…' : '환불 요청'}
+                </Text>
+              </Pressable>
+              {payment.refundDeadline && (
+                <Text
+                  style={[
+                    styles.refundNotice,
+                    {
+                      color: theme.colors.textTertiary,
+                      fontFamily: theme.fontFamily.regular,
+                      fontSize: theme.fontSize.xs,
+                    },
+                  ]}
+                >
+                  환불 가능 기한: {payment.refundDeadline}
+                </Text>
+              )}
+            </Animated.View>
+          )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function SectionCard({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   const theme = useTheme();
   return (
     <View

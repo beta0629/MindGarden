@@ -15,7 +15,7 @@ import SearchFilterSection from './SearchFilterSection';
 import SectionHeader from './SectionHeader';
 import SessionExtensionModal from './mapping/SessionExtensionModal';
 import SafeText from '../common/SafeText';
-import { ProfileCard } from '../ui/Card';
+import { ProfileCard } from '../ui/Card/index';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate, getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import '../../styles/unified-design-tokens.css';

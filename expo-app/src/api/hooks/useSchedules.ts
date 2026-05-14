@@ -4,12 +4,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { apiGet, apiPut } from '../client';
 import { SCHEDULE_API, CONSULTANT_API } from '../endpoints';
 
@@ -53,11 +48,9 @@ interface SchedulesParams {
 const SCHEDULE_QUERY_KEYS = {
   all: ['schedules'] as const,
   lists: () => [...SCHEDULE_QUERY_KEYS.all, 'list'] as const,
-  list: (params: SchedulesParams) =>
-    [...SCHEDULE_QUERY_KEYS.lists(), params] as const,
+  list: (params: SchedulesParams) => [...SCHEDULE_QUERY_KEYS.lists(), params] as const,
   details: () => [...SCHEDULE_QUERY_KEYS.all, 'detail'] as const,
-  detail: (id: string | number) =>
-    [...SCHEDULE_QUERY_KEYS.details(), id] as const,
+  detail: (id: string | number) => [...SCHEDULE_QUERY_KEYS.details(), id] as const,
   dashboard: (consultantId: string | number) =>
     [...SCHEDULE_QUERY_KEYS.all, 'dashboard', consultantId] as const,
 };
@@ -86,17 +79,14 @@ export function useScheduleDetail(
 ) {
   return useQuery<ScheduleDetail>({
     queryKey: SCHEDULE_QUERY_KEYS.detail(scheduleId!),
-    queryFn: () =>
-      apiGet<ScheduleDetail>(SCHEDULE_API.scheduleDetail(scheduleId!)),
+    queryFn: () => apiGet<ScheduleDetail>(SCHEDULE_API.scheduleDetail(scheduleId!)),
     enabled: !!scheduleId,
     staleTime: 1000 * 60 * 5,
     ...options,
   });
 }
 
-export function useConsultantDashboard(
-  consultantId: string | number | undefined,
-) {
+export function useConsultantDashboard(consultantId: string | number | undefined) {
   return useQuery<{
     todaySchedules: Schedule[];
     pendingRecordCount: number;
@@ -104,8 +94,7 @@ export function useConsultantDashboard(
     weeklyCount: number;
   }>({
     queryKey: SCHEDULE_QUERY_KEYS.dashboard(consultantId!),
-    queryFn: () =>
-      apiGet(CONSULTANT_API.consultantDashboard(consultantId!)),
+    queryFn: () => apiGet(CONSULTANT_API.consultantDashboard(consultantId!)),
     enabled: !!consultantId,
     staleTime: 1000 * 60 * 2,
   });
@@ -132,8 +121,7 @@ export function useStartConsultation() {
   const mutation = useUpdateScheduleStatus();
   return {
     ...mutation,
-    mutate: (scheduleId: string | number) =>
-      mutation.mutate({ scheduleId, status: 'IN_PROGRESS' }),
+    mutate: (scheduleId: string | number) => mutation.mutate({ scheduleId, status: 'IN_PROGRESS' }),
     mutateAsync: (scheduleId: string | number) =>
       mutation.mutateAsync({ scheduleId, status: 'IN_PROGRESS' }),
   };
@@ -143,8 +131,7 @@ export function useCompleteConsultation() {
   const mutation = useUpdateScheduleStatus();
   return {
     ...mutation,
-    mutate: (scheduleId: string | number) =>
-      mutation.mutate({ scheduleId, status: 'COMPLETED' }),
+    mutate: (scheduleId: string | number) => mutation.mutate({ scheduleId, status: 'COMPLETED' }),
     mutateAsync: (scheduleId: string | number) =>
       mutation.mutateAsync({ scheduleId, status: 'COMPLETED' }),
   };

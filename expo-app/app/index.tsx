@@ -32,11 +32,7 @@ export default function AppEntry() {
         >
           MindGarden
         </Animated.Text>
-        <ActivityIndicator
-          size="large"
-          color={theme.colors.primary}
-          style={styles.loader}
-        />
+        <ActivityIndicator size="large" color={theme.colors.primary} style={styles.loader} />
       </View>
     );
   }

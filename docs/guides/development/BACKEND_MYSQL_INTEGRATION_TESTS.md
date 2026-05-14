@@ -4,6 +4,12 @@
 
 **Maven `-Dspring.profiles.active=test`와의 관계**: 이 저장소의 `pom.xml`은 Surefire에 `spring.profiles.active`를 테스트 JVM으로 넘기도록 설정되어 있지 않다. 따라서 **`test` 프로파일과 `application-test.yml` 로드는 `@ActiveProfiles("test")`가 담당**한다. IDE에서 VM 옵션으로 `-Dspring.profiles.active=test`를 주는 것은 선택 사항이며, CLI에서 `mvn -Dspring.profiles.active=test test`만으로 포크 JVM에 동일 프로퍼티가 보장되지는 않을 수 있다.
 
+## JUnit `@Tag("local-mysql")` (Surefire 기본 제외)
+
+`PsychAssessmentMmpiExtractionIntegrationTest` 등 **`@ActiveProfiles("local")`로 개발자 MySQL에 붙는** 케이스는 `@Tag("local-mysql")`로 묶이고, 루트 `pom.xml`의 `maven-surefire-plugin` **`excludedGroups`** 에서 기본 `mvn test` / `mvn clean test`에서 제외된다(Flyway 실패 스키마 등으로 CI·클린 머신이 깨지지 않도록). 로컬에서 해당 태그만 실행하려면 제외를 비우고 그룹을 지정한다:
+
+`mvn test -Dgroups=local-mysql -DexcludedGroups=`
+
 ## 대상(현재 저장소 인벤토리)
 
 | 클래스 | 메서드(@DisplayName 요약) | 비활성 사유 |

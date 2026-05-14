@@ -42,15 +42,8 @@ export function EmptyState({
       accessibilityRole="text"
       accessibilityLabel={`${title}${description ? `. ${description}` : ''}`}
     >
-      <View
-        style={[
-          styles.iconCircle,
-          { backgroundColor: theme.colors.accentSoft },
-        ]}
-      >
-        {icon ?? (
-          <Inbox size={32} color={theme.colors.textTertiary} />
-        )}
+      <View style={[styles.iconCircle, { backgroundColor: theme.colors.accentSoft }]}>
+        {icon ?? <Inbox size={32} color={theme.colors.textTertiary} />}
       </View>
       <Text
         style={[
@@ -81,10 +74,7 @@ export function EmptyState({
       {actionLabel && onAction ? (
         <Pressable
           onPress={handleAction}
-          style={[
-            styles.actionButton,
-            { backgroundColor: theme.colors.primary },
-          ]}
+          style={[styles.actionButton, { backgroundColor: theme.colors.primary }]}
           accessibilityLabel={actionLabel}
           accessibilityRole="button"
         >

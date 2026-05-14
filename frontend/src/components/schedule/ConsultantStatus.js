@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet } from '../../utils/ajax';
-import { ProfileCard } from '../ui/Card';
+import { ProfileCard } from '../ui/Card/index';
 import './ConsultantStatus.css';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';

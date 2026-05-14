@@ -13,11 +13,7 @@ interface ProgressBarProps {
   labels?: string[];
 }
 
-export function ProgressBar({
-  currentStep,
-  totalSteps = 3,
-  labels,
-}: ProgressBarProps) {
+export function ProgressBar({ currentStep, totalSteps = 3, labels }: ProgressBarProps) {
   const theme = useTheme();
   const progress = currentStep / totalSteps;
 
@@ -41,15 +37,9 @@ export function ProgressBar({
             <Text
               key={label}
               style={{
-                fontFamily:
-                  i < currentStep
-                    ? theme.fontFamily.semibold
-                    : theme.fontFamily.regular,
+                fontFamily: i < currentStep ? theme.fontFamily.semibold : theme.fontFamily.regular,
                 fontSize: theme.fontSize.xs,
-                color:
-                  i < currentStep
-                    ? theme.colors.primary
-                    : theme.colors.textTertiary,
+                color: i < currentStep ? theme.colors.primary : theme.colors.textTertiary,
               }}
             >
               {label}

@@ -16,12 +16,7 @@ interface TimeSlotChipProps {
   onPress?: () => void;
 }
 
-export function TimeSlotChip({
-  time,
-  isAvailable,
-  isSelected,
-  onPress,
-}: TimeSlotChipProps) {
+export function TimeSlotChip({ time, isAvailable, isSelected, onPress }: TimeSlotChipProps) {
   const theme = useTheme();
 
   const handlePress = () => {
@@ -53,18 +48,14 @@ export function TimeSlotChip({
         {
           backgroundColor: getBg(),
           borderRadius: theme.borderRadius.lg,
-          borderColor: isSelected
-            ? theme.colors.primary
-            : theme.colors.border,
+          borderColor: isSelected ? theme.colors.primary : theme.colors.border,
         },
       ]}
       accessibilityLabel={`${time}${isSelected ? ' 선택됨' : ''}${!isAvailable ? ' 불가' : ''}`}
       accessibilityRole="button"
       accessibilityState={{ selected: isSelected, disabled: !isAvailable }}
     >
-      {isSelected && (
-        <Check size={14} color={theme.colors.textOnPrimary} />
-      )}
+      {isSelected && <Check size={14} color={theme.colors.textOnPrimary} />}
       <Text
         style={{
           fontFamily: theme.fontFamily.medium,

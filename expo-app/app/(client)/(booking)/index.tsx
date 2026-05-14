@@ -35,13 +35,8 @@ export default function BookingConsultantSelect() {
     specialty: selectedSpecialty === '전체' ? undefined : selectedSpecialty,
   };
 
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useAvailableConsultants(filters);
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useAvailableConsultants(filters);
 
   const consultants = data?.pages.flat() ?? [];
 
@@ -75,10 +70,7 @@ export default function BookingConsultantSelect() {
   );
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="새로운 상담 예약" canGoBack />
       <ProgressBar currentStep={1} totalSteps={3} labels={STEP_LABELS} />
 
@@ -109,10 +101,7 @@ export default function BookingConsultantSelect() {
             ))}
           </View>
         ) : consultants.length === 0 ? (
-          <EmptyState
-            title="조건에 맞는 상담사가 없어요"
-            description="검색 조건을 변경해보세요"
-          />
+          <EmptyState title="조건에 맞는 상담사가 없어요" description="검색 조건을 변경해보세요" />
         ) : (
           <FlashList
             data={consultants}
@@ -121,9 +110,7 @@ export default function BookingConsultantSelect() {
             onEndReached={handleEndReached}
             onEndReachedThreshold={0.5}
             showsVerticalScrollIndicator={false}
-            ListFooterComponent={
-              isFetchingNextPage ? <SkeletonCard lines={2} /> : null
-            }
+            ListFooterComponent={isFetchingNextPage ? <SkeletonCard lines={2} /> : null}
           />
         )}
       </View>

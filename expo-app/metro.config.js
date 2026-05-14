@@ -150,11 +150,7 @@ function tryMmkvExplicitResolution(context, moduleName) {
 
   if (stripsToProjectLibGetMmkv(moduleName)) {
     const origin = context.originModulePath;
-    if (
-      typeof origin === 'string' &&
-      origin.length > 0 &&
-      isFirstPartyProjectPath(origin)
-    ) {
+    if (typeof origin === 'string' && origin.length > 0 && isFirstPartyProjectPath(origin)) {
       return mmkvExplicitSourceResolution();
     }
   }

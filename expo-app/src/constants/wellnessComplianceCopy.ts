@@ -37,4 +37,3 @@ export const MIND_WEATHER_SHARE_COPY_KO = {
   ctaCancel: '나만 보기',
   unshareConfirm: '공유를 철회하면 상담사 화면에서 이 카드가 즉시 보이지 않아요.',
 } as const;
-

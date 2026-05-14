@@ -27,20 +27,13 @@ export default function ClientMindGardenScreen() {
 
   const progress = getGardenStageProgress(totalGardenPoints);
   const nextTh = progress.nextThreshold;
-  const segmentSpan =
-    nextTh === null ? 0 : nextTh - progress.currentThreshold;
+  const segmentSpan = nextTh === null ? 0 : nextTh - progress.currentThreshold;
   const barRatio =
-    segmentSpan > 0
-      ? Math.min(1, Math.max(0, progress.pointsInStage / segmentSpan))
-      : 1;
+    segmentSpan > 0 ? Math.min(1, Math.max(0, progress.pointsInStage / segmentSpan)) : 1;
 
-  const unlocked = GARDEN_VISUAL_ELEMENTS.filter(
-    (el) => el.minStageIndex <= progress.stageIndex,
-  );
+  const unlocked = GARDEN_VISUAL_ELEMENTS.filter((el) => el.minStageIndex <= progress.stageIndex);
 
-  const applyDemo = (
-    kind: 'SESSION_COMPLETED' | 'HOMEWORK_COMPLETED' | 'SELF_CARE_COMPLETED',
-  ) => {
+  const applyDemo = (kind: 'SESSION_COMPLETED' | 'HOMEWORK_COMPLETED' | 'SELF_CARE_COMPLETED') => {
     const r = recordGrowthEvent(kind, { skipDedupe: true });
     if (r.duplicate) {
       return;
@@ -54,23 +47,15 @@ export default function ClientMindGardenScreen() {
     }
     const fullWeight = GARDEN_EVENT_WEIGHTS[kind];
     const extra =
-      r.earned > 0 && r.earned < fullWeight
-        ? ' (이번 주 한도에 맞춰 일부만 반영됐어요.)'
-        : '';
+      r.earned > 0 && r.earned < fullWeight ? ' (이번 주 한도에 맞춰 일부만 반영됐어요.)' : '';
     Alert.alert('정원이 자랐어요', `+${r.earned} 성장점이 쌓였어요.${extra}`);
   };
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="마음 정원" canGoBack />
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View
           style={[
             styles.hero,
@@ -318,8 +303,8 @@ export default function ClientMindGardenScreen() {
               marginBottom: theme.spacing.md,
             }}
           >
-            실제 서비스에서는 상담 완료·과제·자기돌봄 완료 시 자동 반영됩니다. (TODO: 스케줄·웰니스 훅
-            연결)
+            실제 서비스의 서버 권위 이벤트·예약·웰니스 연동은 기획서 Phase 3-G(마음 정원) 범위이며,
+            이 화면 버튼은 로컬 데모용입니다.
           </Text>
           <View style={styles.demoRow}>
             <DemoButton
@@ -340,14 +325,10 @@ export default function ClientMindGardenScreen() {
           </View>
           <Pressable
             onPress={() => {
-              Alert.alert(
-                '초기화',
-                '데모 성장점을 모두 지울까요?',
-                [
-                  { text: '취소', style: 'cancel' },
-                  { text: '초기화', style: 'destructive', onPress: () => resetForDemo() },
-                ],
-              );
+              Alert.alert('초기화', '데모 성장점을 모두 지울까요?', [
+                { text: '취소', style: 'cancel' },
+                { text: '초기화', style: 'destructive', onPress: () => resetForDemo() },
+              ]);
             }}
             style={{ marginTop: theme.spacing.md }}
             accessibilityRole="button"

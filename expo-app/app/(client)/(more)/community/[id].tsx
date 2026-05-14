@@ -19,22 +19,18 @@ import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import {
-  ArrowLeft,
-  Heart,
-  MessageCircle,
-  Send,
-  User,
-} from 'lucide-react-native';
+import { ArrowLeft, Heart, MessageCircle, Send, User } from 'lucide-react-native';
 
 import { useTheme } from '@/theme';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { useCommunityPostById, useCommunityFeed } from '@/api/hooks/useCommunity';
 import { useCommunityStore } from '@/stores/useCommunityStore';
 import {
-  COMMUNITY_DEMO_LABELS,
-  type CommunityComment,
-} from '@/constants/communityData';
+  createRemoteCommunityComment,
+  createRemoteCommunityLike,
+  deleteRemoteCommunityLike,
+} from '@/services/communityApi';
+import { COMMUNITY_DEMO_LABELS, type CommunityComment } from '@/constants/communityData';
 
 export default function ClientCommunityDetail() {
   const theme = useTheme();
@@ -48,6 +44,7 @@ export default function ClientCommunityDetail() {
     isPostLiked,
     isCommentLiked,
     addComment,
+    appendServerComment,
   } = useCommunityStore();
 
   const { dataSource, isError: feedQueryError } = useCommunityFeed();
@@ -63,9 +60,19 @@ export default function ClientCommunityDetail() {
     router.back();
   };
 
-  const handlePostLike = () => {
+  const handlePostLike = async () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    const wasLiked = isPostLiked(postId);
+    try {
+      if (wasLiked) {
+        await deleteRemoteCommunityLike(postId);
+      } else {
+        await createRemoteCommunityLike(postId);
+      }
+    } catch {
+      /* §11.1 — 서버 실패 시에도 로컬 토글로 데모 유지 */
     }
     togglePostLike(postId);
   };
@@ -80,11 +87,22 @@ export default function ClientCommunityDetail() {
     [toggleCommentLike],
   );
 
-  const handleSendComment = () => {
+  const handleSendComment = async () => {
     const trimmed = commentText.trim();
     if (!trimmed) return;
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    try {
+      const remoteComment = await createRemoteCommunityComment(postId, { body: trimmed });
+      if (remoteComment) {
+        appendServerComment(postId, remoteComment);
+        setCommentText('');
+        inputRef.current?.blur();
+        return;
+      }
+    } catch {
+      /* §11.1 폴백 */
     }
     addComment(postId, COMMUNITY_DEMO_LABELS.clientCommentAuthor, trimmed);
     setCommentText('');
@@ -133,12 +151,7 @@ export default function ClientCommunityDetail() {
       </View>
       {/* 작성자 */}
       <View style={styles.authorRow}>
-        <View
-          style={[
-            styles.avatar,
-            { backgroundColor: theme.colors.accentSoft },
-          ]}
-        >
+        <View style={[styles.avatar, { backgroundColor: theme.colors.accentSoft }]}>
           <User size={20} color={theme.colors.textSecondary} />
         </View>
         <View style={styles.authorText}>
@@ -203,9 +216,7 @@ export default function ClientCommunityDetail() {
         style={({ pressed }) => [
           styles.likeBtn,
           {
-            backgroundColor: liked
-              ? theme.colors.error + '15'
-              : theme.colors.accentSoft,
+            backgroundColor: liked ? theme.colors.error + '15' : theme.colors.accentSoft,
             borderRadius: theme.borderRadius.lg,
             transform: [{ scale: pressed ? 0.95 : 1 }],
           },
@@ -247,13 +258,7 @@ export default function ClientCommunityDetail() {
     </View>
   );
 
-  const renderComment = ({
-    item,
-    index,
-  }: {
-    item: CommunityComment;
-    index: number;
-  }) => {
+  const renderComment = ({ item, index }: { item: CommunityComment; index: number }) => {
     const commentLiked = isCommentLiked(item.id);
     return (
       <Animated.View entering={FadeInDown.delay(index * 40).springify()}>
@@ -305,18 +310,14 @@ export default function ClientCommunityDetail() {
           >
             <Heart
               size={14}
-              color={
-                commentLiked ? theme.colors.error : theme.colors.textTertiary
-              }
+              color={commentLiked ? theme.colors.error : theme.colors.textTertiary}
               fill={commentLiked ? theme.colors.error : 'transparent'}
             />
             <Text
               style={{
                 fontFamily: theme.fontFamily.regular,
                 fontSize: theme.fontSize['2xs'],
-                color: commentLiked
-                  ? theme.colors.error
-                  : theme.colors.textTertiary,
+                color: commentLiked ? theme.colors.error : theme.colors.textTertiary,
                 marginLeft: 4,
               }}
             >
@@ -329,10 +330,7 @@ export default function ClientCommunityDetail() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       {/* 헤더 */}
       <Animated.View entering={FadeIn.duration(300)} style={styles.header}>
         <Pressable
@@ -408,9 +406,7 @@ export default function ClientCommunityDetail() {
             style={[
               styles.sendBtn,
               {
-                backgroundColor: commentText.trim()
-                  ? theme.colors.primary
-                  : theme.colors.border,
+                backgroundColor: commentText.trim() ? theme.colors.primary : theme.colors.border,
                 borderRadius: theme.borderRadius.lg,
               },
             ]}

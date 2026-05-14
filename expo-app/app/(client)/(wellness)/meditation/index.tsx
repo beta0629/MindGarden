@@ -19,13 +19,7 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Heart,
-  Headphones,
-  Clock,
-  Flame,
-  Play,
-} from 'lucide-react-native';
+import { Heart, Headphones, Clock, Flame, Play } from 'lucide-react-native';
 
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
@@ -46,14 +40,11 @@ import {
 export default function MeditationMain() {
   const theme = useTheme();
   const router = useRouter();
-  const [activeCategory, setActiveCategory] = useState<
-    MeditationCategory | 'favorites'
-  >('all');
+  const [activeCategory, setActiveCategory] = useState<MeditationCategory | 'favorites'>('all');
   const [refreshing, setRefreshing] = useState(false);
 
   const catalogQuery = useMeditationCatalog();
-  const catalogTracks: MeditationTrack[] =
-    catalogQuery.data?.tracks ?? MOCK_MEDITATION_TRACKS;
+  const catalogTracks: MeditationTrack[] = catalogQuery.data?.tracks ?? MOCK_MEDITATION_TRACKS;
   const catalogSource = catalogQuery.data?.source ?? 'demo';
 
   const { favorites, totalPracticeMinutes, streakDays } = useMeditationStore();
@@ -82,10 +73,7 @@ export default function MeditationMain() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="명상 가이드" canGoBack />
 
       <View
@@ -208,7 +196,8 @@ export default function MeditationMain() {
                           opacity: 0.8,
                         }}
                       >
-                        {recommendedTrack.categoryLabel} · {formatDuration(recommendedTrack.durationSeconds)}
+                        {recommendedTrack.categoryLabel} ·{' '}
+                        {formatDuration(recommendedTrack.durationSeconds)}
                       </Text>
                     </View>
                   </View>
@@ -253,7 +242,9 @@ export default function MeditationMain() {
         {filteredTracks.length === 0 ? (
           <EmptyState
             icon={<Heart size={32} color={theme.colors.textTertiary} />}
-            title={activeCategory === 'favorites' ? '즐겨찾기가 비어있어요' : '명상 콘텐츠가 없어요'}
+            title={
+              activeCategory === 'favorites' ? '즐겨찾기가 비어있어요' : '명상 콘텐츠가 없어요'
+            }
             description={
               activeCategory === 'favorites'
                 ? '하트를 눌러 즐겨찾기에 추가해보세요'
@@ -341,12 +332,7 @@ function MeditationCard({ track, index, onPress }: MeditationCardProps) {
             >
               {formatDuration(track.durationSeconds)}
             </Text>
-            <View
-              style={[
-                cardStyles.tag,
-                { backgroundColor: theme.colors.accentSoft },
-              ]}
-            >
+            <View style={[cardStyles.tag, { backgroundColor: theme.colors.accentSoft }]}>
               <Text
                 style={{
                   fontFamily: theme.fontFamily.medium,

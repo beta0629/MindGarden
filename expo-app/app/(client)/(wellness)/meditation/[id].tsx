@@ -5,27 +5,14 @@
  * @since 2026-05-12
  */
 import { useEffect } from 'react';
-import {
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import Slider from '@react-native-community/slider';
-import {
-  ArrowLeft,
-  Heart,
-  Play,
-  Pause,
-  RotateCcw,
-  RotateCw,
-} from 'lucide-react-native';
+import { ArrowLeft, Heart, Play, Pause, RotateCcw, RotateCw } from 'lucide-react-native';
 
 import { useTheme } from '@/theme';
 import { fontSize as fontSizeTokens } from '@/theme/typography';
@@ -44,8 +31,13 @@ export default function MeditationPlayer() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const trackId = Number(id);
 
-  const { track, isLoading, refetch, isError, source: catalogSource } =
-    useMeditationTrackById(trackId);
+  const {
+    track,
+    isLoading,
+    refetch,
+    isError,
+    source: catalogSource,
+  } = useMeditationTrackById(trackId);
   const {
     currentTrack,
     isPlaying,
@@ -94,9 +86,7 @@ export default function MeditationPlayer() {
         <EmptyState
           title="명상 콘텐츠를 찾을 수 없습니다"
           description={
-            isError
-              ? '목록을 다시 불러온 뒤 선택해 주세요.'
-              : '목록에서 다른 트랙을 선택해 주세요'
+            isError ? '목록을 다시 불러온 뒤 선택해 주세요.' : '목록에서 다른 트랙을 선택해 주세요'
           }
           actionLabel="다시 불러오기"
           onAction={() => {
@@ -108,8 +98,7 @@ export default function MeditationPlayer() {
   }
 
   const liked = isFavorite(track.id);
-  const progress =
-    track.durationSeconds > 0 ? currentTime / track.durationSeconds : 0;
+  const progress = track.durationSeconds > 0 ? currentTime / track.durationSeconds : 0;
   const isFinished = currentTime >= track.durationSeconds;
 
   const handlePlayPause = () => {
@@ -199,50 +188,41 @@ export default function MeditationPlayer() {
           </Animated.View>
 
           <View style={styles.content}>
-            <Animated.View
-              entering={FadeInDown.delay(200).springify()}
-              style={styles.artworkWrap}
-            >
+            <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.artworkWrap}>
               <View
-                style={[
-                  styles.artwork,
-                  { backgroundColor: theme.colors.textOnPrimary + '20' },
-                ]}
+                style={[styles.artwork, { backgroundColor: theme.colors.textOnPrimary + '20' }]}
               >
                 <Text style={styles.artworkEmoji}>🧘</Text>
               </View>
             </Animated.View>
 
-          <Animated.View
-            entering={FadeInDown.delay(300).springify()}
-            style={styles.infoWrap}
-          >
-            <View
-              style={{
-                alignSelf: 'stretch',
-                marginBottom: 12,
-                paddingVertical: 8,
-                paddingHorizontal: 10,
-                borderRadius: theme.borderRadius.lg,
-                backgroundColor: theme.colors.textOnPrimary + '18',
-              }}
-              accessibilityRole="text"
-            >
-              <Text
+            <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.infoWrap}>
+              <View
                 style={{
-                  fontFamily: theme.fontFamily.medium,
-                  fontSize: theme.fontSize.xs,
-                  color: theme.colors.textOnPrimary,
-                  opacity: 0.9,
-                  textAlign: 'center',
+                  alignSelf: 'stretch',
+                  marginBottom: 12,
+                  paddingVertical: 8,
+                  paddingHorizontal: 10,
+                  borderRadius: theme.borderRadius.lg,
+                  backgroundColor: theme.colors.textOnPrimary + '18',
                 }}
+                accessibilityRole="text"
               >
-                {catalogSource === 'api'
-                  ? '서버 카탈로그(GET /api/v1/meditations). 오디오 URL이 없으면 앱에 포함된 무음 데모 클립으로 재생됩니다(실제 가이드 음원은 서버·자사 CDN에 등록).'
-                  : '데모 카탈로그(서버 실패 시 폴백). 오디오는 무음 데모 클립이며, 가이드 음원은 라이선스 확보 후 API·CDN에 연결하세요.'}
-              </Text>
-            </View>
-            <Text
+                <Text
+                  style={{
+                    fontFamily: theme.fontFamily.medium,
+                    fontSize: theme.fontSize.xs,
+                    color: theme.colors.textOnPrimary,
+                    opacity: 0.9,
+                    textAlign: 'center',
+                  }}
+                >
+                  {catalogSource === 'api'
+                    ? '서버 카탈로그(GET /api/v1/meditations). 오디오 URL이 없으면 앱에 포함된 무음 데모 클립으로 재생됩니다(실제 가이드 음원은 서버·자사 CDN에 등록).'
+                    : '데모 카탈로그(서버 실패 시 폴백). 오디오는 무음 데모 클립이며, 가이드 음원은 라이선스 확보 후 API·CDN에 연결하세요.'}
+                </Text>
+              </View>
+              <Text
                 style={{
                   fontFamily: theme.fontFamily.bold,
                   fontSize: theme.fontSize['2xl'],
@@ -269,10 +249,7 @@ export default function MeditationPlayer() {
             </Animated.View>
           </View>
 
-          <Animated.View
-            entering={FadeInUp.delay(400).springify()}
-            style={styles.controls}
-          >
+          <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.controls}>
             <View style={styles.sliderWrap}>
               <Slider
                 value={progress}
@@ -318,24 +295,27 @@ export default function MeditationPlayer() {
                 accessibilityRole="button"
               >
                 <RotateCcw size={28} color={theme.colors.textOnPrimary} />
-                <Text style={[styles.skipLabel, { color: theme.colors.textOnPrimary }]}>
-                  10
-                </Text>
+                <Text style={[styles.skipLabel, { color: theme.colors.textOnPrimary }]}>10</Text>
               </Pressable>
 
               <Pressable
                 onPress={handlePlayPause}
-                style={[
-                  styles.playBtn,
-                  { backgroundColor: theme.colors.textOnPrimary + '25' },
-                ]}
+                style={[styles.playBtn, { backgroundColor: theme.colors.textOnPrimary + '25' }]}
                 accessibilityLabel={isPlaying ? '일시정지' : '재생'}
                 accessibilityRole="button"
               >
                 {isPlaying ? (
-                  <Pause size={36} color={theme.colors.textOnPrimary} fill={theme.colors.textOnPrimary} />
+                  <Pause
+                    size={36}
+                    color={theme.colors.textOnPrimary}
+                    fill={theme.colors.textOnPrimary}
+                  />
                 ) : (
-                  <Play size={36} color={theme.colors.textOnPrimary} fill={theme.colors.textOnPrimary} />
+                  <Play
+                    size={36}
+                    color={theme.colors.textOnPrimary}
+                    fill={theme.colors.textOnPrimary}
+                  />
                 )}
               </Pressable>
 
@@ -347,9 +327,7 @@ export default function MeditationPlayer() {
                 accessibilityRole="button"
               >
                 <RotateCw size={28} color={theme.colors.textOnPrimary} />
-                <Text style={[styles.skipLabel, { color: theme.colors.textOnPrimary }]}>
-                  10
-                </Text>
+                <Text style={[styles.skipLabel, { color: theme.colors.textOnPrimary }]}>10</Text>
               </Pressable>
             </View>
 

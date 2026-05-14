@@ -2,28 +2,26 @@
  * 시스템 공지(system-notifications) 및 푸시 설정 훅
  * ApiResponse `{ success, data }` 언래핑
  *
+ * **역할 분담** (`EXPO_NATIVE_APP_PLAN.md` 11.1 푸시 행 + **Expo Phase 4**):
+ * - 본 훅: 인앱 **알림 센터** 목록·읽음 처리, **카테고리별 푸시 설정** GET/PUT
+ *   (`PUSH_API` — `NotificationService`의 on-device 게이트와 값 공유).
+ * - **미포함**: 원격 푸시 페이로드 발송, 12종 스케줄러, FCM 토큰 주기 갱신,
+ *   오프라인 큐·네트워크 복구 동기화 — `NotificationService`·Phase 4 오프라인 배치.
+ * - `CONSULTANT_CLIENT_APP_PLAN.md` **Phase 4**는 「마음 날씨·정원」(Expo 3-F·3-G) 의미로
+ *   번호가 겹칠 뿐, 본 훅 범위와 동일하지 않음.
+ *
  * @author MindGarden
  * @since 2026-05-12
  * @since 2026-05-13 — 목록 필드 `notifications` 정합, read-all 경로 상수화
  */
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPut } from '../client';
 import { NOTIFICATION_API, PUSH_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
 import { useTenantStore } from '../../stores/useTenantStore';
 import { toDisplayString, toSafeNumber, stripHtmlToPlainText } from '../../utils/safeDisplay';
 
-export type NotificationType =
-  | 'SCHEDULE'
-  | 'PAYMENT'
-  | 'MESSAGE'
-  | 'WELLNESS'
-  | 'SYSTEM';
+export type NotificationType = 'SCHEDULE' | 'PAYMENT' | 'MESSAGE' | 'WELLNESS' | 'SYSTEM';
 
 export interface AppNotification {
   id: number;
@@ -34,13 +32,6 @@ export interface AppNotification {
   createdAt: string;
   deepLink?: string;
   metadata?: Record<string, unknown>;
-}
-
-interface NotificationsPage {
-  content: AppNotification[];
-  hasNext: boolean;
-  page: number;
-  totalCount: number;
 }
 
 export interface NotificationSettings {
@@ -56,8 +47,7 @@ const PAGE_SIZE = 20;
 const NOTIFICATION_QUERY_KEYS = {
   all: ['notifications'],
   list: (tenantId: string) => [...NOTIFICATION_QUERY_KEYS.all, 'list', tenantId],
-  unreadCount: (tenantId: string) =>
-    [...NOTIFICATION_QUERY_KEYS.all, 'unread-count', tenantId],
+  unreadCount: (tenantId: string) => [...NOTIFICATION_QUERY_KEYS.all, 'unread-count', tenantId],
   settings: (tenantId: string) => [...NOTIFICATION_QUERY_KEYS.all, 'settings', tenantId],
 };
 
@@ -102,9 +92,7 @@ function pickDeepLink(row: Record<string, unknown>): string | undefined {
     try {
       const parsed = JSON.parse(meta) as Record<string, unknown>;
       return (
-        toDisplayString(parsed.deepLink, '') ||
-        toDisplayString(parsed.actionUrl, '') ||
-        undefined
+        toDisplayString(parsed.deepLink, '') || toDisplayString(parsed.actionUrl, '') || undefined
       );
     } catch {
       return undefined;
@@ -149,9 +137,7 @@ export function useNotifications() {
       const currentPage = toSafeNumber(inner.currentPage, 0);
       const totalPages = toSafeNumber(inner.totalPages, 0);
       const hasNext = currentPage + 1 < totalPages;
-      const content = rows
-        .map((r) => mapRowToAppNotification(r))
-        .filter((n) => n.id > 0);
+      const content = rows.map((r) => mapRowToAppNotification(r)).filter((n) => n.id > 0);
       return {
         content,
         hasNext,
@@ -160,8 +146,7 @@ export function useNotifications() {
       };
     },
     initialPageParam: 0,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasNext ? lastPage.page + 1 : undefined,
+    getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined),
     enabled: !!tenantId,
     staleTime: 1000 * 30,
   });
@@ -200,8 +185,7 @@ export function useMarkAsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (notificationId: number) =>
-      apiPost(NOTIFICATION_API.markAsRead(notificationId)),
+    mutationFn: (notificationId: number) => apiPost(NOTIFICATION_API.markAsRead(notificationId)),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: NOTIFICATION_QUERY_KEYS.all,

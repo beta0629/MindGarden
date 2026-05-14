@@ -168,10 +168,19 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/clients/**").authenticated() // 내담자 맥락·프로필 API v1은 인증 필요
                     .requestMatchers("/api/v1/psycho-education/**").authenticated() // 심리 교육 콘텐츠 API는 인증 필요 (내담자 공용)
                     .requestMatchers("/api/v1/mind-weather/**").authenticated() // 마음 날씨(내담자·상담사 역할은 컨트롤러)
+                    // BW-2 mood & self-assessment
+                    .requestMatchers("/api/v1/mood-journals/**").authenticated()
+                    .requestMatchers("/api/v1/self-assessments/**").authenticated()
+                    // BW-4 community
+                    .requestMatchers("/api/v1/community/**").authenticated()
+                    // BW-1 mobile push API
+                    .requestMatchers("/api/v1/mobile/**").authenticated()
                     .requestMatchers("/api/consultant/**").authenticated() // 상담사 API는 인증 필요
                     .requestMatchers("/api/v1/consultants/**").authenticated() // 상담사 API v1은 인증 필요
                     // Expo 웰니스 힐링 콘텐츠 목록 (내담자 세션·테넌트 검증은 컨트롤러)
                     .requestMatchers("/api/v1/healing-contents/**").authenticated()
+                    // BW-5 meditations alias
+                    .requestMatchers("/api/v1/meditations/**").authenticated()
                     // Ops Portal API는 인증 필요 (공개 엔드포인트 제외)
                     .requestMatchers("/api/v1/ops/auth/**").permitAll() // Ops Portal 인증 API는 허용
                     .requestMatchers("/api/v1/ops/**").authenticated() // 나머지 Ops Portal API는 인증 필요
@@ -226,9 +235,23 @@ public class SecurityConfig {
                     // CSS 테마 API는 허용
                     .requestMatchers("/api/v1/admin/css-themes/**").permitAll()
                     .requestMatchers("/api/v1/clients/**").authenticated() // 내담자 맥락·프로필 API v1은 인증 필요
+                    // BW-3 admin content (dev: 전역 permitAll 전에 명시적 인증)
+                    .requestMatchers("/api/v1/admin/content/**").authenticated() // BW-3 admin content
+                    // BW-6 mind weather & mind garden admin observability (read-only)
+                    .requestMatchers("/api/v1/admin/wellness/mind-weather/**").authenticated() // BW-6
+                    .requestMatchers("/api/v1/admin/wellness/mind-garden/**").authenticated() // BW-6
                     .requestMatchers("/api/v1/healing-contents/**").authenticated() // Expo 힐링 콘텐츠 목록
+                    // BW-5 meditations alias
+                    .requestMatchers("/api/v1/meditations/**").authenticated()
                     .requestMatchers("/api/v1/psycho-education/**").authenticated() // Expo 심리 교육 콘텐츠 (내담자 공용)
                     .requestMatchers("/api/v1/mind-weather/**").authenticated() // Expo 마음 날씨
+                    // BW-2 mood & self-assessment
+                    .requestMatchers("/api/v1/mood-journals/**").authenticated()
+                    .requestMatchers("/api/v1/self-assessments/**").authenticated()
+                    // BW-4 community
+                    .requestMatchers("/api/v1/community/**").authenticated()
+                    // BW-1 mobile push API
+                    .requestMatchers("/api/v1/mobile/**").authenticated()
                     // 나머지 Ops Portal API는 인증 필요
                     .requestMatchers("/api/v1/ops/**").authenticated()
                     .anyRequest().permitAll() // 나머지는 허용

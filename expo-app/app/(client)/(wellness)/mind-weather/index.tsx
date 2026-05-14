@@ -1,10 +1,10 @@
 /**
- * 마음 날씨 — Phase 4-A 메인 화면.
+ * 마음 날씨 — Phase 3 메인 화면(MVP).
  *
  * - 짧은 메모 입력 → AI 분석 결과 카드 표시
  * - 카드별 상담사 공유 옵트인 모달 (요약/원문 토글)
  * - 최근 분석 카드 목록 + 트렌드 알림 카피
- * - 음성/STT 는 후속 트랙(플레이스홀더)
+ * - 음성/STT: Phase 3-F 비범위(상수·알림으로만 안내, EXPO_NATIVE_APP_PLAN 11.1 화면 게이트)
  *
  * 참조: `MIND_WEATHER_UI_UX_SPEC.md`, `CONSULTANT_CLIENT_APP_PLAN.md` Phase 4 A절
  *
@@ -45,6 +45,7 @@ import {
   MIND_WEATHER_TEXT_MIN_LENGTH,
   MIND_WEATHER_TREND_ALERT_COPY,
   MIND_WEATHER_TREND_ALERT_THRESHOLD,
+  MIND_WEATHER_VOICE_DEFERRED_UI_LABEL,
   MIND_WEATHER_VOICE_PLACEHOLDER_COPY,
 } from '@/constants/mindWeatherKeywords';
 import {
@@ -74,8 +75,7 @@ export default function ClientMindWeatherIndex() {
   );
 
   const draftLength = draft.trim().length;
-  const canAnalyze =
-    draftLength >= MIND_WEATHER_TEXT_MIN_LENGTH && !analyzeMutation.isPending;
+  const canAnalyze = draftLength >= MIND_WEATHER_TEXT_MIN_LENGTH && !analyzeMutation.isPending;
 
   const handleHaptic = () => {
     if (Platform.OS !== 'web') {
@@ -130,31 +130,24 @@ export default function ClientMindWeatherIndex() {
   };
 
   const handleRequestUnshare = (card: MindWeatherCardData) => {
-    Alert.alert(
-      '공유 철회',
-      MIND_WEATHER_SHARE_COPY_KO.unshareConfirm,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '철회',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await unshareMutation.mutateAsync(card.id);
-            } catch {
-              Alert.alert('처리 실패', '잠시 후 다시 시도해주세요.');
-            }
-          },
+    Alert.alert('공유 철회', MIND_WEATHER_SHARE_COPY_KO.unshareConfirm, [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '철회',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await unshareMutation.mutateAsync(card.id);
+          } catch {
+            Alert.alert('처리 실패', '잠시 후 다시 시도해주세요.');
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="마음 날씨" canGoBack />
 
       <KeyboardAvoidingView
@@ -308,7 +301,7 @@ export default function ClientMindWeatherIndex() {
                     opacity: pressed ? 0.7 : 1,
                   },
                 ]}
-                accessibilityLabel="음성 메모(준비 중)"
+                accessibilityLabel={`음성 입력, ${MIND_WEATHER_VOICE_DEFERRED_UI_LABEL}`}
                 accessibilityRole="button"
               >
                 <Mic size={14} color={theme.colors.textSecondary} />
@@ -320,7 +313,7 @@ export default function ClientMindWeatherIndex() {
                     marginLeft: 4,
                   }}
                 >
-                  음성 메모(준비 중)
+                  {MIND_WEATHER_VOICE_DEFERRED_UI_LABEL}
                 </Text>
               </Pressable>
             </View>

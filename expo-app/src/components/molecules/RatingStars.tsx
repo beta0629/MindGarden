@@ -18,12 +18,7 @@ interface RatingStarsProps {
 
 const MAX_STARS = 5;
 
-export function RatingStars({
-  value,
-  onChange,
-  size = 32,
-  readonly = false,
-}: RatingStarsProps) {
+export function RatingStars({ value, onChange, size = 32, readonly = false }: RatingStarsProps) {
   const theme = useTheme();
 
   const handlePress = (starIndex: number) => {

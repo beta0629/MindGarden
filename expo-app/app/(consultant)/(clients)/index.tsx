@@ -13,10 +13,7 @@ import { FlashList } from '@shopify/flash-list';
 import { Users as UsersIcon } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
-import {
-  useConsultantClients,
-  type ClientStatus,
-} from '@/api/hooks/useClients';
+import { useConsultantClients, type ClientStatus } from '@/api/hooks/useClients';
 import { SearchBar } from '@/components/molecules/SearchBar';
 import { ClientCard } from '@/components/molecules/ClientCard';
 import { Chip } from '@/components/atoms/Chip';
@@ -86,11 +83,7 @@ export default function ConsultantClients() {
         >
           내담자 관리
         </Text>
-        <SearchBar
-          value={search}
-          onChangeText={setSearch}
-          placeholder="이름으로 검색"
-        />
+        <SearchBar value={search} onChangeText={setSearch} placeholder="이름으로 검색" />
         <View style={[styles.chips, { marginTop: theme.spacing.md }]}>
           {FILTER_TABS.map((tab) => (
             <Chip
@@ -143,14 +136,10 @@ export default function ConsultantClients() {
               riskLevel={item.riskLevel}
               totalSessions={item.totalSessions}
               index={index}
-              onPress={() =>
-                router.push(`/(consultant)/(clients)/${item.id}`)
-              }
+              onPress={() => router.push(`/(consultant)/(clients)/${item.id}`)}
             />
           )}
-          ListFooterComponent={
-            clientsQuery.isFetchingNextPage ? <SkeletonCard /> : null
-          }
+          ListFooterComponent={clientsQuery.isFetchingNextPage ? <SkeletonCard /> : null}
         />
       )}
     </SafeAreaView>

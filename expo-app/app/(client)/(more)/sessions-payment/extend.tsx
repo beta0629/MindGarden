@@ -6,15 +6,7 @@
  * @since 2026-05-12
  */
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -25,21 +17,12 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { WebView } from 'react-native-webview';
-import {
-  Check,
-  CreditCard,
-  Package,
-  ShoppingBag,
-  Sparkles,
-} from 'lucide-react-native';
+import { Check, CreditCard, Package, ShoppingBag, Sparkles } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { borderRadius, colors as designColors } from '@/theme/tokens';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
-import {
-  useSessionBalance,
-  useCreatePayment,
-} from '@/api/hooks/usePayments';
+import { useSessionBalance, useCreatePayment } from '@/api/hooks/usePayments';
 import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 import {
   getSessionExtensionPackages,
@@ -81,20 +64,16 @@ export default function SessionExtendScreen() {
   const { data: balance } = useSessionBalance(clientId);
   const createPayment = useCreatePayment();
 
-  const selectedPackage =
-    packages.find((p) => p.id === selectedPackageId) ?? null;
+  const selectedPackage = packages.find((p) => p.id === selectedPackageId) ?? null;
 
   const tossReady = isTossPaymentsClientKeyConfigured();
 
-  const handlePackageSelect = useCallback(
-    (packageId: number) => {
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
-      setSelectedPackageId(packageId);
-    },
-    [],
-  );
+  const handlePackageSelect = useCallback((packageId: number) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setSelectedPackageId(packageId);
+  }, []);
 
   const handlePaymentStart = useCallback(() => {
     if (!selectedPackage || !clientId) {
@@ -141,10 +120,7 @@ export default function SessionExtendScreen() {
           }
 
           const expectedOrderId = orderIdRef.current;
-          if (
-            data.orderId != null &&
-            String(data.orderId) !== String(expectedOrderId)
-          ) {
+          if (data.orderId != null && String(data.orderId) !== String(expectedOrderId)) {
             setFailDetail(
               '결제 주문 번호가 일치하지 않습니다. 중복 결제 여부를 확인한 뒤 고객센터로 문의해 주세요.',
             );
@@ -154,10 +130,7 @@ export default function SessionExtendScreen() {
 
           if (data.amount != null) {
             const paid = Number(data.amount);
-            if (
-              !Number.isFinite(paid) ||
-              paid !== selectedPackage.price
-            ) {
+            if (!Number.isFinite(paid) || paid !== selectedPackage.price) {
               setFailDetail(
                 '결제 금액이 선택한 패키지와 다릅니다. 환불·재결제가 필요하면 고객센터로 문의해 주세요.',
               );
@@ -198,9 +171,7 @@ export default function SessionExtendScreen() {
           }
 
           if (Platform.OS !== 'web') {
-            Haptics.notificationAsync(
-              Haptics.NotificationFeedbackType.Success,
-            );
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           }
           setStep('success');
         } else if (data.status === 'cancel') {
@@ -214,7 +185,9 @@ export default function SessionExtendScreen() {
           setStep('error');
         }
       } catch {
-        setFailDetail('결제 응답을 해석할 수 없습니다. 앱을 다시 실행한 뒤 결제 내역을 확인해 주세요.');
+        setFailDetail(
+          '결제 응답을 해석할 수 없습니다. 앱을 다시 실행한 뒤 결제 내역을 확인해 주세요.',
+        );
         setStep('error');
       }
     },
@@ -250,10 +223,7 @@ export default function SessionExtendScreen() {
         style={[styles.safeArea, { backgroundColor: theme.colors.bgMain }]}
         edges={['bottom']}
       >
-        <SuccessView
-          sessions={selectedPackage?.sessions ?? 0}
-          onDone={handleDone}
-        />
+        <SuccessView sessions={selectedPackage?.sessions ?? 0} onDone={handleDone} />
       </SafeAreaView>
     );
   }
@@ -311,10 +281,7 @@ export default function SessionExtendScreen() {
       style={[styles.safeArea, { backgroundColor: theme.colors.bgMain }]}
       edges={['bottom']}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.duration(400)}>
           <View
             style={[
@@ -349,7 +316,8 @@ export default function SessionExtendScreen() {
                   fontSize: theme.fontSize.base,
                 }}
               >
-                {' '}회기
+                {' '}
+                회기
               </Text>
             </Text>
           </View>
@@ -436,9 +404,7 @@ export default function SessionExtendScreen() {
                   {selectedPackage.name} ({selectedPackage.sessions}회)
                 </Text>
               </View>
-              <View
-                style={[styles.summaryDivider, { backgroundColor: theme.colors.divider }]}
-              />
+              <View style={[styles.summaryDivider, { backgroundColor: theme.colors.divider }]} />
               <View style={styles.summaryRow}>
                 <Text
                   style={{
@@ -480,9 +446,7 @@ export default function SessionExtendScreen() {
             styles.payButton,
             {
               backgroundColor:
-                selectedPackageId && tossReady
-                  ? theme.colors.primary
-                  : theme.colors.gray[300],
+                selectedPackageId && tossReady ? theme.colors.primary : theme.colors.gray[300],
               borderRadius: theme.borderRadius.lg,
               opacity: pressed ? 0.85 : 1,
             },
@@ -534,10 +498,7 @@ function PackageCard({ pkg, isSelected, onSelect, index }: PackageCardProps) {
   };
 
   return (
-    <Animated.View
-      entering={FadeInDown.delay(index * 80).duration(400)}
-      style={animatedStyle}
-    >
+    <Animated.View entering={FadeInDown.delay(index * 80).duration(400)} style={animatedStyle}>
       <Pressable
         onPress={() => onSelect(pkg.id)}
         onPressIn={handlePressIn}
@@ -579,7 +540,10 @@ function PackageCard({ pkg, isSelected, onSelect, index }: PackageCardProps) {
 
         <View style={styles.packageInfo}>
           <View style={styles.packageHeader}>
-            <Package size={20} color={isSelected ? theme.colors.primary : theme.colors.textSecondary} />
+            <Package
+              size={20}
+              color={isSelected ? theme.colors.primary : theme.colors.textSecondary}
+            />
             <Text
               style={{
                 color: theme.colors.textMain,
@@ -614,12 +578,7 @@ function PackageCard({ pkg, isSelected, onSelect, index }: PackageCardProps) {
             {formatCurrency(pkg.price)}
           </Text>
           {isSelected && (
-            <View
-              style={[
-                styles.checkCircle,
-                { backgroundColor: theme.colors.primary },
-              ]}
-            >
+            <View style={[styles.checkCircle, { backgroundColor: theme.colors.primary }]}>
               <Check size={14} color={theme.colors.textOnPrimary} />
             </View>
           )}
@@ -629,26 +588,12 @@ function PackageCard({ pkg, isSelected, onSelect, index }: PackageCardProps) {
   );
 }
 
-function SuccessView({
-  sessions,
-  onDone,
-}: {
-  sessions: number;
-  onDone: () => void;
-}) {
+function SuccessView({ sessions, onDone }: { sessions: number; onDone: () => void }) {
   const theme = useTheme();
 
   return (
-    <Animated.View
-      entering={FadeInDown.duration(500).springify()}
-      style={styles.resultContainer}
-    >
-      <View
-        style={[
-          styles.resultIcon,
-          { backgroundColor: `${theme.colors.success}20` },
-        ]}
-      >
+    <Animated.View entering={FadeInDown.duration(500).springify()} style={styles.resultContainer}>
+      <View style={[styles.resultIcon, { backgroundColor: `${theme.colors.success}20` }]}>
         <Check size={48} color={theme.colors.success} />
       </View>
       <Text
@@ -699,26 +644,12 @@ function SuccessView({
   );
 }
 
-function ErrorView({
-  message,
-  onRetry,
-}: {
-  message?: string;
-  onRetry: () => void;
-}) {
+function ErrorView({ message, onRetry }: { message?: string; onRetry: () => void }) {
   const theme = useTheme();
 
   return (
-    <Animated.View
-      entering={FadeInDown.duration(500).springify()}
-      style={styles.resultContainer}
-    >
-      <View
-        style={[
-          styles.resultIcon,
-          { backgroundColor: `${theme.colors.error}20` },
-        ]}
-      >
+    <Animated.View entering={FadeInDown.duration(500).springify()} style={styles.resultContainer}>
+      <View style={[styles.resultIcon, { backgroundColor: `${theme.colors.error}20` }]}>
         <CreditCard size={48} color={theme.colors.error} />
       </View>
       <Text
@@ -775,16 +706,8 @@ function CancelledView({ onRetry }: { onRetry: () => void }) {
   const theme = useTheme();
 
   return (
-    <Animated.View
-      entering={FadeInDown.duration(500).springify()}
-      style={styles.resultContainer}
-    >
-      <View
-        style={[
-          styles.resultIcon,
-          { backgroundColor: `${theme.colors.warning}25` },
-        ]}
-      >
+    <Animated.View entering={FadeInDown.duration(500).springify()} style={styles.resultContainer}>
+      <View style={[styles.resultIcon, { backgroundColor: `${theme.colors.warning}25` }]}>
         <CreditCard size={48} color={theme.colors.warning} />
       </View>
       <Text

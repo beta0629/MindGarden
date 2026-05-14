@@ -138,11 +138,7 @@ export function InAppNotificationToast() {
       <Animated.View
         entering={SlideInDown.springify().damping(18)}
         exiting={SlideOutUp.duration(200)}
-        style={[
-          styles.wrapper,
-          animatedStyle,
-          { top: insets.top + 8 },
-        ]}
+        style={[styles.wrapper, animatedStyle, { top: insets.top + 8 }]}
       >
         <Pressable
           onPress={handlePress}
@@ -157,12 +153,7 @@ export function InAppNotificationToast() {
           accessibilityRole="alert"
           accessibilityLabel={`${toast.title}. ${toast.body}`}
         >
-          <View
-            style={[
-              styles.iconCircle,
-              { backgroundColor: theme.colors.accentSoft },
-            ]}
-          >
+          <View style={[styles.iconCircle, { backgroundColor: theme.colors.accentSoft }]}>
             <IconComponent size={20} color={theme.colors.primary} />
           </View>
           <View style={styles.textContainer}>

@@ -13,6 +13,19 @@ const DEFAULT_MENU_ITEMS = [
   { to: ADMIN_ROUTES.DASHBOARD, icon: 'LAYOUT_DASHBOARD', label: '대시보드', end: true },
   { to: ADMIN_ROUTES.INTEGRATED_SCHEDULE, icon: 'CALENDAR', label: '통합 스케줄 센터', end: true },
   { to: ADMIN_ROUTES.CONSULTATION_LOGS, icon: 'CALENDAR_DAYS', label: '상담일지 조회', end: true },
+  {
+    to: ADMIN_ROUTES.COMMUNITY_MODERATION,
+    icon: 'FLAG',
+    label: '콘텐츠·커뮤니티',
+    end: false,
+    children: [
+      { to: ADMIN_ROUTES.COMMUNITY_MODERATION, icon: 'FLAG', label: '커뮤니티 검수 큐', end: true },
+      { to: ADMIN_ROUTES.CONTENT_MASTER, icon: 'FILE_TEXT', label: '심리교육·힐링 마스터', end: true },
+      { to: ADMIN_ROUTES.MIND_WEATHER_OBSERVABILITY, icon: 'CLOUD_SUN', label: '마음 날씨 관측', end: true },
+      { to: ADMIN_ROUTES.MIND_GARDEN_OBSERVABILITY, icon: 'HEART', label: '마음 정원 관측', end: true },
+      { to: ADMIN_ROUTES.PUSH_MONITORING, icon: 'BELL', label: '푸시 설정 모니터링', end: true }
+    ]
+  },
   { to: ADMIN_ROUTES.NOTIFICATIONS, icon: 'MESSAGE_CIRCLE', label: '알림·메시지 관리', end: true },
   {
     to: '/admin/user-management',

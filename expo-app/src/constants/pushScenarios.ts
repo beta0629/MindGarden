@@ -1,11 +1,16 @@
 /**
- * 푸시 알림 시나리오 상수 (`CONSULTANT_CLIENT_APP_PLAN.md` 표 §3.7 P1–P12).
+ * 푸시 알림 시나리오 상수 (`CONSULTANT_CLIENT_APP_PLAN.md` 표 3.7절 P1–P12).
  * 서버 `data.type` 문자열과 매핑. 레거시·타 백엔드 표기는 `PUSH_TYPE_ALIASES`로 정규화.
  * `payment_refunded`·`record_shared`는 P1–P12 외 확장 타입으로 동일 맵에 등록됨.
  *
+ * **역할 분담** (`EXPO_NATIVE_APP_PLAN.md` 11.1 푸시 행 + **Expo Phase 4** 푸시 파트):
+ * - 본 모듈: 12종+확장에 대한 **클라이언트 계약**(type·카테고리·딥링크 템플릿) 고정.
+ * - **미포함(Phase 4 본구현)**: 서버에서 12종을 **언제 보낼지** 스케줄링, 발송 파이프라인,
+ *   토큰 갱신 배치 등 — 기획서 P1–P12 **본구현**은 Expo Phase 4·백엔드 트랙에서 진행.
+ *
  * @author MindGarden
  * @since 2026-05-12
- * @see docs/project-management/CONSULTANT_CLIENT_APP_PLAN.md (§3.7 푸시 알림 시나리오 상세)
+ * @see docs/project-management/CONSULTANT_CLIENT_APP_PLAN.md (3.7절 푸시 알림 시나리오 상세)
  */
 
 export type PushCategory =
@@ -39,7 +44,7 @@ export interface PushScenario {
 }
 
 /**
- * §3.7 P1–P12 서버 type (snake_case) — 각 1행
+ * 3.7절 P1–P12 서버 type (snake_case) — 각 1행
  */
 export const PUSH_SCENARIOS = {
   /** P1 예약 리마인더 — 상담사·내담자 */
@@ -206,12 +211,12 @@ export const PUSH_SCENARIOS_P1_TO_P12_ORDERED: readonly PushScenario[] = [
   PUSH_SCENARIOS.SYSTEM_NOTICE,
 ];
 
-/** §3.7 기준 12종 type 목록 (검증·문서용) */
-export const PUSH_SCENARIO_SERVER_TYPES: readonly string[] =
-  PUSH_SCENARIOS_P1_TO_P12_ORDERED.map((s) => s.type);
+/** 3.7절 기준 12종 type 목록 (검증·문서용) */
+export const PUSH_SCENARIO_SERVER_TYPES: readonly string[] = PUSH_SCENARIOS_P1_TO_P12_ORDERED.map(
+  (s) => s.type,
+);
 
-export type PushScenarioType =
-  (typeof PUSH_SCENARIOS)[keyof typeof PUSH_SCENARIOS]['type'];
+export type PushScenarioType = (typeof PUSH_SCENARIOS)[keyof typeof PUSH_SCENARIOS]['type'];
 
 /** 서버가 보낼 수 있는 추가 type — 동일 카테고리·라우팅 유지 */
 const PAYMENT_REFUNDED_SCENARIO: PushScenario = {
@@ -285,10 +290,7 @@ export function resolveRoute(
 /**
  * (more) 그룹에 역할 프리픽스 부여
  */
-export function prefixRoleForMoreRoute(
-  route: string,
-  role: 'client' | 'consultant',
-): string {
+export function prefixRoleForMoreRoute(route: string, role: 'client' | 'consultant'): string {
   if (!route.startsWith('/(more)')) {
     return route;
   }
@@ -299,10 +301,7 @@ export function prefixRoleForMoreRoute(
 /**
  * 경로가 현재 역할과 호환되는지 (잘못된 탭 딥링크 방지)
  */
-export function routeMatchesRole(
-  route: string,
-  role: 'client' | 'consultant',
-): boolean {
+export function routeMatchesRole(route: string, role: 'client' | 'consultant'): boolean {
   if (route.startsWith('/(client)') && role === 'client') {
     return true;
   }
@@ -315,10 +314,7 @@ export function routeMatchesRole(
 /**
  * @deprecated prefixRoleForMoreRoute + routeMatchesRole 조합 사용
  */
-export function resolveRouteForRole(
-  route: string,
-  role: 'client' | 'consultant',
-): string {
+export function resolveRouteForRole(route: string, role: 'client' | 'consultant'): string {
   let r = route;
   if (role === 'client' && r.startsWith('/(consultant)')) {
     r = r.replace('/(consultant)', '/(client)');

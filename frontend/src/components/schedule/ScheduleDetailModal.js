@@ -19,7 +19,7 @@ import ClientSummaryField from '../consultant/molecules/ClientSummaryField';
 import StatusBadge from '../common/StatusBadge';
 import ScheduleClientNotesSection from './ScheduleClientNotesSection';
 import SchedulePartyQuickViewModal from './molecules/SchedulePartyQuickViewModal';
-import { ProfileCard } from '../ui/Card';
+import { ProfileCard } from '../ui/Card/index';
 import { applyPartyPiiPolicy } from '../../utils/partyPiiDisplay';
 import { getProfessionalProviderTypeLabel } from '../../constants/professionalProviderRoles';
 

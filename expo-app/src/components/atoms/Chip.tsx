@@ -17,13 +17,7 @@ interface ChipProps {
   style?: ViewStyle;
 }
 
-export function Chip({
-  label,
-  selected = false,
-  disabled = false,
-  onPress,
-  style,
-}: ChipProps) {
+export function Chip({ label, selected = false, disabled = false, onPress, style }: ChipProps) {
   const theme = useTheme();
 
   const handlePress = () => {

@@ -132,10 +132,7 @@ export default function ConsultantScheduleDetail() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { padding: theme.spacing.lg },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { padding: theme.spacing.lg }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -166,14 +163,8 @@ export default function ConsultantScheduleDetail() {
               ]}
             >
               <View style={styles.clientRow}>
-                <Avatar
-                  uri={schedule.clientProfileImageUrl}
-                  name={schedule.clientName}
-                  size="lg"
-                />
-                <View
-                  style={[styles.clientInfo, { marginLeft: theme.spacing.md }]}
-                >
+                <Avatar uri={schedule.clientProfileImageUrl} name={schedule.clientName} size="lg" />
+                <View style={[styles.clientInfo, { marginLeft: theme.spacing.md }]}>
                   <Text
                     style={{
                       color: theme.colors.textMain,
@@ -235,12 +226,7 @@ export default function ConsultantScheduleDetail() {
                   {schedule.date}
                 </Text>
               </View>
-              <View
-                style={[
-                  styles.infoRow,
-                  { marginTop: theme.spacing.md },
-                ]}
-              >
+              <View style={[styles.infoRow, { marginTop: theme.spacing.md }]}>
                 <Text
                   style={{
                     color: theme.colors.textSecondary,
@@ -261,12 +247,7 @@ export default function ConsultantScheduleDetail() {
                 </Text>
               </View>
               {schedule.location ? (
-                <View
-                  style={[
-                    styles.infoRow,
-                    { marginTop: theme.spacing.md },
-                  ]}
-                >
+                <View style={[styles.infoRow, { marginTop: theme.spacing.md }]}>
                   <Text
                     style={{
                       color: theme.colors.textSecondary,
@@ -287,12 +268,7 @@ export default function ConsultantScheduleDetail() {
                   </Text>
                 </View>
               ) : null}
-              <View
-                style={[
-                  styles.infoRow,
-                  { marginTop: theme.spacing.md },
-                ]}
-              >
+              <View style={[styles.infoRow, { marginTop: theme.spacing.md }]}>
                 <Text
                   style={{
                     color: theme.colors.textSecondary,
@@ -307,12 +283,7 @@ export default function ConsultantScheduleDetail() {
                   label={STATUS_LABEL[schedule.status] ?? schedule.status}
                 />
               </View>
-              <View
-                style={[
-                  styles.infoRow,
-                  { marginTop: theme.spacing.md },
-                ]}
-              >
+              <View style={[styles.infoRow, { marginTop: theme.spacing.md }]}>
                 <Text
                   style={{
                     color: theme.colors.textSecondary,
@@ -330,19 +301,17 @@ export default function ConsultantScheduleDetail() {
                   }}
                 >
                   {schedule.consultationType}
-                  {schedule.sessionNumber
-                    ? ` (${schedule.sessionNumber}회차)`
-                    : ''}
+                  {schedule.sessionNumber ? ` (${schedule.sessionNumber}회차)` : ''}
                 </Text>
               </View>
             </View>
 
             {/* 액션 버튼 */}
-            {schedule.status === 'SCHEDULED' || schedule.status === 'BOOKED' || schedule.status === 'IN_PROGRESS' ? (
-              <View
-                style={[styles.actionRow, { marginTop: theme.spacing.lg }]}
-              >
-                {(schedule.status === 'SCHEDULED' || schedule.status === 'BOOKED') ? (
+            {schedule.status === 'SCHEDULED' ||
+            schedule.status === 'BOOKED' ||
+            schedule.status === 'IN_PROGRESS' ? (
+              <View style={[styles.actionRow, { marginTop: theme.spacing.lg }]}>
+                {schedule.status === 'SCHEDULED' || schedule.status === 'BOOKED' ? (
                   <Pressable
                     onPress={handleStart}
                     disabled={startMutation.isPending}
@@ -477,9 +446,7 @@ export default function ConsultantScheduleDetail() {
                       }}
                     >
                       {session.consultationType}
-                      {session.sessionNumber
-                        ? ` · ${session.sessionNumber}회차`
-                        : ''}
+                      {session.sessionNumber ? ` · ${session.sessionNumber}회차` : ''}
                     </Text>
                   </View>
                 ))}

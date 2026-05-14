@@ -13,10 +13,7 @@ import { FlashList } from '@shopify/flash-list';
 import { FileText } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
-import {
-  useConsultationRecords,
-  usePendingRecords,
-} from '@/api/hooks/useRecords';
+import { useConsultationRecords, usePendingRecords } from '@/api/hooks/useRecords';
 import { RecordCard } from '@/components/molecules/RecordCard';
 import { Chip } from '@/components/atoms/Chip';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
@@ -43,9 +40,10 @@ export default function ConsultantRecords() {
   );
 
   const isLoading = tab === 'pending' ? pendingQuery.isLoading : recordsQuery.isLoading;
-  const isRefreshing = tab === 'pending'
-    ? pendingQuery.isFetching && !pendingQuery.isLoading
-    : recordsQuery.isFetching && !recordsQuery.isLoading;
+  const isRefreshing =
+    tab === 'pending'
+      ? pendingQuery.isFetching && !pendingQuery.isLoading
+      : recordsQuery.isFetching && !recordsQuery.isLoading;
 
   const onRefresh = useCallback(() => {
     if (tab === 'pending') {
@@ -56,11 +54,7 @@ export default function ConsultantRecords() {
   }, [tab, pendingQuery, recordsQuery]);
 
   const onEndReached = () => {
-    if (
-      tab === 'all' &&
-      recordsQuery.hasNextPage &&
-      !recordsQuery.isFetchingNextPage
-    ) {
+    if (tab === 'all' && recordsQuery.hasNextPage && !recordsQuery.isFetchingNextPage) {
       recordsQuery.fetchNextPage();
     }
   };
@@ -95,11 +89,7 @@ export default function ConsultantRecords() {
             onPress={() => setTab('pending')}
           />
           <View style={{ width: theme.spacing.sm }} />
-          <Chip
-            label="전체"
-            selected={tab === 'all'}
-            onPress={() => setTab('all')}
-          />
+          <Chip label="전체" selected={tab === 'all'} onPress={() => setTab('all')} />
         </View>
       </View>
 
@@ -135,11 +125,7 @@ export default function ConsultantRecords() {
                 time={`${item.startTime} - ${item.endTime}`}
                 isPending
                 index={index}
-                onPress={() =>
-                  router.push(
-                    `/(consultant)/(records)/create/${item.scheduleId}`,
-                  )
-                }
+                onPress={() => router.push(`/(consultant)/(records)/create/${item.scheduleId}`)}
               />
             )}
           />
@@ -175,16 +161,12 @@ export default function ConsultantRecords() {
               index={index}
               onPress={() =>
                 item.status === 'DRAFT'
-                  ? router.push(
-                      `/(consultant)/(records)/create/${item.scheduleId}`,
-                    )
+                  ? router.push(`/(consultant)/(records)/create/${item.scheduleId}`)
                   : router.push(`/(consultant)/(records)/${item.id}`)
               }
             />
           )}
-          ListFooterComponent={
-            recordsQuery.isFetchingNextPage ? <SkeletonCard /> : null
-          }
+          ListFooterComponent={recordsQuery.isFetchingNextPage ? <SkeletonCard /> : null}
         />
       )}
     </SafeAreaView>

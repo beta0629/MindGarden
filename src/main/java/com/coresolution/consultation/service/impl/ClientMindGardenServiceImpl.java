@@ -2,16 +2,23 @@ package com.coresolution.consultation.service.impl;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import com.coresolution.consultation.constant.GardenGrowthConstants;
 import com.coresolution.consultation.constant.GardenGrowthEventType;
 import com.coresolution.consultation.dto.MindGardenEventApplyResponse;
 import com.coresolution.consultation.dto.MindGardenServerStateResponse;
+import com.coresolution.consultation.dto.admin.wellness.MindGardenAdminSnapshotResponse;
+import com.coresolution.consultation.dto.admin.wellness.MindGardenAdminSummaryResponse;
 import com.coresolution.consultation.service.ClientMindGardenService;
 import com.coresolution.consultation.util.GardenGrowthWeekKey;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -94,6 +101,81 @@ public class ClientMindGardenServiceImpl implements ClientMindGardenService {
                     remainingAfter,
                     toResponse(state));
         }
+    }
+
+    @Override
+    public Page<MindGardenAdminSnapshotResponse> listSnapshotsForAdmin(String tenantId, Pageable pageable) {
+        String prefix = tenantId.trim() + ":";
+        List<Map.Entry<String, MutableState>> entries = new ArrayList<>();
+        for (Map.Entry<String, MutableState> e : store.entrySet()) {
+            if (e.getKey().startsWith(prefix)) {
+                entries.add(e);
+            }
+        }
+        entries.sort(Comparator.<Map.Entry<String, MutableState>, Instant>comparing(
+                en -> en.getValue().lastSyncedAt != null ? en.getValue().lastSyncedAt : Instant.EPOCH)
+            .reversed());
+        long total = entries.size();
+        int start = Math.min((int) pageable.getOffset(), entries.size());
+        int end = Math.min(start + pageable.getPageSize(), entries.size());
+        List<MindGardenAdminSnapshotResponse> slice = new ArrayList<>();
+        for (int i = start; i < end; i++) {
+            Map.Entry<String, MutableState> en = entries.get(i);
+            String key = en.getKey();
+            long userId = parseClientUserId(key, prefix.length());
+            synchronized (lockFor(key)) {
+                MutableState state = store.get(key);
+                if (state == null) {
+                    continue;
+                }
+                rolloverWeekIfNeeded(state);
+                MindGardenServerStateResponse r = toResponse(state);
+                int unlocked = r.unlockedElementIds() != null ? r.unlockedElementIds().size() : 0;
+                slice.add(new MindGardenAdminSnapshotResponse(
+                        userId,
+                        r.revision(),
+                        r.stageIndex(),
+                        r.totalPoints(),
+                        r.weeklyPointsCredited(),
+                        r.weekKey(),
+                        unlocked,
+                        r.lastSyncedAt()));
+            }
+        }
+        return new PageImpl<>(slice, pageable, total);
+    }
+
+    @Override
+    public MindGardenAdminSummaryResponse summarizeForAdmin(String tenantId) {
+        String prefix = tenantId.trim() + ":";
+        long users = 0;
+        long sum = 0;
+        int maxPts = 0;
+        int maxStage = 0;
+        for (Map.Entry<String, MutableState> e : store.entrySet()) {
+            if (!e.getKey().startsWith(prefix)) {
+                continue;
+            }
+            String key = e.getKey();
+            synchronized (lockFor(key)) {
+                MutableState state = store.get(key);
+                if (state == null) {
+                    continue;
+                }
+                rolloverWeekIfNeeded(state);
+                MindGardenServerStateResponse r = toResponse(state);
+                users++;
+                sum += r.totalPoints();
+                maxPts = Math.max(maxPts, r.totalPoints());
+                maxStage = Math.max(maxStage, r.stageIndex());
+            }
+        }
+        double avg = users > 0 ? ((double) sum) / users : 0d;
+        return new MindGardenAdminSummaryResponse(users, sum, maxPts, avg, maxStage, true);
+    }
+
+    private static long parseClientUserId(String compositeKey, int prefixLen) {
+        return Long.parseLong(compositeKey.substring(prefixLen));
     }
 
     private static String compositeKey(String tenantId, long userId) {

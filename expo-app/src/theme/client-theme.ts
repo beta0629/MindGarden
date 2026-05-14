@@ -5,7 +5,6 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import type { ViewStyle } from 'react-native';
 import { colors, spacing, borderRadius } from './tokens';
 import { fontFamily, fontSize, textStyles } from './typography';
 import { shadows } from './shadows';

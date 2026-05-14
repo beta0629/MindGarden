@@ -23,6 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * <p>쿼리 파라미터 {@code size}, {@code sort} 등은 Expo 호환을 위해 허용하나 현재 구현에서는 무시한다.</p>
  *
+ * <p>목록은 테넌트 마스터({@code healing_content_catalog_items}, 노출·정렬)와
+ * 당일 일별 힐링({@link com.coresolution.consultation.entity.DailyHealingContent})을 합쳐 반환한다.
+ * 어드민 마스터 CRUD는 {@link AdminHealingContentCatalogController} 참조.</p>
+ *
  * <p><strong>응답 JSON 예시</strong> (성공 시 {@code data}가 배열):</p>
  * <pre>{@code
  * {
@@ -40,7 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
  *       "durationMinutes": null
  *     },
  *     {
- *       "id": 9000001,
+ *       "id": 101,
  *       "title": "호흡과 바디 스캔",
  *       "description": "짧은 가이드 명상으로 긴장을 낮춥니다.",
  *       "category": "RELAXATION",

@@ -58,9 +58,7 @@ function saveBookmarks(ids: number[]) {
 export default function PsychoEducationMain() {
   const theme = useTheme();
   const router = useRouter();
-  const [activeCategory, setActiveCategory] = useState<
-    PsychoCategory | 'bookmarks'
-  >('all');
+  const [activeCategory, setActiveCategory] = useState<PsychoCategory | 'bookmarks'>('all');
   const [bookmarks, setBookmarks] = useState<number[]>(loadBookmarks);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -76,18 +74,14 @@ export default function PsychoEducationMain() {
 
   const healingArticlePreview = useMemo(() => {
     const list = healingQuery.data ?? [];
-    return list
-      .filter((item) => item.type === 'ARTICLE')
-      .slice(0, 3);
+    return list.filter((item) => item.type === 'ARTICLE').slice(0, 3);
   }, [healingQuery.data]);
 
   const filteredArticles = useMemo(() => {
     if (activeCategory === 'all') return catalogArticles;
     if (activeCategory === 'bookmarks')
       return catalogArticles.filter((a) => bookmarks.includes(a.id));
-    return catalogArticles.filter(
-      (a) => a.category === activeCategory,
-    );
+    return catalogArticles.filter((a) => a.category === activeCategory);
   }, [activeCategory, bookmarks, catalogArticles]);
 
   const toggleBookmark = useCallback(
@@ -118,10 +112,7 @@ export default function PsychoEducationMain() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="심리 교육" canGoBack />
 
       <View
@@ -146,8 +137,7 @@ export default function PsychoEducationMain() {
             ? `서버 목록(${PSYCHO_EDUCATION_API_PLACEHOLDER}). 북마크·읽기 완료는 이 기기(MMKV)에만 저장됩니다.`
             : psychoFallbackError
               ? `전용 API(${PSYCHO_EDUCATION_API_PLACEHOLDER})에 연결하지 못해 아래는 샘플 카드뉴스입니다. 서버 연동 후 자동으로 바뀝니다.`
-              : `샘플 카드뉴스 · API ${PSYCHO_EDUCATION_API_PLACEHOLDER}(예정). 서버 연동 시 목록이 바뀝니다.`}
-          {' '}
+              : `샘플 카드뉴스 · API ${PSYCHO_EDUCATION_API_PLACEHOLDER}(예정). 서버 연동 시 목록이 바뀝니다.`}{' '}
           {healingQuery.isSuccess && healingArticlePreview.length > 0
             ? '힐링에서 가져온 글은 아래에 표시됩니다.'
             : '힐링 API 연동 전에는 아래 심리 교육 카드만 표시됩니다.'}
@@ -251,9 +241,7 @@ export default function PsychoEducationMain() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={
-              refreshing || healingQuery.isFetching || psychoCatalogQuery.isFetching
-            }
+            refreshing={refreshing || healingQuery.isFetching || psychoCatalogQuery.isFetching}
             onRefresh={handleRefresh}
             tintColor={theme.colors.primary}
           />
@@ -281,11 +269,7 @@ export default function PsychoEducationMain() {
         {filteredArticles.length === 0 ? (
           <EmptyState
             icon={<BookOpen size={32} color={theme.colors.textTertiary} />}
-            title={
-              activeCategory === 'bookmarks'
-                ? '북마크가 비어있어요'
-                : '콘텐츠가 없어요'
-            }
+            title={activeCategory === 'bookmarks' ? '북마크가 비어있어요' : '콘텐츠가 없어요'}
             description={
               activeCategory === 'bookmarks'
                 ? '북마크 아이콘을 눌러 저장해보세요'
@@ -319,13 +303,7 @@ interface PsychoCardProps {
   onBookmark: () => void;
 }
 
-function PsychoCard({
-  article,
-  index,
-  isBookmarked,
-  onPress,
-  onBookmark,
-}: PsychoCardProps) {
+function PsychoCard({ article, index, isBookmarked, onPress, onBookmark }: PsychoCardProps) {
   const theme = useTheme();
 
   return (
@@ -365,12 +343,7 @@ function PsychoCard({
             {article.title}
           </Text>
           <View style={cardStyles.metaRow}>
-            <View
-              style={[
-                cardStyles.tag,
-                { backgroundColor: theme.colors.accentSoft },
-              ]}
-            >
+            <View style={[cardStyles.tag, { backgroundColor: theme.colors.accentSoft }]}>
               <Text
                 style={{
                   fontFamily: theme.fontFamily.medium,
@@ -405,9 +378,7 @@ function PsychoCard({
         >
           <Bookmark
             size={20}
-            color={
-              isBookmarked ? theme.colors.primary : theme.colors.textTertiary
-            }
+            color={isBookmarked ? theme.colors.primary : theme.colors.textTertiary}
             fill={isBookmarked ? theme.colors.primary : 'transparent'}
           />
         </Pressable>

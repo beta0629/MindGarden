@@ -50,11 +50,7 @@ export function ConsultantProfileCard({
         accessibilityRole="button"
       >
         <View style={styles.topRow}>
-          <Avatar
-            uri={consultant.profileImageUrl}
-            name={consultant.name}
-            size="lg"
-          />
+          <Avatar uri={consultant.profileImageUrl} name={consultant.name} size="lg" />
           <View style={styles.info}>
             <Text
               style={{
@@ -67,11 +63,7 @@ export function ConsultantProfileCard({
               {consultant.name} 전문가
             </Text>
             <View style={styles.ratingRow}>
-              <Star
-                size={14}
-                color={theme.colors.warning}
-                fill={theme.colors.warning}
-              />
+              <Star size={14} color={theme.colors.warning} fill={theme.colors.warning} />
               <Text
                 style={{
                   fontFamily: theme.fontFamily.medium,

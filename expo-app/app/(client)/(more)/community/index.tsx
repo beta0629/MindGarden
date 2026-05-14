@@ -5,26 +5,13 @@
  * @since 2026-05-12
  */
 import { useCallback, useMemo, useState } from 'react';
-import {
-  Platform,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Platform, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import {
-  Heart,
-  MessageCircle,
-  Plus,
-  User,
-  RefreshCw,
-} from 'lucide-react-native';
+import { Heart, MessageCircle, Plus, User, RefreshCw } from 'lucide-react-native';
 
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
@@ -32,24 +19,20 @@ import { Chip } from '@/components/atoms/Chip';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { useCommunityFeed } from '@/api/hooks/useCommunity';
 import { useCommunityStore } from '@/stores/useCommunityStore';
-import {
-  COMMUNITY_TABS,
-  type CommunityPost,
-  type CommunityTab,
-} from '@/constants/communityData';
+import { COMMUNITY_TABS, type CommunityPost, type CommunityTab } from '@/constants/communityData';
 
 export default function ClientCommunityFeed() {
   const theme = useTheme();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<CommunityTab>('all');
+  const [refreshing, setRefreshing] = useState(false);
   const {
     dataSource,
     refetch,
     isFetching,
     lastFetchedAt,
     isError: feedQueryError,
-  } = useCommunityFeed();
-  const [activeTab, setActiveTab] = useState<CommunityTab>('all');
-  const [refreshing, setRefreshing] = useState(false);
+  } = useCommunityFeed({ feedTab: activeTab });
 
   const { posts, togglePostLike, isPostLiked } = useCommunityStore();
 
@@ -102,10 +85,7 @@ export default function ClientCommunityFeed() {
   );
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="커뮤니티" canGoBack />
 
       <View
@@ -145,7 +125,8 @@ export default function ClientCommunityFeed() {
               marginTop: 4,
             }}
           >
-            글·댓글·좋아요는 우선 이 기기(MMKV)에 저장됩니다. 서버 API(/api/v1/community) 연동 후 동기화됩니다.
+            글·댓글·좋아요는 우선 이 기기(MMKV)에 저장됩니다. 서버 API(/api/v1/community) 연동 후
+            동기화됩니다.
           </Text>
         </View>
         <Pressable
@@ -199,7 +180,8 @@ export default function ClientCommunityFeed() {
               color: theme.colors.textSecondary,
             }}
           >
-            서버 피드(/api/v1/community)를 불러오지 못했습니다. 아래는 데모 샘플과 이 기기에 저장된 글입니다. 동기화로 다시 시도할 수 있습니다.
+            서버 피드(/api/v1/community)를 불러오지 못했습니다. 아래는 데모 샘플과 이 기기에 저장된
+            글입니다. 동기화로 다시 시도할 수 있습니다.
           </Text>
         </View>
       ) : null}
@@ -299,12 +281,7 @@ function PostCard({ post, index, isLiked, onPress, onLike }: PostCardProps) {
       >
         {/* 작성자 */}
         <View style={postStyles.authorRow}>
-          <View
-            style={[
-              postStyles.avatar,
-              { backgroundColor: theme.colors.accentSoft },
-            ]}
-          >
+          <View style={[postStyles.avatar, { backgroundColor: theme.colors.accentSoft }]}>
             <User size={16} color={theme.colors.textSecondary} />
           </View>
           <View style={postStyles.authorText}>

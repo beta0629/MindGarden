@@ -30,14 +30,7 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ role, children }: ThemeProviderProps) {
-  const theme = useMemo(
-    () => (role === 'consultant' ? consultantTheme : clientTheme),
-    [role],
-  );
+  const theme = useMemo(() => (role === 'consultant' ? consultantTheme : clientTheme), [role]);
 
-  return (
-    <ThemeContext.Provider value={theme}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
 }

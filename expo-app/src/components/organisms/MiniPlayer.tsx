@@ -17,8 +17,7 @@ export function MiniPlayer() {
   const theme = useTheme();
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
-  const { currentTrack, isPlaying, currentTime, pause, resume, stop } =
-    useMeditationStore();
+  const { currentTrack, isPlaying, currentTime, pause, resume, stop } = useMeditationStore();
 
   if (!currentTrack) return null;
 
@@ -45,9 +44,7 @@ export function MiniPlayer() {
   };
 
   const progress =
-    currentTrack.durationSeconds > 0
-      ? currentTime / currentTrack.durationSeconds
-      : 0;
+    currentTrack.durationSeconds > 0 ? currentTime / currentTrack.durationSeconds : 0;
 
   return (
     <Animated.View
@@ -63,9 +60,7 @@ export function MiniPlayer() {
       ]}
     >
       {/* 진행 바 */}
-      <View
-        style={[styles.progressBg, { backgroundColor: theme.colors.divider }]}
-      >
+      <View style={[styles.progressBg, { backgroundColor: theme.colors.divider }]}>
         <View
           style={[
             styles.progressFill,

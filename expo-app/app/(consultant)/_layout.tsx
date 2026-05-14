@@ -8,13 +8,7 @@
 import { Tabs, useRouter } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import {
-  Home,
-  Calendar,
-  Users,
-  FileText,
-  MoreHorizontal,
-} from 'lucide-react-native';
+import { Home, Calendar, Users, FileText, MoreHorizontal } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useMoreTabUnreadTotal } from '@/hooks/useMoreTabUnreadTotal';
 
@@ -26,9 +20,7 @@ function UnreadBadge({ visible }: Readonly<{ visible: boolean }>) {
   if (!visible) {
     return null;
   }
-  return (
-    <View style={[styles.badge, { backgroundColor: theme.colors.error }]} />
-  );
+  return <View style={[styles.badge, { backgroundColor: theme.colors.error }]} />;
 }
 
 export default function ConsultantLayout() {
@@ -66,9 +58,7 @@ export default function ConsultantLayout() {
         name="(home)"
         options={{
           title: '홈',
-          tabBarIcon: ({ color }) => (
-            <Home size={ICON_SIZE} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <Home size={ICON_SIZE} color={color} />,
           tabBarAccessibilityLabel: '홈 탭',
         }}
         listeners={{ tabPress: handleTabPress }}
@@ -77,9 +67,7 @@ export default function ConsultantLayout() {
         name="(schedule)"
         options={{
           title: '스케줄',
-          tabBarIcon: ({ color }) => (
-            <Calendar size={ICON_SIZE} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <Calendar size={ICON_SIZE} color={color} />,
           tabBarAccessibilityLabel: '스케줄 탭',
         }}
         listeners={{ tabPress: handleTabPress }}
@@ -88,9 +76,7 @@ export default function ConsultantLayout() {
         name="(clients)"
         options={{
           title: '내담자',
-          tabBarIcon: ({ color }) => (
-            <Users size={ICON_SIZE} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <Users size={ICON_SIZE} color={color} />,
           tabBarAccessibilityLabel: '내담자 탭',
         }}
         listeners={{ tabPress: handleTabPress }}
@@ -99,9 +85,7 @@ export default function ConsultantLayout() {
         name="(records)"
         options={{
           title: '일지',
-          tabBarIcon: ({ color }) => (
-            <FileText size={ICON_SIZE} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <FileText size={ICON_SIZE} color={color} />,
           tabBarAccessibilityLabel: '일지 탭',
         }}
         listeners={{ tabPress: handleTabPress }}

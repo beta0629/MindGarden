@@ -24,9 +24,7 @@ export function useProfileRemoteSync() {
       void (async () => {
         try {
           const endpoint =
-            user.role === 'client'
-              ? PROFILE_API.CLIENT_PROFILE
-              : PROFILE_API.userProfile(user.id);
+            user.role === 'client' ? PROFILE_API.CLIENT_PROFILE : PROFILE_API.userProfile(user.id);
           const raw = await apiGet<unknown>(endpoint);
           if (cancelled) {
             return;

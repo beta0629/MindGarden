@@ -8,7 +8,10 @@
 import { QueryClient } from '@tanstack/react-query';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import { getMmkv } from '@/lib/getMmkv';
-import { isOfflinePersistedQueryKey, shouldDehydrateOfflinePersistedQuery } from './offlinePersistPolicy';
+import {
+  isOfflinePersistedQueryKey,
+  shouldDehydrateOfflinePersistedQuery,
+} from './offlinePersistPolicy';
 
 const CACHE_GC_TIME = 1000 * 60 * 60 * 24 * 7;
 const CACHE_STALE_TIME = 1000 * 60 * 5;

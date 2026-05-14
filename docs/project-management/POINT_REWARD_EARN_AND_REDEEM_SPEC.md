@@ -17,6 +17,7 @@
 | [CORE_PLANNER_DELEGATION_ORDER.md](./CORE_PLANNER_DELEGATION_ORDER.md) | 구현 패치는 **core-coder** 위임; 일반 채팅 에이전트 직접 수정 금지. 코드 변경 배치는 **core-tester 검증 게이트** 필수(스모크·회귀 등). UI 중심 배치 시 core-designer에 `gemini-3.1-pro` 권장 등 Task 모델 가이드. |
 | [core-solution-multi-tenant](../../.cursor/skills/core-solution-multi-tenant/SKILL.md) | **tenantId 없는 API·저장 금지**. 포인트 원장·정책·hold·주문 연동 전 구간에서 tenant 스코프·인덱스·WHERE 일관. 컨텍스트 없으면 거절. |
 | [core-solution-erp](../../.cursor/skills/core-solution-erp/SKILL.md) | **`confirm-payment`**로 매핑 확정·거래 타입 분기; **`amount-info`**로 패키지가·결제액·`relatedTransactions` 대사; **중복 INCOME 방지**·유효 금액 없음 스킵 원칙. 포인트 할인은 **현금 매출과 분리 표기** 시 기존 흐름과 충돌 없이 옵션화. |
+| **구현(2026-05-14)** | 백엔드 테이블 `client_point_wallets`, `client_point_ledger_entries`(유형 HOLD·RELEASE·COMMIT, 멱등 키)·주문 `shop_client_orders` 및 내담자 API `/api/v1/clients/me/shop/*` 가 추가됨. PG 승인(PAID) 후 hold→commit 자동화·적립(EARN)은 다음 PR에서 결제 웹훅과 연동한다. |
 
 **문서 분리 권고 (한 문단)**  
 본 포인트 도메인은 **원장·정책·회계 옵션·감사**가 온라인 결제 스펙보다 무겁고 버전 관리 주기가 다를 수 있으므로, **`POINT_REWARD_EARN_AND_REDEEM_SPEC.md`를 단독 문서로 두고** `ONLINE_PAYMENT_CATALOG_CHECKOUT_SPEC.md`에는 **체크아웃 UI 슬롯·주문 상태 연동·링크**만 유지·상호 링크하는 구성을 권장한다. 한 파일 병합은 장문·리뷰 비용이 커지므로 **MVP 이후에만** 재검토한다.
@@ -175,4 +176,5 @@
 
 | 버전 | 일자 | 작성 | 요약 |
 |------|------|------|------|
+| 0.2 | 2026-05-14 | core-coder | 구현 행 추가: `client_point_wallets`·`client_point_ledger_entries`·`/api/v1/clients/me/shop/*`; PG PAID 연동은 후속 PR |
 | 0.1 초안 | 2026-05-13 | core-planner | 적립·사용(hold)·환불·ERP·어드민·UX·보안·로드맵·서브에이전트 배분 최초 정리 |

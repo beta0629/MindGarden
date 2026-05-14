@@ -94,10 +94,7 @@ export default function ConsultantDashboard() {
     >
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingHorizontal: theme.spacing.lg },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: theme.spacing.lg }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -216,9 +213,7 @@ export default function ConsultantDashboard() {
                   sessionType={item.consultationType}
                   status={item.status}
                   index={index}
-                  onPress={() =>
-                    router.push(`/(consultant)/(schedule)/${item.id}`)
-                  }
+                  onPress={() => router.push(`/(consultant)/(schedule)/${item.id}`)}
                   actionLabel={
                     item.status === 'SCHEDULED'
                       ? '상담 시작'
@@ -228,8 +223,7 @@ export default function ConsultantDashboard() {
                   }
                   onActionPress={
                     item.status === 'SCHEDULED' || item.status === 'IN_PROGRESS'
-                      ? () =>
-                          router.push(`/(consultant)/(schedule)/${item.id}`)
+                      ? () => router.push(`/(consultant)/(schedule)/${item.id}`)
                       : undefined
                   }
                 />

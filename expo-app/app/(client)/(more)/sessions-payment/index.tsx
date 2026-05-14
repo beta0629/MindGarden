@@ -6,31 +6,14 @@
  * @since 2026-05-12
  */
 import React, { useCallback, useMemo, useState } from 'react';
-import {
-  Platform,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Platform, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Animated, {
-  FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated';
-import {
-  ChevronRight,
-  CreditCard,
-  History,
-  Plus,
-  RotateCcw,
-} from 'lucide-react-native';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import { ChevronRight, CreditCard, History, Plus, RotateCcw } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
 import {
@@ -49,7 +32,10 @@ const FILTER_OPTIONS: { key: PaymentFilter; label: string }[] = [
   { key: 'REFUNDED', label: '환불' },
 ];
 
-const STATUS_BADGE_MAP: Record<string, { label: string; variant: 'success' | 'warning' | 'error' | 'gray' | 'info' }> = {
+const STATUS_BADGE_MAP: Record<
+  string,
+  { label: string; variant: 'success' | 'warning' | 'error' | 'gray' | 'info' }
+> = {
   COMPLETED: { label: '완료', variant: 'success' },
   PENDING: { label: '대기', variant: 'warning' },
   FAILED: { label: '실패', variant: 'error' },
@@ -93,13 +79,9 @@ export default function SessionsPaymentIndex() {
     if (pl && Array.isArray(pl.content)) {
       rows = pl.content;
     } else if (pl && Array.isArray(pl.pages)) {
-      rows = pl.pages.flatMap((p) =>
-        Array.isArray(p?.content) ? p.content! : [],
-      );
+      rows = pl.pages.flatMap((p) => (Array.isArray(p?.content) ? p.content! : []));
     }
-    return rows.filter(
-      (x): x is PaymentItem => x != null && typeof x.id === 'number',
-    );
+    return rows.filter((x): x is PaymentItem => x != null && typeof x.id === 'number');
   }, [paymentList]);
 
   const emptyPaymentsCopy = useMemo(() => {
@@ -145,9 +127,7 @@ export default function SessionsPaymentIndex() {
       <PaymentListItem
         item={item}
         index={index}
-        onPress={() =>
-          router.push(`/(client)/(more)/sessions-payment/${item.id}`)
-        }
+        onPress={() => router.push(`/(client)/(more)/sessions-payment/${item.id}`)}
       />
     ),
     [router],
@@ -192,14 +172,9 @@ export default function SessionsPaymentIndex() {
               used={balance?.usedSessions ?? 0}
               isLow={isLowSessions}
               onExtend={() => router.push('/(client)/(more)/sessions-payment/extend')}
-              onUsageHistory={() =>
-                router.push('/(client)/(more)/sessions-payment/usage')
-              }
+              onUsageHistory={() => router.push('/(client)/(more)/sessions-payment/usage')}
             />
-            <FilterBar
-              active={activeFilter}
-              onSelect={handleFilterPress}
-            />
+            <FilterBar active={activeFilter} onSelect={handleFilterPress} />
           </View>
         }
         ListEmptyComponent={
@@ -284,9 +259,7 @@ function SessionBalanceCard({
           >
             보유 회기
           </Text>
-          {isLow && (
-            <Badge label="소진 임박" variant="warning" size="sm" />
-          )}
+          {isLow && <Badge label="소진 임박" variant="warning" size="sm" />}
         </View>
 
         <Text
@@ -311,25 +284,21 @@ function SessionBalanceCard({
               },
             ]}
           >
-            {' '}회기
+            {' '}
+            회기
           </Text>
         </Text>
 
         <View style={styles.progressContainer}>
           <View
-            style={[
-              styles.progressTrack,
-              { backgroundColor: `${theme.colors.textOnPrimary}30` },
-            ]}
+            style={[styles.progressTrack, { backgroundColor: `${theme.colors.textOnPrimary}30` }]}
           >
             <View
               style={[
                 styles.progressFill,
                 {
                   width: `${progress * 100}%`,
-                  backgroundColor: isLow
-                    ? theme.colors.warning
-                    : theme.colors.textOnPrimary,
+                  backgroundColor: isLow ? theme.colors.warning : theme.colors.textOnPrimary,
                 },
               ]}
             />
@@ -442,12 +411,8 @@ function FilterBar({ active, onSelect }: FilterBarProps) {
               style={[
                 styles.filterChip,
                 {
-                  backgroundColor: isActive
-                    ? theme.colors.primary
-                    : theme.colors.surface,
-                  borderColor: isActive
-                    ? theme.colors.primary
-                    : theme.colors.border,
+                  backgroundColor: isActive ? theme.colors.primary : theme.colors.surface,
+                  borderColor: isActive ? theme.colors.primary : theme.colors.border,
                   borderRadius: theme.borderRadius.full,
                 },
               ]}
@@ -457,12 +422,8 @@ function FilterBar({ active, onSelect }: FilterBarProps) {
             >
               <Text
                 style={{
-                  color: isActive
-                    ? theme.colors.textOnPrimary
-                    : theme.colors.textSecondary,
-                  fontFamily: isActive
-                    ? theme.fontFamily.semibold
-                    : theme.fontFamily.medium,
+                  color: isActive ? theme.colors.textOnPrimary : theme.colors.textSecondary,
+                  fontFamily: isActive ? theme.fontFamily.semibold : theme.fontFamily.medium,
                   fontSize: theme.fontSize.sm,
                 }}
               >
@@ -496,9 +457,7 @@ function PaymentListItem({ item, index, onPress }: PaymentListItemProps) {
         style={({ pressed }) => [
           styles.paymentItem,
           {
-            backgroundColor: pressed
-              ? theme.colors.accentSoft
-              : theme.colors.surface,
+            backgroundColor: pressed ? theme.colors.accentSoft : theme.colors.surface,
             borderRadius: theme.borderRadius.lg,
           },
         ]}
@@ -539,11 +498,7 @@ function PaymentListItem({ item, index, onPress }: PaymentListItemProps) {
           </Text>
           <View style={styles.paymentItemMeta}>
             <Badge label={badge.label} variant={badge.variant} size="sm" />
-            <ChevronRight
-              size={16}
-              color={theme.colors.gray[400]}
-              style={styles.chevron}
-            />
+            <ChevronRight size={16} color={theme.colors.gray[400]} style={styles.chevron} />
           </View>
         </View>
       </Pressable>

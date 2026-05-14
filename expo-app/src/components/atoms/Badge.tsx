@@ -33,12 +33,7 @@ export function Badge({ label, variant = 'primary', size = 'sm', style }: BadgeP
 
   return (
     <View
-      style={[
-        styles.badge,
-        size === 'md' && styles.badgeMd,
-        { backgroundColor: colors.bg },
-        style,
-      ]}
+      style={[styles.badge, size === 'md' && styles.badgeMd, { backgroundColor: colors.bg }, style]}
       accessibilityRole="text"
     >
       <Text

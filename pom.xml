@@ -376,6 +376,8 @@
                     <forkCount>1</forkCount>
                     <!-- false: SpringBootTest·Mockito 인라인 mock 재사용 시 Metaspace/NoClassDefFound 방지 -->
                     <reuseForks>false</reuseForks>
+                    <!-- 로컬 MySQL·Flyway 정상 스키마가 필요한 JUnit 5 @Tag("local-mysql") 전용 (기본 CI/클린 머신에서 제외) -->
+                    <excludedGroups>local-mysql</excludedGroups>
                 </configuration>
             </plugin>
 

@@ -4,11 +4,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import {
-  useQuery,
-  useInfiniteQuery,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { apiGet } from '../client';
 import { CONSULTANT_API } from '../endpoints';
 
@@ -76,11 +72,9 @@ interface PaginatedResponse<T> {
 const CLIENT_QUERY_KEYS = {
   all: ['clients'] as const,
   lists: () => [...CLIENT_QUERY_KEYS.all, 'list'] as const,
-  list: (params: Omit<ClientsParams, 'page'>) =>
-    [...CLIENT_QUERY_KEYS.lists(), params] as const,
+  list: (params: Omit<ClientsParams, 'page'>) => [...CLIENT_QUERY_KEYS.lists(), params] as const,
   details: () => [...CLIENT_QUERY_KEYS.all, 'detail'] as const,
-  detail: (id: string | number) =>
-    [...CLIENT_QUERY_KEYS.details(), id] as const,
+  detail: (id: string | number) => [...CLIENT_QUERY_KEYS.details(), id] as const,
 };
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -91,18 +85,14 @@ export function useConsultantClients(params: ClientsParams) {
   return useInfiniteQuery<PaginatedResponse<Client>>({
     queryKey: CLIENT_QUERY_KEYS.list({ consultantId, search, status }),
     queryFn: ({ pageParam }) =>
-      apiGet<PaginatedResponse<Client>>(
-        CONSULTANT_API.consultantClients(consultantId),
-        {
-          search: search || undefined,
-          status: status === 'ALL' ? undefined : status,
-          page: pageParam,
-          size,
-        },
-      ),
+      apiGet<PaginatedResponse<Client>>(CONSULTANT_API.consultantClients(consultantId), {
+        search: search || undefined,
+        status: status === 'ALL' ? undefined : status,
+        page: pageParam,
+        size,
+      }),
     initialPageParam: 0,
-    getNextPageParam: (lastPage) =>
-      lastPage.last ? undefined : lastPage.number + 1,
+    getNextPageParam: (lastPage) => (lastPage.last ? undefined : lastPage.number + 1),
     enabled: !!consultantId,
     staleTime: 1000 * 60 * 5,
   });
@@ -114,8 +104,7 @@ export function useClientDetail(
 ) {
   return useQuery<ClientDetail>({
     queryKey: CLIENT_QUERY_KEYS.detail(clientId!),
-    queryFn: () =>
-      apiGet<ClientDetail>(`/api/v1/clients/${clientId}`),
+    queryFn: () => apiGet<ClientDetail>(`/api/v1/clients/${clientId}`),
     enabled: !!clientId,
     staleTime: 1000 * 60 * 5,
     ...options,

@@ -7,13 +7,7 @@
  * @since 2026-05-13 — 실 API 집계·검색 지연·오류·표시 경계
  */
 import { useCallback, useDeferredValue, useMemo, useState } from 'react';
-import {
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { MessageCircle } from 'lucide-react-native';
 import Animated, { FadeInRight } from 'react-native-reanimated';
@@ -62,8 +56,7 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
     if (!tenantId || !user?.id || !user.role) {
       return [];
     }
-    const flat =
-      data?.pages.flatMap((p) => ('messages' in p ? p.messages : [])) ?? [];
+    const flat = data?.pages.flatMap((p) => ('messages' in p ? p.messages : [])) ?? [];
     flat.sort((a, b) => {
       const sa = String(a.sentAt ?? a.createdAt ?? '');
       const sb = String(b.sentAt ?? b.createdAt ?? '');
@@ -90,11 +83,7 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
 
   const renderItem = useCallback(
     ({ item, index }: { item: Conversation; index: number }) => (
-      <ConversationItem
-        conversation={item}
-        onPress={handleConversationPress}
-        index={index}
-      />
+      <ConversationItem conversation={item} onPress={handleConversationPress} index={index} />
     ),
     [handleConversationPress],
   );
@@ -115,11 +104,7 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
         <View style={styles.searchWrapper}>
-          <SearchBar
-            value=""
-            onChangeText={() => {}}
-            placeholder="이름으로 검색"
-          />
+          <SearchBar value="" onChangeText={() => {}} placeholder="이름으로 검색" />
         </View>
         {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
           <SkeletonCard key={i} lines={2} style={styles.skeletonCard} />
@@ -166,11 +151,7 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
       <View style={styles.searchWrapper}>
-        <SearchBar
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="이름으로 검색"
-        />
+        <SearchBar value={searchQuery} onChangeText={setSearchQuery} placeholder="이름으로 검색" />
       </View>
       <FlashList
         data={conversations}
@@ -216,20 +197,14 @@ function ConversationItem({ conversation, onPress, index }: ConversationItemProp
         style={({ pressed }) => [
           styles.itemContainer,
           {
-            backgroundColor: pressed
-              ? theme.colors.accentSoft
-              : theme.colors.surface,
+            backgroundColor: pressed ? theme.colors.accentSoft : theme.colors.surface,
             borderBottomColor: theme.colors.divider,
           },
         ]}
         accessibilityRole="button"
         accessibilityLabel={`${partnerLabel}과의 대화. ${preview}`}
       >
-        <Avatar
-          uri={conversation.partnerProfileImageUrl}
-          name={partnerLabel}
-          size="lg"
-        />
+        <Avatar uri={conversation.partnerProfileImageUrl} name={partnerLabel} size="lg" />
         <View style={styles.itemContent}>
           <View style={styles.itemTopRow}>
             <Text
@@ -273,12 +248,7 @@ function ConversationItem({ conversation, onPress, index }: ConversationItemProp
               {preview}
             </Text>
             {conversation.unreadCount > 0 ? (
-              <View
-                style={[
-                  styles.unreadBadge,
-                  { backgroundColor: theme.colors.primary },
-                ]}
-              >
+              <View style={[styles.unreadBadge, { backgroundColor: theme.colors.primary }]}>
                 <Text
                   style={[
                     styles.unreadText,
@@ -289,9 +259,7 @@ function ConversationItem({ conversation, onPress, index }: ConversationItemProp
                     },
                   ]}
                 >
-                  {conversation.unreadCount > 99
-                    ? '99+'
-                    : String(conversation.unreadCount)}
+                  {conversation.unreadCount > 99 ? '99+' : String(conversation.unreadCount)}
                 </Text>
               </View>
             ) : null}

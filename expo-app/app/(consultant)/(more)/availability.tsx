@@ -22,14 +22,7 @@ import {
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Stack } from 'expo-router';
-import {
-  Clock,
-  CalendarOff,
-  Plus,
-  Trash2,
-  Save,
-  RotateCcw,
-} from 'lucide-react-native';
+import { Clock, CalendarOff, Plus, Trash2, Save, RotateCcw } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { EmptyState } from '@/components/atoms/EmptyState';
@@ -64,10 +57,7 @@ const SLOT_INTERVAL_MIN = 30;
 const buildTimeSlots = (): string[] => {
   const slots: string[] = [];
   for (let h = START_HOUR; h < END_HOUR; h++) {
-    slots.push(
-      `${String(h).padStart(2, '0')}:00`,
-      `${String(h).padStart(2, '0')}:30`,
-    );
+    slots.push(`${String(h).padStart(2, '0')}:00`, `${String(h).padStart(2, '0')}:30`);
   }
   return slots;
 };
@@ -204,10 +194,7 @@ export default function ConsultantAvailability() {
       }
       Alert.alert('저장 완료', '근무 가능 시간이 저장되었습니다.');
     } catch (err) {
-      Alert.alert(
-        '저장 실패',
-        extractErrorMessage(err, '근무시간 저장에 실패했습니다.'),
-      );
+      Alert.alert('저장 실패', extractErrorMessage(err, '근무시간 저장에 실패했습니다.'));
     }
   }, [consultantId, hasChanges, grid, triggerHaptic, updateAvailability]);
 
@@ -220,10 +207,7 @@ export default function ConsultantAvailability() {
   const handleAddVacation = useCallback(async () => {
     if (!consultantId || !vacStartDate || !vacEndDate) return;
     if (!isValidDate(vacStartDate) || !isValidDate(vacEndDate)) {
-      Alert.alert(
-        '입력 확인',
-        '날짜를 YYYY-MM-DD 형식(예: 2026-05-13)으로 입력해 주세요.',
-      );
+      Alert.alert('입력 확인', '날짜를 YYYY-MM-DD 형식(예: 2026-05-13)으로 입력해 주세요.');
       return;
     }
     if (vacStartDate > vacEndDate) {
@@ -242,10 +226,7 @@ export default function ConsultantAvailability() {
       setVacEndDate('');
       setVacReason('');
     } catch (err) {
-      Alert.alert(
-        '등록 실패',
-        extractErrorMessage(err, '휴가 등록에 실패했습니다.'),
-      );
+      Alert.alert('등록 실패', extractErrorMessage(err, '휴가 등록에 실패했습니다.'));
     }
   }, [consultantId, vacStartDate, vacEndDate, vacReason, triggerHaptic, createVacation]);
 
@@ -256,15 +237,10 @@ export default function ConsultantAvailability() {
       try {
         await deleteVacation.mutateAsync({
           consultantId: cid,
-          date: vacationDate.includes('T')
-            ? vacationDate.slice(0, 10)
-            : vacationDate,
+          date: vacationDate.includes('T') ? vacationDate.slice(0, 10) : vacationDate,
         });
       } catch (err) {
-        Alert.alert(
-          '삭제 실패',
-          extractErrorMessage(err, '휴가 삭제에 실패했습니다.'),
-        );
+        Alert.alert('삭제 실패', extractErrorMessage(err, '휴가 삭제에 실패했습니다.'));
       }
     },
     [consultantId, deleteVacation],
@@ -385,10 +361,7 @@ export default function ConsultantAvailability() {
       <Stack.Screen options={{ headerShown: true, title: '근무 가능 시간' }} />
       <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
         <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { padding: theme.spacing.lg },
-          ]}
+          contentContainerStyle={[styles.scrollContent, { padding: theme.spacing.lg }]}
           showsVerticalScrollIndicator={false}
         >
           {/* 주간 근무 시간 섹션 */}
@@ -628,9 +601,7 @@ export default function ConsultantAvailability() {
                   styles.addButton,
                   {
                     backgroundColor:
-                      !vacStartDate || !vacEndDate
-                        ? theme.colors.gray[300]
-                        : theme.colors.primary,
+                      !vacStartDate || !vacEndDate ? theme.colors.gray[300] : theme.colors.primary,
                     borderRadius: theme.borderRadius.lg,
                     marginTop: theme.spacing.lg,
                   },
@@ -742,9 +713,7 @@ export default function ConsultantAvailability() {
             style={[
               styles.bottomButton,
               {
-                backgroundColor: hasChanges
-                  ? theme.colors.surfaceAlt
-                  : theme.colors.gray[100],
+                backgroundColor: hasChanges ? theme.colors.surfaceAlt : theme.colors.gray[100],
                 borderRadius: theme.borderRadius.lg,
               },
             ]}
@@ -774,9 +743,7 @@ export default function ConsultantAvailability() {
               styles.bottomButton,
               styles.saveButton,
               {
-                backgroundColor: hasChanges
-                  ? theme.colors.primary
-                  : theme.colors.gray[300],
+                backgroundColor: hasChanges ? theme.colors.primary : theme.colors.gray[300],
                 borderRadius: theme.borderRadius.lg,
               },
             ]}

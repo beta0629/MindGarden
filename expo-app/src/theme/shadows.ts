@@ -8,12 +8,12 @@
  */
 import { Platform, type ViewStyle } from 'react-native';
 
+import { colors } from './tokens';
+
 type Shadow = Pick<
   ViewStyle,
   'shadowColor' | 'shadowOffset' | 'shadowOpacity' | 'shadowRadius' | 'elevation'
 >;
-
-import { colors } from './tokens';
 
 const SHADOW_COLOR = colors.common.shadowSource;
 

@@ -27,7 +27,11 @@ interface CommunityState {
   isPostLiked: (postId: number) => boolean;
   isCommentLiked: (commentId: number) => boolean;
   addPost: (post: Omit<CommunityPost, 'id' | 'likes' | 'comments' | 'time'>) => void;
+  /** 서버 생성·상세 응답을 id 기준으로 앞에 병합 */
+  prependRemotePost: (post: CommunityPost) => void;
   addComment: (postId: number, author: string, body: string) => void;
+  /** 서버 댓글 응답을 그대로 붙임 */
+  appendServerComment: (postId: number, comment: CommunityComment) => void;
   getPostById: (id: number) => CommunityPost | undefined;
 }
 
@@ -47,9 +51,7 @@ export const useCommunityStore = create<CommunityState>()(
           ? likedPostIds.filter((id) => id !== postId)
           : [...likedPostIds, postId];
         const nextPosts = posts.map((p) =>
-          p.id === postId
-            ? { ...p, likes: p.likes + (isLiked ? -1 : 1) }
-            : p,
+          p.id === postId ? { ...p, likes: p.likes + (isLiked ? -1 : 1) } : p,
         );
         set({ likedPostIds: nextLiked, posts: nextPosts });
       },
@@ -63,9 +65,7 @@ export const useCommunityStore = create<CommunityState>()(
         const nextPosts = posts.map((p) => ({
           ...p,
           comments: p.comments.map((c) =>
-            c.id === commentId
-              ? { ...c, likes: c.likes + (isLiked ? -1 : 1) }
-              : c,
+            c.id === commentId ? { ...c, likes: c.likes + (isLiked ? -1 : 1) } : c,
           ),
         }));
         set({ likedCommentIds: nextLiked, posts: nextPosts });
@@ -86,6 +86,14 @@ export const useCommunityStore = create<CommunityState>()(
         set({ posts: [newPost, ...posts], nextPostId: nextPostId + 1 });
       },
 
+      prependRemotePost: (post) => {
+        const { posts, nextPostId } = get();
+        set({
+          posts: [post, ...posts.filter((p) => p.id !== post.id)],
+          nextPostId: Math.max(nextPostId, post.id + 1),
+        });
+      },
+
       addComment: (postId, author, body) => {
         const { nextCommentId, posts } = get();
         const comment: CommunityComment = {
@@ -96,11 +104,20 @@ export const useCommunityStore = create<CommunityState>()(
           likes: 0,
         };
         const nextPosts = posts.map((p) =>
-          p.id === postId
-            ? { ...p, comments: [...p.comments, comment] }
-            : p,
+          p.id === postId ? { ...p, comments: [...p.comments, comment] } : p,
         );
         set({ posts: nextPosts, nextCommentId: nextCommentId + 1 });
+      },
+
+      appendServerComment: (postId, comment) => {
+        const { posts, nextCommentId } = get();
+        const nextPosts = posts.map((p) =>
+          p.id === postId ? { ...p, comments: [...p.comments, comment] } : p,
+        );
+        set({
+          posts: nextPosts,
+          nextCommentId: Math.max(nextCommentId, comment.id + 1),
+        });
       },
 
       getPostById: (id) => get().posts.find((p) => p.id === id),

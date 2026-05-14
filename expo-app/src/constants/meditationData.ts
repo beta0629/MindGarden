@@ -1,17 +1,16 @@
 /**
- * 명상 콘텐츠 Mock 데이터
+ * 명상 카탈로그 — **로컬(번들) 폴백 SSOT** (`EXPO_NATIVE_APP_PLAN.md` §11.1 API·§13·`WELLNESS_PHASE_3B_DATA_SOURCE.meditationCatalog`).
+ *
+ * **원장(Mock vs API)**:
+ * - **API 성공**(`meditationCatalogService.fetchMeditationCatalog` → `source: 'api'`): 서버에서 정규화된 트랙 목록만 사용한다. 이 파일의 `MOCK_MEDITATION_TRACKS`는 목록에 포함되지 않는다.
+ * - **로컬 폴백**(`source: 'demo'`): GET 예외 또는 정규화 후 목록이 비면 `MOCK_MEDITATION_TRACKS`를 복사해 쓰고, 트랙별 `audioUri`가 없으면 `MEDITATION_DEFAULT_STREAM_URI` → `MEDITATION_LOCAL_DEMO_SILENCE` 순으로 채운다.
  *
  * @author MindGarden
  * @since 2026-05-12
  */
 import { colors } from '@/theme/tokens';
 
-export type MeditationCategory =
-  | 'all'
-  | 'breathing'
-  | 'mindfulness'
-  | 'sleep'
-  | 'nature';
+export type MeditationCategory = 'all' | 'breathing' | 'mindfulness' | 'sleep' | 'nature';
 
 export interface MeditationTrack {
   readonly id: number;
@@ -38,8 +37,9 @@ export const MEDITATION_DEFAULT_STREAM_URI: string | undefined =
   envDemoStream.length > 0 ? envDemoStream : undefined;
 
 /** 무음 짧은 클립 — 리포지토리 내 생성 WAV(제3자 음원 없음). UI·플레이어 데모 폴백용 */
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-export const MEDITATION_LOCAL_DEMO_SILENCE = require('../../assets/audio/demo-silence.wav') as number;
+
+export const MEDITATION_LOCAL_DEMO_SILENCE =
+  require('../../assets/audio/demo-silence.wav') as number;
 
 export const MEDITATION_CATEGORIES: readonly {
   key: MeditationCategory | 'favorites';
@@ -53,10 +53,7 @@ export const MEDITATION_CATEGORIES: readonly {
   { key: 'favorites', label: '즐겨찾기' },
 ] as const;
 
-export const MEDITATION_GRADIENT_MAP: Record<
-  MeditationCategory,
-  readonly [string, string]
-> = {
+export const MEDITATION_GRADIENT_MAP: Record<MeditationCategory, readonly [string, string]> = {
   all: [colors.client.primary, colors.client.primaryLight],
   breathing: [colors.client.accent, colors.consultant.accent],
   mindfulness: [colors.consultant.primaryLight, colors.client.accent],
@@ -64,6 +61,7 @@ export const MEDITATION_GRADIENT_MAP: Record<
   nature: [colors.consultant.accent, colors.client.primaryLight],
 } as const;
 
+/** API 실패·빈 카탈로그 시에만 `meditationCatalogService`가 목록 소스로 사용 */
 export const MOCK_MEDITATION_TRACKS: MeditationTrack[] = [
   {
     id: 1,

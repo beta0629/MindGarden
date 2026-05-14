@@ -20,10 +20,7 @@ import { fontSize as fontSizeTokens } from '@/theme/typography';
 import { AppTopBar } from '@/components/templates/AppTopBar';
 import { Chip } from '@/components/atoms/Chip';
 import { EmptyState } from '@/components/atoms/EmptyState';
-import {
-  useMoodJournalDetail,
-  useDeleteMoodJournal,
-} from '@/api/hooks/useMoodJournal';
+import { useMoodJournalDetail, useDeleteMoodJournal } from '@/api/hooks/useMoodJournal';
 import { MOOD_EMOJIS } from '@/constants/moodConstants';
 
 export default function MoodJournalDetail() {
@@ -39,13 +36,9 @@ export default function MoodJournalDetail() {
     }
   };
 
-  const dateLabel = date
-    ? format(parseISO(date), 'yyyy년 M월 d일 (EEEE)', { locale: ko })
-    : '';
+  const dateLabel = date ? format(parseISO(date), 'yyyy년 M월 d일 (EEEE)', { locale: ko }) : '';
 
-  const moodDef = entry
-    ? MOOD_EMOJIS.find((m) => m.value === entry.moodValue)
-    : null;
+  const moodDef = entry ? MOOD_EMOJIS.find((m) => m.value === entry.moodValue) : null;
 
   const handleEdit = () => {
     hapticFeedback();
@@ -78,10 +71,7 @@ export default function MoodJournalDetail() {
 
   if (isLoading) {
     return (
-      <SafeAreaView
-        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-        edges={['top']}
-      >
+      <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
         <AppTopBar title="감정 일기" canGoBack />
         <View style={styles.loadingWrap}>
           <Text
@@ -100,10 +90,7 @@ export default function MoodJournalDetail() {
 
   if (!entry) {
     return (
-      <SafeAreaView
-        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-        edges={['top']}
-      >
+      <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
         <AppTopBar title="감정 일기" canGoBack />
         <EmptyState
           title="기록이 없습니다"
@@ -116,16 +103,10 @@ export default function MoodJournalDetail() {
   }
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="감정 일기" canGoBack />
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* 날짜 */}
         <Animated.View entering={FadeInDown.springify()}>
           <Text
@@ -141,10 +122,7 @@ export default function MoodJournalDetail() {
         </Animated.View>
 
         {/* 이모지 + 라벨 */}
-        <Animated.View
-          entering={FadeInDown.delay(80).springify()}
-          style={styles.emojiSection}
-        >
+        <Animated.View entering={FadeInDown.delay(80).springify()} style={styles.emojiSection}>
           <Text style={styles.bigEmoji}>{entry.emoji}</Text>
           <Text
             style={{
@@ -243,10 +221,7 @@ export default function MoodJournalDetail() {
         )}
 
         {/* 수정/삭제 버튼 */}
-        <Animated.View
-          entering={FadeInDown.delay(400).springify()}
-          style={styles.actionRow}
-        >
+        <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.actionRow}>
           <Pressable
             onPress={handleEdit}
             style={({ pressed }) => [

@@ -1,5 +1,14 @@
 package com.coresolution.consultation.service.impl;
 
+import java.security.SecureRandom;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.SocialSignupRequest;
 import com.coresolution.consultation.dto.SocialSignupResponse;
@@ -14,13 +23,8 @@ import com.coresolution.consultation.service.SocialAuthService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.security.PasswordPolicy;
 import com.coresolution.core.security.PasswordService;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * 소셜 인증 서비스 구현체
@@ -39,6 +43,13 @@ public class SocialAuthServiceImpl implements SocialAuthService {
      * 암호화·Base64·키 접두어 후에도 컬럼 길이(500) 내에 들어가도록 여유 있게 제한한다.
      */
     private static final int MAX_PROVIDER_USERNAME_PLAINTEXT_LENGTH = 200;
+
+    /**
+     * SNS A안 내부 비밀번호 생성 시 사용하는 난수 문자 집합(정책 허용 문자만).
+     */
+    private static final String INTERNAL_SOCIAL_PASSWORD_ALPHABET =
+        "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"
+            + PasswordPolicy.LOGIN_PASSWORD_ALLOWED_SPECIALS;
 
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;
@@ -101,25 +112,25 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 .build();
         }
             
-        // 비밀번호 검증 (로그인 AuthController와 동일하게 trim 후 길이·해시 처리)
+        // 비밀번호: 클라이언트 미전송(SNS A안) 시 서버 내부용 강난수만 생성·해시(평문 미반환).
+        // 클라이언트가 비밀번호를 보낸 경우에만 기존 길이 검증 후 encodePassword 정책 적용.
         String trimmedPassword = request.getPassword() == null ? "" : request.getPassword().trim();
+        final String passwordPlainForEncoding;
         if (!StringUtils.hasText(trimmedPassword)) {
-            log.warn("비밀번호가 입력되지 않음");
-            return SocialSignupResponse.builder()
-                .success(false)
-                .message("비밀번호를 입력해주세요.")
-                .build();
-        }
-
-        if (trimmedPassword.length() < 8) {
-            log.warn("비밀번호가 너무 짧음: {}", trimmedPassword.length());
-            return SocialSignupResponse.builder()
-                .success(false)
-                .message("비밀번호는 8자 이상이어야 합니다.")
-                .build();
+            passwordPlainForEncoding = generateInternalRandomLoginPassword();
+            log.info("소셜 회원가입: 비밀번호 미입력 — 내부용 강난수 생성 후 정책 검증·해시 저장");
+        } else {
+            if (trimmedPassword.length() < PasswordPolicy.LOGIN_PASSWORD_MIN_LENGTH) {
+                log.warn("비밀번호가 너무 짧음: {}", trimmedPassword.length());
+                return SocialSignupResponse.builder()
+                    .success(false)
+                    .message(String.format("비밀번호는 %d자 이상이어야 합니다.", PasswordPolicy.LOGIN_PASSWORD_MIN_LENGTH))
+                    .build();
+            }
+            passwordPlainForEncoding = trimmedPassword;
         }
             
-        // 비밀번호 확인 검증은 프론트엔드에서 처리
+        // 비밀번호 확인 검증은 프론트엔드에서 처리(클라이언트 전송 시)
             
         // 개인정보 동의 검증
         if (!request.isPrivacyConsent()) {
@@ -183,7 +194,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             
         User user = User.builder()
                 .userId(userId)
-                .password(passwordService.encodePassword(trimmedPassword))
+                .password(passwordService.encodePassword(passwordPlainForEncoding))
                 .name(request.getName())
                 .email(normalizedEmail)
                 .phone(phone)
@@ -363,10 +374,27 @@ public class SocialAuthServiceImpl implements SocialAuthService {
     }
     
     /**
-     * 임시 비밀번호 생성
+     * 로그인 저장 정책({@link PasswordPolicy})을 만족하는 난수 비밀번호를 생성한다.
+     * SNS A안 전용 — 평문은 응답·로그에 남기지 않는다.
+     *
+     * @return 정책 통과 평문
+     * @throws IllegalStateException 반복 생성 실패 시
      */
-    private String generateTempPassword() {
-        return "SOCIAL_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 1000);
+    private String generateInternalRandomLoginPassword() {
+        SecureRandom random = new SecureRandom();
+        for (int attempt = 0; attempt < 512; attempt++) {
+            int length = 14 + random.nextInt(9);
+            StringBuilder sb = new StringBuilder(length);
+            for (int i = 0; i < length; i++) {
+                int idx = random.nextInt(INTERNAL_SOCIAL_PASSWORD_ALPHABET.length());
+                sb.append(INTERNAL_SOCIAL_PASSWORD_ALPHABET.charAt(idx));
+            }
+            String candidate = sb.toString();
+            if (PasswordPolicy.firstLoginStorageViolationMessage(candidate) == null) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException("소셜 가입용 내부 비밀번호 생성에 실패했습니다.");
     }
     
     /**

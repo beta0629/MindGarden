@@ -1,7 +1,11 @@
 /**
- * 명상 카탈로그 — `GET /api/v1/meditations` 시도 후 데모 스트림·Mock 목록 단일 폴백
+ * 명상 카탈로그 — `GET /api/v1/meditations` + **번들 Mock 폴백** (`EXPO_NATIVE_APP_PLAN.md` §11.1 API·§13).
  *
- * SSOT: `docs/project-management/EXPO_NATIVE_APP_PLAN.md` Phase 3-C·§13
+ * **원장(Mock vs API)** — 표기는 `WELLNESS_PHASE_3B_DATA_SOURCE.meditationCatalog`와 동일 의미:
+ * - **API 경로**: `apiGet` 성공 후 `normalizeTrackList`가 **1건 이상**이면 `{ source: 'api', tracks }` — 서버 권위, `MOCK_MEDITATION_TRACKS` 미사용.
+ * - **로컬 폴백**: GET 예외(catch)·정규화 결과 `null`/빈 배열이면 `{ source: 'demo', tracks: applyDefaultAudio([...MOCK_MEDITATION_TRACKS]) }`.
+ * - **오디오**: 트랙에 스트림 URI가 없으면 `MEDITATION_DEFAULT_STREAM_URI` → `MEDITATION_LOCAL_DEMO_SILENCE` (`meditationData` 주석).
+ * - **표시 경계**: 제목·설명 등은 `normalizeTrack`에서 `toDisplayString`·`toSafeNumber`로 스칼라화(`COMMON_DISPLAY_BOUNDARY_MEETING_20260322.md`).
  *
  * @author MindGarden
  * @since 2026-05-13
@@ -125,7 +129,7 @@ function applyDefaultAudio(tracks: MeditationTrack[]): MeditationTrack[] {
 }
 
 /**
- * API 성공 시 정규화 목록, 그 외에는 Mock 목록 + 데모 스트림 URI를 동일 규칙으로 부여
+ * @returns `source: 'api'` = 서버 목록만; `source: 'demo'` = `MOCK_MEDITATION_TRACKS` + 데모 오디오 규칙(원장은 파일머리).
  */
 export async function fetchMeditationCatalog(): Promise<{
   source: MeditationCatalogSource;

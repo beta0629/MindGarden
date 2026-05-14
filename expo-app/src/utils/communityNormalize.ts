@@ -18,7 +18,10 @@ function normalizeTab(raw: unknown): CommunityTab {
   return 'all';
 }
 
-function normalizeComment(raw: unknown, index: number): CommunityComment | null {
+/**
+ * 단일 댓글 응답(`CommunityCommentResponse`) → `CommunityComment`
+ */
+export function normalizeCommunityComment(raw: unknown, index: number): CommunityComment | null {
   if (raw == null || typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
   return {
@@ -40,7 +43,7 @@ function normalizePost(raw: unknown, index: number): CommunityPost | null {
   const commentsRaw = o.comments ?? o.replies;
   const comments: CommunityComment[] = Array.isArray(commentsRaw)
     ? commentsRaw
-        .map((c, i) => normalizeComment(c, i + 1))
+        .map((c, i) => normalizeCommunityComment(c, i + 1))
         .filter((c): c is CommunityComment => c != null)
     : [];
   const tab = normalizeTab(o.tab ?? o.category ?? o.type);
@@ -83,4 +86,12 @@ export function normalizeCommunityPosts(raw: unknown): CommunityPost[] | null {
     i += 1;
   }
   return out.length > 0 ? out : [];
+}
+
+/**
+ * 단일 게시 응답(`CommunityPostFeedItemResponse`) → `CommunityPost`
+ */
+export function normalizeCommunityPost(raw: unknown): CommunityPost | null {
+  const body = unwrapApiResponse<unknown>(raw) ?? raw;
+  return normalizePost(body, 0);
 }

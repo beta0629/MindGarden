@@ -23,7 +23,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Bookmark, Check } from 'lucide-react-native';
 import { getMmkv } from '@/lib/getMmkv';
 
-import { usePsychoEducationArticleById, PSYCHO_EDUCATION_API_PLACEHOLDER } from '@/api/hooks/useWellness';
+import {
+  usePsychoEducationArticleById,
+  PSYCHO_EDUCATION_API_PLACEHOLDER,
+} from '@/api/hooks/useWellness';
 import { useTheme } from '@/theme';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { type PsychoPage } from '@/constants/psychoEducationData';
@@ -279,10 +282,7 @@ export default function PsychoEducationDetail() {
         </View>
 
         {/* 카드 스와이프 */}
-        <Animated.View
-          entering={FadeInDown.delay(200).springify()}
-          style={styles.flex}
-        >
+        <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.flex}>
           <FlatList
             ref={flatListRef}
             data={article.pages as PsychoPage[]}
@@ -304,10 +304,7 @@ export default function PsychoEducationDetail() {
               style={[
                 styles.dot,
                 {
-                  backgroundColor:
-                    i === currentPage
-                      ? theme.colors.primary
-                      : theme.colors.border,
+                  backgroundColor: i === currentPage ? theme.colors.primary : theme.colors.border,
                   width: i === currentPage ? 20 : 8,
                 },
               ]}

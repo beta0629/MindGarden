@@ -123,9 +123,15 @@ export const MIND_WEATHER_SOURCE_LABELS: Record<MindWeatherSource, string> = {
   voice: '음성 메모',
 };
 
-/** Phase 4-A MVP에서는 텍스트만 활성. 음성/STT는 후속 트랙. */
+/**
+ * 음성/STT: EXPO_NATIVE_APP_PLAN Phase 3-F(마음 날씨 고도화) 및 11.1 게이트 이후 트랙 비범위.
+ * Phase 3 화면에서는 텍스트 입력만 활성.
+ */
 export const MIND_WEATHER_VOICE_PLACEHOLDER_COPY =
-  '음성 메모는 다음 업데이트에서 제공돼요. 지금은 짧은 글로 기록해 주세요.';
+  '음성으로 남기는 기능은 아직 제공되지 않아요. 지금은 짧은 글로 기록해 주세요.';
+
+/** 음성 버튼 짧은 라벨(준비 중 대신 비범위 안내) */
+export const MIND_WEATHER_VOICE_DEFERRED_UI_LABEL = '추후 제공';
 
 /** MMKV 캐시 키 */
 export const MIND_WEATHER_STORAGE_KEY = 'mg_mind_weather';

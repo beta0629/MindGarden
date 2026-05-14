@@ -21,8 +21,7 @@ export function useCreateRating() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateRatingRequest) =>
-      apiPost(RATING_API.SUBMIT_RATING, data),
+    mutationFn: (data: CreateRatingRequest) => apiPost(RATING_API.SUBMIT_RATING, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: CONSULTATION_QUERY_KEYS.all,

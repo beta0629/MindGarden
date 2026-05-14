@@ -13,7 +13,13 @@ import { useTheme } from '@/theme';
 import type { AppTheme } from '@/theme';
 import { Badge } from '../atoms/Badge';
 
-type ScheduleStatus = 'SCHEDULED' | 'BOOKED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+type ScheduleStatus =
+  | 'SCHEDULED'
+  | 'BOOKED'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'NO_SHOW';
 
 interface ScheduleCardProps {
   readonly time: string;
@@ -35,7 +41,10 @@ const STATUS_LABEL: Record<ScheduleStatus, string> = {
   NO_SHOW: '불참',
 };
 
-const STATUS_BADGE_VARIANT: Record<ScheduleStatus, 'info' | 'warning' | 'success' | 'gray' | 'error'> = {
+const STATUS_BADGE_VARIANT: Record<
+  ScheduleStatus,
+  'info' | 'warning' | 'success' | 'gray' | 'error'
+> = {
   BOOKED: 'info',
   SCHEDULED: 'info',
   IN_PROGRESS: 'warning',
@@ -123,10 +132,7 @@ export function ScheduleCard({
           >
             {time}
           </Text>
-          <Badge
-            variant={STATUS_BADGE_VARIANT[status]}
-            label={STATUS_LABEL[status]}
-          />
+          <Badge variant={STATUS_BADGE_VARIANT[status]} label={STATUS_LABEL[status]} />
         </View>
 
         <Text

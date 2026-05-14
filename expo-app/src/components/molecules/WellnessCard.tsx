@@ -17,13 +17,7 @@ interface WellnessCardProps {
   onPress?: () => void;
 }
 
-export function WellnessCard({
-  icon,
-  title,
-  description,
-  index = 0,
-  onPress,
-}: WellnessCardProps) {
+export function WellnessCard({ icon, title, description, index = 0, onPress }: WellnessCardProps) {
   const theme = useTheme();
 
   const handlePress = () => {
@@ -49,12 +43,7 @@ export function WellnessCard({
         accessibilityLabel={`${title}. ${description}`}
         accessibilityRole="button"
       >
-        <View
-          style={[
-            styles.iconWrap,
-            { backgroundColor: theme.colors.primaryLight + '30' },
-          ]}
-        >
+        <View style={[styles.iconWrap, { backgroundColor: theme.colors.primaryLight + '30' }]}>
           {icon}
         </View>
         <View style={styles.textWrap}>

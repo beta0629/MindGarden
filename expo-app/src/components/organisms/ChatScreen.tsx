@@ -18,18 +18,8 @@ import {
 } from 'react-native';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import * as Haptics from 'expo-haptics';
-import {
-  Check,
-  CheckCheck,
-  RefreshCw,
-  Send,
-} from 'lucide-react-native';
-import Animated, {
-  FadeIn,
-  FadeInDown,
-  SlideInLeft,
-  SlideInRight,
-} from 'react-native-reanimated';
+import { Check, CheckCheck, RefreshCw, Send } from 'lucide-react-native';
+import Animated, { FadeIn, FadeInDown, SlideInLeft, SlideInRight } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
 import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
@@ -40,23 +30,14 @@ import {
   type Message,
 } from '@/api/hooks/useMessages';
 import { useAuthStore } from '@/stores/useAuthStore';
-import {
-  formatMessageTime,
-  formatDateSeparator,
-  isSameDay,
-} from '@/utils/dateFormat';
+import { formatMessageTime, formatDateSeparator, isSameDay } from '@/utils/dateFormat';
 import { toDisplayString } from '@/utils/safeDisplay';
 
 interface ChatScreenProps {
   partnerId: number;
 }
 
-const QUICK_REPLIES = [
-  '네, 알겠습니다',
-  '확인했습니다',
-  '감사합니다',
-  '잠시만요',
-];
+const QUICK_REPLIES = ['네, 알겠습니다', '확인했습니다', '감사합니다', '잠시만요'];
 
 export function ChatScreen({ partnerId }: ChatScreenProps) {
   const theme = useTheme();
@@ -68,13 +49,9 @@ export function ChatScreen({ partnerId }: ChatScreenProps) {
   const listRef = useRef<FlashListRef<Message>>(null);
   const markedIdsRef = useRef<Set<number>>(new Set());
 
-  const {
-    data,
-    isLoading,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-  } = useMessages(Number.isFinite(partnerId) ? partnerId : undefined);
+  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useMessages(
+    Number.isFinite(partnerId) ? partnerId : undefined,
+  );
 
   const sendMessageMutation = useSendMessage();
   const { mutate: markReadMutate } = useMarkMessageAsRead();
@@ -163,18 +140,12 @@ export function ChatScreen({ partnerId }: ChatScreenProps) {
   const renderItem = useCallback(
     ({ item, index }: { item: Message; index: number }) => {
       const olderMessage = messages[index - 1];
-      const showDateSeparator =
-        !olderMessage || !isSameDay(item.sentAt, olderMessage.sentAt);
+      const showDateSeparator = !olderMessage || !isSameDay(item.sentAt, olderMessage.sentAt);
 
       return (
         <>
-          {showDateSeparator ? (
-            <DateSeparator date={item.sentAt} />
-          ) : null}
-          <MessageBubble
-            message={item}
-            onRetry={handleRetry}
-          />
+          {showDateSeparator ? <DateSeparator date={item.sentAt} /> : null}
+          <MessageBubble message={item} onRetry={handleRetry} />
         </>
       );
     },
@@ -220,9 +191,7 @@ export function ChatScreen({ partnerId }: ChatScreenProps) {
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
         contentContainerStyle={styles.listContent}
-        ListFooterComponent={
-          isFetchingNextPage ? <LoadingIndicator /> : null
-        }
+        ListFooterComponent={isFetchingNextPage ? <LoadingIndicator /> : null}
       />
 
       {sendMessageMutation.isError ? (
@@ -243,10 +212,7 @@ export function ChatScreen({ partnerId }: ChatScreenProps) {
       {showQuickReplies ? (
         <Animated.View
           entering={FadeInDown.duration(200)}
-          style={[
-            styles.quickRepliesContainer,
-            { borderTopColor: theme.colors.divider },
-          ]}
+          style={[styles.quickRepliesContainer, { borderTopColor: theme.colors.divider }]}
         >
           {QUICK_REPLIES.map((text) => (
             <Pressable
@@ -329,9 +295,7 @@ export function ChatScreen({ partnerId }: ChatScreenProps) {
           style={[
             styles.sendButton,
             {
-              backgroundColor: inputText.trim()
-                ? theme.colors.primary
-                : theme.colors.gray[200],
+              backgroundColor: inputText.trim() ? theme.colors.primary : theme.colors.gray[200],
               borderRadius: theme.borderRadius.full,
             },
           ]}
@@ -340,11 +304,7 @@ export function ChatScreen({ partnerId }: ChatScreenProps) {
         >
           <Send
             size={18}
-            color={
-              inputText.trim()
-                ? theme.colors.textOnPrimary
-                : theme.colors.textTertiary
-            }
+            color={inputText.trim() ? theme.colors.textOnPrimary : theme.colors.textTertiary}
           />
         </Pressable>
       </View>
@@ -364,17 +324,12 @@ function MessageBubble({
   const isFailed = message.status === 'FAILED';
   const body = toDisplayString(message.content, '');
 
-  const enterAnimation = isMine
-    ? SlideInRight.duration(250)
-    : SlideInLeft.duration(250);
+  const enterAnimation = isMine ? SlideInRight.duration(250) : SlideInLeft.duration(250);
 
   return (
     <Animated.View
       entering={enterAnimation}
-      style={[
-        styles.bubbleRow,
-        isMine ? styles.bubbleRowRight : styles.bubbleRowLeft,
-      ]}
+      style={[styles.bubbleRow, isMine ? styles.bubbleRowRight : styles.bubbleRowLeft]}
     >
       {isFailed ? (
         <Pressable
@@ -404,9 +359,7 @@ function MessageBubble({
       >
         <Text
           style={{
-            color: isMine
-              ? theme.colors.textOnPrimary
-              : theme.colors.textMain,
+            color: isMine ? theme.colors.textOnPrimary : theme.colors.textMain,
             fontFamily: theme.fontFamily.regular,
             fontSize: theme.fontSize.sm,
             lineHeight: theme.fontSize.sm * 1.5,
@@ -416,9 +369,7 @@ function MessageBubble({
         </Text>
       </View>
       <View style={[styles.metaRow, isMine && styles.metaRowRight]}>
-        {isMine ? (
-          <ReadStatus status={message.status} />
-        ) : null}
+        {isMine ? <ReadStatus status={message.status} /> : null}
         <Text
           style={{
             color: theme.colors.textTertiary,
@@ -482,11 +433,7 @@ function ChatSkeleton() {
             i % 2 === 0 ? styles.bubbleRowLeft : styles.bubbleRowRight,
           ]}
         >
-          <SkeletonLoader
-            width={i % 3 === 0 ? 200 : 150}
-            height={40}
-            borderRadius={16}
-          />
+          <SkeletonLoader width={i % 3 === 0 ? 200 : 150} height={40} borderRadius={16} />
         </View>
       ))}
     </View>

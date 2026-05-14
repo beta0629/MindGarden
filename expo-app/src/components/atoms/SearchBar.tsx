@@ -15,12 +15,7 @@ interface SearchBarProps {
   style?: ViewStyle;
 }
 
-export function SearchBar({
-  value,
-  onChangeText,
-  placeholder = '검색',
-  style,
-}: SearchBarProps) {
+export function SearchBar({ value, onChangeText, placeholder = '검색', style }: SearchBarProps) {
   const theme = useTheme();
 
   return (

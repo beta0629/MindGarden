@@ -11,33 +11,17 @@
  * @since 2026-05-12
  */
 import { useCallback, useEffect, useState } from 'react';
-import {
-  Alert,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import Animated, {
-  FadeIn,
-  SlideInRight,
-  SlideInLeft,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, SlideInRight, SlideInLeft } from 'react-native-reanimated';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
 import { ProgressBar } from '@/components/molecules/ProgressBar';
 import { useSubmitAssessment } from '@/api/hooks/useSelfAssessment';
-import {
-  ASSESSMENTS,
-  OPTION_LABELS,
-  type AssessmentType,
-} from '@/constants/assessmentQuestions';
+import { ASSESSMENTS, OPTION_LABELS, type AssessmentType } from '@/constants/assessmentQuestions';
 import { WELLNESS_NON_MEDICAL_DISCLAIMER_KO } from '@/constants/wellnessComplianceCopy';
 
 export default function AssessmentTake() {
@@ -72,10 +56,7 @@ export default function AssessmentTake() {
 
   if (!definition) {
     return (
-      <SafeAreaView
-        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-        edges={['top']}
-      >
+      <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
         <AppTopBar title="자가 점검" canGoBack />
         <View style={styles.center}>
           <Text
@@ -141,9 +122,7 @@ export default function AssessmentTake() {
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      router.replace(
-        `/(client)/(wellness)/self-assessment/result/${result.id}`,
-      );
+      router.replace(`/(client)/(wellness)/self-assessment/result/${result.id}`);
     } catch {
       Alert.alert('오류', '제출에 실패했습니다. 다시 시도해주세요.');
     }
@@ -153,10 +132,7 @@ export default function AssessmentTake() {
     direction === 'right' ? SlideInRight.duration(250) : SlideInLeft.duration(250);
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title={definition.shortName} canGoBack />
 
       <View style={styles.content}>
@@ -189,11 +165,7 @@ export default function AssessmentTake() {
         </Text>
 
         {/* 문항 */}
-        <Animated.View
-          key={currentIdx}
-          entering={EnterAnimation}
-          style={styles.questionWrap}
-        >
+        <Animated.View key={currentIdx} entering={EnterAnimation} style={styles.questionWrap}>
           <Text
             style={{
               fontFamily: theme.fontFamily.semibold,
@@ -220,12 +192,8 @@ export default function AssessmentTake() {
                 style={({ pressed }) => [
                   styles.optionButton,
                   {
-                    backgroundColor: optSelected
-                      ? theme.colors.primary
-                      : theme.colors.surface,
-                    borderColor: optSelected
-                      ? theme.colors.primary
-                      : theme.colors.border,
+                    backgroundColor: optSelected ? theme.colors.primary : theme.colors.surface,
+                    borderColor: optSelected ? theme.colors.primary : theme.colors.border,
                     borderRadius: theme.borderRadius.lg,
                     ...(!optSelected && theme.shadows.sm),
                     transform: [{ scale: pressed ? 0.97 : 1 }],
@@ -239,9 +207,7 @@ export default function AssessmentTake() {
                   style={{
                     fontFamily: theme.fontFamily.semibold,
                     fontSize: theme.fontSize.sm,
-                    color: optSelected
-                      ? theme.colors.textOnPrimary
-                      : theme.colors.textSecondary,
+                    color: optSelected ? theme.colors.textOnPrimary : theme.colors.textSecondary,
                   }}
                 >
                   {opt.score}
@@ -250,9 +216,7 @@ export default function AssessmentTake() {
                   style={{
                     fontFamily: theme.fontFamily.medium,
                     fontSize: theme.fontSize.sm,
-                    color: optSelected
-                      ? theme.colors.textOnPrimary
-                      : theme.colors.textMain,
+                    color: optSelected ? theme.colors.textOnPrimary : theme.colors.textMain,
                     marginLeft: 8,
                   }}
                 >
@@ -293,9 +257,7 @@ export default function AssessmentTake() {
                 false: theme.colors.gray[300],
                 true: theme.colors.primaryLight,
               }}
-              thumbColor={
-                shareWithConsultant ? theme.colors.primary : theme.colors.surface
-              }
+              thumbColor={shareWithConsultant ? theme.colors.primary : theme.colors.surface}
               accessibilityLabel="상담사 공유 토글"
             />
           </Animated.View>
@@ -367,12 +329,8 @@ export default function AssessmentTake() {
               style={({ pressed }) => [
                 styles.navButton,
                 {
-                  backgroundColor: isAnswered
-                    ? theme.colors.primary
-                    : theme.colors.surface,
-                  borderColor: isAnswered
-                    ? theme.colors.primary
-                    : theme.colors.border,
+                  backgroundColor: isAnswered ? theme.colors.primary : theme.colors.surface,
+                  borderColor: isAnswered ? theme.colors.primary : theme.colors.border,
                   borderRadius: theme.borderRadius.lg,
                   opacity: isAnswered ? 1 : 0.5,
                   transform: [{ scale: pressed ? 0.97 : 1 }],
@@ -382,9 +340,7 @@ export default function AssessmentTake() {
               accessibilityRole="button"
             >
               {(() => {
-                const textColor = isAnswered
-                  ? theme.colors.textOnPrimary
-                  : theme.colors.textMain;
+                const textColor = isAnswered ? theme.colors.textOnPrimary : theme.colors.textMain;
                 return (
                   <>
                     <Text

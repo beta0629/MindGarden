@@ -6,12 +6,7 @@
  * @since 2026-05-12
  * @since 2026-05-13 — 실 API 페이징·ApiResponse 언래핑·역할별 스레드 키 정합
  */
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost } from '../client';
 import { MESSAGE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
@@ -70,12 +65,6 @@ interface ConsultationMessagesPage {
   totalElements: number;
 }
 
-interface MessagesThreadPage {
-  content: Message[];
-  page: number;
-  hasNext: boolean;
-}
-
 interface SendMessageParams {
   partnerId: number;
   content: string;
@@ -88,11 +77,21 @@ const DEFAULT_PARTNER_NAME = '내담자';
 const MESSAGE_QUERY_KEYS = {
   all: ['messages'],
   conversations: () => [...MESSAGE_QUERY_KEYS.all, 'conversations'],
-  conversationsList: (role: string, userId: number, search: string, tenantId: string) =>
-    [...MESSAGE_QUERY_KEYS.conversations(), role, userId, search, tenantId],
+  conversationsList: (role: string, userId: number, search: string, tenantId: string) => [
+    ...MESSAGE_QUERY_KEYS.conversations(),
+    role,
+    userId,
+    search,
+    tenantId,
+  ],
   messages: () => [...MESSAGE_QUERY_KEYS.all, 'detail'],
-  messagesList: (role: string, selfId: number, partnerId: number, tenantId: string) =>
-    [...MESSAGE_QUERY_KEYS.messages(), role, selfId, partnerId, tenantId],
+  messagesList: (role: string, selfId: number, partnerId: number, tenantId: string) => [
+    ...MESSAGE_QUERY_KEYS.messages(),
+    role,
+    selfId,
+    partnerId,
+    tenantId,
+  ],
   unreadCount: (userId: number) => [...MESSAGE_QUERY_KEYS.all, 'unread-count', userId],
 };
 
@@ -100,10 +99,7 @@ function roleToSenderType(role: 'client' | 'consultant'): string {
   return role === 'consultant' ? 'CONSULTANT' : 'CLIENT';
 }
 
-function normalizeBubbleStatus(
-  rawStatus: unknown,
-  isRead: boolean,
-): Message['status'] {
+function normalizeBubbleStatus(rawStatus: unknown, isRead: boolean): Message['status'] {
   const s = String(rawStatus ?? '').toUpperCase();
   if (isRead || s === 'READ' || s === 'REPLIED') {
     return 'READ';
@@ -117,11 +113,7 @@ function normalizeBubbleStatus(
   return 'SENT';
 }
 
-function rowToMessage(
-  row: ConsultationMessageRow,
-  partnerId: number,
-  selfId: number,
-): Message {
+function rowToMessage(row: ConsultationMessageRow, partnerId: number, selfId: number): Message {
   const id = toSafeNumber(row.id, 0);
   const senderId = toSafeNumber(row.senderId, 0);
   const isMine = senderId === selfId && senderId > 0;
@@ -199,8 +191,7 @@ export function buildConversationsFromRows(
     const preview = toDisplayString(row.content, toDisplayString(row.title, ''));
 
     const receiverId = toSafeNumber(row.receiverId, 0);
-    const unreadInc =
-      row.isRead === false && receiverId === selfId && selfId > 0 ? 1 : 0;
+    const unreadInc = row.isRead === false && receiverId === selfId && selfId > 0 ? 1 : 0;
 
     const existing = byPartner.get(partnerId);
     if (!existing) {
@@ -291,12 +282,7 @@ export function useConversations(searchQuery: string) {
   const userId = user?.id;
 
   return useInfiniteQuery({
-    queryKey: MESSAGE_QUERY_KEYS.conversationsList(
-      role ?? '',
-      userId ?? 0,
-      searchQuery,
-      tenantId,
-    ),
+    queryKey: MESSAGE_QUERY_KEYS.conversationsList(role ?? '', userId ?? 0, searchQuery, tenantId),
     queryFn: async ({ pageParam }) => {
       if (!userId || !role || !tenantId) {
         return { messages: [], page: 0, hasNext: false, totalElements: 0 };
@@ -317,12 +303,7 @@ export function useMessages(partnerId: number | undefined) {
   const selfId = user?.id;
 
   return useInfiniteQuery({
-    queryKey: MESSAGE_QUERY_KEYS.messagesList(
-      role ?? '',
-      selfId ?? 0,
-      partnerId ?? 0,
-      tenantId,
-    ),
+    queryKey: MESSAGE_QUERY_KEYS.messagesList(role ?? '', selfId ?? 0, partnerId ?? 0, tenantId),
     queryFn: async ({ pageParam }) => {
       if (!partnerId || !selfId || !role || !tenantId) {
         return { content: [], page: 0, hasNext: false };
@@ -353,9 +334,7 @@ export function useMessages(partnerId: number | undefined) {
       const currentPage = toSafeNumber(inner.currentPage, 0);
       const totalPages = toSafeNumber(inner.totalPages, 0);
       const hasNext = currentPage + 1 < totalPages;
-      const content = rows
-        .map((r) => rowToMessage(r, partnerId, selfId))
-        .reverse();
+      const content = rows.map((r) => rowToMessage(r, partnerId, selfId)).reverse();
       return { content, page: currentPage, hasNext };
     },
     initialPageParam: 0,
@@ -378,8 +357,7 @@ export function useSendMessage() {
       if (!trimmed) {
         throw new Error('내용을 입력해주세요.');
       }
-      const title =
-        trimmed.length > 80 ? `${trimmed.slice(0, 80)}…` : trimmed;
+      const title = trimmed.length > 80 ? `${trimmed.slice(0, 80)}…` : trimmed;
       const body =
         user.role === 'consultant'
           ? {
@@ -414,12 +392,7 @@ export function useSendMessage() {
         return;
       }
       queryClient.invalidateQueries({
-        queryKey: MESSAGE_QUERY_KEYS.messagesList(
-          user.role,
-          user.id,
-          variables.partnerId,
-          tid,
-        ),
+        queryKey: MESSAGE_QUERY_KEYS.messagesList(user.role, user.id, variables.partnerId, tid),
       });
       queryClient.invalidateQueries({
         queryKey: MESSAGE_QUERY_KEYS.conversations(),
@@ -438,9 +411,7 @@ export function useUnreadMessageCount() {
     queryKey: [...MESSAGE_QUERY_KEYS.unreadCount(userId ?? 0), tenantId],
     queryFn: async () => {
       try {
-        const raw = await apiGet<unknown>(
-          MESSAGE_API.unreadCount(userId!, userType),
-        );
+        const raw = await apiGet<unknown>(MESSAGE_API.unreadCount(userId!, userType));
         const inner = unwrapApiResponse<Record<string, unknown>>(raw);
         const bag = inner ?? (raw as Record<string, unknown>);
         const unread =

@@ -78,11 +78,7 @@ export function ClientCard({
       accessibilityRole="button"
       accessibilityLabel={`${name}, 총 ${totalSessions}회 상담`}
     >
-      <Avatar
-        uri={profileImageUrl}
-        name={name}
-        size="lg"
-      />
+      <Avatar uri={profileImageUrl} name={name} size="lg" />
 
       <View style={[styles.info, { marginLeft: theme.spacing.md }]}>
         <View style={styles.nameRow}>
@@ -97,11 +93,7 @@ export function ClientCard({
             {name}
           </Text>
           {riskLevel && riskLevel !== 'LOW' ? (
-            <Badge
-              variant={RISK_VARIANT[riskLevel]}
-              label={RISK_LABEL[riskLevel]}
-              size="sm"
-            />
+            <Badge variant={RISK_VARIANT[riskLevel]} label={RISK_LABEL[riskLevel]} size="sm" />
           ) : null}
         </View>
 
@@ -114,22 +106,14 @@ export function ClientCard({
           }}
           numberOfLines={1}
         >
-          {lastSessionDate
-            ? `최근 상담: ${lastSessionDate}`
-            : '상담 이력 없음'}
+          {lastSessionDate ? `최근 상담: ${lastSessionDate}` : '상담 이력 없음'}
           {` · ${totalSessions}회`}
         </Text>
 
-        {status === 'INACTIVE' ? (
-          <Badge variant="gray" label="비활성" size="sm" />
-        ) : null}
+        {status === 'INACTIVE' ? <Badge variant="gray" label="비활성" size="sm" /> : null}
       </View>
 
-      <ChevronRight
-        size={20}
-        color={theme.colors.gray[300]}
-        style={styles.chevron}
-      />
+      <ChevronRight size={20} color={theme.colors.gray[300]} style={styles.chevron} />
     </AnimatedPressable>
   );
 }

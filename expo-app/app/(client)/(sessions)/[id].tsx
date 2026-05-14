@@ -5,15 +5,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  Platform,
-} from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -47,14 +39,10 @@ export default function ClientSessionDetail() {
   const isCompleted = detail?.status === 'COMPLETED';
 
   const handleCancelRequest = () => {
-    Alert.alert(
-      '상담 취소',
-      '정말 이 상담을 취소하시겠습니까?',
-      [
-        { text: '아니요', style: 'cancel' },
-        { text: '취소하기', style: 'destructive', onPress: () => {} },
-      ],
-    );
+    Alert.alert('상담 취소', '정말 이 상담을 취소하시겠습니까?', [
+      { text: '아니요', style: 'cancel' },
+      { text: '취소하기', style: 'destructive', onPress: () => {} },
+    ]);
   };
 
   const handleReview = () => {
@@ -87,10 +75,7 @@ export default function ClientSessionDetail() {
 
   if (isLoading) {
     return (
-      <SafeAreaView
-        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-        edges={['top']}
-      >
+      <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
         <AppTopBar title="상담 상세" canGoBack />
         <View style={styles.loadingWrap}>
           <SkeletonCard />
@@ -102,10 +87,7 @@ export default function ClientSessionDetail() {
 
   if (!detail) {
     return (
-      <SafeAreaView
-        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-        edges={['top']}
-      >
+      <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
         <AppTopBar title="상담 상세" canGoBack />
         <EmptyState
           title="상담 정보를 불러올 수 없습니다"
@@ -115,7 +97,10 @@ export default function ClientSessionDetail() {
     );
   }
 
-  const statusConfig: Record<string, { label: string; variant: 'primary' | 'success' | 'error' | 'gray' }> = {
+  const statusConfig: Record<
+    string,
+    { label: string; variant: 'primary' | 'success' | 'error' | 'gray' }
+  > = {
     BOOKED: { label: '예정', variant: 'primary' },
     SCHEDULED: { label: '예정', variant: 'primary' },
     IN_PROGRESS: { label: '진행중', variant: 'primary' },
@@ -125,21 +110,13 @@ export default function ClientSessionDetail() {
   };
   const status = statusConfig[detail.status] ?? statusConfig['SCHEDULED']!;
   const consultantLabel = maskEncryptedDisplay(detail.consultantName, '상담사');
-  const consultantAvatarUri = resolveProfileImageUrlForNative(
-    detail.consultantProfileImageUrl,
-  );
+  const consultantAvatarUri = resolveProfileImageUrlForNative(detail.consultantProfileImageUrl);
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="상담 상세" canGoBack />
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* 상담사 프로필 */}
         <Animated.View
           entering={FadeInDown.springify()}
@@ -153,11 +130,7 @@ export default function ClientSessionDetail() {
           ]}
         >
           <View style={styles.profileRow}>
-            <Avatar
-              uri={consultantAvatarUri}
-              name={consultantLabel}
-              size="lg"
-            />
+            <Avatar uri={consultantAvatarUri} name={consultantLabel} size="lg" />
             <View style={styles.profileInfo}>
               <Text
                 style={{
@@ -338,10 +311,7 @@ export default function ClientSessionDetail() {
               </Pressable>
               <Pressable
                 onPress={handleOpenMindGarden}
-                style={[
-                  styles.tertiaryActionRow,
-                  { borderRadius: theme.borderRadius.lg },
-                ]}
+                style={[styles.tertiaryActionRow, { borderRadius: theme.borderRadius.lg }]}
                 accessibilityLabel="마음 정원 화면으로 이동"
                 accessibilityRole="button"
               >

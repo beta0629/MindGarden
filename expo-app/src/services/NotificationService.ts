@@ -2,6 +2,16 @@
  * NotificationService — expo-notifications 기반 푸시 알림 통합 서비스
  * 토큰 등록/해제 + 포그라운드 핸들러 + 탭 라우팅 + 설정 연동
  *
+ * 역할 분담(문서 고정, 본 파일은 계약·클라이언트 수신측만 유지):
+ * - `docs/project-management/EXPO_NATIVE_APP_PLAN.md` **11.1** 게이트 표의 **푸시** 행:
+ *   `NotificationService`·푸시 토큰 API 계약을 Phase 3 잔여로 명시하고,
+ *   **Expo Phase 4(푸시+오프라인)** 본 트랙과의 경계를 둔다.
+ * - 동 문서 **Phase 4: 푸시 알림 완성 + 오프라인 지원**(`core-coder`):
+ *   12종 시나리오 **서버 발화·스케줄링**, FCM/토큰 **주기 갱신**(expo-background-task),
+ *   오프라인·동기화·캐시 정리 등은 Phase 4 배치에서 다룬다.
+ *   웹 기획서 `CONSULTANT_CLIENT_APP_PLAN.md`의 **Phase 4** 번호는
+ *   「마음 날씨·마음 정원」(3-F·3-G) 의미로 **본 Expo Phase 4와 다름**(문서 주석 참고).
+ *
  * @author MindGarden
  * @since 2026-05-12
  */
@@ -35,15 +45,13 @@ import { stripHtmlToPlainText } from '../utils/safeDisplay';
  *
  * Spring에 위 API가 없으면 등록은 4xx로 실패할 수 있음 — 앱은 `registerToken` 실패를 삼키고
  * 로컬 알림 설정(MMKV)만 유지한다. 서버 푸시·스케줄러는 별도 백엔드 배치에서 구현한다.
- * (`CONSULTANT_CLIENT_APP_PLAN.md` §8, `EXPO_NATIVE_APP_PLAN.md` Phase 4)
+ * (`CONSULTANT_CLIENT_APP_PLAN.md` 8절, `EXPO_NATIVE_APP_PLAN.md` Expo Phase 4 본 트랙)
  *
  * @see `expo-app/src/api/endpoints.ts` 의 PUSH_API 주석
  */
 function navigateToSystemNotifications(role: 'client' | 'consultant'): void {
   const path =
-    role === 'consultant'
-      ? '/(consultant)/(more)/notifications'
-      : '/(client)/(more)/notifications';
+    role === 'consultant' ? '/(consultant)/(more)/notifications' : '/(client)/(more)/notifications';
   try {
     router.push(path as Href);
   } catch {
@@ -77,15 +85,8 @@ function collectPushRouteParams(
     return params;
   }
 
-  if (
-    scenario.category === 'booking' ||
-    scenario.category === 'session'
-  ) {
-    const sid = firstString(
-      data.scheduleId,
-      data.consultationId,
-      data.id,
-    );
+  if (scenario.category === 'booking' || scenario.category === 'session') {
+    const sid = firstString(data.scheduleId, data.consultationId, data.id);
     if (sid != null) {
       params.id = sid;
     }
@@ -100,12 +101,7 @@ function collectPushRouteParams(
       params.id = pid;
     }
   } else {
-    const oid = firstString(
-      data.id,
-      data.conversationId,
-      data.threadId,
-      data.userId,
-    );
+    const oid = firstString(data.id, data.conversationId, data.threadId, data.userId);
     if (oid != null) {
       params.id = oid;
     }
@@ -128,22 +124,16 @@ function resolvePushRouteWithFallback(
     return route;
   }
   if (route.includes('sessions)/review')) {
-    return role === 'consultant'
-      ? '/(consultant)/(schedule)'
-      : '/(client)/(sessions)';
+    return role === 'consultant' ? '/(consultant)/(schedule)' : '/(client)/(sessions)';
   }
   if (route.includes('records)/create')) {
     return '/(consultant)/(records)';
   }
   if (scenario.route.includes('sessions-payment')) {
-    return role === 'consultant'
-      ? '/(consultant)/(more)'
-      : '/(client)/(more)/sessions-payment';
+    return role === 'consultant' ? '/(consultant)/(more)' : '/(client)/(more)/sessions-payment';
   }
   if (scenario.route.includes('(sessions)')) {
-    return role === 'consultant'
-      ? '/(consultant)/(schedule)'
-      : '/(client)/(sessions)';
+    return role === 'consultant' ? '/(consultant)/(schedule)' : '/(client)/(sessions)';
   }
   if (scenario.route.includes('(schedule)')) {
     return '/(consultant)/(schedule)';
@@ -154,13 +144,9 @@ function resolvePushRouteWithFallback(
       : '/(client)/(more)/notifications';
   }
   if (scenario.route.includes('messages')) {
-    return role === 'consultant'
-      ? '/(consultant)/(more)/messages'
-      : '/(client)/(more)/messages';
+    return role === 'consultant' ? '/(consultant)/(more)/messages' : '/(client)/(more)/messages';
   }
-  return role === 'consultant'
-    ? '/(consultant)/(home)'
-    : '/(client)/(home)';
+  return role === 'consultant' ? '/(consultant)/(home)' : '/(client)/(home)';
 }
 
 /**

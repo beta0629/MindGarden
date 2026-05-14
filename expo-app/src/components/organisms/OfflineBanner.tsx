@@ -7,10 +7,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  SlideInUp,
-  SlideOutUp,
-} from 'react-native-reanimated';
+import Animated, { SlideInUp, SlideOutUp } from 'react-native-reanimated';
 import { WifiOff, Wifi } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
@@ -41,9 +38,7 @@ export function OfflineBanner() {
   if (!isOffline && !showReconnect) return null;
 
   const isReconnected = !isOffline && showReconnect;
-  const backgroundColor = isReconnected
-    ? theme.colors.success
-    : theme.colors.warning;
+  const backgroundColor = isReconnected ? theme.colors.success : theme.colors.warning;
   const IconComponent = isReconnected ? Wifi : WifiOff;
   const label = isReconnected ? '연결되었습니다' : '오프라인 상태입니다';
 
@@ -51,19 +46,12 @@ export function OfflineBanner() {
     <Animated.View
       entering={SlideInUp.duration(300)}
       exiting={SlideOutUp.duration(300)}
-      style={[
-        styles.container,
-        { backgroundColor, paddingTop: insets.top + 4 },
-      ]}
+      style={[styles.container, { backgroundColor, paddingTop: insets.top + 4 }]}
       accessibilityRole="alert"
       accessibilityLabel={label}
     >
       <View style={styles.content}>
-        <IconComponent
-          size={16}
-          color={theme.colors.textOnPrimary}
-          accessibilityElementsHidden
-        />
+        <IconComponent size={16} color={theme.colors.textOnPrimary} accessibilityElementsHidden />
         <Text
           style={[
             styles.text,

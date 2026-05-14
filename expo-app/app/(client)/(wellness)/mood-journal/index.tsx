@@ -9,15 +9,7 @@
  * @since 2026-05-12
  */
 import { useCallback, useMemo, useState } from 'react';
-import {
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  Dimensions,
-} from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -46,7 +38,7 @@ function getCalendarDays(year: number, month: number) {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const daysInPrev = new Date(year, month, 0).getDate();
-  const days: Array<{ day: number; otherMonth: boolean }> = [];
+  const days: { day: number; otherMonth: boolean }[] = [];
 
   for (let i = firstDay - 1; i >= 0; i--) {
     days.push({ day: daysInPrev - i, otherMonth: true });
@@ -108,8 +100,7 @@ export default function MoodJournalIndex() {
 
   const maxStatValue = 5;
 
-  const chartLabels =
-    stats?.map((s) => format(new Date(s.date), 'M/d')) ?? [];
+  const chartLabels = stats?.map((s) => format(new Date(s.date), 'M/d')) ?? [];
   const chartValues = stats?.map((s) => s.value) ?? [];
   const hasAnyMoodPoint = chartValues.some((v) => v > 0);
 
@@ -176,16 +167,10 @@ export default function MoodJournalIndex() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="감정 일기" canGoBack />
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* 월 네비게이션 */}
         <Animated.View entering={FadeInDown.springify()} style={styles.monthNav}>
           <Pressable
@@ -237,17 +222,13 @@ export default function MoodJournalIndex() {
         {/* 달력 그리드 */}
         <Animated.View entering={FadeIn.duration(300)} style={styles.calendarGrid}>
           {calDays.map((cell, idx) => {
-            const cellKey = cell.otherMonth
-              ? `other-${idx}`
-              : `day-${cell.day}`;
+            const cellKey = cell.otherMonth ? `other-${idx}` : `day-${cell.day}`;
             const dateStr = cell.otherMonth
               ? ''
               : format(new Date(calYear, calMonth, cell.day), 'yyyy-MM-dd');
             const isToday = dateStr === todayStr;
             const emoji = cell.otherMonth ? null : emojiForDate(cell.day);
-            const dayColor = cell.otherMonth
-              ? theme.colors.textTertiary
-              : theme.colors.textMain;
+            const dayColor = cell.otherMonth ? theme.colors.textTertiary : theme.colors.textMain;
             const hasRecord = Boolean(emoji);
             const recordSuffix = hasRecord ? ' 기록 있음' : '';
             const a11yLabel = cell.otherMonth
@@ -350,10 +331,8 @@ export default function MoodJournalIndex() {
                   style={[
                     styles.periodChip,
                     {
-                      backgroundColor:
-                        statPeriod === p ? theme.colors.primary : 'transparent',
-                      borderColor:
-                        statPeriod === p ? theme.colors.primary : theme.colors.border,
+                      backgroundColor: statPeriod === p ? theme.colors.primary : 'transparent',
+                      borderColor: statPeriod === p ? theme.colors.primary : theme.colors.border,
                     },
                   ]}
                   accessibilityLabel={MOOD_STAT_PERIOD_LABELS[p]}
@@ -365,9 +344,7 @@ export default function MoodJournalIndex() {
                       fontFamily: theme.fontFamily.medium,
                       fontSize: theme.fontSize.xs,
                       color:
-                        statPeriod === p
-                          ? theme.colors.textOnPrimary
-                          : theme.colors.textSecondary,
+                        statPeriod === p ? theme.colors.textOnPrimary : theme.colors.textSecondary,
                     }}
                   >
                     {MOOD_STAT_PERIOD_LABELS[p]}

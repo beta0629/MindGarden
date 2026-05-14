@@ -22,8 +22,16 @@ export const MOOD_EMOJIS: readonly MoodEmoji[] = [
 ] as const;
 
 export const EMOTION_TAGS = [
-  '불안', '우울', '화남', '외로움', '감사',
-  '행복', '평온', '설렘', '피곤', '스트레스',
+  '불안',
+  '우울',
+  '화남',
+  '외로움',
+  '감사',
+  '행복',
+  '평온',
+  '설렘',
+  '피곤',
+  '스트레스',
 ] as const;
 
 export type EmotionTag = (typeof EMOTION_TAGS)[number];

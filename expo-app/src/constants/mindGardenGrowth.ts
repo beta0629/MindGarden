@@ -11,13 +11,7 @@ export const GARDEN_GROWTH_WEEKLY_POINTS_CAP = 60;
 /** 누적 성장점 구간 — 단계 인덱스 산출용 (과도한 세션 보상 완화는 주간 캡으로 별도 처리) */
 export const GARDEN_STAGE_THRESHOLDS = [0, 45, 110, 220, 400] as const;
 
-export const GARDEN_STAGE_LABELS = [
-  '씨앗',
-  '새싹',
-  '줄기',
-  '꽃봉오리',
-  '만개한 정원',
-] as const;
+export const GARDEN_STAGE_LABELS = ['씨앗', '새싹', '줄기', '꽃봉오리', '만개한 정원'] as const;
 
 export const GARDEN_EVENT_WEIGHTS = {
   SESSION_COMPLETED: 18,
@@ -28,8 +22,7 @@ export const GARDEN_EVENT_WEIGHTS = {
 export type GardenGrowthEventType = keyof typeof GARDEN_EVENT_WEIGHTS;
 
 export const GARDEN_POLICY_COPY_KO = {
-  nonCompetitive:
-    '다른 사람과 비교하거나 순위를 매기지 않아요. 나만의 속도로 정원이 자라요.',
+  nonCompetitive: '다른 사람과 비교하거나 순위를 매기지 않아요. 나만의 속도로 정원이 자라요.',
   weeklyCap: `한 주에 모을 수 있는 성장점은 최대 ${GARDEN_GROWTH_WEEKLY_POINTS_CAP}점이에요. 건강한 리듬을 위해 정해진 한도예요.`,
   noDecay: '잠시 쉬어도 정원이 시들지 않아요. 언제든 다시 만나요.',
 } as const;
@@ -105,12 +98,9 @@ export function getGardenStageProgress(totalPoints: number): GardenStageProgress
   const currentThreshold = GARDEN_STAGE_THRESHOLDS[stageIndex] ?? 0;
   const nextIdx = stageIndex + 1;
   const nextThreshold: number | null =
-    nextIdx < GARDEN_STAGE_THRESHOLDS.length
-      ? (GARDEN_STAGE_THRESHOLDS[nextIdx] ?? null)
-      : null;
+    nextIdx < GARDEN_STAGE_THRESHOLDS.length ? (GARDEN_STAGE_THRESHOLDS[nextIdx] ?? null) : null;
   const pointsInStage = totalPoints - currentThreshold;
-  const pointsToNext =
-    nextThreshold === null ? null : Math.max(0, nextThreshold - totalPoints);
+  const pointsToNext = nextThreshold === null ? null : Math.max(0, nextThreshold - totalPoints);
   return {
     stageIndex,
     stageLabel,

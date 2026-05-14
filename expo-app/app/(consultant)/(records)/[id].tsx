@@ -125,10 +125,7 @@ export default function ConsultantRecordDetail() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { padding: theme.spacing.lg },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { padding: theme.spacing.lg }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

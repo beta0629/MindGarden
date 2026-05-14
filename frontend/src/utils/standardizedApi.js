@@ -9,7 +9,7 @@
  * @since 2025-12-06
  */
 
-import { apiGet, apiPost, apiPostFormData, apiPut, apiDelete } from './ajax';
+import { apiGet, apiPost, apiPostFormData, apiPut, apiPatch, apiDelete } from './ajax';
 import { getDefaultApiHeadersAsync } from './apiHeaders';
 import { getApiBaseUrl } from '../constants/api';
 
@@ -110,7 +110,36 @@ class StandardizedApi {
             throw StandardizedApi.handleError(error, endpoint, 'PUT');
         }
     }
-    
+
+    /**
+     * PATCH 요청 (표준화)
+     * @param {string} endpoint API 엔드포인트
+     * @param {Object} data 요청 본문
+     * @param {Object} options 추가 옵션
+     * @returns {Promise<any>} API 응답 데이터
+     */
+    static async patch(endpoint, data = {}, options = {}) {
+        try {
+            StandardizedApi.validateEndpoint(endpoint);
+
+            const headers = await getDefaultApiHeadersAsync({}, true);
+            const finalOptions = {
+                ...options,
+                headers: { ...headers, ...(options.headers || {}) }
+            };
+
+            console.log(`📤 [표준화 API] PATCH ${endpoint}`, { data, tenantId: headers['X-Tenant-Id'] });
+
+            const response = await apiPatch(endpoint, data, finalOptions);
+
+            console.log(`✅ [표준화 API] PATCH ${endpoint} 성공`);
+            return response;
+        } catch (error) {
+            console.error(`❌ [표준화 API] PATCH ${endpoint} 실패:`, error);
+            throw StandardizedApi.handleError(error, endpoint, 'PATCH');
+        }
+    }
+
     /**
      * POST FormData 요청 (표준화) - 파일 업로드 등
      * @param {string} endpoint API 엔드포인트

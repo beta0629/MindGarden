@@ -91,6 +91,7 @@ import ClientWellnessRenewal from './components/client/ClientWellnessRenewal';
 import MoodJournal from './components/client/MoodJournal';
 import SelfAssessment from './components/client/SelfAssessment';
 import ClientSessionPaymentRenewal from './components/client/ClientSessionPaymentRenewal';
+import ShopCheckoutMvp from './pages/client/ShopCheckoutMvp';
 import ConsultantAvailabilityRenewal from './components/consultant/ConsultantAvailabilityRenewal';
 import ConsultantIncomeReport from './components/consultant/ConsultantIncomeReport';
 import MeditationGuide from './components/wellness/MeditationGuide';
@@ -103,6 +104,11 @@ import ClientSettings from './components/client/ClientSettings';
 import WellnessNotificationList from './components/wellness/WellnessNotificationList';
 import WellnessNotificationDetail from './components/wellness/WellnessNotificationDetail';
 import WellnessManagement from './components/admin/WellnessManagement';
+import AdminCommunityModerationQueuePage from './components/admin/AdminCommunityModerationQueuePage';
+import AdminContentMasterPage from './components/admin/AdminContentMasterPage';
+import AdminPushMonitoringPlaceholderPage from './components/admin/AdminPushMonitoringPlaceholderPage';
+import AdminMindWeatherObservabilityPage from './components/admin/AdminMindWeatherObservabilityPage';
+import AdminMindGardenObservabilityPage from './components/admin/AdminMindGardenObservabilityPage';
 import MindfulnessGuide from './components/wellness/MindfulnessGuide';
 import TenantProfile from './components/tenant/TenantProfile';
 import PgConfigurationList from './components/tenant/PgConfigurationList';
@@ -405,6 +411,7 @@ function AppContent() {
               <Route path="mood-journal" element={<MoodJournal />} />
               <Route path="self-assessment" element={<SelfAssessment />} />
               <Route path="session-payment" element={<ClientSessionPaymentRenewal />} />
+              <Route path="shop-checkout" element={<ShopCheckoutMvp />} />
               <Route path="meditation" element={<MeditationGuide />} />
               <Route path="psycho-education" element={<PsychoEducation />} />
               <Route path="community" element={<CommunityFeed primaryColor="var(--mg-client-primary)" />} />
@@ -547,6 +554,11 @@ function AppContent() {
             
             {/* 관리자 - 웰니스 관리 */}
             <Route path="/admin/wellness" element={<WellnessManagement />} />
+            <Route path={ADMIN_ROUTES.COMMUNITY_MODERATION} element={<AdminCommunityModerationQueuePage />} />
+            <Route path={ADMIN_ROUTES.CONTENT_MASTER} element={<AdminContentMasterPage />} />
+            <Route path={ADMIN_ROUTES.MIND_WEATHER_OBSERVABILITY} element={<AdminMindWeatherObservabilityPage />} />
+            <Route path={ADMIN_ROUTES.MIND_GARDEN_OBSERVABILITY} element={<AdminMindGardenObservabilityPage />} />
+            <Route path={ADMIN_ROUTES.PUSH_MONITORING} element={<AdminPushMonitoringPlaceholderPage />} />
             
             {/* 개인정보 및 약관 관련 라우트 */}
             <Route path="/privacy" element={<PrivacyPolicy />} />

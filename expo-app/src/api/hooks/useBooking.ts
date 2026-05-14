@@ -4,12 +4,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import {
-  useQuery,
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost } from '../client';
 import { CONSULTANT_API, SCHEDULE_API } from '../endpoints';
 import { CONSULTATION_QUERY_KEYS } from './useConsultations';
@@ -75,9 +70,7 @@ export function useAvailableConsultants(filters?: ConsultantFilters) {
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) =>
-      lastPage.length === CONSULTANTS_PAGE_SIZE
-        ? allPages.length
-        : undefined,
+      lastPage.length === CONSULTANTS_PAGE_SIZE ? allPages.length : undefined,
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -89,10 +82,9 @@ export function useConsultantAvailability(
   return useQuery<AvailabilityResponse>({
     queryKey: BOOKING_QUERY_KEYS.availability(consultantId!, weekStart!),
     queryFn: () =>
-      apiGet<AvailabilityResponse>(
-        CONSULTANT_API.consultantAvailability(consultantId!),
-        { weekStart },
-      ),
+      apiGet<AvailabilityResponse>(CONSULTANT_API.consultantAvailability(consultantId!), {
+        weekStart,
+      }),
     enabled: !!consultantId && !!weekStart,
     staleTime: 1000 * 60 * 3,
   });
@@ -102,8 +94,7 @@ export function useCreateBooking() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateBookingRequest) =>
-      apiPost(SCHEDULE_API.SCHEDULE_CREATE, data),
+    mutationFn: (data: CreateBookingRequest) => apiPost(SCHEDULE_API.SCHEDULE_CREATE, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: CONSULTATION_QUERY_KEYS.all,

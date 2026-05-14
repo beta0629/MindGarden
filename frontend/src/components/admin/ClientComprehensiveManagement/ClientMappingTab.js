@@ -1,7 +1,7 @@
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import SafeText from '../../common/SafeText';
-import { MappingCard } from '../../ui/Card';
+import { MappingCard } from '../../ui/Card/index';
 import './ClientMappingTab.css';
 
 /**

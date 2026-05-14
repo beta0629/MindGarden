@@ -7,11 +7,7 @@
  */
 import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Platform } from 'react-native';
-import {
-  setAudioModeAsync,
-  useAudioPlayer,
-  useAudioPlayerStatus,
-} from 'expo-audio';
+import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 
 import {
   MEDITATION_DEFAULT_STREAM_URI,
@@ -52,9 +48,7 @@ function MeditationAudioBridgeInner({ children }: { children: ReactNode }) {
   const uri =
     currentTrack == null
       ? undefined
-      : currentTrack.audioUri ??
-        MEDITATION_DEFAULT_STREAM_URI ??
-        MEDITATION_LOCAL_DEMO_SILENCE;
+      : (currentTrack.audioUri ?? MEDITATION_DEFAULT_STREAM_URI ?? MEDITATION_LOCAL_DEMO_SILENCE);
   const player = useAudioPlayer(uri, {
     updateInterval: 300,
     downloadFirst: true,
@@ -143,11 +137,7 @@ function MeditationAudioBridgeInner({ children }: { children: ReactNode }) {
     [player, seekStore],
   );
 
-  return (
-    <MeditationPlaybackProvider value={controls}>
-      {children}
-    </MeditationPlaybackProvider>
-  );
+  return <MeditationPlaybackProvider value={controls}>{children}</MeditationPlaybackProvider>;
 }
 
 /**

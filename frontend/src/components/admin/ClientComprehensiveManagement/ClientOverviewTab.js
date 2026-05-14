@@ -3,7 +3,7 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { SmallCardGrid, ListTableView, StatusBadge } from '../../common';
 import SafeText from '../../common/SafeText';
-import { ProfileCard } from '../../ui/Card';
+import { ProfileCard } from '../../ui/Card/index';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, maskEncryptedDisplay } from '../../../utils/codeHelper';
 import { formatKoreanMobileForDisplay } from '../../../utils/koreanMobilePhone';
 import { toDisplayString } from '../../../utils/safeDisplay';

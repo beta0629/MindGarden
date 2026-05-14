@@ -7,7 +7,5 @@ import { Stack } from 'expo-router';
  * @since 2026-05-13
  */
 export default function ClientMindGardenLayout() {
-  return (
-    <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }} />
-  );
+  return <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }} />;
 }

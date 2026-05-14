@@ -64,12 +64,7 @@ export function MindWeatherCard({
       ]}
     >
       <View style={styles.headerRow}>
-        <View
-          style={[
-            styles.headerIcon,
-            { backgroundColor: theme.colors.primaryLight + '30' },
-          ]}
-        >
+        <View style={[styles.headerIcon, { backgroundColor: theme.colors.primaryLight + '30' }]}>
           <CloudSun size={20} color={theme.colors.primary} />
         </View>
         <View style={styles.headerText}>
@@ -99,12 +94,7 @@ export function MindWeatherCard({
       {card.keywords.length > 0 ? (
         <View style={styles.chipsRow}>
           {card.keywords.map((kw) => (
-            <Chip
-              key={kw.key}
-              label={toDisplayString(kw.label, '')}
-              selected
-              style={styles.chip}
-            />
+            <Chip key={kw.key} label={toDisplayString(kw.label, '')} selected style={styles.chip} />
           ))}
         </View>
       ) : (
@@ -146,15 +136,12 @@ export function MindWeatherCard({
         {MIND_WEATHER_DISCLAIMER_KO}
       </Text>
 
-      {(onPressShare || onPressUnshare) ? (
+      {onPressShare || onPressUnshare ? (
         <View style={styles.actionsRow}>
           {sharedSummary ? (
             <View style={styles.statusGroup}>
               <View
-                style={[
-                  styles.statusBadge,
-                  { backgroundColor: theme.colors.primaryLight + '40' },
-                ]}
+                style={[styles.statusBadge, { backgroundColor: theme.colors.primaryLight + '40' }]}
               >
                 <Share2 size={14} color={theme.colors.primary} />
                 <Text

@@ -59,6 +59,16 @@ export const ADMIN_ROUTES = {
     CACHE_MONITORING: '/admin/cache-monitoring',
     SECURITY_MONITORING: '/admin/security-monitoring',
     API_PERFORMANCE: '/admin/api-performance',
-    PSYCH_ASSESSMENTS: '/admin/psych-assessments'
+    PSYCH_ASSESSMENTS: '/admin/psych-assessments',
+    /** 커뮤니티 게시 검수 대기열 */
+    COMMUNITY_MODERATION: '/admin/community-moderation',
+    /** 심리교육·힐링 콘텐츠 마스터(읽기 연동 스캐폴드) */
+    CONTENT_MASTER: '/admin/content-master',
+    /** 푸시·알림 설정 모니터링(BW-1) 플레이스홀더 */
+    PUSH_MONITORING: '/admin/push-monitoring',
+    /** BW-6 마음 날씨 관측(읽기 전용) */
+    MIND_WEATHER_OBSERVABILITY: '/admin/wellness/mind-weather-observability',
+    /** BW-6 마음 정원 관측(읽기 전용) */
+    MIND_GARDEN_OBSERVABILITY: '/admin/wellness/mind-garden-observability'
 };
 

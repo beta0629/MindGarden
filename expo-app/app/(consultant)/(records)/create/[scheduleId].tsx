@@ -28,16 +28,7 @@ import { useCreateRecord } from '@/api/hooks/useRecords';
 import { Chip } from '@/components/atoms/Chip';
 import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 
-const TAG_OPTIONS = [
-  '우울',
-  '불안',
-  '가족',
-  '학업',
-  '직장',
-  '관계',
-  '자아',
-  '기타',
-];
+const TAG_OPTIONS = ['우울', '불안', '가족', '학업', '직장', '관계', '자아', '기타'];
 
 export default function ConsultantRecordCreate() {
   const theme = useTheme();
@@ -83,9 +74,7 @@ export default function ConsultantRecordCreate() {
         onSuccess: () => {
           Alert.alert(
             status === 'COMPLETED' ? '저장 완료' : '임시 저장',
-            status === 'COMPLETED'
-              ? '상담일지가 저장되었습니다.'
-              : '임시 저장되었습니다.',
+            status === 'COMPLETED' ? '상담일지가 저장되었습니다.' : '임시 저장되었습니다.',
             [{ text: '확인', onPress: () => router.back() }],
           );
         },
@@ -140,10 +129,7 @@ export default function ConsultantRecordCreate() {
       >
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { padding: theme.spacing.lg },
-          ]}
+          contentContainerStyle={[styles.scrollContent, { padding: theme.spacing.lg }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -178,8 +164,7 @@ export default function ConsultantRecordCreate() {
                   marginTop: theme.spacing.xs,
                 }}
               >
-                {schedule.date} · {schedule.startTime} -{' '}
-                {schedule.endTime}
+                {schedule.date} · {schedule.startTime} - {schedule.endTime}
               </Text>
             </View>
           ) : null}

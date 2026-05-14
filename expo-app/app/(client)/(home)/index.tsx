@@ -11,23 +11,11 @@
  * @since 2026-05-12
  */
 import { useCallback } from 'react';
-import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import {
-  Bell,
-  Calendar,
-  Heart,
-  TrendingUp,
-} from 'lucide-react-native';
+import { Bell, Calendar, Heart, TrendingUp } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
@@ -67,8 +55,7 @@ export default function ClientHome() {
   const unreadQuery = useUnreadCount();
   const unreadCount = unreadQuery.data?.count ?? 0;
 
-  const isLoading =
-    dashboardQuery.isLoading || upcomingQuery.isLoading;
+  const isLoading = dashboardQuery.isLoading || upcomingQuery.isLoading;
 
   const onRefresh = useCallback(() => {
     dashboardQuery.refetch();
@@ -89,10 +76,7 @@ export default function ClientHome() {
   const tip = tipQuery.data;
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar
         title="홈"
         rightAction={
@@ -106,12 +90,7 @@ export default function ClientHome() {
             <View>
               <Bell size={22} color={theme.colors.textMain} />
               {unreadCount > 0 ? (
-                <View
-                  style={[
-                    styles.notificationDot,
-                    { backgroundColor: theme.colors.error },
-                  ]}
-                />
+                <View style={[styles.notificationDot, { backgroundColor: theme.colors.error }]} />
               ) : null}
             </View>
           </Pressable>
@@ -183,14 +162,9 @@ export default function ClientHome() {
               </Text>
               <ConsultationCard
                 schedule={upcoming}
-                onPress={() =>
-                  router.push(`/(client)/(sessions)/${upcoming.id}`)
-                }
+                onPress={() => router.push(`/(client)/(sessions)/${upcoming.id}`)}
               />
-              <CountdownTimer
-                targetDate={upcoming.date}
-                targetTime={upcoming.startTime}
-              />
+              <CountdownTimer targetDate={upcoming.date} targetTime={upcoming.startTime} />
             </View>
           ) : (
             <View style={styles.section}>
@@ -223,18 +197,14 @@ export default function ClientHome() {
               icon={<Heart size={24} color={theme.colors.primary} />}
               title={tip.title}
               description={tip.description}
-              onPress={() =>
-                router.push('/(client)/(wellness)')
-              }
+              onPress={() => router.push('/(client)/(wellness)')}
             />
           ) : (
             <WellnessCard
               icon={<Heart size={24} color={theme.colors.primary} />}
               title="마음 돌봄"
               description="오늘도 잠시 마음을 챙겨보세요"
-              onPress={() =>
-                router.push('/(client)/(wellness)')
-              }
+              onPress={() => router.push('/(client)/(wellness)')}
             />
           )}
         </Animated.View>

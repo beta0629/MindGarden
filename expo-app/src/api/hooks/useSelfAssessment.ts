@@ -21,8 +21,7 @@ const ASSESSMENT_QUERY_KEYS = {
   all: ['self-assessment'] as const,
   list: () => [...ASSESSMENT_QUERY_KEYS.all, 'list'] as const,
   detail: (id: string) => [...ASSESSMENT_QUERY_KEYS.all, 'detail', id] as const,
-  lastByType: (type: AssessmentType) =>
-    [...ASSESSMENT_QUERY_KEYS.all, 'last', type] as const,
+  lastByType: (type: AssessmentType) => [...ASSESSMENT_QUERY_KEYS.all, 'last', type] as const,
 };
 
 export function useSelfAssessments() {
@@ -49,9 +48,7 @@ export function useLastAssessmentByType(type: AssessmentType) {
       const results = await fetchSelfAssessments();
       const filtered = results
         .filter((r) => r.type === type)
-        .sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        );
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       return filtered[0] ?? null;
     },
     staleTime: 1000 * 60,

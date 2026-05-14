@@ -5,6 +5,7 @@
  * @since 2026-05-12
  */
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -24,18 +25,27 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ArrowLeft } from 'lucide-react-native';
 
 import { useTheme } from '@/theme';
+import { COMMUNITY_QUERY_KEYS } from '@/api/hooks/useCommunity';
 import { useCommunityStore } from '@/stores/useCommunityStore';
+import { createRemoteCommunityPost } from '@/services/communityApi';
 import { COMMUNITY_DEMO_LABELS } from '@/constants/communityData';
 
 const ANONYMOUS_NICKNAMES = [
-  '익명의 구름', '익명의 바람', '익명의 별', '익명의 달',
-  '익명의 숲', '익명의 파도', '익명의 하늘', '익명의 꽃',
+  '익명의 구름',
+  '익명의 바람',
+  '익명의 별',
+  '익명의 달',
+  '익명의 숲',
+  '익명의 파도',
+  '익명의 하늘',
+  '익명의 꽃',
 ];
 
 export default function ClientCommunityCreate() {
   const theme = useTheme();
   const router = useRouter();
-  const { addPost } = useCommunityStore();
+  const queryClient = useQueryClient();
+  const { addPost, prependRemotePost } = useCommunityStore();
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -50,7 +60,7 @@ export default function ClientCommunityCreate() {
     router.back();
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit) return;
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -59,6 +69,28 @@ export default function ClientCommunityCreate() {
     const nickname = isAnonymous
       ? (ANONYMOUS_NICKNAMES[randomIdx] ?? '익명')
       : COMMUNITY_DEMO_LABELS.newClientNamedAuthor;
+
+    try {
+      const remote = await createRemoteCommunityPost({
+        postKind: 'CLIENT_REVIEW',
+        title: title.trim(),
+        body: body.trim(),
+        specialty: '',
+        anonymous: isAnonymous,
+      });
+      if (remote) {
+        prependRemotePost(remote);
+        await queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.all });
+        Alert.alert(
+          '접수되었습니다',
+          '관리자 검수 후 피드에 공개됩니다. 목록이 갱신되면 서버 기준으로 표시됩니다.',
+          [{ text: '확인', onPress: () => router.back() }],
+        );
+        return;
+      }
+    } catch {
+      /* §11.1 폴백 */
+    }
 
     addPost({
       tab: 'reviews',
@@ -78,10 +110,7 @@ export default function ClientCommunityCreate() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       {/* 헤더 */}
       <View style={styles.header}>
         <Pressable
@@ -110,9 +139,7 @@ export default function ClientCommunityCreate() {
           style={[
             styles.submitBtn,
             {
-              backgroundColor: canSubmit
-                ? theme.colors.primary
-                : theme.colors.border,
+              backgroundColor: canSubmit ? theme.colors.primary : theme.colors.border,
               borderRadius: theme.borderRadius.lg,
             },
           ]}

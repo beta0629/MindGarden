@@ -8,15 +8,7 @@
  * @since 2026-05-13
  */
 import { useEffect, useState } from 'react';
-import {
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { ShieldCheck, X } from 'lucide-react-native';
@@ -61,12 +53,7 @@ export function MindWeatherShareSheet({
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable
         style={[styles.backdrop, { backgroundColor: theme.colors.modalBackdrop }]}
         onPress={onClose}
@@ -87,21 +74,13 @@ export function MindWeatherShareSheet({
         >
           <SafeAreaView edges={['bottom']}>
             <View style={styles.handleRow}>
-              <View
-                style={[
-                  styles.handle,
-                  { backgroundColor: theme.colors.gray[300] },
-                ]}
-              />
+              <View style={[styles.handle, { backgroundColor: theme.colors.gray[300] }]} />
             </View>
 
             <View style={styles.header}>
               <View style={styles.headerLeft}>
                 <View
-                  style={[
-                    styles.headerIcon,
-                    { backgroundColor: theme.colors.primaryLight + '40' },
-                  ]}
+                  style={[styles.headerIcon, { backgroundColor: theme.colors.primaryLight + '40' }]}
                 >
                   <ShieldCheck size={18} color={theme.colors.primary} />
                 </View>

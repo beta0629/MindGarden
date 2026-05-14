@@ -9,9 +9,9 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -47,11 +47,7 @@ export default function ClientWellness() {
   const { data: contents, isPending, isFetching, refetch } = useHealingContents();
   const healingFeed = Array.isArray(contents) ? contents : [];
 
-  const showComingSoon = (feature: string) => {
-    Alert.alert('준비 중', `${feature} 기능은 다음 업데이트에서 만나보실 수 있어요.`);
-  };
-
-  const ENTRY_ROUTES: Record<string, string | undefined> = {
+  const ENTRY_ROUTES: Record<string, string> = {
     '감정 일기': '/(client)/(wellness)/mood-journal',
     '마음 자가 점검': '/(client)/(wellness)/self-assessment',
     '명상 가이드': '/(client)/(wellness)/meditation',
@@ -63,9 +59,7 @@ export default function ClientWellness() {
   const handleEntryPress = (title: string) => {
     const route = ENTRY_ROUTES[title];
     if (route) {
-      router.push(route as never);
-    } else {
-      showComingSoon(title);
+      router.push(route as Href);
     }
   };
 
@@ -103,10 +97,7 @@ export default function ClientWellness() {
   ];
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="웰니스" />
 
       <ScrollView
@@ -174,10 +165,7 @@ export default function ClientWellness() {
         </View>
 
         {/* 힐링 콘텐츠 피드 */}
-        <Animated.View
-          entering={FadeInDown.delay(400).springify()}
-          style={styles.feedSection}
-        >
+        <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.feedSection}>
           <Text
             style={[
               styles.sectionTitle,
@@ -205,12 +193,7 @@ export default function ClientWellness() {
             />
           ) : (
             healingFeed.map((item, index) => (
-              <HealingContentCard
-                key={item.id}
-                content={item}
-                index={index}
-                theme={theme}
-              />
+              <HealingContentCard key={item.id} content={item} index={index} theme={theme} />
             ))
           )}
         </Animated.View>
@@ -247,12 +230,7 @@ function HealingContentCard({ content, index, theme }: HealingContentCardProps) 
         },
       ]}
     >
-      <View
-        style={[
-          feedStyles.iconWrap,
-          { backgroundColor: theme.colors.primaryLight + '30' },
-        ]}
-      >
+      <View style={[feedStyles.iconWrap, { backgroundColor: theme.colors.primaryLight + '30' }]}>
         {typeIcons[content.type] ?? typeIcons.ARTICLE}
       </View>
       <View style={feedStyles.textWrap}>

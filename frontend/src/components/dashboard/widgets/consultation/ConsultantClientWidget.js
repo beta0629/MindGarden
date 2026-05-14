@@ -22,7 +22,7 @@ import { toDisplayString } from '../../../../utils/safeDisplay';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultantClientWidget.css';
 import MGButton from '../../../common/MGButton';
-import { ProfileCard } from '../../../ui/Card';
+import { ProfileCard } from '../../../ui/Card/index';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 const ConsultantClientWidget = ({ widget, user }) => {
   const navigate = useNavigate();

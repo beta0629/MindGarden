@@ -1,7 +1,11 @@
 /**
- * 심리 교육 — `GET /api/v1/psycho-education` 시도·정규화
+ * 심리 교육 카탈로그 — `GET /api/v1/psycho-education` + **번들 Mock 폴백** (`EXPO_NATIVE_APP_PLAN.md` §11.1 API·§13).
  *
- * SSOT: `docs/project-management/EXPO_NATIVE_APP_PLAN.md` Phase 3-C·§13
+ * **원장(Mock vs API)** — 표기는 `WELLNESS_PHASE_3B_DATA_SOURCE.psychoEducationCatalog`와 동일 의미:
+ * - **API 경로**: LIST가 예외 없이 끝나고 정규화 배열 **길이 > 0**이면 `{ source: 'api', articles, usedFallbackDueToError: false }` — `MOCK_PSYCHO_ARTICLES` 미사용.
+ * - **로컬 폴백**: `fetchPsychoEducationListOrThrow` 예외 → `{ source: 'demo', usedFallbackDueToError: true }`.
+ * - **빈 목록(HTTP 성공)**: 정상 응답이나 0건이면 `{ source: 'demo', usedFallbackDueToError: false }`(오류 플래그와 구분).
+ * - **표시 경계**: `normalizeArticle` 등에서 `toDisplayString`·`toSafeNumber` 사용(`COMMON_DISPLAY_BOUNDARY_MEETING_20260322.md`).
  *
  * @author MindGarden
  * @since 2026-05-13
@@ -52,9 +56,7 @@ function normalizePages(raw: unknown, titleFallback: string, bodyFallback: strin
     }
     if (pages.length > 0) return pages;
   }
-  return [
-    { title: titleFallback, body: bodyFallback },
-  ];
+  return [{ title: titleFallback, body: bodyFallback }];
 }
 
 function normalizeArticle(raw: unknown, index: number): PsychoArticle | null {
@@ -126,7 +128,7 @@ export interface PsychoEducationCatalogState {
 }
 
 /**
- * `GET /api/v1/psycho-education` 성공·비어 있지 않으면 API, 그 외 샘플(§13 Phase 3-C)
+ * 성공·비어 있지 않으면 API 권위; 그 외는 `MOCK_PSYCHO_ARTICLES`(플래그는 파일머리 원장).
  */
 export async function fetchPsychoEducationCatalog(): Promise<PsychoEducationCatalogState> {
   try {

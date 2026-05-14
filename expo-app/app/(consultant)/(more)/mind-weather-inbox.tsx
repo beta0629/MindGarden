@@ -1,9 +1,9 @@
 /**
- * 상담사 — 마음 날씨 수신함 (Phase 4-A 옵트인 공유 결과 표시).
+ * 상담사 — 마음 날씨 수신함 (내담자 옵트인 공유 카드).
  *
  * - 내담자가 공유 동의한 카드만 노출
  * - 카드 자체는 분석 결과(요약·키워드)에 한정. 원문은 옵트인 시에만 표시
- * - 백엔드 미부착 시 mock 폴백(MMKV 인박스)
+ * - 목록: 상담사 인박스 API 우선, 오류·빈 응답 시 로컬(MMKV) 인박스 폴백
  *
  * 참조: `MIND_WEATHER_UI_UX_SPEC.md` §2.2
  *
@@ -35,10 +35,7 @@ export default function ConsultantMindWeatherInbox() {
   const items = inboxQuery.data?.items ?? [];
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="마음 날씨 수신함" canGoBack />
 
       <ScrollView
@@ -76,7 +73,8 @@ export default function ConsultantMindWeatherInbox() {
               lineHeight: 20,
             }}
           >
-            내담자가 직접 공유 동의한 카드만 보여요. 동의 범위에 따라 원문 보기가 잠겨 있을 수 있습니다.
+            내담자가 직접 공유 동의한 카드만 보여요. 동의 범위에 따라 원문 보기가 잠겨 있을 수
+            있습니다.
           </Text>
           <Text
             style={{

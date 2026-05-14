@@ -89,16 +89,13 @@ interface PaymentListResponse {
 const PAYMENT_QUERY_KEYS = {
   all: ['payments'] as const,
   /** v2: 매칭 API 기반 + useQuery 형태(영속 캐시의 infinite pages 잔여와 구분) */
-  balance: (clientId: number) =>
-    [...PAYMENT_QUERY_KEYS.all, 'balance', 'v2', clientId] as const,
+  balance: (clientId: number) => [...PAYMENT_QUERY_KEYS.all, 'balance', 'v2', clientId] as const,
   history: (clientId: number, filter?: PaymentFilter) =>
     [...PAYMENT_QUERY_KEYS.all, 'history', 'v2', clientId, filter] as const,
-  detail: (paymentId: number) =>
-    [...PAYMENT_QUERY_KEYS.all, 'detail', paymentId] as const,
+  detail: (paymentId: number) => [...PAYMENT_QUERY_KEYS.all, 'detail', paymentId] as const,
   sessionDetail: (clientId: number, detailId: number) =>
     [...PAYMENT_QUERY_KEYS.all, 'sessionDetail', clientId, detailId] as const,
-  usage: (clientId: number) =>
-    [...PAYMENT_QUERY_KEYS.all, 'usage', clientId] as const,
+  usage: (clientId: number) => [...PAYMENT_QUERY_KEYS.all, 'usage', clientId] as const,
 };
 
 /**
@@ -138,23 +135,11 @@ function extractMappingsFromResponse(response: any): any[] {
 }
 
 /** 웹 ClientDashboard와 동일: ACTIVE 매칭만 회기 합산 */
-function aggregateSessionBalance(
-  clientId: number,
-  mappings: any[],
-): SessionBalance {
+function aggregateSessionBalance(clientId: number, mappings: any[]): SessionBalance {
   const active = mappings.filter((m) => m?.status === 'ACTIVE');
-  const totalSessions = active.reduce(
-    (s, m) => s + (Number(m.totalSessions) || 0),
-    0,
-  );
-  const usedSessions = active.reduce(
-    (s, m) => s + (Number(m.usedSessions) || 0),
-    0,
-  );
-  const remainingSessions = active.reduce(
-    (s, m) => s + (Number(m.remainingSessions) || 0),
-    0,
-  );
+  const totalSessions = active.reduce((s, m) => s + (Number(m.totalSessions) || 0), 0);
+  const usedSessions = active.reduce((s, m) => s + (Number(m.usedSessions) || 0), 0);
+  const remainingSessions = active.reduce((s, m) => s + (Number(m.remainingSessions) || 0), 0);
   return {
     clientId,
     totalSessions,
@@ -163,18 +148,11 @@ function aggregateSessionBalance(
   };
 }
 
-function mappingPaymentStatusToItemStatus(
-  raw: string | undefined,
-): PaymentStatus {
+function mappingPaymentStatusToItemStatus(raw: string | undefined): PaymentStatus {
   const ps = raw != null ? String(raw).trim().toUpperCase() : '';
   if (!ps) return 'PENDING';
   if (ps === 'REFUNDED') return 'REFUNDED';
-  if (
-    ps === 'CONFIRMED' ||
-    ps === 'PAY' ||
-    ps === 'DEP' ||
-    ps === 'APPROVED'
-  ) {
+  if (ps === 'CONFIRMED' || ps === 'PAY' || ps === 'DEP' || ps === 'APPROVED') {
     return 'COMPLETED';
   }
   if (ps === 'PENDING') return 'PENDING';
@@ -202,8 +180,7 @@ function mappingToPaymentItem(m: any): PaymentItem {
     paymentMethod: m.paymentMethod != null ? String(m.paymentMethod) : '-',
     status: mappingPaymentStatusToItemStatus(ps),
     packageName: m.packageName != null ? String(m.packageName) : undefined,
-    sessionCount:
-      m.totalSessions != null ? Number(m.totalSessions) : undefined,
+    sessionCount: m.totalSessions != null ? Number(m.totalSessions) : undefined,
     createdAt:
       typeof m.createdAt === 'string'
         ? m.createdAt
@@ -211,10 +188,7 @@ function mappingToPaymentItem(m: any): PaymentItem {
   };
 }
 
-function filterPaymentItems(
-  items: PaymentItem[],
-  filter: PaymentFilter,
-): PaymentItem[] {
+function filterPaymentItems(items: PaymentItem[], filter: PaymentFilter): PaymentItem[] {
   if (filter === 'ALL') return items;
   if (filter === 'COMPLETED') {
     return items.filter((p) => p.status === 'COMPLETED');
@@ -240,10 +214,7 @@ export function useSessionBalance(clientId: number | undefined) {
   });
 }
 
-export function usePaymentHistory(
-  clientId: number | undefined,
-  filter: PaymentFilter = 'ALL',
-) {
+export function usePaymentHistory(clientId: number | undefined, filter: PaymentFilter = 'ALL') {
   return useQuery<PaymentListResponse>({
     queryKey: PAYMENT_QUERY_KEYS.history(clientId!, filter),
     queryFn: async () => {
@@ -251,13 +222,11 @@ export function usePaymentHistory(
         clientId,
       });
       const mappings = extractMappingsFromResponse(response);
-      const items = mappings
-        .map(mappingToPaymentItem)
-        .sort((a, b) => {
-          const tb = Date.parse(String(b.createdAt)) || 0;
-          const ta = Date.parse(String(a.createdAt)) || 0;
-          return tb - ta;
-        });
+      const items = mappings.map(mappingToPaymentItem).sort((a, b) => {
+        const tb = Date.parse(String(b.createdAt)) || 0;
+        const ta = Date.parse(String(a.createdAt)) || 0;
+        return tb - ta;
+      });
       const content = filterPaymentItems(items, filter);
       return {
         content,
@@ -272,10 +241,8 @@ export function usePaymentHistory(
 }
 
 function pgPaymentToPaymentDetail(raw: Record<string, unknown>, id: number): PaymentDetail {
-  const amount =
-    Number(raw.amount ?? raw.paymentAmount ?? raw.totalAmount ?? 0) || 0;
-  const statusRaw =
-    raw.status != null ? String(raw.status).trim().toUpperCase() : '';
+  const amount = Number(raw.amount ?? raw.paymentAmount ?? raw.totalAmount ?? 0) || 0;
+  const statusRaw = raw.status != null ? String(raw.status).trim().toUpperCase() : '';
   let status: PaymentStatus = 'PENDING';
   if (statusRaw.includes('COMPLET') || statusRaw === 'PAID' || statusRaw === 'DONE') {
     status = 'COMPLETED';
@@ -295,16 +262,9 @@ function pgPaymentToPaymentDetail(raw: Record<string, unknown>, id: number): Pay
     raw.description != null && String(raw.description).trim() !== ''
       ? String(raw.description)
       : '결제';
-  const refundKey =
-    raw.paymentId ??
-    raw.paymentKey ??
-    raw.orderId ??
-    raw.id ??
-    id;
+  const refundKey = raw.paymentId ?? raw.paymentKey ?? raw.orderId ?? raw.id ?? id;
   const refundApiPaymentId =
-    refundKey != null && String(refundKey).trim() !== ''
-      ? String(refundKey)
-      : String(id);
+    refundKey != null && String(refundKey).trim() !== '' ? String(refundKey) : String(id);
   return {
     id: Number(raw.id) || id,
     paymentDate,
@@ -313,8 +273,7 @@ function pgPaymentToPaymentDetail(raw: Record<string, unknown>, id: number): Pay
     paymentMethod,
     status,
     refundable: status === 'COMPLETED',
-    refundDeadline:
-      raw.refundDeadline != null ? String(raw.refundDeadline) : undefined,
+    refundDeadline: raw.refundDeadline != null ? String(raw.refundDeadline) : undefined,
     receiptUrl: raw.receiptUrl != null ? String(raw.receiptUrl) : undefined,
     createdAt: createdAt || paymentDate || new Date().toISOString(),
     detailKind: 'PG',
@@ -323,18 +282,14 @@ function pgPaymentToPaymentDetail(raw: Record<string, unknown>, id: number): Pay
 }
 
 function mappingRowToPaymentDetail(m: Record<string, unknown>, mappingId: number): PaymentDetail {
-  const amount =
-    Number(m.packagePrice ?? m.paymentAmount ?? 0) || 0;
+  const amount = Number(m.packagePrice ?? m.paymentAmount ?? 0) || 0;
   const consultant =
     m.consultant != null && typeof m.consultant === 'object'
       ? (m.consultant as Record<string, unknown>)
       : null;
   const consultantName =
-    consultant?.consultantName != null
-      ? String(consultant.consultantName)
-      : undefined;
-  const assignedAt =
-    m.assignedAt != null ? String(m.assignedAt).split('T')[0] : undefined;
+    consultant?.consultantName != null ? String(consultant.consultantName) : undefined;
+  const assignedAt = m.assignedAt != null ? String(m.assignedAt).split('T')[0] : undefined;
   const paymentDate = formatMappingDate(m) || '-';
   const ps = m.paymentStatus != null ? String(m.paymentStatus) : '';
   return {
@@ -345,13 +300,10 @@ function mappingRowToPaymentDetail(m: Record<string, unknown>, mappingId: number
       m.packageName != null && String(m.packageName).trim() !== ''
         ? String(m.packageName)
         : '상담 패키지(매칭)',
-    paymentMethod:
-      m.paymentMethod != null ? String(m.paymentMethod) : '-',
+    paymentMethod: m.paymentMethod != null ? String(m.paymentMethod) : '-',
     status: mappingPaymentStatusToItemStatus(ps),
-    packageName:
-      m.packageName != null ? String(m.packageName) : undefined,
-    sessionCount:
-      m.totalSessions != null ? Number(m.totalSessions) : undefined,
+    packageName: m.packageName != null ? String(m.packageName) : undefined,
+    sessionCount: m.totalSessions != null ? Number(m.totalSessions) : undefined,
     consultantName,
     consultationDate: assignedAt,
     refundable: false,
@@ -389,10 +341,7 @@ function normalizeUsageRows(response: unknown): SessionUsageItem[] {
     const r = row as Record<string, unknown>;
     const id = Number(r.id) || idx + 1;
     const dateRaw = r.date ?? r.usageDate ?? r.createdAt ?? '';
-    const date =
-      typeof dateRaw === 'string'
-        ? dateRaw.split('T')[0] ?? ''
-        : String(dateRaw);
+    const date = typeof dateRaw === 'string' ? (dateRaw.split('T')[0] ?? '') : String(dateRaw);
     const typeRaw = r.type != null ? String(r.type).toUpperCase() : 'USED';
     let type: UsageType = 'USED';
     if (typeRaw.includes('CHARGE') || typeRaw === 'CHARGED') {
@@ -400,12 +349,10 @@ function normalizeUsageRows(response: unknown): SessionUsageItem[] {
     } else if (typeRaw.includes('REFUND')) {
       type = 'REFUNDED';
     }
-    const description =
-      r.description != null ? String(r.description) : '회기 변동';
+    const description = r.description != null ? String(r.description) : '회기 변동';
     const sessionChange = Number(r.sessionChange ?? r.delta ?? 0);
     const remainingAfter = Number(r.remainingAfter ?? r.remaining ?? 0);
-    const consultantName =
-      r.consultantName != null ? String(r.consultantName) : undefined;
+    const consultantName = r.consultantName != null ? String(r.consultantName) : undefined;
     if (!date) {
       return;
     }
@@ -442,16 +389,13 @@ function buildUsageFromMappings(mappings: any[]): SessionUsageItem[] {
     }
     const id = Number(m.id) || idx + 1;
     const date = formatMappingDate(m) || '-';
-    const pkg =
-      m.packageName != null ? String(m.packageName) : '패키지';
+    const pkg = m.packageName != null ? String(m.packageName) : '패키지';
     const consultant =
       m.consultant != null && typeof m.consultant === 'object'
         ? (m.consultant as Record<string, unknown>)
         : null;
     const consultantName =
-      consultant?.consultantName != null
-        ? String(consultant.consultantName)
-        : undefined;
+      consultant?.consultantName != null ? String(consultant.consultantName) : undefined;
     rows.push({
       id: id + 1_000_000,
       date,
@@ -565,8 +509,7 @@ export function useCreatePayment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreatePaymentRequest) =>
-      apiPost(PAYMENT_API.CONFIRM_PAYMENT, data),
+    mutationFn: (data: CreatePaymentRequest) => apiPost(PAYMENT_API.CONFIRM_PAYMENT, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PAYMENT_QUERY_KEYS.all });
     },
@@ -577,8 +520,7 @@ export function useRequestExtension() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: RequestExtensionRequest) =>
-      apiPost(PAYMENT_API.SESSION_EXTENSIONS, data),
+    mutationFn: (data: RequestExtensionRequest) => apiPost(PAYMENT_API.SESSION_EXTENSIONS, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PAYMENT_QUERY_KEYS.all });
     },

@@ -5,6 +5,7 @@
  * @since 2026-05-12
  */
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -23,13 +24,16 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ArrowLeft } from 'lucide-react-native';
 
 import { useTheme } from '@/theme';
+import { COMMUNITY_QUERY_KEYS } from '@/api/hooks/useCommunity';
 import { useCommunityStore } from '@/stores/useCommunityStore';
+import { createRemoteCommunityPost } from '@/services/communityApi';
 import { COMMUNITY_DEMO_LABELS } from '@/constants/communityData';
 
 export default function ConsultantCommunityCreate() {
   const theme = useTheme();
   const router = useRouter();
-  const { addPost } = useCommunityStore();
+  const queryClient = useQueryClient();
+  const { addPost, prependRemotePost } = useCommunityStore();
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -43,10 +47,30 @@ export default function ConsultantCommunityCreate() {
     router.back();
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit) return;
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+
+    try {
+      const remote = await createRemoteCommunityPost({
+        postKind: 'CONSULTANT_COLUMN',
+        title: title.trim(),
+        body: body.trim(),
+        specialty: COMMUNITY_DEMO_LABELS.newConsultantSpecialty,
+        anonymous: false,
+      });
+      if (remote) {
+        prependRemotePost(remote);
+        await queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.all });
+        Alert.alert('접수되었습니다', '관리자 검수 후 피드에 공개됩니다.', [
+          { text: '확인', onPress: () => router.back() },
+        ]);
+        return;
+      }
+    } catch {
+      /* §11.1 폴백 */
     }
 
     addPost({
@@ -67,10 +91,7 @@ export default function ConsultantCommunityCreate() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       {/* 헤더 */}
       <View style={styles.header}>
         <Pressable
@@ -99,9 +120,7 @@ export default function ConsultantCommunityCreate() {
           style={[
             styles.submitBtn,
             {
-              backgroundColor: canSubmit
-                ? theme.colors.primary
-                : theme.colors.border,
+              backgroundColor: canSubmit ? theme.colors.primary : theme.colors.border,
               borderRadius: theme.borderRadius.lg,
             },
           ]}

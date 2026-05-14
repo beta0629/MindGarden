@@ -20,13 +20,10 @@ function realPathSafe(p) {
 }
 
 const metroConfig = require(metroPath);
-const resolveRequest =
-  metroConfig.resolver && metroConfig.resolver.resolveRequest;
+const resolveRequest = metroConfig.resolver && metroConfig.resolver.resolveRequest;
 
 if (typeof resolveRequest !== 'function') {
-  console.error(
-    'verify-metro-mmkv: metro.config.js resolver.resolveRequest가 함수가 아님',
-  );
+  console.error('verify-metro-mmkv: metro.config.js resolver.resolveRequest가 함수가 아님');
   process.exit(1);
 }
 
@@ -116,10 +113,7 @@ for (const platform of platforms) {
     try {
       result = resolveRequest(context, c.moduleName, platform);
     } catch (err) {
-      console.error(
-        `verify-metro-mmkv: FAIL [${platform}] "${c.label}" threw`,
-        err,
-      );
+      console.error(`verify-metro-mmkv: FAIL [${platform}] "${c.label}" threw`, err);
       process.exit(1);
     }
     if (!result || result.type !== 'sourceFile' || !result.filePath) {
@@ -131,9 +125,7 @@ for (const platform of platforms) {
     }
     const gotReal = realPathSafe(result.filePath);
     if (gotReal !== expectedReal) {
-      console.error(
-        `verify-metro-mmkv: FAIL [${platform}] "${c.label}" — filePath 불일치`,
-      );
+      console.error(`verify-metro-mmkv: FAIL [${platform}] "${c.label}" — filePath 불일치`);
       console.error('  expected:', expectedReal);
       console.error('  actual:  ', gotReal);
       process.exit(1);

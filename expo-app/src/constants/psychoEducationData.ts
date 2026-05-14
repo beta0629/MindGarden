@@ -1,5 +1,9 @@
 /**
- * 심리 교육 콘텐츠 Mock 데이터
+ * 심리 교육 카탈로그 — **로컬(번들) 폴백 SSOT** (`EXPO_NATIVE_APP_PLAN.md` §11.1 API·§13·`WELLNESS_PHASE_3B_DATA_SOURCE.psychoEducationCatalog`).
+ *
+ * **원장(Mock vs API)**:
+ * - **API 성공**(`psychoEducationService.fetchPsychoEducationCatalog` → `source: 'api'`): 서버에서 정규화된 기사 배열만 사용한다. 이 파일의 `MOCK_PSYCHO_ARTICLES`는 목록에 포함되지 않는다.
+ * - **로컬 폴백**(`source: 'demo'`): LIST 호출 예외·`INVALID_PSYCHO_RESPONSE`·정규화 후 빈 배열이면 `MOCK_PSYCHO_ARTICLES`를 복사해 쓴다(`usedFallbackDueToError`는 서비스 주석 참조).
  *
  * 운영 전: 편집·감수·저작권(표절) 검토 및 의료·광고 표현 준수(`EXPO_NATIVE_APP_PLAN.md` §10.1)를 거친 콘텐츠로 교체한다.
  *
@@ -7,12 +11,9 @@
  * @since 2026-05-12
  */
 
-export type PsychoCategory =
-  | 'all'
-  | 'stress'
-  | 'emotion'
-  | 'relationship'
-  | 'selfcare';
+import { colors } from '@/theme/tokens';
+
+export type PsychoCategory = 'all' | 'stress' | 'emotion' | 'relationship' | 'selfcare';
 
 export interface PsychoPage {
   readonly title: string;
@@ -42,12 +43,7 @@ export const PSYCHO_CATEGORIES: readonly {
   { key: 'bookmarks', label: '북마크' },
 ] as const;
 
-import { colors } from '@/theme/tokens';
-
-export const PSYCHO_GRADIENT_MAP: Record<
-  PsychoCategory,
-  readonly [string, string]
-> = {
+export const PSYCHO_GRADIENT_MAP: Record<PsychoCategory, readonly [string, string]> = {
   all: [colors.client.primary, colors.client.primaryLight],
   stress: [colors.client.primary, colors.client.primaryLight],
   emotion: [colors.consultant.primaryLight, colors.client.accent],
@@ -55,6 +51,7 @@ export const PSYCHO_GRADIENT_MAP: Record<
   selfcare: [colors.client.accent, colors.consultant.accent],
 } as const;
 
+/** API 실패·빈·비파싱 카탈로그 시에만 `psychoEducationService`가 목록 소스로 사용 */
 export const MOCK_PSYCHO_ARTICLES: PsychoArticle[] = [
   {
     id: 1,

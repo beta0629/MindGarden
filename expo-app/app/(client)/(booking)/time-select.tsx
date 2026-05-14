@@ -6,36 +6,22 @@
  * @since 2026-05-12
  */
 import { useMemo, useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  Platform,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import {
-  format,
-  addDays,
-  startOfWeek,
-  isSameDay,
-} from 'date-fns';
+import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
+import { toDisplayString } from '@/utils/safeDisplay';
 import { AppTopBar } from '@/components/templates/AppTopBar';
 import { ProgressBar } from '@/components/molecules/ProgressBar';
 import { TimeSlotChip } from '@/components/molecules/TimeSlotChip';
 import { Avatar } from '@/components/atoms/Avatar';
 import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 import { EmptyState } from '@/components/atoms/EmptyState';
-import {
-  useConsultantAvailability,
-  type AvailableSlot,
-} from '@/api/hooks/useBooking';
+import { useConsultantAvailability, type AvailableSlot } from '@/api/hooks/useBooking';
 
 const STEP_LABELS = ['상담사 선택', '시간 선택', '결제'];
 const DAYS_IN_WEEK = 7;
@@ -54,12 +40,11 @@ export default function BookingTimeSelect() {
   const [selectedDate, setSelectedDate] = useState(today);
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
 
+  const consultantLabel = toDisplayString(params.consultantName, '상담');
+
   const weekStart = format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'yyyy-MM-dd');
 
-  const { data, isLoading } = useConsultantAvailability(
-    params.consultantId,
-    weekStart,
-  );
+  const { data, isLoading } = useConsultantAvailability(params.consultantId, weekStart);
 
   const weekDays = useMemo(() => {
     const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
@@ -67,9 +52,7 @@ export default function BookingTimeSelect() {
   }, [selectedDate]);
 
   const slotsForSelectedDate =
-    data?.slots.filter(
-      (s) => s.date === format(selectedDate, 'yyyy-MM-dd'),
-    ) ?? [];
+    data?.slots.filter((s) => s.date === format(selectedDate, 'yyyy-MM-dd')) ?? [];
 
   const handleDateSelect = (date: Date) => {
     if (Platform.OS !== 'web') {
@@ -92,7 +75,7 @@ export default function BookingTimeSelect() {
       pathname: '/(client)/(booking)/payment',
       params: {
         consultantId: params.consultantId,
-        consultantName: params.consultantName,
+        consultantName: consultantLabel,
         date: selectedSlot.date,
         startTime: selectedSlot.startTime,
         endTime: selectedSlot.endTime,
@@ -101,24 +84,14 @@ export default function BookingTimeSelect() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="시간 선택" canGoBack />
       <ProgressBar currentStep={2} totalSteps={3} labels={STEP_LABELS} />
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* 상담사 미니 프로필 */}
         <Animated.View entering={FadeInDown.springify()} style={styles.miniProfile}>
-          <Avatar
-            uri={params.consultantImage || undefined}
-            name={params.consultantName}
-            size="sm"
-          />
+          <Avatar uri={params.consultantImage || undefined} name={consultantLabel} size="sm" />
           <Text
             style={{
               fontFamily: theme.fontFamily.semibold,
@@ -127,7 +100,7 @@ export default function BookingTimeSelect() {
               marginLeft: 8,
             }}
           >
-            {params.consultantName} 전문가
+            {consultantLabel} 전문가
           </Text>
         </Animated.View>
 
@@ -147,12 +120,8 @@ export default function BookingTimeSelect() {
                 style={[
                   styles.dayChip,
                   {
-                    backgroundColor: isSelected
-                      ? theme.colors.primary
-                      : 'transparent',
-                    borderColor: isToday
-                      ? theme.colors.primary
-                      : theme.colors.border,
+                    backgroundColor: isSelected ? theme.colors.primary : 'transparent',
+                    borderColor: isToday ? theme.colors.primary : theme.colors.border,
                     borderRadius: theme.borderRadius.lg,
                   },
                 ]}
@@ -165,9 +134,7 @@ export default function BookingTimeSelect() {
                   style={{
                     fontFamily: theme.fontFamily.regular,
                     fontSize: theme.fontSize.xs,
-                    color: isSelected
-                      ? theme.colors.textOnPrimary
-                      : theme.colors.textSecondary,
+                    color: isSelected ? theme.colors.textOnPrimary : theme.colors.textSecondary,
                   }}
                 >
                   {format(day, 'EEE', { locale: ko })}
@@ -176,9 +143,7 @@ export default function BookingTimeSelect() {
                   style={{
                     fontFamily: theme.fontFamily.semibold,
                     fontSize: theme.fontSize.lg,
-                    color: isSelected
-                      ? theme.colors.textOnPrimary
-                      : theme.colors.textMain,
+                    color: isSelected ? theme.colors.textOnPrimary : theme.colors.textMain,
                   }}
                 >
                   {format(day, 'd')}
@@ -209,10 +174,7 @@ export default function BookingTimeSelect() {
             ))}
           </View>
         ) : slotsForSelectedDate.length === 0 ? (
-          <EmptyState
-            title="가용 시간이 없어요"
-            description="다른 날짜를 선택해보세요"
-          />
+          <EmptyState title="가용 시간이 없어요" description="다른 날짜를 선택해보세요" />
         ) : (
           <View style={styles.slotGrid}>
             {slotsForSelectedDate.map((slot) => (
@@ -221,8 +183,7 @@ export default function BookingTimeSelect() {
                 time={slot.startTime}
                 isAvailable={slot.isAvailable}
                 isSelected={
-                  selectedSlot?.date === slot.date &&
-                  selectedSlot?.startTime === slot.startTime
+                  selectedSlot?.date === slot.date && selectedSlot?.startTime === slot.startTime
                 }
                 onPress={() => handleSlotSelect(slot)}
               />
@@ -248,9 +209,7 @@ export default function BookingTimeSelect() {
           style={[
             styles.nextButton,
             {
-              backgroundColor: selectedSlot
-                ? theme.colors.primary
-                : theme.colors.gray[300],
+              backgroundColor: selectedSlot ? theme.colors.primary : theme.colors.gray[300],
               borderRadius: theme.borderRadius.lg,
             },
           ]}
@@ -261,9 +220,7 @@ export default function BookingTimeSelect() {
             style={{
               fontFamily: theme.fontFamily.semibold,
               fontSize: theme.fontSize.base,
-              color: selectedSlot
-                ? theme.colors.textOnPrimary
-                : theme.colors.textTertiary,
+              color: selectedSlot ? theme.colors.textOnPrimary : theme.colors.textTertiary,
             }}
           >
             다음 단계

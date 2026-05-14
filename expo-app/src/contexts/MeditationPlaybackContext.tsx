@@ -10,9 +10,7 @@ export interface MeditationPlaybackControls {
   seekPlaybackTo: (seconds: number) => Promise<void>;
 }
 
-const MeditationPlaybackContext = createContext<MeditationPlaybackControls | null>(
-  null,
-);
+const MeditationPlaybackContext = createContext<MeditationPlaybackControls | null>(null);
 
 export function MeditationPlaybackProvider({
   value,

@@ -78,8 +78,7 @@ function unwrapApiData<T = unknown>(raw: unknown): T {
   if (typeof raw === 'object') {
     const o = raw as Record<string, unknown>;
     if (o.success === false) {
-      const message =
-        typeof o.message === 'string' ? o.message : '요청에 실패했습니다.';
+      const message = typeof o.message === 'string' ? o.message : '요청에 실패했습니다.';
       throw new Error(message);
     }
     if ('data' in o) {
@@ -117,9 +116,7 @@ function monthRange(month: string): { startDate: string; endDate: string } {
   };
 }
 
-function buildSixMonthRange(
-  baseMonth: string,
-): { startDate: string; endDate: string } {
+function buildSixMonthRange(baseMonth: string): { startDate: string; endDate: string } {
   const [y = 0, m = 1] = baseMonth.split('-').map(Number);
   const start = new Date(y, m - 1 - (MONTHLY_TREND_WINDOW - 1), 1);
   const end = new Date(y, m, 0);
@@ -133,10 +130,7 @@ function isCompleted(row: ConsultantScheduleRow): boolean {
   return String(row.status ?? '').toUpperCase() === COMPLETED_STATUS;
 }
 
-function buildMonthlyTrend(
-  baseMonth: string,
-  schedules: ConsultantScheduleRow[],
-): MonthlyIncome[] {
+function buildMonthlyTrend(baseMonth: string, schedules: ConsultantScheduleRow[]): MonthlyIncome[] {
   const [y = 0, m = 1] = baseMonth.split('-').map(Number);
   const trend: MonthlyIncome[] = [];
   const counts = new Map<string, number>();
@@ -185,8 +179,7 @@ export function useIncomeReport(
       if (!consultantId || !month) {
         throw new Error('상담사 정보가 필요합니다.');
       }
-      const { startDate: trendStart, endDate: trendEnd } =
-        buildSixMonthRange(month);
+      const { startDate: trendStart, endDate: trendEnd } = buildSixMonthRange(month);
       const { startDate: monthStart, endDate: monthEnd } = monthRange(month);
 
       const [schedulesRaw, ratingRaw] = await Promise.all([
@@ -194,9 +187,7 @@ export function useIncomeReport(
           `${SCHEDULE_API.SCHEDULES_BY_CONSULTANT}/${encodeURIComponent(String(consultantId))}`,
           { startDate: trendStart, endDate: trendEnd },
         ).catch(() => [] as unknown),
-        apiGet<unknown>(RATING_API.consultantStats(consultantId)).catch(
-          () => null,
-        ),
+        apiGet<unknown>(RATING_API.consultantStats(consultantId)).catch(() => null),
       ]);
 
       const allSchedules = unwrapScheduleList(schedulesRaw);
@@ -208,9 +199,7 @@ export function useIncomeReport(
 
       const completedThisMonth = monthSchedules.filter(isCompleted);
 
-      const ratingPayload = unwrapApiData<Record<string, unknown> | null>(
-        ratingRaw,
-      );
+      const ratingPayload = unwrapApiData<Record<string, unknown> | null>(ratingRaw);
       const avgRating = Number(ratingPayload?.averageHeartScore ?? 0);
       const totalRatings = Number(ratingPayload?.totalRatingCount ?? 0);
 

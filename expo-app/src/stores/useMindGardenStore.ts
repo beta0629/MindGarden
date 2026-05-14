@@ -77,26 +77,18 @@ export const useMindGardenStore = create<MindGardenState>()(
         }
 
         const dedupeKey =
-          options?.skipDedupe === true
-            ? null
-            : buildDedupeKey(eventType, options?.sourceId);
+          options?.skipDedupe === true ? null : buildDedupeKey(eventType, options?.sourceId);
         if (dedupeKey && processed.includes(dedupeKey)) {
           return {
             earned: 0,
             duplicate: true,
             weeklyCapReached: weeklyPoints >= GARDEN_GROWTH_WEEKLY_POINTS_CAP,
-            remainingWeeklyBudget: Math.max(
-              0,
-              GARDEN_GROWTH_WEEKLY_POINTS_CAP - weeklyPoints,
-            ),
+            remainingWeeklyBudget: Math.max(0, GARDEN_GROWTH_WEEKLY_POINTS_CAP - weeklyPoints),
           };
         }
 
         const baseWeight = GARDEN_EVENT_WEIGHTS[eventType];
-        const remaining = Math.max(
-          0,
-          GARDEN_GROWTH_WEEKLY_POINTS_CAP - weeklyPoints,
-        );
+        const remaining = Math.max(0, GARDEN_GROWTH_WEEKLY_POINTS_CAP - weeklyPoints);
         const earned = Math.min(baseWeight, remaining);
         const weeklyCapReached = remaining <= baseWeight && earned < baseWeight;
 

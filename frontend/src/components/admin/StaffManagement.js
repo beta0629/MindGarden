@@ -24,7 +24,7 @@ import { ViewModeToggle, SmallCardGrid, ListTableView, StatusBadge, SafeText } f
 import { SearchInput } from '../dashboard-v2/atoms';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { ProfileCard } from '../ui/Card';
+import { ProfileCard } from '../ui/Card/index';
 import { showSuccess, showError } from '../../utils/notification';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { formatKoreanMobileForDisplay, isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../utils/koreanMobilePhone';

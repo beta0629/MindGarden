@@ -8,14 +8,7 @@
  * @since 2026-05-12
  */
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  StyleSheet,
-  Platform,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Platform } from 'react-native';
 import Animated, {
   FadeInDown,
   FadeInRight,
@@ -70,7 +63,7 @@ function AnimatedBar({
   item,
   maxValue,
   isCurrent,
-  index,
+  index: _index,
   showAmount,
 }: {
   readonly item: MonthlyIncome;
@@ -120,9 +113,7 @@ function AnimatedBar({
           style={[
             styles.bar,
             {
-              backgroundColor: isCurrent
-                ? theme.colors.primary
-                : theme.colors.primaryLight,
+              backgroundColor: isCurrent ? theme.colors.primary : theme.colors.primaryLight,
               borderRadius: theme.borderRadius.sm,
             },
             animatedBarStyle,
@@ -341,9 +332,7 @@ export default function ConsultantIncome() {
 
   const maxBarValue = useMemo(() => {
     if (!report?.monthlyTrend?.length) return 1;
-    const values = report.monthlyTrend.map((d) =>
-      incomeAvailable ? d.income : d.sessions,
-    );
+    const values = report.monthlyTrend.map((d) => (incomeAvailable ? d.income : d.sessions));
     return Math.max(...values, 1);
   }, [report, incomeAvailable]);
 
@@ -496,10 +485,7 @@ export default function ConsultantIncome() {
       <Stack.Screen options={{ headerShown: true, title: '수입 리포트' }} />
       <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
         <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { padding: theme.spacing.lg },
-          ]}
+          contentContainerStyle={[styles.scrollContent, { padding: theme.spacing.lg }]}
           showsVerticalScrollIndicator={false}
         >
           {/* 월 선택 네비게이션 */}
@@ -600,7 +586,8 @@ export default function ConsultantIncome() {
                   textAlign: 'center',
                 }}
               >
-                수입 금액은 결제·정산 연동 후 표시됩니다. 현재는 완료된 상담 건수와 평점만 제공됩니다.
+                수입 금액은 결제·정산 연동 후 표시됩니다. 현재는 완료된 상담 건수와 평점만
+                제공됩니다.
               </Text>
             </Animated.View>
           )}

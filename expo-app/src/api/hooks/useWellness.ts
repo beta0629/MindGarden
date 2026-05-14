@@ -28,10 +28,8 @@ export interface HealingContent {
 
 const WELLNESS_QUERY_KEYS = {
   all: ['wellness'] as const,
-  healingContents: () =>
-    [...WELLNESS_QUERY_KEYS.all, 'healing-contents'] as const,
-  randomTip: () =>
-    [...WELLNESS_QUERY_KEYS.all, 'random-tip'] as const,
+  healingContents: () => [...WELLNESS_QUERY_KEYS.all, 'healing-contents'] as const,
+  randomTip: () => [...WELLNESS_QUERY_KEYS.all, 'random-tip'] as const,
 };
 
 function normalizeHealingList(data: HealingContent[] | undefined): HealingContent[] {
@@ -76,8 +74,7 @@ export function usePsychoEducationCatalog() {
 
 export function usePsychoEducationArticleById(articleId: number) {
   const q = usePsychoEducationCatalog();
-  const article =
-    q.data?.articles.find((a) => a.id === articleId) ?? null;
+  const article = q.data?.articles.find((a) => a.id === articleId) ?? null;
   return {
     article,
     source: q.data?.source ?? ('demo' as PsychoCatalogSource),
@@ -94,15 +91,10 @@ export function useRandomWellnessTip() {
   return useQuery<HealingContent | null>({
     queryKey: WELLNESS_QUERY_KEYS.randomTip(),
     queryFn: async () => {
-      const raw = await apiGet<unknown>(
-        HEALING_CONTENT_API.GET_ALL,
-        { size: 10, sort: 'random' },
-      );
+      const raw = await apiGet<unknown>(HEALING_CONTENT_API.GET_ALL, { size: 10, sort: 'random' });
       const list = unwrapApiResponse<HealingContent[]>(raw);
       const contents = Array.isArray(list) ? list : [];
-      return contents.length > 0
-        ? contents[Math.floor(Math.random() * contents.length)]!
-        : null;
+      return contents.length > 0 ? contents[Math.floor(Math.random() * contents.length)]! : null;
     },
     staleTime: 1000 * 60 * 30,
   });

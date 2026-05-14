@@ -1,7 +1,16 @@
 /**
- * 커뮤니티 Mock 데이터
+ * 커뮤니티 Mock(샘플) 데이터 및 로컬 키 상수
+ *
+ * **§11.1 게이트(API 행) — 커뮤니티**
+ * - 기획서상 Phase 3에서는 커뮤니티가 **샘플·플레이스홀더**로도 허용되며, `GET /api/v1/community` 미구현·오류 시에도 앱이 동작해야 한다.
+ * - `INITIAL_COMMUNITY_POSTS`는 그 **시드 피드**(데모)이며, 런타임 상태는 `useCommunityStore`(Zustand + MMKV/Expo Go 메모리 persist)에 적재된다.
+ * - 원격이 살아 있으면 `useCommunityFeed`가 API 응답을 정규화해 스토어와 병합한다(상세는 해당 훅 주석).
+ *
+ * `MMKV_KEY_*`는 동일 도메인에 대한 **문서·참조용 키 문자열**이다. Zustand persist의 실제 저장소 바인딩은 스토어 쪽 설정을 따른다.
  *
  * 데모용 가상 게시물이며 실제 인물·사건과 무관합니다. 운영 시 커뮤니티 정책·저작권·의료광고 표현을 준수한다 (`EXPO_NATIVE_APP_PLAN.md` §10.1).
+ *
+ * SSOT: `docs/project-management/EXPO_NATIVE_APP_PLAN.md` §11.1, §13
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -46,6 +55,7 @@ export const COMMUNITY_DEMO_LABELS = {
   newClientNamedAuthor: '내담자(데모)',
 } as const;
 
+/** §11.1 폴백 피드 시드 — API 없을 때 스토어 초기·복원과 함께 사용 */
 export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
   {
     id: 1,
@@ -72,7 +82,13 @@ export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
     body: '매주 상담을 받으면서 불안이 많이 줄었어요. 자동적 사고를 알아차리는 연습이 정말 도움이 되었습니다.',
     likes: 24,
     comments: [
-      { id: 3, author: '익명의 구름', body: '어떤 기법이 가장 도움이 되었나요?', time: '2시간 전', likes: 2 },
+      {
+        id: 3,
+        author: '익명의 구름',
+        body: '어떤 기법이 가장 도움이 되었나요?',
+        time: '2시간 전',
+        likes: 2,
+      },
     ],
     time: '5시간 전',
     isConsultant: false,
@@ -129,7 +145,13 @@ export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
     body: '아무것도 하고 싶지 않은 날, 정말 작은 것부터 시작하면 됩니다. 커튼 열기, 물 한 잔 마시기, 5분만 산책하기 — 이것만으로도 충분합니다.',
     likes: 52,
     comments: [
-      { id: 6, author: '익명의 빛', body: '오늘 산책 다녀왔습니다. 감사합니다.', time: '3시간 전', likes: 8 },
+      {
+        id: 6,
+        author: '익명의 빛',
+        body: '오늘 산책 다녀왔습니다. 감사합니다.',
+        time: '3시간 전',
+        likes: 8,
+      },
     ],
     time: '2일 전',
     isConsultant: true,
@@ -137,5 +159,7 @@ export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
   },
 ] as const;
 
+/** MMKV 직접 접근 시 참고용 키(스토어 persist 키와는 별도일 수 있음) */
 export const MMKV_KEY_COMMUNITY_POSTS = 'mg_community_posts';
+/** @see MMKV_KEY_COMMUNITY_POSTS */
 export const MMKV_KEY_COMMUNITY_LIKES = 'mg_community_likes';

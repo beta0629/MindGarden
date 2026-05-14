@@ -109,6 +109,7 @@
 - `PaymentIntent` / `Payment` (PG tid, 금액, 상태, 멱등 키)
 - `Entitlement` 또는 `OrderFulfillment` (검사 업로드 슬롯, 회기권, 리포트 생성 잡)
 - 기존 `CONSULTANT_CLIENT_MAPPING*` 계열과의 **외래 연결은 OrderLine 수준**에서 nullable 링크로 두어 **검사 단독 구매**와 **매핑 연동 구매**를 모두 수용 (확정은 코더·DB 리뷰).
+- **P1 구현 메모 (2026-05-14)**: DB `shop_catalog_skus.unit_price_minor`(원 정수)가 PLP·장바구니의 **서버 권위 가격**이다. `PACKAGE_PRICE_MANAGEMENT_PLAN.md` 전용 패키지 요금 UI·API와의 단일 권위 동기화·어드민 SKU CRUD는 후속 WA 배치에서 확정한다. MVP 백엔드는 **포인트 전액 결제** 또는 **카드 전액 결제**만 허용하며, 포인트+PG 혼합 시 PG 승인 후 hold commit 훅은 후속 PR에서 연결한다.
 
 ---
 
@@ -172,6 +173,7 @@
 
 | 문서 | 용도 |
 |------|------|
+| [WEB_ADMIN_APP_SCOPE_AND_CHECKOUT_FEATURES.md](./WEB_ADMIN_APP_SCOPE_AND_CHECKOUT_FEATURES.md) | **어드민 웹 전용·Expo 비어드민** 채널 확정, WA/EA 기능 ID, §8.1 Phase별 웹/Expo 매핑 |
 | [EXPO_NATIVE_APP_PLAN.md](./EXPO_NATIVE_APP_PLAN.md) | 네이티브 앱에서 동일 결제·주문·딥링크 흐름 정합 |
 | [../psych-assessment/PSYCH_PDF_AND_IMAGE_UPLOAD_PLAN.md](../psych-assessment/PSYCH_PDF_AND_IMAGE_UPLOAD_PLAN.md) | 검사 자료 업로드·처리 파이프라인 |
 | [../psych-assessment/PSYCH_UPLOAD_UI_SPEC.md](../psych-assessment/PSYCH_UPLOAD_UI_SPEC.md) | 업로드 UI·가이드 (PDP·결제 후 화면과 연결) |
@@ -187,5 +189,6 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-14 | P1 구현 메모(온라인 카탈로그 가격 권위·포인트+PG 혼합 후속) 반영 |
 | 2026-05-13 | 초안 — `core-planner` 산출 본문을 저장소에 반영 |
 | 2026-05-13 | [POINT_REWARD_EARN_AND_REDEEM_SPEC.md](./POINT_REWARD_EARN_AND_REDEEM_SPEC.md) 링크 추가 — 포인트 사용·원장·환불 기획은 별도 문서로 정합 |

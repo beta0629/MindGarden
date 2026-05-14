@@ -6,14 +6,7 @@
  * @since 2026-05-12
  */
 import { useCallback, useState } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  ScrollView,
-  RefreshControl,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, Pressable, ScrollView, RefreshControl, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Mail, Phone, Calendar as CalendarIcon, FileText } from 'lucide-react-native';
@@ -84,10 +77,7 @@ export default function ConsultantClientDetail() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { padding: theme.spacing.lg },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { padding: theme.spacing.lg }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -108,11 +98,7 @@ export default function ConsultantClientDetail() {
           <>
             {/* 프로필 */}
             <View style={styles.profileSection}>
-              <Avatar
-                uri={client.profileImageUrl}
-                name={client.name}
-                size="xl"
-              />
+              <Avatar uri={client.profileImageUrl} name={client.name} size="xl" />
               <Text
                 style={{
                   color: theme.colors.textMain,
@@ -195,21 +181,9 @@ export default function ConsultantClientDetail() {
                 >
                   {client.gender || client.birthDate || client.occupation ? (
                     <>
-                      <InfoRow
-                        theme={theme}
-                        label="성별"
-                        value={client.gender ?? '-'}
-                      />
-                      <InfoRow
-                        theme={theme}
-                        label="생년월일"
-                        value={client.birthDate ?? '-'}
-                      />
-                      <InfoRow
-                        theme={theme}
-                        label="직업"
-                        value={client.occupation ?? '-'}
-                      />
+                      <InfoRow theme={theme} label="성별" value={client.gender ?? '-'} />
+                      <InfoRow theme={theme} label="생년월일" value={client.birthDate ?? '-'} />
+                      <InfoRow theme={theme} label="직업" value={client.occupation ?? '-'} />
                     </>
                   ) : null}
                   <InfoRow
@@ -217,11 +191,7 @@ export default function ConsultantClientDetail() {
                     label="상담 목적"
                     value={client.consultationPurpose ?? '-'}
                   />
-                  <InfoRow
-                    theme={theme}
-                    label="특이사항"
-                    value={client.specialNotes ?? '-'}
-                  />
+                  <InfoRow theme={theme} label="특이사항" value={client.specialNotes ?? '-'} />
                 </View>
               )}
 

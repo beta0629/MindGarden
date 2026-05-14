@@ -50,9 +50,7 @@ export default function ClientSessionReview() {
   const createRating = useCreateRating();
 
   const consultantLabel = maskEncryptedDisplay(detail?.consultantName, '상담사');
-  const consultantAvatarUri = resolveProfileImageUrlForNative(
-    detail?.consultantProfileImageUrl,
-  );
+  const consultantAvatarUri = resolveProfileImageUrlForNative(detail?.consultantProfileImageUrl);
 
   const [rating, setRating] = useState(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -63,9 +61,7 @@ export default function ClientSessionReview() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     setSelectedTags((prev) =>
-      prev.includes(tag)
-        ? prev.filter((t) => t !== tag)
-        : [...prev, tag],
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
 
@@ -97,10 +93,7 @@ export default function ClientSessionReview() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="상담사 평가" canGoBack />
 
       <KeyboardAvoidingView
@@ -113,15 +106,8 @@ export default function ClientSessionReview() {
           keyboardShouldPersistTaps="handled"
         >
           {/* 상담사 프로필 */}
-          <Animated.View
-            entering={FadeInDown.springify()}
-            style={styles.profileSection}
-          >
-            <Avatar
-              uri={consultantAvatarUri}
-              name={consultantLabel}
-              size="xl"
-            />
+          <Animated.View entering={FadeInDown.springify()} style={styles.profileSection}>
+            <Avatar uri={consultantAvatarUri} name={consultantLabel} size="xl" />
             <Text
               style={{
                 fontFamily: theme.fontFamily.semibold,
@@ -135,10 +121,7 @@ export default function ClientSessionReview() {
           </Animated.View>
 
           {/* 별점 */}
-          <Animated.View
-            entering={FadeInDown.delay(100).springify()}
-            style={styles.section}
-          >
+          <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.section}>
             <Text
               style={[
                 styles.sectionTitle,
@@ -157,10 +140,7 @@ export default function ClientSessionReview() {
           </Animated.View>
 
           {/* 태그 칩 */}
-          <Animated.View
-            entering={FadeInDown.delay(200).springify()}
-            style={styles.section}
-          >
+          <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.section}>
             <Text
               style={[
                 styles.sectionTitle,
@@ -186,10 +166,7 @@ export default function ClientSessionReview() {
           </Animated.View>
 
           {/* 한줄평 */}
-          <Animated.View
-            entering={FadeInDown.delay(300).springify()}
-            style={styles.section}
-          >
+          <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.section}>
             <Text
               style={[
                 styles.sectionTitle,
@@ -252,8 +229,7 @@ export default function ClientSessionReview() {
             style={[
               styles.submitButton,
               {
-                backgroundColor:
-                  rating > 0 ? theme.colors.primary : theme.colors.gray[300],
+                backgroundColor: rating > 0 ? theme.colors.primary : theme.colors.gray[300],
                 borderRadius: theme.borderRadius.lg,
               },
             ]}

@@ -6,12 +6,13 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import axios, {
+import type {
   AxiosError,
   AxiosInstance,
   AxiosRequestConfig,
   InternalAxiosRequestConfig,
 } from 'axios';
+import axios from 'axios';
 import { getApiBaseUrl } from '@/config/apiBaseUrl';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useTenantStore } from '../stores/useTenantStore';
@@ -28,10 +29,10 @@ const apiClient: AxiosInstance = axios.create({
 });
 
 let isRefreshing = false;
-let failedQueue: Array<{
+let failedQueue: {
   resolve: (value: unknown) => void;
   reject: (reason?: unknown) => void;
-}> = [];
+}[] = [];
 
 const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach(({ resolve, reject }) => {
@@ -97,8 +98,7 @@ apiClient.interceptors.response.use(
           { headers: { 'Content-Type': 'application/json' } },
         );
 
-        const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
-          response.data;
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
 
         await useAuthStore.getState().updateTokens({
           accessToken: newAccessToken,
@@ -122,8 +122,7 @@ apiClient.interceptors.response.use(
 
     const status = error.response?.status ?? 0;
     const message =
-      (error.response?.data as { message?: string })?.message ??
-      getErrorMessage(status);
+      (error.response?.data as { message?: string })?.message ?? getErrorMessage(status);
 
     return Promise.reject({ status, message, originalError: error });
   },
@@ -166,6 +165,14 @@ export const apiPut = async <T = unknown>(
   config?: AxiosRequestConfig,
 ): Promise<T> => {
   return apiClient.put(endpoint, data, config) as Promise<T>;
+};
+
+export const apiPatch = async <T = unknown>(
+  endpoint: string,
+  data?: unknown,
+  config?: AxiosRequestConfig,
+): Promise<T> => {
+  return apiClient.patch(endpoint, data, config) as Promise<T>;
 };
 
 export const apiDelete = async <T = unknown>(

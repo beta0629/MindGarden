@@ -6,24 +6,9 @@
  * @since 2026-05-12
  */
 import { useCallback, useEffect } from 'react';
-import {
-  Platform,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
+import { Platform, RefreshControl, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import {
-  Bell,
-  Calendar,
-  CreditCard,
-  Heart,
-  MessageCircle,
-  Settings,
-} from 'lucide-react-native';
+import { Bell, Calendar, CreditCard, Heart, MessageCircle, Settings } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 import {
@@ -166,7 +151,8 @@ export function NotificationSettingsScreen() {
           }}
           accessibilityLiveRegion="polite"
         >
-          서버에 저장하지 못했습니다. 아래를 당겨 새로고침해 주세요. 푸시 설정 API가 아직 없으면 이 기기에만 적용됩니다.
+          서버에 저장하지 못했습니다. 아래를 당겨 새로고침해 주세요. 푸시 설정 API가 아직 없으면 이
+          기기에만 적용됩니다.
         </Text>
       ) : null}
       <View
@@ -199,8 +185,7 @@ export function NotificationSettingsScreen() {
           },
         ]}
       >
-        알림을 끄면 해당 카테고리의 푸시 알림을 받지 않습니다.{'\n'}
-        앱 내 알림은 항상 표시됩니다.
+        알림을 끄면 해당 카테고리의 푸시 알림을 받지 않습니다.{'\n'}앱 내 알림은 항상 표시됩니다.
       </Text>
     </ScrollView>
   );
@@ -224,12 +209,7 @@ function SettingRow({ category, value, onToggle, isLast }: SettingRowProps) {
         !isLast && { borderBottomColor: theme.colors.divider, borderBottomWidth: 1 },
       ]}
     >
-      <View
-        style={[
-          styles.iconCircle,
-          { backgroundColor: theme.colors.accentSoft },
-        ]}
-      >
+      <View style={[styles.iconCircle, { backgroundColor: theme.colors.accentSoft }]}>
         <IconComponent size={20} color={theme.colors.textSecondary} />
       </View>
       <View style={styles.rowContent}>

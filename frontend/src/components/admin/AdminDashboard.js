@@ -46,7 +46,7 @@ import SafeText from '../common/SafeText';
 import SystemStatus from './system/SystemStatus';
 import DashboardSection from '../layout/DashboardSection';
 import StatCard from '../ui/Card/StatCard';
-import { ProfileCard, ConsultantRatingCard } from '../ui/Card';
+import { ProfileCard, ConsultantRatingCard } from '../ui/Card/index';
 import { API_BASE_URL } from '../../constants/api';
 import SystemTools from './system/SystemTools';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';

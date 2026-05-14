@@ -19,15 +19,8 @@ import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
 import { EmptyState } from '@/components/atoms/EmptyState';
-import {
-  useSelfAssessments,
-  useLastAssessmentByType,
-} from '@/api/hooks/useSelfAssessment';
-import {
-  ASSESSMENTS,
-  SEVERITY_COLORS,
-  type AssessmentType,
-} from '@/constants/assessmentQuestions';
+import { useSelfAssessments, useLastAssessmentByType } from '@/api/hooks/useSelfAssessment';
+import { ASSESSMENTS, SEVERITY_COLORS, type AssessmentType } from '@/constants/assessmentQuestions';
 import {
   WELLNESS_ASSESSMENT_REFERENCE_FOOTER_KO,
   WELLNESS_NON_MEDICAL_DISCLAIMER_KO,
@@ -82,12 +75,7 @@ function AssessmentCard({ type, index }: AssessmentCardProps) {
         accessibilityRole="button"
       >
         <View style={styles.cardTop}>
-          <View
-            style={[
-              styles.iconWrap,
-              { backgroundColor: theme.colors.primaryLight + '30' },
-            ]}
-          >
+          <View style={[styles.iconWrap, { backgroundColor: theme.colors.primaryLight + '30' }]}>
             <Icon size={24} color={theme.colors.primary} />
           </View>
           <View style={styles.cardInfo}>
@@ -161,10 +149,7 @@ export default function SelfAssessmentIndex() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="마음 자가 점검" canGoBack />
 
       <View
@@ -191,20 +176,14 @@ export default function SelfAssessmentIndex() {
         </Text>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* 자가 점검 카드 목록 */}
         {assessmentTypes.map((type, idx) => (
           <AssessmentCard key={type} type={type} index={idx} />
         ))}
 
         {/* 이전 점검 이력 */}
-        <Animated.View
-          entering={FadeInDown.delay(400).springify()}
-          style={styles.historySection}
-        >
+        <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.historySection}>
           <Text
             style={{
               fontFamily: theme.fontFamily.semibold,
@@ -232,9 +211,7 @@ export default function SelfAssessmentIndex() {
                     if (Platform.OS !== 'web') {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }
-                    router.push(
-                      `/(client)/(wellness)/self-assessment/result/${result.id}`,
-                    );
+                    router.push(`/(client)/(wellness)/self-assessment/result/${result.id}`);
                   }}
                   style={({ pressed }) => [
                     styles.historyCard,

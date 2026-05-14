@@ -22,12 +22,7 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { FlashList } from '@shopify/flash-list';
 import { Plus, Calendar as CalendarIcon } from 'lucide-react-native';
-import {
-  format,
-  addDays,
-  startOfWeek,
-  isSameDay,
-} from 'date-fns';
+import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -102,11 +97,7 @@ export default function ConsultantSchedule() {
 
         {/* 뷰 토글 */}
         <View style={[styles.toggleRow, { marginTop: theme.spacing.md }]}>
-          <Chip
-            label="일간"
-            selected={viewMode === 'daily'}
-            onPress={() => setViewMode('daily')}
-          />
+          <Chip label="일간" selected={viewMode === 'daily'} onPress={() => setViewMode('daily')} />
           <View style={{ width: theme.spacing.sm }} />
           <Chip
             label="주간"
@@ -121,10 +112,7 @@ export default function ConsultantSchedule() {
           data={weekDays}
           keyExtractor={(item) => item.toISOString()}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.weekList,
-            { marginTop: theme.spacing.md },
-          ]}
+          contentContainerStyle={[styles.weekList, { marginTop: theme.spacing.md }]}
           renderItem={({ item }) => {
             const isSelected = isSameDay(item, selectedDate);
             const isToday = isSameDay(item, new Date());
@@ -134,9 +122,7 @@ export default function ConsultantSchedule() {
                 style={[
                   styles.dayCell,
                   {
-                    backgroundColor: isSelected
-                      ? theme.colors.primary
-                      : 'transparent',
+                    backgroundColor: isSelected ? theme.colors.primary : 'transparent',
                     borderRadius: theme.borderRadius.lg,
                     paddingVertical: theme.spacing.sm,
                     paddingHorizontal: theme.spacing.md,
@@ -149,9 +135,7 @@ export default function ConsultantSchedule() {
               >
                 <Text
                   style={{
-                    color: isSelected
-                      ? theme.colors.textOnPrimary
-                      : theme.colors.textSecondary,
+                    color: isSelected ? theme.colors.textOnPrimary : theme.colors.textSecondary,
                     fontFamily: theme.fontFamily.medium,
                     fontSize: theme.fontSize.xs,
                     textAlign: 'center',
@@ -166,9 +150,7 @@ export default function ConsultantSchedule() {
                       : isToday
                         ? theme.colors.primary
                         : theme.colors.textMain,
-                    fontFamily: isToday
-                      ? theme.fontFamily.bold
-                      : theme.fontFamily.semibold,
+                    fontFamily: isToday ? theme.fontFamily.bold : theme.fontFamily.semibold,
                     fontSize: theme.fontSize.lg,
                     textAlign: 'center',
                     marginTop: theme.spacing['2xs'],
@@ -185,10 +167,7 @@ export default function ConsultantSchedule() {
       {/* 상담 카드 리스트 */}
       <ScrollView
         style={styles.listScroll}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingHorizontal: theme.spacing.lg },
-        ]}
+        contentContainerStyle={[styles.listContent, { paddingHorizontal: theme.spacing.lg }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -235,9 +214,7 @@ export default function ConsultantSchedule() {
                   sessionType={item.consultationType}
                   status={item.status}
                   index={index}
-                  onPress={() =>
-                    router.push(`/(consultant)/(schedule)/${item.id}`)
-                  }
+                  onPress={() => router.push(`/(consultant)/(schedule)/${item.id}`)}
                   actionLabel={
                     item.status === 'SCHEDULED' || item.status === 'BOOKED'
                       ? '상담 시작'
@@ -246,9 +223,10 @@ export default function ConsultantSchedule() {
                         : undefined
                   }
                   onActionPress={
-                    item.status === 'SCHEDULED' || item.status === 'BOOKED' || item.status === 'IN_PROGRESS'
-                      ? () =>
-                          router.push(`/(consultant)/(schedule)/${item.id}`)
+                    item.status === 'SCHEDULED' ||
+                    item.status === 'BOOKED' ||
+                    item.status === 'IN_PROGRESS'
+                      ? () => router.push(`/(consultant)/(schedule)/${item.id}`)
                       : undefined
                   }
                 />

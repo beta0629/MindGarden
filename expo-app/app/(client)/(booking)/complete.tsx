@@ -18,12 +18,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import Animated, {
-  BounceIn,
-  FadeInDown,
-} from 'react-native-reanimated';
+import Animated, { BounceIn, FadeInDown } from 'react-native-reanimated';
 import { Check, Calendar as CalendarIcon, Clock, CalendarCheck } from 'lucide-react-native';
 import { useTheme } from '@/theme';
+import { toDisplayString } from '@/utils/safeDisplay';
 
 function normalizeTimePart(t: string | undefined): string {
   const v = (t ?? '').trim();
@@ -66,12 +64,10 @@ type ExpoCalendarEntityTypes = { EVENT: string };
 type ExpoCalendarModuleLike = {
   EntityTypes: ExpoCalendarEntityTypes;
   isAvailableAsync: () => Promise<boolean>;
-  getDefaultCalendarAsync: () => Promise<
-    { id: string; allowsModifications: boolean } | undefined
-  >;
+  getDefaultCalendarAsync: () => Promise<{ id: string; allowsModifications: boolean } | undefined>;
   getCalendarsAsync: (
     entityType?: string,
-  ) => Promise<Array<{ id: string; allowsModifications: boolean }>>;
+  ) => Promise<{ id: string; allowsModifications: boolean }[]>;
   createEventAsync: (
     calendarId: string,
     event: { title: string; notes: string; startDate: Date; endDate: Date },
@@ -134,8 +130,7 @@ async function persistBookingToCalendar(opts: {
   }
   if (!calendarId) {
     const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
-    const picked =
-      calendars.find((c) => c.allowsModifications) ?? calendars[0];
+    const picked = calendars.find((c) => c.allowsModifications) ?? calendars[0];
     calendarId = picked?.id ?? null;
   }
   if (!calendarId) {
@@ -160,6 +155,7 @@ export default function BookingComplete() {
     endTime: string;
   }>();
   const [calendarBusy, setCalendarBusy] = useState(false);
+  const consultantLabel = toDisplayString(params.consultantName, '상담');
 
   const handleGoHome = () => {
     if (Platform.OS !== 'web') {
@@ -187,7 +183,7 @@ export default function BookingComplete() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setCalendarBusy(true);
     try {
-      const name = (params.consultantName ?? '상담').trim() || '상담';
+      const name = toDisplayString(params.consultantName, '상담').trim() || '상담';
       await persistBookingToCalendar({
         title: `MindGarden 상담 · ${name}`,
         notes: '앱에서 예약한 상담 일정입니다.',
@@ -222,17 +218,9 @@ export default function BookingComplete() {
         {/* 성공 아이콘 */}
         <Animated.View
           entering={BounceIn.delay(200)}
-          style={[
-            styles.iconCircle,
-            { backgroundColor: theme.colors.success + '20' },
-          ]}
+          style={[styles.iconCircle, { backgroundColor: theme.colors.success + '20' }]}
         >
-          <View
-            style={[
-              styles.iconInner,
-              { backgroundColor: theme.colors.success },
-            ]}
-          >
+          <View style={[styles.iconInner, { backgroundColor: theme.colors.success }]}>
             <Check size={32} color={theme.colors.textOnPrimary} strokeWidth={3} />
           </View>
         </Animated.View>
@@ -282,7 +270,7 @@ export default function BookingComplete() {
               marginBottom: 16,
             }}
           >
-            {params.consultantName} 전문가
+            {consultantLabel} 전문가
           </Text>
           <View style={styles.detailRow}>
             <CalendarIcon size={16} color={theme.colors.textSecondary} />
@@ -312,10 +300,7 @@ export default function BookingComplete() {
           </View>
         </Animated.View>
 
-        <Animated.View
-          entering={FadeInDown.delay(800).springify()}
-          style={styles.buttonGroup}
-        >
+        <Animated.View entering={FadeInDown.delay(800).springify()} style={styles.buttonGroup}>
           <Pressable
             onPress={handleGoHome}
             style={[

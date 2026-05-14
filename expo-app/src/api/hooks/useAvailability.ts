@@ -6,12 +6,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { apiGet, apiPost, apiDelete } from '../client';
 import { CONSULTANT_API, VACATION_API } from '../endpoints';
 
@@ -63,9 +58,7 @@ function unwrapListPayload<T>(raw: unknown): T[] {
   if (typeof raw === 'object') {
     const o = raw as Record<string, unknown>;
     if (o.success === false) {
-      throw new Error(
-        typeof o.message === 'string' ? o.message : '요청에 실패했습니다.',
-      );
+      throw new Error(typeof o.message === 'string' ? o.message : '요청에 실패했습니다.');
     }
     if (Array.isArray(o.data)) {
       return o.data as T[];
@@ -149,8 +142,8 @@ function parseVacationRows(raw: unknown): Vacation[] {
     }
     const dateStr =
       row.date != null
-        ? String(row.date).split('T')[0] ?? ''
-        : String(row.startDate ?? '').split('T')[0] ?? '';
+        ? (String(row.date).split('T')[0] ?? '')
+        : (String(row.startDate ?? '').split('T')[0] ?? '');
     if (!dateStr) {
       continue;
     }
@@ -191,9 +184,7 @@ export function useConsultantAvailability(
   return useQuery<AvailabilitySlot[]>({
     queryKey: AVAILABILITY_QUERY_KEYS.consultant(consultantId!),
     queryFn: async () => {
-      const raw = await apiGet<unknown>(
-        CONSULTANT_API.consultantAvailability(consultantId!),
-      );
+      const raw = await apiGet<unknown>(CONSULTANT_API.consultantAvailability(consultantId!));
       return parseAvailabilityRows(raw);
     },
     enabled: !!consultantId,
@@ -211,14 +202,10 @@ export function useUpdateAvailability() {
 
   return useMutation({
     mutationFn: async ({ consultantId, slots }: UpdateAvailabilityRequest) => {
-      const raw = await apiGet<unknown>(
-        CONSULTANT_API.consultantAvailability(consultantId),
-      );
+      const raw = await apiGet<unknown>(CONSULTANT_API.consultantAvailability(consultantId));
       const current = parseAvailabilityRows(raw);
 
-      const desiredKeys = new Set(
-        slots.map((s) => slotKey(s.dayOfWeek, s.startTime)),
-      );
+      const desiredKeys = new Set(slots.map((s) => slotKey(s.dayOfWeek, s.startTime)));
       const desiredByKey = new Map(
         slots.map((s) => [slotKey(s.dayOfWeek, s.startTime), s] as const),
       );
@@ -226,15 +213,11 @@ export function useUpdateAvailability() {
       for (const row of current) {
         const k = slotKey(row.dayOfWeek, row.startTime);
         if (!desiredKeys.has(k) && row.id != null) {
-          await apiDelete(
-            CONSULTANT_API.consultantAvailabilitySlot(row.id),
-          );
+          await apiDelete(CONSULTANT_API.consultantAvailabilitySlot(row.id));
         }
       }
 
-      const currentKeys = new Set(
-        current.map((c) => slotKey(c.dayOfWeek, c.startTime)),
-      );
+      const currentKeys = new Set(current.map((c) => slotKey(c.dayOfWeek, c.startTime)));
 
       for (const k of desiredKeys) {
         if (!currentKeys.has(k)) {
@@ -242,16 +225,12 @@ export function useUpdateAvailability() {
           if (!s) continue;
           const body = {
             dayOfWeek: dayOfWeekToApi(s.dayOfWeek),
-            startTime:
-              s.startTime.length === 5 ? `${s.startTime}:00` : s.startTime,
+            startTime: s.startTime.length === 5 ? `${s.startTime}:00` : s.startTime,
             endTime: s.endTime.length === 5 ? `${s.endTime}:00` : s.endTime,
             durationMinutes: 30,
             isActive: true,
           };
-          await apiPost(
-            CONSULTANT_API.consultantAvailability(consultantId),
-            body,
-          );
+          await apiPost(CONSULTANT_API.consultantAvailability(consultantId), body);
         }
       }
     },
@@ -283,12 +262,7 @@ export function useCreateVacation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      consultantId,
-      startDate,
-      endDate,
-      reason,
-    }: CreateVacationRequest) => {
+    mutationFn: async ({ consultantId, startDate, endDate, reason }: CreateVacationRequest) => {
       if (!isValidDate(startDate) || !isValidDate(endDate)) {
         throw new Error('휴가 시작일·종료일을 YYYY-MM-DD 형식으로 입력해 주세요.');
       }
@@ -319,18 +293,9 @@ export function useDeleteVacation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      consultantId,
-      date,
-    }: {
-      consultantId: string | number;
-      date: string;
-    }) =>
+    mutationFn: ({ consultantId, date }: { consultantId: string | number; date: string }) =>
       apiDelete(
-        VACATION_API.vacationByDate(
-          consultantId,
-          date.includes('T') ? date.slice(0, 10) : date,
-        ),
+        VACATION_API.vacationByDate(consultantId, date.includes('T') ? date.slice(0, 10) : date),
       ),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({

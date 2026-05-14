@@ -7,13 +7,7 @@
  * @since 2026-05-13 — 전체/안읽음 필터·표시 경계·아이콘 색상 토큰
  */
 import { useCallback, useMemo, useState } from 'react';
-import {
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import {
   Bell,
@@ -45,10 +39,13 @@ const SKELETON_COUNT = 6;
 
 const NOTIFICATION_TYPE_ICONS: Record<
   NotificationType,
-  { icon: typeof Bell; colorKey: keyof Pick<
-    AppThemeColors,
-    'primary' | 'success' | 'warning' | 'info' | 'textSecondary'
-  > }
+  {
+    icon: typeof Bell;
+    colorKey: keyof Pick<
+      AppThemeColors,
+      'primary' | 'success' | 'warning' | 'info' | 'textSecondary'
+    >;
+  }
 > = {
   SCHEDULE: { icon: Calendar, colorKey: 'info' },
   PAYMENT: { icon: CreditCard, colorKey: 'success' },
@@ -125,11 +122,7 @@ export function NotificationCenterScreen() {
 
   const renderItem = useCallback(
     ({ item, index }: { item: AppNotification; index: number }) => (
-      <NotificationItem
-        notification={item}
-        onPress={handleNotificationPress}
-        index={index}
-      />
+      <NotificationItem notification={item} onPress={handleNotificationPress} index={index} />
     ),
     [handleNotificationPress],
   );
@@ -199,8 +192,7 @@ export function NotificationCenterScreen() {
           <Text
             style={{
               color: filter === 'all' ? theme.colors.primary : theme.colors.textSecondary,
-              fontFamily:
-                filter === 'all' ? theme.fontFamily.semibold : theme.fontFamily.regular,
+              fontFamily: filter === 'all' ? theme.fontFamily.semibold : theme.fontFamily.regular,
               fontSize: theme.fontSize.sm,
             }}
           >
@@ -218,12 +210,9 @@ export function NotificationCenterScreen() {
         >
           <Text
             style={{
-              color:
-                filter === 'unread' ? theme.colors.primary : theme.colors.textSecondary,
+              color: filter === 'unread' ? theme.colors.primary : theme.colors.textSecondary,
               fontFamily:
-                filter === 'unread'
-                  ? theme.fontFamily.semibold
-                  : theme.fontFamily.regular,
+                filter === 'unread' ? theme.fontFamily.semibold : theme.fontFamily.regular,
               fontSize: theme.fontSize.sm,
             }}
           >
@@ -318,16 +307,9 @@ function NotificationItem({ notification, onPress, index }: NotificationItemProp
         accessibilityLabel={`${title}. ${body}`}
       >
         {!notification.isRead ? (
-          <View
-            style={[styles.unreadDot, { backgroundColor: theme.colors.info }]}
-          />
+          <View style={[styles.unreadDot, { backgroundColor: theme.colors.info }]} />
         ) : null}
-        <View
-          style={[
-            styles.iconWrapper,
-            { backgroundColor: theme.colors.accentSoft },
-          ]}
-        >
+        <View style={[styles.iconWrapper, { backgroundColor: theme.colors.accentSoft }]}>
           <IconComponent size={20} color={iconColor} />
         </View>
         <View style={styles.itemContent}>

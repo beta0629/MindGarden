@@ -3,6 +3,10 @@ package com.coresolution.consultation.service;
 import com.coresolution.consultation.constant.GardenGrowthEventType;
 import com.coresolution.consultation.dto.MindGardenEventApplyResponse;
 import com.coresolution.consultation.dto.MindGardenServerStateResponse;
+import com.coresolution.consultation.dto.admin.wellness.MindGardenAdminSnapshotResponse;
+import com.coresolution.consultation.dto.admin.wellness.MindGardenAdminSummaryResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * 내담자 「마음 정원」서버 권위 상태 (MVP 인메모리).
@@ -35,4 +39,21 @@ public interface ClientMindGardenService {
             long userId,
             GardenGrowthEventType eventType,
             String sourceId);
+
+    /**
+     * BW-6: 테넌트 내 인메모리 정원 스냅샷 목록(읽기 전용).
+     *
+     * @param tenantId 테넌트 ID
+     * @param pageable 페이지
+     * @return 페이지
+     */
+    Page<MindGardenAdminSnapshotResponse> listSnapshotsForAdmin(String tenantId, Pageable pageable);
+
+    /**
+     * BW-6: 테넌트 단위 정원 요약(인메모리).
+     *
+     * @param tenantId 테넌트 ID
+     * @return 요약
+     */
+    MindGardenAdminSummaryResponse summarizeForAdmin(String tenantId);
 }

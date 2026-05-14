@@ -10,6 +10,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.security.PasswordPolicy;
 import com.coresolution.core.security.PasswordService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -196,6 +197,49 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
         ArgumentCaptor<UserSocialAccount> socialCap = ArgumentCaptor.forClass(UserSocialAccount.class);
         verify(userSocialAccountRepository).save(socialCap.capture());
         assertThat(socialCap.getValue().getProvider()).isEqualTo("NAVER");
+    }
+
+    @Test
+    @DisplayName("성공: 비밀번호 미입력(SNS A안) 시 정책 만족 난수가 encodePassword로 전달된다")
+    void createUserFromSocial_blankPassword_generatesCompliantRandomSecret() {
+        SocialSignupRequest request = SocialSignupRequest.builder()
+            .email("blank-pw-social@test.com")
+            .name("소셜사용자")
+            .password(null)
+            .phone("01012345678")
+            .provider("KAKAO")
+            .providerUserId("kakao-999")
+            .providerUsername("kakao-nick")
+            .providerProfileImage("https://img")
+            .privacyConsent(true)
+            .termsConsent(true)
+            .marketingConsent(false)
+            .build();
+
+        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", request.getEmail())).thenReturn(false);
+        when(passwordService.encodePassword(anyString())).thenAnswer(inv -> {
+            String plain = inv.getArgument(0);
+            assertThat(PasswordPolicy.firstLoginStorageViolationMessage(plain))
+                .as("내부 생성 비밀번호는 로그인 저장 정책을 통과해야 함")
+                .isNull();
+            return "encoded";
+        });
+        when(encryptionUtil.encrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(encryptionUtil.safeDecrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
+            User user = inv.getArgument(0);
+            user.setId(7010L);
+            return user;
+        });
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SocialSignupResponse response = socialAuthService.createUserFromSocial(request);
+
+        assertThat(response.isSuccess()).isTrue();
+        ArgumentCaptor<String> pwCap = ArgumentCaptor.forClass(String.class);
+        verify(passwordService).encodePassword(pwCap.capture());
+        assertThat(pwCap.getValue()).isNotBlank();
+        assertThat(pwCap.getValue().length()).isGreaterThanOrEqualTo(PasswordPolicy.LOGIN_PASSWORD_MIN_LENGTH);
     }
 
     @Test

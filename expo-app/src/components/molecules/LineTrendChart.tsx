@@ -20,13 +20,7 @@ const PADDING_X = 14;
 const PADDING_TOP = 10;
 const PADDING_BOTTOM = 22;
 
-export function LineTrendChart({
-  values,
-  labels,
-  maxValue,
-  width,
-  height,
-}: LineTrendChartProps) {
+export function LineTrendChart({ values, labels, maxValue, width, height }: LineTrendChartProps) {
   const theme = useTheme();
   const plotW = Math.max(1, width - PADDING_X * 2);
   const plotH = Math.max(1, height - PADDING_TOP - PADDING_BOTTOM);

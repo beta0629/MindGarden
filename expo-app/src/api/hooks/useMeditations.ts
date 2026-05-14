@@ -35,8 +35,7 @@ export function useMeditationCatalog() {
 
 export function useMeditationTrackById(trackId: number) {
   const q = useMeditationCatalog();
-  const track =
-    q.data?.tracks.find((t) => t.id === trackId) ?? null;
+  const track = q.data?.tracks.find((t) => t.id === trackId) ?? null;
   return {
     track,
     source: q.data?.source ?? ('demo' as MeditationCatalogSource),

@@ -8,12 +8,16 @@
  */
 
 export const AUTH_API = {
-  LOGIN: '/api/auth/login',
+  LOGIN: '/api/v1/auth/login',
   BRANCH_LOGIN: '/api/auth/branch-login',
   LOGOUT: '/api/auth/logout',
   REFRESH_TOKEN: '/api/auth/refresh-token',
   GET_CURRENT_USER: '/api/auth/current-user',
-  SOCIAL_LOGIN: '/api/auth/social-login',
+  SOCIAL_LOGIN: '/api/v1/auth/social-login',
+  /** Spring `SocialAuthController` — 쿼리 `tenantId` 권장 */
+  SOCIAL_SIGNUP: '/api/v1/auth/social/signup',
+  OAUTH_ACCOUNT_SELECTION_PREVIEW: '/api/v1/auth/oauth2/account-selection-preview',
+  OAUTH_ACCOUNT_SELECTION_COMPLETE: '/api/v1/auth/oauth2/complete-account-selection',
   KAKAO_AUTHORIZE: '/api/auth/oauth2/kakao/authorize',
   NAVER_AUTHORIZE: '/api/auth/oauth2/naver/authorize',
   SMS_SEND: '/api/auth/sms/send',
@@ -55,15 +59,12 @@ export const SCHEDULE_API = {
 export const MESSAGE_API = {
   SEND_MESSAGE: '/api/v1/consultation-messages',
   /** 내담자 본인 메시지 목록 (Spring Pageable) */
-  clientMessages: (clientId: string | number) =>
-    `/api/v1/consultation-messages/client/${clientId}`,
+  clientMessages: (clientId: string | number) => `/api/v1/consultation-messages/client/${clientId}`,
   /** 상담사 본인 메시지 목록 */
   consultantMessages: (consultantId: string | number) =>
     `/api/v1/consultation-messages/consultant/${consultantId}`,
-  markAsRead: (messageId: string | number) =>
-    `/api/v1/consultation-messages/${messageId}/read`,
-  reply: (messageId: string | number) =>
-    `/api/v1/consultation-messages/${messageId}/reply`,
+  markAsRead: (messageId: string | number) => `/api/v1/consultation-messages/${messageId}/read`,
+  reply: (messageId: string | number) => `/api/v1/consultation-messages/${messageId}/reply`,
   unreadCount: (userId: string | number, userType: string) =>
     `/api/v1/consultation-messages/unread-count?userId=${userId}&userType=${encodeURIComponent(userType)}`,
 } as const;
@@ -106,17 +107,14 @@ export const CONSULTANT_API = {
  * GET/POST `/{consultantId}/vacation`, DELETE `/{consultantId}/vacation/{date}`
  */
 export const VACATION_API = {
-  vacations: (consultantId: string | number) =>
-    `/api/v1/consultants/${consultantId}/vacation`,
+  vacations: (consultantId: string | number) => `/api/v1/consultants/${consultantId}/vacation`,
   vacationByDate: (consultantId: string | number, date: string) =>
     `/api/v1/consultants/${consultantId}/vacation/${encodeURIComponent(date)}`,
 } as const;
 
 export const INCOME_API = {
-  report: (consultantId: string | number) =>
-    `/api/v1/consultants/${consultantId}/income/report`,
-  details: (consultantId: string | number) =>
-    `/api/v1/consultants/${consultantId}/income/details`,
+  report: (consultantId: string | number) => `/api/v1/consultants/${consultantId}/income/report`,
+  details: (consultantId: string | number) => `/api/v1/consultants/${consultantId}/income/details`,
 } as const;
 
 export const CONSULTATION_RECORD_API = {
@@ -141,8 +139,7 @@ export const ADMIN_CLIENT_API = {
 
 export const PAYMENT_API = {
   /** PG 결제 건별 목록(결제자 ID). 매칭 기반 회기와 별개일 수 있음 */
-  PAYMENTS_BY_PAYER: (payerId: string | number) =>
-    `/api/v1/payments/payer/${payerId}`,
+  PAYMENTS_BY_PAYER: (payerId: string | number) => `/api/v1/payments/payer/${payerId}`,
   GET_PAYMENTS: '/api/v1/payments',
   CREATE_PAYMENT: '/api/v1/payments/create',
   SESSION_EXTENSIONS: '/api/v1/admin/session-extensions',
@@ -185,9 +182,23 @@ export const PSYCHO_EDUCATION_API = {
   detail: (id: string | number) => `/api/v1/psycho-education/${id}`,
 } as const;
 
-/** Phase 3-C §13 — 게시글 CRUD·좋아요·댓글(백엔드 예정) */
+/**
+ * Phase 3-C §13 — `CommunityController` `/api/v1/community`
+ * - GET `LIST` — optional `tab`: `reviews` | `columns` (Spring `Pageable` 기본 size 50)
+ * - Path builders: `postId`·`commentId`는 `encodeURIComponent(String(id))` 로 이스케이프
+ */
 export const COMMUNITY_API = {
   LIST: '/api/v1/community',
+  detail: (postId: string | number) => `/api/v1/community/${encodeURIComponent(String(postId))}`,
+  comments: (postId: string | number) =>
+    `/api/v1/community/${encodeURIComponent(String(postId))}/comments`,
+  /** DELETE 본인 댓글 — `CommunityController` `DELETE .../comments/{commentId}` */
+  commentById: (commentId: string | number) =>
+    `/api/v1/community/comments/${encodeURIComponent(String(commentId))}`,
+  likes: (postId: string | number) =>
+    `/api/v1/community/${encodeURIComponent(String(postId))}/likes`,
+  reports: (postId: string | number) =>
+    `/api/v1/community/${encodeURIComponent(String(postId))}/reports`,
 } as const;
 
 /**

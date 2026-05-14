@@ -131,8 +131,7 @@ function interpretGAD7(score: number): AssessmentInterpretation {
     return {
       level: '참고·낮은 편',
       severity: 'minimal',
-      description:
-        '응답만 보면 최근 2주간 불안에 대한 불편이 크게 느껴지지 않는 편입니다(참고용).',
+      description: '응답만 보면 최근 2주간 불안에 대한 불편이 크게 느껴지지 않는 편입니다(참고용).',
     };
   }
   if (score <= 9) {
@@ -147,8 +146,7 @@ function interpretGAD7(score: number): AssessmentInterpretation {
     return {
       level: '중간 정도 불편 (참고)',
       severity: 'moderate',
-      description:
-        '응답상 불안이 중간 정도로 느껴질 수 있습니다(참고용). 전문 상담을 권합니다.',
+      description: '응답상 불안이 중간 정도로 느껴질 수 있습니다(참고용). 전문 상담을 권합니다.',
     };
   }
   return {

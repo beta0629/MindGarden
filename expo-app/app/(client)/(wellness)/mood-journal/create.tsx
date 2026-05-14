@@ -85,9 +85,7 @@ function EmojiButton({ emoji, label, selected, onPress }: EmojiButtonProps) {
         style={[
           styles.emojiCircle,
           {
-            backgroundColor: selected
-              ? theme.colors.primaryLight + '40'
-              : theme.colors.accentSoft,
+            backgroundColor: selected ? theme.colors.primaryLight + '40' : theme.colors.accentSoft,
             borderColor: selected ? theme.colors.primary : 'transparent',
             borderWidth: selected ? 2 : 0,
           },
@@ -117,13 +115,8 @@ export default function MoodJournalCreate() {
   const editDate =
     typeof dateParam === 'string' && ISO_DATE.test(dateParam) ? dateParam : undefined;
   const isEdit = Boolean(editDate);
-  const targetDate =
-    isEdit && editDate ? editDate : format(new Date(), 'yyyy-MM-dd');
-  const dateLabel = format(
-    parseISO(targetDate),
-    'M월 d일 (EEEE)',
-    { locale: ko },
-  );
+  const targetDate = isEdit && editDate ? editDate : format(new Date(), 'yyyy-MM-dd');
+  const dateLabel = format(parseISO(targetDate), 'M월 d일 (EEEE)', { locale: ko });
 
   const [selectedMood, setSelectedMood] = useState(0);
   const [selectedTags, setSelectedTags] = useState<EmotionTag[]>([]);
@@ -188,10 +181,7 @@ export default function MoodJournalCreate() {
 
   if (isEdit && entryLoading) {
     return (
-      <SafeAreaView
-        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-        edges={['top']}
-      >
+      <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
         <AppTopBar title="기분 수정" canGoBack />
         <View style={styles.loadingWrap}>
           <Text
@@ -210,10 +200,7 @@ export default function MoodJournalCreate() {
 
   if (isEdit && !existing) {
     return (
-      <SafeAreaView
-        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-        edges={['top']}
-      >
+      <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
         <AppTopBar title="기분 수정" canGoBack />
         <View style={styles.loadingWrap}>
           <Text
@@ -235,10 +222,7 @@ export default function MoodJournalCreate() {
   const savePending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title={isEdit ? '기분 수정' : '기분 기록'} canGoBack />
 
       <KeyboardAvoidingView
@@ -419,9 +403,7 @@ export default function MoodJournalCreate() {
                 false: theme.colors.gray[300],
                 true: theme.colors.primaryLight,
               }}
-              thumbColor={
-                shareWithConsultant ? theme.colors.primary : theme.colors.surface
-              }
+              thumbColor={shareWithConsultant ? theme.colors.primary : theme.colors.surface}
               accessibilityLabel="상담사 공유 토글"
             />
           </Animated.View>

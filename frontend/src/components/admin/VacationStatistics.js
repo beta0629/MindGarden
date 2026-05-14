@@ -5,7 +5,7 @@ import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
-import { ProfileCard } from '../ui/Card';
+import { ProfileCard } from '../ui/Card/index';
 import './VacationStatistics.css';
 
 /**

@@ -197,10 +197,7 @@ function buildSummary(keywords: MindWeatherKeyword[], tone: MindWeatherTone): st
 }
 
 function isMindWeatherSource(value: unknown): value is MindWeatherSource {
-  return (
-    typeof value === 'string' &&
-    (MIND_WEATHER_SOURCES as readonly string[]).includes(value)
-  );
+  return typeof value === 'string' && (MIND_WEATHER_SOURCES as readonly string[]).includes(value);
 }
 
 function normalizeKeyword(raw: unknown): MindWeatherKeyword | null {
@@ -284,9 +281,7 @@ function normalizeListPayload(raw: unknown): MindWeatherCard[] | null {
   const body = unwrapApiResponse<unknown>(raw) ?? raw;
   if (body == null) return null;
   if (Array.isArray(body)) {
-    return body
-      .map(normalizeCard)
-      .filter((c): c is MindWeatherCard => c != null);
+    return body.map(normalizeCard).filter((c): c is MindWeatherCard => c != null);
   }
   if (typeof body === 'object') {
     const o = body as Record<string, unknown>;
@@ -346,9 +341,7 @@ export async function fetchMindWeatherList(): Promise<MindWeatherListPayload> {
   return { items: getAllCardsLocal(), source: 'cache' };
 }
 
-export async function fetchMindWeatherDetail(
-  id: string,
-): Promise<MindWeatherCard | null> {
+export async function fetchMindWeatherDetail(id: string): Promise<MindWeatherCard | null> {
   try {
     const raw = await apiGet<unknown>(MIND_WEATHER_API.detail(id));
     const body = unwrapApiResponse<unknown>(raw) ?? raw;
@@ -367,9 +360,7 @@ export interface MindWeatherShareInput {
   readonly consultantId?: number;
 }
 
-export async function shareMindWeatherCard(
-  input: MindWeatherShareInput,
-): Promise<MindWeatherCard> {
+export async function shareMindWeatherCard(input: MindWeatherShareInput): Promise<MindWeatherCard> {
   const consent: MindWeatherShareConsent = {
     summary: input.summary,
     original: input.original,
@@ -406,9 +397,7 @@ export async function shareMindWeatherCard(
   return updated;
 }
 
-export async function unshareMindWeatherCard(
-  cardId: string,
-): Promise<MindWeatherCard> {
+export async function unshareMindWeatherCard(cardId: string): Promise<MindWeatherCard> {
   try {
     await apiDelete<unknown>(MIND_WEATHER_API.unshare(cardId));
   } catch {

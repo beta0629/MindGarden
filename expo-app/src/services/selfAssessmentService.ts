@@ -1,8 +1,12 @@
 /**
- * 자가 심리검사 — **API 성공 시 서버 데이터만 사용**, **요청 실패(catch) 시에만** MMKV Mock
+ * 자가 심리검사 — **MMKV 로컬 Mock** + REST (`EXPO_NATIVE_APP_PLAN.md` §11.1·§13 Phase 3-B).
  *
- * SSOT: `docs/project-management/EXPO_NATIVE_APP_PLAN.md` Phase 3-B·§11.1·§13
- * §11.1 표기: `WELLNESS_PHASE_3B_DATA_SOURCE.selfAssessment` (`src/constants/wellnessDataSource.ts`)
+ * **원장(Mock vs API)** — 표기: `WELLNESS_PHASE_3B_DATA_SOURCE.selfAssessment`:
+ * - **`fetchSelfAssessments`**: `normalizeList`가 배열을 반환하면 **정렬된 서버 목록만** 반환. `catch` **또는** 성공 응답인데 `normalizeList === null`이면 **MMKV** `getAllResultsLocal()`(형식 불일치 시에도 로컬 폴백).
+ * - **`fetchAssessmentDetail`**: 정규화된 단건이 있으면 서버 권위; 없거나 `catch`면 MMKV에서 id 매칭.
+ * - **`submitSelfAssessmentRemote`**: `catch`면 MMKV 저장 후 로컬 결과 반환. **HTTP 성공**이나 응답 본문을 `normalizeResult`할 수 없으면 **메모리 내 `localResult`만** 반환(MMKV에 넣지 않음 — 서버 재조회 시 재시도 가능).
+ * - **`updateSelfAssessmentShareRemote`**: `catch` 시 MMKV만 갱신.
+ * - **표시 경계**: `normalizeResult` 등 `toDisplayString`·`toSafeNumber`(`COMMON_DISPLAY_BOUNDARY_MEETING_20260322.md`).
  * 문항 정적 데이터: `src/constants/assessmentQuestions.ts`
  *
  * @author MindGarden
@@ -65,9 +69,7 @@ function normalizeResult(raw: unknown): AssessmentResult | null {
   if (!ASSESSMENTS[type]) return null;
   const def = ASSESSMENTS[type];
   const answersRaw = o.answers ?? o.responses;
-  const answers = Array.isArray(answersRaw)
-    ? answersRaw.map((a) => toSafeNumber(a, 0))
-    : [];
+  const answers = Array.isArray(answersRaw) ? answersRaw.map((a) => toSafeNumber(a, 0)) : [];
   const totalScore = toSafeNumber(o.totalScore ?? o.score, calculateScore(type, answers));
   const interpretation =
     typeof o.interpretation === 'object' && o.interpretation != null
@@ -108,9 +110,7 @@ export async function fetchSelfAssessments(): Promise<AssessmentResult[]> {
     const raw = await apiGet<unknown>(SELF_ASSESSMENT_API.GET_ALL);
     const list = normalizeList(raw);
     if (list != null) {
-      return list.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
+      return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
   } catch {
     /* MMKV Mock: 요청 실패 시에만 */

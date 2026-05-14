@@ -54,12 +54,7 @@ export function MenuListItem({
       accessibilityRole="button"
       accessibilityLabel={title}
     >
-      <View
-        style={[
-          styles.iconContainer,
-          { backgroundColor: theme.colors.accentSoft },
-        ]}
-      >
+      <View style={[styles.iconContainer, { backgroundColor: theme.colors.accentSoft }]}>
         <Icon size={ICON_SIZE} color={theme.colors.primary} />
       </View>
 

@@ -48,7 +48,9 @@ function normalizePackageRow(row: unknown): SessionExtensionPackage | null {
   }
   const perSessionRaw = r.perSession != null ? Number(r.perSession) : Math.round(price / sessions);
   const perSession =
-    Number.isFinite(perSessionRaw) && perSessionRaw > 0 ? perSessionRaw : Math.round(price / sessions);
+    Number.isFinite(perSessionRaw) && perSessionRaw > 0
+      ? perSessionRaw
+      : Math.round(price / sessions);
   const popular = r.popular === true;
   return { id, name, sessions, price, perSession, popular };
 }

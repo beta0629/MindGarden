@@ -38,11 +38,7 @@ function formatTime(time: string | undefined): string {
   return parts.length >= 2 ? `${parts[0]}:${parts[1]}` : time;
 }
 
-export function ConsultationCard({
-  schedule,
-  index = 0,
-  onPress,
-}: ConsultationCardProps) {
+export function ConsultationCard({ schedule, index = 0, onPress }: ConsultationCardProps) {
   const theme = useTheme();
 
   const handlePress = () => {
@@ -53,13 +49,8 @@ export function ConsultationCard({
   };
 
   const statusCfg = STATUS_CONFIG[schedule.status] ?? STATUS_CONFIG['SCHEDULED']!;
-  const consultantLabel = maskEncryptedDisplay(
-    schedule.consultantName,
-    '상담사',
-  );
-  const avatarUri = resolveProfileImageUrlForNative(
-    schedule.consultantProfileImageUrl,
-  );
+  const consultantLabel = maskEncryptedDisplay(schedule.consultantName, '상담사');
+  const avatarUri = resolveProfileImageUrlForNative(schedule.consultantProfileImageUrl);
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).springify()}>
@@ -82,11 +73,7 @@ export function ConsultationCard({
         </View>
 
         <View style={styles.body}>
-          <Avatar
-            uri={avatarUri || undefined}
-            name={consultantLabel}
-            size="md"
-          />
+          <Avatar uri={avatarUri || undefined} name={consultantLabel} size="md" />
           <View style={styles.info}>
             <Text
               style={{
@@ -112,19 +99,19 @@ export function ConsultationCard({
               </Text>
             </View>
             {(schedule.startTime || schedule.endTime) && (
-            <View style={styles.metaRow}>
-              <Clock size={14} color={theme.colors.textSecondary} />
-              <Text
-                style={{
-                  fontFamily: theme.fontFamily.regular,
-                  fontSize: theme.fontSize.sm,
-                  color: theme.colors.textSecondary,
-                  marginLeft: 4,
-                }}
-              >
-                {formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}
-              </Text>
-            </View>
+              <View style={styles.metaRow}>
+                <Clock size={14} color={theme.colors.textSecondary} />
+                <Text
+                  style={{
+                    fontFamily: theme.fontFamily.regular,
+                    fontSize: theme.fontSize.sm,
+                    color: theme.colors.textSecondary,
+                    marginLeft: 4,
+                  }}
+                >
+                  {formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}
+                </Text>
+              </View>
             )}
           </View>
         </View>

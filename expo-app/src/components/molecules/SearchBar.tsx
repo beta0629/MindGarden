@@ -74,10 +74,7 @@ export function SearchBar({
           accessibilityRole="button"
           accessibilityLabel="필터"
         >
-          <SlidersHorizontal
-            size={ICON_SIZE}
-            color={theme.colors.textSecondary}
-          />
+          <SlidersHorizontal size={ICON_SIZE} color={theme.colors.textSecondary} />
         </Pressable>
       ) : null}
     </View>

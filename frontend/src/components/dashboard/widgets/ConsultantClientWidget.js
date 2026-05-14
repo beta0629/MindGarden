@@ -8,7 +8,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
-import { ProfileCard } from '../../ui/Card';
+import { ProfileCard } from '../../ui/Card/index';
 import './ConsultantClientWidget.css';
 const ConsultantClientWidget = ({ widget, user }) => {
   const navigate = useNavigate();

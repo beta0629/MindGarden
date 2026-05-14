@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { formatPhoneNumber, isValidEmail, isValidPassword } from '../../utils/common';
+import { formatPhoneNumber, isValidEmail } from '../../utils/common';
 import {
   isValidKoreanMobileDigits,
   normalizeKoreanMobileDigits
 } from '../../utils/koreanMobilePhone';
-import { userAPI } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
+import {
+  API_BASE_URL,
+  API_ERROR_MESSAGES,
+  API_STATUS,
+  AUTH_API
+} from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import PrivacyConsentModal from '../common/PrivacyConsentModal';
 import MGButton from '../common/MGButton';
@@ -13,7 +19,6 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
-import { API_BASE_URL, API_ERROR_MESSAGES, API_STATUS } from '../../constants/api';
 import '../../styles/auth/social-signup-modal.css';
 
 const statusToFallbackMessage = (status) => {
@@ -81,16 +86,11 @@ const SocialSignupModal = ({
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
-    name: '',
-    nickname: '',
-    password: '',
-    confirmPassword: '',
+    displayName: '',
     phone: ''
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [showPrivacyConsent, setShowPrivacyConsent] = useState(false);
   const [privacyConsents, setPrivacyConsents] = useState({
@@ -104,10 +104,7 @@ const SocialSignupModal = ({
       setFormData((prev) => ({
         ...prev,
         email: socialUser.email || '',
-        name: socialUser.name || '',
-        nickname: socialUser.nickname || '',
-        password: '',
-        confirmPassword: '',
+        displayName: (socialUser.name || socialUser.nickname || '').trim(),
         phone: ''
       }));
     }
@@ -148,14 +145,6 @@ const SocialSignupModal = ({
     }
   };
 
-  const togglePassword = (field) => {
-    if (field === 'password') {
-      setShowPassword(!showPassword);
-    } else if (field === 'confirmPassword') {
-      setShowConfirmPassword(!showConfirmPassword);
-    }
-  };
-
   const validateForm = () => {
     const newErrors = {};
 
@@ -164,41 +153,16 @@ const SocialSignupModal = ({
     }
 
     if (!socialUser?.needsBranchMapping) {
-      if (!formData.name.trim()) {
-        newErrors.name = '이름을 입력해주세요.';
-      } else if (formData.name.trim().length < 2) {
-        newErrors.name = '이름은 2자 이상 입력해주세요.';
-      }
-
-      if (!formData.nickname.trim()) {
-        newErrors.nickname = '닉네임을 입력해주세요.';
-      } else if (formData.nickname.trim().length < 2) {
-        newErrors.nickname = '닉네임은 2자 이상 입력해주세요.';
-      }
-
-      const trimmedPassword = (formData.password || '').trim();
-      const trimmedConfirm = (formData.confirmPassword || '').trim();
-
-      if (!trimmedPassword) {
-        newErrors.password = '비밀번호를 입력해주세요.';
-      } else if (trimmedPassword.length < 8) {
-        newErrors.password = '비밀번호는 8자 이상 입력해주세요.';
-      } else if (!isValidPassword(trimmedPassword)) {
-        newErrors.password =
-          '비밀번호는 8~100자이며, 영문 대소문자·숫자·특수문자(@$!%*?&)를 각각 포함하고, 연속·동일문자 3회 반복은 사용할 수 없습니다.';
-      }
-
-      if (!trimmedConfirm) {
-        newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
-      } else if (trimmedPassword !== trimmedConfirm) {
-        newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
+      const dn = (formData.displayName || '').trim();
+      if (!dn) {
+        newErrors.displayName = '이름(표시명)을 입력해주세요.';
+      } else if (dn.length < 2) {
+        newErrors.displayName = '이름(표시명)은 2자 이상 입력해주세요.';
       }
 
       const phoneDigits = normalizeKoreanMobileDigits(formData.phone);
-      if (!phoneDigits) {
-        newErrors.phone = '휴대폰 번호를 입력해주세요.';
-      } else if (!isValidKoreanMobileDigits(phoneDigits)) {
-        newErrors.phone = '휴대폰 번호는 11자리여야 합니다.';
+      if (phoneDigits && !isValidKoreanMobileDigits(phoneDigits)) {
+        newErrors.phone = '휴대폰 번호 형식을 확인해주세요.';
       }
     }
 
@@ -236,7 +200,9 @@ const SocialSignupModal = ({
   };
 
   const handleSubmit = async(e) => {
-    e.preventDefault();
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+    }
 
     if (!privacyConsents.privacy || !privacyConsents.terms) {
       setErrors({
@@ -253,20 +219,27 @@ const SocialSignupModal = ({
     setErrors({});
 
     try {
+      const displayName =
+        (formData.displayName || '').trim() ||
+        (socialUser.name || '').trim() ||
+        (socialUser.nickname || '').trim();
+      const phoneDigits = normalizeKoreanMobileDigits(formData.phone);
+
       const signupData = {
         provider: socialUser.provider,
         providerUserId: socialUser.providerUserId,
-        providerUsername: socialUser.name || socialUser.nickname,
+        providerUsername: displayName || socialUser.name || socialUser.nickname,
         email: formData.email,
-        name: formData.name,
-        nickname: formData.nickname,
-        password: (formData.password || '').trim(),
-        phone: formData.phone,
+        name: displayName || socialUser.name || socialUser.nickname,
+        nickname: displayName || socialUser.nickname || socialUser.name,
+        ...(phoneDigits ? { phone: phoneDigits } : {}),
         providerProfileImage: socialUser.profileImageUrl,
         branchCode: '',
         privacyConsent: privacyConsents.privacy,
         termsConsent: privacyConsents.terms,
-        marketingConsent: privacyConsents.marketing
+        marketingConsent: privacyConsents.marketing,
+        agreeTerms: privacyConsents.terms,
+        agreeMarketing: privacyConsents.marketing
       };
 
       let response;
@@ -294,30 +267,32 @@ const SocialSignupModal = ({
         }
         response = bodyJson || {};
       } else if (socialUser.tenantId) {
-        const tenantSignupResponse = await fetch(
-          `${API_BASE_URL}/api/v1/auth/social/signup?tenantId=${socialUser.tenantId}`,
-          {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(signupData)
-          }
-        );
-        const bodyJson = await parseFetchJsonBodySafe(tenantSignupResponse);
-        if (!tenantSignupResponse.ok) {
+        try {
+          response = await StandardizedApi.post(
+            `${AUTH_API.SOCIAL_SIGNUP}?tenantId=${encodeURIComponent(socialUser.tenantId)}`,
+            signupData
+          );
+        } catch (error) {
           const submitFailMsg = toDisplayString(
-            messageFromFetchErrorBody(bodyJson),
-            statusToFallbackMessage(tenantSignupResponse.status)
+            toErrorMessage(error?.response?.data ?? error, ''),
+            statusToFallbackMessage(error?.status)
           );
           setErrors({ submit: submitFailMsg });
           notificationManager.show(submitFailMsg, 'error');
           return;
         }
-        response = bodyJson || {};
       } else {
-        response = await userAPI.socialSignup(signupData);
+        try {
+          response = await StandardizedApi.post(AUTH_API.SOCIAL_SIGNUP, signupData);
+        } catch (error) {
+          const submitFailMsg = toDisplayString(
+            toErrorMessage(error?.response?.data ?? error, ''),
+            statusToFallbackMessage(error?.status)
+          );
+          setErrors({ submit: submitFailMsg });
+          notificationManager.show(submitFailMsg, 'error');
+          return;
+        }
       }
 
       if (isSocialSignupSuccess(response)) {
@@ -404,51 +379,30 @@ const SocialSignupModal = ({
 
           <form onSubmit={handleSubmit} className="social-signup-modal__form">
             {!socialUser?.needsBranchMapping && (
-              <>
-                <div className="mg-v2-form-group">
-                  <label htmlFor="socialName" className="mg-v2-label">
-                    이름 <span className="mg-v2-form-label-required">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="socialName"
-                    name="name"
-                    className={`mg-v2-input mg-v2-w-full ${errors.name ? 'social-signup-modal__input--error' : ''}`}
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="이름을 입력하세요"
-                    autoComplete="name"
-                  />
-                  {errors.name && (
-                    <span className="social-signup-modal__error-text">
-                      {toDisplayString(errors.name)}
-                    </span>
-                  )}
-                </div>
-
-                <div className="mg-v2-form-group">
-                  <label htmlFor="socialNickname" className="mg-v2-label">
-                    닉네임 <span className="mg-v2-form-label-required">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="socialNickname"
-                    name="nickname"
-                    className={`mg-v2-input mg-v2-w-full ${errors.nickname ? 'social-signup-modal__input--error' : ''}`}
-                    value={formData.nickname}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="닉네임을 입력하세요"
-                    autoComplete="nickname"
-                  />
-                  {errors.nickname && (
-                    <span className="social-signup-modal__error-text">
-                      {toDisplayString(errors.nickname)}
-                    </span>
-                  )}
-                </div>
-              </>
+              <div className="mg-v2-form-group">
+                <label htmlFor="socialDisplayName" className="mg-v2-label">
+                  이름(표시명) <span className="mg-v2-form-label-required">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="socialDisplayName"
+                  name="displayName"
+                  className={`mg-v2-input mg-v2-w-full ${errors.displayName ? 'social-signup-modal__input--error' : ''}`}
+                  value={formData.displayName}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="닉네임 또는 이름"
+                  autoComplete="name"
+                />
+                {errors.displayName && (
+                  <span className="social-signup-modal__error-text">
+                    {toDisplayString(errors.displayName)}
+                  </span>
+                )}
+                <span className="mg-v2-form-help">
+                  이후 로그인은 동일 소셜 버튼을 이용합니다. 이메일·비밀번호 로그인은 보조 수단입니다.
+                </span>
+              </div>
             )}
 
             <div className="mg-v2-form-group">
@@ -476,94 +430,9 @@ const SocialSignupModal = ({
             </div>
 
             {!socialUser?.needsBranchMapping && (
-              <>
-                <div className="mg-v2-form-group">
-                  <label htmlFor="socialPassword" className="mg-v2-label">
-                    비밀번호 <span className="mg-v2-form-label-required">*</span>
-                  </label>
-                  <div className="social-signup-modal__password-wrap">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      id="socialPassword"
-                      name="password"
-                      className={`mg-v2-input mg-v2-w-full ${errors.password ? 'social-signup-modal__input--error' : ''}`}
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                      minLength="8"
-                      autoComplete="new-password"
-                    />
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      size="small"
-                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} social-signup-modal__password-toggle`}
-                      onClick={() => togglePassword('password')}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      preventDoubleClick={false}
-                      aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
-                    >
-                      <i className={`bi bi-${showPassword ? 'eye-slash' : 'eye'}`} aria-hidden />
-                    </MGButton>
-                  </div>
-                  {errors.password && (
-                    <span className="social-signup-modal__error-text">
-                      {toDisplayString(errors.password)}
-                    </span>
-                  )}
-                  <span className="mg-v2-form-help">
-                    8자 이상의 안전한 비밀번호를 입력하세요
-                  </span>
-                </div>
-
-                <div className="mg-v2-form-group">
-                  <label htmlFor="socialPasswordConfirm" className="mg-v2-label">
-                    비밀번호 확인 <span className="mg-v2-form-label-required">*</span>
-                  </label>
-                  <div className="social-signup-modal__password-wrap">
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      id="socialPasswordConfirm"
-                      name="confirmPassword"
-                      className={`mg-v2-input mg-v2-w-full ${errors.confirmPassword ? 'social-signup-modal__input--error' : ''}`}
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      required
-                      minLength="8"
-                      autoComplete="new-password"
-                    />
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      size="small"
-                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} social-signup-modal__password-toggle`}
-                      onClick={() => togglePassword('confirmPassword')}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      preventDoubleClick={false}
-                      aria-label={showConfirmPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
-                    >
-                      <i
-                        className={`bi bi-${showConfirmPassword ? 'eye-slash' : 'eye'}`}
-                        aria-hidden
-                      />
-                    </MGButton>
-                  </div>
-                  {errors.confirmPassword && (
-                    <span className="social-signup-modal__error-text">
-                      {toDisplayString(errors.confirmPassword)}
-                    </span>
-                  )}
-                  <span className="mg-v2-form-help">
-                    비밀번호를 한 번 더 입력하세요
-                  </span>
-                </div>
-              </>
-            )}
-
-            {!socialUser?.needsBranchMapping && (
               <div className="mg-v2-form-group">
                 <label htmlFor="socialPhone" className="mg-v2-label">
-                  휴대폰 번호 <span className="mg-v2-form-label-required">*</span>
+                  휴대폰 번호 (선택)
                 </label>
                 <input
                   type="tel"
@@ -572,7 +441,6 @@ const SocialSignupModal = ({
                   className={`mg-v2-input mg-v2-w-full ${errors.phone ? 'social-signup-modal__input--error' : ''}`}
                   value={formData.phone}
                   onChange={handlePhoneChange}
-                  required
                   maxLength="13"
                   placeholder="010-0000-0000"
                   autoComplete="tel"
@@ -583,7 +451,7 @@ const SocialSignupModal = ({
                   </span>
                 )}
                 <span className="mg-v2-form-help">
-                  숫자만 입력하면 자동으로 하이픈이 추가됩니다
+                  입력 시 11자리 휴대폰 번호 형식이어야 합니다. 비워 두면 가입 시 수집하지 않습니다.
                 </span>
               </div>
             )}

@@ -17,10 +17,7 @@ const PERSIST_ROOTS = {
 function isConsultationPersistBranch(key: readonly unknown[]): boolean {
   const branch = key[1];
   return (
-    branch === 'list' ||
-    branch === 'detail' ||
-    branch === 'upcoming' ||
-    branch === 'dashboard'
+    branch === 'list' || branch === 'detail' || branch === 'upcoming' || branch === 'dashboard'
   );
 }
 

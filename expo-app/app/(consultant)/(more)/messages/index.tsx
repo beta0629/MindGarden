@@ -4,10 +4,9 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { Pressable } from 'react-native';
 import { useTheme } from '@/theme';
 import { ConversationListScreen } from '@/components/organisms/ConversationListScreen';
 

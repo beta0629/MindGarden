@@ -62,9 +62,7 @@ function markCachePruneDone(): void {
 }
 
 /** `useOffline`과 동일 기준 — 캡티브 포털 등 `isInternetReachable === false`면 작업 스킵 */
-function hasUsableInternet(
-  state: Awaited<ReturnType<typeof NetInfo.fetch>>,
-): boolean {
+function hasUsableInternet(state: Awaited<ReturnType<typeof NetInfo.fetch>>): boolean {
   const connected = state.isConnected ?? false;
   if (!connected) {
     return false;
@@ -139,9 +137,7 @@ export const BackgroundTaskService = {
           return;
         }
 
-        const isRegistered = await TaskManager.isTaskRegisteredAsync(
-          BACKGROUND_TASK_NAME,
-        );
+        const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_TASK_NAME);
 
         if (!isRegistered) {
           await BackgroundFetch.registerTaskAsync(BACKGROUND_TASK_NAME, {
@@ -168,9 +164,7 @@ export const BackgroundTaskService = {
    */
   async unregister(): Promise<void> {
     try {
-      const isRegistered = await TaskManager.isTaskRegisteredAsync(
-        BACKGROUND_TASK_NAME,
-      );
+      const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_TASK_NAME);
       if (isRegistered) {
         await BackgroundFetch.unregisterTaskAsync(BACKGROUND_TASK_NAME);
       }

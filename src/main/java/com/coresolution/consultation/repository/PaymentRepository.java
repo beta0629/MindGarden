@@ -271,6 +271,18 @@ public interface PaymentRepository extends BaseRepository<Payment, Long> {
      * 주문 ID로 승인된 결제 존재 여부 확인
      */
     boolean existsByOrderIdAndStatusAndIsDeletedFalse(String orderId, Payment.PaymentStatus status);
+
+    /**
+     * 테넌트·주문 ID로 최신 PENDING 결제 1건 (온라인 주문 PG intent 재사용).
+     *
+     * @param tenantId 테넌트 ID
+     * @param orderId  주문 공개 ID(shop_client_orders.public_id 등)
+     * @return 대기 중 결제
+     */
+    Optional<Payment> findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+            String tenantId,
+            String orderId,
+            Payment.PaymentStatus status);
     
     // ==================== 통계 대시보드용 메서드 ====================
     

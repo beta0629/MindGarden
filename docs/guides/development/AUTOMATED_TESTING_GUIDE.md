@@ -218,7 +218,7 @@ jobs:
 
 ## 백엔드 JUnit / MySQL에서 `@Disabled` 통합 테스트
 
-기본 `mvn test`는 H2(`application-test.yml`, 프로파일 **`test`**) 기준이다. MySQL 저장 프로시저에만 의존하는 케이스는 코드에 `@Disabled`로 두는 경우가 있어, **스테이징·로컬 MySQL**에서 돌릴 때는 환경 변수 덮어쓰기와(필요 시) 로컬에서만 스킵 해제 절차가 필요하다. 상세는 **[백엔드 MySQL 통합 테스트](./BACKEND_MYSQL_INTEGRATION_TESTS.md)** 를 본다.
+기본 `mvn test`는 H2(`application-test.yml`, 프로파일 **`test`**) 기준이다. MySQL 저장 프로시저에만 의존하는 케이스는 코드에 `@Disabled`로 두는 경우가 있어, **스테이징·로컬 MySQL**에서 돌릴 때는 환경 변수 덮어쓰기와(필요 시) 로컬에서만 스킵 해제 절차가 필요하다. 상세는 **[백엔드 MySQL 통합 테스트](./BACKEND_MYSQL_INTEGRATION_TESTS.md)** 를 본다. `@Tag("local-mysql")` 로 표시된 테스트(예: 로컬 DB·`@ActiveProfiles("local")` MMPI 통합)는 Surefire 기본값에서 제외되며, 로컬에서만 돌릴 때는 `mvn test -Dgroups=local-mysql -DexcludedGroups=` 처럼 **그룹 포함과 제외 해제**를 함께 지정한다(Maven Surefire `groups` / `excludedGroups`).
 
 ## 📚 관련 문서
 

@@ -59,10 +59,7 @@ export function useAnalyzeMindWeather() {
     mutationFn: (request) => analyzeMindWeather(request),
     onSuccess: (card) => {
       queryClient.invalidateQueries({ queryKey: MIND_WEATHER_QUERY_KEYS.list() });
-      queryClient.setQueryData(
-        MIND_WEATHER_QUERY_KEYS.detail(card.id),
-        card,
-      );
+      queryClient.setQueryData(MIND_WEATHER_QUERY_KEYS.detail(card.id), card);
     },
   });
 }

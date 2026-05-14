@@ -69,9 +69,7 @@ export default function TenantSelectScreen() {
     if (!searchQuery.trim()) return tenants;
     const query = searchQuery.trim().toLowerCase();
     return tenants.filter(
-      (t) =>
-        t.name.toLowerCase().includes(query) ||
-        t.subdomain.toLowerCase().includes(query),
+      (t) => t.name.toLowerCase().includes(query) || t.subdomain.toLowerCase().includes(query),
     );
   }, [tenants, searchQuery]);
 
@@ -118,10 +116,9 @@ export default function TenantSelectScreen() {
       setErrorMessage(null);
 
       try {
-        const response = await apiGet<TenantBySubdomainResponse>(
-          TENANT_API.BY_SUBDOMAIN,
-          { subdomain: tenantCode },
-        );
+        const response = await apiGet<TenantBySubdomainResponse>(TENANT_API.BY_SUBDOMAIN, {
+          subdomain: tenantCode,
+        });
         const body = response as unknown as TenantBySubdomainResponse;
         const tenantData = body?.data?.tenant;
 
@@ -169,9 +166,7 @@ export default function TenantSelectScreen() {
     if (errorMessage && tenants.length === 0) {
       return (
         <View style={styles.centerState}>
-          <Text style={[styles.errorText, { color: theme.colors.error }]}>
-            {errorMessage}
-          </Text>
+          <Text style={[styles.errorText, { color: theme.colors.error }]}>{errorMessage}</Text>
           <Pressable
             style={[styles.retryButton, { borderColor: theme.colors.primary }]}
             onPress={() => fetchTenants()}
@@ -179,17 +174,13 @@ export default function TenantSelectScreen() {
             accessibilityRole="button"
           >
             <RefreshCw size={16} color={theme.colors.primary} />
-            <Text style={[styles.retryButtonText, { color: theme.colors.primary }]}>
-              다시 시도
-            </Text>
+            <Text style={[styles.retryButtonText, { color: theme.colors.primary }]}>다시 시도</Text>
           </Pressable>
         </View>
       );
     }
 
-    const emptyMessage = searchQuery.trim()
-      ? '검색 결과가 없습니다.'
-      : '등록된 기관이 없습니다.';
+    const emptyMessage = searchQuery.trim() ? '검색 결과가 없습니다.' : '등록된 기관이 없습니다.';
 
     return (
       <FlatList
@@ -232,15 +223,15 @@ export default function TenantSelectScreen() {
           accessibilityRole="button"
         >
           <View
-            style={[styles.tenantIconWrapper, { backgroundColor: theme.colors.primaryLight ?? theme.colors.bgSub }]}
+            style={[
+              styles.tenantIconWrapper,
+              { backgroundColor: theme.colors.primaryLight ?? theme.colors.bgSub },
+            ]}
           >
             <Building2 size={22} color={theme.colors.primary} />
           </View>
           <View style={styles.tenantInfo}>
-            <Text
-              style={[styles.tenantName, { color: theme.colors.textMain }]}
-              numberOfLines={1}
-            >
+            <Text style={[styles.tenantName, { color: theme.colors.textMain }]} numberOfLines={1}>
               {item.name}
             </Text>
             <Text
@@ -267,7 +258,10 @@ export default function TenantSelectScreen() {
           onBarcodeScanned={(result) => handleQrScan(result.data)}
         />
         <Pressable
-          style={[styles.closeScannerButton, { backgroundColor: theme.colors.surface, ...theme.shadows.md }]}
+          style={[
+            styles.closeScannerButton,
+            { backgroundColor: theme.colors.surface, ...theme.shadows.md },
+          ]}
           onPress={() => setShowScanner(false)}
           accessibilityLabel="스캐너 닫기"
           accessibilityRole="button"
@@ -302,10 +296,7 @@ export default function TenantSelectScreen() {
           </Animated.Text>
         </View>
 
-        <Animated.View
-          entering={SlideInDown.delay(300).duration(500)}
-          style={styles.listSection}
-        >
+        <Animated.View entering={SlideInDown.delay(300).duration(500)} style={styles.listSection}>
           <View
             style={[
               styles.searchContainer,
@@ -339,15 +330,10 @@ export default function TenantSelectScreen() {
           {renderListContent()}
         </Animated.View>
 
-        <Animated.View
-          entering={FadeInDown.delay(500).duration(400)}
-          style={styles.qrSection}
-        >
+        <Animated.View entering={FadeInDown.delay(500).duration(400)} style={styles.qrSection}>
           <View style={styles.dividerRow}>
             <View style={[styles.dividerLine, { backgroundColor: theme.colors.divider }]} />
-            <Text style={[styles.dividerText, { color: theme.colors.textTertiary }]}>
-              또는
-            </Text>
+            <Text style={[styles.dividerText, { color: theme.colors.textTertiary }]}>또는</Text>
             <View style={[styles.dividerLine, { backgroundColor: theme.colors.divider }]} />
           </View>
 

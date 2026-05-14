@@ -23,32 +23,32 @@ import { ProfileCard } from '@/components/molecules/ProfileCard';
 import { MenuListItem } from '@/components/molecules/MenuListItem';
 import { AuthService } from '@/services/AuthService';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { toDisplayString } from '@/utils/safeDisplay';
 
 export default function ConsultantMore() {
   const theme = useTheme();
   const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  const profileName = toDisplayString(user?.nickname?.trim() || user?.name, '선생');
+  const profileSubtitle = toDisplayString(user?.email, '전문 상담');
 
   const handleLogout = () => {
-    Alert.alert(
-      '로그아웃',
-      '정말 로그아웃하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '로그아웃',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await AuthService.logout();
-              router.replace('/(auth)/login');
-            } catch {
-              await useAuthStore.getState().logout();
-              router.replace('/(auth)/login');
-            }
-          },
+    Alert.alert('로그아웃', '정말 로그아웃하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '로그아웃',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await AuthService.logout();
+            router.replace('/(auth)/login');
+          } catch {
+            await useAuthStore.getState().logout();
+            router.replace('/(auth)/login');
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
@@ -72,12 +72,8 @@ export default function ConsultantMore() {
         </Text>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* TODO: Phase 1-A에서 실제 사용자 데이터 연동 */}
-        <ProfileCard name="상담사" subtitle="전문 상담" />
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ProfileCard name={profileName} subtitle={profileSubtitle} />
 
         <View style={styles.sectionContainer}>
           <Text

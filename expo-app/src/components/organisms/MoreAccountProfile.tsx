@@ -65,24 +65,17 @@ export function MoreAccountProfile({
   const theme = useTheme();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const { mutate: uploadProfileImage, isPending: isUploadingProfile } =
-    useProfileImageUpload();
+  const { mutate: uploadProfileImage, isPending: isUploadingProfile } = useProfileImageUpload();
   useProfileRemoteSync();
 
-  const displayName = toDisplayString(
-    user?.nickname?.trim() || user?.name,
-    '로그인 계정',
-  );
+  const displayName = toDisplayString(user?.nickname?.trim() || user?.name, '로그인 계정');
   const email = toDisplayString(user?.email, '—');
   const tenantLine =
     user?.tenantId != null && String(user.tenantId).trim() !== ''
       ? `테넌트: ${toDisplayString(user.tenantId)}`
       : undefined;
 
-  const appVersion =
-    Constants.nativeApplicationVersion ??
-    Constants.expoConfig?.version ??
-    '—';
+  const appVersion = Constants.nativeApplicationVersion ?? Constants.expoConfig?.version ?? '—';
 
   const handleLogout = () => {
     Alert.alert('로그아웃', '정말 로그아웃하시겠습니까?', [
@@ -119,15 +112,10 @@ export function MoreAccountProfile({
         if (source === 'library') {
           const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
           if (!perm.granted) {
-            Alert.alert(
-              '권한 필요',
-              '사진 보관함 접근 권한을 허용한 뒤 다시 시도해주세요.',
-            );
+            Alert.alert('권한 필요', '사진 보관함 접근 권한을 허용한 뒤 다시 시도해주세요.');
             return;
           }
-          const result = await ImagePicker.launchImageLibraryAsync(
-            PROFILE_IMAGE_PICK_OPTIONS,
-          );
+          const result = await ImagePicker.launchImageLibraryAsync(PROFILE_IMAGE_PICK_OPTIONS);
           if (result.canceled || !result.assets?.[0]) {
             return;
           }
@@ -148,10 +136,7 @@ export function MoreAccountProfile({
 
         const camPerm = await ImagePicker.requestCameraPermissionsAsync();
         if (!camPerm.granted) {
-          Alert.alert(
-            '권한 필요',
-            '카메라 접근 권한을 허용한 뒤 다시 시도해주세요.',
-          );
+          Alert.alert('권한 필요', '카메라 접근 권한을 허용한 뒤 다시 시도해주세요.');
           return;
         }
         const shot = await ImagePicker.launchCameraAsync(PROFILE_IMAGE_PICK_OPTIONS);
@@ -229,10 +214,7 @@ export function MoreAccountProfile({
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View
           style={[
             styles.card,

@@ -7,14 +7,7 @@
  * @since 2026-05-12
  */
 import { useCallback, useState } from 'react';
-import {
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-  Platform,
-} from 'react-native';
+import { Pressable, RefreshControl, StyleSheet, Text, View, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
@@ -26,9 +19,7 @@ import { ConsultationCard } from '@/components/molecules/ConsultationCard';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { useAuthStore } from '@/stores/useAuthStore';
-import {
-  useClientConsultations,
-} from '@/api/hooks/useConsultations';
+import { useClientConsultations } from '@/api/hooks/useConsultations';
 import type { Schedule } from '@/api/hooks/useSchedules';
 
 type TabKey = 'SCHEDULED' | 'COMPLETED';
@@ -44,18 +35,11 @@ export default function ClientSessions() {
   const user = useAuthStore((s) => s.user);
   const [activeTab, setActiveTab] = useState<TabKey>('SCHEDULED');
 
-  const {
-    data,
-    isLoading,
-    isFetching,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch,
-  } = useClientConsultations({
-    clientId: user?.id ?? '',
-    status: activeTab,
-  });
+  const { data, isLoading, isFetching, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+    useClientConsultations({
+      clientId: user?.id ?? '',
+      status: activeTab,
+    });
 
   const consultations = data?.pages.flat() ?? [];
 
@@ -86,19 +70,14 @@ export default function ClientSessions() {
       <ConsultationCard
         schedule={item}
         index={index}
-        onPress={() =>
-          router.push(`/(client)/(sessions)/${item.id}`)
-        }
+        onPress={() => router.push(`/(client)/(sessions)/${item.id}`)}
       />
     ),
     [router],
   );
 
   return (
-    <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title="내 상담" />
 
       {/* Segmented Control */}
@@ -120,11 +99,9 @@ export default function ClientSessions() {
               style={[
                 styles.segmentedTab,
                 {
-                  backgroundColor: active
-                    ? theme.colors.surface
-                    : 'transparent',
+                  backgroundColor: active ? theme.colors.surface : 'transparent',
                   borderRadius: theme.borderRadius.md,
-                  ...( active ? theme.shadows.sm : {}),
+                  ...(active ? theme.shadows.sm : {}),
                 },
               ]}
               accessibilityLabel={`${tab.label} 탭`}
@@ -133,13 +110,9 @@ export default function ClientSessions() {
             >
               <Text
                 style={{
-                  fontFamily: active
-                    ? theme.fontFamily.semibold
-                    : theme.fontFamily.regular,
+                  fontFamily: active ? theme.fontFamily.semibold : theme.fontFamily.regular,
                   fontSize: theme.fontSize.sm,
-                  color: active
-                    ? theme.colors.textMain
-                    : theme.colors.textSecondary,
+                  color: active ? theme.colors.textMain : theme.colors.textSecondary,
                 }}
               >
                 {tab.label}
@@ -166,11 +139,7 @@ export default function ClientSessions() {
                 <ClipboardCheck size={32} color={theme.colors.textTertiary} />
               )
             }
-            title={
-              activeTab === 'SCHEDULED'
-                ? '예정된 상담이 없어요'
-                : '완료된 상담이 없어요'
-            }
+            title={activeTab === 'SCHEDULED' ? '예정된 상담이 없어요' : '완료된 상담이 없어요'}
             description={
               activeTab === 'SCHEDULED'
                 ? '관리자에게 상담 예약을 문의해주세요'
@@ -193,9 +162,7 @@ export default function ClientSessions() {
                 tintColor={theme.colors.primary}
               />
             }
-            ListFooterComponent={
-              isFetchingNextPage ? <SkeletonCard lines={2} /> : null
-            }
+            ListFooterComponent={isFetchingNextPage ? <SkeletonCard lines={2} /> : null}
           />
         )}
       </View>

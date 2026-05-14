@@ -25,6 +25,7 @@ import Animated, { FadeIn, FadeInDown, SlideInDown } from 'react-native-reanimat
 import { Building2, QrCode, ChevronRight, X, Search, RefreshCw } from 'lucide-react-native';
 import { useTheme } from '../../src/theme';
 import { fontSize as fontSizeTokens } from '../../src/theme/typography';
+import { AppBrandMark } from '../../src/components/molecules/AppBrandMark';
 import { useTenantStore } from '../../src/stores/useTenantStore';
 import { apiGet } from '../../src/api/client';
 import { TENANT_API } from '../../src/api/endpoints';
@@ -281,13 +282,9 @@ export default function TenantSelectScreen() {
     <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
       <Animated.View entering={FadeIn.duration(600)} style={styles.content}>
         <View style={styles.header}>
-          <Animated.Text
-            entering={FadeInDown.delay(100).duration(500)}
-            style={[styles.logo, { color: theme.colors.primary }]}
-            accessibilityRole="header"
-          >
-            CoreSolution
-          </Animated.Text>
+          <Animated.View entering={FadeInDown.delay(100).duration(500)}>
+            <AppBrandMark variant="hero" style={{ marginBottom: theme.spacing.sm }} />
+          </Animated.View>
           <Animated.Text
             entering={FadeInDown.delay(200).duration(500)}
             style={[styles.subtitle, { color: theme.colors.textSecondary }]}
@@ -367,11 +364,6 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 28,
-  },
-  logo: {
-    fontSize: fontSizeTokens['3xl'],
-    fontWeight: '700',
-    marginBottom: 8,
   },
   subtitle: {
     fontSize: fontSizeTokens.base,

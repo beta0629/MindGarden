@@ -24,8 +24,9 @@ import { ChevronDown, ChevronUp, Mail, Lock } from 'lucide-react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useTheme } from '@/theme';
 import { fontSize as fontSizeTokens } from '@/theme/typography';
+import { AppBrandMark } from '@/components/molecules/AppBrandMark';
 import { useTenantStore } from '@/stores/useTenantStore';
-import { AuthService } from '@/services/AuthService';
+import { AuthService, type SocialUserInfoDraft } from '@/services/AuthService';
 import { navigateAfterAuthenticated } from '@/utils/navigateAfterAuth';
 import {
   OAUTH_KAKAO_BACKGROUND,
@@ -36,6 +37,23 @@ import {
 
 function isExpoGoApp(): boolean {
   return Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+}
+
+function socialSignupRouteParams(info: SocialUserInfoDraft) {
+  const base = {
+    provider: info.provider,
+    email: info.email,
+    nickname: info.nickname,
+    socialId: info.providerUserId,
+    profileImageUrl: info.profileImageUrl ?? '',
+  };
+  const phone = info.phone?.trim();
+  const initialDisplayName = info.initialDisplayName?.trim();
+  return {
+    ...base,
+    ...(phone ? { phone } : {}),
+    ...(initialDisplayName ? { initialDisplayName } : {}),
+  };
 }
 
 export default function LoginScreen() {
@@ -68,13 +86,7 @@ export default function LoginScreen() {
       } else if (result.kind === 'requiresSignup') {
         router.push({
           pathname: '/(auth)/social-signup',
-          params: {
-            provider: 'KAKAO',
-            email: result.socialUserInfo.email,
-            nickname: result.socialUserInfo.nickname,
-            socialId: result.socialUserInfo.providerUserId,
-            profileImageUrl: result.socialUserInfo.profileImageUrl ?? '',
-          },
+          params: socialSignupRouteParams(result.socialUserInfo),
         });
       } else if (result.kind === 'requiresPhoneAccountSelection') {
         router.push({
@@ -109,13 +121,7 @@ export default function LoginScreen() {
       } else if (result.kind === 'requiresSignup') {
         router.push({
           pathname: '/(auth)/social-signup',
-          params: {
-            provider: 'NAVER',
-            email: result.socialUserInfo.email,
-            nickname: result.socialUserInfo.nickname,
-            socialId: result.socialUserInfo.providerUserId,
-            profileImageUrl: result.socialUserInfo.profileImageUrl ?? '',
-          },
+          params: socialSignupRouteParams(result.socialUserInfo),
         });
       } else if (result.kind === 'requiresPhoneAccountSelection') {
         router.push({
@@ -176,13 +182,9 @@ export default function LoginScreen() {
       >
         <Animated.View entering={FadeIn.duration(600)} style={styles.content}>
           <View style={styles.header}>
-            <Animated.Text
-              entering={FadeInDown.delay(100).duration(500)}
-              style={[styles.logo, { color: theme.colors.primary }]}
-              accessibilityRole="header"
-            >
-              MindGarden
-            </Animated.Text>
+            <Animated.View entering={FadeInDown.delay(100).duration(500)}>
+              <AppBrandMark variant="hero" style={{ marginBottom: theme.spacing.sm }} />
+            </Animated.View>
             {Boolean(tenantName) && (
               <Animated.Text
                 entering={FadeInDown.delay(200).duration(500)}
@@ -392,11 +394,6 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 40,
-  },
-  logo: {
-    fontSize: fontSizeTokens['4xl'],
-    fontWeight: '700',
-    marginBottom: 8,
   },
   tenantName: {
     fontSize: fontSizeTokens.base,

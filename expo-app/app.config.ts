@@ -150,7 +150,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     splash: {
       image: './assets/images/splash-icon.png',
       resizeMode: 'contain',
-      backgroundColor: appCfgColors.clientBgMain,
+      /** 스플래시도 아이콘과 동일 톤 */
+      backgroundColor: '#000000',
     },
     ios: {
       supportsTablet: true,
@@ -169,7 +170,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     android: {
       adaptiveIcon: {
         foregroundImage: './assets/images/adaptive-icon.png',
-        backgroundColor: appCfgColors.clientBgMain,
+        /** 나비 로고와 동일한 검정 배경(Adaptive Icon 마스크 외곽) */
+        backgroundColor: '#000000',
       },
       package: 'com.mindgardenmobile',
       edgeToEdgeEnabled: true,

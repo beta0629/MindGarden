@@ -15,7 +15,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Linking,
 } from 'react-native';
 import { router, type Href, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -28,6 +27,7 @@ import {
   type SocialSignupRequestBody,
 } from '@/services/AuthService';
 import { navigateAfterAuthenticated } from '@/utils/navigateAfterAuth';
+import { normalizeKoreanMobileDigits } from '@/utils/phoneNormalize';
 
 function firstParam(v: string | string[] | undefined): string {
   if (Array.isArray(v)) return v[0] ?? '';
@@ -76,6 +76,8 @@ export default function SocialSignupScreen() {
     nickname?: string | string[];
     socialId?: string | string[];
     profileImageUrl?: string | string[];
+    phone?: string | string[];
+    initialDisplayName?: string | string[];
   }>();
 
   const provider = useMemo((): SocialAuthProvider => {
@@ -85,6 +87,11 @@ export default function SocialSignupScreen() {
 
   const initialEmail = useMemo(() => firstParam(params.email), [params.email]);
   const initialNickname = useMemo(() => firstParam(params.nickname), [params.nickname]);
+  const initialDisplayNameParam = useMemo(
+    () => firstParam(params.initialDisplayName),
+    [params.initialDisplayName],
+  );
+  const initialPhoneParam = useMemo(() => firstParam(params.phone), [params.phone]);
   const socialId = useMemo(() => firstParam(params.socialId), [params.socialId]);
   const profileImageUrl = useMemo(
     () => firstParam(params.profileImageUrl),
@@ -92,10 +99,16 @@ export default function SocialSignupScreen() {
   );
 
   const [email, setEmail] = useState(() => initialEmail);
-  const [displayName, setDisplayName] = useState(() =>
-    defaultDisplayName(initialEmail, initialNickname),
-  );
-  const [phone, setPhone] = useState('');
+  const [displayName, setDisplayName] = useState(() => {
+    const fromRoute = initialDisplayNameParam.trim();
+    if (fromRoute.length >= 2) return fromRoute;
+    return defaultDisplayName(initialEmail, initialNickname);
+  });
+  const [phone, setPhone] = useState(() => {
+    const normalized =
+      normalizeKoreanMobileDigits(initialPhoneParam) ?? normalizePhoneDigits(initialPhoneParam);
+    return normalized;
+  });
   const [terms, setTerms] = useState(false);
   const [privacy, setPrivacy] = useState(false);
   const [marketing, setMarketing] = useState(false);
@@ -104,17 +117,19 @@ export default function SocialSignupScreen() {
 
   const legal = useMemo(() => resolveLegalUrls(), []);
 
-  const openUrl = async (url: string) => {
-    if (!url) {
+  const openLegalInApp = (type: 'terms' | 'privacy') => {
+    const fullUrl = type === 'terms' ? legal.terms : legal.privacy;
+    if (!fullUrl) {
       setError('약관 링크가 설정되어 있지 않습니다. 관리자에게 문의해 주세요.');
       return;
     }
-    const ok = await Linking.canOpenURL(url);
-    if (!ok) {
-      setError('링크를 열 수 없습니다.');
-      return;
-    }
-    await Linking.openURL(url);
+    router.push({
+      pathname: '/(auth)/legal-webview',
+      params: {
+        url: encodeURIComponent(fullUrl),
+        title: type === 'terms' ? '이용약관' : '개인정보 처리방침',
+      },
+    });
   };
 
   const validate = (): string | null => {
@@ -125,8 +140,11 @@ export default function SocialSignupScreen() {
     const dn = displayName.trim();
     if (dn.length < 2) return '이름(표시명)은 2자 이상 입력해 주세요.';
     const digits = normalizePhoneDigits(phone);
-    if (phone.trim() && (digits.length !== 11 || !digits.startsWith('01'))) {
-      return '휴대폰 번호는 01로 시작하는 11자리 숫자여야 합니다. 비워 두면 제외됩니다.';
+    if (!digits.length) {
+      return '휴대폰 번호를 입력해 주세요.';
+    }
+    if (digits.length !== 11 || !digits.startsWith('01')) {
+      return '휴대폰 번호는 01로 시작하는 11자리 숫자여야 합니다.';
     }
     if (!socialId) return '소셜 식별자가 없습니다. 로그인 화면으로 돌아가 다시 시도해 주세요.';
     return null;
@@ -151,7 +169,7 @@ export default function SocialSignupScreen() {
         email: email.trim(),
         name: dn,
         nickname: dn,
-        ...(digits.length === 11 ? { phone: digits } : {}),
+        phone: digits,
         providerProfileImage: profileImageUrl || undefined,
         branchCode: '',
         privacyConsent: privacy,
@@ -229,7 +247,7 @@ export default function SocialSignupScreen() {
 
         <View style={[styles.field, { borderColor: theme.colors.border }]}>
           <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-            휴대폰 (선택, 11자리)
+            휴대폰 (필수, 11자리)
           </Text>
           <TextInput
             style={[styles.input, { color: theme.colors.textMain }]}
@@ -252,7 +270,7 @@ export default function SocialSignupScreen() {
             <Text style={{ color: theme.colors.textMain, flex: 1 }}>이용약관에 동의합니다.</Text>
           </Pressable>
           <Pressable
-            onPress={() => openUrl(legal.terms)}
+            onPress={() => openLegalInApp('terms')}
             hitSlop={8}
             accessibilityLabel="이용약관 전문"
           >
@@ -273,7 +291,7 @@ export default function SocialSignupScreen() {
             </Text>
           </Pressable>
           <Pressable
-            onPress={() => openUrl(legal.privacy)}
+            onPress={() => openLegalInApp('privacy')}
             hitSlop={8}
             accessibilityLabel="개인정보 전문"
           >

@@ -10,7 +10,7 @@ import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Redirect, type Href } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useTheme } from '../src/theme';
-import { fontSize as fontSizeTokens } from '../src/theme/typography';
+import { AppBrandMark } from '../src/components/molecules/AppBrandMark';
 import { useTenantStore } from '../src/stores/useTenantStore';
 import { useAuthStore } from '../src/stores/useAuthStore';
 
@@ -26,12 +26,9 @@ export default function AppEntry() {
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
-        <Animated.Text
-          entering={FadeIn.duration(400)}
-          style={[styles.logo, { color: theme.colors.primary }]}
-        >
-          MindGarden
-        </Animated.Text>
+        <Animated.View entering={FadeIn.duration(400)}>
+          <AppBrandMark variant="splash" style={{ marginBottom: theme.spacing.lg }} />
+        </Animated.View>
         <ActivityIndicator size="large" color={theme.colors.primary} style={styles.loader} />
       </View>
     );
@@ -57,11 +54,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  logo: {
-    fontSize: fontSizeTokens['4xl'],
-    fontWeight: '700',
-    marginBottom: 16,
   },
   loader: {
     marginTop: 8,

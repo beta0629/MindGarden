@@ -1,6 +1,9 @@
 package com.coresolution.consultation.service.impl;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +53,17 @@ public class SocialAuthServiceImpl implements SocialAuthService {
     private static final String INTERNAL_SOCIAL_PASSWORD_ALPHABET =
         "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"
             + PasswordPolicy.LOGIN_PASSWORD_ALLOWED_SPECIALS;
+
+    private static final String MSG_SOCIAL_PROVIDER_REQUIRED_FOR_LINK =
+        "소셜 연동을 완료하려면 제공자 정보가 필요합니다.";
+    private static final String MSG_SOCIAL_PROVIDER_USER_ID_REQUIRED =
+        "소셜 계정 식별 정보(providerUserId)가 필요합니다.";
+    private static final String MSG_SOCIAL_ACCOUNT_LINKED_TO_OTHER_USER =
+        "해당 소셜 계정은 다른 사용자와 이미 연결되어 있습니다. 고객센터로 문의해주세요.";
+    private static final String MSG_SOCIAL_LINK_COMPLETED =
+        "소셜 계정 연동이 완료되었습니다. 다시 로그인해주세요.";
+    private static final String MSG_SOCIAL_ALREADY_LINKED_SAME_USER =
+        "이미 해당 소셜 계정으로 연동되어 있습니다. 다시 로그인해주세요.";
 
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;
@@ -102,16 +116,28 @@ public class SocialAuthServiceImpl implements SocialAuthService {
         String normalizedProvider = SocialProvider.normalize(request.getProvider());
         log.info("소셜 회원가입 시작: email={}, provider={}", normalizedEmail, normalizedProvider);
         String tenantId = TenantContextHolder.getRequiredTenantId();
-            
-        // 이메일 중복 확인 (tenantId 필터링)
+
         if (userRepository.existsByTenantIdAndEmail(tenantId, normalizedEmail)) {
-            log.warn("이미 가입된 이메일: {}", normalizedEmail);
-            return SocialSignupResponse.builder()
-                .success(false)
-                .message("이미 가입된 이메일입니다.")
-                .build();
+            Optional<User> existingOpt = userRepository.findByTenantIdAndEmail(tenantId, normalizedEmail);
+            if (existingOpt.isEmpty()) {
+                log.warn("이메일 존재 플래그와 조회 결과 불일치: tenantId={}, email={}", tenantId, normalizedEmail);
+                return SocialSignupResponse.builder()
+                    .success(false)
+                    .message("이미 가입된 이메일입니다.")
+                    .build();
+            }
+            User existing = existingOpt.get();
+            if (!qualifiesForIncompleteSocialLink(existing)) {
+                log.warn("이미 가입된 이메일(완료된 계정): {}", normalizedEmail);
+                return SocialSignupResponse.builder()
+                    .success(false)
+                    .message("이미 가입된 이메일입니다.")
+                    .build();
+            }
+            return linkSocialToIncompleteExistingUser(
+                request, tenantId, normalizedEmail, normalizedProvider, existing);
         }
-            
+
         // 비밀번호: 클라이언트 미전송(SNS A안) 시 서버 내부용 강난수만 생성·해시(평문 미반환).
         // 클라이언트가 비밀번호를 보낸 경우에만 기존 길이 검증 후 encodePassword 정책 적용.
         String trimmedPassword = request.getPassword() == null ? "" : request.getPassword().trim();
@@ -271,19 +297,261 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             
         log.info("소셜 회원가입 성공: userId={}, email={}", client.getId(), client.getEmail());
 
-        // 상담사 신청 가능 여부 및 안내 메시지 생성
-        boolean canApplyConsultant = true; // 기본적으로 상담사 신청 가능
-        String consultantApplicationMessage = "상담사로 활동하고 싶으시다면 프로필을 완성한 후 관리자에게 신청해주세요.";
-        // 프로필 완성도 계산 (Client 엔티티에 맞게 수정)
+        return buildPostSocialSignupSuccessResponse(client,
+            "🎉 소셜 계정으로 간편 회원가입이 완료되었습니다! 이제 다시 로그인해주세요.");
+    }
+
+    /**
+     * 이메일 미인증이면서 전화번호가 사실상 비어 있는 사용자만 SNS 간편가입 경로에서 기존 User에 소셜을 연결할 수 있다.
+     */
+    private boolean qualifiesForIncompleteSocialLink(User user) {
+        return Boolean.FALSE.equals(user.getIsEmailVerified()) && isPhoneEffectivelyBlankOnUser(user);
+    }
+
+    private boolean isPhoneEffectivelyBlankOnUser(User user) {
+        if (!StringUtils.hasText(user.getPhone())) {
+            return true;
+        }
+        String decrypted = encryptionUtil.safeDecrypt(user.getPhone());
+        return !StringUtils.hasText(decrypted);
+    }
+
+    /**
+     * 미완성(이메일 미인증·전화 없음) 기존 사용자에 소셜 계정을 연결한다. 신규 User INSERT는 수행하지 않는다.
+     */
+    private SocialSignupResponse linkSocialToIncompleteExistingUser(
+        SocialSignupRequest request,
+        String tenantId,
+        String normalizedEmail,
+        String normalizedProvider,
+        User existing) {
+
+        if (existing.getTenantId() == null || !tenantId.equals(existing.getTenantId())) {
+            throw new IllegalStateException("소셜 연동 tenantId 정합성 오류: users.tenant_id 불일치");
+        }
+        if (existing.getId() == null) {
+            throw new IllegalStateException("소셜 연동에 실패했습니다. users.id가 없습니다.");
+        }
+
+        if (!request.isPrivacyConsent()) {
+            log.warn("개인정보 처리방침 동의 필요(미완성 연동): email={}", normalizedEmail);
+            return SocialSignupResponse.builder()
+                .success(false)
+                .message("개인정보 처리방침에 동의해주세요.")
+                .build();
+        }
+        if (!request.isTermsConsent()) {
+            log.warn("이용약관 동의 필요(미완성 연동): email={}", normalizedEmail);
+            return SocialSignupResponse.builder()
+                .success(false)
+                .message("이용약관에 동의해주세요.")
+                .build();
+        }
+
+        log.info("미완성 계정 소셜 연동: privacy={}, terms={}, marketing={}",
+            request.isPrivacyConsent(), request.isTermsConsent(), request.isMarketingConsent());
+
+        SocialSignupResponse phoneValidationError = validateOptionalSignupPhone(request);
+        if (phoneValidationError != null) {
+            return phoneValidationError;
+        }
+        String normalizedPhoneDigits = normalizeRequestPhoneDigitsOrNull(request);
+
+        if (!StringUtils.hasText(normalizedProvider)) {
+            log.warn("소셜 제공자 누락(미완성 연동): email={}", normalizedEmail);
+            return SocialSignupResponse.builder()
+                .success(false)
+                .message(MSG_SOCIAL_PROVIDER_REQUIRED_FOR_LINK)
+                .build();
+        }
+        if (!StringUtils.hasText(request.getProviderUserId())) {
+            log.warn("소셜 providerUserId 누락(미완성 연동): email={}", normalizedEmail);
+            return SocialSignupResponse.builder()
+                .success(false)
+                .message(MSG_SOCIAL_PROVIDER_USER_ID_REQUIRED)
+                .build();
+        }
+
+        Optional<UserSocialAccount> socialOpt = userSocialAccountRepository
+            .findByTenantIdAndProviderAndProviderUserIdAndIsDeletedFalse(
+                tenantId, normalizedProvider, request.getProviderUserId());
+
+        if (socialOpt.isPresent()) {
+            User linkedOwner = socialOpt.get().getUser();
+            if (linkedOwner == null || linkedOwner.getId() == null
+                || !Objects.equals(existing.getId(), linkedOwner.getId())) {
+                log.warn("소셜 계정이 다른 사용자에 연결됨: provider={}, providerUserId={}, expectedUserPk={}",
+                    normalizedProvider, request.getProviderUserId(), existing.getId());
+                return SocialSignupResponse.builder()
+                    .success(false)
+                    .message(MSG_SOCIAL_ACCOUNT_LINKED_TO_OTHER_USER)
+                    .build();
+            }
+            return finalizeIncompleteSocialLink(
+                request, tenantId, normalizedEmail, normalizedProvider, existing,
+                normalizedPhoneDigits, true);
+        }
+
+        String plainProviderUsername = resolvePlainProviderUsername(request, normalizedEmail);
+        String storedProviderUsername = StringUtils.hasText(plainProviderUsername)
+            ? encryptionUtil.encrypt(truncateForEncryptedUsername(plainProviderUsername))
+            : "";
+
+        UserSocialAccount socialAccount = UserSocialAccount.builder()
+            .user(existing)
+            .provider(normalizedProvider)
+            .providerUserId(request.getProviderUserId())
+            .providerUsername(storedProviderUsername)
+            .providerProfileImage(request.getProviderProfileImage())
+            .isActive(true)
+            .build();
+
+        userSocialAccountRepository.save(socialAccount);
+        log.info("미완성 계정에 소셜 행 저장: userPk={}, provider={}, providerUserId={}",
+            existing.getId(), normalizedProvider, request.getProviderUserId());
+
+        return finalizeIncompleteSocialLink(
+            request, tenantId, normalizedEmail, normalizedProvider, existing,
+            normalizedPhoneDigits, false);
+    }
+
+    private SocialSignupResponse finalizeIncompleteSocialLink(
+        SocialSignupRequest request,
+        String tenantId,
+        String normalizedEmail,
+        String normalizedProvider,
+        User existing,
+        String normalizedPhoneDigits,
+        boolean alreadyLinkedSameUser) {
+
+        boolean dirty = applyLegacySocialColumnsFromSignup(existing, normalizedProvider, request);
+        dirty |= applyPhoneEnrichmentIfAllowed(existing, normalizedPhoneDigits);
+
+        if (dirty) {
+            userRepository.saveAndFlush(existing);
+        }
+
+        Client client = ensureClientRecordForLinkedUser(existing, tenantId);
+        boolean clientDirty = syncClientPhoneIfUserPhonePresent(client, existing);
+        if (clientDirty) {
+            clientRepository.saveAndFlush(client);
+        }
+
+        String message = alreadyLinkedSameUser
+            ? MSG_SOCIAL_ALREADY_LINKED_SAME_USER
+            : MSG_SOCIAL_LINK_COMPLETED;
+        log.info("미완성 소셜 연동 완료: userPk={}, email={}, idempotent={}",
+            existing.getId(), normalizedEmail, alreadyLinkedSameUser);
+
+        return buildPostSocialSignupSuccessResponse(client, message);
+    }
+
+    private boolean applyLegacySocialColumnsFromSignup(
+        User user, String normalizedProvider, SocialSignupRequest request) {
+        boolean changed = false;
+        if (!Boolean.TRUE.equals(user.getIsSocialAccount())) {
+            user.setIsSocialAccount(true);
+            changed = true;
+        }
+        if (normalizedProvider != null && !normalizedProvider.equals(user.getSocialProvider())) {
+            user.setSocialProvider(normalizedProvider);
+            changed = true;
+        }
+        String providerUserId = request.getProviderUserId();
+        if (StringUtils.hasText(providerUserId)
+            && !providerUserId.equals(user.getSocialProviderUserId())) {
+            user.setSocialProviderUserId(providerUserId);
+            changed = true;
+        }
+        String profileImage = request.getProviderProfileImage();
+        if (StringUtils.hasText(profileImage) && !profileImage.equals(user.getProfileImageUrl())) {
+            user.setProfileImageUrl(profileImage);
+            changed = true;
+        }
+        if (changed || user.getSocialLinkedAt() == null) {
+            user.setSocialLinkedAt(LocalDateTime.now());
+            changed = true;
+        }
+        return changed;
+    }
+
+    private boolean applyPhoneEnrichmentIfAllowed(User user, String normalizedPhoneDigits) {
+        if (!StringUtils.hasText(normalizedPhoneDigits)) {
+            return false;
+        }
+        if (!isPhoneEffectivelyBlankOnUser(user)) {
+            return false;
+        }
+        user.setPhone(encryptionUtil.safeEncrypt(normalizedPhoneDigits));
+        return true;
+    }
+
+    private Client ensureClientRecordForLinkedUser(User user, String tenantId) {
+        Optional<Client> existingClient = clientRepository.findById(user.getId());
+        if (existingClient.isPresent()) {
+            return existingClient.get();
+        }
+        Client client = Client.builder()
+            .id(user.getId())
+            .tenantId(tenantId)
+            .name(user.getName())
+            .email(user.getEmail())
+            .phone(user.getPhone())
+            .branchCode(user.getBranchCode())
+            .build();
+        return clientRepository.saveAndFlush(client);
+    }
+
+    private boolean syncClientPhoneIfUserPhonePresent(Client client, User user) {
+        if (client == null || user.getPhone() == null) {
+            return false;
+        }
+        if (Objects.equals(client.getPhone(), user.getPhone())) {
+            return false;
+        }
+        client.setPhone(user.getPhone());
+        return true;
+    }
+
+    /**
+     * 요청 휴대폰: null이면 검증 생략. 값이 있으면 11자리 01 시작만 허용.
+     *
+     * @return 오류 응답 또는 null(정상)
+     */
+    private SocialSignupResponse validateOptionalSignupPhone(SocialSignupRequest request) {
+        if (request.getPhone() == null) {
+            return null;
+        }
+        String digits = request.getPhone().replaceAll("[^0-9]", "");
+        if (digits.length() != 11 || !digits.startsWith("01")) {
+            log.warn("올바르지 않은 휴대폰 번호 형식(미완성 연동): {}", request.getPhone());
+            return SocialSignupResponse.builder()
+                .success(false)
+                .message("올바른 휴대폰 번호 형식이 아닙니다. (11자리 숫자, 01로 시작)")
+                .build();
+        }
+        return null;
+    }
+
+    private String normalizeRequestPhoneDigitsOrNull(SocialSignupRequest request) {
+        if (request.getPhone() == null) {
+            return null;
+        }
+        return request.getPhone().replaceAll("[^0-9]", "");
+    }
+
+    private SocialSignupResponse buildPostSocialSignupSuccessResponse(Client client, String message) {
+        boolean canApplyConsultant = true;
+        String consultantApplicationMessage =
+            "상담사로 활동하고 싶으시다면 프로필을 완성한 후 관리자에게 신청해주세요.";
         int profileCompletionRate = calculateProfileCompletionRate(client);
-            
         return SocialSignupResponse.builder()
             .success(true)
-            .message("🎉 소셜 계정으로 간편 회원가입이 완료되었습니다! 이제 다시 로그인해주세요.")
+            .message(message)
             .userId(client.getId())
             .email(client.getEmail())
             .name(encryptionUtil.safeDecrypt(client.getName()))
-            .nickname(null) // Client 엔티티에는 nickname 필드가 없음
+            .nickname(null)
             .redirectUrl(getFrontendBaseUrl() + "/login?signup=success&email=" + client.getEmail())
             .canApplyConsultant(canApplyConsultant)
             .consultantApplicationMessage(consultantApplicationMessage)

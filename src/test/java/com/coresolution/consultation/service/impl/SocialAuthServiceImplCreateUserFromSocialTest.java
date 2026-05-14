@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.SocialSignupRequest;
 import com.coresolution.consultation.dto.SocialSignupResponse;
 import com.coresolution.consultation.entity.Client;
@@ -27,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -293,5 +295,254 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
 
         assertThat(response.isSuccess()).isFalse();
         verify(userRepository, never()).existsByTenantIdAndEmail(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("미완성(이메일 미인증·전화 없음) + 동일 이메일: User INSERT 없이 소셜 연동 성공")
+    void createUserFromSocial_incompleteExistingEmail_linksSocialWithoutNewUser() {
+        SocialSignupRequest request = SocialSignupRequest.builder()
+            .email("pending@test.com")
+            .name("연동사용자")
+            .password(null)
+            .phone("01012345678")
+            .provider("KAKAO")
+            .providerUserId("kakao-link-1")
+            .providerUsername("kakao-nick")
+            .providerProfileImage("https://img/kakao")
+            .privacyConsent(true)
+            .termsConsent(true)
+            .marketingConsent(false)
+            .build();
+
+        User existing = User.builder()
+            .userId("legacy_pending")
+            .password("encoded-existing")
+            .name("enc-name")
+            .email("pending@test.com")
+            .phone(null)
+            .role(UserRole.CLIENT)
+            .isEmailVerified(false)
+            .isSocialAccount(false)
+            .build();
+        existing.setId(9101L);
+        existing.setTenantId("tenant-social-ut");
+
+        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", "pending@test.com")).thenReturn(true);
+        when(userRepository.findByTenantIdAndEmail("tenant-social-ut", "pending@test.com"))
+            .thenReturn(java.util.Optional.of(existing));
+        when(userSocialAccountRepository.findByTenantIdAndProviderAndProviderUserIdAndIsDeletedFalse(
+            eq("tenant-social-ut"), eq("KAKAO"), eq("kakao-link-1")))
+            .thenReturn(java.util.Optional.empty());
+        when(encryptionUtil.encrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
+        when(encryptionUtil.safeDecrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(clientRepository.findById(9101L)).thenReturn(java.util.Optional.empty());
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SocialSignupResponse response = socialAuthService.createUserFromSocial(request);
+
+        assertThat(response.isSuccess()).isTrue();
+        assertThat(response.getUserId()).isEqualTo(9101L);
+        assertThat(response.getMessage()).contains("연동");
+        verify(userRepository).saveAndFlush(any(User.class));
+        verify(userSocialAccountRepository).save(any(UserSocialAccount.class));
+        verify(clientRepository).saveAndFlush(any(Client.class));
+    }
+
+    @Test
+    @DisplayName("이메일 인증 완료된 기존 사용자: 동일 이메일로 소셜 간편가입 차단")
+    void createUserFromSocial_existingVerifiedEmail_blocks() {
+        SocialSignupRequest request = SocialSignupRequest.builder()
+            .email("done@test.com")
+            .name("홍길동")
+            .password("ValidPass123!")
+            .phone("01012345678")
+            .provider("KAKAO")
+            .providerUserId("k-1")
+            .privacyConsent(true)
+            .termsConsent(true)
+            .build();
+
+        User existing = User.builder()
+            .userId("u1")
+            .password("enc")
+            .name("n")
+            .email("done@test.com")
+            .phone(null)
+            .role(UserRole.CLIENT)
+            .isEmailVerified(true)
+            .build();
+        existing.setId(9201L);
+        existing.setTenantId("tenant-social-ut");
+
+        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", "done@test.com")).thenReturn(true);
+        when(userRepository.findByTenantIdAndEmail("tenant-social-ut", "done@test.com"))
+            .thenReturn(java.util.Optional.of(existing));
+
+        SocialSignupResponse response = socialAuthService.createUserFromSocial(request);
+
+        assertThat(response.isSuccess()).isFalse();
+        assertThat(response.getMessage()).isEqualTo("이미 가입된 이메일입니다.");
+        verify(userSocialAccountRepository, never()).save(any(UserSocialAccount.class));
+    }
+
+    @Test
+    @DisplayName("이메일 미인증이나 전화가 이미 있으면: 동일 이메일로 소셜 간편가입 차단")
+    void createUserFromSocial_existingUnverifiedButHasPhone_blocks() {
+        SocialSignupRequest request = SocialSignupRequest.builder()
+            .email("hasphone@test.com")
+            .name("홍길동")
+            .password("ValidPass123!")
+            .phone("01012345678")
+            .provider("KAKAO")
+            .providerUserId("k-2")
+            .privacyConsent(true)
+            .termsConsent(true)
+            .build();
+
+        User existing = User.builder()
+            .userId("u2")
+            .password("enc")
+            .name("n")
+            .email("hasphone@test.com")
+            .phone("enc-phone")
+            .role(UserRole.CLIENT)
+            .isEmailVerified(false)
+            .build();
+        existing.setId(9202L);
+        existing.setTenantId("tenant-social-ut");
+
+        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", "hasphone@test.com")).thenReturn(true);
+        when(userRepository.findByTenantIdAndEmail("tenant-social-ut", "hasphone@test.com"))
+            .thenReturn(java.util.Optional.of(existing));
+        when(encryptionUtil.safeDecrypt("enc-phone")).thenReturn("01099998888");
+
+        SocialSignupResponse response = socialAuthService.createUserFromSocial(request);
+
+        assertThat(response.isSuccess()).isFalse();
+        assertThat(response.getMessage()).isEqualTo("이미 가입된 이메일입니다.");
+        verify(userSocialAccountRepository, never()).save(any(UserSocialAccount.class));
+    }
+
+    @Test
+    @DisplayName("미완성 사용자인데 동일 소셜 ID가 다른 유저에 연결된 경우: 실패")
+    void createUserFromSocial_incompleteButSocialOwnedByOther_fails() {
+        SocialSignupRequest request = SocialSignupRequest.builder()
+            .email("inc@test.com")
+            .name("홍길동")
+            .password("ValidPass123!")
+            .phone("01012345678")
+            .provider("NAVER")
+            .providerUserId("nv-shared")
+            .privacyConsent(true)
+            .termsConsent(true)
+            .build();
+
+        User existing = User.builder()
+            .userId("u-inc")
+            .password("enc")
+            .name("n")
+            .email("inc@test.com")
+            .phone(null)
+            .role(UserRole.CLIENT)
+            .isEmailVerified(false)
+            .build();
+        existing.setId(9301L);
+        existing.setTenantId("tenant-social-ut");
+
+        User other = User.builder()
+            .userId("other")
+            .password("enc")
+            .name("n2")
+            .email("other@test.com")
+            .role(UserRole.CLIENT)
+            .build();
+        other.setId(9302L);
+        other.setTenantId("tenant-social-ut");
+
+        UserSocialAccount taken = UserSocialAccount.builder()
+            .user(other)
+            .provider("NAVER")
+            .providerUserId("nv-shared")
+            .build();
+
+        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", "inc@test.com")).thenReturn(true);
+        when(userRepository.findByTenantIdAndEmail("tenant-social-ut", "inc@test.com"))
+            .thenReturn(java.util.Optional.of(existing));
+        when(userSocialAccountRepository.findByTenantIdAndProviderAndProviderUserIdAndIsDeletedFalse(
+            eq("tenant-social-ut"), eq("NAVER"), eq("nv-shared")))
+            .thenReturn(java.util.Optional.of(taken));
+
+        SocialSignupResponse response = socialAuthService.createUserFromSocial(request);
+
+        assertThat(response.isSuccess()).isFalse();
+        assertThat(response.getMessage()).contains("다른 사용자");
+        verify(userRepository, never()).saveAndFlush(any(User.class));
+        verify(userSocialAccountRepository, never()).save(any(UserSocialAccount.class));
+    }
+
+    @Test
+    @DisplayName("미완성 사용자 + 이미 동일 소셜 연동됨: 멱등 성공, UserSocialAccount 추가 저장 없음")
+    void createUserFromSocial_incompleteAlreadyLinked_idempotent() {
+        SocialSignupRequest request = SocialSignupRequest.builder()
+            .email("idem@test.com")
+            .name("홍길동")
+            .password("ValidPass123!")
+            .phone(null)
+            .provider("KAKAO")
+            .providerUserId("k-idem")
+            .providerProfileImage("https://same")
+            .privacyConsent(true)
+            .termsConsent(true)
+            .build();
+
+        User existing = User.builder()
+            .userId("u-idem")
+            .password("enc")
+            .name("n")
+            .email("idem@test.com")
+            .phone(null)
+            .role(UserRole.CLIENT)
+            .isEmailVerified(false)
+            .isSocialAccount(true)
+            .socialProvider("KAKAO")
+            .socialProviderUserId("k-idem")
+            .profileImageUrl("https://same")
+            .build();
+        existing.setId(9401L);
+        existing.setTenantId("tenant-social-ut");
+        existing.setSocialLinkedAt(java.time.LocalDateTime.now().minusDays(1));
+
+        UserSocialAccount link = UserSocialAccount.builder()
+            .user(existing)
+            .provider("KAKAO")
+            .providerUserId("k-idem")
+            .build();
+
+        Client clientRow = Client.builder()
+            .id(9401L)
+            .tenantId("tenant-social-ut")
+            .name("n")
+            .email("idem@test.com")
+            .phone(null)
+            .build();
+
+        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", "idem@test.com")).thenReturn(true);
+        when(userRepository.findByTenantIdAndEmail("tenant-social-ut", "idem@test.com"))
+            .thenReturn(java.util.Optional.of(existing));
+        when(userSocialAccountRepository.findByTenantIdAndProviderAndProviderUserIdAndIsDeletedFalse(
+            eq("tenant-social-ut"), eq("KAKAO"), eq("k-idem")))
+            .thenReturn(java.util.Optional.of(link));
+        when(encryptionUtil.safeDecrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(clientRepository.findById(9401L)).thenReturn(java.util.Optional.of(clientRow));
+
+        SocialSignupResponse response = socialAuthService.createUserFromSocial(request);
+
+        assertThat(response.isSuccess()).isTrue();
+        assertThat(response.getMessage()).contains("이미");
+        verify(userSocialAccountRepository, never()).save(any(UserSocialAccount.class));
+        verify(userRepository, never()).saveAndFlush(any(User.class));
+        verify(clientRepository, never()).saveAndFlush(any(Client.class));
     }
 }

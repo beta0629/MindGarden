@@ -19,6 +19,7 @@ import type { User, Tokens } from '../stores/useAuthStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useTenantStore } from '../stores/useTenantStore';
 import { isExpoGoApp } from '@/lib/getMmkv';
+import { normalizeKoreanMobileDigits } from '../utils/phoneNormalize';
 
 export type SocialAuthProvider = 'KAKAO' | 'NAVER';
 
@@ -30,6 +31,12 @@ export interface SocialUserInfoDraft {
   /** 백엔드 `providerUserId` — 네이티브 응답에서는 `socialId` 키로 전달됨 */
   providerUserId: string;
   profileImageUrl?: string;
+  /** 국내 11자리(010…) — SDK·동의가 있을 때만 */
+  phone?: string;
+  /** 카카오 실명 동의 등 원본 이름 */
+  realName?: string;
+  /** 간편가입 표시명 초기값(실명 우선 시) */
+  initialDisplayName?: string;
 }
 
 export interface SocialSignupRequestBody {
@@ -157,6 +164,116 @@ function mapApiUserToStoreUser(raw: SocialLoginApiUser): User {
     role,
     profileImageUrl: raw.profileImageUrl,
     tenantId: useTenantStore.getState().tenantId ?? undefined,
+  };
+}
+
+function readOptionalString(v: unknown): string | undefined {
+  if (typeof v === 'string') {
+    const t = v.trim();
+    return t.length ? t : undefined;
+  }
+  return undefined;
+}
+
+function readKakaoNestedAccount(profile: Record<string, unknown>): Record<string, unknown> | undefined {
+  const ka = profile.kakao_account;
+  if (ka && typeof ka === 'object') {
+    return ka as Record<string, unknown>;
+  }
+  return undefined;
+}
+
+/**
+ * 카카오 네이티브 프로필로 가입 분기 draft 보강(이메일·닉·전화·표시명).
+ * API 값이 비어 있을 때만 이메일 등 보수적으로 덮어씀.
+ */
+function enrichDraftFromKakaoProfile(
+  draft: SocialUserInfoDraft,
+  profile: unknown,
+): SocialUserInfoDraft {
+  const rec = (profile && typeof profile === 'object' ? profile : {}) as Record<string, unknown>;
+  const ka = readKakaoNestedAccount(rec);
+
+  const profileEmail =
+    readOptionalString(rec.email) ?? (ka ? readOptionalString(ka.email) : undefined);
+  const email =
+    !draft.email?.trim() && profileEmail?.trim() ? profileEmail.trim() : draft.email;
+
+  const phoneRaw =
+    readOptionalString(rec.phoneNumber) ??
+    readOptionalString(rec.phone_number) ??
+    readOptionalString(rec.phone) ??
+    (ka
+      ? readOptionalString(ka.phone_number) ??
+        readOptionalString(ka.phoneNumber) ??
+        readOptionalString(ka.phone)
+      : undefined);
+  const normalizedPhone = normalizeKoreanMobileDigits(phoneRaw);
+  const phone = normalizedPhone ?? draft.phone;
+
+  const realName =
+    readOptionalString(rec.name) ?? (ka ? readOptionalString(ka.name) : undefined);
+
+  let nickname = draft.nickname?.trim() ?? '';
+  if (!nickname) {
+    nickname =
+      readOptionalString(rec.nickname) ??
+      readOptionalString(rec.displayName) ??
+      (realName?.trim() ?? '');
+  }
+
+  const initialDisplayName =
+    realName && realName.trim().length >= 2
+      ? realName.trim()
+      : draft.initialDisplayName;
+
+  return {
+    ...draft,
+    email,
+    nickname: nickname || draft.nickname,
+    phone,
+    realName: realName ?? draft.realName,
+    initialDisplayName,
+  };
+}
+
+/**
+ * 네이버 getProfile response로 전화·이메일·닉 보강.
+ */
+function enrichDraftFromNaverResponse(
+  draft: SocialUserInfoDraft,
+  response: Record<string, unknown> | null | undefined,
+): SocialUserInfoDraft {
+  if (!response) return draft;
+
+  const phoneRaw =
+    readOptionalString(response.mobile) ??
+    readOptionalString(response.cellphone) ??
+    readOptionalString(response.mobile_no) ??
+    readOptionalString(response.phone) ??
+    readOptionalString(response.tel);
+  const normalizedPhone = normalizeKoreanMobileDigits(phoneRaw);
+  const phone = normalizedPhone ?? draft.phone;
+
+  let email = draft.email;
+  if (!email?.trim()) {
+    const pe = readOptionalString(response.email);
+    if (pe) email = pe;
+  }
+
+  let nickname = draft.nickname?.trim() ?? '';
+  if (!nickname) {
+    nickname =
+      readOptionalString(response.nickname) ??
+      readOptionalString(response.name) ??
+      '';
+  }
+
+  return {
+    ...draft,
+    email,
+    nickname: nickname || draft.nickname,
+    phone,
   };
 }
 
@@ -303,6 +420,13 @@ export const AuthService = {
         });
         return { kind: 'authenticated', user: mapped.user };
       }
+      if (mapped.kind === 'requiresSignup') {
+        return {
+          kind: 'requiresSignup',
+          socialUserInfo: enrichDraftFromKakaoProfile(mapped.socialUserInfo, profile),
+          provider: 'KAKAO',
+        };
+      }
       return mapped;
     } catch (error: unknown) {
       logAuthError('카카오 로그인 에러', error);
@@ -354,14 +478,19 @@ export const AuthService = {
       let email: string | null = null;
       let nickname: string | null = null;
       let profileImage: string | null = null;
+      let naverProfile: Record<string, unknown> | undefined;
 
       try {
         const profileResult = await NaverLogin.getProfile(accessToken);
         if (profileResult?.response) {
-          userId = profileResult.response.id ?? null;
-          email = profileResult.response.email ?? null;
-          nickname = profileResult.response.nickname ?? profileResult.response.name ?? null;
-          profileImage = profileResult.response.profile_image ?? null;
+          naverProfile = profileResult.response as Record<string, unknown>;
+          userId = naverProfile.id != null ? String(naverProfile.id) : null;
+          email = readOptionalString(naverProfile.email) ?? null;
+          nickname =
+            readOptionalString(naverProfile.nickname) ??
+            readOptionalString(naverProfile.name) ??
+            null;
+          profileImage = readOptionalString(naverProfile.profile_image) ?? null;
         }
       } catch {
         // 프로필 가져오기 실패 — 백엔드에서 accessToken으로 조회 가능
@@ -383,6 +512,13 @@ export const AuthService = {
           refreshToken: response.refreshToken as string,
         });
         return { kind: 'authenticated', user: mapped.user };
+      }
+      if (mapped.kind === 'requiresSignup') {
+        return {
+          kind: 'requiresSignup',
+          socialUserInfo: enrichDraftFromNaverResponse(mapped.socialUserInfo, naverProfile),
+          provider: 'NAVER',
+        };
       }
       return mapped;
     } catch (error: unknown) {

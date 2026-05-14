@@ -44,8 +44,13 @@ export default function MeditationMain() {
   const [refreshing, setRefreshing] = useState(false);
 
   const catalogQuery = useMeditationCatalog();
-  const catalogTracks: MeditationTrack[] = catalogQuery.data?.tracks ?? MOCK_MEDITATION_TRACKS;
-  const catalogSource = catalogQuery.data?.source ?? 'demo';
+  const serverTracks = catalogQuery.data?.tracks;
+  const catalogTracks: MeditationTrack[] =
+    serverTracks != null && serverTracks.length > 0 ? serverTracks : MOCK_MEDITATION_TRACKS;
+  const catalogSource =
+    serverTracks != null && serverTracks.length > 0 && catalogQuery.data?.source === 'api'
+      ? 'api'
+      : 'demo';
 
   const { favorites, totalPracticeMinutes, streakDays } = useMeditationStore();
 
@@ -95,8 +100,8 @@ export default function MeditationMain() {
           }}
         >
           {catalogSource === 'api'
-            ? '서버 목록(GET /api/v1/meditations). 오디오 URL이 없으면 무음 데모 클립으로 재생됩니다.'
-            : '데모 목록(GET /api/v1/meditations 실패 시 폴백). 오디오는 무음 데모 클립입니다.'}
+            ? '서버에 등록된 명상(MEDITATION) 카탈로그를 불러왔어요. 오디오 URL이 없으면 무음 데모 클립으로 재생됩니다.'
+            : '지금은 앱에 포함된 데모 목록을 보여 드려요. 운영에서 힐링 카탈로그에 명상 항목을 등록·노출하면 GET /api/v1/meditations 목록으로 자동 전환됩니다.'}
         </Text>
       </View>
 

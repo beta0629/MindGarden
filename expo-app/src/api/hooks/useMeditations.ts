@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { MeditationTrack } from '@/constants/meditationData';
 import {
   fetchMeditationCatalog,
+  getDemoMeditationCatalogState,
   type MeditationCatalogSource,
 } from '@/services/meditationCatalogService';
 
@@ -30,6 +31,7 @@ export function useMeditationCatalog() {
     queryKey: MEDITATION_QUERY_KEYS.catalog(),
     queryFn: () => fetchMeditationCatalog(),
     staleTime: 1000 * 60 * 10,
+    placeholderData: () => getDemoMeditationCatalogState(),
   });
 }
 

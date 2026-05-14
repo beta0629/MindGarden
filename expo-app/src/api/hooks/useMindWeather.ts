@@ -1,7 +1,7 @@
 /**
  * 마음 날씨 — Phase 4-A TanStack Query 훅.
  *
- * - `analyzeMindWeather` 는 mutation으로 노출 (성공 시 목록 invalidate)
+ * - `analyzeMindWeather` 는 mutation으로 노출 (성공 시 목록 캐시 선반영 + invalidate)
  * - 공유 옵트인 토글은 단일 카드 단위
  * - 상담사 수신함은 별도 쿼리 키
  *
@@ -18,6 +18,7 @@ import {
   unshareMindWeatherCard,
   type MindWeatherAnalyzeRequest,
   type MindWeatherCard,
+  type MindWeatherListPayload,
   type MindWeatherShareInput,
 } from '@/services/mindWeatherService';
 
@@ -58,6 +59,17 @@ export function useAnalyzeMindWeather() {
   return useMutation<MindWeatherCard, Error, MindWeatherAnalyzeRequest>({
     mutationFn: (request) => analyzeMindWeather(request),
     onSuccess: (card) => {
+      queryClient.setQueryData<MindWeatherListPayload | undefined>(
+        MIND_WEATHER_QUERY_KEYS.list(),
+        (old) => {
+          const prev = old?.items ?? [];
+          const nextItems = [card, ...prev.filter((c) => c.id !== card.id)];
+          return {
+            items: nextItems,
+            source: old?.source ?? 'api',
+          };
+        },
+      );
       queryClient.invalidateQueries({ queryKey: MIND_WEATHER_QUERY_KEYS.list() });
       queryClient.setQueryData(MIND_WEATHER_QUERY_KEYS.detail(card.id), card);
     },

@@ -8,7 +8,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
 import { fontSize as fontSizeTokens } from '@/theme/typography';
 
@@ -40,7 +39,6 @@ function isHttpsUrl(url: string): boolean {
 export default function LegalWebViewScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ url?: string | string[]; title?: string | string[] }>();
 
   const rawUrl = useMemo(() => firstParam(params.url), [params.url]);
@@ -48,10 +46,7 @@ export default function LegalWebViewScreen() {
   const titleParam = useMemo(() => firstParam(params.title), [params.title]);
   const headerTitle = titleParam.trim() || '문서';
 
-  const urlValid = useMemo(
-    () => decodedUrl.length > 0 && isHttpsUrl(decodedUrl),
-    [decodedUrl],
-  );
+  const urlValid = useMemo(() => decodedUrl.length > 0 && isHttpsUrl(decodedUrl), [decodedUrl]);
 
   const [webLoading, setWebLoading] = useState(urlValid);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -81,7 +76,7 @@ export default function LegalWebViewScreen() {
         style={[
           styles.header,
           {
-            paddingTop: insets.top + 8,
+            paddingTop: 12,
             paddingBottom: 12,
             borderBottomColor: theme.colors.border,
             backgroundColor: theme.colors.bgMain,
@@ -95,14 +90,17 @@ export default function LegalWebViewScreen() {
           accessibilityRole="button"
           accessibilityLabel="뒤로"
         >
-          <Text style={{ color: theme.colors.primary, fontSize: fontSizeTokens.base, fontWeight: '600' }}>
+          <Text
+            style={{
+              color: theme.colors.primary,
+              fontSize: fontSizeTokens.base,
+              fontWeight: '600',
+            }}
+          >
             뒤로
           </Text>
         </Pressable>
-        <Text
-          style={[styles.headerTitle, { color: theme.colors.textMain }]}
-          numberOfLines={1}
-        >
+        <Text style={[styles.headerTitle, { color: theme.colors.textMain }]} numberOfLines={1}>
           {headerTitle}
         </Text>
         <View style={styles.headerSide} />

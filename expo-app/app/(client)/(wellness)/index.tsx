@@ -8,8 +8,17 @@
  *
  * @author MindGarden
  * @since 2026-05-12
+ * @since 2026-05-13 — 마음챙김 가이드 섹션·힐링 카드 탭 네비게이션
  */
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Linking,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, type Href } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -24,6 +33,7 @@ import {
   Sparkles,
   Flower2,
   CloudSun,
+  ChevronRight,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
@@ -61,6 +71,35 @@ export default function ClientWellness() {
     if (route) {
       router.push(route as Href);
     }
+  };
+
+  const handleMindfulnessGuideSectionPress = () => {
+    router.push('/(client)/(wellness)/meditation' as Href);
+  };
+
+  const handleHealingContentPress = (content: HealingContent) => {
+    const url = content.contentUrl?.trim() ?? '';
+    const isHttp = /^https?:\/\//i.test(url);
+
+    if (content.type === 'MEDITATION' || content.type === 'AUDIO') {
+      router.push(`/(client)/(wellness)/meditation/${content.id}` as Href);
+      return;
+    }
+    if (content.type === 'ARTICLE') {
+      if (isHttp) {
+        void Linking.openURL(url);
+        return;
+      }
+      router.push(`/(client)/(wellness)/psycho-education/${content.id}` as Href);
+      return;
+    }
+    if (content.type === 'VIDEO') {
+      if (isHttp) {
+        void Linking.openURL(url);
+        return;
+      }
+    }
+    router.push('/(client)/(wellness)/meditation' as Href);
   };
 
   const entries: WellnessEntryItem[] = [
@@ -166,18 +205,28 @@ export default function ClientWellness() {
 
         {/* 힐링 콘텐츠 피드 */}
         <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.feedSection}>
-          <Text
-            style={[
-              styles.sectionTitle,
-              {
-                fontFamily: theme.fontFamily.semibold,
-                fontSize: theme.fontSize.base,
-                color: theme.colors.textMain,
-              },
-            ]}
+          <Pressable
+            onPress={handleMindfulnessGuideSectionPress}
+            style={({ pressed }) => [styles.feedSectionHeader, { opacity: pressed ? 0.75 : 1 }]}
+            accessibilityRole="button"
+            accessibilityLabel="마음챙김 가이드, 명상 가이드 전체 보기"
+            hitSlop={{ top: 8, bottom: 8, left: 0, right: 0 }}
           >
-            마음챙김 가이드
-          </Text>
+            <Text
+              style={[
+                styles.sectionTitle,
+                {
+                  fontFamily: theme.fontFamily.semibold,
+                  fontSize: theme.fontSize.base,
+                  color: theme.colors.textMain,
+                  marginBottom: 0,
+                },
+              ]}
+            >
+              마음챙김 가이드
+            </Text>
+            <ChevronRight size={20} color={theme.colors.textSecondary} />
+          </Pressable>
 
           {isPending ? (
             <View style={styles.feedLoading}>
@@ -193,7 +242,13 @@ export default function ClientWellness() {
             />
           ) : (
             healingFeed.map((item, index) => (
-              <HealingContentCard key={item.id} content={item} index={index} theme={theme} />
+              <HealingContentCard
+                key={item.id}
+                content={item}
+                index={index}
+                theme={theme}
+                onPress={() => handleHealingContentPress(item)}
+              />
             ))
           )}
         </Animated.View>
@@ -208,9 +263,10 @@ interface HealingContentCardProps {
   content: HealingContent;
   index: number;
   theme: ReturnType<typeof useTheme>;
+  onPress: () => void;
 }
 
-function HealingContentCard({ content, index, theme }: HealingContentCardProps) {
+function HealingContentCard({ content, index, theme, onPress }: HealingContentCardProps) {
   const typeIcons: Record<string, React.ReactNode> = {
     MEDITATION: <Headphones size={20} color={theme.colors.primary} />,
     ARTICLE: <BookOpen size={20} color={theme.colors.primary} />,
@@ -219,55 +275,62 @@ function HealingContentCard({ content, index, theme }: HealingContentCardProps) 
   };
 
   return (
-    <Animated.View
-      entering={FadeInDown.delay(500 + index * 80).springify()}
-      style={[
-        feedStyles.card,
-        {
-          backgroundColor: theme.colors.surface,
-          borderRadius: theme.borderRadius.xl,
-          ...theme.shadows.sm,
-        },
-      ]}
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1 }]}
+      accessibilityRole="button"
+      accessibilityLabel={`${content.title}. ${content.description}`}
     >
-      <View style={[feedStyles.iconWrap, { backgroundColor: theme.colors.primaryLight + '30' }]}>
-        {typeIcons[content.type] ?? typeIcons.ARTICLE}
-      </View>
-      <View style={feedStyles.textWrap}>
-        <Text
-          style={{
-            fontFamily: theme.fontFamily.semibold,
-            fontSize: theme.fontSize.sm,
-            color: theme.colors.textMain,
-          }}
-          numberOfLines={1}
-        >
-          {content.title}
-        </Text>
-        <Text
-          style={{
-            fontFamily: theme.fontFamily.regular,
-            fontSize: theme.fontSize.xs,
-            color: theme.colors.textSecondary,
-          }}
-          numberOfLines={2}
-        >
-          {content.description}
-        </Text>
-        {content.durationMinutes != null && (
+      <Animated.View
+        entering={FadeInDown.delay(500 + index * 80).springify()}
+        style={[
+          feedStyles.card,
+          {
+            backgroundColor: theme.colors.surface,
+            borderRadius: theme.borderRadius.xl,
+            ...theme.shadows.sm,
+          },
+        ]}
+      >
+        <View style={[feedStyles.iconWrap, { backgroundColor: theme.colors.primaryLight + '30' }]}>
+          {typeIcons[content.type] ?? typeIcons.ARTICLE}
+        </View>
+        <View style={feedStyles.textWrap}>
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.semibold,
+              fontSize: theme.fontSize.sm,
+              color: theme.colors.textMain,
+            }}
+            numberOfLines={1}
+          >
+            {content.title}
+          </Text>
           <Text
             style={{
               fontFamily: theme.fontFamily.regular,
-              fontSize: theme.fontSize['2xs'],
-              color: theme.colors.textTertiary,
-              marginTop: 2,
+              fontSize: theme.fontSize.xs,
+              color: theme.colors.textSecondary,
             }}
+            numberOfLines={2}
           >
-            {content.durationMinutes}분
+            {content.description}
           </Text>
-        )}
-      </View>
-    </Animated.View>
+          {content.durationMinutes != null && (
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.regular,
+                fontSize: theme.fontSize['2xs'],
+                color: theme.colors.textTertiary,
+                marginTop: 2,
+              }}
+            >
+              {content.durationMinutes}분
+            </Text>
+          )}
+        </View>
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -313,8 +376,15 @@ const styles = StyleSheet.create({
   feedSection: {
     marginTop: 12,
   },
-  sectionTitle: {
+  feedSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 12,
+  },
+  sectionTitle: {
+    flex: 1,
+    marginRight: 8,
   },
   feedLoading: {
     gap: 10,

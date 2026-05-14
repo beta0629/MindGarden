@@ -3,7 +3,8 @@
  *
  * **원장(Mock vs API)** — 표기는 `WELLNESS_PHASE_3B_DATA_SOURCE.meditationCatalog`와 동일 의미:
  * - **API 경로**: `apiGet` 성공 후 `normalizeTrackList`가 **1건 이상**이면 `{ source: 'api', tracks }` — 서버 권위, `MOCK_MEDITATION_TRACKS` 미사용.
- * - **로컬 폴백**: GET 예외(catch)·정규화 결과 `null`/빈 배열이면 `{ source: 'demo', tracks: applyDefaultAudio([...MOCK_MEDITATION_TRACKS]) }`.
+ * - **로컬 폴백**: GET 예외(catch)·정규화 결과 `null`/빈 배열이면 `getDemoMeditationCatalogState()` — TanStack 캐시에 `tracks: []`가
+ *   들어간 경우(영속화 등) UI에서도 `??`만으로는 복구되지 않으므로 화면은 `tracks.length`로 폴백한다.
  * - **오디오**: 트랙에 스트림 URI가 없으면 `MEDITATION_DEFAULT_STREAM_URI` → `MEDITATION_LOCAL_DEMO_SILENCE` (`meditationData` 주석).
  * - **표시 경계**: 제목·설명 등은 `normalizeTrack`에서 `toDisplayString`·`toSafeNumber`로 스칼라화(`COMMON_DISPLAY_BOUNDARY_MEETING_20260322.md`).
  *
@@ -54,7 +55,7 @@ function normalizeTrack(raw: unknown, index: number): MeditationTrack | null {
   if (raw == null || typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
   const id = toSafeNumber(o.id ?? o.meditationId ?? index + 1, index + 1);
-  const title = toDisplayString(o.title ?? o.name, '');
+  const title = toDisplayString(o.title ?? o.name ?? o.headline ?? o.contentTitle, '');
   if (!title) return null;
   const description = toDisplayString(o.description ?? o.summary, '명상 가이드');
   const category = mapCategoryKey(o.category ?? o.categoryCode ?? o.type);
@@ -128,6 +129,17 @@ function applyDefaultAudio(tracks: MeditationTrack[]): MeditationTrack[] {
   );
 }
 
+/** 쿼리 placeholder·UI 폴백용 — 항상 비지 않은 데모 카탈로그 */
+export function getDemoMeditationCatalogState(): {
+  source: MeditationCatalogSource;
+  tracks: MeditationTrack[];
+} {
+  return {
+    source: 'demo',
+    tracks: applyDefaultAudio([...MOCK_MEDITATION_TRACKS]),
+  };
+}
+
 /**
  * @returns `source: 'api'` = 서버 목록만; `source: 'demo'` = `MOCK_MEDITATION_TRACKS` + 데모 오디오 규칙(원장은 파일머리).
  */
@@ -144,8 +156,5 @@ export async function fetchMeditationCatalog(): Promise<{
   } catch {
     /* 단일 폴백 */
   }
-  return {
-    source: 'demo',
-    tracks: applyDefaultAudio([...MOCK_MEDITATION_TRACKS]),
-  };
+  return getDemoMeditationCatalogState();
 }

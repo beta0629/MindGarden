@@ -12,6 +12,7 @@ import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-au
 import {
   MEDITATION_DEFAULT_STREAM_URI,
   MEDITATION_LOCAL_DEMO_SILENCE,
+  type MeditationTrack,
 } from '@/constants/meditationData';
 import { useMeditationStore } from '@/stores/useMeditationStore';
 import {
@@ -38,6 +39,38 @@ async function ensureMeditationAudioMode(): Promise<void> {
   AUDIO_MODE_CONFIGURED.current = true;
 }
 
+/**
+ * 빈 문자열 `audioUri`는 로드 실패로 이어지므로 제외하고, 트랙 없음일 때는 null(유휴)을 반환한다.
+ *
+ * @param track 현재 트랙 또는 없음
+ * @return expo-audio 소스(원격 URL·로컬 require 번들) 또는 유휴 시 null
+ */
+function resolvePlaybackSource(track: MeditationTrack | null | undefined): string | number | null {
+  if (track == null) {
+    return null;
+  }
+  const raw = track.audioUri;
+  if (typeof raw === 'number') {
+    return raw;
+  }
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (trimmed.length > 0) {
+      return trimmed;
+    }
+  }
+  const defaultStream = MEDITATION_DEFAULT_STREAM_URI;
+  if (typeof defaultStream === 'string' && defaultStream.trim().length > 0) {
+    return defaultStream.trim();
+  }
+  return MEDITATION_LOCAL_DEMO_SILENCE;
+}
+
+function isRemoteHttpPlaybackSource(source: string): boolean {
+  const head = source.trim().toLowerCase();
+  return head.startsWith('http://') || head.startsWith('https://');
+}
+
 function MeditationAudioBridgeInner({ children }: { children: ReactNode }) {
   const currentTrack = useMeditationStore((s) => s.currentTrack);
   const isPlaying = useMeditationStore((s) => s.isPlaying);
@@ -45,14 +78,22 @@ function MeditationAudioBridgeInner({ children }: { children: ReactNode }) {
   const pauseStore = useMeditationStore((s) => s.pause);
   const addPracticeMinutes = useMeditationStore((s) => s.addPracticeMinutes);
 
-  const uri =
-    currentTrack == null
-      ? undefined
-      : (currentTrack.audioUri ?? MEDITATION_DEFAULT_STREAM_URI ?? MEDITATION_LOCAL_DEMO_SILENCE);
-  const player = useAudioPlayer(uri, {
-    updateInterval: 300,
-    downloadFirst: true,
-  });
+  const { playbackSource, downloadFirst } = useMemo(() => {
+    const playbackSource = resolvePlaybackSource(currentTrack);
+    const downloadFirst =
+      typeof playbackSource === 'string' && isRemoteHttpPlaybackSource(playbackSource);
+    return { playbackSource, downloadFirst };
+  }, [currentTrack?.id, currentTrack?.audioUri]); // eslint-disable-line react-hooks/exhaustive-deps -- 재생 소스는 id·audioUri만 사용
+
+  const playerOptions = useMemo(
+    () => ({
+      updateInterval: 300,
+      downloadFirst,
+    }),
+    [downloadFirst],
+  );
+
+  const player = useAudioPlayer(playbackSource, playerOptions);
   const status = useAudioPlayerStatus(player);
   const finishReportedRef = useRef(false);
 
@@ -125,7 +166,7 @@ function MeditationAudioBridgeInner({ children }: { children: ReactNode }) {
     return () => {
       player.setActiveForLockScreen(false);
     };
-  }, [currentTrack?.id, currentTrack?.title, isPlaying, player]);
+  }, [currentTrack, isPlaying, player]);
 
   const controls = useMemo<MeditationPlaybackControls>(
     () => ({

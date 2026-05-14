@@ -9,7 +9,7 @@
  * - `docs/design-system/v2/MIND_WEATHER_UI_UX_SPEC.md`
  *
  * @author MindGarden
- * @since 2026-05-13
+ * @since 2026-05-13 — 목록·로컬 병합으로 분석 폴백 카드 누락 방지
  */
 import { getMmkv } from '@/lib/getMmkv';
 import { apiDelete, apiGet, apiPost } from '@/api/client';
@@ -74,7 +74,7 @@ export interface MindWeatherAnalyzeRequest {
   readonly sourceRefId?: string;
 }
 
-interface MindWeatherListPayload {
+export interface MindWeatherListPayload {
   readonly items: MindWeatherCard[];
   readonly source: 'api' | 'cache';
 }
@@ -259,7 +259,7 @@ function normalizeCard(raw: unknown): MindWeatherCard | null {
     return pickTone(keywords);
   })();
   const summary = toDisplayString(o.summary, buildSummary(keywords, tone));
-  const text = toDisplayString(o.text ?? o.note, '');
+  const text = toDisplayString(o.text ?? o.note ?? o.bodyText, '');
   const createdAt = toDisplayString(o.createdAt ?? o.created_at, nowIso());
   const clientId = pickConsultantId(o.clientId);
   const clientName = toDisplayString(o.clientName ?? o.userName, '') || undefined;
@@ -289,6 +289,34 @@ function normalizeListPayload(raw: unknown): MindWeatherCard[] | null {
     if (Array.isArray(o.items)) return normalizeListPayload(o.items);
   }
   return null;
+}
+
+function parseCreatedAtMs(iso: string): number {
+  const t = Date.parse(iso);
+  return Number.isNaN(t) ? 0 : t;
+}
+
+/**
+ * 서버 목록이 비어 있거나 분석이 일시적으로 로컬 폴백만 된 경우에도
+ * MMKV에만 있는 카드가 목록에서 사라지지 않도록 병합한다.
+ */
+function mergeMindWeatherListWithLocal(apiItems: MindWeatherCard[]): MindWeatherCard[] {
+  const locals = getAllCardsLocal();
+  if (locals.length === 0) {
+    return apiItems;
+  }
+  const byId = new Map<string, MindWeatherCard>();
+  for (const c of apiItems) {
+    byId.set(c.id, c);
+  }
+  for (const c of locals) {
+    if (!byId.has(c.id)) {
+      byId.set(c.id, c);
+    }
+  }
+  return Array.from(byId.values()).sort(
+    (a, b) => parseCreatedAtMs(b.createdAt) - parseCreatedAtMs(a.createdAt),
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -333,7 +361,7 @@ export async function fetchMindWeatherList(): Promise<MindWeatherListPayload> {
     const raw = await apiGet<unknown>(MIND_WEATHER_API.LIST);
     const items = normalizeListPayload(raw);
     if (items != null) {
-      return { items, source: 'api' };
+      return { items: mergeMindWeatherListWithLocal(items), source: 'api' };
     }
   } catch {
     /* mock fallback */

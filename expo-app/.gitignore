@@ -41,3 +41,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# 로컬에서 말아 둔 dev API 릴리스 APK (재빌드 시 덮어씀)
+mindgarden-dev-release.apk

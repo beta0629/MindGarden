@@ -42,8 +42,24 @@ function warnIfSocialLoginEnvMissingForEasBuild(): void {
   }
 }
 
+/**
+ * Metro가 아닌 릴리스/프리뷰 APK·AAB에서 `getApiBaseUrl()`이 개발(또는 스테이징) API를 쓰도록 주입.
+ * 우선순위: `EXPO_PUBLIC_API_BASE_URL` → `APP_ENV === development` 이면 dev 기본 호스트.
+ */
+function resolveApiBaseUrlExtra(): string | undefined {
+  const explicit = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
+  if (explicit) {
+    return explicit.replace(/\/+$/, '');
+  }
+  if ((process.env.APP_ENV ?? '').trim() === 'development') {
+    return 'https://dev.core-solution.co.kr';
+  }
+  return undefined;
+}
+
 export default ({ config }: ConfigContext): ExpoConfig => {
   warnIfSocialLoginEnvMissingForEasBuild();
+  const apiBaseUrl = resolveApiBaseUrlExtra();
 
   return {
     ...config,
@@ -155,6 +171,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       eas: {
         projectId: 'YOUR_EAS_PROJECT_ID',
       },
+      ...(apiBaseUrl ? { apiBaseUrl } : {}),
       /** EAS/로컬 빌드 시 env 주입 — 소스에 PG 키 평문 커밋 금지 */
       tossPaymentsClientKey: process.env.EXPO_PUBLIC_TOSS_PAYMENTS_CLIENT_KEY ?? '',
       tossPaymentSuccessUrl: process.env.EXPO_PUBLIC_TOSS_PAYMENT_SUCCESS_URL ?? '',

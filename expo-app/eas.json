@@ -23,6 +23,17 @@
         "APP_ENV": "preview"
       }
     },
+    "internal-dev": {
+      "developmentClient": false,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "APP_ENV": "development",
+        "EXPO_PUBLIC_API_BASE_URL": "https://dev.core-solution.co.kr"
+      }
+    },
     "production": {
       "autoIncrement": true,
       "env": {

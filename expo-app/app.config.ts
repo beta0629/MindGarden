@@ -60,6 +60,76 @@ function resolveApiBaseUrlExtra(): string | undefined {
 export default ({ config }: ConfigContext): ExpoConfig => {
   warnIfSocialLoginEnvMissingForEasBuild();
   const apiBaseUrl = resolveApiBaseUrlExtra();
+  /**
+   * 실제 안드로이드 폰에 올리는 릴리스 APK는 Metro 없이 내장 번들로만 기동해야 한다.
+   * `expo-dev-client`가 있으면 개발 서버 URL 입력 화면에서 멈추는 경우가 많아,
+   * `EXPO_USE_DEV_CLIENT=0` 또는 `false`이면 플러그인에서 제외한다. 로컬 `expo start`는 env 미설정(포함) 유지.
+   */
+  const includeExpoDevClient = !['0', 'false'].includes(
+    (process.env.EXPO_USE_DEV_CLIENT ?? '').trim().toLowerCase(),
+  );
+
+  const appPlugins: ExpoConfig['plugins'] = [
+    ...(includeExpoDevClient ? (['expo-dev-client'] as const) : []),
+    'expo-router',
+    [
+      'expo-build-properties',
+      {
+        android: {
+          /** RN 0.81 libs.versions.toml 과 맞춤 — 구형 1.5.10 시 KSP·expo-root-project 실패 방지 */
+          kotlinVersion: '2.1.20',
+        },
+      },
+    ],
+    'expo-secure-store',
+    [
+      'expo-notifications',
+      {
+        icon: './assets/images/notification-icon.png',
+        color: appCfgColors.consultantPrimary,
+      },
+    ],
+    [
+      'expo-camera',
+      {
+        cameraPermission: 'QR 코드 스캔과 프로필 사진 촬영을 위해 카메라 접근이 필요합니다.',
+      },
+    ],
+    [
+      'expo-image-picker',
+      {
+        photosPermission: '프로필 사진을 선택하기 위해 사진 보관함 접근이 필요합니다.',
+        cameraPermission: 'QR 코드 스캔과 프로필 사진 촬영을 위해 카메라 접근이 필요합니다.',
+      },
+    ],
+    'expo-font',
+    'expo-splash-screen',
+    [
+      'expo-calendar',
+      {
+        calendarPermission:
+          '상담 예약 일정을 기기 캘린더에 저장하기 위해 캘린더 접근이 필요합니다.',
+      },
+    ],
+    [
+      '@react-native-seoul/kakao-login',
+      {
+        kakaoAppKey: process.env.KAKAO_APP_KEY ?? 'KAKAO_APP_KEY_HERE',
+        /** 기본 1.5.10이면 KSP/RN 0.81과 충돌 — expo-build-properties·RN과 동일 버전 */
+        kotlinVersion: '2.1.20',
+      },
+    ],
+    [
+      '@react-native-seoul/naver-login',
+      {
+        urlScheme: 'naverMindGardenMobileApp',
+        consumerKey: process.env.NAVER_CLIENT_ID ?? 'NAVER_CLIENT_ID_HERE',
+        consumerSecret: process.env.NAVER_CLIENT_SECRET ?? 'NAVER_CLIENT_SECRET_HERE',
+        appName: 'MindGardenMobileApp',
+      },
+    ],
+    withAndroidKakaoMaven,
+  ];
 
   return {
     ...config,
@@ -103,67 +173,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       output: 'static',
       favicon: './assets/images/favicon.png',
     },
-    plugins: [
-      'expo-dev-client',
-      'expo-router',
-      [
-        'expo-build-properties',
-        {
-          android: {
-            /** RN 0.81 libs.versions.toml 과 맞춤 — 구형 1.5.10 시 KSP·expo-root-project 실패 방지 */
-            kotlinVersion: '2.1.20',
-          },
-        },
-      ],
-      'expo-secure-store',
-      [
-        'expo-notifications',
-        {
-          icon: './assets/images/notification-icon.png',
-          color: appCfgColors.consultantPrimary,
-        },
-      ],
-      [
-        'expo-camera',
-        {
-          cameraPermission: 'QR 코드 스캔과 프로필 사진 촬영을 위해 카메라 접근이 필요합니다.',
-        },
-      ],
-      [
-        'expo-image-picker',
-        {
-          photosPermission: '프로필 사진을 선택하기 위해 사진 보관함 접근이 필요합니다.',
-          cameraPermission: 'QR 코드 스캔과 프로필 사진 촬영을 위해 카메라 접근이 필요합니다.',
-        },
-      ],
-      'expo-font',
-      'expo-splash-screen',
-      [
-        'expo-calendar',
-        {
-          calendarPermission:
-            '상담 예약 일정을 기기 캘린더에 저장하기 위해 캘린더 접근이 필요합니다.',
-        },
-      ],
-      [
-        '@react-native-seoul/kakao-login',
-        {
-          kakaoAppKey: process.env.KAKAO_APP_KEY ?? 'KAKAO_APP_KEY_HERE',
-          /** 기본 1.5.10이면 KSP/RN 0.81과 충돌 — expo-build-properties·RN과 동일 버전 */
-          kotlinVersion: '2.1.20',
-        },
-      ],
-      [
-        '@react-native-seoul/naver-login',
-        {
-          urlScheme: 'naverMindGardenMobileApp',
-          consumerKey: process.env.NAVER_CLIENT_ID ?? 'NAVER_CLIENT_ID_HERE',
-          consumerSecret: process.env.NAVER_CLIENT_SECRET ?? 'NAVER_CLIENT_SECRET_HERE',
-          appName: 'MindGardenMobileApp',
-        },
-      ],
-      withAndroidKakaoMaven,
-    ],
+    plugins: appPlugins,
     experiments: {
       typedRoutes: true,
     },

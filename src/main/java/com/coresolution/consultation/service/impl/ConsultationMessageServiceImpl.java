@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.constant.AlertType;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultationMessage;
 import com.coresolution.consultation.exception.EntityNotFoundException;
@@ -100,6 +101,13 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         
         log.info("📨 메시지 전송 - 상담사 ID: {}, 내담자 ID: {}, 발신자: {}", consultantId, clientId, senderType);
         
+        // SYSTEM: 스레드는 (consultantId, clientId), 수신자는 기존과 같이 두 번째 인자를 내담자 ID로 간주
+        if (AlertType.SYSTEM.equals(senderType)) {
+            return sendSystemThreadMessage(
+                consultantId, clientId, clientId, consultationId,
+                title, content, messageType, isImportant, isUrgent);
+        }
+        
         ConsultationMessage message = new ConsultationMessage();
         message.setConsultantId(consultantId);
         message.setClientId(clientId);
@@ -117,11 +125,6 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         if (UserRole.CONSULTANT.name().equals(senderType)) {
             message.setSenderId(consultantId);
             message.setReceiverId(clientId);
-        } else if ("SYSTEM".equals(senderType)) {
-            message.setSenderId(0L); // 시스템 ID
-            // 시스템 메시지의 수신자를 판별 (WorkflowAutomationServiceImpl 등에서 보내는 방식에 의존)
-            // 보통 두 번째 파라미터(clientId 위치)에 실제 수신자 ID를 넣도록 호출부를 수정했습니다.
-            message.setReceiverId(clientId);
         } else {
             message.setSenderId(clientId);
             message.setReceiverId(consultantId);
@@ -135,6 +138,59 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
             // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
             return consultationMessageRepository.save(message);
         }
+    }
+
+    /**
+     * 시스템 발신 스레드 메시지 저장. 스레드 쌍과 수신자를 분리합니다.
+     *
+     * @param consultantId 스레드 상담사 ID
+     * @param clientId 스레드 내담자 ID
+     * @param receiverUserId 실제 수신자 사용자 ID
+     * @param consultationId 상담 ID
+     * @param title 제목
+     * @param content 본문
+     * @param messageType 유형
+     * @param isImportant 중요
+     * @param isUrgent 긴급
+     * @return 저장된 메시지
+     * @author CoreSolution
+     * @since 2026-05-14
+     */
+    @Override
+    public ConsultationMessage sendSystemThreadMessage(
+            Long consultantId,
+            Long clientId,
+            Long receiverUserId,
+            Long consultationId,
+            String title,
+            String content,
+            String messageType,
+            Boolean isImportant,
+            Boolean isUrgent) {
+
+        log.info("📨 시스템 스레드 메시지 전송 - 상담사 ID: {}, 내담자 ID: {}, 수신자: {}",
+            consultantId, clientId, receiverUserId);
+
+        ConsultationMessage message = new ConsultationMessage();
+        message.setConsultantId(consultantId);
+        message.setClientId(clientId);
+        message.setConsultationId(consultationId);
+        message.setSenderType(AlertType.SYSTEM);
+        message.setSenderId(0L);
+        message.setReceiverId(receiverUserId);
+        message.setTitle(title);
+        message.setContent(content);
+        message.setMessageType(messageType);
+        message.setIsImportant(isImportant != null ? isImportant : false);
+        message.setIsUrgent(isUrgent != null ? isUrgent : false);
+        message.setStatus("SENT");
+        message.setSentAt(LocalDateTime.now());
+
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null) {
+            return create(tenantId, message);
+        }
+        return consultationMessageRepository.save(message);
     }
 
     @Override

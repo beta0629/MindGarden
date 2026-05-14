@@ -8,6 +8,7 @@
  */
 import type { CommunityComment, CommunityPost, CommunityTab } from '@/constants/communityData';
 import { unwrapApiResponse } from '@/api/unwrapApiResponse';
+import { formatCommunityListedTime } from '@/utils/dateFormat';
 import { toDisplayString } from '@/utils/toDisplayString';
 import { toSafeNumber } from '@/utils/safeDisplay';
 
@@ -28,7 +29,10 @@ export function normalizeCommunityComment(raw: unknown, index: number): Communit
     id: toSafeNumber(o.id ?? index, index),
     author: toDisplayString(o.author ?? o.writerName, '익명'),
     body: toDisplayString(o.body ?? o.content ?? o.text, ''),
-    time: toDisplayString(o.time ?? o.createdAt ?? o.relativeTime, '—'),
+    time: formatCommunityListedTime(
+      toDisplayString(o.time ?? o.createdAt ?? o.relativeTime, '—'),
+      '—',
+    ),
     likes: toSafeNumber(o.likes ?? o.likeCount, 0),
   };
 }
@@ -58,7 +62,10 @@ function normalizePost(raw: unknown, index: number): CommunityPost | null {
     body: body || title,
     likes: toSafeNumber(o.likes ?? o.likeCount, 0),
     comments,
-    time: toDisplayString(o.time ?? o.createdAt ?? o.relativeTime, '—'),
+    time: formatCommunityListedTime(
+      toDisplayString(o.time ?? o.createdAt ?? o.relativeTime, '—'),
+      '—',
+    ),
     isConsultant: Boolean(o.isConsultant ?? o.consultant ?? o.role === 'CONSULTANT'),
     isAnonymous: Boolean(o.isAnonymous ?? o.anonymous),
   };

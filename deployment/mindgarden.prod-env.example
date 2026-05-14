@@ -52,3 +52,8 @@ SPRING_PROFILES_ACTIVE=
 SSL_KEYSTORE_PATH=
 SSL_KEYSTORE_PASSWORD=
 SSL_KEY_ALIAS=
+
+# Expo 푸시: application.yml의 mindgarden.mobile.push.expo 및 Expo Push API 호출에 쓰는 액세스 토큰(호스트 env에만 설정).
+EXPO_ACCESS_TOKEN=
+# 기본 Push API URL을 쓰면 비워도 됨. 커스텀 엔드포인트만 필요할 때 설정.
+EXPO_PUSH_API_URL=

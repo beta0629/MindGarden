@@ -17,6 +17,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultationMessageService;
+import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.WorkflowAutomationService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -44,6 +45,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     private final ConsultationMessageService consultationMessageService;
     private final StatisticsService statisticsService;
     private final CommonCodeService commonCodeService;
+    private final MobilePushDispatchService mobilePushDispatchService;
     
     // 워크플로우 실행 로그 저장용 (실제 환경에서는 별도 테이블 사용 권장)
     private final List<Map<String, Object>> workflowLogs = new ArrayList<>();
@@ -78,14 +80,14 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                 
                 // 1시간 전 리마인더
                 if (isTimeInRange(currentTime, reminderTime1Hour, 5)) {
-                    sendReminderMessage(schedule, "1시간 전 리마인더", 
-                        "상담이 1시간 후에 시작됩니다. 준비해주세요.");
+                    sendReminderMessage(schedule, "1시간 전 리마인더",
+                        "상담이 1시간 후에 시작됩니다. 준비해주세요.", "T60");
                 }
-                
+
                 // 30분 전 리마인더
                 if (isTimeInRange(currentTime, reminderTime30Min, 5)) {
-                    sendReminderMessage(schedule, "30분 전 리마인더", 
-                        "상담이 30분 후에 시작됩니다. 곧 시작됩니다!");
+                    sendReminderMessage(schedule, "30분 전 리마인더",
+                        "상담이 30분 후에 시작됩니다. 곧 시작됩니다!", "T30");
                 }
             }
             
@@ -136,17 +138,16 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                 
                 try {
                     TenantContextHolder.setTenantId(schedule.getTenantId());
-                    consultationMessageService.sendMessage(
-                        schedule.getConsultantId(), 
-                        schedule.getClientId(), 
-                        null, // consultationId
-                        "SYSTEM", // 시스템 발송 (수신자: 상담사)
-                        "미완료 상담 알림", 
+                    consultationMessageService.sendSystemThreadMessage(
+                        schedule.getConsultantId(),
+                        schedule.getClientId(),
+                        schedule.getConsultantId(),
+                        null,
+                        "미완료 상담 알림",
                         alertMessage,
                         getMessageTypeFromCommonCode("INCOMPLETE_CONSULTATION"),
-                        true, // isImportant
-                        false  // isUrgent
-                    );
+                        true,
+                        false);
                 } finally {
                     TenantContextHolder.clear();
                 }
@@ -392,43 +393,38 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
         return !currentTime.isBefore(lowerBound) && !currentTime.isAfter(upperBound);
     }
     
-    private void sendReminderMessage(Schedule schedule, String title, String message) {
+    private void sendReminderMessage(Schedule schedule, String title, String message, String reminderSlotCode) {
         try {
-            // 내담자에게 리마인더 발송
+            String reminderBody = message + String.format("\n\n📅 일시: %s %s-%s",
+                schedule.getDate(), schedule.getStartTime(), schedule.getEndTime());
             try {
                 TenantContextHolder.setTenantId(schedule.getTenantId());
-                consultationMessageService.sendMessage(
-                    schedule.getClientId(), // 수신자가 내담자
-                    schedule.getConsultantId(), // 반대편이 상담사
-                    null, // consultationId
-                    "SYSTEM", // 시스템 발송
-                    title, 
-                    message + String.format("\n\n📅 일시: %s %s-%s", 
-                        schedule.getDate(), schedule.getStartTime(), schedule.getEndTime()),
+                consultationMessageService.sendSystemThreadMessage(
+                    schedule.getConsultantId(),
+                    schedule.getClientId(),
+                    schedule.getClientId(),
+                    null,
+                    title,
+                    reminderBody,
                     "REMINDER",
-                    false, // isImportant
-                    false  // isUrgent
-                );
-                
-                // 상담사에게도 리마인더 발송
-                consultationMessageService.sendMessage(
-                    schedule.getConsultantId(), // 수신자가 상담사
-                    schedule.getClientId(), // 반대편이 내담자
-                    null, // consultationId
-                    "SYSTEM", // 시스템 발송
-                    title, 
-                    message + String.format("\n\n📅 일시: %s %s-%s", 
-                        schedule.getDate(), schedule.getStartTime(), schedule.getEndTime()),
+                    false,
+                    false);
+                consultationMessageService.sendSystemThreadMessage(
+                    schedule.getConsultantId(),
+                    schedule.getClientId(),
+                    schedule.getConsultantId(),
+                    null,
+                    title,
+                    reminderBody,
                     "REMINDER",
-                    false, // isImportant
-                    false  // isUrgent
-                );
+                    false,
+                    false);
+                mobilePushDispatchService.dispatchBookingReminder(schedule.getTenantId(), schedule, reminderBody,
+                        reminderSlotCode);
             } finally {
                 TenantContextHolder.clear();
             }
-            
             log.info("🔔 리마인더 발송: scheduleId={}, title={}", schedule.getId(), title);
-            
         } catch (Exception e) {
             log.error("리마인더 발송 실패: scheduleId={}, title={}", schedule.getId(), title, e);
         }

@@ -4,7 +4,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
@@ -37,8 +37,11 @@ export default function ConsultantCommunityCreate() {
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const lockRef = useRef(false);
 
   const canSubmit = title.trim().length > 0 && body.trim().length > 0;
+  const submitEnabled = canSubmit && !isSubmitting;
 
   const handleBack = () => {
     if (Platform.OS !== 'web') {
@@ -49,45 +52,54 @@ export default function ConsultantCommunityCreate() {
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
-    if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
+    if (lockRef.current) return;
+    lockRef.current = true;
+    setIsSubmitting(true);
 
     try {
-      const remote = await createRemoteCommunityPost({
-        postKind: 'CONSULTANT_COLUMN',
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+
+      try {
+        const remote = await createRemoteCommunityPost({
+          postKind: 'CONSULTANT_COLUMN',
+          title: title.trim(),
+          body: body.trim(),
+          specialty: COMMUNITY_DEMO_LABELS.newConsultantSpecialty,
+          anonymous: false,
+        });
+        if (remote) {
+          prependRemotePost(remote);
+          await queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.all });
+          Alert.alert('접수되었습니다', '관리자 검수 후 피드에 공개됩니다.', [
+            { text: '확인', onPress: () => router.back() },
+          ]);
+          return;
+        }
+      } catch {
+        /* §11.1 폴백 */
+      }
+
+      addPost({
+        tab: 'columns',
+        author: COMMUNITY_DEMO_LABELS.newConsultantAuthor,
+        specialty: COMMUNITY_DEMO_LABELS.newConsultantSpecialty,
         title: title.trim(),
         body: body.trim(),
-        specialty: COMMUNITY_DEMO_LABELS.newConsultantSpecialty,
-        anonymous: false,
+        isConsultant: true,
+        isAnonymous: false,
       });
-      if (remote) {
-        prependRemotePost(remote);
-        await queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.all });
-        Alert.alert('접수되었습니다', '관리자 검수 후 피드에 공개됩니다.', [
-          { text: '확인', onPress: () => router.back() },
-        ]);
-        return;
-      }
-    } catch {
-      /* §11.1 폴백 */
+
+      Alert.alert(
+        '기기에 저장됨',
+        '칼럼이 이 기기(MMKV)에만 등록되었습니다. /api/v1/community 연동 후 프로필명·검수 흐름이 적용됩니다.',
+        [{ text: '확인', onPress: () => router.back() }],
+      );
+    } finally {
+      lockRef.current = false;
+      setIsSubmitting(false);
     }
-
-    addPost({
-      tab: 'columns',
-      author: COMMUNITY_DEMO_LABELS.newConsultantAuthor,
-      specialty: COMMUNITY_DEMO_LABELS.newConsultantSpecialty,
-      title: title.trim(),
-      body: body.trim(),
-      isConsultant: true,
-      isAnonymous: false,
-    });
-
-    Alert.alert(
-      '기기에 저장됨',
-      '칼럼이 이 기기(MMKV)에만 등록되었습니다. /api/v1/community 연동 후 프로필명·검수 흐름이 적용됩니다.',
-      [{ text: '확인', onPress: () => router.back() }],
-    );
   };
 
   return (
@@ -116,12 +128,13 @@ export default function ConsultantCommunityCreate() {
         </Text>
         <Pressable
           onPress={handleSubmit}
-          disabled={!canSubmit}
+          disabled={!submitEnabled}
           style={[
             styles.submitBtn,
             {
-              backgroundColor: canSubmit ? theme.colors.primary : theme.colors.border,
+              backgroundColor: submitEnabled ? theme.colors.primary : theme.colors.border,
               borderRadius: theme.borderRadius.lg,
+              opacity: isSubmitting ? 0.55 : 1,
             },
           ]}
           accessibilityLabel="게시"

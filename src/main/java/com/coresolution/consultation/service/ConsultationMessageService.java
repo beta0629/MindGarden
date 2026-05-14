@@ -30,6 +30,35 @@ public interface ConsultationMessageService extends BaseService<ConsultationMess
     ConsultationMessage sendMessage(
         Long consultantId, Long clientId, Long consultationId, String senderType,
         String title, String content, String messageType, Boolean isImportant, Boolean isUrgent);
+
+    /**
+     * 시스템 발신 메시지를 (상담사, 내담자) 스레드에 저장합니다.
+     * {@code consultantId}/{@code clientId}는 대화 스레드 식별용으로 고정하고,
+     * 실제 수신자는 {@code receiverUserId}로만 지정합니다.
+     *
+     * @param consultantId 스레드 상담사 사용자 ID
+     * @param clientId 스레드 내담자(클라이언트 엔티티 연계) ID
+     * @param receiverUserId 실제 수신자 사용자 ID (내담자 또는 상담사)
+     * @param consultationId 상담 ID (없으면 null)
+     * @param title 제목
+     * @param content 본문
+     * @param messageType 메시지 유형 코드
+     * @param isImportant 중요 여부
+     * @param isUrgent 긴급 여부
+     * @return 저장된 메시지 엔티티
+     * @author CoreSolution
+     * @since 2026-05-14
+     */
+    ConsultationMessage sendSystemThreadMessage(
+        Long consultantId,
+        Long clientId,
+        Long receiverUserId,
+        Long consultationId,
+        String title,
+        String content,
+        String messageType,
+        Boolean isImportant,
+        Boolean isUrgent);
     
     /**
      * 메시지 읽음 처리

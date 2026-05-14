@@ -15,6 +15,38 @@ import {
   parseISO,
 } from 'date-fns';
 
+/** Spring Instant 등 나노초 ISO 프리픽스 식별용 */
+const COMMUNITY_LISTED_TIME_ISO_PREFIX = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}/;
+
+/** 나노초 이하를 밀리초 3자리로 자름 (Z / 오프셋 보존) */
+const COMMUNITY_LISTED_TIME_NANO_TRIM = /(\.\d{3})\d+/;
+
+/**
+ * 커뮤니티 목록/피드용 시간: ISO면 나노초 정리 후 상대·짧은 표시, 그 외는 그대로
+ *
+ * @param raw 원시 또는 이미 가공된 라벨
+ * @param fallback 빈 문자열·파싱 불가 시
+ */
+export function formatCommunityListedTime(raw: string, fallback: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return fallback;
+  }
+  if (!COMMUNITY_LISTED_TIME_ISO_PREFIX.test(trimmed)) {
+    return trimmed;
+  }
+  const normalized = trimmed.replace(COMMUNITY_LISTED_TIME_NANO_TRIM, '$1');
+  let date = parseISO(normalized);
+  if (Number.isNaN(date.getTime())) {
+    date = new Date(normalized);
+    if (Number.isNaN(date.getTime())) {
+      return fallback;
+    }
+    return format(date, 'M/d HH:mm');
+  }
+  return formatRelativeTime(normalized);
+}
+
 /**
  * ISO 문자열 → 상대 시간 (방금, n분 전, n시간 전, 어제, MM/dd)
  */

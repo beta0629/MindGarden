@@ -139,6 +139,11 @@ mindgarden:
       easypay:
         host-test: ${KICC_EASYPAY_HOST_TEST:testpgapi.easypay.co.kr}
         host-prod: ${KICC_EASYPAY_HOST_PROD:pgapi.easypay.co.kr}
+  mobile:
+    push:
+      expo:
+        access-token: ${EXPO_ACCESS_TOKEN:}
+        api-url: ${EXPO_PUSH_API_URL:https://exp.host/--/api/v2/push/send}
   security:
     # CAPTCHA (Cloudflare Turnstile). enabled=false 시 검증 생략(no-op). 시크릿·사이트키는 환경 변수로만 주입.
     captcha:

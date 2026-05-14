@@ -17,6 +17,7 @@ import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultationMessageService;
+import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ReserveFundService;
@@ -58,6 +59,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     private final StatisticsService statisticsService;
     private final ConsultationMessageService consultationMessageService;
     private final CommonCodeService commonCodeService;
+    private final MobilePushDispatchService mobilePushDispatchService;
     
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
@@ -67,7 +69,8 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             AdminService adminService,
             StatisticsService statisticsService,
             ConsultationMessageService consultationMessageService,
-            CommonCodeService commonCodeService) {
+            CommonCodeService commonCodeService,
+            MobilePushDispatchService mobilePushDispatchService) {
         super(paymentRepository, accessControlService);
         this.paymentRepository = paymentRepository;
         this.financialTransactionService = financialTransactionService;
@@ -76,6 +79,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         this.statisticsService = statisticsService;
         this.consultationMessageService = consultationMessageService;
         this.commonCodeService = commonCodeService;
+        this.mobilePushDispatchService = mobilePushDispatchService;
     }
     
     
@@ -282,7 +286,13 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     } catch (Exception e) {
                         log.error("결제 완료 알림 발송 실패: {}", e.getMessage(), e);
                     }
-                    
+
+                    try {
+                        mobilePushDispatchService.dispatchPaymentCompleted(tenantId, payment);
+                    } catch (Exception ex) {
+                        log.warn("결제 완료 푸시 실패: {}", ex.getMessage());
+                    }
+
                     try {
                         reserveFundService.autoReserveFromIncome(payment.getAmount(), 
                             "결제 수입 - " + payment.getDescription());
@@ -304,9 +314,16 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             case REFUNDED:
                 payment.setRefundedAt(LocalDateTime.now());
                 break;
+            case FAILED:
+                payment.setFailedAt(LocalDateTime.now());
+                try {
+                    mobilePushDispatchService.dispatchPaymentFailed(tenantId, payment);
+                } catch (Exception ex) {
+                    log.warn("결제 실패 푸시 실패: {}", ex.getMessage());
+                }
+                break;
             case PENDING:
             case PROCESSING:
-            case FAILED:
             case EXPIRED:
                 break;
         }

@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import com.coresolution.consultation.config.ExpoPushProperties;
 import com.coresolution.consultation.config.MindgardenSecurityProperties;
 import com.coresolution.core.config.KiccEasypayProperties;
 
@@ -48,7 +49,11 @@ import com.coresolution.core.config.KiccEasypayProperties;
 @EnableJpaAuditing
 @EnableAsync
 @EnableScheduling
-@EnableConfigurationProperties({ MindgardenSecurityProperties.class, KiccEasypayProperties.class })
+@EnableConfigurationProperties({
+        MindgardenSecurityProperties.class,
+        KiccEasypayProperties.class,
+        ExpoPushProperties.class
+})
 public class ConsultationManagementApplication {
 
     public static void main(String[] args) {

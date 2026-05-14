@@ -32,6 +32,7 @@ import com.coresolution.consultation.constant.ProfessionalProviderTypeConstants;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultationMessageService;
+import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
@@ -87,7 +88,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
     private final NotificationService notificationService;
     private final ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
-    
+    private final MobilePushDispatchService mobilePushDispatchService;
+
     public ScheduleServiceImpl(
             ScheduleRepository scheduleRepository,
             TenantAccessControlService accessControlService,
@@ -107,7 +109,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             PlSqlScheduleValidationService plSqlScheduleValidationService,
             com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService,
             NotificationService notificationService,
-            ScheduleListUserFieldsResolver scheduleListUserFieldsResolver) {
+            ScheduleListUserFieldsResolver scheduleListUserFieldsResolver,
+            MobilePushDispatchService mobilePushDispatchService) {
         super(scheduleRepository, accessControlService);
         this.scheduleRepository = scheduleRepository;
         this.mappingRepository = mappingRepository;
@@ -127,6 +130,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.userPersonalDataCacheService = userPersonalDataCacheService;
         this.notificationService = notificationService;
         this.scheduleListUserFieldsResolver = scheduleListUserFieldsResolver;
+        this.mobilePushDispatchService = mobilePushDispatchService;
     }
     
     
@@ -604,6 +608,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.error("회기 사용 후 동기화 실패: mappingId={}, error={}",
                     mappingId, syncError.getMessage(), syncError);
         }
+        try {
+            Integer rem = freshMapping.getRemainingSessions();
+            if (rem != null && rem > 0 && rem <= 2) {
+                mobilePushDispatchService.dispatchSessionLow(tenantId, mappingId, clientUserId, rem);
+            }
+        } catch (Exception pushEx) {
+            log.warn("회기 임박 푸시 실패: mappingId={}", mappingId, pushEx);
+        }
     }
 
     @Override
@@ -681,6 +693,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 && schedule.getConsultantId() != null && schedule.getClientId() != null) {
             restoreSessionForMapping(schedule.getConsultantId(), schedule.getClientId());
         }
+        try {
+            mobilePushDispatchService.dispatchBookingCancelled(saved.getTenantId(), saved);
+        } catch (Exception ex) {
+            log.warn("예약 취소 푸시 실패: scheduleId={}", saved.getId(), ex);
+        }
         return saved;
     }
 
@@ -700,6 +717,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         
         Schedule saved = scheduleRepository.save(schedule);
         tryDispatchScheduleConfirmedExternalNotification(saved);
+        try {
+            mobilePushDispatchService.dispatchBookingConfirmed(saved.getTenantId(), saved);
+        } catch (Exception ex) {
+            log.warn("예약 확정 푸시 실패: scheduleId={}", saved.getId(), ex);
+        }
         return saved;
     }
     

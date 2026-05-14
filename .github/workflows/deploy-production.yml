@@ -41,6 +41,7 @@ on:
       - 'src/main/resources/db/migration/**'
       - 'pom.xml'
       - 'deployment/application-production.yml'
+      - 'deployment/mindgarden.prod-env.example'
       - 'sql/**'
       - 'database/schema/**'
       - 'config/nginx/**'

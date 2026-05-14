@@ -253,15 +253,32 @@ export const NotificationService = {
   },
 
   /**
+   * 백엔드·Expo Push API `to` 필드에 맞는 토큰을 한 경로로 해석.
+   * EAS `projectId`가 있으면 `ExponentPushToken[...]`(`getExpoPushTokenAsync`)를 우선하고,
+   * 없거나 실패 시에만 `getDevicePushTokenAsync` 네이티브 토큰으로 폴백한다.
+   *
+   * @returns 서버 `push_token`에 저장되는 문자열, 또는 null
+   */
+  async resolveBackendPushToken(): Promise<string | null> {
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    if (projectId) {
+      const expoToken = await this.getExpoPushToken();
+      if (expoToken) return expoToken;
+    }
+    return this.getDeviceToken();
+  },
+
+  /**
    * 푸시 토큰을 서버에 등록
    * `POST /api/v1/mobile/push-token/register` — Spring 미구현 시 실패·false 반환(앱은 계속 동작).
+   * 서버에는 `resolveBackendPushToken` 결과(통상 `ExponentPushToken[...]`, 폴백 시 네이티브 디바이스 토큰)가 저장된다.
    */
   async registerToken(): Promise<boolean> {
     try {
       const hasPermission = await this.requestPermission();
       if (!hasPermission) return false;
 
-      const token = await this.getDeviceToken();
+      const token = await this.resolveBackendPushToken();
       if (!token) return false;
 
       const { user } = useAuthStore.getState();
@@ -291,10 +308,11 @@ export const NotificationService = {
   /**
    * 푸시 토큰을 서버에서 해제
    * DELETE /api/v1/mobile/push-token/unregister
+   * 해제 바디의 `token`은 등록 시와 동일하게 `resolveBackendPushToken`을 사용한다.
    */
   async unregisterToken(): Promise<boolean> {
     try {
-      const token = await this.getDeviceToken();
+      const token = await this.resolveBackendPushToken();
       if (!token) return false;
 
       const { user } = useAuthStore.getState();

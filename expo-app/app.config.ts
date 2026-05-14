@@ -8,6 +8,12 @@ const appCfgColors = require('./src/theme/tokensAppConfig.cjs') as {
 };
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const withAndroidKakaoMaven = require('./plugins/withAndroidKakaoMaven');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pkg = require('./package.json') as { version: string };
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const releaseManifest = require('./releases/manifest.json') as {
+  androidVersionCode: number;
+};
 
 /** EAS 빌드 로그에서 카카오·네이버 키 누락을 한 번에 알림 (빌드는 계속 진행) */
 function warnIfSocialLoginEnvMissingForEasBuild(): void {
@@ -135,7 +141,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ...config,
     name: 'MindGarden',
     slug: 'mindgarden',
-    version: '1.0.0',
+    version: pkg.version,
     scheme: 'mindgarden',
     orientation: 'portrait',
     icon: './assets/images/icon.png',
@@ -167,6 +173,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       },
       package: 'com.mindgardenmobile',
       edgeToEdgeEnabled: true,
+      versionCode: releaseManifest.androidVersionCode,
     },
     web: {
       bundler: 'metro',

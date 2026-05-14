@@ -1,7 +1,7 @@
 {
   "name": "expo-app",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "prestart": "npm run verify:metro-mmkv",
     "prestart:clean": "npm run verify:metro-mmkv",
@@ -15,6 +15,7 @@
     "ios:metro-localhost": "xcrun simctl openurl booted \"mindgarden://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081\"",
     "android": "expo run:android",
     "android:apk:dev": "EXPO_USE_DEV_CLIENT=0 EXPO_PUBLIC_API_BASE_URL=https://dev.core-solution.co.kr npx expo prebuild --platform android --clean && cd android && ./gradlew clean assembleRelease",
+    "release:archive-dev-apk": "node ./scripts/archive-release-apk.js dev",
     "ios": "expo run:ios",
     "web": "expo start --web"
   },

@@ -45,5 +45,6 @@ yarn-error.*
 # 로컬에서 말아 둔 dev API 릴리스 APK (재빌드 시 덮어씀)
 mindgarden-dev-release.apk
 
-# 릴리즈 아티팩트 바이너리(Git에는 manifest·README만)
-releases/artifacts/*.apk
+# 릴리즈 아티팩트 바이너리 (Git에는 manifest·README·.gitkeep만)
+releases/artifacts/*
+!releases/artifacts/.gitkeep

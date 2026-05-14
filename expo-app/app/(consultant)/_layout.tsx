@@ -10,6 +10,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Home, Calendar, Users, FileText, MoreHorizontal } from 'lucide-react-native';
 import { useTheme } from '@/theme';
+import { useBottomTabNavigatorOptions } from '@/hooks/useBottomTabNavigatorOptions';
 import { useMoreTabUnreadTotal } from '@/hooks/useMoreTabUnreadTotal';
 
 const ICON_SIZE = 24;
@@ -25,6 +26,7 @@ function UnreadBadge({ visible }: Readonly<{ visible: boolean }>) {
 
 export default function ConsultantLayout() {
   const theme = useTheme();
+  const tabScreenOptions = useBottomTabNavigatorOptions(theme);
   const router = useRouter();
   const moreTabUnread = useMoreTabUnreadTotal();
 
@@ -35,25 +37,7 @@ export default function ConsultantLayout() {
   };
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.gray[400],
-        tabBarStyle: {
-          backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.border,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: {
-          fontFamily: theme.fontFamily.medium,
-          fontSize: theme.fontSize.xs,
-        },
-      }}
-    >
+    <Tabs screenOptions={tabScreenOptions}>
       <Tabs.Screen
         name="(home)"
         options={{

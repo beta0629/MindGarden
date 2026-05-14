@@ -12,6 +12,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import 'react-native-reanimated';
 import { ThemeProvider } from '../src/theme';
@@ -96,15 +97,16 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{
-          persister: queryPersister,
-          maxAge: QUERY_PERSIST_MAX_AGE_MS,
-          buster: queryPersistBuster,
-          dehydrateOptions: queryPersistDehydrateOptions,
-        }}
-      >
+      <SafeAreaProvider>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{
+            persister: queryPersister,
+            maxAge: QUERY_PERSIST_MAX_AGE_MS,
+            buster: queryPersistBuster,
+            dehydrateOptions: queryPersistDehydrateOptions,
+          }}
+        >
         <ThemeProvider role={role ?? 'client'}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
@@ -118,6 +120,7 @@ export default function RootLayout() {
           <StatusBar style="auto" />
         </ThemeProvider>
       </PersistQueryClientProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

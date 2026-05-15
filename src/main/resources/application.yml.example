@@ -25,7 +25,7 @@ spring:
     show-sql: true  # SQL 로그 활성화
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
         use_sql_comments: true
         # 로그 레벨 분리 설정
@@ -44,7 +44,7 @@ spring:
         hbm2ddl:
           auto: update
           import_files: false
-    database-platform: org.hibernate.dialect.MySQL8Dialect
+    database-platform: org.hibernate.dialect.MySQLDialect
   
   # Thymeleaf 설정
   thymeleaf:

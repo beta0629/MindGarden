@@ -1,12 +1,8 @@
--- salary_calculations: 승인·지급 표준 프로시저 및 JPA와 정합 (updated_by, 타임스탬프)
--- information_schema로 컬럼 존재 시 스킵 (재실행·환경 차이 대응)
---
--- 레거시/순서: 신규·CI DB는 본 버전(20260516.002)이 정상 순서로 적용된다.
--- 운영 등에서 16_002가 flyway history에 없이 17_001 이후로 진행된 경우,
--- 동일 DDL을 V20260519_001에서 한 번 더 제공한다(컬럼 있으면 no-op, 중복 안전).
---
+-- salary_calculations: 운영 등에서 V20260516_002가 스킵된(out-of-order) 환경용 보강.
+-- 내용은 V20260516_002와 동일하며 information_schema 기준 idempotent (중복 적용 안전).
+-- 신규 DB는 16_002 적용 후 본 스크립트는 컬럼 존재 시 전부 no-op.
 -- @author MindGarden
--- @since 2026-05-15
+-- @since 2026-05-19
 
 SET @db := DATABASE();
 

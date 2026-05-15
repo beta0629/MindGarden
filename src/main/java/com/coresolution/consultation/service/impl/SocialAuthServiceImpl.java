@@ -24,6 +24,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.SocialAuthService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.SocialLoginUserIdDerivation;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordPolicy;
@@ -618,27 +619,12 @@ public class SocialAuthServiceImpl implements SocialAuthService {
      * 이메일 기반으로 userId 생성 (fallback)
      */
     private String generateUserIdFromEmail(String email) {
-        if (email == null || email.isEmpty()) {
+        String normalized = SocialProvider.normalizeEmail(email);
+        String derived = SocialLoginUserIdDerivation.deriveLoginUserIdFromNormalizedEmail(normalized);
+        if (!StringUtils.hasText(derived)) {
             return "user_" + System.currentTimeMillis();
         }
-        
-        // 이메일에서 @ 앞부분 추출
-        String userId = email.split("@")[0];
-        
-        // 특수문자 제거 및 길이 제한
-        userId = userId.replaceAll("[^a-zA-Z0-9_]", "");
-        
-        // 길이가 3자 미만이면 보완
-        if (userId.length() < 3) {
-            userId = "user_" + userId;
-        }
-        
-        // 최대 50자로 제한
-        if (userId.length() > 50) {
-            userId = userId.substring(0, 50);
-        }
-        
-        return userId;
+        return derived;
     }
     
     /**

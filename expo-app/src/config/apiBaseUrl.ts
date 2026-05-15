@@ -15,5 +15,10 @@ export function getApiBaseUrl(): string {
     return 'https://dev.core-solution.co.kr';
   }
 
-  return 'https://core-solution.co.kr';
+  /**
+   * apex `core-solution.co.kr` 는 nginx에서 `app.core-solution.co.kr` 로 301 리다이렉트한다.
+   * POST + 301 조합 시 클라이언트가 GET으로 바꿔 재요청하면 `/api/v1/auth/social-login` 등에서 405가 난다.
+   * API 호출은 항상 **app** 서브도메인으로 직접 보낸다.
+   */
+  return 'https://app.core-solution.co.kr';
 }

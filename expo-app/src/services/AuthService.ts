@@ -11,6 +11,7 @@ import {
   getProfile as getKakaoProfile,
 } from '@react-native-seoul/kakao-login';
 import NaverLogin from '@react-native-seoul/naver-login';
+import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
 import { apiPost } from '../api/client';
 import { AUTH_API } from '../api/endpoints';
@@ -19,6 +20,7 @@ import type { User, Tokens } from '../stores/useAuthStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useTenantStore } from '../stores/useTenantStore';
 import { isExpoGoApp } from '@/lib/getMmkv';
+import { getApiBaseUrl } from '../config/apiBaseUrl';
 import { normalizeKoreanMobileDigits } from '../utils/phoneNormalize';
 
 export type SocialAuthProvider = 'KAKAO' | 'NAVER';
@@ -130,6 +132,108 @@ export type SocialLoginOutcome =
   | { kind: 'error'; message: string };
 
 let naverInitialized = false;
+
+const AUTH_SERVICE_SOCIAL_LOGIN_LOG_PREFIX = '[AuthService][social-login]';
+
+type SocialLoginDebugOutcome =
+  | 'authenticated'
+  | 'requiresSignup'
+  | 'requiresPhoneAccountSelection'
+  | 'error';
+
+function isSocialLoginDebugLoggingEnabled(): boolean {
+  if (__DEV__) {
+    return true;
+  }
+  const extra = Constants.expoConfig?.extra as { socialLoginDebug?: boolean } | undefined;
+  return extra?.socialLoginDebug === true;
+}
+
+function computeHasPhoneFromKakaoProfile(profile: unknown): boolean {
+  const rec = (profile && typeof profile === 'object' ? profile : {}) as Record<string, unknown>;
+  const ka = readKakaoNestedAccount(rec);
+  let fromKa: string | undefined;
+  if (ka) {
+    fromKa =
+      readOptionalString(ka.phone_number) ??
+      readOptionalString(ka.phoneNumber) ??
+      readOptionalString(ka.phone);
+  }
+  const phoneRaw =
+    readOptionalString(rec.phoneNumber) ??
+    readOptionalString(rec.phone_number) ??
+    readOptionalString(rec.phone) ??
+    fromKa;
+  return Boolean(normalizeKoreanMobileDigits(phoneRaw));
+}
+
+function computeHasPhoneFromNaverProfile(response: Record<string, unknown> | undefined): boolean {
+  if (!response) {
+    return false;
+  }
+  const phoneRaw =
+    readOptionalString(response.mobile) ??
+    readOptionalString(response.cellphone) ??
+    readOptionalString(response.mobile_no) ??
+    readOptionalString(response.phone) ??
+    readOptionalString(response.tel);
+  return Boolean(normalizeKoreanMobileDigits(phoneRaw));
+}
+
+function emitSocialLoginDebugLog(
+  phase: 'request' | 'response',
+  payload: Record<string, unknown>,
+): void {
+  // eslint-disable-next-line no-console -- 소셜 로그인 진단(EXPO_PUBLIC_SOCIAL_LOGIN_DEBUG=1 또는 __DEV__); 토큰·PII 미포함
+  console.log(AUTH_SERVICE_SOCIAL_LOGIN_LOG_PREFIX, phase, payload);
+}
+
+function logSocialLoginDebugRequest(fields: {
+  provider: SocialAuthProvider;
+  providerUserId: string;
+  hasEmail: boolean;
+  hasNickname: boolean;
+  hasProfileImage: boolean;
+  hasPhone: boolean;
+}): void {
+  if (!isSocialLoginDebugLoggingEnabled()) {
+    return;
+  }
+  const tenantId = useTenantStore.getState().tenantId ?? null;
+  emitSocialLoginDebugLog('request', {
+    apiBaseUrl: getApiBaseUrl(),
+    tenantId,
+    provider: fields.provider,
+    providerUserId: fields.providerUserId,
+    hasEmail: fields.hasEmail,
+    hasNickname: fields.hasNickname,
+    hasProfileImage: fields.hasProfileImage,
+    hasPhone: fields.hasPhone,
+    __DEV__,
+  });
+}
+
+function logSocialLoginDebugResponse(
+  response: SocialLoginResponse,
+  mapped: SocialLoginOutcome,
+): void {
+  if (!isSocialLoginDebugLoggingEnabled()) {
+    return;
+  }
+  const outcome: SocialLoginDebugOutcome = mapped.kind === 'error' ? 'error' : mapped.kind;
+  const socialId = response.socialUserInfo?.socialId;
+  const payload: Record<string, unknown> = {
+    success: response.success,
+    requiresSignup: Boolean(response.requiresSignup),
+    requiresPhoneAccountSelection: Boolean(response.requiresPhoneAccountSelection),
+    message: response.message,
+    outcome,
+  };
+  if (typeof socialId === 'string' && socialId.length > 0) {
+    payload.socialUserInfoSocialId = socialId;
+  }
+  emitSocialLoginDebugLog('response', payload);
+}
 
 function kakaoNativeUnavailableMessage(): string {
   if (isExpoGoApp()) {
@@ -356,8 +460,14 @@ const initializeNaverSDK = () => {
     return;
   }
 
-  const consumerKey = process.env.EXPO_PUBLIC_NAVER_CLIENT_ID ?? '';
-  const consumerSecret = process.env.EXPO_PUBLIC_NAVER_CLIENT_SECRET ?? '';
+  const extra = Constants.expoConfig?.extra as
+    | { naverClientId?: string; naverClientSecret?: string }
+    | undefined;
+  const consumerKey = (extra?.naverClientId ?? process.env.EXPO_PUBLIC_NAVER_CLIENT_ID ?? '').trim();
+  const consumerSecret = (
+    extra?.naverClientSecret ?? process.env.EXPO_PUBLIC_NAVER_CLIENT_SECRET ??
+    ''
+  ).trim();
   const appName = 'MindGardenMobileApp';
 
   const initConfig: {
@@ -375,7 +485,11 @@ const initializeNaverSDK = () => {
     initConfig.serviceUrlSchemeIOS = 'naverMindGardenMobileApp';
   }
 
-  console.warn('[AuthService] 네이버 SDK 초기화:', JSON.stringify(initConfig));
+  if (!consumerKey || !consumerSecret) {
+    console.warn('[AuthService] 네이버 SDK: consumerKey/Secret 비어 있음 — app.config extra 확인');
+    return;
+  }
+
   NaverLogin.initialize(initConfig);
   naverInitialized = true;
 };
@@ -402,6 +516,16 @@ export const AuthService = {
       const token = await kakaoSDKLogin();
       const profile = await getKakaoProfile();
       const profileImageUrl = profile.profileImageUrl ?? undefined;
+      const providerUserId = String(profile.id);
+
+      logSocialLoginDebugRequest({
+        provider: 'KAKAO',
+        providerUserId,
+        hasEmail: Boolean(String(profile.email ?? '').trim()),
+        hasNickname: Boolean(String(profile.nickname ?? '').trim()),
+        hasProfileImage: Boolean(profileImageUrl),
+        hasPhone: computeHasPhoneFromKakaoProfile(profile),
+      });
 
       const response = await apiPost<SocialLoginResponse>(AUTH_API.SOCIAL_LOGIN, {
         provider: 'KAKAO',
@@ -413,6 +537,7 @@ export const AuthService = {
       });
 
       const mapped = mapNativeSocialResponse(response, 'KAKAO', profileImageUrl);
+      logSocialLoginDebugResponse(response, mapped);
       if (mapped.kind === 'authenticated') {
         await applyAuthenticatedUser(mapped.user, {
           accessToken: response.accessToken as string,
@@ -496,6 +621,15 @@ export const AuthService = {
         // 프로필 가져오기 실패 — 백엔드에서 accessToken으로 조회 가능
       }
 
+      logSocialLoginDebugRequest({
+        provider: 'NAVER',
+        providerUserId: userId ?? '',
+        hasEmail: Boolean(String(email ?? '').trim()),
+        hasNickname: Boolean(String(nickname ?? '').trim()),
+        hasProfileImage: Boolean(String(profileImage ?? '').trim()),
+        hasPhone: computeHasPhoneFromNaverProfile(naverProfile),
+      });
+
       const response = await apiPost<SocialLoginResponse>(AUTH_API.SOCIAL_LOGIN, {
         provider: 'NAVER',
         accessToken,
@@ -506,6 +640,7 @@ export const AuthService = {
       });
 
       const mapped = mapNativeSocialResponse(response, 'NAVER', profileImage ?? undefined);
+      logSocialLoginDebugResponse(response, mapped);
       if (mapped.kind === 'authenticated') {
         await applyAuthenticatedUser(mapped.user, {
           accessToken: response.accessToken as string,
@@ -711,15 +846,29 @@ export const AuthService = {
       const { refreshToken } = useAuthStore.getState();
       if (!refreshToken) return null;
 
-      const response = await apiPost<{ accessToken: string; refreshToken: string }>(
-        AUTH_API.REFRESH_TOKEN,
-        { refreshToken },
-      );
+      const raw = await apiPost<Record<string, unknown>>(AUTH_API.REFRESH_TOKEN, { refreshToken });
+      if (!raw || typeof raw !== 'object') {
+        return null;
+      }
+      if (raw.success === false) {
+        await useAuthStore.getState().logout();
+        return null;
+      }
+      const inner = unwrapApiResponse<Record<string, unknown>>(raw) ?? raw;
 
-      if (response?.accessToken && response?.refreshToken) {
+      let accessToken: string | undefined;
+      if (typeof inner.accessToken === 'string') {
+        accessToken = inner.accessToken;
+      } else if (typeof inner.token === 'string') {
+        accessToken = inner.token;
+      }
+      const nextRefresh =
+        typeof inner.refreshToken === 'string' ? inner.refreshToken : undefined;
+
+      if (accessToken && nextRefresh) {
         const tokens: Tokens = {
-          accessToken: response.accessToken,
-          refreshToken: response.refreshToken,
+          accessToken,
+          refreshToken: nextRefresh,
         };
         await useAuthStore.getState().updateTokens(tokens);
         return tokens;

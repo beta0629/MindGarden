@@ -514,6 +514,43 @@ public class AuthController extends BaseApiController {
         
         return success("로그아웃되었습니다.");
     }
+
+    /**
+     * 리프레시 JWT로 액세스·리프레시 토큰을 재발급한다(모바일/Expo 등 stateless 클라이언트).
+     *
+     * @param request JSON 본문 — 키 {@code refreshToken} 필수
+     * @return 성공 시 {@code data}에 {@code accessToken}, {@code refreshToken}, 선택적 {@code message}
+     */
+    @PostMapping("/refresh-token")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> refreshJwtWithRefreshToken(
+            @RequestBody(required = false) Map<String, String> request) {
+        String rt = request != null ? request.get("refreshToken") : null;
+        if (!StringUtils.hasText(rt)) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.<Map<String, Object>>builder()
+                    .success(false)
+                    .message("리프레시 토큰이 필요합니다.")
+                    .data(null)
+                    .build());
+        }
+        AuthResponse authResponse = authService.refreshToken(rt.trim());
+        if (!authResponse.isSuccess()) {
+            String msg = authResponse.getMessage() != null ? authResponse.getMessage() : "토큰 갱신에 실패했습니다.";
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.<Map<String, Object>>builder()
+                    .success(false)
+                    .message(msg)
+                    .data(null)
+                    .build());
+        }
+        Map<String, Object> data = new HashMap<>();
+        data.put("accessToken", authResponse.getToken());
+        data.put("refreshToken", authResponse.getRefreshToken());
+        if (StringUtils.hasText(authResponse.getMessage())) {
+            data.put("message", authResponse.getMessage());
+        }
+        return success(data);
+    }
     
     @GetMapping("/session-info")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSessionInfo(HttpSession session) {

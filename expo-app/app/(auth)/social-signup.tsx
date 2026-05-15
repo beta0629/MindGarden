@@ -68,6 +68,99 @@ function defaultDisplayName(email: string, nickname: string): string {
   return nick || local || '회원';
 }
 
+const SOCIAL_SIGNUP_STACK_LOG_MAX = 800;
+
+/**
+ * 간편가입 예외를 로그·UI용 문자열로 정리한다 (axios 인터셉터 등 비-Error reject 대응).
+ *
+ * @param e catch로 받은 값
+ * @returns logText — logcat/Metro용 다줄 평문, userMessage — 사용자에게 보여줄 한 줄(없으면 빈 문자열)
+ */
+function formatSocialSignupFailure(e: unknown): { logText: string; userMessage: string } {
+  const httpLine = (status: number) => `HTTP ${status}`;
+
+  if (e instanceof Error) {
+    const stackRaw = e.stack ?? '';
+    const stackTruncated =
+      stackRaw.length > SOCIAL_SIGNUP_STACK_LOG_MAX
+        ? `${stackRaw.slice(0, SOCIAL_SIGNUP_STACK_LOG_MAX)}…(truncated)`
+        : stackRaw;
+    const parts = [e.name, e.message, stackTruncated].filter((line) => line.length > 0);
+    const logText = parts.join('\n').trim() || String(e);
+    return { logText, userMessage: e.message.trim() };
+  }
+
+  if (typeof e !== 'object' || e === null) {
+    let dump = '';
+    try {
+      dump = JSON.stringify(e);
+    } catch {
+      dump = String(e);
+    }
+    const logText = (dump || String(e)).trim() || String(e);
+    const userMessage = typeof e === 'string' ? e.trim() : '';
+    return { logText, userMessage };
+  }
+
+  const rec = e as Record<string, unknown>;
+  const statusNum =
+    typeof rec.status === 'number' && Number.isFinite(rec.status) ? rec.status : null;
+
+  let userMessage = '';
+  if (typeof rec.message === 'string' && rec.message.trim()) {
+    userMessage = rec.message.trim();
+  } else {
+    const orig = rec.originalError;
+    if (orig && typeof orig === 'object') {
+      const o = orig as Record<string, unknown>;
+      const response = o.response;
+      if (response && typeof response === 'object') {
+        const r = response as Record<string, unknown>;
+        const data = r.data;
+        if (data && typeof data === 'object') {
+          const d = data as Record<string, unknown>;
+          const m = d.message;
+          if (typeof m === 'string' && m.trim()) {
+            userMessage = m.trim();
+          }
+        }
+      }
+    }
+  }
+
+  if (statusNum !== null) {
+    const http = httpLine(statusNum);
+    userMessage = userMessage ? `${userMessage} (${http})` : http;
+  }
+
+  let dump = '';
+  try {
+    dump = JSON.stringify(rec);
+  } catch {
+    dump = String(e);
+  }
+  const logLines: string[] = [];
+  const body = (dump || String(e)).trim() || String(e);
+  logLines.push(body);
+  if (statusNum !== null) {
+    logLines.push(httpLine(statusNum));
+  }
+  const logText = logLines.join('\n').trim() || String(e);
+
+  return { logText, userMessage };
+}
+
+/** 일부 실기기·환경에서 햅틱 미지원 시 예외 → 가입 흐름을 실패로 오인하지 않도록 삼킨다. */
+async function safeNotificationAsync(
+  feedbackType: Haptics.NotificationFeedbackType,
+): Promise<void> {
+  try {
+    await Haptics.notificationAsync(feedbackType);
+  } catch {
+    /* noop */
+  }
+}
+
 export default function SocialSignupScreen() {
   const theme = useTheme();
   const params = useLocalSearchParams<{
@@ -154,7 +247,7 @@ export default function SocialSignupScreen() {
     const v = validate();
     if (v) {
       setError(v);
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      await safeNotificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
     setBusy(true);
@@ -182,7 +275,7 @@ export default function SocialSignupScreen() {
       const signupRes = await AuthService.socialSignup(body);
       if (!signupRes.success) {
         setError(signupRes.message ?? '가입에 실패했습니다.');
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
       }
 
@@ -193,13 +286,23 @@ export default function SocialSignupScreen() {
             ? `${again.message} 가입은 완료되었습니다. 로그인 화면에서 ${provider === 'KAKAO' ? '카카오' : '네이버'}로 다시 로그인해 주세요.`
             : '가입은 완료되었습니다. 로그인 화면에서 동일 SNS 버튼으로 다시 로그인해 주세요.',
         );
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Warning);
         router.replace('/(auth)/login' as Href);
         return;
       }
 
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
       await navigateAfterAuthenticated();
+    } catch (e: unknown) {
+      const { logText, userMessage } = formatSocialSignupFailure(e);
+      console.warn('[SocialSignup]', logText);
+      console.error('[SocialSignup]', logText);
+      const trimmed = userMessage.trim();
+      setError(
+        trimmed
+          ? `가입 처리 중: ${trimmed}`
+          : '가입 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+      );
     } finally {
       setBusy(false);
     }

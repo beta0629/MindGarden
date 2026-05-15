@@ -25,6 +25,7 @@ import com.coresolution.consultation.service.OAuth2Service;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.SocialLoginUserIdDerivation;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
@@ -41,12 +42,14 @@ import lombok.RequiredArgsConstructor;
  * 기존 테넌트 사용자(어드민 등록 내담자·상담사 등) 매칭 우선순위(카카오·네이버 동일):
  * (a) {@code tenantId}+provider+providerUserId 기존 {@code user_social_accounts} 연동,
  * (b) SNS가 휴대폰을 제공·동의한 경우에 한해 {@code tenantId} 내 정규화 휴대폰({@code User.phone} 복호화 비교),
- * (c) {@code tenantId}+정규화 이메일({@code User.email} 평문 저장·암호화 저장 복호화 비교 동일).
+ * (c) {@code tenantId}+정규화 이메일({@code User.email} 평문 저장·암호화 저장 복호화 비교 동일),
+ * (d) SNS 정규화 이메일에서 파생한 {@code user_id} 와 동일한 테넌트 내 사용자({@code User.userId}).
  * SNS 이메일은 어드민 등록 이메일과 다를 수 있어 (b)를 (c)보다 우선한다.
  * (b)는 전화 미제공·비한국 휴대패턴이면 스킵된다. 동일 전화에 관리자·상담사·스태프·내담자 중 서로 다른 역할이 2종 이상이면
  * (b)에서 자동 선택하지 않고 계정 선택 플로우로 넘긴다(동일 역할만 여러 명이면 우선순위로 1명 확정).
  * (c)에서도 동일 정규화 이메일에 위 역할 집합 기준 서로 다른 역할이 2종 이상이면 동일 계정 선택 플로우로 넘긴다.
- * (a)(b)(c) 모두 실패 시에만 간편가입 플로우.
+ * (d)는 (c)의 이메일 문자열 매칭으로 사용자를 찾지 못했을 때만 시도한다.
+ * (a)(b)(c)(d) 모두 실패 시에만 간편가입 플로우.
  *
  * @author MindGarden
  * @version 1.0.0
@@ -263,6 +266,18 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         }
         if (email.getSelectedUserId() != null) {
             return OAuthExistingUserResolution.unique(email.getSelectedUserId(), true);
+        }
+        String normalizedEmailForUserId = SocialProvider.normalizeEmail(socialUserInfo.getEmail());
+        String derivedUserId =
+            SocialLoginUserIdDerivation.deriveLoginUserIdFromNormalizedEmail(normalizedEmailForUserId);
+        if (StringUtils.hasText(derivedUserId)) {
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            Optional<User> userByDerivedId = userRepository.findByTenantIdAndUserId(tenantId, derivedUserId);
+            if (userByDerivedId.isPresent()) {
+                log.info("이메일 파생 user_id로 기존 사용자 매칭(OAuth): tenantId={}, derivedUserId={}, userPk={}",
+                    tenantId, derivedUserId, userByDerivedId.get().getId());
+                return OAuthExistingUserResolution.unique(userByDerivedId.get().getId(), true);
+            }
         }
         return OAuthExistingUserResolution.noMatch();
     }

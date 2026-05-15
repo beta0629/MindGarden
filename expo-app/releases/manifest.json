@@ -1,4 +1,4 @@
 {
-  "androidVersionCode": 4,
-  "lastReleaseNote": "인앱 MindGarden 브랜드 마크(AppBrandMark) + PATCH 1.0.3"
+  "androidVersionCode": 5,
+  "lastReleaseNote": "PATCH 1.0.4 — 로그인 401 시 refresh 스킵, v1 refresh-token, maxRedirects:0"
 }

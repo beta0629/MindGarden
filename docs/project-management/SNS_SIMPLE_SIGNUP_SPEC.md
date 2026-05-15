@@ -4,7 +4,7 @@
 |------|------|
 | **상태** | 고도화 반영(초안) — 법무·보안 검토 후 확정 |
 | **작성** | 2026-05-13 |
-| **개정** | 2026-05-16 — SNS 우선·비밀번호 저장의 역할 명시 |
+| **개정** | 2026-05-16 — SNS 우선·비밀번호 저장의 역할 명시 · 2026-05-15 — 소셜 로그인 매칭 우선순위·이메일 파생 `user_id`(§2·§3.3·§9) |
 | **범위** | 카카오·네이버(및 동일 패턴 소셜) **최초 방문자** 가입 UX 간소화, MindGarden·테넌트 측 동의·원장, **재방문 시 SNS 로그인 유도**, (향후) **휴대폰 기준 식별자 통일·복수 계정 선택·롤별 대시보드** |
 | **비범위** | 애플·구글 등 미연동 제공자 전체 일반화(별 문서), 학원 전용 `academy_signup_mode` 상세 |
 
@@ -29,6 +29,15 @@
 | 소셜 회원가입 API | `POST /api/v1/auth/social/signup` + `tenantId`(쿼리 또는 컨텍스트) | `SocialAuthController.java` |
 | 가입 서비스 | 이메일·비밀번호(선택·미전송 시 A안 서버 강난수)·`privacyConsent`·`termsConsent` 필수, 휴대폰 선택(형식 엄격) | `SocialAuthServiceImpl.java`, `SocialSignupRequest.java` |
 | 가입 성공 응답 | JWT 없음, “다시 로그인” + 웹 로그인 URL | `SocialSignupResponse.java` |
+
+**백엔드 소셜 로그인(네이티브 `social-login`) — 기존 계정 매칭 우선순위:** 아래 **(a)~(d)** 순으로 기존 사용자와 연결을 시도하고, **모두 실패할 때만** `requiresSignup: true`(간편가입 분기)로 응답한다.
+
+| 순서 | 축 | 설명 |
+|:----:|----|------|
+| **(a)** | 소셜 행 | 동일 `tenantId`에서 `provider` + `providerUserId`(또는 동등 식별자)로 등록된 소셜 연동 행이 있으면 해당 사용자로 로그인(연동 유지·갱신). |
+| **(b)** | 전화 | 정규화된 휴대폰 번호로 기존 `User`를 찾아 매칭(테넌트 정책·§10과 정합). |
+| **(c)** | 정규화 이메일 | SNS에서 수신·정규화한 이메일과 동일한 기존 `User`가 있으면 해당 계정으로 처리. |
+| **(d)** | 이메일에서 파생한 `user_id` | SNS 이메일을 **간편가입과 동일한 규칙**으로 변환한 값이 `users.user_id`와 일치하는 기존 `User`가 있으면 **간편가입으로 보내지 않고** 기존 계정 로그인(소셜 연동)으로 처리. |
 
 **비고(제품 관점):** 위 표의 “비밀번호 필수”는 **현재 DTO·검증 규칙**이다. SNS로만 가입한 사용자는 **일상적으로 비밀번호를 입력하지 않고** 재방문 시에도 **같은 SNS로 로그인**하는 것이 기대 동작이다. DB에 저장되는 비밀번호 해시는 (A안 채택 시) **내부용 난수**로만 채워지고 **사용자가 알 필요·쓸 일이 없음**을 문서·화면·FAQ에서 일관되게 전달한다. 이메일+비밀번호 로그인은 **별도 가입 경로** 또는 레거시 계정에 한해 노출하는 것을 권장한다.
 
@@ -60,6 +69,15 @@
 - SNS만 쓰는 사용자에게 **비밀번호를 알려주거나** “기억해 두세요”라고 하지 않는다.
 - **이메일 찾기·계정 통합** 등에서 이메일 로그인이 필요해지면, 그때만 별도 플로(비밀번호 설정 또는 소셜 연동 확인)를 정의한다.
 - 감사 로그에 **가입 채널**(WEB/EXPO), **provider**, 동의 버전을 남긴다.
+
+---
+
+### 3.3 매칭·간편가입 경계
+
+소셜 네이티브 `social-login` 분기에서 **이메일·휴대폰만**으로는 잡히지 않았지만, **이메일에서 파생한 로그인 ID(`users.user_id`)** 가 기존 행과 같으면 **별도 간편가입 화면(`requiresSignup`)으로 보내지 않는다** — §2 표의 **(d)** 단계로 기존 계정에 소셜을 연결하고 세션을 완료한다.  
+카카오·네이버 등에서 **이메일 미제공·비동의**인 경우에는 **(c)·(d) 모두 적용할 수 없을 수 있으므로**, 그때는 **(a)(b)** 결과만으로 매칭 여부가 결정된다(이메일 없이도 가입·로그인 정책은 §10·제공자별 폴백과 함께 본다).  
+**(d)** 에 쓰는 파생 규칙은 **간편가입 시 `SocialAuthServiceImpl`이 `user_id`를 생성할 때와 동일한 알고리즘**이어야 한다. 구현이 한쪽만 바뀌면 동일 인물이 **가입 직후에는 (d)로 잡히지 않다가** 나중에 잡히는 등 SSOT가 깨지므로, 파생 로직은 **단일 유틸**로 모으고 가입·로그인 양쪽에서 호출한다.  
+구현 위치는 코드 인덱스(§9)의 `AbstractOAuth2Service`, `SocialLoginUserIdDerivation` 경로를 따르며, 세부 알고리즘은 소스 주석·테스트로 단일화한다.
 
 ---
 
@@ -198,6 +216,8 @@
 | 웹 콜백 | `frontend/src/components/auth/OAuth2Callback.js` |
 | 네이티브 소셜 로그인 | `OAuth2Controller.java` (`/api/auth/social-login`) |
 | 소셜 가입 | `SocialAuthController.java`, `SocialAuthServiceImpl.java` |
+| 소셜 로그인 매칭·연동(공통 상위) | `src/main/java/com/coresolution/consultation/service/impl/AbstractOAuth2Service.java` |
+| 이메일 → `user_id` 파생(가입·로그인 공용) | `src/main/java/com/coresolution/consultation/util/SocialLoginUserIdDerivation.java` (구현 PR과 클래스·파일명 정합) |
 | 상수 메시지 | `OAuth2Constants.MESSAGE_SIGNUP_REQUIRED` 등 |
 | 휴대폰 계정 분기(기존) | `SocialLoginResponse.requiresPhoneAccountSelection`, `phoneAccountSelectionToken` | `SocialLoginResponse.java` |
 
@@ -264,4 +284,5 @@
 | 날짜 | 내용 |
 |------|------|
 | 2026-05-13 | 초안 작성 — 현황·원칙·체크리스트·위임 순서 |
+| 2026-05-15 | **§2** 소셜 로그인 매칭 우선순위 (a)~(d) 및 `requiresSignup` 조건 명시. **§3.3** 매칭·간편가입 경계·이메일 미제공 시 (d) 한계·`SocialAuthServiceImpl`과 동일 `user_id` 파생 알고리즘. **§9** `AbstractOAuth2Service`, `SocialLoginUserIdDerivation` 경로 추가. |
 | 2026-05-16 | 고도화 — §3.1 비밀번호 필드, §3 원칙 5·§4.3~4.4 SNS 유도, A/B/C(A 1순위), 체크리스트·§8·§9 보강. **§10 추가** — 휴대폰 공통 식별, 복수 계정·복수 롤 선택, 롤별 대시보드, API 초안·미결, §7.6 |

@@ -15,14 +15,51 @@ const releaseManifest = require('./releases/manifest.json') as {
   androidVersionCode: number;
 };
 
+/**
+ * 카카오 네이티브 앱 키 — `mobile/ios/MindGardenMobile/Info.plist` 의 KAKAO_APP_KEY 와 동일 폴백.
+ * 릴리스 APK에서 env 미주입 시 Android 플러그인이 `KAKAO_APP_KEY_HERE` 로 들어가 로그인 실패하는 것을 막는다.
+ */
+const KAKAO_DEV_NATIVE_APP_KEY = 'dc936dc99531bf6085bdfab781ad2096';
+
+function resolveKakaoAppKeyForNative(): string {
+  const k = process.env.KAKAO_APP_KEY?.trim();
+  if (k && k !== 'KAKAO_APP_KEY_HERE') {
+    return k;
+  }
+  return KAKAO_DEV_NATIVE_APP_KEY;
+}
+
+/**
+ * 네이버 네이티브 플러그인·iOS Plist·`extra`·JS 초기화가 동일 값을 쓰도록 단일 해석.
+ * EXPO_PUBLIC_* → NAVER_* 순, 없으면 iOS와 동일한 개발 폴백(저장소에 이미 노출된 값).
+ */
+const NAVER_DEV_CLIENT_ID = 'vTKNlxYKIfo1uCCXaDfk';
+const NAVER_DEV_CLIENT_SECRET = 'V_b3omW5pu';
+
+function resolveNaverClientIdForNative(): string {
+  return (
+    process.env.EXPO_PUBLIC_NAVER_CLIENT_ID?.trim() ||
+    process.env.NAVER_CLIENT_ID?.trim() ||
+    NAVER_DEV_CLIENT_ID
+  );
+}
+
+function resolveNaverClientSecretForNative(): string {
+  return (
+    process.env.EXPO_PUBLIC_NAVER_CLIENT_SECRET?.trim() ||
+    process.env.NAVER_CLIENT_SECRET?.trim() ||
+    NAVER_DEV_CLIENT_SECRET
+  );
+}
+
 /** EAS 빌드 로그에서 카카오·네이버 키 누락을 한 번에 알림 (빌드는 계속 진행) */
 function warnIfSocialLoginEnvMissingForEasBuild(): void {
   if (process.env.EAS_BUILD !== 'true') {
     return;
   }
   const issues: string[] = [];
-  const k = process.env.KAKAO_APP_KEY?.trim();
-  if (!k || k === 'KAKAO_APP_KEY_HERE') {
+  const kakaoEnv = process.env.KAKAO_APP_KEY?.trim();
+  if (kakaoEnv === 'KAKAO_APP_KEY_HERE') {
     issues.push('KAKAO_APP_KEY');
   }
   const naverId = process.env.NAVER_CLIENT_ID?.trim();
@@ -120,7 +157,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     [
       '@react-native-seoul/kakao-login',
       {
-        kakaoAppKey: process.env.KAKAO_APP_KEY ?? 'KAKAO_APP_KEY_HERE',
+        kakaoAppKey: resolveKakaoAppKeyForNative(),
         /** 기본 1.5.10이면 KSP/RN 0.81과 충돌 — expo-build-properties·RN과 동일 버전 */
         kotlinVersion: '2.1.20',
       },
@@ -129,8 +166,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       '@react-native-seoul/naver-login',
       {
         urlScheme: 'naverMindGardenMobileApp',
-        consumerKey: process.env.NAVER_CLIENT_ID ?? 'NAVER_CLIENT_ID_HERE',
-        consumerSecret: process.env.NAVER_CLIENT_SECRET ?? 'NAVER_CLIENT_SECRET_HERE',
+        consumerKey: resolveNaverClientIdForNative(),
+        consumerSecret: resolveNaverClientSecretForNative(),
         appName: 'MindGardenMobileApp',
       },
     ],
@@ -162,8 +199,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           'QR 코드 스캔과 프로필 사진 촬영을 위해 카메라 접근이 필요합니다.',
         NSMicrophoneUsageDescription: '음성 메시지를 위해 마이크 접근이 필요합니다.',
         NSCalendarsUsageDescription: '상담 일정을 기기 캘린더에 추가하기 위해 접근이 필요합니다.',
-        NAVER_CLIENT_ID: process.env.NAVER_CLIENT_ID ?? 'vTKNlxYKIfo1uCCXaDfk',
-        NAVER_CLIENT_SECRET: process.env.NAVER_CLIENT_SECRET ?? 'V_b3omW5pu',
+        KAKAO_APP_KEY: resolveKakaoAppKeyForNative(),
+        NAVER_CLIENT_ID: resolveNaverClientIdForNative(),
+        NAVER_CLIENT_SECRET: resolveNaverClientSecretForNative(),
         NAVER_APP_NAME: 'MindGardenMobileApp',
       },
     },
@@ -197,6 +235,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       tossPaymentFailUrl: process.env.EXPO_PUBLIC_TOSS_PAYMENT_FAIL_URL ?? '',
       /** JSON 배열 문자열. 비우면 데모 카탈로그(`sessionExtensionCatalog.ts`) 사용 */
       sessionExtensionCatalog: process.env.EXPO_PUBLIC_SESSION_EXTENSION_CATALOG_JSON ?? '',
+      /** 릴리스 번들에서 `process.env.EXPO_PUBLIC_*` 가 비어도 네이버 SDK JS 초기화가 되도록 */
+      naverClientId: resolveNaverClientIdForNative(),
+      naverClientSecret: resolveNaverClientSecretForNative(),
+      /** 카카오 네이티브 키(디버깅·원격 설정용) — SDK는 플러그인 주입 값 사용 */
+      kakaoNativeAppKey: resolveKakaoAppKeyForNative(),
+      /** EXPO_PUBLIC_SOCIAL_LOGIN_DEBUG=1 이면 릴리스·프리뷰에서도 AuthService 소셜 로그인 구조화 진단 로그가 켜집니다(adb logcat / Metro에서 `[AuthService][social-login]` 필터). */
+      socialLoginDebug: process.env.EXPO_PUBLIC_SOCIAL_LOGIN_DEBUG === '1',
     },
   };
 };

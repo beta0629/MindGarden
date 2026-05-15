@@ -20,9 +20,55 @@ import { AUTH_API } from './endpoints';
 
 const API_TIMEOUT = 30000;
 
+/** 401 시 refresh 재시도하지 않는 URL(로그인·소셜·OAuth2·refresh 자체 등) */
+const AUTH_REFRESH_SKIP_URL_SUBSTRINGS = [
+  '/api/v1/auth/login',
+  '/api/v1/auth/social-login',
+  '/api/v1/auth/social/signup',
+  '/api/v1/auth/oauth2/',
+  '/api/v1/auth/refresh-token',
+] as const;
+
+function resolveRequestUrlForMatch(config: InternalAxiosRequestConfig): string {
+  const url = config.url ?? '';
+  if (url.includes('://')) {
+    return url;
+  }
+  const base = typeof config.baseURL === 'string' ? config.baseURL : '';
+  return `${base}${url}`;
+}
+
+function shouldSkipTokenRefreshOn401(config: InternalAxiosRequestConfig): boolean {
+  const haystack = resolveRequestUrlForMatch(config);
+  return AUTH_REFRESH_SKIP_URL_SUBSTRINGS.some((sub) => haystack.includes(sub));
+}
+
+function extractTokensFromRefreshBody(body: unknown): {
+  accessToken?: string;
+  refreshToken?: string;
+} {
+  if (body == null || typeof body !== 'object') {
+    return {};
+  }
+  const root = body as Record<string, unknown>;
+  const payload =
+    root.data != null && typeof root.data === 'object'
+      ? (root.data as Record<string, unknown>)
+      : root;
+  let accessToken: string | undefined;
+  if (typeof payload.accessToken === 'string') {
+    accessToken = payload.accessToken;
+  } else if (typeof payload.token === 'string') {
+    accessToken = payload.token;
+  }
+  const refreshToken = typeof payload.refreshToken === 'string' ? payload.refreshToken : undefined;
+  return { accessToken, refreshToken };
+}
+
 const apiClient: AxiosInstance = axios.create({
   baseURL: getApiBaseUrl(),
   timeout: API_TIMEOUT,
+  maxRedirects: 0,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -70,6 +116,13 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
+    if (error.response?.status === 401 && shouldSkipTokenRefreshOn401(originalRequest)) {
+      const status = 401;
+      const message =
+        (error.response?.data as { message?: string })?.message ?? getErrorMessage(status);
+      return Promise.reject({ status, message, originalError: error });
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -95,10 +148,21 @@ apiClient.interceptors.response.use(
         const response = await axios.post(
           `${getApiBaseUrl()}${AUTH_API.REFRESH_TOKEN}`,
           { refreshToken },
-          { headers: { 'Content-Type': 'application/json' } },
+          {
+            headers: { 'Content-Type': 'application/json' },
+            maxRedirects: 0,
+          },
         );
 
-        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+          extractTokensFromRefreshBody(response.data);
+
+        if (!newAccessToken || !newRefreshToken) {
+          const parseErr = new Error('토큰 갱신 응답 형식이 올바르지 않습니다.');
+          processQueue(parseErr, null);
+          await useAuthStore.getState().logout();
+          return Promise.reject(parseErr);
+        }
 
         await useAuthStore.getState().updateTokens({
           accessToken: newAccessToken,

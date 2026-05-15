@@ -52,14 +52,45 @@ function getMemoryMmkv(id: string): MemoryMmkv {
   return m;
 }
 
+/**
+ * Dev Client + Android에서 모듈 최상단 `getMmkv()`가 `createMMKV`를 즉시 호출하면
+ * JSI/호스트가 `MainActivity`의 React delegate 준비보다 먼저 잡혀
+ * `App react context shouldn't be created before`(expo-dev-launcher)로 크래시할 수 있다.
+ * 네이티브 MMKV는 첫 I/O 시점에만 실제 인스턴스를 만든다.
+ */
+const lazyNativeById = new Map<string, MmkvLike>();
+
+function createLazyNativeMmkv(id: string): MmkvLike {
+  let backing: import('react-native-mmkv').MMKV | null = null;
+  const ensure = () => {
+    if (!backing) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- Expo Go 분기 위에서 이미 제외됨
+      const { createMMKV } = require('react-native-mmkv') as typeof import('react-native-mmkv');
+      backing = createMMKV({ id });
+    }
+    return backing;
+  };
+  return {
+    getString: (key: string) => ensure().getString(key),
+    getNumber: (key: string) => ensure().getNumber(key),
+    set: (key: string, value: boolean | string | number) => ensure().set(key, value),
+    remove: (key: string) => {
+      ensure().remove(key);
+    },
+  };
+}
+
 /** Nitro 없이 동작해야 할 때(Expo Go) 메모리 구현 */
 export function getMmkv(id: string): MmkvLike {
   if (isExpoGoApp()) {
     return getMemoryMmkv(id);
   }
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- Expo Go에서 네이티브 모듈 로드 방지
-  const { createMMKV } = require('react-native-mmkv') as typeof import('react-native-mmkv');
-  return createMMKV({ id });
+  let lazy = lazyNativeById.get(id);
+  if (!lazy) {
+    lazy = createLazyNativeMmkv(id);
+    lazyNativeById.set(id, lazy);
+  }
+  return lazy;
 }
 
 /** zustand `persist` + `createJSONStorage`용 */

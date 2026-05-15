@@ -10,9 +10,9 @@
 export const AUTH_API = {
   LOGIN: '/api/v1/auth/login',
   BRANCH_LOGIN: '/api/auth/branch-login',
-  LOGOUT: '/api/auth/logout',
-  REFRESH_TOKEN: '/api/auth/refresh-token',
-  GET_CURRENT_USER: '/api/auth/current-user',
+  LOGOUT: '/api/v1/auth/logout',
+  REFRESH_TOKEN: '/api/v1/auth/refresh-token',
+  GET_CURRENT_USER: '/api/v1/auth/current-user',
   SOCIAL_LOGIN: '/api/v1/auth/social-login',
   /** Spring `SocialAuthController` — 쿼리 `tenantId` 권장 */
   SOCIAL_SIGNUP: '/api/v1/auth/social/signup',

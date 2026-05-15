@@ -39,6 +39,17 @@ function isExpoGoApp(): boolean {
   return Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 }
 
+/** 일부 실기기·환경에서 햅틱 미지원 시 예외 → 로그인 성공을 실패로 오인하지 않도록 삼킨다. */
+async function safeNotificationAsync(
+  feedbackType: Haptics.NotificationFeedbackType,
+): Promise<void> {
+  try {
+    await Haptics.notificationAsync(feedbackType);
+  } catch {
+    /* noop */
+  }
+}
+
 function socialSignupRouteParams(info: SocialUserInfoDraft) {
   const base = {
     provider: info.provider,
@@ -81,7 +92,7 @@ export default function LoginScreen() {
     try {
       const result = await AuthService.loginWithKakao();
       if (result.kind === 'authenticated') {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
         await handleLoginSuccess();
       } else if (result.kind === 'requiresSignup') {
         router.push({
@@ -98,10 +109,15 @@ export default function LoginScreen() {
         });
       } else {
         setErrorMessage(result.message ?? '카카오 로그인에 실패했습니다.');
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-    } catch {
-      setErrorMessage('카카오 로그인 중 오류가 발생했습니다.');
+    } catch (e) {
+      console.error('[Login] kakao', e);
+      const detail =
+        e instanceof Error && e.message.trim()
+          ? ` (${e.message.trim().slice(0, 100)})`
+          : '';
+      setErrorMessage(`카카오 로그인 중 오류가 발생했습니다.${detail}`);
     } finally {
       setIsLoading(false);
       setLoadingProvider(null);
@@ -116,7 +132,7 @@ export default function LoginScreen() {
     try {
       const result = await AuthService.loginWithNaver();
       if (result.kind === 'authenticated') {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
         await handleLoginSuccess();
       } else if (result.kind === 'requiresSignup') {
         router.push({
@@ -133,10 +149,15 @@ export default function LoginScreen() {
         });
       } else {
         setErrorMessage(result.message ?? '네이버 로그인에 실패했습니다.');
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-    } catch {
-      setErrorMessage('네이버 로그인 중 오류가 발생했습니다.');
+    } catch (e) {
+      console.error('[Login] naver', e);
+      const detail =
+        e instanceof Error && e.message.trim()
+          ? ` (${e.message.trim().slice(0, 100)})`
+          : '';
+      setErrorMessage(`네이버 로그인 중 오류가 발생했습니다.${detail}`);
     } finally {
       setIsLoading(false);
       setLoadingProvider(null);
@@ -156,13 +177,14 @@ export default function LoginScreen() {
     try {
       const result = await AuthService.loginWithCredentials(email.trim(), password);
       if (result.success) {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
         await handleLoginSuccess();
       } else {
         setErrorMessage(result.message ?? '로그인에 실패했습니다.');
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-    } catch {
+    } catch (e) {
+      console.error('[Login] credential', e);
       setErrorMessage('로그인 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
@@ -293,7 +315,7 @@ export default function LoginScreen() {
             <Pressable
               style={[styles.toggleButton, { borderColor: theme.colors.border }]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
                 setShowCredentials(!showCredentials);
               }}
               accessibilityLabel="다른 방법으로 로그인"

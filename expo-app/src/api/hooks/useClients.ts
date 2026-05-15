@@ -7,6 +7,7 @@
 import { useQuery, useInfiniteQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { apiGet } from '../client';
 import { CONSULTANT_API } from '../endpoints';
+import { unwrapApiResponse } from '../unwrapApiResponse';
 
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type ClientStatus = 'ACTIVE' | 'INACTIVE' | 'AT_RISK';
@@ -79,18 +80,42 @@ const CLIENT_QUERY_KEYS = {
 
 const DEFAULT_PAGE_SIZE = 20;
 
+function parseConsultantClientsPage(raw: unknown): PaginatedResponse<Client> {
+  const body =
+    unwrapApiResponse<Record<string, unknown>>(raw) ??
+    (raw != null && typeof raw === 'object' ? (raw as Record<string, unknown>) : null);
+  if (body == null) {
+    return {
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      last: true,
+      number: 0,
+    };
+  }
+  const content = Array.isArray(body.content) ? (body.content as Client[]) : [];
+  const totalElements = typeof body.totalElements === 'number' ? body.totalElements : 0;
+  const totalPages = typeof body.totalPages === 'number' ? body.totalPages : 0;
+  const number = typeof body.number === 'number' ? body.number : 0;
+  const last =
+    typeof body.last === 'boolean' ? body.last : totalPages <= 0 || number >= totalPages - 1;
+  return { content, totalElements, totalPages, last, number };
+}
+
 export function useConsultantClients(params: ClientsParams) {
   const { consultantId, search, status, size = DEFAULT_PAGE_SIZE } = params;
 
   return useInfiniteQuery<PaginatedResponse<Client>>({
     queryKey: CLIENT_QUERY_KEYS.list({ consultantId, search, status }),
-    queryFn: ({ pageParam }) =>
-      apiGet<PaginatedResponse<Client>>(CONSULTANT_API.consultantClients(consultantId), {
+    queryFn: async ({ pageParam }) => {
+      const raw = await apiGet<unknown>(CONSULTANT_API.consultantClients(consultantId), {
         search: search || undefined,
         status: status === 'ALL' ? undefined : status,
         page: pageParam,
         size,
-      }),
+      });
+      return parseConsultantClientsPage(raw);
+    },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => (lastPage.last ? undefined : lastPage.number + 1),
     enabled: !!consultantId,

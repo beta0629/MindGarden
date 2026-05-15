@@ -1161,6 +1161,22 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     @Override
+    public List<ScheduleResponse> findScheduleResponsesByUserRoleAndDate(
+        Long userId, String userRole, LocalDate date) {
+        return findSchedulesByUserRoleAndDate(userId, userRole, date).stream()
+            .map(this::convertToScheduleDto)
+            .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    public List<ScheduleResponse> findScheduleResponsesByUserRoleAndDateBetween(
+        Long userId, String userRole, LocalDate startDate, LocalDate endDate) {
+        return findSchedulesByUserRoleAndDateBetween(userId, userRole, startDate, endDate).stream()
+            .map(this::convertToScheduleDto)
+            .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
     public Map<String, Object> getScheduleStatisticsForAdmin(String startDate, String endDate) {
         log.info("📊 관리자용 전체 스케줄 통계 조회 시작 - 시작일: {}, 종료일: {}", startDate, endDate);
         

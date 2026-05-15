@@ -15,6 +15,10 @@ import { apiGet, apiPost, apiPut } from '../client';
 import { CONSULTATION_RECORD_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
 import { useAuthStore } from '@/stores/useAuthStore';
+import {
+  consultationTypeToKorean,
+  resolveClientNameForScheduleRow,
+} from '@/utils/scheduleDisplayLabels';
 import { SCHEDULE_QUERY_KEYS } from './useSchedules';
 
 export interface ConsultationRecord {
@@ -142,10 +146,7 @@ function normalizeEntityRowToConsultationRecord(row: Record<string, unknown>): C
   const consultationId = Number(row.consultationId ?? row.consultation_id ?? 0);
   const consultantId = Number(row.consultantId ?? row.consultant_id ?? 0);
   const clientId = Number(row.clientId ?? row.client_id ?? 0);
-  const clientName =
-    readStringProp(row, 'clientName') ||
-    readStringProp(row, 'client_name') ||
-    (clientId > 0 ? `내담자 ${clientId}` : '');
+  const clientName = resolveClientNameForScheduleRow(row, clientId);
   const sessionDate = parseJsonLocalDate(row.sessionDate ?? row.session_date);
   const date = sessionDate || parseJsonLocalDate(row.date);
   const startTime = parseIsoTimePart(row.startTime ?? row.start_time);
@@ -193,7 +194,7 @@ function normalizeAdminDetailToConsultationRecord(
   const id = Number(data.id ?? 0);
   const clientId = Number(data.clientId ?? data.client_id ?? 0);
   const consultantId = Number(data.consultantId ?? data.consultant_id ?? 0);
-  const clientName = readStringProp(data, 'clientName');
+  const clientName = resolveClientNameForScheduleRow(data as Record<string, unknown>, clientId);
   const date =
     parseJsonLocalDate(data.sessionDate) || parseJsonLocalDate(data.consultationDate) || '';
   const startTime = parseIsoTimePart(data.startTime);
@@ -242,10 +243,7 @@ function normalizeEntityRowToPending(row: Record<string, unknown>): PendingRecor
   const consultationId = Number(row.consultationId ?? row.consultation_id ?? 0);
   if (!consultationId) return null;
   const clientId = Number(row.clientId ?? row.client_id ?? 0);
-  const clientName =
-    readStringProp(row, 'clientName') ||
-    readStringProp(row, 'client_name') ||
-    (clientId > 0 ? `내담자 ${clientId}` : '');
+  const clientName = resolveClientNameForScheduleRow(row, clientId);
   const date = parseJsonLocalDate(row.sessionDate ?? row.session_date) || '';
   return {
     scheduleId: consultationId,
@@ -255,7 +253,9 @@ function normalizeEntityRowToPending(row: Record<string, unknown>): PendingRecor
     date,
     startTime: parseIsoTimePart(row.startTime ?? row.start_time),
     endTime: parseIsoTimePart(row.endTime ?? row.end_time),
-    consultationType: readStringProp(row, 'consultationType') || 'INDIVIDUAL',
+    consultationType: consultationTypeToKorean(
+      readStringProp(row, 'consultationType') || 'INDIVIDUAL',
+    ),
   };
 }
 
@@ -275,14 +275,14 @@ export function useConsultationRecords(params: RecordsParams) {
       assertApiSuccess(raw);
       const inner = unwrapApiResponse<Record<string, unknown> | unknown[]>(raw);
       let rows: Record<string, unknown>[] = [];
+      let pageEnvelope: Record<string, unknown> | null = null;
       if (Array.isArray(inner)) {
         rows = inner as Record<string, unknown>[];
-      } else if (
-        inner != null &&
-        typeof inner === 'object' &&
-        Array.isArray((inner as Record<string, unknown>).records)
-      ) {
-        rows = (inner as Record<string, unknown>).records as Record<string, unknown>[];
+      } else if (inner != null && typeof inner === 'object') {
+        pageEnvelope = inner as Record<string, unknown>;
+        if (Array.isArray(pageEnvelope.records)) {
+          rows = pageEnvelope.records as Record<string, unknown>[];
+        }
       }
       let content = rows.map((r) => normalizeEntityRowToConsultationRecord(r));
       if (status && status !== 'ALL') {
@@ -292,13 +292,30 @@ export function useConsultationRecords(params: RecordsParams) {
         const q = search.trim().toLowerCase();
         content = content.filter((r) => r.clientName.toLowerCase().includes(q));
       }
-      const totalElements = content.length;
+      const totalElements =
+        pageEnvelope && typeof pageEnvelope.totalCount === 'number'
+          ? (pageEnvelope.totalCount as number)
+          : content.length;
+      const totalPages =
+        pageEnvelope && typeof pageEnvelope.totalPages === 'number'
+          ? (pageEnvelope.totalPages as number)
+          : 1;
+      const last =
+        pageEnvelope && typeof pageEnvelope.last === 'boolean'
+          ? (pageEnvelope.last as boolean)
+          : true;
+      const number =
+        pageEnvelope && typeof pageEnvelope.number === 'number'
+          ? (pageEnvelope.number as number)
+          : typeof pageParam === 'number'
+            ? pageParam
+            : 0;
       return {
         content,
         totalElements,
-        totalPages: 1,
-        last: true,
-        number: typeof pageParam === 'number' ? pageParam : 0,
+        totalPages,
+        last,
+        number,
       };
     },
     initialPageParam: 0,
@@ -318,6 +335,7 @@ export function usePendingRecords(consultantId: string | number | undefined) {
     queryFn: async () => {
       const raw = await apiGet<unknown>(
         CONSULTATION_RECORD_API.listEntitiesByConsultant(consultantId!),
+        { page: 0, size: 500 },
       );
       assertApiSuccess(raw);
       const inner = unwrapApiResponse<Record<string, unknown> | unknown[]>(raw);

@@ -6,11 +6,16 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.consultation.constant.ProfessionalProviderTypeConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
@@ -21,6 +26,7 @@ import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.AdminService;
@@ -83,6 +89,7 @@ public class ScheduleController extends BaseApiController {
     private final DynamicPermissionService dynamicPermissionService;
     private final com.coresolution.consultation.repository.UserRepository userRepository;
     private final ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
+    private final ObjectMapper objectMapper;
     private final com.coresolution.consultation.service.ConsultantDashboardService consultantDashboardService;
     private final com.coresolution.consultation.repository.ClientScheduleNoteRepository clientScheduleNoteRepository;
 
@@ -225,14 +232,14 @@ public class ScheduleController extends BaseApiController {
      * 권한 기반 특정 날짜 스케줄 조회
      */
     @GetMapping("/date/{date}")
-    public ResponseEntity<ApiResponse<List<Schedule>>> getSchedulesByUserRoleAndDate(
+    public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getSchedulesByUserRoleAndDate(
             @RequestParam Long userId,
             @RequestParam String userRole,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         
         log.info("🔐 권한 기반 특정 날짜 스케줄 조회: 사용자 {}, 역할 {}, 날짜 {}", userId, userRole, date);
         
-        List<Schedule> schedules = scheduleService.findSchedulesByUserRoleAndDate(userId, userRole, date);
+        List<ScheduleResponse> schedules = scheduleService.findScheduleResponsesByUserRoleAndDate(userId, userRole, date);
         log.info("✅ 특정 날짜 스케줄 조회 완료: {}개", schedules.size());
         return success(schedules);
     }
@@ -242,7 +249,7 @@ public class ScheduleController extends BaseApiController {
      * 권한 기반 날짜 범위 스케줄 조회
      */
     @GetMapping("/date-range")
-    public ResponseEntity<ApiResponse<List<Schedule>>> getSchedulesByUserRoleAndDateRange(
+    public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getSchedulesByUserRoleAndDateRange(
             @RequestParam Long userId,
             @RequestParam String userRole,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -250,7 +257,8 @@ public class ScheduleController extends BaseApiController {
         
         log.info("🔐 권한 기반 날짜 범위 스케줄 조회: 사용자 {}, 역할 {}, 기간 {} ~ {}", userId, userRole, startDate, endDate);
         
-        List<Schedule> schedules = scheduleService.findSchedulesByUserRoleAndDateBetween(userId, userRole, startDate, endDate);
+        List<ScheduleResponse> schedules = scheduleService.findScheduleResponsesByUserRoleAndDateBetween(
+            userId, userRole, startDate, endDate);
         log.info("✅ 날짜 범위 스케줄 조회 완료: {}개", schedules.size());
         return success(schedules);
     }
@@ -880,38 +888,74 @@ public class ScheduleController extends BaseApiController {
     }
     
     
-     /**
-     * 상담일지 목록 조회
-     * GET /api/schedules/consultation-records?consultantId=41&consultationId=schedule-30
+    /**
+     * 상담일지 목록 조회 (모바일·웹 공통). {@code records}는 표시용 필드({@code clientName} 등)가 채워진 맵 리스트이다.
+     * GET /api/v1/schedules/consultation-records?consultantId=&amp;consultationId=&amp;page=&amp;size=
+     *
+     * @param consultantId 상담사 ID (지정 시 Spring {@link Pageable}로 전체 목록 페이지 조회)
+     * @param consultationId 상담(스케줄) ID 또는 {@code schedule-} 접두 — 지정 시 해당 상담의 일지만 비페이지 목록
+     * @param pageable 상담사별 목록 시 페이지·크기
+     * @return records, totalCount, totalPages, number, last, size
      */
     @GetMapping("/consultation-records")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultationRecords(
             @RequestParam(required = false) Long consultantId,
-            @RequestParam(required = false) String consultationId) {
-        
-        log.info("📝 상담일지 목록 조회 - 상담사 ID: {}, 상담 ID: {}", consultantId, consultationId);
-        
-        List<com.coresolution.consultation.entity.ConsultationRecord> records;
-        
+            @RequestParam(required = false) String consultationId,
+            @PageableDefault(size = 20) Pageable pageable) {
+
+        log.info("📝 상담일지 목록 조회 - 상담사 ID: {}, 상담 ID: {}, page={}, size={}",
+            consultantId, consultationId, pageable.getPageNumber(), pageable.getPageSize());
+
+        List<ConsultationRecord> recordList;
+        long totalCount;
+        int totalPages;
+        int number;
+        boolean last;
+        int size;
+
         if (consultationId != null) {
-            Long consultationIdLong = null;
+            Long consultationIdLong;
             if (consultationId.startsWith("schedule-")) {
                 consultationIdLong = Long.valueOf(consultationId.replace("schedule-", ""));
             } else {
                 consultationIdLong = Long.valueOf(consultationId);
             }
-            records = consultationRecordService.getConsultationRecordsByConsultationId(consultationIdLong);
+            recordList = consultationRecordService.getConsultationRecordsByConsultationId(consultationIdLong);
+            totalCount = recordList.size();
+            totalPages = 1;
+            number = 0;
+            last = true;
+            size = recordList.size();
         } else if (consultantId != null) {
-            records = consultationRecordService.getRecentConsultationRecords(consultantId, UserRole.CONSULTANT.name(), 10);
+            Page<ConsultationRecord> page =
+                consultationRecordService.getConsultationRecordsByConsultantId(consultantId, pageable);
+            recordList = page.getContent();
+            totalCount = page.getTotalElements();
+            totalPages = page.getTotalPages();
+            number = page.getNumber();
+            last = page.isLast();
+            size = page.getSize();
         } else {
-            records = new ArrayList<>();
+            recordList = new ArrayList<>();
+            totalCount = 0L;
+            totalPages = 0;
+            number = 0;
+            last = true;
+            size = pageable.getPageSize();
         }
-        
-        Map<String, Object> data = Map.of(
-            "records", records,
-            "totalCount", records.size()
-        );
-        
+
+        String tenantId = resolveTenantIdForConsultationRecordList(recordList);
+        Map<Long, String> displayNameByUserId = buildScheduleListDisplayNameIndex(tenantId, recordList);
+        List<Map<String, Object>> records = convertConsultationRecordsToDisplayMaps(recordList, displayNameByUserId);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("records", records);
+        data.put("totalCount", totalCount);
+        data.put("totalPages", totalPages);
+        data.put("number", number);
+        data.put("last", last);
+        data.put("size", size);
+
         return success(data);
     }
     
@@ -1654,6 +1698,89 @@ public class ScheduleController extends BaseApiController {
             if (cnt > 0) {
                 out.put(cid, cnt);
             }
+        }
+        return out;
+    }
+
+    /**
+     * 상담일지 목록 응답용 테넌트 ID (호출 스레드 컨텍스트 → 엔티티 필드 순).
+     *
+     * @param records 상담일지 목록
+     * @return tenantId 또는 null
+     */
+    private String resolveTenantIdForConsultationRecordList(List<ConsultationRecord> records) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null && !tenantId.isBlank()) {
+            return tenantId.trim();
+        }
+        for (ConsultationRecord r : records) {
+            if (r.getTenantId() != null && !r.getTenantId().isBlank()) {
+                return r.getTenantId().trim();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 상담일지에 등장하는 내담자·상담사 사용자 ID에 대해 스케줄 목록과 동일한 표시명을 조회한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param records 일지 목록
+     * @return 사용자 PK → 표시명
+     */
+    private Map<Long, String> buildScheduleListDisplayNameIndex(String tenantId, List<ConsultationRecord> records) {
+        Map<Long, String> index = new HashMap<>();
+        if (tenantId == null || tenantId.isEmpty() || records.isEmpty()) {
+            return index;
+        }
+        String scopedTenantId = tenantId.trim();
+        Set<Long> distinctIds = new HashSet<>();
+        for (ConsultationRecord r : records) {
+            if (r.getClientId() != null) {
+                distinctIds.add(r.getClientId());
+            }
+            if (r.getConsultantId() != null) {
+                distinctIds.add(r.getConsultantId());
+            }
+        }
+        for (Long userId : distinctIds) {
+            try {
+                User user = userRepository.findByTenantIdAndId(scopedTenantId, userId).orElse(null);
+                index.put(userId, scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(user));
+            } catch (Exception e) {
+                log.warn("상담일지 목록 표시명 조회 실패: tenantId={}, userId={}, error={}",
+                    scopedTenantId, userId, e.getMessage());
+                index.put(userId, AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
+            }
+        }
+        return index;
+    }
+
+    /**
+     * 상담일지 엔티티를 API 맵으로 변환하고 {@code clientName}/{@code consultantName}을 채운다.
+     *
+     * @param records 원본 일지
+     * @param displayNameByUserId PK별 표시명
+     * @return JSON 필드 + 표시명
+     */
+    private List<Map<String, Object>> convertConsultationRecordsToDisplayMaps(
+            List<ConsultationRecord> records,
+            Map<Long, String> displayNameByUserId) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (ConsultationRecord r : records) {
+            Map<String, Object> map = new LinkedHashMap<>(objectMapper.convertValue(
+                r, new TypeReference<Map<String, Object>>() {}));
+            String clientResolved = r.getClientId() != null
+                ? displayNameByUserId.getOrDefault(r.getClientId(), AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN)
+                : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
+            String consultantResolved = r.getConsultantId() != null
+                ? displayNameByUserId.getOrDefault(r.getConsultantId(), AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN)
+                : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
+            map.put("clientName", clientResolved);
+            map.put("client_name", clientResolved);
+            map.put("consultantName", consultantResolved);
+            map.put("consultant_name", consultantResolved);
+            out.add(map);
         }
         return out;
     }

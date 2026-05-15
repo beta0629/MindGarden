@@ -421,15 +421,25 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         
         List<ConsultantClientMapping> mappings;
         if (status != null && !status.trim().isEmpty()) {
-            ConsultantClientMapping.MappingStatus mappingStatus = ConsultantClientMapping.MappingStatus.valueOf(status);
-            mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId, 
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                mappingStatus == ConsultantClientMapping.MappingStatus.ACTIVE ? 
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                ConsultantClientMapping.MappingStatus.INACTIVE : ConsultantClientMapping.MappingStatus.ACTIVE);
+            ConsultantClientMapping.MappingStatus mappingStatus;
+            try {
+                mappingStatus = ConsultantClientMapping.MappingStatus.valueOf(status.trim());
+            } catch (IllegalArgumentException ex) {
+                log.warn("내담자 목록: 매핑 상태로 해석 불가(앱 전용 필터 등) — 전체 조회로 대체 status={}", status);
+                mappingStatus = null;
+            }
+            if (mappingStatus != null) {
+                mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId,
+                    mappingStatus == ConsultantClientMapping.MappingStatus.ACTIVE
+                        ? ConsultantClientMapping.MappingStatus.INACTIVE
+                        : ConsultantClientMapping.MappingStatus.ACTIVE);
+            } else {
+                mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId,
+                    ConsultantClientMapping.MappingStatus.INACTIVE);
+            }
         } else {
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId, ConsultantClientMapping.MappingStatus.INACTIVE);
+            mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId,
+                ConsultantClientMapping.MappingStatus.INACTIVE);
         }
         
         List<Client> clients = mappings.stream()

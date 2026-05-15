@@ -10,6 +10,10 @@ import { apiGet } from '../client';
 import { SCHEDULE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
 import { useAuthStore } from '@/stores/useAuthStore';
+import {
+  consultationTypeToKorean,
+  resolveClientNameForScheduleRow,
+} from '@/utils/scheduleDisplayLabels';
 import type { Schedule, ScheduleDetail } from './useSchedules';
 
 type ConsultationStatus = 'SCHEDULED' | 'BOOKED' | 'COMPLETED' | 'ALL';
@@ -90,6 +94,7 @@ function mapClientScheduleRow(
   const id = Number(row.id);
   const consultantId = Number(row.consultantId ?? fallbackConsultantId);
   const clientId = Number(row.clientId ?? 0);
+  const safeClientId = Number.isFinite(clientId) ? clientId : 0;
   const dateVal = row.date;
   const dateStr =
     typeof dateVal === 'string'
@@ -97,28 +102,25 @@ function mapClientScheduleRow(
       : dateVal != null && typeof dateVal === 'object' && 'toString' in dateVal
         ? String(dateVal).slice(0, 10)
         : '';
-  const clientNameRaw = row.clientName;
-  const clientName =
-    typeof clientNameRaw === 'string' && clientNameRaw.trim().length > 0
-      ? clientNameRaw.trim()
-      : '내담자';
+  const clientName = resolveClientNameForScheduleRow(row, safeClientId);
   const consultantNameRaw = row.consultantName;
   const consultantName =
     typeof consultantNameRaw === 'string' && consultantNameRaw.trim().length > 0
       ? consultantNameRaw.trim()
       : '상담사';
   const status = mapBackendStatusToCardStatus(String(row.status ?? 'SCHEDULED'));
-  const consultationType =
+  const typeRaw =
     typeof row.consultationType === 'string' && row.consultationType.length > 0
       ? row.consultationType
       : typeof row.scheduleType === 'string' && row.scheduleType.length > 0
         ? row.scheduleType
-        : '상담';
+        : '';
+  const consultationType = consultationTypeToKorean(typeRaw || undefined);
 
   return {
     id: Number.isFinite(id) ? id : 0,
     consultantId: Number.isFinite(consultantId) ? consultantId : fallbackConsultantId,
-    clientId: Number.isFinite(clientId) ? clientId : 0,
+    clientId: safeClientId,
     clientName,
     clientProfileImageUrl:
       typeof row.clientProfileImageUrl === 'string' ? row.clientProfileImageUrl : undefined,

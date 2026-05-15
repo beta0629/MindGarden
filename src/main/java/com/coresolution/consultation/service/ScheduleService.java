@@ -329,7 +329,20 @@ public interface ScheduleService {
      * 권한 기반 날짜 범위 스케줄 조회
      */
     List<Schedule> findSchedulesByUserRoleAndDateBetween(Long userId, String userRole, LocalDate startDate, LocalDate endDate);
-    
+
+    /**
+     * 특정 날짜 스케줄을 목록 DTO(상담사·내담자 표시명, 상담 유형·일정 유형 한글 등)로 반환.
+     * {@link #findSchedulesByUserRoleAndDate}와 동일 권한·필터.
+     */
+    List<ScheduleResponse> findScheduleResponsesByUserRoleAndDate(Long userId, String userRole, LocalDate date);
+
+    /**
+     * 날짜 범위 스케줄을 목록 DTO로 반환.
+     * {@link #findSchedulesByUserRoleAndDateBetween}와 동일 권한·필터.
+     */
+    List<ScheduleResponse> findScheduleResponsesByUserRoleAndDateBetween(
+        Long userId, String userRole, LocalDate startDate, LocalDate endDate);
+
     /**
      * 관리자용 전체 스케줄 통계 조회
      */

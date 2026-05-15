@@ -28,6 +28,7 @@ import { NotificationService } from '../src/services/NotificationService';
 import { BackgroundTaskService } from '../src/services/BackgroundTaskService';
 import { OfflineBanner } from '../src/components/organisms/OfflineBanner';
 import { InAppNotificationToast } from '../src/components/organisms/InAppNotificationToast';
+import { ApiEnvironmentBanner } from '../src/components/atoms/ApiEnvironmentBanner';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -107,19 +108,20 @@ export default function RootLayout() {
             dehydrateOptions: queryPersistDehydrateOptions,
           }}
         >
-        <ThemeProvider role={role ?? 'client'}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(consultant)" />
-            <Stack.Screen name="(client)" />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <OfflineBanner />
-          <InAppNotificationToast />
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </PersistQueryClientProvider>
+          <ThemeProvider role={role ?? 'client'}>
+            <ApiEnvironmentBanner />
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(consultant)" />
+              <Stack.Screen name="(client)" />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+            <OfflineBanner />
+            <InAppNotificationToast />
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </PersistQueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

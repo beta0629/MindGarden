@@ -154,16 +154,16 @@ public class ConsultantController extends BaseApiController {
         
         log.info("상담사별 내담자 목록 조회 - ID: {}, status: {}, page: {}", id, status, pageable.getPageNumber());
         
-        // Page<Client> clients = consultantService.findClientsByConsultantId(id, status, pageable);
-        Page<Client> clients = new org.springframework.data.domain.PageImpl<>(new ArrayList<>());
+        Page<Client> clients = consultantService.findClientsByConsultantId(id, status, pageable);
         
-        Map<String, Object> data = Map.of(
-            "content", clients.getContent(),
-            "totalElements", clients.getTotalElements(),
-            "totalPages", clients.getTotalPages(),
-            "size", clients.getSize(),
-            "number", clients.getNumber()
-        );
+        Map<String, Object> data = new java.util.HashMap<>();
+        data.put("content", clients.getContent());
+        data.put("totalElements", clients.getTotalElements());
+        data.put("totalPages", clients.getTotalPages());
+        data.put("size", clients.getSize());
+        data.put("number", clients.getNumber());
+        data.put("last", clients.isLast());
+        data.put("first", clients.isFirst());
         
         return success(data);
     }

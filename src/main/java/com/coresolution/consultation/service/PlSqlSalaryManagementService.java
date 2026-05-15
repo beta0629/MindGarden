@@ -23,13 +23,23 @@ public interface PlSqlSalaryManagementService {
     
     /**
      * 급여 승인 및 ERP 동기화
+     *
+     * @param calculationId 급여 계산 ID
+     * @param tenantId      테넌트 ID (프로시저 IN p_tenant_id)
+     * @param approvedBy    승인자
+     * @return success, message 등 결과 맵
      */
-    Map<String, Object> approveSalaryWithErpSync(Long calculationId, String approvedBy);
+    Map<String, Object> approveSalaryWithErpSync(Long calculationId, String tenantId, String approvedBy);
     
     /**
      * 급여 지급 완료 및 ERP 동기화
+     *
+     * @param calculationId 급여 계산 ID
+     * @param tenantId      테넌트 ID (프로시저 IN p_tenant_id)
+     * @param paidBy        지급 처리자
+     * @return success, message 등 결과 맵
      */
-    Map<String, Object> processSalaryPaymentWithErpSync(Long calculationId, String paidBy);
+    Map<String, Object> processSalaryPaymentWithErpSync(Long calculationId, String tenantId, String paidBy);
     
     /**
      * 통합 급여 통계 조회

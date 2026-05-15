@@ -452,8 +452,12 @@ public class SalaryManagementController extends BaseApiController {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
         requireSalaryManagePermission(session);
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new ValidationException("테넌트 정보가 없어 급여 승인을 진행할 수 없습니다. 관리자에게 문의하세요.");
+        }
         Map<String, Object> result = plSqlSalaryManagementService.approveSalaryWithErpSync(
-            calculationId, currentUser.getName()
+            calculationId, tenantId, currentUser.getName()
         );
         if (!Boolean.TRUE.equals(result.get("success"))) {
             throw new ValidationException(
@@ -477,8 +481,12 @@ public class SalaryManagementController extends BaseApiController {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
         requireSalaryManagePermission(session);
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new ValidationException("테넌트 정보가 없어 급여 지급을 진행할 수 없습니다. 관리자에게 문의하세요.");
+        }
         Map<String, Object> result = plSqlSalaryManagementService.processSalaryPaymentWithErpSync(
-            calculationId, currentUser.getName()
+            calculationId, tenantId, currentUser.getName()
         );
         if (!Boolean.TRUE.equals(result.get("success"))) {
             throw new ValidationException(

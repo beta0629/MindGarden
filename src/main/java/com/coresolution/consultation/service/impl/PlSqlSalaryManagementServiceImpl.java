@@ -558,30 +558,32 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
     }
     
     @Override
-    public Map<String, Object> approveSalaryWithErpSync(Long calculationId, String approvedBy) {
+    public Map<String, Object> approveSalaryWithErpSync(Long calculationId, String tenantId, String approvedBy) {
         
-        log.info("✅ PL/SQL 급여 승인 시작: CalculationID={}, ApprovedBy={}", calculationId, approvedBy);
+        log.info("✅ PL/SQL 급여 승인 시작: CalculationID={}, tenantId={}, ApprovedBy={}",
+                calculationId, tenantId, approvedBy);
         
         Map<String, Object> result = new HashMap<>();
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              CallableStatement stmt = connection.prepareCall(
-                 "{CALL ApproveSalaryWithErpSync(?, ?, ?, ?)}")) {
+                 "{CALL ApproveSalaryWithErpSync(?, ?, ?, ?, ?)}")) {
             
-            // IN 파라미터 설정
+            // IN 파라미터 설정 (p_calculation_id, p_tenant_id, p_approved_by)
             stmt.setLong(1, calculationId);
-            stmt.setString(2, approvedBy);
+            stmt.setString(2, tenantId);
+            stmt.setString(3, approvedBy);
             
-            // OUT 파라미터 등록
-            stmt.registerOutParameter(3, java.sql.Types.BOOLEAN);  // success
-            stmt.registerOutParameter(4, java.sql.Types.VARCHAR);  // message
+            // OUT 파라미터 등록 (p_success, p_message)
+            stmt.registerOutParameter(4, java.sql.Types.BOOLEAN);
+            stmt.registerOutParameter(5, java.sql.Types.VARCHAR);
             
             // 프로시저 실행
             stmt.execute();
             
             // 결과 추출
-            result.put("success", readMysqlProcedureBooleanOut(stmt, 3));
-            result.put("message", stmt.getString(4));
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 4));
+            result.put("message", stmt.getString(5));
             
             log.info("✅ PL/SQL 급여 승인 완료: Success={}", result.get("success"));
             
@@ -596,30 +598,32 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
     }
     
     @Override
-    public Map<String, Object> processSalaryPaymentWithErpSync(Long calculationId, String paidBy) {
+    public Map<String, Object> processSalaryPaymentWithErpSync(Long calculationId, String tenantId, String paidBy) {
         
-        log.info("💳 PL/SQL 급여 지급 시작: CalculationID={}, PaidBy={}", calculationId, paidBy);
+        log.info("💳 PL/SQL 급여 지급 시작: CalculationID={}, tenantId={}, PaidBy={}",
+                calculationId, tenantId, paidBy);
         
         Map<String, Object> result = new HashMap<>();
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              CallableStatement stmt = connection.prepareCall(
-                 "{CALL ProcessSalaryPaymentWithErpSync(?, ?, ?, ?)}")) {
+                 "{CALL ProcessSalaryPaymentWithErpSync(?, ?, ?, ?, ?)}")) {
             
-            // IN 파라미터 설정
+            // IN 파라미터 설정 (p_calculation_id, p_tenant_id, p_paid_by)
             stmt.setLong(1, calculationId);
-            stmt.setString(2, paidBy);
+            stmt.setString(2, tenantId);
+            stmt.setString(3, paidBy);
             
-            // OUT 파라미터 등록
-            stmt.registerOutParameter(3, java.sql.Types.BOOLEAN);  // success
-            stmt.registerOutParameter(4, java.sql.Types.VARCHAR);  // message
+            // OUT 파라미터 등록 (p_success, p_message)
+            stmt.registerOutParameter(4, java.sql.Types.BOOLEAN);
+            stmt.registerOutParameter(5, java.sql.Types.VARCHAR);
             
             // 프로시저 실행
             stmt.execute();
             
             // 결과 추출
-            result.put("success", readMysqlProcedureBooleanOut(stmt, 3));
-            result.put("message", stmt.getString(4));
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 4));
+            result.put("message", stmt.getString(5));
             
             log.info("✅ PL/SQL 급여 지급 완료: Success={}", result.get("success"));
             

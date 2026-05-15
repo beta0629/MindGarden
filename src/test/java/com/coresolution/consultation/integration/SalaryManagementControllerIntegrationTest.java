@@ -438,7 +438,7 @@ class SalaryManagementControllerIntegrationTest {
         @Test
         @DisplayName("I-API-15: POST /approve/{calculationId} 존재하지 않는 ID → 404/400")
         void postApprove_notFound_returnsError() throws Exception {
-            when(plSqlSalaryManagementService.approveSalaryWithErpSync(eq(999L), any()))
+            when(plSqlSalaryManagementService.approveSalaryWithErpSync(eq(999L), eq(TENANT_A), any()))
                     .thenReturn(Map.of("success", false, "message", "급여 계산을 찾을 수 없습니다."));
 
             mockMvc.perform(post("/api/v1/admin/salary/approve/999")
@@ -504,7 +504,7 @@ class SalaryManagementControllerIntegrationTest {
         @Test
         @DisplayName("I-API-16: POST /pay/{calculationId} 존재하지 않는 ID → 404/400")
         void postPay_notFound_returnsError() throws Exception {
-            when(plSqlSalaryManagementService.processSalaryPaymentWithErpSync(eq(999L), any()))
+            when(plSqlSalaryManagementService.processSalaryPaymentWithErpSync(eq(999L), eq(TENANT_A), any()))
                     .thenReturn(Map.of("success", false, "message", "급여 계산을 찾을 수 없습니다."));
 
             mockMvc.perform(post("/api/v1/admin/salary/pay/999")

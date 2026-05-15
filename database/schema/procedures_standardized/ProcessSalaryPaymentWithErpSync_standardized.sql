@@ -68,13 +68,15 @@ proc_main: BEGIN
         ROLLBACK;
         LEAVE proc_main;
     ELSE
-        -- 4. 급여 지급 완료 (테넌트 격리)
-        UPDATE salary_calculations 
-        SET status = 'PAID', 
+        -- 4. 급여 지급 완료 (테넌트 격리). 선행 COUNT는 status=APPROVED만 통과.
+        UPDATE salary_calculations
+        SET status = 'PAID',
             updated_at = NOW(),
-            updated_by = p_paid_by
-        WHERE id = p_calculation_id 
+            updated_by = p_paid_by,
+            paid_at = NOW()
+        WHERE id = p_calculation_id
           AND tenant_id = p_tenant_id
+          AND status = 'APPROVED'
           AND is_deleted = FALSE;
         
         -- 5. ERP 동기화 로그 생성 (테넌트 격리)

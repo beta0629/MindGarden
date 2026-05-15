@@ -69,13 +69,15 @@ proc_main: BEGIN
         ROLLBACK;
         LEAVE proc_main;
     ELSE
-        -- 4. 급여 승인 (테넌트 격리)
-        UPDATE salary_calculations 
-        SET status = 'APPROVED', 
+        -- 4. 급여 승인 (테넌트 격리). 선행 COUNT는 status=CALCULATED만 통과 → 동시성·이중 승인 시 본 UPDATE 0행.
+        UPDATE salary_calculations
+        SET status = 'APPROVED',
             updated_at = NOW(),
-            updated_by = p_approved_by
-        WHERE id = p_calculation_id 
+            updated_by = p_approved_by,
+            approved_at = NOW()
+        WHERE id = p_calculation_id
           AND tenant_id = p_tenant_id
+          AND status = 'CALCULATED'
           AND is_deleted = FALSE;
         
         -- 5. ERP 동기화 로그 생성 (테넌트 격리)

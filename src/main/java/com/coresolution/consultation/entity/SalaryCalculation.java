@@ -3,16 +3,11 @@ package com.coresolution.consultation.entity;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -90,11 +85,14 @@ public class SalaryCalculation extends BaseEntity {
     
     @Column(name = "calculated_by", length = 50)
     private String calculatedBy;
+
+    @Column(name = "updated_by", length = 50)
+    private String updatedBy;
     
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
     
-    // @Column(name = "paid_at")
+    @Column(name = "paid_at")
     private LocalDateTime paidAt;
     
     /**

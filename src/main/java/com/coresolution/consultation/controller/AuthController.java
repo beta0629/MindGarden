@@ -21,6 +21,8 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AuthService;
 import com.coresolution.consultation.service.BranchService;
+import com.coresolution.consultation.service.JwtService;
+import com.coresolution.consultation.service.RefreshTokenService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
@@ -79,6 +81,8 @@ public class AuthController extends BaseApiController {
     private final UserPersonalDataCacheService userPersonalDataCacheService;
     private final PermissionGroupService permissionGroupService;
     private final org.springframework.core.env.Environment environment;
+    private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
     
     // 로컬 개발 환경용 기본 테넌트 ID (서브도메인이 없을 때 사용)
     @org.springframework.beans.factory.annotation.Value("${local.default-tenant-id:${LOCAL_DEFAULT_TENANT_ID:}}")
@@ -908,6 +912,23 @@ public class AuthController extends BaseApiController {
                 if ((dto.getTenantId() == null || dto.getTenantId().isEmpty()) && sessionUser.getTenantId() != null) {
                     dto.setTenantId(sessionUser.getTenantId());
                 }
+            }
+
+            // Expo·모바일 등 stateless 클라이언트: 세션 로그인 성공 후에도 JWT 쌍을 내려준다.
+            // (AuthServiceImpl.authenticateWithSession 은 token/refreshToken 을 null 로 둠)
+            try {
+                List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(sessionUser);
+                String accessToken = jwtService.generateToken(sessionUser, permissions);
+                String refreshToken = jwtService.generateRefreshToken(sessionUser);
+                try {
+                    refreshTokenService.createRefreshToken(sessionUser, refreshToken, null);
+                } catch (Exception e) {
+                    log.warn("Refresh Token 저장 실패 (무시): {}", e.getMessage());
+                }
+                response.put("accessToken", accessToken);
+                response.put("refreshToken", refreshToken);
+            } catch (Exception e) {
+                log.warn("⚠️ 세션 로그인 후 JWT 발급 실패 (모바일 ID/PW 로그인 불가): {}", e.getMessage());
             }
             
             return success(response);

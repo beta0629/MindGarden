@@ -1,6 +1,8 @@
 package com.coresolution.consultation.entity;
 
 import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,25 +16,23 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
- /**
- * ERP 동기화 로그 엔티티
- /**
- * ERP 시스템과의 데이터 동기화 이력 관리
- /**
- * 
- /**
+/**
+ * ERP 동기화 로그 엔티티. 물리 테이블 {@code erp_sync_logs}와 급여 ERP 프로시저 INSERT/UPDATE 정합.
+ *
  * @author MindGarden
- /**
- * @version 1.0.0
- /**
  * @since 2025-09-24
  */
 @Entity
-@Table(name = "erp_sync_log",
+@Table(name = "erp_sync_logs",
     indexes = {
-        @Index(name = "idx_erp_sync_type_date", columnList = "syncType, syncDate"),
-        @Index(name = "idx_erp_sync_status", columnList = "status")
+        @Index(name = "idx_erp_sync_logs_tenant_date", columnList = "tenant_id, sync_date"),
+        @Index(name = "idx_erp_sync_logs_tenant_status", columnList = "tenant_id, status"),
+        @Index(name = "idx_erp_sync_logs_tenant_sync_type", columnList = "tenant_id, sync_type")
     })
 @Data
 @Builder
@@ -40,11 +40,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ErpSyncLog {
 
+    /**
+     * 전역 스케줄러가 테넌트 컨텍스트 없이 적재하는 집계 로그용 식별자(실제 테넌트 ID와 구분).
+     */
+    public static final String PLATFORM_AGGREGATE_TENANT_ID = "__mg_platform_aggregate__";
+
+    /** 스케줄러가 {@link #createdBy}/{@link #updatedBy}에 넣는 감사 주체 식별자. */
+    public static final String SCHEDULER_AUDIT_ACTOR = "SYSTEM";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    @Column(name = "tenant_id", length = 100)
+
+    @Column(name = "tenant_id", nullable = false, length = 100)
     private String tenantId;
 
     @Enumerated(EnumType.STRING)
@@ -60,9 +68,9 @@ public class ErpSyncLog {
     private Integer recordsProcessed = 0;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 20)
+    @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
-    private SyncStatus status = SyncStatus.STARTED;
+    private SyncStatus status = SyncStatus.PENDING;
 
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
@@ -77,9 +85,29 @@ public class ErpSyncLog {
     @Column(name = "duration_seconds")
     private Long durationSeconds;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "sync_data", columnDefinition = "json")
+    private JsonNode syncData;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "created_by", length = 50)
+    private String createdBy;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "updated_by", length = 50)
+    private String updatedBy;
+
     public enum SyncType {
         FINANCIAL("재무데이터"),
         SALARY("급여데이터"),
+        SALARY_APPROVAL("급여승인"),
+        SALARY_PAYMENT("급여지급"),
         INVENTORY("재고데이터"),
         CUSTOMER("고객데이터"),
         FULL_SYNC("전체동기화");
@@ -96,6 +124,7 @@ public class ErpSyncLog {
     }
 
     public enum SyncStatus {
+        PENDING("대기"),
         STARTED("시작"),
         IN_PROGRESS("진행중"),
         COMPLETED("완료"),
@@ -114,7 +143,6 @@ public class ErpSyncLog {
     }
 
     public void markAsCompleted(int recordsProcessed) {
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.status = SyncStatus.COMPLETED;
         this.recordsProcessed = recordsProcessed;
         this.completedAt = LocalDateTime.now();
@@ -129,7 +157,6 @@ public class ErpSyncLog {
     }
 
     public void markAsInProgress() {
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.status = SyncStatus.IN_PROGRESS;
     }
 
@@ -140,7 +167,6 @@ public class ErpSyncLog {
     }
 
     public boolean isSuccessful() {
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         return SyncStatus.COMPLETED.equals(this.status);
     }
 

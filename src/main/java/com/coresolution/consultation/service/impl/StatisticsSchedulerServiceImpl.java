@@ -53,6 +53,7 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
             LocalDateTime endTime = LocalDateTime.now();
             
             ErpSyncLog syncLog = ErpSyncLog.builder()
+                .tenantId(ErpSyncLog.PLATFORM_AGGREGATE_TENANT_ID)
                 .syncType(ErpSyncLog.SyncType.FINANCIAL)
                 .syncDate(startTime)
                 .recordsProcessed(getBranchCount(yesterday))
@@ -61,6 +62,8 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
                 .startedAt(startTime)
                 .completedAt(endTime)
                 .durationSeconds(java.time.Duration.between(startTime, endTime).getSeconds())
+                .createdBy(ErpSyncLog.SCHEDULER_AUDIT_ACTOR)
+                .updatedBy(ErpSyncLog.SCHEDULER_AUDIT_ACTOR)
                 .build();
             
             erpSyncLogRepository.save(syncLog);
@@ -71,6 +74,7 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
             LocalDateTime endTime = LocalDateTime.now();
             
             ErpSyncLog syncLog = ErpSyncLog.builder()
+                .tenantId(ErpSyncLog.PLATFORM_AGGREGATE_TENANT_ID)
                 .syncType(ErpSyncLog.SyncType.FINANCIAL)
                 .syncDate(startTime)
                 .recordsProcessed(0)
@@ -79,6 +83,8 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
                 .completedAt(endTime)
                 .durationSeconds(java.time.Duration.between(startTime, endTime).getSeconds())
                 .errorMessage(e.getMessage())
+                .createdBy(ErpSyncLog.SCHEDULER_AUDIT_ACTOR)
+                .updatedBy(ErpSyncLog.SCHEDULER_AUDIT_ACTOR)
                 .build();
             
             erpSyncLogRepository.save(syncLog);
@@ -105,6 +111,7 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
             LocalDateTime endTime = LocalDateTime.now();
             
             ErpSyncLog syncLog = ErpSyncLog.builder()
+                .tenantId(ErpSyncLog.PLATFORM_AGGREGATE_TENANT_ID)
                 .syncType(ErpSyncLog.SyncType.SALARY)
                 .syncDate(startTime)
                 .recordsProcessed(getConsultantCount(yesterday))
@@ -113,6 +120,8 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
                 .startedAt(startTime)
                 .completedAt(endTime)
                 .durationSeconds(java.time.Duration.between(startTime, endTime).getSeconds())
+                .createdBy(ErpSyncLog.SCHEDULER_AUDIT_ACTOR)
+                .updatedBy(ErpSyncLog.SCHEDULER_AUDIT_ACTOR)
                 .build();
             
             erpSyncLogRepository.save(syncLog);
@@ -123,6 +132,7 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
             LocalDateTime endTime = LocalDateTime.now();
             
             ErpSyncLog syncLog = ErpSyncLog.builder()
+                .tenantId(ErpSyncLog.PLATFORM_AGGREGATE_TENANT_ID)
                 .syncType(ErpSyncLog.SyncType.SALARY)
                 .syncDate(startTime)
                 .recordsProcessed(0)
@@ -131,6 +141,8 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
                 .completedAt(endTime)
                 .durationSeconds(java.time.Duration.between(startTime, endTime).getSeconds())
                 .errorMessage(e.getMessage())
+                .createdBy(ErpSyncLog.SCHEDULER_AUDIT_ACTOR)
+                .updatedBy(ErpSyncLog.SCHEDULER_AUDIT_ACTOR)
                 .build();
             
             erpSyncLogRepository.save(syncLog);
@@ -157,6 +169,7 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
             LocalDateTime endTime = LocalDateTime.now();
             
             ErpSyncLog syncLog = ErpSyncLog.builder()
+                .tenantId(ErpSyncLog.PLATFORM_AGGREGATE_TENANT_ID)
                 .syncType(ErpSyncLog.SyncType.CUSTOMER)
                 .syncDate(startTime)
                 .recordsProcessed(alertCount)
@@ -165,6 +178,8 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
                 .startedAt(startTime)
                 .completedAt(endTime)
                 .durationSeconds(java.time.Duration.between(startTime, endTime).getSeconds())
+                .createdBy(ErpSyncLog.SCHEDULER_AUDIT_ACTOR)
+                .updatedBy(ErpSyncLog.SCHEDULER_AUDIT_ACTOR)
                 .build();
             
             erpSyncLogRepository.save(syncLog);
@@ -175,6 +190,7 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
             LocalDateTime endTime = LocalDateTime.now();
             
             ErpSyncLog syncLog = ErpSyncLog.builder()
+                .tenantId(ErpSyncLog.PLATFORM_AGGREGATE_TENANT_ID)
                 .syncType(ErpSyncLog.SyncType.CUSTOMER)
                 .syncDate(startTime)
                 .recordsProcessed(0)
@@ -183,6 +199,8 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
                 .completedAt(endTime)
                 .durationSeconds(java.time.Duration.between(startTime, endTime).getSeconds())
                 .errorMessage(e.getMessage())
+                .createdBy(ErpSyncLog.SCHEDULER_AUDIT_ACTOR)
+                .updatedBy(ErpSyncLog.SCHEDULER_AUDIT_ACTOR)
                 .build();
             
             erpSyncLogRepository.save(syncLog);
@@ -229,7 +247,8 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
             boolean plsqlAvailable = plSqlStatisticsService.isProcedureAvailable();
             
             LocalDate today = LocalDate.now();
-            long todayLogs = erpSyncLogRepository.countBySyncDateAfter(today.atStartOfDay());
+            long todayLogs = erpSyncLogRepository.countByTenantIdAndSyncDateAfter(
+                ErpSyncLog.PLATFORM_AGGREGATE_TENANT_ID, today.atStartOfDay());
             
             return String.format(
                 "스케줄러 상태 - PL/SQL사용가능: %s, 오늘실행로그: %d개, 마지막확인: %s",

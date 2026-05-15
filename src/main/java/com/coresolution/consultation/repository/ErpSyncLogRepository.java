@@ -18,12 +18,13 @@ import org.springframework.stereotype.Repository;
 public interface ErpSyncLogRepository extends JpaRepository<ErpSyncLog, Long> {
     
     /**
-     * 특정 시간 이후 생성된 로그 개수 조회
-     * 
-     * @param syncDate 기준 시간
+     * 테넌트·기준 시각 이후 로그 개수(스케줄러 집계 테넌트 등 스코프 조회용).
+     *
+     * @param tenantId 테넌트 ID
+     * @param syncDate 기준 시각
      * @return 로그 개수
      */
-    long countBySyncDateAfter(LocalDateTime syncDate);
+    long countByTenantIdAndSyncDateAfter(String tenantId, LocalDateTime syncDate);
     
     /**
      * 동기화 타입별 최신 로그 조회

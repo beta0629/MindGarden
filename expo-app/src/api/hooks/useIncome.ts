@@ -3,21 +3,25 @@
  *
  * 주의 (Phase 3-D):
  * - 백엔드 `/api/v1/payments` 는 관리자 전용(전체 결제 목록·통계)이므로 상담사 화면에서 호출 금지.
- *   대신 본인 권한이 보장된 `GET /api/v1/schedules/consultant/{id}` 와
+ *   대신 본인 권한이 보장된 `GET /api/v1/schedules/date-range`(userId·userRole=CONSULTANT·기간) 와
  *   `GET /api/v1/ratings/consultant/{id}/stats` 만 사용한다.
  * - 백엔드에 상담사용 수입(amount) 집계 API가 아직 제공되지 않으므로
  *   `totalIncome` 및 `MonthlyIncome.income`, `SessionTypeDistribution.amount` 는 0 으로 반환한다.
- *   화면(`income.tsx`)은 `incomeAvailable` 플래그로 안내 카피를 분기 표시한다.
+ *   Expo 상담사 앱에서는 수입 화면이 정책상 비노출이며, 관리자·재무 권한 전용 UI에서만 훅 사용을 검토한다.
  *
  * @author MindGarden
  * @since 2026-05-12
  */
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { apiGet } from '../client';
-import { SCHEDULE_API, RATING_API } from '../endpoints';
+import { RATING_API } from '../endpoints';
+import { unwrapApiResponse } from '../unwrapApiResponse';
 
 const MONTHLY_TREND_WINDOW = 6;
 const COMPLETED_STATUS = 'COMPLETED';
+/** Spring `ScheduleController#getSchedulesByUserRoleAndDateRange` — 세션 없이 userId·역할로 조회 */
+const SCHEDULES_DATE_RANGE_PATH = '/api/v1/schedules/date-range' as const;
+const USER_ROLE_CONSULTANT_QUERY = 'CONSULTANT' as const;
 
 export interface IncomeSummary {
   totalIncome: number;
@@ -183,14 +187,17 @@ export function useIncomeReport(
       const { startDate: monthStart, endDate: monthEnd } = monthRange(month);
 
       const [schedulesRaw, ratingRaw] = await Promise.all([
-        apiGet<unknown>(
-          `${SCHEDULE_API.SCHEDULES_BY_CONSULTANT}/${encodeURIComponent(String(consultantId))}`,
-          { startDate: trendStart, endDate: trendEnd },
-        ).catch(() => [] as unknown),
+        apiGet<unknown>(SCHEDULES_DATE_RANGE_PATH, {
+          userId: String(consultantId),
+          userRole: USER_ROLE_CONSULTANT_QUERY,
+          startDate: trendStart,
+          endDate: trendEnd,
+        }).catch(() => [] as unknown),
         apiGet<unknown>(RATING_API.consultantStats(consultantId)).catch(() => null),
       ]);
 
-      const allSchedules = unwrapScheduleList(schedulesRaw);
+      const schedulesBody = unwrapApiResponse<unknown>(schedulesRaw) ?? schedulesRaw;
+      const allSchedules = unwrapScheduleList(schedulesBody);
       const monthSchedules = allSchedules.filter((s) => {
         if (!s.date) return false;
         const d = String(s.date).slice(0, 10);
@@ -199,9 +206,9 @@ export function useIncomeReport(
 
       const completedThisMonth = monthSchedules.filter(isCompleted);
 
-      const ratingPayload = unwrapApiData<Record<string, unknown> | null>(ratingRaw);
-      const avgRating = Number(ratingPayload?.averageHeartScore ?? 0);
-      const totalRatings = Number(ratingPayload?.totalRatingCount ?? 0);
+      const ratingPayload = unwrapApiResponse<Record<string, unknown>>(ratingRaw) ?? {};
+      const avgRating = Number(ratingPayload.averageHeartScore ?? 0);
+      const totalRatings = Number(ratingPayload.totalRatingCount ?? 0);
 
       return {
         totalIncome: 0,
@@ -231,12 +238,15 @@ export function useIncomeDetails(
         return [];
       }
       const { startDate, endDate } = monthRange(month);
-      const raw = await apiGet<unknown>(
-        `${SCHEDULE_API.SCHEDULES_BY_CONSULTANT}/${encodeURIComponent(String(consultantId))}`,
-        { startDate, endDate },
-      ).catch(() => [] as unknown);
+      const raw = await apiGet<unknown>(SCHEDULES_DATE_RANGE_PATH, {
+        userId: String(consultantId),
+        userRole: USER_ROLE_CONSULTANT_QUERY,
+        startDate,
+        endDate,
+      }).catch(() => [] as unknown);
 
-      const rows = unwrapScheduleList(raw);
+      const body = unwrapApiResponse<unknown>(raw) ?? raw;
+      const rows = unwrapScheduleList(body);
       return rows
         .filter(isCompleted)
         .map((row) => ({

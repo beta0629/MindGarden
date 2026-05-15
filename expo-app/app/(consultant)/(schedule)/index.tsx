@@ -1,6 +1,6 @@
 /**
  * 상담사 스케줄 캘린더
- * 주간/일간 뷰 토글, 날짜 선택, 상담 카드 리스트, FAB
+ * 주간/일간 뷰 토글, 날짜 선택, 상담 카드 리스트
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -21,7 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { FlashList } from '@shopify/flash-list';
-import { Plus, Calendar as CalendarIcon } from 'lucide-react-native';
+import { Calendar as CalendarIcon } from 'lucide-react-native';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
@@ -216,16 +216,14 @@ export default function ConsultantSchedule() {
                   index={index}
                   onPress={() => router.push(`/(consultant)/(schedule)/${item.id}`)}
                   actionLabel={
-                    item.status === 'SCHEDULED' || item.status === 'BOOKED'
+                    item.status === 'BOOKED'
                       ? '상담 시작'
                       : item.status === 'IN_PROGRESS'
                         ? '상담 완료'
                         : undefined
                   }
                   onActionPress={
-                    item.status === 'SCHEDULED' ||
-                    item.status === 'BOOKED' ||
-                    item.status === 'IN_PROGRESS'
+                    item.status === 'BOOKED' || item.status === 'IN_PROGRESS'
                       ? () => router.push(`/(consultant)/(schedule)/${item.id}`)
                       : undefined
                   }
@@ -236,27 +234,6 @@ export default function ConsultantSchedule() {
         )}
         <View style={{ height: 80 }} />
       </ScrollView>
-
-      {/* FAB — 새 상담 추가 */}
-      <Pressable
-        onPress={() => {
-          if (Platform.OS !== 'web') {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          }
-          router.push('/(consultant)/(schedule)/');
-        }}
-        style={[
-          styles.fab,
-          {
-            backgroundColor: theme.colors.primary,
-            ...theme.shadows.lg,
-          },
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel="새 상담 추가"
-      >
-        <Plus size={24} color={theme.colors.textOnPrimary} />
-      </Pressable>
     </SafeAreaView>
   );
 }
@@ -284,15 +261,5 @@ const styles = StyleSheet.create({
   },
   flashWrapper: {
     minHeight: 100,
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

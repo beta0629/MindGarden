@@ -12,34 +12,56 @@
 import React, { useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Home, Calendar, Users, FileText, MoreHorizontal
+  Home, Calendar, Users, FileText, MoreHorizontal, Wallet
 } from 'lucide-react';
 import AppTopBar from './AppTopBar';
 import BottomNavigation from './BottomNavigation';
 import { useNotification } from '../../contexts/NotificationContext';
+import { useConsultantSalaryCalculations } from '../../hooks/useConsultantSalaryCalculations';
+import { CONSULTANT_SALARY_SETTLEMENT_STRINGS as SALARY_STRINGS } from '../../constants/consultantSalarySettlementStrings';
 import './ConsultantAppShell.css';
 
-const CONSULTANT_NAV_ITEMS = [
+const CONSULTANT_BOTTOM_NAV_ITEMS = [
   { icon: 'Home', label: '홈', path: '/consultant/renewal/dashboard', badge: 0 },
   { icon: 'Calendar', label: '스케줄', path: '/consultant/renewal/schedule', badge: 0 },
   { icon: 'Users', label: '내담자', path: '/consultant/renewal/clients', badge: 0 },
   { icon: 'FileText', label: '일지', path: '/consultant/renewal/consultation-records', badge: 0 },
-  { icon: 'MoreHorizontal', label: '더보기', path: '/consultant/more', badge: 0 },
+  { icon: 'MoreHorizontal', label: '더보기', path: '/consultant/more', badge: 0 }
 ];
 
-const SIDEBAR_ICON_MAP = { Home, Calendar, Users, FileText, MoreHorizontal };
+const SALARY_NAV_ITEM = {
+  icon: 'Wallet',
+  label: SALARY_STRINGS.SALARY_MENU_TITLE,
+  path: '/consultant/salary-settlement',
+  badge: 0
+};
 
 const TITLE_MAP = {
   '/consultant/renewal/dashboard': 'MindGarden',
   '/consultant/renewal/schedule': '스케줄',
   '/consultant/renewal/clients': '내담자',
   '/consultant/renewal/consultation-records': '일지',
+  '/consultant/salary-settlement': SALARY_STRINGS.PAGE_TITLE
+};
+
+const SIDEBAR_ICON_MAP = {
+  Home, Calendar, Users, FileText, MoreHorizontal, Wallet
 };
 
 const ConsultantAppShell = ({ title = '', showBack = false, onBack, children }) => {
   const { unreadCount } = useNotification();
   const location = useLocation();
   const navigate = useNavigate();
+  const { hasItems, loading: salaryGateLoading } = useConsultantSalaryCalculations();
+
+  const sidebarNavItems = useMemo(() => {
+    const rows = CONSULTANT_BOTTOM_NAV_ITEMS.slice(0, 4);
+    if (!salaryGateLoading && hasItems) {
+      rows.push(SALARY_NAV_ITEM);
+    }
+    rows.push(CONSULTANT_BOTTOM_NAV_ITEMS[4]);
+    return rows;
+  }, [hasItems, salaryGateLoading]);
 
   const currentTitle = useMemo(() => {
     if (title) return title;
@@ -57,10 +79,10 @@ const ConsultantAppShell = ({ title = '', showBack = false, onBack, children }) 
           <span className="mg-app-shell__sidebar-logo-text">MindGarden</span>
         </div>
         <nav className="mg-app-shell__sidebar-nav">
-          {CONSULTANT_NAV_ITEMS.map((item) => {
+          {sidebarNavItems.map((item) => {
             const Icon = SIDEBAR_ICON_MAP[item.icon] || Home;
             const isActive = location.pathname === item.path
-              || location.pathname.startsWith(item.path + '/');
+              || location.pathname.startsWith(`${item.path}/`);
             return (
               <a
                 key={item.path}
@@ -95,7 +117,7 @@ const ConsultantAppShell = ({ title = '', showBack = false, onBack, children }) 
 
         {/* 모바일/태블릿 바텀 네비게이션 */}
         <BottomNavigation
-          items={CONSULTANT_NAV_ITEMS}
+          items={CONSULTANT_BOTTOM_NAV_ITEMS}
           activeColor="var(--mg-consultant-primary)"
         />
       </div>

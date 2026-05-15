@@ -149,6 +149,12 @@ const CONSULTANT_MENU_ITEMS = [
       { to: '/consultant/consultation-records', icon: 'FILE_TEXT', label: '상담 일지 관리', end: true },
       { to: '/consultant/consultation-logs', icon: 'FILE_TEXT', label: '상담 리포트/로그', end: true }
     ]
+  },
+  {
+    to: '/consultant/salary-settlement',
+    icon: 'DOLLAR_SIGN',
+    label: '급여 정산',
+    end: true
   }
 ];
 

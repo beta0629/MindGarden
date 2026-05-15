@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +33,9 @@ import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.salary.PlSqlSalaryProcedureUserFacingMessages;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.CommonCode;
+import com.coresolution.consultation.entity.SalaryCalculation;
+import com.coresolution.consultation.entity.SalaryCalculation.SalaryStatus;
+import com.coresolution.consultation.entity.SalaryProfile;
 import com.coresolution.consultation.entity.SalaryTaxCalculation;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
@@ -139,6 +143,31 @@ class SalaryManagementControllerIntegrationTest {
                             .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
                     .andExpect(status().isForbidden())
                     .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("급여 관리 권한")));
+        }
+
+        @Test
+        @DisplayName("I-AUTH-04: 상담사·SALARY_MANAGE 없음 GET /profiles 목록 → 403")
+        void getProfilesList_asConsultant_returns403() throws Exception {
+            when(dynamicPermissionService.hasPermission(any(User.class), eq("SALARY_MANAGE")))
+                    .thenReturn(false);
+
+            mockMvc.perform(get("/api/v1/admin/salary/profiles")
+                            .sessionAttr(SessionConstants.USER_OBJECT, consultantUserNoSalaryPermission())
+                            .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("I-AUTH-05: 상담사·SALARY_MANAGE 없음 타인 GET /calculations/{consultantId} → 403")
+        void getCalculationsByConsultant_asConsultant_otherId_returns403() throws Exception {
+            when(dynamicPermissionService.hasPermission(any(User.class), eq("SALARY_MANAGE")))
+                    .thenReturn(false);
+
+            mockMvc.perform(get("/api/v1/admin/salary/calculations/99")
+                            .sessionAttr(SessionConstants.USER_OBJECT, consultantUserNoSalaryPermission())
+                            .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("권한")));
         }
 
         @Test
@@ -515,4 +544,73 @@ class SalaryManagementControllerIntegrationTest {
                     .andExpect(status().isOk());
         }
     }
+
+    @Nested
+    @DisplayName("상담사 본인 급여 정산 GET /api/v1/consultants/me/salary-calculations (I-ME)")
+    class ConsultantMeSalaryCalculations {
+
+        @Test
+        @DisplayName("I-ME-01: 미인증 → 401")
+        void withoutSession_returns401() throws Exception {
+            mockMvc.perform(get("/api/v1/consultants/me/salary-calculations"))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("I-ME-02: 내담자 역할 → 403")
+        void clientRole_returns403() throws Exception {
+            User client = new User();
+            client.setId(9L);
+            client.setUserId("c9");
+            client.setEmail("c@test");
+            client.setName("내담자");
+            client.setPassword("password12");
+            client.setTenantId(TENANT_A);
+            client.setRole(UserRole.CLIENT);
+
+            mockMvc.perform(get("/api/v1/consultants/me/salary-calculations")
+                            .sessionAttr(SessionConstants.USER_OBJECT, client)
+                            .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("I-ME-03: 상담사·목록 200 및 data 배열")
+        void consultant_returns200WithDataArray() throws Exception {
+            User cRef = new User();
+            cRef.setId(2L);
+            cRef.setName("상담사");
+            SalaryProfile sp = SalaryProfile.builder()
+                    .profileName("기본")
+                    .baseSalary(BigDecimal.ZERO)
+                    .build();
+            sp.setId(1L);
+
+            SalaryCalculation approved = SalaryCalculation.builder()
+                    .consultant(cRef)
+                    .salaryProfile(sp)
+                    .calculationPeriodStart(LocalDate.of(2025, 6, 1))
+                    .calculationPeriodEnd(LocalDate.of(2025, 6, 30))
+                    .totalConsultations(0)
+                    .completedConsultations(0)
+                    .totalSalary(BigDecimal.ZERO)
+                    .netSalary(new BigDecimal("2500000"))
+                    .status(SalaryStatus.APPROVED)
+                    .calculatedAt(LocalDateTime.of(2025, 6, 1, 10, 0))
+                    .build();
+            approved.setId(2L);
+
+            when(salaryManagementService.getSalaryCalculationsVisibleToConsultant(2L))
+                    .thenReturn(List.of(approved));
+
+            mockMvc.perform(get("/api/v1/consultants/me/salary-calculations")
+                            .sessionAttr(SessionConstants.USER_OBJECT, consultantUserNoSalaryPermission())
+                            .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.length()").value(1))
+                    .andExpect(jsonPath("$.data[0].status").value("APPROVED"));
+        }
+    }
 }
+

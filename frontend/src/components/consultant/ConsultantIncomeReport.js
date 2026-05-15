@@ -1,5 +1,6 @@
 /**
- * ConsultantIncomeReport — 상담사 수입 리포트
+ * ConsultantIncomeReport — 수입·정산 리포트 UI (레거시).
+ * 상담사 리뉴얼 라우트에서는 비연결; FINANCIAL_VIEW 등 관리자 전용 경로에만 연결할 것.
  *
  * 월별 요약(총 상담 건수, 총 수입, 평균 평점),
  * CSS 바 차트(월별 수입 추이), 날짜별 상세 목록.

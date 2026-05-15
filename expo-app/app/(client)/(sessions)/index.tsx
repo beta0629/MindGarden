@@ -6,7 +6,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, StyleSheet, Text, View, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -19,7 +19,7 @@ import { ConsultationCard } from '@/components/molecules/ConsultationCard';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { useClientConsultations } from '@/api/hooks/useConsultations';
+import { matchesClientSessionsTab, useClientConsultations } from '@/api/hooks/useConsultations';
 import type { Schedule } from '@/api/hooks/useSchedules';
 
 type TabKey = 'SCHEDULED' | 'COMPLETED';
@@ -41,16 +41,10 @@ export default function ClientSessions() {
       status: activeTab,
     });
 
-  const consultations = data?.pages.flat() ?? [];
-
-  console.log('[ClientSessions] render', {
-    userId: user?.id,
-    activeTab,
-    isLoading,
-    isFetching,
-    dataPages: data?.pages?.length,
-    consultationsCount: consultations.length,
-  });
+  const consultations = useMemo(() => {
+    const rows = data?.pages.flatMap((p) => p.items) ?? [];
+    return rows.filter((s) => matchesClientSessionsTab(s, activeTab));
+  }, [data?.pages, activeTab]);
 
   const handleTabChange = (tab: TabKey) => {
     if (Platform.OS !== 'web') {

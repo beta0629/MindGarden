@@ -1,0 +1,71 @@
+/**
+ * ConsultantMoreHub — 상담사 더보기 진입 메뉴
+ *
+ * @author MindGarden
+ * @since 2026-05-15
+ */
+
+.cr-more-hub {
+  padding-left: var(--mg-spacing-md);
+  padding-right: var(--mg-spacing-md);
+}
+
+.cr-more-hub__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.cr-more-hub__row {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  width: 100%;
+  padding: var(--mg-spacing-md) var(--mg-spacing-lg);
+  border: none;
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-consultant-surface);
+  box-shadow: var(--mg-shadow-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+  color: var(--mg-color-text-main);
+}
+
+.cr-more-hub__row:hover {
+  box-shadow: var(--mg-shadow-md);
+}
+
+.cr-more-hub__row:active {
+  transform: scale(0.99);
+}
+
+.cr-more-hub__row-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-consultant-primary);
+}
+
+.cr-more-hub__row-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-2xs);
+  min-width: 0;
+}
+
+.cr-more-hub__row-title {
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+.cr-more-hub__row-sub {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-muted);
+}
+
+.cr-more-hub__row-chevron {
+  flex-shrink: 0;
+  color: var(--mg-color-text-muted);
+}

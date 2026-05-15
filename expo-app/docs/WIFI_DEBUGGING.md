@@ -68,6 +68,18 @@ ANDROID_SERIAL=emulator-5554 npx expo run:android --device
 
 (이미 둘 다 개발 빌드가 깔려 있으면 Metro만 켜고 앱만 열어도 됩니다.)
 
+### 0.6 Metro 없이 동작하는 APK (릴리스 번들 내장)
+
+**목표:** PC에서 `expo start`를 켜지 않아도 앱이 바로 뜨고, “개발 서버 URL 입력” 화면에 멈추지 않게 합니다.
+
+1. **네이티브 트리를 dev client 없이 다시 생성**해야 합니다. `expo-dev-client`가 한 번이라도 prebuild에 포함된 `android/` 폴더만 두고 `./gradlew assembleRelease`만 돌리면, **옛날 네이티브 설정이 남아** 여전히 Metro·URL 화면을 요구할 수 있습니다.  
+   - **권장 한 줄:** 저장소 루트에서 `cd expo-app` 후 **`npm run android:apk:dev`** 또는 동일 파이프라인 별칭 **`npm run android:apk:standalone`** (`EXPO_USE_DEV_CLIENT=0` + `expo prebuild --platform android --clean` + `assembleRelease`).  
+   - `app.config.ts` 주석과 같이, **`EXPO_USE_DEV_CLIENT=0`** 이면 prebuild 시 `expo-dev-client` 플러그인이 빠지고, 릴리스 APK는 **빌드 시점에 JS 번들이 embed** 되는 설정(`export:embed`)을 따릅니다.
+
+2. **디버그 설치물과 구분:** `npx expo run:android`로 깔린 **디버그 빌드**는 Metro에 붙는 것이 정상입니다. Metro 없이 쓰려면 위 스크립트로 만든 **release APK**를 `adb install` 등으로 설치하세요.
+
+3. **API 주소:** `android:apk:standalone` / `android:apk:dev` 스크립트는 빌드 시 `EXPO_PUBLIC_API_BASE_URL`을 박아 둡니다. 다른 환경용 APK가 필요하면 해당 스크립트를 복제해 URL만 바꾸거나, 동일 env를 셸에서 덮어쓴 뒤 같은 prebuild + `assembleRelease` 흐름을 따르세요.
+
 ---
 
 ## 1. Metro(자바스크립트) — Wi-Fi
@@ -142,3 +154,4 @@ Xcode로 설치한 개발 빌드는 PC의 Metro에 붙을 때 **같은 Wi-Fi + L
 | `npm run adb:reverse-metro` | `adb reverse tcp:8081 tcp:8081` (기기 **한 대**만 연결됐을 때) |
 | `npm run adb:reverse-metro:all` | 연결된 **모든** 기기(실기기+에뮬)에 reverse 적용 |
 | `npm run dev:metro-url` | 이 머신의 `http://<IP>:8081` 안내 출력 |
+| `npm run android:apk:standalone` | Metro 없이 쓰는 **릴리스 APK** 빌드 (`EXPO_USE_DEV_CLIENT=0` prebuild + `assembleRelease`) |

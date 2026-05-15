@@ -61,9 +61,16 @@ export default function ConsultantRecordCreate() {
       return;
     }
 
+    if (!schedule?.clientId || !schedule?.consultantId) {
+      Alert.alert('알림', '스케줄 정보를 불러온 뒤 다시 시도해주세요.');
+      return;
+    }
+
     createMutation.mutate(
       {
         scheduleId: Number(scheduleId),
+        clientId: schedule.clientId,
+        consultantId: schedule.consultantId,
         summary: summary.trim(),
         expertMemo: expertMemo.trim() || undefined,
         tags: selectedTags,

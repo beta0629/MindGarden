@@ -88,6 +88,8 @@
 | CST_AVAILABILITY| 가능 시간  | /consultant/availability     | 40         |
 | CST_MESSAGES    | 메시지     | /consultant/messages         | 50         |
 
+> **정책(스케줄)**: 상담사 스케줄 = **확정 일정 변경·조회**만; **신규 예약·매칭**은 **관리자**에서 처리한다.
+
 ### 2.5 HQ(본사) 영역 — 별도 라우트/레이아웃
 
 HQ는 역할이 `ADMIN`으로 매핑되며, **menu_location** 또는 **경로 prefix**로 구분할 수 있음. LNB는 “어드민”과 동일한 API를 쓰되, `menu_location = 'HQ'`인 메뉴만 필터해 사용하거나, 별도 엔드포인트 확장 시 사용.
@@ -103,6 +105,8 @@ HQ는 역할이 `ADMIN`으로 매핑되며, **menu_location** 또는 **경로 pr
 ---
 
 ## 3. 아이콘 매핑
+
+> **참고**: 본 절 표는 **DB `icon` 값 ↔ Lucide 컴포넌트** 매핑용이다. 와이어프레임·탭 등 UI에 쓰인 이모지·장식 아이콘과 **1:1 대응하지 않을 수 있음**(표시 혼동 방지).
 
 - **DB**: `menus.icon`에 문자열 저장. 프론트에서 이 문자열을 **lucide-react** 컴포넌트와 매핑.
 - **매핑표** (기존 `menuItems.js`의 lucide 아이콘과 동일하게 유지):

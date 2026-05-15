@@ -62,6 +62,15 @@ export default function ConsultantScheduleDetail() {
   const schedule = detailQuery.data;
   const isLoading = detailQuery.isLoading;
 
+  /** 예약 확정(BOOKED) 이후만 세션 액션 — SCHEDULED(가용 슬롯 등)은 백엔드 규칙 재검증 TODO */
+  const canRunSessionActions = schedule
+    ? schedule.status === 'BOOKED' || schedule.status === 'IN_PROGRESS'
+    : false;
+
+  const canEditMemo = schedule
+    ? schedule.status === 'BOOKED' || schedule.status === 'IN_PROGRESS'
+    : false;
+
   const onRefresh = useCallback(() => {
     detailQuery.refetch();
   }, [detailQuery]);
@@ -306,12 +315,10 @@ export default function ConsultantScheduleDetail() {
               </View>
             </View>
 
-            {/* 액션 버튼 */}
-            {schedule.status === 'SCHEDULED' ||
-            schedule.status === 'BOOKED' ||
-            schedule.status === 'IN_PROGRESS' ? (
+            {/* 액션 버튼 — 확정 예약(Booked)·진행 중만 */}
+            {canRunSessionActions ? (
               <View style={[styles.actionRow, { marginTop: theme.spacing.lg }]}>
-                {schedule.status === 'SCHEDULED' || schedule.status === 'BOOKED' ? (
+                {schedule.status === 'BOOKED' ? (
                   <Pressable
                     onPress={handleStart}
                     disabled={startMutation.isPending}
@@ -380,28 +387,50 @@ export default function ConsultantScheduleDetail() {
             >
               상담 메모
             </Text>
-            <TextInput
-              style={[
-                styles.memoInput,
-                {
+            {canEditMemo ? (
+              <TextInput
+                style={[
+                  styles.memoInput,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                    borderRadius: theme.borderRadius.lg,
+                    color: theme.colors.textMain,
+                    fontFamily: theme.fontFamily.regular,
+                    fontSize: theme.fontSize.sm,
+                    padding: theme.spacing.md,
+                    marginTop: theme.spacing.md,
+                  },
+                ]}
+                value={memo || schedule.memo || ''}
+                onChangeText={setMemo}
+                placeholder="상담 메모를 입력하세요..."
+                placeholderTextColor={theme.colors.gray[400]}
+                multiline
+                textAlignVertical="top"
+                accessibilityLabel="상담 메모"
+              />
+            ) : (
+              <Text
+                style={{
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.border,
+                  borderWidth: 1,
                   borderRadius: theme.borderRadius.lg,
-                  color: theme.colors.textMain,
+                  color: theme.colors.textSecondary,
                   fontFamily: theme.fontFamily.regular,
                   fontSize: theme.fontSize.sm,
                   padding: theme.spacing.md,
                   marginTop: theme.spacing.md,
-                },
-              ]}
-              value={memo || schedule.memo || ''}
-              onChangeText={setMemo}
-              placeholder="상담 메모를 입력하세요..."
-              placeholderTextColor={theme.colors.gray[400]}
-              multiline
-              textAlignVertical="top"
-              accessibilityLabel="상담 메모"
-            />
+                  minHeight: 100,
+                }}
+                accessibilityLabel="상담 메모 읽기 전용"
+              >
+                {schedule.memo?.trim()
+                  ? schedule.memo
+                  : '확정된 예약에서만 메모를 수정할 수 있습니다.'}
+              </Text>
+            )}
 
             {/* 이전 상담 이력 */}
             {schedule.previousSessions && schedule.previousSessions.length > 0 ? (

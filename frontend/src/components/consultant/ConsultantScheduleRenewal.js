@@ -11,7 +11,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ChevronLeft, ChevronRight, Calendar, Plus, X
+  ChevronLeft, ChevronRight, Calendar, X
 } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
@@ -28,6 +28,7 @@ const VIEW_TYPES = {
 
 const STATUS_LABELS = {
   SCHEDULED: '예정',
+  BOOKED: '예약 확정',
   ACTIVE: '진행중',
   COMPLETED: '완료',
   CANCELLED: '취소',
@@ -138,7 +139,7 @@ const BottomSheet = ({ schedule, onClose, onStartConsultation, onCompleteConsult
           )}
 
           <div className="cr-bottomsheet__actions">
-            {(status === 'SCHEDULED' || status === 'CONFIRMED') && (
+            {(status === 'BOOKED' || status === 'CONFIRMED') && (
               <button
                 className="cr-bottomsheet__btn cr-bottomsheet__btn--primary"
                 onClick={() => onStartConsultation?.(schedule)}
@@ -373,10 +374,10 @@ const ConsultantScheduleRenewal = () => {
           </p>
           <button
             className="cr-schedule__empty-cta"
-            onClick={() => navigate('/consultant/schedule')}
+            onClick={() => navigate('/consultant/renewal/availability')}
             type="button"
           >
-            <Plus size={16} /> 일정 추가
+            <Calendar size={16} aria-hidden /> 근무 가능 시간
           </button>
         </div>
       ) : (
@@ -416,7 +417,7 @@ const ConsultantScheduleRenewal = () => {
                   </div>
                   {viewType === VIEW_TYPES.DAILY && (
                     <div className="cr-schedule-detail__actions" onClick={(e) => e.stopPropagation()}>
-                      {(status === 'SCHEDULED' || status === 'CONFIRMED') && (
+                      {(status === 'BOOKED' || status === 'CONFIRMED') && (
                         <button
                           className="cr-schedule-detail__action-btn cr-schedule-detail__action-btn--primary"
                           onClick={() => handleStartConsultation(schedule)}

@@ -100,6 +100,8 @@ export const CONSULTANT_API = {
   consultantAvailabilitySlot: (slotId: string | number) =>
     `/api/v1/consultants/availability/${slotId}`,
   GET_ALL: '/api/v1/consultants',
+  /** 본인 급여 정산(관리자 확정·승인·지급 건만) — Spring `ConsultantSalarySelfController` */
+  MY_SALARY_CALCULATIONS: '/api/v1/consultants/me/salary-calculations',
 } as const;
 
 /**
@@ -117,11 +119,28 @@ export const INCOME_API = {
   details: (consultantId: string | number) => `/api/v1/consultants/${consultantId}/income/details`,
 } as const;
 
+/**
+ * 상담일지 — Spring `ConsultantRecordsController`, `ScheduleController` 경로와 정합.
+ * 관리 목록 GET은 `HttpSession` 기반일 수 있어, 모바일 JWT는 `listEntitiesByConsultant` 우선.
+ */
 export const CONSULTATION_RECORD_API = {
+  /** Spring `ConsultantRecordsController` — GET `/{consultantId}/consultation-records` (맵 배열 `data`) */
   records: (consultantId: string | number) =>
-    `/api/v1/consultant/${consultantId}/consultation-records`,
-  CREATE_RECORD: '/api/v1/consultation-records',
-  detail: (recordId: string | number) => `/api/v1/consultation-records/${recordId}`,
+    `/api/v1/admin/consultant-records/${encodeURIComponent(String(consultantId))}/consultation-records`,
+  /**
+   * Spring `ScheduleController` — GET `/api/v1/schedules/consultation-records?consultantId=`
+   * 엔티티 JSON(`data.records`)에 `consultationId` 등 포함 → 모바일 목록·미작성 탭에 사용.
+   */
+  listEntitiesByConsultant: (consultantId: string | number) =>
+    `/api/v1/schedules/consultation-records?consultantId=${encodeURIComponent(String(consultantId))}`,
+  /** Spring `ScheduleController` — POST `/api/v1/schedules/consultation-records` */
+  CREATE_RECORD: '/api/v1/schedules/consultation-records',
+  /** Spring `ConsultantRecordsController` — GET 상세 */
+  detail: (consultantId: string | number, recordId: string | number) =>
+    `/api/v1/admin/consultant-records/${encodeURIComponent(String(consultantId))}/consultation-records/${encodeURIComponent(String(recordId))}`,
+  /** Spring `ScheduleController` — PUT `/api/v1/schedules/consultation-records/{recordId}` */
+  update: (recordId: string | number) =>
+    `/api/v1/schedules/consultation-records/${encodeURIComponent(String(recordId))}`,
 } as const;
 
 export const RATING_API = {

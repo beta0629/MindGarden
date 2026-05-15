@@ -28,6 +28,8 @@ import ConsultantDashboardRenewal from './components/consultant/ConsultantDashbo
 import ConsultantScheduleRenewal from './components/consultant/ConsultantScheduleRenewal';
 import ConsultantClientManagementRenewal from './components/consultant/ConsultantClientManagementRenewal';
 import ConsultantRecordsRenewal from './components/consultant/ConsultantRecordsRenewal';
+import ConsultantMoreHub from './components/consultant/ConsultantMoreHub';
+import ConsultantSalarySettlement from './components/consultant/ConsultantSalarySettlement';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
 import SchedulePage from './components/schedule/SchedulePage';
 import AdminSchedulesPage from './components/schedule/AdminSchedulesPage';
@@ -93,7 +95,6 @@ import SelfAssessment from './components/client/SelfAssessment';
 import ClientSessionPaymentRenewal from './components/client/ClientSessionPaymentRenewal';
 import ShopCheckoutMvp from './pages/client/ShopCheckoutMvp';
 import ConsultantAvailabilityRenewal from './components/consultant/ConsultantAvailabilityRenewal';
-import ConsultantIncomeReport from './components/consultant/ConsultantIncomeReport';
 import MeditationGuide from './components/wellness/MeditationGuide';
 import PsychoEducation from './components/wellness/PsychoEducation';
 import CommunityFeed from './components/community/CommunityFeed';
@@ -451,7 +452,31 @@ function AppContent() {
             <Route path="/branch_manager/mypage" element={<Navigate to="/admin/mypage" replace />} />
             <Route path="/mypage" element={<MypageRedirect />} />
             <Route path="/settings" element={<SettingsRedirect />} />
-            
+
+            <Route
+              path="/consultant/income-report"
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
+                  <Navigate to="/consultant/renewal/dashboard" replace />
+                </ProtectedRoute>
+              )}
+            />
+
+            <Route
+              path="/consultant/salary-settlement"
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
+                  <AdminCommonLayout title="급여 정산">
+                    <div className="mg-v2-ad-b0kla">
+                      <div className="mg-v2-ad-b0kla__container">
+                        <ConsultantSalarySettlement />
+                      </div>
+                    </div>
+                  </AdminCommonLayout>
+                </ProtectedRoute>
+              )}
+            />
+
             {/* 상담사 리뉴얼 라우트 (ConsultantAppShell) */}
             <Route path="/consultant/renewal" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
@@ -464,7 +489,8 @@ function AppContent() {
               <Route path="clients" element={<ConsultantClientManagementRenewal />} />
               <Route path="consultation-records" element={<ConsultantRecordsRenewal />} />
               <Route path="availability" element={<ConsultantAvailabilityRenewal />} />
-              <Route path="income-report" element={<ConsultantIncomeReport />} />
+              <Route path="salary-settlement" element={<ConsultantSalarySettlement />} />
+              <Route path="income-report" element={<Navigate to="/consultant/renewal/dashboard" replace />} />
               <Route path="community" element={<CommunityFeed primaryColor="var(--mg-consultant-primary)" />} />
               <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />} />
             </Route>
@@ -475,6 +501,7 @@ function AppContent() {
                 <ConsultantAppShell title="더보기" />
               </ProtectedRoute>
             }>
+              <Route index element={<ConsultantMoreHub />} />
               <Route path="community" element={<CommunityFeed primaryColor="var(--mg-consultant-primary)" />} />
               <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />} />
             </Route>

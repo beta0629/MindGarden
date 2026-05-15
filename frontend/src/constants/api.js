@@ -182,6 +182,11 @@ export const CONSULTATION_API = {
   GET_CONSULTANTS: '/api/v1/consultants',
   GET_CONSULTANT_PROFILE: '/api/v1/consultants/profile',
   GET_CONSULTANT_SCHEDULE: '/api/v1/consultants/schedule',
+  /**
+   * 본인 급여 정산(관리자 산출) 목록.
+   * 백엔드 경로는 배치에 따라 조정 가능 — 프론트는 이 상수만 교체하면 된다.
+   */
+  GET_MY_SALARY_CALCULATIONS: '/api/v1/consultants/me/salary-calculations',
   
   // 상담 세션
   START_SESSION: '/api/v1/consultations/session/start',

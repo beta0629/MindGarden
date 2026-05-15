@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Calendar, FileText, Clock, MessageSquare,
   AlertTriangle, ChevronRight, RefreshCw,
-  CalendarPlus, Settings
+  Settings
 } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
@@ -86,7 +86,7 @@ const EmptySchedule = ({ onAction }) => (
     <Calendar size={48} className="cr-empty-state__icon" />
     <p className="cr-empty-state__text">오늘 예정된 상담이 없습니다</p>
     <button className="cr-empty-state__cta" onClick={onAction} type="button">
-      일정 추가하기
+      스케줄 보기
     </button>
   </div>
 );
@@ -271,7 +271,7 @@ const ConsultantDashboardRenewal = () => {
   };
 
   const handleScheduleDetail = (schedule) => {
-    navigate('/consultant/schedule');
+    navigate('/consultant/renewal/schedule');
   };
 
   const handleGoToRecords = () => {
@@ -283,10 +283,10 @@ const ConsultantDashboardRenewal = () => {
   };
 
   const quickActions = [
-    { icon: CalendarPlus, label: '일정 추가', action: () => navigate('/consultant/schedule') },
+    { icon: Calendar, label: '오늘 스케줄', action: () => navigate('/consultant/renewal/schedule') },
     { icon: FileText, label: '일지 작성', action: () => navigate('/consultant/consultation-records') },
     { icon: MessageSquare, label: '메시지', action: () => navigate('/consultant/messages') },
-    { icon: Settings, label: '근무 설정', action: () => navigate('/consultant/availability') },
+    { icon: Settings, label: '근무 설정', action: () => navigate('/consultant/renewal/availability') },
   ];
 
   if (sessionLoading || loading) {
@@ -342,14 +342,14 @@ const ConsultantDashboardRenewal = () => {
           </h2>
           <button
             className="cr-dashboard__section-link"
-            onClick={() => navigate('/consultant/schedule')}
+            onClick={() => navigate('/consultant/renewal/schedule')}
             type="button"
           >
             전체 보기
           </button>
         </div>
         {todaySchedules.length === 0 ? (
-          <EmptySchedule onAction={() => navigate('/consultant/schedule')} />
+          <EmptySchedule onAction={() => navigate('/consultant/renewal/schedule')} />
         ) : (
           todaySchedules.map((schedule) => (
             <ScheduleCard

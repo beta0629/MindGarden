@@ -20,13 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { FlashList } from '@shopify/flash-list';
-import {
-  CalendarPlus,
-  Calendar as CalendarIcon,
-  Clock,
-  DollarSign,
-  AlertTriangle,
-} from 'lucide-react-native';
+import { Calendar as CalendarIcon, Clock, AlertTriangle } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
@@ -62,19 +56,14 @@ export default function ConsultantDashboard() {
   const quickActions: QuickAction[] = useMemo(
     () => [
       {
-        icon: CalendarPlus,
-        label: '일정 추가',
+        icon: CalendarIcon,
+        label: '오늘 스케줄',
         onPress: () => router.push('/(consultant)/(schedule)/'),
       },
       {
         icon: Clock,
         label: '근무 설정',
         onPress: () => router.push('/(consultant)/(more)/availability'),
-      },
-      {
-        icon: DollarSign,
-        label: '수입 내역',
-        onPress: () => router.push('/(consultant)/(more)/income'),
       },
     ],
     [router],

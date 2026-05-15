@@ -208,7 +208,8 @@ expo-app/                          # 새 Expo 프로젝트 (루트)
 │   │   └── (more)/
 │   │       ├── index.tsx          # 더보기 메뉴
 │   │       ├── availability.tsx   # 근무 가능 시간
-│   │       ├── income.tsx         # 수입 리포트
+│   │       ├── salary-settlement.tsx  # 급여 정산(관리자 산정·승인·지급 결과 조회 전용; 매출·수입 리포트 아님)
+│   │       ├── income.tsx         # (정책) 수입 리포트 비노출 — 더보기로 리다이렉트
 │   │       ├── community/         # 커뮤니티 (칼럼)
 │   │       ├── notifications.tsx  # 알림 센터
 │   │       ├── messages/          # 메시지
@@ -700,7 +701,7 @@ export const colors = {
 >    - 인사 메시지 + 오늘 상담 건수
 >    - 긴급 알림 영역 (미작성 일지, 에러 색상)
 >    - 오늘의 스케줄 (ScheduleCard 리스트, FlashList)
->    - 빠른 액션 바 (일정추가, 근무설정, 수입내역)
+>    - 빠른 액션 바 (일정추가, 근무설정, 급여 정산 조회(조건부))
 >    - Pull-to-refresh, 스켈레톤 로딩
 >    - API: `GET /api/v1/consultants/{id}/dashboard` 또는 조합
 >
@@ -867,7 +868,7 @@ export const colors = {
 | 항목 | 값 |
 |------|-----|
 | **담당** | `core-coder` |
-| **목표** | 근무 가능 시간 설정, 수입 리포트 |
+| **목표** | 근무 가능 시간 설정, **급여 정산(조건부)** — 관리자 산정 결과 조회(수입·매출 집계 리포트 제외) |
 | **의존** | Phase 2-A 완료 |
 | **병렬** | Phase 3-A~C와 동시 진행 가능 |
 
@@ -879,10 +880,10 @@ export const colors = {
 >    - 휴가 등록 (달력에서 날짜 선택)
 >    - API: `PUT /api/v1/consultants/{id}/availability`
 >
-> 2. **수입 리포트** (`app/(consultant)/(more)/income.tsx`):
->    - 월별 상담 건수·수입·평점 통계
->    - 차트 (react-native-skia)
->    - API: 조합 (consultations 통계 + payments 통계)
+> 2. **급여 정산(조건부)** (`app/(consultant)/(more)/income.tsx`):
+>    - 테넌트 정책 시 **관리자가 산정한 급여·정산 결과 조회**만 (차트는 요약·기간별 조회 수준)
+>    - **수입·매출·정산 원장 편집** 등 관리자 전용 기능은 앱 범위에서 제외
+>    - API: 관리자·정산 도메인에서 노출하는 **읽기 전용** 계약(없으면 화면 비노출 또는 안내)
 
 #### Phase 3-E: 내담자 결제·회기
 
@@ -1017,7 +1018,7 @@ export const colors = {
 | **3-A** | `core-coder` | 메시지 + 알림 센터 | ✅ 3-B~E와 동시 | Phase 2 |
 | **3-B** | `core-coder` | 감정 일기 + 자가 심리검사 | ✅ 3-A,C~E와 동시 | Phase 2-B |
 | **3-C** | `core-coder` | 명상·심리교육·커뮤니티 | ✅ 3-A,B,D,E와 동시 | Phase 2 |
-| **3-D** | `core-coder` | 상담사 P1 (근무시간·수입) | ✅ 3-A~C,E와 동시 | Phase 2-A |
+| **3-D** | `core-coder` | 상담사 P1 (근무시간·급여 정산 조회(조건부)) | ✅ 3-A~C,E와 동시 | Phase 2-A |
 | **3-E** | `core-coder` | 내담자 결제·회기 | ✅ 3-A~D와 동시 | Phase 2-B |
 | **3-F** | `core-coder` | AI 「마음 날씨」감정 분석 + 상담사 옵트인 브릿지 (`CONSULTANT_CLIENT_APP_PLAN` Phase 4 정합) | ✅ 3-A~E·3-G·Phase 4와 병렬 가능 | Phase 3-B |
 | **3-G** | `core-coder` | **마음 정원** 성장 시각화(게임화, 비경쟁) + 이벤트 연동 (`CONSULTANT_CLIENT_APP_PLAN` Phase 4 정합) | ✅ 3-A~F·Phase 4와 병렬 가능 | Phase 3 |
@@ -1107,8 +1108,12 @@ export const colors = {
 - [ ] 심리 교육 (카드뉴스)
 - [ ] 커뮤니티 (게시판 + 칼럼)
 - [ ] 근무 가능 시간 (상담사)
-- [ ] 수입 리포트 (상담사)
+- [ ] 급여 정산 조회(조건부, 상담사)
 - [ ] 결제·회기 관리 (내담자)
+
+**core-tester 회귀(급여 정산)**  
+- 상담사: `GET /api/v1/consultants/me/salary-calculations` — 본인만, 승인·지급 건만; 빈 목록 시 더보기 메뉴 미노출·빈 화면 안내 문구.  
+- 관리자: `GET /api/v1/admin/salary/calculations/{id}` — `SALARY_MANAGE`(또는 ADMIN 자동 통과) 없으면 403; 상담사가 타인 ID로 호출 불가.
 
 ### Phase 4 (푸시 + 오프라인)
 - [ ] 12종 푸시 시나리오 구현

@@ -348,6 +348,19 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         return salaryCalculationRepository.findByTenantIdAndConsultant_IdOrderByCalculatedAtDesc(
                 tenantId, consultantId);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<SalaryCalculation> getSalaryCalculationsVisibleToConsultant(Long consultantId) {
+        List<SalaryCalculation> all = getSalaryCalculations(consultantId);
+        return all.stream()
+                .filter(c -> c.getStatus() == SalaryCalculation.SalaryStatus.APPROVED
+                        || c.getStatus() == SalaryCalculation.SalaryStatus.PAID)
+                .collect(Collectors.toList());
+    }
     
     /**
      * 세금 상세 내역 조회 (테넌트 소유 검증 적용)

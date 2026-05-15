@@ -9,7 +9,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   Clock,
-  DollarSign,
   Users as UsersIcon,
   Bell,
   MessageSquare,
@@ -17,6 +16,7 @@ import {
   Settings,
   LogOut,
   CloudSun,
+  Wallet,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { ProfileCard } from '@/components/molecules/ProfileCard';
@@ -24,6 +24,7 @@ import { MenuListItem } from '@/components/molecules/MenuListItem';
 import { AuthService } from '@/services/AuthService';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { toDisplayString } from '@/utils/safeDisplay';
+import { useConsultantSalarySettlements } from '@/api/hooks/useConsultantSalarySettlements';
 
 export default function ConsultantMore() {
   const theme = useTheme();
@@ -31,6 +32,9 @@ export default function ConsultantMore() {
   const user = useAuthStore((s) => s.user);
   const profileName = toDisplayString(user?.nickname?.trim() || user?.name, '선생');
   const profileSubtitle = toDisplayString(user?.email, '전문 상담');
+  const salaryQuery = useConsultantSalarySettlements({ enabled: Boolean(user?.id) });
+  const showSalarySettlementMenu =
+    salaryQuery.isSuccess && Array.isArray(salaryQuery.data) && salaryQuery.data.length > 0;
 
   const handleLogout = () => {
     Alert.alert('로그아웃', '정말 로그아웃하시겠습니까?', [
@@ -103,11 +107,6 @@ export default function ConsultantMore() {
               onPress={() => router.push('/(consultant)/(more)/availability')}
             />
             <MenuListItem
-              icon={DollarSign}
-              title="수입 리포트"
-              onPress={() => router.push('/(consultant)/(more)/income')}
-            />
-            <MenuListItem
               icon={UsersIcon}
               title="커뮤니티"
               subtitle="게시글 · 댓글"
@@ -119,6 +118,14 @@ export default function ConsultantMore() {
               subtitle="내담자가 공유한 분석 카드"
               onPress={() => router.push('/(consultant)/(more)/mind-weather-inbox')}
             />
+            {showSalarySettlementMenu ? (
+              <MenuListItem
+                icon={Wallet}
+                title="급여 정산"
+                subtitle="관리자 확정 정산 내역"
+                onPress={() => router.push('/(consultant)/(more)/salary-settlement')}
+              />
+            ) : null}
           </View>
         </View>
 

@@ -44,6 +44,18 @@ public interface SalaryManagementService {
     
     // 프론트엔드 호환성을 위한 메서드들
     List<SalaryCalculation> getSalaryCalculations(Long consultantId);
+
+    /**
+     * 상담사 본인 조회 전용: 관리자 확정({@code APPROVED})·지급 완료({@code PAID}) 건만 반환합니다.
+     * <p>
+     * 비즈니스 정책: {@code PENDING}/{@code CALCULATED}는 내부 검토·미확정으로 노출하지 않으며,
+     * {@code CANCELLED}는 폐기 건으로 노출하지 않습니다.
+     * </p>
+     *
+     * @param consultantId 상담사(User) ID
+     * @return 확정·지급 완료 급여 계산 목록 (최신순과 동일 정렬은 구현체에 따름)
+     */
+    List<SalaryCalculation> getSalaryCalculationsVisibleToConsultant(Long consultantId);
     Map<String, Object> getTaxDetails(Long calculationId);
     /**
      * 세금 통계 (기간별). {@code consultantId}가 있으면 해당 상담사 급여 계산만 집계.

@@ -31,6 +31,7 @@ import com.coresolution.consultation.service.SalaryExportService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.consultation.service.SalaryScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
+import com.coresolution.consultation.util.SalaryCalculationResponseMapper;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
@@ -70,6 +71,19 @@ public class SalaryManagementController extends BaseApiController {
     private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
 
     private final SalaryExportService salaryExportService;
+
+    /**
+     * 급여 관리(SALARY_MANAGE) 권한이 없으면 예외를 던진다. 관리자(ADMIN)는 동적 권한 체크에서 자동 통과한다.
+     *
+     * @param session HTTP 세션
+     */
+    private void requireSalaryManagePermission(HttpSession session) {
+        ResponseEntity<?> permissionResponse =
+                PermissionCheckUtils.checkPermission(session, "SALARY_MANAGE", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new ForbiddenException("급여 관리 권한이 없습니다.");
+        }
+    }
     
     /**
      * 급여 계산 PDF 출력 (data URL 다운로드 링크).
@@ -238,6 +252,7 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
+        requireSalaryManagePermission(session);
         log.info("급여 프로필 조회: 사용자 {}, 지점 {}", currentUser.getName(), currentUser.getBranchCode());
         List<ConsultantSalaryProfile> profiles = salaryManagementService.getAllSalaryProfiles();
         return success("급여 프로필 목록을 조회했습니다.", profiles);
@@ -255,49 +270,15 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
+        requireSalaryManagePermission(session);
         log.info("급여 계산 조회: 사용자 {}, 상담사 ID {}", currentUser.getName(), consultantId);
         List<SalaryCalculation> calculations = salaryManagementService.getSalaryCalculations(consultantId);
         List<Map<String, Object>> calculationDtos = calculations.stream()
-            .map(this::toCalculationDto)
+            .map(SalaryCalculationResponseMapper::toCalculationDto)
             .collect(Collectors.toList());
         return success("급여 계산 내역을 조회했습니다.", calculationDtos);
     }
 
-    private Map<String, Object> toCalculationDto(SalaryCalculation calc) {
-        Map<String, Object> dto = new HashMap<>();
-        dto.put("id", calc.getId());
-        dto.put("calculationPeriod", calc.getCalculationPeriod());
-        dto.put("calculationPeriodStart", calc.getCalculationPeriodStart());
-        dto.put("calculationPeriodEnd", calc.getCalculationPeriodEnd());
-        dto.put("baseSalary", calc.getBaseSalary() != null ? calc.getBaseSalary() : BigDecimal.ZERO);
-        dto.put("totalHoursWorked", calc.getTotalHoursWorked());
-        BigDecimal hourlyEarnings = calc.getHourlyEarnings() != null ? calc.getHourlyEarnings() : BigDecimal.ZERO;
-        dto.put("hourlyEarnings", hourlyEarnings);
-        dto.put("totalConsultations", calc.getTotalConsultations());
-        dto.put("completedConsultations", calc.getCompletedConsultations());
-        dto.put("consultationCount", calc.getCompletedConsultations());
-        BigDecimal commissionEarnings = calc.getCommissionEarnings() != null ? calc.getCommissionEarnings() : BigDecimal.ZERO;
-        dto.put("commissionEarnings", commissionEarnings);
-        dto.put("bonusEarnings", calc.getBonusEarnings() != null ? calc.getBonusEarnings() : BigDecimal.ZERO);
-        dto.put("deductions", calc.getDeductions() != null ? calc.getDeductions() : BigDecimal.ZERO);
-        dto.put("grossSalary", calc.getGrossSalary() != null ? calc.getGrossSalary() : BigDecimal.ZERO);
-        dto.put("netSalary", calc.getNetSalary() != null ? calc.getNetSalary() : BigDecimal.ZERO);
-        dto.put("totalSalary", calc.getTotalSalary() != null ? calc.getTotalSalary() : BigDecimal.ZERO);
-        dto.put("status", calc.getStatus());
-        dto.put("calculatedAt", calc.getCalculatedAt());
-        dto.put("approvedAt", calc.getApprovedAt());
-        dto.put("paidAt", calc.getPaidAt());
-        dto.put("branchCode", calc.getBranchCode());
-        // 가변 급여(프리랜서 상담료·정규직 시급 등)는 commission XOR hourly가 아니라 합산(미리보기 base+variable 소계와 동일)
-        dto.put("optionSalary", commissionEarnings.add(hourlyEarnings));
-        dto.put("taxAmount", calc.getDeductions() != null ? calc.getDeductions() : BigDecimal.ZERO);
-        if (calc.getConsultant() != null) {
-            dto.put("consultantId", calc.getConsultant().getId());
-            dto.put("consultantName", calc.getConsultant().getName());
-        }
-        return dto;
-    }
-    
     /**
      * 기산일 기준 실제 계산 기간 조회 (선택 월에 대한 적용 기간)
      *
@@ -414,6 +395,7 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
+        requireSalaryManagePermission(session);
         Map<String, Object> result = plSqlSalaryManagementService.calculateSalaryPreview(
             consultantId, periodStart, periodEnd
         );
@@ -469,6 +451,7 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
+        requireSalaryManagePermission(session);
         Map<String, Object> result = plSqlSalaryManagementService.approveSalaryWithErpSync(
             calculationId, currentUser.getName()
         );
@@ -493,6 +476,7 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
+        requireSalaryManagePermission(session);
         Map<String, Object> result = plSqlSalaryManagementService.processSalaryPaymentWithErpSync(
             calculationId, currentUser.getName()
         );
@@ -518,6 +502,7 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
+        requireSalaryManagePermission(session);
         String branchCode = currentUser.getBranchCode();
         Map<String, Object> statistics = plSqlSalaryManagementService.getIntegratedSalaryStatistics(
             branchCode, startDate, endDate
@@ -540,6 +525,7 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
+        requireSalaryManagePermission(session);
         List<SalaryCalculation> calculations = salaryManagementService.getSalaryCalculations(startDate, endDate);
         return success("급여 계산 목록을 조회했습니다.", calculations);
     }

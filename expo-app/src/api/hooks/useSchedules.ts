@@ -5,7 +5,13 @@
  * @since 2026-05-12
  */
 import { addDays, format as formatDate, parseISO, startOfWeek } from 'date-fns';
-import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseMutationOptions,
+  type UseQueryOptions,
+} from '@tanstack/react-query';
 import { apiGet, apiPut } from '../client';
 import { SCHEDULE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
@@ -26,7 +32,14 @@ export interface Schedule {
   date: string;
   startTime: string;
   endTime: string;
-  status: 'SCHEDULED' | 'BOOKED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+  status:
+    | 'SCHEDULED'
+    | 'BOOKED'
+    | 'CONFIRMED'
+    | 'IN_PROGRESS'
+    | 'COMPLETED'
+    | 'CANCELLED'
+    | 'NO_SHOW';
   consultationType: string;
   scheduleType?: string;
   sessionNumber?: number;
@@ -69,10 +82,18 @@ type CardScheduleStatus = Schedule['status'];
 
 function mapBackendStatusToCardStatus(raw: string): CardScheduleStatus {
   const u = raw.toUpperCase();
-  if (u === 'BOOKED' || u === 'SCHEDULED' || u === 'IN_PROGRESS' || u === 'COMPLETED' || u === 'CANCELLED' || u === 'NO_SHOW') {
+  if (
+    u === 'BOOKED' ||
+    u === 'SCHEDULED' ||
+    u === 'CONFIRMED' ||
+    u === 'IN_PROGRESS' ||
+    u === 'COMPLETED' ||
+    u === 'CANCELLED' ||
+    u === 'NO_SHOW'
+  ) {
     return u as CardScheduleStatus;
   }
-  if (u === 'CONFIRMED' || u === 'TENTATIVE_PENDING_PAYMENT') return 'BOOKED';
+  if (u === 'TENTATIVE_PENDING_PAYMENT') return 'BOOKED';
   if (u === 'AVAILABLE') return 'SCHEDULED';
   if (u === 'VACATION') return 'CANCELLED';
   return 'SCHEDULED';
@@ -84,6 +105,30 @@ function formatTimePart(v: unknown): string {
     return v.length >= 5 ? v.slice(0, 5) : v;
   }
   return String(v);
+}
+
+/** `HH:mm` / `H:mm` 등 시작 시각 → 자정부터 분(정렬용) */
+function scheduleStartMinutesFromMidnight(startTime: string): number {
+  const t = String(startTime ?? '').trim();
+  const m = /^(\d{1,2}):(\d{2})/.exec(t);
+  if (!m) return 0;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (!Number.isFinite(h) || !Number.isFinite(min)) return 0;
+  return h * 60 + min;
+}
+
+/** 날짜 오름차순, 같은 날에는 시작 시각 오름차순(상담사 목록·대시보드 공통) */
+export function sortSchedulesChronologically(list: Schedule[]): Schedule[] {
+  return [...list].sort((a, b) => {
+    const da = String(a.date ?? '').slice(0, 10);
+    const db = String(b.date ?? '').slice(0, 10);
+    const dc = da.localeCompare(db);
+    if (dc !== 0) return dc;
+    return (
+      scheduleStartMinutesFromMidnight(a.startTime) - scheduleStartMinutesFromMidnight(b.startTime)
+    );
+  });
 }
 
 function normalizeScheduleRows(raw: unknown): unknown[] {
@@ -171,14 +216,19 @@ async function fetchConsultantSchedulesForDate(
   consultantId: string | number,
   dateYmd: string,
 ): Promise<Schedule[]> {
-  const raw = await apiGet<unknown>(`${SCHEDULE_API.SCHEDULES}/date/${encodeURIComponent(dateYmd)}`, {
-    userId: consultantId,
-    userRole: CONSULTANT_USER_ROLE,
-  });
+  const raw = await apiGet<unknown>(
+    `${SCHEDULE_API.SCHEDULES}/date/${encodeURIComponent(dateYmd)}`,
+    {
+      userId: consultantId,
+      userRole: CONSULTANT_USER_ROLE,
+    },
+  );
   const rows = normalizeScheduleRows(raw);
   const cid = typeof consultantId === 'string' ? Number(consultantId) : consultantId;
   const fallbackCid = Number.isFinite(cid) ? cid : 0;
-  return rows.map((r) => mapRowToSchedule(r as Record<string, unknown>, fallbackCid));
+  return sortSchedulesChronologically(
+    rows.map((r) => mapRowToSchedule(r as Record<string, unknown>, fallbackCid)),
+  );
 }
 
 async function fetchConsultantSchedulesForParams(params: SchedulesParams): Promise<Schedule[]> {
@@ -200,7 +250,9 @@ async function fetchConsultantSchedulesForParams(params: SchedulesParams): Promi
     const rows = normalizeScheduleRows(raw);
     const cid = typeof userId === 'string' ? Number(userId) : userId;
     const fallbackCid = Number.isFinite(cid) ? cid : 0;
-    return rows.map((r) => mapRowToSchedule(r as Record<string, unknown>, fallbackCid));
+    return sortSchedulesChronologically(
+      rows.map((r) => mapRowToSchedule(r as Record<string, unknown>, fallbackCid)),
+    );
   }
 
   return fetchConsultantSchedulesForDate(userId, params.date);
@@ -235,7 +287,8 @@ export function useScheduleDetail(
         userId: user.id,
         userRole,
       });
-      const inner = unwrapApiResponse<Record<string, unknown>>(raw) ?? (raw as Record<string, unknown>);
+      const inner =
+        unwrapApiResponse<Record<string, unknown>>(raw) ?? (raw as Record<string, unknown>);
       return mapRowToSchedule(inner, user.id) as ScheduleDetail;
     },
     enabled: !!scheduleId,
@@ -290,9 +343,20 @@ export function useStartConsultation() {
   const mutation = useUpdateScheduleStatus();
   return {
     ...mutation,
-    mutate: (scheduleId: string | number) => mutation.mutate({ scheduleId, status: 'IN_PROGRESS' }),
-    mutateAsync: (scheduleId: string | number) =>
-      mutation.mutateAsync({ scheduleId, status: 'IN_PROGRESS' }),
+    mutate: (
+      scheduleId: string | number,
+      opts?: Pick<
+        UseMutationOptions<unknown, unknown, StatusMutationVars, unknown>,
+        'onError' | 'onSuccess' | 'onSettled'
+      >,
+    ) => mutation.mutate({ scheduleId, status: 'IN_PROGRESS' }, opts),
+    mutateAsync: (
+      scheduleId: string | number,
+      opts?: Pick<
+        UseMutationOptions<unknown, unknown, StatusMutationVars, unknown>,
+        'onError' | 'onSuccess' | 'onSettled'
+      >,
+    ) => mutation.mutateAsync({ scheduleId, status: 'IN_PROGRESS' }, opts),
   };
 }
 
@@ -300,9 +364,20 @@ export function useCompleteConsultation() {
   const mutation = useUpdateScheduleStatus();
   return {
     ...mutation,
-    mutate: (scheduleId: string | number) => mutation.mutate({ scheduleId, status: 'COMPLETED' }),
-    mutateAsync: (scheduleId: string | number) =>
-      mutation.mutateAsync({ scheduleId, status: 'COMPLETED' }),
+    mutate: (
+      scheduleId: string | number,
+      opts?: Pick<
+        UseMutationOptions<unknown, unknown, StatusMutationVars, unknown>,
+        'onError' | 'onSuccess' | 'onSettled'
+      >,
+    ) => mutation.mutate({ scheduleId, status: 'COMPLETED' }, opts),
+    mutateAsync: (
+      scheduleId: string | number,
+      opts?: Pick<
+        UseMutationOptions<unknown, unknown, StatusMutationVars, unknown>,
+        'onError' | 'onSuccess' | 'onSettled'
+      >,
+    ) => mutation.mutateAsync({ scheduleId, status: 'COMPLETED' }, opts),
   };
 }
 

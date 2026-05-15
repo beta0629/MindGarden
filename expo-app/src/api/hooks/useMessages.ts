@@ -6,7 +6,13 @@
  * @since 2026-05-12
  * @since 2026-05-13 — 실 API 페이징·ApiResponse 언래핑·역할별 스레드 키 정합
  */
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from '@tanstack/react-query';
 import { apiGet, apiPost } from '../client';
 import { MESSAGE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
@@ -23,6 +29,8 @@ export interface Conversation {
   lastMessage: string;
   lastMessageAt: string;
   unreadCount: number;
+  /** 수신·미읽음 메시지 id — 미리보기 시 일괄 읽음 처리용 */
+  unreadMessageIds: number[];
 }
 
 export interface Message {
@@ -167,6 +175,7 @@ export function buildConversationsFromRows(
       lastMessage: string;
       lastMessageAt: string;
       unread: number;
+      unreadMessageIds: number[];
     }
   >();
 
@@ -192,6 +201,7 @@ export function buildConversationsFromRows(
 
     const receiverId = toSafeNumber(row.receiverId, 0);
     const unreadInc = row.isRead === false && receiverId === selfId && selfId > 0 ? 1 : 0;
+    const messageId = toSafeNumber(row.id, 0);
 
     const existing = byPartner.get(partnerId);
     if (!existing) {
@@ -200,9 +210,13 @@ export function buildConversationsFromRows(
         lastMessage: preview,
         lastMessageAt: lastAt,
         unread: unreadInc,
+        unreadMessageIds: unreadInc > 0 && messageId > 0 ? [messageId] : [],
       });
     } else {
       existing.unread += unreadInc;
+      if (unreadInc > 0 && messageId > 0 && !existing.unreadMessageIds.includes(messageId)) {
+        existing.unreadMessageIds.push(messageId);
+      }
       const prevTime = new Date(existing.lastMessageAt).getTime();
       const curTime = new Date(lastAt).getTime();
       if (!Number.isNaN(curTime) && (Number.isNaN(prevTime) || curTime >= prevTime)) {
@@ -230,6 +244,7 @@ export function buildConversationsFromRows(
       lastMessage: v.lastMessage,
       lastMessageAt: v.lastMessageAt,
       unreadCount: v.unread,
+      unreadMessageIds: v.unreadMessageIds,
     });
   });
 
@@ -430,6 +445,22 @@ export function useUnreadMessageCount() {
   });
 }
 
+function invalidateMessageCaches(queryClient: QueryClient): void {
+  const user = useAuthStore.getState().user;
+  const tid = useTenantStore.getState().tenantId?.trim() ?? '';
+  queryClient.invalidateQueries({
+    queryKey: MESSAGE_QUERY_KEYS.conversations(),
+  });
+  queryClient.invalidateQueries({
+    queryKey: MESSAGE_QUERY_KEYS.messages(),
+  });
+  if (user?.id != null) {
+    queryClient.invalidateQueries({
+      queryKey: [...MESSAGE_QUERY_KEYS.unreadCount(user.id), tid],
+    });
+  }
+}
+
 export function useMarkMessageAsRead() {
   const queryClient = useQueryClient();
 
@@ -443,12 +474,31 @@ export function useMarkMessageAsRead() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: MESSAGE_QUERY_KEYS.conversations(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: MESSAGE_QUERY_KEYS.messages(),
-      });
+      invalidateMessageCaches(queryClient);
+    },
+  });
+}
+
+/** 미리보기 등에서 스레드 단위로 여러 메시지 읽음 — invalidate는 한 번 */
+export function useMarkMessagesAsReadBatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (messageIds: number[]) => {
+      const ids = [...new Set(messageIds)].filter((id) => id > 0);
+      await Promise.all(
+        ids.map(async (id) => {
+          try {
+            const raw = await apiGet<unknown>(MESSAGE_API.markAsRead(id));
+            unwrapApiResponse<unknown>(raw);
+          } catch {
+            /* 권한·네트워크 실패 시 개별 무시 */
+          }
+        }),
+      );
+    },
+    onSuccess: () => {
+      invalidateMessageCaches(queryClient);
     },
   });
 }

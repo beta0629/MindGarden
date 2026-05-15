@@ -7,7 +7,7 @@
  * @since 2026-05-13 — 실 API 집계·검색 지연·오류·표시 경계
  * @since 2026-05-13 — 목록 탭 시 미리보기 시트 후 대화 화면 이동
  */
-import { useCallback, useDeferredValue, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
   Modal,
@@ -31,6 +31,7 @@ import { SearchBar } from '@/components/molecules/SearchBar';
 import {
   useConversations,
   buildConversationsFromRows,
+  useMarkMessagesAsReadBatch,
   type Conversation,
 } from '@/api/hooks/useMessages';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -228,6 +229,23 @@ function ConversationPreviewSheet({
   bodyMaxHeight,
 }: ConversationPreviewSheetProps) {
   const theme = useTheme();
+  const role = useAuthStore((s) => s.user?.role);
+  const { mutate: markUnreadBatch } = useMarkMessagesAsReadBatch();
+  const unreadIdsSerialized = JSON.stringify(conversation.unreadMessageIds ?? []);
+
+  useEffect(() => {
+    if (role !== 'consultant') return;
+    if (unreadIdsSerialized === '[]') return;
+    let ids: number[] = [];
+    try {
+      ids = JSON.parse(unreadIdsSerialized) as number[];
+    } catch {
+      return;
+    }
+    if (!Array.isArray(ids) || ids.length === 0) return;
+    markUnreadBatch(ids);
+  }, [role, conversation.partnerId, unreadIdsSerialized, markUnreadBatch]);
+
   const partnerLabel = toDisplayString(conversation.partnerName, '대화');
   const preview = toDisplayString(conversation.lastMessage, '');
   const previewDisplay = preview.length > 0 ? preview : '메시지가 없습니다.';

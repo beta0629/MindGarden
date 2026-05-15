@@ -5,6 +5,7 @@
  * @author MindGarden
  * @since 2026-05-12
  * @see docs/design-system/v2/CONSULTANT_CLIENT_COMPONENTS_SPEC.md §2
+ * @see docs/design-system/v2/EXPO_APP_SCHEDULE_CARD_STATUS_SPEC.md
  */
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
@@ -16,6 +17,7 @@ import { Badge } from '../atoms/Badge';
 type ScheduleStatus =
   | 'SCHEDULED'
   | 'BOOKED'
+  | 'CONFIRMED'
   | 'IN_PROGRESS'
   | 'COMPLETED'
   | 'CANCELLED'
@@ -29,12 +31,15 @@ interface ScheduleCardProps {
   readonly onPress?: () => void;
   readonly onActionPress?: () => void;
   readonly actionLabel?: string;
+  readonly footerHint?: string;
+  readonly containerOpacity?: number;
   readonly index?: number;
 }
 
 const STATUS_LABEL: Record<ScheduleStatus, string> = {
   BOOKED: '예정',
   SCHEDULED: '예정',
+  CONFIRMED: '예약확정',
   IN_PROGRESS: '진행중',
   COMPLETED: '완료',
   CANCELLED: '취소',
@@ -47,6 +52,7 @@ const STATUS_BADGE_VARIANT: Record<
 > = {
   BOOKED: 'info',
   SCHEDULED: 'info',
+  CONFIRMED: 'info',
   IN_PROGRESS: 'warning',
   COMPLETED: 'success',
   CANCELLED: 'gray',
@@ -57,6 +63,7 @@ function getAccentColor(status: ScheduleStatus, theme: AppTheme): string {
   const map: Record<ScheduleStatus, string> = {
     BOOKED: theme.colors.primary,
     SCHEDULED: theme.colors.primary,
+    CONFIRMED: theme.colors.primary,
     IN_PROGRESS: theme.colors.warning,
     COMPLETED: theme.colors.success,
     CANCELLED: theme.colors.gray[300],
@@ -75,10 +82,16 @@ export function ScheduleCard({
   onPress,
   onActionPress,
   actionLabel,
+  footerHint,
+  containerOpacity = 1,
   index = 0,
 }: ScheduleCardProps) {
   const theme = useTheme();
   const accentColor = getAccentColor(status, theme);
+  const badgeVariant =
+    footerHint && (status === 'BOOKED' || status === 'CONFIRMED' || status === 'SCHEDULED')
+      ? 'warning'
+      : STATUS_BADGE_VARIANT[status];
 
   const handlePress = () => {
     if (Platform.OS !== 'web') {
@@ -104,6 +117,7 @@ export function ScheduleCard({
           backgroundColor: theme.colors.surface,
           borderRadius: theme.borderRadius.xl,
           padding: theme.spacing.lg,
+          opacity: containerOpacity,
           ...theme.shadows.sm,
         },
       ]}
@@ -132,7 +146,7 @@ export function ScheduleCard({
           >
             {time}
           </Text>
-          <Badge variant={STATUS_BADGE_VARIANT[status]} label={STATUS_LABEL[status]} />
+          <Badge variant={badgeVariant} label={STATUS_LABEL[status]} />
         </View>
 
         <Text
@@ -161,6 +175,20 @@ export function ScheduleCard({
             numberOfLines={1}
           >
             {sessionType}
+          </Text>
+        ) : null}
+
+        {footerHint ? (
+          <Text
+            style={{
+              color: theme.colors.warning,
+              fontFamily: theme.fontFamily.medium,
+              fontSize: theme.fontSize.xs,
+              marginTop: theme.spacing.sm,
+            }}
+            numberOfLines={2}
+          >
+            {footerHint}
           </Text>
         ) : null}
 

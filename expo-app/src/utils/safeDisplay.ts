@@ -93,3 +93,28 @@ export function toSafeNumber(value: unknown, fallback = 0): number {
   }
   return fallback;
 }
+
+/**
+ * API 뮤테이션 실패 시 Alert 등에 넣을 사용자용 문장 (객체·스택 직접 노출 방지, React #130·표시 경계).
+ *
+ * @param err axios 인터셉터가 reject한 `{ message?: string }` 또는 Error
+ * @param fallback 메시지 없을 때
+ */
+export function toApiMutationMessage(err: unknown, fallback = '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.'): string {
+  if (err != null && typeof err === 'object') {
+    const msg = (err as { message?: unknown }).message;
+    if (typeof msg === 'string') {
+      const t = msg.trim();
+      if (t.length > 0) {
+        return t.length > 200 ? `${t.slice(0, 200)}…` : t;
+      }
+    }
+  }
+  if (err instanceof Error) {
+    const t = err.message.trim();
+    if (t.length > 0) {
+      return t.length > 200 ? `${t.slice(0, 200)}…` : t;
+    }
+  }
+  return fallback;
+}

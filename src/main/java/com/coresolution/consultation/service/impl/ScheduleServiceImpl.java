@@ -308,9 +308,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             saved = scheduleRepository.save(existingSchedule);
         }
         
-        // 상태가 CANCELLED로 바뀐 경우 회기 1회 복원 (BOOKED/CONFIRMED였을 때만)
+        // 상태가 CANCELLED로 바뀐 경우 회기 1회 복원 (예약·확정·진행 중이었을 때만)
         if (updateData.getStatus() == ScheduleStatus.CANCELLED
-                && (previousStatus == ScheduleStatus.BOOKED || previousStatus == ScheduleStatus.CONFIRMED)
+                && (previousStatus == ScheduleStatus.BOOKED || previousStatus == ScheduleStatus.CONFIRMED
+                        || previousStatus == ScheduleStatus.IN_PROGRESS)
                 && consultantId != null && clientId != null) {
             restoreSessionForMapping(consultantId, clientId);
         }
@@ -688,8 +689,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setStatus(ScheduleStatus.CANCELLED);
         schedule.setDescription(reason);
         Schedule saved = scheduleRepository.save(schedule);
-        // 예약 취소 시 회기 1회 복원 (BOOKED/CONFIRMED였을 때만, 분쟁 방지)
-        if ((previousStatus == ScheduleStatus.BOOKED || previousStatus == ScheduleStatus.CONFIRMED)
+        // 예약 취소 시 회기 1회 복원 (예약·확정·진행 중이었을 때만, 분쟁 방지)
+        if ((previousStatus == ScheduleStatus.BOOKED || previousStatus == ScheduleStatus.CONFIRMED
+                || previousStatus == ScheduleStatus.IN_PROGRESS)
                 && schedule.getConsultantId() != null && schedule.getClientId() != null) {
             restoreSessionForMapping(schedule.getConsultantId(), schedule.getClientId());
         }
@@ -1212,7 +1214,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 completedSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.COMPLETED, start, end);
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 cancelledSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.CANCELLED, start, end);
-                inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
+                inProgressSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.IN_PROGRESS, start, end);
             } else if (start != null) {
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 bookedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.BOOKED, start);
@@ -1220,7 +1222,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 completedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.COMPLETED, start);
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 cancelledSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.CANCELLED, start);
-                inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
+                inProgressSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.IN_PROGRESS, start);
             } else if (end != null) {
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 bookedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.BOOKED, end);
@@ -1228,7 +1230,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 completedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.COMPLETED, end);
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 cancelledSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.CANCELLED, end);
-                inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
+                inProgressSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.IN_PROGRESS, end);
             } else {
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 bookedSchedules = scheduleRepository.countByStatus(tenantId, ScheduleStatus.BOOKED.name());
@@ -1236,7 +1238,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 completedSchedules = scheduleRepository.countByStatus(tenantId, ScheduleStatus.COMPLETED.name());
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 cancelledSchedules = scheduleRepository.countByStatus(tenantId, ScheduleStatus.CANCELLED.name());
-                inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
+                inProgressSchedules = scheduleRepository.countByStatus(tenantId, ScheduleStatus.IN_PROGRESS.name());
             }
             
             statistics.put("bookedSchedules", bookedSchedules);
@@ -1256,7 +1258,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             long completedToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.COMPLETED);
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             long cancelledToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.CANCELLED);
-            long inProgressToday = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
+            long inProgressToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.IN_PROGRESS);
             
             statistics.put("totalToday", totalToday);
             statistics.put("bookedToday", bookedToday);
@@ -1363,7 +1365,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         long completedToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.COMPLETED);
         statistics.put("completedToday", completedToday);
         
-        long inProgressToday = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
+        long inProgressToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.IN_PROGRESS);
         statistics.put("inProgressToday", inProgressToday);
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -1413,7 +1415,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         long completedToday = scheduleRepository.countByTenantIdAndDateAndStatus(tenantId, today, ScheduleStatus.COMPLETED);
         statistics.put("completedToday", completedToday);
         
-        long inProgressToday = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
+        long inProgressToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.IN_PROGRESS);
         statistics.put("inProgressToday", inProgressToday);
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -1531,7 +1533,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         long completedToday = scheduleRepository.countByDateAndStatusAndConsultantId(tenantId, today, ScheduleStatus.COMPLETED, consultantId);
         statistics.put("completedToday", completedToday);
         
-        long inProgressToday = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
+        long inProgressToday = scheduleRepository.countByDateAndStatusAndConsultantId(
+                tenantId, today, ScheduleStatus.IN_PROGRESS, consultantId);
         statistics.put("inProgressToday", inProgressToday);
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -2159,6 +2162,35 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 }
             }
             
+            List<Schedule> pastInProgressSchedules = scheduleRepository.findByDateBeforeAndStatus(
+                    tenantId, today, ScheduleStatus.IN_PROGRESS);
+            for (Schedule schedule : pastInProgressSchedules) {
+                try {
+                    Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
+                    if (latestSchedule != null && ScheduleStatus.IN_PROGRESS.equals(latestSchedule.getStatus())) {
+                        boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
+                        if (hasRecord) {
+                            latestSchedule.setStatus(ScheduleStatus.COMPLETED);
+                            latestSchedule.setUpdatedAt(LocalDateTime.now());
+                            scheduleRepository.save(latestSchedule);
+                            completedCount++;
+                            log.info("✅ 지난 진행중 스케줄 자동 완료: ID={}, 제목={}, 날짜={}, 시간={}",
+                                    latestSchedule.getId(), latestSchedule.getTitle(), latestSchedule.getDate(), latestSchedule.getStartTime());
+                        } else {
+                            try {
+                                plSqlScheduleValidationService.createConsultationRecordReminder(
+                                        latestSchedule.getId(), latestSchedule.getConsultantId(), latestSchedule.getClientId(),
+                                        latestSchedule.getDate(), "상담일지 누락 안내");
+                            } catch (Exception e) {
+                                log.warn("상담일지 리마인더 생성 실패: {}", e.getMessage());
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("❌ 지난 진행중 스케줄 자동 완료 실패: ID={}, 오류={}", schedule.getId(), e.getMessage());
+                }
+            }
+            
         } catch (Exception e) {
             log.error("❌ 자동 완료 처리 중 오류 발생: {}", e.getMessage(), e);
         }
@@ -2631,8 +2663,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 tenantId, consultantId, actualStartDate, actualEndDate);
         
         List<ScheduleResponse> responses = schedules.stream()
-                .filter(schedule -> schedule.getStatus() == ScheduleStatus.BOOKED || 
-                                  schedule.getStatus() == ScheduleStatus.CONFIRMED)
+                .filter(schedule -> schedule.getStatus() == ScheduleStatus.BOOKED
+                        || schedule.getStatus() == ScheduleStatus.CONFIRMED
+                        || schedule.getStatus() == ScheduleStatus.IN_PROGRESS)
                 .sorted((s1, s2) -> {
                     int dateCompare = s1.getDate().compareTo(s2.getDate());
                     if (dateCompare != 0) {

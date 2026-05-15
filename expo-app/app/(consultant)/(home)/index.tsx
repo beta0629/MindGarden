@@ -28,6 +28,11 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { useConsultantDashboard } from '@/api/hooks/useSchedules';
 import { usePendingRecords } from '@/api/hooks/useRecords';
 import { ScheduleCard } from '@/components/molecules/ScheduleCard';
+import {
+  getConsultantScheduleCardFooterHint,
+  getConsultantScheduleCardVisualTone,
+  getConsultantScheduleListRowActions,
+} from '@/utils/consultantScheduleCardUi';
 import { QuickActionBar, type QuickAction } from '@/components/molecules/QuickActionBar';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { EmptyState } from '@/components/atoms/EmptyState';
@@ -195,28 +200,26 @@ export default function ConsultantDashboard() {
               data={schedules}
               keyExtractor={(item) => String(item.id)}
               scrollEnabled={false}
-              renderItem={({ item, index }) => (
-                <ScheduleCard
-                  time={`${item.startTime} - ${item.endTime}`}
-                  clientName={`${item.clientName} 님`}
-                  sessionType={item.consultationType}
-                  status={item.status}
-                  index={index}
-                  onPress={() => router.push(`/(consultant)/(schedule)/${item.id}`)}
-                  actionLabel={
-                    item.status === 'SCHEDULED'
-                      ? '상담 시작'
-                      : item.status === 'IN_PROGRESS'
-                        ? '상담 완료'
-                        : undefined
-                  }
-                  onActionPress={
-                    item.status === 'SCHEDULED' || item.status === 'IN_PROGRESS'
-                      ? () => router.push(`/(consultant)/(schedule)/${item.id}`)
-                      : undefined
-                  }
-                />
-              )}
+              renderItem={({ item, index }) => {
+                const nav = () => router.push(`/(consultant)/(schedule)/${item.id}`);
+                const row = getConsultantScheduleListRowActions(item, nav);
+                const hint = getConsultantScheduleCardFooterHint(item);
+                const tone = getConsultantScheduleCardVisualTone(item);
+                return (
+                  <ScheduleCard
+                    time={`${item.startTime} - ${item.endTime}`}
+                    clientName={`${item.clientName} 님`}
+                    sessionType={item.consultationType}
+                    status={item.status}
+                    index={index}
+                    containerOpacity={tone.containerOpacity}
+                    footerHint={hint.text}
+                    onPress={nav}
+                    actionLabel={row.primaryActionLabel}
+                    onActionPress={row.onPrimaryAction}
+                  />
+                );
+              }}
             />
           </View>
         )}

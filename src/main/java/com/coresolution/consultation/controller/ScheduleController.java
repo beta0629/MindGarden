@@ -493,21 +493,30 @@ public class ScheduleController extends BaseApiController {
             HttpSession session) {
         
         log.info("📝 스케줄 수정 요청: ID {}, 데이터 {}", id, updateData);
-        
-        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "SCHEDULE_MODIFY", dynamicPermissionService);
-        if (permissionResponse != null) {
-            log.warn("❌ 권한 체크 실패: {}", permissionResponse.getBody());
-            throw new org.springframework.security.access.AccessDeniedException("스케줄 수정 권한이 없습니다.");
-        }
-        
-        Schedule existingSchedule = scheduleService.findById(id);
-        
+
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
-        if (!canRegisterOrModifyOthersSchedule(currentUser.getRole()) && !currentUser.getId().equals(existingSchedule.getConsultantId())) {
+
+        Schedule existingSchedule = scheduleService.findById(id);
+
+        if (!canRegisterOrModifyOthersSchedule(currentUser.getRole())
+            && !currentUser.getId().equals(existingSchedule.getConsultantId())) {
             throw new org.springframework.security.access.AccessDeniedException("본인의 스케줄만 수정할 수 있습니다.");
+        }
+
+        boolean skipScheduleModifyPermission =
+            isOwnProfessionalScheduleStatusOnlyUpdate(currentUser, existingSchedule, updateData);
+        if (!skipScheduleModifyPermission) {
+            ResponseEntity<?> permissionResponse =
+                PermissionCheckUtils.checkPermission(session, "SCHEDULE_MODIFY", dynamicPermissionService);
+            if (permissionResponse != null) {
+                log.warn("❌ 권한 체크 실패: {}", permissionResponse.getBody());
+                throw new org.springframework.security.access.AccessDeniedException("스케줄 수정 권한이 없습니다.");
+            }
+        } else {
+            log.info("✅ 본인 일정 상태만 변경 — SCHEDULE_MODIFY 생략: scheduleId={}, userId={}", id, currentUser.getId());
         }
         
         if (updateData.containsKey("status")) {
@@ -1389,6 +1398,28 @@ public class ScheduleController extends BaseApiController {
             return false;
         }
         return roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(role);
+    }
+
+    /**
+     * 상담사(전문가)가 <b>본인</b> 일정에 대해 {@code status} 필드만 변경하는 경우(상담 시작·완료 등).
+     * 모바일/JWT 환경에서 {@code SCHEDULE_MODIFY} 동적 권한이 없어도 세션 상담사 본인 확인으로 허용한다.
+     */
+    private boolean isOwnProfessionalScheduleStatusOnlyUpdate(User user, Schedule schedule, Map<String, Object> updateData) {
+        if (user == null || user.getRole() == null || !user.getRole().isProfessionalProvider()) {
+            return false;
+        }
+        if (schedule.getConsultantId() == null || !schedule.getConsultantId().equals(user.getId())) {
+            return false;
+        }
+        if (updateData == null || updateData.isEmpty()) {
+            return false;
+        }
+        for (String key : updateData.keySet()) {
+            if (!"status".equals(key)) {
+                return false;
+            }
+        }
+        return updateData.containsKey("status");
     }
 
     /**

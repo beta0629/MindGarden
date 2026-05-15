@@ -27,6 +27,11 @@ import {
   useStartConsultation,
   useCompleteConsultation,
 } from '@/api/hooks/useSchedules';
+import {
+  canShowConsultantScheduleStartButton,
+  getConsultantScheduleCardFooterHint,
+} from '@/utils/consultantScheduleCardUi';
+import { toApiMutationMessage } from '@/utils/safeDisplay';
 import { Avatar } from '@/components/atoms/Avatar';
 import { Badge } from '@/components/atoms/Badge';
 import { SkeletonCard, SkeletonLoader } from '@/components/atoms/SkeletonLoader';
@@ -34,6 +39,7 @@ import { SkeletonCard, SkeletonLoader } from '@/components/atoms/SkeletonLoader'
 const STATUS_LABEL: Record<string, string> = {
   BOOKED: '예정',
   SCHEDULED: '예정',
+  CONFIRMED: '예약확정',
   IN_PROGRESS: '진행중',
   COMPLETED: '완료',
   CANCELLED: '취소',
@@ -43,6 +49,7 @@ const STATUS_LABEL: Record<string, string> = {
 const STATUS_VARIANT: Record<string, 'info' | 'warning' | 'success' | 'gray' | 'error'> = {
   BOOKED: 'info',
   SCHEDULED: 'info',
+  CONFIRMED: 'info',
   IN_PROGRESS: 'warning',
   COMPLETED: 'success',
   CANCELLED: 'gray',
@@ -62,14 +69,18 @@ export default function ConsultantScheduleDetail() {
   const schedule = detailQuery.data;
   const isLoading = detailQuery.isLoading;
 
-  /** 예약 확정(BOOKED) 이후만 세션 액션 — SCHEDULED(가용 슬롯 등)은 백엔드 규칙 재검증 TODO */
-  const canRunSessionActions = schedule
-    ? schedule.status === 'BOOKED' || schedule.status === 'IN_PROGRESS'
+  /** 예약·확정·진행 중일 때 메모 편집 허용 */
+  const canEditMemo = schedule
+    ? schedule.status === 'BOOKED' ||
+        schedule.status === 'CONFIRMED' ||
+        schedule.status === 'SCHEDULED' ||
+        schedule.status === 'IN_PROGRESS'
     : false;
 
-  const canEditMemo = schedule
-    ? schedule.status === 'BOOKED' || schedule.status === 'IN_PROGRESS'
-    : false;
+  const showStartButton = schedule ? canShowConsultantScheduleStartButton(schedule) : false;
+  const showCompleteButton = schedule ? schedule.status === 'IN_PROGRESS' : false;
+  const canRunSessionActions = showStartButton || showCompleteButton;
+  const statusFooterHint = schedule ? getConsultantScheduleCardFooterHint(schedule).text : undefined;
 
   const onRefresh = useCallback(() => {
     detailQuery.refetch();
@@ -84,7 +95,12 @@ export default function ConsultantScheduleDetail() {
       { text: '취소', style: 'cancel' },
       {
         text: '시작',
-        onPress: () => startMutation.mutate(id),
+        onPress: () =>
+          startMutation.mutate(id, {
+            onError: (err) => {
+              Alert.alert('상담 시작', toApiMutationMessage(err));
+            },
+          }),
       },
     ]);
   };
@@ -98,7 +114,12 @@ export default function ConsultantScheduleDetail() {
       { text: '취소', style: 'cancel' },
       {
         text: '완료',
-        onPress: () => completeMutation.mutate(id),
+        onPress: () =>
+          completeMutation.mutate(id, {
+            onError: (err) => {
+              Alert.alert('상담 완료', toApiMutationMessage(err));
+            },
+          }),
       },
     ]);
   };
@@ -289,9 +310,21 @@ export default function ConsultantScheduleDetail() {
                 </Text>
                 <Badge
                   variant={STATUS_VARIANT[schedule.status] ?? 'info'}
-                  label={STATUS_LABEL[schedule.status] ?? schedule.status}
+                  label={STATUS_LABEL[schedule.status] ?? String(schedule.status)}
                 />
               </View>
+              {statusFooterHint ? (
+                <Text
+                  style={{
+                    color: theme.colors.warning,
+                    fontFamily: theme.fontFamily.medium,
+                    fontSize: theme.fontSize.xs,
+                    marginTop: theme.spacing.sm,
+                  }}
+                >
+                  {statusFooterHint}
+                </Text>
+              ) : null}
               <View style={[styles.infoRow, { marginTop: theme.spacing.md }]}>
                 <Text
                   style={{
@@ -315,10 +348,10 @@ export default function ConsultantScheduleDetail() {
               </View>
             </View>
 
-            {/* 액션 버튼 — 확정 예약(Booked)·진행 중만 */}
+            {/* 액션 버튼 — 예약·확정·슬롯 유효 시 시작, 진행 중이면 완료 */}
             {canRunSessionActions ? (
               <View style={[styles.actionRow, { marginTop: theme.spacing.lg }]}>
-                {schedule.status === 'BOOKED' ? (
+                {showStartButton ? (
                   <Pressable
                     onPress={handleStart}
                     disabled={startMutation.isPending}

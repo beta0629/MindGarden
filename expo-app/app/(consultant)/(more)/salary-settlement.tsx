@@ -127,7 +127,7 @@ export default function ConsultantSalarySettlementScreen() {
                   {
                     color: theme.colors.textMain,
                     fontFamily: theme.fontFamily.semibold,
-                    fontSize: theme.fontSize.md,
+                    fontSize: theme.fontSize.base,
                   },
                 ]}
               >

@@ -27,6 +27,7 @@ const AUTH_REFRESH_SKIP_URL_SUBSTRINGS = [
   '/api/v1/auth/social/signup',
   '/api/v1/auth/oauth2/',
   '/api/v1/auth/refresh-token',
+  '/api/v1/auth/logout', // 로그아웃 요청 401 시 갱신 루프 방지
 ] as const;
 
 function resolveRequestUrlForMatch(config: InternalAxiosRequestConfig): string {

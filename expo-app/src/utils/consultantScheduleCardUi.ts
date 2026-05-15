@@ -90,6 +90,19 @@ export function getConsultantScheduleCardFooterHint(
   return { text: undefined };
 }
 
+/** 카드 컨테이너 강조: 진행 중만 보더·틴트, 그 외는 기본 서피스. */
+export type ConsultantScheduleCardContainerVariant = 'inProgress' | 'default';
+
+/**
+ * `IN_PROGRESS`일 때만 컨테이너 보더·배경 틴트 적용.
+ * 시간 경과·미시작(`footerHint`)은 동 상태가 아니므로 기본 톤 유지.
+ */
+export function getConsultantScheduleCardContainerVariant(
+  status: ConsultantScheduleCardStatus,
+): ConsultantScheduleCardContainerVariant {
+  return status === 'IN_PROGRESS' ? 'inProgress' : 'default';
+}
+
 export interface ConsultantScheduleCardVisualTone {
   /** 카드 컨테이너 불투명도(과거·종료·완료 톤). */
   readonly containerOpacity: number;
@@ -99,7 +112,11 @@ export function getConsultantScheduleCardVisualTone(
   schedule: Pick<Schedule, 'status' | 'date' | 'endTime'>,
 ): ConsultantScheduleCardVisualTone {
   const pastEnd = isConsultantSchedulePastSlotEnd(schedule.date, schedule.endTime);
-  if (schedule.status === 'COMPLETED' || schedule.status === 'CANCELLED' || schedule.status === 'NO_SHOW') {
+  if (
+    schedule.status === 'COMPLETED' ||
+    schedule.status === 'CANCELLED' ||
+    schedule.status === 'NO_SHOW'
+  ) {
     return { containerOpacity: 0.78 };
   }
   if (

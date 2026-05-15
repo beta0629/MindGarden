@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '@/theme';
 import type { AppTheme } from '@/theme';
+import { getConsultantScheduleCardContainerVariant } from '@/utils/consultantScheduleCardUi';
 import { Badge } from '../atoms/Badge';
 
 type ScheduleStatus =
@@ -87,6 +88,8 @@ export function ScheduleCard({
   index = 0,
 }: ScheduleCardProps) {
   const theme = useTheme();
+  const containerVariant = getConsultantScheduleCardContainerVariant(status);
+  const inProgressContainer = containerVariant === 'inProgress';
   const accentColor = getAccentColor(status, theme);
   const badgeVariant =
     footerHint && (status === 'BOOKED' || status === 'CONFIRMED' || status === 'SCHEDULED')
@@ -114,10 +117,15 @@ export function ScheduleCard({
       style={[
         styles.container,
         {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: inProgressContainer
+            ? theme.colors.scheduleCardInProgressBackground
+            : theme.colors.surface,
           borderRadius: theme.borderRadius.xl,
           padding: theme.spacing.lg,
           opacity: containerOpacity,
+          borderWidth: inProgressContainer ? theme.spacing['2xs'] : 0,
+          borderColor: inProgressContainer ? theme.colors.warning : theme.colors.surface,
+          marginBottom: theme.spacing.md,
           ...theme.shadows.sm,
         },
       ]}
@@ -227,7 +235,6 @@ export function ScheduleCard({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    marginBottom: 12,
     overflow: 'hidden',
   },
   accent: {

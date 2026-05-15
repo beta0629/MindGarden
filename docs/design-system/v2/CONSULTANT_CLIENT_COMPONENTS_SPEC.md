@@ -12,9 +12,9 @@
 ## 2. ScheduleCard (일정 카드 - 상담사용)
 대시보드와 스케줄 탭에서 개별 상담 일정을 표시하는 카드입니다.
 
-**상태·배지·과거 슬롯·미시작 보조 문구·액션 규칙(Expo SSOT)**은 [EXPO_APP_SCHEDULE_CARD_STATUS_SPEC.md](./EXPO_APP_SCHEDULE_CARD_STATUS_SPEC.md)를 따른다.
+**상태별 컨테이너(보더/배경), 배지, 과거 슬롯, 미시작 보조 문구, 액션 규칙 등 세부 시각 스펙(Expo SSOT)**은 [EXPO_APP_SCHEDULE_CARD_STATUS_SPEC.md](./EXPO_APP_SCHEDULE_CARD_STATUS_SPEC.md)를 따른다.
 
-- **컨테이너**:
+- **기본 컨테이너** (진행 중(`IN_PROGRESS`) 등 특수 상태의 보더·배경 강조는 위 스펙 문서 참조):
   - `background`: `var(--mg-consultant-surface)`
   - `border-radius`: `var(--mg-radius-xl)` (16px)
   - `padding`: `var(--mg-spacing-md)` (16px)

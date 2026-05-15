@@ -44,6 +44,25 @@
 - 슬롯 **종료 시각**이 지난 `BOOKED`·`CONFIRMED`·`SCHEDULED`·`IN_PROGRESS`: **0.82**  
 - 종료 시각 이후 **목록·상세**에서 「상담 시작」 CTA 숨김. `IN_PROGRESS`는 「상담 완료」는 유지.
 
+## 컨테이너(카드 전체) 시각 규칙
+
+카드 전체의 테두리(보더)와 배경색을 통해 현재 상태의 중요도를 직관적으로 구분합니다. 컨테이너 기본 형태는 [CONSULTANT_CLIENT_COMPONENTS_SPEC.md](./CONSULTANT_CLIENT_COMPONENTS_SPEC.md) §2를 따릅니다.
+
+- **`IN_PROGRESS` (진행 중)**: 카드 **테두리(보더)** + **얕은 배경 틴트** + 기존 좌측 악센트 바를 모두 적용하여 "지금 진행 중"임을 최우선으로 부각합니다. 다중 진행 중인 카드가 있을 경우를 대비해 과도하지 않게 보더 두께(최대 1.5~2px)와 배경 채도 상한을 둡니다.
+- **시간 경과·미시작 (Warning)**: 보조 문구와 경고 배지만 표시하며, **보더·배경 강조는 약하게(또는 기본값 유지)** 처리하여 `IN_PROGRESS`와 역할을 시각적으로 명확히 분리합니다.
+- **접근성**: 색상에만 의존하지 않고 텍스트(보조 문구)와 배지를 병행 표기하며, 명도 대비 AA 등급(4.5:1 이상)을 만족하도록 색상을 선정합니다.
+
+구현 SSOT: 컨테이너 강조 여부는 `getConsultantScheduleCardContainerVariant` (`consultantScheduleCardUi.ts`)로 `IN_PROGRESS`만 분기한다.
+
+### 상태별 컨테이너 매핑 (`theme.colors.*` 후보)
+
+| 카드 상태 (또는 파생) | 테두리 (`borderColor`) | 배경색 (`backgroundColor`) | 좌측 악센트 | 접근성 / 비고 |
+|---------------------|----------------------|--------------------------|-----------|--------------|
+| **`IN_PROGRESS`** | `theme.colors.warning` (`theme.spacing['2xs']`) | `theme.colors.scheduleCardInProgressBackground` (`tokens.ts` → `colors.common`) | `warning` | 진행 중 최우선 부각. |
+| **시간 경과·미시작** | 없음(기본 카드, `borderWidth` 0) | `theme.colors.surface` | `primary` | 배지(`warning`)·`footerHint`만으로 경고. 진행 중과 분리. |
+| **일반 예약/가용** | 없음(`borderWidth` 0) | `theme.colors.surface` | `primary` | 기본 카드 스타일. |
+| **종료 / 과거** | 없음(`borderWidth` 0) | `theme.colors.surface` | 상태별 악센트 | `containerOpacity` 0.78~0.82로 후순위화. |
+
 ## 목록 주 액션(홈·스케줄 탭)
 
 | 조건 | 버튼 라벨 | 동작 |

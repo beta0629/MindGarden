@@ -15,6 +15,7 @@
 import { authAPI } from './ajax';
 import { storage, sessionStorage } from './common';
 import { AUTH_API, API_BASE_URL } from '../constants/api';
+import StandardizedApi from './standardizedApi';
 import { 
   KAKAO_OAUTH2_CONFIG, 
   NAVER_OAUTH2_CONFIG,
@@ -357,23 +358,28 @@ export const handleOAuthCallback = async(provider, code, state) => {
     
     console.log(`${provider} OAuth2 콜백 처리:`, { code, state, codeVerifier });
     
-    // 백엔드로 인증 코드 전송
-    const response = await fetch(`${AUTH_API.OAUTH2_CALLBACK}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        provider, 
-        code, 
+    const raw = await StandardizedApi.post(
+      AUTH_API.OAUTH2_CALLBACK,
+      {
+        provider,
+        code,
         state,
-        codeVerifier 
-      })
-    });
+        codeVerifier
+      },
+      { unwrapApiEnvelope: false }
+    );
 
-    if (!response.ok) {
-      throw new Error('OAuth2 콜백 처리 실패');
-    }
-    
-    const result = await response.json();
+    const envelope = raw && typeof raw === 'object' ? raw : {};
+    const result =
+      envelope.data != null && typeof envelope.data === 'object'
+        ? {
+          ...envelope.data,
+          success: envelope.success,
+          message: envelope.message || envelope.data.message,
+          requiresSignup: envelope.data.requiresSignup ?? envelope.requiresSignup,
+          socialUserInfo: envelope.data.socialUserInfo ?? envelope.socialUserInfo
+        }
+        : envelope;
     console.log(`${provider} OAuth2 결과:`, result);
     
     if (result.success) {

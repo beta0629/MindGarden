@@ -29,7 +29,9 @@ import { formatPhoneNumber } from '../../utils/common';
 import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
 import {
   LOGIN_CREDENTIALS_MISMATCH_MESSAGE,
-  LOGIN_IDENTIFIER_PASSWORD_REQUIRED
+  LOGIN_IDENTIFIER_PASSWORD_REQUIRED,
+  OAUTH_POST_SIGNUP_LOGIN_REMINDER,
+  OAUTH_SIGNUP_REQUIRED_PROMPT
 } from '../../constants/loginDisplay';
 import '../../styles/auth/TabletLogin.css';
 
@@ -462,7 +464,7 @@ const TabletLogin = () => {
         const detectedProvider = decodedError.includes('카카오') ? 'kakao' : 'naver';
         
       const socialUserInfo = {
-        provider: (urlProvider || detectedProvider).toUpperCase(), // 대문자로 변환
+        provider: String(urlProvider || detectedProvider || '').trim().toUpperCase(),
         email: urlEmail || '',
         name: urlName || '',
         nickname: urlNickname || '',
@@ -473,7 +475,7 @@ const TabletLogin = () => {
         console.log('👤 소셜 사용자 정보 설정:', socialUserInfo);
         
         // 알림 표시
-        showTooltip(`${socialUserInfo.provider === 'KAKAO' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
+        showTooltip(toDisplayString(OAUTH_SIGNUP_REQUIRED_PROMPT, OAUTH_SIGNUP_REQUIRED_PROMPT), 'info');
         
         setSocialUserInfo(socialUserInfo);
         setShowSocialSignupModal(true);
@@ -508,7 +510,7 @@ const TabletLogin = () => {
       });
       
       const socialUserInfo = {
-        provider: provider.toUpperCase(), // 대문자로 변환
+        provider: String(provider || '').trim().toUpperCase(),
         email: email || '',
         name: name || '',
         nickname: nickname || '',
@@ -519,7 +521,7 @@ const TabletLogin = () => {
       console.log('👤 소셜 사용자 정보 설정:', socialUserInfo);
       
       // 알림 표시
-      showTooltip(`${provider.toUpperCase() === 'KAKAO' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
+      showTooltip(toDisplayString(OAUTH_SIGNUP_REQUIRED_PROMPT, OAUTH_SIGNUP_REQUIRED_PROMPT), 'info');
       
       console.log('📋 모달 상태 설정 시작 - socialUserInfo:', socialUserInfo);
       setSocialUserInfo(socialUserInfo);
@@ -590,7 +592,7 @@ const TabletLogin = () => {
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         notificationManager.show(
-          toDisplayString(response.message, '회원가입이 완료되었습니다.'),
+          toDisplayString(response.message, OAUTH_POST_SIGNUP_LOGIN_REMINDER),
           'success'
         );
 
@@ -617,6 +619,10 @@ const TabletLogin = () => {
         );
       } else {
         // HttpOnly·세션 직후 타이밍 한계로 클라 동기화가 비면 풀리드(쿠키·번들·스토어 일치)
+        notificationManager.show(
+          toDisplayString(OAUTH_POST_SIGNUP_LOGIN_REMINDER, OAUTH_POST_SIGNUP_LOGIN_REMINDER),
+          'success'
+        );
         // eslint-disable-next-line no-restricted-globals
         window.location.reload();
       }

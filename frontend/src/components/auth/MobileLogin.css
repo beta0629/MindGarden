@@ -65,7 +65,15 @@
   display: flex;
   flex-direction: column;
   gap: var(--mg-spacing-md);
-  margin-bottom: var(--mg-spacing-lg);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.mg-mobile-login__sns-hint {
+  margin: 0 0 var(--mg-spacing-lg);
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  line-height: 1.5;
+  text-align: center;
 }
 
 .mg-mobile-login__social-btn {

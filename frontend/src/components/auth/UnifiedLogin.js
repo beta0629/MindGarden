@@ -53,7 +53,9 @@ import {
   LOGIN_IDENTIFIER_FIELD_HINT,
   LOGIN_IDENTIFIER_LABEL,
   LOGIN_IDENTIFIER_PASSWORD_REQUIRED,
-  LOGIN_IDENTIFIER_PLACEHOLDER
+  LOGIN_IDENTIFIER_PLACEHOLDER,
+  OAUTH_SIGNUP_REQUIRED_PROMPT,
+  OAUTH_POST_SIGNUP_LOGIN_REMINDER
 } from '../../constants/loginDisplay';
 
 const UnifiedLogin = () => {
@@ -351,13 +353,16 @@ const UnifiedLogin = () => {
       const name = searchParams.get('name') || '';
       const nickname = searchParams.get('nickname') || '';
       const tenantId = searchParams.get('tenantId') || sessionStorage.getItem('subdomain_tenant_id');
+      const providerUpper = String(provider || '').trim().toUpperCase();
 
-      console.log('📝 간편 회원가입 필요 감지 (signup=required):', { provider, tenantId, email });
-      // 사용자 안내 메시지 (표준: notificationManager 사용, alert 금지)
-      notificationManager.show(`${provider} 소셜 로그인 성공! 회원가입을 완료해주세요.`, 'success');
+      console.log('📝 간편 회원가입 필요 감지 (signup=required):', { provider: providerUpper, tenantId, email });
+      notificationManager.show(
+        OAUTH_SIGNUP_REQUIRED_PROMPT,
+        'info'
+      );
 
       setSocialUserInfo({
-        provider,
+        provider: providerUpper || provider,
         providerUserId: searchParams.get('providerUserId') || null,
         email,
         name,
@@ -986,7 +991,10 @@ const UnifiedLogin = () => {
           socialUser={socialUserInfo}
           onSignupSuccess={(response) => {
             console.log('✅ 소셜 회원가입 성공:', response);
-            notificationManager.show('회원가입이 완료되었습니다. 로그인해주세요.', 'success');
+            notificationManager.show(
+              OAUTH_POST_SIGNUP_LOGIN_REMINDER,
+              'success'
+            );
             setShowSocialSignupModal(false);
             navigate('/login');
           }}

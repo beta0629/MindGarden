@@ -4,12 +4,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
-import { LOGIN_SESSION_CHECK_DELAY } from '../../constants/session';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import SocialSignupModal from './SocialSignupModal';
 import AccountIntegrationModal from './AccountIntegrationModal';
 import TenantSelection from './TenantSelection';
-import { API_BASE_URL } from '../../constants/api';
 import { toDisplayString } from '../../utils/safeDisplay';
 import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -24,6 +22,12 @@ import {
   buildOAuthAccountSelectionCandidatePrimaryLine,
   buildOAuthAccountSelectionCandidateSecondaryLine
 } from '../../constants/oauthAccountSelectionStrings';
+import {
+  OAUTH_ACCOUNT_LINK_PROMPT,
+  OAUTH_POST_SIGNUP_LOGIN_REMINDER,
+  OAUTH_SIGNUP_REQUIRED_PROMPT,
+  OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT
+} from '../../constants/loginDisplay';
 
 /** OAuth2 리다이렉트 error 쿼리 표시 상한 (민감·과다 노출 완화) */
 const OAUTH2_ERROR_QUERY_DISPLAY_MAX_LEN = 200;
@@ -81,7 +85,10 @@ const OAuth2Callback = () => {
         refreshToken: data.refreshToken
       });
       setShowPhoneAccountSelectionModal(false);
-      notificationManager.show(`${phoneSelectionProvider} 소셜 로그인에 성공했습니다!`, 'success');
+      notificationManager.show(
+        toDisplayString(OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT, OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT),
+        'success'
+      );
       const authResponse = { success: true, user: userInfo, currentTenantRole: null };
       await redirectToDynamicDashboard(authResponse, navigate);
     } catch (e) {
@@ -166,6 +173,13 @@ const OAuth2Callback = () => {
           return;
         }
 
+        const parsedOAuthUserId =
+          userId != null && String(userId).trim() !== '' ? parseInt(userId, 10) : NaN;
+        const hasOAuthUserSessionParams =
+          oauthSucceeded &&
+          Number.isFinite(parsedOAuthUserId) &&
+          parsedOAuthUserId > 0;
+
         const accountSelection = searchParams.get('accountSelection');
         const selectionToken = searchParams.get('selectionToken');
         if (
@@ -215,7 +229,10 @@ const OAuth2Callback = () => {
           console.log('🔗 OAuth2 계정 통합 필요:', { provider, email, name, nickname });
           
           // 성공 메시지 표시
-          notificationManager.show(`${provider} 소셜 로그인 성공! 기존 계정과 연결해주세요.`, 'success');
+          notificationManager.show(
+            toDisplayString(OAUTH_ACCOUNT_LINK_PROMPT, OAUTH_ACCOUNT_LINK_PROMPT),
+            'info'
+          );
           
           // SNS 사용자 정보 설정
           const userData = {
@@ -234,8 +251,8 @@ const OAuth2Callback = () => {
           return;
         }
         
-        // 회원가입이 필요한 경우
-        if (requiresSignup === 'true') {
+        // 회원가입이 필요한 경우(미등록 소셜). JWT·userId가 이미 있으면 (a)~(d) 매칭 로그인으로 간주하고 이 분기는 건너뜀.
+        if (requiresSignup === 'true' && !hasOAuthUserSessionParams) {
           console.log('📝 OAuth2 회원가입 필요:', { provider, email, name, nickname });
           
           // 학원 시스템 회원가입 모드 확인
@@ -270,9 +287,11 @@ const OAuth2Callback = () => {
           // 서브도메인에서 감지한 tenant_id 확인 (URL 파라미터 또는 sessionStorage)
           const detectedTenantId = tenantId || sessionStorage.getItem('subdomain_tenant_id');
           
-          // 일반 회원가입 모드
-          // 성공 메시지 표시
-          notificationManager.show(`${provider} 소셜 로그인 성공! 회원가입을 완료해주세요.`, 'success');
+          // 일반 회원가입 모드 — success 토스트는 “가입 완료”로 오인되므로 info + SSOT 문구
+          notificationManager.show(
+            toDisplayString(OAUTH_SIGNUP_REQUIRED_PROMPT, OAUTH_SIGNUP_REQUIRED_PROMPT),
+            'info'
+          );
           
           // SNS 사용자 정보 설정
           const userData = {
@@ -297,154 +316,175 @@ const OAuth2Callback = () => {
           return;
         }
         
-        // 성공적인 OAuth2 로그인 처리 (기존 사용자)
+        // 성공적인 OAuth2 로그인 처리 (기존 사용자·(c)(d) 이메일/파생 ID 매칭 등)
         console.log('✅ OAuth2 로그인 성공:', { provider, userId, email, name, nickname, role });
         console.log('🔍 OAuth2 콜백 URL 파라미터:', { userId, email, name, nickname, role, provider });
-        
-        // 성공 메시지 표시
-        notificationManager.show(`${provider} 소셜 로그인에 성공했습니다!`, 'success');
-        
+
+        if (!hasOAuthUserSessionParams) {
+          setError('OAuth2 로그인 정보가 불완전합니다. 다시 시도해 주세요.');
+          notificationManager.show(
+            toDisplayString('OAuth2 로그인 정보가 불완전합니다. 다시 시도해 주세요.'),
+            'error'
+          );
+          setTimeout(() => navigate('/login'), 3000);
+          return;
+        }
+
+        notificationManager.show(
+          toDisplayString(OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT, OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT),
+          'success'
+        );
+
         // 사용자 정보를 중앙 세션에 설정
-        if (userId && email) {
-          const userInfo = {
-            id: parseInt(userId),
+        const userInfo = {
+          id: parsedOAuthUserId,
+          email: email || '',
+          name: name,
+          nickname: nickname,
+          role: role,
+          profileImageUrl: profileImageUrl,
+          provider: provider,
+          ...(tenantId ? { tenantId } : {}),
+          // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
+          branchId: branchId ? parseInt(branchId, 10) : null,
+          branchName: branchName,
+          // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
+          branchCode: branchCode,
+          needsBranchMapping: needsBranchMapping === 'true'
+        };
+
+        // 지점 매핑이 필요한 경우 로그인하지 않고 모달 표시
+        if (userInfo.needsBranchMapping) {
+          console.log('🏢 지점 매핑 필요 - 로그인 중단하고 모달 표시');
+          setSocialUserData({
+            provider: provider,
             email: email,
             name: name,
             nickname: nickname,
-            role: role,
+            providerUserId: providerUserId,
             profileImageUrl: profileImageUrl,
-            provider: provider,
-            ...(tenantId ? { tenantId } : {}),
-            // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-            branchId: branchId ? parseInt(branchId) : null,
-            branchName: branchName,
-            // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-            branchCode: branchCode,
-            needsBranchMapping: needsBranchMapping === 'true'
-          };
-          
-          // 지점 매핑이 필요한 경우 로그인하지 않고 모달 표시
-          if (userInfo.needsBranchMapping) {
-            console.log('🏢 지점 매핑 필요 - 로그인 중단하고 모달 표시');
-            setSocialUserData({
-              provider: provider,
-              email: email,
-              name: name,
-              nickname: nickname,
-              providerUserId: providerUserId,
-              profileImageUrl: profileImageUrl,
-              needsBranchMapping: true
-            });
-            setShowSignupModal(true);
-            return;
-          }
-          
-          // 중앙 세션에 사용자 정보 설정 (비밀번호 로그인 API 호출 없음)
-          const loginSuccess = await testLogin(userInfo, {
-            accessToken: oauthAccessToken || 'oauth2_token',
-            refreshToken: oauthRefreshToken || 'oauth2_refresh_token'
+            needsBranchMapping: true
           });
-          console.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo);
-          
-          // 멀티 테넌트 사용자 확인
-          const checkMultiTenantAndRedirect = async(userRole) => {
-            try {
-              const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/check-multi`, {
-                credentials: 'include'
-              });
-              
-              if (response.ok) {
-                const responseData = await response.json();
-                // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
-                const data = (responseData && typeof responseData === 'object' && 'success' in responseData && 'data' in responseData)
-                  ? responseData.data
-                  : responseData;
-                if (data.isMultiTenant) {
-                  // 멀티 테넌트 사용자: 테넌트 목록 로드
-                  const tenantsResponse = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/accessible`, {
-                    credentials: 'include'
-                  });
-                  
-                  if (tenantsResponse.ok) {
-                    const tenantsData = await tenantsResponse.json();
-                    if (tenantsData.success) {
-                      const tenants = (tenantsData.tenants || []).map(tenant => ({
-                        tenantId: tenant.tenantId,
-                        tenantName: tenant.name,
-                        businessType: tenant.businessType,
-                        status: tenant.status,
-                        tenantRole: tenant.tenantRole || null
-                      }));
-                      setAccessibleTenants(tenants);
-                      setShowTenantSelection(true);
-                      setIsProcessing(false);
-                      return;
-                    }
-                  }
-                }
+          setShowSignupModal(true);
+          return;
+        }
+
+        // 중앙 세션에 사용자 정보 설정 (비밀번호 로그인 API 호출 없음)
+        const loginSuccess = await testLogin(userInfo, {
+          accessToken: oauthAccessToken || 'oauth2_token',
+          refreshToken: oauthRefreshToken || 'oauth2_refresh_token'
+        });
+        console.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo);
+
+        // 멀티 테넌트 사용자 확인 (X-Tenant-Id: 쿼리·사용자 정보 우선)
+        const checkMultiTenantAndRedirect = async(userRole) => {
+          try {
+            const tenantHeader = (tenantId || userInfo.tenantId || '').trim();
+            const tenantApiOptions =
+              tenantHeader.length > 0
+                ? { headers: { 'X-Tenant-Id': tenantHeader }, unwrapApiEnvelope: false }
+                : { unwrapApiEnvelope: false };
+
+            const checkRaw = await StandardizedApi.get(
+              '/api/v1/auth/tenant/check-multi',
+              {},
+              tenantApiOptions
+            );
+            const checkEnvelope =
+              checkRaw && typeof checkRaw === 'object' ? checkRaw : {};
+            const multiData =
+              'success' in checkEnvelope && 'data' in checkEnvelope
+                ? checkEnvelope.data
+                : checkEnvelope;
+            const checkOk =
+              checkEnvelope.success !== false &&
+              checkRaw != null &&
+              multiData &&
+              typeof multiData === 'object';
+
+            if (checkOk && multiData.isMultiTenant) {
+              const tenantsRaw = await StandardizedApi.get(
+                '/api/v1/auth/tenant/accessible',
+                {},
+                tenantApiOptions
+              );
+              const tenantsEnvelope =
+                tenantsRaw && typeof tenantsRaw === 'object' ? tenantsRaw : {};
+              const tenantsData =
+                'success' in tenantsEnvelope && 'data' in tenantsEnvelope
+                  ? tenantsEnvelope.data
+                  : tenantsEnvelope;
+              const tenantList =
+                (tenantsData && tenantsData.tenants) || tenantsEnvelope.tenants || [];
+              if (Array.isArray(tenantList) && tenantList.length > 0) {
+                const tenants = tenantList.map((tenant) => ({
+                  tenantId: tenant.tenantId,
+                  tenantName: tenant.name,
+                  businessType: tenant.businessType,
+                  status: tenant.status,
+                  tenantRole: tenant.tenantRole || null
+                }));
+                setAccessibleTenants(tenants);
+                setShowTenantSelection(true);
+                setIsProcessing(false);
+                return;
               }
-              
-              // 단일 테넌트 사용자: 동적 대시보드로
-              const authResponse = {
-                success: true,
-                user: userInfo,
-                currentTenantRole: null // TODO: 세션에서 역할 정보 가져오기
-              };
-              await redirectToDynamicDashboard(authResponse, navigate);
-            } catch (error) {
-              console.error('멀티 테넌트 확인 오류:', error);
-              // 오류 시에도 동적 대시보드로 이동
-              const authResponse = {
-                success: true,
-                user: userInfo,
-                currentTenantRole: null
-              };
-              await redirectToDynamicDashboard(authResponse, navigate);
             }
-          };
 
-          // 공통 리다이렉트 함수 사용
-          const redirectToDashboard = (userRole) => {
-            if (userRole) {
-              console.log('🎯 대시보드 리다이렉트 시작:', userRole);
-              console.log('🎯 사용자 정보:', userInfo);
-              
-              // 멀티 테넌트 확인 후 리다이렉트
-              checkMultiTenantAndRedirect(userRole);
-            } else {
-              console.log('🎯 기본 대시보드로 리다이렉트');
-              checkMultiTenantAndRedirect('CLIENT');
-            }
-          };
+            const authResponse = {
+              success: true,
+              user: userInfo,
+              currentTenantRole: null
+            };
+            await redirectToDynamicDashboard(authResponse, navigate);
+          } catch (error) {
+            console.error('멀티 테넌트 확인 오류:', error);
+            const authResponse = {
+              success: true,
+              user: userInfo,
+              currentTenantRole: null
+            };
+            await redirectToDynamicDashboard(authResponse, navigate);
+          }
+        };
 
-          if (loginSuccess) {
-            console.log('✅ 중앙 세션 로그인 성공, 멀티 테넌트 확인 후 대시보드로 리다이렉트 시작');
-            redirectToDashboard(role);
+        // 공통 리다이렉트 함수 사용
+        const redirectToDashboard = (userRole) => {
+          if (userRole) {
+            console.log('🎯 대시보드 리다이렉트 시작:', userRole);
+            console.log('🎯 사용자 정보:', userInfo);
+
+            checkMultiTenantAndRedirect(userRole);
           } else {
-            console.error('❌ OAuth2 중앙 세션 로그인 실패, 재시도...');
-            // 로그인 실패 시 추가 시도
-            setTimeout(async() => {
-              try {
-                console.log('🔄 OAuth2 세션 재확인 시도...');
-                const isLoggedIn = await checkSession(true);
-                if (isLoggedIn && role) {
-                  console.log('✅ 세션 재확인 성공, 대시보드로 리다이렉트');
-                  redirectToDashboard(role);
-                } else {
-                  console.error('❌ 세션 재확인 실패, 강제 리다이렉트 시도');
-                  redirectToDashboard(role);
-                }
-              } catch (error) {
-                console.error('❌ OAuth2 세션 재확인 실패:', error);
-                // 에러가 발생해도 강제 리다이렉트 시도
+            console.log('🎯 기본 대시보드로 리다이렉트');
+            checkMultiTenantAndRedirect('CLIENT');
+          }
+        };
+
+        if (loginSuccess) {
+          console.log('✅ 중앙 세션 로그인 성공, 멀티 테넌트 확인 후 대시보드로 리다이렉트 시작');
+          redirectToDashboard(role);
+        } else {
+          console.error('❌ OAuth2 중앙 세션 로그인 실패, 재시도...');
+          setTimeout(async() => {
+            try {
+              console.log('🔄 OAuth2 세션 재확인 시도...');
+              const isLoggedIn = await checkSession(true);
+              if (isLoggedIn && role) {
+                console.log('✅ 세션 재확인 성공, 대시보드로 리다이렉트');
+                redirectToDashboard(role);
+              } else {
+                console.error('❌ 세션 재확인 실패, 강제 리다이렉트 시도');
                 redirectToDashboard(role);
               }
-            }, 500);
-          }
-          
-          // 세션 스토리지에도 저장 (백업)
-          sessionStorage.setItem('oauth2_user', JSON.stringify(userInfo));
+            } catch (retryErr) {
+              console.error('❌ OAuth2 세션 재확인 실패:', retryErr);
+              redirectToDashboard(role);
+            }
+          }, 500);
         }
+
+        sessionStorage.setItem('oauth2_user', JSON.stringify(userInfo));
         
       } catch (error) {
         console.error('❌ OAuth2 콜백 처리 오류:', error);
@@ -579,7 +619,10 @@ const OAuth2Callback = () => {
           socialUser={socialUserData}
           onSignupSuccess={(response) => {
             console.log('✅ 소셜 회원가입 성공:', response);
-            notificationManager.show('회원가입이 완료되었습니다. 로그인해주세요.', 'success');
+            notificationManager.show(
+              toDisplayString(OAUTH_POST_SIGNUP_LOGIN_REMINDER, OAUTH_POST_SIGNUP_LOGIN_REMINDER),
+              'success'
+            );
             // 로그인 페이지로 이동
             navigate('/login');
           }}

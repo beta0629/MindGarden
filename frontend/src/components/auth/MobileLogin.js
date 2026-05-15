@@ -9,10 +9,15 @@
  * @since 2026-05-12
  */
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { API_BASE_URL } from '../../constants/api';
+import {
+  LOGIN_HUB_SNS_PRIMARY_HINT,
+  OAUTH_SOCIAL_BUTTON_KAKAO,
+  OAUTH_SOCIAL_BUTTON_NAVER
+} from '../../constants/loginDisplay';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import './MobileLogin.css';
@@ -21,6 +26,7 @@ const TENANT_ID_KEY = 'mg_tenant_id';
 
 const MobileLogin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { checkSession } = useSession();
   const [showIdPw, setShowIdPw] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -28,6 +34,13 @@ const MobileLogin = () => {
   const [error, setError] = useState('');
 
   const tenantId = localStorage.getItem(TENANT_ID_KEY) || '';
+
+  useEffect(() => {
+    const q = new URLSearchParams(location.search);
+    if (q.get('signup') === 'required' && q.get('provider')) {
+      navigate(`/login?${q.toString()}`, { replace: true });
+    }
+  }, [location.search, navigate]);
 
   const handleSocialLogin = (provider) => {
     const state = encodeURIComponent(JSON.stringify({ tenantId }));
@@ -41,7 +54,7 @@ const MobileLogin = () => {
     if (error) setError('');
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     if (!formData.email || !formData.password) {
       setError('아이디와 비밀번호를 입력해주세요.');
@@ -56,13 +69,13 @@ const MobileLogin = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(tenantId ? { 'X-Tenant-Id': tenantId } : {}),
+          ...(tenantId ? { 'X-Tenant-Id': tenantId } : {})
         },
         credentials: 'include',
         body: JSON.stringify({
           identifier: formData.email,
-          password: formData.password,
-        }),
+          password: formData.password
+        })
       });
 
       const data = await response.json();
@@ -109,7 +122,7 @@ const MobileLogin = () => {
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <path d="M10 3C5.58 3 2 5.79 2 9.21c0 2.17 1.45 4.07 3.63 5.15l-.93 3.42c-.08.3.26.54.52.37l4.09-2.69c.22.02.44.03.69.03 4.42 0 8-2.79 8-6.28S14.42 3 10 3z" fill="currentColor"/>
             </svg>
-            <span>카카오로 시작하기</span>
+            <span>{OAUTH_SOCIAL_BUTTON_KAKAO}</span>
           </button>
 
           <button
@@ -120,9 +133,13 @@ const MobileLogin = () => {
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <path d="M13.56 10.69L6.17 3H3v14h3.44V9.31L13.83 17H17V3h-3.44v7.69z" fill="currentColor"/>
             </svg>
-            <span>네이버로 시작하기</span>
+            <span>{OAUTH_SOCIAL_BUTTON_NAVER}</span>
           </button>
         </div>
+
+        <p className="mg-mobile-login__sns-hint" role="note">
+          {LOGIN_HUB_SNS_PRIMARY_HINT}
+        </p>
 
         {/* 다른 방법으로 로그인 */}
         <button

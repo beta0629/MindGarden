@@ -19,6 +19,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
+import { SOCIAL_SIGNUP_CHANNEL_HELP } from '../../constants/loginDisplay';
 import '../../styles/auth/social-signup-modal.css';
 
 const statusToFallbackMessage = (status) => {
@@ -400,7 +401,7 @@ const SocialSignupModal = ({
                   </span>
                 )}
                 <span className="mg-v2-form-help">
-                  이후 로그인은 동일 소셜 버튼을 이용합니다. 이메일·비밀번호 로그인은 보조 수단입니다.
+                  {SOCIAL_SIGNUP_CHANNEL_HELP}
                 </span>
               </div>
             )}

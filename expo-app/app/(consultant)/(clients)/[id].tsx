@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Mail, Phone, Calendar as CalendarIcon, FileText } from 'lucide-react-native';
 import { useTheme } from '@/theme';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useClientDetail } from '@/api/hooks/useClients';
 import { Avatar } from '@/components/atoms/Avatar';
 import { Chip } from '@/components/atoms/Chip';
@@ -31,7 +32,10 @@ export default function ConsultantClientDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<TabKey>('info');
 
-  const detailQuery = useClientDetail(id);
+  const user = useAuthStore((s) => s.user);
+  const consultantId = user?.id != null ? String(user.id) : '';
+
+  const detailQuery = useClientDetail({ clientId: id, consultantId });
   const client = detailQuery.data;
   const isLoading = detailQuery.isLoading;
 
@@ -149,7 +153,8 @@ export default function ConsultantClientDetail() {
                   marginTop: theme.spacing.xs,
                 }}
               >
-                등록일: {client.registeredDate} · 총 {client.totalSessions}회 상담
+                등록일: {client.registeredDate} · 총{' '}
+                {Number.isFinite(client.totalSessions) ? client.totalSessions : 0}회 상담
               </Text>
             </View>
 
@@ -197,13 +202,13 @@ export default function ConsultantClientDetail() {
 
               {activeTab === 'history' && (
                 <>
-                  {client.sessionHistory.length === 0 ? (
+                  {(client.sessionHistory ?? []).length === 0 ? (
                     <EmptyState
                       icon={<CalendarIcon size={32} color={theme.colors.textTertiary} />}
                       title="상담 이력이 없습니다"
                     />
                   ) : (
-                    client.sessionHistory.map((session) => (
+                    (client.sessionHistory ?? []).map((session) => (
                       <View
                         key={session.id}
                         style={[
@@ -255,14 +260,14 @@ export default function ConsultantClientDetail() {
 
               {activeTab === 'memo' && (
                 <>
-                  {client.memos.length === 0 ? (
+                  {(client.memos ?? []).length === 0 ? (
                     <EmptyState
                       icon={<FileText size={32} color={theme.colors.textTertiary} />}
                       title="작성된 메모가 없습니다"
                       description="상담 중 메모를 남겨보세요."
                     />
                   ) : (
-                    client.memos.map((m) => (
+                    (client.memos ?? []).map((m) => (
                       <View
                         key={m.id}
                         style={[

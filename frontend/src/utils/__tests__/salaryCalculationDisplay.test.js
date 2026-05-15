@@ -4,13 +4,26 @@ import {
   SALARY_CALC_DETAIL_MERGED_DEDUP_LABEL,
   SALARY_CALC_DETAIL_OPTION_LABEL
 } from '../../constants/salaryConstants';
-import { buildSalaryCalculationComponentRows } from '../salaryCalculationDisplay';
+import {
+  buildSalaryCalculationComponentRows,
+  normalizeSalaryCalculationStatus
+} from '../salaryCalculationDisplay';
 
 const toNum = (v) => {
   if (v == null || v === '') return 0;
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 };
+
+describe('normalizeSalaryCalculationStatus', () => {
+  it('returns uppercased string', () => {
+    expect(normalizeSalaryCalculationStatus('calculated')).toBe('CALCULATED');
+  });
+
+  it('reads enum-like object name', () => {
+    expect(normalizeSalaryCalculationStatus({ name: 'CALCULATED' })).toBe('CALCULATED');
+  });
+});
 
 describe('buildSalaryCalculationComponentRows', () => {
   it('merges duplicate base and commission into one row', () => {

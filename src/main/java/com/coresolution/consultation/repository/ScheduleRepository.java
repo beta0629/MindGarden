@@ -168,6 +168,24 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     List<Schedule> findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
             String tenantId, Long consultantId, Long clientId, ScheduleStatus status);
 
+    /**
+     * 상담사·내담자별 완료(COMPLETED) 일정 중 가장 최근 상담일(날짜 기준 MAX).
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 ID
+     * @param clientIds 내담자 사용자 ID 목록
+     * @param status {@link ScheduleStatus#COMPLETED}
+     * @return [0]=clientId, [1]=maxDate
+     */
+    @Query("SELECT s.clientId, MAX(s.date) FROM Schedule s WHERE s.tenantId = :tenantId "
+            + "AND s.consultantId = :consultantId AND s.isDeleted = false AND s.status = :status "
+            + "AND s.clientId IN :clientIds GROUP BY s.clientId")
+    List<Object[]> findMaxCompletedSessionDateByConsultantAndClientIds(
+            @Param("tenantId") String tenantId,
+            @Param("consultantId") Long consultantId,
+            @Param("clientIds") List<Long> clientIds,
+            @Param("status") ScheduleStatus status);
+
     // ==================== 상태별 스케줄 조회 ====================
     
     /**

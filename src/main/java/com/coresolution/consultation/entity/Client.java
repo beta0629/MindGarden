@@ -10,6 +10,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 /**
  * 클라이언트 엔티티
@@ -102,6 +103,25 @@ public class Client extends AuditableTenantBase {
  */
     @Column(name = "branch_code", length = 20)
     private String branchCode;
+
+    /**
+     * 상담사 맥락 목록 전용(비영속): 매핑의 사용 회기 수를 API 필드명 {@code totalSessions}로 노출.
+     * {@link com.coresolution.consultation.entity.ConsultantClientMapping#getUsedSessions()} 정책.
+     */
+    @Transient
+    private Integer totalSessions;
+
+    /** 상담사·해당 내담자 간 최근 COMPLETED 일정일(없으면 null). */
+    @Transient
+    private LocalDate lastSessionDate;
+
+    /** Expo ClientStatus: ACTIVE, INACTIVE, AT_RISK (매핑 상태 기반). */
+    @Transient
+    private String status;
+
+    /** Expo RiskLevel: LOW, MEDIUM, HIGH, CRITICAL (기본 LOW). */
+    @Transient
+    private String riskLevel;
     
     // 비즈니스 메서드
     // BaseEntity에서 상속받은 softDelete(), restore() 메서드 사용

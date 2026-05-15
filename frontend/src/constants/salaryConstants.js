@@ -87,6 +87,8 @@ export const SALARY_API_ENDPOINTS = {
   CALCULATIONS: '/api/v1/admin/salary/calculations',
   CALCULATION_PERIOD: '/api/v1/admin/salary/calculation-period',
   CONFIRM: '/api/v1/admin/salary/confirm',
+  /** POST 본문 없음: `/approve/{calculationId}` */
+  APPROVE: '/api/v1/admin/salary/approve',
 
   CONFIGS: '/api/v1/admin/salary/configs',
   CONFIG_OPTIONS: '/api/v1/admin/salary/config-options',
@@ -186,6 +188,11 @@ export const SALARY_CSS_CLASSES = {
   FORM_INPUT: 'salary-form-input',
   FORM_SELECT: 'salary-form-select',
   FORM_TEXTAREA: 'salary-form-textarea'
+};
+
+/** 급여 관리(ERP) 화면 액션 버튼 라벨 */
+export const SALARY_ACTION_LABELS = {
+  APPROVE: '승인'
 };
 
 export const SALARY_MESSAGES = {

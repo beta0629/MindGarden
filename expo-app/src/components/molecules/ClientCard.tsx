@@ -53,6 +53,7 @@ export function ClientCard({
   index = 0,
 }: ClientCardProps) {
   const theme = useTheme();
+  const safeTotalSessions = Number.isFinite(totalSessions) ? totalSessions : 0;
 
   const handlePress = () => {
     if (Platform.OS !== 'web') {
@@ -76,7 +77,7 @@ export function ClientCard({
         },
       ]}
       accessibilityRole="button"
-      accessibilityLabel={`${name}, 총 ${totalSessions}회 상담`}
+      accessibilityLabel={`${name}, 총 ${safeTotalSessions}회 상담`}
     >
       <Avatar uri={profileImageUrl} name={name} size="lg" />
 
@@ -107,7 +108,7 @@ export function ClientCard({
           numberOfLines={1}
         >
           {lastSessionDate ? `최근 상담: ${lastSessionDate}` : '상담 이력 없음'}
-          {` · ${totalSessions}회`}
+          {` · ${safeTotalSessions}회`}
         </Text>
 
         {status === 'INACTIVE' ? <Badge variant="gray" label="비활성" size="sm" /> : null}

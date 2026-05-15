@@ -92,6 +92,8 @@ export const PUSH_API = {
 export const CONSULTANT_API = {
   consultantClients: (consultantId: string | number) =>
     `/api/v1/consultants/${consultantId}/clients`,
+  consultantClientDetail: (consultantId: string | number, clientId: string | number) =>
+    `/api/v1/consultants/${encodeURIComponent(String(consultantId))}/clients/${encodeURIComponent(String(clientId))}`,
   consultantDashboard: (consultantId: string | number) =>
     `/api/v1/consultants/${consultantId}/dashboard`,
   consultantAvailability: (consultantId: string | number) =>

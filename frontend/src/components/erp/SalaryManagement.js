@@ -14,16 +14,22 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea } from '../dashboard-v2/content';
 import StandardizedApi from '../../utils/standardizedApi';
 import {
+  SALARY_ACTION_LABELS,
   SALARY_API_ENDPOINTS,
+  SALARY_MESSAGES,
   SALARY_PAY_DAY_FALLBACK_OPTIONS,
   SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL,
   SALARY_PREVIEW_CONSULTATION_FEE_LABEL,
   SALARY_PREVIEW_PRE_TAX_TOTAL_LABEL,
   SALARY_CALC_DETAIL_TAX_DEDUCTIONS_LABEL,
+  SALARY_STATUS,
   TAX_BREAKDOWN_ORDER,
   TAX_BREAKDOWN_LABELS
 } from '../../constants/salaryConstants';
-import { buildSalaryCalculationComponentRows } from '../../utils/salaryCalculationDisplay';
+import {
+  buildSalaryCalculationComponentRows,
+  normalizeSalaryCalculationStatus
+} from '../../utils/salaryCalculationDisplay';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { showNotification } from '../../utils/notification';
@@ -79,6 +85,8 @@ const SalaryManagement = () => {
   const [isConsultantPickerOpen, setIsConsultantPickerOpen] = useState(false);
   const [profileViewMode, setProfileViewMode] = useState('largeCard');
   const [confirmSalaryLoading, setConfirmSalaryLoading] = useState(false);
+  /** 급여 승인 API 진행 중인 calculation.id (동시 요청·중복 클릭 방지). */
+  const [approvingCalculationId, setApprovingCalculationId] = useState(null);
   /** 최초 상담사 목록 페치 1회 완료 여부(초기 인라인 로딩 vs 이후 로딩 오버레이 구분). */
   const [consultantsInitialFetchDone, setConsultantsInitialFetchDone] = useState(false);
 
@@ -354,6 +362,44 @@ const SalaryManagement = () => {
       showNotification('급여 계산 내역을 불러오는데 실패했습니다.', 'error');
     } finally {
       if (!silent) setLoading(false);
+    }
+  };
+
+  /**
+   * 계산완료(CALCULATED) 건만 승인 API 호출 후 목록 갱신.
+   * @param {{ id: number|string, status?: string }} calculation
+   */
+  const handleApproveSalary = async(calculation) => {
+    const cid = selectedConsultant?.id;
+    if (cid == null || calculation?.id == null) {
+      return;
+    }
+    if (normalizeSalaryCalculationStatus(calculation.status) !== SALARY_STATUS.CALCULATED) {
+      return;
+    }
+    try {
+      setApprovingCalculationId(calculation.id);
+      const res = await StandardizedApi.post(
+        `${SALARY_API_ENDPOINTS.APPROVE}/${calculation.id}`,
+        {}
+      );
+      if (res && typeof res === 'object' && res.success === false) {
+        showNotification(
+          toErrorMessage(res?.message, SALARY_MESSAGES.APPROVAL_ERROR),
+          'error'
+        );
+      } else {
+        showNotification(SALARY_MESSAGES.APPROVAL_SUCCESS, 'success');
+        await loadSalaryCalculations(cid, { silent: true });
+      }
+    } catch (err) {
+      console.error('급여 승인 API 오류:', err);
+      showNotification(
+        toErrorMessage(err, SALARY_MESSAGES.APPROVAL_ERROR),
+        'error'
+      );
+    } finally {
+      setApprovingCalculationId(null);
     }
   };
 
@@ -1104,6 +1150,24 @@ const SalaryManagement = () => {
                           >
                             세금 내역 보기
                           </MGButton>
+                          {normalizeSalaryCalculationStatus(calculation.status) === SALARY_STATUS.CALCULATED && (
+                            <MGButton
+                              variant="primary"
+                              size="small"
+                              onClick={() => handleApproveSalary(calculation)}
+                              disabled={approvingCalculationId !== null}
+                              loading={approvingCalculationId === calculation.id}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                              className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'sm',
+                                loading: approvingCalculationId === calculation.id
+                              })}
+                              aria-label={SALARY_ACTION_LABELS.APPROVE}
+                            >
+                              {SALARY_ACTION_LABELS.APPROVE}
+                            </MGButton>
+                          )}
                           <MGButton
                             variant="primary"
                             size="small"

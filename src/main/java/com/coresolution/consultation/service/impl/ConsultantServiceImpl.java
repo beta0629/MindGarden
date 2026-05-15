@@ -1,19 +1,27 @@
 package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.ConsultantConstants;
+import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.dto.ConsultantClientDetailResponse;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
+import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.ConsultantService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
@@ -43,9 +51,9 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         implements ConsultantService {
     
     private final ConsultantRepository consultantRepository;
-    
-    @Autowired
-    private ConsultantClientMappingRepository mappingRepository;
+    private final ConsultantClientMappingRepository mappingRepository;
+    private final ScheduleRepository scheduleRepository;
+    private final ClientRepository clientRepository;
     
     @Autowired
     private PersonalDataEncryptionUtil encryptionUtil;
@@ -53,9 +61,15 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     public ConsultantServiceImpl(
             ConsultantRepository consultantRepository,
-            TenantAccessControlService accessControlService) {
+            TenantAccessControlService accessControlService,
+            ConsultantClientMappingRepository mappingRepository,
+            ScheduleRepository scheduleRepository,
+            ClientRepository clientRepository) {
         super(consultantRepository, accessControlService);
         this.consultantRepository = consultantRepository;
+        this.mappingRepository = mappingRepository;
+        this.scheduleRepository = scheduleRepository;
+        this.clientRepository = clientRepository;
     }
     
     /**
@@ -414,10 +428,8 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
             return new org.springframework.data.domain.PageImpl<>(new java.util.ArrayList<>(), pageable, 0);
         }
         
-        Consultant consultant = consultantRepository.findByTenantIdAndId(tenantId, consultantId)
+        consultantRepository.findByTenantIdAndId(tenantId, consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
-        
-        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
         List<ConsultantClientMapping> mappings;
         if (status != null && !status.trim().isEmpty()) {
@@ -442,31 +454,126 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
                 ConsultantClientMapping.MappingStatus.INACTIVE);
         }
         
-        List<Client> clients = mappings.stream()
-                .map(mapping -> {
-                    User user = mapping.getClient();
-                    Client client = new Client();
-                    client.setId(user.getId());
-                    client.setName(user.getName());
-                    client.setEmail(user.getEmail());
-                    client.setPhone(user.getPhone());
-                    client.setBranchCode(user.getBranchCode());
-                    client.setCreatedAt(user.getCreatedAt());
-                    client.setUpdatedAt(user.getUpdatedAt());
-                    return client;
-                })
-                .distinct()
-                .collect(java.util.stream.Collectors.toList());
+        List<Long> orderedClientIds = new ArrayList<>();
+        Map<Long, ConsultantClientMapping> primaryMappingByClientId = new LinkedHashMap<>();
+        for (ConsultantClientMapping mapping : mappings) {
+            User user = mapping.getClient();
+            if (user == null || user.getId() == null) {
+                continue;
+            }
+            Long cid = user.getId();
+            ConsultantClientMapping existing = primaryMappingByClientId.get(cid);
+            if (existing == null) {
+                orderedClientIds.add(cid);
+                primaryMappingByClientId.put(cid, mapping);
+                continue;
+            }
+            LocalDateTime newStart = mapping.getStartDate();
+            LocalDateTime oldStart = existing.getStartDate();
+            if (newStart != null && (oldStart == null || newStart.isAfter(oldStart))) {
+                primaryMappingByClientId.put(cid, mapping);
+            }
+        }
+        
+        Map<Long, LocalDate> lastDates = loadLastCompletedSessionDates(tenantId, consultantId, orderedClientIds);
+        
+        List<Client> clients = new ArrayList<>();
+        for (Long cid : orderedClientIds) {
+            ConsultantClientMapping mapping = primaryMappingByClientId.get(cid);
+            User user = mapping.getClient();
+            Client client = buildClientFromUser(user);
+            applyConsultantMappingDerivedFields(client, mapping, lastDates.get(cid));
+            clients.add(client);
+        }
         
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), clients.size());
-        List<Client> pageContent = clients.subList(start, end);
+        List<Client> pageContent = start >= clients.size()
+                ? new ArrayList<>()
+                : clients.subList(start, end);
         
         return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, clients.size());
     }
     
+    private Map<Long, LocalDate> loadLastCompletedSessionDates(String tenantId, Long consultantId,
+            List<Long> clientIds) {
+        if (clientIds == null || clientIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Object[]> rows = scheduleRepository.findMaxCompletedSessionDateByConsultantAndClientIds(
+                tenantId, consultantId, clientIds, ScheduleStatus.COMPLETED);
+        Map<Long, LocalDate> out = new HashMap<>();
+        for (Object[] row : rows) {
+            if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
+                continue;
+            }
+            Long cid = ((Number) row[0]).longValue();
+            LocalDate maxDate = (LocalDate) row[1];
+            out.put(cid, maxDate);
+        }
+        return out;
+    }
+    
+    private static String mapMappingStatusToAppClientStatus(ConsultantClientMapping.MappingStatus mappingStatus) {
+        if (mappingStatus == null) {
+            return "ACTIVE";
+        }
+        switch (mappingStatus) {
+            case INACTIVE:
+            case TERMINATED:
+                return "INACTIVE";
+            case SUSPENDED:
+            case SESSIONS_EXHAUSTED:
+                return "AT_RISK";
+            default:
+                return "ACTIVE";
+        }
+    }
+    
+    private static String mapMappingStatusToAppRiskLevel(ConsultantClientMapping.MappingStatus mappingStatus) {
+        if (mappingStatus == ConsultantClientMapping.MappingStatus.SUSPENDED
+                || mappingStatus == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
+            return "MEDIUM";
+        }
+        return "LOW";
+    }
+    
+    private static Client buildClientFromUser(User user) {
+        Client client = new Client();
+        client.setId(user.getId());
+        client.setName(user.getName());
+        client.setEmail(user.getEmail());
+        client.setPhone(user.getPhone());
+        client.setBranchCode(user.getBranchCode());
+        client.setCreatedAt(user.getCreatedAt());
+        client.setUpdatedAt(user.getUpdatedAt());
+        return client;
+    }
+    
+    /**
+     * totalSessions API 필드에는 매핑의 usedSessions(사용·차감 회기 수)를 넣는다.
+     */
+    private static void applyConsultantMappingDerivedFields(Client client, ConsultantClientMapping mapping,
+            LocalDate lastCompletedSessionDate) {
+        int used = mapping.getUsedSessions() != null ? Math.max(0, mapping.getUsedSessions()) : 0;
+        client.setTotalSessions(used);
+        client.setLastSessionDate(lastCompletedSessionDate);
+        client.setStatus(mapMappingStatusToAppClientStatus(mapping.getStatus()));
+        client.setRiskLevel(mapMappingStatusToAppRiskLevel(mapping.getStatus()));
+    }
+    
+    private static String firstNonBlankNotes(String specialConsiderations, String notes) {
+        if (specialConsiderations != null && !specialConsiderations.trim().isEmpty()) {
+            return specialConsiderations;
+        }
+        if (notes != null && !notes.trim().isEmpty()) {
+            return notes;
+        }
+        return null;
+    }
+    
     @Override
-    public Optional<Client> findClientByConsultantId(Long consultantId, Long clientId) {
+    public Optional<ConsultantClientDetailResponse> findClientByConsultantId(Long consultantId, Long clientId) {
         log.info("상담사별 특정 내담자 조회: consultantId={}, clientId={}", consultantId, clientId);
         
         String tenantId = TenantContextHolder.getTenantId();
@@ -475,29 +582,53 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
             return Optional.empty();
         }
         
-        Consultant consultant = consultantRepository.findByTenantIdAndId(tenantId, consultantId)
+        consultantRepository.findByTenantIdAndId(tenantId, consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
+        List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId,
+                consultantId, ConsultantClientMapping.MappingStatus.INACTIVE);
         
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId, ConsultantClientMapping.MappingStatus.INACTIVE);
+        Optional<ConsultantClientMapping> mappingOpt = mappings.stream()
+                .filter(m -> m.getClient() != null && clientId.equals(m.getClient().getId()))
+                .max(Comparator.comparing(ConsultantClientMapping::getStartDate,
+                        Comparator.nullsFirst(Comparator.naturalOrder())));
         
-        return mappings.stream()
-                .map(mapping -> {
-                    User user = mapping.getClient();
-                    Client client = new Client();
-                    client.setId(user.getId());
-                    client.setName(user.getName());
-                    client.setEmail(user.getEmail());
-                    client.setPhone(user.getPhone());
-                    client.setBranchCode(user.getBranchCode());
-                    client.setCreatedAt(user.getCreatedAt());
-                    client.setUpdatedAt(user.getUpdatedAt());
-                    return client;
-                })
-                .filter(client -> client.getId().equals(clientId))
-                .findFirst();
+        if (mappingOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        ConsultantClientMapping mapping = mappingOpt.get();
+        User user = mapping.getClient();
+        
+        Optional<Client> profileOpt = clientRepository.findByTenantIdAndId(tenantId, clientId);
+        Map<Long, LocalDate> lastDates = loadLastCompletedSessionDates(tenantId, consultantId, List.of(clientId));
+        LocalDate lastSessionDate = lastDates.get(clientId);
+        int totalSessions = mapping.getUsedSessions() != null ? Math.max(0, mapping.getUsedSessions()) : 0;
+        
+        Client profile = profileOpt.orElse(null);
+        DateTimeFormatter isoDate = DateTimeFormatter.ISO_LOCAL_DATE;
+        
+        ConsultantClientDetailResponse dto = ConsultantClientDetailResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .registeredDate(user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate().format(isoDate) : null)
+                .lastSessionDate(lastSessionDate)
+                .status(mapMappingStatusToAppClientStatus(mapping.getStatus()))
+                .riskLevel(mapMappingStatusToAppRiskLevel(mapping.getStatus()))
+                .totalSessions(totalSessions)
+                .consultationPurpose(profile != null ? profile.getConsultationPurpose() : null)
+                .specialNotes(firstNonBlankNotes(mapping.getSpecialConsiderations(), mapping.getNotes()))
+                .birthDate(profile != null ? profile.getBirthDate() : null)
+                .gender(profile != null ? profile.getGender() : null)
+                .occupation(null)
+                .nickname(null)
+                .profileImageUrl(null)
+                .sessionHistory(new ArrayList<>())
+                .memos(new ArrayList<>())
+                .build();
+        
+        return Optional.of(dto);
     }
     
     @Override

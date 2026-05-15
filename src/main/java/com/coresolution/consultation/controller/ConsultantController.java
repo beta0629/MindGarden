@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.constant.ConsultantConstants;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.ConsultantClientDetailResponse;
 import com.coresolution.consultation.dto.ConsultantScheduleSettingsDto;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.Consultant;
@@ -175,13 +176,13 @@ public class ConsultantController extends BaseApiController {
      * GET /api/v1/consultants/{consultantId}/clients/{clientId}
      */
     @GetMapping("/{consultantId}/clients/{clientId}")
-    public ResponseEntity<ApiResponse<Client>> getClientByConsultant(
+    public ResponseEntity<ApiResponse<ConsultantClientDetailResponse>> getClientByConsultant(
             @PathVariable Long consultantId,
             @PathVariable Long clientId) {
         
         log.info("상담사별 내담자 상세 정보 조회 - consultantId: {}, clientId: {}", consultantId, clientId);
 
-        Client client = consultantService.findClientByConsultantId(consultantId, clientId)
+        ConsultantClientDetailResponse client = consultantService.findClientByConsultantId(consultantId, clientId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CLIENT_NOT_FOUND));
 
         return success(client);

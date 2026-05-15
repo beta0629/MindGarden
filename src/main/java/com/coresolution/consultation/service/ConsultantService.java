@@ -5,6 +5,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.dto.ConsultantClientDetailResponse;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.Consultant;
 import org.springframework.data.domain.Page;
@@ -57,9 +58,9 @@ public interface ConsultantService extends BaseService<Consultant, Long> {
     Page<Client> findClientsByConsultantId(Long consultantId, String status, Pageable pageable);
     
     /**
-     * 상담사별 내담자 상세 정보 조회
+     * 상담사별 내담자 상세 정보 조회 (상담 이력·메모 목록은 DTO에서 빈 배열 기본).
      */
-    Optional<Client> findClientByConsultantId(Long consultantId, Long clientId);
+    Optional<ConsultantClientDetailResponse> findClientByConsultantId(Long consultantId, Long clientId);
     
     /**
      * 상담사별 내담자 프로필 수정

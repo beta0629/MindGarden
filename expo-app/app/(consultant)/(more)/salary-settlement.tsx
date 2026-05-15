@@ -4,8 +4,10 @@
  * @author MindGarden
  * @since 2026-05-15
  */
+import { useCallback, useRef } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { AlertCircle, Wallet } from 'lucide-react-native';
 import { useTheme } from '@/theme';
@@ -58,6 +60,20 @@ export default function ConsultantSalarySettlementScreen() {
   const hasUser = Boolean(user?.id);
   const { data, isLoading, isError, error, refetch, isFetching, isSuccess } =
     useConsultantSalarySettlements({ enabled: hasUser });
+
+  const didFocusOnceRef = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasUser) {
+        return;
+      }
+      if (!didFocusOnceRef.current) {
+        didFocusOnceRef.current = true;
+        return;
+      }
+      void refetch();
+    }, [hasUser, refetch]),
+  );
 
   const rows = Array.isArray(data) ? data : [];
 

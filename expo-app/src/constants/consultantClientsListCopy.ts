@@ -14,4 +14,6 @@ export const CONSULTANT_CLIENTS_LIST_COPY = {
   NO_USER_DESCRIPTION: '로그인 정보가 없어 목록을 불러올 수 없습니다. 다시 로그인해 주세요.',
   INVALID_RESPONSE: '내담자 목록 응답 형식이 올바르지 않습니다.',
   API_REJECTED_FALLBACK: '내담자 목록을 가져올 수 없습니다.',
+  DETAIL_INVALID_RESPONSE: '내담자 상세 응답 형식이 올바르지 않습니다.',
+  DETAIL_API_REJECTED_FALLBACK: '내담자 상세를 가져올 수 없습니다.',
 } as const;

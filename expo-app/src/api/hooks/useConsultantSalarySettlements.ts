@@ -6,6 +6,8 @@
  * @since 2026-05-15
  */
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
+import { CONSULTANT_SALARY_SETTLEMENT_COPY } from '@/constants/consultantSalarySettlementCopy';
+import { toDisplayString } from '@/utils/safeDisplay';
 import { apiGet } from '../client';
 import { CONSULTANT_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
@@ -52,6 +54,17 @@ export function useConsultantSalarySettlements(
     queryKey: QUERY_KEYS.list(),
     queryFn: async () => {
       const raw = await apiGet(CONSULTANT_API.MY_SALARY_CALCULATIONS);
+      if (raw != null && typeof raw === 'object') {
+        const root = raw as Record<string, unknown>;
+        if (root.success === false) {
+          throw new Error(
+            toDisplayString(
+              root.message ?? root.error ?? root.code,
+              CONSULTANT_SALARY_SETTLEMENT_COPY.LIST_FETCH_FAILED,
+            ),
+          );
+        }
+      }
       return normalizeList(raw);
     },
     enabled: options?.enabled ?? true,

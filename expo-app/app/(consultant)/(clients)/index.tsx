@@ -10,7 +10,7 @@ import { View, Text, StyleSheet, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { Users as UsersIcon } from 'lucide-react-native';
+import { AlertCircle, Users as UsersIcon } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useConsultantClients, type ClientStatus } from '@/api/hooks/useClients';
@@ -19,6 +19,8 @@ import { ClientCard } from '@/components/molecules/ClientCard';
 import { Chip } from '@/components/atoms/Chip';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { EmptyState } from '@/components/atoms/EmptyState';
+import { CONSULTANT_CLIENTS_LIST_COPY } from '@/constants/consultantClientsListCopy';
+import { toDisplayString } from '@/utils/safeDisplay';
 
 type FilterTab = 'ALL' | ClientStatus;
 
@@ -29,16 +31,28 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: 'INACTIVE', label: '비활성' },
 ];
 
+function getQueryErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) {
+    return toDisplayString(error.message, fallback);
+  }
+  if (error != null && typeof error === 'object' && 'message' in error) {
+    return toDisplayString((error as { message: unknown }).message, fallback);
+  }
+  return fallback;
+}
+
 export default function ConsultantClients() {
   const theme = useTheme();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const consultantId = user?.id != null ? String(user.id) : '';
+  const hasConsultantSession = consultantId.length > 0;
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterTab>('ALL');
 
   const clientsQuery = useConsultantClients({
-    consultantId: user?.id ?? '',
+    consultantId,
     search: search || undefined,
     status: filter,
   });
@@ -60,6 +74,10 @@ export default function ConsultantClients() {
       clientsQuery.fetchNextPage();
     }
   };
+
+  const emptySearchDescription = search
+    ? `"${toDisplayString(search, '')}"${CONSULTANT_CLIENTS_LIST_COPY.EMPTY_SEARCH_SUFFIX}`
+    : CONSULTANT_CLIENTS_LIST_COPY.EMPTY_NO_SEARCH;
 
   return (
     <SafeAreaView
@@ -96,22 +114,35 @@ export default function ConsultantClients() {
         </View>
       </View>
 
-      {isLoading ? (
+      {!hasConsultantSession ? (
+        <EmptyState
+          icon={<AlertCircle size={32} color={theme.colors.textTertiary} />}
+          title={CONSULTANT_CLIENTS_LIST_COPY.NO_USER_TITLE}
+          description={CONSULTANT_CLIENTS_LIST_COPY.NO_USER_DESCRIPTION}
+        />
+      ) : clientsQuery.isError ? (
+        <EmptyState
+          icon={<AlertCircle size={32} color={theme.colors.error} />}
+          title={CONSULTANT_CLIENTS_LIST_COPY.LOAD_ERROR}
+          description={getQueryErrorMessage(
+            clientsQuery.error,
+            CONSULTANT_CLIENTS_LIST_COPY.LOAD_ERROR,
+          )}
+          actionLabel={CONSULTANT_CLIENTS_LIST_COPY.RETRY}
+          onAction={() => clientsQuery.refetch()}
+        />
+      ) : isLoading ? (
         <View style={[styles.listPadding, { paddingHorizontal: theme.spacing.lg }]}>
           <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
         </View>
-      ) : clients.length === 0 ? (
+      ) : clientsQuery.isSuccess && clients.length === 0 ? (
         <EmptyState
           icon={<UsersIcon size={32} color={theme.colors.textTertiary} />}
-          title="등록된 내담자가 없습니다"
-          description={
-            search
-              ? `"${search}"에 해당하는 내담자를 찾을 수 없습니다.`
-              : '아직 배정된 내담자가 없습니다.'
-          }
+          title={CONSULTANT_CLIENTS_LIST_COPY.EMPTY_TITLE}
+          description={emptySearchDescription}
         />
       ) : (
         <FlashList

@@ -6,6 +6,7 @@
  * @since 2026-05-12
  */
 import { useCallback, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   View,
   Text,
@@ -21,12 +22,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { ArrowLeft, Phone, MessageCircle } from 'lucide-react-native';
-import { useTheme } from '@/theme';
+import { useTheme, type AppTheme } from '@/theme';
 import {
   useScheduleDetail,
   useStartConsultation,
   useCompleteConsultation,
+  type ScheduleDetail,
 } from '@/api/hooks/useSchedules';
+import { useConsultationRecordExistsForSchedule } from '@/api/hooks/useRecords';
+import { CONSULTANT_SCHEDULE_DETAIL_COPY } from '@/constants/consultantScheduleDetailCopy';
 import {
   canShowConsultantScheduleStartButton,
   getConsultantScheduleCardFooterHint,
@@ -56,6 +60,198 @@ const STATUS_VARIANT: Record<string, 'info' | 'warning' | 'success' | 'gray' | '
   NO_SHOW: 'error',
 };
 
+interface ConsultantScheduleSessionActionContentProps {
+  theme: AppTheme;
+  canRunSessionActions: boolean;
+  showStartButton: boolean;
+  showCompleteButton: boolean;
+  showWriteRecordBeforeComplete: boolean;
+  scheduleStatus: string | undefined;
+  recordExistsQueryLoading: boolean;
+  startMutationPending: boolean;
+  completeMutationPending: boolean;
+  onStart: () => void;
+  onComplete: () => void;
+  onWriteRecord: () => void;
+}
+
+/**
+ * 진행 중 스케줄의 시작·일지 확인·완료·일지 작성 CTA 분기
+ */
+function buildConsultantScheduleSessionActionContent(
+  props: ConsultantScheduleSessionActionContentProps,
+): ReactNode {
+  const {
+    theme,
+    canRunSessionActions,
+    showStartButton,
+    showCompleteButton,
+    showWriteRecordBeforeComplete,
+    scheduleStatus,
+    recordExistsQueryLoading,
+    startMutationPending,
+    completeMutationPending,
+    onStart,
+    onComplete,
+    onWriteRecord,
+  } = props;
+
+  if (!canRunSessionActions) {
+    return null;
+  }
+  if (showStartButton) {
+    return (
+      <Pressable
+        onPress={onStart}
+        disabled={startMutationPending}
+        style={[
+          styles.primaryButton,
+          {
+            backgroundColor: theme.colors.primary,
+            borderRadius: theme.borderRadius.lg,
+            paddingVertical: theme.spacing.md,
+            opacity: startMutationPending ? 0.6 : 1,
+          },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={CONSULTANT_SCHEDULE_DETAIL_COPY.START_BUTTON_A11Y}
+      >
+        <Text
+          style={{
+            color: theme.colors.textOnPrimary,
+            fontFamily: theme.fontFamily.semibold,
+            fontSize: theme.fontSize.base,
+            textAlign: 'center',
+          }}
+        >
+          {CONSULTANT_SCHEDULE_DETAIL_COPY.START_BUTTON}
+        </Text>
+      </Pressable>
+    );
+  }
+  if (scheduleStatus === 'IN_PROGRESS' && recordExistsQueryLoading) {
+    return (
+      <View
+        style={[styles.primaryButton, { minHeight: 48, justifyContent: 'center' }]}
+        accessibilityRole="progressbar"
+        accessibilityLabel={CONSULTANT_SCHEDULE_DETAIL_COPY.RECORD_EXISTENCE_CHECK_A11Y}
+      >
+        <SkeletonLoader
+          height={48}
+          style={{ width: '100%', borderRadius: theme.borderRadius.lg }}
+        />
+      </View>
+    );
+  }
+  if (showCompleteButton) {
+    return (
+      <Pressable
+        onPress={onComplete}
+        disabled={completeMutationPending}
+        style={[
+          styles.primaryButton,
+          {
+            backgroundColor: theme.colors.success,
+            borderRadius: theme.borderRadius.lg,
+            paddingVertical: theme.spacing.md,
+            opacity: completeMutationPending ? 0.6 : 1,
+          },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={CONSULTANT_SCHEDULE_DETAIL_COPY.COMPLETE_BUTTON_A11Y}
+      >
+        <Text
+          style={{
+            color: theme.colors.textOnPrimary,
+            fontFamily: theme.fontFamily.semibold,
+            fontSize: theme.fontSize.base,
+            textAlign: 'center',
+          }}
+        >
+          {CONSULTANT_SCHEDULE_DETAIL_COPY.COMPLETE_BUTTON}
+        </Text>
+      </Pressable>
+    );
+  }
+  if (showWriteRecordBeforeComplete) {
+    return (
+      <Pressable
+        onPress={onWriteRecord}
+        style={[
+          styles.primaryButton,
+          {
+            backgroundColor: theme.colors.primary,
+            borderRadius: theme.borderRadius.lg,
+            paddingVertical: theme.spacing.md,
+          },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={CONSULTANT_SCHEDULE_DETAIL_COPY.WRITE_RECORD_FOR_COMPLETE_CTA_A11Y}
+      >
+        <MessageCircle
+          size={18}
+          color={theme.colors.textOnPrimary}
+          style={{ marginRight: theme.spacing.sm }}
+        />
+        <Text
+          style={{
+            color: theme.colors.textOnPrimary,
+            fontFamily: theme.fontFamily.semibold,
+            fontSize: theme.fontSize.base,
+          }}
+        >
+          {CONSULTANT_SCHEDULE_DETAIL_COPY.WRITE_RECORD_FOR_COMPLETE_CTA}
+        </Text>
+      </Pressable>
+    );
+  }
+  return null;
+}
+
+function canEditConsultantScheduleMemo(schedule: ScheduleDetail | undefined): boolean {
+  if (!schedule) {
+    return false;
+  }
+  const st = schedule.status;
+  return st === 'BOOKED' || st === 'CONFIRMED' || st === 'SCHEDULED' || st === 'IN_PROGRESS';
+}
+
+function consultantScheduleStatusFooterText(
+  schedule: ScheduleDetail | undefined,
+): string | undefined {
+  if (!schedule) {
+    return undefined;
+  }
+  return getConsultantScheduleCardFooterHint(schedule).text;
+}
+
+interface RecordExistenceQuerySlice {
+  data: boolean | undefined;
+  isLoading: boolean;
+}
+
+function deriveConsultantScheduleSessionFlags(
+  schedule: ScheduleDetail | undefined,
+  recordExists: RecordExistenceQuerySlice,
+) {
+  const hasConsultationRecord = recordExists.data === true;
+  const showCompleteButton = Boolean(
+    schedule?.status === 'IN_PROGRESS' && hasConsultationRecord && !recordExists.isLoading,
+  );
+  const showWriteRecordBeforeComplete = Boolean(
+    schedule?.status === 'IN_PROGRESS' && !recordExists.isLoading && !hasConsultationRecord,
+  );
+  const showStartButton = schedule ? canShowConsultantScheduleStartButton(schedule) : false;
+  const canRunSessionActions = showStartButton || schedule?.status === 'IN_PROGRESS';
+  return {
+    showStartButton,
+    hasConsultationRecord,
+    showCompleteButton,
+    showWriteRecordBeforeComplete,
+    canRunSessionActions,
+  };
+}
+
 export default function ConsultantScheduleDetail() {
   const theme = useTheme();
   const router = useRouter();
@@ -68,61 +264,107 @@ export default function ConsultantScheduleDetail() {
 
   const schedule = detailQuery.data;
   const isLoading = detailQuery.isLoading;
+  const recordExistsEnabled = Boolean(id && schedule?.status === 'IN_PROGRESS');
+  const recordExistsQuery = useConsultationRecordExistsForSchedule(id, recordExistsEnabled);
 
   /** 예약·확정·진행 중일 때 메모 편집 허용 */
-  const canEditMemo = schedule
-    ? schedule.status === 'BOOKED' ||
-        schedule.status === 'CONFIRMED' ||
-        schedule.status === 'SCHEDULED' ||
-        schedule.status === 'IN_PROGRESS'
-    : false;
+  const canEditMemo = canEditConsultantScheduleMemo(schedule);
 
-  const showStartButton = schedule ? canShowConsultantScheduleStartButton(schedule) : false;
-  const showCompleteButton = schedule ? schedule.status === 'IN_PROGRESS' : false;
-  const canRunSessionActions = showStartButton || showCompleteButton;
-  const statusFooterHint = schedule ? getConsultantScheduleCardFooterHint(schedule).text : undefined;
+  const {
+    showStartButton,
+    hasConsultationRecord,
+    showCompleteButton,
+    showWriteRecordBeforeComplete,
+    canRunSessionActions,
+  } = deriveConsultantScheduleSessionFlags(schedule, {
+    data: recordExistsQuery.data,
+    isLoading: recordExistsQuery.isLoading,
+  });
+  const statusFooterHint = consultantScheduleStatusFooterText(schedule);
 
   const onRefresh = useCallback(() => {
     detailQuery.refetch();
-  }, [detailQuery]);
+    if (recordExistsEnabled) {
+      recordExistsQuery.refetch().catch(() => {
+        /* 당겨서 새로고침 시 일지 존재 조회는 best-effort */
+      });
+    }
+  }, [detailQuery, recordExistsEnabled, recordExistsQuery]);
 
   const handleStart = () => {
     if (!id) return;
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    Alert.alert('상담 시작', '상담을 시작하시겠습니까?', [
-      { text: '취소', style: 'cancel' },
-      {
-        text: '시작',
-        onPress: () =>
-          startMutation.mutate(id, {
-            onError: (err) => {
-              Alert.alert('상담 시작', toApiMutationMessage(err));
-            },
-          }),
-      },
-    ]);
+    Alert.alert(
+      CONSULTANT_SCHEDULE_DETAIL_COPY.START_ALERT_TITLE,
+      CONSULTANT_SCHEDULE_DETAIL_COPY.START_ALERT_MESSAGE,
+      [
+        { text: CONSULTANT_SCHEDULE_DETAIL_COPY.START_ALERT_CANCEL, style: 'cancel' },
+        {
+          text: CONSULTANT_SCHEDULE_DETAIL_COPY.START_ALERT_CONFIRM,
+          onPress: () =>
+            startMutation.mutate(id, {
+              onError: (err) => {
+                Alert.alert(
+                  CONSULTANT_SCHEDULE_DETAIL_COPY.START_ALERT_TITLE,
+                  toApiMutationMessage(err),
+                );
+              },
+            }),
+        },
+      ],
+    );
   };
 
   const handleComplete = () => {
-    if (!id) return;
+    if (!id || !hasConsultationRecord) return;
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    Alert.alert('상담 완료', '상담을 완료하시겠습니까?', [
-      { text: '취소', style: 'cancel' },
-      {
-        text: '완료',
-        onPress: () =>
-          completeMutation.mutate(id, {
-            onError: (err) => {
-              Alert.alert('상담 완료', toApiMutationMessage(err));
-            },
-          }),
-      },
-    ]);
+    Alert.alert(
+      CONSULTANT_SCHEDULE_DETAIL_COPY.COMPLETE_ALERT_TITLE,
+      CONSULTANT_SCHEDULE_DETAIL_COPY.COMPLETE_ALERT_MESSAGE,
+      [
+        { text: CONSULTANT_SCHEDULE_DETAIL_COPY.COMPLETE_ALERT_CANCEL, style: 'cancel' },
+        {
+          text: CONSULTANT_SCHEDULE_DETAIL_COPY.COMPLETE_ALERT_CONFIRM,
+          onPress: () =>
+            completeMutation.mutate(id, {
+              onError: (err) => {
+                Alert.alert(
+                  CONSULTANT_SCHEDULE_DETAIL_COPY.COMPLETE_ALERT_TITLE,
+                  toApiMutationMessage(err),
+                );
+              },
+            }),
+        },
+      ],
+    );
   };
+
+  const handleNavigateWriteRecord = () => {
+    if (!schedule?.id) return;
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    router.push(`/(consultant)/(records)/create/${schedule.id}`);
+  };
+
+  const sessionActionInner = buildConsultantScheduleSessionActionContent({
+    theme,
+    canRunSessionActions,
+    showStartButton,
+    showCompleteButton,
+    showWriteRecordBeforeComplete,
+    scheduleStatus: schedule?.status,
+    recordExistsQueryLoading: recordExistsQuery.isLoading,
+    startMutationPending: startMutation.isPending,
+    completeMutationPending: completeMutation.isPending,
+    onStart: handleStart,
+    onComplete: handleComplete,
+    onWriteRecord: handleNavigateWriteRecord,
+  });
 
   return (
     <SafeAreaView
@@ -156,7 +398,7 @@ export default function ConsultantScheduleDetail() {
             marginLeft: theme.spacing.md,
           }}
         >
-          상담 상세
+          {CONSULTANT_SCHEDULE_DETAIL_COPY.HEADER_TITLE}
         </Text>
       </View>
 
@@ -172,13 +414,14 @@ export default function ConsultantScheduleDetail() {
           />
         }
       >
-        {isLoading ? (
+        {isLoading && (
           <>
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonLoader height={100} style={{ marginTop: 16 }} />
           </>
-        ) : schedule ? (
+        )}
+        {!isLoading && schedule && (
           <>
             {/* 내담자 정보 카드 */}
             <View
@@ -348,64 +591,10 @@ export default function ConsultantScheduleDetail() {
               </View>
             </View>
 
-            {/* 액션 버튼 — 예약·확정·슬롯 유효 시 시작, 진행 중이면 완료 */}
+            {/* 액션 버튼 — 예약·확정·슬롯 유효 시 시작, 진행 중·일지 유무에 따라 완료 또는 일지 작성 */}
             {canRunSessionActions ? (
               <View style={[styles.actionRow, { marginTop: theme.spacing.lg }]}>
-                {showStartButton ? (
-                  <Pressable
-                    onPress={handleStart}
-                    disabled={startMutation.isPending}
-                    style={[
-                      styles.primaryButton,
-                      {
-                        backgroundColor: theme.colors.primary,
-                        borderRadius: theme.borderRadius.lg,
-                        paddingVertical: theme.spacing.md,
-                        opacity: startMutation.isPending ? 0.6 : 1,
-                      },
-                    ]}
-                    accessibilityRole="button"
-                    accessibilityLabel="상담 시작"
-                  >
-                    <Text
-                      style={{
-                        color: theme.colors.textOnPrimary,
-                        fontFamily: theme.fontFamily.semibold,
-                        fontSize: theme.fontSize.base,
-                        textAlign: 'center',
-                      }}
-                    >
-                      상담 시작
-                    </Text>
-                  </Pressable>
-                ) : (
-                  <Pressable
-                    onPress={handleComplete}
-                    disabled={completeMutation.isPending}
-                    style={[
-                      styles.primaryButton,
-                      {
-                        backgroundColor: theme.colors.success,
-                        borderRadius: theme.borderRadius.lg,
-                        paddingVertical: theme.spacing.md,
-                        opacity: completeMutation.isPending ? 0.6 : 1,
-                      },
-                    ]}
-                    accessibilityRole="button"
-                    accessibilityLabel="상담 완료"
-                  >
-                    <Text
-                      style={{
-                        color: theme.colors.textOnPrimary,
-                        fontFamily: theme.fontFamily.semibold,
-                        fontSize: theme.fontSize.base,
-                        textAlign: 'center',
-                      }}
-                    >
-                      상담 완료
-                    </Text>
-                  </Pressable>
-                )}
+                {sessionActionInner}
               </View>
             ) : null}
 
@@ -518,12 +707,7 @@ export default function ConsultantScheduleDetail() {
             {/* 일지 작성 바로가기 */}
             {schedule.status === 'COMPLETED' && !schedule.hasRecord ? (
               <Pressable
-                onPress={() => {
-                  if (Platform.OS !== 'web') {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }
-                  router.push(`/(consultant)/(records)/create/${schedule.id}`);
-                }}
+                onPress={handleNavigateWriteRecord}
                 style={[
                   styles.primaryButton,
                   {
@@ -534,7 +718,9 @@ export default function ConsultantScheduleDetail() {
                   },
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="일지 작성"
+                accessibilityLabel={
+                  CONSULTANT_SCHEDULE_DETAIL_COPY.WRITE_RECORD_AFTER_COMPLETED_CTA_A11Y
+                }
               >
                 <MessageCircle
                   size={18}
@@ -548,14 +734,14 @@ export default function ConsultantScheduleDetail() {
                     fontSize: theme.fontSize.base,
                   }}
                 >
-                  일지 작성하기
+                  {CONSULTANT_SCHEDULE_DETAIL_COPY.WRITE_RECORD_AFTER_COMPLETED_CTA}
                 </Text>
               </Pressable>
             ) : null}
 
             <View style={{ height: 32 }} />
           </>
-        ) : null}
+        )}
       </ScrollView>
     </SafeAreaView>
   );

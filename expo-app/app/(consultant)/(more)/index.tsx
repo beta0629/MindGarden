@@ -1,6 +1,8 @@
 /**
  * 상담사 더보기 메뉴 화면
  *
+ * TODO(IA): 웹 `ConsultantMoreHub`·LNB와 메뉴 항목·라벨 SSOT 통합은 별도 배치(이번 Expo 범위 밖).
+ *
  * @author MindGarden
  * @since 2026-05-12
  */
@@ -24,7 +26,7 @@ import { MenuListItem } from '@/components/molecules/MenuListItem';
 import { AuthService } from '@/services/AuthService';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { toDisplayString } from '@/utils/safeDisplay';
-import { useConsultantSalarySettlements } from '@/api/hooks/useConsultantSalarySettlements';
+import { CONSULTANT_SALARY_SETTLEMENT_COPY } from '@/constants/consultantSalarySettlementCopy';
 
 export default function ConsultantMore() {
   const theme = useTheme();
@@ -32,9 +34,7 @@ export default function ConsultantMore() {
   const user = useAuthStore((s) => s.user);
   const profileName = toDisplayString(user?.nickname?.trim() || user?.name, '선생');
   const profileSubtitle = toDisplayString(user?.email, '전문 상담');
-  const salaryQuery = useConsultantSalarySettlements({ enabled: Boolean(user?.id) });
-  const showSalarySettlementMenu =
-    salaryQuery.isSuccess && Array.isArray(salaryQuery.data) && salaryQuery.data.length > 0;
+  const showSalarySettlementMenu = Boolean(user?.id);
 
   const handleLogout = () => {
     Alert.alert('로그아웃', '정말 로그아웃하시겠습니까?', [
@@ -121,8 +121,8 @@ export default function ConsultantMore() {
             {showSalarySettlementMenu ? (
               <MenuListItem
                 icon={Wallet}
-                title="급여 정산"
-                subtitle="관리자 확정 정산 내역"
+                title={CONSULTANT_SALARY_SETTLEMENT_COPY.MENU_TITLE}
+                subtitle={CONSULTANT_SALARY_SETTLEMENT_COPY.MENU_SUBTITLE}
                 onPress={() => router.push('/(consultant)/(more)/salary-settlement')}
               />
             ) : null}

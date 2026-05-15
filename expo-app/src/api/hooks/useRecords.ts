@@ -87,6 +87,8 @@ const RECORD_QUERY_KEYS = {
   details: () => [...RECORD_QUERY_KEYS.all, 'detail'] as const,
   detail: (consultantId: string | number | undefined, recordId: string | number) =>
     [...RECORD_QUERY_KEYS.details(), consultantId, recordId] as const,
+  existenceBySchedule: (scheduleId: string | number) =>
+    [...RECORD_QUERY_KEYS.all, 'existsBySchedule', String(scheduleId)] as const,
 };
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -326,6 +328,36 @@ export function useConsultationRecords(params: RecordsParams) {
 }
 
 /**
+ * 해당 스케줄(상담) ID에 연결된 비삭제 상담일지가 1건 이상인지.
+ * Spring `ScheduleController` GET `/api/v1/schedules/consultation-records?consultationId=`
+ *
+ * @param scheduleId 스케줄·상담 ID(숫자 문자열)
+ * @param enabled 진행 중(IN_PROGRESS) 등 조건부 fetch 시 false
+ */
+export function useConsultationRecordExistsForSchedule(
+  scheduleId: string | number | undefined,
+  enabled: boolean,
+) {
+  const sid = scheduleId != null && String(scheduleId).trim() !== '' ? String(scheduleId) : '';
+
+  return useQuery<boolean>({
+    queryKey: RECORD_QUERY_KEYS.existenceBySchedule(sid || '0'),
+    queryFn: async () => {
+      const raw = await apiGet<unknown>(CONSULTATION_RECORD_API.listByConsultationId(sid));
+      assertApiSuccess(raw);
+      const inner = unwrapApiResponse<Record<string, unknown>>(raw);
+      if (inner == null || typeof inner !== 'object') {
+        return false;
+      }
+      const rec = (inner as Record<string, unknown>).records;
+      return Array.isArray(rec) && rec.length > 0;
+    },
+    enabled: Boolean(sid) && enabled,
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
+/**
  * 미작성 후보 — `/pending` 전용 API 없음. `ScheduleController` 상담일지 엔티티 목록에서
  * `isSessionCompleted === false` 인 항목만 필터한다.
  */
@@ -410,9 +442,12 @@ export function useCreateRecord() {
       }
       return apiPost<unknown>(CONSULTATION_RECORD_API.CREATE_RECORD, body);
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: RECORD_QUERY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: SCHEDULE_QUERY_KEYS.all });
+      queryClient.invalidateQueries({
+        queryKey: RECORD_QUERY_KEYS.existenceBySchedule(String(variables.scheduleId)),
+      });
     },
   });
 }

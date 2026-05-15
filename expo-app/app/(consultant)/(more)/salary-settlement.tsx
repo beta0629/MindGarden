@@ -4,24 +4,26 @@
  * @author MindGarden
  * @since 2026-05-15
  */
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
-import { Wallet } from 'lucide-react-native';
+import { AlertCircle, Wallet } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useConsultantSalarySettlements } from '@/api/hooks/useConsultantSalarySettlements';
+import { CONSULTANT_SALARY_SETTLEMENT_COPY } from '@/constants/consultantSalarySettlementCopy';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { EmptyState } from '@/components/atoms/EmptyState';
 import { toDisplayString, toSafeNumber } from '@/utils/safeDisplay';
 
-const COPY = {
-  title: '급여 정산',
-  intro: '관리자가 확정한 급여 정산만 표시됩니다. 일반 매출·수입 리포트와는 별도입니다.',
-  empty: '관리자 급여 산정이 반영되면 이 화면에서 확인할 수 있습니다.',
-  loadError: '급여 정산 정보를 불러오지 못했습니다.',
-  period: '정산 기간',
-  status: '상태',
-  net: '실수령액',
-  gross: '총 지급액',
-} as const;
+function getQueryErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) {
+    return toDisplayString(error.message, fallback);
+  }
+  if (error != null && typeof error === 'object' && 'message' in error) {
+    return toDisplayString((error as { message: unknown }).message, fallback);
+  }
+  return fallback;
+}
 
 function formatWon(value: unknown): string {
   const n = toSafeNumber(value, Number.NaN);
@@ -52,13 +54,18 @@ function periodLabel(row: {
 
 export default function ConsultantSalarySettlementScreen() {
   const theme = useTheme();
-  const { data, isLoading, isError, error, refetch, isFetching } = useConsultantSalarySettlements();
+  const user = useAuthStore((s) => s.user);
+  const hasUser = Boolean(user?.id);
+  const { data, isLoading, isError, error, refetch, isFetching, isSuccess } =
+    useConsultantSalarySettlements({ enabled: hasUser });
 
   const rows = Array.isArray(data) ? data : [];
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
-      <Stack.Screen options={{ headerShown: true, title: COPY.title }} />
+      <Stack.Screen
+        options={{ headerShown: true, title: CONSULTANT_SALARY_SETTLEMENT_COPY.SCREEN_TITLE }}
+      />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Text
           style={[
@@ -70,29 +77,49 @@ export default function ConsultantSalarySettlementScreen() {
             },
           ]}
         >
-          {COPY.intro}
+          {CONSULTANT_SALARY_SETTLEMENT_COPY.INTRO}
         </Text>
 
-        {isLoading ? (
+        {!hasUser ? (
+          <EmptyState
+            icon={<AlertCircle size={32} color={theme.colors.textTertiary} />}
+            title={CONSULTANT_SALARY_SETTLEMENT_COPY.NO_USER_TITLE}
+            description={CONSULTANT_SALARY_SETTLEMENT_COPY.NO_USER_HINT}
+          />
+        ) : isLoading ? (
           <View style={styles.center} accessibilityRole="progressbar">
             <ActivityIndicator size="large" color={theme.colors.accent} />
           </View>
         ) : isError ? (
           <View style={styles.center}>
             <Text style={{ color: theme.colors.error, fontFamily: theme.fontFamily.medium }}>
-              {toDisplayString((error as Error)?.message, COPY.loadError)}
+              {getQueryErrorMessage(error, CONSULTANT_SALARY_SETTLEMENT_COPY.LOAD_ERROR)}
             </Text>
-            <Text
+            <Pressable
               onPress={() => refetch()}
-              style={[
+              style={({ pressed }) => [
                 styles.retry,
-                { color: theme.colors.accent, fontFamily: theme.fontFamily.medium },
+                {
+                  color: theme.colors.accent,
+                  fontFamily: theme.fontFamily.medium,
+                  opacity: pressed ? 0.7 : 1,
+                },
               ]}
+              accessibilityRole="button"
+              accessibilityLabel={CONSULTANT_SALARY_SETTLEMENT_COPY.RETRY}
             >
-              다시 시도
-            </Text>
+              <Text
+                style={{
+                  color: theme.colors.accent,
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: 16,
+                }}
+              >
+                {CONSULTANT_SALARY_SETTLEMENT_COPY.RETRY}
+              </Text>
+            </Pressable>
           </View>
-        ) : rows.length === 0 ? (
+        ) : isSuccess && rows.length === 0 ? (
           <View
             style={[
               styles.emptyBox,
@@ -103,10 +130,22 @@ export default function ConsultantSalarySettlementScreen() {
             <Text
               style={[
                 styles.emptyText,
-                { color: theme.colors.textMain, fontFamily: theme.fontFamily.medium },
+                { color: theme.colors.textMain, fontFamily: theme.fontFamily.semibold },
               ]}
             >
-              {COPY.empty}
+              {CONSULTANT_SALARY_SETTLEMENT_COPY.EMPTY_PRIMARY}
+            </Text>
+            <Text
+              style={[
+                styles.emptyHint,
+                {
+                  color: theme.colors.textSecondary,
+                  fontFamily: theme.fontFamily.regular,
+                  fontSize: theme.fontSize.sm,
+                },
+              ]}
+            >
+              {CONSULTANT_SALARY_SETTLEMENT_COPY.EMPTY_HINT}
             </Text>
           </View>
         ) : (
@@ -135,7 +174,7 @@ export default function ConsultantSalarySettlementScreen() {
               </Text>
               <View style={styles.row}>
                 <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-                  {COPY.status}
+                  {CONSULTANT_SALARY_SETTLEMENT_COPY.STATUS}
                 </Text>
                 <Text style={[styles.value, { color: theme.colors.textMain }]}>
                   {toDisplayString(row.status, '—')}
@@ -143,7 +182,7 @@ export default function ConsultantSalarySettlementScreen() {
               </View>
               <View style={styles.row}>
                 <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-                  {COPY.net}
+                  {CONSULTANT_SALARY_SETTLEMENT_COPY.NET}
                 </Text>
                 <Text style={[styles.valueEmph, { color: theme.colors.accent }]}>
                   {formatWon(row.netSalary)}
@@ -151,7 +190,7 @@ export default function ConsultantSalarySettlementScreen() {
               </View>
               <View style={styles.row}>
                 <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-                  {COPY.gross}
+                  {CONSULTANT_SALARY_SETTLEMENT_COPY.GROSS}
                 </Text>
                 <Text style={[styles.value, { color: theme.colors.textMain }]}>
                   {formatWon(row.grossSalary)}
@@ -175,10 +214,11 @@ const styles = StyleSheet.create({
   scroll: { padding: 16, paddingBottom: 32 },
   intro: { marginBottom: 16, lineHeight: 22 },
   center: { paddingVertical: 48, alignItems: 'center', justifyContent: 'center' },
-  retry: { marginTop: 12, fontSize: 16 },
+  retry: { marginTop: 12, paddingVertical: 8, paddingHorizontal: 12 },
   emptyBox: { padding: 24, alignItems: 'center' },
   emptyIcon: { marginBottom: 12 },
-  emptyText: { textAlign: 'center', lineHeight: 22 },
+  emptyText: { textAlign: 'center', lineHeight: 24, marginBottom: 8 },
+  emptyHint: { textAlign: 'center', lineHeight: 22 },
   card: { padding: 16, marginBottom: 12 },
   cardTitle: { marginBottom: 12 },
   row: {

@@ -5,6 +5,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.constant.ConsultantConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ConsultantScheduleSettingsDto;
 import com.coresolution.consultation.entity.Client;
@@ -35,15 +36,15 @@ import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 상담사 관리 컨트롤러 (상담소 전용)
- * API 설계 문서에 명시된 상담사 관리 API 구현
- * 업종별 접근 제어: CONSULTATION 업종에서만 접근 가능
+ * 상담사 관리 컨트롤러.
+ * API 설계 문서에 명시된 상담사 관리 API 구현.
+ * 클래스 레벨 {@code @RequireBusinessType}은 두지 않음 — Expo 상담사「내담자」등은 테넌트 매핑·권한으로 보호하고 업종과 무관하게 동작해야 함.
+ * 상담소 브랜치·카탈로그 성격의 목록 API만 메서드 단위로 CONSULTATION 업종을 요구한다.
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/consultants")
 @CrossOrigin(origins = "*")
-@RequireBusinessType(value = "CONSULTATION", message = "상담사 관리 기능은 상담소에서만 사용할 수 있습니다.")
 public class ConsultantController extends BaseApiController {
     
     @Autowired
@@ -56,6 +57,7 @@ public class ConsultantController extends BaseApiController {
      * GET /api/v1/consultants?specialty=PSYCHOLOGY&experience=5&rating=4.0
      */
     @GetMapping
+    @RequireBusinessType(value = "CONSULTATION", message = "상담사 목록(카탈로그)은 상담소에서만 사용할 수 있습니다.")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultants(
             @RequestParam(required = false) String specialty,
@@ -178,8 +180,11 @@ public class ConsultantController extends BaseApiController {
             @PathVariable Long clientId) {
         
         log.info("상담사별 내담자 상세 정보 조회 - consultantId: {}, clientId: {}", consultantId, clientId);
-        
-        throw new RuntimeException("상담사를 찾을 수 없습니다.");
+
+        Client client = consultantService.findClientByConsultantId(consultantId, clientId)
+                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CLIENT_NOT_FOUND));
+
+        return success(client);
     }
     
     /**

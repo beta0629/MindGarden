@@ -5,6 +5,8 @@
  * @since 2026-05-12
  */
 import { useQuery, useInfiniteQuery, type UseQueryOptions } from '@tanstack/react-query';
+import { CONSULTANT_CLIENTS_LIST_COPY } from '@/constants/consultantClientsListCopy';
+import { toDisplayString } from '@/utils/safeDisplay';
 import { apiGet } from '../client';
 import { CONSULTANT_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
@@ -80,18 +82,31 @@ const CLIENT_QUERY_KEYS = {
 
 const DEFAULT_PAGE_SIZE = 20;
 
+/**
+ * `success: false` 래퍼는 빈 페이지와 동일하게 파싱되면 안 되므로 즉시 실패 처리한다.
+ */
+function assertClientsListNotFailureEnvelope(raw: unknown): void {
+  if (raw == null || typeof raw !== 'object') {
+    return;
+  }
+  const root = raw as Record<string, unknown>;
+  if (root.success === false) {
+    throw new Error(
+      toDisplayString(
+        root.message ?? root.error ?? root.code,
+        CONSULTANT_CLIENTS_LIST_COPY.API_REJECTED_FALLBACK,
+      ),
+    );
+  }
+}
+
 function parseConsultantClientsPage(raw: unknown): PaginatedResponse<Client> {
+  assertClientsListNotFailureEnvelope(raw);
+  const unwrapped = unwrapApiResponse<Record<string, unknown>>(raw);
   const body =
-    unwrapApiResponse<Record<string, unknown>>(raw) ??
-    (raw != null && typeof raw === 'object' ? (raw as Record<string, unknown>) : null);
+    unwrapped ?? (raw != null && typeof raw === 'object' ? (raw as Record<string, unknown>) : null);
   if (body == null) {
-    return {
-      content: [],
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-      number: 0,
-    };
+    throw new Error(CONSULTANT_CLIENTS_LIST_COPY.INVALID_RESPONSE);
   }
   const content = Array.isArray(body.content) ? (body.content as Client[]) : [];
   const totalElements = typeof body.totalElements === 'number' ? body.totalElements : 0;
@@ -104,11 +119,13 @@ function parseConsultantClientsPage(raw: unknown): PaginatedResponse<Client> {
 
 export function useConsultantClients(params: ClientsParams) {
   const { consultantId, search, status, size = DEFAULT_PAGE_SIZE } = params;
+  const consultantIdStr =
+    consultantId != null && String(consultantId).trim() !== '' ? String(consultantId).trim() : '';
 
   return useInfiniteQuery<PaginatedResponse<Client>>({
-    queryKey: CLIENT_QUERY_KEYS.list({ consultantId, search, status }),
+    queryKey: CLIENT_QUERY_KEYS.list({ consultantId: consultantIdStr, search, status }),
     queryFn: async ({ pageParam }) => {
-      const raw = await apiGet<unknown>(CONSULTANT_API.consultantClients(consultantId), {
+      const raw = await apiGet<unknown>(CONSULTANT_API.consultantClients(consultantIdStr), {
         search: search || undefined,
         status: status === 'ALL' ? undefined : status,
         page: pageParam,
@@ -118,7 +135,7 @@ export function useConsultantClients(params: ClientsParams) {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => (lastPage.last ? undefined : lastPage.number + 1),
-    enabled: !!consultantId,
+    enabled: consultantIdStr.length > 0,
     staleTime: 1000 * 60 * 5,
   });
 }

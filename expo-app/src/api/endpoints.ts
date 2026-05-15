@@ -133,6 +133,9 @@ export const CONSULTATION_RECORD_API = {
    */
   listEntitiesByConsultant: (consultantId: string | number) =>
     `/api/v1/schedules/consultation-records?consultantId=${encodeURIComponent(String(consultantId))}`,
+  /** Spring `ScheduleController` — GET `?consultationId=` 만으로 해당 스케줄 비페이지 목록 */
+  listByConsultationId: (consultationId: string | number) =>
+    `/api/v1/schedules/consultation-records?consultationId=${encodeURIComponent(String(consultationId))}`,
   /** Spring `ScheduleController` — POST `/api/v1/schedules/consultation-records` */
   CREATE_RECORD: '/api/v1/schedules/consultation-records',
   /** Spring `ConsultantRecordsController` — GET 상세 */

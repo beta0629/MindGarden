@@ -12,7 +12,7 @@ CREATE PROCEDURE ApproveSalaryWithErpSync(
     OUT p_success BOOLEAN,
     OUT p_message TEXT
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_consultant_id BIGINT;
     DECLARE v_gross_salary DECIMAL(15,2);
@@ -36,14 +36,14 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '테넌트 ID는 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_calculation_id IS NULL OR p_calculation_id <= 0 THEN
         SET p_success = FALSE;
         SET p_message = '급여 계산 ID는 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 2. 급여 계산 정보 조회 (테넌트 격리)
@@ -67,7 +67,7 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '승인 가능한 급여 계산을 찾을 수 없습니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     ELSE
         -- 4. 급여 승인 (테넌트 격리)
         UPDATE salary_calculations 

@@ -81,6 +81,8 @@ PROCEDURES=(
     "ProcessIntegratedSalaryCalculation"
     "GetIntegratedSalaryStatistics"
     "CalculateSalaryPreview"
+    "ApproveSalaryWithErpSync"
+    "ProcessSalaryPaymentWithErpSync"
     "ProcessDiscountAccounting"
     "UpdateDailyStatistics"
     "UpdateConsultantPerformance"

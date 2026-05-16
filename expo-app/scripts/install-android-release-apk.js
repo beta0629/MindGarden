@@ -10,9 +10,10 @@ const path = require('path');
 const root = path.join(__dirname, '..');
 const PACKAGE = 'com.mindgardenmobile';
 
+/** Gradle 산출물을 우선 — 루트 mindgarden-dev-release.apk는 구버전일 수 있음 */
 const candidates = [
-  path.join(root, 'mindgarden-dev-release.apk'),
   path.join(root, 'android', 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk'),
+  path.join(root, 'mindgarden-dev-release.apk'),
 ];
 
 function run(cmd, opts = {}) {
@@ -42,7 +43,17 @@ if (devices.length === 0) {
 }
 
 console.log(`\n📦 설치: ${apk}`);
-run(`adb install -r "${apk}"`);
+const install = spawnSync('adb', ['install', '-r', apk], { encoding: 'utf8' });
+if (install.status !== 0) {
+  const err = `${install.stderr ?? ''}${install.stdout ?? ''}`;
+  if (err.includes('INSTALL_FAILED_VERSION_DOWNGRADE')) {
+    console.log('⚠️  버전 다운그레이드 — -d 로 재시도');
+    run(`adb install -r -d "${apk}"`);
+  } else {
+    console.error(err);
+    process.exit(install.status ?? 1);
+  }
+}
 
 console.log('\n🚀 앱 실행:', PACKAGE);
 const launch = spawnSync(

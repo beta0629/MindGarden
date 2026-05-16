@@ -14,6 +14,8 @@
  */
 import { useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useTenantStore } from '@/stores/useTenantStore';
 import { useCommunityStore } from '@/stores/useCommunityStore';
 import type { CommunityPost, CommunityTab } from '@/constants/communityData';
 import { fetchRemoteCommunityFeed } from '@/services/communityApi';
@@ -52,11 +54,20 @@ export type UseCommunityFeedOptions = {
  */
 export function useCommunityFeed(options?: UseCommunityFeedOptions) {
   const feedTab = options?.feedTab;
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const userTenantId = useAuthStore((s) => s.user?.tenantId);
+  const headerTenantId = useTenantStore((s) => s.tenantId);
+  const tenantId = headerTenantId ?? userTenantId ?? '';
+  const userId = useAuthStore((s) => s.user?.id);
+  const enabled = Boolean(accessToken && tenantId && userId);
+
   const query = useQuery<CommunityPost[]>({
-    queryKey: COMMUNITY_QUERY_KEYS.feed(feedTab),
+    queryKey: [...COMMUNITY_QUERY_KEYS.feed(feedTab), tenantId, String(userId ?? '')] as const,
     queryFn: () => fetchRemoteCommunityFeed(feedTab),
+    enabled,
     staleTime: 1000 * 60,
     retry: 1,
+    refetchOnMount: 'always',
   });
 
   useEffect(() => {

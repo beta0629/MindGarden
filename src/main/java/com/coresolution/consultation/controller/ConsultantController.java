@@ -153,11 +153,13 @@ public class ConsultantController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getClientsByConsultant(
             @PathVariable Long id,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
             Pageable pageable) {
         
-        log.info("상담사별 내담자 목록 조회 - ID: {}, status: {}, page: {}", id, status, pageable.getPageNumber());
+        log.info("상담사별 내담자 목록 조회 - ID: {}, status: {}, search: {}, page: {}",
+                id, status, search != null && !search.isBlank() ? "(set)" : null, pageable.getPageNumber());
         
-        Page<Client> clients = consultantService.findClientsByConsultantId(id, status, pageable);
+        Page<Client> clients = consultantService.findClientsByConsultantId(id, status, search, pageable);
         
         Map<String, Object> data = new java.util.HashMap<>();
         data.put("content", clients.getContent());

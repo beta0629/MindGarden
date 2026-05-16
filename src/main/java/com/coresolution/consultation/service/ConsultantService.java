@@ -54,8 +54,10 @@ public interface ConsultantService extends BaseService<Consultant, Long> {
     
     /**
      * 상담사별 내담자 목록 조회
+     *
+     * @param search 이름 부분 검색(선택, 복호화된 표시명 기준·대소문자 무시)
      */
-    Page<Client> findClientsByConsultantId(Long consultantId, String status, Pageable pageable);
+    Page<Client> findClientsByConsultantId(Long consultantId, String status, String search, Pageable pageable);
     
     /**
      * 상담사별 내담자 상세 정보 조회 (상담 이력·메모 목록은 DTO에서 빈 배열 기본).

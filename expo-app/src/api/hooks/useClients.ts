@@ -6,6 +6,7 @@
  */
 import { useQuery, useInfiniteQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { CONSULTANT_CLIENTS_LIST_COPY } from '@/constants/consultantClientsListCopy';
+import { maskEncryptedDisplay } from '@/utils/displayString';
 import { toDisplayString, toSafeNumber } from '@/utils/safeDisplay';
 import { apiGet } from '../client';
 import { CONSULTANT_API } from '../endpoints';
@@ -140,10 +141,23 @@ export function mapRawToClient(row: unknown): Client {
     pickStr(o, 'lastSessionDate', 'last_session_date') ??
     isoDatePrefix(o.lastSessionDate ?? o.last_session_date);
 
+  const rawName =
+    pickStr(o, 'name', 'name') ?? (typeof o.name === 'string' ? o.name : undefined);
+  const rawNickname = pickStr(o, 'nickname', 'nickname');
+  const rawEmail = pickStr(o, 'email', 'email');
+  const rawPhone =
+    pickStr(o, 'contactNumber', 'contact_number') ?? pickStr(o, 'phone', 'phone');
+
+  const nickname =
+    rawNickname == null ? undefined : maskEncryptedDisplay(rawNickname, '') || undefined;
+  const email = rawEmail == null ? undefined : maskEncryptedDisplay(rawEmail, '') || undefined;
+  const contactNumber =
+    rawPhone == null ? undefined : maskEncryptedDisplay(rawPhone, '') || undefined;
+
   return {
     id,
-    name: toDisplayString(o.name, '—'),
-    nickname: pickStr(o, 'nickname', 'nickname'),
+    name: maskEncryptedDisplay(rawName, '이름 비공개'),
+    nickname,
     profileImageUrl: pickStr(o, 'profileImageUrl', 'profile_image_url'),
     registeredDate,
     lastSessionDate,
@@ -152,8 +166,8 @@ export function mapRawToClient(row: unknown): Client {
     totalSessions,
     consultationPurpose: pickStr(o, 'consultationPurpose', 'consultation_purpose'),
     specialNotes: pickStr(o, 'specialNotes', 'special_notes'),
-    contactNumber: pickStr(o, 'contactNumber', 'contact_number') ?? pickStr(o, 'phone', 'phone'),
-    email: pickStr(o, 'email', 'email'),
+    contactNumber,
+    email,
   };
 }
 

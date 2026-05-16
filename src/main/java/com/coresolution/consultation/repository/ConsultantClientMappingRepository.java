@@ -72,8 +72,18 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
     // 상담사 ID로 특정 상태의 매칭 조회 (tenantId 필터링)
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.status = :status")
     List<ConsultantClientMapping> findByConsultantIdAndStatus(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("status") ConsultantClientMapping.MappingStatus status);
-    
-    // 상담사 ID로 모든 매칭 조회 (tenantId 필터링)
+
+    /**
+     * 상담사·상태 목록(앱 AT_RISK=복수 매핑 상태 등)으로 매핑 조회 (tenantId 필터링)
+     */
+    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client "
+            + "WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.status IN :statuses")
+    List<ConsultantClientMapping> findByConsultantIdAndStatusIn(
+            @Param("tenantId") String tenantId,
+            @Param("consultantId") Long consultantId,
+            @Param("statuses") List<ConsultantClientMapping.MappingStatus> statuses);
+
+    // 상담사 ID로 모든 매핑 조회 (tenantId 필터링)
     @Query("SELECT m FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId")
     List<ConsultantClientMapping> findByConsultantId(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
 

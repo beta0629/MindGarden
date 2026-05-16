@@ -9,8 +9,10 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ConsultantConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.dto.ConsultantClientDetailResponse;
@@ -419,41 +421,21 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     
     @Override
-    public Page<Client> findClientsByConsultantId(Long consultantId, String status, Pageable pageable) {
-        log.info("상담사별 내담자 조회: consultantId={}, status={}", consultantId, status);
-        
+    public Page<Client> findClientsByConsultantId(Long consultantId, String status, String search,
+            Pageable pageable) {
+        log.info("상담사별 내담자 조회: consultantId={}, status={}, search={}", consultantId, status, search);
+
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null || tenantId.isEmpty()) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new org.springframework.data.domain.PageImpl<>(new java.util.ArrayList<>(), pageable, 0);
         }
-        
+
         consultantRepository.findByTenantIdAndId(tenantId, consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
-        
-        List<ConsultantClientMapping> mappings;
-        if (status != null && !status.trim().isEmpty()) {
-            ConsultantClientMapping.MappingStatus mappingStatus;
-            try {
-                mappingStatus = ConsultantClientMapping.MappingStatus.valueOf(status.trim());
-            } catch (IllegalArgumentException ex) {
-                log.warn("내담자 목록: 매핑 상태로 해석 불가(앱 전용 필터 등) — 전체 조회로 대체 status={}", status);
-                mappingStatus = null;
-            }
-            if (mappingStatus != null) {
-                mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId,
-                    mappingStatus == ConsultantClientMapping.MappingStatus.ACTIVE
-                        ? ConsultantClientMapping.MappingStatus.INACTIVE
-                        : ConsultantClientMapping.MappingStatus.ACTIVE);
-            } else {
-                mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId,
-                    ConsultantClientMapping.MappingStatus.INACTIVE);
-            }
-        } else {
-            mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId,
-                ConsultantClientMapping.MappingStatus.INACTIVE);
-        }
-        
+
+        List<ConsultantClientMapping> mappings = loadClientMappingsForAppFilter(tenantId, consultantId, status);
+
         List<Long> orderedClientIds = new ArrayList<>();
         Map<Long, ConsultantClientMapping> primaryMappingByClientId = new LinkedHashMap<>();
         for (ConsultantClientMapping mapping : mappings) {
@@ -474,9 +456,9 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
                 primaryMappingByClientId.put(cid, mapping);
             }
         }
-        
+
         Map<Long, LocalDate> lastDates = loadLastCompletedSessionDates(tenantId, consultantId, orderedClientIds);
-        
+
         List<Client> clients = new ArrayList<>();
         for (Long cid : orderedClientIds) {
             ConsultantClientMapping mapping = primaryMappingByClientId.get(cid);
@@ -485,14 +467,93 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
             applyConsultantMappingDerivedFields(client, mapping, lastDates.get(cid));
             clients.add(client);
         }
-        
+
+        if (search != null && !search.trim().isEmpty()) {
+            String needle = search.trim().toLowerCase(Locale.ROOT);
+            clients = clients.stream()
+                    .filter(c -> c.getName() != null
+                            && c.getName().toLowerCase(Locale.ROOT).contains(needle))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), clients.size());
         List<Client> pageContent = start >= clients.size()
                 ? new ArrayList<>()
                 : clients.subList(start, end);
-        
+
         return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, clients.size());
+    }
+
+    /**
+     * 앱(Expo) 필터: ACTIVE / INACTIVE / AT_RISK / ALL — {@link ConsultantClientMapping.MappingStatus} 와 직접 1:1이 아님.
+     */
+    private List<ConsultantClientMapping> loadClientMappingsForAppFilter(String tenantId, Long consultantId,
+            String status) {
+        String s = status == null ? "" : status.trim();
+        if (s.isEmpty() || "ALL".equalsIgnoreCase(s)) {
+            return mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId,
+                    ConsultantClientMapping.MappingStatus.INACTIVE);
+        }
+        String upper = s.toUpperCase(Locale.ROOT);
+        switch (upper) {
+            case "ACTIVE":
+                return mappingRepository.findByConsultantIdAndStatus(tenantId, consultantId,
+                        ConsultantClientMapping.MappingStatus.ACTIVE);
+            case "INACTIVE":
+                return mappingRepository.findByConsultantIdAndStatusIn(tenantId, consultantId,
+                        List.of(ConsultantClientMapping.MappingStatus.INACTIVE,
+                                ConsultantClientMapping.MappingStatus.TERMINATED));
+            case "AT_RISK":
+                return mappingRepository.findByConsultantIdAndStatusIn(tenantId, consultantId,
+                        List.of(ConsultantClientMapping.MappingStatus.SUSPENDED,
+                                ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED));
+            default:
+                log.warn("내담자 목록: 알 수 없는 status — 비활성 제외 전체로 조회: status={}", status);
+                return mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId,
+                        ConsultantClientMapping.MappingStatus.INACTIVE);
+        }
+    }
+
+    private static final String LEGACY_ENCRYPTED_PREFIX = "legacy::";
+
+    private String displayNameForClientApi(String storedName) {
+        if (storedName == null || storedName.trim().isEmpty()) {
+            return "이름 비공개";
+        }
+        String t = storedName.trim();
+        if (t.startsWith(LEGACY_ENCRYPTED_PREFIX)) {
+            return "이름 비공개";
+        }
+        try {
+            String d = encryptionUtil.safeDecrypt(t);
+            if (d == null || d.isBlank()) {
+                return "이름 비공개";
+            }
+            if (d.startsWith(LEGACY_ENCRYPTED_PREFIX)) {
+                return "이름 비공개";
+            }
+            return d;
+        } catch (Exception ex) {
+            log.debug("내담자 이름 표시용 복호화 예외(무시): {}", ex.getMessage());
+            return "이름 비공개";
+        }
+    }
+
+    private String displayOptionalContactForClientApi(String stored) {
+        if (stored == null || stored.trim().isEmpty()) {
+            return null;
+        }
+        String t = stored.trim();
+        if (t.startsWith(LEGACY_ENCRYPTED_PREFIX)) {
+            return null;
+        }
+        try {
+            return encryptionUtil.safeDecrypt(t);
+        } catch (Exception ex) {
+            log.debug("내담자 연락처 필드 복호화 예외(무시): {}", ex.getMessage());
+            return null;
+        }
     }
     
     private Map<Long, LocalDate> loadLastCompletedSessionDates(String tenantId, Long consultantId,
@@ -538,12 +599,12 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         return "LOW";
     }
     
-    private static Client buildClientFromUser(User user) {
+    private Client buildClientFromUser(User user) {
         Client client = new Client();
         client.setId(user.getId());
-        client.setName(user.getName());
-        client.setEmail(user.getEmail());
-        client.setPhone(user.getPhone());
+        client.setName(displayNameForClientApi(user.getName()));
+        client.setEmail(displayOptionalContactForClientApi(user.getEmail()));
+        client.setPhone(displayOptionalContactForClientApi(user.getPhone()));
         client.setBranchCode(user.getBranchCode());
         client.setCreatedAt(user.getCreatedAt());
         client.setUpdatedAt(user.getUpdatedAt());
@@ -609,9 +670,9 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         
         ConsultantClientDetailResponse dto = ConsultantClientDetailResponse.builder()
                 .id(user.getId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
+                .name(displayNameForClientApi(user.getName()))
+                .email(displayOptionalContactForClientApi(user.getEmail()))
+                .phone(displayOptionalContactForClientApi(user.getPhone()))
                 .registeredDate(user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate().format(isoDate) : null)
                 .lastSessionDate(lastSessionDate)
                 .status(mapMappingStatusToAppClientStatus(mapping.getStatus()))

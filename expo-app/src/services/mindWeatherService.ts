@@ -228,6 +228,33 @@ function pickConsultantId(raw: unknown): number | undefined {
   return undefined;
 }
 
+/** 카드 JSON에서 내담자 회원 id 추출 (`clientId`, snake_case, `client.id` 등). */
+function pickClientIdFromCardRaw(o: Record<string, unknown>): number | undefined {
+  const direct = pickConsultantId(o.clientId ?? o.client_id);
+  if (direct != null) {
+    return direct;
+  }
+  const nested = o.client;
+  if (nested != null && typeof nested === 'object') {
+    const nc = nested as Record<string, unknown>;
+    return pickConsultantId(nc.id ?? nc.userId ?? nc.clientId);
+  }
+  return undefined;
+}
+
+function pickClientNameFromCardRaw(o: Record<string, unknown>): string | undefined {
+  const n = toDisplayString(o.clientName ?? o.client_name ?? o.userName, '').trim();
+  if (n) {
+    return n;
+  }
+  const nested = o.client;
+  if (nested != null && typeof nested === 'object') {
+    const nm = toDisplayString((nested as Record<string, unknown>).name, '').trim();
+    return nm || undefined;
+  }
+  return undefined;
+}
+
 function normalizeShareConsent(raw: unknown): MindWeatherShareConsent | null {
   if (raw == null || typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
@@ -261,8 +288,8 @@ function normalizeCard(raw: unknown): MindWeatherCard | null {
   const summary = toDisplayString(o.summary, buildSummary(keywords, tone));
   const text = toDisplayString(o.text ?? o.note ?? o.bodyText, '');
   const createdAt = toDisplayString(o.createdAt ?? o.created_at, nowIso());
-  const clientId = pickConsultantId(o.clientId);
-  const clientName = toDisplayString(o.clientName ?? o.userName, '') || undefined;
+  const clientId = pickClientIdFromCardRaw(o);
+  const clientName = pickClientNameFromCardRaw(o);
   return {
     id,
     clientId,

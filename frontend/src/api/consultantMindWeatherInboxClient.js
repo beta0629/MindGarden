@@ -49,6 +49,53 @@ function normalizeShare(s) {
 
 /**
  * @param {*} raw
+ * @returns {number|null}
+ */
+function pickInboxClientId(raw) {
+  if (raw == null || typeof raw !== 'object') {
+    return null;
+  }
+  const cid = raw.clientId ?? raw.client_id;
+  if (cid != null && cid !== '') {
+    const n = toSafeNumber(cid, Number.NaN);
+    if (Number.isFinite(n) && n > 0) {
+      return n;
+    }
+  }
+  const c = raw.client;
+  if (c != null && typeof c === 'object') {
+    const id = c.id ?? c.userId ?? c.clientId;
+    if (id != null && id !== '') {
+      const n = toSafeNumber(id, Number.NaN);
+      if (Number.isFinite(n) && n > 0) {
+        return n;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * @param {*} raw
+ * @returns {string}
+ */
+function pickInboxClientName(raw) {
+  if (raw == null || typeof raw !== 'object') {
+    return '';
+  }
+  const flat = toDisplayString(raw.clientName ?? raw.client_name ?? raw.userName, '').trim();
+  if (flat) {
+    return flat;
+  }
+  const c = raw.client;
+  if (c != null && typeof c === 'object' && c.name != null) {
+    return toDisplayString(c.name, '').trim();
+  }
+  return '';
+}
+
+/**
+ * @param {*} raw
  * @param {number} idx
  * @returns {{
  *   id: string,
@@ -65,14 +112,13 @@ function normalizeShare(s) {
  */
 export function normalizeMindWeatherInboxItem(raw, idx) {
   const idRaw = raw?.id ?? raw?.cardId;
+  const clientId = pickInboxClientId(raw);
   return {
     id: idRaw != null && String(idRaw).trim() !== ''
       ? String(idRaw)
       : `row-${idx}`,
-    clientId: raw?.clientId != null && raw?.clientId !== ''
-      ? toSafeNumber(raw.clientId, 0)
-      : null,
-    clientName: toDisplayString(raw?.clientName, ''),
+    clientId,
+    clientName: pickInboxClientName(raw),
     source: toDisplayString(raw?.source, ''),
     text: toDisplayString(raw?.text, ''),
     summary: toDisplayString(raw?.summary, ''),

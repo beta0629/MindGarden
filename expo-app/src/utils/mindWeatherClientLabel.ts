@@ -14,11 +14,16 @@ export function formatMindWeatherClientHeadline(
   clientId: number | string | null | undefined,
 ): string {
   const name = toDisplayString(clientName, '').trim();
+  const n = toSafeNumber(clientId, Number.NaN);
+  const hasId = Number.isFinite(n) && n > 0;
+  /** API가 이름 없이·또는 구버전에서 "내담자"만 줄 때는 회원 ID로 식별 */
+  if (hasId && (!name || name === GENERIC_LABEL)) {
+    return `${GENERIC_LABEL} #${n}`;
+  }
   if (name && name !== GENERIC_LABEL) {
     return name;
   }
-  const n = toSafeNumber(clientId, Number.NaN);
-  if (Number.isFinite(n) && n > 0) {
+  if (hasId) {
     return `${GENERIC_LABEL} #${n}`;
   }
   return GENERIC_LABEL;

@@ -49,11 +49,15 @@ function shareScopeLabel(share) {
  */
 function formatClientHeadline(row) {
   const name = toDisplayString(row.clientName, '').trim();
+  const id = row.clientId;
+  const hasId = typeof id === 'number' && Number.isFinite(id) && id > 0;
+  if (hasId && (!name || name === S.LABEL_CLIENT)) {
+    return `${S.CLIENT_HEADLINE_ID_PREFIX}${id}`;
+  }
   if (name && name !== S.LABEL_CLIENT) {
     return name;
   }
-  const id = row.clientId;
-  if (typeof id === 'number' && Number.isFinite(id) && id > 0) {
+  if (hasId) {
     return `${S.CLIENT_HEADLINE_ID_PREFIX}${id}`;
   }
   return S.LABEL_CLIENT;

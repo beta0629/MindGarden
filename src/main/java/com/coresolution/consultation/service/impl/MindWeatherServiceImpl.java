@@ -220,9 +220,19 @@ public class MindWeatherServiceImpl implements MindWeatherService {
         }
         Long clientId = null;
         String clientName = null;
-        if (card.getClient() != null) {
-            clientId = card.getClient().getId();
-            clientName = resolveClientDisplayName(card.getClient());
+        User clientUser = card.getClient();
+        if (clientUser != null) {
+            Long cid = clientUser.getId();
+            if (cid != null) {
+                clientUser = userRepository.findById(cid).orElse(clientUser);
+            }
+            clientId = clientUser.getId();
+            clientName = resolveClientDisplayName(clientUser);
+            if (clientId != null && MindWeatherConstants.isGenericClientDisplayLabel(clientName)) {
+                clientName = "내담자 #" + clientId;
+            }
+        } else {
+            log.warn("마음 날씨 카드에 client 연관이 없음: cardId={}, tenantId={}", card.getId(), card.getTenantId());
         }
         return MindWeatherCardResponse.builder()
             .id(String.valueOf(card.getId()))
@@ -260,6 +270,10 @@ public class MindWeatherServiceImpl implements MindWeatherService {
                 if (n != null && !MindWeatherConstants.isGenericClientDisplayLabel(n)) {
                     return n;
                 }
+                String nick = decrypted.get("nickname");
+                if (nick != null && !MindWeatherConstants.isGenericClientDisplayLabel(nick)) {
+                    return nick;
+                }
             }
         } catch (Exception e) {
             log.warn("마음 날씨 내담자명 캐시 복호화 실패: clientId={}, {}", id, e.getMessage());
@@ -270,6 +284,14 @@ public class MindWeatherServiceImpl implements MindWeatherService {
             if (plain != null && !MindWeatherConstants.isGenericClientDisplayLabel(plain)
                 && !plain.startsWith("legacy::")) {
                 return plain;
+            }
+        }
+        String nickStored = client.getNickname();
+        if (nickStored != null && !nickStored.isBlank()) {
+            String nickPlain = encryptionUtil.safeDecrypt(nickStored.trim());
+            if (nickPlain != null && !MindWeatherConstants.isGenericClientDisplayLabel(nickPlain)
+                && !nickPlain.startsWith("legacy::")) {
+                return nickPlain;
             }
         }
         if (id != null) {

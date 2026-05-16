@@ -128,6 +128,7 @@ export default function ConsultantMindWeatherInbox() {
               }
             })();
             const sharedOriginal = Boolean(card.share?.original);
+            const clientHeadline = formatMindWeatherClientHeadline(card.clientName, card.clientId);
             return (
               <Animated.View
                 key={card.id}
@@ -150,7 +151,7 @@ export default function ConsultantMindWeatherInbox() {
                       color: theme.colors.textMain,
                     }}
                   >
-                    {formatMindWeatherClientHeadline(card.clientName, card.clientId)}
+                    {clientHeadline}
                   </Text>
                   <Text
                     style={{
@@ -208,7 +209,7 @@ export default function ConsultantMindWeatherInbox() {
                     }}
                   >
                     {sharedOriginal
-                      ? '내담자 원문(공유 동의됨)'
+                      ? `${clientHeadline} 원문(공유 동의됨)`
                       : '원문은 내담자가 별도 동의해야 표시돼요'}
                   </Text>
                   <Text

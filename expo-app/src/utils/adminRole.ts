@@ -1,0 +1,183 @@
+/**
+ * 관리자 모바일 — 앱 역할 판별·API 역할 매핑
+ *
+ * UI 분기·탭 가드는 `useAuthStore.role`을 SSOT로 사용한다.
+ * JWT 해석(`resolveAdminMobileJwtRole`)은 스케줄 API `userRole` 쿼리 등
+ * 백엔드가 토큰 claim을 기대하는 호출에만 사용한다.
+ *
+ * @author MindGarden
+ * @since 2026-05-16
+ */
+import type { AppAuthRole } from '@/stores/useAuthStore';
+import { decodeJwtPayload } from './jwtPayload';
+
+export type { AppAuthRole };
+
+const PROFESSIONAL_PROVIDER_ROLES = new Set([
+  'CONSULTANT',
+  'PLAY_THERAPIST',
+  'SPEECH_THERAPIST',
+  'COUNSELOR',
+]);
+
+const ADMIN_API_ROLES = new Set([
+  'ADMIN',
+  'TENANT_ADMIN',
+  'TENANTADMIN',
+  'PRINCIPAL',
+  'OWNER',
+  'BRANCH_ADMIN',
+  'BRANCH_SUPER_ADMIN',
+  'HQ_ADMIN',
+  'SUPER_HQ_ADMIN',
+  'HQ_MASTER',
+  'HQ_SUPER_ADMIN',
+  'BRANCH_MANAGER',
+  'SUPERADMIN',
+  'ROOT',
+  '원장',
+  '사장',
+  '테넌트관리자',
+]);
+
+const STAFF_API_ROLES = new Set(['STAFF', 'PARENT', '학부모', 'OFFICE_STAFF', 'OFFICESTAFF']);
+
+const CLIENT_API_ROLES = new Set(['CLIENT', 'USER', 'CUSTOMER']);
+
+/** 스케줄 API `userRole` — JWT claim 해석 결과 */
+export type AdminMobileJwtRole = 'ADMIN' | 'STAFF';
+
+const JWT_ADMIN_ROLE_CODES = new Set([
+  'ADMIN',
+  'TENANT_ADMIN',
+  'TENANTADMIN',
+  'HQ_ADMIN',
+  'BRANCH_ADMIN',
+  'SUPERADMIN',
+]);
+
+const JWT_STAFF_ROLE_CODES = new Set(['STAFF', 'OFFICE_STAFF', 'OFFICESTAFF']);
+
+function normalizeApiRole(apiRole: string | undefined | null): string {
+  const trimmed = (apiRole ?? 'CLIENT').trim().toUpperCase();
+  return trimmed.startsWith('ROLE_') ? trimmed.slice(5) : trimmed;
+}
+
+function normalizeJwtRoleToken(raw: unknown): string {
+  const trimmed = String(raw ?? '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '_');
+  return trimmed.startsWith('ROLE_') ? trimmed.slice(5) : trimmed;
+}
+
+/**
+ * 백엔드 `UserRole` 문자열 → Expo 스토어 역할.
+ * ADMIN·레거시 테넌트 관리자는 `admin`, STAFF는 `staff`, 전문가 계열은 `consultant`.
+ */
+export function mapApiRoleToStoreRole(apiRole: string | undefined | null): AppAuthRole {
+  const normalized = normalizeApiRole(apiRole);
+
+  if (PROFESSIONAL_PROVIDER_ROLES.has(normalized)) {
+    return 'consultant';
+  }
+  if (ADMIN_API_ROLES.has(normalized)) {
+    return 'admin';
+  }
+  if (STAFF_API_ROLES.has(normalized)) {
+    return 'staff';
+  }
+  if (CLIENT_API_ROLES.has(normalized)) {
+    return 'client';
+  }
+
+  return 'client';
+}
+
+export function isAdminRole(role: AppAuthRole | null | undefined): role is 'admin' {
+  return role === 'admin';
+}
+
+export function isStaffRole(role: AppAuthRole | null | undefined): role is 'staff' {
+  return role === 'staff';
+}
+
+/** 커뮤니티 검수 API — Spring `@PreAuthorize hasRole('ADMIN')` */
+export function canAccessCommunityModeration(role: AppAuthRole | null | undefined): boolean {
+  return isAdminRole(role);
+}
+
+/** 관리자 모바일 5탭 셸 진입 역할 */
+export function isAdminMobileShellRole(role: AppAuthRole | null | undefined): boolean {
+  return isAdminRole(role) || isStaffRole(role);
+}
+
+export type ClientConsultantRole = 'client' | 'consultant';
+
+/**
+ * 메시지·프로필·푸시 등 client/consultant 이원 API용.
+ * 어드민 모바일 메시지 탭은 `GET /consultation-messages/all`(MESSAGE_MANAGE)을 사용한다.
+ */
+export function toClientConsultantMessagingRole(
+  role: AppAuthRole | null | undefined,
+): ClientConsultantRole {
+  return role === 'consultant' ? 'consultant' : 'client';
+}
+
+/** 어드민 모바일 — tenant 전체 메시지 목록 API 사용 대상 */
+export function usesAdminMessagingAllApi(role: AppAuthRole | null | undefined): boolean {
+  return isAdminMobileShellRole(role);
+}
+
+function jwtRoleFromPayload(payload: Record<string, unknown> | null): AdminMobileJwtRole | null {
+  if (!payload) {
+    return null;
+  }
+
+  const direct = normalizeJwtRoleToken(payload.role ?? payload.userRole ?? payload.primaryRole);
+  if (JWT_ADMIN_ROLE_CODES.has(direct)) {
+    return 'ADMIN';
+  }
+  if (JWT_STAFF_ROLE_CODES.has(direct)) {
+    return 'STAFF';
+  }
+
+  const authorities = payload.authorities ?? payload.roles ?? payload.scope;
+  const list = Array.isArray(authorities)
+    ? authorities.map((a) => normalizeJwtRoleToken(a))
+    : typeof authorities === 'string'
+      ? authorities.split(/[\s,]+/).map((a) => normalizeJwtRoleToken(a))
+      : [];
+
+  for (const code of list) {
+    if (JWT_ADMIN_ROLE_CODES.has(code)) {
+      return 'ADMIN';
+    }
+  }
+  for (const code of list) {
+    if (JWT_STAFF_ROLE_CODES.has(code)) {
+      return 'STAFF';
+    }
+  }
+
+  return null;
+}
+
+/** accessToken payload — 스케줄 API `userRole` 전용 (UI는 스토어 역할 사용) */
+export function resolveAdminMobileJwtRole(
+  accessToken: string | null | undefined,
+): AdminMobileJwtRole | null {
+  if (!accessToken?.trim()) {
+    return null;
+  }
+  return jwtRoleFromPayload(decodeJwtPayload(accessToken));
+}
+
+export function isAdminMobileAdminRole(role: AdminMobileJwtRole | null): boolean {
+  return role === 'ADMIN';
+}
+
+/** 스케줄 API `userRole` 쿼리 */
+export function adminMobileScheduleUserRole(role: AdminMobileJwtRole | null): string | null {
+  return role ?? null;
+}

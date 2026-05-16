@@ -17,12 +17,14 @@ const SECURE_KEY_REFRESH_TOKEN = 'mg_refresh_token';
 
 const zustandMMKVStorage = createZustandMmkvPersistStorage('auth-store');
 
+export type AppAuthRole = 'client' | 'consultant' | 'admin' | 'staff';
+
 export interface User {
   id: number;
   email: string;
   name: string;
   nickname?: string;
-  role: 'client' | 'consultant';
+  role: AppAuthRole;
   profileImageUrl?: string;
   tenantId?: string;
 }
@@ -37,7 +39,7 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
-  role: 'client' | 'consultant' | null;
+  role: AppAuthRole | null;
   isLoading: boolean;
   /** MMKV persist + SecureStore `restoreTokens` 완료 — Query `enabled` 레이스 방지 */
   _hasHydrated: boolean;

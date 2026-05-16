@@ -1,0 +1,44 @@
+# Admin Mobile MVP — Maestro smoke (ADMIN)
+# §7.1 ADMIN_MOBILE_MVP_TEST_PLAN.md · 수동 절차 ADMIN_MOBILE_MVP_SMOKE_RUN.md
+#
+# 전제: ROLE_ADMIN 계정. STAFF(검수 탭 없음)는 admin-mvp-smoke-staff.yaml 별도(선택).
+# 카피: src/constants/adminMobileCopy.ts, adminMobileScreensCopy.ts, adminCommunityModerationCopy.ts
+appId: com.mindgardenmobile
+name: Admin MVP smoke (ADMIN)
+tags:
+  - admin
+  - smoke
+  - mvp
+---
+- launchApp:
+    # MMKV/SecureStore 세션이 있으면 로그인 생략 가능
+    clearState: false
+
+# Optional login — MAESTRO_ADMIN_EMAIL·MAESTRO_ADMIN_PASSWORD(·테넌트) 설정 시에만 동작
+# 미설정 + 미로그인이면 아래 assert에서 실패 → README 환경 변수 참고
+- runFlow:
+    file: subflows/admin-credentials-login.yaml
+
+- extendedWaitUntil:
+    visible: '안녕하세요'
+    timeout: 90000
+
+# 관리 홈 (ADMIN_MOBILE_HOME_COPY)
+- assertVisible: '안녕하세요'
+- assertVisible: '읽지 않은 알림'
+- assertVisible: '오늘 일정'
+
+# 검수 탭 (ADMIN_MOBILE_COPY.TAB_REVIEW — STAFF 셸에서는 탭 없음)
+- tapOn: '검수'
+- assertVisible: '커뮤니티 검수'
+
+# 운영 → 사용자 조회 (ADMIN_MOBILE_OPERATION_COPY.USERS)
+- tapOn: '운영'
+- assertVisible: '운영'
+- scrollUntilVisible:
+    element: '사용자 조회'
+    direction: DOWN
+    timeout: 15000
+- tapOn: '사용자 조회'
+- assertVisible: '사용자 조회'
+- assertVisible: '이름, 이메일, 전화번호로 검색'

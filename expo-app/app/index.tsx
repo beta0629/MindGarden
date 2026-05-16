@@ -42,6 +42,10 @@ export default function AppEntry() {
     return <Redirect href={'/(auth)/login' as Href} />;
   }
 
+  if (role === 'admin' || role === 'staff') {
+    return <Redirect href={'/(admin)/(home)' as Href} />;
+  }
+
   if (role === 'consultant') {
     return <Redirect href={'/(consultant)/(home)' as Href} />;
   }

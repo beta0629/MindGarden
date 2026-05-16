@@ -24,6 +24,7 @@ import { getApiBaseUrl } from '../config/apiBaseUrl';
 import { normalizeKoreanMobileDigits } from '../utils/phoneNormalize';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 import { setCachedJsessionId, setJsessionId } from '@/utils/sessionCookie';
+import { mapApiRoleToStoreRole } from '@/utils/adminRole';
 
 export type SocialAuthProvider = 'KAKAO' | 'NAVER';
 
@@ -262,8 +263,7 @@ function logAuthError(scope: string, error: unknown): void {
 }
 
 function mapApiUserToStoreUser(raw: SocialLoginApiUser): User {
-  const roleUpper = (raw.role ?? 'CLIENT').toUpperCase();
-  const role: User['role'] = roleUpper === 'CONSULTANT' ? 'consultant' : 'client';
+  const role = mapApiRoleToStoreRole(raw.role);
   return {
     id: raw.id,
     email: raw.email ?? '',
@@ -797,8 +797,7 @@ export const AuthService = {
         return { ok: false, message: '토큰을 받지 못했습니다. 다시 시도해 주세요.' };
       }
 
-      const roleUpper = (inner.role ?? 'CLIENT').toUpperCase();
-      const role: User['role'] = roleUpper === 'CONSULTANT' ? 'consultant' : 'client';
+      const role = mapApiRoleToStoreRole(inner.role);
       const user: User = {
         id: inner.userId,
         email: inner.email,

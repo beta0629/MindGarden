@@ -9,6 +9,7 @@
  * @since 2026-05-13
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
 import {
@@ -107,7 +108,27 @@ export function useConsultantMindWeatherInbox() {
   const role = useAuthStore((s) => s.role);
   const userTenantId = useAuthStore((s) => s.user?.tenantId);
   const headerTenantId = useTenantStore((s) => s.tenantId);
-  const tenantId = headerTenantId ?? userTenantId ?? '';
+  const tenantCode = useTenantStore((s) => s.tenantCode);
+  const recentTenants = useTenantStore((s) => s.recentTenants);
+  const tenantId = useMemo(() => {
+    const h = (headerTenantId ?? '').trim();
+    if (h.length > 0) {
+      return h;
+    }
+    const u = (userTenantId ?? '').trim();
+    if (u.length > 0) {
+      return u;
+    }
+    const c = (tenantCode ?? '').trim();
+    if (c.length > 0 && recentTenants.length > 0) {
+      const hit = recentTenants.find((t) => t.code === c);
+      const fromRecent = hit?.id?.trim();
+      if (fromRecent && fromRecent.length > 0) {
+        return fromRecent;
+      }
+    }
+    return '';
+  }, [headerTenantId, userTenantId, tenantCode, recentTenants]);
   const consultantId = useAuthStore((s) => s.user?.id);
   const enabled = Boolean(accessToken && tenantId && role === 'consultant' && consultantId);
 

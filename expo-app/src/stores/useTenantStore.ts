@@ -18,6 +18,19 @@ interface RecentTenant {
   lastUsed: number;
 }
 
+function pickTenantIdFromRecent(
+  tenantCode: string | null,
+  recentTenants: RecentTenant[],
+): string | null {
+  const c = tenantCode?.trim();
+  if (!c || recentTenants.length === 0) {
+    return null;
+  }
+  const hit = recentTenants.find((t) => t.code === c);
+  const id = hit?.id?.trim();
+  return id && id.length > 0 ? id : null;
+}
+
 interface TenantState {
   tenantCode: string | null;
   tenantId: string | null;
@@ -60,6 +73,19 @@ export const useTenantStore = create<TenantState>()(
     {
       name: 'tenant-storage',
       storage: zustandMMKVStorage,
+      onRehydrateStorage: () => (state, error) => {
+        if (error != null || state == null) {
+          return;
+        }
+        const recovered = pickTenantIdFromRecent(state.tenantCode, state.recentTenants ?? []);
+        if (recovered != null && !(state.tenantId ?? '').trim()) {
+          const hit = state.recentTenants?.find((t) => t.code === state.tenantCode);
+          useTenantStore.setState({
+            tenantId: recovered,
+            tenantName: state.tenantName ?? hit?.name ?? null,
+          });
+        }
+      },
     },
   ),
 );

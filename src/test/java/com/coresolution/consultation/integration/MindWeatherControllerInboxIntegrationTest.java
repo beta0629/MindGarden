@@ -2,6 +2,7 @@ package com.coresolution.consultation.integration;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -87,6 +88,33 @@ class MindWeatherControllerInboxIntegrationTest {
             .andExpect(jsonPath("$.data[0].id").value("1001"))
             .andExpect(jsonPath("$.data[0].clientId").value(42))
             .andExpect(jsonPath("$.data[0].clientName").value("테스트내담자"));
+    }
+
+    @Test
+    @DisplayName("수신함 응답 data[]에 clientId·clientName JSON 키가 항상 포함된다")
+    void inbox_alwaysIncludesClientIdentityJsonKeys() throws Exception {
+        MindWeatherCardResponse row = MindWeatherCardResponse.builder()
+            .id("1003")
+            .clientId(7L)
+            .clientName(null)
+            .source("memo")
+            .text("")
+            .summary("요약")
+            .tone("positive")
+            .keywords(List.of())
+            .share(null)
+            .createdAt("2026-05-15T10:00:00+09:00")
+            .build();
+        when(mindWeatherService.listInboxForConsultant(any())).thenReturn(List.of(row));
+
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(SessionConstants.USER_OBJECT, consultant(2L));
+        session.setAttribute(SessionConstants.TENANT_ID, TENANT);
+
+        mockMvc.perform(get("/api/v1/mind-weather/inbox").session(session))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data[0].clientId").value(7))
+            .andExpect(jsonPath("$.data[0].clientName").value(nullValue()));
     }
 
     @Test

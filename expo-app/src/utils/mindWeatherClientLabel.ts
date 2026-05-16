@@ -13,7 +13,22 @@ export const MIND_WEATHER_GENERIC_CLIENT_LABEL = '내담자';
 export function isGenericMindWeatherClientDisplayName(
   clientName: string | null | undefined,
 ): boolean {
-  return toDisplayString(clientName, '').trim() === MIND_WEATHER_GENERIC_CLIENT_LABEL;
+  const t = toDisplayString(clientName, '').trim();
+  if (t.length === 0) {
+    return true;
+  }
+  const lower = t.toLowerCase();
+  if (lower === MIND_WEATHER_GENERIC_CLIENT_LABEL.toLowerCase()) {
+    return true;
+  }
+  if (t === '이름 비공개' || lower === 'anonymous' || t === '—') {
+    return true;
+  }
+  /** 서버가 `내담자 #123` 형태로 주면 표시용으로는 충분히 구체적이므로 제네릭이 아님 */
+  if (/^내담자\s*#\s*\d+$/u.test(t)) {
+    return false;
+  }
+  return false;
 }
 
 export function formatMindWeatherClientHeadline(
@@ -25,11 +40,11 @@ export function formatMindWeatherClientHeadline(
   const name = toDisplayString(clientName, '').trim();
   const n = toSafeNumber(clientId, Number.NaN);
   const hasId = Number.isFinite(n) && n > 0;
-  /** API가 이름 없이·또는 구버전에서 "내담자"만 줄 때는 회원 ID로 식별 */
-  if (hasId && (!name || name === MIND_WEATHER_GENERIC_CLIENT_LABEL)) {
+  /** API가 이름 없이·제네릭만 줄 때는 회원 id로 식별 */
+  if (hasId && (!name || isGenericMindWeatherClientDisplayName(name))) {
     return `${MIND_WEATHER_GENERIC_CLIENT_LABEL} #${n}`;
   }
-  if (name && name !== MIND_WEATHER_GENERIC_CLIENT_LABEL) {
+  if (name && !isGenericMindWeatherClientDisplayName(name)) {
     return name;
   }
   if (hasId) {

@@ -33,7 +33,7 @@ public interface MindWeatherCardRepository extends BaseRepository<MindWeatherCar
         + "WHERE c.tenantId = :tenantId AND c.id = :id AND c.isDeleted = false")
     Optional<MindWeatherCard> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
 
-    @Query("SELECT c FROM MindWeatherCard c JOIN FETCH c.client LEFT JOIN FETCH c.shareConsultant "
+    @Query("SELECT DISTINCT c FROM MindWeatherCard c JOIN FETCH c.client LEFT JOIN FETCH c.shareConsultant "
         + "WHERE c.tenantId = :tenantId AND c.isDeleted = false AND c.shareSummary = true "
         + "AND c.shareConsultant.id = :consultantId ORDER BY c.consentUpdatedAt DESC, c.createdAt DESC")
     List<MindWeatherCard> findInboxForConsultant(

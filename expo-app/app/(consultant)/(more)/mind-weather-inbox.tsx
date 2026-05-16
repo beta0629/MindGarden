@@ -37,6 +37,7 @@ import { toSafeNumber } from '@/utils/safeDisplay';
 import {
   formatMindWeatherClientHeadline,
   isGenericMindWeatherClientDisplayName,
+  MIND_WEATHER_GENERIC_CLIENT_LABEL,
 } from '@/utils/mindWeatherClientLabel';
 import { useAuthStore } from '@/stores/useAuthStore';
 import type { MindWeatherCard } from '@/services/mindWeatherService';
@@ -51,6 +52,7 @@ export default function ConsultantMindWeatherInbox() {
     consultantId: consultantIdStr,
     status: 'ALL',
     search: undefined,
+    size: 100,
   });
   const clientLabelByUserId = useMemo(() => {
     const m = new Map<number, string>();
@@ -74,7 +76,14 @@ export default function ConsultantMindWeatherInbox() {
           return fromRoster;
         }
       }
-      return formatMindWeatherClientHeadline(card.clientName, card.clientId, card.id);
+      const base = formatMindWeatherClientHeadline(card.clientName, card.clientId, card.id);
+      if (base === MIND_WEATHER_GENERIC_CLIENT_LABEL) {
+        const cardKey = toDisplayString(card.id, '').trim();
+        if (cardKey.length > 0) {
+          return formatMindWeatherClientHeadline(undefined, undefined, card.id);
+        }
+      }
+      return base;
     };
   }, [clientLabelByUserId]);
 

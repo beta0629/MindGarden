@@ -37,6 +37,12 @@ public class MindWeatherCard extends BaseEntity {
     @JoinColumn(name = "client_id", nullable = false)
     private User client;
 
+    /**
+     * 소유 내담자 회원 PK. {@link #client} 와 동일 DB 컬럼 — 연관 미초기화·프록시 한계 시에도 식별값을 읽는다.
+     */
+    @Column(name = "client_id", insertable = false, updatable = false)
+    private Long clientUserId;
+
     @Column(name = "source", nullable = false, length = 32)
     private String source;
 

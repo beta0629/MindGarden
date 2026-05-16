@@ -28,7 +28,10 @@ import {
 } from '@/constants/mindWeatherKeywords';
 import { toDisplayString } from '@/utils/toDisplayString';
 import { toSafeNumber } from '@/utils/safeDisplay';
-import { isGenericMindWeatherClientDisplayName } from '@/utils/mindWeatherClientLabel';
+import {
+  isGenericMindWeatherClientDisplayName,
+  MIND_WEATHER_GENERIC_CLIENT_LABEL,
+} from '@/utils/mindWeatherClientLabel';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 const mmkv = getMmkv(MIND_WEATHER_STORAGE_KEY);
@@ -352,7 +355,13 @@ function normalizeCard(raw: unknown): MindWeatherCard | null {
   const text = toDisplayString(o.text ?? o.note ?? o.bodyText, '');
   const createdAt = toDisplayString(o.createdAt ?? o.created_at, nowIso());
   const clientId = pickClientIdFromCardRaw(o);
-  const clientName = pickClientNameFromCardRaw(o);
+  let clientName = pickClientNameFromCardRaw(o);
+  if (clientId != null && clientId > 0) {
+    const trimmed = toDisplayString(clientName, '').trim();
+    if (!trimmed || isGenericMindWeatherClientDisplayName(trimmed)) {
+      clientName = `${MIND_WEATHER_GENERIC_CLIENT_LABEL} #${clientId}`;
+    }
+  }
   return {
     id,
     clientId,

@@ -218,6 +218,7 @@ public class MindWeatherServiceImpl implements MindWeatherService {
                 .updatedAt(formatOffset(card.getConsentUpdatedAt()))
                 .build();
         }
+        Long clientIdFromFk = card.getClientUserId();
         Long clientId = null;
         String clientName = null;
         User clientUser = card.getClient();
@@ -228,11 +229,20 @@ public class MindWeatherServiceImpl implements MindWeatherService {
             }
             clientId = clientUser.getId();
             clientName = resolveClientDisplayName(clientUser);
-            if (clientId != null && MindWeatherConstants.isGenericClientDisplayLabel(clientName)) {
-                clientName = "내담자 #" + clientId;
-            }
         } else {
-            log.warn("마음 날씨 카드에 client 연관이 없음: cardId={}, tenantId={}", card.getId(), card.getTenantId());
+            log.warn("마음 날씨 카드에 client 연관이 없음: cardId={}, tenantId={}, clientUserIdFk={}",
+                card.getId(), card.getTenantId(), clientIdFromFk);
+        }
+        if (clientId == null) {
+            clientId = clientIdFromFk;
+        }
+        if (clientId != null && clientName == null) {
+            clientName = userRepository.findById(clientId)
+                .map(this::resolveClientDisplayName)
+                .orElse(null);
+        }
+        if (clientId != null && MindWeatherConstants.isGenericClientDisplayLabel(clientName)) {
+            clientName = "내담자 #" + clientId;
         }
         return MindWeatherCardResponse.builder()
             .id(String.valueOf(card.getId()))

@@ -19,8 +19,10 @@ import lombok.Value;
 public class MindWeatherCardResponse {
 
     String id;
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonAlias({"client_id"})
     Long clientId;
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("clientName")
     @JsonAlias({"client_name"})
     String clientName;

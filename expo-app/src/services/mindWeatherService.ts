@@ -86,12 +86,38 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+/**
+ * 카드 id는 항상 문자열로 통일한다.
+ * Android 등에서 JSON 역직렬화 시 숫자 id가 되면 `===` 비교가 깨져 공유·병합이 실패할 수 있다.
+ */
+function normalizeMindWeatherCardId(id: string | number | undefined | null): string {
+  return toDisplayString(id, '').trim();
+}
+
+function sameMindWeatherCardId(a: unknown, b: unknown): boolean {
+  return (
+    normalizeMindWeatherCardId(a as string | number) ===
+    normalizeMindWeatherCardId(b as string | number)
+  );
+}
+
+function withNormalizedMindWeatherCardId(card: MindWeatherCard): MindWeatherCard {
+  const id = normalizeMindWeatherCardId(card.id);
+  if (id === card.id) {
+    return card;
+  }
+  return { ...card, id };
+}
+
 function getAllCardsLocal(): MindWeatherCard[] {
   const raw = mmkv.getString(STORAGE_CARDS_KEY);
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as MindWeatherCard[]) : [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return (parsed as MindWeatherCard[]).map((c) => withNormalizedMindWeatherCardId(c));
   } catch {
     return [];
   }
@@ -106,7 +132,10 @@ function getInboxLocal(): MindWeatherCard[] {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as MindWeatherCard[]) : [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return (parsed as MindWeatherCard[]).map((c) => withNormalizedMindWeatherCardId(c));
   } catch {
     return [];
   }
@@ -118,10 +147,11 @@ function saveInboxLocal(cards: MindWeatherCard[]): void {
 
 /** 동일 카드를 카드/인박스 양쪽에서 일관되게 갱신한다. mock 환경 한정. */
 function syncInboxLocal(card: MindWeatherCard): void {
+  const normalized = withNormalizedMindWeatherCardId(card);
   const inbox = getInboxLocal();
-  const next = inbox.filter((c) => c.id !== card.id);
-  if (card.share?.summary) {
-    next.unshift(card);
+  const next = inbox.filter((c) => !sameMindWeatherCardId(c.id, normalized.id));
+  if (normalized.share?.summary) {
+    next.unshift(normalized);
   }
   saveInboxLocal(next);
 }
@@ -303,7 +333,7 @@ function normalizeShareConsent(raw: unknown): MindWeatherShareConsent | null {
 function normalizeCard(raw: unknown): MindWeatherCard | null {
   if (raw == null || typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
-  const id = toDisplayString(o.id ?? o.cardId, '');
+  const id = normalizeMindWeatherCardId(o.id ?? o.cardId);
   if (!id) return null;
   const sourceRaw = o.source;
   const source: MindWeatherSource = isMindWeatherSource(sourceRaw) ? sourceRaw : 'memo';
@@ -454,8 +484,8 @@ function enrichConsultantInboxCardFromLocalStores(
   inboxLocals: readonly MindWeatherCard[],
   cardsLocals: readonly MindWeatherCard[],
 ): MindWeatherCard {
-  const fromInbox = inboxLocals.find((c) => c.id === card.id);
-  const fromCards = cardsLocals.find((c) => c.id === card.id);
+  const fromInbox = inboxLocals.find((c) => sameMindWeatherCardId(c.id, card.id));
+  const fromCards = cardsLocals.find((c) => sameMindWeatherCardId(c.id, card.id));
   const clientId = card.clientId ?? fromInbox?.clientId ?? fromCards?.clientId;
   const clientName = pickBetterMindWeatherClientName(
     card.clientName,
@@ -475,11 +505,14 @@ function mergeMindWeatherListWithLocal(apiItems: MindWeatherCard[]): MindWeather
   }
   const byId = new Map<string, MindWeatherCard>();
   for (const c of apiItems) {
-    byId.set(c.id, c);
+    const cn = withNormalizedMindWeatherCardId(c);
+    byId.set(normalizeMindWeatherCardId(cn.id), cn);
   }
   for (const c of locals) {
-    if (!byId.has(c.id)) {
-      byId.set(c.id, c);
+    const cn = withNormalizedMindWeatherCardId(c);
+    const key = normalizeMindWeatherCardId(cn.id);
+    if (!byId.has(key)) {
+      byId.set(key, cn);
     }
   }
   return Array.from(byId.values()).sort(
@@ -496,14 +529,17 @@ function mergeConsultantInboxWithLocal(apiItems: MindWeatherCard[]): MindWeather
   const cardsLocals = getAllCardsLocal();
   const byId = new Map<string, MindWeatherCard>();
   for (const c of apiItems) {
-    byId.set(c.id, c);
+    const cn = withNormalizedMindWeatherCardId(c);
+    byId.set(normalizeMindWeatherCardId(cn.id), cn);
   }
   for (const c of inboxLocals) {
-    const existing = byId.get(c.id);
+    const cn = withNormalizedMindWeatherCardId(c);
+    const key = normalizeMindWeatherCardId(cn.id);
+    const existing = byId.get(key);
     if (existing) {
-      byId.set(c.id, mergeSameIdConsultantInboxPreferApi(existing, c));
+      byId.set(key, mergeSameIdConsultantInboxPreferApi(existing, cn));
     } else {
-      byId.set(c.id, c);
+      byId.set(key, cn);
     }
   }
   return Array.from(byId.values())
@@ -524,7 +560,10 @@ export async function analyzeMindWeather(
     const normalized = normalizeCard(body);
     if (normalized != null) {
       const cards = getAllCardsLocal();
-      saveAllCardsLocal([normalized, ...cards.filter((c) => c.id !== normalized.id)]);
+      saveAllCardsLocal([
+        normalized,
+        ...cards.filter((c) => !sameMindWeatherCardId(c.id, normalized.id)),
+      ]);
       return normalized;
     }
     /* 본문은 왔으나 기대 형태 아님 → mock fallback */
@@ -545,7 +584,7 @@ export async function analyzeMindWeather(
   };
   card = enrichMindWeatherCardWithClientAuth(card);
   const cards = getAllCardsLocal();
-  saveAllCardsLocal([card, ...cards]);
+  saveAllCardsLocal([card, ...cards.filter((c) => !sameMindWeatherCardId(c.id, card.id))]);
   return card;
 }
 
@@ -563,19 +602,20 @@ export async function fetchMindWeatherList(): Promise<MindWeatherListPayload> {
 }
 
 export async function fetchMindWeatherDetail(id: string): Promise<MindWeatherCard | null> {
+  const idKey = normalizeMindWeatherCardId(id);
   try {
-    const raw = await apiGet<unknown>(MIND_WEATHER_API.detail(id));
+    const raw = await apiGet<unknown>(MIND_WEATHER_API.detail(idKey));
     const body = unwrapApiResponse<unknown>(raw) ?? raw;
     const normalized = normalizeCard(body);
     if (normalized != null) return normalized;
   } catch {
     /* mock fallback */
   }
-  return getAllCardsLocal().find((c) => c.id === id) ?? null;
+  return getAllCardsLocal().find((c) => sameMindWeatherCardId(c.id, idKey)) ?? null;
 }
 
 export interface MindWeatherShareInput {
-  readonly cardId: string;
+  readonly cardId: string | number;
   readonly summary: boolean;
   readonly original: boolean;
   readonly consultantId?: number;
@@ -588,8 +628,9 @@ export async function shareMindWeatherCard(input: MindWeatherShareInput): Promis
     consultantId: input.consultantId,
     updatedAt: nowIso(),
   };
+  const cardIdKey = normalizeMindWeatherCardId(input.cardId);
   try {
-    const raw = await apiPost<unknown>(MIND_WEATHER_API.share(input.cardId), {
+    const raw = await apiPost<unknown>(MIND_WEATHER_API.share(cardIdKey), {
       shareSummary: consent.summary,
       shareOriginal: consent.original,
       consultantId: consent.consultantId,
@@ -598,7 +639,10 @@ export async function shareMindWeatherCard(input: MindWeatherShareInput): Promis
     const normalized = normalizeCard(body);
     if (normalized != null) {
       const cards = getAllCardsLocal();
-      const next = [normalized, ...cards.filter((c) => c.id !== normalized.id)];
+      const next = [
+        normalized,
+        ...cards.filter((c) => !sameMindWeatherCardId(c.id, normalized.id)),
+      ];
       saveAllCardsLocal(next);
       syncInboxLocal(normalized);
       return normalized;
@@ -607,30 +651,31 @@ export async function shareMindWeatherCard(input: MindWeatherShareInput): Promis
     /* mock fallback */
   }
   const cards = getAllCardsLocal();
-  const target = cards.find((c) => c.id === input.cardId);
+  const target = cards.find((c) => sameMindWeatherCardId(c.id, cardIdKey));
   if (!target) {
     throw new Error('마음 날씨 카드를 찾지 못했습니다.');
   }
   let updated: MindWeatherCard = enrichMindWeatherCardWithClientAuth({ ...target, share: consent });
-  const next = cards.map((c) => (c.id === input.cardId ? updated : c));
+  const next = cards.map((c) => (sameMindWeatherCardId(c.id, cardIdKey) ? updated : c));
   saveAllCardsLocal(next);
   syncInboxLocal(updated);
   return updated;
 }
 
-export async function unshareMindWeatherCard(cardId: string): Promise<MindWeatherCard> {
+export async function unshareMindWeatherCard(cardId: string | number): Promise<MindWeatherCard> {
+  const cardIdKey = normalizeMindWeatherCardId(cardId);
   try {
-    await apiDelete<unknown>(MIND_WEATHER_API.unshare(cardId));
+    await apiDelete<unknown>(MIND_WEATHER_API.unshare(cardIdKey));
   } catch {
     /* mock fallback */
   }
   const cards = getAllCardsLocal();
-  const target = cards.find((c) => c.id === cardId);
+  const target = cards.find((c) => sameMindWeatherCardId(c.id, cardIdKey));
   if (!target) {
     throw new Error('마음 날씨 카드를 찾지 못했습니다.');
   }
   const updated: MindWeatherCard = { ...target, share: null };
-  const next = cards.map((c) => (c.id === cardId ? updated : c));
+  const next = cards.map((c) => (sameMindWeatherCardId(c.id, cardIdKey) ? updated : c));
   saveAllCardsLocal(next);
   syncInboxLocal(updated);
   return updated;

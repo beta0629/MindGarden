@@ -195,6 +195,40 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
                 String.valueOf(mappingId), bucket);
     }
 
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void dispatchMindWeatherShared(
+            String tenantId,
+            Long cardId,
+            Long consultantUserId,
+            String clientDisplayName,
+            String summarySnippet) {
+        if (cardId == null || consultantUserId == null) {
+            return;
+        }
+        String tid = requireTenantId(tenantId, null);
+        if (tid == null) {
+            return;
+        }
+        String clientLabel = clientDisplayName != null && !clientDisplayName.isBlank()
+            ? clientDisplayName.trim()
+            : "내담자";
+        String title = "마음 날씨 공유";
+        String body = summarySnippet != null && !summarySnippet.isBlank()
+            ? String.format("%s님이 분석 카드를 공유했어요. %s", clientLabel,
+                truncate(summarySnippet.trim(), 80))
+            : String.format("%s님이 마음 날씨 분석 카드를 공유했어요.", clientLabel);
+        Map<String, String> data = new LinkedHashMap<>();
+        data.put("type", MobilePushCanonicalTypes.MIND_WEATHER_SHARED);
+        data.put("tenantId", tid);
+        data.put("cardId", String.valueOf(cardId));
+        data.put("id", String.valueOf(cardId));
+        data.put("title", truncate(title, MobilePushDispatchConstants.TITLE_MAX_LENGTH));
+        sanitizeDataStrings(data);
+        dispatchFanout(tid, List.of(consultantUserId), MobilePushCanonicalTypes.MIND_WEATHER_SHARED, title, body,
+                data, String.valueOf(cardId), "shared");
+    }
+
     private Map<String, String> buildScheduleData(String tenantId, Schedule schedule, String canonicalType) {
         Map<String, String> data = new LinkedHashMap<>();
         data.put("type", canonicalType);

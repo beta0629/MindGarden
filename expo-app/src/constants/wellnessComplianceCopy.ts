@@ -35,5 +35,8 @@ export const MIND_WEATHER_SHARE_COPY_KO = {
   originalConsentHelper: '필요할 때만 켜 주세요. 언제든 끌 수 있습니다.',
   ctaShare: '상담사에게 공유하기',
   ctaCancel: '나만 보기',
+  shareSuccessTitle: '공유 완료',
+  shareSuccessMessage:
+    '담당 상담사에게 마음 날씨 카드를 공유했어요. 상담사 앱으로 알림이 전달됩니다.',
   unshareConfirm: '공유를 철회하면 상담사 화면에서 이 카드가 즉시 보이지 않아요.',
 } as const;

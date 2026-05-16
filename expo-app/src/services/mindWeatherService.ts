@@ -655,45 +655,35 @@ export interface MindWeatherShareInput {
   readonly consultantId?: number;
 }
 
+function isLocalMindWeatherCardId(cardId: string): boolean {
+  return cardId.startsWith('local-');
+}
+
 export async function shareMindWeatherCard(input: MindWeatherShareInput): Promise<MindWeatherCard> {
-  const consent: MindWeatherShareConsent = {
-    summary: input.summary,
-    original: input.original,
-    consultantId: input.consultantId,
-    updatedAt: nowIso(),
-  };
   const cardIdKey = normalizeMindWeatherCardId(input.cardId);
-  try {
-    const raw = await apiPost<unknown>(MIND_WEATHER_API.share(cardIdKey), {
-      shareSummary: consent.summary,
-      shareOriginal: consent.original,
-      consultantId: consent.consultantId,
-    });
-    const body = unwrapApiResponse<unknown>(raw) ?? raw;
-    const normalized = normalizeCard(body);
-    if (normalized != null) {
-      const cards = getAllCardsLocal();
-      const next = [
-        normalized,
-        ...cards.filter((c) => !sameMindWeatherCardId(c.id, normalized.id)),
-      ];
-      saveAllCardsLocal(next);
-      syncInboxLocal(normalized);
-      return normalized;
-    }
-  } catch {
-    /* mock fallback */
+  if (isLocalMindWeatherCardId(cardIdKey)) {
+    throw new Error(
+      '서버에 저장된 카드만 공유할 수 있어요. 새로 분석한 뒤 다시 공유해 주세요.',
+    );
+  }
+  const raw = await apiPost<unknown>(MIND_WEATHER_API.share(cardIdKey), {
+    shareSummary: input.summary,
+    shareOriginal: input.original,
+    consultantId: input.consultantId,
+  });
+  const body = unwrapApiResponse<unknown>(raw) ?? raw;
+  const normalized = normalizeCard(body);
+  if (normalized == null) {
+    throw new Error('공유 응답 형식이 올바르지 않습니다.');
   }
   const cards = getAllCardsLocal();
-  const target = cards.find((c) => sameMindWeatherCardId(c.id, cardIdKey));
-  if (!target) {
-    throw new Error('마음 날씨 카드를 찾지 못했습니다.');
-  }
-  let updated: MindWeatherCard = enrichMindWeatherCardWithClientAuth({ ...target, share: consent });
-  const next = cards.map((c) => (sameMindWeatherCardId(c.id, cardIdKey) ? updated : c));
+  const next = [
+    normalized,
+    ...cards.filter((c) => !sameMindWeatherCardId(c.id, normalized.id)),
+  ];
   saveAllCardsLocal(next);
-  syncInboxLocal(updated);
-  return updated;
+  syncInboxLocal(normalized);
+  return normalized;
 }
 
 export async function unshareMindWeatherCard(cardId: string | number): Promise<MindWeatherCard> {

@@ -9,9 +9,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import * as SecureStore from 'expo-secure-store';
 import { createZustandMmkvPersistStorage } from '@/lib/getMmkv';
-import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
+import { syncTenantStoreFromAccessToken } from '@/utils/tenantJwtSync';
 import { clearJsessionId, hydrateJsessionCacheFromSecureStore } from '@/utils/sessionCookie';
-import { queryClient } from '../api/queryClient';
 
 const SECURE_KEY_ACCESS_TOKEN = 'mg_access_token';
 const SECURE_KEY_REFRESH_TOKEN = 'mg_refresh_token';
@@ -50,9 +49,56 @@ interface AuthState {
   setLoading: (loading: boolean) => void;
 }
 
+type AuthSetState = (
+  partial:
+    | Partial<AuthState>
+    | ((state: AuthState) => Partial<AuthState>),
+) => void;
+type AuthGetState = () => AuthState;
+
+/** persist rehydrate 시점에는 `useAuthStore` export가 아직 없을 수 있음 — get/set 클로저만 사용 */
+let authGetState: AuthGetState | null = null;
+let authSetState: AuthSetState | null = null;
+let authRestoreTokens: (() => Promise<void>) | null = null;
+
+async function runRestoreTokensFromSecureStore(
+  set: AuthSetState,
+): Promise<void> {
+  const accessToken = await SecureStore.getItemAsync(SECURE_KEY_ACCESS_TOKEN);
+  const refreshToken = await SecureStore.getItemAsync(SECURE_KEY_REFRESH_TOKEN);
+  if (accessToken && refreshToken) {
+    const jwtTenantId = syncTenantStoreFromAccessToken(accessToken);
+    await hydrateJsessionCacheFromSecureStore();
+    set((state) => ({
+      accessToken,
+      refreshToken,
+      isAuthenticated: true,
+      isLoading: false,
+      _hasHydrated: true,
+      user:
+        state.user != null && jwtTenantId
+          ? { ...state.user, tenantId: jwtTenantId }
+          : state.user,
+    }));
+    return;
+  }
+  set({
+    accessToken: null,
+    refreshToken: null,
+    isAuthenticated: false,
+    isLoading: false,
+    _hasHydrated: true,
+  });
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => {
+      authGetState = get;
+      authSetState = set;
+      authRestoreTokens = () => runRestoreTokensFromSecureStore(set);
+
+      return {
       user: null,
       accessToken: null,
       refreshToken: null,
@@ -79,6 +125,7 @@ export const useAuthStore = create<AuthState>()(
         await SecureStore.deleteItemAsync(SECURE_KEY_ACCESS_TOKEN);
         await SecureStore.deleteItemAsync(SECURE_KEY_REFRESH_TOKEN);
         await clearJsessionId();
+        const { queryClient } = await import('../api/queryClient');
         queryClient.clear();
         set({
           user: null,
@@ -94,12 +141,16 @@ export const useAuthStore = create<AuthState>()(
       updateTokens: async (tokens) => {
         await SecureStore.setItemAsync(SECURE_KEY_ACCESS_TOKEN, tokens.accessToken);
         await SecureStore.setItemAsync(SECURE_KEY_REFRESH_TOKEN, tokens.refreshToken);
-        syncTenantFromAccessToken(tokens.accessToken);
+        const jwtTenantId = syncTenantStoreFromAccessToken(tokens.accessToken);
         await hydrateJsessionCacheFromSecureStore();
-        set({
+        set((state) => ({
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
-        });
+          user:
+            state.user != null && jwtTenantId
+              ? { ...state.user, tenantId: jwtTenantId }
+              : state.user,
+        }));
       },
 
       updateUser: (partial) => {
@@ -112,33 +163,14 @@ export const useAuthStore = create<AuthState>()(
       },
 
       restoreTokens: async () => {
-        const accessToken = await SecureStore.getItemAsync(SECURE_KEY_ACCESS_TOKEN);
-        const refreshToken = await SecureStore.getItemAsync(SECURE_KEY_REFRESH_TOKEN);
-        if (accessToken && refreshToken) {
-          syncTenantFromAccessToken(accessToken);
-          await hydrateJsessionCacheFromSecureStore();
-          set({
-            accessToken,
-            refreshToken,
-            isAuthenticated: true,
-            isLoading: false,
-            _hasHydrated: true,
-          });
-          return;
-        }
-        set({
-          accessToken: null,
-          refreshToken: null,
-          isAuthenticated: false,
-          isLoading: false,
-          _hasHydrated: true,
-        });
+        await runRestoreTokensFromSecureStore(set);
       },
 
       setLoading: (loading) => {
         set({ isLoading: loading });
       },
-    }),
+    };
+    },
     {
       name: 'auth-storage',
       storage: zustandMMKVStorage,
@@ -147,13 +179,23 @@ export const useAuthStore = create<AuthState>()(
         role: state.role,
         isAuthenticated: state.isAuthenticated,
       }),
-      onRehydrateStorage: () => () => {
-        void (async () => {
-          await useAuthStore.getState().restoreTokens();
-          if (!useAuthStore.getState()._hasHydrated) {
-            useAuthStore.setState({ _hasHydrated: true });
-          }
-        })();
+      onRehydrateStorage: () => (_state, error) => {
+        queueMicrotask(() => {
+          void (async () => {
+            if (error != null) {
+              authSetState?.({ _hasHydrated: true, isLoading: false });
+              return;
+            }
+            if (authRestoreTokens == null) {
+              authSetState?.({ _hasHydrated: true, isLoading: false });
+              return;
+            }
+            await authRestoreTokens();
+            if (authGetState != null && !authGetState()._hasHydrated) {
+              authSetState?.({ _hasHydrated: true });
+            }
+          })();
+        });
       },
     },
   ),

@@ -151,8 +151,19 @@ export default function ClientMindWeatherIndex() {
         original: consent.original,
       });
       setShareTargetId(null);
-    } catch {
-      Alert.alert('공유 실패', '잠시 후 다시 시도해주세요.');
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      Alert.alert(
+        MIND_WEATHER_SHARE_COPY_KO.shareSuccessTitle,
+        MIND_WEATHER_SHARE_COPY_KO.shareSuccessMessage,
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message.trim().length > 0
+          ? err.message
+          : '잠시 후 다시 시도해주세요.';
+      Alert.alert('공유 실패', message);
     }
   };
 

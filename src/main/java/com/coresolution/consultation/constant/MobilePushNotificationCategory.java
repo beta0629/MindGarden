@@ -36,7 +36,8 @@ public enum MobilePushNotificationCategory {
                     MobilePushCanonicalTypes.PAYMENT_FAILED,
                     MobilePushCanonicalTypes.SESSION_LOW -> PAYMENT;
             case "new_message" -> MESSAGE;
-            case "mood_reminder" -> WELLNESS;
+            case "mood_reminder",
+                    MobilePushCanonicalTypes.MIND_WEATHER_SHARED -> WELLNESS;
             case "system_notice" -> SYSTEM;
             default -> SCHEDULE;
         };

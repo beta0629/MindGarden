@@ -17,4 +17,6 @@ public final class MobilePushCanonicalTypes {
     public static final String PAYMENT_COMPLETED = "payment_completed";
     public static final String PAYMENT_FAILED = "payment_failed";
     public static final String SESSION_LOW = "session_low";
+    /** 내담자 마음 날씨 카드 상담사 공유 */
+    public static final String MIND_WEATHER_SHARED = "mind_weather_shared";
 }

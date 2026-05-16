@@ -19,6 +19,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.MindWeatherCardRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MindWeatherService;
+import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.mindweather.MindWeatherHeuristicAnalyzer;
 import com.coresolution.consultation.service.mindweather.MindWeatherHeuristicAnalyzer.AnalysisResult;
@@ -54,6 +55,7 @@ public class MindWeatherServiceImpl implements MindWeatherService {
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
     private final PersonalDataEncryptionUtil encryptionUtil;
+    private final MobilePushDispatchService mobilePushDispatchService;
 
     private enum CardViewMode {
         /** 내담자 본인 조회 — 원문 항상 포함 */
@@ -133,7 +135,15 @@ public class MindWeatherServiceImpl implements MindWeatherService {
         card.setShareConsultant(targetConsultant);
         card.setConsentUpdatedAt(java.time.LocalDateTime.now());
         mindWeatherCardRepository.save(card);
-        return toResponse(card, CardViewMode.CLIENT_SELF);
+        MindWeatherCardResponse response = toResponse(card, CardViewMode.CLIENT_SELF);
+        String clientName = resolveClientDisplayName(card.getClient());
+        mobilePushDispatchService.dispatchMindWeatherShared(
+            tenantId,
+            card.getId(),
+            targetConsultant.getId(),
+            clientName,
+            card.getSummary());
+        return response;
     }
 
     @Override

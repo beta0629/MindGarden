@@ -62,4 +62,20 @@ public interface MobilePushDispatchService {
      * @param remainingSessions 남은 회기 수
      */
     void dispatchSessionLow(String tenantId, Long mappingId, Long clientUserId, int remainingSessions);
+
+    /**
+     * 마음 날씨 카드 공유 푸시(담당 상담사).
+     *
+     * @param tenantId 테넌트 ID
+     * @param cardId 카드 PK
+     * @param consultantUserId 수신 상담사 users.id
+     * @param clientDisplayName 푸시 본문용 내담자 표시명
+     * @param summarySnippet 요약 일부(선택)
+     */
+    void dispatchMindWeatherShared(
+            String tenantId,
+            Long cardId,
+            Long consultantUserId,
+            String clientDisplayName,
+            String summarySnippet);
 }

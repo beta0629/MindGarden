@@ -129,6 +129,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         // userId를 principal로 사용
                         UsernamePasswordAuthenticationToken authentication =
                                 new UsernamePasswordAuthenticationToken(userId, null, authorities);
+                        // SessionUtils.getCurrentUser(HttpSession)은 SecurityContext의 details에
+                        // User가 있어야 반환한다. JSESSIONID 없이 Bearer만 쓰는 Android(OkHttp) 등에서
+                        // 세션 필터가 User를 못 올리면 컨트롤러가 null 사용자로 동작하므로 DB 조회 성공 시
+                        // 반드시 details에 User를 싣는다.
+                        if (user != null) {
+                            authentication.setDetails(user);
+                        }
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                         log.info(

@@ -77,11 +77,11 @@ export default function ConsultantMindWeatherInbox() {
         }
       }
       const base = formatMindWeatherClientHeadline(card.clientName, card.clientId, card.id);
-      if (base === MIND_WEATHER_GENERIC_CLIENT_LABEL) {
-        const cardKey = toDisplayString(card.id, '').trim();
-        if (cardKey.length > 0) {
-          return formatMindWeatherClientHeadline(undefined, undefined, card.id);
-        }
+      if (
+        base === MIND_WEATHER_GENERIC_CLIENT_LABEL ||
+        isGenericMindWeatherClientDisplayName(base)
+      ) {
+        return formatMindWeatherClientHeadline(undefined, undefined, card.id);
       }
       return base;
     };

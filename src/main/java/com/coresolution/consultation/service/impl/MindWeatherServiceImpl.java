@@ -68,7 +68,8 @@ public class MindWeatherServiceImpl implements MindWeatherService {
         if (!MindWeatherConstants.isAllowedSource(request.getSource())) {
             throw new IllegalArgumentException("허용되지 않은 source 값입니다.");
         }
-        User managedClient = userRepository.findById(client.getId())
+        User managedClient = userRepository.findByTenantIdAndId(
+            TenantContextHolder.getRequiredTenantId(), client.getId())
             .orElseThrow(() -> new EntityNotFoundException("User", client.getId()));
         AnalysisResult result = heuristicAnalyzer.analyze(request.getText());
         MindWeatherCard card = MindWeatherCard.builder()
@@ -221,11 +222,12 @@ public class MindWeatherServiceImpl implements MindWeatherService {
         Long clientIdFromFk = card.getClientUserId();
         Long clientId = null;
         String clientName = null;
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         User clientUser = card.getClient();
         if (clientUser != null) {
             Long cid = clientUser.getId();
             if (cid != null) {
-                clientUser = userRepository.findById(cid).orElse(clientUser);
+                clientUser = userRepository.findByTenantIdAndId(tenantId, cid).orElse(clientUser);
             }
             clientId = clientUser.getId();
             clientName = resolveClientDisplayName(clientUser);
@@ -237,12 +239,17 @@ public class MindWeatherServiceImpl implements MindWeatherService {
             clientId = clientIdFromFk;
         }
         if (clientId != null && clientName == null) {
-            clientName = userRepository.findById(clientId)
+            clientName = userRepository.findByTenantIdAndId(tenantId, clientId)
                 .map(this::resolveClientDisplayName)
                 .orElse(null);
         }
         if (clientId != null && MindWeatherConstants.isGenericClientDisplayLabel(clientName)) {
-            clientName = "내담자 #" + clientId;
+            clientName = MindWeatherConstants.GENERIC_CLIENT_DISPLAY_LABEL + " #" + clientId;
+        }
+        if ((clientName == null || MindWeatherConstants.isGenericClientDisplayLabel(clientName))
+            && clientId == null
+            && card.getId() != null) {
+            clientName = MindWeatherConstants.SHARED_CARD_HEADLINE_PREFIX + card.getId();
         }
         return MindWeatherCardResponse.builder()
             .id(String.valueOf(card.getId()))

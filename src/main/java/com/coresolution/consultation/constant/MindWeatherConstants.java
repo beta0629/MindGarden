@@ -26,6 +26,12 @@ public final class MindWeatherConstants {
      */
     public static final String GENERIC_CLIENT_DISPLAY_LABEL = "내담자";
 
+    /**
+     * 내담자 회원 식별 불가 시 카드 PK로만 구분하는 수신함 표기 접두어.
+     * Expo {@code formatMindWeatherClientHeadline} 의 {@code 공유 카드 #} 정책과 동일.
+     */
+    public static final String SHARED_CARD_HEADLINE_PREFIX = "공유 카드 #";
+
     private MindWeatherConstants() {
     }
 

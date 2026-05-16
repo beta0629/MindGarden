@@ -361,6 +361,11 @@ function normalizeCard(raw: unknown): MindWeatherCard | null {
     if (!trimmed || isGenericMindWeatherClientDisplayName(trimmed)) {
       clientName = `${MIND_WEATHER_GENERIC_CLIENT_LABEL} #${clientId}`;
     }
+  } else {
+    const trimmed = toDisplayString(clientName, '').trim();
+    if (!trimmed || isGenericMindWeatherClientDisplayName(trimmed)) {
+      clientName = undefined;
+    }
   }
   return {
     id,
@@ -478,11 +483,30 @@ function mergeSameIdConsultantInboxPreferApi(
   apiRow: MindWeatherCard,
   localRow: MindWeatherCard,
 ): MindWeatherCard {
-  return {
+  return sanitizeMindWeatherCardGenericClientLabel({
     ...apiRow,
     clientId: apiRow.clientId ?? localRow.clientId,
     clientName: pickBetterMindWeatherClientName(apiRow.clientName, localRow.clientName),
-  };
+  });
+}
+
+/**
+ * 회원 id 없이 제네릭 `내담자`만 있으면 헤드라인이 `formatMindWeatherClientHeadline`으로
+ * `공유 카드 #` 폴백을 타도록 `clientName`을 비운다.
+ */
+function sanitizeMindWeatherCardGenericClientLabel(card: MindWeatherCard): MindWeatherCard {
+  const cid = card.clientId;
+  const nameTrim = toDisplayString(card.clientName, '').trim();
+  if (cid != null && cid > 0) {
+    if (!nameTrim || isGenericMindWeatherClientDisplayName(nameTrim)) {
+      return { ...card, clientName: `${MIND_WEATHER_GENERIC_CLIENT_LABEL} #${cid}` };
+    }
+    return card;
+  }
+  if (!nameTrim || isGenericMindWeatherClientDisplayName(nameTrim)) {
+    return { ...card, clientName: undefined };
+  }
+  return card;
 }
 
 /**
@@ -500,7 +524,7 @@ function enrichConsultantInboxCardFromLocalStores(
     card.clientName,
     pickBetterMindWeatherClientName(fromInbox?.clientName, fromCards?.clientName),
   );
-  return { ...card, clientId, clientName };
+  return sanitizeMindWeatherCardGenericClientLabel({ ...card, clientId, clientName });
 }
 
 /**

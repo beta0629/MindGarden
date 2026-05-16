@@ -9,6 +9,8 @@
  * @since 2026-05-13
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useTenantStore } from '@/stores/useTenantStore';
 import {
   analyzeMindWeather,
   fetchConsultantMindWeatherInbox,
@@ -101,10 +103,21 @@ export function useUnshareMindWeatherCard() {
 }
 
 export function useConsultantMindWeatherInbox() {
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const role = useAuthStore((s) => s.role);
+  const userTenantId = useAuthStore((s) => s.user?.tenantId);
+  const headerTenantId = useTenantStore((s) => s.tenantId);
+  const tenantId = headerTenantId ?? userTenantId ?? '';
+  const consultantId = useAuthStore((s) => s.user?.id);
+  const enabled = Boolean(accessToken && tenantId && role === 'consultant' && consultantId);
+
   return useQuery({
-    queryKey: MIND_WEATHER_QUERY_KEYS.inbox(),
+    queryKey: [...MIND_WEATHER_QUERY_KEYS.inbox(), tenantId, String(consultantId ?? '')] as const,
     queryFn: () => fetchConsultantMindWeatherInbox(),
+    enabled,
     staleTime: 1000 * 60,
+    /** 토큰 주입 직후·탭 재진입 시 서버 목록 재확인 (Android SecureStore 지연 레이스 완화) */
+    refetchOnMount: 'always',
   });
 }
 

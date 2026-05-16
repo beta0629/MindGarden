@@ -29,12 +29,61 @@
   display: flex;
   flex-direction: column;
   gap: var(--mg-spacing-md);
+  border: 1px solid var(--mg-color-border-main);
+}
+
+.cr-salary-settlement__card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--mg-spacing-md);
 }
 
 .cr-salary-settlement__card-title {
+  margin: 0;
   font-size: var(--mg-font-size-base);
   font-weight: var(--mg-font-weight-semibold);
   color: var(--mg-color-text-main);
+  flex: 1;
+  min-width: 0;
+}
+
+.cr-salary-settlement__card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cr-salary-settlement__detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--mg-spacing-xs) 0;
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-main);
+  gap: var(--mg-spacing-md);
+}
+
+.cr-salary-settlement__detail-row--tax,
+.cr-salary-settlement__detail-row--total {
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+.cr-salary-settlement__detail-row--total .cr-salary-settlement__detail-value {
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-consultant-primary);
+}
+
+.cr-salary-settlement__detail-label {
+  color: var(--mg-color-text-muted);
+  flex: 1;
+  min-width: 0;
+}
+
+.cr-salary-settlement__detail-value {
+  text-align: right;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .cr-salary-settlement__grid {
@@ -112,4 +161,8 @@
 .cr-salary-settlement__retry:focus-visible {
   outline: 2px solid var(--mg-consultant-primary);
   outline-offset: 2px;
+}
+
+.cr-salary-settlement__memo-block {
+  margin-top: var(--mg-spacing-sm);
 }

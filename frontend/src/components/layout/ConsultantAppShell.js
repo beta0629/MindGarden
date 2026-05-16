@@ -19,6 +19,14 @@ import BottomNavigation from './BottomNavigation';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useConsultantSalaryCalculations } from '../../hooks/useConsultantSalaryCalculations';
 import { CONSULTANT_SALARY_SETTLEMENT_STRINGS as SALARY_STRINGS } from '../../constants/consultantSalarySettlementStrings';
+import {
+  CONSULTANT_SESSION_KPI_ROUTE,
+  CONSULTANT_SESSION_KPI_STRINGS as SESSION_KPI_STRINGS
+} from '../../constants/consultantSessionKpiStrings';
+import {
+  CONSULTANT_MIND_WEATHER_INBOX_ROUTE,
+  CONSULTANT_MIND_WEATHER_INBOX_STRINGS as MIND_WEATHER_INBOX_STRINGS
+} from '../../constants/consultantMindWeatherInboxStrings';
 import './ConsultantAppShell.css';
 
 const CONSULTANT_BOTTOM_NAV_ITEMS = [
@@ -64,6 +72,12 @@ const ConsultantAppShell = ({ title = '', showBack = false, onBack, children }) 
   }, [hasItems, salaryGateLoading]);
 
   const currentTitle = useMemo(() => {
+    if (location.pathname === CONSULTANT_SESSION_KPI_ROUTE) {
+      return SESSION_KPI_STRINGS.PAGE_TITLE;
+    }
+    if (location.pathname === CONSULTANT_MIND_WEATHER_INBOX_ROUTE) {
+      return MIND_WEATHER_INBOX_STRINGS.PAGE_TITLE;
+    }
     if (title) return title;
     return TITLE_MAP[location.pathname] || 'MindGarden';
   }, [title, location.pathname]);

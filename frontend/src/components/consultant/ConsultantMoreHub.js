@@ -7,9 +7,17 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Wallet, ChevronRight } from 'lucide-react';
+import { Users, Wallet, ChevronRight, BarChart3, Inbox } from 'lucide-react';
 import { useConsultantSalaryCalculations } from '../../hooks/useConsultantSalaryCalculations';
 import { CONSULTANT_SALARY_SETTLEMENT_STRINGS as S } from '../../constants/consultantSalarySettlementStrings';
+import {
+  CONSULTANT_SESSION_KPI_ROUTE,
+  CONSULTANT_SESSION_KPI_STRINGS as KPI_S
+} from '../../constants/consultantSessionKpiStrings';
+import {
+  CONSULTANT_MIND_WEATHER_INBOX_ROUTE,
+  CONSULTANT_MIND_WEATHER_INBOX_STRINGS as MW_S
+} from '../../constants/consultantMindWeatherInboxStrings';
 import './ConsultantMoreHub.css';
 
 const ConsultantMoreHub = () => {
@@ -21,6 +29,36 @@ const ConsultantMoreHub = () => {
       <section className="cr-dashboard__section" aria-label={S.MORE_SECTION_TITLE}>
         <h2 className="cr-dashboard__section-title">{S.MORE_SECTION_TITLE}</h2>
         <div className="cr-more-hub__list">
+          <button
+            type="button"
+            className="cr-more-hub__row"
+            onClick={() => navigate(CONSULTANT_SESSION_KPI_ROUTE)}
+          >
+            <span className="cr-more-hub__row-icon" aria-hidden>
+              <BarChart3 size={22} />
+            </span>
+            <span className="cr-more-hub__row-body">
+              <span className="cr-more-hub__row-title">{KPI_S.MENU_TITLE}</span>
+              <span className="cr-more-hub__row-sub">{KPI_S.MENU_SUBTITLE}</span>
+            </span>
+            <ChevronRight size={20} className="cr-more-hub__row-chevron" aria-hidden />
+          </button>
+
+          <button
+            type="button"
+            className="cr-more-hub__row"
+            onClick={() => navigate(CONSULTANT_MIND_WEATHER_INBOX_ROUTE)}
+          >
+            <span className="cr-more-hub__row-icon" aria-hidden>
+              <Inbox size={22} />
+            </span>
+            <span className="cr-more-hub__row-body">
+              <span className="cr-more-hub__row-title">{MW_S.MENU_TITLE}</span>
+              <span className="cr-more-hub__row-sub">{MW_S.MENU_SUBTITLE}</span>
+            </span>
+            <ChevronRight size={20} className="cr-more-hub__row-chevron" aria-hidden />
+          </button>
+
           <button
             type="button"
             className="cr-more-hub__row"

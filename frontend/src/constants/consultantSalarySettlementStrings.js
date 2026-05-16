@@ -26,5 +26,12 @@ export const CONSULTANT_SALARY_SETTLEMENT_STRINGS = {
   LABEL_GROSS: '총 지급액',
   LABEL_DEDUCTIONS: '공제 합계',
   LABEL_MEMO: '비고',
+  /** ERP 급여 계산 카드와 동일 흐름의 상담사 노출 라벨 */
+  LABEL_CONSULTATION_PSYCH: '상담/심리검사 급여',
+  LABEL_MEAL_TRANSPORT: '식대·교통비',
+  LABEL_GROSS_PRETAX: '총 급여 (세전)',
+  LABEL_TAX_DEDUCTION: '세금 공제',
+  LABEL_NET_AFTER_TAX: '실수령액 (세후)',
+  LABEL_SETTLEMENT_METHOD: '정산 수단',
   FALLBACK_STATUS: '—'
 };

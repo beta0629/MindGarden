@@ -9,7 +9,7 @@
  * - `docs/design-system/v2/MIND_WEATHER_UI_UX_SPEC.md`
  *
  * @author MindGarden
- * @since 2026-05-13 — 목록·로컬 병합으로 분석 폴백 카드 누락 방지
+ * @since 2026-05-13 — 목록·인박스 로컬 병합으로 폴백·서버 반영 전 카드 누락 방지
  */
 import { getMmkv } from '@/lib/getMmkv';
 import { apiDelete, apiGet, apiPost } from '@/api/client';
@@ -319,6 +319,29 @@ function mergeMindWeatherListWithLocal(apiItems: MindWeatherCard[]): MindWeather
   );
 }
 
+/**
+ * 상담사 수신함: API가 빈 배열이어도 MMKV `inbox`에만 있는 공유 카드가 누락되지 않게 병합한다.
+ * 동일 `id`는 **서버(API) 응답을 우선**하고, 나머지는 `createdAt` 내림차순으로 정렬한다.
+ */
+function mergeConsultantInboxWithLocal(apiItems: MindWeatherCard[]): MindWeatherCard[] {
+  const locals = getInboxLocal();
+  if (locals.length === 0) {
+    return apiItems;
+  }
+  const byId = new Map<string, MindWeatherCard>();
+  for (const c of apiItems) {
+    byId.set(c.id, c);
+  }
+  for (const c of locals) {
+    if (!byId.has(c.id)) {
+      byId.set(c.id, c);
+    }
+  }
+  return Array.from(byId.values()).sort(
+    (a, b) => parseCreatedAtMs(b.createdAt) - parseCreatedAtMs(a.createdAt),
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /*                                 공개 API                                   */
 /* -------------------------------------------------------------------------- */
@@ -448,7 +471,7 @@ export async function fetchConsultantMindWeatherInbox(): Promise<MindWeatherList
     const raw = await apiGet<unknown>(MIND_WEATHER_API.CONSULTANT_INBOX);
     const items = normalizeListPayload(raw);
     if (items != null) {
-      return { items, source: 'api' };
+      return { items: mergeConsultantInboxWithLocal(items), source: 'api' };
     }
   } catch {
     /* mock fallback */

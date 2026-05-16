@@ -11,11 +11,19 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { AlertCircle, Wallet } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { useConsultantSalarySettlements } from '@/api/hooks/useConsultantSalarySettlements';
+import {
+  useConsultantSalarySettlements,
+  type ConsultantSalarySettlementRow,
+} from '@/api/hooks/useConsultantSalarySettlements';
 import { CONSULTANT_SALARY_SETTLEMENT_COPY } from '@/constants/consultantSalarySettlementCopy';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { toDisplayString, toSafeNumber } from '@/utils/safeDisplay';
+import {
+  buildSalaryCalculationComponentRows,
+  getSalaryStatusLabelKorean,
+  mapConsultantComponentRowLabel,
+} from '@/utils/salaryCalculationDisplay';
 
 function getQueryErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message) {
@@ -35,6 +43,14 @@ function formatWon(value: unknown): string {
   return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(n);
 }
 
+function toSalaryNumber(value: unknown): number {
+  if (value == null || value === '') {
+    return 0;
+  }
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function periodLabel(row: {
   calculationPeriod?: string | null;
   calculationPeriodStart?: string | null;
@@ -52,6 +68,236 @@ function periodLabel(row: {
     return toDisplayString(`${a} ~ ${b}`, '—');
   }
   return '—';
+}
+
+function resolveMemo(item: ConsultantSalarySettlementRow): string | null {
+  const raw =
+    item.memo ??
+    (item as { note?: string | null }).note ??
+    (item as { description?: string | null }).description ??
+    (item as { remarks?: string | null }).remarks;
+  if (raw == null) {
+    return null;
+  }
+  const s = String(raw).trim();
+  return s === '' ? null : s;
+}
+
+function resolveSettlementMethodDisplay(item: ConsultantSalarySettlementRow): string {
+  const v =
+    item.paymentMethod ??
+    item.settlementMethod ??
+    (item as { payMethod?: string | null }).payMethod ??
+    (item as { payoutMethod?: string | null }).payoutMethod;
+  return toDisplayString(v, '—');
+}
+
+type Theme = ReturnType<typeof useTheme>;
+
+function SalarySettlementCard({
+  row,
+  theme,
+}: {
+  row: ConsultantSalarySettlementRow;
+  theme: Theme;
+}) {
+  const pretaxRows = buildSalaryCalculationComponentRows(
+    row as Record<string, unknown>,
+    toSalaryNumber,
+  );
+  const bonus = toSalaryNumber(row.bonusEarnings);
+  const taxAmt = toSalaryNumber(row.taxAmount ?? row.deductions);
+  const grossPretax =
+    row.grossSalary != null && row.grossSalary !== ''
+      ? toSalaryNumber(row.grossSalary)
+      : toSalaryNumber(row.totalSalary);
+  const netAfter =
+    row.netSalary != null && row.netSalary !== ''
+      ? toSalaryNumber(row.netSalary)
+      : grossPretax - taxAmt;
+  const memo = resolveMemo(row);
+  const statusText = getSalaryStatusLabelKorean(
+    row.status,
+    CONSULTANT_SALARY_SETTLEMENT_COPY.FALLBACK_STATUS,
+  );
+
+  return (
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.colors.surface,
+          borderRadius: theme.borderRadius.lg,
+        },
+      ]}
+    >
+      <View style={styles.cardHeader}>
+        <Text
+          style={[
+            styles.cardTitle,
+            {
+              color: theme.colors.textMain,
+              fontFamily: theme.fontFamily.semibold,
+              fontSize: theme.fontSize.base,
+            },
+          ]}
+        >
+          {periodLabel(row)}
+        </Text>
+        <View
+          style={[styles.statusPill, { backgroundColor: theme.colors.textTertiary }]}
+          accessibilityRole="text"
+          accessibilityLabel={`${CONSULTANT_SALARY_SETTLEMENT_COPY.STATUS}: ${statusText}`}
+        >
+          <Text style={[styles.statusPillText, { color: theme.colors.surface }]}>{statusText}</Text>
+        </View>
+      </View>
+
+      {pretaxRows.map((r, i) => (
+        <View key={`${r.label}-${i}`} style={styles.detailRow}>
+          <Text
+            style={[
+              styles.detailLabel,
+              { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.regular },
+            ]}
+          >
+            {mapConsultantComponentRowLabel(
+              r.label,
+              CONSULTANT_SALARY_SETTLEMENT_COPY.LABEL_CONSULTATION_PSYCH,
+            )}
+          </Text>
+          <Text
+            style={[
+              styles.detailValue,
+              { color: theme.colors.textMain, fontFamily: theme.fontFamily.medium },
+            ]}
+          >
+            {formatWon(r.amount)}
+          </Text>
+        </View>
+      ))}
+
+      {bonus > 0 ? (
+        <View style={styles.detailRow}>
+          <Text
+            style={[
+              styles.detailLabel,
+              { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.regular },
+            ]}
+          >
+            {CONSULTANT_SALARY_SETTLEMENT_COPY.LABEL_MEAL_TRANSPORT}
+          </Text>
+          <Text
+            style={[
+              styles.detailValue,
+              { color: theme.colors.textMain, fontFamily: theme.fontFamily.medium },
+            ]}
+          >
+            +{formatWon(row.bonusEarnings)}
+          </Text>
+        </View>
+      ) : null}
+
+      <View style={styles.detailRow}>
+        <Text
+          style={[
+            styles.detailLabel,
+            { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.regular },
+          ]}
+        >
+          {CONSULTANT_SALARY_SETTLEMENT_COPY.LABEL_GROSS_PRETAX}
+        </Text>
+        <Text
+          style={[
+            styles.detailValue,
+            { color: theme.colors.textMain, fontFamily: theme.fontFamily.medium },
+          ]}
+        >
+          {formatWon(grossPretax)}
+        </Text>
+      </View>
+
+      {taxAmt > 0 ? (
+        <View style={styles.detailRow}>
+          <Text
+            style={[
+              styles.detailLabel,
+              { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.semibold },
+            ]}
+          >
+            {CONSULTANT_SALARY_SETTLEMENT_COPY.LABEL_TAX_DEDUCTION}
+          </Text>
+          <Text
+            style={[
+              styles.detailValue,
+              { color: theme.colors.textMain, fontFamily: theme.fontFamily.semibold },
+            ]}
+          >
+            -{formatWon(taxAmt)}
+          </Text>
+        </View>
+      ) : null}
+
+      <View style={styles.detailRow}>
+        <Text
+          style={[
+            styles.detailLabel,
+            { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.semibold },
+          ]}
+        >
+          {CONSULTANT_SALARY_SETTLEMENT_COPY.LABEL_NET_AFTER_TAX}
+        </Text>
+        <Text
+          style={[
+            styles.detailValueEmph,
+            { color: theme.colors.accent, fontFamily: theme.fontFamily.semibold },
+          ]}
+        >
+          {formatWon(netAfter)}
+        </Text>
+      </View>
+
+      <View style={styles.detailRow}>
+        <Text
+          style={[
+            styles.detailLabel,
+            { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.regular },
+          ]}
+        >
+          {CONSULTANT_SALARY_SETTLEMENT_COPY.LABEL_SETTLEMENT_METHOD}
+        </Text>
+        <Text
+          style={[
+            styles.detailValue,
+            { color: theme.colors.textMain, fontFamily: theme.fontFamily.medium },
+          ]}
+        >
+          {resolveSettlementMethodDisplay(row)}
+        </Text>
+      </View>
+
+      {memo ? (
+        <View style={styles.memoBlock}>
+          <Text
+            style={[
+              styles.detailLabel,
+              { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.regular },
+            ]}
+          >
+            {CONSULTANT_SALARY_SETTLEMENT_COPY.LABEL_MEMO}
+          </Text>
+          <Text
+            style={[
+              styles.memoText,
+              { color: theme.colors.textMain, fontFamily: theme.fontFamily.regular },
+            ]}
+          >
+            {memo}
+          </Text>
+        </View>
+      ) : null}
+    </View>
+  );
 }
 
 export default function ConsultantSalarySettlementScreen() {
@@ -166,53 +412,7 @@ export default function ConsultantSalarySettlementScreen() {
           </View>
         ) : (
           rows.map((row, idx) => (
-            <View
-              key={String(row.id ?? idx)}
-              style={[
-                styles.card,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderRadius: theme.borderRadius.lg,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.cardTitle,
-                  {
-                    color: theme.colors.textMain,
-                    fontFamily: theme.fontFamily.semibold,
-                    fontSize: theme.fontSize.base,
-                  },
-                ]}
-              >
-                {periodLabel(row)}
-              </Text>
-              <View style={styles.row}>
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-                  {CONSULTANT_SALARY_SETTLEMENT_COPY.STATUS}
-                </Text>
-                <Text style={[styles.value, { color: theme.colors.textMain }]}>
-                  {toDisplayString(row.status, '—')}
-                </Text>
-              </View>
-              <View style={styles.row}>
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-                  {CONSULTANT_SALARY_SETTLEMENT_COPY.NET}
-                </Text>
-                <Text style={[styles.valueEmph, { color: theme.colors.accent }]}>
-                  {formatWon(row.netSalary)}
-                </Text>
-              </View>
-              <View style={styles.row}>
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-                  {CONSULTANT_SALARY_SETTLEMENT_COPY.GROSS}
-                </Text>
-                <Text style={[styles.value, { color: theme.colors.textMain }]}>
-                  {formatWon(row.grossSalary)}
-                </Text>
-              </View>
-            </View>
+            <SalarySettlementCard key={String(row.id ?? idx)} row={row} theme={theme} />
           ))
         )}
         {isFetching && !isLoading ? (
@@ -236,15 +436,32 @@ const styles = StyleSheet.create({
   emptyText: { textAlign: 'center', lineHeight: 24, marginBottom: 8 },
   emptyHint: { textAlign: 'center', lineHeight: 22 },
   card: { padding: 16, marginBottom: 12 },
-  cardTitle: { marginBottom: 12 },
-  row: {
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 12,
+  },
+  cardTitle: { flex: 1, minWidth: 0 },
+  statusPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    flexShrink: 0,
+  },
+  statusPillText: { fontSize: 12, fontWeight: '600' },
+  detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    gap: 12,
   },
-  label: { fontSize: 13, flex: 1 },
-  value: { fontSize: 14, flex: 1, textAlign: 'right' },
-  valueEmph: { fontSize: 16, flex: 1, textAlign: 'right', fontWeight: '600' },
+  detailLabel: { fontSize: 13, flex: 1, minWidth: 0 },
+  detailValue: { fontSize: 14, textAlign: 'right', fontVariant: ['tabular-nums'] },
+  detailValueEmph: { fontSize: 16, textAlign: 'right', fontVariant: ['tabular-nums'] },
+  memoBlock: { marginTop: 8 },
+  memoText: { fontSize: 13, marginTop: 4, lineHeight: 20 },
   inlineFetch: { alignItems: 'center', marginTop: 8 },
 });

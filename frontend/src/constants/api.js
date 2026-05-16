@@ -187,11 +187,25 @@ export const CONSULTATION_API = {
    * 백엔드 경로는 배치에 따라 조정 가능 — 프론트는 이 상수만 교체하면 된다.
    */
   GET_MY_SALARY_CALCULATIONS: '/api/v1/consultants/me/salary-calculations',
+
+  /**
+   * 본인 완료 회기 통계(일·주·월 버킷).
+   * 쿼리: startDate, endDate(YYYY-MM-DD), granularity=DAY|WEEK|MONTH
+   */
+  GET_MY_SESSION_STATISTICS: '/api/v1/consultants/me/session-statistics',
   
   // 상담 세션
   START_SESSION: '/api/v1/consultations/session/start',
   END_SESSION: '/api/v1/consultations/session/end',
   GET_SESSION_INFO: '/api/v1/consultations/session'
+};
+
+/**
+ * 마음 날씨 API (Expo MIND_WEATHER_API 정합).
+ * 상담사 수신함: GET /api/v1/mind-weather/inbox
+ */
+export const MIND_WEATHER_API = {
+  INBOX: '/api/v1/mind-weather/inbox'
 };
 
 // 관리자 관련 API (표준 경로: /api/v1/admin)

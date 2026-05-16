@@ -1,0 +1,116 @@
+/**
+ * ConsultantSessionKpiPage — B0KlA·토큰만 사용
+ *
+ * @author MindGarden
+ * @since 2026-05-16
+ */
+
+.consultant-session-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-lg);
+  padding-bottom: var(--mg-spacing-xl);
+}
+
+.consultant-session-kpi__toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.consultant-session-kpi__segmented-track {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-2xs);
+}
+
+.consultant-session-kpi__period-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-md);
+}
+
+.consultant-session-kpi__period-label {
+  flex: 1;
+  text-align: center;
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+  color: var(--mg-color-text-main);
+  word-break: break-all;
+}
+
+.consultant-session-kpi__nav-btn {
+  flex-shrink: 0;
+}
+
+.consultant-session-kpi__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-xl);
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-consultant-surface);
+  box-shadow: var(--mg-shadow-sm);
+  text-align: center;
+}
+
+.consultant-session-kpi__state--error {
+  border: 1px solid var(--mg-color-border-subtle);
+}
+
+.consultant-session-kpi__state--empty {
+  border: 1px dashed var(--mg-color-border-subtle);
+}
+
+.consultant-session-kpi__state-icon {
+  color: var(--mg-color-text-muted);
+}
+
+.consultant-session-kpi__state-text {
+  margin: 0;
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-main);
+}
+
+.consultant-session-kpi__state-sub {
+  margin: 0;
+  max-width: 28rem;
+  font-size: var(--mg-font-size-sm);
+  line-height: var(--mg-line-height-relaxed, 1.5);
+}
+
+.consultant-session-kpi__state-sub--muted {
+  color: var(--mg-color-text-muted);
+}
+
+.consultant-session-kpi__chart {
+  width: 100%;
+}
+
+.consultant-session-kpi__table-wrap {
+  overflow-x: auto;
+}
+
+.consultant-session-kpi__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mg-font-size-sm);
+}
+
+.consultant-session-kpi__table th,
+.consultant-session-kpi__table td {
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--mg-color-border-subtle);
+}
+
+.consultant-session-kpi__table th {
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-muted);
+}
+
+.consultant-session-kpi__table td {
+  color: var(--mg-color-text-main);
+}

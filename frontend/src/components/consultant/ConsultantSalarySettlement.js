@@ -2,6 +2,7 @@
  * ConsultantSalarySettlement — 관리자 급여 산정 결과(상담사 조회 전용)
  *
  * 금액·문자 필드는 {@link toDisplayString}, {@link toSafeNumber} 경계를 따른다.
+ * 카드 레이아웃·구성 행은 ERP 급여 관리(`SalaryManagement`)와 동일 규칙을 사용한다.
  *
  * @author MindGarden
  * @since 2026-05-15
@@ -12,6 +13,17 @@ import { AlertTriangle } from 'lucide-react';
 import { useConsultantSalaryCalculations } from '../../hooks/useConsultantSalaryCalculations';
 import { toDisplayString, toSafeNumber, toErrorMessage } from '../../utils/safeDisplay';
 import { CONSULTANT_SALARY_SETTLEMENT_STRINGS as S } from '../../constants/consultantSalarySettlementStrings';
+import {
+  SALARY_STATUS_LABELS,
+  SALARY_CALC_DETAIL_OPTION_LABEL,
+  SALARY_CALC_DETAIL_CONSULTATION_LABEL,
+  SALARY_CALC_DETAIL_HOURLY_LABEL
+} from '../../constants/salaryConstants';
+import {
+  buildSalaryCalculationComponentRows,
+  normalizeSalaryCalculationStatus
+} from '../../utils/salaryCalculationDisplay';
+import '../common/StatusBadge.css';
 import './ConsultantSalarySettlement.css';
 
 /**
@@ -24,6 +36,18 @@ const formatWon = (value) => {
     return toDisplayString(null, '—');
   }
   return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(n);
+};
+
+/**
+ * @param {unknown} value
+ * @returns {number}
+ */
+const toSalaryNumber = (value) => {
+  if (value == null || value === '') {
+    return 0;
+  }
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
 };
 
 /**
@@ -58,40 +82,31 @@ const resolvePeriodLabel = (item) => {
 };
 
 /**
- * @param {Object} item
+ * @param {unknown} raw
  * @returns {string}
  */
-const resolveStatus = (item) => {
-  const v = item.status ?? item.settlementStatus ?? item.state;
-  return toDisplayString(v, S.FALLBACK_STATUS);
+const getSalaryStatusLabel = (raw) => {
+  const key = normalizeSalaryCalculationStatus(raw);
+  if (key && Object.prototype.hasOwnProperty.call(SALARY_STATUS_LABELS, key)) {
+    return SALARY_STATUS_LABELS[key];
+  }
+  return toDisplayString(raw, S.FALLBACK_STATUS);
 };
 
 /**
- * @param {Object} item
- * @returns {*}
+ * @param {string} rowLabel
+ * @returns {string}
  */
-const resolveNet = (item) =>
-  item.netSalary
-  ?? item.netPay
-  ?? item.netAmount
-  ?? item.actualPayment
-  ?? item.takeHomePay;
-
-/**
- * @param {Object} item
- * @returns {*}
- */
-const resolveGross = (item) =>
-  item.grossSalary
-  ?? item.grossPay
-  ?? item.totalGross
-  ?? item.totalPayment;
-
-/**
- * @param {Object} item
- * @returns {*}
- */
-const resolveDeductions = (item) => item.totalDeductions ?? item.deductionTotal ?? item.deductions;
+const mapConsultantComponentLabel = (rowLabel) => {
+  if (
+    rowLabel === SALARY_CALC_DETAIL_OPTION_LABEL
+    || rowLabel === SALARY_CALC_DETAIL_CONSULTATION_LABEL
+    || rowLabel === SALARY_CALC_DETAIL_HOURLY_LABEL
+  ) {
+    return S.LABEL_CONSULTATION_PSYCH;
+  }
+  return rowLabel;
+};
 
 /**
  * @param {Object} item
@@ -99,37 +114,85 @@ const resolveDeductions = (item) => item.totalDeductions ?? item.deductionTotal 
  */
 const resolveMemo = (item) => item.memo ?? item.note ?? item.description ?? item.remarks;
 
+/**
+ * @param {Object} item
+ * @returns {string}
+ */
+const resolveSettlementMethodDisplay = (item) => {
+  const v = item.paymentMethod ?? item.settlementMethod ?? item.payMethod ?? item.payoutMethod;
+  return toDisplayString(v, '—');
+};
+
 // eslint-disable-next-line react/prop-types -- 행 단위 프레젠테이션 전용
 const SettlementCard = ({ item }) => {
+  const pretaxRows = buildSalaryCalculationComponentRows(item, toSalaryNumber);
+  const bonus = toSalaryNumber(item.bonusEarnings);
+  const taxAmt = toSalaryNumber(item.taxAmount ?? item.deductions);
+  const grossPretax =
+    item.grossSalary != null && item.grossSalary !== ''
+      ? toSalaryNumber(item.grossSalary)
+      : toSalaryNumber(item.totalSalary);
+  const netAfter =
+    item.netSalary != null && item.netSalary !== ''
+      ? toSalaryNumber(item.netSalary)
+      : grossPretax - taxAmt;
+  const memo = resolveMemo(item);
+
   return (
     <article
       className="cr-salary-settlement__card"
       aria-label={`${S.LABEL_PERIOD}: ${resolvePeriodLabel(item)}`}
     >
-      <h3 className="cr-salary-settlement__card-title">{resolvePeriodLabel(item)}</h3>
-      <div className="cr-salary-settlement__grid">
-        <div className="cr-salary-settlement__field">
-          <span className="cr-salary-settlement__label">{S.LABEL_STATUS}</span>
-          <span className="cr-salary-settlement__value">{resolveStatus(item)}</span>
+      <div className="cr-salary-settlement__card-header">
+        <h3 className="cr-salary-settlement__card-title">{resolvePeriodLabel(item)}</h3>
+        <span className="mg-v2-status-badge mg-v2-badge--neutral" role="status">
+          {getSalaryStatusLabel(item.status ?? item.settlementStatus ?? item.state)}
+        </span>
+      </div>
+      <div className="cr-salary-settlement__card-details">
+        {pretaxRows.map((row, idx) => (
+          <div
+            key={`${row.label}-${idx}`}
+            className="cr-salary-settlement__detail-row"
+          >
+            <span className="cr-salary-settlement__detail-label">
+              {mapConsultantComponentLabel(row.label)}
+            </span>
+            <span className="cr-salary-settlement__detail-value">{formatWon(row.amount)}</span>
+          </div>
+        ))}
+        {bonus > 0 ? (
+          <div className="cr-salary-settlement__detail-row">
+            <span className="cr-salary-settlement__detail-label">{S.LABEL_MEAL_TRANSPORT}</span>
+            <span className="cr-salary-settlement__detail-value">+{formatWon(item.bonusEarnings)}</span>
+          </div>
+        ) : null}
+        <div className="cr-salary-settlement__detail-row">
+          <span className="cr-salary-settlement__detail-label">{S.LABEL_GROSS_PRETAX}</span>
+          <span className="cr-salary-settlement__detail-value">{formatWon(grossPretax)}</span>
         </div>
-        <div className="cr-salary-settlement__field">
-          <span className="cr-salary-settlement__label">{S.LABEL_NET}</span>
-          <span className="cr-salary-settlement__value cr-salary-settlement__value--emph">
-            {formatWon(resolveNet(item))}
-          </span>
+        {taxAmt > 0 ? (
+          <div className="cr-salary-settlement__detail-row cr-salary-settlement__detail-row--tax">
+            <span className="cr-salary-settlement__detail-label">{S.LABEL_TAX_DEDUCTION}</span>
+            <span className="cr-salary-settlement__detail-value">-{formatWon(taxAmt)}</span>
+          </div>
+        ) : null}
+        <div className="cr-salary-settlement__detail-row cr-salary-settlement__detail-row--total">
+          <span className="cr-salary-settlement__detail-label">{S.LABEL_NET_AFTER_TAX}</span>
+          <span className="cr-salary-settlement__detail-value">{formatWon(netAfter)}</span>
         </div>
-        <div className="cr-salary-settlement__field">
-          <span className="cr-salary-settlement__label">{S.LABEL_GROSS}</span>
-          <span className="cr-salary-settlement__value">{formatWon(resolveGross(item))}</span>
+        <div className="cr-salary-settlement__detail-row">
+          <span className="cr-salary-settlement__detail-label">{S.LABEL_SETTLEMENT_METHOD}</span>
+          <span className="cr-salary-settlement__detail-value">{resolveSettlementMethodDisplay(item)}</span>
         </div>
-        <div className="cr-salary-settlement__field">
-          <span className="cr-salary-settlement__label">{S.LABEL_DEDUCTIONS}</span>
-          <span className="cr-salary-settlement__value">{formatWon(resolveDeductions(item))}</span>
-        </div>
-        <div className="cr-salary-settlement__field cr-salary-settlement__field--full">
-          <span className="cr-salary-settlement__label">{S.LABEL_MEMO}</span>
-          <span className="cr-salary-settlement__value">{toDisplayString(resolveMemo(item), '—')}</span>
-        </div>
+        {memo != null && String(memo).trim() !== '' ? (
+          <div className="cr-salary-settlement__grid cr-salary-settlement__memo-block">
+            <div className="cr-salary-settlement__field cr-salary-settlement__field--full">
+              <span className="cr-salary-settlement__label">{S.LABEL_MEMO}</span>
+              <span className="cr-salary-settlement__value">{toDisplayString(memo, '—')}</span>
+            </div>
+          </div>
+        ) : null}
       </div>
     </article>
   );

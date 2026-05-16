@@ -18,11 +18,19 @@ export interface ConsultantSalarySettlementRow {
   calculationPeriodStart?: string | null;
   calculationPeriodEnd?: string | null;
   status?: string | null;
+  baseSalary?: number | string | null;
+  commissionEarnings?: number | string | null;
+  hourlyEarnings?: number | string | null;
+  bonusEarnings?: number | string | null;
+  totalSalary?: number | string | null;
   netSalary?: number | string | null;
   grossSalary?: number | string | null;
   deductions?: number | string | null;
   /** `SalaryCalculationResponseMapper` — 세금·공제( `deductions` 와 동일 값 ) */
   taxAmount?: number | string | null;
+  memo?: string | null;
+  paymentMethod?: string | null;
+  settlementMethod?: string | null;
   approvedAt?: string | null;
   paidAt?: string | null;
 }

@@ -252,6 +252,9 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/community/**").authenticated()
                     // BW-1 mobile push API
                     .requestMatchers("/api/v1/mobile/**").authenticated()
+                    // 상담사 API(운영 프로파일과 동일하게 세션·토큰 필요)
+                    .requestMatchers("/api/consultant/**").authenticated()
+                    .requestMatchers("/api/v1/consultants/**").authenticated()
                     // 나머지 Ops Portal API는 인증 필요
                     .requestMatchers("/api/v1/ops/**").authenticated()
                     .anyRequest().permitAll() // 나머지는 허용

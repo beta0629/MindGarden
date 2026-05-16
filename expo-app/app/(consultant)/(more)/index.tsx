@@ -19,6 +19,7 @@ import {
   LogOut,
   CloudSun,
   Wallet,
+  BarChart3,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { ProfileCard } from '@/components/molecules/ProfileCard';
@@ -27,6 +28,7 @@ import { AuthService } from '@/services/AuthService';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { toDisplayString } from '@/utils/safeDisplay';
 import { CONSULTANT_SALARY_SETTLEMENT_COPY } from '@/constants/consultantSalarySettlementCopy';
+import { CONSULTANT_SESSION_KPI_COPY } from '@/constants/consultantSessionKpiCopy';
 
 export default function ConsultantMore() {
   const theme = useTheme();
@@ -117,6 +119,12 @@ export default function ConsultantMore() {
               title="마음 날씨 수신함"
               subtitle="내담자가 공유한 분석 카드"
               onPress={() => router.push('/(consultant)/(more)/mind-weather-inbox')}
+            />
+            <MenuListItem
+              icon={BarChart3}
+              title={CONSULTANT_SESSION_KPI_COPY.MENU_TITLE}
+              subtitle={CONSULTANT_SESSION_KPI_COPY.MENU_SUBTITLE}
+              onPress={() => router.push('/(consultant)/(more)/session-kpi')}
             />
             {showSalarySettlementMenu ? (
               <MenuListItem

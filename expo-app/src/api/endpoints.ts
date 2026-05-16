@@ -104,6 +104,11 @@ export const CONSULTANT_API = {
   GET_ALL: '/api/v1/consultants',
   /** 본인 급여 정산(관리자 확정·승인·지급 건만) — Spring `ConsultantSalarySelfController` */
   MY_SALARY_CALCULATIONS: '/api/v1/consultants/me/salary-calculations',
+  /**
+   * 본인 완료 회기 KPI — `GET ?startDate&endDate&granularity=DAY|WEEK|MONTH`
+   * (Spring 경로가 다르면 본 상수만 교체)
+   */
+  MY_SESSION_STATISTICS: '/api/v1/consultants/me/session-statistics',
 } as const;
 
 /**

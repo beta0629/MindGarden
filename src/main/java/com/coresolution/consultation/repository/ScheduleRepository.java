@@ -829,6 +829,26 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId AND s.status = :status AND s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
     long countByStatusAndDateBetweenAndConsultantId(@Param("tenantId") String tenantId, @Param("status") ScheduleStatus status, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("consultantId") Long consultantId);
 
+    /**
+     * 상담사·테넌트·기간 내 완료(COMPLETED) 등 지정 상태 일정을 일자별 건수로 집계한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 사용자 ID
+     * @param status 스케줄 상태(예: {@link ScheduleStatus#COMPLETED})
+     * @param startDate 시작일(포함)
+     * @param endDate 종료일(포함)
+     * @return [0]=일자, [1]=건수
+     */
+    @Query("SELECT s.date, COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId "
+            + "AND s.isDeleted = false AND s.status = :status AND s.date BETWEEN :startDate AND :endDate "
+            + "GROUP BY s.date ORDER BY s.date ASC")
+    List<Object[]> countByTenantConsultantStatusAndDateBetweenGroupedByDate(
+            @Param("tenantId") String tenantId,
+            @Param("consultantId") Long consultantId,
+            @Param("status") ScheduleStatus status,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!

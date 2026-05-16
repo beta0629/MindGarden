@@ -19,5 +19,13 @@ export const CONSULTANT_SALARY_SETTLEMENT_COPY = {
   STATUS: '상태',
   NET: '실수령액',
   GROSS: '총 지급액',
+  LABEL_CONSULTATION_PSYCH: '상담/심리검사 급여',
+  LABEL_MEAL_TRANSPORT: '식대·교통비',
+  LABEL_GROSS_PRETAX: '총 급여 (세전)',
+  LABEL_TAX_DEDUCTION: '세금 공제',
+  LABEL_NET_AFTER_TAX: '실수령액 (세후)',
+  LABEL_SETTLEMENT_METHOD: '정산 수단',
+  LABEL_MEMO: '비고',
+  FALLBACK_STATUS: '—',
   LIST_FETCH_FAILED: '급여 정산 목록을 불러오지 못했습니다.',
 } as const;

@@ -159,6 +159,11 @@ export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
   },
 ] as const;
 
+/** API 권위 모드에서 제외할 데모 시드 게시물 id (서버 id와 겹칠 수 있음 — 내용 비교로 구분) */
+export const COMMUNITY_DEMO_SEED_POST_IDS: ReadonlySet<number> = new Set(
+  INITIAL_COMMUNITY_POSTS.map((p) => p.id),
+);
+
 /** MMKV 직접 접근 시 참고용 키(스토어 persist 키와는 별도일 수 있음) */
 export const MMKV_KEY_COMMUNITY_POSTS = 'mg_community_posts';
 /** @see MMKV_KEY_COMMUNITY_POSTS */

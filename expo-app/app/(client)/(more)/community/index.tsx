@@ -29,6 +29,7 @@ import {
   COMMUNITY_FEED_SYNC_HINT,
   COMMUNITY_FEED_SYNC_OK,
   COMMUNITY_POST_LOCAL_ONLY_BADGE,
+  COMMUNITY_POST_PENDING_MODERATION_BADGE,
 } from '@/constants/communityFeedCopy';
 
 export default function ClientCommunityFeed() {
@@ -43,6 +44,7 @@ export default function ClientCommunityFeed() {
     lastFetchedAt,
     isError: feedQueryError,
     isPostLocalOnly,
+    isPostPendingModeration,
     hasLocalOnlyPosts,
   } = useCommunityFeed({ feedTab: activeTab });
 
@@ -90,11 +92,12 @@ export default function ClientCommunityFeed() {
         index={index}
         isLiked={isPostLiked(item.id)}
         showLocalOnlyBadge={isPostLocalOnly(item.id)}
+        showPendingModerationBadge={isPostPendingModeration(item.id)}
         onPress={() => navigateToDetail(item.id)}
         onLike={() => handleLike(item.id)}
       />
     ),
-    [isPostLiked, handleLike, isPostLocalOnly],
+    [isPostLiked, handleLike, isPostLocalOnly, isPostPendingModeration],
   );
 
   return (
@@ -271,11 +274,20 @@ interface PostCardProps {
   index: number;
   isLiked: boolean;
   showLocalOnlyBadge: boolean;
+  showPendingModerationBadge: boolean;
   onPress: () => void;
   onLike: () => void;
 }
 
-function PostCard({ post, index, isLiked, showLocalOnlyBadge, onPress, onLike }: PostCardProps) {
+function PostCard({
+  post,
+  index,
+  isLiked,
+  showLocalOnlyBadge,
+  showPendingModerationBadge,
+  onPress,
+  onLike,
+}: PostCardProps) {
   const theme = useTheme();
 
   return (
@@ -331,6 +343,17 @@ function PostCard({ post, index, isLiked, showLocalOnlyBadge, onPress, onLike }:
                 }}
               >
                 {COMMUNITY_POST_LOCAL_ONLY_BADGE}
+              </Text>
+            ) : null}
+            {showPendingModerationBadge ? (
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: theme.fontSize['2xs'],
+                  color: theme.colors.textSecondary,
+                }}
+              >
+                {COMMUNITY_POST_PENDING_MODERATION_BADGE}
               </Text>
             ) : null}
             <Text

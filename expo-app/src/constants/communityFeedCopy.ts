@@ -29,4 +29,6 @@ export const COMMUNITY_FEED_FETCH_ERROR =
 
 export const COMMUNITY_POST_LOCAL_ONLY_BADGE = '이 기기 전용';
 
+export const COMMUNITY_POST_PENDING_MODERATION_BADGE = '검수 대기';
+
 export const COMMUNITY_FEED_DEV_DATA_SOURCE_PREFIX = 'dataSource:';

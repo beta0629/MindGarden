@@ -11,7 +11,8 @@
  * @author MindGarden
  * @since 2026-05-13
  */
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -41,6 +42,9 @@ import {
   useUnshareMindWeatherCard,
 } from '@/api/hooks/useMindWeather';
 import {
+  CLIENT_MIND_WEATHER_LIST_API_FAILED,
+  CLIENT_MIND_WEATHER_SETUP_NO_TENANT,
+  CLIENT_MIND_WEATHER_SETUP_NO_TOKEN,
   MIND_WEATHER_TEXT_MAX_LENGTH,
   MIND_WEATHER_TEXT_MIN_LENGTH,
   MIND_WEATHER_TREND_ALERT_COPY,
@@ -64,6 +68,26 @@ export default function ClientMindWeatherIndex() {
 
   const list = useMindWeatherList();
   const analyzeMutation = useAnalyzeMindWeather();
+  const showListSkeleton =
+    list.blockReason === 'auth_loading' ||
+    list.blockReason === 'tenant_hydrating' ||
+    (list.isQueryReady && list.isPending && !list.data);
+  const setupErrorMessage =
+    list.blockReason === 'no_token'
+      ? CLIENT_MIND_WEATHER_SETUP_NO_TOKEN
+      : list.blockReason === 'no_tenant'
+        ? CLIENT_MIND_WEATHER_SETUP_NO_TENANT
+        : null;
+  const showApiListWarning =
+    list.isQueryReady && list.isError && (list.data?.items?.length ?? 0) === 0;
+
+  useFocusEffect(
+    useCallback(() => {
+      if (list.isQueryReady) {
+        void list.refetch();
+      }
+    }, [list.isQueryReady, list.refetch]),
+  );
   const shareMutation = useShareMindWeatherCard();
   const unshareMutation = useUnshareMindWeatherCard();
 
@@ -75,7 +99,10 @@ export default function ClientMindWeatherIndex() {
   );
 
   const draftLength = draft.trim().length;
-  const canAnalyze = draftLength >= MIND_WEATHER_TEXT_MIN_LENGTH && !analyzeMutation.isPending;
+  const canAnalyze =
+    list.isQueryReady &&
+    draftLength >= MIND_WEATHER_TEXT_MIN_LENGTH &&
+    !analyzeMutation.isPending;
 
   const handleHaptic = () => {
     if (Platform.OS !== 'web') {
@@ -166,6 +193,40 @@ export default function ClientMindWeatherIndex() {
             />
           }
         >
+          {setupErrorMessage ? (
+            <View
+              style={{
+                marginBottom: 12,
+                padding: 12,
+                borderRadius: theme.borderRadius.lg,
+                backgroundColor: theme.colors.surfaceAlt,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: theme.fontSize.sm,
+                  color: theme.colors.textMain,
+                }}
+              >
+                {setupErrorMessage}
+              </Text>
+            </View>
+          ) : null}
+
+          {showApiListWarning ? (
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.regular,
+                fontSize: theme.fontSize.xs,
+                color: theme.colors.textSecondary,
+                marginBottom: 8,
+              }}
+            >
+              {CLIENT_MIND_WEATHER_LIST_API_FAILED}
+            </Text>
+          ) : null}
+
           <Animated.View entering={FadeInDown.springify()} style={styles.headerWrap}>
             <View style={styles.headerRow}>
               <CloudSun size={22} color={theme.colors.primary} />
@@ -359,7 +420,7 @@ export default function ClientMindWeatherIndex() {
               최근 분석 카드
             </Text>
 
-            {list.isLoading ? (
+            {showListSkeleton ? (
               <View style={styles.loadingWrap}>
                 {[0, 1].map((i) => (
                   <SkeletonCard key={i} lines={3} />

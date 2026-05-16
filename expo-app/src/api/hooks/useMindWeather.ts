@@ -43,12 +43,59 @@ const MIND_WEATHER_QUERY_KEYS = {
   inbox: () => [...MIND_WEATHER_QUERY_KEYS.all, 'inbox'] as const,
 };
 
+export type ClientMindWeatherListBlockReason =
+  | 'auth_loading'
+  | 'tenant_hydrating'
+  | 'no_token'
+  | 'no_tenant'
+  | null;
+
 export function useMindWeatherList() {
-  return useQuery({
-    queryKey: MIND_WEATHER_QUERY_KEYS.list(),
+  const apiReady = useApiQueryReady();
+  const { ready, tenantId, userId, accessToken } = apiReady;
+  const authIsLoading = useAuthStore((s) => s.isLoading);
+  const authHasHydrated = useAuthStore((s) => s._hasHydrated);
+  const tenantHasHydrated = useTenantStore((s) => s._hasHydrated);
+
+  const blockReason: ClientMindWeatherListBlockReason = useMemo(() => {
+    if (authIsLoading || !authHasHydrated) {
+      return 'auth_loading';
+    }
+    if (!tenantHasHydrated) {
+      return 'tenant_hydrating';
+    }
+    if (!accessToken) {
+      return 'no_token';
+    }
+    if (!tenantId) {
+      return 'no_tenant';
+    }
+    return null;
+  }, [authIsLoading, authHasHydrated, tenantHasHydrated, accessToken, tenantId]);
+
+  const enabled = blockReason === null && ready;
+
+  useEffect(() => {
+    if (!accessToken) {
+      return;
+    }
+    syncTenantFromAccessToken(accessToken);
+  }, [accessToken]);
+
+  const query = useQuery({
+    queryKey: [...MIND_WEATHER_QUERY_KEYS.list(), tenantId, String(userId ?? '')] as const,
     queryFn: () => fetchMindWeatherList(),
+    enabled,
     staleTime: 1000 * 30,
+    refetchOnMount: 'always',
   });
+
+  return {
+    ...query,
+    blockReason,
+    isQueryReady: enabled,
+    resolvedTenantId: tenantId,
+  };
 }
 
 export function useMindWeatherDetail(id: string) {
@@ -76,7 +123,7 @@ export function useAnalyzeMindWeather() {
           };
         },
       );
-      queryClient.invalidateQueries({ queryKey: MIND_WEATHER_QUERY_KEYS.list() });
+      void queryClient.invalidateQueries({ queryKey: MIND_WEATHER_QUERY_KEYS.list() });
       queryClient.setQueryData(MIND_WEATHER_QUERY_KEYS.detail(card.id), card);
     },
   });

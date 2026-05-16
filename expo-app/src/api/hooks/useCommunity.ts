@@ -20,6 +20,7 @@ import { fetchRemoteCommunityFeed } from '@/services/communityApi';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import {
   isCommunityLocalOnlyPost,
+  isCommunityPendingModerationPost,
   mergeRemoteCommunityWithStore,
 } from '@/utils/communityFeedMerge';
 
@@ -98,6 +99,17 @@ export function useCommunityFeed(options?: UseCommunityFeedOptions) {
     [dataSource, remotePostIds],
   );
 
+  const isPostPendingModeration = useMemo(
+    () => (postId: number) => {
+      const post = posts.find((p) => p.id === postId);
+      if (!post) {
+        return false;
+      }
+      return isCommunityPendingModerationPost(post, dataSource, remotePostIds);
+    },
+    [dataSource, remotePostIds, posts],
+  );
+
   const hasLocalOnlyPosts = useMemo(
     () => dataSource === 'api' && posts.some((p) => isPostLocalOnly(p.id)),
     [dataSource, posts, isPostLocalOnly],
@@ -112,6 +124,7 @@ export function useCommunityFeed(options?: UseCommunityFeedOptions) {
     dataSource,
     lastFetchedAt: query.dataUpdatedAt,
     isPostLocalOnly,
+    isPostPendingModeration,
     hasLocalOnlyPosts,
     remotePostIds,
   };

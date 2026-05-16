@@ -144,3 +144,12 @@ export const CONSULTANT_MIND_WEATHER_INBOX_SETUP_NO_TOKEN =
 
 export const CONSULTANT_MIND_WEATHER_INBOX_SETUP_NO_TENANT =
   '기관(테넌트) 정보가 없어요. 더보기에서 기관을 다시 선택한 뒤 시도해 주세요.';
+
+export const CLIENT_MIND_WEATHER_SETUP_NO_TOKEN =
+  '로그인 후 마음 날씨를 이용할 수 있어요. 다시 로그인해 주세요.';
+
+export const CLIENT_MIND_WEATHER_SETUP_NO_TENANT =
+  '기관 정보가 없어요. 더보기에서 기관을 선택한 뒤 다시 시도해 주세요.';
+
+export const CLIENT_MIND_WEATHER_LIST_API_FAILED =
+  '서버에서 카드 목록을 불러오지 못했어요. 아래는 이 기기에 저장된 카드입니다.';

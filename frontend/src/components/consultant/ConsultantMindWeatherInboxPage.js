@@ -41,6 +41,24 @@ function shareScopeLabel(share) {
   return S.SHARE_NONE;
 }
 
+/**
+ * 카드 제목: 복호화된 이름 우선, 없으면 회원 ID로 식별.
+ *
+ * @param {{ clientName?: string, clientId?: number|null }} row
+ * @returns {string}
+ */
+function formatClientHeadline(row) {
+  const name = toDisplayString(row.clientName, '').trim();
+  if (name && name !== S.LABEL_CLIENT) {
+    return name;
+  }
+  const id = row.clientId;
+  if (typeof id === 'number' && Number.isFinite(id) && id > 0) {
+    return `${S.CLIENT_HEADLINE_ID_PREFIX}${id}`;
+  }
+  return S.LABEL_CLIENT;
+}
+
 const ConsultantMindWeatherInboxPage = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -123,7 +141,7 @@ const ConsultantMindWeatherInboxPage = () => {
               <li key={toDisplayString(row.id, '—')} className="consultant-mind-weather-inbox__card">
                 <div className="consultant-mind-weather-inbox__card-head">
                   <h3 className="consultant-mind-weather-inbox__card-title">
-                    <SafeText fallback={S.LABEL_CLIENT}>{row.clientName}</SafeText>
+                    <SafeText fallback={S.LABEL_CLIENT}>{formatClientHeadline(row)}</SafeText>
                   </h3>
                   <p className="consultant-mind-weather-inbox__card-meta">
                     <SafeText fallback="">{S.CARD_META}</SafeText>

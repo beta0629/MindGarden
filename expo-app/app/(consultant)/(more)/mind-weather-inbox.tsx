@@ -28,6 +28,7 @@ import {
 } from '@/constants/wellnessComplianceCopy';
 import { MIND_WEATHER_SOURCE_LABELS } from '@/constants/mindWeatherKeywords';
 import { toDisplayString } from '@/utils/toDisplayString';
+import { formatMindWeatherClientHeadline } from '@/utils/mindWeatherClientLabel';
 
 export default function ConsultantMindWeatherInbox() {
   const theme = useTheme();
@@ -135,7 +136,7 @@ export default function ConsultantMindWeatherInbox() {
                       color: theme.colors.textMain,
                     }}
                   >
-                    {toDisplayString(card.clientName, '내담자')}
+                    {formatMindWeatherClientHeadline(card.clientName, card.clientId)}
                   </Text>
                   <Text
                     style={{

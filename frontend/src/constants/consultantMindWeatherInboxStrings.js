@@ -20,6 +20,8 @@ export const CONSULTANT_MIND_WEATHER_INBOX_STRINGS = {
   RETRY: '다시 시도',
   CARD_META: '등록',
   LABEL_CLIENT: '내담자',
+  /** `clientName` 비어 있을 때 카드 제목 — 회원 식별 */
+  CLIENT_HEADLINE_ID_PREFIX: '내담자 #',
   LABEL_TONE: '톤',
   LABEL_SOURCE: '출처',
   LABEL_SUMMARY: '요약',

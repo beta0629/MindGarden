@@ -4,6 +4,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.MindWeatherConstants;
 import com.coresolution.consultation.dto.mindweather.MindWeatherAnalyzeRequest;
@@ -18,10 +19,13 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.MindWeatherCardRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MindWeatherService;
+import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.mindweather.MindWeatherHeuristicAnalyzer;
 import com.coresolution.consultation.service.mindweather.MindWeatherHeuristicAnalyzer.AnalysisResult;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author MindGarden
  * @since 2026-05-13
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -47,6 +52,8 @@ public class MindWeatherServiceImpl implements MindWeatherService {
     private final MindWeatherHeuristicAnalyzer heuristicAnalyzer;
     private final UserRepository userRepository;
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
+    private final UserPersonalDataCacheService userPersonalDataCacheService;
+    private final PersonalDataEncryptionUtil encryptionUtil;
 
     private enum CardViewMode {
         /** 내담자 본인 조회 — 원문 항상 포함 */
@@ -211,13 +218,11 @@ public class MindWeatherServiceImpl implements MindWeatherService {
                 .updatedAt(formatOffset(card.getConsentUpdatedAt()))
                 .build();
         }
-        String clientName = null;
         Long clientId = null;
+        String clientName = null;
         if (card.getClient() != null) {
             clientId = card.getClient().getId();
-            if (card.getClient().getName() != null && !card.getClient().getName().isBlank()) {
-                clientName = card.getClient().getName();
-            }
+            clientName = resolveClientDisplayName(card.getClient());
         }
         return MindWeatherCardResponse.builder()
             .id(String.valueOf(card.getId()))
@@ -238,5 +243,37 @@ public class MindWeatherServiceImpl implements MindWeatherService {
             return null;
         }
         return t.atZone(DISPLAY_ZONE).format(ISO_OFFSET);
+    }
+
+    /**
+     * 상담사 수신함·내담자 본인 목록 공통 — 저장명이 암호화된 경우 복호화, 불가 시 회원 ID로 식별 가능하게 표시.
+     */
+    private String resolveClientDisplayName(User client) {
+        if (client == null) {
+            return null;
+        }
+        Long id = client.getId();
+        try {
+            Map<String, String> decrypted = userPersonalDataCacheService.getDecryptedUserData(client);
+            if (decrypted != null) {
+                String n = decrypted.get("name");
+                if (n != null && !n.isBlank()) {
+                    return n;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("마음 날씨 내담자명 캐시 복호화 실패: clientId={}, {}", id, e.getMessage());
+        }
+        String stored = client.getName();
+        if (stored != null && !stored.isBlank()) {
+            String plain = encryptionUtil.safeDecrypt(stored.trim());
+            if (plain != null && !plain.isBlank() && !plain.startsWith("legacy::")) {
+                return plain;
+            }
+        }
+        if (id != null) {
+            return "내담자 #" + id;
+        }
+        return "내담자";
     }
 }

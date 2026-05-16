@@ -224,6 +224,10 @@ function normalizeKeyword(raw: unknown): MindWeatherKeyword | null {
 
 function pickConsultantId(raw: unknown): number | undefined {
   if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+  if (typeof raw === 'bigint') {
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+  }
   if (typeof raw === 'string') {
     const n = toSafeNumber(raw, 0);
     return n || undefined;
@@ -234,27 +238,51 @@ function pickConsultantId(raw: unknown): number | undefined {
 /** 카드 JSON에서 내담자 회원 id 추출 (`clientId`, snake_case, `client.id` 등). */
 function pickClientIdFromCardRaw(o: Record<string, unknown>): number | undefined {
   const direct = pickConsultantId(
-    o.clientId ?? o.client_id ?? o.userId ?? o.user_id ?? o.ownerId ?? o.owner_id,
+    o.clientId ??
+      o.client_id ??
+      o.clientUserId ??
+      o.client_user_id ??
+      o.memberId ??
+      o.member_id ??
+      o.userId ??
+      o.user_id ??
+      o.ownerId ??
+      o.owner_id,
   );
   if (direct != null) {
     return direct;
   }
-  const nested = o.client;
+  const nested = o.client ?? o.clientUser ?? o.member ?? o.user;
   if (nested != null && typeof nested === 'object') {
     const nc = nested as Record<string, unknown>;
-    return pickConsultantId(nc.id ?? nc.userId ?? nc.clientId);
+    return pickConsultantId(
+      nc.id ??
+        nc.userId ??
+        nc.user_id ??
+        nc.clientId ??
+        nc.client_id ??
+        nc.memberId ??
+        nc.member_id,
+    );
   }
   return undefined;
 }
 
 function pickClientNameFromCardRaw(o: Record<string, unknown>): string | undefined {
-  const n = toDisplayString(o.clientName ?? o.client_name ?? o.userName, '').trim();
+  const n = toDisplayString(
+    o.clientName ?? o.client_name ?? o.userName ?? o.user_name ?? o.displayName ?? o.display_name,
+    '',
+  ).trim();
   if (n) {
     return n;
   }
-  const nested = o.client;
+  const nested = o.client ?? o.clientUser ?? o.member ?? o.user;
   if (nested != null && typeof nested === 'object') {
-    const nm = toDisplayString((nested as Record<string, unknown>).name, '').trim();
+    const nc = nested as Record<string, unknown>;
+    const nm = toDisplayString(
+      nc.name ?? nc.nickname ?? nc.displayName ?? nc.display_name,
+      '',
+    ).trim();
     return nm || undefined;
   }
   return undefined;

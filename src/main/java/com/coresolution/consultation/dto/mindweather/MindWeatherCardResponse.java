@@ -1,6 +1,7 @@
 package com.coresolution.consultation.dto.mindweather;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
@@ -18,8 +19,10 @@ import lombok.Value;
 public class MindWeatherCardResponse {
 
     String id;
+    @JsonAlias({"client_id"})
     Long clientId;
     @JsonProperty("clientName")
+    @JsonAlias({"client_name"})
     String clientName;
     String source;
     String text;

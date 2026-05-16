@@ -10,6 +10,7 @@
  * @author MindGarden
  * @since 2026-05-13
  */
+import { useMemo } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -22,6 +23,7 @@ import { Chip } from '@/components/atoms/Chip';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { useConsultantMindWeatherInbox } from '@/api/hooks/useMindWeather';
+import { useConsultantClients } from '@/api/hooks/useClients';
 import {
   MIND_WEATHER_DISCLAIMER_KO,
   MIND_WEATHER_SHARE_COPY_KO,
@@ -31,12 +33,50 @@ import {
   MIND_WEATHER_SOURCE_LABELS,
 } from '@/constants/mindWeatherKeywords';
 import { toDisplayString } from '@/utils/toDisplayString';
-import { formatMindWeatherClientHeadline } from '@/utils/mindWeatherClientLabel';
+import { toSafeNumber } from '@/utils/safeDisplay';
+import {
+  formatMindWeatherClientHeadline,
+  isGenericMindWeatherClientDisplayName,
+} from '@/utils/mindWeatherClientLabel';
+import { useAuthStore } from '@/stores/useAuthStore';
+import type { MindWeatherCard } from '@/services/mindWeatherService';
 
 export default function ConsultantMindWeatherInbox() {
   const theme = useTheme();
   const inboxQuery = useConsultantMindWeatherInbox();
   const items = inboxQuery.data?.items ?? [];
+  const authUser = useAuthStore((s) => s.user);
+  const consultantIdStr = authUser?.id != null ? String(authUser.id) : '';
+  const clientsQuery = useConsultantClients({
+    consultantId: consultantIdStr,
+    status: 'ALL',
+    search: undefined,
+  });
+  const clientLabelByUserId = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const p of clientsQuery.data?.pages ?? []) {
+      for (const c of p.content) {
+        if (c.id <= 0) continue;
+        const raw = toDisplayString(c.nickname ?? c.name, '').trim();
+        if (!raw || isGenericMindWeatherClientDisplayName(raw) || raw === '이름 비공개') continue;
+        m.set(c.id, raw);
+      }
+    }
+    return m;
+  }, [clientsQuery.data]);
+
+  const resolveInboxClientHeadline = useMemo(() => {
+    return (card: MindWeatherCard): string => {
+      const cid = toSafeNumber(card.clientId, Number.NaN);
+      if (Number.isFinite(cid) && cid > 0) {
+        const fromRoster = clientLabelByUserId.get(cid);
+        if (fromRoster) {
+          return fromRoster;
+        }
+      }
+      return formatMindWeatherClientHeadline(card.clientName, card.clientId, card.id);
+    };
+  }, [clientLabelByUserId]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
@@ -128,7 +168,7 @@ export default function ConsultantMindWeatherInbox() {
               }
             })();
             const sharedOriginal = Boolean(card.share?.original);
-            const clientHeadline = formatMindWeatherClientHeadline(card.clientName, card.clientId);
+            const clientHeadline = resolveInboxClientHeadline(card);
             return (
               <Animated.View
                 key={card.id}

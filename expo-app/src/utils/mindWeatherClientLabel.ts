@@ -19,6 +19,8 @@ export function isGenericMindWeatherClientDisplayName(
 export function formatMindWeatherClientHeadline(
   clientName: string | null | undefined,
   clientId: number | string | null | undefined,
+  /** API·로컬에 식별 필드가 없을 때 카드 엔티티 id로만이라도 구분 */
+  cardEntityId?: string | null,
 ): string {
   const name = toDisplayString(clientName, '').trim();
   const n = toSafeNumber(clientId, Number.NaN);
@@ -32,6 +34,10 @@ export function formatMindWeatherClientHeadline(
   }
   if (hasId) {
     return `${MIND_WEATHER_GENERIC_CLIENT_LABEL} #${n}`;
+  }
+  const cardId = toDisplayString(cardEntityId, '').trim();
+  if (cardId) {
+    return `공유 카드 #${cardId}`;
   }
   return MIND_WEATHER_GENERIC_CLIENT_LABEL;
 }

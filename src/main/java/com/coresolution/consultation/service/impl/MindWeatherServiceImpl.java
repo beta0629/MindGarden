@@ -257,7 +257,7 @@ public class MindWeatherServiceImpl implements MindWeatherService {
             Map<String, String> decrypted = userPersonalDataCacheService.getDecryptedUserData(client);
             if (decrypted != null) {
                 String n = decrypted.get("name");
-                if (n != null && !n.isBlank()) {
+                if (n != null && !MindWeatherConstants.isGenericClientDisplayLabel(n)) {
                     return n;
                 }
             }
@@ -267,7 +267,8 @@ public class MindWeatherServiceImpl implements MindWeatherService {
         String stored = client.getName();
         if (stored != null && !stored.isBlank()) {
             String plain = encryptionUtil.safeDecrypt(stored.trim());
-            if (plain != null && !plain.isBlank() && !plain.startsWith("legacy::")) {
+            if (plain != null && !MindWeatherConstants.isGenericClientDisplayLabel(plain)
+                && !plain.startsWith("legacy::")) {
                 return plain;
             }
         }

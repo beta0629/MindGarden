@@ -135,3 +135,6 @@ export const MIND_WEATHER_VOICE_DEFERRED_UI_LABEL = '추후 제공';
 
 /** MMKV 캐시 키 */
 export const MIND_WEATHER_STORAGE_KEY = 'mg_mind_weather';
+
+/** 상담사 수신함 API가 `success: false`일 때 기본 메시지 */
+export const CONSULTANT_MIND_WEATHER_INBOX_FETCH_FAILED = '마음 날씨 수신함을 불러오지 못했습니다.';

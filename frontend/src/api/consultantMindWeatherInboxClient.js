@@ -55,7 +55,7 @@ function pickInboxClientId(raw) {
   if (raw == null || typeof raw !== 'object') {
     return null;
   }
-  const cid = raw.clientId ?? raw.client_id;
+  const cid = raw.clientId ?? raw.client_id ?? raw.userId ?? raw.user_id;
   if (cid != null && cid !== '') {
     const n = toSafeNumber(cid, Number.NaN);
     if (Number.isFinite(n) && n > 0) {

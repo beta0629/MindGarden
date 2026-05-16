@@ -7,7 +7,14 @@
 import { toDisplayString } from '@/utils/toDisplayString';
 import { toSafeNumber } from '@/utils/safeDisplay';
 
-const GENERIC_LABEL = '내담자';
+/** API·로컬에서 쓰이는 제네릭 내담자 표기(실명 없음) */
+export const MIND_WEATHER_GENERIC_CLIENT_LABEL = '내담자';
+
+export function isGenericMindWeatherClientDisplayName(
+  clientName: string | null | undefined,
+): boolean {
+  return toDisplayString(clientName, '').trim() === MIND_WEATHER_GENERIC_CLIENT_LABEL;
+}
 
 export function formatMindWeatherClientHeadline(
   clientName: string | null | undefined,
@@ -17,14 +24,14 @@ export function formatMindWeatherClientHeadline(
   const n = toSafeNumber(clientId, Number.NaN);
   const hasId = Number.isFinite(n) && n > 0;
   /** API가 이름 없이·또는 구버전에서 "내담자"만 줄 때는 회원 ID로 식별 */
-  if (hasId && (!name || name === GENERIC_LABEL)) {
-    return `${GENERIC_LABEL} #${n}`;
+  if (hasId && (!name || name === MIND_WEATHER_GENERIC_CLIENT_LABEL)) {
+    return `${MIND_WEATHER_GENERIC_CLIENT_LABEL} #${n}`;
   }
-  if (name && name !== GENERIC_LABEL) {
+  if (name && name !== MIND_WEATHER_GENERIC_CLIENT_LABEL) {
     return name;
   }
   if (hasId) {
-    return `${GENERIC_LABEL} #${n}`;
+    return `${MIND_WEATHER_GENERIC_CLIENT_LABEL} #${n}`;
   }
-  return GENERIC_LABEL;
+  return MIND_WEATHER_GENERIC_CLIENT_LABEL;
 }

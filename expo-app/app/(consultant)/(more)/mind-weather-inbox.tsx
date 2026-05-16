@@ -13,7 +13,7 @@
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { CloudSun, Inbox } from 'lucide-react-native';
+import { AlertCircle, CloudSun, Inbox } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
@@ -26,7 +26,10 @@ import {
   MIND_WEATHER_DISCLAIMER_KO,
   MIND_WEATHER_SHARE_COPY_KO,
 } from '@/constants/wellnessComplianceCopy';
-import { MIND_WEATHER_SOURCE_LABELS } from '@/constants/mindWeatherKeywords';
+import {
+  CONSULTANT_MIND_WEATHER_INBOX_FETCH_FAILED,
+  MIND_WEATHER_SOURCE_LABELS,
+} from '@/constants/mindWeatherKeywords';
 import { toDisplayString } from '@/utils/toDisplayString';
 import { formatMindWeatherClientHeadline } from '@/utils/mindWeatherClientLabel';
 
@@ -96,6 +99,17 @@ export default function ConsultantMindWeatherInbox() {
               <SkeletonCard key={i} lines={3} />
             ))}
           </View>
+        ) : inboxQuery.isError ? (
+          <EmptyState
+            icon={<AlertCircle size={32} color={theme.colors.textTertiary} />}
+            title="수신함을 불러오지 못했어요"
+            description={(() => {
+              const msg = inboxQuery.error instanceof Error ? inboxQuery.error.message.trim() : '';
+              return msg.length > 0 ? msg : CONSULTANT_MIND_WEATHER_INBOX_FETCH_FAILED;
+            })()}
+            actionLabel="다시 시도"
+            onAction={() => inboxQuery.refetch()}
+          />
         ) : items.length === 0 ? (
           <EmptyState
             icon={<Inbox size={32} color={theme.colors.textTertiary} />}

@@ -15,17 +15,62 @@ import {
   parseISO,
 } from 'date-fns';
 
-/** Spring Instant 등 나노초 ISO 프리픽스 식별용 */
+/** Spring LocalDateTime / Instant 등 ISO 프리픽스 식별용 */
 const COMMUNITY_LISTED_TIME_ISO_PREFIX = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}/;
 
 /** 나노초 이하를 밀리초 3자리로 자름 (Z / 오프셋 보존) */
 const COMMUNITY_LISTED_TIME_NANO_TRIM = /(\.\d{3})\d+/;
 
+const COMMUNITY_LISTED_TIME_LOCAL_DT =
+  /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(Z|[+-]\d{2}:?\d{2})?$/;
+
+/**
+ * Hermes·date-fns가 나노초 LocalDateTime을 못 읽을 때 밀리초 3자리·수동 파싱으로 정규화
+ */
+export function normalizeCommunityListedTimeIso(trimmed: string): string {
+  let s = trimmed.replace(COMMUNITY_LISTED_TIME_NANO_TRIM, '$1');
+  const m = s.match(COMMUNITY_LISTED_TIME_LOCAL_DT);
+  if (m) {
+    const frac = m[7];
+    const tz = m[8];
+    if (frac && frac.length > 3) {
+      const ms = frac.slice(0, 3);
+      s = `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}.${ms}${tz ?? ''}`;
+    }
+  }
+  return s;
+}
+
+function parseCommunityListedDate(normalized: string): Date | null {
+  let date = parseISO(normalized);
+  if (!Number.isNaN(date.getTime())) {
+    return date;
+  }
+  date = new Date(normalized);
+  if (!Number.isNaN(date.getTime())) {
+    return date;
+  }
+  const m = normalized.match(COMMUNITY_LISTED_TIME_LOCAL_DT);
+  if (!m) {
+    return null;
+  }
+  const year = Number(m[1]);
+  const month = Number(m[2]) - 1;
+  const day = Number(m[3]);
+  const hour = Number(m[4]);
+  const minute = Number(m[5]);
+  const second = Number(m[6]);
+  const frac = m[7];
+  const ms = frac ? Number(frac.slice(0, 3).padEnd(3, '0')) : 0;
+  const manual = new Date(year, month, day, hour, minute, second, ms);
+  return Number.isNaN(manual.getTime()) ? null : manual;
+}
+
 /**
  * 커뮤니티 목록/피드용 시간: ISO면 나노초 정리 후 상대·짧은 표시, 그 외는 그대로
  *
  * @param raw 원시 또는 이미 가공된 라벨
- * @param fallback 빈 문자열·파싱 불가 시
+ * @param fallback 빈 문자열·파싱 불가 시 (원문 ISO 노출 금지)
  */
 export function formatCommunityListedTime(raw: string, fallback: string): string {
   const trimmed = raw.trim();
@@ -35,13 +80,12 @@ export function formatCommunityListedTime(raw: string, fallback: string): string
   if (!COMMUNITY_LISTED_TIME_ISO_PREFIX.test(trimmed)) {
     return trimmed;
   }
-  const normalized = trimmed.replace(COMMUNITY_LISTED_TIME_NANO_TRIM, '$1');
-  let date = parseISO(normalized);
-  if (Number.isNaN(date.getTime())) {
-    date = new Date(normalized);
-    if (Number.isNaN(date.getTime())) {
-      return fallback;
-    }
+  const normalized = normalizeCommunityListedTimeIso(trimmed);
+  const date = parseCommunityListedDate(normalized);
+  if (date == null) {
+    return fallback;
+  }
+  if (Number.isNaN(parseISO(normalized).getTime())) {
     return format(date, 'M/d HH:mm');
   }
   return formatRelativeTime(normalized);

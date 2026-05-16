@@ -12,8 +12,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
-import { extractTenantIdFromAccessToken } from '@/utils/jwtPayload';
-import { resolveTenantIdForApi, resolveTenantIdFromSources } from '@/utils/resolveTenantIdForApi';
+import { resolveTenantIdForApi, useResolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 import {
   analyzeMindWeather,
@@ -118,25 +118,12 @@ export function useConsultantMindWeatherInbox() {
   const queryClient = useQueryClient();
   const accessToken = useAuthStore((s) => s.accessToken);
   const authIsLoading = useAuthStore((s) => s.isLoading);
+  const authHasHydrated = useAuthStore((s) => s._hasHydrated);
   const role = useAuthStore((s) => s.role);
-  const userTenantId = useAuthStore((s) => s.user?.tenantId);
-  const accessTokenForTenant = useAuthStore((s) => s.accessToken);
-  const headerTenantId = useTenantStore((s) => s.tenantId);
-  const tenantCode = useTenantStore((s) => s.tenantCode);
-  const recentTenants = useTenantStore((s) => s.recentTenants);
   const tenantHasHydrated = useTenantStore((s) => s._hasHydrated);
-  const tenantId = useMemo(() => {
-    const fromUser = (userTenantId ?? '').trim();
-    const fromJwt =
-      fromUser.length > 0 ? fromUser : extractTenantIdFromAccessToken(accessTokenForTenant);
-    return resolveTenantIdFromSources({
-      headerTenantId,
-      userTenantId: fromJwt,
-      tenantCode,
-      recentTenants,
-    });
-  }, [headerTenantId, userTenantId, accessTokenForTenant, tenantCode, recentTenants]);
+  const tenantId = useResolveTenantIdForApi();
   const consultantId = useAuthStore((s) => s.user?.id);
+  const apiReady = useApiQueryReady({ requireUserId: true });
 
   useEffect(() => {
     if (tenantHasHydrated) {
@@ -151,7 +138,7 @@ export function useConsultantMindWeatherInbox() {
   }, [tenantHasHydrated]);
 
   const blockReason: ConsultantMindWeatherInboxBlockReason = useMemo(() => {
-    if (authIsLoading) {
+    if (authIsLoading || !authHasHydrated) {
       return 'auth_loading';
     }
     if (!tenantHasHydrated) {
@@ -169,6 +156,7 @@ export function useConsultantMindWeatherInbox() {
     return null;
   }, [
     authIsLoading,
+    authHasHydrated,
     tenantHasHydrated,
     accessToken,
     role,
@@ -176,7 +164,7 @@ export function useConsultantMindWeatherInbox() {
     tenantId,
   ]);
 
-  const enabled = blockReason === null;
+  const enabled = blockReason === null && apiReady.ready;
 
   const prevEnabledRef = useRef(false);
   useEffect(() => {

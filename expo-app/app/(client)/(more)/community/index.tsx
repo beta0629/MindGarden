@@ -20,6 +20,16 @@ import { EmptyState } from '@/components/atoms/EmptyState';
 import { useCommunityFeed } from '@/api/hooks/useCommunity';
 import { useCommunityStore } from '@/stores/useCommunityStore';
 import { COMMUNITY_TABS, type CommunityPost, type CommunityTab } from '@/constants/communityData';
+import {
+  COMMUNITY_FEED_DATA_SOURCE_API,
+  COMMUNITY_FEED_DATA_SOURCE_DEMO,
+  COMMUNITY_FEED_DEMO_HINT,
+  COMMUNITY_FEED_DEV_DATA_SOURCE_PREFIX,
+  COMMUNITY_FEED_FETCH_ERROR,
+  COMMUNITY_FEED_SYNC_HINT,
+  COMMUNITY_FEED_SYNC_OK,
+  COMMUNITY_POST_LOCAL_ONLY_BADGE,
+} from '@/constants/communityFeedCopy';
 
 export default function ClientCommunityFeed() {
   const theme = useTheme();
@@ -32,6 +42,8 @@ export default function ClientCommunityFeed() {
     isFetching,
     lastFetchedAt,
     isError: feedQueryError,
+    isPostLocalOnly,
+    hasLocalOnlyPosts,
   } = useCommunityFeed({ feedTab: activeTab });
 
   const { posts, togglePostLike, isPostLiked } = useCommunityStore();
@@ -77,11 +89,12 @@ export default function ClientCommunityFeed() {
         post={item}
         index={index}
         isLiked={isPostLiked(item.id)}
+        showLocalOnlyBadge={isPostLocalOnly(item.id)}
         onPress={() => navigateToDetail(item.id)}
         onLike={() => handleLike(item.id)}
       />
     ),
-    [isPostLiked, handleLike],
+    [isPostLiked, handleLike, isPostLocalOnly],
   );
 
   return (
@@ -106,10 +119,8 @@ export default function ClientCommunityFeed() {
               color: theme.colors.textTertiary,
             }}
           >
-            데이터 소스:{' '}
-            {dataSource === 'api'
-              ? '서버(/api/v1/community) + 이 기기에만 있는 글'
-              : '데모 샘플 + MMKV(이 기기)'}
+            {__DEV__ ? `${COMMUNITY_FEED_DEV_DATA_SOURCE_PREFIX} ` : ''}
+            {dataSource === 'api' ? COMMUNITY_FEED_DATA_SOURCE_API : COMMUNITY_FEED_DATA_SOURCE_DEMO}
             {lastFetchedAt > 0
               ? ` · 동기화 ${new Date(lastFetchedAt).toLocaleTimeString('ko-KR', {
                   hour: '2-digit',
@@ -125,8 +136,11 @@ export default function ClientCommunityFeed() {
               marginTop: 4,
             }}
           >
-            글·댓글·좋아요는 우선 이 기기(MMKV)에 저장됩니다. 서버 API(/api/v1/community) 연동 후
-            동기화됩니다.
+            {dataSource === 'api'
+              ? hasLocalOnlyPosts
+                ? COMMUNITY_FEED_SYNC_HINT
+                : COMMUNITY_FEED_SYNC_OK
+              : COMMUNITY_FEED_DEMO_HINT}
           </Text>
         </View>
         <Pressable
@@ -180,8 +194,7 @@ export default function ClientCommunityFeed() {
               color: theme.colors.textSecondary,
             }}
           >
-            서버 피드(/api/v1/community)를 불러오지 못했습니다. 아래는 데모 샘플과 이 기기에 저장된
-            글입니다. 동기화로 다시 시도할 수 있습니다.
+            {COMMUNITY_FEED_FETCH_ERROR}
           </Text>
         </View>
       ) : null}
@@ -257,11 +270,12 @@ interface PostCardProps {
   post: CommunityPost;
   index: number;
   isLiked: boolean;
+  showLocalOnlyBadge: boolean;
   onPress: () => void;
   onLike: () => void;
 }
 
-function PostCard({ post, index, isLiked, onPress, onLike }: PostCardProps) {
+function PostCard({ post, index, isLiked, showLocalOnlyBadge, onPress, onLike }: PostCardProps) {
   const theme = useTheme();
 
   return (
@@ -307,15 +321,28 @@ function PostCard({ post, index, isLiked, onPress, onLike }: PostCardProps) {
               </Text>
             ) : null}
           </View>
-          <Text
-            style={{
-              fontFamily: theme.fontFamily.regular,
-              fontSize: theme.fontSize.xs,
-              color: theme.colors.textTertiary,
-            }}
-          >
-            {post.time}
-          </Text>
+          <View style={{ alignItems: 'flex-end', gap: 4 }}>
+            {showLocalOnlyBadge ? (
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: theme.fontSize['2xs'],
+                  color: theme.colors.primary,
+                }}
+              >
+                {COMMUNITY_POST_LOCAL_ONLY_BADGE}
+              </Text>
+            ) : null}
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.regular,
+                fontSize: theme.fontSize.xs,
+                color: theme.colors.textTertiary,
+              }}
+            >
+              {post.time}
+            </Text>
+          </View>
         </View>
 
         {/* 본문 */}

@@ -18,6 +18,7 @@ import 'react-native-reanimated';
 import { ThemeProvider } from '../src/theme';
 import { useAuthStore } from '../src/stores/useAuthStore';
 import { hydrateJsessionCacheFromSecureStore } from '../src/utils/sessionCookie';
+import { useAppForegroundRefetch } from '../src/hooks/useAppForegroundRefetch';
 import {
   queryClient,
   queryPersister,
@@ -38,6 +39,11 @@ export const unstable_settings = {
 };
 
 SplashScreen.preventAutoHideAsync();
+
+function AppForegroundRefetchBridge() {
+  useAppForegroundRefetch();
+  return null;
+}
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -81,11 +87,13 @@ export default function RootLayout() {
     };
   }, []);
 
-  /** dev client 직접 진입 등 `index`를 거치지 않아도 SecureStore 토큰 복구 */
+  /** dev client 직접 진입 등 `index`를 거치지 않아도 SecureStore·JSESSION 복구 (MMKV rehydrate 후 토큰) */
   useEffect(() => {
     if (!loaded) return;
-    void hydrateJsessionCacheFromSecureStore();
-    void useAuthStore.getState().restoreTokens();
+    void (async () => {
+      await hydrateJsessionCacheFromSecureStore();
+      await useAuthStore.getState().restoreTokens();
+    })();
   }, [loaded]);
 
   useEffect(() => {
@@ -116,6 +124,7 @@ export default function RootLayout() {
             dehydrateOptions: queryPersistDehydrateOptions,
           }}
         >
+          <AppForegroundRefetchBridge />
           <ThemeProvider role={role ?? 'client'}>
             <ApiEnvironmentBanner />
             <Stack screenOptions={{ headerShown: false }}>

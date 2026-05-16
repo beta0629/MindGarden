@@ -40,6 +40,8 @@ interface AuthState {
   isAuthenticated: boolean;
   role: 'client' | 'consultant' | null;
   isLoading: boolean;
+  /** MMKV persist + SecureStore `restoreTokens` 완료 — Query `enabled` 레이스 방지 */
+  _hasHydrated: boolean;
   login: (user: User, tokens: Tokens) => Promise<void>;
   logout: () => Promise<void>;
   updateTokens: (tokens: Tokens) => Promise<void>;
@@ -57,6 +59,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       role: null,
       isLoading: true,
+      _hasHydrated: false,
 
       login: async (user, tokens) => {
         await SecureStore.setItemAsync(SECURE_KEY_ACCESS_TOKEN, tokens.accessToken);
@@ -68,6 +71,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
           role: user.role,
           isLoading: false,
+          _hasHydrated: true,
         });
       },
 
@@ -83,12 +87,15 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           role: null,
           isLoading: false,
+          _hasHydrated: true,
         });
       },
 
       updateTokens: async (tokens) => {
         await SecureStore.setItemAsync(SECURE_KEY_ACCESS_TOKEN, tokens.accessToken);
         await SecureStore.setItemAsync(SECURE_KEY_REFRESH_TOKEN, tokens.refreshToken);
+        syncTenantFromAccessToken(tokens.accessToken);
+        await hydrateJsessionCacheFromSecureStore();
         set({
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
@@ -110,7 +117,13 @@ export const useAuthStore = create<AuthState>()(
         if (accessToken && refreshToken) {
           syncTenantFromAccessToken(accessToken);
           await hydrateJsessionCacheFromSecureStore();
-          set({ accessToken, refreshToken, isAuthenticated: true, isLoading: false });
+          set({
+            accessToken,
+            refreshToken,
+            isAuthenticated: true,
+            isLoading: false,
+            _hasHydrated: true,
+          });
           return;
         }
         set({
@@ -118,6 +131,7 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null,
           isAuthenticated: false,
           isLoading: false,
+          _hasHydrated: true,
         });
       },
 
@@ -134,7 +148,12 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => () => {
-        void useAuthStore.getState().restoreTokens();
+        void (async () => {
+          await useAuthStore.getState().restoreTokens();
+          if (!useAuthStore.getState()._hasHydrated) {
+            useAuthStore.setState({ _hasHydrated: true });
+          }
+        })();
       },
     },
   ),

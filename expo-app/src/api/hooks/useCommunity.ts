@@ -14,11 +14,14 @@
  */
 import { useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/stores/useAuthStore';
-import { useTenantStore } from '@/stores/useTenantStore';
 import { useCommunityStore } from '@/stores/useCommunityStore';
 import type { CommunityPost, CommunityTab } from '@/constants/communityData';
 import { fetchRemoteCommunityFeed } from '@/services/communityApi';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
+import {
+  isCommunityLocalOnlyPost,
+  mergeRemoteCommunityWithStore,
+} from '@/utils/communityFeedMerge';
 
 /** 원격 피드 권위 여부(§11.1 API 행 — 샘플/MMKV 폴백 구분용). */
 export type CommunityDataSource =
@@ -33,15 +36,6 @@ const COMMUNITY_QUERY_KEYS = {
     [...COMMUNITY_QUERY_KEYS.all, 'feed', feedTab ?? 'all'] as const,
 };
 
-function mergeRemoteWithStore(remote: CommunityPost[], local: CommunityPost[]): CommunityPost[] {
-  if (remote.length === 0) {
-    return local;
-  }
-  const remoteIds = new Set(remote.map((p) => p.id));
-  const extras = local.filter((p) => !remoteIds.has(p.id));
-  return [...remote, ...extras];
-}
-
 export type UseCommunityFeedOptions = {
   /** Spring `tab` 쿼리: `reviews` | `columns` — `all`이면 생략 */
   feedTab?: CommunityTab;
@@ -54,32 +48,31 @@ export type UseCommunityFeedOptions = {
  */
 export function useCommunityFeed(options?: UseCommunityFeedOptions) {
   const feedTab = options?.feedTab;
-  const accessToken = useAuthStore((s) => s.accessToken);
-  const userTenantId = useAuthStore((s) => s.user?.tenantId);
-  const headerTenantId = useTenantStore((s) => s.tenantId);
-  const tenantId = headerTenantId ?? userTenantId ?? '';
-  const userId = useAuthStore((s) => s.user?.id);
-  const enabled = Boolean(accessToken && tenantId && userId);
+  const { ready, tenantId, userId } = useApiQueryReady();
 
   const query = useQuery<CommunityPost[]>({
     queryKey: [...COMMUNITY_QUERY_KEYS.feed(feedTab), tenantId, String(userId ?? '')] as const,
     queryFn: () => fetchRemoteCommunityFeed(feedTab),
-    enabled,
+    enabled: ready,
     staleTime: 1000 * 60,
     retry: 1,
     refetchOnMount: 'always',
   });
 
+  const remotePostIds = useMemo(() => {
+    if (!query.isSuccess) {
+      return new Set<number>();
+    }
+    return new Set((query.data ?? []).map((p) => p.id));
+  }, [query.isSuccess, query.data]);
+
   useEffect(() => {
     if (!query.isSuccess) {
       return;
     }
-    const remote = query.data;
-    if (!remote?.length) {
-      return;
-    }
+    const remote = query.data ?? [];
     const prev = useCommunityStore.getState().posts;
-    const next = mergeRemoteWithStore(remote, prev);
+    const next = mergeRemoteCommunityWithStore(remote, prev);
     useCommunityStore.setState({ posts: next });
   }, [query.isSuccess, query.data, query.dataUpdatedAt]);
 
@@ -100,6 +93,16 @@ export function useCommunityFeed(options?: UseCommunityFeedOptions) {
   const dataSource: CommunityDataSource =
     query.isSuccess && !query.isError ? 'api' : 'demo-mmkv';
 
+  const isPostLocalOnly = useMemo(
+    () => (postId: number) => isCommunityLocalOnlyPost(postId, dataSource, remotePostIds),
+    [dataSource, remotePostIds],
+  );
+
+  const hasLocalOnlyPosts = useMemo(
+    () => dataSource === 'api' && posts.some((p) => isPostLocalOnly(p.id)),
+    [dataSource, posts, isPostLocalOnly],
+  );
+
   return {
     posts,
     isLoading: query.isPending,
@@ -108,6 +111,9 @@ export function useCommunityFeed(options?: UseCommunityFeedOptions) {
     isFetching: query.isFetching,
     dataSource,
     lastFetchedAt: query.dataUpdatedAt,
+    isPostLocalOnly,
+    hasLocalOnlyPosts,
+    remotePostIds,
   };
 }
 

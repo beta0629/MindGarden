@@ -17,7 +17,8 @@ import { apiGet, apiPost } from '../client';
 import { MESSAGE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
 import { useAuthStore } from '../../stores/useAuthStore';
-import { useTenantStore } from '../../stores/useTenantStore';
+import { resolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 
 export interface Conversation {
@@ -292,7 +293,7 @@ async function fetchConsultationMessagesPage(
 
 export function useConversations(searchQuery: string) {
   const user = useAuthStore((s) => s.user);
-  const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
+  const { ready, tenantId } = useApiQueryReady();
   const role = user?.role;
   const userId = user?.id;
 
@@ -306,14 +307,14 @@ export function useConversations(searchQuery: string) {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined),
-    enabled: !!userId && !!role && !!tenantId,
+    enabled: ready && !!role,
     staleTime: 1000 * 30,
   });
 }
 
 export function useMessages(partnerId: number | undefined) {
   const user = useAuthStore((s) => s.user);
-  const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
+  const { ready, tenantId } = useApiQueryReady();
   const role = user?.role;
   const selfId = user?.id;
 
@@ -354,7 +355,7 @@ export function useMessages(partnerId: number | undefined) {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined),
-    enabled: !!partnerId && !!selfId && !!role && !!tenantId,
+    enabled: ready && !!partnerId && !!role,
     staleTime: 1000 * 10,
   });
 }
@@ -402,7 +403,7 @@ export function useSendMessage() {
     },
     onSuccess: (_data, variables) => {
       const user = useAuthStore.getState().user;
-      const tid = useTenantStore.getState().tenantId?.trim() ?? '';
+      const tid = resolveTenantIdForApi();
       if (!user || !tid) {
         return;
       }
@@ -418,7 +419,7 @@ export function useSendMessage() {
 
 export function useUnreadMessageCount() {
   const user = useAuthStore((s) => s.user);
-  const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
+  const { ready, tenantId } = useApiQueryReady();
   const userId = user?.id;
   const userType = user?.role ? roleToSenderType(user.role) : '';
 
@@ -438,7 +439,7 @@ export function useUnreadMessageCount() {
         return { count: 0 };
       }
     },
-    enabled: !!userId && !!userType && !!tenantId,
+    enabled: ready && !!userType,
     staleTime: 1000 * 30,
     refetchInterval: 1000 * 60,
     retry: false,
@@ -447,7 +448,7 @@ export function useUnreadMessageCount() {
 
 function invalidateMessageCaches(queryClient: QueryClient): void {
   const user = useAuthStore.getState().user;
-  const tid = useTenantStore.getState().tenantId?.trim() ?? '';
+  const tid = resolveTenantIdForApi();
   queryClient.invalidateQueries({
     queryKey: MESSAGE_QUERY_KEYS.conversations(),
   });

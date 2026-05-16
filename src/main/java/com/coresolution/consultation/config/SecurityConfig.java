@@ -72,16 +72,13 @@ public class SecurityConfig {
             // CORS 설정 - 모든 요청에 대해 허용
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
-            // Bearer JWT로 User·tenant를 먼저 올린 뒤 TenantContextFilter가 세션/헤더를 해석한다.
-            .addFilterBefore(jwtAuthenticationFilter, TenantContextFilter.class)
-
-            // TenantContextFilter — SessionBasedAuthenticationFilter 이전
-            .addFilterBefore(tenantContextFilter, 
+            // UsernamePasswordAuthenticationFilter 앞 커스텀 필터 — 동일 앵커에 등록 시 마지막 등록이 요청 최초 실행.
+            // 요청 순서: Jwt → TenantContext → SessionBased → UsernamePassword
+            .addFilterBefore(sessionBasedAuthenticationFilter,
                 org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
-            
-            // SessionBasedAuthenticationFilter를 Spring Security 필터 체인에 추가
-            // (UsernamePasswordAuthenticationFilter 이전에 실행되도록 설정)
-            .addFilterBefore(sessionBasedAuthenticationFilter, 
+            .addFilterBefore(tenantContextFilter,
+                org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(jwtAuthenticationFilter,
                 org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
             
             // SessionCookieRenewalFilter: 인증 완료 후 JSESSIONID 쿠키 Max-Age 슬라이딩 갱신

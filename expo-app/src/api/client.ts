@@ -15,7 +15,11 @@ import type {
 import axios, { create } from 'axios';
 import { Platform } from 'react-native';
 import { getApiBaseUrl } from '@/config/apiBaseUrl';
-import { formatJsessionCookieHeader, peekCachedJsessionId } from '@/utils/sessionCookie';
+import {
+  formatJsessionCookieHeader,
+  hydrateJsessionCacheFromSecureStore,
+  peekCachedJsessionId,
+} from '@/utils/sessionCookie';
 import { useAuthStore } from '../stores/useAuthStore';
 import { resolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
@@ -112,6 +116,9 @@ apiClient.interceptors.request.use(
     const sessionCookie = formatJsessionCookieHeader(peekCachedJsessionId());
     if (sessionCookie) {
       config.headers.set('Cookie', sessionCookie);
+    } else if (__DEV__ && accessToken) {
+      // eslint-disable-next-line no-console -- Android SecureStore 지연·Bearer-only 경로 추적
+      console.debug('[api] Bearer-only (no JSESSIONID cache)');
     }
 
     return config;
@@ -178,6 +185,7 @@ apiClient.interceptors.response.use(
           accessToken: newAccessToken,
           refreshToken: newRefreshToken,
         });
+        await hydrateJsessionCacheFromSecureStore();
 
         processQueue(null, newAccessToken);
 

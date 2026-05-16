@@ -9,6 +9,7 @@ import { apiPut } from '../client';
 import { PROFILE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { toClientConsultantMessagingRole } from '@/utils/adminRole';
 import { MESSAGE_QUERY_KEYS } from './useMessages';
 import { CLIENT_QUERY_KEYS } from './useClients';
 import { CONSULTATION_QUERY_KEYS } from './useConsultations';
@@ -59,7 +60,10 @@ export function useProfileImageUpload() {
       if (!u) {
         return;
       }
-      const profileImageUrl = extractProfileImageUrlFromPutResponse(u.role, raw);
+      const profileImageUrl = extractProfileImageUrlFromPutResponse(
+        toClientConsultantMessagingRole(u.role),
+        raw,
+      );
       if (profileImageUrl) {
         useAuthStore.getState().updateUser({ profileImageUrl });
       }

@@ -25,11 +25,12 @@ function base64UrlToUtf8(segment: string): string {
 
 export function decodeJwtPayload(token: string): Record<string, unknown> | null {
   const parts = token.trim().split('.');
-  if (parts.length < 2) {
+  const payloadSegment = parts[1];
+  if (!payloadSegment) {
     return null;
   }
   try {
-    const json = base64UrlToUtf8(parts[1]);
+    const json = base64UrlToUtf8(payloadSegment);
     const parsed: unknown = JSON.parse(json);
     return parsed != null && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null;
   } catch {

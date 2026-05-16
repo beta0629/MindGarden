@@ -166,6 +166,38 @@ export const ADMIN_CLIENT_API = {
   MAPPINGS_BY_CLIENT: '/api/v1/admin/mappings/client',
 } as const;
 
+/**
+ * 어드민·스태프 모바일 MVP (Task C) — 커뮤니티 검수(Task B)와 분리
+ * 오늘 스케줄은 `SCHEDULE_API` + `userRole=ADMIN|STAFF` 재사용
+ */
+export const ADMIN_MOBILE_API = {
+  USER_MANAGEMENT: '/api/v1/admin/user-management',
+  CONSULTANT_RECORDS_ROOT: '/api/v1/admin/consultant-records',
+  /** Spring `ConsultantRecordsController` — 상담사별 상담일지 목록 */
+  consultantConsultationRecords: (consultantId: string | number) =>
+    `/api/v1/admin/consultant-records/${encodeURIComponent(String(consultantId))}/consultation-records`,
+  /** Spring `ConsultantRecordsController` — 상담일지 상세(읽기 전용) */
+  consultantConsultationRecordDetail: (
+    consultantId: string | number,
+    recordId: string | number,
+  ) =>
+    `/api/v1/admin/consultant-records/${encodeURIComponent(String(consultantId))}/consultation-records/${encodeURIComponent(String(recordId))}`,
+  MIND_WEATHER_CARDS: '/api/v1/admin/wellness/mind-weather/cards',
+  MIND_WEATHER_SUMMARY: '/api/v1/admin/wellness/mind-weather/summary',
+  COMMUNITY_MODERATION_QUEUE: '/api/v1/admin/community/moderation-queue',
+} as const;
+
+/**
+ * 어드민 커뮤니티 검수 — `AdminCommunityModerationController` `/api/v1/admin/community`
+ * - GET `MODERATION_QUEUE` — 검수 대기 목록
+ * - PATCH `moderation(postId)` — 본문 `{ decision: 'APPROVE'|'REJECT', reasonCode?, note? }`
+ */
+export const ADMIN_COMMUNITY_API = {
+  MODERATION_QUEUE: '/api/v1/admin/community/moderation-queue',
+  moderation: (postId: string | number) =>
+    `/api/v1/admin/community/posts/${encodeURIComponent(String(postId))}/moderation`,
+} as const;
+
 export const PAYMENT_API = {
   /** PG 결제 건별 목록(결제자 ID). 매칭 기반 회기와 별개일 수 있음 */
   PAYMENTS_BY_PAYER: (payerId: string | number) => `/api/v1/payments/payer/${payerId}`,
@@ -276,6 +308,7 @@ export const API_ENDPOINTS = {
   NOTIFICATION: NOTIFICATION_API,
   PUSH: PUSH_API,
   CONSULTANT: CONSULTANT_API,
+  ADMIN_COMMUNITY: ADMIN_COMMUNITY_API,
   CONSULTATION_RECORD: CONSULTATION_RECORD_API,
   RATING: RATING_API,
   PAYMENT: PAYMENT_API,
@@ -289,4 +322,5 @@ export const API_ENDPOINTS = {
   COMMUNITY: COMMUNITY_API,
   GARDEN: GARDEN_API,
   MIND_WEATHER: MIND_WEATHER_API,
+  ADMIN_MOBILE: ADMIN_MOBILE_API,
 } as const;

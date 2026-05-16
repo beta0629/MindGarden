@@ -9,6 +9,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { apiGet } from '../client';
 import { PROFILE_API } from '../endpoints';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { toClientConsultantMessagingRole } from '@/utils/adminRole';
 import { extractProfileImageUrlFromPutResponse } from './useProfileImageUpload';
 
 export function useProfileRemoteSync() {
@@ -23,13 +24,16 @@ export function useProfileRemoteSync() {
       let cancelled = false;
       void (async () => {
         try {
+          const shellRole = toClientConsultantMessagingRole(user.role);
           const endpoint =
-            user.role === 'client' ? PROFILE_API.CLIENT_PROFILE : PROFILE_API.userProfile(user.id);
+            shellRole === 'client'
+              ? PROFILE_API.CLIENT_PROFILE
+              : PROFILE_API.userProfile(user.id);
           const raw = await apiGet<unknown>(endpoint);
           if (cancelled) {
             return;
           }
-          const url = extractProfileImageUrlFromPutResponse(user.role, raw);
+          const url = extractProfileImageUrlFromPutResponse(shellRole, raw);
           if (url) {
             updateUser({ profileImageUrl: url });
           }

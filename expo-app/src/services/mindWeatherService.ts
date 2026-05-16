@@ -337,7 +337,10 @@ function normalizeShareConsent(raw: unknown): MindWeatherShareConsent | null {
 function normalizeCard(raw: unknown): MindWeatherCard | null {
   if (raw == null || typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
-  const id = normalizeMindWeatherCardId(o.id ?? o.cardId);
+  const idRaw = o.id ?? o.cardId;
+  const id = normalizeMindWeatherCardId(
+    typeof idRaw === 'string' || typeof idRaw === 'number' ? idRaw : null,
+  );
   if (!id) return null;
   const sourceRaw = o.source;
   const source: MindWeatherSource = isMindWeatherSource(sourceRaw) ? sourceRaw : 'memo';

@@ -35,6 +35,7 @@ import {
   type Conversation,
 } from '@/api/hooks/useMessages';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { toClientConsultantMessagingRole } from '@/utils/adminRole';
 import { useTenantStore } from '@/stores/useTenantStore';
 import { formatRelativeTime } from '@/utils/dateFormat';
 import { toDisplayString } from '@/utils/safeDisplay';
@@ -81,7 +82,12 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
       const tb = new Date(sb).getTime();
       return (Number.isNaN(tb) ? 0 : tb) - (Number.isNaN(ta) ? 0 : ta);
     });
-    return buildConversationsFromRows(flat, user.role, user.id, deferredSearch);
+    return buildConversationsFromRows(
+      flat,
+      toClientConsultantMessagingRole(user.role),
+      user.id,
+      deferredSearch,
+    );
   }, [tenantId, data?.pages, deferredSearch, user?.id, user?.role]);
 
   const handleEndReached = useCallback(() => {

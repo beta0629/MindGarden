@@ -363,7 +363,6 @@ export default function ClientCommunityDetail() {
           <FlashList
             data={post.comments as CommunityComment[]}
             renderItem={renderComment}
-            estimatedItemSize={88}
             keyExtractor={(item) => String(item.id)}
             ListHeaderComponent={renderHeader}
             contentContainerStyle={styles.listContent}

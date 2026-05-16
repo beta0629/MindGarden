@@ -228,7 +228,6 @@ export default function ConsultantCommunityFeed() {
           <FlashList
             data={filteredPosts}
             renderItem={renderItem}
-            estimatedItemSize={168}
             keyExtractor={(item) => String(item.id)}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}

@@ -19,6 +19,7 @@ import { unwrapApiResponse } from '../unwrapApiResponse';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { resolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
+import { toClientConsultantMessagingRole } from '@/utils/adminRole';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 
 export interface Conversation {
@@ -303,7 +304,11 @@ export function useConversations(searchQuery: string) {
       if (!userId || !role || !tenantId) {
         return { messages: [], page: 0, hasNext: false, totalElements: 0 };
       }
-      return fetchConsultationMessagesPage(role, userId, pageParam as number);
+      return fetchConsultationMessagesPage(
+        toClientConsultantMessagingRole(role),
+        userId,
+        pageParam as number,
+      );
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined),
@@ -421,7 +426,7 @@ export function useUnreadMessageCount() {
   const user = useAuthStore((s) => s.user);
   const { ready, tenantId } = useApiQueryReady();
   const userId = user?.id;
-  const userType = user?.role ? roleToSenderType(user.role) : '';
+  const userType = user?.role ? roleToSenderType(toClientConsultantMessagingRole(user.role)) : '';
 
   return useQuery<{ count: number }>({
     queryKey: [...MESSAGE_QUERY_KEYS.unreadCount(userId ?? 0), tenantId],

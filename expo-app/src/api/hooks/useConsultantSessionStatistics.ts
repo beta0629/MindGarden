@@ -96,7 +96,7 @@ function normalizeBucketItem(item: unknown, index: number): SessionStatisticsBuc
     row.bucketStart;
   let label: string;
   if (typeof labelRaw === 'string') {
-    label = labelRaw.includes('T') ? labelRaw.split('T')[0] : labelRaw;
+    label = labelRaw.includes('T') ? (labelRaw.split('T')[0] ?? labelRaw) : labelRaw;
   } else {
     label = toDisplayString(labelRaw, String(index + 1));
   }

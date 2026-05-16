@@ -37,6 +37,11 @@ import {
 } from '../constants/pushScenarios';
 import { showInAppToast } from '../components/organisms/InAppNotificationToast';
 import { stripHtmlToPlainText } from '../utils/safeDisplay';
+import {
+  isAdminMobileShellRole,
+  toClientConsultantMessagingRole,
+  type AppAuthRole,
+} from '@/utils/adminRole';
 
 /**
  * 푸시 백엔드 계약(프론트·Expo 공통, 웹 `PushNotificationService` 동일 경로):
@@ -49,9 +54,20 @@ import { stripHtmlToPlainText } from '../utils/safeDisplay';
  *
  * @see `expo-app/src/api/endpoints.ts` 의 PUSH_API 주석
  */
-function navigateToSystemNotifications(role: 'client' | 'consultant'): void {
+function navigateToSystemNotifications(role: AppAuthRole): void {
+  if (isAdminMobileShellRole(role)) {
+    try {
+      router.push('/(admin)/(more)' as Href);
+    } catch {
+      // 잘못된 경로 무시
+    }
+    return;
+  }
+  const shellRole = toClientConsultantMessagingRole(role);
   const path =
-    role === 'consultant' ? '/(consultant)/(more)/notifications' : '/(client)/(more)/notifications';
+    shellRole === 'consultant'
+      ? '/(consultant)/(more)/notifications'
+      : '/(client)/(more)/notifications';
   try {
     router.push(path as Href);
   } catch {
@@ -418,17 +434,18 @@ export const NotificationService = {
       return;
     }
 
+    const shellRole = toClientConsultantMessagingRole(role);
     const params = collectPushRouteParams(scenario, data);
-    const template = getRouteTemplateForRole(scenario, role);
+    const template = getRouteTemplateForRole(scenario, shellRole);
     let route = resolveRoute(template, params);
-    route = prefixRoleForMoreRoute(route, role);
+    route = prefixRoleForMoreRoute(route, shellRole);
 
-    if (!routeMatchesRole(route, role)) {
+    if (!routeMatchesRole(route, shellRole)) {
       navigateToSystemNotifications(role);
       return;
     }
 
-    route = resolvePushRouteWithFallback(scenario, route, role);
+    route = resolvePushRouteWithFallback(scenario, route, shellRole);
 
     try {
       router.push(route as Href);

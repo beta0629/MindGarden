@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 /**
- * `adb devices`에 나온 모든 `device` 상태 기기에 Metro 포트 reverse 적용.
- * 포트: `METRO_PORT` / `RCT_METRO_PORT` / `EXPO_METRO_PORT` (기본 8081)
- * 실기기 + 에뮬레이터 병행 시 각각 한 번씩 실행해야 호스트 Metro에 붙는다.
+ * `adb devices`의 모든 device에 Metro 포트 reverse.
+ * 포트: `METRO_PORT` 또는 `RCT_METRO_PORT` 또는 `EXPO_METRO_PORT` (기본 8081)
  */
 const { execSync } = require('child_process');
 
@@ -13,7 +12,7 @@ const port = String(
 let out;
 try {
   out = execSync('adb devices', { encoding: 'utf8' });
-} catch (e) {
+} catch {
   console.error('adb 실행 실패. Android SDK platform-tools PATH 확인.');
   process.exit(1);
 }

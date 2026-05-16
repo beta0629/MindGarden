@@ -25,7 +25,7 @@
     "adb:reverse-metro:all": "node ./scripts/adb-reverse-metro-all.js",
     "ios:metro-localhost": "xcrun simctl openurl booted \"mindgarden://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081\"",
     "android": "expo run:android",
-    "android:apk:dev": "EXPO_USE_DEV_CLIENT=0 EXPO_PUBLIC_API_BASE_URL=https://dev.core-solution.co.kr npx expo prebuild --platform android --clean && cd android && ./gradlew clean assembleRelease",
+    "android:apk:dev": "bash ./scripts/build-android-apk-dev.sh",
     "android:apk:standalone": "npm run android:apk:dev",
     "android:apk:install": "node ./scripts/install-android-release-apk.js",
     "android:apk:dev:install": "npm run android:apk:dev && npm run android:apk:install",

@@ -16,6 +16,17 @@ const candidates = [
   path.join(root, 'mindgarden-dev-release.apk'),
 ];
 
+function adbArgs(extraArgs) {
+  const serial = process.env.ANDROID_SERIAL?.trim();
+  return serial ? ['-s', serial, ...extraArgs] : extraArgs;
+}
+
+function runAdb(args) {
+  const full = ['adb', ...adbArgs(args)].join(' ');
+  console.log(`> ${full}`);
+  execSync(full, { stdio: 'inherit' });
+}
+
 function run(cmd, opts = {}) {
   console.log(`> ${cmd}`);
   execSync(cmd, { stdio: 'inherit', ...opts });
@@ -41,14 +52,21 @@ if (devices.length === 0) {
   console.error('adb 연결 기기 없음. USB 디버깅 또는 Wi-Fi adb를 확인하세요.');
   process.exit(1);
 }
+if (!process.env.ANDROID_SERIAL?.trim() && devices.length > 1) {
+  const physical = devices.find((line) => !line.includes('emulator-'));
+  if (physical) {
+    process.env.ANDROID_SERIAL = physical.split('\t')[0].trim();
+    console.log(`ℹ️  기기 2대 이상 — 실기기 우선: ANDROID_SERIAL=${process.env.ANDROID_SERIAL}`);
+  }
+}
 
 console.log(`\n📦 설치: ${apk}`);
-const install = spawnSync('adb', ['install', '-r', apk], { encoding: 'utf8' });
+const install = spawnSync('adb', adbArgs(['install', '-r', apk]), { encoding: 'utf8' });
 if (install.status !== 0) {
   const err = `${install.stderr ?? ''}${install.stdout ?? ''}`;
   if (err.includes('INSTALL_FAILED_VERSION_DOWNGRADE')) {
     console.log('⚠️  버전 다운그레이드 — -d 로 재시도');
-    run(`adb install -r -d "${apk}"`);
+    runAdb(['install', '-r', '-d', apk]);
   } else {
     console.error(err);
     process.exit(install.status ?? 1);
@@ -56,15 +74,17 @@ if (install.status !== 0) {
 }
 
 console.log('\n🚀 앱 실행:', PACKAGE);
-const launch = spawnSync(
-  'adb',
-  ['shell', 'monkey', '-p', PACKAGE, '-c', 'android.intent.category.LAUNCHER', '1'],
-  { encoding: 'utf8' },
-);
+const launch = spawnSync('adb', adbArgs([
+  'shell',
+  'monkey',
+  '-p',
+  PACKAGE,
+  '-c',
+  'android.intent.category.LAUNCHER',
+  '1',
+]), { encoding: 'utf8' });
 if (launch.status !== 0) {
-  run(
-    `adb shell am start -n ${PACKAGE}/.MainActivity`,
-  );
+  runAdb(['shell', 'am', 'start', '-n', `${PACKAGE}/.MainActivity`]);
 }
 
 console.log('\n✅ 설치·실행 완료');

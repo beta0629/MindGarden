@@ -7,7 +7,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMemo } from 'react';
 import { useTheme } from '@/theme';
 import type { AppTheme } from '@/theme/client-theme';
-import { getApiDeploymentUi, type ApiDeploymentKind } from '@/config/apiEnvironment';
+import {
+  getApiDeploymentUi,
+  shouldShowApiEnvironmentBanner,
+  type ApiDeploymentKind,
+} from '@/config/apiEnvironment';
 
 function bannerPalette(theme: AppTheme, kind: ApiDeploymentKind): { bg: string; fg: string } {
   if (kind === 'prod') {
@@ -23,6 +27,12 @@ export function ApiEnvironmentBanner() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const ui = useMemo(() => getApiDeploymentUi(), []);
+  const show = useMemo(() => shouldShowApiEnvironmentBanner(), []);
+
+  if (!show) {
+    return null;
+  }
+
   const { bg, fg } = bannerPalette(theme, ui.kind);
   const line = `${ui.headline} · ${ui.detail}`;
 

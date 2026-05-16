@@ -25,10 +25,19 @@ function isProductionApiHost(hostname: string): boolean {
   return hostname === 'app.core-solution.co.kr';
 }
 
+/** 운영 릴리스 APK에서는 상단 띠를 숨긴다(개발·Metro만 표시). */
+export function shouldShowApiEnvironmentBanner(): boolean {
+  if (__DEV__) {
+    return true;
+  }
+  const host = hostnameFromApiBase(getApiBaseUrl());
+  return !isProductionApiHost(host);
+}
+
 /**
  * 현재 번들·`getApiBaseUrl()` 기준 환경 표시용 문구.
  * - `__DEV__`: Metro 개발 번들(호스트는 `getApiBaseUrl()`과 동일 표시)
- * - 릴리스: `app.core-solution.co.kr` → 운영, 그 외( dev.* · 로컬 등 ) → 개발 API
+ * - 릴리스: `app.core-solution.co.kr` → 운영(띠 미표시), 그 외 → 개발 API
  */
 export function getApiDeploymentUi(): ApiDeploymentUi {
   const base = getApiBaseUrl();

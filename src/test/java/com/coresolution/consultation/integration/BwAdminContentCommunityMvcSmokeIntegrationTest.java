@@ -101,6 +101,17 @@ class BwAdminContentCommunityMvcSmokeIntegrationTest {
         return u;
     }
 
+    private User staffSessionUser() {
+        User u = new User();
+        u.setId(9003L);
+        u.setUserId("staff-bw-smoke");
+        u.setEmail("staff-bw-smoke@test.com");
+        u.setName("BW Smoke Staff");
+        u.setTenantId(TEST_TENANT_ID);
+        u.setRole(UserRole.STAFF);
+        return u;
+    }
+
     @Test
     @DisplayName("GET /api/v1/admin/content/psycho-education — ADMIN·테넌트 있으면 200")
     @WithMockUser(roles = {"ADMIN"})
@@ -141,6 +152,31 @@ class BwAdminContentCommunityMvcSmokeIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true));
 
         verify(communityService).moderationQueue(any(User.class), any());
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/admin/community/moderation-queue — STAFF 세션이면 403")
+    @WithMockUser(roles = {"STAFF"})
+    void moderationQueue_whenStaff_returns403() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/community/moderation-queue")
+                        .sessionAttr(SessionConstants.USER_OBJECT, staffSessionUser())
+                        .sessionAttr(SessionConstants.TENANT_ID, TEST_TENANT_ID))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/v1/admin/community/posts/{id}/moderation — status 본문이면 400")
+    @WithMockUser(roles = {"ADMIN"})
+    void moderatePost_whenLegacyStatusBody_returns400() throws Exception {
+        long postId = 42L;
+        String body = "{\"status\":\"APPROVED\"}";
+
+        mockMvc.perform(patch("/api/v1/admin/community/posts/{postId}/moderation", postId)
+                        .sessionAttr(SessionConstants.USER_OBJECT, adminSessionUser())
+                        .sessionAttr(SessionConstants.TENANT_ID, TEST_TENANT_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

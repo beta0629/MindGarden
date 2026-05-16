@@ -64,9 +64,20 @@
 |------|------|
 | CSS 파일 (*.css) | React Native에서 미사용. StyleSheet 또는 NativeWind로 대체 |
 | 데스크톱 사이드바 레이아웃 | 모바일 네이티브 앱 → 바텀탭 전용. 태블릿은 확장 레이아웃 별도 검토 |
-| AdminCommonLayout 참조 | 어드민은 웹 전용. 네이티브 앱은 상담사·내담자만 |
+| AdminCommonLayout 참조 (웹) | 웹 어드민은 `AdminCommonLayout`·데스크톱 IA 유지. **동일 Expo 앱**에 `app/(admin)/`·`app/(staff)/` 라우트 그룹 추가(§2.4). 네이티브 범위는 상담사·내담자 + 어드민·스태프 **모바일 MVP**로 한정 |
 | react-router-dom | Expo Router로 완전 대체 |
 | Webpack 설정 | Metro Bundler (Expo 기본) |
+
+### 2.4 Admin Mobile MVP
+
+> 웹 어드민·ERP를 대체하지 않는다. **단일 Expo 앱**에 어드민·스태프 모바일 라우트를 두고, 현장·이동 중 **조회·검수·알림 대응**에 필요한 화면만 MVP로 둔다.
+
+| 구분 | 내용 |
+|------|------|
+| **MVP Top 8** | ① 홈 ② 커뮤니티 검수(ADMIN) ③ 알림·메시지 ④ 스케줄 라이트 ⑤ 상담일지 ⑥ 사용자 조회 ⑦ 마음날씨 관측 ⑧ 더보기 |
+| **Phase 2** | 대시보드 위젯·고급 필터·일괄 처리, 스태프 전용 워크플로 — 상담사·내담자 Phase 3 이후 또는 병렬 검토 |
+| **제외** | ERP 전체, 설정 편집, 인프라·시스템 모니터링(웹 전용 유지) |
+| **분배** | IA·API 매핑 `explore` → 화면·탭·카피 `core-designer`(model: `gemini-3.1-pro`) → `app/(admin)/`·`(staff)/` 라우트·화면 `core-coder` · 완료 후 `core-tester` 게이트 |
 
 ---
 

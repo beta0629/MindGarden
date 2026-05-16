@@ -84,6 +84,12 @@ public class MindWeatherServiceImpl implements MindWeatherService {
             .shareOriginal(false)
             .build();
         card.setTenantId(TenantContextHolder.getRequiredTenantId());
+        if (card.getIsDeleted() == null) {
+            card.setIsDeleted(false);
+        }
+        if (card.getVersion() == null) {
+            card.setVersion(0L);
+        }
         mindWeatherCardRepository.save(card);
         mindWeatherCardRepository.flush();
         MindWeatherCard loaded = mindWeatherCardRepository.findByTenantIdAndIdAndClientId(

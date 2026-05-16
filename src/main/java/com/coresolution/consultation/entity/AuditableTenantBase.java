@@ -7,7 +7,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Version;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
@@ -47,9 +49,11 @@ public abstract class AuditableTenantBase {
     @Column(name = "deleted_at")
     protected LocalDateTime deletedAt;
 
+    @Builder.Default
     @Column(name = "is_deleted", nullable = false)
     protected Boolean isDeleted = false;
 
+    @Builder.Default
     @Version
     @Column(name = "version", nullable = false)
     protected Long version = 0L;
@@ -106,6 +110,19 @@ public abstract class AuditableTenantBase {
 
     public void setTenantId(String tenantId) {
         this.tenantId = tenantId;
+    }
+
+    /**
+     * {@link lombok.experimental.SuperBuilder}는 필드 초기값을 자동 적용하지 않으므로 영속화 전 보정한다.
+     */
+    @PrePersist
+    protected void auditablePrePersist() {
+        if (isDeleted == null) {
+            isDeleted = false;
+        }
+        if (version == null) {
+            version = 0L;
+        }
     }
 
     /**

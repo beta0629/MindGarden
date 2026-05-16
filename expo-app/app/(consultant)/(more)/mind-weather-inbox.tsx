@@ -45,7 +45,15 @@ import type { MindWeatherCard } from '@/services/mindWeatherService';
 export default function ConsultantMindWeatherInbox() {
   const theme = useTheme();
   const inboxQuery = useConsultantMindWeatherInbox();
+  const authIsLoading = useAuthStore((s) => s.isLoading);
   const items = inboxQuery.data?.items ?? [];
+  const isQueryReady = inboxQuery.isQueryReady;
+  const showLoadingSkeleton =
+    !isQueryReady ||
+    authIsLoading ||
+    inboxQuery.isLoading ||
+    (inboxQuery.fetchStatus === 'idle' && !inboxQuery.isFetched);
+  const showEmptyInbox = inboxQuery.isFetched && !inboxQuery.isError && items.length === 0;
   const authUser = useAuthStore((s) => s.user);
   const consultantIdStr = authUser?.id != null ? String(authUser.id) : '';
   const clientsQuery = useConsultantClients({
@@ -142,7 +150,7 @@ export default function ConsultantMindWeatherInbox() {
           </Text>
         </Animated.View>
 
-        {inboxQuery.isLoading ? (
+        {showLoadingSkeleton ? (
           <View style={styles.loadingWrap}>
             {[0, 1].map((i) => (
               <SkeletonCard key={i} lines={3} />
@@ -159,7 +167,7 @@ export default function ConsultantMindWeatherInbox() {
             actionLabel="다시 시도"
             onAction={() => inboxQuery.refetch()}
           />
-        ) : items.length === 0 ? (
+        ) : showEmptyInbox ? (
           <EmptyState
             icon={<Inbox size={32} color={theme.colors.textTertiary} />}
             title="아직 공유받은 카드가 없어요"

@@ -12,10 +12,10 @@ import type {
   AxiosRequestConfig,
   InternalAxiosRequestConfig,
 } from 'axios';
-import axios from 'axios';
+import axios, { create } from 'axios';
 import { getApiBaseUrl } from '@/config/apiBaseUrl';
 import { useAuthStore } from '../stores/useAuthStore';
-import { useTenantStore } from '../stores/useTenantStore';
+import { resolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 import { AUTH_API } from './endpoints';
 
 const API_TIMEOUT = 30000;
@@ -66,7 +66,7 @@ function extractTokensFromRefreshBody(body: unknown): {
   return { accessToken, refreshToken };
 }
 
-const apiClient: AxiosInstance = axios.create({
+const apiClient: AxiosInstance = create({
   baseURL: getApiBaseUrl(),
   timeout: API_TIMEOUT,
   maxRedirects: 0,
@@ -94,7 +94,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const { tenantId } = useTenantStore.getState();
+    const tenantId = resolveTenantIdForApi();
     const { accessToken } = useAuthStore.getState();
 
     if (tenantId) {

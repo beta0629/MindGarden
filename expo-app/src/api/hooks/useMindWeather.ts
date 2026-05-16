@@ -9,9 +9,10 @@
  * @since 2026-05-13
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
+import { resolveTenantIdFromSources } from '@/utils/resolveTenantIdForApi';
 import {
   analyzeMindWeather,
   fetchConsultantMindWeatherInbox,
@@ -104,35 +105,44 @@ export function useUnshareMindWeatherCard() {
 }
 
 export function useConsultantMindWeatherInbox() {
+  const queryClient = useQueryClient();
   const accessToken = useAuthStore((s) => s.accessToken);
+  const authIsLoading = useAuthStore((s) => s.isLoading);
   const role = useAuthStore((s) => s.role);
   const userTenantId = useAuthStore((s) => s.user?.tenantId);
   const headerTenantId = useTenantStore((s) => s.tenantId);
   const tenantCode = useTenantStore((s) => s.tenantCode);
   const recentTenants = useTenantStore((s) => s.recentTenants);
-  const tenantId = useMemo(() => {
-    const h = (headerTenantId ?? '').trim();
-    if (h.length > 0) {
-      return h;
-    }
-    const u = (userTenantId ?? '').trim();
-    if (u.length > 0) {
-      return u;
-    }
-    const c = (tenantCode ?? '').trim();
-    if (c.length > 0 && recentTenants.length > 0) {
-      const hit = recentTenants.find((t) => t.code === c);
-      const fromRecent = hit?.id?.trim();
-      if (fromRecent && fromRecent.length > 0) {
-        return fromRecent;
-      }
-    }
-    return '';
-  }, [headerTenantId, userTenantId, tenantCode, recentTenants]);
+  const tenantHasHydrated = useTenantStore((s) => s._hasHydrated);
+  const tenantId = useMemo(
+    () =>
+      resolveTenantIdFromSources({
+        headerTenantId,
+        userTenantId,
+        tenantCode,
+        recentTenants,
+      }),
+    [headerTenantId, userTenantId, tenantCode, recentTenants],
+  );
   const consultantId = useAuthStore((s) => s.user?.id);
-  const enabled = Boolean(accessToken && tenantId && role === 'consultant' && consultantId);
+  const enabled = Boolean(
+    !authIsLoading &&
+    tenantHasHydrated &&
+    accessToken &&
+    tenantId &&
+    role === 'consultant' &&
+    consultantId,
+  );
 
-  return useQuery({
+  const prevEnabledRef = useRef(false);
+  useEffect(() => {
+    if (enabled && !prevEnabledRef.current) {
+      void queryClient.invalidateQueries({ queryKey: MIND_WEATHER_QUERY_KEYS.inbox() });
+    }
+    prevEnabledRef.current = enabled;
+  }, [enabled, queryClient]);
+
+  const query = useQuery({
     queryKey: [...MIND_WEATHER_QUERY_KEYS.inbox(), tenantId, String(consultantId ?? '')] as const,
     queryFn: () => fetchConsultantMindWeatherInbox(),
     enabled,
@@ -140,6 +150,12 @@ export function useConsultantMindWeatherInbox() {
     /** 토큰 주입 직후·탭 재진입 시 서버 목록 재확인 (Android SecureStore 지연 레이스 완화) */
     refetchOnMount: 'always',
   });
+
+  return {
+    ...query,
+    isQueryReady: enabled,
+    resolvedTenantId: tenantId,
+  };
 }
 
 export { MIND_WEATHER_QUERY_KEYS };

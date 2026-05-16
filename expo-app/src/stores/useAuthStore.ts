@@ -105,9 +105,15 @@ export const useAuthStore = create<AuthState>()(
         const accessToken = await SecureStore.getItemAsync(SECURE_KEY_ACCESS_TOKEN);
         const refreshToken = await SecureStore.getItemAsync(SECURE_KEY_REFRESH_TOKEN);
         if (accessToken && refreshToken) {
-          set({ accessToken, refreshToken, isAuthenticated: true });
+          set({ accessToken, refreshToken, isAuthenticated: true, isLoading: false });
+          return;
         }
-        set({ isLoading: false });
+        set({
+          accessToken: null,
+          refreshToken: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
       },
 
       setLoading: (loading) => {

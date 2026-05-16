@@ -36,6 +36,8 @@ interface TenantState {
   tenantId: string | null;
   tenantName: string | null;
   recentTenants: RecentTenant[];
+  /** MMKV persist rehydrate 완료 여부 — Query `enabled` 레이스 방지 */
+  _hasHydrated: boolean;
   setTenant: (code: string, id: string, name: string) => void;
   clearTenant: () => void;
   addRecentTenant: (code: string, id: string, name: string) => void;
@@ -50,6 +52,7 @@ export const useTenantStore = create<TenantState>()(
       tenantId: null,
       tenantName: null,
       recentTenants: [],
+      _hasHydrated: false,
 
       setTenant: (code, id, name) => {
         set({ tenantCode: code, tenantId: id, tenantName: name });
@@ -74,17 +77,17 @@ export const useTenantStore = create<TenantState>()(
       name: 'tenant-storage',
       storage: zustandMMKVStorage,
       onRehydrateStorage: () => (state, error) => {
-        if (error != null || state == null) {
-          return;
+        if (error == null && state != null) {
+          const recovered = pickTenantIdFromRecent(state.tenantCode, state.recentTenants ?? []);
+          if (recovered != null && !(state.tenantId ?? '').trim()) {
+            const hit = state.recentTenants?.find((t) => t.code === state.tenantCode);
+            useTenantStore.setState({
+              tenantId: recovered,
+              tenantName: state.tenantName ?? hit?.name ?? null,
+            });
+          }
         }
-        const recovered = pickTenantIdFromRecent(state.tenantCode, state.recentTenants ?? []);
-        if (recovered != null && !(state.tenantId ?? '').trim()) {
-          const hit = state.recentTenants?.find((t) => t.code === state.tenantCode);
-          useTenantStore.setState({
-            tenantId: recovered,
-            tenantName: state.tenantName ?? hit?.name ?? null,
-          });
-        }
+        useTenantStore.setState({ _hasHydrated: true });
       },
     },
   ),

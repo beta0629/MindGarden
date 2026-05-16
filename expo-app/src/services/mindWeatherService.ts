@@ -120,7 +120,7 @@ function getAllCardsLocal(): MindWeatherCard[] {
     if (!Array.isArray(parsed)) {
       return [];
     }
-    return (parsed as MindWeatherCard[]).map((c) => withNormalizedMindWeatherCardId(c));
+    return parsed.map(normalizeCard).filter((c): c is MindWeatherCard => c != null);
   } catch {
     return [];
   }
@@ -138,7 +138,7 @@ function getInboxLocal(): MindWeatherCard[] {
     if (!Array.isArray(parsed)) {
       return [];
     }
-    return (parsed as MindWeatherCard[]).map((c) => withNormalizedMindWeatherCardId(c));
+    return parsed.map(normalizeCard).filter((c): c is MindWeatherCard => c != null);
   } catch {
     return [];
   }
@@ -714,6 +714,34 @@ export async function unshareMindWeatherCard(cardId: string | number): Promise<M
   return updated;
 }
 
+export class MindWeatherInboxFetchError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'MindWeatherInboxFetchError';
+    this.status = status;
+  }
+}
+
+function shouldRethrowConsultantInboxFetchError(err: unknown): boolean {
+  if (err == null || typeof err !== 'object') {
+    return false;
+  }
+  const status = (err as { status?: number }).status ?? 0;
+  return status === 0 || status === 401 || status === 403;
+}
+
+function throwConsultantInboxFetchError(err: unknown): never {
+  const rec = err as { status?: number; message?: string };
+  const status = rec.status ?? 0;
+  const message = toDisplayString(rec.message, CONSULTANT_MIND_WEATHER_INBOX_FETCH_FAILED);
+  if (__DEV__) {
+    console.warn(`[mindWeather] consultant inbox fetch failed: ${status} ${message}`);
+  }
+  throw new MindWeatherInboxFetchError(message, status);
+}
+
 export async function fetchConsultantMindWeatherInbox(): Promise<MindWeatherListPayload> {
   const buildInboxCachePayload = (): MindWeatherListPayload => {
     const inboxLocals = getInboxLocal();
@@ -729,7 +757,10 @@ export async function fetchConsultantMindWeatherInbox(): Promise<MindWeatherList
   let raw: unknown;
   try {
     raw = await apiGet<unknown>(MIND_WEATHER_API.CONSULTANT_INBOX);
-  } catch {
+  } catch (err) {
+    if (shouldRethrowConsultantInboxFetchError(err)) {
+      throwConsultantInboxFetchError(err);
+    }
     return buildInboxCachePayload();
   }
 

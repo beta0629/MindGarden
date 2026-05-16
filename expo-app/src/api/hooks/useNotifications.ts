@@ -19,6 +19,7 @@ import { apiGet, apiPost, apiPut } from '../client';
 import { NOTIFICATION_API, PUSH_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
 import { useTenantStore } from '../../stores/useTenantStore';
+import { maskEncryptedDisplay } from '../../utils/displayString';
 import { toDisplayString, toSafeNumber, stripHtmlToPlainText } from '../../utils/safeDisplay';
 
 export type NotificationType = 'SCHEDULE' | 'PAYMENT' | 'MESSAGE' | 'WELLNESS' | 'SYSTEM';
@@ -103,11 +104,13 @@ function pickDeepLink(row: Record<string, unknown>): string | undefined {
 
 function mapRowToAppNotification(row: Record<string, unknown>): AppNotification {
   const deep = pickDeepLink(row);
+  const rawTitle = toDisplayString(row.title, '알림');
+  const rawContent = toDisplayString(row.content, '');
   return {
     id: toSafeNumber(row.id, 0),
     type: mapNotificationType(row.notificationType),
-    title: stripHtmlToPlainText(toDisplayString(row.title, '알림')),
-    content: stripHtmlToPlainText(toDisplayString(row.content, '')),
+    title: stripHtmlToPlainText(maskEncryptedDisplay(rawTitle, '알림')),
+    content: stripHtmlToPlainText(maskEncryptedDisplay(rawContent, '')),
     isRead: Boolean(row.isRead),
     createdAt: toDisplayString(row.createdAt ?? row.publishedAt, ''),
     deepLink: deep && deep.length > 0 ? deep : undefined,

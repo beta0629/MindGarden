@@ -229,12 +229,10 @@ function ConversationPreviewSheet({
   bodyMaxHeight,
 }: ConversationPreviewSheetProps) {
   const theme = useTheme();
-  const role = useAuthStore((s) => s.user?.role);
   const { mutate: markUnreadBatch } = useMarkMessagesAsReadBatch();
   const unreadIdsSerialized = JSON.stringify(conversation.unreadMessageIds ?? []);
 
   useEffect(() => {
-    if (role !== 'consultant') return;
     if (unreadIdsSerialized === '[]') return;
     let ids: number[] = [];
     try {
@@ -244,7 +242,7 @@ function ConversationPreviewSheet({
     }
     if (!Array.isArray(ids) || ids.length === 0) return;
     markUnreadBatch(ids);
-  }, [role, conversation.partnerId, unreadIdsSerialized, markUnreadBatch]);
+  }, [conversation.partnerId, unreadIdsSerialized, markUnreadBatch]);
 
   const partnerLabel = toDisplayString(conversation.partnerName, '대화');
   const preview = toDisplayString(conversation.lastMessage, '');

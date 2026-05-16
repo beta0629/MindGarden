@@ -29,7 +29,6 @@ import {
   useMarkMessageAsRead,
   type Message,
 } from '@/api/hooks/useMessages';
-import { useAuthStore } from '@/stores/useAuthStore';
 import { formatMessageTime, formatDateSeparator, isSameDay } from '@/utils/dateFormat';
 import { toDisplayString } from '@/utils/safeDisplay';
 
@@ -42,7 +41,6 @@ const QUICK_REPLIES = ['네, 알겠습니다', '확인했습니다', '감사합�
 export function ChatScreen({ partnerId }: ChatScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const role = useAuthStore((s) => s.user?.role);
   const [inputText, setInputText] = useState('');
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const inputRef = useRef<TextInput>(null);
@@ -66,9 +64,9 @@ export function ChatScreen({ partnerId }: ChatScreenProps) {
     [data?.pages],
   );
 
-  /** Spring `ConsultationMessageController` 의 읽음 API는 MESSAGE_MANAGE 권한 전제 — 내담자는 403 방지를 위해 생략 */
+  /** 수신 메시지 읽음 — 백엔드에서 수신자 본인이면 MESSAGE_MANAGE 없이 허용 */
   useEffect(() => {
-    if (!messages.length || role !== 'consultant') {
+    if (!messages.length) {
       return;
     }
     messages.forEach((m) => {
@@ -77,7 +75,7 @@ export function ChatScreen({ partnerId }: ChatScreenProps) {
         markReadMutate(m.id);
       }
     });
-  }, [messages, markReadMutate, role]);
+  }, [messages, markReadMutate]);
 
   useEffect(() => {
     if (isLoading || messages.length === 0) {

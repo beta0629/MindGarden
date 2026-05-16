@@ -469,8 +469,11 @@ export function useMarkMessageAsRead() {
       try {
         const raw = await apiGet<unknown>(MESSAGE_API.markAsRead(messageId));
         unwrapApiResponse<unknown>(raw);
-      } catch {
-        /* 백엔드 권한 제한 시 무시 */
+      } catch (e) {
+        if (__DEV__) {
+          // eslint-disable-next-line no-console -- 읽음 API 실패 추적
+          console.warn('[mark-message-read]', messageId, e);
+        }
       }
     },
     onSuccess: () => {
@@ -491,8 +494,11 @@ export function useMarkMessagesAsReadBatch() {
           try {
             const raw = await apiGet<unknown>(MESSAGE_API.markAsRead(id));
             unwrapApiResponse<unknown>(raw);
-          } catch {
-            /* 권한·네트워크 실패 시 개별 무시 */
+          } catch (e) {
+            if (__DEV__) {
+              // eslint-disable-next-line no-console -- 읽음 배치 실패 추적
+              console.warn('[mark-messages-read-batch]', id, e);
+            }
           }
         }),
       );

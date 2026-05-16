@@ -3,6 +3,7 @@ package com.coresolution.consultation.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultationMessage;
@@ -45,6 +46,20 @@ public class ConsultationMessageController extends BaseApiController {
     private final ConsultationMessageService consultationMessageService;
     private final UserRepository userRepository;
     private final com.coresolution.consultation.service.DynamicPermissionService dynamicPermissionService;
+
+    /**
+     * 읽음 처리: 메시지 수신자 본인이면 MESSAGE_MANAGE 없이 허용 (내담자·상담사 공통).
+     *
+     * @param user    현재 사용자
+     * @param message 대상 메시지
+     * @return 수신자 본인이면 true
+     */
+    private static boolean isMessageReceiver(User user, ConsultationMessage message) {
+        if (user == null || message == null) {
+            return false;
+        }
+        return user.getId() != null && Objects.equals(message.getReceiverId(), user.getId());
+    }
 
     /**
      * 권한 체크: 관리자 권한 확인
@@ -339,12 +354,7 @@ public class ConsultationMessageController extends BaseApiController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.error("로그인이 필요합니다."));
         }
-        boolean hasPermission = dynamicPermissionService.hasPermission(currentUser, "MESSAGE_MANAGE");
-        if (!hasPermission) {
-            log.warn("⚠️ 권한 없음 - 사용자 ID: {}, 권한: MESSAGE_MANAGE", currentUser.getId());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error("메시지 관리 권한이 필요합니다."));
-        }
+        boolean hasManage = dynamicPermissionService.hasPermission(currentUser, "MESSAGE_MANAGE");
         String tenantId = currentUser.getTenantId();
         if (tenantId == null || tenantId.trim().isEmpty()) {
             log.warn("⚠️ 테넌트 정보 없음 - 사용자 ID: {}", currentUser.getId());
@@ -358,9 +368,16 @@ public class ConsultationMessageController extends BaseApiController {
             ConsultationMessage message = consultationMessageService.findActiveById(messageId)
                 .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다."));
 
+            if (!hasManage && !isMessageReceiver(currentUser, message)
+                    && !Objects.equals(message.getSenderId(), currentUser.getId())) {
+                log.warn("⚠️ 메시지 상세 조회 거부 - userId={}, messageId={}", currentUser.getId(), messageId);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("메시지를 조회할 권한이 없습니다."));
+            }
+
             log.info("📨 메시지 조회 성공 - ID: {}, 읽음 상태: {}", messageId, message.getIsRead());
 
-            if (!message.getIsRead()) {
+            if (!message.getIsRead() && (hasManage || isMessageReceiver(currentUser, message))) {
                 try {
                     log.info("🔄 읽음 처리 시작 - 메시지 ID: {}", messageId);
                     consultationMessageService.markAsRead(messageId);
@@ -427,11 +444,6 @@ public class ConsultationMessageController extends BaseApiController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.error("로그인이 필요합니다."));
         }
-        boolean hasPermission = dynamicPermissionService.hasPermission(currentUser, "MESSAGE_MANAGE");
-        if (!hasPermission) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error("메시지 관리 권한이 필요합니다."));
-        }
         String tenantId = currentUser.getTenantId();
         if (tenantId == null || tenantId.trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -441,6 +453,16 @@ public class ConsultationMessageController extends BaseApiController {
 
         try {
             TenantContextHolder.setTenantId(tenantId);
+            ConsultationMessage existing = consultationMessageService.findActiveById(messageId)
+                .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다."));
+            boolean hasManage = dynamicPermissionService.hasPermission(currentUser, "MESSAGE_MANAGE");
+            boolean isReceiver = isMessageReceiver(currentUser, existing);
+            if (!hasManage && !isReceiver) {
+                log.warn("⚠️ 읽음 처리 거부 - userId={}, messageId={}, receiverId={}, MESSAGE_MANAGE=false",
+                    currentUser.getId(), messageId, existing.getReceiverId());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("이 메시지를 읽음 처리할 권한이 없습니다."));
+            }
             ConsultationMessage message = consultationMessageService.markAsRead(messageId);
             Map<String, Object> messageData = new HashMap<>();
             messageData.put("id", message.getId());
@@ -573,6 +595,10 @@ public class ConsultationMessageController extends BaseApiController {
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("로그인이 필요합니다."));
+        }
+        if (!Objects.equals(currentUser.getId(), userId)) {
+            log.warn("⚠️ 미읽음 수 조회 userId 불일치 - sessionUserId={}, paramUserId={}", currentUser.getId(), userId);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("본인의 미읽음 수만 조회할 수 있습니다."));
         }
         String tenantId = currentUser.getTenantId();
         if (tenantId == null || tenantId.isEmpty()) {

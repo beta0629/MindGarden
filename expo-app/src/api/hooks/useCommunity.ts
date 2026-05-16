@@ -4,8 +4,8 @@
  * **§11.1 게이트(API 행) 정합 — 커뮤니티**
  * - Phase 3에서는 `GET /api/v1/community`가 없거나 실패해도 동작하도록 **샘플 + 로컬(MMKV) 폴백**이 허용 범위다.
  * - 성공 시: 응답을 정규화한 뒤 `useCommunityStore`와 병합(원격 우선, 로컬 전용 글은 뒤에 유지).
- * - API 미사용·빈 목록·에러·파싱 실패: 화면은 `useCommunityStore`의 게시물을 쓴다(시드·이전 상태는 `communityData`의 샘플 + MMKV persist).
- * - `useCommunityFeed().dataSource`: `'api'` = 원격 피드가 유효, `'demo-mmkv'` = 위 폴백 경로(기획서 표현과 동일하게 라벨만 부여; 실제 저장은 스토어 persist).
+ * - API 미사용·에러·파싱 실패: 화면은 `useCommunityStore`의 게시물을 쓴다(시드·이전 상태는 `communityData`의 샘플 + MMKV persist). 원격이 빈 배열이어도 HTTP·파싱 성공이면 `dataSource`는 `api`다.
+ * - `useCommunityFeed().dataSource`: `'api'` = `GET /api/v1/community`가 **HTTP 성공·본문 파싱 성공**(빈 목록 포함), `'demo-mmkv'` = 미결/실패/쿼리 비활성 등 폴백.
  *
  * SSOT: `docs/project-management/EXPO_NATIVE_APP_PLAN.md` §11.1, Phase 3-C, §13(커뮤니티 API 목표)
  *
@@ -22,9 +22,9 @@ import { fetchRemoteCommunityFeed } from '@/services/communityApi';
 
 /** 원격 피드 권위 여부(§11.1 API 행 — 샘플/MMKV 폴백 구분용). */
 export type CommunityDataSource =
-  /** `GET /api/v1/community` 정상·비어 있지 않음 */
+  /** `GET /api/v1/community` HTTP 성공 + 본문 파싱 성공(빈 배열 포함) */
   | 'api'
-  /** API 미결/실패/빈 응답 또는 스토어 시드·MMKV 기반 데모 상태 */
+  /** API 미결·HTTP 실패·파싱 실패·쿼리 비활성 — 스토어 시드·MMKV 기반 */
   | 'demo-mmkv';
 
 const COMMUNITY_QUERY_KEYS = {
@@ -83,11 +83,22 @@ export function useCommunityFeed(options?: UseCommunityFeedOptions) {
     useCommunityStore.setState({ posts: next });
   }, [query.isSuccess, query.data, query.dataUpdatedAt]);
 
+  useEffect(() => {
+    if (!__DEV__ || !query.isError) {
+      return;
+    }
+    const err = query.error;
+    const message = err instanceof Error ? err.message : String(err);
+    const tabLabel = feedTab ?? 'all';
+    // eslint-disable-next-line no-console -- 개발용 커뮤니티 API 실패 추적
+    console.warn(`[community-feed] tab=${tabLabel} tenant=${tenantId} message=${message}`);
+  }, [query.isError, query.error, feedTab, tenantId]);
+
   const posts = useCommunityStore((s) => s.posts);
 
-  const remoteLen = query.isSuccess ? (query.data?.length ?? 0) : 0;
+  /** HTTP 200 + 파싱 성공이면 원격 연동으로 간주(빈 피드 포함). */
   const dataSource: CommunityDataSource =
-    query.isSuccess && !query.isError && remoteLen > 0 ? 'api' : 'demo-mmkv';
+    query.isSuccess && !query.isError ? 'api' : 'demo-mmkv';
 
   return {
     posts,

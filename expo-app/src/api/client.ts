@@ -16,6 +16,7 @@ import axios, { create } from 'axios';
 import { getApiBaseUrl } from '@/config/apiBaseUrl';
 import { useAuthStore } from '../stores/useAuthStore';
 import { resolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
+import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 import { AUTH_API } from './endpoints';
 
 const API_TIMEOUT = 30000;
@@ -94,15 +95,15 @@ const processQueue = (error: unknown, token: string | null = null) => {
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const tenantId = resolveTenantIdForApi();
     const { accessToken } = useAuthStore.getState();
-
-    if (tenantId) {
-      config.headers.set('X-Tenant-Id', tenantId);
+    if (accessToken) {
+      syncTenantFromAccessToken(accessToken);
+      config.headers.set('Authorization', `Bearer ${accessToken}`);
     }
 
-    if (accessToken) {
-      config.headers.set('Authorization', `Bearer ${accessToken}`);
+    const tenantId = resolveTenantIdForApi();
+    if (tenantId) {
+      config.headers.set('X-Tenant-Id', tenantId);
     }
 
     return config;

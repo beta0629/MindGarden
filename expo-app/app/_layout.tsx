@@ -80,6 +80,12 @@ export default function RootLayout() {
     };
   }, []);
 
+  /** dev client 직접 진입 등 `index`를 거치지 않아도 SecureStore 토큰 복구 */
+  useEffect(() => {
+    if (!loaded) return;
+    void useAuthStore.getState().restoreTokens();
+  }, [loaded]);
+
   useEffect(() => {
     if (!isAuthenticated) return;
 

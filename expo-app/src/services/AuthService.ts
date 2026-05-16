@@ -22,6 +22,7 @@ import { useTenantStore } from '../stores/useTenantStore';
 import { isExpoGoApp } from '@/lib/getMmkv';
 import { getApiBaseUrl } from '../config/apiBaseUrl';
 import { normalizeKoreanMobileDigits } from '../utils/phoneNormalize';
+import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 
 export type SocialAuthProvider = 'KAKAO' | 'NAVER';
 
@@ -68,6 +69,7 @@ interface SocialLoginApiUser {
   nickname: string;
   role: string;
   profileImageUrl?: string;
+  tenantId?: string;
 }
 
 interface SocialLoginResponse {
@@ -267,7 +269,10 @@ function mapApiUserToStoreUser(raw: SocialLoginApiUser): User {
     nickname: raw.nickname,
     role,
     profileImageUrl: raw.profileImageUrl,
-    tenantId: useTenantStore.getState().tenantId ?? undefined,
+    tenantId:
+      (typeof raw.tenantId === 'string' && raw.tenantId.trim()) ||
+      useTenantStore.getState().tenantId ||
+      undefined,
   };
 }
 
@@ -436,7 +441,9 @@ function mapNativeSocialResponse(
 }
 
 async function applyAuthenticatedUser(user: User, tokens: Tokens): Promise<void> {
+  syncTenantFromAccessToken(tokens.accessToken);
   await useAuthStore.getState().login(user, tokens);
+  syncTenantFromAccessToken(tokens.accessToken);
 }
 
 function readSignupErrorMessage(err: unknown): string {

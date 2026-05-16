@@ -6,6 +6,7 @@
  */
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
+import { extractTenantIdFromAccessToken } from '@/utils/jwtPayload';
 
 export interface ResolveTenantIdSources {
   readonly headerTenantId?: string | null;
@@ -19,13 +20,14 @@ export interface ResolveTenantIdSources {
  * 없으면 빈 문자열.
  */
 export function resolveTenantIdFromSources(sources: ResolveTenantIdSources): string {
-  const h = (sources.headerTenantId ?? '').trim();
-  if (h.length > 0) {
-    return h;
-  }
+  /** JWT·프로필 테넌트가 SSOT — MMKV 헤더가 예전 기관이면 Android 수신함 등이 빈 배열로 보인다 */
   const u = (sources.userTenantId ?? '').trim();
   if (u.length > 0) {
     return u;
+  }
+  const h = (sources.headerTenantId ?? '').trim();
+  if (h.length > 0) {
+    return h;
   }
   const c = (sources.tenantCode ?? '').trim();
   if (c.length > 0 && sources.recentTenants.length > 0) {
@@ -41,7 +43,10 @@ export function resolveTenantIdFromSources(sources: ResolveTenantIdSources): str
 /** Zustand getState() 기준 — axios 인터셉터 등 비리액티브 호출용 */
 export function resolveTenantIdForApi(): string {
   const { tenantId: headerTenantId, tenantCode, recentTenants } = useTenantStore.getState();
-  const userTenantId = useAuthStore.getState().user?.tenantId;
+  const { user, accessToken } = useAuthStore.getState();
+  const fromUser = user?.tenantId?.trim() ?? '';
+  const userTenantId =
+    fromUser.length > 0 ? fromUser : extractTenantIdFromAccessToken(accessToken);
   return resolveTenantIdFromSources({
     headerTenantId,
     userTenantId,

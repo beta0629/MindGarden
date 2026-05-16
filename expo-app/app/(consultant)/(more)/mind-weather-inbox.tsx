@@ -10,8 +10,9 @@
  * @author MindGarden
  * @since 2026-05-13
  */
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AlertCircle, CloudSun, Inbox } from 'lucide-react-native';
@@ -30,6 +31,8 @@ import {
 } from '@/constants/wellnessComplianceCopy';
 import {
   CONSULTANT_MIND_WEATHER_INBOX_FETCH_FAILED,
+  CONSULTANT_MIND_WEATHER_INBOX_SETUP_NO_TENANT,
+  CONSULTANT_MIND_WEATHER_INBOX_SETUP_NO_TOKEN,
   MIND_WEATHER_SOURCE_LABELS,
 } from '@/constants/mindWeatherKeywords';
 import { toDisplayString } from '@/utils/toDisplayString';
@@ -40,20 +43,43 @@ import {
   MIND_WEATHER_GENERIC_CLIENT_LABEL,
 } from '@/utils/mindWeatherClientLabel';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 import type { MindWeatherCard } from '@/services/mindWeatherService';
 
 export default function ConsultantMindWeatherInbox() {
   const theme = useTheme();
   const inboxQuery = useConsultantMindWeatherInbox();
-  const authIsLoading = useAuthStore((s) => s.isLoading);
   const items = inboxQuery.data?.items ?? [];
-  const isQueryReady = inboxQuery.isQueryReady;
+  const blockReason = inboxQuery.blockReason;
   const showLoadingSkeleton =
-    !isQueryReady ||
-    authIsLoading ||
-    inboxQuery.isLoading ||
-    (inboxQuery.fetchStatus === 'idle' && !inboxQuery.isFetched);
-  const showEmptyInbox = inboxQuery.isFetched && !inboxQuery.isError && items.length === 0;
+    blockReason === 'auth_loading' ||
+    blockReason === 'tenant_hydrating' ||
+    (inboxQuery.isQueryReady &&
+      (inboxQuery.isPending || inboxQuery.isFetching || !inboxQuery.isFetched));
+  const setupErrorMessage =
+    blockReason === 'no_token'
+      ? CONSULTANT_MIND_WEATHER_INBOX_SETUP_NO_TOKEN
+      : blockReason === 'no_tenant'
+        ? CONSULTANT_MIND_WEATHER_INBOX_SETUP_NO_TENANT
+        : null;
+  const showSetupError = setupErrorMessage != null;
+  const showEmptyInbox =
+    inboxQuery.isQueryReady &&
+    inboxQuery.isFetched &&
+    !inboxQuery.isError &&
+    items.length === 0;
+  const inboxDataSource = inboxQuery.data?.source;
+
+  useFocusEffect(
+    useCallback(() => {
+      const token = useAuthStore.getState().accessToken;
+      syncTenantFromAccessToken(token);
+      if (inboxQuery.isQueryReady) {
+        void inboxQuery.refetch();
+      }
+    }, [inboxQuery.isQueryReady, inboxQuery.refetch]),
+  );
+
   const authUser = useAuthStore((s) => s.user);
   const consultantIdStr = authUser?.id != null ? String(authUser.id) : '';
   const clientsQuery = useConsultantClients({
@@ -156,6 +182,19 @@ export default function ConsultantMindWeatherInbox() {
               <SkeletonCard key={i} lines={3} />
             ))}
           </View>
+        ) : showSetupError ? (
+          <EmptyState
+            icon={<AlertCircle size={32} color={theme.colors.textTertiary} />}
+            title="수신함을 준비하지 못했어요"
+            description={setupErrorMessage}
+            actionLabel="다시 시도"
+            onAction={() => {
+              const token = useAuthStore.getState().accessToken;
+              syncTenantFromAccessToken(token);
+              void useAuthStore.getState().restoreTokens();
+              void inboxQuery.refetch();
+            }}
+          />
         ) : inboxQuery.isError ? (
           <EmptyState
             icon={<AlertCircle size={32} color={theme.colors.textTertiary} />}
@@ -171,7 +210,11 @@ export default function ConsultantMindWeatherInbox() {
           <EmptyState
             icon={<Inbox size={32} color={theme.colors.textTertiary} />}
             title="아직 공유받은 카드가 없어요"
-            description="내담자가 공유 동의를 켜면 이 화면에 카드가 도착해요."
+            description={
+              inboxDataSource === 'api'
+                ? '서버에 공유된 카드가 없거나, 다른 기관·계정으로 조회 중일 수 있어요. 당겨서 새로고침하거나 다시 로그인해 보세요.'
+                : '내담자가 공유 동의를 켜면 이 화면에 카드가 도착해요.'
+            }
           />
         ) : (
           items.map((card, index) => {

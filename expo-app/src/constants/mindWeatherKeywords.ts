@@ -138,3 +138,9 @@ export const MIND_WEATHER_STORAGE_KEY = 'mg_mind_weather';
 
 /** 상담사 수신함 API가 `success: false`일 때 기본 메시지 */
 export const CONSULTANT_MIND_WEATHER_INBOX_FETCH_FAILED = '마음 날씨 수신함을 불러오지 못했습니다.';
+
+export const CONSULTANT_MIND_WEATHER_INBOX_SETUP_NO_TOKEN =
+  '로그인 정보를 불러오지 못했어요. 앱을 다시 시작하거나 다시 로그인해 주세요.';
+
+export const CONSULTANT_MIND_WEATHER_INBOX_SETUP_NO_TENANT =
+  '기관(테넌트) 정보가 없어요. 더보기에서 기관을 다시 선택한 뒤 시도해 주세요.';

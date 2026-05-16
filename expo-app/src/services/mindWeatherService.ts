@@ -33,6 +33,7 @@ import {
   MIND_WEATHER_GENERIC_CLIENT_LABEL,
 } from '@/utils/mindWeatherClientLabel';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 
 const mmkv = getMmkv(MIND_WEATHER_STORAGE_KEY);
 
@@ -724,14 +725,6 @@ export class MindWeatherInboxFetchError extends Error {
   }
 }
 
-function shouldRethrowConsultantInboxFetchError(err: unknown): boolean {
-  if (err == null || typeof err !== 'object') {
-    return false;
-  }
-  const status = (err as { status?: number }).status ?? 0;
-  return status === 0 || status === 401 || status === 403;
-}
-
 function throwConsultantInboxFetchError(err: unknown): never {
   const rec = err as { status?: number; message?: string };
   const status = rec.status ?? 0;
@@ -743,25 +736,13 @@ function throwConsultantInboxFetchError(err: unknown): never {
 }
 
 export async function fetchConsultantMindWeatherInbox(): Promise<MindWeatherListPayload> {
-  const buildInboxCachePayload = (): MindWeatherListPayload => {
-    const inboxLocals = getInboxLocal();
-    const cardsLocals = getAllCardsLocal();
-    return {
-      items: inboxLocals.map((c) =>
-        enrichConsultantInboxCardFromLocalStores(c, inboxLocals, cardsLocals),
-      ),
-      source: 'cache',
-    };
-  };
+  syncTenantFromAccessToken(useAuthStore.getState().accessToken);
 
   let raw: unknown;
   try {
     raw = await apiGet<unknown>(MIND_WEATHER_API.CONSULTANT_INBOX);
   } catch (err) {
-    if (shouldRethrowConsultantInboxFetchError(err)) {
-      throwConsultantInboxFetchError(err);
-    }
-    return buildInboxCachePayload();
+    throwConsultantInboxFetchError(err);
   }
 
   if (raw != null && typeof raw === 'object') {
@@ -781,7 +762,13 @@ export async function fetchConsultantMindWeatherInbox(): Promise<MindWeatherList
     return { items: mergeConsultantInboxWithLocal(items), source: 'api' };
   }
 
-  return buildInboxCachePayload();
+  if (__DEV__) {
+    console.warn('[mindWeather] consultant inbox: unrecognized response shape', raw);
+  }
+  throw new MindWeatherInboxFetchError(
+    CONSULTANT_MIND_WEATHER_INBOX_FETCH_FAILED,
+    0,
+  );
 }
 
 /**

@@ -12,7 +12,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
-import { resolveTenantIdFromSources } from '@/utils/resolveTenantIdForApi';
+import { extractTenantIdFromAccessToken } from '@/utils/jwtPayload';
+import { resolveTenantIdForApi, resolveTenantIdFromSources } from '@/utils/resolveTenantIdForApi';
+import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 import {
   analyzeMindWeather,
   fetchConsultantMindWeatherInbox,
@@ -104,37 +106,91 @@ export function useUnshareMindWeatherCard() {
   });
 }
 
+export type ConsultantMindWeatherInboxBlockReason =
+  | 'auth_loading'
+  | 'tenant_hydrating'
+  | 'no_token'
+  | 'no_tenant'
+  | 'not_consultant'
+  | null;
+
 export function useConsultantMindWeatherInbox() {
   const queryClient = useQueryClient();
   const accessToken = useAuthStore((s) => s.accessToken);
   const authIsLoading = useAuthStore((s) => s.isLoading);
   const role = useAuthStore((s) => s.role);
   const userTenantId = useAuthStore((s) => s.user?.tenantId);
+  const accessTokenForTenant = useAuthStore((s) => s.accessToken);
   const headerTenantId = useTenantStore((s) => s.tenantId);
   const tenantCode = useTenantStore((s) => s.tenantCode);
   const recentTenants = useTenantStore((s) => s.recentTenants);
   const tenantHasHydrated = useTenantStore((s) => s._hasHydrated);
-  const tenantId = useMemo(
-    () =>
-      resolveTenantIdFromSources({
-        headerTenantId,
-        userTenantId,
-        tenantCode,
-        recentTenants,
-      }),
-    [headerTenantId, userTenantId, tenantCode, recentTenants],
-  );
+  const tenantId = useMemo(() => {
+    const fromUser = (userTenantId ?? '').trim();
+    const fromJwt =
+      fromUser.length > 0 ? fromUser : extractTenantIdFromAccessToken(accessTokenForTenant);
+    return resolveTenantIdFromSources({
+      headerTenantId,
+      userTenantId: fromJwt,
+      tenantCode,
+      recentTenants,
+    });
+  }, [headerTenantId, userTenantId, accessTokenForTenant, tenantCode, recentTenants]);
   const consultantId = useAuthStore((s) => s.user?.id);
-  const enabled = Boolean(
-    !authIsLoading &&
-    tenantHasHydrated &&
-    accessToken &&
-    tenantId &&
-    role === 'consultant' &&
+
+  useEffect(() => {
+    if (tenantHasHydrated) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (!useTenantStore.getState()._hasHydrated) {
+        useTenantStore.setState({ _hasHydrated: true });
+      }
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [tenantHasHydrated]);
+
+  const blockReason: ConsultantMindWeatherInboxBlockReason = useMemo(() => {
+    if (authIsLoading) {
+      return 'auth_loading';
+    }
+    if (!tenantHasHydrated) {
+      return 'tenant_hydrating';
+    }
+    if (!accessToken) {
+      return 'no_token';
+    }
+    if (role !== 'consultant' || !consultantId) {
+      return 'not_consultant';
+    }
+    if (!tenantId) {
+      return 'no_tenant';
+    }
+    return null;
+  }, [
+    authIsLoading,
+    tenantHasHydrated,
+    accessToken,
+    role,
     consultantId,
-  );
+    tenantId,
+  ]);
+
+  const enabled = blockReason === null;
 
   const prevEnabledRef = useRef(false);
+  useEffect(() => {
+    if (!accessToken) {
+      return;
+    }
+    const before = resolveTenantIdForApi();
+    syncTenantFromAccessToken(accessToken);
+    const after = resolveTenantIdForApi();
+    if (before !== after) {
+      void queryClient.invalidateQueries({ queryKey: MIND_WEATHER_QUERY_KEYS.inbox() });
+    }
+  }, [accessToken, queryClient]);
+
   useEffect(() => {
     if (enabled && !prevEnabledRef.current) {
       void queryClient.invalidateQueries({ queryKey: MIND_WEATHER_QUERY_KEYS.inbox() });
@@ -153,6 +209,7 @@ export function useConsultantMindWeatherInbox() {
 
   return {
     ...query,
+    blockReason,
     isQueryReady: enabled,
     resolvedTenantId: tenantId,
   };

@@ -402,6 +402,21 @@ public class TenantContextFilter implements Filter {
             log.debug("세션이 없습니다.");
         }
 
+        // 1-3. JSESSIONID 없이 Bearer만 쓰는 모바일 — SecurityContext JWT details의 User tenantId
+        User securityUser = SessionUtils.getCurrentUser(session);
+        if (securityUser != null && securityUser.getTenantId() != null
+                && !securityUser.getTenantId().isEmpty()) {
+            String fromJwtUser = securityUser.getTenantId();
+            if (!"tenant-unknown".equals(fromJwtUser) && !"tenant-default".equals(fromJwtUser)) {
+                if (session != null) {
+                    session.setAttribute(SESSION_TENANT_ID, fromJwtUser);
+                    session.setAttribute(SessionConstants.TENANT_ID, fromJwtUser);
+                }
+                log.info("✅ Tenant ID extracted from SecurityContext user: {}", fromJwtUser);
+                return fromJwtUser;
+            }
+        }
+
         // 2. HTTP 헤더에서 추출 (우선순위 2)
         String tenantId = request.getHeader(TENANT_ID_HEADER);
         log.info("🔍 Tenant ID 추출 시도: 헤더={}, 모든 헤더={}", tenantId, getHeadersAsString(request));

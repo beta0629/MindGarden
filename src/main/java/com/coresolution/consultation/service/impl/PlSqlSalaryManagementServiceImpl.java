@@ -52,6 +52,14 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             "표준 ProcessIntegratedSalaryCalculation 프로시저 배포가 필요할 수 있습니다 "
                     + "(deploy-procedures-production-mysql.yml 또는 deploy_standardized_procedures.sh).";
 
+    private static final String APPROVE_SALARY_ERP_SYNC_SIGNATURE_MISMATCH_HINT =
+            "DB 저장 프로시저 ApproveSalaryWithErpSync의 파라미터 구성이 애플리케이션 기대와 다를 수 있습니다. "
+                    + "표준(5파라미터, p_tenant_id IN 포함) 배포를 확인하세요.";
+
+    private static final String PROCESS_SALARY_PAYMENT_ERP_SYNC_SIGNATURE_MISMATCH_HINT =
+            "DB 저장 프로시저 ProcessSalaryPaymentWithErpSync의 파라미터 구성이 애플리케이션 기대와 다를 수 있습니다. "
+                    + "표준(5파라미터, p_tenant_id IN 포함) 배포를 확인하세요.";
+
     private static final String DEFAULT_PREVIEW_FAILURE_USER_MESSAGE =
             "급여 계산 미리보기에 실패했습니다. DB에서 사유를 반환하지 않았습니다.";
 
@@ -115,13 +123,13 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                         result.putAll(executeProcessIntegratedSalaryCalculationStandard(
                                 consultantId, periodStart, periodEnd, tenantId, triggeredBy));
                     } catch (SQLException ex) {
-                        if (shouldLogProcessIntegratedSalarySignatureMismatch(ex)) {
+                        if (shouldLogJdbcCallableSignatureMismatch(ex)) {
                             log.warn("파라미터 개수 미확인 상태에서 표준(13) 호출 실패, 12OUT·11레거시 순 재시도: {}", ex.getMessage());
                             try {
                                 result.putAll(executeProcessIntegratedSalaryCalculationStandard12Out(
                                         consultantId, periodStart, periodEnd, tenantId, triggeredBy));
                             } catch (SQLException ex12) {
-                                if (shouldLogProcessIntegratedSalarySignatureMismatch(ex12)) {
+                                if (shouldLogJdbcCallableSignatureMismatch(ex12)) {
                                     result.putAll(executeProcessIntegratedSalaryCalculationLegacy11(
                                             consultantId, periodStart, periodEnd, triggeredBy));
                                 } else {
@@ -146,7 +154,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             log.error("❌ PL/SQL 통합 급여 계산 오류", e);
             logProcessIntegratedSalaryParameterDiagnostics(e);
             result.put("success", false);
-            if (shouldLogProcessIntegratedSalarySignatureMismatch(e)) {
+            if (shouldLogJdbcCallableSignatureMismatch(e)) {
                 result.put("message",
                         "급여 계산 중 오류가 발생했습니다. " + PROCESS_INTEGRATED_SALARY_SIGNATURE_MISMATCH_HINT
                                 + " 상세: " + e.getMessage());
@@ -512,18 +520,28 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
     }
 
     private int countProcessIntegratedSalaryCalculationParameters() {
+        return countProcedureParameters("ProcessIntegratedSalaryCalculation");
+    }
+
+    /**
+     * information_schema.PARAMETERS 기준 저장 프로시저 파라미터 개수.
+     *
+     * @param specificName SPECIFIC_NAME (예: ApproveSalaryWithErpSync)
+     * @return 개수, 조회 실패 시 -1
+     */
+    private int countProcedureParameters(String specificName) {
         try {
             String sql = "SELECT COUNT(*) FROM information_schema.PARAMETERS "
-                    + "WHERE SPECIFIC_SCHEMA = DATABASE() AND SPECIFIC_NAME = 'ProcessIntegratedSalaryCalculation'";
-            Integer c = jdbcTemplate.queryForObject(sql, Integer.class);
+                    + "WHERE SPECIFIC_SCHEMA = DATABASE() AND SPECIFIC_NAME = ?";
+            Integer c = jdbcTemplate.queryForObject(sql, Integer.class, specificName);
             return c != null ? c : -1;
         } catch (Exception e) {
-            log.warn("ProcessIntegratedSalaryCalculation 파라미터 개수 조회 실패: {}", e.getMessage());
+            log.warn("{} 파라미터 개수 조회 실패: {}", specificName, e.getMessage());
             return -1;
         }
     }
 
-    private boolean shouldLogProcessIntegratedSalarySignatureMismatch(Throwable cause) {
+    private static boolean shouldLogJdbcCallableSignatureMismatch(Throwable cause) {
         for (Throwable t = cause; t != null; t = t.getCause()) {
             String msg = t.getMessage();
             if (msg == null || msg.isEmpty()) {
@@ -540,7 +558,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
     }
 
     private void logProcessIntegratedSalaryParameterDiagnostics(Throwable cause) {
-        if (!shouldLogProcessIntegratedSalarySignatureMismatch(cause)) {
+        if (!shouldLogJdbcCallableSignatureMismatch(cause)) {
             return;
         }
         try {
@@ -556,81 +574,340 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             log.warn("프로시저 파라미터 진단 조회 실패: error={}", ex.getMessage(), ex);
         }
     }
-    
-    @Override
-    public Map<String, Object> approveSalaryWithErpSync(Long calculationId, String tenantId, String approvedBy) {
-        
-        log.info("✅ PL/SQL 급여 승인 시작: CalculationID={}, tenantId={}, ApprovedBy={}",
-                calculationId, tenantId, approvedBy);
-        
+
+    /**
+     * ApproveSalaryWithErpSync / ProcessSalaryPaymentWithErpSync 에 대해 information_schema 기반 동적 호출 가능 여부.
+     * 5파라미터 표준(p_tenant_id 포함) 또는 4파라미터 레거시(p_tenant_id IN 없음)만 허용한다.
+     *
+     * @param rows           PARAMETERS 조회 결과
+     * @param actorParamName {@code p_approved_by} 또는 {@code p_paid_by}
+     * @return 이름·개수가 알려진 시그니처이면 true
+     */
+    private boolean isCompleteSalaryErpSyncProcedureMetadata(List<ProcedureParameterMeta> rows, String actorParamName) {
+        if (rows == null || rows.isEmpty()) {
+            return false;
+        }
+        int n = rows.size();
+        if (n != 4 && n != 5) {
+            return false;
+        }
+        Set<String> names = rows.stream()
+                .map(r -> normalizeMysqlParameterName(r.name()))
+                .collect(Collectors.toSet());
+        if (names.stream().anyMatch(String::isEmpty)) {
+            return false;
+        }
+        String actor = normalizeMysqlParameterName(actorParamName);
+        if (!names.contains(actor)
+                || !names.contains("p_calculation_id")
+                || !names.contains("p_success")
+                || !names.contains("p_message")) {
+            return false;
+        }
+        if (n == 5) {
+            return names.contains("p_tenant_id");
+        }
+        return !names.contains("p_tenant_id");
+    }
+
+    private void bindSalaryErpSyncInParameter(
+            CallableStatement stmt,
+            ProcedureParameterMeta r,
+            String routineName,
+            Long calculationId,
+            String tenantId,
+            String actor) throws SQLException {
+        String nm = normalizeMysqlParameterName(r.name());
+        int o = r.ordinal();
+        switch (nm) {
+            case "p_calculation_id" -> stmt.setLong(o, calculationId);
+            case "p_tenant_id" -> stmt.setString(o, tenantId);
+            case "p_approved_by", "p_paid_by" -> stmt.setString(o, actor);
+            default -> throw new SQLException(routineName + " 알 수 없는 IN 파라미터: " + r.name());
+        }
+    }
+
+    /**
+     * PARAMETERS 메타데이터에 맞춰 승인·지급 ERP 동기화 프로시저를 호출한다.
+     *
+     * @param routineName    SPECIFIC_NAME
+     * @param rows           ORDINAL 순 메타
+     * @param calculationId  p_calculation_id
+     * @param tenantId       p_tenant_id (레거시 4파라미터면 스키마에 없음)
+     * @param actor          p_approved_by 또는 p_paid_by
+     * @return success, message
+     */
+    private Map<String, Object> executeSalaryErpSyncProcedureWithMetadata(
+            String routineName,
+            List<ProcedureParameterMeta> rows,
+            Long calculationId,
+            String tenantId,
+            String actor) throws SQLException {
         Map<String, Object> result = new HashMap<>();
-        
+        int total = rows.size();
+        StringBuilder call = new StringBuilder("{CALL ").append(routineName).append("(");
+        for (int i = 0; i < total; i++) {
+            if (i > 0) {
+                call.append(", ");
+            }
+            call.append("?");
+        }
+        call.append(")}");
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
-             CallableStatement stmt = connection.prepareCall(
-                 "{CALL ApproveSalaryWithErpSync(?, ?, ?, ?, ?)}")) {
-            
-            // IN 파라미터 설정 (p_calculation_id, p_tenant_id, p_approved_by)
+                CallableStatement stmt = connection.prepareCall(call.toString())) {
+            setConnectionUtf8mb4(connection);
+            for (ProcedureParameterMeta r : rows) {
+                if ("IN".equalsIgnoreCase(r.mode())) {
+                    bindSalaryErpSyncInParameter(stmt, r, routineName, calculationId, tenantId, actor);
+                } else if ("OUT".equalsIgnoreCase(r.mode()) || "INOUT".equalsIgnoreCase(r.mode())) {
+                    stmt.registerOutParameter(r.ordinal(), mapMysqlDataTypeToJdbcTypeForOut(r.dataType()));
+                }
+            }
+            stmt.execute();
+            for (ProcedureParameterMeta r : rows) {
+                if (!"OUT".equalsIgnoreCase(r.mode()) && !"INOUT".equalsIgnoreCase(r.mode())) {
+                    continue;
+                }
+                String nm = normalizeMysqlParameterName(r.name());
+                int o = r.ordinal();
+                if ("p_success".equals(nm)) {
+                    result.put("success", readMysqlProcedureBooleanOut(stmt, o));
+                } else if ("p_message".equals(nm)) {
+                    result.put("message", stmt.getString(o));
+                }
+            }
+        }
+        if (!result.containsKey("success")) {
+            result.put("success", false);
+        }
+        if (!result.containsKey("message")) {
+            result.put("message", null);
+        }
+        return result;
+    }
+
+    private void logSalaryErpSyncProcedureParameterDiagnostics(String routineName, Throwable cause) {
+        if (!shouldLogJdbcCallableSignatureMismatch(cause)) {
+            return;
+        }
+        try {
+            String sql = "SELECT ORDINAL_POSITION, PARAMETER_MODE, PARAMETER_NAME "
+                    + "FROM information_schema.PARAMETERS "
+                    + "WHERE SPECIFIC_SCHEMA = DATABASE() AND SPECIFIC_NAME = ? "
+                    + "ORDER BY ORDINAL_POSITION";
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, routineName);
+            log.error("{} 시그니처 진단: information_schema.PARAMETERS rows={}", routineName, rows);
+        } catch (Exception ex) {
+            log.warn("프로시저 파라미터 진단 조회 실패 routine={}: {}", routineName, ex.getMessage());
+        }
+    }
+
+    private Map<String, Object> executeApproveSalaryWithErpSyncStandard5(
+            Long calculationId, String tenantId, String approvedBy) throws SQLException {
+        Map<String, Object> result = new HashMap<>();
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+                CallableStatement stmt = connection.prepareCall(
+                        "{CALL ApproveSalaryWithErpSync(?, ?, ?, ?, ?)}")) {
+            setConnectionUtf8mb4(connection);
             stmt.setLong(1, calculationId);
             stmt.setString(2, tenantId);
             stmt.setString(3, approvedBy);
-            
-            // OUT 파라미터 등록 (p_success, p_message)
-            stmt.registerOutParameter(4, java.sql.Types.BOOLEAN);
-            stmt.registerOutParameter(5, java.sql.Types.VARCHAR);
-            
-            // 프로시저 실행
+            stmt.registerOutParameter(4, Types.BOOLEAN);
+            stmt.registerOutParameter(5, Types.VARCHAR);
             stmt.execute();
-            
-            // 결과 추출
             result.put("success", readMysqlProcedureBooleanOut(stmt, 4));
             result.put("message", stmt.getString(5));
-            
-            log.info("✅ PL/SQL 급여 승인 완료: Success={}", result.get("success"));
-            
+        }
+        return result;
+    }
+
+    private Map<String, Object> executeApproveSalaryWithErpSyncLegacy4(
+            Long calculationId, String approvedBy) throws SQLException {
+        Map<String, Object> result = new HashMap<>();
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+                CallableStatement stmt = connection.prepareCall(
+                        "{CALL ApproveSalaryWithErpSync(?, ?, ?, ?)}")) {
+            setConnectionUtf8mb4(connection);
+            stmt.setLong(1, calculationId);
+            stmt.setString(2, approvedBy);
+            stmt.registerOutParameter(3, Types.BOOLEAN);
+            stmt.registerOutParameter(4, Types.VARCHAR);
+            stmt.execute();
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 3));
+            result.put("message", stmt.getString(4));
+        }
+        return result;
+    }
+
+    private Map<String, Object> executeProcessSalaryPaymentWithErpSyncStandard5(
+            Long calculationId, String tenantId, String paidBy) throws SQLException {
+        Map<String, Object> result = new HashMap<>();
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+                CallableStatement stmt = connection.prepareCall(
+                        "{CALL ProcessSalaryPaymentWithErpSync(?, ?, ?, ?, ?)}")) {
+            setConnectionUtf8mb4(connection);
+            stmt.setLong(1, calculationId);
+            stmt.setString(2, tenantId);
+            stmt.setString(3, paidBy);
+            stmt.registerOutParameter(4, Types.BOOLEAN);
+            stmt.registerOutParameter(5, Types.VARCHAR);
+            stmt.execute();
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 4));
+            result.put("message", stmt.getString(5));
+        }
+        return result;
+    }
+
+    private Map<String, Object> executeProcessSalaryPaymentWithErpSyncLegacy4(
+            Long calculationId, String paidBy) throws SQLException {
+        Map<String, Object> result = new HashMap<>();
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+                CallableStatement stmt = connection.prepareCall(
+                        "{CALL ProcessSalaryPaymentWithErpSync(?, ?, ?, ?)}")) {
+            setConnectionUtf8mb4(connection);
+            stmt.setLong(1, calculationId);
+            stmt.setString(2, paidBy);
+            stmt.registerOutParameter(3, Types.BOOLEAN);
+            stmt.registerOutParameter(4, Types.VARCHAR);
+            stmt.execute();
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 3));
+            result.put("message", stmt.getString(4));
+        }
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> approveSalaryWithErpSync(Long calculationId, String tenantId, String approvedBy) {
+
+        log.info("✅ PL/SQL 급여 승인 시작: CalculationID={}, tenantId={}, ApprovedBy={}",
+                calculationId, tenantId, approvedBy);
+
+        Map<String, Object> result = new HashMap<>();
+        final String routine = "ApproveSalaryWithErpSync";
+
+        try {
+            List<ProcedureParameterMeta> procedureMeta = loadRoutineParametersFromInformationSchema(routine);
+            if (isCompleteSalaryErpSyncProcedureMetadata(procedureMeta, "p_approved_by")) {
+                try {
+                    result.putAll(executeSalaryErpSyncProcedureWithMetadata(
+                            routine, procedureMeta, calculationId, tenantId, approvedBy));
+                    log.info("✅ PL/SQL 급여 승인 완료(메타데이터 매핑): Success={}", result.get("success"));
+                } catch (SQLException dynamicEx) {
+                    log.warn("{} 메타데이터 기반 호출 실패, 개수 분기로 폴백: {}", routine, dynamicEx.getMessage());
+                    logSalaryErpSyncProcedureParameterDiagnostics(routine, dynamicEx);
+                    result.clear();
+                }
+            }
+            if (result.isEmpty()) {
+                int paramCount = countProcedureParameters(routine);
+                if (paramCount == 5) {
+                    result.putAll(executeApproveSalaryWithErpSyncStandard5(calculationId, tenantId, approvedBy));
+                    log.info("✅ PL/SQL 급여 승인 완료: Success={}", result.get("success"));
+                } else if (paramCount == 4) {
+                    log.warn("⚠️ {} 구버전(4파라미터, p_tenant_id IN 없음). 표준 프로시저 배포를 권장합니다.", routine);
+                    result.putAll(executeApproveSalaryWithErpSyncLegacy4(calculationId, approvedBy));
+                    log.info("✅ PL/SQL 급여 승인 완료(레거시 시그니처): Success={}", result.get("success"));
+                } else if (paramCount < 0) {
+                    try {
+                        result.putAll(executeApproveSalaryWithErpSyncStandard5(calculationId, tenantId, approvedBy));
+                        log.info("✅ PL/SQL 급여 승인 완료: Success={}", result.get("success"));
+                    } catch (SQLException ex) {
+                        if (shouldLogJdbcCallableSignatureMismatch(ex)) {
+                            log.warn("파라미터 개수 미확인 상태에서 표준(5) 호출 실패, 레거시(4) 재시도: {}", ex.getMessage());
+                            logSalaryErpSyncProcedureParameterDiagnostics(routine, ex);
+                            result.putAll(executeApproveSalaryWithErpSyncLegacy4(calculationId, approvedBy));
+                            log.info("✅ PL/SQL 급여 승인 완료(레거시 시그니처): Success={}", result.get("success"));
+                        } else {
+                            throw ex;
+                        }
+                    }
+                } else {
+                    log.error("❌ {} 파라미터 개수 비정상: count={}", routine, paramCount);
+                    result.put("success", false);
+                    result.put("message",
+                            routine + " 프로시저 정의를 확인할 수 없습니다(parameters=" + paramCount + ").");
+                }
+            }
         } catch (SQLException e) {
             log.error("❌ PL/SQL 급여 승인 오류", e);
+            logSalaryErpSyncProcedureParameterDiagnostics(routine, e);
             result.put("success", false);
-            result.put("message", "급여 승인 중 오류가 발생했습니다: " + e.getMessage());
+            if (shouldLogJdbcCallableSignatureMismatch(e)) {
+                result.put("message",
+                        "급여 승인 중 오류가 발생했습니다. " + APPROVE_SALARY_ERP_SYNC_SIGNATURE_MISMATCH_HINT
+                                + " 상세: " + e.getMessage());
+            } else {
+                result.put("message", "급여 승인 중 오류가 발생했습니다: " + e.getMessage());
+            }
         }
 
         ensureUserFacingMessageWhenProcedureFailed(result, DEFAULT_APPROVE_FAILURE_USER_MESSAGE);
         return result;
     }
-    
+
     @Override
     public Map<String, Object> processSalaryPaymentWithErpSync(Long calculationId, String tenantId, String paidBy) {
-        
+
         log.info("💳 PL/SQL 급여 지급 시작: CalculationID={}, tenantId={}, PaidBy={}",
                 calculationId, tenantId, paidBy);
-        
+
         Map<String, Object> result = new HashMap<>();
-        
-        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
-             CallableStatement stmt = connection.prepareCall(
-                 "{CALL ProcessSalaryPaymentWithErpSync(?, ?, ?, ?, ?)}")) {
-            
-            // IN 파라미터 설정 (p_calculation_id, p_tenant_id, p_paid_by)
-            stmt.setLong(1, calculationId);
-            stmt.setString(2, tenantId);
-            stmt.setString(3, paidBy);
-            
-            // OUT 파라미터 등록 (p_success, p_message)
-            stmt.registerOutParameter(4, java.sql.Types.BOOLEAN);
-            stmt.registerOutParameter(5, java.sql.Types.VARCHAR);
-            
-            // 프로시저 실행
-            stmt.execute();
-            
-            // 결과 추출
-            result.put("success", readMysqlProcedureBooleanOut(stmt, 4));
-            result.put("message", stmt.getString(5));
-            
-            log.info("✅ PL/SQL 급여 지급 완료: Success={}", result.get("success"));
-            
+        final String routine = "ProcessSalaryPaymentWithErpSync";
+
+        try {
+            List<ProcedureParameterMeta> procedureMeta = loadRoutineParametersFromInformationSchema(routine);
+            if (isCompleteSalaryErpSyncProcedureMetadata(procedureMeta, "p_paid_by")) {
+                try {
+                    result.putAll(executeSalaryErpSyncProcedureWithMetadata(
+                            routine, procedureMeta, calculationId, tenantId, paidBy));
+                    log.info("✅ PL/SQL 급여 지급 완료(메타데이터 매핑): Success={}", result.get("success"));
+                } catch (SQLException dynamicEx) {
+                    log.warn("{} 메타데이터 기반 호출 실패, 개수 분기로 폴백: {}", routine, dynamicEx.getMessage());
+                    logSalaryErpSyncProcedureParameterDiagnostics(routine, dynamicEx);
+                    result.clear();
+                }
+            }
+            if (result.isEmpty()) {
+                int paramCount = countProcedureParameters(routine);
+                if (paramCount == 5) {
+                    result.putAll(executeProcessSalaryPaymentWithErpSyncStandard5(calculationId, tenantId, paidBy));
+                    log.info("✅ PL/SQL 급여 지급 완료: Success={}", result.get("success"));
+                } else if (paramCount == 4) {
+                    log.warn("⚠️ {} 구버전(4파라미터, p_tenant_id IN 없음). 표준 프로시저 배포를 권장합니다.", routine);
+                    result.putAll(executeProcessSalaryPaymentWithErpSyncLegacy4(calculationId, paidBy));
+                    log.info("✅ PL/SQL 급여 지급 완료(레거시 시그니처): Success={}", result.get("success"));
+                } else if (paramCount < 0) {
+                    try {
+                        result.putAll(executeProcessSalaryPaymentWithErpSyncStandard5(calculationId, tenantId, paidBy));
+                        log.info("✅ PL/SQL 급여 지급 완료: Success={}", result.get("success"));
+                    } catch (SQLException ex) {
+                        if (shouldLogJdbcCallableSignatureMismatch(ex)) {
+                            log.warn("파라미터 개수 미확인 상태에서 표준(5) 호출 실패, 레거시(4) 재시도: {}", ex.getMessage());
+                            logSalaryErpSyncProcedureParameterDiagnostics(routine, ex);
+                            result.putAll(executeProcessSalaryPaymentWithErpSyncLegacy4(calculationId, paidBy));
+                            log.info("✅ PL/SQL 급여 지급 완료(레거시 시그니처): Success={}", result.get("success"));
+                        } else {
+                            throw ex;
+                        }
+                    }
+                } else {
+                    log.error("❌ {} 파라미터 개수 비정상: count={}", routine, paramCount);
+                    result.put("success", false);
+                    result.put("message",
+                            routine + " 프로시저 정의를 확인할 수 없습니다(parameters=" + paramCount + ").");
+                }
+            }
         } catch (SQLException e) {
             log.error("❌ PL/SQL 급여 지급 오류", e);
+            logSalaryErpSyncProcedureParameterDiagnostics(routine, e);
             result.put("success", false);
-            result.put("message", "급여 지급 중 오류가 발생했습니다: " + e.getMessage());
+            if (shouldLogJdbcCallableSignatureMismatch(e)) {
+                result.put("message",
+                        "급여 지급 중 오류가 발생했습니다. " + PROCESS_SALARY_PAYMENT_ERP_SYNC_SIGNATURE_MISMATCH_HINT
+                                + " 상세: " + e.getMessage());
+            } else {
+                result.put("message", "급여 지급 중 오류가 발생했습니다: " + e.getMessage());
+            }
         }
 
         ensureUserFacingMessageWhenProcedureFailed(result, DEFAULT_PAY_FAILURE_USER_MESSAGE);
@@ -1003,19 +1280,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
      * @return information_schema 진단 로그 및 사용자 메시지 분기 여부
      */
     private boolean shouldLogCalculateSalaryPreviewSignatureMismatch(Throwable cause) {
-        for (Throwable t = cause; t != null; t = t.getCause()) {
-            String msg = t.getMessage();
-            if (msg == null || msg.isEmpty()) {
-                continue;
-            }
-            if (msg.contains("OUT parameter")) {
-                return true;
-            }
-            if (msg.contains("Parameter index of") && msg.contains("out of range")) {
-                return true;
-            }
-        }
-        return false;
+        return shouldLogJdbcCallableSignatureMismatch(cause);
     }
 
     /**

@@ -114,12 +114,15 @@ fi
 
 if [[ "$SKIP_VERIFY" != true ]]; then
   echo "🔍 Metro/MMKV 검증 (verify:metro-mmkv)..."
+  echo "   (로그의 undefined origin / empty origin 은 테스트 케이스 이름이며 오류가 아닙니다)"
   npm run verify:metro-mmkv
+  echo "✅ verify:metro-mmkv 통과"
   echo ""
 fi
 
 if [[ "$SKIP_ADB" != true ]] && command -v adb >/dev/null 2>&1; then
-  device_count="$(adb devices 2>/dev/null | grep -E '[[:space:]]device$' | wc -l | tr -d ' ')"
+  # pipefail 환경에서 grep 무일치 시 exit 1 → 스크립트가 Metro 전에 종료되는 것 방지
+  device_count="$(adb devices 2>/dev/null | { grep -E '[[:space:]]device$' || true; } | wc -l | tr -d ' ')"
   if [[ "${device_count:-0}" -gt 0 ]]; then
     echo "📱 adb reverse tcp:${METRO_PORT} (연결 기기 ${device_count}대)..."
     METRO_PORT="$METRO_PORT" node ./scripts/adb-reverse-metro-port.js

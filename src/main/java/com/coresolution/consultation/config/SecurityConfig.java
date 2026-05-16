@@ -72,14 +72,11 @@ public class SecurityConfig {
             // CORS 설정 - 모든 요청에 대해 허용
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
-            // TenantContextFilter를 가장 먼저 실행 (테넌트 컨텍스트 설정)
-            // SessionBasedAuthenticationFilter 이전에 실행되어야 함
+            // Bearer JWT로 User·tenant를 먼저 올린 뒤 TenantContextFilter가 세션/헤더를 해석한다.
+            .addFilterBefore(jwtAuthenticationFilter, TenantContextFilter.class)
+
+            // TenantContextFilter — SessionBasedAuthenticationFilter 이전
             .addFilterBefore(tenantContextFilter, 
-                org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
-            
-            // JwtAuthenticationFilter를 SessionBasedAuthenticationFilter 이전에 추가
-            // (JWT 토큰 인증이 세션 인증보다 우선)
-            .addFilterBefore(jwtAuthenticationFilter, 
                 org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
             
             // SessionBasedAuthenticationFilter를 Spring Security 필터 체인에 추가

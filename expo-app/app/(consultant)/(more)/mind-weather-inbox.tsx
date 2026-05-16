@@ -11,7 +11,7 @@
  * @since 2026-05-13
  */
 import { useCallback, useMemo } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -44,6 +44,7 @@ import {
 } from '@/utils/mindWeatherClientLabel';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
+import { peekCachedJsessionId } from '@/utils/sessionCookie';
 import type { MindWeatherCard } from '@/services/mindWeatherService';
 
 export default function ConsultantMindWeatherInbox() {
@@ -211,9 +212,11 @@ export default function ConsultantMindWeatherInbox() {
             icon={<Inbox size={32} color={theme.colors.textTertiary} />}
             title="아직 공유받은 카드가 없어요"
             description={
-              inboxDataSource === 'api'
-                ? '서버에 공유된 카드가 없거나, 다른 기관·계정으로 조회 중일 수 있어요. 당겨서 새로고침하거나 다시 로그인해 보세요.'
-                : '내담자가 공유 동의를 켜면 이 화면에 카드가 도착해요.'
+              Platform.OS === 'android' && !peekCachedJsessionId()
+                ? 'Android에서는 한 번 로그아웃 후 다시 로그인해야 수신함이 동기화될 수 있어요. 이후에도 비면 당겨서 새로고침해 주세요.'
+                : inboxDataSource === 'api'
+                  ? '서버에 공유된 카드가 없거나, 다른 기관·계정으로 조회 중일 수 있어요. 당겨서 새로고침하거나 다시 로그인해 보세요.'
+                  : '내담자가 공유 동의를 켜면 이 화면에 카드가 도착해요.'
             }
           />
         ) : (

@@ -17,6 +17,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import 'react-native-reanimated';
 import { ThemeProvider } from '../src/theme';
 import { useAuthStore } from '../src/stores/useAuthStore';
+import { hydrateJsessionCacheFromSecureStore } from '../src/utils/sessionCookie';
 import {
   queryClient,
   queryPersister,
@@ -83,6 +84,7 @@ export default function RootLayout() {
   /** dev client 직접 진입 등 `index`를 거치지 않아도 SecureStore 토큰 복구 */
   useEffect(() => {
     if (!loaded) return;
+    void hydrateJsessionCacheFromSecureStore();
     void useAuthStore.getState().restoreTokens();
   }, [loaded]);
 

@@ -13,7 +13,9 @@ import type {
   InternalAxiosRequestConfig,
 } from 'axios';
 import axios, { create } from 'axios';
+import { Platform } from 'react-native';
 import { getApiBaseUrl } from '@/config/apiBaseUrl';
+import { formatJsessionCookieHeader, peekCachedJsessionId } from '@/utils/sessionCookie';
 import { useAuthStore } from '../stores/useAuthStore';
 import { resolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
@@ -73,6 +75,7 @@ const apiClient: AxiosInstance = create({
   maxRedirects: 0,
   headers: {
     'Content-Type': 'application/json',
+    'User-Agent': `MindGardenMobile/1.0 (${Platform.OS})`,
   },
 });
 
@@ -104,6 +107,11 @@ apiClient.interceptors.request.use(
     const tenantId = resolveTenantIdForApi();
     if (tenantId) {
       config.headers.set('X-Tenant-Id', tenantId);
+    }
+
+    const sessionCookie = formatJsessionCookieHeader(peekCachedJsessionId());
+    if (sessionCookie) {
+      config.headers.set('Cookie', sessionCookie);
     }
 
     return config;

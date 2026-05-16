@@ -10,6 +10,7 @@ import { persist } from 'zustand/middleware';
 import * as SecureStore from 'expo-secure-store';
 import { createZustandMmkvPersistStorage } from '@/lib/getMmkv';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
+import { clearJsessionId, hydrateJsessionCacheFromSecureStore } from '@/utils/sessionCookie';
 import { queryClient } from '../api/queryClient';
 
 const SECURE_KEY_ACCESS_TOKEN = 'mg_access_token';
@@ -73,6 +74,7 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         await SecureStore.deleteItemAsync(SECURE_KEY_ACCESS_TOKEN);
         await SecureStore.deleteItemAsync(SECURE_KEY_REFRESH_TOKEN);
+        await clearJsessionId();
         queryClient.clear();
         set({
           user: null,
@@ -107,6 +109,7 @@ export const useAuthStore = create<AuthState>()(
         const refreshToken = await SecureStore.getItemAsync(SECURE_KEY_REFRESH_TOKEN);
         if (accessToken && refreshToken) {
           syncTenantFromAccessToken(accessToken);
+          await hydrateJsessionCacheFromSecureStore();
           set({ accessToken, refreshToken, isAuthenticated: true, isLoading: false });
           return;
         }

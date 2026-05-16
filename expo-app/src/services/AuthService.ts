@@ -23,6 +23,7 @@ import { isExpoGoApp } from '@/lib/getMmkv';
 import { getApiBaseUrl } from '../config/apiBaseUrl';
 import { normalizeKoreanMobileDigits } from '../utils/phoneNormalize';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
+import { setCachedJsessionId, setJsessionId } from '@/utils/sessionCookie';
 
 export type SocialAuthProvider = 'KAKAO' | 'NAVER';
 
@@ -77,6 +78,7 @@ interface SocialLoginResponse {
   user?: SocialLoginApiUser;
   accessToken?: string;
   refreshToken?: string;
+  sessionId?: string;
   requiresSignup?: boolean;
   requiresPhoneAccountSelection?: boolean;
   /** 네이티브 social-login 분기 — JWT `phoneAccountSelectionToken` 대신 `selectionToken` */
@@ -440,8 +442,35 @@ function mapNativeSocialResponse(
   return { kind: 'error', message: response.message ?? '로그인에 실패했습니다.' };
 }
 
-async function applyAuthenticatedUser(user: User, tokens: Tokens): Promise<void> {
+function pickSessionIdFromAuthPayload(raw: unknown): string | undefined {
+  if (raw == null || typeof raw !== 'object') {
+    return undefined;
+  }
+  const rec = raw as Record<string, unknown>;
+  const direct = rec.sessionId;
+  if (typeof direct === 'string' && direct.trim().length > 0) {
+    return direct.trim();
+  }
+  const data = rec.data;
+  if (data != null && typeof data === 'object') {
+    const nested = (data as Record<string, unknown>).sessionId;
+    if (typeof nested === 'string' && nested.trim().length > 0) {
+      return nested.trim();
+    }
+  }
+  return undefined;
+}
+
+async function applyAuthenticatedUser(
+  user: User,
+  tokens: Tokens,
+  sessionId?: string,
+): Promise<void> {
   syncTenantFromAccessToken(tokens.accessToken);
+  if (sessionId) {
+    await setJsessionId(sessionId);
+    setCachedJsessionId(sessionId);
+  }
   await useAuthStore.getState().login(user, tokens);
   syncTenantFromAccessToken(tokens.accessToken);
 }
@@ -546,10 +575,14 @@ export const AuthService = {
       const mapped = mapNativeSocialResponse(response, 'KAKAO', profileImageUrl);
       logSocialLoginDebugResponse(response, mapped);
       if (mapped.kind === 'authenticated') {
-        await applyAuthenticatedUser(mapped.user, {
-          accessToken: response.accessToken as string,
-          refreshToken: response.refreshToken as string,
-        });
+        await applyAuthenticatedUser(
+          mapped.user,
+          {
+            accessToken: response.accessToken as string,
+            refreshToken: response.refreshToken as string,
+          },
+          pickSessionIdFromAuthPayload(response),
+        );
         return { kind: 'authenticated', user: mapped.user };
       }
       if (mapped.kind === 'requiresSignup') {
@@ -649,10 +682,14 @@ export const AuthService = {
       const mapped = mapNativeSocialResponse(response, 'NAVER', profileImage ?? undefined);
       logSocialLoginDebugResponse(response, mapped);
       if (mapped.kind === 'authenticated') {
-        await applyAuthenticatedUser(mapped.user, {
-          accessToken: response.accessToken as string,
-          refreshToken: response.refreshToken as string,
-        });
+        await applyAuthenticatedUser(
+          mapped.user,
+          {
+            accessToken: response.accessToken as string,
+            refreshToken: response.refreshToken as string,
+          },
+          pickSessionIdFromAuthPayload(response),
+        );
         return { kind: 'authenticated', user: mapped.user };
       }
       if (mapped.kind === 'requiresSignup') {
@@ -772,10 +809,14 @@ export const AuthService = {
         tenantId: inner.tenantId ?? useTenantStore.getState().tenantId ?? undefined,
       };
 
-      await applyAuthenticatedUser(user, {
-        accessToken: inner.accessToken,
-        refreshToken: inner.refreshToken,
-      });
+      await applyAuthenticatedUser(
+        user,
+        {
+          accessToken: inner.accessToken,
+          refreshToken: inner.refreshToken,
+        },
+        pickSessionIdFromAuthPayload(raw),
+      );
       return { ok: true, user };
     } catch (err: unknown) {
       return { ok: false, message: readSignupErrorMessage(err) };
@@ -810,7 +851,11 @@ export const AuthService = {
 
       if (userRaw && accessToken && refreshToken) {
         const user = mapApiUserToStoreUser(userRaw);
-        await applyAuthenticatedUser(user, { accessToken, refreshToken });
+        await applyAuthenticatedUser(
+          user,
+          { accessToken, refreshToken },
+          pickSessionIdFromAuthPayload(raw),
+        );
         return { success: true, user };
       }
 

@@ -31,6 +31,7 @@ export const ADMIN_MOBILE_HOME_COPY = {
   TITLE: '관리 홈',
   GREETING: '안녕하세요',
   TENANT_LABEL: '테넌트',
+  /** 탭 시 모바일 알림 설정(인박스 MVP). 전체 알림 센터는 웹 `NOTIFICATIONS` 경로 */
   UNREAD_NOTIFICATIONS: '읽지 않은 알림',
   TODAY_SCHEDULES: '오늘 일정',
   QUICK_LINKS_TITLE: '바로가기',

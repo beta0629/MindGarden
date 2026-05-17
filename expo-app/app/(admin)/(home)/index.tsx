@@ -111,6 +111,7 @@ export default function AdminHomeScreen() {
               value={dashboard.unreadNotificationCount}
               unit="건"
               icon={<Bell size={20} color={theme.colors.primary} />}
+              onPress={() => router.push('/(admin)/(more)/notification-settings')}
             />
           )}
           {dashboard.schedulesLoading ? (
@@ -122,6 +123,7 @@ export default function AdminHomeScreen() {
               value={dashboard.todayScheduleCount}
               unit="건"
               icon={<Calendar size={20} color={theme.colors.primary} />}
+              onPress={() => router.push('/(admin)/(operation)/schedule')}
             />
           )}
         </View>

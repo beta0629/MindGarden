@@ -4,7 +4,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme';
 
 interface StatCardProps {
@@ -13,25 +13,24 @@ interface StatCardProps {
   unit?: string;
   icon?: React.ReactNode;
   style?: ViewStyle;
+  onPress?: () => void;
 }
 
-export function StatCard({ label, value, unit, icon, style }: StatCardProps) {
+export function StatCard({ label, value, unit, icon, style, onPress }: StatCardProps) {
   const theme = useTheme();
+  const accessibilityLabel = `${label}: ${value}${unit ? ` ${unit}` : ''}`;
+  const cardStyle = [
+    styles.card,
+    {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.xl,
+      ...theme.shadows.sm,
+    },
+    style,
+  ];
 
-  return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: theme.colors.surface,
-          borderRadius: theme.borderRadius.xl,
-          ...theme.shadows.sm,
-        },
-        style,
-      ]}
-      accessibilityLabel={`${label}: ${value}${unit ? ` ${unit}` : ''}`}
-      accessibilityRole="text"
-    >
+  const content = (
+    <>
       {icon ? <View style={styles.iconWrap}>{icon}</View> : null}
       <Text
         style={[
@@ -68,6 +67,25 @@ export function StatCard({ label, value, unit, icon, style }: StatCardProps) {
       >
         {label}
       </Text>
+    </>
+  );
+
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [cardStyle, pressed && styles.pressed]}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="button"
+      >
+        {content}
+      </Pressable>
+    );
+  }
+
+  return (
+    <View style={cardStyle} accessibilityLabel={accessibilityLabel} accessibilityRole="text">
+      {content}
     </View>
   );
 }
@@ -77,6 +95,9 @@ const styles = StyleSheet.create({
     padding: 16,
     minWidth: 100,
     alignItems: 'center',
+  },
+  pressed: {
+    opacity: 0.85,
   },
   iconWrap: {
     marginBottom: 8,

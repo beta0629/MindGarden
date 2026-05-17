@@ -225,9 +225,16 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
     @Test
     @DisplayName("ProcessIntegratedSalaryCalculation 12파라미터: specialSupportAmount는 0")
     void processIntegrated_whenTwelveParams_specialSupportAmountZero() throws Exception {
+        when(jdbcTemplate.queryForList(
+                argThat((String sql) -> sql.contains("information_schema.PARAMETERS")
+                        && sql.contains("ORDINAL_POSITION")),
+                eq("ProcessIntegratedSalaryCalculation")))
+                .thenReturn(Collections.emptyList());
         when(jdbcTemplate.queryForObject(
-                argThat((String sql) -> sql.contains("ProcessIntegratedSalaryCalculation") && sql.contains("COUNT")),
-                eq(Integer.class)))
+                argThat((String sql) -> sql.contains("information_schema.PARAMETERS")
+                        && sql.contains("COUNT")),
+                eq(Integer.class),
+                eq("ProcessIntegratedSalaryCalculation")))
                 .thenReturn(12);
         stubProcessIntegratedOut12();
 

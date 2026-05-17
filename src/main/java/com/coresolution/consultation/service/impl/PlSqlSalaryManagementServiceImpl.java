@@ -425,13 +425,18 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                     case "p_erp_sync_id" -> result.put("erpSyncId", getNullableLong(stmt, o));
                     case "p_success" -> result.put("success", readMysqlProcedureBooleanOut(stmt, o));
                     case "p_message" -> result.put("message", stmt.getString(o));
-                    case "p_special_support_amount" -> result.put("specialSupportAmount", stmt.getBigDecimal(o));
+                    case "p_special_support_amount" -> {
+                        BigDecimal specialSupport = stmt.getBigDecimal(o);
+                        result.put("specialSupportAmount",
+                                specialSupport != null ? specialSupport : BigDecimal.ZERO);
+                    }
                     default -> {
                         // 알 수 없는 OUT은 무시 (향후 확장 호환)
                     }
                 }
             }
-            if (!result.containsKey("specialSupportAmount")) {
+            if (!result.containsKey("specialSupportAmount")
+                    || result.get("specialSupportAmount") == null) {
                 result.put("specialSupportAmount", BigDecimal.ZERO);
             }
         }

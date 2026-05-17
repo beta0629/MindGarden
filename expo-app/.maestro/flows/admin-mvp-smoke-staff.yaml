@@ -1,0 +1,43 @@
+# Admin Mobile MVP — Maestro smoke (STAFF)
+# §7.1 ADMIN_MOBILE_MVP_TEST_PLAN.md · STAFF: 검수 탭 숨김 (app/(admin)/_layout.tsx)
+#
+# 카피: src/constants/adminMobileCopy.ts, adminMobileScreensCopy.ts, adminUserManagementCopy.ts
+appId: com.mindgardenmobile
+name: Admin MVP smoke (STAFF)
+tags:
+  - admin
+  - smoke
+  - mvp
+  - staff
+---
+- launchApp:
+    clearState: false
+
+# Optional login — MAESTRO_STAFF_EMAIL·MAESTRO_STAFF_PASSWORD(·테넌트) 설정 시에만 동작
+- runFlow:
+    file: subflows/admin-credentials-login-staff.yaml
+
+- extendedWaitUntil:
+    visible: '안녕하세요'
+    timeout: 90000
+
+# 관리 홈 (ADMIN_MOBILE_HOME_COPY)
+- assertVisible: '안녕하세요'
+- assertVisible: '읽지 않은 알림'
+- assertVisible: '오늘 일정'
+
+# STAFF: 검수 탭 없음 (href: null — TAB_REVIEW / TAB_REVIEW_A11Y)
+- assertNotVisible: '검수'
+- assertNotVisible:
+    text: '검수 탭'
+
+# 운영 → 사용자 조회 (ADMIN_MOBILE_OPERATION_COPY.USERS)
+- tapOn: '운영'
+- assertVisible: '운영'
+- scrollUntilVisible:
+    element: '사용자 조회'
+    direction: DOWN
+    timeout: 15000
+- tapOn: '사용자 조회'
+- assertVisible: '사용자 조회'
+- assertVisible: '이름, 이메일, 전화번호로 검색'

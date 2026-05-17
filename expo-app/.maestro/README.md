@@ -11,7 +11,7 @@ Admin MVP 스모크 E2E 초안. 수동 체크리스트는 [`docs/project-managem
 | CLI | [Maestro](https://maestro.mobile.dev/) 설치 |
 | 기기 | Android 에뮬레이터/실기기 (`adb devices`) |
 | 앱 | `com.mindgardenmobile` — dev release APK 권장 ([`scripts/build-android-apk-dev.sh`](../scripts/build-android-apk-dev.sh), [`ADMIN_MOBILE_MVP_SMOKE_RUN.md`](../../docs/project-management/ADMIN_MOBILE_MVP_SMOKE_RUN.md)) |
-| 계정 | **ROLE_ADMIN** (검수 탭 필요). STAFF는 검수 탭이 없어 본 플로우와 불일치 |
+| 계정 | **ROLE_ADMIN** → `admin-mvp-smoke.yaml`. **STAFF** → `admin-mvp-smoke-staff.yaml` (검수 탭 없음) |
 
 ## 환경 변수
 
@@ -19,8 +19,10 @@ Admin MVP 스모크 E2E 초안. 수동 체크리스트는 [`docs/project-managem
 
 | 변수 | 필수 | 용도 |
 |------|------|------|
-| `MAESTRO_ADMIN_EMAIL` | 로그인 시 | 이메일/휴대폰 (로그인 placeholder와 동일) |
-| `MAESTRO_ADMIN_PASSWORD` | 로그인 시 | 비밀번호 (**커밋·README 예시 값 금지**) |
+| `MAESTRO_ADMIN_EMAIL` | ADMIN 로그인 시 | 이메일/휴대폰 (로그인 placeholder와 동일) |
+| `MAESTRO_ADMIN_PASSWORD` | ADMIN 로그인 시 | 비밀번호 (**커밋·README 예시 값 금지**) |
+| `MAESTRO_STAFF_EMAIL` | STAFF 로그인 시 | STAFF 플로우 전용 (`admin-mvp-smoke-staff.yaml`) |
+| `MAESTRO_STAFF_PASSWORD` | STAFF 로그인 시 | STAFF 비밀번호 (**커밋·README 예시 값 금지**) |
 | `MAESTRO_TENANT_SEARCH` | 테넌트 미캐시 시 | 기관 검색어(서브도메인·기관명 일부) |
 | `MAESTRO_TENANT_NAME` | 테넌트 미캐시 시 | 목록에서 탭할 **표시 이름** (카드 `accessibilityLabel`의 기관명) |
 
@@ -42,6 +44,19 @@ export MAESTRO_TENANT_NAME='Dev Tenant Display Name'  # 필요 시
 maestro test .maestro/flows/admin-mvp-smoke.yaml
 ```
 
+**STAFF** (검수 탭 없음 — `admin-mvp-smoke-staff.yaml`):
+
+```bash
+cd expo-app
+
+export MAESTRO_STAFF_EMAIL='your-staff@example.com'
+export MAESTRO_STAFF_PASSWORD='***'
+export MAESTRO_TENANT_SEARCH='dev'    # 필요 시
+export MAESTRO_TENANT_NAME='Dev Tenant Display Name'  # 필요 시
+
+maestro test .maestro/flows/admin-mvp-smoke-staff.yaml
+```
+
 또는 인라인:
 
 ```bash
@@ -55,11 +70,11 @@ maestro test .maestro/flows/admin-mvp-smoke.yaml \
 | 파일 | 역할 |
 |------|------|
 | [`flows/admin-mvp-smoke.yaml`](flows/admin-mvp-smoke.yaml) | ADMIN: 홈 assert → 검수 탭 → 운영 → 사용자 조회 |
-| [`flows/subflows/admin-credentials-login.yaml`](flows/subflows/admin-credentials-login.yaml) | 테넌트 선택(선택) + ID/PW 로그인 서브플로우 |
+| [`flows/admin-mvp-smoke-staff.yaml`](flows/admin-mvp-smoke-staff.yaml) | STAFF: 홈 assert → 검수 탭 **없음** assert → 운영 → 사용자 조회 |
+| [`flows/subflows/admin-credentials-login.yaml`](flows/subflows/admin-credentials-login.yaml) | ADMIN 테넌트 선택(선택) + ID/PW 로그인 |
+| [`flows/subflows/admin-credentials-login-staff.yaml`](flows/subflows/admin-credentials-login-staff.yaml) | STAFF 로그인 (`MAESTRO_STAFF_EMAIL` / `MAESTRO_STAFF_PASSWORD`) |
 
-### STAFF 변형 (선택)
-
-STAFF는 바텀탭 **「검수」가 숨김** (`app/(admin)/_layout.tsx`, `isStaffRole`). ADMIN 스모크를 그대로 돌리면 `검수` 탭 단계에서 실패합니다. STAFF 전용 플로우는 `admin-mvp-smoke-staff.yaml`로 분리해 검수 단계를 빼고, 운영 허브에서 **마음날씨** 메뉴가 없는지 등을 assert하는 방식을 권장합니다(아직 미추가 시 본 README만 참고).
+STAFF 셸은 바텀탭 **「검수」가 숨김** (`app/(admin)/_layout.tsx`, `isStaffRole`). ADMIN 플로우를 STAFF 계정에 돌리면 `검수` 탭 단계에서 실패합니다.
 
 ## assert에 쓰는 UI 문구 (코드 상수)
 

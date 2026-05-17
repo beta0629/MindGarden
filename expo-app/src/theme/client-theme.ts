@@ -31,6 +31,7 @@ export interface AppThemeColors {
   readonly info: string;
   readonly shadowSource: string;
   readonly modalBackdrop: string;
+  readonly modalLoadingOverlay: string;
   readonly scheduleCardInProgressBackground: string;
   readonly gray: typeof colors.gray;
 }

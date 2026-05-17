@@ -55,6 +55,8 @@ const COMMON_COLORS = {
   shadowSource: '#000000',
   /** 모달·바텀 시트 백드롭 — `#000000` + 0x52 alpha (≈0.32) */
   modalBackdrop: '#00000052',
+  /** 모달 카드 로딩 오버레이 — `#FFFFFF` + 0x59 alpha (≈0.35) */
+  modalLoadingOverlay: '#FFFFFF59',
   /**
    * 상담사 스케줄 카드 `IN_PROGRESS` 컨테이너 얕은 배경 틴트.
    * 보더 색은 `warning`과 동일 역할로 `theme.colors.warning` 사용.

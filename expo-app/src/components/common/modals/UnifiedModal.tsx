@@ -181,7 +181,12 @@ export function UnifiedModal({
             ) : null}
 
             {loading ? (
-              <View style={styles.loadingOverlay}>
+              <View
+                style={[
+                  styles.loadingOverlay,
+                  { backgroundColor: theme.colors.modalLoadingOverlay },
+                ]}
+              >
                 <ActivityIndicator color={theme.colors.primary} />
               </View>
             ) : null}
@@ -235,6 +240,5 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.35)',
   },
 });

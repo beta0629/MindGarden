@@ -58,6 +58,31 @@ const JWT_ADMIN_ROLE_CODES = new Set([
 
 const JWT_STAFF_ROLE_CODES = new Set(['STAFF', 'OFFICE_STAFF', 'OFFICESTAFF']);
 
+/**
+ * API 응답 `role` — 문자열 또는 `{ name: "ADMIN" }` 등 객체를 문자열로 통일.
+ */
+export function coerceApiRoleString(raw: unknown): string | null {
+  if (raw == null) {
+    return null;
+  }
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    return trimmed.length ? trimmed : null;
+  }
+  if (typeof raw === 'object') {
+    const rec = raw as Record<string, unknown>;
+    const nested = rec.name ?? rec.role ?? rec.code ?? rec.value;
+    if (nested != null && nested !== raw) {
+      return coerceApiRoleString(nested);
+    }
+  }
+  const asString = String(raw).trim();
+  if (!asString.length || asString === '[object Object]') {
+    return null;
+  }
+  return asString;
+}
+
 function normalizeApiRole(apiRole: string | undefined | null): string {
   const trimmed = (apiRole ?? 'CLIENT').trim().toUpperCase();
   return trimmed.startsWith('ROLE_') ? trimmed.slice(5) : trimmed;
@@ -75,8 +100,8 @@ function normalizeJwtRoleToken(raw: unknown): string {
  * 백엔드 `UserRole` 문자열 → Expo 스토어 역할.
  * ADMIN·레거시 테넌트 관리자는 `admin`, STAFF는 `staff`, 전문가 계열은 `consultant`.
  */
-export function mapApiRoleToStoreRole(apiRole: string | undefined | null): AppAuthRole {
-  const normalized = normalizeApiRole(apiRole);
+export function mapApiRoleToStoreRole(apiRole: string | undefined | null | unknown): AppAuthRole {
+  const normalized = normalizeApiRole(coerceApiRoleString(apiRole) ?? undefined);
 
   if (PROFESSIONAL_PROVIDER_ROLES.has(normalized)) {
     return 'consultant';
@@ -173,19 +198,21 @@ const STORE_ROLE_PRIORITY: readonly AppAuthRole[] = [
 function collectApiRoleCandidates(payload: Record<string, unknown>): string[] {
   const out: string[] = [];
   const direct = payload.role ?? payload.userRole ?? payload.primaryRole;
-  if (direct != null && String(direct).trim()) {
-    out.push(String(direct));
+  const directCoerced = coerceApiRoleString(direct);
+  if (directCoerced) {
+    out.push(directCoerced);
   }
 
   const authorities = payload.authorities ?? payload.roles ?? payload.scope;
   const list = Array.isArray(authorities)
-    ? authorities.map((a) => String(a))
+    ? authorities
     : typeof authorities === 'string'
       ? authorities.split(/[\s,]+/)
       : [];
   for (const raw of list) {
-    if (String(raw).trim()) {
-      out.push(String(raw));
+    const coerced = coerceApiRoleString(raw);
+    if (coerced) {
+      out.push(coerced);
     }
   }
   return out;

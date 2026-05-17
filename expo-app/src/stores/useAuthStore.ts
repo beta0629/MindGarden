@@ -138,12 +138,15 @@ export const useAuthStore = create<AuthState>()(
       login: async (user, tokens) => {
         await SecureStore.setItemAsync(SECURE_KEY_ACCESS_TOKEN, tokens.accessToken);
         await SecureStore.setItemAsync(SECURE_KEY_REFRESH_TOKEN, tokens.refreshToken);
+        const roleFromJwt = resolveStoreRoleFromAccessToken(tokens.accessToken);
+        const role = roleFromJwt ?? user.role;
+        const syncedUser = { ...user, role };
         set({
-          user,
+          user: syncedUser,
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
           isAuthenticated: true,
-          role: user.role,
+          role,
           isLoading: false,
           _hasHydrated: true,
         });
@@ -170,15 +173,25 @@ export const useAuthStore = create<AuthState>()(
         await SecureStore.setItemAsync(SECURE_KEY_ACCESS_TOKEN, tokens.accessToken);
         await SecureStore.setItemAsync(SECURE_KEY_REFRESH_TOKEN, tokens.refreshToken);
         const jwtTenantId = syncTenantStoreFromAccessToken(tokens.accessToken);
+        const roleFromJwt = resolveStoreRoleFromAccessToken(tokens.accessToken);
         await hydrateJsessionCacheFromSecureStore();
-        set((state) => ({
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-          user:
-            state.user != null && jwtTenantId
-              ? { ...state.user, tenantId: jwtTenantId }
-              : state.user,
-        }));
+        set((state) => {
+          const role = roleFromJwt ?? state.role;
+          let user = state.user;
+          if (user != null) {
+            user = {
+              ...user,
+              ...(role != null ? { role } : {}),
+              ...(jwtTenantId ? { tenantId: jwtTenantId } : {}),
+            };
+          }
+          return {
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            role,
+            user,
+          };
+        });
       },
 
       updateUser: (partial) => {

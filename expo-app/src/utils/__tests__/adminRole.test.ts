@@ -1,6 +1,7 @@
 import {
   adminMobileScheduleUserRole,
   canAccessCommunityModeration,
+  coerceApiRoleString,
   isAdminMobileAdminRole,
   isAdminMobileShellRole,
   isAdminRole,
@@ -18,10 +19,19 @@ function fakeJwt(payload: Record<string, unknown>): string {
 }
 
 describe('adminRole', () => {
+  it('coerces object-shaped API roles to strings', () => {
+    expect(coerceApiRoleString({ name: 'ADMIN' })).toBe('ADMIN');
+    expect(coerceApiRoleString({ role: 'STAFF' })).toBe('STAFF');
+    expect(coerceApiRoleString('  TENANT_ADMIN  ')).toBe('TENANT_ADMIN');
+    expect(coerceApiRoleString(null)).toBeNull();
+    expect(coerceApiRoleString({})).toBeNull();
+  });
+
   it('maps ADMIN and legacy tenant admin to admin', () => {
     expect(mapApiRoleToStoreRole('ADMIN')).toBe('admin');
     expect(mapApiRoleToStoreRole('TENANT_ADMIN')).toBe('admin');
     expect(mapApiRoleToStoreRole('ROLE_ADMIN')).toBe('admin');
+    expect(mapApiRoleToStoreRole({ name: 'ADMIN' })).toBe('admin');
   });
 
   it('maps STAFF and legacy office roles to staff', () => {

@@ -24,7 +24,7 @@ import { getApiBaseUrl } from '../config/apiBaseUrl';
 import { normalizeKoreanMobileDigits } from '../utils/phoneNormalize';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 import { setCachedJsessionId, setJsessionId } from '@/utils/sessionCookie';
-import { mapApiRoleToStoreRole } from '@/utils/adminRole';
+import { coerceApiRoleString, mapApiRoleToStoreRole } from '@/utils/adminRole';
 
 export type SocialAuthProvider = 'KAKAO' | 'NAVER';
 
@@ -69,7 +69,7 @@ interface SocialLoginApiUser {
   email: string;
   name: string;
   nickname: string;
-  role: string;
+  role: unknown;
   profileImageUrl?: string;
   tenantId?: string;
 }
@@ -263,7 +263,7 @@ function logAuthError(scope: string, error: unknown): void {
 }
 
 function mapApiUserToStoreUser(raw: SocialLoginApiUser): User {
-  const role = mapApiRoleToStoreRole(raw.role);
+  const role = mapApiRoleToStoreRole(coerceApiRoleString(raw.role) ?? undefined);
   return {
     id: raw.id,
     email: raw.email ?? '',

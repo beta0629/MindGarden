@@ -291,12 +291,25 @@ cd expo-app && npm run test:utils
 
 **미완 (수동)**: §2·§3 역할·라우팅, §4.2 검수 UI 시나리오, §6 APK 4역할 스모크.
 
+### 10.5 Local CI repro (Task AG)
+
+**2026-05-17** · `develop` HEAD (local) · `code-quality-check.yml` 3게이트 · core-tester Task AG
+
+| # | 명령 | exit | 결과 |
+|---|------|------|------|
+| 1 | `node scripts/design-system/css-tools/check-hardcoding-enhanced.js` | **0** | 오류 0, 경고 5449 (repo). **expo-app 위반 0** — 첫 expo 위반 N/A |
+| 2 | `cd expo-app && npm run test:utils && npx tsc --noEmit` | **0** | PASS — 4 suites, 24 tests; `tsc --noEmit` clean |
+| 3 | `mvn -q -Dtest=BwAdminContentCommunityMvcSmokeIntegrationTest test` | **0** | PASS (~18.8s wall) |
+
+**3/3 PASS** — read-only; 프로덕션·Expo 코드 변경 없음.
+
 ---
 
 ## 변경 이력
 
 | 날짜 | 변경 |
 |------|------|
+| 2026-05-17 | §10.5 Task AG — Local CI repro (`check-hardcoding`, expo `test:utils`+`tsc`, BW admin community MockMvc) |
 | 2026-05-16 | §8.1·§10.4 Task O — Phase 2 Top 8 인벤토리, `test:utils`·`tsc --noEmit`·placeholder grep |
 | 2026-05-16 | §10.3 Task L — §5.2 `ConsultantSessionStatistics*`·`MindWeather*` 통합 + `test:utils`·BW admin community 재실행 (전항목 PASS) |
 | 2026-05-16 | §10 Gate run log — Task F 자동 게이트 1차 (Expo utils + BW admin community MockMvc) |

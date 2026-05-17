@@ -9,6 +9,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import * as SecureStore from 'expo-secure-store';
 import { createZustandMmkvPersistStorage } from '@/lib/getMmkv';
+import { resolveStoreRoleFromAccessToken } from '@/utils/adminRole';
+import { decodeJwtPayload, parseJwtSubAsUserId } from '@/utils/jwtPayload';
 import { syncTenantStoreFromAccessToken } from '@/utils/tenantJwtSync';
 import { clearJsessionId, hydrateJsessionCacheFromSecureStore } from '@/utils/sessionCookie';
 
@@ -70,18 +72,42 @@ async function runRestoreTokensFromSecureStore(
   const refreshToken = await SecureStore.getItemAsync(SECURE_KEY_REFRESH_TOKEN);
   if (accessToken && refreshToken) {
     const jwtTenantId = syncTenantStoreFromAccessToken(accessToken);
+    const jwtPayload = decodeJwtPayload(accessToken);
+    const roleFromJwt = resolveStoreRoleFromAccessToken(accessToken);
     await hydrateJsessionCacheFromSecureStore();
-    set((state) => ({
-      accessToken,
-      refreshToken,
-      isAuthenticated: true,
-      isLoading: false,
-      _hasHydrated: true,
-      user:
-        state.user != null && jwtTenantId
-          ? { ...state.user, tenantId: jwtTenantId }
-          : state.user,
-    }));
+    set((state) => {
+      const role = roleFromJwt ?? state.role;
+      let user = state.user;
+      if (user != null && role != null) {
+        user = {
+          ...user,
+          role,
+          ...(jwtTenantId ? { tenantId: jwtTenantId } : {}),
+        };
+      } else if (user == null && role != null) {
+        const userId = parseJwtSubAsUserId(jwtPayload);
+        if (userId != null) {
+          user = {
+            id: userId,
+            email: '',
+            name: '',
+            role,
+            ...(jwtTenantId ? { tenantId: jwtTenantId } : {}),
+          };
+        }
+      } else if (user != null && jwtTenantId) {
+        user = { ...user, tenantId: jwtTenantId };
+      }
+      return {
+        accessToken,
+        refreshToken,
+        isAuthenticated: true,
+        isLoading: false,
+        _hasHydrated: true,
+        role,
+        user,
+      };
+    });
     return;
   }
   set({

@@ -7,6 +7,8 @@ import {
   isStaffRole,
   mapApiRoleToStoreRole,
   resolveAdminMobileJwtRole,
+  resolveStoreRoleFromAccessToken,
+  resolveStoreRoleFromJwtPayload,
 } from '../adminRole';
 
 function fakeJwt(payload: Record<string, unknown>): string {
@@ -62,5 +64,32 @@ describe('adminRole', () => {
     expect(isAdminMobileAdminRole('STAFF')).toBe(false);
     expect(adminMobileScheduleUserRole('ADMIN')).toBe('ADMIN');
     expect(adminMobileScheduleUserRole(null)).toBeNull();
+  });
+
+  it('resolves store role from JWT for token restore (admin over stale client)', () => {
+    const adminToken = fakeJwt({ role: 'ADMIN', sub: '42' });
+    expect(resolveStoreRoleFromAccessToken(adminToken)).toBe('admin');
+    expect(resolveStoreRoleFromJwtPayload({ role: 'TENANT_ADMIN' })).toBe('admin');
+  });
+
+  it('resolves store role for staff and consultant from JWT claims', () => {
+    expect(resolveStoreRoleFromAccessToken(fakeJwt({ userRole: 'STAFF' }))).toBe('staff');
+    expect(resolveStoreRoleFromAccessToken(fakeJwt({ role: 'CONSULTANT' }))).toBe('consultant');
+    expect(resolveStoreRoleFromAccessToken(fakeJwt({ role: 'CLIENT' }))).toBe('client');
+  });
+
+  it('picks highest privilege when JWT has multiple role claims', () => {
+    expect(
+      resolveStoreRoleFromJwtPayload({
+        role: 'CLIENT',
+        authorities: ['ROLE_STAFF', 'ROLE_ADMIN'],
+      }),
+    ).toBe('admin');
+  });
+
+  it('returns null when JWT has no role claims (keep MMKV role)', () => {
+    expect(resolveStoreRoleFromJwtPayload({ tenantId: 't1', sub: '1' })).toBeNull();
+    expect(resolveStoreRoleFromAccessToken('not-a-jwt')).toBeNull();
+    expect(resolveStoreRoleFromAccessToken(null)).toBeNull();
   });
 });

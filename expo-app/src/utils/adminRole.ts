@@ -163,6 +163,71 @@ function jwtRoleFromPayload(payload: Record<string, unknown> | null): AdminMobil
   return null;
 }
 
+const STORE_ROLE_PRIORITY: readonly AppAuthRole[] = [
+  'admin',
+  'staff',
+  'consultant',
+  'client',
+];
+
+function collectApiRoleCandidates(payload: Record<string, unknown>): string[] {
+  const out: string[] = [];
+  const direct = payload.role ?? payload.userRole ?? payload.primaryRole;
+  if (direct != null && String(direct).trim()) {
+    out.push(String(direct));
+  }
+
+  const authorities = payload.authorities ?? payload.roles ?? payload.scope;
+  const list = Array.isArray(authorities)
+    ? authorities.map((a) => String(a))
+    : typeof authorities === 'string'
+      ? authorities.split(/[\s,]+/)
+      : [];
+  for (const raw of list) {
+    if (String(raw).trim()) {
+      out.push(String(raw));
+    }
+  }
+  return out;
+}
+
+function pickHighestStoreRoleFromCandidates(candidates: string[]): AppAuthRole | null {
+  if (candidates.length === 0) {
+    return null;
+  }
+  let best: AppAuthRole | null = null;
+  let bestIdx = STORE_ROLE_PRIORITY.length;
+  for (const raw of candidates) {
+    const mapped = mapApiRoleToStoreRole(raw);
+    const idx = STORE_ROLE_PRIORITY.indexOf(mapped);
+    if (idx >= 0 && idx < bestIdx) {
+      bestIdx = idx;
+      best = mapped;
+    }
+  }
+  return best;
+}
+
+/** JWT payload — SecureStore 복구 시 MMKV 역할과 동기화 */
+export function resolveStoreRoleFromJwtPayload(
+  payload: Record<string, unknown> | null,
+): AppAuthRole | null {
+  if (!payload) {
+    return null;
+  }
+  return pickHighestStoreRoleFromCandidates(collectApiRoleCandidates(payload));
+}
+
+/** accessToken — 앱 재시작 후 스토어 `role` SSOT 동기화 */
+export function resolveStoreRoleFromAccessToken(
+  accessToken: string | null | undefined,
+): AppAuthRole | null {
+  if (!accessToken?.trim()) {
+    return null;
+  }
+  return resolveStoreRoleFromJwtPayload(decodeJwtPayload(accessToken));
+}
+
 /** accessToken payload — 스케줄 API `userRole` 전용 (UI는 스토어 역할 사용) */
 export function resolveAdminMobileJwtRole(
   accessToken: string | null | undefined,

@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '../client';
 import { ADMIN_MOBILE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
+import { useAdminApiTenantSync } from '@/hooks/useAdminApiTenantSync';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isAdminRole } from '@/utils/adminRole';
@@ -60,6 +61,7 @@ export function useAdminMindWeatherCards(page = 0) {
   const { ready, tenantId } = useApiQueryReady();
   const role = useAuthStore((s) => s.role);
   const allowed = isAdminRole(role);
+  useAdminApiTenantSync();
 
   const query = useQuery({
     queryKey: ADMIN_MIND_WEATHER_QUERY_KEYS.cards(tenantId, page),
@@ -76,6 +78,7 @@ export function useAdminMindWeatherSummary() {
   const { ready, tenantId } = useApiQueryReady();
   const role = useAuthStore((s) => s.role);
   const allowed = isAdminRole(role);
+  useAdminApiTenantSync();
 
   const query = useQuery({
     queryKey: ADMIN_MIND_WEATHER_QUERY_KEYS.summary(tenantId),

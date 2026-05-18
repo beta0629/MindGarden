@@ -4,11 +4,14 @@
  * @author MindGarden
  * @since 2026-05-18
  */
+import { queryClient } from '@/api/queryClient';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { invalidateAdminApiQueries } from '@/utils/invalidateAdminApiQueries';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 
 export { isAdminListQueryLoading } from '@/utils/isAdminListQueryLoading';
 
 export function retryAdminApiSession(): void {
   syncTenantFromAccessToken(useAuthStore.getState().accessToken);
+  invalidateAdminApiQueries(queryClient);
 }

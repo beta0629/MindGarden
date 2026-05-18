@@ -5,6 +5,7 @@
  * @since 2026-05-16
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAdminApiTenantSync } from '@/hooks/useAdminApiTenantSync';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { canAccessCommunityModeration } from '@/utils/adminRole';
@@ -56,6 +57,7 @@ export function useAdminCommunityModerationQueue() {
   const { ready, tenantId } = useApiQueryReady({ requireUserId: false });
   const role = useAuthStore((s) => s.role);
   const allowed = canAccessCommunityModeration(role);
+  useAdminApiTenantSync();
 
   const query = useQuery({
     queryKey: ADMIN_COMMUNITY_MODERATION_QUERY_KEYS.queue(tenantId),

@@ -7,7 +7,7 @@
 import { useMemo } from 'react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
-import { extractTenantIdFromAccessToken } from '@/utils/jwtPayload';
+import { resolveEffectiveUserTenantId } from '@/utils/resolveEffectiveUserTenantId';
 import {
   resolveTenantIdFromSources,
   type ResolveTenantIdSources,
@@ -15,14 +15,13 @@ import {
 
 export type { ResolveTenantIdSources } from '@/utils/resolveTenantIdFromSources';
 export { resolveTenantIdFromSources } from '@/utils/resolveTenantIdFromSources';
+export { resolveEffectiveUserTenantId } from '@/utils/resolveEffectiveUserTenantId';
 
 /** Zustand getState() 기준 — axios 인터셉터 등 비리액티브 호출용 */
 export function resolveTenantIdForApi(): string {
   const { tenantId: headerTenantId, tenantCode, recentTenants } = useTenantStore.getState();
   const { user, accessToken } = useAuthStore.getState();
-  const fromUser = user?.tenantId?.trim() ?? '';
-  const userTenantId =
-    fromUser.length > 0 ? fromUser : extractTenantIdFromAccessToken(accessToken);
+  const userTenantId = resolveEffectiveUserTenantId(user?.tenantId, accessToken);
   return resolveTenantIdFromSources({
     headerTenantId,
     userTenantId,
@@ -40,12 +39,10 @@ export function useResolveTenantIdForApi(): string {
   const accessToken = useAuthStore((s) => s.accessToken);
 
   return useMemo(() => {
-    const fromUser = (userTenantId ?? '').trim();
-    const fromJwt =
-      fromUser.length > 0 ? fromUser : extractTenantIdFromAccessToken(accessToken);
+    const effectiveUserTenantId = resolveEffectiveUserTenantId(userTenantId, accessToken);
     return resolveTenantIdFromSources({
       headerTenantId,
-      userTenantId: fromJwt,
+      userTenantId: effectiveUserTenantId,
       tenantCode,
       recentTenants,
     });

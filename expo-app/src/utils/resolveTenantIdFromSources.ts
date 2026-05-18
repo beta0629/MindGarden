@@ -13,7 +13,8 @@ export interface ResolveTenantIdSources {
 }
 
 /**
- * 사용자 프로필·JWT → 테넌트 헤더(MMKV) → recentTenants+tenantCode 순으로 tenantId를 반환한다.
+ * `userTenantId`(상위에서 JWT·프로필 effective 값) → 테넌트 헤더(MMKV) → recentTenants+tenantCode 순.
+ * Bearer 앱은 `resolveTenantIdForApi` / `resolveEffectiveUserTenantId`가 JWT를 user보다 먼저 넣는다.
  * 없으면 빈 문자열.
  */
 export function resolveTenantIdFromSources(sources: ResolveTenantIdSources): string {

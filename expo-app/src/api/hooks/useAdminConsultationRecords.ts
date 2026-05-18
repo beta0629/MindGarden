@@ -8,6 +8,7 @@ import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { apiGet } from '../client';
 import { ADMIN_MOBILE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
+import { useAdminApiTenantSync } from '@/hooks/useAdminApiTenantSync';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isAdminRole } from '@/utils/adminRole';
@@ -147,6 +148,7 @@ export function useAdminConsultantPicker() {
   const { ready, tenantId } = useApiQueryReady();
   const role = useAuthStore((s) => s.role);
   const allowed = isAdminRole(role);
+  useAdminApiTenantSync();
 
   return useQuery({
     queryKey: ADMIN_CONSULTATION_RECORDS_QUERY_KEYS.consultants(tenantId),
@@ -171,6 +173,7 @@ export function useAdminConsultationRecordsList(
   const role = useAuthStore((s) => s.role);
   const allowed = isAdminRole(role);
   const cid = consultantId != null && consultantId > 0 ? consultantId : null;
+  useAdminApiTenantSync();
 
   return useQuery({
     queryKey:
@@ -201,6 +204,7 @@ export function useAdminConsultationRecordDetail(
   const allowed = isAdminRole(role);
   const cid = consultantId != null && consultantId > 0 ? consultantId : null;
   const rid = recordId != null && recordId > 0 ? recordId : null;
+  useAdminApiTenantSync();
 
   return useQuery({
     queryKey:

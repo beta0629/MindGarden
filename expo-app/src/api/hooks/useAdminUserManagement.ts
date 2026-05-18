@@ -5,6 +5,7 @@
  * @since 2026-05-16
  */
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
+import { useAdminApiTenantSync } from '@/hooks/useAdminApiTenantSync';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isAdminMobileShellRole } from '@/utils/adminRole';
@@ -62,6 +63,7 @@ export function useAdminUserManagement(
   const { ready, tenantId } = useApiQueryReady();
   const role = useAuthStore((s) => s.role);
   const allowed = isAdminMobileShellRole(role);
+  useAdminApiTenantSync();
 
   return useQuery<AdminManagedUserListItem[]>({
     queryKey: ADMIN_USER_MANAGEMENT_QUERY_KEYS.list(tenantId, roleFilter, includeInactive),

@@ -1,9 +1,9 @@
 # Admin 모바일 MVP — 자동 스모크 준비 (Task K / O)
 
-**실행 일시:** 2026-05-16 (로컬) · **§6 갱신:** 2026-05-18 (`develop` @ `46fe1c0be`)  
-**커밋:** 게이트 문서만 — `docs(admin-mvp): §10.7 게이트·§6 APK 스모크 준비 기록`  
+**실행 일시:** 2026-05-16 (로컬) · **§6 갱신:** 2026-05-18 (`develop` @ `d95768075`, §10.8 게이트·APK 재빌드 안내)  
+**커밋:** 게이트 문서만 — `docs(admin-mvp): §10.8 게이트·§6 d957680 APK·운영 스모크 기록`  
 **Task O (2026-05-16):** `npm run test:utils`·`tsc --noEmit` PASS; `app/(admin)` 내 `AdminMobilePlaceholderScreen` 0건  
-**JWT SSOT (2026-05-18):** `46fe1c0be` — 로그인·복구 시 JWT 역할로 admin/staff 홈 라우팅; 자동 `test:utils` **34** tests PASS
+**JWT SSOT:** `46fe1c0be` — 로그인·복구 시 JWT 역할로 admin/staff 홈 라우팅 · **운영 API (2026-05-18):** `d95768075` — 어드민 운영 탭·STAFF 일정; `test:utils` **36** tests PASS @ §10.8
 
 ## 환경
 
@@ -93,9 +93,9 @@ unzip -p expo-app/android/app/build/outputs/apk/release/app-release.apk assets/a
 
 ## 6. 빌드·재설치 — admin 로그인 후 client 셸 회귀
 
-> **증상**: ADMIN(또는 STAFF) 계정인데 로그인·복구 후 `/(client)/(home)` 등 **내담자 셸**로 진입.  
-> **원인**: JWT 라우팅 SSOT 이전에 빌드된 **구 APK** 또는 SecureStore/MMKV에 남은 **이전 역할·토큰**과 신규 `navigateAfterAuth`·`adminRole` 불일치.  
-> **기준 수정**: `develop` @ **`46fe1c0be`** (`fix(expo): 로그인·복구 시 JWT 역할로 admin/staff 홈 라우팅 SSOT`).
+> **증상**: ADMIN(또는 STAFF) 계정인데 로그인·복구 후 `/(client)/(home)` 등 **내담자 셸**로 진입. 운영·검수 탭에서 **401/빈 목록** 또는 STAFF **일정 미표시**.  
+> **원인**: JWT 라우팅 SSOT·**운영 API** 이전에 빌드된 **구 APK** (`46fe1c0be` 이하) 또는 SecureStore/MMKV·세션에 남은 **이전 역할·토큰**과 `navigateAfterAuth`·`useApiQueryReady`·백엔드 STAFF 스코프 불일치.  
+> **기준 수정**: `develop` @ **`d95768075`** (`fix(expo,backend): 어드민 운영 API ready·STAFF 일정 조회`). JWT 홈 라우팅 SSOT는 `46fe1c0be` 유지.
 
 ### 6.1 dev APK 재빌드·설치
 
@@ -110,11 +110,12 @@ npm run android:apk:install      # adb 기기 1대 — 또는 npm run android:ap
 
 ### 6.2 세션 초기화 (필수)
 
-1. 앱 **로그아웃** — admin 스택·persist 히스토리 초기화.
-2. **동일 ADMIN/STAFF 계정으로 재로그인** — JWT에서 `role`/`actorRole` 재동기화.
-3. 기대: ADMIN → `/(admin)/(home)`; STAFF → admin 셸 홈(검수 탭 없음). CONSULTANT/CLIENT 회귀는 [`ADMIN_MOBILE_MVP_TEST_PLAN.md` §5](./ADMIN_MOBILE_MVP_TEST_PLAN.md#5-회귀--상담사내담자-regression) 참고.
+1. **`d95768075` 기준 dev APK 재빌드·재설치** — §6.1 (`android:apk:dev` → `android:apk:install` 또는 `admin-mvp-smoke-prep.sh --force-install`).
+2. 앱 **로그아웃** — admin 스택·persist 히스토리·운영 API 캐시 초기화.
+3. **동일 ADMIN/STAFF 계정으로 재로그인** — JWT에서 `role`/`actorRole`·`tenantId` 재동기화.
+4. 기대: ADMIN → `/(admin)/(home)`·운영 탭(일정·기록·사용자·마음날씨) 200; STAFF → admin 셸 홈(검수 탭 없음)·**일정** 조회. CONSULTANT/CLIENT 회귀는 [`ADMIN_MOBILE_MVP_TEST_PLAN.md` §5](./ADMIN_MOBILE_MVP_TEST_PLAN.md#5-회귀--상담사내담자-regression) 참고.
 
-여전히 client 셸이면: 앱 데이터 삭제(`adb shell pm clear com.mindgardenmobile`) 후 §6.1·6.2 재실행.
+**운영·검수 화면 수정 검수 후**에도 §6.1 APK가 최신이면 **로그아웃·재로그인(2–4)** 만으로 충분. client 셸·401 지속 시 `adb shell pm clear com.mindgardenmobile` 후 §6.1·6.2 전체 재실행.
 
 ### 6.3 스모크 전 자동 게이트 (로컬)
 
@@ -122,9 +123,18 @@ npm run android:apk:install      # adb 기기 1대 — 또는 npm run android:ap
 cd expo-app && npm run test:utils && npx tsc --noEmit
 ```
 
-**2026-05-18 @ `46fe1c0be`**: 5 suites, **34** tests PASS; `tsc --noEmit` clean ([`ADMIN_MOBILE_MVP_TEST_PLAN.md` §10.7](./ADMIN_MOBILE_MVP_TEST_PLAN.md#107-admin-mvp-자동-게이트-재실행-46fe1c0be-2026-05-18)).
+**2026-05-18 @ `d95768075`**: 6 suites, **36** tests PASS; `tsc --noEmit` clean ([`ADMIN_MOBILE_MVP_TEST_PLAN.md` §10.8](./ADMIN_MOBILE_MVP_TEST_PLAN.md#108-admin-mvp-자동-게이트-d95768075-2026-05-18)).
 
-### §6 빌드 기록 (2026-05-18, JWT 라우팅 SSOT)
+### §6 빌드 기록 (2026-05-18, 운영 API @ `d95768075`)
+
+| 항목 | 값 |
+|------|-----|
+| **HEAD** | `d95768075` (`fix(expo,backend): 어드민 운영 API ready·STAFF 일정 조회`) |
+| **필수** | §6.1 `npm run android:apk:dev` → `android:apk:install` — **미실행 시 §6.2 역할·운영 스모크 무효** |
+| **embedded apiBaseUrl** | `https://dev.core-solution.co.kr` (빌드 후 `unzip -p` 확인) |
+| **검수 후** | 운영·검수 탭 반영 확인 → **로그아웃·재로그인** (§6.2) |
+
+### §6 빌드 기록 (2026-05-18, JWT 라우팅 SSOT @ `46fe1c0be`)
 
 | 항목 | 값 |
 |------|-----|
@@ -136,3 +146,24 @@ cd expo-app && npm run test:utils && npx tsc --noEmit
 | **adb 설치** | `cd expo-app && npm run android:apk:install` → `emulator-5554` **성공** |
 | **수동 설치** | `adb install -r expo-app/android/app/build/outputs/apk/release/app-release.apk` |
 | **smoke prep** | `bash expo-app/scripts/admin-mvp-smoke-prep.sh` → exit **0** (AdminRoleGate·Unable to resolve **0**) |
+
+### §6.2 실행 결과 (2026-05-18, core-tester)
+
+**기준 APK:** `46fe1c0be` 빌드 (`app-release.apk`, mtime 2026-05-18 09:19:24 KST) · **embedded apiBaseUrl:** `https://dev.core-solution.co.kr`
+
+| # | 항목 | 결과 | 일시 (KST) | 비고 |
+|---|------|------|------------|------|
+| P | `admin-mvp-smoke-prep.sh` | **pass** | 2026-05-18 | `emulator-5554` device; 설치 생략(APK mtime ≤ 캐시); logcat 필터 매칭 없음 |
+| P | `adb devices` | **pass** | 2026-05-18 | `emulator-5554` `device` |
+| P | `npm run test:utils` (§6.3) | **pass** | 2026-05-18 | 5 suites, **34** tests |
+| S | Maestro `admin-mvp-smoke.yaml` | **skip** | 2026-05-18 | Maestro skipped (no `MAESTRO_*`); CLI 미설치 |
+| S | Maestro `admin-mvp-smoke-staff.yaml` | **skip** | 2026-05-18 | 동일 |
+| M | §6.2 #1 ADMIN 로그인·홈 | **manual pending** | — | 자격 증명·Maestro 없음; 기대 홈 카피 `안녕하세요` (`ADMIN_MOBILE_HOME_COPY.GREETING`) vs client 셸 구분 미검증 |
+| M | §6.2 #2–#5 (검수·STAFF·승인/반려) | **manual pending** | — | Maestro·팀 계정 필요 |
+| M | §6.2 #6 CONSULTANT 로그인 | **manual pending** | 2026-05-18 | Maestro 플로우 없음 — `/(consultant)/(home)` 수동 |
+| M | §6.2 #7 CLIENT 로그인 | **manual pending** | 2026-05-18 | Maestro 플로우 없음 — `/(client)/(home)` 수동 |
+| P | `pm clear` + cold start | **pass** (부분) | 2026-05-18 | 테넌트 선택 화면·`개발 서버 · dev.core-solution.co.kr` 배너 확인; ADMIN 재로그인·JWT 홈 라우팅은 **미실행** |
+
+**JWT 홈 라우팅 (§6.2 #1):** `adb shell pm clear com.mindgardenmobile` 후 앱 기동 → 기관 선택 UI만 확인. ADMIN 재로그인 후 `/(admin)/(home)` vs `/(client)/(home)` 구분은 **팀 계정 또는 `MAESTRO_*` + Maestro CLI** 필요.
+
+**다음 (수동/Maestro):** `export MAESTRO_ADMIN_EMAIL` 등 설정 + [Maestro 설치](https://maestro.mobile.dev/) 후 `maestro test expo-app/.maestro/flows/admin-mvp-smoke.yaml` · STAFF는 `admin-mvp-smoke-staff.yaml`.

@@ -2,7 +2,7 @@
 
 **작성일**: 2026-05-16  
 **작성자**: core-tester  
-**상태**: Phase 2 자동 게이트 통과 (2026-05-16 Task O) — §6 APK·§2·§3 수동 대기  
+**상태**: Phase 2 자동 게이트 통과 (2026-05-16 Task O) — §6 APK prep·자동 게이트 완료 (2026-05-18); §6.2 역할 스모크·Maestro **부분 대기**  
 **기준 기획**: [`EXPO_NATIVE_APP_PLAN.md`](./EXPO_NATIVE_APP_PLAN.md) §2.4 Admin Mobile MVP  
 **API 표면**: [`BW4_COMMUNITY_API_SURFACE.md`](./BW4_COMMUNITY_API_SURFACE.md)
 
@@ -128,7 +128,7 @@ Admin MVP 머지 전·후 **필수** 스모크. 자동화는 기존 Expo 유닛 
 
 ## 6. Android Dev APK — 수동 스모크 절차
 
-> **2026-05-16 게이트**: 실기기 APK 스모크 **미실행** — *pending device* (§6.2 전항목 수동 대기).
+> **2026-05-18 게이트**: `develop` @ **`d95768075`** — 운영 API·STAFF 일정 반영 후 **dev APK 재빌드·재설치** 필수 (`npm run android:apk:dev` → `android:apk:install`). 이전 @ `46fe1c0be` APK는 prep·`pm clear`만 완료 — §6.2 #1–#7·Maestro **수동·Maestro 대기** ([`SMOKE_RUN` §6](./ADMIN_MOBILE_MVP_SMOKE_RUN.md#6-빌드재설치--admin-로그인-후-client-셸-회귀)). 운영·검수 탭 수정 검수 후 **로그아웃·재로그인** 필수.
 
 Dev API가 번들에 박힌 **release APK** 기준 ([`expo-app/scripts/build-android-apk-dev.sh`](../expo-app/scripts/build-android-apk-dev.sh)).
 
@@ -145,15 +145,17 @@ npm run android:apk:install      # adb 기기 1대 연결
 
 ### 6.2 스모크 시나리오 (기기 1대, dev 테넌트)
 
-| # | 단계 | 기대 결과 |
-|---|------|-----------|
-| 1 | ADMIN 계정 로그인 | Admin 홈, API 배너에 dev URL |
-| 2 | 검수 탭 → 대기 목록 | 200, 목록 UI (빈/있음) |
-| 3 | 항목 1건 승인 | PATCH body에 `decision:APPROVE`; 성공 토스트/목록 갱신 |
-| 4 | (선택) 반려 1건 | `decision:REJECT`; 사유 입력 UX |
-| 5 | 로그아웃 → STAFF 로그인 | 검수 탭 **없음** |
-| 6 | 로그아웃 → CONSULTANT 로그인 | `/(consultant)/(home)`, admin URL 불가 |
-| 7 | CLIENT 로그인 | 커뮤니티 피드·검수 대기 배지 기존 동작 |
+| # | 단계 | 기대 결과 | 2026-05-18 @ `46fe1c0be` |
+|---|------|-----------|---------------------------|
+| 1 | ADMIN 계정 로그인 | Admin 홈, API 배너에 dev URL | [ ] manual pending (Maestro skip: no `MAESTRO_*`) |
+| 2 | 검수 탭 → 대기 목록 | 200, 목록 UI (빈/있음) | [ ] manual pending |
+| 3 | 항목 1건 승인 | PATCH body에 `decision:APPROVE`; 성공 토스트/목록 갱신 | [ ] manual pending |
+| 4 | (선택) 반려 1건 | `decision:REJECT`; 사유 입력 UX | [ ] manual pending |
+| 5 | 로그아웃 → STAFF 로그인 | 검수 탭 **없음** | [ ] manual pending (Maestro skip) |
+| 6 | 로그아웃 → CONSULTANT 로그인 | `/(consultant)/(home)`, admin URL 불가 | [ ] manual pending (플로우 없음) |
+| 7 | CLIENT 로그인 | 커뮤니티 피드·검수 대기 배지 기존 동작 | [ ] manual pending (플로우 없음) |
+
+**§6.1 자동 prep (동일 일자):** [x] `admin-mvp-smoke-prep.sh` exit 0 · [x] `adb devices` · [x] `npm run test:utils` 34 tests · [x] `pm clear` 후 테넌트 선택·dev 배너 (ADMIN 홈 `안녕하세요` assert는 미실행)
 
 ### 6.3 실패 시 수집
 
@@ -171,7 +173,7 @@ npm run android:apk:install      # adb 기기 1대 연결
 |------|------|------|
 | Jest 유닛 (`src/utils/__tests__`) | **유지** | Admin 전용 스텁 **추가 안 함** (진행 중 `app/(admin)/` 와 충돌 방지) |
 | `@testing-library/react-native` 화면 테스트 | 없음 | — |
-| Maestro / Detox E2E | **Expo E2E TBD** | [`EXPO_NATIVE_APP_PLAN.md`](./EXPO_NATIVE_APP_PLAN.md) §3.11 `maestro` — Admin MVP Phase 2 후 `.maestro/admin-smoke.yaml` 검토 |
+| Maestro / Detox E2E | **초안 있음** (`expo-app/.maestro/flows/admin-mvp-smoke*.yaml`) | 2026-05-18 실행 **skip** — `MAESTRO_*` 미설정·CLI 미설치; [`SMOKE_RUN` §6.2](./ADMIN_MOBILE_MVP_SMOKE_RUN.md#62-실행-결과-2026-05-18-core-tester) |
 
 > **결론**: repo convention상 expo-app 통합/E2E 패턴 미성숙 → **문서·수동 게이트만**. 코더 완료 후 `core-tester`가 Maestro 시나리오 초안을 별도 태스크로 제안 가능.
 
@@ -210,7 +212,7 @@ cd expo-app && npm run test:utils
 
 - [ ] §2 역할 매트릭스·§3 라우팅·§4 API 계약 체크리스트 **전항목** 통과 (수동+자동 가능분)
 - [ ] §5 consultant/client 회귀 수동 스모크 + `test:utils` green
-- [ ] §6 Android dev APK ADMIN/STAFF/CONSULTANT/CLIENT 4역할 스모크 1회 이상
+- [ ] §6 Android dev APK ADMIN/STAFF/CONSULTANT/CLIENT 4역할 스모크 1회 이상 *(2026-05-18: prep·cold start만; #1–#7 manual/Maestro 대기)*
 - [x] §7.2 백엔드 STAFF 403·`status` 본문 400 케이스 — `BwAdminContentCommunityMvcSmokeIntegrationTest` *(2026-05-16)*
 - [ ] `core-coder` 구현 PR과 본 문서 버전·경로 링크를 PR 설명에 기재
 
@@ -255,7 +257,7 @@ cd expo-app && npm run test:utils
 ### 10.2 자동화로 닫지 않은 항목
 
 - §2.1·§3·§4.2·§5.1 수동 표 — 역할 로그인·라우팅·검수 UI·회귀 스모크
-- §6 Android dev APK — **pending device**
+- §6 Android dev APK — **prep 완료** (2026-05-18 `emulator-5554`); §6.2 #1–#7 역할 스모크 **manual/Maestro 대기**
 
 ### 10.3 Task L — §5.2 백엔드 회귀 + 재실행 (2026-05-16)
 
@@ -289,7 +291,7 @@ cd expo-app && npm run test:utils
 | 3 | grep `AdminMobilePlaceholderScreen` under `expo-app/app/(admin)` | **0건** |
 | 4 | MVP Top 8 파일 존재 | **PASS** — `(home)/index`, `(review)/index`, `(messages)/index`, `(operation)/index`, `schedule`, `records/index`, `users`, `mind-weather`, `(more)/index` |
 
-**미완 (수동)**: §2·§3 역할·라우팅, §4.2 검수 UI 시나리오, §6 APK 4역할 스모크.
+**미완 (수동)**: §2·§3 역할·라우팅, §4.2 검수 UI 시나리오, §6.2 #1–#7 (Maestro·팀 계정).
 
 ### 10.5 Local CI repro (Task AG)
 
@@ -327,7 +329,25 @@ cd expo-app && npm run test:utils
 | 3 | `mvn -q -Dtest=BwAdminContentCommunityMvcSmokeIntegrationTest test` | **0** | **PASS** — 7 tests, 0 failures (STAFF GET 403, legacy `status` PATCH 400 포함) | ~73s |
 | 4 | `mvn -q test -Dspring.profiles.active=test` *(optional)* | **0** | **PASS** — Surefire **816** run / 0 failures / 0 errors / 45 skipped | ~12.0m |
 
-**4/4 PASS** — §6 Android dev APK·4역할 스모크는 **pending device** 유지 (본 게이트에서 미실행). 수동 잔여: §2·§3 — [`ADMIN_MOBILE_MVP_SMOKE_RUN.md` §6](./ADMIN_MOBILE_MVP_SMOKE_RUN.md#6-빌드재설치--admin-로그인-후-client-셸-회귀) (구 APK·캐시된 역할 시 **APK 재설치 + 로그아웃 후 재로그인** 필수).
+**4/4 PASS** — §6 APK prep·`pm clear` cold start는 2026-05-18 [`SMOKE_RUN` §6.2](./ADMIN_MOBILE_MVP_SMOKE_RUN.md#62-실행-결과-2026-05-18-core-tester); §6.2 #1–#7·Maestro는 **manual/Maestro 대기**. 수동 잔여: §2·§3 — [`ADMIN_MOBILE_MVP_SMOKE_RUN.md` §6](./ADMIN_MOBILE_MVP_SMOKE_RUN.md#6-빌드재설치--admin-로그인-후-client-셸-회귀) (구 APK·캐시된 역할 시 **APK 재설치 + 로그아웃 후 재로그인** 필수).
+
+### 10.8 Admin MVP 자동 게이트 @ `d95768075` (2026-05-18)
+
+| 항목 | 값 |
+|------|-----|
+| **Task ID** | Admin MVP 자동 게이트 @ `d95768075` (운영 API ready·STAFF 일정) |
+| **날짜** | 2026-05-18 |
+| **브랜치** | `develop` |
+| **SHA** | `d95768075` — `fix(expo,backend): 어드민 운영 API ready·STAFF 일정 조회` |
+| **실행** | core-coder (문서 게이트; read-only 코드 변경 없음) |
+| **범위** | 어드민 운영 탭 API 연동(`useApiQueryReady`·스케줄/기록/사용자/마음날씨), 백엔드 `ScheduleServiceImpl` STAFF 일정 조회 스코프 |
+
+| # | 명령 | exit | 결과 | wall |
+|---|------|------|------|------|
+| 1 | `cd expo-app && npm run test:utils` | **0** | **PASS** — 6 suites, **36** tests (`adminRole`·`navigateAfterAuth`·`jwtPayload`·`resolveTenantIdForApi`·`communityFeedMerge`·`dateFormat`) | ~6.6s |
+| 2 | `cd expo-app && npx tsc --noEmit` | **0** | **PASS** — 타입 오류 없음 | — |
+
+**2/2 PASS** — §6 Android dev APK는 **`d95768075` 기준 재빌드·재설치 필수** ([`SMOKE_RUN` §6](./ADMIN_MOBILE_MVP_SMOKE_RUN.md#6-빌드재설치--admin-로그인-후-client-셸-회귀)·운영·검수 화면 수정 반영 후 **로그아웃·재로그인**으로 JWT·tenant 재동기화. §6.2 #1–#7·Maestro는 §10.7과 동일 **manual/Maestro 대기**.
 
 ---
 
@@ -335,6 +355,8 @@ cd expo-app && npm run test:utils
 
 | 날짜 | 변경 |
 |------|------|
+| 2026-05-18 | §10.8 — 게이트 PASS @ `d95768075` (`test:utils` 36·`tsc`); §6 APK `d957680` 재빌드·운영/검수 후 재로그인 안내 |
+| 2026-05-18 | §6.2 — emulator prep·`test:utils`·`pm clear` cold start; Maestro skip (no `MAESTRO_*`); §6.2 #1–#7 manual pending |
 | 2026-05-18 | §10.7 — Admin MVP 자동 게이트 재실행 PASS @ `46fe1c0be` (`test:utils` 34·`tsc`·BW MockMvc 7·full `mvn test` 816) |
 | 2026-05-17 | §10.6 Task AN — Full `mvn test` (`spring.profiles.active=test`) PASS @ `cb4bf8b57` |
 | 2026-05-17 | §10.5 Task AG — Local CI repro (`check-hardcoding`, expo `test:utils`+`tsc`, BW admin community MockMvc) |

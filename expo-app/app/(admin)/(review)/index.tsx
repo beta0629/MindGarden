@@ -107,8 +107,7 @@ export default function AdminCommunityModerationQueueScreen() {
   }, [queueQuery]);
 
   const handleSessionRetry = useCallback(() => {
-    retryAdminApiSession();
-    void queueQuery.refetch();
+    void retryAdminApiSession().then(() => queueQuery.refetch());
   }, [queueQuery]);
 
   const openDetail = useCallback(

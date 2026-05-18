@@ -42,8 +42,7 @@ export default function AdminScheduleLiteScreen() {
   const isRefreshing = query.isFetching && !isLoading && query.ready;
 
   const handleSessionRetry = useCallback(() => {
-    retryAdminApiSession();
-    void query.refetch();
+    void retryAdminApiSession().then(() => query.refetch());
   }, [query]);
 
   const onRefresh = useCallback(() => {

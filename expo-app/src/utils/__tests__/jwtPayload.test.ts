@@ -1,4 +1,8 @@
-import { decodeJwtPayload, parseJwtSubAsUserId } from '../jwtPayload';
+import {
+  decodeJwtPayload,
+  extractTenantIdFromAccessToken,
+  parseJwtSubAsUserId,
+} from '../jwtPayload';
 
 function fakeJwt(payload: Record<string, unknown>): string {
   const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url');
@@ -20,5 +24,10 @@ describe('jwtPayload', () => {
     const payload = decodeJwtPayload(token);
     expect(parseJwtSubAsUserId(payload)).toBe(12345);
     expect(payload?.tenantId).toBe('t-1');
+  });
+
+  it('extractTenantIdFromAccessToken coerces numeric tenantId claim', () => {
+    const token = fakeJwt({ sub: '1', tenantId: 4242 });
+    expect(extractTenantIdFromAccessToken(token)).toBe('4242');
   });
 });

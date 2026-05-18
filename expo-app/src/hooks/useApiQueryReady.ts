@@ -4,10 +4,15 @@
  * @author MindGarden
  * @since 2026-05-16
  */
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
-import { decodeJwtPayload, parseJwtSubAsUserId } from '@/utils/jwtPayload';
+import { logAdminApiReadyGate } from '@/utils/adminSessionDiag';
+import {
+  decodeJwtPayload,
+  extractTenantIdFromAccessToken,
+  parseJwtSubAsUserId,
+} from '@/utils/jwtPayload';
 import { resolveEffectiveTenantIdForApi } from '@/utils/resolveEffectiveTenantIdForApi';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 
@@ -39,8 +44,10 @@ export function useApiQueryReady(options?: UseApiQueryReadyOptions): {
 } {
   const requireUserId = options?.requireUserId !== false;
   const requireAccessToken = options?.requireAccessToken !== false;
+  const didLogNotReadyRef = useRef(false);
 
   const authIsLoading = useAuthStore((s) => s.isLoading);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const authHasHydrated = useAuthStore((s) => s._hasHydrated);
   const accessToken = useAuthStore((s) => s.accessToken);
   const storeUserId = useAuthStore((s) => s.user?.id);
@@ -99,6 +106,47 @@ export function useApiQueryReady(options?: UseApiQueryReadyOptions): {
     (!requireAccessToken || Boolean(accessToken)) &&
     Boolean(effectiveTenantId) &&
     (!requireUserId || Boolean(userId));
+
+  useEffect(() => {
+    const verbose = process.env.EXPO_PUBLIC_ADMIN_SESSION_DIAG === '1';
+    if (ready) {
+      didLogNotReadyRef.current = false;
+      return;
+    }
+    if (!verbose && didLogNotReadyRef.current) {
+      return;
+    }
+    didLogNotReadyRef.current = true;
+    logAdminApiReadyGate({
+      ready,
+      authHasHydrated,
+      authIsLoading,
+      tenantHasHydrated,
+      accessTokenPresent: Boolean(accessToken?.trim()),
+      effectiveTenantId,
+      userId,
+      requireAccessToken,
+      requireUserId,
+      isAuthenticated,
+      headerTenantId: headerTenantId ?? undefined,
+      userTenantId,
+      jwtTenantPresent: Boolean(extractTenantIdFromAccessToken(accessToken)),
+      source: 'useApiQueryReady',
+    });
+  }, [
+    ready,
+    authHasHydrated,
+    authIsLoading,
+    tenantHasHydrated,
+    accessToken,
+    effectiveTenantId,
+    userId,
+    requireAccessToken,
+    requireUserId,
+    isAuthenticated,
+    headerTenantId,
+    userTenantId,
+  ]);
 
   return { ready, tenantId: effectiveTenantId, userId, accessToken };
 }

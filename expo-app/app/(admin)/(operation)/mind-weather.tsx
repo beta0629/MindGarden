@@ -112,8 +112,9 @@ export default function AdminMindWeatherObservabilityScreen() {
   }, [summaryQuery, cardsQuery]);
 
   const handleSessionRetry = useCallback(() => {
-    retryAdminApiSession();
-    void Promise.all([summaryQuery.refetch(), cardsQuery.refetch()]);
+    void retryAdminApiSession().then(() =>
+      Promise.all([summaryQuery.refetch(), cardsQuery.refetch()]),
+    );
   }, [summaryQuery, cardsQuery]);
 
   const renderCardRow = useCallback(

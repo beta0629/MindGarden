@@ -68,58 +68,71 @@ let authRestoreTokens: (() => Promise<void>) | null = null;
 async function runRestoreTokensFromSecureStore(
   set: AuthSetState,
 ): Promise<void> {
-  const accessToken = await SecureStore.getItemAsync(SECURE_KEY_ACCESS_TOKEN);
-  const refreshToken = await SecureStore.getItemAsync(SECURE_KEY_REFRESH_TOKEN);
-  if (accessToken && refreshToken) {
-    const jwtTenantId = syncTenantStoreFromAccessToken(accessToken);
-    const jwtPayload = decodeJwtPayload(accessToken);
-    const roleFromJwt = resolveStoreRoleFromAccessToken(accessToken);
-    await hydrateJsessionCacheFromSecureStore();
-    set((state) => {
-      const role = roleFromJwt ?? state.role;
-      let user = state.user;
-      const jwtUserId = parseJwtSubAsUserId(jwtPayload);
-      if (user != null && role != null) {
-        user = {
-          ...user,
-          role,
-          ...(jwtTenantId ? { tenantId: jwtTenantId } : {}),
-          ...((!Number.isFinite(user.id) || user.id <= 0) && jwtUserId != null
-            ? { id: jwtUserId }
-            : {}),
-        };
-      } else if (user == null && role != null) {
-        if (jwtUserId != null) {
+  try {
+    const accessToken = await SecureStore.getItemAsync(SECURE_KEY_ACCESS_TOKEN);
+    const refreshToken = await SecureStore.getItemAsync(SECURE_KEY_REFRESH_TOKEN);
+    if (accessToken && refreshToken) {
+      const jwtTenantId = syncTenantStoreFromAccessToken(accessToken);
+      const jwtPayload = decodeJwtPayload(accessToken);
+      const roleFromJwt = resolveStoreRoleFromAccessToken(accessToken);
+      await hydrateJsessionCacheFromSecureStore();
+      set((state) => {
+        const role = roleFromJwt ?? state.role;
+        let user = state.user;
+        const jwtUserId = parseJwtSubAsUserId(jwtPayload);
+        if (user != null && role != null) {
           user = {
-            id: jwtUserId,
-            email: '',
-            name: '',
+            ...user,
             role,
             ...(jwtTenantId ? { tenantId: jwtTenantId } : {}),
+            ...((!Number.isFinite(user.id) || user.id <= 0) && jwtUserId != null
+              ? { id: jwtUserId }
+              : {}),
           };
+        } else if (user == null && role != null) {
+          if (jwtUserId != null) {
+            user = {
+              id: jwtUserId,
+              email: '',
+              name: '',
+              role,
+              ...(jwtTenantId ? { tenantId: jwtTenantId } : {}),
+            };
+          }
+        } else if (user != null && jwtTenantId) {
+          user = { ...user, tenantId: jwtTenantId };
         }
-      } else if (user != null && jwtTenantId) {
-        user = { ...user, tenantId: jwtTenantId };
-      }
-      return {
-        accessToken,
-        refreshToken,
-        isAuthenticated: true,
-        isLoading: false,
-        _hasHydrated: true,
-        role,
-        user,
-      };
+        return {
+          accessToken,
+          refreshToken,
+          isAuthenticated: true,
+          isLoading: false,
+          _hasHydrated: true,
+          role,
+          user,
+        };
+      });
+      return;
+    }
+    set({
+      accessToken: null,
+      refreshToken: null,
+      isAuthenticated: false,
+      isLoading: false,
+      _hasHydrated: true,
     });
-    return;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    // eslint-disable-next-line no-console -- SecureStore 복구 실패 진단(토큰 미포함)
+    console.warn('[Auth] restoreTokens failed', message);
+    set({
+      accessToken: null,
+      refreshToken: null,
+      isAuthenticated: false,
+      isLoading: false,
+      _hasHydrated: true,
+    });
   }
-  set({
-    accessToken: null,
-    refreshToken: null,
-    isAuthenticated: false,
-    isLoading: false,
-    _hasHydrated: true,
-  });
 }
 
 export const useAuthStore = create<AuthState>()(

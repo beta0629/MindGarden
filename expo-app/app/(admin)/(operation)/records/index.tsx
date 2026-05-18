@@ -158,9 +158,10 @@ export default function AdminConsultationRecordsLiteScreen() {
   }, [consultantsQuery, recordsQuery, selectedConsultant]);
 
   const handleSessionRetry = useCallback(() => {
-    retryAdminApiSession();
-    void consultantsQuery.refetch();
-    void recordsQuery.refetch();
+    void retryAdminApiSession().then(() => {
+      void consultantsQuery.refetch();
+      void recordsQuery.refetch();
+    });
   }, [consultantsQuery, recordsQuery]);
 
   const handleSelectConsultant = useCallback((item: AdminConsultantPickerItem) => {

@@ -132,8 +132,7 @@ export default function AdminUsersScreen() {
   }, [listQuery]);
 
   const handleSessionRetry = useCallback(() => {
-    retryAdminApiSession();
-    void listQuery.refetch();
+    void retryAdminApiSession().then(() => listQuery.refetch());
   }, [listQuery]);
 
   const openDetail = useCallback((user: AdminManagedUserListItem) => {

@@ -138,8 +138,7 @@ export default function AdminCommunityModerationDetailScreen() {
   }, []);
 
   const handleSessionRetry = useCallback(() => {
-    retryAdminApiSession();
-    void queueQuery.refetch();
+    void retryAdminApiSession().then(() => queueQuery.refetch());
   }, [queueQuery]);
 
   const handleConfirmPatch = useCallback(async () => {

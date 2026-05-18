@@ -10,6 +10,7 @@ cd "$ROOT_DIR"
 
 export EXPO_USE_DEV_CLIENT=0
 export EXPO_PUBLIC_API_BASE_URL=https://dev.core-solution.co.kr
+export EXPO_PUBLIC_ADMIN_SESSION_DIAG=1
 export APP_ENV=development
 
 echo "======================================"

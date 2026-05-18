@@ -55,7 +55,13 @@ export function extractTenantIdFromAccessToken(accessToken: string | null | unde
   }
   const payload = decodeJwtPayload(accessToken);
   const tid = payload?.tenantId;
-  return typeof tid === 'string' ? tid.trim() : '';
+  if (typeof tid === 'string') {
+    return tid.trim();
+  }
+  if (typeof tid === 'number' && Number.isFinite(tid)) {
+    return String(Math.trunc(tid));
+  }
+  return '';
 }
 
 export function parseJwtSubAsUserId(payload: Record<string, unknown> | null): number | null {

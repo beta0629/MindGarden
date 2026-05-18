@@ -1,8 +1,9 @@
 # Admin 모바일 MVP — 자동 스모크 준비 (Task K / O)
 
-**실행 일시:** 2026-05-16 (로컬)  
-**커밋:** 없음 (준비 기록만)  
-**Task O (2026-05-16):** `npm run test:utils`·`tsc --noEmit` PASS; `app/(admin)` 내 `AdminMobilePlaceholderScreen` 0건
+**실행 일시:** 2026-05-16 (로컬) · **§6 갱신:** 2026-05-18 (`develop` @ `46fe1c0be`)  
+**커밋:** 게이트 문서만 — `docs(admin-mvp): §10.7 게이트·§6 APK 스모크 준비 기록`  
+**Task O (2026-05-16):** `npm run test:utils`·`tsc --noEmit` PASS; `app/(admin)` 내 `AdminMobilePlaceholderScreen` 0건  
+**JWT SSOT (2026-05-18):** `46fe1c0be` — 로그인·복구 시 JWT 역할로 admin/staff 홈 라우팅; 자동 `test:utils` **34** tests PASS
 
 ## 환경
 
@@ -80,3 +81,45 @@ unzip -p expo-app/android/app/build/outputs/apk/release/app-release.apk assets/a
 - **logcat (5s, ReactNativeJS|error|AdminRoleGate|Unable to resolve)**: **E 2** (TaskPersister, chromium WebView); AdminRoleGate·Unable to resolve **0**
 - **RN 주의**: `(messages)` 라우트 경고 1건; `expo-background-fetch` deprecation 경고
 - **prep 결과**: exit 0 — 수동 스모크 체크리스트는 스크립트 출력 기준
+
+## Post-CI smoke prep (Task AP)
+
+- **일시**: 2026-05-17 (`admin-mvp-smoke-prep.sh --force-install`)
+- **prep exit**: **1** — `adb devices`에 `device` 없음, 설치·logcat 미실행
+- **adb device**: *(none)*
+- **apiBaseUrl (로컬 release APK `assets/app.config`)**: `https://dev.core-solution.co.kr`
+- **logcat (error|AdminRoleGate|Unable to resolve)**: **N/A** (기기 없어 수집 안 함)
+- **다음**: 에뮬레이터/실기기 연결 후 동일 스크립트 재실행
+
+## 6. 빌드·재설치 — admin 로그인 후 client 셸 회귀
+
+> **증상**: ADMIN(또는 STAFF) 계정인데 로그인·복구 후 `/(client)/(home)` 등 **내담자 셸**로 진입.  
+> **원인**: JWT 라우팅 SSOT 이전에 빌드된 **구 APK** 또는 SecureStore/MMKV에 남은 **이전 역할·토큰**과 신규 `navigateAfterAuth`·`adminRole` 불일치.  
+> **기준 수정**: `develop` @ **`46fe1c0be`** (`fix(expo): 로그인·복구 시 JWT 역할로 admin/staff 홈 라우팅 SSOT`).
+
+### 6.1 dev APK 재빌드·설치
+
+```bash
+cd expo-app
+npm run android:apk:dev          # EXPO_PUBLIC_API_BASE_URL=https://dev.core-solution.co.kr
+npm run android:apk:install      # adb 기기 1대 — 또는 npm run android:apk:dev:install
+# 일괄 준비(선택): ./scripts/admin-mvp-smoke-prep.sh --force-install
+```
+
+설치 후 `assets/app.config`의 `extra.apiBaseUrl`이 `https://dev.core-solution.co.kr` 인지 확인 ([§환경](#환경) `unzip -p` 명령 참고).
+
+### 6.2 세션 초기화 (필수)
+
+1. 앱 **로그아웃** — admin 스택·persist 히스토리 초기화.
+2. **동일 ADMIN/STAFF 계정으로 재로그인** — JWT에서 `role`/`actorRole` 재동기화.
+3. 기대: ADMIN → `/(admin)/(home)`; STAFF → admin 셸 홈(검수 탭 없음). CONSULTANT/CLIENT 회귀는 [`ADMIN_MOBILE_MVP_TEST_PLAN.md` §5](./ADMIN_MOBILE_MVP_TEST_PLAN.md#5-회귀--상담사내담자-regression) 참고.
+
+여전히 client 셸이면: 앱 데이터 삭제(`adb shell pm clear com.mindgardenmobile`) 후 §6.1·6.2 재실행.
+
+### 6.3 스모크 전 자동 게이트 (로컬)
+
+```bash
+cd expo-app && npm run test:utils && npx tsc --noEmit
+```
+
+**2026-05-18 @ `46fe1c0be`**: 5 suites, **34** tests PASS; `tsc --noEmit` clean ([`ADMIN_MOBILE_MVP_TEST_PLAN.md` §10.7](./ADMIN_MOBILE_MVP_TEST_PLAN.md#107-develop-46fe1c0be--jwt-라우팅-ssot-게이트-2026-05-18)).

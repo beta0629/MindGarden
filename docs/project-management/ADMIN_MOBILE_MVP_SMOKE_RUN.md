@@ -122,4 +122,17 @@ npm run android:apk:install      # adb 기기 1대 — 또는 npm run android:ap
 cd expo-app && npm run test:utils && npx tsc --noEmit
 ```
 
-**2026-05-18 @ `46fe1c0be`**: 5 suites, **34** tests PASS; `tsc --noEmit` clean ([`ADMIN_MOBILE_MVP_TEST_PLAN.md` §10.7](./ADMIN_MOBILE_MVP_TEST_PLAN.md#107-develop-46fe1c0be--jwt-라우팅-ssot-게이트-2026-05-18)).
+**2026-05-18 @ `46fe1c0be`**: 5 suites, **34** tests PASS; `tsc --noEmit` clean ([`ADMIN_MOBILE_MVP_TEST_PLAN.md` §10.7](./ADMIN_MOBILE_MVP_TEST_PLAN.md#107-admin-mvp-자동-게이트-재실행-46fe1c0be-2026-05-18)).
+
+### §6 빌드 기록 (2026-05-18, JWT 라우팅 SSOT)
+
+| 항목 | 값 |
+|------|-----|
+| **HEAD** | `46fe1c0be` (`fix(expo): 로그인·복구 시 JWT 역할로 admin/staff 홈 라우팅 SSOT`) |
+| **명령** | `cd expo-app && npm run android:apk:dev` → **성공** (Gradle `assembleRelease` 4m 14s) |
+| **APK** | `expo-app/android/app/build/outputs/apk/release/app-release.apk` (`app-release.apk`, ~132MB) |
+| **빌드 시각** | 2026-05-18 09:19:24 KST |
+| **embedded apiBaseUrl** | `https://dev.core-solution.co.kr` |
+| **adb 설치** | `cd expo-app && npm run android:apk:install` → `emulator-5554` **성공** |
+| **수동 설치** | `adb install -r expo-app/android/app/build/outputs/apk/release/app-release.apk` |
+| **smoke prep** | `bash expo-app/scripts/admin-mvp-smoke-prep.sh` → exit **0** (AdminRoleGate·Unable to resolve **0**) |

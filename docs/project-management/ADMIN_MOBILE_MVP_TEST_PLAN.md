@@ -309,21 +309,25 @@ cd expo-app && npm run test:utils
 
 **PASS** — `mvn -q test -Dspring.profiles.active=test` exit 0, ~11.2m wall; Surefire 816 run / 0 failures / 0 errors / 45 skipped (179 classes; includes `PlSqlSalaryManagementServiceImplSpecialSupportBranchTest`, `BwAdminContentCommunityMvcSmokeIntegrationTest`, `ConsultantSessionStatisticsControllerIntegrationTest`, `MindWeatherControllerInboxIntegrationTest`).
 
-### 10.7 develop @ `46fe1c0be` — JWT 라우팅 SSOT 게이트 (2026-05-18)
+### 10.7 Admin MVP 자동 게이트 재실행 @ `46fe1c0be` (2026-05-18)
 
 | 항목 | 값 |
 |------|-----|
+| **Task ID** | Admin MVP 자동 게이트 재실행 @ `46fe1c0be` |
 | **날짜** | 2026-05-18 |
-| **기준 커밋** | `46fe1c0be` — `fix(expo): 로그인·복구 시 JWT 역할로 admin/staff 홈 라우팅 SSOT` |
-| **범위** | `AuthService`·`useAuthStore`·`adminRole`·`navigateAfterAuth` — 로그인·세션 복구 시 JWT `role`/`actorRole`로 `/(admin)/(home)`·`/(staff)/(home)` 분기 SSOT |
-| **실행** | core-coder (Admin MVP 게이트 문서·로컬 자동 재확인) |
+| **브랜치** | `develop` |
+| **SHA** | `46fe1c0be` — `fix(expo): 로그인·복구 시 JWT 역할로 admin/staff 홈 라우팅 SSOT` |
+| **실행** | core-tester (read-only; 프로덕션·Expo 코드 변경 없음) |
+| **환경** | macOS, 시스템 `mvn`, `expo-app` Jest (`jest.config.cjs`) |
 
-| # | 명령 | 결과 |
-|---|------|------|
-| 1 | `cd expo-app && npm run test:utils` | **PASS** — 5 suites, **34** tests (~3.8s); `adminRole`·`navigateAfterAuth`·`resolveTenantIdForApi`·`communityFeedMerge`·`dateFormat` |
-| 2 | `cd expo-app && npx tsc --noEmit` | **PASS** |
+| # | 명령 | exit | 결과 | wall |
+|---|------|------|------|------|
+| 1 | `cd expo-app && npm run test:utils` | **0** | **PASS** — 5 suites, **34** tests (`adminRole`·`navigateAfterAuth`·`resolveTenantIdForApi`·`communityFeedMerge`·`dateFormat`) | ~5.4s |
+| 2 | `cd expo-app && npx tsc --noEmit` | **0** | **PASS** — 타입 오류 없음 | ~4.7s |
+| 3 | `mvn -q -Dtest=BwAdminContentCommunityMvcSmokeIntegrationTest test` | **0** | **PASS** — 7 tests, 0 failures (STAFF GET 403, legacy `status` PATCH 400 포함) | ~73s |
+| 4 | `mvn -q test -Dspring.profiles.active=test` *(optional)* | **0** | **PASS** — Surefire **816** run / 0 failures / 0 errors / 45 skipped | ~12.0m |
 
-**수동 잔여**: §2·§3 역할·라우팅, §6 APK 4역할 스모크 — [`ADMIN_MOBILE_MVP_SMOKE_RUN.md` §6](./ADMIN_MOBILE_MVP_SMOKE_RUN.md#6-빌드재설치--admin-로그인-후-client-셸-회귀) (구 APK·캐시된 역할 시 **APK 재설치 + 로그아웃 후 재로그인** 필수).
+**4/4 PASS** — §6 Android dev APK·4역할 스모크는 **pending device** 유지 (본 게이트에서 미실행). 수동 잔여: §2·§3 — [`ADMIN_MOBILE_MVP_SMOKE_RUN.md` §6](./ADMIN_MOBILE_MVP_SMOKE_RUN.md#6-빌드재설치--admin-로그인-후-client-셸-회귀) (구 APK·캐시된 역할 시 **APK 재설치 + 로그아웃 후 재로그인** 필수).
 
 ---
 
@@ -331,7 +335,7 @@ cd expo-app && npm run test:utils
 
 | 날짜 | 변경 |
 |------|------|
-| 2026-05-18 | §10.7 — `develop` @ `46fe1c0be` JWT 라우팅 SSOT; `test:utils` 34 tests·`tsc --noEmit` PASS |
+| 2026-05-18 | §10.7 — Admin MVP 자동 게이트 재실행 PASS @ `46fe1c0be` (`test:utils` 34·`tsc`·BW MockMvc 7·full `mvn test` 816) |
 | 2026-05-17 | §10.6 Task AN — Full `mvn test` (`spring.profiles.active=test`) PASS @ `cb4bf8b57` |
 | 2026-05-17 | §10.5 Task AG — Local CI repro (`check-hardcoding`, expo `test:utils`+`tsc`, BW admin community MockMvc) |
 | 2026-05-16 | §8.1·§10.4 Task O — Phase 2 Top 8 인벤토리, `test:utils`·`tsc --noEmit`·placeholder grep |

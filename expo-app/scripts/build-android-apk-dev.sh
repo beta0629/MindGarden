@@ -13,9 +13,22 @@ export EXPO_PUBLIC_API_BASE_URL=https://dev.core-solution.co.kr
 export EXPO_PUBLIC_ADMIN_SESSION_DIAG=1
 export APP_ENV=development
 
+# EAS projectId — env 가 있을 때만 prebuild·app.config 에 전달 (없으면 app.config 폴백)
+if [[ -n "${EAS_PROJECT_ID:-}" ]]; then
+  export EXPO_PUBLIC_EAS_PROJECT_ID="${EXPO_PUBLIC_EAS_PROJECT_ID:-$EAS_PROJECT_ID}"
+fi
+if [[ -n "${EXPO_PUBLIC_EAS_PROJECT_ID:-}" ]]; then
+  export EAS_PROJECT_ID="${EAS_PROJECT_ID:-$EXPO_PUBLIC_EAS_PROJECT_ID}"
+fi
+
 echo "======================================"
 echo "  MindGarden Android APK (DEV API)"
 echo "  EXPO_PUBLIC_API_BASE_URL=${EXPO_PUBLIC_API_BASE_URL}"
+if [[ -n "${EAS_PROJECT_ID:-}" ]]; then
+  echo "  EAS_PROJECT_ID=(set)"
+else
+  echo "  EAS_PROJECT_ID=(unset — Expo push token may fail on device)"
+fi
 echo "======================================"
 echo ""
 

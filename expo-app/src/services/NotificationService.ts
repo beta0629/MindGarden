@@ -43,6 +43,18 @@ import {
 } from '@/utils/adminRole';
 import { requestOsNotificationPermission } from '@/utils/notificationPermissionFlow';
 
+/** __DEV__ 로그용 — 토큰 원문·길이 노출 금지 */
+function maskPushTokenForDevLog(token: string): string {
+  const t = token.trim();
+  if (!t) {
+    return '(empty)';
+  }
+  if (t.length <= 12) {
+    return '***';
+  }
+  return `${t.slice(0, 8)}…`;
+}
+
 /**
  * 푸시 백엔드 계약(프론트·Expo 공통, 웹 `PushNotificationService` 동일 경로):
  * - `POST /api/v1/mobile/push-token/register` · `POST .../unregister` — 바디에 tenantId 포함(멀티테넌트).
@@ -294,22 +306,43 @@ export const NotificationService = {
    * 서버에는 `resolveBackendPushToken` 결과(통상 `ExponentPushToken[...]`, 폴백 시 네이티브 디바이스 토큰)가 저장된다.
    */
   async registerToken(): Promise<boolean> {
+    let resolvedToken: string | null = null;
+    const logDevFailure = (reason: string) => {
+      if (!__DEV__) {
+        return;
+      }
+      const payload: { reason: string; token?: string } = { reason };
+      if (resolvedToken) {
+        payload.token = maskPushTokenForDevLog(resolvedToken);
+      }
+      console.warn('[NotificationService] registerToken failed', payload);
+    };
+
     try {
       const hasPermission = await this.requestPermission();
-      if (!hasPermission) return false;
+      if (!hasPermission) {
+        logDevFailure('notification_permission_denied');
+        return false;
+      }
 
-      const token = await this.resolveBackendPushToken();
-      if (!token) return false;
+      resolvedToken = await this.resolveBackendPushToken();
+      if (!resolvedToken) {
+        logDevFailure('push_token_unavailable');
+        return false;
+      }
 
       const { user } = useAuthStore.getState();
       const { tenantId } = useTenantStore.getState();
 
-      if (!user?.id || !tenantId) return false;
+      if (!user?.id || !tenantId) {
+        logDevFailure('auth_or_tenant_missing');
+        return false;
+      }
 
       await apiPost(PUSH_API.REGISTER_TOKEN, {
         userId: user.id,
         tenantId,
-        token,
+        token: resolvedToken,
         platform: Platform.OS,
         deviceInfo: {
           brand: Device.brand,
@@ -320,7 +353,10 @@ export const NotificationService = {
       });
 
       return true;
-    } catch {
+    } catch (err) {
+      const reason =
+        err instanceof Error ? err.message : 'register_api_error';
+      logDevFailure(reason);
       return false;
     }
   },

@@ -12,6 +12,7 @@ import { useAdminApiTenantSync } from '@/hooks/useAdminApiTenantSync';
 import { useAdminApiQueryReady } from '@/hooks/useAdminApiQueryReady';
 import { isAdminMobileShellRole } from '@/utils/adminRole';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { resolveClientNameForScheduleRow } from '@/utils/scheduleDisplayLabels';
 import {
   buildOccupiedRangesFromSchedules,
   normalizeScheduleTimeForSlot,
@@ -30,6 +31,8 @@ export const CONSULTANT_SCHEDULES_BY_DATE_QUERY_KEYS = {
 
 export type ConsultantScheduleByDateItem = {
   readonly id: number;
+  readonly clientId: number;
+  readonly clientName: string;
   readonly startTime: string;
   readonly endTime: string;
   readonly status: string | null;
@@ -62,6 +65,11 @@ export function parseConsultantSchedulesByDateResponse(raw: unknown): Consultant
       }
       const r = row as Record<string, unknown>;
       const id = Number(r.id);
+      const clientId = Number(r.clientId ?? 0);
+      const clientName = resolveClientNameForScheduleRow(
+        r,
+        Number.isFinite(clientId) ? clientId : 0,
+      );
       const startTime = normalizeScheduleTimeForSlot(r.startTime);
       const endTime = normalizeScheduleTimeForSlot(r.endTime);
       if (!startTime || !endTime) {
@@ -82,6 +90,8 @@ export function parseConsultantSchedulesByDateResponse(raw: unknown): Consultant
             });
       return {
         id: Number.isFinite(id) ? id : 0,
+        clientId: Number.isFinite(clientId) ? clientId : 0,
+        clientName,
         startTime,
         endTime,
         status,

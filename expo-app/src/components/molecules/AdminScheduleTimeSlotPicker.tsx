@@ -9,17 +9,14 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { useTheme } from '@/theme';
 import { TimeSlotChip } from '@/components/molecules/TimeSlotChip';
 import { EmptyState } from '@/components/atoms/EmptyState';
-import {
-  occupiedRangesFromConsultantSchedules,
-  useConsultantSchedulesByDate,
-} from '@/api/hooks/useConsultantSchedulesByDate';
+import type { ConsultantScheduleByDateItem } from '@/api/hooks/useConsultantSchedulesByDate';
+import { occupiedRangesFromConsultantSchedules } from '@/api/hooks/useConsultantSchedulesByDate';
 import { ADMIN_SCHEDULE_REGISTER_COPY } from '@/constants/adminScheduleRegisterCopy';
 import { computeEndTimeFromDuration } from '@/utils/adminScheduleCreateBody';
 import {
   buildAdminScheduleSlotAvailabilities,
   validateAdminScheduleTimeSelection,
 } from '@/utils/scheduleTimeSlotConflict';
-import { toDisplayString } from '@/utils/safeDisplay';
 
 export type AdminScheduleTimeSlotPickerProps = {
   readonly consultantId: number | null;
@@ -27,6 +24,10 @@ export type AdminScheduleTimeSlotPickerProps = {
   readonly durationMinutes: number;
   readonly selectedStartTime: string | null;
   readonly onSelectStartTime: (startTime: string, endTime: string) => void;
+  readonly schedules: readonly ConsultantScheduleByDateItem[];
+  readonly schedulesLoading: boolean;
+  readonly schedulesError: boolean;
+  readonly onSchedulesRetry: () => void;
 };
 
 export function AdminScheduleTimeSlotPicker({
@@ -35,26 +36,22 @@ export function AdminScheduleTimeSlotPicker({
   durationMinutes,
   selectedStartTime,
   onSelectStartTime,
+  schedules,
+  schedulesLoading,
+  schedulesError,
+  onSchedulesRetry,
 }: AdminScheduleTimeSlotPickerProps) {
   const theme = useTheme();
-  const schedulesQuery = useConsultantSchedulesByDate(consultantId, dateYmd);
 
   const occupiedRanges = useMemo(
-    () => occupiedRangesFromConsultantSchedules(schedulesQuery.data ?? []),
-    [schedulesQuery.data],
+    () => occupiedRangesFromConsultantSchedules(schedules),
+    [schedules],
   );
 
   const slotAvailabilities = useMemo(
     () => buildAdminScheduleSlotAvailabilities(dateYmd, durationMinutes, occupiedRanges),
     [dateYmd, durationMinutes, occupiedRanges],
   );
-
-  const computedEndTime = useMemo(() => {
-    if (!selectedStartTime) {
-      return null;
-    }
-    return computeEndTimeFromDuration(selectedStartTime, durationMinutes);
-  }, [durationMinutes, selectedStartTime]);
 
   const availableCount = slotAvailabilities.filter((s) => s.isAvailable).length;
 
@@ -79,7 +76,7 @@ export function AdminScheduleTimeSlotPicker({
     );
   }
 
-  if (schedulesQuery.isLoading) {
+  if (schedulesLoading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator color={theme.colors.primary} />
@@ -97,7 +94,7 @@ export function AdminScheduleTimeSlotPicker({
     );
   }
 
-  if (schedulesQuery.isError) {
+  if (schedulesError) {
     return (
       <View style={styles.centered}>
         <Text
@@ -111,7 +108,7 @@ export function AdminScheduleTimeSlotPicker({
           {ADMIN_SCHEDULE_REGISTER_COPY.SLOTS_ERROR}
         </Text>
         <Pressable
-          onPress={() => void schedulesQuery.refetch()}
+          onPress={onSchedulesRetry}
           style={[styles.retryBtn, { borderColor: theme.colors.primary }]}
         >
           <Text style={{ color: theme.colors.primary, fontFamily: theme.fontFamily.medium }}>
@@ -119,15 +116,6 @@ export function AdminScheduleTimeSlotPicker({
           </Text>
         </Pressable>
       </View>
-    );
-  }
-
-  if (availableCount === 0) {
-    return (
-      <EmptyState
-        title={ADMIN_SCHEDULE_REGISTER_COPY.SLOTS_EMPTY}
-        description={ADMIN_SCHEDULE_REGISTER_COPY.SLOT_BOOKED}
-      />
     );
   }
 
@@ -146,6 +134,18 @@ export function AdminScheduleTimeSlotPicker({
           {ADMIN_SCHEDULE_REGISTER_COPY.SLOT_PAST}
         </Text>
       </View>
+      {availableCount === 0 ? (
+        <Text
+          style={{
+            marginBottom: theme.spacing.sm,
+            color: theme.colors.textTertiary,
+            fontFamily: theme.fontFamily.regular,
+            fontSize: theme.fontSize.sm,
+          }}
+        >
+          {ADMIN_SCHEDULE_REGISTER_COPY.SLOTS_EMPTY}
+        </Text>
+      ) : null}
       <View style={styles.slotGrid}>
         {slotAvailabilities.map((slot) => (
           <View key={slot.startTime} style={styles.slotCell}>
@@ -158,19 +158,6 @@ export function AdminScheduleTimeSlotPicker({
           </View>
         ))}
       </View>
-      {selectedStartTime && computedEndTime ? (
-        <Text
-          style={{
-            marginTop: theme.spacing.md,
-            color: theme.colors.textMain,
-            fontFamily: theme.fontFamily.medium,
-            fontSize: theme.fontSize.sm,
-          }}
-        >
-          {ADMIN_SCHEDULE_REGISTER_COPY.LABEL_SELECTED_END}:{' '}
-          {toDisplayString(computedEndTime, '—')}
-        </Text>
-      ) : null}
     </View>
   );
 }

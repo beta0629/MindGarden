@@ -56,11 +56,14 @@ import {
   computeEndTimeFromDuration,
   resolveDurationMinutes,
 } from '@/utils/adminScheduleCreateBody';
+import { AdminConsultantDayScheduleList } from '@/components/molecules/AdminConsultantDayScheduleList';
+import { AdminScheduleSelectionSummary } from '@/components/molecules/AdminScheduleSelectionSummary';
 import { AdminScheduleTimeSlotPicker } from '@/components/molecules/AdminScheduleTimeSlotPicker';
 import {
   occupiedRangesFromConsultantSchedules,
   useConsultantSchedulesByDate,
 } from '@/api/hooks/useConsultantSchedulesByDate';
+import { normalizeConsultantDaySchedulesFromItems } from '@/utils/adminConsultantDayScheduleNormalize';
 import { validateAdminScheduleTimeSelection } from '@/utils/scheduleTimeSlotConflict';
 import { toDisplayString } from '@/utils/safeDisplay';
 
@@ -156,6 +159,11 @@ export default function AdminScheduleCreateScreen() {
   });
   const occupiedRanges = useMemo(
     () => occupiedRangesFromConsultantSchedules(existingSchedulesQuery.data ?? []),
+    [existingSchedulesQuery.data],
+  );
+
+  const daySchedules = useMemo(
+    () => normalizeConsultantDaySchedulesFromItems(existingSchedulesQuery.data ?? []),
     [existingSchedulesQuery.data],
   );
 
@@ -548,6 +556,12 @@ export default function AdminScheduleCreateScreen() {
                   <ChevronRight size={20} color={theme.colors.textSecondary} />
                 </Pressable>
               </View>
+              <AdminConsultantDayScheduleList
+                schedules={daySchedules}
+                isLoading={existingSchedulesQuery.isLoading}
+                isError={existingSchedulesQuery.isError}
+                onRetry={() => void existingSchedulesQuery.refetch()}
+              />
               <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary, marginTop: 16 }]}>
                 {ADMIN_SCHEDULE_REGISTER_COPY.LABEL_DURATION}
               </Text>
@@ -587,7 +601,12 @@ export default function AdminScheduleCreateScreen() {
                   setStartTime(start);
                   setEndTime(end);
                 }}
+                schedules={existingSchedulesQuery.data ?? []}
+                schedulesLoading={existingSchedulesQuery.isLoading}
+                schedulesError={existingSchedulesQuery.isError}
+                onSchedulesRetry={() => void existingSchedulesQuery.refetch()}
               />
+              <AdminScheduleSelectionSummary startTime={startTime} endTime={endTime} />
             </>
           ) : null}
 

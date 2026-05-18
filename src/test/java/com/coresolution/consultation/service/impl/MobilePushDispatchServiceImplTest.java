@@ -67,6 +67,24 @@ class MobilePushDispatchServiceImplTest {
     private MobilePushDispatchServiceImpl mobilePushDispatchService;
 
     @Test
+    @DisplayName("Expo access token 미설정이면 토큰 조회·멱등·Expo POST를 하지 않는다")
+    void skipsExpoWhenAccessTokenMissing() {
+        when(expoPushProperties.getAccessToken()).thenReturn("");
+
+        Payment payment = new Payment();
+        payment.setTenantId("tenant-a");
+        payment.setPayerId(77L);
+        payment.setPaymentId("pay-" + UUID.randomUUID());
+
+        mobilePushDispatchService.dispatchPaymentCompleted("tenant-a", payment);
+
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(anyString(),
+                anyList());
+        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+    }
+
+    @Test
     @DisplayName("schedule 카테고리 off면 Expo·멱등·토큰 조회를 하지 않는다")
     void skipsExpoWhenScheduleCategoryDisabled() {
         when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");

@@ -229,6 +229,54 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
                 data, String.valueOf(cardId), "shared");
     }
 
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void dispatchMappingSettlement(
+            String tenantId,
+            Long mappingId,
+            Long clientUserId,
+            Long consultantUserId,
+            boolean includeConsultant,
+            String canonicalType,
+            String dedupeBucket,
+            String title,
+            String clientBody,
+            String consultantBody) {
+        if (mappingId == null || clientUserId == null) {
+            return;
+        }
+        String tid = requireTenantId(tenantId, null);
+        if (tid == null) {
+            return;
+        }
+        String safeTitle = title != null && !title.isBlank() ? title : "알림";
+        String safeClientBody = clientBody != null && !clientBody.isBlank() ? clientBody : safeTitle;
+        Map<String, String> data = new LinkedHashMap<>();
+        data.put("type", canonicalType);
+        data.put("tenantId", tid);
+        data.put("mappingId", String.valueOf(mappingId));
+        data.put("id", String.valueOf(mappingId));
+        data.put("title", truncate(safeTitle, MobilePushDispatchConstants.TITLE_MAX_LENGTH));
+        sanitizeDataStrings(data);
+        String entityId = String.valueOf(mappingId);
+        String bucket = dedupeBucket != null && !dedupeBucket.isBlank() ? dedupeBucket : "default";
+        dispatchFanout(tid, List.of(clientUserId), canonicalType, safeTitle, safeClientBody, data, entityId, bucket);
+        if (includeConsultant && consultantUserId != null) {
+            String safeConsultantBody = consultantBody != null && !consultantBody.isBlank()
+                    ? consultantBody
+                    : safeClientBody;
+            dispatchFanout(
+                    tid,
+                    List.of(consultantUserId),
+                    canonicalType,
+                    safeTitle,
+                    safeConsultantBody,
+                    data,
+                    entityId,
+                    bucket + "|consultant");
+        }
+    }
+
     private Map<String, String> buildScheduleData(String tenantId, Schedule schedule, String canonicalType) {
         Map<String, String> data = new LinkedHashMap<>();
         data.put("type", canonicalType);

@@ -179,54 +179,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             createdSchedule = scheduleRepository.save(schedule);
         }
         
-        try {
-            log.info("🔔 예약 생성 후 자동 알림 발송: scheduleId={}", createdSchedule.getId());
-            
-            String clientMessage = String.format("상담 예약이 완료되었습니다.\n" +
-                "📅 날짜: %s\n" +
-                "⏰ 시간: %s - %s", 
-                schedule.getDate(), 
-                schedule.getStartTime(), 
-                schedule.getEndTime()
-            );
-            
-            consultationMessageService.sendMessage(
-                schedule.getClientId(), 
-                schedule.getConsultantId(), 
-                null, // consultationId
-                getRoleCodeFromCommonCode(UserRole.CLIENT.name()), 
-                "예약 확인", 
-                clientMessage,
-                getMessageTypeFromCommonCode("APPOINTMENT_CONFIRMATION"),
-                false, // isImportant
-                false  // isUrgent
-            );
-            
-            String consultantMessage = String.format("새로운 상담 예약이 있습니다.\n" +
-                "📅 날짜: %s\n" +
-                "⏰ 시간: %s - %s", 
-                schedule.getDate(), 
-                schedule.getStartTime(), 
-                schedule.getEndTime()
-            );
-            
-            consultationMessageService.sendMessage(
-                schedule.getConsultantId(), 
-                schedule.getClientId(), 
-                null, // consultationId
-                getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()), 
-                "새 예약", 
-                consultantMessage,
-                getMessageTypeFromCommonCode("NEW_APPOINTMENT"),
-                false, // isImportant
-                false  // isUrgent
-            );
-            
-            log.info("✅ 예약 생성 워크플로우 자동화 완료: scheduleId={}", createdSchedule.getId());
-            
-        } catch (Exception e) {
-            log.error("❌ 예약 생성 워크플로우 자동화 실패: scheduleId={}", createdSchedule.getId(), e);
-        }
+        notifyScheduleCreated(createdSchedule);
         
         try {
             if (tenantId != null) {
@@ -419,6 +372,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
         if (!tentativeBeforeDeposit) {
             useSessionForMapping(consultantId, clientId);
+            notifyScheduleCreated(savedSchedule);
         }
 
         log.info("✅ 상담사 스케줄 생성 완료: ID {}", savedSchedule.getId());
@@ -486,6 +440,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (!tentativeBeforeDeposit) {
             useSessionForMapping(consultantId, clientId);
             log.info("✅ 회기 사용 처리 완료: consultantId={}, clientId={}", consultantId, clientId);
+            notifyScheduleCreated(savedSchedule);
         }
 
         log.info("✅ 상담사 스케줄 생성 완료 (상담유형 포함): ID {}, 상담유형: {}", savedSchedule.getId(), consultationType);
@@ -529,7 +484,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         Schedule savedSchedule = scheduleRepository.save(schedule);
         
         useSessionForMapping(consultantId, clientId);
-        
+        notifyScheduleCreated(savedSchedule);
+
         log.info("✅ 상담사 스케줄 생성 완료 (유형 기반): ID {}, 상담 유형: {}, 시간: {} - {}", 
                 savedSchedule.getId(), consultationType.getDisplayName(), startTime, endTime);
         return savedSchedule;
@@ -569,8 +525,109 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 tentatives.size(), mapping.getId());
         for (Schedule schedule : tentatives) {
             schedule.setStatus(ScheduleStatus.BOOKED);
-            scheduleRepository.save(schedule);
+            Schedule booked = scheduleRepository.save(schedule);
             useSessionForSpecificMapping(tenantId, mapping.getId(), consultantUserId, clientUserId);
+            notifyTentativeScheduleBookedAfterDeposit(booked, tenantId);
+        }
+    }
+
+    /**
+     * 가예약 입금 확정 후 BOOKED 전환 시 예약 확정 알림·푸시(멱등·본 트랜잭션 비차단).
+     */
+    private void notifyTentativeScheduleBookedAfterDeposit(Schedule schedule, String tenantId) {
+        if (schedule == null || schedule.getClientId() == null) {
+            return;
+        }
+        try {
+            mobilePushDispatchService.dispatchBookingConfirmed(tenantId, schedule);
+        } catch (Exception ex) {
+            log.warn("가예약 확정 푸시 실패: scheduleId={}", schedule.getId(), ex);
+        }
+        String previousTenant = TenantContextHolder.getTenantId();
+        try {
+            if (tenantId != null && !tenantId.isBlank()) {
+                TenantContextHolder.setTenantId(tenantId);
+            }
+            tryDispatchScheduleConfirmedExternalNotification(schedule);
+        } catch (Exception ex) {
+            log.warn("가예약 확정 외부 알림 실패: scheduleId={}", schedule.getId(), ex);
+        } finally {
+            if (previousTenant != null && !previousTenant.isBlank()) {
+                TenantContextHolder.setTenantId(previousTenant);
+            } else {
+                TenantContextHolder.clear();
+            }
+        }
+        try {
+            notifyScheduleCreated(schedule, false);
+        } catch (Exception ex) {
+            log.warn("가예약 확정 인앱 알림 실패: scheduleId={}", schedule.getId(), ex);
+        }
+    }
+
+    /**
+     * 일정 등록(BOOKED) 시 내담자·상담사 인앱 메시지 및 내담자 예약 확정 푸시.
+     * {@link #createSchedule(Schedule)}·{@link #createConsultantSchedule} 공통.
+     */
+    private void notifyScheduleCreated(Schedule schedule) {
+        notifyScheduleCreated(schedule, true);
+    }
+
+    private void notifyScheduleCreated(Schedule schedule, boolean includeMobilePush) {
+        if (schedule == null || schedule.getConsultantId() == null || schedule.getClientId() == null) {
+            return;
+        }
+        if (schedule.getStatus() != ScheduleStatus.BOOKED && schedule.getStatus() != ScheduleStatus.CONFIRMED) {
+            return;
+        }
+        try {
+            log.info("예약 생성 알림 발송: scheduleId={}", schedule.getId());
+
+            String clientMessage = String.format(
+                    "상담 예약이 완료되었습니다.\n📅 날짜: %s\n⏰ 시간: %s - %s",
+                    schedule.getDate(),
+                    schedule.getStartTime(),
+                    schedule.getEndTime());
+
+            consultationMessageService.sendMessage(
+                    schedule.getConsultantId(),
+                    schedule.getClientId(),
+                    null,
+                    getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()),
+                    "예약 확인",
+                    clientMessage,
+                    getMessageTypeFromCommonCode("APPOINTMENT_CONFIRMATION"),
+                    false,
+                    false);
+
+            String consultantMessage = String.format(
+                    "새로운 상담 예약이 있습니다.\n📅 날짜: %s\n⏰ 시간: %s - %s",
+                    schedule.getDate(),
+                    schedule.getStartTime(),
+                    schedule.getEndTime());
+
+            consultationMessageService.sendMessage(
+                    schedule.getConsultantId(),
+                    schedule.getClientId(),
+                    null,
+                    getRoleCodeFromCommonCode(UserRole.CLIENT.name()),
+                    "새 예약",
+                    consultantMessage,
+                    getMessageTypeFromCommonCode("NEW_APPOINTMENT"),
+                    false,
+                    false);
+
+            String tid = schedule.getTenantId();
+            if (tid == null || tid.isBlank()) {
+                tid = TenantContextHolder.getTenantId();
+            }
+            if (includeMobilePush && tid != null && !tid.isBlank()) {
+                mobilePushDispatchService.dispatchBookingConfirmed(tid, schedule);
+            }
+
+            log.info("예약 생성 알림 완료: scheduleId={}", schedule.getId());
+        } catch (Exception e) {
+            log.error("예약 생성 알림 실패: scheduleId={}", schedule.getId(), e);
         }
     }
 

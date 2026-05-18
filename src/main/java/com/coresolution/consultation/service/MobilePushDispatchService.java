@@ -78,4 +78,30 @@ public interface MobilePushDispatchService {
             Long consultantUserId,
             String clientDisplayName,
             String summarySnippet);
+
+    /**
+     * 어드민 매칭 정산(결제·입금·승인) 푸시. PG {@code Payment} 발송과 분리·멱등 버킷 사용.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 PK
+     * @param clientUserId 내담자 users.id
+     * @param consultantUserId 상담사 users.id
+     * @param includeConsultant 상담사 푸시 포함 여부(승인 시 true)
+     * @param canonicalType {@link com.coresolution.consultation.constant.MobilePushCanonicalTypes}
+     * @param dedupeBucket 멱등 버킷(시나리오별 고정)
+     * @param title 알림 제목
+     * @param clientBody 내담자 알림 본문
+     * @param consultantBody 상담사 알림 본문({@code includeConsultant}일 때만 사용, null이면 {@code clientBody}와 동일)
+     */
+    void dispatchMappingSettlement(
+            String tenantId,
+            Long mappingId,
+            Long clientUserId,
+            Long consultantUserId,
+            boolean includeConsultant,
+            String canonicalType,
+            String dedupeBucket,
+            String title,
+            String clientBody,
+            String consultantBody);
 }

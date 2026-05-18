@@ -114,6 +114,17 @@ export const PUSH_SCENARIOS = {
     category: 'payment',
     settingsCategory: 'payment',
   },
+  /** 어드민 매칭 승인(approve) — 내담자·상담사 (PG 결제와 분리) */
+  MAPPING_APPROVED: {
+    type: 'mapping_approved',
+    title: '매칭 승인',
+    icon: 'CheckCircle',
+    route: '/(client)/(more)/sessions-payment',
+    routeClient: '/(client)/(more)/sessions-payment',
+    routeConsultant: '/(consultant)/(more)',
+    category: 'system',
+    settingsCategory: 'system',
+  },
   /** P8 회기 소진 임박 — 내담자 */
   SESSION_LOW: {
     type: 'session_low',

@@ -270,17 +270,22 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                             payment.getDescription()
                         );
                         
-                        consultationMessageService.sendMessage(
-                            payment.getPayerId(), 
-                            payment.getRecipientId(), 
-                            null, // consultationId
-                            getRoleCodeFromCommonCode(UserRole.CLIENT.name()), 
-                            "결제 완료", 
-                            paymentMessage,
-                            getMessageTypeFromCommonCode("PAYMENT_COMPLETION"),
-                            false, // isImportant
-                            false  // isUrgent
-                        );
+                        Long clientUserId = payment.getPayerId();
+                        Long consultantUserId = payment.getRecipientId();
+                        if (clientUserId != null && consultantUserId != null) {
+                            consultationMessageService.sendMessage(
+                                    consultantUserId,
+                                    clientUserId,
+                                    null,
+                                    getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()),
+                                    "결제 완료",
+                                    paymentMessage,
+                                    getMessageTypeFromCommonCode("PAYMENT_COMPLETION"),
+                                    false,
+                                    false);
+                        } else {
+                            log.warn("결제 완료 인앱 알림 생략: payer/recipient 없음 paymentId={}", paymentId);
+                        }
                         
                         log.info("🔔 결제 완료 알림 자동 발송: PaymentID={}", paymentId);
                     } catch (Exception e) {

@@ -14,6 +14,7 @@ import com.coresolution.consultation.repository.VacationRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultationMessageService;
+import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
@@ -96,6 +97,9 @@ class ScheduleServiceImplConfirmScheduleAlimTalkTest {
     private NotificationService notificationService;
 
     @Mock
+    private MobilePushDispatchService mobilePushDispatchService;
+
+    @Mock
     private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
 
     @InjectMocks
@@ -152,6 +156,7 @@ class ScheduleServiceImplConfirmScheduleAlimTalkTest {
             eq("이상담"),
             eq("2026-05-01"),
             eq("10:00-11:00"));
+        verify(mobilePushDispatchService).dispatchBookingConfirmed(eq(TENANT_ID), any(Schedule.class));
     }
 
     @Test

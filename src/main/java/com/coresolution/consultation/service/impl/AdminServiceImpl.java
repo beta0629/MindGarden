@@ -59,6 +59,8 @@ import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultantStatsService;
 import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.ConsultationMessageService;
+import com.coresolution.consultation.service.MappingSettlementNotificationHelper;
+import com.coresolution.consultation.service.MappingSettlementScenario;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
@@ -137,6 +139,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
     private final ScheduleService scheduleService;
     private final ProfessionalProviderTypeService professionalProviderTypeService;
+    private final MappingSettlementNotificationHelper mappingSettlementNotificationHelper;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -773,6 +776,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 컨트롤러에서 mapping.getConsultant()/getClient() 접근 시 no Session 방지: 같은 트랜잭션 내에서 lazy 초기화
         Hibernate.initialize(savedMapping.getConsultant());
         Hibernate.initialize(savedMapping.getClient());
+        notifyMappingSettlement(savedMapping, MappingSettlementScenario.PAYMENT_CONFIRMED);
         return savedMapping;
     }
 
@@ -1232,6 +1236,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 컨트롤러에서 mapping.getConsultant()/getClient() 접근 시 no Session 방지
         Hibernate.initialize(savedMapping.getConsultant());
         Hibernate.initialize(savedMapping.getClient());
+        notifyMappingSettlement(savedMapping, MappingSettlementScenario.PAYMENT_CONFIRMED);
         return savedMapping;
     }
 
@@ -1414,6 +1419,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 컨트롤러에서 mapping.getConsultant()/getClient() 접근 시 no Session 방지
         Hibernate.initialize(savedMapping.getConsultant());
         Hibernate.initialize(savedMapping.getClient());
+        notifyMappingSettlement(savedMapping, MappingSettlementScenario.DEPOSIT_CONFIRMED);
         return savedMapping;
     }
 
@@ -1435,7 +1441,20 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 컨트롤러/직렬화 시 no Session 방지
         Hibernate.initialize(savedMapping.getConsultant());
         Hibernate.initialize(savedMapping.getClient());
+        notifyMappingSettlement(savedMapping, MappingSettlementScenario.MAPPING_APPROVED);
         return savedMapping;
+    }
+
+    private void notifyMappingSettlement(ConsultantClientMapping mapping, MappingSettlementScenario scenario) {
+        try {
+            String tenantId = getTenantIdFromMapping(mapping);
+            if (tenantId == null) {
+                tenantId = getTenantIdOrNull();
+            }
+            mappingSettlementNotificationHelper.notifyAfterMappingSettlement(mapping, tenantId, scenario);
+        } catch (Exception ex) {
+            log.warn("매칭 정산 알림 실패: mappingId={}, scenario={}", mapping.getId(), scenario, ex);
+        }
     }
 
      /**

@@ -16,6 +16,7 @@ import com.coresolution.consultation.repository.VacationRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultationMessageService;
+import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
@@ -98,6 +99,8 @@ class ScheduleServiceImplFinalizeTentativeAfterDepositTest {
     private UserPersonalDataCacheService userPersonalDataCacheService;
     @Mock
     private NotificationService notificationService;
+    @Mock
+    private MobilePushDispatchService mobilePushDispatchService;
 
     @Mock
     private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
@@ -184,5 +187,6 @@ class ScheduleServiceImplFinalizeTentativeAfterDepositTest {
 
         verify(sessionSyncService, times(2)).syncAfterSessionUsage(
                 eq(MAPPING_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID));
+        verify(mobilePushDispatchService, times(2)).dispatchBookingConfirmed(eq(TENANT_ID), any(Schedule.class));
     }
 }

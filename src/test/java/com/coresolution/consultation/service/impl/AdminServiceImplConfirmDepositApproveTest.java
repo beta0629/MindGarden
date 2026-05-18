@@ -22,6 +22,8 @@ import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultantStatsService;
 import com.coresolution.consultation.service.ConsultationMessageService;
+import com.coresolution.consultation.service.MappingSettlementNotificationHelper;
+import com.coresolution.consultation.service.MappingSettlementScenario;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.ProfessionalProviderTypeService;
@@ -145,6 +147,8 @@ class AdminServiceImplConfirmDepositApproveTest {
     private ScheduleService scheduleService;
     @Mock
     private ProfessionalProviderTypeService professionalProviderTypeService;
+    @Mock
+    private MappingSettlementNotificationHelper mappingSettlementNotificationHelper;
 
     /** JDBC 없이 TransactionTemplate(REQUIRES_NEW) 콜백만 수행 */
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
@@ -206,7 +210,8 @@ class AdminServiceImplConfirmDepositApproveTest {
                 userService,
                 consultantSalaryProfileRepository,
                 scheduleService,
-                professionalProviderTypeService);
+                professionalProviderTypeService,
+                mappingSettlementNotificationHelper);
         adminService = Mockito.spy(real);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
@@ -235,6 +240,8 @@ class AdminServiceImplConfirmDepositApproveTest {
         verify(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
         verify(storedProcedureService).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
         verify(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
+        verify(mappingSettlementNotificationHelper).notifyAfterMappingSettlement(
+                any(ConsultantClientMapping.class), eq(TEST_TENANT_ID), eq(MappingSettlementScenario.DEPOSIT_CONFIRMED));
     }
 
     @Test

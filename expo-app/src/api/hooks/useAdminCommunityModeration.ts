@@ -21,6 +21,17 @@ import { unwrapApiResponse } from '../unwrapApiResponse';
 
 const QUERY_BASE = ['adminCommunityModeration'] as const;
 
+type ApiReject = { status?: number; message?: string };
+
+function isForbiddenError(error: unknown): boolean {
+  return (
+    error != null &&
+    typeof error === 'object' &&
+    'status' in error &&
+    (error as ApiReject).status === 403
+  );
+}
+
 export const ADMIN_COMMUNITY_MODERATION_QUERY_KEYS = {
   all: QUERY_BASE,
   queue: (tenantId: string) => [...QUERY_BASE, 'queue', tenantId] as const,
@@ -64,6 +75,7 @@ export function useAdminCommunityModerationQueue() {
     enabled: ready && allowed,
     staleTime: 1000 * 30,
     refetchOnMount: 'always',
+    retry: (failureCount, error) => !isForbiddenError(error) && failureCount < 1,
   });
 
   return { ...query, ready };

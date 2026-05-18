@@ -79,6 +79,14 @@ export const ADMIN_MOBILE_MORE_COPY = {
   CANCEL: '취소',
 } as const;
 
+/** TanStack `enabled: false`(tenant·hydrate 미준비) — 무한 스피너 대신 EmptyState */
+export const ADMIN_API_QUERY_NOT_READY_COPY = {
+  TITLE: '세션을 준비할 수 없습니다',
+  DESCRIPTION:
+    '테넌트·로그인 정보가 아직 반영되지 않았습니다. 다시 시도하거나, 로그인 화면에서 테넌트를 선택한 뒤 다시 접속해 주세요.',
+  RETRY: '다시 시도',
+} as const;
+
 export const ADMIN_MOBILE_OPERATION_COPY = {
   HUB_TITLE: '운영',
   SCHEDULE_LITE: '스케줄 라이트',

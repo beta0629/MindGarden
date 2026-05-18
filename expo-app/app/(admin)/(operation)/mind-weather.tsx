@@ -20,12 +20,19 @@ import {
   useAdminMindWeatherSummary,
 } from '@/api/hooks/useAdminMindWeatherObservability';
 import { ADMIN_MIND_WEATHER_COPY } from '@/constants/adminMindWeatherCopy';
-import { ADMIN_MOBILE_OPERATION_COPY } from '@/constants/adminMobileScreensCopy';
+import {
+  ADMIN_API_QUERY_NOT_READY_COPY,
+  ADMIN_MOBILE_OPERATION_COPY,
+} from '@/constants/adminMobileScreensCopy';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isAdminRole, isStaffRole } from '@/utils/adminRole';
 import type { AdminMindWeatherCardItem } from '@/utils/adminMindWeatherNormalize';
 import { toDisplayString } from '@/utils/safeDisplay';
 import { normalizeCommunityListedTimeIso } from '@/utils/dateFormat';
+import {
+  isAdminListQueryLoading,
+  retryAdminApiSession,
+} from '@/utils/retryAdminApiSession';
 
 function formatObservedAt(iso: string): string {
   const trimmed = iso.trim();
@@ -102,6 +109,11 @@ export default function AdminMindWeatherObservabilityScreen() {
     setRefreshing(true);
     await Promise.all([summaryQuery.refetch(), cardsQuery.refetch()]);
     setRefreshing(false);
+  }, [summaryQuery, cardsQuery]);
+
+  const handleSessionRetry = useCallback(() => {
+    retryAdminApiSession();
+    void Promise.all([summaryQuery.refetch(), cardsQuery.refetch()]);
   }, [summaryQuery, cardsQuery]);
 
   const renderCardRow = useCallback(
@@ -203,7 +215,7 @@ export default function AdminMindWeatherObservabilityScreen() {
           >
             {summaryError}
           </Text>
-        ) : !summaryQuery.ready || summaryQuery.isLoading ? (
+        ) : summaryQuery.isLoading && summaryQuery.data === undefined ? (
           <ActivityIndicator style={{ marginTop: theme.spacing.md }} color={theme.colors.primary} />
         ) : summary ? (
           <View style={styles.metricsGrid}>
@@ -286,10 +298,28 @@ export default function AdminMindWeatherObservabilityScreen() {
     : null;
 
   const showLoading =
-    !cardsQuery.ready ||
-    !summaryQuery.ready ||
-    cardsQuery.isLoading ||
-    summaryQuery.isLoading;
+    isAdminListQueryLoading(cardsQuery.isLoading, cardsQuery.data?.items) ||
+    (summaryQuery.isLoading && summaryQuery.data === undefined);
+
+  if (!cardsQuery.ready) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
+        edges={['top', 'left', 'right']}
+      >
+        <AppTopBar title={ADMIN_MIND_WEATHER_COPY.PAGE_TITLE} canGoBack />
+        <View style={styles.centered}>
+          <EmptyState
+            icon={<CloudSun size={36} color={theme.colors.textTertiary} />}
+            title={ADMIN_API_QUERY_NOT_READY_COPY.TITLE}
+            description={ADMIN_API_QUERY_NOT_READY_COPY.DESCRIPTION}
+            actionLabel={ADMIN_API_QUERY_NOT_READY_COPY.RETRY}
+            onAction={handleSessionRetry}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView

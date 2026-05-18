@@ -40,4 +40,7 @@ export const ADMIN_COMMUNITY_MODERATION_COPY = {
   MODAL_CONFIRM: '확인',
   PATCH_SUCCESS: '검수 처리되었습니다.',
   PATCH_ERROR: '검수 처리에 실패했습니다.',
+  SESSION_NOT_READY_TITLE: '세션을 준비할 수 없습니다',
+  SESSION_NOT_READY_DESC:
+    '테넌트·로그인 정보가 아직 반영되지 않았습니다. 다시 시도하거나, 로그인 화면에서 테넌트를 선택한 뒤 다시 접속해 주세요.',
 } as const;

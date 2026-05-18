@@ -34,7 +34,10 @@ import {
   ADMIN_USER_MANAGEMENT_ROLE_LABELS,
   type AdminUserManagementRoleFilter,
 } from '@/constants/adminUserManagementCopy';
-import { ADMIN_MOBILE_OPERATION_COPY } from '@/constants/adminMobileScreensCopy';
+import {
+  ADMIN_API_QUERY_NOT_READY_COPY,
+  ADMIN_MOBILE_OPERATION_COPY,
+} from '@/constants/adminMobileScreensCopy';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isAdminMobileShellRole } from '@/utils/adminRole';
 import {
@@ -42,6 +45,10 @@ import {
   type AdminManagedUserListItem,
 } from '@/utils/adminUserManagementNormalize';
 import { toDisplayString } from '@/utils/safeDisplay';
+import {
+  isAdminListQueryLoading,
+  retryAdminApiSession,
+} from '@/utils/retryAdminApiSession';
 
 function roleLabel(role: string): string {
   const code = role.trim().toUpperCase();
@@ -109,7 +116,7 @@ export default function AdminUsersScreen() {
 
   const { ready } = useApiQueryReady();
   const listQuery = useAdminUserManagement(roleFilter);
-  const showLoading = !ready || listQuery.isLoading;
+  const showLoading = isAdminListQueryLoading(listQuery.isLoading, listQuery.data);
 
   const filteredUsers = useMemo(
     () => filterAdminManagedUsersBySearch(listQuery.data ?? [], searchQuery),
@@ -120,6 +127,11 @@ export default function AdminUsersScreen() {
     setRefreshing(true);
     await listQuery.refetch();
     setRefreshing(false);
+  }, [listQuery]);
+
+  const handleSessionRetry = useCallback(() => {
+    retryAdminApiSession();
+    void listQuery.refetch();
   }, [listQuery]);
 
   const openDetail = useCallback((user: AdminManagedUserListItem) => {
@@ -243,7 +255,17 @@ export default function AdminUsersScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title={ADMIN_MOBILE_OPERATION_COPY.USERS} canGoBack />
 
-      {showLoading ? (
+      {!ready ? (
+        <View style={[styles.loading, { paddingHorizontal: theme.spacing.lg }]}>
+          <EmptyState
+            icon={<Users size={32} color={theme.colors.textTertiary} />}
+            title={ADMIN_API_QUERY_NOT_READY_COPY.TITLE}
+            description={ADMIN_API_QUERY_NOT_READY_COPY.DESCRIPTION}
+            actionLabel={ADMIN_API_QUERY_NOT_READY_COPY.RETRY}
+            onAction={handleSessionRetry}
+          />
+        </View>
+      ) : showLoading ? (
         <View style={[styles.loading, { paddingHorizontal: theme.spacing.lg }]}>
           <SkeletonCard />
           <SkeletonCard />

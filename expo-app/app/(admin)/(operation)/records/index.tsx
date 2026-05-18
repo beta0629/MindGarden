@@ -35,9 +35,14 @@ import {
 } from '@/api/hooks/useAdminConsultationRecords';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { ADMIN_CONSULTATION_RECORDS_COPY } from '@/constants/adminConsultationRecordsCopy';
+import { ADMIN_API_QUERY_NOT_READY_COPY } from '@/constants/adminMobileScreensCopy';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isAdminRole, isStaffRole } from '@/utils/adminRole';
 import { toDisplayString } from '@/utils/safeDisplay';
+import {
+  isAdminListQueryLoading,
+  retryAdminApiSession,
+} from '@/utils/retryAdminApiSession';
 
 function formatSessionDate(ymd: string): string {
   const trimmed = ymd.trim();
@@ -89,8 +94,11 @@ export default function AdminConsultationRecordsLiteScreen() {
   const { ready } = useApiQueryReady();
   const consultantsQuery = useAdminConsultantPicker();
   const recordsQuery = useAdminConsultationRecordsList(selectedConsultant?.id ?? null);
-  const consultantsLoading = !ready || consultantsQuery.isLoading;
-  const recordsLoading = !ready || recordsQuery.isLoading;
+  const consultantsLoading = isAdminListQueryLoading(
+    consultantsQuery.isLoading,
+    consultantsQuery.data,
+  );
+  const recordsLoading = isAdminListQueryLoading(recordsQuery.isLoading, recordsQuery.data);
 
   const accessDeniedMessage = useMemo(() => {
     if (staffDenied) {
@@ -133,6 +141,12 @@ export default function AdminConsultationRecordsLiteScreen() {
       setRefreshing(false);
     }
   }, [consultantsQuery, recordsQuery, selectedConsultant]);
+
+  const handleSessionRetry = useCallback(() => {
+    retryAdminApiSession();
+    void consultantsQuery.refetch();
+    void recordsQuery.refetch();
+  }, [consultantsQuery, recordsQuery]);
 
   const handleSelectConsultant = useCallback((item: AdminConsultantPickerItem) => {
     if (Platform.OS !== 'web') {
@@ -178,6 +192,23 @@ export default function AdminConsultationRecordsLiteScreen() {
             icon={<FileText size={32} color={theme.colors.textTertiary} />}
             title={ADMIN_CONSULTATION_RECORDS_COPY.ACCESS_DENIED_TITLE}
             description={accessDeniedMessage}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!ready) {
+    return (
+      <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
+        <AppTopBar title={ADMIN_CONSULTATION_RECORDS_COPY.PAGE_TITLE} canGoBack />
+        <View style={[styles.denied, { paddingHorizontal: theme.spacing.lg }]}>
+          <EmptyState
+            icon={<FileText size={32} color={theme.colors.textTertiary} />}
+            title={ADMIN_API_QUERY_NOT_READY_COPY.TITLE}
+            description={ADMIN_API_QUERY_NOT_READY_COPY.DESCRIPTION}
+            actionLabel={ADMIN_API_QUERY_NOT_READY_COPY.RETRY}
+            onAction={handleSessionRetry}
           />
         </View>
       </SafeAreaView>

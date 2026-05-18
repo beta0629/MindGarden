@@ -35,6 +35,10 @@ import { canAccessCommunityModeration, isStaffRole } from '@/utils/adminRole';
 import type { CommunityModerationQueueItem } from '@/utils/adminCommunityModerationNormalize';
 import { toDisplayString } from '@/utils/safeDisplay';
 import { normalizeCommunityListedTimeIso } from '@/utils/dateFormat';
+import {
+  isAdminListQueryLoading,
+  retryAdminApiSession,
+} from '@/utils/retryAdminApiSession';
 
 function formatQueueCreatedAt(iso: string): string {
   const trimmed = iso.trim();
@@ -100,6 +104,11 @@ export default function AdminCommunityModerationQueueScreen() {
     setRefreshing(true);
     await queueQuery.refetch();
     setRefreshing(false);
+  }, [queueQuery]);
+
+  const handleSessionRetry = useCallback(() => {
+    retryAdminApiSession();
+    void queueQuery.refetch();
   }, [queueQuery]);
 
   const openDetail = useCallback(
@@ -217,7 +226,7 @@ export default function AdminCommunityModerationQueueScreen() {
     ? getMutationErrorMessage(queueQuery.error, ADMIN_COMMUNITY_MODERATION_COPY.LIST_ERROR)
     : null;
 
-  const showLoading = !queueQuery.ready || queueQuery.isLoading;
+  const showLoading = isAdminListQueryLoading(queueQuery.isLoading, queueQuery.data);
 
   return (
     <SafeAreaView
@@ -237,7 +246,16 @@ export default function AdminCommunityModerationQueueScreen() {
         </Text>
       </View>
 
-      {showLoading ? (
+      {!queueQuery.ready ? (
+        <View style={styles.listEmpty}>
+          <EmptyState
+            title={ADMIN_COMMUNITY_MODERATION_COPY.SESSION_NOT_READY_TITLE}
+            description={ADMIN_COMMUNITY_MODERATION_COPY.SESSION_NOT_READY_DESC}
+            actionLabel={ADMIN_COMMUNITY_MODERATION_COPY.RETRY}
+            onAction={handleSessionRetry}
+          />
+        </View>
+      ) : showLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>

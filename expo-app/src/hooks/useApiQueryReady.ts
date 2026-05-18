@@ -4,11 +4,12 @@
  * @author MindGarden
  * @since 2026-05-16
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
 import { decodeJwtPayload, parseJwtSubAsUserId } from '@/utils/jwtPayload';
 import { useResolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
+import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 
 export type UseApiQueryReadyOptions = {
   /** false면 userId 없이도 ready 가능 (드묾) */
@@ -50,6 +51,20 @@ export function useApiQueryReady(options?: UseApiQueryReadyOptions): {
     () => resolveEffectiveUserId(storeUserId, accessToken),
     [storeUserId, accessToken],
   );
+
+  useEffect(() => {
+    if (!authHasHydrated || !tenantHasHydrated || authIsLoading) {
+      return;
+    }
+    if (!accessToken?.trim() || tenantId) {
+      return;
+    }
+    syncTenantFromAccessToken(accessToken);
+    if (__DEV__) {
+      // eslint-disable-next-line no-console -- hydrate 후 tenantId 누락 진단(개발 전용)
+      console.debug('[useApiQueryReady] tenantId missing after hydrate; synced from JWT');
+    }
+  }, [authHasHydrated, tenantHasHydrated, authIsLoading, accessToken, tenantId]);
 
   const ready =
     authHasHydrated &&

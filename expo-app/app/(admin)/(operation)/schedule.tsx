@@ -19,8 +19,15 @@ import { ScheduleCard } from '@/components/molecules/ScheduleCard';
 import { useAdminTodaySchedules } from '@/api/hooks/useAdminSchedules';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isStaffRole } from '@/utils/adminRole';
-import { ADMIN_MOBILE_OPERATION_COPY } from '@/constants/adminMobileScreensCopy';
+import {
+  ADMIN_API_QUERY_NOT_READY_COPY,
+  ADMIN_MOBILE_OPERATION_COPY,
+} from '@/constants/adminMobileScreensCopy';
 import { toDisplayString } from '@/utils/safeDisplay';
+import {
+  isAdminListQueryLoading,
+  retryAdminApiSession,
+} from '@/utils/retryAdminApiSession';
 
 const TODAY_LABEL = format(new Date(), 'M월 d일 (EEEE)', { locale: ko });
 
@@ -29,8 +36,13 @@ export default function AdminScheduleLiteScreen() {
   const role = useAuthStore((s) => s.role);
   const query = useAdminTodaySchedules();
   const schedules = query.data ?? [];
-  const isLoading = !query.ready || query.isLoading;
-  const isRefreshing = query.isFetching && !isLoading;
+  const isLoading = isAdminListQueryLoading(query.isLoading, query.data);
+  const isRefreshing = query.isFetching && !isLoading && query.ready;
+
+  const handleSessionRetry = useCallback(() => {
+    retryAdminApiSession();
+    void query.refetch();
+  }, [query]);
 
   const onRefresh = useCallback(() => {
     void query.refetch();
@@ -72,7 +84,15 @@ export default function AdminScheduleLiteScreen() {
           </Text>
         ) : null}
 
-        {isLoading ? (
+        {!query.ready ? (
+          <EmptyState
+            icon={<Calendar size={32} color={theme.colors.textTertiary} />}
+            title={ADMIN_API_QUERY_NOT_READY_COPY.TITLE}
+            description={ADMIN_API_QUERY_NOT_READY_COPY.DESCRIPTION}
+            actionLabel={ADMIN_API_QUERY_NOT_READY_COPY.RETRY}
+            onAction={handleSessionRetry}
+          />
+        ) : isLoading ? (
           <>
             <SkeletonCard />
             <SkeletonCard />

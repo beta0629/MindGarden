@@ -37,6 +37,10 @@ import { canAccessCommunityModeration, isStaffRole } from '@/utils/adminRole';
 import type { CommunityModerationDecision } from '@/utils/adminCommunityModerationNormalize';
 import { toDisplayString } from '@/utils/safeDisplay';
 import { normalizeCommunityListedTimeIso } from '@/utils/dateFormat';
+import {
+  isAdminListQueryLoading,
+  retryAdminApiSession,
+} from '@/utils/retryAdminApiSession';
 
 type PendingModal = CommunityModerationDecision | null;
 
@@ -133,6 +137,11 @@ export default function AdminCommunityModerationDetailScreen() {
     setPendingModal(decision);
   }, []);
 
+  const handleSessionRetry = useCallback(() => {
+    retryAdminApiSession();
+    void queueQuery.refetch();
+  }, [queueQuery]);
+
   const handleConfirmPatch = useCallback(async () => {
     if (postId == null || pendingModal == null) {
       return;
@@ -188,7 +197,7 @@ export default function AdminCommunityModerationDetailScreen() {
     );
   }
 
-  const showLoading = !queueQuery.ready || (queueQuery.isLoading && item == null);
+  const showLoading = isAdminListQueryLoading(queueQuery.isLoading, queueQuery.data);
   const badge = item ? statusBadge(item.moderationStatus) : null;
   const isPending = item?.moderationStatus.trim().toUpperCase() === 'PENDING';
 
@@ -208,7 +217,16 @@ export default function AdminCommunityModerationDetailScreen() {
     >
       <AppTopBar title={ADMIN_COMMUNITY_MODERATION_COPY.DETAIL_TITLE} canGoBack />
 
-      {showLoading ? (
+      {!queueQuery.ready ? (
+        <View style={styles.centered}>
+          <EmptyState
+            title={ADMIN_COMMUNITY_MODERATION_COPY.SESSION_NOT_READY_TITLE}
+            description={ADMIN_COMMUNITY_MODERATION_COPY.SESSION_NOT_READY_DESC}
+            actionLabel={ADMIN_COMMUNITY_MODERATION_COPY.RETRY}
+            onAction={handleSessionRetry}
+          />
+        </View>
+      ) : showLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text

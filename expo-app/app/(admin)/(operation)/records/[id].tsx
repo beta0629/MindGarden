@@ -16,6 +16,7 @@ import { AppTopBar } from '@/components/templates/AppTopBar';
 import { Badge } from '@/components/atoms/Badge';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { useAdminConsultationRecordDetail } from '@/api/hooks/useAdminConsultationRecords';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { ADMIN_CONSULTATION_RECORDS_COPY } from '@/constants/adminConsultationRecordsCopy';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isAdminRole, isStaffRole } from '@/utils/adminRole';
@@ -75,10 +76,12 @@ export default function AdminConsultationRecordDetailScreen() {
   const consultantId = toSafeNumber(params.consultantId, 0);
   const validIds = recordId > 0 && consultantId > 0;
 
+  const { ready } = useApiQueryReady();
   const detailQuery = useAdminConsultationRecordDetail(
     validIds ? consultantId : null,
     validIds ? recordId : null,
   );
+  const showDetailLoading = validIds && (!ready || detailQuery.isLoading);
 
   const accessDeniedMessage = useMemo(() => {
     if (staffDenied) {
@@ -124,7 +127,7 @@ export default function AdminConsultationRecordDetailScreen() {
             icon={<FileText size={32} color={theme.colors.textTertiary} />}
             title={ADMIN_CONSULTATION_RECORDS_COPY.DETAIL_NOT_FOUND}
           />
-        ) : detailQuery.isLoading ? (
+        ) : showDetailLoading ? (
           <ActivityIndicator color={theme.colors.primary} style={{ marginTop: 32 }} />
         ) : detailQuery.isError || !record ? (
           <EmptyState

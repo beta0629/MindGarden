@@ -33,6 +33,7 @@ import {
   type AdminConsultantPickerItem,
   type AdminConsultationRecordLite,
 } from '@/api/hooks/useAdminConsultationRecords';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { ADMIN_CONSULTATION_RECORDS_COPY } from '@/constants/adminConsultationRecordsCopy';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isAdminRole, isStaffRole } from '@/utils/adminRole';
@@ -85,8 +86,11 @@ export default function AdminConsultationRecordsLiteScreen() {
   const [recordSearch, setRecordSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
+  const { ready } = useApiQueryReady();
   const consultantsQuery = useAdminConsultantPicker();
   const recordsQuery = useAdminConsultationRecordsList(selectedConsultant?.id ?? null);
+  const consultantsLoading = !ready || consultantsQuery.isLoading;
+  const recordsLoading = !ready || recordsQuery.isLoading;
 
   const accessDeniedMessage = useMemo(() => {
     if (staffDenied) {
@@ -253,7 +257,7 @@ export default function AdminConsultationRecordsLiteScreen() {
         {!selectedConsultant ? (
           <ConsultantPickerList
             consultants={filteredConsultants}
-            isLoading={consultantsQuery.isLoading}
+            isLoading={consultantsLoading}
             isError={consultantsQuery.isError}
             refreshing={refreshing}
             onRefresh={handleRefresh}
@@ -262,7 +266,7 @@ export default function AdminConsultationRecordsLiteScreen() {
         ) : (
           <RecordsList
             records={filteredRecords}
-            isLoading={recordsQuery.isLoading}
+            isLoading={recordsLoading}
             isError={recordsQuery.isError}
             refreshing={refreshing}
             onRefresh={handleRefresh}

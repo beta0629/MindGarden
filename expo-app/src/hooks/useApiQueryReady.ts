@@ -4,8 +4,10 @@
  * @author MindGarden
  * @since 2026-05-16
  */
+import { useMemo } from 'react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
+import { decodeJwtPayload, parseJwtSubAsUserId } from '@/utils/jwtPayload';
 import { useResolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 
 export type UseApiQueryReadyOptions = {
@@ -13,6 +15,20 @@ export type UseApiQueryReadyOptions = {
   requireUserId?: boolean;
   requireAccessToken?: boolean;
 };
+
+function resolveEffectiveUserId(
+  storeUserId: number | undefined,
+  accessToken: string | null,
+): number | undefined {
+  if (typeof storeUserId === 'number' && Number.isFinite(storeUserId) && storeUserId > 0) {
+    return storeUserId;
+  }
+  if (!accessToken?.trim()) {
+    return undefined;
+  }
+  const fromJwt = parseJwtSubAsUserId(decodeJwtPayload(accessToken));
+  return fromJwt != null && fromJwt > 0 ? fromJwt : undefined;
+}
 
 export function useApiQueryReady(options?: UseApiQueryReadyOptions): {
   ready: boolean;
@@ -26,9 +42,14 @@ export function useApiQueryReady(options?: UseApiQueryReadyOptions): {
   const authIsLoading = useAuthStore((s) => s.isLoading);
   const authHasHydrated = useAuthStore((s) => s._hasHydrated);
   const accessToken = useAuthStore((s) => s.accessToken);
-  const userId = useAuthStore((s) => s.user?.id);
+  const storeUserId = useAuthStore((s) => s.user?.id);
   const tenantHasHydrated = useTenantStore((s) => s._hasHydrated);
   const tenantId = useResolveTenantIdForApi();
+
+  const userId = useMemo(
+    () => resolveEffectiveUserId(storeUserId, accessToken),
+    [storeUserId, accessToken],
+  );
 
   const ready =
     authHasHydrated &&

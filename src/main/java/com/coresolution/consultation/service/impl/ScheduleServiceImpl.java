@@ -1665,7 +1665,19 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return false;
         }
     }
-    
+
+    private boolean isStaffRole(String userRole) {
+        if (userRole == null) {
+            return false;
+        }
+        try {
+            UserRole role = UserRole.fromString(userRole);
+            return role != null && role.isStaff();
+        } catch (Exception e) {
+            log.warn("역할 확인 실패: {}", userRole, e);
+            return false;
+        }
+    }
 
      /**
      * 상담사 역할 여부 확인
@@ -1701,7 +1713,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     private boolean scheduleAdminSeesAllTenant(Long userId, String userRole) {
-        return isAdminRole(userRole) && !adminCounselingOwnSchedulesOnly(userId, userRole);
+        if (adminCounselingOwnSchedulesOnly(userId, userRole)) {
+            return false;
+        }
+        return isAdminRole(userRole) || isStaffRole(userRole);
     }
 
     private boolean scheduleUsesConsultantOwnScope(Long userId, String userRole) {

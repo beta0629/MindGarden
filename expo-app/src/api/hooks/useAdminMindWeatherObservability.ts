@@ -61,13 +61,15 @@ export function useAdminMindWeatherCards(page = 0) {
   const role = useAuthStore((s) => s.role);
   const allowed = isAdminRole(role);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ADMIN_MIND_WEATHER_QUERY_KEYS.cards(tenantId, page),
     queryFn: () => fetchCardsPage(page),
     enabled: ready && allowed,
     staleTime: 1000 * 30,
     refetchOnMount: 'always',
   });
+
+  return { ...query, ready };
 }
 
 export function useAdminMindWeatherSummary() {
@@ -75,13 +77,15 @@ export function useAdminMindWeatherSummary() {
   const role = useAuthStore((s) => s.role);
   const allowed = isAdminRole(role);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ADMIN_MIND_WEATHER_QUERY_KEYS.summary(tenantId),
     queryFn: fetchSummary,
     enabled: ready && allowed,
     staleTime: 1000 * 60,
     refetchOnMount: 'always',
   });
+
+  return { ...query, ready };
 }
 
 export function getMindWeatherQueryErrorMessage(error: unknown, fallback: string): string {

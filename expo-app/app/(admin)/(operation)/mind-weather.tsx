@@ -203,7 +203,7 @@ export default function AdminMindWeatherObservabilityScreen() {
           >
             {summaryError}
           </Text>
-        ) : summaryQuery.isPending && !summaryQuery.isFetched ? (
+        ) : !summaryQuery.ready || summaryQuery.isLoading ? (
           <ActivityIndicator style={{ marginTop: theme.spacing.md }} color={theme.colors.primary} />
         ) : summary ? (
           <View style={styles.metricsGrid}>
@@ -286,8 +286,10 @@ export default function AdminMindWeatherObservabilityScreen() {
     : null;
 
   const showLoading =
-    (cardsQuery.isPending && !cardsQuery.isFetched) ||
-    (summaryQuery.isPending && !summaryQuery.isFetched);
+    !cardsQuery.ready ||
+    !summaryQuery.ready ||
+    cardsQuery.isLoading ||
+    summaryQuery.isLoading;
 
   return (
     <SafeAreaView

@@ -78,17 +78,20 @@ async function runRestoreTokensFromSecureStore(
     set((state) => {
       const role = roleFromJwt ?? state.role;
       let user = state.user;
+      const jwtUserId = parseJwtSubAsUserId(jwtPayload);
       if (user != null && role != null) {
         user = {
           ...user,
           role,
           ...(jwtTenantId ? { tenantId: jwtTenantId } : {}),
+          ...((!Number.isFinite(user.id) || user.id <= 0) && jwtUserId != null
+            ? { id: jwtUserId }
+            : {}),
         };
       } else if (user == null && role != null) {
-        const userId = parseJwtSubAsUserId(jwtPayload);
-        if (userId != null) {
+        if (jwtUserId != null) {
           user = {
-            id: userId,
+            id: jwtUserId,
             email: '',
             name: '',
             role,

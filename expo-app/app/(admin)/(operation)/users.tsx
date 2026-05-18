@@ -27,6 +27,7 @@ import { SearchBar } from '@/components/atoms/SearchBar';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
 import { useAdminUserManagement } from '@/api/hooks/useAdminUserManagement';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import {
   ADMIN_USER_MANAGEMENT_COPY,
   ADMIN_USER_MANAGEMENT_ROLE_FILTERS,
@@ -106,7 +107,9 @@ export default function AdminUsersScreen() {
   const [selectedUser, setSelectedUser] = useState<AdminManagedUserListItem | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  const { ready } = useApiQueryReady();
   const listQuery = useAdminUserManagement(roleFilter);
+  const showLoading = !ready || listQuery.isLoading;
 
   const filteredUsers = useMemo(
     () => filterAdminManagedUsersBySearch(listQuery.data ?? [], searchQuery),
@@ -240,7 +243,7 @@ export default function AdminUsersScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title={ADMIN_MOBILE_OPERATION_COPY.USERS} canGoBack />
 
-      {listQuery.isLoading ? (
+      {showLoading ? (
         <View style={[styles.loading, { paddingHorizontal: theme.spacing.lg }]}>
           <SkeletonCard />
           <SkeletonCard />

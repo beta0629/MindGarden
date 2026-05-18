@@ -123,7 +123,7 @@ export function useAdminTodaySchedules(options?: Partial<UseQueryOptions<Schedul
   const scheduleRole = adminMobileScheduleUserRole(jwtRole);
   const todayYmd = format(new Date(), 'yyyy-MM-dd');
 
-  return useQuery<Schedule[]>({
+  const query = useQuery<Schedule[]>({
     queryKey:
       userId && scheduleRole
         ? ADMIN_SCHEDULE_QUERY_KEYS.today(userId, scheduleRole, todayYmd)
@@ -139,4 +139,6 @@ export function useAdminTodaySchedules(options?: Partial<UseQueryOptions<Schedul
     retry: false,
     ...options,
   });
+
+  return { ...query, ready };
 }

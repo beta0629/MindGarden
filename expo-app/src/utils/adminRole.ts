@@ -286,3 +286,56 @@ export function resolveAdminMobileJwtRoleFromStoreRole(
   }
   return null;
 }
+
+function normalizePermissionToken(raw: unknown): string {
+  return String(raw ?? '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '_');
+}
+
+function collectJwtPermissionTokens(payload: Record<string, unknown> | null): string[] {
+  if (!payload) {
+    return [];
+  }
+  const perms = payload.permissions ?? payload.permission;
+  if (Array.isArray(perms)) {
+    return perms.map((p) => normalizePermissionToken(p));
+  }
+  if (typeof perms === 'string') {
+    return perms.split(/[\s,]+/).map((p) => normalizePermissionToken(p));
+  }
+  return [];
+}
+
+/** JWT `permissions` claim — DynamicPermissionService 코드와 동일 문자열 */
+export function hasJwtPermission(
+  accessToken: string | null | undefined,
+  permissionCode: string,
+): boolean {
+  if (!accessToken?.trim()) {
+    return false;
+  }
+  const target = normalizePermissionToken(permissionCode);
+  const tokens = collectJwtPermissionTokens(decodeJwtPayload(accessToken));
+  return tokens.includes(target);
+}
+
+/** 스태프 상담사 등록 UI — ADMIN 항상, STAFF는 CONSULTANT_MANAGE */
+export function canRegisterConsultantOnMobile(
+  storeRole: AppAuthRole | null | undefined,
+  accessToken: string | null | undefined,
+): boolean {
+  if (isAdminRole(storeRole)) {
+    return true;
+  }
+  if (isStaffRole(storeRole)) {
+    return hasJwtPermission(accessToken, 'CONSULTANT_MANAGE');
+  }
+  return false;
+}
+
+/** 스태프 등록 — ADMIN + USER_MANAGE (UI는 admin만 노출, JWT는 이중 확인용) */
+export function canRegisterStaffOnMobile(storeRole: AppAuthRole | null | undefined): boolean {
+  return isAdminRole(storeRole);
+}

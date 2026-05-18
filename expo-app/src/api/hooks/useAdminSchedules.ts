@@ -121,7 +121,10 @@ async function fetchAdminTodaySchedules(
   );
 }
 
-export function useAdminTodaySchedules(options?: Partial<UseQueryOptions<Schedule[]>>) {
+export function useAdminSchedulesByDate(
+  dateYmd: string,
+  options?: Partial<UseQueryOptions<Schedule[]>>,
+) {
   const { ready, userId } = useAdminApiQueryReady();
   useAdminApiTenantSync();
   const accessToken = useAuthStore((s) => s.accessToken);
@@ -130,24 +133,28 @@ export function useAdminTodaySchedules(options?: Partial<UseQueryOptions<Schedul
     resolveAdminMobileJwtRole(accessToken) ??
     resolveAdminMobileJwtRoleFromStoreRole(storeRole);
   const scheduleRole = adminMobileScheduleUserRole(jwtRole);
-  const todayYmd = format(new Date(), 'yyyy-MM-dd');
 
   const query = useQuery<Schedule[]>({
     queryKey:
       userId && scheduleRole
-        ? ADMIN_SCHEDULE_QUERY_KEYS.today(userId, scheduleRole, todayYmd)
+        ? ADMIN_SCHEDULE_QUERY_KEYS.today(userId, scheduleRole, dateYmd)
         : [...ADMIN_SCHEDULE_QUERY_KEYS.all, 'disabled'],
     queryFn: () => {
       if (userId == null || !scheduleRole) {
         throw new Error('관리자 일정 조회 권한이 없습니다.');
       }
-      return fetchAdminTodaySchedules(userId, scheduleRole, todayYmd);
+      return fetchAdminTodaySchedules(userId, scheduleRole, dateYmd);
     },
-    enabled: ready && Boolean(scheduleRole) && options?.enabled !== false,
+    enabled: ready && Boolean(scheduleRole) && dateYmd.length >= 10 && options?.enabled !== false,
     staleTime: 1000 * 60 * 2,
     retry: false,
     ...options,
   });
 
-  return { ...query, ready };
+  return { ...query, ready, scheduleRole };
+}
+
+export function useAdminTodaySchedules(options?: Partial<UseQueryOptions<Schedule[]>>) {
+  const todayYmd = format(new Date(), 'yyyy-MM-dd');
+  return useAdminSchedulesByDate(todayYmd, options);
 }

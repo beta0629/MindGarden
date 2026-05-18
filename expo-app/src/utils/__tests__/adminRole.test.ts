@@ -1,7 +1,10 @@
 import {
   adminMobileScheduleUserRole,
   canAccessCommunityModeration,
+  canRegisterConsultantOnMobile,
+  canRegisterStaffOnMobile,
   coerceApiRoleString,
+  hasJwtPermission,
   isAdminMobileAdminRole,
   isAdminMobileShellRole,
   isAdminRole,
@@ -101,5 +104,17 @@ describe('adminRole', () => {
     expect(resolveStoreRoleFromJwtPayload({ tenantId: 't1', sub: '1' })).toBeNull();
     expect(resolveStoreRoleFromAccessToken('not-a-jwt')).toBeNull();
     expect(resolveStoreRoleFromAccessToken(null)).toBeNull();
+  });
+
+  it('reads JWT permissions for consultant registration gate', () => {
+    const withPerm = fakeJwt({ role: 'STAFF', permissions: ['CONSULTANT_MANAGE'] });
+    const withoutPerm = fakeJwt({ role: 'STAFF', permissions: ['CLIENT_MANAGE'] });
+    expect(hasJwtPermission(withPerm, 'CONSULTANT_MANAGE')).toBe(true);
+    expect(hasJwtPermission(withoutPerm, 'CONSULTANT_MANAGE')).toBe(false);
+    expect(canRegisterConsultantOnMobile('admin', null)).toBe(true);
+    expect(canRegisterConsultantOnMobile('staff', withPerm)).toBe(true);
+    expect(canRegisterConsultantOnMobile('staff', withoutPerm)).toBe(false);
+    expect(canRegisterStaffOnMobile('admin')).toBe(true);
+    expect(canRegisterStaffOnMobile('staff')).toBe(false);
   });
 });

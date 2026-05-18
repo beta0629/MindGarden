@@ -52,8 +52,17 @@ export const SCHEDULE_API = {
   SCHEDULES_BY_DATE: '/api/v1/schedules/date',
   SCHEDULES_BY_CONSULTANT: '/api/v1/schedules/consultant',
   SCHEDULES_BY_CLIENT: '/api/v1/schedules/client',
+  /** 내담자 본인 예약 — 어드민 일정 등록과 혼동 금지 */
   SCHEDULE_CREATE: '/api/v1/schedules',
+  /** 웹 ScheduleModal SSOT — ADMIN/STAFF 상담 일정 등록 */
+  SCHEDULE_CREATE_CONSULTANT: '/api/v1/schedules/consultant',
   scheduleDetail: (id: string | number) => `/api/v1/schedules/${id}`,
+} as const;
+
+/** 공통코드 — ScheduleModal 상담유형·시간(분) 피커 */
+export const COMMON_CODE_API = {
+  group: (codeGroup: string) =>
+    `/api/v1/common-codes/groups/${encodeURIComponent(codeGroup)}`,
 } as const;
 
 export const MESSAGE_API = {
@@ -172,6 +181,15 @@ export const ADMIN_CLIENT_API = {
  */
 export const ADMIN_MOBILE_API = {
   USER_MANAGEMENT: '/api/v1/admin/user-management',
+  MAPPINGS: '/api/v1/admin/mappings',
+  mappingsByConsultant: (consultantId: string | number) =>
+    `/api/v1/admin/mappings/consultant/${encodeURIComponent(String(consultantId))}/clients`,
+  CONSULTANTS_WITH_VACATION: '/api/v1/admin/consultants/with-vacation',
+  CREATE_CLIENT: '/api/v1/admin/clients',
+  CREATE_CONSULTANT: '/api/v1/admin/consultants',
+  CREATE_STAFF: '/api/v1/admin/staff',
+  DUPLICATE_CHECK_EMAIL: '/api/v1/admin/duplicate-check/email',
+  DUPLICATE_CHECK_PHONE: '/api/v1/admin/duplicate-check/phone',
   CONSULTANT_RECORDS_ROOT: '/api/v1/admin/consultant-records',
   /** Spring `ConsultantRecordsController` — 상담사별 상담일지 목록 */
   consultantConsultationRecords: (consultantId: string | number) =>

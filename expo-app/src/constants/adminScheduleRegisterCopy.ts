@@ -1,0 +1,82 @@
+/**
+ * 어드민 모바일 — 일정 등록·사용자 추가 카피
+ *
+ * @author MindGarden
+ * @since 2026-05-18
+ */
+
+export const ADMIN_SCHEDULE_REGISTER_COPY = {
+  CREATE_TITLE: '일정 등록',
+  FAB_LABEL: '일정 등록',
+  STEP_CONSULTANT: '상담사 선택',
+  STEP_CLIENT: '내담자 선택',
+  STEP_DATETIME: '날짜·시간',
+  STEP_DETAILS: '세부 입력',
+  STEP_OF: (current: number, total: number) => `${current}/${total}`,
+  SEARCH_CONSULTANT: '이름 또는 이메일 검색',
+  SEARCH_CLIENT: '이름 또는 연락처 검색',
+  LINK_CREATE_CONSULTANT: '상담사 신규 등록',
+  LINK_CREATE_CLIENT: '내담자 신규 등록',
+  LABEL_DATE: '날짜',
+  LABEL_START_TIME: '시작 시간',
+  LABEL_END_TIME: '종료 시간',
+  LABEL_CONSULTATION_TYPE: '상담 유형',
+  LABEL_DURATION: '상담 시간',
+  LABEL_TITLE: '제목 (선택)',
+  LABEL_MEMO: '메모 (선택)',
+  TENTATIVE_TOGGLE: '가예약 (보증금 결제 전)',
+  SUBMIT: '등록 완료',
+  PREV: '이전',
+  NEXT: '다음',
+  CANCEL: '취소',
+  CANCEL_CONFIRM_TITLE: '등록 취소',
+  CANCEL_CONFIRM_BODY: '작성 중인 내용이 사라집니다. 취소하시겠습니까?',
+  SUCCESS_TITLE: '일정 등록 완료',
+  SUCCESS_BODY: '일정이 등록되었습니다.',
+  ERROR_TITLE: '일정 등록 실패',
+  VALIDATION_PICK_CONSULTANT: '상담사를 선택해 주세요.',
+  VALIDATION_PICK_CLIENT: '내담자를 선택해 주세요.',
+  VALIDATION_DATETIME: '날짜와 시작·종료 시간을 확인해 주세요.',
+  VALIDATION_DURATION: '상담 시간을 선택해 주세요.',
+  EMPTY_CONSULTANTS: '등록된 상담사가 없습니다.',
+  EMPTY_CLIENTS: '선택 가능한 내담자가 없습니다.',
+  VACATION_BADGE: '휴무',
+  INACTIVE_BADGE: '비활성',
+  REFRESH_HINT: '목록을 새로고침한 뒤 다시 시도해 보세요.',
+} as const;
+
+export const ADMIN_USER_CREATE_COPY = {
+  FAB_LABEL: '사용자 추가',
+  SHEET_TITLE: '사용자 추가',
+  SHEET_CANCEL: '취소',
+  OPTION_CLIENT: '내담자 추가',
+  OPTION_CONSULTANT: '상담사 추가',
+  OPTION_STAFF: '스태프 추가',
+  CLIENT_TITLE: '내담자 추가',
+  CONSULTANT_TITLE: '상담사 추가',
+  STAFF_TITLE: '스태프 추가',
+  LABEL_NAME: '이름',
+  LABEL_EMAIL: '이메일',
+  LABEL_CONTACT: '이메일 또는 연락처',
+  LABEL_PHONE: '연락처',
+  LABEL_PASSWORD: '비밀번호 (선택)',
+  SUBMIT: '등록',
+  SUCCESS_CLIENT: '내담자가 등록되었습니다.',
+  SUCCESS_CONSULTANT: '상담사가 등록되었습니다.',
+  SUCCESS_STAFF: '스태프가 등록되었습니다.',
+  ERROR_TITLE: '등록 실패',
+  VALIDATION_NAME: '이름을 입력해 주세요.',
+  VALIDATION_EMAIL: '이메일을 입력해 주세요.',
+  VALIDATION_CONTACT: '이메일 또는 연락처 중 하나를 입력해 주세요.',
+  DUPLICATE_EMAIL: '이미 사용 중인 이메일입니다.',
+  EMAIL_AVAILABLE: '사용 가능한 이메일입니다.',
+  ACCESS_STAFF_DENIED: '스태프 등록은 관리자만 가능합니다.',
+  ACCESS_CONSULTANT_DENIED: '상담사 등록 권한이 없습니다.',
+} as const;
+
+/** ScheduleModal 기본값과 동일 */
+export const ADMIN_SCHEDULE_DEFAULTS = {
+  SCHEDULE_TYPE: 'CONSULTATION',
+  CONSULTATION_TYPE: 'INDIVIDUAL',
+  DURATION_CODE: '50_MIN',
+} as const;

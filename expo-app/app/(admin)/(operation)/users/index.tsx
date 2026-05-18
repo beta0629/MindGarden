@@ -1,5 +1,5 @@
 /**
- * 어드민·스태프 — 사용자 조회 (읽기 전용)
+ * 어드민·스태프 — 사용자 조회 + 추가 FAB
  *
  * @author MindGarden
  * @since 2026-05-16
@@ -16,8 +16,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter, type Href } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Users } from 'lucide-react-native';
+import { Plus, Users } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
 import { Badge } from '@/components/atoms/Badge';
@@ -38,8 +39,13 @@ import {
   ADMIN_API_QUERY_NOT_READY_COPY,
   ADMIN_MOBILE_OPERATION_COPY,
 } from '@/constants/adminMobileScreensCopy';
+import { ADMIN_USER_CREATE_COPY } from '@/constants/adminScheduleRegisterCopy';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { isAdminMobileShellRole } from '@/utils/adminRole';
+import {
+  canRegisterConsultantOnMobile,
+  canRegisterStaffOnMobile,
+  isAdminMobileShellRole,
+} from '@/utils/adminRole';
 import {
   filterAdminManagedUsersBySearch,
   type AdminManagedUserListItem,
@@ -106,13 +112,18 @@ function DetailField({ label, value }: DetailFieldProps) {
 
 export default function AdminUsersScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const storeRole = useAuthStore((s) => s.role);
+  const accessToken = useAuthStore((s) => s.accessToken);
   const allowed = isAdminMobileShellRole(storeRole);
+  const showConsultantOption = canRegisterConsultantOnMobile(storeRole, accessToken);
+  const showStaffOption = canRegisterStaffOnMobile(storeRole);
 
   const [roleFilter, setRoleFilter] = useState<AdminUserManagementRoleFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<AdminManagedUserListItem | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [addSheetOpen, setAddSheetOpen] = useState(false);
 
   const { ready } = useAdminApiQueryReady();
   const listQuery = useAdminUserManagement(roleFilter);
@@ -145,6 +156,14 @@ export default function AdminUsersScreen() {
   const closeDetail = useCallback(() => {
     setSelectedUser(null);
   }, []);
+
+  const navigateCreate = useCallback(
+    (path: Href) => {
+      setAddSheetOpen(false);
+      router.push(path);
+    },
+    [router],
+  );
 
   const renderItem = useCallback(
     ({ item }: { item: AdminManagedUserListItem }) => {
@@ -252,6 +271,30 @@ export default function AdminUsersScreen() {
     </View>
   );
 
+  const sheetActions = [
+    {
+      label: ADMIN_USER_CREATE_COPY.OPTION_CLIENT,
+      onPress: () => navigateCreate('/(admin)/(operation)/users/create-client' as Href),
+    },
+    ...(showConsultantOption
+      ? [
+          {
+            label: ADMIN_USER_CREATE_COPY.OPTION_CONSULTANT,
+            onPress: () =>
+              navigateCreate('/(admin)/(operation)/users/create-consultant' as Href),
+          },
+        ]
+      : []),
+    ...(showStaffOption
+      ? [
+          {
+            label: ADMIN_USER_CREATE_COPY.OPTION_STAFF,
+            onPress: () => navigateCreate('/(admin)/(operation)/users/create-staff' as Href),
+          },
+        ]
+      : []),
+  ];
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title={ADMIN_MOBILE_OPERATION_COPY.USERS} canGoBack />
@@ -305,6 +348,56 @@ export default function AdminUsersScreen() {
           }
         />
       )}
+
+      <Pressable
+        onPress={() => setAddSheetOpen(true)}
+        style={({ pressed }) => [
+          styles.fab,
+          {
+            backgroundColor: theme.colors.primary,
+            opacity: pressed ? 0.92 : 1,
+            ...theme.shadows.lg,
+          },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={ADMIN_USER_CREATE_COPY.FAB_LABEL}
+      >
+        <Plus size={28} color={theme.colors.textOnPrimary} />
+      </Pressable>
+
+      <UnifiedModal
+        isOpen={addSheetOpen}
+        onClose={() => setAddSheetOpen(false)}
+        title={ADMIN_USER_CREATE_COPY.SHEET_TITLE}
+        actions={[
+          {
+            label: ADMIN_USER_CREATE_COPY.SHEET_CANCEL,
+            onPress: () => setAddSheetOpen(false),
+            variant: 'secondary',
+          },
+        ]}
+      >
+        <View style={{ gap: 8 }}>
+          {sheetActions.map((action) => (
+            <Pressable
+              key={action.label}
+              onPress={action.onPress}
+              style={({ pressed }) => [
+                styles.sheetRow,
+                {
+                  borderColor: theme.colors.divider,
+                  backgroundColor: theme.colors.surface,
+                  opacity: pressed ? 0.9 : 1,
+                },
+              ]}
+            >
+              <Text style={{ color: theme.colors.textMain, fontFamily: theme.fontFamily.medium }}>
+                {action.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </UnifiedModal>
 
       <UnifiedModal
         isOpen={selectedUser != null}
@@ -364,7 +457,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   listContent: {
-    paddingBottom: 32,
+    paddingBottom: 96,
     paddingTop: 8,
   },
   listContentEmpty: {
@@ -398,5 +491,21 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetRow: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
   },
 });

@@ -352,6 +352,13 @@ export const NotificationService = {
         },
       });
 
+      if (__DEV__) {
+        console.log(
+          '[NotificationService] push token registered',
+          maskPushTokenForDevLog(resolvedToken),
+        );
+      }
+
       return true;
     } catch (err) {
       const reason =

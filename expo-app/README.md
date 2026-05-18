@@ -45,6 +45,15 @@ eas secret:create --scope project --name EXPO_PUBLIC_NAVER_CLIENT_SECRET --type 
 
 또는 [Expo 대시보드](https://expo.dev) → 해당 프로젝트 → **Environment variables**에서 **위와 동일한 변수 이름**으로 추가합니다.
 
+### DEV APK + 푸시 토큰 (로컬, `EAS_PROJECT_ID` 필요)
+
+```bash
+cd expo-app && npx eas-cli login && npx eas-cli project:info   # projectId UUID 확인 → .env 에 EAS_PROJECT_ID=<uuid>
+EAS_PROJECT_ID='<uuid>' npm run android:apk:dev   # 또는 .env 에 넣은 뒤 npm run android:apk:dev
+```
+
+`.env`·토큰 값은 **git에 커밋하지 않음**. 상세: [`MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md`](../docs/project-management/MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md) §2.
+
 ### GitHub Actions에서 빌드할 때만
 
 Repository **Secrets**에 `KAKAO_APP_KEY`, `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`, `EXPO_PUBLIC_NAVER_CLIENT_ID`, `EXPO_PUBLIC_NAVER_CLIENT_SECRET`을 저장하고, 워크플로 `env`로 넘깁니다. (EAS만 쓰면 GitHub 시크릿은 필수 아님.)

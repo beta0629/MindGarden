@@ -2,7 +2,7 @@
 
 **작성일**: 2026-05-16  
 **작성자**: core-tester  
-**상태**: Phase 2 자동 게이트 통과 (2026-05-16 Task O) — §6 APK prep·자동 게이트 완료 (2026-05-18); §6.2 역할 스모크·Maestro **부분 대기**  
+**상태**: §10.8 자동 게이트 **3/3 PASS** @ `d95768075` (2026-05-18); §6.2 운영·검수 회귀·Maestro **skip** (APK·자격 증명)  
 **기준 기획**: [`EXPO_NATIVE_APP_PLAN.md`](./EXPO_NATIVE_APP_PLAN.md) §2.4 Admin Mobile MVP  
 **API 표면**: [`BW4_COMMUNITY_API_SURFACE.md`](./BW4_COMMUNITY_API_SURFACE.md)
 
@@ -339,15 +339,16 @@ cd expo-app && npm run test:utils
 | **날짜** | 2026-05-18 |
 | **브랜치** | `develop` |
 | **SHA** | `d95768075` — `fix(expo,backend): 어드민 운영 API ready·STAFF 일정 조회` |
-| **실행** | core-coder (문서 게이트; read-only 코드 변경 없음) |
+| **실행** | core-tester (게이트 @ `d95768075`; read-only, 프로덕션·Expo 코드 변경 없음) |
 | **범위** | 어드민 운영 탭 API 연동(`useApiQueryReady`·스케줄/기록/사용자/마음날씨), 백엔드 `ScheduleServiceImpl` STAFF 일정 조회 스코프 |
 
 | # | 명령 | exit | 결과 | wall |
 |---|------|------|------|------|
-| 1 | `cd expo-app && npm run test:utils` | **0** | **PASS** — 6 suites, **36** tests (`adminRole`·`navigateAfterAuth`·`jwtPayload`·`resolveTenantIdForApi`·`communityFeedMerge`·`dateFormat`) | ~6.6s |
-| 2 | `cd expo-app && npx tsc --noEmit` | **0** | **PASS** — 타입 오류 없음 | — |
+| 1 | `cd expo-app && npm run test:utils` | **0** | **PASS** — 6 suites, **36** tests (`adminRole`·`navigateAfterAuth`·`jwtPayload`·`resolveTenantIdForApi`·`communityFeedMerge`·`dateFormat`) | ~3.6s |
+| 2 | `cd expo-app && npx tsc --noEmit` | **0** | **PASS** — 타입 오류 없음 | ~11s (연속 실행) |
+| 3 | `mvn -q -Dtest=ScheduleServiceImplAdminStaffScheduleScopeTest,BwAdminContentCommunityMvcSmokeIntegrationTest test` | **0** | **PASS** — **10** tests, 0 failures (`ScheduleServiceImpl` STAFF·ADMIN·CLIENT 스코프 **3** + BW admin community MockMvc **7**) | ~81s |
 
-**2/2 PASS** — §6 Android dev APK는 **`d95768075` 기준 재빌드·재설치 필수** ([`SMOKE_RUN` §6](./ADMIN_MOBILE_MVP_SMOKE_RUN.md#6-빌드재설치--admin-로그인-후-client-셸-회귀)·운영·검수 화면 수정 반영 후 **로그아웃·재로그인**으로 JWT·tenant 재동기화. §6.2 #1–#7·Maestro는 §10.7과 동일 **manual/Maestro 대기**.
+**3/3 PASS** — §6 Android dev APK는 **`d95768075` 기준 재빌드·재설치 필수** ([`SMOKE_RUN` §6](./ADMIN_MOBILE_MVP_SMOKE_RUN.md#6-빌드재설치--admin-로그인-후-client-셸-회귀)·운영·검수 화면 수정 반영 후 **로그아웃·재로그인**으로 JWT·tenant 재동기화. §6.2 운영·검수 회귀 스모크·Maestro는 [`SMOKE_RUN` §6.2 @ `d95768075`](./ADMIN_MOBILE_MVP_SMOKE_RUN.md#62-게이트-실행--d95768075-2026-05-18-core-tester) (**skip** — §6.1 APK 미빌드·`MAESTRO_*` 없음).
 
 ---
 
@@ -355,6 +356,7 @@ cd expo-app && npm run test:utils
 
 | 날짜 | 변경 |
 |------|------|
+| 2026-05-18 | §10.8 — 게이트 **3/3 PASS** @ `d95768075` (core-tester: `test:utils` 36·`tsc`·Maven STAFF 스코프+BW 10); §6.2 운영·검수 회귀 **skip** (APK·자격 증명) |
 | 2026-05-18 | §10.8 — 게이트 PASS @ `d95768075` (`test:utils` 36·`tsc`); §6 APK `d957680` 재빌드·운영/검수 후 재로그인 안내 |
 | 2026-05-18 | §6.2 — emulator prep·`test:utils`·`pm clear` cold start; Maestro skip (no `MAESTRO_*`); §6.2 #1–#7 manual pending |
 | 2026-05-18 | §10.7 — Admin MVP 자동 게이트 재실행 PASS @ `46fe1c0be` (`test:utils` 34·`tsc`·BW MockMvc 7·full `mvn test` 816) |

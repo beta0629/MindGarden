@@ -6,6 +6,7 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import {
+  Alert,
   Platform,
   Pressable,
   RefreshControl,
@@ -19,7 +20,14 @@ import { addDays, format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Calendar, ChevronLeft, ChevronRight, Link2, Plus } from 'lucide-react-native';
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Link2,
+  Plus,
+} from 'lucide-react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
@@ -29,6 +37,8 @@ import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { ScheduleCard } from '@/components/molecules/ScheduleCard';
 import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
+import { AdminMappingPaymentConfirmModal } from '@/components/organisms/AdminMappingPaymentConfirmModal';
+import { AdminMappingDepositConfirmModal } from '@/components/organisms/AdminMappingDepositConfirmModal';
 import {
   filterAdminMappingsByView,
   getAdminMappingsErrorMessage,
@@ -53,6 +63,20 @@ import {
 } from '@/constants/adminMobileScreensCopy';
 import { ADMIN_SCHEDULE_REGISTER_COPY } from '@/constants/adminScheduleRegisterCopy';
 import { toDisplayString } from '@/utils/safeDisplay';
+import { openAdminWebIntegratedSchedule } from '@/utils/openAdminWebMappingPayment';
+import {
+  canScheduleAdminMapping,
+  getAdminMappingPrimaryActionKind,
+  getAdminMappingPrimaryCtaLabel,
+  getScheduleBlockedPaymentHint,
+  getWebPaymentCtaLabel,
+  shouldShowAdminMappingPrimaryCta,
+  shouldShowWebPaymentCta,
+} from '@/utils/adminMappingSettlement';
+import {
+  getAdminMappingSettlementErrorMessage,
+  useApproveMapping,
+} from '@/api/hooks/useAdminMappingSettlement';
 import {
   isAdminListQueryLoading,
   retryAdminApiSession,
@@ -88,14 +112,26 @@ function mappingStatusLabel(status: string): string {
 function MappingListCard({
   item,
   index,
+  canManageMappings,
   onSchedule,
+  onOpenPayment,
+  onOpenDeposit,
+  onOpenApprove,
 }: {
   item: AdminMappingListItem;
   index: number;
+  canManageMappings: boolean;
   onSchedule: (mapping: AdminMappingListItem) => void;
+  onOpenPayment: (mapping: AdminMappingListItem) => void;
+  onOpenDeposit: (mapping: AdminMappingListItem) => void;
+  onOpenApprove: (mapping: AdminMappingListItem) => void;
 }) {
   const theme = useTheme();
   const status = item.status.trim().toUpperCase();
+  const scheduleAllowed = canScheduleAdminMapping(item);
+  const primaryKind = getAdminMappingPrimaryActionKind(status);
+  const showPrimary = shouldShowAdminMappingPrimaryCta(status, canManageMappings);
+  const showWebPayment = canManageMappings && shouldShowWebPaymentCta(status);
   const variant =
     status === 'ACTIVE'
       ? 'success'
@@ -140,31 +176,112 @@ function MappingListCard({
         {ADMIN_MAPPING_COPY.REMAINING_SESSIONS(item.remainingSessions)}
         {item.packageName.trim() !== '' ? ` · ${item.packageName}` : ''}
       </Text>
-      <Pressable
-        onPress={() => onSchedule(item)}
-        style={({ pressed }) => [
-          styles.mappingAction,
-          {
-            borderColor: theme.colors.primary,
-            opacity: pressed ? 0.9 : 1,
-            marginTop: theme.spacing.sm,
-          },
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel={ADMIN_MAPPING_COPY.ACTION_SCHEDULE_FROM_MAPPING}
-      >
-        <Link2 size={16} color={theme.colors.primary} />
+      {!scheduleAllowed ? (
         <Text
           style={{
-            color: theme.colors.primary,
-            fontFamily: theme.fontFamily.medium,
-            fontSize: theme.fontSize.sm,
-            marginLeft: 6,
+            marginTop: theme.spacing.sm,
+            color: theme.colors.textTertiary,
+            fontFamily: theme.fontFamily.regular,
+            fontSize: theme.fontSize.xs,
           }}
         >
-          {ADMIN_MAPPING_COPY.ACTION_SCHEDULE_FROM_MAPPING}
+          {getScheduleBlockedPaymentHint(item)}
         </Text>
-      </Pressable>
+      ) : null}
+      <View style={[styles.mappingActionsRow, { marginTop: theme.spacing.sm }]}>
+        {showPrimary && primaryKind != null ? (
+          <Pressable
+            onPress={() => {
+              if (primaryKind === 'payment') {
+                onOpenPayment(item);
+              } else if (primaryKind === 'deposit') {
+                onOpenDeposit(item);
+              } else if (primaryKind === 'approve') {
+                onOpenApprove(item);
+              } else if (scheduleAllowed) {
+                onSchedule(item);
+              }
+            }}
+            disabled={primaryKind === 'schedule' && !scheduleAllowed}
+            style={({ pressed }) => [
+              styles.mappingAction,
+              styles.mappingActionPrimary,
+              {
+                borderColor: theme.colors.primary,
+                backgroundColor: theme.colors.primary,
+                opacity:
+                  primaryKind === 'schedule' && !scheduleAllowed ? 0.6 : pressed ? 0.85 : 1,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={getAdminMappingPrimaryCtaLabel(primaryKind)}
+          >
+            <Text
+              style={{
+                color: theme.colors.textOnPrimary,
+                fontFamily: theme.fontFamily.semibold,
+                fontSize: theme.fontSize.sm,
+              }}
+            >
+              {getAdminMappingPrimaryCtaLabel(primaryKind)}
+            </Text>
+          </Pressable>
+        ) : null}
+        {showWebPayment ? (
+          <Pressable
+            onPress={() => void openAdminWebIntegratedSchedule()}
+            style={({ pressed }) => [
+              styles.mappingAction,
+              showPrimary ? styles.mappingActionSecondary : styles.mappingActionPrimary,
+              {
+                borderColor: theme.colors.primary,
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={ADMIN_MAPPING_COPY.OPEN_WEB_PAYMENT_A11Y}
+          >
+            <ExternalLink size={16} color={theme.colors.primary} />
+            <Text
+              style={{
+                color: theme.colors.primary,
+                fontFamily: theme.fontFamily.medium,
+                fontSize: theme.fontSize.sm,
+                marginLeft: 6,
+              }}
+            >
+              {getWebPaymentCtaLabel(status)}
+            </Text>
+          </Pressable>
+        ) : null}
+        {!showPrimary && scheduleAllowed ? (
+          <Pressable
+            onPress={() => onSchedule(item)}
+            style={({ pressed }) => [
+              styles.mappingAction,
+              styles.mappingActionPrimary,
+              {
+                borderColor: theme.colors.primary,
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={ADMIN_MAPPING_COPY.ACTION_SCHEDULE_FROM_MAPPING}
+          >
+            <Link2 size={16} color={theme.colors.primary} />
+            <Text
+              style={{
+                color: theme.colors.primary,
+                fontFamily: theme.fontFamily.medium,
+                fontSize: theme.fontSize.sm,
+                marginLeft: 6,
+              }}
+            >
+              {ADMIN_MAPPING_COPY.ACTION_SCHEDULE_FROM_MAPPING}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -184,6 +301,10 @@ export default function AdminScheduleHubScreen() {
   const [mappingFilter, setMappingFilter] = useState<AdminMappingViewFilter>('ongoing');
   const [fabSheetOpen, setFabSheetOpen] = useState(false);
   const [forbiddenOpen, setForbiddenOpen] = useState(false);
+  const [paymentModalMapping, setPaymentModalMapping] = useState<AdminMappingListItem | null>(null);
+  const [depositModalMapping, setDepositModalMapping] = useState<AdminMappingListItem | null>(null);
+  const [approveModalMapping, setApproveModalMapping] = useState<AdminMappingListItem | null>(null);
+  const approveMutation = useApproveMapping();
 
   const [dateYmd, setDateYmd] = useState(() => {
     if (typeof params.dateYmd === 'string' && params.dateYmd.length >= 10) {
@@ -196,6 +317,27 @@ export default function AdminScheduleHubScreen() {
     enabled: hubTab === 'schedule',
   });
   const mappingsQuery = useAdminMappings({ enabled: hubTab === 'mappings' && canViewMappings });
+
+  const handleSettlementSuccess = useCallback(() => {
+    void mappingsQuery.refetch();
+  }, [mappingsQuery]);
+
+  const handleApproveConfirm = useCallback(async () => {
+    if (approveModalMapping == null) {
+      return;
+    }
+    try {
+      await approveMutation.mutateAsync(approveModalMapping.id);
+      setApproveModalMapping(null);
+      Alert.alert(ADMIN_MAPPING_COPY.SUCCESS_TITLE, ADMIN_MAPPING_COPY.APPROVE_SUCCESS);
+      handleSettlementSuccess();
+    } catch (err) {
+      Alert.alert(
+        ADMIN_MAPPING_COPY.ERROR_TITLE,
+        getAdminMappingSettlementErrorMessage(err, ADMIN_MAPPING_COPY.APPROVE_FAILED),
+      );
+    }
+  }, [approveModalMapping, approveMutation, handleSettlementSuccess]);
 
   const schedules = scheduleQuery.data ?? [];
   const filteredMappings = useMemo(
@@ -515,7 +657,11 @@ export default function AdminScheduleHubScreen() {
                         <MappingListCard
                           item={item}
                           index={index}
+                          canManageMappings={canManageMappings}
                           onSchedule={openScheduleFromMapping}
+                          onOpenPayment={setPaymentModalMapping}
+                          onOpenDeposit={setDepositModalMapping}
+                          onOpenApprove={setApproveModalMapping}
                         />
                       )}
                     />
@@ -608,6 +754,39 @@ export default function AdminScheduleHubScreen() {
           { label: '확인', onPress: () => setForbiddenOpen(false), variant: 'primary' },
         ]}
       />
+
+      <AdminMappingPaymentConfirmModal
+        isOpen={paymentModalMapping != null}
+        mapping={paymentModalMapping}
+        onClose={() => setPaymentModalMapping(null)}
+        onSuccess={handleSettlementSuccess}
+      />
+      <AdminMappingDepositConfirmModal
+        isOpen={depositModalMapping != null}
+        mapping={depositModalMapping}
+        onClose={() => setDepositModalMapping(null)}
+        onSuccess={handleSettlementSuccess}
+      />
+      <UnifiedModal
+        isOpen={approveModalMapping != null}
+        onClose={() => setApproveModalMapping(null)}
+        title={ADMIN_MAPPING_COPY.APPROVE_CONFIRM_TITLE}
+        subtitle={ADMIN_MAPPING_COPY.APPROVE_CONFIRM_BODY}
+        loading={approveMutation.isPending}
+        actions={[
+          {
+            label: ADMIN_MAPPING_COPY.CANCEL,
+            onPress: () => setApproveModalMapping(null),
+            variant: 'secondary',
+          },
+          {
+            label: ADMIN_MAPPING_COPY.APPROVE_MAPPING_CTA,
+            onPress: () => void handleApproveConfirm(),
+            variant: 'primary',
+            disabled: approveMutation.isPending,
+          },
+        ]}
+      />
     </SafeAreaView>
   );
 }
@@ -654,14 +833,28 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 8,
   },
+  mappingActionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
   mappingAction: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
+  },
+  mappingActionPrimary: {
+    flex: 1,
+    minWidth: 120,
+    justifyContent: 'center',
+  },
+  mappingActionSecondary: {
+    flex: 1,
+    minWidth: 120,
+    justifyContent: 'center',
   },
   fab: {
     position: 'absolute',

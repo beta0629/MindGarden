@@ -183,6 +183,12 @@ export const ADMIN_MOBILE_API = {
   USER_MANAGEMENT: '/api/v1/admin/user-management',
   CLIENTS_WITH_MAPPING_INFO: '/api/v1/admin/clients/with-mapping-info',
   MAPPINGS: '/api/v1/admin/mappings',
+  confirmMappingPayment: (mappingId: string | number) =>
+    `/api/v1/admin/mappings/${encodeURIComponent(String(mappingId))}/confirm-payment`,
+  confirmMappingDeposit: (mappingId: string | number) =>
+    `/api/v1/admin/mappings/${encodeURIComponent(String(mappingId))}/confirm-deposit`,
+  approveMapping: (mappingId: string | number) =>
+    `/api/v1/admin/mappings/${encodeURIComponent(String(mappingId))}/approve`,
   mappingsByConsultant: (consultantId: string | number) =>
     `/api/v1/admin/mappings/consultant/${encodeURIComponent(String(consultantId))}/clients`,
   CONSULTANTS_WITH_VACATION: '/api/v1/admin/consultants/with-vacation',

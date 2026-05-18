@@ -17,12 +17,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
+import { ExternalLink } from 'lucide-react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SearchBar } from '@/components/atoms/SearchBar';
 import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
+import { AdminMappingPaymentConfirmModal } from '@/components/organisms/AdminMappingPaymentConfirmModal';
 import {
   getAdminCreateMappingErrorMessage,
   useAdminCreateMapping,
@@ -44,6 +46,8 @@ import {
 import { useAuthStore } from '@/stores/useAuthStore';
 import { generateMappingPaymentReference } from '@/utils/adminMappingCreateBody';
 import { canManageMappingsOnMobile } from '@/utils/adminRole';
+import { extractCreatedMappingId, openAdminWebIntegratedSchedule } from '@/utils/openAdminWebMappingPayment';
+import type { AdminMappingSettlementTarget } from '@/utils/adminMappingSettlement';
 import { toDisplayString } from '@/utils/safeDisplay';
 
 const TOTAL_STEPS = 5;
@@ -88,6 +92,9 @@ export default function AdminMappingCreateScreen() {
   const [errorModal, setErrorModal] = useState<string | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [forbiddenOpen, setForbiddenOpen] = useState(false);
+  const [createdMappingSnapshot, setCreatedMappingSnapshot] =
+    useState<AdminMappingSettlementTarget | null>(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   const dateYmd = format(new Date(), 'yyyy-MM-dd');
   const consultantsQuery = useAdminConsultantsWithVacation(dateYmd);
@@ -176,7 +183,7 @@ export default function AdminMappingCreateScreen() {
       return;
     }
     try {
-      await createMutation.mutateAsync({
+      const raw = await createMutation.mutateAsync({
         consultantId: consultant.id,
         clientId: client.id,
         payment: {
@@ -190,6 +197,19 @@ export default function AdminMappingCreateScreen() {
           notes,
         },
       });
+      const newId = extractCreatedMappingId(raw);
+      if (newId != null && consultant && client) {
+        setCreatedMappingSnapshot({
+          id: newId,
+          status: 'PENDING_PAYMENT',
+          remainingSessions: sessions,
+          consultantName: toDisplayString(consultant.name, '상담사'),
+          clientName: toDisplayString(client.name, '내담자'),
+          packageName: packageName.trim(),
+          packagePrice: price,
+          paymentMethod,
+        });
+      }
       setStep(5);
     } catch (err) {
       if (
@@ -223,6 +243,10 @@ export default function AdminMappingCreateScreen() {
       params: { tab: 'mappings' },
     } as Href);
   }, [router]);
+
+  const openWebPayment = useCallback(() => {
+    void openAdminWebIntegratedSchedule();
+  }, []);
 
   const renderPickerRow = (
     label: string,
@@ -593,23 +617,82 @@ export default function AdminMappingCreateScreen() {
               marginTop: theme.spacing.md,
             }}
           >
-            {ADMIN_MAPPING_COPY.DONE_HINT}
+            {ADMIN_MAPPING_COPY.WEB_PAYMENT_HINT}
           </Text>
+          {allowed && createdMappingSnapshot != null ? (
+            <Pressable
+              onPress={() => setPaymentModalOpen(true)}
+              style={({ pressed }) => [
+                styles.primaryBtn,
+                {
+                  backgroundColor: theme.colors.primary,
+                  opacity: pressed ? 0.7 : 1,
+                  marginTop: theme.spacing.xl,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={ADMIN_MAPPING_COPY.CONFIRM_PAYMENT_CTA}
+            >
+              <Text style={{ color: theme.colors.textOnPrimary, fontFamily: theme.fontFamily.semibold }}>
+                {ADMIN_MAPPING_COPY.CONFIRM_PAYMENT_CTA}
+              </Text>
+            </Pressable>
+          ) : null}
           <Pressable
             onPress={finishToMappingsTab}
             style={({ pressed }) => [
               styles.primaryBtn,
+              allowed && createdMappingSnapshot != null ? styles.outlineBtn : null,
               {
-                backgroundColor: theme.colors.primary,
-                opacity: pressed ? 0.92 : 1,
-                marginTop: theme.spacing.xl,
+                backgroundColor:
+                  allowed && createdMappingSnapshot != null
+                    ? 'transparent'
+                    : theme.colors.primary,
+                borderColor: theme.colors.primary,
+                opacity: pressed ? 0.7 : 1,
+                marginTop:
+                  allowed && createdMappingSnapshot != null
+                    ? theme.spacing.sm
+                    : theme.spacing.xl,
               },
             ]}
+            accessibilityRole="button"
           >
-            <Text style={{ color: theme.colors.textOnPrimary, fontFamily: theme.fontFamily.semibold }}>
+            <Text
+              style={{
+                color:
+                  allowed && createdMappingSnapshot != null
+                    ? theme.colors.primary
+                    : theme.colors.textOnPrimary,
+                fontFamily: theme.fontFamily.semibold,
+              }}
+            >
               {ADMIN_MAPPING_COPY.DONE_BACK}
             </Text>
           </Pressable>
+          {allowed ? (
+            <Pressable
+              onPress={openWebPayment}
+              style={({ pressed }) => [
+                styles.tertiaryBtn,
+                { opacity: pressed ? 0.7 : 1, marginTop: theme.spacing.sm },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={ADMIN_MAPPING_COPY.OPEN_WEB_PAYMENT_A11Y}
+            >
+              <ExternalLink size={16} color={theme.colors.primary} />
+              <Text
+                style={{
+                  color: theme.colors.primary,
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: theme.fontSize.sm,
+                  marginLeft: 6,
+                }}
+              >
+                {ADMIN_MAPPING_COPY.OPEN_WEB_PAYMENT_CTA}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       ) : null}
 
@@ -718,6 +801,15 @@ export default function AdminMappingCreateScreen() {
           },
         ]}
       />
+      <AdminMappingPaymentConfirmModal
+        isOpen={paymentModalOpen}
+        mapping={createdMappingSnapshot}
+        onClose={() => setPaymentModalOpen(false)}
+        onSuccess={() => {
+          setPaymentModalOpen(false);
+          finishToMappingsTab();
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -786,8 +878,18 @@ const styles = StyleSheet.create({
     flex: 2,
   },
   primaryBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 12,
+  },
+  outlineBtn: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+  },
+  tertiaryBtn: {
+    alignItems: 'center',
+    paddingVertical: 12,
   },
 });

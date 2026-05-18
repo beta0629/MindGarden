@@ -274,14 +274,14 @@ export default function AdminUsersScreen() {
   const sheetActions = [
     {
       label: ADMIN_USER_CREATE_COPY.OPTION_CLIENT,
-      onPress: () => navigateCreate('/(admin)/(operation)/users/create-client' as Href),
+      onPress: () => navigateCreate('/(admin)/(operation)/user-management/create-client' as Href),
     },
     ...(showConsultantOption
       ? [
           {
             label: ADMIN_USER_CREATE_COPY.OPTION_CONSULTANT,
             onPress: () =>
-              navigateCreate('/(admin)/(operation)/users/create-consultant' as Href),
+              navigateCreate('/(admin)/(operation)/user-management/create-consultant' as Href),
           },
         ]
       : []),
@@ -289,7 +289,7 @@ export default function AdminUsersScreen() {
       ? [
           {
             label: ADMIN_USER_CREATE_COPY.OPTION_STAFF,
-            onPress: () => navigateCreate('/(admin)/(operation)/users/create-staff' as Href),
+            onPress: () => navigateCreate('/(admin)/(operation)/user-management/create-staff' as Href),
           },
         ]
       : []),

@@ -62,7 +62,7 @@ export default function AdminOperationHubScreen() {
             icon={Users}
             title={ADMIN_MOBILE_OPERATION_COPY.USERS}
             subtitle={ADMIN_MOBILE_OPERATION_COPY.USERS_SUB}
-            onPress={() => router.push('/(admin)/(operation)/users')}
+            onPress={() => router.push('/(admin)/(operation)/user-management')}
           />
           {showMindWeather ? (
             <MenuListItem

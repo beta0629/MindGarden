@@ -1,6 +1,6 @@
 # Admin 모바일 MVP — 자동 스모크 준비 (Task K / O)
 
-**실행 일시:** 2026-05-16 (로컬) · **§6 갱신:** 2026-05-18 (`develop` @ `d95768075`, §10.8 게이트·APK 재빌드 안내)  
+**실행 일시:** 2026-05-16 (로컬) · **§6 갱신:** 2026-05-18 (`develop` @ `d95768075`, §10.8 **3/3 PASS**·§6.2 운영·검수 회귀 **skip**)  
 **커밋:** 게이트 문서만 — `docs(admin-mvp): §10.8 게이트·§6 d957680 APK·운영 스모크 기록`  
 **Task O (2026-05-16):** `npm run test:utils`·`tsc --noEmit` PASS; `app/(admin)` 내 `AdminMobilePlaceholderScreen` 0건  
 **JWT SSOT:** `46fe1c0be` — 로그인·복구 시 JWT 역할로 admin/staff 홈 라우팅 · **운영 API (2026-05-18):** `d95768075` — 어드민 운영 탭·STAFF 일정; `test:utils` **36** tests PASS @ §10.8
@@ -130,11 +130,16 @@ cd expo-app && npm run test:utils && npx tsc --noEmit
 | 항목 | 값 |
 |------|-----|
 | **HEAD** | `d95768075` (`fix(expo,backend): 어드민 운영 API ready·STAFF 일정 조회`) |
-| **필수** | §6.1 `npm run android:apk:dev` → `android:apk:install` — **미실행 시 §6.2 역할·운영 스모크 무효** |
-| **embedded apiBaseUrl** | `https://dev.core-solution.co.kr` (빌드 후 `unzip -p` 확인) |
+| **명령** | `cd expo-app && npm run android:apk:dev` → **성공** (Gradle `assembleRelease` 4m 11s) |
+| **APK** | `expo-app/android/app/build/outputs/apk/release/app-release.apk` (`app-release.apk`, ~132MB) |
+| **빌드 시각** | 2026-05-18 11:07:27 KST |
+| **embedded apiBaseUrl** | `https://dev.core-solution.co.kr` |
+| **adb 설치** | `cd expo-app && npm run android:apk:install` → `emulator-5554` **성공** |
+| **수동 설치** | `adb install -r expo-app/android/app/build/outputs/apk/release/app-release.apk` |
+| **smoke prep** | `bash expo-app/scripts/admin-mvp-smoke-prep.sh` → exit **0** (AdminRoleGate·Unable to resolve **0**) |
 | **검수 후** | 운영·검수 탭 반영 확인 → **로그아웃·재로그인** (§6.2) |
 
-### §6 빌드 기록 (2026-05-18, JWT 라우팅 SSOT @ `46fe1c0be`)
+### §6 빌드 기록 — 이전 (JWT 라우팅 SSOT @ `46fe1c0be`)
 
 | 항목 | 값 |
 |------|-----|
@@ -149,11 +154,11 @@ cd expo-app && npm run test:utils && npx tsc --noEmit
 
 ### §6.2 실행 결과 (2026-05-18, core-tester)
 
-**기준 APK:** `46fe1c0be` 빌드 (`app-release.apk`, mtime 2026-05-18 09:19:24 KST) · **embedded apiBaseUrl:** `https://dev.core-solution.co.kr`
+**기준 APK:** `d95768075` 빌드 (`app-release.apk`, mtime 2026-05-18 11:07:27 KST) · **embedded apiBaseUrl:** `https://dev.core-solution.co.kr`
 
 | # | 항목 | 결과 | 일시 (KST) | 비고 |
 |---|------|------|------------|------|
-| P | `admin-mvp-smoke-prep.sh` | **pass** | 2026-05-18 | `emulator-5554` device; 설치 생략(APK mtime ≤ 캐시); logcat 필터 매칭 없음 |
+| P | `admin-mvp-smoke-prep.sh` | **pass** | 2026-05-18 11:07 | `emulator-5554` device; APK 재설치·MainActivity 기동; logcat 필터 매칭 없음(AdminRoleGate·Unable to resolve) |
 | P | `adb devices` | **pass** | 2026-05-18 | `emulator-5554` `device` |
 | P | `npm run test:utils` (§6.3) | **pass** | 2026-05-18 | 5 suites, **34** tests |
 | S | Maestro `admin-mvp-smoke.yaml` | **skip** | 2026-05-18 | Maestro skipped (no `MAESTRO_*`); CLI 미설치 |
@@ -167,3 +172,20 @@ cd expo-app && npm run test:utils && npx tsc --noEmit
 **JWT 홈 라우팅 (§6.2 #1):** `adb shell pm clear com.mindgardenmobile` 후 앱 기동 → 기관 선택 UI만 확인. ADMIN 재로그인 후 `/(admin)/(home)` vs `/(client)/(home)` 구분은 **팀 계정 또는 `MAESTRO_*` + Maestro CLI** 필요.
 
 **다음 (수동/Maestro):** `export MAESTRO_ADMIN_EMAIL` 등 설정 + [Maestro 설치](https://maestro.mobile.dev/) 후 `maestro test expo-app/.maestro/flows/admin-mvp-smoke.yaml` · STAFF는 `admin-mvp-smoke-staff.yaml`.
+
+### §6.2 게이트 실행 @ `d95768075` (2026-05-18, core-tester)
+
+**기준 HEAD:** `d95768075` · **설치 APK:** `mindgarden-dev-release.apk` (mtime **2026-05-14** 16:31 KST) — §6.1 `android:apk:dev` **미실행**, `app-release.apk` 없음 · embedded `apiBaseUrl` **missing** (prep 출력)
+
+| # | 항목 | 결과 | 일시 (KST) | 비고 |
+|---|------|------|------------|------|
+| P | `admin-mvp-smoke-prep.sh` | **pass** | 2026-05-18 11:04 | `emulator-5554`; APK 설치 생략(mtime ≤ 캐시); AdminRoleGate·Unable to resolve **0** |
+| P | `npm run test:utils` + `tsc --noEmit` (§6.3) | **pass** | 2026-05-18 11:03 | 6 suites, **36** tests; `tsc` clean — [`TEST_PLAN` §10.8](./ADMIN_MOBILE_MVP_TEST_PLAN.md#108-admin-mvp-자동-게이트-d95768075-2026-05-18) |
+| P | Maven `ScheduleServiceImplAdminStaffScheduleScopeTest` + `BwAdminContentCommunityMvcSmokeIntegrationTest` | **pass** | 2026-05-18 11:03–11:04 | **10** tests, 0 failures (~81s) |
+| S | Maestro `admin-mvp-smoke.yaml` | **skip** | 2026-05-18 11:05 | `MAESTRO_*` 미설정; Maestro CLI 미설치 |
+| S | 운영 회귀 — ADMIN 로그인 | **skip** | 2026-05-18 11:05 | 팀 자격 증명 없음; §6.1 `@ d95768075` APK 미빌드·구 APK(2026-05-14) |
+| S | 운영 — **사용자 조회** 목록 로딩 종료(스켈레톤 아님) | **skip** | 2026-05-18 11:05 | 동일 — ADMIN 세션·최신 APK 선행 필요 |
+| S | 운영 — **스케줄** 빈 상태·목록 표시 | **skip** | 2026-05-18 11:05 | 동일 |
+| S | **검수** 탭 로딩 종료(대기 큐·스켈레톤 아님) | **skip** | 2026-05-18 11:05 | 동일 |
+
+**판단:** 자동 게이트(Expo utils·`tsc`·Maven 10) **PASS**. 운영·검수 UI 회귀는 §6.1 APK 재빌드·재설치 + ADMIN 로그인(또는 `MAESTRO_*` + Maestro) 후 재실행. 실패 시 **core-coder** 위임(프로덕션 코드 수정 금지 — core-tester).

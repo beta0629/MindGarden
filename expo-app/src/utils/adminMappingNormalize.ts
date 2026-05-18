@@ -16,6 +16,9 @@ export type AdminMappingListItem = {
   readonly remainingSessions: number;
   readonly totalSessions: number;
   readonly packageName: string;
+  readonly packagePrice: number;
+  readonly paymentMethod: string;
+  readonly paymentReference?: string;
   readonly createdAt: string | null;
 };
 
@@ -46,6 +49,17 @@ function mapRow(row: Record<string, unknown>): AdminMappingListItem | null {
   }
   const remainingSessions = toSafeNumber(row.remainingSessions, 0);
   const totalSessions = toSafeNumber(row.totalSessions, 0);
+  const packagePrice = toSafeNumber(row.packagePrice, 0);
+  const paymentMethodRaw = row.paymentMethod;
+  const paymentMethod =
+    paymentMethodRaw != null && String(paymentMethodRaw).trim() !== ''
+      ? String(paymentMethodRaw).trim()
+      : '';
+  const paymentReferenceRaw = row.paymentReference;
+  const paymentReference =
+    paymentReferenceRaw != null && String(paymentReferenceRaw).trim() !== ''
+      ? String(paymentReferenceRaw).trim()
+      : undefined;
   const createdAtRaw = row.createdAt ?? row.assignedAt ?? row.startDate;
   const createdAt =
     createdAtRaw == null
@@ -63,6 +77,9 @@ function mapRow(row: Record<string, unknown>): AdminMappingListItem | null {
     remainingSessions: Number.isFinite(remainingSessions) ? remainingSessions : 0,
     totalSessions: Number.isFinite(totalSessions) ? totalSessions : 0,
     packageName: toDisplayString(row.packageName, ''),
+    packagePrice: Number.isFinite(packagePrice) ? packagePrice : 0,
+    paymentMethod,
+    ...(paymentReference != null ? { paymentReference } : {}),
     createdAt,
   };
 }

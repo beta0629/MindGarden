@@ -73,7 +73,7 @@ export default function AdminCreateConsultantScreen() {
       const returnPath =
         typeof params.returnPath === 'string' && params.returnPath.length > 0
           ? params.returnPath
-          : '/(admin)/(operation)/users';
+          : '/(admin)/(operation)/user-management';
       const consultantId = result.id;
       if (returnPath.includes('schedule/create') && consultantId != null) {
         router.replace({

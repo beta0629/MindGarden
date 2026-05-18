@@ -4,11 +4,14 @@
  * @author MindGarden
  * @since 2026-05-16
  */
+import { buildAdminWebUrl } from '@/config/webBaseUrl';
 
-/** 웹 어드민 SPA 경로 — `getAdminWebUrl()` 과 조합 */
+/** 웹 어드민 SPA 경로 — `buildAdminWebUrl()` 과 조합 (`frontend/src/constants/adminRoutes.js` SSOT) */
 export const ADMIN_MOBILE_WEB_ROUTES = {
   DASHBOARD: '/admin/dashboard',
   SCHEDULES: '/admin/schedules',
+  INTEGRATED_SCHEDULE: '/admin/integrated-schedule',
+  MAPPING_MANAGEMENT: '/admin/mapping-management',
   NOTIFICATIONS: '/admin/notifications',
   SYSTEM_CONFIG: '/admin/system-config',
   USER_MANAGEMENT: '/admin/user-management',
@@ -16,6 +19,24 @@ export const ADMIN_MOBILE_WEB_ROUTES = {
   COMMUNITY_MODERATION: '/admin/community-moderation',
   MIND_WEATHER_OBSERVABILITY: '/admin/wellness/mind-weather-observability',
 } as const;
+
+/** 통합 스케줄 — 매칭 카드 「결제 확인」 웹 SSOT (Sprint 1c 기본 오픈) */
+export function adminIntegratedScheduleWebUrl(): string {
+  return buildAdminWebUrl(ADMIN_MOBILE_WEB_ROUTES.INTEGRATED_SCHEDULE);
+}
+
+/** 매칭 관리 — 결제 대기 필터 (`?status=PENDING_PAYMENT`) */
+export function adminMappingManagementPendingPaymentPath(): string {
+  return `${ADMIN_MOBILE_WEB_ROUTES.MAPPING_MANAGEMENT}?status=PENDING_PAYMENT`;
+}
+
+export function adminMappingManagementPendingPaymentUrl(): string {
+  return buildAdminWebUrl(adminMappingManagementPendingPaymentPath());
+}
+
+export function adminMappingManagementWebUrl(): string {
+  return buildAdminWebUrl(ADMIN_MOBILE_WEB_ROUTES.MAPPING_MANAGEMENT);
+}
 
 /** Phase 2+ API 경로 주석용 (Spring) */
 export const ADMIN_MOBILE_API_PATH_HINTS = {

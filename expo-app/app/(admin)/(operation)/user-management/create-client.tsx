@@ -76,7 +76,7 @@ export default function AdminCreateClientScreen() {
       const returnPath =
         typeof params.returnPath === 'string' && params.returnPath.length > 0
           ? params.returnPath
-          : '/(admin)/(operation)/users';
+          : '/(admin)/(operation)/user-management';
       const clientId = result.id;
       if (returnPath.includes('schedule/create') && clientId != null) {
         router.replace({

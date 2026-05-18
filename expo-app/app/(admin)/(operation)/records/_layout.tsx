@@ -7,10 +7,5 @@
 import { Stack } from 'expo-router';
 
 export default function AdminOperationRecordsLayout() {
-  return (
-    <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="[id]" />
-    </Stack>
-  );
+  return <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }} />;
 }

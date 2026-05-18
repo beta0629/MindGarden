@@ -8,7 +8,7 @@ import { useEffect, useMemo } from 'react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
 import { decodeJwtPayload, parseJwtSubAsUserId } from '@/utils/jwtPayload';
-import { useResolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
+import { resolveEffectiveTenantIdForApi } from '@/utils/resolveEffectiveTenantIdForApi';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 
 export type UseApiQueryReadyOptions = {
@@ -44,8 +44,33 @@ export function useApiQueryReady(options?: UseApiQueryReadyOptions): {
   const authHasHydrated = useAuthStore((s) => s._hasHydrated);
   const accessToken = useAuthStore((s) => s.accessToken);
   const storeUserId = useAuthStore((s) => s.user?.id);
+  const userTenantId = useAuthStore((s) => s.user?.tenantId);
   const tenantHasHydrated = useTenantStore((s) => s._hasHydrated);
-  const tenantId = useResolveTenantIdForApi();
+  const headerTenantId = useTenantStore((s) => s.tenantId);
+  const tenantCode = useTenantStore((s) => s.tenantCode);
+  const recentTenants = useTenantStore((s) => s.recentTenants);
+
+  const storesResolved = authHasHydrated && !authIsLoading && tenantHasHydrated;
+
+  const effectiveTenantId = useMemo(
+    () =>
+      resolveEffectiveTenantIdForApi({
+        storesResolved,
+        accessToken,
+        headerTenantId,
+        userTenantId,
+        tenantCode,
+        recentTenants,
+      }),
+    [
+      storesResolved,
+      accessToken,
+      headerTenantId,
+      userTenantId,
+      tenantCode,
+      recentTenants,
+    ],
+  );
 
   const userId = useMemo(
     () => resolveEffectiveUserId(storeUserId, accessToken),
@@ -53,26 +78,27 @@ export function useApiQueryReady(options?: UseApiQueryReadyOptions): {
   );
 
   useEffect(() => {
-    if (!authHasHydrated || !tenantHasHydrated || authIsLoading) {
+    if (!storesResolved || !accessToken?.trim() || !effectiveTenantId) {
       return;
     }
-    if (!accessToken?.trim() || tenantId) {
+    const storeTid = (useTenantStore.getState().tenantId ?? '').trim();
+    if (storeTid) {
       return;
     }
     syncTenantFromAccessToken(accessToken);
     if (__DEV__) {
       // eslint-disable-next-line no-console -- hydrate 후 tenantId 누락 진단(개발 전용)
-      console.debug('[useApiQueryReady] tenantId missing after hydrate; synced from JWT');
+      console.debug('[useApiQueryReady] synced JWT tenantId into store');
     }
-  }, [authHasHydrated, tenantHasHydrated, authIsLoading, accessToken, tenantId]);
+  }, [storesResolved, accessToken, effectiveTenantId]);
 
   const ready =
     authHasHydrated &&
     !authIsLoading &&
     tenantHasHydrated &&
     (!requireAccessToken || Boolean(accessToken)) &&
-    Boolean(tenantId) &&
+    Boolean(effectiveTenantId) &&
     (!requireUserId || Boolean(userId));
 
-  return { ready, tenantId, userId, accessToken };
+  return { ready, tenantId: effectiveTenantId, userId, accessToken };
 }

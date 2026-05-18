@@ -273,3 +273,16 @@ export function isAdminMobileAdminRole(role: AdminMobileJwtRole | null): boolean
 export function adminMobileScheduleUserRole(role: AdminMobileJwtRole | null): string | null {
   return role ?? null;
 }
+
+/** JWT role claim 누락 시 스토어 역할 → 스케줄 API `userRole` */
+export function resolveAdminMobileJwtRoleFromStoreRole(
+  role: AppAuthRole | null | undefined,
+): AdminMobileJwtRole | null {
+  if (role === 'admin') {
+    return 'ADMIN';
+  }
+  if (role === 'staff') {
+    return 'STAFF';
+  }
+  return null;
+}

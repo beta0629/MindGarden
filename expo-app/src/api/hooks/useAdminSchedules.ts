@@ -13,7 +13,11 @@ import { type Schedule, sortSchedulesChronologically } from './useSchedules';
 import { useAdminApiTenantSync } from '@/hooks/useAdminApiTenantSync';
 import { useAdminApiQueryReady } from '@/hooks/useAdminApiQueryReady';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { adminMobileScheduleUserRole, resolveAdminMobileJwtRole } from '@/utils/adminRole';
+import {
+  adminMobileScheduleUserRole,
+  resolveAdminMobileJwtRole,
+  resolveAdminMobileJwtRoleFromStoreRole,
+} from '@/utils/adminRole';
 
 const ADMIN_SCHEDULE_QUERY_KEYS = {
   all: ['admin-mobile', 'schedules'] as const,
@@ -121,7 +125,10 @@ export function useAdminTodaySchedules(options?: Partial<UseQueryOptions<Schedul
   const { ready, userId } = useAdminApiQueryReady();
   useAdminApiTenantSync();
   const accessToken = useAuthStore((s) => s.accessToken);
-  const jwtRole = resolveAdminMobileJwtRole(accessToken);
+  const storeRole = useAuthStore((s) => s.role);
+  const jwtRole =
+    resolveAdminMobileJwtRole(accessToken) ??
+    resolveAdminMobileJwtRoleFromStoreRole(storeRole);
   const scheduleRole = adminMobileScheduleUserRole(jwtRole);
   const todayYmd = format(new Date(), 'yyyy-MM-dd');
 

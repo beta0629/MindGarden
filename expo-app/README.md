@@ -48,8 +48,9 @@ eas secret:create --scope project --name EXPO_PUBLIC_NAVER_CLIENT_SECRET --type 
 ### DEV APK + 푸시 토큰 (로컬, `EAS_PROJECT_ID` 필요)
 
 ```bash
-cd expo-app && npx eas-cli login && npx eas-cli project:info   # projectId UUID 확인 → .env 에 EAS_PROJECT_ID=<uuid>
-EAS_PROJECT_ID='<uuid>' npm run android:apk:dev   # 또는 .env 에 넣은 뒤 npm run android:apk:dev
+cd expo-app && npx eas-cli login && npx eas-cli init --id da41eca0-daad-4825-baf7-16cd3c71e6cd && npx eas-cli project:info
+# .env: EAS_PROJECT_ID=da41eca0-daad-4825-baf7-16cd3c71e6cd (및 EXPO_PUBLIC_EAS_PROJECT_ID 동일)
+EAS_PROJECT_ID='da41eca0-daad-4825-baf7-16cd3c71e6cd' npm run android:apk:dev   # 또는 .env 에 넣은 뒤 npm run android:apk:dev
 ```
 
 `.env`·토큰 값은 **git에 커밋하지 않음**. 상세: [`MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md`](../docs/project-management/MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md) §2.

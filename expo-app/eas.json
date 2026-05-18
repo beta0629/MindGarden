@@ -11,7 +11,9 @@
         "simulator": true
       },
       "env": {
-        "APP_ENV": "development"
+        "APP_ENV": "development",
+        "EAS_PROJECT_ID": "da41eca0-daad-4825-baf7-16cd3c71e6cd",
+        "EXPO_PUBLIC_EAS_PROJECT_ID": "da41eca0-daad-4825-baf7-16cd3c71e6cd"
       }
     },
     "preview": {
@@ -20,7 +22,9 @@
         "simulator": false
       },
       "env": {
-        "APP_ENV": "preview"
+        "APP_ENV": "preview",
+        "EAS_PROJECT_ID": "da41eca0-daad-4825-baf7-16cd3c71e6cd",
+        "EXPO_PUBLIC_EAS_PROJECT_ID": "da41eca0-daad-4825-baf7-16cd3c71e6cd"
       }
     },
     "internal-dev": {
@@ -32,13 +36,17 @@
       "env": {
         "APP_ENV": "development",
         "EXPO_PUBLIC_API_BASE_URL": "https://dev.core-solution.co.kr",
-        "EXPO_USE_DEV_CLIENT": "0"
+        "EXPO_USE_DEV_CLIENT": "0",
+        "EAS_PROJECT_ID": "da41eca0-daad-4825-baf7-16cd3c71e6cd",
+        "EXPO_PUBLIC_EAS_PROJECT_ID": "da41eca0-daad-4825-baf7-16cd3c71e6cd"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "APP_ENV": "production"
+        "APP_ENV": "production",
+        "EAS_PROJECT_ID": "da41eca0-daad-4825-baf7-16cd3c71e6cd",
+        "EXPO_PUBLIC_EAS_PROJECT_ID": "da41eca0-daad-4825-baf7-16cd3c71e6cd"
       }
     }
   },

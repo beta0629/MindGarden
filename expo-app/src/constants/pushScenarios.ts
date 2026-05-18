@@ -78,6 +78,17 @@ export const PUSH_SCENARIOS = {
     category: 'booking',
     settingsCategory: 'schedule',
   },
+  /** 예약 일정 변경 — 상담사·내담자 */
+  BOOKING_RESCHEDULED: {
+    type: 'booking_rescheduled',
+    title: '예약 일정 변경',
+    icon: 'CalendarClock',
+    route: '/(client)/(sessions)/{id}',
+    routeClient: '/(client)/(sessions)/{id}',
+    routeConsultant: '/(consultant)/(schedule)/{id}',
+    category: 'booking',
+    settingsCategory: 'schedule',
+  },
   /** P4 상담 시작 — 내담자 */
   SESSION_STARTED: {
     type: 'session_started',
@@ -189,6 +200,11 @@ export const PUSH_TYPE_ALIASES: Readonly<Record<string, string>> = {
   appointment_cancelled: 'booking_cancelled',
   schedule_cancelled: 'booking_cancelled',
   reservation_cancelled: 'booking_cancelled',
+  schedule_changed: 'booking_rescheduled',
+  appointment_rescheduled: 'booking_rescheduled',
+  booking_reschedule: 'booking_rescheduled',
+  reservation_changed: 'booking_rescheduled',
+  consultation_rescheduled: 'booking_rescheduled',
   consultation_started: 'session_started',
   session_start: 'session_started',
   session_complete: 'session_completed',

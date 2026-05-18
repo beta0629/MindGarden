@@ -28,8 +28,8 @@ import {
   type NotificationSettings,
 } from '@/api/hooks/useNotifications';
 import { useNotificationSettingsStore } from '@/stores/useNotificationSettingsStore';
-import { useTenantStore } from '@/stores/useTenantStore';
 import { EmptyState } from '@/components/atoms/EmptyState';
+import { useResolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 import { PUSH_PERMISSION_COPY } from '@/constants/pushPermissionCopy';
 import {
   getNotificationPermissionSnapshot,
@@ -93,9 +93,10 @@ function resolvePermissionStatusLabel(snapshot: NotificationPermissionSnapshot |
 
 export function NotificationSettingsScreen() {
   const theme = useTheme();
-  const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
+  const tenantId = useResolveTenantIdForApi();
   const [permission, setPermission] = useState<NotificationPermissionSnapshot | null>(null);
   const [permissionBusy, setPermissionBusy] = useState(false);
+  const [reregisterBusy, setReregisterBusy] = useState(false);
 
   const refreshPermission = useCallback(async () => {
     const snapshot = await getNotificationPermissionSnapshot();
@@ -104,8 +105,27 @@ export function NotificationSettingsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void refreshPermission();
-    }, [refreshPermission]),
+      let cancelled = false;
+
+      const onFocus = async () => {
+        const snapshot = await getNotificationPermissionSnapshot();
+        if (cancelled) {
+          return;
+        }
+        setPermission(snapshot);
+
+        const tid = tenantId.trim();
+        if (snapshot.granted && tid) {
+          await NotificationService.registerToken();
+        }
+      };
+
+      void onFocus();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [tenantId]),
   );
 
   const { data: settings, isLoading, refetch, isRefetching } = useNotificationSettings();
@@ -136,6 +156,16 @@ export function NotificationSettingsScreen() {
     void openNotificationSettings();
   }, []);
 
+  const handleReregisterToken = useCallback(async () => {
+    setReregisterBusy(true);
+    try {
+      await NotificationService.registerToken();
+      await refreshPermission();
+    } finally {
+      setReregisterBusy(false);
+    }
+  }, [refreshPermission]);
+
   const showOpenSettings =
     permission != null && !permission.granted && permission.canAskAgain === false;
 
@@ -150,7 +180,7 @@ export function NotificationSettingsScreen() {
     [updateMutation, setLocalCategory],
   );
 
-  if (!tenantId) {
+  if (!tenantId.trim()) {
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
         <EmptyState
@@ -233,7 +263,7 @@ export function NotificationSettingsScreen() {
           }}
         >
           {permission?.granted
-            ? PUSH_PERMISSION_COPY.allowHint
+            ? PUSH_PERMISSION_COPY.reregisterHint
             : showOpenSettings
               ? PUSH_PERMISSION_COPY.deniedHint
               : PUSH_PERMISSION_COPY.allowHint}
@@ -280,7 +310,31 @@ export function NotificationSettingsScreen() {
                 </Text>
               )}
             </Pressable>
-          ) : null}
+          ) : (
+            <Pressable
+              onPress={() => {
+                void handleReregisterToken();
+              }}
+              disabled={reregisterBusy}
+              style={[styles.permissionButton, { backgroundColor: theme.colors.gray[100] }]}
+              accessibilityRole="button"
+              accessibilityLabel={PUSH_PERMISSION_COPY.reregisterButton}
+            >
+              {reregisterBusy ? (
+                <ActivityIndicator color={theme.colors.textMain} />
+              ) : (
+                <Text
+                  style={{
+                    color: theme.colors.textMain,
+                    fontFamily: theme.fontFamily.medium,
+                    fontSize: theme.fontSize.sm,
+                  }}
+                >
+                  {PUSH_PERMISSION_COPY.reregisterButton}
+                </Text>
+              )}
+            </Pressable>
+          )}
         </View>
       </View>
 

@@ -6,7 +6,7 @@
 #
 # dev.env 예 (서버에서만 편집):
 #   export EXPO_ACCESS_TOKEN="<expo-access-token>"
-#   export EXPO_PUSH_API_URL="https://exp.host/--/api/v2/push/send"   # 선택, 비우면 application.yml 기본값
+#   # EXPO_PUSH_API_URL 줄은 생략하거나 full URL만 설정. EXPO_PUSH_API_URL= 빈 할당 금지.
 
 export EXPO_ACCESS_TOKEN
-export EXPO_PUSH_API_URL
+export EXPO_PUSH_API_URL="${EXPO_PUSH_API_URL:-https://exp.host/--/api/v2/push/send}"

@@ -9,6 +9,7 @@ import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MappingSettlementNotificationHelper;
 import com.coresolution.consultation.service.MappingSettlementScenario;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.util.MobilePushMessageFormatter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -135,6 +136,8 @@ public class MappingSettlementNotificationHelperImpl implements MappingSettlemen
             Long consultantUserId,
             Long clientUserId) {
         Long mappingId = mapping.getId();
+        String packageName = resolvePackageName(mapping);
+        String amountLabel = resolveAmountLabel(mapping);
         switch (scenario) {
             case PAYMENT_CONFIRMED -> mobilePushDispatchService.dispatchMappingSettlement(
                     tenantId,
@@ -145,7 +148,7 @@ public class MappingSettlementNotificationHelperImpl implements MappingSettlemen
                     MobilePushCanonicalTypes.PAYMENT_COMPLETED,
                     "mapping-payment-confirmed",
                     MappingSettlementNotificationCopy.PUSH_TITLE_PAYMENT,
-                    MappingSettlementNotificationCopy.BODY_PUSH_PAYMENT,
+                    MobilePushMessageFormatter.buildMappingPaymentConfirmedPushBody(packageName, amountLabel),
                     null);
             case DEPOSIT_CONFIRMED -> mobilePushDispatchService.dispatchMappingSettlement(
                     tenantId,
@@ -156,7 +159,7 @@ public class MappingSettlementNotificationHelperImpl implements MappingSettlemen
                     MobilePushCanonicalTypes.PAYMENT_COMPLETED,
                     "mapping-deposit-confirmed",
                     MappingSettlementNotificationCopy.PUSH_TITLE_DEPOSIT,
-                    MappingSettlementNotificationCopy.BODY_PUSH_DEPOSIT,
+                    MobilePushMessageFormatter.buildMappingDepositConfirmedPushBody(packageName, amountLabel),
                     null);
             case MAPPING_APPROVED -> mobilePushDispatchService.dispatchMappingSettlement(
                     tenantId,

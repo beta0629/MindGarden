@@ -2,6 +2,8 @@ package com.coresolution.consultation.service;
 
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.Schedule;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  * Expo Push API를 통한 모바일 OS 푸시 발송(토큰·설정 게이트·멱등·무효 토큰 비활성).
@@ -36,6 +38,22 @@ public interface MobilePushDispatchService {
      * @param schedule 일정
      */
     void dispatchBookingCancelled(String tenantId, Schedule schedule);
+
+    /**
+     * 예약 일정 변경 푸시(내담자·상담사).
+     *
+     * @param tenantId 테넌트 ID
+     * @param schedule 변경 후 일정(식별·수신자·신규 슬롯)
+     * @param previousDate 변경 전 일자
+     * @param previousStart 변경 전 시작 시각
+     * @param previousEnd 변경 전 종료 시각
+     */
+    void dispatchBookingRescheduled(
+            String tenantId,
+            Schedule schedule,
+            LocalDate previousDate,
+            LocalTime previousStart,
+            LocalTime previousEnd);
 
     /**
      * 결제 완료 푸시(결제자).

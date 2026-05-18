@@ -14,6 +14,7 @@ public final class MobilePushCanonicalTypes {
     public static final String BOOKING_REMINDER = "booking_reminder";
     public static final String BOOKING_CONFIRMED = "booking_confirmed";
     public static final String BOOKING_CANCELLED = "booking_cancelled";
+    public static final String BOOKING_RESCHEDULED = "booking_rescheduled";
     public static final String PAYMENT_COMPLETED = "payment_completed";
     public static final String PAYMENT_FAILED = "payment_failed";
     public static final String SESSION_LOW = "session_low";

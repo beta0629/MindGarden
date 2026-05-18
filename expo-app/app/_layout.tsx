@@ -39,6 +39,7 @@ import { InAppNotificationToast } from '../src/components/organisms/InAppNotific
 import { ApiEnvironmentBanner } from '../src/components/atoms/ApiEnvironmentBanner';
 import { ForceUpdateGate } from '../src/components/organisms/ForceUpdateGate';
 import { useTenantStore } from '../src/stores/useTenantStore';
+import { useResolveTenantIdForApi } from '../src/utils/resolveTenantIdForApi';
 
 const PUSH_TOKEN_REGISTER_DEBOUNCE_MS = 500;
 
@@ -67,8 +68,8 @@ export default function RootLayout() {
   const role = useAuthStore((s) => s.role);
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const tenantId = useTenantStore((s) => s.tenantId);
   const tenantHydrated = useTenantStore((s) => s._hasHydrated);
+  const effectiveTenantIdForApi = useResolveTenantIdForApi();
   const pushRegisterTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const queryPersistBuster = useMemo(() => {
@@ -125,7 +126,7 @@ export default function RootLayout() {
     if (!loaded || !isAuthenticated || !tenantHydrated) {
       return;
     }
-    const tid = tenantId?.trim() ?? '';
+    const tid = effectiveTenantIdForApi.trim();
     if (!tid) {
       return;
     }
@@ -143,7 +144,7 @@ export default function RootLayout() {
         pushRegisterTimerRef.current = null;
       }
     };
-  }, [loaded, isAuthenticated, tenantHydrated, tenantId]);
+  }, [loaded, isAuthenticated, tenantHydrated, effectiveTenantIdForApi]);
 
   if (!loaded) {
     return null;

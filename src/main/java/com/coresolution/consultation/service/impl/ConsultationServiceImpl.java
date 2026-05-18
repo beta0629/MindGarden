@@ -18,6 +18,7 @@ import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.Consultation;
 import com.coresolution.consultation.entity.Note;
 import com.coresolution.consultation.entity.Review;
+import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.BaseRepository;
 import com.coresolution.consultation.repository.ClientRepository;
@@ -29,6 +30,7 @@ import com.coresolution.consultation.repository.ReviewRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ConsultationService;
 import com.coresolution.consultation.service.EmailService;
+import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -94,6 +96,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private MobilePushDispatchService mobilePushDispatchService;
     
     @Autowired
     private UserPersonalDataCacheService userPersonalDataCacheService;
@@ -570,6 +575,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         Consultation consultation = findActiveByIdOrThrow(consultationId);
         LocalDate previousDate = consultation.getConsultationDate();
         LocalTime previousStart = consultation.getStartTime();
+        LocalTime previousEnd = consultation.getEndTime();
         consultation.setConsultationDate(newDateTime.toLocalDate());
         consultation.setStartTime(newDateTime.toLocalTime());
         consultation.setStatus("RESCHEDULED");
@@ -580,6 +586,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         
         sendConsultationChangeNotification(consultationId, "일정 변경");
         trySendConsultationRescheduledExternalChannels(savedConsultation, previousDate, previousStart);
+        tryDispatchConsultationRescheduledMobilePush(
+                savedConsultation, previousDate, previousStart, previousEnd);
         
         return savedConsultation;
     }
@@ -2085,6 +2093,54 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         }
     }
     
+    private void tryDispatchConsultationRescheduledMobilePush(
+            Consultation consultation, LocalDate previousDate, LocalTime previousStart, LocalTime previousEnd) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = consultation.getTenantId();
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("일정 변경 푸시 생략: tenantId 없음 consultationId={}", consultation.getId());
+            return;
+        }
+        try {
+            Schedule pushSchedule = resolveScheduleForConsultationReschedulePush(tenantId, consultation);
+            if (pushSchedule == null) {
+                return;
+            }
+            mobilePushDispatchService.dispatchBookingRescheduled(
+                    tenantId, pushSchedule, previousDate, previousStart, previousEnd);
+        } catch (Exception e) {
+            log.warn("일정 변경 푸시 실패(본 처리 롤백 없음): consultationId={}, {}",
+                    consultation.getId(), e.getMessage());
+        }
+    }
+
+    private Schedule resolveScheduleForConsultationReschedulePush(String tenantId, Consultation consultation) {
+        java.util.List<Schedule> linked = scheduleRepository.findByTenantIdAndConsultationId(
+                tenantId, consultation.getId());
+        Schedule schedule = linked.stream()
+                .filter(s -> s != null && !s.isDeleted())
+                .findFirst()
+                .orElse(null);
+        if (schedule != null) {
+            schedule.setDate(consultation.getConsultationDate());
+            schedule.setStartTime(consultation.getStartTime());
+            schedule.setEndTime(consultation.getEndTime());
+            scheduleRepository.save(schedule);
+            return schedule;
+        }
+        Schedule synthetic = new Schedule();
+        synthetic.setTenantId(tenantId);
+        synthetic.setConsultationId(consultation.getId());
+        synthetic.setClientId(consultation.getClientId());
+        synthetic.setConsultantId(consultation.getConsultantId());
+        synthetic.setDate(consultation.getConsultationDate());
+        synthetic.setStartTime(consultation.getStartTime());
+        synthetic.setEndTime(consultation.getEndTime());
+        return synthetic;
+    }
+
     private void trySendConsultationRescheduledExternalChannels(Consultation consultation,
             LocalDate previousDate, LocalTime previousStart) {
         String tenantId = TenantContextHolder.getTenantId();

@@ -17,6 +17,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class ExpoPushProperties {
 
     /**
+     * Expo Push API 기본 엔드포인트 (application.yml 기본값·env 빈 문자열 보정과 동일).
+     */
+    public static final String DEFAULT_PUSH_API_URL = "https://exp.host/--/api/v2/push/send";
+
+    /**
      * Expo access token (환경 변수 {@code EXPO_ACCESS_TOKEN} 등으로 주입).
      */
     private String accessToken = "";
@@ -24,14 +29,32 @@ public class ExpoPushProperties {
     /**
      * Push send 엔드포인트 URL.
      */
-    private String apiUrl = "https://exp.host/--/api/v2/push/send";
+    private String apiUrl = DEFAULT_PUSH_API_URL;
 
     /**
-     * 기동 시 토큰 설정 여부만 로깅(값·길이 노출 금지).
+     * env에 빈 {@code EXPO_PUSH_API_URL=} 가 있으면 Spring placeholder 기본값이 적용되지 않으므로 보정 후 로깅.
      */
     @PostConstruct
-    void logAccessTokenConfigured() {
-        boolean configured = accessToken != null && !accessToken.isBlank();
+    void normalizeConfiguration() {
+        applyDefaults();
+    }
+
+    /**
+     * 빈 apiUrl을 기본 URL로 치환. 단위 테스트에서도 호출.
+     */
+    void applyDefaults() {
+        if (apiUrl == null || apiUrl.isBlank()) {
+            apiUrl = DEFAULT_PUSH_API_URL;
+            log.debug("Expo push apiUrl blank; using default endpoint");
+        } else {
+            apiUrl = apiUrl.trim();
+        }
+        if (accessToken == null) {
+            accessToken = "";
+        } else {
+            accessToken = accessToken.trim();
+        }
+        boolean configured = !accessToken.isBlank();
         log.info("Expo push access token configured: {}", configured);
     }
 }

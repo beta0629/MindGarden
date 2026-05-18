@@ -39,7 +39,7 @@ export OPS_ADMIN_USERNAME
 export OPS_ADMIN_PASSWORD
 export OPS_ADMIN_ROLE
 export EXPO_ACCESS_TOKEN
-export EXPO_PUSH_API_URL
+export EXPO_PUSH_API_URL="${EXPO_PUSH_API_URL:-https://exp.host/--/api/v2/push/send}"
 cd /var/www/mindgarden-dev
 exec /usr/bin/java -jar app.jar --spring.profiles.active=dev -Dops.admin.userId="$OPS_ADMIN_USERNAME" -Dops.admin.password="$OPS_ADMIN_PASSWORD" -Dops.admin.role="$OPS_ADMIN_ROLE"
 EOF

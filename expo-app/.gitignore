@@ -31,6 +31,9 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# Firebase Android (FCM) — Firebase Console에서 다운로드, 로컬만 보관
+google-services.json
+
 # local env (비밀·키는 커밋 금지 — 템플릿은 .env.example)
 .env
 .env.local

@@ -212,6 +212,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         backgroundColor: '#000000',
       },
       package: 'com.mindgardenmobile',
+      googleServicesFile: './google-services.json',
       edgeToEdgeEnabled: true,
       versionCode: releaseManifest.androidVersionCode,
     },

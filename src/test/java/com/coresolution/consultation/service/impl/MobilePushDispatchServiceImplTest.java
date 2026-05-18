@@ -1,7 +1,9 @@
 package com.coresolution.consultation.service.impl;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
+import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -17,12 +19,18 @@ import com.coresolution.consultation.entity.MobilePushSettings;
 import com.coresolution.consultation.entity.MobilePushToken;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.Schedule;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.MobilePushSettingsRepository;
 import com.coresolution.consultation.repository.MobilePushTokenRepository;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MobilePushDispatchDedupService;
+import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -62,6 +70,12 @@ class MobilePushDispatchServiceImplTest {
 
     @Mock
     private MobilePushDispatchDedupService mobilePushDispatchDedupService;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
 
     @InjectMocks
     private MobilePushDispatchServiceImpl mobilePushDispatchService;
@@ -326,6 +340,114 @@ class MobilePushDispatchServiceImplTest {
                 eq("901"), eq("mapping-approved"));
         verify(mobilePushDispatchDedupService).tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.MAPPING_APPROVED),
                 eq("901"), eq("mapping-approved|consultant"));
+        verify(restTemplate, times(2)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("dispatchBookingConfirmed: 본문에 일시·상담사명 포함")
+    void dispatchBookingConfirmed_enrichedBody() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setScheduleEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+
+        User consultant = new User();
+        when(userRepository.findByTenantIdAndId(eq("tenant-a"), eq(88L))).thenReturn(Optional.of(consultant));
+        when(scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(consultant)).thenReturn("박상담");
+
+        MobilePushToken token = new MobilePushToken();
+        token.setPushToken("ExponentPushToken[enriched]");
+        token.setUserId(77L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L)))).thenReturn(List.of(token));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED),
+                eq("50"), eq("confirmed"))).thenReturn(true);
+
+        ArgumentCaptor<org.springframework.http.HttpEntity<?>> entityCaptor =
+                ArgumentCaptor.forClass(org.springframework.http.HttpEntity.class);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), entityCaptor.capture(),
+                eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        Schedule schedule = new Schedule();
+        schedule.setId(50L);
+        schedule.setTenantId("tenant-a");
+        schedule.setClientId(77L);
+        schedule.setConsultantId(88L);
+        schedule.setDate(LocalDate.of(2026, 5, 20));
+        schedule.setStartTime(LocalTime.of(14, 0));
+        schedule.setEndTime(LocalTime.of(15, 0));
+
+        mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule);
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> messages =
+                (List<Map<String, Object>>) entityCaptor.getValue().getBody();
+        assertThat(messages).isNotNull().hasSize(1);
+        assertThat(messages.get(0).get("body").toString())
+                .contains("2026-05-20 (수) 14:00–15:00")
+                .contains("박상담");
+    }
+
+    @Test
+    @DisplayName("dispatchBookingRescheduled: 내담자·상담사 각각 fanout")
+    void dispatchBookingRescheduled_clientAndConsultantFanout() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setScheduleEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(88L)))
+                .thenReturn(Optional.of(settings));
+
+        User consultant = new User();
+        User client = new User();
+        when(userRepository.findByTenantIdAndId(eq("tenant-a"), eq(88L))).thenReturn(Optional.of(consultant));
+        when(userRepository.findByTenantIdAndId(eq("tenant-a"), eq(77L))).thenReturn(Optional.of(client));
+        when(scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(consultant)).thenReturn("박상담");
+        when(scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(client)).thenReturn("이내담");
+
+        MobilePushToken clientToken = new MobilePushToken();
+        clientToken.setPushToken("ExponentPushToken[client]");
+        clientToken.setUserId(77L);
+        MobilePushToken consultantToken = new MobilePushToken();
+        consultantToken.setPushToken("ExponentPushToken[consultant]");
+        consultantToken.setUserId(88L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L)))).thenReturn(List.of(clientToken));
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(88L)))).thenReturn(List.of(consultantToken));
+
+        when(mobilePushDispatchDedupService.tryClaim(
+                eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_RESCHEDULED), eq("50"), anyString()))
+                .thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        Schedule schedule = new Schedule();
+        schedule.setId(50L);
+        schedule.setTenantId("tenant-a");
+        schedule.setClientId(77L);
+        schedule.setConsultantId(88L);
+        schedule.setDate(LocalDate.of(2026, 5, 21));
+        schedule.setStartTime(LocalTime.of(14, 0));
+        schedule.setEndTime(LocalTime.of(15, 0));
+
+        mobilePushDispatchService.dispatchBookingRescheduled(
+                "tenant-a",
+                schedule,
+                LocalDate.of(2026, 5, 20),
+                LocalTime.of(10, 0),
+                LocalTime.of(11, 0));
+
+        verify(mobilePushDispatchDedupService, times(2)).tryClaim(
+                eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_RESCHEDULED), eq("50"), anyString());
         verify(restTemplate, times(2)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class));
     }
 

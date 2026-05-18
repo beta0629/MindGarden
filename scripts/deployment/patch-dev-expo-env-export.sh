@@ -24,9 +24,10 @@ fi
 sed -i.bak "/source \\/etc\\/mindgarden\\/dev.env/a\\
 $MARKER\\
 export EXPO_ACCESS_TOKEN\\
-export EXPO_PUSH_API_URL\\
+export EXPO_PUSH_API_URL=\"\${EXPO_PUSH_API_URL:-https://exp.host/--/api/v2/push/send}\"\\
 " "$START_SCRIPT"
 
 echo "Patched: $START_SCRIPT (backup: ${START_SCRIPT}.bak)"
 echo "Next: set EXPO_ACCESS_TOKEN in /etc/mindgarden/dev.env (export form recommended), then:"
+echo "  Remove empty EXPO_PUSH_API_URL= lines from dev.env (blank export overrides Spring defaults)."
 echo "  systemctl restart mindgarden-dev"

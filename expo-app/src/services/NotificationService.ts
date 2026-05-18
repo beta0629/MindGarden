@@ -24,7 +24,7 @@ import type { Href } from 'expo-router';
 import { apiPost } from '../api/client';
 import { PUSH_API } from '../api/endpoints';
 import { useAuthStore } from '../stores/useAuthStore';
-import { useTenantStore } from '../stores/useTenantStore';
+import { resolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 import { useNotificationSettingsStore } from '../stores/useNotificationSettingsStore';
 import {
   getScenarioByType,
@@ -43,8 +43,8 @@ import {
 } from '@/utils/adminRole';
 import { requestOsNotificationPermission } from '@/utils/notificationPermissionFlow';
 
-/** __DEV__ 로그용 — 토큰 원문·길이 노출 금지 */
-function maskPushTokenForDevLog(token: string): string {
+/** logcat·adb 추적용 — 토큰 원문·길이 노출 금지 */
+function maskPushTokenForLog(token: string): string {
   const t = token.trim();
   if (!t) {
     return '(empty)';
@@ -53,6 +53,21 @@ function maskPushTokenForDevLog(token: string): string {
     return '***';
   }
   return `${t.slice(0, 8)}…`;
+}
+
+/** 릴리스 포함 — ReactNativeJS logcat 1줄 (토큰 마스킹, reason만) */
+function logRegisterTokenOutcome(
+  outcome: 'ok' | 'failed',
+  detail: { reason?: string; token?: string | null },
+): void {
+  const payload: Record<string, string> = { outcome };
+  if (detail.reason) {
+    payload.reason = detail.reason;
+  }
+  if (detail.token) {
+    payload.token = maskPushTokenForLog(detail.token);
+  }
+  console.warn('[NotificationService] registerToken', payload);
 }
 
 /**
@@ -307,35 +322,28 @@ export const NotificationService = {
    */
   async registerToken(): Promise<boolean> {
     let resolvedToken: string | null = null;
-    const logDevFailure = (reason: string) => {
-      if (!__DEV__) {
-        return;
-      }
-      const payload: { reason: string; token?: string } = { reason };
-      if (resolvedToken) {
-        payload.token = maskPushTokenForDevLog(resolvedToken);
-      }
-      console.warn('[NotificationService] registerToken failed', payload);
+    const logFailure = (reason: string) => {
+      logRegisterTokenOutcome('failed', { reason, token: resolvedToken });
     };
 
     try {
       const hasPermission = await this.requestPermission();
       if (!hasPermission) {
-        logDevFailure('notification_permission_denied');
+        logFailure('notification_permission_denied');
         return false;
       }
 
       resolvedToken = await this.resolveBackendPushToken();
       if (!resolvedToken) {
-        logDevFailure('push_token_unavailable');
+        logFailure('push_token_unavailable');
         return false;
       }
 
       const { user } = useAuthStore.getState();
-      const { tenantId } = useTenantStore.getState();
+      const tenantId = resolveTenantIdForApi().trim();
 
       if (!user?.id || !tenantId) {
-        logDevFailure('auth_or_tenant_missing');
+        logFailure('auth_or_tenant_missing');
         return false;
       }
 
@@ -352,18 +360,11 @@ export const NotificationService = {
         },
       });
 
-      if (__DEV__) {
-        console.log(
-          '[NotificationService] push token registered',
-          maskPushTokenForDevLog(resolvedToken),
-        );
-      }
-
+      logRegisterTokenOutcome('ok', { token: resolvedToken });
       return true;
     } catch (err) {
-      const reason =
-        err instanceof Error ? err.message : 'register_api_error';
-      logDevFailure(reason);
+      const reason = err instanceof Error ? err.message : 'register_api_error';
+      logFailure(reason);
       return false;
     }
   },
@@ -379,7 +380,7 @@ export const NotificationService = {
       if (!token) return false;
 
       const { user } = useAuthStore.getState();
-      const { tenantId } = useTenantStore.getState();
+      const tenantId = resolveTenantIdForApi().trim();
 
       if (!user?.id || !tenantId) return false;
 

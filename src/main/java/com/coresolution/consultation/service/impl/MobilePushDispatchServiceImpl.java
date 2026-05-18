@@ -9,10 +9,15 @@ import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.repository.MobilePushSettingsRepository;
 import com.coresolution.consultation.repository.MobilePushTokenRepository;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MobilePushDispatchDedupService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
+import com.coresolution.consultation.util.MobilePushMessageFormatter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -49,6 +54,8 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
     private final MobilePushTokenRepository mobilePushTokenRepository;
     private final MobilePushSettingsRepository mobilePushSettingsRepository;
     private final MobilePushDispatchDedupService mobilePushDispatchDedupService;
+    private final UserRepository userRepository;
+    private final ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -87,7 +94,9 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
             return;
         }
         String title = "예약 확정";
-        String body = "예약이 확정되었습니다.";
+        String consultantName = resolveUserDisplayName(tid, schedule.getConsultantId(),
+                MobilePushMessageFormatter.FALLBACK_CONSULTANT_NAME);
+        String body = MobilePushMessageFormatter.buildBookingConfirmedBody(schedule, consultantName);
         Map<String, String> data = buildScheduleData(tid, schedule, MobilePushCanonicalTypes.BOOKING_CONFIRMED);
         dispatchFanout(tid, List.of(schedule.getClientId()), MobilePushCanonicalTypes.BOOKING_CONFIRMED, title, body,
                 data, String.valueOf(schedule.getId()), "confirmed");
@@ -111,10 +120,69 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
             targets.add(schedule.getConsultantId());
         }
         String title = "예약 취소";
-        String body = "예약이 취소되었습니다.";
+        String consultantName = resolveUserDisplayName(tid, schedule.getConsultantId(),
+                MobilePushMessageFormatter.FALLBACK_CONSULTANT_NAME);
+        String clientName = resolveUserDisplayName(tid, schedule.getClientId(),
+                MobilePushMessageFormatter.FALLBACK_CLIENT_NAME);
         Map<String, String> data = buildScheduleData(tid, schedule, MobilePushCanonicalTypes.BOOKING_CANCELLED);
-        dispatchFanout(tid, targets, MobilePushCanonicalTypes.BOOKING_CANCELLED, title, body, data,
-                String.valueOf(schedule.getId()), "cancelled");
+        String entityId = String.valueOf(schedule.getId());
+        if (schedule.getClientId() != null) {
+            String clientBody = MobilePushMessageFormatter.buildBookingCancelledBody(
+                    schedule, consultantName, clientName, false);
+            dispatchFanout(tid, List.of(schedule.getClientId()), MobilePushCanonicalTypes.BOOKING_CANCELLED, title,
+                    clientBody, data, entityId, "cancelled");
+        }
+        if (schedule.getConsultantId() != null) {
+            String consultantBody = MobilePushMessageFormatter.buildBookingCancelledBody(
+                    schedule, consultantName, clientName, true);
+            dispatchFanout(tid, List.of(schedule.getConsultantId()), MobilePushCanonicalTypes.BOOKING_CANCELLED,
+                    title, consultantBody, data, entityId, "cancelled|consultant");
+        }
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void dispatchBookingRescheduled(
+            String tenantId,
+            Schedule schedule,
+            LocalDate previousDate,
+            LocalTime previousStart,
+            LocalTime previousEnd) {
+        if (schedule == null) {
+            return;
+        }
+        if (schedule.getClientId() == null && schedule.getConsultantId() == null) {
+            return;
+        }
+        String tid = requireTenantId(tenantId, schedule.getTenantId());
+        if (tid == null) {
+            return;
+        }
+        String oldSlot = MobilePushMessageFormatter.formatScheduleSlot(previousDate, previousStart, previousEnd);
+        String newSlot = MobilePushMessageFormatter.formatScheduleSlot(
+                schedule.getDate(), schedule.getStartTime(), schedule.getEndTime());
+        String consultantName = resolveUserDisplayName(tid, schedule.getConsultantId(),
+                MobilePushMessageFormatter.FALLBACK_CONSULTANT_NAME);
+        String clientName = resolveUserDisplayName(tid, schedule.getClientId(),
+                MobilePushMessageFormatter.FALLBACK_CLIENT_NAME);
+        String title = "예약 일정 변경";
+        Map<String, String> data = buildScheduleData(tid, schedule, MobilePushCanonicalTypes.BOOKING_RESCHEDULED);
+        String entityId = schedule.getId() != null
+                ? String.valueOf(schedule.getId())
+                : (schedule.getConsultationId() != null ? "c-" + schedule.getConsultationId() : "unknown");
+        String bucket = oldSlot + ">" + newSlot;
+        if (schedule.getClientId() != null) {
+            String clientBody = MobilePushMessageFormatter.buildBookingRescheduledBody(
+                    oldSlot, newSlot, consultantName, clientName, false);
+            dispatchFanout(tid, List.of(schedule.getClientId()), MobilePushCanonicalTypes.BOOKING_RESCHEDULED, title,
+                    clientBody, data, entityId, bucket);
+        }
+        if (schedule.getConsultantId() != null) {
+            String consultantBody = MobilePushMessageFormatter.buildBookingRescheduledBody(
+                    oldSlot, newSlot, consultantName, clientName, true);
+            dispatchFanout(tid, List.of(schedule.getConsultantId()), MobilePushCanonicalTypes.BOOKING_RESCHEDULED,
+                    title, consultantBody, data, entityId, bucket + "|consultant");
+        }
     }
 
     @Override
@@ -129,13 +197,17 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
         }
         String title = "결제 완료";
         String amountStr = payment.getAmount() != null ? payment.getAmount().toPlainString() : "";
-        String body = "결제가 완료되었습니다.";
+        String body = MobilePushMessageFormatter.buildPaymentCompletedBody(
+                payment.getAmount(), payment.getDescription());
         Map<String, String> data = new LinkedHashMap<>();
         data.put("type", MobilePushCanonicalTypes.PAYMENT_COMPLETED);
         data.put("tenantId", tid);
         data.put("paymentId", payment.getPaymentId() != null ? payment.getPaymentId() : "");
         data.put("id", payment.getPaymentId() != null ? payment.getPaymentId() : "");
         data.put("amount", amountStr);
+        if (payment.getDescription() != null && !payment.getDescription().isBlank()) {
+            data.put("description", payment.getDescription().trim());
+        }
         data.put("title", truncate(title, MobilePushDispatchConstants.TITLE_MAX_LENGTH));
         sanitizeDataStrings(data);
         dispatchFanout(tid, List.of(payment.getPayerId()), MobilePushCanonicalTypes.PAYMENT_COMPLETED, title, body,
@@ -155,9 +227,8 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
         }
         String title = "결제 실패";
         String body = truncate(
-                payment.getFailureReason() != null && !payment.getFailureReason().isBlank()
-                        ? payment.getFailureReason()
-                        : "결제에 실패했습니다.",
+                MobilePushMessageFormatter.buildPaymentFailedBody(
+                        payment.getAmount(), payment.getDescription(), payment.getFailureReason()),
                 MobilePushDispatchConstants.BODY_MAX_LENGTH);
         Map<String, String> data = new LinkedHashMap<>();
         data.put("type", MobilePushCanonicalTypes.PAYMENT_FAILED);
@@ -286,15 +357,35 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
         if (schedule.getConsultationId() != null) {
             data.put("consultationId", String.valueOf(schedule.getConsultationId()));
         }
+        if (schedule.getDate() != null) {
+            data.put("scheduleDate", schedule.getDate().toString());
+        }
+        if (schedule.getStartTime() != null) {
+            data.put("startTime", MobilePushMessageFormatter.formatTime(schedule.getStartTime()));
+        }
+        if (schedule.getEndTime() != null) {
+            data.put("endTime", MobilePushMessageFormatter.formatTime(schedule.getEndTime()));
+        }
         String shortTitle = switch (canonicalType) {
             case MobilePushCanonicalTypes.BOOKING_REMINDER -> "상담 리마인더";
             case MobilePushCanonicalTypes.BOOKING_CONFIRMED -> "예약 확정";
             case MobilePushCanonicalTypes.BOOKING_CANCELLED -> "예약 취소";
+            case MobilePushCanonicalTypes.BOOKING_RESCHEDULED -> "예약 일정 변경";
             default -> "상담 알림";
         };
         data.put("title", truncate(shortTitle, MobilePushDispatchConstants.TITLE_MAX_LENGTH));
         sanitizeDataStrings(data);
         return data;
+    }
+
+    private String resolveUserDisplayName(String tenantId, Long userId, String fallback) {
+        if (tenantId == null || tenantId.isBlank() || userId == null) {
+            return fallback;
+        }
+        return userRepository.findByTenantIdAndId(tenantId, userId)
+                .map(scheduleListUserFieldsResolver::resolveDisplayNameForScheduleList)
+                .filter(name -> name != null && !name.isBlank())
+                .orElse(fallback);
     }
 
     private void sanitizeDataStrings(Map<String, String> data) {

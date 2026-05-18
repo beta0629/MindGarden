@@ -217,6 +217,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         ScheduleStatus previousStatus = existingSchedule.getStatus();
         Long consultantId = existingSchedule.getConsultantId();
         Long clientId = existingSchedule.getClientId();
+        LocalDate previousDate = existingSchedule.getDate();
+        LocalTime previousStartTime = existingSchedule.getStartTime();
+        LocalTime previousEndTime = existingSchedule.getEndTime();
         
         copyScheduleFields(updateData, existingSchedule);
         
@@ -272,6 +275,20 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                         || previousStatus == ScheduleStatus.IN_PROGRESS)
                 && consultantId != null && clientId != null) {
             restoreSessionForMapping(consultantId, clientId);
+        }
+
+        boolean slotChanged = !Objects.equals(previousDate, saved.getDate())
+                || !Objects.equals(previousStartTime, saved.getStartTime())
+                || !Objects.equals(previousEndTime, saved.getEndTime());
+        boolean cancellingNow = updateData.getStatus() == ScheduleStatus.CANCELLED;
+        if (slotChanged && !cancellingNow && saved.getStatus() != ScheduleStatus.CANCELLED) {
+            try {
+                String pushTenantId = tenantId != null ? tenantId : saved.getTenantId();
+                mobilePushDispatchService.dispatchBookingRescheduled(
+                        pushTenantId, saved, previousDate, previousStartTime, previousEndTime);
+            } catch (Exception ex) {
+                log.warn("예약 일정 변경 푸시 실패: scheduleId={}", saved.getId(), ex);
+            }
         }
         
         return saved;

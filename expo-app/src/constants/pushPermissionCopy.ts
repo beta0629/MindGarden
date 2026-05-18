@@ -14,4 +14,6 @@ export const PUSH_PERMISSION_COPY = {
   openSettingsButton: '설정에서 켜기',
   allowHint: '푸시 알림을 받으려면 기기에서 알림을 허용해 주세요.',
   deniedHint: '알림이 꺼져 있습니다. 설정 앱에서 MindGarden 알림을 켜 주세요.',
+  reregisterButton: '푸시 다시 등록',
+  reregisterHint: '서버에 기기 토큰을 다시 보냅니다. 푸시가 오지 않을 때 시도해 보세요.',
 } as const;

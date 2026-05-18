@@ -20,6 +20,7 @@ import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.WorkflowAutomationService;
+import com.coresolution.consultation.util.MobilePushMessageFormatter;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -395,8 +396,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     
     private void sendReminderMessage(Schedule schedule, String title, String message, String reminderSlotCode) {
         try {
-            String reminderBody = message + String.format("\n\n📅 일시: %s %s-%s",
-                schedule.getDate(), schedule.getStartTime(), schedule.getEndTime());
+            String reminderBody = MobilePushMessageFormatter.buildBookingReminderLead(message, schedule);
             try {
                 TenantContextHolder.setTenantId(schedule.getTenantId());
                 consultationMessageService.sendSystemThreadMessage(

@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.Schedule;
@@ -19,6 +20,7 @@ import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
+import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.service.StatisticsService;
@@ -40,11 +42,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -52,13 +55,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * {@code POST /api/v1/schedules/consultant} → {@code createConsultantSchedule} 알림 미발화 baseline (P0 코더 전).
+ * {@code POST /api/v1/schedules/consultant} → {@code createConsultantSchedule} 알림 발화 검증 (P0 후).
  *
  * <p>SSOT: PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION §3.3, P0-1.
- * 코더 연동 후 {@code never()} → {@code verify(mobilePushDispatchService).dispatch...} 등으로 갱신.
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ScheduleServiceImpl createConsultantSchedule 알림 baseline (수정 전)")
+@MockitoSettings(strictness = Strictness.LENIENT)
+@DisplayName("ScheduleServiceImpl createConsultantSchedule 알림 (P0)")
 class ScheduleServiceImplCreateConsultantScheduleNotificationBaselineTest {
 
     private static final String TENANT_ID = "tenant-sched-notif-" + UUID.randomUUID();
@@ -86,6 +89,7 @@ class ScheduleServiceImplCreateConsultantScheduleNotificationBaselineTest {
     @Mock private NotificationService notificationService;
     @Mock private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
     @Mock private MobilePushDispatchService mobilePushDispatchService;
+    @Mock private ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper;
 
     @InjectMocks
     private ScheduleServiceImpl scheduleService;
@@ -93,6 +97,10 @@ class ScheduleServiceImplCreateConsultantScheduleNotificationBaselineTest {
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId(TENANT_ID);
+        when(commonCodeService.getCodeValue("ROLE", UserRole.CONSULTANT.name())).thenReturn("CONSULTANT");
+        when(commonCodeService.getCodeValue("ROLE", UserRole.CLIENT.name())).thenReturn("CLIENT");
+        when(commonCodeService.getCodeValue("MESSAGE_TYPE", "APPOINTMENT")).thenReturn("APPOINTMENT");
+        when(commonCodeService.getCodeValue("MESSAGE_TYPE", "NEW_APPOINTMENT")).thenReturn("NEW_APPOINTMENT");
     }
 
     @AfterEach
@@ -101,8 +109,8 @@ class ScheduleServiceImplCreateConsultantScheduleNotificationBaselineTest {
     }
 
     @Test
-    @DisplayName("BOOKED 일정 등록 성공 후에도 인앱·푸시·알림톡 경로 미호출 (baseline)")
-    void createConsultantSchedule_afterSave_doesNotDispatchNotifications() {
+    @DisplayName("BOOKED 일정 등록 성공 후 notifyScheduleCreated·booking_confirmed 발화")
+    void createConsultantSchedule_afterSave_dispatchesNotifications() {
         stubConflictCheckAndAutoComplete();
         stubActiveMappingWithSessions();
 
@@ -121,13 +129,8 @@ class ScheduleServiceImplCreateConsultantScheduleNotificationBaselineTest {
         assertThat(saved.getId()).isEqualTo(501L);
         assertThat(saved.getStatus()).isEqualTo(ScheduleStatus.BOOKED);
 
-        verify(consultationMessageService, never()).sendMessage(
-                anyLong(), anyLong(), any(), anyString(), anyString(), anyString(), anyString(), any(), any());
+        verify(scheduleCreatedNotificationHelper).notifyScheduleCreated(any(Schedule.class), eq(true));
         verify(notificationService, never()).sendConsultationConfirmed(any(), any(), any(), any());
-        verify(mobilePushDispatchService, never()).dispatchBookingConfirmed(anyString(), any(Schedule.class));
-        verify(mobilePushDispatchService, never()).dispatchBookingReminder(anyString(), any(Schedule.class),
-                anyString(), anyString());
-        verify(mobilePushDispatchService, never()).dispatchSessionLow(anyString(), anyLong(), anyLong(), anyInt());
     }
 
     private void stubConflictCheckAndAutoComplete() {

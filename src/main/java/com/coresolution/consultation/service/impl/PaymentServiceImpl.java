@@ -22,6 +22,7 @@ import com.coresolution.consultation.service.erp.financial.FinancialTransactionS
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ReserveFundService;
 import com.coresolution.consultation.service.StatisticsService;
+import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
@@ -772,11 +773,9 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
      * 공통코드에서 메시지 타입 코드 조회
      */
     private String getMessageTypeFromCommonCode(String messageTypeName) {
-        try {
-            String codeValue = commonCodeService.getCodeValue("MESSAGE_TYPE", messageTypeName);
-            return codeValue != null ? codeValue : messageTypeName;
-        } catch (Exception e) {
-            return messageTypeName;
-        }
+        return ConsultationMessageTypeCodes.resolve(
+                commonCodeService,
+                messageTypeName,
+                ConsultationMessageTypeCodes.CANONICAL_PAYMENT_COMPLETION);
     }
 }

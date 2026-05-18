@@ -70,6 +70,8 @@ class ScheduleServiceImplCancelRestoreSessionTest {
 
     @Mock
     private NotificationService notificationService;
+    @Mock
+    private com.coresolution.consultation.service.ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper;
 
     @Mock
     private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;

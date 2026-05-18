@@ -35,9 +35,11 @@ import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
+import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SessionSyncService;
+import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
@@ -89,6 +91,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final NotificationService notificationService;
     private final ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
     private final MobilePushDispatchService mobilePushDispatchService;
+    private final ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper;
 
     public ScheduleServiceImpl(
             ScheduleRepository scheduleRepository,
@@ -110,7 +113,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService,
             NotificationService notificationService,
             ScheduleListUserFieldsResolver scheduleListUserFieldsResolver,
-            MobilePushDispatchService mobilePushDispatchService) {
+            MobilePushDispatchService mobilePushDispatchService,
+            ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper) {
         super(scheduleRepository, accessControlService);
         this.scheduleRepository = scheduleRepository;
         this.mappingRepository = mappingRepository;
@@ -131,6 +135,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.notificationService = notificationService;
         this.scheduleListUserFieldsResolver = scheduleListUserFieldsResolver;
         this.mobilePushDispatchService = mobilePushDispatchService;
+        this.scheduleCreatedNotificationHelper = scheduleCreatedNotificationHelper;
     }
     
     
@@ -574,61 +579,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     private void notifyScheduleCreated(Schedule schedule, boolean includeMobilePush) {
-        if (schedule == null || schedule.getConsultantId() == null || schedule.getClientId() == null) {
-            return;
-        }
-        if (schedule.getStatus() != ScheduleStatus.BOOKED && schedule.getStatus() != ScheduleStatus.CONFIRMED) {
-            return;
-        }
-        try {
-            log.info("예약 생성 알림 발송: scheduleId={}", schedule.getId());
-
-            String clientMessage = String.format(
-                    "상담 예약이 완료되었습니다.\n📅 날짜: %s\n⏰ 시간: %s - %s",
-                    schedule.getDate(),
-                    schedule.getStartTime(),
-                    schedule.getEndTime());
-
-            consultationMessageService.sendMessage(
-                    schedule.getConsultantId(),
-                    schedule.getClientId(),
-                    null,
-                    getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()),
-                    "예약 확인",
-                    clientMessage,
-                    getMessageTypeFromCommonCode("APPOINTMENT_CONFIRMATION"),
-                    false,
-                    false);
-
-            String consultantMessage = String.format(
-                    "새로운 상담 예약이 있습니다.\n📅 날짜: %s\n⏰ 시간: %s - %s",
-                    schedule.getDate(),
-                    schedule.getStartTime(),
-                    schedule.getEndTime());
-
-            consultationMessageService.sendMessage(
-                    schedule.getConsultantId(),
-                    schedule.getClientId(),
-                    null,
-                    getRoleCodeFromCommonCode(UserRole.CLIENT.name()),
-                    "새 예약",
-                    consultantMessage,
-                    getMessageTypeFromCommonCode("NEW_APPOINTMENT"),
-                    false,
-                    false);
-
-            String tid = schedule.getTenantId();
-            if (tid == null || tid.isBlank()) {
-                tid = TenantContextHolder.getTenantId();
-            }
-            if (includeMobilePush && tid != null && !tid.isBlank()) {
-                mobilePushDispatchService.dispatchBookingConfirmed(tid, schedule);
-            }
-
-            log.info("예약 생성 알림 완료: scheduleId={}", schedule.getId());
-        } catch (Exception e) {
-            log.error("예약 생성 알림 실패: scheduleId={}", schedule.getId(), e);
-        }
+        scheduleCreatedNotificationHelper.notifyScheduleCreated(schedule, includeMobilePush);
     }
 
     /**
@@ -2707,12 +2658,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 공통코드에서 메시지 타입 코드 조회
      */
     private String getMessageTypeFromCommonCode(String messageTypeName) {
-        try {
-            String codeValue = commonCodeService.getCodeValue("MESSAGE_TYPE", messageTypeName);
-            return codeValue != null ? codeValue : messageTypeName;
-        } catch (Exception e) {
-            return messageTypeName;
-        }
+        return ConsultationMessageTypeCodes.resolve(
+                commonCodeService, messageTypeName, messageTypeName);
     }
     
     @Override

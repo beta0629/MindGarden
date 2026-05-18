@@ -235,4 +235,125 @@ class MobilePushDispatchServiceImplTest {
 
         assertDoesNotThrow(() -> mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule));
     }
+
+    @Test
+    @DisplayName("dispatchMappingSettlement: 내담자만 fanout (includeConsultant=false)")
+    void dispatchMappingSettlement_clientOnlyFanout() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setPaymentEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+
+        MobilePushToken token = new MobilePushToken();
+        token.setPushToken("ExponentPushToken[mapping-client]");
+        token.setUserId(77L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L)))).thenReturn(List.of(token));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.PAYMENT_COMPLETED),
+                eq("900"), eq("mapping-payment-confirmed"))).thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        mobilePushDispatchService.dispatchMappingSettlement(
+                "tenant-a",
+                900L,
+                77L,
+                88L,
+                false,
+                MobilePushCanonicalTypes.PAYMENT_COMPLETED,
+                "mapping-payment-confirmed",
+                "결제 완료",
+                "패키지 결제가 확인되었습니다.",
+                null);
+
+        verify(mobilePushTokenRepository).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L)));
+        verify(mobilePushDispatchDedupService, times(1)).tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.PAYMENT_COMPLETED), eq("900"), eq("mapping-payment-confirmed"));
+        verify(restTemplate, times(1)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("dispatchMappingSettlement: 승인 시 내담자·상담사 각각 fanout")
+    void dispatchMappingSettlement_clientAndConsultantFanout() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushSettings clientSettings = new MobilePushSettings();
+        clientSettings.setSystemEnabled(true);
+        MobilePushSettings consultantSettings = new MobilePushSettings();
+        consultantSettings.setSystemEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(clientSettings));
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(88L)))
+                .thenReturn(Optional.of(consultantSettings));
+
+        MobilePushToken clientToken = new MobilePushToken();
+        clientToken.setPushToken("ExponentPushToken[mapping-client]");
+        clientToken.setUserId(77L);
+        MobilePushToken consultantToken = new MobilePushToken();
+        consultantToken.setPushToken("ExponentPushToken[mapping-consultant]");
+        consultantToken.setUserId(88L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L)))).thenReturn(List.of(clientToken));
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(88L)))).thenReturn(List.of(consultantToken));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.MAPPING_APPROVED),
+                eq("901"), eq("mapping-approved"))).thenReturn(true);
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.MAPPING_APPROVED),
+                eq("901"), eq("mapping-approved|consultant"))).thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        mobilePushDispatchService.dispatchMappingSettlement(
+                "tenant-a",
+                901L,
+                77L,
+                88L,
+                true,
+                MobilePushCanonicalTypes.MAPPING_APPROVED,
+                "mapping-approved",
+                "매칭 승인",
+                "매칭이 승인되었습니다.",
+                "새 매칭이 승인되었습니다.");
+
+        verify(mobilePushDispatchDedupService).tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.MAPPING_APPROVED),
+                eq("901"), eq("mapping-approved"));
+        verify(mobilePushDispatchDedupService).tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.MAPPING_APPROVED),
+                eq("901"), eq("mapping-approved|consultant"));
+        verify(restTemplate, times(2)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("dispatchMappingSettlement: payment 카테고리 off면 내담자 fanout 생략")
+    void dispatchMappingSettlement_skipsWhenPaymentCategoryDisabled() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setPaymentEnabled(false);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+
+        mobilePushDispatchService.dispatchMappingSettlement(
+                "tenant-a",
+                900L,
+                77L,
+                88L,
+                false,
+                MobilePushCanonicalTypes.PAYMENT_COMPLETED,
+                "mapping-deposit-confirmed",
+                "입금 확인",
+                "입금이 확인되었습니다.",
+                null);
+
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(anyString(),
+                anyList());
+        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+    }
 }

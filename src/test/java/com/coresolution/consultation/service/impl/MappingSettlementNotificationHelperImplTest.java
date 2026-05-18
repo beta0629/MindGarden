@@ -48,6 +48,40 @@ class MappingSettlementNotificationHelperImplTest {
     private MappingSettlementNotificationHelperImpl helper;
 
     @Test
+    @DisplayName("결제 확인: 내담자 인앱·payment_completed 푸시(상담사 푸시 없음)")
+    void notify_paymentConfirmed_clientOnly() {
+        when(commonCodeService.getCodeValue("ROLE", UserRole.CONSULTANT.name())).thenReturn("CONSULTANT");
+        when(commonCodeService.getCodeValue("MESSAGE_TYPE", MappingSettlementNotificationCopy.MESSAGE_TYPE_PAYMENT))
+                .thenReturn("PAYMENT_COMPLETION");
+
+        ConsultantClientMapping mapping = buildMapping();
+
+        helper.notifyAfterMappingSettlement(mapping, TENANT_ID, MappingSettlementScenario.PAYMENT_CONFIRMED);
+
+        verify(consultationMessageService).sendMessage(
+                eq(CONSULTANT_ID),
+                eq(CLIENT_ID),
+                eq(null),
+                eq("CONSULTANT"),
+                eq(MappingSettlementNotificationCopy.TITLE_PAYMENT_CONFIRMED),
+                any(),
+                eq("PAYMENT_COMPLETION"),
+                eq(false),
+                eq(false));
+        verify(mobilePushDispatchService).dispatchMappingSettlement(
+                eq(TENANT_ID),
+                eq(MAPPING_ID),
+                eq(CLIENT_ID),
+                eq(CONSULTANT_ID),
+                eq(false),
+                eq(MobilePushCanonicalTypes.PAYMENT_COMPLETED),
+                eq("mapping-payment-confirmed"),
+                any(),
+                any(),
+                eq(null));
+    }
+
+    @Test
     @DisplayName("입금 확인: 내담자 인앱·payment_completed 푸시(상담사 푸시 없음)")
     void notify_depositConfirmed_clientOnly() {
         when(commonCodeService.getCodeValue("ROLE", UserRole.CONSULTANT.name())).thenReturn("CONSULTANT");

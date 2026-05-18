@@ -16,6 +16,7 @@ import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
+import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.SessionSyncService;
@@ -98,6 +99,8 @@ class ScheduleServiceImplConfirmScheduleAlimTalkTest {
 
     @Mock
     private MobilePushDispatchService mobilePushDispatchService;
+    @Mock
+    private ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper;
 
     @Mock
     private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;

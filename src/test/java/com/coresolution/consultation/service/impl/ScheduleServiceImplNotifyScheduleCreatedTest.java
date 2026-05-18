@@ -19,10 +19,12 @@ import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
+import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
+import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.DashboardIntegrationService;
@@ -36,12 +38,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -49,7 +53,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * {@link ScheduleServiceImpl#createConsultantSchedule} 종료 시 알림 발화 검증.
+ * {@link ScheduleServiceImpl#createConsultantSchedule} 종료 시 {@link ScheduleCreatedNotificationHelper} 위임 검증.
+ * messageType 20자 제한·canonical 값은 {@link ScheduleCreatedNotificationHelperImplTest} 참고.
  *
  * @author MindGarden
  * @since 2026-05-18
@@ -103,6 +108,8 @@ class ScheduleServiceImplNotifyScheduleCreatedTest {
     private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
     @Mock
     private MobilePushDispatchService mobilePushDispatchService;
+    @Mock
+    private ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper;
 
     @InjectMocks
     private ScheduleServiceImpl scheduleService;
@@ -112,7 +119,7 @@ class ScheduleServiceImplNotifyScheduleCreatedTest {
         TenantContextHolder.setTenantId(TENANT_ID);
         when(commonCodeService.getCodeValue("ROLE", UserRole.CONSULTANT.name())).thenReturn("CONSULTANT");
         when(commonCodeService.getCodeValue("ROLE", UserRole.CLIENT.name())).thenReturn("CLIENT");
-        when(commonCodeService.getCodeValue("MESSAGE_TYPE", "APPOINTMENT_CONFIRMATION"))
+        when(commonCodeService.getCodeValue("MESSAGE_TYPE", "APPOINTMENT"))
                 .thenReturn("APPOINTMENT_CONFIRMATION");
         when(commonCodeService.getCodeValue("MESSAGE_TYPE", "NEW_APPOINTMENT")).thenReturn("NEW_APPOINTMENT");
     }
@@ -123,8 +130,8 @@ class ScheduleServiceImplNotifyScheduleCreatedTest {
     }
 
     @Test
-    @DisplayName("createConsultantSchedule(BOOKED): 인앱 2건·booking_confirmed 푸시")
-    void createConsultantSchedule_booked_sendsNotifications() {
+    @DisplayName("createConsultantSchedule(BOOKED): ScheduleCreatedNotificationHelper 위임(푸시 포함)")
+    void createConsultantSchedule_booked_delegatesToNotificationHelper() {
         stubConflictCheckAndAutoComplete();
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> {
             Schedule s = inv.getArgument(0);
@@ -143,31 +150,19 @@ class ScheduleServiceImplNotifyScheduleCreatedTest {
                 "메모",
                 false);
 
-        verify(consultationMessageService).sendMessage(
-                eq(CONSULTANT_ID),
-                eq(CLIENT_ID),
-                eq(null),
-                eq("CONSULTANT"),
-                eq("예약 확인"),
-                any(),
-                eq("APPOINTMENT_CONFIRMATION"),
-                eq(false),
-                eq(false));
-        verify(consultationMessageService).sendMessage(
-                eq(CONSULTANT_ID),
-                eq(CLIENT_ID),
-                eq(null),
-                eq("CLIENT"),
-                eq("새 예약"),
-                any(),
-                eq("NEW_APPOINTMENT"),
-                eq(false),
-                eq(false));
-        verify(mobilePushDispatchService).dispatchBookingConfirmed(eq(TENANT_ID), any(Schedule.class));
+        ArgumentCaptor<Schedule> scheduleCaptor = ArgumentCaptor.forClass(Schedule.class);
+        verify(scheduleCreatedNotificationHelper)
+                .notifyScheduleCreated(scheduleCaptor.capture(), eq(true));
+        assertThat(scheduleCaptor.getValue().getId()).isEqualTo(100L);
+
+        String clientType = ConsultationMessageTypeCodes.resolve(
+                commonCodeService, "APPOINTMENT", ConsultationMessageTypeCodes.CANONICAL_APPOINTMENT);
+        assertThat(clientType.length()).isLessThanOrEqualTo(ConsultationMessageTypeCodes.MAX_MESSAGE_TYPE_LENGTH);
+        assertThat(clientType).isEqualTo(ConsultationMessageTypeCodes.CANONICAL_APPOINTMENT);
     }
 
     @Test
-    @DisplayName("createConsultantSchedule(가예약): 알림 미발송")
+    @DisplayName("createConsultantSchedule(가예약): 알림 헬퍼 미호출")
     void createConsultantSchedule_tentative_skipsNotifications() {
         stubConflictCheckAndAutoComplete();
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> {
@@ -187,9 +182,9 @@ class ScheduleServiceImplNotifyScheduleCreatedTest {
                 null,
                 true);
 
+        verify(scheduleCreatedNotificationHelper, never()).notifyScheduleCreated(any(), any(Boolean.class));
         verify(consultationMessageService, never()).sendMessage(any(), any(), any(), any(), any(), any(), any(), any(),
                 any());
-        verify(mobilePushDispatchService, never()).dispatchBookingConfirmed(any(), any());
     }
 
     private void stubConflictCheckAndAutoComplete() {

@@ -76,18 +76,32 @@ export const useTenantStore = create<TenantState>()(
     {
       name: 'tenant-storage',
       storage: zustandMMKVStorage,
+      partialize: (state) => ({
+        tenantCode: state.tenantCode,
+        tenantId: state.tenantId,
+        tenantName: state.tenantName,
+        recentTenants: state.recentTenants,
+      }),
       onRehydrateStorage: () => (state, error) => {
-        if (error == null && state != null) {
-          const recovered = pickTenantIdFromRecent(state.tenantCode, state.recentTenants ?? []);
-          if (recovered != null && !(state.tenantId ?? '').trim()) {
-            const hit = state.recentTenants?.find((t) => t.code === state.tenantCode);
-            useTenantStore.setState({
-              tenantId: recovered,
-              tenantName: state.tenantName ?? hit?.name ?? null,
-            });
+        queueMicrotask(() => {
+          if (error != null) {
+            useTenantStore.setState({ _hasHydrated: true });
+            return;
           }
-        }
-        useTenantStore.setState({ _hasHydrated: true });
+          if (state != null) {
+            const recovered = pickTenantIdFromRecent(state.tenantCode, state.recentTenants ?? []);
+            if (recovered != null && !(state.tenantId ?? '').trim()) {
+              const hit = state.recentTenants?.find((t) => t.code === state.tenantCode);
+              useTenantStore.setState({
+                tenantId: recovered,
+                tenantName: state.tenantName ?? hit?.name ?? null,
+              });
+            }
+          }
+          if (!useTenantStore.getState()._hasHydrated) {
+            useTenantStore.setState({ _hasHydrated: true });
+          }
+        });
       },
     },
   ),

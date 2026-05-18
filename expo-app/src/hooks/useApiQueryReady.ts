@@ -15,6 +15,9 @@ import {
 } from '@/utils/jwtPayload';
 import { resolveEffectiveTenantIdForApi } from '@/utils/resolveEffectiveTenantIdForApi';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
+import { isTenantHydrationGateOk } from '@/utils/tenantHydrationGate';
+
+const TENANT_HYDRATE_FALLBACK_MS = 500;
 
 export type UseApiQueryReadyOptions = {
   /** false면 userId 없이도 ready 가능 (드묾) */
@@ -57,12 +60,12 @@ export function useApiQueryReady(options?: UseApiQueryReadyOptions): {
   const tenantCode = useTenantStore((s) => s.tenantCode);
   const recentTenants = useTenantStore((s) => s.recentTenants);
 
-  const storesResolved = authHasHydrated && !authIsLoading && tenantHasHydrated;
+  const authStoresReady = authHasHydrated && !authIsLoading;
 
   const effectiveTenantId = useMemo(
     () =>
       resolveEffectiveTenantIdForApi({
-        storesResolved,
+        storesResolved: authStoresReady && tenantHasHydrated,
         accessToken,
         headerTenantId,
         userTenantId,
@@ -70,7 +73,8 @@ export function useApiQueryReady(options?: UseApiQueryReadyOptions): {
         recentTenants,
       }),
     [
-      storesResolved,
+      authStoresReady,
+      tenantHasHydrated,
       accessToken,
       headerTenantId,
       userTenantId,
@@ -79,10 +83,28 @@ export function useApiQueryReady(options?: UseApiQueryReadyOptions): {
     ],
   );
 
+  const tenantGateOk = isTenantHydrationGateOk(tenantHasHydrated, effectiveTenantId);
+  const storesResolved = authStoresReady && tenantGateOk;
+
   const userId = useMemo(
     () => resolveEffectiveUserId(storeUserId, accessToken),
     [storeUserId, accessToken],
   );
+
+  useEffect(() => {
+    if (tenantHasHydrated) {
+      return;
+    }
+    if (!effectiveTenantId.trim()) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (!useTenantStore.getState()._hasHydrated) {
+        useTenantStore.setState({ _hasHydrated: true });
+      }
+    }, TENANT_HYDRATE_FALLBACK_MS);
+    return () => clearTimeout(timer);
+  }, [tenantHasHydrated, effectiveTenantId]);
 
   useEffect(() => {
     if (!storesResolved || !accessToken?.trim() || !effectiveTenantId) {
@@ -102,7 +124,7 @@ export function useApiQueryReady(options?: UseApiQueryReadyOptions): {
   const ready =
     authHasHydrated &&
     !authIsLoading &&
-    tenantHasHydrated &&
+    tenantGateOk &&
     (!requireAccessToken || Boolean(accessToken)) &&
     Boolean(effectiveTenantId) &&
     (!requireUserId || Boolean(userId));

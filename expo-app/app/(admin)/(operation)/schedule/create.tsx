@@ -56,6 +56,12 @@ import {
   computeEndTimeFromDuration,
   resolveDurationMinutes,
 } from '@/utils/adminScheduleCreateBody';
+import { AdminScheduleTimeSlotPicker } from '@/components/molecules/AdminScheduleTimeSlotPicker';
+import {
+  occupiedRangesFromConsultantSchedules,
+  useConsultantSchedulesByDate,
+} from '@/api/hooks/useConsultantSchedulesByDate';
+import { validateAdminScheduleTimeSelection } from '@/utils/scheduleTimeSlotConflict';
 import { toDisplayString } from '@/utils/safeDisplay';
 
 const TOTAL_STEPS = 4;
@@ -117,8 +123,8 @@ export default function AdminScheduleCreateScreen() {
       ? params.dateYmd.slice(0, 10)
       : format(new Date(), 'yyyy-MM-dd'),
   );
-  const [startTime, setStartTime] = useState('14:00');
-  const [endTime, setEndTime] = useState('15:00');
+  const [startTime, setStartTime] = useState<string | null>(null);
+  const [endTime, setEndTime] = useState<string | null>(null);
   const [durationCode, setDurationCode] = useState<string>(ADMIN_SCHEDULE_DEFAULTS.DURATION_CODE);
   const [consultationType, setConsultationType] = useState<string>(
     ADMIN_SCHEDULE_DEFAULTS.CONSULTATION_TYPE,
@@ -140,6 +146,18 @@ export default function AdminScheduleCreateScreen() {
   const createMutation = useAdminCreateSchedule();
 
   const durationOptions = durationQuery.data ?? [];
+  const durationMinutes = useMemo(
+    () => resolveDurationMinutes(durationCode, durationOptions),
+    [durationCode, durationOptions],
+  );
+
+  const existingSchedulesQuery = useConsultantSchedulesByDate(consultant?.id ?? null, dateYmd, {
+    enabled: step >= 3,
+  });
+  const occupiedRanges = useMemo(
+    () => occupiedRangesFromConsultantSchedules(existingSchedulesQuery.data ?? []),
+    [existingSchedulesQuery.data],
+  );
 
   useEffect(() => {
     if (!preMappingId || consultant) {
@@ -192,12 +210,30 @@ export default function AdminScheduleCreateScreen() {
   }, [consultant, client, title]);
 
   useEffect(() => {
-    const minutes = resolveDurationMinutes(durationCode, durationOptions);
-    const computed = computeEndTimeFromDuration(startTime, minutes);
+    if (!startTime) {
+      return;
+    }
+    const computed = computeEndTimeFromDuration(startTime, durationMinutes);
     if (computed) {
       setEndTime(computed);
     }
-  }, [durationCode, durationOptions, startTime]);
+  }, [durationMinutes, startTime]);
+
+  useEffect(() => {
+    setStartTime(null);
+    setEndTime(null);
+  }, [consultant?.id, dateYmd]);
+
+  useEffect(() => {
+    if (!startTime || !endTime) {
+      return;
+    }
+    const check = validateAdminScheduleTimeSelection(dateYmd, startTime, endTime, occupiedRanges);
+    if (!check.ok) {
+      setStartTime(null);
+      setEndTime(null);
+    }
+  }, [dateYmd, durationMinutes, endTime, occupiedRanges, startTime]);
 
   const filteredConsultants = useMemo(
     () => filterBySearch(consultantsQuery.data ?? [], consultantSearch),
@@ -243,6 +279,20 @@ export default function AdminScheduleCreateScreen() {
       setErrorModal(ADMIN_SCHEDULE_REGISTER_COPY.VALIDATION_DATETIME);
       return;
     }
+    const timeCheck = validateAdminScheduleTimeSelection(
+      dateYmd,
+      startTime,
+      endTime,
+      occupiedRanges,
+    );
+    if (!timeCheck.ok) {
+      if (timeCheck.reason === 'past') {
+        setErrorModal(ADMIN_SCHEDULE_REGISTER_COPY.VALIDATION_TIME_PAST);
+      } else {
+        setErrorModal(ADMIN_SCHEDULE_REGISTER_COPY.VALIDATION_TIME_CONFLICT);
+      }
+      return;
+    }
     try {
       await createMutation.mutateAsync({
         consultantId: consultant.id,
@@ -268,6 +318,7 @@ export default function AdminScheduleCreateScreen() {
     dateYmd,
     endTime,
     memo,
+    occupiedRanges,
     startTime,
     tentative,
     title,
@@ -275,7 +326,7 @@ export default function AdminScheduleCreateScreen() {
 
   const openCreateConsultant = useCallback(() => {
     router.push({
-      pathname: '/(admin)/(operation)/users/create-consultant',
+      pathname: '/(admin)/(operation)/user-management/create-consultant',
       params: {
         returnPath: '/(admin)/(operation)/schedule/create',
         dateYmd,
@@ -285,7 +336,7 @@ export default function AdminScheduleCreateScreen() {
 
   const openCreateClient = useCallback(() => {
     router.push({
-      pathname: '/(admin)/(operation)/users/create-client',
+      pathname: '/(admin)/(operation)/user-management/create-client',
       params: {
         returnPath: '/(admin)/(operation)/schedule/create',
         consultantId: String(consultant?.id ?? preConsultantId ?? ''),
@@ -498,38 +549,44 @@ export default function AdminScheduleCreateScreen() {
                 </Pressable>
               </View>
               <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary, marginTop: 16 }]}>
-                {ADMIN_SCHEDULE_REGISTER_COPY.LABEL_START_TIME}
+                {ADMIN_SCHEDULE_REGISTER_COPY.LABEL_DURATION}
               </Text>
-              <TextInput
-                value={startTime}
-                onChangeText={setStartTime}
-                style={[
-                  styles.input,
-                  {
-                    borderColor: theme.colors.divider,
-                    color: theme.colors.textMain,
-                    fontFamily: theme.fontFamily.regular,
-                  },
-                ]}
-                placeholder="HH:mm"
-                placeholderTextColor={theme.colors.textTertiary}
-              />
+              <View style={styles.chipWrap}>
+                {durationOptions.map((opt) => (
+                  <Pressable
+                    key={opt.value}
+                    onPress={() => {
+                      setDurationCode(opt.value);
+                      setStartTime(null);
+                      setEndTime(null);
+                    }}
+                    style={[
+                      styles.chip,
+                      {
+                        borderColor:
+                          durationCode === opt.value ? theme.colors.primary : theme.colors.divider,
+                        backgroundColor: theme.colors.surface,
+                      },
+                    ]}
+                  >
+                    <Text style={{ color: theme.colors.textMain, fontFamily: theme.fontFamily.medium }}>
+                      {opt.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
               <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary, marginTop: 16 }]}>
-                {ADMIN_SCHEDULE_REGISTER_COPY.LABEL_END_TIME}
+                {ADMIN_SCHEDULE_REGISTER_COPY.LABEL_TIME_SLOTS}
               </Text>
-              <TextInput
-                value={endTime}
-                onChangeText={setEndTime}
-                style={[
-                  styles.input,
-                  {
-                    borderColor: theme.colors.divider,
-                    color: theme.colors.textMain,
-                    fontFamily: theme.fontFamily.regular,
-                  },
-                ]}
-                placeholder="HH:mm"
-                placeholderTextColor={theme.colors.textTertiary}
+              <AdminScheduleTimeSlotPicker
+                consultantId={consultant?.id ?? null}
+                dateYmd={dateYmd}
+                durationMinutes={durationMinutes}
+                selectedStartTime={startTime}
+                onSelectStartTime={(start, end) => {
+                  setStartTime(start);
+                  setEndTime(end);
+                }}
               />
             </>
           ) : null}
@@ -561,29 +618,11 @@ export default function AdminScheduleCreateScreen() {
                   </Pressable>
                 ))}
               </View>
-              <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary, marginTop: 16 }]}>
-                {ADMIN_SCHEDULE_REGISTER_COPY.LABEL_DURATION}
+              <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary, marginTop: 8 }]}>
+                {ADMIN_SCHEDULE_REGISTER_COPY.LABEL_START_TIME}:{' '}
+                {toDisplayString(startTime, '—')} · {ADMIN_SCHEDULE_REGISTER_COPY.LABEL_END_TIME}:{' '}
+                {toDisplayString(endTime, '—')}
               </Text>
-              <View style={styles.chipWrap}>
-                {durationOptions.map((opt) => (
-                  <Pressable
-                    key={opt.value}
-                    onPress={() => setDurationCode(opt.value)}
-                    style={[
-                      styles.chip,
-                      {
-                        borderColor:
-                          durationCode === opt.value ? theme.colors.primary : theme.colors.divider,
-                        backgroundColor: theme.colors.surface,
-                      },
-                    ]}
-                  >
-                    <Text style={{ color: theme.colors.textMain, fontFamily: theme.fontFamily.medium }}>
-                      {opt.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
               <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary, marginTop: 16 }]}>
                 {ADMIN_SCHEDULE_REGISTER_COPY.LABEL_TITLE}
               </Text>
@@ -664,6 +703,10 @@ export default function AdminScheduleCreateScreen() {
               }
               if (step === 2 && !client) {
                 setErrorModal(ADMIN_SCHEDULE_REGISTER_COPY.VALIDATION_PICK_CLIENT);
+                return;
+              }
+              if (step === 3 && (!startTime || !endTime)) {
+                setErrorModal(ADMIN_SCHEDULE_REGISTER_COPY.VALIDATION_DATETIME);
                 return;
               }
               setStep(step + 1);

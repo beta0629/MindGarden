@@ -14,9 +14,19 @@ interface StatCardProps {
   icon?: React.ReactNode;
   style?: ViewStyle;
   onPress?: () => void;
+  /** B0KlA KPI — 좌측 4px primary 악센트 바 + surface/border 카드 */
+  showAccentBar?: boolean;
 }
 
-export function StatCard({ label, value, unit, icon, style, onPress }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  unit,
+  icon,
+  style,
+  onPress,
+  showAccentBar = false,
+}: StatCardProps) {
   const theme = useTheme();
   const accessibilityLabel = `${label}: ${value}${unit ? ` ${unit}` : ''}`;
   const cardStyle = [
@@ -24,10 +34,15 @@ export function StatCard({ label, value, unit, icon, style, onPress }: StatCardP
     {
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.xl,
-      ...theme.shadows.sm,
+      ...(showAccentBar
+        ? { borderWidth: 1, borderColor: theme.colors.border }
+        : theme.shadows.sm),
     },
+    showAccentBar ? styles.cardAccentLayout : null,
     style,
   ];
+
+  const valueFontSize = showAccentBar ? theme.fontSize['2xl'] : theme.fontSize.xl;
 
   const content = (
     <>
@@ -36,9 +51,9 @@ export function StatCard({ label, value, unit, icon, style, onPress }: StatCardP
         style={[
           styles.value,
           {
-            color: theme.colors.primary,
+            color: showAccentBar ? theme.colors.textMain : theme.colors.primary,
             fontFamily: theme.fontFamily.bold,
-            fontSize: theme.fontSize.xl,
+            fontSize: valueFontSize,
           },
         ]}
       >
@@ -70,6 +85,14 @@ export function StatCard({ label, value, unit, icon, style, onPress }: StatCardP
     </>
   );
 
+  const accentBar = showAccentBar ? (
+    <View
+      style={[styles.accentBar, { backgroundColor: theme.colors.primary }]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    />
+  ) : null;
+
   if (onPress) {
     return (
       <Pressable
@@ -78,14 +101,16 @@ export function StatCard({ label, value, unit, icon, style, onPress }: StatCardP
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="button"
       >
-        {content}
+        {accentBar}
+        <View style={showAccentBar ? styles.cardInner : undefined}>{content}</View>
       </Pressable>
     );
   }
 
   return (
     <View style={cardStyle} accessibilityLabel={accessibilityLabel} accessibilityRole="text">
-      {content}
+      {accentBar}
+      <View style={showAccentBar ? styles.cardInner : undefined}>{content}</View>
     </View>
   );
 }
@@ -94,6 +119,20 @@ const styles = StyleSheet.create({
   card: {
     padding: 16,
     minWidth: 100,
+    alignItems: 'center',
+  },
+  cardAccentLayout: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    overflow: 'hidden',
+    padding: 0,
+  },
+  accentBar: {
+    width: 4,
+  },
+  cardInner: {
+    flex: 1,
+    padding: 16,
     alignItems: 'center',
   },
   pressed: {

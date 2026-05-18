@@ -257,7 +257,8 @@ public class TenantContextFilter implements Filter {
         // 표준화 원칙: 온보딩 관련 API는 공개 API로 설정
         // Ops Portal API는 테넌트별 시스템이 아니므로 tenantId 검증 불필요
         // OAuth 콜백은 로그인 전 단계이므로 tenantId 검증 불필요
-        String[] publicPaths = {"/api/v1/onboarding", // 온보딩 API (테넌트 등록)
+        String[] publicPaths = {"/api/v1/mobile/app-version", // 모바일 버전 검사(테넌트 무관)
+                "/api/v1/onboarding", // 온보딩 API (테넌트 등록)
                 "/api/v1/ops", // Ops Portal API 전체 (테넌트별 시스템 아님)
                 "/api/v1/ops/plans/active", // 활성화된 요금제 목록 (온보딩에서 사용)
                 "/api/v1/ops/plans/code", // plan_code로 요금제 조회 (온보딩에서 사용)

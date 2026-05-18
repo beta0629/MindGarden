@@ -26,6 +26,7 @@ import {
   useAdminDuplicateCheckEmail,
 } from '@/api/hooks/useAdminUserCreate';
 import { ADMIN_USER_CREATE_COPY } from '@/constants/adminScheduleRegisterCopy';
+import { toDisplayString } from '@/utils/safeDisplay';
 import {
   canRegisterConsultantOnMobile,
   isAdminMobileShellRole,
@@ -192,7 +193,9 @@ export default function AdminCreateConsultantScreen() {
         title={ADMIN_USER_CREATE_COPY.ERROR_TITLE}
         actions={[{ label: '확인', onPress: () => setErrorModal(null), variant: 'primary' }]}
       >
-        <Text style={{ color: theme.colors.textSecondary }}>{errorModal}</Text>
+        <Text style={{ color: theme.colors.textSecondary }}>
+          {toDisplayString(errorModal, '')}
+        </Text>
       </UnifiedModal>
     </SafeAreaView>
   );

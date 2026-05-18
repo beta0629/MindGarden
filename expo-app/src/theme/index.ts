@@ -14,4 +14,7 @@ export { shadows } from './shadows';
 export { clientTheme } from './client-theme';
 export type { AppTheme, AppThemeColors } from './client-theme';
 export { consultantTheme } from './consultant-theme';
+export { adminTheme } from './admin-theme';
+export { resolveThemeForRole } from './resolveThemeForRole';
+export { ADMIN_MIN_TOUCH_TARGET } from './tokens';
 export { ThemeProvider, useTheme } from './ThemeProvider';

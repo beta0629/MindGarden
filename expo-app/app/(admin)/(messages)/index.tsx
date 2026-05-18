@@ -35,12 +35,16 @@ import {
 import { usesAdminMessagingAllApi } from '@/utils/adminRole';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { formatRelativeTime } from '@/utils/dateFormat';
+import { ADMIN_MESSAGE_INBOX_COPY } from '@/constants/adminMessageInboxCopy';
+import { normalizeAdminMessageSenderFields } from '@/utils/adminMessageDisplay';
+import { filterAdminMessagesForOpsInbox } from '@/utils/adminMessageInboxFilter';
 import { toDisplayString, toSafeNumber } from '@/utils/safeDisplay';
 
 interface AdminMessageRow {
   id: number;
   title: string;
   content: string;
+  senderType: string;
   senderName: string;
   receiverName: string;
   sentAt: string;
@@ -70,11 +74,13 @@ function normalizeAdminMessageRow(raw: Record<string, unknown>): AdminMessageRow
   const title = toDisplayString(raw.title, '');
   const sentRaw = raw.sentAt ?? raw.createdAt;
   const sentAt = typeof sentRaw === 'string' ? sentRaw : toDisplayString(sentRaw, '');
+  const { senderType, senderName } = normalizeAdminMessageSenderFields(raw);
   return {
     id,
     title,
     content,
-    senderName: toDisplayString(raw.senderName, '발신자'),
+    senderType,
+    senderName,
     receiverName: toDisplayString(raw.receiverName, '수신자'),
     sentAt,
     isRead: Boolean(raw.isRead),
@@ -111,7 +117,7 @@ function extractAdminMessageList(data: unknown): AdminMessageRow[] {
     const tb = new Date(b.sentAt).getTime();
     return (Number.isNaN(tb) ? 0 : tb) - (Number.isNaN(ta) ? 0 : ta);
   });
-  return rows;
+  return filterAdminMessagesForOpsInbox(rows);
 }
 
 async function fetchAdminAllMessages(): Promise<AdminMessageRow[]> {
@@ -222,6 +228,13 @@ export default function AdminMessagesScreen() {
     [listQuery.data, deferredSearch],
   );
 
+  const emptyTitle = deferredSearch.trim()
+    ? ADMIN_MESSAGE_INBOX_COPY.EMPTY_SEARCH_TITLE
+    : ADMIN_MESSAGE_INBOX_COPY.EMPTY_OPS_TITLE;
+  const emptyBody = deferredSearch.trim()
+    ? ADMIN_MESSAGE_INBOX_COPY.EMPTY_SEARCH_BODY
+    : ADMIN_MESSAGE_INBOX_COPY.EMPTY_OPS_BODY;
+
   const handleRefresh = useCallback(async () => {
     await listQuery.refetch();
   }, [listQuery]);
@@ -276,12 +289,12 @@ export default function AdminMessagesScreen() {
             }}
             numberOfLines={1}
           >
-            {item.senderName}
+            {toDisplayString(item.senderName, '발신자')}
             <Text
               style={{ color: theme.colors.textTertiary, fontFamily: theme.fontFamily.regular }}
             >
               {' → '}
-              {item.receiverName}
+              {toDisplayString(item.receiverName, '수신자')}
             </Text>
           </Text>
           <Text
@@ -378,8 +391,8 @@ export default function AdminMessagesScreen() {
           ListEmptyComponent={
             <EmptyState
               icon={<MessageCircle size={32} color={theme.colors.textTertiary} />}
-              title={ADMIN_MOBILE_MESSAGES_COPY.EMPTY_TITLE}
-              description={ADMIN_MOBILE_MESSAGES_COPY.EMPTY_BODY}
+              title={emptyTitle}
+              description={emptyBody}
             />
           }
           contentContainerStyle={filtered.length === 0 ? styles.listEmpty : styles.listContent}

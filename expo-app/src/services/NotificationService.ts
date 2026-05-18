@@ -17,7 +17,7 @@
  */
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import type { Href } from 'expo-router';
@@ -26,7 +26,6 @@ import { PUSH_API } from '../api/endpoints';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useTenantStore } from '../stores/useTenantStore';
 import { useNotificationSettingsStore } from '../stores/useNotificationSettingsStore';
-import { colors } from '../theme/tokens';
 import {
   getScenarioByType,
   getRouteTemplateForRole,
@@ -42,6 +41,7 @@ import {
   toClientConsultantMessagingRole,
   type AppAuthRole,
 } from '@/utils/adminRole';
+import { requestOsNotificationPermission } from '@/utils/notificationPermissionFlow';
 
 /**
  * 푸시 백엔드 계약(프론트·Expo 공통, 웹 `PushNotificationService` 동일 경로):
@@ -204,37 +204,41 @@ function generateToastId(): string {
   return `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+export type NotificationPermissionSnapshot = {
+  granted: boolean;
+  status: Notifications.PermissionStatus;
+  canAskAgain: boolean;
+};
+
+/**
+ * OS 알림 권한 상태 조회 (채널 생성 없음).
+ */
+export async function getNotificationPermissionSnapshot(): Promise<NotificationPermissionSnapshot> {
+  const { status, canAskAgain } = await Notifications.getPermissionsAsync();
+  return {
+    granted: status === 'granted',
+    status,
+    canAskAgain: canAskAgain ?? true,
+  };
+}
+
+/**
+ * 거절·「다시 묻지 않음」 등으로 시스템 설정 이동이 필요할 때.
+ */
+export async function openNotificationSettings(): Promise<void> {
+  await Linking.openSettings();
+}
+
 export const NotificationService = {
   /**
-   * 푸시 알림 권한 요청
+   * 푸시 알림 권한 요청 — Android는 채널을 먼저 만든 뒤 권한을 요청한다.
    */
   async requestPermission(): Promise<boolean> {
     if (!Device.isDevice) {
       return false;
     }
 
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-
-    if (finalStatus !== 'granted') {
-      return false;
-    }
-
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'MindGarden 알림',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: colors.consultant.primary,
-      });
-    }
-
-    return true;
+    return requestOsNotificationPermission();
   },
 
   /**

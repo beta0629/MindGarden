@@ -86,6 +86,9 @@ export const NOTIFICATION_API = {
   markAsRead: (id: string | number) => `/api/v1/system-notifications/${id}/read`,
 } as const;
 
+/** 인증 불필요 — `GET ?platform=android|ios&version={semver}&versionCode={int?}` */
+export const MOBILE_APP_VERSION_CHECK = '/api/v1/mobile/app-version/check';
+
 export const PUSH_API = {
   /** POST 바디: userId, tenantId, token, platform, deviceInfo — Spring 구현 시 `MobilePushTokenController` 등과 정합 */
   REGISTER_TOKEN: '/api/v1/mobile/push-token/register',

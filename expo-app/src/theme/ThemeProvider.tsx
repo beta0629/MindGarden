@@ -16,7 +16,9 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import type { AppTheme } from './client-theme';
 import { clientTheme } from './client-theme';
-import { consultantTheme } from './consultant-theme';
+import { resolveThemeForRole, type ThemeProviderRole } from './resolveThemeForRole';
+
+export type { ThemeProviderRole };
 
 const ThemeContext = createContext<AppTheme>(clientTheme);
 
@@ -24,18 +26,13 @@ export function useTheme(): AppTheme {
   return useContext(ThemeContext);
 }
 
-export type ThemeProviderRole = 'client' | 'consultant' | 'admin' | 'staff';
-
 interface ThemeProviderProps {
   role: ThemeProviderRole;
   children: React.ReactNode;
 }
 
 export function ThemeProvider({ role, children }: ThemeProviderProps) {
-  const theme = useMemo(
-    () => (role === 'consultant' ? consultantTheme : clientTheme),
-    [role],
-  );
+  const theme = useMemo(() => resolveThemeForRole(role), [role]);
 
   return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
 }

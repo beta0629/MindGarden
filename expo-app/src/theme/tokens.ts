@@ -25,6 +25,19 @@ const CLIENT_COLORS = {
   accentSoft: '#F0EDE8',
 } as const;
 
+/** 어드민·스태프 테마: B0KlA 어드민 모바일 (8색) — DESIGN_HANDOFF §2.1 */
+const ADMIN_COLORS = {
+  primary: '#3D5246',
+  primaryLight: '#4A6354',
+  primaryDark: '#2A3A31',
+  bgMain: '#FAF9F7',
+  bgSub: '#F0EDE8',
+  surface: '#F5F3EF',
+  surfaceAlt: '#EDE9E1',
+  accent: '#A4B494',
+  accentSoft: '#F0EDE8',
+} as const;
+
 /** 상담사 테마: 차분한 그린·민트 톤 (8색) */
 const CONSULTANT_COLORS = {
   primary: '#3D5246',
@@ -79,9 +92,13 @@ const GRAY_COLORS = {
 export const colors = {
   client: CLIENT_COLORS,
   consultant: CONSULTANT_COLORS,
+  admin: ADMIN_COLORS,
   common: COMMON_COLORS,
   gray: GRAY_COLORS,
 } as const;
+
+/** 어드민 모바일 터치 타깃 최소 높이 (pt) — DESIGN_HANDOFF §2.2 */
+export const ADMIN_MIN_TOUCH_TARGET = 44;
 
 export const spacing = {
   '2xs': 2,

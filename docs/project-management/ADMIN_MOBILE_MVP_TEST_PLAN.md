@@ -352,10 +352,26 @@ cd expo-app && npm run test:utils
 
 ---
 
+## 11. 상용화 품질 게이트 G1~G4 (부록)
+
+MVP 자동 게이트(§10)는 **G2**에 해당한다. **상용화 릴리스** 판정은 [`ADMIN_MOBILE_COMMERCIALIZATION_ORCHESTRATION.md`](./ADMIN_MOBILE_COMMERCIALIZATION_ORCHESTRATION.md) §7 SSOT를 따른다.
+
+| 게이트 | 본 문서 대응 | PASS 요약 |
+|--------|--------------|-----------|
+| **G1** | §2·§3 역할·라우팅 | ADMIN/STAFF/CONSULTANT/CLIENT 셸·검수 숨김·금지 경로 |
+| **G2** | §10 `test:utils`·`tsc`·Maven | 0 failures (현재 §10.8 **PASS** @ `d95768075`) |
+| **G3** | §8 인벤토리 + 상용화 §6 디자인 | adminTheme·패리티 60%·§17·safeDisplay |
+| **G4** | §6.2·[`SMOKE_RUN`](./ADMIN_MOBILE_MVP_SMOKE_RUN.md) | dev APK·수동/Maestro 스모크 |
+
+**종합 판정**: G1 PASS + G2 PASS + G3 CONDITIONAL 이상 + G4 PASS — 상세 PASS/CONDITIONAL/FAIL 표·현재 스냅샷은 상용화 문서 §7.
+
+---
+
 ## 변경 이력
 
 | 날짜 | 변경 |
 |------|------|
+| 2026-05-18 | §11 — 상용화 G1~G4 부록; SSOT [`ADMIN_MOBILE_COMMERCIALIZATION_ORCHESTRATION.md`](./ADMIN_MOBILE_COMMERCIALIZATION_ORCHESTRATION.md) |
 | 2026-05-18 | §10.8 — 게이트 **3/3 PASS** @ `d95768075` (core-tester: `test:utils` 36·`tsc`·Maven STAFF 스코프+BW 10); §6.2 운영·검수 회귀 **skip** (APK·자격 증명) |
 | 2026-05-18 | §10.8 — 게이트 PASS @ `d95768075` (`test:utils` 36·`tsc`); §6 APK `d957680` 재빌드·운영/검수 후 재로그인 안내 |
 | 2026-05-18 | §6.2 — emulator prep·`test:utils`·`pm clear` cold start; Maestro skip (no `MAESTRO_*`); §6.2 #1–#7 manual pending |

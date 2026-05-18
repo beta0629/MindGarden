@@ -107,6 +107,7 @@ export default function AdminHomeScreen() {
           ) : (
             <StatCard
               style={styles.statFlex}
+              showAccentBar
               label={ADMIN_MOBILE_HOME_COPY.UNREAD_NOTIFICATIONS}
               value={dashboard.unreadNotificationCount}
               unit="건"
@@ -119,6 +120,7 @@ export default function AdminHomeScreen() {
           ) : (
             <StatCard
               style={styles.statFlex}
+              showAccentBar
               label={ADMIN_MOBILE_HOME_COPY.TODAY_SCHEDULES}
               value={dashboard.todayScheduleCount}
               unit="건"
@@ -134,7 +136,9 @@ export default function AdminHomeScreen() {
             styles.scheduleLink,
             {
               backgroundColor: theme.colors.surface,
-              borderRadius: theme.borderRadius.lg,
+              borderColor: theme.colors.border,
+              borderWidth: 1,
+              borderRadius: theme.borderRadius.xl,
               marginTop: theme.spacing.lg,
               padding: theme.spacing.lg,
             },

@@ -6,7 +6,6 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   ScrollView,
@@ -22,6 +21,7 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AdminWizardShell } from '@/components/templates/AdminWizardShell';
 import { Badge } from '@/components/atoms/Badge';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SearchBar } from '@/components/atoms/SearchBar';
@@ -395,37 +395,47 @@ export default function AdminScheduleCreateScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title={ADMIN_SCHEDULE_REGISTER_COPY.CREATE_TITLE} canGoBack />
-      <Text
-        style={{
-          paddingHorizontal: theme.spacing.lg,
-          paddingTop: theme.spacing.sm,
-          color: theme.colors.textSecondary,
-          fontFamily: theme.fontFamily.medium,
-          fontSize: theme.fontSize.sm,
+      <AdminWizardShell
+        currentStep={step}
+        totalSteps={TOTAL_STEPS}
+        stepOfText={ADMIN_SCHEDULE_REGISTER_COPY.STEP_OF(step, TOTAL_STEPS)}
+        stepTitle={stepTitle}
+        leftAction={
+          step > 1
+            ? {
+                label: ADMIN_SCHEDULE_REGISTER_COPY.PREV,
+                onPress: () => setStep(step - 1),
+              }
+            : undefined
+        }
+        rightAction={{
+          label:
+            step < TOTAL_STEPS
+              ? ADMIN_SCHEDULE_REGISTER_COPY.NEXT
+              : ADMIN_SCHEDULE_REGISTER_COPY.SUBMIT,
+          loading: step === TOTAL_STEPS && createMutation.isPending,
+          disabled: step === TOTAL_STEPS && createMutation.isPending,
+          onPress: () => {
+            if (step < TOTAL_STEPS) {
+              if (step === 1 && !consultant) {
+                setErrorModal(ADMIN_SCHEDULE_REGISTER_COPY.VALIDATION_PICK_CONSULTANT);
+                return;
+              }
+              if (step === 2 && !client) {
+                setErrorModal(ADMIN_SCHEDULE_REGISTER_COPY.VALIDATION_PICK_CLIENT);
+                return;
+              }
+              if (step === 3 && (!startTime || !endTime)) {
+                setErrorModal(ADMIN_SCHEDULE_REGISTER_COPY.VALIDATION_DATETIME);
+                return;
+              }
+              setStep(step + 1);
+              return;
+            }
+            void submit();
+          },
         }}
       >
-        {ADMIN_SCHEDULE_REGISTER_COPY.STEP_OF(step, TOTAL_STEPS)} · {stepTitle}
-      </Text>
-      <View
-        style={[
-          styles.progressTrack,
-          {
-            marginHorizontal: theme.spacing.lg,
-            marginTop: theme.spacing.sm,
-            backgroundColor: theme.colors.divider,
-          },
-        ]}
-      >
-        <View
-          style={{
-            width: `${(step / TOTAL_STEPS) * 100}%`,
-            height: 4,
-            backgroundColor: theme.colors.primary,
-            borderRadius: theme.borderRadius.sm,
-          }}
-        />
-      </View>
-
       {step === 1 ? (
         <View style={{ flex: 1, paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.md }}>
           <SearchBar
@@ -690,68 +700,7 @@ export default function AdminScheduleCreateScreen() {
           ) : null}
         </ScrollView>
       ) : null}
-
-      <View
-        style={[
-          styles.footer,
-          {
-            borderTopColor: theme.colors.divider,
-            backgroundColor: theme.colors.bgMain,
-            paddingHorizontal: theme.spacing.lg,
-          },
-        ]}
-      >
-        {step > 1 ? (
-          <Pressable
-            onPress={() => setStep(step - 1)}
-            style={[styles.footerBtn, { borderColor: theme.colors.divider }]}
-          >
-            <Text style={{ color: theme.colors.textMain, fontFamily: theme.fontFamily.medium }}>
-              {ADMIN_SCHEDULE_REGISTER_COPY.PREV}
-            </Text>
-          </Pressable>
-        ) : (
-          <View style={styles.footerBtn} />
-        )}
-        {step < TOTAL_STEPS ? (
-          <Pressable
-            onPress={() => {
-              if (step === 1 && !consultant) {
-                setErrorModal(ADMIN_SCHEDULE_REGISTER_COPY.VALIDATION_PICK_CONSULTANT);
-                return;
-              }
-              if (step === 2 && !client) {
-                setErrorModal(ADMIN_SCHEDULE_REGISTER_COPY.VALIDATION_PICK_CLIENT);
-                return;
-              }
-              if (step === 3 && (!startTime || !endTime)) {
-                setErrorModal(ADMIN_SCHEDULE_REGISTER_COPY.VALIDATION_DATETIME);
-                return;
-              }
-              setStep(step + 1);
-            }}
-            style={[styles.footerBtn, { backgroundColor: theme.colors.primary }]}
-          >
-            <Text style={{ color: theme.colors.textOnPrimary, fontFamily: theme.fontFamily.semibold }}>
-              {ADMIN_SCHEDULE_REGISTER_COPY.NEXT}
-            </Text>
-          </Pressable>
-        ) : (
-          <Pressable
-            onPress={() => void submit()}
-            disabled={createMutation.isPending}
-            style={[styles.footerBtn, { backgroundColor: theme.colors.primary, opacity: createMutation.isPending ? 0.7 : 1 }]}
-          >
-            {createMutation.isPending ? (
-              <ActivityIndicator color={theme.colors.textOnPrimary} />
-            ) : (
-              <Text style={{ color: theme.colors.textOnPrimary, fontFamily: theme.fontFamily.semibold }}>
-                {ADMIN_SCHEDULE_REGISTER_COPY.SUBMIT}
-              </Text>
-            )}
-          </Pressable>
-        )}
-      </View>
+      </AdminWizardShell>
 
       <UnifiedModal
         isOpen={errorModal != null}
@@ -817,7 +766,6 @@ export default function AdminScheduleCreateScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  progressTrack: { height: 4, borderRadius: 4, overflow: 'hidden' },
   pickerRow: {
     borderWidth: 1,
     borderRadius: 12,
@@ -843,23 +791,4 @@ const styles = StyleSheet.create({
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  footer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    gap: 12,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-  },
-  footerBtn: {
-    flex: 1,
-    minHeight: 48,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
 });

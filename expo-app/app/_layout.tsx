@@ -16,7 +16,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
@@ -37,6 +37,10 @@ import { BackgroundTaskService } from '../src/services/BackgroundTaskService';
 import { OfflineBanner } from '../src/components/organisms/OfflineBanner';
 import { InAppNotificationToast } from '../src/components/organisms/InAppNotificationToast';
 import { ApiEnvironmentBanner } from '../src/components/atoms/ApiEnvironmentBanner';
+import { ForceUpdateGate } from '../src/components/organisms/ForceUpdateGate';
+import { useTenantStore } from '../src/stores/useTenantStore';
+
+const PUSH_TOKEN_REGISTER_DEBOUNCE_MS = 500;
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -63,6 +67,9 @@ export default function RootLayout() {
   const role = useAuthStore((s) => s.role);
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const tenantId = useTenantStore((s) => s.tenantId);
+  const tenantHydrated = useTenantStore((s) => s._hasHydrated);
+  const pushRegisterTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const queryPersistBuster = useMemo(() => {
     const tenant = user?.tenantId ?? 'no-tenant';
@@ -106,13 +113,37 @@ export default function RootLayout() {
     if (!isAuthenticated) return;
 
     const { foreground, response } = NotificationService.setupAllHandlers();
-    NotificationService.registerToken();
 
     return () => {
       foreground.remove();
       response.remove();
     };
   }, [isAuthenticated]);
+
+  /** 테넌트 MMKV hydrate + 로그인 후 푸시 토큰 등록 (중복 호출 debounce) */
+  useEffect(() => {
+    if (!loaded || !isAuthenticated || !tenantHydrated) {
+      return;
+    }
+    const tid = tenantId?.trim() ?? '';
+    if (!tid) {
+      return;
+    }
+
+    if (pushRegisterTimerRef.current != null) {
+      clearTimeout(pushRegisterTimerRef.current);
+    }
+    pushRegisterTimerRef.current = setTimeout(() => {
+      void NotificationService.registerToken();
+    }, PUSH_TOKEN_REGISTER_DEBOUNCE_MS);
+
+    return () => {
+      if (pushRegisterTimerRef.current != null) {
+        clearTimeout(pushRegisterTimerRef.current);
+        pushRegisterTimerRef.current = null;
+      }
+    };
+  }, [loaded, isAuthenticated, tenantHydrated, tenantId]);
 
   if (!loaded) {
     return null;
@@ -121,31 +152,33 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <PersistQueryClientProvider
-          client={queryClient}
-          persistOptions={{
-            persister: queryPersister,
-            maxAge: QUERY_PERSIST_MAX_AGE_MS,
-            buster: queryPersistBuster,
-            dehydrateOptions: queryPersistDehydrateOptions,
-          }}
-        >
-          <AppForegroundRefetchBridge />
-          <ThemeProvider role={role ?? 'client'}>
-            <ApiEnvironmentBanner />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(admin)" />
-              <Stack.Screen name="(consultant)" />
-              <Stack.Screen name="(client)" />
-              <Stack.Screen name="+not-found" />
-            </Stack>
-            <OfflineBanner />
-            <InAppNotificationToast />
-            <StatusBar style="auto" />
-          </ThemeProvider>
-        </PersistQueryClientProvider>
+        <ForceUpdateGate enabled={loaded}>
+          <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={{
+              persister: queryPersister,
+              maxAge: QUERY_PERSIST_MAX_AGE_MS,
+              buster: queryPersistBuster,
+              dehydrateOptions: queryPersistDehydrateOptions,
+            }}
+          >
+            <AppForegroundRefetchBridge />
+            <ThemeProvider role={role ?? 'client'}>
+              <ApiEnvironmentBanner />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(admin)" />
+                <Stack.Screen name="(consultant)" />
+                <Stack.Screen name="(client)" />
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <OfflineBanner />
+              <InAppNotificationToast />
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </PersistQueryClientProvider>
+        </ForceUpdateGate>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

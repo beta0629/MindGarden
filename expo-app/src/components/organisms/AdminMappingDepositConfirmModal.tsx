@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTheme } from '@/theme';
+import { ADMIN_MIN_TOUCH_TARGET } from '@/theme/tokens';
 import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
 import {
   getAdminMappingSettlementErrorMessage,
@@ -130,6 +131,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 12,
+    minHeight: ADMIN_MIN_TOUCH_TARGET,
     paddingVertical: 10,
     fontSize: 15,
   },

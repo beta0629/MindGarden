@@ -64,12 +64,15 @@ export const ADMIN_MOBILE_HOME_COPY = {
 
 /** 어드민 모바일 메시지 — Spring `ConsultationMessageController` */
 export const ADMIN_MOBILE_MESSAGES_API = {
-  ALL: '/api/v1/consultation-messages/all',
+  /** 기본: 운영 알림(결제·스케줄)만 — `view=full` 시 전체 */
+  ALL: '/api/v1/consultation-messages/all?view=admin_ops',
   detail: (messageId: number) => `/api/v1/consultation-messages/${messageId}`,
 } as const;
 
 export const ADMIN_MOBILE_MESSAGES_COPY = {
   TITLE: '메시지',
+  /** 웹 SSOT: senderType === SYSTEM → 「시스템」 */
+  SYSTEM_SENDER: '시스템',
   SEARCH_PLACEHOLDER: '제목·내용·발신·수신자 검색',
   EMPTY_TITLE: '메시지가 없습니다',
   EMPTY_BODY: '테넌트 내 상담 메시지가 표시됩니다.',

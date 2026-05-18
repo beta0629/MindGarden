@@ -99,6 +99,19 @@ spring:
   #             - basic
   #           client-name: Instagram
 
+# MindGarden 모바일·보안 (application.yml 과 동기화)
+mindgarden:
+  mobile:
+    app-version:
+      min-android-version: "1.0.0"
+      min-android-version-code: 1
+      min-ios-version: "1.0.0"
+      force-update-enabled: true
+      message-ko: "새 버전이 필요합니다. 업데이트 후 이용해 주세요."
+      android-store-url: ""
+      android-apk-url: ""
+      ios-store-url: ""
+
 # JWT 설정
 jwt:
   secret: ${JWT_SECRET:}

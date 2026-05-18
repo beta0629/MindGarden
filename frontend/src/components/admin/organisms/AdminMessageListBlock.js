@@ -16,6 +16,11 @@ import Badge from '../../common/Badge';
 import BadgeSelect from '../../common/BadgeSelect';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { ADMIN_MESSAGE_INBOX_STRINGS } from '../../../constants/adminMessageInboxStrings';
+import {
+  ADMIN_MESSAGE_INBOX_VIEW,
+  filterAdminMessagesForOpsInbox
+} from '../../../utils/adminMessageInboxFilter';
 import '../../../styles/unified-design-tokens.css';
 
 const MESSAGE_TYPES = {
@@ -38,10 +43,12 @@ const AdminMessageListBlock = () => {
   const loadMessages = useCallback(async() => {
     try {
       setLoading(true);
-      const response = await StandardizedApi.get('/api/v1/consultation-messages/all');
+      const response = await StandardizedApi.get(
+        `/api/v1/consultation-messages/all?view=${ADMIN_MESSAGE_INBOX_VIEW.ADMIN_OPS}`
+      );
       const raw = response?.content ?? response?.messages ?? response?.data ?? response;
       const list = Array.isArray(raw) ? raw : [];
-      setMessages(list);
+      setMessages(filterAdminMessagesForOpsInbox(list));
     } catch (err) {
       console.error('메시지 로드 중 오류:', err);
       notificationManager.show(err?.message || '메시지를 불러오는 중 오류가 발생했습니다.', 'error');
@@ -149,12 +156,21 @@ const AdminMessageListBlock = () => {
         <div className="mg-v2-ad-notifications__list">
           {loading && <UnifiedLoading type="inline" text="로딩 중..." />}
           {!loading && filteredMessages.length === 0 && (
-            <p
+            <div
               className="mg-v2-notification-empty mg-v2-ad-b0kla__table-empty"
               aria-live="polite"
             >
-              메시지가 없습니다.
-            </p>
+              <p className="mg-v2-ad-b0kla__empty-title">
+                {searchTerm.trim()
+                  ? ADMIN_MESSAGE_INBOX_STRINGS.EMPTY_SEARCH_TITLE
+                  : ADMIN_MESSAGE_INBOX_STRINGS.EMPTY_OPS_TITLE}
+              </p>
+              <p className="mg-v2-ad-b0kla__empty-body">
+                {searchTerm.trim()
+                  ? ADMIN_MESSAGE_INBOX_STRINGS.EMPTY_SEARCH_BODY
+                  : ADMIN_MESSAGE_INBOX_STRINGS.EMPTY_OPS_BODY}
+              </p>
+            </div>
           )}
           {!loading && filteredMessages.length > 0 && (
             <ul className="mg-v2-ad-notifications__card-grid" aria-label="메시지 카드 목록">

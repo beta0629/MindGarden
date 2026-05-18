@@ -26,6 +26,7 @@ import {
 import { ADMIN_USER_CREATE_COPY } from '@/constants/adminScheduleRegisterCopy';
 import { isAdminMobileShellRole } from '@/utils/adminRole';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { toDisplayString } from '@/utils/safeDisplay';
 
 type Params = {
   returnPath?: string;
@@ -193,7 +194,9 @@ export default function AdminCreateClientScreen() {
         title={ADMIN_USER_CREATE_COPY.ERROR_TITLE}
         actions={[{ label: '확인', onPress: () => setErrorModal(null), variant: 'primary' }]}
       >
-        <Text style={{ color: theme.colors.textSecondary }}>{errorModal}</Text>
+        <Text style={{ color: theme.colors.textSecondary }}>
+          {toDisplayString(errorModal, '')}
+        </Text>
       </UnifiedModal>
     </SafeAreaView>
   );

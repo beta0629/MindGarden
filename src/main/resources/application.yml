@@ -144,6 +144,15 @@ mindgarden:
       expo:
         access-token: ${EXPO_ACCESS_TOKEN:}
         api-url: ${EXPO_PUSH_API_URL:https://exp.host/--/api/v2/push/send}
+    app-version:
+      min-android-version: "1.0.0"
+      min-android-version-code: 1
+      min-ios-version: "1.0.0"
+      force-update-enabled: true
+      message-ko: "새 버전이 필요합니다. 업데이트 후 이용해 주세요."
+      android-store-url: ""
+      android-apk-url: ""
+      ios-store-url: ""
   security:
     # CAPTCHA (Cloudflare Turnstile). enabled=false 시 검증 생략(no-op). 시크릿·사이트키는 환경 변수로만 주입.
     captcha:

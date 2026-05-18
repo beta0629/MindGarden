@@ -226,7 +226,14 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     extra: {
       eas: {
-        projectId: 'YOUR_EAS_PROJECT_ID',
+        /**
+         * EAS project UUID — 저장소에 실제 ID를 커밋하지 않는다.
+         * 로컬·CI: `EAS_PROJECT_ID` 또는 `EXPO_PUBLIC_EAS_PROJECT_ID` env 로 주입.
+         */
+        projectId:
+          process.env.EAS_PROJECT_ID ??
+          process.env.EXPO_PUBLIC_EAS_PROJECT_ID ??
+          'YOUR_EAS_PROJECT_ID',
       },
       ...(apiBaseUrl ? { apiBaseUrl } : {}),
       /** EAS/로컬 빌드 시 env 주입 — 소스에 PG 키 평문 커밋 금지 */

@@ -21,6 +21,7 @@ import { ExternalLink } from 'lucide-react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AdminWizardShell } from '@/components/templates/AdminWizardShell';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SearchBar } from '@/components/atoms/SearchBar';
 import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
@@ -46,9 +47,10 @@ import {
 import { useAuthStore } from '@/stores/useAuthStore';
 import { generateMappingPaymentReference } from '@/utils/adminMappingCreateBody';
 import { canManageMappingsOnMobile } from '@/utils/adminRole';
+import { ADMIN_MIN_TOUCH_TARGET } from '@/theme/tokens';
 import { extractCreatedMappingId, openAdminWebIntegratedSchedule } from '@/utils/openAdminWebMappingPayment';
 import type { AdminMappingSettlementTarget } from '@/utils/adminMappingSettlement';
-import { toDisplayString } from '@/utils/safeDisplay';
+import { toDisplayString, toSafeNumber } from '@/utils/safeDisplay';
 
 const TOTAL_STEPS = 5;
 
@@ -302,40 +304,48 @@ export default function AdminMappingCreateScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
       <AppTopBar title={ADMIN_MAPPING_COPY.CREATE_TITLE} canGoBack />
       {step < 5 ? (
-        <>
-          <Text
-            style={{
-              paddingHorizontal: theme.spacing.lg,
-              paddingTop: theme.spacing.sm,
-              color: theme.colors.textSecondary,
-              fontFamily: theme.fontFamily.medium,
-              fontSize: theme.fontSize.sm,
-            }}
-          >
-            {ADMIN_MAPPING_COPY.STEP_OF(step, TOTAL_STEPS)} · {stepTitle}
-          </Text>
-          <View
-            style={[
-              styles.progressTrack,
-              {
-                marginHorizontal: theme.spacing.lg,
-                marginTop: theme.spacing.sm,
-                backgroundColor: theme.colors.divider,
-              },
-            ]}
-          >
-            <View
-              style={{
-                width: `${(step / TOTAL_STEPS) * 100}%`,
-                height: 4,
-                backgroundColor: theme.colors.primary,
-                borderRadius: theme.borderRadius.sm,
-              }}
-            />
-          </View>
-        </>
-      ) : null}
-
+      <AdminWizardShell
+        currentStep={step}
+        totalSteps={TOTAL_STEPS}
+        stepOfText={ADMIN_MAPPING_COPY.STEP_OF(step, TOTAL_STEPS)}
+        stepTitle={stepTitle}
+        leftAction={
+          step > 1
+            ? {
+                label: ADMIN_MAPPING_COPY.PREV,
+                onPress: () => setStep(step - 1),
+              }
+            : {
+                label: ADMIN_MAPPING_COPY.CANCEL,
+                onPress: () => setCancelOpen(true),
+                variant: 'cancel',
+              }
+        }
+        rightAction={{
+          label: step < 4 ? ADMIN_MAPPING_COPY.NEXT : ADMIN_MAPPING_COPY.SUBMIT,
+          loading: step === 4 && createMutation.isPending,
+          disabled: step === 4 && createMutation.isPending,
+          onPress: () => {
+            if (step < 4) {
+              if (step === 1 && !consultant) {
+                setErrorModal(ADMIN_MAPPING_COPY.VALIDATION_PICK_CONSULTANT);
+                return;
+              }
+              if (step === 2 && !selectedPackage) {
+                setErrorModal(ADMIN_MAPPING_COPY.VALIDATION_PACKAGE);
+                return;
+              }
+              if (step === 3 && !client) {
+                setErrorModal(ADMIN_MAPPING_COPY.VALIDATION_PICK_CLIENT);
+                return;
+              }
+              setStep(step + 1);
+              return;
+            }
+            void submit();
+          },
+        }}
+      >
       {step === 1 ? (
         <View style={{ flex: 1, paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.md }}>
           <SearchBar
@@ -387,7 +397,7 @@ export default function AdminMappingCreateScreen() {
                   selectedPackage?.value === item.value,
                   () => applyPackage(item),
                   ADMIN_MAPPING_COPY.REMAINING_SESSIONS(item.sessions) +
-                    ` · ${item.price.toLocaleString('ko-KR')}원`,
+                    ` · ${toSafeNumber(item.price, 0).toLocaleString('ko-KR')}원`,
                 )
               }
             />
@@ -601,8 +611,8 @@ export default function AdminMappingCreateScreen() {
           />
         </ScrollView>
       ) : null}
-
-      {step === 5 ? (
+      </AdminWizardShell>
+      ) : (
         <View style={{ flex: 1, paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.xl }}>
           <EmptyState
             title={ADMIN_MAPPING_COPY.SUCCESS_TITLE}
@@ -694,78 +704,7 @@ export default function AdminMappingCreateScreen() {
             </Pressable>
           ) : null}
         </View>
-      ) : null}
-
-      {step < 5 ? (
-        <View
-          style={[
-            styles.footer,
-            {
-              borderTopColor: theme.colors.divider,
-              backgroundColor: theme.colors.bgMain,
-              paddingHorizontal: theme.spacing.lg,
-            },
-          ]}
-        >
-          {step > 1 ? (
-            <Pressable
-              onPress={() => setStep(step - 1)}
-              style={[styles.footerBtn, { borderColor: theme.colors.divider, borderWidth: 1 }]}
-            >
-              <Text style={{ color: theme.colors.textMain, fontFamily: theme.fontFamily.medium }}>
-                {ADMIN_MAPPING_COPY.PREV}
-              </Text>
-            </Pressable>
-          ) : (
-            <Pressable onPress={() => setCancelOpen(true)} style={styles.footerBtn}>
-              <Text style={{ color: theme.colors.textSecondary, fontFamily: theme.fontFamily.medium }}>
-                {ADMIN_MAPPING_COPY.CANCEL}
-              </Text>
-            </Pressable>
-          )}
-          {step < 4 ? (
-            <Pressable
-              onPress={() => {
-                if (step === 1 && !consultant) {
-                  setErrorModal(ADMIN_MAPPING_COPY.VALIDATION_PICK_CONSULTANT);
-                  return;
-                }
-                if (step === 2 && !selectedPackage) {
-                  setErrorModal(ADMIN_MAPPING_COPY.VALIDATION_PACKAGE);
-                  return;
-                }
-                if (step === 3 && !client) {
-                  setErrorModal(ADMIN_MAPPING_COPY.VALIDATION_PICK_CLIENT);
-                  return;
-                }
-                setStep(step + 1);
-              }}
-              style={[styles.footerBtn, { backgroundColor: theme.colors.primary }]}
-            >
-              <Text style={{ color: theme.colors.textOnPrimary, fontFamily: theme.fontFamily.semibold }}>
-                {ADMIN_MAPPING_COPY.NEXT}
-              </Text>
-            </Pressable>
-          ) : (
-            <Pressable
-              onPress={() => void submit()}
-              disabled={createMutation.isPending}
-              style={[
-                styles.footerBtn,
-                { backgroundColor: theme.colors.primary, opacity: createMutation.isPending ? 0.7 : 1 },
-              ]}
-            >
-              {createMutation.isPending ? (
-                <ActivityIndicator color={theme.colors.textOnPrimary} />
-              ) : (
-                <Text style={{ color: theme.colors.textOnPrimary, fontFamily: theme.fontFamily.semibold }}>
-                  {ADMIN_MAPPING_COPY.SUBMIT}
-                </Text>
-              )}
-            </Pressable>
-          )}
-        </View>
-      ) : null}
+      )}
 
       <UnifiedModal
         isOpen={errorModal != null}
@@ -818,11 +757,6 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
-  progressTrack: {
-    height: 4,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
   pickerRow: {
     borderWidth: 1,
     borderRadius: 12,
@@ -857,30 +791,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  footer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    gap: 12,
-    paddingVertical: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  footerBtn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  footerPrimary: {
-    flex: 2,
-  },
   primaryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: ADMIN_MIN_TOUCH_TARGET,
     paddingVertical: 14,
     borderRadius: 12,
   },

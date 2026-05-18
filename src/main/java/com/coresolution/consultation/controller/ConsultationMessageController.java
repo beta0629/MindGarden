@@ -5,7 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.AdminMessageInboxFilterConstants;
+import com.coresolution.consultation.constant.AlertType;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.util.AdminMessageInboxFilter;
 import com.coresolution.consultation.entity.ConsultationMessage;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
@@ -75,6 +78,16 @@ public class ConsultationMessageController extends BaseApiController {
         return hasAdmin;
     }
 
+    /** 웹 어드민 메시지 목록과 동일: SYSTEM 발신 → 「시스템」(senderId 0L 조회 생략) */
+    private static final String SYSTEM_SENDER_DISPLAY_NAME = "시스템";
+
+    private String resolveSenderDisplayName(String tenantId, Long senderId, String senderType) {
+        if (senderType != null && AlertType.SYSTEM.equalsIgnoreCase(senderType.trim())) {
+            return SYSTEM_SENDER_DISPLAY_NAME;
+        }
+        return getUserName(tenantId, senderId, senderType);
+    }
+
     /**
      * 사용자 이름 조회 헬퍼 메서드
      */
@@ -99,11 +112,14 @@ public class ConsultationMessageController extends BaseApiController {
 
     /**
      * 모든 메시지 조회 (관리자 전용)
-     * GET /api/v1/consultation-messages/all
+     * GET /api/v1/consultation-messages/all?view=admin_ops|full (기본 admin_ops — 운영 알림만)
      */
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllMessages(HttpSession session) {
-        log.info("📨 전체 메시지 목록 조회 (관리자)");
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllMessages(
+            HttpSession session,
+            @RequestParam(value = "view", defaultValue = AdminMessageInboxFilterConstants.VIEW_ADMIN_OPS)
+                    String view) {
+        log.info("📨 전체 메시지 목록 조회 (관리자) view={}", view);
         
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
@@ -130,7 +146,11 @@ public class ConsultationMessageController extends BaseApiController {
         try {
             TenantContextHolder.setTenantId(scopedTenantId);
             List<ConsultationMessage> messages = consultationMessageService.getAllMessages();
-        
+            int totalBeforeFilter = messages.size();
+            if (AdminMessageInboxFilter.shouldApplyAdminOpsFilter(view)) {
+                messages = AdminMessageInboxFilter.filterForAdminOps(messages);
+            }
+
         // 데이터 변환 (senderName, receiverName 추가)
         List<Map<String, Object>> messageData = messages.stream()
             .map(message -> {
@@ -140,7 +160,8 @@ public class ConsultationMessageController extends BaseApiController {
                 data.put("content", message.getContent());
                 data.put("senderType", message.getSenderType());
                 data.put("senderId", message.getSenderId());
-                data.put("senderName", getUserName(scopedTenantId, message.getSenderId(), message.getSenderType()));
+                data.put("senderName", resolveSenderDisplayName(
+                    scopedTenantId, message.getSenderId(), message.getSenderType()));
                 data.put("receiverId", message.getReceiverId());
                 // 반대 역할 결정 - enum 활용
                 String receiverType = com.coresolution.consultation.constant.UserRole.CONSULTANT.name().equals(message.getSenderType()) 
@@ -162,7 +183,11 @@ public class ConsultationMessageController extends BaseApiController {
             })
             .collect(Collectors.toList());
         
-            log.info("✅ 전체 메시지 조회 성공 - 총 {}개", messageData.size());
+            log.info(
+                    "✅ 전체 메시지 조회 성공 - view={}, 반환 {}개 (필터 전 {}개)",
+                    view,
+                    messageData.size(),
+                    totalBeforeFilter);
             return success("메시지 목록을 성공적으로 조회했습니다.", messageData);
         } catch (Exception e) {
             log.error("전체 메시지 조회 실패 - 사용자 ID: {}, error: {}", currentUser.getId(), e.getMessage(), e);
@@ -400,7 +425,8 @@ public class ConsultationMessageController extends BaseApiController {
             messageData.put("consultationId", message.getConsultationId());
             messageData.put("senderType", message.getSenderType());
             messageData.put("senderId", message.getSenderId());
-            messageData.put("senderName", getUserName(tenantId, message.getSenderId(), message.getSenderType()));
+            messageData.put("senderName", resolveSenderDisplayName(
+                tenantId, message.getSenderId(), message.getSenderType()));
             messageData.put("receiverId", message.getReceiverId());
             messageData.put("receiverName", getUserName(tenantId, message.getReceiverId(), receiverType));
             messageData.put("title", message.getTitle());

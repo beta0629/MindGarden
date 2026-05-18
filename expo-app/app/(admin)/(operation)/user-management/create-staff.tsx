@@ -27,6 +27,7 @@ import {
 import { ADMIN_USER_CREATE_COPY } from '@/constants/adminScheduleRegisterCopy';
 import { canRegisterStaffOnMobile } from '@/utils/adminRole';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { toDisplayString } from '@/utils/safeDisplay';
 
 export default function AdminCreateStaffScreen() {
   const theme = useTheme();
@@ -202,7 +203,9 @@ export default function AdminCreateStaffScreen() {
         title={ADMIN_USER_CREATE_COPY.ERROR_TITLE}
         actions={[{ label: '확인', onPress: () => setErrorModal(null), variant: 'primary' }]}
       >
-        <Text style={{ color: theme.colors.textSecondary }}>{errorModal}</Text>
+        <Text style={{ color: theme.colors.textSecondary }}>
+          {toDisplayString(errorModal, '')}
+        </Text>
       </UnifiedModal>
     </SafeAreaView>
   );

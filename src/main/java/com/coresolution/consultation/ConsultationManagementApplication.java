@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.coresolution.consultation.config.ExpoPushProperties;
+import com.coresolution.consultation.config.MobileAppVersionProperties;
 import com.coresolution.consultation.config.MindgardenSecurityProperties;
 import com.coresolution.core.config.KiccEasypayProperties;
 
@@ -52,7 +53,8 @@ import com.coresolution.core.config.KiccEasypayProperties;
 @EnableConfigurationProperties({
         MindgardenSecurityProperties.class,
         KiccEasypayProperties.class,
-        ExpoPushProperties.class
+        ExpoPushProperties.class,
+        MobileAppVersionProperties.class
 })
 public class ConsultationManagementApplication {
 

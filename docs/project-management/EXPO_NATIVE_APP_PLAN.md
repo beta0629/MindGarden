@@ -78,6 +78,7 @@
 | **Phase 2** | 대시보드 위젯·고급 필터·일괄 처리, 스태프 전용 워크플로 — 상담사·내담자 Phase 3 이후 또는 병렬 검토 |
 | **제외** | ERP 전체, 설정 편집, 인프라·시스템 모니터링(웹 전용 유지) |
 | **분배** | IA·API 매핑 `explore` → 화면·탭·카피 `core-designer`(model: `gemini-3.1-pro`) → `app/(admin)/`·`(staff)/` 라우트·화면 `core-coder` · 완료 후 `core-tester` 게이트 |
+| **상용화 SSOT** | MVP 이후 **상용화(Commercialization)** 범위·P0/P1 화면·G1~G4·10주 C0~C5 — [`ADMIN_MOBILE_COMMERCIALIZATION_ORCHESTRATION.md`](./ADMIN_MOBILE_COMMERCIALIZATION_ORCHESTRATION.md) (**ACTIVE C0**) |
 
 ---
 

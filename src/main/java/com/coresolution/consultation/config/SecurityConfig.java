@@ -167,6 +167,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/self-assessments/**").authenticated()
                     // BW-4 community
                     .requestMatchers("/api/v1/community/**").authenticated()
+                    // BW-1 mobile: 버전 검사는 로그인 전 공개
+                    .requestMatchers("/api/v1/mobile/app-version/check").permitAll()
                     // BW-1 mobile push API
                     .requestMatchers("/api/v1/mobile/**").authenticated()
                     .requestMatchers("/api/consultant/**").authenticated() // 상담사 API는 인증 필요
@@ -244,6 +246,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/self-assessments/**").authenticated()
                     // BW-4 community
                     .requestMatchers("/api/v1/community/**").authenticated()
+                    // BW-1 mobile: 버전 검사는 로그인 전 공개
+                    .requestMatchers("/api/v1/mobile/app-version/check").permitAll()
                     // BW-1 mobile push API
                     .requestMatchers("/api/v1/mobile/**").authenticated()
                     // 상담사 API(운영 프로파일과 동일하게 세션·토큰 필요)

@@ -203,10 +203,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return path.startsWith("/static/") || path.startsWith("/css/") || path.startsWith("/js/")
                 || path.startsWith("/images/") || path.startsWith("/fonts/")
                 || path.equals("/favicon.ico") || path.equals("/robots.txt")
-                || path.equals("/manifest.json") || path.startsWith("/api/auth/") || // 모든 인증 관련 API
-                                                                                     // 제외
-                path.startsWith("/api/v1/onboarding/") || // 온보딩 API 제외 (새로운 테넌트 등록, Ops Portal 경로 제외)
-                path.startsWith("/oauth2/") || path.startsWith("/api/password-reset/")
+                || path.equals("/manifest.json") || path.startsWith("/api/auth/") // 모든 인증 관련 API 제외
+                || path.startsWith("/api/v1/mobile/app-version/") // 모바일 버전 검사(공개)
+                || path.startsWith("/api/v1/onboarding/") // 온보딩 API 제외 (새로운 테넌트 등록, Ops Portal 경로 제외)
+                || path.startsWith("/oauth2/") || path.startsWith("/api/password-reset/")
                 || path.startsWith("/api/health/") || path.equals("/error")
                 || path.startsWith("/actuator/");
     }

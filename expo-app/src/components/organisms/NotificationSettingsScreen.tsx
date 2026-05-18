@@ -5,9 +5,20 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useCallback, useEffect } from 'react';
-import { Platform, RefreshControl, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { useFocusEffect } from '@react-navigation/native';
 import { Bell, Calendar, CreditCard, Heart, MessageCircle, Settings } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
@@ -19,6 +30,13 @@ import {
 import { useNotificationSettingsStore } from '@/stores/useNotificationSettingsStore';
 import { useTenantStore } from '@/stores/useTenantStore';
 import { EmptyState } from '@/components/atoms/EmptyState';
+import { PUSH_PERMISSION_COPY } from '@/constants/pushPermissionCopy';
+import {
+  getNotificationPermissionSnapshot,
+  NotificationService,
+  openNotificationSettings,
+  type NotificationPermissionSnapshot,
+} from '@/services/NotificationService';
 
 interface SettingCategory {
   key: keyof NotificationSettings;
@@ -60,9 +78,35 @@ const SETTING_CATEGORIES: SettingCategory[] = [
   },
 ];
 
+function resolvePermissionStatusLabel(snapshot: NotificationPermissionSnapshot | null): string {
+  if (snapshot == null) {
+    return PUSH_PERMISSION_COPY.statusUndetermined;
+  }
+  if (snapshot.granted) {
+    return PUSH_PERMISSION_COPY.statusGranted;
+  }
+  if (snapshot.status === 'undetermined') {
+    return PUSH_PERMISSION_COPY.statusUndetermined;
+  }
+  return PUSH_PERMISSION_COPY.statusDenied;
+}
+
 export function NotificationSettingsScreen() {
   const theme = useTheme();
   const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
+  const [permission, setPermission] = useState<NotificationPermissionSnapshot | null>(null);
+  const [permissionBusy, setPermissionBusy] = useState(false);
+
+  const refreshPermission = useCallback(async () => {
+    const snapshot = await getNotificationPermissionSnapshot();
+    setPermission(snapshot);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshPermission();
+    }, [refreshPermission]),
+  );
 
   const { data: settings, isLoading, refetch, isRefetching } = useNotificationSettings();
   const updateMutation = useUpdateNotificationSettings();
@@ -74,6 +118,26 @@ export function NotificationSettingsScreen() {
       setCategoryAll(settings);
     }
   }, [settings, setCategoryAll]);
+
+  const handleRequestPermission = useCallback(async () => {
+    setPermissionBusy(true);
+    try {
+      const granted = await NotificationService.requestPermission();
+      await refreshPermission();
+      if (granted) {
+        await NotificationService.registerToken();
+      }
+    } finally {
+      setPermissionBusy(false);
+    }
+  }, [refreshPermission]);
+
+  const handleOpenSettings = useCallback(() => {
+    void openNotificationSettings();
+  }, []);
+
+  const showOpenSettings =
+    permission != null && !permission.granted && permission.canAskAgain === false;
 
   const handleToggle = useCallback(
     (key: keyof NotificationSettings, value: boolean) => {
@@ -131,6 +195,99 @@ export function NotificationSettingsScreen() {
       <Text
         style={[
           styles.sectionTitle,
+          {
+            color: theme.colors.textSecondary,
+            fontFamily: theme.fontFamily.medium,
+            fontSize: theme.fontSize.xs,
+          },
+        ]}
+      >
+        {PUSH_PERMISSION_COPY.deviceSectionTitle}
+      </Text>
+      <View
+        style={[
+          styles.card,
+          styles.deviceCard,
+          {
+            backgroundColor: theme.colors.surface,
+            borderRadius: theme.borderRadius.xl,
+          },
+          theme.shadows.sm,
+        ]}
+      >
+        <Text
+          style={{
+            color: theme.colors.textMain,
+            fontFamily: theme.fontFamily.medium,
+            fontSize: theme.fontSize.sm,
+          }}
+        >
+          {resolvePermissionStatusLabel(permission)}
+        </Text>
+        <Text
+          style={{
+            color: theme.colors.textTertiary,
+            fontFamily: theme.fontFamily.regular,
+            fontSize: theme.fontSize.xs,
+            marginTop: 4,
+          }}
+        >
+          {permission?.granted
+            ? PUSH_PERMISSION_COPY.allowHint
+            : showOpenSettings
+              ? PUSH_PERMISSION_COPY.deniedHint
+              : PUSH_PERMISSION_COPY.allowHint}
+        </Text>
+        <View style={styles.deviceActions}>
+          {showOpenSettings ? (
+            <Pressable
+              onPress={handleOpenSettings}
+              style={[styles.permissionButton, { backgroundColor: theme.colors.gray[100] }]}
+              accessibilityRole="button"
+              accessibilityLabel={PUSH_PERMISSION_COPY.openSettingsButton}
+            >
+              <Text
+                style={{
+                  color: theme.colors.textMain,
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: theme.fontSize.sm,
+                }}
+              >
+                {PUSH_PERMISSION_COPY.openSettingsButton}
+              </Text>
+            </Pressable>
+          ) : !permission?.granted ? (
+            <Pressable
+              onPress={() => {
+                void handleRequestPermission();
+              }}
+              disabled={permissionBusy}
+              style={[styles.permissionButton, { backgroundColor: theme.colors.primary }]}
+              accessibilityRole="button"
+              accessibilityLabel={PUSH_PERMISSION_COPY.allowButton}
+            >
+              {permissionBusy ? (
+                <ActivityIndicator color={theme.colors.textOnPrimary} />
+              ) : (
+                <Text
+                  style={{
+                    color: theme.colors.textOnPrimary,
+                    fontFamily: theme.fontFamily.medium,
+                    fontSize: theme.fontSize.sm,
+                  }}
+                >
+                  {PUSH_PERMISSION_COPY.allowButton}
+                </Text>
+              )}
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+
+      <Text
+        style={[
+          styles.sectionTitle,
+          styles.sectionTitleSpaced,
           {
             color: theme.colors.textSecondary,
             fontFamily: theme.fontFamily.medium,
@@ -261,8 +418,27 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingLeft: 4,
   },
+  sectionTitleSpaced: {
+    marginTop: 20,
+  },
   card: {
     overflow: 'hidden',
+  },
+  deviceCard: {
+    padding: 16,
+    marginBottom: 4,
+  },
+  deviceActions: {
+    marginTop: 12,
+    flexDirection: 'row',
+  },
+  permissionButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    minWidth: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   row: {
     flexDirection: 'row',

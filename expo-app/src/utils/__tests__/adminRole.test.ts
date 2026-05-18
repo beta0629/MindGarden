@@ -1,8 +1,10 @@
 import {
   adminMobileScheduleUserRole,
   canAccessCommunityModeration,
+  canManageMappingsOnMobile,
   canRegisterConsultantOnMobile,
   canRegisterStaffOnMobile,
+  canViewMappingsOnMobile,
   coerceApiRoleString,
   hasJwtPermission,
   isAdminMobileAdminRole,
@@ -116,5 +118,17 @@ describe('adminRole', () => {
     expect(canRegisterConsultantOnMobile('staff', withoutPerm)).toBe(false);
     expect(canRegisterStaffOnMobile('admin')).toBe(true);
     expect(canRegisterStaffOnMobile('staff')).toBe(false);
+  });
+
+  it('gates mapping view and manage by JWT permissions', () => {
+    const viewOnly = fakeJwt({ role: 'STAFF', permissions: ['MAPPING_VIEW'] });
+    const manage = fakeJwt({ role: 'STAFF', permissions: ['MAPPING_MANAGE'] });
+    const noMapping = fakeJwt({ role: 'STAFF', permissions: ['CLIENT_MANAGE'] });
+    expect(canViewMappingsOnMobile('admin', null)).toBe(true);
+    expect(canViewMappingsOnMobile('staff', viewOnly)).toBe(true);
+    expect(canViewMappingsOnMobile('staff', noMapping)).toBe(false);
+    expect(canManageMappingsOnMobile('admin', null)).toBe(true);
+    expect(canManageMappingsOnMobile('staff', manage)).toBe(true);
+    expect(canManageMappingsOnMobile('staff', viewOnly)).toBe(false);
   });
 });

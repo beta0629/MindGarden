@@ -339,3 +339,31 @@ export function canRegisterConsultantOnMobile(
 export function canRegisterStaffOnMobile(storeRole: AppAuthRole | null | undefined): boolean {
   return isAdminRole(storeRole);
 }
+
+/** 매칭 목록 — ADMIN 또는 JWT MAPPING_VIEW (STAFF 기본) */
+export function canViewMappingsOnMobile(
+  storeRole: AppAuthRole | null | undefined,
+  accessToken: string | null | undefined,
+): boolean {
+  if (isAdminRole(storeRole)) {
+    return true;
+  }
+  if (isStaffRole(storeRole)) {
+    return hasJwtPermission(accessToken, 'MAPPING_VIEW');
+  }
+  return false;
+}
+
+/** 신규 매칭 생성 — ADMIN 또는 JWT MAPPING_MANAGE */
+export function canManageMappingsOnMobile(
+  storeRole: AppAuthRole | null | undefined,
+  accessToken: string | null | undefined,
+): boolean {
+  if (isAdminRole(storeRole)) {
+    return true;
+  }
+  if (isStaffRole(storeRole)) {
+    return hasJwtPermission(accessToken, 'MAPPING_MANAGE');
+  }
+  return false;
+}

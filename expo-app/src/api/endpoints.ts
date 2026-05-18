@@ -181,6 +181,7 @@ export const ADMIN_CLIENT_API = {
  */
 export const ADMIN_MOBILE_API = {
   USER_MANAGEMENT: '/api/v1/admin/user-management',
+  CLIENTS_WITH_MAPPING_INFO: '/api/v1/admin/clients/with-mapping-info',
   MAPPINGS: '/api/v1/admin/mappings',
   mappingsByConsultant: (consultantId: string | number) =>
     `/api/v1/admin/mappings/consultant/${encodeURIComponent(String(consultantId))}/clients`,

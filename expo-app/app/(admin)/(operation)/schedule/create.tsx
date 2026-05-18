@@ -31,6 +31,10 @@ import {
   useAdminCreateSchedule,
 } from '@/api/hooks/useAdminCreateSchedule';
 import {
+  findAdminMappingById,
+  useAdminMappings,
+} from '@/api/hooks/useAdminMappings';
+import {
   useAdminConsultantsWithVacation,
   useAdminConsultationTypeCodes,
   useAdminDurationCodes,
@@ -93,11 +97,16 @@ export default function AdminScheduleCreateScreen() {
   const allowed = isAdminMobileShellRole(storeRole);
   const showConsultantCreateLink = canRegisterConsultantOnMobile(storeRole, accessToken);
 
+  const preMappingId = parsePositiveId(params.mappingId);
   const preConsultantId = parsePositiveId(params.consultantId);
   const preClientId = parsePositiveId(params.clientId);
   const preStep = Math.min(
     TOTAL_STEPS,
-    Math.max(1, Number(params.step) || (preConsultantId && preClientId ? 3 : 1)),
+    Math.max(
+      1,
+      Number(params.step) ||
+        (preMappingId || (preConsultantId && preClientId) ? 3 : 1),
+    ),
   );
 
   const [step, setStep] = useState(preStep);
@@ -123,6 +132,7 @@ export default function AdminScheduleCreateScreen() {
   const [successOpen, setSuccessOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
 
+  const mappingsQuery = useAdminMappings({ enabled: preMappingId != null });
   const consultantsQuery = useAdminConsultantsWithVacation(dateYmd);
   const clientsQuery = useAdminMappingClientsByConsultant(consultant?.id ?? preConsultantId);
   const consultationTypesQuery = useAdminConsultationTypeCodes();
@@ -132,10 +142,28 @@ export default function AdminScheduleCreateScreen() {
   const durationOptions = durationQuery.data ?? [];
 
   useEffect(() => {
-    if (params.mappingId) {
-      // TODO(Sprint-1b): IntegratedMatchingSchedule — mappingId로 consultantId·clientId prefill
+    if (!preMappingId || consultant) {
+      return;
     }
-  }, [params.mappingId]);
+    const mapping = findAdminMappingById(mappingsQuery.data ?? [], preMappingId);
+    if (!mapping) {
+      return;
+    }
+    setConsultant({
+      id: mapping.consultantId,
+      name: mapping.consultantName,
+      email: '',
+      isOnVacation: false,
+      isActive: true,
+    });
+    setClient({
+      id: mapping.clientId,
+      name: mapping.clientName,
+      email: '',
+      phone: '',
+    });
+    setStep(3);
+  }, [consultant, mappingsQuery.data, preMappingId]);
 
   useEffect(() => {
     const list = consultantsQuery.data ?? [];

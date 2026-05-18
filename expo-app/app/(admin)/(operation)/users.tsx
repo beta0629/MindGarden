@@ -27,7 +27,7 @@ import { SearchBar } from '@/components/atoms/SearchBar';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
 import { useAdminUserManagement } from '@/api/hooks/useAdminUserManagement';
-import { useApiQueryReady } from '@/hooks/useApiQueryReady';
+import { useAdminApiQueryReady } from '@/hooks/useAdminApiQueryReady';
 import {
   ADMIN_USER_MANAGEMENT_COPY,
   ADMIN_USER_MANAGEMENT_ROLE_FILTERS,
@@ -114,7 +114,7 @@ export default function AdminUsersScreen() {
   const [selectedUser, setSelectedUser] = useState<AdminManagedUserListItem | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const { ready } = useApiQueryReady();
+  const { ready } = useAdminApiQueryReady();
   const listQuery = useAdminUserManagement(roleFilter);
   const showLoading = isAdminListQueryLoading(listQuery.isLoading, listQuery.data, {
     isError: listQuery.isError,

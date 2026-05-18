@@ -41,7 +41,7 @@ export function parseAdminConsultantPickerResponse(raw: unknown): AdminConsultan
     }
   }
   return normalizeAdminManagedUserList(raw)
-    .filter((u) => String(u.role).trim().toUpperCase() === 'CONSULTANT' && u.isActive)
+    .filter((u) => u.isActive)
     .map((u) => toConsultantPickerItem(u))
     .filter((item): item is AdminConsultantPickerItem => item != null)
     .sort((a, b) => a.name.localeCompare(b.name, 'ko'));

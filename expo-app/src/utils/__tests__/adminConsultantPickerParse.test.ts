@@ -32,6 +32,16 @@ describe('parseAdminConsultantPickerResponse', () => {
     ).toThrow('권한 없음');
   });
 
+  it('includes active users when API already filtered by role', () => {
+    const raw = {
+      success: true,
+      data: [{ id: 3, name: 'API필터', role: 'STAFF', isActive: true }],
+    };
+    const items = parseAdminConsultantPickerResponse(raw);
+    expect(items).toHaveLength(1);
+    expect(items[0]?.name).toBe('API필터');
+  });
+
   it('excludes inactive consultants', () => {
     const raw = {
       success: true,

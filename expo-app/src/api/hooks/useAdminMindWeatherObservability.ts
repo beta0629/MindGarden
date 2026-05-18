@@ -9,7 +9,7 @@ import { apiGet } from '../client';
 import { ADMIN_MOBILE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
 import { useAdminApiTenantSync } from '@/hooks/useAdminApiTenantSync';
-import { useApiQueryReady } from '@/hooks/useApiQueryReady';
+import { useAdminApiQueryReady } from '@/hooks/useAdminApiQueryReady';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isAdminRole } from '@/utils/adminRole';
 import { toDisplayString } from '@/utils/safeDisplay';
@@ -58,7 +58,7 @@ async function fetchSummary(): Promise<AdminMindWeatherSummary | null> {
 }
 
 export function useAdminMindWeatherCards(page = 0) {
-  const { ready, tenantId } = useApiQueryReady();
+  const { ready, tenantId } = useAdminApiQueryReady();
   const role = useAuthStore((s) => s.role);
   const allowed = isAdminRole(role);
   useAdminApiTenantSync();
@@ -75,7 +75,7 @@ export function useAdminMindWeatherCards(page = 0) {
 }
 
 export function useAdminMindWeatherSummary() {
-  const { ready, tenantId } = useApiQueryReady();
+  const { ready, tenantId } = useAdminApiQueryReady();
   const role = useAuthStore((s) => s.role);
   const allowed = isAdminRole(role);
   useAdminApiTenantSync();

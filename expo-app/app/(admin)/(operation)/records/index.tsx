@@ -34,7 +34,7 @@ import {
   type AdminConsultantPickerItem,
   type AdminConsultationRecordLite,
 } from '@/api/hooks/useAdminConsultationRecords';
-import { useApiQueryReady } from '@/hooks/useApiQueryReady';
+import { useAdminApiQueryReady } from '@/hooks/useAdminApiQueryReady';
 import { ADMIN_CONSULTATION_RECORDS_COPY } from '@/constants/adminConsultationRecordsCopy';
 import { ADMIN_API_QUERY_NOT_READY_COPY } from '@/constants/adminMobileScreensCopy';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -93,7 +93,7 @@ export default function AdminConsultationRecordsLiteScreen() {
   const [recordSearch, setRecordSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
-  const { ready } = useApiQueryReady();
+  const { ready } = useAdminApiQueryReady();
   const consultantsQuery = useAdminConsultantPicker();
   const recordsQuery = useAdminConsultationRecordsList(selectedConsultant?.id ?? null);
   const consultantsLoading = isAdminListQueryLoading(

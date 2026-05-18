@@ -26,7 +26,7 @@ import { SearchBar } from '@/components/molecules/SearchBar';
 import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
 import { apiGet } from '@/api/client';
 import { unwrapApiResponse } from '@/api/unwrapApiResponse';
-import { useApiQueryReady } from '@/hooks/useApiQueryReady';
+import { useAdminApiQueryReady } from '@/hooks/useAdminApiQueryReady';
 import { buildAdminWebUrl } from '@/config/webBaseUrl';
 import {
   ADMIN_MOBILE_MESSAGES_API,
@@ -197,7 +197,7 @@ function AdminMessagesWebFallback() {
 export default function AdminMessagesScreen() {
   const theme = useTheme();
   const role = useAuthStore((s) => s.role);
-  const { ready, tenantId } = useApiQueryReady();
+  const { ready, tenantId } = useAdminApiQueryReady();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const deferredSearch = useDeferredValue(searchQuery);

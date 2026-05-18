@@ -11,7 +11,7 @@ import { SCHEDULE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
 import { type Schedule, sortSchedulesChronologically } from './useSchedules';
 import { useAdminApiTenantSync } from '@/hooks/useAdminApiTenantSync';
-import { useApiQueryReady } from '@/hooks/useApiQueryReady';
+import { useAdminApiQueryReady } from '@/hooks/useAdminApiQueryReady';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { adminMobileScheduleUserRole, resolveAdminMobileJwtRole } from '@/utils/adminRole';
 
@@ -118,7 +118,7 @@ async function fetchAdminTodaySchedules(
 }
 
 export function useAdminTodaySchedules(options?: Partial<UseQueryOptions<Schedule[]>>) {
-  const { ready, userId } = useApiQueryReady();
+  const { ready, userId } = useAdminApiQueryReady();
   useAdminApiTenantSync();
   const accessToken = useAuthStore((s) => s.accessToken);
   const jwtRole = resolveAdminMobileJwtRole(accessToken);

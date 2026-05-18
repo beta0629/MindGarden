@@ -16,7 +16,7 @@ import { AppTopBar } from '@/components/templates/AppTopBar';
 import { Badge } from '@/components/atoms/Badge';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { useAdminConsultationRecordDetail } from '@/api/hooks/useAdminConsultationRecords';
-import { useApiQueryReady } from '@/hooks/useApiQueryReady';
+import { useAdminApiQueryReady } from '@/hooks/useAdminApiQueryReady';
 import { ADMIN_CONSULTATION_RECORDS_COPY } from '@/constants/adminConsultationRecordsCopy';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isAdminRole, isStaffRole } from '@/utils/adminRole';
@@ -76,7 +76,7 @@ export default function AdminConsultationRecordDetailScreen() {
   const consultantId = toSafeNumber(params.consultantId, 0);
   const validIds = recordId > 0 && consultantId > 0;
 
-  const { ready } = useApiQueryReady();
+  const { ready } = useAdminApiQueryReady();
   const detailQuery = useAdminConsultationRecordDetail(
     validIds ? consultantId : null,
     validIds ? recordId : null,

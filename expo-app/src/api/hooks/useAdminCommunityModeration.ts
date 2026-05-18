@@ -6,7 +6,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAdminApiTenantSync } from '@/hooks/useAdminApiTenantSync';
-import { useApiQueryReady } from '@/hooks/useApiQueryReady';
+import { useAdminApiQueryReady } from '@/hooks/useAdminApiQueryReady';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { canAccessCommunityModeration } from '@/utils/adminRole';
 import { toDisplayString } from '@/utils/safeDisplay';
@@ -54,7 +54,7 @@ function getMutationErrorMessage(error: unknown, fallback: string): string {
 }
 
 export function useAdminCommunityModerationQueue() {
-  const { ready, tenantId } = useApiQueryReady({ requireUserId: false });
+  const { ready, tenantId } = useAdminApiQueryReady();
   const role = useAuthStore((s) => s.role);
   const allowed = canAccessCommunityModeration(role);
   useAdminApiTenantSync();
@@ -91,7 +91,7 @@ export type ModerateCommunityPostInput = {
 
 export function useModerateCommunityPost() {
   const queryClient = useQueryClient();
-  const { tenantId } = useApiQueryReady();
+  const { tenantId } = useAdminApiQueryReady();
 
   return useMutation({
     mutationFn: async ({ postId, decision, note }: ModerateCommunityPostInput) => {

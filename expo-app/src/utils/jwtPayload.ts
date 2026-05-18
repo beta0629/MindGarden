@@ -5,21 +5,32 @@
  * @author MindGarden
  * @since 2026-05-16
  */
+import { Buffer } from 'buffer';
+
+function decodeBase64WithAtobUtf8(base64: string): string {
+  if (typeof globalThis.atob !== 'function') {
+    return '';
+  }
+  try {
+    const binary = globalThis.atob(base64);
+    return decodeURIComponent(
+      Array.from(binary, (char) => `%${char.charCodeAt(0).toString(16).padStart(2, '0')}`).join(
+        '',
+      ),
+    );
+  } catch {
+    return '';
+  }
+}
 
 function base64UrlToUtf8(segment: string): string {
   const normalized = segment.replace(/-/g, '+').replace(/_/g, '/');
   const padLen = (4 - (normalized.length % 4)) % 4;
   const padded = normalized + '='.repeat(padLen);
   try {
-    // Hermes(Android)는 atob가 없거나 깨지는 경우가 있어 Buffer를 우선한다.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports -- Expo Metro polyfill
-    const { Buffer } = require('buffer') as typeof import('buffer');
     return Buffer.from(padded, 'base64').toString('utf8');
   } catch {
-    if (typeof globalThis.atob === 'function') {
-      return globalThis.atob(padded);
-    }
-    return '';
+    return decodeBase64WithAtobUtf8(padded);
   }
 }
 

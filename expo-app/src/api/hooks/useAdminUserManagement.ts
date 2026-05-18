@@ -6,7 +6,7 @@
  */
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { useAdminApiTenantSync } from '@/hooks/useAdminApiTenantSync';
-import { useApiQueryReady } from '@/hooks/useApiQueryReady';
+import { useAdminApiQueryReady } from '@/hooks/useAdminApiQueryReady';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isAdminMobileShellRole } from '@/utils/adminRole';
 import { toDisplayString } from '@/utils/safeDisplay';
@@ -60,7 +60,7 @@ export function useAdminUserManagement(
   } & Partial<UseQueryOptions<AdminManagedUserListItem[]>>,
 ) {
   const { includeInactive = false, enabled: enabledOverride, ...queryOptions } = options ?? {};
-  const { ready, tenantId } = useApiQueryReady();
+  const { ready, tenantId } = useAdminApiQueryReady();
   const role = useAuthStore((s) => s.role);
   const allowed = isAdminMobileShellRole(role);
   useAdminApiTenantSync();

@@ -9,7 +9,7 @@ import { apiGet } from '../client';
 import { ADMIN_MOBILE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
 import { useAdminApiTenantSync } from '@/hooks/useAdminApiTenantSync';
-import { useApiQueryReady } from '@/hooks/useApiQueryReady';
+import { useAdminApiQueryReady } from '@/hooks/useAdminApiQueryReady';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isAdminRole } from '@/utils/adminRole';
 import { parseAdminConsultantPickerResponse } from '@/utils/adminConsultantPickerNormalize';
@@ -119,7 +119,7 @@ function parseRecordDetailResponse(raw: unknown): AdminConsultationRecordLite {
 
 /** ADMIN 전용 — `ConsultantRecordsController`는 타 상담사 조회 시 세션 ADMIN 필요 */
 export function useAdminConsultantPicker() {
-  const { ready, tenantId } = useApiQueryReady();
+  const { ready, tenantId } = useAdminApiQueryReady();
   const role = useAuthStore((s) => s.role);
   const accessToken = useAuthStore((s) => s.accessToken);
   const allowed = isAdminRole(role);
@@ -130,11 +130,22 @@ export function useAdminConsultantPicker() {
     queryKey: ADMIN_CONSULTATION_RECORDS_QUERY_KEYS.consultants(tenantId),
     queryFn: async () => {
       syncTenantFromAccessToken(accessToken);
-      const raw = await apiGet<unknown>(ADMIN_MOBILE_API.USER_MANAGEMENT, {
-        role: 'CONSULTANT',
-        includeInactive: false,
-      });
-      return parseAdminConsultantPickerResponse(raw);
+      try {
+        const raw = await apiGet<unknown>(ADMIN_MOBILE_API.USER_MANAGEMENT, {
+          role: 'CONSULTANT',
+          includeInactive: false,
+        });
+        const items = parseAdminConsultantPickerResponse(raw);
+        if (items.length === 0) {
+          // eslint-disable-next-line no-console -- release APK 진단(PII 없음)
+          console.warn('[admin] consultant picker', 0);
+        }
+        return items;
+      } catch (error) {
+        // eslint-disable-next-line no-console -- release APK 진단(PII 없음)
+        console.warn('[admin] consultant picker', -1);
+        throw error;
+      }
     },
     enabled: ready && allowed && tenantReady,
     staleTime: 1000 * 60 * 5,
@@ -146,7 +157,7 @@ export function useAdminConsultationRecordsList(
   consultantId: number | null | undefined,
   options?: Partial<UseQueryOptions<AdminConsultationRecordLite[]>>,
 ) {
-  const { ready, tenantId } = useApiQueryReady();
+  const { ready, tenantId } = useAdminApiQueryReady();
   const role = useAuthStore((s) => s.role);
   const allowed = isAdminRole(role);
   const cid = consultantId != null && consultantId > 0 ? consultantId : null;
@@ -176,7 +187,7 @@ export function useAdminConsultationRecordDetail(
   recordId: number | null | undefined,
   options?: Partial<UseQueryOptions<AdminConsultationRecordLite>>,
 ) {
-  const { ready, tenantId } = useApiQueryReady();
+  const { ready, tenantId } = useAdminApiQueryReady();
   const role = useAuthStore((s) => s.role);
   const allowed = isAdminRole(role);
   const cid = consultantId != null && consultantId > 0 ? consultantId : null;

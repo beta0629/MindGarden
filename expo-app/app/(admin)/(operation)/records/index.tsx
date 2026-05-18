@@ -5,6 +5,7 @@
  * @since 2026-05-16
  */
 import { useCallback, useMemo, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   ActivityIndicator,
   FlatList,
@@ -43,6 +44,7 @@ import {
   isAdminListQueryLoading,
   retryAdminApiSession,
 } from '@/utils/retryAdminApiSession';
+import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 
 function formatSessionDate(ymd: string): string {
   const trimmed = ymd.trim();
@@ -97,8 +99,21 @@ export default function AdminConsultationRecordsLiteScreen() {
   const consultantsLoading = isAdminListQueryLoading(
     consultantsQuery.isLoading,
     consultantsQuery.data,
+    { isError: consultantsQuery.isError },
   );
-  const recordsLoading = isAdminListQueryLoading(recordsQuery.isLoading, recordsQuery.data);
+  const recordsLoading = isAdminListQueryLoading(recordsQuery.isLoading, recordsQuery.data, {
+    isError: recordsQuery.isError,
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      const token = useAuthStore.getState().accessToken;
+      syncTenantFromAccessToken(token);
+      if (ready && !selectedConsultant) {
+        void consultantsQuery.refetch();
+      }
+    }, [consultantsQuery.refetch, ready, selectedConsultant]),
+  );
 
   const accessDeniedMessage = useMemo(() => {
     if (staffDenied) {
@@ -328,15 +343,6 @@ function ConsultantPickerList({
 }: ConsultantPickerListProps) {
   const theme = useTheme();
 
-  if (isLoading) {
-    return (
-      <View style={styles.listArea}>
-        <SkeletonCard />
-        <SkeletonCard />
-      </View>
-    );
-  }
-
   if (isError) {
     return (
       <View style={styles.listArea}>
@@ -344,6 +350,15 @@ function ConsultantPickerList({
           icon={<User size={32} color={theme.colors.textTertiary} />}
           title={ADMIN_CONSULTATION_RECORDS_COPY.CONSULTANT_ERROR}
         />
+      </View>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <View style={styles.listArea}>
+        <SkeletonCard />
+        <SkeletonCard />
       </View>
     );
   }

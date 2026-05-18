@@ -12,6 +12,8 @@ import { useAdminApiTenantSync } from '@/hooks/useAdminApiTenantSync';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isAdminRole } from '@/utils/adminRole';
+import { parseAdminConsultantPickerResponse } from '@/utils/adminConsultantPickerNormalize';
+import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 import { toDisplayString, toSafeNumber } from '@/utils/safeDisplay';
 
 const QUERY_BASE = ['admin-mobile', 'consultation-records'] as const;
@@ -25,11 +27,7 @@ export const ADMIN_CONSULTATION_RECORDS_QUERY_KEYS = {
     [...QUERY_BASE, 'detail', tenantId, consultantId, recordId] as const,
 };
 
-export type AdminConsultantPickerItem = {
-  readonly id: number;
-  readonly name: string;
-  readonly email: string;
-};
+export type { AdminConsultantPickerItem } from '@/utils/adminConsultantPickerNormalize';
 
 export type AdminConsultationRecordLite = {
   readonly id: number;
@@ -67,20 +65,6 @@ function parseJsonLocalDate(value: unknown): string {
   return '';
 }
 
-function normalizeConsultantRow(row: Record<string, unknown>): AdminConsultantPickerItem | null {
-  const id = toSafeNumber(row.id, NaN);
-  if (!Number.isFinite(id) || id <= 0) {
-    return null;
-  }
-  const name = toDisplayString(row.name, '').trim();
-  const email = toDisplayString(row.email, '').trim();
-  return {
-    id,
-    name: name || `상담사 #${id}`,
-    email,
-  };
-}
-
 function normalizeRecordRow(row: Record<string, unknown>): AdminConsultationRecordLite | null {
   const id = toSafeNumber(row.id, NaN);
   if (!Number.isFinite(id) || id <= 0) {
@@ -104,16 +88,6 @@ function normalizeRecordRow(row: Record<string, unknown>): AdminConsultationReco
     status,
     isSessionCompleted,
   };
-}
-
-function parseUserListResponse(raw: unknown): AdminConsultantPickerItem[] {
-  assertApiSuccess(raw);
-  const inner = unwrapApiResponse<unknown>(raw) ?? raw;
-  const rows = Array.isArray(inner) ? inner : [];
-  return rows
-    .map((r) => normalizeConsultantRow(r as Record<string, unknown>))
-    .filter((item): item is AdminConsultantPickerItem => item != null)
-    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 }
 
 function parseRecordsListResponse(raw: unknown): AdminConsultationRecordLite[] {
@@ -147,19 +121,22 @@ function parseRecordDetailResponse(raw: unknown): AdminConsultationRecordLite {
 export function useAdminConsultantPicker() {
   const { ready, tenantId } = useApiQueryReady();
   const role = useAuthStore((s) => s.role);
+  const accessToken = useAuthStore((s) => s.accessToken);
   const allowed = isAdminRole(role);
+  const tenantReady = tenantId.trim().length > 0;
   useAdminApiTenantSync();
 
   return useQuery({
     queryKey: ADMIN_CONSULTATION_RECORDS_QUERY_KEYS.consultants(tenantId),
     queryFn: async () => {
+      syncTenantFromAccessToken(accessToken);
       const raw = await apiGet<unknown>(ADMIN_MOBILE_API.USER_MANAGEMENT, {
         role: 'CONSULTANT',
         includeInactive: false,
       });
-      return parseUserListResponse(raw);
+      return parseAdminConsultantPickerResponse(raw);
     },
-    enabled: ready && allowed,
+    enabled: ready && allowed && tenantReady,
     staleTime: 1000 * 60 * 5,
     retry: false,
   });

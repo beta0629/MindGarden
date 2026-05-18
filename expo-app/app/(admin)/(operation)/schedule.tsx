@@ -36,7 +36,9 @@ export default function AdminScheduleLiteScreen() {
   const role = useAuthStore((s) => s.role);
   const query = useAdminTodaySchedules();
   const schedules = query.data ?? [];
-  const isLoading = isAdminListQueryLoading(query.isLoading, query.data);
+  const isLoading = isAdminListQueryLoading(query.isLoading, query.data, {
+    isError: query.isError,
+  });
   const isRefreshing = query.isFetching && !isLoading && query.ready;
 
   const handleSessionRetry = useCallback(() => {

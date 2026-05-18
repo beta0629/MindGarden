@@ -15,4 +15,18 @@ describe('isAdminListQueryLoading', () => {
     expect(isAdminListQueryLoading(true, undefined)).toBe(true);
     expect(isAdminListQueryLoading(false, undefined)).toBe(false);
   });
+
+  it('returns false when query errored', () => {
+    expect(isAdminListQueryLoading(true, undefined, { isError: true })).toBe(false);
+  });
+
+  it('returns false when query disabled and never fetched', () => {
+    expect(
+      isAdminListQueryLoading(true, undefined, {
+        enabled: false,
+        isFetched: false,
+        fetchStatus: 'idle',
+      }),
+    ).toBe(false);
+  });
 });

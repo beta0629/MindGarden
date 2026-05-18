@@ -116,7 +116,9 @@ export default function AdminUsersScreen() {
 
   const { ready } = useApiQueryReady();
   const listQuery = useAdminUserManagement(roleFilter);
-  const showLoading = isAdminListQueryLoading(listQuery.isLoading, listQuery.data);
+  const showLoading = isAdminListQueryLoading(listQuery.isLoading, listQuery.data, {
+    isError: listQuery.isError,
+  });
 
   const filteredUsers = useMemo(
     () => filterAdminManagedUsersBySearch(listQuery.data ?? [], searchQuery),

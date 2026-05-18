@@ -197,7 +197,9 @@ export default function AdminCommunityModerationDetailScreen() {
     );
   }
 
-  const showLoading = isAdminListQueryLoading(queueQuery.isLoading, queueQuery.data);
+  const showLoading = isAdminListQueryLoading(queueQuery.isLoading, queueQuery.data, {
+    isError: queueQuery.isError,
+  });
   const badge = item ? statusBadge(item.moderationStatus) : null;
   const isPending = item?.moderationStatus.trim().toUpperCase() === 'PENDING';
 

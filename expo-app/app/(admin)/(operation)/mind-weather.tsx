@@ -298,7 +298,9 @@ export default function AdminMindWeatherObservabilityScreen() {
     : null;
 
   const showLoading =
-    isAdminListQueryLoading(cardsQuery.isLoading, cardsQuery.data?.items) ||
+    isAdminListQueryLoading(cardsQuery.isLoading, cardsQuery.data?.items, {
+      isError: cardsQuery.isError,
+    }) ||
     (summaryQuery.isLoading && summaryQuery.data === undefined);
 
   if (!cardsQuery.ready) {

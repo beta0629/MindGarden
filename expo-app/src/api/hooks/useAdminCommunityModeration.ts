@@ -42,11 +42,11 @@ function getMutationErrorMessage(error: unknown, fallback: string): string {
 }
 
 export function useAdminCommunityModerationQueue() {
-  const { ready, tenantId } = useApiQueryReady();
+  const { ready, tenantId } = useApiQueryReady({ requireUserId: false });
   const role = useAuthStore((s) => s.role);
   const allowed = canAccessCommunityModeration(role);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ADMIN_COMMUNITY_MODERATION_QUERY_KEYS.queue(tenantId),
     queryFn: async () => {
       const raw = await apiGet(ADMIN_COMMUNITY_API.MODERATION_QUEUE, {
@@ -65,6 +65,8 @@ export function useAdminCommunityModerationQueue() {
     staleTime: 1000 * 30,
     refetchOnMount: 'always',
   });
+
+  return { ...query, ready };
 }
 
 export type ModerateCommunityPostInput = {

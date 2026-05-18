@@ -140,7 +140,16 @@ export const useAuthStore = create<AuthState>()(
         await SecureStore.setItemAsync(SECURE_KEY_REFRESH_TOKEN, tokens.refreshToken);
         const roleFromJwt = resolveStoreRoleFromAccessToken(tokens.accessToken);
         const role = roleFromJwt ?? user.role;
-        const syncedUser = { ...user, role };
+        const jwtPayload = decodeJwtPayload(tokens.accessToken);
+        const jwtUserId = parseJwtSubAsUserId(jwtPayload);
+        const jwtTenantId = syncTenantStoreFromAccessToken(tokens.accessToken);
+        let syncedUser = { ...user, role };
+        if ((!Number.isFinite(syncedUser.id) || syncedUser.id <= 0) && jwtUserId != null) {
+          syncedUser = { ...syncedUser, id: jwtUserId };
+        }
+        if (jwtTenantId) {
+          syncedUser = { ...syncedUser, tenantId: jwtTenantId };
+        }
         set({
           user: syncedUser,
           accessToken: tokens.accessToken,

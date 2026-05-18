@@ -217,7 +217,7 @@ export default function AdminCommunityModerationQueueScreen() {
     ? getMutationErrorMessage(queueQuery.error, ADMIN_COMMUNITY_MODERATION_COPY.LIST_ERROR)
     : null;
 
-  const showLoading = queueQuery.isPending && !queueQuery.isFetched;
+  const showLoading = !queueQuery.ready || queueQuery.isLoading;
 
   return (
     <SafeAreaView

@@ -25,6 +25,7 @@ import { normalizeKoreanMobileDigits } from '../utils/phoneNormalize';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 import { setCachedJsessionId, setJsessionId } from '@/utils/sessionCookie';
 import { coerceApiRoleString, mapApiRoleToStoreRole } from '@/utils/adminRole';
+import { decodeJwtPayload, parseJwtSubAsUserId } from '@/utils/jwtPayload';
 
 export type SocialAuthProvider = 'KAKAO' | 'NAVER';
 
@@ -262,10 +263,19 @@ function logAuthError(scope: string, error: unknown): void {
   console.error(`[AuthService] ${scope}:`, error);
 }
 
-function mapApiUserToStoreUser(raw: SocialLoginApiUser): User {
+function mapApiUserToStoreUser(raw: SocialLoginApiUser, accessToken?: string): User {
   const role = mapApiRoleToStoreRole(coerceApiRoleString(raw.role) ?? undefined);
+  let id = raw.id;
+  if (!Number.isFinite(id) || id <= 0) {
+    if (accessToken?.trim()) {
+      const jwtUserId = parseJwtSubAsUserId(decodeJwtPayload(accessToken));
+      if (jwtUserId != null) {
+        id = jwtUserId;
+      }
+    }
+  }
   return {
-    id: raw.id,
+    id: Number.isFinite(id) && id > 0 ? id : 0,
     email: raw.email ?? '',
     name: raw.name ?? '',
     nickname: raw.nickname,
@@ -435,7 +445,7 @@ function mapNativeSocialResponse(
   }
 
   if (response.success && response.user && response.accessToken && response.refreshToken) {
-    const user = mapApiUserToStoreUser(response.user);
+    const user = mapApiUserToStoreUser(response.user, response.accessToken);
     return { kind: 'authenticated', user };
   }
 
@@ -467,11 +477,16 @@ async function applyAuthenticatedUser(
   sessionId?: string,
 ): Promise<void> {
   syncTenantFromAccessToken(tokens.accessToken);
+  const jwtUserId = parseJwtSubAsUserId(decodeJwtPayload(tokens.accessToken));
+  const enrichedUser =
+    (!Number.isFinite(user.id) || user.id <= 0) && jwtUserId != null
+      ? { ...user, id: jwtUserId }
+      : user;
   if (sessionId) {
     await setJsessionId(sessionId);
     setCachedJsessionId(sessionId);
   }
-  await useAuthStore.getState().login(user, tokens);
+  await useAuthStore.getState().login(enrichedUser, tokens);
   syncTenantFromAccessToken(tokens.accessToken);
 }
 
@@ -849,7 +864,7 @@ export const AuthService = {
       const refreshToken = inner.refreshToken as string | undefined;
 
       if (userRaw && accessToken && refreshToken) {
-        const user = mapApiUserToStoreUser(userRaw);
+        const user = mapApiUserToStoreUser(userRaw, accessToken);
         await applyAuthenticatedUser(
           user,
           { accessToken, refreshToken },

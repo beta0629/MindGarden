@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| 일자 | 2026-05-19 (SSOT 동기화 — R11 알림·푸시 P0 미커밋) |
+| 일자 | 2026-05-19 (R11 `develop` push·dev 배포 완료; OPS·QA 대기) |
 | 범위 | 로컬 미커밋 R3/R4/R8/R9 + **R11** (`ShopNotificationHelper`, push·인앱, Expo `pushScenarios`), Flyway·어드민·Client·OPS·문서 |
 | SSOT | [SHOP_REWARD_IMPLEMENTATION_STATUS.md](./SHOP_REWARD_IMPLEMENTATION_STATUS.md), [SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md), [SHOP_P2_INTEGRATION_TEST_REPORT.md](./SHOP_P2_INTEGRATION_TEST_REPORT.md) |
 | 코드 변경 | **없음** (본 문서는 커밋·배포 절차만) |
@@ -31,7 +31,7 @@
 | **(B) frontend web** | `feat(shop): admin catalog·policies, client checkout, LNB menus` | `frontend/` Shop·LNB·상수·서비스·CSS |
 | **(C) docs + scripts + expo + e2e** | `docs(shop): R11 full completion; expo push scenarios; e2e` | `docs/project-management/SHOP_*.md`, OPS SQL, `expo-app/**` push·notification (§3 glob), `tests/e2e/**` |
 
-> **현재 워크스페이스 (2026-05-19)**: **R11 P0 미커밋** — (A)~(C) **재커밋 필요** ([§6](#6-다음-사용자-액션-2026-05-20)). 커밋 전 `npx jest --testPathPattern='clientShop|pushScenarios'` → **32 passed** ([§5.4](#54-선택-expo--e2e)).
+> **현재 워크스페이스 (2026-05-19)**: R11 **(A)~(C) `develop` 반영** (`0ad73bf`). `api-*.json` 미스테이징 유지. 다음: [§6 (4)~(5)](#6-다음-사용자-액션-2026-05-20) OPS·수동 QA.
 
 ---
 
@@ -169,11 +169,13 @@ cd frontend && npm run build:ci
 
 | # | 액션 | 상태 |
 |---|------|------|
-| **(1)** | **커밋 (A)/(B)/(C)** — §2·§3 glob; `api-*.json`·credentials 제외 ([§1](#1-커밋-제외-필수)) | **R11 재커밋 필요** (P0 알림·푸시 미반영분) |
-| **(2)** | **`develop` push** — 원격 반영·CI·배포 워크플로 트리거 | **R11 재커밋 필요** (1 완료 후) |
-| **(3)** | **dev 배포** — backend → Flyway(`002`~`007`, `V20260520_001`, `V20260521_001`) → frontend ([§4](#4-배포-순서-dev-기준)) | **현재 단계** |
-| **(4)** | **OPS activate + seed** — `activate-shop-reward-tenant-components.sql` + (선택) `seed-shop-demo-catalog.sql`; 배포 직후 10분은 [런북 §4.1](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#41-배포-직후-10분-체크리스트) | **현재 단계** |
-| **(5)** | **수동 QA·GO 판정** — [IMPLEMENTATION_STATUS §4](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) Admin·Client·P1 회귀; (선택) Playwright R10; §5.2 OPS·QA 게이트 갱신 | **현재 단계** |
+| **(1)** | **커밋 (A)/(B)/(C)** — §2·§3 glob; `api-*.json`·credentials 제외 ([§1](#1-커밋-제외-필수)) | **완료** (R11 3커밋, `0ad73bf`) |
+| **(2)** | **`develop` push** — 원격 반영·CI·배포 워크플로 트리거 | **완료** (2026-05-19 push) |
+| **(3)** | **dev 배포** — backend → Flyway(`002`~`007`, `V20260520_001`, `V20260521_001`) → frontend ([§4](#4-배포-순서-dev-기준)) | **완료** — GH Actions `deploy-backend-dev.yml`·`deploy-frontend-dev.yml` **success** (`0ad73bf`, run `26078787938`·`26078787906`) |
+| **(4)** | **OPS activate + seed** — `activate-shop-reward-tenant-components.sql` + (선택) `seed-shop-demo-catalog.sql`; copy-paste 카드 [런북 §4.2](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#42-ops-실행-카드-tier-a--copy-paste) · 10분 체크 [§4.1](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#41-배포-직후-10분-체크리스트) | **진행중** — dev deploy·health **200**; DB 수동(activate/seed·verify·LNB) 잔여 |
+| **(5)** | **수동 QA·GO 판정** — [IMPLEMENTATION_STATUS §4](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) Admin·Client·P1 회귀; (선택) Playwright R10; §5.2 OPS·QA 게이트 갱신 | **BLOCKED** — (4) OPS activate·seed 미완, TenantComponent·`catalogVisible` SKU 전제 미충족 |
+
+> **배포 완료·OPS 진행중 (2026-05-20)**: `develop` HEAD `0ad73bf` · GH Actions backend+frontend dev **success** (run `26078787938`·`26078787906`) · dev health **200**. **`api-*.json`은 커밋·푸시 대상 아님** ([§1](#1-커밋-제외-필수)). **(4)** [런북 §4.2](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#42-ops-실행-카드-tier-a--copy-paste): tenant 조회 → Flyway 3줄 → activate → (선택) seed → `verify-shop-reward-dev.sh` → LNB 스크린샷. **(5)**는 (4) **OPS GO** 후 수동 QA.
 
 > **SSOT**: 배포·OPS·QA 판정은 [IMPLEMENTATION_STATUS §5.2](./SHOP_REWARD_IMPLEMENTATION_STATUS.md#52-운영-반영--배포opsqa-게이트-2026-05-20)와 [런북 §4.1](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#41-배포-직후-10분-체크리스트)를 함께 본다.
 

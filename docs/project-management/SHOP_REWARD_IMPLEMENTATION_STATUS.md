@@ -2,12 +2,12 @@
 
 | 항목 | 내용 |
 |------|------|
-| 일자 | 2026-05-19 (Shop Catalog UX MVP+ B-3 GO · 문서 마무리) |
+| 일자 | 2026-05-19 (post-`544cc5039` B-3 재검증 · **BLOCKED**) |
 | 범위 | Shop P1 + P2 + **MVP+** (어드민 전용 SKU 폼·대표 이미지·웹·Expo PLP/PDP 썸네일) |
 | **MVP+ 한 줄** | 어드민 목록/등록·수정 전용 라우트 + SKU 자동 + `thumbnailUrl` 필수 업로드 + 내담자 웹·Expo 카탈로그 썸네일 (`V20260523_001`) |
 | SSOT | [SHOP_P2_INTEGRATION_TEST_REPORT.md](./SHOP_P2_INTEGRATION_TEST_REPORT.md), [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) §3 |
 | 코드 수정 | **없음** (문서만) |
-| 커밋 | MVP+ B-3 Playwright after deploy (§1.0.8 · §3.5) — develop BE `05f2c2510` · FE `92b89bb44` · Expo `b7a2f8e77` |
+| 커밋 | post-`544cc5039` B-3 Playwright (§1.0.9) — develop HEAD `544cc5039` · FE deploy **success** |
 
 ---
 
@@ -159,6 +159,20 @@
 
 상세 표: [§3.5](#35-shop-catalog-ux-mvp--b-3-게이트-core-tester-2026-05-19).
 
+### 1.0.9 MVP+ B-3 post-`544cc5039` FE deploy (core-tester, 2026-05-19)
+
+**전제**: develop HEAD `544cc5039`; **FE deploy (frontend paths) success**; `E2E_API_BASE`+`BASE_URL` dev.
+
+| 게이트 | exit | passed | skipped | failed | 판정 |
+|--------|------|--------|---------|--------|------|
+| dev `actuator/health` (`E2E_API_BASE`) | — | — | — | — | **PASS** HTTP **200** |
+| Playwright `admin-shop-catalog-skus-smoke` | — | **1** | **0** | **0** | **PASS** (~3.1s) |
+| Playwright `admin-shop-catalog-sku-create-smoke` | — | **0** | **0** | **1** | **FAIL** — `loginErpUser` 후 URL 전환 25s timeout (`/login?tenantId=tenant-incheon-counseling-001`) |
+| Playwright `client-shop-catalog-to-cart` | — | **0** | **0** | **1** | **FAIL** — `react130ConsoleGate`: `console.error` 리소스 **404** (장바구니·소계 UI는 스냅샷상 도달) |
+| Playwright **합계** (3 spec, chromium, `--timeout=90000`) | **1** | **1** | **0** | **2** | **FAIL** |
+
+**MVP+ B-3 종합** (§1.0.9): **BLOCKED** — Playwright **1 / 0 / 2** (exit **1**). **GO** 조건: 3-spec **3 / 0 / 0** 또는 기존 2-spec **2 / 0 / 0** + create spec PASS. **후속**: admin ERP 로그인·`E2E_TENANT_ID` 병렬 간섭·client 썸네일 404(coder).
+
 ### 1.1 백엔드 Maven (`*Test.java`)
 
 **실행 명령** (2026-05-19 통합 게이트, **15클래스·103건**):
@@ -297,8 +311,9 @@ SELECT component_code FROM component_catalog WHERE component_code IN ('CLIENT_SH
 | 3 | frontend `build:ci` | 0 | — | — | — | **PASS** | eslint 경고만, 빌드 성공 |
 | 4 | Expo Jest `--testPathPattern=clientShop` | 0 | 35 | 0 | 0 | **PASS** | 5 suites |
 | 5 | Playwright `admin-shop-catalog-skus-smoke` + `client-shop-catalog-to-cart` (dev, chromium) | 0 | 2 | 0 | 0 | **PASS** | deploy 후 health **200**; admin ~4.1s · client ~5.0s — [§1.0.8](#108-mvp-b-3-playwright-after-deploy-core-tester-2026-05-19) |
+| 6 | Playwright 3-spec (+ `admin-shop-catalog-sku-create-smoke`, post-`544cc5039`) | 1 | 1 | 0 | 2 | **FAIL** | health **200**; [§1.0.9](#109-mvp-b-3-post-544cc5039-fe-deploy-core-tester-2026-05-19) |
 
-**B-3 판정**: **GO** — Playwright **2 / 0 / 0** (exit **0**). **coder 위임**: 없음.
+**B-3 판정** (§3.5·§1.0.8): **GO** — Playwright **2 / 0 / 0** (exit **0**). **§1.0.9 재검증**: **BLOCKED** — **1 / 0 / 2**; **coder 위임**: admin 로그인·client 404.
 
 ### 3.4 잔여 갭 (R3/R4/R8/R9 완료 · R6/R10·운영 QA 잔여)
 
@@ -386,10 +401,10 @@ SELECT component_code FROM component_catalog WHERE component_code IN ('CLIENT_SH
 | Playwright R10 (client + admin smoke, chromium) | **GO** | **2 / 0 / 0** (exit **0**); [§1.0.8](#108-mvp-b-3-playwright-after-deploy-core-tester-2026-05-19) — MVP+ B-3 deploy 후 admin·client **PASS** |
 | Admin·Client 수동 스모크 [§4](#4-수동-qa-체크리스트) | **조건부** | R10 E2E **GO**; §4 체크리스트는 미체크 |
 | **Tier A (4) REG-01** | **GO** | Maven 14클래스 **91 passed** |
-| **MVP+ B-3** | **GO** | 단위·빌드·Playwright **2 passed** — [§3.5](#35-shop-catalog-ux-mvp--b-3-게이트-core-tester-2026-05-19) |
-| **Tier A (5) 종합** | **GO** | dev health **GO**; R10 **2 passed** (`tenant-incheon-counseling-001`) |
+| **MVP+ B-3** | **BLOCKED** | §1.0.8 **GO** (2 spec); post-`544cc5039` §1.0.9 **1 / 0 / 2** — create·client **FAIL** |
+| **Tier A (5) 종합** | **BLOCKED** | post-`544cc5039` Playwright 3-spec 미달; §1.0.8 이력 **GO** 유지 |
 
-**종합**: **코드·Maven·Expo·build:ci·MVP+ B-3 Playwright = GO**. **Tier A (4) = GO**. **Tier A (5) = GO** (R10 dev E2E). 수동 QA §4는 잔여.
+**종합**: **코드·Maven·Expo·build:ci = GO**. **MVP+ B-3 (post-`544cc5039`) = BLOCKED** ([§1.0.9](#109-mvp-b-3-post-544cc5039-fe-deploy-core-tester-2026-05-19)). 수동 QA §4는 잔여.
 
 ---
 

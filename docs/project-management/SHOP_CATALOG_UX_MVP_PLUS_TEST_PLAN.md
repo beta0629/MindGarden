@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서 제목 | Shop Catalog UX MVP+ — 검증 게이트 (B-3) |
-| 상태 | **계획 확정** — 코드·스펙·E2E 구현 **금지** (본 문서만) |
+| 상태 | **검증 실행** — post-`544cc5039` Playwright **BLOCKED** ([STATUS §1.0.9](./SHOP_REWARD_IMPLEMENTATION_STATUS.md#109-mvp-b-3-post-544cc5039-fe-deploy-core-tester-2026-05-19)) |
 | 작성일 | 2026-05-19 |
 | 담당 | core-tester (B-3) |
 | 입력 SSOT | [SHOP_CATALOG_UX_MVP_PLUS_ORCHESTRATION.md](./SHOP_CATALOG_UX_MVP_PLUS_ORCHESTRATION.md) §4 B-3 · [SHOP_CATALOG_UX_MVP_PLUS_DESIGN_HANDOFF.md](./SHOP_CATALOG_UX_MVP_PLUS_DESIGN_HANDOFF.md) testid · 기존 Playwright 2종 |
@@ -22,9 +22,9 @@
 
 **B-3 완료 판정 (오케스트레이션 §4 B-3)**
 
-- [ ] core-tester 보고: passed / failed / skipped · exit code
-- [ ] 실패 시 core-debugger → core-coder 루프 1회
-- [ ] [SHOP_REWARD_IMPLEMENTATION_STATUS.md](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) §3 갱신 항목 목록 제출
+- [x] core-tester 보고: **1 / 0 / 2** · exit **1** (2026-05-19 post-`544cc5039` · 3 spec · health **200**)
+- [ ] 실패 시 core-debugger → core-coder 루프 1회 — **미완료** (admin login timeout · client 404 console)
+- [x] [SHOP_REWARD_IMPLEMENTATION_STATUS.md](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) §1.0.9 · §3.5 행 6 갱신
 
 ---
 
@@ -109,6 +109,22 @@ mvn test -Dtest=AdminShopCatalogSkuServiceImplTest,AdminShopCatalogSkuController
 cd tests/e2e && npx playwright test admin-shop-catalog-skus-smoke client-shop-catalog-to-cart --project=chromium
 ```
 
+**MVP+ 3-spec (post-`544cc5039`, dev)**
+
+```bash
+cd tests/e2e && env -u CI E2E_TENANT_ID=tenant-incheon-counseling-001 E2E_CLIENT_LOGIN_ID=01086322121 \
+  E2E_API_BASE=https://dev.core-solution.co.kr BASE_URL=https://mindgarden.dev.core-solution.co.kr \
+  npx playwright test admin-shop-catalog-skus-smoke admin-shop-catalog-sku-create-smoke client-shop-catalog-to-cart \
+  --project=chromium --timeout=90000
+```
+
+| spec | p | f | s | 비고 |
+|------|---|---|---|------|
+| `admin-shop-catalog-skus-smoke` | 1 | 0 | 0 | PASS ~3.1s |
+| `admin-shop-catalog-sku-create-smoke` | 0 | 1 | 0 | FAIL — ERP 로그인 URL 전환 timeout |
+| `client-shop-catalog-to-cart` | 0 | 1 | 0 | FAIL — `console.error` 404 (severe gate) |
+| **합계** | **1** | **2** | **0** | exit **1** · **BLOCKED** |
+
 ### 3.1 어드민 — 목록 → 등록 → 이미지 → 저장
 
 | 단계 | 동작 | 검증 (testid·셀렉터) |
@@ -167,6 +183,7 @@ cd tests/e2e && npx playwright test admin-shop-catalog-skus-smoke client-shop-ca
 | **REG-01** | `frontend` `npm run build:ci` | 프로젝트 표준 | PASS (eslint 경고만 허용) |
 | **REG-01** | Expo Jest `pushScenarios\|clientShop` | B-2 병행 시 | 32 passed (B-2 범위) |
 | **R10** | Playwright 2 spec · chromium | §3 | **2 passed**, 0 failed (OPS·8080·시드·`CLIENT_SHOP` 전제) |
+| **R10+** | Playwright 3 spec (+ create) · chromium | §3 · §1.0.9 | **1 passed / 2 failed** (post-`544cc5039`) — **BLOCKED** |
 
 **종합 (Tier A Shop GO, MVP+ 배치)**
 

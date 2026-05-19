@@ -86,6 +86,18 @@
 
 **Tier A (5) 종합**: **BLOCKED** — R10 **0 / 0 / 2** (exit **1**). client `CLIENT_SHOP` 게이트 잔여; admin은 OPS·시드 반영 흔적(SKU 1건) 있으나 spec assertion 미통과. **후속**: client 컴포넌트 플래그·E2E client 계정 테넌트 매칭 확인; admin spec line 62 locator 보강(coder).
 
+### 1.0.4 Tier A **(5)** R10 post-`5f1b44b99` (core-tester, 2026-05-19 ~16:04 KST)
+
+**전제**: `5f1b44b99` fix catalog PLP — FE deploy **in_progress** (run `26081634547`).
+
+| 게이트 | exit | passed | skipped | failed | 판정 |
+|--------|------|--------|---------|--------|------|
+| dev `actuator/health` (`curl` apex) | — | — | — | — | **FAIL** HTTP **502** (×2 probe) |
+| Playwright R10 client + admin smoke (chromium) | — | **0** | **0** | **0** | **BLOCKED** — health ≠200, 미실행 |
+| `deploy-frontend-dev` (`5f1b44b99`) | — | — | — | — | **in_progress** (🎨 Frontend 개발 서버 배포) |
+
+**Tier A (5)**: **BLOCKED** — dev API **502** → R10 Playwright **미실행**. **GO** 조건: health **200** + FE deploy **success** (`5f1b44b99`) 후 R10 재실행.
+
 ### 1.1 백엔드 Maven (`*Test.java`)
 
 **실행 명령** (2026-05-19 통합 게이트, **15클래스·103건**):
@@ -160,6 +172,7 @@ mvn -Dtest=ClientShopControllerMvcTest,AdminShopCatalogSkuControllerMvcTest test
 | R10 Tier A **(5)** (2026-05-19 dev 재실행) | **0 passed / 0 skipped / 2 failed** (exit **1**) | `E2E_API_BASE`+`BASE_URL` dev; localhost **8080 down**; `E2E_API_BASE` health **200** → 8080 가드 **미스킵**; `skipWhenCiMissingE2eCredentials` **미발생** (`CI≠true`) |
 | R10 `tenant-incheon-counseling-001` (2026-05-19 ~15:05 KST) | **0 / 0 / 2** passed·skipped·failed (exit **1**) | (이전) client `CLIENT_SHOP` 게이트; admin 비활성 토스트; **`E2E_TENANT_ID` 미연동** |
 | R10 `tenant-incheon-counseling-001` **(4)(5) 재검증** (2026-05-19 ~15:34 KST) | **0 / 0 / 2** (exit **1**) | dev FE+API; `E2E_TENANT_ID` **연동됨**; OPS·seed 전제 — client 게이트 잔여; admin SKU 노출·assertion FAIL |
+| R10 post-`5f1b44b99` **(5)** (2026-05-19 ~16:04 KST) | **BLOCKED** — **0 / 0 / 0** | dev health **502**; Playwright **미실행**; FE deploy `26081634547` **in_progress** |
 
 ### 1.4 프론트엔드 web (React)
 

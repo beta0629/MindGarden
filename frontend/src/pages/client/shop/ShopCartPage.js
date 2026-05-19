@@ -8,8 +8,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
+import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import PriceText from '../../../components/shop/atoms/PriceText';
-import { CLIENT_SHOP_ROUTES } from '../../../constants/clientShopConstants';
+import { CLIENT_SHOP_ROUTES, CLIENT_SHOP_TEST_IDS } from '../../../constants/clientShopConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchShopCart,
@@ -58,14 +59,14 @@ const ShopCartPage = () => {
   };
 
   if (sessionLoading || !isLoggedIn) {
-    return null;
+    return <ShopClientSessionLoading title="장바구니" />;
   }
 
   const lines = cart.lines || [];
   const isEmpty = lines.length === 0;
 
   return (
-    <ShopClientLayout title="장바구니" testId="client-shop-cart-page">
+    <ShopClientLayout title="장바구니" testId={CLIENT_SHOP_TEST_IDS.CART_PAGE}>
       {message ? (
         <p className="client-shop__message client-shop__message--error" role="alert">
           {message}

@@ -8,12 +8,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
+import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import ShopTenantBanner from '../../../components/shop/organisms/ShopTenantBanner';
 import ShopCategoryTabs from '../../../components/shop/molecules/ShopCategoryTabs';
 import SkuCard from '../../../components/shop/molecules/SkuCard';
 import {
   SHOP_CATALOG_CATEGORY,
   CLIENT_SHOP_ROUTES,
+  CLIENT_SHOP_TEST_IDS,
   buildShopSkuDetailPath
 } from '../../../constants/clientShopConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
@@ -71,13 +73,13 @@ const ShopCatalogPage = () => {
   };
 
   if (sessionLoading || !isLoggedIn) {
-    return null;
+    return <ShopClientSessionLoading title="상품 둘러보기" />;
   }
 
   const tenantLabel = user?.tenantName || user?.organizationName || null;
 
   return (
-    <ShopClientLayout title="상품 둘러보기" testId="client-shop-catalog-page">
+    <ShopClientLayout title="상품 둘러보기" testId={CLIENT_SHOP_TEST_IDS.CATALOG_PAGE}>
       <ShopTenantBanner tenantLabel={tenantLabel} />
       <ShopCategoryTabs activeKey={activeCategory} onChange={setActiveCategory} />
       {message ? (

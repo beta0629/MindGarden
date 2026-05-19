@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Coins } from 'lucide-react';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
+import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import PriceText from '../../../components/shop/atoms/PriceText';
 import { CLIENT_SHOP_ROUTES } from '../../../constants/clientShopConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
@@ -74,7 +75,7 @@ const ShopSkuDetailPage = () => {
   };
 
   if (sessionLoading || !isLoggedIn) {
-    return null;
+    return <ShopClientSessionLoading title="상품 상세" />;
   }
 
   return (

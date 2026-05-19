@@ -24,6 +24,8 @@ import {
 
 /** `ClientTenantComponentGate` — `PLATFORM_COMPONENT_CODES.CLIENT_SHOP` */
 const CLIENT_SHOP_GATE_TEST_ID = 'client-tenant-component-gate--CLIENT_SHOP';
+const CLIENT_SHOP_CATALOG_PAGE_TEST_ID = 'client-shop-catalog-page';
+const CLIENT_SHOP_SESSION_LOADING_TEST_ID = 'client-shop-session-loading';
 
 const REACT_130_OR_INVALID_CHILD =
   /Minified React error #130|Objects are not valid as a React child|invariant=130/i;
@@ -75,8 +77,17 @@ test.describe('내담자 쇼핑 PLP → 장바구니', () => {
       );
     }
 
-    const catalogPage = page.getByTestId('client-shop-catalog-page');
-    await expect(catalogPage).toBeVisible({ timeout: 20_000 });
+    await page.waitForSelector(`[data-testid="${CLIENT_SHOP_SESSION_LOADING_TEST_ID}"]`, {
+      state: 'detached',
+      timeout: 30_000
+    }).catch(() => undefined);
+
+    await page.waitForSelector(`[data-testid="${CLIENT_SHOP_CATALOG_PAGE_TEST_ID}"]`, {
+      timeout: 30_000
+    });
+
+    const catalogPage = page.getByTestId(CLIENT_SHOP_CATALOG_PAGE_TEST_ID);
+    await expect(catalogPage).toBeVisible({ timeout: 5_000 });
 
     const addFirst = page.getByTestId('shop-sku-add-first');
     await expect(

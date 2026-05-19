@@ -8,6 +8,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
+import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import PointInput from '../../../components/shop/molecules/PointInput';
 import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary';
 import { formatShopMoney, formatShopPoints } from '../../../utils/clientShopFormat';
@@ -198,7 +199,7 @@ const ShopCheckoutPage = () => {
   };
 
   if (sessionLoading || !isLoggedIn) {
-    return null;
+    return <ShopClientSessionLoading title="결제하기" />;
   }
 
   const lines = cart.lines || [];

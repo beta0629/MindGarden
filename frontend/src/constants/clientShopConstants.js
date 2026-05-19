@@ -158,3 +158,12 @@ export const CLIENT_REWARD_UNAVAILABLE_COPY = {
   TITLE: '포인트·리워드를 이용할 수 없습니다',
   DESCRIPTION: '현재 센터에서 포인트·리워드 서비스가 제공되지 않습니다.'
 };
+
+/** E2E·Playwright용 data-testid */
+export const CLIENT_SHOP_TEST_IDS = {
+  SESSION_LOADING: 'client-shop-session-loading',
+  CATALOG_PAGE: 'client-shop-catalog-page',
+  CART_PAGE: 'client-shop-cart-page'
+};
+
+export const CLIENT_SHOP_SESSION_LOADING_COPY = '불러오는 중…';

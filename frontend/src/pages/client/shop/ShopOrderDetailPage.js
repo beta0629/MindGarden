@@ -8,6 +8,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
+import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import FulfillmentLineList from '../../../components/shop/molecules/FulfillmentLineList';
 import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary';
 import {
@@ -77,7 +78,7 @@ const ShopOrderDetailPage = () => {
   };
 
   if (sessionLoading || !isLoggedIn) {
-    return null;
+    return <ShopClientSessionLoading title="주문 상세" />;
   }
 
   const awaitingPayment = isShopOrderAwaitingPayment(order);

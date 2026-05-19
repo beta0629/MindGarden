@@ -8,6 +8,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
+import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import {
   buildShopOrderDetailPath,
   CLIENT_SHOP_ROUTES,
@@ -42,7 +43,7 @@ const ShopOrdersPage = () => {
   }, [sessionLoading, isLoggedIn, loadOrders]);
 
   if (sessionLoading || !isLoggedIn) {
-    return null;
+    return <ShopClientSessionLoading title="내 구매" />;
   }
 
   return (

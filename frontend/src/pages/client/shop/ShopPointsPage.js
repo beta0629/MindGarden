@@ -8,6 +8,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
+import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import PointBalanceHeader from '../../../components/shop/organisms/PointBalanceHeader';
 import {
   buildShopOrderDetailPath,
@@ -51,7 +52,7 @@ const ShopPointsPage = () => {
   }, [sessionLoading, isLoggedIn, loadData]);
 
   if (sessionLoading || !isLoggedIn) {
-    return null;
+    return <ShopClientSessionLoading title="내 포인트" />;
   }
 
   return (

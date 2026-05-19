@@ -23,6 +23,7 @@ on:
       - '!src/main/java/com/coresolution/core/controller/dto/Onboarding*.java'
       - 'src/main/java/com/coresolution/core/dto/**'
       - 'src/main/java/com/coresolution/core/security/**'
+      - 'src/main/java/com/coresolution/core/filter/**'
       - 'src/main/java/com/coresolution/core/context/**'
       - 'src/main/java/com/coresolution/core/constant/**'
       - 'src/main/java/com/coresolution/core/config/**'

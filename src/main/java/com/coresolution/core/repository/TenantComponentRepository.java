@@ -29,7 +29,7 @@ public interface TenantComponentRepository extends JpaRepository<TenantComponent
             INNER JOIN ComponentCatalog cc ON tc.componentId = cc.componentId
             WHERE tc.tenantId = :tenantId
               AND cc.componentCode = :componentCode
-              AND tc.status = com.coresolution.core.domain.TenantComponent.ComponentStatus.ACTIVE
+              AND tc.status = 'ACTIVE'
               AND tc.isDeleted = FALSE
               AND cc.isDeleted = FALSE
               AND cc.isActive = TRUE
@@ -49,7 +49,7 @@ public interface TenantComponentRepository extends JpaRepository<TenantComponent
             FROM TenantComponent tc
             INNER JOIN ComponentCatalog cc ON tc.componentId = cc.componentId
             WHERE tc.tenantId = :tenantId
-              AND tc.status = com.coresolution.core.domain.TenantComponent.ComponentStatus.ACTIVE
+              AND tc.status = 'ACTIVE'
               AND tc.isDeleted = FALSE
               AND cc.isDeleted = FALSE
               AND cc.isActive = TRUE

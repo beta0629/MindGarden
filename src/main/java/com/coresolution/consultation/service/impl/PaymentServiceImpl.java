@@ -28,6 +28,7 @@ import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -74,7 +75,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             ConsultationMessageService consultationMessageService,
             CommonCodeService commonCodeService,
             MobilePushDispatchService mobilePushDispatchService,
-            ClientShopCheckoutService clientShopCheckoutService) {
+            @Lazy ClientShopCheckoutService clientShopCheckoutService) {
         super(paymentRepository, accessControlService);
         this.paymentRepository = paymentRepository;
         this.financialTransactionService = financialTransactionService;

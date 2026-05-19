@@ -2,7 +2,12 @@ import { toDisplayString } from '../../../utils/safeDisplay';
 import {
     KR_PUBLIC_HOLIDAY_LEGEND_DISCLAIMER,
     KR_PUBLIC_HOLIDAY_LEGEND_LABEL,
-    SCHEDULE_LEGEND_INTEGRATED_WEEKEND_HOLIDAY_NOTE
+    SCHEDULE_LEGEND_INTEGRATED_WEEKEND_HOLIDAY_NOTE,
+    SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING,
+    SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_SAMPLE,
+    SCHEDULE_LEGEND_SESSION_LABELS_TITLE,
+    SCHEDULE_LEGEND_SESSION_REMAINING_MEANING,
+    SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE
 } from '../../../constants/schedule';
 
 /**
@@ -50,6 +55,35 @@ const ScheduleLegend = ({
                     </p>
                 )}
             </div>
+            {calendarSkin === 'integrated' && (
+                <div className="mg-v2-legend-section mg-v2-legend-section--session-labels">
+                    <div className="mg-v2-legend-title">{toDisplayString(SCHEDULE_LEGEND_SESSION_LABELS_TITLE)}</div>
+                    <div className="mg-v2-legend-session-items">
+                        <div className="mg-v2-legend-session-item">
+                            <span
+                                className="mg-v2-legend-session-sample mg-v2-legend-session-sample--booking-sequence mg-v2-ad-calendar-event__sessions mg-v2-ad-calendar-event__sessions--booking-sequence"
+                                aria-hidden="true"
+                            >
+                                {toDisplayString(SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_SAMPLE)}
+                            </span>
+                            <span className="mg-v2-legend-text">
+                                {`= ${toDisplayString(SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING)}`}
+                            </span>
+                        </div>
+                        <div className="mg-v2-legend-session-item">
+                            <span
+                                className="mg-v2-legend-session-sample mg-v2-legend-session-sample--remaining mg-v2-ad-calendar-event__sessions mg-v2-ad-calendar-event__sessions--remaining"
+                                aria-hidden="true"
+                            >
+                                {toDisplayString(SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE)}
+                            </span>
+                            <span className="mg-v2-legend-text">
+                                {`= ${toDisplayString(SCHEDULE_LEGEND_SESSION_REMAINING_MEANING)}`}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* 상담사가 있을 때만 표시 */}
             {activeConsultants.length > 0 && (
                 <div className="mg-v2-legend-section">

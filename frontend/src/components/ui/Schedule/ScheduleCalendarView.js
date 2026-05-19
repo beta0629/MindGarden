@@ -270,7 +270,7 @@ const ScheduleCalendarView = ({
         const clientWideNotesUnresolvedCount = parseClientScheduleNotesClientWideUnresolvedCount(
             extendedProps?.[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
         );
-        const sessionLabel = integratedMonthEventLayout && isMonthView
+        const sessionInfo = integratedMonthEventLayout && isMonthView
             ? resolveCalendarSessionLabel({
                 sessionSequence: extendedProps?.[SCHEDULE_SESSION_SEQUENCE_FIELD],
                 remainingSessions: extendedProps?.[SCHEDULE_REMAINING_SESSIONS_FIELD],
@@ -278,8 +278,12 @@ const ScheduleCalendarView = ({
                 status: extendedProps?.status,
                 isPast: isPastDate
             })
+            : { label: '', variant: null, ariaLabel: '' };
+        const sessionLabel = sessionInfo.label;
+        const sessionTitleSuffix = sessionInfo.ariaLabel ? ` ${sessionInfo.ariaLabel}` : '';
+        const sessionVariantClass = sessionInfo.variant
+            ? ` mg-v2-ad-calendar-event__sessions--${sessionInfo.variant}`
             : '';
-        const sessionTitleSuffix = sessionLabel ? ` ${sessionLabel}` : '';
         const isVacationScheduleRow =
             extendedProps?.type === CALENDAR_EXTENDED_TYPE_VACATION
             || extendedProps?.status === STATUS.VACATION;
@@ -330,7 +334,10 @@ const ScheduleCalendarView = ({
                     <span className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</span>
                     <span className="mg-v2-ad-calendar-event__client">{clientName}</span>
                     {sessionLabel ? (
-                        <span className="mg-v2-ad-calendar-event__sessions" aria-hidden="true">
+                        <span
+                            className={`mg-v2-ad-calendar-event__sessions${sessionVariantClass}`.trim()}
+                            aria-hidden="true"
+                        >
                             {sessionLabel}
                         </span>
                     ) : null}

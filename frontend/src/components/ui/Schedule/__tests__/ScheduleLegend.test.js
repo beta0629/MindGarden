@@ -6,7 +6,12 @@ import { render, screen } from '@testing-library/react';
 import ScheduleLegend from '../ScheduleLegend';
 import {
   KR_PUBLIC_HOLIDAY_LEGEND_LABEL,
-  SCHEDULE_LEGEND_INTEGRATED_WEEKEND_HOLIDAY_NOTE
+  SCHEDULE_LEGEND_INTEGRATED_WEEKEND_HOLIDAY_NOTE,
+  SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING,
+  SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_SAMPLE,
+  SCHEDULE_LEGEND_SESSION_LABELS_TITLE,
+  SCHEDULE_LEGEND_SESSION_REMAINING_MEANING,
+  SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE
 } from '../../../../constants/schedule';
 
 const minimalProps = () => ({
@@ -31,5 +36,14 @@ describe('ScheduleLegend', () => {
   test('calendarSkin=integrated일 때 주말·공휴일 색 안내 문구가 보인다', () => {
     render(<ScheduleLegend {...minimalProps()} calendarSkin="integrated" />);
     expect(screen.getByText(SCHEDULE_LEGEND_INTEGRATED_WEEKEND_HOLIDAY_NOTE)).toBeInTheDocument();
+  });
+
+  test('calendarSkin=integrated일 때 회기 표기 범례가 보인다', () => {
+    render(<ScheduleLegend {...minimalProps()} calendarSkin="integrated" />);
+    expect(screen.getByText(SCHEDULE_LEGEND_SESSION_LABELS_TITLE)).toBeInTheDocument();
+    expect(screen.getByText(SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_SAMPLE)).toBeInTheDocument();
+    expect(screen.getByText(`= ${SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING}`)).toBeInTheDocument();
+    expect(screen.getByText(SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE)).toBeInTheDocument();
+    expect(screen.getByText(`= ${SCHEDULE_LEGEND_SESSION_REMAINING_MEANING}`)).toBeInTheDocument();
   });
 });

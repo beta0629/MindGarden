@@ -473,6 +473,61 @@
   font-weight: 500;
   color: var(--mg-color-text-secondary);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.integrated-schedule__calendar-wrapper--integrated
+  .mg-v2-ad-calendar-event--integrated-month
+  .mg-v2-ad-calendar-event__sessions--booking-sequence {
+  color: var(--mg-secondary-400, var(--mg-color-text-secondary));
+  font-weight: var(--font-weight-normal, 400);
+}
+
+.integrated-schedule__calendar-wrapper--integrated
+  .mg-v2-ad-calendar-event--integrated-month
+  .mg-v2-ad-calendar-event__sessions--remaining {
+  color: var(--mg-info-500, var(--mg-color-primary-main, var(--mg-primary-500)));
+  font-weight: 600;
+}
+
+.mg-v2-schedule-legend--calendar-skin-integrated .mg-v2-legend-section--session-labels {
+  flex-basis: 100%;
+  width: 100%;
+  min-width: 0;
+}
+
+.mg-v2-schedule-legend--calendar-skin-integrated .mg-v2-legend-session-items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-sm, var(--spacing-sm));
+  margin-top: var(--mg-spacing-xs, var(--spacing-xs));
+}
+
+.mg-v2-schedule-legend--calendar-skin-integrated .mg-v2-legend-session-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs, var(--spacing-xs));
+  font-size: var(--font-size-xs);
+}
+
+.mg-v2-schedule-legend--calendar-skin-integrated .mg-v2-legend-session-sample {
+  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.mg-v2-schedule-legend--calendar-skin-integrated .mg-v2-legend-session-sample--booking-sequence {
+  color: var(--mg-secondary-400, var(--mg-color-text-secondary));
+  font-weight: var(--font-weight-normal, 400);
+}
+
+.mg-v2-schedule-legend--calendar-skin-integrated .mg-v2-legend-session-sample--remaining {
+  color: var(--mg-info-500, var(--mg-color-primary-main, var(--mg-primary-500)));
+  font-weight: 600;
 }
 
 .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__badge--cancelled {

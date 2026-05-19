@@ -1,4 +1,5 @@
 import {
+  CALENDAR_SESSION_LABEL_VARIANT,
   CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD,
   CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD,
   SCHEDULE_SESSION_SEQUENCE_FIELD,
@@ -41,8 +42,8 @@ describe('parseClientScheduleNotesClientWideUnresolvedCount', () => {
 });
 
 describe('formatCalendarSessionLabel', () => {
-  it('다회기만 (남은/총) 표시', () => {
-    expect(formatCalendarSessionLabel(2, 10)).toBe('(2/10)');
+  it('다회기만 잔여 표시 (남은/총)', () => {
+    expect(formatCalendarSessionLabel(2, 10)).toBe('남2/10');
     expect(shouldShowCalendarSessionLabel(10, 2)).toBe(true);
   });
 
@@ -68,7 +69,11 @@ describe('resolveCalendarSessionLabel', () => {
         status: 'BOOKED',
         isPast: true
       })
-    ).toBe('(4/10)');
+    ).toEqual({
+      label: '4/10회',
+      variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
+      ariaLabel: '4회차(4/10)'
+    });
   });
 
   it('완료 상태는 sessionSequence 우선', () => {
@@ -80,7 +85,11 @@ describe('resolveCalendarSessionLabel', () => {
         status: 'COMPLETED',
         isPast: false
       })
-    ).toBe('(4/10)');
+    ).toEqual({
+      label: '4/10회',
+      variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
+      ariaLabel: '4회차(4/10)'
+    });
   });
 
   it('미래 예정은 잔여 회기 표시', () => {
@@ -92,10 +101,15 @@ describe('resolveCalendarSessionLabel', () => {
         status: 'BOOKED',
         isPast: false
       })
-    ).toBe('(5/10)');
+    ).toEqual({
+      label: '남5/10',
+      variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
+      ariaLabel: '남은 회기 5/10'
+    });
   });
 
-  it('취소·휴가·단회기는 빈 문자열', () => {
+  it('취소·휴가·단회기는 빈 결과', () => {
+    const empty = { label: '', variant: null, ariaLabel: '' };
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: 2,
@@ -104,7 +118,7 @@ describe('resolveCalendarSessionLabel', () => {
         status: 'CANCELLED',
         isPast: true
       })
-    ).toBe('');
+    ).toEqual(empty);
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: 2,
@@ -113,7 +127,7 @@ describe('resolveCalendarSessionLabel', () => {
         status: 'VACATION',
         isPast: false
       })
-    ).toBe('');
+    ).toEqual(empty);
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: 1,
@@ -122,6 +136,6 @@ describe('resolveCalendarSessionLabel', () => {
         status: 'BOOKED',
         isPast: false
       })
-    ).toBe('');
+    ).toEqual(empty);
   });
 });

@@ -256,6 +256,25 @@ export const SCHEDULE_TOTAL_SESSIONS_FIELD = 'totalSessions';
 export const SCHEDULE_REMAINING_SESSIONS_FIELD = 'remainingSessions';
 export const SCHEDULE_SESSION_SEQUENCE_FIELD = 'sessionSequence';
 
+/** 월간 캘린더 회기 라벨 variant — CSS modifier `mg-v2-ad-calendar-event__sessions--*` */
+export const CALENDAR_SESSION_LABEL_VARIANT = {
+  BOOKING_SEQUENCE: 'booking-sequence',
+  REMAINING: 'remaining'
+};
+
+/** 통합 스케줄 범례 — 회기 표기 샘플·설명 */
+export const SCHEDULE_LEGEND_SESSION_LABELS_TITLE = '회기 표기';
+export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_SAMPLE = '4/10회';
+export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING = '사용 회차';
+export const SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE = '남5/10';
+export const SCHEDULE_LEGEND_SESSION_REMAINING_MEANING = '남은 회기';
+
+const EMPTY_CALENDAR_SESSION_LABEL = Object.freeze({
+  label: '',
+  variant: null,
+  ariaLabel: ''
+});
+
 /**
  * @param {*} raw API 또는 extendedProps 값
  * @returns {number} 0 이상 정수(비정상·null은 0)
@@ -301,7 +320,7 @@ export function shouldShowCalendarSessionLabel(totalSessions, remainingSessions)
 }
 
 /**
- * 월간 캘린더 회기 라벨. 예: "(2/10)" — 남은/총. 표시 불가 시 빈 문자열.
+ * 월간 캘린더 회기 라벨(문자열만). 하위 호환 — {@link resolveCalendarSessionLabel} 의 label.
  */
 export function formatCalendarSessionLabel(remainingSessions, totalSessions) {
   return resolveCalendarSessionLabel({
@@ -310,13 +329,21 @@ export function formatCalendarSessionLabel(remainingSessions, totalSessions) {
     sessionSequence: null,
     status: null,
     isPast: false
-  });
+  }).label;
 }
 
 /**
+ * @typedef {Object} CalendarSessionLabelResult
+ * @property {string} label 컴팩트 표시 (예: `4/10회`, `남5/10`)
+ * @property {'booking-sequence'|'remaining'|null} variant CSS modifier suffix
+ * @property {string} ariaLabel 툴팁·aria용 의미 문구 (예: `4회차(4/10)`)
+ */
+
+/**
  * 월간 캘린더 회기 라벨 분기.
- * - 과거·완료(취소·휴가 제외): 예약 시점 회차 (sessionSequence/총)
- * - 미래·가예약 등: 잔여 (남은/총)
+ * - 과거·완료(취소·휴가 제외): 예약 시점 회차 `4/10회` (booking-sequence)
+ * - 미래·가예약 등: 잔여 `남5/10` (remaining)
+ * @returns {CalendarSessionLabelResult}
  */
 export function resolveCalendarSessionLabel({
   sessionSequence,
@@ -327,12 +354,12 @@ export function resolveCalendarSessionLabel({
 } = {}) {
   const total = parseScheduleSessionCount(totalSessions);
   if (total === null || total <= 1) {
-    return '';
+    return EMPTY_CALENDAR_SESSION_LABEL;
   }
   const statusCode =
     status != null && String(status).trim() !== '' ? String(status).trim().toUpperCase() : '';
   if (statusCode === STATUS.CANCELLED || statusCode === STATUS.VACATION) {
-    return '';
+    return EMPTY_CALENDAR_SESSION_LABEL;
   }
   const sequence = parseScheduleSessionCount(sessionSequence);
   const isTentative = statusCode === 'TENTATIVE_PENDING_PAYMENT';
@@ -340,13 +367,21 @@ export function resolveCalendarSessionLabel({
   const showBookingSequence =
     sequence !== null && !isTentative && (isPast === true || isCompleted);
   if (showBookingSequence) {
-    return `(${sequence}/${total})`;
+    return {
+      label: `${sequence}/${total}회`,
+      variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
+      ariaLabel: `${sequence}회차(${sequence}/${total})`
+    };
   }
   const remaining = parseScheduleSessionCount(remainingSessions);
   if (remaining === null) {
-    return '';
+    return EMPTY_CALENDAR_SESSION_LABEL;
   }
-  return `(${remaining}/${total})`;
+  return {
+    label: `남${remaining}/${total}`,
+    variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
+    ariaLabel: `남은 회기 ${remaining}/${total}`
+  };
 }
 
 export const FILTER_OPTION_LABELS = {

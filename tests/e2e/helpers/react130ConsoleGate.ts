@@ -33,7 +33,7 @@ export function isBenignConsoleNoise(line: string): boolean {
 }
 
 /**
- * React #130·invalid child·부가 네트워크 노이즈를 제외한 치명적 런타임 오류.
+ * React minified 130·invalid child·부가 네트워크 노이즈를 제외한 치명적 런타임 오류.
  *
  * @param {string[]} lines
  * @returns {string[]}

@@ -13,6 +13,7 @@ import React, {
   useState
 } from 'react';
 import StandardizedApi from '../utils/standardizedApi';
+import { getTenantId } from '../utils/apiHeaders';
 import { PLATFORM_COMPONENT_CODES, TENANT_COMPONENT_API } from '../constants/tenantComponentApi';
 import { useSession } from './SessionContext';
 
@@ -91,7 +92,7 @@ async function fetchActiveComponentCodesWithRetry() {
 export const TenantComponentFlagsProvider = ({ children }) => {
   const { isLoggedIn, hasCheckedSession, user } = useSession();
   const sessionTenantId = user?.tenantId?.trim() || '';
-  const fetchEnabled = isLoggedIn && hasCheckedSession && sessionTenantId.length > 0;
+  const fetchEnabled = isLoggedIn && hasCheckedSession;
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [fetchFailed, setFetchFailed] = useState(false);
@@ -110,6 +111,20 @@ export const TenantComponentFlagsProvider = ({ children }) => {
     setLoading(true);
     setLoaded(false);
     setFetchFailed(false);
+
+    getTenantId().then((resolvedTenantId) => {
+      if (cancelled || !resolvedTenantId) {
+        return;
+      }
+      if (process.env.NODE_ENV === 'development') {
+        console.log(
+          '[TenantComponentFlags] active-codes fetch tenant:',
+          resolvedTenantId,
+          'session.user.tenantId:',
+          sessionTenantId || '(empty)'
+        );
+      }
+    });
 
     fetchActiveComponentCodesWithRetry()
       .then(({ codes, fetchFailed: failed }) => {

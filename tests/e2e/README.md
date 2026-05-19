@@ -19,6 +19,19 @@
 **R10 재현** (8080 up 후): `curl -sS -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/actuator/health` → 200 이면 `cd tests/e2e && npx playwright test client-shop-catalog-to-cart admin-shop-catalog-skus-smoke --project=chromium`.
 **dev API만 검증**: `E2E_API_BASE=https://dev.core-solution.co.kr` 등으로 `$E2E_API_BASE/actuator/health`가 **200**이면 8080 없이도 해당 가드 스킵을 해제한다(`helpers/erpAuth.ts`).
 
+### dev 인천 테넌트 (`tenant-incheon-counseling-001`) — Shop·리워드 E2E
+
+Tier-A·R10 재검증 시 **반드시** 아래를 맞춘다. `E2E_TENANT_ID`가 없으면 `loginClientWeb`·`loginErpUser`가 `/login`만 열어 **다른 테넌트 세션**·`CLIENT_SHOP` off·`client-shop-catalog-page` 미노출로 실패할 수 있다.
+
+```bash
+export E2E_TENANT_ID=tenant-incheon-counseling-001
+# 관리자·내담자 계정은 위 tenant에 소속된 계정만 (Secrets·로컬 env, 문서·커밋 금지)
+```
+
+- OPS: [`activate-shop-reward-tenant-components.sql`](../../scripts/ops/activate-shop-reward-tenant-components.sql) → `CLIENT_SHOP`·`CLIENT_REWARD`·`ADMIN_SHOP_CATALOG` ACTIVE.
+- (선택) [`seed-shop-demo-catalog.sql`](../../scripts/ops/seed-shop-demo-catalog.sql) → 어드민에 `DEV-CONSULT-DEMO-01` 노출.
+- 내담자 Playwright 자격(`TEST_CLIENT_USERNAME` / `E2E_CLIENT_LOGIN_ID` 등)은 **해당 테넌트의 내담자**여야 한다.
+
 - **SEC-01 (Playwright 후속)**: 공개 API·레이트리밋 등 H2/로컬 단일 스택에서 재현이 어려운 구간은 백엔드 단위·통합 테스트를 우선하고, E2E는 스테이징·자격 증명 Secrets가 갖춰진 환경에서만 보강한다.
 
 ## 내담자 쇼핑 (CLIENT_SHOP) — Playwright 전제
@@ -30,7 +43,7 @@
 | 1 | 백엔드 API **8080** + 프론트 **3000** (`BASE_URL`, API 베이스 8080 일치) 또는 `E2E_API_BASE` health **200** | `skipWhenLocalBackend8080Down()` (로컬·CI=false) |
 | 2 | Flyway Shop P2 (**002~007**, 001 salary 충돌 해소) | DB·카탈로그 컬럼·`point_tenant_policies` |
 | 3 | 테넌트 **`CLIENT_SHOP`**·**`CLIENT_REWARD`** 컴포넌트 활성 | 어드민 컴포넌트 또는 시드 |
-| 3a | **`E2E_TENANT_ID`** — OPS·로그인과 동일 MindGarden tenant 문자열 ID (예: `tenant-incheon-counseling-001`) | `loginClientWeb`·`loginErpUser` 등 → `/login?tenantId=` (`erpAuth.ts`) |
+| 3a | **`E2E_TENANT_ID`** — OPS·로그인과 동일 MindGarden tenant 문자열 ID (dev: `tenant-incheon-counseling-001`). **내담자·관리자 계정 모두 해당 tenant 소속** | 미설정 시 README §「dev 인천 테넌트」 경고·게이트 skip. `loginClientWeb`·`loginErpUser` → `/login?tenantId=` (`erpAuth.ts`) |
 | 4 | 어드민에서 **`catalogVisible=true`** SKU ≥1 (활성 PLP 탭) | `shop-sku-add-first` testid 노출 |
 | 5 | 내담자 로그인 자격 (`loginClientWeb` — `tests/e2e/helpers/erpAuth.ts`) | CI: `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` 또는 `TEST_USERNAME`/`TEST_PASSWORD` |
 

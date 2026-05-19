@@ -346,6 +346,7 @@ export function getClientWebLogin(): { username: string; password: string } {
 /**
  * 로컬 E2E 테넌트 스코핑 — MindGarden tenant 문자열 ID (`LOCAL_TESTING_GUIDE` 와 동일 형식).
  * 설정 시 `/login?tenantId=` 로 진입해 잘못된 테넌트·컴포넌트 off 를 방지한다.
+ * 미설정 시 Shop·리워드 E2E가 다른 테넌트 세션으로 로그인될 수 있음 — `tests/e2e/README.md` 참고.
  */
 export function getE2eTenantId(): string | undefined {
   return trimEnv('E2E_TENANT_ID');

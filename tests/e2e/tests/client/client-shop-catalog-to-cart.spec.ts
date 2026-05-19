@@ -16,10 +16,14 @@
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page } from '@playwright/test';
 import {
+  getE2eTenantId,
   loginClientWeb,
   skipWhenCiMissingE2eCredentials,
   skipWhenLocalBackend8080Down
 } from '../../helpers/erpAuth';
+
+/** `ClientTenantComponentGate` — `PLATFORM_COMPONENT_CODES.CLIENT_SHOP` */
+const CLIENT_SHOP_GATE_TEST_ID = 'client-tenant-component-gate--CLIENT_SHOP';
 
 const REACT_130_OR_INVALID_CHILD =
   /Minified React error #130|Objects are not valid as a React child|invariant=130/i;
@@ -42,14 +46,34 @@ test.describe('내담자 쇼핑 PLP → 장바구니', () => {
   test.beforeEach(async ({ page }: { page: Page }) => {
     skipWhenCiMissingE2eCredentials();
     await skipWhenLocalBackend8080Down();
+    const tenantId = getE2eTenantId();
+    if (!tenantId) {
+      test.info().annotations.push({
+        type: 'e2e-tenant-id',
+        description:
+          'E2E_TENANT_ID 미설정 — CLIENT_SHOP off·잘못된 테넌트 세션 가능. tests/e2e/README.md 참고.'
+      });
+    }
     collectedErrors = [];
     attachRuntimeErrorCollectors(page, collectedErrors);
     await loginClientWeb(page, test.info());
+    if (tenantId) {
+      expect(tenantId, 'E2E_TENANT_ID는 비어 있지 않아야 함').toMatch(/\S+/);
+    }
   });
 
   test('첫 SKU 담기 후 장바구니 소계가 보인다', async ({ page }: { page: Page }) => {
     await page.goto('/client/shop', { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/client\/shop\/?$/, { timeout: 15_000 });
+
+    const gate = page.getByTestId(CLIENT_SHOP_GATE_TEST_ID);
+    if (await gate.isVisible().catch(() => false)) {
+      const tenantHint = getE2eTenantId() ?? 'E2E_TENANT_ID 미설정';
+      test.skip(
+        true,
+        `CLIENT_SHOP 비활성 또는 테넌트 불일치 — tenantId=${tenantHint}. OPS activate + 내담자 계정이 동일 테넌트 소속인지 확인.`
+      );
+    }
 
     const catalogPage = page.getByTestId('client-shop-catalog-page');
     await expect(catalogPage).toBeVisible({ timeout: 20_000 });

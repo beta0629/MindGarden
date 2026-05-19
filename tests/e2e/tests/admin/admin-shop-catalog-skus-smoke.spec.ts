@@ -21,6 +21,9 @@ const CATALOG_PATH = '/admin/shop/catalog-skus';
 const PAGE_TEST_ID = 'admin-shop-catalog-page';
 /** `AdminTenantComponentGate` — `PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG` */
 const GATE_TEST_ID = 'admin-tenant-component-gate--ADMIN_SHOP_CATALOG';
+/** `scripts/ops/seed-shop-demo-catalog.sql` 시드 SKU */
+const SEED_SKU_CODE = 'DEV-CONSULT-DEMO-01';
+const CATALOG_TABLE_SELECTOR = 'table.mg-v2-list-block__table';
 
 test.describe('관리자 — 쇼핑몰 카탈로그 SKU 스모크', () => {
   test.beforeEach(async ({ page }, testInfo) => {
@@ -50,15 +53,15 @@ test.describe('관리자 — 쇼핑몰 카탈로그 SKU 스모크', () => {
 
     await page.getByText('목록을 불러오는 중…').waitFor({ state: 'hidden', timeout: 20_000 }).catch(() => {});
 
-    const emptyState = page.getByText('등록된 상품이 없습니다.');
     const registerBtn = page.getByRole('button', { name: '상품 등록' });
     await expect(registerBtn).toBeVisible({ timeout: 10_000 });
 
-    const hasEmpty = await emptyState.isVisible().catch(() => false);
-    const hasTable = await page.locator('table, [role="table"]').first().isVisible().catch(() => false);
-    expect(
-      hasEmpty || hasTable,
-      'SKU 목록 영역 — 빈 상태 또는 테이블 중 하나가 보여야 함'
-    ).toBe(true);
+    const emptyState = catalogPage.getByText('등록된 상품이 없습니다.');
+    const seedSku = catalogPage.getByText(SEED_SKU_CODE);
+    const catalogTable = catalogPage.locator(CATALOG_TABLE_SELECTOR);
+    await expect(
+      seedSku.or(emptyState).or(catalogTable.first()),
+      `SKU 목록 — 시드(${SEED_SKU_CODE})·빈 상태·테이블 중 하나가 ${PAGE_TEST_ID} 안에 보여야 함`
+    ).toBeVisible({ timeout: 20_000 });
   });
 });

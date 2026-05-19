@@ -267,7 +267,7 @@ export const SCHEDULE_LEGEND_SESSION_LABELS_TITLE = '회기 표기';
 export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_SAMPLE = '4/10회';
 export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING = '해당 일정 시점 잔여 회기';
 export const SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE = '남5/10';
-export const SCHEDULE_LEGEND_SESSION_REMAINING_MEANING = '남은 회기';
+export const SCHEDULE_LEGEND_SESSION_REMAINING_MEANING = '현재 매핑 잔여 회기 (미래 일정)';
 
 const EMPTY_CALENDAR_SESSION_LABEL = Object.freeze({
   label: '',
@@ -401,7 +401,7 @@ function resolveRemainingSessionsAtScheduleTime(total, sessionSequence) {
 /**
  * 월간 캘린더 회기 라벨 분기.
  * - 과거·완료(취소·휴가·가예약 제외): sessionSequence N → 해당 시점 잔여 `4/10회` (booking-sequence), 없으면 빈 문자열
- * - 미래만: sessionSequence 있으면 해당 예약 직후 잔여 `남3/10` (remaining), 없으면 remainingSessions fallback
+ * - 미래만: 매핑 `remainingSessions` SSOT (`남3/10`). sessionSequence로 미래 잔여 계산 금지.
  * @returns {CalendarSessionLabelResult}
  */
 export function resolveCalendarSessionLabel({
@@ -437,11 +437,8 @@ export function resolveCalendarSessionLabel({
     return EMPTY_CALENDAR_SESSION_LABEL;
   }
 
-  // 미래 일정만 잔여 회기 표시 — sessionSequence 우선(예약 시점), 없을 때만 매핑 remainingSessions
-  const remaining =
-    sequence !== null
-      ? resolveRemainingSessionsAtScheduleTime(total, sequence)
-      : parseScheduleSessionCount(remainingSessions);
+  // 미래 일정: 매핑 remainingSessions만 표시 (sessionSequence로 잔여 역산 금지)
+  const remaining = parseScheduleSessionCount(remainingSessions);
   if (remaining === null) {
     return EMPTY_CALENDAR_SESSION_LABEL;
   }

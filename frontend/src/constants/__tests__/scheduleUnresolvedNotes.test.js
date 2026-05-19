@@ -137,11 +137,11 @@ describe('resolveCalendarSessionLabel', () => {
     });
   });
 
-  it('미래 BOOKED는 sessionSequence 우선 (매핑 remainingSessions 무시)', () => {
+  it('미래 BOOKED는 remainingSessions SSOT (sessionSequence 무시)', () => {
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: 7,
-        remainingSessions: 7,
+        remainingSessions: 3,
         totalSessions: 10,
         status: 'BOOKED',
         isPast: false
@@ -160,9 +160,9 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: false
       })
     ).toEqual({
-      label: '남6/10',
+      label: '남5/10',
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: '남은 회기 6/10'
+      ariaLabel: '남은 회기 5/10'
     });
   });
 

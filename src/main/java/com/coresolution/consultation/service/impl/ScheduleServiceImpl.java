@@ -9,6 +9,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.constant.ScheduleStatus;
@@ -49,8 +51,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import java.util.Objects;
-import java.util.Optional;
 
 /**
  /**
@@ -290,7 +290,17 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 log.warn("예약 일정 변경 푸시 실패: scheduleId={}", saved.getId(), ex);
             }
         }
-        
+
+        boolean wasOccupyingConsultation = previousStatus != null
+                && previousStatus.occupiesTimeForConflictCheck()
+                && previousStatus != ScheduleStatus.TENTATIVE_PENDING_PAYMENT;
+        boolean nowOccupyingConsultation = saved.getStatus() != null
+                && saved.getStatus().occupiesTimeForConflictCheck()
+                && saved.getStatus() != ScheduleStatus.TENTATIVE_PENDING_PAYMENT;
+        if (nowOccupyingConsultation && !wasOccupyingConsultation) {
+            deductSessionForScheduleIfNeeded(saved);
+        }
+
         return saved;
     }
     
@@ -744,6 +754,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setDescription(newDescription);
         
         Schedule saved = scheduleRepository.save(schedule);
+        deductSessionForScheduleIfNeeded(saved);
         tryDispatchScheduleConfirmedExternalNotification(saved);
         try {
             mobilePushDispatchService.dispatchBookingConfirmed(saved.getTenantId(), saved);
@@ -1621,10 +1632,36 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         Integer totalSessions = mapping.getTotalSessions();
         Integer remainingSessions = mapping.getRemainingSessions();
-        if (totalSessions == null || totalSessions <= 1 || remainingSessions == null || remainingSessions <= 0) {
+        if (totalSessions == null || totalSessions < 1 || remainingSessions == null || remainingSessions <= 0) {
             return null;
         }
         return totalSessions - remainingSessions + 1;
+    }
+
+    /**
+     * 상담 일정이 회기 차감 대상인지 (CONSULTATION·내담자·상담사 존재).
+     */
+    private static boolean isConsultationScheduleForSessionDeduction(Schedule schedule) {
+        if (schedule == null || schedule.getClientId() == null || schedule.getConsultantId() == null) {
+            return false;
+        }
+        String scheduleType = schedule.getScheduleType();
+        return scheduleType == null || "CONSULTATION".equalsIgnoreCase(scheduleType);
+    }
+
+    /**
+     * 예약 확정·BOOKED 전환 등에서 회기 미차감 일정에 대해 멱등 차감·sessionSequence 저장.
+     * 이미 {@code sessionSequence}가 있으면 중복 차감하지 않는다.
+     */
+    private void deductSessionForScheduleIfNeeded(Schedule schedule) {
+        if (!isConsultationScheduleForSessionDeduction(schedule)) {
+            return;
+        }
+        if (schedule.getSessionSequence() != null) {
+            log.debug("회기 이미 차감됨(sessionSequence): scheduleId={}", schedule.getId());
+            return;
+        }
+        useSessionForMapping(schedule.getConsultantId(), schedule.getClientId(), schedule);
     }
 
     private void persistSessionSequenceBeforeDeduction(Schedule schedule, ConsultantClientMapping mapping) {
@@ -1646,43 +1683,61 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private void useSessionForMapping(Long consultantId, Long clientId, Schedule scheduleForSequence) {
         log.debug("📅 매칭 회기 사용 처리: 상담사 {}, 내담자 {}", consultantId, clientId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        
-        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            tenantId, ConsultantClientMapping.MappingStatus.ACTIVE);
-        
-        for (ConsultantClientMapping mapping : activeMappings) {
-            if (mapping.getConsultant().getId().equals(consultantId) && 
-                mapping.getClient().getId().equals(clientId)) {
-                
-                try {
-                    ConsultantClientMapping freshMapping = mappingRepository.findByTenantIdAndId(tenantId, mapping.getId())
-                            .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다: " + mapping.getId()));
-                    
-                    log.info("🔍 매칭 상태 확인: mappingId={}, totalSessions={}, usedSessions={}, remainingSessions={}", 
-                            freshMapping.getId(), freshMapping.getTotalSessions(), 
-                            freshMapping.getUsedSessions(), freshMapping.getRemainingSessions());
 
-                    persistSessionSequenceBeforeDeduction(scheduleForSequence, freshMapping);
-                    
-                    freshMapping.useSession();
-                    mappingRepository.save(freshMapping);
-                    
-                    try {
-                        sessionSyncService.syncAfterSessionUsage(mapping.getId(), consultantId, clientId);
-                        log.info("✅ 회기 사용 후 동기화 완료: mappingId={}", mapping.getId());
-                    } catch (Exception syncError) {
-                        log.error("❌ 회기 사용 후 동기화 실패: mappingId={}, error={}", 
-                                 mapping.getId(), syncError.getMessage(), syncError);
-                    }
-                    
-                    log.info("✅ 회기 사용 완료: 남은 회기 수 {}", mapping.getRemainingSessions());
-                } catch (Exception e) {
-                    log.error("❌ 회기 사용 처리 실패: {}", e.getMessage(), e);
-                    throw new RuntimeException("회기 사용 처리에 실패했습니다: " + e.getMessage());
+        Optional<ConsultantClientMapping> mappingOpt = mappingRepository
+                .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId);
+        if (mappingOpt.isEmpty()) {
+            List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
+                    tenantId, ConsultantClientMapping.MappingStatus.ACTIVE);
+            for (ConsultantClientMapping mapping : activeMappings) {
+                if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)) {
+                    mappingOpt = Optional.of(mapping);
+                    break;
                 }
-                break;
             }
+        }
+        if (mappingOpt.isEmpty()) {
+            log.warn("회기 차감 대상 매핑 없음: consultantId={}, clientId={}", consultantId, clientId);
+            return;
+        }
+
+        try {
+            Long mappingId = mappingOpt.get().getId();
+            ConsultantClientMapping freshMapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
+                    .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다: " + mappingId));
+
+            MappingStatus mappingStatus = freshMapping.getStatus();
+            if (mappingStatus != MappingStatus.ACTIVE && mappingStatus != MappingStatus.SESSIONS_EXHAUSTED) {
+                log.warn("회기 차감 불가 매핑 상태: mappingId={}, status={}", mappingId, mappingStatus);
+                return;
+            }
+            Integer remaining = freshMapping.getRemainingSessions();
+            if (remaining == null || remaining <= 0) {
+                log.warn("사용 가능한 회기 없음: mappingId={}, remaining={}", mappingId, remaining);
+                return;
+            }
+
+            log.info("🔍 매칭 상태 확인: mappingId={}, totalSessions={}, usedSessions={}, remainingSessions={}",
+                    freshMapping.getId(), freshMapping.getTotalSessions(),
+                    freshMapping.getUsedSessions(), freshMapping.getRemainingSessions());
+
+            persistSessionSequenceBeforeDeduction(scheduleForSequence, freshMapping);
+
+            freshMapping.useSession();
+            mappingRepository.save(freshMapping);
+
+            try {
+                sessionSyncService.syncAfterSessionUsage(mappingId, consultantId, clientId);
+                log.info("✅ 회기 사용 후 동기화 완료: mappingId={}", mappingId);
+            } catch (Exception syncError) {
+                log.error("❌ 회기 사용 후 동기화 실패: mappingId={}, error={}",
+                        mappingId, syncError.getMessage(), syncError);
+            }
+
+            log.info("✅ 회기 사용 완료: 남은 회기 수 {}", freshMapping.getRemainingSessions());
+        } catch (Exception e) {
+            log.error("❌ 회기 사용 처리 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("회기 사용 처리에 실패했습니다: " + e.getMessage());
         }
     }
 

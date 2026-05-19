@@ -1,0 +1,42 @@
+-- =============================================================================
+-- 개발 DB 전용: 회기 차감·session_sequence 불일치 수동 보정 템플릿
+-- 자동 실행·CI·Flyway에 포함하지 말 것. DBA/개발자가 사전 조회 후 선택 실행.
+-- =============================================================================
+
+-- (1) 비취소 상담 일정 수 vs 매핑 used_sessions 불일치 (예: client_id=27)
+-- SELECT m.id AS mapping_id, m.client_id, m.total_sessions, m.used_sessions, m.remaining_sessions,
+--        COUNT(s.id) AS active_schedule_count
+-- FROM consultant_client_mappings m
+-- JOIN schedules s ON s.tenant_id = m.tenant_id
+--   AND s.consultant_id = (SELECT consultant_id FROM consultant_client_mappings WHERE id = m.id LIMIT 1)
+--   AND s.client_id = m.client_id
+--   AND (s.is_deleted = 0 OR s.is_deleted IS NULL)
+--   AND s.schedule_type = 'CONSULTATION'
+--   AND s.status IN ('BOOKED', 'CONFIRMED', 'COMPLETED', 'IN_PROGRESS')
+-- WHERE m.tenant_id = 'YOUR_TENANT_ID'
+--   AND m.client_id = 27
+-- GROUP BY m.id;
+
+-- (2) session_sequence NULL인 BOOKED/CONFIRMED 상담 일정
+-- SELECT id, client_id, consultant_id, status, date, start_time, session_sequence
+-- FROM schedules
+-- WHERE tenant_id = 'YOUR_TENANT_ID'
+--   AND client_id = 27
+--   AND schedule_type = 'CONSULTATION'
+--   AND status IN ('BOOKED', 'CONFIRMED')
+--   AND session_sequence IS NULL
+--   AND (is_deleted = 0 OR is_deleted IS NULL);
+
+-- (3) schedule_id=82 예시 — 차감·순번 보정 (실행 전 (1)(2)로 매핑·일정 상태 확인)
+-- UPDATE consultant_client_mappings
+-- SET used_sessions = used_sessions + 1,
+--     remaining_sessions = GREATEST(0, remaining_sessions - 1),
+--     status = CASE WHEN remaining_sessions - 1 <= 0 THEN 'SESSIONS_EXHAUSTED' ELSE status END
+-- WHERE id = YOUR_MAPPING_ID AND remaining_sessions > 0;
+--
+-- UPDATE schedules
+-- SET session_sequence = (
+--   SELECT total_sessions - remaining_sessions + 1
+--   FROM consultant_client_mappings WHERE id = YOUR_MAPPING_ID
+-- )
+-- WHERE id = 82 AND session_sequence IS NULL;

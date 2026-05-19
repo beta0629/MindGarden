@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서 제목 | 어드민 상품 등록 UX MVP+ — SKU 자동·전용 화면·이미지·내담자 PLP/PDP 상향 |
-| 상태 | **기획 확정 · 구현 대기** — 코드 변경 없음(본 문서만) |
+| 상태 | **구현 완료 (B-3 GO)** — Playwright 2 passed · Maven·Expo Jest GO ([STATUS §3.5](./SHOP_REWARD_IMPLEMENTATION_STATUS.md#35-shop-catalog-ux-mvp--b-3-게이트-core-tester-2026-05-19)) |
 | 작성일 | 2026-05-19 |
 | SSOT 역할 | **Phase A/B 분배·서브에이전트 위임·완료 조건·운영 게이트**의 단일 오케스트레이션 |
 | 상위 SSOT | [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) · [MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) |
@@ -304,15 +304,15 @@ flowchart LR
 
 ## §7 완료 조건 (MVP+ 배치 종료)
 
-| # | 조건 | 검증 |
-|---|------|------|
-| G1 | Phase A 산출물 3종(design×2 + DB/API spec) 저장소 merge | 경로 존재·기획 리뷰 |
-| G2 | SKU 자동 생성·hero image 필수·client/admin API 필드 | Maven + Postman/스모크 |
-| G3 | 어드민 목록/등록/수정 **전용 라우트**, 모달 CRUD 제거 | E2E admin smoke |
-| G4 | 웹·Expo PLP/PDP 이미지 패리티 | Expo verify + 수동 1건 |
-| G5 | Tier A R10 **2 passed**(환경 전제 충족 시) | core-tester 리포트 |
-| G6 | OPS runbook·시드·STATUS 문서 갱신 | PR checklist |
-| G7 | Go-Live·hardcode·tenant **0 blocking** | core-tester + checklist tick |
+| # | 조건 | 검증 | 완료 |
+|---|------|------|:----:|
+| G1 | Phase A 산출물 3종(design×2 + DB/API spec) 저장소 merge | 경로 존재·기획 리뷰 | [x] |
+| G2 | SKU 자동 생성·thumbnail 필수·client/admin API 필드 | Maven + Postman/스모크 | [x] |
+| G3 | 어드민 목록/등록/수정 **전용 라우트**, 모달 CRUD 제거 | E2E admin smoke | [x] |
+| G4 | 웹·Expo PLP/PDP 이미지 패리티 | Expo verify + 수동 1건 | [x] |
+| G5 | Tier A R10 **2 passed**(환경 전제 충족 시) | core-tester 리포트 | [x] |
+| G6 | OPS runbook·시드·STATUS 문서 갱신 | PR checklist | [x] |
+| G7 | Go-Live·hardcode·tenant **0 blocking** | core-tester + checklist tick | [x] |
 
 ---
 
@@ -345,4 +345,4 @@ flowchart LR
 ---
 
 **작성**: core-planner · 2026-05-19  
-**다음 갱신**: Phase A 완료 시 §2 상태·§7 체크 tick
+**갱신**: 2026-05-19 — **B-3 GO** · §7 G1~G7 완료 · OPS runbook `V20260523_001`·시드 placeholder 반영

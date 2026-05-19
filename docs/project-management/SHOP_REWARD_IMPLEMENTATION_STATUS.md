@@ -2,8 +2,9 @@
 
 | 항목 | 내용 |
 |------|------|
-| 일자 | 2026-05-19 (Shop Catalog UX MVP+ B-3 게이트) |
-| 범위 | Shop P1 + P2 (web·admin·Expo·환불·fulfillment·ERP 훅·컴포넌트 게이트) |
+| 일자 | 2026-05-19 (Shop Catalog UX MVP+ B-3 GO · 문서 마무리) |
+| 범위 | Shop P1 + P2 + **MVP+** (어드민 전용 SKU 폼·대표 이미지·웹·Expo PLP/PDP 썸네일) |
+| **MVP+ 한 줄** | 어드민 목록/등록·수정 전용 라우트 + SKU 자동 + `thumbnailUrl` 필수 업로드 + 내담자 웹·Expo 카탈로그 썸네일 (`V20260523_001`) |
 | SSOT | [SHOP_P2_INTEGRATION_TEST_REPORT.md](./SHOP_P2_INTEGRATION_TEST_REPORT.md), [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) §3 |
 | 코드 수정 | **없음** (문서만) |
 | 커밋 | MVP+ B-3 Playwright after deploy (§1.0.8 · §3.5) — develop BE `05f2c2510` · FE `92b89bb44` · Expo `b7a2f8e77` |
@@ -258,6 +259,9 @@ Shop 전용 `*.test.js` **없음**.
 | V20260519_007 | `V20260519_007__shop_catalog_category_column.sql` | `shop_catalog_skus.catalog_category` | ☐ |
 | V20260520_001 | `V20260520_001__shop_catalog_sku_price_history.sql` | `shop_catalog_sku_price_history` (R3) | ☐ |
 | V20260521_001 | `V20260521_001__lnb_admin_shop_reward_menus.sql` | LNB 「쇼핑·리워드」 메뉴 4건 (어드민) | ☐ |
+| V20260522_001 | `V20260522_001__shop_reward_activate_tenant_components_backfill.sql` | Shop 3종 tenant_components 백필 | ☐ |
+| V20260522_002 | `V20260522_002__shop_reward_default_components_onboarding.sql` | 온보딩 기본 컴포넌트 | ☐ |
+| V20260523_001 | `V20260523_001__shop_catalog_sku_thumbnail_url.sql` | `shop_catalog_skus.thumbnail_url` (MVP+ PLP/PDP) | ☐ |
 
 **이력 주의**: 구버전 `V20260519_001__shop_catalog_category_column.sql` 로 이미 적용된 DB는 `catalog_category` 컬럼·`flyway_schema_history` 수동 확인 후 007 중복 적용 방지 ([SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md) §1).
 
@@ -282,7 +286,7 @@ SELECT component_code FROM component_catalog WHERE component_code IN ('CLIENT_SH
 | **Web client** | `/client/shop/*` PLP·cart·checkout·points·orders·PDP·`ClientTenantComponentGate` |
 | **Web admin** | `/admin/shop/catalog-skus`, `point-policies`, `orders`+refund |
 | **Expo** | `(client)/(shop)/` 7화면, 더보기 진입, `useTenantComponentFlags` — [EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md](./EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md) |
-| **MVP+** | SKU 코드 자동·전용 어드민 등록 폼·hero image 필수·PLP/PDP 썸네일 — develop BE `05f2c2510` · FE `92b89bb44` |
+| **MVP+** | 어드민 전용 등록/수정 폼·SKU 자동·`thumbnailUrl` 필수·웹·Expo PLP/PDP 썸네일 — Flyway `V20260523_001` · B-3 **GO** ([§3.5](#35-shop-catalog-ux-mvp--b-3-게이트-core-tester-2026-05-19)) |
 
 ### 3.5 Shop Catalog UX MVP+ — B-3 게이트 (core-tester, 2026-05-19)
 

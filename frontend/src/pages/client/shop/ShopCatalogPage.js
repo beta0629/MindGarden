@@ -14,8 +14,12 @@ import ShopCategoryTabs from '../../../components/shop/molecules/ShopCategoryTab
 import SkuCard from '../../../components/shop/molecules/SkuCard';
 import {
   SHOP_CATALOG_CATEGORY,
+  SHOP_CATEGORY_TABS,
   CLIENT_SHOP_ROUTES,
   CLIENT_SHOP_TEST_IDS,
+  CLIENT_SHOP_CATALOG_EMPTY_TEST_ID,
+  SHOP_SKU_ADD_FIRST_TEST_ID,
+  normalizeShopCatalogCategory,
   buildShopSkuDetailPath
 } from '../../../constants/clientShopConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
@@ -32,17 +36,21 @@ const ShopCatalogPage = () => {
   const [catalog, setCatalog] = useState([]);
   const [activeCategory, setActiveCategory] = useState(SHOP_CATALOG_CATEGORY.CONSULTATION);
   const [loading, setLoading] = useState(false);
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
   const [message, setMessage] = useState('');
 
   const loadCatalog = useCallback(async () => {
     try {
       setLoading(true);
+      setCatalogLoaded(false);
       setMessage('');
       setCatalog(await fetchShopCatalog());
     } catch (e) {
+      setCatalog([]);
       setMessage(e.message || '카탈로그를 불러오지 못했습니다.');
     } finally {
       setLoading(false);
+      setCatalogLoaded(true);
     }
   }, []);
 
@@ -53,9 +61,32 @@ const ShopCatalogPage = () => {
   }, [sessionLoading, isLoggedIn, loadCatalog]);
 
   const filteredCatalog = useMemo(
-    () => catalog.filter((row) => row.catalogCategory === activeCategory),
+    () =>
+      catalog.filter(
+        (row) => normalizeShopCatalogCategory(row.catalogCategory) === activeCategory
+      ),
     [catalog, activeCategory]
   );
+
+  useEffect(() => {
+    if (!catalogLoaded || catalog.length === 0) {
+      return;
+    }
+    const hasInActiveTab = catalog.some(
+      (row) => normalizeShopCatalogCategory(row.catalogCategory) === activeCategory
+    );
+    if (hasInActiveTab) {
+      return;
+    }
+    const tabWithSkus = SHOP_CATEGORY_TABS.find((tab) =>
+      catalog.some(
+        (row) => normalizeShopCatalogCategory(row.catalogCategory) === tab.key
+      )
+    );
+    if (tabWithSkus) {
+      setActiveCategory(tabWithSkus.key);
+    }
+  }, [catalog, catalogLoaded, activeCategory]);
 
   const handleAddToCart = async (skuCode) => {
     try {
@@ -87,12 +118,17 @@ const ShopCatalogPage = () => {
           {message}
         </p>
       ) : null}
-      {loading && catalog.length === 0 ? (
-        <p className="client-shop__message">불러오는 중…</p>
+      {loading && !catalogLoaded ? (
+        <p className="client-shop__message" data-testid={CLIENT_SHOP_TEST_IDS.CATALOG_LOADING}>
+          불러오는 중…
+        </p>
       ) : null}
-      {filteredCatalog.length === 0 ? (
-        <p className="client-shop__empty">이 카테고리에 노출된 상품이 없습니다.</p>
-      ) : (
+      {catalogLoaded && filteredCatalog.length === 0 ? (
+        <p className="client-shop__empty" data-testid={CLIENT_SHOP_CATALOG_EMPTY_TEST_ID}>
+          이 카테고리에 노출된 상품이 없습니다.
+        </p>
+      ) : null}
+      {filteredCatalog.length > 0 ? (
         <div className="client-shop__grid" role="list">
           {filteredCatalog.map((sku, index) => (
             <SkuCard
@@ -101,11 +137,11 @@ const ShopCatalogPage = () => {
               loading={loading}
               detailTo={buildShopSkuDetailPath(sku.skuCode)}
               onAddToCart={() => handleAddToCart(sku.skuCode)}
-              addButtonTestId={index === 0 ? 'shop-sku-add-first' : null}
+              addButtonTestId={index === 0 ? SHOP_SKU_ADD_FIRST_TEST_ID : null}
             />
           ))}
         </div>
-      )}
+      ) : null}
     </ShopClientLayout>
   );
 };

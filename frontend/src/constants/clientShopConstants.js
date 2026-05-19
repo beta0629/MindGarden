@@ -126,6 +126,26 @@ export const SHOP_CATALOG_CATEGORY = {
   ASSESSMENT: 'ASSESSMENT'
 };
 
+/**
+ * PLP 탭 필터용 — API·DB 대소문자·공백 차이 흡수.
+ *
+ * @param {string|undefined|null} value
+ * @returns {string}
+ */
+export const normalizeShopCatalogCategory = (value) => {
+  const raw = typeof value === 'string' ? value.trim().toUpperCase() : '';
+  if (raw === SHOP_CATALOG_CATEGORY.ASSESSMENT) {
+    return SHOP_CATALOG_CATEGORY.ASSESSMENT;
+  }
+  return SHOP_CATALOG_CATEGORY.CONSULTATION;
+};
+
+/** E2E·Playwright — 첫 노출 SKU 「담기」 */
+export const SHOP_SKU_ADD_FIRST_TEST_ID = 'shop-sku-add-first';
+
+/** E2E — 활성 탭에 SKU 없음(로딩 완료 후) */
+export const CLIENT_SHOP_CATALOG_EMPTY_TEST_ID = 'client-shop-catalog-empty';
+
 /** PLP 탭 — 라벨만 UI 상수, 필터 키는 API catalogCategory */
 export const SHOP_CATEGORY_TABS = [
   { key: SHOP_CATALOG_CATEGORY.CONSULTATION, label: '상담 패키지' },
@@ -163,6 +183,7 @@ export const CLIENT_REWARD_UNAVAILABLE_COPY = {
 export const CLIENT_SHOP_TEST_IDS = {
   SESSION_LOADING: 'client-shop-session-loading',
   CATALOG_PAGE: 'client-shop-catalog-page',
+  CATALOG_LOADING: 'client-shop-catalog-loading',
   CART_PAGE: 'client-shop-cart-page'
 };
 

@@ -47,3 +47,14 @@ WHERE NOT EXISTS (
       AND s.sku_code = 'DEV-CONSULT-DEMO-01'
       AND s.is_deleted = 0
 );
+
+-- 기존 행이 있으면 PLP·E2E 전제(catalog_visible·active·CONSULTATION) 맞춤
+UPDATE shop_catalog_skus
+SET
+    catalog_category = 'CONSULTATION',
+    catalog_visible = 1,
+    active = 1,
+    is_deleted = 0
+WHERE tenant_id = @tenant_id
+  AND sku_code = 'DEV-CONSULT-DEMO-01'
+  AND is_deleted = 0;

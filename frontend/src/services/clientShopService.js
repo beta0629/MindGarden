@@ -7,13 +7,28 @@
 
 import StandardizedApi from '../utils/standardizedApi';
 import { CLIENT_SHOP_API } from '../constants/clientShopApi';
+import { normalizeShopCatalogCategory } from '../constants/clientShopConstants';
 
 const unwrap = (res) => (res && res.success ? res.data : null);
+
+/**
+ * @param {object} row
+ * @returns {object}
+ */
+const mapCatalogRow = (row) => {
+  if (!row || typeof row !== 'object') {
+    return row;
+  }
+  return {
+    ...row,
+    catalogCategory: normalizeShopCatalogCategory(row.catalogCategory)
+  };
+};
 
 export const fetchShopCatalog = async () => {
   const res = await StandardizedApi.get(CLIENT_SHOP_API.CATALOG);
   const data = unwrap(res);
-  return Array.isArray(data) ? data : [];
+  return Array.isArray(data) ? data.map(mapCatalogRow) : [];
 };
 
 export const fetchShopCart = async () => {

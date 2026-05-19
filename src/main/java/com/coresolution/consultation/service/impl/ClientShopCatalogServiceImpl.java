@@ -44,7 +44,11 @@ public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
 
     private static String resolveCatalogCategory(ShopCatalogSku s) {
         if (s.getCatalogCategory() != null && !s.getCatalogCategory().isBlank()) {
-            return s.getCatalogCategory().trim();
+            String normalized = s.getCatalogCategory().trim().toUpperCase();
+            if (ShopCatalogCategory.ASSESSMENT.equals(normalized)) {
+                return ShopCatalogCategory.ASSESSMENT;
+            }
+            return ShopCatalogCategory.CONSULTATION;
         }
         String code = s.getSkuCode();
         if (code != null) {

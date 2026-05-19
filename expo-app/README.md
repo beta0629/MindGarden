@@ -45,15 +45,20 @@ eas secret:create --scope project --name EXPO_PUBLIC_NAVER_CLIENT_SECRET --type 
 
 또는 [Expo 대시보드](https://expo.dev) → 해당 프로젝트 → **Environment variables**에서 **위와 동일한 변수 이름**으로 추가합니다.
 
-### DEV APK + 푸시 토큰 (로컬, `EAS_PROJECT_ID` 필요)
+### DEV APK / iOS + 푸시 토큰 (`EAS_PROJECT_ID` + 플랫폼 Credentials)
 
 ```bash
 cd expo-app && npx eas-cli login && npx eas-cli init --id da41eca0-daad-4825-baf7-16cd3c71e6cd && npx eas-cli project:info
 # .env: EAS_PROJECT_ID=da41eca0-daad-4825-baf7-16cd3c71e6cd (및 EXPO_PUBLIC_EAS_PROJECT_ID 동일)
-EAS_PROJECT_ID='da41eca0-daad-4825-baf7-16cd3c71e6cd' npm run android:apk:dev   # 또는 .env 에 넣은 뒤 npm run android:apk:dev
+EAS_PROJECT_ID='da41eca0-daad-4825-baf7-16cd3c71e6cd' npm run android:apk:dev   # Android: google-services.json + Expo FCM V1
+bash ./scripts/build-ios-eas-internal-dev.sh   # iOS: Expo 대시보드 APNs Push Key + 실기기/TestFlight
 ```
 
-`.env`·토큰 값은 **git에 커밋하지 않음**. 상세: [`MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md`](../docs/project-management/MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md) §2.
+- **Android**: `google-services.json`(로컬 prebuild) + Expo **FCM V1** — §2.2.
+- **iOS**: Apple App ID Push ON + **APNs Auth Key(.p8)** → Expo **Push Key** — §2.3. `aps-environment`는 EAS가 관리.
+- **서버 발송**: Android·iOS 공통 `EXPO_ACCESS_TOKEN`(iOS 전용 env 없음).
+
+`.env`·`.p8`·토큰 값은 **git에 커밋하지 않음**. 상세: [`MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md`](../docs/project-management/MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md) §2.
 
 ### GitHub Actions에서 빌드할 때만
 

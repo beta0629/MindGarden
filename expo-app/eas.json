@@ -30,6 +30,9 @@
     "internal-dev": {
       "developmentClient": false,
       "distribution": "internal",
+      "ios": {
+        "simulator": false
+      },
       "android": {
         "buildType": "apk"
       },

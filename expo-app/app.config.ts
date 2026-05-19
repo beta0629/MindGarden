@@ -130,6 +130,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       {
         icon: './assets/images/notification-icon.png',
         color: appCfgColors.consultantPrimary,
+        /** iOS UIBackgroundModes `remote-notification` — EAS가 APNs entitlements 관리(aps-environment 수동 하드코딩 금지) */
+        enableBackgroundRemoteNotifications: true,
       },
     ],
     [
@@ -194,7 +196,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       supportsTablet: true,
       bundleIdentifier: 'com.mindgarden.MindGardenMobile',
       infoPlist: {
-        UIBackgroundModes: ['audio'],
+        UIBackgroundModes: ['audio', 'remote-notification'],
         NSCameraUsageDescription:
           'QR 코드 스캔과 프로필 사진 촬영을 위해 카메라 접근이 필요합니다.',
         NSMicrophoneUsageDescription: '음성 메시지를 위해 마이크 접근이 필요합니다.',

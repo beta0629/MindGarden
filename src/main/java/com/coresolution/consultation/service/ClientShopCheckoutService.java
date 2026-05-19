@@ -88,4 +88,13 @@ public interface ClientShopCheckoutService {
      * @return 해당 테넌트에 쇼핑 주문이 있으면 {@code true}, 없으면 {@code false}
      */
     boolean releaseOrderHoldOnPaymentFailure(String tenantId, String orderPublicId);
+
+    /**
+     * hold TTL 만료 시 포인트 hold를 해제하고 주문을 {@code EXPIRED}로 전이한다 (멱등).
+     *
+     * @param tenantId       테넌트 ID
+     * @param orderPublicId  주문 공개 ID
+     * @return 이번 호출에서 {@code EXPIRED}로 전이했으면 {@code true}, 주문 없음·이미 종료 상태면 {@code false}
+     */
+    boolean expireOrderHold(String tenantId, String orderPublicId);
 }

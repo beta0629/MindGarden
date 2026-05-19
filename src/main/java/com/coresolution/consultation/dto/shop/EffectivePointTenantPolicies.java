@@ -15,7 +15,8 @@ public record EffectivePointTenantPolicies(
         boolean allowPgMix,
         boolean allowPointsOnly,
         int earnRatePercentBps,
-        long earnCapPerOrderMinor) {
+        long earnCapPerOrderMinor,
+        int holdTtlMinutes) {
 
     /** 포인트 전액 결제 시 적립 기준: subtotal (스펙 §3 과세/할인 후 기준 금액) */
     private static final boolean EARN_ON_SUBTOTAL_FOR_POINTS_ONLY = true;
@@ -33,7 +34,8 @@ public record EffectivePointTenantPolicies(
                 readBoolean(policies.get(PointTenantPolicyKeys.ALLOW_PG_MIX), true),
                 readBoolean(policies.get(PointTenantPolicyKeys.ALLOW_POINTS_ONLY), true),
                 readPercentBps(policies.get(PointTenantPolicyKeys.EARN_RATE)),
-                readAmountMinor(policies.get(PointTenantPolicyKeys.EARN_CAP_PER_ORDER)));
+                readAmountMinor(policies.get(PointTenantPolicyKeys.EARN_CAP_PER_ORDER)),
+                readMinutes(policies.get(PointTenantPolicyKeys.HOLD_TTL_MINUTES), 30));
     }
 
     /**
@@ -96,5 +98,15 @@ public record EffectivePointTenantPolicies(
             return bool;
         }
         return defaultValue;
+    }
+
+    private static int readMinutes(Object value, int defaultMinutes) {
+        if (value instanceof Map<?, ?> map) {
+            Object minutes = map.get("minutes");
+            if (minutes instanceof Number number) {
+                return Math.max(0, number.intValue());
+            }
+        }
+        return defaultMinutes;
     }
 }

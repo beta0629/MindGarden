@@ -1,5 +1,6 @@
 package com.coresolution.consultation.integration;
 
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -13,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.coresolution.consultation.dto.shop.admin.CatalogVisiblePatchRequest;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminItem;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuPriceHistoryItem;
 import com.coresolution.consultation.service.AdminShopCatalogSkuService;
 import com.coresolution.core.constant.PlatformComponentCodes;
 import com.coresolution.core.context.TenantContextHolder;
@@ -128,6 +130,20 @@ class AdminShopCatalogSkuControllerMvcTest {
     }
 
     @Test
+    @DisplayName("GET 목록 — ADMIN_SHOP_CATALOG 비활성 시 403")
+    @WithMockUser(roles = {"ADMIN"})
+    void list_whenComponentInactive_returns403() throws Exception {
+        when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG))
+                .thenReturn(false);
+
+        mockMvc.perform(get(LIST_PATH))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false));
+
+        verify(adminShopCatalogSkuService, never()).listAllForTenant(tenantId);
+    }
+
+    @Test
     @DisplayName("GET 목록 — CLIENT 역할 시 403")
     @WithMockUser(roles = {"CLIENT"})
     void list_whenClientRole_returnsForbidden() throws Exception {
@@ -135,6 +151,45 @@ class AdminShopCatalogSkuControllerMvcTest {
                 .thenReturn(true);
 
         mockMvc.perform(get(LIST_PATH)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("GET price-history — ADMIN·컴포넌트 활성 시 200")
+    @WithMockUser(roles = {"ADMIN"})
+    void listPriceHistory_whenAdmin_returns200() throws Exception {
+        long skuId = 42L;
+        ShopCatalogSkuPriceHistoryItem item = new ShopCatalogSkuPriceHistoryItem(
+                1L,
+                skuId,
+                "SKU-HIST",
+                9000L,
+                "KRW",
+                LocalDateTime.now(),
+                "admin@test.local");
+
+        when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG))
+                .thenReturn(true);
+        when(adminShopCatalogSkuService.listPriceHistory(tenantId, skuId, 50)).thenReturn(List.of(item));
+
+        mockMvc.perform(get(LIST_PATH + "/" + skuId + "/price-history"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].unitPriceMinor").value(9000));
+
+        verify(adminShopCatalogSkuService).listPriceHistory(tenantId, skuId, 50);
+    }
+
+    @Test
+    @DisplayName("GET price-history — 컴포넌트 비활성 시 403")
+    @WithMockUser(roles = {"ADMIN"})
+    void listPriceHistory_whenComponentInactive_returns403() throws Exception {
+        when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG))
+                .thenReturn(false);
+
+        mockMvc.perform(get(LIST_PATH + "/1/price-history"))
+                .andExpect(status().isForbidden());
+
+        verify(adminShopCatalogSkuService, never()).listPriceHistory(eq(tenantId), eq(1L), anyInt());
     }
 
     @Test

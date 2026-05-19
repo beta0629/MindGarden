@@ -508,6 +508,11 @@ scheduler:
     enabled: ${SCHEDULER_SESSION_CLEANUP_ENABLED:true}
     cron: ${SCHEDULER_SESSION_CLEANUP_CRON:0 */5 * * * *}  # 매 5분마다
 
+  # 쇼핑 미결제 주문 hold TTL 만료
+  shop-order-hold-expiry:
+    enabled: ${SCHEDULER_SHOP_ORDER_HOLD_EXPIRY_ENABLED:true}
+    cron: ${SCHEDULER_SHOP_ORDER_HOLD_EXPIRY_CRON:0 */5 * * * *}  # 매 5분마다
+
   # 11. 스키마 변경 감지 스케줄러
   schema-change-detection:
     enabled: ${SCHEDULER_SCHEMA_CHANGE_DETECTION_ENABLED:true}

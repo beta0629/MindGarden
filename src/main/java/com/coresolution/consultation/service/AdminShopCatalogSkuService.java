@@ -2,6 +2,7 @@ package com.coresolution.consultation.service;
 
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminDetail;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminItem;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuPriceHistoryItem;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuUpsertRequest;
 import java.util.List;
 
@@ -22,4 +23,14 @@ public interface AdminShopCatalogSkuService {
     ShopCatalogSkuAdminDetail update(String tenantId, Long id, ShopCatalogSkuUpsertRequest request);
 
     void patchCatalogVisible(String tenantId, Long id, boolean catalogVisible);
+
+    /**
+     * SKU 단가 변경 이력(최근 N건).
+     *
+     * @param tenantId 테넌트 ID
+     * @param skuId SKU ID
+     * @param limit 최대 건수
+     * @return 변경 이력(최신순)
+     */
+    List<ShopCatalogSkuPriceHistoryItem> listPriceHistory(String tenantId, Long skuId, int limit);
 }

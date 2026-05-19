@@ -73,7 +73,7 @@ class AdminShopOrderRefundServiceImplTest {
         Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
-                .thenReturn(new EffectivePointTenantPolicies(0L, 0L, true, true, 500, 0L));
+                .thenReturn(new EffectivePointTenantPolicies(0L, 0L, true, true, 500, 0L, 30));
         when(clientPointWalletService.clawbackEarn(
                         eq(TENANT),
                         eq(42L),
@@ -112,7 +112,7 @@ class AdminShopOrderRefundServiceImplTest {
         ShopClientOrder order = paidOrder(5_000L, 0L, 0L);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
-                .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L));
+                .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L, 30));
 
         ShopOrderRefundResponse response = service.refundPaidOrder(TENANT, ORDER_ID, REASON);
 
@@ -129,7 +129,7 @@ class AdminShopOrderRefundServiceImplTest {
         Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
-                .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L));
+                .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L, 30));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
                 .thenReturn(Optional.of(payment));
@@ -149,7 +149,7 @@ class AdminShopOrderRefundServiceImplTest {
         Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
-                .thenReturn(new EffectivePointTenantPolicies(0L, 0L, true, true, 500, 0L));
+                .thenReturn(new EffectivePointTenantPolicies(0L, 0L, true, true, 500, 0L, 30));
         when(clientPointWalletService.clawbackEarn(
                         eq(TENANT),
                         eq(42L),

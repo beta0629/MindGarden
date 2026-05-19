@@ -20,7 +20,6 @@ import com.coresolution.consultation.dto.shop.ShopOrderResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderSummaryResponse;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentRequest;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentResponse;
-import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopCart;
 import com.coresolution.consultation.entity.ShopCartLine;
@@ -29,7 +28,6 @@ import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.entity.User;
-import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopCartLineRepository;
 import com.coresolution.consultation.repository.ShopCartRepository;
@@ -39,6 +37,7 @@ import com.coresolution.consultation.repository.ShopOrderFulfillmentEventReposit
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
+import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
@@ -70,7 +69,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final UserRepository userRepository;
     private final ShopOrderFulfillmentService shopOrderFulfillmentService;
     private final ShopOrderFulfillmentEventRepository shopOrderFulfillmentEventRepository;
-    private final ConsultantClientMappingRepository consultantClientMappingRepository;
+    private final ClientShopConsultantMappingService clientShopConsultantMappingService;
 
     @Override
     @Transactional
@@ -194,21 +193,21 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         if (!hasConsultation) {
             return null;
         }
+        List<Long> activeIds = clientShopConsultantMappingService.listActiveMappingIds(tenantId, clientUserId);
         if (request.getConsultantClientMappingId() != null) {
-            return request.getConsultantClientMappingId();
+            Long requested = request.getConsultantClientMappingId();
+            if (!activeIds.contains(requested)) {
+                throw new IllegalArgumentException(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_INVALID);
+            }
+            return requested;
         }
-        return findFirstActiveMappingId(tenantId, clientUserId);
-    }
-
-    private Long findFirstActiveMappingId(String tenantId, Long clientUserId) {
-        return consultantClientMappingRepository
-                .findByClientIdAndStatusNot(
-                        tenantId, clientUserId, ConsultantClientMapping.MappingStatus.INACTIVE)
-                .stream()
-                .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
-                .map(ConsultantClientMapping::getId)
-                .findFirst()
-                .orElse(null);
+        if (activeIds.isEmpty()) {
+            return null;
+        }
+        if (activeIds.size() == 1) {
+            return activeIds.get(0);
+        }
+        throw new IllegalArgumentException(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED);
     }
 
     private static void validateRedeemRequest(
@@ -422,6 +421,37 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     tenantId,
                     orderPublicId);
         }
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean expireOrderHold(String tenantId, String orderPublicId) {
+        Optional<ShopClientOrder> orderOpt =
+                shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId);
+        if (orderOpt.isEmpty()) {
+            return false;
+        }
+        ShopClientOrder order = orderOpt.get();
+        if (order.getStatus() == ShopClientOrderStatus.PAID
+                || order.getStatus() == ShopClientOrderStatus.CANCELLED
+                || order.getStatus() == ShopClientOrderStatus.EXPIRED
+                || order.getStatus() == ShopClientOrderStatus.REFUNDED) {
+            return false;
+        }
+        if (order.getStatus() != ShopClientOrderStatus.CREATED
+                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT) {
+            log.warn(
+                    "hold TTL 만료 스킵(비대상 상태): tenantId={}, orderPublicId={}, status={}",
+                    tenantId,
+                    orderPublicId,
+                    order.getStatus());
+            return false;
+        }
+        releasePointsHoldIfAny(tenantId, order.getClientId(), orderPublicId, order.getPointsRedeemMinor());
+        order.setStatus(ShopClientOrderStatus.EXPIRED);
+        shopClientOrderRepository.save(order);
+        log.info("쇼핑 주문 hold TTL 만료: tenantId={}, orderPublicId={}", tenantId, orderPublicId);
         return true;
     }
 

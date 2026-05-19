@@ -1,6 +1,7 @@
 package com.coresolution.consultation.integration;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -10,12 +11,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.shop.ShopCatalogSkuResponse;
+import com.coresolution.consultation.dto.shop.ShopConsultantMappingOption;
 import com.coresolution.consultation.dto.shop.ShopPointLedgerEntryResponse;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.service.ClientShopCartService;
 import com.coresolution.consultation.service.ClientShopCatalogService;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
+import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.core.constant.PlatformComponentCodes;
 import com.coresolution.core.service.TenantComponentActivationService;
 import com.coresolution.integrationtest.shop.ClientShopControllerMvcTestApplication;
@@ -58,6 +61,9 @@ class ClientShopControllerMvcTest {
 
     @MockBean
     private ClientShopCheckoutService clientShopCheckoutService;
+
+    @MockBean
+    private ClientShopConsultantMappingService clientShopConsultantMappingService;
 
     @MockBean
     private ClientPointWalletService clientPointWalletService;
@@ -116,6 +122,79 @@ class ClientShopControllerMvcTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].skuCode").value("SKU-P3"))
                 .andExpect(jsonPath("$.data[0].unitPriceMinor").value(12_000));
+    }
+
+    @Test
+    @DisplayName("GET catalog — CLIENT_SHOP 비활성 시 403")
+    @WithMockUser
+    void getCatalog_whenClientShopInactive_returns403() throws Exception {
+        String tenantId = UUID.randomUUID().toString();
+        when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_SHOP))
+                .thenReturn(false);
+
+        mockMvc.perform(get(BASE + "/catalog").session(clientSession(tenantId, 1L)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false));
+
+        verify(clientShopCatalogService, never()).listVisibleSkus(tenantId);
+    }
+
+    @Test
+    @DisplayName("GET consultant-mappings — CLIENT_SHOP 활성·매핑 1건")
+    @WithMockUser
+    void getConsultantMappings_whenActive_returns200() throws Exception {
+        String tenantId = UUID.randomUUID().toString();
+        long clientId = 5L;
+        ShopConsultantMappingOption option = ShopConsultantMappingOption.builder()
+                .mappingId(101L)
+                .consultantDisplayName("김상담")
+                .label("10회기")
+                .build();
+
+        when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_SHOP))
+                .thenReturn(true);
+        when(clientShopConsultantMappingService.listActiveMappingOptions(tenantId, clientId))
+                .thenReturn(List.of(option));
+
+        mockMvc.perform(get(BASE + "/consultant-mappings").session(clientSession(tenantId, clientId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].mappingId").value(101))
+                .andExpect(jsonPath("$.data[0].consultantDisplayName").value("김상담"))
+                .andExpect(jsonPath("$.data[0].label").value("10회기"));
+
+        verify(clientShopConsultantMappingService).listActiveMappingOptions(eq(tenantId), eq(clientId));
+    }
+
+    @Test
+    @DisplayName("GET consultant-mappings — CLIENT_SHOP 비활성 시 403")
+    @WithMockUser
+    void getConsultantMappings_whenClientShopInactive_returns403() throws Exception {
+        String tenantId = UUID.randomUUID().toString();
+        when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_SHOP))
+                .thenReturn(false);
+
+        mockMvc.perform(get(BASE + "/consultant-mappings").session(clientSession(tenantId, 3L)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false));
+
+        verify(clientShopConsultantMappingService, never()).listActiveMappingOptions(eq(tenantId), eq(3L));
+    }
+
+    @Test
+    @DisplayName("GET points/balance — CLIENT_REWARD 비활성 시 403")
+    @WithMockUser
+    void getPointBalance_whenClientRewardInactive_returns403() throws Exception {
+        String tenantId = UUID.randomUUID().toString();
+        long clientId = 11L;
+        when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_REWARD))
+                .thenReturn(false);
+
+        mockMvc.perform(get(BASE + "/points/balance").session(clientSession(tenantId, clientId)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false));
+
+        verify(clientPointWalletService, never()).getBalance(eq(tenantId), eq(clientId));
     }
 
     @Test

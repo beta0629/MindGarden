@@ -4,12 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuUpsertRequest;
 import com.coresolution.consultation.entity.ShopCatalogSku;
+import com.coresolution.consultation.entity.ShopCatalogSkuPriceHistory;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.repository.ShopCatalogSkuPriceHistoryRepository;
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -35,6 +38,9 @@ class AdminShopCatalogSkuServiceImplTest {
     @Mock
     private ShopCatalogSkuRepository shopCatalogSkuRepository;
 
+    @Mock
+    private ShopCatalogSkuPriceHistoryRepository shopCatalogSkuPriceHistoryRepository;
+
     @InjectMocks
     private AdminShopCatalogSkuServiceImpl adminShopCatalogSkuService;
 
@@ -59,6 +65,69 @@ class AdminShopCatalogSkuServiceImplTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> adminShopCatalogSkuService.create(TENANT, request));
+    }
+
+    @Test
+    @DisplayName("update — unit_price_minor 변경 시 이력 1건 저장")
+    void update_whenUnitPriceChanges_recordsPriceHistory() {
+        ShopCatalogSku row = new ShopCatalogSku();
+        row.setId(7L);
+        row.setTenantId(TENANT);
+        row.setSkuCode("PKG-01");
+        row.setTitle("패키지");
+        row.setUnitPriceMinor(10000L);
+        row.setCurrency("KRW");
+        row.setCatalogVisible(true);
+        row.setActive(true);
+        row.setSortOrder(0);
+
+        when(shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(7L, TENANT))
+                .thenReturn(Optional.of(row));
+        when(shopCatalogSkuRepository.existsByTenantIdAndSkuCodeAndIsDeletedFalseAndIdNot(TENANT, "PKG-01", 7L))
+                .thenReturn(false);
+        when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(shopCatalogSkuPriceHistoryRepository.save(any(ShopCatalogSkuPriceHistory.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        ShopCatalogSkuUpsertRequest request = new ShopCatalogSkuUpsertRequest(
+                "PKG-01", "패키지", null, 12000L, "KRW", true, true, 0);
+
+        adminShopCatalogSkuService.update(TENANT, 7L, request);
+
+        ArgumentCaptor<ShopCatalogSkuPriceHistory> captor = ArgumentCaptor.forClass(ShopCatalogSkuPriceHistory.class);
+        verify(shopCatalogSkuPriceHistoryRepository).save(captor.capture());
+        assertEquals(7L, captor.getValue().getSkuId());
+        assertEquals("PKG-01", captor.getValue().getSkuCode());
+        assertEquals(12000L, captor.getValue().getUnitPriceMinor());
+        assertEquals("KRW", captor.getValue().getCurrency());
+    }
+
+    @Test
+    @DisplayName("update — unit_price_minor 동일하면 이력 skip")
+    void update_whenUnitPriceUnchanged_skipsPriceHistory() {
+        ShopCatalogSku row = new ShopCatalogSku();
+        row.setId(8L);
+        row.setTenantId(TENANT);
+        row.setSkuCode("PKG-02");
+        row.setTitle("패키지2");
+        row.setUnitPriceMinor(5000L);
+        row.setCurrency("KRW");
+        row.setCatalogVisible(true);
+        row.setActive(true);
+        row.setSortOrder(0);
+
+        when(shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(8L, TENANT))
+                .thenReturn(Optional.of(row));
+        when(shopCatalogSkuRepository.existsByTenantIdAndSkuCodeAndIsDeletedFalseAndIdNot(TENANT, "PKG-02", 8L))
+                .thenReturn(false);
+        when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ShopCatalogSkuUpsertRequest request = new ShopCatalogSkuUpsertRequest(
+                "PKG-02", "패키지2", null, 5000L, "KRW", true, true, 0);
+
+        adminShopCatalogSkuService.update(TENANT, 8L, request);
+
+        verify(shopCatalogSkuPriceHistoryRepository, never()).save(any());
     }
 
     @Test

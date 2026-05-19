@@ -1,7 +1,10 @@
 package com.coresolution.consultation.repository;
 
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -41,4 +44,19 @@ public interface ShopClientOrderRepository extends BaseRepository<ShopClientOrde
     List<ShopClientOrder> findRecentByTenant(
             @Param("tenantId") String tenantId,
             Pageable pageable);
+
+    /**
+     * hold TTL 만료 대상: 미결제 상태이며 생성 시각이 cutoff 이전인 주문.
+     *
+     * @param tenantId 테넌트 ID
+     * @param statuses 대상 상태 (CREATED, PENDING_PAYMENT)
+     * @param cutoff   만료 기준 시각 (미만이면 만료)
+     * @return 만료 처리 대상 주문
+     */
+    @Query("SELECT o FROM ShopClientOrder o WHERE o.tenantId = :tenantId AND o.isDeleted = false "
+            + "AND o.status IN :statuses AND o.createdAt < :cutoff ORDER BY o.createdAt ASC")
+    List<ShopClientOrder> findHoldExpiredOrders(
+            @Param("tenantId") String tenantId,
+            @Param("statuses") Collection<ShopClientOrderStatus> statuses,
+            @Param("cutoff") LocalDateTime cutoff);
 }

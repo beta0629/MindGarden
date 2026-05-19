@@ -5,6 +5,7 @@ import com.coresolution.consultation.dto.shop.ShopCatalogSkuResponse;
 import com.coresolution.consultation.dto.shop.ShopCartResponse;
 import com.coresolution.consultation.dto.shop.ShopCheckoutRequest;
 import com.coresolution.consultation.dto.shop.ShopCheckoutResponse;
+import com.coresolution.consultation.dto.shop.ShopConsultantMappingOption;
 import com.coresolution.consultation.dto.shop.ShopOrderResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderSummaryResponse;
 import com.coresolution.consultation.dto.shop.ShopPointBalanceResponse;
@@ -15,6 +16,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.ClientShopCartService;
 import com.coresolution.consultation.service.ClientShopCatalogService;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
+import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.constant.PlatformComponentCodes;
@@ -22,7 +24,6 @@ import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.service.TenantComponentActivationService;
-import java.util.Collections;
 import java.util.List;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -55,9 +56,15 @@ import lombok.extern.slf4j.Slf4j;
 @PreAuthorize("isAuthenticated()")
 public class ClientShopController extends BaseApiController {
 
+    private static final String CLIENT_SHOP_DISABLED_MESSAGE =
+            "내담자 쇼핑몰 컴포넌트가 활성화되지 않았습니다.";
+    private static final String CLIENT_REWARD_DISABLED_MESSAGE =
+            "내담자 리워드 컴포넌트가 활성화되지 않았습니다.";
+
     private final ClientShopCatalogService clientShopCatalogService;
     private final ClientShopCartService clientShopCartService;
     private final ClientShopCheckoutService clientShopCheckoutService;
+    private final ClientShopConsultantMappingService clientShopConsultantMappingService;
     private final ClientPointWalletService clientPointWalletService;
     private final TenantComponentActivationService tenantComponentActivationService;
 
@@ -73,8 +80,9 @@ public class ClientShopController extends BaseApiController {
         String tenantId = requireTenant(user);
         try {
             TenantContextHolder.setTenantId(tenantId);
-            if (!tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_SHOP)) {
-                return success(Collections.emptyList());
+            ResponseEntity<ApiResponse<List<ShopCatalogSkuResponse>>> denied = requireClientShop(tenantId);
+            if (denied != null) {
+                return denied;
             }
             return success(clientShopCatalogService.listVisibleSkus(tenantId));
         } finally {
@@ -137,6 +145,10 @@ public class ClientShopController extends BaseApiController {
         String tenantId = requireTenant(user);
         try {
             TenantContextHolder.setTenantId(tenantId);
+            ResponseEntity<ApiResponse<ShopPointBalanceResponse>> denied = requireClientReward(tenantId);
+            if (denied != null) {
+                return denied;
+            }
             return success(clientPointWalletService.getBalance(tenantId, user.getId()));
         } finally {
             TenantContextHolder.clear();
@@ -159,10 +171,35 @@ public class ClientShopController extends BaseApiController {
         String tenantId = requireTenant(user);
         try {
             TenantContextHolder.setTenantId(tenantId);
-            if (!tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_REWARD)) {
-                return success(Collections.emptyList());
+            ResponseEntity<ApiResponse<List<ShopPointLedgerEntryResponse>>> denied = requireClientReward(tenantId);
+            if (denied != null) {
+                return denied;
             }
             return success(clientPointWalletService.listRecentLedger(tenantId, user.getId(), limit));
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
+    /**
+     * 체크아웃용 활성 상담사-내담자 매핑 목록 (PII 최소).
+     *
+     * @param session HTTP 세션
+     * @return 매핑 선택 옵션
+     */
+    @GetMapping("/consultant-mappings")
+    public ResponseEntity<ApiResponse<List<ShopConsultantMappingOption>>> listConsultantMappings(
+            HttpSession session) {
+
+        User user = requireClient(session);
+        String tenantId = requireTenant(user);
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            ResponseEntity<ApiResponse<List<ShopConsultantMappingOption>>> denied = requireClientShop(tenantId);
+            if (denied != null) {
+                return denied;
+            }
+            return success(clientShopConsultantMappingService.listActiveMappingOptions(tenantId, user.getId()));
         } finally {
             TenantContextHolder.clear();
         }
@@ -315,6 +352,20 @@ public class ClientShopController extends BaseApiController {
             throw new ClientShopAuthException("테넌트 정보가 없습니다.");
         }
         return tenantId.trim();
+    }
+
+    private <T> ResponseEntity<ApiResponse<T>> requireClientShop(String tenantId) {
+        if (tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_SHOP)) {
+            return null;
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(CLIENT_SHOP_DISABLED_MESSAGE));
+    }
+
+    private <T> ResponseEntity<ApiResponse<T>> requireClientReward(String tenantId) {
+        if (tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_REWARD)) {
+            return null;
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(CLIENT_REWARD_DISABLED_MESSAGE));
     }
 
     /**

@@ -20,6 +20,7 @@ public final class PointTenantPolicyKeys {
     public static final String MAX_REDEEM_PER_ORDER = "max_redeem_per_order";
     public static final String ALLOW_PG_MIX = "allow_pg_mix";
     public static final String ALLOW_POINTS_ONLY = "allow_points_only";
+    public static final String HOLD_TTL_MINUTES = "hold_ttl_minutes";
 
     private static final Set<String> MVP_KEYS = Set.of(
             EARN_RATE,
@@ -27,7 +28,8 @@ public final class PointTenantPolicyKeys {
             MIN_ORDER_FOR_REDEEM,
             MAX_REDEEM_PER_ORDER,
             ALLOW_PG_MIX,
-            ALLOW_POINTS_ONLY);
+            ALLOW_POINTS_ONLY,
+            HOLD_TTL_MINUTES);
 
     private static final Map<String, Object> DEFAULTS;
 
@@ -39,6 +41,7 @@ public final class PointTenantPolicyKeys {
         defaults.put(MAX_REDEEM_PER_ORDER, Map.of("amountMinor", 0L));
         defaults.put(ALLOW_PG_MIX, true);
         defaults.put(ALLOW_POINTS_ONLY, true);
+        defaults.put(HOLD_TTL_MINUTES, Map.of("minutes", 30));
         DEFAULTS = Collections.unmodifiableMap(defaults);
     }
 

@@ -54,6 +54,7 @@ class PointTenantPolicyServiceImplTest {
         assertEquals(0L, typed.maxRedeemPerOrderMinor());
         assertTrue(typed.allowPgMix());
         assertTrue(typed.allowPointsOnly());
+        assertEquals(30, typed.holdTtlMinutes());
     }
 
     @Test

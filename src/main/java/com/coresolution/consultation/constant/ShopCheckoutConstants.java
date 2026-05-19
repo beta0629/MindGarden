@@ -38,6 +38,12 @@ public final class ShopCheckoutConstants {
     /** CONSULTATION PAID → confirm-payment(4arg) 결제 수단 (PG 카드) */
     public static final String CONSULTATION_FULFILLMENT_PAYMENT_METHOD = PaymentConstants.METHOD_CARD;
 
+    /** 활성 매핑 2건 이상인데 체크아웃 요청에 mappingId 없음 */
+    public static final String MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED = "담당 상담사를 선택해 주세요.";
+
+    /** 요청 mappingId가 내담자 ACTIVE 매핑이 아님 */
+    public static final String MSG_CONSULTANT_MAPPING_INVALID = "유효하지 않은 상담 연결입니다.";
+
     /** 전액 환불 시 사용 포인트 복원 (원장 COMMIT_REVERSAL) */
     public static final String POINT_COMMIT_REVERSAL_SUFFIX = ":POINT_COMMIT_REVERSAL";
 

@@ -1,8 +1,10 @@
 package com.coresolution.consultation.controller;
 
+import com.coresolution.consultation.constant.ShopAdminOrderConstants;
 import com.coresolution.consultation.dto.shop.admin.CatalogVisiblePatchRequest;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminDetail;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminItem;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuPriceHistoryItem;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuUpsertRequest;
 import com.coresolution.consultation.service.AdminShopCatalogSkuService;
 import com.coresolution.core.constant.PlatformComponentCodes;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -61,6 +64,25 @@ public class AdminShopCatalogSkuController extends BaseApiController {
             return denied;
         }
         return success(adminShopCatalogSkuService.getForAdmin(tenantId, id));
+    }
+
+    /**
+     * SKU 단가 변경 이력(최신순, 최근 N건).
+     *
+     * @param id SKU ID
+     * @param limit 최대 건수 (기본 {@link ShopAdminOrderConstants#DEFAULT_LIST_LIMIT})
+     * @return 단가 이력 목록
+     */
+    @GetMapping("/{id}/price-history")
+    public ResponseEntity<ApiResponse<List<ShopCatalogSkuPriceHistoryItem>>> listPriceHistory(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "" + ShopAdminOrderConstants.DEFAULT_LIST_LIMIT) int limit) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<List<ShopCatalogSkuPriceHistoryItem>>> denied = requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        return success(adminShopCatalogSkuService.listPriceHistory(tenantId, id, limit));
     }
 
     @PostMapping

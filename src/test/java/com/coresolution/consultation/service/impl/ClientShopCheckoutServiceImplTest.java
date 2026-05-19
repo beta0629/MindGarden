@@ -26,14 +26,12 @@ import com.coresolution.consultation.dto.shop.ShopCheckoutResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderResponse;
 import com.coresolution.consultation.dto.shop.ShopPointBalanceResponse;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentRequest;
-import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.entity.ShopCart;
 import com.coresolution.consultation.entity.ShopCartLine;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
-import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopCartLineRepository;
 import com.coresolution.consultation.repository.ShopCartRepository;
@@ -42,6 +40,7 @@ import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ClientPointWalletService;
+import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
@@ -90,7 +89,7 @@ class ClientShopCheckoutServiceImplTest {
     @Mock
     private ShopOrderFulfillmentEventRepository shopOrderFulfillmentEventRepository;
     @Mock
-    private ConsultantClientMappingRepository consultantClientMappingRepository;
+    private ClientShopConsultantMappingService clientShopConsultantMappingService;
 
     @InjectMocks
     private ClientShopCheckoutServiceImpl service;
@@ -231,12 +230,8 @@ class ClientShopCheckoutServiceImplTest {
         stubPolicies(true, true, 0L, 0L);
         when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
                 .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
-        ConsultantClientMapping mapping = ConsultantClientMapping.builder().build();
-        mapping.setId(mappingId);
-        mapping.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
-        when(consultantClientMappingRepository.findByClientIdAndStatusNot(
-                        TENANT, CLIENT_ID, ConsultantClientMapping.MappingStatus.INACTIVE))
-                .thenReturn(List.of(mapping));
+        when(clientShopConsultantMappingService.listActiveMappingIds(TENANT, CLIENT_ID))
+                .thenReturn(List.of(mappingId));
 
         ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
         when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
@@ -271,8 +266,7 @@ class ClientShopCheckoutServiceImplTest {
         stubPolicies(true, true, 0L, 0L);
         when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
                 .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
-        when(consultantClientMappingRepository.findByClientIdAndStatusNot(
-                        TENANT, CLIENT_ID, ConsultantClientMapping.MappingStatus.INACTIVE))
+        when(clientShopConsultantMappingService.listActiveMappingIds(TENANT, CLIENT_ID))
                 .thenReturn(List.of());
 
         ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
@@ -328,6 +322,50 @@ class ClientShopCheckoutServiceImplTest {
                 eq(points),
                 eq(ShopCheckoutConstants.pointHoldKey(idemKey)));
         verify(clientPointWalletService, never()).commitHold(any(), any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("hold TTL 만료 — CREATED→EXPIRED·hold 해제")
+    void expireOrderHold_pendingOrder_expiresAndReleasesHold() {
+        ShopClientOrder order = pendingOrder(2_000L);
+        order.setStatus(ShopClientOrderStatus.CREATED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+
+        assertTrue(service.expireOrderHold(TENANT, ORDER_ID));
+        assertEquals(ShopClientOrderStatus.EXPIRED, order.getStatus());
+        verify(clientPointWalletService).releaseHold(
+                eq(TENANT),
+                eq(CLIENT_ID),
+                eq(ORDER_ID),
+                eq(2_000L),
+                eq(ShopCheckoutConstants.pointReleaseKey(ORDER_ID)));
+        verify(shopClientOrderRepository).save(order);
+    }
+
+    @Test
+    @DisplayName("hold TTL 만료 — 이미 EXPIRED면 멱등 false")
+    void expireOrderHold_alreadyExpired_idempotentFalse() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.EXPIRED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+
+        assertFalse(service.expireOrderHold(TENANT, ORDER_ID));
+        verify(clientPointWalletService, never()).releaseHold(any(), any(), any(), anyLong(), any());
+        verify(shopClientOrderRepository, never()).save(order);
+    }
+
+    @Test
+    @DisplayName("hold TTL 만료 — PAID면 스킵")
+    void expireOrderHold_paid_skips() {
+        ShopClientOrder order = pendingOrder(2_000L);
+        order.setStatus(ShopClientOrderStatus.PAID);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+
+        assertFalse(service.expireOrderHold(TENANT, ORDER_ID));
+        verify(clientPointWalletService, never()).releaseHold(any(), any(), any(), anyLong(), any());
     }
 
     @Test

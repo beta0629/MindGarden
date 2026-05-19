@@ -7,7 +7,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPut } from '@/api/client';
 import { SHOP_API } from '@/api/endpoints';
-import { unwrapApiResponse } from '@/api/unwrapApiResponse';
+import { assertApiSuccessVoid, unwrapApiResponse } from '@/api/unwrapApiResponse';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { buildCartLinesPayload, type ShopCartLinePayload } from '@/utils/clientShopCart';
 
@@ -43,15 +43,11 @@ async function fetchShopCart(): Promise<ShopCart> {
   };
 }
 
+const CART_REPLACE_FAILED_MESSAGE = '장바구니 갱신에 실패했습니다.';
+
 async function replaceShopCart(lines: ShopCartLinePayload[]): Promise<void> {
   const raw = await apiPut<unknown>(SHOP_API.CART, { lines });
-  const unwrapped = unwrapApiResponse<unknown>(raw);
-  if (raw != null && typeof raw === 'object' && (raw as { success?: boolean }).success === false) {
-    throw new Error((raw as { message?: string }).message || '장바구니 갱신에 실패했습니다.');
-  }
-  if (unwrapped === null && raw != null && typeof raw === 'object' && 'success' in raw) {
-    throw new Error((raw as { message?: string }).message || '장바구니 갱신에 실패했습니다.');
-  }
+  assertApiSuccessVoid(raw, CART_REPLACE_FAILED_MESSAGE);
 }
 
 export function useClientShopCart() {

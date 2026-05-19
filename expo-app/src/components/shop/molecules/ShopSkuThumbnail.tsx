@@ -14,6 +14,8 @@ import { CLIENT_SHOP_TEST_IDS } from '@/constants/clientShopConstants';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
 
+const PUBLIC_API_FILES_PATH_PREFIX = '/api/v1/files';
+
 function isSameOriginAsApi(uri: string): boolean {
   try {
     const base = getApiBaseUrl().replace(/\/$/, '');
@@ -22,6 +24,16 @@ function isSameOriginAsApi(uri: string): boolean {
     return apiOrigin === imgOrigin;
   } catch {
     return false;
+  }
+}
+
+/** FileController 공개 경로 — Bearer 없이 로드 (TenantContextFilter 화이트리스트) */
+function isPublicApiFileUrl(uri: string): boolean {
+  try {
+    const pathname = new URL(uri).pathname;
+    return pathname.startsWith(PUBLIC_API_FILES_PATH_PREFIX);
+  } catch {
+    return uri.includes(PUBLIC_API_FILES_PATH_PREFIX);
   }
 }
 
@@ -57,7 +69,8 @@ export function ShopSkuThumbnail({
     if (!u) {
       return null;
     }
-    const needAuthHeaders = isSameOriginAsApi(u) && !!accessToken;
+    const needAuthHeaders =
+      isSameOriginAsApi(u) && !!accessToken && !isPublicApiFileUrl(u);
     if (needAuthHeaders) {
       const headers: Record<string, string> = {
         Authorization: `Bearer ${accessToken}`,

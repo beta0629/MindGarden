@@ -1,4 +1,5 @@
 -- 일정별 예약 시점 매칭 고정 (단회기·다회기 전환 시 캘린더 회기 표기 SSOT)
+-- V20260524_001 백필 UPDATE는 순번만 부여하며 mapping 회기 차감(used/remaining)과 무관함(해당 파일은 운영 적용 후 수정 금지).
 ALTER TABLE schedules
     ADD COLUMN mapping_id BIGINT NULL COMMENT '예약·차감 시점 consultant_client_mappings.id' AFTER session_sequence;
 

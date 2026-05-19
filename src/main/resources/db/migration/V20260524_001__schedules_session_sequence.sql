@@ -1,5 +1,4 @@
 -- 예약 시점 회차(1-based). 회기 차감 직전 remaining 기준으로 애플리케이션에서 설정.
--- 아래 UPDATE 백필은 기존 일정에 순번만 부여하며, consultant_client_mappings 회기 차감(used/remaining)과 무관함.
 ALTER TABLE schedules
     ADD COLUMN session_sequence INT NULL COMMENT '예약 시점 회차(1-based)' AFTER client_id;
 

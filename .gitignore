@@ -80,6 +80,9 @@ deployment/*template*
 # Exception: dashboard-v2 templates folder (atomic design)
 !frontend/src/components/dashboard-v2/templates/
 
+# Exception: client shop templates (atomic design; not *-template.* secrets)
+!frontend/src/components/shop/templates/
+
 # API Keys and Secrets
 **/api-keys/
 **/secrets/

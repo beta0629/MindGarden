@@ -60,7 +60,20 @@ describe('resolveCalendarSessionLabel', () => {
     expect(SCHEDULE_SESSION_SEQUENCE_FIELD).toBe('sessionSequence');
   });
 
-  it('과거·sessionSequence 있으면 예약 시점 회차 표시', () => {
+  it('과거·sessionSequence 있으면 예약 시점 회차 표시 (잔여 무시)', () => {
+    expect(
+      resolveCalendarSessionLabel({
+        sessionSequence: 6,
+        remainingSessions: 7,
+        totalSessions: 10,
+        status: 'COMPLETED',
+        isPast: true
+      })
+    ).toEqual({
+      label: '6/10회',
+      variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
+      ariaLabel: '6회차(6/10)'
+    });
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: 4,
@@ -73,6 +86,38 @@ describe('resolveCalendarSessionLabel', () => {
       label: '4/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
       ariaLabel: '4회차(4/10)'
+    });
+  });
+
+  it('과거·sessionSequence 없으면 빈 문자열 (남X/총 금지)', () => {
+    expect(
+      resolveCalendarSessionLabel({
+        sessionSequence: null,
+        remainingSessions: 7,
+        totalSessions: 10,
+        status: 'COMPLETED',
+        isPast: true
+      })
+    ).toEqual({
+      label: '',
+      variant: null,
+      ariaLabel: ''
+    });
+  });
+
+  it('한글 완료 상태도 예약 시점 회차 표시', () => {
+    expect(
+      resolveCalendarSessionLabel({
+        sessionSequence: 6,
+        remainingSessions: 7,
+        totalSessions: 10,
+        status: '완료',
+        isPast: true
+      })
+    ).toEqual({
+      label: '6/10회',
+      variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
+      ariaLabel: '6회차(6/10)'
     });
   });
 
@@ -96,6 +141,19 @@ describe('resolveCalendarSessionLabel', () => {
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: 4,
+        remainingSessions: 5,
+        totalSessions: 10,
+        status: 'BOOKED',
+        isPast: false
+      })
+    ).toEqual({
+      label: '남5/10',
+      variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
+      ariaLabel: '남은 회기 5/10'
+    });
+    expect(
+      resolveCalendarSessionLabel({
+        sessionSequence: null,
         remainingSessions: 5,
         totalSessions: 10,
         status: 'BOOKED',

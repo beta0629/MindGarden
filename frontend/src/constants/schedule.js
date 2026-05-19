@@ -386,8 +386,8 @@ export function formatCalendarSessionLabel(remainingSessions, totalSessions) {
 
 /**
  * 월간 캘린더 회기 라벨 분기.
- * - 과거·완료(취소·휴가 제외): 예약 시점 회차 `4/10회` (booking-sequence)
- * - 미래·가예약 등: 잔여 `남5/10` (remaining)
+ * - 과거·완료(취소·휴가·가예약 제외): sessionSequence 있으면 `4/10회` (booking-sequence), 없으면 빈 문자열
+ * - 미래만: 잔여 `남5/10` (remaining)
  * @returns {CalendarSessionLabelResult}
  */
 export function resolveCalendarSessionLabel({

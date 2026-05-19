@@ -103,6 +103,7 @@ import ShopOrdersPage from './pages/client/shop/ShopOrdersPage';
 import ShopOrderDetailPage from './pages/client/shop/ShopOrderDetailPage';
 import ShopSkuDetailPage from './pages/client/shop/ShopSkuDetailPage';
 import ClientTenantComponentGate from './components/shop/templates/ClientTenantComponentGate';
+import AdminTenantComponentGate from './components/shop/templates/AdminTenantComponentGate';
 import { PLATFORM_COMPONENT_CODES } from './constants/tenantComponentApi';
 import ConsultantAvailabilityRenewal from './components/consultant/ConsultantAvailabilityRenewal';
 import MeditationGuide from './components/wellness/MeditationGuide';
@@ -642,17 +643,23 @@ function AppContent() {
             <Route path={ADMIN_ROUTES.PUSH_MONITORING} element={<AdminPushMonitoringPlaceholderPage />} />
             <Route path={ADMIN_ROUTES.SHOP_CATALOG_SKUS} element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
-                <AdminShopCatalogSkusPage />
+                <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
+                  <AdminShopCatalogSkusPage />
+                </AdminTenantComponentGate>
               </ProtectedRoute>
             } />
             <Route path={ADMIN_ROUTES.SHOP_POINT_POLICIES} element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
-                <AdminShopPointPoliciesPage />
+                <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
+                  <AdminShopPointPoliciesPage />
+                </AdminTenantComponentGate>
               </ProtectedRoute>
             } />
             <Route path={ADMIN_ROUTES.SHOP_ORDERS} element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
-                <AdminShopOrdersPage />
+                <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
+                  <AdminShopOrdersPage />
+                </AdminTenantComponentGate>
               </ProtectedRoute>
             } />
             

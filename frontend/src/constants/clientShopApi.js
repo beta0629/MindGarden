@@ -9,6 +9,7 @@ export const CLIENT_SHOP_API = {
   CART: '/api/v1/clients/me/shop/cart',
   POINTS_BALANCE: '/api/v1/clients/me/shop/points/balance',
   POINTS_LEDGER: '/api/v1/clients/me/shop/points/ledger',
+  CONSULTANT_MAPPINGS: '/api/v1/clients/me/shop/consultant-mappings',
   CHECKOUT: '/api/v1/clients/me/shop/checkout',
   ORDERS: '/api/v1/clients/me/shop/orders',
   orderDetail: (orderPublicId) => `/api/v1/clients/me/shop/orders/${orderPublicId}`,

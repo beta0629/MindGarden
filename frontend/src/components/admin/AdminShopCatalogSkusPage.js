@@ -23,6 +23,14 @@ import {
   buildAdminShopCatalogVisiblePath,
   buildCatalogVisiblePatchBody
 } from '../../constants/adminShopApi';
+import {
+  ADMIN_SHOP_PRICE_HISTORY_ACTION_LABEL,
+  ADMIN_SHOP_PRICE_HISTORY_COLUMN_LABELS,
+  ADMIN_SHOP_PRICE_HISTORY_EMPTY_MESSAGE,
+  ADMIN_SHOP_PRICE_HISTORY_MODAL_TITLE
+} from '../../constants/adminShopCatalog';
+import { listAdminShopCatalogSkuPriceHistory } from '../../services/adminShopCatalogService';
+import { formatShopDateTime, formatShopMoney } from '../../utils/clientShopFormat';
 import { USER_ROLES } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
@@ -103,6 +111,10 @@ const AdminShopCatalogSkusPage = () => {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
+  const [priceHistoryOpen, setPriceHistoryOpen] = useState(false);
+  const [priceHistoryLoading, setPriceHistoryLoading] = useState(false);
+  const [priceHistoryRows, setPriceHistoryRows] = useState([]);
+  const [priceHistorySkuLabel, setPriceHistorySkuLabel] = useState('');
 
   const loadSkus = useCallback(async() => {
     setLoading(true);
@@ -229,6 +241,55 @@ const AdminShopCatalogSkusPage = () => {
     }
   };
 
+  const closePriceHistory = () => {
+    if (priceHistoryLoading) {
+      return;
+    }
+    setPriceHistoryOpen(false);
+  };
+
+  const openPriceHistory = async(row, ev) => {
+    ev?.stopPropagation?.();
+    const raw = row?.__raw ?? row;
+    const id = raw?.id;
+    if (id == null) {
+      return;
+    }
+    const label = toDisplayString(raw.title, toDisplayString(raw.skuCode, String(id)));
+    setPriceHistorySkuLabel(label);
+    setPriceHistoryRows([]);
+    setPriceHistoryOpen(true);
+    setPriceHistoryLoading(true);
+    try {
+      const items = await listAdminShopCatalogSkuPriceHistory(id);
+      setPriceHistoryRows(Array.isArray(items) ? items : []);
+    } catch (e) {
+      setPriceHistoryRows([]);
+      notificationManager.error(
+        e?.message != null ? String(e.message) : '가격 이력을 불러오지 못했습니다.'
+      );
+    } finally {
+      setPriceHistoryLoading(false);
+    }
+  };
+
+  const priceHistoryTableRows = useMemo(() => {
+    return (Array.isArray(priceHistoryRows) ? priceHistoryRows : []).map((item, idx) => ({
+      __rowKey: item.id != null ? `ph-${String(item.id)}` : `ph-idx-${idx}`,
+      colChangedAt: formatShopDateTime(item.changedAt) || '-',
+      colUnitPrice: item.unitPriceMinor != null ? formatShopMoney(item.unitPriceMinor, item.currency) : '-',
+      colCurrency: toDisplayString(item.currency, '-'),
+      colChangedBy: toDisplayString(item.changedBy, '-')
+    }));
+  }, [priceHistoryRows]);
+
+  const priceHistoryColumns = [
+    { key: 'colChangedAt', label: ADMIN_SHOP_PRICE_HISTORY_COLUMN_LABELS.changedAt },
+    { key: 'colUnitPrice', label: ADMIN_SHOP_PRICE_HISTORY_COLUMN_LABELS.unitPrice },
+    { key: 'colCurrency', label: ADMIN_SHOP_PRICE_HISTORY_COLUMN_LABELS.currency },
+    { key: 'colChangedBy', label: ADMIN_SHOP_PRICE_HISTORY_COLUMN_LABELS.changedBy }
+  ];
+
   const columns = [
     { key: 'colCode', label: 'SKU 코드' },
     { key: 'colTitle', label: '상품명' },
@@ -245,17 +306,26 @@ const AdminShopCatalogSkusPage = () => {
     const raw = item.__raw ?? item;
     const visible = raw.catalogVisible !== false;
     return (
-      <MGButton
-        type="button"
-        className={buildErpMgButtonClassName('secondary')}
-        disabled={togglingId === raw.id}
-        onClick={(ev) => {
-          ev.stopPropagation();
-          toggleVisible(raw);
-        }}
-      >
-        {visible ? '노출 끄기' : '노출 켜기'}
-      </MGButton>
+      <div className="mg-mapping-actions">
+        <MGButton
+          type="button"
+          className={buildErpMgButtonClassName('secondary')}
+          onClick={(ev) => openPriceHistory(raw, ev)}
+        >
+          {ADMIN_SHOP_PRICE_HISTORY_ACTION_LABEL}
+        </MGButton>
+        <MGButton
+          type="button"
+          className={buildErpMgButtonClassName('secondary')}
+          disabled={togglingId === raw.id}
+          onClick={(ev) => {
+            ev.stopPropagation();
+            toggleVisible(raw);
+          }}
+        >
+          {visible ? '노출 끄기' : '노출 켜기'}
+        </MGButton>
+      </div>
     );
   };
 
@@ -387,6 +457,35 @@ const AdminShopCatalogSkusPage = () => {
             <SafeText>판매 활성</SafeText>
           </label>
         </div>
+      </UnifiedModal>
+
+      <UnifiedModal
+        isOpen={priceHistoryOpen}
+        onClose={closePriceHistory}
+        title={`${ADMIN_SHOP_PRICE_HISTORY_MODAL_TITLE}${priceHistorySkuLabel ? ` — ${priceHistorySkuLabel}` : ''}`}
+        size="large"
+        footer={(
+          <MGButton
+            type="button"
+            className={buildErpMgButtonClassName('secondary')}
+            onClick={closePriceHistory}
+            disabled={priceHistoryLoading}
+          >
+            닫기
+          </MGButton>
+        )}
+      >
+        {priceHistoryLoading ? (
+          <UnifiedLoading message="가격 이력을 불러오는 중…" />
+        ) : priceHistoryTableRows.length === 0 ? (
+          <EmptyState message={ADMIN_SHOP_PRICE_HISTORY_EMPTY_MESSAGE} />
+        ) : (
+          <ListTableView
+            columns={priceHistoryColumns}
+            data={priceHistoryTableRows}
+            rowKeyField="__rowKey"
+          />
+        )}
       </UnifiedModal>
     </AdminCommonLayout>
   );

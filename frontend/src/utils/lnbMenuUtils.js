@@ -149,15 +149,12 @@ export function mergeClientShopLnbItems(items, options = {}) {
  * DB LNB에 쇼핑·리워드 어드민 항목 보강 (Flyway 선행 배포 전에도 노출)
  * @param {Array} items
  * @param {{ adminShopCatalogEnabled?: boolean }} [options]
- *   - `false`: ADMIN_SHOP_CATALOG 비활성 — 항목 미추가
- *   - `true` 또는 미지정: 기존 보강 동작 (API 미연동·로딩 중 호환)
+ *   - `adminShopCatalogEnabled`는 페이지/API 403 게이트용. LNB 보강 여부와 무관.
+ *   - DB/API 트리에 shop 경로가 없을 때만 폴백 그룹 추가 (컴포넌트 off여도 노출).
  * @returns {typeof items}
  */
 export function mergeShopAdminLnbItems(items, options = {}) {
   if (!Array.isArray(items)) {
-    return items;
-  }
-  if (options.adminShopCatalogEnabled === false) {
     return items;
   }
   const shopPaths = new Set([

@@ -65,11 +65,30 @@ export const fetchShopCatalogSku = async (skuCode) => {
   return catalog.find((row) => row.skuCode === skuCode) || null;
 };
 
-export const postShopCheckout = async (idempotencyKey, pointsToRedeemMinor) => {
-  const res = await StandardizedApi.post(CLIENT_SHOP_API.CHECKOUT, {
+export const fetchConsultantMappings = async () => {
+  const res = await StandardizedApi.get(CLIENT_SHOP_API.CONSULTANT_MAPPINGS);
+  const data = unwrap(res);
+  return Array.isArray(data) ? data : [];
+};
+
+/**
+ * @param {string} idempotencyKey
+ * @param {number} pointsToRedeemMinor
+ * @param {number|null|undefined} consultantClientMappingId
+ */
+export const postShopCheckout = async (
+  idempotencyKey,
+  pointsToRedeemMinor,
+  consultantClientMappingId
+) => {
+  const body = {
     idempotencyKey,
     pointsToRedeemMinor
-  });
+  };
+  if (consultantClientMappingId != null && consultantClientMappingId !== '') {
+    body.consultantClientMappingId = Number(consultantClientMappingId);
+  }
+  const res = await StandardizedApi.post(CLIENT_SHOP_API.CHECKOUT, body);
   if (!res || !res.success) {
     throw new Error(res?.message || '체크아웃에 실패했습니다.');
   }

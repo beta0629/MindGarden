@@ -48,6 +48,9 @@ export const ADMIN_SHOP_ORDER_STATUS_LABELS = {
 /** 목록 기본 조회 건수 (백엔드 ShopAdminOrderConstants.DEFAULT_LIST_LIMIT) */
 export const ADMIN_SHOP_ORDERS_DEFAULT_LIMIT = 50;
 
+/** SKU 가격 이력 기본 조회 건수 */
+export const ADMIN_SHOP_PRICE_HISTORY_DEFAULT_LIMIT = 50;
+
 /**
  * @param {string|number} skuId
  * @returns {string}
@@ -62,6 +65,20 @@ export function buildAdminShopCatalogSkuPath(skuId) {
  */
 export function buildAdminShopCatalogVisiblePath(skuId) {
   return `${buildAdminShopCatalogSkuPath(skuId)}/catalog-visible`;
+}
+
+/**
+ * @param {string|number} skuId
+ * @param {number} [limit]
+ * @returns {string}
+ */
+export function buildAdminShopCatalogPriceHistoryPath(
+  skuId,
+  limit = ADMIN_SHOP_PRICE_HISTORY_DEFAULT_LIMIT
+) {
+  const base = `${buildAdminShopCatalogSkuPath(skuId)}/price-history`;
+  const safeLimit = Number.isFinite(Number(limit)) ? Number(limit) : ADMIN_SHOP_PRICE_HISTORY_DEFAULT_LIMIT;
+  return `${base}?limit=${encodeURIComponent(String(safeLimit))}`;
 }
 
 /**

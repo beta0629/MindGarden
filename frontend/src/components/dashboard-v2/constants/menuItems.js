@@ -28,6 +28,17 @@ const DEFAULT_MENU_ITEMS = [
   },
   { to: ADMIN_ROUTES.NOTIFICATIONS, icon: 'MESSAGE_CIRCLE', label: '알림·메시지 관리', end: true },
   {
+    to: ADMIN_ROUTES.SHOP_CATALOG_SKUS,
+    icon: 'SHOPPING_BAG',
+    label: '쇼핑·리워드',
+    end: false,
+    children: [
+      { to: ADMIN_ROUTES.SHOP_CATALOG_SKUS, icon: 'PACKAGE', label: '상품(SKU) 관리', end: true },
+      { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: '리워드 정책', end: true },
+      { to: ADMIN_ROUTES.SHOP_ORDERS, icon: 'RECEIPT', label: '온라인 주문', end: true }
+    ]
+  },
+  {
     to: '/admin/user-management',
     icon: 'USERS',
     label: '사용자/권한',

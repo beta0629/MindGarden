@@ -233,6 +233,24 @@
   color: var(--mg-color-text-main);
 }
 
+.client-shop__field-label {
+  display: block;
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-sub);
+  margin-bottom: var(--mg-spacing-xs);
+}
+
+.client-shop__select {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+  font-size: var(--mg-font-size-md);
+  background: var(--mg-color-background-main);
+  color: var(--mg-color-text-main);
+}
+
 .client-shop__summary-row {
   display: flex;
   justify-content: space-between;

@@ -1,0 +1,45 @@
+/**
+ * 어드민 쇼핑몰 TenantComponent 게이트
+ */
+
+.admin-shop-gate {
+  min-height: 12rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-spacing-lg);
+}
+
+.admin-shop-gate__unavailable {
+  max-width: 28rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.admin-shop-gate__title {
+  margin: 0 0 var(--mg-spacing-sm);
+  font-size: var(--mg-font-size-xl);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-text-primary);
+}
+
+.admin-shop-gate__message {
+  margin: 0;
+  color: var(--mg-color-text-secondary);
+  line-height: var(--mg-line-height-relaxed);
+}
+
+.admin-shop-gate__nav-link {
+  display: inline-block;
+  margin-top: var(--mg-spacing-md);
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border-radius: var(--mg-radius-md);
+  border: 1px solid var(--mg-color-border-main);
+  color: var(--mg-color-text-primary);
+  text-decoration: none;
+  background: var(--mg-color-surface-main);
+}
+
+.admin-shop-gate__nav-link:hover {
+  background: var(--mg-color-surface-subtle);
+}

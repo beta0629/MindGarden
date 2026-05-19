@@ -15,6 +15,11 @@ import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../utils/standardizedApi';
 import { ADMIN_SHOP_API } from '../../constants/adminShopApi';
+import {
+  ADMIN_SHOP_HOLD_TTL_DEFAULT_MINUTES,
+  ADMIN_SHOP_POINT_POLICY_FIELD_LABELS,
+  ADMIN_SHOP_POINT_POLICY_KEYS
+} from '../../constants/adminShopPointPolicies';
 import { USER_ROLES } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
@@ -29,6 +34,7 @@ const buildInitialForm = () => ({
   earnCapAmountMinor: '0',
   minOrderForRedeemMinor: '0',
   maxRedeemAmountMinor: '0',
+  holdTtlMinutes: String(ADMIN_SHOP_HOLD_TTL_DEFAULT_MINUTES),
   allowPgMix: true,
   allowPointsOnly: true
 });
@@ -38,26 +44,30 @@ function mapPoliciesToForm(policies) {
   if (!policies || typeof policies !== 'object') {
     return base;
   }
-  const earnRate = policies.earn_rate;
+  const earnRate = policies[ADMIN_SHOP_POINT_POLICY_KEYS.EARN_RATE];
   if (earnRate && typeof earnRate === 'object' && earnRate.percentBps != null) {
     base.earnRatePercentBps = String(earnRate.percentBps);
   }
-  const earnCap = policies.earn_cap_per_order;
+  const earnCap = policies[ADMIN_SHOP_POINT_POLICY_KEYS.EARN_CAP_PER_ORDER];
   if (earnCap && typeof earnCap === 'object' && earnCap.amountMinor != null) {
     base.earnCapAmountMinor = String(earnCap.amountMinor);
   }
-  const minOrder = policies.min_order_for_redeem;
+  const minOrder = policies[ADMIN_SHOP_POINT_POLICY_KEYS.MIN_ORDER_FOR_REDEEM];
   if (minOrder && typeof minOrder === 'object' && minOrder.amountMinor != null) {
     base.minOrderForRedeemMinor = String(minOrder.amountMinor);
   }
-  const maxRedeem = policies.max_redeem_per_order;
+  const maxRedeem = policies[ADMIN_SHOP_POINT_POLICY_KEYS.MAX_REDEEM_PER_ORDER];
   if (maxRedeem && typeof maxRedeem === 'object' && maxRedeem.amountMinor != null) {
     base.maxRedeemAmountMinor = String(maxRedeem.amountMinor);
   }
-  if (policies.allow_pg_mix === false) {
+  const holdTtl = policies[ADMIN_SHOP_POINT_POLICY_KEYS.HOLD_TTL_MINUTES];
+  if (holdTtl && typeof holdTtl === 'object' && holdTtl.minutes != null) {
+    base.holdTtlMinutes = String(holdTtl.minutes);
+  }
+  if (policies[ADMIN_SHOP_POINT_POLICY_KEYS.ALLOW_PG_MIX] === false) {
     base.allowPgMix = false;
   }
-  if (policies.allow_points_only === false) {
+  if (policies[ADMIN_SHOP_POINT_POLICY_KEYS.ALLOW_POINTS_ONLY] === false) {
     base.allowPointsOnly = false;
   }
   return base;
@@ -71,12 +81,13 @@ function parseMinor(value) {
 function buildPatchBody(form) {
   return {
     policies: {
-      earn_rate: { percentBps: parseMinor(form.earnRatePercentBps) },
-      earn_cap_per_order: { amountMinor: parseMinor(form.earnCapAmountMinor) },
-      min_order_for_redeem: { amountMinor: parseMinor(form.minOrderForRedeemMinor) },
-      max_redeem_per_order: { amountMinor: parseMinor(form.maxRedeemAmountMinor) },
-      allow_pg_mix: Boolean(form.allowPgMix),
-      allow_points_only: Boolean(form.allowPointsOnly)
+      [ADMIN_SHOP_POINT_POLICY_KEYS.EARN_RATE]: { percentBps: parseMinor(form.earnRatePercentBps) },
+      [ADMIN_SHOP_POINT_POLICY_KEYS.EARN_CAP_PER_ORDER]: { amountMinor: parseMinor(form.earnCapAmountMinor) },
+      [ADMIN_SHOP_POINT_POLICY_KEYS.MIN_ORDER_FOR_REDEEM]: { amountMinor: parseMinor(form.minOrderForRedeemMinor) },
+      [ADMIN_SHOP_POINT_POLICY_KEYS.MAX_REDEEM_PER_ORDER]: { amountMinor: parseMinor(form.maxRedeemAmountMinor) },
+      [ADMIN_SHOP_POINT_POLICY_KEYS.HOLD_TTL_MINUTES]: { minutes: parseMinor(form.holdTtlMinutes) },
+      [ADMIN_SHOP_POINT_POLICY_KEYS.ALLOW_PG_MIX]: Boolean(form.allowPgMix),
+      [ADMIN_SHOP_POINT_POLICY_KEYS.ALLOW_POINTS_ONLY]: Boolean(form.allowPointsOnly)
     }
   };
 }
@@ -171,7 +182,7 @@ const AdminShopPointPoliciesPage = () => {
               }}
             >
               <label className="mg-v2-label" htmlFor={`${baseId}-earn-bps`}>
-                적립률 (basis points, 100 = 1%)
+                {ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.earnRatePercentBps}
               </label>
               <input
                 id={`${baseId}-earn-bps`}
@@ -181,7 +192,7 @@ const AdminShopPointPoliciesPage = () => {
                 onChange={(e) => setForm((f) => ({ ...f, earnRatePercentBps: e.target.value }))}
               />
               <label className="mg-v2-label" htmlFor={`${baseId}-earn-cap`}>
-                주문당 적립 상한(원)
+                {ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.earnCapAmountMinor}
               </label>
               <input
                 id={`${baseId}-earn-cap`}
@@ -191,7 +202,7 @@ const AdminShopPointPoliciesPage = () => {
                 onChange={(e) => setForm((f) => ({ ...f, earnCapAmountMinor: e.target.value }))}
               />
               <label className="mg-v2-label" htmlFor={`${baseId}-min-order`}>
-                포인트 사용 최소 주문액(원)
+                {ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.minOrderForRedeemMinor}
               </label>
               <input
                 id={`${baseId}-min-order`}
@@ -201,7 +212,7 @@ const AdminShopPointPoliciesPage = () => {
                 onChange={(e) => setForm((f) => ({ ...f, minOrderForRedeemMinor: e.target.value }))}
               />
               <label className="mg-v2-label" htmlFor={`${baseId}-max-redeem`}>
-                주문당 최대 사용 포인트(원)
+                {ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.maxRedeemAmountMinor}
               </label>
               <input
                 id={`${baseId}-max-redeem`}
@@ -210,13 +221,23 @@ const AdminShopPointPoliciesPage = () => {
                 value={form.maxRedeemAmountMinor}
                 onChange={(e) => setForm((f) => ({ ...f, maxRedeemAmountMinor: e.target.value }))}
               />
+              <label className="mg-v2-label" htmlFor={`${baseId}-hold-ttl`}>
+                {ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.holdTtlMinutes}
+              </label>
+              <input
+                id={`${baseId}-hold-ttl`}
+                className="mg-v2-input"
+                inputMode="numeric"
+                value={form.holdTtlMinutes}
+                onChange={(e) => setForm((f) => ({ ...f, holdTtlMinutes: e.target.value }))}
+              />
               <label className="mg-v2-checkbox-row">
                 <input
                   type="checkbox"
                   checked={form.allowPgMix}
                   onChange={(e) => setForm((f) => ({ ...f, allowPgMix: e.target.checked }))}
                 />
-                포인트 + PG 혼합 결제 허용
+                {ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.allowPgMix}
               </label>
               <label className="mg-v2-checkbox-row">
                 <input
@@ -224,7 +245,7 @@ const AdminShopPointPoliciesPage = () => {
                   checked={form.allowPointsOnly}
                   onChange={(e) => setForm((f) => ({ ...f, allowPointsOnly: e.target.checked }))}
                 />
-                포인트 전액 결제 허용
+                {ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.allowPointsOnly}
               </label>
               <div className="admin-shop-point-policies__actions">
                 <MGButton

@@ -6,6 +6,27 @@
 | 상태 | 초안 |
 | 작성일 | 2026-05-13 |
 | 대상 | 웹(내담자)·Expo 앱·백엔드·ERP·테넌트 어드민·감사·정산 담당 |
+| 오케스트레이션 | [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) — **플랫폼 vs 테넌트** 역할·MVP·위임 SSOT |
+
+---
+
+## 0. 플랫폼 vs 테넌트 (구현 위치)
+
+| 구분 | **Core Solution (플랫폼)** | **MindGarden 테넌트 (첫 adopter)** |
+|------|---------------------------|-----------------------------------|
+| **구현 범위** | `client_point_wallets`·`client_point_ledger_entries`·hold/commit/release·멱등·주문 연동 API | **적립률·사용 한도·블록리스트** 등 테넌트 **정책 설정**(후속 정책 테이블); 체크아웃·내 포인트 **UI** |
+| **설정** | 원장 유형·트랜잭션 규칙·동시성 | §3 정책 키 값 — **DB/어드민만**, 코드 상수 금지 |
+| **금지** | 테넌트별 원장 스키마 분리 | 정책·잔액을 JS/Java에 하드코딩 |
+
+PG `PAID` 후 hold→commit·적립(EARN) 연동 상태: 본 문서 **구현(2026-05-14)** 행 및 [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) §3 갭.
+
+### 0.1 크로스 테넌트 포인트·통합몰
+
+| 정책 | 내용 |
+|------|------|
+| **기본 (Phase 1~2)** | **크로스 테넌트 포인트 사용·적립·이전 불가** — 지갑·원장·hold는 `(tenant_id, client_id)` 단위만 |
+| **통합 마켓플레이스 (Phase 3+)** | 다른 **판매자(seller tenant)** 상품 결제 시 **타 테넌트 포인트로 할인 불가** (기본) |
+| **예외** | 플랫폼 통합 포인트·크로스 사용 — **미정**, 별도 법무·회계·에픽 ([MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) §6·§13) |
 
 ---
 
@@ -13,6 +34,8 @@
 
 | 문서·스킬 | 요지 (5~10줄) |
 |-----------|----------------|
+| [MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) | 크로스 테넌트 포인트·통합몰 §6 |
+| [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) | Core vs MindGarden 역할·갭·첫 coder/designer 배치 |
 | [ONLINE_PAYMENT_CATALOG_CHECKOUT_SPEC.md](./ONLINE_PAYMENT_CATALOG_CHECKOUT_SPEC.md) | 카탈로그→체크아웃→PG 단선형; 체크아웃에 **쿠폰/포인트 자리** 명시. 주문 `CREATED`·PG 연결·`PAID` 시 fulfillment·**포인트 적립은 PAID 확정** 등 시점 가이드. ERP는 `confirm-payment`·`amount-info`·`relatedTransactions`·중복 INCOME 방지와 연계. **웹·Expo 공통 API·상태 머신** 전제. |
 | [CORE_PLANNER_DELEGATION_ORDER.md](./CORE_PLANNER_DELEGATION_ORDER.md) | 구현 패치는 **core-coder** 위임; 일반 채팅 에이전트 직접 수정 금지. 코드 변경 배치는 **core-tester 검증 게이트** 필수(스모크·회귀 등). UI 중심 배치 시 core-designer에 `gemini-3.1-pro` 권장 등 Task 모델 가이드. |
 | [core-solution-multi-tenant](../../.cursor/skills/core-solution-multi-tenant/SKILL.md) | **tenantId 없는 API·저장 금지**. 포인트 원장·정책·hold·주문 연동 전 구간에서 tenant 스코프·인덱스·WHERE 일관. 컨텍스트 없으면 거절. |
@@ -176,5 +199,7 @@
 
 | 버전 | 일자 | 작성 | 요약 |
 |------|------|------|------|
+| 0.4 | 2026-05-19 | core-planner | §0.1 크로스 테넌트 포인트 불가·통합몰 예외(미정) |
+| 0.3 | 2026-05-19 | core-planner | §0 플랫폼 vs 테넌트·오케스트레이션 문서 상호 링크 |
 | 0.2 | 2026-05-14 | core-coder | 구현 행 추가: `client_point_wallets`·`client_point_ledger_entries`·`/api/v1/clients/me/shop/*`; PG PAID 연동은 후속 PR |
 | 0.1 초안 | 2026-05-13 | core-planner | 적립·사용(hold)·환불·ERP·어드민·UX·보안·로드맵·서브에이전트 배분 최초 정리 |

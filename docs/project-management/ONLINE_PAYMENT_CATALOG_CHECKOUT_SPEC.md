@@ -6,6 +6,30 @@
 | 상태 | 초안 |
 | 작성일 | 2026-05-13 |
 | 대상 | 웹(내담자/상담사)·Expo 앱, 테넌트별 브랜딩, 백엔드·ERP·어드민 |
+| 오케스트레이션 | [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) — **플랫폼 vs 테넌트** 역할·MVP·위임 SSOT |
+
+---
+
+## 0. 플랫폼 vs 테넌트 (구현 위치)
+
+| 구분 | **Core Solution (플랫폼)** | **MindGarden 테넌트 (첫 adopter)** |
+|------|---------------------------|-----------------------------------|
+| **구현 범위** | 카탈로그·장바구니·주문·PG intent·결제 상태 머신·ERP 훅·`shop_*` / 주문 API (`/api/v1/clients/me/shop/*`) | 테넌트별 **SKU 행·노출·가격·카피·약관 URL**; 내담자 **웹·Expo UI** |
+| **설정** | 스키마·엔진·멀티테넌트 검증·멱등 | `shop_catalog_skus` 등 **tenant_id 데이터**; 디자인 토큰·CMS |
+| **금지** | MindGarden 전용 패키지 분리, 테넌트 코드에 SKU/금액 하드코딩 | 플랫폼 엔진 포크, 클라이언트가 서버 가격·tenant 무시 |
+
+상세 아키텍처·갭·Phase: **[SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md)**. 포인트 원장·hold: **[POINT_REWARD_EARN_AND_REDEEM_SPEC.md](./POINT_REWARD_EARN_AND_REDEEM_SPEC.md)**.
+
+### 0.1 테넌트 몰 vs 통합 마켓플레이스
+
+| 구분 | **테넌트 몰 (모델 A)** | **통합 마켓플레이스 (모델 B)** |
+|------|------------------------|--------------------------------|
+| **Phase** | **1~2 (MVP)** | **3+ 후속** |
+| **카탈로그** | 현재 `GET .../shop/catalog` — **요청 tenant 스코프만** | `marketplace_listing` + 통합 검색 (설계: [MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) §4.2) |
+| **체크아웃** | 단일 `tenant_id` 주문·단일 PG (`tenant_pg_configurations`) | **기본**: 주문당 **단일 seller( tenant )** — 멀티 seller 장바구니·분할 PG는 Phase 3 별도 의사결정 |
+| **입점** | 온보딩·OPS 승인·`CLIENT_SHOP` — 동일 엔진 | listing 노출·수수료는 추가 레이어 |
+
+**Phase 1 구현 범위는 모델 A만.** 통합몰 체크아웃·멀티 판매자 결제 분기는 **본 문서 후속 개정(Phase 3)** 으로 표시한다.
 
 ---
 
@@ -181,6 +205,8 @@
 | [../psych-assessment/PSYCH_IMAGE_OCR_REVIEW.md](../psych-assessment/PSYCH_IMAGE_OCR_REVIEW.md) | OCR·검수 흐름 (리포트 이행 품질) |
 | [SNS_SIMPLE_SIGNUP_SPEC.md](./SNS_SIMPLE_SIGNUP_SPEC.md) | 결제 직전 인증·간편가입과 **인접 주제**로 흐름·용어 정렬 |
 | [POINT_REWARD_EARN_AND_REDEEM_SPEC.md](./POINT_REWARD_EARN_AND_REDEEM_SPEC.md) | 포인트 **적립·체크아웃 사용(hold)·환불·ERP·어드민**; 본 문서와 상호 링크 |
+| [MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) | 입점·테넌트 몰 vs 통합 마켓·Phase 3 체크아웃 |
+| [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) | Core 엔진 vs MindGarden adopter·MVP·서브에이전트 분배 |
 | [CORE_PLANNER_DELEGATION_ORDER.md](./CORE_PLANNER_DELEGATION_ORDER.md) | 위임·테스터 게이트 |
 
 ---
@@ -189,6 +215,8 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-19 | §0.1 테넌트 몰 vs 통합 마켓·[MULTI_TENANT_SHOP_MARKETPLACE_SPEC](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) |
+| 2026-05-19 | §0 플랫폼 vs 테넌트·[SHOP_REWARD_PLATFORM_ORCHESTRATION](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) 링크 |
 | 2026-05-14 | P1 구현 메모(온라인 카탈로그 가격 권위·포인트+PG 혼합 후속) 반영 |
 | 2026-05-13 | 초안 — `core-planner` 산출 본문을 저장소에 반영 |
 | 2026-05-13 | [POINT_REWARD_EARN_AND_REDEEM_SPEC.md](./POINT_REWARD_EARN_AND_REDEEM_SPEC.md) 링크 추가 — 포인트 사용·원장·환불 기획은 별도 문서로 정합 |

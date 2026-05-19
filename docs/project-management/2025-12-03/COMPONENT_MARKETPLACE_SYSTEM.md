@@ -1,5 +1,11 @@
 # 컴포넌트 마켓플레이스 시스템
 
+> **⚠️ 본 문서는 B2B SaaS «컴포넌트 구독 마켓»입니다.**  
+> 대상: **테넌트 관리자(어드민)** — ERP·통계·AI 등 **애드온 패키지** 구매·`TenantComponent` 활성화.  
+> API 예: `/api/v1/marketplace/packages` · DB: `component_packages` 등.  
+> **B2C 내담자용 «상담센터 입점·상품 쇼핑몰»** 과 다릅니다 → [MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md](../MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) · `/api/v1/clients/me/shop/*` · `shop_catalog_skus`.  
+> 용어 «마켓플레이스» 혼동 금지 — 기획·구현 시 위 구분 표를 따른다.
+
 **작성일**: 2025-12-03  
 **목적**: 테넌트 관리자가 필요한 컴포넌트를 구매/활성화하는 시스템
 

@@ -16,7 +16,7 @@
 4. 내담자: `/client/shop` PLP → SKU 담기 → `/client/shop/cart` 소계 ([수동 QA](../../docs/project-management/SHOP_REWARD_MANUAL_QA_RUN_SHEET.md) C1~C3).
 5. 어드민: `/admin/shop/catalog-skus` 셸·테이블 로드(빈 목록 허용) — LNB 「쇼핑·리워드」 스크린샷 1장.
 
-**R10 재현** (8080 up 후): `curl -sS -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/actuator/health` → 200 이면 `cd tests/e2e && npx playwright test client-shop-catalog-to-cart admin-shop-catalog-skus-smoke --project=chromium`.
+**R10 재현** (8080 up 후): `curl -sS -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/actuator/health` → 200 이면 `cd tests/e2e && npx playwright test client-shop-catalog-to-cart admin-shop-catalog-skus-smoke admin-shop-catalog-sku-create-smoke --project=chromium --workers=1` (어드민 2 스펙 병렬 시 ERP 로그인 모달 중복 가능 — **workers=1** 권장).
 **dev API만 검증**: `E2E_API_BASE=https://dev.core-solution.co.kr` 등으로 `$E2E_API_BASE/actuator/health`가 **200**이면 8080 없이도 해당 가드 스킵을 해제한다(`helpers/erpAuth.ts`).
 
 ### dev 인천 테넌트 (`tenant-incheon-counseling-001`) — Shop·리워드 E2E
@@ -53,19 +53,29 @@ export E2E_TENANT_ID=tenant-incheon-counseling-001
 2. Flyway Shop P2 **`002`~`007`** + **`V20260520_001`** + **`V20260521_001`** 적용 확인.
 3. OPS **`activate-shop-reward-tenant-components.sql`** — `CLIENT_SHOP`·`CLIENT_REWARD`·`ADMIN_SHOP_CATALOG` 활성.
 4. 어드민에서 **`catalogVisible=true`** SKU ≥1 (또는 `scripts/ops/seed-shop-demo-catalog.sql`).
-5. `npx playwright test client-shop-catalog-to-cart --project=chromium` (내담자 자격: `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` 또는 `TEST_USERNAME`/`TEST_PASSWORD`).
+5. `npx playwright test client-shop-catalog-to-cart --project=chromium --workers=1` (내담자 자격: `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` 또는 `TEST_USERNAME`/`TEST_PASSWORD`).
 
 **회귀 명령** (위 1~4 충족 후):
 
 ```bash
-npx playwright test client-shop-catalog-to-cart --project=chromium
+npx playwright test client-shop-catalog-to-cart --project=chromium --workers=1
 ```
 
 PG·checkout 결제는 범위 외. 8080 미기동 시 스펙 전체 스킵(로그인 타임아웃 방지). 수동 QA 표: [`SHOP_REWARD_MANUAL_QA_RUN_SHEET.md`](../docs/project-management/SHOP_REWARD_MANUAL_QA_RUN_SHEET.md).
 
 ## 어드민 쇼핑·리워드 (ADMIN_SHOP_CATALOG) — Playwright 스모크
 
-스펙: [`tests/admin/admin-shop-catalog-skus-smoke.spec.ts`](./tests/admin/admin-shop-catalog-skus-smoke.spec.ts)(목록 셸), [`tests/admin/admin-shop-catalog-sku-create-smoke.spec.ts`](./tests/admin/admin-shop-catalog-sku-create-smoke.spec.ts)(목록→등록 폼). 전제: 8080+3000, ERP 어드민 자격, TenantComponent **`ADMIN_SHOP_CATALOG`** 활성(Maestro는 Expo 전용·어드민 웹 미지원). `cd tests/e2e` 후 `npx playwright test admin-shop-catalog-skus-smoke admin-shop-catalog-sku-create-smoke --project=chromium`.
+스펙: [`tests/admin/admin-shop-catalog-skus-smoke.spec.ts`](./tests/admin/admin-shop-catalog-skus-smoke.spec.ts)(목록 셸), [`tests/admin/admin-shop-catalog-sku-create-smoke.spec.ts`](./tests/admin/admin-shop-catalog-sku-create-smoke.spec.ts)(목록→등록 폼). 전제: 8080+3000, ERP 어드민 자격, TenantComponent **`ADMIN_SHOP_CATALOG`** 활성(Maestro는 Expo 전용·어드민 웹 미지원). `cd tests/e2e` 후 **`--workers=1` 필수**(병렬 워커 시 `loginErpUser` 중복 로그인 모달·세션 경합):
+
+```bash
+npx playwright test admin-shop-catalog-skus-smoke admin-shop-catalog-sku-create-smoke --project=chromium --workers=1
+```
+
+Shop·리워드 **통합 회귀**(내담자 PLP + 어드민 2 스모크):
+
+```bash
+npx playwright test client-shop-catalog-to-cart admin-shop-catalog-skus-smoke admin-shop-catalog-sku-create-smoke --project=chromium --workers=1
+```
 
 ## ERP / 관리자 로그인 스펙
 

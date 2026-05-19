@@ -266,7 +266,7 @@ export const CALENDAR_SESSION_LABEL_VARIANT = {
 export const SCHEDULE_LEGEND_SESSION_LABELS_TITLE = '회기 표기';
 export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_SAMPLE = '4/10회';
 export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING = '해당 일정 시점 잔여 회기';
-export const SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE = '남5/10';
+export const SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE = '5/10회';
 export const SCHEDULE_LEGEND_SESSION_REMAINING_MEANING = '해당 예약 직후 잔여 회기 (미래 일정)';
 
 const EMPTY_CALENDAR_SESSION_LABEL = Object.freeze({
@@ -382,7 +382,7 @@ export function formatCalendarSessionLabel(remainingSessions, totalSessions) {
 
 /**
  * @typedef {Object} CalendarSessionLabelResult
- * @property {string} label 컴팩트 표시 (예: `4/10회`, `남5/10`)
+ * @property {string} label 컴팩트 표시 (예: `4/10회`, `5/10회`)
  * @property {'booking-sequence'|'remaining'|null} variant CSS modifier suffix
  * @property {string} ariaLabel 툴팁·aria용 의미 문구 (예: `6회차 · 잔여 4/10`)
  */
@@ -401,7 +401,7 @@ function resolveRemainingSessionsAtScheduleTime(total, sessionSequence) {
 /**
  * 월간 캘린더 회기 라벨 분기.
  * - 과거·완료(취소·휴가·가예약 제외): sessionSequence N → 해당 시점 잔여 `4/10회` (booking-sequence), 없으면 빈 문자열
- * - 미래: sessionSequence 있으면 일정별 `남(total−N)/total`, 없을 때만 매핑 `remainingSessions` fallback
+ * - 미래: sessionSequence 있으면 일정별 `(total−N)/total회`, 없을 때만 매핑 `remainingSessions` fallback
  * @returns {CalendarSessionLabelResult}
  */
 export function resolveCalendarSessionLabel({
@@ -441,9 +441,9 @@ export function resolveCalendarSessionLabel({
   if (sequence !== null) {
     const remainingAtTime = resolveRemainingSessionsAtScheduleTime(total, sequence);
     return {
-      label: `남${remainingAtTime}/${total}`,
+      label: `${remainingAtTime}/${total}회`,
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: `남은 회기 ${remainingAtTime}/${total}`
+      ariaLabel: `잔여 ${remainingAtTime}/${total}`
     };
   }
 
@@ -452,9 +452,9 @@ export function resolveCalendarSessionLabel({
     return EMPTY_CALENDAR_SESSION_LABEL;
   }
   return {
-    label: `남${remaining}/${total}`,
+    label: `${remaining}/${total}회`,
     variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-    ariaLabel: `남은 회기 ${remaining}/${total}`
+    ariaLabel: `잔여 ${remaining}/${total}`
   };
 }
 

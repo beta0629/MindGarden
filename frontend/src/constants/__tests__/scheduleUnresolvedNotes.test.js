@@ -43,7 +43,7 @@ describe('parseClientScheduleNotesClientWideUnresolvedCount', () => {
 
 describe('formatCalendarSessionLabel', () => {
   it('다회기만 잔여 표시 (남은/총)', () => {
-    expect(formatCalendarSessionLabel(2, 10)).toBe('남2/10');
+    expect(formatCalendarSessionLabel(2, 10)).toBe('2/10회');
     expect(shouldShowCalendarSessionLabel(10, 2)).toBe(true);
   });
 
@@ -147,9 +147,9 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: false
       })
     ).toEqual({
-      label: '남3/10',
+      label: '3/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: '남은 회기 3/10'
+      ariaLabel: '잔여 3/10'
     });
     expect(
       resolveCalendarSessionLabel({
@@ -160,9 +160,9 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: false
       })
     ).toEqual({
-      label: '남17/20',
+      label: '17/20회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: '남은 회기 17/20'
+      ariaLabel: '잔여 17/20'
     });
     expect(
       resolveCalendarSessionLabel({
@@ -173,9 +173,9 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: false
       })
     ).toEqual({
-      label: '남5/10',
+      label: '5/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: '남은 회기 5/10'
+      ariaLabel: '잔여 5/10'
     });
   });
 
@@ -189,9 +189,9 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: false
       })
     ).toEqual({
-      label: '남3/10',
+      label: '3/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: '남은 회기 3/10'
+      ariaLabel: '잔여 3/10'
     });
   });
 

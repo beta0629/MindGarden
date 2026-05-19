@@ -62,7 +62,7 @@ export function SkuCard({
       testID={`sku-card-${sku.skuCode}`}
     >
       <ShopSkuThumbnail
-        thumbnailUrl={sku.thumbnailUrl}
+        sku={sku}
         variant="card"
         testID={CLIENT_SHOP_TEST_IDS.SKU_CARD_THUMBNAIL}
       />

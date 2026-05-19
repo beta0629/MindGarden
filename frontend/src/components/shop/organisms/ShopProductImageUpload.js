@@ -1,22 +1,25 @@
 /**
- * ShopProductImageUpload — SKU 대표 이미지 (1:1, react-dropzone)
+ * ShopProductImageUpload — SKU 대표 이미지 (mg-upload-area, react-dropzone)
  *
  * @author CoreSolution
  * @since 2026-05-19
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
-import { ImageIcon } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName } from '../../erp/common/erpMgButtonProps';
 import notificationManager from '../../../utils/notification';
 import {
   ADMIN_SHOP_SKU_IMAGE_ACCEPT,
   ADMIN_SHOP_SKU_IMAGE_MAX_BYTES,
-  ADMIN_SHOP_SKU_IMAGE_UPLOAD_HINT
+  ADMIN_SHOP_SKU_IMAGE_UPLOAD_HINT,
+  ADMIN_SHOP_SKU_IMAGE_FORMAT_HINT,
+  ADMIN_SHOP_SKU_IMAGE_SELECTION_NONE,
+  ADMIN_SHOP_SKU_IMAGE_DROP_REJECTED_DEFAULT
 } from '../../../constants/adminShopCatalog';
+import '../../admin/psych-assessment/organisms/PsychUploadSection.css';
 import './ShopProductImageUpload.css';
 
 const ShopProductImageUpload = ({
@@ -27,19 +30,38 @@ const ShopProductImageUpload = ({
   testId = 'admin-sku-image-upload'
 }) => {
   const [localPreview, setLocalPreview] = useState(null);
+  const [selectedFileName, setSelectedFileName] = useState('');
+  const [uploadError, setUploadError] = useState('');
 
   const displayUrl = localPreview || previewUrl || null;
 
+  useEffect(() => {
+    return () => {
+      if (localPreview) {
+        URL.revokeObjectURL(localPreview);
+      }
+    };
+  }, [localPreview]);
+
   const onDropRejectedHandler = useCallback((fileRejections) => {
+    setUploadError('');
     const first = fileRejections[0];
+    if (!first?.errors?.length) {
+      const message = ADMIN_SHOP_SKU_IMAGE_DROP_REJECTED_DEFAULT;
+      notificationManager.warning(message);
+      setUploadError(message);
+      return;
+    }
     const message =
-      first?.errors?.map((e) => e.message).join('. ') ||
-      'JPEG, PNG, WebP만 업로드할 수 있으며 최대 5MB입니다.';
+      first.errors.map((e) => e.message).join('. ') ||
+      ADMIN_SHOP_SKU_IMAGE_DROP_REJECTED_DEFAULT;
     notificationManager.warning(message);
+    setUploadError(message);
   }, []);
 
   const handleDrop = useCallback(
     (acceptedFiles) => {
+      setUploadError('');
       const file = acceptedFiles?.[0];
       if (!file) {
         return;
@@ -48,17 +70,18 @@ const ShopProductImageUpload = ({
         URL.revokeObjectURL(localPreview);
       }
       setLocalPreview(URL.createObjectURL(file));
+      setSelectedFileName(file.name || '');
       onFileSelect(file);
     },
     [localPreview, onFileSelect]
   );
 
-  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: ADMIN_SHOP_SKU_IMAGE_ACCEPT,
     maxSize: ADMIN_SHOP_SKU_IMAGE_MAX_BYTES,
     multiple: false,
     disabled,
-    noClick: Boolean(displayUrl),
+    noClick: false,
     onDrop: handleDrop,
     onDropRejected: onDropRejectedHandler
   });
@@ -69,59 +92,58 @@ const ShopProductImageUpload = ({
       URL.revokeObjectURL(localPreview);
       setLocalPreview(null);
     }
+    setSelectedFileName('');
+    setUploadError('');
     onClear();
   };
 
-  const rootClassName = [
-    'admin-shop-sku-image-upload',
-    isDragActive ? 'admin-shop-sku-image-upload--drag-over' : '',
-    displayUrl ? 'admin-shop-sku-image-upload--has-preview' : ''
-  ]
-    .filter(Boolean)
-    .join(' ');
-
   return (
-    <div
-      className={rootClassName}
-      data-testid={testId}
-      {...getRootProps()}
-    >
-      <input {...getInputProps()} aria-label="대표 이미지 업로드" />
+    <div className="admin-shop-sku-image-upload" data-testid={testId}>
+      <div
+        {...getRootProps({
+          className: `mg-upload-area admin-shop-sku-image-upload__dropzone ${
+            isDragActive ? 'mg-upload-area--drag-over' : ''
+          }`,
+          'aria-label': '대표 이미지를 드래그하여 놓거나 클릭하여 선택'
+        })}
+      >
+        <input
+          {...getInputProps({
+            accept: 'image/jpeg,image/png,image/webp',
+            'aria-label': '대표 이미지 파일 선택'
+          })}
+        />
+        <p>{ADMIN_SHOP_SKU_IMAGE_UPLOAD_HINT}</p>
+        <p className="admin-shop-sku-image-upload__format-hint">{ADMIN_SHOP_SKU_IMAGE_FORMAT_HINT}</p>
+        <p className="admin-shop-sku-image-upload__selection-feedback">
+          {selectedFileName || ADMIN_SHOP_SKU_IMAGE_SELECTION_NONE}
+        </p>
+        {uploadError ? (
+          <p className="admin-shop-sku-image-upload__error" role="alert">
+            {uploadError}
+          </p>
+        ) : null}
+      </div>
+
       {displayUrl ? (
-        <>
+        <figure className="admin-shop-sku-image-upload__preview-wrap">
           <img
             src={displayUrl}
             alt=""
             className="admin-shop-sku-image-upload__preview"
           />
-          <div className="admin-shop-sku-image-upload__overlay">
+          <div className="admin-shop-sku-image-upload__preview-actions">
             <MGButton
               type="button"
-              className={`${buildErpMgButtonClassName('secondary')} admin-shop-sku-image-upload__overlay-btn`}
-              disabled={disabled}
-              onClick={(ev) => {
-                ev.stopPropagation();
-                open();
-              }}
-            >
-              변경
-            </MGButton>
-            <MGButton
-              type="button"
-              className={`${buildErpMgButtonClassName('secondary')} admin-shop-sku-image-upload__overlay-btn`}
+              className={`${buildErpMgButtonClassName('secondary')} admin-shop-sku-image-upload__action-btn`}
               disabled={disabled}
               onClick={handleClear}
             >
               삭제
             </MGButton>
           </div>
-        </>
-      ) : (
-        <div className="admin-shop-sku-image-upload__placeholder">
-          <ImageIcon size={32} aria-hidden />
-          <span>{ADMIN_SHOP_SKU_IMAGE_UPLOAD_HINT}</span>
-        </div>
-      )}
+        </figure>
+      ) : null}
     </div>
   );
 };

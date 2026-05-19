@@ -1,45 +1,57 @@
 /**
- * Shop SKU 대표 이미지 업로드 — B0KlA·디자인 토큰
+ * Shop SKU 대표 이미지 업로드 — mg-upload-area + 하단 1:1 미리보기
  *
  * @author CoreSolution
  * @since 2026-05-19
  */
 
 .admin-shop-sku-image-upload {
-  position: relative;
-  width: 100%;
-  max-width: 20rem;
-  aspect-ratio: 1 / 1;
-  border: 2px dashed var(--mg-color-border-main);
-  border-radius: var(--mg-radius-lg);
-  background: var(--mg-color-background-main);
-  overflow: hidden;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  max-width: 20rem;
 }
 
-.admin-shop-sku-image-upload--drag-over {
-  border-color: var(--mg-color-primary-main);
-  background: color-mix(in srgb, var(--mg-color-primary-main) 6%, var(--mg-color-background-main));
-}
-
-.admin-shop-sku-image-upload--has-preview {
-  cursor: default;
-  border-style: solid;
-}
-
-.admin-shop-sku-image-upload__placeholder {
+.admin-shop-sku-image-upload__dropzone {
+  padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--mg-spacing-xs);
-  padding: var(--mg-spacing-md);
+  justify-content: center;
+  gap: 0.5rem;
   text-align: center;
-  color: var(--mg-color-text-secondary);
+  cursor: pointer;
+}
+
+.admin-shop-sku-image-upload__dropzone p {
+  margin: 0;
   font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.admin-shop-sku-image-upload__format-hint {
+  font-size: var(--mg-font-size-xs, 0.75rem);
+}
+
+.admin-shop-sku-image-upload__selection-feedback {
+  font-weight: 500;
+  color: var(--mg-color-text-main);
+}
+
+.admin-shop-sku-image-upload__error {
+  color: var(--mg-color-error-main, var(--mg-error-600));
+  font-size: var(--mg-font-size-sm);
+}
+
+.admin-shop-sku-image-upload__preview-wrap {
+  margin: 0;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--mg-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--mg-color-border-main);
+  background: var(--mg-color-surface-main);
 }
 
 .admin-shop-sku-image-upload__preview {
@@ -49,23 +61,15 @@
   display: block;
 }
 
-.admin-shop-sku-image-upload__overlay {
+.admin-shop-sku-image-upload__preview-actions {
   position: absolute;
-  inset: 0;
+  inset: auto 0 0 0;
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: var(--mg-spacing-sm);
-  background: color-mix(in srgb, var(--mg-color-text-main) 45%, transparent);
-  opacity: 0;
-  transition: opacity 0.2s;
+  padding: var(--mg-spacing-sm);
+  background: color-mix(in srgb, var(--mg-color-text-main) 40%, transparent);
 }
 
-.admin-shop-sku-image-upload--has-preview:hover .admin-shop-sku-image-upload__overlay,
-.admin-shop-sku-image-upload--has-preview:focus-within .admin-shop-sku-image-upload__overlay {
-  opacity: 1;
-}
-
-.admin-shop-sku-image-upload__overlay-btn {
+.admin-shop-sku-image-upload__action-btn {
   min-height: 2.75rem;
 }

@@ -5,13 +5,17 @@
  * @since 2026-05-19
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Coins, ImageIcon } from 'lucide-react';
+import { Coins } from 'lucide-react';
 import PriceText from '../atoms/PriceText';
 import SafeText from '../../common/SafeText';
 import { CLIENT_SHOP_TEST_IDS } from '../../../constants/clientShopConstants';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import {
+  generateShopCatalogPlaceholderDataUri,
+  resolveShopCatalogDisplayImageUrl
+} from '../../../utils/shopCatalogThumbnail';
 
 const SkuCard = ({
   sku,
@@ -21,31 +25,37 @@ const SkuCard = ({
   detailTo = null,
   addButtonTestId = null
 }) => {
-  const [imageFailed, setImageFailed] = useState(false);
-  const thumbnailUrl = toDisplayString(sku?.thumbnailUrl, '');
-  const showImage = Boolean(thumbnailUrl) && !imageFailed;
+  const [imageSrc, setImageSrc] = useState(() => resolveShopCatalogDisplayImageUrl(sku));
+
+  useEffect(() => {
+    setImageSrc(resolveShopCatalogDisplayImageUrl(sku));
+  }, [sku]);
+
+  const fallbackDataUri = useMemo(
+    () =>
+      generateShopCatalogPlaceholderDataUri({
+        title: sku?.title,
+        catalogCategory: sku?.catalogCategory
+      }),
+    [sku?.title, sku?.catalogCategory]
+  );
+
+  const handleImageError = () => {
+    setImageSrc(fallbackDataUri);
+  };
+
   const titleText = toDisplayString(sku?.title, '');
 
   return (
     <article className="client-shop__sku-card" data-testid={`sku-card-${sku.skuCode}`}>
       <figure className="client-shop__sku-image-wrapper">
-        {showImage ? (
-          <img
-            src={thumbnailUrl}
-            alt=""
-            className="client-shop__sku-image"
-            data-testid={CLIENT_SHOP_TEST_IDS.SKU_CARD_THUMBNAIL}
-            onError={() => setImageFailed(true)}
-          />
-        ) : (
-          <div
-            className="client-shop__sku-image-placeholder"
-            data-testid={CLIENT_SHOP_TEST_IDS.SKU_CARD_THUMBNAIL}
-            aria-hidden
-          >
-            <ImageIcon size={28} />
-          </div>
-        )}
+        <img
+          src={imageSrc}
+          alt=""
+          className="client-shop__sku-image"
+          data-testid={CLIENT_SHOP_TEST_IDS.SKU_CARD_THUMBNAIL}
+          onError={handleImageError}
+        />
       </figure>
       <div className="client-shop__sku-card-inner">
         <span className="client-shop__accent-bar" aria-hidden />

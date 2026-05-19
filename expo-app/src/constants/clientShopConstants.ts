@@ -50,6 +50,26 @@ export const SHOP_CATALOG_CATEGORY = {
 export type ShopCatalogCategory =
   (typeof SHOP_CATALOG_CATEGORY)[keyof typeof SHOP_CATALOG_CATEGORY];
 
+/** 생성형 SVG placeholder — 400×400, 카테고리별 톤 (디자인 토큰 hex) */
+export const SHOP_CATALOG_PLACEHOLDER_SIZE_PX = 400;
+
+export const SHOP_CATALOG_PLACEHOLDER_TITLE_FALLBACK = '상품';
+
+export const SHOP_CATALOG_PLACEHOLDER_SVG_COLORS: Readonly<
+  Record<ShopCatalogCategory, { background: string; accent: string; text: string }>
+> = {
+  [SHOP_CATALOG_CATEGORY.CONSULTATION]: {
+    background: '#F5F3EF',
+    accent: '#3D5246',
+    text: '#3D5246',
+  },
+  [SHOP_CATALOG_CATEGORY.ASSESSMENT]: {
+    background: '#EEF4F1',
+    accent: '#5C7A6B',
+    text: '#3D5246',
+  },
+};
+
 /**
  * PLP 탭 필터용 — API·DB 대소문자·공백 차이 흡수.
  *

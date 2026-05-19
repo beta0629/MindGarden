@@ -1,5 +1,5 @@
 /**
- * ShopSkuThumbnail — PLP·PDP 1:1 상품 이미지 (expo-image)
+ * ShopSkuThumbnail — PLP·PDP 1:1 상품 이미지 (expo-image, 생성형 placeholder)
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -7,12 +7,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View, type ImageStyle, type ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
-import { ImageIcon } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { getApiBaseUrl } from '@/config/apiBaseUrl';
 import { CLIENT_SHOP_TEST_IDS } from '@/constants/clientShopConstants';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
+import {
+  generateShopCatalogPlaceholderDataUri,
+  resolveShopCatalogDisplayImageUrl,
+  type ShopCatalogImageSku,
+} from '@/utils/shopCatalogThumbnail';
 
 const PUBLIC_API_FILES_PATH_PREFIX = '/api/v1/files';
 
@@ -40,14 +44,14 @@ function isPublicApiFileUrl(uri: string): boolean {
 export type ShopSkuThumbnailVariant = 'card' | 'hero';
 
 interface ShopSkuThumbnailProps {
-  readonly thumbnailUrl?: string | null;
+  readonly sku?: ShopCatalogImageSku | null;
   readonly variant?: ShopSkuThumbnailVariant;
   readonly testID?: string;
   readonly style?: ViewStyle;
 }
 
 export function ShopSkuThumbnail({
-  thumbnailUrl,
+  sku,
   variant = 'card',
   testID = CLIENT_SHOP_TEST_IDS.SKU_CARD_THUMBNAIL,
   style,
@@ -55,19 +59,28 @@ export function ShopSkuThumbnail({
   const theme = useTheme();
   const accessToken = useAuthStore((s) => s.accessToken);
   const tenantId = useTenantStore((s) => s.tenantId);
-  const [imageFailed, setImageFailed] = useState(false);
+  const [displayUri, setDisplayUri] = useState(() => resolveShopCatalogDisplayImageUrl(sku));
+
+  const fallbackDataUri = useMemo(
+    () =>
+      generateShopCatalogPlaceholderDataUri({
+        title: sku?.title,
+        catalogCategory: sku?.catalogCategory,
+      }),
+    [sku?.title, sku?.catalogCategory],
+  );
 
   useEffect(() => {
-    setImageFailed(false);
-  }, [thumbnailUrl]);
+    setDisplayUri(resolveShopCatalogDisplayImageUrl(sku));
+  }, [sku]);
 
   const imageSource = useMemo(() => {
-    if (!thumbnailUrl || imageFailed) {
-      return null;
-    }
-    const u = String(thumbnailUrl).trim();
+    const u = String(displayUri || '').trim();
     if (!u) {
       return null;
+    }
+    if (u.startsWith('data:')) {
+      return { uri: u };
     }
     const needAuthHeaders =
       isSameOriginAsApi(u) && !!accessToken && !isPublicApiFileUrl(u);
@@ -81,7 +94,11 @@ export function ShopSkuThumbnail({
       return { uri: u, headers };
     }
     return { uri: u };
-  }, [thumbnailUrl, accessToken, tenantId, imageFailed]);
+  }, [displayUri, accessToken, tenantId]);
+
+  const handleError = () => {
+    setDisplayUri(fallbackDataUri);
+  };
 
   const placeholderBg = theme.colors.bgMain;
 
@@ -103,20 +120,9 @@ export function ShopSkuThumbnail({
           style={styles.image as ImageStyle}
           contentFit="cover"
           transition={200}
-          onError={() => setImageFailed(true)}
+          onError={handleError}
         />
-      ) : (
-        <View
-          style={[styles.placeholder, { backgroundColor: theme.colors.surface }]}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          <ImageIcon
-            size={variant === 'hero' ? 40 : 28}
-            color={theme.colors.textSecondary}
-          />
-        </View>
-      )}
+      ) : null}
     </View>
   );
 }
@@ -135,11 +141,5 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-  },
-  placeholder: {
-    flex: 1,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

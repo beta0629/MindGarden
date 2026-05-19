@@ -35,6 +35,7 @@ import { USER_ROLES } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { resolveShopCatalogDisplayImageUrl } from '../../utils/shopCatalogThumbnail';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AdminShopCatalogSkuEditorPage.css';
@@ -52,13 +53,6 @@ function normalizeListPayload(raw) {
     return raw.data;
   }
   return [];
-}
-
-function resolveThumbnailUrl(row) {
-  if (!row || typeof row !== 'object') {
-    return '';
-  }
-  return toDisplayString(row.thumbnailUrl || row.heroImageUrl, '');
 }
 
 const AdminShopCatalogSkusPage = () => {
@@ -109,7 +103,7 @@ const AdminShopCatalogSkusPage = () => {
     return (Array.isArray(rows) ? rows : []).map((row, idx) => {
       const price = row.unitPriceMinor != null ? Number(row.unitPriceMinor).toLocaleString('ko-KR') : '';
       const visible = row.catalogVisible !== false;
-      const thumb = resolveThumbnailUrl(row);
+      const thumb = resolveShopCatalogDisplayImageUrl(row);
       return {
         __rowKey: row.id != null ? `sku-${String(row.id)}` : `sku-idx-${idx}`,
         colThumb: thumb,
@@ -220,7 +214,6 @@ const AdminShopCatalogSkusPage = () => {
       if (!url) {
         return '—';
       }
-      const title = toDisplayString(item.colTitle, '상품');
       return (
         <img
           src={url}

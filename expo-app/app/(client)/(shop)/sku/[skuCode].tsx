@@ -164,7 +164,7 @@ export default function ShopSkuDetailScreen() {
             accessibilityLabel={`상품 ${sku.title}`}
             testID={CLIENT_SHOP_TEST_IDS.PDP}
           >
-            <ShopSkuThumbnail thumbnailUrl={sku.thumbnailUrl} variant="hero" />
+            <ShopSkuThumbnail sku={sku} variant="hero" />
             <View style={styles.pdpInner}>
               <AccentBar />
               <View style={styles.pdpBody}>

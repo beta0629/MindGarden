@@ -5,9 +5,8 @@
  * @since 2026-05-19
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ImageIcon } from 'lucide-react';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import PriceText from '../../../components/shop/atoms/PriceText';
@@ -25,7 +24,10 @@ import {
   mergeCartLine,
   replaceShopCart
 } from '../../../services/clientShopService';
-import { toDisplayString } from '../../../utils/safeDisplay';
+import {
+  generateShopCatalogPlaceholderDataUri,
+  resolveShopCatalogDisplayImageUrl
+} from '../../../utils/shopCatalogThumbnail';
 
 const ShopSkuDetailPage = () => {
   const { skuCode } = useParams();
@@ -34,7 +36,7 @@ const ShopSkuDetailPage = () => {
   const [sku, setSku] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [imageFailed, setImageFailed] = useState(false);
+  const [heroImageSrc, setHeroImageSrc] = useState('');
 
   const loadSku = useCallback(async() => {
     if (!skuCode) {
@@ -43,7 +45,6 @@ const ShopSkuDetailPage = () => {
     try {
       setLoading(true);
       setMessage('');
-      setImageFailed(false);
       const row = await fetchShopCatalogSku(decodeURIComponent(skuCode));
       if (!row) {
         setMessage('상품을 찾을 수 없거나 노출되지 않습니다.');
@@ -83,6 +84,31 @@ const ShopSkuDetailPage = () => {
     }
   };
 
+  const heroFallbackDataUri = useMemo(
+    () =>
+      sku
+        ? generateShopCatalogPlaceholderDataUri({
+            title: sku.title,
+            catalogCategory: sku.catalogCategory
+          })
+        : '',
+    [sku]
+  );
+
+  useEffect(() => {
+    if (sku) {
+      setHeroImageSrc(resolveShopCatalogDisplayImageUrl(sku));
+    } else {
+      setHeroImageSrc('');
+    }
+  }, [sku]);
+
+  const handleHeroImageError = () => {
+    if (heroFallbackDataUri) {
+      setHeroImageSrc(heroFallbackDataUri);
+    }
+  };
+
   if (sessionLoading || !isLoggedIn) {
     return <ShopClientSessionLoading title="상품 상세" />;
   }
@@ -90,8 +116,6 @@ const ShopSkuDetailPage = () => {
   const categoryKey = normalizeShopCatalogCategory(sku?.catalogCategory);
   const categoryLabel =
     SHOP_CATEGORY_TABS.find((tab) => tab.key === categoryKey)?.label || categoryKey;
-  const thumbnailUrl = toDisplayString(sku?.thumbnailUrl, '');
-  const showHeroImage = Boolean(thumbnailUrl) && !imageFailed;
 
   return (
     <ShopClientLayout title="상품 상세" testId="client-shop-sku-detail">
@@ -115,18 +139,14 @@ const ShopSkuDetailPage = () => {
           data-testid={CLIENT_SHOP_TEST_IDS.PDP}
         >
           <figure className="client-shop__pdp-image-wrapper">
-            {showHeroImage ? (
+            {heroImageSrc ? (
               <img
-                src={thumbnailUrl}
+                src={heroImageSrc}
                 alt=""
                 className="client-shop__pdp-image"
-                onError={() => setImageFailed(true)}
+                onError={handleHeroImageError}
               />
-            ) : (
-              <div className="client-shop__pdp-image-placeholder" aria-hidden>
-                <ImageIcon size={40} />
-              </div>
-            )}
+            ) : null}
           </figure>
 
           <div className="client-shop__pdp-body">

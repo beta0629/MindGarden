@@ -5,7 +5,7 @@
  * @since 2026-05-19
  */
 
-import React, { useCallback, useEffect, useId, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -39,6 +39,10 @@ import {
   mapAdminShopCatalogRowToForm
 } from '../../utils/adminShopCatalogForm';
 import { toDisplayString } from '../../utils/safeDisplay';
+import {
+  generateShopCatalogPlaceholderDataUri,
+  isShopCatalogPlaceholderUrl
+} from '../../utils/shopCatalogThumbnail';
 import notificationManager from '../../utils/notification';
 import { USER_ROLES } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
@@ -154,6 +158,35 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
     ? ADMIN_SHOP_SKU_FORM_SKU_CODE_PLACEHOLDER
     : toDisplayString(form.skuCode, '—');
 
+  const pendingPreviewUrl = useMemo(() => {
+    if (!pendingImageFile) {
+      return null;
+    }
+    return URL.createObjectURL(pendingImageFile);
+  }, [pendingImageFile]);
+
+  useEffect(() => {
+    return () => {
+      if (pendingPreviewUrl) {
+        URL.revokeObjectURL(pendingPreviewUrl);
+      }
+    };
+  }, [pendingPreviewUrl]);
+
+  const editorPreviewUrl = useMemo(() => {
+    if (pendingPreviewUrl) {
+      return pendingPreviewUrl;
+    }
+    const saved = toDisplayString(form.thumbnailUrl, '').trim();
+    if (saved && !isShopCatalogPlaceholderUrl(saved)) {
+      return saved;
+    }
+    return generateShopCatalogPlaceholderDataUri({
+      title: form.title,
+      catalogCategory: form.catalogCategory
+    });
+  }, [pendingPreviewUrl, form.thumbnailUrl, form.title, form.catalogCategory]);
+
   return (
     <AdminCommonLayout title={pageTitle}>
       <div
@@ -198,7 +231,7 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
                     대표 이미지
                   </h2>
                   <ShopProductImageUpload
-                    previewUrl={form.thumbnailUrl || null}
+                    previewUrl={editorPreviewUrl}
                     onFileSelect={(file) => setPendingImageFile(file)}
                     onClear={() => {
                       setPendingImageFile(null);

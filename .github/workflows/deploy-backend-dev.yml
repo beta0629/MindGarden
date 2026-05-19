@@ -272,8 +272,8 @@ jobs:
         key: ${{ secrets.DEV_SERVER_SSH_KEY }}
         port: 22
         timeout: 120s
-        # 헬스 1차 180s + 2차 120s + journalctl·롤백 여유 (drone-ssh 기본 command_timeout에 걸리지 않도록)
-        command_timeout: 30m
+        # 헬스 대기(최대 600s) + journalctl·롤백 + start.sh 재생성 (Shop·Flyway·PlSql 기동 여유)
+        command_timeout: 45m
         script: |
           cd /var/www/mindgarden-dev
           
@@ -392,38 +392,36 @@ jobs:
           echo "🚀 서비스 시작 중..."
           sudo systemctl start mindgarden-dev.service
           
-          # 서비스가 완전히 시작될 때까지 대기 (Flyway·초기화 지연 대비 최대 180초)
-          echo "⏳ 서비스 시작 대기 중..."
+          # Flyway·Hibernate·PlSql 초기화 여유 (첫 헬스 폴링 전 워밍업)
+          echo "⏳ JVM·Flyway 초기화 워밍업 45초..."
+          sleep 45
+          
+          # 헬스 폴링 (최대 600초, 60초마다 진행 로그·journal 스니펫)
+          echo "⏳ actuator/health 대기 중 (최대 600초)..."
           SERVICE_STARTED=false
-          for i in {1..180}; do
-            if sudo systemctl is-active --quiet mindgarden-dev.service; then
-              if curl -f -s --connect-timeout 3 --max-time 8 http://localhost:8080/actuator/health > /dev/null 2>&1; then
-                echo "✅ 서비스 및 애플리케이션 시작 완료 (${i}초 소요)"
-                SERVICE_STARTED=true
+          for i in $(seq 1 600); do
+            if curl -f -s --connect-timeout 3 --max-time 12 http://localhost:8080/actuator/health > /dev/null 2>&1; then
+              echo "✅ 서비스 및 애플리케이션 시작 완료 (${i}초 소요, 워밍업 45초 포함)"
+              SERVICE_STARTED=true
+              break
+            fi
+            if ! sudo systemctl is-active --quiet mindgarden-dev.service; then
+              if [ "$i" -gt 60 ]; then
+                echo "❌ systemd 비활성(크래시·실패 추정) — ${i}초 경과"
+                sudo journalctl -u mindgarden-dev.service --no-pager -n 120 || true
                 break
               fi
+            fi
+            if [ $((i % 60)) -eq 0 ]; then
+              echo "⏳ 헬스 대기 중... ${i}/600초 (systemd=$(sudo systemctl is-active mindgarden-dev.service 2>/dev/null || echo unknown))"
+              sudo journalctl -u mindgarden-dev.service --no-pager -n 8 2>/dev/null | tail -5 || true
             fi
             sleep 1
           done
           
           if [ "$SERVICE_STARTED" = false ]; then
-            echo "⚠️ 1차 대기(180초) 내 헬스 미응답 — systemd 활성 시 추가 헬스 대기(최대 120초)"
-            if sudo systemctl is-active --quiet mindgarden-dev.service; then
-              for j in {1..120}; do
-                if curl -f -s --connect-timeout 3 --max-time 8 http://localhost:8080/actuator/health > /dev/null 2>&1; then
-                  echo "✅ 추가 대기 후 헬스 OK (${j}초)"
-                  SERVICE_STARTED=true
-                  break
-                fi
-                sleep 1
-              done
-            fi
-          fi
-          
-          if [ "$SERVICE_STARTED" = false ]; then
-            echo "⚠️ 서비스 시작 대기 시간 초과 - 상태 확인 중..."
-            echo "📋 서비스 로그 (원인 파악용):"
-            sudo journalctl -u mindgarden-dev.service --no-pager -n 80 || true
+            echo "⚠️ 600초 내 헬스 미응답 — 상태·로그 확인"
+            sudo journalctl -u mindgarden-dev.service --no-pager -n 150 || true
           fi
           
           # 서비스 상태 확인
@@ -456,6 +454,7 @@ jobs:
         key: ${{ secrets.DEV_SERVER_SSH_KEY }}
         port: 22
         timeout: 120s
+        command_timeout: 15m
         script: |
           echo "🏥 개발 서버 헬스체크 시작..."
           sleep 10

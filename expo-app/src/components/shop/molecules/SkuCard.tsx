@@ -1,5 +1,5 @@
 /**
- * SkuCard — 상품 카드 Molecule
+ * SkuCard — 상품 카드 Molecule (MVP+ 썸네일)
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -10,7 +10,9 @@ import { Coins } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { AccentBar } from '@/components/shop/atoms/AccentBar';
 import { PriceText } from '@/components/shop/atoms/PriceText';
+import { ShopSkuThumbnail } from '@/components/shop/molecules/ShopSkuThumbnail';
 import type { ShopCatalogSku } from '@/api/hooks/useClientShopCatalog';
+import { CLIENT_SHOP_TEST_IDS } from '@/constants/clientShopConstants';
 import { toDisplayString } from '@/utils/toDisplayString';
 
 interface SkuCardProps {
@@ -57,22 +59,44 @@ export function SkuCard({
         },
       ]}
       accessibilityRole="summary"
+      testID={`sku-card-${sku.skuCode}`}
     >
-      <AccentBar />
-      <View style={styles.body}>
-        {onPressDetail ? (
-          <Pressable
-            onPress={handleDetail}
-            accessibilityRole="link"
-            accessibilityLabel={`${sku.title} 상세보기`}
-            hitSlop={4}
-          >
+      <ShopSkuThumbnail
+        thumbnailUrl={sku.thumbnailUrl}
+        variant="card"
+        testID={CLIENT_SHOP_TEST_IDS.SKU_CARD_THUMBNAIL}
+      />
+      <View style={styles.cardInner}>
+        <AccentBar />
+        <View style={styles.body}>
+          {onPressDetail ? (
+            <Pressable
+              onPress={handleDetail}
+              accessibilityRole="link"
+              accessibilityLabel={`${sku.title} 상세보기`}
+              hitSlop={4}
+            >
+              <Text
+                style={[
+                  styles.title,
+                  styles.titleLink,
+                  {
+                    color: theme.colors.primary,
+                    fontFamily: theme.fontFamily.semibold,
+                    fontSize: theme.fontSize.base,
+                  },
+                ]}
+                numberOfLines={2}
+              >
+                {toDisplayString(sku.title, '상품')}
+              </Text>
+            </Pressable>
+          ) : (
             <Text
               style={[
                 styles.title,
-                styles.titleLink,
                 {
-                  color: theme.colors.primary,
+                  color: theme.colors.textMain,
                   fontFamily: theme.fontFamily.semibold,
                   fontSize: theme.fontSize.base,
                 },
@@ -81,74 +105,60 @@ export function SkuCard({
             >
               {toDisplayString(sku.title, '상품')}
             </Text>
-          </Pressable>
-        ) : (
-          <Text
-            style={[
-              styles.title,
-              {
-                color: theme.colors.textMain,
-                fontFamily: theme.fontFamily.semibold,
-                fontSize: theme.fontSize.base,
-              },
-            ]}
-            numberOfLines={2}
-          >
-            {toDisplayString(sku.title, '상품')}
-          </Text>
-        )}
-        {sku.descriptionText ? (
-          <Text
-            style={[
-              styles.desc,
-              {
-                color: theme.colors.textSecondary,
-                fontFamily: theme.fontFamily.regular,
-                fontSize: theme.fontSize.sm,
-              },
-            ]}
-            numberOfLines={3}
-          >
-            {sku.descriptionText}
-          </Text>
-        ) : null}
-        <View style={styles.footer}>
-          <PriceText amountMinor={sku.unitPriceMinor} currency={sku.currency} />
-          <View style={styles.actions}>
-            {pointsRedeemable ? (
-              <Coins
-                size={18}
-                color={theme.colors.accent}
-                accessibilityLabel="포인트 사용 가능"
-              />
-            ) : null}
-            <Pressable
-              onPress={handleAdd}
-              disabled={loading}
-              style={({ pressed }) => [
-                styles.cta,
+          )}
+          {sku.descriptionText ? (
+            <Text
+              style={[
+                styles.desc,
                 {
-                  backgroundColor: pressed ? theme.colors.primaryDark : theme.colors.primaryLight,
-                  borderRadius: theme.borderRadius.md,
-                  opacity: loading ? 0.5 : 1,
+                  color: theme.colors.textSecondary,
+                  fontFamily: theme.fontFamily.regular,
+                  fontSize: theme.fontSize.sm,
                 },
               ]}
-              accessibilityRole="button"
-              accessibilityLabel={`${sku.title} 장바구니에 담기`}
+              numberOfLines={3}
             >
-              <Text
-                style={[
-                  styles.ctaText,
+              {sku.descriptionText}
+            </Text>
+          ) : null}
+          <View style={styles.footer}>
+            <PriceText amountMinor={sku.unitPriceMinor} currency={sku.currency} />
+            <View style={styles.actions}>
+              {pointsRedeemable ? (
+                <Coins
+                  size={18}
+                  color={theme.colors.accent}
+                  accessibilityLabel="포인트 사용 가능"
+                />
+              ) : null}
+              <Pressable
+                onPress={handleAdd}
+                disabled={loading}
+                style={({ pressed }) => [
+                  styles.cta,
                   {
-                    color: theme.colors.textMain,
-                    fontFamily: theme.fontFamily.medium,
-                    fontSize: theme.fontSize.sm,
+                    backgroundColor: pressed ? theme.colors.primaryDark : theme.colors.primaryLight,
+                    borderRadius: theme.borderRadius.md,
+                    opacity: loading ? 0.5 : 1,
                   },
                 ]}
+                accessibilityRole="button"
+                accessibilityLabel={`${sku.title} 장바구니에 담기`}
               >
-                담기
-              </Text>
-            </Pressable>
+                <Text
+                  style={[
+                    styles.ctaText,
+                    {
+                      color: theme.colors.textMain,
+                      fontFamily: theme.fontFamily.medium,
+                      fontSize: theme.fontSize.sm,
+                    },
+                  ]}
+                >
+                  담기
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       </View>
@@ -158,10 +168,15 @@ export function SkuCard({
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
     minHeight: 44,
+  },
+  cardInner: {
+    flexDirection: 'row',
+    flex: 1,
+    minHeight: 0,
   },
   body: {
     flex: 1,

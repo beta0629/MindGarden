@@ -23,9 +23,15 @@ import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/templates/AppTopBar';
 import { AccentBar } from '@/components/shop/atoms/AccentBar';
 import { PriceText } from '@/components/shop/atoms/PriceText';
+import { ShopSkuThumbnail } from '@/components/shop/molecules/ShopSkuThumbnail';
 import { useClientShopCatalogSku } from '@/api/hooks/useClientShopOrders';
 import { useClientShopCart } from '@/api/hooks/useClientShopCart';
-import { CLIENT_SHOP_ROUTES } from '@/constants/clientShopConstants';
+import {
+  CLIENT_SHOP_ROUTES,
+  CLIENT_SHOP_TEST_IDS,
+  SHOP_CATEGORY_TABS,
+  normalizeShopCatalogCategory,
+} from '@/constants/clientShopConstants';
 import { mergeCartLine } from '@/utils/clientShopCart';
 import { toDisplayString } from '@/utils/toDisplayString';
 
@@ -156,9 +162,26 @@ export default function ShopSkuDetailScreen() {
               },
             ]}
             accessibilityLabel={`상품 ${sku.title}`}
+            testID={CLIENT_SHOP_TEST_IDS.PDP}
           >
-            <AccentBar />
-            <View style={styles.pdpBody}>
+            <ShopSkuThumbnail thumbnailUrl={sku.thumbnailUrl} variant="hero" />
+            <View style={styles.pdpInner}>
+              <AccentBar />
+              <View style={styles.pdpBody}>
+              <Text
+                style={[
+                  styles.categoryBadge,
+                  {
+                    color: theme.colors.textSecondary,
+                    fontFamily: theme.fontFamily.medium,
+                    fontSize: theme.fontSize.sm,
+                  },
+                ]}
+              >
+                {SHOP_CATEGORY_TABS.find(
+                  (tab) => tab.key === normalizeShopCatalogCategory(sku.catalogCategory),
+                )?.label ?? sku.catalogCategory}
+              </Text>
               <Text
                 style={[
                   styles.title,
@@ -196,6 +219,7 @@ export default function ShopSkuDetailScreen() {
               <Pressable
                 onPress={handleAddToCart}
                 disabled={loading}
+                testID={CLIENT_SHOP_TEST_IDS.PDP_ADD_TO_CART}
                 style={({ pressed }) => [
                   styles.cta,
                   {
@@ -220,6 +244,7 @@ export default function ShopSkuDetailScreen() {
                   장바구니에 담기
                 </Text>
               </Pressable>
+              </View>
             </View>
           </View>
         ) : null}
@@ -253,14 +278,22 @@ const styles = StyleSheet.create({
   pdp: {
     marginHorizontal: 16,
     marginTop: 8,
-    flexDirection: 'row',
+    flexDirection: 'column',
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
+  },
+  pdpInner: {
+    flexDirection: 'row',
+    flex: 1,
+    minHeight: 0,
   },
   pdpBody: {
     flex: 1,
     padding: 16,
     gap: 10,
+  },
+  categoryBadge: {
+    lineHeight: 20,
   },
   title: { lineHeight: 28 },
   desc: { lineHeight: 22 },

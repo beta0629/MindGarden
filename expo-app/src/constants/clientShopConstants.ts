@@ -50,6 +50,32 @@ export const SHOP_CATALOG_CATEGORY = {
 export type ShopCatalogCategory =
   (typeof SHOP_CATALOG_CATEGORY)[keyof typeof SHOP_CATALOG_CATEGORY];
 
+/**
+ * PLP 탭 필터용 — API·DB 대소문자·공백 차이 흡수.
+ *
+ * @param value catalogCategory 원시값
+ */
+export const normalizeShopCatalogCategory = (
+  value?: string | null,
+): ShopCatalogCategory => {
+  const raw = typeof value === 'string' ? value.trim().toUpperCase() : '';
+  if (raw === SHOP_CATALOG_CATEGORY.ASSESSMENT) {
+    return SHOP_CATALOG_CATEGORY.ASSESSMENT;
+  }
+  return SHOP_CATALOG_CATEGORY.CONSULTATION;
+};
+
+/** E2E·Maestro용 testID (웹 data-testid와 동일 문자열) */
+export const CLIENT_SHOP_TEST_IDS = {
+  SESSION_LOADING: 'client-shop-session-loading',
+  CATALOG_PAGE: 'client-shop-catalog-page',
+  CATALOG_LOADING: 'client-shop-catalog-loading',
+  CART_PAGE: 'client-shop-cart-page',
+  PDP: 'client-shop-pdp',
+  PDP_ADD_TO_CART: 'pdp-add-to-cart-button',
+  SKU_CARD_THUMBNAIL: 'sku-card-thumbnail',
+} as const;
+
 /** PLP 탭 — 라벨만 UI 상수, 필터 키는 API catalogCategory */
 export const SHOP_CATEGORY_TABS: ReadonlyArray<{
   key: ShopCatalogCategory;

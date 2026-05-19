@@ -31,6 +31,7 @@ import { mergeCartLine } from '@/utils/clientShopCart';
 import {
   buildShopSkuDetailPath,
   CLIENT_SHOP_ROUTES,
+  CLIENT_SHOP_TEST_IDS,
   SHOP_CATALOG_CATEGORY,
   type ShopCatalogCategory,
 } from '@/constants/clientShopConstants';
@@ -169,6 +170,7 @@ export default function ShopCatalogScreen() {
     <SafeAreaView
       style={[styles.safe, { backgroundColor: theme.colors.bgMain }]}
       edges={['top']}
+      testID={CLIENT_SHOP_TEST_IDS.CATALOG_PAGE}
     >
       <AppTopBar
         title="상품 둘러보기"
@@ -202,7 +204,7 @@ export default function ShopCatalogScreen() {
           data={filteredCatalog}
           renderItem={renderItem}
           keyExtractor={(item) => item.skuCode}
-          estimatedItemSize={120}
+          estimatedItemSize={280}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}

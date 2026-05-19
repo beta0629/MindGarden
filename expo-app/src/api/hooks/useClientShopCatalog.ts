@@ -10,6 +10,7 @@ import { SHOP_API } from '@/api/endpoints';
 import { unwrapApiResponse } from '@/api/unwrapApiResponse';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import type { ShopCatalogCategory } from '@/constants/clientShopConstants';
+import { normalizeShopCatalogList } from '@/utils/clientShopCatalog';
 
 export interface ShopCatalogSku {
   skuCode: string;
@@ -18,6 +19,7 @@ export interface ShopCatalogSku {
   unitPriceMinor: number;
   currency: string;
   catalogCategory: ShopCatalogCategory | string;
+  thumbnailUrl?: string | null;
 }
 
 export const SHOP_CATALOG_QUERY_KEYS = {
@@ -27,8 +29,8 @@ export const SHOP_CATALOG_QUERY_KEYS = {
 
 async function fetchShopCatalog(): Promise<ShopCatalogSku[]> {
   const raw = await apiGet<unknown>(SHOP_API.CATALOG);
-  const data = unwrapApiResponse<ShopCatalogSku[]>(raw);
-  return Array.isArray(data) ? data : [];
+  const data = unwrapApiResponse<unknown>(raw);
+  return normalizeShopCatalogList(data);
 }
 
 export function useClientShopCatalog() {

@@ -83,7 +83,8 @@ export const DASHBOARD_PATHS = {
   CONSULTANT: '/consultant/dashboard',
   ADMIN: '/admin/dashboard',
   STAFF: '/admin/dashboard',
-  BRANCH_SUPER_ADMIN: '/super_admin/dashboard'
+  BRANCH_SUPER_ADMIN: '/super_admin/dashboard',
+  SUPER_ADMIN: '/super_admin/dashboard'
 };
 
 /** 역할에 맞는 대시보드 경로 반환 (세션/권한 체크 후 리다이렉트용) */

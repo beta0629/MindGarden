@@ -1,0 +1,146 @@
+/**
+ * 슈퍼어드민 — 테넌트 컴포넌트 관리 (Shop·Reward)
+ *
+ * @author CoreSolution
+ * @since 2026-05-22
+ */
+
+.super-admin-tenant-components {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-lg, 1.5rem);
+}
+
+.super-admin-tenant-components__breadcrumb {
+  margin: 0;
+  font-size: var(--cs-text-sm, 0.875rem);
+  color: var(--mg-text-sub, var(--mg-color-text-secondary, var(--mg-gray-600)));
+}
+
+.mg-v2-section-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md, 1rem);
+  padding: var(--mg-spacing-lg, 1.5rem);
+  background: var(--mg-bg-surface, var(--mg-color-surface-muted, var(--mg-gray-50)));
+  border: 1px solid var(--mg-border, var(--mg-color-border-main, var(--mg-gray-200)));
+  border-radius: var(--mg-radius-lg, 1rem);
+}
+
+.mg-v2-section-block__head {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 0.5rem);
+}
+
+.mg-v2-accent-bar {
+  display: block;
+  width: var(--mg-spacing-xs, 0.25rem);
+  min-height: 1rem;
+  align-self: stretch;
+  background: var(--mg-primary, var(--mg-color-primary-main, var(--mg-primary-500)));
+  border-radius: var(--mg-radius-sm, 0.125rem);
+}
+
+.mg-v2-section-block__title {
+  margin: 0;
+  font-size: var(--cs-text-xs, 0.75rem);
+  font-weight: var(--cs-font-semibold, 600);
+  color: var(--mg-text-main, var(--mg-color-text-main, var(--mg-gray-900)));
+}
+
+.super-admin-tenant-components__search-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--mg-spacing-md, 1rem);
+}
+
+.super-admin-tenant-components__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  flex: 1 1 16rem;
+  min-width: 12rem;
+}
+
+.super-admin-tenant-components__label {
+  font-size: var(--cs-text-sm, 0.875rem);
+  color: var(--mg-text-sub, var(--mg-color-text-secondary, var(--mg-gray-600)));
+}
+
+.super-admin-tenant-components__input {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
+  border: 1px solid var(--mg-border, var(--mg-color-border-main, var(--mg-gray-200)));
+  border-radius: var(--mg-radius-md, 0.5rem);
+  background: var(--mg-bg-main, var(--mg-color-surface-main, var(--mg-white)));
+  color: var(--mg-text-main, var(--mg-color-text-main, var(--mg-gray-900)));
+  font-size: var(--cs-text-sm, 0.875rem);
+}
+
+.super-admin-tenant-components__hint {
+  margin: 0;
+  font-size: var(--cs-text-sm, 0.875rem);
+  color: var(--mg-text-sub, var(--mg-color-text-secondary, var(--mg-gray-600)));
+}
+
+.super-admin-tenant-components__status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: var(--mg-spacing-md, 1rem);
+}
+
+.super-admin-tenant-components__status-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  padding: var(--mg-spacing-md, 1rem);
+  border-radius: var(--mg-radius-md, 0.5rem);
+  border: 1px solid var(--mg-border, var(--mg-color-border-main, var(--mg-gray-200)));
+}
+
+.super-admin-tenant-components__status-card--active {
+  color: var(--mg-primary, var(--mg-color-primary-main, var(--mg-primary-500)));
+  background: var(--mg-primary-50, var(--mg-color-primary-surface, rgba(61, 82, 70, 0.08)));
+}
+
+.super-admin-tenant-components__status-card--inactive {
+  color: var(--mg-text-sub, var(--mg-color-text-secondary, var(--mg-gray-600)));
+  background: var(--mg-bg-main, var(--mg-color-surface-main, var(--mg-white)));
+}
+
+.super-admin-tenant-components__status-card--unknown {
+  color: var(--mg-text-sub, var(--mg-color-text-secondary, var(--mg-gray-600)));
+  background: var(--mg-bg-main, var(--mg-color-surface-main, var(--mg-white)));
+}
+
+.super-admin-tenant-components__status-code {
+  margin: 0;
+  font-size: var(--cs-text-sm, 0.875rem);
+  font-weight: var(--cs-font-semibold, 600);
+}
+
+.super-admin-tenant-components__status-desc {
+  margin: 0;
+  font-size: var(--cs-text-xs, 0.75rem);
+}
+
+.super-admin-tenant-components__status-label {
+  margin: 0;
+  font-size: var(--cs-text-xs, 0.75rem);
+  font-weight: var(--cs-font-medium, 500);
+}
+
+.super-admin-tenant-components__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-md, 1rem);
+}
+
+.super-admin-tenant-components__activate-btn.mg-v2-button-primary {
+  min-height: 2.5rem;
+  border-radius: var(--mg-radius-md, 0.625rem);
+}

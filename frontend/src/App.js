@@ -134,6 +134,8 @@ import PgApprovalManagement from './components/ops/PgApprovalManagement';
 import AdminLayout from './components/layout/AdminLayout';
 import TenantCommonCodeManager from './components/admin/TenantCommonCodeManager';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import SuperAdminTenantComponentPage from './components/super-admin/SuperAdminTenantComponentPage';
+import { SUPER_ADMIN_ROLE, SUPER_ADMIN_ROUTES } from './constants/superAdminRoutes';
 import { MypageRedirect, SettingsRedirect } from './components/common/MypageSettingsRedirects';
 import ConsultantAppShell from './components/layout/ConsultantAppShell';
 import ClientAppShell from './components/layout/ClientAppShell';
@@ -495,6 +497,14 @@ function AppContent() {
             <Route path="/admin/dashboard-widget" element={<WidgetBasedAdminDashboard />} />
             <Route path="/admin/dashboard-old" element={<DynamicDashboard user={user} />} />
             <Route path="/super_admin/dashboard" element={<DynamicDashboard user={user} />} />
+            <Route
+              path={SUPER_ADMIN_ROUTES.TENANT_COMPONENTS}
+              element={(
+                <ProtectedRoute requiredRole={SUPER_ADMIN_ROLE}>
+                  <SuperAdminTenantComponentPage />
+                </ProtectedRoute>
+              )}
+            />
             <Route path="/branch_super_admin/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/branch_manager/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/client/mypage" element={<MyPage />} />

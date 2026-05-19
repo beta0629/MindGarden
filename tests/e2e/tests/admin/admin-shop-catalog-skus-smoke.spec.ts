@@ -59,9 +59,20 @@ test.describe('관리자 — 쇼핑몰 카탈로그 SKU 스모크', () => {
     const emptyState = catalogPage.getByText('등록된 상품이 없습니다.');
     const seedSku = catalogPage.getByText(SEED_SKU_CODE);
     const catalogTable = catalogPage.locator(CATALOG_TABLE_SELECTOR);
-    await expect(
-      seedSku.or(emptyState).or(catalogTable.first()),
-      `SKU 목록 — 시드(${SEED_SKU_CODE})·빈 상태·테이블 중 하나가 ${PAGE_TEST_ID} 안에 보여야 함`
-    ).toBeVisible({ timeout: 20_000 });
+    const listStateMessage = `SKU 목록 — 시드(${SEED_SKU_CODE})·빈 상태·테이블 중 하나가 ${PAGE_TEST_ID} 안에 보여야 함`;
+    await expect
+      .poll(
+        async () => {
+          if (await seedSku.isVisible()) {
+            return true;
+          }
+          if (await emptyState.isVisible()) {
+            return true;
+          }
+          return catalogTable.first().isVisible();
+        },
+        { timeout: 20_000, message: listStateMessage }
+      )
+      .toBe(true);
   });
 });

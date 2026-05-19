@@ -23,8 +23,12 @@ import '../../../styles/shop/ClientShop.css';
  * @param {{ componentCode: string, children: import('react').ReactNode }} props
  */
 const ClientTenantComponentGate = ({ componentCode, children }) => {
-  const { loading: flagsLoading, clientShopEnabled, clientRewardEnabled } =
-    useTenantComponentFlags();
+  const {
+    loading: flagsLoading,
+    fetchFailed: flagsFetchFailed,
+    clientShopEnabled,
+    clientRewardEnabled
+  } = useTenantComponentFlags();
   const { isLoading: sessionLoading, hasCheckedSession } = useSession();
   const sessionAwaiting = !hasCheckedSession || sessionLoading;
 
@@ -38,7 +42,7 @@ const ClientTenantComponentGate = ({ componentCode, children }) => {
     return true;
   }, [componentCode, clientShopEnabled, clientRewardEnabled]);
 
-  if (flagsLoading || sessionAwaiting || enabled === undefined) {
+  if (flagsLoading || flagsFetchFailed || sessionAwaiting || enabled === undefined) {
     return (
       <div className="client-shop client-shop__gate-loading" data-testid={CLIENT_SHOP_TEST_IDS.SESSION_LOADING}>
         <p className="client-shop__message">{CLIENT_SHOP_SESSION_LOADING_COPY}</p>

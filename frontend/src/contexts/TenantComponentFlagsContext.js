@@ -18,36 +18,90 @@ import { useSession } from './SessionContext';
 
 const TenantComponentFlagsContext = createContext(null);
 
+const ACTIVE_CODES_RETRY_DELAY_MS = 400;
+
+/**
+ * unwrapApiEnvelope: false 응답 — ApiResponse { success, data: { activeComponentCodes } }
+ *
+ * @param {unknown} res
+ * @returns {{ codes: string[] | null, fetchFailed: boolean }}
+ */
+export function parseActiveComponentCodesResponse(res) {
+  if (res == null) {
+    return { codes: null, fetchFailed: true };
+  }
+  if (typeof res !== 'object') {
+    return { codes: null, fetchFailed: true };
+  }
+
+  const obj = /** @type {Record<string, unknown>} */ (res);
+
+  if (obj.success === false) {
+    return { codes: null, fetchFailed: true };
+  }
+
+  const payload = obj.data ?? obj;
+  if (payload && typeof payload === 'object') {
+    const data = /** @type {Record<string, unknown>} */ (payload);
+    if (Array.isArray(data.activeComponentCodes)) {
+      return { codes: data.activeComponentCodes, fetchFailed: false };
+    }
+  }
+
+  if (Array.isArray(obj.activeComponentCodes)) {
+    return { codes: obj.activeComponentCodes, fetchFailed: false };
+  }
+
+  if (obj.success === true) {
+    return { codes: [], fetchFailed: false };
+  }
+
+  return { codes: null, fetchFailed: true };
+}
+
 /**
  * @param {unknown} res
  * @returns {string[]}
  */
 function parseActiveComponentCodes(res) {
-  if (res == null || typeof res !== 'object') {
+  const { codes, fetchFailed } = parseActiveComponentCodesResponse(res);
+  if (fetchFailed || codes == null) {
     return [];
   }
-  const obj = res;
-  const data = obj.data ?? obj;
-  if (data && typeof data === 'object' && Array.isArray(data.activeComponentCodes)) {
-    return data.activeComponentCodes;
+  return codes;
+}
+
+/**
+ * @returns {Promise<{ codes: string[] | null, fetchFailed: boolean }>}
+ */
+async function fetchActiveComponentCodesWithRetry() {
+  const request = () =>
+    StandardizedApi.get(TENANT_COMPONENT_API.ACTIVE_CODES, {}, { unwrapApiEnvelope: false });
+
+  let result = parseActiveComponentCodesResponse(await request());
+  if (result.fetchFailed) {
+    await new Promise((resolve) => {
+      setTimeout(resolve, ACTIVE_CODES_RETRY_DELAY_MS);
+    });
+    result = parseActiveComponentCodesResponse(await request());
   }
-  if (Array.isArray(obj.activeComponentCodes)) {
-    return obj.activeComponentCodes;
-  }
-  return [];
+  return result;
 }
 
 export const TenantComponentFlagsProvider = ({ children }) => {
-  const { isLoggedIn, hasCheckedSession } = useSession();
-  const fetchEnabled = isLoggedIn && hasCheckedSession;
+  const { isLoggedIn, hasCheckedSession, user } = useSession();
+  const sessionTenantId = user?.tenantId?.trim() || '';
+  const fetchEnabled = isLoggedIn && hasCheckedSession && sessionTenantId.length > 0;
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [fetchFailed, setFetchFailed] = useState(false);
   const [activeCodes, setActiveCodes] = useState([]);
 
   useEffect(() => {
     if (!fetchEnabled) {
       setLoading(false);
       setLoaded(false);
+      setFetchFailed(false);
       setActiveCodes([]);
       return undefined;
     }
@@ -55,15 +109,24 @@ export const TenantComponentFlagsProvider = ({ children }) => {
     let cancelled = false;
     setLoading(true);
     setLoaded(false);
+    setFetchFailed(false);
 
-    StandardizedApi.get(TENANT_COMPONENT_API.ACTIVE_CODES, {}, { unwrapApiEnvelope: false })
-      .then((res) => {
-        if (!cancelled) {
-          setActiveCodes(parseActiveComponentCodes(res));
+    fetchActiveComponentCodesWithRetry()
+      .then(({ codes, fetchFailed: failed }) => {
+        if (cancelled) {
+          return;
+        }
+        if (failed || codes == null) {
+          setFetchFailed(true);
+          setActiveCodes([]);
+        } else {
+          setFetchFailed(false);
+          setActiveCodes(codes);
         }
       })
       .catch(() => {
         if (!cancelled) {
+          setFetchFailed(true);
           setActiveCodes([]);
         }
       })
@@ -77,38 +140,40 @@ export const TenantComponentFlagsProvider = ({ children }) => {
     return () => {
       cancelled = true;
     };
-  }, [fetchEnabled]);
+  }, [fetchEnabled, sessionTenantId]);
 
   const flagsPending = fetchEnabled && (!loaded || loading);
+  const flagsIndeterminate = flagsPending || fetchFailed;
 
   const isActive = useMemo(
     () => (code) => {
-      if (!code) {
+      if (!code || flagsIndeterminate) {
         return false;
       }
       return activeCodes.includes(code);
     },
-    [activeCodes]
+    [activeCodes, flagsIndeterminate]
   );
 
   const adminShopCatalogEnabled = useMemo(
-    () => (flagsPending ? undefined : isActive(PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG)),
-    [flagsPending, isActive]
+    () => (flagsIndeterminate ? undefined : isActive(PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG)),
+    [flagsIndeterminate, isActive]
   );
 
   const clientShopEnabled = useMemo(
-    () => (flagsPending ? undefined : isActive(PLATFORM_COMPONENT_CODES.CLIENT_SHOP)),
-    [flagsPending, isActive]
+    () => (flagsIndeterminate ? undefined : isActive(PLATFORM_COMPONENT_CODES.CLIENT_SHOP)),
+    [flagsIndeterminate, isActive]
   );
 
   const clientRewardEnabled = useMemo(
-    () => (flagsPending ? undefined : isActive(PLATFORM_COMPONENT_CODES.CLIENT_REWARD)),
-    [flagsPending, isActive]
+    () => (flagsIndeterminate ? undefined : isActive(PLATFORM_COMPONENT_CODES.CLIENT_REWARD)),
+    [flagsIndeterminate, isActive]
   );
 
   const value = useMemo(
     () => ({
       loading: flagsPending,
+      fetchFailed,
       activeCodes,
       isActive,
       adminShopCatalogEnabled,
@@ -117,6 +182,7 @@ export const TenantComponentFlagsProvider = ({ children }) => {
     }),
     [
       flagsPending,
+      fetchFailed,
       activeCodes,
       isActive,
       adminShopCatalogEnabled,
@@ -136,6 +202,7 @@ export const TenantComponentFlagsProvider = ({ children }) => {
  * @param {{ enabled?: boolean }} [options] 하위 호환 — Provider가 세션 기준으로 fetch
  * @returns {{
  *   loading: boolean,
+ *   fetchFailed: boolean,
  *   activeCodes: string[],
  *   isActive: (code: string) => boolean,
  *   adminShopCatalogEnabled: boolean | undefined,
@@ -154,6 +221,7 @@ export function useTenantComponentFlags(options = {}) {
   if (!enabled) {
     return {
       loading: false,
+      fetchFailed: false,
       activeCodes: [],
       isActive: () => false,
       adminShopCatalogEnabled: false,
@@ -164,3 +232,5 @@ export function useTenantComponentFlags(options = {}) {
 
   return context;
 }
+
+export { parseActiveComponentCodes };

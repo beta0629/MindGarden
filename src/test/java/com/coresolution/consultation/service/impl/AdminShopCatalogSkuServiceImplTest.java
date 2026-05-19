@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -118,15 +119,28 @@ class AdminShopCatalogSkuServiceImplTest {
     }
 
     @Test
-    @DisplayName("create — thumbnailUrl 없으면 IllegalArgumentException")
-    void create_whenThumbnailMissing_throws() {
+    @DisplayName("create — thumbnailUrl 없어도 저장 성공(이후 multipart 업로드)")
+    void create_whenThumbnailMissing_succeeds() {
+        when(shopCatalogSkuRepository.existsByTenantIdAndSkuCodeAndIsDeletedFalse(TENANT, "PKG-99"))
+                .thenReturn(false);
+        when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> {
+            ShopCatalogSku row = inv.getArgument(0);
+            row.setId(12L);
+            return row;
+        });
+        when(shopCatalogSkuPriceHistoryRepository.save(any(ShopCatalogSkuPriceHistory.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
         ShopCatalogSkuUpsertRequest request = new ShopCatalogSkuUpsertRequest(
                 "PKG-99", "패키지", null, 10000L, "KRW", ShopCatalogCategory.CONSULTATION,
-                null, true, true, 0);
+                null, false, true, 0);
 
-        assertThrows(IllegalArgumentException.class,
-                () -> adminShopCatalogSkuService.create(TENANT, request));
-        verify(shopCatalogSkuRepository, never()).save(any());
+        ShopCatalogSkuAdminDetail detail = adminShopCatalogSkuService.create(TENANT, request);
+
+        assertEquals("PKG-99", detail.skuCode());
+        ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
+        verify(shopCatalogSkuRepository).save(captor.capture());
+        assertNull(captor.getValue().getThumbnailUrl());
     }
 
     @Test
@@ -189,12 +203,28 @@ class AdminShopCatalogSkuServiceImplTest {
     }
 
     @Test
+    @DisplayName("patchCatalogVisible — 노출 true인데 thumbnail 없으면 IllegalArgumentException")
+    void patchCatalogVisible_whenVisibleWithoutThumbnail_throws() {
+        ShopCatalogSku row = new ShopCatalogSku();
+        row.setId(5L);
+        row.setTenantId(TENANT);
+        row.setCatalogVisible(false);
+        when(shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(5L, TENANT))
+                .thenReturn(Optional.of(row));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> adminShopCatalogSkuService.patchCatalogVisible(TENANT, 5L, true));
+        verify(shopCatalogSkuRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("patchCatalogVisible — catalogVisible 반영")
     void patchCatalogVisible_updatesFlag() {
         ShopCatalogSku row = new ShopCatalogSku();
         row.setId(3L);
         row.setTenantId(TENANT);
         row.setCatalogVisible(false);
+        row.setThumbnailUrl(THUMB);
         when(shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(3L, TENANT))
                 .thenReturn(Optional.of(row));
         when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> inv.getArgument(0));

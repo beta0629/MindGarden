@@ -115,6 +115,7 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
     setSaving(true);
     try {
       const body = buildAdminShopCatalogUpsertBody(form);
+      // create/update 먼저 → pendingImageFile 있으면 uploadAdminShopCatalogSkuThumbnail
       let savedId = skuId;
       if (isNew) {
         const created = await createAdminShopCatalogSku(body);

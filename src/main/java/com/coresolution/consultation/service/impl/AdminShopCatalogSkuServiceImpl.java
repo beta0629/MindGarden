@@ -134,6 +134,9 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         ShopCatalogSku row = shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(id, tid)
                 .orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, id));
         row.setCatalogVisible(catalogVisible);
+        if (catalogVisible) {
+            requireThumbnailUrl(row);
+        }
         shopCatalogSkuRepository.save(row);
     }
 
@@ -213,7 +216,6 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         if (StringUtils.hasText(request.thumbnailUrl())) {
             row.setThumbnailUrl(request.thumbnailUrl().trim());
         }
-        requireThumbnailUrl(row);
     }
 
     private static void requireThumbnailUrl(ShopCatalogSku row) {

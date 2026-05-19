@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서 제목 | MindGarden 내담자 쇼핑·리워드 UI 디자인 핸드오프 |
-| 상태 | **설계 완료** — `core-coder`, `core-publisher` 전달용 |
+| 상태 | **설계 완료 · Expo Phase 2 반영** — `core-coder` 전달용 |
 | 작성일 | 2026-05-19 |
 | 대상 | 내담자(Client) 웹 및 Expo 앱 |
 | SSOT 참조 | [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md), [MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md), [ONLINE_PAYMENT_CATALOG_CHECKOUT_SPEC.md](./ONLINE_PAYMENT_CATALOG_CHECKOUT_SPEC.md), [POINT_REWARD_EARN_AND_REDEEM_SPEC.md](./POINT_REWARD_EARN_AND_REDEEM_SPEC.md) |
@@ -86,14 +86,36 @@
 
 ## 3. Expo (모바일 앱) 특화 가이드
 
-웹과 **동일한 IA(Information Architecture) 및 API**를 사용하며, 모바일 네이티브 UX에 맞게 최적화합니다.
+웹과 **동일한 IA·API**를 사용하며, 모바일 네이티브 UX에 맞게 최적화합니다. **SSOT**: [EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md](./EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md).
 
-- **라우트 구조**: `(client)/(shop)/` 하위에 `catalog`, `checkout`, `points` 화면 배치.
-- **네비게이션**: 
-  - PLP: 하단 탭 또는 더보기 메뉴에서 진입.
-  - 체크아웃: 모달(Sheet) 형태 또는 Stack Push로 화면 전환. 상단 뒤로가기 버튼 제공.
-- **터치 영역**: 모든 버튼, 탭, 체크박스의 최소 터치 영역은 **44x44px** 이상 확보.
-- **키보드 대응**: 포인트 입력 시 숫자 키패드(`keyboardType="numeric"`) 활성화 및 키보드 회피(KeyboardAvoidingView) 적용.
+### 3.1 라우트·진입
+
+| 화면 | Expo Router | 상수 |
+|------|-------------|------|
+| PLP | `(client)/(shop)/index` | `CLIENT_SHOP_ROUTES.CATALOG` |
+| 장바구니 | `(client)/(shop)/cart` | `CART` |
+| 체크아웃 | `(client)/(shop)/checkout` | `CHECKOUT` |
+| 내 포인트 | `(client)/(shop)/points` | `POINTS` |
+| 주문 목록 | `(client)/(shop)/orders/index` | `ORDERS` |
+| 주문 상세 | `(client)/(shop)/orders/[orderPublicId]` | `buildShopOrderDetailPath` |
+| SKU PDP | `(client)/(shop)/sku/[skuCode]` | `buildShopSkuDetailPath` |
+
+- **1차 진입**: `(client)/(more)/index` 「온라인 쇼핑」 — `(shop)` 바텀 탭은 **`href: null`**(숨김).
+- **게이트**: `useTenantComponentFlags` — `CLIENT_SHOP`/`CLIENT_REWARD` 비활성 시 메뉴·화면 미노출.
+
+### 3.2 화면별 Expo UX
+
+- **PLP**: `ShopCategoryTabs`(상담/검사), `ShopTenantBanner`, `SkuCard` 그리드.
+- **장바구니**: 수량 변경·소계 — 웹 cart와 동일 API.
+- **체크아웃**: Stack Push; `PointInput`·`CheckoutSummary`; PG는 `prepare-payment` 후 WebView/딥링크.
+- **내 포인트**: `PointBalanceHeader` + `LedgerListItem` — `GET .../points/ledger` 최근 N건.
+- **주문 상세**: `FulfillmentLineList` — CONSULTATION COMPLETED / ASSESSMENT PENDING 배지; `REFUNDED` 상태 표시.
+
+### 3.3 공통 UX
+
+- **터치 영역**: 버튼·탭·체크박스 **44×44px** 이상.
+- **키보드**: 포인트 입력 `keyboardType="numeric"`, `KeyboardAvoidingView`.
+- **체크아웃 전환**: 모달 Sheet 또는 Stack — 상단 뒤로가기.
 
 ---
 
@@ -122,8 +144,8 @@
 `core-coder`는 본 설계 문서를 바탕으로 다음 조건을 만족하도록 구현해야 합니다.
 
 1. **라우트 및 진입점**:
-   - 웹: `/client/shop-catalog`, `/client/shop-checkout`, `/client/shop-points` 라우트 신설 및 연결.
-   - Expo: `(client)/(shop)/` 라우트 트리 신설.
+   - 웹: `/client/shop`, `/client/shop/cart`, `/client/shop/checkout`, `/client/shop/points`, `/client/shop/orders`, `/client/shop/sku/:skuCode` — 레거시 `/client/shop-catalog` 등은 redirect.
+   - Expo: `(client)/(shop)/` 7화면 + Stack; 더보기 「온라인 쇼핑」진입, `(shop)` 탭 숨김 — [EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md](./EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md) §2.
 2. **디자인 토큰 적용**:
    - `unified-design-tokens.css`의 `var(--mg-*)` 변수만 사용하여 스타일링. 하드코딩된 색상값(hex) 사용 금지.
    - 섹션 블록 및 카드 UI에 지정된 `border-radius` 및 패딩 적용.
@@ -134,6 +156,10 @@
    - 포인트 할인액이 반영된 최종 PG 결제 금액 계산 로직 프론트엔드 반영 (서버 검증과 일치).
 5. **반응형 및 모바일 우선**:
    - 웹 화면은 모바일 뷰포트(375px)에서 깨짐 없이 렌더링되어야 하며, 데스크톱(1200px)에서는 중앙 정렬된 컨테이너로 표시.
+6. **Expo 패리티 (Phase 2)**:
+   - cart·orders·PDP·ledger·fulfillment 배지 — 웹 MG-S1~S5b와 동일 API·상태.
+   - `CLIENT_SHOP`/`CLIENT_REWARD` 플래그 off 시 진입 차단.
+   - Jest: `clientShopCart`, `clientShopFormat`, `clientShopRoutes` 3 suite PASS.
 
 ---
 **디자인 설계자**: `core-designer` (gemini-3.1-pro)

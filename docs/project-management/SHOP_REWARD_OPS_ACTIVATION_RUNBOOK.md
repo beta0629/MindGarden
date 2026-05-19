@@ -4,14 +4,14 @@
 |------|------|
 | 일자 | 2026-05-19 |
 | 범위 | Flyway P2 마이그레이션·테넌트 컴포넌트 OPS 활성화·dev/staging 기동·수동 QA·E2E 전제 |
-| SSOT | [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) §7, [SHOP_P2_INTEGRATION_TEST_REPORT.md](./SHOP_P2_INTEGRATION_TEST_REPORT.md), [SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md](./SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md) |
+| SSOT | [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) §7, [SHOP_REWARD_IMPLEMENTATION_STATUS.md](./SHOP_REWARD_IMPLEMENTATION_STATUS.md), [SHOP_P2_INTEGRATION_TEST_REPORT.md](./SHOP_P2_INTEGRATION_TEST_REPORT.md), [SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md](./SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md) |
 | 코드 변경 | 없음 (OPS·DB·배포 절차만) |
 
 ---
 
 ## 한 줄 결론
 
-Shop·Reward P2 반영은 **백엔드 배포(Flyway 002~005·007 자동 적용, 001은 salary 별도) → OPS에서 대표 tenant 컴포넌트 3종 수동 활성화 → §5·§6·P1 QA 수동 스모크 → Playwright 전제 충족 후 E2E** 순서다. 운영 GO는 [PRE_PRODUCTION_GO_LIVE_CHECKLIST.md](../운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md)와 교차 확인한다.
+Shop·Reward P2 반영은 **백엔드 배포(Flyway 002~007 자동 적용, 001은 salary 별도) → OPS에서 대표 tenant 컴포넌트 3종 수동 활성화 → §5·§6·P1 QA 수동 스모크 → Playwright 전제 충족 후 E2E** 순서다. 운영 GO는 [PRE_PRODUCTION_GO_LIVE_CHECKLIST.md](../운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md)와 교차 확인한다.
 
 ---
 
@@ -34,25 +34,27 @@ Shop·Reward P2 반영은 **백엔드 배포(Flyway 002~005·007 자동 적용, 
 | 2 | `V20260519_003` | `V20260519_003__shop_reward_component_catalog_seed.sql` | `component_catalog` 시드 3종 (`INSERT IGNORE`) |
 | 3 | `V20260519_004` | `V20260519_004__shop_order_refunded_status.sql` | `shop_client_orders.status` COMMENT — `REFUNDED` 값 문서화 (VARCHAR 확장, DDL enum 변경 없음) |
 | 4 | `V20260519_005` | `V20260519_005__shop_order_fulfillment_events.sql` | `shop_order_fulfillment_events` 테이블 (PAID 후 이행 이벤트, append-only) |
-| 5 | `V20260519_007` | `V20260519_007__shop_catalog_category_column.sql` | `shop_catalog_skus.catalog_category` (`CONSULTATION` \| `ASSESSMENT`) |
+| 5 | `V20260519_006` | `V20260519_006__shop_order_line_mapping_link.sql` | `shop_client_order_lines.consultant_client_mapping_id` (CONSULTATION ERP 훅) |
+| 6 | `V20260519_007` | `V20260519_007__shop_catalog_category_column.sql` | `shop_catalog_skus.catalog_category` (`CONSULTATION` \| `ASSESSMENT`) |
 
 > **수동 확인**: `flyway_schema_history`에 **구버전** `V20260519_001__shop_catalog_category_column.sql`(또는 `20260519.001` + shop catalog description)이 이미 SUCCESS인 DB는 rename 후 007 재적용을 막기 위해 §1.2 (B)로 `catalog_category` 컬럼 존재를 확인하고, 필요 시 [FLYWAY_REPAIR_AFTER_FAILED_MIGRATION.md](../deployment/FLYWAY_REPAIR_AFTER_FAILED_MIGRATION.md)로 이력·checksum을 정리한다.
 
-> Shop P2c는 **004=REFUNDED**, **005=fulfillment events**, **007=catalog_category** 로 분리되어 있다(과거 `V20260519_004__shop_order_fulfillment_events`·`001` shop 중복 해소). 배포 전 `flyway_schema_history`에서 `20260519` 항목·CI 빌드 로그를 확인한다.
+> Shop P2c는 **004=REFUNDED**, **005=fulfillment events**, **006=mapping link**, **007=catalog_category** 로 분리되어 있다(과거 `V20260519_004__shop_order_fulfillment_events`·`001` shop 중복 해소). 배포 전 `flyway_schema_history`에서 `20260519` 항목·CI 빌드 로그를 확인한다.
 
 ### 1.2 적용 후 검증 SQL
 
 아래는 **대상 DB에 접속한 뒤** 실행한다. `tenant_id`·`subdomain` 등은 환경 변수·조회 결과로 치환한다 (저장소·Flyway에 tenant 하드코딩 금지).
 
 ```sql
--- (A) Flyway 이력 — Shop P2: 002~005·007 SUCCESS (001은 salary 별도)
+-- (A) Flyway 이력 — Shop P2: 002~007 SUCCESS (001은 salary 별도)
 SELECT installed_rank, version, description, success, installed_on
 FROM flyway_schema_history
-WHERE version IN ('20260519.002', '20260519.003', '20260519.004', '20260519.005', '20260519.007')
+WHERE version IN ('20260519.002', '20260519.003', '20260519.004', '20260519.005', '20260519.006', '20260519.007')
    OR script LIKE '%20260519_002__point_tenant%'
    OR script LIKE '%20260519_003__shop_reward%'
    OR script LIKE '%20260519_004__shop_order_refunded%'
    OR script LIKE '%20260519_005__shop_order_fulfillment%'
+   OR script LIKE '%20260519_006__shop_order_line_mapping%'
    OR script LIKE '%20260519_007__shop_catalog_category%'
 ORDER BY installed_rank;
 
@@ -94,6 +96,13 @@ WHERE TABLE_SCHEMA = DATABASE()
 
 -- (F) V005 — shop_order_fulfillment_events 테이블
 SHOW TABLES LIKE 'shop_order_fulfillment_events';
+
+-- (G) V006 — consultant_client_mapping_id (ERP fulfillment)
+SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_COMMENT
+FROM information_schema.COLUMNS
+WHERE TABLE_SCHEMA = DATABASE()
+  AND TABLE_NAME = 'shop_client_order_lines'
+  AND COLUMN_NAME = 'consultant_client_mapping_id';
 ```
 
 **실패 시**: 애플리케이션 로그에서 Flyway 오류 확인 → 개발 `journalctl -u mindgarden-dev.service`, 운영 `mindgarden-core-blue` / `mindgarden-core-green` ([§3](#3-devstaging-기동-deployment-기준)).
@@ -237,7 +246,7 @@ Shop P2는 **백엔드+프론트+DB** 모두 해당 → 개발은 develop 푸시
 | # | 전제 |
 |---|------|
 | 1 | **Spring API 기동** — dev/staging 백엔드·프록시(Nginx) 정상 |
-| 2 | **Flyway P2** — §1 `002`~`005`·`007` 적용·검증 SQL 통과 |
+| 2 | **Flyway P2** — §1 `002`~`007` 적용·검증 SQL 통과 |
 | 3 | **TenantComponent** — §2 OPS 활성화 (`CLIENT_SHOP` 등) |
 | 4 | **노출 SKU** — 활성 탭(상담 패키지 등)에 `catalogVisible=true` SKU ≥ 1 |
 | 5 | **내담자 자격** — `tests/e2e/helpers/erpAuth.ts` `loginClientWeb()` 계정 |
@@ -283,6 +292,8 @@ cd tests/e2e && npx playwright test client-shop-catalog-to-cart --project=chromi
 ## 8. 관련 문서
 
 - [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) §7 컴포넌트 플래그
+- [SHOP_REWARD_IMPLEMENTATION_STATUS.md](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) — **구현 현황판**(Maven 60건·Flyway·R1/R2·GO/NO-GO)
+- [EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md](./EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md)
 - [POINT_REWARD_EARN_AND_REDEEM_SPEC.md](./POINT_REWARD_EARN_AND_REDEEM_SPEC.md)
 - [DEV_DEPLOYMENT_STABILITY_CHECKLIST.md](../troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md)
 - [FLYWAY_CORE_VS_OPS_TRACKS.md](../deployment/FLYWAY_CORE_VS_OPS_TRACKS.md)

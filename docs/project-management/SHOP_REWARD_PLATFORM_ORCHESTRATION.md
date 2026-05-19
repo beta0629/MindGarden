@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서 제목 | 쇼핑·리워드 플랫폼 오케스트레이션 |
-| 상태 | **권장안 확정** — 구현은 서브에이전트 위임만 계획 |
+| 상태 | **구현 진행(로컬)** — P1~P2 백엔드·웹·Expo 반영, 미커밋 |
 | 작성일 | 2026-05-19 |
 | SSOT 역할 | **아키텍처·역할 분리·갭·MVP·위임 순서**의 단일 오케스트레이션 문서 |
 
@@ -16,7 +16,7 @@
 | **책임** | 쇼핑·리워드 **엔진** — API·DB·원장·주문 상태 머신·hold/commit·PG/ERP 훅·멀티테넌트 격리 | **상품·정책·브랜딩·노출** 설정 + **웹/Expo UI** (첫 소비자) |
 | **코드 위치** | `com.coresolution.core.*` (컴포넌트 플래그), `com.coresolution.consultation.*` (현재 MVP 도메인), 공통 Flyway | 테넌트 **설정 데이터**·CMS/정책 테이블·디자인 토큰; UI는 `frontend/`·`expo-app/` |
 | **SKU·가격** | `shop_catalog_skus` 등 **tenant_id 스코프** 테이블·API; SKU 코드는 테넌트별 행 | MindGarden tenant에 **상담 패키지·검사 SKU 행** 시드/어드민 등록; **하드코딩 SKU·금액 금지** |
-| **포인트** | `client_point_wallets`·`client_point_ledger_entries`·hold/commit 서비스 | 적립률·사용 한도 등 **테넌트 정책** (후속 `point_tenant_policies` 등) |
+| **포인트** | `client_point_wallets`·`client_point_ledger_entries`·hold/commit/EARN/clawback 서비스 | 적립률·사용 한도 등 **테넌트 정책** (`point_tenant_policies`·어드민 PATCH) |
 | **UI 노출** | `ComponentCatalog` / `TenantComponent` 로 기능 on/off | LNB·탭·PLP 카피·배너·약관 URL — **토큰·설정**만 |
 | **금지** | 테넌트 전용 코드베이스 분리, MindGarden SKU를 Java/JS 상수로 박기 | 플랫폼 엔진을 MindGarden 전용 패키지로 포크 |
 
@@ -60,11 +60,13 @@ flowchart TB
   Flags -.->|기능 on/off| TenantUI
 ```
 
-**데이터 흐름 (체크아웃·포인트)**  
+**데이터 흐름 (체크아웃·포인트, 2026-05-19 반영)**  
 1. PLP/장바구니 → 서버 가격 권위(`shop_catalog_skus.unit_price_minor`)  
-2. 체크아웃 → `POINT_HOLD` (CREATED)  
-3. PG 승인 또는 포인트 전액 → `PAID` → `POINT_COMMIT` + (정책) `POINT_EARN` — **다음 PR**  
-4. 상담 SKU → 기존 매핑·ERP INCOME 규칙
+2. 체크아웃 → `POINT_HOLD` (CREATED) — `allow_pg_mix` 정책 시 포인트+PG 혼합  
+3. PG 승인(포트원 V2 웹훅) 또는 포인트 전액(`cash_due_minor=0`) → `PAID` → `POINT_COMMIT` (멱등)  
+4. **`PAID` 확정 시 (정책) `POINT_EARN`** — `PointTenantPolicyService`·`creditEarn` (`earn_rate`·`earn_cap_per_order`)  
+5. CONSULTATION SKU → `shop_order_fulfillment_events` + `ErpShopConsultationFulfillmentHook` → `confirm-payment` (mappingId 있을 때)  
+6. 어드민 전액 환불 → `restoreRedeemOnRefund` + `clawbackEarn` + PG `refundPayment` ([POINT_REWARD §0.1](./POINT_REWARD_EARN_AND_REDEEM_SPEC.md))
 
 ---
 
@@ -72,6 +74,8 @@ flowchart TB
 
 | 문서 | 역할 |
 |------|------|
+| [EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md](./EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md) | **Expo** 라우트·API·패리티·검증 SSOT |
+| [SHOP_REWARD_IMPLEMENTATION_STATUS.md](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) | 구현 현황판·Flyway·테스트·R1/R2 |
 | [MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) | **입점·테넌트 몰 vs 통합 마켓**·방향성 7원칙·Phase 3+ |
 | [ONLINE_PAYMENT_CATALOG_CHECKOUT_SPEC.md](./ONLINE_PAYMENT_CATALOG_CHECKOUT_SPEC.md) | 카탈로그·주문·PG·ERP·fulfillment·어드민 상품 |
 | [POINT_REWARD_EARN_AND_REDEEM_SPEC.md](./POINT_REWARD_EARN_AND_REDEEM_SPEC.md) | 원장·hold·적립·환불·ERP 옵션 A/B |
@@ -84,9 +88,9 @@ flowchart TB
 
 ---
 
-## §3 현재 구현 갭 (코드베이스 기준, 2026-05-19)
+## §3 구현 현황 (코드베이스 기준, 2026-05-19)
 
-### 3.1 이미 존재 (플랫폼 MVP 골격)
+### 3.1 MVP 골격 (2026-05-14)
 
 | 영역 | 산출물 |
 |------|--------|
@@ -94,22 +98,52 @@ flowchart TB
 | 엔티티 | `ShopClientOrder`, `ShopClientOrderLine`, `ClientPointWallet` |
 | API | `ClientShopController` — `/api/v1/clients/me/shop/catalog`, `cart`, `checkout`, `points/balance`, `orders/{id}/prepare-payment` 등 |
 | 서비스 | `ClientShopCheckoutServiceImpl`, `ClientPointWalletServiceImpl` |
-| 웹 | `frontend/src/constants/clientShopApi.js`, `ShopCheckoutMvp.js` (`/client/shop-checkout`) |
-| 테스트 | `ClientPointWalletServiceImplTest` |
 
-### 3.2 갭 (MVP 완성 전)
+### 3.2 구현 완료 (2026-05, 로컬)
 
-| # | 갭 | 비고 |
-|---|-----|------|
-| G1 | **PG PAID 웹훅 → hold→commit + EARN** | POINT_REWARD 스펙·구현 메모: **다음 PR** |
-| G2 | **포인트 + PG 혼합** 체크아웃 | MVP는 전액 포인트 또는 전액 카드만 |
-| G3 | **PLP·PDP·내 구매** 정식 화면 (웹·Expo) | 체크아웃 MVP 페이지만 존재 |
-| G4 | **어드민 SKU·가격·노출 CRUD** | 스펙 §6, DB는 SKU 테이블만 |
-| G5 | **테넌트 포인트 정책** 테이블·API | §3 정책 키 — 설계만 |
-| G6 | **ERP 연동** (PAID → INCOME·amount-info 확장) | 온라인 결제 스펙 §5 |
-| G7 | **Fulfillment** (검사 슬롯·회기권) | psych-assessment 플랜 연동 |
-| G8 | **ComponentCatalog 시드** (`CLIENT_SHOP`, `CLIENT_REWARD` 등) | §7 — 코드·마이그레이션 미등록 |
-| G9 | **Expo** shop 라우트·화면 | sessions-payment 인접, 전용 shop 미구현 |
+| # | 영역 | 산출물 |
+|---|------|--------|
+| C1 | **PG PAID → hold→commit + EARN** | `PortOnePaymentWebhookService`·`PaymentServiceImpl`·`creditEarnOnPaid`; Maven 17+14건 |
+| C2 | **포인트 + PG 혼합** | `allow_pg_mix` 정책·체크아웃 `pointsRedeemMinor` |
+| C3 | **내담자 PLP·PDP·장바구니·주문·포인트 (웹·Expo)** | `/client/shop/*`, `(client)/(shop)/*` — [§6](#6-mindgarden-1차-노출-화면-웹expo) |
+| C4 | **어드민 SKU·가격·노출 CRUD** | `AdminShopCatalogSkuController`, `/admin/shop/catalog-skus` |
+| C5 | **테넌트 포인트 정책** | `point_tenant_policies`, `AdminPointTenantPolicyController` |
+| C6 | **ERP 연동 (CONSULTATION)** | `ErpShopConsultationFulfillmentHook` → `confirm-payment`; Flyway **006** `consultant_client_mapping_id` |
+| C7 | **Fulfillment 이벤트** | `shop_order_fulfillment_events`, CONSULTATION COMPLETED / ASSESSMENT PENDING |
+| C8 | **ComponentCatalog 시드** | Flyway 003 — `CLIENT_SHOP`, `CLIENT_REWARD`, `ADMIN_SHOP_CATALOG` |
+| C9 | **Expo shop 라우트** | [EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md](./EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md) |
+| C10 | **원장 API** | `GET .../points/ledger` |
+| C11 | **어드민 주문·전액 환불** | `AdminShopOrderRefundServiceImpl` — 포인트 복원·clawback·PG refund |
+| C12 | **웹 컴포넌트 게이트** | `ClientTenantComponentGate`, `useTenantComponentFlags` |
+
+**Flyway P2 세트**: `V20260519_002`~`005`, `006`(mapping link), `007`(catalog_category). 상세: [SHOP_REWARD_IMPLEMENTATION_STATUS.md](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) §2.
+
+**자동 테스트**: Shop Maven **60건** PASS (11클래스) — [SHOP_P2_INTEGRATION_TEST_REPORT.md](./SHOP_P2_INTEGRATION_TEST_REPORT.md).
+
+### 3.3 (참고) 구버전 갭 ID 매핑
+
+| 구 G# | 내용 | 현재 |
+|-------|------|------|
+| G1~G2 | PG commit·혼합 | §3.2 C1~C2 **완료** |
+| G3, G9 | PLP·Expo | §3.2 C3, C9 **완료** |
+| G4~G6 | 어드민·정책·ERP | §3.2 C4~C6 **완료** |
+| G7 | Fulfillment | CONSULTATION **완료**, ASSESSMENT **잔여** |
+| G8 | 컴포넌트 시드 | §3.2 C8 **완료** |
+
+### 3.4 잔여 갭
+
+| ID | 갭 | Phase·비고 |
+|----|-----|------------|
+| ~~R1~~ | ~~PG 실환불 (어드민)~~ | **완료 (2026-05-19)** — `AdminShopOrderRefundServiceImpl`, PG `refundPayment` |
+| ~~R2~~ | ~~ERP fulfillment 훅~~ | **완료 (2026-05-19)** — `ErpShopConsultationFulfillmentHook`; mappingId는 체크아웃 시 서버 연결 |
+| R3 | **SKU 가격 이력** audit·어드민 UI | Phase 2+ |
+| R4 | **hold TTL** 만료 배치·`EXPIRED` 자동 release | Phase 2+ |
+| R5 | **Phase 3 통합 마켓**(모델 B) | [MULTI_TENANT §8](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) |
+| R6 | **ASSESSMENT fulfillment** — psych-assessment 슬롯 연동 | Phase 3 |
+| R7 | **부분 환불·쿠폰·번들** | MVP 제외 |
+| R8 | **체크아웃 UI mapping 선택** | 서버 자동 연결만; 내담자 선택 UX 미구현 |
+| R9 | **Flyway DB 적용·OPS 컴포넌트 활성화·수동 QA** | [SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md) |
+| R10 | **Playwright E2E** catalog→cart | spec 존재, API·시드 전제 후 재실행 |
 
 ---
 
@@ -163,18 +197,25 @@ flowchart TB
 
 ## §6 MindGarden 1차 노출 화면 (웹·Expo)
 
-| ID | 화면 | 채널 | API·비고 |
-|----|------|------|----------|
-| MG-S1 | 카탈로그 PLP | 웹 → Expo | `GET .../shop/catalog` |
-| MG-S2 | 장바구니 | 웹 | `GET/PUT .../shop/cart` |
-| MG-S3 | 체크아웃 | 웹, Expo(후속) | `POST .../checkout`, `prepare-payment` — 웹에 `ShopCheckoutMvp` 존재 |
-| MG-S4 | 내 포인트 잔액·내역 | 웹, Expo | `GET .../points/balance` (+ ledger API 후속) |
-| MG-S5 | 주문 완료·내 구매 | 웹, Expo | 주문 목록 API 후속 |
-| MG-S6 | (어드민) SKU 목록·노출 | 웹 only | Phase 2 — AdminCommonLayout |
+| ID | 화면 | 웹 라우트 | Expo 라우트 | API·비고 |
+|----|------|-----------|-------------|----------|
+| MG-S1 | 카탈로그 PLP | `/client/shop` | `/(client)/(shop)` | `GET .../shop/catalog`, `catalog_category` 탭 |
+| MG-S2 | 장바구니 | `/client/shop/cart` | `/(client)/(shop)/cart` | `GET/PUT .../shop/cart` |
+| MG-S3 | 체크아웃 | `/client/shop/checkout` | `/(client)/(shop)/checkout` | `POST .../checkout`, `prepare-payment` |
+| MG-S4 | 내 포인트 | `/client/shop/points` | `/(client)/(shop)/points` | `GET .../points/balance`, `.../points/ledger` |
+| MG-S5 | 주문·내 구매 | `/client/shop/orders`, `/client/shop/orders/:orderPublicId` | `/(client)/(shop)/orders`, `.../orders/[orderPublicId]` | fulfillment 라인·REFUNDED 표시 |
+| MG-S5b | SKU PDP | `/client/shop/sku/:skuCode` | `/(client)/(shop)/sku/[skuCode]` | catalog 상세 |
+| MG-S6 | (어드민) SKU·정책·주문 | `/admin/shop/catalog-skus`, `/admin/shop/point-policies`, `/admin/shop/orders` | — | `ADMIN_SHOP_CATALOG` 컴포넌트 게이트 |
 
-**라우트 힌트 (현재)**  
-- 웹: `/client/shop-checkout` (`App.js`)  
-- Expo: `(client)/(more)/sessions-payment/*` 인접 — 전용 `(client)/(shop)/` 트리 신설 권장
+**레거시 리다이렉트 (웹)**  
+- `/client/shop-catalog` → `/client/shop`  
+- `/client/shop-checkout` → `/client/shop/checkout`  
+- `/client/shop-points` → `/client/shop/points`  
+- `ShopCheckoutMvp.js` → checkout 리다이렉트
+
+**Expo 진입**  
+- 더보기 `(client)/(more)/index` 「온라인 쇼핑」  
+- `(shop)` 탭 `href: null` (숨김) — [EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md](./EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md) §2
 
 ---
 
@@ -291,5 +332,6 @@ flowchart TB
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-19 | **구현 진행(로컬)** — §0 EARN·ERP·환불 파이프라인, §3.2 완료·§3.4 잔여(R1/R2 완료), §6 실경로, Expo SSOT 링크 |
 | 2026-05-19 | §13 멀티테넌트 마켓플레이스·§4.3 Phase 3 통합몰·MULTI_TENANT SSOT 링크 |
 | 2026-05-19 | 권장안 확정 — Core 엔진 / MindGarden adopter, 갭·MVP·위임 초안 |

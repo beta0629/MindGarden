@@ -18,15 +18,20 @@
 | **설정** | 원장 유형·트랜잭션 규칙·동시성 | §3 정책 키 값 — **DB/어드민만**, 코드 상수 금지 |
 | **금지** | 테넌트별 원장 스키마 분리 | 정책·잔액을 JS/Java에 하드코딩 |
 
-PG `PAID` 후 hold→commit·적립(EARN) 연동 상태: 본 문서 **구현(2026-05-14)** 행 및 [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) §3 갭.
+PG `PAID` 후 hold→commit·**EARN**·환불 clawback·ledger API: 본 문서 **§0**·[SHOP_REWARD §3.2](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) 및 아래 §0.1.
 
-### 0.1 크로스 테넌트 포인트·통합몰
+### 0.1 크로스 테넌트·적립·환불·원장 (구현 2026-05-19)
 
-| 정책 | 내용 |
-|------|------|
-| **기본 (Phase 1~2)** | **크로스 테넌트 포인트 사용·적립·이전 불가** — 지갑·원장·hold는 `(tenant_id, client_id)` 단위만 |
-| **통합 마켓플레이스 (Phase 3+)** | 다른 **판매자(seller tenant)** 상품 결제 시 **타 테넌트 포인트로 할인 불가** (기본) |
-| **예외** | 플랫폼 통합 포인트·크로스 사용 — **미정**, 별도 법무·회계·에픽 ([MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) §6·§13) |
+| 정책·기능 | 내용 | 구현 위치 |
+|-----------|------|-----------|
+| **크로스 테넌트 (Phase 1~2)** | **크로스 테넌트 포인트 사용·적립·이전 불가** — 지갑·원장·hold는 `(tenant_id, client_id)` 단위만 | API tenant 스코프 |
+| **통합 마켓 (Phase 3+)** | 다른 seller 상품 결제 시 **타 테넌트 포인트 할인 불가** (기본) | [MULTI_TENANT §6](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) |
+| **EARN (적립)** | `PAID` 시 `PointTenantPolicyService` → `creditEarn` — `POINT_EARN` 원장, `earn_rate`·`earn_cap_per_order` | `ClientShopCheckoutServiceImpl.creditEarnOnPaid` |
+| **Ledger API** | 내담자 `GET .../points/ledger` — 최근 원장 N건 | `ClientShopController` |
+| **Clawback** | 어드민 전액 환불 시 적립분 회수 — `clawbackEarn` 멱등 | `AdminShopOrderRefundServiceImpl` |
+| **Redeem 복원** | 환불 시 사용 포인트 `restoreRedeemOnRefund` | 동일 |
+| **PG refund** | 승인 결제 `PaymentGatewayService.refundPayment` + `paymentService.refundPayment`; 실패 시 트랜잭션 롤백(MVP) | `AdminShopOrderRefundServiceImpl` |
+| **예외 (통합 포인트)** | 플랫폼 통합 포인트·크로스 사용 — **미정** | [MULTI_TENANT §13](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) |
 
 ---
 
@@ -41,7 +46,7 @@ PG `PAID` 후 hold→commit·적립(EARN) 연동 상태: 본 문서 **구현(202
 | [core-solution-multi-tenant](../../.cursor/skills/core-solution-multi-tenant/SKILL.md) | **tenantId 없는 API·저장 금지**. 포인트 원장·정책·hold·주문 연동 전 구간에서 tenant 스코프·인덱스·WHERE 일관. 컨텍스트 없으면 거절. |
 | [core-solution-erp](../../.cursor/skills/core-solution-erp/SKILL.md) | **`confirm-payment`**로 매핑 확정·거래 타입 분기; **`amount-info`**로 패키지가·결제액·`relatedTransactions` 대사; **중복 INCOME 방지**·유효 금액 없음 스킵 원칙. 포인트 할인은 **현금 매출과 분리 표기** 시 기존 흐름과 충돌 없이 옵션화. |
 | **구현(2026-05-14)** | 백엔드 테이블 `client_point_wallets`, `client_point_ledger_entries`(유형 HOLD·RELEASE·COMMIT, 멱등 키)·주문 `shop_client_orders` 및 내담자 API `/api/v1/clients/me/shop/*` 가 추가됨. |
-| **구현(2026-05-19)** | PG 승인(`Payment` APPROVED·포트원 V2 웹훅) 1경로에서 `ShopClientOrder`→`PAID` 멱등·`POINT_COMMIT`; 실패·취소 시 hold 해제. 포인트 전액(`cash_due_minor=0`)은 체크아웃 시 즉시 PAID. 적립(EARN)은 후속 PR. |
+| **구현(2026-05-19)** | PG 승인→`PAID` 멱등·`POINT_COMMIT`; 포인트 전액 즉시 PAID; **`POINT_EARN`** (`creditEarn`·정책); `GET .../points/ledger`; 어드민 환불 **`restoreRedeemOnRefund`+`clawbackEarn`+PG refund**; `point_tenant_policies`·Flyway 002~007. |
 
 **문서 분리 권고 (한 문단)**  
 본 포인트 도메인은 **원장·정책·회계 옵션·감사**가 온라인 결제 스펙보다 무겁고 버전 관리 주기가 다를 수 있으므로, **`POINT_REWARD_EARN_AND_REDEEM_SPEC.md`를 단독 문서로 두고** `ONLINE_PAYMENT_CATALOG_CHECKOUT_SPEC.md`에는 **체크아웃 UI 슬롯·주문 상태 연동·링크**만 유지·상호 링크하는 구성을 권장한다. 한 파일 병합은 장문·리뷰 비용이 커지므로 **MVP 이후에만** 재검토한다.
@@ -200,6 +205,7 @@ PG `PAID` 후 hold→commit·적립(EARN) 연동 상태: 본 문서 **구현(202
 
 | 버전 | 일자 | 작성 | 요약 |
 |------|------|------|------|
+| 0.5 | 2026-05-19 | core-planner | §0.1 EARN·clawback·ledger·PG refund 구현 행; §0 파이프라인 SSOT 링크 |
 | 0.4 | 2026-05-19 | core-planner | §0.1 크로스 테넌트 포인트 불가·통합몰 예외(미정) |
 | 0.3 | 2026-05-19 | core-planner | §0 플랫폼 vs 테넌트·오케스트레이션 문서 상호 링크 |
 | 0.2 | 2026-05-14 | core-coder | 구현 행 추가: `client_point_wallets`·`client_point_ledger_entries`·`/api/v1/clients/me/shop/*`; PG PAID 연동은 후속 PR |

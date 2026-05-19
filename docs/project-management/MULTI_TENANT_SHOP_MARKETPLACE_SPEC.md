@@ -227,12 +227,12 @@ stateDiagram-v2
 
 ## §7 UX 채널
 
-| 채널 | Phase 1 | Phase 2+ | 비고 |
-|------|---------|----------|------|
-| **웹 내담자** | PLP·체크아웃·포인트 (`/client/shop-checkout` 등) | PDP·내 구매·정식 디자인 | 테넌트 브랜딩·토큰 |
-| **Expo** | 체크아웃 또는 잔액 1화면 | shop 전용 라우트 트리 | [SHOP_REWARD §6](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) |
-| **테넌트 어드민** | — | SKU·가격·노출 CRUD | AdminCommonLayout |
-| **OPS** | 온보딩 승인·컴포넌트 토글 | (P3) listing·수수료 | backend-ops |
+| 채널 | Phase 1 | Phase 2 (2026-05, 로컬) | 비고 |
+|------|---------|-------------------------|------|
+| **웹 내담자** | 체크아웃 MVP | **PLP·cart·checkout·points·orders·PDP** — `/client/shop/*`, `ClientTenantComponentGate` | [SHOP_REWARD §6](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) |
+| **Expo** | 1화면 후속 | **`(client)/(shop)/` 7화면** — cart·orders·PDP·ledger·fulfillment; 더보기 진입·탭 숨김 | [EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md](./EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md) |
+| **테넌트 어드민** | — | SKU·정책·**온라인 주문·환불** — `/admin/shop/*` | AdminCommonLayout |
+| **OPS** | 온보딩·컴포넌트 | Flyway 002~007·TenantComponent OPS SQL | [SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md) |
 
 **모델 B UI**: 통합 PLP·판매자 뱃지·필터 — **core-designer** Phase 3 (`gemini-3.1-pro` 권장).
 
@@ -380,6 +380,7 @@ gantt
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-19 | §7 Expo Phase 2 완료·어드민 주문·OPS runbook 링크 |
 | 2026-05-19 | 초판 — 방향성 7원칙·모델 A/B·입점·데이터·Phase 1~4·에픽 E-MKT/E-AGG (core-planner) |
 
 ---

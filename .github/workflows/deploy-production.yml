@@ -38,6 +38,7 @@ on:
       - 'src/main/java/com/coresolution/consultation/**'
       - 'src/main/resources/application.yml'
       - 'src/main/resources/application-dev.yml'
+      - 'src/main/resources/shop-catalog-thumbnails/**'
       - 'src/main/resources/db/migration/**'
       - 'pom.xml'
       - 'deployment/application-production.yml'

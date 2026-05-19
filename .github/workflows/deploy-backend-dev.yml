@@ -31,6 +31,8 @@ on:
       # dev 프로파일 설정 (기동 오류 방지)
       - 'src/main/resources/application.yml'
       - 'src/main/resources/application-dev.yml'
+      # Shop 카탈로그 썸네일 classpath placeholder (FileController 폴백)
+      - 'src/main/resources/shop-catalog-thumbnails/**'
       # DB 마이그레이션 (Flyway 적용을 위해 배포 필요)
       - 'src/main/resources/db/migration/**'
       - 'pom.xml'

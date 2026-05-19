@@ -45,9 +45,16 @@ public final class ShopCatalogSkuConstants {
 
     public static final String DUPLICATE_SKU_CODE_MESSAGE = "이미 사용 중인 skuCode 입니다: ";
 
-    /** OPS 시드·QA용 상대 썸네일 URL (실파일은 업로드 또는 정적 배치). */
+    /** OPS 시드·QA용 classpath placeholder 파일명. */
+    public static final String SEED_PLACEHOLDER_THUMBNAIL_FILE_NAME = "placeholder-dev-consult-demo.png";
+
+    /** OPS 시드·QA용 classpath placeholder 리소스 경로. */
+    public static final String SEED_PLACEHOLDER_THUMBNAIL_CLASSPATH =
+            "shop-catalog-thumbnails/" + SEED_PLACEHOLDER_THUMBNAIL_FILE_NAME;
+
+    /** OPS 시드·QA용 상대 썸네일 URL (업로드 없을 때 classpath placeholder 서빙). */
     public static final String SEED_PLACEHOLDER_THUMBNAIL_PATH =
-            THUMBNAIL_URL_PREFIX_V1 + "placeholder-dev-consult-demo.png";
+            THUMBNAIL_URL_PREFIX_V1 + SEED_PLACEHOLDER_THUMBNAIL_FILE_NAME;
 
     private ShopCatalogSkuConstants() {
     }

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -80,8 +81,13 @@ public class FileController {
             }
             Resource resource = new UrlResource(filePath.toUri());
             if (!resource.exists() || !resource.isReadable()) {
-                log.warn("썸네일 파일을 찾을 수 없음: fileName={}", fileName);
-                return ResponseEntity.notFound().build();
+                Resource placeholder = resolveShopCatalogPlaceholderThumbnail(fileName);
+                if (placeholder != null) {
+                    resource = placeholder;
+                } else {
+                    log.warn("썸네일 파일을 찾을 수 없음: fileName={}", fileName);
+                    return ResponseEntity.notFound().build();
+                }
             }
             String contentType = getContentType(fileName);
             log.debug("썸네일 파일 서빙: fileName={}, contentType={}", fileName, contentType);
@@ -95,6 +101,24 @@ public class FileController {
         }
     }
     
+    /**
+     * 업로드 디렉터리에 없을 때 OPS 시드용 classpath placeholder를 반환한다.
+     */
+    private Resource resolveShopCatalogPlaceholderThumbnail(String fileName) {
+        if (!ShopCatalogSkuConstants.SEED_PLACEHOLDER_THUMBNAIL_FILE_NAME.equals(fileName)) {
+            return null;
+        }
+        Resource classpathResource =
+                new ClassPathResource(ShopCatalogSkuConstants.SEED_PLACEHOLDER_THUMBNAIL_CLASSPATH);
+        if (!classpathResource.exists() || !classpathResource.isReadable()) {
+            log.warn("썸네일 placeholder classpath 리소스 없음: path={}",
+                    ShopCatalogSkuConstants.SEED_PLACEHOLDER_THUMBNAIL_CLASSPATH);
+            return null;
+        }
+        log.debug("썸네일 placeholder classpath 서빙: fileName={}", fileName);
+        return classpathResource;
+    }
+
     /**
      * 파일 확장자에 따른 Content-Type 반환
      */

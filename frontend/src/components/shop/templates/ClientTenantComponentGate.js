@@ -15,7 +15,7 @@ import {
   CLIENT_SHOP_UNAVAILABLE_COPY
 } from '../../../constants/clientShopConstants';
 import { PLATFORM_COMPONENT_CODES } from '../../../constants/tenantComponentApi';
-import { useSession } from '../../../hooks/useSession';
+import { useSession } from '../../../contexts/SessionContext';
 import { useTenantComponentFlags } from '../../../hooks/useTenantComponentFlags';
 import '../../../styles/shop/ClientShop.css';
 
@@ -25,7 +25,8 @@ import '../../../styles/shop/ClientShop.css';
 const ClientTenantComponentGate = ({ componentCode, children }) => {
   const { loading: flagsLoading, clientShopEnabled, clientRewardEnabled } =
     useTenantComponentFlags();
-  const { isLoading: sessionLoading } = useSession();
+  const { isLoading: sessionLoading, hasCheckedSession } = useSession();
+  const sessionAwaiting = !hasCheckedSession || sessionLoading;
 
   const enabled = useMemo(() => {
     if (componentCode === PLATFORM_COMPONENT_CODES.CLIENT_SHOP) {
@@ -37,7 +38,7 @@ const ClientTenantComponentGate = ({ componentCode, children }) => {
     return true;
   }, [componentCode, clientShopEnabled, clientRewardEnabled]);
 
-  if (flagsLoading || sessionLoading || enabled === undefined) {
+  if (flagsLoading || sessionAwaiting || enabled === undefined) {
     return (
       <div className="client-shop client-shop__gate-loading" data-testid={CLIENT_SHOP_TEST_IDS.SESSION_LOADING}>
         <p className="client-shop__message">{CLIENT_SHOP_SESSION_LOADING_COPY}</p>

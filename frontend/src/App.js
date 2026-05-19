@@ -142,6 +142,7 @@ import ClientAppShell from './components/layout/ClientAppShell';
 import MobileLogin from './components/auth/MobileLogin';
 import SessionGuard from './components/common/SessionGuard';
 import { SessionProvider, useSession } from './contexts/SessionContext';
+import { TenantComponentFlagsProvider } from './contexts/TenantComponentFlagsContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -925,13 +926,15 @@ function App() {
   return (
     <ThemeProvider>
       <SessionProvider>
-        <NotificationProvider>
-          <ToastProvider>
-            <Router>
-              <AppContent />
-            </Router>
-          </ToastProvider>
-        </NotificationProvider>
+        <TenantComponentFlagsProvider>
+          <NotificationProvider>
+            <ToastProvider>
+              <Router>
+                <AppContent />
+              </Router>
+            </ToastProvider>
+          </NotificationProvider>
+        </TenantComponentFlagsProvider>
       </SessionProvider>
     </ThemeProvider>
   );

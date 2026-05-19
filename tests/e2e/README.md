@@ -19,6 +19,15 @@
 **R10 재현** (8080 up 후): `curl -sS -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/actuator/health` → 200 이면 `cd tests/e2e && npx playwright test client-shop-catalog-to-cart admin-shop-catalog-skus-smoke admin-shop-catalog-sku-create-smoke --project=chromium --workers=1` (어드민 2 스펙 병렬 시 ERP 로그인 모달 중복 가능 — **workers=1** 권장).
 **dev API만 검증**: `E2E_API_BASE=https://dev.core-solution.co.kr` 등으로 `$E2E_API_BASE/actuator/health`가 **200**이면 8080 없이도 해당 가드 스킵을 해제한다(`helpers/erpAuth.ts`).
 
+**OPS placeholder 썸네일 curl** (백엔드·nginx 배포 후, **200** 기대):
+
+```bash
+curl -sS -o /dev/null -w "%{http_code}" \
+  "https://dev.core-solution.co.kr/api/v1/files/shop-catalog-thumbnails/placeholder-dev-consult-demo.png"
+```
+
+`dev.core-solution.co.kr`·`mindgarden.dev.*`는 nginx가 `/api/**/*.png`를 정적 `\.png$` 블록으로 잡지 않도록 `config/nginx/core-solution-dev.conf`의 `^(?!/api/)`·`^~ /api/` 규칙이 적용돼 있어야 한다.
+
 ### dev 인천 테넌트 (`tenant-incheon-counseling-001`) — Shop·리워드 E2E
 
 Tier-A·R10 재검증 시 **반드시** 아래를 맞춘다. `E2E_TENANT_ID`가 없으면 `loginClientWeb`·`loginErpUser`가 `/login`만 열어 **다른 테넌트 세션**·`CLIENT_SHOP` off·`client-shop-catalog-page` 미노출로 실패할 수 있다.

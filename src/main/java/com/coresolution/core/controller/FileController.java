@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.coresolution.consultation.constant.ShopCatalogSkuConstants;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -110,13 +112,14 @@ public class FileController {
         }
         Resource classpathResource =
                 new ClassPathResource(ShopCatalogSkuConstants.SEED_PLACEHOLDER_THUMBNAIL_CLASSPATH);
-        if (!classpathResource.exists() || !classpathResource.isReadable()) {
+        try (InputStream ignored = classpathResource.getInputStream()) {
+            log.debug("썸네일 placeholder classpath 서빙: fileName={}", fileName);
+            return classpathResource;
+        } catch (IOException e) {
             log.warn("썸네일 placeholder classpath 리소스 없음: path={}",
-                    ShopCatalogSkuConstants.SEED_PLACEHOLDER_THUMBNAIL_CLASSPATH);
+                    ShopCatalogSkuConstants.SEED_PLACEHOLDER_THUMBNAIL_CLASSPATH, e);
             return null;
         }
-        log.debug("썸네일 placeholder classpath 서빙: fileName={}", fileName);
-        return classpathResource;
     }
 
     /**

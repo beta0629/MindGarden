@@ -111,9 +111,9 @@ WHERE TABLE_SCHEMA = DATABASE()
 
 ---
 
-## 2. V003 OPS 수동 활성화 — TenantComponent
+## 2. TenantComponent 활성화 (Flyway 백필 SSOT · OPS 응급)
 
-Flyway `V20260519_003`은 **`component_catalog` 시드만** 수행한다. **테넌트별 on/off는 Flyway 밖 OPS SQL**이다 ([SHOP_REWARD §7](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md)). LNB 「쇼핑·리워드」 메뉴는 Flyway `V20260521_001` 적용·어드민 새로고침으로 노출된다(컴포넌트 off여도 LNB 표시, 페이지/API 403은 별도).
+Flyway `V20260519_003`은 **`component_catalog` 시드만** 수행한다. **ACTIVE 상담 계열 테넌트 일괄 백필 SSOT**는 `V20260522_001__shop_reward_activate_tenant_components_backfill.sql` (배포 시 자동). 신규 온보딩 기본 컴포넌트는 `V20260522_002` + `ActivateDefaultComponents`(component_code 조회). **단일 테넌트 dev 응급**만 아래 OPS SQL·API ([SHOP_REWARD §7](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md)). LNB 「쇼핑·리워드」 메뉴는 Flyway `V20260521_001` 적용·어드민 새로고침으로 노출된다(컴포넌트 off여도 LNB 표시, 페이지/API 403은 별도).
 
 ### 2.1 원칙
 

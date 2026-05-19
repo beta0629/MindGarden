@@ -7,8 +7,8 @@
 --      (저장소·Flyway·본 스크립트에 tenant UUID 하드코딩 금지)
 --   3) mysql에서 @tenant_id 설정 후 SOURCE (멱등 — 동일 sku_code 시 INSERT 스킵)
 --
--- 예시:
---   SET @tenant_id = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx';
+-- 예시 (dev SSH 1267 collation 대응):
+--   SET @tenant_id = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' COLLATE utf8mb4_unicode_ci;
 --   SOURCE scripts/ops/seed-shop-demo-catalog.sql;
 --
 -- dev QA 전용 — 운영 DB·덤프 이식 금지. unit_price_minor는 dev 더미(50_000 KRW).

@@ -1,13 +1,16 @@
 -- =============================================================================
--- Shop·Reward — TenantComponent OPS 활성화 (Flyway V20260519_003 이후)
+-- Shop·Reward — TenantComponent OPS 활성화 (dev 응급·단일 테넌트)
 -- =============================================================================
+-- SSOT: 배포 후 Flyway V20260522_001 이 ACTIVE CONSULTATION/COUNSELING 테넌트 전체 백필.
+-- 본 스크립트는 Flyway 백필 이전·단일 tenant 재활성화·검증용으로만 사용한다.
+--
 -- 사용법:
 --   1) Flyway V20260519_003 적용으로 component_catalog 3종 시드 완료 확인
 --   2) §2.2 런북 SQL로 tenant_id 조회 (저장소·Flyway에 tenant UUID 하드코딩 금지)
 --   3) mysql에서 @tenant_id 설정 후 SOURCE (멱등 — NOT EXISTS)
 --
--- 예시 (mysql CLI):
---   SET @tenant_id = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx';
+-- 예시 (mysql CLI — dev SSH 1267 collation 대응):
+--   SET @tenant_id = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' COLLATE utf8mb4_unicode_ci;
 --   SOURCE scripts/ops/activate-shop-reward-tenant-components.sql;
 -- =============================================================================
 

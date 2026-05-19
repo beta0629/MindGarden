@@ -331,6 +331,7 @@ const AdminShopCatalogSkusPage = () => {
 
   return (
     <AdminCommonLayout title="상품(SKU) 관리">
+      <div className="mg-v2-ad-b0kla" data-testid="admin-shop-catalog-page">
       <ContentArea>
         <ContentHeader
           titleId={PAGE_TITLE_ID}
@@ -362,6 +363,7 @@ const AdminShopCatalogSkusPage = () => {
           )}
         </ContentSection>
       </ContentArea>
+      </div>
 
       <UnifiedModal
         isOpen={modalOpen}

@@ -120,6 +120,11 @@ function collectPushRouteParams(
 
   const params: Record<string, string | number> = {};
 
+  const orderPublicId = firstString(data.orderPublicId, data.id);
+  if (orderPublicId != null) {
+    params.orderPublicId = orderPublicId;
+  }
+
   if (scenario.category === 'record') {
     const sid = firstString(data.scheduleId, data.consultationId, data.id);
     if (sid != null) {
@@ -138,6 +143,7 @@ function collectPushRouteParams(
       data.mappingId,
       data.consultantClientMappingId,
       data.paymentId,
+      data.orderPublicId,
       data.id,
     );
     if (pid != null) {
@@ -171,6 +177,9 @@ function resolvePushRouteWithFallback(
   }
   if (route.includes('records)/create')) {
     return '/(consultant)/(records)';
+  }
+  if (scenario.route.includes('(shop)/orders')) {
+    return role === 'consultant' ? '/(consultant)/(more)' : '/(client)/(shop)/orders';
   }
   if (scenario.route.includes('sessions-payment')) {
     return role === 'consultant' ? '/(consultant)/(more)' : '/(client)/(more)/sessions-payment';

@@ -181,6 +181,67 @@ export const PUSH_SCENARIOS = {
     category: 'system',
     settingsCategory: 'system',
   },
+  /** 쇼핑몰 주문 PAID — 내담자 */
+  SHOP_ORDER_PAID: {
+    type: 'shop_order_paid',
+    title: '주문 결제 완료',
+    icon: 'ShoppingBag',
+    route: '/(client)/(shop)/orders/{orderPublicId}',
+    routeClient: '/(client)/(shop)/orders/{orderPublicId}',
+    category: 'payment',
+    settingsCategory: 'payment',
+  },
+  /** 쇼핑몰 PG 결제 실패 — 내담자 */
+  SHOP_PAYMENT_FAILED: {
+    type: 'shop_payment_failed',
+    title: '주문 결제 실패',
+    icon: 'XCircle',
+    route: '/(client)/(shop)/orders/{orderPublicId}',
+    routeClient: '/(client)/(shop)/orders/{orderPublicId}',
+    category: 'payment',
+    settingsCategory: 'payment',
+  },
+  /** 구매 적립 포인트 — 내담자 */
+  POINT_EARNED: {
+    type: 'point_earned',
+    title: '포인트 적립',
+    icon: 'Gift',
+    route: '/(client)/(shop)/orders/{orderPublicId}',
+    routeClient: '/(client)/(shop)/orders/{orderPublicId}',
+    category: 'payment',
+    settingsCategory: 'payment',
+  },
+  /** 쇼핑몰 결제 대기 만료 — 내담자 */
+  SHOP_ORDER_HOLD_EXPIRED: {
+    type: 'shop_order_hold_expired',
+    title: '주문 만료',
+    icon: 'Clock',
+    route: '/(client)/(shop)/orders',
+    routeClient: '/(client)/(shop)/orders',
+    category: 'system',
+    settingsCategory: 'system',
+  },
+  /** 쇼핑몰 전액 환불 — 내담자 */
+  SHOP_ORDER_REFUNDED: {
+    type: 'shop_order_refunded',
+    title: '주문 환불',
+    icon: 'RefreshCw',
+    route: '/(client)/(shop)/orders/{orderPublicId}',
+    routeClient: '/(client)/(shop)/orders/{orderPublicId}',
+    category: 'payment',
+    settingsCategory: 'payment',
+  },
+  /** 쇼핑몰 CONSULTATION fulfillment 완료 — 내담자·상담사 */
+  SHOP_FULFILLMENT_COMPLETED: {
+    type: 'shop_fulfillment_completed',
+    title: '주문 처리 완료',
+    icon: 'CheckCircle',
+    route: '/(client)/(shop)/orders/{orderPublicId}',
+    routeClient: '/(client)/(shop)/orders/{orderPublicId}',
+    routeConsultant: '/(consultant)/(more)',
+    category: 'system',
+    settingsCategory: 'system',
+  },
 } as const satisfies Record<string, PushScenario>;
 
 /** 레거시·별칭 서버 type → `PUSH_SCENARIOS` canonical `type` 문자열 */
@@ -212,6 +273,10 @@ export const PUSH_TYPE_ALIASES: Readonly<Record<string, string>> = {
   payment_success: 'payment_completed',
   payment_error: 'payment_failed',
   payment_declined: 'payment_failed',
+  shop_payment_complete: 'shop_order_paid',
+  shop_order_payment: 'shop_order_paid',
+  shop_point_earned: 'point_earned',
+  points_earned: 'point_earned',
   low_balance: 'session_low',
   sessions_low: 'session_low',
   session_balance_low: 'session_low',

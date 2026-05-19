@@ -4,7 +4,7 @@
  * @author MindGarden
  * @since 2026-05-19
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -23,26 +23,48 @@ import { PointInput } from '@/components/shop/molecules/PointInput';
 import { CheckoutSummary } from '@/components/shop/organisms/CheckoutSummary';
 import { PriceText } from '@/components/shop/atoms/PriceText';
 import { useClientShopCart } from '@/api/hooks/useClientShopCart';
+import { useClientShopCatalog } from '@/api/hooks/useClientShopCatalog';
+import { useClientShopConsultantMappings } from '@/api/hooks/useClientShopConsultantMappings';
 import {
   useClientShopCheckout,
   useClientShopPointBalance,
 } from '@/api/hooks/useClientShopCheckout';
 import { formatShopMoney, formatShopPoints } from '@/utils/clientShopFormat';
-import { SHOP_CHECKOUT_AGREEMENT_LABEL } from '@/constants/clientShopConstants';
+import {
+  SHOP_CHECKOUT_AGREEMENT_LABEL,
+  SHOP_CHECKOUT_MAPPING_COPY,
+} from '@/constants/clientShopConstants';
+import {
+  cartHasConsultationSku,
+  formatConsultantMappingLabel,
+  resolveMappingIdForCheckout,
+  validateCheckoutMapping,
+} from '@/utils/clientShopCheckout';
 import { toDisplayString } from '@/utils/toDisplayString';
 
 export default function ShopCheckoutScreen() {
   const theme = useTheme();
   const [pointsInput, setPointsInput] = useState('0');
   const [agreed, setAgreed] = useState(false);
+  const [selectedMappingId, setSelectedMappingId] = useState('');
   const [message, setMessage] = useState('');
 
   const cartQuery = useClientShopCart();
+  const catalogQuery = useClientShopCatalog();
   const balanceQuery = useClientShopPointBalance();
   const { checkout, isCheckingOut } = useClientShopCheckout();
 
   const cart = cartQuery.data ?? { lines: [], subtotalMinor: 0 };
+  const catalog = catalogQuery.data ?? [];
   const balance = balanceQuery.data ?? { availableMinor: 0, heldMinor: 0 };
+
+  const hasConsultationInCart = useMemo(
+    () => cartHasConsultationSku(cart.lines, catalog),
+    [cart.lines, catalog],
+  );
+
+  const mappingsQuery = useClientShopConsultantMappings(hasConsultationInCart);
+  const consultantMappings = mappingsQuery.data ?? [];
 
   const subtotalMinor = cart.subtotalMinor || 0;
   const availableMinor = balance.availableMinor || 0;
@@ -62,9 +84,59 @@ export default function ShopCheckoutScreen() {
     return '';
   }, [pointsInput, availableMinor, subtotalMinor]);
 
+  const mappingError = useMemo(
+    () =>
+      validateCheckoutMapping(
+        hasConsultationInCart,
+        consultantMappings.length,
+        selectedMappingId,
+      ),
+    [hasConsultationInCart, consultantMappings.length, selectedMappingId],
+  );
+
+  const singleMappingLabel = useMemo(() => {
+    if (consultantMappings.length !== 1) {
+      return '';
+    }
+    const row = consultantMappings[0];
+    if (!row) {
+      return '';
+    }
+    const name = row.consultantDisplayName || '';
+    const suffix = row.label ? ` (${row.label})` : '';
+    return `${SHOP_CHECKOUT_MAPPING_COPY.AUTO_PREFIX}: ${name}${suffix}`;
+  }, [consultantMappings]);
+
+  useEffect(() => {
+    if (!hasConsultationInCart) {
+      setSelectedMappingId('');
+      return;
+    }
+    if (consultantMappings.length === 1) {
+      const only = consultantMappings[0];
+      if (only?.mappingId != null) {
+        setSelectedMappingId(String(only.mappingId));
+      }
+      return;
+    }
+    if (consultantMappings.length === 0) {
+      setSelectedMappingId('');
+    }
+  }, [hasConsultationInCart, consultantMappings]);
+
+  const checkoutBlocked =
+    Boolean(pointsError) ||
+    Boolean(mappingError) ||
+    (hasConsultationInCart && consultantMappings.length === 0);
+
   const handleRefresh = useCallback(async () => {
-    await Promise.all([cartQuery.refetch(), balanceQuery.refetch()]);
-  }, [cartQuery, balanceQuery]);
+    await Promise.all([
+      cartQuery.refetch(),
+      balanceQuery.refetch(),
+      catalogQuery.refetch(),
+      hasConsultationInCart ? mappingsQuery.refetch() : Promise.resolve(),
+    ]);
+  }, [cartQuery, balanceQuery, catalogQuery, mappingsQuery, hasConsultationInCart]);
 
   const handleUseAllPoints = () => {
     setPointsInput(String(Math.min(availableMinor, subtotalMinor)));
@@ -79,13 +151,24 @@ export default function ShopCheckoutScreen() {
       setMessage(pointsError);
       return;
     }
+    if (mappingError) {
+      setMessage(mappingError);
+      return;
+    }
     if ((cart.lines ?? []).length === 0) {
       setMessage('장바구니가 비어 있습니다.');
       return;
     }
+    const mappingIdForCheckout = resolveMappingIdForCheckout(
+      hasConsultationInCart,
+      selectedMappingId,
+    );
     try {
       setMessage('');
-      await checkout({ pointsToRedeemMinor: pointsRedeemMinor });
+      await checkout({
+        pointsToRedeemMinor: pointsRedeemMinor,
+        consultantClientMappingId: mappingIdForCheckout,
+      });
       setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');
       await handleRefresh();
     } catch (e) {
@@ -94,7 +177,12 @@ export default function ShopCheckoutScreen() {
     }
   };
 
-  const loading = cartQuery.isLoading || balanceQuery.isLoading || isCheckingOut;
+  const loading =
+    cartQuery.isLoading ||
+    balanceQuery.isLoading ||
+    catalogQuery.isLoading ||
+    (hasConsultationInCart && mappingsQuery.isLoading) ||
+    isCheckingOut;
 
   return (
     <SafeAreaView
@@ -112,7 +200,11 @@ export default function ShopCheckoutScreen() {
           refreshControl={
             <RefreshControl
               refreshing={
-                (cartQuery.isRefetching || balanceQuery.isRefetching) && !cartQuery.isLoading
+                (cartQuery.isRefetching ||
+                  balanceQuery.isRefetching ||
+                  catalogQuery.isRefetching ||
+                  mappingsQuery.isRefetching) &&
+                !cartQuery.isLoading
               }
               onRefresh={handleRefresh}
               tintColor={theme.colors.primary}
@@ -169,6 +261,117 @@ export default function ShopCheckoutScreen() {
                   <PriceText amountMinor={line.lineTotalMinor} />
                 </View>
               ))}
+            </View>
+          ) : null}
+
+          {hasConsultationInCart ? (
+            <View
+              style={[
+                styles.section,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.borderRadius.xl,
+                },
+              ]}
+              accessibilityLabel={SHOP_CHECKOUT_MAPPING_COPY.SECTION_TITLE}
+            >
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  {
+                    color: theme.colors.textMain,
+                    fontFamily: theme.fontFamily.semibold,
+                    fontSize: theme.fontSize.base,
+                  },
+                ]}
+              >
+                {SHOP_CHECKOUT_MAPPING_COPY.SECTION_TITLE}
+              </Text>
+              {consultantMappings.length === 0 ? (
+                <Text
+                  style={[
+                    styles.errorText,
+                    { color: theme.colors.error, fontFamily: theme.fontFamily.regular },
+                  ]}
+                  accessibilityRole="alert"
+                >
+                  {SHOP_CHECKOUT_MAPPING_COPY.NO_MAPPING}
+                </Text>
+              ) : consultantMappings.length === 1 ? (
+                <Text
+                  style={[
+                    styles.mappingInfo,
+                    {
+                      color: theme.colors.textSecondary,
+                      fontFamily: theme.fontFamily.regular,
+                      fontSize: theme.fontSize.sm,
+                    },
+                  ]}
+                >
+                  {singleMappingLabel}
+                </Text>
+              ) : (
+                <>
+                  <Text
+                    style={[
+                      styles.mappingHint,
+                      {
+                        color: theme.colors.textSecondary,
+                        fontFamily: theme.fontFamily.regular,
+                        fontSize: theme.fontSize.sm,
+                      },
+                    ]}
+                  >
+                    {SHOP_CHECKOUT_MAPPING_COPY.SELECT_PLACEHOLDER}
+                  </Text>
+                  {consultantMappings.map((row) => {
+                    const selected = selectedMappingId === String(row.mappingId);
+                    return (
+                      <Pressable
+                        key={row.mappingId}
+                        onPress={() => setSelectedMappingId(String(row.mappingId))}
+                        disabled={loading}
+                        style={({ pressed }) => [
+                          styles.mappingRow,
+                          {
+                            borderColor: selected ? theme.colors.primary : theme.colors.divider,
+                            backgroundColor: theme.colors.bgMain,
+                            opacity: pressed ? 0.92 : 1,
+                          },
+                        ]}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected }}
+                        accessibilityLabel={formatConsultantMappingLabel(row)}
+                      >
+                        <Text
+                          style={[
+                            styles.mappingRowText,
+                            {
+                              color: theme.colors.textMain,
+                              fontFamily: theme.fontFamily.medium,
+                              fontSize: theme.fontSize.sm,
+                            },
+                          ]}
+                        >
+                          {formatConsultantMappingLabel(row)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                  {mappingError ? (
+                    <Text
+                      style={[
+                        styles.errorText,
+                        { color: theme.colors.error, fontFamily: theme.fontFamily.regular },
+                      ]}
+                      accessibilityRole="alert"
+                    >
+                      {mappingError}
+                    </Text>
+                  ) : null}
+                </>
+              )}
             </View>
           ) : null}
 
@@ -286,13 +489,13 @@ export default function ShopCheckoutScreen() {
 
           <Pressable
             onPress={handleCheckout}
-            disabled={loading}
+            disabled={loading || !agreed || checkoutBlocked}
             style={({ pressed }) => [
               styles.payBtn,
               {
                 backgroundColor: pressed ? theme.colors.primaryDark : theme.colors.primary,
                 borderRadius: theme.borderRadius.lg,
-                opacity: loading ? 0.6 : 1,
+                opacity: loading || !agreed || checkoutBlocked ? 0.6 : 1,
               },
             ]}
             accessibilityRole="button"
@@ -338,6 +541,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   orderTitle: { flex: 1, lineHeight: 20, marginRight: 8 },
+  mappingInfo: { lineHeight: 20 },
+  mappingHint: { lineHeight: 20 },
+  mappingRow: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 8,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  mappingRowText: { lineHeight: 20 },
   balanceHint: { lineHeight: 20 },
   errorText: { fontSize: 13, lineHeight: 18, marginTop: 4 },
   agreeRow: {

@@ -10,6 +10,26 @@
 
 - **SEC-01 (Playwright 후속)**: 공개 API·레이트리밋 등 H2/로컬 단일 스택에서 재현이 어려운 구간은 백엔드 단위·통합 테스트를 우선하고, E2E는 스테이징·자격 증명 Secrets가 갖춰진 환경에서만 보강한다.
 
+## 내담자 쇼핑 (CLIENT_SHOP) — Playwright 전제
+
+스펙: [`tests/client/client-shop-catalog-to-cart.spec.ts`](./tests/client/client-shop-catalog-to-cart.spec.ts) (`testDir` 기준 `./tests/client/…`) (PLP → 장바구니). SSOT: [`docs/project-management/SHOP_P2_INTEGRATION_TEST_REPORT.md`](../docs/project-management/SHOP_P2_INTEGRATION_TEST_REPORT.md) §6.1.
+
+| # | 전제 | 확인 |
+|---|------|------|
+| 1 | 백엔드 API **8080** + 프론트 **3000** (`BASE_URL`, API 베이스 8080 일치) | `skipWhenLocalBackend8080Down()` (로컬·CI=false) |
+| 2 | Flyway Shop P2 (**002~007**, 001 salary 충돌 해소) | DB·카탈로그 컬럼·`point_tenant_policies` |
+| 3 | 테넌트 **`CLIENT_SHOP`**·**`CLIENT_REWARD`** 컴포넌트 활성 | 어드민 컴포넌트 또는 시드 |
+| 4 | 어드민에서 **`catalogVisible=true`** SKU ≥1 (활성 PLP 탭) | `shop-sku-add-first` testid 노출 |
+| 5 | 내담자 로그인 자격 (`loginClientWeb` — `tests/e2e/helpers/erpAuth.ts`) | CI: `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` 또는 `TEST_USERNAME`/`TEST_PASSWORD` |
+
+**회귀 명령** ( `tests/e2e` 디렉터리):
+
+```bash
+npx playwright test client-shop-catalog-to-cart --project=chromium
+```
+
+PG·checkout 결제는 범위 외. 8080 미기동 시 스펙 전체 스킵(로그인 타임아웃 방지).
+
 ## ERP / 관리자 로그인 스펙
 
 Playwright가 **로그인 URL·navigation 타임아웃**으로 실패할 때 아래를 먼저 본다. 자격 증명은 [`docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`](../../docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md) 보안 원칙에 따라 **문서·PR에 평문 금지**(변수명·Secrets·로컬 env만). 우선순위·기본값은 [`.cursor/skills/core-solution-testing/SKILL.md`](../../.cursor/skills/core-solution-testing/SKILL.md)·[`helpers/erpAuth.ts`](./helpers/erpAuth.ts) SSOT.

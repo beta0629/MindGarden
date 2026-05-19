@@ -62,6 +62,16 @@ export const SHOP_CATEGORY_TABS: ReadonlyArray<{
 export const SHOP_CHECKOUT_AGREEMENT_LABEL =
   '디지털 상품 환불 규정 및 결제 진행에 동의합니다.';
 
+/** 체크아웃 — 상담(CONSULTATION) 매핑 선택 UX */
+export const SHOP_CHECKOUT_MAPPING_COPY = {
+  SECTION_TITLE: '담당 상담사',
+  SELECT_PLACEHOLDER: '상담사를 선택해 주세요',
+  NO_MAPPING:
+    '상담 상품 결제를 위해 센터에 상담 연결을 요청해 주세요. 연결 후 다시 결제해 주세요.',
+  REQUIRED: '담당 상담사를 선택해 주세요.',
+  AUTO_PREFIX: '담당 상담사',
+} as const;
+
 export const SHOP_BANNER_PLACEHOLDER_COPY =
   '테넌트 배너·환영 문구는 설정 연동 후 표시됩니다.';
 

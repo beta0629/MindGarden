@@ -9,14 +9,17 @@
  *
  * testid: `client-shop-catalog-page`, `shop-sku-add-first`, `client-shop-cart-page`, `client-shop-cart-subtotal`
  *
- * 로컬 검증 (2026-05-19):
+ * 전제 체크리스트 (R10): `tests/e2e/README.md` §「내담자 쇼핑 (CLIENT_SHOP)」
+ * 로컬 검증 (2026-05-19): 8080 미기동 시 `skipWhenLocalBackend8080Down`으로 스킵.
  *   `cd tests/e2e && npx playwright test client-shop-catalog-to-cart --project=chromium`
- *   결과 FAIL — beforeEach `loginClientWeb` 타임아웃(URL `/login` 유지). 원인: 백엔드(API)·프록시 미기동.
- *   재실행: Spring API + Flyway P2 + 노출 SKU 시드 후 동일 명령.
  */
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page } from '@playwright/test';
-import { loginClientWeb } from '../../helpers/erpAuth';
+import {
+  loginClientWeb,
+  skipWhenCiMissingE2eCredentials,
+  skipWhenLocalBackend8080Down
+} from '../../helpers/erpAuth';
 
 const REACT_130_OR_INVALID_CHILD =
   /Minified React error #130|Objects are not valid as a React child|invariant=130/i;
@@ -37,6 +40,8 @@ test.describe('내담자 쇼핑 PLP → 장바구니', () => {
   let collectedErrors: string[] = [];
 
   test.beforeEach(async ({ page }: { page: Page }) => {
+    skipWhenCiMissingE2eCredentials();
+    await skipWhenLocalBackend8080Down();
     collectedErrors = [];
     attachRuntimeErrorCollectors(page, collectedErrors);
     await loginClientWeb(page, test.info());

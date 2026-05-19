@@ -48,11 +48,20 @@ async function fetchPointBalance(): Promise<ShopPointBalance> {
 async function postShopCheckout(
   idempotencyKey: string,
   pointsToRedeemMinor: number,
+  consultantClientMappingId?: number | string | null,
 ): Promise<ShopCheckoutResult> {
-  const raw = await apiPost<unknown>(SHOP_API.CHECKOUT, {
+  const body: {
+    idempotencyKey: string;
+    pointsToRedeemMinor: number;
+    consultantClientMappingId?: number;
+  } = {
     idempotencyKey,
     pointsToRedeemMinor,
-  });
+  };
+  if (consultantClientMappingId != null && consultantClientMappingId !== '') {
+    body.consultantClientMappingId = Number(consultantClientMappingId);
+  }
+  const raw = await apiPost<unknown>(SHOP_API.CHECKOUT, body);
   if (raw != null && typeof raw === 'object' && (raw as { success?: boolean }).success === false) {
     throw new Error((raw as { message?: string }).message || '체크아웃에 실패했습니다.');
   }
@@ -90,12 +99,14 @@ export function useClientShopCheckout() {
     mutationFn: async ({
       pointsToRedeemMinor,
       idempotencyKey,
+      consultantClientMappingId,
     }: {
       pointsToRedeemMinor: number;
       idempotencyKey?: string;
+      consultantClientMappingId?: number | string | null;
     }) => {
       const key = idempotencyKey ?? createShopIdempotencyKey();
-      const result = await postShopCheckout(key, pointsToRedeemMinor);
+      const result = await postShopCheckout(key, pointsToRedeemMinor, consultantClientMappingId);
       if (result.nextStep === 'PAYMENT' && result.orderPublicId) {
         await prepareShopPayment(result.orderPublicId);
       }

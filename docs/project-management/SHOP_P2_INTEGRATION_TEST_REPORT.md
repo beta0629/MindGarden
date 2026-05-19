@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| 일자 | 2026-05-19 (최종 갱신 12:02 KST) |
+| 일자 | 2026-05-19 (최종 갱신 14:18 KST, **R8·R10** Shop 테스트 게이트) |
 | 범위 | Shop P1 + P2-web + P2-admin + 환불·fulfillment·주문 MockMvc |
 | SSOT | [SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md](./SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md), [SHOP_REWARD_IMPLEMENTATION_STATUS.md](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) |
 | 코드 수정 | **없음** (core-tester 전체 Maven 검증·문서 갱신) |
@@ -14,13 +14,14 @@
 
 | 게이트 | 결과 |
 |--------|------|
-| Shop 관련 Maven 테스트 **65건** | **PASS** (BUILD SUCCESS, **11클래스**, ~28s) |
-| Admin Controller slice | **10건 PASS** (카탈로그 5 + 포인트 정책 2 + **주문 3**) |
-| 환불·fulfillment 단위 | **7건 PASS** (refund 4 + fulfillment 3) |
-| Client API Controller slice | **4건 PASS** (catalog·ledger·T6 주문 없음) |
+| Shop 관련 Maven 테스트 **84건** | **PASS** (BUILD SUCCESS, **13클래스**, ~36s, `mvn clean test -DforkCount=1`) |
+| hold TTL (R4) | **4건 PASS** — `ShopOrderHoldExpiryServiceImplTest` |
+| Admin Controller slice | **13건 PASS** (카탈로그 **8** + 포인트 정책 2 + 주문 3) |
+| Client API slice | **8건 PASS** (catalog·ledger·**컴포넌트 403**·주문 400·**consultant-mappings R8**) |
+| 환불·fulfillment 단위 | **10건 PASS** (refund 6 + fulfillment 4) |
 | P1 GAP T6 cross-tenant | **2건 반영** (`cancelOrder`·`preparePayment` 단위) |
 | P1 GAP H4·I3 | **반영** — §4·§보강 결과 참고 |
-| Playwright Shop E2E | **spec 1건 존재**, 이번 배치 **미실행** — §6.1 |
+| Playwright Shop E2E | **spec 1건**, 로컬 **1 skipped** (8080 미기동) — §6.1·`tests/e2e/README.md` |
 | Flyway P2 마이그레이션 | **5종 + V20260519_001 버전 충돌** — §7 |
 | P2 통합 GO | **조건부 GO** — Flyway 적용 + §5·§6 수동 스모크 후 |
 
@@ -29,27 +30,61 @@
 ## 2. Maven 단위 테스트 실행
 
 ```bash
-mvn -Dtest=AdminShopCatalogSkuServiceImplTest,AdminShopCatalogSkuControllerMvcTest,AdminPointTenantPolicyControllerMvcTest,AdminShopOrderControllerMvcTest,ClientShopControllerMvcTest,ClientShopCheckoutServiceImplTest,ClientPointWalletServiceImplTest,PointTenantPolicyServiceImplTest,TenantComponentActivationServiceImplTest,ShopOrderFulfillmentServiceImplTest,AdminShopOrderRefundServiceImplTest test
+mvn clean test -Dtest=AdminShopCatalogSkuServiceImplTest,AdminShopCatalogSkuControllerMvcTest,AdminPointTenantPolicyControllerMvcTest,AdminShopOrderControllerMvcTest,ClientShopControllerMvcTest,ClientShopCheckoutServiceImplTest,ClientPointWalletServiceImplTest,PointTenantPolicyServiceImplTest,TenantComponentActivationServiceImplTest,ShopOrderFulfillmentServiceImplTest,AdminShopOrderRefundServiceImplTest,ShopOrderHoldExpiryServiceImplTest,ClientShopConsultantMappingServiceImplTest -DforkCount=1 test
 ```
 
 | 클래스 | Tests | Failures | Errors | Skipped | 결과 |
 |--------|-------|----------|--------|---------|------|
-| `AdminShopCatalogSkuServiceImplTest` | 3 | 0 | 0 | 0 | PASS |
-| `AdminShopCatalogSkuControllerMvcTest` | 5 | 0 | 0 | 0 | PASS |
+| `TenantComponentActivationServiceImplTest` | 3 | 0 | 0 | 0 | PASS |
 | `AdminPointTenantPolicyControllerMvcTest` | 2 | 0 | 0 | 0 | PASS |
 | `AdminShopOrderControllerMvcTest` | 3 | 0 | 0 | 0 | PASS |
-| `ClientShopControllerMvcTest` | 4 | 0 | 0 | 0 | PASS |
-| `ClientShopCheckoutServiceImplTest` | 19 | 0 | 0 | 0 | PASS |
-| `ClientPointWalletServiceImplTest` | 14 | 0 | 0 | 0 | PASS |
-| `PointTenantPolicyServiceImplTest` | 2 | 0 | 0 | 0 | PASS |
-| `TenantComponentActivationServiceImplTest` | 3 | 0 | 0 | 0 | PASS |
-| `ShopOrderFulfillmentServiceImplTest` | 4 | 0 | 0 | 0 | PASS |
+| `ClientShopControllerMvcTest` | 8 | 0 | 0 | 0 | PASS |
+| `AdminShopCatalogSkuControllerMvcTest` | 8 | 0 | 0 | 0 | PASS |
 | `AdminShopOrderRefundServiceImplTest` | 6 | 0 | 0 | 0 | PASS |
-| **합계** | **65** | **0** | **0** | **0** | **BUILD SUCCESS** |
+| `ShopOrderHoldExpiryServiceImplTest` | 4 | 0 | 0 | 0 | PASS |
+| `ClientShopCheckoutServiceImplTest` | 22 | 0 | 0 | 0 | PASS |
+| `AdminShopCatalogSkuServiceImplTest` | 5 | 0 | 0 | 0 | PASS |
+| `ShopOrderFulfillmentServiceImplTest` | 4 | 0 | 0 | 0 | PASS |
+| `ClientShopConsultantMappingServiceImplTest` | 3 | 0 | 0 | 0 | PASS |
+| `PointTenantPolicyServiceImplTest` | 2 | 0 | 0 | 0 | PASS |
+| `ClientPointWalletServiceImplTest` | 14 | 0 | 0 | 0 | PASS |
+| **합계** | **84** | **0** | **0** | **0** | **BUILD SUCCESS** |
 
-소요: 약 28s (2026-05-19 12:02 KST).
+소요: 약 36s (2026-05-19 14:18 KST).
 
-**식별된 Shop 관련 `*Test.java` (11건, 누락 없음)**:
+**재실행 주의**: 기본 병렬 fork 시 `ClassNotFoundException`(예: `ClientShopControllerMvcTest`)으로 BUILD FAILURE가 날 수 있음 — 위처럼 `-DforkCount=1` 또는 `mvn clean test` 권장.
+
+### 2.0 MockMvc slice 회귀 (R10 — 코더 산출 후)
+
+Controller slice만 빠르게 돌릴 때:
+
+```bash
+mvn -Dtest=ClientShopControllerMvcTest,AdminShopCatalogSkuControllerMvcTest test
+```
+
+| 클래스 | Tests | 기대 | 비고 |
+|--------|-------|------|------|
+| `ClientShopControllerMvcTest` | 8 | PASS | catalog·ledger·`CLIENT_SHOP`/`CLIENT_REWARD` 403·주문 없음 400·**consultant-mappings (R8)** |
+| `AdminShopCatalogSkuControllerMvcTest` | 8 | PASS | 목록·tenant 스코프·401/403·**`ADMIN_SHOP_CATALOG` 비활성 403**·price-history·PATCH catalog-visible |
+
+부트스트랩: `ClientShopControllerMvcTestApplication`, `AdminShopCatalogSkuControllerMvcTestApplication` (`src/test/java/com/coresolution/integrationtest/shop/`).
+
+### 2.0.1 hold TTL (R4)
+
+```bash
+mvn -Dtest=ShopOrderHoldExpiryServiceImplTest test
+```
+
+| @DisplayName | 검증 |
+|--------------|------|
+| 만료 대상 주문을 expireOrderHold로 처리 | `expireStaleHoldsForTenant` → `expireOrderHold` 1회 |
+| 이미 종료된 주문은 expireOrderHold false로 카운트 제외 | 멱등 스킵, count=0 |
+| hold_ttl_minutes=0이면 조회·만료 미실행 | repository·checkout 미호출 |
+| PAID 등은 repository 조회 대상에서 제외(만료 0건) | 빈 목록 |
+
+**미커버 (§11 시나리오 초안)**: 스케줄러·멀티테넌트 배치 통합, `expireOrderHold` → `EXPIRED`·`releaseHold` DB 연동.
+
+**식별된 Shop 관련 `*Test.java` (12건, R10 suite)**:
 
 1. `src/test/java/com/coresolution/consultation/integration/AdminShopCatalogSkuControllerMvcTest.java`
 2. `src/test/java/com/coresolution/consultation/integration/AdminPointTenantPolicyControllerMvcTest.java`
@@ -62,16 +97,19 @@ mvn -Dtest=AdminShopCatalogSkuServiceImplTest,AdminShopCatalogSkuControllerMvcTe
 9. `src/test/java/com/coresolution/consultation/service/impl/PointTenantPolicyServiceImplTest.java`
 10. `src/test/java/com/coresolution/consultation/service/impl/ShopOrderFulfillmentServiceImplTest.java`
 11. `src/test/java/com/coresolution/core/service/impl/TenantComponentActivationServiceImplTest.java`
+12. `src/test/java/com/coresolution/consultation/service/impl/ShopOrderHoldExpiryServiceImplTest.java`
 
-### 2.1 P2-admin (`AdminShopCatalogSkuServiceImplTest`)
+### 2.1 P2-admin (`AdminShopCatalogSkuServiceImplTest` — **5건**)
 
 | @DisplayName | 검증 내용 |
 |--------------|-----------|
 | patchCatalogVisible — 존재하지 않으면 EntityNotFoundException | tenant·id 스코프 조회 실패 |
 | create — skuCode 중복이면 IllegalArgumentException | 테넌트 내 skuCode 유일 |
 | patchCatalogVisible — catalogVisible 반영 | 노출 플래그 저장 |
+| update — unit_price_minor 변경 시 이력 1건 저장 | **R3** `ShopCatalogSkuPriceHistory` 저장 |
+| update — unit_price_minor 동일하면 이력 skip | **R3** 이력 미저장 |
 
-**미커버**: `list` / `get` / `update` 정상 경로, `catalog_category` 필드, 타 테넌트 id.
+**미커버**: `list` / `get` 정상 경로, `catalog_category` 필드, 타 테넌트 id.
 
 ### 2.2 P1 checkout·wallet (P1 GAP 보강 반영)
 
@@ -88,13 +126,13 @@ mvn -Dtest=AdminShopCatalogSkuServiceImplTest,AdminShopCatalogSkuControllerMvcTe
 
 | 항목 | 상태 |
 |------|------|
-| `AdminShopCatalogSkuController` MockMvc slice | **5건** — 목록 200·tenant 스코프·인증 없음 401/403·CLIENT 403·PATCH catalog-visible 200 |
+| `AdminShopCatalogSkuController` MockMvc slice | **8건** — 목록·tenant·401/403·**`ADMIN_SHOP_CATALOG` 비활성 403**·CLIENT 403·price-history 200/403·PATCH catalog-visible |
 | `AdminPointTenantPolicyController` slice | **2건** — `AdminPointTenantPolicyControllerMvcTest` (GET 200·MVP 키, TenantContext tenant 스코프) |
 | `AdminShopOrderController` slice | **3건** — `AdminShopOrderControllerMvcTest` (GET 목록·GET 상세·POST refund 200·REFUNDED) |
-| `ClientShopController` MockMvc slice | **4건** — `ClientShopControllerMvcTest` (catalog 빈/데이터, points/ledger 200, 타 tenant 주문 없음 **400**) |
+| `ClientShopController` MockMvc slice | **6건** — catalog·ledger·**`CLIENT_SHOP`/`CLIENT_REWARD` 비활성 403**·타 tenant 주문 **400** |
 | 부트스트랩 | `AdminShopCatalogSkuControllerMvcTestApplication`, `AdminPointTenantPolicyControllerMvcTestApplication`, `AdminShopOrderControllerMvcTestApplication`, `ClientShopControllerMvcTestApplication` |
 
-**추가 권장**(차단 아님): Admin 주문·카탈로그 컴포넌트 비활성 403, Client 세션 없음 401 slice.
+**추가 권장**(차단 아님): Client 세션 없음 401 slice.
 
 ### 2.4 환불·이행(fulfillment) 단위
 
@@ -117,7 +155,7 @@ mvn -Dtest=AdminShopCatalogSkuServiceImplTest,AdminShopCatalogSkuControllerMvcTe
 | 영역 | 구현(로컬) | 자동 테스트 | 비고 |
 |------|------------|-------------|------|
 | PLP 카테고리·SKU 카드 | O (`catalog_category`, FE 탭) | 없음 | Flyway 001 후 API 확인 |
-| 어드민 SKU CRUD·노출 | O | Service 3건 | Controller·E2E 없음 |
+| 어드민 SKU CRUD·노출·가격 이력 | O | Service 5건 + MockMvc 8건 | E2E 없음 |
 | 어드민 포인트 정책 GET/PATCH | O | Controller slice 2건 | PATCH·401은 수동 §5.2 |
 | 내담자 PLP→cart→checkout→points | O (라우트·서비스) | P1 checkout 5건만 | 수동 §6 |
 | PG·포인트 commit/hold (P1) | O | 17건 | SSOT §2 |
@@ -228,9 +266,11 @@ SSOT [SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md](./SHOP_P1_PG_POINT_COMMIT_TEST_REP
 
 | 항목 | 상태 |
 |------|------|
-| `tests/e2e/tests/client/client-shop-catalog-to-cart.spec.ts` | **존재** (PLP → cart 스모크) |
-| 이번 배치 E2E 실행 | **미실시** (API·Flyway·SKU 시드 전제) |
-| 로컬 기록 (spec 주석) | login 타임아웃 FAIL — 백엔드 미기동 |
+| `tests/e2e/tests/client/client-shop-catalog-to-cart.spec.ts` | **스펙 준비·전제 문서화** (PLP → cart) |
+| 전제 체크리스트 | [`tests/e2e/README.md`](../../tests/e2e/README.md) §「내담자 쇼핑 (CLIENT_SHOP)」 — Flyway·SKU·`CLIENT_SHOP` 활성 |
+| skip 가드 | `skipWhenCiMissingE2eCredentials` + `skipWhenLocalBackend8080Down` (beforeEach) |
+| R10 로컬 실행 (2026-05-19 14:18 KST) | **1 skipped** — 8080 미기동 (`skipWhenLocalBackend8080Down`, exit 0) |
+| 통과 조건 | 8080+3000·Flyway P2·노출 SKU·내담자 자격 후 재실행 → **1 passed** 기대 |
 
 **재실행**: `cd tests/e2e && npx playwright test client-shop-catalog-to-cart --project=chromium`
 
@@ -289,7 +329,7 @@ P2 통합 후에도 P1 게이트 3건은 **재확인 권장** (SSOT §3):
 
 ## 10. 최종 권고 (GO / NO-GO)
 
-**판정: 조건부 GO.** Maven Shop **11클래스 65건 BUILD SUCCESS**(약 28s, checkout mapping·CONSULTATION 매핑 링크 포함)로 백엔드 자동화 게이트는 통과. Flyway **007 재번호로 001 충돌 해소**, Expo clientShop Jest **19건 PASS**. Flyway **002~007 미적용**, 수동 스모크·Playwright **미실행** — **운영 GO 불가**.
+**판정: 조건부 GO.** Maven Shop **13클래스 84건 BUILD SUCCESS**(약 36s, R8 mapping·hold TTL·컴포넌트 403 slice 포함)로 백엔드 자동화 게이트는 통과. Flyway **007 재번호로 001 충돌 해소**, Expo clientShop Jest **19건 PASS**. Flyway **002~007·V20260520_001·V20260521_001(LNB) 미적용**, 수동 스모크·Playwright **스킵/미완** — **운영 GO 불가**.
 
 ---
 
@@ -311,9 +351,18 @@ P2 통합 후에도 P1 게이트 3건은 **재확인 권장** (SSOT §3):
 | Refund 멱등 | `refundPaidOrder_alreadyRefunded_idempotent` | PASS |
 | Fulfillment | CONSULTATION·ASSESSMENT·주문 멱등 스킵 | 3건 PASS (CONSULTATION 멱등 **기존**, 추가 생략) |
 | Admin 주문 API | `AdminShopOrderControllerMvcTest` GET list·GET detail·POST refund | 3건 PASS |
-| — | Shop Maven **11클래스 65건** | BUILD SUCCESS (~28s) |
+| — | Shop Maven **13클래스 84건** | BUILD SUCCESS (~36s, `-DforkCount=1`) |
+| R4 hold TTL | `ShopOrderHoldExpiryServiceImplTest` ×4 | PASS |
+| R8 mapping | `ClientShopConsultantMappingServiceImplTest` ×3 + Client slice +2 | PASS |
+| R10 slice | `ClientShopControllerMvcTest` 8·`AdminShopCatalogSkuControllerMvcTest` 8 | PASS |
 
-신규·수정 테스트 파일 (환불·fulfillment 배치):
+신규·수정 테스트 파일 (환불·fulfillment·R10):
+
+- `ShopOrderHoldExpiryServiceImplTest` — hold TTL 배치 단위 4건 (**R4**)
+- `AdminShopCatalogSkuControllerMvcTest` — 컴포넌트 403·price-history (+3)
+- `ClientShopControllerMvcTest` — `CLIENT_SHOP`/`CLIENT_REWARD` 403 (+2)
+
+이전 (환불·fulfillment 배치):
 
 - `AdminShopOrderRefundServiceImplTest` — refund 4건 (clawback 멱등 0 반환 **신규**)
 - `ShopOrderFulfillmentServiceImplTest` — fulfillment 3건
@@ -328,4 +377,18 @@ P2 통합 후에도 P1 게이트 3건은 **재확인 권장** (SSOT §3):
 
 ---
 
-*작성: core-tester · 문서·검증만 · 커밋 없음*
+## 11. hold TTL — 미커버 시나리오 초안 (core-coder, R4 후속)
+
+P1 SSOT [SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md](./SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md) **H5**. 단위 4건은 `ShopOrderHoldExpiryServiceImplTest` **PASS**; 아래는 통합·배치 권장.
+
+| ID | 시나리오 | Given | When | Then |
+|----|----------|-------|------|------|
+| H5-1 | TTL 경과 `PENDING_PAYMENT` | `hold_ttl_minutes=30`, `createdAt` 31분 전, 포인트 hold 존재 | `expireStaleHoldsForTenant` 또는 스케줄러 1회 | `EXPIRED`(또는 `CREATED`), `releaseHold` 1회, PG 미호출 |
+| H5-2 | TTL 미경과 | 10분 전 주문 | 동일 | 만료 0건, `expireOrderHold` 미호출 |
+| H5-3 | `hold_ttl_minutes=0` | 정책 0 | 배치 | 조회·만료 전부 스킵 (단위 **PASS**) |
+| H5-4 | 멱등 재배치 | 이미 `EXPIRED` | 재실행 | `expireOrderHold` false, clawback·이중 release 없음 |
+| H5-5 | cross-tenant | tenant A 주문 | tenant B 배치 | A 주문 미처리 |
+
+---
+
+*작성: core-tester · R10 문서·검증 · 커밋 없음*

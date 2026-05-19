@@ -3,8 +3,8 @@
 | 항목 | 내용 |
 |------|------|
 | 문서 제목 | 쇼핑·리워드 플랫폼 오케스트레이션 |
-| 상태 | **구현 진행(로컬)** — P1~P2 백엔드·웹·Expo 반영, 미커밋 |
-| 작성일 | 2026-05-19 |
+| 상태 | **코드 GO (로컬)** — R3/R4/R8(웹+Expo)/R9·LNB `V20260521_001`·OPS scripts 반영(2026-05-20); **잔여** R6/R10·커밋·dev 배포·OPS·수동 QA |
+| 작성일 | 2026-05-19 (SSOT 갱신 2026-05-20) |
 | SSOT 역할 | **아키텍처·역할 분리·갭·MVP·위임 순서**의 단일 오케스트레이션 문서 |
 
 ---
@@ -88,7 +88,7 @@ flowchart TB
 
 ---
 
-## §3 구현 현황 (코드베이스 기준, 2026-05-19)
+## §3 구현 현황 (코드베이스 기준, 2026-05-20)
 
 ### 3.1 MVP 골격 (2026-05-14)
 
@@ -118,7 +118,7 @@ flowchart TB
 
 **Flyway P2 세트**: `V20260519_002`~`005`, `006`(mapping link), `007`(catalog_category). 상세: [SHOP_REWARD_IMPLEMENTATION_STATUS.md](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) §2.
 
-**자동 테스트**: Shop Maven **60건** PASS (11클래스) — [SHOP_P2_INTEGRATION_TEST_REPORT.md](./SHOP_P2_INTEGRATION_TEST_REPORT.md).
+**자동 테스트**: Shop Maven **84건** PASS (13클래스) — [SHOP_P2_INTEGRATION_TEST_REPORT.md](./SHOP_P2_INTEGRATION_TEST_REPORT.md).
 
 ### 3.3 (참고) 구버전 갭 ID 매핑
 
@@ -136,14 +136,25 @@ flowchart TB
 |----|-----|------------|
 | ~~R1~~ | ~~PG 실환불 (어드민)~~ | **완료 (2026-05-19)** — `AdminShopOrderRefundServiceImpl`, PG `refundPayment` |
 | ~~R2~~ | ~~ERP fulfillment 훅~~ | **완료 (2026-05-19)** — `ErpShopConsultationFulfillmentHook`; mappingId는 체크아웃 시 서버 연결 |
-| R3 | **SKU 가격 이력** audit·어드민 UI | Phase 2+ |
-| R4 | **hold TTL** 만료 배치·`EXPIRED` 자동 release | Phase 2+ |
+| ~~R3~~ | ~~**SKU 가격 이력** audit·어드민 API~~ | **완료 (2026-05-20)** — `shop_catalog_sku_price_history`, `GET .../catalog-skus/{id}/price-history`, Flyway `V20260520_001`; 어드민 UI 탭은 잔여(선택) |
+| ~~R4~~ | ~~**hold TTL** 만료 배치·자동 release~~ | **완료 (2026-05-20)** — `ShopOrderHoldExpiryScheduler`·`ShopOrderHoldExpiryServiceImpl`, `point_tenant_policies` 키 `hold_ttl_minutes`(기본 30), 단위 4건 PASS |
 | R5 | **Phase 3 통합 마켓**(모델 B) | [MULTI_TENANT §8](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) |
-| R6 | **ASSESSMENT fulfillment** — psych-assessment 슬롯 연동 | Phase 3 |
+| R6 | **ASSESSMENT fulfillment** — psych-assessment 슬롯 연동 | **잔여** — Phase 3; CONSULTATION 대비 미연동 |
 | R7 | **부분 환불·쿠폰·번들** | MVP 제외 |
-| R8 | **체크아웃 UI mapping 선택** | 서버 자동 연결만; 내담자 선택 UX 미구현 |
-| R9 | **Flyway DB 적용·OPS 컴포넌트 활성화·수동 QA** | [SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md) |
-| R10 | **Playwright E2E** catalog→cart | spec 존재, API·시드 전제 후 재실행 |
+| ~~R8~~ | ~~**체크아웃 UI mapping 선택**~~ | **완료 (웹+Expo, 2026-05-20)** — `ShopCheckoutPage`·`expo-app/.../checkout.tsx`·`GET .../consultant-mappings`·`ClientShopConsultantMappingServiceImplTest` 3건·`clientShopCheckout` Jest |
+| ~~R9~~ | ~~**OPS 컴포넌트·Client API 게이트**~~ | **완료 (코드·스크립트, 2026-05-20)** — `scripts/ops/activate-shop-reward-tenant-components.sql`, `seed-shop-demo-catalog.sql`, `ClientShopController` → 403; **환경별** SQL 실행·수동 QA는 [런북](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md) 잔여 |
+| R10 | **Playwright E2E** catalog→cart | **잔여** — spec·testid 준비; dev 배포·OPS·SKU 시드 후 passed 기대 ([§1.3](./SHOP_REWARD_IMPLEMENTATION_STATUS.md)) |
+
+### 3.5 다음 단계 (잔여·운영, 2026-05-20)
+
+| 우선 | 항목 | 담당·SSOT |
+|------|------|-----------|
+| **운영** | 커밋 (A)/(B)/(C) → `develop` push → dev 배포 → OPS activate + (선택) seed → 수동 QA §4 | [SHOP_REWARD_INTEGRATION_COMMIT_CHECKLIST.md](./SHOP_REWARD_INTEGRATION_COMMIT_CHECKLIST.md) §6 |
+| R6 | **ASSESSMENT fulfillment** — psych-assessment 슬롯 연동 | Phase 3; CONSULTATION 대비 미연동 |
+| R10 | **Playwright** catalog→cart | API 8080·Flyway·OPS·시드 전제 후 재실행 |
+| 검증 | Maven Shop **84건** (13클래스)·Expo `clientShop` Jest **29건** | [SHOP_P2](./SHOP_P2_INTEGRATION_TEST_REPORT.md), [IMPLEMENTATION_STATUS §1](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) |
+
+**코드 게이트**: R3/R4/R8/R9·LNB `V20260521_001`·OPS SQL — **GO**. **운영 GO**: 커밋·배포·OPS·[IMPLEMENTATION_STATUS §4](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) 수동 QA 완료 전까지 **불가**.
 
 ---
 
@@ -332,6 +343,8 @@ flowchart TB
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-20 | SSOT 동기화 — R8 Expo 완료, §3.4·§3.5 잔여 R6/R10·운영 QA, Maven 84/13·Expo jest 29, 커밋 체크리스트 §6 |
+| 2026-05-19 | §3.4 R3/R4/R9 완료·R6/R8/R10 잔여, §3.5 병렬 배치 제안, R3 Flyway `V20260520_001` |
 | 2026-05-19 | **구현 진행(로컬)** — §0 EARN·ERP·환불 파이프라인, §3.2 완료·§3.4 잔여(R1/R2 완료), §6 실경로, Expo SSOT 링크 |
 | 2026-05-19 | §13 멀티테넌트 마켓플레이스·§4.3 Phase 3 통합몰·MULTI_TENANT SSOT 링크 |
 | 2026-05-19 | 권장안 확정 — Core 엔진 / MindGarden adopter, 갭·MVP·위임 초안 |

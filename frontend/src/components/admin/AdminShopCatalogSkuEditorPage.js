@@ -127,7 +127,12 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
         await updateAdminShopCatalogSku(skuId, body);
       }
       if (pendingImageFile && savedId != null) {
-        await uploadAdminShopCatalogSkuThumbnail(savedId, pendingImageFile);
+        try {
+          await uploadAdminShopCatalogSkuThumbnail(savedId, pendingImageFile);
+        } catch (uploadErr) {
+          const detail = uploadErr?.message != null ? String(uploadErr.message) : '알 수 없는 오류';
+          throw new Error(`썸네일 업로드 실패: ${detail}`);
+        }
       }
       notificationManager.show(
         isNew ? '상품이 등록되었습니다.' : '상품이 수정되었습니다.',

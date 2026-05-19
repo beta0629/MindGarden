@@ -19,16 +19,29 @@ class CsrfTokenManager {
     constructor() {
         this.token = null;
         this.tokenExpiry = null;
+        this.csrfDisabled = false;
         this.isRefreshing = false;
         this.refreshPromise = null;
+    }
+
+    /**
+     * @param {unknown} token
+     * @returns {token is string}
+     */
+    _isValidToken(token) {
+        return typeof token === 'string' && token.length > 0;
     }
 
 /**
      * CSRF 토큰 가져오기 (캐시된 토큰이 있으면 사용, 없으면 새로 요청)
      */
     async getToken() {
+        if (this.csrfDisabled) {
+            return null;
+        }
+
         // 캐시된 토큰이 있고 유효하면 반환
-        if (this.token && this.tokenExpiry && Date.now() < this.tokenExpiry) {
+        if (this._isValidToken(this.token) && this.tokenExpiry && Date.now() < this.tokenExpiry) {
             return this.token;
         }
 
@@ -77,7 +90,18 @@ class CsrfTokenManager {
                 const data = (responseData && typeof responseData === 'object' && 'success' in responseData && 'data' in responseData)
                     ? responseData.data
                     : responseData;
-                this.token = data.token || data;
+
+                if (data && typeof data === 'object' && data.disabled === true) {
+                    this.csrfDisabled = true;
+                    this.token = null;
+                    this.tokenExpiry = Date.now() + (30 * 60 * 1000);
+                    console.debug('CSRF 비활성화 — 토큰 없이 진행');
+                    return null;
+                }
+
+                this.csrfDisabled = false;
+                const rawToken = data && typeof data === 'object' ? data.token : data;
+                this.token = this._isValidToken(rawToken) ? rawToken : null;
                 // 토큰을 30분간 유효하다고 가정 (실제로는 서버에서 만료 시간을 알려줘야 함)
                 this.tokenExpiry = Date.now() + (30 * 60 * 1000);
                 console.debug('CSRF 토큰 갱신 완료');
@@ -107,8 +131,8 @@ class CsrfTokenManager {
             ...options.headers
         };
         
-        // CSRF 토큰이 있으면 헤더에 추가
-        if (token) {
+        // CSRF 토큰이 있으면 헤더에 추가 (string만 허용)
+        if (this._isValidToken(token)) {
             headers['X-XSRF-TOKEN'] = token;
         }
         
@@ -137,12 +161,15 @@ class CsrfTokenManager {
         }
 
         let token = await this.getToken();
-        if (!token) {
-            this.clearToken();
-            token = await this.refreshToken();
-        }
-        if (!token) {
-            throw new Error(CSRF_TOKEN_UNAVAILABLE_MESSAGE);
+
+        if (!this.csrfDisabled) {
+            if (!this._isValidToken(token)) {
+                this.clearToken();
+                token = await this.refreshToken();
+            }
+            if (!this._isValidToken(token)) {
+                throw new Error(CSRF_TOKEN_UNAVAILABLE_MESSAGE);
+            }
         }
 
         const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
@@ -163,7 +190,9 @@ class CsrfTokenManager {
             ...rawHeaders
         };
 
-        headers['X-XSRF-TOKEN'] = token;
+        if (this._isValidToken(token)) {
+            headers['X-XSRF-TOKEN'] = token;
+        }
 
         const tenantId = await getTenantId();
         if (tenantId) {

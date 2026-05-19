@@ -26,6 +26,7 @@ import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
@@ -37,6 +38,7 @@ import com.coresolution.consultation.service.ConsultationRecordDraftService;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
@@ -92,6 +94,7 @@ public class ScheduleController extends BaseApiController {
     private final ObjectMapper objectMapper;
     private final com.coresolution.consultation.service.ConsultantDashboardService consultantDashboardService;
     private final com.coresolution.consultation.repository.ClientScheduleNoteRepository clientScheduleNoteRepository;
+    private final ConsultantClientMappingRepository consultantClientMappingRepository;
 
     /**
      * 테넌트 컨텍스트가 비어 있을 때 세션 사용자의 tenantId로 보완 (상담사 대시보드 등).
@@ -203,7 +206,10 @@ public class ScheduleController extends BaseApiController {
         int unresolvedForClient = schedule.getClientId() != null
                 ? unresolvedByClientId.getOrDefault(schedule.getClientId(), 0)
                 : 0;
-        ScheduleResponse dto = convertToScheduleResponse(schedule, unresolvedForSchedule, unresolvedForClient);
+        Map<String, ConsultantClientMapping> mappingLookup =
+                buildActiveOrExhaustedMappingLookup(tenantIdVal);
+        ScheduleResponse dto = convertToScheduleResponse(
+                schedule, unresolvedForSchedule, unresolvedForClient, mappingLookup);
         return success("스케줄 조회 성공", dto);
     }
 
@@ -380,9 +386,15 @@ public class ScheduleController extends BaseApiController {
         
         List<ScheduleResponse> schedules;
         if (startDate != null && endDate != null) {
-            List<Schedule> scheduleList = scheduleService.findSchedulesByUserRoleAndDateBetween(consultantId, UserRole.CONSULTANT.name(), startDate, endDate);
+            List<Schedule> scheduleList = scheduleService.findSchedulesByUserRoleAndDateBetween(
+                    consultantId, UserRole.CONSULTANT.name(), startDate, endDate);
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                tenantId = currentUser.getTenantId();
+            }
+            Map<String, ConsultantClientMapping> mappingLookup = buildActiveOrExhaustedMappingLookup(tenantId);
             schedules = scheduleList.stream()
-                .map(schedule -> convertToScheduleResponse(schedule, 0, 0))
+                .map(schedule -> convertToScheduleResponse(schedule, 0, 0, mappingLookup))
                 .collect(java.util.stream.Collectors.toList());
         } else {
             schedules = scheduleService.findSchedulesWithNamesByUserRole(consultantId, UserRole.CONSULTANT.name());
@@ -1297,13 +1309,15 @@ public class ScheduleController extends BaseApiController {
         String tenantId = TenantContextHolder.getTenantId();
         Map<Long, Integer> unresolvedByScheduleId = buildUnresolvedClientNoteCountByScheduleId(tenantId, schedules);
         Map<Long, Integer> unresolvedByClientId = buildUnresolvedClientNoteCountByClientId(tenantId, schedules);
+        Map<String, ConsultantClientMapping> mappingLookup = buildActiveOrExhaustedMappingLookup(tenantId);
 
         List<ScheduleResponse> scheduleResponses = schedules.stream()
             .map(s -> convertToScheduleResponse(s,
                     unresolvedByScheduleId.getOrDefault(s.getId(), 0),
                     s.getClientId() != null
                             ? unresolvedByClientId.getOrDefault(s.getClientId(), 0)
-                            : 0))
+                            : 0,
+                    mappingLookup))
             .collect(Collectors.toList());
         
         Map<String, Object> data = new HashMap<>();
@@ -1827,6 +1841,18 @@ public class ScheduleController extends BaseApiController {
             Schedule schedule,
             int clientScheduleNotesUnresolvedCount,
             int clientScheduleNotesClientWideUnresolvedCount) {
+        return convertToScheduleResponse(
+                schedule,
+                clientScheduleNotesUnresolvedCount,
+                clientScheduleNotesClientWideUnresolvedCount,
+                null);
+    }
+
+    private ScheduleResponse convertToScheduleResponse(
+            Schedule schedule,
+            int clientScheduleNotesUnresolvedCount,
+            int clientScheduleNotesClientWideUnresolvedCount,
+            Map<String, ConsultantClientMapping> mappingLookup) {
         String consultantName = AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
         String clientName = AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
         String consultantPhone = "";
@@ -1870,6 +1896,12 @@ public class ScheduleController extends BaseApiController {
             log.warn("⚠️ 사용자 정보 조회 실패: consultantId={}, clientId={}, error={}", 
                     schedule.getConsultantId(), schedule.getClientId(), e.getMessage());
         }
+
+        ConsultantClientMapping mapping = resolveActiveOrExhaustedMapping(
+                tenantId, schedule.getConsultantId(), schedule.getClientId(), mappingLookup);
+        Long mappingId = mapping != null ? mapping.getId() : null;
+        Integer totalSessions = mapping != null ? mapping.getTotalSessions() : null;
+        Integer remainingSessions = mapping != null ? mapping.getRemainingSessions() : null;
         
         return ScheduleResponse.builder()
             .id(schedule.getId())
@@ -1897,7 +1929,64 @@ public class ScheduleController extends BaseApiController {
             .updatedAt(schedule.getUpdatedAt())
             .clientScheduleNotesUnresolvedCount(Math.max(0, clientScheduleNotesUnresolvedCount))
             .clientScheduleNotesClientWideUnresolvedCount(Math.max(0, clientScheduleNotesClientWideUnresolvedCount))
+            .mappingId(mappingId)
+            .totalSessions(totalSessions)
+            .remainingSessions(remainingSessions)
             .build();
+    }
+
+    private static String mappingLookupKey(Long consultantId, Long clientId) {
+        return consultantId + ":" + clientId;
+    }
+
+    private Map<String, ConsultantClientMapping> buildActiveOrExhaustedMappingLookup(String tenantId) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            return Map.of();
+        }
+        List<ConsultantClientMapping> mappings =
+                consultantClientMappingRepository.findActiveOrExhaustedByTenantId(tenantId);
+        Map<String, ConsultantClientMapping> lookup = new HashMap<>();
+        for (ConsultantClientMapping mapping : mappings) {
+            if (mapping.getConsultant() == null || mapping.getClient() == null) {
+                continue;
+            }
+            Long consultantId = mapping.getConsultant().getId();
+            Long clientId = mapping.getClient().getId();
+            if (consultantId == null || clientId == null) {
+                continue;
+            }
+            String key = mappingLookupKey(consultantId, clientId);
+            lookup.merge(key, mapping, ScheduleController::preferActiveMapping);
+        }
+        return lookup;
+    }
+
+    private ConsultantClientMapping resolveActiveOrExhaustedMapping(
+            String tenantId,
+            Long consultantId,
+            Long clientId,
+            Map<String, ConsultantClientMapping> mappingLookup) {
+        if (consultantId == null || clientId == null || tenantId == null || tenantId.isEmpty()) {
+            return null;
+        }
+        if (mappingLookup != null && !mappingLookup.isEmpty()) {
+            return mappingLookup.get(mappingLookupKey(consultantId, clientId));
+        }
+        return consultantClientMappingRepository
+                .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId)
+                .orElse(null);
+    }
+
+    private static ConsultantClientMapping preferActiveMapping(
+            ConsultantClientMapping existing,
+            ConsultantClientMapping incoming) {
+        if (existing.getStatus() == MappingStatus.ACTIVE) {
+            return existing;
+        }
+        if (incoming.getStatus() == MappingStatus.ACTIVE) {
+            return incoming;
+        }
+        return existing;
     }
 
     private static String nullableUserProfileImageUrl(User user) {

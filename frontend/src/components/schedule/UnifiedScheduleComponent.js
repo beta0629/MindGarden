@@ -27,8 +27,12 @@ import {
   CALENDAR_EXTENDED_TYPE_VACATION,
   CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD,
   CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD,
+  SCHEDULE_MAPPING_ID_FIELD,
+  SCHEDULE_REMAINING_SESSIONS_FIELD,
+  SCHEDULE_TOTAL_SESSIONS_FIELD,
   parseClientScheduleNotesClientWideUnresolvedCount,
-  parseClientScheduleNotesUnresolvedCount
+  parseClientScheduleNotesUnresolvedCount,
+  parseScheduleSessionCount
 } from '../../constants/schedule';
 import { KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS } from '../../utils/krPublicHolidays';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -448,7 +452,18 @@ const UnifiedScheduleComponent = ({
                         editable: !isCompleted,
                         extendedProps: {
                             id: schedule.id,
-                            mappingId: schedule.mappingId || schedule.scheduleMappingId || schedule.mapping_id || schedule.schedule_mapping_id || undefined,
+                            [SCHEDULE_MAPPING_ID_FIELD]: schedule[SCHEDULE_MAPPING_ID_FIELD]
+                                || schedule.mappingId
+                                || schedule.scheduleMappingId
+                                || schedule.mapping_id
+                                || schedule.schedule_mapping_id
+                                || undefined,
+                            [SCHEDULE_TOTAL_SESSIONS_FIELD]: parseScheduleSessionCount(
+                                schedule[SCHEDULE_TOTAL_SESSIONS_FIELD] ?? schedule.total_sessions
+                            ),
+                            [SCHEDULE_REMAINING_SESSIONS_FIELD]: parseScheduleSessionCount(
+                                schedule[SCHEDULE_REMAINING_SESSIONS_FIELD] ?? schedule.remaining_sessions
+                            ),
                             consultantId: schedule.consultantId,
                             consultantName: schedule.consultantName,
                             consultantPhone: schedule.consultantPhone,
@@ -560,7 +575,18 @@ const UnifiedScheduleComponent = ({
                             editable: !isCompleted,
                             extendedProps: {
                                 id: schedule.id,
-                                mappingId: schedule.mappingId || schedule.scheduleMappingId || schedule.mapping_id || schedule.schedule_mapping_id || undefined,
+                                [SCHEDULE_MAPPING_ID_FIELD]: schedule[SCHEDULE_MAPPING_ID_FIELD]
+                                    || schedule.mappingId
+                                    || schedule.scheduleMappingId
+                                    || schedule.mapping_id
+                                    || schedule.schedule_mapping_id
+                                    || undefined,
+                                [SCHEDULE_TOTAL_SESSIONS_FIELD]: parseScheduleSessionCount(
+                                    schedule[SCHEDULE_TOTAL_SESSIONS_FIELD] ?? schedule.total_sessions
+                                ),
+                                [SCHEDULE_REMAINING_SESSIONS_FIELD]: parseScheduleSessionCount(
+                                    schedule[SCHEDULE_REMAINING_SESSIONS_FIELD] ?? schedule.remaining_sessions
+                                ),
                                 consultantId: schedule.consultantId,
                                 consultantName: schedule.consultantName,
                                 consultantProfessionalProviderTypeCode: schedule.consultantProfessionalProviderTypeCode,

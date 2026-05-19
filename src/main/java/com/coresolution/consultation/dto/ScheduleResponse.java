@@ -67,6 +67,15 @@ public class ScheduleResponse {
     @Default
     private int clientScheduleNotesClientWideUnresolvedCount = 0;
 
+    /** 상담사·내담자 매칭 ID (ACTIVE 또는 SESSIONS_EXHAUSTED). 없으면 null. */
+    private Long mappingId;
+
+    /** 매칭 총 회기 수. 매칭 없으면 null. */
+    private Integer totalSessions;
+
+    /** 매칭 남은 회기 수. 매칭 없으면 null. */
+    private Integer remainingSessions;
+
     /**
      * Schedule 엔티티를 ScheduleResponse로 변환
      * 상담 유형을 한글로 변환

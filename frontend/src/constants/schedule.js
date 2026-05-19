@@ -250,6 +250,11 @@ export const CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD = 'clientScheduleNotes
 export const CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD =
   'clientScheduleNotesClientWideUnresolvedCount';
 
+/** ScheduleResponse·FullCalendar extendedProps — 매칭 총/남은 회기 */
+export const SCHEDULE_MAPPING_ID_FIELD = 'mappingId';
+export const SCHEDULE_TOTAL_SESSIONS_FIELD = 'totalSessions';
+export const SCHEDULE_REMAINING_SESSIONS_FIELD = 'remainingSessions';
+
 /**
  * @param {*} raw API 또는 extendedProps 값
  * @returns {number} 0 이상 정수(비정상·null은 0)
@@ -265,6 +270,45 @@ export function parseClientScheduleNotesUnresolvedCount(raw) {
 /** {@link parseClientScheduleNotesUnresolvedCount} 와 동일 파싱(필드명만 구분). */
 export function parseClientScheduleNotesClientWideUnresolvedCount(raw) {
   return parseClientScheduleNotesUnresolvedCount(raw);
+}
+
+/**
+ * @param {*} raw API 또는 extendedProps 값
+ * @returns {number|null} 0 이상 정수, 비정상·null은 null
+ */
+export function parseScheduleSessionCount(raw) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) {
+    return null;
+  }
+  return Math.floor(Math.min(n, Number.MAX_SAFE_INTEGER));
+}
+
+/**
+ * 월간 캘린더에 (남은/총) 회기 라벨을 표시할지 여부. 단회기(totalSessions <= 1)는 false.
+ */
+export function shouldShowCalendarSessionLabel(totalSessions, remainingSessions) {
+  const total = parseScheduleSessionCount(totalSessions);
+  const remaining = parseScheduleSessionCount(remainingSessions);
+  if (total === null || total <= 1) {
+    return false;
+  }
+  if (remaining === null) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * 월간 캘린더 회기 라벨. 예: "(2/10)" — 남은/총. 표시 불가 시 빈 문자열.
+ */
+export function formatCalendarSessionLabel(remainingSessions, totalSessions) {
+  if (!shouldShowCalendarSessionLabel(totalSessions, remainingSessions)) {
+    return '';
+  }
+  const total = parseScheduleSessionCount(totalSessions);
+  const remaining = parseScheduleSessionCount(remainingSessions);
+  return `(${remaining}/${total})`;
 }
 
 export const FILTER_OPTION_LABELS = {

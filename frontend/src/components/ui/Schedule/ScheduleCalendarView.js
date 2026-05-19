@@ -10,7 +10,10 @@ import {
   CALENDAR_EXTENDED_TYPE_VACATION,
   CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD,
   CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD,
+  SCHEDULE_REMAINING_SESSIONS_FIELD,
+  SCHEDULE_TOTAL_SESSIONS_FIELD,
   STATUS,
+  formatCalendarSessionLabel,
   parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount
 } from '../../../constants/schedule';
@@ -261,6 +264,13 @@ const ScheduleCalendarView = ({
         const clientWideNotesUnresolvedCount = parseClientScheduleNotesClientWideUnresolvedCount(
             extendedProps?.[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
         );
+        const sessionLabel = integratedMonthEventLayout && isMonthView
+            ? formatCalendarSessionLabel(
+                extendedProps?.[SCHEDULE_REMAINING_SESSIONS_FIELD],
+                extendedProps?.[SCHEDULE_TOTAL_SESSIONS_FIELD]
+            )
+            : '';
+        const sessionTitleSuffix = sessionLabel ? ` ${sessionLabel}` : '';
         const isVacationScheduleRow =
             extendedProps?.type === CALENDAR_EXTENDED_TYPE_VACATION
             || extendedProps?.status === STATUS.VACATION;
@@ -284,9 +294,9 @@ const ScheduleCalendarView = ({
 
         // 월간 뷰: 컴팩트 렌더링 (시간 + 내담자명만). 통합 스케줄은 좌측 Dot + 텍스트(전면 fill 완화).
         if (isMonthView) {
-            const fullTooltip = `${clientName} · ${consultantName} · ${statusKorean}${unresolvedTitleSuffix}`;
+            const fullTooltip = `${clientName}${sessionTitleSuffix} · ${consultantName} · ${statusKorean}${unresolvedTitleSuffix}`;
             const integratedMonthLabel =
-                `${eventInfo.timeText} · ${clientName} · ${statusKorean}${unresolvedTitleSuffix}`;
+                `${eventInfo.timeText} · ${clientName}${sessionTitleSuffix} · ${statusKorean}${unresolvedTitleSuffix}`;
             const integratedMod = integratedMonthEventLayout ? ' mg-v2-ad-calendar-event--integrated-month' : '';
             const unresolvedMod = scheduleNotesUnresolvedCount > 0
                 ? ' mg-v2-ad-calendar-event--client-notes-unresolved'
@@ -310,6 +320,11 @@ const ScheduleCalendarView = ({
                     )}
                     <span className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</span>
                     <span className="mg-v2-ad-calendar-event__client">{clientName}</span>
+                    {sessionLabel ? (
+                        <span className="mg-v2-ad-calendar-event__sessions" aria-hidden="true">
+                            {sessionLabel}
+                        </span>
+                    ) : null}
                     {showUnresolvedMonthIndicator && scheduleNotesUnresolvedCount > 0 && (
                         <AlertCircle className="mg-v2-ad-calendar-event__unresolved-icon" size={14} aria-hidden="true" />
                     )}

@@ -1,8 +1,10 @@
 import {
   CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD,
   CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD,
+  formatCalendarSessionLabel,
   parseClientScheduleNotesClientWideUnresolvedCount,
-  parseClientScheduleNotesUnresolvedCount
+  parseClientScheduleNotesUnresolvedCount,
+  shouldShowCalendarSessionLabel
 } from '../schedule';
 
 describe('parseClientScheduleNotesUnresolvedCount', () => {
@@ -33,5 +35,19 @@ describe('parseClientScheduleNotesClientWideUnresolvedCount', () => {
   it('일정 직결 파서와 동일 규칙', () => {
     expect(parseClientScheduleNotesClientWideUnresolvedCount(2)).toBe(2);
     expect(parseClientScheduleNotesClientWideUnresolvedCount(0)).toBe(0);
+  });
+});
+
+describe('formatCalendarSessionLabel', () => {
+  it('다회기만 (남은/총) 표시', () => {
+    expect(formatCalendarSessionLabel(2, 10)).toBe('(2/10)');
+    expect(shouldShowCalendarSessionLabel(10, 2)).toBe(true);
+  });
+
+  it('단회기·총 1회기·비정상값은 빈 문자열', () => {
+    expect(formatCalendarSessionLabel(1, 1)).toBe('');
+    expect(formatCalendarSessionLabel(0, 1)).toBe('');
+    expect(formatCalendarSessionLabel(2, null)).toBe('');
+    expect(shouldShowCalendarSessionLabel(1, 1)).toBe(false);
   });
 });

@@ -98,6 +98,21 @@
 
 **Tier A (5)**: **BLOCKED** — dev API **502** → R10 Playwright **미실행**. **GO** 조건: health **200** + FE deploy **success** (`5f1b44b99`) 후 R10 재실행.
 
+### 1.0.5 Tier A **(5)** R10 post-`5f1b44b99` 재실행 (core-tester, 2026-05-19 ~16:08 KST)
+
+**전제**: dev health **200** 복구; BE·FE deploy `5f1b44b99` **success** (runs `26081634631`, `26081634547`).
+
+| 게이트 | exit | passed | skipped | failed | 판정 |
+|--------|------|--------|---------|--------|------|
+| dev `actuator/health` | — | — | — | — | **PASS** HTTP **200** |
+| `deploy-frontend-dev` (`5f1b44b99`) | — | — | — | — | **success** (`26081634547`) |
+| BE deploy (`5f1b44b99`) | — | — | — | — | **success** (`26081634631`) |
+| Playwright R10 admin smoke | **—** | **1** | **0** | **0** | **PASS** (~4.5s) |
+| Playwright R10 client catalog→cart | **—** | **0** | **0** | **1** | **FAIL** — `client-shop-catalog-page` 30s timeout; LNB 쇼핑 메뉴 없음·`<main>` 「불러오는 중…」 (`CLIENT_SHOP` 게이트·세션 로딩 추정) |
+| Playwright **합계** (chromium) | **1** | **1** | **0** | **1** | **FAIL** |
+
+**Tier A (5)**: **BLOCKED** — R10 **1 / 0 / 1** (admin **PASS**, client **FAIL**). **GO** 조건: client `CLIENT_SHOP` 게이트·PLP testid 노출 후 **2 passed**.
+
 ### 1.1 백엔드 Maven (`*Test.java`)
 
 **실행 명령** (2026-05-19 통합 게이트, **15클래스·103건**):
@@ -166,13 +181,14 @@ mvn -Dtest=ClientShopControllerMvcTest,AdminShopCatalogSkuControllerMvcTest test
 
 | 파일 | 상태 | 비고 |
 |------|------|------|
-| `tests/e2e/tests/client/client-shop-catalog-to-cart.spec.ts` | **미실행** | R10 재실행 (2026-05-19) — **admin 선행 FAIL** (exit **1**); debugger 권장 `E2E_CLIENT_LOGIN_ID=01086322121` + `E2E_TENANT_ID=tenant-incheon-counseling-001` (이전 FAIL: `client-shop-catalog-page` 게이트) |
-| `tests/e2e/tests/admin/admin-shop-catalog-skus-smoke.spec.ts` | **FAIL** | R10 재실행 (2026-05-19, exit **1**, ~2.6s) — page shell OK·`DEV-CONSULT-DEMO-01`+`table` **동시 노출**; Playwright **strict mode violation** (`.or()` 2 elements, spec line 65) |
+| `tests/e2e/tests/client/client-shop-catalog-to-cart.spec.ts` | **FAIL** | R10 재실행 (2026-05-19 ~16:08) — `client-shop-catalog-page` 30s timeout; LNB 쇼핑 없음·main 「불러오는 중…」 (`CLIENT_SHOP` 게이트) |
+| `tests/e2e/tests/admin/admin-shop-catalog-skus-smoke.spec.ts` | **PASS** | R10 재실행 (2026-05-19 ~16:08, ~4.5s) — catalog-skus 셸·빈 목록 허용 assertion 통과 |
 | R10 Tier A (2026-05-19 14:42) | **2 skipped** / 0 passed | (이전) 8080 down · `skipWhenLocalBackend8080Down` |
 | R10 Tier A **(5)** (2026-05-19 dev 재실행) | **0 passed / 0 skipped / 2 failed** (exit **1**) | `E2E_API_BASE`+`BASE_URL` dev; localhost **8080 down**; `E2E_API_BASE` health **200** → 8080 가드 **미스킵**; `skipWhenCiMissingE2eCredentials` **미발생** (`CI≠true`) |
 | R10 `tenant-incheon-counseling-001` (2026-05-19 ~15:05 KST) | **0 / 0 / 2** passed·skipped·failed (exit **1**) | (이전) client `CLIENT_SHOP` 게이트; admin 비활성 토스트; **`E2E_TENANT_ID` 미연동** |
 | R10 `tenant-incheon-counseling-001` **(4)(5) 재검증** (2026-05-19 ~15:34 KST) | **0 / 0 / 2** (exit **1**) | dev FE+API; `E2E_TENANT_ID` **연동됨**; OPS·seed 전제 — client 게이트 잔여; admin SKU 노출·assertion FAIL |
 | R10 post-`5f1b44b99` **(5)** (2026-05-19 ~16:04 KST) | **BLOCKED** — **0 / 0 / 0** | dev health **502**; Playwright **미실행**; FE deploy `26081634547` **in_progress** |
+| R10 post-`5f1b44b99` **(5) 재실행** (2026-05-19 ~16:08 KST) | **1 / 0 / 1** (exit **1**) | health **200**·BE+FE deploy **success**; admin smoke **PASS**; client `client-shop-catalog-page` timeout·`CLIENT_SHOP` 게이트 잔여 |
 
 ### 1.4 프론트엔드 web (React)
 

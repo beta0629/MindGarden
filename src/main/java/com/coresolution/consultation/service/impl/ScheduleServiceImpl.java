@@ -274,9 +274,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         // 상태가 CANCELLED로 바뀐 경우 회기 1회 복원 (예약·확정·진행 중이었을 때만)
         if (updateData.getStatus() == ScheduleStatus.CANCELLED
                 && (previousStatus == ScheduleStatus.BOOKED || previousStatus == ScheduleStatus.CONFIRMED
-                        || previousStatus == ScheduleStatus.IN_PROGRESS)
-                && consultantId != null && clientId != null) {
-            restoreSessionForMapping(consultantId, clientId);
+                        || previousStatus == ScheduleStatus.IN_PROGRESS)) {
+            restoreSessionForMappingIfDeducted(saved);
         }
 
         boolean slotChanged = !Objects.equals(previousDate, saved.getDate())
@@ -727,11 +726,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setStatus(ScheduleStatus.CANCELLED);
         schedule.setDescription(reason);
         Schedule saved = scheduleRepository.save(schedule);
-        // 예약 취소 시 회기 1회 복원 (예약·확정·진행 중이었을 때만, 분쟁 방지)
-        if ((previousStatus == ScheduleStatus.BOOKED || previousStatus == ScheduleStatus.CONFIRMED
-                || previousStatus == ScheduleStatus.IN_PROGRESS)
-                && schedule.getConsultantId() != null && schedule.getClientId() != null) {
-            restoreSessionForMapping(schedule.getConsultantId(), schedule.getClientId());
+        // 예약 취소 시 회기 1회 복원 (실제 차감(sessionSequence)된 일정만)
+        if (previousStatus == ScheduleStatus.BOOKED || previousStatus == ScheduleStatus.CONFIRMED
+                || previousStatus == ScheduleStatus.IN_PROGRESS) {
+            restoreSessionForMappingIfDeducted(schedule);
         }
         try {
             mobilePushDispatchService.dispatchBookingCancelled(saved.getTenantId(), saved);
@@ -1748,9 +1746,17 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 예약 취소 시 매핑 회기 1회 복원 (분쟁 방지)
+     * 예약 취소 시 매핑 회기 1회 복원. {@code sessionSequence}가 있는 일정만 복원(실제 차감된 회기).
      */
-    private void restoreSessionForMapping(Long consultantId, Long clientId) {
+    private void restoreSessionForMappingIfDeducted(Schedule schedule) {
+        if (schedule == null || schedule.getSessionSequence() == null) {
+            if (schedule != null && schedule.getId() != null) {
+                log.debug("회기 복원 생략(sessionSequence 없음): scheduleId={}", schedule.getId());
+            }
+            return;
+        }
+        Long consultantId = schedule.getConsultantId();
+        Long clientId = schedule.getClientId();
         if (consultantId == null || clientId == null) {
             return;
         }
@@ -1758,18 +1764,21 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (tenantId == null) {
             return;
         }
-        Optional<ConsultantClientMapping> opt = mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId);
+        Optional<ConsultantClientMapping> opt = mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+                tenantId, consultantId, clientId);
         if (opt.isEmpty()) {
-            log.warn("⚠️ 회기 복원 대상 매핑 없음: consultantId={}, clientId={}", consultantId, clientId);
+            log.warn("⚠️ 회기 복원 대상 매핑 없음: scheduleId={}, consultantId={}, clientId={}",
+                    schedule.getId(), consultantId, clientId);
             return;
         }
         ConsultantClientMapping mapping = opt.get();
         try {
             mapping.restoreSession();
             mappingRepository.save(mapping);
-            log.info("✅ 예약 취소로 회기 1회 복원: mappingId={}, 남은 회기={}", mapping.getId(), mapping.getRemainingSessions());
+            log.info("✅ 예약 취소로 회기 1회 복원: scheduleId={}, mappingId={}, sessionSequence={}, 남은 회기={}",
+                    schedule.getId(), mapping.getId(), schedule.getSessionSequence(), mapping.getRemainingSessions());
         } catch (Exception e) {
-            log.error("❌ 회기 복원 처리 실패: {}", e.getMessage(), e);
+            log.error("❌ 회기 복원 처리 실패: scheduleId={}, {}", schedule.getId(), e.getMessage(), e);
         }
     }
 

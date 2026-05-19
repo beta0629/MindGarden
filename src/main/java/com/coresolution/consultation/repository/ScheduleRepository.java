@@ -991,4 +991,21 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      */
     @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false AND (CAST(:branchId AS long) IS NULL OR 1=1)")
     Page<Schedule> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, Pageable pageable);
+
+    /**
+     * 매핑 기준 점유 중인 상담 일정 수 (회기 used_sessions 정합용).
+     * mapping_id 일치 또는 legacy(null mapping_id + 동일 상담사·내담자).
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId "
+            + "AND s.isDeleted = false "
+            + "AND (s.scheduleType = 'CONSULTATION' OR s.scheduleType IS NULL) "
+            + "AND s.status IN :statuses "
+            + "AND (s.mappingId = :mappingId "
+            + "     OR (s.mappingId IS NULL AND s.consultantId = :consultantId AND s.clientId = :clientId))")
+    long countOccupyingConsultationSchedulesForMapping(
+            @Param("tenantId") String tenantId,
+            @Param("mappingId") Long mappingId,
+            @Param("consultantId") Long consultantId,
+            @Param("clientId") Long clientId,
+            @Param("statuses") Collection<ScheduleStatus> statuses);
 }

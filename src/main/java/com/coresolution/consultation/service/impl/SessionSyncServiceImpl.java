@@ -1,12 +1,15 @@
 package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.SessionExtensionRequest;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.SessionExtensionRequestRepository;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
@@ -31,9 +34,16 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Transactional
 public class SessionSyncServiceImpl extends BaseTenantAwareService implements SessionSyncService {
-    
+
+    private static final List<ScheduleStatus> OCCUPYING_CONSULTATION_STATUSES = Arrays.asList(
+            ScheduleStatus.BOOKED,
+            ScheduleStatus.CONFIRMED,
+            ScheduleStatus.COMPLETED,
+            ScheduleStatus.IN_PROGRESS);
+
     private final ConsultantClientMappingRepository mappingRepository;
     private final SessionExtensionRequestRepository requestRepository;
+    private final ScheduleRepository scheduleRepository;
     
     @Override
     public void syncAfterSessionExtension(SessionExtensionRequest extensionRequest) {
@@ -191,18 +201,21 @@ public class SessionSyncServiceImpl extends BaseTenantAwareService implements Se
             
             for (ConsultantClientMapping mapping : allMappings) {
                 try {
+                    boolean changed = reconcileMappingSessionsFromSchedules(tenantId, mapping);
                     if (mapping.getTotalSessions() != (mapping.getUsedSessions() + mapping.getRemainingSessions())) {
-                        log.warn("⚠️ 회기 수 불일치 발견: mappingId={}, total={}, used={}, remaining={}", 
-                                mapping.getId(), mapping.getTotalSessions(), 
+                        log.warn("⚠️ 회기 수 합계 불일치: mappingId={}, total={}, used={}, remaining={}",
+                                mapping.getId(), mapping.getTotalSessions(),
                                 mapping.getUsedSessions(), mapping.getRemainingSessions());
-                        
+
                         int correctRemaining = mapping.getTotalSessions() - mapping.getUsedSessions();
                         mapping.setRemainingSessions(Math.max(0, correctRemaining));
+                        changed = true;
+                    }
+                    if (changed) {
                         mappingRepository.save(mapping);
-                        
                         fixedCount++;
-                        log.info("✅ 회기 수 수정 완료: mappingId={}, remainingSessions={}", 
-                                mapping.getId(), mapping.getRemainingSessions());
+                        log.info("✅ 회기 수 수정 완료: mappingId={}, used={}, remaining={}",
+                                mapping.getId(), mapping.getUsedSessions(), mapping.getRemainingSessions());
                     }
                 } catch (Exception e) {
                     log.error("❌ 매핑 수정 실패: mappingId={}, error={}", 
@@ -216,6 +229,34 @@ public class SessionSyncServiceImpl extends BaseTenantAwareService implements Se
             log.error("❌ 회기 수 불일치 자동 수정 실패: {}", e.getMessage(), e);
             throw new RuntimeException("회기 수 수정에 실패했습니다: " + e.getMessage());
         }
+    }
+
+    /**
+     * 점유 중 상담 일정 수와 used_sessions 정합. 불일치 시 used/remaining 재계산.
+     *
+     * @return 매핑 필드가 변경되었으면 true
+     */
+    boolean reconcileMappingSessionsFromSchedules(String tenantId, ConsultantClientMapping mapping) {
+        if (mapping == null || mapping.getId() == null) {
+            return false;
+        }
+        Long consultantId = mapping.getConsultant() != null ? mapping.getConsultant().getId() : null;
+        Long clientId = mapping.getClient() != null ? mapping.getClient().getId() : null;
+        if (consultantId == null || clientId == null) {
+            return false;
+        }
+        int scheduleCount = (int) scheduleRepository.countOccupyingConsultationSchedulesForMapping(
+                tenantId, mapping.getId(), consultantId, clientId, OCCUPYING_CONSULTATION_STATUSES);
+        int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
+        if (scheduleCount == used) {
+            return false;
+        }
+        log.warn("⚠️ used_sessions·일정 수 불일치: mappingId={}, used_sessions={}, scheduleCount={}",
+                mapping.getId(), used, scheduleCount);
+        int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
+        mapping.setUsedSessions(scheduleCount);
+        mapping.setRemainingSessions(Math.max(0, total - scheduleCount));
+        return true;
     }
     
     @Override

@@ -97,6 +97,7 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         schedule.setStatus(ScheduleStatus.BOOKED);
         schedule.setConsultantId(CONSULTANT_ID);
         schedule.setClientId(CLIENT_ID);
+        schedule.setSessionSequence(1);
 
         ConsultantClientMapping mapping = new ConsultantClientMapping();
         mapping.setId(100L);
@@ -131,6 +132,7 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         schedule.setStatus(ScheduleStatus.CONFIRMED);
         schedule.setConsultantId(CONSULTANT_ID);
         schedule.setClientId(CLIENT_ID);
+        schedule.setSessionSequence(5);
 
         ConsultantClientMapping mapping = new ConsultantClientMapping();
         mapping.setId(100L);
@@ -169,6 +171,26 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         scheduleService.cancelSchedule(SCHEDULE_ID, "테스트");
 
         verify(scheduleRepository).save(any(Schedule.class));
+        verify(mappingRepository, never()).findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(any(), any(), any());
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+    }
+
+    @Test
+    @DisplayName("cancelSchedule - sessionSequence null이면 회기 복원 안 함")
+    void cancelSchedule_nullSessionSequence_doesNotRestoreSession() {
+        Schedule schedule = new Schedule();
+        schedule.setId(SCHEDULE_ID);
+        schedule.setStatus(ScheduleStatus.BOOKED);
+        schedule.setConsultantId(CONSULTANT_ID);
+        schedule.setClientId(CLIENT_ID);
+        schedule.setSessionSequence(null);
+
+        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+                .thenReturn(Optional.of(schedule));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        scheduleService.cancelSchedule(SCHEDULE_ID, "백필만 된 일정 취소");
+
         verify(mappingRepository, never()).findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(any(), any(), any());
         verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
     }

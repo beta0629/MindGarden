@@ -41,6 +41,26 @@
 -- )
 -- WHERE id = 82 AND session_sequence IS NULL;
 
+-- (5) mapping_id=32 / client_id=14 예시 — 일정 수 기준 used/remaining 보정 (김민선 케이스)
+-- 실행 전 tenant·일정 수 확인:
+-- SELECT m.id, m.client_id, m.total_sessions, m.used_sessions, m.remaining_sessions,
+--        COUNT(s.id) AS occupying_schedule_count
+-- FROM consultant_client_mappings m
+-- LEFT JOIN schedules s ON s.tenant_id = m.tenant_id
+--   AND (s.mapping_id = m.id OR (s.mapping_id IS NULL AND s.consultant_id = m.consultant_id AND s.client_id = m.client_id))
+--   AND (s.is_deleted = 0 OR s.is_deleted IS NULL)
+--   AND (s.schedule_type = 'CONSULTATION' OR s.schedule_type IS NULL)
+--   AND s.status IN ('BOOKED', 'CONFIRMED', 'COMPLETED', 'IN_PROGRESS')
+-- WHERE m.id = 32 AND m.client_id = 14
+-- GROUP BY m.id;
+--
+-- occupying_schedule_count=4, total_sessions=10 이면:
+-- UPDATE consultant_client_mappings
+-- SET used_sessions = 4,
+--     remaining_sessions = GREATEST(0, total_sessions - 4),
+--     status = CASE WHEN total_sessions - 4 <= 0 THEN 'SESSIONS_EXHAUSTED' ELSE status END
+-- WHERE id = 32 AND tenant_id = 'YOUR_TENANT_ID';
+
 -- (4) mapping_id·session_sequence 재백필 (Flyway V20260525_001과 동일 로직, 개발 DB 수동 실행용)
 -- 4-a) mapping_id: 일정 created_at 기준 유효 매칭(TERMINATED 포함), 복수 시 최근 생성 매칭
 -- UPDATE schedules s

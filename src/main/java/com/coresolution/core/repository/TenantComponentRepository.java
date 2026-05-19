@@ -55,4 +55,22 @@ public interface TenantComponentRepository extends JpaRepository<TenantComponent
               AND cc.isActive = TRUE
             """)
     List<String> findActiveComponentCodesByTenantId(@Param("tenantId") String tenantId);
+
+    /**
+     * 테넌트·컴포넌트 ID 기준 비삭제 레코드 존재 여부.
+     *
+     * @param tenantId    테넌트 ID
+     * @param componentId component_catalog.component_id
+     * @return 존재 여부
+     */
+    @Query("""
+            SELECT CASE WHEN COUNT(tc) > 0 THEN TRUE ELSE FALSE END
+            FROM TenantComponent tc
+            WHERE tc.tenantId = :tenantId
+              AND tc.componentId = :componentId
+              AND tc.isDeleted = FALSE
+            """)
+    boolean existsNonDeletedByTenantIdAndComponentId(
+            @Param("tenantId") String tenantId,
+            @Param("componentId") String componentId);
 }

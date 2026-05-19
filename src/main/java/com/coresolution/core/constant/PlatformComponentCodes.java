@@ -1,5 +1,7 @@
 package com.coresolution.core.constant;
 
+import java.util.List;
+
 /**
  * 플랫폼 {@code component_catalog.component_code} SSOT.
  * SHOP_REWARD §7, MULTI_TENANT §3.1 step 4.
@@ -17,6 +19,12 @@ public final class PlatformComponentCodes {
 
     /** 어드민 SKU·가격·리워드 정책 */
     public static final String ADMIN_SHOP_CATALOG = "ADMIN_SHOP_CATALOG";
+
+    /** Shop·Reward OPS/API 번들 활성화 대상 (순서 고정) */
+    public static final List<String> SHOP_REWARD_BUNDLE = List.of(
+            CLIENT_SHOP,
+            CLIENT_REWARD,
+            ADMIN_SHOP_CATALOG);
 
     private PlatformComponentCodes() {
     }

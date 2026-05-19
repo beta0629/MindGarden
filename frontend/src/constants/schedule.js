@@ -265,7 +265,7 @@ export const CALENDAR_SESSION_LABEL_VARIANT = {
 /** 통합 스케줄 범례 — 회기 표기 샘플·설명 */
 export const SCHEDULE_LEGEND_SESSION_LABELS_TITLE = '회기 표기';
 export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_SAMPLE = '4/10회';
-export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING = '사용 회차';
+export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING = '해당 일정 시점 잔여 회기';
 export const SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE = '남5/10';
 export const SCHEDULE_LEGEND_SESSION_REMAINING_MEANING = '남은 회기';
 
@@ -384,13 +384,24 @@ export function formatCalendarSessionLabel(remainingSessions, totalSessions) {
  * @typedef {Object} CalendarSessionLabelResult
  * @property {string} label 컴팩트 표시 (예: `4/10회`, `남5/10`)
  * @property {'booking-sequence'|'remaining'|null} variant CSS modifier suffix
- * @property {string} ariaLabel 툴팁·aria용 의미 문구 (예: `4회차(4/10)`)
+ * @property {string} ariaLabel 툴팁·aria용 의미 문구 (예: `6회차 · 잔여 4/10`)
  */
 
 /**
+ * 과거·완료 일정 직후 잔여 회기 (정상 차감 가정: total − sessionSequence, 0~total clamp).
+ * @param {number} total
+ * @param {number} sessionSequence 사용 회차(1 이상)
+ * @returns {number}
+ */
+function resolveRemainingSessionsAtScheduleTime(total, sessionSequence) {
+  const remaining = total - sessionSequence;
+  return Math.max(0, Math.min(total, remaining));
+}
+
+/**
  * 월간 캘린더 회기 라벨 분기.
- * - 과거·완료(취소·휴가·가예약 제외): sessionSequence 있으면 `4/10회` (booking-sequence), 없으면 빈 문자열
- * - 미래만: 잔여 `남5/10` (remaining)
+ * - 과거·완료(취소·휴가·가예약 제외): sessionSequence N → 해당 시점 잔여 `4/10회` (booking-sequence), 없으면 빈 문자열
+ * - 미래만: sessionSequence 있으면 해당 예약 직후 잔여 `남3/10` (remaining), 없으면 remainingSessions fallback
  * @returns {CalendarSessionLabelResult}
  */
 export function resolveCalendarSessionLabel({
@@ -413,20 +424,24 @@ export function resolveCalendarSessionLabel({
   const isCompleted = statusCode === STATUS.COMPLETED;
   const isPastOrCompletedSchedule = isPast === true || isCompleted;
 
-  // 과거·완료: 예약 시점 회차만 표시. 잔여(현재 매칭 기준)는 절대 표시하지 않음.
+  // 과거·완료: 해당 일정 직후 잔여만 표시. remainingSessions(현재 매칭)는 사용하지 않음.
   if (isPastOrCompletedSchedule && !isTentative) {
     if (sequence !== null) {
+      const remainingAtTime = resolveRemainingSessionsAtScheduleTime(total, sequence);
       return {
-        label: `${sequence}/${total}회`,
+        label: `${remainingAtTime}/${total}회`,
         variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
-        ariaLabel: `${sequence}회차(${sequence}/${total})`
+        ariaLabel: `${sequence}회차 · 잔여 ${remainingAtTime}/${total}`
       };
     }
     return EMPTY_CALENDAR_SESSION_LABEL;
   }
 
-  // 미래 일정만 잔여 회기 표시
-  const remaining = parseScheduleSessionCount(remainingSessions);
+  // 미래 일정만 잔여 회기 표시 — sessionSequence 우선(예약 시점), 없을 때만 매핑 remainingSessions
+  const remaining =
+    sequence !== null
+      ? resolveRemainingSessionsAtScheduleTime(total, sequence)
+      : parseScheduleSessionCount(remainingSessions);
   if (remaining === null) {
     return EMPTY_CALENDAR_SESSION_LABEL;
   }

@@ -60,7 +60,7 @@ describe('resolveCalendarSessionLabel', () => {
     expect(SCHEDULE_SESSION_SEQUENCE_FIELD).toBe('sessionSequence');
   });
 
-  it('과거·sessionSequence 있으면 예약 시점 회차 표시 (잔여 무시)', () => {
+  it('과거·sessionSequence 있으면 해당 시점 잔여 표시 (remainingSessions 무시)', () => {
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: 6,
@@ -70,9 +70,9 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: true
       })
     ).toEqual({
-      label: '6/10회',
+      label: '4/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
-      ariaLabel: '6회차(6/10)'
+      ariaLabel: '6회차 · 잔여 4/10'
     });
     expect(
       resolveCalendarSessionLabel({
@@ -83,9 +83,9 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: true
       })
     ).toEqual({
-      label: '4/10회',
+      label: '6/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
-      ariaLabel: '4회차(4/10)'
+      ariaLabel: '4회차 · 잔여 6/10'
     });
   });
 
@@ -105,7 +105,7 @@ describe('resolveCalendarSessionLabel', () => {
     });
   });
 
-  it('한글 완료 상태도 예약 시점 회차 표시', () => {
+  it('한글 완료 상태도 해당 시점 잔여 표시', () => {
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: 6,
@@ -115,13 +115,13 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: true
       })
     ).toEqual({
-      label: '6/10회',
+      label: '4/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
-      ariaLabel: '6회차(6/10)'
+      ariaLabel: '6회차 · 잔여 4/10'
     });
   });
 
-  it('완료 상태는 sessionSequence 우선', () => {
+  it('완료 상태는 sessionSequence로 시점 잔여 계산', () => {
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: 4,
@@ -131,13 +131,26 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: false
       })
     ).toEqual({
-      label: '4/10회',
+      label: '6/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
-      ariaLabel: '4회차(4/10)'
+      ariaLabel: '4회차 · 잔여 6/10'
     });
   });
 
-  it('미래 예정은 잔여 회기 표시', () => {
+  it('미래 BOOKED는 sessionSequence 우선 (매핑 remainingSessions 무시)', () => {
+    expect(
+      resolveCalendarSessionLabel({
+        sessionSequence: 7,
+        remainingSessions: 7,
+        totalSessions: 10,
+        status: 'BOOKED',
+        isPast: false
+      })
+    ).toEqual({
+      label: '남3/10',
+      variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
+      ariaLabel: '남은 회기 3/10'
+    });
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: 4,
@@ -147,22 +160,41 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: false
       })
     ).toEqual({
-      label: '남5/10',
+      label: '남6/10',
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: '남은 회기 5/10'
+      ariaLabel: '남은 회기 6/10'
     });
+  });
+
+  it('미래·sessionSequence 없으면 remainingSessions fallback', () => {
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: null,
-        remainingSessions: 5,
+        remainingSessions: 3,
         totalSessions: 10,
         status: 'BOOKED',
         isPast: false
       })
     ).toEqual({
-      label: '남5/10',
+      label: '남3/10',
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: '남은 회기 5/10'
+      ariaLabel: '남은 회기 3/10'
+    });
+  });
+
+  it('과거·sessionSequence 6은 4/10회 유지', () => {
+    expect(
+      resolveCalendarSessionLabel({
+        sessionSequence: 6,
+        remainingSessions: 7,
+        totalSessions: 10,
+        status: 'COMPLETED',
+        isPast: true
+      })
+    ).toEqual({
+      label: '4/10회',
+      variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
+      ariaLabel: '6회차 · 잔여 4/10'
     });
   });
 

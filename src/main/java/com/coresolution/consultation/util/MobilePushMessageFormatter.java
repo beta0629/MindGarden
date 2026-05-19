@@ -41,6 +41,13 @@ public final class MobilePushMessageFormatter {
     private static final String PAYMENT_FAILED_BODY_NO_AMOUNT_FMT = "%s 결제에 실패했습니다.";
     private static final String MAPPING_PAYMENT_PUSH_BODY_FMT = "패키지: %s\n금액: %s원\n결제가 확인되었습니다.";
     private static final String MAPPING_DEPOSIT_PUSH_BODY_FMT = "패키지: %s\n금액: %s원\n입금이 확인되었습니다.";
+    private static final String SHOP_ORDER_PAID_BODY_FMT = "주문번호 %s\n%s원 결제가 완료되었습니다.";
+    private static final String SHOP_PAYMENT_FAILED_BODY_FMT = "주문번호 %s\n결제에 실패했습니다. 다시 시도해 주세요.";
+    private static final String POINT_EARNED_BODY_FMT = "주문번호 %s\n%sP가 적립되었습니다.";
+    private static final String SHOP_HOLD_EXPIRED_BODY_FMT = "주문번호 %s\n결제 대기 시간이 지나 주문이 만료되었습니다.";
+    private static final String SHOP_REFUNDED_BODY_FMT = "주문번호 %s\n%s원 환불이 완료되었습니다.";
+    private static final String SHOP_FULFILLMENT_CLIENT_BODY_FMT = "주문번호 %s\n상담 패키지 주문 처리가 완료되었습니다.";
+    private static final String SHOP_FULFILLMENT_CONSULTANT_BODY_FMT = "주문번호 %s\n내담자 상담 패키지 주문이 처리되었습니다.";
     private static final String BOOKING_REMINDER_SLOT_PREFIX = "\n\n일시: ";
 
     private MobilePushMessageFormatter() {
@@ -165,6 +172,43 @@ public final class MobilePushMessageFormatter {
                 MAPPING_DEPOSIT_PUSH_BODY_FMT,
                 nonBlankOr(packageName, FALLBACK_PACKAGE_LABEL),
                 formatAmountLabel(amountLabel));
+    }
+
+    public static String buildShopOrderPaidBody(String orderPublicId, long totalPaidMinor) {
+        return String.format(
+                SHOP_ORDER_PAID_BODY_FMT,
+                nonBlankOr(orderPublicId, FALLBACK_PACKAGE_LABEL),
+                KOREAN_NUMBER.format(totalPaidMinor));
+    }
+
+    public static String buildShopPaymentFailedBody(String orderPublicId) {
+        return String.format(SHOP_PAYMENT_FAILED_BODY_FMT, nonBlankOr(orderPublicId, FALLBACK_PACKAGE_LABEL));
+    }
+
+    public static String buildPointEarnedBody(String orderPublicId, long earnAmountMinor) {
+        return String.format(
+                POINT_EARNED_BODY_FMT,
+                nonBlankOr(orderPublicId, FALLBACK_PACKAGE_LABEL),
+                KOREAN_NUMBER.format(earnAmountMinor));
+    }
+
+    public static String buildShopOrderHoldExpiredBody(String orderPublicId) {
+        return String.format(SHOP_HOLD_EXPIRED_BODY_FMT, nonBlankOr(orderPublicId, FALLBACK_PACKAGE_LABEL));
+    }
+
+    public static String buildShopOrderRefundedBody(String orderPublicId, long refundAmountMinor) {
+        return String.format(
+                SHOP_REFUNDED_BODY_FMT,
+                nonBlankOr(orderPublicId, FALLBACK_PACKAGE_LABEL),
+                KOREAN_NUMBER.format(refundAmountMinor));
+    }
+
+    public static String buildShopFulfillmentCompletedBody(String orderPublicId, boolean forConsultant) {
+        if (forConsultant) {
+            return String.format(
+                    SHOP_FULFILLMENT_CONSULTANT_BODY_FMT, nonBlankOr(orderPublicId, FALLBACK_PACKAGE_LABEL));
+        }
+        return String.format(SHOP_FULFILLMENT_CLIENT_BODY_FMT, nonBlankOr(orderPublicId, FALLBACK_PACKAGE_LABEL));
     }
 
     /**

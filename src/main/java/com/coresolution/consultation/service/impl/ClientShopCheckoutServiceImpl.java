@@ -40,6 +40,7 @@ import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
+import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -70,6 +71,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final ShopOrderFulfillmentService shopOrderFulfillmentService;
     private final ShopOrderFulfillmentEventRepository shopOrderFulfillmentEventRepository;
     private final ClientShopConsultantMappingService clientShopConsultantMappingService;
+    private final ShopNotificationHelper shopNotificationHelper;
 
     @Override
     @Transactional
@@ -420,6 +422,11 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     "PG 실패·취소 후 주문 CREATED 복귀: tenantId={}, orderPublicId={}",
                     tenantId,
                     orderPublicId);
+            try {
+                shopNotificationHelper.notifyPaymentFailed(tenantId, order);
+            } catch (Exception ex) {
+                log.warn("쇼핑 결제 실패 알림 실패: orderPublicId={}", orderPublicId, ex);
+            }
         }
         return true;
     }
@@ -452,6 +459,11 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         order.setStatus(ShopClientOrderStatus.EXPIRED);
         shopClientOrderRepository.save(order);
         log.info("쇼핑 주문 hold TTL 만료: tenantId={}, orderPublicId={}", tenantId, orderPublicId);
+        try {
+            shopNotificationHelper.notifyOrderHoldExpired(tenantId, order);
+        } catch (Exception ex) {
+            log.warn("쇼핑 주문 만료 알림 실패: orderPublicId={}", orderPublicId, ex);
+        }
         return true;
     }
 
@@ -468,17 +480,32 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     points,
                     ShopCheckoutConstants.pointCommitKey(order.getPublicId()));
         }
-        creditEarnOnPaid(tenantId, order);
+        long earnAmount = creditEarnOnPaid(tenantId, order);
         order.setStatus(ShopClientOrderStatus.PAID);
         shopClientOrderRepository.save(order);
         shopOrderFulfillmentService.fulfillPaidOrder(tenantId, order);
+        try {
+            shopNotificationHelper.notifyOrderPaid(tenantId, order);
+        } catch (Exception ex) {
+            log.warn("쇼핑 주문 결제 완료 알림 실패: orderPublicId={}", order.getPublicId(), ex);
+        }
+        if (earnAmount > 0L) {
+            try {
+                shopNotificationHelper.notifyPointEarned(tenantId, order, earnAmount);
+            } catch (Exception ex) {
+                log.warn("포인트 적립 알림 실패: orderPublicId={}", order.getPublicId(), ex);
+            }
+        }
     }
 
-    private void creditEarnOnPaid(String tenantId, ShopClientOrder order) {
+    /**
+     * @return 적립 포인트 minor(0이면 미적립)
+     */
+    private long creditEarnOnPaid(String tenantId, ShopClientOrder order) {
         EffectivePointTenantPolicies policies = pointTenantPolicyService.getEffectivePoliciesTyped(tenantId);
         long earnAmount = policies.computeEarnAmountMinor(order.getSubtotalMinor(), order.getCashDueMinor());
         if (earnAmount <= 0L) {
-            return;
+            return 0L;
         }
         clientPointWalletService.creditEarn(
                 tenantId,
@@ -486,6 +513,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 order.getPublicId(),
                 earnAmount,
                 ShopCheckoutConstants.pointEarnKey(order.getPublicId()));
+        return earnAmount;
     }
 
     private void releasePointsHoldIfAny(

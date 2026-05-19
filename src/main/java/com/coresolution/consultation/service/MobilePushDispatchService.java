@@ -122,4 +122,44 @@ public interface MobilePushDispatchService {
             String title,
             String clientBody,
             String consultantBody);
+
+    /**
+     * 쇼핑몰 주문 PAID 확정 푸시(내담자).
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientUserId 내담자 users.id
+     * @param orderPublicId 주문 public ID
+     * @param totalPaidMinor 결제 합계(원, minor)
+     */
+    void dispatchShopOrderPaid(String tenantId, Long clientUserId, String orderPublicId, long totalPaidMinor);
+
+    /**
+     * 쇼핑몰 PG 결제 실패 푸시(내담자).
+     */
+    void dispatchShopPaymentFailed(String tenantId, Long clientUserId, String orderPublicId);
+
+    /**
+     * 구매 적립 포인트 푸시(내담자).
+     */
+    void dispatchPointEarned(String tenantId, Long clientUserId, String orderPublicId, long earnAmountMinor);
+
+    /**
+     * 쇼핑몰 hold TTL 만료 푸시(내담자).
+     */
+    void dispatchShopOrderHoldExpired(String tenantId, Long clientUserId, String orderPublicId);
+
+    /**
+     * 쇼핑몰 전액 환불 푸시(내담자).
+     */
+    void dispatchShopOrderRefunded(String tenantId, Long clientUserId, String orderPublicId, long refundAmountMinor);
+
+    /**
+     * CONSULTATION fulfillment COMPLETED 푸시(내담자·선택 상담사).
+     */
+    void dispatchShopFulfillmentCompleted(
+            String tenantId,
+            Long clientUserId,
+            Long consultantUserId,
+            String orderPublicId,
+            String skuCode);
 }

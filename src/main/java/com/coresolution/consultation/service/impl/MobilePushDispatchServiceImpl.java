@@ -4,6 +4,7 @@ import com.coresolution.consultation.config.ExpoPushProperties;
 import com.coresolution.consultation.constant.MobilePushCanonicalTypes;
 import com.coresolution.consultation.constant.MobilePushDispatchConstants;
 import com.coresolution.consultation.constant.MobilePushNotificationCategory;
+import com.coresolution.consultation.constant.ShopNotificationCopy;
 import com.coresolution.consultation.entity.MobilePushToken;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.Schedule;
@@ -298,6 +299,148 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
         sanitizeDataStrings(data);
         dispatchFanout(tid, List.of(consultantUserId), MobilePushCanonicalTypes.MIND_WEATHER_SHARED, title, body,
                 data, String.valueOf(cardId), "shared");
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void dispatchShopOrderPaid(String tenantId, Long clientUserId, String orderPublicId, long totalPaidMinor) {
+        dispatchShopClientNotification(
+                tenantId,
+                clientUserId,
+                orderPublicId,
+                MobilePushCanonicalTypes.SHOP_ORDER_PAID,
+                ShopNotificationCopy.PUSH_TITLE_ORDER_PAID,
+                MobilePushMessageFormatter.buildShopOrderPaidBody(orderPublicId, totalPaidMinor),
+                "paid");
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void dispatchShopPaymentFailed(String tenantId, Long clientUserId, String orderPublicId) {
+        dispatchShopClientNotification(
+                tenantId,
+                clientUserId,
+                orderPublicId,
+                MobilePushCanonicalTypes.SHOP_PAYMENT_FAILED,
+                ShopNotificationCopy.PUSH_TITLE_PAYMENT_FAILED,
+                MobilePushMessageFormatter.buildShopPaymentFailedBody(orderPublicId),
+                "payment-failed");
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void dispatchPointEarned(String tenantId, Long clientUserId, String orderPublicId, long earnAmountMinor) {
+        dispatchShopClientNotification(
+                tenantId,
+                clientUserId,
+                orderPublicId,
+                MobilePushCanonicalTypes.POINT_EARNED,
+                ShopNotificationCopy.PUSH_TITLE_POINT_EARNED,
+                MobilePushMessageFormatter.buildPointEarnedBody(orderPublicId, earnAmountMinor),
+                "earn");
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void dispatchShopOrderHoldExpired(String tenantId, Long clientUserId, String orderPublicId) {
+        dispatchShopClientNotification(
+                tenantId,
+                clientUserId,
+                orderPublicId,
+                MobilePushCanonicalTypes.SHOP_ORDER_HOLD_EXPIRED,
+                ShopNotificationCopy.PUSH_TITLE_HOLD_EXPIRED,
+                MobilePushMessageFormatter.buildShopOrderHoldExpiredBody(orderPublicId),
+                "hold-expired");
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void dispatchShopOrderRefunded(String tenantId, Long clientUserId, String orderPublicId, long refundAmountMinor) {
+        dispatchShopClientNotification(
+                tenantId,
+                clientUserId,
+                orderPublicId,
+                MobilePushCanonicalTypes.SHOP_ORDER_REFUNDED,
+                ShopNotificationCopy.PUSH_TITLE_REFUNDED,
+                MobilePushMessageFormatter.buildShopOrderRefundedBody(orderPublicId, refundAmountMinor),
+                "refunded");
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void dispatchShopFulfillmentCompleted(
+            String tenantId,
+            Long clientUserId,
+            Long consultantUserId,
+            String orderPublicId,
+            String skuCode) {
+        if (clientUserId == null || orderPublicId == null || orderPublicId.isBlank()) {
+            return;
+        }
+        String tid = requireTenantId(tenantId, null);
+        if (tid == null) {
+            return;
+        }
+        String safeSku = skuCode != null && !skuCode.isBlank() ? skuCode.trim() : "sku";
+        String title = ShopNotificationCopy.PUSH_TITLE_FULFILLMENT;
+        String clientBody = MobilePushMessageFormatter.buildShopFulfillmentCompletedBody(orderPublicId, false);
+        Map<String, String> data = buildShopOrderData(tid, orderPublicId, MobilePushCanonicalTypes.SHOP_FULFILLMENT_COMPLETED, title);
+        data.put("skuCode", safeSku);
+        sanitizeDataStrings(data);
+        dispatchFanout(
+                tid,
+                List.of(clientUserId),
+                MobilePushCanonicalTypes.SHOP_FULFILLMENT_COMPLETED,
+                title,
+                clientBody,
+                data,
+                orderPublicId,
+                "fulfillment|" + safeSku);
+        if (consultantUserId != null) {
+            String consultantBody = MobilePushMessageFormatter.buildShopFulfillmentCompletedBody(orderPublicId, true);
+            dispatchFanout(
+                    tid,
+                    List.of(consultantUserId),
+                    MobilePushCanonicalTypes.SHOP_FULFILLMENT_COMPLETED,
+                    title,
+                    consultantBody,
+                    data,
+                    orderPublicId,
+                    "fulfillment|" + safeSku + "|consultant");
+        }
+    }
+
+    private void dispatchShopClientNotification(
+            String tenantId,
+            Long clientUserId,
+            String orderPublicId,
+            String canonicalType,
+            String title,
+            String body,
+            String dedupeBucket) {
+        if (clientUserId == null || orderPublicId == null || orderPublicId.isBlank()) {
+            return;
+        }
+        String tid = requireTenantId(tenantId, null);
+        if (tid == null) {
+            return;
+        }
+        String safeTitle = title != null && !title.isBlank() ? title : "알림";
+        String safeBody = body != null && !body.isBlank() ? body : safeTitle;
+        Map<String, String> data = buildShopOrderData(tid, orderPublicId, canonicalType, safeTitle);
+        dispatchFanout(tid, List.of(clientUserId), canonicalType, safeTitle, safeBody, data, orderPublicId, dedupeBucket);
+    }
+
+    private Map<String, String> buildShopOrderData(
+            String tenantId, String orderPublicId, String canonicalType, String title) {
+        Map<String, String> data = new LinkedHashMap<>();
+        data.put("type", canonicalType);
+        data.put("tenantId", tenantId);
+        data.put("orderPublicId", orderPublicId);
+        data.put("id", orderPublicId);
+        data.put("title", truncate(title, MobilePushDispatchConstants.TITLE_MAX_LENGTH));
+        sanitizeDataStrings(data);
+        return data;
     }
 
     @Override

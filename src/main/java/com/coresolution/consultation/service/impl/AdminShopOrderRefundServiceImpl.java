@@ -14,6 +14,7 @@ import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.service.PaymentGatewayService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
+import com.coresolution.consultation.service.ShopNotificationHelper;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,7 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
     private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
     private final PaymentGatewayService paymentGatewayService;
+    private final ShopNotificationHelper shopNotificationHelper;
 
     public AdminShopOrderRefundServiceImpl(
             ShopClientOrderRepository shopClientOrderRepository,
@@ -51,12 +53,14 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
             PointTenantPolicyService pointTenantPolicyService,
             PaymentRepository paymentRepository,
             PaymentService paymentService,
+            ShopNotificationHelper shopNotificationHelper,
             @Autowired(required = false) PaymentGatewayService paymentGatewayService) {
         this.shopClientOrderRepository = shopClientOrderRepository;
         this.clientPointWalletService = clientPointWalletService;
         this.pointTenantPolicyService = pointTenantPolicyService;
         this.paymentRepository = paymentRepository;
         this.paymentService = paymentService;
+        this.shopNotificationHelper = shopNotificationHelper;
         this.paymentGatewayService = paymentGatewayService;
     }
 
@@ -111,6 +115,12 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
                 pointsRestored,
                 pointsClawed,
                 pgRefundStatus);
+
+        try {
+            shopNotificationHelper.notifyOrderRefunded(tenantId, order);
+        } catch (Exception ex) {
+            log.warn("쇼핑 주문 환불 알림 실패: orderPublicId={}", orderPublicId, ex);
+        }
 
         return buildResponse(order, reasonCode, pointsRestored, pointsClawed, pgRefundStatus);
     }

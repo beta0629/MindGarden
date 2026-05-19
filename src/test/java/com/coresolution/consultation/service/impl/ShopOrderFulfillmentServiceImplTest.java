@@ -16,8 +16,10 @@ import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
+import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,6 +51,12 @@ class ShopOrderFulfillmentServiceImplTest {
     private ShopClientOrderLineRepository shopClientOrderLineRepository;
     @Mock
     private ShopConsultationFulfillmentHook consultationFulfillmentHook;
+
+    @Mock
+    private ShopNotificationHelper shopNotificationHelper;
+
+    @Mock
+    private ConsultantClientMappingRepository consultantClientMappingRepository;
 
     @InjectMocks
     private ShopOrderFulfillmentServiceImpl service;
@@ -103,6 +111,7 @@ class ShopOrderFulfillmentServiceImplTest {
                 .lineTotalMinor(100_000L)
                 .mappingId(MAPPING_ID)
                 .build()));
+        verify(shopNotificationHelper).notifyFulfillmentCompleted(TENANT, order, null, "SKU-CONSULT");
     }
 
     @Test

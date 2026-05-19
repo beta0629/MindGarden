@@ -34,7 +34,13 @@ public enum MobilePushNotificationCategory {
         return switch (canonicalType) {
             case MobilePushCanonicalTypes.PAYMENT_COMPLETED,
                     MobilePushCanonicalTypes.PAYMENT_FAILED,
-                    MobilePushCanonicalTypes.SESSION_LOW -> PAYMENT;
+                    MobilePushCanonicalTypes.SESSION_LOW,
+                    MobilePushCanonicalTypes.SHOP_ORDER_PAID,
+                    MobilePushCanonicalTypes.SHOP_PAYMENT_FAILED,
+                    MobilePushCanonicalTypes.POINT_EARNED,
+                    MobilePushCanonicalTypes.SHOP_ORDER_REFUNDED -> PAYMENT;
+            case MobilePushCanonicalTypes.SHOP_ORDER_HOLD_EXPIRED,
+                    MobilePushCanonicalTypes.SHOP_FULFILLMENT_COMPLETED -> SYSTEM;
             case "new_message" -> MESSAGE;
             case "mood_reminder",
                     MobilePushCanonicalTypes.MIND_WEATHER_SHARED -> WELLNESS;

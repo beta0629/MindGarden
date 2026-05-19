@@ -21,6 +21,7 @@ import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.service.PaymentGatewayService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
+import com.coresolution.consultation.service.ShopNotificationHelper;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -63,6 +64,9 @@ class AdminShopOrderRefundServiceImplTest {
     @Mock
     private PaymentGatewayService paymentGatewayService;
 
+    @Mock
+    private ShopNotificationHelper shopNotificationHelper;
+
     @InjectMocks
     private AdminShopOrderRefundServiceImpl service;
 
@@ -104,6 +108,7 @@ class AdminShopOrderRefundServiceImplTest {
         verify(paymentGatewayService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any());
         verify(paymentService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any());
         verify(shopClientOrderRepository).save(order);
+        verify(shopNotificationHelper).notifyOrderRefunded(TENANT, order);
     }
 
     @Test

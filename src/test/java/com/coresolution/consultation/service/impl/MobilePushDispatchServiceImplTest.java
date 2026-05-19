@@ -478,4 +478,32 @@ class MobilePushDispatchServiceImplTest {
         verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
         verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
     }
+
+    @Test
+    @DisplayName("dispatchShopOrderPaid: 내담자 fanout·orderPublicId data")
+    void dispatchShopOrderPaid_fanoutOnce() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+        when(mobilePushDispatchDedupService.tryClaim(
+                        eq("tenant-a"),
+                        eq(MobilePushCanonicalTypes.SHOP_ORDER_PAID),
+                        eq("ord-1"),
+                        eq("paid")))
+                .thenReturn(true);
+        MobilePushToken token = new MobilePushToken();
+        token.setPushToken("ExponentPushToken[shop]");
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.empty());
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                        eq("tenant-a"), eq(List.of(77L))))
+                .thenReturn(List.of(token));
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        mobilePushDispatchService.dispatchShopOrderPaid("tenant-a", 77L, "ord-1", 12_000L);
+
+        verify(mobilePushDispatchDedupService).tryClaim(
+                eq("tenant-a"), eq(MobilePushCanonicalTypes.SHOP_ORDER_PAID), eq("ord-1"), eq("paid"));
+        verify(restTemplate).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class));
+    }
 }

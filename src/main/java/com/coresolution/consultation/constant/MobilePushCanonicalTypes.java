@@ -22,4 +22,17 @@ public final class MobilePushCanonicalTypes {
     public static final String MIND_WEATHER_SHARED = "mind_weather_shared";
     /** 어드민 매칭 승인(approve) — PG 결제와 분리 */
     public static final String MAPPING_APPROVED = "mapping_approved";
+
+    /** 쇼핑몰 주문 PAID 확정 — 내담자 */
+    public static final String SHOP_ORDER_PAID = "shop_order_paid";
+    /** 쇼핑몰 PG 결제 실패·주문 CREATED 복귀 — 내담자 */
+    public static final String SHOP_PAYMENT_FAILED = "shop_payment_failed";
+    /** 쇼핑몰 구매 적립 포인트 — 내담자 */
+    public static final String POINT_EARNED = "point_earned";
+    /** 쇼핑몰 결제 대기 hold TTL 만료 — 내담자 */
+    public static final String SHOP_ORDER_HOLD_EXPIRED = "shop_order_hold_expired";
+    /** 쇼핑몰 어드민 전액 환불 — 내담자 */
+    public static final String SHOP_ORDER_REFUNDED = "shop_order_refunded";
+    /** 쇼핑몰 CONSULTATION fulfillment COMPLETED — 내담자(·상담사) */
+    public static final String SHOP_FULFILLMENT_COMPLETED = "shop_fulfillment_completed";
 }

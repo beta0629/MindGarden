@@ -43,6 +43,7 @@ import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
+import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -90,6 +91,9 @@ class ClientShopCheckoutServiceImplTest {
     private ShopOrderFulfillmentEventRepository shopOrderFulfillmentEventRepository;
     @Mock
     private ClientShopConsultantMappingService clientShopConsultantMappingService;
+
+    @Mock
+    private ShopNotificationHelper shopNotificationHelper;
 
     @InjectMocks
     private ClientShopCheckoutServiceImpl service;
@@ -139,6 +143,8 @@ class ClientShopCheckoutServiceImplTest {
                 eq(ORDER_ID),
                 eq(50L),
                 eq(ShopCheckoutConstants.pointEarnKey(ORDER_ID)));
+        verify(shopNotificationHelper).notifyOrderPaid(TENANT, order);
+        verify(shopNotificationHelper).notifyPointEarned(TENANT, order, 50L);
     }
 
     @Test
@@ -176,6 +182,8 @@ class ClientShopCheckoutServiceImplTest {
                 eq(5_000L),
                 eq(ShopCheckoutConstants.pointCommitKey(ORDER_ID)));
         verify(shopClientOrderRepository).save(order);
+        verify(shopNotificationHelper).notifyOrderPaid(TENANT, order);
+        verify(shopNotificationHelper, never()).notifyPointEarned(any(), any(), anyLong());
     }
 
     @Test
@@ -341,6 +349,7 @@ class ClientShopCheckoutServiceImplTest {
                 eq(2_000L),
                 eq(ShopCheckoutConstants.pointReleaseKey(ORDER_ID)));
         verify(shopClientOrderRepository).save(order);
+        verify(shopNotificationHelper).notifyOrderHoldExpired(TENANT, order);
     }
 
     @Test
@@ -385,6 +394,7 @@ class ClientShopCheckoutServiceImplTest {
                 eq(2_000L),
                 eq(ShopCheckoutConstants.pointReleaseKey(ORDER_ID)));
         verify(shopClientOrderRepository).save(order);
+        verify(shopNotificationHelper).notifyPaymentFailed(TENANT, order);
     }
 
     @Test

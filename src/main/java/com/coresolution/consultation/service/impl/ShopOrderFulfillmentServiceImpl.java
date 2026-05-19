@@ -10,9 +10,13 @@ import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
+import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import java.util.Optional;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +38,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     private final ShopOrderFulfillmentEventRepository fulfillmentEventRepository;
     private final ShopClientOrderLineRepository shopClientOrderLineRepository;
     private final ShopConsultationFulfillmentHook consultationFulfillmentHook;
+    private final ShopNotificationHelper shopNotificationHelper;
+    private final ConsultantClientMappingRepository consultantClientMappingRepository;
 
     @Override
     @Transactional
@@ -83,6 +89,30 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 .build();
         event.setTenantId(tenantId);
         fulfillmentEventRepository.save(event);
+        if (ShopCatalogCategory.CONSULTATION.equals(category)
+                && ShopOrderFulfillmentStatus.COMPLETED.equals(outcome.status())) {
+            Long consultantUserId = resolveConsultantUserId(tenantId, line.getConsultantClientMappingId());
+            try {
+                shopNotificationHelper.notifyFulfillmentCompleted(
+                        tenantId, order, consultantUserId, skuCode);
+            } catch (Exception ex) {
+                log.warn(
+                        "쇼핑 fulfillment 알림 실패: tenantId={}, orderPublicId={}, skuCode={}",
+                        tenantId,
+                        order.getPublicId(),
+                        skuCode,
+                        ex);
+            }
+        }
+    }
+
+    private Long resolveConsultantUserId(String tenantId, Long mappingId) {
+        if (mappingId == null || tenantId == null || tenantId.isBlank()) {
+            return null;
+        }
+        Optional<ConsultantClientMapping> mappingOpt =
+                consultantClientMappingRepository.findByTenantIdAndId(tenantId, mappingId);
+        return mappingOpt.map(m -> m.getConsultant() != null ? m.getConsultant().getId() : null).orElse(null);
     }
 
     private FulfillmentOutcome resolveOutcome(

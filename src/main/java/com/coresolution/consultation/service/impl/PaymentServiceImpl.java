@@ -14,6 +14,7 @@ import com.coresolution.consultation.dto.PaymentResponse;
 import com.coresolution.consultation.dto.PaymentWebhookRequest;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.repository.PaymentRepository;
+import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultationMessageService;
@@ -64,6 +65,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     private final CommonCodeService commonCodeService;
     private final MobilePushDispatchService mobilePushDispatchService;
     private final ClientShopCheckoutService clientShopCheckoutService;
+    private final ShopClientOrderRepository shopClientOrderRepository;
     
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
@@ -75,6 +77,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             ConsultationMessageService consultationMessageService,
             CommonCodeService commonCodeService,
             MobilePushDispatchService mobilePushDispatchService,
+            ShopClientOrderRepository shopClientOrderRepository,
             @Lazy ClientShopCheckoutService clientShopCheckoutService) {
         super(paymentRepository, accessControlService);
         this.paymentRepository = paymentRepository;
@@ -85,6 +88,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         this.consultationMessageService = consultationMessageService;
         this.commonCodeService = commonCodeService;
         this.mobilePushDispatchService = mobilePushDispatchService;
+        this.shopClientOrderRepository = shopClientOrderRepository;
         this.clientShopCheckoutService = clientShopCheckoutService;
     }
     
@@ -266,42 +270,46 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                         log.error("통계 업데이트 실패: {}", e.getMessage(), e);
                     }
                     
-                    try {
-                        String paymentMessage = String.format("결제가 완료되었습니다.\n" +
-                            "💰 금액: %s원\n" +
-                            "📅 결제일시: %s\n" +
-                            "📝 내용: %s", 
-                            payment.getAmount(), 
-                            LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                            payment.getDescription()
-                        );
-                        
-                        Long clientUserId = payment.getPayerId();
-                        Long consultantUserId = payment.getRecipientId();
-                        if (clientUserId != null && consultantUserId != null) {
-                            consultationMessageService.sendMessage(
-                                    consultantUserId,
-                                    clientUserId,
-                                    null,
-                                    getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()),
-                                    "결제 완료",
-                                    paymentMessage,
-                                    getMessageTypeFromCommonCode("PAYMENT_COMPLETION"),
-                                    false,
-                                    false);
-                        } else {
-                            log.warn("결제 완료 인앱 알림 생략: payer/recipient 없음 paymentId={}", paymentId);
+                    if (!isShopOrderPayment(payment)) {
+                        try {
+                            String paymentMessage = String.format("결제가 완료되었습니다.\n" +
+                                "💰 금액: %s원\n" +
+                                "📅 결제일시: %s\n" +
+                                "📝 내용: %s", 
+                                payment.getAmount(), 
+                                LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                                payment.getDescription()
+                            );
+                            
+                            Long clientUserId = payment.getPayerId();
+                            Long consultantUserId = payment.getRecipientId();
+                            if (clientUserId != null && consultantUserId != null) {
+                                consultationMessageService.sendMessage(
+                                        consultantUserId,
+                                        clientUserId,
+                                        null,
+                                        getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()),
+                                        "결제 완료",
+                                        paymentMessage,
+                                        getMessageTypeFromCommonCode("PAYMENT_COMPLETION"),
+                                        false,
+                                        false);
+                            } else {
+                                log.warn("결제 완료 인앱 알림 생략: payer/recipient 없음 paymentId={}", paymentId);
+                            }
+                            
+                            log.info("🔔 결제 완료 알림 자동 발송: PaymentID={}", paymentId);
+                        } catch (Exception e) {
+                            log.error("결제 완료 알림 발송 실패: {}", e.getMessage(), e);
                         }
-                        
-                        log.info("🔔 결제 완료 알림 자동 발송: PaymentID={}", paymentId);
-                    } catch (Exception e) {
-                        log.error("결제 완료 알림 발송 실패: {}", e.getMessage(), e);
-                    }
 
-                    try {
-                        mobilePushDispatchService.dispatchPaymentCompleted(tenantId, payment);
-                    } catch (Exception ex) {
-                        log.warn("결제 완료 푸시 실패: {}", ex.getMessage());
+                        try {
+                            mobilePushDispatchService.dispatchPaymentCompleted(tenantId, payment);
+                        } catch (Exception ex) {
+                            log.warn("결제 완료 푸시 실패: {}", ex.getMessage());
+                        }
+                    } else {
+                        log.debug("쇼핑 주문 PG: generic payment_completed 알림 스킵 paymentId={}", paymentId);
                     }
 
                     try {
@@ -327,10 +335,14 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 break;
             case FAILED:
                 payment.setFailedAt(LocalDateTime.now());
-                try {
-                    mobilePushDispatchService.dispatchPaymentFailed(tenantId, payment);
-                } catch (Exception ex) {
-                    log.warn("결제 실패 푸시 실패: {}", ex.getMessage());
+                if (!isShopOrderPayment(payment)) {
+                    try {
+                        mobilePushDispatchService.dispatchPaymentFailed(tenantId, payment);
+                    } catch (Exception ex) {
+                        log.warn("결제 실패 푸시 실패: {}", ex.getMessage());
+                    }
+                } else {
+                    log.debug("쇼핑 주문 PG: generic payment_failed 푸시 스킵 paymentId={}", paymentId);
                 }
                 break;
             case PENDING:
@@ -344,6 +356,24 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         log.info("결제 상태 업데이트 완료: {}", paymentId);
         
         return buildPaymentResponse(payment, null);
+    }
+
+    /**
+     * 결제 {@code order_id}가 쇼핑몰 주문 public ID인지 여부.
+     */
+    private boolean isShopOrderPayment(Payment payment) {
+        if (payment == null) {
+            return false;
+        }
+        String orderPublicId = payment.getOrderId();
+        if (orderPublicId == null || orderPublicId.isBlank()) {
+            return false;
+        }
+        String tenantId = payment.getTenantId() != null ? payment.getTenantId() : TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            return false;
+        }
+        return shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId).isPresent();
     }
 
     /**

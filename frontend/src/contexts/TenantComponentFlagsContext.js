@@ -157,7 +157,8 @@ export const TenantComponentFlagsProvider = ({ children }) => {
     };
   }, [fetchEnabled, sessionTenantId]);
 
-  const flagsPending = fetchEnabled && (!loaded || loading);
+  const flagsPending =
+    isLoggedIn && (!hasCheckedSession || !fetchEnabled || !loaded || loading);
   const flagsIndeterminate = flagsPending || fetchFailed;
 
   const isActive = useMemo(

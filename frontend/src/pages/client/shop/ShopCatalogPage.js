@@ -60,33 +60,38 @@ const ShopCatalogPage = () => {
     }
   }, [sessionLoading, isLoggedIn, loadCatalog]);
 
-  const filteredCatalog = useMemo(
-    () =>
-      catalog.filter(
-        (row) => normalizeShopCatalogCategory(row.catalogCategory) === activeCategory
-      ),
-    [catalog, activeCategory]
-  );
-
-  useEffect(() => {
-    if (!catalogLoaded || catalog.length === 0) {
-      return;
+  /** 활성 탭에 SKU 없으면 동기 fallback — useEffect 탭 전환 시 empty testid 1프레임 노출 방지 */
+  const displayCategory = useMemo(() => {
+    if (catalog.length === 0) {
+      return activeCategory;
     }
     const hasInActiveTab = catalog.some(
       (row) => normalizeShopCatalogCategory(row.catalogCategory) === activeCategory
     );
     if (hasInActiveTab) {
-      return;
+      return activeCategory;
     }
     const tabWithSkus = SHOP_CATEGORY_TABS.find((tab) =>
       catalog.some(
         (row) => normalizeShopCatalogCategory(row.catalogCategory) === tab.key
       )
     );
-    if (tabWithSkus) {
-      setActiveCategory(tabWithSkus.key);
+    return tabWithSkus?.key ?? activeCategory;
+  }, [catalog, activeCategory]);
+
+  const filteredCatalog = useMemo(
+    () =>
+      catalog.filter(
+        (row) => normalizeShopCatalogCategory(row.catalogCategory) === displayCategory
+      ),
+    [catalog, displayCategory]
+  );
+
+  useEffect(() => {
+    if (displayCategory !== activeCategory && catalog.length > 0) {
+      setActiveCategory(displayCategory);
     }
-  }, [catalog, catalogLoaded, activeCategory]);
+  }, [displayCategory, activeCategory, catalog.length]);
 
   const handleAddToCart = async (skuCode) => {
     try {
@@ -112,7 +117,7 @@ const ShopCatalogPage = () => {
   return (
     <ShopClientLayout title="상품 둘러보기" testId={CLIENT_SHOP_TEST_IDS.CATALOG_PAGE}>
       <ShopTenantBanner tenantLabel={tenantLabel} />
-      <ShopCategoryTabs activeKey={activeCategory} onChange={setActiveCategory} />
+      <ShopCategoryTabs activeKey={displayCategory} onChange={setActiveCategory} />
       {message ? (
         <p className="client-shop__message client-shop__message--error" role="alert">
           {message}
@@ -123,7 +128,7 @@ const ShopCatalogPage = () => {
           불러오는 중…
         </p>
       ) : null}
-      {catalogLoaded && filteredCatalog.length === 0 ? (
+      {catalogLoaded && !loading && filteredCatalog.length === 0 ? (
         <p className="client-shop__empty" data-testid={CLIENT_SHOP_CATALOG_EMPTY_TEST_ID}>
           이 카테고리에 노출된 상품이 없습니다.
         </p>

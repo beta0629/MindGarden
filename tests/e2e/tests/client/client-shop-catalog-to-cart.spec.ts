@@ -30,6 +30,8 @@ const CLIENT_SHOP_CATALOG_LOADING_TEST_ID = 'client-shop-catalog-loading';
 const CLIENT_SHOP_CATALOG_EMPTY_TEST_ID = 'client-shop-catalog-empty';
 const SHOP_SKU_ADD_FIRST_TEST_ID = 'shop-sku-add-first';
 
+const PLP_READY_POLL_MS = 15_000;
+
 const REACT_130_OR_INVALID_CHILD =
   /Minified React error #130|Objects are not valid as a React child|invariant=130/i;
 
@@ -43,6 +45,25 @@ function attachRuntimeErrorCollectors(page: Page, bucket: string[]) {
     const stack = err.stack ? '\n' + err.stack : '';
     bucket.push('[pageerror] ' + err.message + stack);
   });
+}
+
+async function isClientShopAddFirstReady(page: Page): Promise<boolean> {
+  const sessionLoading = page.getByTestId(CLIENT_SHOP_SESSION_LOADING_TEST_ID);
+  if (await sessionLoading.isVisible().catch(() => false)) {
+    return false;
+  }
+
+  const catalogPage = page.getByTestId(CLIENT_SHOP_CATALOG_PAGE_TEST_ID);
+  if (!(await catalogPage.isVisible().catch(() => false))) {
+    return false;
+  }
+
+  const catalogLoading = page.getByTestId(CLIENT_SHOP_CATALOG_LOADING_TEST_ID);
+  if (await catalogLoading.isVisible().catch(() => false)) {
+    return false;
+  }
+
+  return page.getByTestId(SHOP_SKU_ADD_FIRST_TEST_ID).isVisible().catch(() => false);
 }
 
 test.describe('내담자 쇼핑 PLP → 장바구니', () => {
@@ -71,53 +92,55 @@ test.describe('내담자 쇼핑 PLP → 장바구니', () => {
     await page.goto('/client/shop', { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/client\/shop\/?$/, { timeout: 15_000 });
 
-    const gate = page.getByTestId(CLIENT_SHOP_GATE_TEST_ID);
-    if (await gate.isVisible().catch(() => false)) {
-      const tenantHint = getE2eTenantId() ?? 'E2E_TENANT_ID 미설정';
-      test.skip(
-        true,
-        `CLIENT_SHOP 비활성 또는 테넌트 불일치 — tenantId=${tenantHint}. OPS activate + 내담자 계정이 동일 테넌트 소속인지 확인.`
-      );
-    }
-
-    await page.waitForSelector(`[data-testid="${CLIENT_SHOP_SESSION_LOADING_TEST_ID}"]`, {
-      state: 'detached',
-      timeout: 30_000
-    }).catch(() => undefined);
-
-    await page.waitForSelector(`[data-testid="${CLIENT_SHOP_CATALOG_PAGE_TEST_ID}"]`, {
-      timeout: 30_000
-    });
-
-    const catalogPage = page.getByTestId(CLIENT_SHOP_CATALOG_PAGE_TEST_ID);
-    await expect(catalogPage).toBeVisible({ timeout: 5_000 });
-
     await page
-      .waitForSelector(`[data-testid="${CLIENT_SHOP_CATALOG_LOADING_TEST_ID}"]`, {
+      .waitForSelector(`[data-testid="${CLIENT_SHOP_SESSION_LOADING_TEST_ID}"]`, {
         state: 'detached',
         timeout: 30_000
       })
       .catch(() => undefined);
 
     const addFirst = page.getByTestId(SHOP_SKU_ADD_FIRST_TEST_ID);
-    const catalogEmpty = page.getByTestId(CLIENT_SHOP_CATALOG_EMPTY_TEST_ID);
-    await Promise.race([
-      addFirst.waitFor({ state: 'visible', timeout: 20_000 }),
-      catalogEmpty.waitFor({ state: 'visible', timeout: 20_000 })
-    ]).catch(() => undefined);
-
-    if (await catalogEmpty.isVisible().catch(() => false)) {
-      const tenantHint = getE2eTenantId() ?? 'E2E_TENANT_ID 미설정';
-      test.skip(
-        true,
-        `PLP 노출 SKU 없음 — tenantId=${tenantHint}. OPS: activate-shop-reward-tenant-components.sql + seed-shop-demo-catalog.sql(catalog_visible=1, CONSULTATION) 또는 어드민 PLP 노출 ON.`
-      );
+    let addFirstReady = false;
+    try {
+      await expect
+        .poll(async () => isClientShopAddFirstReady(page), {
+          timeout: PLP_READY_POLL_MS,
+          intervals: [200, 300, 500, 800, 1000]
+        })
+        .toBe(true);
+      addFirstReady = true;
+    } catch {
+      addFirstReady = false;
     }
 
-    await expect(
-      addFirst,
-      'PLP에 노출 SKU 없음 — 어드민 catalogVisible SKU·Flyway·API 확인'
-    ).toBeVisible({ timeout: 5_000 });
+    const tenantHint = getE2eTenantId() ?? 'E2E_TENANT_ID 미설정';
+
+    if (!addFirstReady) {
+      const gate = page.getByTestId(CLIENT_SHOP_GATE_TEST_ID);
+      if (await gate.isVisible().catch(() => false)) {
+        test.skip(
+          true,
+          `CLIENT_SHOP 비활성 또는 테넌트 불일치 — tenantId=${tenantHint}. OPS activate + 내담자 계정이 동일 테넌트 소속인지 확인.`
+        );
+      }
+
+      const catalogEmpty = page.getByTestId(CLIENT_SHOP_CATALOG_EMPTY_TEST_ID);
+      if (await catalogEmpty.isVisible().catch(() => false)) {
+        test.skip(
+          true,
+          `PLP 노출 SKU 없음 — tenantId=${tenantHint}. OPS: activate-shop-reward-tenant-components.sql + seed-shop-demo-catalog.sql(catalog_visible=1, CONSULTATION) 또는 어드민 PLP 노출 ON.`
+        );
+      }
+
+      await expect(
+        addFirst,
+        'PLP에 노출 SKU 없음 — 어드민 catalogVisible SKU·Flyway·API 확인'
+      ).toBeVisible({ timeout: 5_000 });
+    }
+
+    await expect(page.getByTestId(CLIENT_SHOP_CATALOG_PAGE_TEST_ID)).toBeVisible({
+      timeout: 5_000
+    });
 
     await addFirst.click();
 

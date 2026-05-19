@@ -276,6 +276,51 @@ const EMPTY_CALENDAR_SESSION_LABEL = Object.freeze({
 });
 
 /**
+ * 캘린더 회기 라벨 분기용 상태 코드 정규화 (API 코드·한글 라벨·레거시 호환).
+ * @param {*} status
+ * @returns {string} 대문자 코드 또는 빈 문자열
+ */
+export function normalizeCalendarSessionStatusCode(status) {
+  if (status == null || String(status).trim() === '') {
+    return '';
+  }
+  const s = String(status).trim();
+  const upper = s.toUpperCase();
+  const known = [
+    STATUS.BOOKED,
+    STATUS.CONFIRMED,
+    STATUS.COMPLETED,
+    STATUS.CANCELLED,
+    STATUS.VACATION,
+    STATUS.AVAILABLE,
+    'IN_PROGRESS',
+    'TENTATIVE_PENDING_PAYMENT'
+  ];
+  if (known.includes(upper)) {
+    return upper;
+  }
+  if (/취소|취소됨/.test(s)) {
+    return STATUS.CANCELLED;
+  }
+  if (/완료|완료됨/.test(s)) {
+    return STATUS.COMPLETED;
+  }
+  if (/확정|확정됨/.test(s)) {
+    return STATUS.CONFIRMED;
+  }
+  if (/예약됨|예약/.test(s)) {
+    return STATUS.BOOKED;
+  }
+  if (/휴가/.test(s)) {
+    return STATUS.VACATION;
+  }
+  if (/가능/.test(s)) {
+    return STATUS.AVAILABLE;
+  }
+  return upper;
+}
+
+/**
  * @param {*} raw API 또는 extendedProps 값
  * @returns {number} 0 이상 정수(비정상·null은 0)
  */
@@ -356,23 +401,28 @@ export function resolveCalendarSessionLabel({
   if (total === null || total <= 1) {
     return EMPTY_CALENDAR_SESSION_LABEL;
   }
-  const statusCode =
-    status != null && String(status).trim() !== '' ? String(status).trim().toUpperCase() : '';
+  const statusCode = normalizeCalendarSessionStatusCode(status);
   if (statusCode === STATUS.CANCELLED || statusCode === STATUS.VACATION) {
     return EMPTY_CALENDAR_SESSION_LABEL;
   }
   const sequence = parseScheduleSessionCount(sessionSequence);
   const isTentative = statusCode === 'TENTATIVE_PENDING_PAYMENT';
   const isCompleted = statusCode === STATUS.COMPLETED;
-  const showBookingSequence =
-    sequence !== null && !isTentative && (isPast === true || isCompleted);
-  if (showBookingSequence) {
-    return {
-      label: `${sequence}/${total}회`,
-      variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
-      ariaLabel: `${sequence}회차(${sequence}/${total})`
-    };
+  const isPastOrCompletedSchedule = isPast === true || isCompleted;
+
+  // 과거·완료: 예약 시점 회차만 표시. 잔여(현재 매칭 기준)는 절대 표시하지 않음.
+  if (isPastOrCompletedSchedule && !isTentative) {
+    if (sequence !== null) {
+      return {
+        label: `${sequence}/${total}회`,
+        variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
+        ariaLabel: `${sequence}회차(${sequence}/${total})`
+      };
+    }
+    return EMPTY_CALENDAR_SESSION_LABEL;
   }
+
+  // 미래 일정만 잔여 회기 표시
   const remaining = parseScheduleSessionCount(remainingSessions);
   if (remaining === null) {
     return EMPTY_CALENDAR_SESSION_LABEL;

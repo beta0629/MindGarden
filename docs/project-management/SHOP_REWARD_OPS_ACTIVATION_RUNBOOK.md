@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| 일자 | 2026-05-19 |
+| 일자 | 2026-05-20 (§4.1 배포 직후 10분 SSOT) |
 | 범위 | Flyway P2 마이그레이션·테넌트 컴포넌트 OPS 활성화·dev/staging 기동·수동 QA·E2E 전제 |
 | SSOT | [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) §7, [SHOP_REWARD_IMPLEMENTATION_STATUS.md](./SHOP_REWARD_IMPLEMENTATION_STATUS.md), [SHOP_P2_INTEGRATION_TEST_REPORT.md](./SHOP_P2_INTEGRATION_TEST_REPORT.md), [SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md](./SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md) |
 | 코드 변경 | 없음 (OPS·DB·배포 절차만) |
@@ -270,6 +270,59 @@ LIMIT 5;
 ## 4. P2 수동 QA (교차 참조)
 
 **SSOT**: [SHOP_P2_INTEGRATION_TEST_REPORT.md](./SHOP_P2_INTEGRATION_TEST_REPORT.md)
+
+### 4.1 배포 직후 10분 체크리스트
+
+**대상**: dev — `develop` push·백엔드 배포(Flyway 자동) 직후 ~10분. **판정 SSOT**: [IMPLEMENTATION_STATUS §5.2](./SHOP_REWARD_IMPLEMENTATION_STATUS.md#52-운영-반영--배포opsqa-게이트-2026-05-20), [INTEGRATION_COMMIT_CHECKLIST §6 (3)~(5)](./SHOP_REWARD_INTEGRATION_COMMIT_CHECKLIST.md#6-다음-사용자-액션-2026-05-20).
+
+| 순서 | 작업 | 완료 |
+|------|------|:----:|
+| 0 | **frontend dev** 배포 완료 확인 (`deploy-frontend-dev.yml`); Flyway `V20260521_001` 후 어드민 **강력 새로고침** | ☐ |
+| 1 | **Flyway 3줄** — 대상 DB에서 `20260520.001`·`20260521.001` SUCCESS (Shop P2는 §1.2 전체 SQL로 002~007 병행 확인) | ☐ |
+| 2 | **OPS activate** — `scripts/ops/activate-shop-reward-tenant-components.sql` (`:tenant_id` = §2.2 조회 UUID) | ☐ |
+| 3 | **(선택) seed** — `scripts/ops/seed-shop-demo-catalog.sql` — PLP·Playwright 전제 SKU | ☐ |
+| 4 | **verify 헬퍼** — `TENANT_ID=<uuid> bash scripts/ops/verify-shop-reward-dev.sh` (read-only; `VERIFY_STRICT=1` 선택) | ☐ |
+| 5 | **어드민 LNB** — 로그인 후 LNB 「쇼핑·리워드」 4메뉴 노출 **스크린샷 1장** (첨부는 티켓·채널; 본 문서에는 경로·캡션만 기록) | ☐ |
+
+**1) Flyway 검증 SQL (3줄)**
+
+```sql
+SELECT version, description, success FROM flyway_schema_history
+WHERE version IN ('20260520.001', '20260521.001') AND success = 1
+ORDER BY installed_rank;
+```
+
+**2) OPS activate** — §2.1·§2.3; `tenant_id` 저장소 하드코딩 금지.
+
+```bash
+mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" \
+  -e "SET @tenant_id='YOUR-TENANT-UUID'; SOURCE scripts/ops/activate-shop-reward-tenant-components.sql;"
+```
+
+**3) (선택) seed** — §3.5.
+
+```bash
+mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" \
+  -e "SET @tenant_id='YOUR-TENANT-UUID'; SOURCE scripts/ops/seed-shop-demo-catalog.sql;"
+```
+
+**4) verify-shop-reward-dev.sh**
+
+```bash
+TENANT_ID=<uuid> bash scripts/ops/verify-shop-reward-dev.sh
+# 엄격 health: TENANT_ID=<uuid> VERIFY_STRICT=1 bash scripts/ops/verify-shop-reward-dev.sh
+```
+
+**5) 어드민 LNB (텍스트 기록만)**
+
+- **캡션 예**: `dev 어드민 LNB — 쇼핑·리워드 (catalog-skus, point-policies, orders, …) post V20260521_001`
+- **기대**: 카탈로그 SKU·포인트 정책·주문·(리워드) 메뉴 4건 표시; 컴포넌트 off 시 페이지 403은 §2·API와 별도 확인.
+
+10분 내 위 표 전항 ☐ → [CHECKLIST §6 (4)](./SHOP_REWARD_INTEGRATION_COMMIT_CHECKLIST.md#6-다음-사용자-액션-2026-05-20) **OPS GO** 후 §4.2·§5 수동 QA·Playwright 진행.
+
+---
+
+### 4.2 P2 수동 QA 교차 참조
 
 | 구분 | 문서 위치 | 내용 |
 |------|-----------|------|

@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| 일자 | 2026-05-20 (SSOT 동기화 — R8 웹+Expo, LNB `V20260521_001`, Maven 84/13, Expo jest 29) |
+| 일자 | 2026-05-19 (SSOT 동기화 — R11 알림·푸시 P0, Maven 103/15, Expo jest 32) |
 | 범위 | Shop P1 + P2 (web·admin·Expo·환불·fulfillment·ERP 훅·컴포넌트 게이트) |
 | SSOT | [SHOP_P2_INTEGRATION_TEST_REPORT.md](./SHOP_P2_INTEGRATION_TEST_REPORT.md), [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) §3 |
 | 코드 수정 | **없음** (문서만) |
@@ -22,20 +22,33 @@
 | R5 | Phase 3 통합 마켓 | 잔여 | [MULTI_TENANT §8](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) |
 | R8 | 체크아웃 UI mapping 선택 | **완료 (웹+Expo)** | `ShopCheckoutPage`·`expo-app/.../checkout.tsx`·`GET /consultant-mappings`·`clientShopCheckout` Jest |
 | R10 | Playwright catalog→cart | **잔여** | spec·testid 준비; 8080+전제 충족 시 passed 기대 — [§1.3](#13-playwright-e2e) |
+| **R11** | 쇼핑·리워드 인앱·모바일 푸시 P0 (S1~S6) | **완료 (코드·단위)** | `ShopNotificationHelper`·`ShopNotificationCopy`·`MobilePushDispatchService` shop_*·Expo `pushScenarios`; [FULL_COMPLETION §3](./SHOP_REWARD_FULL_COMPLETION_ORCHESTRATION.md) |
 
 ---
 
 ## 1. 자동 테스트 현황
 
+### 1.0 Tier A REG-01 · R10 (core-tester, 2026-05-19 14:42 KST)
+
+| 게이트 | exit | passed | skipped | 판정 |
+|--------|------|--------|---------|------|
+| Maven **14클래스** (Tier A 목록, `ShopNotificationHelper` 포함) | **0** | **91** | 0 | **PASS** (`-DforkCount=0`) |
+| Maven (위임 `mvn clean test … -DforkCount=1 test`) | **1** | — | — | **FAIL** (로컬 `target`/fork) |
+| Expo Jest `pushScenarios\|clientShop` | **0** | **32** | 0 | **PASS** |
+| frontend `build:ci` | **0** | — | — | **PASS** |
+| Playwright R10 + admin smoke (chromium) | **0** | 0 | **2** | **SKIP** (8080 down) |
+
+**Tier A**: REG-01 **GO** · R10 **잔여**. 상세: [SHOP_P2 §1.0](./SHOP_P2_INTEGRATION_TEST_REPORT.md). R11 확장 게이트(15클래스·103건)는 §1.1.
+
 ### 1.1 백엔드 Maven (`*Test.java`)
 
-**실행 명령** (2026-05-19 14:18 KST, R8·R10 Shop 게이트, **13클래스**):
+**실행 명령** (2026-05-19 통합 게이트, **15클래스·103건**):
 
 ```bash
-mvn -Dtest=AdminShopCatalogSkuServiceImplTest,AdminShopCatalogSkuControllerMvcTest,AdminPointTenantPolicyControllerMvcTest,AdminShopOrderControllerMvcTest,ClientShopControllerMvcTest,ClientShopCheckoutServiceImplTest,ClientPointWalletServiceImplTest,PointTenantPolicyServiceImplTest,TenantComponentActivationServiceImplTest,ShopOrderFulfillmentServiceImplTest,AdminShopOrderRefundServiceImplTest,ShopOrderHoldExpiryServiceImplTest,ClientShopConsultantMappingServiceImplTest test
+mvn clean test -Dtest=AdminShopCatalogSkuServiceImplTest,AdminShopCatalogSkuControllerMvcTest,AdminPointTenantPolicyControllerMvcTest,AdminShopOrderControllerMvcTest,ClientShopControllerMvcTest,ClientShopCheckoutServiceImplTest,ClientPointWalletServiceImplTest,PointTenantPolicyServiceImplTest,TenantComponentActivationServiceImplTest,ShopOrderFulfillmentServiceImplTest,AdminShopOrderRefundServiceImplTest,ShopOrderHoldExpiryServiceImplTest,ClientShopConsultantMappingServiceImplTest,ShopNotificationHelperImplTest,MobilePushDispatchServiceImplTest -DforkCount=1 test
 ```
 
-병렬 fork에서 `ClassNotFoundException`이 나면 `mvn clean test ... -DforkCount=1` 로 재실행.
+**권장**: `-DforkCount=1` (병렬 fork 시 `ClassNotFoundException` 회피). 최종 검증 2026-05-19: **103 passed**, BUILD SUCCESS (~50s).
 
 **MockMvc slice 회귀** (코더 산출 후):
 
@@ -58,9 +71,13 @@ mvn -Dtest=ClientShopControllerMvcTest,AdminShopCatalogSkuControllerMvcTest test
 | 11 | `ClientPointWalletServiceImplTest` | 단위 | 14 | PASS |
 | 12 | `ShopOrderHoldExpiryServiceImplTest` | 단위 (hold TTL) | 4 | PASS |
 | 13 | `ClientShopConsultantMappingServiceImplTest` | 단위 (R8 mapping API) | 3 | PASS |
-| | **합계** | **13클래스** | **84** | **BUILD SUCCESS** |
+| 14 | `ShopNotificationHelperImplTest` | 단위 (R11 S1~S6·S2/S4/S5) | 7 | PASS |
+| 15 | `MobilePushDispatchServiceImplTest` | 단위 (shop push dispatch) | 12 | PASS |
+| | **합계** | **15클래스** | **103** | **BUILD SUCCESS** |
 
-소요: 약 36s (`mvn clean test`, `-DforkCount=1`).
+소요: 약 50s (`mvn clean test`, `-DforkCount=1`, 2026-05-19 게이트).
+
+**R11 커버**: `ShopNotificationHelperImplTest` — PAID·EARN·fulfillment·**S2 결제 실패·S4 hold 만료·S5 환불** 푸시; `ClientShopCheckoutServiceImplTest` — `notifyOrderPaid`·`notifyPointEarned`·S2/S4 연동 verify; `MobilePushDispatchServiceImplTest` — `dispatchShopOrderPaid` 등 shop canonical.
 
 **R1 (PG refund) 커버**: `AdminShopOrderRefundServiceImplTest` 4건 — 복원·clawback·REFUNDED·멱등·PAID 아님 거부.
 
@@ -82,16 +99,18 @@ mvn -Dtest=ClientShopControllerMvcTest,AdminShopCatalogSkuControllerMvcTest test
 | `expo-app/src/utils/__tests__/clientShopFormat.test.ts` | PASS | — |
 | `expo-app/src/utils/__tests__/clientShopRoutes.test.ts` | PASS | — |
 | `expo-app/src/utils/__tests__/clientShopCheckout.test.ts` | PASS | — |
-| **합계** | **4/4 suite** | **29 passed** (로컬, 2026-05-20) |
+| `expo-app/src/utils/__tests__/pushScenarios.test.ts` | PASS | 3 (R11 shop type·alias) |
+| **합계** | **5/5 suite** | **32 passed** (로컬, 2026-05-19) |
 
-`expo-app/package.json`에 `npm test` 스크립트 없음 — `npx jest --testPathPattern=clientShop` 로 실행.
+`expo-app/package.json`에 `npm test` 스크립트 없음 — `npx jest --testPathPattern='clientShop|pushScenarios'` 로 실행.
 
 ### 1.3 Playwright E2E
 
 | 파일 | 상태 | 비고 |
 |------|------|------|
-| `tests/e2e/tests/client/client-shop-catalog-to-cart.spec.ts` | **스펙 준비·전제 문서화** | [`tests/e2e/README.md`](../../tests/e2e/README.md) §CLIENT_SHOP; `skipWhenLocalBackend8080Down` |
-| R10 로컬 (2026-05-19 14:18) | **1 skipped** (8080 down) | `skipWhenLocalBackend8080Down` 동작 확인; 전제 충족 시 passed 기대 |
+| `tests/e2e/tests/client/client-shop-catalog-to-cart.spec.ts` | **SKIP** (8080 down) | R10 — chromium exit 0, 1 skipped |
+| `tests/e2e/tests/admin/admin-shop-catalog-skus-smoke.spec.ts` | **SKIP** (8080 down) | admin catalog smoke — 동일 가드 |
+| R10 Tier A (2026-05-19 14:42) | **2 skipped** / 0 passed | 8080+OPS·시드 후 **2 passed** 기대 |
 
 ### 1.4 프론트엔드 web (React)
 
@@ -149,6 +168,7 @@ SELECT component_code FROM component_catalog WHERE component_code IN ('CLIENT_SH
 | ~~R8~~ | 체크아웃 UI mapping 선택 | **완료 (웹+Expo)** — `ShopCheckoutPage`·Expo checkout·mapping API·`clientShopCheckout` Jest |
 | R6 | ASSESSMENT fulfillment | **잔여** — Phase 3 ([ORCHESTRATION §3.4](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md)) |
 | R10 | Playwright E2E catalog→cart | **잔여** — dev 배포·OPS·시드 후 재실행 ([§1.3](#13-playwright-e2e)) |
+| ~~R11~~ | 인앱·모바일 푸시 P0 (S1~S6) | **완료 (코드·단위)** — [FULL_COMPLETION](./SHOP_REWARD_FULL_COMPLETION_ORCHESTRATION.md) §4 순서 1~3; 수동 스모크·커밋 잔여 |
 
 상세 SSOT: [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) §3.4.
 
@@ -201,28 +221,30 @@ SELECT component_code FROM component_catalog WHERE component_code IN ('CLIENT_SH
 
 ---
 
-## 5. GO / NO-GO (planner 요약, 2026-05-20)
+## 5. GO / NO-GO (planner 요약, 2026-05-19)
 
 ### 5.1 코드·자동 테스트 — **GO**
 
 | 게이트 | 판정 |
 |--------|------|
-| Maven Shop **84건** (13클래스) | **GO** |
-| **R1~R4**·**R8**·**R9** (코드·단위·MockMvc·OPS SQL·Expo checkout) | **GO** |
+| Maven Shop **103건** (15클래스, `-DforkCount=1`, 2026-05-19) | **GO** |
+| `frontend` `npm run build:ci` (2026-05-20) | **GO** |
+| **R1~R4**·**R8 (웹+Expo)**·**R9**·**R11 P0** (코드·단위·MockMvc·OPS SQL) | **GO** |
 | Flyway Shop P2 (`002`~`007`) + **V20260520_001** + **V20260521_001** (LNB) | **GO** (파일·코드); DB 적용은 배포 시 |
-| Expo `clientShop` Jest **4 suite / 29건** | **GO** (로컬) |
+| Expo Jest **5 suite / 32건** (`clientShop` + `pushScenarios`) | **GO** (로컬) |
 | Playwright catalog→cart (R10) | **조건부** (dev·OPS·시드 후) |
 
-### 5.2 운영 반영 — **커밋·배포·OPS 후**
+### 5.2 운영 반영 — **배포·OPS·QA 게이트** (2026-05-19)
 
-| 게이트 | 판정 |
-|--------|------|
-| 커밋 (A)/(B)/(C) + `develop` push | **NO-GO** (미완) |
-| dev backend·frontend 배포 + Flyway 적용 | **NO-GO** (미완) |
-| OPS `activate` + (선택) `seed-shop-demo-catalog.sql` | **NO-GO** (환경별 미실행) |
-| Admin·Client 수동 스모크 [§4](#4-수동-qa-체크리스트) | **NO-GO** (미완 시 운영 GO 불가) |
+| 게이트 | 판정 | 비고 |
+|--------|------|------|
+| 커밋 (A)/(B)/(C) + `develop` push | **R11 재커밋 필요** | [CHECKLIST §6 (1)(2)](./SHOP_REWARD_INTEGRATION_COMMIT_CHECKLIST.md#6-다음-사용자-액션-2026-05-20) |
+| dev backend·frontend 배포 + Flyway `002`~`007`·`V20260520_001`·`V20260521_001` | **진행 중** | [CHECKLIST §6 (3)](./SHOP_REWARD_INTEGRATION_COMMIT_CHECKLIST.md#6-다음-사용자-액션-2026-05-20) **현재 단계** |
+| OPS `activate` + (선택) `seed` + `verify-shop-reward-dev.sh` | **진행 중** | 배포 직후 [런북 §4.1](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#41-배포-직후-10분-체크리스트); tenant_id 하드코딩 금지 |
+| Admin·Client 수동 스모크 [§4](#4-수동-qa-체크리스트) | **NO-GO** | Flyway·OPS·`catalogVisible` SKU 전제; 미완 시 **운영 GO 불가** |
+| Playwright R10 (`client-shop-catalog-to-cart`) | **조건부** | dev·OPS·시드 후 [§1.3](#13-playwright-e2e); passed 시 §5.2 R10 행 **GO**로 갱신 |
 
-**종합**: **코드·로컬 자동화 = GO**. **운영 GO**는 [INTEGRATION_COMMIT_CHECKLIST §6](./SHOP_REWARD_INTEGRATION_COMMIT_CHECKLIST.md) 순서(커밋 → push → dev 배포 → OPS → §4 QA) 완료 후에만 가능. 잔여 기능 갭: **R6**, **R10**.
+**종합**: **코드·로컬 자동화 = GO** (R11 P0 포함). **커밋·push**는 R11 미반영분 **재커밋 후** 진행. **배포 후 OPS·GO 판정**은 §6 **(3)~(5)** — [런북 §4.1](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#41-배포-직후-10분-체크리스트). **운영 GO**는 §4 수동 QA + R11 수동 스모크([FULL_COMPLETION §6](./SHOP_REWARD_FULL_COMPLETION_ORCHESTRATION.md#6-검증-체크리스트링크)) + Go-Live 교차. 잔여: **R6**, **R10** (E2E).
 
 ---
 

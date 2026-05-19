@@ -2,8 +2,8 @@
 
 | 항목 | 내용 |
 |------|------|
-| 일자 | 2026-05-20 (SSOT 동기화) |
-| 범위 | 로컬 미커밋 R3/R4/R8/R9, Flyway `V20260520_001`·`V20260521_001`, 어드민·Client 웹, OPS·문서 |
+| 일자 | 2026-05-19 (SSOT 동기화 — R11 알림·푸시 P0 미커밋) |
+| 범위 | 로컬 미커밋 R3/R4/R8/R9 + **R11** (`ShopNotificationHelper`, push·인앱, Expo `pushScenarios`), Flyway·어드민·Client·OPS·문서 |
 | SSOT | [SHOP_REWARD_IMPLEMENTATION_STATUS.md](./SHOP_REWARD_IMPLEMENTATION_STATUS.md), [SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md), [SHOP_P2_INTEGRATION_TEST_REPORT.md](./SHOP_P2_INTEGRATION_TEST_REPORT.md) |
 | 코드 변경 | **없음** (본 문서는 커밋·배포 절차만) |
 
@@ -27,11 +27,11 @@
 
 | 커밋 | 제목 예시 | 포함 요약 |
 |------|-----------|-----------|
-| **(A) backend + Flyway** | `feat(shop): R3 price history, R4 hold TTL, R8/R9 gates, Flyway P2c` | Java Shop·Point·스케줄러·mapping API, `V20260519_002`~`007`, `V20260520_001`, `V20260521_001`, `application.yml`, Shop Maven **13클래스·84건** |
+| **(A) backend + Flyway** | `feat(shop): R11 notifications, R3/R4/R8/R9, Flyway P2c` | `ShopNotificationHelper`·`ShopNotificationCopy`·`MobilePush*` shop dispatch·hold/refund/checkout 훅, Flyway, Shop Maven **15클래스·103건** |
 | **(B) frontend web** | `feat(shop): admin catalog·policies, client checkout, LNB menus` | `frontend/` Shop·LNB·상수·서비스·CSS |
-| **(C) docs + scripts + expo + e2e** | `docs(shop): P2 status·runbook; ops scripts; expo checkout mapping; e2e spec` | `docs/project-management/SHOP_*.md`, `scripts/ops/activate-shop-reward-tenant-components.sql`, `scripts/ops/seed-shop-demo-catalog.sql`, `tests/e2e/**`, `expo-app/**` (§3 glob) |
+| **(C) docs + scripts + expo + e2e** | `docs(shop): R11 full completion; expo push scenarios; e2e` | `docs/project-management/SHOP_*.md`, OPS SQL, `expo-app/**` push·notification (§3 glob), `tests/e2e/**` |
 
-> **현재 워크스페이스 (2026-05-20)**: R8 Expo·OPS seed·문서 포함 — **(C)에 `expo-app/` Shop·checkout·hooks·utils** 스테이징. 커밋 전 `npx jest --testPathPattern=clientShop` → **29 passed** ([§5.4](#54-선택-expo--e2e)).
+> **현재 워크스페이스 (2026-05-19)**: **R11 P0 미커밋** — (A)~(C) **재커밋 필요** ([§6](#6-다음-사용자-액션-2026-05-20)). 커밋 전 `npx jest --testPathPattern='clientShop|pushScenarios'` → **32 passed** ([§5.4](#54-선택-expo--e2e)).
 
 ---
 
@@ -46,6 +46,15 @@ src/main/java/com/coresolution/consultation/**/shop/**
 src/main/java/com/coresolution/consultation/**/*Shop*
 src/main/java/com/coresolution/consultation/constant/PointTenantPolicyKeys.java
 src/main/java/com/coresolution/consultation/constant/ShopCheckoutConstants.java
+src/main/java/com/coresolution/consultation/constant/ShopNotificationCopy.java
+src/main/java/com/coresolution/consultation/constant/MobilePushCanonicalTypes.java
+src/main/java/com/coresolution/consultation/constant/MobilePushNotificationCategory.java
+src/main/java/com/coresolution/consultation/service/ShopNotificationHelper.java
+src/main/java/com/coresolution/consultation/service/impl/ShopNotificationHelperImpl.java
+src/main/java/com/coresolution/consultation/service/MobilePushDispatchService.java
+src/main/java/com/coresolution/consultation/service/impl/MobilePushDispatchServiceImpl.java
+src/main/java/com/coresolution/consultation/service/impl/PaymentServiceImpl.java
+src/main/java/com/coresolution/consultation/util/MobilePushMessageFormatter.java
 src/main/resources/db/migration/V20260519_002__*.sql
 src/main/resources/db/migration/V20260519_003__*.sql
 src/main/resources/db/migration/V20260519_004__*.sql
@@ -67,6 +76,7 @@ frontend/src/components/admin/AdminShop*
 frontend/src/pages/client/shop/**
 frontend/src/constants/adminShop*
 frontend/src/constants/clientShop*
+frontend/src/constants/clientShopNotificationCopy.js
 frontend/src/services/adminShop*
 frontend/src/services/clientShop*
 frontend/src/styles/shop/**
@@ -88,11 +98,15 @@ expo-app/app/(client)/(shop)/**
 expo-app/src/api/hooks/useClientShop*
 expo-app/src/api/endpoints.ts
 expo-app/src/constants/clientShop*
+expo-app/src/constants/pushScenarios.ts
+expo-app/src/constants/shopNotificationCopy.ts
+expo-app/src/services/NotificationService.ts
 expo-app/src/utils/clientShop*
 expo-app/src/utils/__tests__/clientShop*
+expo-app/src/utils/__tests__/pushScenarios.test.ts
 ```
 
-**Expo Jest (커밋 전)**: `cd expo-app && npx jest --testPathPattern=clientShop` — **29 passed** (4 suite).
+**Expo Jest (커밋 전)**: `cd expo-app && npx jest --testPathPattern='clientShop|pushScenarios'` — **32 passed** (5 suite).
 
 ---
 
@@ -115,13 +129,14 @@ SSOT: [SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md](./SHOP_REWARD_OPS_ACTIVATION_RUNBO
 
 ### 5.1 Maven — Shop 13클래스 (84건)
 
-저장소 루트에서:
+저장소 루트에서 (`-DforkCount=1` **권장** — 병렬 fork 시 `ClassNotFoundException` 회피):
 
 ```bash
-mvn -Dtest=AdminShopCatalogSkuServiceImplTest,AdminShopCatalogSkuControllerMvcTest,AdminPointTenantPolicyControllerMvcTest,AdminShopOrderControllerMvcTest,ClientShopControllerMvcTest,ClientShopCheckoutServiceImplTest,ClientPointWalletServiceImplTest,PointTenantPolicyServiceImplTest,TenantComponentActivationServiceImplTest,ShopOrderFulfillmentServiceImplTest,AdminShopOrderRefundServiceImplTest,ShopOrderHoldExpiryServiceImplTest,ClientShopConsultantMappingServiceImplTest test
+mvn clean test -Dtest=AdminShopCatalogSkuServiceImplTest,AdminShopCatalogSkuControllerMvcTest,AdminPointTenantPolicyControllerMvcTest,AdminShopOrderControllerMvcTest,ClientShopControllerMvcTest,ClientShopCheckoutServiceImplTest,ClientPointWalletServiceImplTest,PointTenantPolicyServiceImplTest,TenantComponentActivationServiceImplTest,ShopOrderFulfillmentServiceImplTest,AdminShopOrderRefundServiceImplTest,ShopOrderHoldExpiryServiceImplTest,ClientShopConsultantMappingServiceImplTest,ShopNotificationHelperImplTest,MobilePushDispatchServiceImplTest -DforkCount=1 test
 ```
 
-**통과 기준**: `BUILD SUCCESS`, **13클래스·84 tests** 0 failures ([SHOP_P2 §2](./SHOP_P2_INTEGRATION_TEST_REPORT.md), [IMPLEMENTATION_STATUS §1.1](./SHOP_REWARD_IMPLEMENTATION_STATUS.md)).
+**통과 기준**: `BUILD SUCCESS`, **15클래스·103 tests** 0 failures ([SHOP_P2 §2](./SHOP_P2_INTEGRATION_TEST_REPORT.md), [IMPLEMENTATION_STATUS §1.1](./SHOP_REWARD_IMPLEMENTATION_STATUS.md)).  
+**포함**: `ShopNotificationHelperImplTest` (R11, 7건)·`MobilePushDispatchServiceImplTest` (shop dispatch, 12건). 최종 게이트 2026-05-19: **PASS**.
 
 ### 5.2 Frontend CI 빌드
 
@@ -145,18 +160,22 @@ cd frontend && npm run build:ci
 
 | 항목 | 명령 |
 |------|------|
-| Expo Jest | `cd expo-app && npx jest --testPathPattern=clientShop` — **29 passed** (4 suite) |
+| Expo Jest | `cd expo-app && npx jest --testPathPattern='clientShop|pushScenarios'` — **32 passed** (5 suite) |
 | Playwright | `tests/e2e/tests/client/client-shop-catalog-to-cart.spec.ts` (dev API·OPS·시드 후) |
 
 ---
 
 ## 6. 다음 사용자 액션 (2026-05-20)
 
-1. **커밋 (A)/(B)/(C)** — §2·§3 glob; `api-*.json`·credentials 제외 ([§1](#1-커밋-제외-필수)).
-2. **`develop` push** — 원격 반영 후 CI·배포 워크플로 트리거.
-3. **dev 배포** — backend → Flyway(`002`~`007`, `V20260520_001`, `V20260521_001`) → frontend ([§4](#4-배포-순서-dev-기준)).
-4. **OPS activate + seed** — `activate-shop-reward-tenant-components.sql` + (선택) `seed-shop-demo-catalog.sql` ([런북](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md) §2·§3.5).
-5. **수동 QA** — [IMPLEMENTATION_STATUS §4](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) Admin·Client·P1 회귀; (선택) Playwright R10.
+| # | 액션 | 상태 |
+|---|------|------|
+| **(1)** | **커밋 (A)/(B)/(C)** — §2·§3 glob; `api-*.json`·credentials 제외 ([§1](#1-커밋-제외-필수)) | **R11 재커밋 필요** (P0 알림·푸시 미반영분) |
+| **(2)** | **`develop` push** — 원격 반영·CI·배포 워크플로 트리거 | **R11 재커밋 필요** (1 완료 후) |
+| **(3)** | **dev 배포** — backend → Flyway(`002`~`007`, `V20260520_001`, `V20260521_001`) → frontend ([§4](#4-배포-순서-dev-기준)) | **현재 단계** |
+| **(4)** | **OPS activate + seed** — `activate-shop-reward-tenant-components.sql` + (선택) `seed-shop-demo-catalog.sql`; 배포 직후 10분은 [런북 §4.1](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#41-배포-직후-10분-체크리스트) | **현재 단계** |
+| **(5)** | **수동 QA·GO 판정** — [IMPLEMENTATION_STATUS §4](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) Admin·Client·P1 회귀; (선택) Playwright R10; §5.2 OPS·QA 게이트 갱신 | **현재 단계** |
+
+> **SSOT**: 배포·OPS·QA 판정은 [IMPLEMENTATION_STATUS §5.2](./SHOP_REWARD_IMPLEMENTATION_STATUS.md#52-운영-반영--배포opsqa-게이트-2026-05-20)와 [런북 §4.1](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#41-배포-직후-10분-체크리스트)를 함께 본다.
 
 ---
 
@@ -164,9 +183,9 @@ cd frontend && npm run build:ci
 
 - [ ] `api-*.json` 및 `test-results` 미스테이징
 - [ ] (A) Flyway 파일명·버전 순서 확인 (`007` shop catalog, `020` price history, `021` LNB)
-- [ ] (A) Maven **13클래스·84건** PASS
+- [ ] (A) Maven **15클래스·103건** PASS (`-DforkCount=1` 권장)
 - [ ] (B) `npm run build:ci` PASS
-- [ ] (C) SHOP_* 문서·OPS SQL·expo-app Shop — credentials 없음; Expo Jest **29** PASS
+- [ ] (C) SHOP_* 문서·OPS SQL·expo-app Shop·pushScenarios — credentials 없음; Expo Jest **32** PASS
 - [ ] 푸시 후 dev: backend → Flyway → OPS → frontend 순 배포
 - [ ] §4 수동 QA 3줄(Admin / Client / P1) 스테이징·dev에서 스모크
 

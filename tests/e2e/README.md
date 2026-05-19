@@ -22,13 +22,25 @@
 | 4 | 어드민에서 **`catalogVisible=true`** SKU ≥1 (활성 PLP 탭) | `shop-sku-add-first` testid 노출 |
 | 5 | 내담자 로그인 자격 (`loginClientWeb` — `tests/e2e/helpers/erpAuth.ts`) | CI: `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` 또는 `TEST_USERNAME`/`TEST_PASSWORD` |
 
-**회귀 명령** ( `tests/e2e` 디렉터리):
+**R10 실행 순서** (5줄, `tests/e2e` 디렉터리):
+
+1. 백엔드 **8080** + 프론트 **3000** 기동 (`BASE_URL`·API 베이스 8080 일치).
+2. Flyway Shop P2 **`002`~`007`** + **`V20260520_001`** + **`V20260521_001`** 적용 확인.
+3. OPS **`activate-shop-reward-tenant-components.sql`** — `CLIENT_SHOP`·`CLIENT_REWARD`·`ADMIN_SHOP_CATALOG` 활성.
+4. 어드민에서 **`catalogVisible=true`** SKU ≥1 (또는 `scripts/ops/seed-shop-demo-catalog.sql`).
+5. `npx playwright test client-shop-catalog-to-cart --project=chromium` (내담자 자격: `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` 또는 `TEST_USERNAME`/`TEST_PASSWORD`).
+
+**회귀 명령** (위 1~4 충족 후):
 
 ```bash
 npx playwright test client-shop-catalog-to-cart --project=chromium
 ```
 
-PG·checkout 결제는 범위 외. 8080 미기동 시 스펙 전체 스킵(로그인 타임아웃 방지).
+PG·checkout 결제는 범위 외. 8080 미기동 시 스펙 전체 스킵(로그인 타임아웃 방지). 수동 QA 표: [`SHOP_REWARD_MANUAL_QA_RUN_SHEET.md`](../docs/project-management/SHOP_REWARD_MANUAL_QA_RUN_SHEET.md).
+
+## 어드민 쇼핑·리워드 (ADMIN_SHOP_CATALOG) — Playwright 스모크
+
+스펙: [`tests/admin/admin-shop-catalog-skus-smoke.spec.ts`](./tests/admin/admin-shop-catalog-skus-smoke.spec.ts). 전제: 8080+3000, ERP 어드민 자격, TenantComponent **`ADMIN_SHOP_CATALOG`** 활성(Maestro는 Expo 전용·어드민 웹 미지원). `cd tests/e2e` 후 `npx playwright test admin-shop-catalog-skus-smoke --project=chromium`.
 
 ## ERP / 관리자 로그인 스펙
 

@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| 일자 | 2026-05-19 (최종 갱신 14:18 KST, **R8·R10** Shop 테스트 게이트) |
+| 일자 | 2026-05-19 (최종 갱신 **14:42 KST**, Tier A **REG-01·R10** core-tester) |
 | 범위 | Shop P1 + P2-web + P2-admin + 환불·fulfillment·주문 MockMvc |
 | SSOT | [SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md](./SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md), [SHOP_REWARD_IMPLEMENTATION_STATUS.md](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) |
 | 코드 수정 | **없음** (core-tester 전체 Maven 검증·문서 갱신) |
@@ -12,16 +12,32 @@
 
 ## 1. 판정 요약
 
+### 1.0 Tier A — REG-01 · R10 (2026-05-19 14:42 KST)
+
+| ID | 게이트 | exit | passed | skipped | failed | 판정 |
+|----|--------|------|--------|---------|--------|------|
+| **REG-01** | Maven Shop **14클래스** (`ShopNotificationHelperImplTest` 포함) | **0** (`-DforkCount=0`) | **91** | 0 | 0 | **PASS** |
+| **REG-01** | Maven (위임 명령: `mvn clean test … -DforkCount=1 test`) | **1** | — | — | — | **FAIL** (testCompile `NoSuchFileException` / fork `ClassNotFoundException` — 로컬 `target` 경합) |
+| **REG-01** | Expo Jest `pushScenarios\|clientShop` | **0** | **32** (5 suite) | 0 | 0 | **PASS** |
+| **REG-01** | `frontend` `npm run build:ci` | **0** | — | — | — | **PASS** (eslint 경고만) |
+| **R10** | Playwright `client-shop-catalog-to-cart` (chromium) | **0** | 0 | **1** | 0 | **SKIP** — `skipWhenLocalBackend8080Down` (8080 미기동) |
+| **R10** | Playwright `admin-shop-catalog-skus-smoke` (chromium) | **0** | 0 | **1** | 0 | **SKIP** — 동일 |
+| **R10** | Playwright 전 프로젝트 (firefox/webkit) | **1** | 0 | 2 | **4** | **환경** — `npx playwright install` 미실행 |
+
+**Tier A 종합**: **REG-01 = GO** (자동 회귀). **R10 = 잔여** (8080·OPS·시드·Flyway 후 재실행).
+
+권장 Maven (CI·로컬 게이트): `-DforkCount=0` 또는 `rm -rf target && mvn test -Dtest=… -DforkCount=1` (중복 `test` goal·동시 `clean` 금지).
+
 | 게이트 | 결과 |
 |--------|------|
-| Shop 관련 Maven 테스트 **84건** | **PASS** (BUILD SUCCESS, **13클래스**, ~36s, `mvn clean test -DforkCount=1`) |
+| Shop 관련 Maven 테스트 **91건** | **PASS** (BUILD SUCCESS, **14클래스**, ~22s, `-DforkCount=0`; R11 `ShopNotificationHelperImplTest` **+7**) |
 | hold TTL (R4) | **4건 PASS** — `ShopOrderHoldExpiryServiceImplTest` |
 | Admin Controller slice | **13건 PASS** (카탈로그 **8** + 포인트 정책 2 + 주문 3) |
 | Client API slice | **8건 PASS** (catalog·ledger·**컴포넌트 403**·주문 400·**consultant-mappings R8**) |
 | 환불·fulfillment 단위 | **10건 PASS** (refund 6 + fulfillment 4) |
 | P1 GAP T6 cross-tenant | **2건 반영** (`cancelOrder`·`preparePayment` 단위) |
 | P1 GAP H4·I3 | **반영** — §4·§보강 결과 참고 |
-| Playwright Shop E2E | **spec 1건**, 로컬 **1 skipped** (8080 미기동) — §6.1·`tests/e2e/README.md` |
+| Playwright Shop E2E | **2 spec** (client R10 + admin smoke), chromium **2 skipped** (8080 미기동, exit 0) — §6.1 |
 | Flyway P2 마이그레이션 | **5종 + V20260519_001 버전 충돌** — §7 |
 | P2 통합 GO | **조건부 GO** — Flyway 적용 + §5·§6 수동 스모크 후 |
 
@@ -30,7 +46,7 @@
 ## 2. Maven 단위 테스트 실행
 
 ```bash
-mvn clean test -Dtest=AdminShopCatalogSkuServiceImplTest,AdminShopCatalogSkuControllerMvcTest,AdminPointTenantPolicyControllerMvcTest,AdminShopOrderControllerMvcTest,ClientShopControllerMvcTest,ClientShopCheckoutServiceImplTest,ClientPointWalletServiceImplTest,PointTenantPolicyServiceImplTest,TenantComponentActivationServiceImplTest,ShopOrderFulfillmentServiceImplTest,AdminShopOrderRefundServiceImplTest,ShopOrderHoldExpiryServiceImplTest,ClientShopConsultantMappingServiceImplTest -DforkCount=1 test
+mvn test -Dtest=AdminShopCatalogSkuServiceImplTest,AdminShopCatalogSkuControllerMvcTest,AdminPointTenantPolicyControllerMvcTest,AdminShopOrderControllerMvcTest,ClientShopControllerMvcTest,ClientShopCheckoutServiceImplTest,ClientPointWalletServiceImplTest,PointTenantPolicyServiceImplTest,TenantComponentActivationServiceImplTest,ShopOrderFulfillmentServiceImplTest,AdminShopOrderRefundServiceImplTest,ShopOrderHoldExpiryServiceImplTest,ClientShopConsultantMappingServiceImplTest,ShopNotificationHelperImplTest -DforkCount=0
 ```
 
 | 클래스 | Tests | Failures | Errors | Skipped | 결과 |
@@ -269,8 +285,9 @@ SSOT [SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md](./SHOP_P1_PG_POINT_COMMIT_TEST_REP
 | `tests/e2e/tests/client/client-shop-catalog-to-cart.spec.ts` | **스펙 준비·전제 문서화** (PLP → cart) |
 | 전제 체크리스트 | [`tests/e2e/README.md`](../../tests/e2e/README.md) §「내담자 쇼핑 (CLIENT_SHOP)」 — Flyway·SKU·`CLIENT_SHOP` 활성 |
 | skip 가드 | `skipWhenCiMissingE2eCredentials` + `skipWhenLocalBackend8080Down` (beforeEach) |
-| R10 로컬 실행 (2026-05-19 14:18 KST) | **1 skipped** — 8080 미기동 (`skipWhenLocalBackend8080Down`, exit 0) |
-| 통과 조건 | 8080+3000·Flyway P2·노출 SKU·내담자 자격 후 재실행 → **1 passed** 기대 |
+| R10 로컬 (2026-05-19 **14:42** KST) | **2 skipped** (chromium) — `client-shop-catalog-to-cart` + `admin-shop-catalog-skus-smoke`; 8080 down, exit **0** |
+| admin smoke spec | `tests/e2e/tests/admin/admin-shop-catalog-skus-smoke.spec.ts` — R10과 동일 skip 가드 |
+| 통과 조건 | 8080+3000·Flyway P2·OPS·노출 SKU·내담자/어드민 자격 후 재실행 → **2 passed** 기대 |
 
 **재실행**: `cd tests/e2e && npx playwright test client-shop-catalog-to-cart --project=chromium`
 

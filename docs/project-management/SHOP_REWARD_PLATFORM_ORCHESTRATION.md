@@ -132,6 +132,8 @@ flowchart TB
 
 ### 3.4 잔여 갭
 
+**P2 Shop·Reward 자동/체크아웃 게이트**: ~~R8~~ **완료 (웹+Expo, 2026-05-20)** — **R10 Playwright**·**R11 알림·푸시(P0)** 잔여 (R5/R6/R7은 Phase 3·MVP 범위). **전체 완결 갭·티어·R11 시나리오·coder 배치**: [SHOP_REWARD_FULL_COMPLETION_ORCHESTRATION.md](./SHOP_REWARD_FULL_COMPLETION_ORCHESTRATION.md).
+
 | ID | 갭 | Phase·비고 |
 |----|-----|------------|
 | ~~R1~~ | ~~PG 실환불 (어드민)~~ | **완료 (2026-05-19)** — `AdminShopOrderRefundServiceImpl`, PG `refundPayment` |
@@ -144,6 +146,7 @@ flowchart TB
 | ~~R8~~ | ~~**체크아웃 UI mapping 선택**~~ | **완료 (웹+Expo, 2026-05-20)** — `ShopCheckoutPage`·`expo-app/.../checkout.tsx`·`GET .../consultant-mappings`·`ClientShopConsultantMappingServiceImplTest` 3건·`clientShopCheckout` Jest |
 | ~~R9~~ | ~~**OPS 컴포넌트·Client API 게이트**~~ | **완료 (코드·스크립트, 2026-05-20)** — `scripts/ops/activate-shop-reward-tenant-components.sql`, `seed-shop-demo-catalog.sql`, `ClientShopController` → 403; **환경별** SQL 실행·수동 QA는 [런북](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md) 잔여 |
 | R10 | **Playwright E2E** catalog→cart | **잔여** — spec·testid 준비; dev 배포·OPS·SKU 시드 후 passed 기대 ([§1.3](./SHOP_REWARD_IMPLEMENTATION_STATUS.md)) |
+| R11 | **쇼핑·리워드 인앱·모바일 푸시** (PAID·실패·EARN·TTL·환불·fulfillment) | **잔여 P0** — `markOrderPaidAndCommitPoints` 무알림; PG `payment_completed` 딥링크 충돌; [FULL_COMPLETION §3](./SHOP_REWARD_FULL_COMPLETION_ORCHESTRATION.md) |
 
 ### 3.5 다음 단계 (잔여·운영, 2026-05-20)
 

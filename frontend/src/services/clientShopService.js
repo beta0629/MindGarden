@@ -9,7 +9,28 @@ import StandardizedApi from '../utils/standardizedApi';
 import { CLIENT_SHOP_API } from '../constants/clientShopApi';
 import { normalizeShopCatalogCategory } from '../constants/clientShopConstants';
 
-const unwrap = (res) => (res && res.success ? res.data : null);
+/**
+ * StandardizedApi(apiGet)는 기본적으로 ApiResponse.data를 추출해 반환한다.
+ * 배열·도메인 객체가 직접 오는 경우와 { success, data } 래퍼가 남는 경우를 모두 처리한다.
+ *
+ * @param {*} res
+ * @returns {*|null}
+ */
+const unwrap = (res) => {
+  if (res == null) {
+    return null;
+  }
+  if (Array.isArray(res)) {
+    return res;
+  }
+  if (typeof res !== 'object') {
+    return null;
+  }
+  if ('success' in res) {
+    return res.success ? res.data ?? null : null;
+  }
+  return res;
+};
 
 /**
  * @param {object} row

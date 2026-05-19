@@ -21,6 +21,7 @@ INSERT INTO shop_catalog_skus (
     sku_code,
     title,
     catalog_category,
+    thumbnail_url,
     unit_price_minor,
     currency,
     catalog_visible,
@@ -33,6 +34,7 @@ SELECT
     'DEV-CONSULT-DEMO-01',
     'Dev 상담 패키지 (QA)',
     'CONSULTATION',
+    '/api/v1/files/shop-catalog-thumbnails/placeholder-dev-consult-demo.png',
     50000,
     'KRW',
     1,
@@ -48,10 +50,14 @@ WHERE NOT EXISTS (
       AND s.is_deleted = 0
 );
 
--- 기존 행이 있으면 PLP·E2E 전제(catalog_visible·active·CONSULTATION) 맞춤
+-- 기존 행이 있으면 PLP·E2E 전제(catalog_visible·active·CONSULTATION·썸네일) 맞춤
 UPDATE shop_catalog_skus
 SET
     catalog_category = 'CONSULTATION',
+    thumbnail_url = COALESCE(
+        NULLIF(TRIM(thumbnail_url), ''),
+        '/api/v1/files/shop-catalog-thumbnails/placeholder-dev-consult-demo.png'
+    ),
     catalog_visible = 1,
     active = 1,
     is_deleted = 0

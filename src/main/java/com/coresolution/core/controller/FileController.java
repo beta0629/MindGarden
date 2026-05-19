@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.coresolution.consultation.constant.ShopCatalogSkuConstants;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,6 +60,37 @@ public class FileController {
                 
         } catch (MalformedURLException e) {
             log.error("로고 파일 경로 오류: fileName={}", fileName, e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * 쇼핑 카탈로그 SKU 썸네일 서빙.
+     */
+    @GetMapping("/shop-catalog-thumbnails/{fileName}")
+    @Operation(summary = "카탈로그 썸네일 조회", description = "업로드된 SKU 썸네일 이미지를 조회합니다")
+    public ResponseEntity<Resource> getShopCatalogThumbnail(
+            @Parameter(description = "파일명") @PathVariable String fileName) {
+        try {
+            Path uploadBase = Paths.get(ShopCatalogSkuConstants.THUMBNAIL_UPLOAD_DIR).toAbsolutePath().normalize();
+            Path filePath = uploadBase.resolve(fileName).normalize();
+            if (!filePath.startsWith(uploadBase)) {
+                log.warn("썸네일 파일 경로가 허용 범위를 벗어남: fileName={}", fileName);
+                return ResponseEntity.badRequest().build();
+            }
+            Resource resource = new UrlResource(filePath.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                log.warn("썸네일 파일을 찾을 수 없음: fileName={}", fileName);
+                return ResponseEntity.notFound().build();
+            }
+            String contentType = getContentType(fileName);
+            log.debug("썸네일 파일 서빙: fileName={}, contentType={}", fileName, contentType);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
+                    .body(resource);
+        } catch (MalformedURLException e) {
+            log.error("썸네일 파일 경로 오류: fileName={}", fileName, e);
             return ResponseEntity.badRequest().build();
         }
     }

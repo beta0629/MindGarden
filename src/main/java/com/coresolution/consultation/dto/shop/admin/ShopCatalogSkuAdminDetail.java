@@ -13,6 +13,8 @@ public record ShopCatalogSkuAdminDetail(
         String descriptionText,
         long unitPriceMinor,
         String currency,
+        String catalogCategory,
+        String thumbnailUrl,
         boolean catalogVisible,
         boolean active,
         int sortOrder

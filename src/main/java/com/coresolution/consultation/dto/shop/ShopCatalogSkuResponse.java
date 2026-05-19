@@ -24,4 +24,7 @@ public class ShopCatalogSkuResponse {
     private String currency;
     /** CONSULTATION | ASSESSMENT */
     private String catalogCategory;
+
+    /** PLP/PDP 대표 이미지 URL */
+    private String thumbnailUrl;
 }

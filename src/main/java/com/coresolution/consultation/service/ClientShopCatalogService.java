@@ -18,4 +18,13 @@ public interface ClientShopCatalogService {
      * @return SKU 목록
      */
     List<ShopCatalogSkuResponse> listVisibleSkus(String tenantId);
+
+    /**
+     * 노출 중인 단일 SKU (PDP).
+     *
+     * @param tenantId 테넌트 ID
+     * @param skuCode SKU 코드
+     * @return SKU
+     */
+    ShopCatalogSkuResponse getVisibleSkuByCode(String tenantId, String skuCode);
 }

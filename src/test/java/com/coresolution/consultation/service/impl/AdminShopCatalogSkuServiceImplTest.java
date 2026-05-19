@@ -8,12 +8,16 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.coresolution.consultation.constant.ShopCatalogCategory;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminDetail;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuUpsertRequest;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopCatalogSkuPriceHistory;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ShopCatalogSkuPriceHistoryRepository;
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
+import com.coresolution.consultation.service.ShopCatalogSkuCodeGenerator;
+import com.coresolution.consultation.service.ShopCatalogSkuThumbnailService;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,6 +38,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class AdminShopCatalogSkuServiceImplTest {
 
     private static final String TENANT = "tenant-admin-shop";
+    private static final String THUMB = "/api/v1/files/shop-catalog-thumbnails/test.png";
 
     @Mock
     private ShopCatalogSkuRepository shopCatalogSkuRepository;
@@ -41,8 +46,30 @@ class AdminShopCatalogSkuServiceImplTest {
     @Mock
     private ShopCatalogSkuPriceHistoryRepository shopCatalogSkuPriceHistoryRepository;
 
+    @Mock
+    private ShopCatalogSkuCodeGenerator shopCatalogSkuCodeGenerator;
+
+    @Mock
+    private ShopCatalogSkuThumbnailService shopCatalogSkuThumbnailService;
+
     @InjectMocks
     private AdminShopCatalogSkuServiceImpl adminShopCatalogSkuService;
+
+    private static ShopCatalogSkuUpsertRequest upsert(
+            String skuCode,
+            long unitPriceMinor) {
+        return new ShopCatalogSkuUpsertRequest(
+                skuCode,
+                "패키지",
+                null,
+                unitPriceMinor,
+                "KRW",
+                ShopCatalogCategory.CONSULTATION,
+                THUMB,
+                true,
+                true,
+                0);
+    }
 
     @Test
     @DisplayName("patchCatalogVisible — 존재하지 않으면 EntityNotFoundException")
@@ -60,11 +87,46 @@ class AdminShopCatalogSkuServiceImplTest {
         when(shopCatalogSkuRepository.existsByTenantIdAndSkuCodeAndIsDeletedFalse(TENANT, "PKG-01"))
                 .thenReturn(true);
 
-        ShopCatalogSkuUpsertRequest request = new ShopCatalogSkuUpsertRequest(
-                "PKG-01", "패키지", null, 10000L, "KRW", true, true, 0);
+        ShopCatalogSkuUpsertRequest request = upsert("PKG-01", 10000L);
 
         assertThrows(IllegalArgumentException.class,
                 () -> adminShopCatalogSkuService.create(TENANT, request));
+    }
+
+    @Test
+    @DisplayName("create — skuCode 생략 시 서버 자동 발급")
+    void create_whenSkuCodeAbsent_generatesCode() {
+        when(shopCatalogSkuCodeGenerator.generateNextCode(TENANT)).thenReturn("SHOP-20260523-001");
+        when(shopCatalogSkuRepository.existsByTenantIdAndSkuCodeAndIsDeletedFalse(TENANT, "SHOP-20260523-001"))
+                .thenReturn(false);
+        when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> {
+            ShopCatalogSku row = inv.getArgument(0);
+            row.setId(11L);
+            return row;
+        });
+        when(shopCatalogSkuPriceHistoryRepository.save(any(ShopCatalogSkuPriceHistory.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        ShopCatalogSkuUpsertRequest request = upsert(null, 10000L);
+        ShopCatalogSkuAdminDetail detail = adminShopCatalogSkuService.create(TENANT, request);
+
+        assertEquals("SHOP-20260523-001", detail.skuCode());
+        ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
+        verify(shopCatalogSkuRepository).save(captor.capture());
+        assertEquals("SHOP-20260523-001", captor.getValue().getSkuCode());
+        assertEquals(THUMB, captor.getValue().getThumbnailUrl());
+    }
+
+    @Test
+    @DisplayName("create — thumbnailUrl 없으면 IllegalArgumentException")
+    void create_whenThumbnailMissing_throws() {
+        ShopCatalogSkuUpsertRequest request = new ShopCatalogSkuUpsertRequest(
+                "PKG-99", "패키지", null, 10000L, "KRW", ShopCatalogCategory.CONSULTATION,
+                null, true, true, 0);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> adminShopCatalogSkuService.create(TENANT, request));
+        verify(shopCatalogSkuRepository, never()).save(any());
     }
 
     @Test
@@ -80,17 +142,15 @@ class AdminShopCatalogSkuServiceImplTest {
         row.setCatalogVisible(true);
         row.setActive(true);
         row.setSortOrder(0);
+        row.setThumbnailUrl(THUMB);
 
         when(shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(7L, TENANT))
                 .thenReturn(Optional.of(row));
-        when(shopCatalogSkuRepository.existsByTenantIdAndSkuCodeAndIsDeletedFalseAndIdNot(TENANT, "PKG-01", 7L))
-                .thenReturn(false);
         when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> inv.getArgument(0));
         when(shopCatalogSkuPriceHistoryRepository.save(any(ShopCatalogSkuPriceHistory.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        ShopCatalogSkuUpsertRequest request = new ShopCatalogSkuUpsertRequest(
-                "PKG-01", "패키지", null, 12000L, "KRW", true, true, 0);
+        ShopCatalogSkuUpsertRequest request = upsert("OTHER-CODE", 12000L);
 
         adminShopCatalogSkuService.update(TENANT, 7L, request);
 
@@ -99,7 +159,7 @@ class AdminShopCatalogSkuServiceImplTest {
         assertEquals(7L, captor.getValue().getSkuId());
         assertEquals("PKG-01", captor.getValue().getSkuCode());
         assertEquals(12000L, captor.getValue().getUnitPriceMinor());
-        assertEquals("KRW", captor.getValue().getCurrency());
+        assertEquals("PKG-01", row.getSkuCode());
     }
 
     @Test
@@ -115,15 +175,13 @@ class AdminShopCatalogSkuServiceImplTest {
         row.setCatalogVisible(true);
         row.setActive(true);
         row.setSortOrder(0);
+        row.setThumbnailUrl(THUMB);
 
         when(shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(8L, TENANT))
                 .thenReturn(Optional.of(row));
-        when(shopCatalogSkuRepository.existsByTenantIdAndSkuCodeAndIsDeletedFalseAndIdNot(TENANT, "PKG-02", 8L))
-                .thenReturn(false);
         when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        ShopCatalogSkuUpsertRequest request = new ShopCatalogSkuUpsertRequest(
-                "PKG-02", "패키지2", null, 5000L, "KRW", true, true, 0);
+        ShopCatalogSkuUpsertRequest request = upsert("PKG-02", 5000L);
 
         adminShopCatalogSkuService.update(TENANT, 8L, request);
 
@@ -146,5 +204,31 @@ class AdminShopCatalogSkuServiceImplTest {
         ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
         verify(shopCatalogSkuRepository).save(captor.capture());
         assertEquals(true, captor.getValue().getCatalogVisible());
+    }
+
+    @Test
+    @DisplayName("uploadThumbnail — 저장 URL 반영")
+    void uploadThumbnail_setsThumbnailUrl() {
+        ShopCatalogSku row = new ShopCatalogSku();
+        row.setId(4L);
+        row.setTenantId(TENANT);
+        row.setSkuCode("PKG-04");
+        row.setTitle("상품");
+        row.setUnitPriceMinor(1000L);
+        row.setCurrency("KRW");
+        row.setCatalogVisible(true);
+        row.setActive(true);
+        row.setSortOrder(0);
+
+        when(shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(4L, TENANT))
+                .thenReturn(Optional.of(row));
+        when(shopCatalogSkuThumbnailService.storeThumbnail(eq(TENANT), eq(4L), any()))
+                .thenReturn(THUMB);
+        when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ShopCatalogSkuAdminDetail detail = adminShopCatalogSkuService.uploadThumbnail(TENANT, 4L, null);
+
+        assertEquals(THUMB, detail.thumbnailUrl());
+        assertEquals(THUMB, row.getThumbnailUrl());
     }
 }

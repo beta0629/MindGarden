@@ -2,6 +2,8 @@ package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.BankTransferConstants;
 import com.coresolution.consultation.constant.ShopAdminOrderConstants;
+import com.coresolution.consultation.constant.ShopCatalogCategory;
+import com.coresolution.consultation.constant.ShopCatalogSkuConstants;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminDetail;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminItem;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuPriceHistoryItem;
@@ -12,6 +14,8 @@ import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ShopCatalogSkuPriceHistoryRepository;
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
 import com.coresolution.consultation.service.AdminShopCatalogSkuService;
+import com.coresolution.consultation.service.ShopCatalogSkuCodeGenerator;
+import com.coresolution.consultation.service.ShopCatalogSkuThumbnailService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 어드민 카탈로그 SKU 서비스.
@@ -39,6 +44,8 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
 
     private final ShopCatalogSkuRepository shopCatalogSkuRepository;
     private final ShopCatalogSkuPriceHistoryRepository shopCatalogSkuPriceHistoryRepository;
+    private final ShopCatalogSkuCodeGenerator shopCatalogSkuCodeGenerator;
+    private final ShopCatalogSkuThumbnailService shopCatalogSkuThumbnailService;
 
     @Override
     @Transactional(readOnly = true)
@@ -85,10 +92,8 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
     @Transactional
     public ShopCatalogSkuAdminDetail create(String tenantId, ShopCatalogSkuUpsertRequest request) {
         String tid = requireTenant(tenantId);
-        String skuCode = normalizeSkuCode(request.skuCode());
-        if (shopCatalogSkuRepository.existsByTenantIdAndSkuCodeAndIsDeletedFalse(tid, skuCode)) {
-            throw new IllegalArgumentException("이미 사용 중인 skuCode 입니다: " + skuCode);
-        }
+        String skuCode = resolveSkuCodeForCreate(tid, request.skuCode());
+        assertSkuCodeUniqueForCreate(tid, skuCode);
         ShopCatalogSku row = new ShopCatalogSku();
         row.setTenantId(tid);
         row.setSkuCode(skuCode);
@@ -105,15 +110,21 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         ShopCatalogSku row = shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(id, tid)
                 .orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, id));
         Long previousUnitPriceMinor = row.getUnitPriceMinor();
-        String skuCode = normalizeSkuCode(request.skuCode());
-        if (shopCatalogSkuRepository.existsByTenantIdAndSkuCodeAndIsDeletedFalseAndIdNot(tid, skuCode, id)) {
-            throw new IllegalArgumentException("이미 사용 중인 skuCode 입니다: " + skuCode);
-        }
-        row.setSkuCode(skuCode);
         applyUpsert(row, request);
         ShopCatalogSku saved = shopCatalogSkuRepository.save(row);
         recordPriceHistoryIfChanged(saved, previousUnitPriceMinor);
         return toDetail(saved);
+    }
+
+    @Override
+    @Transactional
+    public ShopCatalogSkuAdminDetail uploadThumbnail(String tenantId, Long id, MultipartFile file) {
+        String tid = requireTenant(tenantId);
+        ShopCatalogSku row = shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(id, tid)
+                .orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, id));
+        String thumbnailUrl = shopCatalogSkuThumbnailService.storeThumbnail(tid, id, file);
+        row.setThumbnailUrl(thumbnailUrl);
+        return toDetail(shopCatalogSkuRepository.save(row));
     }
 
     @Override
@@ -124,6 +135,25 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 .orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, id));
         row.setCatalogVisible(catalogVisible);
         shopCatalogSkuRepository.save(row);
+    }
+
+    private String resolveSkuCodeForCreate(String tenantId, String requestedSkuCode) {
+        if (StringUtils.hasText(requestedSkuCode)) {
+            return requestedSkuCode.trim();
+        }
+        for (int attempt = 0; attempt < ShopCatalogSkuConstants.SKU_CODE_GENERATION_MAX_ATTEMPTS; attempt++) {
+            String candidate = shopCatalogSkuCodeGenerator.generateNextCode(tenantId);
+            if (!shopCatalogSkuRepository.existsByTenantIdAndSkuCodeAndIsDeletedFalse(tenantId, candidate)) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException("SKU 코드 자동 발급에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    }
+
+    private void assertSkuCodeUniqueForCreate(String tenantId, String skuCode) {
+        if (shopCatalogSkuRepository.existsByTenantIdAndSkuCodeAndIsDeletedFalse(tenantId, skuCode)) {
+            throw new IllegalArgumentException(ShopCatalogSkuConstants.DUPLICATE_SKU_CODE_MESSAGE + skuCode);
+        }
     }
 
     private void recordPriceHistoryIfChanged(ShopCatalogSku row, Long previousUnitPriceMinor) {
@@ -166,14 +196,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         return tenantId.trim();
     }
 
-    private static String normalizeSkuCode(String skuCode) {
-        if (!StringUtils.hasText(skuCode)) {
-            throw new IllegalArgumentException("skuCode는 비울 수 없습니다.");
-        }
-        return skuCode.trim();
-    }
-
-    private static void applyUpsert(ShopCatalogSku row, ShopCatalogSkuUpsertRequest request) {
+    private void applyUpsert(ShopCatalogSku row, ShopCatalogSkuUpsertRequest request) {
         row.setTitle(request.title().trim());
         row.setDescriptionText(
                 StringUtils.hasText(request.descriptionText()) ? request.descriptionText().trim() : null);
@@ -185,6 +208,35 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         row.setCatalogVisible(request.catalogVisible());
         row.setActive(request.active());
         row.setSortOrder(request.sortOrder());
+        row.setCatalogCategory(normalizeCatalogCategory(request.catalogCategory(), row.getSkuCode()));
+
+        if (StringUtils.hasText(request.thumbnailUrl())) {
+            row.setThumbnailUrl(request.thumbnailUrl().trim());
+        }
+        requireThumbnailUrl(row);
+    }
+
+    private static void requireThumbnailUrl(ShopCatalogSku row) {
+        if (!StringUtils.hasText(row.getThumbnailUrl())) {
+            throw new IllegalArgumentException(ShopCatalogSkuConstants.THUMBNAIL_REQUIRED_MESSAGE);
+        }
+    }
+
+    private static String normalizeCatalogCategory(String requestedCategory, String skuCode) {
+        if (StringUtils.hasText(requestedCategory)) {
+            String normalized = requestedCategory.trim().toUpperCase();
+            if (ShopCatalogCategory.ASSESSMENT.equals(normalized)) {
+                return ShopCatalogCategory.ASSESSMENT;
+            }
+            return ShopCatalogCategory.CONSULTATION;
+        }
+        if (skuCode != null) {
+            String upper = skuCode.toUpperCase();
+            if (upper.startsWith("ASSESS_") || upper.startsWith("TEST_") || upper.contains("_ASSESS")) {
+                return ShopCatalogCategory.ASSESSMENT;
+            }
+        }
+        return ShopCatalogCategory.CONSULTATION;
     }
 
     private static ShopCatalogSkuAdminItem toItem(ShopCatalogSku row) {
@@ -194,6 +246,8 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 row.getTitle(),
                 row.getUnitPriceMinor(),
                 row.getCurrency(),
+                row.getCatalogCategory(),
+                row.getThumbnailUrl(),
                 Boolean.TRUE.equals(row.getCatalogVisible()),
                 Boolean.TRUE.equals(row.getActive()),
                 row.getSortOrder() != null ? row.getSortOrder() : 0,
@@ -208,6 +262,8 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 row.getDescriptionText(),
                 row.getUnitPriceMinor(),
                 row.getCurrency(),
+                row.getCatalogCategory(),
+                row.getThumbnailUrl(),
                 Boolean.TRUE.equals(row.getCatalogVisible()),
                 Boolean.TRUE.equals(row.getActive()),
                 row.getSortOrder() != null ? row.getSortOrder() : 0);

@@ -57,4 +57,7 @@ public class ShopCatalogSku extends BaseEntity {
 
     @Column(name = "catalog_category", length = 32)
     private String catalogCategory;
+
+    @Column(name = "thumbnail_url", length = 512)
+    private String thumbnailUrl;
 }

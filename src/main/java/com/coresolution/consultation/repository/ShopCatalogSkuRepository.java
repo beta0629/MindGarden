@@ -39,4 +39,12 @@ public interface ShopCatalogSkuRepository extends BaseRepository<ShopCatalogSku,
     boolean existsByTenantIdAndSkuCodeAndIsDeletedFalse(String tenantId, String skuCode);
 
     boolean existsByTenantIdAndSkuCodeAndIsDeletedFalseAndIdNot(String tenantId, String skuCode, Long id);
+
+    List<String> findSkuCodesByTenantIdAndSkuCodeStartingWithAndIsDeletedFalse(String tenantId, String prefix);
+
+    @Query("SELECT s FROM ShopCatalogSku s WHERE s.tenantId = :tenantId AND s.skuCode = :skuCode "
+            + "AND s.isDeleted = false AND s.catalogVisible = true AND s.active = true")
+    Optional<ShopCatalogSku> findVisibleByTenantAndSkuCode(
+            @Param("tenantId") String tenantId,
+            @Param("skuCode") String skuCode);
 }

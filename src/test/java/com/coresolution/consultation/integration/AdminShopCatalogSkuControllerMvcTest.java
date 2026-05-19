@@ -100,6 +100,8 @@ class AdminShopCatalogSkuControllerMvcTest {
                 "단위테스트 상품",
                 5000L,
                 "KRW",
+                "CONSULTATION",
+                "/api/v1/files/shop-catalog-thumbnails/ut.png",
                 true,
                 true,
                 0,

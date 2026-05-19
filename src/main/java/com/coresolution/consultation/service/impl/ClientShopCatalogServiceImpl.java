@@ -1,15 +1,17 @@
 package com.coresolution.consultation.service.impl;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.dto.shop.ShopCatalogSkuResponse;
 import com.coresolution.consultation.entity.ShopCatalogSku;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
 import com.coresolution.consultation.service.ClientShopCatalogService;
+import java.util.List;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.RequiredArgsConstructor;
+import org.springframework.util.StringUtils;
 
 /**
  * 카탈로그 조회 구현.
@@ -21,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
 
+    private static final String ENTITY_NAME = "ShopCatalogSku";
+
     private final ShopCatalogSkuRepository shopCatalogSkuRepository;
 
     @Override
@@ -31,6 +35,18 @@ public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ShopCatalogSkuResponse getVisibleSkuByCode(String tenantId, String skuCode) {
+        if (!StringUtils.hasText(skuCode)) {
+            throw new IllegalArgumentException("skuCode가 필요합니다.");
+        }
+        ShopCatalogSku row = shopCatalogSkuRepository
+                .findVisibleByTenantAndSkuCode(tenantId, skuCode.trim())
+                .orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, skuCode.trim()));
+        return toResponse(row);
+    }
+
     private ShopCatalogSkuResponse toResponse(ShopCatalogSku s) {
         return ShopCatalogSkuResponse.builder()
                 .skuCode(s.getSkuCode())
@@ -39,6 +55,7 @@ public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
                 .unitPriceMinor(s.getUnitPriceMinor())
                 .currency(s.getCurrency())
                 .catalogCategory(resolveCatalogCategory(s))
+                .thumbnailUrl(s.getThumbnailUrl())
                 .build();
     }
 

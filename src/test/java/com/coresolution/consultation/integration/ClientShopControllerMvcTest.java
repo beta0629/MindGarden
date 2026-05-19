@@ -111,6 +111,7 @@ class ClientShopControllerMvcTest {
                 .unitPriceMinor(12_000L)
                 .currency("KRW")
                 .catalogCategory("CONSULTATION")
+                .thumbnailUrl("/api/v1/files/shop-catalog-thumbnails/p3.png")
                 .build();
 
         when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_SHOP))
@@ -122,6 +123,31 @@ class ClientShopControllerMvcTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].skuCode").value("SKU-P3"))
                 .andExpect(jsonPath("$.data[0].unitPriceMinor").value(12_000));
+    }
+
+    @Test
+    @DisplayName("GET catalog/{skuCode} — SKU 1건 시 200·thumbnailUrl")
+    @WithMockUser
+    void getCatalogSku_whenFound_returns200() throws Exception {
+        String tenantId = UUID.randomUUID().toString();
+        ShopCatalogSkuResponse sku = ShopCatalogSkuResponse.builder()
+                .skuCode("SKU-PDP")
+                .title("PDP 상품")
+                .unitPriceMinor(9_000L)
+                .currency("KRW")
+                .catalogCategory("CONSULTATION")
+                .thumbnailUrl("/api/v1/files/shop-catalog-thumbnails/pdp.png")
+                .build();
+
+        when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_SHOP))
+                .thenReturn(true);
+        when(clientShopCatalogService.getVisibleSkuByCode(tenantId, "SKU-PDP")).thenReturn(sku);
+
+        mockMvc.perform(get(BASE + "/catalog/SKU-PDP").session(clientSession(tenantId, 3L)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.skuCode").value("SKU-PDP"))
+                .andExpect(jsonPath("$.data.thumbnailUrl").value("/api/v1/files/shop-catalog-thumbnails/pdp.png"));
     }
 
     @Test

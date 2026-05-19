@@ -74,6 +74,31 @@ public class ClientShopController extends BaseApiController {
      * @param session HTTP 세션
      * @return SKU 목록
      */
+    /**
+     * PDP용 단일 SKU.
+     *
+     * @param session HTTP 세션
+     * @param skuCode SKU 코드
+     * @return SKU
+     */
+    @GetMapping("/catalog/{skuCode}")
+    public ResponseEntity<ApiResponse<ShopCatalogSkuResponse>> getCatalogSku(
+            HttpSession session,
+            @PathVariable String skuCode) {
+        User user = requireClient(session);
+        String tenantId = requireTenant(user);
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            ResponseEntity<ApiResponse<ShopCatalogSkuResponse>> denied = requireClientShop(tenantId);
+            if (denied != null) {
+                return denied;
+            }
+            return success(clientShopCatalogService.getVisibleSkuByCode(tenantId, skuCode));
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
     @GetMapping("/catalog")
     public ResponseEntity<ApiResponse<List<ShopCatalogSkuResponse>>> getCatalog(HttpSession session) {
         User user = requireClient(session);

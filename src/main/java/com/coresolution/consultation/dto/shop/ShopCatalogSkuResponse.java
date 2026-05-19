@@ -22,4 +22,6 @@ public class ShopCatalogSkuResponse {
     private String descriptionText;
     private long unitPriceMinor;
     private String currency;
+    /** CONSULTATION | ASSESSMENT */
+    private String catalogCategory;
 }

@@ -25,4 +25,6 @@ public class ShopOrderResponse {
     private long pointsRedeemMinor;
     private long cashDueMinor;
     private List<ShopOrderLineResponse> lines;
+    /** PAID 이후 기록된 SKU 단위 이행 이벤트 (없으면 빈 목록) */
+    private List<ShopOrderFulfillmentLineResponse> fulfillmentLines;
 }

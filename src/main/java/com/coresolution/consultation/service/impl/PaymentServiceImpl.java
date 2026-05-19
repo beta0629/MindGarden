@@ -19,6 +19,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ReserveFundService;
 import com.coresolution.consultation.service.StatisticsService;
@@ -61,6 +62,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     private final ConsultationMessageService consultationMessageService;
     private final CommonCodeService commonCodeService;
     private final MobilePushDispatchService mobilePushDispatchService;
+    private final ClientShopCheckoutService clientShopCheckoutService;
     
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
@@ -71,7 +73,8 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             StatisticsService statisticsService,
             ConsultationMessageService consultationMessageService,
             CommonCodeService commonCodeService,
-            MobilePushDispatchService mobilePushDispatchService) {
+            MobilePushDispatchService mobilePushDispatchService,
+            ClientShopCheckoutService clientShopCheckoutService) {
         super(paymentRepository, accessControlService);
         this.paymentRepository = paymentRepository;
         this.financialTransactionService = financialTransactionService;
@@ -81,6 +84,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         this.consultationMessageService = consultationMessageService;
         this.commonCodeService = commonCodeService;
         this.mobilePushDispatchService = mobilePushDispatchService;
+        this.clientShopCheckoutService = clientShopCheckoutService;
     }
     
     
@@ -335,9 +339,44 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         }
         
         payment = paymentRepository.save(payment);
+        syncShopOrderOnPaymentStatus(payment, status);
         log.info("결제 상태 업데이트 완료: {}", paymentId);
         
         return buildPaymentResponse(payment, null);
+    }
+
+    /**
+     * 쇼핑 주문({@code shop_client_orders.public_id} = 결제 {@code order_id})에 PG 상태를 반영한다.
+     */
+    private void syncShopOrderOnPaymentStatus(Payment payment, Payment.PaymentStatus status) {
+        String orderPublicId = payment.getOrderId();
+        if (orderPublicId == null || orderPublicId.isBlank()) {
+            return;
+        }
+        String tenantId = payment.getTenantId() != null ? payment.getTenantId() : TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            return;
+        }
+        try {
+            switch (status) {
+                case APPROVED:
+                    clientShopCheckoutService.completeOrderOnPaymentApproved(tenantId, orderPublicId);
+                    break;
+                case FAILED:
+                case CANCELLED:
+                    clientShopCheckoutService.releaseOrderHoldOnPaymentFailure(tenantId, orderPublicId);
+                    break;
+                default:
+                    break;
+            }
+        } catch (RuntimeException e) {
+            log.error(
+                    "쇼핑 주문 PG 연동 실패(결제 상태는 유지): tenantId={}, orderPublicId={}, paymentStatus={}",
+                    tenantId,
+                    orderPublicId,
+                    status,
+                    e);
+        }
     }
     
     @Override

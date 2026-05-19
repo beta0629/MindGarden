@@ -52,4 +52,8 @@ public class ShopClientOrderLine extends BaseEntity {
 
     @Column(name = "line_total_minor", nullable = false)
     private Long lineTotalMinor;
+
+    /** 상담 패키지(CONSULTATION) ERP confirm-payment 연동용 매핑 ID (nullable) */
+    @Column(name = "consultant_client_mapping_id")
+    private Long consultantClientMappingId;
 }

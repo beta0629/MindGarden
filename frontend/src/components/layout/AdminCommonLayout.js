@@ -19,9 +19,12 @@ import { DEFAULT_MENU_ITEMS, CONSULTANT_MENU_ITEMS, CLIENT_MENU_ITEMS, BREAKPOIN
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { getLnbMenus } from '../../utils/menuApi';
+import { useTenantComponentFlags } from '../../hooks/useTenantComponentFlags';
 import {
   deriveGnbQuickNavigateActionsFromLnb,
   getLnbTreeFromResponse,
+  mergeClientShopLnbItems,
+  mergeShopAdminLnbItems,
   mergeSupplementalAdminLnbItems,
   normalizeLnbTree
 } from '../../utils/lnbMenuUtils';
@@ -55,6 +58,9 @@ const AdminCommonLayout = ({
   const getDefaultMenu = () => (userRole === 'CONSULTANT' ? CONSULTANT_MENU_ITEMS : userRole === 'CLIENT' ? CLIENT_MENU_ITEMS : DEFAULT_MENU_ITEMS);
 
   const [lnbMenuItems, setLnbMenuItems] = useState(null);
+  const { adminShopCatalogEnabled, clientShopEnabled, clientRewardEnabled } = useTenantComponentFlags({
+    enabled: Boolean(user)
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -64,22 +70,41 @@ const AdminCommonLayout = ({
         if (cancelled) return;
         const tree = getLnbTreeFromResponse(res);
         if (tree && tree.length > 0) {
-          setLnbMenuItems(
-            mergeSupplementalAdminLnbItems(normalizeLnbTree(tree, { userRole }))
-          );
+          let normalized = mergeSupplementalAdminLnbItems(normalizeLnbTree(tree, { userRole }));
+          if (userRole === 'CLIENT') {
+            normalized = mergeClientShopLnbItems(normalized, {
+              clientShopEnabled,
+              clientRewardEnabled
+            });
+          } else {
+            normalized = mergeShopAdminLnbItems(normalized, { adminShopCatalogEnabled });
+          }
+          setLnbMenuItems(normalized);
         } else {
-          setLnbMenuItems(fallback);
+          setLnbMenuItems(
+            userRole === 'CLIENT'
+              ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
+              : mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled })
+          );
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setLnbMenuItems(fallback);
+          setLnbMenuItems(
+            userRole === 'CLIENT'
+              ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
+              : mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled })
+          );
         }
       });
     return () => { cancelled = true; };
-  }, [userRole]);
+  }, [userRole, adminShopCatalogEnabled, clientShopEnabled, clientRewardEnabled]);
 
-  const menuItems = lnbMenuItems !== null ? lnbMenuItems : getDefaultMenu();
+  const menuItems = lnbMenuItems !== null
+    ? lnbMenuItems
+    : (userRole === 'CLIENT'
+      ? mergeClientShopLnbItems(getDefaultMenu(), { clientShopEnabled, clientRewardEnabled })
+      : getDefaultMenu());
 
   const navigateQuickActionsFromLnb = useMemo(
     () => deriveGnbQuickNavigateActionsFromLnb(menuItems),

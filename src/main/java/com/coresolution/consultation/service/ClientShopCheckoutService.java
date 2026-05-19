@@ -70,4 +70,22 @@ public interface ClientShopCheckoutService {
      * @return 상세
      */
     ShopOrderResponse getOrder(String tenantId, Long clientUserId, String orderPublicId);
+
+    /**
+     * PG 결제 승인 시 주문을 {@code PAID}로 전이하고 포인트 hold를 commit 한다 (멱등).
+     *
+     * @param tenantId       테넌트 ID
+     * @param orderPublicId  주문 공개 ID ({@link com.coresolution.consultation.entity.Payment#getOrderId()} 와 동일)
+     * @return 해당 테넌트에 쇼핑 주문이 있으면 {@code true}, 없으면 {@code false}
+     */
+    boolean completeOrderOnPaymentApproved(String tenantId, String orderPublicId);
+
+    /**
+     * PG 결제 실패·취소 시 포인트 hold를 해제한다 (멱등). {@code PENDING_PAYMENT}는 {@code CREATED}로 되돌린다.
+     *
+     * @param tenantId       테넌트 ID
+     * @param orderPublicId  주문 공개 ID
+     * @return 해당 테넌트에 쇼핑 주문이 있으면 {@code true}, 없으면 {@code false}
+     */
+    boolean releaseOrderHoldOnPaymentFailure(String tenantId, String orderPublicId);
 }

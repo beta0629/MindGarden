@@ -27,4 +27,10 @@ public class ShopCheckoutRequest {
     @Min(0)
     @Builder.Default
     private long pointsToRedeemMinor = 0L;
+
+    /**
+     * CONSULTATION 주문 라인용 {@code consultant_client_mapping_id} 오버라이드 (선택).
+     * 미지정 시 서버가 내담자 활성 매핑 1건을 조회한다.
+     */
+    private Long consultantClientMappingId;
 }

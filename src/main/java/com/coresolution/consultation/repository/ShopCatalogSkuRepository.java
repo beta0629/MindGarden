@@ -31,4 +31,12 @@ public interface ShopCatalogSkuRepository extends BaseRepository<ShopCatalogSku,
     List<ShopCatalogSku> findActiveByTenantAndIds(
             @Param("tenantId") String tenantId,
             @Param("ids") List<Long> ids);
+
+    List<ShopCatalogSku> findByTenantIdAndIsDeletedFalseOrderBySortOrderAscIdAsc(String tenantId);
+
+    Optional<ShopCatalogSku> findByIdAndTenantIdAndIsDeletedFalse(Long id, String tenantId);
+
+    boolean existsByTenantIdAndSkuCodeAndIsDeletedFalse(String tenantId, String skuCode);
+
+    boolean existsByTenantIdAndSkuCodeAndIsDeletedFalseAndIdNot(String tenantId, String skuCode, Long id);
 }

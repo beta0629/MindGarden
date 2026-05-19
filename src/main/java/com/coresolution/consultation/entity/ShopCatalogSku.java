@@ -54,4 +54,7 @@ public class ShopCatalogSku extends BaseEntity {
     @Column(name = "sort_order", nullable = false)
     @Builder.Default
     private Integer sortOrder = 0;
+
+    @Column(name = "catalog_category", length = 32)
+    private String catalogCategory;
 }

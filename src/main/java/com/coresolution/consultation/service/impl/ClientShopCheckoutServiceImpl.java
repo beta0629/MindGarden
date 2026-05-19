@@ -6,33 +6,42 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import com.coresolution.consultation.constant.PaymentConstants;
+import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.dto.shop.EffectivePointTenantPolicies;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
 import com.coresolution.consultation.dto.shop.ShopCheckoutRequest;
 import com.coresolution.consultation.dto.shop.ShopCheckoutResponse;
+import com.coresolution.consultation.dto.shop.ShopOrderFulfillmentLineResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderLineResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderSummaryResponse;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentRequest;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentResponse;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopCart;
 import com.coresolution.consultation.entity.ShopCartLine;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
+import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopCartLineRepository;
 import com.coresolution.consultation.repository.ShopCartRepository;
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
+import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
+import com.coresolution.consultation.service.PointTenantPolicyService;
+import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,9 +64,13 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final ShopClientOrderRepository shopClientOrderRepository;
     private final ShopClientOrderLineRepository shopClientOrderLineRepository;
     private final ClientPointWalletService clientPointWalletService;
+    private final PointTenantPolicyService pointTenantPolicyService;
     private final PaymentService paymentService;
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
+    private final ShopOrderFulfillmentService shopOrderFulfillmentService;
+    private final ShopOrderFulfillmentEventRepository shopOrderFulfillmentEventRepository;
+    private final ConsultantClientMappingRepository consultantClientMappingRepository;
 
     @Override
     @Transactional
@@ -84,15 +97,27 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             throw new IllegalArgumentException("주문 금액이 유효하지 않습니다.");
         }
 
+        EffectivePointTenantPolicies policies = pointTenantPolicyService.getEffectivePoliciesTyped(tenantId);
         long requestedPoints = Math.max(0L, request.getPointsToRedeemMinor());
+        validateRedeemRequest(subtotal, requestedPoints, policies);
+
         var balance = clientPointWalletService.getBalance(tenantId, clientUserId);
         long maxPoints = Math.min(subtotal, balance.getAvailableMinor());
+        if (policies.maxRedeemPerOrderMinor() > 0L) {
+            maxPoints = Math.min(maxPoints, policies.maxRedeemPerOrderMinor());
+        }
         long points = Math.min(requestedPoints, maxPoints);
+        if (requestedPoints > 0L && requestedPoints > points) {
+            throw new IllegalArgumentException("사용 가능한 포인트가 부족합니다.");
+        }
 
         long cashDue = subtotal - points;
-        if (points > 0L && cashDue > 0L) {
+        if (cashDue == 0L && points > 0L && !policies.allowPointsOnly()) {
+            throw new IllegalArgumentException("포인트만으로 결제할 수 없습니다. 카드 결제를 이용해 주세요.");
+        }
+        if (points > 0L && cashDue > 0L && !policies.allowPgMix()) {
             throw new IllegalArgumentException(
-                    "현재 단계에서는 포인트와 카드 결제를 동시에 사용할 수 없습니다. 포인트 전액 또는 카드 전액으로 결제해 주세요.");
+                    "포인트와 카드 결제를 동시에 사용할 수 없습니다. 포인트 전액 또는 카드 전액으로 결제해 주세요.");
         }
         if (cashDue > 0L && cashDue < ShopCheckoutConstants.MIN_CASH_FOR_PAYMENT_GATEWAY) {
             throw new IllegalArgumentException(
@@ -112,10 +137,16 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         order.setTenantId(tenantId);
         order = shopClientOrderRepository.save(order);
 
+        Long consultationMappingId = resolveConsultationMappingIdForCheckout(tenantId, clientUserId, request, cartLines);
+
         int lineNo = 1;
         for (ShopCartLine cl : cartLines) {
             ShopCatalogSku sku = cl.getSku();
             long lineTotal = sku.getUnitPriceMinor() * cl.getQuantity();
+            Long lineMappingId = null;
+            if (ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory())) {
+                lineMappingId = consultationMappingId;
+            }
             ShopClientOrderLine ol = ShopClientOrderLine.builder()
                     .clientOrder(order)
                     .lineNo(lineNo++)
@@ -125,28 +156,78 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     .unitPriceMinor(sku.getUnitPriceMinor())
                     .quantity(cl.getQuantity())
                     .lineTotalMinor(lineTotal)
+                    .consultantClientMappingId(lineMappingId)
                     .build();
             ol.setTenantId(tenantId);
             shopClientOrderLineRepository.save(ol);
         }
 
-        String holdKey = request.getIdempotencyKey() + ":POINT_HOLD";
         if (points > 0L) {
-            clientPointWalletService.hold(tenantId, clientUserId, publicId, points, holdKey);
+            clientPointWalletService.hold(
+                    tenantId,
+                    clientUserId,
+                    publicId,
+                    points,
+                    ShopCheckoutConstants.pointHoldKey(request.getIdempotencyKey()));
         }
 
         if (cashDue == 0L) {
-            order.setStatus(ShopClientOrderStatus.PAID);
-            shopClientOrderRepository.save(order);
-            if (points > 0L) {
-                clientPointWalletService.commitHold(
-                        tenantId, clientUserId, publicId, points, publicId + ":POINT_COMMIT");
-            }
+            markOrderPaidAndCommitPoints(tenantId, order);
         }
 
         clearCartLines(tenantId, clientUserId);
         ShopClientOrder refreshed = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, publicId).orElse(order);
         return toCheckoutResponse(refreshed);
+    }
+
+    /**
+     * 체크아웃 시 CONSULTATION 라인에 붙일 매핑 ID (요청 오버라이드 우선, 없으면 활성 매핑 1건).
+     */
+    private Long resolveConsultationMappingIdForCheckout(
+            String tenantId,
+            Long clientUserId,
+            ShopCheckoutRequest request,
+            List<ShopCartLine> cartLines) {
+        boolean hasConsultation = cartLines.stream()
+                .map(ShopCartLine::getSku)
+                .anyMatch(sku -> ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory()));
+        if (!hasConsultation) {
+            return null;
+        }
+        if (request.getConsultantClientMappingId() != null) {
+            return request.getConsultantClientMappingId();
+        }
+        return findFirstActiveMappingId(tenantId, clientUserId);
+    }
+
+    private Long findFirstActiveMappingId(String tenantId, Long clientUserId) {
+        return consultantClientMappingRepository
+                .findByClientIdAndStatusNot(
+                        tenantId, clientUserId, ConsultantClientMapping.MappingStatus.INACTIVE)
+                .stream()
+                .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
+                .map(ConsultantClientMapping::getId)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static void validateRedeemRequest(
+            long subtotalMinor, long requestedPointsMinor, EffectivePointTenantPolicies policies) {
+        if (requestedPointsMinor <= 0L) {
+            return;
+        }
+        if (policies.minOrderForRedeemMinor() > 0L && subtotalMinor < policies.minOrderForRedeemMinor()) {
+            throw new IllegalArgumentException(
+                    "포인트 사용 가능 최소 주문 금액은 "
+                            + policies.minOrderForRedeemMinor()
+                            + "원입니다.");
+        }
+        if (policies.maxRedeemPerOrderMinor() > 0L && requestedPointsMinor > policies.maxRedeemPerOrderMinor()) {
+            throw new IllegalArgumentException(
+                    "주문당 최대 사용 포인트는 "
+                            + policies.maxRedeemPerOrderMinor()
+                            + "원입니다.");
+        }
     }
 
     private void clearCartLines(String tenantId, Long clientUserId) {
@@ -282,16 +363,111 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         if (!order.getClientId().equals(clientUserId)) {
             throw new IllegalArgumentException("주문에 접근할 수 없습니다.");
         }
-        if (order.getStatus() != ShopClientOrderStatus.CREATED) {
+        if (order.getStatus() != ShopClientOrderStatus.CREATED
+                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT) {
             throw new IllegalArgumentException("취소할 수 없는 주문 상태입니다.");
+        }
+        releasePointsHoldIfAny(tenantId, clientUserId, orderPublicId, order.getPointsRedeemMinor());
+        order.setStatus(ShopClientOrderStatus.CANCELLED);
+        shopClientOrderRepository.save(order);
+    }
+
+    @Override
+    @Transactional
+    public boolean completeOrderOnPaymentApproved(String tenantId, String orderPublicId) {
+        Optional<ShopClientOrder> orderOpt =
+                shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId);
+        if (orderOpt.isEmpty()) {
+            return false;
+        }
+        ShopClientOrder order = orderOpt.get();
+        if (order.getStatus() == ShopClientOrderStatus.PAID) {
+            log.debug("쇼핑 주문 이미 PAID(멱등): tenantId={}, orderPublicId={}", tenantId, orderPublicId);
+            return true;
+        }
+        if (order.getStatus() != ShopClientOrderStatus.CREATED
+                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT) {
+            log.warn(
+                    "PG 승인 후 PAID 전이 불가 상태: tenantId={}, orderPublicId={}, status={}",
+                    tenantId,
+                    orderPublicId,
+                    order.getStatus());
+            return true;
+        }
+        markOrderPaidAndCommitPoints(tenantId, order);
+        log.info("쇼핑 주문 PAID 반영: tenantId={}, orderPublicId={}", tenantId, orderPublicId);
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean releaseOrderHoldOnPaymentFailure(String tenantId, String orderPublicId) {
+        Optional<ShopClientOrder> orderOpt =
+                shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId);
+        if (orderOpt.isEmpty()) {
+            return false;
+        }
+        ShopClientOrder order = orderOpt.get();
+        if (order.getStatus() == ShopClientOrderStatus.PAID
+                || order.getStatus() == ShopClientOrderStatus.CANCELLED
+                || order.getStatus() == ShopClientOrderStatus.EXPIRED) {
+            return true;
+        }
+        releasePointsHoldIfAny(tenantId, order.getClientId(), orderPublicId, order.getPointsRedeemMinor());
+        if (order.getStatus() == ShopClientOrderStatus.PENDING_PAYMENT) {
+            order.setStatus(ShopClientOrderStatus.CREATED);
+            shopClientOrderRepository.save(order);
+            log.info(
+                    "PG 실패·취소 후 주문 CREATED 복귀: tenantId={}, orderPublicId={}",
+                    tenantId,
+                    orderPublicId);
+        }
+        return true;
+    }
+
+    private void markOrderPaidAndCommitPoints(String tenantId, ShopClientOrder order) {
+        if (order.getStatus() == ShopClientOrderStatus.PAID) {
+            return;
         }
         long points = order.getPointsRedeemMinor();
         if (points > 0L) {
-            clientPointWalletService.releaseHold(
-                    tenantId, clientUserId, orderPublicId, points, orderPublicId + ":POINT_RELEASE");
+            clientPointWalletService.commitHold(
+                    tenantId,
+                    order.getClientId(),
+                    order.getPublicId(),
+                    points,
+                    ShopCheckoutConstants.pointCommitKey(order.getPublicId()));
         }
-        order.setStatus(ShopClientOrderStatus.CANCELLED);
+        creditEarnOnPaid(tenantId, order);
+        order.setStatus(ShopClientOrderStatus.PAID);
         shopClientOrderRepository.save(order);
+        shopOrderFulfillmentService.fulfillPaidOrder(tenantId, order);
+    }
+
+    private void creditEarnOnPaid(String tenantId, ShopClientOrder order) {
+        EffectivePointTenantPolicies policies = pointTenantPolicyService.getEffectivePoliciesTyped(tenantId);
+        long earnAmount = policies.computeEarnAmountMinor(order.getSubtotalMinor(), order.getCashDueMinor());
+        if (earnAmount <= 0L) {
+            return;
+        }
+        clientPointWalletService.creditEarn(
+                tenantId,
+                order.getClientId(),
+                order.getPublicId(),
+                earnAmount,
+                ShopCheckoutConstants.pointEarnKey(order.getPublicId()));
+    }
+
+    private void releasePointsHoldIfAny(
+            String tenantId, Long clientUserId, String orderPublicId, long pointsMinor) {
+        if (pointsMinor > 0L) {
+            clientPointWalletService.releaseHold(
+                    tenantId,
+                    clientUserId,
+                    orderPublicId,
+                    pointsMinor,
+                    ShopCheckoutConstants.pointReleaseKey(orderPublicId));
+        }
     }
 
     @Override
@@ -336,6 +512,18 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     .lineTotalMinor(l.getLineTotalMinor())
                     .build());
         }
+        List<ShopOrderFulfillmentEvent> fulfillmentEvents =
+                shopOrderFulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        tenantId, orderPublicId);
+        List<ShopOrderFulfillmentLineResponse> fulfillmentLines = new ArrayList<>();
+        for (ShopOrderFulfillmentEvent event : fulfillmentEvents) {
+            fulfillmentLines.add(ShopOrderFulfillmentLineResponse.builder()
+                    .skuCode(event.getSkuCode())
+                    .category(event.getCategory())
+                    .status(event.getStatus())
+                    .message(event.getMessage())
+                    .build());
+        }
         return ShopOrderResponse.builder()
                 .orderPublicId(order.getPublicId())
                 .status(order.getStatus())
@@ -343,6 +531,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .pointsRedeemMinor(order.getPointsRedeemMinor())
                 .cashDueMinor(order.getCashDueMinor())
                 .lines(lr)
+                .fulfillmentLines(fulfillmentLines)
                 .build();
     }
 }

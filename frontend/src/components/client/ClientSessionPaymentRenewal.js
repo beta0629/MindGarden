@@ -9,10 +9,13 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CreditCard, ShoppingBag } from 'lucide-react';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import { useSession } from '../../contexts/SessionContext';
 import { useToast } from '../../contexts/ToastContext';
+import { CLIENT_SHOP_ROUTES } from '../../constants/clientShopConstants';
+import { useTenantComponentFlags } from '../../hooks/useTenantComponentFlags';
 import './ClientSessionPaymentRenewal.css';
 
 const TABS = [
@@ -61,8 +64,10 @@ const ConsultantProgressRing = ({ remaining, total }) => {
 };
 
 const ClientSessionPaymentRenewal = () => {
+  const navigate = useNavigate();
   const { user } = useSession();
   const { showToast } = useToast();
+  const { clientShopEnabled } = useTenantComponentFlags();
   const [activeTab, setActiveTab] = useState('payments');
   const [sessionInfo, setSessionInfo] = useState({ total: 0, used: 0, remaining: 0 });
   const [payments, setPayments] = useState([]);
@@ -153,6 +158,17 @@ const ClientSessionPaymentRenewal = () => {
           </span>
         </div>
       </div>
+
+      {clientShopEnabled !== false ? (
+        <button
+          type="button"
+          className="session-payment__shop-link"
+          onClick={() => navigate(CLIENT_SHOP_ROUTES.CATALOG)}
+        >
+          <ShoppingBag size={18} aria-hidden />
+          온라인 쇼핑 — 상품 둘러보기
+        </button>
+      ) : null}
 
       {/* 탭 */}
       <div className="session-payment__tabs">

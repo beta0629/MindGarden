@@ -69,6 +69,12 @@ export const ADMIN_ROUTES = {
     /** BW-6 마음 날씨 관측(읽기 전용) */
     MIND_WEATHER_OBSERVABILITY: '/admin/wellness/mind-weather-observability',
     /** BW-6 마음 정원 관측(읽기 전용) */
-    MIND_GARDEN_OBSERVABILITY: '/admin/wellness/mind-garden-observability'
+    MIND_GARDEN_OBSERVABILITY: '/admin/wellness/mind-garden-observability',
+    /** P2-admin 온라인 카탈로그 SKU 관리 */
+    SHOP_CATALOG_SKUS: '/admin/shop/catalog-skus',
+    /** P2-admin 포인트·리워드 정책(MVP) */
+    SHOP_POINT_POLICIES: '/admin/shop/point-policies',
+    /** P2-admin 온라인 주문·환불 */
+    SHOP_ORDERS: '/admin/shop/orders'
 };
 

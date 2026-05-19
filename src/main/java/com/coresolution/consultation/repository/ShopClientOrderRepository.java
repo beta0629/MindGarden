@@ -35,4 +35,10 @@ public interface ShopClientOrderRepository extends BaseRepository<ShopClientOrde
             @Param("tenantId") String tenantId,
             @Param("clientId") Long clientId,
             Pageable pageable);
+
+    @Query("SELECT o FROM ShopClientOrder o WHERE o.tenantId = :tenantId AND o.isDeleted = false "
+            + "ORDER BY o.createdAt DESC")
+    List<ShopClientOrder> findRecentByTenant(
+            @Param("tenantId") String tenantId,
+            Pageable pageable);
 }

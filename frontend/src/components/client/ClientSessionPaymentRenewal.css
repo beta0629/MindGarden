@@ -326,6 +326,28 @@
   cursor: not-allowed;
 }
 
+.session-payment__shop-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-xs);
+  width: 100%;
+  padding: var(--mg-spacing-md);
+  margin-top: var(--mg-spacing-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-color-surface-main);
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.session-payment__shop-link:hover {
+  background: var(--mg-color-background-main);
+}
+
 /* Empty */
 .session-payment__empty {
   display: flex;

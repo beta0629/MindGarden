@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.dto.shop.ShopCatalogSkuResponse;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
@@ -37,6 +38,21 @@ public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
                 .descriptionText(s.getDescriptionText())
                 .unitPriceMinor(s.getUnitPriceMinor())
                 .currency(s.getCurrency())
+                .catalogCategory(resolveCatalogCategory(s))
                 .build();
+    }
+
+    private static String resolveCatalogCategory(ShopCatalogSku s) {
+        if (s.getCatalogCategory() != null && !s.getCatalogCategory().isBlank()) {
+            return s.getCatalogCategory().trim();
+        }
+        String code = s.getSkuCode();
+        if (code != null) {
+            String upper = code.toUpperCase();
+            if (upper.startsWith("ASSESS_") || upper.startsWith("TEST_") || upper.contains("_ASSESS")) {
+                return ShopCatalogCategory.ASSESSMENT;
+            }
+        }
+        return ShopCatalogCategory.CONSULTATION;
     }
 }

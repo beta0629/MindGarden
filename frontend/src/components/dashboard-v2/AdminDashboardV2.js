@@ -12,9 +12,11 @@ import { getLnbMenus } from '../../utils/menuApi';
 import {
   deriveGnbQuickNavigateActionsFromLnb,
   getLnbTreeFromResponse,
+  mergeShopAdminLnbItems,
   mergeSupplementalAdminLnbItems,
   normalizeLnbTree
 } from '../../utils/lnbMenuUtils';
+import { useTenantComponentFlags } from '../../hooks/useTenantComponentFlags';
 import { useNavigate } from 'react-router-dom';
 import { AdminMgmtNavCard, AdminMgmtActionCard } from './molecules/AdminMgmtGridCard';
 import notificationManager from '../../utils/notification';
@@ -194,6 +196,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   const canManageClients = hasRole('ADMIN') || hasRole('STAFF');
 
+  const { adminShopCatalogEnabled } = useTenantComponentFlags({
+    enabled: Boolean(dashboardUser)
+  });
+
   const [lnbMenuItems, setLnbMenuItems] = useState(null);
 
   /** API LNB 메뉴 후처리: 매칭관리→통합 스케줄 센터 치환, 알림을 세 번째 위치로 정렬 */
@@ -233,7 +239,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         if (tree && tree.length > 0) {
           setLnbMenuItems(
             normalizeLnbMenuItemsForDashboard(
-              mergeSupplementalAdminLnbItems(normalizeLnbTree(tree))
+              mergeShopAdminLnbItems(
+                mergeSupplementalAdminLnbItems(normalizeLnbTree(tree)),
+                { adminShopCatalogEnabled }
+              )
             )
           );
         }
@@ -242,7 +251,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         if (!cancelled) setLnbMenuItems(DEFAULT_MENU_ITEMS);
       });
     return () => { cancelled = true; };
-  }, [normalizeLnbMenuItemsForDashboard]);
+  }, [normalizeLnbMenuItemsForDashboard, adminShopCatalogEnabled]);
 
   const [userPermissions, setUserPermissions] = useState([]);
   const [stats, setStats] = useState({

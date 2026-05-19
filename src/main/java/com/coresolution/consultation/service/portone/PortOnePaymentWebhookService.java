@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.repository.PaymentRepository;
+import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import com.coresolution.core.constants.TenantPgSettingsJsonKeys;
@@ -51,6 +52,7 @@ public class PortOnePaymentWebhookService {
     private final TenantPgConfigurationRepository tenantPgConfigurationRepository;
     private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
+    private final ClientShopCheckoutService clientShopCheckoutService;
 
     /**
      * 포트원 V2 웹훅을 처리한다. 서명 검증 실패 시 4xx, 일시적 오류 시 5xx.
@@ -167,6 +169,7 @@ public class PortOnePaymentWebhookService {
                 paymentRow.setWebhookData(rawUtf8);
                 paymentRow.setExternalResponse(dataNode != null ? dataNode.toString() : rawUtf8);
                 paymentRepository.save(paymentRow);
+                syncShopOrderOnPaymentStatus(tenantId, paymentRow, targetStatus);
                 log.info("포트원 웹훅: 동일 상태 재전송(멱등) paymentId={}, status={}, webhookId={}",
                         paymentId, targetStatus, webhookId);
                 body.put("status", "ok");
@@ -300,6 +303,28 @@ public class PortOnePaymentWebhookService {
         }
         String v = node.get(field).asText();
         return v.isEmpty() ? null : v;
+    }
+
+    private void syncShopOrderOnPaymentStatus(
+            String tenantId, Payment payment, Payment.PaymentStatus status) {
+        String orderPublicId = payment.getOrderId();
+        if (orderPublicId == null || orderPublicId.isBlank()) {
+            return;
+        }
+        try {
+            if (status == Payment.PaymentStatus.APPROVED) {
+                clientShopCheckoutService.completeOrderOnPaymentApproved(tenantId, orderPublicId);
+            } else if (status == Payment.PaymentStatus.FAILED || status == Payment.PaymentStatus.CANCELLED) {
+                clientShopCheckoutService.releaseOrderHoldOnPaymentFailure(tenantId, orderPublicId);
+            }
+        } catch (RuntimeException e) {
+            log.error(
+                    "포트원 웹훅: 쇼핑 주문 연동 실패 tenantId={}, orderPublicId={}, status={}",
+                    tenantId,
+                    orderPublicId,
+                    status,
+                    e);
+        }
     }
 
     private static String textNested(JsonNode node, String parent, String child) {

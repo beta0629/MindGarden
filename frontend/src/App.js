@@ -95,7 +95,15 @@ import ClientWellnessRenewal from './components/client/ClientWellnessRenewal';
 import MoodJournal from './components/client/MoodJournal';
 import SelfAssessment from './components/client/SelfAssessment';
 import ClientSessionPaymentRenewal from './components/client/ClientSessionPaymentRenewal';
-import ShopCheckoutMvp from './pages/client/ShopCheckoutMvp';
+import ShopCatalogPage from './pages/client/shop/ShopCatalogPage';
+import ShopCartPage from './pages/client/shop/ShopCartPage';
+import ShopCheckoutPage from './pages/client/shop/ShopCheckoutPage';
+import ShopPointsPage from './pages/client/shop/ShopPointsPage';
+import ShopOrdersPage from './pages/client/shop/ShopOrdersPage';
+import ShopOrderDetailPage from './pages/client/shop/ShopOrderDetailPage';
+import ShopSkuDetailPage from './pages/client/shop/ShopSkuDetailPage';
+import ClientTenantComponentGate from './components/shop/templates/ClientTenantComponentGate';
+import { PLATFORM_COMPONENT_CODES } from './constants/tenantComponentApi';
 import ConsultantAvailabilityRenewal from './components/consultant/ConsultantAvailabilityRenewal';
 import MeditationGuide from './components/wellness/MeditationGuide';
 import PsychoEducation from './components/wellness/PsychoEducation';
@@ -112,6 +120,9 @@ import AdminContentMasterPage from './components/admin/AdminContentMasterPage';
 import AdminPushMonitoringPlaceholderPage from './components/admin/AdminPushMonitoringPlaceholderPage';
 import AdminMindWeatherObservabilityPage from './components/admin/AdminMindWeatherObservabilityPage';
 import AdminMindGardenObservabilityPage from './components/admin/AdminMindGardenObservabilityPage';
+import AdminShopCatalogSkusPage from './components/admin/AdminShopCatalogSkusPage';
+import AdminShopPointPoliciesPage from './components/admin/AdminShopPointPoliciesPage';
+import AdminShopOrdersPage from './components/admin/AdminShopOrdersPage';
 import MindfulnessGuide from './components/wellness/MindfulnessGuide';
 import TenantProfile from './components/tenant/TenantProfile';
 import PgConfigurationList from './components/tenant/PgConfigurationList';
@@ -414,7 +425,46 @@ function AppContent() {
               <Route path="mood-journal" element={<MoodJournal />} />
               <Route path="self-assessment" element={<SelfAssessment />} />
               <Route path="session-payment" element={<ClientSessionPaymentRenewal />} />
-              <Route path="shop-checkout" element={<ShopCheckoutMvp />} />
+              <Route path="shop" element={
+                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                  <ShopCatalogPage />
+                </ClientTenantComponentGate>
+              } />
+              <Route path="shop/cart" element={
+                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                  <ShopCartPage />
+                </ClientTenantComponentGate>
+              } />
+              <Route path="shop/checkout" element={
+                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                  <ShopCheckoutPage />
+                </ClientTenantComponentGate>
+              } />
+              <Route path="shop/points" element={
+                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_REWARD}>
+                    <ShopPointsPage />
+                  </ClientTenantComponentGate>
+                </ClientTenantComponentGate>
+              } />
+              <Route path="shop/orders" element={
+                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                  <ShopOrdersPage />
+                </ClientTenantComponentGate>
+              } />
+              <Route path="shop/orders/:orderPublicId" element={
+                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                  <ShopOrderDetailPage />
+                </ClientTenantComponentGate>
+              } />
+              <Route path="shop/sku/:skuCode" element={
+                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                  <ShopSkuDetailPage />
+                </ClientTenantComponentGate>
+              } />
+              <Route path="shop-catalog" element={<Navigate to="/client/shop" replace />} />
+              <Route path="shop-checkout" element={<Navigate to="/client/shop/checkout" replace />} />
+              <Route path="shop-points" element={<Navigate to="/client/shop/points" replace />} />
               <Route path="meditation" element={<MeditationGuide />} />
               <Route path="psycho-education" element={<PsychoEducation />} />
               <Route path="community" element={<CommunityFeed primaryColor="var(--mg-client-primary)" />} />
@@ -590,6 +640,21 @@ function AppContent() {
             <Route path={ADMIN_ROUTES.MIND_WEATHER_OBSERVABILITY} element={<AdminMindWeatherObservabilityPage />} />
             <Route path={ADMIN_ROUTES.MIND_GARDEN_OBSERVABILITY} element={<AdminMindGardenObservabilityPage />} />
             <Route path={ADMIN_ROUTES.PUSH_MONITORING} element={<AdminPushMonitoringPlaceholderPage />} />
+            <Route path={ADMIN_ROUTES.SHOP_CATALOG_SKUS} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminShopCatalogSkusPage />
+              </ProtectedRoute>
+            } />
+            <Route path={ADMIN_ROUTES.SHOP_POINT_POLICIES} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminShopPointPoliciesPage />
+              </ProtectedRoute>
+            } />
+            <Route path={ADMIN_ROUTES.SHOP_ORDERS} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminShopOrdersPage />
+              </ProtectedRoute>
+            } />
             
             {/* 개인정보 및 약관 관련 라우트 */}
             <Route path="/privacy" element={<PrivacyPolicy />} />

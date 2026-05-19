@@ -1,12 +1,16 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.constant.PointLedgerEntryLabels;
 import com.coresolution.consultation.constant.PointLedgerEntryType;
 import com.coresolution.consultation.dto.shop.ShopPointBalanceResponse;
+import com.coresolution.consultation.dto.shop.ShopPointLedgerEntryResponse;
 import com.coresolution.consultation.entity.ClientPointLedgerEntry;
 import com.coresolution.consultation.entity.ClientPointWallet;
 import com.coresolution.consultation.repository.ClientPointLedgerEntryRepository;
 import com.coresolution.consultation.repository.ClientPointWalletRepository;
 import com.coresolution.consultation.service.ClientPointWalletService;
+import java.util.List;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +39,20 @@ public class ClientPointWalletServiceImpl implements ClientPointWalletService {
                         .heldMinor(w.getHeldMinor())
                         .build())
                 .orElse(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ShopPointLedgerEntryResponse> listRecentLedger(String tenantId, Long userId, int limit) {
+        int effectiveLimit = Math.min(
+                Math.max(limit, 1),
+                PointLedgerEntryLabels.MAX_LIST_LIMIT);
+        return clientPointLedgerEntryRepository
+                .findByTenantIdAndUserIdAndIsDeletedFalseOrderByCreatedAtDesc(
+                        tenantId, userId, Pageable.ofSize(effectiveLimit))
+                .stream()
+                .map(ShopPointLedgerEntryResponse::fromEntity)
+                .toList();
     }
 
     @Override
@@ -93,6 +111,61 @@ public class ClientPointWalletServiceImpl implements ClientPointWalletService {
         wallet.setHeldMinor(wallet.getHeldMinor() - amountMinor);
         clientPointWalletRepository.save(wallet);
         persistLedger(tenantId, userId, orderPublicId, PointLedgerEntryType.COMMIT, amountMinor, idempotencyKey);
+    }
+
+    @Override
+    @Transactional
+    public void creditEarn(String tenantId, Long userId, String orderPublicId, long amountMinor, String idempotencyKey) {
+        if (amountMinor <= 0) {
+            return;
+        }
+        if (clientPointLedgerEntryRepository.existsByTenantIdAndIdempotencyKeyAndIsDeletedFalse(tenantId, idempotencyKey)) {
+            return;
+        }
+        ClientPointWallet wallet = loadOrCreateWalletForUpdate(tenantId, userId);
+        wallet.setAvailableMinor(wallet.getAvailableMinor() + amountMinor);
+        clientPointWalletRepository.save(wallet);
+        persistLedger(tenantId, userId, orderPublicId, PointLedgerEntryType.EARN, amountMinor, idempotencyKey);
+    }
+
+    @Override
+    @Transactional
+    public void restoreRedeemOnRefund(
+            String tenantId, Long userId, String orderPublicId, long amountMinor, String idempotencyKey) {
+        if (amountMinor <= 0) {
+            return;
+        }
+        if (clientPointLedgerEntryRepository.existsByTenantIdAndIdempotencyKeyAndIsDeletedFalse(tenantId, idempotencyKey)) {
+            return;
+        }
+        ClientPointWallet wallet = loadOrCreateWalletForUpdate(tenantId, userId);
+        wallet.setAvailableMinor(wallet.getAvailableMinor() + amountMinor);
+        clientPointWalletRepository.save(wallet);
+        persistLedger(
+                tenantId, userId, orderPublicId, PointLedgerEntryType.COMMIT_REVERSAL, amountMinor, idempotencyKey);
+    }
+
+    @Override
+    @Transactional
+    public long clawbackEarn(
+            String tenantId, Long userId, String orderPublicId, long amountMinor, String idempotencyKey) {
+        if (amountMinor <= 0) {
+            return 0L;
+        }
+        if (clientPointLedgerEntryRepository.existsByTenantIdAndIdempotencyKeyAndIsDeletedFalse(tenantId, idempotencyKey)) {
+            return 0L;
+        }
+        ClientPointWallet wallet = clientPointWalletRepository.lockByTenantIdAndUserId(tenantId, userId)
+                .orElseThrow(() -> new IllegalStateException("포인트 지갑이 없어 clawback을 할 수 없습니다."));
+        long clawAmount = Math.min(amountMinor, Math.max(0L, wallet.getAvailableMinor()));
+        if (clawAmount <= 0L) {
+            persistLedger(tenantId, userId, orderPublicId, PointLedgerEntryType.CLAWBACK, 0L, idempotencyKey);
+            return 0L;
+        }
+        wallet.setAvailableMinor(wallet.getAvailableMinor() - clawAmount);
+        clientPointWalletRepository.save(wallet);
+        persistLedger(tenantId, userId, orderPublicId, PointLedgerEntryType.CLAWBACK, clawAmount, idempotencyKey);
+        return clawAmount;
     }
 
     private ClientPointWallet loadOrCreateWalletForUpdate(String tenantId, Long userId) {

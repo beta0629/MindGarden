@@ -15,6 +15,7 @@ import {
   UserCircle,
   Settings,
   LogOut,
+  ShoppingBag,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { ProfileCard } from '@/components/molecules/ProfileCard';
@@ -22,6 +23,8 @@ import { MenuListItem } from '@/components/molecules/MenuListItem';
 import { AuthService } from '@/services/AuthService';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { toDisplayString } from '@/utils/safeDisplay';
+import { CLIENT_SHOP_ROUTES } from '@/constants/clientShopConstants';
+import { useTenantComponentFlags } from '@/hooks/useTenantComponentFlags';
 
 export default function ClientMore() {
   const theme = useTheme();
@@ -29,6 +32,7 @@ export default function ClientMore() {
   const user = useAuthStore((s) => s.user);
   const profileName = toDisplayString(user?.nickname?.trim() || user?.name, '내담자');
   const profileSubtitle = toDisplayString(user?.email, '마음 돌봄');
+  const { clientShopEnabled } = useTenantComponentFlags();
 
   const handleLogout = () => {
     Alert.alert('로그아웃', '정말 로그아웃하시겠습니까?', [
@@ -100,6 +104,16 @@ export default function ClientMore() {
               title="회기 · 결제"
               subtitle="보유 회기, 결제 내역, 연장"
               onPress={() => router.push('/(client)/(more)/sessions-payment')}
+            />
+            <MenuListItem
+              icon={ShoppingBag}
+              title="온라인 쇼핑"
+              subtitle={
+                clientShopEnabled === true
+                  ? '상담 패키지 · 심리 검사 · 포인트'
+                  : '상품 둘러보기 · 포인트'
+              }
+              onPress={() => router.push(CLIENT_SHOP_ROUTES.CATALOG)}
             />
             <MenuListItem
               icon={UsersIcon}

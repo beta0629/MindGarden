@@ -7,13 +7,192 @@
 
 import { getLnbIcon } from '../components/dashboard-v2/constants/lnbIconMap';
 import { ADMIN_ROUTES } from '../constants/adminRoutes';
+import { CLIENT_SHOP_ROUTES } from '../constants/clientShopConstants';
 import { getDashboardPathByRole } from '../constants/session';
+
+const SHOP_ADMIN_LNB_GROUP_LABEL = '쇼핑·리워드';
+const CLIENT_SHOP_LNB_GROUP_LABEL = '온라인 쇼핑';
+
+const CLIENT_SHOP_LNB_PATHS = new Set([
+  CLIENT_SHOP_ROUTES.CATALOG,
+  CLIENT_SHOP_ROUTES.CART,
+  CLIENT_SHOP_ROUTES.CHECKOUT,
+  CLIENT_SHOP_ROUTES.ORDERS,
+  CLIENT_SHOP_ROUTES.POINTS,
+  CLIENT_SHOP_ROUTES.SKU_DETAIL
+]);
+
+/**
+ * @param {string} [path]
+ * @returns {boolean}
+ */
+function isClientShopLnbPath(path) {
+  if (typeof path !== 'string' || !path.startsWith('/')) {
+    return false;
+  }
+  const normalized = path.split('?')[0];
+  if (CLIENT_SHOP_LNB_PATHS.has(normalized)) {
+    return true;
+  }
+  return normalized.startsWith(`${CLIENT_SHOP_ROUTES.ORDERS}/`)
+    || normalized.startsWith(`${CLIENT_SHOP_ROUTES.SKU_DETAIL}/`);
+}
+
+/**
+ * @param {string} [path]
+ * @returns {boolean}
+ */
+function isClientRewardLnbPath(path) {
+  if (typeof path !== 'string') {
+    return false;
+  }
+  const normalized = path.split('?')[0];
+  return normalized === CLIENT_SHOP_ROUTES.POINTS;
+}
+
+/**
+ * DB·폴백 LNB에서 TenantComponent off 항목 제거 (내담자)
+ * @param {Array} items
+ * @param {{ clientShopEnabled?: boolean, clientRewardEnabled?: boolean }} [options]
+ * @returns {typeof items}
+ */
+export function filterClientShopLnbItems(items, options = {}) {
+  if (!Array.isArray(items)) {
+    return items;
+  }
+  const { clientShopEnabled, clientRewardEnabled } = options;
+
+  const filterNode = (item) => {
+    if (!item || typeof item !== 'object') {
+      return null;
+    }
+    if (clientShopEnabled === false && isClientShopLnbPath(item.to)) {
+      return null;
+    }
+    if (clientRewardEnabled === false && isClientRewardLnbPath(item.to)) {
+      return null;
+    }
+    if (!Array.isArray(item.children) || item.children.length === 0) {
+      return item;
+    }
+    const children = item.children.map(filterNode).filter(Boolean);
+    if (children.length === 0) {
+      if (isClientShopLnbPath(item.to) || isClientRewardLnbPath(item.to)) {
+        return null;
+      }
+      return {
+        to: item.to,
+        label: item.label,
+        icon: item.icon,
+        end: item.end
+      };
+    }
+    return { ...item, children };
+  };
+
+  return items.map(filterNode).filter(Boolean);
+}
+
+/**
+ * DB LNB에 내담자 쇼핑·리워드 항목 보강 (Flyway 선행 배포 전에도 노출)
+ * @param {Array} items
+ * @param {{ clientShopEnabled?: boolean, clientRewardEnabled?: boolean }} [options]
+ *   - `clientShopEnabled: false` — 쇼핑 그룹 미추가·제거
+ *   - `clientRewardEnabled: false` — 포인트 메뉴만 제외
+ * @returns {typeof items}
+ */
+export function mergeClientShopLnbItems(items, options = {}) {
+  const filtered = filterClientShopLnbItems(items, options);
+  if (!Array.isArray(filtered)) {
+    return filtered;
+  }
+  if (options.clientShopEnabled === false) {
+    return filtered;
+  }
+  const hasShop = filtered.some((item) => {
+    if (isClientShopLnbPath(item.to)) {
+      return true;
+    }
+    if (Array.isArray(item.children)) {
+      return item.children.some((c) => isClientShopLnbPath(c.to));
+    }
+    return false;
+  });
+  if (hasShop) {
+    return filtered;
+  }
+  const children = [
+    { to: CLIENT_SHOP_ROUTES.CATALOG, icon: 'SHOPPING_BAG', label: '상품 둘러보기', end: true },
+    { to: CLIENT_SHOP_ROUTES.ORDERS, icon: 'RECEIPT', label: '내 구매', end: true }
+  ];
+  if (options.clientRewardEnabled !== false) {
+    children.push({ to: CLIENT_SHOP_ROUTES.POINTS, icon: 'GIFT', label: '내 포인트', end: true });
+  }
+  return [
+    ...filtered,
+    {
+      to: CLIENT_SHOP_ROUTES.CATALOG,
+      icon: 'SHOPPING_BAG',
+      label: CLIENT_SHOP_LNB_GROUP_LABEL,
+      end: false,
+      children
+    }
+  ];
+}
 
 /**
  * DB LNB에 아직 없는 관리자 설정 하위 항목을 보강 (Flyway 선행 배포 전에도 노출)
  * @param {Array<{ to?: string, label?: string, icon?: string, end?: boolean, children?: Array }>} items
  * @returns {typeof items}
  */
+/**
+ * DB LNB에 쇼핑·리워드 어드민 항목 보강 (Flyway 선행 배포 전에도 노출)
+ * @param {Array} items
+ * @param {{ adminShopCatalogEnabled?: boolean }} [options]
+ *   - `false`: ADMIN_SHOP_CATALOG 비활성 — 항목 미추가
+ *   - `true` 또는 미지정: 기존 보강 동작 (API 미연동·로딩 중 호환)
+ * @returns {typeof items}
+ */
+export function mergeShopAdminLnbItems(items, options = {}) {
+  if (!Array.isArray(items)) {
+    return items;
+  }
+  if (options.adminShopCatalogEnabled === false) {
+    return items;
+  }
+  const shopPaths = new Set([
+    ADMIN_ROUTES.SHOP_CATALOG_SKUS,
+    ADMIN_ROUTES.SHOP_POINT_POLICIES,
+    ADMIN_ROUTES.SHOP_ORDERS
+  ]);
+  const hasShop = items.some((item) => {
+    if (shopPaths.has(item.to)) {
+      return true;
+    }
+    if (Array.isArray(item.children)) {
+      return item.children.some((c) => shopPaths.has(c.to));
+    }
+    return false;
+  });
+  if (hasShop) {
+    return items;
+  }
+  return [
+    ...items,
+    {
+      to: ADMIN_ROUTES.SHOP_CATALOG_SKUS,
+      icon: 'SHOPPING_BAG',
+      label: SHOP_ADMIN_LNB_GROUP_LABEL,
+      end: false,
+      children: [
+        { to: ADMIN_ROUTES.SHOP_CATALOG_SKUS, icon: 'PACKAGE', label: '상품(SKU) 관리', end: true },
+        { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: '리워드 정책', end: true },
+        { to: ADMIN_ROUTES.SHOP_ORDERS, icon: 'RECEIPT', label: '온라인 주문', end: true }
+      ]
+    }
+  ];
+}
+
 export function mergeSupplementalAdminLnbItems(items) {
   if (!Array.isArray(items)) {
     return items;

@@ -299,6 +299,30 @@ export const GARDEN_API = {
 } as const;
 
 /**
+ * 내담자 온라인 쇼핑 — 카탈로그·장바구니·체크아웃·포인트
+ *
+ * @author MindGarden
+ * @since 2026-05-19
+ */
+export const SHOP_API = {
+  CATALOG: '/api/v1/clients/me/shop/catalog',
+  CART: '/api/v1/clients/me/shop/cart',
+  POINTS_BALANCE: '/api/v1/clients/me/shop/points/balance',
+  POINTS_LEDGER: '/api/v1/clients/me/shop/points/ledger',
+  CHECKOUT: '/api/v1/clients/me/shop/checkout',
+  ORDERS: '/api/v1/clients/me/shop/orders',
+  orderDetail: (orderPublicId: string) =>
+    `/api/v1/clients/me/shop/orders/${encodeURIComponent(orderPublicId)}`,
+  preparePayment: (orderPublicId: string) =>
+    `/api/v1/clients/me/shop/orders/${encodeURIComponent(orderPublicId)}/prepare-payment`,
+} as const;
+
+/** 테넌트 활성 컴포넌트 플래그 — CLIENT_SHOP 등 */
+export const TENANT_COMPONENT_API = {
+  ACTIVE_CODES: '/api/v1/tenant/components/active-codes',
+} as const;
+
+/**
  * Phase 4-A 「마음 날씨」 — `CONSULTANT_CLIENT_APP_PLAN.md` Phase 4 A절.
  * - 텍스트(또는 후속 음성/STT) → 감정 키워드·한 줄 요약 분석 (참고용·진단 아님)
  * - 상담사 옵트인 공유는 카드별 토글 엔드포인트로 분리
@@ -351,4 +375,6 @@ export const API_ENDPOINTS = {
   GARDEN: GARDEN_API,
   MIND_WEATHER: MIND_WEATHER_API,
   ADMIN_MOBILE: ADMIN_MOBILE_API,
+  SHOP: SHOP_API,
+  TENANT_COMPONENT: TENANT_COMPONENT_API,
 } as const;

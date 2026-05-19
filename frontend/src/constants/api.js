@@ -228,13 +228,25 @@ export const ADMIN_API = {
   KAKAO_ALIMTALK_SETTINGS: '/api/v1/admin/kakao-alimtalk-settings',
 
   /** 테넌트 SMS 비시크릿 설정 (GET/PUT 동일 경로) */
-  TENANT_SMS_SETTINGS: '/api/v1/admin/tenant-sms-settings'
+  TENANT_SMS_SETTINGS: '/api/v1/admin/tenant-sms-settings',
+
+  /** 온라인 카탈로그 SKU (GET/POST, GET/PUT/PATCH `/{id}`) */
+  SHOP_CATALOG_SKUS: '/api/v1/admin/shop/catalog-skus',
+
+  /** 포인트·리워드 정책 MVP (GET/PATCH) */
+  SHOP_POINT_POLICIES: '/api/v1/admin/shop/point-policies',
+
+  /** 온라인 주문 목록·상세·환불 (GET/POST) */
+  SHOP_ORDERS: '/api/v1/admin/shop/orders'
 };
 
 /** 페이지·훅에서 `API.KAKAO_ALIMTALK_SETTINGS` 형태로 참조 (ADMIN_API와 동일 경로) */
 export const API = {
   KAKAO_ALIMTALK_SETTINGS: ADMIN_API.KAKAO_ALIMTALK_SETTINGS,
-  TENANT_SMS_SETTINGS: ADMIN_API.TENANT_SMS_SETTINGS
+  TENANT_SMS_SETTINGS: ADMIN_API.TENANT_SMS_SETTINGS,
+  SHOP_CATALOG_SKUS: ADMIN_API.SHOP_CATALOG_SKUS,
+  SHOP_POINT_POLICIES: ADMIN_API.SHOP_POINT_POLICIES,
+  SHOP_ORDERS: ADMIN_API.SHOP_ORDERS
 };
 
 // 스케줄 관련 API (중앙화) (표준화 2025-12-05: /api/v1/ 경로 적용)

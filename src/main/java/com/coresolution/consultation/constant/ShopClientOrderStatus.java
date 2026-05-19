@@ -11,5 +11,7 @@ public enum ShopClientOrderStatus {
     PENDING_PAYMENT,
     PAID,
     CANCELLED,
-    EXPIRED
+    EXPIRED,
+    /** 전액 환불(이행 전 MVP) */
+    REFUNDED
 }

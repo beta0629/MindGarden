@@ -8,6 +8,7 @@ import com.coresolution.consultation.dto.shop.ShopCheckoutResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderSummaryResponse;
 import com.coresolution.consultation.dto.shop.ShopPointBalanceResponse;
+import com.coresolution.consultation.dto.shop.ShopPointLedgerEntryResponse;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentRequest;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentResponse;
 import com.coresolution.consultation.entity.User;
@@ -16,9 +17,12 @@ import com.coresolution.consultation.service.ClientShopCatalogService;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.constant.PlatformComponentCodes;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
+import com.coresolution.core.service.TenantComponentActivationService;
+import java.util.Collections;
 import java.util.List;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -55,6 +59,7 @@ public class ClientShopController extends BaseApiController {
     private final ClientShopCartService clientShopCartService;
     private final ClientShopCheckoutService clientShopCheckoutService;
     private final ClientPointWalletService clientPointWalletService;
+    private final TenantComponentActivationService tenantComponentActivationService;
 
     /**
      * PLP용 카탈로그.
@@ -68,6 +73,9 @@ public class ClientShopController extends BaseApiController {
         String tenantId = requireTenant(user);
         try {
             TenantContextHolder.setTenantId(tenantId);
+            if (!tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_SHOP)) {
+                return success(Collections.emptyList());
+            }
             return success(clientShopCatalogService.listVisibleSkus(tenantId));
         } finally {
             TenantContextHolder.clear();
@@ -130,6 +138,31 @@ public class ClientShopController extends BaseApiController {
         try {
             TenantContextHolder.setTenantId(tenantId);
             return success(clientPointWalletService.getBalance(tenantId, user.getId()));
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
+    /**
+     * 포인트 원장 최근 N건.
+     *
+     * @param session HTTP 세션
+     * @param limit   조회 건수 (기본 20)
+     * @return 원장 목록
+     */
+    @GetMapping("/points/ledger")
+    public ResponseEntity<ApiResponse<List<ShopPointLedgerEntryResponse>>> getPointLedger(
+            HttpSession session,
+            @RequestParam(defaultValue = "20") int limit) {
+
+        User user = requireClient(session);
+        String tenantId = requireTenant(user);
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            if (!tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_REWARD)) {
+                return success(Collections.emptyList());
+            }
+            return success(clientPointWalletService.listRecentLedger(tenantId, user.getId(), limit));
         } finally {
             TenantContextHolder.clear();
         }

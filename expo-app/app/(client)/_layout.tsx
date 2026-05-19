@@ -8,7 +8,7 @@
 import { Tabs, useRouter } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { Home, CalendarPlus, MessageCircle, Leaf, MoreHorizontal } from 'lucide-react-native';
+import { Home, CalendarPlus, MessageCircle, Leaf, MoreHorizontal, ShoppingBag } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useBottomTabNavigatorOptions } from '@/hooks/useBottomTabNavigatorOptions';
 import { useMoreTabUnreadTotal } from '@/hooks/useMoreTabUnreadTotal';
@@ -81,6 +81,15 @@ export default function ClientLayout() {
               tabBarAccessibilityLabel: '웰니스 탭',
             }}
             listeners={{ tabPress: handleTabPress }}
+          />
+          <Tabs.Screen
+            name="(shop)"
+            options={{
+              title: '쇼핑',
+              href: null,
+              tabBarIcon: ({ color }) => <ShoppingBag size={ICON_SIZE} color={color} />,
+              tabBarAccessibilityLabel: '쇼핑',
+            }}
           />
           <Tabs.Screen
             name="(more)"

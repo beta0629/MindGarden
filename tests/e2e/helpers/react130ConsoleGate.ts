@@ -11,6 +11,39 @@ export const REACT_130_OR_INVALID_CHILD = new RegExp(
   'i'
 );
 
+/**
+ * Chromium `console.error` — 부가 리소스·백그라운드 API 401/404 (favicon 등).
+ * 쇼핑·장바구니 플로우와 무관하며, ajax/StandardizedApi가 이미 앱 레벨에서 처리한다.
+ */
+export const BENIGN_CONSOLE_NETWORK_NOISE = new RegExp(
+  [
+    'Failed to load resource:.*\\b401\\b',
+    'Failed to load resource:.*\\b404\\b.*favicon',
+    'Failed to load resource:.*\\b404\\b.*\\.ico'
+  ].join('|'),
+  'i'
+);
+
+/**
+ * @param {string} line
+ * @returns {boolean}
+ */
+export function isBenignConsoleNoise(line: string): boolean {
+  return BENIGN_CONSOLE_NETWORK_NOISE.test(line);
+}
+
+/**
+ * React #130·invalid child·부가 네트워크 노이즈를 제외한 치명적 런타임 오류.
+ *
+ * @param {string[]} lines
+ * @returns {string[]}
+ */
+export function filterSevereConsoleErrors(lines: string[]): string[] {
+  return lines.filter(
+    (line) => !REACT_130_OR_INVALID_CHILD.test(line) && !isBenignConsoleNoise(line)
+  );
+}
+
 export function attachRuntimeErrorCollectors(page: Page, bucket: string[]): void {
   page.on('console', (msg) => {
     if (msg.type() === 'error') {

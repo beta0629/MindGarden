@@ -21,6 +21,11 @@ import {
   skipWhenCiMissingE2eCredentials,
   skipWhenLocalBackend8080Down
 } from '../../helpers/erpAuth';
+import {
+  REACT_130_OR_INVALID_CHILD,
+  attachRuntimeErrorCollectors,
+  filterSevereConsoleErrors
+} from '../../helpers/react130ConsoleGate';
 
 /** `ClientTenantComponentGate` — `PLATFORM_COMPONENT_CODES.CLIENT_SHOP` */
 const CLIENT_SHOP_GATE_TEST_ID = 'client-tenant-component-gate--CLIENT_SHOP';
@@ -31,21 +36,6 @@ const CLIENT_SHOP_CATALOG_EMPTY_TEST_ID = 'client-shop-catalog-empty';
 const SHOP_SKU_ADD_FIRST_TEST_ID = 'shop-sku-add-first';
 
 const PLP_READY_POLL_MS = 15_000;
-
-const REACT_130_OR_INVALID_CHILD =
-  /Minified React error #130|Objects are not valid as a React child|invariant=130/i;
-
-function attachRuntimeErrorCollectors(page: Page, bucket: string[]) {
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') {
-      bucket.push(`[console.error] ${msg.text()}`);
-    }
-  });
-  page.on('pageerror', (err) => {
-    const stack = err.stack ? '\n' + err.stack : '';
-    bucket.push('[pageerror] ' + err.message + stack);
-  });
-}
 
 async function isClientShopAddFirstReady(page: Page): Promise<boolean> {
   const sessionLoading = page.getByTestId(CLIENT_SHOP_SESSION_LOADING_TEST_ID);
@@ -159,7 +149,7 @@ test.describe('내담자 쇼핑 PLP → 장바구니', () => {
       `React #130 또는 invalid child:\n${reactHits.join('\n---\n')}\n전체:\n${collectedErrors.join('\n')}`
     ).toEqual([]);
 
-    const severe = collectedErrors.filter((line) => !REACT_130_OR_INVALID_CHILD.test(line));
+    const severe = filterSevereConsoleErrors(collectedErrors);
     expect(severe, `pageerror / console.error:\n${severe.join('\n---\n')}`).toEqual([]);
   });
 });

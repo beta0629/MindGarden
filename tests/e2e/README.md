@@ -36,7 +36,7 @@ export E2E_TENANT_ID=tenant-incheon-counseling-001
 
 ## 내담자 쇼핑 (CLIENT_SHOP) — Playwright 전제
 
-스펙: [`tests/client/client-shop-catalog-to-cart.spec.ts`](./tests/client/client-shop-catalog-to-cart.spec.ts) (`testDir` 기준 `./tests/client/…`) (PLP → 장바구니). SSOT: [`docs/project-management/SHOP_P2_INTEGRATION_TEST_REPORT.md`](../docs/project-management/SHOP_P2_INTEGRATION_TEST_REPORT.md) §6.1.
+스펙: [`tests/client/client-shop-catalog-to-cart.spec.ts`](./tests/client/client-shop-catalog-to-cart.spec.ts) (`testDir` 기준 `./tests/client/…`) (PLP → 장바구니). SSOT: [`docs/project-management/SHOP_P2_INTEGRATION_TEST_REPORT.md`](../docs/project-management/SHOP_P2_INTEGRATION_TEST_REPORT.md) §6.1. **콘솔 게이트**: React **#130**만 실패·`Failed to load resource` **401/404(favicon)** 등 부가 네트워크 노이즈는 [`helpers/react130ConsoleGate.ts`](./helpers/react130ConsoleGate.ts) `BENIGN_CONSOLE_NETWORK_NOISE`로 무시(장바구니 API 성공과 무관).
 
 | # | 전제 | 확인 |
 |---|------|------|

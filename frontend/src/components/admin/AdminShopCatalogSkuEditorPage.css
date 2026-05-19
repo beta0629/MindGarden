@@ -1,0 +1,57 @@
+/**
+ * AdminShopCatalogSkuEditorPage — B0KlA 섹션·read-only SKU
+ *
+ * @author CoreSolution
+ * @since 2026-05-19
+ */
+
+.admin-shop-sku-editor__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-lg);
+}
+
+.admin-shop-sku-editor__section {
+  padding: var(--mg-spacing-lg);
+  border-radius: var(--mg-radius-lg);
+  border: 1px solid var(--mg-color-border-main);
+  background: var(--mg-color-surface-main);
+}
+
+.admin-shop-sku-editor__section-title {
+  margin: 0 0 var(--mg-spacing-md);
+  padding-left: var(--mg-spacing-sm);
+  border-left: 4px solid var(--mg-color-primary-main);
+  font-size: var(--mg-font-size-md);
+  font-weight: 700;
+  color: var(--mg-color-text-main);
+}
+
+.admin-shop-sku-editor__sku-code-readonly {
+  margin: 0;
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border-radius: var(--mg-radius-md);
+  background: color-mix(in srgb, var(--mg-color-text-main) 5%, var(--mg-color-background-main));
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-md);
+}
+
+.admin-shop-sku-editor__category-fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-shop-sku-editor__category-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-md);
+}
+
+.admin-shop-catalog-list__thumb {
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: cover;
+  border-radius: var(--mg-radius-sm);
+  background: var(--mg-color-background-main);
+}

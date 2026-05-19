@@ -122,6 +122,7 @@ import AdminPushMonitoringPlaceholderPage from './components/admin/AdminPushMoni
 import AdminMindWeatherObservabilityPage from './components/admin/AdminMindWeatherObservabilityPage';
 import AdminMindGardenObservabilityPage from './components/admin/AdminMindGardenObservabilityPage';
 import AdminShopCatalogSkusPage from './components/admin/AdminShopCatalogSkusPage';
+import AdminShopCatalogSkuEditorPage from './components/admin/AdminShopCatalogSkuEditorPage';
 import AdminShopPointPoliciesPage from './components/admin/AdminShopPointPoliciesPage';
 import AdminShopOrdersPage from './components/admin/AdminShopOrdersPage';
 import MindfulnessGuide from './components/wellness/MindfulnessGuide';
@@ -652,6 +653,20 @@ function AppContent() {
             <Route path={ADMIN_ROUTES.MIND_WEATHER_OBSERVABILITY} element={<AdminMindWeatherObservabilityPage />} />
             <Route path={ADMIN_ROUTES.MIND_GARDEN_OBSERVABILITY} element={<AdminMindGardenObservabilityPage />} />
             <Route path={ADMIN_ROUTES.PUSH_MONITORING} element={<AdminPushMonitoringPlaceholderPage />} />
+            <Route path={`${ADMIN_ROUTES.SHOP_CATALOG_SKUS}/new`} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
+                  <AdminShopCatalogSkuEditorPage isNew />
+                </AdminTenantComponentGate>
+              </ProtectedRoute>
+            } />
+            <Route path={`${ADMIN_ROUTES.SHOP_CATALOG_SKUS}/:skuId/edit`} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
+                  <AdminShopCatalogSkuEditorPage />
+                </AdminTenantComponentGate>
+              </ProtectedRoute>
+            } />
             <Route path={ADMIN_ROUTES.SHOP_CATALOG_SKUS} element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
                 <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>

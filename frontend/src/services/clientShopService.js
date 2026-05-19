@@ -8,6 +8,7 @@
 import StandardizedApi from '../utils/standardizedApi';
 import { CLIENT_SHOP_API } from '../constants/clientShopApi';
 import { normalizeShopCatalogCategory } from '../constants/clientShopConstants';
+import { toDisplayString } from '../utils/safeDisplay';
 
 /**
  * StandardizedApi(apiGet)는 기본적으로 ApiResponse.data를 추출해 반환한다.
@@ -40,9 +41,14 @@ const mapCatalogRow = (row) => {
   if (!row || typeof row !== 'object') {
     return row;
   }
+  const thumbnailUrl = toDisplayString(
+    row.thumbnailUrl || row.heroImageUrl,
+    ''
+  );
   return {
     ...row,
-    catalogCategory: normalizeShopCatalogCategory(row.catalogCategory)
+    catalogCategory: normalizeShopCatalogCategory(row.catalogCategory),
+    thumbnailUrl: thumbnailUrl || null
   };
 };
 

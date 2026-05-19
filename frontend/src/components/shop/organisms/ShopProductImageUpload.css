@@ -1,0 +1,71 @@
+/**
+ * Shop SKU 대표 이미지 업로드 — B0KlA·디자인 토큰
+ *
+ * @author CoreSolution
+ * @since 2026-05-19
+ */
+
+.admin-shop-sku-image-upload {
+  position: relative;
+  width: 100%;
+  max-width: 20rem;
+  aspect-ratio: 1 / 1;
+  border: 2px dashed var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-color-background-main);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.admin-shop-sku-image-upload--drag-over {
+  border-color: var(--mg-color-primary-main);
+  background: color-mix(in srgb, var(--mg-color-primary-main) 6%, var(--mg-color-background-main));
+}
+
+.admin-shop-sku-image-upload--has-preview {
+  cursor: default;
+  border-style: solid;
+}
+
+.admin-shop-sku-image-upload__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+  padding: var(--mg-spacing-md);
+  text-align: center;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+}
+
+.admin-shop-sku-image-upload__preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.admin-shop-sku-image-upload__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-spacing-sm);
+  background: color-mix(in srgb, var(--mg-color-text-main) 45%, transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.admin-shop-sku-image-upload--has-preview:hover .admin-shop-sku-image-upload__overlay,
+.admin-shop-sku-image-upload--has-preview:focus-within .admin-shop-sku-image-upload__overlay {
+  opacity: 1;
+}
+
+.admin-shop-sku-image-upload__overlay-btn {
+  min-height: 2.75rem;
+}

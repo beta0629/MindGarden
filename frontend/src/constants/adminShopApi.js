@@ -63,6 +63,29 @@ export function buildAdminShopCatalogSkuPath(skuId) {
  * @param {string|number} skuId
  * @returns {string}
  */
+export function buildAdminShopCatalogSkuThumbnailPath(skuId) {
+  return `${buildAdminShopCatalogSkuPath(skuId)}/thumbnail`;
+}
+
+/**
+ * @returns {string}
+ */
+export function buildAdminShopCatalogSkuNewRoute() {
+  return `${ADMIN_SHOP_ROUTES.CATALOG_SKUS}/new`;
+}
+
+/**
+ * @param {string|number} skuId
+ * @returns {string}
+ */
+export function buildAdminShopCatalogSkuEditRoute(skuId) {
+  return `${ADMIN_SHOP_ROUTES.CATALOG_SKUS}/${encodeURIComponent(String(skuId))}/edit`;
+}
+
+/**
+ * @param {string|number} skuId
+ * @returns {string}
+ */
 export function buildAdminShopCatalogVisiblePath(skuId) {
   return `${buildAdminShopCatalogSkuPath(skuId)}/catalog-visible`;
 }

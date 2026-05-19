@@ -1,5 +1,5 @@
 /**
- * ShopSkuDetailPage — SKU 상세 PDP 골격 (Phase 2a)
+ * ShopSkuDetailPage — SKU 상세 PDP (MVP+ 히어로 이미지·고정 CTA)
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -7,11 +7,17 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Coins } from 'lucide-react';
+import { ImageIcon } from 'lucide-react';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import PriceText from '../../../components/shop/atoms/PriceText';
-import { CLIENT_SHOP_ROUTES } from '../../../constants/clientShopConstants';
+import SafeText from '../../../components/common/SafeText';
+import {
+  CLIENT_SHOP_ROUTES,
+  CLIENT_SHOP_TEST_IDS,
+  SHOP_CATEGORY_TABS,
+  normalizeShopCatalogCategory
+} from '../../../constants/clientShopConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchShopCart,
@@ -19,6 +25,7 @@ import {
   mergeCartLine,
   replaceShopCart
 } from '../../../services/clientShopService';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 const ShopSkuDetailPage = () => {
   const { skuCode } = useParams();
@@ -27,14 +34,16 @@ const ShopSkuDetailPage = () => {
   const [sku, setSku] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [imageFailed, setImageFailed] = useState(false);
 
-  const loadSku = useCallback(async () => {
+  const loadSku = useCallback(async() => {
     if (!skuCode) {
       return;
     }
     try {
       setLoading(true);
       setMessage('');
+      setImageFailed(false);
       const row = await fetchShopCatalogSku(decodeURIComponent(skuCode));
       if (!row) {
         setMessage('상품을 찾을 수 없거나 노출되지 않습니다.');
@@ -56,7 +65,7 @@ const ShopSkuDetailPage = () => {
     }
   }, [sessionLoading, isLoggedIn, loadSku]);
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async() => {
     if (!sku?.skuCode) {
       return;
     }
@@ -78,6 +87,12 @@ const ShopSkuDetailPage = () => {
     return <ShopClientSessionLoading title="상품 상세" />;
   }
 
+  const categoryKey = normalizeShopCatalogCategory(sku?.catalogCategory);
+  const categoryLabel =
+    SHOP_CATEGORY_TABS.find((tab) => tab.key === categoryKey)?.label || categoryKey;
+  const thumbnailUrl = toDisplayString(sku?.thumbnailUrl, '');
+  const showHeroImage = Boolean(thumbnailUrl) && !imageFailed;
+
   return (
     <ShopClientLayout title="상품 상세" testId="client-shop-sku-detail">
       <p className="client-shop__message">
@@ -90,31 +105,58 @@ const ShopSkuDetailPage = () => {
 
       {message ? (
         <p className="client-shop__message client-shop__message--error" role="alert">
-          {message}
+          <SafeText>{message}</SafeText>
         </p>
       ) : null}
 
       {sku ? (
-        <article className="client-shop__pdp" data-testid={`sku-detail-${sku.skuCode}`}>
-          <span className="client-shop__accent-bar client-shop__pdp-accent" aria-hidden />
+        <article
+          className="client-shop__pdp"
+          data-testid={CLIENT_SHOP_TEST_IDS.PDP}
+        >
+          <figure className="client-shop__pdp-image-wrapper">
+            {showHeroImage ? (
+              <img
+                src={thumbnailUrl}
+                alt=""
+                className="client-shop__pdp-image"
+                onError={() => setImageFailed(true)}
+              />
+            ) : (
+              <div className="client-shop__pdp-image-placeholder" aria-hidden>
+                <ImageIcon size={40} />
+              </div>
+            )}
+          </figure>
+
           <div className="client-shop__pdp-body">
-            <h2 className="client-shop__sku-title">{sku.title}</h2>
-            {sku.descriptionText ? (
-              <p className="client-shop__sku-desc">{sku.descriptionText}</p>
-            ) : null}
+            <span className="client-shop__pdp-category-badge">
+              <SafeText>{categoryLabel}</SafeText>
+            </span>
+            <h2 className="client-shop__pdp-title">
+              <SafeText>{sku.title}</SafeText>
+            </h2>
             <div className="client-shop__pdp-price-row">
               <PriceText amountMinor={sku.unitPriceMinor} currency={sku.currency} />
-              <Coins size={20} color="var(--mg-color-accent-main)" aria-label="포인트 사용 가능" />
             </div>
+            {sku.descriptionText ? (
+              <p className="client-shop__pdp-desc">
+                <SafeText>{sku.descriptionText}</SafeText>
+              </p>
+            ) : null}
+          </div>
+
+          <footer className="client-shop__pdp-footer">
             <button
               type="button"
-              className="client-shop__cta"
+              className="client-shop__cta client-shop__cta--primary"
               disabled={loading}
               onClick={handleAddToCart}
+              data-testid={CLIENT_SHOP_TEST_IDS.PDP_ADD_TO_CART}
             >
-              장바구니에 담기
+              장바구니 담기
             </button>
-          </div>
+          </footer>
         </article>
       ) : null}
     </ShopClientLayout>

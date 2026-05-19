@@ -184,7 +184,10 @@ export const CLIENT_SHOP_TEST_IDS = {
   SESSION_LOADING: 'client-shop-session-loading',
   CATALOG_PAGE: 'client-shop-catalog-page',
   CATALOG_LOADING: 'client-shop-catalog-loading',
-  CART_PAGE: 'client-shop-cart-page'
+  CART_PAGE: 'client-shop-cart-page',
+  PDP: 'client-shop-pdp',
+  PDP_ADD_TO_CART: 'pdp-add-to-cart-button',
+  SKU_CARD_THUMBNAIL: 'sku-card-thumbnail'
 };
 
 export const CLIENT_SHOP_SESSION_LOADING_COPY = '불러오는 중…';

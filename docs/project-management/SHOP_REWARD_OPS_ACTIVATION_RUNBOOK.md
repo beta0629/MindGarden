@@ -360,8 +360,8 @@ mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" \
 **4) verify 헬퍼** — `YOUR-TENANT-UUID`를 env로만 전달 (저장소·문서에 실 UUID 기록 금지)
 
 ```bash
-TENANT_ID=YOUR-TENANT-UUID bash scripts/ops/verify-shop-reward-dev.sh
-# TENANT_ID=YOUR-TENANT-UUID VERIFY_STRICT=1 bash scripts/ops/verify-shop-reward-dev.sh
+TENANT_ID=tenant-incheon-counseling-001 bash scripts/ops/verify-shop-reward-dev.sh
+# TENANT_ID=tenant-incheon-counseling-001 VERIFY_STRICT=1 bash scripts/ops/verify-shop-reward-dev.sh
 ```
 
 **5) 어드민 LNB** — Flyway `V20260521_001` 후 강력 새로고침 → 「쇼핑·리워드」4메뉴 스크린샷 1장 (티켓·채널 첨부; 본 문서에는 캡션만)

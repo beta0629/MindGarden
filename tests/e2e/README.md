@@ -30,6 +30,7 @@
 | 1 | 백엔드 API **8080** + 프론트 **3000** (`BASE_URL`, API 베이스 8080 일치) 또는 `E2E_API_BASE` health **200** | `skipWhenLocalBackend8080Down()` (로컬·CI=false) |
 | 2 | Flyway Shop P2 (**002~007**, 001 salary 충돌 해소) | DB·카탈로그 컬럼·`point_tenant_policies` |
 | 3 | 테넌트 **`CLIENT_SHOP`**·**`CLIENT_REWARD`** 컴포넌트 활성 | 어드민 컴포넌트 또는 시드 |
+| 3a | **`E2E_TENANT_ID`** — OPS·로그인과 동일 MindGarden tenant 문자열 ID (예: `tenant-incheon-counseling-001`) | `loginClientWeb`·`loginErpUser` 등 → `/login?tenantId=` (`erpAuth.ts`) |
 | 4 | 어드민에서 **`catalogVisible=true`** SKU ≥1 (활성 PLP 탭) | `shop-sku-add-first` testid 노출 |
 | 5 | 내담자 로그인 자격 (`loginClientWeb` — `tests/e2e/helpers/erpAuth.ts`) | CI: `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` 또는 `TEST_USERNAME`/`TEST_PASSWORD` |
 

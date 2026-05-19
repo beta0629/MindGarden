@@ -344,6 +344,29 @@ export function getClientWebLogin(): { username: string; password: string } {
 }
 
 /**
+ * 로컬 E2E 테넌트 스코핑 — MindGarden tenant 문자열 ID (`LOCAL_TESTING_GUIDE` 와 동일 형식).
+ * 설정 시 `/login?tenantId=` 로 진입해 잘못된 테넌트·컴포넌트 off 를 방지한다.
+ */
+export function getE2eTenantId(): string | undefined {
+  return trimEnv('E2E_TENANT_ID');
+}
+
+/**
+ * UnifiedLogin 진입 경로. `E2E_TENANT_ID` 가 있으면 `tenantId` 쿼리를 붙인다.
+ */
+export function buildLoginPath(): string {
+  const tenantId = getE2eTenantId();
+  if (!tenantId) {
+    return '/login';
+  }
+  return `/login?tenantId=${encodeURIComponent(tenantId)}`;
+}
+
+async function gotoLoginPage(page: Page): Promise<void> {
+  await page.goto(buildLoginPath(), { waitUntil: 'domcontentloaded' });
+}
+
+/**
  * ERP E2E용 로그인. 실패 시 URL·알림 텍스트·스크린샷을 testInfo에 첨부한다.
  *
  * @param page 페이지
@@ -358,7 +381,7 @@ export async function loginErpUser(
   const { email, password } = getE2eCredentials();
   const timeoutMs = options?.timeoutMs ?? 25_000;
 
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  await gotoLoginPage(page);
   const idField = page.locator(UNIFIED_LOGIN_IDENTIFIER_SELECTOR).first();
   await idField.waitFor({ state: 'visible', timeout: 15_000 });
   await idField.fill(email);
@@ -403,7 +426,7 @@ export async function loginClientWeb(
   const { username, password } = getClientWebLogin();
   const timeoutMs = options?.timeoutMs ?? 20_000;
 
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  await gotoLoginPage(page);
   const idField = page.locator(UNIFIED_LOGIN_IDENTIFIER_SELECTOR).first();
   await idField.waitFor({ state: 'visible', timeout: 15_000 });
   await idField.fill(username);
@@ -435,7 +458,7 @@ export async function loginConsultantWeb(
   const { username, password } = getConsultantWebLogin();
   const timeoutMs = options?.timeoutMs ?? 20_000;
 
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  await gotoLoginPage(page);
   const idField = page.locator(UNIFIED_LOGIN_IDENTIFIER_SELECTOR).first();
   await idField.waitFor({ state: 'visible', timeout: 15_000 });
   await idField.fill(username);

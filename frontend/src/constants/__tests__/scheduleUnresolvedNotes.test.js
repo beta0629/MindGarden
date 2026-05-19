@@ -1,9 +1,11 @@
 import {
   CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD,
   CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD,
+  SCHEDULE_SESSION_SEQUENCE_FIELD,
   formatCalendarSessionLabel,
   parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount,
+  resolveCalendarSessionLabel,
   shouldShowCalendarSessionLabel
 } from '../schedule';
 
@@ -49,5 +51,77 @@ describe('formatCalendarSessionLabel', () => {
     expect(formatCalendarSessionLabel(0, 1)).toBe('');
     expect(formatCalendarSessionLabel(2, null)).toBe('');
     expect(shouldShowCalendarSessionLabel(1, 1)).toBe(false);
+  });
+});
+
+describe('resolveCalendarSessionLabel', () => {
+  it('필드명 SSOT 상수 정의', () => {
+    expect(SCHEDULE_SESSION_SEQUENCE_FIELD).toBe('sessionSequence');
+  });
+
+  it('과거·sessionSequence 있으면 예약 시점 회차 표시', () => {
+    expect(
+      resolveCalendarSessionLabel({
+        sessionSequence: 4,
+        remainingSessions: 7,
+        totalSessions: 10,
+        status: 'BOOKED',
+        isPast: true
+      })
+    ).toBe('(4/10)');
+  });
+
+  it('완료 상태는 sessionSequence 우선', () => {
+    expect(
+      resolveCalendarSessionLabel({
+        sessionSequence: 4,
+        remainingSessions: 7,
+        totalSessions: 10,
+        status: 'COMPLETED',
+        isPast: false
+      })
+    ).toBe('(4/10)');
+  });
+
+  it('미래 예정은 잔여 회기 표시', () => {
+    expect(
+      resolveCalendarSessionLabel({
+        sessionSequence: 4,
+        remainingSessions: 5,
+        totalSessions: 10,
+        status: 'BOOKED',
+        isPast: false
+      })
+    ).toBe('(5/10)');
+  });
+
+  it('취소·휴가·단회기는 빈 문자열', () => {
+    expect(
+      resolveCalendarSessionLabel({
+        sessionSequence: 2,
+        remainingSessions: 1,
+        totalSessions: 10,
+        status: 'CANCELLED',
+        isPast: true
+      })
+    ).toBe('');
+    expect(
+      resolveCalendarSessionLabel({
+        sessionSequence: 2,
+        remainingSessions: 1,
+        totalSessions: 10,
+        status: 'VACATION',
+        isPast: false
+      })
+    ).toBe('');
+    expect(
+      resolveCalendarSessionLabel({
+        sessionSequence: 1,
+        remainingSessions: 0,
+        totalSessions: 1,
+        status: 'BOOKED',
+        isPast: false
+      })
+    ).toBe('');
   });
 });

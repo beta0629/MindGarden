@@ -72,6 +72,12 @@ public class Schedule extends BaseEntity {
     
     @Column(name = "client_id")
     private Long clientId; // 내담자 ID (예약된 경우)
+
+    /**
+     * 예약 확정·회기 차감 시점의 회차 번호(1-based). 가예약·미차감 일정은 null.
+     */
+    @Column(name = "session_sequence")
+    private Integer sessionSequence;
     
     @Size(max = 20, message = "상담 방법은 20자 이하여야 합니다.")
     @Column(name = "consultation_method", length = 20)

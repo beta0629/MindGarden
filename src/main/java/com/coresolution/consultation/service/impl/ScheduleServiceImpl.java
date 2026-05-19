@@ -393,7 +393,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         Schedule savedSchedule = scheduleRepository.save(schedule);
 
         if (!tentativeBeforeDeposit) {
-            useSessionForMapping(consultantId, clientId);
+            useSessionForMapping(consultantId, clientId, savedSchedule);
             notifyScheduleCreated(savedSchedule);
         }
 
@@ -460,7 +460,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 savedSchedule.getId(), savedSchedule.getTenantId(), savedSchedule.getIsDeleted());
 
         if (!tentativeBeforeDeposit) {
-            useSessionForMapping(consultantId, clientId);
+            useSessionForMapping(consultantId, clientId, savedSchedule);
             log.info("✅ 회기 사용 처리 완료: consultantId={}, clientId={}", consultantId, clientId);
             notifyScheduleCreated(savedSchedule);
         }
@@ -505,7 +505,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         
         Schedule savedSchedule = scheduleRepository.save(schedule);
         
-        useSessionForMapping(consultantId, clientId);
+        useSessionForMapping(consultantId, clientId, savedSchedule);
         notifyScheduleCreated(savedSchedule);
 
         log.info("✅ 상담사 스케줄 생성 완료 (유형 기반): ID {}, 상담 유형: {}, 시간: {} - {}", 
@@ -548,7 +548,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         for (Schedule schedule : tentatives) {
             schedule.setStatus(ScheduleStatus.BOOKED);
             Schedule booked = scheduleRepository.save(schedule);
-            useSessionForSpecificMapping(tenantId, mapping.getId(), consultantUserId, clientUserId);
+            useSessionForSpecificMapping(tenantId, mapping.getId(), consultantUserId, clientUserId, booked);
             notifyTentativeScheduleBookedAfterDeposit(booked, tenantId);
         }
     }
@@ -604,7 +604,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 입금 확인 직후 매핑이 DEPOSIT_PENDING인 경우에도 허용한다.
      */
     private void useSessionForSpecificMapping(String tenantId, Long mappingId, Long consultantUserId,
-            Long clientUserId) {
+            Long clientUserId, Schedule scheduleForSequence) {
         log.debug("매핑 단건 회기 사용: mappingId={}, 상담사 {}, 내담자 {}", mappingId, consultantUserId, clientUserId);
         ConsultantClientMapping freshMapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
@@ -625,6 +625,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("매핑 회기 차감: mappingId={}, totalSessions={}, usedSessions={}, remainingSessions={}",
                 freshMapping.getId(), freshMapping.getTotalSessions(),
                 freshMapping.getUsedSessions(), freshMapping.getRemainingSessions());
+        persistSessionSequenceBeforeDeduction(scheduleForSequence, freshMapping);
         freshMapping.useSession();
         mappingRepository.save(freshMapping);
         try {
@@ -1611,10 +1612,38 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return true;
     }
 
+    /**
+     * 회기 차감 직전 매칭 잔여 기준 예약 회차(1-based): totalSessions - remainingSessions + 1.
+     */
+    private static Integer computeSessionSequenceBeforeDeduction(ConsultantClientMapping mapping) {
+        if (mapping == null) {
+            return null;
+        }
+        Integer totalSessions = mapping.getTotalSessions();
+        Integer remainingSessions = mapping.getRemainingSessions();
+        if (totalSessions == null || totalSessions <= 1 || remainingSessions == null || remainingSessions <= 0) {
+            return null;
+        }
+        return totalSessions - remainingSessions + 1;
+    }
+
+    private void persistSessionSequenceBeforeDeduction(Schedule schedule, ConsultantClientMapping mapping) {
+        if (schedule == null || schedule.getId() == null || mapping == null) {
+            return;
+        }
+        Integer sequence = computeSessionSequenceBeforeDeduction(mapping);
+        if (sequence == null) {
+            return;
+        }
+        schedule.setSessionSequence(sequence);
+        scheduleRepository.save(schedule);
+        log.info("예약 시점 회차 저장: scheduleId={}, sessionSequence={}", schedule.getId(), sequence);
+    }
+
      /**
      * 매칭의 회기 사용 처리
      */
-    private void useSessionForMapping(Long consultantId, Long clientId) {
+    private void useSessionForMapping(Long consultantId, Long clientId, Schedule scheduleForSequence) {
         log.debug("📅 매칭 회기 사용 처리: 상담사 {}, 내담자 {}", consultantId, clientId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         
@@ -1633,6 +1662,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     log.info("🔍 매칭 상태 확인: mappingId={}, totalSessions={}, usedSessions={}, remainingSessions={}", 
                             freshMapping.getId(), freshMapping.getTotalSessions(), 
                             freshMapping.getUsedSessions(), freshMapping.getRemainingSessions());
+
+                    persistSessionSequenceBeforeDeduction(scheduleForSequence, freshMapping);
                     
                     freshMapping.useSession();
                     mappingRepository.save(freshMapping);
@@ -2047,6 +2078,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             .mappingId(mappingId)
             .totalSessions(totalSessions)
             .remainingSessions(remainingSessions)
+            .sessionSequence(schedule.getSessionSequence())
             .build();
     }
 

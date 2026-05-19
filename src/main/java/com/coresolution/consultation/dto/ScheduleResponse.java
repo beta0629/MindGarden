@@ -76,6 +76,9 @@ public class ScheduleResponse {
     /** 매칭 남은 회기 수. 매칭 없으면 null. */
     private Integer remainingSessions;
 
+    /** 예약 시점 회차(1-based). 미설정·가예약·단회기 미차감 시 null. */
+    private Integer sessionSequence;
+
     /**
      * Schedule 엔티티를 ScheduleResponse로 변환
      * 상담 유형을 한글로 변환
@@ -94,6 +97,7 @@ public class ScheduleResponse {
                 .description(schedule.getDescription())
                 .consultationId(schedule.getConsultationId())
                 .clientId(schedule.getClientId())
+                .sessionSequence(schedule.getSessionSequence())
                 .createdAt(schedule.getCreatedAt())
                 .updatedAt(schedule.getUpdatedAt())
                 .clientScheduleNotesUnresolvedCount(0)

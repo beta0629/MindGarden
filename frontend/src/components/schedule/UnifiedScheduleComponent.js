@@ -29,6 +29,7 @@ import {
   CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD,
   SCHEDULE_MAPPING_ID_FIELD,
   SCHEDULE_REMAINING_SESSIONS_FIELD,
+  SCHEDULE_SESSION_SEQUENCE_FIELD,
   SCHEDULE_TOTAL_SESSIONS_FIELD,
   parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount,
@@ -464,6 +465,9 @@ const UnifiedScheduleComponent = ({
                             [SCHEDULE_REMAINING_SESSIONS_FIELD]: parseScheduleSessionCount(
                                 schedule[SCHEDULE_REMAINING_SESSIONS_FIELD] ?? schedule.remaining_sessions
                             ),
+                            [SCHEDULE_SESSION_SEQUENCE_FIELD]: parseScheduleSessionCount(
+                                schedule[SCHEDULE_SESSION_SEQUENCE_FIELD] ?? schedule.session_sequence
+                            ),
                             consultantId: schedule.consultantId,
                             consultantName: schedule.consultantName,
                             consultantPhone: schedule.consultantPhone,
@@ -586,6 +590,9 @@ const UnifiedScheduleComponent = ({
                                 ),
                                 [SCHEDULE_REMAINING_SESSIONS_FIELD]: parseScheduleSessionCount(
                                     schedule[SCHEDULE_REMAINING_SESSIONS_FIELD] ?? schedule.remaining_sessions
+                                ),
+                                [SCHEDULE_SESSION_SEQUENCE_FIELD]: parseScheduleSessionCount(
+                                    schedule[SCHEDULE_SESSION_SEQUENCE_FIELD] ?? schedule.session_sequence
                                 ),
                                 consultantId: schedule.consultantId,
                                 consultantName: schedule.consultantName,

@@ -254,6 +254,7 @@ export const CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD =
 export const SCHEDULE_MAPPING_ID_FIELD = 'mappingId';
 export const SCHEDULE_TOTAL_SESSIONS_FIELD = 'totalSessions';
 export const SCHEDULE_REMAINING_SESSIONS_FIELD = 'remainingSessions';
+export const SCHEDULE_SESSION_SEQUENCE_FIELD = 'sessionSequence';
 
 /**
  * @param {*} raw API 또는 extendedProps 값
@@ -303,11 +304,48 @@ export function shouldShowCalendarSessionLabel(totalSessions, remainingSessions)
  * 월간 캘린더 회기 라벨. 예: "(2/10)" — 남은/총. 표시 불가 시 빈 문자열.
  */
 export function formatCalendarSessionLabel(remainingSessions, totalSessions) {
-  if (!shouldShowCalendarSessionLabel(totalSessions, remainingSessions)) {
+  return resolveCalendarSessionLabel({
+    remainingSessions,
+    totalSessions,
+    sessionSequence: null,
+    status: null,
+    isPast: false
+  });
+}
+
+/**
+ * 월간 캘린더 회기 라벨 분기.
+ * - 과거·완료(취소·휴가 제외): 예약 시점 회차 (sessionSequence/총)
+ * - 미래·가예약 등: 잔여 (남은/총)
+ */
+export function resolveCalendarSessionLabel({
+  sessionSequence,
+  remainingSessions,
+  totalSessions,
+  status,
+  isPast
+} = {}) {
+  const total = parseScheduleSessionCount(totalSessions);
+  if (total === null || total <= 1) {
     return '';
   }
-  const total = parseScheduleSessionCount(totalSessions);
+  const statusCode =
+    status != null && String(status).trim() !== '' ? String(status).trim().toUpperCase() : '';
+  if (statusCode === STATUS.CANCELLED || statusCode === STATUS.VACATION) {
+    return '';
+  }
+  const sequence = parseScheduleSessionCount(sessionSequence);
+  const isTentative = statusCode === 'TENTATIVE_PENDING_PAYMENT';
+  const isCompleted = statusCode === STATUS.COMPLETED;
+  const showBookingSequence =
+    sequence !== null && !isTentative && (isPast === true || isCompleted);
+  if (showBookingSequence) {
+    return `(${sequence}/${total})`;
+  }
   const remaining = parseScheduleSessionCount(remainingSessions);
+  if (remaining === null) {
+    return '';
+  }
   return `(${remaining}/${total})`;
 }
 

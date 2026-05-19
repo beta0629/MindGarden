@@ -1932,6 +1932,7 @@ public class ScheduleController extends BaseApiController {
             .mappingId(mappingId)
             .totalSessions(totalSessions)
             .remainingSessions(remainingSessions)
+            .sessionSequence(schedule.getSessionSequence())
             .build();
     }
 

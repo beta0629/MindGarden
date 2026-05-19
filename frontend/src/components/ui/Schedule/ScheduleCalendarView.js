@@ -11,9 +11,10 @@ import {
   CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD,
   CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD,
   SCHEDULE_REMAINING_SESSIONS_FIELD,
+  SCHEDULE_SESSION_SEQUENCE_FIELD,
   SCHEDULE_TOTAL_SESSIONS_FIELD,
   STATUS,
-  formatCalendarSessionLabel,
+  resolveCalendarSessionLabel,
   parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount
 } from '../../../constants/schedule';
@@ -239,6 +240,11 @@ const ScheduleCalendarView = ({
         const isMonthView = eventInfo.view?.type === 'dayGridMonth';
         const isPastOrCompleted = isEventPastOrCompleted(event);
         const pastClass = isPastOrCompleted ? ' mg-v2-ad-calendar-event--past' : '';
+        const eventStart = new Date(event.start);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        eventStart.setHours(0, 0, 0, 0);
+        const isPastDate = eventStart < today;
         const isCancelled = extendedProps?.status === 'CANCELLED';
         const cancelledClass = isCancelled ? ' mg-v2-ad-calendar-event--cancelled' : '';
 
@@ -265,10 +271,13 @@ const ScheduleCalendarView = ({
             extendedProps?.[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
         );
         const sessionLabel = integratedMonthEventLayout && isMonthView
-            ? formatCalendarSessionLabel(
-                extendedProps?.[SCHEDULE_REMAINING_SESSIONS_FIELD],
-                extendedProps?.[SCHEDULE_TOTAL_SESSIONS_FIELD]
-            )
+            ? resolveCalendarSessionLabel({
+                sessionSequence: extendedProps?.[SCHEDULE_SESSION_SEQUENCE_FIELD],
+                remainingSessions: extendedProps?.[SCHEDULE_REMAINING_SESSIONS_FIELD],
+                totalSessions: extendedProps?.[SCHEDULE_TOTAL_SESSIONS_FIELD],
+                status: extendedProps?.status,
+                isPast: isPastDate
+            })
             : '';
         const sessionTitleSuffix = sessionLabel ? ` ${sessionLabel}` : '';
         const isVacationScheduleRow =

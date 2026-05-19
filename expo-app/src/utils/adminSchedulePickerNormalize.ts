@@ -6,6 +6,8 @@
  */
 import { toDisplayString, toSafeNumber } from '@/utils/safeDisplay';
 
+export { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
+
 export type AdminConsultantVacationPickerItem = {
   readonly id: number;
   readonly name: string;
@@ -131,26 +133,3 @@ export function extractCreatedEntityId(raw: unknown): number | null {
   return null;
 }
 
-export function extractApiErrorMessage(error: unknown, fallback: string): string {
-  if (error != null && typeof error === 'object') {
-    const rec = error as Record<string, unknown>;
-    const msg = rec.message;
-    if (typeof msg === 'string' && msg.trim().length > 0) {
-      return msg.trim();
-    }
-    const original = rec.originalError;
-    if (original != null && typeof original === 'object') {
-      const axiosData = (original as { response?: { data?: unknown } }).response?.data;
-      if (axiosData != null && typeof axiosData === 'object') {
-        const body = axiosData as Record<string, unknown>;
-        if (typeof body.message === 'string' && body.message.trim()) {
-          return body.message.trim();
-        }
-        if (typeof body.error === 'string' && body.error.trim()) {
-          return body.error.trim();
-        }
-      }
-    }
-  }
-  return fallback;
-}

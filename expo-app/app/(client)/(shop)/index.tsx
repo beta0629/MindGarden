@@ -28,6 +28,7 @@ import { SkuCard } from '@/components/shop/molecules/SkuCard';
 import { useClientShopCatalog, type ShopCatalogSku } from '@/api/hooks/useClientShopCatalog';
 import { useClientShopCart } from '@/api/hooks/useClientShopCart';
 import { mergeCartLine } from '@/utils/clientShopCart';
+import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 import {
   buildShopSkuDetailPath,
   CLIENT_SHOP_ROUTES,
@@ -69,8 +70,7 @@ export default function ShopCatalogScreen() {
         await replaceCart(lines);
         router.push(CLIENT_SHOP_ROUTES.CART);
       } catch (e) {
-        const errMsg = e instanceof Error ? e.message : '장바구니에 담지 못했습니다.';
-        setMessage(errMsg);
+        setMessage(extractApiErrorMessage(e, '장바구니에 담지 못했습니다.'));
       }
     },
     [refetchCart, replaceCart, router],

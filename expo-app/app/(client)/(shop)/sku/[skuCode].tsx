@@ -33,6 +33,7 @@ import {
   normalizeShopCatalogCategory,
 } from '@/constants/clientShopConstants';
 import { mergeCartLine } from '@/utils/clientShopCart';
+import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 import { toDisplayString } from '@/utils/toDisplayString';
 
 export default function ShopSkuDetailScreen() {
@@ -69,8 +70,7 @@ export default function ShopSkuDetailScreen() {
       }
       router.push(CLIENT_SHOP_ROUTES.CART);
     } catch (e) {
-      const errMsg = e instanceof Error ? e.message : '장바구니에 담지 못했습니다.';
-      setMessage(errMsg);
+      setMessage(extractApiErrorMessage(e, '장바구니에 담지 못했습니다.'));
     }
   };
 

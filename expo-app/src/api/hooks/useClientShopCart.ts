@@ -10,6 +10,7 @@ import { SHOP_API } from '@/api/endpoints';
 import { assertApiSuccessVoid, unwrapApiResponse } from '@/api/unwrapApiResponse';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { buildCartLinesPayload, type ShopCartLinePayload } from '@/utils/clientShopCart';
+import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 
 export interface ShopCartLine {
   skuCode: string;
@@ -45,9 +46,24 @@ async function fetchShopCart(): Promise<ShopCart> {
 
 const CART_REPLACE_FAILED_MESSAGE = '장바구니 갱신에 실패했습니다.';
 
-async function replaceShopCart(lines: ShopCartLinePayload[]): Promise<void> {
-  const raw = await apiPut<unknown>(SHOP_API.CART, { lines });
-  assertApiSuccessVoid(raw, CART_REPLACE_FAILED_MESSAGE);
+export async function replaceShopCart(lines: ShopCartLinePayload[]): Promise<void> {
+  let raw: unknown;
+  try {
+    raw = await apiPut<unknown>(SHOP_API.CART, { lines });
+  } catch (error) {
+    if (__DEV__) {
+      console.warn('[shop-cart]', error);
+    }
+    throw new Error(extractApiErrorMessage(error, CART_REPLACE_FAILED_MESSAGE));
+  }
+  try {
+    assertApiSuccessVoid(raw, CART_REPLACE_FAILED_MESSAGE);
+  } catch (error) {
+    if (__DEV__) {
+      console.warn('[shop-cart]', raw);
+    }
+    throw error instanceof Error ? error : new Error(CART_REPLACE_FAILED_MESSAGE);
+  }
 }
 
 export function useClientShopCart() {

@@ -13,6 +13,10 @@ describe('assertApiSuccessVoid', () => {
     expect(() => assertApiSuccessVoid({ success: true, data: null }, fallback)).not.toThrow();
   });
 
+  it('accepts string success true with null data', () => {
+    expect(() => assertApiSuccessVoid({ success: 'true', data: null }, fallback)).not.toThrow();
+  });
+
   it('throws with server message when success is false', () => {
     expect(() =>
       assertApiSuccessVoid({ success: false, message: '재고 부족' }, fallback),

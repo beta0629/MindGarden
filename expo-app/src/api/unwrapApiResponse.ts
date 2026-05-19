@@ -6,12 +6,20 @@
  * @since 2026-05-13
  */
 
+function isApiSuccessFlag(value: unknown): boolean {
+  return value === true || value === 'true';
+}
+
+function isApiFailureFlag(value: unknown): boolean {
+  return value === false || value === 'false';
+}
+
 export function unwrapApiResponse<T>(raw: unknown): T | null {
   if (raw == null || typeof raw !== 'object') {
     return null;
   }
   const obj = raw as Record<string, unknown>;
-  if (obj.success === false) {
+  if (isApiFailureFlag(obj.success)) {
     return null;
   }
   if ('data' in obj && obj.data !== undefined) {
@@ -31,10 +39,10 @@ export function assertApiSuccessVoid(raw: unknown, fallbackMessage: string): voi
     throw new Error(fallbackMessage);
   }
   const obj = raw as Record<string, unknown>;
-  if (obj.success === true) {
+  if (isApiSuccessFlag(obj.success)) {
     return;
   }
-  if (obj.success === false) {
+  if (isApiFailureFlag(obj.success)) {
     const message = obj.message;
     throw new Error(typeof message === 'string' && message.trim() ? message : fallbackMessage);
   }

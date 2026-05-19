@@ -342,6 +342,9 @@ export function parseClientScheduleNotesClientWideUnresolvedCount(raw) {
  * @returns {number|null} 0 이상 정수, 비정상·null은 null
  */
 export function parseScheduleSessionCount(raw) {
+  if (raw === null || raw === undefined || raw === '') {
+    return null;
+  }
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 0) {
     return null;

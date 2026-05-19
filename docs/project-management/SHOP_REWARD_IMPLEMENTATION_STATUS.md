@@ -40,17 +40,17 @@
 
 **Tier A**: REG-01 **GO** · R10 **잔여**. 상세: [SHOP_P2 §1.0](./SHOP_P2_INTEGRATION_TEST_REPORT.md). R11 확장 게이트(15클래스·103건)는 §1.1.
 
-### 1.0.1 Tier A **(5)** R10 dev·Playwright 스모크 (core-tester, 2026-05-19 ~14:50 KST)
+### 1.0.1 Tier A **(5)** R10 dev·Playwright 스모크 (core-tester, 2026-05-19 ~14:54 KST)
 
 | 게이트 | exit | passed | skipped | failed | 판정 |
 |--------|------|--------|---------|--------|------|
-| `gh` backend-dev (최신 `develop` push) | — | — | — | — | **BLOCKED** — run `26078787938` **in_progress** (R11 docs); 직전 `26077938936` **success** |
-| `verify-shop-reward-dev.sh` | **2** | — | — | — | **SKIP** — `TENANT_ID` 미설정 (런북 §4.1·env Secret; 저장소 하드코딩 금지) |
-| dev `actuator/health` (`https://dev.core-solution.co.kr`) | — | — | — | — | **WARN** HTTP **502** (배포·재기동 중 가능) |
-| localhost `8080` health | — | — | — | — | **down** (연결 실패) |
-| Playwright R10 client + admin smoke (chromium, default·`BASE_URL=…dev…`) | **0** | **0** | **2** | **0** | **SKIP** — `skipWhenLocalBackend8080Down` (로컬 8080 프로브; dev BASE_URL만으로는 미통과) |
+| `verify-shop-reward-dev.sh` (`SKIP_HEALTH=0`, `TENANT_ID` 없음) | **2** | — | — | — | **SKIP** — `ERROR: TENANT_ID 환경 변수가 필요합니다` |
+| dev health only (`curl` apex, TENANT_ID 불필) | — | — | — | — | **PASS** HTTP **200** (`https://dev.core-solution.co.kr/actuator/health`) |
+| localhost `8080` health (`curl` 프로브) | — | — | — | — | **down** — 연결 실패 `000` |
+| Playwright R10 client + admin smoke (chromium) | **0** | **0** | **2** | **0** | **SKIP** — `skipWhenLocalBackend8080Down` |
+| dev-only 수동 스모크 (8080 down) | — | — | — | — | [E2E README §dev-only](../../tests/e2e/README.md) 5줄 |
 
-**Tier A (5)**: **BLOCKED** (배포 중·전제 미충족). R10 **passed** 재실행: backend-dev **success** + OPS(`TENANT_ID`) + (로컬) 8080+3000 또는 CI Secrets + dev 프론트·SKU 시드.
+**Tier A (5)**: **BLOCKED** — R10 **skipped** (8080 down), verify **exit 2** (`TENANT_ID` 필요). **GO** 조건: `TENANT_ID` + OPS activate/seed + (로컬) 8080+3000 후 Playwright **2 passed** 또는 dev 수동 스모크 PASS.
 
 ### 1.1 백엔드 Maven (`*Test.java`)
 
@@ -123,7 +123,7 @@ mvn -Dtest=ClientShopControllerMvcTest,AdminShopCatalogSkuControllerMvcTest test
 | `tests/e2e/tests/client/client-shop-catalog-to-cart.spec.ts` | **SKIP** (8080 down) | R10 — chromium exit 0, 1 skipped |
 | `tests/e2e/tests/admin/admin-shop-catalog-skus-smoke.spec.ts` | **SKIP** (8080 down) | admin catalog smoke — 동일 가드 |
 | R10 Tier A (2026-05-19 14:42) | **2 skipped** / 0 passed | 8080+OPS·시드 후 **2 passed** 기대 |
-| R10 Tier A **(5)** (2026-05-19 ~14:50) | **0 passed / 2 skipped / 0 failed** | `BASE_URL=https://mindgarden.dev.core-solution.co.kr` 재시도도 동일(로컬 8080 프로브). backend-dev 최신 run **in_progress**, dev health **502** |
+| R10 Tier A **(5)** (2026-05-19 ~14:54) | **0 passed / 2 skipped / 0 failed** | localhost 8080 **down**; dev apex health **200**; `skipWhenLocalBackend8080Down` |
 
 ### 1.4 프론트엔드 web (React)
 
@@ -247,17 +247,17 @@ SELECT component_code FROM component_catalog WHERE component_code IN ('CLIENT_SH
 | Expo Jest **5 suite / 32건** (`clientShop` + `pushScenarios`) | **GO** (로컬) |
 | Playwright catalog→cart (R10) | **조건부** (dev·OPS·시드 후) |
 
-### 5.2 운영 반영 — **배포·OPS·QA 게이트** (2026-05-19)
+### 5.2 운영 반영 — **배포·OPS·QA 게이트** (2026-05-19, Tier A (5) 최종)
 
 | 게이트 | 판정 | 비고 |
 |--------|------|------|
-| 커밋 (A)/(B)/(C) + `develop` push | **R11 재커밋 필요** | [CHECKLIST §6 (1)(2)](./SHOP_REWARD_INTEGRATION_COMMIT_CHECKLIST.md#6-다음-사용자-액션-2026-05-20) |
-| dev backend·frontend 배포 + Flyway `002`~`007`·`V20260520_001`·`V20260521_001` | **진행 중** | backend-dev run `26078787938` **in_progress** (2026-05-19); 직전 push **success** |
-| OPS `activate` + (선택) `seed` + `verify-shop-reward-dev.sh` | **진행 중** | Tier A (5): `TENANT_ID` 없어 verify **exit 2 SKIP** — [런북 §4.1](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#41-배포-직후-10분-체크리스트) |
-| Admin·Client 수동 스모크 [§4](#4-수동-qa-체크리스트) | **NO-GO** | Flyway·OPS·`catalogVisible` SKU 전제; 미완 시 **운영 GO 불가** |
-| Playwright R10 (client + admin smoke, chromium) | **BLOCKED** | Tier A (5): **0/2/0** passed/skipped/failed — 8080 down·배포 중; [§1.0.1](#101-tier-a-5-r10-devplaywright-스모크-core-tester-2026-05-19-1450-kst) |
+| dev `actuator/health` (apex curl) | **GO** | HTTP **200** (`https://dev.core-solution.co.kr`) |
+| OPS `activate` + (선택) `seed` + `verify-shop-reward-dev.sh` | **BLOCKED** | verify **exit 2** — `TENANT_ID` 미설정; [런북 §4.1](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#41-배포-직후-10분-체크리스트) |
+| Playwright R10 (client + admin smoke, chromium) | **BLOCKED** | **0 / 2 / 0** passed·skipped·failed — localhost **8080 down**; [§1.0.1](#101-tier-a-5-r10-devplaywright-스모크-core-tester-2026-05-19-1454-kst) |
+| Admin·Client 수동 스모크 [§4](#4-수동-qa-체크리스트) | **NO-GO** | OPS·`catalogVisible` SKU 전제 미충족 |
+| **Tier A (5) 종합** | **BLOCKED** | dev health **GO**; R10·verify·수동 QA는 `TENANT_ID` + OPS + (로컬) 8080 또는 [dev-only 수동 스모크](../../tests/e2e/README.md) |
 
-**종합**: **코드·로컬 자동화 = GO** (R11 P0 포함). **커밋·push**는 R11 미반영분 **재커밋 후** 진행. **배포 후 OPS·GO 판정**은 §6 **(3)~(5)** — [런북 §4.1](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#41-배포-직후-10분-체크리스트). **운영 GO**는 §4 수동 QA + R11 수동 스모크([FULL_COMPLETION §6](./SHOP_REWARD_FULL_COMPLETION_ORCHESTRATION.md#6-검증-체크리스트링크)) + Go-Live 교차. 잔여: **R6**, **R10** (E2E).
+**종합**: **코드·Maven·Expo·build:ci = GO**. **Tier A (5) = BLOCKED** — 사용자 입력 **`TENANT_ID=<dev-tenant-uuid>`** 후 verify·OPS·수동 QA·(선택) 로컬 8080+3000 Playwright 재실행.
 
 ---
 

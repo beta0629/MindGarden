@@ -246,12 +246,35 @@ function isLocalBackendProbeUnreachableError(err: unknown): boolean {
   return code === 'ECONNREFUSED' || code === 'ETIMEDOUT';
 }
 
+async function probeActuatorHealthOk(apiBaseUrl: string): Promise<boolean> {
+  const normalized = apiBaseUrl.replace(/\/$/, '');
+  const healthUrl = `${normalized}/actuator/health`;
+  const ctx = await playwrightApiRequest.newContext({
+    timeout: LOCAL_BACKEND_PROBE_TIMEOUT_MS,
+  });
+  try {
+    const res = await ctx.get(healthUrl, {
+      timeout: LOCAL_BACKEND_PROBE_TIMEOUT_MS,
+    });
+    return res.status() === 200;
+  } catch {
+    return false;
+  } finally {
+    await ctx.dispose();
+  }
+}
+
 /**
  * 로컬에서 백엔드(8080) 미기동 시 연쇄 실패 대신 스킵.
+ * `E2E_API_BASE`가 있으면 해당 호스트 `/actuator/health` 200이면 스킵하지 않음(dev API만으로 R10 등 실행).
  * `CI=true`일 때는 호출하지 않음(프로브 없음, CI는 README·Secrets 전제로 실패 유지).
  */
 export async function skipWhenLocalBackend8080Down(): Promise<void> {
   if (process.env.CI === 'true') {
+    return;
+  }
+  const remoteApiBase = trimEnv('E2E_API_BASE');
+  if (remoteApiBase && (await probeActuatorHealthOk(remoteApiBase))) {
     return;
   }
   const ctx = await playwrightApiRequest.newContext({
@@ -265,9 +288,12 @@ export async function skipWhenLocalBackend8080Down(): Promise<void> {
     if (!isLocalBackendProbeUnreachableError(err)) {
       throw err;
     }
+    const remoteHint = remoteApiBase
+      ? ` E2E_API_BASE(${remoteApiBase}) health도 200이 아닙니다.`
+      : '';
     playwrightTest.skip(
       true,
-      `로컬 백엔드(${LOCAL_E2E_BACKEND_API_BASE_URL})에 연결할 수 없습니다. API(8080) 기동 후 재실행하세요. tests/e2e/README.md 기동 절 참고.`
+      `로컬 백엔드(${LOCAL_E2E_BACKEND_API_BASE_URL})에 연결할 수 없습니다.${remoteHint} API(8080) 또는 dev E2E_API_BASE 기동 후 재실행하세요. tests/e2e/README.md 참고.`
     );
   } finally {
     await ctx.dispose();

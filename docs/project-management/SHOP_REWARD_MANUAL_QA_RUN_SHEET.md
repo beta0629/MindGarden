@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| 일자 | 2026-05-20 |
+| 일자 | 2026-05-19 |
 | SSOT | [SHOP_REWARD_IMPLEMENTATION_STATUS.md](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) §4, [SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md) |
 | 용도 | dev/staging 운영 GO 전 Admin·Client·P1 회귀 수동 검증 기록 |
 | 자격 증명 | **문서·커밋 금지** — 로컬 env·Secrets만 사용 |
@@ -22,6 +22,14 @@
 **컴포넌트 코드**: `CLIENT_SHOP`, `CLIENT_REWARD`, `ADMIN_SHOP_CATALOG` (Flyway 003 시드 + OPS 활성화).
 
 **기록 규칙**: 결과 열에 `PASS` / `FAIL` / `스킵` 중 하나. `FAIL`·`스킵` 시 비고에 재현·스크린샷·이슈 링크.
+
+### 배포 완료·OPS 대기 (Tier A (5) 게이트)
+
+| ☐ | 항목 | core-tester (2026-05-19) |
+|---|------|---------------------------|
+| ☑ | dev 배포·`https://dev.core-solution.co.kr/actuator/health` **200** | curl 확인 |
+| ☐ | OPS `activate-shop-reward-tenant-components.sql` + (선택) `seed-shop-demo-catalog.sql` | DB 수동 — [런북 §4.2](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#42-ops-실행-카드-tier-a--copy-paste) |
+| ☐ | `TENANT_ID=<uuid> bash scripts/ops/verify-shop-reward-dev.sh` exit **0** | **BLOCKED** — `TENANT_ID` 미설정 시 exit **2**; health만: `curl -sS -o /dev/null -w "%{http_code}" https://dev.core-solution.co.kr/actuator/health` |
 
 | 실행자 | 환경(URL) | 일시 | Flyway | OPS | 시드 |
 |--------|-----------|------|--------|-----|------|
@@ -93,6 +101,7 @@
 | 일시 | 8080 | 3000 | 결과 | 비고 |
 |------|------|------|------|------|
 | 2026-05-20 | down | webServer 기동 | **1 skipped** | `skipWhenLocalBackend8080Down` — `npx playwright test client-shop-catalog-to-cart --project=chromium`, exit 0 |
+| 2026-05-19 | down | webServer 기동 | **2 skipped** | client + admin smoke — `npx playwright test client-shop-catalog-to-cart admin-shop-catalog-skus-smoke --project=chromium`, exit 0 |
 
 ---
 

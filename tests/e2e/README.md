@@ -8,6 +8,17 @@
 
 **로컬 API(8080) 미기동**: `skipWhenLocalBackend8080Down()`가 있는 스펙은 전부 스킵되고, 없는 스펙(예: `integrated-schedule-detail-modal`)은 로그인 단계에서 타임아웃·실패할 수 있다 — 의미 있는 회귀는 8080+3000 기동 후 실행.
 
+**dev-only 수동 스모크** (로컬 `127.0.0.1:8080` down · Playwright R10 **BLOCKED** 시, 5줄):
+
+1. dev API: `curl -sS -o /dev/null -w "%{http_code}" https://dev.core-solution.co.kr/actuator/health` → **200** ([OPS 런북](../../docs/project-management/SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md) §4.1).
+2. 프론트: `BASE_URL=https://mindgarden.dev.core-solution.co.kr` — 어드민·내담자 로그인(자격은 env·Secrets만; 문서·커밋 금지).
+3. DB OPS: [activate + (선택) seed](../../docs/project-management/SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#42-ops-실행-카드-tier-a--copy-paste) → `CLIENT_SHOP`·`CLIENT_REWARD`·`ADMIN_SHOP_CATALOG`·`catalogVisible=true` SKU ≥1.
+4. 내담자: `/client/shop` PLP → SKU 담기 → `/client/shop/cart` 소계 ([수동 QA](../../docs/project-management/SHOP_REWARD_MANUAL_QA_RUN_SHEET.md) C1~C3).
+5. 어드민: `/admin/shop/catalog-skus` 셸·테이블 로드(빈 목록 허용) — LNB 「쇼핑·리워드」 스크린샷 1장.
+
+**R10 재현** (8080 up 후): `curl -sS -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/actuator/health` → 200 이면 `cd tests/e2e && npx playwright test client-shop-catalog-to-cart admin-shop-catalog-skus-smoke --project=chromium`.
+**dev API만 검증**: `E2E_API_BASE=https://dev.core-solution.co.kr` 등으로 `$E2E_API_BASE/actuator/health`가 **200**이면 8080 없이도 해당 가드 스킵을 해제한다(`helpers/erpAuth.ts`).
+
 - **SEC-01 (Playwright 후속)**: 공개 API·레이트리밋 등 H2/로컬 단일 스택에서 재현이 어려운 구간은 백엔드 단위·통합 테스트를 우선하고, E2E는 스테이징·자격 증명 Secrets가 갖춰진 환경에서만 보강한다.
 
 ## 내담자 쇼핑 (CLIENT_SHOP) — Playwright 전제
@@ -16,7 +27,7 @@
 
 | # | 전제 | 확인 |
 |---|------|------|
-| 1 | 백엔드 API **8080** + 프론트 **3000** (`BASE_URL`, API 베이스 8080 일치) | `skipWhenLocalBackend8080Down()` (로컬·CI=false) |
+| 1 | 백엔드 API **8080** + 프론트 **3000** (`BASE_URL`, API 베이스 8080 일치) 또는 `E2E_API_BASE` health **200** | `skipWhenLocalBackend8080Down()` (로컬·CI=false) |
 | 2 | Flyway Shop P2 (**002~007**, 001 salary 충돌 해소) | DB·카탈로그 컬럼·`point_tenant_policies` |
 | 3 | 테넌트 **`CLIENT_SHOP`**·**`CLIENT_REWARD`** 컴포넌트 활성 | 어드민 컴포넌트 또는 시드 |
 | 4 | 어드민에서 **`catalogVisible=true`** SKU ≥1 (활성 PLP 탭) | `shop-sku-add-first` testid 노출 |

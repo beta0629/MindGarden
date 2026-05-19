@@ -318,11 +318,71 @@ TENANT_ID=<uuid> bash scripts/ops/verify-shop-reward-dev.sh
 - **캡션 예**: `dev 어드민 LNB — 쇼핑·리워드 (catalog-skus, point-policies, orders, …) post V20260521_001`
 - **기대**: 카탈로그 SKU·포인트 정책·주문·(리워드) 메뉴 4건 표시; 컴포넌트 off 시 페이지 403은 §2·API와 별도 확인.
 
-10분 내 위 표 전항 ☐ → [CHECKLIST §6 (4)](./SHOP_REWARD_INTEGRATION_COMMIT_CHECKLIST.md#6-다음-사용자-액션-2026-05-20) **OPS GO** 후 §4.2·§5 수동 QA·Playwright 진행.
+10분 내 위 표 전항 ☐ → [CHECKLIST §6 (4)](./SHOP_REWARD_INTEGRATION_COMMIT_CHECKLIST.md#6-다음-사용자-액션-2026-05-20) **OPS GO** 후 [§4.3](#43-p2-수동-qa-교차-참조)·§5 수동 QA·Playwright 진행. copy-paste 일괄본: [§4.2](#42-ops-실행-카드-tier-a--copy-paste).
 
 ---
 
-### 4.2 P2 수동 QA 교차 참조
+### 4.2 OPS 실행 카드 (Tier A · copy-paste)
+
+**전제**: `develop` `0ad73bf` · backend+frontend dev deploy **success** · `https://dev.core-solution.co.kr/actuator/health` **200**. `tenant_id`·`subdomain`는 저장소·Flyway에 박지 않는다 — 아래 **0)** 조회 UUID만 치환한다. `api-*.json` 커밋 금지.
+
+**0) tenant_id 조회** ([§2.2](#22-tenant_id-조회-치환용) — `:subdomain`을 dev MindGarden 호스트 접두로 치환)
+
+```sql
+SELECT tenant_id, subdomain, tenant_name, status
+FROM tenants
+WHERE subdomain = :subdomain
+  AND is_deleted = FALSE;
+```
+
+**1) Flyway 3줄** — `20260520.001`·`20260521.001` SUCCESS
+
+```sql
+SELECT version, description, success FROM flyway_schema_history
+WHERE version IN ('20260520.001', '20260521.001') AND success = 1
+ORDER BY installed_rank;
+```
+
+**2) OPS activate** — `YOUR-TENANT-UUID` ← **0)** `tenant_id`
+
+```bash
+mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" \
+  -e "SET @tenant_id='YOUR-TENANT-UUID'; SOURCE scripts/ops/activate-shop-reward-tenant-components.sql;"
+```
+
+**3) (선택) seed** — PLP·Playwright 전제 SKU
+
+```bash
+mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" \
+  -e "SET @tenant_id='YOUR-TENANT-UUID'; SOURCE scripts/ops/seed-shop-demo-catalog.sql;"
+```
+
+**4) verify 헬퍼** — `YOUR-TENANT-UUID`를 env로만 전달 (저장소·문서에 실 UUID 기록 금지)
+
+```bash
+TENANT_ID=YOUR-TENANT-UUID bash scripts/ops/verify-shop-reward-dev.sh
+# TENANT_ID=YOUR-TENANT-UUID VERIFY_STRICT=1 bash scripts/ops/verify-shop-reward-dev.sh
+```
+
+**5) 어드민 LNB** — Flyway `V20260521_001` 후 강력 새로고침 → 「쇼핑·리워드」4메뉴 스크린샷 1장 (티켓·채널 첨부; 본 문서에는 캡션만)
+
+- 캡션 예: `dev 어드민 LNB — 쇼핑·리워드 post V20260521_001`
+- **2.4 검증 SQL** (activate 후 3행 ACTIVE):
+
+```sql
+SELECT tc.tenant_id, cc.component_code, tc.status, tc.activated_at
+FROM tenant_components tc
+JOIN component_catalog cc ON cc.component_id = tc.component_id
+WHERE tc.tenant_id = 'YOUR-TENANT-UUID'
+  AND cc.component_code IN ('CLIENT_SHOP', 'CLIENT_REWARD', 'ADMIN_SHOP_CATALOG')
+  AND tc.is_deleted = FALSE;
+```
+
+§4.1 표 전항 ☐ → [INTEGRATION_COMMIT_CHECKLIST §6 (4)](./SHOP_REWARD_INTEGRATION_COMMIT_CHECKLIST.md#6-다음-사용자-액션-2026-05-20) **OPS GO** 후 아래 §4.3·§5 수동 QA.
+
+---
+
+### 4.3 P2 수동 QA 교차 참조
 
 | 구분 | 문서 위치 | 내용 |
 |------|-----------|------|

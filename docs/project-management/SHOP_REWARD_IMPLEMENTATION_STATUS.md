@@ -2,11 +2,11 @@
 
 | 항목 | 내용 |
 |------|------|
-| 일자 | 2026-05-19 (Tier A R10 post-`c39272c6e` deploy 검증) |
+| 일자 | 2026-05-19 (Shop Catalog UX MVP+ B-3 게이트) |
 | 범위 | Shop P1 + P2 (web·admin·Expo·환불·fulfillment·ERP 훅·컴포넌트 게이트) |
 | SSOT | [SHOP_P2_INTEGRATION_TEST_REPORT.md](./SHOP_P2_INTEGRATION_TEST_REPORT.md), [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) §3 |
 | 코드 수정 | **없음** (문서만) |
-| 커밋 | Tier A R10 after `c39272c6e` deploy (§1.0.6) |
+| 커밋 | MVP+ B-3 Playwright after deploy (§1.0.8 · §3.5) — develop BE `05f2c2510` · FE `92b89bb44` · Expo `b7a2f8e77` |
 
 ---
 
@@ -21,7 +21,7 @@
 | **R9** | OPS 컴포넌트 + Client 403 | **완료 (코드·스크립트)** | `scripts/ops/activate-shop-reward-tenant-components.sql`, `ClientShopController` `CLIENT_SHOP` 비활성 403 |
 | R5 | Phase 3 통합 마켓 | 잔여 | [MULTI_TENANT §8](./MULTI_TENANT_SHOP_MARKETPLACE_SPEC.md) |
 | R8 | 체크아웃 UI mapping 선택 | **완료 (웹+Expo)** | `ShopCheckoutPage`·`expo-app/.../checkout.tsx`·`GET /consultant-mappings`·`clientShopCheckout` Jest |
-| R10 | Playwright catalog→cart | **잔여** | spec·testid 준비; 8080+전제 충족 시 passed 기대 — [§1.3](#13-playwright-e2e) |
+| R10 | Playwright catalog→cart | **완료 (dev)** | MVP+ B-3 deploy 후 **2 passed** — [§1.0.8](#108-mvp-b-3-playwright-after-deploy-core-tester-2026-05-19) · [§1.3](#13-playwright-e2e) |
 | **R11** | 쇼핑·리워드 인앱·모바일 푸시 P0 (S1~S6) | **완료 (코드·단위)** | `ShopNotificationHelper`·`ShopNotificationCopy`·`MobilePushDispatchService` shop_*·Expo `pushScenarios`; [FULL_COMPLETION §3](./SHOP_REWARD_FULL_COMPLETION_ORCHESTRATION.md) |
 
 ---
@@ -128,6 +128,36 @@
 
 **Tier A (5)**: **BLOCKED** — R10 **1 passed / 1 skipped / 0 failed** (exit **0**). admin **PASS**; client **SKIP** — `CLIENT_SHOP` 게이트·테넌트 컴포넌트 미활성 추정. **GO** 조건: **2 passed**.
 
+### 1.0.7 Shop Catalog UX MVP+ **B-3** (core-tester, 2026-05-19 ~18:06 KST)
+
+**전제**: develop pushed — BE `05f2c2510` · FE `92b89bb44` · Expo `b7a2f8e77`. SSOT: [SHOP_CATALOG_UX_MVP_PLUS_TEST_PLAN.md](./SHOP_CATALOG_UX_MVP_PLUS_TEST_PLAN.md).
+
+| 게이트 | exit | passed | skipped | failed | 판정 |
+|--------|------|--------|---------|--------|------|
+| Maven MVP+ slice (4클래스, `-DforkCount=0`) | **0** | **28** | 0 | 0 | **PASS** |
+| Maven Tier A (14클래스, `-DforkCount=0`) | **0** | **97** | 0 | 0 | **PASS** |
+| frontend `build:ci` | **0** | — | — | — | **PASS** |
+| Expo Jest `clientShop` | **0** | **35** | 0 | 0 | **PASS** |
+| dev `actuator/health` (`E2E_API_BASE`) | — | — | — | — | **FAIL** HTTP **502** |
+| Playwright admin + client (chromium, dev FE+API) | **0** | **0** | **2** | **0** | **SKIP** — `skipWhenLocalBackend8080Down` (8080 down + dev health ≠200) |
+
+**MVP+ B-3 종합** (§1.0.7 시점): **BLOCKED** — 자동 단위·빌드 **GO**; Playwright **0 / 2 / 0** (미실행·스킵). **후속**: deploy 후 **GO** — [§1.0.8](#108-mvp-b-3-playwright-after-deploy-core-tester-2026-05-19).
+
+### 1.0.8 MVP+ B-3 Playwright after deploy (core-tester, 2026-05-19)
+
+**전제**: deployer BE/FE **success**; `curl` dev `actuator/health` → **200**.
+
+| 게이트 | exit | passed | skipped | failed | 판정 |
+|--------|------|--------|---------|--------|------|
+| dev `actuator/health` (`E2E_API_BASE`) | — | — | — | — | **PASS** HTTP **200** |
+| Playwright `admin-shop-catalog-skus-smoke` | **0** | **1** | **0** | **0** | **PASS** (~4.1s) — catalog-skus 셸·빈 목록 허용 |
+| Playwright `client-shop-catalog-to-cart` | **0** | **1** | **0** | **0** | **PASS** (~5.0s) — 첫 SKU 담기·장바구니 소계 |
+| Playwright **합계** (chromium) | **0** | **2** | **0** | **0** | **PASS** |
+
+**MVP+ B-3 종합**: **GO** — Playwright **2 / 0 / 0** (exit **0**). **coder 위임**: 없음.
+
+상세 표: [§3.5](#35-shop-catalog-ux-mvp--b-3-게이트-core-tester-2026-05-19).
+
 ### 1.1 백엔드 Maven (`*Test.java`)
 
 **실행 명령** (2026-05-19 통합 게이트, **15클래스·103건**):
@@ -205,6 +235,7 @@ mvn -Dtest=ClientShopControllerMvcTest,AdminShopCatalogSkuControllerMvcTest test
 | R10 post-`5f1b44b99` **(5)** (2026-05-19 ~16:04 KST) | **BLOCKED** — **0 / 0 / 0** | dev health **502**; Playwright **미실행**; FE deploy `26081634547` **in_progress** |
 | R10 post-`5f1b44b99` **(5) 재실행** (2026-05-19 ~16:08 KST) | **1 / 0 / 1** (exit **1**) | health **200**·BE+FE deploy **success**; admin smoke **PASS**; client `client-shop-catalog-page` timeout·`CLIENT_SHOP` 게이트 잔여 |
 | R10 post-`c39272c6e` **(5)** (2026-05-19 ~16:45 KST) | **1 / 1 / 0** (exit **0**) | health **200**·FE deploy **success**; admin **PASS**; client **SKIP** — `CLIENT_SHOP` 게이트 (`tenant-incheon-counseling-001`); BE `c39272c6e` **미배포** |
+| MVP+ B-3 post-deploy **(4c/4)** (2026-05-19) | **2 / 0 / 0** (exit **0**) | health **200**·BE/FE deploy **success**; `E2E_TENANT_ID=tenant-incheon-counseling-001`; admin·client smoke **PASS** — [§1.0.8](#108-mvp-b-3-playwright-after-deploy-core-tester-2026-05-19) |
 
 ### 1.4 프론트엔드 web (React)
 
@@ -251,6 +282,19 @@ SELECT component_code FROM component_catalog WHERE component_code IN ('CLIENT_SH
 | **Web client** | `/client/shop/*` PLP·cart·checkout·points·orders·PDP·`ClientTenantComponentGate` |
 | **Web admin** | `/admin/shop/catalog-skus`, `point-policies`, `orders`+refund |
 | **Expo** | `(client)/(shop)/` 7화면, 더보기 진입, `useTenantComponentFlags` — [EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md](./EXPO_SHOP_REWARD_IMPLEMENTATION_STRATEGY.md) |
+| **MVP+** | SKU 코드 자동·전용 어드민 등록 폼·hero image 필수·PLP/PDP 썸네일 — develop BE `05f2c2510` · FE `92b89bb44` |
+
+### 3.5 Shop Catalog UX MVP+ — B-3 게이트 (core-tester, 2026-05-19)
+
+| # | 게이트 | exit | p | f | s | 판정 | 비고 |
+|---|--------|------|---|---|---|------|------|
+| 1 | Maven MVP+ slice (`AdminShopCatalogSkuServiceImplTest`, `AdminShopCatalogSkuControllerMvcTest`, `ClientShopControllerMvcTest`, `ClientShopCatalogServiceImplTest`) | 0 | 28 | 0 | 0 | **PASS** | hero·skuCode·`heroImageUrl` 시나리오 포함 |
+| 2 | Maven Tier A 14클래스 (`-DforkCount=0`) | 0 | 97 | 0 | 0 | **PASS** | REG-01 회귀 (+6 vs §1.0.3, MVP+ 테스트 추가) |
+| 3 | frontend `build:ci` | 0 | — | — | — | **PASS** | eslint 경고만, 빌드 성공 |
+| 4 | Expo Jest `--testPathPattern=clientShop` | 0 | 35 | 0 | 0 | **PASS** | 5 suites |
+| 5 | Playwright `admin-shop-catalog-skus-smoke` + `client-shop-catalog-to-cart` (dev, chromium) | 0 | 2 | 0 | 0 | **PASS** | deploy 후 health **200**; admin ~4.1s · client ~5.0s — [§1.0.8](#108-mvp-b-3-playwright-after-deploy-core-tester-2026-05-19) |
+
+**B-3 판정**: **GO** — Playwright **2 / 0 / 0** (exit **0**). **coder 위임**: 없음.
 
 ### 3.4 잔여 갭 (R3/R4/R8/R9 완료 · R6/R10·운영 QA 잔여)
 
@@ -261,7 +305,7 @@ SELECT component_code FROM component_catalog WHERE component_code IN ('CLIENT_SH
 | ~~R9~~ | OPS 컴포넌트·Client API 게이트 | **완료 (코드·스크립트)** — `activate-shop-reward-tenant-components.sql`·`seed-shop-demo-catalog.sql`·403 slice; 환경별 실행·수동 QA는 [런북](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md) |
 | ~~R8~~ | 체크아웃 UI mapping 선택 | **완료 (웹+Expo)** — `ShopCheckoutPage`·Expo checkout·mapping API·`clientShopCheckout` Jest |
 | R6 | ASSESSMENT fulfillment | **잔여** — Phase 3 ([ORCHESTRATION §3.4](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md)) |
-| R10 | Playwright E2E catalog→cart | **잔여** — dev 배포·OPS·시드 후 재실행 ([§1.3](#13-playwright-e2e)) |
+| ~~R10~~ | Playwright E2E catalog→cart | **완료 (dev)** — MVP+ B-3 deploy 후 **2 passed** ([§1.0.8](#108-mvp-b-3-playwright-after-deploy-core-tester-2026-05-19)) |
 | ~~R11~~ | 인앱·모바일 푸시 P0 (S1~S6) | **완료 (코드·단위)** — [FULL_COMPLETION](./SHOP_REWARD_FULL_COMPLETION_ORCHESTRATION.md) §4 순서 1~3; 수동 스모크·커밋 잔여 |
 
 상세 SSOT: [SHOP_REWARD_PLATFORM_ORCHESTRATION.md](./SHOP_REWARD_PLATFORM_ORCHESTRATION.md) §3.4.
@@ -326,7 +370,7 @@ SELECT component_code FROM component_catalog WHERE component_code IN ('CLIENT_SH
 | **R1~R4**·**R8 (웹+Expo)**·**R9**·**R11 P0** (코드·단위·MockMvc·OPS SQL) | **GO** |
 | Flyway Shop P2 (`002`~`007`) + **V20260520_001** + **V20260521_001** (LNB) | **GO** (파일·코드); DB 적용은 배포 시 |
 | Expo Jest **5 suite / 32건** (`clientShop` + `pushScenarios`) | **GO** (로컬) |
-| Playwright catalog→cart (R10) | **조건부** (dev·OPS·시드 후) |
+| Playwright catalog→cart (R10) | **GO** — MVP+ B-3 deploy 후 **2 / 0 / 0** ([§1.0.8](#108-mvp-b-3-playwright-after-deploy-core-tester-2026-05-19)) |
 
 ### 5.2 운영 반영 — **배포·OPS·QA 게이트** (2026-05-19, Tier A **(4)(5)** · `tenant-incheon-counseling-001`)
 
@@ -335,12 +379,13 @@ SELECT component_code FROM component_catalog WHERE component_code IN ('CLIENT_SH
 | dev `actuator/health` (apex curl) | **GO** | HTTP **200** (`https://dev.core-solution.co.kr`) |
 | Maven Tier A **14클래스** (`-DforkCount=0`) | **GO** | **91 passed**, exit **0** — [§1.0.3](#103-tier-a-45-r10-tenant-incheon-counseling-001-재검증-core-tester-2026-05-19-1534-kst) |
 | OPS `activate` + `seed` + `verify-shop-reward-dev.sh` | **조건부 GO** | SSH 전제 Shop 3/3 ACTIVE + seed; verify helper **exit 0**; admin E2E 스냅샷 `DEV-CONSULT-DEMO-01` — 시드 반영 흔적; client `CLIENT_SHOP` 게이트 잔여 |
-| Playwright R10 (client + admin smoke, chromium) | **BLOCKED** | **1 / 1 / 0** (exit **0**); [§1.0.6](#106-tier-a-5-r10-post-c39272c6e-deploy-core-tester-2026-05-19-1645-kst) — admin **PASS**, client **SKIP** (`CLIENT_SHOP` 게이트) |
-| Admin·Client 수동 스모크 [§4](#4-수동-qa-체크리스트) | **NO-GO** | client `CLIENT_SHOP` 게이트; admin catalog-skus smoke **PASS** |
+| Playwright R10 (client + admin smoke, chromium) | **GO** | **2 / 0 / 0** (exit **0**); [§1.0.8](#108-mvp-b-3-playwright-after-deploy-core-tester-2026-05-19) — MVP+ B-3 deploy 후 admin·client **PASS** |
+| Admin·Client 수동 스모크 [§4](#4-수동-qa-체크리스트) | **조건부** | R10 E2E **GO**; §4 체크리스트는 미체크 |
 | **Tier A (4) REG-01** | **GO** | Maven 14클래스 **91 passed** |
-| **Tier A (5) 종합** | **BLOCKED** | dev health **GO**; R10 **1 passed / 1 skipped** — client `CLIENT_SHOP` 게이트 (`tenant-incheon-counseling-001`) |
+| **MVP+ B-3** | **GO** | 단위·빌드·Playwright **2 passed** — [§3.5](#35-shop-catalog-ux-mvp--b-3-게이트-core-tester-2026-05-19) |
+| **Tier A (5) 종합** | **GO** | dev health **GO**; R10 **2 passed** (`tenant-incheon-counseling-001`) |
 
-**종합**: **코드·Maven·Expo·build:ci = GO**. **Tier A (4) = GO**. **Tier A (5) = BLOCKED** — OPS `CLIENT_SHOP` activate + BE `c39272c6e` 배포 후 R10 **2 passed** 재목표.
+**종합**: **코드·Maven·Expo·build:ci·MVP+ B-3 Playwright = GO**. **Tier A (4) = GO**. **Tier A (5) = GO** (R10 dev E2E). 수동 QA §4는 잔여.
 
 ---
 

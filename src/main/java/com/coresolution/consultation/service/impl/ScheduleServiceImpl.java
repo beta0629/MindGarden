@@ -39,6 +39,8 @@ import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
 import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
+import com.coresolution.consultation.service.ScheduleMappingContextResolver;
+import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
@@ -1204,7 +1206,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         Long userId, String userRole, LocalDate date) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         List<Schedule> schedules = findSchedulesByUserRoleAndDate(userId, userRole, date);
-        Map<String, ConsultantClientMapping> mappingLookup = buildActiveOrExhaustedMappingLookup(tenantId);
+        Map<String, ConsultantClientMapping> mappingLookup =
+                ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
         return schedules.stream()
             .map(schedule -> convertToScheduleDto(schedule, mappingLookup))
             .collect(java.util.stream.Collectors.toList());
@@ -1215,7 +1218,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         Long userId, String userRole, LocalDate startDate, LocalDate endDate) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         List<Schedule> schedules = findSchedulesByUserRoleAndDateBetween(userId, userRole, startDate, endDate);
-        Map<String, ConsultantClientMapping> mappingLookup = buildActiveOrExhaustedMappingLookup(tenantId);
+        Map<String, ConsultantClientMapping> mappingLookup =
+                ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
         return schedules.stream()
             .map(schedule -> convertToScheduleDto(schedule, mappingLookup))
             .collect(java.util.stream.Collectors.toList());
@@ -1672,9 +1676,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (sequence == null) {
             return;
         }
+        schedule.setMappingId(mapping.getId());
         schedule.setSessionSequence(sequence);
         scheduleRepository.save(schedule);
-        log.info("예약 시점 회차 저장: scheduleId={}, sessionSequence={}", schedule.getId(), sequence);
+        log.info("예약 시점 회차·매칭 저장: scheduleId={}, mappingId={}, sessionSequence={}",
+                schedule.getId(), mapping.getId(), sequence);
     }
 
      /**
@@ -1864,7 +1870,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
         }
         
-        Map<String, ConsultantClientMapping> mappingLookup = buildActiveOrExhaustedMappingLookup(tenantId);
+        Map<String, ConsultantClientMapping> mappingLookup =
+                ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
         List<ScheduleResponse> scheduleDtos = schedules.stream()
             .map(schedule -> convertToScheduleDto(schedule, mappingLookup))
             .collect(java.util.stream.Collectors.toList());
@@ -1902,7 +1909,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
         }
 
-        Map<String, ConsultantClientMapping> mappingLookup = buildActiveOrExhaustedMappingLookup(tenantId);
+        Map<String, ConsultantClientMapping> mappingLookup =
+                ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
         return schedulePage.map(schedule -> convertToScheduleDto(schedule, mappingLookup));
     }
 
@@ -2046,7 +2054,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (tenantId == null || tenantId.isEmpty()) {
             tenantId = TenantContextHolder.getTenantId();
         }
-        Map<String, ConsultantClientMapping> mappingLookup = buildActiveOrExhaustedMappingLookup(tenantId);
+        Map<String, ConsultantClientMapping> mappingLookup =
+                ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
         return convertToScheduleDto(schedule, mappingLookup);
     }
 
@@ -2104,11 +2113,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (tenantId == null || tenantId.isEmpty()) {
             tenantId = TenantContextHolder.getTenantId();
         }
-        ConsultantClientMapping mapping = resolveActiveOrExhaustedMapping(
-                tenantId, schedule.getConsultantId(), schedule.getClientId(), mappingLookup);
-        Long mappingId = mapping != null ? mapping.getId() : null;
-        Integer totalSessions = mapping != null ? mapping.getTotalSessions() : null;
-        Integer remainingSessions = mapping != null ? mapping.getRemainingSessions() : null;
+        ScheduleMappingResponseContext mappingContext = ScheduleMappingContextResolver.resolveForScheduleResponse(
+                schedule, tenantId, mappingRepository, mappingLookup);
         
         return ScheduleResponse.builder()
             .id(schedule.getId())
@@ -2130,65 +2136,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             .notes(schedule.getNotes())
             .createdAt(schedule.getCreatedAt())
             .updatedAt(schedule.getUpdatedAt())
-            .mappingId(mappingId)
-            .totalSessions(totalSessions)
-            .remainingSessions(remainingSessions)
+            .mappingId(mappingContext.getMappingId())
+            .totalSessions(mappingContext.getTotalSessions())
+            .remainingSessions(mappingContext.getRemainingSessions())
             .sessionSequence(schedule.getSessionSequence())
             .build();
-    }
-
-    private static String mappingLookupKey(Long consultantId, Long clientId) {
-        return consultantId + ":" + clientId;
-    }
-
-    private Map<String, ConsultantClientMapping> buildActiveOrExhaustedMappingLookup(String tenantId) {
-        if (tenantId == null || tenantId.isEmpty()) {
-            return Map.of();
-        }
-        List<ConsultantClientMapping> mappings =
-                mappingRepository.findActiveOrExhaustedByTenantId(tenantId);
-        Map<String, ConsultantClientMapping> lookup = new HashMap<>();
-        for (ConsultantClientMapping mapping : mappings) {
-            if (mapping.getConsultant() == null || mapping.getClient() == null) {
-                continue;
-            }
-            Long consultantId = mapping.getConsultant().getId();
-            Long clientId = mapping.getClient().getId();
-            if (consultantId == null || clientId == null) {
-                continue;
-            }
-            String key = mappingLookupKey(consultantId, clientId);
-            lookup.merge(key, mapping, ScheduleServiceImpl::preferActiveMapping);
-        }
-        return lookup;
-    }
-
-    private ConsultantClientMapping resolveActiveOrExhaustedMapping(
-            String tenantId,
-            Long consultantId,
-            Long clientId,
-            Map<String, ConsultantClientMapping> mappingLookup) {
-        if (consultantId == null || clientId == null || tenantId == null || tenantId.isEmpty()) {
-            return null;
-        }
-        if (mappingLookup != null && !mappingLookup.isEmpty()) {
-            return mappingLookup.get(mappingLookupKey(consultantId, clientId));
-        }
-        return mappingRepository
-                .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId)
-                .orElse(null);
-    }
-
-    private static ConsultantClientMapping preferActiveMapping(
-            ConsultantClientMapping existing,
-            ConsultantClientMapping incoming) {
-        if (existing.getStatus() == MappingStatus.ACTIVE) {
-            return existing;
-        }
-        if (incoming.getStatus() == MappingStatus.ACTIVE) {
-            return incoming;
-        }
-        return existing;
     }
 
     private static String nullableUserProfileImageUrl(User user) {

@@ -141,6 +141,7 @@ class ScheduleServiceImplConfirmScheduleSessionDeductionTest {
         verify(scheduleRepository, org.mockito.Mockito.atLeast(2)).save(scheduleCaptor.capture());
         Schedule lastSaved = scheduleCaptor.getAllValues().get(scheduleCaptor.getAllValues().size() - 1);
         assertThat(lastSaved.getSessionSequence()).isEqualTo(2);
+        assertThat(lastSaved.getMappingId()).isEqualTo(MAPPING_ID);
     }
 
     @Test

@@ -67,13 +67,13 @@ public class ScheduleResponse {
     @Default
     private int clientScheduleNotesClientWideUnresolvedCount = 0;
 
-    /** 상담사·내담자 매칭 ID (ACTIVE 또는 SESSIONS_EXHAUSTED). 없으면 null. */
+    /** 일정 예약·차감 시점 매칭 ID ({@code schedules.mapping_id}). 없으면 null. */
     private Long mappingId;
 
-    /** 매칭 총 회기 수. 매칭 없으면 null. */
+    /** 일정 시점 매칭 총 회기 수(단회기=1 → 캘린더 표기 없음). 없으면 null. */
     private Integer totalSessions;
 
-    /** 매칭 남은 회기 수. 매칭 없으면 null. */
+    /** 현재 ACTIVE/SESSIONS_EXHAUSTED 매칭 남은 회기(미래 일정 SSOT). 없으면 null. */
     private Integer remainingSessions;
 
     /** 예약 시점 회차(1-based). 미설정·가예약·단회기 미차감 시 null. */

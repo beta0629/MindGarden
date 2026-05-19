@@ -26,7 +26,8 @@ import lombok.Data;
     @Index(name = "idx_schedules_consultant_id", columnList = "consultant_id"),
     @Index(name = "idx_schedules_date", columnList = "date"),
     @Index(name = "idx_schedules_status", columnList = "status"),
-    @Index(name = "idx_schedules_is_deleted", columnList = "is_deleted")
+    @Index(name = "idx_schedules_is_deleted", columnList = "is_deleted"),
+    @Index(name = "idx_schedules_tenant_mapping", columnList = "tenant_id, mapping_id")
 })
 @Data
 public class Schedule extends BaseEntity {
@@ -78,6 +79,12 @@ public class Schedule extends BaseEntity {
      */
     @Column(name = "session_sequence")
     private Integer sessionSequence;
+
+    /**
+     * 예약·회기 차감 시점의 consultant_client_mappings.id (캘린더 회기 표기 SSOT).
+     */
+    @Column(name = "mapping_id")
+    private Long mappingId;
     
     @Size(max = 20, message = "상담 방법은 20자 이하여야 합니다.")
     @Column(name = "consultation_method", length = 20)

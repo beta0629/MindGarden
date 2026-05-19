@@ -98,6 +98,17 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client "
             + "WHERE m.tenantId = :tenantId AND m.status IN ('ACTIVE', 'SESSIONS_EXHAUSTED')")
     List<ConsultantClientMapping> findActiveOrExhaustedByTenantId(@Param("tenantId") String tenantId);
+
+    /**
+     * 상담사·내담자 매칭 전체(TERMINATED 포함) — 일정 created_at 기준 매칭 역산용.
+     */
+    @Query("SELECT m FROM ConsultantClientMapping m "
+            + "WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.client.id = :clientId "
+            + "ORDER BY m.createdAt DESC")
+    List<ConsultantClientMapping> findAllByTenantIdAndConsultantIdAndClientIdOrderByCreatedAtDesc(
+            @Param("tenantId") String tenantId,
+            @Param("consultantId") Long consultantId,
+            @Param("clientId") Long clientId);
     
     // 테넌트별 결제 상태별 매칭 수 조회 (tenantId 필터링 필수)
     @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.paymentStatus = :paymentStatus")

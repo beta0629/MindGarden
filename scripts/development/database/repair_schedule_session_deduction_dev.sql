@@ -40,3 +40,45 @@
 --   FROM consultant_client_mappings WHERE id = YOUR_MAPPING_ID
 -- )
 -- WHERE id = 82 AND session_sequence IS NULL;
+
+-- (4) mapping_id·session_sequence 재백필 (Flyway V20260525_001과 동일 로직, 개발 DB 수동 실행용)
+-- 4-a) mapping_id: 일정 created_at 기준 유효 매칭(TERMINATED 포함), 복수 시 최근 생성 매칭
+-- UPDATE schedules s
+-- INNER JOIN (
+--   SELECT s2.id AS schedule_id,
+--          (
+--            SELECT m.id
+--            FROM consultant_client_mappings m
+--            WHERE m.tenant_id = s2.tenant_id
+--              AND m.consultant_id = s2.consultant_id
+--              AND m.client_id = s2.client_id
+--              AND s2.created_at >= m.created_at
+--              AND (m.terminated_at IS NULL OR s2.created_at < m.terminated_at)
+--            ORDER BY m.created_at DESC
+--            LIMIT 1
+--          ) AS resolved_mapping_id
+--   FROM schedules s2
+--   WHERE s2.tenant_id = 'YOUR_TENANT_ID'
+--     AND (s2.is_deleted = 0 OR s2.is_deleted IS NULL)
+--     AND s2.client_id IS NOT NULL
+--     AND s2.schedule_type = 'CONSULTATION'
+-- ) pick ON s.id = pick.schedule_id
+-- SET s.mapping_id = pick.resolved_mapping_id
+-- WHERE pick.resolved_mapping_id IS NOT NULL;
+--
+-- 4-b) session_sequence: PARTITION BY mapping_id (취소·가예약 제외는 V20260525_001 참고)
+-- UPDATE schedules s
+-- INNER JOIN (
+--   SELECT id,
+--          ROW_NUMBER() OVER (
+--            PARTITION BY mapping_id
+--            ORDER BY date ASC, start_time ASC, id ASC
+--          ) AS seq_num
+--   FROM schedules
+--   WHERE tenant_id = 'YOUR_TENANT_ID'
+--     AND mapping_id IS NOT NULL
+--     AND (is_deleted = 0 OR is_deleted IS NULL)
+--     AND schedule_type = 'CONSULTATION'
+--     AND status IN ('BOOKED', 'CONFIRMED', 'COMPLETED')
+-- ) ranked ON s.id = ranked.id
+-- SET s.session_sequence = ranked.seq_num;

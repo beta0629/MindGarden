@@ -5,6 +5,7 @@ import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.dto.BrandingInfo;
 import com.coresolution.core.dto.BrandingUpdateRequest;
 import com.coresolution.core.repository.TenantRepository;
+import com.coresolution.core.util.TenantLogoFileUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Base64;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -39,10 +41,8 @@ public class BrandingService {
     private final ObjectMapper objectMapper;
     
     // 로고 저장 경로 (실제 환경에서는 S3 등 클라우드 스토리지 사용 권장)
-    private static final String LOGO_UPLOAD_DIR = "uploads/logos/";
-    private static final String LOGO_URL_PREFIX = "/api/files/logos/";
-    /** {@link com.coresolution.core.controller.FileController} 와 동일한 로고 URL 프리픽스 */
-    private static final String LOGO_URL_PREFIX_V1 = "/api/v1/files/logos/";
+    private static final String LOGO_UPLOAD_DIR = TenantLogoFileUtils.LOGO_UPLOAD_DIR;
+    private static final String LOGO_URL_PREFIX = TenantLogoFileUtils.LOGO_URL_PREFIX;
 
     /**
      * API 응답에 포함할 로고 인라인 data URI 최대 크기(바이트). 초과 시 URL만 유지합니다.
@@ -73,7 +73,7 @@ public class BrandingService {
             if (!brandingInfo.hasLogo()) {
                 log.debug("로고 정보 없어 기본 로고 적용: tenantId={}", tenantId);
                 brandingInfo.setLogo(BrandingInfo.LogoInfo.builder()
-                    .url("/images/core-solution-logo.png")
+                    .url(TenantLogoFileUtils.DEFAULT_LOGO_URL)
                     .width(200)
                     .height(60)
                     .format("png")
@@ -92,6 +92,7 @@ public class BrandingService {
         log.debug("브랜딩 정보 조회 완료: tenantId={}, hasLogo={}, companyName={}", 
             tenantId, brandingInfo.hasLogo(), brandingInfo.getDisplayName());
 
+        resolveBrokenLogoUrl(tenantId, brandingInfo);
         enrichLogoDataUri(brandingInfo);
         return brandingInfo;
     }
@@ -147,6 +148,7 @@ public class BrandingService {
             tenantRepository.save(tenant);
             
             log.info("브랜딩 정보 업데이트 완료: tenantId={}", tenantId);
+            resolveBrokenLogoUrl(tenantId, currentBranding);
             enrichLogoDataUri(currentBranding);
             return currentBranding;
             
@@ -270,6 +272,48 @@ public class BrandingService {
      *
      * @param info 브랜딩 정보
      */
+    /**
+     * branding_json 의 업로드 로고 URL이 디스크에 없으면 테넌트 최신 파일 또는 기본 로고로 대체합니다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param info 브랜딩 정보
+     */
+    private void resolveBrokenLogoUrl(String tenantId, BrandingInfo info) {
+        if (info == null || !info.hasLogo()) {
+            return;
+        }
+        BrandingInfo.LogoInfo logo = info.getLogo();
+        String url = logo.getUrl();
+        if (!TenantLogoFileUtils.isUploadLogoUrl(url)) {
+            return;
+        }
+        String fileName = extractFileNameFromLogoUrl(url);
+        if (fileName == null || fileName.isBlank()) {
+            return;
+        }
+        if (TenantLogoFileUtils.resolveExistingLogoFile(fileName).isPresent()) {
+            return;
+        }
+        applyLogoUrlFallback(tenantId, logo);
+    }
+
+    private void applyLogoUrlFallback(String tenantId, BrandingInfo.LogoInfo logo) {
+        Optional<Path> latestFile = TenantLogoFileUtils.findLatestTenantLogoFile(tenantId);
+        if (latestFile.isPresent()) {
+            String fileName = latestFile.get().getFileName().toString();
+            String newUrl = TenantLogoFileUtils.buildLogoUrl(fileName);
+            log.info("로고 파일 없음, 테넌트 최신 파일로 URL 대체: tenantId={}, url={}", tenantId, newUrl);
+            logo.setUrl(newUrl);
+            logo.setFormat(getFileExtension(fileName));
+            logo.setDataUri(null);
+            return;
+        }
+        log.info("로고 파일 없음, 기본 로고 URL 적용: tenantId={}", tenantId);
+        logo.setUrl(TenantLogoFileUtils.DEFAULT_LOGO_URL);
+        logo.setFormat("png");
+        logo.setDataUri(null);
+    }
+
     private void enrichLogoDataUri(BrandingInfo info) {
         if (info == null || !info.hasLogo()) {
             return;
@@ -281,16 +325,11 @@ public class BrandingService {
             return;
         }
 
-        Path uploadBase = Paths.get(LOGO_UPLOAD_DIR).toAbsolutePath().normalize();
-        Path filePath = uploadBase.resolve(fileName).normalize();
-        if (!filePath.startsWith(uploadBase)) {
-            log.warn("로고 파일 경로가 허용 범위를 벗어남: fileName={}", fileName);
+        Optional<Path> existingFile = TenantLogoFileUtils.resolveExistingLogoFile(fileName);
+        if (existingFile.isEmpty()) {
             return;
         }
-
-        if (!Files.isRegularFile(filePath) || !Files.isReadable(filePath)) {
-            return;
-        }
+        Path filePath = existingFile.get();
 
         try {
             long size = Files.size(filePath);
@@ -315,17 +354,7 @@ public class BrandingService {
      * @return 파일명 또는 해당 없으면 null
      */
     public String extractFileNameFromLogoUrl(String url) {
-        if (url == null || url.isBlank()) {
-            return null;
-        }
-        String u = url.trim();
-        if (u.startsWith(LOGO_URL_PREFIX_V1)) {
-            return u.substring(LOGO_URL_PREFIX_V1.length());
-        }
-        if (u.startsWith(LOGO_URL_PREFIX)) {
-            return u.substring(LOGO_URL_PREFIX.length());
-        }
-        return null;
+        return TenantLogoFileUtils.extractFileNameFromLogoUrl(url);
     }
 
     /**

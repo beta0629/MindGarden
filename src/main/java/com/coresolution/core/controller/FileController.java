@@ -13,11 +13,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.coresolution.consultation.constant.ShopCatalogSkuConstants;
+import com.coresolution.core.util.TenantLogoFileUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 /**
  * 파일 서빙 컨트롤러
@@ -33,8 +35,6 @@ import java.nio.file.Paths;
 @Tag(name = "File", description = "파일 서빙 API")
 public class FileController {
     
-    private static final String LOGO_UPLOAD_DIR = "uploads/logos/";
-    
     /**
      * 로고 파일 서빙
      */
@@ -43,28 +43,54 @@ public class FileController {
     public ResponseEntity<Resource> getLogoFile(
             @Parameter(description = "파일명") @PathVariable String fileName) {
         try {
-            Path filePath = Paths.get(LOGO_UPLOAD_DIR).resolve(fileName).normalize();
+            Optional<Path> resolvedPath = TenantLogoFileUtils.resolveExistingLogoFile(fileName);
+            if (resolvedPath.isEmpty()) {
+                resolvedPath = resolveFallbackLogoPath(fileName);
+            }
+            if (resolvedPath.isEmpty()) {
+                log.warn("로고 파일을 찾을 수 없음: fileName={}", fileName);
+                return ResponseEntity.notFound().build();
+            }
+
+            Path filePath = resolvedPath.get();
             Resource resource = new UrlResource(filePath.toUri());
             
             if (!resource.exists() || !resource.isReadable()) {
-                log.warn("로고 파일을 찾을 수 없음: fileName={}", fileName);
+                log.warn("로고 파일을 읽을 수 없음: fileName={}", fileName);
                 return ResponseEntity.notFound().build();
             }
             
             // 파일 확장자에 따른 Content-Type 설정
-            String contentType = getContentType(fileName);
+            String contentType = getContentType(filePath.getFileName().toString());
             
-            log.debug("로고 파일 서빙: fileName={}, contentType={}", fileName, contentType);
+            log.debug("로고 파일 서빙: fileName={}, contentType={}", filePath.getFileName(), contentType);
             
             return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                    "inline; filename=\"" + filePath.getFileName() + "\"")
                 .body(resource);
                 
         } catch (MalformedURLException e) {
             log.error("로고 파일 경로 오류: fileName={}", fileName, e);
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    /**
+     * 요청 파일이 없을 때 동일 tenantId prefix 최신 로고 파일을 반환합니다.
+     */
+    private Optional<Path> resolveFallbackLogoPath(String fileName) {
+        Optional<String> tenantId = TenantLogoFileUtils.extractTenantIdFromLogoFileName(fileName);
+        if (tenantId.isEmpty()) {
+            return Optional.empty();
+        }
+        Optional<Path> latest = TenantLogoFileUtils.findLatestTenantLogoFile(tenantId.get());
+        if (latest.isPresent()) {
+            log.info("로고 파일 없음, 테넌트 최신 파일로 서빙: requested={}, fallback={}",
+                fileName, latest.get().getFileName());
+        }
+        return latest;
     }
 
     /**

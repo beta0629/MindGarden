@@ -154,8 +154,8 @@ mvn -Dtest=ClientShopControllerMvcTest,AdminShopCatalogSkuControllerMvcTest test
 
 | 파일 | 상태 | 비고 |
 |------|------|------|
-| `tests/e2e/tests/client/client-shop-catalog-to-cart.spec.ts` | **FAIL** | [§1.0.3](#103-tier-a-45-r10-tenant-incheon-counseling-001-재검증-core-tester-2026-05-19-1534-kst) — `client-shop-catalog-page` 미노출; LNB 쇼핑 없음·빈 main (`CLIENT_SHOP` 게이트) |
-| `tests/e2e/tests/admin/admin-shop-catalog-skus-smoke.spec.ts` | **FAIL** | [§1.0.3](#103-tier-a-45-r10-tenant-incheon-counseling-001-재검증-core-tester-2026-05-19-1534-kst) — page shell OK·`DEV-CONSULT-DEMO-01` SKU 스냅샷; line 62 empty/table assertion FAIL |
+| `tests/e2e/tests/client/client-shop-catalog-to-cart.spec.ts` | **미실행** | R10 재실행 (2026-05-19) — **admin 선행 FAIL** (exit **1**); debugger 권장 `E2E_CLIENT_LOGIN_ID=01086322121` + `E2E_TENANT_ID=tenant-incheon-counseling-001` (이전 FAIL: `client-shop-catalog-page` 게이트) |
+| `tests/e2e/tests/admin/admin-shop-catalog-skus-smoke.spec.ts` | **FAIL** | R10 재실행 (2026-05-19, exit **1**, ~2.6s) — page shell OK·`DEV-CONSULT-DEMO-01`+`table` **동시 노출**; Playwright **strict mode violation** (`.or()` 2 elements, spec line 65) |
 | R10 Tier A (2026-05-19 14:42) | **2 skipped** / 0 passed | (이전) 8080 down · `skipWhenLocalBackend8080Down` |
 | R10 Tier A **(5)** (2026-05-19 dev 재실행) | **0 passed / 0 skipped / 2 failed** (exit **1**) | `E2E_API_BASE`+`BASE_URL` dev; localhost **8080 down**; `E2E_API_BASE` health **200** → 8080 가드 **미스킵**; `skipWhenCiMissingE2eCredentials` **미발생** (`CI≠true`) |
 | R10 `tenant-incheon-counseling-001` (2026-05-19 ~15:05 KST) | **0 / 0 / 2** passed·skipped·failed (exit **1**) | (이전) client `CLIENT_SHOP` 게이트; admin 비활성 토스트; **`E2E_TENANT_ID` 미연동** |

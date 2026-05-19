@@ -63,6 +63,29 @@
 
 **Tier A (5)**: **BLOCKED** — **OPS 필요** (`activate` + `seed` on dev DB for `tenant-incheon-counseling-001`) + **`erpAuth` `E2E_TENANT_ID` 로그인 URL** (coder) 후 R10 재실행.
 
+### 1.0.3 Tier A **(4)(5)** R10 `tenant-incheon-counseling-001` 재검증 (core-tester, 2026-05-19 ~15:34 KST)
+
+**전제**: dev SSH — Shop 3/3 ACTIVE + seed 완료 (OPS 반영 후).
+
+| 게이트 | exit | passed | skipped | failed | 판정 |
+|--------|------|--------|---------|--------|------|
+| dev `actuator/health` | — | — | — | — | **PASS** HTTP **200** |
+| `verify-shop-reward-dev.sh` (`TENANT_ID=tenant-incheon-counseling-001`) | **0** | — | — | — | **PASS** (read-only 안내; Flyway·OPS SQL은 수동 확인) |
+| Maven **14클래스** (`-DforkCount=0`, Tier A 목록) | **0** | **91** | 0 | 0 | **PASS** (2 batch, BUILD SUCCESS) |
+| `E2E_TENANT_ID` → `buildLoginPath()` (`erpAuth.ts`) | — | — | — | — | **구현됨** — `/login?tenantId=` |
+| Playwright R10 client + admin smoke (chromium, dev FE+API) | **1** | **0** | **0** | **2** | **FAIL** |
+
+**Playwright 상세**:
+
+| spec | 결과 | 관찰 |
+|------|------|------|
+| `client-shop-catalog-to-cart` | **FAIL** | `/client/shop` — `client-shop-catalog-page` 미노출; LNB에 쇼핑 메뉴 없음·`<main>` 빈 영역 (`CLIENT_SHOP` 게이트 추정) |
+| `admin-shop-catalog-skus-smoke` | **FAIL** | `admin-shop-catalog-page`·제목·「상품 등록」 OK; 스냅샷에 `DEV-CONSULT-DEMO-01` SKU 테이블 노출 — line 62 `hasEmpty \|\| hasTable` assertion **FAIL** (locator·타이밍 의심) |
+
+**Tier A (4) REG-01**: **GO** — Maven 14클래스 **91 passed** (`-DforkCount=0`).
+
+**Tier A (5) 종합**: **BLOCKED** — R10 **0 / 0 / 2** (exit **1**). client `CLIENT_SHOP` 게이트 잔여; admin은 OPS·시드 반영 흔적(SKU 1건) 있으나 spec assertion 미통과. **후속**: client 컴포넌트 플래그·E2E client 계정 테넌트 매칭 확인; admin spec line 62 locator 보강(coder).
+
 ### 1.1 백엔드 Maven (`*Test.java`)
 
 **실행 명령** (2026-05-19 통합 게이트, **15클래스·103건**):
@@ -131,11 +154,12 @@ mvn -Dtest=ClientShopControllerMvcTest,AdminShopCatalogSkuControllerMvcTest test
 
 | 파일 | 상태 | 비고 |
 |------|------|------|
-| `tests/e2e/tests/client/client-shop-catalog-to-cart.spec.ts` | **FAIL** | R10 incheon — `CLIENT_SHOP` 게이트(「온라인 쇼핑을 이용할 수 없습니다」) |
-| `tests/e2e/tests/admin/admin-shop-catalog-skus-smoke.spec.ts` | **FAIL** | R10 incheon — `ADMIN_SHOP_CATALOG` 비활성 토스트; 목록 empty/table 미충족 |
+| `tests/e2e/tests/client/client-shop-catalog-to-cart.spec.ts` | **FAIL** | [§1.0.3](#103-tier-a-45-r10-tenant-incheon-counseling-001-재검증-core-tester-2026-05-19-1534-kst) — `client-shop-catalog-page` 미노출; LNB 쇼핑 없음·빈 main (`CLIENT_SHOP` 게이트) |
+| `tests/e2e/tests/admin/admin-shop-catalog-skus-smoke.spec.ts` | **FAIL** | [§1.0.3](#103-tier-a-45-r10-tenant-incheon-counseling-001-재검증-core-tester-2026-05-19-1534-kst) — page shell OK·`DEV-CONSULT-DEMO-01` SKU 스냅샷; line 62 empty/table assertion FAIL |
 | R10 Tier A (2026-05-19 14:42) | **2 skipped** / 0 passed | (이전) 8080 down · `skipWhenLocalBackend8080Down` |
 | R10 Tier A **(5)** (2026-05-19 dev 재실행) | **0 passed / 0 skipped / 2 failed** (exit **1**) | `E2E_API_BASE`+`BASE_URL` dev; localhost **8080 down**; `E2E_API_BASE` health **200** → 8080 가드 **미스킵**; `skipWhenCiMissingE2eCredentials` **미발생** (`CI≠true`) |
-| R10 `tenant-incheon-counseling-001` (2026-05-19 ~15:05 KST) | **0 / 0 / 2** passed·skipped·failed (exit **1**) | client: `client-shop-catalog-page` 미노출 — 「온라인 쇼핑을 이용할 수 없습니다」(`CLIENT_SHOP` 게이트); admin: catalog page testid OK·목록 영역 실패 — 「어드민 쇼핑 카탈로그 컴포넌트가 활성화되지 않았습니다」; **`E2E_TENANT_ID` 미연동** |
+| R10 `tenant-incheon-counseling-001` (2026-05-19 ~15:05 KST) | **0 / 0 / 2** passed·skipped·failed (exit **1**) | (이전) client `CLIENT_SHOP` 게이트; admin 비활성 토스트; **`E2E_TENANT_ID` 미연동** |
+| R10 `tenant-incheon-counseling-001` **(4)(5) 재검증** (2026-05-19 ~15:34 KST) | **0 / 0 / 2** (exit **1**) | dev FE+API; `E2E_TENANT_ID` **연동됨**; OPS·seed 전제 — client 게이트 잔여; admin SKU 노출·assertion FAIL |
 
 ### 1.4 프론트엔드 web (React)
 
@@ -259,17 +283,19 @@ SELECT component_code FROM component_catalog WHERE component_code IN ('CLIENT_SH
 | Expo Jest **5 suite / 32건** (`clientShop` + `pushScenarios`) | **GO** (로컬) |
 | Playwright catalog→cart (R10) | **조건부** (dev·OPS·시드 후) |
 
-### 5.2 운영 반영 — **배포·OPS·QA 게이트** (2026-05-19, Tier A (5) · `tenant-incheon-counseling-001`)
+### 5.2 운영 반영 — **배포·OPS·QA 게이트** (2026-05-19, Tier A **(4)(5)** · `tenant-incheon-counseling-001`)
 
 | 게이트 | 판정 | 비고 |
 |--------|------|------|
 | dev `actuator/health` (apex curl) | **GO** | HTTP **200** (`https://dev.core-solution.co.kr`) |
-| OPS `activate` + (선택) `seed` + `verify-shop-reward-dev.sh` | **OPS 필요** | verify helper **exit 0** (`TENANT_ID=tenant-incheon-counseling-001`); **dev DB에 activate/seed 미실행** — E2E에서 `CLIENT_SHOP`·`ADMIN_SHOP_CATALOG` 게이트; [런북 §4.1](./SHOP_REWARD_OPS_ACTIVATION_RUNBOOK.md#41-배포-직후-10분-체크리스트) |
-| Playwright R10 (client + admin smoke, chromium) | **FAIL** | **0 / 0 / 2** passed·skipped·failed (exit **1**); [§1.0.2](#102-tier-a-5-r10-tenant-incheon-counseling-001-core-tester-2026-05-19-1505-kst) · `erpAuth` **`E2E_TENANT_ID` 미구현** |
-| Admin·Client 수동 스모크 [§4](#4-수동-qa-체크리스트) | **NO-GO** | 동일 테넌트 OPS·시드·컴포넌트 활성 전제 미충족 |
-| **Tier A (5) 종합** | **BLOCKED** | dev health **GO**; R10 **FAIL** — OPS DB + (선택) `E2E_TENANT_ID` 로그인 후 재실행 |
+| Maven Tier A **14클래스** (`-DforkCount=0`) | **GO** | **91 passed**, exit **0** — [§1.0.3](#103-tier-a-45-r10-tenant-incheon-counseling-001-재검증-core-tester-2026-05-19-1534-kst) |
+| OPS `activate` + `seed` + `verify-shop-reward-dev.sh` | **조건부 GO** | SSH 전제 Shop 3/3 ACTIVE + seed; verify helper **exit 0**; admin E2E 스냅샷 `DEV-CONSULT-DEMO-01` — 시드 반영 흔적; client `CLIENT_SHOP` 게이트 잔여 |
+| Playwright R10 (client + admin smoke, chromium) | **FAIL** | **0 / 0 / 2** (exit **1**); [§1.0.3](#103-tier-a-45-r10-tenant-incheon-counseling-001-재검증-core-tester-2026-05-19-1534-kst) · `E2E_TENANT_ID` **연동됨** |
+| Admin·Client 수동 스모크 [§4](#4-수동-qa-체크리스트) | **NO-GO** | client PLP 미노출; admin SKU 1건 관찰·자동 spec 미통과 |
+| **Tier A (4) REG-01** | **GO** | Maven 14클래스 **91 passed** |
+| **Tier A (5) 종합** | **BLOCKED** | dev health **GO**; R10 **FAIL** — client `CLIENT_SHOP` + admin spec assertion |
 
-**종합**: **코드·Maven·Expo·build:ci = GO**. **Tier A (5) = BLOCKED** — `tenant-incheon-counseling-001`에 **OPS activate/seed** 실행 후 Playwright **2 passed** 목표; `tests/e2e/helpers/erpAuth.ts`에 **`E2E_TENANT_ID` → `/login?tenantId=`** 반영(coder) 권장.
+**종합**: **코드·Maven·Expo·build:ci = GO**. **Tier A (4) = GO**. **Tier A (5) = BLOCKED** — client 컴포넌트·E2E 계정 테넌트 확인 + admin spec line 62 보강 후 R10 **2 passed** 재목표.
 
 ---
 

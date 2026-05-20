@@ -4,6 +4,29 @@
  * (내담자/상담사/스태프 모달 공통 — B0KlA만으로 동일 레이아웃 보장)
  */
 
+/* T8-C1-4: 인라인 폼 row 그리드 (16px gap) — ClientModal 스코프 한정 */
+.mg-v2-client-modal__form-row-two {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.mg-v2-client-modal__form-row-two--edit-spaced {
+  margin-top: 8px;
+}
+
+.mg-v2-client-modal__address-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.mg-v2-client-modal__address-input {
+  flex: 1;
+  min-width: 200px;
+}
+
 .mg-v2-client-modal__summary {
   margin-bottom: var(--mg-layout-gap, 1rem);
 }

@@ -1164,3 +1164,13 @@ div[class*="consultant-specialty-display"] div,
     grid-template-columns: repeat(2, 1fr);
     gap: var(--mg-spacing-16, 16px);
 }
+
+/* T8-C1-4: 삭제 확인 모달 인라인 추출 */
+.mg-v2-delete-confirmation .mg-v2-detail-grid {
+    margin-top: 0.75rem;
+}
+
+.mg-v2-delete-confirmation .mg-v2-warning-text {
+    margin-top: 1rem;
+    color: var(--ad-b0kla-danger, var(--color-danger));
+}

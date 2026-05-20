@@ -1826,7 +1826,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     <div className="mg-v2-delete-confirmation">
                         <p><SafeText fallback="이 상담사">{selectedConsultant?.name}</SafeText>를 정말 삭제하시겠습니까?</p>
                         {selectedConsultant && (
-                            <div className="mg-v2-detail-grid" style={{ marginTop: '0.75rem' }}>
+                            <div className="mg-v2-detail-grid">
                                 <div className="mg-v2-detail-item">
                                     <span className="mg-v2-detail-label">이름:</span>
                                     <span className="mg-v2-detail-value"><SafeText fallback="-">{selectedConsultant.name}</SafeText></span>
@@ -1837,7 +1837,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 </div>
                             </div>
                         )}
-                        <p className="mg-v2-warning-text" style={{ marginTop: '1rem', color: 'var(--ad-b0kla-danger, var(--color-danger))' }}>
+                        <p className="mg-v2-warning-text">
                             ⚠️ 이 작업은 되돌릴 수 없습니다.
                         </p>
                     </div>

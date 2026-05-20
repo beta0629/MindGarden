@@ -214,96 +214,90 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
             }
           />
 
-          <section className="mg-v2-ad-b0kla__card" style={{ padding: 24 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <section className="mg-v2-ad-b0kla__card mg-v2-package-pricing__form-card">
+            <div className="mg-v2-package-pricing__form-stack">
               <div>
-                <label className="mg-v2-form-label" style={{ display: 'block', marginBottom: 6, fontSize: 12, color: 'var(--ad-b0kla-text-secondary)' }}>
+                <label className="mg-v2-form-label mg-v2-package-pricing__form-label">
                   {LABELS.LABEL_CODE}
                 </label>
                 <input
                   type="text"
-                  className="mg-v2-form-input"
+                  className="mg-v2-form-input mg-v2-package-pricing__form-control"
                   value={form.codeValue}
                   onChange={(e) => setForm((f) => ({ ...f, codeValue: e.target.value }))}
                   readOnly={!isNew}
                   disabled={!isNew}
                   placeholder="예: BASIC, SINGLE_80000"
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--ad-b0kla-border)', borderRadius: 10 }}
                 />
-                {formErrors.codeValue && <span className="mg-v2-form-error" style={{ fontSize: 12 }}>{formErrors.codeValue}</span>}
+                {formErrors.codeValue && <span className="mg-v2-form-error mg-v2-package-pricing__form-error">{formErrors.codeValue}</span>}
               </div>
               <div>
-                <label className="mg-v2-form-label" style={{ display: 'block', marginBottom: 6, fontSize: 12, color: 'var(--ad-b0kla-text-secondary)' }}>
+                <label className="mg-v2-form-label mg-v2-package-pricing__form-label">
                   {LABELS.LABEL_NAME}
                 </label>
                 <input
                   type="text"
-                  className="mg-v2-form-input"
+                  className="mg-v2-form-input mg-v2-package-pricing__form-control"
                   value={form.koreanName}
                   onChange={(e) => setForm((f) => ({ ...f, koreanName: e.target.value }))}
                   placeholder="패키지 한글명"
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--ad-b0kla-border)', borderRadius: 10 }}
                 />
-                {formErrors.koreanName && <span className="mg-v2-form-error" style={{ fontSize: 12 }}>{formErrors.koreanName}</span>}
+                {formErrors.koreanName && <span className="mg-v2-form-error mg-v2-package-pricing__form-error">{formErrors.koreanName}</span>}
               </div>
               <div>
-                <label className="mg-v2-form-label" style={{ display: 'block', marginBottom: 6, fontSize: 12, color: 'var(--ad-b0kla-text-secondary)' }}>
+                <label className="mg-v2-form-label mg-v2-package-pricing__form-label">
                   {LABELS.LABEL_SESSIONS}
                 </label>
                 <input
                   type="number"
                   min={1}
-                  className="mg-v2-form-input"
+                  className="mg-v2-form-input mg-v2-package-pricing__form-control"
                   value={form.sessions}
                   onChange={(e) => setForm((f) => ({ ...f, sessions: e.target.value }))}
                   placeholder="예: 20"
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--ad-b0kla-border)', borderRadius: 10 }}
                 />
-                {formErrors.sessions && <span className="mg-v2-form-error" style={{ fontSize: 12 }}>{formErrors.sessions}</span>}
+                {formErrors.sessions && <span className="mg-v2-form-error mg-v2-package-pricing__form-error">{formErrors.sessions}</span>}
               </div>
               <div>
-                <label className="mg-v2-form-label" style={{ display: 'block', marginBottom: 6, fontSize: 12, color: 'var(--ad-b0kla-text-secondary)' }}>
+                <label className="mg-v2-form-label mg-v2-package-pricing__form-label">
                   {LABELS.LABEL_PRICE}
                 </label>
                 <input
                   type="number"
                   min={0}
-                  className="mg-v2-form-input"
+                  className="mg-v2-form-input mg-v2-package-pricing__form-control"
                   value={form.price}
                   onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
                   placeholder="예: 400000"
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--ad-b0kla-border)', borderRadius: 10 }}
                 />
-                {formErrors.price && <span className="mg-v2-form-error" style={{ fontSize: 12 }}>{formErrors.price}</span>}
+                {formErrors.price && <span className="mg-v2-form-error mg-v2-package-pricing__form-error">{formErrors.price}</span>}
               </div>
               <div>
-                <label className="mg-v2-form-label" style={{ display: 'block', marginBottom: 6, fontSize: 12, color: 'var(--ad-b0kla-text-secondary)' }}>
+                <label className="mg-v2-form-label mg-v2-package-pricing__form-label">
                   {LABELS.LABEL_REMARK}
                 </label>
                 <textarea
-                  className="mg-v2-form-input"
+                  className="mg-v2-form-input mg-v2-package-pricing__form-control mg-v2-package-pricing__form-control--textarea"
                   value={form.remark}
                   onChange={(e) => setForm((f) => ({ ...f, remark: e.target.value }))}
                   placeholder="비고 (선택)"
                   rows={2}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--ad-b0kla-border)', borderRadius: 10, resize: 'vertical' }}
                 />
               </div>
               <div>
-                <label className="mg-v2-form-label" style={{ display: 'block', marginBottom: 6, fontSize: 12, color: 'var(--ad-b0kla-text-secondary)' }}>
+                <label className="mg-v2-form-label mg-v2-package-pricing__form-label">
                   {LABELS.LABEL_ACTIVE}
                 </label>
                 <select
-                  className="mg-v2-form-input"
+                  className="mg-v2-form-input mg-v2-package-pricing__form-control"
                   value={form.isActive ? 'Y' : 'N'}
                   onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.value === 'Y' }))}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--ad-b0kla-border)', borderRadius: 10 }}
                 >
                   <option value="Y">{LABELS.ACTIVE_YES}</option>
                   <option value="N">{LABELS.ACTIVE_NO}</option>
                 </select>
               </div>
-              <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+              <div className="mg-v2-package-pricing__form-actions">
                 <MGButton
                   type="button"
                   variant="outline"

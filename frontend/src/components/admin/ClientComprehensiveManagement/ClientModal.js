@@ -492,7 +492,7 @@ const ClientModal = ({
                     {type === 'edit' && (
                         <small className="mg-v2-form-help">수정 시 기존 값은 표시하지 않습니다. 변경할 때만 입력해 주세요.</small>
                     )}
-                    <div className="mg-v2-form-row mg-v2-form-row--two" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginTop: type === 'edit' ? '8px' : 0 }}>
+                    <div className={`mg-v2-form-row mg-v2-form-row--two mg-v2-client-modal__form-row-two${type === 'edit' ? ' mg-v2-client-modal__form-row-two--edit-spaced' : ''}`}>
                         <div className="mg-v2-form-group">
                             <label htmlFor="client-rrnFirst6" className="mg-v2-form-label">주민번호 앞 6자리 (선택)</label>
                             <input
@@ -527,7 +527,7 @@ const ClientModal = ({
                 </div>
                 {(type === 'view' || type === 'edit') && (
                     <div className="mg-v2-form-group">
-                        <div className="mg-v2-form-row mg-v2-form-row--two" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                        <div className="mg-v2-form-row mg-v2-form-row--two mg-v2-client-modal__form-row-two">
                             <div className="mg-v2-form-group">
                                 <span className="mg-v2-form-label" id="client-demographic-gender-label">성별</span>
                                 <input
@@ -626,7 +626,7 @@ const ClientModal = ({
                 </div>
                 <div className="mg-v2-form-group">
                     <label className="mg-v2-form-label">주소 검색</label>
-                    <div className="mg-v2-address-search-row" style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div className="mg-v2-address-search-row mg-v2-client-modal__address-row">
                         <MGButton
                             type="button"
                             variant="secondary"
@@ -657,8 +657,7 @@ const ClientModal = ({
                         <input
                             type="text"
                             readOnly
-                            className="mg-v2-form-input"
-                            style={{ flex: 1, minWidth: '200px' }}
+                            className="mg-v2-form-input mg-v2-client-modal__address-input"
                             value={safeFormData.address}
                             placeholder="주소 검색 버튼을 눌러 주소를 입력하세요."
                         />
@@ -848,7 +847,7 @@ const ClientModal = ({
                     </div>
                 </ContentSection>
                 <ContentSection title="비상 연락처" noCard className="mg-v2-client-modal__subsection">
-                    <div className="mg-v2-form-row mg-v2-form-row--two" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                    <div className="mg-v2-form-row mg-v2-form-row--two mg-v2-client-modal__form-row-two">
                         <div className="mg-v2-form-group">
                             <label htmlFor="client-emergencyContact" className="mg-v2-form-label">비상 연락처 이름</label>
                             <input

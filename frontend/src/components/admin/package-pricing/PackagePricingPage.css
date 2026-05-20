@@ -175,3 +175,43 @@
   padding: 8px 12px;
   font-size: 13px;
 }
+
+/* ===== T8-C1-4: 등록/상세 폼 인라인 스타일 추출 ===== */
+
+.mg-v2-package-pricing__form-card {
+  padding: 24px;
+}
+
+.mg-v2-package-pricing__form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mg-v2-package-pricing__form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-package-pricing__form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: 10px;
+}
+
+.mg-v2-package-pricing__form-control--textarea {
+  resize: vertical;
+}
+
+.mg-v2-package-pricing__form-error {
+  font-size: 12px;
+}
+
+.mg-v2-package-pricing__form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}

@@ -60,12 +60,14 @@ import './mapping-management/organisms/MappingSearchSection.css';
 import './mapping-management/organisms/MappingListBlock.css';
 import './ProfileCard.css';
 
+import { USER_ROLES } from '../../constants/roles';
+
 const API_USER_MANAGEMENT = '/api/v1/admin/user-management';
 const API_ROLES = '/api/v1/admin/user-management/roles';
 const API_STAFF_REGISTER = '/api/v1/admin/staff';
 const basicProfileEndpoint = (userId) => `/api/v1/admin/user-management/${userId}/basic-profile`;
-const ROLE_STAFF = 'STAFF';
-const ROLE_ADMIN = 'ADMIN';
+const ROLE_STAFF = USER_ROLES.STAFF;
+const ROLE_ADMIN = USER_ROLES.ADMIN;
 const adminUserDetailPath = (userId) => `/api/v1/admin/users/${userId}`;
 const adminCounselingEnabledPath = (userId) => `/api/v1/admin/users/${userId}/counseling-enabled`;
 
@@ -208,7 +210,7 @@ const StaffManagement = ({ embedded = false }) => {
 
   const canConsultantManage = hasPermission(userPermissions, PERMISSIONS.CONSULTANT_MANAGE);
   /** API updateCounselingEnabled는 세션 역할 ADMIN만 허용 */
-  const canEditAdminCounselingDual = canConsultantManage && hasRole('ADMIN');
+  const canEditAdminCounselingDual = canConsultantManage && hasRole(USER_ROLES.ADMIN);
 
   useEffect(() => {
     fetchUserPermissions(setUserPermissions);
@@ -872,7 +874,7 @@ const StaffManagement = ({ embedded = false }) => {
                       phone: <><Phone size={12} /> {formatKoreanMobileForDisplay(maskEncryptedDisplay(staff.phone, STAFF_MGMT_MASK.PHONE_NONE))}</>
                     }}
                     badges={[
-                      <StatusBadge key="role" variant={staff.role === 'ADMIN' ? 'info' : 'neutral'}>
+                      <StatusBadge key="role" variant={staff.role === USER_ROLES.ADMIN ? 'info' : 'neutral'}>
                         {STAFF_MGMT_ROLE_LABELS[staff.role] || staff.role}
                       </StatusBadge>,
                       <StatusBadge key="status" variant={staff.isActive ? 'success' : 'neutral'}>
@@ -896,7 +898,7 @@ const StaffManagement = ({ embedded = false }) => {
                       phone: <><Phone size={12} /> {formatKoreanMobileForDisplay(maskEncryptedDisplay(staff.phone, STAFF_MGMT_MASK.PHONE_NONE))}</>
                     }}
                     badges={[
-                      <StatusBadge key="role" variant={staff.role === 'ADMIN' ? 'info' : 'neutral'}>
+                      <StatusBadge key="role" variant={staff.role === USER_ROLES.ADMIN ? 'info' : 'neutral'}>
                         {STAFF_MGMT_ROLE_LABELS[staff.role] || staff.role}
                       </StatusBadge>,
                       <StatusBadge key="status" variant={staff.isActive ? 'success' : 'neutral'}>

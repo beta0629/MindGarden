@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils/permissionUtils';
-import { RoleUtils } from '../../constants/roles';
+import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import { AUTH_API, ERP_API } from '../../constants/api';
 import StandardizedApi from '../../utils/standardizedApi';
 import { formatCurrency } from '../../utils/formatUtils';
@@ -52,7 +52,7 @@ const setDefaultPermissionsForRole = (user, setUserPermissions) => {
   const defaultPermissions = [];
 
   // 관리자 역할이면 모든 ERP 권한 부여
-  if (role === 'ADMIN' || role === 'TENANT_ADMIN' || role === 'PRINCIPAL' || role === 'OWNER') {
+  if (role === USER_ROLES.ADMIN || role === LEGACY_USER_ROLES.TENANT_ADMIN || role === LEGACY_USER_ROLES.PRINCIPAL || role === LEGACY_USER_ROLES.OWNER) {
     defaultPermissions.push(
       PERMISSIONS.ERP_ACCESS,
       PERMISSIONS.ERP_DASHBOARD_VIEW,
@@ -324,10 +324,10 @@ const ErpDashboard = ({ user: propUser }) => {
 
         // 관리자 역할이면 일단 대시보드 로드 (백엔드에서 최종 권한 체크)
         const isAdmin =
-          currentUser.role === 'ADMIN' ||
-          currentUser.role === 'TENANT_ADMIN' ||
-          currentUser.role === 'PRINCIPAL' ||
-          currentUser.role === 'OWNER';
+          currentUser.role === USER_ROLES.ADMIN ||
+          currentUser.role === LEGACY_USER_ROLES.TENANT_ADMIN ||
+          currentUser.role === LEGACY_USER_ROLES.PRINCIPAL ||
+          currentUser.role === LEGACY_USER_ROLES.OWNER;
 
         if (isAdmin) {
           loadDashboardData();

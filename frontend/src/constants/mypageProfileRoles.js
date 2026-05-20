@@ -8,12 +8,14 @@
  * @since 2026-04-17
  */
 
+import { USER_ROLES } from './roles';
+
 /**
  * @param {string|undefined|null} role
  * @returns {boolean}
  */
 export function isConsultantUserProfileRole(role) {
-  return role === 'CONSULTANT';
+  return role === USER_ROLES.CONSULTANT;
 }
 
 /**

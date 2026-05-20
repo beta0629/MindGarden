@@ -8,6 +8,7 @@ import Avatar from './Avatar';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import { API_BASE_URL } from '../../constants/api';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import notificationManager from '../../utils/notification';
 import { useBranding } from '../../hooks/useBranding';
 import { useSession } from '../../contexts/SessionContext';
@@ -434,7 +435,7 @@ const UnifiedHeader = ({
           <div className="mg-header__user-details">
             <span className="mg-header__user-name">
               {getSafeDisplayName(user)}
-              {(user.role === 'ROLE_CONSULTANT' || user.role === 'CONSULTANT') ? ' 선생님' : ''}
+              {(user.role === LEGACY_USER_ROLES.ROLE_CONSULTANT || user.role === USER_ROLES.CONSULTANT) ? ' 선생님' : ''}
             </span>
             <span className="mg-header__user-role">{getTenantDisplayName()}</span>
           </div>

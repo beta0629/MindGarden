@@ -3,6 +3,7 @@ import { CONSTANTS } from '../constants/magicNumbers';
 import { useSession } from './SessionContext';
 import { apiGet, apiPost } from '../utils/ajax';
 import { getConsultationMessagesListPath } from '../utils/consultationMessagesApi';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../constants/roles';
 
 const NotificationContext = createContext();
 
@@ -76,14 +77,13 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       // 역할에 따라 userType 결정
-      let userType = 'CLIENT'; // 기본값
-      if (user.role === 'CONSULTANT' || user.role === 'ROLE_CONSULTANT') {
-        userType = 'CONSULTANT';
-      } else if (user.role === 'CLIENT' || user.role === 'ROLE_CLIENT') {
-        userType = 'CLIENT';
-      } else if (user.role && (user.role.includes('ADMIN') || user.role.includes('SUPER'))) {
-        // 관리자는 자신이 수신자인 메시지만 카운트
-        userType = 'ADMIN';
+      let userType = USER_ROLES.CLIENT; // 기본값
+      if (user.role === USER_ROLES.CONSULTANT || user.role === LEGACY_USER_ROLES.ROLE_CONSULTANT) {
+        userType = USER_ROLES.CONSULTANT;
+      } else if (user.role === USER_ROLES.CLIENT || user.role === LEGACY_USER_ROLES.ROLE_CLIENT) {
+        userType = USER_ROLES.CLIENT;
+      } else if (user.role && (user.role.includes(USER_ROLES.ADMIN) || user.role.includes('SUPER'))) {
+        userType = USER_ROLES.ADMIN;
       }
       
       // 캐싱 방지를 위한 타임스탬프 추가

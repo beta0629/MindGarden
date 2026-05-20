@@ -18,6 +18,7 @@ import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { API_BASE_URL } from '../../constants/api';
+import { USER_ROLES } from '../../constants/roles';
 import { sessionManager } from '../../utils/sessionManager';
 import DashboardWidgetEditor from './DashboardWidgetEditor';
 import DashboardLayoutEditor from './DashboardLayoutEditor';
@@ -583,7 +584,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
           size: { width: 1, height: 1 }
         }
       ];
-    } else if (roleKey.includes('ADMIN') || roleKey.includes(DASHBOARD_FORM_ROLE_KEY.ADMIN)) {
+    } else if (roleKey.includes(USER_ROLES.ADMIN) || roleKey.includes(DASHBOARD_FORM_ROLE_KEY.ADMIN)) {
       // 관리자: 환영, 통계, 활동 목록
       defaultConfig.widgets = [
         {
@@ -1114,9 +1115,9 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   const dashboardTypeOptions = [
     { value: 'STUDENT', label: DASHBOARD_FORM_TYPE_OPTION.STUDENT },
     { value: 'TEACHER', label: DASHBOARD_FORM_TYPE_OPTION.TEACHER },
-    { value: 'ADMIN', label: DASHBOARD_FORM_TYPE_OPTION.ADMIN },
-    { value: 'CLIENT', label: DASHBOARD_FORM_TYPE_OPTION.CLIENT },
-    { value: 'CONSULTANT', label: DASHBOARD_FORM_TYPE_OPTION.CONSULTANT },
+    { value: USER_ROLES.ADMIN, label: DASHBOARD_FORM_TYPE_OPTION.ADMIN },
+    { value: USER_ROLES.CLIENT, label: DASHBOARD_FORM_TYPE_OPTION.CLIENT },
+    { value: USER_ROLES.CONSULTANT, label: DASHBOARD_FORM_TYPE_OPTION.CONSULTANT },
     { value: 'PRINCIPAL', label: DASHBOARD_FORM_TYPE_OPTION.PRINCIPAL },
     { value: 'DEFAULT', label: DASHBOARD_FORM_TYPE_OPTION.DEFAULT }
   ];

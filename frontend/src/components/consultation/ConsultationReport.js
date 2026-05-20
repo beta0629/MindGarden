@@ -4,6 +4,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { DASHBOARD_API } from '../../constants/api';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import MGButton from '../common/MGButton';
@@ -153,19 +154,19 @@ const ConsultationReport = () => {
       console.log('📊 상담 리포트 로드 시작 - 사용자 ID:', user.id, '역할:', user.role);
 
       let response;
-      if (user.role === 'CLIENT') {
+      if (user.role === USER_ROLES.CLIENT) {
         response = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
           userId: user.id,
-          userRole: 'CLIENT'
+          userRole: USER_ROLES.CLIENT
         });
-      } else if (user.role === 'CONSULTANT') {
+      } else if (user.role === USER_ROLES.CONSULTANT) {
         response = await apiGet(DASHBOARD_API.CONSULTANT_SCHEDULES, {
           userId: user.id,
-          userRole: 'CONSULTANT'
+          userRole: USER_ROLES.CONSULTANT
         });
-      } else if (user.role === 'ADMIN' || user.role === 'BRANCH_SUPER_ADMIN') {
+      } else if (user.role === USER_ROLES.ADMIN || user.role === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN) {
         response = await apiGet(DASHBOARD_API.ADMIN_STATS, {
-          userRole: 'ADMIN'
+          userRole: USER_ROLES.ADMIN
         });
       }
 
@@ -214,7 +215,7 @@ const ConsultationReport = () => {
     const cancelledConsultations = filteredConsultations.filter(c => c.status === 'CANCELLED').length;
     
     const consultantStats = {};
-    if (user.role === 'CLIENT') {
+    if (user.role === USER_ROLES.CLIENT) {
       filteredConsultations.forEach(consultation => {
         const consultantName = consultation.consultantName || '알 수 없음';
         if (!consultantStats[consultantName]) {
@@ -236,7 +237,7 @@ const ConsultationReport = () => {
     }
 
     const clientStats = {};
-    if (user.role === 'CONSULTANT') {
+    if (user.role === USER_ROLES.CONSULTANT) {
       filteredConsultations.forEach(consultation => {
         const clientName = consultation.clientName || '알 수 없음';
         if (!clientStats[clientName]) {
@@ -490,7 +491,7 @@ const ConsultationReport = () => {
 
               {/* 상세 통계 */}
               <div className="detailed-stats">
-                {user.role === 'CLIENT' && Object.keys(reportData.consultantStats).length > 0 && (
+                {user.role === USER_ROLES.CLIENT && Object.keys(reportData.consultantStats).length > 0 && (
                   <div className="stats-section">
                     <h3>상담사별 상담 현황</h3>
                     <div className="stats-table">
@@ -514,7 +515,7 @@ const ConsultationReport = () => {
                   </div>
                 )}
 
-                {user.role === 'CONSULTANT' && Object.keys(reportData.clientStats).length > 0 && (
+                {user.role === USER_ROLES.CONSULTANT && Object.keys(reportData.clientStats).length > 0 && (
                   <div className="stats-section">
                     <h3>내담자별 상담 현황</h3>
                     <div className="stats-table">

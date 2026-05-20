@@ -7,7 +7,7 @@ import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils
 import { AUTH_API, ERP_API } from '../../constants/api';
 import StandardizedApi from '../../utils/standardizedApi';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
-import { RoleUtils, USER_ROLES } from '../../constants/roles';
+import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import { COMMON_CSS_CLASSES } from '../../constants/css';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -155,7 +155,7 @@ const setDefaultPermissionsForRole = (user, setUserPermissions) => {
   const defaultPermissions = [];
 
   // 관리자 역할이면 모든 ERP 권한 부여
-  if (role === 'ADMIN' || role === 'TENANT_ADMIN' || role === 'PRINCIPAL' || role === 'OWNER') {
+  if (role === USER_ROLES.ADMIN || role === LEGACY_USER_ROLES.TENANT_ADMIN || role === LEGACY_USER_ROLES.PRINCIPAL || role === LEGACY_USER_ROLES.OWNER) {
     defaultPermissions.push(
       PERMISSIONS.ERP_ACCESS,
       PERMISSIONS.ERP_DASHBOARD_VIEW,
@@ -187,7 +187,7 @@ const getDefaultPermissionsForRole = (user) => {
   const defaultPermissions = [];
 
   // 관리자 역할이면 모든 ERP 권한 부여
-  if (role === 'ADMIN' || role === 'TENANT_ADMIN' || role === 'PRINCIPAL' || role === 'OWNER') {
+  if (role === USER_ROLES.ADMIN || role === LEGACY_USER_ROLES.TENANT_ADMIN || role === LEGACY_USER_ROLES.PRINCIPAL || role === LEGACY_USER_ROLES.OWNER) {
     defaultPermissions.push(
       PERMISSIONS.ERP_ACCESS,
       PERMISSIONS.ERP_DASHBOARD_VIEW,

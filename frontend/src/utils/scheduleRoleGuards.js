@@ -1,4 +1,4 @@
-import { USER_ROLES } from '../constants/roles';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../constants/roles';
 
 /**
  * 세션 등에서 내려온 role 문자열 기준으로 스케줄 «신규 등록» 행위자 여부를 반환한다.
@@ -19,7 +19,7 @@ export function canRegisterSchedulerByRoleString(role) {
   if (role === USER_ROLES.ADMIN || role === USER_ROLES.STAFF) {
     return true;
   }
-  if (role === 'BRANCH_SUPER_ADMIN') {
+  if (role === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN) {
     return true;
   }
   return false;

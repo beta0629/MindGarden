@@ -21,6 +21,7 @@ import {
 
 import { apiGet } from './ajax';
 import { sessionManager } from './sessionManager';
+import { USER_ROLES } from '../constants/roles';
 
 /**
  * 업종별 허용 위젯 타입 반환 (동적)
@@ -147,7 +148,7 @@ export const isWidgetVisible = (widgetType, businessType, userRole = null) => {
   }
   
   // ⭐ 관리자 특권: 업종 정보 없어도 모든 위젯 접근 가능 (최우선)
-  if (userRole === 'ADMIN') {
+  if (userRole === USER_ROLES.ADMIN) {
     console.debug(`✅ ADMIN 특권으로 위젯 접근 허용: ${widgetType}, 역할: ${userRole}, 업종: ${businessType || 'N/A'}`);
     return true;
   }
@@ -169,7 +170,7 @@ export const isWidgetVisible = (widgetType, businessType, userRole = null) => {
   
   // 관리자 위젯은 추가 역할 검증 (2단계에서 공통코드로 개선 예정)
   if (isAdminWidget(normalizedType)) {
-    const hasAdminRole = (userRole === 'ADMIN'); // 1단계 임시
+    const hasAdminRole = (userRole === USER_ROLES.ADMIN); // 1단계 임시
     if (!hasAdminRole) {
       console.debug(`관리자 위젯 접근 거부: ${widgetType}, 역할: ${userRole}`);
       return false;
@@ -314,7 +315,7 @@ const isAdminRole = (userRole) => {
   const currentUser = sessionManager?.getUser?.();
   if (currentUser && currentUser.role === userRole) {
     const isOnAdminPage = window.location.pathname.includes('/admin');
-    const hasAdminInName = userRole.toUpperCase().includes('ADMIN');
+    const hasAdminInName = userRole.toUpperCase().includes(USER_ROLES.ADMIN);
     const result = isOnAdminPage || hasAdminInName;
     
     // 임시 결과를 캐시에 저장 (1분 단기 캐시)

@@ -36,12 +36,13 @@ import {
   parseScheduleSessionCount
 } from '../../constants/schedule';
 import { KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS } from '../../utils/krPublicHolidays';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 
 /** 캘린더 관리자 권한(통합 스케줄 STAFF 동기화): 로드·필터·날짜 액션·재예약 */
 const isAdminLikeScheduleUserRole = (role) =>
-  role === 'ADMIN' || role === 'BRANCH_SUPER_ADMIN' || role === 'STAFF';
+  role === USER_ROLES.ADMIN || role === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN || role === USER_ROLES.STAFF;
 
 /**
  * 스케줄 관리 컨테이너 컴포넌트

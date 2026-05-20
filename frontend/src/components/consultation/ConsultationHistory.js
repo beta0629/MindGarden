@@ -151,9 +151,9 @@ const ConsultationHistory = () => {
   };
 
   const getConsultationTitle = (consultation) => {
-    if (user.role === 'CLIENT') {
+    if (user.role === USER_ROLES.CLIENT) {
       return `${consultation.consultantName} 상담사와의 상담`;
-    } else if (user.role === 'CONSULTANT') {
+    } else if (user.role === USER_ROLES.CONSULTANT) {
       return `${consultation.clientName}과의 상담`;
     } else {
       return `${consultation.consultantName} - ${consultation.clientName} 상담`;

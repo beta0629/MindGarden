@@ -25,7 +25,14 @@ const CACHE_DURATION = 10 * 60 * 1000; // 10분 캐시
 /**
  * @returns {Promise<Array>} 역할 코드 목록
  */
-const ALLOWED_ROLES = ['ADMIN', 'STAFF', 'CONSULTANT', 'CLIENT'];
+// constants/roles.js 와 순환 import 방지를 위해 로컬 리터럴 사용 (USER_ROLES 값과 동일)
+const ROLE_VALUE = Object.freeze({
+  ADMIN: 'ADMIN',
+  STAFF: 'STAFF',
+  CONSULTANT: 'CONSULTANT',
+  CLIENT: 'CLIENT'
+});
+const ALLOWED_ROLES = [ROLE_VALUE.ADMIN, ROLE_VALUE.STAFF, ROLE_VALUE.CONSULTANT, ROLE_VALUE.CLIENT];
 
 const filterToAllowedRoles = (list) => (list || []).filter(
     code => code && code.codeValue && ALLOWED_ROLES.includes(code.codeValue)
@@ -111,11 +118,11 @@ export const getAdminRoleCodes = async() => {
     try {
         const roleCodes = await getRoleCodesFromCommonCode();
         return roleCodes
-            .filter(code => (code.codeValue || '') === 'ADMIN')
+            .filter(code => (code.codeValue || '') === ROLE_VALUE.ADMIN)
             .map(code => code.codeValue);
     } catch (error) {
         console.error('관리자 역할 코드 조회 실패:', error);
-        return ['ADMIN'];
+        return [ROLE_VALUE.ADMIN];
     }
 };
 

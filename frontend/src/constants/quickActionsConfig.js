@@ -17,7 +17,7 @@ import {
   User, Calendar, MessageCircle, UserPlus, History, 
   FileText, Link2, Code, BarChart3, HelpCircle, Settings 
 } from 'lucide-react';
-import { RoleUtils } from './roles';
+import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from './roles';
 
 /**
  * 기본 공통 액션들 (모든 사용자)
@@ -88,7 +88,7 @@ const CLIENT_CONSULTANT_ACTIONS = [
       }
       return '/messages';
     },
-    roles: ['CLIENT', 'CONSULTANT'],
+    roles: [USER_ROLES.CLIENT, USER_ROLES.CONSULTANT],
     tooltip: '메시지 관리'
   }
 ];
@@ -102,7 +102,7 @@ const CLIENT_ACTIONS = [
     label: '상담사 신청',
     icon: <UserPlus size={24} />,
     onClick: 'MODAL:consultant-application', // 모달 트리거
-    roles: ['CLIENT'],
+    roles: [USER_ROLES.CLIENT],
     enabled: false, // 현재 임시 비활성화
     tooltip: '상담사로 신청하기'
   }
@@ -117,7 +117,7 @@ const ADMIN_ACTIONS = [
     label: '매칭 시스템',
     icon: <Link2 size={24} />,
     url: '/admin/mapping-management',
-    roles: ['ADMIN', 'STAFF', 'HQ_MASTER', 'BRANCH_SUPER_ADMIN'],
+    roles: [USER_ROLES.ADMIN, USER_ROLES.STAFF, LEGACY_USER_ROLES.HQ_MASTER, LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN],
     tooltip: '상담사-내담자 매칭 관리'
   },
   {
@@ -125,7 +125,7 @@ const ADMIN_ACTIONS = [
     label: '공통코드',
     icon: <Code size={24} />,
     url: '/admin/common-codes',
-    roles: ['ADMIN', 'STAFF', 'HQ_MASTER'],
+    roles: [USER_ROLES.ADMIN, USER_ROLES.STAFF, LEGACY_USER_ROLES.HQ_MASTER],
     tooltip: '시스템 공통코드 관리'
   },
   {
@@ -133,7 +133,7 @@ const ADMIN_ACTIONS = [
     label: '통계',
     icon: <BarChart3 size={24} />,
     url: '/admin/statistics',
-    roles: ['ADMIN', 'STAFF', 'HQ_MASTER'],
+    roles: [USER_ROLES.ADMIN, USER_ROLES.STAFF, LEGACY_USER_ROLES.HQ_MASTER],
     tooltip: '시스템 통계 보기'
   }
 ];
@@ -153,17 +153,17 @@ export const generateQuickActionsConfig = (user) => {
   let actions = [...COMMON_ACTIONS];
   
   // 내담자/상담사 공통 액션 추가
-  if (['CLIENT', 'CONSULTANT'].includes(user.role)) {
+  if ([USER_ROLES.CLIENT, USER_ROLES.CONSULTANT].includes(user.role)) {
     actions = [...actions, ...CLIENT_CONSULTANT_ACTIONS];
   }
   
   // 내담자 전용 액션 추가
-  if (user.role === 'CLIENT') {
+  if (user.role === USER_ROLES.CLIENT) {
     actions = [...actions, ...CLIENT_ACTIONS.filter(action => action.enabled !== false)];
   }
   
   // 관리자·스태프 전용 액션 추가
-  if (['ADMIN', 'STAFF', 'BRANCH_SUPER_ADMIN', 'HQ_MASTER'].includes(user.role)) {
+  if ([USER_ROLES.ADMIN, USER_ROLES.STAFF, LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN, LEGACY_USER_ROLES.HQ_MASTER].includes(user.role)) {
     actions = [...actions, ...ADMIN_ACTIONS];
   }
 

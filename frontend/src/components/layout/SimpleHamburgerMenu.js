@@ -7,6 +7,7 @@ import { fetchUserPermissions } from '../../utils/permissionUtils';
 import ConfirmModal from '../common/ConfirmModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { USER_ROLES } from '../../constants/roles';
 import './SimpleHamburgerMenu.css';
 
 /**
@@ -64,7 +65,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
         };
         
         // 관리자 여부: 서버에서 받은 role 기준 (동적 권한)
-        const isAdmin = user?.role === 'ADMIN';
+        const isAdmin = user?.role === USER_ROLES.ADMIN;
         
         console.log('🔍 사용자 역할 및 권한 체크:', {
           role: user?.role,

@@ -9,6 +9,7 @@ import {
   isSessionPublicPath
 } from '../constants/session';
 import { AUTH_MESSAGES } from '../constants/messages';
+import { USER_ROLES } from '../constants/roles';
 
 // 세션 상태 타입 정의
 const SessionState = {
@@ -550,10 +551,10 @@ export const SessionProvider = ({ children }) => {
     // 유틸리티 (서버에서 받은 role, permissionGroupCodes 기준)
     hasRole: (role) => state.user?.role === role,
     hasAnyRole: (roles) => Array.isArray(roles) && roles.includes(state.user?.role),
-    isAdmin: () => state.user?.role === 'ADMIN',
-    isConsultant: () => state.user?.role === 'CONSULTANT',
-    isClient: () => state.user?.role === 'CLIENT',
-    isStaff: () => state.user?.role === 'STAFF',
+    isAdmin: () => state.user?.role === USER_ROLES.ADMIN,
+    isConsultant: () => state.user?.role === USER_ROLES.CONSULTANT,
+    isClient: () => state.user?.role === USER_ROLES.CLIENT,
+    isStaff: () => state.user?.role === USER_ROLES.STAFF,
     /** 서버에서 받은 권한 그룹 코드 목록으로 그룹 코드 보유 여부 확인 (동적 권한) */
     hasPermissionGroup: (groupCode) => Array.isArray(state.user?.permissionGroupCodes) &&
       state.user.permissionGroupCodes.includes(groupCode),

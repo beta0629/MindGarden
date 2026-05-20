@@ -3,6 +3,8 @@
  * STAFF는 마스킹, ADMIN은 전체 표시(백엔드에서 이미 복호화된 값 전제).
  */
 
+import { USER_ROLES } from '../constants/roles';
+
 /**
  * @param {string} phone
  * @returns {string}
@@ -42,8 +44,8 @@ export function maskEmailDisplay(email) {
  */
 export function applyPartyPiiPolicy(value, kind, user) {
   if (value == null || value === '') return value;
-  if (user?.role === 'ADMIN') return value;
-  if (user?.role === 'STAFF') {
+  if (user?.role === USER_ROLES.ADMIN) return value;
+  if (user?.role === USER_ROLES.STAFF) {
     return kind === 'phone' ? maskPhoneDisplay(String(value)) : maskEmailDisplay(String(value));
   }
   return value;

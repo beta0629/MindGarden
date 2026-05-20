@@ -17,6 +17,30 @@ export const USER_ROLES = {
   CLIENT: 'CLIENT'
 };
 
+/**
+ * 레거시·확장 역할 상수.
+ *
+ * - 4역할 단순화(2026-02) 이후에도 일부 화면·권한 가드·표준 문서
+ *   (docs/standards/PERMISSION_SYSTEM_STANDARD.md v2.2.1)에서 여전히
+ *   비교되는 문자열을 상수화하기 위해 유지한다.
+ * - 신규 코드에서는 USER_ROLES 만 사용한다.
+ *
+ * @deprecated 신규 코드에서 사용 금지. 운영 정리 대상.
+ */
+export const LEGACY_USER_ROLES = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  HQ_ADMIN: 'HQ_ADMIN',
+  HQ_MASTER: 'HQ_MASTER',
+  SUPER_HQ_ADMIN: 'SUPER_HQ_ADMIN',
+  BRANCH_ADMIN: 'BRANCH_ADMIN',
+  BRANCH_SUPER_ADMIN: 'BRANCH_SUPER_ADMIN',
+  TENANT_ADMIN: 'TENANT_ADMIN',
+  PRINCIPAL: 'PRINCIPAL',
+  OWNER: 'OWNER',
+  ROLE_CONSULTANT: 'ROLE_CONSULTANT',
+  ROLE_CLIENT: 'ROLE_CLIENT'
+};
+
 /** 관리자 역할 (서버 역할 ADMIN 기준). 표시/선택용은 getAdminRoles() 사용. */
 const SERVER_ADMIN_ROLE = 'ADMIN';
 let ADMIN_ROLES = [USER_ROLES.ADMIN];

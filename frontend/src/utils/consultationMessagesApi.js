@@ -5,18 +5,20 @@
  * @param {{ id?: number|string, role?: string }|null|undefined} user
  * @returns {string|null} 쿼리스트링 없는 경로
  */
+import { USER_ROLES, LEGACY_USER_ROLES } from '../constants/roles';
+
 export function getConsultationMessagesListPath(user) {
   if (user == null || user.id == null || user.id === '') {
     return null;
   }
   const role = String(user.role || '');
-  if (role === 'CONSULTANT' || role === 'ROLE_CONSULTANT') {
+  if (role === USER_ROLES.CONSULTANT || role === LEGACY_USER_ROLES.ROLE_CONSULTANT) {
     return `/api/v1/consultation-messages/consultant/${user.id}`;
   }
-  if (role === 'CLIENT' || role === 'ROLE_CLIENT') {
+  if (role === USER_ROLES.CLIENT || role === LEGACY_USER_ROLES.ROLE_CLIENT) {
     return `/api/v1/consultation-messages/client/${user.id}`;
   }
-  if (role === 'ADMIN' || role.includes('ADMIN')) {
+  if (role === USER_ROLES.ADMIN || role.includes(USER_ROLES.ADMIN)) {
     return '/api/v1/consultation-messages/all';
   }
   return `/api/v1/consultation-messages/client/${user.id}`;

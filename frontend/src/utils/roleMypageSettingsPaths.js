@@ -6,6 +6,7 @@
  */
 
 import { getDashboardPathByRole } from '../constants/session';
+import { USER_ROLES } from '../constants/roles';
 
 const DASHBOARD_TO_MYPAGE = {
   '/client/dashboard': '/client/mypage',
@@ -66,5 +67,5 @@ export function shouldShowProfileDropdownSettings(role) {
     return false;
   }
   const r = String(role).toUpperCase();
-  return r !== 'CLIENT' && r !== 'CONSULTANT';
+  return r !== USER_ROLES.CLIENT && r !== USER_ROLES.CONSULTANT;
 }

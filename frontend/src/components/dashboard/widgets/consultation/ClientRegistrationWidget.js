@@ -330,7 +330,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
               {/* 필수 필드 */}
               <div className="form-section">
                 <h4 className="section-title">기본 정보</h4>
-                <p className="mg-v2-form-help" style={{ marginBottom: 'var(--mg-space-3, 12px)' }}>
+                <p className="mg-v2-form-help mg-v2-form-help--spacing-3">
                   {VALIDATION_MESSAGES.HELP_EMAIL_OR_PHONE_ONE_REQUIRED}
                 </p>
                 <div className="form-grid">

@@ -5,6 +5,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import Icon from '../../ui/Icon/Icon';
 import UrgentClientCard from './UrgentClientCard';
 import { ContentSection } from '../content';
+import './UrgentClientsSection.css';
 
 /**
  * 긴급 확인 필요 내담자 섹션 컴포넌트
@@ -26,7 +27,7 @@ const UrgentClientsSection = ({
   return (
     <ContentSection
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="urgent-clients-section__title">
           <Icon name="ALERT_CIRCLE" size="MD" color="TRANSPARENT" />
           긴급 확인 필요 내담자
         </div>

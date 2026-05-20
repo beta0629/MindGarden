@@ -139,7 +139,7 @@ const BaseWidget = ({
                    WIDGET_CONSTANTS.CSS_CLASSES.MG_FLEX_COL} ${  
                    WIDGET_CONSTANTS.CSS_CLASSES.MG_ALIGN_CENTER} ${  
                    WIDGET_CONSTANTS.CSS_CLASSES.MG_PY_XL}`}>
-      <div className="mg-empty-icon" style={{ fontSize: '3rem', marginBottom: '1rem' }}>
+      <div className="mg-empty-icon mg-empty-icon--widget">
         {config.emptyIcon || '📭'}
       </div>
       <p className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
@@ -157,7 +157,7 @@ const BaseWidget = ({
           })}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onRefresh}
-          style={{ marginTop: '1rem' }}
+          className="base-widget__refresh-button"
         >
           새로고침
         </MGButton>
@@ -183,7 +183,7 @@ const BaseWidget = ({
           {/* 제목 영역 */}
           <div className="mg-widget-title-area">
             {config.icon && (
-              <span className="mg-widget-icon" style={{ marginRight: '0.5rem' }}>
+              <span className="mg-widget-icon mg-widget-icon--spaced">
                 {config.icon}
               </span>
             )}

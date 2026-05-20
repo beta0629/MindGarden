@@ -225,8 +225,7 @@ const WeatherCard = () => {
             style={{ background: getTemperatureColor(weatherData.temperature) }}
           >
             <i
-              className={`bi ${weatherData.icon}`}
-              style={{ fontSize: '1.5rem', color: 'var(--mg-white, #fff)' }}
+              className={`bi ${weatherData.icon} mg-v2-weather-icon-glyph`}
               aria-hidden="true"
             />
           </div>

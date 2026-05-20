@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
+import './ErpPurchaseRequestPanel.css';
 const ErpPurchaseRequestPanel = ({ user }) => {
   const navigate = useNavigate();
   const [purchaseData, setPurchaseData] = useState({
@@ -97,7 +98,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
             {/* 통계 카드 */}
             <div className="mg-dashboard-stats mg-mb-lg">
               <div className="mg-dashboard-stat-card">
-                <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-warning)' }} />
+                <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon--warning" />
                 <div className="mg-dashboard-stat-content">
                   <div className="mg-dashboard-stat-value">{purchaseData.pendingRequests}</div>
                   <div className="mg-dashboard-stat-label">대기 중</div>
@@ -105,7 +106,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
               </div>
 
               <div className="mg-dashboard-stat-card">
-                <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-success)' }} />
+                <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon--success" />
                 <div className="mg-dashboard-stat-content">
                   <div className="mg-dashboard-stat-value">{purchaseData.approvedRequests}</div>
                   <div className="mg-dashboard-stat-label">승인됨</div>
@@ -113,7 +114,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
               </div>
 
               <div className="mg-dashboard-stat-card">
-                <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-info)' }} />
+                <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon--info" />
                 <div className="mg-dashboard-stat-content">
                   <div className="mg-dashboard-stat-value">{purchaseData.totalRequests}</div>
                   <div className="mg-dashboard-stat-label">전체</div>

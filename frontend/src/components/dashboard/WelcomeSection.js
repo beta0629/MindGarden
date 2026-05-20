@@ -216,7 +216,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
               
               {/* 오늘 상담이 많을 때 자세히 보기 버튼 */}
               {todayConsultations.length > 4 && (
-                <div className="mg-text-center mg-v2-mt-md mg-v2-pt-md mg-v2-w-full" style={{ borderTop: '1px solid var(--light-beige)' }}>
+                <div className="mg-text-center mg-v2-mt-md mg-v2-pt-md mg-v2-w-full welcome-section__more-divider">
                   <MGButton
                     variant="outline"
                     fullWidth

@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| 일자 | 2026-05-19 (최종 갱신 **14:42 KST**, Tier A **REG-01·R10** core-tester) |
+| 일자 | 2026-05-20 (배치 **4/4** R10 재검증) · 2026-05-19 (**14:42 KST** REG-01) |
 | 범위 | Shop P1 + P2-web + P2-admin + 환불·fulfillment·주문 MockMvc |
 | SSOT | [SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md](./SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md), [SHOP_REWARD_IMPLEMENTATION_STATUS.md](./SHOP_REWARD_IMPLEMENTATION_STATUS.md) |
 | 코드 수정 | **없음** (core-tester 전체 Maven 검증·문서 갱신) |
@@ -25,6 +25,35 @@
 | **R10** | Playwright 전 프로젝트 (firefox/webkit) | **1** | 0 | 2 | **4** | **환경** — `npx playwright install` 미실행 |
 
 **Tier A 종합**: **REG-01 = GO** (자동 회귀). **R10 = 잔여** (8080·OPS·시드·Flyway 후 재실행).
+
+### 1.0.1 Tier A — R10 배치 4/4 (2026-05-20 · `e52678ab7` 후)
+
+| ID | 게이트 | exit | passed | skipped | failed | 판정 |
+|----|--------|------|--------|---------|--------|------|
+| **선행** | `GET https://dev.core-solution.co.kr/actuator/health` | — | — | — | — | **200** `{"status":"UP"}` |
+| **R10-A** | Playwright (위임 명령: localhost:3000 + `E2E_TENANT_ID` only) | **0** | 0 | **2** | 0 | **BLOCKED** — `skipWhenLocalBackend8080Down` (로컬 **8080** 미기동; `curl :8080/actuator/health` 실패) |
+| **R10-B** | Playwright (권장 dev 스택) | **0** | **2** | 0 | 0 | **PASS** — `BASE_URL=https://mindgarden.dev.core-solution.co.kr` + `E2E_API_BASE=https://dev.core-solution.co.kr` + `E2E_TENANT_ID=tenant-incheon-counseling-001`, chromium, ~5s |
+
+**R10-A 명령** (배치 4 위임 · 로컬-only):
+
+```bash
+cd tests/e2e && env -u CI E2E_TENANT_ID=tenant-incheon-counseling-001 \
+  npx playwright test client-shop-catalog-to-cart admin-shop-catalog-skus-smoke --project=chromium
+```
+
+**R10-B 명령** (배치 4 실측 · dev FE+API):
+
+```bash
+cd tests/e2e && env -u CI \
+  E2E_TENANT_ID=tenant-incheon-counseling-001 \
+  E2E_API_BASE=https://dev.core-solution.co.kr \
+  BASE_URL=https://mindgarden.dev.core-solution.co.kr \
+  npx playwright test client-shop-catalog-to-cart admin-shop-catalog-skus-smoke --project=chromium
+```
+
+**전제**: dev health **200**; `CLIENT_SHOP`·`ADMIN_SHOP_CATALOG` **ACTIVE** + 노출 SKU ≥1 (client 스펙 **게이트 skip 없음** → 활성·SKU 전제 충족으로 간주). 인천 테넌트 내담자·ERP 자격은 `erpAuth` 기본값(로컬 env).
+
+**Tier A (배치 4)**: **R10 = PASS** (dev FE+API 스택). 로컬-only 위임 명령은 **BLOCKED**.
 
 권장 Maven (CI·로컬 게이트): `-DforkCount=0` 또는 `rm -rf target && mvn test -Dtest=… -DforkCount=1` (중복 `test` goal·동시 `clean` 금지).
 
@@ -286,8 +315,10 @@ SSOT [SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md](./SHOP_P1_PG_POINT_COMMIT_TEST_REP
 | 전제 체크리스트 | [`tests/e2e/README.md`](../../tests/e2e/README.md) §「내담자 쇼핑 (CLIENT_SHOP)」 — Flyway·SKU·`CLIENT_SHOP` 활성 |
 | skip 가드 | `skipWhenCiMissingE2eCredentials` + `skipWhenLocalBackend8080Down` (beforeEach) |
 | R10 로컬 (2026-05-19 **14:42** KST) | **2 skipped** (chromium) — `client-shop-catalog-to-cart` + `admin-shop-catalog-skus-smoke`; 8080 down, exit **0** |
+| R10 dev (2026-05-20 **배치 4/4**) | **2 passed** (chromium, ~5s) — `mindgarden.dev` + `E2E_API_BASE` + `tenant-incheon-counseling-001`; `CLIENT_SHOP` 게이트 미노출 |
+| R10 localhost only (배치 4) | **2 skipped** (chromium, exit **0**) — **8080** 미기동 → `skipWhenLocalBackend8080Down` (**BLOCKED**) |
 | admin smoke spec | `tests/e2e/tests/admin/admin-shop-catalog-skus-smoke.spec.ts` — R10과 동일 skip 가드 |
-| 통과 조건 | 8080+3000·Flyway P2·OPS·노출 SKU·내담자/어드민 자격 후 재실행 → **2 passed** 기대 |
+| 통과 조건 | **(A)** 8080+3000 로컬 또는 **(B)** `BASE_URL` dev FE + `E2E_API_BASE` health 200 + OPS·노출 SKU·자격 |
 
 **재실행**: `cd tests/e2e && npx playwright test client-shop-catalog-to-cart --project=chromium`
 
@@ -407,5 +438,7 @@ P1 SSOT [SHOP_P1_PG_POINT_COMMIT_TEST_REPORT.md](./SHOP_P1_PG_POINT_COMMIT_TEST_
 | H5-5 | cross-tenant | tenant A 주문 | tenant B 배치 | A 주문 미처리 |
 
 ---
+
+| 2026-05-20 | **배치 4/4** — dev health **200**; R10-B **2 passed** (~5s); R10-A 위임 **2 skipped** (**BLOCKED** — 8080 미기동) |
 
 *작성: core-tester · R10 문서·검증 · 커밋 없음*

@@ -1,11 +1,11 @@
 # 결제·승인·일정 알림/푸시 — 수동 UAT 리포트
 
 **작성**: core-tester  
-**최종 갱신**: 2026-05-20 (병렬 배치 **3/4** — 코드·자동 검증·수동 UAT 감사; **C2 게이트 2/4** `test:utils` 재실행 연동)  
-**이전**: 2026-05-18 Phase C 자동 게이트  
+**최종 갱신**: 2026-05-20 (병렬 배치 **4/4** — §8 자동 재실행; 라이브 푸시 E2E는 journal·DB 미접근으로 **NOT RUN** 유지)  
+**이전**: 2026-05-18 Phase C 자동 게이트 · 배치 3/4  
 **SSOT**: [PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) §3~§7 · [MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md](./MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md) §2.1  
-**코드 기준**: `24b901caf` — `MappingSettlementNotificationHelper`, `ScheduleCreatedNotificationHelper` (REQUIRES_NEW)  
-**환경**: `https://dev.core-solution.co.kr` — `/actuator/health` **200** (2026-05-20). 라이브 푸시·DB 증빙은 **미실행**.
+**코드 기준**: **`e52678ab7`** (ancestor of HEAD) — `MappingSettlementNotificationHelper`, `ScheduleCreatedNotificationHelper`, Expo `pushNavigation`  
+**환경**: `https://dev.core-solution.co.kr` — `/actuator/health` **200** (2026-05-20 배치 4). dev JVM `EXPO_ACCESS_TOKEN` journal·`mobile_push_tokens` — **테스터 환경에서 미확인**.
 
 ---
 
@@ -52,7 +52,7 @@
 | **§7.5** | 5-1~5-3 | 웹·Expo 동일 API·푸시 | **NOT RUN** | health 200만 확인 |
 | **자동** | — | Java Phase B/C 6클래스 | **PASS** | 2026-05-20 실행, 0 failures |
 | | — | Expo `pushScenarios\|notificationService` | **PASS** | 7 tests |
-| | — | Expo `test:utils` 전체 | **PASS** | 33 suites, **192** tests, 0 failed (2026-05-20 C2 게이트 2/4 재실행) |
+| | — | Expo `test:utils` 전체 | **PASS** | 33 suites, **192** tests, 0 failed (2026-05-20 배치 **4/4** @ `e52678ab7` 후) |
 
 **종합**: **CONDITIONAL** — 코드·단위·베이스라인 **PASS**; 라이브 UAT·푸시 E2E **PENDING/BLOCKED**.
 
@@ -205,17 +205,18 @@ mvn -Dtest=MappingSettlementNotificationHelperImplTest,ScheduleServiceImplNotify
 
 ## 8. 자동 검증 결과 (Phase C — 푸시 E2E 게이트)
 
-**실행일**: 2026-05-20 (배치 3/4 재실행 · **C2 게이트 2/4** `test:utils` 동기화) · 2026-05-18 (최초)  
+**실행일**: 2026-05-20 (배치 **4/4** · `e52678ab7` 후) · 2026-05-20 (배치 3/4) · 2026-05-18 (최초)  
 **실행자**: core-tester  
-**코드 기준**: `24b901caf` — `ScheduleCreatedNotificationHelper` REQUIRES_NEW, `MappingSettlementNotificationHelper`, `ExpoPushProperties`  
-**dev**: `https://dev.core-solution.co.kr/actuator/health` → **200**; `EXPO_ACCESS_TOKEN` **미설정(로컬)** · `mobile_push_tokens` **라이브 미확인**  
-**판정 요약**: Java 6클래스·Expo 푸시 Jest **PASS** / `test:utils` **192/192 PASS** / §1~§5·§8.5 라이브 **NOT RUN** → **CONDITIONAL**
+**코드 기준**: **`e52678ab7`** — `ScheduleCreatedNotificationHelper` REQUIRES_NEW, `MappingSettlementNotificationHelper`, `ExpoPushProperties`, Expo `pushNavigation`·`test:utils`  
+**dev**: `https://dev.core-solution.co.kr/actuator/health` → **200** (`{"status":"UP"}`)  
+**dev 푸시 토큰 재기동**: 운영 측 재기동 **가정** — 본 배치에서 **원격 journal·DB 미접근** → §8.3 L1·§8.5 **NOT RUN/BLOCKED 유지** (재기동 후 `journalctl`로 `Expo push access token configured: true` 확인 시 L1·§8.5만 갱신 가능)  
+**판정 요약**: Java 6클래스·Expo 푸시 Jest·`test:utils` **192/192 PASS** / §1~§5·§8.5 라이브 **NOT RUN** → **CONDITIONAL**
 
 ### 8.1 Java (Phase C — P0 알림·푸시 단위)
 
 | 항목 | 결과 |
 |------|------|
-| **판정** | **PASS** (12 tests, 0 failures) |
+| **판정** | **PASS** (26 tests, 0 failures — 6클래스) |
 | **명령** | 아래 3클래스 |
 
 ```bash
@@ -239,7 +240,8 @@ mvn -q -Dtest=ScheduleCreatedNotificationHelperImplTest,ExpoPushPropertiesTest,M
 | 항목 | 결과 |
 |------|------|
 | **푸시 계약** | **PASS** — `npx jest --testPathPattern='pushScenarios\|notificationService'` → **7 tests**, 0 failed |
-| **test:utils 전체** | **PASS** — 33 suites, **192** tests, 0 failed (2026-05-20 C2 게이트 2/4) |
+| **test:utils 전체** | **PASS** — 33 suites, **192** tests, 0 failed (2026-05-20 배치 **4/4**, ~15s) |
+| **pushScenarios\|notificationService** | **PASS** — 3 suites, **7** tests (배치 4 재실행) |
 | **관련 스위트** | `pushScenarios.test.ts`, `notificationServiceRegisterToken.test.ts`, `notificationServiceRequestPermission.test.ts` |
 
 ### 8.3 수동 UAT
@@ -252,9 +254,9 @@ mvn -q -Dtest=ScheduleCreatedNotificationHelperImplTest,ExpoPushPropertiesTest,M
 
 **라이브 UAT 선행 체크 (미충족 시 NOT RUN 유지)**
 
-| # | 조건 | 배치 2/4 점검 |
-|---|------|---------------|
-| L1 | dev JVM `EXPO_ACCESS_TOKEN` 설정 | **BLOCKED** — 로컬 env unset; journal 미확인 |
+| # | 조건 | 배치 **4/4** 점검 |
+|---|------|-------------------|
+| L1 | dev JVM `EXPO_ACCESS_TOKEN` 설정 | **BLOCKED** — 테스터 환경 SSH/journal **미접근**; 재기동 여부는 운영 확인 필요 (`Expo push access token configured: true`) |
 | L2 | CLIENT `POST .../push-token/register` **200** | **NOT RUN** |
 | L3 | `mobile_push_tokens` CLIENT `active=1` **≥ 1** | **NOT RUN** |
 | L4 | 앱 카테고리 `payment`·`schedule` ON | **NOT RUN** |
@@ -296,17 +298,19 @@ mvn -q -Dtest=ScheduleCreatedNotificationHelperImplTest,ExpoPushPropertiesTest,M
 4. 웹 어드민으로 `POST /api/v1/schedules/consultant` (BOOKED) → API **200**  
 5. 로그 `예약 생성 알림`·`booking_confirmed`·실기기 알림 (또는 §8.5 E4 스킵 사유 기록)
 
-### 8.6 게이트 최종 판정 (배치 3/4)
+### 8.6 게이트 최종 판정 (배치 **4/4**)
 
 | 레이어 | 판정 |
 |--------|------|
-| Java Phase B/C (6클래스) | **PASS** (2026-05-20) |
-| Expo 푸시·알림 Jest | **PASS** |
-| Expo `test:utils` 전체 | **PASS** (192/192, 2026-05-20) |
-| dev API reachability | **PASS** — health 200 |
-| 푸시 E2E dev (§8.5) | **NOT RUN / BLOCKED (env)** — `EXPO_ACCESS_TOKEN` 미설정; 토큰 DB 미확인 |
+| Java Phase B/C (6클래스) | **PASS** (2026-05-20 배치 4 재실행, **26** tests, 0 failures) |
+| Expo 푸시·알림 Jest (`pushScenarios\|notificationService`) | **PASS** (7 tests) |
+| Expo `test:utils` 전체 | **PASS** (192/192, 2026-05-20 배치 4, ~15s) |
+| dev API reachability | **PASS** — `/actuator/health` **200** |
+| 푸시 E2E dev (§8.5) | **NOT RUN / BLOCKED** — L1 journal·L2~L3 DB·실기기 **미확인** (재기동만으로는 테스터 미검증) |
 | §1~§5 전체 수동 | **NOT RUN** |
 | **종합** | **CONDITIONAL** — §A.2 참조; §8.4·§8.5 완료 전 운영 go-live 비권장 |
+
+**배치 4에서 NOT RUN → 변경 없음**: 라이브 UAT·§8.5는 journal `true`·register 200·DB 행 증빙 없이 갱신 불가. **자동만 재확인**: Java 6클래스·`test:utils`·푸시 Jest subset.
 
 ---
 

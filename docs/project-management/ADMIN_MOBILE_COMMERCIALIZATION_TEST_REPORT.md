@@ -1,10 +1,10 @@
 # Admin Mobile — 상용화 C2 품질 게이트 테스트 리포트
 
 **작성일**: 2026-05-20  
-**작성자**: core-tester (C2 테스터 게이트 · 병렬 배치 **3/4**)  
-**Phase**: **C2→C3** — P0 시각·표시 경계 + 결제 웹 CTA WIP (`core-coder` 후속 재검증)  
+**작성자**: core-tester (C2 테스터 게이트 · 병렬 배치 **4/4**)  
+**Phase**: **C2→C3** — P0 시각·표시 경계 + 결제 웹 CTA (`e52678ab7` 후 재검증)  
 **상태**: **CONDITIONAL** — G2 **PASS**; G1·G3·G4 **CONDITIONAL**  
-**기준 브랜치**: `develop` @ **WIP 미커밋** · C2 구현 근거 **`5d5e16433`**
+**기준 브랜치**: `develop` @ **`e52678ab7`** (`feat(expo-app): admin 매핑 웹 결제 CTA·G3 표시 경계·푸시 네비게이션`)
 
 ---
 
@@ -23,12 +23,12 @@
 
 **종합 판정**: **CONDITIONAL** — G2 **PASS** (`tsc` 0 + `test:utils` 192/192). 상용화 최소선(G1 PASS + G2 PASS + G3 CONDITIONAL+ + G4 PASS) **미충족** — G1·G4 수동·Maestro 잔여.
 
-| 게이트 | 이름 | 판정 | 근거 (2026-05-20 · WIP HEAD · core-coder 후속 재검증) |
-|--------|------|------|---------------------------------------------------------------------|
+| 게이트 | 이름 | 판정 | 근거 (2026-05-20 · `e52678ab7` · 배치 **4/4**) |
+|--------|------|------|--------------------------------------------------|
 | **G1** | 역할·라우팅 | **CONDITIONAL** | 정적·Jest green; §6.2 수동·Maestro **미검** |
-| **G2** | 자동·API | **PASS** | `npx tsc --noEmit` **0 errors**; `npm run test:utils` **33 suites, 192 tests** PASS (~8s) · WIP HEAD |
+| **G2** | 자동·API | **PASS** | `npx tsc --noEmit` **0 errors** (~18s); `npm run test:utils` **33 suites, 192 tests** PASS (~15s) |
 | **G3** | 디자인·표시 | **CONDITIONAL** | adminTheme 코드 OK; 패리티·safeDisplay(일정 raw)·디자이너 체크리스트 미완 |
-| **G4** | 수동·E2E | **CONDITIONAL** | `admin-mvp-smoke-prep` **PASS** (`emulator-5554`); §6.2 #1–#7·U4/U5 실기기 **skip**; Maestro CLI **skip** |
+| **G4** | 수동·E2E | **CONDITIONAL** | `admin-mvp-smoke-prep` **PASS** (`emulator-5554`); §5.4 **M7–M10** 웹 CTA **미검** (팀 계정·Maestro 없음); Maestro CLI **skip** |
 
 ---
 
@@ -50,20 +50,21 @@
 
 ---
 
-## 4. 자동 게이트 실행 (WIP HEAD · 배치 **3/4** · 2026-05-20)
+## 4. 자동 게이트 실행 (`e52678ab7` · 배치 **4/4** · 2026-05-20)
 
 ```bash
 cd expo-app && npm run test:utils
 cd expo-app && npx tsc --noEmit
+bash expo-app/scripts/admin-mvp-smoke-prep.sh
 ```
 
 | 순서 | 명령 | 결과 | 상세 |
 |------|------|------|------|
-| 1 | `npm run test:utils` | **PASS** | 33 suites, **192** tests, ~8.0s |
-| 2 | `npx tsc --noEmit` | **PASS** | exit **0** — **0** errors |
-| 3 | `admin-mvp-smoke-prep.sh --force-install` | **PASS** | `emulator-5554`; APK 재설치·MainActivity; embedded `apiBaseUrl` `https://dev.core-solution.co.kr` — [`SMOKE_RUN` §6.2](./ADMIN_MOBILE_MVP_SMOKE_RUN.md) |
+| 1 | `npm run test:utils` | **PASS** | 33 suites, **192** tests, ~15s |
+| 2 | `npx tsc --noEmit` | **PASS** | exit **0** — **0** errors (~18s). `npm run tsc` 스크립트 **없음** — SSOT는 `npx tsc --noEmit` |
+| 3 | `admin-mvp-smoke-prep.sh` @ HEAD | **PASS** | `emulator-5554`; APK **132M** (mtime 2026-05-19 02:23 KST); 설치 생략(기존 설치); embedded `apiBaseUrl` `https://dev.core-solution.co.kr`; logcat 필터 **매칭 없음** |
 
-**배치 2→3 변화**: `tsc` **5→0** (모달 삭제·FlashList prop 제거). Jest **192** 유지. **G2 PASS 조건 충족**.
+**배치 4**: G2 회귀 **PASS** 유지. G4 prep **PASS**; **M7–M10** 수동·팀 계정 **미실행** → G4 **CONDITIONAL** 유지.
 
 **배치 2 `tsc` 오류 (해소됨 · 참고)**
 
@@ -191,12 +192,12 @@ maestro test expo-app/.maestro/flows/admin-mvp-smoke-staff.yaml
 
 ## 8. Orchestration §7 스냅샷 갱신 제안
 
-| 게이트 | 2026-05-18 (문서) | **2026-05-20 (배치 3/4 · WIP HEAD)** |
-|--------|-------------------|--------------------------------------|
+| 게이트 | 2026-05-18 (문서) | **2026-05-20 (배치 4/4 · `e52678ab7`)** |
+|--------|-------------------|------------------------------------------|
 | G1 | CONDITIONAL | **CONDITIONAL** (수동 동일) |
 | G2 | PASS (@ `d95768075`) | **PASS** (`tsc` **0**; `test:utils` **192/192**) |
 | G3 | CONDITIONAL | **CONDITIONAL** (adminTheme 코드 OK · 패리티·safeDisplay 잔여) |
-| G4 | CONDITIONAL | **CONDITIONAL** (prep **PASS**; §6.2·U4/U5 웹 CTA 실기기 **미검**) |
+| G4 | CONDITIONAL | **CONDITIONAL** (prep **PASS**; §5.4 **M7–M10** 웹 CTA **미검** · 팀 계정 없음) |
 
 ---
 
@@ -209,3 +210,5 @@ maestro test expo-app/.maestro/flows/admin-mvp-smoke-staff.yaml
 | 2026-05-20 | **C2 테스터 게이트 2/4** — Jest **33/192** PASS; **tsc 5** FAIL (G2 **FAIL 유지**); Maestro CLI·env 없음 → G4 CONDITIONAL; PAYMENT UAT §8 `test:utils` 갱신 연동 |
 | 2026-05-20 | **C2 테스터 게이트 3/4** — **G2 PASS** (`tsc` 0); §2 G2 해소·§3 C3 위임 3줄; U4 **웹 CTA**; 오케스트레이션 §7 C3 체크리스트 연동 |
 | 2026-05-20 | **G4+C3 스모크 (core-tester)** — `adb`+`admin-mvp-smoke-prep` **PASS**; `test:utils` 192/192·`tsc` 0; Maestro **skip**; §5.4 M7–M10 U4/U5 웹 CTA 수동 절차; [`SMOKE_RUN` §6.2](./ADMIN_MOBILE_MVP_SMOKE_RUN.md) 갱신 |
+| 2026-05-20 | **C2 테스터 게이트 4/4** — `e52678ab7`; `test:utils` **192/192**·`npx tsc --noEmit` **0**; `admin-mvp-smoke-prep` **PASS**; G4 **M7–M10** **미검**(팀 계정·Maestro 없음) → **CONDITIONAL** 유지 |
+| 2026-05-20 | **배치 4 재실행** — G2 회귀 재확인 (~15s Jest, ~18s tsc); prep **PASS**; M7–M10·Maestro **미변경** |

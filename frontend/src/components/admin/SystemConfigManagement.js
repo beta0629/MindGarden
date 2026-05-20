@@ -30,6 +30,28 @@ import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './SystemConfigManagement.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_SYSTEM_CONFIG_OPENAI = '/api/v1/admin/system-config/openai';
+const API_ADMIN_SYSTEM_CONFIG_GEMINI_API_KEY = '/api/v1/admin/system-config/GEMINI_API_KEY';
+const API_ADMIN_SYSTEM_CONFIG_GEMINI_API_URL = '/api/v1/admin/system-config/GEMINI_API_URL';
+const API_ADMIN_SYSTEM_CONFIG_GEMINI_MODEL = '/api/v1/admin/system-config/GEMINI_MODEL';
+const API_ADMIN_SYSTEM_CONFIG_CLAUDE_API_KEY = '/api/v1/admin/system-config/CLAUDE_API_KEY';
+const API_ADMIN_SYSTEM_CONFIG_CLAUDE_API_URL = '/api/v1/admin/system-config/CLAUDE_API_URL';
+const API_ADMIN_SYSTEM_CONFIG_CLAUDE_MODEL = '/api/v1/admin/system-config/CLAUDE_MODEL';
+const API_ADMIN_SYSTEM_CONFIG_REPLICATE_API_KEY = '/api/v1/admin/system-config/REPLICATE_API_KEY';
+const API_ADMIN_SYSTEM_CONFIG_REPLICATE_API_URL = '/api/v1/admin/system-config/REPLICATE_API_URL';
+const API_ADMIN_SYSTEM_CONFIG_REPLICATE_MODEL = '/api/v1/admin/system-config/REPLICATE_MODEL';
+const API_ADMIN_SYSTEM_CONFIG_AI_DEFAULT_PROVIDER = '/api/v1/admin/system-config/ai-default-provider';
+const API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED = '/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED';
+const API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME = '/api/v1/admin/system-config/WELLNESS_SEND_TIME';
+const API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES = '/api/v1/admin/system-config/WELLNESS_TARGET_ROLES';
+const API_ADMIN_SYSTEM_CONFIG_OPENAI_MODELS = '/api/v1/admin/system-config/openai-models';
+const API_ADMIN_SYSTEM_CONFIG_GEMINI_MODELS = '/api/v1/admin/system-config/gemini-models';
+const API_ADMIN_SYSTEM_CONFIG_AI_DEFAULT_PROVIDER_2 = '/api/v1/admin/system-config/AI_DEFAULT_PROVIDER';
+const API_ADMIN_SYSTEM_CONFIG_TEST_OPENAI = '/api/v1/admin/system-config/test-openai';
+const API_ADMIN_SYSTEM_CONFIG_TEST_GEMINI = '/api/v1/admin/system-config/test-gemini';
+
+
 const AI_PROVIDERS = [
   { id: 'openai', label: 'OpenAI', keyPrefix: 'OPENAI', defaultUrl: 'https://api.openai.com/v1/chat/completions', defaultModel: 'gpt-4o-mini' },
   { id: 'gemini', label: 'Gemini', keyPrefix: 'GEMINI', defaultUrl: '', defaultModel: 'gemini-3.1-pro' },
@@ -118,7 +140,7 @@ const SystemConfigManagement = () => {
   const loadConfigs = useCallback(async() => {
     try {
       setLoading(true);
-      const openaiRes = await apiGet('/api/v1/admin/system-config/openai');
+      const openaiRes = await apiGet(API_ADMIN_SYSTEM_CONFIG_OPENAI);
       if (openaiRes.success) {
         setProviders((prev) => ({
           ...prev,
@@ -131,15 +153,15 @@ const SystemConfigManagement = () => {
       }
 
       const [geminiKey, geminiUrl, geminiModel, claudeKey, claudeUrl, claudeModel, repKey, repUrl, repModel] = await Promise.all([
-        apiGet('/api/v1/admin/system-config/GEMINI_API_KEY'),
-        apiGet('/api/v1/admin/system-config/GEMINI_API_URL'),
-        apiGet('/api/v1/admin/system-config/GEMINI_MODEL'),
-        apiGet('/api/v1/admin/system-config/CLAUDE_API_KEY'),
-        apiGet('/api/v1/admin/system-config/CLAUDE_API_URL'),
-        apiGet('/api/v1/admin/system-config/CLAUDE_MODEL'),
-        apiGet('/api/v1/admin/system-config/REPLICATE_API_KEY'),
-        apiGet('/api/v1/admin/system-config/REPLICATE_API_URL'),
-        apiGet('/api/v1/admin/system-config/REPLICATE_MODEL')
+        apiGet(API_ADMIN_SYSTEM_CONFIG_GEMINI_API_KEY),
+        apiGet(API_ADMIN_SYSTEM_CONFIG_GEMINI_API_URL),
+        apiGet(API_ADMIN_SYSTEM_CONFIG_GEMINI_MODEL),
+        apiGet(API_ADMIN_SYSTEM_CONFIG_CLAUDE_API_KEY),
+        apiGet(API_ADMIN_SYSTEM_CONFIG_CLAUDE_API_URL),
+        apiGet(API_ADMIN_SYSTEM_CONFIG_CLAUDE_MODEL),
+        apiGet(API_ADMIN_SYSTEM_CONFIG_REPLICATE_API_KEY),
+        apiGet(API_ADMIN_SYSTEM_CONFIG_REPLICATE_API_URL),
+        apiGet(API_ADMIN_SYSTEM_CONFIG_REPLICATE_MODEL)
       ]);
 
       const getVal = (r) => (r && r.success ? r.configValue || '' : '');
@@ -163,15 +185,15 @@ const SystemConfigManagement = () => {
         }
       }));
 
-      const defaultProviderRes = await apiGet('/api/v1/admin/system-config/ai-default-provider');
+      const defaultProviderRes = await apiGet(API_ADMIN_SYSTEM_CONFIG_AI_DEFAULT_PROVIDER);
       if (defaultProviderRes?.success && defaultProviderRes.providerId) {
         setAiDefaultProvider(defaultProviderRes.providerId);
       }
 
       const [wEnabled, wTime, wRoles] = await Promise.all([
-        apiGet('/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED'),
-        apiGet('/api/v1/admin/system-config/WELLNESS_SEND_TIME'),
-        apiGet('/api/v1/admin/system-config/WELLNESS_TARGET_ROLES')
+        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED),
+        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME),
+        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES)
       ]);
       setWellness({
         wellnessAutoSendEnabled: wEnabled?.success ? wEnabled.configValue === 'true' : true,
@@ -182,13 +204,13 @@ const SystemConfigManagement = () => {
       // API 키가 있으면 사용 가능한 모델만 조회해 드롭다운에 표시
       if (openaiRes?.success && (openaiRes.apiKey || '').trim()) {
         try {
-          const res = await apiPost('/api/v1/admin/system-config/openai-models', { apiKey: (openaiRes.apiKey || '').trim() });
+          const res = await apiPost(API_ADMIN_SYSTEM_CONFIG_OPENAI_MODELS, { apiKey: (openaiRes.apiKey || '').trim() });
           if (res.success && Array.isArray(res.models)) setOpenaiModels(res.models);
         } catch (_) { /* 무시 */ }
       }
       if ((getVal(geminiKey) || '').trim()) {
         try {
-          const res = await apiPost('/api/v1/admin/system-config/gemini-models', { apiKey: getVal(geminiKey).trim() });
+          const res = await apiPost(API_ADMIN_SYSTEM_CONFIG_GEMINI_MODELS, { apiKey: getVal(geminiKey).trim() });
           if (res.success && Array.isArray(res.models)) setGeminiModels(res.models);
         } catch (_) { /* 무시 */ }
       }
@@ -215,10 +237,10 @@ const SystemConfigManagement = () => {
       });
 
       posts.push(
-        apiPost('/api/v1/admin/system-config/AI_DEFAULT_PROVIDER', { configValue: aiDefaultProvider, description: '기본 AI 프로바이더 (openai|gemini|claude|replicate)', category: 'AI' }),
-        apiPost('/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED', { configValue: String(wellness.wellnessAutoSendEnabled), description: '웰니스 자동 발송', category: 'WELLNESS' }),
-        apiPost('/api/v1/admin/system-config/WELLNESS_SEND_TIME', { configValue: wellness.wellnessSendTime, description: '웰니스 발송 시간', category: 'WELLNESS' }),
-        apiPost('/api/v1/admin/system-config/WELLNESS_TARGET_ROLES', { configValue: wellness.wellnessTargetRoles, description: '웰니스 대상 역할', category: 'WELLNESS' })
+        apiPost(API_ADMIN_SYSTEM_CONFIG_AI_DEFAULT_PROVIDER_2, { configValue: aiDefaultProvider, description: '기본 AI 프로바이더 (openai|gemini|claude|replicate)', category: 'AI' }),
+        apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED, { configValue: String(wellness.wellnessAutoSendEnabled), description: '웰니스 자동 발송', category: 'WELLNESS' }),
+        apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME, { configValue: wellness.wellnessSendTime, description: '웰니스 발송 시간', category: 'WELLNESS' }),
+        apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES, { configValue: wellness.wellnessTargetRoles, description: '웰니스 대상 역할', category: 'WELLNESS' })
       );
 
       await Promise.all(posts);
@@ -240,7 +262,7 @@ const SystemConfigManagement = () => {
     try {
       setTesting(true);
       setTestResult(null);
-      const response = await apiPost('/api/v1/admin/system-config/test-openai', {
+      const response = await apiPost(API_ADMIN_SYSTEM_CONFIG_TEST_OPENAI, {
         apiKey: key,
         apiUrl: providers.openai?.apiUrl || '',
         model: providers.openai?.model || ''
@@ -268,7 +290,7 @@ const SystemConfigManagement = () => {
     try {
       setTestingGemini(true);
       setTestResultGemini(null);
-      const response = await apiPost('/api/v1/admin/system-config/test-gemini', { apiKey: key });
+      const response = await apiPost(API_ADMIN_SYSTEM_CONFIG_TEST_GEMINI, { apiKey: key });
       if (response.success) {
         setTestResultGemini({ success: true, message: response.message || 'Gemini API 키가 정상 동작합니다.' });
       } else {
@@ -290,7 +312,7 @@ const SystemConfigManagement = () => {
     }
     try {
       setLoadingGeminiModels(true);
-      const response = await apiPost('/api/v1/admin/system-config/gemini-models', { apiKey: key });
+      const response = await apiPost(API_ADMIN_SYSTEM_CONFIG_GEMINI_MODELS, { apiKey: key });
       if (response.success && Array.isArray(response.models)) {
         setGeminiModels(response.models);
         notificationManager.show(`모델 ${response.models.length}개를 불러왔습니다.`, 'success');
@@ -313,7 +335,7 @@ const SystemConfigManagement = () => {
     }
     try {
       setLoadingOpenaiModels(true);
-      const response = await apiPost('/api/v1/admin/system-config/openai-models', { apiKey: key });
+      const response = await apiPost(API_ADMIN_SYSTEM_CONFIG_OPENAI_MODELS, { apiKey: key });
       if (response.success && Array.isArray(response.models)) {
         setOpenaiModels(response.models);
         notificationManager.show(`모델 ${response.models.length}개를 불러왔습니다.`, 'success');

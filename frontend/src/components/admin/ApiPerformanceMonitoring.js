@@ -10,6 +10,12 @@ import { ApiPerformanceReportGenerator } from '../../utils/apiPerformanceUtils';
 import { API_PERFORMANCE_WIDGET } from '../../constants/widgetConstants';
 import notificationManager from '../../utils/notification';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_REPORTS_FINANCIAL = '/api/v1/reports/financial';
+const API_USERS_EXPORT = '/api/v1/users/export';
+const API_DASHBOARD_SUMMARY = '/api/v1/dashboard/summary';
+
+
 // Mock Data
 const MOCK_CHART_DATA = {
   lineChart: {
@@ -29,12 +35,12 @@ const MOCK_CHART_DATA = {
     overallErrorRate: 2.5,
     totalRequests: 154200,
     slowestRequest: 1250,
-    slowestEndpoint: '/api/v1/reports/financial'
+    slowestEndpoint: API_REPORTS_FINANCIAL
   },
   slowApis: {
-    '/api/v1/reports/financial': { averageDuration: 850, maxDuration: 1250, totalRequests: 320 },
-    '/api/v1/users/export': { averageDuration: 720, maxDuration: 980, totalRequests: 150 },
-    '/api/v1/dashboard/summary': { averageDuration: 640, maxDuration: 890, totalRequests: 5400 }
+    API_REPORTS_FINANCIAL: { averageDuration: 850, maxDuration: 1250, totalRequests: 320 },
+    API_USERS_EXPORT: { averageDuration: 720, maxDuration: 980, totalRequests: 150 },
+    API_DASHBOARD_SUMMARY: { averageDuration: 640, maxDuration: 890, totalRequests: 5400 }
   }
 };
 

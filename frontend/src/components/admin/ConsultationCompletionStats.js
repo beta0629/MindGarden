@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import ConsultationCompletionStatsView from '../ui/Statistics/ConsultationCompletionStatsView';
 import { apiGet } from '../../utils/ajax';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
+
+
 /**
  * 상담 완료 통계 컨테이너 컴포넌트
 /**
@@ -103,7 +107,7 @@ const ConsultationCompletionStats = () => {
             
             const url = period 
                 ? `/api/admin/statistics/consultation-completion?period=${period}`
-                : '/api/v1/admin/statistics/consultation-completion';
+                : API_ADMIN_STATISTICS_CONSULTATION_COMPLETION;
             
             const response = await apiGet(url);
             console.log('📊 상담 완료 통계 API 응답:', response);

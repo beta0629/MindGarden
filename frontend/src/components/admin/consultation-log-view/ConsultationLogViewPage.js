@@ -25,6 +25,10 @@ import ConsultationLogModal from '../../consultant/ConsultationLogModal';
 import { getAllConsultantsWithStats, getAllClientsWithStats } from '../../../utils/consultantHelper';
 import '../ConsultationLogViewPage.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_CONSULTATION_RECORDS = '/api/v1/admin/consultation-records';
+
+
 const PAGE_TITLE = '상담일지 조회';
 const PAGE_SUBTITLE = '상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다.';
 const CONTENT_AREA_ARIA_LABEL = '상담일지 조회 콘텐츠';
@@ -114,7 +118,7 @@ const ConsultationLogViewPage = () => {
           };
           if (consultantId != null) params.consultantId = consultantId;
           if (clientId != null) params.clientId = clientId;
-          const response = await StandardizedApi.get('/api/v1/admin/consultation-records', params);
+          const response = await StandardizedApi.get(API_ADMIN_CONSULTATION_RECORDS, params);
           const list = Array.isArray(response) ? response : (response?.data ?? []);
           setRecords(Array.isArray(list) ? list : []);
         } catch (adminErr) {

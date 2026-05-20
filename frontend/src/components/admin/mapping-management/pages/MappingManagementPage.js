@@ -32,6 +32,11 @@ import '../../../../styles/dashboard-tokens-extension.css';
 import '../../AdminDashboard/AdminDashboardB0KlA.css';
 import '../MappingManagementPage.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
+const API_COMMON_CODES_GROUPS_MAPPING_STATUS = '/api/v1/common-codes/groups/MAPPING_STATUS';
+
+
 const MappingManagementPage = () => {
   const { user } = useSession();
   const [mappings, setMappings] = useState([]);
@@ -62,7 +67,7 @@ const MappingManagementPage = () => {
     setIsLoadingMappings(true);
     setLoading(true);
     try {
-      const response = await StandardizedApi.get('/api/v1/admin/mappings');
+      const response = await StandardizedApi.get(API_ADMIN_MAPPINGS);
       if (response && response.mappings) {
         setMappings(response.mappings);
       } else if (response && Array.isArray(response)) {
@@ -138,7 +143,7 @@ const MappingManagementPage = () => {
 
   const loadMappingStatusInfo = async() => {
     try {
-      const response = await StandardizedApi.get('/api/v1/common-codes/groups/MAPPING_STATUS');
+      const response = await StandardizedApi.get(API_COMMON_CODES_GROUPS_MAPPING_STATUS);
       if (response && response.length > 0) {
         const statusInfoMap = {};
         response.forEach((code) => {

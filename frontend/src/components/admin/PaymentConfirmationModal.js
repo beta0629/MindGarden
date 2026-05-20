@@ -8,6 +8,11 @@ import BadgeSelect from '../common/BadgeSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './PaymentConfirmationModal.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_PAYMENTS_CONFIRM = '/api/v1/admin/payments/confirm';
+const API_ADMIN_PAYMENTS_CANCEL = '/api/v1/admin/payments/cancel';
+
+
 /**
  * 결제 확인 모달 컴포넌트
 /**
@@ -48,8 +53,8 @@ const PaymentConfirmationModal = ({
   const [loadingCodes, setLoadingCodes] = useState(false);
 
   const API_ENDPOINTS = {
-    CONFIRM_PAYMENT: '/api/v1/admin/payments/confirm',
-    CANCEL_PAYMENT: '/api/v1/admin/payments/cancel'
+    CONFIRM_PAYMENT: API_ADMIN_PAYMENTS_CONFIRM,
+    CANCEL_PAYMENT: API_ADMIN_PAYMENTS_CANCEL
   };
   
   const PAYMENT_STATUS = {

@@ -34,6 +34,13 @@ import './ClientManagementPage.css';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 import { Users, UserCheck, Clock, Link2 } from 'lucide-react';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_CONSULTANTS = '/api/v1/admin/consultants';
+const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
+const API_ADMIN_CONSULTATIONS = '/api/v1/admin/consultations';
+const API_ADMIN_CLIENTS = '/api/v1/admin/clients';
+
+
 /** KPI 카드 장식 아이콘 — 액션 버튼(MGButton)의 라벨 전용 아이콘 제거와 별개로 유지 */
 const CLIENT_KPI_ICON_SIZE = 24;
 
@@ -212,7 +219,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
 
     const loadConsultants = useCallback(async() => {
         try {
-            const response = await apiGet('/api/v1/admin/consultants');
+            const response = await apiGet(API_ADMIN_CONSULTANTS);
             console.log('📊 상담사 목록 응답:', response);
             
             if (response && response.success) {
@@ -230,7 +237,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
 
     const loadMappings = useCallback(async() => {
         try {
-            const response = await apiGet('/api/v1/admin/mappings');
+            const response = await apiGet(API_ADMIN_MAPPINGS);
             console.log('📊 매칭 정보 응답:', response);
             // apiGet이 401/404 시 null 반환 → 총 매칭 0건으로 표시됨. 원인 추적용 로그.
             if (response == null) {
@@ -256,7 +263,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
     const loadConsultations = useCallback(async() => {
         try {
             console.log('🔄 상담 이력 로드 시작...');
-            const response = await apiGet('/api/v1/admin/consultations');
+            const response = await apiGet(API_ADMIN_CONSULTATIONS);
             console.log('📊 상담 이력 응답:', response);
             
             if (Array.isArray(response)) {
@@ -832,7 +839,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                     let response;
                                     if (modalType === 'create') {
                                         console.log('🔧 내담자 등록 시작:', { ...payload, profileImageUrl: payload.profileImageUrl ? '(base64)' : undefined });
-                                        response = await StandardizedApi.post('/api/v1/admin/clients', payload);
+                                        response = await StandardizedApi.post(API_ADMIN_CLIENTS, payload);
                                         console.log('✅ 내담자 등록 응답:', response);
                                         if (!response) {
                                             throw new Error('등록 응답이 없습니다.');

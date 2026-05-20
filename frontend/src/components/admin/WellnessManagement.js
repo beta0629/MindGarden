@@ -26,6 +26,14 @@ import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './WellnessManagement.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_WELLNESS_USAGE_STATS = '/api/v1/admin/wellness/usage-stats';
+const API_ADMIN_WELLNESS_TEMPLATES = '/api/v1/admin/wellness/templates';
+const API_ADMIN_WELLNESS_EXCHANGE_RATE = '/api/v1/admin/wellness/exchange-rate';
+const API_ADMIN_WELLNESS_TEST_SEND = '/api/v1/admin/wellness/test-send';
+const API_ADMIN_WELLNESS_EXCHANGE_RATE_REFRESH = '/api/v1/admin/wellness/exchange-rate/refresh';
+
+
 /**
  * 웰니스 알림 관리 페이지
 /**
@@ -81,7 +89,7 @@ const WellnessManagement = () => {
             console.log('📊 웰니스 관리 데이터 로드 시작');
             
             // API 사용 통계 로드
-            const usageStatsResponse = await apiGet('/api/v1/admin/wellness/usage-stats', {
+            const usageStatsResponse = await apiGet(API_ADMIN_WELLNESS_USAGE_STATS, {
                 year: selectedMonth.year,
                 month: selectedMonth.month
             });
@@ -93,7 +101,7 @@ const WellnessManagement = () => {
             }
             
             // 템플릿 목록 로드
-            const templatesResponse = await apiGet('/api/v1/admin/wellness/templates');
+            const templatesResponse = await apiGet(API_ADMIN_WELLNESS_TEMPLATES);
             
             console.log('📋 템플릿 응답:', templatesResponse);
             
@@ -102,7 +110,7 @@ const WellnessManagement = () => {
             }
             
             // 환율 정보 로드
-            const exchangeRateResponse = await apiGet('/api/v1/admin/wellness/exchange-rate');
+            const exchangeRateResponse = await apiGet(API_ADMIN_WELLNESS_EXCHANGE_RATE);
             
             console.log('💰 환율 응답:', exchangeRateResponse);
             
@@ -141,7 +149,7 @@ const WellnessManagement = () => {
                 console.log('📊 웰니스 관리 데이터 로드 시작');
                 
                 // API 사용 통계 로드
-                const usageStatsResponse = await apiGet('/api/v1/admin/wellness/usage-stats', {
+                const usageStatsResponse = await apiGet(API_ADMIN_WELLNESS_USAGE_STATS, {
                     year: selectedMonth.year,
                     month: selectedMonth.month
                 });
@@ -153,7 +161,7 @@ const WellnessManagement = () => {
                 }
                 
                 // 템플릿 목록 로드
-                const templatesResponse = await apiGet('/api/v1/admin/wellness/templates');
+                const templatesResponse = await apiGet(API_ADMIN_WELLNESS_TEMPLATES);
                 
                 console.log('📋 템플릿 응답:', templatesResponse);
                 
@@ -162,7 +170,7 @@ const WellnessManagement = () => {
                 }
                 
                 // 환율 정보 로드
-                const exchangeRateResponse = await apiGet('/api/v1/admin/wellness/exchange-rate');
+                const exchangeRateResponse = await apiGet(API_ADMIN_WELLNESS_EXCHANGE_RATE);
                 
                 console.log('💰 환율 응답:', exchangeRateResponse);
                 
@@ -200,7 +208,7 @@ const WellnessManagement = () => {
             onConfirm: async() => {
                 try {
                     setSending(true);
-                    const response = await apiPost('/api/v1/admin/wellness/test-send');
+                    const response = await apiPost(API_ADMIN_WELLNESS_TEST_SEND);
                     
                     if (response.success) {
                         notificationManager.show('웰니스 알림이 성공적으로 발송되었습니다!', 'success');
@@ -233,7 +241,7 @@ const WellnessManagement = () => {
     const handleExchangeRateRefresh = async() => {
         try {
             setRefreshing(true);
-            const response = await apiPost('/api/v1/admin/wellness/exchange-rate/refresh');
+            const response = await apiPost(API_ADMIN_WELLNESS_EXCHANGE_RATE_REFRESH);
             
             if (response.success) {
                 notificationManager.show('환율을 새로고침했습니다.', 'success');

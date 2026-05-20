@@ -6,6 +6,10 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './CommonCodeForm.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes';
+
+
 /** @type {string} 폼·actions submit 연결용 id (DOM 한 곳) */
 const COMMON_CODE_FORM_DOM_ID = 'common-code-form-root';
 
@@ -52,7 +56,7 @@ const CommonCodeForm = ({
     const loadCommonCodeGroupOptions = useCallback(async() => {
         try {
             setLoadingCodes(true);
-            const response = await StandardizedApi.get('/api/v1/common-codes', { codeGroup: 'COMMON_CODE_GROUP' });
+            const response = await StandardizedApi.get(API_COMMON_CODES, { codeGroup: 'COMMON_CODE_GROUP' });
             if (response && response.length > 0) {
                 setCommonCodeGroupOptions(response.map(code => ({
                     value: code.codeValue,

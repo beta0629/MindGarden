@@ -31,6 +31,12 @@ import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentManagementPage.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ASSESSMENTS_PSYCH_STATS = '/api/v1/assessments/psych/stats';
+const API_ASSESSMENTS_PSYCH_DOCUMENTS_RECENT = '/api/v1/assessments/psych/documents/recent';
+const API_ASSESSMENTS_PSYCH_DOCUMENTS = '/api/v1/assessments/psych/documents';
+
+
 const CLIENTS_WITH_MAPPING_URL = '/api/v1/admin/clients/with-mapping-info';
 
 /** 심리검사 AI: 테넌트 관리(ADMIN)·본사 마스터·사무원(STAFF) — 백엔드는 isAuthenticated만 요구 */
@@ -73,8 +79,8 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
     setRecentLoadError(false);
     try {
       const [statsRes, recentRes] = await Promise.all([
-        StandardizedApi.get('/api/v1/assessments/psych/stats'),
-        StandardizedApi.get('/api/v1/assessments/psych/documents/recent')
+        StandardizedApi.get(API_ASSESSMENTS_PSYCH_STATS),
+        StandardizedApi.get(API_ASSESSMENTS_PSYCH_DOCUMENTS_RECENT)
       ]);
       const statsData = statsRes?.data ?? statsRes;
       const recentData = recentRes?.data ?? recentRes;
@@ -240,7 +246,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
         form.append('clientId', String(clientId));
       }
 
-      const res = await StandardizedApi.postFormData('/api/v1/assessments/psych/documents', form);
+      const res = await StandardizedApi.postFormData(API_ASSESSMENTS_PSYCH_DOCUMENTS, form);
       if (res?.success === false) {
         throw new Error(res?.message || '업로드에 실패했습니다.');
       }

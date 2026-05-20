@@ -15,6 +15,10 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_USERS_ROLES = '/api/v1/admin/users/roles';
+
+
 const USER_MANAGEMENT_PAGE_TITLE_ID = 'user-management-title';
 
 const UserManagement = ({ onUpdate }) => {
@@ -88,7 +92,7 @@ const UserManagement = ({ onUpdate }) => {
         try {
             const [usersRes, rolesRes] = await Promise.all([
                 fetch(`/api/admin/users?includeInactive=${includeInactive}`),
-                fetch('/api/v1/admin/users/roles')
+                fetch(API_ADMIN_USERS_ROLES)
             ]);
 
             if (usersRes.ok) {

@@ -86,6 +86,27 @@ import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
+const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
+const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
+const API_ADMIN_VACATION_STATISTICS = '/api/v1/admin/vacation-statistics?period=month';
+const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
+const API_ADMIN_REFUND_STATISTICS = '/api/v1/admin/refund-statistics?period=month';
+const API_ADMIN_CONSULTANTS_WITH_VACATION = '/api/v1/admin/consultants/with-vacation';
+const API_ADMIN_MAPPINGS_PENDING_DEPOSIT = '/api/v1/admin/mappings/pending-deposit';
+const API_ADMIN_SCHEDULES_AUTO_COMPLETE = '/api/v1/admin/schedules/auto-complete';
+const API_ADMIN_SCHEDULES_AUTO_COMPLETE_WITH_REMINDER = '/api/v1/admin/schedules/auto-complete-with-reminder';
+const API_ADMIN_DUPLICATE_MAPPINGS = '/api/v1/admin/duplicate-mappings';
+const API_ADMIN_MERGE_DUPLICATE_MAPPINGS = '/api/v1/admin/merge-duplicate-mappings';
+const API_TEST_CREATE_TEST_DATA = '/api/v1/test/create-test-data';
+const API_HEALTH_SERVER = '/api/v1/health/server';
+const API_HEALTH_DATABASE = '/api/v1/health/database';
+const API_ADMIN_LOGS_RECENT = '/api/v1/admin/logs/recent';
+const API_ADMIN_CACHE_CLEAR = '/api/v1/admin/cache/clear';
+const API_ADMIN_BACKUP_CREATE = '/api/v1/admin/backup/create';
+
+
 /** 관리 기능 카드 상단 아이콘 (B0KlA 톤 배지 + Lucide, AdminDashboardV2와 동일 계열) */
 function AdminMgmtCardIcon({ icon: LucideIcon, tone = 'blue' }) {
     return (
@@ -272,11 +293,11 @@ const AdminDashboard = ({ user: propUser }) => {
         try {
             const [consultantsRes, clientsRes, mappingsRes, ratingRes, vacationRes, consultationRes] = await Promise.all([
                 fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`),
-                fetch('/api/v1/admin/clients/with-mapping-info'),
-                fetch('/api/v1/admin/mappings'),
-                fetch('/api/v1/admin/consultant-rating-stats'),
-                fetch('/api/v1/admin/vacation-statistics?period=month'),
-                fetch('/api/v1/admin/statistics/consultation-completion')
+                fetch(API_ADMIN_CLIENTS_WITH_MAPPING_INFO),
+                fetch(API_ADMIN_MAPPINGS),
+                fetch(API_ADMIN_CONSULTANT_RATING_STATS),
+                fetch(API_ADMIN_VACATION_STATISTICS),
+                fetch(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION)
             ]);
 
             let totalConsultants = 0;
@@ -383,7 +404,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const loadRefundStats = useCallback(async() => {
         try {
-            const response = await fetch('/api/v1/admin/refund-statistics?period=month');
+            const response = await fetch(API_ADMIN_REFUND_STATISTICS);
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.data.summary) {
@@ -405,8 +426,8 @@ const AdminDashboard = ({ user: propUser }) => {
         try {
             const dateStr = new Date().toISOString().split('T')[0];
             const [clientsRes, consultantsRes] = await Promise.all([
-                StandardizedApi.get('/api/v1/admin/clients/with-mapping-info'),
-                StandardizedApi.get('/api/v1/admin/consultants/with-vacation', { date: dateStr })
+                StandardizedApi.get(API_ADMIN_CLIENTS_WITH_MAPPING_INFO),
+                StandardizedApi.get(API_ADMIN_CONSULTANTS_WITH_VACATION, { date: dateStr })
             ]);
             const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
             const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
@@ -427,7 +448,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const loadPendingDepositStats = useCallback(async() => {
         try {
-            const data = await StandardizedApi.get('/api/v1/admin/mappings/pending-deposit');
+            const data = await StandardizedApi.get(API_ADMIN_MAPPINGS_PENDING_DEPOSIT);
             const rawMappings = data?.mappings ?? data?.data?.mappings ?? (Array.isArray(data) ? data : []);
             const pendingList = Array.isArray(rawMappings) ? rawMappings : [];
             const count = pendingList.length;
@@ -447,7 +468,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const handleConfirmMatch = useCallback(async(clientId, consultantId) => {
         try {
-            await StandardizedApi.post('/api/v1/admin/mappings', {
+            await StandardizedApi.post(API_ADMIN_MAPPINGS, {
                 clientId: Number(clientId),
                 consultantId: Number(consultantId),
                 status: 'PENDING_PAYMENT',
@@ -468,7 +489,7 @@ const AdminDashboard = ({ user: propUser }) => {
     const handleAutoCompleteSchedules = async() => {
         setAutoCompleteLoading(true);
         try {
-            const response = await csrfTokenManager.post('/api/v1/admin/schedules/auto-complete');
+            const response = await csrfTokenManager.post(API_ADMIN_SCHEDULES_AUTO_COMPLETE);
 
             if (response.ok) {
                 const result = await response.json();
@@ -489,7 +510,7 @@ const AdminDashboard = ({ user: propUser }) => {
     const handleAutoCompleteWithReminder = async() => {
         setAutoCompleteWithReminderLoading(true);
         try {
-            const response = await csrfTokenManager.post('/api/v1/admin/schedules/auto-complete-with-reminder');
+            const response = await csrfTokenManager.post(API_ADMIN_SCHEDULES_AUTO_COMPLETE_WITH_REMINDER);
 
             if (response.ok) {
                 const result = await response.json();
@@ -509,7 +530,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const handleMergeDuplicateMappings = async() => {
         try {
-            const checkResponse = await fetch('/api/v1/admin/duplicate-mappings');
+            const checkResponse = await fetch(API_ADMIN_DUPLICATE_MAPPINGS);
             if (!checkResponse.ok) {
                 showToast('중복 매칭 조회에 실패했습니다.', 'danger');
                 return;
@@ -529,7 +550,7 @@ const AdminDashboard = ({ user: propUser }) => {
         return;
     }
             
-            const response = await csrfTokenManager.post('/api/v1/admin/merge-duplicate-mappings');
+            const response = await csrfTokenManager.post(API_ADMIN_MERGE_DUPLICATE_MAPPINGS);
 
             if (response.ok) {
                 const result = await response.json();
@@ -555,7 +576,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const createTestData = async() => {
         try {
-            const response = await csrfTokenManager.post('/api/v1/test/create-test-data');
+            const response = await csrfTokenManager.post(API_TEST_CREATE_TEST_DATA);
 
             if (response.ok) {
                 showToast('테스트 데이터가 성공적으로 생성되었습니다.');
@@ -574,8 +595,8 @@ const AdminDashboard = ({ user: propUser }) => {
         setLoading(true);
         try {
             const [serverRes, dbRes] = await Promise.all([
-                fetch('/api/v1/health/server'),
-                fetch('/api/v1/health/database')
+                fetch(API_HEALTH_SERVER),
+                fetch(API_HEALTH_DATABASE)
             ]);
 
             const serverStatus = serverRes.ok ? 'healthy' : 'error';
@@ -607,7 +628,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const viewLogs = async() => {
         try {
-            const response = await fetch('/api/v1/admin/logs/recent');
+            const response = await fetch(API_ADMIN_LOGS_RECENT);
             if (response.ok) {
                 const logs = await response.json();
                 const logWindow = window.open('', '_blank');
@@ -632,7 +653,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const clearCache = async() => {
         try {
-            const response = await csrfTokenManager.post('/api/v1/admin/cache/clear');
+            const response = await csrfTokenManager.post(API_ADMIN_CACHE_CLEAR);
 
             if (response.ok) {
                 showToast('캐시가 성공적으로 초기화되었습니다.', 'success');
@@ -648,7 +669,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const createBackup = async() => {
         try {
-            const response = await csrfTokenManager.post('/api/v1/admin/backup/create');
+            const response = await csrfTokenManager.post(API_ADMIN_BACKUP_CREATE);
 
             if (response.ok) {
                 const backupData = await response.json();

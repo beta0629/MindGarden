@@ -21,6 +21,14 @@ import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistr
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
+const API_ADMIN_CONSULTANTS = '/api/v1/admin/consultants';
+const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
+const API_ADMIN_SESSION_EXTENSIONS_REQUESTS = '/api/v1/admin/session-extensions/requests';
+const API_COMMON_CODES_GROUPS_MAPPING_STATUS = '/api/v1/common-codes/groups/MAPPING_STATUS';
+
+
 /**
  * 회기 관리 컴포넌트 - 완전 재설계
 /**
@@ -70,10 +78,10 @@ const SessionManagement = () => {
             setLoading(true);
             
             const [clientsRes, consultantsRes, mappingsRes, requestsRes] = await Promise.all([
-                apiGet('/api/v1/admin/clients/with-mapping-info'),
-                apiGet('/api/v1/admin/consultants'),
-                apiGet('/api/v1/admin/mappings'),
-                apiGet('/api/v1/admin/session-extensions/requests')
+                apiGet(API_ADMIN_CLIENTS_WITH_MAPPING_INFO),
+                apiGet(API_ADMIN_CONSULTANTS),
+                apiGet(API_ADMIN_MAPPINGS),
+                apiGet(API_ADMIN_SESSION_EXTENSIONS_REQUESTS)
             ]);
             
             const clientsData = clientsRes?.data || clientsRes || [];
@@ -117,7 +125,7 @@ const SessionManagement = () => {
         try {
             setLoadingCodes(true);
             // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
-            const response = await apiGet('/api/v1/common-codes/groups/MAPPING_STATUS');
+            const response = await apiGet(API_COMMON_CODES_GROUPS_MAPPING_STATUS);
             if (response && response.length > 0) {
                 const options = response.map(code => ({
                     value: code.codeValue,

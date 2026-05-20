@@ -17,6 +17,11 @@ import SystemNotificationFormModal from '../molecules/SystemNotificationFormModa
 import { toDisplayString } from '../../../utils/safeDisplay';
 import '../../../styles/unified-design-tokens.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SYSTEM_NOTIFICATIONS_ADMIN_ALL = '/api/v1/system-notifications/admin/all';
+const API_SYSTEM_NOTIFICATIONS_ADMIN = '/api/v1/system-notifications/admin';
+
+
 const STATUS_OPTIONS = [
   { value: '', label: '전체' },
   { value: 'DRAFT', label: '임시 저장' },
@@ -50,7 +55,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
       params.page = 0;
       params.size = 50;
 
-      const response = await StandardizedApi.get('/api/v1/system-notifications/admin/all', params);
+      const response = await StandardizedApi.get(API_SYSTEM_NOTIFICATIONS_ADMIN_ALL, params);
       const raw = response?.notifications ?? response?.content ?? response?.data ?? response;
       const list = Array.isArray(raw) ? raw : [];
       setNotifications(list);
@@ -94,7 +99,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
       setSaveLoading(true);
       const endpoint = editingNotification
         ? `/api/v1/system-notifications/admin/${editingNotification.id}`
-        : '/api/v1/system-notifications/admin';
+        : API_SYSTEM_NOTIFICATIONS_ADMIN;
       if (editingNotification) {
         await StandardizedApi.put(endpoint, formData);
       } else {

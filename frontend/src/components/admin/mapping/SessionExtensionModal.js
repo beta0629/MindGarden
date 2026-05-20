@@ -8,6 +8,10 @@ import MGButton from '../../common/MGButton';
 import BadgeSelect from '../../common/BadgeSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_SESSION_EXTENSIONS_REQUESTS = '/api/v1/admin/session-extensions/requests';
+
+
 /**
  * 회기 추가 요청 모달 컴포넌트
 /**
@@ -123,7 +127,7 @@ const SessionExtensionModal = ({
 
             console.log('🚀 회기 추가 요청:', requestData);
 
-            const response = await csrfTokenManager.post('/api/v1/admin/session-extensions/requests', requestData);
+            const response = await csrfTokenManager.post(API_ADMIN_SESSION_EXTENSIONS_REQUESTS, requestData);
             const result = await response.json();
 
             if (result.success !== false) {

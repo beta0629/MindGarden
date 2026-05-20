@@ -36,6 +36,10 @@ import './CommonCodeManagementB0KlA.css';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES_GROUPS_LIST = '/api/v1/common-codes/groups/list';
+
+
 /**
  * - 2단 분할 구조 (마스터-디테일): 코드그룹 목록(좌) / 코드 관리(우)
  * - 아토믹 디자인 및 B0KlA 어드민 디자인 토큰 적용
@@ -146,7 +150,7 @@ const CommonCodeManagement = () => {
             if (groups && groups.length > 0) {
                 setCodeGroups(groups);
             } else {
-                const response = await apiGet('/api/v1/common-codes/groups/list');
+                const response = await apiGet(API_COMMON_CODES_GROUPS_LIST);
                 if (response && response.length > 0) {
                     const filteredGroups = response.filter(groupCode => {
                         return hasCodeGroupPermission(groupCode);

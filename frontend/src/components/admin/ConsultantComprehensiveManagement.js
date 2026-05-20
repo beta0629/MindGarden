@@ -65,6 +65,13 @@ import {
     getProfessionalProviderTypeLabel
 } from '../../constants/professionalProviderRoles';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
+const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
+const API_COMMON_CODES_CORE_GROUPS_SPECIALTY = '/api/v1/common-codes/core/groups/SPECIALTY';
+const API_ADMIN_CONSULTANTS = '/api/v1/admin/consultants';
+
+
 /** ContentHeader / 본문 main aria-labelledby 연동 */
 const CONSULTANT_COMP_MGMT_TITLE_ID = 'consultant-comprehensive-management-title';
 
@@ -330,7 +337,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 console.error('❌ sessionManager 사용 중 오류:', error);
             }
             
-            const response = await apiGet('/api/v1/admin/mappings');
+            const response = await apiGet(API_ADMIN_MAPPINGS);
             if (response && response.success) {
                 setMappings(response.data || []);
                 console.log('✅ 매칭 데이터 로딩 완료:', response.data?.length || 0, '개');
@@ -353,7 +360,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 console.error('❌ sessionManager 사용 중 오류:', error);
             }
             
-            const response = await apiGet('/api/v1/admin/schedules');
+            const response = await apiGet(API_ADMIN_SCHEDULES);
             if (response && response.success) {
                 setSchedules(response.data || []);
                 console.log('✅ 스케줄 데이터 로딩 완료:', response.data?.length || 0, '개');
@@ -450,7 +457,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 console.log('🔄 테넌트 코드가 없음, 코어 코드로 폴백 시도...');
                 try {
                     // 코어 코드 API 직접 호출
-                    const coreCodes = await apiGet('/api/v1/common-codes/core/groups/SPECIALTY');
+                    const coreCodes = await apiGet(API_COMMON_CODES_CORE_GROUPS_SPECIALTY);
                     console.log('📋 코어 코드 API 응답:', coreCodes);
                     
                     if (Array.isArray(coreCodes)) {
@@ -1022,7 +1029,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             
             console.log('📤 상담사 등록 요청 데이터:', { ...requestData, password: '***', profileImageUrl: requestData.profileImageUrl ? '(base64)' : undefined });
             
-            const response = await apiPost('/api/v1/admin/consultants', requestData, options);
+            const response = await apiPost(API_ADMIN_CONSULTANTS, requestData, options);
             console.log('📥 상담사 등록 응답:', response);
             
             // apiPost가 ApiResponse의 data만 추출하므로, response는 User 객체 또는 null

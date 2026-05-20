@@ -28,6 +28,10 @@ import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './DashboardManagement.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_TENANT_DASHBOARDS = '/api/v1/tenant/dashboards';
+
+
 const DASHBOARD_MGMT_TITLE_ID = 'dashboard-management-title';
 
 const DashboardManagement = () => {
@@ -44,7 +48,7 @@ const DashboardManagement = () => {
   const loadDashboards = useCallback(async() => {
     setLoading(true);
     try {
-      const response = await apiGet(`/api/v1/tenant/dashboards`);
+      const response = await apiGet(API_TENANT_DASHBOARDS);
       
       // apiGet은 ApiResponse 래퍼를 처리하여 data를 반환하거나, 직접 배열을 반환할 수 있음
       let dashboardList = [];

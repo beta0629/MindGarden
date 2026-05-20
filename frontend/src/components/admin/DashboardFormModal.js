@@ -44,6 +44,13 @@ import {
   dashboardFormConfirmDeleteRole
 } from '../../constants/dashboardFormModalStrings';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_AUTH_TENANT_CURRENT = '/api/v1/auth/tenant/current';
+const API_TENANT_DASHBOARDS = '/api/v1/tenant/dashboards';
+const API_TENANT_ROLES_TEMPLATES = '/api/v1/tenant/roles/templates';
+const API_TENANT_ROLES = '/api/v1/tenant/roles';
+
+
 // 대시보드 설정을 JSON 문자열로 변환하는 유틸리티 함수
 const stringifyDashboardConfig = (config) => {
   try {
@@ -107,7 +114,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       // 테넌트 정보 로드 (businessType 포함)
       // 방법 1: /api/v1/auth/tenant/current 사용
       try {
-        const tenantResponse = await apiGet(`/api/v1/auth/tenant/current`);
+        const tenantResponse = await apiGet(API_AUTH_TENANT_CURRENT);
         // apiGet은 ApiResponse 래퍼를 처리하여 data를 반환
         // 응답 구조: { tenant: { tenantId, name, businessType, status } }
         if (tenantResponse) {
@@ -141,7 +148,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       // 역할 목록과 대시보드 목록을 동시에 로드
       const [rolesResponse, dashboardsResponse] = await Promise.all([
         apiGet(`/api/tenants/${tenantId}/roles`),
-        apiGet(`/api/v1/tenant/dashboards`).catch(() => null) // 대시보드 목록 로드 실패해도 계속 진행
+        apiGet(API_TENANT_DASHBOARDS).catch(() => null) // 대시보드 목록 로드 실패해도 계속 진행
       ]);
       
       // 대시보드가 있는 역할 ID 목록 생성
@@ -245,7 +252,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         return;
       }
 
-      const templatesResponse = await apiGet(`/api/v1/tenant/roles/templates`);
+      const templatesResponse = await apiGet(API_TENANT_ROLES_TEMPLATES);
       
       if (templatesResponse && Array.isArray(templatesResponse)) {
         // 업종별 필터링
@@ -306,7 +313,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       };
 
       const response = await csrfTokenManager.post(
-        `/api/v1/tenant/roles`,
+        API_TENANT_ROLES,
         requestData
       );
 
@@ -919,7 +926,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     try {
       const url = isEditMode
         ? `/api/v1/tenant/dashboards/${dashboard.dashboardId}`
-        : `/api/v1/tenant/dashboards`;
+        : API_TENANT_DASHBOARDS;
 
       const method = isEditMode ? 'PUT' : 'POST';
 

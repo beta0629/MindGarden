@@ -13,6 +13,10 @@ import BadgeSelect from '../common/BadgeSelect';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=VACATION_TYPE';
+
+
 /**
  * 관리자용 휴가 관리 모달 컴포넌트
 /**
@@ -68,7 +72,7 @@ const VacationManagementModal = ({
         const loadVacationTypeCodes = async() => {
             try {
                 setLoadingCodes(true);
-                const response = await apiGet('/api/v1/common-codes?codeGroup=VACATION_TYPE');
+                const response = await apiGet(API_COMMON_CODES);
                 if (response && response.length > 0) {
                     // 원하는 휴가 유형만 필터링 (시간이 표시된 구체적인 옵션만)
                     const allowedTypes = [

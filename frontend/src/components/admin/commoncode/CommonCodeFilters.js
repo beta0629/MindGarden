@@ -4,6 +4,10 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './CommonCodeFilters.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=STATUS';
+
+
 /**
  * 공통코드 필터 컴포넌트
 /**
@@ -39,7 +43,7 @@ const CommonCodeFilters = ({
                 codes = await getCommonCodes('STATUS');
             } catch (error) {
                 // 하위 호환성: 기존 API 사용
-                const response = await fetch('/api/v1/common-codes?codeGroup=STATUS');
+                const response = await fetch(API_COMMON_CODES);
                 if (response.ok) {
                     const data = await response.json();
                     codes = Array.isArray(data) ? data : [];

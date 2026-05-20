@@ -10,6 +10,13 @@ import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import { USER_ROLES } from '../../constants/roles';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
+const API_PERMISSIONS_MANAGEABLE = '/api/v1/permissions/manageable';
+const API_PERMISSIONS_MY_PERMISSIONS = '/api/v1/permissions/my-permissions';
+const API_PERMISSIONS_ROLE_PERMISSIONS = '/api/v1/permissions/role-permissions';
+
+
 const PERMISSION_CATEGORIES = {
     '대시보드 및 보고서': [
         { code: 'ADMIN_DASHBOARD_VIEW', name: '관리자 대시보드', description: '관리자 대시보드 전체 접근' },
@@ -151,7 +158,7 @@ const PermissionManagement = () => {
 
     const fetchUserInfo = async() => {
         try {
-            const response = await fetch('/api/v1/auth/current-user', {
+            const response = await fetch(API_AUTH_CURRENT_USER, {
                 credentials: 'include'
             });
             
@@ -171,7 +178,7 @@ const PermissionManagement = () => {
     const loadAllPermissions = useCallback(async() => {
         try {
             // DB에서 모든 권한 목록 로드
-            const response = await fetch('/api/v1/permissions/manageable', {
+            const response = await fetch(API_PERMISSIONS_MANAGEABLE, {
                 credentials: 'include'
             });
             
@@ -190,7 +197,7 @@ const PermissionManagement = () => {
     const loadUserPermissions = useCallback(async() => {
         try {
             // 실제 사용자 권한 로드
-            const response = await fetch('/api/v1/permissions/my-permissions', {
+            const response = await fetch(API_PERMISSIONS_MY_PERMISSIONS, {
                 credentials: 'include'
             });
             
@@ -285,7 +292,7 @@ const PermissionManagement = () => {
         setMessage('');
         
         try {
-            const response = await fetch('/api/v1/permissions/role-permissions', {
+            const response = await fetch(API_PERMISSIONS_ROLE_PERMISSIONS, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

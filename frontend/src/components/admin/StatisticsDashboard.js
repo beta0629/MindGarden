@@ -17,6 +17,13 @@ import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './StatisticsDashboard.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_STATISTICS_OVERALL = '/api/v1/admin/statistics/overall';
+const API_ADMIN_STATISTICS_TRENDS = '/api/v1/admin/statistics/trends';
+const API_ADMIN_STATISTICS_CHART_DATA = '/api/v1/admin/statistics/chart-data';
+const API_ADMIN_STATISTICS_RECENT_ACTIVITY = '/api/v1/admin/statistics/recent-activity';
+
+
 const STATISTICS_TITLE_ID = 'statistics-dashboard-title';
 
 /**
@@ -57,10 +64,10 @@ const StatisticsDashboard = () => {
 
     try {
       const [overallStats, trendStats, chartStats, activityStats] = await Promise.all([
-        apiGet('/api/v1/admin/statistics/overall'),
-        apiGet('/api/v1/admin/statistics/trends'),
-        apiGet('/api/v1/admin/statistics/chart-data'),
-        apiGet('/api/v1/admin/statistics/recent-activity')
+        apiGet(API_ADMIN_STATISTICS_OVERALL),
+        apiGet(API_ADMIN_STATISTICS_TRENDS),
+        apiGet(API_ADMIN_STATISTICS_CHART_DATA),
+        apiGet(API_ADMIN_STATISTICS_RECENT_ACTIVITY)
       ]);
 
       const apiData = {

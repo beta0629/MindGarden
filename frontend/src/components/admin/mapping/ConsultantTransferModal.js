@@ -7,6 +7,10 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import CustomSelect from '../../common/CustomSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_MAPPINGS_TRANSFER = '/api/v1/admin/mappings/transfer';
+
 /**
  * 상담사 변경 모달 컴포넌트
 /**
@@ -148,7 +152,7 @@ const ConsultantTransferModal = ({
         packagePrice: formData.packagePrice ? parseInt(formData.packagePrice) : null
       };
       
-      const response = await fetch('/api/v1/admin/mappings/transfer', {
+      const response = await fetch(API_ADMIN_MAPPINGS_TRANSFER, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

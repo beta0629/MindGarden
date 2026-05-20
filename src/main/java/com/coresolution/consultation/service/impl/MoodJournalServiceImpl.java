@@ -7,16 +7,20 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.MindWeatherConstants;
 import com.coresolution.consultation.constant.MoodJournalConstants;
 import com.coresolution.consultation.dto.moodjournal.MoodJournalEntryResponse;
+import com.coresolution.consultation.dto.moodjournal.MoodJournalInboxItemResponse;
 import com.coresolution.consultation.dto.moodjournal.MoodJournalUpsertRequest;
 import com.coresolution.consultation.dto.moodjournal.MoodStatRowResponse;
 import com.coresolution.consultation.entity.MoodJournalEntry;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.MoodJournalEntryRepository;
+import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.MoodJournalService;
+import com.coresolution.consultation.service.support.ConsultantClientShareSupport;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -38,6 +42,9 @@ public class MoodJournalServiceImpl implements MoodJournalService {
     private static final DateTimeFormatter ISO_OFFSET = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     private final MoodJournalEntryRepository moodJournalEntryRepository;
+    private final UserRepository userRepository;
+    private final ConsultantClientShareSupport consultantClientShareSupport;
+    private final MobilePushDispatchService mobilePushDispatchService;
 
     @Override
     @Transactional(readOnly = true)
@@ -74,8 +81,10 @@ public class MoodJournalServiceImpl implements MoodJournalService {
         MoodJournalEntry entity = moodJournalEntryRepository
             .findByTenantClientAndDate(tenantId, client.getId(), journalDate)
             .orElseGet(() -> newEntry(tenantId, client.getId(), journalDate));
+        boolean wasShared = entity.isSharedWithConsultant();
         applyPayload(entity, request);
         moodJournalEntryRepository.save(entity);
+        maybeDispatchSharePush(tenantId, client, entity, wasShared);
         return toResponse(entity);
     }
 
@@ -87,8 +96,10 @@ public class MoodJournalServiceImpl implements MoodJournalService {
         MoodJournalEntry entity = moodJournalEntryRepository
             .findByTenantClientAndDate(tenantId, client.getId(), date)
             .orElseThrow(() -> new EntityNotFoundException("MoodJournalEntry", date));
+        boolean wasShared = entity.isSharedWithConsultant();
         applyPayload(entity, request);
         moodJournalEntryRepository.save(entity);
+        maybeDispatchSharePush(tenantId, client, entity, wasShared);
         return toResponse(entity);
     }
 
@@ -136,6 +147,72 @@ public class MoodJournalServiceImpl implements MoodJournalService {
             out.add(MoodStatRowResponse.builder().date(d.toString()).value(v).build());
         }
         return out;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MoodJournalInboxItemResponse> listInboxForConsultant(User consultant) {
+        assertTenantMatchesUser(consultant);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return moodJournalEntryRepository.findInboxForConsultant(tenantId, consultant.getId()).stream()
+            .map(e -> toInboxItem(tenantId, e))
+            .toList();
+    }
+
+    private void maybeDispatchSharePush(
+            String tenantId,
+            User client,
+            MoodJournalEntry entity,
+            boolean wasShared) {
+        if (wasShared || !entity.isSharedWithConsultant()) {
+            return;
+        }
+        User managedClient = userRepository.findByTenantIdAndId(tenantId, client.getId())
+            .orElse(client);
+        User targetConsultant = consultantClientShareSupport.resolveTargetConsultant(
+            tenantId, managedClient, null);
+        consultantClientShareSupport.assertConsultantMappedToClient(
+            tenantId, targetConsultant, managedClient);
+        String clientName = consultantClientShareSupport.resolveClientDisplayName(managedClient);
+        mobilePushDispatchService.dispatchMoodJournalShared(
+            tenantId,
+            managedClient.getId(),
+            targetConsultant.getId(),
+            clientName,
+            entity.getJournalDate().toString(),
+            entity.getEmoji(),
+            entity.getMemo());
+    }
+
+    private MoodJournalInboxItemResponse toInboxItem(String tenantId, MoodJournalEntry e) {
+        String emoji = e.getEmoji();
+        if (emoji == null || emoji.isBlank()) {
+            emoji = MoodJournalConstants.emojiForMoodValue(e.getMoodValue());
+        }
+        List<String> tags = e.getTags() == null ? List.of() : List.copyOf(e.getTags());
+        Long clientId = e.getClientId();
+        String clientName = null;
+        if (clientId != null) {
+            clientName = userRepository.findByTenantIdAndId(tenantId, clientId)
+                .map(consultantClientShareSupport::resolveClientDisplayName)
+                .orElse(null);
+        }
+        if (clientId != null && MindWeatherConstants.isGenericClientDisplayLabel(clientName)) {
+            clientName = MindWeatherConstants.GENERIC_CLIENT_DISPLAY_LABEL + " #" + clientId;
+        }
+        return MoodJournalInboxItemResponse.builder()
+            .id(e.getId())
+            .clientId(clientId)
+            .clientName(clientName)
+            .date(e.getJournalDate().toString())
+            .moodValue(e.getMoodValue())
+            .emoji(emoji)
+            .tags(tags)
+            .memo(e.getMemo())
+            .sharedWithConsultant(e.isSharedWithConsultant())
+            .createdAt(formatOffset(e.getCreatedAt()))
+            .updatedAt(formatOffset(e.getUpdatedAt()))
+            .build();
     }
 
     private MoodJournalEntry newEntry(String tenantId, Long clientId, LocalDate journalDate) {

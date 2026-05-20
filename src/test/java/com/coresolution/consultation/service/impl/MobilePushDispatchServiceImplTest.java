@@ -506,4 +506,36 @@ class MobilePushDispatchServiceImplTest {
                 eq("tenant-a"), eq(MobilePushCanonicalTypes.SHOP_ORDER_PAID), eq("ord-1"), eq("paid"));
         verify(restTemplate).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class));
     }
+
+    @Test
+    @DisplayName("dispatchMoodJournalShared: 상담사 fanout·journalDate dedupe")
+    void dispatchMoodJournalShared_fanoutConsultant() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+        when(mobilePushDispatchDedupService.tryClaim(
+                eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.MOOD_JOURNAL_SHARED),
+                eq("77:2026-05-20"),
+                eq("shared")))
+            .thenReturn(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(88L)))
+            .thenReturn(Optional.empty());
+        MobilePushToken token = new MobilePushToken();
+        token.setPushToken("ExponentPushToken[mj]");
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(88L))))
+            .thenReturn(List.of(token));
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+            .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        mobilePushDispatchService.dispatchMoodJournalShared(
+                "tenant-a", 77L, 88L, "이내담", "2026-05-20", "🙂", "메모");
+
+        verify(mobilePushDispatchDedupService).tryClaim(
+                eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.MOOD_JOURNAL_SHARED),
+                eq("77:2026-05-20"),
+                eq("shared"));
+        verify(restTemplate).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class));
+    }
 }

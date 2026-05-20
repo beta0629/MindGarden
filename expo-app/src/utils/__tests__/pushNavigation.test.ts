@@ -117,6 +117,13 @@ describe('pushNavigation P1–P12', () => {
       route: '/(client)/(wellness)/mood-journal',
     },
     {
+      label: 'mood journal shared consultant',
+      type: 'mood_journal_shared',
+      role: 'consultant' as const,
+      data: { journalDate: '2026-05-20', clientUserId: '42' },
+      route: '/(consultant)/(more)/mood-journal-inbox',
+    },
+    {
       label: 'P12 notice client',
       type: PUSH_SCENARIOS.SYSTEM_NOTICE.type,
       role: 'client' as const,

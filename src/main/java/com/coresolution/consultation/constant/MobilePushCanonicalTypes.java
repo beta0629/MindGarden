@@ -20,6 +20,8 @@ public final class MobilePushCanonicalTypes {
     public static final String SESSION_LOW = "session_low";
     /** 내담자 마음 날씨 카드 상담사 공유 */
     public static final String MIND_WEATHER_SHARED = "mind_weather_shared";
+    /** 내담자 감정 일기 상담사 공유 */
+    public static final String MOOD_JOURNAL_SHARED = "mood_journal_shared";
     /** 어드민 매칭 승인(approve) — PG 결제와 분리 */
     public static final String MAPPING_APPROVED = "mapping_approved";
 

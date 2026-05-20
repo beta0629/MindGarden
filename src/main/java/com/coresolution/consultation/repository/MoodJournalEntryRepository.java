@@ -31,4 +31,13 @@ public interface MoodJournalEntryRepository extends BaseRepository<MoodJournalEn
         @Param("tenantId") String tenantId,
         @Param("clientId") Long clientId,
         @Param("day") LocalDate day);
+
+    @Query("SELECT e FROM MoodJournalEntry e WHERE e.tenantId = :tenantId AND e.isDeleted = false "
+        + "AND e.sharedWithConsultant = true AND e.clientId IN "
+        + "(SELECT m.client.id FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId "
+        + "AND m.consultant.id = :consultantId AND m.status = 'ACTIVE') "
+        + "ORDER BY e.journalDate DESC, e.updatedAt DESC")
+    List<MoodJournalEntry> findInboxForConsultant(
+        @Param("tenantId") String tenantId,
+        @Param("consultantId") Long consultantId);
 }

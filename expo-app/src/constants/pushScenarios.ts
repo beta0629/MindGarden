@@ -284,6 +284,8 @@ export const PUSH_TYPE_ALIASES: Readonly<Record<string, string>> = {
   message_received: 'new_message',
   mind_weather_share: 'mind_weather_shared',
   mind_weather_shared: 'mind_weather_shared',
+  mood_journal_share: 'mood_journal_shared',
+  mood_journal_shared: 'mood_journal_shared',
   admin_notice: 'system_notice',
   maintenance_notice: 'system_notice',
   service_notice: 'system_notice',
@@ -342,6 +344,16 @@ const MIND_WEATHER_SHARED_SCENARIO: PushScenario = {
   settingsCategory: 'wellness',
 };
 
+const MOOD_JOURNAL_SHARED_SCENARIO: PushScenario = {
+  type: 'mood_journal_shared',
+  title: '감정 일기 공유',
+  icon: 'Heart',
+  route: '/(consultant)/(more)/mood-journal-inbox',
+  routeConsultant: '/(consultant)/(more)/mood-journal-inbox',
+  category: 'wellness',
+  settingsCategory: 'wellness',
+};
+
 /** 서버에서 온 `data.type`을 `PUSH_SCENARIOS`의 canonical type으로 정규화 */
 export function resolveCanonicalPushType(type: string): string {
   return PUSH_TYPE_ALIASES[type] ?? type;
@@ -355,6 +367,7 @@ for (const s of Object.values(PUSH_SCENARIOS)) {
 SCENARIO_BY_TYPE.set('payment_refunded', PAYMENT_REFUNDED_SCENARIO);
 SCENARIO_BY_TYPE.set('record_shared', RECORD_SHARED_SCENARIO);
 SCENARIO_BY_TYPE.set('mind_weather_shared', MIND_WEATHER_SHARED_SCENARIO);
+SCENARIO_BY_TYPE.set('mood_journal_shared', MOOD_JOURNAL_SHARED_SCENARIO);
 
 /**
  * 서버 알림 type으로 시나리오 조회 (별칭·추가 type 포함)

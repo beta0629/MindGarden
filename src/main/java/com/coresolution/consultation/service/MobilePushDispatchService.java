@@ -97,6 +97,15 @@ public interface MobilePushDispatchService {
             String clientDisplayName,
             String summarySnippet);
 
+    void dispatchMoodJournalShared(
+            String tenantId,
+            Long clientUserId,
+            Long consultantUserId,
+            String clientDisplayName,
+            String journalDate,
+            String emoji,
+            String memoSnippet);
+
     /**
      * 어드민 매칭 정산(결제·입금·승인) 푸시. PG {@code Payment} 발송과 분리·멱등 버킷 사용.
      *

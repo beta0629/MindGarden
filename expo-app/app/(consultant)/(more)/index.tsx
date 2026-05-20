@@ -18,6 +18,7 @@ import {
   Settings,
   LogOut,
   CloudSun,
+  BookHeart,
   Wallet,
   BarChart3,
 } from 'lucide-react-native';
@@ -29,6 +30,7 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { toDisplayString } from '@/utils/safeDisplay';
 import { CONSULTANT_SALARY_SETTLEMENT_COPY } from '@/constants/consultantSalarySettlementCopy';
 import { CONSULTANT_SESSION_KPI_COPY } from '@/constants/consultantSessionKpiCopy';
+import { CONSULTANT_MOOD_JOURNAL_INBOX_COPY } from '@/constants/consultantMoodJournalInboxCopy';
 
 export default function ConsultantMore() {
   const theme = useTheme();
@@ -119,6 +121,12 @@ export default function ConsultantMore() {
               title="마음 날씨 수신함"
               subtitle="내담자가 공유한 분석 카드"
               onPress={() => router.push('/(consultant)/(more)/mind-weather-inbox')}
+            />
+            <MenuListItem
+              icon={BookHeart}
+              title={CONSULTANT_MOOD_JOURNAL_INBOX_COPY.MENU_TITLE}
+              subtitle={CONSULTANT_MOOD_JOURNAL_INBOX_COPY.MENU_SUBTITLE}
+              onPress={() => router.push('/(consultant)/(more)/mood-journal-inbox')}
             />
             <MenuListItem
               icon={BarChart3}

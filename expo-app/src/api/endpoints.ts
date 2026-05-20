@@ -252,6 +252,7 @@ export const MOOD_JOURNAL_API = {
   CREATE: '/api/v1/mood-journals',
   delete: (date: string) => `/api/v1/mood-journals/${date}`,
   STATS: '/api/v1/mood-journals/stats',
+  CONSULTANT_INBOX: '/api/v1/mood-journals/inbox',
 } as const;
 
 export const SELF_ASSESSMENT_API = {

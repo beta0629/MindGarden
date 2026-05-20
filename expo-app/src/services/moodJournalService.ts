@@ -16,6 +16,9 @@ import { getMmkv } from '@/lib/getMmkv';
 import { apiDelete, apiGet, apiPost, apiPut } from '@/api/client';
 import { MOOD_JOURNAL_API } from '@/api/endpoints';
 import { unwrapApiResponse } from '@/api/unwrapApiResponse';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
+import { CONSULTANT_MOOD_JOURNAL_INBOX_FETCH_FAILED } from '@/constants/consultantMoodJournalInboxCopy';
 import type { EmotionTag, MoodStatPeriod } from '@/constants/moodConstants';
 import { MOOD_STORAGE_KEY, MOOD_EMOJIS } from '@/constants/moodConstants';
 import { toDisplayString } from '@/utils/toDisplayString';
@@ -36,6 +39,25 @@ export interface MoodJournalEntry {
 export interface MoodStat {
   date: string;
   value: number;
+}
+
+export interface MoodJournalInboxItem {
+  id: number;
+  clientId: number | null;
+  clientName: string | null;
+  date: string;
+  moodValue: number;
+  emoji: string;
+  tags: EmotionTag[];
+  memo: string;
+  sharedWithConsultant: boolean;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface MoodJournalInboxPayload {
+  items: MoodJournalInboxItem[];
+  source: 'api';
 }
 
 function getAllEntriesLocal(): Record<string, MoodJournalEntry> {
@@ -291,4 +313,84 @@ export async function fetchMoodStats(period: MoodStatPeriod): Promise<MoodStat[]
     const key = format(d, 'yyyy-MM-dd');
     return { date: key, value: all[key]?.moodValue ?? 0 };
   });
+}
+
+function normalizeInboxItem(raw: unknown): MoodJournalInboxItem | null {
+  if (raw == null || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+  const date = toDisplayString(o.date ?? o.journalDate, '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const id = toSafeNumber(o.id, Number.NaN);
+  if (!Number.isFinite(id) || id <= 0) return null;
+  const moodValue = toSafeNumber(o.moodValue ?? o.mood, 0);
+  const emojiDef = MOOD_EMOJIS.find((m) => m.value === moodValue);
+  const tagsRaw = o.tags ?? o.emotionTags;
+  const tags: EmotionTag[] = Array.isArray(tagsRaw)
+    ? (tagsRaw.filter((t) => typeof t === 'string') as EmotionTag[])
+    : [];
+  const clientIdRaw = o.clientId ?? o.clientUserId;
+  const clientIdNum = clientIdRaw == null ? Number.NaN : toSafeNumber(clientIdRaw, Number.NaN);
+  const clientId =
+    Number.isFinite(clientIdNum) && clientIdNum > 0 ? clientIdNum : null;
+  return {
+    id,
+    clientId,
+    clientName: toDisplayString(o.clientName, '') || null,
+    date,
+    moodValue,
+    emoji: toDisplayString(o.emoji, emojiDef?.emoji ?? '😐'),
+    tags,
+    memo: toDisplayString(o.memo ?? o.note, ''),
+    sharedWithConsultant: Boolean(o.sharedWithConsultant ?? o.shareWithConsultant),
+    createdAt: toDisplayString(o.createdAt ?? o.created_at, ''),
+    updatedAt: toDisplayString(o.updatedAt ?? o.updated_at, '') || null,
+  };
+}
+
+function normalizeInboxPayload(raw: unknown): MoodJournalInboxItem[] | null {
+  const body = unwrapApiResponse<unknown>(raw) ?? raw;
+  if (body == null) return null;
+  if (Array.isArray(body)) {
+    return body
+      .map((row) => normalizeInboxItem(row))
+      .filter((x): x is MoodJournalInboxItem => x != null);
+  }
+  if (typeof body === 'object') {
+    const o = body as Record<string, unknown>;
+    if (Array.isArray(o.content)) return normalizeInboxPayload(o.content);
+    if (Array.isArray(o.items)) return normalizeInboxPayload(o.items);
+  }
+  return null;
+}
+
+export class MoodJournalInboxFetchError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'MoodJournalInboxFetchError';
+    this.status = status;
+  }
+}
+
+export async function fetchConsultantMoodJournalInbox(): Promise<MoodJournalInboxPayload> {
+  syncTenantFromAccessToken(useAuthStore.getState().accessToken);
+  let raw: unknown;
+  try {
+    raw = await apiGet<unknown>(MOOD_JOURNAL_API.CONSULTANT_INBOX);
+  } catch (err) {
+    const rec = err as { status?: number; message?: string };
+    throw new MoodJournalInboxFetchError(
+      toDisplayString(rec.message, CONSULTANT_MOOD_JOURNAL_INBOX_FETCH_FAILED),
+      rec.status ?? 0,
+    );
+  }
+  if (raw != null && typeof raw === 'object' && (raw as Record<string, unknown>).success === false) {
+    const root = raw as Record<string, unknown>;
+    throw new Error(
+      toDisplayString(root.message ?? root.error ?? root.code, CONSULTANT_MOOD_JOURNAL_INBOX_FETCH_FAILED),
+    );
+  }
+  const items = normalizeInboxPayload(raw);
+  if (items != null) return { items, source: 'api' };
+  throw new MoodJournalInboxFetchError(CONSULTANT_MOOD_JOURNAL_INBOX_FETCH_FAILED, 0);
 }

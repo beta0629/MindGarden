@@ -20,7 +20,7 @@
 }
 
 .mg-layout--gradient {
-  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-gradient-primary-end) 100%);
   color: var(--color-bg-surface);
 }
 
@@ -61,7 +61,7 @@
 .mg-section--bg-transparent { background: transparent; }
 .mg-section--bg-white { background: var(--color-bg-surface); }
 .mg-section--bg-gray { background: #f8fafc; }
-.mg-section--bg-primary { background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%); }
+.mg-section--bg-primary { background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-gradient-primary-end) 100%); }
 .mg-section--bg-secondary { background: linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%); }
 
 /* ===== 컨테이너 컴포넌트 ===== */
@@ -160,7 +160,7 @@
 
 .mg-divider--gradient {
   height: 2px;
-  background: linear-gradient(90deg, var(--mg-primary-500), #764ba2);
+  background: linear-gradient(90deg, var(--mg-primary-500), var(--mg-gradient-primary-end));
   border-radius: 1px;
 }
 

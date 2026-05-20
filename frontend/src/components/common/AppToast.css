@@ -28,9 +28,9 @@
 .app-toast {
   position: relative;
   width: 100%;
-  background: var(--mg-client-surface, #ffffff);
+  background: var(--mg-client-surface, var(--mg-white));
   border-radius: var(--mg-radius-lg, 12px);
-  box-shadow: var(--mg-shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.1));
+  box-shadow: var(--mg-shadow-lg, 0 10px 15px var(--mg-shadow-light));
   overflow: hidden;
   pointer-events: auto;
   display: flex;
@@ -120,7 +120,7 @@
   flex: 1;
   font-size: var(--mg-font-size-sm, 14px);
   font-weight: var(--mg-font-weight-medium, 500);
-  color: var(--mg-color-text-main, #1a1a1a);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-900));
   line-height: 1.4;
 }
 
@@ -140,13 +140,13 @@
 }
 
 .app-toast__close:hover {
-  background: var(--mg-color-bg-secondary, #f5f5f5);
+  background: var(--mg-color-bg-secondary, var(--mg-gray-100));
 }
 
 /* 프로그레스 바 */
 .app-toast__progress-track {
   height: 3px;
-  background: var(--mg-color-bg-secondary, #f5f5f5);
+  background: var(--mg-color-bg-secondary, var(--mg-gray-100));
 }
 
 .app-toast__progress-bar {

@@ -15,7 +15,7 @@
 
 .mg-admin-sidebar {
     width: var(--mg-layout-sidebar-width, 260px);
-    background: var(--mg-layout-sidebar-bg, #2C2C2C);
+    background: var(--mg-layout-sidebar-bg, var(--mg-dark-bg-800));
     color: var(--mg-white);
     overflow-y: auto;
     display: flex;
@@ -121,7 +121,7 @@
 }
 
 .mg-menu-link.mg-active {
-    background: var(--mg-layout-sidebar-active-bg, #3D5246);
+    background: var(--mg-layout-sidebar-active-bg, var(--mg-color-primary-main));
     color: var(--mg-white);
 }
 

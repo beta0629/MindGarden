@@ -69,7 +69,7 @@
   min-height: var(--button-height-lg);
 }
 
-/* Variants — B0KlA primary #3D5246, radius 10px */
+/* Variants — B0KlA primary var(--mg-color-primary-main), radius 10px */
 .mg-button--primary {
   background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
   color: var(--mg-color-text-on-primary, var(--mg-white));

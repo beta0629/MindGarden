@@ -104,7 +104,7 @@
 .summary-panels-summary-value {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 /* 상담사 목록 */
@@ -121,12 +121,12 @@
   padding: 1rem;
   background: var(--mg-gray-100);
   border-radius: 8px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--mg-color-border-main);
   transition: all 0.2s ease;
 }
 
 .consultant-card:hover {
-  background: #e9ecef;
+  background: var(--mg-color-border-main);
   transform: translateY(-1px);
   box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
@@ -137,7 +137,7 @@
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--mg-color-border-main);
 }
 
 .consultant-details {
@@ -147,7 +147,7 @@
 .consultant-name {
   font-size: 1rem;
   font-weight: 600;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
   margin-bottom: 0.25rem;
 }
 
@@ -185,7 +185,7 @@
 .summary-panels-mapping-actions {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--mg-color-border-main);
 }
 
 .summary-panels-mapping-actions .mg-button {

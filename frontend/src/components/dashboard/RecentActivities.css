@@ -63,11 +63,11 @@
   background: var(--mg-gray-100);
   border-radius: 8px;
   transition: all 0.2s ease;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--mg-color-border-main);
 }
 
 .recent-activities-activity-item:hover {
-  background: #e9ecef;
+  background: var(--mg-color-border-main);
   border-color: var(--mg-primary-500);
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
@@ -103,7 +103,7 @@
 .recent-activities-activity-title {
   font-size: 1rem;
   font-weight: 500;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
   margin-bottom: 0.25rem;
   line-height: 1.4;
 }

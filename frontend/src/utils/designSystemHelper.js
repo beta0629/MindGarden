@@ -4,6 +4,10 @@
  * CSS 변수와 테마 관리
  */
 
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_CSS_THEMES_CONSULTANT_COLORS = '/api/v1/admin/css-themes/consultant-colors';
+
 /**
  * CSS 변수에 상담사별 색상 설정
 /**
@@ -91,7 +95,7 @@ export const initializeDesignSystem = async(config = {}) => {
     // 상담사별 색상 로드
     if (config.loadConsultantColors !== false) {
       try {
-        const response = await fetch('/api/v1/admin/css-themes/consultant-colors');
+        const response = await fetch(API_ADMIN_CSS_THEMES_CONSULTANT_COLORS);
         const data = await response.json();
         
         if (data.success && data.colors) {

@@ -7,6 +7,10 @@
  */
 import { USER_ROLES, LEGACY_USER_ROLES } from '../constants/roles';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_CONSULTATION_MESSAGES_ALL = '/api/v1/consultation-messages/all';
+
+
 export function getConsultationMessagesListPath(user) {
   if (user == null || user.id == null || user.id === '') {
     return null;
@@ -19,7 +23,7 @@ export function getConsultationMessagesListPath(user) {
     return `/api/v1/consultation-messages/client/${user.id}`;
   }
   if (role === USER_ROLES.ADMIN || role.includes(USER_ROLES.ADMIN)) {
-    return '/api/v1/consultation-messages/all';
+    return API_CONSULTATION_MESSAGES_ALL;
   }
   return `/api/v1/consultation-messages/client/${user.id}`;
 }

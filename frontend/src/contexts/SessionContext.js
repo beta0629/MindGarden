@@ -11,6 +11,10 @@ import {
 import { AUTH_MESSAGES } from '../constants/messages';
 import { USER_ROLES } from '../constants/roles';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_PERMISSIONS_CHECK_PERMISSION = '/api/v1/permissions/check-permission';
+
+
 // 세션 상태 타입 정의
 const SessionState = {
   user: null,
@@ -564,7 +568,7 @@ export const SessionProvider = ({ children }) => {
     hasPermission: async(permission) => {
       try {
         const { apiPost } = await import('../utils/ajax');
-        const result = await apiPost('/api/v1/permissions/check-permission', { permission });
+        const result = await apiPost(API_PERMISSIONS_CHECK_PERMISSION, { permission });
         return result?.success && result?.data?.hasPermission === true;
       } catch (error) {
         console.error('권한 체크 오류:', error);

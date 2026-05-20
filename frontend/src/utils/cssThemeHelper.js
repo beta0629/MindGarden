@@ -14,6 +14,11 @@
 
 import { apiGet } from './ajax';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_CSS_THEMES_THEMES = '/api/v1/admin/css-themes/themes';
+const API_ADMIN_CSS_THEMES_THEMES_DEFAULT = '/api/v1/admin/css-themes/themes/default';
+
+
 // 테마 색상 캐시 (5분간 유지)
 const themeColorCache = new Map();
 const cacheTimestamp = new Map();
@@ -71,7 +76,7 @@ export const getAllActiveThemes = async() => {
         const cached = getFromCache(cacheKey);
         if (cached) return cached;
 
-        const response = await apiGet('/api/v1/admin/css-themes/themes');
+        const response = await apiGet(API_ADMIN_CSS_THEMES_THEMES);
         if (response.success && response.data) {
             setToCache(cacheKey, response.data);
             return response.data;
@@ -94,7 +99,7 @@ export const getDefaultTheme = async() => {
         const cached = getFromCache(cacheKey);
         if (cached) return cached;
 
-        const response = await apiGet('/api/v1/admin/css-themes/themes/default');
+        const response = await apiGet(API_ADMIN_CSS_THEMES_THEMES_DEFAULT);
         if (response.success && response.data) {
             setToCache(cacheKey, response.data);
             return response.data;

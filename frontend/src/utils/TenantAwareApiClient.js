@@ -10,6 +10,10 @@
 
 import StandardizedApi from './standardizedApi';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_TENANT_VALIDATE_CODE = '/api/v1/tenant/validate-code';
+
+
 const TENANT_ID_KEY = 'mg_tenant_id';
 
 class TenantAwareApiClient {
@@ -119,7 +123,7 @@ class TenantAwareApiClient {
    * @returns {Promise<{valid: boolean, tenantId: string, tenantName: string}>}
    */
   static async validateTenantCode(tenantCode) {
-    const response = await StandardizedApi.post('/api/v1/tenant/validate-code', {
+    const response = await StandardizedApi.post(API_TENANT_VALIDATE_CODE, {
       code: tenantCode,
     });
     return response;

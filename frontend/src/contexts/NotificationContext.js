@@ -5,6 +5,10 @@ import { apiGet, apiPost } from '../utils/ajax';
 import { getConsultationMessagesListPath } from '../utils/consultationMessagesApi';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../constants/roles';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SYSTEM_NOTIFICATIONS_READ_ALL = '/api/v1/system-notifications/read-all';
+
+
 const NotificationContext = createContext();
 
 const PUBLIC_PATHS = [
@@ -244,7 +248,7 @@ export const NotificationProvider = ({ children }) => {
   const markAllSystemNotificationsAsRead = async() => {
     try {
       console.log('📢 공지 일괄 읽음 처리 시작');
-      await apiPost('/api/v1/system-notifications/read-all', {});
+      await apiPost(API_SYSTEM_NOTIFICATIONS_READ_ALL, {});
       setSystemNotifications([]);
       lastMarkAllReadSystemAtRef.current = Date.now();
       setUnreadSystemCount(0);

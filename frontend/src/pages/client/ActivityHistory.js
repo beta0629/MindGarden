@@ -16,6 +16,11 @@ import '../../components/admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
 import './ActivityHistory.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ACTIVITIES_HISTORY = '/api/v1/activities/history';
+const API_ACTIVITIES_STATISTICS = '/api/v1/activities/statistics';
+
+
 const ACTIVITY_HISTORY_TITLE_ID = 'client-activity-history-title';
 
 const FILTER_TYPES = ['all', 'consultation', 'payment', 'system'];
@@ -77,7 +82,7 @@ const ActivityHistory = () => {
         params.type = filter.toUpperCase();
       }
 
-      const result = await StandardizedApi.get('/api/v1/activities/history', params);
+      const result = await StandardizedApi.get(API_ACTIVITIES_HISTORY, params);
 
       if (result && result.success) {
         setActivities(Array.isArray(result.data) ? result.data : []);
@@ -95,7 +100,7 @@ const ActivityHistory = () => {
 
   const loadStatistics = useCallback(async() => {
     try {
-      const result = await StandardizedApi.get('/api/v1/activities/statistics', {});
+      const result = await StandardizedApi.get(API_ACTIVITIES_STATISTICS, {});
 
       if (result && result.success && result.data && typeof result.data === 'object') {
         setStatistics(result.data);

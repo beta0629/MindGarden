@@ -289,27 +289,17 @@ jobs:
           chmod +x app.jar
           
           # 시작 스크립트 생성
+          # 환경변수 export 패턴: set -a / source / set +a (개별 export 목록 미사용 → 신규 ENV 누락 회귀 방지)
           echo "📝 시작 스크립트 생성 중..."
           sudo mkdir -p /opt/mindgarden
           sudo bash -c 'echo "#!/bin/bash" > /opt/mindgarden/start.sh'
           sudo bash -c 'echo "set -e" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "# /etc/mindgarden/dev.env 의 모든 key=value 를 자동 export" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "# (개별 export 목록을 유지하지 않아도 신규 키가 누락되지 않음)" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "set -a" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "# shellcheck source=/dev/null" >> /opt/mindgarden/start.sh'
           sudo bash -c 'echo "source /etc/mindgarden/dev.env" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export DB_PASSWORD" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export DB_USERNAME" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export DB_HOST" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export DB_NAME" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export DB_PORT" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export JWT_SECRET" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export PERSONAL_DATA_ENCRYPTION_KEY" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export PERSONAL_DATA_ENCRYPTION_IV" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export OPS_ADMIN_USERNAME" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export OPS_ADMIN_PASSWORD" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export OPS_ADMIN_ROLE" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export MAIL_HOST" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export MAIL_PORT" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export MAIL_USERNAME" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export MAIL_PASSWORD" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "export SESSION_COOKIE_DOMAIN" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "set +a" >> /opt/mindgarden/start.sh'
           sudo bash -c 'echo "cd /var/www/mindgarden-dev" >> /opt/mindgarden/start.sh'
           sudo bash -c 'echo "JAVA_OPTS=\"\${JAVA_OPTS:--Xms1g -Xmx4g -XX:+UseG1GC}\"" >> /opt/mindgarden/start.sh'
           sudo bash -c 'echo "exec /usr/bin/java \$JAVA_OPTS -jar app.jar --spring.profiles.active=dev" >> /opt/mindgarden/start.sh'

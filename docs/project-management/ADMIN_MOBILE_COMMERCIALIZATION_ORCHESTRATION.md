@@ -2,7 +2,7 @@
 
 **작성일**: 2026-05-18  
 **작성자**: core-planner (C0 문서 SSOT)  
-**상태**: **ACTIVE (C3)** — 병렬 배치 **5/5** · C2 **G2 PASS** · G1/G3/G4 **CONDITIONAL** · coder C3 `@e52678ab7`+`2643b8852` 반영 · **C3-06·푸시 UAT human · EAS `cbae858a` queue** 잔여  
+**상태**: **ACTIVE (C3)** — 병렬 배치 **6/6** (문서) · `develop` @ **`35765024b`** · C2 **G2 PASS** · G1/G3/G4 **CONDITIONAL** · **C4 진입 대기 (G4 PASS)** · EAS **`79fbcd1b` FINISHED** · **`cbae858a` cancel 권고** · C3-06 human·tester 잔여  
 **범위**: 단일 Expo 앱 `app/(admin)/` · ADMIN/STAFF 모바일 — **문서·분배·게이트 SSOT** (구현은 본 문서 이후 Phase별 위임)  
 **선행**: [`EXPO_NATIVE_APP_PLAN.md`](./EXPO_NATIVE_APP_PLAN.md) §2.4 · [`ADMIN_MOBILE_MVP_TEST_PLAN.md`](./ADMIN_MOBILE_MVP_TEST_PLAN.md)  
 **위임 규칙**: [`CORE_PLANNER_DELEGATION_ORDER.md`](./CORE_PLANNER_DELEGATION_ORDER.md) — 메인·일반 어시스턴트 **코드 직접 수정 금지**, 구현·검증은 표 §9 분배실행
@@ -158,14 +158,17 @@
 | **G3** | 디자인·표시 | §6 체크리스트·§17 expo 0건·#130 콘솔 0 | 10/10 또는 패리티 6/6 | 패리티 4/6 · adminTheme 미완이나 일정표만 예외 문서화 | 패리티 &lt;4/6 · placeholder 화면 · 하드코딩 신규 |
 | **G4** | 수동·E2E | dev APK · ADMIN·STAFF 스모크 · Maestro (선택) | [`ADMIN_MOBILE_MVP_SMOKE_RUN.md`](./ADMIN_MOBILE_MVP_SMOKE_RUN.md) §6.2 #1–#7 | Maestro skip · 수동 PASS | 결제·등록 핵심 시나리오 실패 |
 
-**현재 스냅샷 (2026-05-20 · C3 진행 · 병렬 배치 **5/5** · `develop` @ `2643b8852`)**
+**현재 스냅샷 (2026-05-20 · C3 진행 · 병렬 배치 **6/6** · `develop` @ **`35765024b`**)**
 
 | 게이트 | 판정 | 근거 |
 |--------|------|------|
 | G1 | **CONDITIONAL** | Jest green; §6.2 수동·Maestro **미검** |
 | G2 | **PASS** | `tsc --noEmit` **0 errors**; `test:utils` **33 suites / 192 tests** @ `e52678ab7` |
 | G3 | **CONDITIONAL** | 패리티 60%·safeDisplay(일정 raw)·`check-hardcoding` **미실행** · 디자이너 체크리스트 미완 |
-| G4 | **CONDITIONAL** | `admin-mvp-smoke-prep` **PASS**; §6.2 #1–#7·U3–U5(웹 CTA) **human 미검**; Maestro **skip** |
+| G4 | **CONDITIONAL** | `admin-mvp-smoke-prep` **PASS**; §6.2 #1–#7·**U4 웹 CTA** **human 미검**; Maestro **skip**; EAS **`79fbcd1b` FINISHED** → C3-06 착수 가능 |
+
+**G4 PASS 정의 (Maestro skip · C3 게이트)**  
+G4 **PASS**는 [`ADMIN_MOBILE_MVP_SMOKE_RUN.md`](./ADMIN_MOBILE_MVP_SMOKE_RUN.md) **§6.2 #1–#7** 전항 **Pass** + C3 **U4 웹 CTA**([`TEST_REPORT` §6.4 M7–M9](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md#64-g4--maestro-수동-대체-배치-55--cli-skip)) **1건 묶음 Pass**(또는 M7·M8·M9 **3건** 세분 기록)로 본다. Maestro·`MAESTRO_*` **skip** 시 **수동 Pass 최소 7건**: §6.2 **필수 6건**(#1·#2·#3·#5·#6·#7 — #4 반려는 **선택**) + U4 **1건**(PENDING_PAYMENT·DEPOSIT_PENDING Secondary → 통합 스케줄 URL·네이티브 결제 모달 없음·`mapping/create` Step5 CTA 포함). `admin-mvp-smoke-prep`·`test:utils`·`tsc`는 G2/ prep 범위이며 G4 수동 Pass **건수에 포함하지 않음**. U1–U3·U5(M10)는 C3-06 전체 해소·G1 보강에 권장하나, **C4 진입 최소선**은 위 §6.2+U4 Pass + 본 문서 C3→C4 게이트 문구를 따른다.
 
 > **코드 팩트 (C3 @ `e52678ab7`)**: `AdminMappingPaymentConfirmModal` **삭제** — 결제 1단계는 **`AdminMappingListCard` 웹 Secondary CTA** (`shouldShowWebPaymentCta` · `openAdminWebIntegratedSchedule`). `pushNavigation.ts`·`NotificationService` 연동·Jest **192/192 PASS**. G2: 모달 삭제·FlashList prop 정리 후 **PASS** 유지.
 
@@ -178,19 +181,34 @@
 | C3-03 | 결제 웹 CTA | `PENDING_PAYMENT`/`DEPOSIT_PENDING` → ExternalLink Secondary · 통합 스케줄 URL | **`e52678ab7` 반영** · G4 U4 **미검** |
 | C3-04 | 네이티브 결제 모달 | ~~PaymentConfirm~~ 삭제 · DepositConfirm **미연결** | 1d **웹 우선** — 네이티브 100%는 P2 |
 | C3-05 | G2 회귀 | `tsc` 0 + `test:utils` PASS | **PASS** |
-| C3-06 | G4 스모크 | §6.2 #1–#7 + U1–U5 (U4=웹 CTA) | **PENDING** — EAS dev APK·human |
+| C3-06 | G4 스모크 | §6.2 #1–#7 + **U4 웹 CTA** (U1–U3·U5 권장) | **PENDING** — EAS **`79fbcd1b` FINISHED** · human·tester (Maestro skip → **수동 7건**) |
 | C3-07 | pushNavigation | `pushNavigation.ts` + Jest · NotificationService 연동 | **코드·Jest PASS** · ADMIN 푸시 E2E **비대상** |
 
-**C3 블로커 1표 (C3-06/07 · EAS · 푸시 UAT · 배치 5 갱신)**
+**C3 블로커 1표 (C3-06/07 · EAS · 푸시 UAT · 배치 6 갱신)**
 
 | ID | 블로커 | 담당 | 상태 | 해소 조건 |
 |----|--------|------|------|-----------|
-| **B-C3-06** | G4 수동 스모크 §6.2 #1–#7 + U3–U5 (U4 웹 CTA) | **human** + **core-tester** | **PENDING** | EAS dev APK 설치 → [`SMOKE_RUN` §6.2](./ADMIN_MOBILE_MVP_SMOKE_RUN.md)·[`TEST_REPORT` §5.4](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md) M7–M10 Pass 기록 |
+| **B-C3-06** | G4 수동 스모크 §6.2 #1–#7 + **U4 웹 CTA** (U1–U3·U5 권장) | **human** + **core-tester** | **PENDING** | EAS **`79fbcd1b` FINISHED** 산출물 설치 @ `35765024b` → §6.2+U4 **수동 Pass 7건**(Maestro skip, 위 G4 PASS 정의) · [`SMOKE_RUN` §6.2](./ADMIN_MOBILE_MVP_SMOKE_RUN.md)·[`TEST_REPORT` §6.4–6.5](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md) 기록 |
 | **B-C3-07** | pushNavigation·NotificationService (ADMIN 셸) | **core-coder** ✅ → **core-tester** | **코드 PASS** | Jest·`test:utils` green @ `e52678ab7`; 잔여 없음 (ADMIN `payment_completed` E2E **비대상**) |
-| **B-EAS** | dev APK / iOS internal-dev @ C3 HEAD | **human** · EAS | **QUEUE** (`cbae858a`) | EAS build **finished** → tester C3-06 착수; Android `android:apk:dev` 또는 iOS Ad Hoc 링크 |
-| **B-PUSH-UAT** | 결제·일정 푸시 라이브 E2E (CLIENT) | **human** · QA | **BLOCKED / NOT RUN** | [`PAYMENT_SCHEDULE_NOTIFICATION_PUSH_UAT_REPORT`](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_UAT_REPORT.md) §8.3 L1–L5: journal `Expo push access token configured: true` · CLIENT register 200 · §8.5 |
+| **B-EAS** | dev APK / iOS internal-dev @ C3 HEAD | **human** · EAS · **core-deployer** | **FINISHED** (`79fbcd1b`) · **`cbae858a` cancel 권고** | **SSOT 빌드 `79fbcd1b` finished** — 중복 queue `cbae858a`는 **cancel**(비용·혼선 방지); 설치 후 B-C3-06 착수 · Android `android:apk:dev` 또는 iOS Ad Hoc |
+| **B-PUSH-UAT** | 결제·일정 푸시 라이브 E2E (CLIENT) | **human** · QA | **UNBLOCKED (EAS)** · **NOT RUN** | `79fbcd1b` IPA/APK 설치 후 [`PAYMENT_SCHEDULE…UAT`](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_UAT_REPORT.md) §8.5 L1→E5; ADMIN G4와 **병렬 가능** |
 
-> **C3→C4 게이트**: G4 **PASS**(또는 Maestro skip + 수동 Pass 문서화) + C3-06 **해소** 전 **C4(Dedupe CI) 착수 금지**. G1·G3 **CONDITIONAL**은 C4 병렬 가능하나 C5 상용화 판정 전 **PASS** 필요.
+**병렬 배치 6 — 역할별 결과 슬롯** (`35765024b` · 문서만 · 커밋은 호출자)
+
+| 역할 | 배치 6 결과 | 비고 |
+|------|-------------|------|
+| **human** | — | `79fbcd1b` 산출물 설치 · §6.2+U4 수동 · `cbae858a` **cancel** 확인 |
+| **core-tester** | — | C3-06 Pass 기록 · [`TEST_REPORT`](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md)·[`SMOKE_RUN` §6.2](./ADMIN_MOBILE_MVP_SMOKE_RUN.md) 갱신 |
+| **core-deployer** | — | EAS **`cbae858a` cancel** 권고 실행 여부 · SSOT **`79fbcd1b`** 링크·HEAD 정합 |
+
+**병렬 배치 7 — 4줄 제안 (G4 PASS → C4)**
+
+1. **human**: `79fbcd1b` APK/IPA 설치 + 팀 ADMIN/STAFF로 §6.2·U4(M7–M9) 수동 Pass → tester에 로그 전달.  
+2. **core-tester**: Pass 7건(또는 U4 3건 세분) 반영 후 G4 **PASS** 판정 · C3-06·B-C3-06 **해소** 문서화.  
+3. **core-deployer**: queue 잔존 시 **`cbae858a` cancel** 확인 · 필요 시 `35765024b` 기준 Android 로컬 `android:apk:dev` 보조.  
+4. **core-planner**: G4 PASS + C3-06 해소 확인 후 **C4(Dedupe·Maestro·§17)** 분배실행 표 갱신 — G1/G3 CONDITIONAL 병렬 허용.
+
+> **C3→C4 게이트**: G4 **PASS**(Maestro skip 시 §6.2+U4 **수동 Pass 7건** 문서화) + C3-06 **해소** 전 **C4(Dedupe CI) 착수 금지**. G1·G3 **CONDITIONAL**은 C4 병렬 가능하나 C5 상용화 판정 전 **PASS** 필요.
 
 상세 체크리스트 부록: [`ADMIN_MOBILE_MVP_TEST_PLAN.md` §11](./ADMIN_MOBILE_MVP_TEST_PLAN.md#11-상용화-품질-게이트-g1g4-부록) · [`ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md`](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md).
 
@@ -230,7 +248,8 @@ flowchart LR
 | 5 | **core-tester** C2 ✅ | default | G1~G4 실행·SMOKE_RUN 갱신 | **완료** — G2 **PASS**; G1/G3/G4 **CONDITIONAL**; [`ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md`](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md) |
 | 6 | **core-coder** C3 ✅ | default | 웹 CTA·pushNavigation·G3 잔여 | **`e52678ab7`** — C3-03·C3-07 **코드 PASS**; G3 safeDisplay·Fab 잔여는 C4 병렬 가능 |
 | 7 | **core-tester** C3 | default | G4 U3–U5·웹 CTA U4 | §7 C3-06·블로커 B-EAS **완료 후**; FAIL 시 재위임 |
-| 8 | **human** | — | EAS `cbae858a` queue → APK 설치 | B-EAS **finished** 신호 → #7 착수 |
+| 8 | **human** | — | EAS **`79fbcd1b` FINISHED** → APK/IPA 설치 · `cbae858a` **cancel** | B-EAS **해소** → #7 C3-06 착수 |
+| 8b | **core-deployer** | — | **`cbae858a` cancel** 권고 · SSOT `79fbcd1b` | queue 중복 제거 · 배치 7 선행 |
 | 9 | **core-tester** (푸시) | default | [`PAYMENT_SCHEDULE…UAT_REPORT`](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_UAT_REPORT.md) §8.5 | B-PUSH-UAT — **CLIENT** APK·운영 journal; C3 ADMIN 스모크와 **병렬 가능** |
 
 **금지**: 메인 채팅 어시스턴트의 **소스 직접 패치** ([`CORE_PLANNER_DELEGATION_ORDER.md`](./CORE_PLANNER_DELEGATION_ORDER.md)).
@@ -268,3 +287,4 @@ flowchart LR
 | 2026-05-20 | **C2 테스터 게이트 2/4** — §7 스냅샷: G2 **FAIL** (`tsc` 5); G1/G3/G4 **CONDITIONAL**; [`ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md`](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md) |
 | 2026-05-20 | **C3 전환 (배치 3/4)** — 상태 `ACTIVE (C3)`; §7 C3 체크리스트·웹 CTA 팩트; `AdminMappingPaymentConfirmModal` 삭제 반영; §9 tester C2 ✅ · coder/tester C3 추가 |
 | 2026-05-20 | **배치 5/5 (core-planner)** — `@e52678ab7`+`2643b8852`; §7 C3-03/07 **코드 PASS**·C3-06 **PENDING**; **C3 블로커 1표**(EAS `cbae858a` queue·푸시 UAT); §9 coder C3 ✅ · human·푸시 tester 추가; C4 진입 조건 명시 |
+| 2026-05-20 | **배치 6/6 (core-planner · 문서만)** — `@35765024b`; **C3 블로커 1표** EAS **`79fbcd1b` FINISHED**·**`cbae858a` cancel 권고**; **G4 PASS 정의**(§6.2+U4·Maestro skip **수동 7건**); 배치 6 human/tester/deployer 슬롯·배치 7 4줄 제안; C4 **G4 PASS 대기** |

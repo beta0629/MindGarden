@@ -47,7 +47,7 @@
 | **4** | **사용자 등록 3화면 폼 골격** | `user-management/create-{client,consultant,staff}.tsx` | `SafeAreaView` + `AppTopBar` + `ScrollView` + `TextInput` 필드 + `useAdminDuplicateCheckEmail` + `UnifiedModal`(에러) 패턴 반복. consultant는 name 필드 없음 등 **필드만 다름**. |
 | **5** | **리스트 행 Pressable 카드 패턴** | `user-management/index`, `records/index`, `review/index`, `messages/index`, `schedule/index`(`MappingListCard`) | surface+border+행 Pressable+Badge 조합이 화면마다 재구현. `ScheduleCard`는 일정 탭만 사용, 매칭은 **인라인 카드**로 분기. |
 
-**부가(라우트)**: git에는 `(operation)/users/*` 잔존 흔적이 있으나 워크스페이스에는 **`user-management`만 존재** — 라우트·딥링크·문서에서 `users` 잔여 참조 정리 권장(core-coder).
+**부가(라우트)**: SSOT `(operation)/user-management/*` — `users/` 라우트·딥링크 없음. 스모크·prep 문서 경로는 C4에서 `user-management`로 정합.
 
 ---
 
@@ -139,7 +139,7 @@
 2. **`AdminMappingListCard`** SSOT 유지(추출 완료); ~~PaymentConfirm~~ 삭제 반영 — 웹 CTA만 유지. DepositConfirm·step4 **결제 필드 Molecule** 공통화는 P2.  
 3. **어드민 import SSOT**: `StatCard`→`atoms`, `SearchBar`→팀 합의 1경로; molecules 동명 파일은 rename 또는 deprecated 처리한다.  
 4. **`messages/index`, `schedule/index` 리스트/카드 JSX에 `toDisplayString`/`toSafeNumber` 적용**(회의 §4 규칙; 로컬 `String()` 산발 금지).  
-5. **사용자 등록 3화면**은 `AdminUserCreateFormLayout`(가칭)으로 골격 통합; `(operation)/users` 잔여 라우트·링크 제거 여부 기획 확인.
+5. **사용자 등록 3화면**은 `AdminUserCreateFormLayout`(가칭)으로 골격 통합; `(operation)/user-management/*` 경로·허브 링크 SSOT 유지.
 
 ---
 

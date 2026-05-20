@@ -1,6 +1,6 @@
 # Admin 모바일 MVP — 자동 스모크 준비 (Task K / O)
 
-**실행 일시:** 2026-05-16 (로컬) · **§6 갱신:** 2026-05-20 (G4+C3 스모크 · `develop` @ `24b901caf` · §6.2 아래) · 이전: 2026-05-18 (`d95768075`, §10.8 **3/3 PASS**)  
+**실행 일시:** 2026-05-16 (로컬) · **§6 갱신:** 2026-05-20 (G4+C3 스모크 · `develop` @ **`35765024b`** · 배치 **6/6** · §6.2 아래) · 이전: 2026-05-20 (`2643b8852`, 배치 5/5)  
 **커밋:** 게이트 문서만 — `docs(admin-mvp): §10.8 게이트·§6 d957680 APK·운영 스모크 기록`  
 **Task O (2026-05-16):** `npm run test:utils`·`tsc --noEmit` PASS; `app/(admin)` 내 `AdminMobilePlaceholderScreen` 0건  
 **JWT SSOT:** `46fe1c0be` — 로그인·복구 시 JWT 역할로 admin/staff 홈 라우팅 · **운영 API (2026-05-18):** `d95768075` — 어드민 운영 탭·STAFF 일정; `test:utils` **36** tests PASS @ §10.8
@@ -41,7 +41,7 @@
    - **검수** — `/(admin)/(review)` 대기 큐 목록 (ADMIN만; STAFF는 탭 숨김)
    - **운영 허브** — `/(admin)/(operation)` 메뉴 4종 노출 (ADMIN: 스케줄·사용자·기록·마음날씨 / STAFF: 마음날씨 항목 없음)
    - **스케줄** — `/(admin)/(operation)/schedule` 오늘 일정 목록·당겨서 새로고침
-   - **사용자** *(Phase 2)* — `/(admin)/(operation)/users` 역할 필터·검색·상세 모달(읽기 전용)
+   - **사용자** *(Phase 2)* — `/(admin)/(operation)/user-management` 역할 필터·검색·상세 모달(읽기 전용)
    - **상담일지** *(Phase 2)* — `/(admin)/(operation)/records` 상담사 선택 → 목록 → `records/[id]` 상세
    - **마음날씨** *(Phase 2, ADMIN)* — `/(admin)/(operation)/mind-weather` 요약·카드 목록 (STAFF 진입 시 차단 UX)
    - **메시지** — `/(admin)/(messages)` 웹 어드민 안내·외부 링크 CTA (네이티브 채팅 아님)
@@ -189,6 +189,25 @@ cd expo-app && npm run test:utils && npx tsc --noEmit
 | S | **검수** 탭 로딩 종료(대기 큐·스켈레톤 아님) | **skip** | 2026-05-18 11:05 | 동일 |
 
 **판단:** 자동 게이트(Expo utils·`tsc`·Maven 10) **PASS**. 운영·검수 UI 회귀는 §6.1 APK 재빌드·재설치 + ADMIN 로그인(또는 `MAESTRO_*` + Maestro) 후 재실행. 실패 시 **core-coder** 위임(프로덕션 코드 수정 금지 — core-tester).
+
+### §6.2 실행 결과 (2026-05-20, core-tester · G4+C3 스모크 · 배치 **6/6**)
+
+**기준 HEAD:** `35765024b` (`develop`) · **설치 APK:** `app-release.apk` (~132MB, mtime **2026-05-19** 02:23:33 KST) · **embedded apiBaseUrl:** `https://dev.core-solution.co.kr` · **iOS IPA:** **`79fbcd1b`** (human 설치, 본 배치 미검)
+
+| # | 항목 | 결과 | 일시 (KST) | 비고 |
+|---|------|------|------------|------|
+| P | `adb devices` | **pass** | 2026-05-20 | `emulator-5554` `device` |
+| P | `admin-mvp-smoke-prep.sh --skip-install` | **pass** | 2026-05-20 | exit **0**; MainActivity; logcat 5s — AdminRoleGate·Unable to resolve **0** |
+| P | `npm run test:utils` + `tsc --noEmit` | **pass** | 2026-05-20 | **34** suites, **196** tests (~10s); `notificationServiceNavigate.test.ts` 포함; `tsc` **0** (~5s) |
+| S | Maestro `admin-mvp-smoke.yaml` | **skip** | 2026-05-20 | `which maestro` → not found; `MAESTRO_*` unset |
+| S | Maestro `admin-mvp-smoke-staff.yaml` | **skip** | 2026-05-20 | 동일 |
+| S | §6.2 #1–#7 | **skip** | 2026-05-20 | 팀 ADMIN/STAFF 자격 증명 없음 |
+| S | C3 U4 **M7–M9** (웹 CTA) | **skip** | 2026-05-20 | ADMIN 로그인·`PENDING_PAYMENT`/`DEPOSIT_PENDING` 매칭 시드 없음 — [`TEST_REPORT` §6.4 M7–M9](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md#64-g4--maestro-수동-대체-배치-55--cli-skip) |
+| S | C3 U5 **M10** (STAFF) | **skip** | 2026-05-20 | STAFF 계정 없음 — Primary·웹 CTA 숨김 대조 미실행 |
+
+**Maestro**: [`COMMERCIALIZATION_TEST_REPORT` §6.1.1](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md#611-maestro-설치환경-변수-비밀번호-저장소-금지).
+
+**다음 (human):** IPA **`79fbcd1b`** 또는 최신 dev APK + 팀 계정 → §6.5·M7–M10 Pass 기록 → [`TEST_REPORT` §6.6 G4 PASS 전환](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md#66-g4-pass-전환-조건-human-only-잔여-시-1표).
 
 ### §6.2 실행 결과 (2026-05-20, core-tester · G4+C3 스모크 · 배치 **5/5**)
 

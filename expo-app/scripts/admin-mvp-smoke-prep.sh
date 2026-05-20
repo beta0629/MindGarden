@@ -156,7 +156,7 @@ print_manual_checklist() {
    - 검수 — /(admin)/(review) 대기 큐 목록 (ADMIN만; STAFF는 탭 숨김)
    - 운영 허브 — /(admin)/(operation) 메뉴 4종 (ADMIN: 스케줄·사용자·기록·마음날씨 / STAFF: 마음날씨 없음)
    - 스케줄 — /(admin)/(operation)/schedule 오늘 일정·당겨서 새로고침
-   - 사용자 (Phase 2) — /(admin)/(operation)/users 역할 필터·검색·상세 모달(읽기 전용)
+   - 사용자 (Phase 2) — /(admin)/(operation)/user-management 역할 필터·검색·상세 모달(읽기 전용)
    - 상담일지 (Phase 2) — /(admin)/(operation)/records 상담사 선택 → 목록 → records/[id] 상세
    - 마음날씨 (Phase 2, ADMIN) — /(admin)/(operation)/mind-weather 요약·카드 (STAFF 진입 시 차단 UX)
    - 메시지 — /(admin)/(messages) 웹 어드민 안내·외부 링크 CTA

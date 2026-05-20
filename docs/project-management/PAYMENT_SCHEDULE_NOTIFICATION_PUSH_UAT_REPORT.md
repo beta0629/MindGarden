@@ -1,11 +1,11 @@
 # 결제·승인·일정 알림/푸시 — 수동 UAT 리포트
 
 **작성**: core-tester  
-**최종 갱신**: 2026-05-20 (병렬 배치 **5/5** — `test:utils`·`pushNavigation` 회귀 PASS; §8.5 라이브 **NOT RUN** 유지 — EAS **`cbae858a` queue** · IPA finished 전 L1~E5 실행 금지)  
-**이전**: 2026-05-20 배치 4/4 · 2026-05-18 Phase C 자동 게이트  
+**최종 갱신**: 2026-05-20 (병렬 배치 **6/6** — `test:utils` **196/196**·`pushNavigation`·`notificationServiceNavigate` PASS; §8.5 라이브 **NOT RUN** 유지)  
+**이전**: 2026-05-20 배치 5/5 · 2026-05-20 배치 4/4 · 2026-05-18 Phase C 자동 게이트  
 **SSOT**: [PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) §3~§7 · [MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md](./MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md) §2.1  
-**코드 기준**: **`e52678ab7`** (ancestor of HEAD) — `MappingSettlementNotificationHelper`, `ScheduleCreatedNotificationHelper`, Expo `pushNavigation`  
-**환경**: `https://dev.core-solution.co.kr` — `/actuator/health` **200** (2026-05-20 배치 4). dev JVM `EXPO_ACCESS_TOKEN` journal·`mobile_push_tokens` — **테스터 환경에서 미확인**.
+**코드 기준**: **`35765024b`** (`develop` HEAD) — `MappingSettlementNotificationHelper`, `ScheduleCreatedNotificationHelper`, Expo `pushNavigation`  
+**환경**: `https://dev.core-solution.co.kr` — `/actuator/health` **200** (배치 **6/6**). dev JVM journal L1·`mobile_push_tokens`·CLIENT 실기기 — **미확인/BLOCKED**.
 
 ---
 
@@ -301,12 +301,12 @@ mvn -q -Dtest=ScheduleCreatedNotificationHelperImplTest,ExpoPushPropertiesTest,M
 
 ### 8.5.1 IPA·EAS finished 후 실행 순서 (L1~L5 → E0~E5)
 
-> **선행**: EAS build **`cbae858a`** status **finished** · CLIENT **internal-dev IPA**(iOS 실기기) 또는 Android dev APK 설치 · dev `https://dev.core-solution.co.kr` UP. **finished 전** 아래 표 **실행 금지** — §8.5 라이브 **NOT RUN** 유지.
+> **선행**: CLIENT **internal-dev IPA** **`79fbcd1b`**(human 설치) 또는 Android dev APK · dev `https://dev.core-solution.co.kr` UP. **라이브 E2E**(L2~L5·E1~E5)는 본 배치 **NOT RUN** — 자동 가능 범위만 아래 「배치 6 자동」 참고.
 
 | 순서 | ID | 단계 | 담당 | 증빙·Pass 기록 | 블로커 |
 |------|-----|------|------|----------------|--------|
-| 0 | — | EAS **`cbae858a` finished** + CLIENT 앱 설치 | human | Expo dashboard build **finished** | queue 중 |
-| 1 | **L1** / **E0** | dev JVM journal — `EXPO_ACCESS_TOKEN` | ops/tester | `Expo push access token configured: true` | SSH/journal 미접근 → **BLOCKED** |
+| 0 | — | CLIENT IPA **`79fbcd1b`** 또는 dev APK 설치 | human | 실기기 설치 완료 | 본 배치 미검 |
+| 1 | **L1** / **E0** | dev JVM journal — `EXPO_ACCESS_TOKEN` | ops/tester | `Expo push access token configured: true` | SSH/journal 미접근 → **BLOCKED** (배치 6) |
 | 2 | **L5** | QA 테스트 테넌트·4역할·`X-Tenant-ID` | human/QA | 계정 목록·테넌트 id | — |
 | 3 | **L2** / **E1** | **CLIENT** 로그인 → OS 푸시 허용 → `registerToken` | tester | `POST .../push-token/register` **200** · `success=true` | IPA/APK·실기기 |
 | 4 | **L4** | 앱 설정 카테고리 `payment`·`schedule` **ON** | tester | 설정 스크린 또는 in-app state | E1 후 |
@@ -317,21 +317,30 @@ mvn -q -Dtest=ScheduleCreatedNotificationHelperImplTest,ExpoPushPropertiesTest,M
 
 **ADMIN G4(C3-06)와의 관계**: 동일 EAS finished 신호로 **병렬** 가능 — ADMIN 스모크는 [`COMMERCIALIZATION_TEST_REPORT` §6.5](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md); 본 표는 **CLIENT 푸시 E2E 전용**.
 
-**배치 5 판정**: L1~L5·E1~E5 **전항 NOT RUN/BLOCKED 유지** — IPA finished·journal·register 200·DB 행·실기기 알림 **증빙 없음**.
+**배치 6 자동 (2026-05-20 · `35765024b`)**
 
-### 8.6 게이트 최종 판정 (배치 **5/5**)
+| ID | 자동 확인 | 결과 | 비고 |
+|----|-----------|------|------|
+| — | `curl https://dev.core-solution.co.kr/actuator/health` | **PASS** | HTTP **200** |
+| **L1** / **E0** | dev JVM journal grep | **BLOCKED** | SSH/journal 미접근 |
+| **L2~L5** · **E1~E5** | CLIENT 실기기·register·DB·일정 POST·OS 알림 | **NOT RUN** | IPA human·팀 CLIENT 계정 선행 |
+
+**배치 5 판정**: L1~L5·E1~E5 **전항 NOT RUN/BLOCKED 유지** — journal·register 200·DB 행·실기기 알림 **증빙 없음**.
+
+### 8.6 게이트 최종 판정 (배치 **6/6**)
 
 | 레이어 | 판정 |
 |--------|------|
 | Java Phase B/C (6클래스) | **PASS** (배치 4 기준 **26** tests — 본 배치 **미재실행**) |
 | Expo 푸시·알림 Jest (`pushScenarios\|notificationService`) | **PASS** (7 tests — 배치 4 기준) |
-| Expo `test:utils` 전체 | **PASS** (192/192, 2026-05-20 배치 **5/5**, ~45s) — **`pushNavigation.test.ts` 포함** |
-| dev API reachability | **PASS** — `/actuator/health` **200** (배치 4) |
-| 푸시 E2E dev (§8.5) | **NOT RUN / BLOCKED** — EAS **`cbae858a` queue**; L1 journal·L2~L5·E1~E5 **미확인** |
+| Expo `test:utils` 전체 | **PASS** (**196/196**, 2026-05-20 배치 **6/6**, ~10s) — **`pushNavigation.test.ts`·`notificationServiceNavigate.test.ts` 포함** |
+| dev API reachability | **PASS** — `/actuator/health` **200** (배치 **6/6**) |
+| 푸시 E2E dev (§8.5) | **NOT RUN / BLOCKED** — L1 journal **BLOCKED**; L2~L5·E1~E5 **NOT RUN** (라이브 유지) |
 | §1~§5 전체 수동 | **NOT RUN** |
-| **종합** | **CONDITIONAL** — §A.2 참조; §8.5.1 완료 전 운영 go-live 비권장 |
+| Shop R10 (dev FE+API) | **PASS** — **2 passed** (~8s); 로컬 **8080 BLOCKED** ([`SHOP_P2` §1.0.1](./SHOP_P2_INTEGRATION_TEST_REPORT.md)) |
+| **종합** | **CONDITIONAL** — §A.2 참조; §8.5.1 라이브 완료 전 운영 go-live 비권장 |
 
-**배치 5**: 자동(`test:utils`·`pushNavigation`) **PASS** 재확인; §8.5 라이브 **NOT RUN → 변경 없음** (IPA finished 전).
+**배치 6**: 자동(`test:utils` **196/196`·dev health **200**) **PASS**; §8.5 라이브 **NOT RUN → 변경 없음**.
 
 ---
 

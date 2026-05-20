@@ -333,3 +333,30 @@
         background: rgba(255, 255, 255, 0.1);
     }
 }
+
+/* T8-C1-5: 인라인 마진/사이즈 추출 (정적) */
+.mg-v2-system-config__section-actions--mb-sm {
+    margin-bottom: var(--mg-spacing-8, 8px);
+}
+
+.mg-v2-system-config__notice--mb-sm {
+    margin-bottom: var(--mg-spacing-8, 8px);
+}
+
+.mg-v2-system-config__notice--mt-sm {
+    margin-top: var(--mg-spacing-8, 8px);
+}
+
+.mg-v2-system-config__section-desc--mt-sm {
+    margin-top: var(--mg-spacing-8, 8px);
+}
+
+.mg-v2-system-config__test-result--mt-sm {
+    margin-top: var(--mg-spacing-8, 8px);
+}
+
+.mg-v2-system-config__input--mb-sm {
+    margin-bottom: var(--mg-spacing-8, 8px);
+    width: 100%;
+    max-width: 360px;
+}

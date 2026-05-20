@@ -471,7 +471,7 @@ const SystemConfigManagement = () => {
                       <label htmlFor={`model-${id}`}>모델</label>
                       {id === 'gemini' ? (
                         <>
-                          <div className="section-actions" style={{ marginBottom: 8 }}>
+                          <div className="section-actions mg-v2-system-config__section-actions--mb-sm">
                             <MGButton
                               type="button"
                               variant="secondary"
@@ -495,8 +495,7 @@ const SystemConfigManagement = () => {
                               id={`model-select-${id}`}
                               value={geminiModels.some((m) => m.id === (providers.gemini?.model || '')) ? (providers.gemini?.model || '') : '__custom__'}
                               onChange={(e) => setProvider('gemini', 'model', e.target.value === '__custom__' ? (providers.gemini?.model || '') : e.target.value)}
-                              className="mg-v2-input"
-                              style={{ marginBottom: 8, width: '100%', maxWidth: 360 }}
+                              className="mg-v2-input mg-v2-system-config__input--mb-sm"
                             >
                               <option value="__custom__">직접 입력 (아래 입력란)</option>
                               {geminiModels.map((m) => (
@@ -504,7 +503,7 @@ const SystemConfigManagement = () => {
                               ))}
                             </select>
                           ) : (
-                            <p className="mg-v2-system-config__pricing-notice" style={{ marginBottom: 8 }}>
+                            <p className="mg-v2-system-config__pricing-notice mg-v2-system-config__notice--mb-sm">
                               위 버튼을 누르면 이 계정에서 사용 가능한 모델만 목록에 표시됩니다.
                             </p>
                           )}
@@ -524,7 +523,7 @@ const SystemConfigManagement = () => {
                               ))}
                             </datalist>
                           )}
-                          <div className="mg-v2-system-config__pricing-notice" style={{ marginTop: 8 }}>
+                          <div className="mg-v2-system-config__pricing-notice mg-v2-system-config__notice--mt-sm">
                             <>
                               {getModelPricingLabel('gemini', providers.gemini?.model || '') ? (
                                 <span><strong>요금 참고:</strong> {getModelPricingLabel('gemini', providers.gemini?.model || '')} (1M tokens 기준, USD). </span>
@@ -538,7 +537,7 @@ const SystemConfigManagement = () => {
                         </>
                       ) : id === 'openai' ? (
                         <>
-                          <div className="section-actions" style={{ marginBottom: 8 }}>
+                          <div className="section-actions mg-v2-system-config__section-actions--mb-sm">
                             <MGButton
                               variant="secondary"
                               size="medium"
@@ -565,8 +564,7 @@ const SystemConfigManagement = () => {
                                   : '__custom__'
                               }
                               onChange={(e) => setProvider('openai', 'model', e.target.value === '__custom__' ? (providers.openai?.model || '') : e.target.value)}
-                              className="mg-v2-input"
-                              style={{ marginBottom: 8, width: '100%', maxWidth: 360 }}
+                              className="mg-v2-input mg-v2-system-config__input--mb-sm"
                             >
                               <option value="__custom__">직접 입력 (아래 입력란)</option>
                               {openaiModels.map((m) => (
@@ -574,7 +572,7 @@ const SystemConfigManagement = () => {
                               ))}
                             </select>
                           ) : (
-                            <p className="mg-v2-system-config__pricing-notice" style={{ marginBottom: 8 }}>
+                            <p className="mg-v2-system-config__pricing-notice mg-v2-system-config__notice--mb-sm">
                               위 버튼을 누르면 이 계정에서 사용 가능한 모델만 목록에 표시됩니다.
                             </p>
                           )}
@@ -594,7 +592,7 @@ const SystemConfigManagement = () => {
                               ))}
                             </datalist>
                           )}
-                          <div className="mg-v2-system-config__pricing-notice" style={{ marginTop: 8 }}>
+                          <div className="mg-v2-system-config__pricing-notice mg-v2-system-config__notice--mt-sm">
                             <>
                               {getModelPricingLabel('openai', providers.openai?.model || '') ? (
                                 <span><strong>요금 참고:</strong> {getModelPricingLabel('openai', providers.openai?.model || '')} (1M tokens 기준, USD). </span>
@@ -677,11 +675,11 @@ const SystemConfigManagement = () => {
                           키 테스트
                         </MGButton>
                       </div>
-                      <p className="mg-v2-system-config__section-desc" style={{ marginTop: 8 }}>
+                      <p className="mg-v2-system-config__section-desc mg-v2-system-config__section-desc--mt-sm">
                         Google AI Studio에서 발급한 API 키는 키만 입력하면 됩니다. 프로젝트 이름/번호는 입력할 필요 없습니다.
                       </p>
                       {testResultGemini && (
-                        <div className={`test-result ${testResultGemini.success ? 'success' : 'error'}`} style={{ marginTop: 8 }}>
+                        <div className={`test-result mg-v2-system-config__test-result--mt-sm ${testResultGemini.success ? 'success' : 'error'}`}>
                           <div className="result-icon">
                             {testResultGemini.success ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
                           </div>

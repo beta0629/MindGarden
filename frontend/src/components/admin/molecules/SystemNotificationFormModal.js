@@ -12,6 +12,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { USER_ROLES } from '../../../constants/roles';
 import '../../../styles/unified-design-tokens.css';
+import '../AdminNotificationsPage.css';
 
 const TARGET_OPTIONS = [
   { value: 'ALL', label: '전체 사용자' },
@@ -115,7 +116,7 @@ const SystemNotificationFormModal = ({
     >
       <div className="mg-v2-ad-b0kla-modal__body">
         <form onSubmit={handleSubmit} aria-label="공지 작성 폼">
-          <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
+          <fieldset className="mg-v2-ad-notifications__form-fieldset">
             <legend className="sr-only">공지 정보</legend>
 
             <div className="mg-v2-form-group mg-v2-space-y-md">

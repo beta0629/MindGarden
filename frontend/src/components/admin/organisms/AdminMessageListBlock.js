@@ -177,13 +177,8 @@ const AdminMessageListBlock = () => {
               {filteredMessages.map((message) => (
                 <li key={message.id} className="mg-v2-ad-notifications__card">
                   <span
-                    className="mg-v2-ad-notifications__card-accent"
+                    className={`mg-v2-ad-notifications__card-accent ${message.isRead ? 'mg-v2-ad-notifications__card-accent--read' : 'mg-v2-ad-notifications__card-accent--unread'}`}
                     aria-hidden="true"
-                    style={{
-                      backgroundColor: message.isRead
-                        ? 'var(--mg-color-border-main)'
-                        : 'var(--mg-color-accent-main)'
-                    }}
                   />
                   <div>
                     <p className="mg-v2-ad-notifications__card-meta">

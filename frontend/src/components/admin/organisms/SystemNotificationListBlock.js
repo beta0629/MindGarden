@@ -255,16 +255,14 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
               {filteredList.map((notification) => (
                 <li key={notification.id} className="mg-v2-ad-notifications__card">
                   <span
-                    className="mg-v2-ad-notifications__card-accent"
+                    className={`mg-v2-ad-notifications__card-accent ${
+                      notification.status === 'PUBLISHED'
+                        ? 'mg-v2-ad-notifications__card-accent--published'
+                        : notification.status === 'DRAFT'
+                          ? 'mg-v2-ad-notifications__card-accent--draft'
+                          : 'mg-v2-ad-notifications__card-accent--neutral'
+                    }`}
                     aria-hidden="true"
-                    style={{
-                      backgroundColor:
-                        notification.status === 'PUBLISHED'
-                          ? 'var(--mg-color-primary-main)'
-                          : notification.status === 'DRAFT'
-                            ? 'var(--mg-color-text-secondary)'
-                            : 'var(--mg-color-border-main)'
-                    }}
                   />
                   <div>
                     <h3 className="mg-v2-ad-notifications__card-title">{toDisplayString(notification.title)}</h3>

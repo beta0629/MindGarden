@@ -127,6 +127,34 @@
   flex-shrink: 0;
 }
 
+/* T8-C1-5: 알림/공지 카드 액센트 상태 modifier */
+.mg-v2-ad-notifications__card-accent--published {
+  background-color: var(--mg-color-primary-main);
+}
+
+.mg-v2-ad-notifications__card-accent--draft {
+  background-color: var(--mg-color-text-secondary);
+}
+
+.mg-v2-ad-notifications__card-accent--neutral {
+  background-color: var(--mg-color-border-main);
+}
+
+.mg-v2-ad-notifications__card-accent--unread {
+  background-color: var(--mg-color-accent-main);
+}
+
+.mg-v2-ad-notifications__card-accent--read {
+  background-color: var(--mg-color-border-main);
+}
+
+/* T8-C1-5: 공지 작성 폼 fieldset 리셋 */
+.mg-v2-ad-notifications__form-fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
 .mg-v2-ad-notifications__card > div:first-of-type {
   flex: 1;
   min-width: 0;

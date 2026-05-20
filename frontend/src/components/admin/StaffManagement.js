@@ -107,7 +107,7 @@ const AddStaffModalContent = ({ list = [], searchTerm, onSearch, roleOf, onAssig
           placeholder={STAFF_MGMT_PLACEHOLDER.SEARCH_NAME_EMAIL_PHONE}
         />
       </div>
-      <div className="mg-v2-client-list-block" style={{ maxHeight: '320px', overflowY: 'auto' }}>
+      <div className="mg-v2-client-list-block mg-v2-client-list-block--scrollable">
         {filtered.length === 0 ? (
           <p className="mg-v2-mapping-list-block__empty-desc">{STAFF_MGMT_MSG.SEARCH_EMPTY}</p>
         ) : (
@@ -1260,7 +1260,7 @@ const StaffManagement = ({ embedded = false }) => {
               helpText={STAFF_MGMT_HELP.PROFILE_IMAGE}
             />
             <div className="mg-v2-form-group">
-              <div className="mg-v2-form-row mg-v2-form-row--two" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+              <div className="mg-v2-form-row mg-v2-form-row--two mg-v2-client-modal__form-row-two">
                 <div className="mg-v2-form-group">
                   <label htmlFor="staff-rrnFirst6" className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.RRN_FIRST_OPTIONAL}</label>
                   <input
@@ -1331,7 +1331,7 @@ const StaffManagement = ({ embedded = false }) => {
             />
             <div className="mg-v2-form-group">
               <label htmlFor="staff-address-input" className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.ADDRESS_SEARCH}</label>
-              <div className="mg-v2-address-search-row" style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="mg-v2-address-search-row mg-v2-client-modal__address-row">
                 <MGButton
                   type="button"
                   variant="secondary"
@@ -1361,8 +1361,7 @@ const StaffManagement = ({ embedded = false }) => {
                   id="staff-address-input"
                   type="text"
                   readOnly
-                  className="mg-v2-form-input"
-                  style={{ flex: 1, minWidth: '200px' }}
+                  className="mg-v2-form-input mg-v2-client-modal__address-input"
                   value={createForm.address}
                   placeholder={STAFF_MGMT_PLACEHOLDER.CREATE_ADDRESS}
                 />

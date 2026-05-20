@@ -59,15 +59,15 @@ const ConsultantMessageScreen = () => {
       padding: '20px'
     },
     header: {
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-      backgroundColor: '#fff',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-white) -> var(--mg-custom-fff)
+      backgroundColor: 'var(--mg-white)',
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
-      border: '1px solid #e9ecef'
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e9ecef)
+      border: '1px solid var(--mg-color-border-main)'
     },
     headerTitle: {
       fontSize: 'var(--font-size-xxl)',
@@ -85,15 +85,15 @@ const ConsultantMessageScreen = () => {
       marginBottom: '20px'
     },
     clientInfoCard: {
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-      backgroundColor: '#fff',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-white) -> var(--mg-custom-fff)
+      backgroundColor: 'var(--mg-white)',
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
-      border: '1px solid #e9ecef'
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e9ecef)
+      border: '1px solid var(--mg-color-border-main)'
     },
     clientInfoTitle: {
       fontSize: 'var(--font-size-xl)',
@@ -129,14 +129,14 @@ const ConsultantMessageScreen = () => {
       fontWeight: '500'
     },
     messageCard: {
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-      backgroundColor: '#fff',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-white) -> var(--mg-custom-fff)
+      backgroundColor: 'var(--mg-white)',
       borderRadius: '12px',
       padding: '24px',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
-      border: '1px solid #e9ecef'
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e9ecef)
+      border: '1px solid var(--mg-color-border-main)'
     },
     messageTitle: {
       fontSize: 'var(--font-size-xl)',
@@ -161,41 +161,41 @@ const ConsultantMessageScreen = () => {
     formLabel: {
       fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
-      color: '#495057',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-495057)
+      color: 'var(--mg-color-text-secondary)',
       marginBottom: '4px'
     },
     formInput: {
       padding: '12px 16px',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
-      border: '2px solid #e9ecef',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e9ecef)
+      border: '2px solid var(--mg-color-border-main)',
       borderRadius: '8px',
       fontSize: 'var(--font-size-sm)',
       transition: 'all 0.2s ease',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-      backgroundColor: '#fff'
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-white) -> var(--mg-custom-fff)
+      backgroundColor: 'var(--mg-white)'
     },
     formTextarea: {
       padding: '12px 16px',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
-      border: '2px solid #e9ecef',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e9ecef)
+      border: '2px solid var(--mg-color-border-main)',
       borderRadius: '8px',
       fontSize: 'var(--font-size-sm)',
       minHeight: '120px',
       resize: 'vertical',
       fontFamily: 'inherit',
       transition: 'all 0.2s ease',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-      backgroundColor: '#fff'
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-white) -> var(--mg-custom-fff)
+      backgroundColor: 'var(--mg-white)'
     },
     formSelect: {
       padding: '12px 16px',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
-      border: '2px solid #e9ecef',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e9ecef)
+      border: '2px solid var(--mg-color-border-main)',
       borderRadius: '8px',
       fontSize: 'var(--font-size-sm)',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-      backgroundColor: '#fff',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-white) -> var(--mg-custom-fff)
+      backgroundColor: 'var(--mg-white)',
       cursor: 'pointer',
       transition: 'all 0.2s ease'
     },
@@ -223,8 +223,8 @@ const ConsultantMessageScreen = () => {
     checkboxLabel: {
       fontSize: 'var(--font-size-sm)',
       fontWeight: '500',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
-      color: '#495057',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-495057)
+      color: 'var(--mg-color-text-secondary)',
       cursor: 'pointer'
     },
     messageTypeGrid: {
@@ -234,14 +234,14 @@ const ConsultantMessageScreen = () => {
     },
     messageTypeItem: {
       padding: '16px',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
-      border: '2px solid #e9ecef',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e9ecef)
+      border: '2px solid var(--mg-color-border-main)',
       borderRadius: '8px',
       cursor: 'pointer',
       transition: 'all 0.2s ease',
       textAlign: 'center',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-      backgroundColor: '#fff'
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-white) -> var(--mg-custom-fff)
+      backgroundColor: 'var(--mg-white)'
     },
     messageTypeItemSelected: {
       borderColor: 'var(--mg-primary-500)',
@@ -255,8 +255,8 @@ const ConsultantMessageScreen = () => {
     messageTypeLabel: {
       fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
-      color: '#495057'
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-495057)
+      color: 'var(--mg-color-text-secondary)'
     },
     buttonGroup: {
       display: 'flex',
@@ -264,8 +264,8 @@ const ConsultantMessageScreen = () => {
       justifyContent: 'flex-end',
       marginTop: '24px',
       paddingTop: '20px',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
-      borderTop: '1px solid #e9ecef'
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e9ecef)
+      borderTop: '1px solid var(--mg-color-border-main)'
     },
     button: {
       padding: '12px 24px',
@@ -281,18 +281,18 @@ const ConsultantMessageScreen = () => {
     },
     primaryButton: {
       backgroundColor: 'var(--mg-primary-500)',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-      color: '#fff'
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-white) -> var(--mg-custom-fff)
+      color: 'var(--mg-white)'
     },
     secondaryButton: {
       backgroundColor: 'var(--mg-secondary-500)',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-      color: '#fff'
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-white) -> var(--mg-custom-fff)
+      color: 'var(--mg-white)'
     },
     successButton: {
       backgroundColor: 'var(--mg-success-500)',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-      color: '#fff'
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-white) -> var(--mg-custom-fff)
+      color: 'var(--mg-white)'
     },
     loadingOverlay: {
       position: 'fixed',

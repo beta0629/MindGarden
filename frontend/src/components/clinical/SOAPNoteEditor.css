@@ -11,7 +11,7 @@
     align-items: center;
     margin-bottom: 24px;
     padding-bottom: 16px;
-    border-bottom: 2px solid #e5e7eb;
+    border-bottom: 2px solid var(--mg-color-border-main);
 }
 
 .editor-header h4 {
@@ -70,14 +70,14 @@
 
 .soap-section {
     margin-bottom: 24px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--mg-color-border-main);
     border-radius: 8px;
     padding: 16px;
     transition: all 0.2s;
 }
 
 .soap-section:hover {
-    border-color: #2563eb;
+    border-color: var(--mg-color-info);
     box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
 }
 
@@ -94,7 +94,7 @@
     justify-content: center;
     width: 36px;
     height: 36px;
-    background: linear-gradient(135deg, #2563eb, var(--mg-primary-500));
+    background: linear-gradient(135deg, var(--mg-color-info), var(--mg-primary-500));
     color: white;
     border-radius: 50%;
     font-size: 18px;
@@ -104,12 +104,12 @@
 
 .section-title strong {
     font-size: 16px;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
 }
 
 .section-desc {
     font-size: 13px;
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     margin-left: auto;
 }
 
@@ -127,7 +127,7 @@
 
 .soap-textarea:focus {
     outline: none;
-    border-color: #2563eb;
+    border-color: var(--mg-color-info);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -163,7 +163,7 @@
     align-items: center;
     margin-top: 24px;
     padding-top: 20px;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--mg-color-border-main);
 }
 
 .btn {
@@ -191,12 +191,12 @@
 }
 
 .btn-secondary {
-    background: #6b7280;
+    background: var(--mg-color-text-secondary);
     color: white;
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: #4b5563;
+    background: var(--mg-color-text-tertiary);
 }
 
 .btn-success {

@@ -118,12 +118,12 @@ const ConsultationRecordScreen = () => {
       padding: '20px'
     },
     header: {
-      backgroundColor: 'var(--mg-white, #fff)',
+      backgroundColor: 'var(--mg-white, var(--mg-white))',
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      border: '1px solid var(--mg-gray-200, #e9ecef)'
+      border: '1px solid var(--mg-gray-200, var(--mg-color-border-main))'
     },
     headerTitle: {
       fontSize: 'var(--font-size-xxl)',
@@ -140,12 +140,12 @@ const ConsultationRecordScreen = () => {
       marginBottom: '20px'
     },
     clientInfoCard: {
-      backgroundColor: 'var(--mg-white, #fff)',
+      backgroundColor: 'var(--mg-white, var(--mg-white))',
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      border: '1px solid var(--mg-gray-200, #e9ecef)'
+      border: '1px solid var(--mg-gray-200, var(--mg-color-border-main))'
     },
     clientInfoTitle: {
       fontSize: 'var(--font-size-xl)',
@@ -179,11 +179,11 @@ const ConsultationRecordScreen = () => {
       fontWeight: '500'
     },
     formCard: {
-      backgroundColor: 'var(--mg-white, #fff)',
+      backgroundColor: 'var(--mg-white, var(--mg-white))',
       borderRadius: '12px',
       padding: '24px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      border: '1px solid var(--mg-gray-200, #e9ecef)'
+      border: '1px solid var(--mg-gray-200, var(--mg-color-border-main))'
     },
     formTitle: {
       fontSize: 'var(--font-size-xl)',
@@ -207,34 +207,34 @@ const ConsultationRecordScreen = () => {
     formLabel: {
       fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
-      color: '#495057',
+      color: 'var(--mg-color-text-secondary)',
       marginBottom: '4px'
     },
     formInput: {
       padding: '12px 16px',
-      border: '2px solid #e9ecef',
+      border: '2px solid var(--mg-color-border-main)',
       borderRadius: '8px',
       fontSize: 'var(--font-size-sm)',
       transition: 'all 0.2s ease',
-      backgroundColor: '#fff'
+      backgroundColor: 'var(--mg-white)'
     },
     formTextarea: {
       padding: '12px 16px',
-      border: '2px solid #e9ecef',
+      border: '2px solid var(--mg-color-border-main)',
       borderRadius: '8px',
       fontSize: 'var(--font-size-sm)',
       minHeight: '100px',
       resize: 'vertical',
       fontFamily: 'inherit',
       transition: 'all 0.2s ease',
-      backgroundColor: '#fff'
+      backgroundColor: 'var(--mg-white)'
     },
     formSelect: {
       padding: '12px 16px',
-      border: '2px solid #e9ecef',
+      border: '2px solid var(--mg-color-border-main)',
       borderRadius: '8px',
       fontSize: 'var(--font-size-sm)',
-      backgroundColor: 'var(--mg-white, #fff)',
+      backgroundColor: 'var(--mg-white, var(--mg-white))',
       cursor: 'pointer',
       transition: 'all 0.2s ease'
     },
@@ -248,7 +248,7 @@ const ConsultationRecordScreen = () => {
       justifyContent: 'flex-end',
       marginTop: '24px',
       paddingTop: '20px',
-      borderTop: '1px solid #e9ecef'
+      borderTop: '1px solid var(--mg-color-border-main)'
     },
     button: {
       padding: '12px 24px',
@@ -264,15 +264,15 @@ const ConsultationRecordScreen = () => {
     },
     primaryButton: {
       backgroundColor: 'var(--mg-primary-500)',
-      color: '#fff'
+      color: 'var(--mg-white)'
     },
     secondaryButton: {
       backgroundColor: 'var(--mg-secondary-500)',
-      color: '#fff'
+      color: 'var(--mg-white)'
     },
     dangerButton: {
       backgroundColor: 'var(--mg-error-500)',
-      color: '#fff'
+      color: 'var(--mg-white)'
     },
     statusBadge: {
       padding: '4px 12px',
@@ -285,7 +285,7 @@ const ConsultationRecordScreen = () => {
     progressBar: {
       width: '100%',
       height: '8px',
-      backgroundColor: '#e9ecef',
+      backgroundColor: 'var(--mg-color-border-main)',
       borderRadius: '4px',
       overflow: 'hidden',
       marginTop: '8px'
@@ -595,7 +595,7 @@ const ConsultationRecordScreen = () => {
                 ...styles.statusBadge,
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 backgroundColor: client.status === 'ACTIVE' ? 'var(--mg-success-500)' : 'var(--mg-secondary-500)',
-                color: '#fff'
+                color: 'var(--mg-white)'
               }}>
                 <SafeText>{getUserStatusKoreanNameSync(client.status)}</SafeText>
               </span>

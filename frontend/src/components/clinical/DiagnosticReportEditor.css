@@ -16,8 +16,8 @@
     width: 40px;
     height: 40px;
     margin-bottom: 16px;
-    border: 4px solid #e5e7eb;
-    border-top-color: #2563eb;
+    border: 4px solid var(--mg-color-border-main);
+    border-top-color: var(--mg-color-info);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -66,7 +66,7 @@
 }
 
 .btn-primary {
-    background: #2563eb;
+    background: var(--mg-color-info);
     color: white;
 }
 
@@ -75,12 +75,12 @@
 }
 
 .btn-secondary {
-    background: #6b7280;
+    background: var(--mg-color-text-secondary);
     color: white;
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: #4b5563;
+    background: var(--mg-color-text-tertiary);
 }
 
 .btn-success {
@@ -123,12 +123,12 @@
 .no-report-message h4 {
     margin: 0 0 12px 0;
     font-size: 20px;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
 }
 
 .no-report-message p {
     margin: 0 0 24px 0;
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     font-size: 15px;
 }
 
@@ -151,7 +151,7 @@
 
 .meta-item {
     font-size: 14px;
-    color: #4b5563;
+    color: var(--mg-color-text-tertiary);
 }
 
 .meta-item.reviewed {
@@ -162,13 +162,13 @@
 .report-section {
     margin-bottom: 32px;
     padding: 24px;
-    border: 2px solid #e5e7eb;
+    border: 2px solid var(--mg-color-border-main);
     border-radius: 8px;
     transition: all 0.2s;
 }
 
 .report-section:hover {
-    border-color: #2563eb;
+    border-color: var(--mg-color-info);
     box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
 }
 
@@ -176,13 +176,13 @@
     margin: 0 0 8px 0;
     font-size: 18px;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
 }
 
 .section-guide {
     margin: 0 0 16px 0;
     font-size: 13px;
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     font-style: italic;
 }
 
@@ -200,7 +200,7 @@
 
 .report-textarea:focus {
     outline: none;
-    border-color: #2563eb;
+    border-color: var(--mg-color-info);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -235,7 +235,7 @@
     justify-content: flex-end;
     margin-top: 24px;
     padding-top: 20px;
-    border-top: 2px solid #e5e7eb;
+    border-top: 2px solid var(--mg-color-border-main);
 }
 
 .report-disclaimer {

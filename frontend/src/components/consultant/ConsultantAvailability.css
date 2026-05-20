@@ -65,7 +65,7 @@
 
 .mg-btn--primary {
   background: #3498db;
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .mg-btn--primary:hover {
@@ -81,7 +81,7 @@
 
 .btn-outline-secondary:hover {
   background: var(--mg-secondary-500);
-  color: #fff;
+  color: var(--mg-white);
   transform: translateY(-1px);
 }
 
@@ -151,12 +151,12 @@
 
 /* 요일 카드 */
 .day-card {
-  background: #fff;
+  background: var(--mg-white);
   border-radius: 15px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   overflow: hidden;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--mg-color-border-main);
 }
 
 .day-card:hover {
@@ -169,8 +169,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px 20px 15px;
-  background: linear-gradient(135deg, var(--mg-gray-100) 0%, #e9ecef 100%);
-  border-bottom: 1px solid #e9ecef;
+  background: linear-gradient(135deg, var(--mg-gray-100) 0%, var(--mg-color-border-main) 100%);
+  border-bottom: 1px solid var(--mg-color-border-main);
 }
 
 .day-title {
@@ -182,7 +182,7 @@
 
 .day-count {
   background: #3498db;
-  color: #fff;
+  color: var(--mg-white);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.85rem;
@@ -204,12 +204,12 @@
   margin-bottom: 10px;
   background: var(--mg-gray-100);
   border-radius: 8px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--mg-color-border-main);
   transition: all 0.3s ease;
 }
 
 .time-slot:hover {
-  background: #e9ecef;
+  background: var(--mg-color-border-main);
   transform: translateX(2px);
 }
 
@@ -260,7 +260,7 @@
 
 .btn-outline-primary:hover {
   background: #3498db;
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .btn-outline-danger {
@@ -271,7 +271,7 @@
 
 .btn-outline-danger:hover {
   background: var(--mg-error-500);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .no-slots {
@@ -310,7 +310,7 @@
 }
 
 .availability-modal {
-  background: #fff;
+  background: var(--mg-white);
   border-radius: 15px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   max-width: 500px;
@@ -325,8 +325,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 25px 30px 20px;
-  border-bottom: 1px solid #e9ecef;
-  background: linear-gradient(135deg, var(--mg-gray-100) 0%, #e9ecef 100%);
+  border-bottom: 1px solid var(--mg-color-border-main);
+  background: linear-gradient(135deg, var(--mg-gray-100) 0%, var(--mg-color-border-main) 100%);
   border-radius: 15px 15px 0 0;
 }
 
@@ -361,7 +361,7 @@
 }
 
 .modal-close-btn:hover {
-  background: #e9ecef;
+  background: var(--mg-color-border-main);
   color: var(--mg-color-text-main);
 }
 
@@ -391,11 +391,11 @@
 .form-control {
   width: 100%;
   padding: 12px 15px;
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--mg-color-border-main);
   border-radius: 8px;
   font-size: 1rem;
   transition: all 0.3s ease;
-  background: #fff;
+  background: var(--mg-white);
   color: #000;
 }
 
@@ -443,7 +443,7 @@
   align-items: center;
   gap: var(--spacing-md);
   padding: 20px 30px 30px;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--mg-color-border-main);
   background: var(--mg-gray-100);
   border-radius: 0 0 15px 15px;
 }
@@ -462,7 +462,7 @@
 
 .mg-btn--primary {
   background: #3498db;
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .mg-btn--primary:hover {
@@ -472,7 +472,7 @@
 
 .mg-btn--secondary {
   background: var(--mg-secondary-500);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .mg-btn--secondary:hover {

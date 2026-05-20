@@ -745,14 +745,14 @@ const CommonCodeManagement = () => {
                                                         className="mg-v2-ad-b0kla__form-input"
                                                     />
                                                 </div>
-                                                <div className="mg-v2-ad-b0kla__form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px', paddingTop: '24px' }}>
+                                                <div className="mg-v2-ad-b0kla__form-group mg-v2-ad-b0kla__form-group--inline-check">
                                                     <input
                                                         type="checkbox"
                                                         id="isActiveCheckbox"
                                                         checked={ newCodeData.isActive }
                                                         onChange={ (e) => setNewCodeData({ ...newCodeData, isActive: e.target.checked })}
                                                     />
-                                                    <label htmlFor="isActiveCheckbox" className="mg-v2-ad-b0kla__form-label" style={{ cursor: 'pointer' }}>{CCM_UI.LABEL_ACTIVE_STATE}</label>
+                                                    <label htmlFor="isActiveCheckbox" className="mg-v2-ad-b0kla__form-label mg-v2-ad-b0kla__form-label--clickable">{CCM_UI.LABEL_ACTIVE_STATE}</label>
                                                 </div>
                                             </div>
                                             <div className="mg-v2-ad-b0kla__form-actions">
@@ -791,7 +791,7 @@ const CommonCodeManagement = () => {
                                 )}
 
                                 {loading && groupCodes.length === 0 ? (
-                                    <div style={{ textAlign: 'center', padding: 'var(--mg-spacing-xl)', color: 'var(--ad-b0kla-text-secondary)' }}>{CCM_UI.LOADING}</div>
+                                    <div className="mg-v2-ad-b0kla__loading-message">{CCM_UI.LOADING}</div>
                                 ) : (
                                     <table className="mg-v2-ad-b0kla__data-table">
                                         <thead>
@@ -802,23 +802,23 @@ const CommonCodeManagement = () => {
                                                 <th>{CCM_UI.COL_STATUS}</th>
                                                 <th>{CCM_UI.COL_SORT}</th>
                                                 <th>{CCM_UI.COL_DESCRIPTION}</th>
-                                                <th style={{ width: '120px', textAlign: 'center' }}>{CCM_UI.COL_MANAGE}</th>
+                                                <th className="mg-v2-ad-b0kla__data-table-actions-col">{CCM_UI.COL_MANAGE}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {groupCodes.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={tableColSpan} style={{ textAlign: 'center', color: 'var(--ad-b0kla-text-secondary)', padding: 'var(--mg-spacing-xl)' }}>
+                                                    <td colSpan={tableColSpan} className="mg-v2-ad-b0kla__data-table-empty-cell">
                                                         {CCM_UI.EMPTY_NO_CODES}
                                                     </td>
                                                 </tr>
                                             ) : (
                                                 groupCodes.map(code => (
-                                                    <tr key={code.id} style={{ opacity: code.isActive ? 1 : 0.6 }}>
-                                                        <td style={{ fontWeight: 500 }}>{toDisplayString(code.codeLabel, CCM_UI.DISPLAY_EMPTY)}</td>
-                                                        <td><code style={{ fontSize: '12px', background: 'var(--mg-gray-100)', padding: '2px 4px', borderRadius: '4px' }}>{toDisplayString(code.codeValue, CCM_UI.DISPLAY_EMPTY)}</code></td>
+                                                    <tr key={code.id} className={code.isActive ? '' : 'mg-v2-ad-b0kla__data-row--inactive'}>
+                                                        <td className="mg-v2-ad-b0kla__data-cell--label">{toDisplayString(code.codeLabel, CCM_UI.DISPLAY_EMPTY)}</td>
+                                                        <td><code className="mg-v2-ad-b0kla__code-inline">{toDisplayString(code.codeValue, CCM_UI.DISPLAY_EMPTY)}</code></td>
                                                         {showParentColumn && (
-                                                            <td style={{ color: 'var(--ad-b0kla-text-secondary)' }}>
+                                                            <td className="mg-v2-ad-b0kla__data-cell--secondary">
                                                                 {resolveParentCategoryLabel(code)}
                                                             </td>
                                                         )}
@@ -828,11 +828,11 @@ const CommonCodeManagement = () => {
                                                             </span>
                                                         </td>
                                                         <td>{toDisplayString(code.sortOrder, CCM_UI.DISPLAY_EMPTY)}</td>
-                                                        <td style={{ color: 'var(--ad-b0kla-text-secondary)' }}>
+                                                        <td className="mg-v2-ad-b0kla__data-cell--secondary">
                                                             {code.codeDescription ? toDisplayString(code.codeDescription, CCM_UI.DISPLAY_EMPTY) : CCM_UI.DISPLAY_EMPTY}
                                                         </td>
-                                                        <td style={{ textAlign: 'center' }}>
-                                                            <div className="mg-v2-ad-b0kla__code-actions" style={{ justifyContent: 'center' }}>
+                                                        <td className="mg-v2-ad-b0kla__data-cell--center">
+                                                            <div className="mg-v2-ad-b0kla__code-actions mg-v2-ad-b0kla__code-actions--centered">
                                                                 <MGButton
                                                                     type="button"
                                                                     variant="outline"
@@ -840,13 +840,13 @@ const CommonCodeManagement = () => {
                                                                     className={buildErpMgButtonClassName({
                                                                         variant: 'outline',
                                                                         size: 'sm',
-                                                                        loading: loading
+                                                                        loading: loading,
+                                                                        className: 'mg-v2-ad-b0kla__action-btn--edit'
                                                                     })}
                                                                     loading={loading}
                                                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                                     onClick={() => handleEditCode(code)}
                                                                     title={CCM_UI.BTN_EDIT}
-                                                                    style={{ color: 'var(--ad-b0kla-green)' }}
                                                                     preventDoubleClick={false}
                                                                 >
                                                                     {CCM_UI.BTN_EDIT}
@@ -858,13 +858,13 @@ const CommonCodeManagement = () => {
                                                                     className={buildErpMgButtonClassName({
                                                                         variant: 'outline',
                                                                         size: 'sm',
-                                                                        loading: loading
+                                                                        loading: loading,
+                                                                        className: code.isActive ? 'mg-v2-ad-b0kla__action-btn--toggle-active' : 'mg-v2-ad-b0kla__action-btn--toggle-inactive'
                                                                     })}
                                                                     loading={loading}
                                                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                                     onClick={() => handleToggleStatus(code.id, code.isActive)}
                                                                     title={code.isActive ? CCM_UI.ACTION_DEACTIVATE : CCM_UI.ACTION_ACTIVATE}
-                                                                    style={{ color: code.isActive ? 'var(--mg-warning-500)' : 'var(--ad-b0kla-green)' }}
                                                                     preventDoubleClick={false}
                                                                 >
                                                                     {code.isActive ? CCM_UI.ACTION_DEACTIVATE : CCM_UI.ACTION_ACTIVATE}
@@ -876,13 +876,13 @@ const CommonCodeManagement = () => {
                                                                     className={buildErpMgButtonClassName({
                                                                         variant: 'outline',
                                                                         size: 'sm',
-                                                                        loading: loading
+                                                                        loading: loading,
+                                                                        className: 'mg-v2-ad-b0kla__action-btn--delete'
                                                                     })}
                                                                     loading={loading}
                                                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                                     onClick={() => handleDeleteCode(code.id)}
                                                                     title={CCM_UI.BTN_DELETE}
-                                                                    style={{ color: 'var(--mg-error-500)' }}
                                                                     preventDoubleClick={false}
                                                                 >
                                                                     {CCM_UI.BTN_DELETE}

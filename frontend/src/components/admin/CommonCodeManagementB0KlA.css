@@ -461,3 +461,79 @@
 .mg-v2-ad-b0kla__code-actions .mg-button.mg-button--outline.mg-button--small .mg-button__text {
     display: contents;
 }
+
+/* T8-C1-3: 인라인 스타일 추출 */
+
+/* 활성 상태 폼 체크박스 그룹 (가로 정렬·padding-top) */
+.mg-v2-ad-b0kla__form-group--inline-check {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--mg-spacing-8);
+    padding-top: var(--mg-spacing-24);
+}
+
+.mg-v2-ad-b0kla__form-label--clickable {
+    cursor: pointer;
+}
+
+/* 데이터 테이블 행/셀 보조 스타일 */
+.mg-v2-ad-b0kla__loading-message {
+    text-align: center;
+    padding: var(--mg-spacing-xl);
+    color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla__data-table-actions-col {
+    width: 120px;
+    text-align: center;
+}
+
+.mg-v2-ad-b0kla__data-table-empty-cell {
+    text-align: center;
+    color: var(--ad-b0kla-text-secondary);
+    padding: var(--mg-spacing-xl);
+}
+
+.mg-v2-ad-b0kla__data-row--inactive {
+    opacity: 0.6;
+}
+
+.mg-v2-ad-b0kla__data-cell--label {
+    font-weight: 500;
+}
+
+.mg-v2-ad-b0kla__data-cell--secondary {
+    color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla__data-cell--center {
+    text-align: center;
+}
+
+.mg-v2-ad-b0kla__code-actions--centered {
+    justify-content: center;
+}
+
+.mg-v2-ad-b0kla__code-inline {
+    font-size: 12px;
+    background: var(--mg-gray-100);
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+/* 코드 액션 버튼 색상 토큰 */
+.mg-v2-ad-b0kla__action-btn--edit {
+    color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla__action-btn--toggle-active {
+    color: var(--mg-warning-500);
+}
+
+.mg-v2-ad-b0kla__action-btn--toggle-inactive {
+    color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla__action-btn--delete {
+    color: var(--mg-error-500);
+}

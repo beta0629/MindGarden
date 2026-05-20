@@ -2,17 +2,17 @@
 
 /* CSS 변수 정의 */
 :root {
-    --branch-login-primary: #2563eb;
+    --branch-login-primary: var(--mg-color-info);
     --branch-login-success: #16a34a;
     --branch-login-warning: #d97706;
-    --branch-login-error: #dc2626;
+    --branch-login-error: var(--mg-color-error);
     --branch-login-gray-100: #f3f4f6;
-    --branch-login-gray-200: #e5e7eb;
+    --branch-login-gray-200: var(--mg-color-border-main);
     --branch-login-gray-300: #d1d5db;
-    --branch-login-gray-500: #6b7280;
-    --branch-login-gray-600: #4b5563;
-    --branch-login-gray-700: #374151;
-    --branch-login-gray-800: #1f2937;
+    --branch-login-gray-500: var(--mg-color-text-secondary);
+    --branch-login-gray-600: var(--mg-color-text-tertiary);
+    --branch-login-gray-700: var(--mg-color-text-secondary-dark);
+    --branch-login-gray-800: var(--mg-color-text-main);
     --branch-login-gray-900: #111827;
     --branch-login-white: var(--mg-white);
     --branch-login-border-radius: 12px;
@@ -523,7 +523,7 @@ select:focus {
     }
     
     .branch-info-header {
-        background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+        background: linear-gradient(135deg, var(--mg-color-text-secondary-dark) 0%, var(--mg-color-text-tertiary) 100%);
         border-color: var(--branch-login-gray-600);
     }
     

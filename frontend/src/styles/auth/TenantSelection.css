@@ -56,7 +56,7 @@
 .tenant-selection__item {
   width: 100%;
   padding: var(--spacing-lg);
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--mg-color-border-main);
   border-radius: var(--border-radius-lg);
   background-color: var(--bg-primary);
   cursor: pointer;
@@ -132,7 +132,7 @@
 .tenant-selection__cancel-button {
   flex: 1;
   padding: var(--spacing-md);
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--mg-color-border-main);
   border-radius: var(--border-radius-lg);
   background-color: var(--bg-primary);
   color: var(--text-primary);
@@ -143,7 +143,7 @@
 
 .tenant-selection__cancel-button:hover:not(:disabled) {
   border-color: #d1d5db;
-  background-color: #f9fafb;
+  background-color: var(--mg-color-background-main);
 }
 
 .tenant-selection__cancel-button:disabled {

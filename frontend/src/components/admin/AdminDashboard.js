@@ -1690,7 +1690,6 @@ const AdminDashboard = ({ user: propUser }) => {
                                 console.log('🔗 ERP 대시보드 클릭 - 네비게이션 시작');
                                 navigate('/erp/dashboard');
                             }}
-                            style={{ cursor: 'pointer' }}
                         >
                             <div className="mg-management-icon">
                                 <FaChartLine />

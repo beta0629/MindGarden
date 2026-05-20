@@ -159,16 +159,7 @@ const DashboardWidgetEditor = ({
       <div className="widget-editor-section">
         <h3 className="widget-editor-section-title">
           기본 위젯
-          <span className="widget-section-badge" style={{
-            marginLeft: '8px',
-            padding: '2px 8px',
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd)
-            backgroundColor: '#e3f2fd',
-            color: 'var(--mg-secondary-600)',
-            borderRadius: '12px',
-            fontSize: '0.85em',
-            fontWeight: '500'
-          }}>
+          <span className="widget-section-badge widget-section-badge--basic">
             {commonWidgetTypes.length}개
           </span>
         </h3>
@@ -190,19 +181,12 @@ const DashboardWidgetEditor = ({
           {commonWidgetTypes.map(widgetType => (
             <div
               key={widgetType}
-              className="available-widget-item"
+              className="available-widget-item available-widget-item--draggable"
               data-widget-type={widgetType}
               title={getWidgetTypeName(widgetType)}
               onClick={() => handleAddWidget(widgetType)}
-              style={{ cursor: 'grab' }}
             >
-              <FaGripVertical className="widget-drag-handle-icon" style={{ 
-                position: 'absolute', 
-                top: '4px', 
-                right: '4px', 
-                fontSize: '12px',
-                color: 'var(--mg-text-tertiary, #9ca3af)'
-              }} />
+              <FaGripVertical className="widget-drag-handle-icon widget-drag-handle-icon--corner" />
               <FaPlus className="widget-add-icon" />
               <span className="widget-type-name">
                 {getWidgetTypeName(widgetType)}
@@ -214,22 +198,12 @@ const DashboardWidgetEditor = ({
 
       {/* 특화 위젯 목록 */}
       {specializedWidgetTypes.length > 0 && (
-        <div className="widget-editor-section" style={{ marginTop: '24px' }}>
+        <div className="widget-editor-section widget-editor-section--with-top-gap">
           <h3 className="widget-editor-section-title">
             {businessType?.toLowerCase() === 'consultation' && '상담소 특화 위젯'}
             {businessType?.toLowerCase() === 'academy' && '학원 특화 위젯'}
             {!businessType && '특화 위젯'}
-            <span className="widget-section-badge" style={{
-              marginLeft: '8px',
-              padding: '2px 8px',
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3e0 -> var(--mg-custom-fff3e0)
-              backgroundColor: '#fff3e0',
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e65100 -> var(--mg-custom-e65100)
-              color: '#e65100',
-              borderRadius: '12px',
-              fontSize: '0.85em',
-              fontWeight: '500'
-            }}>
+            <span className="widget-section-badge widget-section-badge--specialized">
               {specializedWidgetTypes.length}개
             </span>
           </h3>
@@ -251,38 +225,17 @@ const DashboardWidgetEditor = ({
             {specializedWidgetTypes.map(widgetType => (
               <div
                 key={widgetType}
-                className="available-widget-item specialized-widget-item"
+                className="available-widget-item specialized-widget-item available-widget-item--specialized"
                 data-widget-type={widgetType}
                 onClick={() => handleAddWidget(widgetType)}
                 title={getWidgetTypeName(widgetType)}
-                style={{
-                  borderColor: 'var(--mg-warning-500)',
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff8f0 -> var(--mg-custom-fff8f0)
-                  backgroundColor: '#fff8f0',
-                  cursor: 'grab',
-                  position: 'relative'
-                }}
               >
-                <FaGripVertical className="widget-drag-handle-icon" style={{ 
-                  position: 'absolute', 
-                  top: '4px', 
-                  right: '4px', 
-                  fontSize: '12px',
-                  color: 'var(--mg-text-tertiary, #9ca3af)'
-                }} />
+                <FaGripVertical className="widget-drag-handle-icon widget-drag-handle-icon--corner" />
                 <FaPlus className="widget-add-icon" />
                 <span className="widget-type-name">
                   {getWidgetTypeName(widgetType)}
                 </span>
-                <span className="widget-specialized-badge" style={{
-                  marginLeft: '4px',
-                  padding: '1px 6px',
-                  backgroundColor: 'var(--mg-warning-500)',
-                  color: 'white',
-                  borderRadius: '8px',
-                  fontSize: '0.75em',
-                  fontWeight: '600'
-                }}>
+                <span className="widget-specialized-badge widget-specialized-badge--marker">
                   특화
                 </span>
               </div>
@@ -328,24 +281,12 @@ const DashboardWidgetEditor = ({
                       variant: 'outline',
                       size: 'sm',
                       loading: false,
-                      className: 'widget-action-btn widget-config-btn'
+                      className: 'widget-action-btn widget-config-btn widget-action-btn--config'
                     })}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleConfigWidget(widget)}
                     title="위젯 설정"
                     preventDoubleClick={false}
-                    style={{
-                      padding: '6px 12px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      backgroundColor: '#fff',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      color: '#666'
-                    }}
                   >
                     설정
                   </MGButton>
@@ -357,24 +298,12 @@ const DashboardWidgetEditor = ({
                       variant: 'danger',
                       size: 'sm',
                       loading: false,
-                      className: 'widget-action-btn widget-delete-btn'
+                      className: 'widget-action-btn widget-delete-btn widget-action-btn--delete'
                     })}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleDeleteWidget(widget.id)}
                     title="위젯 삭제"
                     preventDoubleClick={false}
-                    style={{
-                      padding: '6px 12px',
-                      border: '1px solid var(--mg-error-500)',
-                      borderRadius: '4px',
-                      backgroundColor: '#fff',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      color: 'var(--mg-error-500)'
-                    }}
                   >
                     삭제
                   </MGButton>

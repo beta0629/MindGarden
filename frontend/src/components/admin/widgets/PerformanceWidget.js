@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaChartLine, FaArrowUp, FaArrowDown, FaClock, FaDatabase } from 'react-icons/fa';
 import { PerformanceCalculator, DataTransformer, PerformanceUtils } from '../../../utils/performanceUtils';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
+import './PerformanceWidget.css';
 
 /**
  * 성능 모니터링 위젯
@@ -89,9 +90,9 @@ const PerformanceWidget = ({
   const getTrendIcon = () => {
     const trendTypes = WIDGET_CONSTANTS.PERFORMANCE_WIDGET.TREND_TYPES;
     switch (performanceData.trend) {
-      case trendTypes.UP: return <FaArrowUp style={{ color: 'var(--mg-success-500)' }} />;
-      case trendTypes.DOWN: return <FaArrowDown style={{ color: 'var(--mg-error-500)' }} />;
-      default: return <FaClock style={{ color: 'var(--mg-info-500)' }} />;
+      case trendTypes.UP: return <FaArrowUp className="performance-widget__trend-icon--up" />;
+      case trendTypes.DOWN: return <FaArrowDown className="performance-widget__trend-icon--down" />;
+      default: return <FaClock className="performance-widget__trend-icon--stable" />;
     }
   };
 
@@ -108,7 +109,7 @@ const PerformanceWidget = ({
       {/* Header */}
       <div className="mg-v2-ad-b0kla__card-header mg-v2-ad-b0kla__flex-between">
         <div className="mg-v2-ad-b0kla__flex">
-          <FaChartLine className="mg-v2-ad-b0kla__icon" style={{ marginRight: 'var(--mg-spacing-8)' }} />
+          <FaChartLine className="mg-v2-ad-b0kla__icon performance-widget__header-icon" />
           <span className="mg-v2-ad-b0kla__text--bold mg-v2-ad-b0kla__text--lg">{title}</span>
         </div>
         <div className="trend-icon">
@@ -118,54 +119,54 @@ const PerformanceWidget = ({
 
       {/* Body */}
       <div className="mg-v2-ad-b0kla__card-body">
-        <div className="mg-v2-ad-b0kla__grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
-          
+        <div className="mg-v2-ad-b0kla__grid performance-widget__grid">
+
           {/* API Response Time */}
           <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col">
-            <span className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-600)' }}>
+            <span className="mg-v2-ad-b0kla__text--sm performance-widget__stat-label">
               {WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_LABELS.API_RESPONSE_TIME}
             </span>
-            <span 
-              className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold" 
-              style={{ color: getGradeColor(performanceData[WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_TYPES.API_RESPONSE_TIME], 'responseTime'), marginTop: 'var(--mg-spacing-4)' }}
+            <span
+              className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold performance-widget__stat-value"
+              style={{ color: getGradeColor(performanceData[WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_TYPES.API_RESPONSE_TIME], 'responseTime') }}
             >
               {PerformanceUtils.formatDuration(performanceData[WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_TYPES.API_RESPONSE_TIME])}
             </span>
           </div>
-          
+
           {/* Cache Hit Rate */}
           <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col">
-            <span className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-600)' }}>
+            <span className="mg-v2-ad-b0kla__text--sm performance-widget__stat-label">
               {WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_LABELS.CACHE_HIT_RATE}
             </span>
-            <span 
-              className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold mg-v2-ad-b0kla__flex" 
-              style={{ color: getGradeColor(performanceData[WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_TYPES.CACHE_HIT_RATE], 'cacheHitRate'), alignItems: 'center', marginTop: 'var(--mg-spacing-4)' }}
+            <span
+              className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold mg-v2-ad-b0kla__flex performance-widget__stat-value"
+              style={{ color: getGradeColor(performanceData[WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_TYPES.CACHE_HIT_RATE], 'cacheHitRate'), alignItems: 'center' }}
             >
-              <FaDatabase style={{ marginRight: 'var(--mg-spacing-4)', fontSize: '1rem' }} />
+              <FaDatabase className="performance-widget__cache-icon" />
               {PerformanceUtils.formatPercentage(performanceData[WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_TYPES.CACHE_HIT_RATE])}
             </span>
           </div>
 
           {/* Active Users */}
           <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col">
-            <span className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-600)' }}>
+            <span className="mg-v2-ad-b0kla__text--sm performance-widget__stat-label">
               {WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_LABELS.ACTIVE_USERS}
             </span>
-            <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold" style={{ marginTop: 'var(--mg-spacing-4)' }}>
+            <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold performance-widget__stat-value">
               {PerformanceUtils.formatNumber(performanceData[WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_TYPES.ACTIVE_USERS])}
-              <span className="mg-v2-ad-b0kla__text--sm" style={{ fontWeight: 'normal', marginLeft: '2px' }}>{WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_UNITS.ACTIVE_USERS}</span>
+              <span className="mg-v2-ad-b0kla__text--sm performance-widget__value-unit">{WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_UNITS.ACTIVE_USERS}</span>
             </span>
           </div>
-          
+
           {/* System Load */}
           <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col">
-            <span className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-600)' }}>
+            <span className="mg-v2-ad-b0kla__text--sm performance-widget__stat-label">
               {WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_LABELS.SYSTEM_LOAD}
             </span>
-            <span 
-              className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold" 
-              style={{ color: getGradeColor(performanceData[WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_TYPES.SYSTEM_LOAD], 'systemLoad'), marginTop: 'var(--mg-spacing-4)' }}
+            <span
+              className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold performance-widget__stat-value"
+              style={{ color: getGradeColor(performanceData[WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_TYPES.SYSTEM_LOAD], 'systemLoad') }}
             >
               {PerformanceUtils.formatPercentage(performanceData[WIDGET_CONSTANTS.PERFORMANCE_WIDGET.METRIC_TYPES.SYSTEM_LOAD])}
             </span>
@@ -175,16 +176,16 @@ const PerformanceWidget = ({
       </div>
 
       {/* Footer */}
-      <div className="mg-v2-ad-b0kla__card-footer" style={{ borderTop: '1px solid var(--mg-gray-200)', paddingTop: 'var(--mg-spacing-12)', marginTop: 'var(--mg-spacing-16)' }}>
+      <div className="mg-v2-ad-b0kla__card-footer performance-widget__footer">
         {loading && (
-          <div className="mg-v2-ad-b0kla__flex" style={{ justifyContent: 'center' }}>
-            <span className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-500)' }}>
+          <div className="mg-v2-ad-b0kla__flex performance-widget__loading-row">
+            <span className="mg-v2-ad-b0kla__text--sm performance-widget__loading-text">
               {WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.LOADING}
             </span>
           </div>
         )}
         {lastUpdated && !loading && (
-          <div className="mg-v2-ad-b0kla__text--xs mg-v2-text-muted" style={{ textAlign: 'right' }}>
+          <div className="mg-v2-ad-b0kla__text--xs mg-v2-text-muted performance-widget__updated">
             마지막 업데이트: {lastUpdated.toLocaleTimeString()}
           </div>
         )}

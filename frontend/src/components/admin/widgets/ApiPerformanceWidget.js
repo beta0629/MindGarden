@@ -2,6 +2,7 @@ import React from 'react';
 import { PerformanceUtils } from '../../../utils/performanceUtils';
 import { ApiPerformanceAnalyzer } from '../../../utils/apiPerformanceUtils';
 import { API_PERFORMANCE_WIDGET } from '../../../constants/widgetConstants';
+import './ApiPerformanceWidget.css';
 
 /**
  * API 성능 모니터링 요약 위젯 (Top Section)
@@ -31,71 +32,49 @@ const ApiPerformanceWidget = ({
   };
 
   return (
-    <div className={`mg-v2-ad-b0kla__grid ${className}`} style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }} {...props}>
-      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col" style={{
-        backgroundColor: 'var(--mg-color-surface-main)',
-        border: '1px solid var(--mg-color-border-main)',
-        borderRadius: '16px',
-        padding: '24px',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{ position: 'absolute', left: 0, top: '24px', bottom: '24px', width: '4px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '0 2px 2px 0' }} />
-        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex" style={{ color: 'var(--mg-color-text-secondary)', alignItems: 'center' }}>
+    <div className={`mg-v2-ad-b0kla__grid api-perf-summary ${className}`} {...props}>
+      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col api-perf-summary__card">
+        <div className="api-perf-summary__bar" />
+        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex api-perf-summary__label">
           {API_PERFORMANCE_WIDGET.METRIC_LABELS.AVERAGE_RESPONSE_TIME}
         </span>
-        <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold" style={{ color: getGradeColor(getPerformanceGrade(summary.averageResponseTime)), marginTop: 'var(--mg-spacing-8)', fontSize: '24px' }}>
+        <span
+          className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold api-perf-summary__value"
+          style={{ color: getGradeColor(getPerformanceGrade(summary.averageResponseTime)) }}
+        >
           {PerformanceUtils.formatDuration(summary.averageResponseTime)}
         </span>
       </div>
 
-      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col" style={{
-        backgroundColor: 'var(--mg-color-surface-main)',
-        border: '1px solid var(--mg-color-border-main)',
-        borderRadius: '16px',
-        padding: '24px',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{ position: 'absolute', left: 0, top: '24px', bottom: '24px', width: '4px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '0 2px 2px 0' }} />
-        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex" style={{ color: 'var(--mg-color-text-secondary)', alignItems: 'center' }}>
+      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col api-perf-summary__card">
+        <div className="api-perf-summary__bar" />
+        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex api-perf-summary__label">
           {API_PERFORMANCE_WIDGET.METRIC_LABELS.OVERALL_ERROR_RATE}
         </span>
-        <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold" style={{ color: getGradeColor(getErrorRateGrade(summary.overallErrorRate)), marginTop: 'var(--mg-spacing-8)', fontSize: '24px' }}>
+        <span
+          className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold api-perf-summary__value"
+          style={{ color: getGradeColor(getErrorRateGrade(summary.overallErrorRate)) }}
+        >
           {PerformanceUtils.formatPercentage(summary.overallErrorRate)}
         </span>
       </div>
 
-      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col" style={{
-        backgroundColor: 'var(--mg-color-surface-main)',
-        border: '1px solid var(--mg-color-border-main)',
-        borderRadius: '16px',
-        padding: '24px',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{ position: 'absolute', left: 0, top: '24px', bottom: '24px', width: '4px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '0 2px 2px 0' }} />
-        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex" style={{ color: 'var(--mg-color-text-secondary)', alignItems: 'center' }}>
+      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col api-perf-summary__card">
+        <div className="api-perf-summary__bar" />
+        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex api-perf-summary__label">
           전체 캐시 히트율
         </span>
-        <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold" style={{ marginTop: 'var(--mg-spacing-8)', fontSize: '24px', color: 'var(--mg-color-text-main)' }}>
+        <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold api-perf-summary__value api-perf-summary__value--neutral">
           78%
         </span>
       </div>
 
-      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col" style={{
-        backgroundColor: 'var(--mg-color-surface-main)',
-        border: '1px solid var(--mg-color-border-main)',
-        borderRadius: '16px',
-        padding: '24px',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{ position: 'absolute', left: 0, top: '24px', bottom: '24px', width: '4px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '0 2px 2px 0' }} />
-        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex" style={{ color: 'var(--mg-color-text-secondary)', alignItems: 'center' }}>
+      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col api-perf-summary__card">
+        <div className="api-perf-summary__bar" />
+        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex api-perf-summary__label">
           {API_PERFORMANCE_WIDGET.METRIC_LABELS.TOTAL_REQUESTS}
         </span>
-        <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold" style={{ marginTop: 'var(--mg-spacing-8)', fontSize: '24px', color: 'var(--mg-color-text-main)' }}>
+        <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold api-perf-summary__value api-perf-summary__value--neutral">
           {PerformanceUtils.formatNumber(summary.totalRequests)}건
         </span>
       </div>

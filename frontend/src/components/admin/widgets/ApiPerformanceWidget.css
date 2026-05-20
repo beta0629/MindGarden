@@ -1,0 +1,42 @@
+/**
+ * API 성능 모니터링 요약 위젯 스타일
+ * CSS 변수 사용 필수, 하드코딩 금지
+ */
+
+.api-perf-summary {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--mg-spacing-16);
+}
+
+.api-perf-summary__card {
+    background-color: var(--mg-color-surface-main);
+    border: 1px solid var(--mg-color-border-main);
+    border-radius: var(--mg-radius-16, 16px);
+    padding: var(--mg-spacing-24);
+    position: relative;
+    overflow: hidden;
+}
+
+.api-perf-summary__bar {
+    position: absolute;
+    left: 0;
+    top: var(--mg-spacing-24);
+    bottom: var(--mg-spacing-24);
+    width: 4px;
+    background-color: var(--mg-color-primary-main);
+    border-radius: 0 2px 2px 0;
+}
+
+.api-perf-summary__label {
+    color: var(--mg-color-text-secondary);
+    align-items: center;
+}
+
+.api-perf-summary__value {
+    margin-top: var(--mg-spacing-8);
+    font-size: var(--mg-font-size-2xl, 24px);
+}
+
+.api-perf-summary__value--neutral {
+    color: var(--mg-color-text-main);
+}

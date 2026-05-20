@@ -218,10 +218,9 @@ const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미
       </div>
 
       {/* 3D 미리보기 영역 */}
-      <div 
-        className="preview-3d-container"
+      <div
+        className={`preview-3d-container${isDragging ? ' preview-3d-container--dragging' : ''}`}
         onMouseDown={handleMouseDown}
-        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
       >
         <div
           ref={previewRef}

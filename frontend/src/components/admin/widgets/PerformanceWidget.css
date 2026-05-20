@@ -1,0 +1,61 @@
+/**
+ * 성능 모니터링 위젯 스타일
+ * CSS 변수 사용 필수, 하드코딩 금지
+ */
+
+.performance-widget__trend-icon--up {
+    color: var(--mg-success-500);
+}
+
+.performance-widget__trend-icon--down {
+    color: var(--mg-error-500);
+}
+
+.performance-widget__trend-icon--stable {
+    color: var(--mg-info-500);
+}
+
+.performance-widget__header-icon {
+    margin-right: var(--mg-spacing-8);
+}
+
+.performance-widget__grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--mg-spacing-16);
+}
+
+.performance-widget__stat-label {
+    color: var(--mg-gray-600);
+}
+
+.performance-widget__stat-value {
+    margin-top: var(--mg-spacing-4);
+}
+
+.performance-widget__cache-icon {
+    margin-right: var(--mg-spacing-4);
+    font-size: 1rem;
+}
+
+.performance-widget__value-unit {
+    font-weight: normal;
+    margin-left: 2px;
+}
+
+.performance-widget__footer {
+    border-top: 1px solid var(--mg-gray-200);
+    padding-top: var(--mg-spacing-12);
+    margin-top: var(--mg-spacing-16);
+}
+
+.performance-widget__loading-row {
+    justify-content: center;
+}
+
+.performance-widget__loading-text {
+    color: var(--mg-gray-500);
+}
+
+.performance-widget__updated {
+    text-align: right;
+}

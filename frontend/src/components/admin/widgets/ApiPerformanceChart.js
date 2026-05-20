@@ -12,6 +12,7 @@ import {
   ArcElement
 } from 'chart.js';
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
+import './ApiPerformanceChart.css';
 
 ChartJS.register(
   CategoryScale,
@@ -265,16 +266,16 @@ export const CacheHitBarChart = ({ data }) => {
   };
 
   return (
-    <div className="mg-v2-ad-b0kla__flex-col" style={{ width: '100%', height: '100%', justifyContent: 'center' }}>
-      <div className="mg-v2-ad-b0kla__flex-between" style={{ marginBottom: '8px' }}>
-        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__text--bold" style={{ color: 'var(--mg-success-500)' }}>
+    <div className="mg-v2-ad-b0kla__flex-col api-perf-cache-hit__wrapper">
+      <div className="mg-v2-ad-b0kla__flex-between api-perf-cache-hit__legend">
+        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__text--bold api-perf-cache-hit__legend-hit">
           적중: {hitRate}%
         </span>
-        <span className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-color-text-secondary)' }}>
+        <span className="mg-v2-ad-b0kla__text--sm api-perf-cache-hit__legend-miss">
           미적중: {missRate}%
         </span>
       </div>
-      <div style={{ height: '24px', width: '100%' }}>
+      <div className="api-perf-cache-hit__bar-container">
         <Bar options={options} data={chartData} />
       </div>
     </div>

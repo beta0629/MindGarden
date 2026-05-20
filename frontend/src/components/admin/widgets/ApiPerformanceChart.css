@@ -1,0 +1,27 @@
+/**
+ * API 성능 차트 위젯 스타일
+ * CSS 변수 사용 필수, 하드코딩 금지
+ */
+
+.api-perf-cache-hit__wrapper {
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+}
+
+.api-perf-cache-hit__legend {
+    margin-bottom: var(--mg-spacing-8);
+}
+
+.api-perf-cache-hit__legend-hit {
+    color: var(--mg-success-500);
+}
+
+.api-perf-cache-hit__legend-miss {
+    color: var(--mg-color-text-secondary);
+}
+
+.api-perf-cache-hit__bar-container {
+    height: 24px;
+    width: 100%;
+}

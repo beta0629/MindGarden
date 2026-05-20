@@ -15,7 +15,7 @@ import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
 import { toDisplayString } from '@/utils/safeDisplay';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { ProgressBar } from '@/components/molecules/ProgressBar';
 import { TimeSlotChip } from '@/components/molecules/TimeSlotChip';
 import { Avatar } from '@/components/atoms/Avatar';

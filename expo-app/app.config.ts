@@ -196,6 +196,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       supportsTablet: true,
       bundleIdentifier: 'com.mindgarden.MindGardenMobile',
       infoPlist: {
+        /** EAS export compliance 프롬프트 생략 — 표준 면제 암호화만 사용 */
+        ITSAppUsesNonExemptEncryption: false,
         UIBackgroundModes: ['audio', 'remote-notification'],
         NSCameraUsageDescription:
           'QR 코드 스캔과 프로필 사진 촬영을 위해 카메라 접근이 필요합니다.',

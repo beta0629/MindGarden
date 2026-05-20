@@ -19,7 +19,7 @@ import { format, addMonths, subMonths } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
 import { fontSize as fontSizeTokens } from '@/theme/typography';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { LineTrendChart } from '@/components/molecules/LineTrendChart';
 import { useMoodJournals, useMoodStats } from '@/api/hooks/useMoodJournal';
 import {

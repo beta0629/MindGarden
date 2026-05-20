@@ -19,7 +19,7 @@ import { AlertCircle, CloudSun, Inbox } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { Chip } from '@/components/atoms/Chip';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';

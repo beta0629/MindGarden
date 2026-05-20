@@ -22,7 +22,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { Avatar } from '@/components/atoms/Avatar';
 import { Chip } from '@/components/atoms/Chip';
 import { RatingStars } from '@/components/molecules/RatingStars';

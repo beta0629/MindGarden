@@ -17,7 +17,7 @@ import { Heart, Brain, Activity, ChevronRight, Clock } from 'lucide-react-native
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { useSelfAssessments, useLastAssessmentByType } from '@/api/hooks/useSelfAssessment';
 import { ASSESSMENTS, SEVERITY_COLORS, type AssessmentType } from '@/constants/assessmentQuestions';

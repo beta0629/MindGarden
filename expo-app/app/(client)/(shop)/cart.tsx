@@ -19,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { PriceText } from '@/components/shop/atoms/PriceText';
 import { useClientShopCart } from '@/api/hooks/useClientShopCart';

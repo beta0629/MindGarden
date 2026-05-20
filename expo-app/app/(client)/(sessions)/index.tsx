@@ -14,7 +14,7 @@ import { FlashList } from '@shopify/flash-list';
 import * as Haptics from 'expo-haptics';
 import { Calendar, ClipboardCheck } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { ConsultationCard } from '@/components/molecules/ConsultationCard';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';

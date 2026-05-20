@@ -19,7 +19,7 @@ import { Bell, Calendar, Heart, TrendingUp } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { ConsultationCard } from '@/components/molecules/ConsultationCard';
 import { CountdownTimer } from '@/components/molecules/CountdownTimer';
 import { WellnessCard } from '@/components/molecules/WellnessCard';

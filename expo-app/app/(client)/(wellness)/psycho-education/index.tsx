@@ -23,7 +23,7 @@ import { Bookmark, Clock, BookOpen } from 'lucide-react-native';
 import { getMmkv } from '@/lib/getMmkv';
 
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { Chip } from '@/components/atoms/Chip';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import {

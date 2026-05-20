@@ -8,7 +8,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Sprout, Flower2, Info } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import {
   GARDEN_EVENT_WEIGHTS,
   GARDEN_GROWTH_WEEKLY_POINTS_CAP,

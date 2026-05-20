@@ -20,7 +20,7 @@ import { FlashList } from '@shopify/flash-list';
 import * as Haptics from 'expo-haptics';
 import { ShoppingBag, Coins } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { ShopTenantBanner } from '@/components/shop/organisms/ShopTenantBanner';
 import { ShopCategoryTabs } from '@/components/shop/molecules/ShopCategoryTabs';

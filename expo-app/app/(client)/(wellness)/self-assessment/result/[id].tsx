@@ -36,7 +36,7 @@ import { RotateCcw } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { LineTrendChart } from '@/components/molecules/LineTrendChart';
 import {

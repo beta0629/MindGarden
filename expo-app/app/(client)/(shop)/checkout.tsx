@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { PointInput } from '@/components/shop/molecules/PointInput';
 import { CheckoutSummary } from '@/components/shop/organisms/CheckoutSummary';
 import { PriceText } from '@/components/shop/atoms/PriceText';

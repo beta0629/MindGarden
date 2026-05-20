@@ -19,7 +19,7 @@ import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { PointBalanceHeader } from '@/components/shop/organisms/PointBalanceHeader';
 import { LedgerListItem } from '@/components/shop/molecules/LedgerListItem';

@@ -15,7 +15,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Calendar, Clock, Ticket } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { toDisplayString } from '@/utils/safeDisplay';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { ProgressBar } from '@/components/molecules/ProgressBar';
 import { Avatar } from '@/components/atoms/Avatar';
 import { useCreateBooking } from '@/api/hooks/useBooking';

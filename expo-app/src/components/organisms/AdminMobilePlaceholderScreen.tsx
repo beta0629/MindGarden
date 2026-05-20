@@ -7,7 +7,7 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { ADMIN_MOBILE_OPERATION_COPY } from '@/constants/adminMobileScreensCopy';
 import { toDisplayString } from '@/utils/safeDisplay';
 

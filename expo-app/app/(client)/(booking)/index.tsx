@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { ProgressBar } from '@/components/molecules/ProgressBar';
 import { ConsultantProfileCard } from '@/components/molecules/ConsultantProfileCard';
 import { SearchBar } from '@/components/atoms/SearchBar';

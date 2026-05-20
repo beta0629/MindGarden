@@ -1,0 +1,83 @@
+# EAS Build upload ignore — MindGarden monorepo
+# EAS archives from the git repository root; inconsistent filename casing under
+# docs/, docs-old/, frontend/ (e.g. gitignored template files) breaks iOS builds.
+# This file shrinks the upload to what expo-app needs. Patterns below expo-app
+# blocks are relative to expo-app/; leading "/" entries are repo-root paths.
+
+# --- expo-app/.gitignore (paths relative to expo-app) ---
+
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+.cache/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# Firebase Android (FCM) — Firebase Console에서 다운로드, 로컬만 보관
+google-services.json
+
+# local env (비밀·키는 커밋 금지 — 템플릿은 .env.example)
+.env
+.env.local
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+/android
+
+# 로컬에서 말아 둔 dev API 릴리스 APK (재빌드 시 덮어씀)
+mindgarden-dev-release.apk
+
+# 릴리즈 아티팩트 바이너리 (Git에는 manifest·README·.gitkeep만)
+releases/artifacts/*
+!releases/artifacts/.gitkeep
+
+# --- Monorepo root exclusions (git repository root) ---
+
+/docs
+/docs-old
+/frontend
+/src
+/target
+/node_modules
+/mobile
+/tests
+/test-results
+/deployment
+/uploads
+/temp
+/logs
+/scripts
+/test-reports
+/.idea
+/.vscode
+/api-*.json

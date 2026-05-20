@@ -18,7 +18,7 @@ import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, SlideInRight, SlideInLeft } from 'react-native-reanimated';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { ProgressBar } from '@/components/molecules/ProgressBar';
 import { useSubmitAssessment } from '@/api/hooks/useSelfAssessment';
 import { ASSESSMENTS, OPTION_LABELS, type AssessmentType } from '@/constants/assessmentQuestions';

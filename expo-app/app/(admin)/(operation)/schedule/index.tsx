@@ -23,7 +23,7 @@ import * as Haptics from 'expo-haptics';
 import { Calendar, ChevronLeft, ChevronRight, Link2, Plus } from 'lucide-react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/templates/AppTopBar';
+import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { Chip } from '@/components/atoms/Chip';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';

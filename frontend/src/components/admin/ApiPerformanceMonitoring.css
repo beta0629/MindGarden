@@ -1,0 +1,109 @@
+/**
+ * API 성능 모니터링 페이지 스타일
+ * CSS 변수 사용 필수, 하드코딩 금지
+ */
+
+.api-perf-monitor__actions {
+    gap: var(--mg-spacing-8);
+}
+
+.api-perf-monitor__container {
+    padding: var(--mg-spacing-24) var(--mg-spacing-32);
+}
+
+.api-perf-monitor__grid {
+    display: grid;
+    gap: var(--mg-spacing-16);
+    margin-top: var(--mg-spacing-24);
+}
+
+.api-perf-monitor__grid--7-3 {
+    grid-template-columns: 7fr 3fr;
+}
+
+.api-perf-monitor__grid--1-1 {
+    grid-template-columns: 1fr 1fr;
+}
+
+.api-perf-monitor__section {
+    background-color: var(--mg-color-surface-main);
+    border: 1px solid var(--mg-color-border-main);
+    border-radius: var(--mg-radius-16, 16px);
+    padding: var(--mg-spacing-24);
+}
+
+.api-perf-monitor__section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--mg-spacing-16);
+}
+
+.api-perf-monitor__accent-bar {
+    width: 4px;
+    height: 16px;
+    background-color: var(--mg-color-primary-main);
+    border-radius: 2px;
+    margin-right: var(--mg-spacing-8);
+}
+
+.api-perf-monitor__section-title {
+    font-size: var(--mg-font-size-base, 16px);
+    font-weight: 600;
+    color: var(--mg-color-text-main);
+    margin: 0;
+}
+
+.api-perf-monitor__canvas-wrapper {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+.api-perf-monitor__canvas-wrapper--cache {
+    position: relative;
+    height: 100px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.api-perf-monitor__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-12);
+}
+
+.api-perf-monitor__list-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: var(--mg-spacing-12);
+    border-bottom: 1px solid var(--mg-color-border-main);
+}
+
+.api-perf-monitor__list-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.api-perf-monitor__list-endpoint {
+    font-size: var(--mg-font-size-sm, 14px);
+    font-weight: 600;
+    color: var(--mg-color-text-main);
+}
+
+.api-perf-monitor__list-meta {
+    font-size: var(--mg-font-size-xs, 12px);
+    color: var(--mg-color-text-secondary);
+    margin-top: var(--mg-spacing-4);
+}
+
+.api-perf-monitor__list-right {
+    text-align: right;
+}
+
+.api-perf-monitor__list-duration {
+    font-size: var(--mg-font-size-sm, 14px);
+    font-weight: 600;
+    color: var(--mg-color-error-main, var(--mg-error-500));
+}

@@ -9,6 +9,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import { ApiPerformanceReportGenerator } from '../../utils/apiPerformanceUtils';
 import { API_PERFORMANCE_WIDGET } from '../../constants/widgetConstants';
 import notificationManager from '../../utils/notification';
+import './ApiPerformanceMonitoring.css';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_REPORTS_FINANCIAL = '/api/v1/reports/financial';
@@ -124,7 +125,7 @@ const ApiPerformanceMonitoring = () => {
           title="API 성능 및 트래픽 모니터링" 
           subtitle="실시간 API 응답 시간, 상태 코드 비율 및 서버 성능 지표를 모니터링합니다."
           actions={
-            <div className="mg-v2-ad-b0kla__flex" style={{ gap: 'var(--mg-spacing-8)' }}>
+            <div className="mg-v2-ad-b0kla__flex api-perf-monitor__actions">
               <MGButton
                 variant="outline"
                 size="small"
@@ -176,79 +177,54 @@ const ApiPerformanceMonitoring = () => {
             </div>
           }
         />
-        <div className="mg-v2-ad-b0kla__container" style={{ padding: 'var(--mg-spacing-24) var(--mg-spacing-32)' }}>
-        
+        <div className="mg-v2-ad-b0kla__container api-perf-monitor__container">
+
         {/* Top Section: 요약 지표 카드 4종 */}
         <ApiPerformanceWidget summary={dashboardData.summary} />
 
         {/* Middle Section: 메인 차트 2종 */}
-        <div className="mg-v2-ad-b0kla__grid-container" style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '7fr 3fr', 
-          gap: 'var(--mg-spacing-16)', 
-          marginTop: 'var(--mg-spacing-24)' 
-        }}>
+        <div className="mg-v2-ad-b0kla__grid-container api-perf-monitor__grid api-perf-monitor__grid--7-3">
           {/* 응답 시간 트렌드 */}
-          <div className="mg-v2-ad-b0kla__chart-section" style={{
-            backgroundColor: 'var(--mg-color-surface-main)',
-            border: '1px solid var(--mg-color-border-main)',
-            borderRadius: '16px',
-            padding: '24px'
-          }}>
-            <div className="mg-v2-ad-b0kla__section-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }} />
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--mg-color-text-main)', margin: 0 }}>응답 시간 트렌드</h3>
+          <div className="mg-v2-ad-b0kla__chart-section api-perf-monitor__section">
+            <div className="mg-v2-ad-b0kla__section-header api-perf-monitor__section-header">
+              <span className="mg-v2-ad-b0kla__accent-bar api-perf-monitor__accent-bar" />
+              <h3 className="api-perf-monitor__section-title">응답 시간 트렌드</h3>
             </div>
-            <div className="mg-v2-ad-b0kla__canvas-wrapper" style={{ position: 'relative', height: '300px', width: '100%' }}>
+            <div className="mg-v2-ad-b0kla__canvas-wrapper api-perf-monitor__canvas-wrapper">
               <ResponseTimeLineChart data={dashboardData.lineChart} />
             </div>
           </div>
 
           {/* 상태 코드 비율 */}
-          <div className="mg-v2-ad-b0kla__chart-section" style={{
-            backgroundColor: 'var(--mg-color-surface-main)',
-            border: '1px solid var(--mg-color-border-main)',
-            borderRadius: '16px',
-            padding: '24px'
-          }}>
-            <div className="mg-v2-ad-b0kla__section-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }} />
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--mg-color-text-main)', margin: 0 }}>상태 코드 비율</h3>
+          <div className="mg-v2-ad-b0kla__chart-section api-perf-monitor__section">
+            <div className="mg-v2-ad-b0kla__section-header api-perf-monitor__section-header">
+              <span className="mg-v2-ad-b0kla__accent-bar api-perf-monitor__accent-bar" />
+              <h3 className="api-perf-monitor__section-title">상태 코드 비율</h3>
             </div>
-            <div className="mg-v2-ad-b0kla__canvas-wrapper" style={{ position: 'relative', height: '300px', width: '100%' }}>
+            <div className="mg-v2-ad-b0kla__canvas-wrapper api-perf-monitor__canvas-wrapper">
               <StatusCodeDoughnutChart data={dashboardData.doughnutChart} />
             </div>
           </div>
         </div>
 
         {/* Bottom Section: 상세 지표 및 리스트 */}
-        <div className="mg-v2-ad-b0kla__grid-container" style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr', 
-          gap: 'var(--mg-spacing-16)', 
-          marginTop: 'var(--mg-spacing-24)' 
-        }}>
+        <div className="mg-v2-ad-b0kla__grid-container api-perf-monitor__grid api-perf-monitor__grid--1-1">
           {/* 가장 느린 API 리스트 */}
-          <div className="mg-v2-ad-b0kla__chart-section" style={{
-            backgroundColor: 'var(--mg-color-surface-main)',
-            border: '1px solid var(--mg-color-border-main)',
-            borderRadius: '16px',
-            padding: '24px'
-          }}>
-            <div className="mg-v2-ad-b0kla__section-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }} />
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--mg-color-text-main)', margin: 0 }}>가장 느린 API Top 5</h3>
+          <div className="mg-v2-ad-b0kla__chart-section api-perf-monitor__section">
+            <div className="mg-v2-ad-b0kla__section-header api-perf-monitor__section-header">
+              <span className="mg-v2-ad-b0kla__accent-bar api-perf-monitor__accent-bar" />
+              <h3 className="api-perf-monitor__section-title">가장 느린 API Top 5</h3>
             </div>
-            <div className="mg-v2-ad-b0kla__list-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="mg-v2-ad-b0kla__list-wrapper api-perf-monitor__list">
               {Object.entries(dashboardData.slowApis).map(([endpoint, stats]) => (
-                <div key={endpoint} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px solid var(--mg-color-border-main)' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--mg-color-text-main)' }}>{endpoint}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--mg-color-text-secondary)', marginTop: '4px' }}>요청 수: {stats.totalRequests.toLocaleString()}건</span>
+                <div key={endpoint} className="api-perf-monitor__list-row">
+                  <div className="api-perf-monitor__list-col">
+                    <span className="api-perf-monitor__list-endpoint">{endpoint}</span>
+                    <span className="api-perf-monitor__list-meta">요청 수: {stats.totalRequests.toLocaleString()}건</span>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--mg-color-error-main, var(--mg-error-500))' }}>{stats.averageDuration}ms</div>
-                    <div style={{ fontSize: '12px', color: 'var(--mg-color-text-secondary)', marginTop: '4px' }}>최대 {stats.maxDuration}ms</div>
+                  <div className="api-perf-monitor__list-right">
+                    <div className="api-perf-monitor__list-duration">{stats.averageDuration}ms</div>
+                    <div className="api-perf-monitor__list-meta">최대 {stats.maxDuration}ms</div>
                   </div>
                 </div>
               ))}
@@ -256,17 +232,12 @@ const ApiPerformanceMonitoring = () => {
           </div>
 
           {/* 캐시 히트율 상세 */}
-          <div className="mg-v2-ad-b0kla__chart-section" style={{
-            backgroundColor: 'var(--mg-color-surface-main)',
-            border: '1px solid var(--mg-color-border-main)',
-            borderRadius: '16px',
-            padding: '24px'
-          }}>
-            <div className="mg-v2-ad-b0kla__section-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }} />
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--mg-color-text-main)', margin: 0 }}>캐시 히트 상태</h3>
+          <div className="mg-v2-ad-b0kla__chart-section api-perf-monitor__section">
+            <div className="mg-v2-ad-b0kla__section-header api-perf-monitor__section-header">
+              <span className="mg-v2-ad-b0kla__accent-bar api-perf-monitor__accent-bar" />
+              <h3 className="api-perf-monitor__section-title">캐시 히트 상태</h3>
             </div>
-            <div className="mg-v2-ad-b0kla__canvas-wrapper" style={{ position: 'relative', height: '100px', width: '100%', display: 'flex', alignItems: 'center' }}>
+            <div className="mg-v2-ad-b0kla__canvas-wrapper api-perf-monitor__canvas-wrapper--cache">
               <CacheHitBarChart data={dashboardData.cacheHit} />
             </div>
           </div>

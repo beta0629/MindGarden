@@ -8,7 +8,7 @@
     display: flex;
     gap: 24px;
     padding: 16px;
-    background: #f9fafb;
+    background: var(--mg-color-background-main);
     border-radius: 8px;
 }
 
@@ -28,20 +28,20 @@
 
 .classification {
     font-size: 13px;
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
 }
 
 .sentiment-magnitude {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #4b5563;
+    color: var(--mg-color-text-tertiary);
 }
 
 .distortions-section h4 {
     margin: 0 0 16px 0;
     font-size: 16px;
-    color: #374151;
+    color: var(--mg-color-text-secondary-dark);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -55,7 +55,7 @@
     font-weight: 600;
 }
 
-.count-badge.risk-high { background: #dc2626; }
+.count-badge.risk-high { background: var(--mg-color-error); }
 .count-badge.risk-medium { background: var(--mg-warning-500); }
 .count-badge.risk-low { background: var(--mg-success-500); }
 
@@ -82,7 +82,7 @@
 
 .type-label {
     font-weight: 600;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
     font-size: 14px;
 }
 
@@ -96,13 +96,13 @@
 
 .distortion-text {
     font-size: 14px;
-    color: #4b5563;
+    color: var(--mg-color-text-tertiary);
     margin-bottom: 4px;
 }
 
 .distortion-context {
     font-size: 13px;
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     font-style: italic;
 }
 

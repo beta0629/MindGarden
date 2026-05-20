@@ -18,7 +18,7 @@
   align-items: center;
   margin-bottom: var(--spacing-xl);
   padding-bottom: 20px;
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 2px solid var(--mg-color-border-main);
 }
 
 .payment-header h1 {
@@ -99,7 +99,7 @@
 
 .filter-group label {
   font-weight: 600;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
   font-size: 0.9rem;
 }
 
@@ -272,7 +272,7 @@
   padding: 15px 12px;
   text-align: left;
   font-weight: 600;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
   border-bottom: 2px solid #dee2e6;
   white-space: nowrap;
 }
@@ -330,7 +330,7 @@
 
 .badge-light {
   background-color: var(--mg-gray-100);
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 /* 액션 버튼 */
@@ -412,7 +412,7 @@
 
 .pagination span {
   font-weight: 500;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 /* 로딩 */
@@ -451,7 +451,7 @@
 
 .bulk-info {
   font-weight: 600;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 .bulk-buttons {

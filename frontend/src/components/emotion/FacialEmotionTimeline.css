@@ -7,7 +7,7 @@
 .emotion-distribution h4 {
     margin: 0 0 16px 0;
     font-size: 16px;
-    color: #374151;
+    color: var(--mg-color-text-secondary-dark);
 }
 
 .emotion-bars {
@@ -25,13 +25,13 @@
 .emotion-bar-item > span:first-child {
     width: 80px;
     font-size: 14px;
-    color: #4b5563;
+    color: var(--mg-color-text-tertiary);
 }
 
 .bar-container {
     flex: 1;
     height: 24px;
-    background: #e5e7eb;
+    background: var(--mg-color-border-main);
     border-radius: 12px;
     overflow: hidden;
 }
@@ -43,7 +43,7 @@
 
 .emotion-joy .bar { background: linear-gradient(90deg, #fbbf24, var(--mg-warning-500)); }
 .emotion-sorrow .bar { background: linear-gradient(90deg, #60a5fa, var(--mg-primary-500)); }
-.emotion-anger .bar { background: linear-gradient(90deg, #f87171, #dc2626); }
+.emotion-anger .bar { background: linear-gradient(90deg, #f87171, var(--mg-color-error)); }
 .emotion-fear .bar { background: linear-gradient(90deg, #a78bfa, var(--mg-purple-500)); }
 .emotion-surprise .bar { background: linear-gradient(90deg, #34d399, var(--mg-success-500)); }
 
@@ -51,18 +51,18 @@
     width: 50px;
     text-align: right;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
 }
 
 .emotion-timeline {
     padding-top: 24px;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--mg-color-border-main);
 }
 
 .emotion-timeline h4 {
     margin: 0 0 16px 0;
     font-size: 16px;
-    color: #374151;
+    color: var(--mg-color-text-secondary-dark);
 }
 
 .timeline-container {
@@ -71,7 +71,7 @@
     align-items: flex-end;
     height: 150px;
     padding: 10px;
-    background: #f9fafb;
+    background: var(--mg-color-background-main);
     border-radius: 8px;
 }
 
@@ -100,7 +100,7 @@
 
 .timeline-time {
     font-size: 11px;
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
 }
 
 .dominant-emotion-badge {

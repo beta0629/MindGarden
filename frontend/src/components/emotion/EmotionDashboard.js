@@ -77,12 +77,12 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
      */
     const getRiskColor = (riskLevel) => {
         const colors = {
-            'CRITICAL': '#dc2626',
+            'CRITICAL': 'var(--mg-color-error)',
             'HIGH': '#ea580c',
             'MEDIUM': 'var(--mg-warning-500)',
             'LOW': 'var(--mg-success-500)'
         };
-        return colors[riskLevel] || '#6b7280';
+        return colors[riskLevel] || 'var(--mg-color-text-secondary)';
     };
 
     if (isLoading) {

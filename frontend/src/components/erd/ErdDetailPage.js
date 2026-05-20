@@ -110,12 +110,12 @@ const ErdDetailPage = () => {
           primaryBorderColor: 'var(--mg-primary-500)',
           lineColor: '#666',
           secondaryColor: '#f0f0f0',
-          tertiaryColor: '#fff',
-          background: '#fff',
-          mainBkg: '#fff',
+          tertiaryColor: 'var(--mg-white)',
+          background: 'var(--mg-white)',
+          mainBkg: 'var(--mg-white)',
           secondBkg: 'var(--mg-gray-100)',
           textColor: '#333',
-          edgeLabelBackground: '#fff',
+          edgeLabelBackground: 'var(--mg-white)',
           clusterBkg: 'var(--mg-gray-100)',
           clusterBorder: '#ccc',
           defaultLinkColor: '#666',
@@ -126,7 +126,7 @@ const ErdDetailPage = () => {
           actorLineColor: 'var(--mg-primary-500)',
           signalColor: '#333',
           signalTextColor: '#333',
-          labelBoxBkgColor: '#fff',
+          labelBoxBkgColor: 'var(--mg-white)',
           labelBoxBorderColor: 'var(--mg-primary-500)',
           labelTextColor: '#333',
           loopTextColor: '#333',
@@ -135,7 +135,7 @@ const ErdDetailPage = () => {
           noteTextColor: '#333',
           activationBorderColor: 'var(--mg-primary-500)',
           activationBkgColor: '#e3f2fd',
-          sequenceNumberColor: '#fff'
+          sequenceNumberColor: 'var(--mg-white)'
         },
         flowchart: {
           useMaxWidth: true,
@@ -149,7 +149,7 @@ const ErdDetailPage = () => {
           minEntityHeight: 75,
           entityPadding: 15,
           stroke: 'var(--mg-primary-500)',
-          fill: '#fff',
+          fill: 'var(--mg-white)',
           fontSize: 14
         },
         securityLevel: 'loose'

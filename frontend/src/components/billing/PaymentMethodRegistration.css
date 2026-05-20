@@ -6,7 +6,7 @@
   max-width: 600px;
   margin: 0 auto;
   padding: 2rem;
-  background: #fff;
+  background: var(--mg-white);
   border-radius: 8px;
   box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
@@ -17,14 +17,14 @@
   gap: 0.75rem;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--mg-color-border-main);
 }
 
 .payment-method-registration__header h3 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--mg-color-text-main);
 }
 
 .payment-method-registration__content {
@@ -33,12 +33,12 @@
 
 .payment-method-registration__description {
   margin-bottom: 1.5rem;
-  color: #4b5563;
+  color: var(--mg-color-text-tertiary);
   line-height: 1.6;
 }
 
 .payment-method-registration__description small {
-  color: #6b7280;
+  color: var(--mg-color-text-secondary);
   font-size: 0.875rem;
 }
 
@@ -51,7 +51,7 @@
   background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 6px;
-  color: #dc2626;
+  color: var(--mg-color-error);
   font-size: 0.875rem;
 }
 
@@ -60,7 +60,7 @@
   flex-direction: column;
   gap: 0.75rem;
   padding: 1rem;
-  background: #f9fafb;
+  background: var(--mg-color-background-main);
   border-radius: 6px;
 }
 
@@ -72,11 +72,11 @@
 }
 
 .payment-method-registration__info-item strong {
-  color: #374151;
+  color: var(--mg-color-text-secondary-dark);
 }
 
 .payment-method-registration__info-item span {
-  color: #6b7280;
+  color: var(--mg-color-text-secondary);
 }
 
 .payment-method-registration__customer-key {

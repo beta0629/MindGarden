@@ -12,14 +12,14 @@
 
 .biomarker-metric {
     padding: 16px;
-    background: #f9fafb;
+    background: var(--mg-color-background-main);
     border-radius: 8px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--mg-color-border-main);
 }
 
 .metric-label {
     font-size: 13px;
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     margin-bottom: 8px;
 }
 
@@ -34,7 +34,7 @@
 }
 
 .metric-value.out-of-range {
-    color: #dc2626;
+    color: var(--mg-color-error);
 }
 
 .biomarker-metric small {
@@ -44,14 +44,14 @@
 
 .emotion-indicators {
     padding: var(--spacing-md, 1rem);
-    background: var(--cs-secondary-50, #f9fafb);
+    background: var(--cs-secondary-50, var(--mg-color-background-main));
     border-radius: var(--border-radius-md, 0.5rem);
 }
 
 .emotion-indicators h4 {
     margin: 0 0 var(--spacing-md, 1rem) 0;
     font-size: var(--font-size-base, 1rem);
-    color: var(--cs-secondary-700, #374151);
+    color: var(--cs-secondary-700, var(--mg-color-text-secondary-dark));
 }
 
 .indicator-item {
@@ -64,13 +64,13 @@
 .indicator-item span:first-child {
     width: 80px;
     font-size: 14px;
-    color: #4b5563;
+    color: var(--mg-color-text-tertiary);
 }
 
 .indicator-bar {
     flex: 1;
     height: 20px;
-    background: #e5e7eb;
+    background: var(--mg-color-border-main);
     border-radius: 10px;
     overflow: hidden;
 }
@@ -88,7 +88,7 @@
     width: 50px;
     text-align: right;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
 }
 
 .tremor-alert {

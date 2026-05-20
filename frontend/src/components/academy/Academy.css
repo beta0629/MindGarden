@@ -30,7 +30,7 @@
   border: 1px solid var(--color-border, #ddd);
   border-radius: var(--radius-md, 4px);
   font-size: var(--font-size-base, 14px);
-  background-color: var(--color-background, #fff);
+  background-color: var(--color-background, var(--mg-white));
   color: var(--color-text, #333);
   cursor: pointer;
   transition: border-color 0.2s ease;
@@ -129,7 +129,7 @@
   border: 1px solid var(--color-border, #ddd);
   border-radius: var(--radius-md, 4px);
   font-size: var(--font-size-base, 14px);
-  background-color: var(--color-background, #fff);
+  background-color: var(--color-background, var(--mg-white));
   color: var(--color-text, #333);
   transition: border-color 0.2s ease;
 }
@@ -262,7 +262,7 @@
 
 .academy-social-button-naver {
   background-color: #03C75A;
-  color: #fff;
+  color: var(--mg-white);
   border: 1px solid #03C75A;
 }
 
@@ -272,7 +272,7 @@
 }
 
 .academy-social-button-google {
-  background-color: #fff;
+  background-color: var(--mg-white);
   color: #333;
   border: 1px solid var(--color-border, #ddd);
 }

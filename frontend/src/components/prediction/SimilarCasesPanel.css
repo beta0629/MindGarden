@@ -1,11 +1,11 @@
 .similar-cases-panel h3 {
     margin: 0 0 12px 0;
     font-size: 18px;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
 }
 
 .panel-description {
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     font-size: 14px;
     margin-bottom: 20px;
 }
@@ -18,8 +18,8 @@
 
 .case-card {
     padding: 20px;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
+    background: var(--mg-color-background-main);
+    border: 1px solid var(--mg-color-border-main);
     border-radius: 12px;
     transition: box-shadow 0.2s;
 }
@@ -37,7 +37,7 @@
 
 .case-id {
     font-weight: 600;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
 }
 
 .similarity-badge {
@@ -66,7 +66,7 @@
 
 .improvement-rate {
     font-size: 14px;
-    color: #4b5563;
+    color: var(--mg-color-text-tertiary);
 }
 
 .case-details {
@@ -79,7 +79,7 @@
     display: flex;
     gap: 8px;
     font-size: 14px;
-    color: #4b5563;
+    color: var(--mg-color-text-tertiary);
 }
 
 .similar-factors {

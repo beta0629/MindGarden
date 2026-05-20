@@ -1,7 +1,7 @@
 .treatment-outcome-chart h3 {
     margin: 0 0 20px 0;
     font-size: 18px;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
 }
 
 .outcome-display {
@@ -21,26 +21,26 @@
 
 .success-probability {
     padding: 16px;
-    background: #f9fafb;
+    background: var(--mg-color-background-main);
     border-radius: 8px;
 }
 
 .probability-label {
     font-size: 13px;
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     margin-bottom: 8px;
 }
 
 .probability-value {
     font-size: 36px;
     font-weight: 700;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
     margin-bottom: 12px;
 }
 
 .probability-bar {
     height: 12px;
-    background: #e5e7eb;
+    background: var(--mg-color-border-main);
     border-radius: 6px;
     overflow: hidden;
 }
@@ -56,24 +56,24 @@
     align-items: center;
     gap: 8px;
     font-size: 15px;
-    color: #4b5563;
+    color: var(--mg-color-text-tertiary);
 }
 
 .improvement-rate strong {
     font-size: 18px;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
 }
 
 .factors-section {
     margin-top: 20px;
     padding-top: 20px;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--mg-color-border-main);
 }
 
 .factors-section h4 {
     margin: 0 0 12px 0;
     font-size: 15px;
-    color: #374151;
+    color: var(--mg-color-text-secondary-dark);
 }
 
 .factors-list {
@@ -83,7 +83,7 @@
 
 .factors-list li {
     margin-bottom: 6px;
-    color: #4b5563;
+    color: var(--mg-color-text-tertiary);
     line-height: 1.5;
 }
 
@@ -92,7 +92,7 @@
     gap: 16px;
     margin-top: 16px;
     padding-top: 16px;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--mg-color-border-main);
     font-size: 13px;
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
 }

@@ -15,11 +15,11 @@
 .simulator-setup h2 {
     margin: 0 0 16px 0;
     font-size: 28px;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
 }
 
 .simulator-setup p {
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     margin-bottom: 32px;
 }
 
@@ -39,7 +39,7 @@
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #374151;
+    color: var(--mg-color-text-secondary-dark);
 }
 
 .form-control {
@@ -63,7 +63,7 @@
 .simulator-header {
     padding: 20px;
     background: #f3f4f6;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--mg-color-border-main);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -72,12 +72,12 @@
 .session-info h3 {
     margin: 0 0 4px 0;
     font-size: 18px;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
 }
 
 .turn-count {
     font-size: 13px;
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
 }
 
 .chat-container {
@@ -105,7 +105,7 @@
 .chat-message.client {
     align-self: flex-start;
     background: #f3f4f6;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
 }
 
 .message-header {
@@ -153,7 +153,7 @@
 
 .chat-input-container {
     padding: 20px;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--mg-color-border-main);
     display: flex;
     gap: 12px;
 }

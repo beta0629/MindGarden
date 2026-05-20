@@ -52,16 +52,16 @@ const CognitiveDistortionPanel = ({ emotionId }) => {
         if (score > 0.2) return '#84cc16';
         if (score > -0.2) return 'var(--mg-warning-500)';
         if (score > -0.5) return '#f97316';
-        return '#dc2626';
+        return 'var(--mg-color-error)';
     };
 
     const getSeverityColor = (severity) => {
         const colors = {
-            'HIGH': '#dc2626',
+            'HIGH': 'var(--mg-color-error)',
             'MEDIUM': 'var(--mg-warning-500)',
             'LOW': 'var(--mg-success-500)'
         };
-        return colors[severity] || '#6b7280';
+        return colors[severity] || 'var(--mg-color-text-secondary)';
     };
 
     return (

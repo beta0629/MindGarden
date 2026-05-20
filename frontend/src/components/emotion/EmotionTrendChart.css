@@ -6,7 +6,7 @@
 
 .trend-summary {
     padding: 16px;
-    background: #f9fafb;
+    background: var(--mg-color-background-main);
     border-radius: 8px;
 }
 
@@ -26,10 +26,10 @@
 
 .trend-badge.trend-improving { color: var(--mg-success-500); background: #d1fae5; }
 .trend-badge.trend-stable { color: var(--mg-warning-500); background: #fef3c7; }
-.trend-badge.trend-worsening { color: #dc2626; background: #fee2e2; }
+.trend-badge.trend-worsening { color: var(--mg-color-error); background: #fee2e2; }
 
 .trend-chart-svg {
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--mg-color-border-main);
     border-radius: 8px;
     background: white;
     padding: 20px;
@@ -52,17 +52,17 @@
     padding: 12px;
     text-align: left;
     font-size: 13px;
-    color: #4b5563;
+    color: var(--mg-color-text-tertiary);
     font-weight: 600;
 }
 
 .trend-table td {
     padding: 12px;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--mg-color-border-main);
     font-size: 14px;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
 }
 
 .trend-table tbody tr:hover {
-    background: #f9fafb;
+    background: var(--mg-color-background-main);
 }

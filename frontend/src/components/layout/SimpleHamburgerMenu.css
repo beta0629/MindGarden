@@ -40,7 +40,7 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-xl) var(--spacing-lg);
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 2px solid var(--mg-color-border-main);
   background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-gradient-primary-end) 100%);
   color: white;
 }
@@ -105,7 +105,7 @@
 .simple-hamburger-main-item {
   font-weight: 600;
   background: white;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--mg-color-border-main);
   margin: 0 16px 16px 16px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -137,13 +137,13 @@
   background: white;
   border-radius: 8px;
   margin-bottom: 6px;
-  border-left: 3px solid #e9ecef;
+  border-left: 3px solid var(--mg-color-border-main);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .simple-hamburger-sub-item:hover {
   background: var(--mg-gray-100);
-  color: #495057;
+  color: var(--mg-color-text-secondary);
   border-left-color: var(--mg-primary-500);
   transform: translateX(4px);
 }
@@ -167,7 +167,7 @@
 
 .simple-hamburger-divider {
   height: 2px;
-  background: linear-gradient(90deg, transparent, #e9ecef, transparent);
+  background: linear-gradient(90deg, transparent, var(--mg-color-border-main), transparent);
   margin: var(--spacing-xl) var(--spacing-md);
   border-radius: 1px;
 }
@@ -313,7 +313,7 @@
 
 .simple-menu-item:hover {
   background: var(--mg-gray-100);
-  border-color: #e9ecef;
+  border-color: var(--mg-color-border-main);
 }
 
 .simple-menu-item.has-submenu:hover {
@@ -349,7 +349,7 @@
 /* 서브메뉴 스타일 */
 .simple-submenu {
   margin-left: 1rem;
-  border-left: 2px solid #e9ecef;
+  border-left: 2px solid var(--mg-color-border-main);
   padding-left: 1rem;
 }
 
@@ -383,7 +383,7 @@
 
 .simple-submenu-label {
   font-size: 0.875rem;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 /* 햄버거 메뉴 푸터 영역 */

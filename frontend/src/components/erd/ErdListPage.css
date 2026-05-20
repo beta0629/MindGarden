@@ -35,7 +35,7 @@
 .filter-button {
   padding: 0.5rem 1rem;
   border: 1px solid var(--border-color, var(--mg-gray-300));
-  background: var(--bg-secondary, #fff);
+  background: var(--bg-secondary, var(--mg-white));
   color: var(--text-secondary, #666);
   border-radius: 0.5rem;
   cursor: pointer;
@@ -50,13 +50,13 @@
 
 .filter-button.active {
   background: var(--primary-color, var(--mg-primary-500));
-  color: #fff;
+  color: var(--mg-white);
   border-color: var(--primary-color, var(--mg-primary-500));
 }
 
 .erd-list-filters .mg-button.filter-button.active {
   background: var(--primary-color, var(--mg-primary-500));
-  color: #fff;
+  color: var(--mg-white);
   border-color: var(--primary-color, var(--mg-primary-500));
 }
 
@@ -103,7 +103,7 @@
 .retry-button {
   padding: 0.75rem 1.5rem;
   background: var(--primary-color, var(--mg-primary-500));
-  color: #fff;
+  color: var(--mg-white);
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
@@ -137,7 +137,7 @@
 
 /* ERD 카드 */
 .erd-card {
-  background: var(--bg-secondary, #fff);
+  background: var(--bg-secondary, var(--mg-white));
   border: 1px solid var(--border-color, var(--mg-gray-300));
   border-radius: 0.75rem;
   padding: 1.5rem;
@@ -177,12 +177,12 @@
 
 .erd-status-active {
   background: var(--success-color, var(--mg-success-500));
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .erd-status-inactive {
   background: var(--text-secondary, #999);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .erd-card-body {
@@ -232,7 +232,7 @@
 .erd-view-button {
   padding: 0.5rem 1rem;
   background: var(--primary-color, var(--mg-primary-500));
-  color: #fff;
+  color: var(--mg-white);
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;

@@ -14,20 +14,20 @@
   gap: 0.75rem;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 2px solid var(--mg-color-border-main);
 }
 
 .subscription-management__header h2 {
   margin: 0;
   font-size: 1.875rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--mg-color-text-main);
 }
 
 .subscription-management__section {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: #fff;
+  background: var(--mg-white);
   border-radius: 8px;
   box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
@@ -43,13 +43,13 @@
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--mg-color-text-main);
 }
 
 .subscription-management__empty {
   text-align: center;
   padding: 3rem 2rem;
-  color: #6b7280;
+  color: var(--mg-color-text-secondary);
 }
 
 .subscription-management__payment-methods {
@@ -63,8 +63,8 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--mg-color-background-main);
+  border: 1px solid var(--mg-color-border-main);
   border-radius: 6px;
 }
 
@@ -73,13 +73,13 @@
 }
 
 .subscription-management__payment-method-info strong {
-  color: #1f2937;
+  color: var(--mg-color-text-main);
   font-size: 1rem;
 }
 
 .subscription-management__payment-method-info small {
   display: block;
-  color: #6b7280;
+  color: var(--mg-color-text-secondary);
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
@@ -87,7 +87,7 @@
 .subscription-management__badge {
   padding: 0.25rem 0.75rem;
   background: var(--mg-success-500);
-  color: #fff;
+  color: var(--mg-white);
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 500;
@@ -100,7 +100,7 @@
 .subscription-management__plans h4 {
   margin-bottom: 1rem;
   font-size: 1.125rem;
-  color: #1f2937;
+  color: var(--mg-color-text-main);
 }
 
 .subscription-management__plan-grid {
@@ -112,8 +112,8 @@
 
 .subscription-management__plan-card {
   padding: 1.5rem;
-  background: #f9fafb;
-  border: 2px solid #e5e7eb;
+  background: var(--mg-color-background-main);
+  border: 2px solid var(--mg-color-border-main);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -132,7 +132,7 @@
 .subscription-management__plan-card h4 {
   margin: 0 0 0.75rem 0;
   font-size: 1.125rem;
-  color: #1f2937;
+  color: var(--mg-color-text-main);
 }
 
 .subscription-management__plan-price {
@@ -145,7 +145,7 @@
 .subscription-management__plan-description {
   margin: 0;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--mg-color-text-secondary);
   line-height: 1.5;
 }
 
@@ -169,8 +169,8 @@
 
 .subscription-management__subscription {
   padding: 1.5rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--mg-color-background-main);
+  border: 1px solid var(--mg-color-border-main);
   border-radius: 8px;
 }
 
@@ -184,7 +184,7 @@
 .subscription-management__subscription-header h4 {
   margin: 0;
   font-size: 1.125rem;
-  color: #1f2937;
+  color: var(--mg-color-text-main);
 }
 
 .subscription-management__status {
@@ -218,7 +218,7 @@
   gap: 1rem;
   margin-bottom: 1rem;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--mg-color-text-secondary);
 }
 
 .subscription-management__subscription-info > div {
@@ -241,7 +241,7 @@
   background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 6px;
-  color: #dc2626;
+  color: var(--mg-color-error);
 }
 
 @media (max-width: 768px) {

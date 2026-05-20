@@ -1,7 +1,7 @@
 .dropout-risk-indicator h3 {
     margin: 0 0 var(--spacing-lg, 1.25rem) 0;
     font-size: var(--font-size-lg, 1.125rem);
-    color: var(--cs-secondary-800, #1f2937);
+    color: var(--cs-secondary-800, var(--mg-color-text-main));
 }
 
 .risk-display {
@@ -44,13 +44,13 @@
 
 .risk-prob-caption {
     font-size: var(--font-size-sm, 0.875rem);
-    color: var(--mg-gray-600, var(--cs-secondary-600, #4b5563));
+    color: var(--mg-gray-600, var(--cs-secondary-600, var(--mg-color-text-tertiary)));
 }
 
 .engagement-metrics h4 {
     margin: 0 0 var(--spacing-md, 1rem) 0;
     font-size: var(--font-size-base, 1rem);
-    color: var(--cs-secondary-700, #374151);
+    color: var(--cs-secondary-700, var(--mg-color-text-secondary-dark));
 }
 
 .metric-item {
@@ -63,13 +63,13 @@
 .metric-item > span:first-child {
     width: 100px;
     font-size: 14px;
-    color: #4b5563;
+    color: var(--mg-color-text-tertiary);
 }
 
 .metric-bar {
     flex: 1;
     height: 20px;
-    background: #e5e7eb;
+    background: var(--mg-color-border-main);
     border-radius: 10px;
     overflow: hidden;
 }
@@ -83,7 +83,7 @@
     width: 50px;
     text-align: right;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
 }
 
 .warning-signs {

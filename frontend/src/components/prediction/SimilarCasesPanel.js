@@ -13,9 +13,9 @@ const SimilarCasesPanel = ({ cases }) => {
             'EXCELLENT': 'var(--mg-success-500)',
             'GOOD': '#84cc16',
             'MODERATE': 'var(--mg-warning-500)',
-            'POOR': '#dc2626'
+            'POOR': 'var(--mg-color-error)'
         };
-        return colors[outcome] || '#6b7280';
+        return colors[outcome] || 'var(--mg-color-text-secondary)';
     };
 
     return (

@@ -104,7 +104,28 @@ const COLOR_MAPPING = {
   '#1d1d1f': 'var(--mg-color-text-main)',
   '#0056b3': 'var(--mg-color-primary-dark)',
   '#87ceeb': 'var(--mg-info-500)',
-  '#2c3e50': 'var(--mg-color-text-main)'
+  '#2c3e50': 'var(--mg-color-text-main)',
+
+  // 2026 Q2 D2 합의서 매핑 (SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D2.md §3)
+  // A. 기존 토큰 통합 (5건) — 변수명은 unified-design-tokens.css 실제 정의에 맞춤
+  '#6b7280': 'var(--mg-color-text-secondary)',
+  '#1f2937': 'var(--mg-color-text-main)',
+  '#f9fafb': 'var(--mg-color-background-main)',
+  '#2563eb': 'var(--mg-color-info)',
+  '#dc2626': 'var(--mg-color-error)',
+
+  // B. 신설 토큰 (2건) — unified-design-tokens.css D2 블록에 정의
+  '#374151': 'var(--mg-color-text-secondary-dark)',
+  '#4b5563': 'var(--mg-color-text-tertiary)',
+
+  // C. 폐기 통합 (3건) — Tailwind/Bootstrap 잔재를 시스템 표준 토큰으로 흡수
+  '#e5e7eb': 'var(--mg-color-border-main)',
+  '#e9ecef': 'var(--mg-color-border-main)',
+  '#495057': 'var(--mg-color-text-secondary)',
+
+  // D2 보강 — 3자리 흰색(#fff)도 var(--mg-white)로 정규화
+  // (lookbehind/lookahead 가드가 #ffffff 와의 충돌을 방지)
+  '#fff': 'var(--mg-white)'
 };
 
 // RGB/RGBA 색상 매핑

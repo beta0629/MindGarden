@@ -1209,6 +1209,23 @@
   --mg-gradient-primary: linear-gradient(135deg, var(--mg-color-primary-main) 0%, var(--mg-gradient-primary-end) 100%);
 }
 
+/* ========================================
+   2026 Q2 D2 합의서 신규 토큰 (Tailwind/Bootstrap 잔재 흡수)
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D2.md §2
+   ======================================== */
+
+:root {
+  /* 보조 텍스트 (다크 톤) — Tailwind gray-700 대체 */
+  --mg-color-text-secondary-dark: #374151;
+  /* 3차 텍스트 (플레이스홀더·캡션) — Tailwind gray-600 대체 */
+  --mg-color-text-tertiary: #4b5563;
+}
+
+[data-theme='dark'] {
+  --mg-color-text-secondary-dark: #d1d5db; /* Tailwind gray-300 대응 */
+  --mg-color-text-tertiary: #9ca3af; /* Tailwind gray-400 대응 */
+}
+
 /* ===== 테넌트별 브랜딩 오버라이드 ===== */
 /* 특정 테넌트에 대한 브랜딩 커스터마이징 */
 

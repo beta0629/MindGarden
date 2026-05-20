@@ -144,15 +144,17 @@ class HardcodedColorConverter {
       backup: options.backup !== false,
       verbose: options.verbose || false,
       criticalOnly: options.criticalOnly || false,
+      target: options.target || null,
       ...options
     };
-    
+
     this.stats = {
       filesProcessed: 0,
       filesModified: 0,
       colorsConverted: 0,
       backupsCreated: 0,
-      errors: []
+      errors: [],
+      perMappingCounts: {}
     };
   }
 
@@ -186,33 +188,63 @@ class HardcodedColorConverter {
 
   /**
    * 처리할 파일들 찾기
+   *
+   * - `--target <path>` 가 주어지면 해당 디렉터리(또는 파일) 하위로만 한정한다 (반복 지정 가능).
+   * - 토큰 정의 파일(`styles/unified-design-tokens.css`, `styles/tokens/**`, `styles/themes/**`,
+   *   루트 외 `tokens/**`, `themes/**`) 과 테스트 파일(`__tests__/**`, `*.test.*`, `*.spec.*`)
+   *   은 절대 변환하지 않는다 (인벤토리 §6).
    */
   async findFiles() {
-    const patterns = [
-      'frontend/src/**/*.css',
-      'frontend/src/**/*.scss',
-      'frontend/src/**/*.js',
-      'frontend/src/**/*.jsx',
-      'frontend/src/**/*.ts',
-      'frontend/src/**/*.tsx'
-    ];
+    const exts = ['css', 'scss', 'js', 'jsx', 'ts', 'tsx'];
+    const rawTargets = this.options.target
+      ? (Array.isArray(this.options.target) ? this.options.target : [this.options.target])
+      : [null];
 
     let allFiles = [];
-    
-    for (const pattern of patterns) {
-      const files = glob.sync(pattern, {
-        ignore: EXCLUDE_PATTERNS,
-        cwd: process.cwd()
-      });
-      allFiles = allFiles.concat(files);
+
+    for (const rawTarget of rawTargets) {
+      const base = rawTarget ? rawTarget.replace(/\/+$/, '') : 'frontend/src';
+
+      try {
+        const stat = fs.statSync(base);
+        if (stat.isFile()) {
+          if (exts.some(ext => base.endsWith('.' + ext))) {
+            allFiles.push(base);
+          }
+          continue;
+        }
+      } catch (_) {
+        // 존재하지 않으면 glob 으로 fall-through
+      }
+
+      for (const ext of exts) {
+        const pattern = `${base}/**/*.${ext}`;
+        const files = glob.sync(pattern, {
+          ignore: EXCLUDE_PATTERNS,
+          cwd: process.cwd()
+        });
+        allFiles = allFiles.concat(files);
+      }
     }
 
-    // 중요 파일만 처리하는 옵션
+    // 안전망: 절대 변환 금지 영역 (인벤토리 §6 + 작업 정의서 §치환 규칙)
+    const HARD_EXCLUDE = [
+      /\bfrontend\/src\/styles\/unified-design-tokens\.css$/,
+      /\bfrontend\/src\/styles\/tokens\//,
+      /\bfrontend\/src\/styles\/themes\//,
+      /\bfrontend\/src\/tokens\//,
+      /\bfrontend\/src\/themes\//,
+      /\/__tests__\//,
+      /\.test\.(js|jsx|ts|tsx)$/,
+      /\.spec\.(js|jsx|ts|tsx)$/
+    ];
+    allFiles = allFiles.filter(f => !HARD_EXCLUDE.some(rx => rx.test(f)));
+
     if (this.options.criticalOnly) {
       allFiles = allFiles.filter(file => this.isCriticalFile(file));
     }
 
-    return [...new Set(allFiles)]; // 중복 제거
+    return [...new Set(allFiles)];
   }
 
   /**
@@ -244,13 +276,18 @@ class HardcodedColorConverter {
       let changeCount = 0;
 
       // HEX 색상 변환
-      Object.entries(COLOR_MAPPING).forEach(([hexColor, cssVar]) => {
-        const regex = new RegExp(hexColor.replace('#', '#'), 'gi');
+      // 안전성: 매핑 키 길이 내림차순(8→6→3) + 앞뒤가 hex 문자가 아닐 때만 치환
+      // → `#1a1a1a` 가 `#1a1a1aff` 의 일부로 잘못 잡히는 케이스 방지
+      const orderedHex = Object.entries(COLOR_MAPPING).sort((a, b) => b[0].length - a[0].length);
+      orderedHex.forEach(([hexColor, cssVar]) => {
+        const escaped = hexColor.replace(/[#]/g, '\\$&');
+        const regex = new RegExp(`(?<![0-9a-fA-F])${escaped}(?![0-9a-fA-F])`, 'gi');
         const matches = modifiedContent.match(regex);
         if (matches) {
           modifiedContent = modifiedContent.replace(regex, cssVar);
           changeCount += matches.length;
-          
+          this.stats.perMappingCounts[hexColor] = (this.stats.perMappingCounts[hexColor] || 0) + matches.length;
+
           if (this.options.verbose) {
             console.log(`  🎨 ${hexColor} → ${cssVar} (${matches.length}개)`);
           }
@@ -264,7 +301,8 @@ class HardcodedColorConverter {
         if (matches) {
           modifiedContent = modifiedContent.replace(regex, cssVar);
           changeCount += matches.length;
-          
+          this.stats.perMappingCounts[rgbColor] = (this.stats.perMappingCounts[rgbColor] || 0) + matches.length;
+
           if (this.options.verbose) {
             console.log(`  🎨 ${rgbColor} → ${cssVar} (${matches.length}개)`);
           }
@@ -409,14 +447,25 @@ ${this.stats.errors.length > 0 ?
 // CLI 인터페이스
 function parseArgs() {
   const args = process.argv.slice(2);
-  const options = {};
+  const options = { target: [] };
 
-  args.forEach(arg => {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
     if (arg === '--dry-run') options.dryRun = true;
-    if (arg === '--no-backup') options.backup = false;
-    if (arg === '--verbose') options.verbose = true;
-    if (arg === '--critical-only') options.criticalOnly = true;
-  });
+    else if (arg === '--no-backup') options.backup = false;
+    else if (arg === '--verbose') options.verbose = true;
+    else if (arg === '--critical-only') options.criticalOnly = true;
+    else if (arg === '--target' && args[i + 1]) {
+      options.target.push(args[i + 1]);
+      i++;
+    } else if (arg.startsWith('--target=')) {
+      options.target.push(arg.split('=')[1]);
+    }
+  }
+
+  if (options.target.length === 0) {
+    options.target = null;
+  }
 
   return options;
 }
@@ -427,13 +476,14 @@ if (require.main === module) {
   const converter = new HardcodedColorConverter(options);
   
   console.log('사용법:');
-  console.log('  node scripts/convert-hardcoded-colors.js [옵션]');
+  console.log('  node scripts/design-system/color-management/convert-hardcoded-colors.js [옵션]');
   console.log('');
   console.log('옵션:');
-  console.log('  --dry-run        실제 파일 수정 없이 미리보기');
-  console.log('  --no-backup      백업 파일 생성 안함');
-  console.log('  --verbose        상세 로그 출력');
-  console.log('  --critical-only  중요 파일만 처리');
+  console.log('  --dry-run         실제 파일 수정 없이 미리보기');
+  console.log('  --no-backup       백업 파일 생성 안함');
+  console.log('  --verbose         상세 로그 출력');
+  console.log('  --critical-only   중요 파일만 처리');
+  console.log('  --target <path>   처리 영역을 디렉터리/파일로 한정 (반복 지정 가능)');
   console.log('');
   
   converter.run().catch(console.error);

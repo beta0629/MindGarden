@@ -84,7 +84,27 @@ const COLOR_MAPPING = {
   
   // Finance Colors
   '#f39c12': 'var(--mg-finance-primary)',
-  '#e67e22': 'var(--mg-finance-dark)'
+  '#e67e22': 'var(--mg-finance-dark)',
+
+  // 2026 Q2 D1 합의서 매핑 (SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2.md)
+  // A. 기존 토큰 매핑 (4건)
+  '#3d5246': 'var(--mg-color-primary-main)',
+  '#d4cfc8': 'var(--mg-color-border-main)',
+  '#5c6b61': 'var(--mg-color-text-secondary)',
+  '#faf9f7': 'var(--mg-color-background-main)',
+
+  // B. 신설 토큰 (3건) — unified-design-tokens.css §2026 Q2 신규 블록에 정의
+  // 주의: #2c2c2c 는 텍스트 용도일 땐 var(--mg-color-text-main) 사용 (합의서 §1)
+  '#1a1a1a': 'var(--mg-dark-bg-900)',
+  '#2c2c2c': 'var(--mg-dark-bg-800)',
+  '#764ba2': 'var(--mg-gradient-primary-end)',
+
+  // C. 폐기·통합 (4건) — 합의서 §1 명시 통합 대상으로 치환
+  // 주의: #1d1d1f 는 배경 용도일 땐 var(--mg-dark-bg-800) 로 수동 확인 (합의서 §1)
+  '#1d1d1f': 'var(--mg-color-text-main)',
+  '#0056b3': 'var(--mg-color-primary-dark)',
+  '#87ceeb': 'var(--mg-info-500)',
+  '#2c3e50': 'var(--mg-color-text-main)'
 };
 
 // RGB/RGBA 색상 매핑

@@ -1185,6 +1185,30 @@
 
 }
 
+/* ========================================
+   2026 Q2 신규 및 다크/배경 토큰 (B0KlA 반영)
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2.md §2
+   ======================================== */
+
+:root {
+  /* 다크 배경 (사이드바, 모달 바탕 등) */
+  --mg-dark-bg-800: #2c2c2c;
+  --mg-dark-bg-900: #1a1a1a;
+
+  /* 그라데이션 토큰 */
+  --mg-gradient-primary-end: #764ba2;
+  --mg-gradient-primary: linear-gradient(135deg, var(--mg-color-primary-main) 0%, var(--mg-gradient-primary-end) 100%);
+}
+
+/* 다크 모드 대응 (dark-theme.css 등) */
+[data-theme='dark'] {
+  --mg-dark-bg-800: #2c2c2c; /* 다크모드에서는 본연의 색 유지 */
+  --mg-dark-bg-900: #1a1a1a;
+
+  --mg-gradient-primary-end: #8e63b8; /* 다크모드 환경에서 가시성 확보를 위해 약간 더 밝게 보정 */
+  --mg-gradient-primary: linear-gradient(135deg, var(--mg-color-primary-main) 0%, var(--mg-gradient-primary-end) 100%);
+}
+
 /* ===== 테넌트별 브랜딩 오버라이드 ===== */
 /* 특정 테넌트에 대한 브랜딩 커스터마이징 */
 

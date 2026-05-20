@@ -5,6 +5,7 @@ import UnifiedScheduleComponent from '../schedule/UnifiedScheduleComponent';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import { useSession } from '../../contexts/SessionContext';
+import { USER_ROLES } from '../../constants/roles';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 
@@ -61,7 +62,7 @@ const ConsultantSchedule = () => {
     );
   }
 
-  console.log('✅ ConsultantSchedule: UnifiedScheduleComponent 렌더링 시작', { userRole: 'CONSULTANT', userId: user.id });
+  console.log('✅ ConsultantSchedule: UnifiedScheduleComponent 렌더링 시작', { userRole: USER_ROLES.CONSULTANT, userId: user.id });
 
   return (
     <AdminCommonLayout title="스케줄">

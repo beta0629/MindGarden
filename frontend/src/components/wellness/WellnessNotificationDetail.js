@@ -14,6 +14,7 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
 import './WellnessNotificationDetail.css';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 
 /**
  * 웰니스 알림 상세 페이지 컴포넌트
@@ -39,7 +40,7 @@ const WellnessNotificationDetail = () => {
       return;
     }
 
-    if (user?.role !== 'CLIENT' && user?.role !== 'ROLE_CLIENT') {
+    if (user?.role !== USER_ROLES.CLIENT && user?.role !== LEGACY_USER_ROLES.ROLE_CLIENT) {
       notificationManager.show('접근 권한이 없습니다.', 'error');
       navigate('/');
       return;

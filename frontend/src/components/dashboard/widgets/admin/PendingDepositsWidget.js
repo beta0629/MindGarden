@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
-import { RoleUtils } from '../../../../constants/roles';
+import { RoleUtils, LEGACY_USER_ROLES } from '../../../../constants/roles';
 import { formatCurrency, formatDate } from '../../../../utils/formatUtils';
 import './PendingDepositsWidget.css';
 import MGButton from '../../../common/MGButton';
@@ -83,13 +83,13 @@ const PendingDepositsWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER'),
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, LEGACY_USER_ROLES.HQ_MASTER),
     cache: true,
     retryCount: 3
   });
 
   // 관리자만 표시
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, LEGACY_USER_ROLES.HQ_MASTER)) {
     return null;
   }
 

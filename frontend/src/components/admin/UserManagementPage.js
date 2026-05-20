@@ -22,6 +22,7 @@ import ClientComprehensiveManagement from './ClientComprehensiveManagement';
 import StaffManagement from './StaffManagement';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
+import { USER_ROLES } from '../../constants/roles';
 
 const TYPE_CONSULTANT = 'consultant';
 const TYPE_CLIENT = 'client';
@@ -40,7 +41,7 @@ const UserManagementPage = () => {
   const { hasRole } = useSession();
   const type = getTypeFromParams(searchParams);
 
-  const canManageClients = hasRole('ADMIN') || hasRole('STAFF');
+  const canManageClients = hasRole(USER_ROLES.ADMIN) || hasRole(USER_ROLES.STAFF);
 
   const handleTypeChange = (newType) => {
     if (newType === TYPE_CLIENT && !canManageClients) {

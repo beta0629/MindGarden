@@ -30,6 +30,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from './MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './ScheduleList.css';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=SCHEDULE_FILTER';
@@ -39,7 +40,7 @@ const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
 
 
 const ScheduleList = ({ 
-  userRole = 'ADMIN',
+  userRole = USER_ROLES.ADMIN,
   userId = null, // 기본값 제거, 호출하는 컴포넌트에서 전달해야 함
   onScheduleView,
   onScheduleEdit,
@@ -152,7 +153,7 @@ const ScheduleList = ({
         userRole: userRole
       };
       
-      if (userRole === 'ADMIN' || userRole === 'STAFF') {
+      if (userRole === USER_ROLES.ADMIN || userRole === USER_ROLES.STAFF) {
         url = API_ADMIN_SCHEDULES;
         params = {};
         
@@ -182,13 +183,13 @@ const ScheduleList = ({
     loadFilterOptions();
     loadSortOptions();
     
-    if (userRole === 'ADMIN' || userRole === 'STAFF') {
+    if (userRole === USER_ROLES.ADMIN || userRole === USER_ROLES.STAFF) {
       loadConsultants();
     }
   }, [userId, userRole, loadFilterOptions, loadSortOptions, loadConsultants]);
 
   useEffect(() => {
-    if (userRole === 'ADMIN' || userRole === 'STAFF') {
+    if (userRole === USER_ROLES.ADMIN || userRole === USER_ROLES.STAFF) {
       loadSchedules();
     }
   }, [selectedConsultantId]);
@@ -377,7 +378,7 @@ const ScheduleList = ({
         
         <div className="schedule-controls">
           {/* 상담사 선택 (어드민/수퍼어드민만) */}
-          {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
+          {(userRole === USER_ROLES.ADMIN || userRole === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN) && (
             <CustomSelect
               value={selectedConsultantId}
               onChange={(value) => setSelectedConsultantId(value)}

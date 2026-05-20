@@ -12,6 +12,7 @@ import CustomSelect from '../common/CustomSelect';
 import BadgeSelect from '../common/BadgeSelect';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=VACATION_TYPE';
@@ -211,7 +212,7 @@ const VacationManagementModal = ({
             console.log('🏖️ 모달이 열림 - 상담사 목록 로드 시작');
             
             // 상담사인 경우 자신의 ID를 자동 설정
-            if (userRole === 'CONSULTANT' && selectedConsultant) {
+            if (userRole === USER_ROLES.CONSULTANT && selectedConsultant) {
                 console.log('🏖️ 상담사 모드 - 자신의 ID 설정:', selectedConsultant.id);
                 setSelectedConsultantId(selectedConsultant.id);
                 loadVacations(selectedConsultant.id);
@@ -233,9 +234,9 @@ const VacationManagementModal = ({
     }, [selectedConsultantId]);
 
     // 권한 확인 (관리자 또는 상담사)
-    console.log('🏖️ 권한 확인:', { userRole, isAdmin: userRole === 'ADMIN', isSuperAdmin: userRole === 'BRANCH_SUPER_ADMIN', isConsultant: userRole === 'CONSULTANT' });
+    console.log('🏖️ 권한 확인:', { userRole, isAdmin: userRole === USER_ROLES.ADMIN, isSuperAdmin: userRole === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN, isConsultant: userRole === USER_ROLES.CONSULTANT });
     
-    if (userRole !== 'ADMIN' && userRole !== 'BRANCH_SUPER_ADMIN' && userRole !== 'CONSULTANT') {
+    if (userRole !== USER_ROLES.ADMIN && userRole !== LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN && userRole !== USER_ROLES.CONSULTANT) {
         console.log('🏖️ 권한 없음 - 모달 렌더링하지 않음');
         return null;
     }
@@ -494,7 +495,7 @@ const VacationManagementModal = ({
         >
                 <div className="mg-v2-modal-body">
                     {/* 상담사 선택 (관리자만) */}
-                    {userRole !== 'CONSULTANT' && (
+                    {userRole !== USER_ROLES.CONSULTANT && (
                         <div className="mg-v2-form-group">
                             <label className="mg-v2-label">상담사 선택</label>
                             <CustomSelect
@@ -515,7 +516,7 @@ const VacationManagementModal = ({
                     )}
                     
                     {/* 상담사용 안내 메시지 */}
-                    {userRole === 'CONSULTANT' && (
+                    {userRole === USER_ROLES.CONSULTANT && (
                         <div className="mg-v2-form-group">
                             <div className="mg-v2-flex mg-gap-sm mg-align-center mg-p-sm mg-bg-info-light mg-radius-md">
                                 <span className="mg-v2-text-sm">본인의 휴가를 등록합니다</span>

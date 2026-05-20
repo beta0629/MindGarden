@@ -26,7 +26,7 @@ import { canRegisterSchedulerByRoleString } from '../../utils/scheduleRoleGuards
 const SchedulePage = ({ user: propUser }) => {
   const { user: sessionUser, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
   
-  const [userRole, setUserRole] = useState('CLIENT');
+  const [userRole, setUserRole] = useState(USER_ROLES.CLIENT);
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
@@ -40,7 +40,7 @@ const SchedulePage = ({ user: propUser }) => {
     }
 
     if (displayUser) {
-      setUserRole(displayUser.role || 'CLIENT');
+      setUserRole(displayUser.role || USER_ROLES.CLIENT);
       setUserId(displayUser.id);
       setLoading(false);
     } else {

@@ -743,7 +743,7 @@ function AppContent() {
             {/* 관리자/스태프 전용 라우트 */}
             <Route path="/admin/consultant-comprehensive" element={<Navigate to="/admin/user-management?type=consultant" replace />} />
             <Route path="/admin/client-comprehensive" element={
-              <ProtectedRoute requiredRoles={['ADMIN', 'STAFF']}>
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
                 <Navigate to="/admin/user-management?type=client" replace />
               </ProtectedRoute>
             } />
@@ -765,7 +765,7 @@ function AppContent() {
               </ProtectedRoute>
             } />
             <Route path="/admin/user-management" element={
-              <ProtectedRoute requiredRoles={['ADMIN', 'STAFF']}>
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
                 <UserManagementPage />
               </ProtectedRoute>
             } />
@@ -805,14 +805,14 @@ function AppContent() {
             <Route path="/academy/register" element={<AcademyRegister />} />
             <Route path="/admin/schedules" element={
               <AdminSchedulesPage
-                userRole={user?.role || 'ADMIN'}
+                userRole={user?.role || USER_ROLES.ADMIN}
                 userId={user?.id}
               />
             } />
             <Route path="/admin/statistics" element={
               <AdminCommonLayout title="통계">
                 <StatisticsDashboard 
-                  userRole={user?.role || 'ADMIN'}
+                  userRole={user?.role || USER_ROLES.ADMIN}
                   userId={user?.id}
                 />
               </AdminCommonLayout>
@@ -820,7 +820,7 @@ function AppContent() {
             <Route path="/admin/statistics-dashboard" element={
               <AdminCommonLayout title="통계 대시보드">
                 <StatisticsDashboard 
-                  userRole={user?.role || 'ADMIN'}
+                  userRole={user?.role || USER_ROLES.ADMIN}
                   userId={user?.id}
                 />
               </AdminCommonLayout>
@@ -911,7 +911,7 @@ function AppContent() {
           <StatisticsModal
             isOpen={showStatisticsModal}
             onClose={() => setShowStatisticsModal(false)}
-            userRole={user?.role || 'ADMIN'}
+            userRole={user?.role || USER_ROLES.ADMIN}
           />
           
           {/* 중복 로그인 알림 - UnifiedNotification으로 통합 */}

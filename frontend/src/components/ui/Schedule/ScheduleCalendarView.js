@@ -22,7 +22,7 @@ import {
   getKrPublicHolidayNameForLocalDate,
   getKrSubstituteHolidayEveHintForLocalDate
 } from '../../../utils/krPublicHolidays';
-import { USER_ROLES } from '../../../constants/roles';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../../../constants/roles';
 import './ScheduleCalendarView.css';
 
 const KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS = 'mg-v2-ad-calendar-day-holiday-badge';
@@ -35,7 +35,7 @@ const WEEKEND_SUN_DAY_CELL_CLASS = 'mg-v2-ad-calendar-day--weekend-sun';
 const SCHEDULE_DROP_ADMIN_ROLES = new Set([
     USER_ROLES.ADMIN,
     USER_ROLES.STAFF,
-    'BRANCH_SUPER_ADMIN'
+    LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN
 ]);
 
 const isScheduleDropAdminRole = (role) => !!role && SCHEDULE_DROP_ADMIN_ROLES.has(role);

@@ -288,7 +288,7 @@ const ScheduleDetailModal = ({
         setLoading(true);
         try {
             console.log('✅ 예약 확정 요청:', scheduleData.id);
-            const confirmRole = encodeURIComponent(user?.role || 'ADMIN');
+            const confirmRole = encodeURIComponent(user?.role || USER_ROLES.ADMIN);
             const response = await StandardizedApi.put(
                 `/api/v1/schedules/${scheduleData.id}/confirm?userRole=${confirmRole}`,
                 { adminNote: adminNote || '입금 확인 완료' }

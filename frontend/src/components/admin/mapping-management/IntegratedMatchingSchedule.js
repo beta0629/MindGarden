@@ -42,6 +42,7 @@ import {
   assertExternalMappingDropAllowed,
   assertDropDateNotPast
 } from '../../../utils/scheduleExternalDropGuards';
+import { USER_ROLES } from '../../../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
@@ -50,7 +51,7 @@ const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
 const IntegratedMatchingSchedule = () => {
   const { user } = useSession();
   /** 통합 스케줄 캘린더·등록 모달: 세션 역할 전달(STAFF 등). 미로그인 시에만 ADMIN 폴백 */
-  const calendarUserRole = user?.role || 'ADMIN';
+  const calendarUserRole = user?.role || USER_ROLES.ADMIN;
   const [mappings, setMappings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);

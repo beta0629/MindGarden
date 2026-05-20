@@ -6,9 +6,10 @@ import { apiGet } from '../../utils/ajax';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
+import { USER_ROLES } from '../../constants/roles';
 
 // 일정 모달 컴포넌트
-const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSULTANT', onWriteConsultationLog, onConsultationLogSaved }) => {
+const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = USER_ROLES.CONSULTANT, onWriteConsultationLog, onConsultationLogSaved }) => {
   // Date 객체를 datetime-local 형식으로 변환하는 함수
   const formatDateForInput = (date) => {
     if (!date) return '';
@@ -42,7 +43,7 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
   });
 
   // 상담사는 일정 수정 불가
-  const isReadOnly = userRole === 'CONSULTANT';
+  const isReadOnly = userRole === USER_ROLES.CONSULTANT;
 
   // 상담일지 작성 상태 체크
   const checkConsultationLogStatus = async() => {

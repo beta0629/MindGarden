@@ -14,6 +14,7 @@ import PropTypes from 'prop-types';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Icon from '../Icon/Icon';
+import { USER_ROLES } from '../../../constants/roles';
 
 const ERP_VARIANT_SET = new Set(['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'outline', 'progress']);
 
@@ -40,7 +41,7 @@ const VARIANT_ALIASES = {
   link: 'outline'
 };
 
-const THEME_ROLES = new Set(['CLIENT', 'CONSULTANT', 'ADMIN']);
+const THEME_ROLES = new Set([USER_ROLES.CLIENT, USER_ROLES.CONSULTANT, USER_ROLES.ADMIN]);
 
 const ICON_SIZE_BY_BUTTON = {
   small: 'SM',
@@ -131,7 +132,7 @@ Button.propTypes = {
   type: PropTypes.string,
   icon: PropTypes.string,
   iconPosition: PropTypes.oneOf(['left', 'right']),
-  role: PropTypes.oneOf(['CLIENT', 'CONSULTANT', 'ADMIN'])
+  role: PropTypes.oneOf([USER_ROLES.CLIENT, USER_ROLES.CONSULTANT, USER_ROLES.ADMIN])
 };
 
 export default Button;

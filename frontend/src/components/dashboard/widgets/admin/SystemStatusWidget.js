@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWidget } from '../../../../hooks/useWidget';
 
 import BaseWidget from '../BaseWidget';
-import { RoleUtils } from '../../../../constants/roles';
+import { RoleUtils, LEGACY_USER_ROLES } from '../../../../constants/roles';
 import { formatDate } from '../../../../utils/formatUtils';
 import './SystemStatusWidget.css';
 import MGButton from '../../../common/MGButton';
@@ -120,13 +120,13 @@ const SystemStatusWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER'),
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, LEGACY_USER_ROLES.HQ_MASTER),
     cache: false, // 실시간 데이터
     retryCount: 2
   });
 
   // 관리자만 표시
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, LEGACY_USER_ROLES.HQ_MASTER)) {
     return null;
   }
   // 기본 데이터 구조

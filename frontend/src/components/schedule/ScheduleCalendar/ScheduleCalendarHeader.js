@@ -2,6 +2,7 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import CustomSelect from '../../common/CustomSelect';
 import { ICONS } from '../../../constants/icons';
+import { USER_ROLES } from '../../../constants/roles';
 
 const CalendarIcon = ICONS.CALENDAR;
 const UsersIcon = ICONS.USERS;
@@ -32,7 +33,7 @@ const ScheduleCalendarHeader = ({
     setForceMobileMode,
     loading
 }) => {
-    const isAdmin = currentUserRole === 'ADMIN';
+    const isAdmin = currentUserRole === USER_ROLES.ADMIN;
 
     return (
         <div className="mg-v2-calendar-header">

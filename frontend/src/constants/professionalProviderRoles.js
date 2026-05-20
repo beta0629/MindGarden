@@ -9,6 +9,7 @@
 import { toDisplayString } from '../utils/safeDisplay';
 import { getCommonCodes } from '../utils/commonCodeApi';
 import StandardizedApi from '../utils/standardizedApi';
+import { USER_ROLES } from './roles';
 
 /** 테넌트 공통코드 그룹명 (백엔드와 동일). */
 export const PROFESSIONAL_PROVIDER_TYPE_CODE_GROUP = 'PROFESSIONAL_PROVIDER_TYPE';
@@ -286,5 +287,5 @@ export function isProfessionalProviderRole(role) {
     return false;
   }
   const r = String(role).trim();
-  return r === 'CONSULTANT' || r === 'PLAY_THERAPIST' || r === 'SPEECH_THERAPIST';
+  return r === USER_ROLES.CONSULTANT || r === USER_ROLES.PLAY_THERAPIST || r === USER_ROLES.SPEECH_THERAPIST;
 }

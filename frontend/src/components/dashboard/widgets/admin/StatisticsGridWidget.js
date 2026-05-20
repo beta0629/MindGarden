@@ -18,7 +18,7 @@ import { useWidget } from '../../../../hooks/useWidget';
 
 import BaseWidget from '../BaseWidget';
 import SafeText from '../../../common/SafeText';
-import { RoleUtils } from '../../../../constants/roles';
+import { RoleUtils, LEGACY_USER_ROLES } from '../../../../constants/roles';
 import { formatCurrency } from '../../../../utils/formatUtils';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import './StatisticsGridWidget.css';
@@ -103,13 +103,13 @@ const StatisticsGridWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER'),
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, LEGACY_USER_ROLES.HQ_MASTER),
     cache: true,
     retryCount: 3
   });
 
   // 관리자만 표시
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, LEGACY_USER_ROLES.HQ_MASTER)) {
     return null;
   }
   

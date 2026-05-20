@@ -7,6 +7,7 @@ import { useState } from 'react';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Modal from './Modal';
+import { USER_ROLES } from '../../../constants/roles';
 
 const modalStoryMgBtnPrimary = {
   className: buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false }),
@@ -43,7 +44,7 @@ export default { title: 'UI Components/Modal',
     closeOnEscape: { control: 'boolean',
       description: 'ESC 키로 닫기 여부' },
     role: { control: 'select',
-      options: ['CLIENT', 'CONSULTANT', 'ADMIN'],
+      options: [USER_ROLES.CLIENT, USER_ROLES.CONSULTANT, USER_ROLES.ADMIN],
       description: '사용자 역할 (테마 적용)' },
     onClose: { action: 'closed',
       description: '모달 닫기 핸들러' } } };

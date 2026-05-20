@@ -12,6 +12,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ClientSchedule.css';
+import { USER_ROLES } from '../../constants/roles';
 
 const CLIENT_SCHEDULE_TITLE_ID = 'client-schedule-page-title';
 
@@ -113,7 +114,7 @@ const ClientSchedule = () => {
         <div className="client-schedule-calendar-wrapper">
           <ScheduleCalendar
             key={calendarKey}
-            userRole={user?.role || 'CLIENT'}
+            userRole={user?.role || USER_ROLES.CLIENT}
             userId={user?.id || null}
             readOnly={false}
             showClientView={true}

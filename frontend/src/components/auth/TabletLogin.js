@@ -34,6 +34,7 @@ import {
   OAUTH_SIGNUP_REQUIRED_PROMPT
 } from '../../constants/loginDisplay';
 import '../../styles/auth/TabletLogin.css';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_SMS_LOGIN = '/api/v1/auth/sms-login';
@@ -680,14 +681,14 @@ const TabletLogin = () => {
       
       // 역할에 따른 프로필(MyPage) — App.js 등록 경로와 일치
       switch (userRole) {
-        case 'ADMIN':
-        case 'SUPER_ADMIN':
+        case USER_ROLES.ADMIN:
+        case LEGACY_USER_ROLES.SUPER_ADMIN:
           profileUrl = '/admin/mypage';
           break;
-        case 'CONSULTANT':
+        case USER_ROLES.CONSULTANT:
           profileUrl = '/consultant/mypage';
           break;
-        case 'CLIENT':
+        case USER_ROLES.CLIENT:
           profileUrl = '/client/mypage';
           break;
         default:

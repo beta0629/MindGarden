@@ -19,6 +19,7 @@ import SafeText from '../../common/SafeText';
 import '../../../styles/unified-design-tokens.css';
 import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantDashboard.css';
+import { USER_ROLES } from '../../../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTATION_MESSAGES_UNREAD_COUNT = '/api/v1/consultation-messages/unread-count';
@@ -105,7 +106,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       let statsResponse;
       try {
         statsResponse = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_STATS, {
-          userRole: 'CONSULTANT'
+          userRole: USER_ROLES.CONSULTANT
         });
       } catch (statsErr) {
         const isTenantError = (statsErr?.status === 400 || statsErr?.response?.status === 400) && /테넌트/.test(statsErr?.response?.data?.message || statsErr?.message || '');
@@ -128,7 +129,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       try {
         scheduleResponse = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_SCHEDULES, {
           userId: currentUser.id,
-          userRole: 'CONSULTANT'
+          userRole: USER_ROLES.CONSULTANT
         });
       } catch (scheduleErr) {
         const isTenantError = (scheduleErr?.status === 400 || scheduleErr?.response?.status === 400) && /테넌트/.test(scheduleErr?.response?.data?.message || scheduleErr?.message || '');
@@ -225,7 +226,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       try {
         const unreadRes = await StandardizedApi.get(API_CONSULTATION_MESSAGES_UNREAD_COUNT, {
           userId: currentUser.id,
-          userType: 'CONSULTANT',
+          userType: USER_ROLES.CONSULTANT,
           _t: Date.now()
         });
         if (unreadRes != null && typeof unreadRes.unreadCount === 'number') {
@@ -259,7 +260,7 @@ const ConsultantDashboardV2 = ({ user }) => {
         
         upcomingResponse = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_UPCOMING_SCHEDULES, {
           userId: currentUser.id,
-          userRole: 'CONSULTANT',
+          userRole: USER_ROLES.CONSULTANT,
           startDate: todayDate.toISOString().split('T')[0],
           endDate: endDate.toISOString().split('T')[0],
           limit: 5

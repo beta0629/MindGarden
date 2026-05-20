@@ -9,6 +9,7 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Table from './Table';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { USER_ROLES } from '../../../constants/roles';
 
 const SAMPLE_SLICE = { START: 0, LEN: 5 };
 
@@ -136,7 +137,7 @@ export default {
     bordered: { control: 'boolean', description: '테두리 표시' },
     responsive: { control: 'boolean', description: '반응형 여부' },
     loading: { control: 'boolean', description: '로딩 상태' },
-    role: { control: 'select', options: ['CLIENT', 'CONSULTANT', 'ADMIN'], description: '사용자 역할 (테마 적용)' },
+    role: { control: 'select', options: [USER_ROLES.CLIENT, USER_ROLES.CONSULTANT, USER_ROLES.ADMIN], description: '사용자 역할 (테마 적용)' },
     onRowClick: { action: 'row-clicked', description: '행 클릭 핸들러' },
     onCellClick: { action: 'cell-clicked', description: '셀 클릭 핸들러' }
   }

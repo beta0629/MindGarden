@@ -28,6 +28,7 @@ import {
   OAUTH_SIGNUP_REQUIRED_PROMPT,
   OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT
 } from '../../constants/loginDisplay';
+import { USER_ROLES } from '../../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_TENANT_CHECK_MULTI = '/api/v1/auth/tenant/check-multi';
@@ -462,7 +463,7 @@ const OAuth2Callback = () => {
             checkMultiTenantAndRedirect(userRole);
           } else {
             console.log('🎯 기본 대시보드로 리다이렉트');
-            checkMultiTenantAndRedirect('CLIENT');
+            checkMultiTenantAndRedirect(USER_ROLES.CLIENT);
           }
         };
 

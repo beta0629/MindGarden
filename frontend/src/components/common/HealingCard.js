@@ -4,19 +4,20 @@ import { normalizeApiObjectPayload } from '../../utils/apiResponseNormalize';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './HealingCard.css';
+import { USER_ROLES } from '../../constants/roles';
 
 /**
  * 오늘의 힐링 카드 컴포넌트
 /**
  * GPT로 생성된 힐링 컨텐츠를 표시
  */
-const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
+const HealingCard = ({ userRole = USER_ROLES.CLIENT, category = null }) => {
     const [healingData, setHealingData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     // 대상 역할 설정 (상담사/내담자에 따라)
-    const targetRole = userRole === 'CONSULTANT' ? 'CONSULTANT' : 'CLIENT';
+    const targetRole = userRole === USER_ROLES.CONSULTANT ? USER_ROLES.CONSULTANT : USER_ROLES.CLIENT;
 
     useEffect(() => {
         fetchHealingData();

@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
-import { RoleUtils } from '../../../constants/roles';
+import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../../constants/roles';
 import { getStatusLabel } from '../../../utils/colorUtils';
 import { RECENT_ACTIVITIES_CSS } from '../../../constants/css';
 import './RecentActivitiesWidget.css';
@@ -46,21 +46,21 @@ const RecentActivitiesWidget = ({ widget, user }) => {
     };
     
     switch (user.role) {
-      case 'CLIENT':
+      case USER_ROLES.CLIENT:
         return {
           ...baseConfig,
           url: API_SCHEDULES,
           transform: (data) => transformClientActivities(data)
         };
-      case 'CONSULTANT':
+      case USER_ROLES.CONSULTANT:
         return {
           ...baseConfig,
           url: API_SCHEDULES,
           transform: (data) => transformConsultantActivities(data)
         };
-      case 'ADMIN':
-      case 'BRANCH_SUPER_ADMIN':
-      case 'HQ_MASTER':
+      case USER_ROLES.ADMIN:
+      case LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN:
+      case LEGACY_USER_ROLES.HQ_MASTER:
         return {
           ...baseConfig,
           url: API_SCHEDULES_ADMIN_STATISTICS,

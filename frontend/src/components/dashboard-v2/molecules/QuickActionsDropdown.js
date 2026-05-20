@@ -18,6 +18,7 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import GnbDropdownPortal from './GnbDropdownPortal';
 import './QuickActionsDropdown.css';
+import { USER_ROLES } from '../../../constants/roles';
 
 const QUICK_ACTIONS_PANEL_ID = 'mg-v2-quick-actions-panel';
 
@@ -34,7 +35,7 @@ const QuickActionsDropdown = ({ onModalAction, navigateQuickActionsFromLnb }) =>
     const user = sessionManager.getUser();
     const roleRaw = user?.role;
     const normalizedRole = roleRaw ? String(roleRaw).toUpperCase() : '';
-    const isAdminOrStaff = normalizedRole === 'ADMIN' || normalizedRole === 'STAFF';
+    const isAdminOrStaff = normalizedRole === USER_ROLES.ADMIN || normalizedRole === USER_ROLES.STAFF;
     const fromLnb = navigateQuickActionsFromLnb;
     if (
       isAdminOrStaff &&

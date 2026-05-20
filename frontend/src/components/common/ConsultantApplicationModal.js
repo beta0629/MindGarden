@@ -3,6 +3,7 @@ import { Button, Form, Alert, Row, Col } from 'react-bootstrap';
 import UnifiedModal from './modals/UnifiedModal';
 import { apiPost, apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
+import { USER_ROLES } from '../../constants/roles';
 
 /**
  * 상담사 신청 모달 컴포넌트
@@ -80,7 +81,7 @@ const ConsultantApplicationModal = ({
 
     // 모달이 열릴 때마다 자격 요건 확인
     useEffect(() => {
-        if (isOpen && userId && userRole === 'CLIENT') {
+        if (isOpen && userId && userRole === USER_ROLES.CLIENT) {
             checkEligibility();
         }
     }, [isOpen, userId, userRole, checkEligibility]);
@@ -148,7 +149,7 @@ const ConsultantApplicationModal = ({
     };
 
     // 내담자가 아닌 경우 접근 제한
-    if (userRole !== 'CLIENT') {
+    if (userRole !== USER_ROLES.CLIENT) {
         return null;
     }
 

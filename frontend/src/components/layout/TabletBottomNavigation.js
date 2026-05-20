@@ -3,6 +3,7 @@ import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 �
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getLegacyDashboardPath } from '../../utils/dashboardUtils';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { USER_ROLES } from '../../constants/roles';
 
 const TabletBottomNavigation = ({ userRole }) => {
   const navigate = useNavigate();
@@ -10,23 +11,23 @@ const TabletBottomNavigation = ({ userRole }) => {
 
   const getNavigationItems = (role) => {
     switch (role) {
-      case 'CLIENT':
+      case USER_ROLES.CLIENT:
         return [
-          { path: getLegacyDashboardPath('CLIENT'), icon: 'bi-house', label: '홈' },
+          { path: getLegacyDashboardPath(USER_ROLES.CLIENT), icon: 'bi-house', label: '홈' },
           { path: '/client/schedule', icon: 'bi-calendar-check', label: '상담' },
           { path: '/client/session-management', icon: 'bi-list-task', label: '과제' },
           { path: '/client/mypage', icon: 'bi-person', label: '프로필' }
         ];
-      case 'CONSULTANT':
+      case USER_ROLES.CONSULTANT:
         return [
-          { path: getLegacyDashboardPath('CONSULTANT'), icon: 'bi-house', label: '홈' },
+          { path: getLegacyDashboardPath(USER_ROLES.CONSULTANT), icon: 'bi-house', label: '홈' },
           { path: '/consultant/schedule', icon: 'bi-calendar-week', label: '일정' },
           { path: '/consultant/clients', icon: 'bi-people', label: '내담자' },
           { path: '/consultant/mypage', icon: 'bi-person', label: '프로필' }
         ];
-      case 'ADMIN':
+      case USER_ROLES.ADMIN:
         return [
-          { path: getLegacyDashboardPath('ADMIN'), icon: 'bi-house', label: '홈' },
+          { path: getLegacyDashboardPath(USER_ROLES.ADMIN), icon: 'bi-house', label: '홈' },
           { path: '/admin/user-management', icon: 'bi-people', label: '사용자' },
           { path: '/admin/system', icon: 'bi-gear', label: '설정' },
           { path: '/admin/mypage', icon: 'bi-person', label: '프로필' }

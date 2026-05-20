@@ -13,6 +13,7 @@ import { Send, Check, CheckCheck, MessageCircle } from 'lucide-react';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import { useToast } from '../../contexts/ToastContext';
 import './ChatScreen.css';
+import { USER_ROLES } from '../../constants/roles';
 
 const API_ENDPOINT = '/api/v1/consultation-messages';
 const MESSAGES_PER_PAGE = 50;
@@ -56,7 +57,7 @@ const ChatScreen = ({
   partnerRole = '',
   partnerAvatar = null,
   currentUserId,
-  currentUserRole = 'CLIENT',
+  currentUserRole = USER_ROLES.CLIENT,
   themeVariant = 'client',
   onBack,
 }) => {
@@ -89,7 +90,7 @@ const ChatScreen = ({
     if (!partnerId || !currentUserId) return;
     try {
       setLoading(true);
-      const userType = currentUserRole === 'CONSULTANT' ? 'consultant' : 'client';
+      const userType = currentUserRole === USER_ROLES.CONSULTANT ? 'consultant' : 'client';
       const response = await TenantAwareApiClient.get(
         `${API_ENDPOINT}/${userType}/${currentUserId}`,
         { partnerId, page: 0, size: MESSAGES_PER_PAGE, sort: 'createdAt,asc' }

@@ -4,6 +4,7 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 
 const XCircleIcon = ICONS.X_CIRCLE;
 
@@ -36,7 +37,7 @@ const DateActionModal = ({
   };
 
   const canManageSchedule =
-    userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN';
+    userRole === USER_ROLES.ADMIN || userRole === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN;
 
   return (
     <UnifiedModal

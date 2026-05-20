@@ -15,6 +15,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { useToast } from '../../contexts/ToastContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ClientConsultationsRenewal.css';
+import { USER_ROLES } from '../../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SCHEDULES = '/api/v1/schedules';
@@ -70,7 +71,7 @@ const ClientConsultationsRenewal = () => {
       setLoading(true);
       const res = await TenantAwareApiClient.get(API_SCHEDULES, {
         userId: user.id,
-        userRole: 'CLIENT',
+        userRole: USER_ROLES.CLIENT,
       });
       const data = Array.isArray(res) ? res : res?.data || res?.content || [];
       setConsultations(data);

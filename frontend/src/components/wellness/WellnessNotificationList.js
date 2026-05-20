@@ -15,6 +15,7 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
 import './WellnessNotificationList.css';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SYSTEM_NOTIFICATIONS_ACTIVE = '/api/v1/system-notifications/active';
@@ -48,7 +49,7 @@ const WellnessNotificationList = () => {
       return;
     }
 
-    if (user?.role !== 'CLIENT' && user?.role !== 'ROLE_CLIENT') {
+    if (user?.role !== USER_ROLES.CLIENT && user?.role !== LEGACY_USER_ROLES.ROLE_CLIENT) {
       notificationManager.show('접근 권한이 없습니다.', 'error');
       navigate('/');
       return;

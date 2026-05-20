@@ -11,6 +11,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { USER_ROLES } from '../../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=SPECIALTY';
@@ -111,7 +112,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                         userId: consultantEntity.userId || consultantName,
                         email: consultantEmail,
                         phone: consultantEntity.phone || '',
-                        role: consultantEntity.role || 'CONSULTANT',
+                        role: consultantEntity.role || USER_ROLES.CONSULTANT,
                         isActive: consultantEntity.isActive !== undefined ? consultantEntity.isActive : true,
                         branchCode: consultantEntity.branchCode || '',
                         specialty: rawSpecialty, // 원본 저장

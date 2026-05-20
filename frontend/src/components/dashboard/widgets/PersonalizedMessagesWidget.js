@@ -19,7 +19,7 @@ import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
-import { RoleUtils } from '../../../constants/roles';
+import { RoleUtils, USER_ROLES } from '../../../constants/roles';
 import { DASHBOARD_API } from '../../../constants/api';
 import { apiGet } from '../../../utils/ajax';
 import ConsultantListModal from '../../common/ConsultantListModal';
@@ -45,7 +45,7 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     url: API_SCHEDULES,
     params: {
       userId: user.id,
-      userRole: 'CLIENT',
+      userRole: USER_ROLES.CLIENT,
       includeConsultantInfo: true
     }
   });

@@ -35,6 +35,7 @@ import {
   PG_PROVIDER_IAMPORT_DISPLAY_LABEL
 } from '../../constants/portonePgConfiguration';
 import './PgApprovalManagement.css';
+import { USER_ROLES } from '../../constants/roles';
 
 /**
  * 운영 포털에서 테넌트 PG 설정 승인·거부를 관리하는 페이지
@@ -125,7 +126,7 @@ const PgApprovalManagement = () => {
   useEffect(() => {
     if (!sessionLoading && isLoggedIn && user) {
       // 권한 확인 (ADMIN 또는 OPS 역할)
-      const allowedRoles = ['ADMIN', 'STAFF'];
+      const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.STAFF];
       if (!allowedRoles.includes(user.role)) {
         showNotification('접근 권한이 없습니다.', 'error');
         navigate('/');

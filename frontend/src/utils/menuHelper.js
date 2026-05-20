@@ -1,4 +1,5 @@
 import { apiGet } from './ajax';
+import { USER_ROLES } from '../constants/roles';
 
 /**
  * 메뉴 관련 유틸리티 함수들
@@ -62,7 +63,7 @@ export const loadMenuStructure = async() => {
         try {
             const { sessionManager } = await import('./sessionManager');
             const user = sessionManager.getUser();
-            const userRole = user?.role || 'CLIENT';
+            const userRole = user?.role || USER_ROLES.CLIENT;
             
             // 역할별 표시명 매핑 (4역할: ADMIN, STAFF, CONSULTANT, CLIENT)
             const roleDisplayMap = {
@@ -84,7 +85,7 @@ export const loadMenuStructure = async() => {
             return {
                 menus: [],
                 totalMenus: 0,
-                userRole: 'CLIENT',
+                userRole: USER_ROLES.CLIENT,
                 roleDisplayName: '내담자'
             };
         }

@@ -150,7 +150,7 @@ const PermissionManagement = () => {
     const { checkSession } = useSession();
     const [userPermissions, setUserPermissions] = useState([]);
     const [currentUserRole, setCurrentUserRole] = useState(null);
-    const [selectedRole, setSelectedRole] = useState('ADMIN');
+    const [selectedRole, setSelectedRole] = useState(USER_ROLES.ADMIN);
     const [rolePermissions, setRolePermissions] = useState([]);
     const [saveLoading, setSaveLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -331,8 +331,8 @@ const PermissionManagement = () => {
         return userPermissions.includes(permissionCode);
     };
 
-    const canManagePermissions = currentUserRole === 'ADMIN';
-    const isTopAdmin = currentUserRole === 'ADMIN';
+    const canManagePermissions = currentUserRole === USER_ROLES.ADMIN;
+    const isTopAdmin = currentUserRole === USER_ROLES.ADMIN;
 
     console.log('🔍 PermissionManagement 권한 체크:', {
         userPermissions,

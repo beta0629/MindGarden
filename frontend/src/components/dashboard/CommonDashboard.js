@@ -6,7 +6,7 @@ import { authAPI, apiGet } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
 import { DASHBOARD_API, API_BASE_URL } from '../../constants/api';
 import { redirectToDynamicDashboard, getLegacyDashboardPath } from '../../utils/dashboardUtils';
-import { RoleUtils, USER_ROLES } from '../../constants/roles';
+import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import { getStatusLabel } from '../../utils/colorUtils';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -71,7 +71,7 @@ const CommonDashboard = ({ user: propUser }) => {
       
       const scheduleResponse = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
         userId: userId,
-        userRole: 'CLIENT'
+        userRole: USER_ROLES.CLIENT
       });
       
       console.log('📅 스케줄 응답:', scheduleResponse);
@@ -219,7 +219,7 @@ const CommonDashboard = ({ user: propUser }) => {
       
       const scheduleResponse = await apiGet(DASHBOARD_API.CONSULTANT_SCHEDULES, {
         userId: userId,
-        userRole: 'CONSULTANT'
+        userRole: USER_ROLES.CONSULTANT
       });
       
       console.log('📅 상담사 스케줄 응답:', scheduleResponse);
@@ -366,7 +366,7 @@ const CommonDashboard = ({ user: propUser }) => {
       
       try {
         const statsResponse = await apiGet(DASHBOARD_API.CONSULTANT_STATS, {
-          userRole: 'CONSULTANT'
+          userRole: USER_ROLES.CONSULTANT
         });
         
         console.log('📊 상담사 통계 응답:', statsResponse);
@@ -404,7 +404,7 @@ const CommonDashboard = ({ user: propUser }) => {
       
       try {
         const statsResponse = await apiGet(DASHBOARD_API.ADMIN_STATS, {
-          userRole: 'ADMIN'
+          userRole: USER_ROLES.ADMIN
         });
         
         console.log('📊 관리자 통계 응답:', statsResponse);
@@ -588,7 +588,7 @@ const CommonDashboard = ({ user: propUser }) => {
           setUser(dashboardUser);
         }
         
-        if (dashboardUser?.role && !['CLIENT', 'CONSULTANT'].includes(dashboardUser.role)) {
+        if (dashboardUser?.role && ![USER_ROLES.CLIENT, USER_ROLES.CONSULTANT].includes(dashboardUser.role)) {
           console.log('🎯 관리자 역할 감지, 적절한 대시보드로 리다이렉션:', dashboardUser.role);
           const authResponse = {
             user: dashboardUser,
@@ -653,12 +653,12 @@ const CommonDashboard = ({ user: propUser }) => {
     if (!user?.role) return '대시보드';
     
     switch (user.role) {
-      case 'CLIENT':
+      case USER_ROLES.CLIENT:
         return '내담자 대시보드';
-      case 'CONSULTANT':
+      case USER_ROLES.CONSULTANT:
         return '상담사 대시보드';
-      case 'ADMIN':
-      case 'SUPER_ADMIN':
+      case USER_ROLES.ADMIN:
+      case LEGACY_USER_ROLES.SUPER_ADMIN:
         return '관리자 대시보드';
       default:
         return '대시보드';
@@ -669,12 +669,12 @@ const CommonDashboard = ({ user: propUser }) => {
     if (!user?.role) return '대시보드에 오신 것을 환영합니다';
     
     switch (user.role) {
-      case 'CLIENT':
+      case USER_ROLES.CLIENT:
         return '내담자님의 상담 현황을 확인하세요';
-      case 'CONSULTANT':
+      case USER_ROLES.CONSULTANT:
         return '상담사님의 상담 일정을 관리하세요';
-      case 'ADMIN':
-      case 'SUPER_ADMIN':
+      case USER_ROLES.ADMIN:
+      case LEGACY_USER_ROLES.SUPER_ADMIN:
         return '관리자님의 시스템 현황을 확인하세요';
       default:
         return '대시보드에 오신 것을 환영합니다';

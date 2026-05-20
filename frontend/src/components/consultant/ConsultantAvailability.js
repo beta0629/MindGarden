@@ -15,6 +15,7 @@ import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantAvailability.css';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES_GROUPS_DURATION = '/api/v1/common-codes/groups/DURATION';
@@ -251,7 +252,7 @@ const ConsultantAvailability = () => {
   }
 
   const userRole = user?.role;
-  const hasPermission = userRole === 'CONSULTANT' || userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN';
+  const hasPermission = userRole === USER_ROLES.CONSULTANT || userRole === USER_ROLES.ADMIN || userRole === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN;
 
   const headerActions = (
     <>

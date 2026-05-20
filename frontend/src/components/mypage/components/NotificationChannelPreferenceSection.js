@@ -4,6 +4,7 @@ import {
   tNotificationChannel
 } from '../../../constants/notificationChannelPreference';
 import './NotificationChannelPreferenceSection.css';
+import { USER_ROLES } from '../../../constants/roles';
 
 const SECTION_I18N = 'tenantProfile.notificationChannel.sectionTitle';
 const SUB_I18N = 'tenantProfile.notificationChannel.sectionSubtitle';
@@ -40,7 +41,7 @@ const NotificationChannelPreferenceSection = ({
   const titleId = `${groupId}-title`;
 
   const r = subjectRole ? String(subjectRole).toUpperCase() : '';
-  if (r !== 'CLIENT' && r !== 'CONSULTANT') {
+  if (r !== USER_ROLES.CLIENT && r !== USER_ROLES.CONSULTANT) {
     return null;
   }
 

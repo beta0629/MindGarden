@@ -18,7 +18,7 @@ import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
-import { RoleUtils } from '../../../constants/roles';
+import { RoleUtils, USER_ROLES } from '../../../constants/roles';
 import './HealingCardWidget.css';
 import '../../../components/common/HealingCard.css';
 
@@ -28,7 +28,7 @@ const API_HEALING_CONTENT = '/api/v1/healing/content';
 const HealingCardWidget = ({ widget, user }) => {
   // 역할별 데이터 소스 설정
   const getDataSourceConfig = () => {
-    const targetRole = RoleUtils.isConsultant(user) ? 'CONSULTANT' : 'CLIENT';
+    const targetRole = RoleUtils.isConsultant(user) ? USER_ROLES.CONSULTANT : USER_ROLES.CLIENT;
     const category = widget?.config?.category || null;
     
     const params = {};
@@ -74,7 +74,7 @@ const HealingCardWidget = ({ widget, user }) => {
 
   // 새로고침 핸들러 (API 변경)
   const handleRefresh = async() => {
-    const targetRole = RoleUtils.isConsultant(user) ? 'CONSULTANT' : 'CLIENT';
+    const targetRole = RoleUtils.isConsultant(user) ? USER_ROLES.CONSULTANT : USER_ROLES.CLIENT;
     const category = widget?.config?.category || null;
     
     const params = {};

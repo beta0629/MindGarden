@@ -9,6 +9,7 @@ import PropTypes from 'prop-types';
 import { ICONS, ICON_SIZES, ICON_COLORS, ICON_COLORS_BY_ROLE } from '../../../constants/icons';
 import { LAYOUT_SYSTEM } from '../../../constants/layout';
 import './Icon.css';
+import { USER_ROLES } from '../../../constants/roles';
 
 const Icon = ({ name,
   size = 'MD',
@@ -90,7 +91,7 @@ Icon.propTypes = { /** 아이콘 이름 (ICONS 객체의 키) */
   color: PropTypes.oneOf(['PRIMARY', 'SECONDARY', 'SUCCESS', 'WARNING', 'ERROR', 'INFO', 'MUTED', 'TRANSPARENT']),
   
   /** 사용자 역할 (테마 적용) */
-  userRole: PropTypes.oneOf(['CLIENT', 'CONSULTANT', 'ADMIN']),
+  userRole: PropTypes.oneOf([USER_ROLES.CLIENT, USER_ROLES.CONSULTANT, USER_ROLES.ADMIN]),
   
   /** 아이콘 변형 */
   variant: PropTypes.oneOf(['default', 'outlined', 'filled', 'minimal']),

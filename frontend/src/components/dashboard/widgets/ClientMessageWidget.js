@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { RoleUtils } from '../../../constants/roles';
+import { RoleUtils, USER_ROLES } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { apiGet } from '../../../utils/ajax';
@@ -121,7 +121,7 @@ const ClientMessageWidget = ({ widget, user }) => {
           })
           .map(msg => ({
             ...msg,
-            messageSource: 'CONSULTANT',
+            messageSource: USER_ROLES.CONSULTANT,
             displayDate: msg.sentAt || msg.createdAt
           }));
       }
@@ -135,7 +135,7 @@ const ClientMessageWidget = ({ widget, user }) => {
             .filter(notice => {
               const targetRoles = notice.targetRoles || [];
               // 전체 공지만 표시 (내담자 전용 공지는 제외)
-              return targetRoles.includes('ALL') && !targetRoles.includes('CLIENT');
+              return targetRoles.includes('ALL') && !targetRoles.includes(USER_ROLES.CLIENT);
             })
             .map(notice => ({
               id: `system-${notice.id}`,
@@ -203,7 +203,7 @@ const ClientMessageWidget = ({ widget, user }) => {
         if (response?.success) {
           setSelectedMessage({
             ...response.data,
-            messageSource: 'CONSULTANT'
+            messageSource: USER_ROLES.CONSULTANT
           });
         } else {
           setSelectedMessage(message);

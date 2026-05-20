@@ -38,6 +38,7 @@ import SafeText from '../common/SafeText';
 import CardContainer from '../common/CardContainer';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import './ClientDashboard.css';
+import { USER_ROLES } from '../../constants/roles';
 
 const CLIENT_DASHBOARD_TITLE_ID = 'client-dashboard-page-title';
 
@@ -118,7 +119,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
           email: urlParams.get('email') || '',
           name: decodeURIComponent(urlParams.get('name') || ''),
           nickname: decodeURIComponent(urlParams.get('nickname') || ''),
-          role: urlParams.get('role') || 'CLIENT',
+          role: urlParams.get('role') || USER_ROLES.CLIENT,
           profileImageUrl: decodeURIComponent(urlParams.get('profileImage') || ''),
           provider: urlParams.get('provider') || 'UNKNOWN'
         };
@@ -205,7 +206,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
 
       const scheduleRaw = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
         userId: currentUser.id,
-        userRole: 'CLIENT'
+        userRole: USER_ROLES.CLIENT
       });
       const schedules = normalizeScheduleListPayload(scheduleRaw);
 

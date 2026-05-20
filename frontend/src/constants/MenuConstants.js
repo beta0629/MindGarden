@@ -13,6 +13,7 @@
  */
 
 import { apiGet } from '../utils/ajax';
+import { USER_ROLES } from './roles';
 
 /**
  * 메뉴 카테고리 정의
@@ -86,7 +87,7 @@ const DEFAULT_MENU_CONFIG = {
   sessions: {
     category: MENU_CATEGORIES.CONSULTATION,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['CONSULTANT', 'ADMIN'],
+    allowedRoles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN],
     label: '세션 관리',
     path: '/sessions',
     icon: 'psychology',
@@ -95,7 +96,7 @@ const DEFAULT_MENU_CONFIG = {
   consultations: {
     category: MENU_CATEGORIES.CONSULTATION,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['CONSULTANT', 'ADMIN'],
+    allowedRoles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN],
     label: '상담 관리',
     path: '/consultations',
     icon: 'chat',
@@ -104,7 +105,7 @@ const DEFAULT_MENU_CONFIG = {
   clients: {
     category: MENU_CATEGORIES.CONSULTATION,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['CONSULTANT', 'ADMIN'],
+    allowedRoles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN],
     label: '내담자 관리',
     path: '/clients',
     icon: 'people',
@@ -113,7 +114,7 @@ const DEFAULT_MENU_CONFIG = {
   consultants: {
     category: MENU_CATEGORIES.CONSULTATION,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['ADMIN'],
+    allowedRoles: [USER_ROLES.ADMIN],
     label: '상담사 관리',
     path: '/consultants',
     icon: 'supervisor_account',
@@ -122,7 +123,7 @@ const DEFAULT_MENU_CONFIG = {
   mappings: {
     category: MENU_CATEGORIES.CONSULTATION,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['ADMIN'],
+    allowedRoles: [USER_ROLES.ADMIN],
     label: '매칭 관리',
     path: '/mappings',
     icon: 'link',
@@ -133,7 +134,7 @@ const DEFAULT_MENU_CONFIG = {
   courses: {
     category: MENU_CATEGORIES.ACADEMY,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['CONSULTANT', 'ADMIN'],
+    allowedRoles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN],
     label: '강좌 관리',
     path: '/courses',
     icon: 'school',
@@ -142,7 +143,7 @@ const DEFAULT_MENU_CONFIG = {
   classes: {
     category: MENU_CATEGORIES.ACADEMY,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['CONSULTANT', 'ADMIN'],
+    allowedRoles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN],
     label: '반 관리',
     path: '/classes',
     icon: 'class',
@@ -151,7 +152,7 @@ const DEFAULT_MENU_CONFIG = {
   enrollments: {
     category: MENU_CATEGORIES.ACADEMY,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['STAFF', 'ADMIN'],
+    allowedRoles: [USER_ROLES.STAFF, USER_ROLES.ADMIN],
     label: '수강 관리',
     path: '/enrollments',
     icon: 'assignment',
@@ -160,7 +161,7 @@ const DEFAULT_MENU_CONFIG = {
   attendance: {
     category: MENU_CATEGORIES.ACADEMY,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['CONSULTANT', 'ADMIN'],
+    allowedRoles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN],
     label: '출석 관리',
     path: '/attendance',
     icon: 'fact_check',
@@ -169,7 +170,7 @@ const DEFAULT_MENU_CONFIG = {
   tuition: {
     category: MENU_CATEGORIES.ACADEMY,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['STAFF', 'ADMIN'],
+    allowedRoles: [USER_ROLES.STAFF, USER_ROLES.ADMIN],
     label: '수강료 관리',
     path: '/tuition',
     icon: 'payment',
@@ -414,14 +415,14 @@ const checkMenuPermission = (menuConfig, userRole, userPermissions = []) => {
  * @param {string} userRole - 사용자 역할
  * @returns {boolean} 관리자·스태프 역할 여부
  */
-const isAdminOrStaffRole = (userRole) => userRole === 'ADMIN' || userRole === 'STAFF';
+const isAdminOrStaffRole = (userRole) => userRole === USER_ROLES.ADMIN || userRole === USER_ROLES.STAFF;
 
 /**
  * 관리자 역할 확인 (동적)
  * @param {string} userRole - 사용자 역할
  * @returns {boolean} 관리자 역할 여부
  */
-const isAdminRole = (userRole) => userRole === 'ADMIN';
+const isAdminRole = (userRole) => userRole === USER_ROLES.ADMIN;
 
 // ============ 캐시 관리 함수들 ============
 

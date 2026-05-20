@@ -27,6 +27,7 @@
 import React, { useState, useEffect } from 'react';
 import notificationManager from '../../../utils/notification';
 import DashboardWidgetManagerPresentation from './DashboardWidgetManagerPresentation';
+import { USER_ROLES } from '../../../constants/roles';
 
 const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) => {
   // ========================================
@@ -41,7 +42,7 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
   // 사용자 정보 추출
   const tenantId = user?.tenantId;
   const businessType = user?.businessType || 'CONSULTATION';
-  const roleCode = user?.role || 'ADMIN';
+  const roleCode = user?.role || USER_ROLES.ADMIN;
   
   // ========================================
   // 데이터 로딩

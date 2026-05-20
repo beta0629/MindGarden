@@ -14,6 +14,7 @@ import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import './ConsultantMessages.css';
+import { USER_ROLES } from '../../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTATION_MESSAGES = '/api/v1/consultation-messages';
@@ -48,10 +49,10 @@ function getMessageCounterpartyLine(message) {
   if (messageType === 'REMINDER' || senderType === 'SYSTEM') {
     return MESSAGE_COUNTERPARTY_COPY.SOURCE_REMINDER_OR_SYSTEM;
   }
-  if (senderType === 'CLIENT' && clientName) {
+  if (senderType === USER_ROLES.CLIENT && clientName) {
     return `${MESSAGE_COUNTERPARTY_COPY.SENDER_PREFIX} ${clientName}`;
   }
-  if (senderType === 'CONSULTANT' && clientName) {
+  if (senderType === USER_ROLES.CONSULTANT && clientName) {
     return `${MESSAGE_COUNTERPARTY_COPY.RECIPIENT_PREFIX} ${clientName}`;
   }
   if (clientName) {

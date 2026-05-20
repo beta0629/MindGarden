@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { WELCOME_SECTION_CSS } from '../../constants/css';
 import { DASHBOARD_MESSAGES } from '../../constants/dashboard';
-import { RoleUtils } from '../../constants/roles';
+import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import WeatherCard from './WeatherCard';
 import { getStatusLabel } from '../../utils/colorUtils';
 import Avatar from '../common/Avatar';
@@ -33,13 +33,13 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
     }
     
     switch (user.role) {
-      case 'CLIENT':
+      case USER_ROLES.CLIENT:
         return DASHBOARD_MESSAGES.WELCOME.CLIENT;
-      case 'CONSULTANT':
+      case USER_ROLES.CONSULTANT:
         return DASHBOARD_MESSAGES.WELCOME.CONSULTANT;
-      case 'ADMIN':
-      case 'BRANCH_SUPER_ADMIN':
-      case 'HQ_MASTER':
+      case USER_ROLES.ADMIN:
+      case LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN:
+      case LEGACY_USER_ROLES.HQ_MASTER:
         return DASHBOARD_MESSAGES.WELCOME.ADMIN;
       default:
         console.log('⚠️ 알 수 없는 role:', user.role);
@@ -157,7 +157,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
       )}
 
       {/* 상담사/관리자용 정보 카드 */}
-      {user?.role !== 'CLIENT' && (
+      {user?.role !== USER_ROLES.CLIENT && (
         <div className="welcome-info-cards">
           {/* 오늘의 상담 - 큰 카드 */}
           <div className="welcome-info-card today-consultation-card">

@@ -280,7 +280,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                       >
                         {notification.targetType === 'ALL'
                           ? '전체'
-                          : notification.targetType === 'CONSULTANT'
+                          : notification.targetType === USER_ROLES.CONSULTANT
                             ? '상담사'
                             : '내담자'}
                       </StatusBadge>

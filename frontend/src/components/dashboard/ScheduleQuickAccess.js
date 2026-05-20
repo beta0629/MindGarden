@@ -4,6 +4,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from '../common/MGButton';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { USER_ROLES } from '../../constants/roles';
 
 /**
  * 상담사용 스케줄 빠른 접근 컴포넌트
@@ -12,7 +13,7 @@ const ScheduleQuickAccess = ({ user }) => {
   const navigate = useNavigate();
 
   // 상담사가 아닌 경우 렌더링하지 않음
-  if (user?.role !== 'CONSULTANT') {
+  if (user?.role !== USER_ROLES.CONSULTANT) {
     return null;
   }
 

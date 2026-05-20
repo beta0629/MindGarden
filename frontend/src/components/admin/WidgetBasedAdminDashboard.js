@@ -11,6 +11,7 @@ import axios from 'axios';
 import { API_BASE_URL } from '../../constants/api';
 import WelcomeWidget from '../dashboard/widgets/WelcomeWidget';
 import './WidgetBasedAdminDashboard.css';
+import { USER_ROLES } from '../../constants/roles';
 
 /**
  * 위젯 기반 관리자 대시보드
@@ -103,7 +104,7 @@ const WidgetBasedAdminDashboard = () => {
                 {
                     params: {
                         businessType: 'CONSULTATION',
-                        roleCode: 'ADMIN'
+                        roleCode: USER_ROLES.ADMIN
                     },
                     withCredentials: true,
                     headers: {

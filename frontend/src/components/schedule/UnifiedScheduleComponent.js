@@ -374,7 +374,7 @@ const UnifiedScheduleComponent = ({
             let url = '';
             
             // 상담사는 자신의 스케줄만 조회
-            if (userRole === 'CONSULTANT') {
+            if (userRole === USER_ROLES.CONSULTANT) {
                 url = `/api/v1/schedules/consultant/${userId}`;
                 console.log('🔍 상담사 자신의 스케줄만 조회:', userId);
             }
@@ -712,7 +712,7 @@ const UnifiedScheduleComponent = ({
         const isPastDate = clickedDate < today;
         
         // 상담사는 휴가만 등록 가능
-        if (userRole === 'CONSULTANT') {
+        if (userRole === USER_ROLES.CONSULTANT) {
             if (isPastDate) {
                 notificationManager.warning('과거 날짜에는 휴가를 등록할 수 없습니다.');
                 return;
@@ -1061,7 +1061,7 @@ const UnifiedScheduleComponent = ({
                 />
             )}
 
-            {isVacationModalOpen && userRole === 'CONSULTANT' && (
+            {isVacationModalOpen && userRole === USER_ROLES.CONSULTANT && (
                 <ConsultantVacationModal
                     isOpen={isVacationModalOpen}
                     onClose={() => setIsVacationModalOpen(false)}
@@ -1074,7 +1074,7 @@ const UnifiedScheduleComponent = ({
                 />
             )}
 
-            {isVacationModalOpen && userRole !== 'CONSULTANT' && (
+            {isVacationModalOpen && userRole !== USER_ROLES.CONSULTANT && (
                 <VacationManagementModal
                     isOpen={isVacationModalOpen}
                     onClose={() => setIsVacationModalOpen(false)}

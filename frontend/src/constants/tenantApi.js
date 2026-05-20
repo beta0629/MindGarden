@@ -6,11 +6,13 @@
  * @since 2026-04-01
  */
 
+import { USER_ROLES } from './roles';
+
 /** 테넌트 표시명 최대 길이 (tenants.name, 엔티티와 동일) */
 export const TENANT_DISPLAY_NAME_MAX_LENGTH = 255;
 
 /** 표시명 변경 API 호출 가능 역할 (Spring hasRole 정합: ADMIN, OPS) */
-export const TENANT_DISPLAY_NAME_EDIT_ROLES = Object.freeze(['ADMIN', 'OPS']);
+export const TENANT_DISPLAY_NAME_EDIT_ROLES = Object.freeze([USER_ROLES.ADMIN, 'OPS']);
 
 /**
  * 테넌트 표시명 변경 UI/API 권한 여부

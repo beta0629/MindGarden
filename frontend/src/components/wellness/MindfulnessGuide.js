@@ -12,6 +12,7 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
 import './MindfulnessGuide.css';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 
 const MINDFULNESS_GUIDE_TITLE_ID = 'mindfulness-guide-page-title';
 
@@ -31,7 +32,7 @@ const MindfulnessGuide = () => {
       return;
     }
 
-    if (user.role !== 'CLIENT' && user.role !== 'ROLE_CLIENT') {
+    if (user.role !== USER_ROLES.CLIENT && user.role !== LEGACY_USER_ROLES.ROLE_CLIENT) {
       notificationManager.show('접근 권한이 없습니다.', 'error');
       navigate('/');
       return;

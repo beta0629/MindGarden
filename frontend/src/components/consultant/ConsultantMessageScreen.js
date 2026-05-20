@@ -11,6 +11,7 @@ import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
+import { USER_ROLES } from '../../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTATION_MESSAGES = '/api/v1/consultation-messages';
@@ -388,7 +389,7 @@ const ConsultantMessageScreen = () => {
         consultantId: user.id,
         clientId: client.id,
         consultationId: parseInt(consultationId),
-        senderType: 'CONSULTANT',
+        senderType: USER_ROLES.CONSULTANT,
         title: messageData.title,
         content: messageData.content,
         messageType: messageData.messageType,

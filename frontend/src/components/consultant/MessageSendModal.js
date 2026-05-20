@@ -8,6 +8,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
+import { USER_ROLES } from '../../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=MESSAGE_TYPE';
@@ -134,7 +135,7 @@ const MessageSendModal = ({
         consultantId: user.id,
         clientId: clientData.id,
         consultationId: consultationId,
-        senderType: 'CONSULTANT',
+        senderType: USER_ROLES.CONSULTANT,
         title: formData.title,
         content: formData.content,
         messageType: formData.messageType,

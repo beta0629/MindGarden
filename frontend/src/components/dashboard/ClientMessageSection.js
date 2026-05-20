@@ -18,6 +18,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
 import './ClientMessageSection.css';
+import { USER_ROLES } from '../../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SYSTEM_NOTIFICATIONS_ACTIVE = '/api/v1/system-notifications/active';
@@ -121,7 +122,7 @@ const ClientMessageSection = ({ userId }) => {
           return !isIncompleteNotification;
         }).map(msg => ({
           ...msg,
-          messageSource: 'CONSULTANT',
+          messageSource: USER_ROLES.CONSULTANT,
           displayDate: msg.sentAt || msg.createdAt
         }));
       }
@@ -137,7 +138,7 @@ const ClientMessageSection = ({ userId }) => {
           .filter(notice => {
             const targetRoles = notice.targetRoles || [];
             // 전체 공지만 표시 (내담자 전용 공지는 제외)
-            return targetRoles.includes('ALL') && !targetRoles.includes('CLIENT');
+            return targetRoles.includes('ALL') && !targetRoles.includes(USER_ROLES.CLIENT);
           })
           .map(notice => ({
             id: `system-${notice.id}`,
@@ -207,7 +208,7 @@ const ClientMessageSection = ({ userId }) => {
         if (detail) {
           setSelectedMessage({
             ...detail,
-            messageSource: 'CONSULTANT'
+            messageSource: USER_ROLES.CONSULTANT
           });
         } else {
           setSelectedMessage(message);

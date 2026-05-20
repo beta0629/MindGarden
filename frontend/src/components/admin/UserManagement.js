@@ -53,7 +53,7 @@ const UserManagement = ({ onUpdate }) => {
             const { getCommonCodes } = await import('../../utils/commonCodeApi');
             const codes = await getCommonCodes('ROLE');
             
-            const ALLOWED = ['ADMIN', 'STAFF', 'CONSULTANT', 'CLIENT'];
+            const ALLOWED = [USER_ROLES.ADMIN, USER_ROLES.STAFF, USER_ROLES.CONSULTANT, USER_ROLES.CLIENT];
             const defaultOptions = [
                 { value: USER_ROLES.CLIENT, label: '내담자', icon: 'User', color: 'var(--mg-primary-500)', description: '상담을 받는 내담자' },
                 { value: USER_ROLES.CONSULTANT, label: '상담사', icon: 'UserCircle', color: 'var(--mg-success-500)', description: '상담을 제공하는 상담사' },

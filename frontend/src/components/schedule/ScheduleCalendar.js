@@ -11,6 +11,7 @@ import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import notificationManager from '../../utils/notification';
 import { normalizeScheduleListPayload } from '../../utils/apiResponseNormalize';
 import { CALENDAR_EXTENDED_TYPE_VACATION } from '../../constants/schedule';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 
 import ScheduleCalendarHeader from './ScheduleCalendar/ScheduleCalendarHeader';
 import ScheduleCalendarLegend from './ScheduleCalendar/ScheduleCalendarLegend';
@@ -48,7 +49,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const { user: sessionUser } = useSession();
     
     const currentUser = sessionUser;
-    const currentUserRole = userRole || currentUser?.role || 'CLIENT';
+    const currentUserRole = userRole || currentUser?.role || USER_ROLES.CLIENT;
     const currentUserId = userId || currentUser?.id;
     
     const [events, setEvents] = useState([]);
@@ -122,7 +123,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     }, []);
 
     const loadConsultants = useCallback(async() => {
-        if (currentUserRole === 'CLIENT') {
+        if (currentUserRole === USER_ROLES.CLIENT) {
             console.log('👤 내담자 - 상담사 목록 로드 생략');
             setConsultants([]);
             return;
@@ -142,7 +143,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             
             console.log('🔍 조건 확인:', {
                 currentUserRole,
-                isAdmin: currentUserRole === 'ADMIN',
+                isAdmin: currentUserRole === USER_ROLES.ADMIN,
                 hasBranchId: !!currentUser?.branchId,
                 branchId: currentUser?.branchId
             });
@@ -154,7 +155,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             // } else {
                 console.log('🏢 전체 상담사 조회 - 이유:', {
                     role: currentUserRole,
-                    isAdmin: currentUserRole === 'ADMIN',
+                    isAdmin: currentUserRole === USER_ROLES.ADMIN,
                     hasBranchId: !!currentUser?.branchId,
                     branchId: currentUser?.branchId
                 });
@@ -192,7 +193,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             
             let url = `/api/v1/schedules?userId=${currentUserId}&userRole=${currentUserRole}`;
             
-            if (currentUserRole === 'ADMIN') {
+            if (currentUserRole === USER_ROLES.ADMIN) {
                 url = API_SCHEDULES_ADMIN;
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
@@ -253,7 +254,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             }
 
             const vacationEvents = [];
-            if (currentUserRole === 'ADMIN') {
+            if (currentUserRole === USER_ROLES.ADMIN) {
                 try {
                     const today = new Date();
                     const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
@@ -352,7 +353,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const handleDateClick = (info) => {
         console.log('📅 날짜 클릭:', info);
         
-        if (currentUserRole === 'CLIENT') {
+        if (currentUserRole === USER_ROLES.CLIENT) {
             notificationManager.info('일정은 상담사가 관리합니다.');
             return;
         }
@@ -373,7 +374,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             
             openMobileZoom(info.dateStr, dayEvents);
         } else {
-            if (currentUserRole === 'ADMIN') {
+            if (currentUserRole === USER_ROLES.ADMIN) {
                 const clickedDate = new Date(info.date);
                 const today = new Date();
                 
@@ -603,7 +604,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 onEventDrop={handleEventDrop}
                 isMobile={isMobile}
                 forceMobileMode={forceMobileMode}
-                readOnly={currentUserRole === 'CLIENT'}
+                readOnly={currentUserRole === USER_ROLES.CLIENT}
             />
 
             {/* 모바일 확대 모달 */}
@@ -661,7 +662,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 onConfirm={handleTimeSelectionConfirm}
             />
 
-            {(currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN') && (
+            {(currentUserRole === USER_ROLES.ADMIN || currentUserRole === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN) && (
                 <RescheduleScheduleModal
                     isOpen={isRescheduleModalOpen}
                     onClose={handleRescheduleModalClose}

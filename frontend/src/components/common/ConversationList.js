@@ -12,6 +12,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Search, MessageCircle } from 'lucide-react';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ConversationList.css';
+import { USER_ROLES } from '../../constants/roles';
 
 const API_ENDPOINT = '/api/v1/consultation-messages';
 const SEARCH_PLACEHOLDER = '대화 검색';
@@ -39,7 +40,7 @@ const formatRelativeTime = (dateString) => {
 
 const ConversationList = ({
   currentUserId,
-  currentUserRole = 'CLIENT',
+  currentUserRole = USER_ROLES.CLIENT,
   themeVariant = 'client',
   onSelectConversation,
 }) => {
@@ -60,7 +61,7 @@ const ConversationList = ({
     if (!currentUserId) return;
     try {
       setLoading(true);
-      const userType = currentUserRole === 'CONSULTANT' ? 'consultant' : 'client';
+      const userType = currentUserRole === USER_ROLES.CONSULTANT ? 'consultant' : 'client';
       const response = await TenantAwareApiClient.get(
         `${API_ENDPOINT}/${userType}/${currentUserId}`,
         { page: 0, size: 100, sort: 'createdAt,desc' }

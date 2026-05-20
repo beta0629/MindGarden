@@ -23,7 +23,7 @@ import PsychAiReportModalContent from './psych-assessment/organisms/PsychAiRepor
 import UnifiedModal from '../common/modals/UnifiedModal';
 import ComingSoon from '../common/ComingSoon';
 import { useSession } from '../../contexts/SessionContext';
-import { RoleUtils, USER_ROLES } from '../../constants/roles';
+import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import notificationManager from '../../utils/notification';
 import StandardizedApi from '../../utils/standardizedApi';
 import { toErrorMessage } from '../../utils/safeDisplay';
@@ -42,7 +42,7 @@ const CLIENTS_WITH_MAPPING_URL = '/api/v1/admin/clients/with-mapping-info';
 /** 심리검사 AI: 테넌트 관리(ADMIN)·본사 마스터·사무원(STAFF) — 백엔드는 isAuthenticated만 요구 */
 const canAccessPsychAssessmentAdmin = (u) =>
   RoleUtils.isAdmin(u) ||
-  RoleUtils.hasRole(u, 'HQ_MASTER') ||
+  RoleUtils.hasRole(u, LEGACY_USER_ROLES.HQ_MASTER) ||
   RoleUtils.hasRole(u, USER_ROLES.STAFF);
 
 const PsychAssessmentManagement = ({ user: propUser }) => {

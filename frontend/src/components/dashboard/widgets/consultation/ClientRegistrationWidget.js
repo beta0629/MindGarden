@@ -16,7 +16,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import BaseWidget from '../BaseWidget';
-import { RoleUtils } from '../../../../constants/roles';
+import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../../../constants/roles';
 import { useNotification } from '../../../../contexts/NotificationContext';
 import { validateEmail, validatePhone } from '../../../../utils/validationUtils';
 import { VALIDATION_MESSAGES } from '../../../../constants/messages';
@@ -56,7 +56,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
   const [submitError, setSubmitError] = useState(null);
 
   // 관리자/상담사만 사용 가능
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, LEGACY_USER_ROLES.HQ_MASTER)) {
     return null;
   }
 
@@ -202,7 +202,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
       password: formData.password,
       name: formData.name?.trim(),
       phone: phoneTrim,
-      role: 'CLIENT',
+      role: USER_ROLES.CLIENT,
       ...(formData.rrnFirst6?.trim() && { rrnFirst6: formData.rrnFirst6.trim() }),
       ...(formData.rrnLast1?.trim() && { rrnLast1: formData.rrnLast1.trim() }),
       ...(formData.age && { age: parseInt(formData.age) }),

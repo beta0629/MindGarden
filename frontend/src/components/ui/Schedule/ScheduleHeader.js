@@ -10,6 +10,7 @@ import { Calendar, RefreshCw } from 'lucide-react';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import { USER_ROLES, LEGACY_USER_ROLES } from '../../../constants/roles';
 
 const ScheduleHeader = ({
   userRole,
@@ -33,7 +34,7 @@ const ScheduleHeader = ({
         </div>
       )}
       <div className="mg-v2-schedule-header__actions">
-        {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
+        {(userRole === USER_ROLES.ADMIN || userRole === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN) && (
           <select
             value={selectedConsultantId}
             onChange={onConsultantChange}

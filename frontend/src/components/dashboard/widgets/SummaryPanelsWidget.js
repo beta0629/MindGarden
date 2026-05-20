@@ -49,13 +49,13 @@ const SummaryPanelsWidget = ({ widget, user }) => {
       return {
         ...baseConfig,
         url: API_SCHEDULES,
-        params: { ...baseConfig.params, userRole: 'CONSULTANT' }
+        params: { ...baseConfig.params, userRole: USER_ROLES.CONSULTANT }
       };
     } else if (RoleUtils.isAdmin(user) || RoleUtils.isAdmin(user)) {
       return {
         ...baseConfig,
         url: API_SCHEDULES_ADMIN_STATISTICS,
-        params: { ...baseConfig.params, userRole: 'ADMIN' }
+        params: { ...baseConfig.params, userRole: USER_ROLES.ADMIN }
       };
     }
     

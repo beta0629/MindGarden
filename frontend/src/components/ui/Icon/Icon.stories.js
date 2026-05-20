@@ -5,6 +5,7 @@
 
 import Icon from './Icon';
 import { ICONS } from '../../../constants/icons';
+import { USER_ROLES } from '../../../constants/roles';
 
 export default { title: 'UI Components/Icon',
   component: Icon,
@@ -19,7 +20,7 @@ export default { title: 'UI Components/Icon',
       options: ['PRIMARY', 'SECONDARY', 'SUCCESS', 'WARNING', 'ERROR', 'INFO', 'MUTED', 'TRANSPARENT'],
       description: '아이콘 색상' },
     userRole: { control: 'select',
-      options: ['CLIENT', 'CONSULTANT', 'ADMIN'],
+      options: [USER_ROLES.CLIENT, USER_ROLES.CONSULTANT, USER_ROLES.ADMIN],
       description: '사용자 역할 (테마 적용)' },
     variant: { control: 'select',
       options: ['default', 'outlined', 'filled', 'minimal'],

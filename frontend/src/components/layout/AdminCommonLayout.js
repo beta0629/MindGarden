@@ -28,6 +28,7 @@ import {
   mergeSupplementalAdminLnbItems,
   normalizeLnbTree
 } from '../../utils/lnbMenuUtils';
+import { USER_ROLES } from '../../constants/roles';
 
 const AdminCommonLayout = ({
   children,
@@ -55,7 +56,7 @@ const AdminCommonLayout = ({
   const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
   const userRole = user?.role;
 
-  const getDefaultMenu = () => (userRole === 'CONSULTANT' ? CONSULTANT_MENU_ITEMS : userRole === 'CLIENT' ? CLIENT_MENU_ITEMS : DEFAULT_MENU_ITEMS);
+  const getDefaultMenu = () => (userRole === USER_ROLES.CONSULTANT ? CONSULTANT_MENU_ITEMS : userRole === USER_ROLES.CLIENT ? CLIENT_MENU_ITEMS : DEFAULT_MENU_ITEMS);
 
   const [lnbMenuItems, setLnbMenuItems] = useState(null);
   const { adminShopCatalogEnabled, clientShopEnabled, clientRewardEnabled } = useTenantComponentFlags({
@@ -71,7 +72,7 @@ const AdminCommonLayout = ({
         const tree = getLnbTreeFromResponse(res);
         if (tree && tree.length > 0) {
           let normalized = mergeSupplementalAdminLnbItems(normalizeLnbTree(tree, { userRole }));
-          if (userRole === 'CLIENT') {
+          if (userRole === USER_ROLES.CLIENT) {
             normalized = mergeClientShopLnbItems(normalized, {
               clientShopEnabled,
               clientRewardEnabled
@@ -82,7 +83,7 @@ const AdminCommonLayout = ({
           setLnbMenuItems(normalized);
         } else {
           setLnbMenuItems(
-            userRole === 'CLIENT'
+            userRole === USER_ROLES.CLIENT
               ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
               : mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled })
           );
@@ -91,7 +92,7 @@ const AdminCommonLayout = ({
       .catch(() => {
         if (!cancelled) {
           setLnbMenuItems(
-            userRole === 'CLIENT'
+            userRole === USER_ROLES.CLIENT
               ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
               : mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled })
           );
@@ -102,7 +103,7 @@ const AdminCommonLayout = ({
 
   const menuItems = lnbMenuItems !== null
     ? lnbMenuItems
-    : (userRole === 'CLIENT'
+    : (userRole === USER_ROLES.CLIENT
       ? mergeClientShopLnbItems(getDefaultMenu(), { clientShopEnabled, clientRewardEnabled })
       : getDefaultMenu());
 

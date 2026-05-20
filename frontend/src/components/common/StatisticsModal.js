@@ -21,8 +21,9 @@ import UnifiedModal from './modals/UnifiedModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './StatisticsModal.css';
+import { USER_ROLES } from '../../constants/roles';
 
-const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
+const StatisticsModal = ({ isOpen, onClose, userRole = USER_ROLES.ADMIN }) => {
   const [statistics, setStatistics] = useState(null);
   const [todayStatistics, setTodayStatistics] = useState(null);
   const [loading, setLoading] = useState(false);

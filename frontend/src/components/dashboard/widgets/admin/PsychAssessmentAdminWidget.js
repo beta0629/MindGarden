@@ -10,7 +10,7 @@
 
 import React, { forwardRef, useImperativeHandle, useMemo, useState, useEffect } from 'react';
 import { useWidget } from '../../../../hooks/useWidget';
-import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
+import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../../../constants/roles';
 import notificationManager from '../../../../utils/notification';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import PsychKpiSection from '../../../admin/psych-assessment/organisms/PsychKpiSection';
@@ -46,7 +46,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
 
   const isAdminUser =
     RoleUtils.isAdmin(user) ||
-    RoleUtils.hasRole(user, 'HQ_MASTER') ||
+    RoleUtils.hasRole(user, LEGACY_USER_ROLES.HQ_MASTER) ||
     RoleUtils.hasRole(user, USER_ROLES.STAFF);
 
   const widgetWithDataSource = useMemo(() => {

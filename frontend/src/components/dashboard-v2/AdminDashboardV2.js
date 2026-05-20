@@ -20,7 +20,7 @@ import { useTenantComponentFlags } from '../../hooks/useTenantComponentFlags';
 import { useNavigate } from 'react-router-dom';
 import { AdminMgmtNavCard, AdminMgmtActionCard } from './molecules/AdminMgmtGridCard';
 import notificationManager from '../../utils/notification';
-import { RoleUtils } from '../../constants/roles';
+import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { FaCalendarAlt, FaCheckCircle, FaUsers } from 'react-icons/fa';
 import {
   Activity,
@@ -209,7 +209,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const { windowSize } = useResponsive();
   const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
 
-  const canManageClients = hasRole('ADMIN') || hasRole('STAFF');
+  const canManageClients = hasRole(USER_ROLES.ADMIN) || hasRole(USER_ROLES.STAFF);
 
   const { adminShopCatalogEnabled } = useTenantComponentFlags({
     enabled: Boolean(dashboardUser)
@@ -413,7 +413,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         email: urlParams.get('email') || '',
         name: decodeURIComponent(urlParams.get('name') || ''),
         nickname: decodeURIComponent(urlParams.get('nickname') || ''),
-        role: urlParams.get('role') || 'ADMIN',
+        role: urlParams.get('role') || USER_ROLES.ADMIN,
         profileImageUrl: decodeURIComponent(urlParams.get('profileImage') || ''),
         provider: urlParams.get('provider') || 'UNKNOWN'
       };
@@ -1979,7 +1979,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         className="mg-v2-ad-b0kla"
       >
         <StatisticsDashboard
-          userRole={(propUser || sessionUser)?.role || 'ADMIN'}
+          userRole={(propUser || sessionUser)?.role || USER_ROLES.ADMIN}
           userId={(propUser || sessionUser)?.id}
         />
       </UnifiedModal>

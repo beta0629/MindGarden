@@ -45,6 +45,7 @@ import {
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './TenantProfile.css';
+import { USER_ROLES } from '../../constants/roles';
 
 const TenantProfile = () => {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ const TenantProfile = () => {
 
   const tenantId = sessionInfo?.tenantId || user?.tenantId;
   const canRenameTenant = canEditTenantDisplayName(user);
-  const canOpenAdminNotificationSettings = hasAnyRole(['ADMIN', 'STAFF']);
+  const canOpenAdminNotificationSettings = hasAnyRole([USER_ROLES.ADMIN, USER_ROLES.STAFF]);
 
   useEffect(() => {
     if (sessionLoading) {

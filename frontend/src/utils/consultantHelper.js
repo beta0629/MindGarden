@@ -15,6 +15,10 @@
  */
 
 import { apiGet } from './ajax';
+import { API_ENDPOINTS } from '../constants/apiEndpoints';
+
+const CONSULTANTS_WITH_STATS = API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_STATS;
+const CLIENTS_WITH_STATS = API_ENDPOINTS.ADMIN.CLIENTS.WITH_STATS;
 
 /** CONSULTANT_GRADE 공통코드값 → 배지 level(BEM modifier) 매핑 */
 export const CONSULTANT_GRADE_TO_LEVEL = {
@@ -191,7 +195,7 @@ export const getConsultantGradeStyles = async() => {
  */
 export const getConsultantWithStats = async(consultantId) => {
     try {
-        const response = await apiGet(`/api/v1/admin/consultants/with-stats/${consultantId}`);
+        const response = await apiGet(`${CONSULTANTS_WITH_STATS}/${consultantId}`);
         if (response.success) {
             return response.data;
         }
@@ -257,7 +261,7 @@ export const getAllConsultantsWithStats = async() => {
         }
         
         // 표준화된 API 호출 사용
-        const response = await StandardizedApi.get('/api/v1/admin/consultants/with-stats');
+        const response = await StandardizedApi.get(CONSULTANTS_WITH_STATS);
         
         // 응답 구조: { success: true, data: { consultants: [...], count: N } }
         const consultantsList = response?.consultants || response?.data?.consultants || response?.data || [];
@@ -273,7 +277,7 @@ export const getAllConsultantsWithStats = async() => {
                 if (typeof window !== 'undefined' && window.sessionManager) {
                     await window.sessionManager.checkSession(true);
                     // 재시도
-                    const retryResponse = await StandardizedApi.get('/api/v1/admin/consultants/with-stats');
+                    const retryResponse = await StandardizedApi.get(CONSULTANTS_WITH_STATS);
                     const retryList = retryResponse?.consultants || retryResponse?.data?.consultants || retryResponse?.data || [];
                     console.log('✅ 재시도 성공, count:', retryList.length);
                     return Array.isArray(retryList) ? retryList : [];
@@ -372,7 +376,7 @@ export const transformConsultantData = (consultantRaw) => {
 export const getClientWithStats = async(clientId) => {
     try {
         // 표준화 2025-12-08: API 경로 수정 (/api/v1/admin)
-        const response = await apiGet(`/api/v1/admin/clients/with-stats/${clientId}`);
+        const response = await apiGet(`${CLIENTS_WITH_STATS}/${clientId}`);
         if (response.success) {
             return response.data;
         }
@@ -394,7 +398,7 @@ export const getClientWithStats = async(clientId) => {
 export const getAllClientsWithStats = async() => {
     try {
         // 표준화 2025-12-08: API 경로 수정 (/api/v1/admin)
-        const response = await apiGet('/api/v1/admin/clients/with-stats');
+        const response = await apiGet(CLIENTS_WITH_STATS);
         
         // apiGet이 ApiResponse의 data만 추출하므로, response는 { clients: [...], count: N } 형태
         if (response && (response.clients || Array.isArray(response))) {

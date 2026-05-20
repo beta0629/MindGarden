@@ -36,7 +36,7 @@ let oauth2Config = null;
 export const initializeOAuth2 = async() => {
   try {
     const config = await cachedApiCall(
-      '/api/v1/auth/config/oauth2',
+      AUTH_API.GET_OAUTH2_CONFIG,
       {},
       CACHE_CONFIG.OAUTH2_CONFIG.ttl
     );

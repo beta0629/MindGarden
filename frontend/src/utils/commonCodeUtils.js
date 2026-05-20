@@ -1,5 +1,6 @@
 import { apiGet } from './ajax';
 import { getCommonCodes as getCommonCodesStandard } from './commonCodeApi';
+import { COMMON_CODE_API } from '../constants/api';
 
 /**
  * 공통 코드 관련 유틸리티 함수들
@@ -37,7 +38,7 @@ export const getCommonCodes = async(groupCode, useCache = true) => {
         } catch (error) {
             console.warn('표준화된 API 조회 실패, v1 폴백 시도:', error);
             try {
-                const response = await apiGet('/api/v1/common-codes', { codeGroup: groupCode });
+                const response = await apiGet(COMMON_CODE_API.BASE, { codeGroup: groupCode });
                 if (response && Array.isArray(response.codes)) {
                     codes = response.codes;
                 } else if (Array.isArray(response)) {

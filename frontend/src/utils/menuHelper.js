@@ -14,6 +14,8 @@ import { apiGet } from './ajax';
  * @since 2025-09-14
  */
 
+const MENU_STRUCTURE_API = '/api/v1/menu/structure';
+
 // 메뉴 구조 캐시
 let menuStructureCache = null;
 let lastMenuCacheTime = 0;
@@ -33,8 +35,8 @@ export const loadMenuStructure = async() => {
     
     try {
         console.log('🔄 서버에서 메뉴 구조 로드 중...');
-        // 표준화 2025-12-08: API 경로 표준화 (/api/v1/menu/structure)
-        const response = await apiGet('/api/v1/menu/structure');
+        // 표준화 2025-12-08: API 경로 표준화 (MENU_STRUCTURE_API)
+        const response = await apiGet(MENU_STRUCTURE_API);
         
         // apiGet은 이미 ApiResponse의 data를 추출하여 반환하므로
         // response는 직접 메뉴 구조 데이터입니다

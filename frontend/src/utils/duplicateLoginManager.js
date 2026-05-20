@@ -13,6 +13,10 @@
  */
 
 import ajax from './ajax';
+
+const AUTH_CHECK_DUPLICATE_LOGIN = '/api/v1/auth/check-duplicate-login';
+const AUTH_SESSION_INFO = '/api/v1/auth/session-info';
+const AUTH_FORCE_LOGOUT = '/api/v1/auth/force-logout';
 import notificationManager from './notification';
 import { redirectToLoginPageOnce } from './sessionRedirect';
 
@@ -81,7 +85,7 @@ class DuplicateLoginManager {
 
             // ajax.get은 ApiResponse 래퍼에서 data를 추출해서 반환
             // 따라서 response는 { hasDuplicateLogin: boolean, message: string } 형태
-            const response = await ajax.get('/api/v1/auth/check-duplicate-login');
+            const response = await ajax.get(AUTH_CHECK_DUPLICATE_LOGIN);
             
             if (response && typeof response === 'object') {
                 if (response.hasDuplicateLogin === true) {
@@ -149,7 +153,7 @@ class DuplicateLoginManager {
      */
     async checkSessionStatus() {
         try {
-            const response = await ajax.get('/api/v1/auth/session-info');
+            const response = await ajax.get(AUTH_SESSION_INFO);
             return response;
         } catch (error) {
             console.error('세션 상태 확인 실패:', error);
@@ -162,7 +166,7 @@ class DuplicateLoginManager {
      */
     async forceLogoutUser(email) {
         try {
-            const response = await ajax.post('/api/v1/auth/force-logout', { email });
+            const response = await ajax.post(AUTH_FORCE_LOGOUT, { email });
             
             if (response.success) {
                 notificationManager.success(`${email} 사용자의 세션이 강제 종료되었습니다.`);

@@ -14,6 +14,7 @@
 
 import { apiGet } from './ajax';
 import { cachedApiCall, CACHE_CONFIG } from './apiCache';
+import { COMMON_CODE_API } from '../constants/api';
 
 class NotificationManager {
     constructor() {
@@ -29,7 +30,7 @@ class NotificationManager {
     async loadNotificationTypes() {
         try {
             const response = await cachedApiCall(
-                '/api/v1/common-codes?codeGroup=NOTIFICATION_TYPE',
+                `${COMMON_CODE_API.BASE}?codeGroup=NOTIFICATION_TYPE`,
                 {},
                 CACHE_CONFIG.COMMON_CODES.ttl
             );

@@ -1,4 +1,7 @@
 import { apiGet } from './ajax';
+import { COMMON_CODE_API } from '../constants/api';
+
+const COMMON_CODES_GROUPS_BASE = `${COMMON_CODE_API.BASE}/groups`;
 import {
   AVAILABILITY_AVAILABLE_LABEL,
   AVAILABILITY_BUSY_LABEL,
@@ -76,7 +79,7 @@ export const loadCodeGroupMetadata = async() => {
         try {
             groups = await getCodeGroups();
         } catch (error) {
-            const response = await apiGet('/api/v1/common-codes/groups/list');
+            const response = await apiGet(`${COMMON_CODES_GROUPS_BASE}/list`);
             groups = Array.isArray(response) ? response : [];
         }
         
@@ -109,7 +112,7 @@ export const getCodeGroupKoreanName = async(groupName) => {
         }
         
         // 표준화 2025-12-08: 올바른 API 경로 사용
-        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
+        const response = await apiGet(`/`);
         if (response && response.length > 0) {
             return response[0].koreanName || groupName;
         }
@@ -133,7 +136,7 @@ export const getCodeGroupIcon = async(groupName) => {
         }
         
         // 표준화 2025-12-08: 올바른 API 경로 사용
-        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
+        const response = await apiGet(`/`);
         if (response && response.length > 0) {
             return response[0].icon || 'ClipboardList';
         }
@@ -157,7 +160,7 @@ export const getCodeGroupColor = async(groupName) => {
         }
         
         // 표준화 2025-12-08: 올바른 API 경로 사용
-        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
+        const response = await apiGet(`/`);
         if (response && response.length > 0) {
             return response[0].colorCode || 'var(--mg-secondary-500)';
         }
@@ -208,7 +211,7 @@ export const getStatusIcon = async(codeValue, groupName = 'STATUS') => {
     }
 
     try {
-        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
+        const response = await apiGet(`/`);
         if (response && response.length > 0) {
             let code = response.find(c => c.codeValue === codeValue);
             if (!code && groupName === 'MAPPING_STATUS') {
@@ -269,7 +272,7 @@ export const getStatusStyle = async(codeValue, groupName = 'STATUS') => {
         return { color: 'var(--mg-color-text-secondary)', icon: 'ClipboardList' };
     }
     try {
-        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
+        const response = await apiGet(`/`);
         if (response && Array.isArray(response)) {
             const code = response.find(c => c.codeValue === codeValue);
             if (code) {
@@ -294,7 +297,7 @@ export const getStatusStyle = async(codeValue, groupName = 'STATUS') => {
 export const getStatusColor = async(codeValue, groupName) => {
     try {
         // 표준화 2025-12-08: 올바른 API 경로 사용
-        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
+        const response = await apiGet(`/`);
         if (response && response.length > 0) {
             let code = response.find(c => c.codeValue === codeValue);
             
@@ -373,7 +376,7 @@ export const getStatusColor = async(codeValue, groupName) => {
 export const getCodeGroupDisplayOptions = async(groupName) => {
     try {
         // 표준화 2025-12-08: 올바른 API 경로 사용
-        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
+        const response = await apiGet(`/`);
         if (response.success && response.data) {
             return response.data;
         }
@@ -424,7 +427,7 @@ export const getCodeGroupIconSync = (groupName) => {
 export const getUserStatusKoreanName = async(status) => {
     try {
         // 표준화 2025-12-08: 올바른 API 경로 사용
-        const response = await apiGet(`/api/v1/common-codes/groups/STATUS`);
+        const response = await apiGet(`${COMMON_CODES_GROUPS_BASE}/STATUS`);
         if (response.success && response.data && response.data.codes) {
             const code = response.data.codes.find(c => c.codeValue === status);
             if (code && code.codeLabel) {
@@ -503,7 +506,7 @@ export const getUserGradeIconSync = (grade) => {
 export const getMappingStatusKoreanName = async(status) => {
     try {
         // 표준화 2025-12-08: 올바른 API 경로 사용
-        const response = await apiGet(`/api/v1/common-codes/groups/MAPPING_STATUS`);
+        const response = await apiGet(`${COMMON_CODES_GROUPS_BASE}/MAPPING_STATUS`);
         if (response && response.length > 0) {
             let code = response.find(c => c.codeValue === status);
             
@@ -573,7 +576,7 @@ export const getSpecialtyKoreanNames = (codes) => {
 export const getSpecialtyFromCommonCode = async(codeValue) => {
     try {
         // 표준화 2025-12-08: 올바른 API 경로 사용
-        const response = await apiGet(`/api/v1/common-codes/groups/SPECIALTY`);
+        const response = await apiGet(`${COMMON_CODES_GROUPS_BASE}/SPECIALTY`);
         if (response && response.length > 0) {
             const code = response.find(c => c.codeValue === codeValue);
             if (code) {

@@ -6,6 +6,7 @@
 
 import { apiGet } from './ajax';
 import { RoleUtils } from '../constants/roles';
+import { PERMISSIONS_API } from '../constants/api';
 
 /**
  * 사용자의 권한 목록을 가져옵니다.
@@ -15,7 +16,7 @@ import { RoleUtils } from '../constants/roles';
 export const fetchUserPermissions = async(setUserPermissions = null) => {
     try {
         console.log('🔍 사용자 권한 목록 조회 중...');
-        const response = await apiGet('/api/v1/permissions/my-permissions');
+        const response = await apiGet(PERMISSIONS_API.MY_PERMISSIONS);
         
         // apiGet이 이미 ApiResponse 래퍼를 처리하므로, response는 직접 data입니다
         if (response && typeof response === 'object') {

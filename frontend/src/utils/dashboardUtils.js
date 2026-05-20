@@ -7,6 +7,8 @@
 import { apiGet } from './ajax';
 import { API_BASE_URL } from '../constants/api';
 
+const TENANT_DASHBOARDS_BASE = '/api/v1/tenant/dashboards';
+
 /**
  * 사용자의 역할에 맞는 대시보드 정보 조회
 /**
@@ -24,10 +26,10 @@ export const getCurrentUserDashboard = async(tenantId, tenantRoleId = null) => {
     
     if (tenantRoleId) {
       // 역할 ID가 있으면 역할별 대시보드 조회
-      endpoint = `/api/v1/tenant/dashboards/by-role/${tenantRoleId}`;
+      endpoint = `${TENANT_DASHBOARDS_BASE}/by-role/${tenantRoleId}`;
     } else {
       // 역할 ID가 없으면 현재 사용자 대시보드 조회
-      endpoint = `/api/v1/tenant/dashboards/current`;
+      endpoint = `${TENANT_DASHBOARDS_BASE}/current`;
     }
     
     const response = await apiGet(endpoint);

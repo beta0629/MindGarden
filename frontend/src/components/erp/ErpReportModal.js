@@ -13,6 +13,11 @@ import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import './ErpCommon.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_BRANCHES = '/api/v1/branches';
+const API_ERP_REPORTS = '/api/v1/erp/reports';
+
+
 /**
  * ERP 보고서 모달 컴포넌트
 /**
@@ -52,7 +57,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
     const loadBranches = async() => {
         try {
             setLoadingBranches(true);
-            const raw = await StandardizedApi.get('/api/v1/branches');
+            const raw = await StandardizedApi.get(API_BRANCHES);
             const list = Array.isArray(raw) ? raw : (raw?.data ?? []);
             setBranches(Array.isArray(list) ? list : []);
         } catch (error) {
@@ -74,7 +79,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
         try {
             setLoading(true);
             
-            const response = await StandardizedApi.get('/api/v1/erp/reports', {
+            const response = await StandardizedApi.get(API_ERP_REPORTS, {
                 type: reportType,
                 period: period,
                 // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거

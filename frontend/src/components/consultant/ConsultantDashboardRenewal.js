@@ -19,10 +19,15 @@ import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ConsultantDashboardRenewal.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_CONSULTANTS = '/api/v1/consultants';
+const API_SCHEDULES = '/api/v1/schedules';
+
+
 const API_ENDPOINTS = {
-  DASHBOARD: '/api/v1/consultants',
-  SCHEDULES: '/api/v1/schedules',
-  RECORDS: '/api/v1/consultants',
+  DASHBOARD: API_CONSULTANTS,
+  SCHEDULES: API_SCHEDULES,
+  RECORDS: API_CONSULTANTS,
 };
 
 const SCHEDULE_STATUS = {

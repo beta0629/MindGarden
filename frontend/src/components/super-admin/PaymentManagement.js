@@ -12,6 +12,11 @@ import { apiGet } from '../../utils/ajax';
 import './PaymentManagement.css';
 import notificationManager from '../../utils/notification';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=PAYMENT_STATUS';
+const API_COMMON_CODES_GROUPS_PAYMENT_METHOD = '/api/v1/common-codes/groups/PAYMENT_METHOD';
+
+
 /**
  * 수퍼어드민 결제 관리 컴포넌트
 /**
@@ -68,7 +73,7 @@ const PaymentManagement = () => {
     const loadPaymentStatusCodes = async() => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/v1/common-codes?codeGroup=PAYMENT_STATUS');
+        const response = await apiGet(API_COMMON_CODES);
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,
@@ -106,7 +111,7 @@ const PaymentManagement = () => {
     try {
       setLoadingGatewayCodes(true);
       // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
-      const response = await apiGet('/api/v1/common-codes/groups/PAYMENT_METHOD');
+      const response = await apiGet(API_COMMON_CODES_GROUPS_PAYMENT_METHOD);
       if (response && response.length > 0) {
         setPaymentGatewayOptions(response.map(code => ({
           value: code.codeValue,
@@ -138,7 +143,7 @@ const PaymentManagement = () => {
     try {
       setLoadingMethodCodes(true);
       // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
-      const response = await apiGet('/api/v1/common-codes/groups/PAYMENT_METHOD');
+      const response = await apiGet(API_COMMON_CODES_GROUPS_PAYMENT_METHOD);
       if (response && response.length > 0) {
         setPaymentMethodOptions(response.map(code => ({
           value: code.codeValue,

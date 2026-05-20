@@ -29,6 +29,11 @@ import {
   OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT
 } from '../../constants/loginDisplay';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_AUTH_TENANT_CHECK_MULTI = '/api/v1/auth/tenant/check-multi';
+const API_AUTH_TENANT_ACCESSIBLE = '/api/v1/auth/tenant/accessible';
+
+
 /** OAuth2 리다이렉트 error 쿼리 표시 상한 (민감·과다 노출 완화) */
 const OAUTH2_ERROR_QUERY_DISPLAY_MAX_LEN = 200;
 
@@ -386,7 +391,7 @@ const OAuth2Callback = () => {
                 : { unwrapApiEnvelope: false };
 
             const checkRaw = await StandardizedApi.get(
-              '/api/v1/auth/tenant/check-multi',
+              API_AUTH_TENANT_CHECK_MULTI,
               {},
               tenantApiOptions
             );
@@ -404,7 +409,7 @@ const OAuth2Callback = () => {
 
             if (checkOk && multiData.isMultiTenant) {
               const tenantsRaw = await StandardizedApi.get(
-                '/api/v1/auth/tenant/accessible',
+                API_AUTH_TENANT_ACCESSIBLE,
                 {},
                 tenantApiOptions
               );

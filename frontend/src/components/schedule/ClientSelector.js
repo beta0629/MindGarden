@@ -5,6 +5,10 @@ import notificationManager from '../../utils/notification';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import '../../styles/main.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SCHEDULES_CLIENT_MAPPING_CHECK = '/api/v1/schedules/client/mapping/check';
+
+
 /**
  * 내담자 선택 컴포넌트
 /**
@@ -221,7 +225,7 @@ const ClientSelector = ({
      */
     const getClientMappingInfo = async(client) => {
         const API_ENDPOINTS = {
-            CHECK_MAPPING: '/api/v1/schedules/client/mapping/check'
+            CHECK_MAPPING: API_SCHEDULES_CLIENT_MAPPING_CHECK
         };
         const MESSAGES = {
             NO_MAPPING: '매핑이 설정되지 않은 내담자입니다.',

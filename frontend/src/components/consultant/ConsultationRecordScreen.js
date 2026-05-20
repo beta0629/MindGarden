@@ -12,6 +12,12 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from '../common/MGButton';
 import PsychClientContextSummaryBlock from '../psych-context/organisms/PsychClientContextSummaryBlock';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=PRIORITY';
+const API_COMMON_CODES_2 = '/api/v1/common-codes?codeGroup=COMPLETION_STATUS';
+const API_SCHEDULES = '/api/v1/schedules?userId=0&userRole=ADMIN';
+
+
 /**
  * 상담일지 작성 화면
 /**
@@ -38,7 +44,7 @@ const ConsultationRecordScreen = () => {
   const loadPriorityCodes = useCallback(async() => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/v1/common-codes?codeGroup=PRIORITY');
+      const response = await apiGet(API_COMMON_CODES);
       if (response && response.length > 0) {
         const options = response.map(code => ({
           value: code.codeValue,
@@ -306,7 +312,7 @@ const ConsultationRecordScreen = () => {
   const loadCompletionStatusCodes = useCallback(async() => {
     try {
       setLoadingCompletionCodes(true);
-      const response = await apiGet('/api/v1/common-codes?codeGroup=COMPLETION_STATUS');
+      const response = await apiGet(API_COMMON_CODES_2);
       if (response && response.length > 0) {
         setCompletionStatusOptions(response.map(code => ({
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -338,7 +344,7 @@ const ConsultationRecordScreen = () => {
     try {
       setLoading(true);
       
-      const scheduleResponse = await apiGet(`/api/v1/schedules?userId=0&userRole=ADMIN`);
+      const scheduleResponse = await apiGet(API_SCHEDULES);
       if (scheduleResponse.success && scheduleResponse.data.length > 0) {
         const scheduleData = scheduleResponse.data[0];
         const consultationData = {

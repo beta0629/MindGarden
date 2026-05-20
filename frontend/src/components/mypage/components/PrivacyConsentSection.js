@@ -8,6 +8,11 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_PRIVACY_CONSENT_STATUS = '/api/v1/privacy-consent/status';
+const API_PRIVACY_CONSENT_UPDATE = '/api/v1/privacy-consent/update';
+
+
 const TERMS_PLACEHOLDER =
   '약관 전문은 관리자 설정에 따라 제공됩니다. 자세한 내용은 고객센터로 문의해 주세요.';
 
@@ -30,7 +35,7 @@ const PrivacyConsentSection = () => {
   const loadConsentStatus = useCallback(async() => {
     try {
       setLoading(true);
-      const result = await StandardizedApi.get('/api/v1/privacy-consent/status');
+      const result = await StandardizedApi.get(API_PRIVACY_CONSENT_STATUS);
       if (result?.success && result.data) {
         setConsentStatus(result.data);
       } else if (result && typeof result === 'object' && 'privacyConsent' in result) {
@@ -46,7 +51,7 @@ const PrivacyConsentSection = () => {
   const updateConsentStatus = async(consentData) => {
     try {
       setUpdating(true);
-      const result = await StandardizedApi.post('/api/v1/privacy-consent/update', consentData);
+      const result = await StandardizedApi.post(API_PRIVACY_CONSENT_UPDATE, consentData);
       if (result && result.success !== false) {
         await loadConsentStatus();
         notificationManager.show('개인정보 동의 상태가 업데이트되었습니다.', 'info');

@@ -8,6 +8,12 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ACCOUNT_INTEGRATION_SEND_VERIFICATION_CODE = '/api/v1/account-integration/send-verification-code';
+const API_ACCOUNT_INTEGRATION_VERIFY_CODE = '/api/v1/account-integration/verify-code';
+const API_ACCOUNT_INTEGRATION_INTEGRATE = '/api/v1/account-integration/integrate';
+
+
 /**
  * 계정 통합 모달 컴포넌트
 /**
@@ -68,7 +74,7 @@ const AccountIntegrationModal = ({
 
         setIsLoading(true);
         try {
-            const response = await apiPost('/api/v1/account-integration/send-verification-code', null, {
+            const response = await apiPost(API_ACCOUNT_INTEGRATION_SEND_VERIFICATION_CODE, null, {
                 email: formData.existingEmail
             });
 
@@ -96,7 +102,7 @@ const AccountIntegrationModal = ({
 
         setIsLoading(true);
         try {
-            const response = await apiPost('/api/v1/account-integration/verify-code', null, {
+            const response = await apiPost(API_ACCOUNT_INTEGRATION_VERIFY_CODE, null, {
                 email: formData.existingEmail,
                 code: formData.verificationCode
             });
@@ -135,7 +141,7 @@ const AccountIntegrationModal = ({
                 finalNickname: formData.finalNickname
             };
 
-            const response = await apiPost('/api/v1/account-integration/integrate', requestData);
+            const response = await apiPost(API_ACCOUNT_INTEGRATION_INTEGRATE, requestData);
 
             if (response.success) {
                 notificationManager.showToast('계정 통합이 완료되었습니다!', 'success');

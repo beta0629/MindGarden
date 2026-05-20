@@ -22,6 +22,11 @@ import { PrivacyPolicyContent } from '../common/PrivacyPolicy';
 import '../common/PrivacyPolicy.css';
 import './AuthPageCommon.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_AUTH_CONFIG_OAUTH2 = '/api/v1/auth/config/oauth2';
+const API_AUTH_REGISTER = '/api/v1/auth/register';
+
+
 /** 주민번호 7번째 자리로 성별 코드 반환 (1,3: 남성 / 2,4: 여성 / 그 외: 기타) */
 const GENDER_FROM_RRN = {
   '1': 'MALE',
@@ -72,7 +77,7 @@ const TabletRegister = () => {
 
   const getOAuth2Config = async() => {
     try {
-      const response = await fetch('/api/v1/auth/config/oauth2');
+      const response = await fetch(API_AUTH_CONFIG_OAUTH2);
       if (response.ok) {
         // OAuth2 설정 사용 시 활용
       }
@@ -319,7 +324,7 @@ const TabletRegister = () => {
       };
       const subdomain = getTenantSubdomainFromHost();
       const registerOptions = subdomain ? { headers: { 'X-Tenant-Subdomain': subdomain } } : {};
-      const response = await csrfTokenManager.post('/api/v1/auth/register', payload, registerOptions);
+      const response = await csrfTokenManager.post(API_AUTH_REGISTER, payload, registerOptions);
 
       if (response.ok) {
         await response.json();

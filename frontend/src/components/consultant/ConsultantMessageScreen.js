@@ -12,6 +12,10 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_CONSULTATION_MESSAGES = '/api/v1/consultation-messages';
+
+
 /**
  * 상담사 메시지 전송 화면
 /**
@@ -392,7 +396,7 @@ const ConsultantMessageScreen = () => {
         isUrgent: messageData.isUrgent
       };
 
-      const response = await apiPost('/api/v1/consultation-messages', messagePayload);
+      const response = await apiPost(API_CONSULTATION_MESSAGES, messagePayload);
 
       if (response.success) {
         notificationManager.show('메시지가 전송되었습니다.', 'success');

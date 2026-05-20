@@ -18,6 +18,11 @@ import { useToast } from '../../contexts/ToastContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ClientBookingRenewal.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_CONSULTANTS = '/api/v1/consultants';
+const API_CONSULTATIONS = '/api/v1/consultations';
+
+
 const STEP_LABELS = ['상담사 선택', '시간 선택', '결제 확인', '완료'];
 const SPECIALTY_FILTERS = ['전체', '우울', '불안', '대인관계', '자존감', '스트레스', '진로'];
 const SORT_OPTIONS = [
@@ -68,7 +73,7 @@ const ClientBookingRenewal = () => {
   const loadConsultants = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await TenantAwareApiClient.get('/api/v1/consultants', { status: 'ACTIVE' });
+      const res = await TenantAwareApiClient.get(API_CONSULTANTS, { status: 'ACTIVE' });
       const data = Array.isArray(res) ? res : res?.data || res?.content || [];
       setConsultants(data);
     } catch (err) {
@@ -128,7 +133,7 @@ const ClientBookingRenewal = () => {
     try {
       setSubmitting(true);
       const cId = selectedConsultant?.id || selectedConsultant?.consultantId;
-      await TenantAwareApiClient.post('/api/v1/consultations', {
+      await TenantAwareApiClient.post(API_CONSULTATIONS, {
         consultantId: cId,
         date: selectedDate,
         startTime: selectedTime,

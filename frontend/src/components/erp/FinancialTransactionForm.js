@@ -34,6 +34,10 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/
 import './FinancialTransactionForm.css';
 import './FinancialManagement.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ERP_COMMON_CODES_FINANCIAL = '/api/v1/erp/common-codes/financial';
+
+
 /**
  * 수입/지출 거래 등록·수정 폼 컴포넌트 (공통 코드 사용)
  *
@@ -99,7 +103,7 @@ const FinancialTransactionForm = ({
   const loadCommonCodes = async() => {
     try {
       setLoadingCodes(true);
-      const response = await csrfTokenManager.get('/api/v1/erp/common-codes/financial');
+      const response = await csrfTokenManager.get(API_ERP_COMMON_CODES_FINANCIAL);
       const body = await response.json().catch(() => ({}));
 
       if (response.ok && body.success) {

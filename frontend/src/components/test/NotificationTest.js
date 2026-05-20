@@ -4,6 +4,10 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import notificationManager from '../../utils/notification';
 import './NotificationTest.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=NOTIFICATION_TYPE';
+
+
 /**
  * 알림 시스템 테스트 페이지
 /**
@@ -26,7 +30,7 @@ const NotificationTest = () => {
     const loadNotificationTypeCodes = useCallback(async() => {
         try {
             setLoadingCodes(true);
-            const response = await fetch('/api/v1/common-codes?codeGroup=NOTIFICATION_TYPE');
+            const response = await fetch(API_COMMON_CODES);
             if (response.ok) {
                 const data = await response.json();
                 if (data && data.length > 0) {

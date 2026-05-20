@@ -17,6 +17,10 @@ import {
 import { getTenantSubdomainFromHost } from '../../utils/subdomainUtils';
 import './PrivacyConsentModal.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_AUTH_TENANT_BY_SUBDOMAIN = '/api/v1/auth/tenant/by-subdomain';
+
+
 /**
  * 개인정보 수집 및 이용 동의 모달 컴포넌트
  *
@@ -65,7 +69,7 @@ const PrivacyConsentModal = ({
     let cancelled = false;
     (async() => {
       try {
-        const tenantData = await StandardizedApi.get('/api/v1/auth/tenant/by-subdomain', { subdomain });
+        const tenantData = await StandardizedApi.get(API_AUTH_TENANT_BY_SUBDOMAIN, { subdomain });
         if (cancelled) {
           return;
         }

@@ -30,6 +30,12 @@ import {
 import './ScheduleCalendar.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=STATUS';
+const API_SCHEDULES_ADMIN = '/api/v1/schedules/admin';
+const API_CONSULTANTS_AVAILABILITY_VACATIONS = '/api/v1/consultants/availability/vacations';
+
+
 /**
  * FullCalendar 기반 스케줄 관리 컴포넌트 (리팩토링됨)
  * 
@@ -75,7 +81,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const loadScheduleStatusCodes = useCallback(async() => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/v1/common-codes?codeGroup=STATUS');
+            const response = await apiGet(API_COMMON_CODES);
             console.log('📋 스케줄 상태 코드 응답:', response);
             
             if (response && Array.isArray(response) && response.length > 0) {
@@ -187,7 +193,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             let url = `/api/v1/schedules?userId=${currentUserId}&userRole=${currentUserRole}`;
             
             if (currentUserRole === 'ADMIN') {
-                url = '/api/v1/schedules/admin';
+                url = API_SCHEDULES_ADMIN;
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
                     console.log('🔍 상담사 필터링 적용:', selectedConsultantId);
@@ -253,7 +259,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
                     const endDate = new Date(today.getFullYear(), today.getMonth() + 2, 0).toISOString().split('T')[0];
                     
-                    const vacationResponse = await fetch(`/api/v1/consultants/availability/vacations`, {
+                    const vacationResponse = await fetch(API_CONSULTANTS_AVAILABILITY_VACATIONS, {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include'

@@ -34,6 +34,15 @@ import { ErpFilterToolbar, useErpSilentRefresh } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ERP_ITEMS = '/api/v1/erp/items';
+const API_ERP_PURCHASE_REQUESTS_PENDING_ADMIN = '/api/v1/erp/purchase-requests/pending-admin';
+const API_ERP_PURCHASE_ORDERS = '/api/v1/erp/purchase-orders';
+const API_ERP_BUDGETS = '/api/v1/erp/budgets';
+const API_ERP_ACCOUNTING_INIT_TENANT_ERP = '/api/v1/erp/accounting/init-tenant-erp';
+const API_ERP_ACCOUNTING_BACKFILL_JOURNAL_ENTRIES = '/api/v1/erp/accounting/backfill-journal-entries';
+
+
 const ERP_DASHBOARD_PAGE_TITLE_ID = 'erp-dashboard-page-title';
 
 const isDevEnv = process.env.NODE_ENV === 'development';
@@ -150,10 +159,10 @@ const ErpDashboard = ({ user: propUser }) => {
     }
     try {
       const results = await Promise.allSettled([
-        StandardizedApi.get('/api/v1/erp/items'),
-        StandardizedApi.get('/api/v1/erp/purchase-requests/pending-admin'),
-        StandardizedApi.get('/api/v1/erp/purchase-orders'),
-        StandardizedApi.get('/api/v1/erp/budgets')
+        StandardizedApi.get(API_ERP_ITEMS),
+        StandardizedApi.get(API_ERP_PURCHASE_REQUESTS_PENDING_ADMIN),
+        StandardizedApi.get(API_ERP_PURCHASE_ORDERS),
+        StandardizedApi.get(API_ERP_BUDGETS)
       ]);
 
       const toListAndCount = (value) => {
@@ -345,7 +354,7 @@ const ErpDashboard = ({ user: propUser }) => {
     setInitResult(null);
     setInitLoading(true);
     try {
-      const json = await StandardizedApi.post('/api/v1/erp/accounting/init-tenant-erp', {});
+      const json = await StandardizedApi.post(API_ERP_ACCOUNTING_INIT_TENANT_ERP, {});
       const data = json?.data ?? json;
       const ok = json?.success !== false;
       setInitResult(
@@ -364,7 +373,7 @@ const ErpDashboard = ({ user: propUser }) => {
     setBackfillResult(null);
     setBackfillLoading(true);
     try {
-      const json = await StandardizedApi.post('/api/v1/erp/accounting/backfill-journal-entries', {});
+      const json = await StandardizedApi.post(API_ERP_ACCOUNTING_BACKFILL_JOURNAL_ENTRIES, {});
       const data = json?.data ?? json;
       const ok = json?.success !== false;
       const processed = data?.processedCount ?? 0;

@@ -18,6 +18,11 @@ import { CLIENT_SHOP_ROUTES } from '../../constants/clientShopConstants';
 import { useTenantComponentFlags } from '../../hooks/useTenantComponentFlags';
 import './ClientSessionPaymentRenewal.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_PAYMENTS = '/api/v1/payments';
+const API_ADMIN_SESSION_EXTENSIONS = '/api/v1/admin/session-extensions';
+
+
 const TABS = [
   { key: 'payments', label: '결제 내역' },
   { key: 'extend', label: '회기 연장' },
@@ -81,8 +86,8 @@ const ClientSessionPaymentRenewal = () => {
     try {
       setLoading(true);
       const [paymentsRes, sessionsRes] = await Promise.all([
-        TenantAwareApiClient.get('/api/v1/payments', { clientId }).catch(() => []),
-        TenantAwareApiClient.get('/api/v1/admin/session-extensions', { clientId }).catch(() => null),
+        TenantAwareApiClient.get(API_PAYMENTS, { clientId }).catch(() => []),
+        TenantAwareApiClient.get(API_ADMIN_SESSION_EXTENSIONS, { clientId }).catch(() => null),
       ]);
 
       const paymentList = Array.isArray(paymentsRes) ? paymentsRes : (paymentsRes?.data || []);
@@ -115,7 +120,7 @@ const ClientSessionPaymentRenewal = () => {
   const handleExtend = async () => {
     if (!selectedPackage || !clientId) return;
     try {
-      await TenantAwareApiClient.post('/api/v1/admin/session-extensions', {
+      await TenantAwareApiClient.post(API_ADMIN_SESSION_EXTENSIONS, {
         clientId,
         packageId: selectedPackage,
         sessionCount: PACKAGES.find((p) => p.id === selectedPackage)?.sessions,

@@ -9,6 +9,11 @@ import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=MESSAGE_TYPE';
+const API_CONSULTATION_MESSAGES = '/api/v1/consultation-messages';
+
+
 /**
  * 내담자 메시지 전송 모달 컴포넌트
 /**
@@ -39,7 +44,7 @@ const MessageSendModal = ({
     const loadMessageTypeCodes = async() => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/v1/common-codes?codeGroup=MESSAGE_TYPE');
+        const response = await apiGet(API_COMMON_CODES);
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,
@@ -137,7 +142,7 @@ const MessageSendModal = ({
         isUrgent: formData.isUrgent
       };
 
-      const response = await apiPost('/api/v1/consultation-messages', messageData);
+      const response = await apiPost(API_CONSULTATION_MESSAGES, messageData);
 
       if (response.success) {
         notificationManager.show('메시지가 성공적으로 전송되었습니다.', 'success');

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=PACKAGE';
+
+
 /**
  * 공통 패키지 선택 컴포넌트
 /**
@@ -42,7 +46,7 @@ const PackageSelector = ({
                 data = codes || [];
             } catch (error) {
                 // 하위 호환성: 기존 API 사용
-                const response = await apiGet('/api/v1/common-codes?codeGroup=PACKAGE');
+                const response = await apiGet(API_COMMON_CODES);
                 data = response?.data || response || [];
             }
             

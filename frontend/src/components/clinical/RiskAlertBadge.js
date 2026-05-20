@@ -5,6 +5,10 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './RiskAlertBadge.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_CONSULTATION_RECORD_ALERTS_HIGH_RISK = '/api/v1/consultation-record-alerts/high-risk';
+
+
 /**
  * 위험 알림 배지 컴포넌트
  * 실시간으로 AI가 감지한 위험 징후 알림 표시
@@ -38,7 +42,7 @@ const RiskAlertBadge = ({ tenantId }) => {
 
         try {
             // 고위험 알림만 조회 (AI_DETECTED)
-            const data = await apiGet('/api/v1/consultation-record-alerts/high-risk');
+            const data = await apiGet(API_CONSULTATION_RECORD_ALERTS_HIGH_RISK);
 
             if (!data) {
                 throw new Error('알림 로드 실패');

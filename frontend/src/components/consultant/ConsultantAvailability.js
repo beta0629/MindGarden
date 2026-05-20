@@ -16,6 +16,10 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantAvailability.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES_GROUPS_DURATION = '/api/v1/common-codes/groups/DURATION';
+
+
 const CONSULTANT_AVAILABILITY_TITLE_ID = 'consultant-availability-page-title';
 const CONSULTANT_AVAILABILITY_FORM_ID = 'consultant-availability-slot-form';
 
@@ -34,7 +38,7 @@ const ConsultantAvailability = () => {
   const loadDurationCodes = useCallback(async() => {
     try {
       setLoadingCodes(true);
-      const response = await StandardizedApi.get('/api/v1/common-codes/groups/DURATION');
+      const response = await StandardizedApi.get(API_COMMON_CODES_GROUPS_DURATION);
       const data = response?.data || response;
       if (data && data.length > 0) {
         setDurationOptions(data.map(code => ({

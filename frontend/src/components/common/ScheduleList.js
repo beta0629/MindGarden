@@ -31,6 +31,13 @@ import MGButton from './MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './ScheduleList.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=SCHEDULE_FILTER';
+const API_COMMON_CODES_2 = '/api/v1/common-codes?codeGroup=SCHEDULE_SORT';
+const API_ADMIN_CONSULTANTS = '/api/v1/admin/consultants';
+const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
+
+
 const ScheduleList = ({ 
   userRole = 'ADMIN',
   userId = null, // 기본값 제거, 호출하는 컴포넌트에서 전달해야 함
@@ -62,7 +69,7 @@ const ScheduleList = ({
   const loadFilterOptions = useCallback(async() => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/v1/common-codes?codeGroup=SCHEDULE_FILTER');
+      const response = await apiGet(API_COMMON_CODES);
       if (response && response.length > 0) {
         setFilterOptions(response.map(code => ({
           value: code.codeValue,
@@ -91,7 +98,7 @@ const ScheduleList = ({
   const loadSortOptions = useCallback(async() => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/v1/common-codes?codeGroup=SCHEDULE_SORT');
+      const response = await apiGet(API_COMMON_CODES_2);
       if (response && response.length > 0) {
         setSortOptions(response.map(code => ({
           value: code.codeValue,
@@ -119,7 +126,7 @@ const ScheduleList = ({
   const loadConsultants = useCallback(async() => {
     try {
       setLoadingConsultants(true);
-      const response = await apiGet('/api/v1/admin/consultants');
+      const response = await apiGet(API_ADMIN_CONSULTANTS);
       
       if (response && response.success) {
         setConsultants(response.data || []);
@@ -146,7 +153,7 @@ const ScheduleList = ({
       };
       
       if (userRole === 'ADMIN' || userRole === 'STAFF') {
-        url = '/api/v1/admin/schedules';
+        url = API_ADMIN_SCHEDULES;
         params = {};
         
         if (selectedConsultantId) {

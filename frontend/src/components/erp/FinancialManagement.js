@@ -108,6 +108,10 @@ import '../admin/mapping-management/organisms/MappingListBlock.css';
 import './ErpCommon.css';
 import './FinancialManagement.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_FINANCIAL_TRANSACTIONS = '/api/v1/admin/financial-transactions';
+
+
 /** 거래 내역 보기: 일반 카드 / 콤팩트 카드 / 테이블 */
 const TRANSACTION_VIEW_MODE_OPTIONS = FM_TRANSACTION_VIEW_MODE_OPTIONS;
 
@@ -680,7 +684,7 @@ const FinancialManagement = () => {
       if (filters.category !== 'ALL') params.category = filters.category;
 
       const envelope = await StandardizedApi.get(
-        '/api/v1/admin/financial-transactions',
+        API_ADMIN_FINANCIAL_TRANSACTIONS,
         params,
         { unwrapApiEnvelope: false }
       );

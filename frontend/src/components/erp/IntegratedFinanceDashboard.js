@@ -78,6 +78,10 @@ import {
   INTEGRATED_FINANCE_TAB_ITEMS
 } from '../../constants/integratedFinanceDashboardStrings';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ACCOUNTS_ACTIVE = '/api/v1/accounts/active';
+
+
 const INTEGRATED_FINANCE_TITLE_ID = 'integrated-finance-title';
 
 const integratedFinanceTabLabel = (key) =>
@@ -2123,7 +2127,7 @@ const LedgersTab = () => {
   useEffect(() => {
     const loadAccounts = async() => {
       try {
-        const res = await StandardizedApi.get('/api/v1/accounts/active');
+        const res = await StandardizedApi.get(API_ACCOUNTS_ACTIVE);
         const list = Array.isArray(res) ? res : (res?.data ?? []);
         setAccountList(Array.isArray(list) ? list : []);
       } catch (err) {

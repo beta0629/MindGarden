@@ -7,6 +7,10 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './VirtualClientSimulator.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_TRAINING_VIRTUAL_CLIENT_CREATE = '/api/v1/training/virtual-client/create';
+
+
 /**
  * 가상 내담자 시뮬레이터 컴포넌트
  *
@@ -53,7 +57,7 @@ const VirtualClientSimulator = ({ consultantId }) => {
         }
 
         try {
-            const data = await apiPost('/api/v1/training/virtual-client/create', {
+            const data = await apiPost(API_TRAINING_VIRTUAL_CLIENT_CREATE, {
                 consultantId,
                 scenarioType: selectedScenario,
                 difficultyLevel

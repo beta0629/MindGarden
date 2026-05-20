@@ -21,6 +21,10 @@ import {
   normalizeScheduleListPayload
 } from '../../utils/apiResponseNormalize';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
+
+
 const MAPPINGS_FETCH_ERROR_TEXT = '목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
 
 const CLIENT_SESSION_MGMT_TITLE_ID = 'client-session-management-title';
@@ -48,7 +52,7 @@ const ClientSessionManagement = () => {
       }
       setError(null);
 
-      const userResponse = await apiGet('/api/v1/auth/current-user');
+      const userResponse = await apiGet(API_AUTH_CURRENT_USER);
       if (!userResponse || !userResponse.id) {
         throw new Error('로그인이 필요합니다.');
       }

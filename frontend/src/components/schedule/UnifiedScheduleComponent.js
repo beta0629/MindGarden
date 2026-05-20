@@ -40,6 +40,10 @@ import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SCHEDULES_ADMIN = '/api/v1/schedules/admin';
+
+
 /** 캘린더 관리자 권한(통합 스케줄 STAFF 동기화): 로드·필터·날짜 액션·재예약 */
 const isAdminLikeScheduleUserRole = (role) =>
   role === USER_ROLES.ADMIN || role === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN || role === USER_ROLES.STAFF;
@@ -376,7 +380,7 @@ const UnifiedScheduleComponent = ({
             }
             // 관리자·스텝은 관리자 API 사용
             else if (isAdminLikeScheduleUserRole(userRole)) {
-                url = '/api/v1/schedules/admin';
+                url = API_SCHEDULES_ADMIN;
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
                     console.log('🔍 상담사 필터링 적용:', selectedConsultantId);

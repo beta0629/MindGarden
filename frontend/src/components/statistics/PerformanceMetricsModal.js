@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { ICONS } from '../../constants/icons';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_BRANCHES = '/api/v1/branches';
+const API_STATISTICS_RECALCULATE = '/api/v1/statistics/recalculate';
+
+
 const BarChartIcon = ICONS.BAR_CHART;
 const CalendarIcon = ICONS.CALENDAR;
 const BuildingIcon = ICONS.BUILDING;
@@ -64,7 +69,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
      */
     const loadBranches = async() => {
         try {
-            const response = await apiGet('/api/v1/branches');
+            const response = await apiGet(API_BRANCHES);
             if (response && response.success !== false) {
                 setBranches(response.data || []);
             }
@@ -111,7 +116,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
         try {
             setRecalculating(true);
             
-            const response = await apiPost('/api/v1/statistics/recalculate', {
+            const response = await apiPost(API_STATISTICS_RECALCULATE, {
                 startDate: dateRange.startDate,
                 endDate: dateRange.endDate,
                 // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거

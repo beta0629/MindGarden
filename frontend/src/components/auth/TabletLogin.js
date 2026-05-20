@@ -35,6 +35,10 @@ import {
 } from '../../constants/loginDisplay';
 import '../../styles/auth/TabletLogin.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_AUTH_SMS_LOGIN = '/api/v1/auth/sms-login';
+
+
 const TabletLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -363,7 +367,7 @@ const TabletLogin = () => {
         loginType: 'SMS_AUTH'
       };
       
-      const response = await csrfTokenManager.post('/api/v1/auth/sms-login', loginData);
+      const response = await csrfTokenManager.post(API_AUTH_SMS_LOGIN, loginData);
       
       const data = await response.json();
       

@@ -4,6 +4,10 @@ import notificationManager from '../../../utils/notification';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes';
+
+
 const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isEditing }) => {
   const [addressType, setAddressType] = useState('HOME');
   const [localPostalCode, setLocalPostalCode] = useState(postalCode || '');
@@ -22,7 +26,7 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
     const loadAddressTypeCodes = async() => {
       try {
         setLoadingCodes(true);
-        const response = await StandardizedApi.get('/api/v1/common-codes', { codeGroup: 'ADDRESS_TYPE' });
+        const response = await StandardizedApi.get(API_COMMON_CODES, { codeGroup: 'ADDRESS_TYPE' });
         const list = Array.isArray(response)
           ? response
           : Array.isArray(response?.codes)

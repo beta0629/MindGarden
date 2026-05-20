@@ -18,6 +18,10 @@ import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import { useSession } from '../../contexts/SessionContext';
 import './ConsultantIncomeReport.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_PAYMENTS = '/api/v1/payments';
+
+
 const formatCurrency = (amount) => {
   if (!amount && amount !== 0) return '₩0';
   return `₩${Number(amount).toLocaleString()}`;
@@ -44,7 +48,7 @@ const ConsultantIncomeReport = () => {
 
       const [statsRes, paymentsRes] = await Promise.all([
         TenantAwareApiClient.get(`/api/v1/consultants/${consultantId}`, {}).catch(() => null),
-        TenantAwareApiClient.get('/api/v1/payments', {
+        TenantAwareApiClient.get(API_PAYMENTS, {
           consultantId,
           year,
           month,

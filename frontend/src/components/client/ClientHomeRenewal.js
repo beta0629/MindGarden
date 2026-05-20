@@ -18,6 +18,12 @@ import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ClientHomeRenewal.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SCHEDULES = '/api/v1/schedules';
+const API_HEALING_CONTENT = '/api/v1/healing/content';
+const API_ACTIVITIES = '/api/v1/activities';
+
+
 const MOOD_EMOJIS = [
   { value: 1, emoji: '😢', label: '매우 나쁨' },
   { value: 2, emoji: '😟', label: '나쁨' },
@@ -70,12 +76,12 @@ const ClientHomeRenewal = () => {
     try {
       setLoading(true);
       const [schedulesRes, healingRes, activitiesRes] = await Promise.allSettled([
-        TenantAwareApiClient.get('/api/v1/schedules', {
+        TenantAwareApiClient.get(API_SCHEDULES, {
           userId: user.id,
           userRole: 'CLIENT',
         }),
-        TenantAwareApiClient.get('/api/v1/healing/content', { page: 0, size: 1 }),
-        TenantAwareApiClient.get('/api/v1/activities', { userId: user.id, size: 3 }),
+        TenantAwareApiClient.get(API_HEALING_CONTENT, { page: 0, size: 1 }),
+        TenantAwareApiClient.get(API_ACTIVITIES, { userId: user.id, size: 3 }),
       ]);
 
       if (schedulesRes.status === 'fulfilled') {

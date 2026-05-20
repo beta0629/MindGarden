@@ -18,6 +18,10 @@ import {
   TrendingUp
 } from 'lucide-react';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_FINANCIAL_TRANSACTIONS = '/api/v1/admin/financial-transactions';
+
+
 /**
  * 재무 거래 달력 뷰 컴포넌트
  * 공통 달력(mg-calendar) 구조·클래스 사용. 수입/지출을 달력 형태로 표시.
@@ -42,7 +46,7 @@ const FinancialCalendarView = () => {
       const lastDay = new Date(year, month, 0).getDate();
       const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
-      const response = await StandardizedApi.get('/api/v1/admin/financial-transactions', {
+      const response = await StandardizedApi.get(API_ADMIN_FINANCIAL_TRANSACTIONS, {
         startDate,
         endDate,
         size: 1000

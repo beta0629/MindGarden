@@ -29,6 +29,11 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ClientPaymentHistory.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
+const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
+
+
 const CLIENT_PAYMENT_HISTORY_TITLE_ID = 'client-payment-history-title';
 
 /**
@@ -59,14 +64,14 @@ const ClientPaymentHistory = () => {
       }
       setError(null);
 
-      const userResponse = await StandardizedApi.get('/api/v1/auth/current-user');
+      const userResponse = await StandardizedApi.get(API_AUTH_CURRENT_USER);
       if (!userResponse || !userResponse.id) {
         throw new Error('로그인이 필요합니다.');
       }
 
       const userId = userResponse.id;
       // 표준화 2025-12-08: /api/v1/admin 경로로 통일
-      const mappingsResponse = await StandardizedApi.get('/api/v1/admin/mappings/client', {
+      const mappingsResponse = await StandardizedApi.get(API_ADMIN_MAPPINGS_CLIENT, {
         clientId: userId
       });
       if (isApiGetNullFailure(mappingsResponse)) {

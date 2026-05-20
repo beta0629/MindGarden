@@ -8,6 +8,12 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_RECURRING_EXPENSES = '/api/v1/admin/recurring-expenses';
+const API_ADMIN_STATISTICS_RECURRING_EXPENSES = '/api/v1/admin/statistics/recurring-expenses';
+const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=FINANCIAL_CATEGORY';
+
+
 /**
  * 반복 지출 관리 모달 컴포넌트
 /**
@@ -66,7 +72,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         try {
             setLoading(true);
             console.log('🔄 반복 지출 목록 API 호출 시작');
-            const response = await apiGet('/api/v1/admin/recurring-expenses');
+            const response = await apiGet(API_ADMIN_RECURRING_EXPENSES);
             console.log('📋 반복 지출 목록 API 응답:', response);
             if (response && response.success !== false) {
                 setExpenses(response.data || []);
@@ -84,7 +90,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      */
     const loadStatistics = async() => {
         try {
-            const response = await apiGet('/api/v1/admin/statistics/recurring-expenses');
+            const response = await apiGet(API_ADMIN_STATISTICS_RECURRING_EXPENSES);
             if (response && response.success !== false) {
                 setStatistics(response.data);
             }
@@ -98,7 +104,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      */
     const loadCategories = async() => {
         try {
-            const response = await apiGet('/api/v1/common-codes?codeGroup=FINANCIAL_CATEGORY');
+            const response = await apiGet(API_COMMON_CODES);
             if (response && Array.isArray(response)) {
                 setCategories(response);
             } else if (response && response.success !== false) {
@@ -181,7 +187,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
             if (editingExpense) {
                 response = await apiPut(`/api/admin/recurring-expenses/${editingExpense.id}`, expenseData);
             } else {
-                response = await apiPost('/api/v1/admin/recurring-expenses', expenseData);
+                response = await apiPost(API_ADMIN_RECURRING_EXPENSES, expenseData);
             }
             
             if (response && response.success !== false) {

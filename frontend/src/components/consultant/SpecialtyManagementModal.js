@@ -12,6 +12,11 @@ import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=SPECIALTY';
+const API_COMMON_CODES_2 = '/api/v1/common-codes';
+
+
 /**
  * 상담사 전문분야 관리 모달 컴포넌트
 /**
@@ -149,7 +154,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
      */
     const loadSpecialties = async() => {
         try {
-            const response = await apiGet('/api/v1/common-codes?codeGroup=SPECIALTY');
+            const response = await apiGet(API_COMMON_CODES);
             if (response && Array.isArray(response)) {
                 setSpecialties(response);
             } else if (response && response.success !== false) {
@@ -263,7 +268,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         try {
             setLoading(true);
             
-            const response = await apiPost('/api/v1/common-codes', {
+            const response = await apiPost(API_COMMON_CODES_2, {
                 codeGroup: 'CONSULTANT_SPECIALTY',
                 codeValue: newSpecialty.trim().toUpperCase().replace(/\s+/g, '_'),
                 codeLabel: newSpecialty.trim(),

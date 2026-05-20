@@ -6,6 +6,11 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import './ScheduleB0KlA.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES_GROUPS_CONSULTATION_TYPE = '/api/v1/common-codes/groups/CONSULTATION_TYPE';
+const API_COMMON_CODES_GROUPS_DURATION = '/api/v1/common-codes/groups/DURATION';
+
+
 /**
  * 스케줄 생성·재예약 공통: 상담 유형·상담 시간(BadgeSelect) + B0KlA TimeSlotGrid
  *
@@ -133,8 +138,8 @@ const ScheduleTimeSelectionPanel = ({
       let nextDuration = FALLBACK_DURATION;
       try {
         const [typeRes, durRes] = await Promise.all([
-          StandardizedApi.get('/api/v1/common-codes/groups/CONSULTATION_TYPE'),
-          StandardizedApi.get('/api/v1/common-codes/groups/DURATION')
+          StandardizedApi.get(API_COMMON_CODES_GROUPS_CONSULTATION_TYPE),
+          StandardizedApi.get(API_COMMON_CODES_GROUPS_DURATION)
         ]);
         if (cancelled) return;
         try {

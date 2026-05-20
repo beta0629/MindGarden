@@ -11,6 +11,12 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './ConsultationReport.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=REPORT_PERIOD';
+const API_COMMON_CODES_2 = '/api/v1/common-codes?codeGroup=YEAR_RANGE';
+const API_COMMON_CODES_3 = '/api/v1/common-codes?codeGroup=MONTH_RANGE';
+
+
 const ConsultationReport = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -53,7 +59,7 @@ const ConsultationReport = () => {
   const loadPeriodCodes = useCallback(async() => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/v1/common-codes?codeGroup=REPORT_PERIOD');
+      const response = await apiGet(API_COMMON_CODES);
       if (response && response.length > 0) {
         const uniqueCodes = response.reduce((acc, code) => {
           if (!acc.find(item => item.codeValue === code.codeValue)) {
@@ -81,7 +87,7 @@ const ConsultationReport = () => {
   const loadYearCodes = useCallback(async() => {
     try {
       setLoadingYearCodes(true);
-      const response = await apiGet('/api/v1/common-codes?codeGroup=YEAR_RANGE');
+      const response = await apiGet(API_COMMON_CODES_2);
       if (response && response.length > 0) {
         const uniqueCodes = response.reduce((acc, code) => {
           if (!acc.find(item => item.codeValue === code.codeValue)) {
@@ -108,7 +114,7 @@ const ConsultationReport = () => {
   const loadMonthCodes = useCallback(async() => {
     try {
       setLoadingMonthCodes(true);
-      const response = await apiGet('/api/v1/common-codes?codeGroup=MONTH_RANGE');
+      const response = await apiGet(API_COMMON_CODES_3);
       if (response && response.length > 0) {
         const uniqueCodes = response.reduce((acc, code) => {
           if (!acc.find(item => item.codeValue === code.codeValue)) {

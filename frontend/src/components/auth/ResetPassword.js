@@ -7,6 +7,10 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './AuthPageCommon.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_AUTH_PASSWORD_RESET_RESET = '/api/v1/auth/password-reset/reset';
+
+
 const ResetPassword = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -97,7 +101,7 @@ const ResetPassword = () => {
     setIsLoading(true);
 
     try {
-      const response = await apiPost('/api/v1/auth/password-reset/reset', {
+      const response = await apiPost(API_AUTH_PASSWORD_RESET_RESET, {
         token: token,
         newPassword: formData.newPassword,
         confirmPassword: formData.confirmPassword

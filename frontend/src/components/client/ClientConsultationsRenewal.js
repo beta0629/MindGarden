@@ -16,6 +16,11 @@ import { useToast } from '../../contexts/ToastContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ClientConsultationsRenewal.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SCHEDULES = '/api/v1/schedules';
+const API_RATINGS = '/api/v1/ratings';
+
+
 const TABS = [
   { key: 'upcoming', label: '예정' },
   { key: 'completed', label: '완료' },
@@ -63,7 +68,7 @@ const ClientConsultationsRenewal = () => {
     if (!user?.id) return;
     try {
       setLoading(true);
-      const res = await TenantAwareApiClient.get('/api/v1/schedules', {
+      const res = await TenantAwareApiClient.get(API_SCHEDULES, {
         userId: user.id,
         userRole: 'CLIENT',
       });
@@ -123,7 +128,7 @@ const ClientConsultationsRenewal = () => {
     try {
       setSubmittingRating(true);
       const consultationId = ratingModal.id || ratingModal.consultationId;
-      await TenantAwareApiClient.post('/api/v1/ratings', {
+      await TenantAwareApiClient.post(API_RATINGS, {
         consultationId,
         rating,
         tags: selectedTags,

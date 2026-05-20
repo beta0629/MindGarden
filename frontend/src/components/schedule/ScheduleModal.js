@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ICONS } from '../../constants/icons';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SCHEDULES_CONSULTANT = '/api/v1/schedules/consultant';
+
+
 const CheckIcon = ICONS.CHECK;
 import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
@@ -197,7 +201,7 @@ const ScheduleModalNew = ({
                 scheduleData.tentativeBeforeDeposit = Boolean(tentativeBeforeDeposit);
             }
 
-            const response = await StandardizedApi.post('/api/v1/schedules/consultant', scheduleData);
+            const response = await StandardizedApi.post(API_SCHEDULES_CONSULTANT, scheduleData);
             
             notificationManager.success(response?.message || '스케줄이 성공적으로 생성되었습니다!');
             onScheduleCreated();

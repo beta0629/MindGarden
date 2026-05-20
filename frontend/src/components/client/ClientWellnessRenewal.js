@@ -17,6 +17,10 @@ import {
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ClientWellnessRenewal.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_HEALING_CONTENT = '/api/v1/healing/content';
+
+
 const MOOD_EMOJIS = [
   { value: 1, emoji: '😢', label: '매우 나쁨' },
   { value: 2, emoji: '😟', label: '나쁨' },
@@ -64,7 +68,7 @@ const ClientWellnessRenewal = () => {
   const loadWellnessData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await TenantAwareApiClient.get('/api/v1/healing/content', {
+      const res = await TenantAwareApiClient.get(API_HEALING_CONTENT, {
         page: 0,
         size: 5,
       });

@@ -17,9 +17,15 @@ import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ConsultantClientManagementRenewal.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_CONSULTANTS = '/api/v1/consultants';
+const API_CONSULTATION_CLIENT_MAPPINGS = '/api/v1/consultation-client-mappings';
+const API_SCHEDULES = '/api/v1/schedules';
+
+
 const API_ENDPOINTS = {
-  CLIENTS: '/api/v1/consultants',
-  CLIENT_MAPPINGS: '/api/v1/consultation-client-mappings',
+  CLIENTS: API_CONSULTANTS,
+  CLIENT_MAPPINGS: API_CONSULTATION_CLIENT_MAPPINGS,
 };
 
 const FILTER_OPTIONS = [
@@ -118,7 +124,7 @@ const ProfileSheet = ({ client, onClose, onMessage }) => {
   const loadHistory = async () => {
     try {
       const clientId = client.clientId || client.id;
-      const res = await TenantAwareApiClient.get('/api/v1/schedules', {
+      const res = await TenantAwareApiClient.get(API_SCHEDULES, {
         clientId,
         size: 10,
         sort: 'startTime,desc',

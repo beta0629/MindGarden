@@ -8,6 +8,11 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=VACATION_TYPE';
+const API_CONSULTANT_VACATION = '/api/v1/consultant/vacation';
+
+
 /**
  * 상담사용 휴가 등록 모달
 /**
@@ -52,7 +57,7 @@ const ConsultantVacationModal = ({
     useEffect(() => {
         const loadVacationTypeCodes = async() => {
             try {
-                const response = await apiGet('/api/v1/common-codes?codeGroup=VACATION_TYPE');
+                const response = await apiGet(API_COMMON_CODES);
                 if (response && response.length > 0) {
                     const allowedTypes = [
                         'MORNING_HALF_DAY',
@@ -113,7 +118,7 @@ const ConsultantVacationModal = ({
 
             console.log('🏖️ 휴가 등록 요청:', requestData);
 
-            const response = await csrfTokenManager.post('/api/v1/consultant/vacation', requestData);
+            const response = await csrfTokenManager.post(API_CONSULTANT_VACATION, requestData);
 
             if (response.ok) {
                 const result = await response.json();

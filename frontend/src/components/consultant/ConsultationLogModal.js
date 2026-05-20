@@ -24,6 +24,12 @@ import ConsultationLogFormPanel from './organisms/ConsultationLogFormPanel';
 import ConsultationLogRequiredFieldsNotice from './molecules/ConsultationLogRequiredFieldsNotice';
 import ConsultationLogSessionHeaderMeta from './molecules/ConsultationLogSessionHeaderMeta';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=PRIORITY';
+const API_COMMON_CODES_2 = '/api/v1/common-codes?codeGroup=COMPLETION_STATUS';
+const API_SCHEDULES_CONSULTATION_RECORDS = '/api/v1/schedules/consultation-records';
+
+
 /** PRIORITY 공통코드가 비어 있거나 로드 실패 시 — 목표 달성도와 동일하게 칩으로 바로 선택 */
 const DEFAULT_RISK_LEVEL_OPTIONS = [
   { value: 'LOW', label: '낮음', icon: '🟢', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
@@ -198,7 +204,7 @@ const ConsultationLogModal = ({
   const loadPriorityCodes = useCallback(async() => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/v1/common-codes?codeGroup=PRIORITY');
+      const response = await apiGet(API_COMMON_CODES);
       const list = response?.codes ?? [];
       if (list.length > 0) {
         const options = list
@@ -417,7 +423,7 @@ const ConsultationLogModal = ({
   const loadCompletionStatusCodes = useCallback(async() => {
     try {
       setLoadingCompletionCodes(true);
-      const response = await apiGet('/api/v1/common-codes?codeGroup=COMPLETION_STATUS');
+      const response = await apiGet(API_COMMON_CODES_2);
       const list = response?.codes ?? [];
       if (list.length > 0) {
         setCompletionStatusOptions(list.map((code, index) => ({
@@ -878,7 +884,7 @@ const ConsultationLogModal = ({
           response = await apiPut(`/api/v1/schedules/consultation-records/${consultationRecord.id}`, recordData);
         }
       } else {
-        response = await apiPost('/api/v1/schedules/consultation-records', recordData);
+        response = await apiPost(API_SCHEDULES_CONSULTATION_RECORDS, recordData);
       }
 
       const record = response?.data ?? response;
@@ -954,7 +960,7 @@ const ConsultationLogModal = ({
           response = await apiPut(`/api/v1/schedules/consultation-records/${consultationRecord.id}`, recordData);
         }
       } else {
-        response = await apiPost('/api/v1/schedules/consultation-records', recordData);
+        response = await apiPost(API_SCHEDULES_CONSULTATION_RECORDS, recordData);
       }
 
       const record = response?.data ?? response;

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ICONS } from '../../../constants/icons';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_MAPPINGS_ACTIVE = '/api/v1/admin/mappings/active';
+
+
 const Link2Icon = ICONS.LINK_2;
 import MappingCreationModal from '../../admin/MappingCreationModal';
 import MGButton from '../../common/MGButton';
@@ -141,7 +145,7 @@ const ClientSelectionStep = ({
         try {
             console.log('👤 전체 매핑에서 상담사별 필터링 시작');
             
-            const response = await fetch('/api/v1/admin/mappings/active', {
+            const response = await fetch(API_ADMIN_MAPPINGS_ACTIVE, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'

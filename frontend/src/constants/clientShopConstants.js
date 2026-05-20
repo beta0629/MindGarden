@@ -135,13 +135,13 @@ export const SHOP_CATALOG_PLACEHOLDER_TITLE_FALLBACK = '상품';
 export const SHOP_CATALOG_PLACEHOLDER_SVG_COLORS = {
   [SHOP_CATALOG_CATEGORY.CONSULTATION]: {
     background: '#F5F3EF',
-    accent: '#3D5246',
-    text: '#3D5246'
+    accent: 'var(--mg-color-primary-main)',
+    text: 'var(--mg-color-primary-main)'
   },
   [SHOP_CATALOG_CATEGORY.ASSESSMENT]: {
     background: '#EEF4F1',
     accent: '#5C7A6B',
-    text: '#3D5246'
+    text: 'var(--mg-color-primary-main)'
   }
 };
 

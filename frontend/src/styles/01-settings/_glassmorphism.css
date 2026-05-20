@@ -36,7 +36,7 @@
   --ios-gray: #8e8e93;
   
   /* 아이폰 텍스트 색상 */
-  --ios-text-primary: #1d1d1f;
+  --ios-text-primary: var(--mg-color-text-main);
   --ios-text-secondary: #86868b;
   --ios-text-tertiary: #c7c7cc;
   

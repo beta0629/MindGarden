@@ -39,7 +39,7 @@
     justify-content: center;
     margin-top: 2rem;
     padding-top: 2rem;
-    border-top: 1px solid #E5E7EB;
+    border-top: 1px solid var(--mg-color-border-main);
 }
 
 .tablet-profile-edit .btn {
@@ -66,23 +66,23 @@
 }
 
 .mg-btn--secondary {
-    background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%);
+    background: linear-gradient(135deg, var(--mg-color-text-secondary) 0%, var(--mg-color-text-tertiary) 100%);
     color: white;
 }
 
 .mg-btn--secondary:hover {
-    background: linear-gradient(135deg, #4B5563 0%, #374151 100%);
+    background: linear-gradient(135deg, var(--mg-color-text-tertiary) 0%, var(--mg-color-text-secondary-dark) 100%);
     transform: translateY(-1px);
 }
 
 .btn-cancel {
-    background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
-    color: #374151;
+    background: linear-gradient(135deg, #F3F4F6 0%, var(--mg-color-border-main) 100%);
+    color: var(--mg-color-text-secondary-dark);
     border: 1px solid #D1D5DB;
 }
 
 .btn-cancel:hover {
-    background: linear-gradient(135deg, #E5E7EB 0%, #D1D5DB 100%);
+    background: linear-gradient(135deg, var(--mg-color-border-main) 0%, #D1D5DB 100%);
 }
 
 /* 폼 스타일 */
@@ -106,18 +106,18 @@
     display: block;
     margin-bottom: 0.75rem;
     font-weight: 600;
-    color: #374151;
+    color: var(--mg-color-text-secondary-dark);
     font-size: 1.1rem;
 }
 
 .tablet-profile-edit .mg-form__input {
     width: 100%;
     padding: 1rem;
-    border: 2px solid #E5E7EB;
+    border: 2px solid var(--mg-color-border-main);
     border-radius: 0.75rem;
     font-size: 1rem;
     transition: all 0.3s ease;
-    background: #F9FAFB;
+    background: var(--mg-color-background-main);
 }
 
 .tablet-profile-edit .mg-form__input:focus {
@@ -156,7 +156,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+    background: linear-gradient(135deg, var(--mg-color-background-main) 0%, #F3F4F6 100%);
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
@@ -166,7 +166,7 @@
 
 .image-preview:hover {
     border-color: var(--mg-purple-500);
-    background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+    background: linear-gradient(135deg, #F3F4F6 0%, var(--mg-color-border-main) 100%);
     transform: scale(1.05);
     box-shadow: 0 8px 16px rgba(139, 92, 246, 0.2);
 }
@@ -193,7 +193,7 @@
     position: absolute;
     top: 0.75rem;
     right: 0.75rem;
-    background: linear-gradient(135deg, var(--mg-error-500) 0%, #DC2626 100%);
+    background: linear-gradient(135deg, var(--mg-error-500) 0%, var(--mg-color-error) 100%);
     color: white;
     border: none;
     border-radius: 50%;
@@ -222,7 +222,7 @@
 }
 
 .upload-text {
-    color: #6B7280;
+    color: var(--mg-color-text-secondary);
     font-size: 1rem;
     margin-top: 1rem;
     line-height: 1.5;
@@ -244,7 +244,7 @@
 }
 
 .profile-subtitle {
-    color: #6B7280;
+    color: var(--mg-color-text-secondary);
     font-size: 1.1rem;
     margin-bottom: 2.5rem;
     text-align: center;

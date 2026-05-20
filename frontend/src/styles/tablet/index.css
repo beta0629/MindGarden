@@ -1316,7 +1316,7 @@ html {
   height: 20px;
   border: 3px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  border-top-color: #fff;
+  border-top-color: var(--mg-white);
   animation: spin 1s ease-in-out infinite;
 }
 
@@ -1829,7 +1829,7 @@ html {
   height: 20px;
   border: 3px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  border-top-color: #fff;
+  border-top-color: var(--mg-white);
   animation: spin 1s ease-in-out infinite;
 }
 

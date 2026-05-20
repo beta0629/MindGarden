@@ -748,7 +748,7 @@ export const getFormattedAvailability = (consultant) => {
         color = 'var(--mg-error-500)';
     } else if (!consultant?.available) {
         text = AVAILABILITY_UNAVAILABLE_LABEL;
-        color = '#6b7280';
+        color = 'var(--mg-color-text-secondary)';
     } else if (consultant?.busy) {
         text = AVAILABILITY_BUSY_LABEL;
         color = 'var(--mg-warning-500)';

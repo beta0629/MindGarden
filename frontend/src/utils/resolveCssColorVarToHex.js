@@ -9,13 +9,13 @@
 /**
  * unified-design-tokens.css :root — --cs-secondary-500 고정값 (SSR·해석 실패 시)
  */
-const MG_SECONDARY_500_SSR_FALLBACK_HEX = '#6B7280';
+const MG_SECONDARY_500_SSR_FALLBACK_HEX = 'var(--mg-color-text-secondary)';
 
 /**
  * unified-design-tokens.css :root — --cs-primary-600 고정값.
  * --mg-primary-500 ↔ --cs-primary-500 상호 참조 시 브라우저 해석이 불안정할 수 있어 동일 팔레트 앵커로 사용.
  */
-const MG_PRIMARY_500_SSR_FALLBACK_HEX = '#2563EB';
+const MG_PRIMARY_500_SSR_FALLBACK_HEX = 'var(--mg-color-info)';
 
 const RGBA_RE = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)/i;
 

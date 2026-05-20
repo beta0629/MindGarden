@@ -6,7 +6,7 @@
 
 .page-header {
   background: white;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--mg-color-border-main);
   padding: 1rem 0;
   margin-bottom: 2rem;
 }
@@ -50,20 +50,20 @@
 }
 
 .back-button:hover {
-  background: #e9ecef;
-  color: #495057;
+  background: var(--mg-color-border-main);
+  color: var(--mg-color-text-secondary);
 }
 
 .back-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: #e9ecef;
-  color: #495057;
+  background: var(--mg-color-border-main);
+  color: var(--mg-color-text-secondary);
 }
 
 .header-text h1 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 .header-text p {
@@ -102,18 +102,18 @@
 .selector-group label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   margin-bottom: 0.25rem;
 }
 
 .selector-input {
   padding: 0.75rem 1rem;
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--mg-color-border-main);
   border-radius: 10px;
   font-size: 0.95rem;
   background: #fafbfc;
   transition: all 0.3s ease;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 .selector-input:focus {
@@ -143,7 +143,7 @@
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px var(--mg-shadow-light);
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--mg-color-border-main);
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -159,7 +159,7 @@
   width: 50px;
   height: 50px;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--mg-primary-500), #0056b3);
+  background: linear-gradient(135deg, var(--mg-primary-500), var(--mg-color-primary-dark));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -182,7 +182,7 @@
   margin: 0;
   font-size: 1.8rem;
   font-weight: 700;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 /* 상세 통계 */
@@ -197,15 +197,15 @@
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px var(--mg-shadow-light);
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--mg-color-border-main);
 }
 
 .stats-section h3 {
   margin: 0 0 1.5rem 0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #495057;
-  border-bottom: 2px solid #e9ecef;
+  color: var(--mg-color-text-secondary);
+  border-bottom: 2px solid var(--mg-color-border-main);
   padding-bottom: 0.5rem;
 }
 
@@ -225,7 +225,7 @@
   border-radius: 8px;
   font-weight: 600;
   font-size: 0.9rem;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 .table-row {
@@ -244,7 +244,7 @@
 
 .table-row span:first-child {
   font-weight: 500;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 .table-row .completed {
@@ -272,7 +272,7 @@
 
 .period-info p {
   margin: 0 0 0.5rem 0;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
   font-size: 0.9rem;
 }
 
@@ -307,7 +307,7 @@
 .no-data p {
   margin: 0 0 0.5rem 0;
   font-size: 1.1rem;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 .no-data small {
@@ -334,11 +334,11 @@
 }
 
 .retry-btn:hover {
-  background: #0056b3;
+  background: var(--mg-color-primary-dark);
 }
 
 .retry-btn.mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: #0056b3;
+  background: var(--mg-color-primary-dark);
 }
 
 /* 로딩 상태 */
@@ -378,7 +378,7 @@
   .table-header span,
   .table-row span {
     padding: 0.25rem 0;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--mg-color-border-main);
   }
   
   .table-header span:before,

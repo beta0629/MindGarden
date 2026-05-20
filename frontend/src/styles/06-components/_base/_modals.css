@@ -308,7 +308,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 3px solid var(--color-border-light, #e5e7eb);
+  border: 3px solid var(--color-border-light, var(--mg-color-border-main));
   border-top-color: var(--color-primary, var(--ad-b0kla-green, #0d9488));
   animation: mg-spin 1s linear infinite;
 }

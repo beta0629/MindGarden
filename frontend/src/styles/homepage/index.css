@@ -222,7 +222,7 @@
 .hero-section-mobile {
   text-align: center;
   padding: 60px 16px 40px;
-  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-gradient-primary-end) 100%);
   color: white;
   border-radius: 0 0 30px 30px;
   margin-bottom: 40px;
@@ -493,7 +493,7 @@
 }
 
 .service-card-brain {
-  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-gradient-primary-end) 100%);
 }
 
 .service-card-mobile {

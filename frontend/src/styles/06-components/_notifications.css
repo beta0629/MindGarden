@@ -81,7 +81,7 @@
   flex: 1;
   font-size: var(--notification-message-font-size, 0.875rem);
   line-height: var(--notification-message-line-height, 1.5);
-  color: var(--color-text-primary, #1f2937);
+  color: var(--color-text-primary, var(--mg-color-text-main));
   margin: 0;
 }
 
@@ -92,7 +92,7 @@
   height: var(--notification-close-size, 24px);
   border: none;
   background: none;
-  color: var(--color-text-secondary, #6b7280);
+  color: var(--color-text-secondary, var(--mg-color-text-secondary));
   cursor: pointer;
   border-radius: var(--notification-close-border-radius, 0.25rem);
   display: flex;

@@ -159,7 +159,7 @@ export const COLORS = {
   LIGHT: '#f2f2f7',
   DARK: '#1c1c1e',
   
-  TEXT_PRIMARY: '#1d1d1f',
+  TEXT_PRIMARY: 'var(--mg-color-text-main)',
   TEXT_SECONDARY: '#86868b',
   TEXT_TERTIARY: '#c7c7cc',
   

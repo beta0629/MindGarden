@@ -6,7 +6,7 @@
 
 .page-header {
   background: white;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--mg-color-border-main);
   padding: 1rem 0;
   margin-bottom: 2rem;
 }
@@ -35,15 +35,15 @@
 }
 
 .back-button:hover {
-  background: #e9ecef;
-  color: #495057;
+  background: var(--mg-color-border-main);
+  color: var(--mg-color-text-secondary);
 }
 
 .header-text h1 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 .header-text p {
@@ -82,19 +82,19 @@
 .filter-group label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   margin-bottom: 0.25rem;
 }
 
 .filter-select,
 .filter-input {
   padding: 0.75rem 1rem;
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--mg-color-border-main);
   border-radius: 10px;
   font-size: 0.95rem;
   background: #fafbfc;
   transition: all 0.3s ease;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 .filter-select:focus,
@@ -151,7 +151,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--mg-primary-500), #0056b3);
+  background: linear-gradient(90deg, var(--mg-primary-500), var(--mg-color-primary-dark));
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -178,7 +178,7 @@
   margin: 0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
   flex: 1;
 }
 
@@ -216,8 +216,8 @@
 }
 
 .status-default {
-  background: #e9ecef;
-  color: #495057;
+  background: var(--mg-color-border-main);
+  color: var(--mg-color-text-secondary);
 }
 
 .consultation-details {
@@ -249,7 +249,7 @@
 }
 
 .consultation-footer {
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--mg-color-border-main);
   padding-top: 0.75rem;
 }
 
@@ -280,7 +280,7 @@
 .no-data p {
   margin: 0 0 0.5rem 0;
   font-size: 1.1rem;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 .no-data small {
@@ -301,7 +301,7 @@
 }
 
 .retry-btn:hover {
-  background: #0056b3;
+  background: var(--mg-color-primary-dark);
 }
 
 /* 로딩 상태 */

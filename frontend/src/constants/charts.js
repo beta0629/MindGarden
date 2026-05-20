@@ -41,7 +41,7 @@ export const CHART_COLORS = {
  */
 export const B0KLA_CHART_BAR_FALLBACK = {
   FILL: '#059669',
-  BORDER: '#2563eb'
+  BORDER: 'var(--mg-color-info)'
 };
 
 /**
@@ -52,8 +52,8 @@ export const B0KLA_CHART_BAR_FALLBACK = {
 export const ERP_INCOME_EXPENSE_CHART_HEX = {
   INCOME_FILL: '#34d399',
   INCOME_BORDER: '#059669',
-  EXPENSE_FILL: '#ef4444',
-  EXPENSE_BORDER: '#dc2626'
+  EXPENSE_FILL: 'var(--mg-error-500)',
+  EXPENSE_BORDER: 'var(--mg-color-error)'
 };
 
 /**
@@ -64,12 +64,12 @@ export const B0KLA_STEP_CHART_HEX = [
   '#0d9488',
   '#fb923c',
   '#7c3aed',
-  '#2563eb',
+  'var(--mg-color-info)',
   '#64748b'
 ];
 
 export const CHART_GRADIENTS = {
-  PRIMARY: ['var(--mg-primary-500)', '#0056b3'],
+  PRIMARY: ['var(--mg-primary-500)', 'var(--mg-color-primary-dark)'],
   SUCCESS: ['var(--mg-success-500)', '#1e7e34'],
   WARNING: ['var(--mg-warning-500)', '#e0a800'],
   DANGER: ['var(--mg-error-500)', '#c82333'],

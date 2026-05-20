@@ -6,7 +6,7 @@
   max-width: 600px;
   margin: 4rem auto;
   padding: 2rem;
-  background: #fff;
+  background: var(--mg-white);
   border-radius: 8px;
   box-shadow: 0 2px 8px var(--mg-shadow-light);
   text-align: center;
@@ -37,12 +37,12 @@
 .billing-callback__loading h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: #1f2937;
+  color: var(--mg-color-text-main);
 }
 
 .billing-callback__loading p {
   margin: 0;
-  color: #6b7280;
+  color: var(--mg-color-text-secondary);
 }
 
 .billing-callback__success,
@@ -70,13 +70,13 @@
 .billing-callback__fail h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: #1f2937;
+  color: var(--mg-color-text-main);
 }
 
 .billing-callback__success p,
 .billing-callback__fail p {
   margin: 0;
-  color: #6b7280;
+  color: var(--mg-color-text-secondary);
   line-height: 1.6;
 }
 
@@ -84,7 +84,7 @@
   width: 100%;
   margin-top: 1.5rem;
   padding: 1.5rem;
-  background: #f9fafb;
+  background: var(--mg-color-background-main);
   border-radius: 6px;
   text-align: left;
 }
@@ -94,7 +94,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 0;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--mg-color-border-main);
   font-size: 0.875rem;
 }
 
@@ -103,11 +103,11 @@
 }
 
 .billing-callback__info-item strong {
-  color: #374151;
+  color: var(--mg-color-text-secondary-dark);
 }
 
 .billing-callback__info-item span {
-  color: #6b7280;
+  color: var(--mg-color-text-secondary);
   font-family: 'Courier New', monospace;
 }
 
@@ -126,7 +126,7 @@
   justify-content: space-between;
   align-items: center;
   font-size: 0.875rem;
-  color: #dc2626;
+  color: var(--mg-color-error);
 }
 
 .billing-callback__error-item strong {

@@ -89,8 +89,8 @@ export const useTheme = () => {
             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f2f2f7 -> var(--mg-custom-f2f2f7)
             root.style.setProperty('--theme-bg-secondary', '#f2f2f7');
             root.style.setProperty('--theme-bg-tertiary', 'var(--mg-white)');
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1d1d1f -> var(--mg-custom-1d1d1f)
-            root.style.setProperty('--theme-text-primary', '#1d1d1f');
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-1d1d1f)
+            root.style.setProperty('--theme-text-primary', 'var(--mg-color-text-main)');
             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #86868b -> var(--mg-custom-86868b)
             root.style.setProperty('--theme-text-secondary', '#86868b');
             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #c7c7cc -> var(--mg-custom-c7c7cc)

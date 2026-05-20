@@ -4,7 +4,7 @@
 }
 
 .result-card {
-  background: #fff;
+  background: var(--mg-white);
   border: 1px solid #dee2e6;
   border-radius: 8px;
   padding: 20px;
@@ -55,12 +55,12 @@
 }
 
 .badge-success {
-  color: #fff;
+  color: var(--mg-white);
   background-color: var(--mg-success-500);
 }
 
 .badge-danger {
-  color: #fff;
+  color: var(--mg-white);
   background-color: var(--mg-error-500);
 }
 
@@ -70,7 +70,7 @@
 }
 
 .badge-secondary {
-  color: #fff;
+  color: var(--mg-white);
   background-color: var(--mg-secondary-500);
 }
 
@@ -92,7 +92,7 @@
 
 .test-item {
   background: var(--mg-gray-100);
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--mg-color-border-main);
   border-radius: 4px;
   padding: 10px;
   margin-bottom: 10px;
@@ -153,7 +153,7 @@
   padding: 8px 12px;
   background: var(--mg-gray-100);
   border-radius: 4px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--mg-color-border-main);
 }
 
 .status-item span:first-child {

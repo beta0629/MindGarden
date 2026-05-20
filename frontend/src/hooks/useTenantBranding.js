@@ -56,8 +56,8 @@ export const useTenantBranding = (options = {}) => {
     const defaultBranding = {
       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-primary-500) -> var(--mg-custom-3b82f6)
       primaryColor: 'var(--mg-primary-500)',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-      secondaryColor: '#6b7280', 
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-6b7280)
+      secondaryColor: 'var(--mg-color-text-secondary)', 
       logoUrl: '/images/core-solution-logo.png',
       companyName: 'CoreSolution'
     };

@@ -6,9 +6,9 @@
   align-items: center;
   gap: var(--mg-spacing-md, 12px);
   padding: var(--mg-spacing-md, 12px);
-  background: var(--mg-bg-surface, #fff);
+  background: var(--mg-bg-surface, var(--mg-white));
   border-radius: 12px;
-  border: 1px solid var(--mg-border-light, #e5e7eb);
+  border: 1px solid var(--mg-border-light, var(--mg-color-border-main));
   margin-bottom: var(--mg-spacing-sm, 8px);
 }
 

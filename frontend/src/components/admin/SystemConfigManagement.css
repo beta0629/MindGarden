@@ -246,7 +246,7 @@
 }
 
 .mg-v2-system-config__pricing-notice a {
-    color: var(--mg-color-primary-main, #2563eb);
+    color: var(--mg-color-primary-main, var(--mg-color-info));
     text-decoration: none;
 }
 

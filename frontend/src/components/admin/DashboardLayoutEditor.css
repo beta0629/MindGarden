@@ -13,9 +13,9 @@
   flex-direction: column;
   gap: var(--mg-spacing-md, 0.75rem);
   padding: var(--mg-spacing-md, 0.75rem);
-  background: var(--mg-bg-secondary, #f9fafb);
+  background: var(--mg-bg-secondary, var(--mg-color-background-main));
   border-radius: var(--mg-border-radius-md, 0.5rem);
-  border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  border: var(--mg-border-width, 1px) solid var(--mg-border-color, var(--mg-color-border-main));
 }
 
 .layout-editor-header {
@@ -23,21 +23,21 @@
   align-items: center;
   justify-content: space-between;
   padding-bottom: var(--mg-spacing-sm, 0.5rem);
-  border-bottom: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  border-bottom: var(--mg-border-width, 1px) solid var(--mg-border-color, var(--mg-color-border-main));
 }
 
 .layout-editor-title {
   margin: 0;
   font-size: var(--mg-font-size-base, 1rem);
   font-weight: var(--mg-font-weight-semibold, 600);
-  color: var(--mg-text-primary, #1f2937);
+  color: var(--mg-text-primary, var(--mg-color-text-main));
 }
 
 .layout-editor-info {
   display: flex;
   gap: var(--mg-spacing-md, 0.75rem);
   font-size: var(--mg-font-size-sm, 0.875rem);
-  color: var(--mg-text-secondary, #6b7280);
+  color: var(--mg-text-secondary, var(--mg-color-text-secondary));
 }
 
 .widget-count,
@@ -136,7 +136,7 @@
 /* 위젯 아이템 */
 .layout-widget-item {
   background: var(--mg-bg-primary, var(--mg-white));
-  border: var(--mg-border-width, 2px) solid var(--mg-border-color, #e5e7eb);
+  border: var(--mg-border-width, 2px) solid var(--mg-border-color, var(--mg-color-border-main));
   border-radius: var(--mg-border-radius-md, 0.5rem);
   min-height: 120px;
   display: flex;
@@ -153,7 +153,7 @@
 /* 드래그 상태 */
 .widget-ghost {
   opacity: 0.4;
-  background: var(--mg-bg-secondary, #f9fafb);
+  background: var(--mg-bg-secondary, var(--mg-color-background-main));
   border: var(--mg-border-width, 2px) dashed var(--mg-primary, var(--mg-primary-500));
 }
 
@@ -173,8 +173,8 @@
   align-items: center;
   gap: var(--mg-spacing-sm, 0.5rem);
   padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 0.75rem);
-  background: var(--mg-bg-secondary, #f9fafb);
-  border-bottom: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  background: var(--mg-bg-secondary, var(--mg-color-background-main));
+  border-bottom: var(--mg-border-width, 1px) solid var(--mg-border-color, var(--mg-color-border-main));
   border-radius: var(--mg-border-radius-md, 0.5rem) var(--mg-border-radius-md, 0.5rem) 0 0;
 }
 
@@ -194,7 +194,7 @@
   flex: 1;
   font-size: var(--mg-font-size-sm, 0.875rem);
   font-weight: var(--mg-font-weight-medium, 500);
-  color: var(--mg-text-primary, #1f2937);
+  color: var(--mg-text-primary, var(--mg-color-text-main));
 }
 
 .widget-item-actions {
@@ -206,7 +206,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  color: var(--mg-text-secondary, #6b7280);
+  color: var(--mg-text-secondary, var(--mg-color-text-secondary));
   font-size: var(--mg-icon-size-sm, 0.875rem);
   padding: var(--mg-spacing-xs, 0.25rem);
   display: flex;
@@ -218,7 +218,7 @@
 
 .widget-action-btn:hover {
   background: var(--mg-bg-hover, #f3f4f6);
-  color: var(--mg-text-primary, #1f2937);
+  color: var(--mg-text-primary, var(--mg-color-text-main));
 }
 
 .widget-delete-btn:hover {
@@ -246,7 +246,7 @@
 .widget-preview-label {
   font-size: var(--mg-font-size-sm, 0.875rem);
   font-weight: var(--mg-font-weight-medium, 500);
-  color: var(--mg-text-primary, #1f2937);
+  color: var(--mg-text-primary, var(--mg-color-text-main));
 }
 
 .widget-preview-position {
@@ -258,10 +258,10 @@
 .layout-empty-state {
   padding: var(--mg-spacing-xl, 2rem);
   text-align: center;
-  color: var(--mg-text-secondary, #6b7280);
+  color: var(--mg-text-secondary, var(--mg-color-text-secondary));
   background: var(--mg-bg-primary, var(--mg-white));
   border-radius: var(--mg-border-radius-md, 0.5rem);
-  border: var(--mg-border-width, 2px) dashed var(--mg-border-color, #e5e7eb);
+  border: var(--mg-border-width, 2px) dashed var(--mg-border-color, var(--mg-color-border-main));
 }
 
 .layout-empty-state p {

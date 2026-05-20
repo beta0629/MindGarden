@@ -20,9 +20,9 @@
   margin: 0;
   font-size: var(--mg-font-size-lg, 1.125rem);
   font-weight: var(--mg-font-weight-semibold, 600);
-  color: var(--mg-text-primary, #1f2937);
+  color: var(--mg-text-primary, var(--mg-color-text-main));
   padding-bottom: var(--mg-spacing-sm, 0.5rem);
-  border-bottom: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  border-bottom: var(--mg-border-width, 1px) solid var(--mg-border-color, var(--mg-color-border-main));
 }
 
 /* 사용 가능한 위젯 그리드 */
@@ -40,8 +40,8 @@
   justify-content: center;
   gap: var(--mg-spacing-xs, 0.25rem);
   padding: var(--mg-spacing-md, 0.75rem);
-  background: var(--mg-bg-secondary, #f9fafb);
-  border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  background: var(--mg-bg-secondary, var(--mg-color-background-main));
+  border: var(--mg-border-width, 1px) solid var(--mg-border-color, var(--mg-color-border-main));
   border-radius: var(--mg-border-radius-md, 0.5rem);
   cursor: grab;
   transition: all var(--mg-animation-duration-fast, 0.2s);
@@ -80,7 +80,7 @@
 
 .widget-type-name {
   font-size: var(--mg-font-size-sm, 0.875rem);
-  color: var(--mg-text-secondary, #6b7280);
+  color: var(--mg-text-secondary, var(--mg-color-text-secondary));
   text-align: center;
   word-break: break-word;
 }
@@ -98,7 +98,7 @@
   gap: var(--mg-spacing-md, 0.75rem);
   padding: var(--mg-spacing-md, 0.75rem);
   background: var(--mg-bg-primary, var(--mg-white));
-  border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  border: var(--mg-border-width, 1px) solid var(--mg-border-color, var(--mg-color-border-main));
   border-radius: var(--mg-border-radius-md, 0.5rem);
   transition: all var(--mg-animation-duration-fast, 0.2s);
 }
@@ -141,12 +141,12 @@
 .widget-item-type {
   font-size: var(--mg-font-size-base, 1rem);
   font-weight: var(--mg-font-weight-medium, 500);
-  color: var(--mg-text-primary, #1f2937);
+  color: var(--mg-text-primary, var(--mg-color-text-main));
 }
 
 .widget-item-position {
   font-size: var(--mg-font-size-sm, 0.875rem);
-  color: var(--mg-text-secondary, #6b7280);
+  color: var(--mg-text-secondary, var(--mg-color-text-secondary));
 }
 
 .widget-item-actions {
@@ -164,10 +164,10 @@
 .widget-empty-state {
   padding: var(--mg-spacing-xl, 2rem);
   text-align: center;
-  color: var(--mg-text-secondary, #6b7280);
-  background: var(--mg-bg-secondary, #f9fafb);
+  color: var(--mg-text-secondary, var(--mg-color-text-secondary));
+  background: var(--mg-bg-secondary, var(--mg-color-background-main));
   border-radius: var(--mg-border-radius-md, 0.5rem);
-  border: var(--mg-border-width, 2px) dashed var(--mg-border-color, #e5e7eb);
+  border: var(--mg-border-width, 2px) dashed var(--mg-border-color, var(--mg-color-border-main));
 }
 
 .widget-empty-state p {
@@ -254,12 +254,12 @@
 }
 
 /* 위젯 액션 버튼 (설정 / 삭제) */
-/* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값(#ddd/#fff/#666) -> 토큰 매핑 부재 */
+/* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값(#ddd/var(--mg-white)/#666) -> 토큰 매핑 부재 */
 .widget-action-btn--config {
   padding: 6px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  background-color: #fff;
+  background-color: var(--mg-white);
   cursor: pointer;
   font-size: 12px;
   display: inline-flex;
@@ -272,7 +272,7 @@
   padding: 6px 12px;
   border: 1px solid var(--mg-error-500);
   border-radius: 4px;
-  background-color: #fff;
+  background-color: var(--mg-white);
   cursor: pointer;
   font-size: 12px;
   display: inline-flex;

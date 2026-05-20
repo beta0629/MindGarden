@@ -371,7 +371,7 @@ const CommonCodeForm = ({
                                 <input
                                     type="color"
                                     id="colorCodePicker"
-                                    value={/^#[0-9A-Fa-f]{6}$/i.test(formData.colorCode || '') ? formData.colorCode : '#6b7280'}
+                                    value={/^#[0-9A-Fa-f]{6}$/i.test(formData.colorCode || '') ? formData.colorCode : 'var(--mg-color-text-secondary)'}
                                     onChange={(e) => {
                                         setFormData(prev => ({ ...prev, colorCode: e.target.value }));
                                     }}

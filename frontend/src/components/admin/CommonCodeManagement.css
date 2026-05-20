@@ -50,8 +50,8 @@
 
 .mg-form-input--legacy {
     color: #000;
-    background-color: #fff;
-    border: 2px solid #e9ecef;
+    background-color: var(--mg-white);
+    border: 2px solid var(--mg-color-border-main);
 }
 
 /* 반응형 디자인 */

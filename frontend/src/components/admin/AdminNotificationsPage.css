@@ -211,9 +211,9 @@
 }
 
 /* 배지 변형 (공지 카드용) */
-.mg-v2-status-badge.mg-v2-badge--success { background: var(--mg-color-success, var(--mg-color-primary-main)); color: #fff; }
-.mg-v2-status-badge.mg-v2-badge--info { background: var(--mg-color-info); color: #fff; }
-.mg-v2-status-badge.mg-v2-badge--neutral { background: var(--mg-color-text-secondary); color: #fff; }
+.mg-v2-status-badge.mg-v2-badge--success { background: var(--mg-color-success, var(--mg-color-primary-main)); color: var(--mg-white); }
+.mg-v2-status-badge.mg-v2-badge--info { background: var(--mg-color-info); color: var(--mg-white); }
+.mg-v2-status-badge.mg-v2-badge--neutral { background: var(--mg-color-text-secondary); color: var(--mg-white); }
 .mg-v2-status-badge.mg-v2-badge--secondary { background: var(--mg-color-border-main); color: var(--mg-color-text-main); }
 
 @media (min-width: 768px) {

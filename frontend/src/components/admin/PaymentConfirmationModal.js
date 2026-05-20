@@ -117,7 +117,7 @@ const PaymentConfirmationModal = ({
     { value: 'NAVER_PAY', label: '네이버페이', icon: '💚', color: '#03c75a', description: '네이버페이 간편결제' },
     { value: 'TOSS', label: '토스', icon: '🔷', color: '#0064ff', description: '토스 간편결제' },
     { value: 'PAYPAL', label: '페이팔', icon: '🔵', color: '#0070ba', description: '페이팔 결제' },
-    { value: 'OTHER', label: '기타', icon: '💱', color: '#6b7280', description: '기타 결제 방법' }
+    { value: 'OTHER', label: '기타', icon: '💱', color: 'var(--mg-color-text-secondary)', description: '기타 결제 방법' }
   ];
 
   useEffect(() => {

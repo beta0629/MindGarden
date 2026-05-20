@@ -226,7 +226,7 @@
   justify-content: flex-end;
   align-items: center;
   gap: var(--spacing-md);
-  border-top: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  border-top: var(--mg-border-width, 1px) solid var(--mg-border-color, var(--mg-color-border-main));
   background: var(--mg-bg-secondary, var(--mg-gray-100));
 }
 
@@ -320,7 +320,7 @@
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--mg-spacing-lg, 1.5rem);
-  border-top: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  border-top: var(--mg-border-width, 1px) solid var(--mg-border-color, var(--mg-color-border-main));
   background: var(--mg-bg-secondary, var(--mg-gray-100));
   flex-shrink: 0;
 }

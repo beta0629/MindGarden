@@ -9,8 +9,8 @@
   margin-top: var(--spacing-lg, 24px);
   padding: var(--spacing-lg, 24px);
   padding-top: var(--spacing-md, 16px);
-  border-top: 1px solid var(--color-border-light, #e5e7eb);
-  background: var(--color-bg-secondary, #f9fafb);
+  border-top: 1px solid var(--color-border-light, var(--mg-color-border-main));
+  background: var(--color-bg-secondary, var(--mg-color-background-main));
 }
 
 /* MGButton이 모달 푸터에서 제대로 표시되도록 스타일 보완 */
@@ -54,17 +54,17 @@
 }
 
 .mg-v2-modal-footer .mg-button--danger:hover:not(:disabled) {
-  background-color: #dc2626 !important;
+  background-color: var(--mg-color-error) !important;
 }
 
 .mg-v2-modal-footer .mg-button--secondary {
-  background-color: #6b7280 !important;
+  background-color: var(--mg-color-text-secondary) !important;
   color: var(--mg-white) !important;
   border: 1px solid #d1d5db !important;
 }
 
 .mg-v2-modal-footer .mg-button--secondary:hover:not(:disabled) {
-  background-color: #4b5563 !important;
+  background-color: var(--mg-color-text-tertiary) !important;
 }
 
 /* 모바일 반응형 */

@@ -2,7 +2,7 @@
  * ManualMatchingQueue - 미배정 내담자 매칭 대기열 스타일
  */
 .manual-matching-queue {
-  background: var(--mg-bg-surface, #fff);
+  background: var(--mg-bg-surface, var(--mg-white));
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   padding: var(--mg-spacing-lg, 20px);

@@ -8,9 +8,9 @@
   flex-direction: column;
   gap: var(--mg-spacing-md, 1rem);
   padding: var(--mg-spacing-md, 1rem);
-  background: var(--mg-bg-secondary, #f9fafb);
+  background: var(--mg-bg-secondary, var(--mg-color-background-main));
   border-radius: var(--mg-border-radius-lg, 0.75rem);
-  border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  border: var(--mg-border-width, 1px) solid var(--mg-border-color, var(--mg-color-border-main));
   min-height: 500px;
   position: relative;
 }
@@ -35,7 +35,7 @@
   padding: var(--mg-spacing-md, 0.75rem);
   background: var(--mg-bg-primary, var(--mg-white));
   border-radius: var(--mg-border-radius-md, 0.5rem);
-  border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  border: var(--mg-border-width, 1px) solid var(--mg-border-color, var(--mg-color-border-main));
 }
 
 .preview-controls-left {
@@ -48,7 +48,7 @@
   margin: 0;
   font-size: var(--mg-font-size-lg, 1.125rem);
   font-weight: var(--mg-font-weight-semibold, 600);
-  color: var(--mg-text-primary, #1f2937);
+  color: var(--mg-text-primary, var(--mg-color-text-main));
   display: flex;
   align-items: center;
   gap: var(--mg-spacing-xs, 0.25rem);
@@ -65,12 +65,12 @@
   align-items: center;
   gap: var(--mg-spacing-xs, 0.25rem);
   padding: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.5rem);
-  background: var(--mg-bg-secondary, #f9fafb);
-  border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  background: var(--mg-bg-secondary, var(--mg-color-background-main));
+  border: var(--mg-border-width, 1px) solid var(--mg-border-color, var(--mg-color-border-main));
   border-radius: var(--mg-border-radius-sm, 0.25rem);
   cursor: pointer;
   font-size: var(--mg-font-size-sm, 0.875rem);
-  color: var(--mg-text-secondary, #6b7280);
+  color: var(--mg-text-secondary, var(--mg-color-text-secondary));
   transition: all var(--mg-animation-duration-fast, 0.2s);
 }
 
@@ -82,7 +82,7 @@
 
 .preview-scale-indicator {
   font-size: var(--mg-font-size-sm, 0.875rem);
-  color: var(--mg-text-secondary, #6b7280);
+  color: var(--mg-text-secondary, var(--mg-color-text-secondary));
   font-weight: var(--mg-font-weight-medium, 500);
   min-width: 50px;
   text-align: center;
@@ -144,8 +144,8 @@
 
 /* 위젯 미리보기 아이템 */
 .preview-widget-item {
-  background: var(--mg-bg-secondary, #f9fafb);
-  border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  background: var(--mg-bg-secondary, var(--mg-color-background-main));
+  border: var(--mg-border-width, 1px) solid var(--mg-border-color, var(--mg-color-border-main));
   border-radius: var(--mg-border-radius-md, 0.5rem);
   overflow: hidden;
   transition: all var(--mg-animation-duration-fast, 0.2s);
@@ -164,7 +164,7 @@
   gap: var(--mg-spacing-xs, 0.25rem);
   padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 0.75rem);
   background: var(--mg-bg-primary, var(--mg-white));
-  border-bottom: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  border-bottom: var(--mg-border-width, 1px) solid var(--mg-border-color, var(--mg-color-border-main));
 }
 
 .preview-widget-icon {
@@ -174,7 +174,7 @@
 .preview-widget-name {
   font-size: var(--mg-font-size-sm, 0.875rem);
   font-weight: var(--mg-font-weight-medium, 500);
-  color: var(--mg-text-primary, #1f2937);
+  color: var(--mg-text-primary, var(--mg-color-text-main));
 }
 
 .preview-widget-content {
@@ -198,10 +198,10 @@
   align-items: center;
   justify-content: center;
   padding: var(--mg-spacing-xl, 2rem);
-  color: var(--mg-text-secondary, #6b7280);
-  background: var(--mg-bg-secondary, #f9fafb);
+  color: var(--mg-text-secondary, var(--mg-color-text-secondary));
+  background: var(--mg-bg-secondary, var(--mg-color-background-main));
   border-radius: var(--mg-border-radius-md, 0.5rem);
-  border: var(--mg-border-width, 2px) dashed var(--mg-border-color, #e5e7eb);
+  border: var(--mg-border-width, 2px) dashed var(--mg-border-color, var(--mg-color-border-main));
 }
 
 .preview-empty-state p {
@@ -214,13 +214,13 @@
   padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 0.75rem);
   background: var(--mg-bg-primary, var(--mg-white));
   border-radius: var(--mg-border-radius-md, 0.5rem);
-  border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  border: var(--mg-border-width, 1px) solid var(--mg-border-color, var(--mg-color-border-main));
 }
 
 .preview-help p {
   margin: 0;
   font-size: var(--mg-font-size-sm, 0.875rem);
-  color: var(--mg-text-secondary, #6b7280);
+  color: var(--mg-text-secondary, var(--mg-color-text-secondary));
   text-align: center;
 }
 

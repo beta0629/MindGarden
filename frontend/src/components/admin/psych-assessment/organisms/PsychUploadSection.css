@@ -440,5 +440,5 @@
 .mg-v2-psych-upload-section__error {
   margin: 0;
   font-size: 14px;
-  color: var(--mg-error-500, var(--cs-error-500, #dc2626));
+  color: var(--mg-error-500, var(--cs-error-500, var(--mg-color-error)));
 }

@@ -4,7 +4,7 @@
   position: relative;
   overflow: hidden;
   background: var(--color-surface, var(--mg-white));
-  border: 1px solid var(--color-border-light, #e5e7eb);
+  border: 1px solid var(--color-border-light, var(--mg-color-border-main));
   border-radius: var(--radius-lg, 16px);
   padding: var(--spacing-lg, 24px);
   display: flex;
@@ -92,7 +92,7 @@
   flex-direction: column;
   gap: 4px;
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary, #4b5563);
+  color: var(--color-text-secondary, var(--mg-color-text-tertiary));
 }
 
 .mg-v2-profile-card__email,
@@ -167,7 +167,7 @@
 
 .mg-v2-profile-card__stat-label {
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary, #4b5563);
+  color: var(--color-text-secondary, var(--mg-color-text-tertiary));
 }
 
 .mg-v2-profile-card__stat-value {
@@ -179,10 +179,10 @@
 .mg-v2-profile-card__extra-info {
   margin-top: var(--spacing-sm, 8px);
   padding-top: var(--spacing-sm, 8px);
-  border-top: 1px dashed var(--color-border-light, #e5e7eb);
+  border-top: 1px dashed var(--color-border-light, var(--mg-color-border-main));
   line-height: 1.5;
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary, #4b5563);
+  color: var(--color-text-secondary, var(--mg-color-text-tertiary));
   display: flex;
   gap: 8px;
 }
@@ -232,7 +232,7 @@
 .mg-v2-profile-card__inline-actions .mg-button--primary,
 .mg-v2-profile-card__actions.mg-v2-client-actions .mg-button--primary {
   background: var(--ad-b0kla-green);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .mg-v2-profile-card__footer .mg-button--primary:hover:not(:disabled):not(.mg-button--disabled),
@@ -263,11 +263,11 @@
 .mg-v2-profile-card__inline-actions .mg-button--danger,
 .mg-v2-profile-card__actions.mg-v2-client-actions .mg-button--danger {
   background: var(--mg-error-500);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .mg-v2-profile-card__footer .mg-button--danger:hover:not(:disabled):not(.mg-button--disabled) {
-  background: var(--mg-error-600, #dc2626);
+  background: var(--mg-error-600, var(--mg-color-error));
   filter: brightness(1.05);
   transform: translateY(-1px);
 }
@@ -386,13 +386,13 @@
   display: flex; align-items: center; gap: 4px;
 }
 .mg-v2-profile-card__stat-icon {
-  color: var(--color-text-secondary, #4b5563); display: flex; align-items: center;
+  color: var(--color-text-secondary, var(--mg-color-text-tertiary)); display: flex; align-items: center;
 }
 
 /* 미니 진행률 바 */
 .mg-v2-profile-card__progress { width: 100%; margin-top: var(--spacing-sm, 8px); }
 .mg-v2-profile-card__progress-bar {
-  height: 4px; background-color: var(--mg-gray-200, #e5e7eb);
+  height: 4px; background-color: var(--mg-gray-200, var(--mg-color-border-main));
   border-radius: 2px; overflow: hidden;
 }
 .mg-v2-profile-card__progress-fill {

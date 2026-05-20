@@ -179,7 +179,7 @@
   gap: var(--mg-spacing-xs, 0.25rem); /* 간격 축소 */
   padding: var(--mg-spacing-sm, 0.5rem); /* 패딩 축소 */
   background: white;
-  border: 1px solid var(--mg-border-color, #e5e7eb); /* 테두리 얇게 */
+  border: 1px solid var(--mg-border-color, var(--mg-color-border-main)); /* 테두리 얇게 */
   border-radius: var(--mg-border-radius-md, 0.5rem); /* 둥근 정도 줄임 */
   cursor: pointer;
   transition: all var(--mg-animation-duration-normal, 0.3s);
@@ -240,7 +240,7 @@
 .widget-card-name {
   font-weight: var(--mg-font-weight-medium, 500); /* 글꼴 두께 줄임 */
   font-size: var(--mg-font-size-xs, 0.75rem); /* 글꼴 크기 축소 */
-  color: var(--mg-text-primary, #1f2937);
+  color: var(--mg-text-primary, var(--mg-color-text-main));
   margin-bottom: var(--mg-spacing-xs, 0.125rem); /* 간격 줄임 */
   line-height: 1.2; /* 줄 높이 축소 */
   text-align: center;
@@ -355,7 +355,7 @@
   justify-content: center;
   height: 100%;
   text-align: center;
-  color: var(--mg-text-secondary, #6b7280);
+  color: var(--mg-text-secondary, var(--mg-color-text-secondary));
 }
 
 .empty-icon {
@@ -368,7 +368,7 @@
   margin: 0 0 var(--mg-spacing-sm, 0.5rem) 0;
   font-size: var(--mg-font-size-lg, 1.125rem);
   font-weight: var(--mg-font-weight-semibold, 600);
-  color: var(--mg-text-primary, #1f2937);
+  color: var(--mg-text-primary, var(--mg-color-text-main));
 }
 
 .empty-dashboard p {
@@ -391,7 +391,7 @@
 /* ===== 대시보드 위젯 카드들 ===== */
 .dashboard-widget-card {
   background: white;
-  border: 2px solid var(--mg-border-color, #e5e7eb);
+  border: 2px solid var(--mg-border-color, var(--mg-color-border-main));
   border-radius: var(--mg-border-radius-lg, 1rem);
   overflow: hidden;
   transition: all var(--mg-animation-duration-normal, 0.3s);
@@ -428,7 +428,7 @@
   cursor: grab;
   opacity: 0;
   transition: all var(--mg-animation-duration-fast, 0.2s);
-  color: var(--mg-text-secondary, #6b7280);
+  color: var(--mg-text-secondary, var(--mg-color-text-secondary));
 }
 
 .widget-drag-handle:active {
@@ -458,7 +458,7 @@
   width: 32px;
   height: 32px;
   border-radius: var(--mg-border-radius-md, 0.5rem);
-  background: var(--mg-bg-secondary, #f9fafb);
+  background: var(--mg-bg-secondary, var(--mg-color-background-main));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -473,7 +473,7 @@
   margin: 0;
   font-size: var(--mg-font-size-sm, 0.875rem);
   font-weight: var(--mg-font-weight-semibold, 600);
-  color: var(--mg-text-primary, #1f2937);
+  color: var(--mg-text-primary, var(--mg-color-text-main));
   line-height: 1.2;
 }
 
@@ -486,7 +486,7 @@
 /* ===== 위젯 미리보기 영역 ===== */
 .widget-preview {
   flex: 1;
-  background: var(--mg-bg-secondary, #f9fafb);
+  background: var(--mg-bg-secondary, var(--mg-color-background-main));
   border-radius: var(--mg-border-radius-md, 0.5rem);
   padding: var(--mg-spacing-sm, 0.5rem);
   margin-bottom: var(--mg-spacing-sm, 0.5rem);
@@ -538,7 +538,7 @@
 }
 
 .config-btn:hover {
-  background: var(--mg-info-dark, #2563eb);
+  background: var(--mg-info-dark, var(--mg-color-info));
   transform: var(--mg-transform-scale-up, scale(1.1));
 }
 
@@ -548,7 +548,7 @@
 }
 
 .delete-btn:hover {
-  background: var(--mg-danger-dark, #dc2626);
+  background: var(--mg-danger-dark, var(--mg-color-error));
   transform: var(--mg-transform-scale-up, scale(1.1));
 }
 

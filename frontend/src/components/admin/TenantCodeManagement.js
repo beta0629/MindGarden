@@ -632,8 +632,8 @@ const TenantCodeManagement = () => {
                                 <input
                                     id="tenant-code-color"
                                     type="color"
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-                                    value={formData.colorCode || '#6b7280'}
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-6b7280)
+                                    value={formData.colorCode || 'var(--mg-color-text-secondary)'}
                                     onChange={(e) => setFormData({ ...formData, colorCode: e.target.value })}
                                 />
                             </div>

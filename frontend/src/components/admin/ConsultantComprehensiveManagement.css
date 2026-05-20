@@ -81,7 +81,7 @@
 .consultant-comp-consultant-name {
     font-size: var(--font-size-base);
     font-weight: 600;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
     margin: 0 0 4px 0;
     white-space: nowrap;
     overflow: hidden;
@@ -90,7 +90,7 @@
 
 .consultant-comp-consultant-email {
     font-size: var(--font-size-sm);
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     margin: 0 0 2px 0;
     white-space: nowrap;
     overflow: hidden;
@@ -99,7 +99,7 @@
 
 .consultant-comp-consultant-phone {
     font-size: var(--font-size-xs);
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     margin: 0 0 4px 0;
     white-space: nowrap;
     overflow: hidden;
@@ -108,7 +108,7 @@
 
 .consultant-comp-consultant-specialty {
     font-size: var(--font-size-xs);
-    color: #374151;
+    color: var(--mg-color-text-secondary-dark);
     margin: 0 0 4px 0;
     white-space: normal;
     word-wrap: break-word;
@@ -123,7 +123,7 @@
 
 .consultant-comp-consultant-date {
     font-size: var(--font-size-xs);
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     margin: 0;
 }
 
@@ -155,7 +155,7 @@
 }
 
 .consultant-comp-consultant-actions .mg-btn--primary:hover {
-    background: #2563eb;
+    background: var(--mg-color-info);
     transform: translateY(-1px);
 }
 
@@ -165,7 +165,7 @@
 }
 
 .consultant-comp-consultant-actions .btn-danger:hover {
-    background: #dc2626;
+    background: var(--mg-color-error);
     transform: translateY(-1px);
 }
 
@@ -217,7 +217,7 @@
     border: 2px solid var(--color-border);
     border-radius: 8px;
     background: var(--color-bg-surface);
-    color: #374151;
+    color: var(--mg-color-text-secondary-dark);
     font-size: var(--font-size-sm);
     font-family: inherit;
     box-sizing: border-box;
@@ -269,7 +269,7 @@
 .consultant-detail-section h4 {
     font-size: var(--font-size-lg);
     font-weight: 600;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
     margin: 0 0 16px 0;
     padding-bottom: 12px;
     border-bottom: 1px solid var(--color-border);
@@ -292,14 +292,14 @@
 .consultant-detail-label {
     font-size: var(--font-size-xs);
     font-weight: 500;
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .consultant-detail-value {
     font-size: var(--font-size-sm);
-    color: #1f2937;
+    color: var(--mg-color-text-main);
     font-weight: 500;
 }
 
@@ -330,16 +330,16 @@
 }
 
 .consultant-detail-actions .mg-btn--primary:hover {
-    background: #2563eb;
+    background: var(--mg-color-info);
 }
 
 .consultant-detail-actions .mg-btn--secondary {
-    background: #6b7280;
+    background: var(--mg-color-text-secondary);
     color: white;
 }
 
 .consultant-detail-actions .mg-btn--secondary:hover {
-    background: #4b5563;
+    background: var(--mg-color-text-tertiary);
 }
 
 /* 기본 컨테이너 */
@@ -396,14 +396,14 @@
 .consultant-comp-stat-number {
     font-size: var(--font-size-xxl);
     font-weight: 700;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
     margin: 0 0 4px 0;
     line-height: 1;
 }
 
 .consultant-comp-stat-label {
     font-size: var(--font-size-sm);
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     margin: 0;
     font-weight: 500;
 }
@@ -416,7 +416,7 @@
 .consultant-comp-section-header h3 {
     font-size: var(--font-size-lg);
     font-weight: 600;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
     margin: 0 0 8px 0;
 }
 
@@ -457,7 +457,7 @@
 .consultant-comp-title {
     font-size: var(--font-size-xxl);
     font-weight: 700;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
     margin: 0 0 8px 0;
     display: flex;
     align-items: center;
@@ -465,7 +465,7 @@
 }
 
 .consultant-comp-description {
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     margin: 0 0 20px 0;
     font-size: var(--font-size-sm);
 }
@@ -486,7 +486,7 @@
     cursor: pointer;
     transition: all 0.2s;
     background: #f3f4f6;
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
 }
 
 .consultant-comp-main-tab-btn.active {
@@ -499,7 +499,7 @@
 }
 
 .consultant-comp-main-tab-btn.active:hover {
-    background: #2563eb;
+    background: var(--mg-color-info);
 }
 
 /* 기본관리 탭 */
@@ -511,14 +511,14 @@
 }
 
 .basic-management-content h3 {
-    color: #1f2937;
+    color: var(--mg-color-text-main);
     margin: 0 0 8px 0;
     font-size: var(--font-size-xl);
     font-weight: 600;
 }
 
 .basic-management-content p {
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     margin: 0 0 20px 0;
     font-size: var(--font-size-sm);
 }
@@ -548,16 +548,16 @@
 }
 
 .mg-btn--primary:hover {
-    background: #2563eb;
+    background: var(--mg-color-info);
 }
 
 .mg-btn--secondary {
-    background: #6b7280;
+    background: var(--mg-color-text-secondary);
     color: white;
 }
 
 .mg-btn--secondary:hover {
-    background: #4b5563;
+    background: var(--mg-color-text-tertiary);
 }
 
 /* 상담사 목록 컨테이너 - 상담사 종합관리와 동일한 스타일 */
@@ -631,7 +631,7 @@
 .basic-management-tab .consultant-basic-info .consultant-name {
     font-size: var(--font-size-lg);
     font-weight: 700;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
     margin: 0 0 6px 0;
     white-space: nowrap;
     overflow: hidden;
@@ -641,7 +641,7 @@
 
 .basic-management-tab .consultant-basic-info .consultant-email {
     font-size: var(--font-size-sm);
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
@@ -672,7 +672,7 @@
 .basic-management-tab .consultants-cards-grid .consultant-card .consultant-specialty-display,
 .basic-management-tab .consultants-cards-container .consultant-specialty-display {
     font-size: var(--font-size-sm);
-    color: #374151;
+    color: var(--mg-color-text-secondary-dark);
     line-height: 1.6;
     background: #f0f9ff;
     padding: var(--spacing-md) var(--spacing-lg);
@@ -717,7 +717,7 @@ div[class*="consultant-specialty-display"] div,
 .basic-management-tab .consultants-cards-grid .consultant-card .consultant-specialty-display div,
 .basic-management-tab .consultants-cards-container .consultant-specialty-display div {
     font-size: var(--font-size-sm);
-    color: #374151;
+    color: var(--mg-color-text-secondary-dark);
     line-height: 1.6;
     background: #f0f9ff;
     padding: var(--spacing-md) var(--spacing-lg);
@@ -773,13 +773,13 @@ div[class*="consultant-specialty-display"] div,
 
 .basic-management-tab .join-label {
     font-size: var(--font-size-sm);
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     font-weight: 500;
 }
 
 .basic-management-tab .join-value {
     font-size: var(--font-size-sm);
-    color: #374151;
+    color: var(--mg-color-text-secondary-dark);
     font-weight: 600;
 }
 
@@ -811,7 +811,7 @@ div[class*="consultant-specialty-display"] div,
 }
 
 .basic-management-tab .mg-btn--primary:hover {
-    background: #2563eb;
+    background: var(--mg-color-info);
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
 }
@@ -822,20 +822,20 @@ div[class*="consultant-specialty-display"] div,
 }
 
 .basic-management-tab .btn-danger:hover {
-    background: #dc2626;
+    background: var(--mg-color-error);
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
 }
 
 .btn-danger:hover {
-    background: #dc2626;
+    background: var(--mg-color-error);
 }
 
 /* 상담사 없음 */
 .no-consultants {
     text-align: center;
     padding: var(--spacing-xxxl);
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
 }
 
 /* 반응형 디자인 */

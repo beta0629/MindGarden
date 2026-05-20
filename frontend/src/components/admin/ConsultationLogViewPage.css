@@ -185,12 +185,12 @@
 
 .mg-v2-badge--success {
   background: var(--mg-success-500);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .mg-v2-badge--warning {
   background: var(--mg-warning-500);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 /* 빈 상태 */

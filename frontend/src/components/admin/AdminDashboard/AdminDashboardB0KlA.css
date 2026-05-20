@@ -15,7 +15,7 @@
 .mg-v2-ad-b0kla .mg-v2-button--primary,
 .mg-v2-ad-b0kla .mg-button--primary {
   background: var(--ad-b0kla-green);
-  color: #fff;
+  color: var(--mg-white);
   border: none;
 }
 
@@ -42,7 +42,7 @@
 .mg-v2-ad-b0kla .mg-v2-button-success,
 .mg-v2-ad-b0kla .mg-v2-button--success {
   background: var(--ad-b0kla-green);
-  color: #fff;
+  color: var(--mg-white);
   border: none;
 }
 
@@ -61,15 +61,15 @@
 }
 .mg-v2-ad-b0kla .mg-v2-badge.success {
   background: var(--ad-b0kla-green);
-  color: #fff;
+  color: var(--mg-white);
 }
 .mg-v2-ad-b0kla .mg-v2-badge.warning {
   background: var(--ad-b0kla-orange);
-  color: #fff;
+  color: var(--mg-white);
 }
 .mg-v2-ad-b0kla .mg-v2-badge.info {
   background: var(--ad-b0kla-blue);
-  color: #fff;
+  color: var(--mg-white);
 }
 .mg-v2-ad-b0kla .mg-v2-badge.error {
   background: var(--ad-b0kla-danger);
@@ -77,13 +77,13 @@
 }
 .mg-v2-ad-b0kla .mg-v2-badge.secondary {
   background: var(--ad-b0kla-text-secondary);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .mg-v2-ad-b0kla .mg-v2-button-danger,
 .mg-v2-ad-b0kla .mg-v2-button--danger {
   background: var(--ad-b0kla-danger);
-  color: #fff;
+  color: var(--mg-white);
   border: none;
 }
 
@@ -133,39 +133,39 @@
 .mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge--success,
 .mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge.mg-v2-badge--success {
   background: var(--ad-b0kla-green) !important;
-  color: #fff;
+  color: var(--mg-white);
 }
 .mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge--warning,
 .mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge.mg-v2-badge--warning {
   background: var(--ad-b0kla-orange) !important;
-  color: #fff;
+  color: var(--mg-white);
 }
 .mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge--neutral,
 .mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge.mg-v2-badge--neutral {
   background: var(--ad-b0kla-text-secondary) !important;
-  color: #fff;
+  color: var(--mg-white);
 }
 
 /* 매칭 리스트 행 내 상태 배지: 배경·글자색 확실히 적용 (카드 블록과 동일) */
 .mg-v2-ad-b0kla .mg-v2-mapping-list-row .mg-v2-status-badge.mg-v2-badge--success {
   background: var(--ad-b0kla-green);
-  color: #fff;
+  color: var(--mg-white);
 }
 .mg-v2-ad-b0kla .mg-v2-mapping-list-row .mg-v2-status-badge.mg-v2-badge--warning {
   background: var(--ad-b0kla-orange);
-  color: #fff;
+  color: var(--mg-white);
 }
 .mg-v2-ad-b0kla .mg-v2-mapping-list-row .mg-v2-status-badge.mg-v2-badge--neutral {
   background: var(--ad-b0kla-text-secondary);
-  color: #fff;
+  color: var(--mg-white);
 }
 .mg-v2-ad-b0kla .mg-v2-mapping-list-row .mg-v2-status-badge.mg-v2-badge--danger {
   background: var(--ad-b0kla-danger);
-  color: #fff;
+  color: var(--mg-white);
 }
 .mg-v2-ad-b0kla .mg-v2-mapping-list-row .mg-v2-status-badge.mg-v2-badge--info {
   background: var(--ad-b0kla-blue);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 /* ===== 레이아웃 ===== */
@@ -1388,20 +1388,20 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary,
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary.mg-v2-button-primary {
   background: var(--ad-b0kla-green);
-  color: #fff;
+  color: var(--mg-white);
   border-color: transparent;
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary.mg-v2-button-primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--mg-success-700);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-button__content,
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-button__text,
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-v2-text-lg {
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-v2-text-secondary {
@@ -1577,7 +1577,7 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
 .mg-v2-ad-b0kla .mg-v2-specialty-tag--selected {
   background: var(--ad-b0kla-green);
   border-color: var(--ad-b0kla-green);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .mg-v2-ad-b0kla .mg-v2-specialty-tag--selected:hover {
@@ -1608,7 +1608,7 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
 .mg-v2-ad-b0kla .mg-v2-specialty-tag.mg-button.mg-button--outline.mg-v2-specialty-tag--selected {
   background: var(--ad-b0kla-green);
   border-color: var(--ad-b0kla-green);
-  color: #fff;
+  color: var(--mg-white);
 }
 
 .mg-v2-ad-b0kla .mg-v2-specialty-tag.mg-button.mg-button--outline.mg-v2-specialty-tag--selected:hover:not(.mg-button--disabled):not(.mg-button--loading) {

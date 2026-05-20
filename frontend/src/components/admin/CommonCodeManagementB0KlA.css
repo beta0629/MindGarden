@@ -192,7 +192,7 @@
 
 .mg-v2-ad-b0kla__common-code-container .mg-v2-btn.mg-button--primary {
     background: var(--ad-b0kla-green);
-    color: #fff;
+    color: var(--mg-white);
     border: none;
 }
 
@@ -268,7 +268,7 @@
 
 .mg-v2-btn--primary {
     background: var(--ad-b0kla-green);
-    color: #fff;
+    color: var(--mg-white);
 }
 
 .mg-v2-btn--primary:hover {
@@ -287,8 +287,8 @@
 
 .mg-v2-btn--danger-outline {
     background: transparent;
-    border: 1px solid var(--mg-error-500, #dc2626);
-    color: var(--mg-error-500, #dc2626);
+    border: 1px solid var(--mg-error-500, var(--mg-color-error));
+    color: var(--mg-error-500, var(--mg-color-error));
 }
 
 .mg-v2-btn--danger-outline:hover {

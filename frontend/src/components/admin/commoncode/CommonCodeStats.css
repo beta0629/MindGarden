@@ -45,7 +45,7 @@
 }
 
 .stat-card.inactive .stat-icon {
-    background: linear-gradient(135deg, var(--mg-error-500), #dc2626);
+    background: linear-gradient(135deg, var(--mg-error-500), var(--mg-color-error));
 }
 
 .stat-card.groups .stat-icon {
@@ -59,14 +59,14 @@
 .stat-value {
     font-size: 32px;
     font-weight: 700;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
     line-height: 1;
     margin-bottom: 4px;
 }
 
 .stat-label {
     font-size: 14px;
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     font-weight: 500;
 }
 

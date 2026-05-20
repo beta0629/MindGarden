@@ -1,0 +1,99 @@
+/**
+ * SalaryExportModal 컴포넌트 추출 스타일
+ *
+ * T8-C2 인라인 스타일 → CSS 클래스 추출 (HARDCODE_CLEANUP_HOTZONE_INVENTORY §4.C)
+ * - 동작·시각 변경 0건. 추출된 클래스는 인라인과 1:1 동등
+ * - HEX 매핑이 명확한 색상만 토큰 치환, 그 외 HEX는 그대로 유지 (T1 codemod 후 정리)
+ *
+ * @since 2026-05-21
+ */
+
+.salary-export-modal__summary-emoji {
+  font-size: var(--font-size-lg);
+}
+
+.salary-export-modal__summary-label {
+  font-size: var(--font-size-xs);
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.salary-export-modal__summary-value {
+  font-size: var(--font-size-sm);
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.salary-export-modal__summary-value--total {
+  font-size: var(--font-size-base);
+  color: #059669;
+  font-weight: 700;
+}
+
+.salary-export-modal__option-section {
+  margin-bottom: 20px;
+}
+
+.salary-export-modal__option-heading {
+  margin: 0 0 15px 0;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+}
+
+.salary-export-modal__option-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.salary-export-modal__radio-row {
+  display: flex;
+  gap: 15px;
+  margin-top: 8px;
+}
+
+.salary-export-modal__radio-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.salary-export-modal__checkbox-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.salary-export-modal__checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.salary-export-modal__email-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.salary-export-modal__attachment-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  margin-left: 24px;
+}
+
+.salary-export-modal__error {
+  color: #dc2626;
+  background-color: #fef2f2;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}

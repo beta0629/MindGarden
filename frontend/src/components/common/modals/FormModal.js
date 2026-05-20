@@ -3,6 +3,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import UnifiedModal from './UnifiedModal';
 import MGButton from '../MGButton';
 import '../../../styles/main.css';
+import './FormModal.css';
 
 const SUBMIT_VARIANTS = new Set(['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'outline']);
 
@@ -74,7 +75,7 @@ const FormModal = ({
       }
     >
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+        <div className="form-modal__body">
           {children}
         </div>
       </form>

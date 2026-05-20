@@ -97,14 +97,8 @@ export const PrivacyPolicyContent = ({ omitHeading = false }) => (
           <p className="mg-v2-terms-paragraph">
             회사는 개인정보를 제1조(개인정보의 처리목적)에서 명시한 범위 내에서만 처리하며, 정보주체의 동의, 법률의 특별한 규정 등 개인정보보호법 제17조에 해당하는 경우에만 개인정보를 제3자에게 제공합니다.
           </p>
-          <div style={{
-            background: 'var(--mg-custom-fff3cd, #fff3cd)',
-            border: '1px solid var(--mg-custom-ffeaa7, #ffeaa7)',
-            borderRadius: '8px',
-            padding: '15px',
-            marginBottom: '15px'
-          }}>
-            <p className="mg-v2-text-sm mg-v2-m-0" style={{ color: 'var(--mg-custom-856404, #856404)' }}>
+          <div className="privacy-policy-warning-box">
+            <p className="mg-v2-text-sm mg-v2-m-0 privacy-policy-warning-text">
               <strong>주의:</strong> 상담 서비스 제공을 위해 상담사에게 필요한 최소한의 정보만 제공되며,
               이는 상담 서비스의 질적 향상을 위한 목적으로만 사용됩니다.
             </p>
@@ -140,7 +134,7 @@ export const PrivacyPolicyContent = ({ omitHeading = false }) => (
             <li>개인정보 정정·삭제요구</li>
             <li>개인정보 처리정지요구</li>
           </ul>
-          <p className="mg-v2-text-sm mg-v2-text-secondary" style={{ marginTop: '15px' }}>
+          <p className="mg-v2-text-sm mg-v2-text-secondary privacy-policy-rights-note">
             권리 행사는 회사에 대해 서면, 전화, 전자우편, 모사전송(FAX) 등을 통하여 하실 수 있으며 회사는 이에 대해 지체없이 조치하겠습니다.
           </p>
         </div>
@@ -186,14 +180,8 @@ export const PrivacyPolicyContent = ({ omitHeading = false }) => (
           </p>
         </div>
 
-        <div style={{
-          background: 'var(--mg-custom-e8f4fd, #e8f4fd)',
-          border: '1px solid var(--mg-custom-bee5eb, #bee5eb)',
-          borderRadius: '8px',
-          padding: '20px',
-          textAlign: 'center'
-        }}>
-          <p style={{ margin: '0', fontSize: 'var(--font-size-sm)', color: 'var(--mg-custom-0c5460, #0c5460)' }}>
+        <div className="privacy-policy-conclusion-box">
+          <p className="privacy-policy-conclusion-text">
             <strong>본 개인정보처리방침은 2025년 1월 17일부터 시행됩니다.</strong>
           </p>
         </div>

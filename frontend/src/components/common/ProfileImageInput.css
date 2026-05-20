@@ -1,0 +1,15 @@
+/**
+ * ProfileImageInput 컴포넌트 추출 스타일
+ *
+ * T8-C2 인라인 스타일 → CSS 클래스 추출 (HARDCODE_CLEANUP_HOTZONE_INVENTORY §4.C)
+ * - 동작·시각 변경 0건. 추출된 클래스는 인라인과 1:1 동등
+ *
+ * @since 2026-05-21
+ */
+
+.mg-v2-profile-photo-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

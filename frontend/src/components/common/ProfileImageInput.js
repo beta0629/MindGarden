@@ -10,6 +10,7 @@ import { User } from 'lucide-react';
 import { processProfileImage } from '../../utils/imageResizeCrop';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
+import './ProfileImageInput.css';
 
 const DEFAULT_MAX_BYTES = 2 * 1024 * 1024;
 const DEFAULT_CROP_SIZE = 400;
@@ -72,7 +73,7 @@ const ProfileImageInput = ({
               src={value}
               alt="프로필 미리보기"
               decoding="async"
-              style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+              className="mg-v2-profile-photo-img"
             />
           ) : (
             <span className="mg-v2-profile-photo-placeholder" aria-hidden="true">

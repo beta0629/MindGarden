@@ -10,6 +10,7 @@ import {
 import StandardizedApi from '../../utils/standardizedApi';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
+import './SalaryExportModal.css';
 
 /**
  * 급여 출력 모달. 모든 출력 형식에서 상담사 등록 이메일로 발송 옵션 제공.
@@ -172,57 +173,24 @@ const SalaryExportModal = ({
             </h4>
             <div className="mg-v2-form-grid">
               <div className="mg-v2-card-item">
-                <div style={{ fontSize: 'var(--font-size-lg)' }}>👤</div>
+                <div className="salary-export-modal__summary-emoji">👤</div>
                 <div>
-                  <div style={{
-                    fontSize: 'var(--font-size-xs)',
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-                    color: '#6b7280',
-                    fontWeight: '500',
-                    marginBottom: '2px'
-                  }}>상담사</div>
-                  <div style={{
-                    fontSize: 'var(--font-size-sm)',
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
-                    color: '#1f2937',
-                    fontWeight: '600'
-                  }}>{consultantName || '정보 없음'}</div>
+                  <div className="salary-export-modal__summary-label">상담사</div>
+                  <div className="salary-export-modal__summary-value">{consultantName || '정보 없음'}</div>
                 </div>
               </div>
               <div className="mg-v2-card-item">
-                <div style={{ fontSize: 'var(--font-size-lg)' }}>📅</div>
+                <div className="salary-export-modal__summary-emoji">📅</div>
                 <div>
-                  <div style={{
-                    fontSize: 'var(--font-size-xs)',
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-                    color: '#6b7280',
-                    fontWeight: '500',
-                    marginBottom: '2px'
-                  }}>기간</div>
-                  <div style={{
-                    fontSize: 'var(--font-size-sm)',
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
-                    color: '#1f2937',
-                    fontWeight: '600'
-                  }}>{period || '정보 없음'}</div>
+                  <div className="salary-export-modal__summary-label">기간</div>
+                  <div className="salary-export-modal__summary-value">{period || '정보 없음'}</div>
                 </div>
               </div>
               <div className="mg-v2-card-item">
-                <div style={{ fontSize: 'var(--font-size-lg)' }}>💵</div>
+                <div className="salary-export-modal__summary-emoji">💵</div>
                 <div>
-                  <div style={{
-                    fontSize: 'var(--font-size-xs)',
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-                    color: '#6b7280',
-                    fontWeight: '500',
-                    marginBottom: '2px'
-                  }}>총 급여</div>
-                  <div style={{
-                    fontSize: 'var(--font-size-base)',
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #059669 -> var(--mg-custom-059669)
-                    color: '#059669',
-                    fontWeight: '700'
-                  }}>
+                  <div className="salary-export-modal__summary-label">총 급여</div>
+                  <div className="salary-export-modal__summary-value salary-export-modal__summary-value--total">
                     {salaryData ? new Intl.NumberFormat('ko-KR').format(salaryData.totalSalary || 0) : 0}원
                   </div>
                 </div>
@@ -231,17 +199,17 @@ const SalaryExportModal = ({
           </div>
 
           {/* 출력 옵션 */}
-          <div style={{ marginBottom: '20px' }}>
-            <h4 style={{ margin: '0 0 15px 0', fontSize: 'var(--font-size-base)', fontWeight: '600' }}>출력 옵션</h4>
-            
+          <div className="salary-export-modal__option-section">
+            <h4 className="salary-export-modal__option-heading">출력 옵션</h4>
+
             {/* 출력 형식 선택 */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+            <div className="salary-export-modal__option-section">
+              <label className="salary-export-modal__option-label">
                 출력 형식
               </label>
-              <div style={{ display: 'flex', gap: '15px', marginTop: '8px' }}>
+              <div className="salary-export-modal__radio-row">
                 {Object.values(EXPORT_FORMAT).map(format => (
-                  <label key={format} style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
+                  <label key={format} className="salary-export-modal__radio-item">
                     <input
                       type="radio"
                       name="format"
@@ -256,12 +224,12 @@ const SalaryExportModal = ({
             </div>
 
             {/* 포함 내용 선택 */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+            <div className="salary-export-modal__option-section">
+              <label className="salary-export-modal__option-label">
                 포함 내용
               </label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <div className="salary-export-modal__checkbox-column">
+                <label className="salary-export-modal__checkbox-item">
                   <input
                     type="checkbox"
                     checked={includeTaxDetails}
@@ -269,7 +237,7 @@ const SalaryExportModal = ({
                   />
                   <span>세금 내역</span>
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <label className="salary-export-modal__checkbox-item">
                   <input
                     type="checkbox"
                     checked={includeCalculationDetails}
@@ -281,15 +249,8 @@ const SalaryExportModal = ({
             </div>
 
             {/* 상담사 등록 이메일 발송 */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                marginBottom: '10px'
-              }}
-              >
+            <div className="salary-export-modal__option-section">
+              <label className="salary-export-modal__email-checkbox-item">
                 <input
                   type="checkbox"
                   checked={sendEmail}
@@ -298,14 +259,7 @@ const SalaryExportModal = ({
                 <span>상담사 등록 이메일로 계산서 발송</span>
               </label>
               {sendEmail && (
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  marginLeft: '24px'
-                }}
-                >
+                <label className="salary-export-modal__attachment-checkbox-item">
                   <input
                     type="checkbox"
                     checked={includeAttachment}
@@ -319,15 +273,7 @@ const SalaryExportModal = ({
 
           {/* 오류 메시지 */}
           {error && (
-            <div style={{
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dc2626 -> var(--mg-custom-dc2626)
-              color: '#dc2626',
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef2f2 -> var(--mg-custom-fef2f2)
-              backgroundColor: '#fef2f2',
-              padding: '10px',
-              borderRadius: '4px',
-              marginBottom: '10px'
-            }}>
+            <div className="salary-export-modal__error">
               ❌ {error}
             </div>
           )}

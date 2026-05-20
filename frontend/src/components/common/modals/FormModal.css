@@ -1,0 +1,11 @@
+/**
+ * FormModal 컴포넌트 추출 스타일
+ *
+ * T8-C2 인라인 스타일 → CSS 클래스 추출 (HARDCODE_CLEANUP_HOTZONE_INVENTORY §4.C)
+ *
+ * @since 2026-05-21
+ */
+
+.form-modal__body {
+  margin-bottom: var(--spacing-lg);
+}

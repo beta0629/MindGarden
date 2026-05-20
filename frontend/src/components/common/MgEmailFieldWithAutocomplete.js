@@ -143,7 +143,7 @@ const MgEmailFieldWithAutocomplete = ({
           {label}
         </label>
       )}
-      <div className="mg-v2-email-field__input-wrap" style={{ position: 'relative' }}>
+      <div className="mg-v2-email-field__input-wrap">
         <input
           ref={inputRef}
           type="email"

@@ -14,12 +14,6 @@ export type AdminMappingSettlementTarget = Pick<
 
 export type AdminMappingPrimaryActionKind = 'payment' | 'deposit' | 'approve' | 'schedule';
 
-const SETTLEMENT_STATUSES = new Set([
-  'PENDING_PAYMENT',
-  'PAYMENT_CONFIRMED',
-  'DEPOSIT_PENDING',
-]);
-
 /** 일정 등록 — ACTIVE + 잔여 회기 1 이상 (웹 canConfirmedScheduleForMapping) */
 export function canScheduleAdminMapping(
   mapping: Pick<AdminMappingListItem, 'status' | 'remainingSessions'>,
@@ -52,16 +46,12 @@ export function isScheduleBlockedByPaymentStatus(
 
 export function getAdminMappingPrimaryActionKind(status: string): AdminMappingPrimaryActionKind | null {
   const key = status.trim().toUpperCase();
-  if (key === 'PENDING_PAYMENT') {
-    return 'payment';
-  }
-  if (key === 'PAYMENT_CONFIRMED') {
-    return 'deposit';
-  }
-  if (key === 'DEPOSIT_PENDING') {
-    return 'approve';
-  }
-  if (key === 'ACTIVE') {
+  if (
+    key === 'PENDING_PAYMENT' ||
+    key === 'PAYMENT_CONFIRMED' ||
+    key === 'DEPOSIT_PENDING' ||
+    key === 'ACTIVE'
+  ) {
     return 'schedule';
   }
   return null;
@@ -90,9 +80,10 @@ export function shouldShowAdminMappingPrimaryCta(
   return getAdminMappingPrimaryActionKind(status) != null;
 }
 
-/** 웹 브릿지 Secondary — 결제·입금·승인 대기 상태 */
+/** 웹 브릿지 Secondary — `PENDING_PAYMENT` · `DEPOSIT_PENDING` (§5.3; `PAYMENT_CONFIRMED` 숨김) */
 export function shouldShowWebPaymentCta(status: string): boolean {
-  return SETTLEMENT_STATUSES.has(status.trim().toUpperCase());
+  const key = status.trim().toUpperCase();
+  return key === 'PENDING_PAYMENT' || key === 'DEPOSIT_PENDING';
 }
 
 export function getWebPaymentCtaLabel(status: string): string {

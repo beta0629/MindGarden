@@ -13,6 +13,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '@/theme';
 import type { AppTheme } from '@/theme';
 import { getConsultantScheduleCardContainerVariant } from '@/utils/consultantScheduleCardUi';
+import { toDisplayString } from '@/utils/safeDisplay';
 import { Badge } from '../atoms/Badge';
 
 type ScheduleStatus =
@@ -154,7 +155,7 @@ export function ScheduleCard({
           >
             {time}
           </Text>
-          <Badge variant={badgeVariant} label={STATUS_LABEL[status]} />
+          <Badge variant={badgeVariant} label={STATUS_LABEL[status] ?? toDisplayString(status, '—')} />
         </View>
 
         <Text
@@ -182,7 +183,7 @@ export function ScheduleCard({
             }}
             numberOfLines={1}
           >
-            {sessionType}
+            {toDisplayString(sessionType, '')}
           </Text>
         ) : null}
 

@@ -6,7 +6,6 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import {
-  Alert,
   Platform,
   Pressable,
   RefreshControl,
@@ -31,8 +30,6 @@ import { ScheduleCard } from '@/components/molecules/ScheduleCard';
 import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
 import { AdminFabActionSheet } from '@/components/molecules/AdminFabActionSheet';
 import { AdminMappingListCard } from '@/components/molecules/AdminMappingListCard';
-import { AdminMappingPaymentConfirmModal } from '@/components/organisms/AdminMappingPaymentConfirmModal';
-import { AdminMappingDepositConfirmModal } from '@/components/organisms/AdminMappingDepositConfirmModal';
 import { ADMIN_MIN_TOUCH_TARGET } from '@/theme/tokens';
 import {
   filterAdminMappingsByView,
@@ -55,10 +52,6 @@ import {
 } from '@/constants/adminMobileScreensCopy';
 import { ADMIN_SCHEDULE_REGISTER_COPY } from '@/constants/adminScheduleRegisterCopy';
 import { toDisplayString } from '@/utils/safeDisplay';
-import {
-  getAdminMappingSettlementErrorMessage,
-  useApproveMapping,
-} from '@/api/hooks/useAdminMappingSettlement';
 import {
   isAdminListQueryLoading,
   retryAdminApiSession,
@@ -101,11 +94,6 @@ export default function AdminScheduleHubScreen() {
   const [mappingFilter, setMappingFilter] = useState<AdminMappingViewFilter>('ongoing');
   const [fabSheetOpen, setFabSheetOpen] = useState(false);
   const [forbiddenOpen, setForbiddenOpen] = useState(false);
-  const [paymentModalMapping, setPaymentModalMapping] = useState<AdminMappingListItem | null>(null);
-  const [depositModalMapping, setDepositModalMapping] = useState<AdminMappingListItem | null>(null);
-  const [approveModalMapping, setApproveModalMapping] = useState<AdminMappingListItem | null>(null);
-  const approveMutation = useApproveMapping();
-
   const [dateYmd, setDateYmd] = useState(() => {
     if (typeof params.dateYmd === 'string' && params.dateYmd.length >= 10) {
       return params.dateYmd.slice(0, 10);
@@ -117,27 +105,6 @@ export default function AdminScheduleHubScreen() {
     enabled: hubTab === 'schedule',
   });
   const mappingsQuery = useAdminMappings({ enabled: hubTab === 'mappings' && canViewMappings });
-
-  const handleSettlementSuccess = useCallback(() => {
-    void mappingsQuery.refetch();
-  }, [mappingsQuery]);
-
-  const handleApproveConfirm = useCallback(async () => {
-    if (approveModalMapping == null) {
-      return;
-    }
-    try {
-      await approveMutation.mutateAsync(approveModalMapping.id);
-      setApproveModalMapping(null);
-      Alert.alert(ADMIN_MAPPING_COPY.SUCCESS_TITLE, ADMIN_MAPPING_COPY.APPROVE_SUCCESS);
-      handleSettlementSuccess();
-    } catch (err) {
-      Alert.alert(
-        ADMIN_MAPPING_COPY.ERROR_TITLE,
-        getAdminMappingSettlementErrorMessage(err, ADMIN_MAPPING_COPY.APPROVE_FAILED),
-      );
-    }
-  }, [approveModalMapping, approveMutation, handleSettlementSuccess]);
 
   const schedules = scheduleQuery.data ?? [];
   const filteredMappings = useMemo(
@@ -387,15 +354,18 @@ export default function AdminScheduleHubScreen() {
                   data={schedules}
                   scrollEnabled={false}
                   keyExtractor={(item) => String(item.id)}
-                  renderItem={({ item, index }) => (
-                    <ScheduleCard
-                      time={`${item.startTime} - ${item.endTime}`}
-                      clientName={`${toDisplayString(item.clientName, '내담자')} · ${toDisplayString(item.consultantName, '상담사')}`}
-                      sessionType={item.consultationType}
-                      status={item.status}
-                      index={index}
-                    />
-                  )}
+                  renderItem={({ item, index }) => {
+                    const sessionTypeDisplay = toDisplayString(item.consultationType, '');
+                    return (
+                      <ScheduleCard
+                        time={`${toDisplayString(item.startTime, '—')} - ${toDisplayString(item.endTime, '—')}`}
+                        clientName={`${toDisplayString(item.clientName, '내담자')} · ${toDisplayString(item.consultantName, '상담사')}`}
+                        sessionType={sessionTypeDisplay !== '' ? sessionTypeDisplay : undefined}
+                        status={item.status}
+                        index={index}
+                      />
+                    );
+                  }}
                 />
               </View>
             )}
@@ -428,6 +398,18 @@ export default function AdminScheduleHubScreen() {
                     />
                   ))}
                 </ScrollView>
+                {canManageMappings ? (
+                  <Text
+                    style={{
+                      marginTop: theme.spacing.sm,
+                      color: theme.colors.textTertiary,
+                      fontFamily: theme.fontFamily.regular,
+                      fontSize: theme.fontSize.xs,
+                    }}
+                  >
+                    {ADMIN_MAPPING_COPY.WEB_PAYMENT_PULL_REFRESH_HINT}
+                  </Text>
+                ) : null}
                 {mappingsLoading ? (
                   <>
                     <SkeletonCard />
@@ -460,9 +442,6 @@ export default function AdminScheduleHubScreen() {
                           index={index}
                           canManageMappings={canManageMappings}
                           onSchedule={openScheduleFromMapping}
-                          onOpenPayment={setPaymentModalMapping}
-                          onOpenDeposit={setDepositModalMapping}
-                          onOpenApprove={setApproveModalMapping}
                         />
                       )}
                     />
@@ -521,38 +500,6 @@ export default function AdminScheduleHubScreen() {
         ]}
       />
 
-      <AdminMappingPaymentConfirmModal
-        isOpen={paymentModalMapping != null}
-        mapping={paymentModalMapping}
-        onClose={() => setPaymentModalMapping(null)}
-        onSuccess={handleSettlementSuccess}
-      />
-      <AdminMappingDepositConfirmModal
-        isOpen={depositModalMapping != null}
-        mapping={depositModalMapping}
-        onClose={() => setDepositModalMapping(null)}
-        onSuccess={handleSettlementSuccess}
-      />
-      <UnifiedModal
-        isOpen={approveModalMapping != null}
-        onClose={() => setApproveModalMapping(null)}
-        title={ADMIN_MAPPING_COPY.APPROVE_CONFIRM_TITLE}
-        subtitle={ADMIN_MAPPING_COPY.APPROVE_CONFIRM_BODY}
-        loading={approveMutation.isPending}
-        actions={[
-          {
-            label: ADMIN_MAPPING_COPY.CANCEL,
-            onPress: () => setApproveModalMapping(null),
-            variant: 'secondary',
-          },
-          {
-            label: ADMIN_MAPPING_COPY.APPROVE_MAPPING_CTA,
-            onPress: () => void handleApproveConfirm(),
-            variant: 'primary',
-            disabled: approveMutation.isPending,
-          },
-        ]}
-      />
     </SafeAreaView>
   );
 }

@@ -26,6 +26,7 @@ import { Chip } from '@/components/atoms/Chip';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SearchBar } from '@/components/atoms/SearchBar';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
+import { AdminFabActionSheet } from '@/components/molecules/AdminFabActionSheet';
 import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
 import { useAdminUserManagement } from '@/api/hooks/useAdminUserManagement';
 import { useAdminApiQueryReady } from '@/hooks/useAdminApiQueryReady';
@@ -171,8 +172,7 @@ export default function AdminUsersScreen() {
         ? ADMIN_USER_MANAGEMENT_COPY.STATUS_ACTIVE
         : ADMIN_USER_MANAGEMENT_COPY.STATUS_INACTIVE;
       const statusVariant = item.isActive ? 'success' : 'error';
-      const phoneDisplay =
-        item.phone.trim() !== '' ? item.phone : ADMIN_USER_MANAGEMENT_COPY.PHONE_NONE;
+      const phoneDisplay = toDisplayString(item.phone, ADMIN_USER_MANAGEMENT_COPY.PHONE_NONE);
 
       return (
         <Pressable
@@ -365,39 +365,13 @@ export default function AdminUsersScreen() {
         <Plus size={28} color={theme.colors.textOnPrimary} />
       </Pressable>
 
-      <UnifiedModal
+      <AdminFabActionSheet
         isOpen={addSheetOpen}
         onClose={() => setAddSheetOpen(false)}
         title={ADMIN_USER_CREATE_COPY.SHEET_TITLE}
-        actions={[
-          {
-            label: ADMIN_USER_CREATE_COPY.SHEET_CANCEL,
-            onPress: () => setAddSheetOpen(false),
-            variant: 'secondary',
-          },
-        ]}
-      >
-        <View style={{ gap: 8 }}>
-          {sheetActions.map((action) => (
-            <Pressable
-              key={action.label}
-              onPress={action.onPress}
-              style={({ pressed }) => [
-                styles.sheetRow,
-                {
-                  borderColor: theme.colors.divider,
-                  backgroundColor: theme.colors.surface,
-                  opacity: pressed ? 0.9 : 1,
-                },
-              ]}
-            >
-              <Text style={{ color: theme.colors.textMain, fontFamily: theme.fontFamily.medium }}>
-                {action.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </UnifiedModal>
+        cancelLabel={ADMIN_USER_CREATE_COPY.SHEET_CANCEL}
+        actions={sheetActions}
+      />
 
       <UnifiedModal
         isOpen={selectedUser != null}
@@ -424,11 +398,7 @@ export default function AdminUsersScreen() {
             />
             <DetailField
               label={ADMIN_USER_MANAGEMENT_COPY.DETAIL_LABEL_PHONE}
-              value={
-                selectedUser.phone.trim() !== ''
-                  ? selectedUser.phone
-                  : ADMIN_USER_MANAGEMENT_COPY.PHONE_NONE
-              }
+              value={toDisplayString(selectedUser.phone, ADMIN_USER_MANAGEMENT_COPY.PHONE_NONE)}
             />
             <DetailField
               label={ADMIN_USER_MANAGEMENT_COPY.DETAIL_LABEL_ROLE}
@@ -501,11 +471,5 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  sheetRow: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
   },
 });

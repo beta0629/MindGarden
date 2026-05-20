@@ -31,9 +31,6 @@ export type AdminMappingListCardProps = {
   readonly index: number;
   readonly canManageMappings: boolean;
   readonly onSchedule: (mapping: AdminMappingListItem) => void;
-  readonly onOpenPayment: (mapping: AdminMappingListItem) => void;
-  readonly onOpenDeposit: (mapping: AdminMappingListItem) => void;
-  readonly onOpenApprove: (mapping: AdminMappingListItem) => void;
 };
 
 function mappingStatusLabel(status: string): string {
@@ -46,9 +43,6 @@ export function AdminMappingListCard({
   index,
   canManageMappings,
   onSchedule,
-  onOpenPayment,
-  onOpenDeposit,
-  onOpenApprove,
 }: AdminMappingListCardProps) {
   const theme = useTheme();
   const status = item.status.trim().toUpperCase();
@@ -115,28 +109,17 @@ export function AdminMappingListCard({
         </Text>
       ) : null}
       <View style={[styles.mappingActionsRow, { marginTop: theme.spacing.sm }]}>
-        {showPrimary && primaryKind != null ? (
+        {showPrimary && primaryKind === 'schedule' ? (
           <Pressable
-            onPress={() => {
-              if (primaryKind === 'payment') {
-                onOpenPayment(item);
-              } else if (primaryKind === 'deposit') {
-                onOpenDeposit(item);
-              } else if (primaryKind === 'approve') {
-                onOpenApprove(item);
-              } else if (scheduleAllowed) {
-                onSchedule(item);
-              }
-            }}
-            disabled={primaryKind === 'schedule' && !scheduleAllowed}
+            onPress={() => onSchedule(item)}
+            disabled={!scheduleAllowed}
             style={({ pressed }) => [
               styles.mappingAction,
               styles.mappingActionPrimary,
               {
                 borderColor: theme.colors.primary,
                 backgroundColor: theme.colors.primary,
-                opacity:
-                  primaryKind === 'schedule' && !scheduleAllowed ? 0.6 : pressed ? 0.85 : 1,
+                opacity: !scheduleAllowed ? 0.6 : pressed ? 0.85 : 1,
               },
             ]}
             accessibilityRole="button"

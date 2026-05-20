@@ -183,7 +183,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     version: pkg.version,
     scheme: 'mindgarden',
     orientation: 'portrait',
-    /** Android adaptive foreground와 동일 소스 — iOS는 ios.icon으로 마스크 보정 */
+    /** Android adaptive foreground·iOS·글로벌 아이콘 공통 소스 */
     icon: './assets/images/adaptive-icon.png',
     userInterfaceStyle: 'automatic',
     newArchEnabled: true,
@@ -194,8 +194,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       backgroundColor: '#000000',
     },
     ios: {
-      /** adaptive safe zone(~66%) 보정 — Android 홈 화면 나비 크기와 맞춤 */
-      icon: './assets/images/icon-ios.png',
+      icon: './assets/images/adaptive-icon.png',
       supportsTablet: true,
       bundleIdentifier: 'com.mindgarden.MindGardenMobile',
       infoPlist: {

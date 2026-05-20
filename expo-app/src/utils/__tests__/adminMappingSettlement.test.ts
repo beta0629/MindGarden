@@ -65,10 +65,10 @@ describe('isScheduleBlockedByPaymentStatus', () => {
 });
 
 describe('primary CTA visibility', () => {
-  it('maps status to primary action kind', () => {
-    expect(getAdminMappingPrimaryActionKind('PENDING_PAYMENT')).toBe('payment');
-    expect(getAdminMappingPrimaryActionKind('PAYMENT_CONFIRMED')).toBe('deposit');
-    expect(getAdminMappingPrimaryActionKind('DEPOSIT_PENDING')).toBe('approve');
+  it('maps settlement and ACTIVE statuses to schedule primary (Sprint 1c hybrid)', () => {
+    expect(getAdminMappingPrimaryActionKind('PENDING_PAYMENT')).toBe('schedule');
+    expect(getAdminMappingPrimaryActionKind('PAYMENT_CONFIRMED')).toBe('schedule');
+    expect(getAdminMappingPrimaryActionKind('DEPOSIT_PENDING')).toBe('schedule');
     expect(getAdminMappingPrimaryActionKind('ACTIVE')).toBe('schedule');
     expect(getAdminMappingPrimaryActionKind('TERMINATED')).toBeNull();
   });
@@ -89,9 +89,9 @@ describe('primary CTA visibility', () => {
 });
 
 describe('web fallback CTA', () => {
-  it('shows for settlement pipeline statuses', () => {
+  it('shows only for PENDING_PAYMENT and DEPOSIT_PENDING (§5.3)', () => {
     expect(shouldShowWebPaymentCta('PENDING_PAYMENT')).toBe(true);
-    expect(shouldShowWebPaymentCta('PAYMENT_CONFIRMED')).toBe(true);
+    expect(shouldShowWebPaymentCta('PAYMENT_CONFIRMED')).toBe(false);
     expect(shouldShowWebPaymentCta('DEPOSIT_PENDING')).toBe(true);
     expect(shouldShowWebPaymentCta('ACTIVE')).toBe(false);
   });

@@ -1,6 +1,6 @@
 # Admin 모바일 MVP — 자동 스모크 준비 (Task K / O)
 
-**실행 일시:** 2026-05-16 (로컬) · **§6 갱신:** 2026-05-18 (`develop` @ `d95768075`, §10.8 **3/3 PASS**·§6.2 운영·검수 회귀 **skip**)  
+**실행 일시:** 2026-05-16 (로컬) · **§6 갱신:** 2026-05-20 (G4+C3 스모크 · `develop` @ `24b901caf` · §6.2 아래) · 이전: 2026-05-18 (`d95768075`, §10.8 **3/3 PASS**)  
 **커밋:** 게이트 문서만 — `docs(admin-mvp): §10.8 게이트·§6 d957680 APK·운영 스모크 기록`  
 **Task O (2026-05-16):** `npm run test:utils`·`tsc --noEmit` PASS; `app/(admin)` 내 `AdminMobilePlaceholderScreen` 0건  
 **JWT SSOT:** `46fe1c0be` — 로그인·복구 시 JWT 역할로 admin/staff 홈 라우팅 · **운영 API (2026-05-18):** `d95768075` — 어드민 운영 탭·STAFF 일정; `test:utils` **36** tests PASS @ §10.8
@@ -189,3 +189,29 @@ cd expo-app && npm run test:utils && npx tsc --noEmit
 | S | **검수** 탭 로딩 종료(대기 큐·스켈레톤 아님) | **skip** | 2026-05-18 11:05 | 동일 |
 
 **판단:** 자동 게이트(Expo utils·`tsc`·Maven 10) **PASS**. 운영·검수 UI 회귀는 §6.1 APK 재빌드·재설치 + ADMIN 로그인(또는 `MAESTRO_*` + Maestro) 후 재실행. 실패 시 **core-coder** 위임(프로덕션 코드 수정 금지 — core-tester).
+
+### §6.2 실행 결과 (2026-05-20, core-tester · G4+C3 스모크 · 배치 3/4)
+
+**기준 HEAD:** `24b901caf` (`develop`) · **설치 APK:** `app-release.apk` (~132MB, mtime **2026-05-19** 02:23:33 KST) · **embedded apiBaseUrl:** `https://dev.core-solution.co.kr`
+
+| # | 항목 | 결과 | 일시 (KST) | 비고 |
+|---|------|------|------------|------|
+| P | `adb devices` | **pass** | 2026-05-20 22:53 | `emulator-5554` `device` |
+| P | `admin-mvp-smoke-prep.sh --force-install` | **pass** | 2026-05-20 22:53 | exit **0**; `android:apk:install`·MainActivity; logcat 5s — AdminRoleGate·Unable to resolve **0**; RN deprecation 1건 |
+| P | `npm run test:utils` + `tsc --noEmit` (§6.3) | **pass** | 2026-05-20 22:54 | 33 suites, **192** tests; `tsc` **0** errors |
+| S | Maestro `admin-mvp-smoke.yaml` | **skip** | 2026-05-20 | `which maestro` → not found; `MAESTRO_*` unset |
+| S | Maestro `admin-mvp-smoke-staff.yaml` | **skip** | 2026-05-20 | 동일 |
+| S | §6.2 #1 ADMIN 로그인·홈 | **skip** | 2026-05-20 | 팀 자격 증명 없음 — cold start·테넌트 UI만 prep로 확인 |
+| S | §6.2 #2–#5 (검수·승인/반려·STAFF) | **skip** | 2026-05-20 | Maestro·ADMIN 세션 선행 |
+| S | §6.2 #6 CONSULTANT | **skip** | 2026-05-20 | Maestro 플로우 없음 |
+| S | §6.2 #7 CLIENT | **skip** | 2026-05-20 | Maestro 플로우 없음 |
+| S | C3 U4 웹 결제 CTA (`PENDING_PAYMENT` 카드) | **skip** | 2026-05-20 | ADMIN 로그인·매칭 시드 데이터 필요 — §5.4 M7–M9 ([`COMMERCIALIZATION_TEST_REPORT`](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md)) |
+
+**Maestro CLI (미설치 · 설치 가능 여부만):**
+
+- macOS: [Maestro 설치 가이드](https://maestro.mobile.dev/getting-started/installing-maestro) — `curl -Ls "https://get.maestro.mobile.dev" \| bash` 또는 Homebrew `brew tap mobile-dev-inc/tap && brew install maestro`
+- 실행 전: `export MAESTRO_ADMIN_EMAIL=… MAESTRO_ADMIN_PASSWORD=…` (저장소에 계정 없음)
+- flow: `maestro test expo-app/.maestro/flows/admin-mvp-smoke.yaml` · STAFF: `admin-mvp-smoke-staff.yaml`
+- **본 배치:** CLI 없음 → flow **미실행** (문서화만)
+
+**다음:** ADMIN/STAFF 계정으로 §6.2 #1–#7 + C3 U4(웹 Secondary CTA) 수동; Maestro 설치 시 M1–M6 자동화.

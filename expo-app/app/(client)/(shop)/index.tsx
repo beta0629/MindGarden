@@ -204,7 +204,6 @@ export default function ShopCatalogScreen() {
           data={filteredCatalog}
           renderItem={renderItem}
           keyExtractor={(item) => item.skuCode}
-          estimatedItemSize={280}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}

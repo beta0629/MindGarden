@@ -2,7 +2,7 @@
 
 **작성일**: 2026-05-18  
 **작성자**: core-planner (C0 문서 SSOT)  
-**상태**: **ACTIVE (C2)** — C2 구현 완료 · **테스터 게이트 진행중** (C0 `explore`·`core-component-manager` **완료**)  
+**상태**: **ACTIVE (C3)** — C2 테스터 **G2 PASS** · G1/G3/G4 **CONDITIONAL** → **C3** (W6–W7: 등록·매칭·결제 웹 CTA·G4 스모크)  
 **범위**: 단일 Expo 앱 `app/(admin)/` · ADMIN/STAFF 모바일 — **문서·분배·게이트 SSOT** (구현은 본 문서 이후 Phase별 위임)  
 **선행**: [`EXPO_NATIVE_APP_PLAN.md`](./EXPO_NATIVE_APP_PLAN.md) §2.4 · [`ADMIN_MOBILE_MVP_TEST_PLAN.md`](./ADMIN_MOBILE_MVP_TEST_PLAN.md)  
 **위임 규칙**: [`CORE_PLANNER_DELEGATION_ORDER.md`](./CORE_PLANNER_DELEGATION_ORDER.md) — 메인·일반 어시스턴트 **코드 직접 수정 금지**, 구현·검증은 표 §9 분배실행
@@ -98,7 +98,7 @@
 | **P0** | 스케줄 허브 | `(operation)/schedule/index.tsx` | 날짜 이동·목록·CTA(등록·매칭·결제) — 웹 통합 스케줄 **정보 밀도 60%** |
 | **P0** | 일정 등록 | `(operation)/schedule/create.tsx` | 4스텝 폼·충돌·가예약 — [`ADMIN_MOBILE_SCHEDULE_CREATE_DESIGN_HANDOFF.md`](./ADMIN_MOBILE_SCHEDULE_CREATE_DESIGN_HANDOFF.md) |
 | **P0** | 신규 매칭 | `(operation)/schedule/mapping/create.tsx` | 5스텝·`POST /api/v1/admin/mappings` |
-| **P0** | 결제 3단계 | Organisms: `AdminMappingPaymentConfirmModal`, `AdminMappingDepositConfirmModal` + 웹 브릿지 | `confirm-payment` → `confirm-deposit` → `approve` — [`ADMIN_MOBILE_MAPPING_PAYMENT_APPROVAL_ORCHESTRATION.md`](./ADMIN_MOBILE_MAPPING_PAYMENT_APPROVAL_ORCHESTRATION.md) |
+| **P0** | 결제 3단계 | **웹 CTA** — `AdminMappingListCard` Secondary (`openAdminWebIntegratedSchedule`) · `PENDING_PAYMENT`/`DEPOSIT_PENDING` · ~~`AdminMappingPaymentConfirmModal`~~ **삭제** · `AdminMappingDepositConfirmModal` **잔존(미연결)** | 웹 통합 스케줄에서 `confirm-payment` → `confirm-deposit` → `approve` — [`ADMIN_MOBILE_MAPPING_PAYMENT_APPROVAL_ORCHESTRATION.md`](./ADMIN_MOBILE_MAPPING_PAYMENT_APPROVAL_ORCHESTRATION.md) |
 | **P0** | 홈 | `(home)/index.tsx` | 대시보드 샘플 카드·KPI·`safeDisplay` |
 | **P0** | 메시지 | `(messages)/index.tsx` | 네이티브 목록·검색·상세 모달 |
 | **P0** | 검수 | `(review)/index.tsx`, `[id].tsx` | ADMIN only · BW-4 `decision` |
@@ -158,16 +158,31 @@
 | **G3** | 디자인·표시 | §6 체크리스트·§17 expo 0건·#130 콘솔 0 | 10/10 또는 패리티 6/6 | 패리티 4/6 · adminTheme 미완이나 일정표만 예외 문서화 | 패리티 &lt;4/6 · placeholder 화면 · 하드코딩 신규 |
 | **G4** | 수동·E2E | dev APK · ADMIN·STAFF 스모크 · Maestro (선택) | [`ADMIN_MOBILE_MVP_SMOKE_RUN.md`](./ADMIN_MOBILE_MVP_SMOKE_RUN.md) §6.2 #1–#7 | Maestro skip · 수동 PASS | 결제·등록 핵심 시나리오 실패 |
 
-**현재 스냅샷 (2026-05-18)**
+**현재 스냅샷 (2026-05-20 · C2→C3 전환 · 병렬 배치 3/4 · WIP 미커밋)**
 
 | 게이트 | 판정 | 근거 |
 |--------|------|------|
-| G1 | **CONDITIONAL** | 자동·JWT 라우팅 @ `46fe1c0be`~`d95768075`; §6.2 수동·Maestro 대기 |
-| G2 | **PASS** | [`ADMIN_MOBILE_MVP_TEST_PLAN.md`](./ADMIN_MOBILE_MVP_TEST_PLAN.md) §10.8 |
-| G3 | **CONDITIONAL** | MVP Top 8 존재; adminTheme·패리티 60%·users 중복 미완 |
-| G4 | **CONDITIONAL** | APK 재설치·운영 회귀 수동 대기 |
+| G1 | **CONDITIONAL** | Jest green; §6.2 수동·Maestro **미검** |
+| G2 | **PASS** | `tsc --noEmit` **0 errors**; `test:utils` **33 suites / 192 tests** |
+| G3 | **CONDITIONAL** | 패리티 60%·safeDisplay(일정 raw)·디자이너 체크리스트 미완 |
+| G4 | **CONDITIONAL** | Maestro CLI·`MAESTRO_*` 없음; §6.2·U4(웹 CTA) **manual pending** |
 
-상세 체크리스트 부록: [`ADMIN_MOBILE_MVP_TEST_PLAN.md` §11](./ADMIN_MOBILE_MVP_TEST_PLAN.md#11-상용화-품질-게이트-g1g4-부록).
+> **코드 팩트 (C3 착수)**: `AdminMappingPaymentConfirmModal` **삭제** — 결제 1단계는 네이티브 모달 대신 **`AdminMappingListCard` 웹 Secondary CTA** (`shouldShowWebPaymentCta` · `openAdminWebIntegratedSchedule`). Primary CTA는 일정(`schedule`) 중심. `mapping/create` 완료 화면도 동일 웹 CTA.
+> G2: C2 재검증 **FAIL**(tsc 5) → 모달 삭제·FlashList prop 정리 후 **PASS** 복귀.
+
+**C3 체크리스트 (W6–W7 · 진행중)**
+
+| # | 항목 | 기준 | 상태 |
+|---|------|------|------|
+| C3-01 | 일정 등록 4스텝 | `schedule/create` · 충돌·가예약 · AdminWizardShell | 코드 존재 · G4 U3 **미검** |
+| C3-02 | 신규 매칭 5스텝 | `mapping/create` · `POST /api/v1/admin/mappings` · 완료 후 웹 CTA | 코드 존재 · G4 U3 **미검** |
+| C3-03 | 결제 웹 CTA | `PENDING_PAYMENT`/`DEPOSIT_PENDING` → ExternalLink Secondary · 통합 스케줄 URL | **WIP 반영** · G4 U4 **미검** |
+| C3-04 | 네이티브 결제 모달 | ~~PaymentConfirm~~ 삭제 · DepositConfirm **미연결** | 1d **웹 우선** — 네이티브 100%는 P2 |
+| C3-05 | G2 회귀 | `tsc` 0 + `test:utils` PASS | **PASS** |
+| C3-06 | G4 스모크 | §6.2 #1–#7 + U1–U5 (U4=웹 CTA) | **PENDING** |
+| C3-07 | pushNavigation | `pushNavigation.ts` + Jest · NotificationService 연동 | **WIP** · 테스터 재검 대기 |
+
+상세 체크리스트 부록: [`ADMIN_MOBILE_MVP_TEST_PLAN.md` §11](./ADMIN_MOBILE_MVP_TEST_PLAN.md#11-상용화-품질-게이트-g1g4-부록) · [`ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md`](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md).
 
 ---
 
@@ -178,7 +193,7 @@
 | **C0** | W1 | **SSOT·인벤토리·분배** (본 문서) | ACTIVE; 링크 갱신 §10 |
 | **C1** | W2–W3 | **adminTheme·토큰·디자인 핸드오프** | B0KlA 대조표; ThemeProvider; G3 패리티 착수 |
 | **C2** | W4–W5 | **P0 화면 시각·표시 경계** | 홈·운영·스케줄 허브; §6 8/10+; G3 CONDITIONAL→PASS |
-| **C3** | W6–W7 | **P1 등록·매칭·결제 3단계** | create·mapping/create·모달; G2 회귀; G4 스모크 |
+| **C3** | W6–W7 | **P1 등록·매칭·결제 웹 CTA** | create·mapping/create·`AdminMappingListCard` 웹 Secondary; G2 **PASS**; G4 U3–U4 스모크 |
 | **C4** | W8–W9 | **P2 정리·Maestro·하드코딩** | users→user-management 통합; §17; Maestro ADMIN+STAFF |
 | **C5** | W10 | **상용화 판정·스토어 준비** | G1~G4 종합 PASS; go-live 체크리스트; PR·릴리스 노트 |
 
@@ -202,7 +217,9 @@ flowchart LR
 | 2 | **core-component-manager** ✅ | default | StatCard·모달·스케줄 피커 중복 | **완료** — [`ADMIN_MOBILE_COMMERCIALIZATION_COMPONENT_AUDIT.md`](./ADMIN_MOBILE_COMMERCIALIZATION_COMPONENT_AUDIT.md) |
 | 3 | **core-designer** ✅ | **gemini-3.1-pro** | adminTheme·P0 화면 6종 와이어 | 핸드오프 md; 패리티 체크리스트 — [`ADMIN_MOBILE_COMMERCIALIZATION_DESIGN_HANDOFF.md`](./ADMIN_MOBILE_COMMERCIALIZATION_DESIGN_HANDOFF.md) |
 | 4 | **core-coder** C2 ✅ | default | ThemeProvider·화면·hooks | §6·§17; adminTheme·AdminWizardShell·Fab·MappingListCard; Metro [`EXPO_APP_METRO_ALIAS_AND_MMKV_HANDOFF.md`](./EXPO_APP_METRO_ALIAS_AND_MMKV_HANDOFF.md) §5 |
-| 5 | **core-tester** | default | G1~G4 실행·SMOKE_RUN 갱신 | 게이트 표 §7 업데이트; FAIL 시 재위임 |
+| 5 | **core-tester** C2 ✅ | default | G1~G4 실행·SMOKE_RUN 갱신 | **완료** — G2 **PASS**; G1/G3/G4 **CONDITIONAL**; [`ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md`](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md) |
+| 6 | **core-coder** C3 | default | 웹 CTA·pushNavigation·G3 잔여 | §7 C3-03·C3-07; Metro [`EXPO_APP_METRO_ALIAS_AND_MMKV_HANDOFF.md`](./EXPO_APP_METRO_ALIAS_AND_MMKV_HANDOFF.md) §5 |
+| 7 | **core-tester** C3 | default | G4 U3–U5·웹 CTA U4·pushNavigation Jest | §7 C3-06; FAIL 시 재위임 |
 
 **금지**: 메인 채팅 어시스턴트의 **소스 직접 패치** ([`CORE_PLANNER_DELEGATION_ORDER.md`](./CORE_PLANNER_DELEGATION_ORDER.md)).
 
@@ -236,3 +253,5 @@ flowchart LR
 | 2026-05-18 | **초안 (C0)** — MVP→상용화 SSOT, G1~G4, 10주 C0~C5, 분배실행, §10 링크 목록 |
 | 2026-05-18 | **C0 완료** — 상태 `ACTIVE (C1)`; §5 explore 부록; §9 explore·component-manager ✅; §10 컴포넌트 감사 링크 |
 | 2026-05-18 | **C2 구현 완료** — adminTheme·AdminWizardShell·AdminFabActionSheet·AdminMappingListCard; §9 core-designer·core-coder C2 ✅; 테스터 게이트 진행중 |
+| 2026-05-20 | **C2 테스터 게이트 2/4** — §7 스냅샷: G2 **FAIL** (`tsc` 5); G1/G3/G4 **CONDITIONAL**; [`ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md`](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md) |
+| 2026-05-20 | **C3 전환 (배치 3/4)** — 상태 `ACTIVE (C3)`; §7 C3 체크리스트·웹 CTA 팩트; `AdminMappingPaymentConfirmModal` 삭제 반영; §9 tester C2 ✅ · coder/tester C3 추가 |

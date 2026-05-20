@@ -25,7 +25,6 @@ import { AdminWizardShell } from '@/components/app-chrome/AdminWizardShell';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SearchBar } from '@/components/atoms/SearchBar';
 import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
-import { AdminMappingPaymentConfirmModal } from '@/components/organisms/AdminMappingPaymentConfirmModal';
 import {
   getAdminCreateMappingErrorMessage,
   useAdminCreateMapping,
@@ -96,7 +95,6 @@ export default function AdminMappingCreateScreen() {
   const [forbiddenOpen, setForbiddenOpen] = useState(false);
   const [createdMappingSnapshot, setCreatedMappingSnapshot] =
     useState<AdminMappingSettlementTarget | null>(null);
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   const dateYmd = format(new Date(), 'yyyy-MM-dd');
   const consultantsQuery = useAdminConsultantsWithVacation(dateYmd);
@@ -249,6 +247,21 @@ export default function AdminMappingCreateScreen() {
   const openWebPayment = useCallback(() => {
     void openAdminWebIntegratedSchedule();
   }, []);
+
+  const openScheduleFromCreatedMapping = useCallback(() => {
+    if (createdMappingSnapshot == null || consultant == null || client == null) {
+      return;
+    }
+    router.push({
+      pathname: '/(admin)/(operation)/schedule/create',
+      params: {
+        mappingId: String(createdMappingSnapshot.id),
+        consultantId: String(consultant.id),
+        clientId: String(client.id),
+        step: '3',
+      },
+    } as Href);
+  }, [client, consultant, createdMappingSnapshot, router]);
 
   const renderPickerRow = (
     label: string,
@@ -630,23 +643,67 @@ export default function AdminMappingCreateScreen() {
             {ADMIN_MAPPING_COPY.WEB_PAYMENT_HINT}
           </Text>
           {allowed && createdMappingSnapshot != null ? (
-            <Pressable
-              onPress={() => setPaymentModalOpen(true)}
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                {
-                  backgroundColor: theme.colors.primary,
-                  opacity: pressed ? 0.7 : 1,
-                  marginTop: theme.spacing.xl,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={ADMIN_MAPPING_COPY.CONFIRM_PAYMENT_CTA}
-            >
-              <Text style={{ color: theme.colors.textOnPrimary, fontFamily: theme.fontFamily.semibold }}>
-                {ADMIN_MAPPING_COPY.CONFIRM_PAYMENT_CTA}
+            <>
+              <Text
+                style={{
+                  textAlign: 'center',
+                  color: theme.colors.textTertiary,
+                  fontFamily: theme.fontFamily.regular,
+                  fontSize: theme.fontSize.xs,
+                  marginTop: theme.spacing.sm,
+                }}
+              >
+                {ADMIN_MAPPING_COPY.WEB_PAYMENT_PULL_REFRESH_HINT}
               </Text>
-            </Pressable>
+              <Pressable
+                onPress={openScheduleFromCreatedMapping}
+                style={({ pressed }) => [
+                  styles.primaryBtn,
+                  {
+                    backgroundColor: theme.colors.primary,
+                    opacity: pressed ? 0.7 : 1,
+                    marginTop: theme.spacing.xl,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={ADMIN_MAPPING_COPY.ACTION_SCHEDULE_FROM_MAPPING}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.textOnPrimary,
+                    fontFamily: theme.fontFamily.semibold,
+                  }}
+                >
+                  {ADMIN_MAPPING_COPY.ACTION_SCHEDULE_FROM_MAPPING}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={openWebPayment}
+                style={({ pressed }) => [
+                  styles.primaryBtn,
+                  styles.outlineBtn,
+                  {
+                    borderColor: theme.colors.primary,
+                    opacity: pressed ? 0.7 : 1,
+                    marginTop: theme.spacing.sm,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={ADMIN_MAPPING_COPY.OPEN_WEB_PAYMENT_A11Y}
+              >
+                <ExternalLink size={16} color={theme.colors.primary} />
+                <Text
+                  style={{
+                    color: theme.colors.primary,
+                    fontFamily: theme.fontFamily.medium,
+                    fontSize: theme.fontSize.sm,
+                    marginLeft: theme.spacing.sm,
+                  }}
+                >
+                  {ADMIN_MAPPING_COPY.OPEN_WEB_PAYMENT_CTA}
+                </Text>
+              </Pressable>
+            </>
           ) : null}
           <Pressable
             onPress={finishToMappingsTab}
@@ -680,29 +737,6 @@ export default function AdminMappingCreateScreen() {
               {ADMIN_MAPPING_COPY.DONE_BACK}
             </Text>
           </Pressable>
-          {allowed ? (
-            <Pressable
-              onPress={openWebPayment}
-              style={({ pressed }) => [
-                styles.tertiaryBtn,
-                { opacity: pressed ? 0.7 : 1, marginTop: theme.spacing.sm },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={ADMIN_MAPPING_COPY.OPEN_WEB_PAYMENT_A11Y}
-            >
-              <ExternalLink size={16} color={theme.colors.primary} />
-              <Text
-                style={{
-                  color: theme.colors.primary,
-                  fontFamily: theme.fontFamily.medium,
-                  fontSize: theme.fontSize.sm,
-                  marginLeft: 6,
-                }}
-              >
-                {ADMIN_MAPPING_COPY.OPEN_WEB_PAYMENT_CTA}
-              </Text>
-            </Pressable>
-          ) : null}
         </View>
       )}
 
@@ -739,15 +773,6 @@ export default function AdminMappingCreateScreen() {
             variant: 'primary',
           },
         ]}
-      />
-      <AdminMappingPaymentConfirmModal
-        isOpen={paymentModalOpen}
-        mapping={createdMappingSnapshot}
-        onClose={() => setPaymentModalOpen(false)}
-        onSuccess={() => {
-          setPaymentModalOpen(false);
-          finishToMappingsTab();
-        }}
       />
     </SafeAreaView>
   );

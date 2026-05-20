@@ -26,14 +26,8 @@ import { PUSH_API } from '../api/endpoints';
 import { useAuthStore } from '../stores/useAuthStore';
 import { resolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 import { useNotificationSettingsStore } from '../stores/useNotificationSettingsStore';
-import {
-  getScenarioByType,
-  getRouteTemplateForRole,
-  prefixRoleForMoreRoute,
-  resolveRoute,
-  routeMatchesRole,
-  type PushScenario,
-} from '../constants/pushScenarios';
+import { getScenarioByType } from '../constants/pushScenarios';
+import { resolvePushNavigationRoute } from '../utils/pushNavigation';
 import { showInAppToast } from '../components/organisms/InAppNotificationToast';
 import { stripHtmlToPlainText } from '../utils/safeDisplay';
 import {
@@ -100,105 +94,6 @@ function navigateToSystemNotifications(role: AppAuthRole): void {
   } catch {
     // 잘못된 경로 무시
   }
-}
-
-/**
- * 푸시 data에서 라우트 파라미터 추출 (id·scheduleId 등 서버 키 편차 흡수)
- */
-function collectPushRouteParams(
-  scenario: PushScenario,
-  data: Record<string, unknown>,
-): Record<string, string | number> {
-  const firstString = (...vals: unknown[]): string | undefined => {
-    for (const v of vals) {
-      if (v != null && String(v).trim() !== '') {
-        return String(v);
-      }
-    }
-    return undefined;
-  };
-
-  const params: Record<string, string | number> = {};
-
-  const orderPublicId = firstString(data.orderPublicId, data.id);
-  if (orderPublicId != null) {
-    params.orderPublicId = orderPublicId;
-  }
-
-  if (scenario.category === 'record') {
-    const sid = firstString(data.scheduleId, data.consultationId, data.id);
-    if (sid != null) {
-      params.scheduleId = sid;
-    }
-    return params;
-  }
-
-  if (scenario.category === 'booking' || scenario.category === 'session') {
-    const sid = firstString(data.scheduleId, data.consultationId, data.id);
-    if (sid != null) {
-      params.id = sid;
-    }
-  } else if (scenario.category === 'payment') {
-    const pid = firstString(
-      data.mappingId,
-      data.consultantClientMappingId,
-      data.paymentId,
-      data.orderPublicId,
-      data.id,
-    );
-    if (pid != null) {
-      params.id = pid;
-    }
-  } else {
-    const oid = firstString(data.id, data.conversationId, data.threadId, data.userId);
-    if (oid != null) {
-      params.id = oid;
-    }
-  }
-
-  const scheduleExtra = firstString(data.scheduleId, data.consultationId);
-  if (scheduleExtra != null && params.id == null) {
-    params.scheduleId = scheduleExtra;
-  }
-
-  return params;
-}
-
-function resolvePushRouteWithFallback(
-  scenario: PushScenario,
-  route: string,
-  role: 'client' | 'consultant',
-): string {
-  if (!/\{[^}]+\}/.test(route)) {
-    return route;
-  }
-  if (route.includes('sessions)/review')) {
-    return role === 'consultant' ? '/(consultant)/(schedule)' : '/(client)/(sessions)';
-  }
-  if (route.includes('records)/create')) {
-    return '/(consultant)/(records)';
-  }
-  if (scenario.route.includes('(shop)/orders')) {
-    return role === 'consultant' ? '/(consultant)/(more)' : '/(client)/(shop)/orders';
-  }
-  if (scenario.route.includes('sessions-payment')) {
-    return role === 'consultant' ? '/(consultant)/(more)' : '/(client)/(more)/sessions-payment';
-  }
-  if (scenario.route.includes('(sessions)')) {
-    return role === 'consultant' ? '/(consultant)/(schedule)' : '/(client)/(sessions)';
-  }
-  if (scenario.route.includes('(schedule)')) {
-    return '/(consultant)/(schedule)';
-  }
-  if (scenario.route.includes('notifications')) {
-    return role === 'consultant'
-      ? '/(consultant)/(more)/notifications'
-      : '/(client)/(more)/notifications';
-  }
-  if (scenario.route.includes('messages')) {
-    return role === 'consultant' ? '/(consultant)/(more)/messages' : '/(client)/(more)/messages';
-  }
-  return role === 'consultant' ? '/(consultant)/(home)' : '/(client)/(home)';
 }
 
 /**
@@ -492,20 +387,14 @@ export const NotificationService = {
     }
 
     const shellRole = toClientConsultantMessagingRole(role);
-    const params = collectPushRouteParams(scenario, data);
-    const template = getRouteTemplateForRole(scenario, shellRole);
-    let route = resolveRoute(template, params);
-    route = prefixRoleForMoreRoute(route, shellRole);
-
-    if (!routeMatchesRole(route, shellRole)) {
+    const nav = resolvePushNavigationRoute(type, data, shellRole);
+    if (!nav.ok) {
       navigateToSystemNotifications(role);
       return;
     }
 
-    route = resolvePushRouteWithFallback(scenario, route, shellRole);
-
     try {
-      router.push(route as Href);
+      router.push(nav.route as Href);
     } catch {
       navigateToSystemNotifications(role);
     }

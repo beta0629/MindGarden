@@ -84,9 +84,9 @@ describe('mapping payment CTA visibility (re-exported settlement SSOT)', () => {
     expect(isScheduleBlockedByPaymentStatus('ACTIVE', 0)).toBe(true);
   });
 
-  it('shows web CTA for settlement pipeline statuses', () => {
+  it('shows web CTA for PENDING_PAYMENT and DEPOSIT_PENDING only', () => {
     expect(shouldShowWebPaymentCta('PENDING_PAYMENT')).toBe(true);
-    expect(shouldShowWebPaymentCta('PAYMENT_CONFIRMED')).toBe(true);
+    expect(shouldShowWebPaymentCta('PAYMENT_CONFIRMED')).toBe(false);
     expect(shouldShowWebPaymentCta('DEPOSIT_PENDING')).toBe(true);
     expect(shouldShowWebPaymentCta('ACTIVE')).toBe(false);
   });

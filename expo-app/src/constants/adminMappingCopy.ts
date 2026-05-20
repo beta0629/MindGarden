@@ -68,15 +68,11 @@ export const ADMIN_MAPPING_COPY = {
   CONFIRM_PAYMENT_CTA: '결제 확인',
   CONFIRM_DEPOSIT_CTA: '입금 확인',
   APPROVE_MAPPING_CTA: '매칭 승인',
-  PAYMENT_MODAL_TITLE: '결제 확인',
-  PAYMENT_MODAL_SUBMIT: '입금 확인',
   DEPOSIT_MODAL_TITLE: '입금 확인',
   DEPOSIT_MODAL_SUBMIT: '입금 확인',
   APPROVE_CONFIRM_TITLE: '매칭 승인',
   APPROVE_CONFIRM_BODY:
     '입금 확인이 완료되었습니다. 매칭을 최종 승인하면 ACTIVE 상태로 전환되고 일정 등록이 가능합니다.',
-  CONFIRM_PAYMENT_SUCCESS: '결제 확인이 완료되었습니다.',
-  CONFIRM_PAYMENT_FAILED: '결제 확인에 실패했습니다.',
   CONFIRM_DEPOSIT_SUCCESS: '입금 확인이 완료되었습니다.',
   CONFIRM_DEPOSIT_FAILED: '입금 확인에 실패했습니다.',
   APPROVE_SUCCESS: '매칭이 승인되었습니다.',
@@ -84,7 +80,13 @@ export const ADMIN_MAPPING_COPY = {
   OPEN_WEB_PAYMENT_CTA: '웹에서 결제 확인',
   OPEN_WEB_DEPOSIT_CTA: '웹에서 입금 확인',
   DEPOSIT_PENDING_WEB_CTA: '웹에서 입금 확인',
-  WEB_PAYMENT_HINT: '결제 대기 상태입니다. 아래에서 결제 확인을 진행해 주세요.',
+  WEB_PAYMENT_FALLBACK_TITLE: '웹 어드민에서 결제 확인',
+  WEB_PAYMENT_FALLBACK_BODY:
+    '모바일에서는 결제·입금 승인을 웹 통합 스케줄에서 처리합니다. 브라우저에서 로그인한 뒤 매칭 카드의 「결제 확인」을 진행해 주세요.',
+  WEB_PAYMENT_HINT:
+    '결제 대기 상태입니다. 「웹에서 결제 확인」으로 진행하거나, 이 매칭으로 가예약 일정을 잡을 수 있습니다.',
+  WEB_PAYMENT_PULL_REFRESH_HINT:
+    '웹에서 결제·입금 확인을 마친 뒤 매칭 탭에서 아래로 당겨 새로고침하면 상태가 반영됩니다.',
   SCHEDULE_BLOCKED_PAYMENT_HINT: '결제·승인이 완료되어야 일정을 잡을 수 있어요.',
   SCHEDULE_BLOCKED_PENDING_PAYMENT_HINT: '결제 확인 후 일정을 잡을 수 있어요.',
   SCHEDULE_BLOCKED_PAYMENT_CONFIRMED_HINT: '입금 확인 후 일정을 잡을 수 있어요.',

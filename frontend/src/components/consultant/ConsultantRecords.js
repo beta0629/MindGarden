@@ -146,7 +146,7 @@ const ConsultantRecords = () => {
     if (!isLoggedIn) {
       return (
         <ContentArea>
-          <div className="consultant-records-login-required" style={{ textAlign: 'center', padding: '3rem' }}>
+          <div className="consultant-records-login-required consultant-records__center-pad-lg">
             <h3>로그인이 필요합니다.</h3>
             <p>상담 기록을 보려면 로그인해주세요.</p>
           </div>
@@ -172,11 +172,11 @@ const ConsultantRecords = () => {
             />
 
             {loading && (
-              <div style={{ textAlign: 'center', padding: '2rem' }}>
+              <div className="consultant-records__loading">
                 <div className="spinner-border text-primary" role="status">
                   <span className="visually-hidden">로딩 중...</span>
                 </div>
-                <p style={{ marginTop: '1rem' }}>상담 기록을 불러오는 중...</p>
+                <p className="consultant-records__loading-text">상담 기록을 불러오는 중...</p>
               </div>
             )}
 

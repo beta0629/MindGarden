@@ -12,6 +12,7 @@ import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
+import './ConsultantRecordListBlock.css';
 
 const EMPTY_TITLE = '등록된 상담일지가 없습니다.';
 const EMPTY_DESC = '아직 작성된 상담 기록이 없습니다. 상담 기록은 일정 관리에서 작성할 수 있습니다.';
@@ -59,8 +60,8 @@ const ConsultantRecordListBlock = ({ records, onViewRecord, onWriteRecord, onNav
           const updatedAt = record.updatedAt ?? record.createdAt;
 
           return (
-            <div key={record.id} className="mg-v2-consultation-log-list-block__card" style={{ display: 'flex', flexDirection: 'column', cursor: 'default' }}>
-              <div className="mg-v2-consultation-log-list-block__card-inner" style={{ flexGrow: 1 }}>
+            <div key={record.id} className="mg-v2-consultation-log-list-block__card consultant-record-list__card">
+              <div className="mg-v2-consultation-log-list-block__card-inner consultant-record-list__card-inner">
                 <div className="mg-v2-consultation-log-list-block__card-row mg-v2-consultation-log-list-block__card-row--date">
                   {formatDate(sessionDate)}
                 </div>
@@ -87,7 +88,7 @@ const ConsultantRecordListBlock = ({ records, onViewRecord, onWriteRecord, onNav
                   </div>
                 )}
               </div>
-              <div style={{ padding: '1rem', borderTop: '1px solid var(--mg-gray-200)', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+              <div className="consultant-record-list__card-footer">
                 {isCompleted ? (
                   <MGButton
                     variant="outline"

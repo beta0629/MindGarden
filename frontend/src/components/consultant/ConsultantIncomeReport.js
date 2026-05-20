@@ -168,7 +168,7 @@ const ConsultantIncomeReport = () => {
       {/* 바 차트 */}
       <div className="income-report__chart-section">
         <div className="income-report__chart-title">
-          <BarChart3 size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />
+          <BarChart3 size={16} className="income-report__chart-title-icon" />
           월별 수입 추이
         </div>
         <div className="income-report__bar-chart">

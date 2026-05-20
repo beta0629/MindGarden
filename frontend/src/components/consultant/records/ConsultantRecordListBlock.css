@@ -1,0 +1,27 @@
+/**
+ * ConsultantRecordListBlock 추출 스타일
+ *
+ * T8-C4 인라인 스타일 → CSS 클래스 추출 (HARDCODE_CLEANUP_HOTZONE_INVENTORY §4.C)
+ * - 동작·시각 변경 0건. 추출 클래스는 인라인과 1:1 동등.
+ * - 기존 `.mg-v2-consultation-log-list-block__*` 클래스에 modifier 추가.
+ *
+ * @since 2026-05-21
+ */
+
+.consultant-record-list__card {
+  display: flex;
+  flex-direction: column;
+  cursor: default;
+}
+
+.consultant-record-list__card-inner {
+  flex-grow: 1;
+}
+
+.consultant-record-list__card-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--mg-gray-200);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}

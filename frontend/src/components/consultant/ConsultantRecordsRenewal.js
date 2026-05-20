@@ -139,11 +139,10 @@ const RecordFormSheet = ({ schedule, onClose, onSave }) => {
             </label>
             <textarea
               id="cr-summary"
-              className={`cr-form-textarea ${errors.summary ? 'cr-form-textarea--error' : ''}`}
+              className={`cr-form-textarea cr-form-textarea--summary ${errors.summary ? 'cr-form-textarea--error' : ''}`}
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               placeholder="내담자에게 공유되는 한 줄 요약입니다."
-              style={{ minHeight: '80px' }}
             />
             {errors.summary && <span className="cr-form-error">{errors.summary}</span>}
           </div>
@@ -216,7 +215,7 @@ const RecordDetailSheet = ({ record, onClose }) => {
           {record?.summary && (
             <div className="cr-form-field">
               <span className="cr-form-label">상담 요약</span>
-              <p style={{ fontSize: 'var(--mg-font-size-base)', color: 'var(--mg-color-text-main)' }}>
+              <p className="cr-form-static-text">
                 {record.summary}
               </p>
             </div>
@@ -225,7 +224,7 @@ const RecordDetailSheet = ({ record, onClose }) => {
           {record?.privateMemo && (
             <div className="cr-form-field">
               <span className="cr-form-label">전문가 메모</span>
-              <p style={{ fontSize: 'var(--mg-font-size-base)', color: 'var(--mg-color-text-main)' }}>
+              <p className="cr-form-static-text">
                 {record.privateMemo}
               </p>
             </div>
@@ -234,7 +233,7 @@ const RecordDetailSheet = ({ record, onClose }) => {
           {(record?.clientCondition || record?.mainIssues) && (
             <div className="cr-form-field">
               <span className="cr-form-label">내담자 상태</span>
-              <p style={{ fontSize: 'var(--mg-font-size-base)', color: 'var(--mg-color-text-main)' }}>
+              <p className="cr-form-static-text">
                 {record.clientCondition || record.mainIssues}
               </p>
             </div>
@@ -396,7 +395,7 @@ const ConsultantRecordsRenewal = () => {
               onClick={() => setDateFilter('')}
               aria-label="필터 초기화"
               type="button"
-              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+              className="cr-icon-button"
             >
               <X size={18} color="var(--mg-color-text-secondary)" />
             </button>

@@ -112,9 +112,9 @@ const BottomSheet = ({ schedule, onClose, onStartConsultation, onCompleteConsult
           <div className="cr-bottomsheet__handle-bar" />
         </div>
         <div className="cr-bottomsheet__content">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="cr-bottomsheet__header">
             <h2 className="cr-bottomsheet__title">상담 상세</h2>
-            <button onClick={onClose} aria-label="닫기" type="button" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+            <button onClick={onClose} aria-label="닫기" type="button" className="cr-icon-button">
               <X size={24} color="var(--mg-color-text-secondary)" />
             </button>
           </div>

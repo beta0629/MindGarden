@@ -8,6 +8,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
+import './ConsultantRecordFilterBlock.css';
 
 const ConsultantRecordFilterBlock = ({
   searchTerm,
@@ -17,44 +18,40 @@ const ConsultantRecordFilterBlock = ({
   statusOptions
 }) => {
   return (
-    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-      <div style={{ flex: '1 1 300px', display: 'flex', alignItems: 'center', backgroundColor: 'var(--mg-bg-white)', border: '1px solid var(--mg-gray-300)', borderRadius: 'var(--mg-radius-md)', padding: '0.5rem 1rem' }}>
-        <i className="bi bi-search" style={{ color: 'var(--mg-gray-400)', marginRight: '0.5rem' }} />
+    <div className="consultant-record-filter">
+      <div className="consultant-record-filter__search-wrap">
+        <i className="bi bi-search consultant-record-filter__search-icon" />
         <input
           type="text"
-          style={{ border: 'none', outline: 'none', width: '100%', backgroundColor: 'transparent' }}
+          className="consultant-record-filter__search-input"
           placeholder="내담자명, 제목, 내용으로 검색..."
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
         />
       </div>
-      
-      <div style={{ flex: '0 0 auto', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-        {statusOptions.map(option => (
-          <MGButton
-            key={option.value}
-            type="button"
-            onClick={() => onFilterStatusChange(option.value)}
-            preventDoubleClick={false}
-            variant={filterStatus === option.value ? 'primary' : 'outline'}
-            className={buildErpMgButtonClassName({
-              variant: filterStatus === option.value ? 'primary' : 'outline',
-              size: 'md',
-              loading: false,
-              className: `mg-v2-badge ${filterStatus === option.value ? 'mg-v2-badge--primary' : 'mg-v2-badge--default'}`
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            style={{
-              cursor: 'pointer',
-              border: filterStatus === option.value ? 'none' : '1px solid var(--mg-gray-300)',
-              backgroundColor: filterStatus === option.value ? 'var(--mg-primary-color)' : 'var(--mg-bg-white)',
-              color: filterStatus === option.value ? 'var(--mg-color-text-on-primary, var(--mg-layout-header-bg))' : 'var(--mg-text-secondary)',
-              padding: '0.5rem 1rem'
-            }}
-          >
-            {option.label}
-          </MGButton>
-        ))}
+
+      <div className="consultant-record-filter__button-group">
+        {statusOptions.map(option => {
+          const isActive = filterStatus === option.value;
+          return (
+            <MGButton
+              key={option.value}
+              type="button"
+              onClick={() => onFilterStatusChange(option.value)}
+              preventDoubleClick={false}
+              variant={isActive ? 'primary' : 'outline'}
+              className={`${buildErpMgButtonClassName({
+                variant: isActive ? 'primary' : 'outline',
+                size: 'md',
+                loading: false,
+                className: `mg-v2-badge ${isActive ? 'mg-v2-badge--primary' : 'mg-v2-badge--default'}`
+              })} consultant-record-filter__button ${isActive ? 'consultant-record-filter__button--active' : 'consultant-record-filter__button--inactive'}`}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            >
+              {option.label}
+            </MGButton>
+          );
+        })}
       </div>
     </div>
   );

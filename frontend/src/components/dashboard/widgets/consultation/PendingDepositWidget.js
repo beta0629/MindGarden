@@ -21,6 +21,11 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './PendingDepositWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_DEPOSITS_PENDING = '/api/v1/deposits/pending';
+const API_DEPOSITS_PENDING_STATS = '/api/v1/deposits/pending-stats';
+
 const PendingDepositWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -30,7 +35,7 @@ const PendingDepositWidget = ({ widget, user }) => {
       type: 'multi-api',
       endpoints: {
         deposits: {
-          url: '/api/v1/deposits/pending',
+          url: API_DEPOSITS_PENDING,
           method: 'GET',
           params: { 
             limit: widget.config?.maxItems || 10,
@@ -39,7 +44,7 @@ const PendingDepositWidget = ({ widget, user }) => {
           }
         },
         stats: {
-          url: '/api/v1/deposits/pending-stats',
+          url: API_DEPOSITS_PENDING_STATS,
           method: 'GET',
           params: {
             ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })

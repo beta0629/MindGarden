@@ -21,13 +21,19 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './SessionManagementWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SESSIONS = '/api/v1/sessions';
+const API_SESSIONS_STATS = '/api/v1/sessions/stats';
+const API_SESSIONS_EXTENSION_REQUESTS = '/api/v1/sessions/extension-requests';
+
 const SessionManagementWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
   const getDataSourceConfig = () => {
     const baseEndpoints = {
       sessions: {
-        url: '/api/v1/sessions',
+        url: API_SESSIONS,
         method: 'GET',
         params: { 
           limit: widget.config?.maxItems || 10,
@@ -36,7 +42,7 @@ const SessionManagementWidget = ({ widget, user }) => {
         }
       },
       stats: {
-        url: '/api/v1/sessions/stats',
+        url: API_SESSIONS_STATS,
         method: 'GET',
         params: {
           ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })
@@ -46,7 +52,7 @@ const SessionManagementWidget = ({ widget, user }) => {
 
     if (widget.config?.showExtensionRequests !== false) {
       baseEndpoints.extensionRequests = {
-        url: '/api/v1/sessions/extension-requests',
+        url: API_SESSIONS_EXTENSION_REQUESTS,
         method: 'GET',
         params: {
           status: 'pending',

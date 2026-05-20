@@ -22,12 +22,16 @@ import './ConsultationScheduleWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_CONSULTATION_SCHEDULES = '/api/v1/consultation-schedules';
+
 const ConsultationScheduleWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
   const getDataSourceConfig = () => ({
     type: 'api',
-    url: '/api/v1/consultation-schedules',
+    url: API_CONSULTATION_SCHEDULES,
     method: 'GET',
     params: { 
       limit: widget.config?.maxItems || 5,

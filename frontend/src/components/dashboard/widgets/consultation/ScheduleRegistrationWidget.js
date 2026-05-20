@@ -22,6 +22,11 @@ import './ScheduleRegistrationWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SCHEDULES = '/api/v1/schedules';
+const API_SCHEDULES_TODAY_STATS = '/api/v1/schedules/today-stats';
+
 const ScheduleRegistrationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -32,7 +37,7 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
       type: 'multi-api',
       endpoints: {
         schedules: {
-          url: '/api/v1/schedules',
+          url: API_SCHEDULES,
           method: 'GET',
           params: { 
             limit: widget.config?.maxItems || 10,
@@ -41,7 +46,7 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
           }
         },
         todayStats: {
-          url: '/api/v1/schedules/today-stats',
+          url: API_SCHEDULES_TODAY_STATS,
           method: 'GET',
           params: {
             ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })

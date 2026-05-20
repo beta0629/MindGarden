@@ -25,6 +25,12 @@ import { toErrorMessage } from '../../../../utils/safeDisplay';
 import '../../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentAdminWidget.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ASSESSMENTS_PSYCH_STATS = '/api/v1/assessments/psych/stats';
+const API_ASSESSMENTS_PSYCH_DOCUMENTS_RECENT = '/api/v1/assessments/psych/documents/recent';
+const API_ASSESSMENTS_PSYCH_DOCUMENTS = '/api/v1/assessments/psych/documents';
+
+
 const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
   const [uploadType, setUploadType] = useState('TCI');
   const [uploadFiles, setUploadFiles] = useState([]);
@@ -51,12 +57,12 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
       fetcher: StandardizedApi.get,
       endpoints: [
         {
-          url: '/api/v1/assessments/psych/stats',
+          url: API_ASSESSMENTS_PSYCH_STATS,
           key: 'stats',
           fallback: {}
         },
         {
-          url: '/api/v1/assessments/psych/documents/recent',
+          url: API_ASSESSMENTS_PSYCH_DOCUMENTS_RECENT,
           key: 'recent',
           fallback: []
         }
@@ -176,7 +182,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
         uploadFiles.forEach((f) => form.append('files', f));
       }
 
-      const res = await StandardizedApi.postFormData('/api/v1/assessments/psych/documents', form);
+      const res = await StandardizedApi.postFormData(API_ASSESSMENTS_PSYCH_DOCUMENTS, form);
       if (res?.success === false) {
         throw new Error(res?.message || '업로드에 실패했습니다.');
       }

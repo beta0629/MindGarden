@@ -25,6 +25,10 @@ import SafeText from '../../../common/SafeText';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_PERMISSIONS_USER_PERMISSIONS = '/api/v1/admin/permissions/user-permissions';
+
+
 const ErpManagementGridWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -32,7 +36,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
   const getDataSourceConfig = () => {
     return {
       type: 'api',
-      url: '/api/v1/admin/permissions/user-permissions',
+      url: API_ADMIN_PERMISSIONS_USER_PERMISSIONS,
       cache: true,
       refreshInterval: 600000, // 10분마다 새로고침
       params: {

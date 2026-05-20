@@ -23,6 +23,11 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../
 import './SystemToolsWidget.css';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_CACHE_CLEAR = '/api/v1/admin/cache/clear';
+const API_ADMIN_BACKUP_CREATE = '/api/v1/admin/backup/create';
+
+
 const SystemToolsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   
@@ -49,7 +54,7 @@ const SystemToolsWidget = ({ widget, user }) => {
       label: '캐시 초기화',
       icon: 'bi-trash',
       variant: 'danger',
-      action: { type: 'api', url: '/api/v1/admin/cache/clear', method: 'POST' },
+      action: { type: 'api', url: API_ADMIN_CACHE_CLEAR, method: 'POST' },
       description: '시스템 캐시를 초기화합니다'
     },
     {
@@ -57,7 +62,7 @@ const SystemToolsWidget = ({ widget, user }) => {
       label: '백업 생성',
       icon: 'bi-download',
       variant: 'success',
-      action: { type: 'api', url: '/api/v1/admin/backup/create', method: 'POST' },
+      action: { type: 'api', url: API_ADMIN_BACKUP_CREATE, method: 'POST' },
       description: '데이터베이스 백업을 생성합니다'
     }
   ];

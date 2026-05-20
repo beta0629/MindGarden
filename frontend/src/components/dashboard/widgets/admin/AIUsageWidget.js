@@ -23,6 +23,10 @@ import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_MONITORING_AI_USAGE_DETAILED = '/api/v1/monitoring/ai-usage/detailed';
+
+
 const MG_STATS_LUCIDE_SIZE = 22;
 
 const AIUsageWidget = ({ widget, user }) => {
@@ -34,7 +38,7 @@ const AIUsageWidget = ({ widget, user }) => {
       type: 'single-api',
       cache: false,
       refreshInterval: 60000, // 1분마다 새로고침
-      url: '/api/v1/monitoring/ai-usage/detailed'
+      url: API_MONITORING_AI_USAGE_DETAILED
     };
   };
 

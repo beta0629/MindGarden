@@ -24,12 +24,16 @@ import './ConsultantClientWidget.css';
 import MGButton from '../../../common/MGButton';
 import { ProfileCard } from '../../../ui/Card/index';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_CONSULTANT_CLIENTS = '/api/v1/consultant-clients';
+
 const ConsultantClientWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
   const getDataSourceConfig = () => ({
     type: 'api',
-    url: '/api/v1/consultant-clients',
+    url: API_CONSULTANT_CLIENTS,
     method: 'GET',
     params: { 
       limit: widget.config?.maxItems || 5,

@@ -25,6 +25,11 @@ import './SummaryPanelsWidget.css';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import '../SummaryPanels.css';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SCHEDULES = '/api/v1/schedules';
+const API_SCHEDULES_ADMIN_STATISTICS = '/api/v1/schedules/admin/statistics';
+
 const SummaryPanelsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   
@@ -43,13 +48,13 @@ const SummaryPanelsWidget = ({ widget, user }) => {
     if (RoleUtils.isConsultant(user)) {
       return {
         ...baseConfig,
-        url: '/api/v1/schedules',
+        url: API_SCHEDULES,
         params: { ...baseConfig.params, userRole: 'CONSULTANT' }
       };
     } else if (RoleUtils.isAdmin(user) || RoleUtils.isAdmin(user)) {
       return {
         ...baseConfig,
-        url: '/api/v1/schedules/admin/statistics',
+        url: API_SCHEDULES_ADMIN_STATISTICS,
         params: { ...baseConfig.params, userRole: 'ADMIN' }
       };
     }

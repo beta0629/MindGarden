@@ -27,6 +27,10 @@ import ConsultationGuideModal from '../../common/ConsultationGuideModal';
 import notificationManager from '../../../utils/notification';
 import './PersonalizedMessagesWidget.css';
 import '../ClientPersonalizedMessages.css';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SCHEDULES = '/api/v1/schedules';
+
 const PersonalizedMessagesWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const [clientStatus, setClientStatus] = useState(null);
@@ -38,7 +42,7 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     type: 'api',
     cache: true,
     refreshInterval: 120000, // 2분마다 새로고침
-    url: '/api/v1/schedules',
+    url: API_SCHEDULES,
     params: {
       userId: user.id,
       userRole: 'CLIENT',

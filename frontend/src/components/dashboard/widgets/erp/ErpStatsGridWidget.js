@@ -25,6 +25,10 @@ import MGButton from '../../../common/MGButton';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ERP_DASHBOARD_STATISTICS = '/api/v1/erp/dashboard/statistics';
+
 const ErpStatsGridWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -32,7 +36,7 @@ const ErpStatsGridWidget = ({ widget, user }) => {
   const getDataSourceConfig = () => {
     return {
       type: 'api',
-      url: '/api/v1/erp/dashboard/statistics',
+      url: API_ERP_DASHBOARD_STATISTICS,
       cache: true,
       refreshInterval: 300000, // 5분마다 새로고침
       params: {

@@ -11,6 +11,10 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import '../../styles/unified-design-tokens.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SYSTEM_NOTIFICATIONS = '/api/v1/system-notifications?page=0&size=50';
+
+
 /**
  * 통합 알림 페이지
 /**
@@ -39,7 +43,7 @@ const UnifiedNotifications = () => {
 
     try {
       setLoading(true);
-      const response = await apiGet('/api/v1/system-notifications?page=0&size=50');
+      const response = await apiGet(API_SYSTEM_NOTIFICATIONS);
 
       if (response) {
         // 백엔드 응답이 { notifications: [...] } 형태일 수 있음

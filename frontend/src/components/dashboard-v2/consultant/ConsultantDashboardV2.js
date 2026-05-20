@@ -20,6 +20,11 @@ import '../../../styles/unified-design-tokens.css';
 import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantDashboard.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_CONSULTATION_MESSAGES_UNREAD_COUNT = '/api/v1/consultation-messages/unread-count';
+const API_SYSTEM_NOTIFICATIONS_ACTIVE = '/api/v1/system-notifications/active';
+
+
 const TENANT_ERROR_MESSAGE = '테넌트 정보를 불러올 수 없습니다. 로그아웃 후 다시 로그인해 주세요.';
 const CONSULTANT_DASHBOARD_TITLE_ID = 'consultant-dashboard-v2-page-title';
 
@@ -218,7 +223,7 @@ const ConsultantDashboardV2 = ({ user }) => {
 
       let unreadMessages = stats.unreadMessages ?? 0;
       try {
-        const unreadRes = await StandardizedApi.get('/api/v1/consultation-messages/unread-count', {
+        const unreadRes = await StandardizedApi.get(API_CONSULTATION_MESSAGES_UNREAD_COUNT, {
           userId: currentUser.id,
           userType: 'CONSULTANT',
           _t: Date.now()
@@ -232,7 +237,7 @@ const ConsultantDashboardV2 = ({ user }) => {
 
       let activeNotifications = [];
       try {
-        const notiRes = await StandardizedApi.get('/api/v1/system-notifications/active');
+        const notiRes = await StandardizedApi.get(API_SYSTEM_NOTIFICATIONS_ACTIVE);
         if (notiRes && Array.isArray(notiRes)) {
           activeNotifications = notiRes.slice(0, 3).map(n => ({
             id: n.id,

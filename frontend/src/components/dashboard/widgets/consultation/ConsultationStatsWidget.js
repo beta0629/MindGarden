@@ -21,12 +21,16 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationStatsWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_CONSULTATIONS_STATS = '/api/v1/consultations/stats';
+
 const ConsultationStatsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
   const getDataSourceConfig = () => ({
     type: 'api',
-    url: '/api/v1/consultations/stats',
+    url: API_CONSULTATIONS_STATS,
     method: 'GET',
     params: { 
       period: widget.config?.period || 'month',

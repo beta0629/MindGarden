@@ -46,6 +46,14 @@ import ClientDashboard from '../client/ClientDashboard';
 import AdminDashboard from '../admin/AdminDashboard';
 import AcademyDashboard from '../academy/AcademyDashboard';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
+const API_ADMIN_BRANDING = '/api/v1/admin/branding';
+const API_CONSULTATIONS_STATISTICS_OVERALL = '/api/v1/consultations/statistics/overall';
+const API_CONSULTATIONS_MY_STATS = '/api/v1/consultations/my-stats';
+const API_SYSTEM_NOTIFICATIONS_ACTIVE = '/api/v1/system-notifications/active';
+
+
 const DASHBOARD_COMPONENTS = {
   'CommonDashboard': CommonDashboard,
   'ClientDashboard': ClientDashboard,
@@ -304,7 +312,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             color: 'info',
             dataSource: {
               type: 'api',
-              url: '/api/v1/auth/current-user'
+              url: API_AUTH_CURRENT_USER
             }
           }
         },
@@ -317,7 +325,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             color: 'success',
             dataSource: {
               type: 'api',
-              url: '/api/v1/admin/branding'
+              url: API_ADMIN_BRANDING
             }
           }
         },
@@ -606,14 +614,14 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
         console.debug(`테넌트 업종 정보 조회 시작: ${user.tenantId}`);
         
         // /api/v1/auth/current-user 응답에서 businessType 조회
-        const currentUserInfo = await apiGet('/api/v1/auth/current-user');
+        const currentUserInfo = await apiGet(API_AUTH_CURRENT_USER);
         
         if (currentUserInfo?.businessType) {
           setBusinessType(currentUserInfo.businessType);
           console.debug(`current-user에서 업종 정보 조회 성공: ${user.tenantId} → ${currentUserInfo.businessType}`);
         } else {
           // 폴백: 브랜딩 정보에서 테넌트 정보 추출
-          const brandingInfo = await apiGet('/api/v1/admin/branding');
+          const brandingInfo = await apiGet(API_ADMIN_BRANDING);
           if (brandingInfo?.tenantInfo?.businessType) {
             setBusinessType(brandingInfo.tenantInfo.businessType);
             console.debug(`브랜딩 정보에서 업종 정보 조회: ${brandingInfo.tenantInfo.businessType}`);
@@ -1025,7 +1033,7 @@ const createDefaultAdminDashboardConfig = (allAdminRoles) => {
         subtitle: '상담 현황 및 성과 지표',
         dataSource: {
           type: 'api',
-          url: '/api/v1/consultations/statistics/overall',
+          url: API_CONSULTATIONS_STATISTICS_OVERALL,
           refreshInterval: 300000 // 5분마다 새로고침
         },
         metrics: [
@@ -1211,7 +1219,7 @@ const createDefaultUserDashboardConfig = (businessType, userRole) => {
           title: '내 상담 현황',
           dataSource: {
             type: 'api',
-            url: '/api/v1/consultations/my-stats'
+            url: API_CONSULTATIONS_MY_STATS
           }
         }
       },
@@ -1223,7 +1231,7 @@ const createDefaultUserDashboardConfig = (businessType, userRole) => {
           title: '알림',
           dataSource: {
             type: 'api',
-            url: '/api/v1/system-notifications/active'
+            url: API_SYSTEM_NOTIFICATIONS_ACTIVE
           }
         }
       }

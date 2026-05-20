@@ -8,6 +8,12 @@ import { RoleUtils } from '../../../../constants/roles';
 import './AdminSystemOverviewWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_STATISTICS_CONSULTANTS = '/api/v1/admin/statistics/consultants';
+const API_ADMIN_STATISTICS_CLIENTS = '/api/v1/admin/statistics/clients';
+const API_ADMIN_STATISTICS_MAPPINGS = '/api/v1/admin/statistics/mappings';
+
 /**
  * 관리자 시스템 개요 위젯 - 표준화된 위젯
 /**
@@ -34,15 +40,15 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
       refreshInterval: 300000, // 5분마다 새로고침
       endpoints: [
         {
-          url: '/api/v1/admin/statistics/consultants',
+          url: API_ADMIN_STATISTICS_CONSULTANTS,
           key: 'consultants'
         },
         {
-          url: '/api/v1/admin/statistics/clients', 
+          url: API_ADMIN_STATISTICS_CLIENTS, 
           key: 'clients'
         },
         {
-          url: '/api/v1/admin/statistics/mappings',
+          url: API_ADMIN_STATISTICS_MAPPINGS,
           key: 'mappings'
         }
       ],

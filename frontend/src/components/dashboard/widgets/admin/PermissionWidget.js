@@ -24,6 +24,10 @@ import './PermissionWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_PERMISSIONS_CURRENT_USER = '/api/v1/admin/permissions/current-user';
+
 const PermissionWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const [expandedCategories, setExpandedCategories] = useState({
@@ -36,7 +40,7 @@ const PermissionWidget = ({ widget, user }) => {
   const getDataSourceConfig = () => {
     return {
       type: 'api',
-      url: '/api/v1/admin/permissions/current-user',
+      url: API_ADMIN_PERMISSIONS_CURRENT_USER,
       cache: true,
       refreshInterval: 600000, // 10분마다 새로고침
       params: {

@@ -103,6 +103,21 @@ import '../../styles/themes/admin-theme.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/AdminDashboard/AdminDashboardPipeline.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
+const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
+const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
+const API_ADMIN_VACATION_STATISTICS = '/api/v1/admin/vacation-statistics?period=month';
+const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
+const API_ADMIN_REFUND_STATISTICS = '/api/v1/admin/refund-statistics?period=month';
+const API_ADMIN_CONSULTANTS_WITH_VACATION = '/api/v1/admin/consultants/with-vacation';
+const API_ADMIN_MAPPINGS_PENDING_DEPOSIT = '/api/v1/admin/mappings/pending-deposit';
+const API_ADMIN_SCHEDULES_AUTO_COMPLETE = '/api/v1/admin/schedules/auto-complete';
+const API_ADMIN_SCHEDULES_AUTO_COMPLETE_WITH_REMINDER = '/api/v1/admin/schedules/auto-complete-with-reminder';
+const API_ADMIN_DUPLICATE_MAPPINGS = '/api/v1/admin/duplicate-mappings';
+const API_ADMIN_MERGE_DUPLICATE_MAPPINGS = '/api/v1/admin/merge-duplicate-mappings';
+
+
 /** 단계별 현황 도넛 차트 라벨 (5단계) */
 const STEP_CHART_LABELS = [
   '매칭',
@@ -441,11 +456,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       const dummyFailedResponse = () => ({ ok: false, json: () => Promise.resolve({}) });
       const settled = await Promise.allSettled([
         fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`, { headers, credentials: 'include' }),
-        fetch('/api/v1/admin/clients/with-mapping-info', { headers, credentials: 'include' }),
-        fetch('/api/v1/admin/mappings', { headers, credentials: 'include' }),
-        fetch('/api/v1/admin/consultant-rating-stats', { headers, credentials: 'include' }),
-        fetch('/api/v1/admin/vacation-statistics?period=month', { headers, credentials: 'include' }),
-        fetch('/api/v1/admin/statistics/consultation-completion', { headers, credentials: 'include' }),
+        fetch(API_ADMIN_CLIENTS_WITH_MAPPING_INFO, { headers, credentials: 'include' }),
+        fetch(API_ADMIN_MAPPINGS, { headers, credentials: 'include' }),
+        fetch(API_ADMIN_CONSULTANT_RATING_STATS, { headers, credentials: 'include' }),
+        fetch(API_ADMIN_VACATION_STATISTICS, { headers, credentials: 'include' }),
+        fetch(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION, { headers, credentials: 'include' }),
         fetch(SCHEDULE_API.STATISTICS, { headers, credentials: 'include' })
       ]);
       const consultantsRes = settled[0].status === 'fulfilled' ? settled[0].value : dummyFailedResponse();
@@ -594,7 +609,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const loadRefundStats = useCallback(async() => {
     try {
       const headers = { 'Content-Type': 'application/json', ...getDefaultApiHeaders() };
-      const response = await fetch('/api/v1/admin/refund-statistics?period=month', { headers, credentials: 'include' });
+      const response = await fetch(API_ADMIN_REFUND_STATISTICS, { headers, credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         const summary = data?.data?.summary ?? data?.summary;
@@ -617,8 +632,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     try {
       const dateStr = new Date().toISOString().split('T')[0];
       const [clientsRes, consultantsRes] = await Promise.all([
-        StandardizedApi.get('/api/v1/admin/clients/with-mapping-info'),
-        StandardizedApi.get('/api/v1/admin/consultants/with-vacation', { date: dateStr })
+        StandardizedApi.get(API_ADMIN_CLIENTS_WITH_MAPPING_INFO),
+        StandardizedApi.get(API_ADMIN_CONSULTANTS_WITH_VACATION, { date: dateStr })
       ]);
       const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
       const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
@@ -639,7 +654,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   const loadPendingDepositStats = useCallback(async() => {
     try {
-      const data = await StandardizedApi.get('/api/v1/admin/mappings/pending-deposit');
+      const data = await StandardizedApi.get(API_ADMIN_MAPPINGS_PENDING_DEPOSIT);
       const rawMappings = data?.mappings ?? data?.data?.mappings ?? (Array.isArray(data) ? data : []);
       const pendingList = Array.isArray(rawMappings) ? rawMappings : [];
       const count = pendingList.length;
@@ -661,7 +676,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const handleConfirmMatch = useCallback(
     async(clientId, consultantId) => {
       try {
-        await StandardizedApi.post('/api/v1/admin/mappings', {
+        await StandardizedApi.post(API_ADMIN_MAPPINGS, {
           clientId: Number(clientId),
           consultantId: Number(consultantId),
           status: 'PENDING_PAYMENT',
@@ -689,7 +704,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const handleAutoCompleteSchedules = async() => {
     setAutoCompleteLoading(true);
     try {
-      const response = await csrfTokenManager.post('/api/v1/admin/schedules/auto-complete');
+      const response = await csrfTokenManager.post(API_ADMIN_SCHEDULES_AUTO_COMPLETE);
       if (response.ok) {
         const result = await response.json();
         showToast(result.message || '스케줄 자동 완료 처리가 완료되었습니다.');
@@ -710,7 +725,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     setAutoCompleteWithReminderLoading(true);
     try {
       const response = await csrfTokenManager.post(
-        '/api/v1/admin/schedules/auto-complete-with-reminder'
+        API_ADMIN_SCHEDULES_AUTO_COMPLETE_WITH_REMINDER
       );
       if (response.ok) {
         const result = await response.json();
@@ -731,7 +746,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const handleMergeDuplicateMappings = async() => {
     setMergeDuplicateLoading(true);
     try {
-      const checkResponse = await fetch('/api/v1/admin/duplicate-mappings');
+      const checkResponse = await fetch(API_ADMIN_DUPLICATE_MAPPINGS);
       if (!checkResponse.ok) {
         showToast('중복 매칭 조회에 실패했습니다.', 'danger');
         return;
@@ -748,7 +763,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         );
       });
       if (!confirmed) return;
-      const response = await csrfTokenManager.post('/api/v1/admin/merge-duplicate-mappings');
+      const response = await csrfTokenManager.post(API_ADMIN_MERGE_DUPLICATE_MAPPINGS);
       if (response.ok) {
         const result = await response.json();
         showToast(result.message || '중복 매칭 통합이 완료되었습니다.');

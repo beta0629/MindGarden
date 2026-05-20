@@ -12,6 +12,10 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SYSTEM_NOTIFICATIONS_ACTIVE = '/api/v1/system-notifications/active';
+
 const ClientMessageWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const [allMessages, setAllMessages] = useState([]);
@@ -125,7 +129,7 @@ const ClientMessageWidget = ({ widget, user }) => {
       // 2. 시스템 공지 로드
       let systemNotifications = [];
       try {
-        const notificationsResponse = await apiGet('/api/v1/system-notifications/active');
+        const notificationsResponse = await apiGet(API_SYSTEM_NOTIFICATIONS_ACTIVE);
         if (notificationsResponse?.success) {
           systemNotifications = (notificationsResponse.data || [])
             .filter(notice => {

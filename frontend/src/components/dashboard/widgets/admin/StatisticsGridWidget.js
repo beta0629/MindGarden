@@ -24,6 +24,14 @@ import { toDisplayString } from '../../../../utils/safeDisplay';
 import './StatisticsGridWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_CONSULTANTS_WITH_STATS = '/api/v1/admin/consultants/with-stats';
+const API_ADMIN_CLIENTS_WITH_STATS = '/api/v1/admin/clients/with-stats';
+const API_ADMIN_MAPPINGS_STATS = '/api/v1/admin/mappings/stats';
+const API_ADMIN_SCHEDULES_TODAY = '/api/v1/admin/schedules/today';
+const API_ADMIN_FINANCE_SUMMARY = '/api/v1/admin/finance/summary';
+
 const StatisticsGridWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -35,27 +43,27 @@ const StatisticsGridWidget = ({ widget, user }) => {
       refreshInterval: 300000, // 5분마다 새로고침
       endpoints: [
         {
-          url: '/api/v1/admin/consultants/with-stats',
+          url: API_ADMIN_CONSULTANTS_WITH_STATS,
           key: 'consultants',
           fallback: []
         },
         {
-          url: '/api/v1/admin/clients/with-stats', 
+          url: API_ADMIN_CLIENTS_WITH_STATS, 
           key: 'clients',
           fallback: []
         },
         {
-          url: '/api/v1/admin/mappings/stats',
+          url: API_ADMIN_MAPPINGS_STATS,
           key: 'mappings',
           fallback: {}
         },
         {
-          url: '/api/v1/admin/schedules/today',
+          url: API_ADMIN_SCHEDULES_TODAY,
           key: 'schedules',
           fallback: []
         },
         {
-          url: '/api/v1/admin/finance/summary',
+          url: API_ADMIN_FINANCE_SUMMARY,
           key: 'finance',
           fallback: { totalRevenue: 0, pendingPayments: 0 }
         }

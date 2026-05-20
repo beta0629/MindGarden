@@ -22,6 +22,10 @@ import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import GnbDropdownPortal from './GnbDropdownPortal';
 import './NotificationDropdown.css';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SYSTEM_NOTIFICATIONS = '/api/v1/system-notifications';
+
+
 const NOTIFICATION_PANEL_ID = 'mg-v2-notification-panel';
 
 const TAB_SYSTEM = 'system';
@@ -96,7 +100,7 @@ const NotificationDropdown = () => {
   const fetchSystemNotifications = async() => {
     try {
       setLoadingSystem(true);
-      const response = await StandardizedApi.get('/api/v1/system-notifications', {
+      const response = await StandardizedApi.get(API_SYSTEM_NOTIFICATIONS, {
         page: 0,
         size: LIST_SIZE
       });

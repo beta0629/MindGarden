@@ -50,6 +50,11 @@ import ConsultantRatingWidget from './widgets/ConsultantRatingWidget';
 import ConsultationRecordSection from '../consultant/ConsultationRecordSection';
 import ConsultationRecordWidget from './widgets/ConsultationRecordWidget';
 
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
+const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
+
+
 const CommonDashboard = ({ user: propUser }) => {
   const navigate = useNavigate();
   const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -455,7 +460,7 @@ const CommonDashboard = ({ user: propUser }) => {
       let activeMappings = 0;
       
       try {
-        const mappingResponse = await apiGet('/api/v1/admin/mappings');
+        const mappingResponse = await apiGet(API_ADMIN_MAPPINGS);
         if (!isApiGetNullFailure(mappingResponse)) {
           const mappings = normalizeMappingsListPayload(mappingResponse);
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -682,7 +687,7 @@ const CommonDashboard = ({ user: propUser }) => {
       
       // 표준화 2025-12-08: /api/v1/admin 경로로 통일
       // apiGet은 ApiResponse면 data만 반환 → { mappings, count } 형태 (success 래핑 없음)
-      const mappingResponse = await apiGet(`/api/v1/admin/mappings/client`, { clientId: userId });
+      const mappingResponse = await apiGet(API_ADMIN_MAPPINGS_CLIENT, { clientId: userId });
 
       let mappingStatus = 'NONE';
       let paymentStatus = null;

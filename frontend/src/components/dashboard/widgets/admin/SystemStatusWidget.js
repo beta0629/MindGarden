@@ -23,6 +23,13 @@ import './SystemStatusWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import SafeText from '../../../common/SafeText';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_HEALTH_SERVER = '/api/v1/health/server';
+const API_HEALTH_DATABASE = '/api/v1/health/database';
+const API_HEALTH_EXTERNAL_SERVICES = '/api/v1/health/external-services';
+const API_HEALTH_SYSTEM_METRICS = '/api/v1/health/system-metrics';
+
 const SystemStatusWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
@@ -34,22 +41,22 @@ const SystemStatusWidget = ({ widget, user }) => {
       refreshInterval: 60000, // 1분마다 새로고침
       endpoints: [
         {
-          url: '/api/v1/health/server',
+          url: API_HEALTH_SERVER,
           key: 'server',
           fallback: { status: 'unknown', uptime: 0, version: 'unknown' }
         },
         {
-          url: '/api/v1/health/database',
+          url: API_HEALTH_DATABASE,
           key: 'database', 
           fallback: { status: 'unknown', connectionCount: 0, queryTime: 0 }
         },
         {
-          url: '/api/v1/health/external-services',
+          url: API_HEALTH_EXTERNAL_SERVICES,
           key: 'services',
           fallback: []
         },
         {
-          url: '/api/v1/health/system-metrics',
+          url: API_HEALTH_SYSTEM_METRICS,
           key: 'metrics',
           fallback: { cpu: 0, memory: 0, disk: 0 }
         }

@@ -24,6 +24,11 @@ import './RecentActivitiesWidget.css';
 import '../RecentActivities.css';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SCHEDULES = '/api/v1/schedules';
+const API_SCHEDULES_ADMIN_STATISTICS = '/api/v1/schedules/admin/statistics';
+
 const RecentActivitiesWidget = ({ widget, user }) => {
   // 역할별 API 엔드포인트 결정
   const getDataSourceConfig = () => {
@@ -44,13 +49,13 @@ const RecentActivitiesWidget = ({ widget, user }) => {
       case 'CLIENT':
         return {
           ...baseConfig,
-          url: '/api/v1/schedules',
+          url: API_SCHEDULES,
           transform: (data) => transformClientActivities(data)
         };
       case 'CONSULTANT':
         return {
           ...baseConfig,
-          url: '/api/v1/schedules',
+          url: API_SCHEDULES,
           transform: (data) => transformConsultantActivities(data)
         };
       case 'ADMIN':
@@ -58,7 +63,7 @@ const RecentActivitiesWidget = ({ widget, user }) => {
       case 'HQ_MASTER':
         return {
           ...baseConfig,
-          url: '/api/v1/schedules/admin/statistics',
+          url: API_SCHEDULES_ADMIN_STATISTICS,
           transform: (data) => transformAdminActivities(data)
         };
       default:

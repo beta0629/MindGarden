@@ -18,6 +18,10 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
 import './ClientMessageSection.css';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_SYSTEM_NOTIFICATIONS_ACTIVE = '/api/v1/system-notifications/active';
+
 /**
  * 내담자 메시지 확인 섹션
 /**
@@ -123,7 +127,7 @@ const ClientMessageSection = ({ userId }) => {
       }
 
       // 2. 시스템 공지 로드 (전체 공지만 표시 - 중복 제거)
-      const notificationsResponse = await apiGet('/api/v1/system-notifications/active');
+      const notificationsResponse = await apiGet(API_SYSTEM_NOTIFICATIONS_ACTIVE);
       
       let systemNotifications = [];
       const noticeList = normalizeApiListPayload(notificationsResponse);

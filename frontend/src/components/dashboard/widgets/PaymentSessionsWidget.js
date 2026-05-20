@@ -25,6 +25,10 @@ import { apiGet } from '../../../utils/ajax';
 import { normalizeMappingsListPayload } from '../../../utils/apiResponseNormalize';
 import './PaymentSessionsWidget.css';
 import '../ClientPaymentSessionsSection.css';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
+
 const PAYMENT_KPI_ICON_SIZE = 22;
 const PAYMENT_ITEM_ICON_SIZE = 20;
 const PAYMENT_STATE_ICON_SIZE = 40;
@@ -36,7 +40,7 @@ const PaymentSessionsWidget = ({ widget, user }) => {
     type: 'api',
     cache: true,
     refreshInterval: 300000, // 5분마다 새로고침 (결제 정보는 자주 변경되지 않음)
-    url: '/api/v1/admin/mappings/client',
+    url: API_ADMIN_MAPPINGS_CLIENT,
     params: {
       clientId: user.id
     },

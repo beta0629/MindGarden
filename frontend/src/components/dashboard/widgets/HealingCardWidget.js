@@ -21,6 +21,10 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import { RoleUtils } from '../../../constants/roles';
 import './HealingCardWidget.css';
 import '../../../components/common/HealingCard.css';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_HEALING_CONTENT = '/api/v1/healing/content';
+
 const HealingCardWidget = ({ widget, user }) => {
   // 역할별 데이터 소스 설정
   const getDataSourceConfig = () => {
@@ -35,7 +39,7 @@ const HealingCardWidget = ({ widget, user }) => {
       type: 'api',
       cache: false, // 힐링 컨텐츠는 항상 최신 상태 유지
       refreshInterval: 300000, // 5분마다 자동 새로고침
-      url: '/api/v1/healing/content',
+      url: API_HEALING_CONTENT,
       params: params
     };
   };

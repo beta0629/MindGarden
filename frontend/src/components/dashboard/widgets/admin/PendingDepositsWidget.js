@@ -8,6 +8,10 @@ import { formatCurrency, formatDate } from '../../../../utils/formatUtils';
 import './PendingDepositsWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+const API_ADMIN_PENDING_DEPOSITS = '/api/v1/admin/pending-deposits';
+
 /**
  * 입금 확인 대기 목록 위젯 - 표준화된 위젯
 /**
@@ -28,7 +32,7 @@ const PendingDepositsWidget = ({ widget, user }) => {
   const getDataSourceConfig = () => {
     return {
       type: 'api',
-      url: '/api/v1/admin/pending-deposits',
+      url: API_ADMIN_PENDING_DEPOSITS,
       cache: true,
       refreshInterval: 180000, // 3분마다 새로고침
       params: {

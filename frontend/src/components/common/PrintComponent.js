@@ -52,8 +52,8 @@ const PrintComponent = forwardRef(({
         lineHeight: '1.4',
         // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #000 -> var(--mg-custom-000)
         color: '#000',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-        backgroundColor: '#fff'
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-white) -> var(--mg-custom-fff)
+        backgroundColor: 'var(--mg-white)'
       },
       '.print-header': {
         textAlign: 'center',

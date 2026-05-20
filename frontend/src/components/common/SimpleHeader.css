@@ -56,7 +56,7 @@
   background: rgba(0, 0, 0, 0.05);
   border-radius: var(--mg-border-radius-md, 8px);
   cursor: pointer;
-  color: var(--mg-color-text, #1f2937);
+  color: var(--mg-color-text, var(--mg-color-text-main));
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   margin-right: var(--mg-spacing-sm, 12px);
 }
@@ -281,7 +281,7 @@
   position: absolute;
   top: -2px;
   right: -2px;
-  background: linear-gradient(135deg, var(--mg-error-500), #dc2626);
+  background: linear-gradient(135deg, var(--mg-error-500), var(--mg-color-error));
   color: white;
   font-size: 10px;
   font-weight: 600;

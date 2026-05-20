@@ -85,7 +85,7 @@
 }
 
 .mg-v2-badge-select--error .mg-v2-badge-select__item {
-  border-color: var(--mg-error-500, #dc2626);
+  border-color: var(--mg-error-500, var(--mg-color-error));
 }
 
 .mg-v2-badge-select__item-icon {

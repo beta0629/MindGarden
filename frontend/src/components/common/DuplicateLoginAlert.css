@@ -55,7 +55,7 @@
 .alert-title {
     font-size: var(--font-size-xl);
     font-weight: 600;
-    color: #1f2937;
+    color: var(--mg-color-text-main);
     margin: 0;
 }
 
@@ -65,14 +65,14 @@
 
 .alert-message {
     font-size: var(--font-size-base);
-    color: #374151;
+    color: var(--mg-color-text-secondary-dark);
     margin: 0 0 12px 0;
     line-height: 1.5;
 }
 
 .alert-submessage {
     font-size: var(--font-size-sm);
-    color: #6b7280;
+    color: var(--mg-color-text-secondary);
     margin: 0;
     line-height: 1.4;
 }
@@ -98,7 +98,7 @@
 
 .btn-cancel {
     background-color: #f3f4f6;
-    color: #374151;
+    color: var(--mg-color-text-secondary-dark);
     border: 1px solid #d1d5db;
 }
 
@@ -113,13 +113,13 @@
 }
 
 .btn-confirm {
-    background: linear-gradient(135deg, var(--mg-error-500), #dc2626);
+    background: linear-gradient(135deg, var(--mg-error-500), var(--mg-color-error));
     color: white;
-    border: 1px solid #dc2626;
+    border: 1px solid var(--mg-color-error);
 }
 
 .btn-confirm:hover:not(:disabled) {
-    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    background: linear-gradient(135deg, var(--mg-color-error), #b91c1c);
     border-color: #b91c1c;
     transform: translateY(-1px);
 }
@@ -139,7 +139,7 @@
 
 .countdown-progress {
     height: 100%;
-    background: linear-gradient(90deg, var(--mg-error-500), #dc2626);
+    background: linear-gradient(90deg, var(--mg-error-500), var(--mg-color-error));
     transition: width 1s linear;
     position: relative;
     width: var(--progress-width, 0%);
@@ -235,16 +235,16 @@
 /* 다크 모드 지원 */
 @media (prefers-color-scheme: dark) {
     .duplicate-login-alert {
-        background: #1f2937;
-        color: #f9fafb;
+        background: var(--mg-color-text-main);
+        color: var(--mg-color-background-main);
     }
     
     .alert-header {
-        border-bottom-color: #374151;
+        border-bottom-color: var(--mg-color-text-secondary-dark);
     }
     
     .alert-title {
-        color: #f9fafb;
+        color: var(--mg-color-background-main);
     }
     
     .alert-message {
@@ -256,13 +256,13 @@
     }
     
     .btn-cancel {
-        background-color: #374151;
-        color: #f9fafb;
-        border-color: #4b5563;
+        background-color: var(--mg-color-text-secondary-dark);
+        color: var(--mg-color-background-main);
+        border-color: var(--mg-color-text-tertiary);
     }
     
     .btn-cancel:hover:not(:disabled) {
-        background-color: #4b5563;
-        border-color: #6b7280;
+        background-color: var(--mg-color-text-tertiary);
+        border-color: var(--mg-color-text-secondary);
     }
 }

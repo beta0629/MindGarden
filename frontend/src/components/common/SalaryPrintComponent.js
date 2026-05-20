@@ -87,7 +87,7 @@ const SalaryPrintComponent = ({
             marginBottom: '20px'
           },
           '.salary-table th': {
-            backgroundColor: '#e9ecef',
+            backgroundColor: 'var(--mg-color-border-main)',
             fontWeight: 'bold',
             padding: '12px 8px',
             border: '1px solid #333',

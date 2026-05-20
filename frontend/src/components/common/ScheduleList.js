@@ -83,7 +83,7 @@ const ScheduleList = ({
     } catch (error) {
       console.error('필터 옵션 로드 실패:', error);
       setFilterOptions([
-        { value: 'ALL', label: '전체', icon: '📋', color: '#6b7280', description: '모든 일정' },
+        { value: 'ALL', label: '전체', icon: '📋', color: 'var(--mg-color-text-secondary)', description: '모든 일정' },
         { value: 'TODAY', label: '오늘', icon: '📅', color: 'var(--mg-primary-500)', description: '오늘 일정' },
         { value: 'THIS_WEEK', label: '이번 주', icon: '📅', color: 'var(--mg-success-500)', description: '이번 주 일정' },
         { value: 'THIS_MONTH', label: '이번 달', icon: '📅', color: 'var(--mg-warning-500)', description: '이번 달 일정' },

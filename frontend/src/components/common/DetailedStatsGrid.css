@@ -354,7 +354,7 @@
 }
 
 /* --- 카드 제목 --- */
-/* T8 핫픽스: 인라인 의도(margin:0; font-size:lg; font-weight:600; color:#495057) 1:1 재현.
+/* T8 핫픽스: 인라인 의도(margin:0; font-size:lg; font-weight:600; color:var(--mg-color-text-secondary)) 1:1 재현.
    상위 정의의 `display:flex; gap` 는 본 컴포넌트 의도(h3 단일 텍스트) 와 다르므로 override. */
 .detailed-stats-card--clients .detailed-stats-card-title,
 .detailed-stats-card--consultants .detailed-stats-card-title,
@@ -367,7 +367,7 @@
   gap: 0;
   font-size: var(--font-size-lg);
   font-weight: 600;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 /* --- 카드 값 (큰 숫자) --- */
@@ -437,7 +437,7 @@
 .detailed-stats-card--clients .detailed-stats-card-growth-value,
 .detailed-stats-card--consultants .detailed-stats-card-growth-value {
   font-size: var(--font-size-sm);
-  color: #495057;
+  color: var(--mg-color-text-secondary);
 }
 
 /* --- 증감/상태 라벨 (모든 카드 공통) --- */

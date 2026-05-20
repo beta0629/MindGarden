@@ -44,7 +44,7 @@
 
 .mg-stats__icon--blue {
   background: rgba(59, 130, 246, 0.1);
-  color: #2563eb;
+  color: var(--mg-color-info);
 }
 
 .mg-stats__icon--orange {
@@ -80,7 +80,7 @@
 
 .mg-stats__trend--negative {
   background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
+  color: var(--mg-color-error);
 }
 
 .mg-stats__trend-icon {
@@ -108,7 +108,7 @@
 
 .mg-stats__title {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--mg-color-text-secondary);
   margin: 0;
   line-height: 1.4;
 }
@@ -134,7 +134,7 @@
 }
 
 .mg-stats__sparkline-line--blue {
-  stroke: #2563eb;
+  stroke: var(--mg-color-info);
   stroke-width: 3;
 }
 
@@ -293,7 +293,7 @@
   }
 
   .mg-stats__value {
-    color: #f9fafb;
+    color: var(--mg-color-background-main);
   }
 
   .mg-stats__title {

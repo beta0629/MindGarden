@@ -7,7 +7,7 @@
 
 .stat-card {
   background: white;
-  border: var(--border-width-thin) solid #e9ecef;
+  border: var(--border-width-thin) solid var(--mg-color-border-main);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-lg);
   display: flex;

@@ -25,7 +25,7 @@
   margin: 0 0 4px 0;
   font-size: 28px;
   font-weight: 600;
-  color: var(--mg-text-primary, #1a1a1a);
+  color: var(--mg-text-primary, var(--mg-dark-bg-900));
 }
 
 .header-title p {
@@ -63,7 +63,7 @@
   border: none;
   outline: none;
   font-size: 14px;
-  color: var(--mg-text-primary, #1a1a1a);
+  color: var(--mg-text-primary, var(--mg-dark-bg-900));
 }
 
 .search-input::placeholder {
@@ -82,7 +82,7 @@
   border-radius: 8px;
   font-size: 14px;
   background: white;
-  color: var(--mg-text-primary, #1a1a1a);
+  color: var(--mg-text-primary, var(--mg-dark-bg-900));
   cursor: pointer;
   transition: border-color 0.2s;
 }
@@ -143,7 +143,7 @@
   margin: 0 0 8px 0;
   font-size: 20px;
   font-weight: 600;
-  color: var(--mg-text-primary, #1a1a1a);
+  color: var(--mg-text-primary, var(--mg-dark-bg-900));
 }
 
 .empty-state p {
@@ -191,7 +191,7 @@
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: var(--mg-text-primary, #1a1a1a);
+  color: var(--mg-text-primary, var(--mg-dark-bg-900));
   flex: 1;
 }
 
@@ -261,7 +261,7 @@
 }
 
 .info-value {
-  color: var(--mg-text-primary, #1a1a1a);
+  color: var(--mg-text-primary, var(--mg-dark-bg-900));
   word-break: break-word;
 }
 
@@ -339,7 +339,7 @@
 
 .mg-modal__body p {
   margin: 0 0 12px 0;
-  color: var(--mg-text-primary, #1a1a1a);
+  color: var(--mg-text-primary, var(--mg-dark-bg-900));
   font-size: 14px;
   line-height: 1.6;
 }

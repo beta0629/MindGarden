@@ -78,7 +78,7 @@
   left: 0;
   width: 4px;
   height: 100%;
-  background: linear-gradient(180deg, #87CEEB, #B0E0E6);
+  background: linear-gradient(180deg, var(--mg-info-500), #B0E0E6);
   opacity: 0;
   transition: opacity var(--transition-fast);
 }
@@ -86,7 +86,7 @@
 .wellness-notification-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
-  border-color: #87CEEB;
+  border-color: var(--mg-info-500);
 }
 
 .wellness-notification-card:hover::before {
@@ -148,7 +148,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #87CEEB;
+  color: var(--mg-info-500);
   margin-bottom: var(--spacing-md);
 }
 
@@ -200,7 +200,7 @@
 }
 
 .meta-item svg {
-  color: #87CEEB;
+  color: var(--mg-info-500);
 }
 
 /* 화살표 */
@@ -208,7 +208,7 @@
   position: absolute;
   bottom: var(--spacing-lg);
   right: var(--spacing-lg);
-  color: #87CEEB;
+  color: var(--mg-info-500);
   opacity: 0;
   transform: translateX(-10px);
   transition: all var(--transition-fast);
@@ -239,7 +239,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #87CEEB;
+  color: var(--mg-info-500);
 }
 
 .empty-title {

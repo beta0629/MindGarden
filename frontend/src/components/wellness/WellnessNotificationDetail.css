@@ -42,7 +42,7 @@
 
 .wellness-notification-detail .back-button:hover {
   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-  border-color: #87CEEB;
+  border-color: var(--mg-info-500);
   color: var(--color-text-primary);
   transform: translateX(-2px);
 }
@@ -62,7 +62,7 @@
 
 .wellness-notification-detail button.back-button.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-  border-color: #87CEEB;
+  border-color: var(--mg-info-500);
   color: var(--color-text-primary);
   transform: translateX(-2px);
 }
@@ -118,7 +118,7 @@
 }
 
 .wellness-notification-detail .badge-type.type-update {
-  background: linear-gradient(135deg, #87CEEB, #B0E0E6);
+  background: linear-gradient(135deg, var(--mg-info-500), #B0E0E6);
   color: var(--color-white);
 }
 
@@ -155,7 +155,7 @@
 }
 
 .meta-item svg {
-  color: #87CEEB;
+  color: var(--mg-info-500);
 }
 
 /* 내용 */
@@ -199,7 +199,7 @@
   margin: var(--spacing-xl) 0 var(--spacing-md) 0;
   padding: var(--spacing-sm) var(--spacing-md);
   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-  border-left: 4px solid #87CEEB;
+  border-left: 4px solid var(--mg-info-500);
   border-radius: var(--border-radius-sm);
   position: relative;
 }
@@ -262,7 +262,7 @@
 }
 
 .content-body a {
-  color: #87CEEB;
+  color: var(--mg-info-500);
   text-decoration: underline;
   transition: color var(--transition-fast);
 }
@@ -281,7 +281,7 @@
 .content-body blockquote {
   margin: var(--spacing-lg) 0;
   padding: var(--spacing-md) var(--spacing-lg);
-  border-left: 4px solid #87CEEB;
+  border-left: 4px solid var(--mg-info-500);
   background: linear-gradient(135deg, rgba(135, 206, 235, 0.05), rgba(176, 224, 230, 0.05));
   border-radius: var(--border-radius-md);
   font-style: italic;

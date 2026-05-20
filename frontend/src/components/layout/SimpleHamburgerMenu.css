@@ -41,7 +41,7 @@
   align-items: center;
   padding: var(--spacing-xl) var(--spacing-lg);
   border-bottom: 2px solid #e9ecef;
-  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-gradient-primary-end) 100%);
   color: white;
 }
 
@@ -95,7 +95,7 @@
   text-align: left;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   font-size: var(--font-size-md);
   font-weight: 500;
   position: relative;
@@ -113,7 +113,7 @@
 }
 
 .simple-hamburger-main-item:hover {
-  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-gradient-primary-end) 100%);
   color: white;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
@@ -468,7 +468,7 @@
 }
 
 .simple-hamburger-menu .retry-btn.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: #0056b3;
+  background: var(--mg-color-primary-dark);
 }
 
 /* 준비중 배지 스타일 */

@@ -112,7 +112,7 @@
 }
 
 .retry-button:hover {
-  background: var(--primary-hover, #0056b3);
+  background: var(--primary-hover, var(--mg-color-primary-dark));
 }
 
 /* 빈 상태 */
@@ -241,7 +241,7 @@
 }
 
 .erd-view-button:hover {
-  background: var(--primary-hover, #0056b3);
+  background: var(--primary-hover, var(--mg-color-primary-dark));
 }
 
 /* 반응형 디자인 */

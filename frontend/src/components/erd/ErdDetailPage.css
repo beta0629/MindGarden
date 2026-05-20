@@ -121,7 +121,7 @@
 
 .export-button:hover,
 .export-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--primary-hover, #0056b3);
+  background: var(--primary-hover, var(--mg-color-primary-dark));
 }
 
 .export-menu {
@@ -268,7 +268,7 @@
 
 .zoom-button:hover,
 .zoom-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--primary-hover, #0056b3);
+  background: var(--primary-hover, var(--mg-color-primary-dark));
 }
 
 .zoom-level {
@@ -681,7 +681,7 @@
 
 .retry-button:hover,
 .retry-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--primary-hover, #0056b3);
+  background: var(--primary-hover, var(--mg-color-primary-dark));
 }
 
 /* 반응형 디자인 */

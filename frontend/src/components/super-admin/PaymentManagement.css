@@ -23,7 +23,7 @@
 
 .payment-header h1 {
   margin: 0;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   font-size: var(--font-size-xxl);
   font-weight: 600;
 }
@@ -42,7 +42,7 @@
 }
 
 .stat-card {
-  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-gradient-primary-end) 100%);
   color: white;
   padding: 25px;
   border-radius: 12px;
@@ -364,7 +364,7 @@
 }
 
 .mg-btn--primary:hover {
-  background-color: #0056b3;
+  background-color: var(--mg-color-primary-dark);
 }
 
 .btn-success {

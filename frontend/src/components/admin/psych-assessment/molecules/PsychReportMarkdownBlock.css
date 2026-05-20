@@ -8,7 +8,7 @@
 
 .mg-v2-psych-report-markdown-block {
   background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg, #F5F3EF));
-  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border, #D4CFC8));
+  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border, var(--mg-color-border-main)));
   border-radius: 16px;
   padding: 1.5rem;
 }
@@ -20,5 +20,5 @@
   font-family: inherit;
   font-size: 0.9375rem;
   line-height: 1.6;
-  color: var(--mg-color-text-main, var(--ad-b0kla-title-color, #2C2C2C));
+  color: var(--mg-color-text-main, var(--ad-b0kla-title-color, var(--mg-dark-bg-800)));
 }

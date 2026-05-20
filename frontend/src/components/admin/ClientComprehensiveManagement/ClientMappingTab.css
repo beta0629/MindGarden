@@ -31,7 +31,7 @@
   top: 0;
   bottom: 0;
   width: 4px;
-  background: var(--ad-b0kla-green, #3D5246);
+  background: var(--ad-b0kla-green, var(--mg-color-primary-main));
   border-radius: 2px;
 }
 

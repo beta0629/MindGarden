@@ -36,7 +36,7 @@
     background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    color: var(--text-primary, #1a1a1a);
+    color: var(--text-primary, var(--mg-dark-bg-900));
     transition: all 0.3s ease;
     box-shadow: 
         0 4px 16px var(--mg-shadow-light),
@@ -71,7 +71,7 @@
     background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    color: var(--text-primary, #1a1a1a);
+    color: var(--text-primary, var(--mg-dark-bg-900));
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 
@@ -97,7 +97,7 @@
 
 .filter-select option {
     background: rgba(255, 255, 255, 0.95);
-    color: var(--text-primary, #1a1a1a);
+    color: var(--text-primary, var(--mg-dark-bg-900));
     padding: 8px 12px;
 }
 

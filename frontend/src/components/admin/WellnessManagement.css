@@ -15,7 +15,7 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-xl);
-    background: linear-gradient(135deg, #87CEEB, #B0E0E6);
+    background: linear-gradient(135deg, var(--mg-info-500), #B0E0E6);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-lg);
     color: var(--color-white);
@@ -148,7 +148,7 @@
 }
 
 .wellness-stat-card--tokens .wellness-stat-icon {
-    background: linear-gradient(135deg, #87CEEB, #4682B4);
+    background: linear-gradient(135deg, var(--mg-info-500), #4682B4);
     box-shadow: 0 4px 12px rgba(135, 206, 235, 0.3);
 }
 
@@ -223,7 +223,7 @@
 }
 
 .wellness-month-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #87CEEB, #B0E0E6);
+    background: linear-gradient(135deg, var(--mg-info-500), #B0E0E6);
     color: var(--color-white);
     border-color: transparent;
 }

@@ -3,7 +3,7 @@
 .mg-v2-profile-card {
   position: relative;
   overflow: hidden;
-  background: var(--color-surface, #ffffff);
+  background: var(--color-surface, var(--mg-white));
   border: 1px solid var(--color-border-light, #e5e7eb);
   border-radius: var(--radius-lg, 16px);
   padding: var(--spacing-lg, 24px);
@@ -17,7 +17,7 @@
 .mg-v2-profile-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border-color: var(--color-border-focus, #3b82f6);
+  border-color: var(--color-border-focus, var(--mg-primary-500));
 }
 
 .mg-v2-profile-card__header {
@@ -31,7 +31,7 @@
   width: 48px;
   height: 48px;
   background: var(--color-background-alt, #f3f4f6);
-  color: var(--color-primary, #3b82f6);
+  color: var(--color-primary, var(--mg-primary-500));
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -375,7 +375,7 @@
 .mg-v2-profile-card__status-indicator {
   position: absolute; bottom: 2px; right: 2px;
   width: 12px; height: 12px; border-radius: 50%;
-  border: 2px solid var(--color-surface, #ffffff);
+  border: 2px solid var(--color-surface, var(--mg-white));
   z-index: 2;
 }
 .mg-v2-profile-card__status-indicator--online { background-color: var(--mg-success-500); }

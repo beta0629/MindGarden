@@ -8,6 +8,6 @@
 .mg-v2-psych-report-meta {
   margin: 0 0 0.75rem;
   font-size: 12px;
-  color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary, #5C6B61));
+  color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary)));
   line-height: 1.5;
 }

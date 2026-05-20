@@ -247,7 +247,7 @@ const ApiPerformanceMonitoring = () => {
                     <span style={{ fontSize: '12px', color: 'var(--mg-color-text-secondary)', marginTop: '4px' }}>요청 수: {stats.totalRequests.toLocaleString()}건</span>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--mg-color-error-main, #ef4444)' }}>{stats.averageDuration}ms</div>
+                    <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--mg-color-error-main, var(--mg-error-500))' }}>{stats.averageDuration}ms</div>
                     <div style={{ fontSize: '12px', color: 'var(--mg-color-text-secondary)', marginTop: '4px' }}>최대 {stats.maxDuration}ms</div>
                   </div>
                 </div>

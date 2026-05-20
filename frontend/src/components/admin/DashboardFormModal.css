@@ -216,7 +216,7 @@
   }
 
 .dashboard-form-modal .mg-modal__header {
-  background: var(--mg-gradient-primary, linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%));
+  background: var(--mg-gradient-primary, linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-gradient-primary-end) 100%));
   color: var(--mg-text-on-dark, white);
   border-bottom: none;
   }
@@ -268,7 +268,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--mg-spacing-lg, 1.5rem);
-  background: var(--mg-gradient-primary, linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%));
+  background: var(--mg-gradient-primary, linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-gradient-primary-end) 100%));
   color: var(--mg-text-on-primary, white);
   border-bottom: none;
   flex-shrink: 0;
@@ -460,8 +460,8 @@
 }
 
 .mg-btn-add-role:hover:not(:disabled) {
-  background-color: var(--mg-color-primary-dark, #0056b3);
-  border-color: var(--mg-color-primary-dark, #0056b3);
+  background-color: var(--mg-color-primary-dark, var(--mg-color-primary-dark));
+  border-color: var(--mg-color-primary-dark, var(--mg-color-primary-dark));
 }
 
 .mg-btn-add-role:disabled {

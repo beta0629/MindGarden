@@ -21,6 +21,7 @@ import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import { USER_ROLES } from '../../constants/roles';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -116,7 +117,7 @@ const SystemConfigManagement = () => {
       notificationManager.show('로그인이 필요합니다.', 'error');
       return;
     }
-    const allowedRoles = ['ADMIN', 'STAFF'];
+    const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.STAFF];
     if (!allowedRoles.includes(user.role)) {
       notificationManager.show('접근 권한이 없습니다.', 'error');
       return;

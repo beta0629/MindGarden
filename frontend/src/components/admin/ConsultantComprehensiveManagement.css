@@ -1150,13 +1150,13 @@ div[class*="consultant-specialty-display"] div,
 .mg-v2-ad-b0kla .mg-v2-section-heading--accent .mg-v2-section-heading__bar {
     width: 4px;
     min-height: 20px;
-    background: var(--mg-color-primary-main, #3D5246);
+    background: var(--mg-color-primary-main, var(--mg-color-primary-main));
     border-radius: 2px;
 }
 .mg-v2-ad-b0kla .mg-v2-section-heading__title {
     font-size: 16px;
     font-weight: 600;
-    color: var(--mg-color-text-main, #2C2C2C);
+    color: var(--mg-color-text-main, var(--mg-dark-bg-800));
     margin: 0;
 }
 .mg-v2-ad-b0kla .mg-v2-form-row--two {

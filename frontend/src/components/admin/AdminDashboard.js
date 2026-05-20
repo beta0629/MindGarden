@@ -236,7 +236,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 email: urlParams.get('email') || '',
                 name: decodeURIComponent(urlParams.get('name') || ''),
                 nickname: decodeURIComponent(urlParams.get('nickname') || ''),
-                role: urlParams.get('role') || 'ADMIN',
+                role: urlParams.get('role') || USER_ROLES.ADMIN,
                 profileImageUrl: decodeURIComponent(urlParams.get('profileImage') || ''),
                 provider: urlParams.get('provider') || 'UNKNOWN'
             };
@@ -1902,7 +1902,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 className="mg-v2-ad-b0kla"
             >
                 <StatisticsDashboard
-                    userRole={(propUser || sessionUser)?.role || 'ADMIN'}
+                    userRole={(propUser || sessionUser)?.role || USER_ROLES.ADMIN}
                     userId={(propUser || sessionUser)?.id}
                 />
             </UnifiedModal>

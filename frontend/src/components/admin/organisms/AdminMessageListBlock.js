@@ -25,7 +25,7 @@ import '../../../styles/unified-design-tokens.css';
 
 const MESSAGE_TYPES = {
   ALL: { label: '전체', color: 'var(--mg-color-text-secondary)' },
-  GENERAL: { label: '일반', color: 'var(--mg-color-info, #5C6B61)' },
+  GENERAL: { label: '일반', color: 'var(--mg-color-info, var(--mg-color-text-secondary))' },
   FOLLOW_UP: { label: '후속 조치', color: 'var(--mg-color-primary-main)' },
   HOMEWORK: { label: '과제 안내', color: 'var(--mg-color-success)' },
   REMINDER: { label: '알림', color: 'var(--mg-color-warning)' },

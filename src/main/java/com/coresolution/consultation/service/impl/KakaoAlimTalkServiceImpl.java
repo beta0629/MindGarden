@@ -7,12 +7,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.entity.CommonCode;
+import com.coresolution.consultation.entity.TenantKakaoAlimtalkSettings;
+import com.coresolution.consultation.integration.solapi.KakaoSolapiCredentialResolver;
+import com.coresolution.consultation.integration.solapi.SolapiAlimTalkClient;
+import com.coresolution.consultation.integration.solapi.SolapiAlimTalkRequest;
+import com.coresolution.consultation.integration.solapi.SolapiAlimTalkResponse;
+import com.coresolution.consultation.integration.solapi.SolapiCredentials;
 import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.consultation.repository.TenantKakaoAlimtalkSettingsRepository;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -32,7 +40,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
-    
+
+    static final String PROVIDER_BIZMSG = "bizmsg";
+    static final String PROVIDER_SOLAPI = "solapi";
+
     @Value("${kakao.alimtalk.enabled:false}")
     private boolean alimTalkEnabled;
     
@@ -47,16 +58,49 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
     
     @Value("${kakao.alimtalk.api-url:https://alimtalk-api.bizmsg.kr}")
     private String apiUrl;
-    
+
+    @Value("${kakao.alimtalk.provider:bizmsg}")
+    private String provider;
+
+    @Value("${kakao.alimtalk.solapi.sender-number:}")
+    private String solapiSenderNumber;
+
     private final CommonCodeRepository commonCodeRepository;
     private final RestTemplate restTemplate;
-    
-    public KakaoAlimTalkServiceImpl(CommonCodeRepository commonCodeRepository) {
+    private final SolapiAlimTalkClient solapiAlimTalkClient;
+    private final KakaoSolapiCredentialResolver solapiCredentialResolver;
+    private final TenantKakaoAlimtalkSettingsRepository tenantKakaoAlimtalkSettingsRepository;
+
+    /**
+     * 운영용 생성자. 솔라피 의존성은 {@code provider=solapi} 분기에서만 사용된다.
+     *
+     * @param commonCodeRepository 공통 코드 저장소
+     * @param solapiAlimTalkClient 솔라피 알림톡 클라이언트(provider 분기용)
+     * @param solapiCredentialResolver 솔라피 자격 증명 resolver
+     * @param tenantKakaoAlimtalkSettingsRepository 테넌트별 알림톡 비시크릿 설정
+     */
+    @Autowired
+    public KakaoAlimTalkServiceImpl(
+            CommonCodeRepository commonCodeRepository,
+            SolapiAlimTalkClient solapiAlimTalkClient,
+            KakaoSolapiCredentialResolver solapiCredentialResolver,
+            TenantKakaoAlimtalkSettingsRepository tenantKakaoAlimtalkSettingsRepository) {
         this.commonCodeRepository = commonCodeRepository;
         this.restTemplate = new RestTemplate();
-        
-        // 알림톡 관련 공통 코드 초기화
+        this.solapiAlimTalkClient = solapiAlimTalkClient;
+        this.solapiCredentialResolver = solapiCredentialResolver;
+        this.tenantKakaoAlimtalkSettingsRepository = tenantKakaoAlimtalkSettingsRepository;
+
         initializeAlimTalkCommonCodes();
+    }
+
+    /**
+     * 후방호환용 생성자. 솔라피 의존성이 없는 컨텍스트(레거시 테스트 등)에서만 사용된다.
+     *
+     * @param commonCodeRepository 공통 코드 저장소
+     */
+    public KakaoAlimTalkServiceImpl(CommonCodeRepository commonCodeRepository) {
+        this(commonCodeRepository, null, null, null);
     }
     
     @Override
@@ -71,51 +115,132 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
             log.info("📱 알림톡 비활성화 상태 - SMS로 대체 발송 권장");
             return false;
         }
-        
-        if (!simulationMode && (apiKey == null || apiKey.isEmpty() || senderKey == null || senderKey.isEmpty())) {
-            log.warn("⚠️ 실제 모드에서 카카오 알림톡 API 키 또는 발신자 키가 설정되지 않았습니다");
-            return false;
-        }
-        
+
+        String contentKey = (contentTemplateKey != null && !contentTemplateKey.isBlank())
+            ? contentTemplateKey.trim()
+            : apiTemplateCode;
+        boolean useSolapi = isSolapiProvider();
+
+        log.info("📤 카카오 알림톡 발송 시작: 수신자={}, 템플릿(api)={}, contentKey={}, provider={}",
+            PhoneLogMasking.maskForLog(phoneNumber), apiTemplateCode, contentKey,
+            useSolapi ? PROVIDER_SOLAPI : PROVIDER_BIZMSG);
+
         try {
-            String contentKey = (contentTemplateKey != null && !contentTemplateKey.isBlank())
-                ? contentTemplateKey.trim()
-                : apiTemplateCode;
-            log.info("📤 카카오 알림톡 발송 시작: 수신자={}, 템플릿(api)={}, contentKey={}",
-                PhoneLogMasking.maskForLog(phoneNumber), apiTemplateCode, contentKey);
-            
-            // 알림톡 API 요청 데이터 구성
-            Map<String, Object> requestData = new HashMap<>();
-            requestData.put("senderKey", senderKey);
-            requestData.put("templateCode", apiTemplateCode);
-            requestData.put("recipientNo", phoneNumber);
-            requestData.put("content", buildMessageContent(contentKey, templateParams));
-            requestData.put("templateParameter", templateParams);
-            requestData.put("requestDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            
-            // HTTP 헤더 설정
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("Authorization", "Bearer " + apiKey);
-            headers.set("Content-Type", "application/json;charset=UTF-8");
-            
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestData, headers);
-            
-            // 실제 API 호출 (현재는 시뮬레이션)
-            boolean success = sendToKakaoApi(request);
-            
+            boolean success = useSolapi
+                ? sendViaSolapi(phoneNumber, apiTemplateCode, contentKey, templateParams)
+                : sendViaBizmsg(phoneNumber, apiTemplateCode, contentKey, templateParams);
+
             if (success) {
-                log.info("✅ 카카오 알림톡 발송 성공: 수신자={}, 템플릿={}", PhoneLogMasking.maskForLog(phoneNumber), apiTemplateCode);
+                log.info("✅ 카카오 알림톡 발송 성공: 수신자={}, 템플릿={}",
+                    PhoneLogMasking.maskForLog(phoneNumber), apiTemplateCode);
             } else {
-                log.warn("⚠️ 카카오 알림톡 발송 실패: 수신자={}, 템플릿={}", PhoneLogMasking.maskForLog(phoneNumber), apiTemplateCode);
+                log.warn("⚠️ 카카오 알림톡 발송 실패: 수신자={}, 템플릿={}",
+                    PhoneLogMasking.maskForLog(phoneNumber), apiTemplateCode);
             }
-            
             return success;
-            
         } catch (Exception e) {
-            log.error("❌ 카카오 알림톡 발송 중 오류: 수신자={}, 템플릿={}", PhoneLogMasking.maskForLog(phoneNumber), apiTemplateCode, e);
+            log.error("❌ 카카오 알림톡 발송 중 오류: 수신자={}, 템플릿={}",
+                PhoneLogMasking.maskForLog(phoneNumber), apiTemplateCode, e);
             return false;
         }
+    }
+
+    /**
+     * 비즈엠(bizmsg) provider 경로. 기존 단일 provider 호환.
+     */
+    private boolean sendViaBizmsg(String phoneNumber, String apiTemplateCode, String contentKey,
+            Map<String, String> templateParams) {
+        if (!simulationMode && (apiKey == null || apiKey.isEmpty() || senderKey == null || senderKey.isEmpty())) {
+            log.warn("⚠️ 실제 모드에서 카카오 알림톡(bizmsg) API 키 또는 발신자 키가 설정되지 않았습니다");
+            return false;
+        }
+
+        Map<String, Object> requestData = new HashMap<>();
+        requestData.put("senderKey", senderKey);
+        requestData.put("templateCode", apiTemplateCode);
+        requestData.put("recipientNo", phoneNumber);
+        requestData.put("content", buildMessageContent(contentKey, templateParams));
+        requestData.put("templateParameter", templateParams);
+        requestData.put("requestDate",
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + apiKey);
+        headers.set("Content-Type", "application/json;charset=UTF-8");
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestData, headers);
+        return sendToKakaoApi(request);
+    }
+
+    /**
+     * 솔라피(solapi) provider 경로. 발신 프로필·자격 증명은 ENV/Secrets에서 resolve.
+     */
+    private boolean sendViaSolapi(String phoneNumber, String apiTemplateCode, String contentKey,
+            Map<String, String> templateParams) {
+        if (simulationMode) {
+            log.info("🎭 [시뮬레이션 모드] solapi 알림톡 발송 - 실제 API 호출 없음, 템플릿={}", apiTemplateCode);
+            log.debug("📋 시뮬레이션 변수: contentKey={}, params={}", contentKey, templateParams);
+            return true;
+        }
+        if (solapiAlimTalkClient == null || solapiCredentialResolver == null) {
+            log.warn("⚠️ provider=solapi 구성에 SolapiAlimTalkClient/Resolver 빈이 주입되지 않음");
+            return false;
+        }
+
+        TenantKakaoAlimtalkSettings tenantSettings = loadTenantSettings();
+        String apiKeyRef = tenantSettings != null ? tenantSettings.getKakaoApiKeyRef() : null;
+        String senderKeyRef = tenantSettings != null ? tenantSettings.getKakaoSenderKeyRef() : null;
+
+        SolapiCredentials credentials = solapiCredentialResolver.resolveCredentials(apiKeyRef);
+        if (!credentials.isComplete()) {
+            log.warn("⚠️ 실제 모드에서 solapi API 키/시크릿 resolve 실패. refPresent={}",
+                apiKeyRef != null && !apiKeyRef.isBlank());
+            return false;
+        }
+
+        String pfId = solapiCredentialResolver.resolvePfId(senderKeyRef);
+        if (pfId == null || pfId.isBlank()) {
+            log.warn("⚠️ 실제 모드에서 solapi 발신 프로필(pfId) resolve 실패. refPresent={}",
+                senderKeyRef != null && !senderKeyRef.isBlank());
+            return false;
+        }
+
+        String fromNumber = (solapiSenderNumber == null || solapiSenderNumber.isBlank())
+            ? null
+            : solapiSenderNumber.trim();
+
+        SolapiAlimTalkRequest request = new SolapiAlimTalkRequest(
+            credentials,
+            pfId,
+            apiTemplateCode,
+            fromNumber,
+            phoneNumber,
+            templateParams != null ? templateParams : new HashMap<>());
+
+        SolapiAlimTalkResponse response = solapiAlimTalkClient.send(request);
+        if (!response.success()) {
+            log.warn("⚠️ solapi 알림톡 응답 실패: status={}, errorCode={}",
+                response.statusCode(), response.errorCode());
+        }
+        return response.success();
+    }
+
+    private TenantKakaoAlimtalkSettings loadTenantSettings() {
+        if (tenantKakaoAlimtalkSettingsRepository == null) {
+            return null;
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            return null;
+        }
+        return tenantKakaoAlimtalkSettingsRepository
+            .findByTenantIdAndIsDeletedFalse(tenantId)
+            .orElse(null);
+    }
+
+    private boolean isSolapiProvider() {
+        return provider != null && PROVIDER_SOLAPI.equalsIgnoreCase(provider.trim());
     }
     
     @Override
@@ -161,21 +286,31 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
         if (!alimTalkEnabled) {
             return false;
         }
-        
+
         if (simulationMode) {
-            // 시뮬레이션 모드에서는 항상 사용 가능
-            log.debug("🎭 시뮬레이션 모드: 알림톡 서비스 사용 가능");
+            log.debug("🎭 시뮬레이션 모드: 알림톡 서비스 사용 가능 (provider={})",
+                isSolapiProvider() ? PROVIDER_SOLAPI : PROVIDER_BIZMSG);
             return true;
         }
-        
-        // 실제 모드에서는 API 키 확인
-        boolean hasKeys = apiKey != null && !apiKey.isEmpty() && 
-                         senderKey != null && !senderKey.isEmpty();
-        
+
+        if (isSolapiProvider()) {
+            if (solapiCredentialResolver == null) {
+                log.warn("⚠️ provider=solapi 구성에 KakaoSolapiCredentialResolver 빈이 없음");
+                return false;
+            }
+            boolean ready = solapiCredentialResolver.hasDefaultCredentials()
+                && solapiCredentialResolver.hasDefaultPfId();
+            if (!ready) {
+                log.warn("⚠️ solapi 알림톡 default 자격 증명 또는 pfId가 설정되지 않았습니다");
+            }
+            return ready;
+        }
+
+        boolean hasKeys = apiKey != null && !apiKey.isEmpty()
+            && senderKey != null && !senderKey.isEmpty();
         if (!hasKeys) {
             log.warn("⚠️ 카카오 알림톡 API 키 또는 발신자 키가 설정되지 않았습니다");
         }
-        
         return hasKeys;
     }
     

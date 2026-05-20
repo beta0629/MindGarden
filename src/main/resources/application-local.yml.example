@@ -124,9 +124,18 @@ kakao:
   alimtalk:
     enabled: true  # 알림톡 활성화
     simulation-mode: true  # 시뮬레이션 모드 (개발/테스트용)
+    provider: ${KAKAO_ALIMTALK_PROVIDER:bizmsg}  # bizmsg | solapi (기본 bizmsg - 후방호환)
+    # --- bizmsg provider 전용 ---
     api-key: ${KAKAO_ALIMTALK_API_KEY:test-api-key}  # 실제 API 키로 교체 필요
     sender-key: ${KAKAO_ALIMTALK_SENDER_KEY:test-sender-key}  # 실제 발신자 키로 교체 필요
-    api-url: https://alimtalk-api.bizmsg.kr  # 카카오 알림톡 API URL
+    api-url: https://alimtalk-api.bizmsg.kr  # 비즈엠 알림톡 API URL
+    # --- solapi provider 전용 (provider=solapi 일 때만 사용) ---
+    solapi:
+      api-url: ${SOLAPI_ALIMTALK_API_URL:https://api.solapi.com}
+      api-key: ${SOLAPI_ALIMTALK_API_KEY:}      # 솔라피 API Key (Secrets로 주입 권장)
+      api-secret: ${SOLAPI_ALIMTALK_API_SECRET:}  # 솔라피 API Secret (Secrets 필수)
+      pf-id: ${SOLAPI_ALIMTALK_PFID:}            # 발신 프로필(채널) ID
+      sender-number: ${SOLAPI_ALIMTALK_SENDER_NUMBER:}  # 발신 번호(선택, 폴백 SMS 등)
     fallback-to-sms: true  # 알림톡 실패 시 SMS 대체 발송
     max-retry-count: 3  # 최대 재시도 횟수
     timeout-seconds: 30  # API 타임아웃 시간

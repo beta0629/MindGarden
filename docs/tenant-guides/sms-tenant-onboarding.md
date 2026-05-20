@@ -11,16 +11,32 @@
 `src/main/resources/application.yml` 의 `sms.auth` 블록은 아래 환경 변수 이름과 1:1로 대응한다.
 
 
-| 환경 변수               | 설명                                                 |
-| ------------------- | -------------------------------------------------- |
-| `SMS_AUTH_ENABLED`  | SMS 인증·연동 기능 전체 사용 여부를 켜거나 끈다.                     |
-| `SMS_PROVIDER`      | 사용할 SMS 게이트웨이 벤더 식별자(예: nhn, twilio, aligo)를 지정한다. |
-| `SMS_API_KEY`       | 프로바이더가 발급한 API 키(식별자)로, 외부에 노출되지 않게 주입한다.          |
-| `SMS_API_SECRET`    | API 호출 서명·인증에 쓰이는 시크릿으로, 키와 분리해 안전하게 보관한다.         |
-| `SMS_SENDER_NUMBER` | 발신 번호(등록된 발신자 식별)로, 프로바이더·통신사 정책에 맞게 설정한다.         |
-| `SMS_TEST_MODE`     | true면 실제 단문 발송 없이 테스트·모의 동작에 맞춘다.                  |
-| `SMS_MOCK_CODE`     | 테스트 모드 등에서 쓰는 고정 인증번호(로컬·스테이징 검증용)를 지정한다.          |
+| 환경 변수               | 설명                                                            |
+| ------------------- | --------------------------------------------------------------- |
+| `SMS_AUTH_ENABLED`  | SMS 인증·연동 기능 전체 사용 여부를 켜거나 끈다.                                |
+| `SMS_PROVIDER`      | 사용할 SMS 게이트웨이 벤더 식별자(예: nhn, **solapi**, twilio, aligo)를 지정한다. |
+| `SMS_API_KEY`       | 프로바이더가 발급한 API 키(식별자)로, 외부에 노출되지 않게 주입한다.                     |
+| `SMS_API_SECRET`    | API 호출 서명·인증에 쓰이는 시크릿으로, 키와 분리해 안전하게 보관한다.                    |
+| `SMS_SENDER_NUMBER` | 발신 번호(등록된 발신자 식별)로, 프로바이더·통신사 정책에 맞게 설정한다.                    |
+| `SMS_TEST_MODE`     | true면 실제 단문 발송 없이 테스트·모의 동작에 맞춘다.                              |
+| `SMS_MOCK_CODE`     | 테스트 모드 등에서 쓰는 고정 인증번호(로컬·스테이징 검증용)를 지정한다.                     |
+| `SOLAPI_API_BASE_URL` | (선택) 솔라피 API 베이스 URL. 미설정 시 `https://api.solapi.com` 기본값 사용. |
 
+
+## 솔라피(Solapi/CoolSMS) Provider 사용법
+
+- `SMS_PROVIDER=solapi` 로 지정하면 `SolapiSmsProvider` 가 활성화된다.
+- 자격 증명은 **별도 ENV(`SOLAPI_API_KEY` 등)를 두지 않고**, 공용 `SMS_API_KEY` / `SMS_API_SECRET` / `SMS_SENDER_NUMBER` 를 그대로 재사용한다(테넌트 멀티프로바이더 충돌 회피·운영 단순화 목적).
+  - `SMS_API_KEY` ← 솔라피 API Key
+  - `SMS_API_SECRET` ← 솔라피 API Secret
+  - `SMS_SENDER_NUMBER` ← 솔라피에 등록된 발신 번호(필수, 사전 등록)
+- 호출 엔드포인트: `POST {SOLAPI_API_BASE_URL}/messages/v4/send-many/detail` (단건/멀티 모두 동일 경로).
+- 인증 방식: `Authorization: HMAC-SHA256 apiKey=..., date=..., salt=..., signature=...`
+  - 서명 = `HMAC-SHA256(apiSecret, date + salt)` (16진 hex)
+  - 공용 유틸: `com.coresolution.consultation.integration.solapi.SolapiSignatureSigner` (SMS·알림톡 채널 공유)
+- **테스트 모드(`SMS_TEST_MODE=true`)** 동작: 외부 API 호출을 건너뛰고 로그만 남기고 성공으로 처리한다(비용·실발송 방지). 실제 발송은 `SMS_TEST_MODE=false` + 자격 증명·발신 번호가 모두 유효할 때만 수행된다.
+
+> 키·시크릿은 절대 저장소·DB·로그·티켓 본문에 평문으로 남기지 말고, 배포 파이프라인 Secrets·서버 ENV로만 주입한다.
 
 ## 개발
 

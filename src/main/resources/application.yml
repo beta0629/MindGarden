@@ -354,12 +354,16 @@ frontend:
 sms:
   auth:
     enabled: ${SMS_AUTH_ENABLED:false}  # 기본값: 비활성화 (비용 절약)
-    provider: ${SMS_PROVIDER:nhn}  # nhn, twilio, aligo 등
+    provider: ${SMS_PROVIDER:nhn}  # nhn, solapi, twilio, aligo 등
+    # solapi 사용 시: SMS_API_KEY=Solapi API Key, SMS_API_SECRET=Solapi API Secret 재활용 (별도 ENV 분리 불필요)
     api-key: ${SMS_API_KEY}
     api-secret: ${SMS_API_SECRET}
     sender-number: ${SMS_SENDER_NUMBER}
     test-mode: ${SMS_TEST_MODE:true}  # 테스트 모드 (실제 SMS 발송 안함)
     mock-verification-code: ${SMS_MOCK_CODE:123456}  # 테스트용 고정 인증번호
+    # solapi 전용 옵션(보통 기본값 사용)
+    solapi:
+      api-base-url: ${SOLAPI_API_BASE_URL:https://api.solapi.com}
 
 # OpenAI API 설정 (프로파일별 설정에서 기본값 제공)
 openai:
@@ -436,6 +440,24 @@ ops:
 # 이메일 설정은 프로파일별 설정 파일에서 관리
 
 # 카카오 알림톡 설정은 프로파일별 설정 파일에서 관리
+# 지원 ENV 키(값은 프로파일별 yml·Secrets에서만 정의):
+#   - KAKAO_ALIMTALK_ENABLED         : 알림톡 채널 활성화 (true|false)
+#   - KAKAO_ALIMTALK_SIMULATION_MODE : 시뮬레이션 모드 (true|false)
+#   - KAKAO_ALIMTALK_PROVIDER        : provider 선택 (bizmsg|solapi, 기본 bizmsg)
+#   # bizmsg provider
+#   - KAKAO_ALIMTALK_API_KEY         : 비즈엠 API Key
+#   - KAKAO_ALIMTALK_SENDER_KEY      : 비즈엠 발신자 키
+#   - KAKAO_ALIMTALK_API_URL         : 비즈엠 API base URL (기본 https://alimtalk-api.bizmsg.kr)
+#   # solapi provider
+#   - SOLAPI_ALIMTALK_PFID           : 솔라피 발신 프로필 ID
+#   - SOLAPI_ALIMTALK_API_KEY        : 솔라피 API Key
+#   - SOLAPI_ALIMTALK_API_SECRET     : 솔라피 API Secret
+#   - SOLAPI_ALIMTALK_API_URL        : 솔라피 API base URL (기본 https://api.solapi.com)
+#   - SOLAPI_ALIMTALK_SENDER_NUMBER  : 솔라피 발신 번호(폴백 SMS용, 선택)
+#
+# 자격증명 미설정 시 sms.auth.api-key/api-secret(= SMS_API_KEY/SMS_API_SECRET)로 자동 fallback.
+# 솔라피는 계정당 통합 API Key/Secret 하나로 SMS·알림톡 모두 발송하므로,
+# 단일 계정 운영자는 SMS_API_KEY/SECRET 만 채워도 알림톡 발송이 가능하다.
 
 # =====================================================
 # 스케줄러 설정 (배치 작업 표준화)

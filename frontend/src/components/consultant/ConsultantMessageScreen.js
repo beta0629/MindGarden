@@ -71,8 +71,8 @@ const ConsultantMessageScreen = () => {
     headerTitle: {
       fontSize: 'var(--font-size-xxl)',
       fontWeight: '700',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
-      color: '#2c3e50',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-2c3e50)
+      color: 'var(--mg-color-text-main)',
       marginBottom: '8px',
       display: 'flex',
       alignItems: 'center',
@@ -97,8 +97,8 @@ const ConsultantMessageScreen = () => {
     clientInfoTitle: {
       fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
-      color: '#2c3e50',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-2c3e50)
+      color: 'var(--mg-color-text-main)',
       marginBottom: '16px',
       display: 'flex',
       alignItems: 'center',
@@ -123,8 +123,8 @@ const ConsultantMessageScreen = () => {
     },
     clientInfoValue: {
       fontSize: 'var(--font-size-base)',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
-      color: '#2c3e50',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-2c3e50)
+      color: 'var(--mg-color-text-main)',
       fontWeight: '500'
     },
     messageCard: {
@@ -140,8 +140,8 @@ const ConsultantMessageScreen = () => {
     messageTitle: {
       fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
-      color: '#2c3e50',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-2c3e50)
+      color: 'var(--mg-color-text-main)',
       marginBottom: '20px',
       display: 'flex',
       alignItems: 'center',

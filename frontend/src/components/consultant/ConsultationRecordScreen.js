@@ -128,7 +128,7 @@ const ConsultationRecordScreen = () => {
     headerTitle: {
       fontSize: 'var(--font-size-xxl)',
       fontWeight: '700',
-      color: 'var(--mg-gray-800, #2c3e50)',
+      color: 'var(--mg-gray-800, var(--mg-color-text-main))',
       marginBottom: '8px',
       display: 'flex',
       alignItems: 'center',
@@ -150,7 +150,7 @@ const ConsultationRecordScreen = () => {
     clientInfoTitle: {
       fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
-      color: 'var(--mg-gray-800, #2c3e50)',
+      color: 'var(--mg-gray-800, var(--mg-color-text-main))',
       marginBottom: '16px',
       display: 'flex',
       alignItems: 'center',
@@ -175,7 +175,7 @@ const ConsultationRecordScreen = () => {
     },
     clientInfoValue: {
       fontSize: 'var(--font-size-base)',
-      color: 'var(--mg-gray-800, #2c3e50)',
+      color: 'var(--mg-gray-800, var(--mg-color-text-main))',
       fontWeight: '500'
     },
     formCard: {
@@ -188,7 +188,7 @@ const ConsultationRecordScreen = () => {
     formTitle: {
       fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
-      color: 'var(--mg-gray-800, #2c3e50)',
+      color: 'var(--mg-gray-800, var(--mg-color-text-main))',
       marginBottom: '20px',
       display: 'flex',
       alignItems: 'center',

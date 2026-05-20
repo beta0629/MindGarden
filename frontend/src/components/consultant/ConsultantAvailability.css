@@ -24,7 +24,7 @@
 .availability-title {
   font-size: 2rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   margin-bottom: 10px;
   display: flex;
   align-items: center;
@@ -133,7 +133,7 @@
 
 .empty-state h3 {
   margin-bottom: 10px;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
 }
 
 .empty-state p {
@@ -176,7 +176,7 @@
 .day-title {
   font-size: 1.2rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   margin: 0;
 }
 
@@ -225,7 +225,7 @@
 
 .time-range {
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   font-size: 1rem;
 }
 
@@ -362,7 +362,7 @@
 
 .modal-close-btn:hover {
   background: #e9ecef;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
 }
 
 .mg-modal__body {

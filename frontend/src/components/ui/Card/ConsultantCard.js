@@ -13,6 +13,7 @@ import { formatCurrency } from '../../../utils/formatUtils';
 import { formatKoreanMobileForDisplay } from '../../../utils/koreanMobilePhone';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { getStatusLabel } from '../../../utils/colorUtils';
+import './ConsultantCard.css';
 import { getProfessionalProviderTypeLabel } from '../../../constants/professionalProviderRoles';
 
 /**
@@ -537,7 +538,7 @@ const ConsultantCard = ({
                         <span className="mg-consultant-card__base-value">{getBaseSalaryDisplay()}</span>
                     </div>
                     {renderActions && (
-                        <div className="mg-consultant-card__actions mg-consultant-card__actions--salary-profile" style={{ position: 'relative', zIndex: 2 }}>
+                        <div className="mg-consultant-card__actions mg-consultant-card__actions--salary-profile mg-consultant-card__actions--stacked">
                             {renderActions(consultant)}
                         </div>
                     )}
@@ -550,12 +551,11 @@ const ConsultantCard = ({
         if (onCardClick) {
             return (
                 <div
-                    className={baseClass}
+                    className={`${baseClass} mg-consultant-card__detail-button`}
                     role="button"
                     tabIndex={0}
                     aria-labelledby={profileNameId}
                     aria-label={`${toDisplayString(consultant.name)} 상세 보기`}
-                    style={{ position: 'relative' }}
                     onClick={() => onCardClick(consultant)}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {

@@ -5,6 +5,7 @@ import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
+import './ClientCard.css';
 
 /**
  * 공통 내담자 카드 컴포넌트
@@ -263,7 +264,7 @@ const ClientCard = ({
                             >
                                 {getStatusClass() === 'unavailable' ? '선택불가' : selected ? (
                                     <>
-                                        <CheckCircle size={14} aria-hidden="true" style={{ marginRight: '4px' }} />
+                                        <CheckCircle size={14} aria-hidden="true" className="mg-client-card__select-icon" />
                                         선택됨
                                     </>
                                 ) : '선택하기'}

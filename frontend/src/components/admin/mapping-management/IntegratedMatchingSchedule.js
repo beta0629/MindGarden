@@ -43,9 +43,9 @@ import {
   assertDropDateNotPast
 } from '../../../utils/scheduleExternalDropGuards';
 import { USER_ROLES } from '../../../constants/roles';
+import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
+// T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
 
 const IntegratedMatchingSchedule = () => {
@@ -69,7 +69,7 @@ const IntegratedMatchingSchedule = () => {
   const loadMappings = useCallback(async() => {
     setLoading(true);
     try {
-      const response = await StandardizedApi.get(API_ADMIN_MAPPINGS);
+      const response = await StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.LIST);
       if (response?.mappings) {
         setMappings(response.mappings);
       } else if (Array.isArray(response)) {

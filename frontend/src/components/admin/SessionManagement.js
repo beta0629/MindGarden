@@ -20,11 +20,10 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate, getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
-const API_ADMIN_CONSULTANTS = '/api/v1/admin/consultants';
-const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
 const API_ADMIN_SESSION_EXTENSIONS_REQUESTS = '/api/v1/admin/session-extensions/requests';
 const API_COMMON_CODES_GROUPS_MAPPING_STATUS = '/api/v1/common-codes/groups/MAPPING_STATUS';
 
@@ -79,8 +78,8 @@ const SessionManagement = () => {
             
             const [clientsRes, consultantsRes, mappingsRes, requestsRes] = await Promise.all([
                 apiGet(API_ADMIN_CLIENTS_WITH_MAPPING_INFO),
-                apiGet(API_ADMIN_CONSULTANTS),
-                apiGet(API_ADMIN_MAPPINGS),
+                apiGet(API_ENDPOINTS.ADMIN.CONSULTANTS.LIST),
+                apiGet(API_ENDPOINTS.ADMIN.MAPPINGS.LIST),
                 apiGet(API_ADMIN_SESSION_EXTENSIONS_REQUESTS)
             ]);
             

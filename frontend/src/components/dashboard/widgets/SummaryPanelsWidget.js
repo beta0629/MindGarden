@@ -25,9 +25,9 @@ import './SummaryPanelsWidget.css';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import '../SummaryPanels.css';
+import { SCHEDULE_API } from '../../../constants/api';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_SCHEDULES = '/api/v1/schedules';
 const API_SCHEDULES_ADMIN_STATISTICS = '/api/v1/schedules/admin/statistics';
 
 const SummaryPanelsWidget = ({ widget, user }) => {
@@ -48,7 +48,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
     if (RoleUtils.isConsultant(user)) {
       return {
         ...baseConfig,
-        url: API_SCHEDULES,
+        url: SCHEDULE_API.SCHEDULES,
         params: { ...baseConfig.params, userRole: USER_ROLES.CONSULTANT }
       };
     } else if (RoleUtils.isAdmin(user) || RoleUtils.isAdmin(user)) {

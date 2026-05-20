@@ -31,11 +31,11 @@ import MGButton from './MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './ScheduleList.css';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=SCHEDULE_FILTER';
 const API_COMMON_CODES_2 = '/api/v1/common-codes?codeGroup=SCHEDULE_SORT';
-const API_ADMIN_CONSULTANTS = '/api/v1/admin/consultants';
 const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
 
 
@@ -127,7 +127,7 @@ const ScheduleList = ({
   const loadConsultants = useCallback(async() => {
     try {
       setLoadingConsultants(true);
-      const response = await apiGet(API_ADMIN_CONSULTANTS);
+      const response = await apiGet(API_ENDPOINTS.ADMIN.CONSULTANTS.LIST);
       
       if (response && response.success) {
         setConsultants(response.data || []);

@@ -16,8 +16,7 @@ import {
 import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ConsultantScheduleRenewal.css';
-
-const API_ENDPOINT = '/api/v1/schedules';
+import { SCHEDULE_API } from '../../constants/api';
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -190,7 +189,7 @@ const ConsultantScheduleRenewal = () => {
       setLoading(true);
       const startDate = formatDateStr(weekDates[0]);
       const endDate = formatDateStr(weekDates[6]);
-      const res = await TenantAwareApiClient.get(API_ENDPOINT, {
+      const res = await TenantAwareApiClient.get(SCHEDULE_API.SCHEDULES, {
         consultantId: user.id,
         startDate,
         endDate,
@@ -250,7 +249,7 @@ const ConsultantScheduleRenewal = () => {
   const handleStartConsultation = async (schedule) => {
     try {
       await TenantAwareApiClient.put(
-        `${API_ENDPOINT}/${schedule.id || schedule.scheduleId}/status`,
+        `${SCHEDULE_API.SCHEDULES}/${schedule.id || schedule.scheduleId}/status`,
         { status: 'ACTIVE' }
       );
       setSelectedSchedule(null);
@@ -263,7 +262,7 @@ const ConsultantScheduleRenewal = () => {
   const handleCompleteConsultation = async (schedule) => {
     try {
       await TenantAwareApiClient.put(
-        `${API_ENDPOINT}/${schedule.id || schedule.scheduleId}/status`,
+        `${SCHEDULE_API.SCHEDULES}/${schedule.id || schedule.scheduleId}/status`,
         { status: 'COMPLETED' }
       );
       setSelectedSchedule(null);

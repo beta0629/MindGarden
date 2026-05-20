@@ -91,6 +91,7 @@ import {
   HIDE_ADMIN_CARD_IDS,
   HIDE_DASHBOARD_MENUS
 } from '../../constants/adminDashboardCardVisibility';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { toSafeNumber, toDisplayString } from '../../utils/safeDisplay';
 import MGButton from '../common/MGButton';
@@ -104,8 +105,8 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/AdminDashboard/AdminDashboardPipeline.css';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
+// /api/v1/admin/mappings 는 SSOT(API_ENDPOINTS.ADMIN.MAPPINGS.LIST) 사용
 const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
-const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
 const API_ADMIN_VACATION_STATISTICS = '/api/v1/admin/vacation-statistics?period=month';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
@@ -457,7 +458,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       const settled = await Promise.allSettled([
         fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`, { headers, credentials: 'include' }),
         fetch(API_ADMIN_CLIENTS_WITH_MAPPING_INFO, { headers, credentials: 'include' }),
-        fetch(API_ADMIN_MAPPINGS, { headers, credentials: 'include' }),
+        fetch(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, { headers, credentials: 'include' }),
         fetch(API_ADMIN_CONSULTANT_RATING_STATS, { headers, credentials: 'include' }),
         fetch(API_ADMIN_VACATION_STATISTICS, { headers, credentials: 'include' }),
         fetch(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION, { headers, credentials: 'include' }),
@@ -676,7 +677,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const handleConfirmMatch = useCallback(
     async(clientId, consultantId) => {
       try {
-        await StandardizedApi.post(API_ADMIN_MAPPINGS, {
+        await StandardizedApi.post(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, {
           clientId: Number(clientId),
           consultantId: Number(consultantId),
           status: 'PENDING_PAYMENT',

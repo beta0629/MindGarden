@@ -20,7 +20,7 @@ import BaseWidget from './BaseWidget';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { RoleUtils, USER_ROLES } from '../../../constants/roles';
-import { DASHBOARD_API } from '../../../constants/api';
+import { DASHBOARD_API, SCHEDULE_API } from '../../../constants/api';
 import { apiGet } from '../../../utils/ajax';
 import ConsultantListModal from '../../common/ConsultantListModal';
 import ConsultationGuideModal from '../../common/ConsultationGuideModal';
@@ -29,8 +29,6 @@ import './PersonalizedMessagesWidget.css';
 import '../ClientPersonalizedMessages.css';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_SCHEDULES = '/api/v1/schedules';
-
 const PersonalizedMessagesWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const [clientStatus, setClientStatus] = useState(null);
@@ -42,7 +40,7 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     type: 'api',
     cache: true,
     refreshInterval: 120000, // 2분마다 새로고침
-    url: API_SCHEDULES,
+    url: SCHEDULE_API.SCHEDULES,
     params: {
       userId: user.id,
       userRole: USER_ROLES.CLIENT,

@@ -19,10 +19,9 @@ import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
 import './ClientMessageSection.css';
 import { USER_ROLES } from '../../constants/roles';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_SYSTEM_NOTIFICATIONS_ACTIVE = '/api/v1/system-notifications/active';
-
 /**
  * 내담자 메시지 확인 섹션
 /**
@@ -128,7 +127,7 @@ const ClientMessageSection = ({ userId }) => {
       }
 
       // 2. 시스템 공지 로드 (전체 공지만 표시 - 중복 제거)
-      const notificationsResponse = await apiGet(API_SYSTEM_NOTIFICATIONS_ACTIVE);
+      const notificationsResponse = await apiGet(API_ENDPOINTS.SYSTEM.NOTIFICATIONS.ACTIVE);
       
       let systemNotifications = [];
       const noticeList = normalizeApiListPayload(notificationsResponse);

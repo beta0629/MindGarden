@@ -16,11 +16,9 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
 import './WellnessNotificationList.css';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_SYSTEM_NOTIFICATIONS_ACTIVE = '/api/v1/system-notifications/active';
-
-
 /**
  * 웰니스 알림 목록 페이지 컴포넌트
  *
@@ -63,7 +61,7 @@ const WellnessNotificationList = () => {
       setLoading(true);
       setError(null);
 
-      const response = await StandardizedApi.get(API_SYSTEM_NOTIFICATIONS_ACTIVE);
+      const response = await StandardizedApi.get(API_ENDPOINTS.SYSTEM.NOTIFICATIONS.ACTIVE);
 
       if (response && response.success) {
         const wellnessNotifications = response.data.filter(

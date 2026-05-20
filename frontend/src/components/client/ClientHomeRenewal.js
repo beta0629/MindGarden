@@ -18,9 +18,9 @@ import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ClientHomeRenewal.css';
 import { USER_ROLES } from '../../constants/roles';
+import { SCHEDULE_API } from '../../constants/api';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_SCHEDULES = '/api/v1/schedules';
 const API_HEALING_CONTENT = '/api/v1/healing/content';
 const API_ACTIVITIES = '/api/v1/activities';
 
@@ -77,7 +77,7 @@ const ClientHomeRenewal = () => {
     try {
       setLoading(true);
       const [schedulesRes, healingRes, activitiesRes] = await Promise.allSettled([
-        TenantAwareApiClient.get(API_SCHEDULES, {
+        TenantAwareApiClient.get(SCHEDULE_API.SCHEDULES, {
           userId: user.id,
           userRole: USER_ROLES.CLIENT,
         }),

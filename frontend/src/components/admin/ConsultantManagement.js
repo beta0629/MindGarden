@@ -18,8 +18,7 @@ import {
 import { CONSULTANT_COMP_PROFESSIONAL_TYPE_FORM } from '../../constants/consultantComprehensiveStrings';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './AdminDashboard/AdminDashboardB0KlA.css';
-
-const API_ADMIN_CONSULTANTS = '/api/v1/admin/consultants';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 
 const ConsultantManagement = ({ onUpdate, showToast }) => {
     const [consultants, setConsultants] = useState([]);
@@ -167,7 +166,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                 professionalTypeCode
             };
 
-            const user = await StandardizedApi.post(API_ADMIN_CONSULTANTS, payload);
+            const user = await StandardizedApi.post(API_ENDPOINTS.ADMIN.CONSULTANTS.LIST, payload);
             if (user && (user.id != null || user.email)) {
                 showToast('상담사가 성공적으로 등록되었습니다.');
                 setShowModal(false);
@@ -200,7 +199,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         }
 
         try {
-            await StandardizedApi.delete(`${API_ADMIN_CONSULTANTS}/${id}`);
+            await StandardizedApi.delete(`${API_ENDPOINTS.ADMIN.CONSULTANTS.LIST}/${id}`);
             showToast('상담사가 성공적으로 삭제되었습니다.');
             loadConsultants();
             onUpdate();

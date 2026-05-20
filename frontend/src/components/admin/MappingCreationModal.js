@@ -25,12 +25,10 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
-const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
-
-
 /**
  * 매칭 생성 모달 - 플로우형 UI (상담사 → 패키지 → 내담자 → 결제)
  * B0KlA 토큰, mg-v2-* 클래스, lucide-react 아이콘 적용
@@ -254,7 +252,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
   const loadMappings = async() => {
     try {
-      const res = await apiGet(API_ADMIN_MAPPINGS);
+      const res = await apiGet(API_ENDPOINTS.ADMIN.MAPPINGS.LIST);
       const list = Array.isArray(res?.data) ? res.data : Array.isArray(res?.mappings) ? res.mappings : Array.isArray(res) ? res : [];
       setMappings(list);
     } catch (e) {
@@ -303,7 +301,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         paymentReference: paymentInfo.paymentReference,
         mappingType: 'NEW'
       };
-      await apiPost(API_ADMIN_MAPPINGS, mappingData);
+      await apiPost(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, mappingData);
       if (paymentInfo.packageName) {
         localStorage.setItem('lastUsedPackage', JSON.stringify({
           packageName: paymentInfo.packageName,

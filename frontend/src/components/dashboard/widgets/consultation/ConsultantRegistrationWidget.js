@@ -29,8 +29,7 @@ import StandardizedApi from '../../../../utils/standardizedApi';
 import './ConsultantRegistrationWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
-
-const CONSULTANT_REGISTER_API = '/api/v1/admin/consultants';
+import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
 
 const ConsultantRegistrationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -225,7 +224,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const response = await StandardizedApi.post(CONSULTANT_REGISTER_API, requestData);
+      const response = await StandardizedApi.post(API_ENDPOINTS.ADMIN.CONSULTANTS.LIST, requestData);
       handleRegistrationSuccess(response);
     } catch (error) {
       console.error('❌ 상담사 등록 실패:', error);

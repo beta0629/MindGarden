@@ -17,15 +17,13 @@ import { useSession } from '../../contexts/SessionContext';
 import { useToast } from '../../contexts/ToastContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ConsultantRecordsRenewal.css';
+import { SCHEDULE_API } from '../../constants/api';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTANTS = '/api/v1/consultants';
-const API_SCHEDULES = '/api/v1/schedules';
-
-
 const API_ENDPOINTS = {
   RECORDS: API_CONSULTANTS,
-  SCHEDULES: API_SCHEDULES,
+  SCHEDULES: SCHEDULE_API.SCHEDULES,
 };
 
 const TABS = {

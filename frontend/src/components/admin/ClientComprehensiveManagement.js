@@ -33,10 +33,9 @@ import './mapping-management/MappingManagementPage.css';
 import './ClientManagementPage.css';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 import { Users, UserCheck, Clock, Link2 } from 'lucide-react';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ADMIN_CONSULTANTS = '/api/v1/admin/consultants';
-const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
 const API_ADMIN_CONSULTATIONS = '/api/v1/admin/consultations';
 const API_ADMIN_CLIENTS = '/api/v1/admin/clients';
 
@@ -219,7 +218,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
 
     const loadConsultants = useCallback(async() => {
         try {
-            const response = await apiGet(API_ADMIN_CONSULTANTS);
+            const response = await apiGet(API_ENDPOINTS.ADMIN.CONSULTANTS.LIST);
             console.log('📊 상담사 목록 응답:', response);
             
             if (response && response.success) {
@@ -237,7 +236,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
 
     const loadMappings = useCallback(async() => {
         try {
-            const response = await apiGet(API_ADMIN_MAPPINGS);
+            const response = await apiGet(API_ENDPOINTS.ADMIN.MAPPINGS.LIST);
             console.log('📊 매칭 정보 응답:', response);
             // apiGet이 401/404 시 null 반환 → 총 매칭 0건으로 표시됨. 원인 추적용 로그.
             if (response == null) {

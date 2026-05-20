@@ -21,9 +21,9 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './MappingManagementWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ADMIN_MAPPINGS = '/api/v1/admin/mappings';
 const API_ADMIN_MAPPINGS_STATS = '/api/v1/admin/mappings/stats';
 
 const MappingManagementWidget = ({ widget, user }) => {
@@ -34,7 +34,7 @@ const MappingManagementWidget = ({ widget, user }) => {
       type: 'multi-api',
       endpoints: {
         mappings: {
-          url: API_ADMIN_MAPPINGS,
+          url: API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
           method: 'GET',
           params: { 
             limit: widget.config?.maxItems || 10,

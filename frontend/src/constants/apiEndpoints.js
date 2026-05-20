@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
 
   ADMIN: {
     CONSULTANTS: {
+      LIST: '/api/v1/admin/consultants',
       WITH_STATS: '/api/v1/admin/consultants/with-stats',
       WITH_VACATION: '/api/v1/admin/consultants/with-vacation',
       RATING_STATS: '/api/v1/admin/consultant-rating-stats'

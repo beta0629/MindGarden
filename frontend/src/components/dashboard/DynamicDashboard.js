@@ -45,15 +45,13 @@ import CommonDashboard from './CommonDashboard';
 import ClientDashboard from '../client/ClientDashboard';
 import AdminDashboard from '../admin/AdminDashboard';
 import AcademyDashboard from '../academy/AcademyDashboard';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
 const API_ADMIN_BRANDING = '/api/v1/admin/branding';
 const API_CONSULTATIONS_STATISTICS_OVERALL = '/api/v1/consultations/statistics/overall';
 const API_CONSULTATIONS_MY_STATS = '/api/v1/consultations/my-stats';
-const API_SYSTEM_NOTIFICATIONS_ACTIVE = '/api/v1/system-notifications/active';
-
-
 const DASHBOARD_COMPONENTS = {
   'CommonDashboard': CommonDashboard,
   'ClientDashboard': ClientDashboard,
@@ -1231,7 +1229,7 @@ const createDefaultUserDashboardConfig = (businessType, userRole) => {
           title: '알림',
           dataSource: {
             type: 'api',
-            url: API_SYSTEM_NOTIFICATIONS_ACTIVE
+            url: API_ENDPOINTS.SYSTEM.NOTIFICATIONS.ACTIVE
           }
         }
       }

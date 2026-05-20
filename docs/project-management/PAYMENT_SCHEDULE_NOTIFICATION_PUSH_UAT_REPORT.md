@@ -1,8 +1,8 @@
 # 결제·승인·일정 알림/푸시 — 수동 UAT 리포트
 
 **작성**: core-tester  
-**최종 갱신**: 2026-05-20 (병렬 배치 **4/4** — §8 자동 재실행; 라이브 푸시 E2E는 journal·DB 미접근으로 **NOT RUN** 유지)  
-**이전**: 2026-05-18 Phase C 자동 게이트 · 배치 3/4  
+**최종 갱신**: 2026-05-20 (병렬 배치 **5/5** — `test:utils`·`pushNavigation` 회귀 PASS; §8.5 라이브 **NOT RUN** 유지 — EAS **`cbae858a` queue** · IPA finished 전 L1~E5 실행 금지)  
+**이전**: 2026-05-20 배치 4/4 · 2026-05-18 Phase C 자동 게이트  
 **SSOT**: [PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) §3~§7 · [MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md](./MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md) §2.1  
 **코드 기준**: **`e52678ab7`** (ancestor of HEAD) — `MappingSettlementNotificationHelper`, `ScheduleCreatedNotificationHelper`, Expo `pushNavigation`  
 **환경**: `https://dev.core-solution.co.kr` — `/actuator/health` **200** (2026-05-20 배치 4). dev JVM `EXPO_ACCESS_TOKEN` journal·`mobile_push_tokens` — **테스터 환경에서 미확인**.
@@ -240,8 +240,9 @@ mvn -q -Dtest=ScheduleCreatedNotificationHelperImplTest,ExpoPushPropertiesTest,M
 | 항목 | 결과 |
 |------|------|
 | **푸시 계약** | **PASS** — `npx jest --testPathPattern='pushScenarios\|notificationService'` → **7 tests**, 0 failed |
-| **test:utils 전체** | **PASS** — 33 suites, **192** tests, 0 failed (2026-05-20 배치 **4/4**, ~15s) |
-| **pushScenarios\|notificationService** | **PASS** — 3 suites, **7** tests (배치 4 재실행) |
+| **test:utils 전체** | **PASS** — 33 suites, **192** tests, 0 failed (2026-05-20 배치 **5/5**, ~45s) — **`pushNavigation.test.ts` 포함** |
+| **pushNavigation** | **PASS** — P1–P12·alias·fallback (`pushNavigation.test.ts`, 배치 5) |
+| **pushScenarios\|notificationService** | **PASS** — 3 suites, **7** tests (배치 4·5 자동 회귀) |
 | **관련 스위트** | `pushScenarios.test.ts`, `notificationServiceRegisterToken.test.ts`, `notificationServiceRequestPermission.test.ts` |
 
 ### 8.3 수동 UAT
@@ -254,10 +255,10 @@ mvn -q -Dtest=ScheduleCreatedNotificationHelperImplTest,ExpoPushPropertiesTest,M
 
 **라이브 UAT 선행 체크 (미충족 시 NOT RUN 유지)**
 
-| # | 조건 | 배치 **4/4** 점검 |
+| # | 조건 | 배치 **5/5** 점검 |
 |---|------|-------------------|
-| L1 | dev JVM `EXPO_ACCESS_TOKEN` 설정 | **BLOCKED** — 테스터 환경 SSH/journal **미접근**; 재기동 여부는 운영 확인 필요 (`Expo push access token configured: true`) |
-| L2 | CLIENT `POST .../push-token/register` **200** | **NOT RUN** |
+| L1 | dev JVM `EXPO_ACCESS_TOKEN` 설정 | **BLOCKED** — 테스터 SSH/journal **미접근**; EAS **`cbae858a` queue** — IPA finished **후** journal `Expo push access token configured: true` 확인 |
+| L2 | CLIENT `POST .../push-token/register` **200** | **NOT RUN** — CLIENT IPA/APK + 실기기 필요 |
 | L3 | `mobile_push_tokens` CLIENT `active=1` **≥ 1** | **NOT RUN** |
 | L4 | 앱 카테고리 `payment`·`schedule` ON | **NOT RUN** |
 | L5 | QA 4역할·테스트 테넌트 | **NOT RUN** |
@@ -298,19 +299,39 @@ mvn -q -Dtest=ScheduleCreatedNotificationHelperImplTest,ExpoPushPropertiesTest,M
 4. 웹 어드민으로 `POST /api/v1/schedules/consultant` (BOOKED) → API **200**  
 5. 로그 `예약 생성 알림`·`booking_confirmed`·실기기 알림 (또는 §8.5 E4 스킵 사유 기록)
 
-### 8.6 게이트 최종 판정 (배치 **4/4**)
+### 8.5.1 IPA·EAS finished 후 실행 순서 (L1~L5 → E0~E5)
+
+> **선행**: EAS build **`cbae858a`** status **finished** · CLIENT **internal-dev IPA**(iOS 실기기) 또는 Android dev APK 설치 · dev `https://dev.core-solution.co.kr` UP. **finished 전** 아래 표 **실행 금지** — §8.5 라이브 **NOT RUN** 유지.
+
+| 순서 | ID | 단계 | 담당 | 증빙·Pass 기록 | 블로커 |
+|------|-----|------|------|----------------|--------|
+| 0 | — | EAS **`cbae858a` finished** + CLIENT 앱 설치 | human | Expo dashboard build **finished** | queue 중 |
+| 1 | **L1** / **E0** | dev JVM journal — `EXPO_ACCESS_TOKEN` | ops/tester | `Expo push access token configured: true` | SSH/journal 미접근 → **BLOCKED** |
+| 2 | **L5** | QA 테스트 테넌트·4역할·`X-Tenant-ID` | human/QA | 계정 목록·테넌트 id | — |
+| 3 | **L2** / **E1** | **CLIENT** 로그인 → OS 푸시 허용 → `registerToken` | tester | `POST .../push-token/register` **200** · `success=true` | IPA/APK·실기기 |
+| 4 | **L4** | 앱 설정 카테고리 `payment`·`schedule` **ON** | tester | 설정 스크린 또는 in-app state | E1 후 |
+| 5 | **L3** / **E2** | DB `mobile_push_tokens` | tester | `active=1` **≥ 1** (tenant·CLIENT `user_id`) | E1 후 |
+| 6 | **E3** | 웹·Expo 어드민 `POST /api/v1/schedules/consultant` (BOOKED, `tentativeBeforeDeposit=false`) | tester/web admin | API **200** · schedule id | L5·매핑 시드 |
+| 7 | **E4** | 서버 로그 grep (`tenantId`) | tester | `예약 생성 알림`·`booking_confirmed`·`dispatchBookingConfirmed` 또는 **스킵 사유** 기록 | E3 후 |
+| 8 | **E5** | CLIENT 실기기 OS 알림 | tester | `booking_confirmed` 1건 또는 E4 skip 사유 + L4 재확인 | E4 후 |
+
+**ADMIN G4(C3-06)와의 관계**: 동일 EAS finished 신호로 **병렬** 가능 — ADMIN 스모크는 [`COMMERCIALIZATION_TEST_REPORT` §6.5](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md); 본 표는 **CLIENT 푸시 E2E 전용**.
+
+**배치 5 판정**: L1~L5·E1~E5 **전항 NOT RUN/BLOCKED 유지** — IPA finished·journal·register 200·DB 행·실기기 알림 **증빙 없음**.
+
+### 8.6 게이트 최종 판정 (배치 **5/5**)
 
 | 레이어 | 판정 |
 |--------|------|
-| Java Phase B/C (6클래스) | **PASS** (2026-05-20 배치 4 재실행, **26** tests, 0 failures) |
-| Expo 푸시·알림 Jest (`pushScenarios\|notificationService`) | **PASS** (7 tests) |
-| Expo `test:utils` 전체 | **PASS** (192/192, 2026-05-20 배치 4, ~15s) |
-| dev API reachability | **PASS** — `/actuator/health` **200** |
-| 푸시 E2E dev (§8.5) | **NOT RUN / BLOCKED** — L1 journal·L2~L3 DB·실기기 **미확인** (재기동만으로는 테스터 미검증) |
+| Java Phase B/C (6클래스) | **PASS** (배치 4 기준 **26** tests — 본 배치 **미재실행**) |
+| Expo 푸시·알림 Jest (`pushScenarios\|notificationService`) | **PASS** (7 tests — 배치 4 기준) |
+| Expo `test:utils` 전체 | **PASS** (192/192, 2026-05-20 배치 **5/5**, ~45s) — **`pushNavigation.test.ts` 포함** |
+| dev API reachability | **PASS** — `/actuator/health` **200** (배치 4) |
+| 푸시 E2E dev (§8.5) | **NOT RUN / BLOCKED** — EAS **`cbae858a` queue**; L1 journal·L2~L5·E1~E5 **미확인** |
 | §1~§5 전체 수동 | **NOT RUN** |
-| **종합** | **CONDITIONAL** — §A.2 참조; §8.4·§8.5 완료 전 운영 go-live 비권장 |
+| **종합** | **CONDITIONAL** — §A.2 참조; §8.5.1 완료 전 운영 go-live 비권장 |
 
-**배치 4에서 NOT RUN → 변경 없음**: 라이브 UAT·§8.5는 journal `true`·register 200·DB 행 증빙 없이 갱신 불가. **자동만 재확인**: Java 6클래스·`test:utils`·푸시 Jest subset.
+**배치 5**: 자동(`test:utils`·`pushNavigation`) **PASS** 재확인; §8.5 라이브 **NOT RUN → 변경 없음** (IPA finished 전).
 
 ---
 
@@ -320,5 +341,5 @@ mvn -q -Dtest=ScheduleCreatedNotificationHelperImplTest,ExpoPushPropertiesTest,M
 - [x] `ScheduleServiceImplCreateConsultantScheduleNotificationBaselineTest` — 인앱·`dispatchBookingConfirmed` **verify**
 - [x] 본 문서 §0 P0 후 기대 Y 표·§2~§4 expected 갱신
 - [ ] §2~§4 수동 UAT (dev·§1 사전 조건 후 실행)
-- [ ] §8.5 푸시 E2E (CLIENT·`mobile_push_tokens`·웹 일정 등록·로그)
+- [ ] §8.5 푸시 E2E (CLIENT·`mobile_push_tokens`·웹 일정 등록·로그) — **IPA finished 후** [§8.5.1](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_UAT_REPORT.md#851-ipaeas-finished후-실행-순서-l1l5--e0e5) 순서표
 - [ ] (선택) `PaymentServiceImpl` APPROVED — `sendMessage` 수신자 P0-5 debugger 확정 반영 테스트 추가

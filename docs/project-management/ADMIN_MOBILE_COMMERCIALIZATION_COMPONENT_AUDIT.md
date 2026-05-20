@@ -17,7 +17,7 @@
 | **guards** | `AdminRoleGate.tsx` | 역할 게이트 |
 | **atoms** | `StatCard`, `EmptyState`, `SearchBar`, `Badge`, `Chip`, `SkeletonLoader` | 홈 KPI·목록 빈 상태·검색·배지 |
 | **molecules** | `AdminScheduleTimeSlotPicker`, `AdminScheduleSelectionSummary`, `AdminConsultantDayScheduleList`, `MenuListItem`, `ScheduleCard`, `StatCard`(동명), `SearchBar`(동명) | 스케줄 등록·허브·공통 메뉴 |
-| **organisms** | `AdminMappingPaymentConfirmModal`, `AdminMappingDepositConfirmModal`, `AdminMobilePlaceholderScreen`, `NotificationSettingsScreen`, `ConversationListScreen`(메시지 탭) | 결제·입금·플레이스홀더 |
+| **organisms** | ~~`AdminMappingPaymentConfirmModal`~~ **삭제(C3)**, `AdminMappingDepositConfirmModal`, `AdminMobilePlaceholderScreen`, `NotificationSettingsScreen`, `ConversationListScreen`(메시지 탭) | 입금(미연결)·플레이스홀더 |
 | **common** | `UnifiedModal` | 확인·폼·FAB 시트·에러 모달 SSOT |
 
 **페이지(라우트)**: `app/(admin)/` 하위 약 20개 화면 TSX + 레이아웃 8개. 운영 핵심은 `(home)`, `(operation)/*`, `(messages)`, `(review)`, `(more)`.
@@ -30,6 +30,10 @@
 | Molecules = 조합 UI | Admin 스케줄 3종은 **적절** (molecules 유지) |
 | Organisms = 화면 블록·모달 | 결제 2모달은 Organism **적절**; 허브 `MappingListCard`는 **페이지 인라인** |
 | Templates = SafeArea + TopBar + 스텝 껍데기 | `AppTopBar`는 templates로 import되나, **스텝 위저드 껍데기는 페이지 중복** |
+
+### 1.3 C3 갱신 — `AdminMappingPaymentConfirmModal` 삭제 (2026-05-20 · `e52678ab7`)
+
+**2026-05-20 C3(`e52678ab7`)**에서 `AdminMappingPaymentConfirmModal` Organism이 **삭제**되었다. 결제 1단계(confirm-payment)는 **`AdminMappingListCard` Molecule의 웹 Secondary CTA**(`shouldShowWebPaymentCta` · `openAdminWebIntegratedSchedule`)로 SSOT가 이동했으며, Primary CTA는 일정(`schedule`) 중심이다. §3 추출 후보 **#3 `AdminMappingSettlementForm`**은 PaymentConfirm·DepositConfirm·`mapping/create` step4 중복 제거용이었으나, PaymentConfirm 경로가 사라져 **범위가 DepositConfirm(미연결) + step4 결제 필드 chip·금액 UI**로 축소된다. §2 #5 리스트 카드 패턴은 **`AdminMappingListCard` 추출 완료**로 인라인 분기가 Molecule로 정리되었고, G2 회귀(`tsc` 0·`test:utils` 192/192)는 모달 삭제·FlashList prop 정리 후 **PASS**다. 후속: §7 core-coder 체크리스트 #2에서 PaymentConfirm 공통화 항목은 **웹 CTA·ListCard SSOT 유지**로 갱신; DepositConfirm 연결 여부는 P2(네이티브 100%) 또는 삭제 검토.
 
 ---
 
@@ -53,7 +57,7 @@
 |---|---------------|-----------|----------------|
 | **1** | **`AdminWizardShell`** (가칭) | **Template** `templates/AdminWizardShell.tsx` | 스텝 타이틀·`STEP_OF`·progress track·하단 이전/다음/취소 footer. `schedule/create`, `mapping/create` 공통. |
 | **2** | **`AdminMappingListCard`** | **Molecule** | `schedule/index.tsx` 내 `MappingListCard` (~120줄). 상태 Badge·CTA 행·`adminMappingSettlement` 연동 props. |
-| **3** | **`AdminMappingSettlementForm`** (또는 PaymentFields) | **Molecule** + Organism 조합 | `AdminMappingPaymentConfirmModal` / `DepositConfirmModal` / `mapping/create` step4 **결제수단 chip·금액·참조** UI 중복. Organism은 UnifiedModal + mutation만 유지. |
+| **3** | **`AdminMappingSettlementForm`** (또는 PaymentFields) | **Molecule** + Organism 조합 | ~~PaymentConfirm~~ **삭제** — `DepositConfirmModal`(미연결) / `mapping/create` step4 **결제수단 chip·금액·참조** UI만 잔존. Organism은 UnifiedModal + mutation만 유지. |
 | **4** | **`AdminFabActionSheet`** | **Molecule** | `user-management/index`(추가 FAB+시트), `schedule/index`(일정|매칭 FAB+UnifiedModal 옵션). 동일 FAB 스타일·haptics·`UnifiedModal` 리스트 액션. |
 | **5** | **`AdminPickerList` + `filterBySearch` util** | **Molecule** + `utils/adminPickerSearch.ts` | 위저드 step1~3의 FlatList+`renderPickerRow`+SearchBar. `filterBySearch`는 두 create 파일에 **동일 함수** 복제. |
 
@@ -132,7 +136,7 @@
 ## 7. core-coder 전달 체크리스트 (5줄)
 
 1. **`schedule/create`·`mapping/create`에서 `AdminWizardShell`(+ `adminPickerSearch`) 추출**하고 페이지는 step/ mutation만 남긴다.  
-2. **`schedule/index`의 `MappingListCard` → `molecules/AdminMappingListCard`**, 결제·입금 모달과 step4 **결제 필드 Molecule** 공통화한다.  
+2. **`AdminMappingListCard`** SSOT 유지(추출 완료); ~~PaymentConfirm~~ 삭제 반영 — 웹 CTA만 유지. DepositConfirm·step4 **결제 필드 Molecule** 공통화는 P2.  
 3. **어드민 import SSOT**: `StatCard`→`atoms`, `SearchBar`→팀 합의 1경로; molecules 동명 파일은 rename 또는 deprecated 처리한다.  
 4. **`messages/index`, `schedule/index` 리스트/카드 JSX에 `toDisplayString`/`toSafeNumber` 적용**(회의 §4 규칙; 로컬 `String()` 산발 금지).  
 5. **사용자 등록 3화면**은 `AdminUserCreateFormLayout`(가칭)으로 골격 통합; `(operation)/users` 잔여 라우트·링크 제거 여부 기획 확인.
@@ -145,7 +149,7 @@
 |------|-------------------|------------------|
 | `(home)/index` | atoms StatCard, QuickActionBar | — |
 | `(operation)/index` | MenuListItem | — |
-| `(operation)/schedule` | ScheduleCard, MappingListCard(인라인), UnifiedModal, 결제 Organisms | MappingListCard, FAB sheet |
+| `(operation)/schedule` | ScheduleCard, `AdminMappingListCard`, UnifiedModal, `AdminMappingDepositConfirmModal`(미연결) | FAB sheet |
 | `(operation)/schedule/create` | AdminSchedule* molecules, UnifiedModal | Wizard shell, PickerList |
 | `(operation)/schedule/mapping/create` | 동상 | 동상 |
 | `(operation)/user-management` | SearchBar(atoms), UnifiedModal, FAB | List row, FAB sheet |

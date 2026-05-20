@@ -190,6 +190,23 @@ cd expo-app && npm run test:utils && npx tsc --noEmit
 
 **판단:** 자동 게이트(Expo utils·`tsc`·Maven 10) **PASS**. 운영·검수 UI 회귀는 §6.1 APK 재빌드·재설치 + ADMIN 로그인(또는 `MAESTRO_*` + Maestro) 후 재실행. 실패 시 **core-coder** 위임(프로덕션 코드 수정 금지 — core-tester).
 
+### §6.2 실행 결과 (2026-05-20, core-tester · G4+C3 스모크 · 배치 **5/5**)
+
+**기준 HEAD:** `2643b8852` (`develop`) · **설치 APK:** `app-release.apk` (~132MB, mtime **2026-05-19** 02:23:33 KST) · **embedded apiBaseUrl:** `https://dev.core-solution.co.kr`
+
+| # | 항목 | 결과 | 일시 (KST) | 비고 |
+|---|------|------|------------|------|
+| P | `adb devices` | **pass** | 2026-05-20 | `emulator-5554` `device` |
+| P | `admin-mvp-smoke-prep.sh --skip-install` | **pass** | 2026-05-20 | exit **0**; MainActivity; logcat 5s — **매칭 없음** |
+| P | `npm run test:utils` + `tsc --noEmit` | **pass** | 2026-05-20 | 33 suites, **192** tests (~45s); `pushNavigation.test.ts` **PASS**; `tsc` **0** errors (~24s) |
+| S | Maestro `admin-mvp-smoke.yaml` | **skip** | 2026-05-20 | `which maestro` → not found; `MAESTRO_*` unset |
+| S | Maestro `admin-mvp-smoke-staff.yaml` | **skip** | 2026-05-20 | 동일 |
+| S | §6.2 #1–#7 · C3 U4 M7–M10 | **skip** | 2026-05-20 | EAS **`cbae858a` queue** — IPA finished 전 human C3-06 착수 금지 |
+
+**Maestro**: 설치·`MAESTRO_*` 템플릿 → [`COMMERCIALIZATION_TEST_REPORT` §6.1.1](./ADMIN_MOBILE_COMMERCIALIZATION_TEST_REPORT.md#611-maestro-설치환경-변수-비밀번호-저장소-금지) · [`expo-app/.maestro/README.md`](../expo-app/.maestro/README.md).
+
+**다음:** EAS **`cbae858a` finished** → §6.5 IPA 체크리스트 · §6.2 #1–#7 + M7–M10 수동.
+
 ### §6.2 실행 결과 (2026-05-20, core-tester · G4+C3 스모크 · 배치 3/4)
 
 **기준 HEAD:** `24b901caf` (`develop`) · **설치 APK:** `app-release.apk` (~132MB, mtime **2026-05-19** 02:23:33 KST) · **embedded apiBaseUrl:** `https://dev.core-solution.co.kr`

@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useId } from 'react';
 import ReactDOM from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { SessionContext } from '../../../contexts/SessionContext';
 import UnifiedLoading from '../UnifiedLoading';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
@@ -59,6 +60,7 @@ const UnifiedModal = ({
   ...props 
 }) => {
   const titleId = useId();
+  const { t } = useTranslation('common');
   const sessionContext = useContext(SessionContext);
   const setSessionModalOpen = sessionContext?.setModalOpen;
 
@@ -163,7 +165,7 @@ const UnifiedModal = ({
                   className: 'mg-modal__close'
                 })}
                 onClick={onClose}
-                aria-label="닫기"
+                aria-label={t('action.close', '닫기')}
                 disabled={loading}
                 variant="outline"
                 preventDoubleClick={false}

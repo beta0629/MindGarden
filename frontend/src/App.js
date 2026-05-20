@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import './i18n'; // i18n Phase 1 부트스트랩 (react-i18next 초기화)
 import './styles/main.css'; // 새로운 통합 디자인 시스템 사용
 import { USER_ROLES } from './constants/roles';
 // import './styles/css-variables.css'; // CSS 상수 시스템 (통합됨)

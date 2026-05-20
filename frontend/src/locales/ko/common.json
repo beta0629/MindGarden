@@ -1,0 +1,12 @@
+{
+  "action.save": "저장",
+  "action.cancel": "취소",
+  "action.delete": "삭제",
+  "action.confirm": "확인",
+  "action.close": "닫기",
+  "action.edit": "수정",
+  "action.add": "추가",
+  "status.loading": "로딩 중...",
+  "status.empty": "데이터가 없습니다.",
+  "status.error": "오류가 발생했습니다."
+}

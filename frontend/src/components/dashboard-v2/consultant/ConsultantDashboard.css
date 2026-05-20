@@ -28,7 +28,7 @@
 }
 
 .consultant-stat-card {
-  background-color: var(--mg-v2-color-surface, #ffffff);
+  background-color: var(--mg-v2-color-surface, var(--mg-white));
   border: 1px solid var(--mg-v2-color-border, #e5e7eb);
   border-radius: var(--mg-v2-radius-lg, 12px);
   padding: var(--mg-v2-spacing-lg, 16px);
@@ -120,7 +120,7 @@
 
 /* Common Card Style */
 .dashboard-card {
-  background-color: var(--mg-v2-color-surface, #ffffff);
+  background-color: var(--mg-v2-color-surface, var(--mg-white));
   border: 1px solid var(--mg-v2-color-border, #e5e7eb);
   border-radius: var(--mg-v2-radius-lg, 12px);
   display: flex;
@@ -328,7 +328,7 @@
 }
 
 .chart-bar.active {
-  background-color: var(--mg-v2-color-primary-500, #3b82f6);
+  background-color: var(--mg-v2-color-primary-500, var(--mg-primary-500));
 }
 
 .chart-label {
@@ -520,7 +520,7 @@
 /* 1. 빠른 액션 바 (Quick Action Bar) */
 .mg-v2-quick-action-bar {
   background: var(--mg-color-surface-main, #F5F3EF);
-  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   border-radius: 16px;
   padding: 20px 24px;
   margin-bottom: 24px;
@@ -534,7 +534,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 16px;
   font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
   display: flex;
   align-items: center;
   gap: 8px;
@@ -606,11 +606,11 @@
 
 .mg-v2-alert--warning {
   background: var(--mg-color-warning-light, #FEF3C7);
-  border: 1px solid var(--mg-color-warning-main, #F59E0B);
+  border: 1px solid var(--mg-color-warning-main, var(--mg-warning-500));
 }
 
 .mg-v2-alert--warning::before {
-  background: var(--mg-color-warning-main, #F59E0B);
+  background: var(--mg-color-warning-main, var(--mg-warning-500));
 }
 
 .mg-v2-alert__content {
@@ -623,7 +623,7 @@
 .mg-v2-alert__icon {
   width: 24px;
   height: 24px;
-  color: var(--mg-color-warning-main, #F59E0B);
+  color: var(--mg-color-warning-main, var(--mg-warning-500));
   flex-shrink: 0;
 }
 
@@ -637,14 +637,14 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 16px;
   font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
 }
 
 .mg-v2-alert__text-subtitle {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
   font-weight: 400;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-color-text-secondary));
 }
 
 .mg-v2-alert__action {
@@ -669,7 +669,7 @@
 /* 3. 다음 상담 준비 카드 (Next Consultation Card) */
 .mg-v2-next-consultation-card {
   background: var(--mg-color-surface-main, #F5F3EF);
-  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 24px;
@@ -684,12 +684,12 @@
   top: 0;
   bottom: 0;
   width: 4px;
-  background: var(--mg-color-primary-main, #3D5246);
+  background: var(--mg-color-primary-main, var(--mg-color-primary-main));
   border-radius: 2px 0 0 2px;
 }
 
 .mg-v2-next-consultation-card:hover {
-  border-color: var(--mg-color-primary-main, #3D5246);
+  border-color: var(--mg-color-primary-main, var(--mg-color-primary-main));
 }
 
 .mg-v2-next-consultation-card__header {
@@ -703,7 +703,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 16px;
   font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
   display: flex;
   align-items: center;
   gap: 8px;
@@ -712,7 +712,7 @@
 .mg-v2-next-consultation-card__title svg {
   width: 18px;
   height: 18px;
-  color: var(--mg-color-primary-main, #3D5246);
+  color: var(--mg-color-primary-main, var(--mg-color-primary-main));
 }
 
 .mg-v2-badge {
@@ -726,23 +726,23 @@
 }
 
 .mg-v2-badge--primary {
-  background: var(--mg-color-primary-main, #3D5246);
-  color: var(--mg-color-background-main, #FAF9F7);
+  background: var(--mg-color-primary-main, var(--mg-color-primary-main));
+  color: var(--mg-color-background-main, var(--mg-color-background-main));
 }
 
 .mg-v2-badge--critical {
-  background: var(--mg-color-error-main, #EF4444);
-  color: var(--mg-white, #FFFFFF);
+  background: var(--mg-color-error-main, var(--mg-error-500));
+  color: var(--mg-white, var(--mg-white));
 }
 
 .mg-v2-badge--high {
   background: #fd7e14;
-  color: var(--mg-white, #FFFFFF);
+  color: var(--mg-white, var(--mg-white));
 }
 
 .mg-v2-badge--medium {
-  background: var(--mg-color-warning-main, #F59E0B);
-  color: var(--mg-white, #FFFFFF);
+  background: var(--mg-color-warning-main, var(--mg-warning-500));
+  color: var(--mg-white, var(--mg-white));
 }
 
 .mg-v2-next-consultation-card__body {
@@ -762,14 +762,14 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 12px;
   font-weight: 400;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-color-text-secondary));
 }
 
 .mg-v2-info-block__value {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 16px;
   font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
 }
 
 .mg-v2-next-consultation-card__footer {
@@ -801,7 +801,7 @@
 /* 4. 긴급 확인 필요 내담자 (Urgent Clients Section) */
 .mg-v2-urgent-clients-section {
   background: var(--mg-color-surface-main, #F5F3EF);
-  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 24px;
@@ -815,7 +815,7 @@
   top: 0;
   bottom: 0;
   width: 4px;
-  background: var(--mg-color-error-main, #EF4444);
+  background: var(--mg-color-error-main, var(--mg-error-500));
   border-radius: 2px 0 0 2px;
 }
 
@@ -830,7 +830,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 16px;
   font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
   display: flex;
   align-items: center;
   gap: 8px;
@@ -839,7 +839,7 @@
 .mg-v2-urgent-clients-section__title svg {
   width: 18px;
   height: 18px;
-  color: var(--mg-color-error-main, #EF4444);
+  color: var(--mg-color-error-main, var(--mg-error-500));
 }
 
 .mg-v2-urgent-clients-section__body {
@@ -849,8 +849,8 @@
 }
 
 .mg-v2-urgent-client-card {
-  background: var(--mg-color-background-main, #FAF9F7);
-  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  background: var(--mg-color-background-main, var(--mg-color-background-main));
+  border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   border-radius: 12px;
   padding: 16px;
   display: flex;
@@ -865,7 +865,7 @@
 }
 
 .mg-v2-urgent-client-card:hover {
-  border-color: var(--mg-color-error-main, #EF4444);
+  border-color: var(--mg-color-error-main, var(--mg-error-500));
   background: rgba(239, 68, 68, 0.02);
 }
 
@@ -884,8 +884,8 @@
 }
 
 .mg-v2-urgent-client-card.mg-button.mg-button--outline {
-  background: var(--mg-color-background-main, #FAF9F7);
-  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  background: var(--mg-color-background-main, var(--mg-color-background-main));
+  border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   color: inherit;
 }
 
@@ -907,14 +907,14 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 16px;
   font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
 }
 
 .mg-v2-urgent-client-card__meta {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 12px;
   font-weight: 400;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-color-text-secondary));
   display: flex;
   align-items: center;
   gap: 4px;
@@ -929,7 +929,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
   font-weight: 400;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-color-text-secondary));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -938,7 +938,7 @@
 .mg-v2-urgent-client-card__icon {
   width: 20px;
   height: 20px;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-color-text-secondary));
   flex-shrink: 0;
 }
 

@@ -1,6 +1,6 @@
 /**
  * DesktopLnb - LNB 260px 다크 사이드바
- * RESPONSIVE_LAYOUT_SPEC: #2C2C2C, 메뉴 항목 44px
+ * RESPONSIVE_LAYOUT_SPEC: var(--mg-dark-bg-800), 메뉴 항목 44px
  *
  * @author CoreSolution
  * @since 2025-02-22
@@ -10,7 +10,7 @@
   width: var(--mg-layout-sidebar-width, 260px);
   min-width: var(--mg-layout-sidebar-width, 260px);
   height: 100%;
-  background: var(--mg-layout-sidebar-bg, #2C2C2C);
+  background: var(--mg-layout-sidebar-bg, var(--mg-dark-bg-800));
   display: flex;
   flex-direction: column;
 }

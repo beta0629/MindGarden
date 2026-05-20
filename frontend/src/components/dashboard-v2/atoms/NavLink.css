@@ -30,7 +30,7 @@
 }
 
 .mg-v2-nav-link--active {
-  background: var(--mg-layout-sidebar-active-bg, #3D5246);
+  background: var(--mg-layout-sidebar-active-bg, var(--mg-color-primary-main));
   color: var(--mg-white);
 }
 
@@ -76,12 +76,12 @@
 }
 
 .mg-v2-nav-link--active.mg-button.mg-button--outline {
-  background: var(--mg-layout-sidebar-active-bg, #3D5246);
+  background: var(--mg-layout-sidebar-active-bg, var(--mg-color-primary-main));
   color: var(--mg-white);
 }
 
 .mg-v2-nav-link--active.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--mg-layout-sidebar-active-bg, #3D5246);
+  background: var(--mg-layout-sidebar-active-bg, var(--mg-color-primary-main));
   color: var(--mg-white);
   transform: none;
   box-shadow: none;

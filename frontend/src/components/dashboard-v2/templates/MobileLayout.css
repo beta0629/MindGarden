@@ -12,7 +12,7 @@
   min-height: 100vh;
   background: linear-gradient(
     180deg,
-    var(--mg-layout-main-bg-start, #FAF9F7) 0%,
+    var(--mg-layout-main-bg-start, var(--mg-color-background-main)) 0%,
     var(--mg-layout-main-bg-end, #F2EDE8) 100%
   );
 }
@@ -40,6 +40,6 @@
   justify-content: space-around;
   height: 56px;
   padding-bottom: env(safe-area-inset-bottom, 0);
-  background: var(--mg-layout-header-bg, #FAF9F7);
-  border-top: 1px solid var(--mg-layout-header-border, #D4CFC8);
+  background: var(--mg-layout-header-bg, var(--mg-color-background-main));
+  border-top: 1px solid var(--mg-layout-header-border, var(--mg-color-border-main));
 }

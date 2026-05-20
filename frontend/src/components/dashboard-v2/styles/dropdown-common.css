@@ -37,7 +37,7 @@
   position: fixed;
   /* top, left, right는 useDropdownPosition 훅에서 인라인으로 설정 */
   background-color: var(--mg-color-surface-main, #F5F3EF);
-  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   z-index: var(--z-dropdown);
@@ -64,7 +64,7 @@
 /* 드롭다운 패널 헤더 (공통) */
 .mg-v2-dropdown-panel__header {
   padding: 16px 20px;
-  border-bottom: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border-bottom: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -75,7 +75,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 16px;
   font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
 }
 
 /* MGButton(G8): 오버레이 — 기본 .mg-button 레이아웃·테두리 무력화 */

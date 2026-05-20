@@ -12,7 +12,7 @@
   min-height: 100vh;
   background: linear-gradient(
     180deg,
-    var(--mg-layout-main-bg-start, #FAF9F7) 0%,
+    var(--mg-layout-main-bg-start, var(--mg-color-background-main)) 0%,
     var(--mg-layout-main-bg-end, #F2EDE8) 100%
   );
 }

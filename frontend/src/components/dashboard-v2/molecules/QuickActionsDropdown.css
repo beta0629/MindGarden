@@ -50,11 +50,11 @@
 }
 
 .mg-v2-quick-action-item:hover {
-  background-color: var(--mg-color-background-main, #FAF9F7);
+  background-color: var(--mg-color-background-main, var(--mg-color-background-main));
 }
 
 .mg-v2-quick-action-item__icon {
-  color: var(--mg-color-primary-main, #3D5246);
+  color: var(--mg-color-primary-main, var(--mg-color-primary-main));
   flex-shrink: 0;
 }
 
@@ -62,12 +62,12 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
   flex: 1;
 }
 
 .mg-v2-quick-action-item__arrow {
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-color-text-secondary));
   margin-left: auto;
   flex-shrink: 0;
 }

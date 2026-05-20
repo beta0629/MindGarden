@@ -28,7 +28,7 @@
   width: var(--mg-layout-sidebar-width-mobile, 280px);
   max-width: 85vw;
   height: 100vh;
-  background: var(--mg-layout-sidebar-bg, #2C2C2C);
+  background: var(--mg-layout-sidebar-bg, var(--mg-dark-bg-800));
   z-index: 1000;
   transform: translateX(-100%);
   transition: transform 0.25s ease;

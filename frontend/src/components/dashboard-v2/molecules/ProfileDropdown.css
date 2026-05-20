@@ -36,7 +36,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -46,7 +46,7 @@
 .mg-v2-profile-trigger__caret {
   font-size: var(--mg-font-xs, 0.625rem);
   line-height: 1;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-color-text-secondary));
 }
 
 @media (max-width: 767px) {
@@ -79,7 +79,7 @@
 
 .mg-v2-profile-dropdown__header {
   padding: 20px;
-  border-bottom: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border-bottom: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -104,7 +104,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 16px;
   font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
   margin: 0 0 4px 0;
   width: 100%;
   max-width: 100%;
@@ -117,7 +117,7 @@
 .mg-v2-profile-dropdown__email {
   font-size: 13px;
   font-weight: 400;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-color-text-secondary));
   margin: 0 0 8px 0;
   width: 100%;
   min-width: 0;
@@ -140,23 +140,23 @@
 }
 
 .mg-v2-badge-role--admin {
-  background-color: #3D5246;
-  color: #FFFFFF;
+  background-color: var(--mg-color-primary-main);
+  color: var(--mg-white);
 }
 
 .mg-v2-badge-role--consultant {
   background-color: #6B7F72;
-  color: #FFFFFF;
+  color: var(--mg-white);
 }
 
 .mg-v2-badge-role--client {
   background-color: #8B7355;
-  color: #FFFFFF;
+  color: var(--mg-white);
 }
 
 .mg-v2-badge-role--staff {
-  background-color: #D4CFC8;
-  color: #2C2C2C;
+  background-color: var(--mg-color-border-main);
+  color: var(--mg-dark-bg-800);
 }
 
 .mg-v2-profile-dropdown__menu {
@@ -175,7 +175,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
   width: 100%;
   text-align: left;
   background: none;
@@ -183,20 +183,20 @@
 }
 
 .mg-v2-profile-menu-item:hover {
-  background-color: var(--mg-color-background-main, #FAF9F7);
+  background-color: var(--mg-color-background-main, var(--mg-color-background-main));
 }
 
 .mg-v2-profile-menu-item svg {
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
   flex-shrink: 0;
 }
 
 .mg-v2-profile-menu-item--danger {
-  color: var(--mg-color-error-500, #EF4444);
+  color: var(--mg-color-error-500, var(--mg-error-500));
 }
 
 .mg-v2-profile-menu-item--danger svg {
-  color: var(--mg-color-error-500, #EF4444);
+  color: var(--mg-color-error-500, var(--mg-error-500));
 }
 
 /* MGButton(G8): 프로필 트리거·메뉴 — outline 기본·내부 래퍼 보정 */
@@ -231,7 +231,7 @@
 }
 
 .mg-v2-profile-menu-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-color-background-main, #FAF9F7);
+  background-color: var(--mg-color-background-main, var(--mg-color-background-main));
   transform: none;
   box-shadow: none;
   color: inherit;

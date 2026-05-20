@@ -1,6 +1,6 @@
 /**
  * DesktopGnb - GNB 64px
- * RESPONSIVE_LAYOUT_SPEC: 배경 #FAF9F7, 하단 1px #D4CFC8
+ * RESPONSIVE_LAYOUT_SPEC: 배경 var(--mg-color-background-main), 하단 1px var(--mg-color-border-main)
  *
  * @author CoreSolution
  * @since 2025-02-22
@@ -12,8 +12,8 @@
   justify-content: space-between;
   height: var(--mg-layout-header-height, 64px);
   padding: 0 24px;
-  background: var(--mg-layout-header-bg, #FAF9F7);
-  border-bottom: 1px solid var(--mg-layout-header-border, #D4CFC8);
+  background: var(--mg-layout-header-bg, var(--mg-color-background-main));
+  border-bottom: 1px solid var(--mg-layout-header-border, var(--mg-color-border-main));
   overflow: visible;
 }
 

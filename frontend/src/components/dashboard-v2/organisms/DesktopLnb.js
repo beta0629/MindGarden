@@ -1,6 +1,6 @@
 /**
- * DesktopLnb - LNB 260px: 다크(#2C2C2C), 메뉴 리스트 (메인/서브 트리 지원)
- * RESPONSIVE_LAYOUT_SPEC: 사이드바 260px, 배경 #2C2C2C
+ * DesktopLnb - LNB 260px: 다크(var(--mg-dark-bg-800)), 메뉴 리스트 (메인/서브 트리 지원)
+ * RESPONSIVE_LAYOUT_SPEC: 사이드바 260px, 배경 var(--mg-dark-bg-800)
  * HTML 유효: ul 직계는 li만. 그룹 시 메인 행은 div+NavLink, 서브만 ul > li(LnbMenuItem).
  * 그룹은 아코디언: 기본 접힘, 헤더 클릭 시 해당 그룹만 펼침.
  *

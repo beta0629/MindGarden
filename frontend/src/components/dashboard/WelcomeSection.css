@@ -241,7 +241,7 @@
 }
 
 .info-icon--progress {
-  background: linear-gradient(135deg, #87CEEB, #B0E0E6);
+  background: linear-gradient(135deg, var(--mg-info-500), #B0E0E6);
   box-shadow: 0 2px 8px rgba(135, 206, 235, 0.3);
 }
 

@@ -27,7 +27,7 @@
 .mg-v2-btn-sm {
   font-size: 12px;
   font-weight: 500;
-  color: var(--mg-color-primary-main, #3D5246);
+  color: var(--mg-color-primary-main, var(--mg-color-primary-main));
 }
 
 .mg-v2-btn-text:hover {
@@ -47,7 +47,7 @@
 .mg-v2-notification-dropdown__tabs {
   display: flex;
   flex-shrink: 0;
-  border-bottom: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border-bottom: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   padding: 0;
   min-height: 40px;
 }
@@ -57,7 +57,7 @@
   padding: 10px 16px;
   font-size: 14px;
   font-weight: 400;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-color-text-secondary));
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -68,13 +68,13 @@
 }
 
 .mg-v2-notification-dropdown__tab:hover {
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
 }
 
 .mg-v2-notification-dropdown__tab--active {
   font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
-  border-bottom-color: var(--mg-color-primary-main, #3D5246);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
+  border-bottom-color: var(--mg-color-primary-main, var(--mg-color-primary-main));
   border-radius: 2px;
 }
 
@@ -109,11 +109,11 @@
 }
 
 .mg-v2-notification-list::-webkit-scrollbar-track {
-  background: var(--mg-color-border-main, #D4CFC8);
+  background: var(--mg-color-border-main, var(--mg-color-border-main));
 }
 
 .mg-v2-notification-list::-webkit-scrollbar-thumb {
-  background: var(--mg-color-primary-main, #3D5246);
+  background: var(--mg-color-primary-main, var(--mg-color-primary-main));
   border-radius: 3px;
 }
 
@@ -124,7 +124,7 @@
 .mg-v2-notification-item {
   position: relative;
   padding: 12px 20px;
-  border-bottom: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border-bottom: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   cursor: pointer;
   display: flex;
   gap: 12px;
@@ -139,7 +139,7 @@
 }
 
 .mg-v2-notification-item:hover {
-  background-color: var(--mg-color-background-main, #FAF9F7);
+  background-color: var(--mg-color-background-main, var(--mg-color-background-main));
 }
 
 .mg-v2-notification-item--unread {
@@ -152,7 +152,7 @@
   top: 16px;
   width: 8px;
   height: 8px;
-  background-color: var(--mg-color-primary-main, #3D5246);
+  background-color: var(--mg-color-primary-main, var(--mg-color-primary-main));
   border-radius: 4px;
 }
 
@@ -164,7 +164,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #FFFFFF;
+  color: var(--mg-white);
   flex-shrink: 0;
 }
 
@@ -185,7 +185,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
   font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -195,14 +195,14 @@
 .mg-v2-notification-item__time {
   font-size: 11px;
   font-weight: 400;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-color-text-secondary));
   white-space: nowrap;
 }
 
 .mg-v2-notification-item__message {
   font-size: 13px;
   font-weight: 400;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-color-text-secondary));
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -229,12 +229,12 @@
   padding: 40px 20px;
   text-align: center;
   font-size: 14px;
-  color: var(--mg-color-text-secondary, #5C6B61);
+  color: var(--mg-color-text-secondary, var(--mg-color-text-secondary));
 }
 
 .mg-v2-dropdown-panel__footer {
   padding: 12px 20px;
-  border-top: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border-top: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   text-align: center;
 }
 
@@ -242,7 +242,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 13px;
   font-weight: 500;
-  color: var(--mg-color-primary-main, #3D5246);
+  color: var(--mg-color-primary-main, var(--mg-color-primary-main));
   text-decoration: none;
 }
 
@@ -277,7 +277,7 @@
 .mg-v2-notification-dropdown__tab.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: none;
   box-shadow: none;
-  color: var(--mg-color-text-main, #2C2C2C);
+  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
   background: none;
 }
 

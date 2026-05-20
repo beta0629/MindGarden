@@ -157,7 +157,7 @@
 }
 
 .widget-header-login-button:hover {
-  background-color: var(--mg-color-primary-dark, #0056b3);
+  background-color: var(--mg-color-primary-dark, var(--mg-color-primary-dark));
 }
 
 /* 반응형 */

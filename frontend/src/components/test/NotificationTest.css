@@ -271,7 +271,7 @@
     
     .mg-form__group input,
     .mg-form__group select {
-        background: #2d3748;
+        background: var(--mg-color-text-main);
         border-color: #4a5568;
         color: var(--toast-dark-color);
     }
@@ -282,7 +282,7 @@
     }
     
     .notification-test-info {
-        background: #2d3748;
+        background: var(--mg-color-text-main);
         border-left-color: var(--color-accent);
     }
 }

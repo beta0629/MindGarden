@@ -118,7 +118,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   margin: 0 0 0.5rem 0;
-  color: #2d3748;
+  color: var(--mg-color-text-main);
 }
 
 .welcome-info-card .info-value {

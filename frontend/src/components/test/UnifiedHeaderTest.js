@@ -190,8 +190,8 @@ const UnifiedHeaderTest = () => {
 
         {/* 긴 콘텐츠로 스크롤 테스트 */}
         // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e5e7eb)
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f3f4f6 -> var(--mg-custom-f3f4f6)
-        <div style={{ height: '200vh', background: 'linear-gradient(180deg, #f3f4f6 0%, var(--mg-color-border-main) 100%)', margin: '0 -20px', padding: '40px 20px' }}>
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-background-main) -> var(--mg-custom-f3f4f6)
+        <div style={{ height: '200vh', background: 'linear-gradient(180deg, var(--mg-color-background-main) 0%, var(--mg-color-border-main) 100%)', margin: '0 -20px', padding: '40px 20px' }}>
           <div style={{ textAlign: 'center', paddingTop: '100px' }}>
             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
             <h2 style={{ fontSize: '28px', fontWeight: '600', marginBottom: '16px', color: 'var(--mg-color-text-secondary-dark)' }}>

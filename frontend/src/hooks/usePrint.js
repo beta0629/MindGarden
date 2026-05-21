@@ -53,8 +53,8 @@ const usePrint = (options = {}) => {
       '.print-header': {
         textAlign: 'center',
         marginBottom: '20px',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
-        borderBottom: '2px solid #333',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-333)
+        borderBottom: '2px solid var(--mg-color-text-main)',
         paddingBottom: '10px'
       },
       '.print-title': {
@@ -64,8 +64,8 @@ const usePrint = (options = {}) => {
       },
       '.print-subtitle': {
         fontSize: 'var(--font-size-sm)',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
-        color: '#666',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-666)
+        color: 'var(--mg-color-text-secondary)',
         margin: '0'
       },
       '.print-content': {
@@ -75,8 +75,8 @@ const usePrint = (options = {}) => {
         marginTop: '30px',
         textAlign: 'center',
         fontSize: 'var(--font-size-xs)',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
-        color: '#666',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-666)
+        color: 'var(--mg-color-text-secondary)',
         // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ccc -> var(--mg-custom-ccc)
         borderTop: '1px solid #ccc',
         paddingTop: '10px'
@@ -93,8 +93,8 @@ const usePrint = (options = {}) => {
         marginBottom: '15px'
       },
       'th, td': {
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
-        border: '1px solid #333',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-333)
+        border: '1px solid var(--mg-color-text-main)',
         padding: '8px',
         textAlign: 'left'
       },

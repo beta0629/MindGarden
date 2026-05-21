@@ -13,7 +13,7 @@
     rgba(245, 250, 255, 0.8) 100%);
   background-size: 200% 200%;
   animation: watercolorFlow 15s ease-in-out infinite;
-  color: #2d3748;
+  color: var(--mg-color-text-main);
 }
 
 @keyframes watercolorFlow {

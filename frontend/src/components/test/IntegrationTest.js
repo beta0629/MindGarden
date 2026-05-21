@@ -497,8 +497,8 @@ const IntegrationTest = () => {
                           }}>{result.details}</p>
                           <small style={{
                             fontSize: 'var(--font-size-xs)',
-                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9ca3af -> var(--mg-custom-9ca3af)
-                            color: '#9ca3af'
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-tertiary) -> var(--mg-custom-9ca3af)
+                            color: 'var(--mg-color-text-tertiary)'
                           }}>{formatDateTime(result.timestamp)}</small>
                         </div>
                       </div>

@@ -281,7 +281,7 @@
 .services-title-mobile {
   font-size: var(--font-size-xxl);
   font-weight: 700;
-  color: #2d3748;
+  color: var(--mg-color-text-main);
   margin-bottom: 12px;
   text-align: center;
   font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;

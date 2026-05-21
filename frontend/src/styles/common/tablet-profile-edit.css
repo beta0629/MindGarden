@@ -76,13 +76,13 @@
 }
 
 .btn-cancel {
-    background: linear-gradient(135deg, #F3F4F6 0%, var(--mg-color-border-main) 100%);
+    background: linear-gradient(135deg, var(--mg-color-background-main) 0%, var(--mg-color-border-main) 100%);
     color: var(--mg-color-text-secondary-dark);
-    border: 1px solid #D1D5DB;
+    border: 1px solid var(--mg-color-border-main);
 }
 
 .btn-cancel:hover {
-    background: linear-gradient(135deg, var(--mg-color-border-main) 0%, #D1D5DB 100%);
+    background: linear-gradient(135deg, var(--mg-color-border-main) 0%, var(--mg-color-border-main) 100%);
 }
 
 /* 폼 스타일 */
@@ -150,13 +150,13 @@
 .image-preview {
     width: 180px;
     height: 180px;
-    border: 3px dashed #D1D5DB;
+    border: 3px dashed var(--mg-color-border-main);
     border-radius: 50%;
     margin: 0 auto 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--mg-color-background-main) 0%, #F3F4F6 100%);
+    background: linear-gradient(135deg, var(--mg-color-background-main) 0%, var(--mg-color-background-main) 100%);
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
@@ -166,7 +166,7 @@
 
 .image-preview:hover {
     border-color: var(--mg-purple-500);
-    background: linear-gradient(135deg, #F3F4F6 0%, var(--mg-color-border-main) 100%);
+    background: linear-gradient(135deg, var(--mg-color-background-main) 0%, var(--mg-color-border-main) 100%);
     transform: scale(1.05);
     box-shadow: 0 8px 16px rgba(139, 92, 246, 0.2);
 }
@@ -180,7 +180,7 @@
 
 .image-preview .upload-icon {
     font-size: 4rem;
-    color: #9CA3AF;
+    color: var(--mg-color-text-tertiary);
     transition: all 0.3s ease;
 }
 

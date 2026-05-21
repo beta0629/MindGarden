@@ -125,6 +125,6 @@
 .no-cases {
     text-align: center;
     padding: 40px;
-    color: #9ca3af;
+    color: var(--mg-color-text-tertiary);
     font-size: 15px;
 }

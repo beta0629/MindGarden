@@ -120,7 +120,7 @@
 }
 
 .risk-warning.high {
-    background: #fee2e2;
+    background: var(--mg-color-error-bg);
     border: 1px solid #fca5a5;
     color: #991b1b;
 }

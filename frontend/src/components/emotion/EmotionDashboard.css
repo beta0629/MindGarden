@@ -113,7 +113,7 @@
 
 .ai-summary-content {
     padding: 16px;
-    background: #f3f4f6;
+    background: var(--mg-color-background-main);
     border-radius: 8px;
     line-height: 1.6;
     color: var(--mg-color-text-secondary-dark);

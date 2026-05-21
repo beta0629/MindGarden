@@ -273,7 +273,7 @@
 
 .academy-social-button-google {
   background-color: var(--mg-white);
-  color: #333;
+  color: var(--mg-color-text-main);
   border: 1px solid var(--color-border, #ddd);
 }
 

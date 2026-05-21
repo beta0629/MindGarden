@@ -263,7 +263,7 @@
 .user-name {
   font-weight: 600;
   font-size: 1rem;
-  color: #333;
+  color: var(--mg-color-text-main);
 }
 
 /* 역할과 로그아웃 버튼을 나란히 배치 */
@@ -337,7 +337,7 @@
 
 .simple-menu-label {
   font-weight: 500;
-  color: #333;
+  color: var(--mg-color-text-main);
 }
 
 .simple-expand-icon {

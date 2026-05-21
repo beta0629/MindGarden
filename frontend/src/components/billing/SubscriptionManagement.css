@@ -154,7 +154,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 1rem;
-  background: #fef3c7;
+  background: var(--mg-color-warning-bg);
   border: 1px solid #fcd34d;
   border-radius: 6px;
   color: #92400e;
@@ -203,12 +203,12 @@
 }
 
 .subscription-management__status--pending_activation {
-  background: #fef3c7;
+  background: var(--mg-color-warning-bg);
   color: #92400e;
 }
 
 .subscription-management__status--cancelled {
-  background: #fee2e2;
+  background: var(--mg-color-error-bg);
   color: #991b1b;
 }
 

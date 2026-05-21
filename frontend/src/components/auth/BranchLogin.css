@@ -546,7 +546,7 @@ select:focus {
     }
     
     .headquarters-info .branch-info {
-        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        background: linear-gradient(135deg, #1e3a8a 0%, var(--mg-color-info-dark) 100%);
     }
     
     .loading-spinner p {

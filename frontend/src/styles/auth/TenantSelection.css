@@ -115,7 +115,7 @@
 
 .tenant-selection__item-status--inactive {
   background-color: var(--mg-color-error-bg);
-  color: #991b1b;
+  color: var(--mg-color-error-dark);
 }
 
 .tenant-selection__item-check {

@@ -331,13 +331,13 @@
   background-color: var(--mg-color-surface-white, var(--mg-white));
   border-radius: var(--mg-radius-xl, 16px);
   overflow: hidden;
-  box-shadow: var(--mg-shadow-md, 0 4px 6px rgba(0,0,0,0.1));
+  box-shadow: var(--mg-shadow-md, 0 4px 6px var(--mg-shadow-light));
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .mg-v2-card:hover {
   transform: translateY(-8px);
-  box-shadow: var(--mg-shadow-lg, 0 10px 15px rgba(0,0,0,0.1));
+  box-shadow: var(--mg-shadow-lg, 0 10px 15px var(--mg-shadow-light));
 }
 
 .mg-v2-card-image {
@@ -526,7 +526,7 @@
 .hamburger-menu-overlay, .profile-menu-overlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
+  background: var(--mg-overlay);
   z-index: 2000;
   display: flex;
   justify-content: flex-end;
@@ -537,7 +537,7 @@
   height: 100%;
   background: var(--mg-color-surface-white, var(--mg-white));
   padding: var(--mg-spacing-xl, 24px);
-  box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+  box-shadow: -2px 0 8px var(--mg-shadow-light);
   display: flex;
   flex-direction: column;
 }

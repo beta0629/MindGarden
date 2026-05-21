@@ -410,7 +410,7 @@
 
 .mg-v2-tooltip--error {
   background-color: var(--mg-color-error-bg);
-  color: #991b1b;
+  color: var(--mg-color-error-dark);
   border: 1px solid #fecaca;
 }
 

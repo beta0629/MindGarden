@@ -209,7 +209,7 @@
 }
 
 .tablet-login-button-secondary:hover:not(:disabled) {
-  background: #059669;
+  background: var(--mg-color-success-600);
 }
 
 /* SMS 섹션 */
@@ -280,7 +280,7 @@
 }
 
 .tablet-login-verification-button:hover:not(:disabled) {
-  background: #059669;
+  background: var(--mg-color-success-600);
   transform: translateY(-1px);
 }
 
@@ -345,7 +345,7 @@
 
 .social-login-button.kakao {
   background: #fef01b;
-  color: #000;
+  color: var(--mg-color-text-main);
   border-color: #fef01b;
 }
 

@@ -433,7 +433,7 @@
 
 .alert-danger {
   color: #721c24;
-  background-color: #f8d7da;
+  background-color: var(--mg-color-error-bg);
   border-color: #f5c6cb;
 }
 

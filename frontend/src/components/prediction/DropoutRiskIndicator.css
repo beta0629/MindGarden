@@ -129,7 +129,7 @@
 
 .intervention-needed h4 {
     margin: 0 0 12px 0;
-    color: #991b1b;
+    color: var(--mg-color-error-dark);
     font-size: 15px;
 }
 

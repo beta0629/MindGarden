@@ -177,7 +177,7 @@
   background: white;
   margin: 0 16px 16px 16px;
   border-radius: 12px;
-  border: 1px solid #f8d7da;
+  border: 1px solid var(--mg-color-error-bg);
   font-weight: 600;
   padding: var(--spacing-md) var(--spacing-xl);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);

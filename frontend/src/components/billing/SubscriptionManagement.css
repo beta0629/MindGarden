@@ -209,7 +209,7 @@
 
 .subscription-management__status--cancelled {
   background: var(--mg-color-error-bg);
-  color: #991b1b;
+  color: var(--mg-color-error-dark);
 }
 
 .subscription-management__subscription-info {
@@ -238,7 +238,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 1rem;
-  background: #fef2f2;
+  background: var(--mg-color-error-50);
   border: 1px solid #fecaca;
   border-radius: 6px;
   color: var(--mg-color-error);

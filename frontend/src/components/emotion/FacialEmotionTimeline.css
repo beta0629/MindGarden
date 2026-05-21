@@ -109,7 +109,7 @@
     border-radius: 8px;
     text-align: center;
     font-size: 14px;
-    color: #1e40af;
+    color: var(--mg-color-info-dark);
 }
 
 .dominant-emotion-badge strong {

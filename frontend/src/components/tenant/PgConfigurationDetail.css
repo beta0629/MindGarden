@@ -85,12 +85,12 @@
 }
 
 .status-badge--warning {
-  background: #fff3cd;
+  background: var(--mg-color-warning-bg);
   color: #856404;
 }
 
 .status-badge--danger {
-  background: #f8d7da;
+  background: var(--mg-color-error-bg);
   color: #721c24;
 }
 
@@ -482,7 +482,7 @@
 }
 
 .approval-status-pending {
-  background: #fff3cd;
+  background: var(--mg-color-warning-bg);
   border: 1px solid var(--mg-warning-500);
 }
 
@@ -502,7 +502,7 @@
 }
 
 .approval-status-rejected {
-  background: #f8d7da;
+  background: var(--mg-color-error-bg);
   border: 1px solid var(--mg-error-500);
 }
 

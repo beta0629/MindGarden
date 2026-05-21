@@ -251,7 +251,7 @@
 
 .academy-social-button-kakao {
   background-color: #FEE500;
-  color: #000;
+  color: var(--mg-color-text-main);
   border: 1px solid #FEE500;
 }
 

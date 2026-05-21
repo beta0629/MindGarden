@@ -111,7 +111,7 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: #fff3cd;
+  background: var(--mg-color-warning-bg);
   border: 1px solid var(--mg-warning-500);
   border-radius: 8px;
   color: #856404;
@@ -226,7 +226,7 @@
 }
 
 .status-badge--warning {
-  background: #fff3cd;
+  background: var(--mg-color-warning-bg);
   color: #856404;
 }
 
@@ -292,7 +292,7 @@
 }
 
 .test-result.error {
-  background: #f8d7da;
+  background: var(--mg-color-error-bg);
   color: #721c24;
 }
 
@@ -459,7 +459,7 @@
 }
 
 .test-result-preview.error {
-  background: #f8d7da;
+  background: var(--mg-color-error-bg);
   color: #721c24;
 }
 

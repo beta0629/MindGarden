@@ -148,12 +148,12 @@
 }
 
 .client-message-item.important {
-  background: #fff3cd;
+  background: var(--mg-color-warning-bg);
   border-color: var(--color-warning);
 }
 
 .client-message-item.urgent {
-  background: #f8d7da;
+  background: var(--mg-color-error-bg);
   border-color: var(--color-danger);
 }
 
@@ -506,12 +506,12 @@
 }
 
 .client-message-screen-message-item-important {
-  background: #fff3cd;
+  background: var(--mg-color-warning-bg);
   border-color: var(--color-warning);
 }
 
 .client-message-screen-message-item-urgent {
-  background: #f8d7da;
+  background: var(--mg-color-error-bg);
   border-color: var(--color-danger);
 }
 

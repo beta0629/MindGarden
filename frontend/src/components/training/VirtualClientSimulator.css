@@ -8,7 +8,7 @@
     background: white;
     padding: 40px;
     border-radius: 16px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px var(--mg-shadow-light);
     text-align: center;
 }
 
@@ -53,7 +53,7 @@
 .simulator-active {
     background: white;
     border-radius: 16px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px var(--mg-shadow-light);
     overflow: hidden;
     height: 700px;
     display: flex;

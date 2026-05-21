@@ -142,7 +142,7 @@
 }
 
 .tablet-login-input::placeholder {
-  color: #9ca3af;
+  color: var(--mg-color-text-tertiary);
 }
 
 .tablet-login-password-toggle {
@@ -161,7 +161,7 @@
 }
 
 .tablet-login-password-toggle:hover {
-  background: #f3f4f6;
+  background: var(--mg-color-background-main);
   color: var(--cs-slate-700);
 }
 
@@ -237,7 +237,7 @@
 
 .tablet-login-sms-button:disabled {
   background: var(--cs-slate-300);
-  color: #9ca3af;
+  color: var(--mg-color-text-tertiary);
   cursor: not-allowed;
   transform: none;
 }
@@ -419,7 +419,7 @@
 
 .test-button:disabled {
   background: var(--cs-slate-300);
-  color: #9ca3af;
+  color: var(--mg-color-text-tertiary);
   cursor: not-allowed;
   transform: none;
 }

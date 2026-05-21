@@ -98,7 +98,7 @@
 
 .tenant-selection__item-type {
   padding: var(--spacing-xs) var(--spacing-sm);
-  background-color: #f3f4f6;
+  background-color: var(--mg-color-background-main);
   border-radius: var(--border-radius-sm);
 }
 
@@ -114,7 +114,7 @@
 }
 
 .tenant-selection__item-status--inactive {
-  background-color: #fee2e2;
+  background-color: var(--mg-color-error-bg);
   color: #991b1b;
 }
 
@@ -142,7 +142,7 @@
 }
 
 .tenant-selection__cancel-button:hover:not(:disabled) {
-  border-color: #d1d5db;
+  border-color: var(--mg-color-border-main);
   background-color: var(--mg-color-background-main);
 }
 

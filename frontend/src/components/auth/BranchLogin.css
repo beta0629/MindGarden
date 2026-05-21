@@ -6,9 +6,9 @@
     --branch-login-success: #16a34a;
     --branch-login-warning: #d97706;
     --branch-login-error: var(--mg-color-error);
-    --branch-login-gray-100: #f3f4f6;
+    --branch-login-gray-100: var(--mg-color-background-main);
     --branch-login-gray-200: var(--mg-color-border-main);
-    --branch-login-gray-300: #d1d5db;
+    --branch-login-gray-300: var(--mg-color-border-main);
     --branch-login-gray-500: var(--mg-color-text-secondary);
     --branch-login-gray-600: var(--mg-color-text-tertiary);
     --branch-login-gray-700: var(--mg-color-text-secondary-dark);
@@ -343,7 +343,7 @@ select:focus {
 .branch-info-header {
     margin-bottom: 32px;
     padding: 24px;
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    background: linear-gradient(135deg, var(--mg-color-background-main) 0%, var(--mg-color-border-main) 100%);
     border-radius: 12px;
     border: 1px solid var(--branch-login-gray-200);
 }

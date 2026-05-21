@@ -86,7 +86,7 @@
 }
 
 .refresh-button:disabled {
-  background: #ccc;
+  background: var(--mg-color-border-main);
   cursor: not-allowed;
 }
 

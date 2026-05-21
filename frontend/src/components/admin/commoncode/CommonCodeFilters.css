@@ -127,7 +127,7 @@
 }
 
 .mg-btn--primary:hover {
-    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    background: linear-gradient(135deg, #1d4ed8, var(--mg-color-info-dark));
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }

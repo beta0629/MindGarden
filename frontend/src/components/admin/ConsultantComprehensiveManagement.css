@@ -202,8 +202,8 @@
 }
 
 .specialty-select option:checked {
-    background: #f0f9ff;
-    color: #1e40af;
+    background: var(--mg-color-info-bg);
+    color: var(--mg-color-info-dark);
     font-weight: 600;
 }
 
@@ -383,7 +383,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f0f9ff;
+    background: var(--mg-color-info-bg);
     border-radius: 12px;
     flex-shrink: 0;
 }
@@ -674,7 +674,7 @@
     font-size: var(--font-size-sm);
     color: var(--mg-color-text-secondary-dark);
     line-height: 1.6;
-    background: #f0f9ff;
+    background: var(--mg-color-info-bg);
     padding: var(--spacing-md) var(--spacing-lg);
     border-radius: 8px;
     border: 1px solid #e0f2fe;
@@ -719,7 +719,7 @@ div[class*="consultant-specialty-display"] div,
     font-size: var(--font-size-sm);
     color: var(--mg-color-text-secondary-dark);
     line-height: 1.6;
-    background: #f0f9ff;
+    background: var(--mg-color-info-bg);
     padding: var(--spacing-md) var(--spacing-lg);
     border-radius: 8px;
     border: 1px solid #e0f2fe;

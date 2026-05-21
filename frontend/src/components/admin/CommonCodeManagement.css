@@ -49,7 +49,7 @@
 }
 
 .mg-form-input--legacy {
-    color: #000;
+    color: var(--mg-color-text-main);
     background-color: var(--mg-white);
     border: 2px solid var(--mg-color-border-main);
 }

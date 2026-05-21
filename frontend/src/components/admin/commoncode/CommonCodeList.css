@@ -75,7 +75,7 @@
 
 .code-card.inactive {
     opacity: 0.7;
-    background-color: #fef2f2;
+    background-color: var(--mg-color-error-50);
     border-color: var(--status-error-border);
 }
 
@@ -202,7 +202,7 @@
 
 .status-badge.inactive {
     background: var(--status-error-bg);
-    color: #991b1b;
+    color: var(--mg-color-error-dark);
 }
 
 .status-badge:hover {

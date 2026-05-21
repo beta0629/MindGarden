@@ -64,8 +64,8 @@ const ConsultantMessageScreen = () => {
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-shadow-light) -> var(--mg-custom-color)
+      boxShadow: '0 2px 8px var(--mg-shadow-light)',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e9ecef)
       border: '1px solid var(--mg-color-border-main)'
     },
@@ -90,8 +90,8 @@ const ConsultantMessageScreen = () => {
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-shadow-light) -> var(--mg-custom-color)
+      boxShadow: '0 2px 8px var(--mg-shadow-light)',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e9ecef)
       border: '1px solid var(--mg-color-border-main)'
     },
@@ -133,8 +133,8 @@ const ConsultantMessageScreen = () => {
       backgroundColor: 'var(--mg-white)',
       borderRadius: '12px',
       padding: '24px',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-shadow-light) -> var(--mg-custom-color)
+      boxShadow: '0 2px 8px var(--mg-shadow-light)',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e9ecef)
       border: '1px solid var(--mg-color-border-main)'
     },
@@ -300,8 +300,8 @@ const ConsultantMessageScreen = () => {
       left: 0,
       right: 0,
       bottom: 0,
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.5) -> var(--mg-custom-color)
-      backgroundColor: 'rgba(0,0,0,0.5)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-overlay) -> var(--mg-custom-color)
+      backgroundColor: 'var(--mg-overlay)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',

@@ -89,7 +89,7 @@
 }
 
 .btn-success:hover:not(:disabled) {
-    background: #059669;
+    background: var(--mg-color-success-600);
 }
 
 .btn-large {
@@ -100,7 +100,7 @@
 .error-message {
     background: var(--mg-color-error-bg);
     border: 1px solid #fecaca;
-    color: #991b1b;
+    color: var(--mg-color-error-dark);
     padding: 12px 16px;
     border-radius: 6px;
     margin-bottom: 16px;
@@ -155,7 +155,7 @@
 }
 
 .meta-item.reviewed {
-    color: #059669;
+    color: var(--mg-color-success-600);
     font-weight: 600;
 }
 
@@ -226,7 +226,7 @@
 .save-message.error {
     background: var(--mg-color-error-bg);
     border: 1px solid #fecaca;
-    color: #991b1b;
+    color: var(--mg-color-error-dark);
 }
 
 .editor-actions {

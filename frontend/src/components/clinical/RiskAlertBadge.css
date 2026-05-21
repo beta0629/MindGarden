@@ -93,7 +93,7 @@
     margin: 0;
     font-size: 16px;
     font-weight: 600;
-    color: #991b1b;
+    color: var(--mg-color-error-dark);
 }
 
 .btn-refresh {
@@ -192,7 +192,7 @@
 
 .severity-critical {
     background: var(--mg-color-error-bg);
-    color: #991b1b;
+    color: var(--mg-color-error-dark);
 }
 
 .severity-high {
@@ -207,7 +207,7 @@
 
 .severity-low {
     background: #dbeafe;
-    color: #1e40af;
+    color: var(--mg-color-info-dark);
 }
 
 .alert-time {
@@ -233,7 +233,7 @@
 }
 
 .detected-keywords strong {
-    color: #991b1b;
+    color: var(--mg-color-error-dark);
 }
 
 .detected-keywords span {
@@ -243,7 +243,7 @@
 }
 
 .ai-analysis {
-    background: #f0f9ff;
+    background: var(--mg-color-info-bg);
     border-left: 3px solid var(--mg-color-info);
     padding: 8px 12px;
     margin-top: 8px;
@@ -253,7 +253,7 @@
 .ai-analysis strong {
     display: block;
     font-size: 12px;
-    color: #1e40af;
+    color: var(--mg-color-info-dark);
     margin-bottom: 4px;
 }
 
@@ -277,7 +277,7 @@
 }
 
 .confidence {
-    color: #059669;
+    color: var(--mg-color-success-600);
 }
 
 .alert-dropdown-footer {

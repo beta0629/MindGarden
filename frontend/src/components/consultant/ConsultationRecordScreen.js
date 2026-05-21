@@ -122,7 +122,7 @@ const ConsultationRecordScreen = () => {
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      boxShadow: '0 2px 8px var(--mg-shadow-light)',
       border: '1px solid var(--mg-gray-200, var(--mg-color-border-main))'
     },
     headerTitle: {
@@ -144,7 +144,7 @@ const ConsultationRecordScreen = () => {
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      boxShadow: '0 2px 8px var(--mg-shadow-light)',
       border: '1px solid var(--mg-gray-200, var(--mg-color-border-main))'
     },
     clientInfoTitle: {
@@ -182,7 +182,7 @@ const ConsultationRecordScreen = () => {
       backgroundColor: 'var(--mg-white, var(--mg-white))',
       borderRadius: '12px',
       padding: '24px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      boxShadow: '0 2px 8px var(--mg-shadow-light)',
       border: '1px solid var(--mg-gray-200, var(--mg-color-border-main))'
     },
     formTitle: {
@@ -301,7 +301,7 @@ const ConsultationRecordScreen = () => {
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
+      backgroundColor: 'var(--mg-overlay)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',

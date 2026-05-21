@@ -39,7 +39,7 @@
 
 .ai-badge {
     background: #dbeafe;
-    color: #1e40af;
+    color: var(--mg-color-info-dark);
 }
 
 .model-badge {
@@ -153,7 +153,7 @@
 .save-message.error {
     background: var(--mg-color-error-bg);
     border: 1px solid #fecaca;
-    color: #991b1b;
+    color: var(--mg-color-error-dark);
 }
 
 .editor-actions {
@@ -205,11 +205,11 @@
 }
 
 .btn-success:hover:not(:disabled) {
-    background: #059669;
+    background: var(--mg-color-success-600);
 }
 
 .approval-notice {
-    color: #059669;
+    color: var(--mg-color-success-600);
     font-size: 14px;
     font-weight: 500;
 }

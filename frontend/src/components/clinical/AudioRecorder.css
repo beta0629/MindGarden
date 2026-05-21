@@ -116,7 +116,7 @@
 }
 
 .btn-success:hover {
-    background: #059669;
+    background: var(--mg-color-success-600);
 }
 
 .btn-danger {
@@ -173,7 +173,7 @@
 .error-message {
     background: var(--mg-color-error-bg);
     border: 1px solid #fecaca;
-    color: #991b1b;
+    color: var(--mg-color-error-dark);
     padding: 12px 16px;
     border-radius: 6px;
     margin-bottom: 16px;
@@ -183,7 +183,7 @@
 .recording-tips {
     margin-top: 20px;
     padding: 16px;
-    background: #f0f9ff;
+    background: var(--mg-color-info-bg);
     border-left: 4px solid var(--mg-color-info);
     border-radius: 4px;
 }
@@ -191,7 +191,7 @@
 .recording-tips p {
     margin: 0 0 8px 0;
     font-weight: 600;
-    color: #1e40af;
+    color: var(--mg-color-info-dark);
 }
 
 .recording-tips ul {

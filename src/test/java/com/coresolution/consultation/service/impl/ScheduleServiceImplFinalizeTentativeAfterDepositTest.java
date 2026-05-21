@@ -182,8 +182,14 @@ class ScheduleServiceImplFinalizeTentativeAfterDepositTest {
         scheduleService.finalizeTentativeSchedulesAfterDepositConfirmed(inputMapping);
 
         ArgumentCaptor<Schedule> scheduleCaptor = ArgumentCaptor.forClass(Schedule.class);
-        verify(scheduleRepository, times(2)).save(scheduleCaptor.capture());
+        // BOOKED 전환 2회 + persistSessionSequenceBeforeDeduction 저장 2회
+        verify(scheduleRepository, times(4)).save(scheduleCaptor.capture());
         assertThat(scheduleCaptor.getAllValues()).allMatch(s -> s.getStatus() == ScheduleStatus.BOOKED);
+
+        assertThat(t1.getSessionSequence()).isEqualTo(6);
+        assertThat(t2.getSessionSequence()).isEqualTo(7);
+        assertThat(t1.getMappingId()).isEqualTo(MAPPING_ID);
+        assertThat(t2.getMappingId()).isEqualTo(MAPPING_ID);
 
         assertThat(fresh.getRemainingSessions()).isEqualTo(3);
         assertThat(fresh.getUsedSessions()).isEqualTo(2);

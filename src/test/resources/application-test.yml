@@ -95,6 +95,12 @@ OPENAI_API_KEY: "test-openai-key"
 OPENAI_API_URL: "https://api.openai.com/v1"
 OPENAI_MODEL: "gpt-4o-mini"
 
+# SMS / Solapi: test·CI 전용 placeholder (운영 비밀 금지). 실제 발송은 sms.auth.test-mode 로 차단.
+SMS_API_KEY: "test-sms-api-key"
+SMS_API_SECRET: "test-sms-api-secret"
+SMS_SENDER_NUMBER: "01000000000"
+SMS_TEST_MODE: true
+
 email:
   block-all-outbound: true
   send-allowlist: ""

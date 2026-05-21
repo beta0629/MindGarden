@@ -381,6 +381,11 @@
   margin-bottom: var(--mg-spacing-md);
 }
 
+/* T8-D3: 인라인 → 클래스 추출 (empty state padding 축소 변형) */
+.client-home__empty--compact {
+  padding: var(--mg-spacing-lg);
+}
+
 .client-home__empty-title {
   font-size: var(--mg-font-size-lg);
   font-weight: var(--mg-font-weight-semibold);

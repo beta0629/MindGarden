@@ -516,3 +516,54 @@
     font-size: 0.9rem;
   }
 }
+
+/* T8-D3: 인라인 → 클래스 추출 (로그인 알림 모달 정적 박스) */
+.tablet-login-notification__box {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--mg-white);
+  color: var(--mg-gray-800);
+  padding: 28px 56px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px var(--mg-shadow-light);
+  z-index: 10001;
+  font-size: var(--font-size-md);
+  font-weight: 400;
+  font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  width: 520px;
+  max-width: 85vw;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid var(--mg-border);
+  animation: loginNotificationSlideIn 0.4s ease-out;
+}
+
+.tablet-login-notification__message {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--mg-gray_dark);
+  line-height: 1.5;
+  letter-spacing: 0.2px;
+}
+
+.tablet-login-notification__hint {
+  font-size: var(--font-size-sm);
+  color: var(--mg-secondary-500);
+  font-weight: 400;
+  opacity: 0.8;
+  margin-top: 12px;
+}
+
+.tablet-login-notification__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--mg-shadow-light);
+  z-index: 10000;
+  backdrop-filter: blur(0.5px);
+}

@@ -132,9 +132,9 @@ const ResetPassword = () => {
           </div>
         </div>
         <div className="mg-v2-auth-content">
-          <div className="mg-v2-auth-form-wrapper" style={{ alignItems: 'center', textAlign: 'center' }}>
-            <span className="mg-v2-spinner" style={{ width: '40px', height: '40px', borderTopColor: 'var(--mg-primary-color)', borderRightColor: 'var(--mg-primary-color)', borderBottomColor: 'var(--mg-primary-color)' }} />
-            <p className="mg-v2-auth-subtitle" style={{ marginTop: '16px' }}>
+          <div className="mg-v2-auth-form-wrapper mg-v2-auth-form-wrapper--centered">
+            <span className="mg-v2-spinner mg-v2-spinner--large" />
+            <p className="mg-v2-auth-subtitle mg-v2-auth-subtitle--validating">
               토큰을 검증하고 있습니다...
             </p>
           </div>
@@ -216,7 +216,7 @@ const ResetPassword = () => {
                   </div>
                 </div>
 
-                <div className="mg-v2-auth-hint" style={{ marginBottom: '24px' }}>
+                <div className="mg-v2-auth-hint mg-v2-auth-hint--password">
                   <p>💡 <strong>비밀번호 요구사항</strong></p>
                   <ul>
                     <li>8자 이상 100자 이하</li>
@@ -253,7 +253,7 @@ const ResetPassword = () => {
               </div>
 
               <div className="mg-v2-auth-success-actions">
-                <Link to="/login" className="mg-v2-button-primary" style={{ textDecoration: 'none' }}>
+                <Link to="/login" className="mg-v2-button-primary mg-v2-button-primary--link">
                   로그인 페이지로 이동
                 </Link>
               </div>

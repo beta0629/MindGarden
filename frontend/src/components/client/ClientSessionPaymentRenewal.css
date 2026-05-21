@@ -326,6 +326,13 @@
   cursor: not-allowed;
 }
 
+/* T8-D3: 인라인 → 클래스 추출 (extend 버튼 내부 아이콘) */
+.session-payment__extend-btn-icon {
+  display: inline;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
 .session-payment__shop-link {
   display: flex;
   align-items: center;

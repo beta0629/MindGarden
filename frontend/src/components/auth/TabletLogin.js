@@ -989,67 +989,25 @@ const TabletLogin = () => {
             }
           `}</style>
           <div
-            style={{
-              position: 'fixed',
-              top: '20%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              backgroundColor: 'var(--mg-white)',
-              color: 'var(--mg-gray-800)',
-              padding: '28px 56px',
-              borderRadius: '12px',
-              boxShadow: '0 4px 20px var(--mg-shadow-light)',
-              zIndex: 10001,
-              fontSize: 'var(--font-size-md)',
-              fontWeight: '400',
-              fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
-              width: '520px',
-              maxWidth: '85vw',
-              textAlign: 'center',
-              cursor: 'pointer',
-              border: '1px solid var(--mg-border)',
-              animation: 'loginNotificationSlideIn 0.4s ease-out'
-            }}
+            className="tablet-login-notification__box"
             onClick={() => setTooltip({ show: false, message: '', type: 'error' })}
           >
             
             
             {/* 메시지 */}
-            <div style={{ 
-              fontSize: 'var(--font-size-base)',
-              fontWeight: '500',
-              marginBottom: '8px',
-              color: 'var(--mg-gray_dark)',
-              lineHeight: '1.5',
-              letterSpacing: '0.2px'
-            }}>
+            <div className="tablet-login-notification__message">
               {tooltip.message}
             </div>
             
             {/* 닫기 안내 */}
-            <div style={{ 
-              fontSize: 'var(--font-size-sm)',
-              color: 'var(--mg-secondary-500)',
-              fontWeight: '400',
-              opacity: 0.8,
-              marginTop: '12px'
-            }}>
+            <div className="tablet-login-notification__hint">
               터치하여 닫기
             </div>
           </div>
           
           {/* 배경 오버레이 */}
           <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'var(--mg-shadow-light)',
-              zIndex: 10000,
-              backdropFilter: 'blur(0.5px)'
-            }}
+            className="tablet-login-notification__overlay"
             onClick={() => setTooltip({ show: false, message: '', type: 'error' })}
           />
         </>

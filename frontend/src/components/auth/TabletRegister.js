@@ -579,7 +579,7 @@ const TabletRegister = () => {
               </label>
             </div>
             {errors.agreeTerms && (
-              <span className="mg-v2-error-text" style={{ marginTop: '-20px', marginBottom: '20px' }}>
+              <span className="mg-v2-error-text mg-v2-error-text--checkbox-adjacent">
                 {errors.agreeTerms}
               </span>
             )}
@@ -609,7 +609,7 @@ const TabletRegister = () => {
               </label>
             </div>
             {errors.agreePrivacy && (
-              <span className="mg-v2-error-text" style={{ marginTop: '-20px', marginBottom: '20px' }}>
+              <span className="mg-v2-error-text mg-v2-error-text--checkbox-adjacent">
                 {errors.agreePrivacy}
               </span>
             )}

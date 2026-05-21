@@ -252,7 +252,7 @@ const ClientSessionPaymentRenewal = () => {
             disabled={!selectedPackage}
             onClick={handleExtend}
           >
-            <ShoppingBag size={18} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />
+            <ShoppingBag size={18} className="session-payment__extend-btn-icon" />
             결제하고 회기 연장하기
           </button>
         </>

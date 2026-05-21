@@ -152,7 +152,7 @@ const ForgotPassword = () => {
                 >
                   다른 이메일로 다시 발송
                 </MGButton>
-                <Link className="mg-v2-button-secondary" to="/login" style={{ textDecoration: 'none' }}>
+                <Link className="mg-v2-button-secondary mg-v2-button-secondary--link" to="/login">
                   로그인 페이지로 돌아가기
                 </Link>
               </div>

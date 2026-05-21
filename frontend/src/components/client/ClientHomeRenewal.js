@@ -330,7 +330,7 @@ const ClientHomeRenewal = () => {
             })}
           </ul>
         ) : (
-          <div className="client-home__empty" style={{ padding: 'var(--mg-spacing-lg)' }}>
+          <div className="client-home__empty client-home__empty--compact">
             <Clock size={36} className="client-home__empty-icon" aria-hidden />
             <p className="client-home__empty-desc">아직 활동 내역이 없어요</p>
           </div>

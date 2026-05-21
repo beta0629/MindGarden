@@ -465,3 +465,35 @@
     gap: 0;
   }
 }
+
+/* T8-D3: 인라인 → 클래스 추출 (auth 페이지 정적 인라인) */
+.mg-v2-auth-form-wrapper--centered {
+  align-items: center;
+  text-align: center;
+}
+
+.mg-v2-spinner--large {
+  width: 40px;
+  height: 40px;
+  border-top-color: var(--mg-primary-color);
+  border-right-color: var(--mg-primary-color);
+  border-bottom-color: var(--mg-primary-color);
+}
+
+.mg-v2-auth-subtitle--validating {
+  margin-top: 16px;
+}
+
+.mg-v2-auth-hint--password {
+  margin-bottom: 24px;
+}
+
+.mg-v2-error-text--checkbox-adjacent {
+  margin-top: -20px;
+  margin-bottom: 20px;
+}
+
+.mg-v2-button-primary--link,
+.mg-v2-button-secondary--link {
+  text-decoration: none;
+}

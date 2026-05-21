@@ -141,7 +141,30 @@ const COLOR_MAPPING = {
 
   // D2 보강 — 3자리 흰색(#fff)도 var(--mg-white)로 정규화
   // (lookbehind/lookahead 가드가 #ffffff 와의 충돌을 방지)
-  '#fff': 'var(--mg-white)'
+  '#fff': 'var(--mg-white)',
+
+  // 2026 Q2 D3 합의서 매핑 (SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D3.md §3)
+  // A. 기존 토큰 통합 (5건) — 3자리 회색 정규화 + Tailwind 잔재 흡수
+  // 주의: 6자리 형태(#666666·#333333)는 기존 매핑(--mg-gray-*)에 그대로 남고,
+  //       3자리 형태(#666·#333)는 D3 결정에 따라 시맨틱 토큰으로 정규화된다.
+  //       lookbehind/lookahead 가드가 6자리/3자리를 분리한다.
+  '#666': 'var(--mg-color-text-secondary)',
+  '#333': 'var(--mg-color-text-main)',
+  // 주의: --mg-color-background-subtle 토큰이 unified-design-tokens.css 에
+  //       미정의이므로 D2 의 #f9fafb 매핑(--mg-color-background-main)과
+  //       일관 처리한다. (작업 정의서 §PR-1, D3 SSOT §1 본문 동일)
+  '#f3f4f6': 'var(--mg-color-background-main)',
+  '#f8fafc': 'var(--mg-color-background-main)',
+  '#9ca3af': 'var(--mg-color-text-tertiary)',
+
+  // B. 신설 토큰 (2건) — unified-design-tokens.css D3 블록에 정의
+  '#fef3c7': 'var(--mg-color-warning-bg)',
+  '#fee2e2': 'var(--mg-color-error-bg)',
+
+  // C. 폐기 통합 (3건) — Tailwind/Bootstrap 잔재를 시스템 표준 토큰으로 흡수
+  '#e2e8f0': 'var(--mg-color-border-main)',
+  '#d1d5db': 'var(--mg-color-border-main)',
+  '#2d3748': 'var(--mg-color-text-main)'
 };
 
 // RGB/RGBA 색상 매핑

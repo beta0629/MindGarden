@@ -108,7 +108,7 @@ const SalaryPrintComponent = ({
             fontWeight: 'bold'
           },
           '.tax-row': {
-            backgroundColor: '#fff3cd'
+            backgroundColor: 'var(--mg-color-warning-bg)'
           },
           '.net-row': {
             backgroundColor: '#d4edda',

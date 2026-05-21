@@ -41,7 +41,7 @@
 
 .consultant-stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--mg-v2-shadow-md, 0 4px 6px -1px rgba(0,0,0,0.1));
+  box-shadow: var(--mg-v2-shadow-md, 0 4px 6px -1px var(--mg-shadow-light));
 }
 
 .stat-icon-wrapper {

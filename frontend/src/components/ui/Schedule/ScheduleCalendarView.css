@@ -306,6 +306,31 @@
     ) !important;
 }
 
+/*
+ * R-4 사이드이펙트 보정: 통합 스킨 weekend td 내부 .fc-non-business 흰색 덮기 무력화.
+ *
+ * 배경 (core-debugger 보고서 §9 — 3중 상호작용):
+ *  1) ScheduleB0KlA.css:628 의 `.fc-non-business` 흰색(--ad-b0kla-card-bg) 강제 덮기
+ *  2) ScheduleB0KlA.css:634 의 `.fc-daygrid-day-frame { min-height: calc(--spacing-xl * 4) }` 셀 높이 제약
+ *  3) R-3 핫픽스(b8336cf11) 로 `--mg-color-background-main` (라이트 모드 surface 토큰) 정착 후
+ *     비로소 활성화된 위 weekend td color-mix 배경(L293·L301)
+ *
+ * 결과: /admin/mapping-schedule 통합 스케줄 캘린더에서 일요일 분홍·토요일 파랑 틴트가
+ *      셀 가운데 .fc-non-business 흰 띠에 가려 분할/부분 노출되는 회귀가 R-3·R-4 정착
+ *      직후(2026-05-21 11:15 KST 이후) 표면화됨.
+ *
+ * 패치 범위: 통합 스킨(`[data-calendar-skin="integrated"]`) + weekend td(`--weekend-sat/sun`)
+ *           내부 `.fc-non-business` 한정 투명화. ScheduleB0KlA.css 의 전역 규칙은 유지하여
+ *           /admin/schedules·/admin/consultation-log 등 다른 페이지 영향 0.
+ *
+ * Refs: core-debugger 보고서 §9, R-3 b8336cf11, R-4 7d7567550,
+ *       ScheduleB0KlA.css:628·634, ScheduleCalendarView.css:293·301
+ */
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sat .fc-non-business,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sun .fc-non-business {
+    background: transparent !important;
+}
+
 /* 통합: 공휴일명·대체 전날 배지 — day-top에서 전폭 줄(일자 위 한 줄 확보), 내부는 세로 스택 */
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-holiday-badge {
     flex: 1 0 100%;

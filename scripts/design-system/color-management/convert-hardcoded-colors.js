@@ -164,7 +164,33 @@ const COLOR_MAPPING = {
   // C. 폐기 통합 (3건) — Tailwind/Bootstrap 잔재를 시스템 표준 토큰으로 흡수
   '#e2e8f0': 'var(--mg-color-border-main)',
   '#d1d5db': 'var(--mg-color-border-main)',
-  '#2d3748': 'var(--mg-color-text-main)'
+  '#2d3748': 'var(--mg-color-text-main)',
+
+  // 2026 Q2 D4 합의서 매핑 (SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D4.md §1·§3)
+  // A. 기존 토큰 통합 + 3자리 회색 일괄 정규화 보강 (7건)
+  // 주의: 6자리 형태(#000000·#999999 등)는 기존 매핑(--mg-black·--mg-gray-*)에 그대로 남고,
+  //       3자리 형태(#000·#999 등)는 D4 결정에 따라 시맨틱 토큰으로 정규화된다.
+  //       lookbehind/lookahead 가드가 6자리/3자리를 분리하고,
+  //       매핑 키 길이 내림차순(8→6→4→3) 정렬로 6자리가 항상 먼저 처리된다.
+  '#000': 'var(--mg-color-text-main)',
+  '#ddd': 'var(--mg-color-border-main)',
+  '#ccc': 'var(--mg-color-border-main)',
+  '#bbb': 'var(--mg-color-text-tertiary)',
+  '#aaa': 'var(--mg-color-text-tertiary)',
+  '#999': 'var(--mg-color-text-tertiary)',
+  '#eee': 'var(--mg-color-border-main)',
+
+  // C. 폐기 통합 (2건) — Bootstrap 잔재를 D3 정착 토큰으로 흡수
+  '#f8d7da': 'var(--mg-color-error-bg)',
+  '#fff3cd': 'var(--mg-color-warning-bg)',
+
+  // B. 신설 토큰 (6건) — unified-design-tokens.css D4 블록에 정의
+  '#f0f9ff': 'var(--mg-color-info-bg)',
+  '#1e40af': 'var(--mg-color-info-dark)',
+  '#fef2f2': 'var(--mg-color-error-50)',
+  '#991b1b': 'var(--mg-color-error-dark)',
+  '#059669': 'var(--mg-color-success-600)',
+  '#6b7c32': 'var(--mg-color-brand-olive)'
 };
 
 // RGB/RGBA 색상 매핑
@@ -214,6 +240,38 @@ const BACKUP_EXTENSIONS = ['.css', '.scss', '.js', '.jsx', '.ts', '.tsx'];
 const VAR_FALLBACK_HEX_PATTERN = /var\s*\(\s*--[\w-]+\s*,\s*#[0-9a-fA-F]{3,8}(?![0-9a-fA-F])\s*\)/g;
 const VAR_FALLBACK_PLACEHOLDER_PREFIX = '__MG_VAR_FALLBACK_HEX_';
 const VAR_FALLBACK_PLACEHOLDER_SUFFIX = '__';
+
+// ── D4 인프라 보강: rgb()/rgba() 변형 매칭 헬퍼 ─────────────────────────────────
+// RGB_MAPPING 키는 카논 형식(`rgba(R, G, B, A)`)만 다루지만, 실 코드에는
+// 다양한 공백·소수점 표기 변형(`rgba(0,0,0,.1)`·`rgba(0, 0, 0, 0.1)` 등)이
+// 혼재한다. 각 키를 파싱해 다음 변형을 모두 매칭하는 정규식으로 변환한다:
+//   - 콤마/괄호 주변 공백 0~다수
+//   - 소수의 leading-zero 옵션 (`0.1` ↔ `.1`)
+//   - 정수 채널: lookbehind/lookahead 가드로 `0` 가 `10`·`100`의 부분 매칭 방지
+// 카논 입력(매핑 키 자체)이 위 정규식에 매칭됨이 보장되며, 치환 결과는 항상
+// 카논 var(--token) 한 종류이므로 동일 입력에 동일 출력(R-2 정신 연장).
+function buildRgbRegex(rgbColor) {
+  const parsed = rgbColor.match(
+    /^(rgba?)\s*\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*([0-9.]+))?\s*\)$/i
+  );
+  if (!parsed) {
+    return new RegExp(rgbColor.replace(/[()]/g, '\\$&'), 'gi');
+  }
+  const [, fn, r, g, b, a] = parsed;
+  const ws = '\\s*';
+  const numToken = (val) => {
+    const num = parseFloat(val);
+    if (Number.isInteger(num)) {
+      return `(?<![0-9.])${num}(?![0-9.])`;
+    }
+    const decPart = num.toString().split('.')[1];
+    return `0?\\.${decPart}`;
+  };
+  const parts = [numToken(r), numToken(g), numToken(b)];
+  if (a !== undefined) parts.push(numToken(a));
+  const pattern = `${fn}${ws}\\(${ws}${parts.join(`${ws},${ws}`)}${ws}\\)`;
+  return new RegExp(pattern, 'gi');
+}
 
 class HardcodedColorConverter {
   constructor(options = {}) {
@@ -430,9 +488,11 @@ class HardcodedColorConverter {
         }
       });
 
-      // RGB/RGBA 색상 변환
+      // RGB/RGBA 색상 변환 (D4 인프라 보강 — 공백·소수점 변형 자동 매칭)
+      // buildRgbRegex 는 카논 키를 변형 허용 정규식으로 변환한다.
+      // 치환 결과는 항상 카논 var(--token) 이므로 동일 입력에 동일 출력 보장.
       Object.entries(RGB_MAPPING).forEach(([rgbColor, cssVar]) => {
-        const regex = new RegExp(rgbColor.replace(/[()]/g, '\\$&'), 'gi');
+        const regex = buildRgbRegex(rgbColor);
         const matches = modifiedContent.match(regex);
         if (matches) {
           modifiedContent = modifiedContent.replace(regex, cssVar);

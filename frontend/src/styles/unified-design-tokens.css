@@ -1263,6 +1263,55 @@
   --mg-color-background-main: #1a1a1a;
 }
 
+/* ========================================
+   2026 Q2 D4 합의서 신규 토큰 (50/100/800 계열 + 브랜드 olive)
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D4.md §2
+   배경: 잔존 표준 팔레트 HEX 10대 매핑 정착을 위한 토큰 신설.
+        Info/Error 50·800 계열, Success 600, Brand olive 6종.
+        다크 변형은 D4 SSOT §2 본문 추정치 사용 (디자이너 합의 후 미세 조정 가능).
+   ======================================== */
+
+:root {
+  --mg-color-info-bg: #f0f9ff;        /* Tailwind sky-50 — 정보 배경 */
+  --mg-color-info-dark: #1e40af;      /* Tailwind blue-800 — 정보 다크 텍스트/보더 */
+  --mg-color-error-50: #fef2f2;       /* Tailwind red-50 — 에러 가장 밝은 배경 */
+  --mg-color-error-dark: #991b1b;     /* Tailwind red-800 — 에러 다크 텍스트/보더 */
+  --mg-color-success-600: #059669;    /* Tailwind emerald-600 — 강조 성공 (기존 #81C784와 별도) */
+  --mg-color-brand-olive: #6b7c32;    /* 브랜드 olive (D4 사용자 컨펌 후 정착) */
+}
+
+:root[data-theme="dark"] {
+  --mg-color-info-bg: #082f49;        /* sky-950 톤 — 다크 모드 정보 배경 */
+  --mg-color-info-dark: #bae6fd;      /* sky-200 톤 — 다크 모드 정보 다크 텍스트 (대비 반전) */
+  --mg-color-error-50: #450a0a;       /* red-950 톤 — 다크 모드 에러 가장 밝은 배경 */
+  --mg-color-error-dark: #fca5a5;     /* red-300 톤 — 다크 모드 에러 다크 텍스트 (대비 반전) */
+  --mg-color-success-600: #6ee7b7;    /* emerald-300 톤 — 다크 모드 강조 성공 (대비 반전) */
+  --mg-color-brand-olive: #d9f99d;    /* lime-200 톤 — 다크 모드 브랜드 olive (대비 반전) */
+}
+
+/* ========================================
+   2026 Q2 R-3 후속 — background 시리즈 누락 토큰 4종 alias 정착
+   배경: R-3 핫픽스가 --mg-color-background-main 만 정의했고,
+        background-base / muted / secondary / sub 4종은 미정의 상태로
+        분산 사용 (각 1~3건). D1 패턴(*-main 베이지 톤)을 따라
+        보수적으로 main alias 로 우선 정의. 후속 디자이너 합의 시 분리 가능.
+   영향: 4종 모두 사용처가 미미하고, alias 처리로 운영 회귀 없음.
+   ======================================== */
+
+:root {
+  --mg-color-background-base: var(--mg-color-background-main);
+  --mg-color-background-muted: var(--mg-color-background-main);
+  --mg-color-background-secondary: var(--mg-color-background-main);
+  --mg-color-background-sub: var(--mg-color-background-main);
+}
+
+:root[data-theme="dark"] {
+  --mg-color-background-base: var(--mg-color-background-main);
+  --mg-color-background-muted: var(--mg-color-background-main);
+  --mg-color-background-secondary: var(--mg-color-background-main);
+  --mg-color-background-sub: var(--mg-color-background-main);
+}
+
 /* ===== 테넌트별 브랜딩 오버라이드 ===== */
 /* 특정 테넌트에 대한 브랜딩 커스터마이징 */
 

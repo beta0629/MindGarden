@@ -28,6 +28,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 const glob = require('glob');
 
 // 색상 매핑 테이블 (하드코딩 → CSS 변수)
@@ -806,6 +807,11 @@ function parseArgs() {
       i++;
     } else if (arg.startsWith('--targets-file=')) {
       loadTargetsFile(arg.split('=')[1]);
+    } else if (arg === '--token-priority' && args[i + 1]) {
+      options.tokenPriority = args[i + 1].split(',').map(s => s.trim()).filter(Boolean);
+      i++;
+    } else if (arg.startsWith('--token-priority=')) {
+      options.tokenPriority = arg.split('=')[1].split(',').map(s => s.trim()).filter(Boolean);
     }
   }
 
@@ -814,6 +820,47 @@ function parseArgs() {
   }
 
   return options;
+}
+
+// ── T-D 진입 가드 (D5 §3.1·§4 P1-a) ─────────────────────────────────────────
+// 직전 라운드 회귀 4건 (R-3·R-4·weekend·R-5) 모두 codemod 가 토큰 매핑을
+// 일괄 치환했지만 SSOT 정의 없는 토큰을 사용한 사이드이펙트가 원인.
+// 본 가드는 codemod 진입 시 다음을 차단한다:
+//   1) check-token-ssot.js 가 ERROR 보고 → 즉시 abort
+//   2) 매핑 텍스트에서 동일 hex → 다중 `--mg-color-*` 매핑 (alias 충돌) 발견 시
+//      `--token-priority` 옵션이 없으면 abort
+//
+// `--skip-ssot-check` 옵션은 주지 않는다 — 가드 회피 경로를 차단하기 위함.
+function runEntryGuards(options) {
+  const lintScript = path.resolve(__dirname, 'check-token-ssot.js');
+  if (!fs.existsSync(lintScript)) {
+    console.error('🚨 [T-D 가드] SSOT lint 스크립트가 존재하지 않습니다:');
+    console.error(`   ${lintScript}`);
+    console.error('   codemod 사이드이펙트 차단 가드가 비활성 상태로 진행할 수 없습니다.');
+    process.exit(1);
+  }
+
+  const lintArgs = ['--quiet'];
+  if (Array.isArray(options.tokenPriority) && options.tokenPriority.length > 0) {
+    lintArgs.push('--token-priority', options.tokenPriority.join(','));
+  }
+
+  console.log('🔍 [T-D 가드] check-token-ssot.js 실행 중...');
+  const result = spawnSync(process.execPath, [lintScript, ...lintArgs], {
+    cwd: process.cwd(),
+    stdio: 'inherit'
+  });
+
+  if (result.status !== 0) {
+    console.error('');
+    console.error('🚨 [T-D 가드] SSOT cross-check 실패 — codemod 를 abort 합니다.');
+    console.error('   D5 §3.1·§4 P1-a: SSOT 정의 누락·alias 충돌 토큰의 일괄 치환은 회귀를 유발합니다.');
+    console.error('   1) 위 lint 출력의 ❌ ERROR / 🚨 alias 충돌 항목을 먼저 해소하세요.');
+    console.error('   2) 의도적 alias 충돌 운영 시 `--token-priority a,b,c` 옵션을 추가하세요.');
+    process.exit(result.status || 1);
+  }
+
+  console.log('✅ [T-D 가드] SSOT cross-check 통과. codemod 본문 실행을 계속합니다.\n');
 }
 
 // 스크립트 실행
@@ -833,6 +880,9 @@ if (require.main === module) {
     '  --target <path>           처리 영역을 디렉터리/파일로 한정 (반복 지정 가능)',
     '  --targets-file <path>     영역 목록 파일에서 한 줄에 하나씩 읽어 처리',
     '                            (zsh $TARGETS 단어 분리 문제 회피 — T1 2차 §6.1)',
+    '  --token-priority a,b,c    [T-D 가드] alias 충돌 발견 시 명시적 우선순위 (인지 신호)',
+    '                            옵션 미지정 + 매핑에 동일 hex → 다중 --mg-color-* 토큰',
+    '                            매핑이 있을 때 lint 가 abort 한다.',
     '  --help, -h                도움말 출력',
     '',
     '예시 (영역 목록 파일):',
@@ -853,6 +903,8 @@ if (require.main === module) {
     '    및 *.test.* / *.spec.* / *.stories.* / __tests__/ 도 자동 제외',
     '  - var(--token, #hex) 폴백 위치의 hex 는 절대 변환하지 않음 (시각 QA R-2 보호).',
     '    예: `var(--cs-error-600, #dc2626)` → 그대로 유지 (nested var 부작용 방지)',
+    '  - [T-D 가드, D5 §3.1·§4 P1-a] 진입 시 check-token-ssot.js 를 호출해',
+    '    매핑 토큰의 SSOT 정의·alias 충돌을 cross-check. 실패 시 즉시 abort.',
     ''
   ].join('\n');
 
@@ -862,6 +914,9 @@ if (require.main === module) {
   }
 
   console.log(usage);
+
+  // T-D 진입 가드: lint·alias 충돌 사전 차단 (D5 §3.1·§4 P1-a)
+  runEntryGuards(options);
 
   const converter = new HardcodedColorConverter(options);
   converter.run().catch(console.error);

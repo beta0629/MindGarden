@@ -2,11 +2,22 @@
 
 /**
  * 하드코딩된 색상값 자동 변환 도구
- * 
- * CI/BI 변경 대비 하드코딩된 색상을 CSS 변수로 자동 변환
- * 
+ *
+ * CI/BI 변경 대비 하드코딩된 색상을 CSS 변수로 자동 변환.
+ *
+ * 안전 가드 (T1 2차 §6 회귀 사고 재발 방지):
+ *   - HARD_EXCLUDE: 토큰 정의 파일 (unified-design-tokens / dashboard-tokens-extension /
+ *     responsive-layout-tokens / mindgarden-design-system / 00-core/_variables /
+ *     00-core/_component-variables / common/variables / constants/css-variables.js)
+ *     은 절대 처리하지 않음. `*tokens*.css` `*variables*.css` `*design-system*.css`
+ *     일반 패턴도 자동 보호. (§6.2)
+ *   - `--targets-file <path>`: zsh `$TARGETS` 단어 분리 문제 회피용 옵션. (§6.1)
+ *   - 잔존 hex 카운트: 매핑 후에도 남는 hex 색상을 dry-run에서 정확히 집계.
+ *     회색 3자리(#666·#333·#000·#ccc·#999·#eee 등) 및 8자리 alpha hex 모두 포함.
+ *   - dry-run 보고서는 `docs/COLOR_CONVERSION_DRY_RUN_REPORT.md` 로 분리 저장.
+ *
  * @author MindGarden Team
- * @version 1.0.0
+ * @version 1.2.0
  * @since 2025-11-28
  */
 
@@ -175,7 +186,11 @@ class HardcodedColorConverter {
       colorsConverted: 0,
       backupsCreated: 0,
       errors: [],
-      perMappingCounts: {}
+      perMappingCounts: {},
+      // 매핑 후에도 남은 hex 색상 카운트 (3·4·6·8자리 모두)
+      // 회색 3자리(#666·#333·#000·#ccc·#999·#eee 등)가 매핑 테이블에 없을 때
+      // dry-run에서 정확히 추적되도록 함 (D3 합의서 적용 라운드 데이터 소스)
+      residualHexCounts: {}
     };
   }
 
@@ -249,15 +264,38 @@ class HardcodedColorConverter {
     }
 
     // 안전망: 절대 변환 금지 영역 (인벤토리 §6 + 작업 정의서 §치환 규칙)
+    // T1 2차 라운드 회귀 사고(§6.2)에서 codemod가 토큰 정의 파일을 휩쓸어
+    // `--mg-white: var(--mg-white)` 같은 순환 참조를 만든 사례를 재발 방지.
     const HARD_EXCLUDE = [
+      // ── 명시적 토큰 정의 파일 (T1 2차 §6.2 되돌린 7개 파일) ──
       /\bfrontend\/src\/styles\/unified-design-tokens\.css$/,
+      /\bfrontend\/src\/styles\/dashboard-tokens-extension\.css$/,
+      /\bfrontend\/src\/styles\/responsive-layout-tokens\.css$/,
+      /\bfrontend\/src\/styles\/mindgarden-design-system\.css$/,
+      /\bfrontend\/src\/styles\/00-core\/_variables\.css$/,
+      /\bfrontend\/src\/styles\/00-core\/_component-variables\.css$/,
+      /\bfrontend\/src\/styles\/common\/variables\.css$/,
+      /\bfrontend\/src\/constants\/css-variables\.js$/,
+
+      // ── 일반 패턴 (forward-looking) — 신규 토큰/변수/디자인시스템 파일도 자동 보호 ──
+      // 파일명에 tokens/variables/design-system 키워드를 포함하는 CSS는 정의 파일로 간주
+      /(?:^|\/)[^/]*tokens[^/]*\.css$/i,
+      /(?:^|\/)[^/]*variables[^/]*\.css$/i,
+      /(?:^|\/)[^/]*design-system[^/]*\.css$/i,
+
+      // ── 디렉터리 단위 보호 영역 ──
       /\bfrontend\/src\/styles\/tokens\//,
       /\bfrontend\/src\/styles\/themes\//,
       /\bfrontend\/src\/tokens\//,
       /\bfrontend\/src\/themes\//,
+      /(?:^|\/)tokens\//,
+      /(?:^|\/)themes\//,
+
+      // ── 테스트·스토리북 ──
       /\/__tests__\//,
       /\.test\.(js|jsx|ts|tsx)$/,
-      /\.spec\.(js|jsx|ts|tsx)$/
+      /\.spec\.(js|jsx|ts|tsx)$/,
+      /\.stories\.(js|jsx|ts|tsx|mdx)$/
     ];
     allFiles = allFiles.filter(f => !HARD_EXCLUDE.some(rx => rx.test(f)));
 
@@ -330,6 +368,19 @@ class HardcodedColorConverter {
         }
       });
 
+      // 잔존 hex 카운트 (매핑 후에도 남아 있는 hex 색상)
+      // - 회색 3자리(#666·#333·#000·#ccc·#999·#eee 등) 미매핑 항목 추적
+      // - 8자리 alpha 포함 hex(#1a1a1aff) 등 lookbehind 가드로 변환 제외된 케이스 추적
+      // - 정규식: `#` 다음 hex 문자 시퀀스, 뒤에 hex 문자가 더 없을 때만 (lookbehind는 불필요)
+      const residualHexRegex = /#[0-9a-fA-F]+(?![0-9a-fA-F])/g;
+      const residualMatches = modifiedContent.match(residualHexRegex) || [];
+      residualMatches.forEach(raw => {
+        const hex = raw.toLowerCase();
+        const len = hex.length - 1; // '#' 제외
+        if (![3, 4, 6, 8].includes(len)) return;
+        this.stats.residualHexCounts[hex] = (this.stats.residualHexCounts[hex] || 0) + 1;
+      });
+
       // 변경사항이 있는 경우 처리
       if (changeCount > 0) {
         this.stats.filesModified++;
@@ -395,21 +446,70 @@ class HardcodedColorConverter {
       });
     }
 
+    // 잔존 hex 색상 Top 20 (D3 합의서 데이터 소스)
+    const residualEntries = Object.entries(this.stats.residualHexCounts)
+      .sort((a, b) => b[1] - a[1]);
+    if (residualEntries.length > 0) {
+      console.log('\n🔍 잔존 hex 색상 (매핑 외) — 상위 20건:');
+      residualEntries.slice(0, 20).forEach(([hex, count]) => {
+        const lenLabel = hex.length === 4 ? '3자리'
+          : hex.length === 5 ? '4자리'
+          : hex.length === 7 ? '6자리'
+          : hex.length === 9 ? '8자리'
+          : '기타';
+        console.log(`  - ${hex} (${lenLabel}): ${count}건`);
+      });
+      const total = residualEntries.reduce((s, [, n]) => s + n, 0);
+      const unique = residualEntries.length;
+      console.log(`  합계: 고유 ${unique}종 / 총 ${total}건`);
+    }
+
     // 상세 리포트 파일 생성
     this.generateDetailedReport();
   }
 
   /**
    * 상세 리포트 파일 생성
+   *
+   * - `--no-report` 가 주어지면 생성하지 않음.
+   * - dry-run 결과는 actual 보고서를 덮어쓰지 않도록 별도 경로에 기록.
+   *   (직전 라운드의 actual 보고서가 dry-run 결과에 휩쓸려 잔존하던 문제 해소)
    */
   generateDetailedReport() {
-    const reportPath = 'docs/COLOR_CONVERSION_REPORT.md';
-    
+    if (this.options.report === false) {
+      console.log('\n📄 상세 리포트 생략 (--no-report)');
+      return;
+    }
+
+    const reportPath = this.options.dryRun
+      ? 'docs/COLOR_CONVERSION_DRY_RUN_REPORT.md'
+      : 'docs/COLOR_CONVERSION_REPORT.md';
+
+    const residualEntries = Object.entries(this.stats.residualHexCounts)
+      .sort((a, b) => b[1] - a[1]);
+    const residualSection = residualEntries.length === 0
+      ? '잔존 hex 없음 ✅'
+      : residualEntries.slice(0, 50).map(([hex, count]) => {
+          const lenLabel = hex.length === 4 ? '3자리'
+            : hex.length === 5 ? '4자리'
+            : hex.length === 7 ? '6자리'
+            : hex.length === 9 ? '8자리'
+            : '기타';
+          return `- \`${hex}\` (${lenLabel}): ${count}건`;
+        }).join('\n');
+    const residualTotal = residualEntries.reduce((s, [, n]) => s + n, 0);
+    const residualUnique = residualEntries.length;
+
+    const targetSummary = Array.isArray(this.options.target) && this.options.target.length > 0
+      ? this.options.target.map(t => `\`${t}\``).join(', ')
+      : '전체 (`frontend/src`)';
+
     const report = `# 🎨 색상 변환 리포트
 
 > **생성일**: ${new Date().toISOString()}  
 > **모드**: ${this.options.dryRun ? 'DRY RUN' : 'ACTUAL'}  
-> **대상**: ${this.options.criticalOnly ? '중요 파일만' : '전체 파일'}
+> **대상 영역**: ${targetSummary}  
+> **필터**: ${this.options.criticalOnly ? '중요 파일만' : '전체 파일'}
 
 ---
 
@@ -425,15 +525,28 @@ class HardcodedColorConverter {
 
 ---
 
+## 🔍 잔존 hex 색상 (매핑 외)
+
+> 처리 후에도 변환되지 않고 남아 있는 hex 색상.  
+> 회색 3자리(\`#666\`·\`#333\`·\`#000\`·\`#ccc\`·\`#999\`·\`#eee\` 등) 미매핑 항목과  
+> 4·8자리 alpha 포함 hex 모두 포함. D3 합의서 작성/적용 라운드의 데이터 소스.
+
+- **고유 종 수**: ${residualUnique}종
+- **총 건수**: ${residualTotal}건
+
+${residualSection}
+
+---
+
 ## 🎯 변환 규칙
 
 ### HEX 색상 변환
-${Object.entries(COLOR_MAPPING).map(([hex, cssVar]) => 
+${Object.entries(COLOR_MAPPING).map(([hex, cssVar]) =>
   `- \`${hex}\` → \`${cssVar}\``
 ).join('\n')}
 
 ### RGB/RGBA 색상 변환  
-${Object.entries(RGB_MAPPING).map(([rgb, cssVar]) => 
+${Object.entries(RGB_MAPPING).map(([rgb, cssVar]) =>
   `- \`${rgb}\` → \`${cssVar}\``
 ).join('\n')}
 
@@ -450,7 +563,7 @@ ${Object.entries(RGB_MAPPING).map(([rgb, cssVar]) =>
 
 ## 🚨 오류 목록
 
-${this.stats.errors.length > 0 ? 
+${this.stats.errors.length > 0 ?
   this.stats.errors.map(({ file, error }) => `- \`${file}\`: ${error}`).join('\n') :
   '오류 없음 ✅'
 }
@@ -470,17 +583,41 @@ function parseArgs() {
   const args = process.argv.slice(2);
   const options = { target: [] };
 
+  const loadTargetsFile = (filePath) => {
+    // 다중 --target 인자 안전성 (T1 2차 §6.1 zsh $TARGETS 단어 분리 문제 재발 방지)
+    // 파일에서 영역 목록을 한 줄에 하나씩 읽고 빈 줄·`#` 주석은 무시.
+    const absPath = path.resolve(process.cwd(), filePath);
+    if (!fs.existsSync(absPath)) {
+      console.error(`❌ --targets-file 경로를 찾을 수 없습니다: ${filePath}`);
+      process.exit(2);
+    }
+    const lines = fs.readFileSync(absPath, 'utf8').split(/\r?\n/);
+    for (const raw of lines) {
+      const trimmed = raw.trim();
+      if (!trimmed) continue;
+      if (trimmed.startsWith('#')) continue;
+      options.target.push(trimmed);
+    }
+  };
+
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--dry-run') options.dryRun = true;
     else if (arg === '--no-backup') options.backup = false;
+    else if (arg === '--no-report') options.report = false;
     else if (arg === '--verbose') options.verbose = true;
     else if (arg === '--critical-only') options.criticalOnly = true;
+    else if (arg === '--help' || arg === '-h') options.help = true;
     else if (arg === '--target' && args[i + 1]) {
       options.target.push(args[i + 1]);
       i++;
     } else if (arg.startsWith('--target=')) {
       options.target.push(arg.split('=')[1]);
+    } else if (arg === '--targets-file' && args[i + 1]) {
+      loadTargetsFile(args[i + 1]);
+      i++;
+    } else if (arg.startsWith('--targets-file=')) {
+      loadTargetsFile(arg.split('=')[1]);
     }
   }
 
@@ -494,19 +631,49 @@ function parseArgs() {
 // 스크립트 실행
 if (require.main === module) {
   const options = parseArgs();
+
+  const usage = [
+    '사용법:',
+    '  node scripts/design-system/color-management/convert-hardcoded-colors.js [옵션]',
+    '',
+    '옵션:',
+    '  --dry-run                 실제 파일 수정 없이 미리보기 (보고서는 별도 경로에 저장)',
+    '  --no-backup               백업 파일 생성 안함',
+    '  --no-report               docs/COLOR_CONVERSION_*REPORT.md 생성 생략',
+    '  --verbose                 상세 로그 출력',
+    '  --critical-only           중요 파일만 처리',
+    '  --target <path>           처리 영역을 디렉터리/파일로 한정 (반복 지정 가능)',
+    '  --targets-file <path>     영역 목록 파일에서 한 줄에 하나씩 읽어 처리',
+    '                            (zsh $TARGETS 단어 분리 문제 회피 — T1 2차 §6.1)',
+    '  --help, -h                도움말 출력',
+    '',
+    '예시 (영역 목록 파일):',
+    '  # scripts/design-system/color-management/targets.b7.txt',
+    '  frontend/src/components/common',
+    '  frontend/src/components/admin/commoncode',
+    '  frontend/src/styles/06-components',
+    '',
+    '  node scripts/design-system/color-management/convert-hardcoded-colors.js \\\\',
+    '       --dry-run --targets-file scripts/design-system/color-management/targets.b7.txt',
+    '',
+    '안전성:',
+    '  - 토큰 정의 파일 (unified-design-tokens / dashboard-tokens-extension /',
+    '    responsive-layout-tokens / mindgarden-design-system /',
+    '    00-core/_variables / 00-core/_component-variables / common/variables /',
+    '    constants/css-variables.js) 은 항상 처리 대상에서 제외 (T1 2차 §6.2 재발 방지)',
+    '  - *tokens*.css / *variables*.css / *design-system*.css / tokens/* / themes/*',
+    '    및 *.test.* / *.spec.* / *.stories.* / __tests__/ 도 자동 제외',
+    ''
+  ].join('\n');
+
+  if (options.help) {
+    console.log(usage);
+    process.exit(0);
+  }
+
+  console.log(usage);
+
   const converter = new HardcodedColorConverter(options);
-  
-  console.log('사용법:');
-  console.log('  node scripts/design-system/color-management/convert-hardcoded-colors.js [옵션]');
-  console.log('');
-  console.log('옵션:');
-  console.log('  --dry-run         실제 파일 수정 없이 미리보기');
-  console.log('  --no-backup       백업 파일 생성 안함');
-  console.log('  --verbose         상세 로그 출력');
-  console.log('  --critical-only   중요 파일만 처리');
-  console.log('  --target <path>   처리 영역을 디렉터리/파일로 한정 (반복 지정 가능)');
-  console.log('');
-  
   converter.run().catch(console.error);
 }
 

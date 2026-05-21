@@ -115,7 +115,7 @@
   width: 100%;
   margin-top: 1rem;
   padding: 1rem;
-  background: #fef2f2;
+  background: var(--mg-color-error-50);
   border: 1px solid #fecaca;
   border-radius: 6px;
   text-align: left;
@@ -130,7 +130,7 @@
 }
 
 .billing-callback__error-item strong {
-  color: #991b1b;
+  color: var(--mg-color-error-dark);
 }
 
 .billing-callback__actions {

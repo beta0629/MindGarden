@@ -36,8 +36,8 @@ const UnifiedHeaderTest = () => {
         background: 'white', 
         padding: '20px', 
         borderRadius: '12px', 
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
-        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-shadow-light) -> var(--mg-custom-color)
+        boxShadow: '0 4px 20px var(--mg-shadow-light)',
         minWidth: '250px'
       }}>
         <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold' }}>헤더 테스트 컨트롤</h3>
@@ -49,8 +49,8 @@ const UnifiedHeaderTest = () => {
           <select 
             value={logoType} 
             onChange={(e) => setLogoType(e.target.value)}
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-            style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ddd' }}
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
+            style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--mg-color-border-main)' }}
           >
             <option value="text">텍스트 로고</option>
             <option value="image">이미지 로고</option>
@@ -65,8 +65,8 @@ const UnifiedHeaderTest = () => {
           <select 
             value={variant} 
             onChange={(e) => setVariant(e.target.value)}
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-            style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ddd' }}
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
+            style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--mg-color-border-main)' }}
           >
             <option value="default">기본</option>
             <option value="compact">컴팩트</option>

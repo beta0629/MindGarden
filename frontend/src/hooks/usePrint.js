@@ -45,8 +45,8 @@ const usePrint = (options = {}) => {
         fontFamily: 'Arial, sans-serif',
         fontSize: 'var(--font-size-xs)',
         lineHeight: '1.4',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #000 -> var(--mg-custom-000)
-        color: '#000',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-000)
+        color: 'var(--mg-color-text-main)',
         // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-white) -> var(--mg-custom-fff)
         backgroundColor: 'var(--mg-white)'
       },
@@ -77,8 +77,8 @@ const usePrint = (options = {}) => {
         fontSize: 'var(--font-size-xs)',
         // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-666)
         color: 'var(--mg-color-text-secondary)',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ccc -> var(--mg-custom-ccc)
-        borderTop: '1px solid #ccc',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ccc)
+        borderTop: '1px solid var(--mg-color-border-main)',
         paddingTop: '10px'
       },
       '.no-print': {

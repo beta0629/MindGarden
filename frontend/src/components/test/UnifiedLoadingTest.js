@@ -101,8 +101,8 @@ const UnifiedLoadingTest = () => {
 
       {/* 인라인 로딩 */}
       {loadingStates.inline && (
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-        <div style={{ marginBottom: '20px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
+        <div style={{ marginBottom: '20px', padding: '20px', border: '1px solid var(--mg-color-border-main)', borderRadius: '8px' }}>
           <h3>인라인 로딩</h3>
           <div className="mg-loading">로딩중...</div>
         </div>
@@ -110,8 +110,8 @@ const UnifiedLoadingTest = () => {
 
       {/* 페이지 로딩 */}
       {loadingStates.page && (
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-        <div style={{ marginBottom: '20px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px', minHeight: '200px' }}>
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
+        <div style={{ marginBottom: '20px', padding: '20px', border: '1px solid var(--mg-color-border-main)', borderRadius: '8px', minHeight: '200px' }}>
           <h3>페이지 로딩</h3>
           <div className="mg-loading">로딩중...</div>
         </div>
@@ -119,8 +119,8 @@ const UnifiedLoadingTest = () => {
 
       {/* 버튼 로딩 */}
       {loadingStates.button && (
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-        <div style={{ marginBottom: '20px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
+        <div style={{ marginBottom: '20px', padding: '20px', border: '1px solid var(--mg-color-border-main)', borderRadius: '8px' }}>
           <h3>버튼 로딩</h3>
           <MGButton
             variant="primary"
@@ -137,24 +137,24 @@ const UnifiedLoadingTest = () => {
       {/* 다양한 스타일 로딩 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '20px' }}>
         {loadingStates.dots && (
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-          <div style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
+          <div style={{ padding: '20px', border: '1px solid var(--mg-color-border-main)', borderRadius: '8px', textAlign: 'center' }}>
             <h4>도트 로딩</h4>
             <div className="mg-loading">로딩중...</div>
           </div>
         )}
         
         {loadingStates.pulse && (
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-          <div style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
+          <div style={{ padding: '20px', border: '1px solid var(--mg-color-border-main)', borderRadius: '8px', textAlign: 'center' }}>
             <h4>펄스 로딩</h4>
             <div className="mg-loading">로딩중...</div>
           </div>
         )}
         
         {loadingStates.bars && (
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-          <div style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
+          <div style={{ padding: '20px', border: '1px solid var(--mg-color-border-main)', borderRadius: '8px', textAlign: 'center' }}>
             <h4>바 로딩</h4>
             <div className="mg-loading">로딩중...</div>
           </div>

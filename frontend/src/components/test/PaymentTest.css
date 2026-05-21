@@ -278,7 +278,7 @@
 }
 
 .result-error {
-  background: #f8d7da;
+  background: var(--mg-color-error-bg);
   color: #721c24;
   padding: 10px;
   border-radius: 4px;

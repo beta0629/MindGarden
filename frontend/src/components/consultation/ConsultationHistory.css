@@ -206,12 +206,12 @@
 }
 
 .status-cancelled {
-  background: #f8d7da;
+  background: var(--mg-color-error-bg);
   color: #721c24;
 }
 
 .mg-status--pending {
-  background: #fff3cd;
+  background: var(--mg-color-warning-bg);
   color: #856404;
 }
 

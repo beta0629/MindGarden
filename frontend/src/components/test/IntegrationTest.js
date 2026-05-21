@@ -379,9 +379,9 @@ const IntegrationTest = () => {
             </h3>
             <div style={{
               padding: '20px',
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef2f2 -> var(--mg-custom-fef2f2)
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f0f9ff -> var(--mg-custom-f0f9ff)
-              backgroundColor: testResults.success ? '#f0f9ff' : '#fef2f2',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-error-50) -> var(--mg-custom-fef2f2)
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-info-bg) -> var(--mg-custom-f0f9ff)
+              backgroundColor: testResults.success ? 'var(--mg-color-info-bg)' : 'var(--mg-color-error-50)',
               border: `2px solid ${testResults.success ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
               borderRadius: '8px',
               borderLeft: `6px solid ${testResults.success ? 'var(--mg-success-500)' : 'var(--mg-error-500)'}`
@@ -458,9 +458,9 @@ const IntegrationTest = () => {
                     {testResults.testResults.map((result, index) => (
                       <div key={index} style={{
                         padding: '12px',
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef2f2 -> var(--mg-custom-fef2f2)
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f0f9ff -> var(--mg-custom-f0f9ff)
-                        backgroundColor: result.success ? '#f0f9ff' : '#fef2f2',
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-error-50) -> var(--mg-custom-fef2f2)
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-info-bg) -> var(--mg-custom-f0f9ff)
+                        backgroundColor: result.success ? 'var(--mg-color-info-bg)' : 'var(--mg-color-error-50)',
                         border: `1px solid ${result.success ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
                         borderRadius: '6px',
                         borderLeft: `4px solid ${result.success ? 'var(--mg-success-500)' : 'var(--mg-error-500)'}`
@@ -536,9 +536,9 @@ const IntegrationTest = () => {
             </h3>
             <div style={{
               padding: '20px',
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef2f2 -> var(--mg-custom-fef2f2)
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f0f9ff -> var(--mg-custom-f0f9ff)
-              backgroundColor: healthStatus.overallStatus === 'HEALTHY' ? '#f0f9ff' : '#fef2f2',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-error-50) -> var(--mg-custom-fef2f2)
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-info-bg) -> var(--mg-custom-f0f9ff)
+              backgroundColor: healthStatus.overallStatus === 'HEALTHY' ? 'var(--mg-color-info-bg)' : 'var(--mg-color-error-50)',
               border: `2px solid ${healthStatus.overallStatus === 'HEALTHY' ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
               borderRadius: '8px',
               borderLeft: `6px solid ${healthStatus.overallStatus === 'HEALTHY' ? 'var(--mg-success-500)' : 'var(--mg-error-500)'}`
@@ -677,9 +677,9 @@ const IntegrationTest = () => {
             </h3>
             <div style={{
               padding: '20px',
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef2f2 -> var(--mg-custom-fef2f2)
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f0f9ff -> var(--mg-custom-f0f9ff)
-              backgroundColor: performanceResults.success ? '#f0f9ff' : '#fef2f2',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-error-50) -> var(--mg-custom-fef2f2)
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-info-bg) -> var(--mg-custom-f0f9ff)
+              backgroundColor: performanceResults.success ? 'var(--mg-color-info-bg)' : 'var(--mg-color-error-50)',
               border: `2px solid ${performanceResults.success ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
               borderRadius: '8px',
               borderLeft: `6px solid ${performanceResults.success ? 'var(--mg-success-500)' : 'var(--mg-error-500)'}`
@@ -805,9 +805,9 @@ const IntegrationTest = () => {
             </h3>
             <div style={{
               padding: '20px',
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef2f2 -> var(--mg-custom-fef2f2)
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f0f9ff -> var(--mg-custom-f0f9ff)
-              backgroundColor: securityResults.success ? '#f0f9ff' : '#fef2f2',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-error-50) -> var(--mg-custom-fef2f2)
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-info-bg) -> var(--mg-custom-f0f9ff)
+              backgroundColor: securityResults.success ? 'var(--mg-color-info-bg)' : 'var(--mg-color-error-50)',
               border: `2px solid ${securityResults.success ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
               borderRadius: '8px',
               borderLeft: `6px solid ${securityResults.success ? 'var(--mg-success-500)' : 'var(--mg-error-500)'}`

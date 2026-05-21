@@ -176,7 +176,7 @@
   
   .page-header-content {
     background: white;
-    border: 1px solid #ccc;
+    border: 1px solid var(--mg-color-border-main);
     box-shadow: none;
   }
   

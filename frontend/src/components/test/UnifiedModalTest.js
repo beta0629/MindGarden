@@ -172,8 +172,8 @@ const UnifiedModalTest = () => {
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>이름:</label>
             <input 
               type="text" 
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-              style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--mg-color-border-main)', borderRadius: '4px' }}
               placeholder="이름을 입력하세요"
             />
           </div>
@@ -181,16 +181,16 @@ const UnifiedModalTest = () => {
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>이메일:</label>
             <input 
               type="email" 
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-              style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--mg-color-border-main)', borderRadius: '4px' }}
               placeholder="이메일을 입력하세요"
             />
           </div>
           <div>
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>메모:</label>
             <textarea 
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-              style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', height: '80px' }}
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--mg-color-border-main)', borderRadius: '4px', height: '80px' }}
               placeholder="메모를 입력하세요"
             />
           </div>

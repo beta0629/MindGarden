@@ -1366,6 +1366,46 @@
   --mg-color-background-sub: var(--mg-color-background-main);
 }
 
+/* ========================================
+   2026 Q2 R-5 핫픽스 — surface 메인 토큰 alias 정착
+   SSOT: R-3 핫픽스 b8336cf11 (background-main 정착),
+        R-4 핫픽스 7d7567550 (primary·white 정착 — 동일 패턴),
+        weekend 보정 0aa3bbcee (주석 hex 인용 회피 정책),
+        core-debugger 보고서 §3 (surface-main 정의 0건 신규 발견).
+   배경: R-3 회고 §추가 점검 결과로 별도 보고만 했던 background 시리즈
+        4종(base/muted/secondary/sub)은 위 R-3 후속 블록에서 이미
+        `--mg-color-background-main` alias 로 정착 완료. 본 R-5 핫픽스는
+        디버거 §3 에서 신규 식별된 `--mg-color-surface-main` 1종만 추가.
+   재집계 결과 (정의 0건 / 사용 건수 — *.css 기준):
+   - `--mg-color-surface-main`        : 정의 0건 / 사용 145건+ (47파일)
+     · 다수 사용처: ErpCommon.css(25), ClientShop.css(10),
+       RefundManagement.css(9), SalaryManagement.css(8),
+       IntegratedFinanceDashboard.css(5), ScheduleCalendarView.css(5),
+       FinancialManagement.css(5), AdminNotificationsPage.css(4) 등
+   - `--mg-color-background-base`     : 정의 2건 (L1356·L1363) — 본 PR 제외
+   - `--mg-color-background-muted`    : 정의 2건 (L1357·L1364) — 본 PR 제외
+   - `--mg-color-background-secondary`: 정의 2건 (L1358·L1365) — 본 PR 제외
+   - `--mg-color-background-sub`      : 정의 2건 (L1359·L1366) — 본 PR 제외
+   원칙: 디자이너 컨펌 없는 상태에서는 새 HEX 신설 금지, 기존 정착값을
+        그대로 alias. surface 메인 면 토큰은 시스템 베이지 배경과 동일
+        톤을 사용(= `--mg-color-background-main`). 후속 디자이너 합의로
+        surface 와 background 톤을 분리할 때는 본 alias 만 교체.
+   영향: 대다수 사용처가 `var(--mg-color-surface-main, ...)` 폴백 보호를
+        사용하므로 정착 후 시각 변경 없음. 무폴백 직접 사용처(있는 경우)는
+        `--mg-color-background-main` 톤으로 회복되는 정상화. 다크 무폴백
+        사용처는 UAT 권장.
+   ======================================== */
+
+:root {
+  /* surface 메인 — 시스템 베이지 배경과 동일 톤 alias (R-3 정착 `--mg-color-background-main` 인용) */
+  --mg-color-surface-main: var(--mg-color-background-main);
+}
+
+:root[data-theme="dark"] {
+  /* 다크 surface 메인 — 다크 배경 메인 토큰 alias (R-3 정착 `--mg-color-background-main` 인용) */
+  --mg-color-surface-main: var(--mg-color-background-main);
+}
+
 /* ===== 테넌트별 브랜딩 오버라이드 ===== */
 /* 특정 테넌트에 대한 브랜딩 커스터마이징 */
 

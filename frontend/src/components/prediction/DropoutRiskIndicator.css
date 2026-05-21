@@ -79,6 +79,15 @@
     transition: width 0.8s ease;
 }
 
+/* T8-D2: 인라인 backgroundColor → modifier 클래스 추출 (width는 동적 인라인 유지) */
+.metric-fill--primary {
+    background-color: var(--mg-primary-500);
+}
+
+.metric-fill--success {
+    background-color: var(--mg-success-500);
+}
+
 .metric-item > span:last-child {
     width: 50px;
     text-align: right;

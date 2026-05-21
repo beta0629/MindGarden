@@ -38,6 +38,13 @@
   margin-bottom: var(--mg-spacing-md);
 }
 
+/* T8-D2: 인라인 → 클래스 추출 (Sparkles 추천 아이콘) */
+.psycho-edu__recommend-icon {
+  display: inline;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
 .psycho-edu__recommend-badge {
   display: inline-block;
   padding: 2px var(--mg-spacing-sm);
@@ -266,6 +273,12 @@
   position: relative;
 }
 
+/* T8-D2: 인라인 → 클래스 추출 (상세 헤더 내 카테고리 아이콘) */
+/* HEX/RGBA 매핑 부재로 인라인 동등 값 그대로 이관 — D3 색상 매핑 후속 처리 */
+.psycho-edu__detail-header-icon {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .psycho-edu__detail-close {
   position: absolute;
   top: var(--mg-spacing-sm);
@@ -332,6 +345,12 @@
 .psycho-edu__detail-nav-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+
+/* T8-D2: 인라인 → 클래스 추출 (이전·다음 네비 화살표 아이콘) */
+.psycho-edu__detail-nav-icon {
+  display: inline;
+  vertical-align: middle;
 }
 
 /* 인디케이터 */

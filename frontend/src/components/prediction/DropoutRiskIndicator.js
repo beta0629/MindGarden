@@ -59,8 +59,8 @@ const DropoutRiskIndicator = ({ risk }) => {
           <span>참여 점수</span>
           <div className="metric-bar">
             <div
-              className="metric-fill"
-              style={{ width: `${risk.engagementScore * 100}%`, backgroundColor: 'var(--mg-primary-500)' }}
+              className="metric-fill metric-fill--primary"
+              style={{ width: `${risk.engagementScore * 100}%` }}
             />
           </div>
           <span>{(risk.engagementScore * 100).toFixed(0)}%</span>
@@ -70,8 +70,8 @@ const DropoutRiskIndicator = ({ risk }) => {
           <span>출석률</span>
           <div className="metric-bar">
             <div
-              className="metric-fill"
-              style={{ width: `${risk.attendanceRate * 100}%`, backgroundColor: 'var(--mg-success-500)' }}
+              className="metric-fill metric-fill--success"
+              style={{ width: `${risk.attendanceRate * 100}%` }}
             />
           </div>
           <span>{(risk.attendanceRate * 100).toFixed(0)}%</span>

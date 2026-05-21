@@ -140,7 +140,7 @@ const PsychoEducation = () => {
       {/* AI 추천 */}
       <div className="psycho-edu__recommend">
         <div className="psycho-edu__recommend-title">
-          <Sparkles size={18} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+          <Sparkles size={18} className="psycho-edu__recommend-icon" />
           추천 콘텐츠
           <span className="psycho-edu__recommend-badge">AI</span>
         </div>
@@ -245,7 +245,7 @@ const PsychoEducation = () => {
             >
               {(() => {
                 const DIcon = ICON_MAP[detailArticle.category] || BookOpen;
-                return <DIcon size={48} style={{ color: 'rgba(255,255,255,0.7)' }} />;
+                return <DIcon size={48} className="psycho-edu__detail-header-icon" />;
               })()}
               <button
                 type="button"
@@ -286,7 +286,7 @@ const PsychoEducation = () => {
                 onClick={() => navigateDetail(-1)}
                 disabled={detailIndex === 0}
               >
-                <ChevronLeft size={16} style={{ display: 'inline', verticalAlign: 'middle' }} />
+                <ChevronLeft size={16} className="psycho-edu__detail-nav-icon" />
                 이전
               </button>
               <button
@@ -296,7 +296,7 @@ const PsychoEducation = () => {
                 disabled={detailIndex >= filteredArticles.length - 1}
               >
                 다음
-                <ChevronRight size={16} style={{ display: 'inline', verticalAlign: 'middle' }} />
+                <ChevronRight size={16} className="psycho-edu__detail-nav-icon" />
               </button>
             </div>
           </div>

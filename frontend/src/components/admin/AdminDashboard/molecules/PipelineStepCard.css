@@ -44,5 +44,5 @@
 }
 
 .pipeline-step-card--auto {
-  background: #f8fafc;
+  background: var(--mg-color-background-main);
 }

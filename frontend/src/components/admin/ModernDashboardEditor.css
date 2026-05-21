@@ -42,7 +42,7 @@
   height: var(--dashboard-editor-height);
   max-height: var(--dashboard-editor-max-height);
   padding: var(--mg-spacing-lg, 1.5rem);
-  background: var(--mg-bg-gradient-light, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%));
+  background: var(--mg-bg-gradient-light, linear-gradient(135deg, var(--mg-color-background-main) 0%, #f1f5f9 100%));
   border-radius: var(--mg-border-radius-lg, 1rem);
 }
 
@@ -221,7 +221,7 @@
   width: var(--mg-widget-card-compact-icon-size, 32px); /* 아이콘 크기 축소 */
   height: var(--mg-widget-card-compact-icon-size, 32px);
   border-radius: var(--mg-border-radius-sm, 0.25rem);
-  background: var(--mg-icon-bg-gradient, linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%));
+  background: var(--mg-icon-bg-gradient, linear-gradient(135deg, var(--mg-color-background-main) 0%, var(--mg-color-border-main) 100%));
   display: flex;
   align-items: center;
   justify-content: center;

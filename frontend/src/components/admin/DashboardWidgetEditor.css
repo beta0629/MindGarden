@@ -254,7 +254,7 @@
 }
 
 /* 위젯 액션 버튼 (설정 / 삭제) */
-/* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값(#ddd/var(--mg-white)/#666) -> 토큰 매핑 부재 */
+/* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값(#ddd/var(--mg-white)/var(--mg-color-text-secondary)) -> 토큰 매핑 부재 */
 .widget-action-btn--config {
   padding: 6px 12px;
   border: 1px solid #ddd;
@@ -265,7 +265,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #666;
+  color: var(--mg-color-text-secondary);
 }
 
 .widget-action-btn--delete {

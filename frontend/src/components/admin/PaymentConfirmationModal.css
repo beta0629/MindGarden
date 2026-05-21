@@ -60,7 +60,7 @@
 .mg-v2-modal-footer .mg-button--secondary {
   background-color: var(--mg-color-text-secondary) !important;
   color: var(--mg-white) !important;
-  border: 1px solid #d1d5db !important;
+  border: 1px solid var(--mg-color-border-main) !important;
 }
 
 .mg-v2-modal-footer .mg-button--secondary:hover:not(:disabled) {

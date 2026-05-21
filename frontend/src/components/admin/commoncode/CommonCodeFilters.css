@@ -99,7 +99,7 @@
 }
 
 .clear-search-btn:hover {
-    background-color: #f3f4f6;
+    background-color: var(--mg-color-background-main);
     color: var(--mg-color-text-secondary-dark);
 }
 
@@ -140,7 +140,7 @@
 
 .btn-outline-secondary:hover {
     background: var(--mg-color-background-main);
-    border-color: #d1d5db;
+    border-color: var(--mg-color-border-main);
     color: var(--mg-color-text-secondary-dark);
 }
 

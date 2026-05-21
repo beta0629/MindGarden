@@ -53,7 +53,7 @@
 }
 
 .completion-badge {
-    background: #fef3c7;
+    background: var(--mg-color-warning-bg);
     color: #92400e;
 }
 
@@ -116,7 +116,7 @@
 .soap-textarea {
     width: 100%;
     padding: 12px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--mg-color-border-main);
     border-radius: 6px;
     font-family: 'Malgun Gothic', sans-serif;
     font-size: 14px;
@@ -132,7 +132,7 @@
 }
 
 .soap-textarea::placeholder {
-    color: #9ca3af;
+    color: var(--mg-color-text-tertiary);
     font-style: italic;
 }
 
@@ -151,7 +151,7 @@
 }
 
 .save-message.error {
-    background: #fee2e2;
+    background: var(--mg-color-error-bg);
     border: 1px solid #fecaca;
     color: #991b1b;
 }

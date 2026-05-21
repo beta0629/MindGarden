@@ -32,7 +32,7 @@
 }
 
 .status-pending {
-    background: #fef3c7;
+    background: var(--mg-color-warning-bg);
     color: #92400e;
 }
 
@@ -47,7 +47,7 @@
 }
 
 .status-failed {
-    background: #fee2e2;
+    background: var(--mg-color-error-bg);
     color: #991b1b;
 }
 
@@ -97,7 +97,7 @@
 .transcription-text {
     width: 100%;
     padding: 12px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--mg-color-border-main);
     border-radius: 6px;
     font-family: 'Malgun Gothic', sans-serif;
     font-size: 14px;
@@ -172,7 +172,7 @@
 .note-section textarea {
     width: 100%;
     padding: 12px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--mg-color-border-main);
     border-radius: 6px;
     font-family: 'Malgun Gothic', sans-serif;
     font-size: 14px;
@@ -188,7 +188,7 @@
 }
 
 .error-message {
-    background: #fee2e2;
+    background: var(--mg-color-error-bg);
     border: 1px solid #fecaca;
     color: #991b1b;
     padding: 12px 16px;

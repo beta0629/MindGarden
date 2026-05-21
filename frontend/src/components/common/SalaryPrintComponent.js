@@ -73,7 +73,7 @@ const SalaryPrintComponent = ({
             marginBottom: '30px',
             padding: '20px',
             backgroundColor: 'var(--mg-gray-100)',
-            border: '2px solid #333'
+            border: '2px solid var(--mg-color-text-main)'
           },
           '.salary-info': {
             display: 'flex',
@@ -90,12 +90,12 @@ const SalaryPrintComponent = ({
             backgroundColor: 'var(--mg-color-border-main)',
             fontWeight: 'bold',
             padding: '12px 8px',
-            border: '1px solid #333',
+            border: '1px solid var(--mg-color-text-main)',
             textAlign: 'center'
           },
           '.salary-table td': {
             padding: '10px 8px',
-            border: '1px solid #333',
+            border: '1px solid var(--mg-color-text-main)',
             textAlign: 'right'
           },
           '.salary-table td.label': {

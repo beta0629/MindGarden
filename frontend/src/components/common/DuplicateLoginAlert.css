@@ -43,7 +43,7 @@
 .alert-icon {
     width: 48px;
     height: 48px;
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    background: linear-gradient(135deg, var(--mg-color-warning-bg), #fde68a);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -97,14 +97,14 @@
 }
 
 .btn-cancel {
-    background-color: #f3f4f6;
+    background-color: var(--mg-color-background-main);
     color: var(--mg-color-text-secondary-dark);
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--mg-color-border-main);
 }
 
 .btn-cancel:hover:not(:disabled) {
     background-color: var(--color-border);
-    border-color: #9ca3af;
+    border-color: var(--mg-color-text-tertiary);
 }
 
 .btn-cancel:disabled {
@@ -252,7 +252,7 @@
     }
     
     .alert-submessage {
-        color: #9ca3af;
+        color: var(--mg-color-text-tertiary);
     }
     
     .btn-cancel {

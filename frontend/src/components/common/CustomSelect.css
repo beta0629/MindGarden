@@ -15,7 +15,7 @@
   padding: var(--spacing-sm) var(--spacing-md);
   border: 1px solid #cbd5e0;
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--mg-color-background-main);
   cursor: pointer;
   transition: var(--transition-bounce);
   min-height: 40px;
@@ -44,7 +44,7 @@
 
 .custom-select__value {
   flex: 1;
-  color: #2d3748;
+  color: var(--mg-color-text-main);
   font-size: var(--font-size-sm);
   white-space: nowrap;
   overflow: hidden;
@@ -53,7 +53,7 @@
 
 .custom-select__arrow {
   margin-left: 8px;
-  color: #666;
+  color: var(--mg-color-text-secondary);
   font-size: var(--font-size-xs);
   transition: transform 0.2s ease;
 }
@@ -148,7 +148,7 @@
 .custom-select__no-options {
   padding: 12px;
   text-align: center;
-  color: #666;
+  color: var(--mg-color-text-secondary);
   font-size: var(--font-size-sm);
   font-style: italic;
 }

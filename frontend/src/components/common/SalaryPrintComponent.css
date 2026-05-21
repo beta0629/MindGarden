@@ -166,7 +166,7 @@
   }
   
   .salary-subtitle {
-    color: #666;
+    color: var(--mg-color-text-secondary);
   }
   
   .salary-table-header {
@@ -188,7 +188,7 @@
   }
   
   .salary-footer-text {
-    color: #666;
+    color: var(--mg-color-text-secondary);
   }
   
   .salary-signature-line {

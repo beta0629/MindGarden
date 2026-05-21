@@ -75,8 +75,8 @@
 }
 
 .usage-examples {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--mg-color-background-main);
+  border: 1px solid var(--mg-color-border-main);
   border-radius: 8px;
   padding: 20px;
   margin-top: 16px;

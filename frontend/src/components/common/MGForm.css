@@ -140,7 +140,7 @@
 .mg-form-input__field {
   width: 100%;
   padding: 16px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--mg-color-border-main);
   border-radius: 12px;
   font-size: 14px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -192,7 +192,7 @@
 .mg-form-textarea {
   width: 100%;
   padding: 16px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--mg-color-border-main);
   border-radius: 12px;
   font-size: 14px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -235,7 +235,7 @@
   width: 100%;
   padding: 16px;
   padding-right: 48px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--mg-color-border-main);
   border-radius: 12px;
   font-size: 14px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

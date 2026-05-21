@@ -297,7 +297,7 @@
   }
 
   .mg-stats__title {
-    color: #9ca3af;
+    color: var(--mg-color-text-tertiary);
   }
 }
 */

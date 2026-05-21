@@ -40,7 +40,7 @@ export const CHART_COLORS = {
  * CSS 변수가 Canvas에서 미해석될 때만 사용.
  */
 export const B0KLA_CHART_BAR_FALLBACK = {
-  FILL: 'var(--mg-color-success-600)',
+  FILL: 'var(--mg-color-success)',
   BORDER: 'var(--mg-color-info)'
 };
 
@@ -51,7 +51,7 @@ export const B0KLA_CHART_BAR_FALLBACK = {
  */
 export const ERP_INCOME_EXPENSE_CHART_HEX = {
   INCOME_FILL: '#34d399',
-  INCOME_BORDER: 'var(--mg-color-success-600)',
+  INCOME_BORDER: 'var(--mg-color-success)',
   EXPENSE_FILL: 'var(--mg-error-500)',
   EXPENSE_BORDER: 'var(--mg-color-error)'
 };

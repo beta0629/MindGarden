@@ -205,11 +205,11 @@
 }
 
 .btn-success:hover:not(:disabled) {
-    background: var(--mg-color-success-600);
+    background: var(--mg-color-success);
 }
 
 .approval-notice {
-    color: var(--mg-color-success-600);
+    color: var(--mg-color-success);
     font-size: 14px;
     font-weight: 500;
 }

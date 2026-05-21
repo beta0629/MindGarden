@@ -27,7 +27,7 @@
 
 .salary-export-modal__summary-value--total {
   font-size: var(--font-size-base);
-  color: var(--mg-color-success-600);
+  color: var(--mg-color-success);
   font-weight: 700;
 }
 

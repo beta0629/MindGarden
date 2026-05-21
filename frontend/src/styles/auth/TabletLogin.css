@@ -209,7 +209,7 @@
 }
 
 .tablet-login-button-secondary:hover:not(:disabled) {
-  background: var(--mg-color-success-600);
+  background: var(--mg-color-success);
 }
 
 /* SMS 섹션 */
@@ -280,7 +280,7 @@
 }
 
 .tablet-login-verification-button:hover:not(:disabled) {
-  background: var(--mg-color-success-600);
+  background: var(--mg-color-success);
   transform: translateY(-1px);
 }
 

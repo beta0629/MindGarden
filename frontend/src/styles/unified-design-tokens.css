@@ -1111,13 +1111,23 @@
   --mg-consultant-primary-dark: #2A3A31;
   --mg-consultant-gradient: linear-gradient(to right, #3D5246, #6B7F72);
 
+  /* --- 2-1. 브랜드 Accent (D5 §3 brand 팔레트 공식 편입) ---
+     SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D5_DESIGN.md §3
+     컨텍스트 가이드:
+       - 권장: B0KlA 기반 프리미엄 상담 상품 태그, 마케팅 배너 강조,
+              프로모션 뱃지, 특수 상태 지표 포인트
+       - 금지: 시스템 피드백(성공/저장 완료 등)·기본 액션 버튼
+     다크 hex 는 다크 모드 오버라이드 블록(D5 T-B 신규)에서 정의.   */
+  --mg-color-brand-olive: #6b7c32;
+
   /* --- 3. 공통 색상 토큰 (역할 무관) --- */
   --mg-color-text-main: #2C2C2C;
   --mg-color-text-secondary: #5C6B61;
   --mg-color-text-on-primary: #FFFFFF;
   --mg-color-border-main: #D4CFC8;
   --mg-color-error: #E57373;
-  --mg-color-success: #81C784;
+  /* 성공 — D5 §4 옵션 A: emerald-600 통합 (#059669, success-600 폐기 흡수, WCAG AA) */
+  --mg-color-success: #059669;
   --mg-color-info: #3B82F6;
 
   /* --- 3-1. RGB 채널 토큰 (rgba 조합용) --- */
@@ -1126,7 +1136,8 @@
   --mg-consultant-primary-rgb: 61, 82, 70;
   --mg-warm-gray-50-rgb: 250, 249, 247;
   --mg-color-error-rgb: 229, 115, 115;
-  --mg-color-success-rgb: 129, 199, 132;
+  /* 성공 RGB — D5 §4 통합 후 emerald-600 (#059669) 채널 (5, 150, 105) */
+  --mg-color-success-rgb: 5, 150, 105;
   --mg-color-info-rgb: 59, 130, 246;
   --mg-color-white-rgb: 255, 255, 255;
 
@@ -1298,6 +1309,9 @@
   --mg-color-primary-main: #3D5246;
   /* 브랜드 primary 라이트 — #4A6354 (UnifiedLogin.css L18 그라데이션 fallback 값 승격) */
   --mg-color-primary-light: #4A6354;
+  /* 브랜드 primary 다크 — #2A3B30 (T-D 가드 6c4f727e9 발견 SSOT 누락 보강,
+     primary-main 한 단계 어두운 톤, --mg-consultant-primary-dark `#2A3A31` 인접) */
+  --mg-color-primary-dark: #2A3B30;
   /* 브랜드 무채색 화이트 — #ffffff */
   --mg-color-white: #ffffff;
   /* alias — primary-color = primary-main (codemod 폴백 chain 1차 토큰) */
@@ -1311,6 +1325,8 @@
   --mg-color-primary-main: #6B7F72;
   /* 다크 브랜드 primary 라이트 — #8AA08F (한 단계 더 밝은 톤, UAT 권장) */
   --mg-color-primary-light: #8AA08F;
+  /* 다크 브랜드 primary 다크 — #4F6B5A (T-D 가드 SSOT 보강, --mg-primary-light `#4A6354` 인접 톤) */
+  --mg-color-primary-dark: #4F6B5A;
   /* 다크 화이트 — #f5f5f5 (다크 베이스에서 가독성 유지) */
   --mg-color-white: #f5f5f5;
   --mg-primary-color: #6B7F72;
@@ -1318,92 +1334,98 @@
 }
 
 /* ========================================
-   2026 Q2 D4 합의서 신규 토큰 (50/100/800 계열 + 브랜드 olive)
-   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D4.md §2
-   배경: 잔존 표준 팔레트 HEX 10대 매핑 정착을 위한 토큰 신설.
-        Info/Error 50·800 계열, Success 600, Brand olive 6종.
-        다크 변형은 D4 SSOT §2 본문 추정치 사용 (디자이너 합의 후 미세 조정 가능).
+   2026 Q2 D5 §3·§4 (T-B) — brand-olive 다크 + success 다크 오버라이드
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D5_DESIGN.md §3·§4
+   배경: brand-olive 는 §3 으로 brand 팔레트 카테고리(L1113 본 PR 신규
+        블록) 에서 라이트(#6b7c32) 정의로 이동했으며, 다크 톤(#d9f99d,
+        lime-200) 은 본 블록에서 오버라이드. success 는 §4 옵션 A 통합
+        결정으로 `--mg-color-success` 라이트 (#059669, L1124 본 PR 재정의)
+        에 대응되는 다크 톤 (#6ee7b7, emerald-300) 을 본 블록에서 신규
+        정의 (기존 success 토큰은 다크 정의가 없어 라이트 톤 cascade
+        였음 — D5 §4 권고 반영).
    ======================================== */
 
-:root {
-  --mg-color-info-bg: #f0f9ff;        /* Tailwind sky-50 — 정보 배경 */
-  --mg-color-info-dark: #1e40af;      /* Tailwind blue-800 — 정보 다크 텍스트/보더 */
-  --mg-color-error-50: #fef2f2;       /* Tailwind red-50 — 에러 가장 밝은 배경 */
-  --mg-color-error-dark: #991b1b;     /* Tailwind red-800 — 에러 다크 텍스트/보더 */
-  --mg-color-success-600: #059669;    /* Tailwind emerald-600 — 강조 성공 (기존 #81C784와 별도) */
-  --mg-color-brand-olive: #6b7c32;    /* 브랜드 olive (D4 사용자 컨펌 후 정착) */
-}
-
 :root[data-theme="dark"] {
-  --mg-color-info-bg: #082f49;        /* sky-950 톤 — 다크 모드 정보 배경 */
-  --mg-color-info-dark: #bae6fd;      /* sky-200 톤 — 다크 모드 정보 다크 텍스트 (대비 반전) */
-  --mg-color-error-50: #450a0a;       /* red-950 톤 — 다크 모드 에러 가장 밝은 배경 */
-  --mg-color-error-dark: #fca5a5;     /* red-300 톤 — 다크 모드 에러 다크 텍스트 (대비 반전) */
-  --mg-color-success-600: #6ee7b7;    /* emerald-300 톤 — 다크 모드 강조 성공 (대비 반전) */
-  --mg-color-brand-olive: #d9f99d;    /* lime-200 톤 — 다크 모드 브랜드 olive (대비 반전) */
+  /* 다크 브랜드 olive — #d9f99d (lime-200 톤, D5 §3 채택, 다크 배경 위 포인트 컬러 대비비 충족) */
+  --mg-color-brand-olive: #d9f99d;
+  /* 다크 성공 — #6ee7b7 (emerald-300 톤, D5 §4 옵션 A 통합 다크 매핑, WCAG AA) */
+  --mg-color-success: #6ee7b7;
+  /* 다크 성공 RGB — emerald-300 채널 (110, 231, 183) */
+  --mg-color-success-rgb: 110, 231, 183;
 }
 
 /* ========================================
-   2026 Q2 R-3 후속 — background 시리즈 누락 토큰 4종 alias 정착
-   배경: R-3 핫픽스가 --mg-color-background-main 만 정의했고,
-        background-base / muted / secondary / sub 4종은 미정의 상태로
-        분산 사용 (각 1~3건). D1 패턴(*-main 베이지 톤)을 따라
-        보수적으로 main alias 로 우선 정의. 후속 디자이너 합의 시 분리 가능.
-   영향: 4종 모두 사용처가 미미하고, alias 처리로 운영 회귀 없음.
+   2026 Q2 D4 합의서 신규 토큰 (50/100/800 계열) — D5 §2 다크 톤 확정 인용
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D4.md §2 (라이트 신설),
+        docs/standards/DESIGN_TOKEN_GAP_2026Q2_D5_DESIGN.md §2 (다크 채택 확정).
+   배경: 잔존 표준 팔레트 HEX 매핑 정착을 위한 Info/Error 50·800 계열 토큰.
+        D4 단계에서 다크 톤은 "디자이너 합의 후 미세 조정 가능" 추정치였으나,
+        D5 디자이너 합의서 §2 에서 4종 모두 WCAG AA 대비비 충족 및 어드민/
+        임상 환경 적합성을 확인하여 추정치 그대로 채택 (값 변경 없음).
+   변경 이력 (D5 T-B 트랙):
+   - success-600 정의 제거 → §4 옵션 A 통합으로 `--mg-color-success` 흡수
+     (L1120 본 PR 라이트·다크 재정의 참조).
+   - brand-olive 정의 이동 → §3 brand 팔레트 카테고리 (consultant 인접
+     L1113 본 PR 신규 블록) 로 재정렬 (라이트·다크 동일 값 유지).
    ======================================== */
 
 :root {
-  --mg-color-background-base: var(--mg-color-background-main);
-  --mg-color-background-muted: var(--mg-color-background-main);
-  --mg-color-background-secondary: var(--mg-color-background-main);
-  --mg-color-background-sub: var(--mg-color-background-main);
+  --mg-color-info-bg: #f0f9ff;        /* Tailwind sky-50 — 정보 배경 (D5 §2 채택) */
+  --mg-color-info-dark: #1e40af;      /* Tailwind blue-800 — 정보 다크 텍스트/보더 (D5 §2 채택) */
+  --mg-color-error-50: #fef2f2;       /* Tailwind red-50 — 에러 가장 밝은 배경 (D5 §2 채택) */
+  --mg-color-error-dark: #991b1b;     /* Tailwind red-800 — 에러 다크 텍스트/보더 (D5 §2 채택) */
 }
 
 :root[data-theme="dark"] {
-  --mg-color-background-base: var(--mg-color-background-main);
-  --mg-color-background-muted: var(--mg-color-background-main);
-  --mg-color-background-secondary: var(--mg-color-background-main);
-  --mg-color-background-sub: var(--mg-color-background-main);
+  --mg-color-info-bg: #082f49;        /* sky-950 톤 — 다크 모드 정보 배경 (D5 §2 채택, WCAG AA) */
+  --mg-color-info-dark: #bae6fd;      /* sky-200 톤 — 다크 모드 정보 다크 텍스트 (D5 §2 채택, 대비 반전) */
+  --mg-color-error-50: #450a0a;       /* red-950 톤 — 다크 모드 에러 가장 밝은 배경 (D5 §2 채택) */
+  --mg-color-error-dark: #fca5a5;     /* red-300 톤 — 다크 모드 에러 다크 텍스트 (D5 §2 채택, 대비 반전) */
 }
 
 /* ========================================
-   2026 Q2 R-5 핫픽스 — surface 메인 토큰 alias 정착
-   SSOT: R-3 핫픽스 b8336cf11 (background-main 정착),
-        R-4 핫픽스 7d7567550 (primary·white 정착 — 동일 패턴),
-        weekend 보정 0aa3bbcee (주석 hex 인용 회피 정책),
-        core-debugger 보고서 §3 (surface-main 정의 0건 신규 발견).
-   배경: R-3 회고 §추가 점검 결과로 별도 보고만 했던 background 시리즈
-        4종(base/muted/secondary/sub)은 위 R-3 후속 블록에서 이미
-        `--mg-color-background-main` alias 로 정착 완료. 본 R-5 핫픽스는
-        디버거 §3 에서 신규 식별된 `--mg-color-surface-main` 1종만 추가.
-   재집계 결과 (정의 0건 / 사용 건수 — *.css 기준):
-   - `--mg-color-surface-main`        : 정의 0건 / 사용 145건+ (47파일)
-     · 다수 사용처: ErpCommon.css(25), ClientShop.css(10),
-       RefundManagement.css(9), SalaryManagement.css(8),
-       IntegratedFinanceDashboard.css(5), ScheduleCalendarView.css(5),
-       FinancialManagement.css(5), AdminNotificationsPage.css(4) 등
-   - `--mg-color-background-base`     : 정의 2건 (L1356·L1363) — 본 PR 제외
-   - `--mg-color-background-muted`    : 정의 2건 (L1357·L1364) — 본 PR 제외
-   - `--mg-color-background-secondary`: 정의 2건 (L1358·L1365) — 본 PR 제외
-   - `--mg-color-background-sub`      : 정의 2건 (L1359·L1366) — 본 PR 제외
-   원칙: 디자이너 컨펌 없는 상태에서는 새 HEX 신설 금지, 기존 정착값을
-        그대로 alias. surface 메인 면 토큰은 시스템 베이지 배경과 동일
-        톤을 사용(= `--mg-color-background-main`). 후속 디자이너 합의로
-        surface 와 background 톤을 분리할 때는 본 alias 만 교체.
-   영향: 대다수 사용처가 `var(--mg-color-surface-main, ...)` 폴백 보호를
-        사용하므로 정착 후 시각 변경 없음. 무폴백 직접 사용처(있는 경우)는
-        `--mg-color-background-main` 톤으로 회복되는 정상화. 다크 무폴백
-        사용처는 UAT 권장.
+   2026 Q2 D5 §1 (T-E) — surface / background 시리즈 5종 톤 분리 정착
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D5_DESIGN.md §1
+   상위: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D5_DIRECTION.md §3.2,
+        R-3 핫픽스 b8336cf11 / R-5 핫픽스 ff3931c73 (alias 정착).
+   배경: R-3 후속(base/muted/secondary/sub 4종) · R-5(surface-main 1종)
+        은 모두 `--mg-color-background-main` alias 로 임시 정착했었음.
+        D5 디자이너 합의서 §1 결정표에 따라 surface vs background 톤을
+        계층적으로 분리하여 카드/사이드바/페이지 배경의 시각 분리도를
+        높임. weekend `.fc-non-business` 등 캘린더 비영업일 영역에서
+        배경 대비가 명확해지며, 어드민 대시보드의 카드 경계가 또렷해짐.
+   변경: 라이트 5종 + 다크 5종 (총 10개) — 디자이너 결정표 hex 직접 정의.
+        기존 alias 정의(`var(--mg-color-background-main)`) 해제.
+   영향: 대다수 사용처는 `var(--mg-color-surface-main, ...)` 폴백 보호를
+        사용해 안전. 무폴백 직접 사용처는 분리된 톤(특히 surface-main
+        `#F5F3EF`)으로 회복되어 카드 경계가 약간 더 어두워짐 (의도된
+        변경). 다크 톤은 어드민/임상 환경 대비비를 충족.
    ======================================== */
 
 :root {
-  /* surface 메인 — 시스템 베이지 배경과 동일 톤 alias (R-3 정착 `--mg-color-background-main` 인용) */
-  --mg-color-surface-main: var(--mg-color-background-main);
+  /* surface 메인 — 카드/모달/리스트 아이템/칩 배경 (#F5F3EF, --mg-consultant-surface L1108 톤 통일) */
+  --mg-color-surface-main: #F5F3EF;
+  /* 페이지 기본 배경 — 전체 페이지/메인 컨테이너 (#FAF9F7, --mg-color-background-main 동일 톤) */
+  --mg-color-background-base: #FAF9F7;
+  /* 한 단계 음영 — LNB(사이드바)/푸터/비활성 탭 (#F2EDE8) */
+  --mg-color-background-muted: #F2EDE8;
+  /* 보조/분할 영역 — Split layout 보조 패널/우측 사이드바 (#EBE6E0) */
+  --mg-color-background-secondary: #EBE6E0;
+  /* 하위 그룹 음영 — 카드 내 중첩 블록/테이블 헤더 영역 (#E0DBD5) */
+  --mg-color-background-sub: #E0DBD5;
 }
 
 :root[data-theme="dark"] {
-  /* 다크 surface 메인 — 다크 배경 메인 토큰 alias (R-3 정착 `--mg-color-background-main` 인용) */
-  --mg-color-surface-main: var(--mg-color-background-main);
+  /* 다크 surface 메인 — 카드/모달/리스트 아이템/칩 배경 (#262626, --mg-dark-bg-800 톤 인접) */
+  --mg-color-surface-main: #262626;
+  /* 다크 페이지 기본 배경 — 전체 페이지/메인 컨테이너 (#1A1A1A, --mg-dark-bg-900 동일) */
+  --mg-color-background-base: #1A1A1A;
+  /* 다크 한 단계 음영 — LNB/푸터/비활성 탭 (#2C2C2C) */
+  --mg-color-background-muted: #2C2C2C;
+  /* 다크 보조/분할 영역 — Split layout 보조 패널 (#232323) */
+  --mg-color-background-secondary: #232323;
+  /* 다크 하위 그룹 음영 — 카드 내 중첩 블록/테이블 헤더 (#333333) */
+  --mg-color-background-sub: #333333;
 }
 
 /* ===== 테넌트별 브랜딩 오버라이드 ===== */

@@ -89,7 +89,7 @@ const ScheduleList = ({
         { value: 'THIS_MONTH', label: '이번 달', icon: '📅', color: 'var(--mg-warning-500)', description: '이번 달 일정' },
         { value: 'UPCOMING', label: '예정된 일정', icon: '⏰', color: 'var(--mg-purple-500)', description: '예정된 일정' },
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        { value: 'COMPLETED', label: '완료된 일정', icon: '✅', color: 'var(--mg-color-success-600)', description: '완료된 일정' }
+        { value: 'COMPLETED', label: '완료된 일정', icon: '✅', color: 'var(--mg-color-success)', description: '완료된 일정' }
       ]);
     } finally {
       setLoadingCodes(false);

@@ -41,7 +41,7 @@
 }
 
 .stat-card.active .stat-icon {
-    background: linear-gradient(135deg, var(--mg-success-500), var(--mg-color-success-600));
+    background: linear-gradient(135deg, var(--mg-success-500), var(--mg-color-success));
 }
 
 .stat-card.inactive .stat-icon {

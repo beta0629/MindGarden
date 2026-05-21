@@ -116,7 +116,7 @@
 }
 
 .btn-success:hover {
-    background: var(--mg-color-success-600);
+    background: var(--mg-color-success);
 }
 
 .btn-danger {

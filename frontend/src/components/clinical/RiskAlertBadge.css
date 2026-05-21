@@ -277,7 +277,7 @@
 }
 
 .confidence {
-    color: var(--mg-color-success-600);
+    color: var(--mg-color-success);
 }
 
 .alert-dropdown-footer {

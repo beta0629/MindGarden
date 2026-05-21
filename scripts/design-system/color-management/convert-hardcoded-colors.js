@@ -190,7 +190,7 @@ const COLOR_MAPPING = {
   '#1e40af': 'var(--mg-color-info-dark)',
   '#fef2f2': 'var(--mg-color-error-50)',
   '#991b1b': 'var(--mg-color-error-dark)',
-  '#059669': 'var(--mg-color-success-600)',
+  '#059669': 'var(--mg-color-success)',
   '#6b7c32': 'var(--mg-color-brand-olive)'
 };
 

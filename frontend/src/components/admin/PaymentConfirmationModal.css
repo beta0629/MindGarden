@@ -45,7 +45,7 @@
 }
 
 .mg-v2-modal-footer .mg-button--success:hover:not(:disabled) {
-  background-color: var(--mg-color-success-600) !important;
+  background-color: var(--mg-color-success) !important;
 }
 
 .mg-v2-modal-footer .mg-button--danger {

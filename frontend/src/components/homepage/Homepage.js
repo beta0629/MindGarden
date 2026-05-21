@@ -107,7 +107,7 @@ const Homepage = () => {
           onLogoClick={() => navigate('/')}
           extraActions={
             !user && (
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div className="mg-v2-homepage-header-actions">
                 <nav className="mg-v2-homepage-nav desktop-only">
                   <MGButton
                     type="button"

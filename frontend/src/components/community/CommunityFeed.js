@@ -203,7 +203,7 @@ const CommunityFeed = ({ primaryColor }) => {
                     )}
                   </div>
                   <span className="community__post-time">{post.time}</span>
-                  <div style={{ position: 'relative' }}>
+                  <div className="community__post-more-anchor">
                     <button
                       type="button"
                       className="community__post-more"
@@ -225,7 +225,7 @@ const CommunityFeed = ({ primaryColor }) => {
                             handleReport(post.id);
                           }}
                         >
-                          <Flag size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+                          <Flag size={14} className="community__report-item-icon" />
                           신고
                         </button>
                       </div>

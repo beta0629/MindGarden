@@ -438,3 +438,14 @@
     right: var(--mg-spacing-lg);
   }
 }
+
+/* T8-D4: 인라인 → 클래스 추출 (신고 메뉴 anchor 컨테이너 + 메뉴 아이콘) */
+.community__post-more-anchor {
+  position: relative;
+}
+
+.community__report-item-icon {
+  display: inline;
+  vertical-align: middle;
+  margin-right: 4px;
+}

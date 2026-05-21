@@ -169,7 +169,7 @@ const SimpleHeader = () => {
         <div className={HEADER_CSS_CLASSES.HEADER_RIGHT}>
           {/* 디버그 정보 */}
           // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
-          <div style={{ fontSize: '10px', color: '#666', marginRight: '10px' }}>
+          <div className="simple-header__debug-badge">
             Debug: {isLoading ? 'Loading' : isLoggedIn ? 'LoggedIn' : 'NotLoggedIn'} | User: {user ? 'Yes' : 'No'}
           </div>
           

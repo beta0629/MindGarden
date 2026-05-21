@@ -185,3 +185,13 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* T8-D4: 인라인 → 클래스 추출 (품목 등록·수정 폼 정적 스타일) */
+.item-management__form-textarea {
+  resize: vertical;
+}
+
+.item-management__form-actions {
+  display: flex;
+  gap: var(--mg-layout-gap);
+}

@@ -459,8 +459,7 @@ const ItemManagement = () => {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="3"
-                className="mg-v2-form-input"
-                style={{ resize: 'vertical' }}
+                className="mg-v2-form-input item-management__form-textarea"
               />
             </div>
 
@@ -529,7 +528,7 @@ const ItemManagement = () => {
               />
             </div>
 
-            <div className="mg-v2-text-right" style={{ display: 'flex', gap: 'var(--mg-layout-gap)' }}>
+            <div className="mg-v2-text-right item-management__form-actions">
               <MGButton
                 type="button"
                 variant={mapErpVariantToMg('secondary')}
@@ -597,8 +596,7 @@ const ItemManagement = () => {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="3"
-                className="mg-v2-form-input"
-                style={{ resize: 'vertical' }}
+                className="mg-v2-form-input item-management__form-textarea"
               />
             </div>
 
@@ -664,7 +662,7 @@ const ItemManagement = () => {
               />
             </div>
 
-            <div className="mg-v2-text-right" style={{ display: 'flex', gap: 'var(--mg-layout-gap)' }}>
+            <div className="mg-v2-text-right item-management__form-actions">
               <MGButton
                 type="button"
                 variant={mapErpVariantToMg('secondary')}

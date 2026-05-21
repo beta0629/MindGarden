@@ -549,3 +549,11 @@
     font-size: var(--header-icon-size);
   }
 }
+
+/* T8-D4: 인라인 → 클래스 추출 (개발용 디버그 배지) */
+/* HEX #666는 D1·D2 매핑 부재로 그대로 이관 — 디버그 UI, D3 색상 매핑 후속 처리 */
+.simple-header__debug-badge {
+  font-size: 10px;
+  color: #666;
+  margin-right: 10px;
+}

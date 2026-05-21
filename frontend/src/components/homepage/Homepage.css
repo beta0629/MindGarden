@@ -610,3 +610,9 @@
   cursor: pointer;
   color: var(--mg-color-text-primary, var(--mg-dark-bg-800));
 }
+
+/* T8-D4: 인라인 → 클래스 추출 (헤더 extraActions 컨테이너) */
+.mg-v2-homepage-header-actions {
+  display: flex;
+  align-items: center;
+}

@@ -15,9 +15,14 @@
  *   - 잔존 hex 카운트: 매핑 후에도 남는 hex 색상을 dry-run에서 정확히 집계.
  *     회색 3자리(#666·#333·#000·#ccc·#999·#eee 등) 및 8자리 alpha hex 모두 포함.
  *   - dry-run 보고서는 `docs/COLOR_CONVERSION_DRY_RUN_REPORT.md` 로 분리 저장.
+ *   - var() 폴백 보호 (시각 QA R-2): `var(--token, #hex)` 형태의 폴백 위치에 들어 있는
+ *     hex 는 codemod 가 절대 변환하지 않는다. processFile 1단계에서 placeholder 로
+ *     임시 치환 → 2단계에서 HEX/RGB 매핑 적용 → 3단계에서 placeholder 복원으로
+ *     `var(--cs-error-600, #dc2626)` 가 `var(--cs-error-600, var(--mg-color-error))`
+ *     같은 nested var 로 잘못 치환되는 부작용을 차단한다.
  *
  * @author MindGarden Team
- * @version 1.2.0
+ * @version 1.3.0
  * @since 2025-11-28
  */
 
@@ -169,6 +174,24 @@ const EXCLUDE_PATTERNS = [
 // 백업할 파일들
 const BACKUP_EXTENSIONS = ['.css', '.scss', '.js', '.jsx', '.ts', '.tsx'];
 
+// ── 시각 QA R-2: var() 폴백 보호 패턴 ─────────────────────────────────────────────
+// `var(--token, #hex)` 형태의 폴백 위치에 있는 hex 는 절대 변환하지 않는다.
+// 정규식 설계:
+//   - `var\(`                : `var(` 시작 (공백 허용)
+//   - `--[\w-]+`              : CSS 커스텀 프로퍼티 이름 (밑줄·하이픈·영숫자)
+//   - `\s*,\s*`               : 폴백 구분자
+//   - `#[0-9a-fA-F]{3,8}`     : 3·4·6·8자리 hex (alpha 포함 가능)
+//   - `(?![0-9a-fA-F])`       : 추가 hex 문자 없을 때만 (예: `#1a1a1aff` 의 일부로 잘못 잡히지 않게)
+//   - `\s*\)`                 : 닫는 괄호
+// 주의: linear-gradient/box-shadow 등 var() 밖에서 콤마 + #hex 가 등장하는 케이스는
+//       매칭되지 않으므로 정상 치환 대상으로 남는다.
+// 주의: nested var 폴백(`var(--a, var(--b, #c))`)의 경우 안쪽 `var(--b, #c)` 가
+//       매칭돼 placeholder 로 치환되므로, 바깥 var 는 자연히 비-hex 폴백을 갖게 되고
+//       추가 처리 없이 그대로 유지된다.
+const VAR_FALLBACK_HEX_PATTERN = /var\s*\(\s*--[\w-]+\s*,\s*#[0-9a-fA-F]{3,8}(?![0-9a-fA-F])\s*\)/g;
+const VAR_FALLBACK_PLACEHOLDER_PREFIX = '__MG_VAR_FALLBACK_HEX_';
+const VAR_FALLBACK_PLACEHOLDER_SUFFIX = '__';
+
 class HardcodedColorConverter {
   constructor(options = {}) {
     this.options = {
@@ -190,7 +213,11 @@ class HardcodedColorConverter {
       // 매핑 후에도 남은 hex 색상 카운트 (3·4·6·8자리 모두)
       // 회색 3자리(#666·#333·#000·#ccc·#999·#eee 등)가 매핑 테이블에 없을 때
       // dry-run에서 정확히 추적되도록 함 (D3 합의서 적용 라운드 데이터 소스)
-      residualHexCounts: {}
+      residualHexCounts: {},
+      // 시각 QA R-2: `var(--token, #hex)` 폴백 위치에서 치환 대상에서 제외된 hex 개수.
+      // dry-run 시 D3 적용 라운드에서 어떤 hex 가 폴백 안에 들어 있어 보호됐는지 추적.
+      protectedVarFallbacks: 0,
+      protectedVarFallbackHexCounts: {}
     };
   }
 
@@ -334,6 +361,33 @@ class HardcodedColorConverter {
       let modifiedContent = originalContent;
       let changeCount = 0;
 
+      // ── 1단계 (R-2): var(--token, #hex) 폴백 보호 ─────────────────────────────
+      // 매핑 적용 전에 폴백 hex 위치를 placeholder 로 임시 치환하여
+      // `var(--cs-error-600, #dc2626)` → `var(--cs-error-600, var(--mg-color-error))`
+      // 같은 nested var 부작용을 차단한다. (시각 QA 보고서 §6 R-2)
+      // 보호 토큰은 hex/rgb/매핑 정규식 어디에도 매칭되지 않는 ASCII 식별자다.
+      const fallbackPlaceholders = new Map();
+      let fallbackCounter = 0;
+      modifiedContent = modifiedContent.replace(VAR_FALLBACK_HEX_PATTERN, (match) => {
+        const placeholder = `${VAR_FALLBACK_PLACEHOLDER_PREFIX}${fallbackCounter++}${VAR_FALLBACK_PLACEHOLDER_SUFFIX}`;
+        fallbackPlaceholders.set(placeholder, match);
+        // 보호된 hex 통계 (dry-run 보고서·로그용)
+        const hexMatch = match.match(/#[0-9a-fA-F]{3,8}/);
+        if (hexMatch) {
+          const hex = hexMatch[0].toLowerCase();
+          this.stats.protectedVarFallbackHexCounts[hex] =
+            (this.stats.protectedVarFallbackHexCounts[hex] || 0) + 1;
+        }
+        return placeholder;
+      });
+      if (fallbackPlaceholders.size > 0) {
+        this.stats.protectedVarFallbacks += fallbackPlaceholders.size;
+        if (this.options.verbose) {
+          console.log(`  🛡️  R-2 폴백 보호: ${fallbackPlaceholders.size}건 (${filePath})`);
+        }
+      }
+
+      // ── 2단계: HEX/RGB 매핑 적용 ──────────────────────────────────────────────
       // HEX 색상 변환
       // 안전성: 매핑 키 길이 내림차순(8→6→3) + 앞뒤가 hex 문자가 아닐 때만 치환
       // → `#1a1a1a` 가 `#1a1a1aff` 의 일부로 잘못 잡히는 케이스 방지
@@ -372,6 +426,8 @@ class HardcodedColorConverter {
       // - 회색 3자리(#666·#333·#000·#ccc·#999·#eee 등) 미매핑 항목 추적
       // - 8자리 alpha 포함 hex(#1a1a1aff) 등 lookbehind 가드로 변환 제외된 케이스 추적
       // - 정규식: `#` 다음 hex 문자 시퀀스, 뒤에 hex 문자가 더 없을 때만 (lookbehind는 불필요)
+      // - R-2: placeholder 가 남아 있는 상태에서 카운트하므로 폴백 hex 는 잔존에서 제외된다
+      //        (의도된 폴백은 잔존 hex 가 아니라 protectedVarFallbacks 로 별도 추적).
       const residualHexRegex = /#[0-9a-fA-F]+(?![0-9a-fA-F])/g;
       const residualMatches = modifiedContent.match(residualHexRegex) || [];
       residualMatches.forEach(raw => {
@@ -380,6 +436,22 @@ class HardcodedColorConverter {
         if (![3, 4, 6, 8].includes(len)) return;
         this.stats.residualHexCounts[hex] = (this.stats.residualHexCounts[hex] || 0) + 1;
       });
+
+      // ── 3단계 (R-2): placeholder 를 원본 var(--token, #hex) 폴백으로 복원 ─────
+      // 보호된 폴백 위치는 codemod 변환 대상에서 제외했으므로 1단계에서 임시 치환한
+      // 문자열을 그대로 원본으로 되돌린다. 동작 변경 0건이 되도록 placeholder 순서대로 복원.
+      if (fallbackPlaceholders.size > 0) {
+        for (const [placeholder, original] of fallbackPlaceholders) {
+          modifiedContent = modifiedContent.split(placeholder).join(original);
+        }
+        // 방어 로직: 어떤 이유로든 placeholder 잔존 시 즉시 실패시켜
+        // 잘못된 내용을 저장하지 않도록 한다 (T1 2차 §6 회귀 사고 재발 방지 정신).
+        if (modifiedContent.includes(VAR_FALLBACK_PLACEHOLDER_PREFIX)) {
+          throw new Error(
+            `var() 폴백 placeholder 복원 실패: ${filePath} — 보호 토큰이 잔존함`
+          );
+        }
+      }
 
       // 변경사항이 있는 경우 처리
       if (changeCount > 0) {
@@ -437,12 +509,23 @@ class HardcodedColorConverter {
     console.log(`📝 수정된 파일: ${this.stats.filesModified}개`);
     console.log(`🎨 변환된 색상: ${this.stats.colorsConverted}개`);
     console.log(`💾 생성된 백업: ${this.stats.backupsCreated}개`);
+    console.log(`🛡️  R-2 폴백 보호: ${this.stats.protectedVarFallbacks}건`);
     console.log(`❌ 오류 발생: ${this.stats.errors.length}개`);
 
     if (this.stats.errors.length > 0) {
       console.log('\n❌ 오류 목록:');
       this.stats.errors.forEach(({ file, error }) => {
         console.log(`  - ${file}: ${error}`);
+      });
+    }
+
+    // R-2 보호된 var() 폴백 hex 분포 (상위 20건)
+    const protectedFallbackEntries = Object.entries(this.stats.protectedVarFallbackHexCounts)
+      .sort((a, b) => b[1] - a[1]);
+    if (protectedFallbackEntries.length > 0) {
+      console.log('\n🛡️  R-2 보호된 var() 폴백 hex — 상위 20건:');
+      protectedFallbackEntries.slice(0, 20).forEach(([hex, count]) => {
+        console.log(`  - ${hex}: ${count}건`);
       });
     }
 
@@ -500,6 +583,14 @@ class HardcodedColorConverter {
     const residualTotal = residualEntries.reduce((s, [, n]) => s + n, 0);
     const residualUnique = residualEntries.length;
 
+    const protectedFallbackEntries = Object.entries(this.stats.protectedVarFallbackHexCounts)
+      .sort((a, b) => b[1] - a[1]);
+    const protectedFallbackSection = protectedFallbackEntries.length === 0
+      ? '보호된 폴백 hex 없음 (영향 0건)'
+      : protectedFallbackEntries.slice(0, 50)
+          .map(([hex, count]) => `- \`${hex}\`: ${count}건`)
+          .join('\n');
+
     const targetSummary = Array.isArray(this.options.target) && this.options.target.length > 0
       ? this.options.target.map(t => `\`${t}\``).join(', ')
       : '전체 (`frontend/src`)';
@@ -521,7 +612,21 @@ class HardcodedColorConverter {
 | 수정된 파일 | ${this.stats.filesModified}개 |
 | 변환된 색상 | ${this.stats.colorsConverted}개 |
 | 생성된 백업 | ${this.stats.backupsCreated}개 |
+| R-2 폴백 보호 | ${this.stats.protectedVarFallbacks}건 |
 | 오류 발생 | ${this.stats.errors.length}개 |
+
+---
+
+## 🛡️ R-2 — \`var(--token, #hex)\` 폴백 보호
+
+> 시각 QA 보고서 §6 R-2 — 폴백 위치의 hex 가 nested var 로 잘못 치환되는 사고 방지.  
+> 본 영역은 codemod 의 HEX 매핑에서 명시적으로 제외된다.  
+> D3 적용 라운드처럼 매핑이 늘어나도 폴백 hex 는 안전.
+
+- **보호된 폴백 총 건수**: ${this.stats.protectedVarFallbacks}건
+- **보호된 폴백 고유 hex 종 수**: ${protectedFallbackEntries.length}종
+
+${protectedFallbackSection}
 
 ---
 
@@ -663,6 +768,8 @@ if (require.main === module) {
     '    constants/css-variables.js) 은 항상 처리 대상에서 제외 (T1 2차 §6.2 재발 방지)',
     '  - *tokens*.css / *variables*.css / *design-system*.css / tokens/* / themes/*',
     '    및 *.test.* / *.spec.* / *.stories.* / __tests__/ 도 자동 제외',
+    '  - var(--token, #hex) 폴백 위치의 hex 는 절대 변환하지 않음 (시각 QA R-2 보호).',
+    '    예: `var(--cs-error-600, #dc2626)` → 그대로 유지 (nested var 부작용 방지)',
     ''
   ].join('\n');
 

@@ -1243,6 +1243,26 @@
   --mg-color-error-bg: #450a0a; /* 다크모드 에러 배경 (대비 조정) */
 }
 
+/* ========================================
+   2026 Q2 R-3 핫픽스 — 누락된 메인 배경 토큰 정의
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2.md §A
+   배경: D1·D2·D3 codemod가 #faf9f7·#f9fafb·#f3f4f6·#f8fafc 등을
+        var(--mg-color-background-main) 으로 일괄 치환했으나 토큰 정의가
+        본 파일에 추가되지 않아 무폴백 사용처(/shop·/tenant-selection·
+        tablet-profile-edit 등)에서 background 가 비어 보이는 운영 회귀가
+        발생. D3 시각 QA §R-3 의 HIGH 회귀 위험을 핫픽스로 회복.
+   ======================================== */
+
+:root {
+  /* 메인 배경 — D1 합의서 §A 매핑값 (#faf9f7, 시스템 베이지 배경) */
+  --mg-color-background-main: #faf9f7;
+}
+
+:root[data-theme="dark"] {
+  /* 다크 메인 배경 — D1 합의서 §B 정착값(--mg-dark-bg-900)과 동일 (#1a1a1a) */
+  --mg-color-background-main: #1a1a1a;
+}
+
 /* ===== 테넌트별 브랜딩 오버라이드 ===== */
 /* 특정 테넌트에 대한 브랜딩 커스터마이징 */
 

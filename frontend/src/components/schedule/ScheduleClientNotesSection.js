@@ -13,6 +13,7 @@ import {
   DEFAULT_NOTE_TYPE_CODE
 } from '../../constants/clientScheduleNoteConstants';
 import { CALENDAR_EXTENDED_TYPE_VACATION } from '../../constants/schedule';
+import './ScheduleClientNotesSection.css';
 
 /**
  * 일정 상세 모달 내부 — 내담자 특이사항(지속 메모) CRUD. adminNote와 분리.
@@ -271,7 +272,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
   return (
     <div className="mg-v2-ad-modal__section">
       <div className="section-title">내담자 특이사항</div>
-      <p className="mg-v2-text-secondary" style={{ marginBottom: 'var(--mg-space-3)' }}>
+      <p className="mg-v2-text-secondary schedule-client-notes-section__intro">
         <SafeText>
           {toDisplayString(
             '입금 확인용 메모와 별도로, 약속·후속 조치 등 지속 관리가 필요한 내용을 기록합니다. 미해소 건은 위에 누적되며, 해소 처리 후에도 아래에 보관됩니다.',
@@ -281,9 +282,9 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
       </p>
       {scheduleData && (
         (scheduleData.clientScheduleNotesUnresolvedCount > 0 || scheduleData.clientScheduleNotesClientWideUnresolvedCount > 0) ? (
-          <div className="mg-v2-alert info" style={{ marginBottom: 'var(--mg-space-3)', padding: 'var(--mg-space-2)', background: 'var(--mg-info-100)', color: 'var(--mg-info-800)', borderRadius: 'var(--mg-border-radius-sm)', border: '1px solid var(--mg-info-300)' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--mg-space-2)' }}>
-              <span role="img" aria-label="info" style={{ fontSize: 'var(--font-size-lg)' }}>ℹ️</span>
+          <div className="mg-v2-alert info schedule-client-notes-section__info-alert">
+            <div className="schedule-client-notes-section__alert-row">
+              <span role="img" aria-label="info" className="schedule-client-notes-section__alert-icon">ℹ️</span>
               <div>
                 {scheduleData.clientScheduleNotesUnresolvedCount > 0 && (
                   <div><SafeText>{toDisplayString(`이 일정 직결 미해소: ${scheduleData.clientScheduleNotesUnresolvedCount}건`, '')}</SafeText></div>
@@ -298,9 +299,9 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
       )}
 
       {clientId == null && (
-        <div className="mg-v2-alert warning" style={{ marginBottom: 'var(--mg-space-3)', padding: 'var(--mg-space-2)', background: 'var(--mg-warning-100)', color: 'var(--mg-warning-800)', borderRadius: 'var(--mg-border-radius-sm)', border: '1px solid var(--mg-warning-300)' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--mg-space-2)' }}>
-            <span role="img" aria-label="warning" style={{ fontSize: 'var(--font-size-lg)' }}>⚠️</span>
+        <div className="mg-v2-alert warning schedule-client-notes-section__warning-alert">
+          <div className="schedule-client-notes-section__alert-row">
+            <span role="img" aria-label="warning" className="schedule-client-notes-section__alert-icon">⚠️</span>
             <SafeText>
               {toDisplayString('내담자가 연결되지 않은 일정입니다. 작성된 특이사항은 이 일정(또는 매칭) 정보에만 한정하여 보관됩니다.', '')}
             </SafeText>
@@ -317,39 +318,35 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
       {(() => {
         const open = notes.filter((n) => isUnresolved(n));
         const done = notes.filter((n) => !isUnresolved(n));
-        const cardBase = {
-          marginBottom: 'var(--mg-space-3)',
-          padding: 'var(--mg-space-3)',
-          border: '1px solid var(--mg-border-subtle)'
-        };
         const renderItem = (n) => {
           const overdue = isPromiseOverdue(n);
           const resolved = !isUnresolved(n);
+          const itemClassName = [
+            'mg-v2-card',
+            'mg-v2-card--flat',
+            'schedule-client-notes-section__item',
+            overdue ? 'schedule-client-notes-section__item--overdue' : '',
+            resolved ? 'schedule-client-notes-section__item--resolved' : ''
+          ].filter(Boolean).join(' ');
           return (
             <li
               key={String(n.id)}
-              className="mg-v2-card mg-v2-card--flat"
-              style={{
-                ...cardBase,
-                borderLeft: overdue ? 'var(--spacing-xs) solid var(--ad-b0kla-orange)' : cardBase.border,
-                opacity: resolved ? 0.88 : 1,
-                background: resolved ? 'var(--ad-b0kla-green-bg)' : undefined
-              }}
+              className={itemClassName}
             >
-              <div style={{ fontWeight: 600, marginBottom: 'var(--mg-space-2)', display: 'flex', flexWrap: 'wrap', gap: 'var(--mg-space-2)', alignItems: 'center' }}>
+              <div className="schedule-client-notes-section__item-title">
                 <SafeText>{toDisplayString(n.title, '')}</SafeText>
                 {overdue ? (
-                  <span className="mg-v2-badge warning" style={{ fontSize: 'var(--font-size-xs)' }}>
+                  <span className="mg-v2-badge warning schedule-client-notes-section__item-badge">
                     약속일 경과
                   </span>
                 ) : null}
                 {resolved ? (
-                  <span className="mg-v2-badge secondary" style={{ fontSize: 'var(--font-size-xs)' }}>
+                  <span className="mg-v2-badge secondary schedule-client-notes-section__item-badge">
                     해소됨
                   </span>
                 ) : null}
               </div>
-              <div className="mg-v2-text-secondary" style={{ fontSize: 'var(--mg-font-size-sm)' }}>
+              <div className="mg-v2-text-secondary schedule-client-notes-section__item-meta">
                 <SafeText>
                   {toDisplayString(
                     `${n.noteType || ''}${n.promiseDate ? ` · 약속일 ${n.promiseDate}` : ''}`,
@@ -358,12 +355,12 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
                 </SafeText>
               </div>
               {n.body ? (
-                <div style={{ marginTop: 'var(--mg-space-2)' }}>
+                <div className="schedule-client-notes-section__item-body">
                   <SafeText>{toDisplayString(n.body, '')}</SafeText>
                 </div>
               ) : null}
               {canEditNote(n) ? (
-                <div style={{ marginTop: 'var(--mg-space-3)', display: 'flex', flexWrap: 'wrap', gap: 'var(--mg-space-2)' }}>
+                <div className="schedule-client-notes-section__item-actions">
                   {isUnresolved(n) ? (
                     <MGButton
                       type="button"
@@ -441,12 +438,12 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
           );
         };
         return (
-          <div style={{ marginBottom: 'var(--mg-space-4)' }}>
-            <div className="section-title" style={{ fontSize: 'var(--font-size-base)', marginBottom: 'var(--mg-space-2)' }}>
+          <div className="schedule-client-notes-section__group">
+            <div className="section-title schedule-client-notes-section__group-title">
               미해소 ({open.length})
             </div>
             {open.length === 0 && !loading ? (
-              <p className="mg-v2-text-secondary" style={{ marginBottom: 'var(--mg-space-3)' }}>
+              <p className="mg-v2-text-secondary schedule-client-notes-section__empty">
                 <SafeText>{toDisplayString('미해소 특이사항이 없습니다.', '')}</SafeText>
               </p>
             ) : (
@@ -454,7 +451,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
             )}
             {done.length > 0 ? (
               <>
-                <div className="section-title" style={{ fontSize: 'var(--font-size-base)', margin: 'var(--mg-space-4) 0 var(--mg-space-2)' }}>
+                <div className="section-title schedule-client-notes-section__group-title--resolved">
                   해소됨 ({done.length})
                 </div>
                 <ul className="mg-v2-list-unstyled">{done.map(renderItem)}</ul>
@@ -523,7 +520,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
             rows={4}
           />
         </div>
-        <div style={{ display: 'flex', gap: 'var(--mg-space-2)' }}>
+        <div className="schedule-client-notes-section__form-actions">
           <MGButton
             type="submit"
             variant="primary"

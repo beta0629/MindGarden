@@ -1,0 +1,103 @@
+/**
+ * ScheduleClientNotesSection — 일정 상세 모달 내부 특이사항 영역
+ * T8-D1: 인라인 스타일 → CSS 클래스/토큰 추출 (동작·시각 변경 0건, 1:1 동등)
+ */
+
+.schedule-client-notes-section__intro {
+    margin-bottom: var(--mg-space-3);
+}
+
+.schedule-client-notes-section__info-alert,
+.schedule-client-notes-section__warning-alert {
+    margin-bottom: var(--mg-space-3);
+    padding: var(--mg-space-2);
+    border-radius: var(--mg-border-radius-sm);
+}
+
+.schedule-client-notes-section__info-alert {
+    background: var(--mg-info-100);
+    color: var(--mg-info-800);
+    border: 1px solid var(--mg-info-300);
+}
+
+.schedule-client-notes-section__warning-alert {
+    background: var(--mg-warning-100);
+    color: var(--mg-warning-800);
+    border: 1px solid var(--mg-warning-300);
+}
+
+.schedule-client-notes-section__alert-row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--mg-space-2);
+}
+
+.schedule-client-notes-section__alert-icon {
+    font-size: var(--font-size-lg);
+}
+
+.schedule-client-notes-section__group {
+    margin-bottom: var(--mg-space-4);
+}
+
+.schedule-client-notes-section__group-title {
+    font-size: var(--font-size-base);
+    margin-bottom: var(--mg-space-2);
+}
+
+.schedule-client-notes-section__group-title--resolved {
+    font-size: var(--font-size-base);
+    margin: var(--mg-space-4) 0 var(--mg-space-2);
+}
+
+.schedule-client-notes-section__empty {
+    margin-bottom: var(--mg-space-3);
+}
+
+.schedule-client-notes-section__item {
+    margin-bottom: var(--mg-space-3);
+    padding: var(--mg-space-3);
+    border: 1px solid var(--mg-border-subtle);
+}
+
+.schedule-client-notes-section__item--overdue {
+    border-left: var(--spacing-xs) solid var(--ad-b0kla-orange);
+}
+
+.schedule-client-notes-section__item--resolved {
+    opacity: 0.88;
+    background: var(--ad-b0kla-green-bg);
+}
+
+.schedule-client-notes-section__item-title {
+    font-weight: 600;
+    margin-bottom: var(--mg-space-2);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--mg-space-2);
+    align-items: center;
+}
+
+.schedule-client-notes-section__item-badge {
+    font-size: var(--font-size-xs);
+}
+
+.schedule-client-notes-section__item-meta {
+    font-size: var(--mg-font-size-sm);
+}
+
+.schedule-client-notes-section__item-body {
+    margin-top: var(--mg-space-2);
+}
+
+.schedule-client-notes-section__item-actions {
+    margin-top: var(--mg-space-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--mg-space-2);
+}
+
+.schedule-client-notes-section__form-actions {
+    display: flex;
+    gap: var(--mg-space-2);
+}

@@ -349,6 +349,109 @@ class SolapiAlimTalkClientTest {
         mockServer.verify();
     }
 
+    @Test
+    @DisplayName("send(): plain key 변수는 #{변수명} 형식으로 wrap 되어 송신")
+    void sendWrapsPlainVariableKeysToHashBraceFormat() {
+        SolapiCredentials credentials = new SolapiCredentials("NCSXXXXKEY", "NCSXXXXSECRET_VALUE_VALUE_VALUE_1234");
+        Map<String, String> plainVariables = new LinkedHashMap<>();
+        plainVariables.put("paymentAmount", "100000");
+        plainVariables.put("packageName", "오픈패키지");
+        plainVariables.put("consultantName", "김선희");
+        SolapiAlimTalkRequest request = new SolapiAlimTalkRequest(
+            credentials, PFID, TEMPLATE_ID, FROM_NUMBER, TO_NUMBER, plainVariables);
+
+        mockServer
+            .expect(requestTo(API_BASE + SolapiAlimTalkClient.SEND_ENDPOINT))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(req -> {
+                org.springframework.mock.http.client.MockClientHttpRequest mockReq =
+                    (org.springframework.mock.http.client.MockClientHttpRequest) req;
+                JsonNode root = objectMapper.readTree(mockReq.getBodyAsString());
+                JsonNode variables = root.get("messages").get(0).get("kakaoOptions").get("variables");
+                assertThat(variables.has("paymentAmount"))
+                    .as("plain key 는 직접 송신되지 않아야 함")
+                    .isFalse();
+                assertThat(variables.get("#{paymentAmount}").asText()).isEqualTo("100000");
+                assertThat(variables.get("#{packageName}").asText()).isEqualTo("오픈패키지");
+                assertThat(variables.get("#{consultantName}").asText()).isEqualTo("김선희");
+            })
+            .andRespond(withSuccess("{\"groupId\":\"G_WRAP\"}", MediaType.APPLICATION_JSON));
+
+        SolapiAlimTalkResponse response = client.send(request);
+
+        assertThat(response.success()).isTrue();
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("send(): 이미 #{} wrap 된 key 는 idempotent 처리(이중 wrap 금지)")
+    void sendKeepsAlreadyWrappedVariableKeys() {
+        SolapiCredentials credentials = new SolapiCredentials("NCSXXXXKEY", "NCSXXXXSECRET_VALUE_VALUE_VALUE_1234");
+        Map<String, String> wrappedVariables = new LinkedHashMap<>();
+        wrappedVariables.put("#{고객명}", "홍길동");
+        wrappedVariables.put("#{주문번호}", "ORD-12345");
+        SolapiAlimTalkRequest request = new SolapiAlimTalkRequest(
+            credentials, PFID, TEMPLATE_ID, FROM_NUMBER, TO_NUMBER, wrappedVariables);
+
+        mockServer
+            .expect(requestTo(API_BASE + SolapiAlimTalkClient.SEND_ENDPOINT))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(req -> {
+                org.springframework.mock.http.client.MockClientHttpRequest mockReq =
+                    (org.springframework.mock.http.client.MockClientHttpRequest) req;
+                JsonNode root = objectMapper.readTree(mockReq.getBodyAsString());
+                JsonNode variables = root.get("messages").get(0).get("kakaoOptions").get("variables");
+                assertThat(variables.get("#{고객명}").asText()).isEqualTo("홍길동");
+                assertThat(variables.get("#{주문번호}").asText()).isEqualTo("ORD-12345");
+                assertThat(variables.has("#{#{고객명}}"))
+                    .as("이중 wrap 금지")
+                    .isFalse();
+                assertThat(variables.has("#{#{주문번호}}"))
+                    .as("이중 wrap 금지")
+                    .isFalse();
+            })
+            .andRespond(withSuccess("{\"groupId\":\"G_IDEM\"}", MediaType.APPLICATION_JSON));
+
+        SolapiAlimTalkResponse response = client.send(request);
+
+        assertThat(response.success()).isTrue();
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("send(): null/blank key 는 skip, null value 는 빈 문자열로 안전 처리")
+    void sendHandlesNullAndBlankKeysSafely() {
+        SolapiCredentials credentials = new SolapiCredentials("NCSXXXXKEY", "NCSXXXXSECRET_VALUE_VALUE_VALUE_1234");
+        Map<String, String> messyVariables = new LinkedHashMap<>();
+        messyVariables.put(null, "skip-me");
+        messyVariables.put("   ", "blank-key-skip");
+        messyVariables.put("clientName", null);
+        messyVariables.put("packageName", "베이직");
+        SolapiAlimTalkRequest request = new SolapiAlimTalkRequest(
+            credentials, PFID, TEMPLATE_ID, FROM_NUMBER, TO_NUMBER, messyVariables);
+
+        mockServer
+            .expect(requestTo(API_BASE + SolapiAlimTalkClient.SEND_ENDPOINT))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(req -> {
+                org.springframework.mock.http.client.MockClientHttpRequest mockReq =
+                    (org.springframework.mock.http.client.MockClientHttpRequest) req;
+                JsonNode root = objectMapper.readTree(mockReq.getBodyAsString());
+                JsonNode variables = root.get("messages").get(0).get("kakaoOptions").get("variables");
+                assertThat(variables.size()).isEqualTo(2);
+                assertThat(variables.get("#{clientName}").asText())
+                    .as("null value 는 빈 문자열로 치환")
+                    .isEqualTo("");
+                assertThat(variables.get("#{packageName}").asText()).isEqualTo("베이직");
+            })
+            .andRespond(withSuccess("{\"groupId\":\"G_SAFE\"}", MediaType.APPLICATION_JSON));
+
+        SolapiAlimTalkResponse response = client.send(request);
+
+        assertThat(response.success()).isTrue();
+        mockServer.verify();
+    }
+
     private SolapiAlimTalkRequest buildRequest() {
         SolapiCredentials credentials = new SolapiCredentials("NCSXXXXKEY", "NCSXXXXSECRET_VALUE_VALUE_VALUE_1234");
         Map<String, String> variables = new LinkedHashMap<>();

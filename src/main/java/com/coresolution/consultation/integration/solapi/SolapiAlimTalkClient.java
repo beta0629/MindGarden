@@ -1,6 +1,5 @@
 package com.coresolution.consultation.integration.solapi;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,11 +103,13 @@ public class SolapiAlimTalkClient {
         Map<String, Object> body = buildRequestBody(request);
         HttpHeaders headers = buildHeaders(request.credentials());
 
+        // 로깅 정합: variables는 wrap된 key(#{변수명}) 기준으로 노출해 운영 디버깅(치환 가시성)을 높인다.
+        Map<String, String> wrappedForLog = wrapVariableKeys(request.variables());
         log.info("Solapi ATA 요청: pfId.len={}, templateId={}, to.last4={}, params.keys={}",
             safeLength(request.pfId()),
             request.templateId(),
             lastFour(request.toNumber()),
-            request.variables() != null ? request.variables().keySet() : List.of());
+            wrappedForLog.keySet());
 
         String url = apiBaseUrl + SEND_ENDPOINT;
         try {
@@ -130,10 +131,7 @@ public class SolapiAlimTalkClient {
         Map<String, Object> kakaoOptions = new LinkedHashMap<>();
         kakaoOptions.put("pfId", request.pfId());
         kakaoOptions.put("templateId", request.templateId());
-        Map<String, String> variables = request.variables() != null
-            ? request.variables()
-            : new HashMap<>();
-        kakaoOptions.put("variables", variables);
+        kakaoOptions.put("variables", wrapVariableKeys(request.variables()));
 
         Map<String, Object> message = new LinkedHashMap<>();
         message.put("type", MESSAGE_TYPE_ATA);
@@ -146,6 +144,42 @@ public class SolapiAlimTalkClient {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("messages", List.of(message));
         return body;
+    }
+
+    /**
+     * Solapi 카카오 알림톡 변수 키를 {@code #{변수명}} 형식으로 wrap한다.
+     *
+     * <p>Solapi 공식 스펙은 {@code kakaoOptions.variables} 키가 {@code #{변수명}} 형식이어야
+     * 템플릿의 {@code #{변수명}} 자리표시자가 정상 치환된다. 호출부가 plain key
+     * ({@code paymentAmount}) 또는 이미 wrap된 key({@code #{paymentAmount}})
+     * 어느 쪽을 전달해도 idempotent하게 동일 결과를 만든다.
+     *
+     * <p>운영 호출부({@code NotificationServiceImpl#buildAlimTalkParams},
+     * {@code AdminTestNotificationServiceImpl} 등)는 모두 plain key 로 Map을 구성하므로,
+     * 단일 SSOT인 본 클라이언트에서 일괄 wrap하여 호출부 변경 0줄로 변수 치환을 정상화한다.
+     *
+     * @param raw 호출부가 전달한 원시 variables map (null/empty 허용)
+     * @return wrap된 variables map. null/blank 키는 skip, null value는 빈 문자열로 치환.
+     */
+    private static Map<String, String> wrapVariableKeys(Map<String, String> raw) {
+        Map<String, String> wrapped = new LinkedHashMap<>();
+        if (raw == null || raw.isEmpty()) {
+            return wrapped;
+        }
+        raw.forEach((k, v) -> {
+            if (k == null) {
+                return;
+            }
+            String trimmed = k.trim();
+            if (trimmed.isEmpty()) {
+                return;
+            }
+            String key = (trimmed.startsWith("#{") && trimmed.endsWith("}"))
+                ? trimmed
+                : "#{" + trimmed + "}";
+            wrapped.put(key, v == null ? "" : v);
+        });
+        return wrapped;
     }
 
     private HttpHeaders buildHeaders(SolapiCredentials credentials) {

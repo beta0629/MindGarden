@@ -281,6 +281,7 @@ export function useUpcomingConsultation(clientId?: number | string) {
     },
     enabled: queryEnabled,
     staleTime: 1000 * 60 * 2,
+    refetchOnMount: 'always',
   });
 }
 
@@ -367,6 +368,7 @@ export function useClientDashboard(clientId?: number | string) {
     },
     enabled: queryEnabled,
     staleTime: 1000 * 60 * 2,
+    refetchOnMount: 'always',
   });
 }
 

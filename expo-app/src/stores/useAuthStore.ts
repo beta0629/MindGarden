@@ -85,9 +85,7 @@ async function runRestoreTokensFromSecureStore(
             ...user,
             role,
             ...(jwtTenantId ? { tenantId: jwtTenantId } : {}),
-            ...((!Number.isFinite(user.id) || user.id <= 0) && jwtUserId != null
-              ? { id: jwtUserId }
-              : {}),
+            ...(jwtUserId != null && user.id !== jwtUserId ? { id: jwtUserId } : {}),
           };
         } else if (user == null && role != null) {
           if (jwtUserId != null) {
@@ -160,7 +158,7 @@ export const useAuthStore = create<AuthState>()(
         const jwtUserId = parseJwtSubAsUserId(jwtPayload);
         const jwtTenantId = syncTenantStoreFromAccessToken(tokens.accessToken);
         let syncedUser = { ...user, role };
-        if ((!Number.isFinite(syncedUser.id) || syncedUser.id <= 0) && jwtUserId != null) {
+        if (jwtUserId != null && syncedUser.id !== jwtUserId) {
           syncedUser = { ...syncedUser, id: jwtUserId };
         }
         if (jwtTenantId) {
@@ -199,6 +197,8 @@ export const useAuthStore = create<AuthState>()(
         await SecureStore.setItemAsync(SECURE_KEY_REFRESH_TOKEN, tokens.refreshToken);
         const jwtTenantId = syncTenantStoreFromAccessToken(tokens.accessToken);
         const roleFromJwt = resolveStoreRoleFromAccessToken(tokens.accessToken);
+        const jwtPayload = decodeJwtPayload(tokens.accessToken);
+        const jwtUserId = parseJwtSubAsUserId(jwtPayload);
         await hydrateJsessionCacheFromSecureStore();
         set((state) => {
           const role = roleFromJwt ?? state.role;
@@ -208,6 +208,7 @@ export const useAuthStore = create<AuthState>()(
               ...user,
               ...(role != null ? { role } : {}),
               ...(jwtTenantId ? { tenantId: jwtTenantId } : {}),
+              ...(jwtUserId != null && user.id !== jwtUserId ? { id: jwtUserId } : {}),
             };
           }
           return {

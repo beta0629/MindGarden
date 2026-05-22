@@ -12,9 +12,12 @@ function fakeJwt(payload: Record<string, unknown>): string {
 }
 
 describe('resolveClientScheduleUserId', () => {
-  it('prefers store user id when valid', () => {
+  it('prefers JWT sub when accessToken is present and differs from store id', () => {
+    expect(resolveClientScheduleUserId(42, fakeJwt({ sub: '99' }))).toBe(99);
+  });
+
+  it('falls back to store user id when accessToken is missing', () => {
     expect(resolveClientScheduleUserId(42, null)).toBe(42);
-    expect(resolveClientScheduleUserId(42, fakeJwt({ sub: '99' }))).toBe(42);
   });
 
   it('falls back to JWT sub when store id is missing', () => {

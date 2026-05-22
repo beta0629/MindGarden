@@ -39,6 +39,31 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
      */
     @Deprecated
     List<CommonCode> findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc(String codeGroup);
+
+    /**
+     * 테넌트 매칭 + 코어(NULL) 폴백 활성 코드 조회.
+     *
+     * <p>{@code tenant_id = :tenantId} row가 있으면 우선 노출하고, 없는 그룹은
+     * {@code tenant_id IS NULL} 의 공통 코드(코어)를 폴백으로 노출한다. 운영에서는
+     * 테넌트별 시드 복제 부담을 줄이기 위해 코어 공통 코드를 그대로 활용하는 그룹이 있다.
+     *
+     * <p>정렬: 테넌트 매칭 row 우선(NULL은 뒤로) → {@code sort_order ASC} → {@code id ASC}.
+     * 같은 {@code code_value}가 양쪽에 모두 있으면 호출 측에서 dedup하여 테넌트 row를 유지한다.
+     *
+     * @param codeGroup 코드 그룹
+     * @param tenantId  테넌트 ID
+     * @return 활성 코드 리스트(테넌트 우선 정렬, 빈 리스트 가능)
+     * @since 2026-05-22 (어드민 테스트 발송 — ALIMTALK_TEMPLATE 코어 폴백)
+     */
+    @Query("SELECT c FROM CommonCode c "
+        + "WHERE c.codeGroup = :codeGroup "
+        + "AND (c.tenantId = :tenantId OR c.tenantId IS NULL) "
+        + "AND c.isActive = true "
+        + "ORDER BY (CASE WHEN c.tenantId IS NULL THEN 1 ELSE 0 END) ASC, "
+        + "c.sortOrder ASC, c.id ASC")
+    List<CommonCode> findActiveByCodeGroupForTenantWithFallback(
+        @Param("codeGroup") String codeGroup,
+        @Param("tenantId") String tenantId);
     
     /**
      * 테넌트별 코드 그룹과 값으로 조회 (테넌트 필터링)

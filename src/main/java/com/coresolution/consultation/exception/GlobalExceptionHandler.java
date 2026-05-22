@@ -348,6 +348,25 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 어드민 테스트 발송 도구의 솔라피 실시간 알림톡 템플릿 조회 실패.
+     * HTTP 502 Bad Gateway + {@code ALIMTALK_TEMPLATE_FETCH_FAILED} 코드.
+     */
+    @ExceptionHandler(AlimtalkTemplateFetchException.class)
+    public ResponseEntity<ErrorResponse> handleAlimtalkTemplateFetch(
+            AlimtalkTemplateFetchException e, HttpServletRequest request) {
+        log.warn("Alimtalk template fetch failed: upstreamStatus={}, upstreamErrorCode={}, message={}",
+            e.getUpstreamStatus(), e.getUpstreamErrorCode(), e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            e.getMessage() != null ? e.getMessage() : "알림톡 템플릿 조회에 실패했습니다.",
+            "ALIMTALK_TEMPLATE_FETCH_FAILED",
+            HttpStatus.BAD_GATEWAY.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error);
+    }
+
+    /**
      * RuntimeException 처리
      * HTTP 500 Internal Server Error 응답
      * 비즈니스 로직 오류의 경우 실제 메시지를 클라이언트에 전달

@@ -7,10 +7,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.TestAlimtalkRequest;
 import com.coresolution.consultation.dto.TestNotificationAlimtalkTemplate;
@@ -24,6 +26,7 @@ import com.coresolution.consultation.entity.AdminTestNotificationLog;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.TenantKakaoAlimtalkSettings;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.AlimtalkTemplateFetchException;
 import com.coresolution.consultation.integration.solapi.KakaoSolapiCredentialResolver;
 import com.coresolution.consultation.integration.solapi.SolapiCredentials;
 import com.coresolution.consultation.integration.solapi.SolapiKakaoTemplateClient;
@@ -151,16 +154,23 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
     @Transactional(readOnly = true)
     public List<TestNotificationAlimtalkTemplate> listCommonCodeTemplates(String tenantId) {
         Objects.requireNonNull(tenantId, "tenantId");
+        // 테넌트 매칭 row가 있으면 그것을 우선 노출, 없으면 코어(tenant_id IS NULL) 공통 코드를 폴백.
+        // 같은 codeValue가 양쪽에 모두 있을 때 테넌트 row만 유지(쿼리 정렬상 먼저 등장하므로 dedup으로 충분).
         List<CommonCode> codes = commonCodeRepository
-            .findByTenantIdAndCodeGroupOrderBySortOrderAsc(tenantId,
-                COMMON_CODE_GROUP_ALIMTALK_TEMPLATE);
+            .findActiveByCodeGroupForTenantWithFallback(
+                COMMON_CODE_GROUP_ALIMTALK_TEMPLATE, tenantId);
         List<TestNotificationAlimtalkTemplate> templates = new ArrayList<>(codes.size());
+        Set<String> seenCodeValues = new HashSet<>();
         for (CommonCode code : codes) {
             if (Boolean.FALSE.equals(code.getIsActive())) {
                 continue;
             }
+            String codeValue = code.getCodeValue();
+            if (codeValue == null || !seenCodeValues.add(codeValue)) {
+                continue;
+            }
             templates.add(TestNotificationAlimtalkTemplate.builder()
-                .templateCode(code.getCodeValue())
+                .templateCode(codeValue)
                 .title(code.getCodeLabel())
                 .status(null)
                 .variables(extractVariables(code.getExtraData()))
@@ -183,16 +193,26 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
 
         SolapiCredentials credentials = solapiCredentialResolver.resolveCredentials(apiKeyRef);
         if (!credentials.isComplete()) {
-            log.warn("어드민 테스트 발송 — 솔라피 실시간 템플릿 조회 자격증명 없음 (tenantId={})", tenantId);
+            // 솔라피 미설정 테넌트는 정상 흐름으로 빈 리스트 반환(에러 아님).
+            log.info("어드민 테스트 발송 — 솔라피 실시간 템플릿 조회 자격증명 없음 (tenantId={})", tenantId);
             return Collections.emptyList();
         }
 
         String pfId = solapiCredentialResolver.resolvePfId(senderKeyRef);
         SolapiKakaoTemplateClient.Response response = solapiKakaoTemplateClient.list(credentials, pfId);
         if (!response.success()) {
-            log.warn("어드민 테스트 발송 — 솔라피 실시간 템플릿 조회 실패: errorCode={}", response.errorCode());
-            return Collections.emptyList();
+            // 빈 리스트만 반환하면 프론트는 "템플릿 없음"으로 보여 사용자가 원인 파악 불가 →
+            // 어드민 도구는 상태코드·errorCode·메시지를 그대로 노출하여 진단을 가속한다.
+            String detail = formatLiveFailureMessage(response.statusCode(),
+                response.errorCode(), response.errorMessage());
+            log.warn("어드민 테스트 발송 — 솔라피 실시간 템플릿 조회 실패: status={}, errorCode={}, errorMessage={}",
+                response.statusCode(), response.errorCode(), response.errorMessage());
+            throw new AlimtalkTemplateFetchException(
+                response.statusCode(), response.errorCode(), detail);
         }
+
+        log.info("어드민 테스트 발송 — 솔라피 실시간 템플릿 조회 성공 (tenantId={}, count={})",
+            tenantId, response.templates().size());
 
         List<TestNotificationAlimtalkTemplate> templates = new ArrayList<>(response.templates().size());
         for (SolapiKakaoTemplateClient.TemplateMeta meta : response.templates()) {
@@ -205,6 +225,26 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
                 .build());
         }
         return templates;
+    }
+
+    /**
+     * 솔라피 실시간 템플릿 조회 실패 메시지 포맷.
+     *
+     * @param statusCode    솔라피 응답 HTTP 상태(클라이언트 실패는 0 또는 5xx)
+     * @param errorCode     솔라피 errorCode
+     * @param errorMessage  솔라피 errorMessage(이미 마스킹된 본문 일부 포함 가능)
+     * @return 어드민 응답으로 노출할 메시지
+     */
+    private static String formatLiveFailureMessage(int statusCode, String errorCode, String errorMessage) {
+        StringBuilder sb = new StringBuilder("솔라피 알림톡 템플릿 조회 실패 (status=")
+            .append(statusCode).append(")");
+        if (errorCode != null && !errorCode.isBlank()) {
+            sb.append(", errorCode=").append(errorCode);
+        }
+        if (errorMessage != null && !errorMessage.isBlank()) {
+            sb.append(", errorMessage=").append(errorMessage);
+        }
+        return sb.toString();
     }
 
     @Override

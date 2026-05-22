@@ -93,23 +93,70 @@ public class SolapiKakaoTemplateClient {
         headers.set(SolapiSignatureSigner.AUTH_HEADER,
             signatureSigner.buildAuthorizationHeader(credentials.apiKey(), credentials.apiSecret()));
 
+        log.info("Solapi 알림톡 템플릿 조회 요청: GET {}, headers={Authorization=***MASKED***, Accept={}}, pfId={}",
+            url, headers.getAccept(), pfId == null ? "(null)" : "(present)");
+
         try {
             ResponseEntity<String> response = restTemplate.exchange(
                 URI.create(url.toString()),
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
                 String.class);
-            return parse(response.getStatusCode().value(), response.getBody());
+            Response parsed = parse(response.getStatusCode().value(), response.getBody());
+            if (parsed.success()) {
+                log.info("Solapi 알림톡 템플릿 조회 성공: status={}, count={}",
+                    response.getStatusCode(), parsed.templates().size());
+            } else {
+                log.warn("Solapi 알림톡 템플릿 조회 응답 파싱 결과 실패: status={}, errorCode={}, errorMessage={}",
+                    response.getStatusCode(), parsed.errorCode(), parsed.errorMessage());
+            }
+            return parsed;
         } catch (RestClientResponseException e) {
-            String maskedBody = SolapiSmsProvider.maskResponseBody(e.getResponseBodyAsString());
-            log.warn("Solapi 알림톡 템플릿 조회 HTTP 오류: status={}, length={}, body={}",
-                e.getStatusCode(), e.getResponseBodyAsString() == null ? 0
-                    : e.getResponseBodyAsString().length(), maskedBody);
-            return parse(e.getStatusCode().value(), e.getResponseBodyAsString());
+            String rawBody = e.getResponseBodyAsString();
+            int rawLength = rawBody == null ? 0 : rawBody.length();
+            String maskedBody = SolapiSmsProvider.maskResponseBody(rawBody);
+            ErrorPayload payload = extractErrorPayload(rawBody);
+            log.warn("Solapi 알림톡 템플릿 조회 HTTP 오류: status={}, length={}, errorCode={}, errorMessage={}, maskedBody={}",
+                e.getStatusCode(), rawLength, payload.code(), payload.message(), maskedBody);
+            return parse(e.getStatusCode().value(), rawBody);
         } catch (Exception e) {
-            log.warn("Solapi 알림톡 템플릿 조회 실패: {}", e.getMessage());
-            return Response.failure(500, "CLIENT_ERROR", e.getClass().getSimpleName());
+            log.warn("Solapi 알림톡 템플릿 조회 실패: {} ({})",
+                e.getMessage(), e.getClass().getSimpleName());
+            return Response.failure(500, "CLIENT_ERROR",
+                e.getClass().getSimpleName() + ": " + e.getMessage());
         }
+    }
+
+    /**
+     * 솔라피 4xx/5xx 응답 JSON에서 진단용으로 안전한 정형 필드만 추출한다.
+     *
+     * <p>{@link SolapiSmsProvider#maskResponseBody} 가 SECRET_LIKE_PATTERN으로 짧은 본문의 토큰을
+     * 광범위하게 마스킹하기 때문에 정작 솔라피의 {@code errorCode}/{@code errorMessage} 까지
+     * 파편화되어 로그에 안 보일 수 있다. 본 메서드는 본문이 JSON일 때 마스킹 전 원본에서
+     * 두 필드만 추출하여 함께 출력한다. PII 가능성이 낮은 정형 코드·메시지에 한정한다.
+     *
+     * @param rawBody 원본 응답 본문(JSON 또는 비-JSON, null 허용)
+     * @return errorCode/errorMessage 추출 결과(없으면 {@code null})
+     */
+    private ErrorPayload extractErrorPayload(String rawBody) {
+        if (rawBody == null || rawBody.isBlank()) {
+            return new ErrorPayload(null, null);
+        }
+        try {
+            JsonNode root = objectMapper.readTree(rawBody);
+            return new ErrorPayload(textOrNull(root, "errorCode"), textOrNull(root, "errorMessage"));
+        } catch (Exception e) {
+            return new ErrorPayload(null, null);
+        }
+    }
+
+    /**
+     * 솔라피 응답 본문에서 추출한 진단용 정형 필드.
+     *
+     * @param code    {@code errorCode} 값(없으면 {@code null})
+     * @param message {@code errorMessage} 값(없으면 {@code null})
+     */
+    private record ErrorPayload(String code, String message) {
     }
 
     private Response parse(int statusCode, String body) {

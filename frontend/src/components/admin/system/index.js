@@ -3,3 +3,4 @@ export { default as SystemStatus } from './SystemStatus';
 export { default as SystemTools } from './SystemTools';
 export { default as TestNotificationForm } from './TestNotificationForm';
 export { default as TestNotificationHistory } from './TestNotificationHistory';
+export { default as AdminTestNotificationPage } from './AdminTestNotificationPage';

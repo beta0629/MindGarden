@@ -66,6 +66,7 @@ const CommonDashboard = lazy(() => import('./components/dashboard/CommonDashboar
 const ConsultantDashboardV2 = lazy(() => import('./components/dashboard-v2/consultant/ConsultantDashboardV2'));
 const AdminKakaoAlimtalkSettingsPage = lazy(() => import('./components/admin/AdminKakaoAlimtalkSettingsPage'));
 const AdminTenantSmsSettingsPage = lazy(() => import('./components/admin/AdminTenantSmsSettingsPage'));
+const AdminTestNotificationPage = lazy(() => import('./components/admin/system/AdminTestNotificationPage'));
 import UnifiedNotification from './components/common/UnifiedNotification';
 import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
@@ -782,6 +783,11 @@ function AppContent() {
             <Route path="/admin/reports" element={<Navigate to="/admin/consultation-logs" replace />} />
             <Route path="/admin/backup" element={<Navigate to="/admin/system-config" replace />} />
             <Route path="/admin/system-config" element={<SystemConfigManagement />} />
+            <Route path={ADMIN_ROUTES.TEST_NOTIFICATION} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminTestNotificationPage />
+              </ProtectedRoute>
+            } />
             <Route path={ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS} element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
                 <AdminKakaoAlimtalkSettingsPage />

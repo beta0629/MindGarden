@@ -1,0 +1,38 @@
+/**
+ * 어드민 알림 테스트 발송 전용 페이지 스타일.
+ *
+ * - 디자인 토큰(`var(--admin-*)`, `var(--mg-*)`)만 사용 (핸드오프 §4).
+ * - HEX/RGB 직접 사용 및 인라인 스타일 금지.
+ * - 좌측 폼(2fr) + 우측 이력(1fr) 그리드, 모바일 단일 컬럼.
+ *
+ * @author MindGarden
+ * @since 2026-05-22
+ */
+
+.mg-v2-admin-test-notification {
+    width: 100%;
+}
+
+.mg-admin-test-notif-page__panel {
+    margin-top: var(--admin-spacing-lg);
+    width: 100%;
+}
+
+.mg-admin-test-notif-page__grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--admin-spacing-lg);
+    align-items: stretch;
+}
+
+.mg-admin-test-notif-page__form,
+.mg-admin-test-notif-page__history {
+    min-width: 0;
+}
+
+@media (max-width: 768px) {
+    .mg-admin-test-notif-page__grid {
+        grid-template-columns: 1fr;
+        gap: var(--admin-spacing-md);
+    }
+}

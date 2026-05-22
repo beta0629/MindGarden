@@ -66,6 +66,12 @@
       "subtitle": "SMS 또는 카카오 알림톡을 본인 또는 DB 사용자에게 테스트 발송합니다.",
       "close": "패널 닫기"
     },
+    "page": {
+      "title": "알림 테스트 발송",
+      "subtitle": "어드민이 본인·DB 사용자에게 SMS·카카오 알림톡을 테스트 발송하여 운영 사고를 재현·예방합니다.",
+      "menuLabel": "알림 테스트 발송",
+      "noAccess": "이 페이지에 접근할 권한이 없습니다. ADMIN 또는 STAFF 권한이 필요합니다."
+    },
     "recipient": {
       "title": "수신자",
       "self": "본인(SELF)",

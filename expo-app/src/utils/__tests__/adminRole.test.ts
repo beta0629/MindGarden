@@ -1,4 +1,5 @@
 import {
+  adminMobileScheduleListUserRole,
   adminMobileScheduleUserRole,
   canAccessCommunityModeration,
   canManageMappingsOnMobile,
@@ -79,6 +80,12 @@ describe('adminRole', () => {
     expect(isAdminMobileAdminRole('STAFF')).toBe(false);
     expect(adminMobileScheduleUserRole('ADMIN')).toBe('ADMIN');
     expect(adminMobileScheduleUserRole(null)).toBeNull();
+  });
+
+  it('maps ADMIN to STAFF for hub schedule list API only', () => {
+    expect(adminMobileScheduleListUserRole('ADMIN')).toBe('STAFF');
+    expect(adminMobileScheduleListUserRole('STAFF')).toBe('STAFF');
+    expect(adminMobileScheduleListUserRole(null)).toBeNull();
   });
 
   it('resolves store role from JWT for token restore (admin over stale client)', () => {

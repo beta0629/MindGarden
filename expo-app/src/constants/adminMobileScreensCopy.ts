@@ -40,7 +40,8 @@ export function adminMappingManagementWebUrl(): string {
 
 /** Phase 2+ API 경로 주석용 (Spring) */
 export const ADMIN_MOBILE_API_PATH_HINTS = {
-  TODAY_SCHEDULES: 'GET /api/v1/schedules/date/{yyyy-MM-dd}?userId=&userRole=ADMIN|STAFF',
+  TODAY_SCHEDULES:
+    'GET /api/v1/schedules/date/{yyyy-MM-dd}?userId=&userRole=STAFF (모바일 허브·ADMIN JWT는 STAFF로 조회)',
   USER_MANAGEMENT: 'GET /api/v1/admin/user-management',
   CONSULTATION_RECORDS: 'GET /api/v1/admin/consultant-records/{consultantId}/consultation-records',
   MIND_WEATHER_CARDS: 'GET /api/v1/admin/wellness/mind-weather/cards',
@@ -127,4 +128,7 @@ export const ADMIN_MOBILE_OPERATION_COPY = {
   SCHEDULE_EMPTY: '오늘 등록된 일정이 없습니다.',
   SCHEDULE_ERROR: '일정을 불러오지 못했습니다. 권한·네트워크를 확인해 주세요.',
   SCHEDULE_STAFF_HINT: '사무원 계정은 제한된 일정만 표시될 수 있습니다.',
+  /** 상담 겸직 ADMIN — 허브 목록은 테넌트 전체(등록한 타 상담사 일정 포함) */
+  SCHEDULE_ADMIN_COUNSELING_LIST_HINT:
+    '상담 겸직 관리자도 운영 탭 일정 목록에는 테넌트 전체 일정이 표시됩니다.',
 } as const;

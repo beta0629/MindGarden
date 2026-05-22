@@ -14,7 +14,7 @@ import { useAdminApiTenantSync } from '@/hooks/useAdminApiTenantSync';
 import { useAdminApiQueryReady } from '@/hooks/useAdminApiQueryReady';
 import { useAuthStore } from '@/stores/useAuthStore';
 import {
-  adminMobileScheduleUserRole,
+  adminMobileScheduleListUserRole,
   resolveAdminMobileJwtRole,
   resolveAdminMobileJwtRoleFromStoreRole,
 } from '@/utils/adminRole';
@@ -132,7 +132,7 @@ export function useAdminSchedulesByDate(
   const jwtRole =
     resolveAdminMobileJwtRole(accessToken) ??
     resolveAdminMobileJwtRoleFromStoreRole(storeRole);
-  const scheduleRole = adminMobileScheduleUserRole(jwtRole);
+  const scheduleRole = adminMobileScheduleListUserRole(jwtRole);
 
   const query = useQuery<Schedule[]>({
     queryKey:

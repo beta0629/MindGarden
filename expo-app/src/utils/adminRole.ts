@@ -269,9 +269,23 @@ export function isAdminMobileAdminRole(role: AdminMobileJwtRole | null): boolean
   return role === 'ADMIN';
 }
 
-/** 스케줄 API `userRole` 쿼리 */
+/** 스케줄 API `userRole` 쿼리 — JWT claim 그대로(등록·타임슬롯 등) */
 export function adminMobileScheduleUserRole(role: AdminMobileJwtRole | null): string | null {
   return role ?? null;
+}
+
+/**
+ * 허브 일정 목록 `GET .../schedules/date/{date}` 전용 `userRole`.
+ *
+ * `counseling_enabled` ADMIN은 `userRole=ADMIN` 시 본인 consultantId 일정만 조회하지만,
+ * `POST .../schedules/consultant` 로 타 상담사 일정 등록은 가능하다. 목록 범위를 STAFF와
+ * 동일(테넌트 전체)로 맞춘다. UI·탭 가드는 JWT/스토어 ADMIN 그대로 유지한다.
+ */
+export function adminMobileScheduleListUserRole(role: AdminMobileJwtRole | null): string | null {
+  if (role === 'ADMIN') {
+    return 'STAFF';
+  }
+  return adminMobileScheduleUserRole(role);
 }
 
 /** JWT role claim 누락 시 스토어 역할 → 스케줄 API `userRole` */

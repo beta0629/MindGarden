@@ -3,6 +3,7 @@
 -- 기획: docs/project-management/2026-05-22/ADMIN_TEST_NOTIFICATION_TOOL_PLAN.md §4.X C6 (new_table)
 -- 90일 보관 정책: 별도 스케줄러는 본 PR 범위 외 (TODO 후속 PR)
 -- 파일명 규칙: timestamp V20260522_003__ (어제 V73 명명 사고 회피 — Flyway 적용 보장)
+-- 2026-05-22 작성 → DEV DB 최상위(V20260525_001) 초과 + out-of-order 회피 위해 2026-05-26 timestamp 로 리네이밍 (git mv, SQL 내용 변경 없음).
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS admin_test_notification_logs (

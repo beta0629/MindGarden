@@ -64,6 +64,15 @@ spring:
       maximum-pool-size: 10
       leak-detection-threshold: 180000
 
+  # Flyway (dev 프로파일 명시 오버라이드 — 베이스 application.yml 기본값과 동일하나, dev 함정 재발 방지 위해 명시)
+  # - 2026-05-22 사고: DEV DB 최상위가 V20260525_001 인 상태에서 V20260522_003/004 가 영원히 무시됨(out-of-order 미설정 기본=false).
+  # - 본 키로 같은 함정 재발 시 즉시 적용 보장.
+  flyway:
+    enabled: ${SPRING_FLYWAY_ENABLED:true}
+    baseline-on-migrate: true
+    out-of-order: ${SPRING_FLYWAY_OUT_OF_ORDER:true}
+    validate-on-migrate: ${SPRING_FLYWAY_VALIDATE_ON_MIGRATE:false}
+
 # Ops Portal 관리자 (환경변수로 주입, -D 인자 제거로 ps/journalctl 노출 방지)
 ops:
   admin:

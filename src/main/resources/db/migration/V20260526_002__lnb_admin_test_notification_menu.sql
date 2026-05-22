@@ -1,3 +1,4 @@
+-- 2026-05-22 작성 → DEV DB 최상위(V20260525_001) 초과 + out-of-order 회피 위해 2026-05-26 timestamp 로 리네이밍 (git mv, SQL 내용 변경 없음).
 -- LNB: 설정(ADM_SETTINGS) 하위에 어드민 알림 테스트 발송 메뉴 추가
 -- - 경로는 `ADMIN_ROUTES.TEST_NOTIFICATION` 와 동일: /admin/test-notification
 -- - 역할·플래그는 카카오 알림톡(ADM_SETTINGS_KAKAO_ALIMTALK)·문자 메시지(ADM_SETTINGS_TENANT_SMS)와 동형(STAFF)

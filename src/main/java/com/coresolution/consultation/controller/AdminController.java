@@ -1966,18 +1966,18 @@ public class AdminController extends BaseApiController {
 
     /**
      * 매칭 정보 수정
+     *
+     * <p>역할 기반 어노테이션 가드로 통일 (2026-05-22).
+     * 기존 MAPPING_MANAGE 동적 권한 체크는 STAFF 시드 권한에 누락되어 항상 403 을 발생시켰음.
+     * 본 메서드는 ADMIN/STAFF 가 매칭을 수정할 수 있어야 한다는 요구에 맞춰
+     * {@code @PreAuthorize} 만으로 인가를 처리한다. 다른 MAPPING_MANAGE 가드 메서드는
+     * 별도 PR 에서 일괄 정리한다 (잔여 위험 참조).</p>
      */
     @PutMapping("/mappings/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<ConsultantClientMapping>> updateMapping(@PathVariable Long id,
             @RequestBody ConsultantClientMappingCreateRequest request, HttpSession session) {
         log.info("🔧 매칭 정보 수정: ID={}", id);
-
-        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
-                "MAPPING_MANAGE", dynamicPermissionService);
-        if (permissionResponse != null) {
-            log.warn("❌ 매칭 수정 권한 없음: MAPPING_MANAGE");
-            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-        }
 
         User currentUser = SessionUtils.getCurrentUser(session);
         String updatedBy = currentUser != null ? currentUser.getName() : "System";

@@ -6,8 +6,15 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { ActionButton, StatusBadge } from '../common';
 import SafeText from '../common/SafeText';
+import { toPackageOption } from '../../utils/packagePricing';
 import './MappingEditModal.css';
 import { useTranslation } from 'react-i18next';
+
+const PACKAGE_META_PLACEHOLDER = '-';
+const formatSessions = (sessions) =>
+  sessions == null ? `${PACKAGE_META_PLACEHOLDER}회기` : `${sessions}회기`;
+const formatPrice = (price) =>
+  price == null ? `${PACKAGE_META_PLACEHOLDER}원` : `${Number(price).toLocaleString()}원`;
 
 /**
  * 매칭 수정 모달 컴포넌트
@@ -65,18 +72,23 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
 
   /**
    * 패키지 옵션 로드
+   * - 공통코드(CONSULTATION_PACKAGE)의 extraData(JSON) 를 그대로 신뢰한다.
+   *   codeValue 패턴 추론·하드코딩 폴백 금지 (패키지 관리 페이지와 동일 소스).
    */
   const loadPackageOptions = async() => {
     try {
       const { getTenantCodes } = await import('../../utils/commonCodeApi');
       const codes = await getTenantCodes('CONSULTATION_PACKAGE');
 
-      const options = codes.map(code => ({
-        value: code.codeValue,
-        label: code.koreanName || code.codeLabel,
-        sessions: getSessionCount(code.codeValue),
-        price: getPackagePrice(code.codeValue)
-      }));
+      const options = (codes || [])
+        .map(toPackageOption)
+        .filter(opt => opt.value)
+        .sort((a, b) => {
+          if (a.sortOrder == null && b.sortOrder == null) return 0;
+          if (a.sortOrder == null) return 1;
+          if (b.sortOrder == null) return -1;
+          return a.sortOrder - b.sortOrder;
+        });
 
       setPackageOptions(options);
     } catch (error) {
@@ -86,49 +98,15 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
   };
 
   /**
-   * 패키지 코드에서 회기 수 추출
-   */
-  const getSessionCount = (codeValue) => {
-    if (codeValue === 'BASIC' || codeValue === 'STANDARD' ||
-        codeValue === 'PREMIUM' || codeValue === 'VIP') {
-      return 20;
-    }
-    if (codeValue.startsWith('SINGLE_')) {
-      return 1;
-    }
-    return 20;
-  };
-
-  /**
-   * 패키지 코드에서 가격 추출
-   */
-  const getPackagePrice = (codeValue) => {
-    const priceMap = {
-      'BASIC': 200000,
-      'STANDARD': 400000,
-      'PREMIUM': 600000,
-      'VIP': 1000000
-    };
-
-    if (priceMap[codeValue]) {
-      return priceMap[codeValue];
-    }
-    if (codeValue.startsWith('SINGLE_')) {
-      const priceStr = codeValue.replace('SINGLE_', '');
-      const price = Number.parseInt(priceStr, 10);
-      return Number.isNaN(price) ? 30000 : price;
-    }
-    return 200000;
-  };
-
-  /**
    * 패키지 카드 클릭 처리
+   * - extraData 누락(null) 인 경우에도 선택은 허용하되, 폼은 빈 값을 그대로 둔다.
+   *   (validateForm 에서 가격/회기 필수 검증이 동작)
    */
   const handlePackageSelect = (pkg) => {
     setFormData({
       packageName: pkg.value,
-      packagePrice: pkg.price,
-      totalSessions: pkg.sessions
+      packagePrice: pkg.price == null ? '' : pkg.price,
+      totalSessions: pkg.sessions == null ? '' : pkg.sessions
     });
     if (errors.packageName) {
       setErrors(prev => ({ ...prev, packageName: '' }));
@@ -307,7 +285,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                   >
                     <SafeText className="mg-v2-mapping-edit-modal__package-card-label" tag="span">{pkg.label}</SafeText>
                     <span className="mg-v2-mapping-edit-modal__package-card-meta">
-                      {pkg.sessions}회기 · {pkg.price.toLocaleString()}원
+                      {formatSessions(pkg.sessions)} · {formatPrice(pkg.price)}
                     </span>
                   </MGButton>
                 ))}

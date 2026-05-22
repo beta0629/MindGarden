@@ -143,8 +143,14 @@ public static ResponseEntity<?> checkPermission(
 ### 매칭 관리
 | 권한 코드 | 설명 | 대상 API |
 |----------|------|---------|
-| `MAPPING_MANAGE` | 매칭 관리 | POST/PUT/DELETE /api/admin/mappings |
+| `MAPPING_MANAGE` | 매칭 관리 | POST/DELETE /api/admin/mappings |
 | `MAPPING_VIEW` | 매칭 조회 | GET /api/admin/mappings |
+
+> ⚠️ **PUT /api/v1/admin/mappings/{id}** (2026-05-22 이후): 동적 권한(MAPPING_MANAGE) 대신
+> `@PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")` 어노테이션 가드로 통일됨.
+> STAFF 시드 권한에 `MAPPING_MANAGE` 가 누락되어 항상 403 이 발생하던 결함을 정정한다.
+> 나머지 `MAPPING_MANAGE` 가드 메서드 (POST/DELETE, 회기 추가 등) 는 후속 PR 에서 동일하게
+> 어노테이션 기반으로 정리 예정.
 
 ### 스케줄 관리
 | 권한 코드 | 설명 | 대상 API |

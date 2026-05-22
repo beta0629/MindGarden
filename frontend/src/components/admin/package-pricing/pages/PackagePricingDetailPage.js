@@ -21,33 +21,10 @@ import {
   API,
   LABELS
 } from '../../../../constants/packagePricingConstants';
+import { parseExtraData, buildExtraDataString } from '../../../../utils/packagePricing';
 import '../../../../styles/unified-design-tokens.css';
 import '../../AdminDashboard/AdminDashboardB0KlA.css';
 import '../PackagePricingPage.css';
-
-const EXTRA_DATA_KEYS = { SESSIONS: 'sessions', PRICE: 'price', REMARK: 'remark' };
-
-function parseExtraData(extraData) {
-  if (!extraData) return { sessions: null, price: null, remark: '' };
-  try {
-    const o = typeof extraData === 'string' ? JSON.parse(extraData) : extraData;
-    return {
-      sessions: o?.sessions !== undefined && o?.sessions !== null ? Number(o.sessions) : null,
-      price: o?.price !== undefined && o?.price !== null ? Number(o.price) : null,
-      remark: o?.remark !== undefined && o?.remark !== null ? String(o.remark) : ''
-    };
-  } catch {
-    return { sessions: null, price: null, remark: '' };
-  }
-}
-
-function buildExtraDataString(sessions, price, remark) {
-  return JSON.stringify({
-    [EXTRA_DATA_KEYS.SESSIONS]: sessions,
-    [EXTRA_DATA_KEYS.PRICE]: price,
-    [EXTRA_DATA_KEYS.REMARK]: remark || ''
-  });
-}
 
 const INITIAL_FORM = {
   codeValue: '',

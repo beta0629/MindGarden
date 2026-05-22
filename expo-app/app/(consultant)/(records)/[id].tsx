@@ -1,6 +1,6 @@
 /**
  * 일지 상세 화면
- * 상담 정보, 요약, 전문가 메모, 태그, 수정 버튼
+ * DRAFT만 모바일 편집 허용, COMPLETED는 웹 안내
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -20,11 +20,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { ArrowLeft, Edit3 } from 'lucide-react-native';
+import { ArrowLeft, Edit3, Monitor } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useRecordDetail, useUpdateRecord } from '@/api/hooks/useRecords';
 import { Chip } from '@/components/atoms/Chip';
+import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard, SkeletonLoader } from '@/components/atoms/SkeletonLoader';
+import { CONSULTANT_RECORDS_COPY } from '@/constants/consultantRecordsCopy';
+import { isConsultantRecordEditableOnMobile } from '@/utils/consultantRecordMobilePolicy';
 
 export default function ConsultantRecordDetail() {
   const theme = useTheme();
@@ -37,6 +40,8 @@ export default function ConsultantRecordDetail() {
 
   const record = detailQuery.data;
   const isLoading = detailQuery.isLoading;
+  const canEditOnMobile = record ? isConsultantRecordEditableOnMobile(record.status) : false;
+  const isCompletedOnMobile = record?.status === 'COMPLETED';
 
   const [editSummary, setEditSummary] = useState('');
   const [editMemo, setEditMemo] = useState('');
@@ -46,14 +51,14 @@ export default function ConsultantRecordDetail() {
   }, [detailQuery]);
 
   const startEdit = () => {
-    if (!record) return;
+    if (!record || !canEditOnMobile) return;
     setEditSummary(record.summary ?? '');
     setEditMemo(record.expertMemo ?? '');
     setIsEditing(true);
   };
 
   const handleSave = () => {
-    if (!record) return;
+    if (!record || !canEditOnMobile) return;
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -96,7 +101,7 @@ export default function ConsultantRecordDetail() {
           onPress={() => router.back()}
           hitSlop={12}
           accessibilityRole="button"
-          accessibilityLabel="뒤로가기"
+          accessibilityLabel={CONSULTANT_RECORDS_COPY.BACK_BUTTON_LABEL}
         >
           <ArrowLeft size={24} color={theme.colors.textMain} />
         </Pressable>
@@ -109,9 +114,9 @@ export default function ConsultantRecordDetail() {
             flex: 1,
           }}
         >
-          일지 상세
+          {CONSULTANT_RECORDS_COPY.DETAIL_PAGE_TITLE}
         </Text>
-        {!isEditing && record ? (
+        {!isEditing && record && canEditOnMobile ? (
           <Pressable
             onPress={startEdit}
             hitSlop={8}
@@ -141,6 +146,14 @@ export default function ConsultantRecordDetail() {
             <SkeletonCard />
             <SkeletonCard />
           </>
+        ) : isCompletedOnMobile ? (
+          <EmptyState
+            icon={<Monitor size={32} color={theme.colors.textTertiary} />}
+            title={CONSULTANT_RECORDS_COPY.COMPLETED_RECORD_DESKTOP_ONLY_TITLE}
+            description={CONSULTANT_RECORDS_COPY.COMPLETED_RECORD_DESKTOP_ONLY_BODY}
+            actionLabel={CONSULTANT_RECORDS_COPY.BACK_BUTTON_LABEL}
+            onAction={() => router.back()}
+          />
         ) : record ? (
           <>
             {/* 상담 정보 */}

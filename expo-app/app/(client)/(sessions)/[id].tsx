@@ -35,15 +35,7 @@ export default function ClientSessionDetail() {
   const { data: detail, isLoading } = useConsultationDetail(id);
   const recordGardenGrowth = useMindGardenStore((s) => s.recordGrowthEvent);
 
-  const isScheduled = detail?.status === 'SCHEDULED' || detail?.status === 'BOOKED';
   const isCompleted = detail?.status === 'COMPLETED';
-
-  const handleCancelRequest = () => {
-    Alert.alert('상담 취소', '정말 이 상담을 취소하시겠습니까?', [
-      { text: '아니요', style: 'cancel' },
-      { text: '취소하기', style: 'destructive', onPress: () => {} },
-    ]);
-  };
 
   const handleReview = () => {
     if (Platform.OS !== 'web') {
@@ -239,30 +231,6 @@ export default function ClientSessionDetail() {
 
         {/* 액션 버튼 */}
         <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.actionGroup}>
-          {isScheduled && (
-            <Pressable
-              onPress={handleCancelRequest}
-              style={[
-                styles.actionButton,
-                {
-                  borderColor: theme.colors.error,
-                  borderRadius: theme.borderRadius.lg,
-                },
-              ]}
-              accessibilityLabel="상담 취소 요청"
-              accessibilityRole="button"
-            >
-              <Text
-                style={{
-                  fontFamily: theme.fontFamily.semibold,
-                  fontSize: theme.fontSize.sm,
-                  color: theme.colors.error,
-                }}
-              >
-                취소 요청
-              </Text>
-            </Pressable>
-          )}
           {isCompleted && (
             <>
               <Pressable
@@ -416,12 +384,6 @@ const styles = StyleSheet.create({
   actionGroup: {
     gap: 12,
     marginTop: 8,
-  },
-  actionButton: {
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
   },
   primaryActionButton: {
     height: 52,

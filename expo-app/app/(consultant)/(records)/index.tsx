@@ -1,11 +1,10 @@
 /**
- * 상담일지 목록
- * 미작성 / 전체 탭, RecordCard 리스트 (무한 스크롤)
+ * 상담일지 목록 — 미작성 일지만 표시 (작성 완료 일지는 웹에서 확인)
  *
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 import { View, Text, StyleSheet, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -13,51 +12,31 @@ import { FlashList } from '@shopify/flash-list';
 import { FileText } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { useConsultationRecords, usePendingRecords } from '@/api/hooks/useRecords';
+import { usePendingRecords } from '@/api/hooks/useRecords';
 import { RecordCard } from '@/components/molecules/RecordCard';
-import { Chip } from '@/components/atoms/Chip';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { EmptyState } from '@/components/atoms/EmptyState';
-
-type Tab = 'pending' | 'all';
+import { CONSULTANT_RECORDS_COPY } from '@/constants/consultantRecordsCopy';
 
 export default function ConsultantRecords() {
   const theme = useTheme();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const [tab, setTab] = useState<Tab>('pending');
 
   const pendingQuery = usePendingRecords(user?.id);
-  const recordsQuery = useConsultationRecords({
-    consultantId: user?.id ?? '',
-    status: 'ALL',
-  });
-
   const pending = pendingQuery.data ?? [];
-  const records = useMemo(
-    () => recordsQuery.data?.pages.flatMap((p) => p.content) ?? [],
-    [recordsQuery.data],
-  );
 
-  const isLoading = tab === 'pending' ? pendingQuery.isLoading : recordsQuery.isLoading;
-  const isRefreshing =
-    tab === 'pending'
-      ? pendingQuery.isFetching && !pendingQuery.isLoading
-      : recordsQuery.isFetching && !recordsQuery.isLoading;
+  const isLoading = pendingQuery.isLoading;
+  const isRefreshing = pendingQuery.isFetching && !pendingQuery.isLoading;
 
   const onRefresh = useCallback(() => {
-    if (tab === 'pending') {
-      pendingQuery.refetch();
-    } else {
-      recordsQuery.refetch();
-    }
-  }, [tab, pendingQuery, recordsQuery]);
+    pendingQuery.refetch();
+  }, [pendingQuery]);
 
-  const onEndReached = () => {
-    if (tab === 'all' && recordsQuery.hasNextPage && !recordsQuery.isFetchingNextPage) {
-      recordsQuery.fetchNextPage();
-    }
-  };
+  const pendingLabel =
+    pending.length > 0
+      ? `${CONSULTANT_RECORDS_COPY.PENDING_SECTION_LABEL} (${pending.length})`
+      : CONSULTANT_RECORDS_COPY.PENDING_SECTION_LABEL;
 
   return (
     <SafeAreaView
@@ -79,18 +58,19 @@ export default function ConsultantRecords() {
           }}
           accessibilityRole="header"
         >
-          상담일지
+          {CONSULTANT_RECORDS_COPY.PAGE_TITLE}
         </Text>
 
-        <View style={styles.tabRow}>
-          <Chip
-            label={`미작성${pending.length > 0 ? ` (${pending.length})` : ''}`}
-            selected={tab === 'pending'}
-            onPress={() => setTab('pending')}
-          />
-          <View style={{ width: theme.spacing.sm }} />
-          <Chip label="전체" selected={tab === 'all'} onPress={() => setTab('all')} />
-        </View>
+        <Text
+          style={{
+            color: theme.colors.textSecondary,
+            fontFamily: theme.fontFamily.medium,
+            fontSize: theme.fontSize.sm,
+            marginBottom: theme.spacing.md,
+          }}
+        >
+          {pendingLabel}
+        </Text>
       </View>
 
       {isLoading ? (
@@ -99,50 +79,17 @@ export default function ConsultantRecords() {
           <SkeletonCard />
           <SkeletonCard />
         </View>
-      ) : tab === 'pending' ? (
-        pending.length === 0 ? (
-          <EmptyState
-            icon={<FileText size={32} color={theme.colors.textTertiary} />}
-            title="미작성 일지가 없습니다"
-            description="모든 상담일지를 작성하셨습니다."
-          />
-        ) : (
-          <FlashList
-            data={pending}
-            keyExtractor={(item) => String(item.scheduleId)}
-            contentContainerStyle={{ paddingHorizontal: theme.spacing.lg }}
-            refreshControl={
-              <RefreshControl
-                refreshing={isRefreshing}
-                onRefresh={onRefresh}
-                tintColor={theme.colors.primary}
-              />
-            }
-            renderItem={({ item, index }) => (
-              <RecordCard
-                clientName={`${item.clientName} 님`}
-                date={item.date}
-                time={`${item.startTime} - ${item.endTime}`}
-                isPending
-                index={index}
-                onPress={() => router.push(`/(consultant)/(records)/create/${item.scheduleId}`)}
-              />
-            )}
-          />
-        )
-      ) : records.length === 0 ? (
+      ) : pending.length === 0 ? (
         <EmptyState
           icon={<FileText size={32} color={theme.colors.textTertiary} />}
-          title="작성된 일지가 없습니다"
-          description="상담 완료 후 일지를 작성해주세요."
+          title={CONSULTANT_RECORDS_COPY.EMPTY_PENDING_TITLE}
+          description={CONSULTANT_RECORDS_COPY.EMPTY_PENDING_DESCRIPTION}
         />
       ) : (
         <FlashList
-          data={records}
-          keyExtractor={(item) => String(item.id)}
+          data={pending}
+          keyExtractor={(item) => String(item.scheduleId)}
           contentContainerStyle={{ paddingHorizontal: theme.spacing.lg }}
-          onEndReached={onEndReached}
-          onEndReachedThreshold={0.5}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -155,18 +102,11 @@ export default function ConsultantRecords() {
               clientName={`${item.clientName} 님`}
               date={item.date}
               time={`${item.startTime} - ${item.endTime}`}
-              summary={item.summary}
-              tags={item.tags}
-              isPending={item.status === 'DRAFT'}
+              isPending
               index={index}
-              onPress={() =>
-                item.status === 'DRAFT'
-                  ? router.push(`/(consultant)/(records)/create/${item.scheduleId}`)
-                  : router.push(`/(consultant)/(records)/${item.id}`)
-              }
+              onPress={() => router.push(`/(consultant)/(records)/create/${item.scheduleId}`)}
             />
           )}
-          ListFooterComponent={recordsQuery.isFetchingNextPage ? <SkeletonCard /> : null}
         />
       )}
     </SafeAreaView>
@@ -178,10 +118,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {},
-  tabRow: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
   loadingContainer: {
     paddingTop: 12,
   },

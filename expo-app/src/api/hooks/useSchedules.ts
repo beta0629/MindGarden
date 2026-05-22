@@ -15,7 +15,9 @@ import {
 import { apiGet, apiPut } from '../client';
 import { SCHEDULE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
+import { useCallback, useMemo } from 'react';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import {
   consultationTypeToKorean,
   resolveClientNameForScheduleRow,
@@ -297,14 +299,26 @@ export function useScheduleDetail(
   });
 }
 
+export interface ConsultantDashboardData {
+  todaySchedules: Schedule[];
+  pendingRecordCount: number;
+  todayCount: number;
+  weeklyCount: number;
+}
+
+export interface ConsultantMobileDashboardSnapshot {
+  todaySchedules: Schedule[];
+  todayCount: number;
+  pendingRecordCount: number;
+  isLoading: boolean;
+  isFetching: boolean;
+  refetchAll: () => void;
+}
+
 export function useConsultantDashboard(consultantId: string | number | undefined) {
+  const { ready } = useApiQueryReady({ requireUserId: true });
   const todayYmdForKey = formatDate(new Date(), 'yyyy-MM-dd');
-  return useQuery<{
-    todaySchedules: Schedule[];
-    pendingRecordCount: number;
-    todayCount: number;
-    weeklyCount: number;
-  }>({
+  return useQuery<ConsultantDashboardData>({
     queryKey: [...SCHEDULE_QUERY_KEYS.dashboard(consultantId!), todayYmdForKey] as const,
     queryFn: async () => {
       const ymd = formatDate(new Date(), 'yyyy-MM-dd');
@@ -317,9 +331,41 @@ export function useConsultantDashboard(consultantId: string | number | undefined
         weeklyCount: 0,
       };
     },
-    enabled: !!consultantId,
+    enabled: ready && !!consultantId,
     staleTime: 1000 * 60 * 2,
   });
+}
+
+/**
+ * 상담사 모바일 홈 — 대시보드 쿼리 + refetchAll
+ */
+export function useConsultantMobileDashboard(
+  consultantId: string | number | undefined,
+): ConsultantMobileDashboardSnapshot {
+  const dashboardQuery = useConsultantDashboard(consultantId);
+
+  const refetchAll = useCallback(() => {
+    void dashboardQuery.refetch();
+  }, [dashboardQuery]);
+
+  return useMemo(
+    () => ({
+      todaySchedules: dashboardQuery.data?.todaySchedules ?? [],
+      todayCount: dashboardQuery.data?.todayCount ?? 0,
+      pendingRecordCount: dashboardQuery.data?.pendingRecordCount ?? 0,
+      isLoading: dashboardQuery.isLoading,
+      isFetching: dashboardQuery.isFetching,
+      refetchAll,
+    }),
+    [
+      dashboardQuery.data?.todaySchedules,
+      dashboardQuery.data?.todayCount,
+      dashboardQuery.data?.pendingRecordCount,
+      dashboardQuery.isLoading,
+      dashboardQuery.isFetching,
+      refetchAll,
+    ],
+  );
 }
 
 interface StatusMutationVars {

@@ -7,8 +7,10 @@
 import { useCallback, useMemo } from 'react';
 import { useUnreadCount } from './useNotifications';
 import { useAdminTodaySchedules } from './useAdminSchedules';
+import type { Schedule } from './useSchedules';
 import { useTenantStore } from '@/stores/useTenantStore';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { sliceTodaySchedulePreview } from '@/utils/adminHomeKpi';
 import { toDisplayString } from '@/utils/safeDisplay';
 
 export interface AdminMobileDashboardSnapshot {
@@ -16,9 +18,11 @@ export interface AdminMobileDashboardSnapshot {
   userDisplayName: string;
   unreadNotificationCount: number;
   todayScheduleCount: number;
+  todaySchedules: Schedule[];
   notificationsLoading: boolean;
   schedulesLoading: boolean;
   schedulesEnabled: boolean;
+  isRefreshing: boolean;
   refetchAll: () => void;
 }
 
@@ -34,28 +38,32 @@ export function useAdminMobileDashboard(): AdminMobileDashboardSnapshot {
     void schedulesQuery.refetch();
   }, [unreadQuery, schedulesQuery]);
 
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    const todaySchedulesRaw = schedulesQuery.data ?? [];
+
+    return {
       tenantName: toDisplayString(tenantName, '테넌트'),
       userDisplayName: toDisplayString(user?.name ?? user?.nickname, '관리자'),
       unreadNotificationCount: unreadQuery.data?.count ?? 0,
-      todayScheduleCount: schedulesQuery.data?.length ?? 0,
+      todayScheduleCount: todaySchedulesRaw.length,
+      todaySchedules: sliceTodaySchedulePreview(todaySchedulesRaw),
       notificationsLoading: unreadQuery.isLoading,
       schedulesLoading: schedulesQuery.isLoading,
       schedulesEnabled: schedulesQuery.isFetched || schedulesQuery.isFetching,
+      isRefreshing: unreadQuery.isFetching || schedulesQuery.isFetching,
       refetchAll,
-    }),
-    [
-      tenantName,
-      user?.name,
-      user?.nickname,
-      unreadQuery.data?.count,
-      unreadQuery.isLoading,
-      schedulesQuery.data?.length,
-      schedulesQuery.isLoading,
-      schedulesQuery.isFetched,
-      schedulesQuery.isFetching,
-      refetchAll,
-    ],
-  );
+    };
+  }, [
+    tenantName,
+    user?.name,
+    user?.nickname,
+    unreadQuery.data?.count,
+    unreadQuery.isLoading,
+    unreadQuery.isFetching,
+    schedulesQuery.data,
+    schedulesQuery.isLoading,
+    schedulesQuery.isFetched,
+    schedulesQuery.isFetching,
+    refetchAll,
+  ]);
 }

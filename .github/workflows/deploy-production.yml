@@ -673,6 +673,34 @@ jobs:
             echo "$INACTIVE" | sudo tee "$ACTIVE_FILE" > /dev/null
             echo "✅ active-backend → $INACTIVE (트래픽은 이제 포트 $INACTIVE_PORT)"
           
+            # 🔁 [post-cutover safety net] 새 idle 슬롯(=직전 active)에 신규 JAR 자동 동기화
+            # 배경: cutover 직후 PREVIOUS_ACTIVE 슬롯에는 이전 빌드 JAR 이 그대로 남아 있어,
+            #       다음 배포 사이클(슬롯 역할 swap)에서 stale JAR + PFID 갱신/재기동 후
+            #       Flyway 신규 마이그레이션(예: V73) 검증이 실패하는 회귀가 발생했음.
+            #       트래픽 전환 후 idle 슬롯의 JAR 만 정렬(systemd 재기동은 하지 않음 —
+            #       다음 배포에서 자연 재시작). SHA-256 으로 멱등성·무결성 검증.
+            NEW_ACTIVE_HOME="/var/www/mindgarden/releases/${INACTIVE}"
+            NEW_IDLE_HOME="/var/www/mindgarden/releases/${PREVIOUS_ACTIVE}"
+            echo "🔁 idle 슬롯 JAR 동기화: ${NEW_ACTIVE_HOME}/app.jar → ${NEW_IDLE_HOME}/app.jar"
+            if [ ! -f "${NEW_ACTIVE_HOME}/app.jar" ]; then
+              echo "::warning::active 슬롯 JAR(${NEW_ACTIVE_HOME}/app.jar) 누락 — idle 동기화 스킵"
+            else
+              sudo cp "${NEW_ACTIVE_HOME}/app.jar" "${NEW_IDLE_HOME}/app.jar"
+              sudo chown mindgarden:mindgarden "${NEW_IDLE_HOME}/app.jar"
+              sudo chmod 0755 "${NEW_IDLE_HOME}/app.jar"
+              NEW_SHA=$(sudo sha256sum "${NEW_ACTIVE_HOME}/app.jar" | awk '{print $1}')
+              IDLE_SHA=$(sudo sha256sum "${NEW_IDLE_HOME}/app.jar" | awk '{print $1}')
+              if [ "$NEW_SHA" != "$IDLE_SHA" ]; then
+                echo "::error::idle 슬롯 JAR 동기화 검증 실패 — SHA256 불일치 (active=$NEW_SHA, idle=$IDLE_SHA)"
+                exit 1
+              fi
+              echo "✅ idle 슬롯 JAR 동기화 완료 (SHA256=${NEW_SHA})"
+            fi
+          
+            # 🩺 [선택] idle 슬롯 무결성 스모크 — 트래픽 미수신 상태에서 JAR 파일 확인만 수행
+            # (포트 헬스체크는 idle 슬롯 systemd 가 정지 상태일 수 있어 의도적으로 생략)
+            ls -lh "${NEW_IDLE_HOME}/app.jar" || true
+          
             # 선택: 구 슬롯 JVM 중지(메모리 회수). 빠른 Nginx 롤백을 원하면 주석 유지.
             # echo "선택적 구 슬롯 중지: sudo systemctl stop mindgarden-core-${PREVIOUS_ACTIVE}.service"
           else

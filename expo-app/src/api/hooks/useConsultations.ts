@@ -9,6 +9,7 @@ import { useQuery, useInfiniteQuery, type UseQueryOptions } from '@tanstack/reac
 import { apiGet } from '../client';
 import { SCHEDULE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
+import { useClientScheduleApiContext } from '@/hooks/useClientScheduleApiContext';
 import { useAuthStore } from '@/stores/useAuthStore';
 import {
   consultationTypeToKorean,
@@ -25,8 +26,8 @@ type ConsultationStatus = 'SCHEDULED' | 'BOOKED' | 'COMPLETED' | 'ALL';
 const CLIENT_HOME_STATS_URL = '/api/v1/consultations';
 
 interface ClientConsultationsParams {
-  clientId: string | number | undefined;
   status?: ConsultationStatus;
+  clientId?: number | string;
 }
 
 const CONSULTATION_QUERY_KEYS = {
@@ -179,23 +180,21 @@ function parseSpringPagePayload(raw: unknown): {
   return { content, pageNumber, totalPages };
 }
 
-export function useClientConsultations(params: ClientConsultationsParams) {
-  const hasValidClientId =
-    params.clientId != null && params.clientId !== '' && params.clientId !== 0;
-  const clientIdNum = hasValidClientId ? Number(params.clientId) : -1;
+export function useClientConsultations(params: ClientConsultationsParams = {}) {
+  const { effectiveUserId, queryEnabled } = useClientScheduleApiContext(params.clientId);
+  const clientIdNum = effectiveUserId ?? -1;
 
   return useInfiniteQuery<ClientConsultationPage>({
     queryKey: CONSULTATION_QUERY_KEYS.clientPagedList(clientIdNum),
     queryFn: async ({ pageParam }) => {
       const raw = await apiGet<unknown>(`${SCHEDULE_API.SCHEDULES}/paged`, {
-        userId: params.clientId,
+        userId: effectiveUserId,
         userRole: 'CLIENT',
         page: pageParam,
         size: PAGE_SIZE,
       });
       const { content, pageNumber, totalPages } = parseSpringPagePayload(raw);
-      const cid = Number(params.clientId);
-      const fallbackCid = Number.isFinite(cid) ? cid : 0;
+      const fallbackCid = effectiveUserId ?? 0;
       const items = content.map((r) => mapClientScheduleRow(r, fallbackCid));
       return { items, pageNumber, totalPages };
     },
@@ -204,7 +203,7 @@ export function useClientConsultations(params: ClientConsultationsParams) {
       lastPage.totalPages > 0 && lastPage.pageNumber + 1 < lastPage.totalPages
         ? lastPage.pageNumber + 1
         : undefined,
-    enabled: hasValidClientId,
+    enabled: queryEnabled,
     staleTime: 1000 * 60 * 2,
     refetchOnMount: 'always',
   });
@@ -254,19 +253,21 @@ function scheduleSortKey(s: Schedule): string {
   return `${s.date}T${(s.startTime ?? '00:00').slice(0, 5)}:00`;
 }
 
-export function useUpcomingConsultation(clientId: string | number | undefined) {
+export function useUpcomingConsultation(clientId?: number | string) {
+  const { effectiveUserId, queryEnabled } = useClientScheduleApiContext(clientId);
+  const clientIdNum = effectiveUserId ?? -1;
+
   return useQuery<UpcomingConsultation | null>({
-    queryKey: CONSULTATION_QUERY_KEYS.upcoming(clientId!),
+    queryKey: CONSULTATION_QUERY_KEYS.upcoming(clientIdNum),
     queryFn: async () => {
       const raw = await apiGet<unknown>(`${SCHEDULE_API.SCHEDULES}/paged`, {
-        userId: clientId,
+        userId: effectiveUserId,
         userRole: 'CLIENT',
         page: 0,
         size: 48,
       });
       const { content } = parseSpringPagePayload(raw);
-      const cid = Number(clientId);
-      const fallbackCid = Number.isFinite(cid) ? cid : 0;
+      const fallbackCid = effectiveUserId ?? 0;
       const schedules = content.map((r) => mapClientScheduleRow(r, fallbackCid));
       const upcoming = schedules
         .filter((s) => s.status !== 'COMPLETED' && s.status !== 'CANCELLED')
@@ -278,7 +279,7 @@ export function useUpcomingConsultation(clientId: string | number | undefined) {
       const daysUntil = differenceInCalendarDays(startOfDay(target), startOfDay(new Date()));
       return { ...upcoming, daysUntil };
     },
-    enabled: !!clientId,
+    enabled: queryEnabled,
     staleTime: 1000 * 60 * 2,
   });
 }
@@ -336,12 +337,15 @@ function streakDaysFromDates(activeDates: Set<string>): number {
   return streak;
 }
 
-export function useClientDashboard(clientId: string | number | undefined) {
+export function useClientDashboard(clientId?: number | string) {
+  const { effectiveUserId, queryEnabled } = useClientScheduleApiContext(clientId);
+  const clientIdNum = effectiveUserId ?? -1;
+
   return useQuery<ClientDashboardData>({
-    queryKey: CONSULTATION_QUERY_KEYS.clientDashboard(clientId!),
+    queryKey: CONSULTATION_QUERY_KEYS.clientDashboard(clientIdNum),
     queryFn: async () => {
       const raw = await apiGet<unknown>(CLIENT_HOME_STATS_URL, {
-        clientId: Number(clientId),
+        clientId: effectiveUserId,
       });
       const { rows, totalCount } = extractConsultationsListForStats(raw);
       const monthPrefix = format(new Date(), 'yyyy-MM');
@@ -361,7 +365,7 @@ export function useClientDashboard(clientId: string | number | undefined) {
         upcomingSchedule: null,
       };
     },
-    enabled: !!clientId,
+    enabled: queryEnabled,
     staleTime: 1000 * 60 * 2,
   });
 }

@@ -8,11 +8,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
 import { logAdminApiReadyGate } from '@/utils/adminSessionDiag';
-import {
-  decodeJwtPayload,
-  extractTenantIdFromAccessToken,
-  parseJwtSubAsUserId,
-} from '@/utils/jwtPayload';
+import { extractTenantIdFromAccessToken } from '@/utils/jwtPayload';
+import { resolveClientScheduleUserId } from '@/utils/resolveClientScheduleUserId';
 import { resolveEffectiveTenantIdForApi } from '@/utils/resolveEffectiveTenantIdForApi';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 import { isTenantHydrationGateOk } from '@/utils/tenantHydrationGate';
@@ -24,20 +21,6 @@ export type UseApiQueryReadyOptions = {
   requireUserId?: boolean;
   requireAccessToken?: boolean;
 };
-
-function resolveEffectiveUserId(
-  storeUserId: number | undefined,
-  accessToken: string | null,
-): number | undefined {
-  if (typeof storeUserId === 'number' && Number.isFinite(storeUserId) && storeUserId > 0) {
-    return storeUserId;
-  }
-  if (!accessToken?.trim()) {
-    return undefined;
-  }
-  const fromJwt = parseJwtSubAsUserId(decodeJwtPayload(accessToken));
-  return fromJwt != null && fromJwt > 0 ? fromJwt : undefined;
-}
 
 export function useApiQueryReady(options?: UseApiQueryReadyOptions): {
   ready: boolean;
@@ -87,7 +70,7 @@ export function useApiQueryReady(options?: UseApiQueryReadyOptions): {
   const storesResolved = authStoresReady && tenantGateOk;
 
   const userId = useMemo(
-    () => resolveEffectiveUserId(storeUserId, accessToken),
+    () => resolveClientScheduleUserId(storeUserId, accessToken),
     [storeUserId, accessToken],
   );
 

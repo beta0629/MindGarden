@@ -1855,6 +1855,15 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return isConsultantRole(userRole) || adminCounselingOwnSchedulesOnly(userId, userRole);
     }
 
+    private boolean matchesClientScheduleRole(String userRole) {
+        if (userRole == null) {
+            return false;
+        }
+        String clientRoleCode = getRoleCodeFromCommonCode(UserRole.CLIENT.name());
+        return UserRole.CLIENT.name().equalsIgnoreCase(userRole)
+                || clientRoleCode.equalsIgnoreCase(userRole);
+    }
+
      /**
      * 권한 기반 스케줄 조회 (상담사 이름 포함)
      */
@@ -1872,7 +1881,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         } else if (scheduleUsesConsultantOwnScope(userId, userRole)) {
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 조회: {}", userId);
             schedules = scheduleRepository.findByTenantIdAndConsultantId(tenantId, userId);
-        } else if (getRoleCodeFromCommonCode(UserRole.CLIENT.name()).equals(userRole)) {
+        } else if (matchesClientScheduleRole(userRole)) {
             log.info("👤 내담자 권한으로 자신의 스케줄만 조회: {}", userId);
             schedules = scheduleRepository.findByTenantIdAndClientId(tenantId, userId);
         } else {
@@ -1911,7 +1920,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         } else if (scheduleUsesConsultantOwnScope(userId, userRole)) {
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
             schedulePage = scheduleRepository.findByTenantIdAndConsultantId(tenantId, userId, pageable);
-        } else if (getRoleCodeFromCommonCode(UserRole.CLIENT.name()).equals(userRole)) {
+        } else if (matchesClientScheduleRole(userRole)) {
             log.info("👤 내담자 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
             schedulePage = scheduleRepository.findByTenantIdAndClientId(tenantId, userId, pageable);
         } else {
@@ -1943,7 +1952,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (scheduleUsesConsultantOwnScope(userId, userRole)) {
             return Objects.equals(schedule.getConsultantId(), userId);
         }
-        if (getRoleCodeFromCommonCode(UserRole.CLIENT.name()).equals(userRole)) {
+        if (matchesClientScheduleRole(userRole)) {
             return Objects.equals(schedule.getClientId(), userId);
         }
         return false;

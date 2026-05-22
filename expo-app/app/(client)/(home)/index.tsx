@@ -49,8 +49,8 @@ export default function ClientHome() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
 
-  const dashboardQuery = useClientDashboard(user?.id);
-  const upcomingQuery = useUpcomingConsultation(user?.id);
+  const dashboardQuery = useClientDashboard();
+  const upcomingQuery = useUpcomingConsultation();
   const tipQuery = useRandomWellnessTip();
   const unreadQuery = useUnreadCount();
   const unreadCount = unreadQuery.data?.count ?? 0;

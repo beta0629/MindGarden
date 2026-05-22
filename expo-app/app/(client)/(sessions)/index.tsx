@@ -18,7 +18,6 @@ import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { ConsultationCard } from '@/components/molecules/ConsultationCard';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
-import { useAuthStore } from '@/stores/useAuthStore';
 import { matchesClientSessionsTab, useClientConsultations } from '@/api/hooks/useConsultations';
 import type { Schedule } from '@/api/hooks/useSchedules';
 
@@ -32,14 +31,20 @@ const TABS: { key: TabKey; label: string }[] = [
 export default function ClientSessions() {
   const theme = useTheme();
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
   const [activeTab, setActiveTab] = useState<TabKey>('SCHEDULED');
 
-  const { data, isLoading, isFetching, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    useClientConsultations({
-      clientId: user?.id ?? '',
-      status: activeTab,
-    });
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = useClientConsultations({
+    status: activeTab,
+  });
 
   const consultations = useMemo(() => {
     const rows = data?.pages.flatMap((p) => p.items) ?? [];
@@ -124,6 +129,14 @@ export default function ClientSessions() {
               <SkeletonCard key={i} />
             ))}
           </View>
+        ) : isError ? (
+          <EmptyState
+            icon={<Calendar size={32} color={theme.colors.textTertiary} />}
+            title="상담 목록을 불러오지 못했어요"
+            description="네트워크 연결을 확인한 뒤 다시 시도해주세요"
+            actionLabel="다시 시도"
+            onAction={() => refetch()}
+          />
         ) : consultations.length === 0 ? (
           <EmptyState
             icon={

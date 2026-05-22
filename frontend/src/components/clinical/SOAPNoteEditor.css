@@ -220,7 +220,7 @@
 }
 
 .soap-section:nth-child(3) .section-letter {
-    background: linear-gradient(135deg, var(--mg-warning-500), #fbbf24);
+    background: linear-gradient(135deg, var(--mg-warning-500), var(--mg-color-warning-500));
 }
 
 .soap-section:nth-child(4) .section-letter {

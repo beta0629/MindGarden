@@ -106,7 +106,7 @@
     text-align: center;
     box-shadow: 0 1px 3px var(--mg-shadow-light);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 1px solid #f0f0f0;
+    border: 1px solid var(--mg-color-surface-light);
 }
 
 .stat-card:hover {
@@ -134,7 +134,7 @@
 }
 
 .stat-card.total .stat-number {
-    color: #7B68EE; /* 진한 보라색 */
+    color: var(--mg-color-accent-violet); /* 진한 보라색 */
 }
 
 .stat-card.completed {

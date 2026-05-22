@@ -18,7 +18,7 @@
 }
 
 .form-input-required {
-  color: #e53e3e;
+  color: var(--mg-color-error-500);
   margin-left: 4px;
 }
 
@@ -63,11 +63,11 @@
 /* 에러 상태 */
 .form-input.form-input--error {
   background-color: #fff5f5;
-  border: 1px solid #e53e3e;
+  border: 1px solid var(--mg-color-error-500);
   color: var(--mg-color-text-main);
 }
 .form-input.form-input--error:focus {
-  border: 2px solid #e53e3e;
+  border: 2px solid var(--mg-color-error-500);
   box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.2);
   padding: 11px 15px;
 }

@@ -284,7 +284,7 @@
 }
 
 .detailed-stats-card--today {
-  background-color: #E3F2FD;
+  background-color: var(--mg-color-info-soft);
   border: 1px solid #BBDEFB;
   border-radius: var(--mg-radius-lg);
   padding: var(--mg-spacing-lg);
@@ -330,7 +330,7 @@
 /* 아이콘 컨테이너 배경색 — 카드 변형별 */
 .detailed-stats-card--clients .detailed-stats-card-icon,
 .detailed-stats-card--consultants .detailed-stats-card-icon {
-  background-color: #7B68EE;
+  background-color: var(--mg-color-accent-violet);
 }
 
 .detailed-stats-completion-rate .detailed-stats-card-icon {
@@ -385,7 +385,7 @@
 
 .detailed-stats-card--clients .detailed-stats-card-value,
 .detailed-stats-card--consultants .detailed-stats-card-value {
-  color: #7B68EE;
+  color: var(--mg-color-accent-violet);
 }
 
 .detailed-stats-completion-rate .detailed-stats-card-value {
@@ -431,7 +431,7 @@
 .detailed-stats-card--clients .detailed-stats-card-growth-icon,
 .detailed-stats-card--consultants .detailed-stats-card-growth-icon {
   font-size: var(--font-size-base);
-  color: #7B68EE;
+  color: var(--mg-color-accent-violet);
 }
 
 .detailed-stats-card--clients .detailed-stats-card-growth-value,

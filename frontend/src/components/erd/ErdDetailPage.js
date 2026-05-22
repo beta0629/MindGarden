@@ -111,7 +111,7 @@ const ErdDetailPage = () => {
           primaryTextColor: 'var(--mg-color-text-main)',
           primaryBorderColor: 'var(--mg-primary-500)',
           lineColor: 'var(--mg-color-text-secondary)',
-          secondaryColor: '#f0f0f0',
+          secondaryColor: 'var(--mg-color-surface-light)',
           tertiaryColor: 'var(--mg-white)',
           background: 'var(--mg-white)',
           mainBkg: 'var(--mg-white)',
@@ -123,7 +123,7 @@ const ErdDetailPage = () => {
           defaultLinkColor: 'var(--mg-color-text-secondary)',
           titleColor: 'var(--mg-color-text-main)',
           actorBorder: 'var(--mg-primary-500)',
-          actorBkg: '#e3f2fd',
+          actorBkg: 'var(--mg-color-info-soft)',
           actorTextColor: 'var(--mg-color-text-main)',
           actorLineColor: 'var(--mg-primary-500)',
           signalColor: 'var(--mg-color-text-main)',
@@ -136,7 +136,7 @@ const ErdDetailPage = () => {
           noteBkgColor: 'var(--mg-color-warning-bg)',
           noteTextColor: 'var(--mg-color-text-main)',
           activationBorderColor: 'var(--mg-primary-500)',
-          activationBkgColor: '#e3f2fd',
+          activationBkgColor: 'var(--mg-color-info-soft)',
           sequenceNumberColor: 'var(--mg-white)'
         },
         flowchart: {

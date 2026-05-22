@@ -317,7 +317,7 @@
 }
 
 .simple-menu-item.has-submenu:hover {
-  background: #e3f2fd;
+  background: var(--mg-color-info-soft);
   border-color: #bbdefb;
 }
 

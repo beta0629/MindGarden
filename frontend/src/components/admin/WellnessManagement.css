@@ -15,7 +15,7 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-xl);
-    background: linear-gradient(135deg, var(--mg-info-500), #B0E0E6);
+    background: linear-gradient(135deg, var(--mg-info-500), var(--mg-color-surface-blue-soft));
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-lg);
     color: var(--color-white);
@@ -223,7 +223,7 @@
 }
 
 .wellness-month-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--mg-info-500), #B0E0E6);
+    background: linear-gradient(135deg, var(--mg-info-500), var(--mg-color-surface-blue-soft));
     color: var(--color-white);
     border-color: transparent;
 }

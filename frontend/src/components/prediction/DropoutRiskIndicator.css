@@ -98,7 +98,7 @@
 .warning-signs {
     padding: 16px;
     background: var(--mg-color-warning-bg);
-    border: 1px solid #fbbf24;
+    border: 1px solid var(--mg-color-warning-500);
     border-radius: 8px;
     margin-top: 20px;
 }

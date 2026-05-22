@@ -80,7 +80,7 @@
     transition: width 0.5s ease;
 }
 
-.indicator-fill.anxiety { background: linear-gradient(90deg, #fbbf24, var(--mg-warning-500)); }
+.indicator-fill.anxiety { background: linear-gradient(90deg, var(--mg-color-warning-500), var(--mg-warning-500)); }
 .indicator-fill.depression { background: linear-gradient(90deg, #6366f1, #4f46e5); }
 .indicator-fill.stress { background: linear-gradient(90deg, #f97316, #ea580c); }
 
@@ -94,7 +94,7 @@
 .tremor-alert {
     padding: 12px 16px;
     background: var(--mg-color-warning-bg);
-    border: 1px solid #fbbf24;
+    border: 1px solid var(--mg-color-warning-500);
     border-radius: 8px;
     color: var(--mg-color-warning-dark);
     font-size: 14px;

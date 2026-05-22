@@ -91,7 +91,7 @@
 }
 
 .stats-card-grid__card-icon--primary {
-  background-color: #7B68EE;
+  background-color: var(--mg-color-accent-violet);
 }
 
 .stats-card-grid__card-icon--warning {
@@ -124,7 +124,7 @@
 }
 
 .stats-card-grid__card-value--primary {
-  color: #7B68EE;
+  color: var(--mg-color-accent-violet);
 }
 
 .stats-card-grid__card-value--warning {

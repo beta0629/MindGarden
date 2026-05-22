@@ -163,7 +163,7 @@
 }
 
 .mg-loading-skeleton__line {
-  background: linear-gradient(90deg, #f0f0f0 25%, var(--mg-gray-300) 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--mg-color-surface-light) 25%, var(--mg-gray-300) 50%, var(--mg-color-surface-light) 75%);
   background-size: 200% 100%;
   animation: skeleton 1.5s infinite;
   border-radius: 4px;
@@ -200,7 +200,7 @@
 .mg-loading-progress__track {
   width: 100%;
   height: 8px;
-  background: #f0f0f0;
+  background: var(--mg-color-surface-light);
   border-radius: 4px;
   overflow: hidden;
   position: relative;

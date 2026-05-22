@@ -247,8 +247,8 @@ const ConsultantMessageScreen = () => {
     },
     messageTypeItemSelected: {
       borderColor: 'var(--mg-primary-500)',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8f9ff -> var(--mg-custom-f8f9ff)
-      backgroundColor: '#f8f9ff'
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-info-bg) -> var(--mg-custom-f8f9ff)
+      backgroundColor: 'var(--mg-color-info-bg)'
     },
     messageTypeIcon: {
       fontSize: 'var(--font-size-xxl)',

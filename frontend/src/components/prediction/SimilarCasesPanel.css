@@ -104,7 +104,7 @@
 
 .lessons-learned {
     padding: 12px;
-    background: #f0fdf4;
+    background: var(--mg-color-success-50);
     border-left: 3px solid var(--mg-success-500);
     border-radius: 6px;
     font-size: 13px;

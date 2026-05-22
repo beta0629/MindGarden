@@ -193,11 +193,11 @@
 }
 
 /* 위젯 카운트 배지 (기본 위젯) */
-/* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd) */
+/* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-info-soft) -> var(--mg-custom-e3f2fd) */
 .widget-section-badge--basic {
   margin-left: var(--mg-spacing-sm, 8px);
   padding: 2px var(--mg-spacing-sm, 8px);
-  background-color: #e3f2fd;
+  background-color: var(--mg-color-info-soft);
   color: var(--mg-secondary-600);
   border-radius: 12px;
   font-size: 0.85em;

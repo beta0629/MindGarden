@@ -85,7 +85,7 @@
   padding: 2rem;
   margin-bottom: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--mg-color-surface-light);
   display: flex;
   gap: 1.5rem;
   align-items: end;

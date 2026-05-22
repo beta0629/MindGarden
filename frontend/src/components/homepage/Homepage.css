@@ -196,7 +196,7 @@
   transition: background-color 0.2s ease, transform 0.2s ease;
 }
 .mg-v2-btn-white:hover {
-  background-color: #F0F0F0;
+  background-color: var(--mg-color-surface-light);
   transform: translateY(-2px);
 }
 

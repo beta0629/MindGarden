@@ -103,15 +103,15 @@
 }
 
 .tool-button.btn-outline-danger {
-    color: #f472b6;
+    color: var(--mg-color-pink-400);
     border-color: #FFB3D1;
     background: linear-gradient(135deg, #FFE8F0 0%, #FFD6E8 100%);
 }
 
 .tool-button.btn-outline-danger:hover {
-    background: linear-gradient(135deg, #f472b6 0%, #fb7185 100%);
+    background: linear-gradient(135deg, var(--mg-color-pink-400) 0%, var(--mg-color-rose-400) 100%);
     color: var(--color-bg-surface);
-    border-color: #f472b6;
+    border-color: var(--mg-color-pink-400);
 }
 
 .tool-button.btn-outline-success {

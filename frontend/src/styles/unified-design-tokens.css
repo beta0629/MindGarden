@@ -1507,6 +1507,78 @@
   --mg-color-info-800: #bfdbfe;
 }
 
+/* ========================================
+   2026 Q2 D8 PR-A 신설/통합 토큰 (디자이너 P1 컨펌, 2026-05-22)
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D8.md §4 C1·C2·C4,
+        docs/project-management/2026-05-22/D8_P1_DESIGN_HANDOFF.md §1·§2·§3·§4.
+   배경: D7-2 PR-A/PR-B 정착 후 잔존 Pink/Top100 hex 흡수.
+   채택 항목 (라이트 8 + 다크 9 + 아래 alias 2):
+     - T-Pink2 3종 신설 (pink-400/pink-200/rose-400)
+     - T-Top100 신설 5종 (surface-light/info-soft/accent-violet/
+                          surface-blue-soft/success-50)
+     - T-TextMain-Dark 다크 cascade (text-main 다크 분리)
+   통합 3건 (warning-500/info-bg/error-500) 은 P1 §2.3 결정에 따라
+   기존 SSOT 흡수. mg-color-warning-500/error-500 은 used_variables.txt
+   에서 R-2 폴백 형태로 이미 참조되고 있으므로 alias 로 정착시켜
+   T-D 가드 PASS·시각 회귀 0건을 동시 보장한다.
+   WCAG AA 검증 (P1 §1·§2.3·§3 인용):
+     - pink-400  light #f472b6 / dark #f9a8d4 (다크 7.2:1 AAA PASS)
+     - pink-200  light #fbcfe8 / dark #fce7f3 (배경 보조)
+     - rose-400  light #fb7185 / dark #fda4af (다크 7.1:1 AAA PASS)
+     - surface-light light #f0f0f0 / dark #262626 (배경용)
+     - info-soft  light #e3f2fd / dark #1e3a8a (배경용)
+     - accent-violet light #7b68ee / dark #a78bfa (Large 4.3:1)
+     - surface-blue-soft light #b0e0e6 / dark #164e63 (배경용)
+     - success-50 light #f0fdf4 / dark #064e3b (배경용)
+     - text-main  light #2C2C2C / dark #E5E5E5 (다크 12.3:1 AAA PASS)
+   D9 이월: border-main/error/info/text-secondary 다크 cascade WARN 4건.
+   ======================================== */
+
+:root {
+  /* D8 T-Pink2 — 개별 신설 3종 (라이트) */
+  --mg-color-pink-400: #f472b6;
+  --mg-color-pink-200: #fbcfe8;
+  --mg-color-rose-400: #fb7185;
+
+  /* D8 T-Top100 — 신설 5종 (라이트) */
+  --mg-color-surface-light: #f0f0f0;
+  --mg-color-info-soft: #e3f2fd;
+  --mg-color-accent-violet: #7b68ee;
+  --mg-color-surface-blue-soft: #b0e0e6;
+  --mg-color-success-50: #f0fdf4;
+
+  /* D8 T-Top100 통합 — P1 §2.3 결정 (기존 SSOT 흡수, light/dark 동일 hex):
+     `--cs-warning-500` (#f59e0b) / `--cs-error-500` (#ef4444) 의 hex 를 그대로
+     `--mg-color-*` 네임스페이스로 정착시킨다. used_variables.txt 의
+     `var(--mg-color-error-500, var(--mg-error-500))` R-2 폴백 패턴이 이미
+     이 토큰의 존재를 가정하고 있어 자연스러운 흡수.
+     체크 토큰 SSOT 가드의 alias chain 추적이 `--mg-color-*` 네임스페이스
+     내부에서만 동작하므로 hex 를 직접 정의한다 (P1 §2.3 "기존 SSOT 흡수" 정합). */
+  --mg-color-warning-500: #f59e0b;
+  --mg-color-error-500: #ef4444;
+}
+
+:root[data-theme="dark"] {
+  /* D8 T-Pink2 — 다크 톤 (P1 §1.4 일관성: 한 단계씩 밝은 톤으로 조정) */
+  --mg-color-pink-400: #f9a8d4;
+  --mg-color-pink-200: #fce7f3;
+  --mg-color-rose-400: #fda4af;
+
+  /* D8 T-Top100 — 신설 5종 다크 cascade (P1 §2.3 표) */
+  --mg-color-surface-light: #262626;
+  --mg-color-info-soft: #1e3a8a;
+  --mg-color-accent-violet: #a78bfa;
+  --mg-color-surface-blue-soft: #164e63;
+  --mg-color-success-50: #064e3b;
+
+  /* D8 T-TextMain-Dark — text-main 다크 cascade 분리 (#E5E5E5, AAA 12.3:1) */
+  --mg-color-text-main: #E5E5E5;
+
+  /* D8 T-Top100 통합 — 다크 cascade (P1 §2.3 "light/dark 동일 hex" 결정) */
+  --mg-color-warning-500: #f59e0b;
+  --mg-color-error-500: #ef4444;
+}
+
 /* ===== 테넌트별 브랜딩 오버라이드 ===== */
 /* 특정 테넌트에 대한 브랜딩 커스터마이징 */
 

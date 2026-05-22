@@ -41,7 +41,7 @@
     transition: width 0.5s ease;
 }
 
-.emotion-joy .bar { background: linear-gradient(90deg, #fbbf24, var(--mg-warning-500)); }
+.emotion-joy .bar { background: linear-gradient(90deg, var(--mg-color-warning-500), var(--mg-warning-500)); }
 .emotion-sorrow .bar { background: linear-gradient(90deg, #60a5fa, var(--mg-primary-500)); }
 .emotion-anger .bar { background: linear-gradient(90deg, #f87171, var(--mg-color-error)); }
 .emotion-fear .bar { background: linear-gradient(90deg, #a78bfa, var(--mg-purple-500)); }
@@ -93,7 +93,7 @@
     border-radius: 2px 2px 0 0;
 }
 
-.mini-bar.joy { background: #fbbf24; }
+.mini-bar.joy { background: var(--mg-color-warning-500); }
 .mini-bar.sorrow { background: #60a5fa; }
 .mini-bar.anger { background: #f87171; }
 .mini-bar.fear { background: #a78bfa; }

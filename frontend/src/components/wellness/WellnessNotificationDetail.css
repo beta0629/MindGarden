@@ -86,7 +86,7 @@
 }
 
 .wellness-notification-detail .badge-important {
-  background: linear-gradient(135deg, #f472b6, #fbcfe8);
+  background: linear-gradient(135deg, var(--mg-color-pink-400), var(--mg-color-pink-200));
   color: var(--color-white);
   box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
 }
@@ -118,7 +118,7 @@
 }
 
 .wellness-notification-detail .badge-type.type-update {
-  background: linear-gradient(135deg, var(--mg-info-500), #B0E0E6);
+  background: linear-gradient(135deg, var(--mg-info-500), var(--mg-color-surface-blue-soft));
   color: var(--color-white);
 }
 
@@ -334,7 +334,7 @@
   width: 80px;
   height: 80px;
   border-radius: var(--border-radius-full);
-  background: linear-gradient(135deg, #f472b6, #fbcfe8);
+  background: linear-gradient(135deg, var(--mg-color-pink-400), var(--mg-color-pink-200));
   display: flex;
   align-items: center;
   justify-content: center;

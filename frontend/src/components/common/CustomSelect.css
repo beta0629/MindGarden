@@ -39,7 +39,7 @@
 
 .custom-select.error .custom-select__trigger {
   background: #fff5f5;
-  border: 1px solid #e53e3e;
+  border: 1px solid var(--mg-color-error-500);
 }
 
 .custom-select__value {

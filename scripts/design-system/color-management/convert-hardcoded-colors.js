@@ -238,7 +238,51 @@ const COLOR_MAPPING = {
   '#92400e': 'var(--mg-color-warning-dark)',
   '#92400E': 'var(--mg-color-warning-dark)',
   '#1d4ed8': 'var(--mg-color-info-dark)',
-  '#1D4ED8': 'var(--mg-color-info-dark)'
+  '#1D4ED8': 'var(--mg-color-info-dark)',
+
+  // 2026 Q2 D8 PR-A 라운드 매핑 (SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D8.md §4 + P1 §1·§2·§5)
+  // §4 C1 컨펌 (2026-05-22) — T-Pink2 개별 신설 3종
+  // 라이트·다크 cascade 정착 확인 (unified-design-tokens.css D8 PR-A 블록):
+  //   --mg-color-pink-400 : light #f472b6 / dark #f9a8d4
+  //   --mg-color-pink-200 : light #fbcfe8 / dark #fce7f3
+  //   --mg-color-rose-400 : light #fb7185 / dark #fda4af
+  '#f472b6': 'var(--mg-color-pink-400)',
+  '#F472B6': 'var(--mg-color-pink-400)',
+  '#fbcfe8': 'var(--mg-color-pink-200)',
+  '#FBCFE8': 'var(--mg-color-pink-200)',
+  '#fb7185': 'var(--mg-color-rose-400)',
+  '#FB7185': 'var(--mg-color-rose-400)',
+
+  // §4 C2 컨펌 (2026-05-22) — T-Top100 신설 5종
+  // 라이트·다크 cascade 정착 확인 (unified-design-tokens.css D8 PR-A 블록):
+  //   --mg-color-surface-light     : light #f0f0f0 / dark #262626 (배경용)
+  //   --mg-color-info-soft         : light #e3f2fd / dark #1e3a8a (배경용)
+  //   --mg-color-accent-violet     : light #7b68ee / dark #a78bfa (Large 4.3:1)
+  //   --mg-color-surface-blue-soft : light #b0e0e6 / dark #164e63 (배경용)
+  //   --mg-color-success-50        : light #f0fdf4 / dark #064e3b (배경용)
+  '#f0f0f0': 'var(--mg-color-surface-light)',
+  '#F0F0F0': 'var(--mg-color-surface-light)',
+  '#e3f2fd': 'var(--mg-color-info-soft)',
+  '#E3F2FD': 'var(--mg-color-info-soft)',
+  '#7b68ee': 'var(--mg-color-accent-violet)',
+  '#7B68EE': 'var(--mg-color-accent-violet)',
+  '#b0e0e6': 'var(--mg-color-surface-blue-soft)',
+  '#B0E0E6': 'var(--mg-color-surface-blue-soft)',
+  '#f0fdf4': 'var(--mg-color-success-50)',
+  '#F0FDF4': 'var(--mg-color-success-50)',
+
+  // §4 C2 컨펌 (2026-05-22) — T-Top100 통합 3건 (기존 SSOT 흡수)
+  // P1 §2.3 결정 + ΔRGB 검증값 인용. 통합 대상 토큰은 D8 PR-A SSOT 블록의
+  // alias (warning-500/error-500) 또는 D5 §2 정착 토큰 (info-bg) 으로 흡수된다.
+  //   #fbbf24 → --mg-color-warning-500 (alias → --mg-warning-500 → #f59e0b, ΔRGB 6/33/25)
+  //   #f8f9ff → --mg-color-info-bg (D5 §2 정착, light #f0f9ff / dark #082f49, ΔRGB 24/7/1)
+  //   #e53e3e → --mg-color-error-500 (alias → --mg-error-500 → #ef4444, ΔRGB 10/6/6)
+  '#fbbf24': 'var(--mg-color-warning-500)',
+  '#FBBF24': 'var(--mg-color-warning-500)',
+  '#f8f9ff': 'var(--mg-color-info-bg)',
+  '#F8F9FF': 'var(--mg-color-info-bg)',
+  '#e53e3e': 'var(--mg-color-error-500)',
+  '#E53E3E': 'var(--mg-color-error-500)'
 };
 
 // RGB/RGBA 색상 매핑

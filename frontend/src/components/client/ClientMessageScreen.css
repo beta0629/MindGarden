@@ -143,7 +143,7 @@
 }
 
 .client-message-item.unread {
-  background: #f8f9ff;
+  background: var(--mg-color-info-bg);
   border-color: var(--color-primary);
 }
 
@@ -501,7 +501,7 @@
 }
 
 .client-message-screen-message-item-unread {
-  background: #f8f9ff;
+  background: var(--mg-color-info-bg);
   border-color: var(--color-primary);
 }
 

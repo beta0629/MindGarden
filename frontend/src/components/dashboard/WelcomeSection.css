@@ -241,12 +241,12 @@
 }
 
 .info-icon--progress {
-  background: linear-gradient(135deg, var(--mg-info-500), #B0E0E6);
+  background: linear-gradient(135deg, var(--mg-info-500), var(--mg-color-surface-blue-soft));
   box-shadow: 0 2px 8px rgba(135, 206, 235, 0.3);
 }
 
 .info-icon--mindfulness {
-  background: linear-gradient(135deg, #f472b6, #fbcfe8);
+  background: linear-gradient(135deg, var(--mg-color-pink-400), var(--mg-color-pink-200));
   box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
 }
 

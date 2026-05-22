@@ -50,6 +50,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.AmountManagementService;
+import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
@@ -140,6 +141,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final ScheduleService scheduleService;
     private final ProfessionalProviderTypeService professionalProviderTypeService;
     private final MappingSettlementNotificationHelper mappingSettlementNotificationHelper;
+    private final BatchNotificationDispatchService batchNotificationDispatchService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -730,7 +732,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setSpecialConsiderations(dto.getSpecialConsiderations());
         mapping.setBranchCode(null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
 
-        return mappingRepository.save(mapping);
+        ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
+
+        // 트랙 C (NOTIFICATION_BATCH_MESSAGE_DESIGN §11) — 신규 매칭 환영 알림톡 (user 영구 1회 멱등).
+        // 매핑 update/재활성화는 본 분기를 통과하지 않으며, 동일 user 이력은 dispatch 측 멱등 가드로 차단됨.
+        try {
+            batchNotificationDispatchService.dispatchClientWelcomeFirst(savedMapping.getId());
+        } catch (Exception welcomeError) {
+            log.warn("CLIENT_WELCOME_FIRST 발송 실패(무시): mappingId={}, error={}",
+                savedMapping.getId(), welcomeError.getMessage());
+        }
+        return savedMapping;
     }
 
     /**

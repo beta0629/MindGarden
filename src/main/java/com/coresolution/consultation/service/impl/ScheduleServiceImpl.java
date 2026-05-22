@@ -31,6 +31,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.VacationRepository;
 import com.coresolution.consultation.constant.ProfessionalProviderTypeConstants;
+import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultationMessageService;
@@ -95,6 +96,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
     private final MobilePushDispatchService mobilePushDispatchService;
     private final ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper;
+    private final BatchNotificationDispatchService batchNotificationDispatchService;
 
     public ScheduleServiceImpl(
             ScheduleRepository scheduleRepository,
@@ -117,7 +119,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             NotificationService notificationService,
             ScheduleListUserFieldsResolver scheduleListUserFieldsResolver,
             MobilePushDispatchService mobilePushDispatchService,
-            ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper) {
+            ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper,
+            BatchNotificationDispatchService batchNotificationDispatchService) {
         super(scheduleRepository, accessControlService);
         this.scheduleRepository = scheduleRepository;
         this.mappingRepository = mappingRepository;
@@ -139,6 +142,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.scheduleListUserFieldsResolver = scheduleListUserFieldsResolver;
         this.mobilePushDispatchService = mobilePushDispatchService;
         this.scheduleCreatedNotificationHelper = scheduleCreatedNotificationHelper;
+        this.batchNotificationDispatchService = batchNotificationDispatchService;
     }
     
     
@@ -613,6 +617,137 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     private void notifyScheduleCreated(Schedule schedule, boolean includeMobilePush) {
         scheduleCreatedNotificationHelper.notifyScheduleCreated(schedule, includeMobilePush);
+        dispatchImmediateReservationNotification(schedule);
+        dispatchInitialGuideNotification(schedule);
+    }
+
+    /**
+     * 스케줄 등록 직후 첫 상담 안내({@code INITIAL_GUIDE_*}) 발송 분기.
+     *
+     * <p>트랙 C (NOTIFICATION_BATCH_MESSAGE_DESIGN §12):
+     * <ul>
+     *   <li>호출자는 첫 상담 여부를 검증하지 않고 무조건 위임 — 첫 상담 판정은
+     *       {@link BatchNotificationDispatchService#dispatchInitialGuide(Long)} 내부에서
+     *       client 누적 스케줄 카운트(=1) 로 수행한다.</li>
+     *   <li>온/오프라인 분기는 {@link Schedule#getConsultationMethod()} (=ONLINE) 로 결정.</li>
+     *   <li>예외/실패는 전체 스케줄 등록 흐름을 막지 않도록 swallow.</li>
+     * </ul>
+     *
+     * @param schedule 신규/입금확정 직후 BOOKED 일정
+     */
+    private void dispatchInitialGuideNotification(Schedule schedule) {
+        try {
+            if (schedule == null || schedule.getId() == null
+                || schedule.getClientId() == null || schedule.getConsultantId() == null) {
+                return;
+            }
+            ScheduleStatus status = schedule.getStatus();
+            if (status != ScheduleStatus.BOOKED && status != ScheduleStatus.CONFIRMED) {
+                return;
+            }
+            batchNotificationDispatchService.dispatchInitialGuide(schedule.getId());
+        } catch (Exception e) {
+            log.warn("INITIAL_GUIDE 발송 분기 실패(무시): scheduleId={}, error={}",
+                schedule != null ? schedule.getId() : null, e.getMessage());
+        }
+    }
+
+    /**
+     * 스케줄 등록 직후 단발성/D-2 미만 즉시 알림톡 발송 분기.
+     *
+     * <p>트랙 A·B (NOTIFICATION_BATCH_MESSAGE_DESIGN P1.2):
+     * <ul>
+     *   <li>매핑 {@code totalSessions == 1} 단발성 결제 → {@code RESERVATION_IMMEDIATE_SINGLE}.</li>
+     *   <li>등록 시점이 스케줄 일자와 D-2 미만 → {@code RESERVATION_IMMEDIATE_LATE}.</li>
+     *   <li>그 외 (1회기 이상 + D-2 이상) → 배치({@link com.coresolution.consultation.scheduler.ReservationReminderScheduler}) 가 처리하므로 즉시 발송 없음.</li>
+     * </ul>
+     *
+     * <p>발송 자체는 {@link BatchNotificationDispatchService} 가 멱등 로그로 중복을 차단하므로,
+     * 본 메서드는 사전 분기만 담당한다. 매핑 lookup 실패·기타 예외는 전체 흐름을 막지 않도록 swallow.
+     *
+     * @param schedule 신규/입금확정 직후 BOOKED 일정
+     */
+    private void dispatchImmediateReservationNotification(Schedule schedule) {
+        try {
+            if (schedule == null || schedule.getId() == null
+                || schedule.getClientId() == null || schedule.getConsultantId() == null
+                || schedule.getDate() == null) {
+                return;
+            }
+            ScheduleStatus status = schedule.getStatus();
+            if (status != ScheduleStatus.BOOKED && status != ScheduleStatus.CONFIRMED) {
+                return;
+            }
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isBlank()) {
+                tenantId = schedule.getTenantId();
+            }
+            if (tenantId == null || tenantId.isBlank()) {
+                log.debug("즉시 발송 분기 skip — tenant context 없음: scheduleId={}", schedule.getId());
+                return;
+            }
+
+            Optional<ConsultantClientMapping> opt = mappingRepository
+                .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+                    tenantId, schedule.getConsultantId(), schedule.getClientId());
+            if (opt.isEmpty()) {
+                log.debug("즉시 발송 분기 skip — 매핑 없음: scheduleId={}", schedule.getId());
+                return;
+            }
+            ConsultantClientMapping mapping = opt.get();
+            Integer total = mapping.getTotalSessions();
+
+            long daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), schedule.getDate());
+
+            if (total != null && total == 1) {
+                batchNotificationDispatchService
+                    .dispatchReservationImmediateSingle(schedule.getId());
+            } else if (daysUntil < 2) {
+                batchNotificationDispatchService
+                    .dispatchReservationImmediateLate(schedule.getId());
+            }
+            // 그 외 (1회기 이상 + D-2 이상) → 배치(ReservationReminderScheduler) 가 처리.
+        } catch (Exception e) {
+            log.warn("즉시 발송 분기 실패(무시): scheduleId={}, error={}",
+                schedule != null ? schedule.getId() : null, e.getMessage());
+        }
+    }
+
+    /**
+     * {@code useSession()} 직후 회기 라이프사이클 알림 발송 분기.
+     *
+     * <p>트랙 A·B (NOTIFICATION_BATCH_MESSAGE_DESIGN P1.2):
+     * <ul>
+     *   <li>{@code remainingSessions == 1} + 패키지(총 {@code &gt; 1}) → {@code SESSION_ENDING_SOON}.</li>
+     *   <li>{@code remainingSessions == 0} + 패키지(총 {@code &gt; 1}) + 마케팅 동의 + cutoff 통과
+     *     → {@code SESSION_RENEW_PROMPT}.</li>
+     * </ul>
+     *
+     * <p>발송 자체는 {@link BatchNotificationDispatchService} 가 멱등 로그로 중복을 차단하므로,
+     * 본 메서드는 사전 분기만 담당한다. 예외는 swallow (회기 차감 본 흐름을 막지 않음).
+     *
+     * @param mapping useSession() 호출 후 영속된 매핑
+     */
+    private void dispatchSessionLifecycleNotification(ConsultantClientMapping mapping) {
+        try {
+            if (mapping == null || mapping.getId() == null) {
+                return;
+            }
+            Integer total = mapping.getTotalSessions();
+            Integer remaining = mapping.getRemainingSessions();
+            if (total == null || total <= 1) {
+                // 단발성(=1회기) 패키지는 회기 라이프사이클 알림 대상 아님.
+                return;
+            }
+            if (remaining != null && remaining == 1) {
+                batchNotificationDispatchService.dispatchSessionEndingSoon(mapping.getId());
+            } else if (remaining != null && remaining == 0) {
+                batchNotificationDispatchService.dispatchSessionRenewPrompt(mapping.getId());
+            }
+        } catch (Exception e) {
+            log.warn("회기 라이프사이클 알림 분기 실패(무시): mappingId={}, error={}",
+                mapping != null ? mapping.getId() : null, e.getMessage());
+        }
     }
 
     /**
@@ -659,6 +794,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         } catch (Exception pushEx) {
             log.warn("회기 임박 푸시 실패: mappingId={}", mappingId, pushEx);
         }
+        dispatchSessionLifecycleNotification(freshMapping);
     }
 
     @Override
@@ -1746,6 +1882,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             }
 
             log.info("✅ 회기 사용 완료: 남은 회기 수 {}", freshMapping.getRemainingSessions());
+
+            dispatchSessionLifecycleNotification(freshMapping);
         } catch (Exception e) {
             log.error("❌ 회기 사용 처리 실패: {}", e.getMessage(), e);
             throw new RuntimeException("회기 사용 처리에 실패했습니다: " + e.getMessage());

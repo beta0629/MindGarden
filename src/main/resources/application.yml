@@ -477,6 +477,19 @@ kakao:
 # 단일 계정 운영자는 SMS_API_KEY/SECRET 만 채워도 알림톡 발송이 가능하다.
 
 # =====================================================
+# 어드민 도구 — SMS·카카오 알림톡 테스트 발송 (2026-05-22)
+# 기획: docs/project-management/2026-05-22/ADMIN_TEST_NOTIFICATION_TOOL_PLAN.md §4.X
+# C5 rate-limit: per-minute=10, per-day=100 (사용자·테넌트당)
+# =====================================================
+admin:
+  test-notification:
+    rate-limit:
+      per-minute: ${ADMIN_TEST_NOTIFICATION_RATE_PER_MINUTE:10}
+      per-day: ${ADMIN_TEST_NOTIFICATION_RATE_PER_DAY:100}
+    history-page-size-default: ${ADMIN_TEST_NOTIFICATION_HISTORY_PAGE_SIZE_DEFAULT:30}
+    history-page-size-max: ${ADMIN_TEST_NOTIFICATION_HISTORY_PAGE_SIZE_MAX:100}
+
+# =====================================================
 # 스케줄러 설정 (배치 작업 표준화)
 # =====================================================
 scheduler:

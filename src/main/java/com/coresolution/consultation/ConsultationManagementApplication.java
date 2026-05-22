@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import com.coresolution.consultation.config.AdminTestNotificationProperties;
 import com.coresolution.consultation.config.ExpoPushProperties;
 import com.coresolution.consultation.config.MobileAppVersionProperties;
 import com.coresolution.consultation.config.MindgardenSecurityProperties;
@@ -54,7 +55,8 @@ import com.coresolution.core.config.KiccEasypayProperties;
         MindgardenSecurityProperties.class,
         KiccEasypayProperties.class,
         ExpoPushProperties.class,
-        MobileAppVersionProperties.class
+        MobileAppVersionProperties.class,
+        AdminTestNotificationProperties.class
 })
 public class ConsultationManagementApplication {
 

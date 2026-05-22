@@ -390,7 +390,7 @@
 .simple-hamburger-footer {
   margin-top: auto;
   padding: 1.25rem;
-  border-top: 2px solid #dee2e6;
+  border-top: 2px solid var(--mg-color-border-main);
   background: var(--mg-white);
   flex-shrink: 0; /* 푸터가 축소되지 않도록 */
   position: relative;

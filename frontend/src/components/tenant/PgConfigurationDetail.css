@@ -80,7 +80,7 @@
 }
 
 .status-badge--success {
-  background: #d4edda;
+  background: var(--mg-color-success-100);
   color: #155724;
 }
 
@@ -91,7 +91,7 @@
 
 .status-badge--danger {
   background: var(--mg-color-error-bg);
-  color: #721c24;
+  color: var(--mg-color-error-dark);
 }
 
 .status-badge--secondary {
@@ -492,7 +492,7 @@
 }
 
 .approval-status-approved {
-  background: #d4edda;
+  background: var(--mg-color-success-100);
   border: 1px solid var(--mg-success-500);
 }
 
@@ -507,7 +507,7 @@
 }
 
 .approval-status-rejected svg {
-  color: #721c24;
+  color: var(--mg-color-error-dark);
   flex-shrink: 0;
 }
 

@@ -273,13 +273,13 @@
   text-align: left;
   font-weight: 600;
   color: var(--mg-color-text-secondary);
-  border-bottom: 2px solid #dee2e6;
+  border-bottom: 2px solid var(--mg-color-border-main);
   white-space: nowrap;
 }
 
 .payment-table td {
   padding: 15px 12px;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--mg-color-border-main);
   vertical-align: middle;
 }
 
@@ -407,7 +407,7 @@
   gap: 15px;
   padding: 20px;
   background: var(--mg-gray-100);
-  border-top: 1px solid #dee2e6;
+  border-top: 1px solid var(--mg-color-border-main);
 }
 
 .pagination span {
@@ -432,7 +432,7 @@
 }
 
 .alert-danger {
-  color: #721c24;
+  color: var(--mg-color-error-dark);
   background-color: var(--mg-color-error-bg);
   border-color: #f5c6cb;
 }
@@ -446,7 +446,7 @@
   padding: 15px 20px;
   border-radius: 8px;
   margin-bottom: 20px;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--mg-color-border-main);
 }
 
 .bulk-info {

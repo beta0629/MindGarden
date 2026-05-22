@@ -355,9 +355,9 @@
 }
 
 .social-login-button.naver {
-  background: #03c75a;
+  background: var(--mg-color-naver-green);
   color: white;
-  border-color: #03c75a;
+  border-color: var(--mg-color-naver-green);
 }
 
 .social-login-button.naver:hover:not(:disabled) {

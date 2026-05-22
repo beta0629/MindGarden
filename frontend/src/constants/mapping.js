@@ -55,7 +55,7 @@ export const MAPPING_STATUS_BG_COLORS = {
     [MAPPING_STATUS.PENDING_PAYMENT]: 'var(--mg-color-warning-bg)',
     [MAPPING_STATUS.PAYMENT_CONFIRMED]: '#d1ecf1',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    [MAPPING_STATUS.ACTIVE]: '#d4edda',
+    [MAPPING_STATUS.ACTIVE]: 'var(--mg-color-success-100)',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [MAPPING_STATUS.INACTIVE]: 'var(--mg-gray-100)',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -202,7 +202,7 @@ export const MAPPING_STAT_BG_COLORS = {
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     PENDING: 'var(--mg-color-warning-bg)',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    ACTIVE: '#d4edda',
+    ACTIVE: 'var(--mg-color-success-100)',
     PAYMENT_CONFIRMED: '#d1ecf1',
     TOTAL: '#e2e3f1',
     TERMINATED: 'var(--mg-color-error-bg)',

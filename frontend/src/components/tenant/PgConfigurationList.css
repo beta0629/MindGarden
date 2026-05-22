@@ -213,7 +213,7 @@
 }
 
 .status-badge--success {
-  background: #d4edda;
+  background: var(--mg-color-success-100);
   color: #155724;
 }
 
@@ -224,7 +224,7 @@
 
 .status-badge--danger {
   background: var(--mg-color-error-bg);
-  color: #721c24;
+  color: var(--mg-color-error-dark);
 }
 
 .status-badge--secondary {
@@ -466,7 +466,7 @@
 
 .rejected-notice {
   background: var(--mg-color-error-bg);
-  color: #721c24;
+  color: var(--mg-color-error-dark);
   border: 1px solid var(--mg-error-500);
 }
 

@@ -202,7 +202,25 @@ const COLOR_MAPPING = {
   '#065f46': 'var(--mg-color-success-800)',       // success dark text (on success-100 6.6:1 PASS)
   '#fecaca': 'var(--mg-color-error-100)',         // error light surface (Tailwind red-200 톤)
   '#dbeafe': 'var(--mg-color-info-100)',          // info light surface (Tailwind blue-100 톤)
-  '#856404': 'var(--mg-color-warning-dark)'       // warning dark text (D4 warning-800 톤 통합)
+  '#856404': 'var(--mg-color-warning-dark)',      // warning dark text (D4 warning-800 톤 통합)
+
+  // 2026 Q2 D7-2 라운드 매핑 (SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D7_2.md §4·§4.1 + P1 §2·§3)
+  // §4.1 C2 컨펌 (2026-05-22) — NAVER OAuth 외부 브랜드 자동 흡수
+  // 라이트·다크 양쪽 SSOT 정착 확인 (unified-design-tokens.css L1455 / L1472, 라이트·다크 동일 hex)
+  '#03c75a': 'var(--mg-color-naver-green)',
+  '#03C75A': 'var(--mg-color-naver-green)', // 대문자 변형
+
+  // §4.1 C3 컨펌 (2026-05-22) — Bootstrap 잔재 3종 일괄 폐기
+  // 라이트·다크 cascade 정착 확인:
+  //   --mg-color-border-main: 라이트 L1127 (다크 cascade 미정의 — T-D 가드 WARN 인지, P1 §3 표 (동일/테마별))
+  //   --mg-color-error-dark : 라이트 L1376 / 다크 L1383
+  //   --mg-color-success-100: 라이트 L1457 / 다크 L1474
+  '#dee2e6': 'var(--mg-color-border-main)',
+  '#DEE2E6': 'var(--mg-color-border-main)',
+  '#721c24': 'var(--mg-color-error-dark)',
+  '#721C24': 'var(--mg-color-error-dark)',
+  '#d4edda': 'var(--mg-color-success-100)',
+  '#D4EDDA': 'var(--mg-color-success-100)'
 };
 
 // RGB/RGBA 색상 매핑

@@ -111,7 +111,7 @@ const SalaryPrintComponent = ({
             backgroundColor: 'var(--mg-color-warning-bg)'
           },
           '.net-row': {
-            backgroundColor: '#d4edda',
+            backgroundColor: 'var(--mg-color-success-100)',
             fontWeight: 'bold',
             fontSize: 'var(--font-size-base)'
           }

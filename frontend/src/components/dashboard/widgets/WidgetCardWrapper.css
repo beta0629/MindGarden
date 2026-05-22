@@ -43,7 +43,7 @@
 }
 
 .mg-card-bordered {
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--mg-color-border-main);
 }
 
 /* 미니멀 스타일 카드 */
@@ -60,7 +60,7 @@
 }
 
 .mg-card-outlined {
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--mg-color-border-main);
   box-shadow: none;
 }
 

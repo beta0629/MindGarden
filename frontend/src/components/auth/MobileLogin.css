@@ -105,7 +105,7 @@
 
 /* 네이버: 플랫폼 가이드라인 색상 */
 .mg-mobile-login__social-btn--naver {
-  background-color: #03C75A;
+  background-color: var(--mg-color-naver-green);
   color: var(--mg-color-text-on-primary);
 }
 

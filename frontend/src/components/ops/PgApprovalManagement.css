@@ -287,13 +287,13 @@
 }
 
 .test-result.success {
-  background: #d4edda;
+  background: var(--mg-color-success-100);
   color: #155724;
 }
 
 .test-result.error {
   background: var(--mg-color-error-bg);
-  color: #721c24;
+  color: var(--mg-color-error-dark);
 }
 
 .test-result small {
@@ -454,13 +454,13 @@
 }
 
 .test-result-preview.success {
-  background: #d4edda;
+  background: var(--mg-color-success-100);
   color: #155724;
 }
 
 .test-result-preview.error {
   background: var(--mg-color-error-bg);
-  color: #721c24;
+  color: var(--mg-color-error-dark);
 }
 
 .test-result-preview small {

@@ -261,9 +261,9 @@
 }
 
 .academy-social-button-naver {
-  background-color: #03C75A;
+  background-color: var(--mg-color-naver-green);
   color: var(--mg-white);
-  border: 1px solid #03C75A;
+  border: 1px solid var(--mg-color-naver-green);
 }
 
 .academy-social-button-naver:hover {

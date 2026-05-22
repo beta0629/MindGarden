@@ -23,7 +23,7 @@
   width: 64px;
   height: 64px;
   border-radius: var(--border-radius-md);
-  background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
+  background: linear-gradient(135deg, #f472b6, #fbcfe8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -98,7 +98,7 @@
 }
 
 .wellness-notification-card.card-important::before {
-  background: linear-gradient(180deg, #FF6B9D, #FFA5C0);
+  background: linear-gradient(180deg, #f472b6, #fbcfe8);
 }
 
 .wellness-notification-card.card-urgent::before {
@@ -125,7 +125,7 @@
 }
 
 .badge-important {
-  background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
+  background: linear-gradient(135deg, #f472b6, #fbcfe8);
   color: var(--color-white);
 }
 

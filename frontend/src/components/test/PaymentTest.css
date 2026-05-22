@@ -201,7 +201,7 @@
   margin: 0;
   padding: 20px;
   background: var(--mg-gray-100);
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--mg-color-border-main);
   color: var(--mg-color-text-secondary);
   font-size: 1.2rem;
 }
@@ -220,7 +220,7 @@
 
 .result-item {
   padding: 20px;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--mg-color-border-main);
   transition: background-color 0.3s ease;
 }
 
@@ -279,7 +279,7 @@
 
 .result-error {
   background: var(--mg-color-error-bg);
-  color: #721c24;
+  color: var(--mg-color-error-dark);
   padding: 10px;
   border-radius: 4px;
   margin: var(--spacing-sm) 0;

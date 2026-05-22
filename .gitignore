@@ -142,3 +142,6 @@ temp/onboarding-backup-*/
 
 # i18n Phase 2.1a 추출 리포트 (dry-run 산출물 — CI 노이즈 방지)
 scripts/i18n/reports/*.json
+
+# D7-2 카운트 인프라 리포트 (count-hardcoded-colors.js 산출물 — CI 노이즈 방지)
+scripts/design-system/color-management/reports/*.json

@@ -191,7 +191,7 @@
 }
 
 .status-confirmed {
-  background: #d4edda;
+  background: var(--mg-color-success-100);
   color: #155724;
 }
 
@@ -207,7 +207,7 @@
 
 .status-cancelled {
   background: var(--mg-color-error-bg);
-  color: #721c24;
+  color: var(--mg-color-error-dark);
 }
 
 .mg-status--pending {

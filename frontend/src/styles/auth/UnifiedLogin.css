@@ -283,7 +283,7 @@
   --oauth-kakao-bg: #fee500;
   --oauth-kakao-bg-hover: #e6cf00;
   --oauth-kakao-text: rgba(0, 0, 0, 0.85);
-  --oauth-naver-bg: #03c75a;
+  --oauth-naver-bg: var(--mg-color-naver-green);
   --oauth-naver-bg-hover: #02a84e;
   --oauth-naver-text: var(--mg-white);
   --oauth-google-bg: var(--mg-white);

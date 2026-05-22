@@ -269,6 +269,86 @@ class SolapiAlimTalkClientTest {
         mockServer.verify();
     }
 
+    @Test
+    @DisplayName("parseResponse: failedMessageList[0].statusCode 가 reject 사유로 추출되어 errorCode/errorMessage 노출")
+    void sendReturnsFailureWithFailedMessageListReject() {
+        SolapiAlimTalkRequest request = buildRequest();
+        String responseBody = "{"
+            + "\"groupInfo\":{\"groupId\":\"G_FML_REJ\",\"status\":\"COMPLETE\","
+            + "\"count\":{\"total\":1,\"registeredFailed\":1}},"
+            + "\"failedMessageList\":[{\"statusCode\":\"3013\","
+            + "\"statusMessage\":\"등록되지 않은 템플릿입니다\",\"type\":\"ATA\"}]}";
+
+        mockServer
+            .expect(requestTo(API_BASE + SolapiAlimTalkClient.SEND_ENDPOINT))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON));
+
+        SolapiAlimTalkResponse response = client.send(request);
+
+        assertThat(response.success()).isFalse();
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.groupId()).isEqualTo("G_FML_REJ");
+        assertThat(response.errorCode()).isEqualTo("3013");
+        assertThat(response.errorMessage())
+            .contains("등록되지 않은 템플릿입니다")
+            .contains("[3013]");
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("parseResponse: failedMessageList=[] + groupInfo.status=COMPLETE + registeredFailed=1 이면 group summary 폴백")
+    void sendReturnsFailureWithGroupSummaryFallback() {
+        SolapiAlimTalkRequest request = buildRequest();
+        String responseBody = "{"
+            + "\"groupInfo\":{\"groupId\":\"G_SUMMARY\",\"status\":\"COMPLETE\","
+            + "\"count\":{\"total\":1,\"registeredFailed\":1}},"
+            + "\"failedMessageList\":[]}";
+
+        mockServer
+            .expect(requestTo(API_BASE + SolapiAlimTalkClient.SEND_ENDPOINT))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON));
+
+        SolapiAlimTalkResponse response = client.send(request);
+
+        assertThat(response.success()).isFalse();
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.groupId()).isEqualTo("G_SUMMARY");
+        assertThat(response.errorCode()).isEqualTo("UNKNOWN");
+        assertThat(response.errorMessage())
+            .contains("Solapi 알림톡 등록 실패")
+            .contains("registeredFailed=1");
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("parseResponse: failedMessageList 와 messageList 가 모두 있어도 failedMessageList 가 우선")
+    void sendPrefersFailedMessageListOverMessageList() {
+        SolapiAlimTalkRequest request = buildRequest();
+        String responseBody = "{"
+            + "\"groupInfo\":{\"groupId\":\"G_BOTH\",\"status\":\"COMPLETE\","
+            + "\"count\":{\"total\":1,\"registeredFailed\":1}},"
+            + "\"failedMessageList\":[{\"statusCode\":\"3013\","
+            + "\"statusMessage\":\"등록되지 않은 템플릿입니다\",\"type\":\"ATA\"}],"
+            + "\"messageList\":[{\"messageId\":\"M_FAIL\",\"statusCode\":\"2000\","
+            + "\"statusMessage\":\"정상 접수\"}]}";
+
+        mockServer
+            .expect(requestTo(API_BASE + SolapiAlimTalkClient.SEND_ENDPOINT))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON));
+
+        SolapiAlimTalkResponse response = client.send(request);
+
+        assertThat(response.success()).isFalse();
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.groupId()).isEqualTo("G_BOTH");
+        assertThat(response.errorCode()).isEqualTo("3013");
+        assertThat(response.errorMessage()).contains("등록되지 않은 템플릿입니다");
+        mockServer.verify();
+    }
+
     private SolapiAlimTalkRequest buildRequest() {
         SolapiCredentials credentials = new SolapiCredentials("NCSXXXXKEY", "NCSXXXXSECRET_VALUE_VALUE_VALUE_1234");
         Map<String, String> variables = new LinkedHashMap<>();

@@ -43,6 +43,15 @@ public class SolapiAlimTalkClient {
     /** 응답 본문이 비어 있지 않은데 파싱 직전 진단용 에러 메시지에 노출할 최대 길이. */
     static final int FALLBACK_ERROR_BODY_LIMIT = 200;
 
+    /** 메시지 단위 reject 사유(failedMessageList 우선)를 어드민 UI 노출용 한국어로 감싸는 prefix. */
+    private static final String ERROR_PREFIX_REJECT = "Solapi 알림톡 거부";
+    /** 그룹 summary 단계까지만 노출 가능한 실패의 한국어 prefix. */
+    private static final String ERROR_PREFIX_GROUP_FAILED = "Solapi 알림톡 등록 실패";
+    /** root/메시지/그룹 어디에서도 사유 추출 불가 — body 일부로 폴백할 때의 한국어 prefix. */
+    private static final String ERROR_PREFIX_BODY_FALLBACK = "Solapi 알림톡 응답 해석 실패";
+    /** 폴백 errorCode: root/메시지/failedMessage 어디에도 코드가 없을 때. */
+    private static final String UNKNOWN_ERROR_CODE = "UNKNOWN";
+
     private final SolapiSignatureSigner signatureSigner;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
@@ -94,6 +103,12 @@ public class SolapiAlimTalkClient {
 
         Map<String, Object> body = buildRequestBody(request);
         HttpHeaders headers = buildHeaders(request.credentials());
+
+        log.info("Solapi ATA 요청: pfId.len={}, templateId={}, to.last4={}, params.keys={}",
+            safeLength(request.pfId()),
+            request.templateId(),
+            lastFour(request.toNumber()),
+            request.variables() != null ? request.variables().keySet() : List.of());
 
         String url = apiBaseUrl + SEND_ENDPOINT;
         try {
@@ -152,11 +167,25 @@ public class SolapiAlimTalkClient {
      *   <li>root {@code errorCode} 부재</li>
      *   <li>{@code groupInfo.status} 가 존재한다면 {@link #GROUP_STATUS_FAILED} 가 아님</li>
      *   <li>{@code groupInfo.count.registeredFailed} 가 존재한다면 0</li>
+     *   <li>{@code failedMessageList[]} 가 비어 있음(Solapi 공식 메시지 단위 reject 컨테이너)</li>
      *   <li>{@code messageList[]} 가 존재한다면 모든 entry의 {@code statusCode}가 {@link #SUCCESS_STATUS_CODE}</li>
      * </ol>
      *
-     * <p>위 중 하나라도 실패하면 success=false 와 함께 root {@code errorCode}, messageList[0]
-     * statusCode/statusMessage 폴백, 본문 일부(마스킹) 순으로 사람이 읽을 메시지를 구성한다.
+     * <p><b>실패 시 errorCode/errorMessage 폴백 우선순위</b>:
+     * <ol>
+     *   <li>root {@code errorCode} / {@code errorMessage} (그룹 단위 API 오류)</li>
+     *   <li>{@code failedMessageList[0].statusCode} / {@code statusMessage}
+     *       (Solapi 공식 메시지 단위 reject — 1순위 승격)</li>
+     *   <li>{@code messageList[0].statusCode} / {@code statusMessage}
+     *       (요청에 {@code showMessageList:true} 가 있을 때만 채워지는 경우의 폴백)</li>
+     *   <li>{@code groupInfo.status} + {@code count.registeredFailed} 의 group summary</li>
+     *   <li>응답 본문 일부(마스킹·절단)</li>
+     * </ol>
+     *
+     * <p>errorMessage 는 어드민 UI 친화적으로 한국어 prefix
+     * ({@link #ERROR_PREFIX_REJECT} / {@link #ERROR_PREFIX_GROUP_FAILED} /
+     * {@link #ERROR_PREFIX_BODY_FALLBACK}) 를 붙여 직접 노출 가능한 형태로 구성한다.
+     * 다만 root {@code errorMessage} 가 존재하면 Solapi가 직접 제공한 메시지를 우선하여 보존한다.
      * 사후 추적을 위해 groupId/messageId 는 실패에도 보존한다.
      *
      * @param statusCode HTTP 상태 코드
@@ -166,14 +195,18 @@ public class SolapiAlimTalkClient {
     private SolapiAlimTalkResponse parseResponse(int statusCode, String body) {
         boolean is2xx = statusCode >= 200 && statusCode < 300;
         if (body == null || body.isBlank()) {
-            return is2xx
-                ? SolapiAlimTalkResponse.success(null)
-                : SolapiAlimTalkResponse.failure(statusCode, "EMPTY_BODY", "empty response");
+            if (is2xx) {
+                log.info("Solapi ATA 응답 OK(빈 body): status={}", statusCode);
+                return SolapiAlimTalkResponse.success(null);
+            }
+            log.warn("Solapi ATA 응답 실패(빈 body): status={}", statusCode);
+            return SolapiAlimTalkResponse.failure(statusCode, "EMPTY_BODY", "empty response");
         }
         try {
             JsonNode root = objectMapper.readTree(body);
             JsonNode groupInfo = root.path("groupInfo");
             JsonNode messageList = root.path("messageList");
+            JsonNode failedMessageList = root.path("failedMessageList");
             JsonNode countNode = groupInfo.path("count");
 
             // groupId 우선순위: groupInfo.groupId → root.groupId → root.messageId
@@ -191,30 +224,48 @@ public class SolapiAlimTalkClient {
             String rootErrorMessage = textOrNull(root, "errorMessage");
             String groupStatus = textOrNull(groupInfo, "status");
             Integer registeredFailed = intOrNull(countNode, "registeredFailed");
+            Integer totalCount = intOrNull(countNode, "total");
+            Integer sentTotalCount = intOrNull(countNode, "sentTotal");
             String firstRejectCode = firstRejectStatusCode(messageList);
             String firstRejectMessage = firstRejectStatusMessage(messageList);
+            String firstFailedStatusCode = firstStatusCode(failedMessageList);
+            String firstFailedStatusMessage = firstStatusMessage(failedMessageList);
+            int failedListSize = sizeOrZero(failedMessageList);
 
             boolean groupStatusFailed = groupStatus != null
                 && GROUP_STATUS_FAILED.equalsIgnoreCase(groupStatus);
             boolean registeredFailedNonZero = registeredFailed != null && registeredFailed > 0;
             boolean messageRejected = firstRejectCode != null;
+            boolean failedMessageListPresent = failedListSize > 0;
 
             boolean success = is2xx
                 && rootErrorCode == null
                 && !groupStatusFailed
                 && !registeredFailedNonZero
-                && !messageRejected;
+                && !messageRejected
+                && !failedMessageListPresent;
 
             if (success) {
+                log.info("Solapi ATA 응답 OK: status={}, groupId={}, total={}, sentTotal={}",
+                    statusCode, groupId, totalCount, sentTotalCount);
                 return SolapiAlimTalkResponse.success(groupId, messageId);
             }
 
-            String resolvedErrorCode = firstNonBlank(rootErrorCode, firstRejectCode, "UNKNOWN");
-            String resolvedErrorMessage = firstNonBlank(
-                rootErrorMessage,
-                firstRejectMessage,
-                buildGroupFailureSummary(groupStatus, registeredFailed),
+            // failedMessageList[0].statusCode 를 messageList 보다 1순위로 승격.
+            String resolvedErrorCode = firstNonBlank(
+                rootErrorCode, firstFailedStatusCode, firstRejectCode, UNKNOWN_ERROR_CODE);
+            String resolvedErrorMessage = buildErrorMessage(body,
+                rootErrorCode, rootErrorMessage,
+                firstFailedStatusCode, firstFailedStatusMessage,
+                firstRejectCode, firstRejectMessage,
+                groupStatus, registeredFailed);
+
+            log.warn("Solapi ATA 응답 실패: status={}, groupId={}, errorCode={}, errorMessage={},"
+                + " registeredFailed={}, failedMessageList.size={}, bodyPreview={}",
+                statusCode, groupId, resolvedErrorCode, resolvedErrorMessage,
+                registeredFailed, failedListSize,
                 SolapiSmsProvider.maskResponseBody(truncate(body, FALLBACK_ERROR_BODY_LIMIT)));
+
             return SolapiAlimTalkResponse.failure(statusCode, groupId, messageId,
                 resolvedErrorCode, resolvedErrorMessage);
         } catch (Exception e) {
@@ -223,6 +274,57 @@ public class SolapiAlimTalkClient {
                 ? SolapiAlimTalkResponse.success(null)
                 : SolapiAlimTalkResponse.failure(statusCode, "PARSE_ERROR", e.getMessage());
         }
+    }
+
+    /**
+     * 사람이 읽을 errorMessage 구성. 폴백 우선순위에 한국어 prefix 를 붙여 어드민 UI 친화적으로 가공한다.
+     *
+     * <p>root {@code errorMessage} 가 존재하면 Solapi 가 직접 제공한 표현을 그대로 보존하여
+     * 4xx ValidationError 등 기존 호출자(어드민 도구·운영 호출부) 동작과의 회귀 호환을 유지한다.
+     *
+     * @param body                       응답 본문(마지막 폴백용)
+     * @param rootErrorCode              root.errorCode (있으면 root.errorMessage 그대로)
+     * @param rootErrorMessage           root.errorMessage
+     * @param firstFailedStatusCode      failedMessageList[0].statusCode
+     * @param firstFailedStatusMessage   failedMessageList[0].statusMessage
+     * @param firstRejectCode            messageList[0].statusCode (2000 이외 첫 번째)
+     * @param firstRejectMessage         messageList[0].statusMessage
+     * @param groupStatus                groupInfo.status
+     * @param registeredFailed           groupInfo.count.registeredFailed
+     * @return UI 노출용 한국어 errorMessage
+     */
+    private static String buildErrorMessage(String body,
+            String rootErrorCode, String rootErrorMessage,
+            String firstFailedStatusCode, String firstFailedStatusMessage,
+            String firstRejectCode, String firstRejectMessage,
+            String groupStatus, Integer registeredFailed) {
+        if (rootErrorCode != null && rootErrorMessage != null) {
+            return rootErrorMessage;
+        }
+        if (rootErrorMessage != null) {
+            return rootErrorMessage;
+        }
+        if (firstFailedStatusCode != null) {
+            return formatRejectMessage(firstFailedStatusCode, firstFailedStatusMessage);
+        }
+        if (firstRejectCode != null) {
+            return formatRejectMessage(firstRejectCode, firstRejectMessage);
+        }
+        String groupSummary = buildGroupFailureSummary(groupStatus, registeredFailed);
+        if (groupSummary != null) {
+            return ERROR_PREFIX_GROUP_FAILED + " (" + groupSummary + ")";
+        }
+        String maskedPreview = SolapiSmsProvider.maskResponseBody(truncate(body, FALLBACK_ERROR_BODY_LIMIT));
+        return ERROR_PREFIX_BODY_FALLBACK + ": " + (maskedPreview == null ? "" : maskedPreview);
+    }
+
+    private static String formatRejectMessage(String statusCode, String statusMessage) {
+        StringBuilder sb = new StringBuilder(ERROR_PREFIX_REJECT)
+            .append(" [").append(statusCode).append("]");
+        if (statusMessage != null && !statusMessage.isBlank()) {
+            sb.append(' ').append(statusMessage);
+        }
+        return sb.toString();
     }
 
     private static String firstMessageId(JsonNode messageList) {
@@ -256,6 +358,42 @@ public class SolapiAlimTalkClient {
             }
         }
         return null;
+    }
+
+    /**
+     * 배열 첫 entry의 {@code statusCode} 텍스트.
+     *
+     * <p>Solapi 공식 응답에서 reject 사유가 담기는 {@code failedMessageList[]} 의 직접 추출에 사용된다.
+     * (messageList[] 에는 {@code showMessageList:true} 옵션이 있을 때만 채워질 수 있어 폴백 가치가 낮다.)
+     *
+     * @param array JSON 배열 노드
+     * @return 첫 entry의 statusCode 또는 {@code null}
+     */
+    private static String firstStatusCode(JsonNode array) {
+        if (array == null || !array.isArray() || array.isEmpty()) {
+            return null;
+        }
+        return textOrNull(array.get(0), "statusCode");
+    }
+
+    /**
+     * 배열 첫 entry의 {@code statusMessage} 텍스트.
+     *
+     * @param array JSON 배열 노드
+     * @return 첫 entry의 statusMessage 또는 {@code null}
+     */
+    private static String firstStatusMessage(JsonNode array) {
+        if (array == null || !array.isArray() || array.isEmpty()) {
+            return null;
+        }
+        return textOrNull(array.get(0), "statusMessage");
+    }
+
+    private static int sizeOrZero(JsonNode array) {
+        if (array == null || !array.isArray()) {
+            return 0;
+        }
+        return array.size();
     }
 
     private static String buildGroupFailureSummary(String groupStatus, Integer registeredFailed) {
@@ -326,5 +464,22 @@ public class SolapiAlimTalkClient {
 
     private static int safeLength(String s) {
         return s == null ? 0 : s.length();
+    }
+
+    /**
+     * 전화번호의 뒤 4자리만 반환(요청 로깅의 PII 보호).
+     *
+     * @param phone 원본 전화번호 (예: 010-1234-5678 / 01012345678)
+     * @return 뒤 4자리. 4자리 미만이면 그대로. 자릿수 추출 실패 시 빈 문자열.
+     */
+    private static String lastFour(String phone) {
+        if (phone == null || phone.isBlank()) {
+            return "";
+        }
+        String digits = phone.replaceAll("\\D", "");
+        if (digits.isEmpty()) {
+            return "";
+        }
+        return digits.length() <= 4 ? digits : digits.substring(digits.length() - 4);
     }
 }

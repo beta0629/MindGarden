@@ -34,6 +34,9 @@ logs/
 *.log
 *.log.*
 
+# Solapi SMS secrets (local only)
+config/environments/sms.local.env
+
 # Test data (organized)
 test-data/
 config/examples/

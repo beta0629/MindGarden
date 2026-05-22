@@ -404,31 +404,12 @@ public class NotificationServiceImpl implements NotificationService {
     }
     
     /**
-     * SMS 발송 (SmsAuthService 활용)
+     * SMS 발송 — {@link SmsAuthService#sendNotificationMessage} (테넌트 effective credentials·SmsProvider).
      */
     private boolean sendSms(String phoneNumber, String message) {
         try {
             log.info("📱 SMS 발송: {}", PhoneLogMasking.maskForLog(phoneNumber));
-            
-            // SmsAuthService를 통한 SMS 발송
-            if (!smsAuthService.isSmsAuthEnabled()) {
-                log.warn("⚠️ SMS 서비스가 비활성화되어 있습니다.");
-                return false;
-            }
-            
-            // SmsAuthService는 인증번호 전용이므로, 일반 메시지 발송을 위한 별도 메서드 필요
-            // 현재는 시뮬레이션으로 처리하되, 향후 확장 가능하도록 구조화
-            if (smsAuthService.isTestMode()) {
-                log.info("🧪 SMS 테스트 모드: 메시지 발송 시뮬레이션");
-                log.info("📱 발송 메시지: {}", message);
-                return true;
-            } else {
-                // 실제 SMS 발송 (향후 구현)
-                log.info("📤 실제 SMS 발송: {}", message);
-                // TODO: SmsAuthService에 일반 메시지 발송 메서드 추가 필요
-                return true;
-            }
-            
+            return smsAuthService.sendNotificationMessage(phoneNumber, message);
         } catch (Exception e) {
             log.error("SMS 발송 실패", e);
             return false;

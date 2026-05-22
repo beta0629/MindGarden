@@ -109,6 +109,26 @@ public class SmsAuthService {
     public boolean isTestMode() {
         return smsProperties.isTestMode();
     }
+
+    /**
+     * 일반 알림 SMS 발송 (인증번호 외). 테넌트 effective credentials 및 {@code SMS_PROVIDER} 사용.
+     *
+     * @param phoneNumber 수신 전화번호
+     * @param message     발송 본문(호출부에서 템플릿 조립 완료)
+     * @return 발송 성공 여부. 테스트 모드에서는 로그만 남기고 true
+     */
+    public boolean sendNotificationMessage(String phoneNumber, String message) {
+        if (!isEffectiveSmsEnabled()) {
+            log.warn("⚠️ SMS가 비활성화되어 있습니다.");
+            return false;
+        }
+        if (smsProperties.isTestMode()) {
+            log.info("🧪 SMS 테스트 모드: 알림 메시지 발송 시뮬레이션");
+            log.info("📱 발송 메시지: {}", message);
+            return true;
+        }
+        return sendViaConfiguredProvider(phoneNumber, message);
+    }
     
     /**
      * 인증번호 생성 (6자리 랜덤 숫자)
@@ -125,12 +145,24 @@ public class SmsAuthService {
      */
     private boolean sendActualSms(String phoneNumber, String verificationCode) {
         log.info("📤 실제 SMS 발송 시작 - 전화번호: {}", phoneNumber);
-        
+        TenantSmsEffectiveCredentials creds = tenantSmsSettingsService.getEffectiveCredentials(
+            TenantContextHolder.getTenantId());
+        String senderLabel = creds.senderNumber() != null && !creds.senderNumber().isEmpty()
+            ? creds.senderNumber()
+            : "CoreSolution";
+        String message = String.format("[%s] 인증번호는 %s입니다.", senderLabel, verificationCode);
+        return sendViaConfiguredProvider(phoneNumber, message);
+    }
+
+    /**
+     * 테넌트 effective credentials로 선택된 {@link SmsProvider}를 통해 SMS 발송.
+     */
+    private boolean sendViaConfiguredProvider(String phoneNumber, String message) {
         if (!smsProperties.isProductionMode()) {
             log.warn("⚠️ SMS 프로덕션 모드가 아닙니다. 설정을 확인해주세요.");
             return false;
         }
-        
+
         TenantSmsEffectiveCredentials creds = tenantSmsSettingsService.getEffectiveCredentials(
             TenantContextHolder.getTenantId());
         String providerName = creds.provider();
@@ -138,35 +170,28 @@ public class SmsAuthService {
             .filter(p -> p.getProviderName().equalsIgnoreCase(providerName))
             .findFirst()
             .orElse(null);
-        
+
         if (provider == null) {
             log.error("❌ SMS 프로바이더를 찾을 수 없습니다: {}", providerName);
             return false;
         }
-        
+
         if (!provider.isConfigured()) {
             log.error("❌ SMS 프로바이더 설정이 완료되지 않았습니다: {}", providerName);
             return false;
         }
-        
+
         try {
-            // SMS 메시지 구성
-            String senderLabel = creds.senderNumber() != null && !creds.senderNumber().isEmpty()
-                ? creds.senderNumber()
-                : "CoreSolution";
-            String message = String.format("[%s] 인증번호는 %s입니다.", senderLabel, verificationCode);
-            
-            // SMS 발송
             boolean success = provider.sendSms(phoneNumber, message);
-            
+
             if (success) {
                 log.info("✅ SMS 발송 성공 - 전화번호: {}, 프로바이더: {}", phoneNumber, providerName);
             } else {
                 log.error("❌ SMS 발송 실패 - 전화번호: {}, 프로바이더: {}", phoneNumber, providerName);
             }
-            
+
             return success;
-            
+
         } catch (Exception e) {
             log.error("❌ SMS 발송 중 오류 발생: {}", e.getMessage(), e);
             return false;

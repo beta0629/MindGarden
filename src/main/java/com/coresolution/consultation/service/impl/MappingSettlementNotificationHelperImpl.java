@@ -4,12 +4,16 @@ import com.coresolution.consultation.constant.MappingSettlementNotificationCopy;
 import com.coresolution.consultation.constant.MobilePushCanonicalTypes;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MappingSettlementNotificationHelper;
 import com.coresolution.consultation.service.MappingSettlementScenario;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.util.MobilePushMessageFormatter;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,9 +29,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class MappingSettlementNotificationHelperImpl implements MappingSettlementNotificationHelper {
 
+    private static final String FALLBACK_CONSULTANT_NAME = "상담사";
+
     private final ConsultationMessageService consultationMessageService;
     private final MobilePushDispatchService mobilePushDispatchService;
     private final CommonCodeService commonCodeService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @Override
     public void notifyAfterMappingSettlement(
@@ -58,6 +66,67 @@ public class MappingSettlementNotificationHelperImpl implements MappingSettlemen
         } catch (Exception ex) {
             log.warn("매칭 정산 푸시 실패: mappingId={}, scenario={}", mapping.getId(), scenario, ex);
         }
+
+        try {
+            dispatchExternalNotification(mapping, tid, scenario);
+        } catch (Exception ex) {
+            log.warn("매칭 정산 알림톡/SMS 실패: mappingId={}, scenario={}", mapping.getId(), scenario, ex);
+        }
+    }
+
+    /**
+     * 알림톡→SMS 폴백(비차단). {@link MappingSettlementScenario#MAPPING_APPROVED}는 전용 템플릿 없음 — 제외.
+     */
+    private void dispatchExternalNotification(
+            ConsultantClientMapping mapping, String tenantId, MappingSettlementScenario scenario) {
+        switch (scenario) {
+            case PAYMENT_CONFIRMED, DEPOSIT_CONFIRMED -> sendPaymentCompletedToClient(mapping, tenantId);
+            case MAPPING_APPROVED -> {
+                // PAYMENT_COMPLETED 알림톡 템플릿 없음 — 이번 배치 제외
+            }
+            default -> {
+            }
+        }
+    }
+
+    private void sendPaymentCompletedToClient(ConsultantClientMapping mapping, String tenantId) {
+        Long clientUserId = mapping.getClient() != null ? mapping.getClient().getId() : null;
+        if (clientUserId == null) {
+            return;
+        }
+        User client = findUserByTenant(tenantId, clientUserId).orElse(null);
+        if (client == null) {
+            log.warn("매칭 정산 알림톡/SMS 생략: 내담자 User 미조회 mappingId={}, clientId={}",
+                    mapping.getId(), clientUserId);
+            return;
+        }
+        long amount = resolvePaymentAmountLong(mapping);
+        String packageName = resolvePackageName(mapping);
+        String consultantName = resolveConsultantDisplayName(mapping, tenantId);
+        notificationService.sendPaymentCompleted(client, amount, packageName, consultantName);
+    }
+
+    private Optional<User> findUserByTenant(String tenantId, Long userId) {
+        if (tenantId == null || tenantId.isBlank() || userId == null) {
+            return Optional.empty();
+        }
+        return userRepository.findByTenantIdAndId(tenantId, userId);
+    }
+
+    private static long resolvePaymentAmountLong(ConsultantClientMapping mapping) {
+        Long amount = mapping.getPaymentAmount() != null && mapping.getPaymentAmount() > 0
+                ? mapping.getPaymentAmount()
+                : mapping.getPackagePrice();
+        return amount != null && amount > 0 ? amount : 0L;
+    }
+
+    private String resolveConsultantDisplayName(ConsultantClientMapping mapping, String tenantId) {
+        if (mapping.getConsultant() == null || mapping.getConsultant().getId() == null) {
+            return FALLBACK_CONSULTANT_NAME;
+        }
+        return findUserByTenant(tenantId, mapping.getConsultant().getId())
+                .map(u -> u.getName() != null && !u.getName().isBlank() ? u.getName() : FALLBACK_CONSULTANT_NAME)
+                .orElse(FALLBACK_CONSULTANT_NAME);
     }
 
     private void sendInAppMessages(

@@ -5,16 +5,20 @@ import com.coresolution.consultation.constant.MobilePushCanonicalTypes;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MappingSettlementScenario;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.NotificationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -43,6 +47,10 @@ class MappingSettlementNotificationHelperImplTest {
     private MobilePushDispatchService mobilePushDispatchService;
     @Mock
     private CommonCodeService commonCodeService;
+    @Mock
+    private NotificationService notificationService;
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private MappingSettlementNotificationHelperImpl helper;
@@ -53,6 +61,7 @@ class MappingSettlementNotificationHelperImplTest {
         when(commonCodeService.getCodeValue("ROLE", UserRole.CONSULTANT.name())).thenReturn("CONSULTANT");
         when(commonCodeService.getCodeValue("MESSAGE_TYPE", MappingSettlementNotificationCopy.MESSAGE_TYPE_PAYMENT))
                 .thenReturn("PAYMENT_COMPLETION");
+        stubClientAndConsultantUsers();
 
         ConsultantClientMapping mapping = buildMapping();
 
@@ -79,6 +88,8 @@ class MappingSettlementNotificationHelperImplTest {
                 any(),
                 any(),
                 eq(null));
+        verify(notificationService).sendPaymentCompleted(
+                eq(clientUser()), eq(500_000L), eq("10회 패키지"), eq("김상담"));
     }
 
     @Test
@@ -87,6 +98,7 @@ class MappingSettlementNotificationHelperImplTest {
         when(commonCodeService.getCodeValue("ROLE", UserRole.CONSULTANT.name())).thenReturn("CONSULTANT");
         when(commonCodeService.getCodeValue("MESSAGE_TYPE", MappingSettlementNotificationCopy.MESSAGE_TYPE_PAYMENT))
                 .thenReturn("PAYMENT_COMPLETION");
+        stubClientAndConsultantUsers();
 
         ConsultantClientMapping mapping = buildMapping();
 
@@ -113,6 +125,8 @@ class MappingSettlementNotificationHelperImplTest {
                 any(),
                 any(),
                 eq(null));
+        verify(notificationService).sendPaymentCompleted(
+                eq(clientUser()), eq(500_000L), eq("10회 패키지"), eq("김상담"));
     }
 
     @Test
@@ -158,6 +172,7 @@ class MappingSettlementNotificationHelperImplTest {
                 any(),
                 any(),
                 any());
+        verify(notificationService, never()).sendPaymentCompleted(any(), any(Long.class), any(), any());
     }
 
     @Test
@@ -173,6 +188,26 @@ class MappingSettlementNotificationHelperImplTest {
                 any());
         verify(mobilePushDispatchService, never()).dispatchMappingSettlement(
                 any(), any(), any(), any(), any(Boolean.class), any(), any(), any(), any(), any());
+        verify(notificationService, never()).sendPaymentCompleted(any(), any(Long.class), any(), any());
+    }
+
+    private void stubClientAndConsultantUsers() {
+        when(userRepository.findByTenantIdAndId(TENANT_ID, CLIENT_ID)).thenReturn(Optional.of(clientUser()));
+        when(userRepository.findByTenantIdAndId(TENANT_ID, CONSULTANT_ID)).thenReturn(Optional.of(consultantUser()));
+    }
+
+    private static User clientUser() {
+        User client = new User();
+        client.setId(CLIENT_ID);
+        client.setName("내담자");
+        return client;
+    }
+
+    private static User consultantUser() {
+        User consultant = new User();
+        consultant.setId(CONSULTANT_ID);
+        consultant.setName("김상담");
+        return consultant;
     }
 
     private static ConsultantClientMapping buildMapping() {

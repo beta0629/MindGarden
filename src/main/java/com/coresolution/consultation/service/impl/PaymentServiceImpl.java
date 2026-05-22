@@ -13,12 +13,15 @@ import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
 import com.coresolution.consultation.dto.PaymentWebhookRequest;
 import com.coresolution.consultation.entity.Payment;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
@@ -66,6 +69,8 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     private final MobilePushDispatchService mobilePushDispatchService;
     private final ClientShopCheckoutService clientShopCheckoutService;
     private final ShopClientOrderRepository shopClientOrderRepository;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
     
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
@@ -78,6 +83,8 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             CommonCodeService commonCodeService,
             MobilePushDispatchService mobilePushDispatchService,
             ShopClientOrderRepository shopClientOrderRepository,
+            NotificationService notificationService,
+            UserRepository userRepository,
             @Lazy ClientShopCheckoutService clientShopCheckoutService) {
         super(paymentRepository, accessControlService);
         this.paymentRepository = paymentRepository;
@@ -89,6 +96,8 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         this.commonCodeService = commonCodeService;
         this.mobilePushDispatchService = mobilePushDispatchService;
         this.shopClientOrderRepository = shopClientOrderRepository;
+        this.notificationService = notificationService;
+        this.userRepository = userRepository;
         this.clientShopCheckoutService = clientShopCheckoutService;
     }
     
@@ -308,6 +317,12 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                         } catch (Exception ex) {
                             log.warn("결제 완료 푸시 실패: {}", ex.getMessage());
                         }
+
+                        try {
+                            trySendPaymentCompletedExternalNotification(tenantId, payment);
+                        } catch (Exception ex) {
+                            log.warn("결제 완료 알림톡/SMS 실패: {}", ex.getMessage());
+                        }
                     } else {
                         log.debug("쇼핑 주문 PG: generic payment_completed 알림 스킵 paymentId={}", paymentId);
                     }
@@ -356,6 +371,39 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         log.info("결제 상태 업데이트 완료: {}", paymentId);
         
         return buildPaymentResponse(payment, null);
+    }
+
+    private static final String FALLBACK_CONSULTANT_NAME = "상담사";
+    private static final String FALLBACK_PACKAGE_NAME = "상담 패키지";
+
+    /**
+     * PG 결제 승인 후 내담자에게 알림톡→SMS 폴백(비차단).
+     */
+    private void trySendPaymentCompletedExternalNotification(String tenantId, Payment payment) {
+        if (payment.getPayerId() == null) {
+            return;
+        }
+        User payer = userRepository.findByTenantIdAndId(tenantId, payment.getPayerId()).orElse(null);
+        if (payer == null) {
+            log.warn("결제 완료 알림톡/SMS 생략: payer User 미조회 paymentId={}, payerId={}",
+                    payment.getPaymentId(), payment.getPayerId());
+            return;
+        }
+        long amount = payment.getAmount() != null ? payment.getAmount().longValue() : 0L;
+        String packageName = payment.getDescription() != null && !payment.getDescription().isBlank()
+                ? payment.getDescription()
+                : FALLBACK_PACKAGE_NAME;
+        String consultantName = resolveRecipientDisplayName(tenantId, payment.getRecipientId());
+        notificationService.sendPaymentCompleted(payer, amount, packageName, consultantName);
+    }
+
+    private String resolveRecipientDisplayName(String tenantId, Long recipientId) {
+        if (recipientId == null) {
+            return FALLBACK_CONSULTANT_NAME;
+        }
+        return userRepository.findByTenantIdAndId(tenantId, recipientId)
+                .map(u -> u.getName() != null && !u.getName().isBlank() ? u.getName() : FALLBACK_CONSULTANT_NAME)
+                .orElse(FALLBACK_CONSULTANT_NAME);
     }
 
     /**

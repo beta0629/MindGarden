@@ -225,6 +225,10 @@ Expo 앱·웹에서 아래 **3대 트리거** 발생 시, **인앱 메시지**, 
 
 **디자인**: 본 배치 UI 변경 최소. 카피·토스트는 `core-designer`는 P0 메시지 문구 확정 시만.
 
+### § 솔라피 병행 배치 (Phase D — 별도 승인)
+
+모바일(Expo)과 **동일 트리거**에서 `NotificationService`(알림톡 `provider=solapi` → SMS `SolapiSmsProvider` 폴백)를 **Expo 푸시·인앱과 병행** 호출한다. 기준 패턴: `ScheduleServiceImpl.tryDispatchScheduleConfirmedExternalNotification` → `sendConsultationConfirmed`. **선행**: `NotificationServiceImpl.sendSms`가 `SmsProvider`(Solapi)를 실제 호출하도록 정비(현재 TODO·시뮬레이션). **대상 트리거**: (1) PG `PaymentServiceImpl` `APPROVED` — `sendPaymentCompleted` (2) `MappingSettlementNotificationHelperImpl` 3시나리오 — `confirm-payment`/`confirm-deposit`/`approve`와 동일. **수신자**: 내담자 필수; `MAPPING_APPROVED`는 상담사 병행 검토. **원칙**: try/catch·본 트랜잭션 롤백 금지·`TenantContextHolder` 유지·쇼핑 PG·웹 FCM 제외. **템플릿**: `PAYMENT_COMPLETED` 기존 SSOT; 입금·승인은 `NotificationType`·`SMS_TEMPLATE`·`ALIMTALK_BIZ_TEMPLATE_CODE` 확장 시 `core-designer` 합의 후. **검증**: `core-tester` — Solapi mock·기존 푸시 baseline green·알림톡/SMS 호출 assertion.
+
 ---
 
 ## 7. 수동 UAT 체크리스트

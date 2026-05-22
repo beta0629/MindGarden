@@ -10,12 +10,12 @@
 .mg-test-notif-history {
     display: flex;
     flex-direction: column;
-    gap: var(--admin-spacing-md);
-    padding: var(--admin-spacing-lg);
-    background: var(--mg-color-surface-light);
+    gap: var(--mg-spacing-md);
+    padding: var(--mg-spacing-lg);
+    background: var(--mg-color-surface-main);
     border: 1px solid var(--mg-color-border-main);
-    border-radius: var(--admin-radius-lg);
-    box-shadow: var(--admin-shadow-sm);
+    border-radius: var(--mg-radius-lg);
+    box-shadow: var(--mg-shadow-sm);
     color: var(--mg-color-text-main);
     max-height: 32rem;
     overflow-y: auto;
@@ -25,7 +25,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--admin-spacing-md);
+    gap: var(--mg-spacing-md);
 }
 
 .mg-test-notif-history__title {
@@ -46,7 +46,7 @@
 }
 
 .mg-test-notif-history__empty {
-    padding: var(--admin-spacing-lg);
+    padding: var(--mg-spacing-lg);
     text-align: center;
     color: var(--mg-color-text-secondary);
     font-size: 0.875rem;
@@ -54,11 +54,11 @@
 }
 
 .mg-test-notif-history__error {
-    padding: var(--admin-spacing-md);
-    color: var(--mg-color-error-main);
-    background: var(--color-bg-surface);
-    border: 1px solid var(--mg-color-error-main);
-    border-radius: var(--admin-radius-md);
+    padding: var(--mg-spacing-md);
+    color: var(--mg-color-error);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--mg-color-error);
+    border-radius: var(--mg-radius-md);
     margin: 0;
     font-size: 0.875rem;
 }
@@ -66,7 +66,7 @@
 .mg-test-notif-history__list {
     display: flex;
     flex-direction: column;
-    gap: var(--admin-spacing-sm);
+    gap: var(--mg-spacing-sm);
     list-style: none;
     margin: 0;
     padding: 0;
@@ -76,21 +76,21 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    padding: var(--admin-spacing-md);
-    background: var(--color-bg-surface);
+    padding: var(--mg-spacing-md);
+    background: var(--color-bg-primary);
     border: 1px solid var(--mg-color-border-main);
-    border-radius: var(--admin-radius-md);
-    box-shadow: var(--admin-shadow-sm);
+    border-radius: var(--mg-radius-md);
+    box-shadow: var(--mg-shadow-sm);
 }
 
 .mg-test-notif-history__item--fail {
-    border-color: var(--mg-color-error-main);
+    border-color: var(--mg-color-error);
 }
 
 .mg-test-notif-history__row {
     display: flex;
     align-items: center;
-    gap: var(--admin-spacing-sm);
+    gap: var(--mg-spacing-sm);
     flex-wrap: wrap;
 }
 
@@ -102,12 +102,12 @@
 .mg-test-notif-history__chip {
     display: inline-flex;
     align-items: center;
-    padding: 0 var(--admin-spacing-sm);
-    border-radius: var(--admin-radius-md);
+    padding: 0 var(--mg-spacing-sm);
+    border-radius: var(--mg-radius-md);
     font-size: 0.75rem;
     font-weight: 600;
     line-height: 1.6;
-    background: var(--mg-color-surface-light);
+    background: var(--mg-color-surface-main);
     color: var(--mg-color-text-secondary);
     border: 1px solid var(--mg-color-border-main);
 }
@@ -118,20 +118,20 @@
 }
 
 .mg-test-notif-history__chip--alimtalk {
-    border-color: var(--mg-color-warning-main);
-    color: var(--mg-color-warning-main);
+    border-color: var(--mg-color-warning-500);
+    color: var(--mg-color-warning-500);
 }
 
 .mg-test-notif-history__chip--success {
-    background: var(--mg-color-success-main);
-    color: var(--color-bg-surface);
-    border-color: var(--mg-color-success-main);
+    background: var(--mg-color-success);
+    color: var(--color-bg-primary);
+    border-color: var(--mg-color-success);
 }
 
 .mg-test-notif-history__chip--fail {
-    background: var(--mg-color-error-main);
-    color: var(--color-bg-surface);
-    border-color: var(--mg-color-error-main);
+    background: var(--mg-color-error);
+    color: var(--color-bg-primary);
+    border-color: var(--mg-color-error);
 }
 
 .mg-test-notif-history__time {
@@ -146,19 +146,19 @@
 }
 
 .mg-test-notif-history__error-inline {
-    color: var(--mg-color-error-main);
+    color: var(--mg-color-error);
     font-size: 0.8125rem;
 }
 
 @media (max-width: 768px) {
     .mg-test-notif-history {
-        padding: var(--admin-spacing-md);
+        padding: var(--mg-spacing-md);
     }
 
     .mg-test-notif-history__header {
         flex-direction: column;
         align-items: stretch;
-        gap: var(--admin-spacing-sm);
+        gap: var(--mg-spacing-sm);
     }
 
     .mg-test-notif-history__time {

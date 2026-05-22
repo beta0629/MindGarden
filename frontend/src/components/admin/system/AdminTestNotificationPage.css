@@ -14,14 +14,14 @@
 }
 
 .mg-admin-test-notif-page__panel {
-    margin-top: var(--admin-spacing-lg);
+    margin-top: var(--mg-spacing-lg);
     width: 100%;
 }
 
 .mg-admin-test-notif-page__grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: var(--admin-spacing-lg);
+    gap: var(--mg-spacing-lg);
     align-items: stretch;
 }
 
@@ -33,6 +33,6 @@
 @media (max-width: 768px) {
     .mg-admin-test-notif-page__grid {
         grid-template-columns: 1fr;
-        gap: var(--admin-spacing-md);
+        gap: var(--mg-spacing-md);
     }
 }

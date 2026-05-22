@@ -10,19 +10,19 @@
 .mg-test-notif-form {
     display: flex;
     flex-direction: column;
-    gap: var(--admin-spacing-md);
-    padding: var(--admin-spacing-lg);
-    background: var(--mg-color-surface-light);
+    gap: var(--mg-spacing-md);
+    padding: var(--mg-spacing-lg);
+    background: var(--mg-color-surface-main);
     border: 1px solid var(--mg-color-border-main);
-    border-radius: var(--admin-radius-lg);
-    box-shadow: var(--admin-shadow-md);
+    border-radius: var(--mg-radius-lg);
+    box-shadow: var(--mg-shadow-md);
     color: var(--mg-color-text-main);
 }
 
 .mg-test-notif-form__section {
     display: flex;
     flex-direction: column;
-    gap: var(--admin-spacing-sm);
+    gap: var(--mg-spacing-sm);
 }
 
 .mg-test-notif-form__section-title {
@@ -35,18 +35,18 @@
 .mg-test-notif-form__label {
     font-size: 0.875rem;
     color: var(--mg-color-text-secondary);
-    margin-bottom: var(--admin-spacing-sm);
+    margin-bottom: var(--mg-spacing-sm);
 }
 
 .mg-test-notif-form__input,
 .mg-test-notif-form__select,
 .mg-test-notif-form__textarea {
     width: 100%;
-    padding: var(--admin-spacing-sm) var(--admin-spacing-md);
-    background: var(--color-bg-surface);
+    padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+    background: var(--color-bg-primary);
     color: var(--mg-color-text-main);
     border: 1px solid var(--mg-color-border-main);
-    border-radius: var(--admin-radius-md);
+    border-radius: var(--mg-radius-md);
     font-size: 0.9375rem;
     line-height: 1.5;
     font-family: inherit;
@@ -58,7 +58,7 @@
 .mg-test-notif-form__textarea:focus {
     outline: none;
     border-color: var(--mg-color-primary-main);
-    box-shadow: var(--admin-shadow-sm);
+    box-shadow: var(--mg-shadow-sm);
 }
 
 .mg-test-notif-form__textarea {
@@ -69,19 +69,19 @@
 .mg-test-notif-form__user-picker {
     display: flex;
     flex-direction: column;
-    gap: var(--admin-spacing-sm);
-    padding: var(--admin-spacing-md);
-    background: var(--color-bg-surface);
+    gap: var(--mg-spacing-sm);
+    padding: var(--mg-spacing-md);
+    background: var(--color-bg-primary);
     border: 1px solid var(--mg-color-border-main);
-    border-radius: var(--admin-radius-md);
+    border-radius: var(--mg-radius-md);
 }
 
 .mg-test-notif-form__sms-body,
 .mg-test-notif-form__alimtalk-body {
     display: flex;
     flex-direction: column;
-    gap: var(--admin-spacing-sm);
-    margin-top: var(--admin-spacing-sm);
+    gap: var(--mg-spacing-sm);
+    margin-top: var(--mg-spacing-sm);
 }
 
 .mg-test-notif-form__counter {
@@ -91,14 +91,14 @@
 }
 
 .mg-test-notif-form__counter--warn {
-    color: var(--mg-color-warning-main);
+    color: var(--mg-color-warning-500);
     font-weight: 600;
 }
 
 .mg-test-notif-form__toggle {
     display: inline-flex;
     align-items: center;
-    gap: var(--admin-spacing-sm);
+    gap: var(--mg-spacing-sm);
     font-size: 0.875rem;
     color: var(--mg-color-text-secondary);
     cursor: pointer;
@@ -107,11 +107,11 @@
 .mg-test-notif-form__variables {
     display: flex;
     flex-direction: column;
-    gap: var(--admin-spacing-sm);
-    padding: var(--admin-spacing-md);
-    background: var(--mg-color-surface-light);
+    gap: var(--mg-spacing-sm);
+    padding: var(--mg-spacing-md);
+    background: var(--mg-color-surface-main);
     border: 1px solid var(--mg-color-border-main);
-    border-radius: var(--admin-radius-md);
+    border-radius: var(--mg-radius-md);
 }
 
 .mg-test-notif-form__variables-title {
@@ -130,7 +130,7 @@
 .mg-test-notif-form__variable-label {
     display: inline-flex;
     align-items: center;
-    gap: var(--admin-spacing-sm);
+    gap: var(--mg-spacing-sm);
     font-size: 0.8125rem;
     color: var(--mg-color-text-secondary);
 }
@@ -138,15 +138,15 @@
 .mg-test-notif-form__badge {
     display: inline-flex;
     align-items: center;
-    padding: 0 var(--admin-spacing-sm);
-    border-radius: var(--admin-radius-md);
+    padding: 0 var(--mg-spacing-sm);
+    border-radius: var(--mg-radius-md);
     font-size: 0.6875rem;
     line-height: 1.4;
 }
 
 .mg-test-notif-form__badge--required {
-    background: var(--mg-color-error-main);
-    color: var(--color-bg-surface);
+    background: var(--mg-color-error);
+    color: var(--color-bg-primary);
 }
 
 .mg-test-notif-form__hint {
@@ -158,19 +158,19 @@
 .mg-test-notif-form__rate {
     display: flex;
     align-items: center;
-    gap: var(--admin-spacing-sm);
-    padding: var(--admin-spacing-sm) var(--admin-spacing-md);
-    background: var(--color-bg-surface);
+    gap: var(--mg-spacing-sm);
+    padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+    background: var(--color-bg-primary);
     border: 1px solid var(--mg-color-border-main);
-    border-radius: var(--admin-radius-md);
+    border-radius: var(--mg-radius-md);
     font-size: 0.875rem;
     color: var(--mg-color-text-secondary);
     margin: 0;
 }
 
 .mg-test-notif-form__rate--exhausted {
-    border-color: var(--mg-color-error-main);
-    color: var(--mg-color-error-main);
+    border-color: var(--mg-color-error);
+    color: var(--mg-color-error);
 }
 
 .mg-test-notif-form__rate-label {
@@ -181,7 +181,7 @@
 .mg-test-notif-form__submit {
     display: flex;
     justify-content: flex-end;
-    padding-top: var(--admin-spacing-sm);
+    padding-top: var(--mg-spacing-sm);
 }
 
 .mg-test-notif-form__submit-btn {
@@ -194,28 +194,28 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--admin-spacing-sm);
+    gap: var(--mg-spacing-sm);
     color: var(--mg-color-text-main);
 }
 
 .mg-test-notif-form__result {
     display: flex;
     flex-direction: column;
-    gap: var(--admin-spacing-sm);
-    padding: var(--admin-spacing-md);
-    border-radius: var(--admin-radius-md);
+    gap: var(--mg-spacing-sm);
+    padding: var(--mg-spacing-md);
+    border-radius: var(--mg-radius-md);
 }
 
 .mg-test-notif-form__result--success {
-    background: var(--color-bg-surface);
-    border: 1px solid var(--mg-color-success-main);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--mg-color-success);
     color: var(--mg-color-text-main);
 }
 
 .mg-test-notif-form__result--fail {
-    background: var(--color-bg-surface);
-    border: 1px solid var(--mg-color-error-main);
-    color: var(--mg-color-error-main);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--mg-color-error);
+    color: var(--mg-color-error);
 }
 
 .mg-test-notif-form__console-link {
@@ -233,8 +233,8 @@
 
 @media (max-width: 768px) {
     .mg-test-notif-form {
-        padding: var(--admin-spacing-md);
-        gap: var(--admin-spacing-sm);
+        padding: var(--mg-spacing-md);
+        gap: var(--mg-spacing-sm);
     }
 
     .mg-test-notif-form__submit {

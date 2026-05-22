@@ -36,6 +36,12 @@ public class SolapiAlimTalkClient {
 
     static final String SEND_ENDPOINT = "/messages/v4/send-many/detail";
     static final String MESSAGE_TYPE_ATA = "ATA";
+    /** Solapi {@code messageList[].statusCode} 정상 코드(접수 성공). */
+    static final String SUCCESS_STATUS_CODE = "2000";
+    /** Solapi {@code groupInfo.status} 그룹 전체 실패 마커. */
+    static final String GROUP_STATUS_FAILED = "FAILED";
+    /** 응답 본문이 비어 있지 않은데 파싱 직전 진단용 에러 메시지에 노출할 최대 길이. */
+    static final int FALLBACK_ERROR_BODY_LIMIT = 200;
 
     private final SolapiSignatureSigner signatureSigner;
     private final RestTemplate restTemplate;
@@ -137,6 +143,26 @@ public class SolapiAlimTalkClient {
         return headers;
     }
 
+    /**
+     * Solapi 응답을 파싱하여 발송 성공 여부와 식별자/오류를 추출한다.
+     *
+     * <p><b>판정 규칙(전부 만족해야 success=true)</b>:
+     * <ol>
+     *   <li>HTTP 2xx</li>
+     *   <li>root {@code errorCode} 부재</li>
+     *   <li>{@code groupInfo.status} 가 존재한다면 {@link #GROUP_STATUS_FAILED} 가 아님</li>
+     *   <li>{@code groupInfo.count.registeredFailed} 가 존재한다면 0</li>
+     *   <li>{@code messageList[]} 가 존재한다면 모든 entry의 {@code statusCode}가 {@link #SUCCESS_STATUS_CODE}</li>
+     * </ol>
+     *
+     * <p>위 중 하나라도 실패하면 success=false 와 함께 root {@code errorCode}, messageList[0]
+     * statusCode/statusMessage 폴백, 본문 일부(마스킹) 순으로 사람이 읽을 메시지를 구성한다.
+     * 사후 추적을 위해 groupId/messageId 는 실패에도 보존한다.
+     *
+     * @param statusCode HTTP 상태 코드
+     * @param body       응답 본문(JSON 또는 null/blank)
+     * @return 발송 결과(success, groupId, messageId, errorCode, errorMessage)
+     */
     private SolapiAlimTalkResponse parseResponse(int statusCode, String body) {
         boolean is2xx = statusCode >= 200 && statusCode < 300;
         if (body == null || body.isBlank()) {
@@ -146,17 +172,51 @@ public class SolapiAlimTalkClient {
         }
         try {
             JsonNode root = objectMapper.readTree(body);
-            String messageId = textOrNull(root, "groupId");
-            if (messageId == null) {
-                messageId = textOrNull(root, "messageId");
-            }
-            String errorCode = textOrNull(root, "errorCode");
-            String errorMessage = textOrNull(root, "errorMessage");
+            JsonNode groupInfo = root.path("groupInfo");
+            JsonNode messageList = root.path("messageList");
+            JsonNode countNode = groupInfo.path("count");
 
-            if (is2xx && errorCode == null) {
-                return SolapiAlimTalkResponse.success(messageId);
+            // groupId 우선순위: groupInfo.groupId → root.groupId → root.messageId
+            String groupId = textOrNull(groupInfo, "groupId");
+            if (groupId == null) {
+                groupId = textOrNull(root, "groupId");
             }
-            return SolapiAlimTalkResponse.failure(statusCode, errorCode, errorMessage);
+            String firstMessageId = firstMessageId(messageList);
+            String messageId = firstMessageId != null ? firstMessageId : textOrNull(root, "messageId");
+            if (messageId == null) {
+                messageId = groupId;
+            }
+
+            String rootErrorCode = textOrNull(root, "errorCode");
+            String rootErrorMessage = textOrNull(root, "errorMessage");
+            String groupStatus = textOrNull(groupInfo, "status");
+            Integer registeredFailed = intOrNull(countNode, "registeredFailed");
+            String firstRejectCode = firstRejectStatusCode(messageList);
+            String firstRejectMessage = firstRejectStatusMessage(messageList);
+
+            boolean groupStatusFailed = groupStatus != null
+                && GROUP_STATUS_FAILED.equalsIgnoreCase(groupStatus);
+            boolean registeredFailedNonZero = registeredFailed != null && registeredFailed > 0;
+            boolean messageRejected = firstRejectCode != null;
+
+            boolean success = is2xx
+                && rootErrorCode == null
+                && !groupStatusFailed
+                && !registeredFailedNonZero
+                && !messageRejected;
+
+            if (success) {
+                return SolapiAlimTalkResponse.success(groupId, messageId);
+            }
+
+            String resolvedErrorCode = firstNonBlank(rootErrorCode, firstRejectCode, "UNKNOWN");
+            String resolvedErrorMessage = firstNonBlank(
+                rootErrorMessage,
+                firstRejectMessage,
+                buildGroupFailureSummary(groupStatus, registeredFailed),
+                SolapiSmsProvider.maskResponseBody(truncate(body, FALLBACK_ERROR_BODY_LIMIT)));
+            return SolapiAlimTalkResponse.failure(statusCode, groupId, messageId,
+                resolvedErrorCode, resolvedErrorMessage);
         } catch (Exception e) {
             log.warn("Solapi 알림톡 응답 파싱 실패: {}", e.getMessage());
             return is2xx
@@ -165,7 +225,90 @@ public class SolapiAlimTalkClient {
         }
     }
 
+    private static String firstMessageId(JsonNode messageList) {
+        if (messageList == null || !messageList.isArray() || messageList.isEmpty()) {
+            return null;
+        }
+        return textOrNull(messageList.get(0), "messageId");
+    }
+
+    private static String firstRejectStatusCode(JsonNode messageList) {
+        if (messageList == null || !messageList.isArray()) {
+            return null;
+        }
+        for (JsonNode message : messageList) {
+            String code = textOrNull(message, "statusCode");
+            if (code != null && !SUCCESS_STATUS_CODE.equals(code)) {
+                return code;
+            }
+        }
+        return null;
+    }
+
+    private static String firstRejectStatusMessage(JsonNode messageList) {
+        if (messageList == null || !messageList.isArray()) {
+            return null;
+        }
+        for (JsonNode message : messageList) {
+            String code = textOrNull(message, "statusCode");
+            if (code != null && !SUCCESS_STATUS_CODE.equals(code)) {
+                return textOrNull(message, "statusMessage");
+            }
+        }
+        return null;
+    }
+
+    private static String buildGroupFailureSummary(String groupStatus, Integer registeredFailed) {
+        if (groupStatus == null && registeredFailed == null) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder("group ");
+        if (groupStatus != null) {
+            sb.append("status=").append(groupStatus);
+        }
+        if (registeredFailed != null) {
+            if (groupStatus != null) {
+                sb.append(", ");
+            }
+            sb.append("registeredFailed=").append(registeredFailed);
+        }
+        return sb.toString();
+    }
+
+    private static String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static String truncate(String value, int max) {
+        if (value == null) {
+            return null;
+        }
+        return value.length() <= max ? value : value.substring(0, max);
+    }
+
+    private static Integer intOrNull(JsonNode node, String field) {
+        if (node == null) {
+            return null;
+        }
+        JsonNode value = node.get(field);
+        if (value == null || value.isNull() || !value.canConvertToInt()) {
+            return null;
+        }
+        return value.asInt();
+    }
+
     private static String textOrNull(JsonNode node, String field) {
+        if (node == null) {
+            return null;
+        }
         JsonNode value = node.get(field);
         if (value == null || value.isNull()) {
             return null;

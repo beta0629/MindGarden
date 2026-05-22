@@ -13,6 +13,7 @@ import com.coresolution.consultation.integration.solapi.SolapiAlimTalkClient;
 import com.coresolution.consultation.integration.solapi.SolapiAlimTalkRequest;
 import com.coresolution.consultation.integration.solapi.SolapiAlimTalkResponse;
 import com.coresolution.consultation.integration.solapi.SolapiCredentials;
+import com.coresolution.consultation.integration.solapi.SolapiSendIds;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.TenantKakaoAlimtalkSettingsRepository;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
@@ -46,6 +47,11 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
 
     /** 직전 알림톡 발송 시도의 오류 상세(상태코드·errorCode·errorMessage 등). 호출 스레드 단위. */
     private static final ThreadLocal<String> LAST_ERROR_DETAIL = new ThreadLocal<>();
+    /**
+     * 직전 솔라피 알림톡 발송 호출에서 응답된 식별자(groupId/messageId). 호출 스레드 단위.
+     * 어드민 감사로그·솔라피 콘솔 사후 추적을 위해 성공·실패와 무관하게 보존한다.
+     */
+    private static final ThreadLocal<SolapiSendIds> LAST_SEND_IDS = new ThreadLocal<>();
     /** 알림톡 errorMessage 절단 한계(감사 컬럼 안전). */
     private static final int ALIMTALK_ERROR_DETAIL_LIMIT = 500;
 
@@ -116,8 +122,9 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
     @Override
     public boolean sendAlimTalk(String phoneNumber, String apiTemplateCode, String contentTemplateKey,
             Map<String, String> templateParams) {
-        // 진입 시점에 잔여 detail을 비운다.
+        // 진입 시점에 잔여 detail·식별자를 비운다(이전 호출 누수 방지).
         LAST_ERROR_DETAIL.remove();
+        LAST_SEND_IDS.remove();
 
         if (!alimTalkEnabled) {
             log.info("📱 알림톡 비활성화 상태 - SMS로 대체 발송 권장");
@@ -160,6 +167,13 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
     public String consumeLastErrorDetail() {
         String value = LAST_ERROR_DETAIL.get();
         LAST_ERROR_DETAIL.remove();
+        return value;
+    }
+
+    @Override
+    public SolapiSendIds consumeLastSolapiIds() {
+        SolapiSendIds value = LAST_SEND_IDS.get();
+        LAST_SEND_IDS.remove();
         return value;
     }
 
@@ -252,6 +266,11 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
             templateParams != null ? templateParams : new HashMap<>());
 
         SolapiAlimTalkResponse response = solapiAlimTalkClient.send(request);
+        // 성공·실패와 무관하게 어드민 감사로그·솔라피 콘솔 추적용 식별자를 보존한다.
+        SolapiSendIds ids = new SolapiSendIds(response.groupId(), response.messageId());
+        if (!ids.isEmpty()) {
+            LAST_SEND_IDS.set(ids);
+        }
         if (!response.success()) {
             log.warn("⚠️ solapi 알림톡 응답 실패: status={}, errorCode={}, errorMessage={}",
                 response.statusCode(), response.errorCode(), response.errorMessage());

@@ -130,6 +130,145 @@ class SolapiAlimTalkClientTest {
         mockServer.verify();
     }
 
+    @Test
+    @DisplayName("parseResponse: messageList statusCode=2000 + groupInfo.status=SENDING 이면 success, groupId 추출")
+    void sendReturnsSuccessWhenMessageStatusIs2000() {
+        SolapiAlimTalkRequest request = buildRequest();
+        String responseBody = "{"
+            + "\"groupInfo\":{\"_id\":\"G_OK\",\"groupId\":\"G_OK\",\"status\":\"SENDING\","
+            + "\"count\":{\"total\":1,\"registeredFailed\":0}},"
+            + "\"messageList\":[{\"messageId\":\"M_OK\",\"statusCode\":\"2000\","
+            + "\"statusMessage\":\"정상 접수\",\"status\":\"PENDING\"}]}";
+
+        mockServer
+            .expect(requestTo(API_BASE + SolapiAlimTalkClient.SEND_ENDPOINT))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON));
+
+        SolapiAlimTalkResponse response = client.send(request);
+
+        assertThat(response.success()).isTrue();
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.groupId()).isEqualTo("G_OK");
+        assertThat(response.messageId()).isEqualTo("M_OK");
+        assertThat(response.errorCode()).isNull();
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("parseResponse: messageList statusCode=3013 reject 이면 success=false + errorCode/Message 폴백")
+    void sendReturnsFailureWhenMessageRejected() {
+        SolapiAlimTalkRequest request = buildRequest();
+        String responseBody = "{"
+            + "\"groupInfo\":{\"groupId\":\"G_REJ\",\"status\":\"SENDING\","
+            + "\"count\":{\"total\":1,\"registeredFailed\":1}},"
+            + "\"messageList\":[{\"messageId\":\"M_REJ\",\"statusCode\":\"3013\","
+            + "\"statusMessage\":\"등록되지 않은 template 입니다\",\"status\":\"FAIL\"}]}";
+
+        mockServer
+            .expect(requestTo(API_BASE + SolapiAlimTalkClient.SEND_ENDPOINT))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON));
+
+        SolapiAlimTalkResponse response = client.send(request);
+
+        assertThat(response.success()).isFalse();
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.groupId()).isEqualTo("G_REJ");
+        assertThat(response.messageId()).isEqualTo("M_REJ");
+        assertThat(response.errorCode()).isEqualTo("3013");
+        assertThat(response.errorMessage()).contains("등록되지 않은");
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("parseResponse: registeredFailed>0 + messageList 비어 있어도 success=false")
+    void sendReturnsFailureWhenRegisteredFailedOnly() {
+        SolapiAlimTalkRequest request = buildRequest();
+        String responseBody = "{"
+            + "\"groupInfo\":{\"groupId\":\"G_RF\",\"status\":\"SENDING\","
+            + "\"count\":{\"total\":1,\"registeredFailed\":1}},"
+            + "\"messageList\":[]}";
+
+        mockServer
+            .expect(requestTo(API_BASE + SolapiAlimTalkClient.SEND_ENDPOINT))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON));
+
+        SolapiAlimTalkResponse response = client.send(request);
+
+        assertThat(response.success()).isFalse();
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.groupId()).isEqualTo("G_RF");
+        assertThat(response.errorCode()).isEqualTo("UNKNOWN");
+        assertThat(response.errorMessage()).contains("registeredFailed=1");
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("parseResponse: groupInfo.status=FAILED 이면 success=false")
+    void sendReturnsFailureWhenGroupStatusFailed() {
+        SolapiAlimTalkRequest request = buildRequest();
+        String responseBody = "{"
+            + "\"groupInfo\":{\"groupId\":\"G_FAIL\",\"status\":\"FAILED\","
+            + "\"count\":{\"total\":1,\"registeredFailed\":0}},"
+            + "\"messageList\":[{\"messageId\":\"M_FAIL\",\"statusCode\":\"2000\","
+            + "\"statusMessage\":\"정상 접수\"}]}";
+
+        mockServer
+            .expect(requestTo(API_BASE + SolapiAlimTalkClient.SEND_ENDPOINT))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON));
+
+        SolapiAlimTalkResponse response = client.send(request);
+
+        assertThat(response.success()).isFalse();
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.groupId()).isEqualTo("G_FAIL");
+        assertThat(response.errorCode()).isEqualTo("UNKNOWN");
+        assertThat(response.errorMessage()).contains("status=FAILED");
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("parseResponse: HTTP 400 + errorCode=PfNotAccepted 회귀 유지(success=false, errorCode 보존)")
+    void sendKeepsLegacyFailureBehaviorOn4xxWithErrorCode() {
+        SolapiAlimTalkRequest request = buildRequest();
+        String responseBody = "{\"errorCode\":\"PfNotAccepted\",\"errorMessage\":\"발신프로필 비활성\"}";
+
+        mockServer
+            .expect(requestTo(API_BASE + SolapiAlimTalkClient.SEND_ENDPOINT))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withBadRequest().body(responseBody).contentType(MediaType.APPLICATION_JSON));
+
+        SolapiAlimTalkResponse response = client.send(request);
+
+        assertThat(response.success()).isFalse();
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(response.errorCode()).isEqualTo("PfNotAccepted");
+        assertThat(response.errorMessage()).isEqualTo("발신프로필 비활성");
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("parseResponse: HTTP 200 + 빈 body 면 success=true, messageId=null (회귀 유지)")
+    void sendKeepsLegacyBehaviorOnEmptyBody() {
+        SolapiAlimTalkRequest request = buildRequest();
+
+        mockServer
+            .expect(requestTo(API_BASE + SolapiAlimTalkClient.SEND_ENDPOINT))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withSuccess("", MediaType.APPLICATION_JSON));
+
+        SolapiAlimTalkResponse response = client.send(request);
+
+        assertThat(response.success()).isTrue();
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.messageId()).isNull();
+        assertThat(response.groupId()).isNull();
+        mockServer.verify();
+    }
+
     private SolapiAlimTalkRequest buildRequest() {
         SolapiCredentials credentials = new SolapiCredentials("NCSXXXXKEY", "NCSXXXXSECRET_VALUE_VALUE_VALUE_1234");
         Map<String, String> variables = new LinkedHashMap<>();

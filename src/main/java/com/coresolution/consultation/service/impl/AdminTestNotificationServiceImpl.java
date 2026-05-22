@@ -30,6 +30,7 @@ import com.coresolution.consultation.exception.AlimtalkTemplateFetchException;
 import com.coresolution.consultation.integration.solapi.KakaoSolapiCredentialResolver;
 import com.coresolution.consultation.integration.solapi.SolapiCredentials;
 import com.coresolution.consultation.integration.solapi.SolapiKakaoTemplateClient;
+import com.coresolution.consultation.integration.solapi.SolapiSendIds;
 import com.coresolution.consultation.repository.AdminTestNotificationLogRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.TenantKakaoAlimtalkSettingsRepository;
@@ -389,9 +390,16 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
         boolean fallbackUsed = false;
         String errorCode = null;
         String errorMessage = null;
+        String solapiGroupId = null;
+        String solapiMessageId = null;
         try {
             success = kakaoAlimTalkService.sendAlimTalk(recipient.phone(),
                 request.getTemplateCode(), params);
+            SolapiSendIds ids = consumeAlimtalkSendIdsSafely();
+            if (ids != null) {
+                solapiGroupId = ids.groupId();
+                solapiMessageId = ids.messageId();
+            }
             if (!success) {
                 errorCode = ERROR_CODE_SEND_FAILED;
                 String detail = consumeAlimtalkDetailSafely();
@@ -402,6 +410,11 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
         } catch (Exception e) {
             success = false;
             errorCode = ERROR_CODE_SEND_FAILED;
+            SolapiSendIds ids = consumeAlimtalkSendIdsSafely();
+            if (ids != null) {
+                solapiGroupId = ids.groupId();
+                solapiMessageId = ids.messageId();
+            }
             String detail = consumeAlimtalkDetailSafely();
             String base = detail != null && !detail.isBlank()
                 ? detail
@@ -433,10 +446,13 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
             }
         }
 
-        logger.updateResult(logEntry.getId(), success, null, null, errorCode, errorMessage);
+        logger.updateResult(logEntry.getId(), success, solapiGroupId, solapiMessageId,
+            errorCode, errorMessage);
 
         return TestNotificationResponse.builder()
             .success(success)
+            .groupId(solapiGroupId)
+            .messageId(solapiMessageId)
             .sentAt(sentAt)
             .errorCode(errorCode)
             .errorMessage(errorMessage)
@@ -522,6 +538,23 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
             return kakaoAlimTalkService.consumeLastErrorDetail();
         } catch (Exception e) {
             log.debug("KakaoAlimTalkService.consumeLastErrorDetail 실패 (무시): {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 알림톡 발송에서 솔라피가 반환한 식별자(groupId/messageId) 묶음을 안전 조회한다.
+     *
+     * <p>발송 성공·실패와 무관하게 솔라피가 식별자를 돌려준 경우 모두 보존되며, 어드민 감사로그와
+     * 솔라피 콘솔 사후 추적 링크에 사용된다. 미구현·정보 없음·예외 시 모두 {@code null}.
+     *
+     * @return 직전 알림톡 발송의 식별자 묶음 또는 {@code null}
+     */
+    private SolapiSendIds consumeAlimtalkSendIdsSafely() {
+        try {
+            return kakaoAlimTalkService.consumeLastSolapiIds();
+        } catch (Exception e) {
+            log.debug("KakaoAlimTalkService.consumeLastSolapiIds 실패 (무시): {}", e.getMessage());
             return null;
         }
     }

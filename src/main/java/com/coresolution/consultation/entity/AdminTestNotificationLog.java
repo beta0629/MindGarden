@@ -33,7 +33,9 @@ import lombok.experimental.SuperBuilder;
         @Index(name = "idx_atnl_sent_by_user", columnList = "sent_by_user_id"),
         @Index(name = "idx_atnl_sent_at", columnList = "sent_at"),
         @Index(name = "idx_atnl_tenant_user_sent",
-            columnList = "tenant_id, sent_by_user_id, sent_at")
+            columnList = "tenant_id, sent_by_user_id, sent_at"),
+        @Index(name = "idx_atnl_tenant_batch",
+            columnList = "tenant_id, batch_id")
     })
 @Getter
 @Setter
@@ -77,6 +79,14 @@ public class AdminTestNotificationLog extends BaseEntity {
 
     @Column(name = "reason", nullable = false, length = 500)
     private String reason;
+
+    /**
+     * 수동 발송 배치 그룹 ID(UUID). 단일 발송 도구는 {@code null} 로 두며,
+     * 어드민 수동 알림 발송 도구가 한 번에 다중 수신자를 발송할 때만 동일한 UUID 가
+     * 같은 배치 행 N개에 부여된다(P1.2 / 2026-05-23).
+     */
+    @Column(name = "batch_id", length = 36)
+    private String batchId;
 
     @Builder.Default
     @Column(name = "success", nullable = false)

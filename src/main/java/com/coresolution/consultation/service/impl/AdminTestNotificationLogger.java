@@ -32,7 +32,11 @@ public class AdminTestNotificationLogger {
     private final ObjectMapper objectMapper;
 
     /**
-     * 발송 직전 로그 행 INSERT (success=false 초기값).
+     * 발송 직전 로그 행 INSERT (success=false 초기값) — 단일 발송 도구 호환 오버로드.
+     *
+     * <p>{@code batchId=null}로 위임한다. 신규 호출자(수동 다중 발송)는
+     * {@link #logAttempt(String, Long, String, TestNotificationRecipientMode, Long, String,
+     * TestNotificationChannel, String, java.util.Map, String, String, String)}를 사용한다.
      *
      * @param tenantId          테넌트 ID
      * @param sentByUserId      발송자 PK
@@ -53,6 +57,36 @@ public class AdminTestNotificationLogger {
             String recipientPhoneMasked, TestNotificationChannel channel,
             String templateCode, Map<String, String> templateParams, String messageContent,
             String reason) {
+        return logAttempt(tenantId, sentByUserId, sentByUsername, recipientMode, recipientUserId,
+            recipientPhoneMasked, channel, templateCode, templateParams, messageContent, reason, null);
+    }
+
+    /**
+     * 발송 직전 로그 행 INSERT (success=false 초기값) — {@code batchId} 포함.
+     *
+     * <p>수동 다중 발송({@code AdminManualNotificationService}) 에서 같은 배치의 모든 수신자 행에
+     * 동일한 UUID 를 부여하기 위해 사용한다. 단일 발송 도구는 {@code batchId=null} 로 둔다.
+     *
+     * @param tenantId          테넌트 ID
+     * @param sentByUserId      발송자 PK
+     * @param sentByUsername    발송자 로그인 ID
+     * @param recipientMode     수신자 모드
+     * @param recipientUserId   수신 사용자 PK
+     * @param recipientPhoneMasked 마스킹된 전화번호
+     * @param channel           채널
+     * @param templateCode      알림톡 템플릿 코드(SMS는 null)
+     * @param templateParams    템플릿 변수(SMS는 null)
+     * @param messageContent    SMS 본문(알림톡은 null)
+     * @param reason            발송 사유
+     * @param batchId           수동 발송 배치 ID(UUID). 단일 발송은 null
+     * @return 저장된 로그 행
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public AdminTestNotificationLog logAttempt(String tenantId, Long sentByUserId, String sentByUsername,
+            TestNotificationRecipientMode recipientMode, Long recipientUserId,
+            String recipientPhoneMasked, TestNotificationChannel channel,
+            String templateCode, Map<String, String> templateParams, String messageContent,
+            String reason, String batchId) {
         AdminTestNotificationLog entity = AdminTestNotificationLog.builder()
             .sentByUserId(sentByUserId)
             .sentByUsername(sentByUsername)
@@ -65,6 +99,7 @@ public class AdminTestNotificationLogger {
             .templateParams(serializeParams(templateParams))
             .messageContent(messageContent)
             .reason(reason)
+            .batchId(batchId)
             .success(Boolean.FALSE)
             .build();
         entity.setTenantId(tenantId);

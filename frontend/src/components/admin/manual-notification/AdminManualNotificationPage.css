@@ -1,0 +1,36 @@
+/**
+ * 어드민 수동 알림 발송 페이지 레이아웃 스타일.
+ *
+ * - 디자인 토큰만 사용 (unified-design-tokens.css)
+ * - 인라인 스타일·하드코딩 HEX/RGB 금지 (운영 게이트)
+ * - 본문(폼) 상단 / 히스토리 하단 1단 배치 — 화면설계서 §1
+ * - 데스크톱 ≥ 1024px 에서도 1단 유지(MVP), 모바일에서는 패딩 축소
+ *
+ * @author MindGarden
+ * @since 2026-05-23
+ */
+
+.mg-v2-admin-manual-notification {
+    width: 100%;
+}
+
+.mg-admin-manual-notif-page__panel {
+    margin-top: var(--mg-spacing-lg);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-xl);
+}
+
+.mg-admin-manual-notif-page__form-area,
+.mg-admin-manual-notif-page__history-area {
+    width: 100%;
+    min-width: 0;
+}
+
+@media (max-width: 768px) {
+    .mg-admin-manual-notif-page__panel {
+        margin-top: var(--mg-spacing-md);
+        gap: var(--mg-spacing-lg);
+    }
+}

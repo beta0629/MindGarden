@@ -40,6 +40,20 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.userId = :userId AND u.isDeleted = false")
     Optional<User> findByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") String userId);
+
+    /**
+     * 테넌트·PK 다중 조회(미삭제만). 어드민 수동 다중 발송 등 batch 검증·resolve 에 사용.
+     *
+     * <p>요청한 {@code ids} 의 일부가 다른 테넌트·삭제·존재하지 않을 경우 단순히 누락되어 반환된다.
+     * 호출자는 반환된 결과를 요청 ID 순서와 비교해 누락된 ID 를 별도 처리해야 한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param ids 사용자 PK 목록
+     * @return 미삭제 사용자 목록(요청 순서 미보장)
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.id IN :ids AND u.isDeleted = false")
+    List<User> findByTenantIdAndIdInAndIsDeletedFalse(@Param("tenantId") String tenantId,
+            @Param("ids") Collection<Long> ids);
     
     /**
      * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 정보 노출!

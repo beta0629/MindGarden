@@ -1,0 +1,273 @@
+/**
+ * 수동 발송 배치 히스토리 (Organism) 스타일.
+ *
+ * - 디자인 토큰만 사용 (unified-design-tokens.css)
+ * - 인라인 스타일·하드코딩 HEX/RGB 0건
+ * - 카드 그룹(배치 단위) + 펼치기(아코디언) 패턴
+ *
+ * @author MindGarden
+ * @since 2026-05-23
+ */
+
+.mg-manual-notif-history {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-md);
+    padding: var(--mg-spacing-lg);
+    background: var(--mg-color-surface-main);
+    border: 1px solid var(--mg-color-border-main);
+    border-radius: var(--mg-radius-lg);
+    box-shadow: var(--mg-shadow-sm);
+    color: var(--mg-color-text-main);
+}
+
+.mg-manual-notif-history__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--mg-spacing-md);
+}
+
+.mg-manual-notif-history__title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--mg-color-text-main);
+    margin: 0;
+}
+
+.mg-manual-notif-history__subtitle {
+    font-size: 0.8125rem;
+    color: var(--mg-color-text-secondary);
+    margin: var(--mg-spacing-xs) 0 0 0;
+}
+
+.mg-manual-notif-history__refresh {
+    min-width: 5rem;
+}
+
+.mg-manual-notif-history__empty {
+    margin: 0;
+    padding: var(--mg-spacing-lg);
+    text-align: center;
+    color: var(--mg-color-text-secondary);
+    font-size: 0.875rem;
+}
+
+.mg-manual-notif-history__error {
+    margin: 0;
+    padding: var(--mg-spacing-md);
+    color: var(--mg-color-error);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--mg-color-error);
+    border-radius: var(--mg-radius-md);
+    font-size: 0.875rem;
+}
+
+.mg-manual-notif-history__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-sm);
+}
+
+.mg-manual-notif-history__card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-xs);
+    padding: var(--mg-spacing-md);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--mg-color-border-main);
+    border-radius: var(--mg-radius-md);
+    box-shadow: var(--mg-shadow-sm);
+}
+
+.mg-manual-notif-history__card--expanded {
+    border-color: var(--mg-color-primary-main);
+}
+
+.mg-manual-notif-history__card-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--mg-spacing-sm);
+}
+
+.mg-manual-notif-history__card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-xs);
+    min-width: 0;
+    word-break: break-all;
+    font-size: 0.875rem;
+    color: var(--mg-color-text-main);
+}
+
+.mg-manual-notif-history__card-batch strong,
+.mg-manual-notif-history__card-channel strong,
+.mg-manual-notif-history__card-started strong,
+.mg-manual-notif-history__card-reason strong {
+    color: var(--mg-color-text-secondary);
+    font-weight: 600;
+    margin-right: var(--mg-spacing-xs);
+}
+
+.mg-manual-notif-history__card-stats {
+    padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+    background: var(--mg-color-surface-main);
+    border: 1px solid var(--mg-color-border-main);
+    border-radius: var(--mg-radius-md);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--mg-color-text-main);
+    white-space: nowrap;
+}
+
+.mg-manual-notif-history__card-reason {
+    font-size: 0.875rem;
+    color: var(--mg-color-text-main);
+}
+
+.mg-manual-notif-history__card-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.mg-manual-notif-history__detail-toggle {
+    min-width: 8rem;
+}
+
+.mg-manual-notif-history__detail {
+    margin-top: var(--mg-spacing-sm);
+    padding-top: var(--mg-spacing-sm);
+    border-top: 1px dashed var(--mg-color-border-main);
+}
+
+.mg-manual-notif-history__detail-empty {
+    margin: 0;
+    padding: var(--mg-spacing-md);
+    text-align: center;
+    color: var(--mg-color-text-secondary);
+    font-size: 0.875rem;
+}
+
+.mg-manual-notif-history__detail-error {
+    margin: 0;
+    padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+    color: var(--mg-color-error);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--mg-color-error);
+    border-radius: var(--mg-radius-md);
+    font-size: 0.875rem;
+}
+
+.mg-manual-notif-history__detail-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-xs);
+    max-height: 18rem;
+    overflow-y: auto;
+}
+
+.mg-manual-notif-history__detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-xs);
+    padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+    background: var(--mg-color-surface-main);
+    border: 1px solid var(--mg-color-border-main);
+    border-radius: var(--mg-radius-md);
+}
+
+.mg-manual-notif-history__detail-row--failed {
+    border-color: var(--mg-color-error);
+}
+
+.mg-manual-notif-history__detail-row-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--mg-spacing-sm);
+}
+
+.mg-manual-notif-history__detail-row-name {
+    font-weight: 600;
+    color: var(--mg-color-text-main);
+}
+
+.mg-manual-notif-history__detail-row-phone {
+    color: var(--mg-color-text-secondary);
+    font-size: 0.875rem;
+}
+
+.mg-manual-notif-history__detail-row-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 var(--mg-spacing-sm);
+    border-radius: var(--mg-radius-md);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.6;
+    border: 1px solid var(--mg-color-border-main);
+    background: var(--color-bg-primary);
+    color: var(--mg-color-text-secondary);
+}
+
+.mg-manual-notif-history__detail-row-status--ok {
+    border-color: var(--mg-color-success);
+    color: var(--mg-color-success);
+}
+
+.mg-manual-notif-history__detail-row-status--fail {
+    border-color: var(--mg-color-error);
+    color: var(--mg-color-error);
+}
+
+.mg-manual-notif-history__detail-row-aux {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--mg-spacing-sm);
+    font-size: 0.8125rem;
+    color: var(--mg-color-text-secondary);
+    word-break: break-all;
+}
+
+.mg-manual-notif-history__detail-row-error {
+    color: var(--mg-color-error);
+}
+
+.mg-manual-notif-history__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--mg-spacing-md);
+    padding-top: var(--mg-spacing-sm);
+}
+
+.mg-manual-notif-history__page-indicator {
+    font-size: 0.875rem;
+    color: var(--mg-color-text-main);
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .mg-manual-notif-history {
+        padding: var(--mg-spacing-md);
+    }
+    .mg-manual-notif-history__header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .mg-manual-notif-history__card-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .mg-manual-notif-history__card-actions {
+        justify-content: stretch;
+    }
+}

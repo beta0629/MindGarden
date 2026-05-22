@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.TestAlimtalkRequest;
@@ -32,7 +31,6 @@ import com.coresolution.consultation.exception.AlimtalkTemplateFetchException;
 import com.coresolution.consultation.integration.solapi.KakaoSolapiCredentialResolver;
 import com.coresolution.consultation.integration.solapi.SolapiCredentials;
 import com.coresolution.consultation.integration.solapi.SolapiKakaoTemplateClient;
-import com.coresolution.consultation.integration.solapi.SolapiSendIds;
 import com.coresolution.consultation.repository.AdminTestNotificationLogRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.TenantKakaoAlimtalkSettingsRepository;
@@ -71,7 +69,7 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
     static final String ERROR_CODE_RECIPIENT_NOT_FOUND = "RECIPIENT_NOT_FOUND";
     static final String ERROR_CODE_RECIPIENT_PHONE_MISSING = "RECIPIENT_PHONE_MISSING";
     static final String ERROR_CODE_USER_ID_REQUIRED = "USER_ID_REQUIRED";
-    static final String ERROR_CODE_SEND_FAILED = "SEND_FAILED";
+    static final String ERROR_CODE_SEND_FAILED = NotificationDispatchHelper.ERROR_CODE_SEND_FAILED;
     static final String ERROR_CODE_ALIMTALK_DISABLED = "ALIMTALK_SERVICE_UNAVAILABLE";
     /** 라이브 템플릿 조회 사전 검증 — 솔라피 자격증명(테넌트 settings + ENV) 모두 미설정. */
     static final String ERROR_CODE_ALIMTALK_CREDENTIALS_MISSING = "ALIMTALK_CREDENTIALS_MISSING";
@@ -99,8 +97,6 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
     static final String COMMON_CODE_GROUP_ALIMTALK_BIZ_TEMPLATE_CODE = "ALIMTALK_BIZ_TEMPLATE_CODE";
 
     private static final int MAX_RECIPIENT_RESULTS = 100;
-    /** {@code admin_test_notification_logs.error_message} VARCHAR(1000) — 안전을 위해 900자에서 절단. */
-    private static final int ERROR_MESSAGE_LOG_LIMIT = 900;
 
     private final UserRepository userRepository;
     private final CommonCodeRepository commonCodeRepository;
@@ -109,6 +105,8 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
     private final AdminTestNotificationRateLimiter rateLimiter;
     private final SmsAuthService smsAuthService;
     private final KakaoAlimTalkService kakaoAlimTalkService;
+    private final NotificationDispatchHelper dispatchHelper;
+    private final AlimtalkTemplateMappingResolver templateMappingResolver;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final ObjectMapper objectMapper;
     private final KakaoSolapiCredentialResolver solapiCredentialResolver;
@@ -210,43 +208,15 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
     }
 
     /**
-     * 공통코드 그룹 {@code ALIMTALK_BIZ_TEMPLATE_CODE} 에서 {@code codeValue} 매칭 row 의
-     * {@code codeLabel}(실 Solapi {@code templateId}) 을 반환한다.
-     *
-     * <p>운영 호출부 {@code NotificationServiceImpl.resolveAlimTalkBizTemplateCode} 와 동일한
-     * 우선순위 — 테넌트 row 우선, 없으면 코어(tenant_id IS NULL) row 폴백. 매칭 row 가 없거나
-     * {@code codeLabel} 이 비어 있으면 {@code null}.
-     *
-     * <p>본 메서드는 어드민 도구 한정으로 사용되며 운영 호출부에는 영향이 없다.
+     * 공통코드 그룹 {@code ALIMTALK_BIZ_TEMPLATE_CODE} 매핑 lookup 을
+     * {@link AlimtalkTemplateMappingResolver} 에 위임한다(SSOT).
      *
      * @param tenantId  테넌트 ID
-     * @param codeValue 공통코드 codeValue(예: {@code PAYMENT_COMPLETED})
+     * @param codeValue 공통코드 codeValue
      * @return Solapi 실 templateId 또는 매핑 없음 시 {@code null}
      */
-    private String resolveSolapiTemplateId(String tenantId, String codeValue) {
-        if (codeValue == null || codeValue.isBlank()) {
-            return null;
-        }
-        try {
-            if (tenantId != null && !tenantId.isBlank()) {
-                Optional<CommonCode> tenantRow = commonCodeRepository.findTenantCodeByGroupAndValue(
-                    tenantId, COMMON_CODE_GROUP_ALIMTALK_BIZ_TEMPLATE_CODE, codeValue);
-                if (tenantRow.isPresent() && tenantRow.get().getCodeLabel() != null
-                        && !tenantRow.get().getCodeLabel().isBlank()) {
-                    return tenantRow.get().getCodeLabel().trim();
-                }
-            }
-            Optional<CommonCode> coreRow = commonCodeRepository.findCoreCodeByGroupAndValue(
-                COMMON_CODE_GROUP_ALIMTALK_BIZ_TEMPLATE_CODE, codeValue);
-            if (coreRow.isPresent() && coreRow.get().getCodeLabel() != null
-                    && !coreRow.get().getCodeLabel().isBlank()) {
-                return coreRow.get().getCodeLabel().trim();
-            }
-        } catch (Exception e) {
-            log.debug("ALIMTALK_BIZ_TEMPLATE_CODE 매핑 조회 실패 (codeValue={}): {}",
-                codeValue, e.getMessage());
-        }
-        return null;
+    String resolveSolapiTemplateId(String tenantId, String codeValue) {
+        return templateMappingResolver.resolveSolapiTemplateId(tenantId, codeValue);
     }
 
     @Override
@@ -397,36 +367,17 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
         rateLimiter.recordAttempt(tenantId, currentUser.getId());
 
         LocalDateTime sentAt = LocalDateTime.now();
-        boolean success;
-        String errorCode = null;
-        String errorMessage = null;
-        try {
-            success = smsAuthService.sendNotificationMessage(recipient.phone(), request.getMessage());
-            if (!success) {
-                errorCode = ERROR_CODE_SEND_FAILED;
-                String detail = consumeSmsDetailSafely();
-                errorMessage = truncateErrorMessage(detail != null && !detail.isBlank()
-                    ? detail
-                    : "SmsAuthService.sendNotificationMessage returned false");
-            }
-        } catch (Exception e) {
-            success = false;
-            errorCode = ERROR_CODE_SEND_FAILED;
-            String detail = consumeSmsDetailSafely();
-            String base = detail != null && !detail.isBlank()
-                ? detail
-                : e.getClass().getSimpleName() + ": " + e.getMessage();
-            errorMessage = truncateErrorMessage(base);
-            log.warn("어드민 테스트 SMS 발송 예외: 수신자={}", recipient.maskedPhone(), e);
-        }
+        NotificationDispatchHelper.DispatchResult dispatch =
+            dispatchHelper.dispatchSms(recipient.phone(), request.getMessage());
 
-        logger.updateResult(logEntry.getId(), success, null, null, errorCode, errorMessage);
+        logger.updateResult(logEntry.getId(), dispatch.success(), null, null,
+            dispatch.errorCode(), dispatch.errorMessage());
 
         return TestNotificationResponse.builder()
-            .success(success)
+            .success(dispatch.success())
             .sentAt(sentAt)
-            .errorCode(errorCode)
-            .errorMessage(errorMessage)
+            .errorCode(dispatch.errorCode())
+            .errorMessage(dispatch.errorMessage())
             .logId(logEntry.getId())
             .build();
     }
@@ -466,7 +417,7 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
                     TestNotificationChannel.ALIMTALK, request.getTemplateCode(), params, null,
                     request.getReason());
                 logger.updateResult(blockedLog.getId(), false, null, null,
-                    ERROR_CODE_TEMPLATE_NOT_MAPPED, truncateErrorMessage(message));
+                    ERROR_CODE_TEMPLATE_NOT_MAPPED, NotificationDispatchHelper.truncate(message));
                 log.warn("어드민 테스트 알림톡 발송 차단 — 공통코드 매핑 없음: codeValue={}, tenantId={}",
                     request.getTemplateCode(), tenantId);
                 return TestNotificationResponse.builder()
@@ -487,42 +438,14 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
         rateLimiter.recordAttempt(tenantId, currentUser.getId());
 
         LocalDateTime sentAt = LocalDateTime.now();
-        boolean success;
+        NotificationDispatchHelper.DispatchResult dispatch =
+            dispatchHelper.dispatchAlimtalk(recipient.phone(), effectiveTemplateCode, params);
+        boolean success = dispatch.success();
         boolean fallbackUsed = false;
-        String errorCode = null;
-        String errorMessage = null;
-        String solapiGroupId = null;
-        String solapiMessageId = null;
-        try {
-            success = kakaoAlimTalkService.sendAlimTalk(recipient.phone(),
-                effectiveTemplateCode, params);
-            SolapiSendIds ids = consumeAlimtalkSendIdsSafely();
-            if (ids != null) {
-                solapiGroupId = ids.groupId();
-                solapiMessageId = ids.messageId();
-            }
-            if (!success) {
-                errorCode = ERROR_CODE_SEND_FAILED;
-                String detail = consumeAlimtalkDetailSafely();
-                errorMessage = truncateErrorMessage(detail != null && !detail.isBlank()
-                    ? detail
-                    : "KakaoAlimTalkService.sendAlimTalk returned false");
-            }
-        } catch (Exception e) {
-            success = false;
-            errorCode = ERROR_CODE_SEND_FAILED;
-            SolapiSendIds ids = consumeAlimtalkSendIdsSafely();
-            if (ids != null) {
-                solapiGroupId = ids.groupId();
-                solapiMessageId = ids.messageId();
-            }
-            String detail = consumeAlimtalkDetailSafely();
-            String base = detail != null && !detail.isBlank()
-                ? detail
-                : e.getClass().getSimpleName() + ": " + e.getMessage();
-            errorMessage = truncateErrorMessage(base);
-            log.warn("어드민 테스트 알림톡 발송 예외: 수신자={}", recipient.maskedPhone(), e);
-        }
+        String errorCode = dispatch.errorCode();
+        String errorMessage = dispatch.errorMessage();
+        String solapiGroupId = dispatch.solapiGroupId();
+        String solapiMessageId = dispatch.solapiMessageId();
 
         if (!success && request.isFallbackToSms()) {
             try {
@@ -535,9 +458,9 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
                     errorCode = null;
                     errorMessage = "fallback to SMS success";
                 } else {
-                    String smsDetail = consumeSmsDetailSafely();
+                    String smsDetail = dispatchHelper.consumeSmsDetailSafely();
                     if (smsDetail != null && !smsDetail.isBlank()) {
-                        errorMessage = truncateErrorMessage(
+                        errorMessage = NotificationDispatchHelper.truncate(
                             (errorMessage != null ? errorMessage : "")
                                 + " | fallback SMS failed: " + smsDetail);
                     }
@@ -616,51 +539,6 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
     }
 
     /**
-     * SMS 프로바이더 detail을 안전 조회한다. 실패해도 호출 흐름을 막지 않는다.
-     *
-     * @return 직전 SMS 발송 실패의 상세(상태코드 + 마스킹 본문) 또는 {@code null}
-     */
-    private String consumeSmsDetailSafely() {
-        try {
-            return smsAuthService.consumeLastErrorDetail();
-        } catch (Exception e) {
-            log.debug("SmsAuthService.consumeLastErrorDetail 실패 (무시): {}", e.getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * 알림톡 detail을 안전 조회한다.
-     *
-     * @return 직전 알림톡 발송 실패의 상세 또는 {@code null}
-     */
-    private String consumeAlimtalkDetailSafely() {
-        try {
-            return kakaoAlimTalkService.consumeLastErrorDetail();
-        } catch (Exception e) {
-            log.debug("KakaoAlimTalkService.consumeLastErrorDetail 실패 (무시): {}", e.getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * 알림톡 발송에서 솔라피가 반환한 식별자(groupId/messageId) 묶음을 안전 조회한다.
-     *
-     * <p>발송 성공·실패와 무관하게 솔라피가 식별자를 돌려준 경우 모두 보존되며, 어드민 감사로그와
-     * 솔라피 콘솔 사후 추적 링크에 사용된다. 미구현·정보 없음·예외 시 모두 {@code null}.
-     *
-     * @return 직전 알림톡 발송의 식별자 묶음 또는 {@code null}
-     */
-    private SolapiSendIds consumeAlimtalkSendIdsSafely() {
-        try {
-            return kakaoAlimTalkService.consumeLastSolapiIds();
-        } catch (Exception e) {
-            log.debug("KakaoAlimTalkService.consumeLastSolapiIds 실패 (무시): {}", e.getMessage());
-            return null;
-        }
-    }
-
-    /**
      * 알림톡 발송 요청의 템플릿 출처가 라이브(Solapi) 모드인지 판정한다.
      *
      * <p>판정 기준 (이중 안전망):
@@ -679,21 +557,6 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
     static boolean isLiveTemplateSource(String templateSource) {
         return templateSource != null
             && SOURCE_SOLAPI.equalsIgnoreCase(templateSource.trim());
-    }
-
-    /**
-     * {@code admin_test_notification_logs.error_message} VARCHAR(1000) 길이 안전 절단.
-     *
-     * @param value 원본
-     * @return {@code null} 또는 최대 {@link #ERROR_MESSAGE_LOG_LIMIT}자
-     */
-    private static String truncateErrorMessage(String value) {
-        if (value == null) {
-            return null;
-        }
-        return value.length() <= ERROR_MESSAGE_LOG_LIMIT
-            ? value
-            : value.substring(0, ERROR_MESSAGE_LOG_LIMIT) + "…(truncated)";
     }
 
     private String decryptSafely(String value) {
@@ -729,7 +592,7 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
      * @param extraDataJson 공통코드 {@code extra_data} JSON 문자열(null/blank 허용)
      * @return 추출된 변수 메타 리스트(불변, 빈 리스트 가능)
      */
-    private List<TestNotificationAlimtalkTemplate.Variable> extractVariables(String extraDataJson) {
+    List<TestNotificationAlimtalkTemplate.Variable> extractVariables(String extraDataJson) {
         if (extraDataJson == null || extraDataJson.isBlank()) {
             return Collections.emptyList();
         }
@@ -755,7 +618,7 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
      * @param templateText 템플릿 본문(null/blank 허용)
      * @return 추출된 변수 메타 리스트(불변, 빈 리스트 가능)
      */
-    private List<TestNotificationAlimtalkTemplate.Variable> extractVariablesFromText(String templateText) {
+    List<TestNotificationAlimtalkTemplate.Variable> extractVariablesFromText(String templateText) {
         if (templateText == null || templateText.isBlank()) {
             return Collections.emptyList();
         }

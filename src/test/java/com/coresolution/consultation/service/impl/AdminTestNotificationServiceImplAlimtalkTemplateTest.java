@@ -83,6 +83,10 @@ class AdminTestNotificationServiceImplAlimtalkTemplateTest {
     @Mock
     private KakaoAlimTalkService kakaoAlimTalkService;
     @Mock
+    private NotificationDispatchHelper dispatchHelper;
+    @Mock
+    private AlimtalkTemplateMappingResolver templateMappingResolver;
+    @Mock
     private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
     private KakaoSolapiCredentialResolver solapiCredentialResolver;
@@ -103,6 +107,8 @@ class AdminTestNotificationServiceImplAlimtalkTemplateTest {
             rateLimiter,
             smsAuthService,
             kakaoAlimTalkService,
+            dispatchHelper,
+            templateMappingResolver,
             encryptionUtil,
             new ObjectMapper(),
             solapiCredentialResolver,
@@ -341,25 +347,11 @@ class AdminTestNotificationServiceImplAlimtalkTemplateTest {
                 eq(CODE_GROUP), eq(TENANT_ID)))
             .thenReturn(rows);
 
-        // PAYMENT_COMPLETED 는 코어 ALIMTALK_BIZ_TEMPLATE_CODE 매핑 있음(codeLabel=KA01TP…).
-        CommonCode bizMappingRow = new CommonCode();
-        bizMappingRow.setTenantId(null);
-        bizMappingRow.setCodeGroup(BIZ_CODE_GROUP);
-        bizMappingRow.setCodeValue("PAYMENT_COMPLETED");
-        bizMappingRow.setCodeLabel("KA01TP250101000000000000000001");
-        bizMappingRow.setIsActive(true);
-        when(commonCodeRepository.findTenantCodeByGroupAndValue(
-                eq(TENANT_ID), eq(BIZ_CODE_GROUP), eq("PAYMENT_COMPLETED")))
-            .thenReturn(Optional.empty());
-        when(commonCodeRepository.findCoreCodeByGroupAndValue(
-                eq(BIZ_CODE_GROUP), eq("PAYMENT_COMPLETED")))
-            .thenReturn(Optional.of(bizMappingRow));
-        when(commonCodeRepository.findTenantCodeByGroupAndValue(
-                eq(TENANT_ID), eq(BIZ_CODE_GROUP), eq("ATX_UNMAPPED")))
-            .thenReturn(Optional.empty());
-        when(commonCodeRepository.findCoreCodeByGroupAndValue(
-                eq(BIZ_CODE_GROUP), eq("ATX_UNMAPPED")))
-            .thenReturn(Optional.empty());
+        // PAYMENT_COMPLETED 는 ALIMTALK_BIZ_TEMPLATE_CODE 매핑 있음(KA01TP…).
+        when(templateMappingResolver.resolveSolapiTemplateId(eq(TENANT_ID), eq("PAYMENT_COMPLETED")))
+            .thenReturn("KA01TP250101000000000000000001");
+        when(templateMappingResolver.resolveSolapiTemplateId(eq(TENANT_ID), eq("ATX_UNMAPPED")))
+            .thenReturn(null);
 
         List<TestNotificationAlimtalkTemplate> result = service.listCommonCodeTemplates(TENANT_ID);
 
@@ -375,18 +367,8 @@ class AdminTestNotificationServiceImplAlimtalkTemplateTest {
     @Test
     @DisplayName("sendAlimtalk — 공통코드 모드 + 매핑 있음: 매핑된 KA01TP… 로 kakao 호출")
     void sendAlimtalk_whenCommonCodeWithMapping_callsKakaoWithMappedTemplateId() {
-        CommonCode bizMappingRow = new CommonCode();
-        bizMappingRow.setTenantId(null);
-        bizMappingRow.setCodeGroup(BIZ_CODE_GROUP);
-        bizMappingRow.setCodeValue("PAYMENT_COMPLETED");
-        bizMappingRow.setCodeLabel("KA01TP250101000000000000000001");
-        bizMappingRow.setIsActive(true);
-        when(commonCodeRepository.findTenantCodeByGroupAndValue(
-                eq(TENANT_ID), eq(BIZ_CODE_GROUP), eq("PAYMENT_COMPLETED")))
-            .thenReturn(Optional.empty());
-        when(commonCodeRepository.findCoreCodeByGroupAndValue(
-                eq(BIZ_CODE_GROUP), eq("PAYMENT_COMPLETED")))
-            .thenReturn(Optional.of(bizMappingRow));
+        when(templateMappingResolver.resolveSolapiTemplateId(eq(TENANT_ID), eq("PAYMENT_COMPLETED")))
+            .thenReturn("KA01TP250101000000000000000001");
 
         AdminTestNotificationLog savedLog = AdminTestNotificationLog.builder()
             .sentByUserId(SENDER_USER_ID)
@@ -407,9 +389,10 @@ class AdminTestNotificationServiceImplAlimtalkTemplateTest {
             .thenReturn(savedLog);
 
         when(encryptionUtil.decrypt(eq(SELF_PHONE))).thenReturn(SELF_PHONE);
-        when(kakaoAlimTalkService.sendAlimTalk(eq(SELF_PHONE),
+        when(dispatchHelper.dispatchAlimtalk(eq(SELF_PHONE),
                 eq("KA01TP250101000000000000000001"), anyMap()))
-            .thenReturn(true);
+            .thenReturn(new NotificationDispatchHelper.DispatchResult(true, null, null,
+                "GROUP-OK", "MSG-OK"));
 
         TestAlimtalkRequest request = TestAlimtalkRequest.builder()
             .recipientMode(TestNotificationRecipientMode.SELF)
@@ -424,23 +407,17 @@ class AdminTestNotificationServiceImplAlimtalkTemplateTest {
         assertThat(response.isSuccess()).isTrue();
         assertThat(response.getErrorCode()).isNull();
         assertThat(response.getLogId()).isEqualTo(123L);
-        // 매핑된 templateId 로 kakao 호출됐는지 확인.
-        verify(kakaoAlimTalkService).sendAlimTalk(eq(SELF_PHONE),
+        verify(dispatchHelper).dispatchAlimtalk(eq(SELF_PHONE),
             eq("KA01TP250101000000000000000001"), anyMap());
-        // 원본 codeValue 로는 호출되지 않아야 함 (회귀 방지).
-        verify(kakaoAlimTalkService, never()).sendAlimTalk(anyString(),
+        verify(dispatchHelper, never()).dispatchAlimtalk(anyString(),
             eq("PAYMENT_COMPLETED"), anyMap());
     }
 
     @Test
     @DisplayName("sendAlimtalk — 공통코드 모드 + 매핑 없음: TEMPLATE_NOT_MAPPED 차단·kakao 호출 0회")
     void sendAlimtalk_whenCommonCodeMappingMissing_blocksAndLogsTemplateNotMapped() {
-        when(commonCodeRepository.findTenantCodeByGroupAndValue(
-                eq(TENANT_ID), eq(BIZ_CODE_GROUP), eq("UNMAPPED_CODE")))
-            .thenReturn(Optional.empty());
-        when(commonCodeRepository.findCoreCodeByGroupAndValue(
-                eq(BIZ_CODE_GROUP), eq("UNMAPPED_CODE")))
-            .thenReturn(Optional.empty());
+        when(templateMappingResolver.resolveSolapiTemplateId(eq(TENANT_ID), eq("UNMAPPED_CODE")))
+            .thenReturn(null);
 
         AdminTestNotificationLog blockedLog = AdminTestNotificationLog.builder()
             .sentByUserId(SENDER_USER_ID)
@@ -478,10 +455,8 @@ class AdminTestNotificationServiceImplAlimtalkTemplateTest {
             .contains("UNMAPPED_CODE")
             .contains(BIZ_CODE_GROUP);
         assertThat(response.getLogId()).isEqualTo(456L);
-        // 매핑 없으면 kakao 발송이 호출되지 않아야 함.
-        verify(kakaoAlimTalkService, never())
-            .sendAlimTalk(anyString(), anyString(), anyMap());
-        // 차단 로그 업데이트: errorCode=TEMPLATE_NOT_MAPPED.
+        verify(dispatchHelper, never())
+            .dispatchAlimtalk(anyString(), anyString(), anyMap());
         verify(logger).updateResult(eq(456L), eq(false), eq(null), eq(null),
             eq("TEMPLATE_NOT_MAPPED"), anyString());
     }
@@ -508,9 +483,10 @@ class AdminTestNotificationServiceImplAlimtalkTemplateTest {
                 eq(null), eq("라이브 송신 검증")))
             .thenReturn(savedLog);
         when(encryptionUtil.decrypt(eq(SELF_PHONE))).thenReturn(SELF_PHONE);
-        when(kakaoAlimTalkService.sendAlimTalk(eq(SELF_PHONE),
+        when(dispatchHelper.dispatchAlimtalk(eq(SELF_PHONE),
                 eq("KA01TP250101000000000000000099"), anyMap()))
-            .thenReturn(true);
+            .thenReturn(new NotificationDispatchHelper.DispatchResult(true, null, null,
+                "GROUP-OK", "MSG-OK"));
 
         TestAlimtalkRequest request = TestAlimtalkRequest.builder()
             .recipientMode(TestNotificationRecipientMode.SELF)
@@ -523,13 +499,8 @@ class AdminTestNotificationServiceImplAlimtalkTemplateTest {
         TestNotificationResponse response = service.sendAlimtalk(TENANT_ID, buildSender(), request);
 
         assertThat(response.isSuccess()).isTrue();
-        // 라이브 모드는 매핑 lookup 호출이 0회여야 함.
-        verify(commonCodeRepository, never()).findTenantCodeByGroupAndValue(
-            anyString(), eq(BIZ_CODE_GROUP), anyString());
-        verify(commonCodeRepository, never()).findCoreCodeByGroupAndValue(
-            eq(BIZ_CODE_GROUP), anyString());
-        // templateCode 가 그대로 kakao 에 전달.
-        verify(kakaoAlimTalkService).sendAlimTalk(eq(SELF_PHONE),
+        verify(templateMappingResolver, never()).resolveSolapiTemplateId(anyString(), anyString());
+        verify(dispatchHelper).dispatchAlimtalk(eq(SELF_PHONE),
             eq("KA01TP250101000000000000000099"), anyMap());
     }
 

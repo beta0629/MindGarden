@@ -158,5 +158,133 @@
       "loadFailed": "데이터를 불러오지 못했습니다.",
       "sendFailed": "발송에 실패했습니다."
     }
+  },
+  "manualNotification": {
+    "page": {
+      "title": "수동 알림 발송",
+      "subtitle": "어드민이 실제 사용자(최대 50명)에게 SMS·카카오 알림톡을 직접 발송합니다. 모든 발송 사유는 감사로그에 영구 기록됩니다.",
+      "menuLabel": "수동 알림 발송",
+      "noAccess": "이 페이지에 접근할 권한이 없습니다. ADMIN 또는 STAFF 권한이 필요합니다.",
+      "warningActualSend": "이 도구는 실제 사용자에게 발송됩니다. 발송 사유는 감사로그에 영구 기록됩니다.",
+      "testLinkText": "테스트 목적이라면 알림 테스트 발송을 사용하세요."
+    },
+    "channel": {
+      "label": "발송 채널",
+      "sms": "SMS",
+      "alimtalk": "카카오 알림톡"
+    },
+    "recipient": {
+      "title": "수신자 선택 (최대 50명)",
+      "searchPlaceholder": "이름·이메일·전화 검색",
+      "searchLabel": "수신자 검색",
+      "noPhone": "전화번호 없음",
+      "loading": "사용자 검색 중...",
+      "empty": "검색 결과가 없습니다.",
+      "addAllVisible": "검색 결과 모두 추가",
+      "clearAll": "전체 해제",
+      "counter": "선택됨 {{count}} / {{max}}",
+      "maxError": "최대 {{max}}명까지 선택할 수 있습니다.",
+      "atLeastOne": "수신자를 최소 1명 이상 선택해 주세요.",
+      "selectedListTitle": "선택된 수신자",
+      "removeChip": "선택 해제",
+      "noResultsHint": "이름·이메일·전화 일부를 입력해 검색하세요."
+    },
+    "sms": {
+      "contentLabel": "SMS 본문",
+      "contentPlaceholder": "전송할 SMS 본문을 입력하세요 (한글 70자 / 영문 160자 권장)",
+      "contentCounter": "{{count}} / {{max}}",
+      "contentRequired": "SMS 본문은 필수입니다."
+    },
+    "alimtalk": {
+      "templateLabel": "알림톡 템플릿",
+      "templatePlaceholder": "템플릿을 선택하세요",
+      "templatesLoading": "템플릿 로드 중...",
+      "liveToggle": "솔라피 전체 보기 (실시간 조회)",
+      "missingMappingBadge": "[매핑없음] ",
+      "missingMappingHint": "선택한 템플릿은 Solapi 실 templateId 매핑이 없어 발송이 차단됩니다. 공통코드 ALIMTALK_BIZ_TEMPLATE_CODE 에 매핑을 추가하거나, 위 '솔라피 전체 보기' 토글로 실제 등록된 templateId 를 선택해 주세요.",
+      "templateRequired": "알림톡 템플릿을 선택해 주세요.",
+      "bodyPreview": "템플릿 본문",
+      "variablesTitle": "변수 입력 (모든 수신자에게 동일하게 적용)",
+      "variableRequired": "필수"
+    },
+    "reason": {
+      "label": "발송 사유 (필수)",
+      "placeholder": "발송 사유를 명확히 기재해 주세요 (감사로그에 영구 기록)",
+      "required": "발송 사유는 필수입니다.",
+      "lengthWarning": "사유를 {{min}}자 이상 상세하게 적는 것을 권장합니다.",
+      "maxError": "최대 {{max}}자까지 입력할 수 있습니다.",
+      "counter": "{{count}} / {{max}}"
+    },
+    "submit": {
+      "send": "발송하기",
+      "sending": "발송 중...",
+      "confirmStep1Title": "발송 미리보기",
+      "confirmStep1Subtitle": "아래 정보를 확인하고 '다음'을 누르면 최종 확인 단계로 이동합니다.",
+      "confirmStep1Next": "다음",
+      "confirmStep2Title": "정말 발송하시겠습니까?",
+      "confirmStep2Subtitle": "실제 단말로 발송됩니다. 이 작업은 취소할 수 없습니다.",
+      "confirmCheckbox": "내용을 확인했고, 취소할 수 없음을 이해했습니다.",
+      "confirmStep2Send": "최종 발송",
+      "cancel": "취소"
+    },
+    "summary": {
+      "channel": "채널",
+      "recipientCount": "수신자",
+      "recipientCountValue": "{{count}}명",
+      "reason": "발송 사유",
+      "templateCode": "템플릿 코드",
+      "templateSource": "템플릿 출처"
+    },
+    "result": {
+      "title": "발송 결과",
+      "subtitle": "총 {{total}}명 중 성공 {{success}}건 / 실패 {{failed}}건",
+      "statTotal": "전체 {{count}}",
+      "statSuccess": "성공 {{count}}",
+      "statFailed": "실패 {{count}}",
+      "batchIdLabel": "배치 ID",
+      "channelLabel": "채널",
+      "startedAtLabel": "시작 시각",
+      "failureListTitle": "실패 상세",
+      "failureEmpty": "실패한 수신자가 없습니다.",
+      "successListTitle": "성공 상세",
+      "successEmpty": "성공한 수신자가 없습니다.",
+      "columnRecipient": "수신자",
+      "columnErrorCode": "에러 코드",
+      "columnErrorMessage": "메시지",
+      "columnSolapiId": "Solapi ID",
+      "close": "닫기"
+    },
+    "history": {
+      "title": "배치 발송 히스토리",
+      "subtitle": "최대 {{size}}건 (페이지당). 배치 ID 기준으로 그룹화되어 있습니다.",
+      "refresh": "새로고침",
+      "loading": "이력 불러오는 중...",
+      "empty": "발송 이력이 없습니다.",
+      "openDetail": "수신자 상세 보기",
+      "closeDetail": "상세 닫기",
+      "detailLoading": "수신자 상세 불러오는 중...",
+      "detailError": "수신자 상세를 불러오지 못했습니다.",
+      "pagePrev": "이전",
+      "pageNext": "다음",
+      "pageIndicator": "{{current}} / {{total}}",
+      "cardBatchId": "배치",
+      "cardChannel": "채널",
+      "cardStartedAt": "발송 시각",
+      "cardStats": "성공 {{success}} / 실패 {{failed}} / 전체 {{total}}",
+      "cardReason": "사유"
+    },
+    "errors": {
+      "RATE_LIMIT_EXCEEDED_BULK": "잔여 발송 한도가 부족합니다. 잠시 후 다시 시도하거나 수신자 수를 줄여 주세요.",
+      "RATE_LIMIT_EXCEEDED": "발송 한도(분당)에 도달했습니다. 잠시 후 다시 시도해 주세요.",
+      "TEMPLATE_NOT_MAPPED": "선택한 알림톡 템플릿이 Solapi templateId 와 매핑되어 있지 않아 발송이 차단되었습니다. 공통코드 ALIMTALK_BIZ_TEMPLATE_CODE 매핑을 확인해 주세요.",
+      "RECIPIENT_NOT_FOUND": "수신자(사용자)를 찾을 수 없습니다. 다시 검색해 주세요.",
+      "RECIPIENT_PHONE_MISSING": "수신자의 전화번호가 등록되어 있지 않습니다.",
+      "SEND_FAILED": "발송에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+      "forbidden": "이 도구에 접근할 권한이 없습니다. (ADMIN/STAFF 전용)",
+      "loadFailed": "데이터를 불러오지 못했습니다.",
+      "sendFailed": "발송에 실패했습니다.",
+      "validationFailed": "입력값을 확인해 주세요.",
+      "unknown": "알 수 없는 오류가 발생했습니다."
+    }
   }
 }

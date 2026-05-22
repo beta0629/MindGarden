@@ -265,6 +265,19 @@ Expo 앱·웹에서 아래 **3대 트리거** 발생 시, **인앱 메시지**, 
 - [ ] 웹 브라우저: OS 알림 **없음** (현행 정상)
 - [ ] Expo: 동일 계정 푸시 **있음/없음** 기록
 
+### 7.6 Solapi Phase D UAT (알림톡·SMS)
+
+> **선행**: commit **`c5b181d28`** (결제·매핑 정산 Solapi 병행) · Phase D **coder DONE** · 잔여 **운영 UAT·templateId 확인**.  
+> ENV·미수신 디버그: [`SOLAPI_NOTIFICATION_MISS_DEBUG.md`](./2026-05-22/SOLAPI_NOTIFICATION_MISS_DEBUG.md) · 배치 10 연계: [`MOOD_JOURNAL…ORCHESTRATION` §9](./2026-05-21/MOOD_JOURNAL_CONSULTANT_INBOX_ORCHESTRATION.md#9-배치-10--deploy--eas--human-85--solapi-uat).
+
+| # | 시나리오 | 검증 (기대) | 담당 | 증빙 |
+|---|----------|-------------|------|------|
+| 1 | **선행** — dev/운영 ENV | `SMS_TEST_MODE=false` · `kakao.alimtalk.solapi.*` journal **WARN 0건** · Solapi 발신번호·PFID 바인딩 | ops / **human** | journal grep · `/etc/mindgarden/*.env` |
+| 2 | **선행** — 솔라피 콘솔 templateId | `PAYMENT_COMPLETED` · 매핑 정산(`confirm-payment`/`deposit`/`approve`) **검수 승인 templateId**·PFID·발신번호 등록 | **human** | 콘솔 스크린·templateId 목록 |
+| 3 | **confirm-payment** (어드민 매칭) | CLIENT 실기기 **알림톡 1건** 또는 **SMS 폴백** · 인앱·Expo 푸시 baseline **유지** | **human** (10-5) | 단말 수신 · 콘솔 `groupId` · 서버 `MappingSettlementNotificationHelper` 로그 |
+| 4 | **PG APPROVED** (테스트 결제) | CLIENT 알림톡/SMS · `sendPaymentCompleted` · **`PAYMENT_COMPLETED` templateId** 정합 | **human** (10-5) | 단말 수신 · PG·Payment `APPROVED` 행 |
+| 5 | **통합 회귀** + 리포트 | `AdminServiceImplMappingSettlementNotificationBaselineTest` · Solapi mock · 기존 Expo 푸시 baseline **green** → UAT 리포트 §7.6 행 채움 | **core-tester** (10-4) | [`PAYMENT_SCHEDULE…UAT_REPORT`](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_UAT_REPORT.md) 초안 |
+
 ---
 
 ## 8. 참조 파일

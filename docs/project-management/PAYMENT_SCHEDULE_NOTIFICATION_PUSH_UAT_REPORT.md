@@ -1,11 +1,11 @@
 # 결제·승인·일정 알림/푸시 — 수동 UAT 리포트
 
 **작성**: core-tester  
-**최종 갱신**: 2026-05-20 (병렬 배치 **6/6** — `test:utils` **196/196**·`pushNavigation`·`notificationServiceNavigate` PASS; §8.5 라이브 **NOT RUN** 유지)  
-**이전**: 2026-05-20 배치 5/5 · 2026-05-20 배치 4/4 · 2026-05-18 Phase C 자동 게이트  
-**SSOT**: [PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) §3~§7 · [MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md](./MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md) §2.1  
-**코드 기준**: **`35765024b`** (`develop` HEAD) — `MappingSettlementNotificationHelper`, `ScheduleCreatedNotificationHelper`, Expo `pushNavigation`  
-**환경**: `https://dev.core-solution.co.kr` — `/actuator/health` **200** (배치 **6/6**). dev JVM journal L1·`mobile_push_tokens`·CLIENT 실기기 — **미확인/BLOCKED**.
+**최종 갱신**: 2026-05-22 (배치 **10** 게이트 — Solapi Phase D **`c5b181d28`** + 감정일기 inbox 회귀 **32+23 PASS**; human Solapi·§8.5 **NOT RUN**)  
+**이전**: 2026-05-20 배치 6/6 · 2026-05-20 배치 5/5 · 2026-05-18 Phase C 자동 게이트  
+**SSOT**: [PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) §3~§7·§7.6 · [MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md](./MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md) §2.1  
+**코드 기준**: **`c5b181d28`** (Solapi Phase D SSOT) · 실행 HEAD **`3f3e97e28`** — `MappingSettlementNotificationHelper`, `NotificationServiceImpl`, Expo `pushNavigation`  
+**환경**: `https://dev.core-solution.co.kr` — `/actuator/health` **200** (배치 **10**). dev JVM journal L1·`mobile_push_tokens`·CLIENT 실기기·Solapi ENV — **human 선행**.
 
 ---
 
@@ -352,3 +352,69 @@ mvn -q -Dtest=ScheduleCreatedNotificationHelperImplTest,ExpoPushPropertiesTest,M
 - [ ] §2~§4 수동 UAT (dev·§1 사전 조건 후 실행)
 - [ ] §8.5 푸시 E2E (CLIENT·`mobile_push_tokens`·웹 일정 등록·로그) — **IPA finished 후** [§8.5.1](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_UAT_REPORT.md#851-ipaeas-finished후-실행-순서-l1l5--e0e5) 순서표
 - [ ] (선택) `PaymentServiceImpl` APPROVED — `sendMessage` 수신자 P0-5 debugger 확정 반영 테스트 추가
+
+---
+
+## 10. Solapi Phase D (2026-05-22)
+
+> **배치 10-4** (core-tester) · SSOT commit **`c5b181d28`** · 오케스트레이션 [§7.6](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md#76-solapi-phase-d-uat-알림톡sms) · ENV 디버그: [`SOLAPI_NOTIFICATION_MISS_DEBUG.md`](./2026-05-22/SOLAPI_NOTIFICATION_MISS_DEBUG.md)
+
+**D-0 dev ENV (human 선행 — 핫픽스 `3f3e97e28` 반영·재기동 후)**: dev `/etc/mindgarden/dev.env`·JVM journal에서 아래 3줄을 **D-2~D-4 착수 전** 확인한다. (1) **`SOLAPI_ALIMTALK_PFID` → `kakao.alimtalk.solapi.pf-id` 바인딩** — 기동·발송 시 WARN `자격 증명 또는 pfId` **0건** (`KakaoAlimTalkServiceImpl#isServiceAvailable` true). (2) **`SMS_TEST_MODE=false`** — journal `🧪 Solapi 테스트 모드 - 실제 발송 스킵` **0건** (정책상 dev 실발송 허용 시 `sync-solapi-sms-env.sh` merge `"false"`). (3) **confirm-deposit 재시도** — 어드민 매칭 **입금 확정** 1회 → `finalizeTentativeSchedulesAfterDepositConfirmed`·`MappingSettlementNotificationHelper` 로그 + 단말 알림톡/SMS 1건 ([§8 Step 2~3](./2026-05-22/SOLAPI_NOTIFICATION_MISS_DEBUG.md#8-재현-절차-수정-후-검증용)).
+
+### 10.1 자동 게이트 (2026-05-22)
+
+| 레이어 | 명령 | 결과 |
+|--------|------|:----:|
+| **Java 7클래스** | `mvn -q test -Dtest=MappingSettlementNotificationHelperImplTest,SmsAuthServiceNotificationMessageTest,NotificationServiceImplSmsFallbackTest,NotificationServiceImplAlimtalkTemplateResolveTest,MoodJournalControllerInboxIntegrationTest,MoodJournalServiceImplSharePushTest,MobilePushDispatchServiceImplTest` | **PASS** — **32** tests, 0 failures (~75s) |
+| **Expo pushNavigation** | `cd expo-app && npm run test:utils -- pushNavigation` | **PASS** — **23** tests, 0 failures (~3s) — `mood_journal_shared` → `/(consultant)/(more)/mood-journal-inbox` 포함 |
+| **dev reachability** | `curl …/actuator/health` | **PASS** — HTTP **200** |
+
+| 테스트 클래스 | Tests | 검증 요지 |
+|---------------|------:|-----------|
+| `MappingSettlementNotificationHelperImplTest` | 4 | confirm-payment/deposit → 인앱·`payment_completed` 푸시 + **`sendPaymentCompleted` verify**; approve는 `sendPaymentCompleted` **미호출** |
+| `NotificationServiceImplSmsFallbackTest` | 1 | `PAYMENT_COMPLETED`: 알림톡 실패 → `SmsAuthService.sendNotificationMessage` SMS 폴백 |
+| `NotificationServiceImplAlimtalkTemplateResolveTest` | 6 | 알림톡 biz templateId resolve (테넌트 DB → 공통코드 → type name) |
+| `SmsAuthServiceNotificationMessageTest` | 2 | 프로덕션 모드 **SolapiSmsProvider** 발송; testMode 시 provider 스킵 |
+| `MoodJournalControllerInboxIntegrationTest` | 3 | `GET /api/v1/mood-journals/inbox` 계약·테넌트·역할 |
+| `MoodJournalServiceImplSharePushTest` | 3 | `sharedWithConsultant` false→true 1회 fanout |
+| `MobilePushDispatchServiceImplTest` | 13 | `payment_completed`·`mood_journal_shared` 등 Expo dispatch baseline |
+
+**판정**: Solapi Phase D **코드·단위·통합 회귀 PASS** — human UAT(§10.3) **착수 가능** (ENV·templateId 선행).
+
+### 10.2 코드 수준 기대 (Phase D)
+
+| 트리거 | 알림톡 | variables / 호출 | SMS 폴백 |
+|--------|--------|------------------|----------|
+| **PG `Payment` APPROVED** | `NotificationType.PAYMENT_COMPLETED` · template `PAYMENT_COMPLETED` | `paymentAmount`, `packageName`, `consultantName` (`NotificationServiceImpl.sendPaymentCompleted`) | 알림톡 실패 시 **Solapi** (`SmsAuthService` → `SolapiSmsProvider`) |
+| **confirm-payment** | 동일 (`MappingSettlementNotificationHelper` → `sendPaymentCompleted`) | 매핑 금액·패키지명·상담사명 | 동일 |
+| **confirm-deposit** | 동일 | 동일 | 동일 |
+| **approve** | **N** (Phase D 범위 외) | `sendPaymentCompleted` **미호출** (단위 검증) | — |
+
+> **병행 유지**: 인앱 `PAYMENT_COMPLETION` · Expo `payment_completed` 푸시는 기존 baseline과 **동시** 발화 (`MappingSettlementNotificationHelperImplTest` verify).
+
+### 10.3 Human UAT 체크리스트 (Solapi · §7.6)
+
+> **담당**: human/QA (배치 **10-5**) · **선행**: `SMS_TEST_MODE=false` · Solapi PFID·발신번호·`PAYMENT_COMPLETED` templateId 검수 승인 · [`§7.6`](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md#76-solapi-phase-d-uat-알림톡sms) 행 1~2
+
+| # | 시나리오 | 검증 (기대) | Pass | 증빙 |
+|---|----------|-------------|:----:|------|
+| D-0 | **선행 ENV** | journal `kakao.alimtalk.solapi.*` WARN **0건** · Solapi 발신번호·PFID 바인딩 | ☐ | journal grep · env 스크린 |
+| D-1 | **선행 templateId** | 솔라피 콘솔 `PAYMENT_COMPLETED` 검수 승인 · 매핑 정산 templateId 목록 | ☐ | 콘솔 스크린·templateId |
+| D-2 | **confirm-payment** | CLIENT 단말 **알림톡 1건** (variables: 금액·패키지·상담사) 또는 **SMS 폴백**; 인앱·Expo 푸시 **유지** | ☐ | 단말 수신 · 콘솔 `groupId` · 서버 `MappingSettlementNotificationHelper` 로그 |
+| D-3 | **PG APPROVED** (테스트 결제) | CLIENT 알림톡/SMS · `sendPaymentCompleted` · **`PAYMENT_COMPLETED` templateId** 정합 | ☐ | PG·Payment `APPROVED` 행 · 단말 수신 |
+| D-4 | **알림톡 실패 → SMS** | 알림톡 차단/실패 시 Solapi SMS 본문 수신 (`[마인드가든] 결제…`) | ☐ | 단말 SMS · `SmsAuthService`/`SolapiSmsProvider` 로그 |
+
+### 10.4 감정일기 inbox 회귀 (배치 10 교차)
+
+**자동**: §10.1 Java·Expo **PASS** (V1~V3). **Human 푸시 E2E**는 [`MOOD_JOURNAL_CONSULTANT_INBOX_TEST_PLAN.md` §6.2](./MOOD_JOURNAL_CONSULTANT_INBOX_TEST_PLAN.md#62-human-85-스모크--qa-3줄-mood_journal_shared) 3줄 스모크( CLIENT 공유 ON → CONSULTANT 푸시·inbox · 재저장 0건 · mind-weather 회귀) — **별도 human UAT**, Solapi D-2~D-4와 **병렬 가능**(EAS·`push-token/register` 선행).
+
+### 10.5 배치 10 게이트 판정
+
+| 레이어 | 판정 |
+|--------|------|
+| Solapi Phase D 자동 (§10.1) | **PASS** |
+| 감정일기 inbox 자동 (§10.1) | **PASS** |
+| Solapi human (§10.3 D-0~D-4) | **NOT RUN** |
+| 감정일기 human (§10.4 cross-ref) | **NOT RUN** |
+| §8.5 CLIENT 푸시 E2E (결제·일정) | **NOT RUN / BLOCKED** (L1 journal) |
+| **종합** | **CONDITIONAL** — **human UAT 착수 가능** (자동 게이트 green; D-0~D-1 ENV·templateId 선행 후 D-2~D-4·감정일기 §6.2 실행) |

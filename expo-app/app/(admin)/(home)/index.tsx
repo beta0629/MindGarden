@@ -4,7 +4,7 @@
  * @author MindGarden
  * @since 2026-05-16
  */
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -28,10 +28,16 @@ export default function AdminHomeScreen() {
   const theme = useTheme();
   const router = useRouter();
   const dashboard = useAdminMobileDashboard();
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
-  const onRefresh = useCallback(() => {
-    dashboard.refetchAll();
-  }, [dashboard]);
+  const onRefresh = useCallback(async () => {
+    setIsManualRefreshing(true);
+    try {
+      await dashboard.refetchAll();
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  }, [dashboard.refetchAll]);
 
   const quickActions: QuickAction[] = useMemo(
     () => [
@@ -83,7 +89,7 @@ export default function AdminHomeScreen() {
         contentContainerStyle={styles.scroll}
         refreshControl={
           <RefreshControl
-            refreshing={dashboard.isRefreshing}
+            refreshing={isManualRefreshing}
             onRefresh={onRefresh}
             tintColor={theme.colors.primary}
           />

@@ -6,7 +6,7 @@
  * @since 2026-05-12
  * @see docs/design-system/SCREEN_SPEC_CONSULTANT_MOBILE_HOME.md
  */
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { FlashList } from '@shopify/flash-list';
 import {
@@ -43,6 +42,7 @@ import { QuickActionBar, type QuickAction } from '@/components/molecules/QuickAc
 import { SkeletonCard, SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { useConsultantMobileDashboard } from '@/api/hooks/useSchedules';
 import { usePendingRecords } from '@/api/hooks/useRecords';
 import { useUnreadCount } from '@/api/hooks/useNotifications';
@@ -61,9 +61,10 @@ export default function ConsultantDashboard() {
   const theme = useTheme();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const { userId } = useApiQueryReady({ requireUserId: true });
 
-  const dashboard = useConsultantMobileDashboard(user?.id);
-  const pendingQuery = usePendingRecords(user?.id);
+  const dashboard = useConsultantMobileDashboard(userId);
+  const pendingQuery = usePendingRecords(userId);
   const unreadNotificationQuery = useUnreadCount();
   const unreadMessageQuery = useUnreadMessageCount();
 
@@ -84,26 +85,31 @@ export default function ConsultantDashboard() {
     [dashboard.todayCount, schedules.length, unreadMessageCount],
   );
 
-  const isKpiLoading = dashboard.isLoading || unreadMessageQuery.isLoading;
+  const isDashboardKpiLoading = dashboard.isLoading;
+  const isUnreadKpiLoading =
+    unreadMessageQuery.isPending && unreadMessageQuery.isFetching;
+  const isKpiLoading = isDashboardKpiLoading || isUnreadKpiLoading;
 
-  const isRefreshing =
-    dashboard.isFetching ||
-    pendingQuery.isFetching ||
-    unreadNotificationQuery.isFetching ||
-    unreadMessageQuery.isFetching;
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
-  const onRefresh = useCallback(() => {
-    dashboard.refetchAll();
-    pendingQuery.refetch();
-    unreadNotificationQuery.refetch();
-    unreadMessageQuery.refetch();
-  }, [dashboard, pendingQuery, unreadNotificationQuery, unreadMessageQuery]);
-
-  useFocusEffect(
-    useCallback(() => {
-      void unreadMessageQuery.refetch();
-    }, [unreadMessageQuery]),
-  );
+  const onRefresh = useCallback(async () => {
+    setIsManualRefreshing(true);
+    try {
+      await Promise.all([
+        dashboard.refetchAll(),
+        pendingQuery.refetch(),
+        unreadNotificationQuery.refetch(),
+        unreadMessageQuery.refetch(),
+      ]);
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  }, [
+    dashboard.refetchAll,
+    pendingQuery.refetch,
+    unreadNotificationQuery.refetch,
+    unreadMessageQuery.refetch,
+  ]);
 
   const quickActions: QuickAction[] = useMemo(
     () => [
@@ -171,7 +177,7 @@ export default function ConsultantDashboard() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={isRefreshing}
+            refreshing={isManualRefreshing}
             onRefresh={onRefresh}
             tintColor={theme.colors.primary}
           />

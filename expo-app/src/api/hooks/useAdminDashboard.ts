@@ -22,8 +22,7 @@ export interface AdminMobileDashboardSnapshot {
   notificationsLoading: boolean;
   schedulesLoading: boolean;
   schedulesEnabled: boolean;
-  isRefreshing: boolean;
-  refetchAll: () => void;
+  refetchAll: () => Promise<unknown[]>;
 }
 
 export function useAdminMobileDashboard(): AdminMobileDashboardSnapshot {
@@ -34,8 +33,7 @@ export function useAdminMobileDashboard(): AdminMobileDashboardSnapshot {
   const schedulesQuery = useAdminTodaySchedules();
 
   const refetchAll = useCallback(() => {
-    void unreadQuery.refetch();
-    void schedulesQuery.refetch();
+    return Promise.all([unreadQuery.refetch(), schedulesQuery.refetch()]);
   }, [unreadQuery, schedulesQuery]);
 
   return useMemo(() => {
@@ -47,10 +45,9 @@ export function useAdminMobileDashboard(): AdminMobileDashboardSnapshot {
       unreadNotificationCount: unreadQuery.data?.count ?? 0,
       todayScheduleCount: todaySchedulesRaw.length,
       todaySchedules: sliceTodaySchedulePreview(todaySchedulesRaw),
-      notificationsLoading: unreadQuery.isLoading,
-      schedulesLoading: schedulesQuery.isLoading,
+      notificationsLoading: unreadQuery.isPending && unreadQuery.isFetching,
+      schedulesLoading: schedulesQuery.isPending && schedulesQuery.isFetching,
       schedulesEnabled: schedulesQuery.isFetched || schedulesQuery.isFetching,
-      isRefreshing: unreadQuery.isFetching || schedulesQuery.isFetching,
       refetchAll,
     };
   }, [
@@ -58,10 +55,10 @@ export function useAdminMobileDashboard(): AdminMobileDashboardSnapshot {
     user?.name,
     user?.nickname,
     unreadQuery.data?.count,
-    unreadQuery.isLoading,
+    unreadQuery.isPending,
     unreadQuery.isFetching,
     schedulesQuery.data,
-    schedulesQuery.isLoading,
+    schedulesQuery.isPending,
     schedulesQuery.isFetched,
     schedulesQuery.isFetching,
     refetchAll,

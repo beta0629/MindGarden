@@ -312,7 +312,7 @@ export interface ConsultantMobileDashboardSnapshot {
   pendingRecordCount: number;
   isLoading: boolean;
   isFetching: boolean;
-  refetchAll: () => void;
+  refetchAll: () => Promise<unknown>;
 }
 
 export function useConsultantDashboard(consultantId: string | number | undefined) {
@@ -345,7 +345,7 @@ export function useConsultantMobileDashboard(
   const dashboardQuery = useConsultantDashboard(consultantId);
 
   const refetchAll = useCallback(() => {
-    void dashboardQuery.refetch();
+    return dashboardQuery.refetch();
   }, [dashboardQuery]);
 
   return useMemo(

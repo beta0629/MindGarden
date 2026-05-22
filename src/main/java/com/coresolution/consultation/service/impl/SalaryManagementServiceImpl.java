@@ -2,10 +2,12 @@ package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.dto.ConsultantSalaryOptionItemRequest;
 import com.coresolution.consultation.dto.ConsultantSalaryProfileResponse;
@@ -220,6 +222,25 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
 
         return salaryCalculationRepository.findByTenantIdAndStatusAndCalculationPeriodStartBetweenWithConsultant(
                 tenantId, SalaryCalculation.SalaryStatus.CALCULATED, startDate, endDate);
+    }
+
+    /**
+     * 어드민 급여 관리 화면 월 단위 자동 표시용. PL/SQL 통합 확정({@code processIntegratedSalaryCalculation}) 이후
+     * 저장된 {@code CALCULATED}, 후속 승인·지급으로 전이된 {@code APPROVED}/{@code PAID}까지 포함한다.
+     * {@code PENDING}/{@code CANCELLED}는 의도적으로 제외한다.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<SalaryCalculation> getConfirmedSalaryCalculationsByPeriod(LocalDate startDate, LocalDate endDate) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📋 확정 급여 계산 월 조회: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
+        Set<SalaryCalculation.SalaryStatus> confirmedStatuses = EnumSet.of(
+                SalaryCalculation.SalaryStatus.CALCULATED,
+                SalaryCalculation.SalaryStatus.APPROVED,
+                SalaryCalculation.SalaryStatus.PAID);
+        return salaryCalculationRepository
+                .findByTenantIdAndStatusInAndCalculationPeriodStartBetweenWithConsultant(
+                        tenantId, confirmedStatuses, startDate, endDate);
     }
     
     @Override

@@ -41,7 +41,18 @@ public interface SalaryManagementService {
     SalaryCalculation calculateSalary(Long consultantId, Long profileId, LocalDate periodStart, LocalDate periodEnd);
     SalaryCalculation approveSalaryCalculation(Long calculationId, String approvedBy);
     SalaryCalculation markAsPaid(Long calculationId, String paidBy);
-    
+
+    /**
+     * 어드민 급여 관리 화면 월 단위 자동 표시용. 확정 이상 상태
+     * ({@code CALCULATED}, {@code APPROVED}, {@code PAID})의 급여 계산을 기간(기산일 기준)으로 조회합니다.
+     * 화면이 특정 월에 진입할 때 별도 클릭 없이 확정된 내역이 보이도록 사용합니다.
+     *
+     * @param startDate 기산일 기준 기간 시작
+     * @param endDate   기산일 기준 기간 종료
+     * @return 해당 테넌트·기간 내 확정 이상 급여 계산 목록 (최신순)
+     */
+    List<SalaryCalculation> getConfirmedSalaryCalculationsByPeriod(LocalDate startDate, LocalDate endDate);
+
     // 프론트엔드 호환성을 위한 메서드들
     List<SalaryCalculation> getSalaryCalculations(Long consultantId);
 

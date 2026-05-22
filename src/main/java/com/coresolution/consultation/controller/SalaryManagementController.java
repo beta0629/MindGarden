@@ -537,6 +537,41 @@ public class SalaryManagementController extends BaseApiController {
         List<SalaryCalculation> calculations = salaryManagementService.getSalaryCalculations(startDate, endDate);
         return success("급여 계산 목록을 조회했습니다.", calculations);
     }
+
+    /**
+     * 기간(기산일 기준) 확정 이상 급여 계산 조회.
+     * 어드민 급여 관리 화면이 특정 월에 진입할 때 별도 클릭 없이 확정된 내역을 자동 표시하는 용도이며,
+     * 응답 스키마는 {@code GET /calculations/{consultantId}}와 동일한 DTO로 통일된다.
+     * {@code CALCULATED}(확정), {@code APPROVED}(승인 완료), {@code PAID}(지급 완료)만 포함한다.
+     *
+     * @param startDate 기간 시작 (기산일 기준)
+     * @param endDate   기간 종료 (기산일 기준)
+     * @return 해당 테넌트·기간의 확정 이상 급여 계산 목록 (DTO 변환됨)
+     */
+    @GetMapping("/calculations/period")
+    public ResponseEntity<?> getConfirmedSalaryCalculationsByPeriod(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new UnauthorizedException("로그인이 필요합니다. 세션을 확인해 주세요.");
+        }
+        if (currentUser.getTenantId() != null) {
+            TenantContextHolder.setTenantId(currentUser.getTenantId());
+        }
+        requireSalaryManagePermission(session);
+        if (endDate.isBefore(startDate)) {
+            throw new ValidationException("종료일은 시작일과 같거나 이후여야 합니다.");
+        }
+        log.info("월 단위 확정 급여 계산 조회: 사용자 {}, 기간 {} ~ {}", currentUser.getName(), startDate, endDate);
+        List<SalaryCalculation> calculations =
+                salaryManagementService.getConfirmedSalaryCalculationsByPeriod(startDate, endDate);
+        List<Map<String, Object>> calculationDtos = calculations.stream()
+                .map(SalaryCalculationResponseMapper::toCalculationDto)
+                .collect(Collectors.toList());
+        return success("확정 급여 계산 목록을 조회했습니다.", calculationDtos);
+    }
     
     /**
      * 급여 옵션 유형 조회 (공통코드 SALARY_OPTION_TYPE)

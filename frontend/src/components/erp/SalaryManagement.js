@@ -22,6 +22,8 @@ import {
   SALARY_PREVIEW_CONSULTATION_FEE_LABEL,
   SALARY_PREVIEW_PRE_TAX_TOTAL_LABEL,
   SALARY_CALC_DETAIL_TAX_DEDUCTIONS_LABEL,
+  SALARY_CALC_EMPTY_FOR_PERIOD_MESSAGE,
+  SALARY_CALC_EMPTY_NO_SELECTION_MESSAGE,
   SALARY_STATUS,
   TAX_BREAKDOWN_ORDER,
   TAX_BREAKDOWN_LABELS
@@ -143,6 +145,70 @@ const SalaryManagement = () => {
       }
     } catch (e) {
       setCalculationPeriodDisplay(null);
+    }
+  };
+
+  /**
+   * YYYY-MM 형식의 period에서 기산일 기준 {periodStart, periodEnd} 산출.
+   * 백엔드 calculation-period 응답을 우선 사용하고, 실패·미응답 시 해당 월 1일~말일로 폴백한다.
+   * @param {string} period YYYY-MM
+   * @returns {Promise<{periodStart: string, periodEnd: string} | null>}
+   */
+  const resolvePeriodRange = async(period) => {
+    if (!period) return null;
+    const [y, m] = period.split('-');
+    const yearN = parseInt(y, 10);
+    const monthN = parseInt(m, 10);
+    let periodStart;
+    let periodEnd;
+    try {
+      const response = await StandardizedApi.get(
+        SALARY_API_ENDPOINTS.CALCULATION_PERIOD,
+        { year: yearN, month: monthN }
+      );
+      const data = (response && (response.data || response)) || null;
+      if (data && data.periodStart && data.periodEnd) {
+        periodStart = data.periodStart;
+        periodEnd = data.periodEnd;
+      }
+    } catch (e) {
+      // 폴백 — 월 단위 1일~말일
+    }
+    if (!periodStart || !periodEnd) {
+      periodStart = `${y}-${m}-01`;
+      const lastDay = new Date(yearN, monthN, 0).getDate();
+      periodEnd = `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
+    }
+    return { periodStart, periodEnd };
+  };
+
+  /**
+   * 월 단위 확정 이상 급여 계산 자동 조회. (사용자 보고: "해당하는 달로 가면 자동으로 확정내역이 보여야해")
+   * GET /api/v1/admin/salary/calculations/period?startDate&endDate — 확정(CALCULATED) 이상만 반환.
+   */
+  const loadSalaryCalculationsByPeriod = async(periodStart, periodEnd, options = {}) => {
+    const silent = options.silent === true;
+    if (!periodStart || !periodEnd) return;
+    try {
+      if (!silent) setLoading(true);
+      const response = await StandardizedApi.get(
+        SALARY_API_ENDPOINTS.CALCULATIONS_BY_PERIOD,
+        { startDate: periodStart, endDate: periodEnd }
+      );
+      let list = [];
+      if (Array.isArray(response)) {
+        list = response;
+      } else if (response && response.success && Array.isArray(response.data)) {
+        list = response.data;
+      } else if (response && Array.isArray(response.data)) {
+        list = response.data;
+      }
+      setSalaryCalculations(list);
+    } catch (error) {
+      console.error('월 단위 확정 급여 내역 로드 실패:', error);
+      setSalaryCalculations([]);
+    } finally {
+      if (!silent) setLoading(false);
     }
   };
 
@@ -458,13 +524,44 @@ const SalaryManagement = () => {
     loadPayDayOptions();
   }, []);
 
+  /**
+   * 페이지 진입 시 현재 월을 selectedPeriod 기본값으로 설정.
+   * 이후 selectedPeriod 변경 useEffect가 트리거되어 해당 월 확정 내역이 자동 표시된다.
+   */
   useEffect(() => {
-    if (selectedPeriod) {
-      const [y, m] = selectedPeriod.split('-');
-      loadCalculationPeriod(parseInt(y, 10), parseInt(m, 10));
-    } else {
-      setCalculationPeriodDisplay(null);
+    if (!selectedPeriod) {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      setSelectedPeriod(`${y}-${m}`);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /**
+   * selectedPeriod 변경 시: 기산일 기준 기간 산출 → 표시 + 월 확정 내역 자동 조회.
+   * 사용자가 매번 미리보기를 다시 누르지 않아도 해당 달 확정 내역이 보이도록 한다.
+   */
+  useEffect(() => {
+    let cancelled = false;
+    (async() => {
+      if (!selectedPeriod) {
+        setCalculationPeriodDisplay(null);
+        setSalaryCalculations([]);
+        return;
+      }
+      const range = await resolvePeriodRange(selectedPeriod);
+      if (cancelled || !range) return;
+      setCalculationPeriodDisplay({
+        periodStart: range.periodStart,
+        periodEnd: range.periodEnd
+      });
+      await loadSalaryCalculationsByPeriod(range.periodStart, range.periodEnd, { silent: true });
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPeriod]);
 
   /** API BigDecimal·문자열 대응; 미리보기·내역 금액 표시 공통 */
@@ -611,12 +708,9 @@ const SalaryManagement = () => {
                         onChange={(e) => {
                           const val = e.target.value;
                           setSelectedPeriod(val);
-                          if (val) {
-                            const [y, m] = val.split('-');
-                            loadCalculationPeriod(parseInt(y, 10), parseInt(m, 10));
-                            if (activeTab === TAB_TAX) loadTaxStatistics(val);
-                          } else {
-                            setCalculationPeriodDisplay(null);
+                          // calculationPeriodDisplay·salaryCalculations 갱신은 selectedPeriod useEffect가 처리.
+                          if (val && activeTab === TAB_TAX) {
+                            loadTaxStatistics(val);
                           }
                         }}
                         className="mg-v2-select"
@@ -1084,6 +1178,15 @@ const SalaryManagement = () => {
                   </div>
                   <div className="salary-calc-block__list">
                     <h3 className="mg-v2-ad-b0kla__section-title salary-calc-block__list-title">급여 계산 내역</h3>
+                    {!loading && salaryCalculations.length === 0 && (
+                      <div className="salary-calc-block__empty" role="status" data-state="empty">
+                        <p className="salary-calc-block__empty-message">
+                          {selectedPeriod
+                            ? SALARY_CALC_EMPTY_FOR_PERIOD_MESSAGE
+                            : SALARY_CALC_EMPTY_NO_SELECTION_MESSAGE}
+                        </p>
+                      </div>
+                    )}
                     {salaryCalculations.map(calculation => (
                       <article key={calculation.id} className="mg-v2-ad-b0kla__card salary-calc-block__card">
                         <div className="salary-calc-block__card-header">

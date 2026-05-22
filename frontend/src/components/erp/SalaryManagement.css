@@ -488,6 +488,23 @@
   margin: 0;
 }
 
+/* 급여 계산 내역 영역: 월 진입 시 확정 내역 0건 안내 (selectedPeriod 변경 시 자동 표시) */
+.salary-calc-block__empty {
+  text-align: center;
+  padding: var(--mg-spacing-xl);
+  background: var(--mg-color-surface-main);
+  border: 1px dashed var(--mg-color-border-main);
+  border-radius: 16px;
+  margin-top: var(--mg-spacing-md);
+}
+
+.salary-calc-block__empty-message {
+  margin: 0;
+  font-size: 14px;
+  color: var(--mg-color-text-secondary);
+  line-height: 1.6;
+}
+
 /* ========== 반응형 (RESPONSIVE_LAYOUT_SPEC §1~4, SCREEN_SPEC §5.3) ========== */
 /* 모바일: 1열 스택, 터치 영역 44px 이상 */
 @media (max-width: 767px) {

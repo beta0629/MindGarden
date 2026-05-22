@@ -1,6 +1,7 @@
 package com.coresolution.consultation.repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.SalaryCalculation;
@@ -105,6 +106,27 @@ public interface SalaryCalculationRepository extends BaseRepository<SalaryCalcul
     List<SalaryCalculation> findByTenantIdAndStatusAndCalculationPeriodStartBetweenWithConsultant(
             @Param("tenantId") String tenantId,
             @Param("status") SalaryCalculation.SalaryStatus status,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    /**
+     * 테넌트·복수 상태·기간별 급여 계산 조회 (확정 이상 상태 자동 표시용, consultant·salaryProfile fetch).
+     * 어드민 급여 관리 화면이 특정 월 진입 시 확정된 내역을 자동 노출할 때 사용한다.
+     *
+     * @param tenantId  테넌트 ID
+     * @param statuses  허용 상태 집합 (예: CALCULATED, APPROVED, PAID)
+     * @param startDate 기간 시작
+     * @param endDate   기간 종료
+     * @return 해당 테넌트·기간 내 허용 상태 급여 계산 목록 (최신 계산일 기준 내림차순, 연관 로딩됨)
+     */
+    @Query("SELECT sc FROM SalaryCalculation sc "
+        + "LEFT JOIN FETCH sc.consultant LEFT JOIN FETCH sc.salaryProfile "
+        + "WHERE sc.tenantId = :tenantId AND sc.status IN :statuses "
+        + "AND sc.calculationPeriodStart BETWEEN :startDate AND :endDate "
+        + "ORDER BY sc.calculatedAt DESC")
+    List<SalaryCalculation> findByTenantIdAndStatusInAndCalculationPeriodStartBetweenWithConsultant(
+            @Param("tenantId") String tenantId,
+            @Param("statuses") Collection<SalaryCalculation.SalaryStatus> statuses,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
 

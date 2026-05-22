@@ -85,6 +85,8 @@ export const EMAIL_TEMPLATE_LABELS = {
 export const SALARY_API_ENDPOINTS = {
   CALCULATE: '/api/v1/admin/salary/calculate',
   CALCULATIONS: '/api/v1/admin/salary/calculations',
+  /** 기간(기산일 기준) 확정 이상 급여 계산 조회: GET ?startDate=&endDate= (어드민 급여 화면 월 진입 시 자동 표시) */
+  CALCULATIONS_BY_PERIOD: '/api/v1/admin/salary/calculations/period',
   CALCULATION_PERIOD: '/api/v1/admin/salary/calculation-period',
   CONFIRM: '/api/v1/admin/salary/confirm',
   /** POST 본문 없음: `/approve/{calculationId}` */
@@ -250,6 +252,13 @@ export const SALARY_CALC_DETAIL_MERGED_DEDUP_LABEL = '급여 산정액';
 
 /** 급여 계산 내역: 통합 확정 시 원천징수 외 지방소득세 등이 포함될 수 있음 */
 export const SALARY_CALC_DETAIL_TAX_DEDUCTIONS_LABEL = '세금·공제';
+
+/** 급여 계산 내역 영역: 월 진입 시 확정 내역이 0건일 때 표시 */
+export const SALARY_CALC_EMPTY_FOR_PERIOD_MESSAGE = '이 달에 확정된 급여 내역이 없습니다.';
+
+/** 급여 계산 내역 영역: 상담사·기간 모두 미선택 시 표시 (자동 표시 전 안내) */
+export const SALARY_CALC_EMPTY_NO_SELECTION_MESSAGE =
+  '기간을 선택하면 해당 월의 확정 급여 내역이 자동으로 표시됩니다.';
 
 export const SALARY_DEFAULTS = {
   PAY_DAY_CODE: 'TENTH',

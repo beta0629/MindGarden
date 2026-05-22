@@ -243,6 +243,100 @@ class SalaryManagementControllerIntegrationTest {
         }
 
         @Test
+        @DisplayName("I-API-03a: GET /calculations/period 빈 결과 → 200, data=[]")
+        void getConfirmedCalculationsByPeriod_empty_returns200() throws Exception {
+            when(salaryManagementService.getConfirmedSalaryCalculationsByPeriod(
+                    any(LocalDate.class), any(LocalDate.class)))
+                    .thenReturn(Collections.emptyList());
+
+            mockMvc.perform(get("/api/v1/admin/salary/calculations/period")
+                            .param("startDate", "2026-04-01")
+                            .param("endDate", "2026-04-30")
+                            .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
+                            .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data.length()").value(0));
+        }
+
+        @Test
+        @DisplayName("I-API-03b: GET /calculations/period 확정 1건 → 200, DTO 스키마 일치")
+        void getConfirmedCalculationsByPeriod_withCalculated_returns200() throws Exception {
+            User consultantRef = new User();
+            consultantRef.setId(7L);
+            consultantRef.setName("프리랜서A");
+
+            SalaryProfile sp = SalaryProfile.builder()
+                    .profileName("기본")
+                    .baseSalary(BigDecimal.ZERO)
+                    .build();
+            sp.setId(11L);
+
+            SalaryCalculation calc = SalaryCalculation.builder()
+                    .consultant(consultantRef)
+                    .salaryProfile(sp)
+                    .calculationPeriodStart(LocalDate.of(2026, 4, 1))
+                    .calculationPeriodEnd(LocalDate.of(2026, 4, 30))
+                    .totalConsultations(5)
+                    .completedConsultations(5)
+                    .grossSalary(new BigDecimal("3000000"))
+                    .netSalary(new BigDecimal("2700000"))
+                    .deductions(new BigDecimal("300000"))
+                    .totalSalary(new BigDecimal("3000000"))
+                    .status(SalaryStatus.CALCULATED)
+                    .calculatedAt(LocalDateTime.of(2026, 5, 1, 10, 0))
+                    .build();
+            calc.setId(100L);
+
+            when(salaryManagementService.getConfirmedSalaryCalculationsByPeriod(
+                    any(LocalDate.class), any(LocalDate.class)))
+                    .thenReturn(List.of(calc));
+
+            mockMvc.perform(get("/api/v1/admin/salary/calculations/period")
+                            .param("startDate", "2026-04-01")
+                            .param("endDate", "2026-04-30")
+                            .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
+                            .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.length()").value(1))
+                    .andExpect(jsonPath("$.data[0].id").value(100))
+                    .andExpect(jsonPath("$.data[0].consultantId").value(7))
+                    .andExpect(jsonPath("$.data[0].consultantName").value("프리랜서A"))
+                    .andExpect(jsonPath("$.data[0].status").value("CALCULATED"))
+                    .andExpect(jsonPath("$.data[0].grossSalary").value(3000000))
+                    .andExpect(jsonPath("$.data[0].netSalary").value(2700000))
+                    .andExpect(jsonPath("$.data[0].taxAmount").value(300000));
+        }
+
+        @Test
+        @DisplayName("I-API-03c: GET /calculations/period endDate<startDate → 400")
+        void getConfirmedCalculationsByPeriod_invalidRange_returns400() throws Exception {
+            mockMvc.perform(get("/api/v1/admin/salary/calculations/period")
+                            .param("startDate", "2026-04-30")
+                            .param("endDate", "2026-04-01")
+                            .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
+                            .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("시작일")));
+        }
+
+        @Test
+        @DisplayName("I-API-03d: GET /calculations/period SALARY_MANAGE 권한 없음 → 403")
+        void getConfirmedCalculationsByPeriod_withoutPermission_returns403() throws Exception {
+            when(dynamicPermissionService.hasPermission(any(User.class), eq("SALARY_MANAGE")))
+                    .thenReturn(false);
+
+            mockMvc.perform(get("/api/v1/admin/salary/calculations/period")
+                            .param("startDate", "2026-04-01")
+                            .param("endDate", "2026-04-30")
+                            .sessionAttr(SessionConstants.USER_OBJECT, consultantUserNoSalaryPermission())
+                            .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
         @DisplayName("I-API-06: GET /calculation-period?year=2025&month=6 정상 → 200, periodStart, periodEnd")
         void getCalculationPeriod_valid_returns200() throws Exception {
             LocalDate start = LocalDate.of(2025, 6, 1);

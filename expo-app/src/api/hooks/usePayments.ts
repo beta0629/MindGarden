@@ -7,13 +7,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost } from '../client';
 import { ADMIN_CLIENT_API, PAYMENT_API } from '../endpoints';
+import {
+  aggregateSessionBalance,
+  extractMappingsFromResponse,
+  type SessionBalance,
+} from '@/utils/clientMappingBalance';
 
-export interface SessionBalance {
-  clientId: number;
-  totalSessions: number;
-  usedSessions: number;
-  remainingSessions: number;
-}
+export type { SessionBalance };
 
 export type PaymentStatus = 'COMPLETED' | 'PENDING' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
 
@@ -97,56 +97,6 @@ const PAYMENT_QUERY_KEYS = {
     [...PAYMENT_QUERY_KEYS.all, 'sessionDetail', clientId, detailId] as const,
   usage: (clientId: number) => [...PAYMENT_QUERY_KEYS.all, 'usage', clientId] as const,
 };
-
-/**
- * 웹 `normalizeApiListPayload` / `normalizeMappingsListPayload`와 동등한 매칭 배열 추출
- */
-function extractMappingsFromResponse(response: any): any[] {
-  if (response == null) {
-    return [];
-  }
-  if (Array.isArray(response)) {
-    return response;
-  }
-  if (typeof response !== 'object') {
-    return [];
-  }
-  const tryKeys = (obj: any): any[] | null => {
-    if (!obj || typeof obj !== 'object') return null;
-    for (const key of ['mappings', 'content', 'data', 'items']) {
-      if (Array.isArray(obj[key])) {
-        return obj[key];
-      }
-    }
-    return null;
-  };
-  const inner = response?.data ?? response;
-  const direct = tryKeys(inner);
-  if (direct) {
-    return direct;
-  }
-  if (inner != null && typeof inner === 'object' && !Array.isArray(inner) && inner.data != null) {
-    const nested = tryKeys(inner.data);
-    if (nested) {
-      return nested;
-    }
-  }
-  return [];
-}
-
-/** 웹 ClientDashboard와 동일: ACTIVE 매칭만 회기 합산 */
-function aggregateSessionBalance(clientId: number, mappings: any[]): SessionBalance {
-  const active = mappings.filter((m) => m?.status === 'ACTIVE');
-  const totalSessions = active.reduce((s, m) => s + (Number(m.totalSessions) || 0), 0);
-  const usedSessions = active.reduce((s, m) => s + (Number(m.usedSessions) || 0), 0);
-  const remainingSessions = active.reduce((s, m) => s + (Number(m.remainingSessions) || 0), 0);
-  return {
-    clientId,
-    totalSessions,
-    usedSessions,
-    remainingSessions,
-  };
-}
 
 function mappingPaymentStatusToItemStatus(raw: string | undefined): PaymentStatus {
   const ps = raw != null ? String(raw).trim().toUpperCase() : '';

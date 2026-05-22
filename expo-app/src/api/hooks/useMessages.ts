@@ -21,6 +21,7 @@ import { resolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { toClientConsultantMessagingRole } from '@/utils/adminRole';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
+import { parseUnreadMessageCountPayload } from '@/utils/consultationMessageUnread';
 
 export interface Conversation {
   /** 스레드 식별자 = 상대방 사용자 ID(내담자: 상담사 ID / 상담사: 내담자 ID) */
@@ -433,13 +434,7 @@ export function useUnreadMessageCount() {
     queryFn: async () => {
       try {
         const raw = await apiGet<unknown>(MESSAGE_API.unreadCount(userId!, userType));
-        const inner = unwrapApiResponse<Record<string, unknown>>(raw);
-        const bag = inner ?? (raw as Record<string, unknown>);
-        const unread =
-          bag && typeof bag === 'object' && 'unreadCount' in bag
-            ? toSafeNumber(bag.unreadCount, 0)
-            : 0;
-        return { count: unread };
+        return { count: parseUnreadMessageCountPayload(raw) };
       } catch {
         return { count: 0 };
       }

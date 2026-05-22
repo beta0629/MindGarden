@@ -4,11 +4,20 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { format, subDays, startOfDay, parseISO, differenceInCalendarDays } from 'date-fns';
+import { startOfDay, parseISO, differenceInCalendarDays } from 'date-fns';
 import { useQuery, useInfiniteQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { apiGet } from '../client';
-import { SCHEDULE_API } from '../endpoints';
+import { ADMIN_CLIENT_API, MESSAGE_API, SCHEDULE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
+import {
+  aggregateSessionBalance,
+  extractMappingsFromResponse,
+} from '@/utils/clientMappingBalance';
+import {
+  countThisMonthSchedules,
+  normalizeScheduleListPayload,
+} from '@/utils/clientHomeKpi';
+import { parseUnreadMessageCountPayload } from '@/utils/consultationMessageUnread';
 import { useClientScheduleApiContext } from '@/hooks/useClientScheduleApiContext';
 import { useAuthStore } from '@/stores/useAuthStore';
 import {
@@ -18,12 +27,6 @@ import {
 import type { Schedule, ScheduleDetail } from './useSchedules';
 
 type ConsultationStatus = 'SCHEDULED' | 'BOOKED' | 'COMPLETED' | 'ALL';
-
-/**
- * Spring에 `GET /api/v1/dashboard/client` JSON REST 없음 — 내담자 상담 목록으로 홈 통계 구성
- * (`endpoints.ts` 변경 없이 이 파일에서만 사용)
- */
-const CLIENT_HOME_STATS_URL = '/api/v1/consultations';
 
 interface ClientConsultationsParams {
   status?: ConsultationStatus;
@@ -286,56 +289,9 @@ export function useUpcomingConsultation(clientId?: number | string) {
 }
 
 export interface ClientDashboardData {
-  totalConsultations: number;
-  thisMonthCount: number;
-  streakDays: number;
-  upcomingSchedule: Schedule | null;
-}
-
-function extractConsultationsListForStats(raw: unknown): {
-  rows: Record<string, unknown>[];
-  totalCount: number;
-} {
-  const data =
-    unwrapApiResponse<Record<string, unknown>>(raw) ??
-    (raw != null && typeof raw === 'object' ? (raw as Record<string, unknown>) : null);
-  if (data == null) {
-    return { rows: [], totalCount: 0 };
-  }
-  const list = data.consultations;
-  const rows = Array.isArray(list) ? (list as Record<string, unknown>[]) : [];
-  const tc = data.totalCount;
-  const totalCount = typeof tc === 'number' && Number.isFinite(tc) ? tc : rows.length;
-  return { rows, totalCount };
-}
-
-function activeConsultationDateKeys(rows: Record<string, unknown>[]): Set<string> {
-  const keys = new Set<string>();
-  for (const o of rows) {
-    const st = String(o.status ?? '').toUpperCase();
-    if (st === 'CANCELLED') {
-      continue;
-    }
-    const d = o.consultationDate;
-    if (typeof d === 'string' && d.length >= 10) {
-      keys.add(d.slice(0, 10));
-    }
-  }
-  return keys;
-}
-
-function streakDaysFromDates(activeDates: Set<string>): number {
-  let streak = 0;
-  const today = startOfDay(new Date());
-  for (let i = 0; i < 366; i += 1) {
-    const key = format(subDays(today, i), 'yyyy-MM-dd');
-    if (activeDates.has(key)) {
-      streak += 1;
-    } else {
-      break;
-    }
-  }
-  return streak;
+  remainingSessions: number;
+  thisMonthScheduleCount: number;
+  unreadMessageCount: number;
 }
 
 export function useClientDashboard(clientId?: number | string) {
@@ -345,25 +301,33 @@ export function useClientDashboard(clientId?: number | string) {
   return useQuery<ClientDashboardData>({
     queryKey: CONSULTATION_QUERY_KEYS.clientDashboard(clientIdNum),
     queryFn: async () => {
-      const raw = await apiGet<unknown>(CLIENT_HOME_STATS_URL, {
-        clientId: effectiveUserId,
-      });
-      const { rows, totalCount } = extractConsultationsListForStats(raw);
-      const monthPrefix = format(new Date(), 'yyyy-MM');
-      const thisMonthCount = rows.filter((o) => {
-        const st = String(o.status ?? '').toUpperCase();
-        if (st === 'CANCELLED') {
-          return false;
-        }
-        const d = o.consultationDate;
-        return typeof d === 'string' && d.startsWith(monthPrefix);
-      }).length;
-      const streakDays = streakDaysFromDates(activeConsultationDateKeys(rows));
+      const [scheduleRaw, mappingRaw, unreadRaw] = await Promise.all([
+        apiGet<unknown>(SCHEDULE_API.SCHEDULES, {
+          userId: effectiveUserId,
+          userRole: 'CLIENT',
+        }),
+        apiGet<unknown>(ADMIN_CLIENT_API.MAPPINGS_BY_CLIENT, {
+          clientId: effectiveUserId,
+        }),
+        apiGet<unknown>(MESSAGE_API.unreadCount(effectiveUserId!, 'CLIENT')).catch(() => null),
+      ]);
+
+      const schedules = normalizeScheduleListPayload(scheduleRaw);
+      const thisMonthScheduleCount = countThisMonthSchedules(schedules);
+
+      const mappings = extractMappingsFromResponse(mappingRaw);
+      const { remainingSessions } = aggregateSessionBalance(
+        Number(effectiveUserId),
+        mappings,
+      );
+
+      const unreadMessageCount =
+        unreadRaw != null ? parseUnreadMessageCountPayload(unreadRaw) : 0;
+
       return {
-        totalConsultations: totalCount,
-        thisMonthCount,
-        streakDays,
-        upcomingSchedule: null,
+        remainingSessions,
+        thisMonthScheduleCount,
+        unreadMessageCount,
       };
     },
     enabled: queryEnabled,

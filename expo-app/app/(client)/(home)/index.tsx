@@ -30,6 +30,7 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { useClientDashboard, useUpcomingConsultation } from '@/api/hooks/useConsultations';
 import { useUnreadCount } from '@/api/hooks/useNotifications';
 import { useRandomWellnessTip } from '@/api/hooks/useWellness';
+import { CLIENT_HOME_COPY, CLIENT_HOME_ROUTES } from '@/constants/clientHomeCopy';
 
 const WARM_MESSAGES = [
   '오늘도 따뜻한 하루 보내세요.',
@@ -55,7 +56,8 @@ export default function ClientHome() {
   const unreadQuery = useUnreadCount();
   const unreadCount = unreadQuery.data?.count ?? 0;
 
-  const isLoading = dashboardQuery.isLoading || upcomingQuery.isLoading;
+  const isUpcomingLoading = upcomingQuery.isLoading;
+  const isKpiLoading = dashboardQuery.isLoading;
 
   const onRefresh = useCallback(() => {
     dashboardQuery.refetch();
@@ -144,7 +146,7 @@ export default function ClientHome() {
 
         {/* 다가오는 상담 카운트다운 */}
         <Animated.View entering={FadeInDown.delay(80).springify()}>
-          {isLoading ? (
+          {isUpcomingLoading ? (
             <SkeletonCard style={styles.section} />
           ) : upcoming ? (
             <View style={styles.section}>
@@ -209,7 +211,7 @@ export default function ClientHome() {
           )}
         </Animated.View>
 
-        {/* 최근 활동 요약 */}
+        {/* 핵심 지표 */}
         <Animated.View entering={FadeInDown.delay(320).springify()} style={styles.section}>
           <Text
             style={[
@@ -221,9 +223,9 @@ export default function ClientHome() {
               },
             ]}
           >
-            나의 활동
+            {CLIENT_HOME_COPY.KPI_SECTION_TITLE}
           </Text>
-          {isLoading ? (
+          {isKpiLoading ? (
             <View style={styles.statRow}>
               {[1, 2, 3].map((i) => (
                 <SkeletonLoader key={i} width={100} height={80} borderRadius={16} />
@@ -236,25 +238,28 @@ export default function ClientHome() {
               contentContainerStyle={styles.statRow}
             >
               <StatCard
-                label="총 상담"
-                value={dashboard?.totalConsultations ?? 0}
-                unit="회"
+                label={CLIENT_HOME_COPY.KPI_REMAINING_SESSIONS}
+                value={dashboard?.remainingSessions ?? 0}
+                unit={CLIENT_HOME_COPY.UNIT_SESSION}
                 icon={<Calendar size={18} color={theme.colors.primary} />}
                 style={styles.statCard}
+                onPress={() => router.push(CLIENT_HOME_ROUTES.SESSIONS_PAYMENT)}
               />
               <StatCard
-                label="이번 달"
-                value={dashboard?.thisMonthCount ?? 0}
-                unit="회"
+                label={CLIENT_HOME_COPY.KPI_THIS_MONTH_SESSIONS}
+                value={dashboard?.thisMonthScheduleCount ?? 0}
+                unit={CLIENT_HOME_COPY.UNIT_SESSION}
                 icon={<TrendingUp size={18} color={theme.colors.primary} />}
                 style={styles.statCard}
+                onPress={() => router.push(CLIENT_HOME_ROUTES.SESSIONS)}
               />
               <StatCard
-                label="연속 관리"
-                value={dashboard?.streakDays ?? 0}
-                unit="일"
-                icon={<Heart size={18} color={theme.colors.primary} />}
+                label={CLIENT_HOME_COPY.KPI_UNREAD_MESSAGES}
+                value={dashboard?.unreadMessageCount ?? 0}
+                unit={CLIENT_HOME_COPY.UNIT_MESSAGE}
+                icon={<Bell size={18} color={theme.colors.primary} />}
                 style={styles.statCard}
+                onPress={() => router.push(CLIENT_HOME_ROUTES.MESSAGES)}
               />
             </ScrollView>
           )}

@@ -1,12 +1,12 @@
 # 감정일기 공유 푸시 + 상담사 inbox — 테스트 플랜
 
-**작성일**: 2026-05-21  
+**작성일**: 2026-05-21 · **갱신**: 2026-05-22 (core-planner 사후 정합 — C-1·C-2 commit `a3051dfd1` 정착 반영)  
 **작성자**: core-tester  
-**상태**: **자동 게이트 PASS (2026-05-21)** — human §8.5·CI `SMS_API_KEY` 선행 확인 잔여  
+**상태**: **자동 게이트 PASS** · **CI green** (gh run `26199540365` · sha `a3051dfd1` · 32m22s · `success`) — **human §8.5 PENDING** (잔여 1건)  
 **SSOT 기획**: [`2026-05-21/MOOD_JOURNAL_CONSULTANT_INBOX_ORCHESTRATION.md`](./2026-05-21/MOOD_JOURNAL_CONSULTANT_INBOX_ORCHESTRATION.md) §0·§8  
 **표준**: [`docs/standards/TESTING_STANDARD.md`](../standards/TESTING_STANDARD.md)
 
-> **게이트**: §3 자동 **PASS** 후에만 human UAT(§6.2)·상용화 착수. 커밋 `0ab910309` / `bc3eb002e` 반영 검증 완료.
+> **게이트**: §3 자동 **PASS** + CI green ✅ — human UAT(§6.2)·상용화 착수 가능. 커밋 `0ab910309` / `bc3eb002e` / `a3051dfd1` (C-1·C-2) 반영 검증 완료.
 
 ---
 
@@ -27,7 +27,7 @@
 - [x] Expo: `pushScenarios` 시나리오 + `app/(consultant)/(more)/mood-journal-inbox.tsx` + `endpoints.ts` `INBOX`
 - [x] 신규 통합 테스트: `MoodJournalControllerInboxIntegrationTest`
 - [x] 단위: `MobilePushDispatchServiceImplTest`에 `mood_journal_shared` 케이스
-- [ ] Expo `_layout.tsx`에 `mood-journal-inbox` **Stack.Screen** 명시 등록 — **core-coder 위임** (파일 라우트는 존재, Stack 옵션만 `session-kpi` 명시)
+- [x] Expo `_layout.tsx`에 `mood-journal-inbox` **Stack.Screen** 명시 등록 — **DONE** (`expo-app/app/(consultant)/(more)/_layout.tsx:7` · commit `a3051dfd1`)
 
 ---
 
@@ -88,7 +88,7 @@ mvn -q -Dtest=MoodJournalControllerInboxIntegrationTest,MoodJournalServiceImplSh
 | `MobilePushDispatchServiceImplTest` — `dispatchMoodJournalShared_fanoutConsultant` | V1 fanout·data | **PASS** | 2026-05-21 — 전체 스위트 green (mood_journal 케이스 포함) |
 | `MindWeatherControllerInboxIntegrationTest` | V4 회귀 | **PASS** | 2026-05-21 — 3/3 (동일 배치·선택 실행) |
 
-**환경 메모**: 최초 동일 명령(09:51)은 `Could not resolve placeholder 'SMS_API_KEY'`로 통합 3건 **ERROR**. `application-test.yml`에 placeholder 존재·재실행(09:54) **PASS**. CI·로컬 재현 시 `SMS_API_KEY`/`SMS_API_SECRET` test profile 로딩 확인 — **core-coder** (테스트 프로퍼티 바인딩) 권장.
+**환경 메모**: 최초 동일 명령(09:51)은 `Could not resolve placeholder 'SMS_API_KEY'`로 통합 3건 **ERROR**. `application-test.yml`에 placeholder 존재·재실행(09:54) **PASS**. **C-2 정착**: `application-test.yml:98-102` SMS placeholder 4건 (`SMS_API_KEY`/`SMS_API_SECRET`/`SMS_SENDER_NUMBER`/`SMS_TEST_MODE`) + 주석 1건 (commit `a3051dfd1`) → CI gh run `26199540365` **green** 확인 완료.
 
 ### 3.2 Expo (Jest)
 
@@ -137,10 +137,11 @@ cd expo-app && npm run test:utils
 |------|:----:|------|
 | **기능 V1~V3 (자동)** | **PASS** | Java 19 tests 0 failures · Expo 30/30 |
 | **회귀 V4** | **PASS** | `MindWeatherControllerInboxIntegrationTest` 3/3 |
-| **Expo 라우트 Stack** | **위임** | `mood-journal-inbox.tsx` 존재 · `_layout.tsx`에 `Stack.Screen` 미등록 → **core-coder** |
+| **Expo 라우트 Stack** | **PASS** | `_layout.tsx:7` `<Stack.Screen name="mood-journal-inbox" options={{ headerShown: false }} />` ✅ (`a3051dfd1`) |
 | **표시 경계 (리뷰)** | **PASS** | `mood-journal-inbox.tsx` — `toDisplayString`·`toSafeNumber`(`safeDisplay`) 사용 |
-| **수동 M-1~M-5** | **NOT RUN** | human §6.2 |
-| **배치 완료 보고** | **조건부** | 자동 게이트 PASS · human §6.2 Pass 후 CLOSED |
+| **CI 코드 품질 검사** | **PASS** | gh run `26199540365` (sha `a3051dfd1` · 32m22s · `success`) |
+| **수동 M-1~M-5** | **NOT RUN** | human §6.2 (잔여) |
+| **배치 완료 보고** | **조건부** | 자동 게이트·CI green ✅ · human §6.2 Pass 후 CLOSED |
 
 ---
 
@@ -155,7 +156,7 @@ cd expo-app && npm run test:utils
 | Push dispatch 단위 | `MobilePushDispatchServiceImplTest` (`mood_journal_shared`) | **PASS** | ✅ |
 | mind-weather 회귀 | `MindWeatherControllerInboxIntegrationTest` | **PASS** | ✅ (env 재실행 green) |
 | Expo V3 | `test:utils` — pushNavigation·pushScenarios·notificationServiceNavigate | **PASS** | ✅ |
-| Expo Stack 등록 | `_layout.tsx` 점검 (코드 수정 없음) | **위임** | — → core-coder |
+| Expo Stack 등록 | `_layout.tsx:7` Stack.Screen 등록 | **PASS** | ✅ (`a3051dfd1` core-coder DONE) |
 | Human 푸시 E2E | §4 M-1~M-5 | **NOT RUN** | human |
 
 **실행 명령 (기록)**:

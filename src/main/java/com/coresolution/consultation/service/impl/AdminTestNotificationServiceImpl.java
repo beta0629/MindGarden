@@ -8,10 +8,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.TestAlimtalkRequest;
@@ -75,11 +77,26 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
     static final String ERROR_CODE_ALIMTALK_CREDENTIALS_MISSING = "ALIMTALK_CREDENTIALS_MISSING";
     /** 라이브 템플릿 조회 사전 검증 — 솔라피 발신 프로필(pfId)이 테넌트 settings·ENV 모두 미설정. */
     static final String ERROR_CODE_ALIMTALK_PFID_MISSING = "ALIMTALK_PFID_MISSING";
+    /**
+     * 어드민 도구 전용 — 공통코드 {@code codeValue} 가 공통코드 그룹
+     * {@code ALIMTALK_BIZ_TEMPLATE_CODE} 의 실 Solapi {@code templateId} 와 매핑되지 않음.
+     *
+     * <p>{@code admin_test_notification_logs.error_code} 컬럼 {@code VARCHAR(50)} — 19자.
+     */
+    static final String ERROR_CODE_TEMPLATE_NOT_MAPPED = "TEMPLATE_NOT_MAPPED";
 
     static final String SOURCE_COMMON_CODE = "COMMON_CODE";
     static final String SOURCE_SOLAPI = "SOLAPI";
 
     static final String COMMON_CODE_GROUP_ALIMTALK_TEMPLATE = "ALIMTALK_TEMPLATE";
+    /**
+     * 공통코드 codeValue(예: {@code PAYMENT_COMPLETED}) → Solapi 실 templateId({@code KA01TP…})
+     * 매핑이 저장되는 공통코드 그룹.
+     *
+     * <p>운영 호출부 {@code NotificationServiceImpl.resolveAlimTalkBizTemplateCode} 와 동일한
+     * 그룹을 사용하여 SSOT 를 보장한다.
+     */
+    static final String COMMON_CODE_GROUP_ALIMTALK_BIZ_TEMPLATE_CODE = "ALIMTALK_BIZ_TEMPLATE_CODE";
 
     private static final int MAX_RECIPIENT_RESULTS = 100;
     /** {@code admin_test_notification_logs.error_message} VARCHAR(1000) — 안전을 위해 900자에서 절단. */
@@ -166,6 +183,9 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
                 COMMON_CODE_GROUP_ALIMTALK_TEMPLATE, tenantId);
         List<TestNotificationAlimtalkTemplate> templates = new ArrayList<>(codes.size());
         Set<String> seenCodeValues = new HashSet<>();
+        // 어드민 UI "매핑없음" 뱃지용 — codeValue 마다 ALIMTALK_BIZ_TEMPLATE_CODE 매핑 lookup 캐시.
+        // codes 사이즈가 작아 N+1이 실질적 문제가 안 되나, 동일 그룹 내 중복 호출은 피한다.
+        Map<String, Boolean> mappingPresenceCache = new LinkedHashMap<>();
         for (CommonCode code : codes) {
             if (Boolean.FALSE.equals(code.getIsActive())) {
                 continue;
@@ -174,15 +194,58 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
             if (codeValue == null || !seenCodeValues.add(codeValue)) {
                 continue;
             }
+            boolean mappingPresent = mappingPresenceCache.computeIfAbsent(codeValue,
+                cv -> resolveSolapiTemplateId(tenantId, cv) != null);
             templates.add(TestNotificationAlimtalkTemplate.builder()
                 .templateCode(codeValue)
                 .title(code.getCodeLabel())
                 .status(null)
                 .variables(extractVariables(code.getExtraData()))
                 .source(SOURCE_COMMON_CODE)
+                .solapiTemplateIdPresent(mappingPresent)
                 .build());
         }
         return templates;
+    }
+
+    /**
+     * 공통코드 그룹 {@code ALIMTALK_BIZ_TEMPLATE_CODE} 에서 {@code codeValue} 매칭 row 의
+     * {@code codeLabel}(실 Solapi {@code templateId}) 을 반환한다.
+     *
+     * <p>운영 호출부 {@code NotificationServiceImpl.resolveAlimTalkBizTemplateCode} 와 동일한
+     * 우선순위 — 테넌트 row 우선, 없으면 코어(tenant_id IS NULL) row 폴백. 매칭 row 가 없거나
+     * {@code codeLabel} 이 비어 있으면 {@code null}.
+     *
+     * <p>본 메서드는 어드민 도구 한정으로 사용되며 운영 호출부에는 영향이 없다.
+     *
+     * @param tenantId  테넌트 ID
+     * @param codeValue 공통코드 codeValue(예: {@code PAYMENT_COMPLETED})
+     * @return Solapi 실 templateId 또는 매핑 없음 시 {@code null}
+     */
+    private String resolveSolapiTemplateId(String tenantId, String codeValue) {
+        if (codeValue == null || codeValue.isBlank()) {
+            return null;
+        }
+        try {
+            if (tenantId != null && !tenantId.isBlank()) {
+                Optional<CommonCode> tenantRow = commonCodeRepository.findTenantCodeByGroupAndValue(
+                    tenantId, COMMON_CODE_GROUP_ALIMTALK_BIZ_TEMPLATE_CODE, codeValue);
+                if (tenantRow.isPresent() && tenantRow.get().getCodeLabel() != null
+                        && !tenantRow.get().getCodeLabel().isBlank()) {
+                    return tenantRow.get().getCodeLabel().trim();
+                }
+            }
+            Optional<CommonCode> coreRow = commonCodeRepository.findCoreCodeByGroupAndValue(
+                COMMON_CODE_GROUP_ALIMTALK_BIZ_TEMPLATE_CODE, codeValue);
+            if (coreRow.isPresent() && coreRow.get().getCodeLabel() != null
+                    && !coreRow.get().getCodeLabel().isBlank()) {
+                return coreRow.get().getCodeLabel().trim();
+            }
+        } catch (Exception e) {
+            log.debug("ALIMTALK_BIZ_TEMPLATE_CODE 매핑 조회 실패 (codeValue={}): {}",
+                codeValue, e.getMessage());
+        }
+        return null;
     }
 
     @Override
@@ -250,6 +313,8 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
                 .status(meta.status())
                 .variables(Collections.emptyList())
                 .source(SOURCE_SOLAPI)
+                // 라이브 출처는 사용자가 실 Solapi templateId 를 직접 선택하는 상태이므로 항상 true.
+                .solapiTemplateIdPresent(true)
                 .build());
         }
         return templates;
@@ -379,6 +444,38 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
             ? new HashMap<>()
             : new HashMap<>(request.getTemplateParams());
 
+        // 결함 C 가드 — 공통코드(codeValue) 모드에서는 ALIMTALK_BIZ_TEMPLATE_CODE 매핑이 필수.
+        // 라이브(SOLAPI) 모드는 사용자가 이미 실 templateId(KA01TP…) 를 선택했으므로 매핑 lookup skip.
+        // templateSource 가 null/blank 이면 기존 호출자 호환을 위해 COMMON_CODE 로 간주.
+        boolean liveMode = isLiveTemplateSource(request.getTemplateSource());
+        String effectiveTemplateCode = request.getTemplateCode();
+        if (!liveMode) {
+            String mappedTemplateId = resolveSolapiTemplateId(tenantId, request.getTemplateCode());
+            if (mappedTemplateId == null) {
+                String message = "Solapi 템플릿 매핑이 없습니다 ("
+                    + request.getTemplateCode() + "). 공통코드 그룹 "
+                    + COMMON_CODE_GROUP_ALIMTALK_BIZ_TEMPLATE_CODE
+                    + " 에 추가하거나, 어드민 UI '솔라피 전체 보기' 토글로 실제 templateId 를 선택해 주세요.";
+                AdminTestNotificationLog blockedLog = logger.logAttempt(tenantId,
+                    currentUser.getId(), currentUser.getUserId(), request.getRecipientMode(),
+                    recipient.userId(), recipient.maskedPhone(),
+                    TestNotificationChannel.ALIMTALK, request.getTemplateCode(), params, null,
+                    request.getReason());
+                logger.updateResult(blockedLog.getId(), false, null, null,
+                    ERROR_CODE_TEMPLATE_NOT_MAPPED, truncateErrorMessage(message));
+                log.warn("어드민 테스트 알림톡 발송 차단 — 공통코드 매핑 없음: codeValue={}, tenantId={}",
+                    request.getTemplateCode(), tenantId);
+                return TestNotificationResponse.builder()
+                    .success(false)
+                    .sentAt(LocalDateTime.now())
+                    .errorCode(ERROR_CODE_TEMPLATE_NOT_MAPPED)
+                    .errorMessage(message)
+                    .logId(blockedLog.getId())
+                    .build();
+            }
+            effectiveTemplateCode = mappedTemplateId;
+        }
+
         AdminTestNotificationLog logEntry = logger.logAttempt(tenantId, currentUser.getId(),
             currentUser.getUserId(), request.getRecipientMode(), recipient.userId(),
             recipient.maskedPhone(), TestNotificationChannel.ALIMTALK,
@@ -394,7 +491,7 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
         String solapiMessageId = null;
         try {
             success = kakaoAlimTalkService.sendAlimTalk(recipient.phone(),
-                request.getTemplateCode(), params);
+                effectiveTemplateCode, params);
             SolapiSendIds ids = consumeAlimtalkSendIdsSafely();
             if (ids != null) {
                 solapiGroupId = ids.groupId();
@@ -557,6 +654,27 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
             log.debug("KakaoAlimTalkService.consumeLastSolapiIds 실패 (무시): {}", e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * 알림톡 발송 요청의 템플릿 출처가 라이브(Solapi) 모드인지 판정한다.
+     *
+     * <p>판정 기준 (이중 안전망):
+     * <ol>
+     *   <li>{@code templateSource} 가 명시적으로 {@code SOLAPI} 이면 라이브.</li>
+     *   <li>플래그가 null/blank/그 외 값이면 {@code COMMON_CODE} 로 간주(기존 호출자 호환).</li>
+     * </ol>
+     *
+     * <p>실 운영 데이터에서 Solapi 가 발급하는 templateId 는 모두 {@code KA01TP} prefix 로 시작하지만,
+     * 휴리스틱은 추후 prefix 변경 시 깨지기 쉬워 사용하지 않는다. UI 토글 ON 이면 명시적으로
+     * {@code SOLAPI} 를 보내도록 한다.
+     *
+     * @param templateSource 요청의 {@code templateSource}
+     * @return 라이브 모드면 {@code true}
+     */
+    static boolean isLiveTemplateSource(String templateSource) {
+        return templateSource != null
+            && SOURCE_SOLAPI.equalsIgnoreCase(templateSource.trim());
     }
 
     /**

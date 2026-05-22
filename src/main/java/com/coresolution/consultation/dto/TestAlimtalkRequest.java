@@ -45,16 +45,32 @@ public class TestAlimtalkRequest {
     private boolean fallbackToSms = false;
 
     /**
+     * 템플릿 출처 — {@code COMMON_CODE}(기본) 또는 {@code SOLAPI}.
+     *
+     * <p>{@code COMMON_CODE}이면 백엔드가 {@code templateCode}(codeValue) 를
+     * 공통코드 그룹 {@code ALIMTALK_BIZ_TEMPLATE_CODE} 에서 실제 Solapi
+     * {@code templateId}(codeLabel) 로 매핑한 뒤 송신한다. 매핑이 없으면 발송 차단.
+     *
+     * <p>{@code SOLAPI}이면 어드민 UI 의 "솔라피 전체 보기" 토글 ON 으로 사용자가 이미
+     * 실 templateId 를 선택한 상태이므로 매핑 lookup 을 건너뛴다.
+     *
+     * <p>null/blank 는 기존 호출자 호환을 위해 {@code COMMON_CODE} 로 간주한다.
+     */
+    @Size(max = 20, message = "templateSource 는 20자 이하여야 합니다.")
+    private String templateSource;
+
+    /**
      * Lombok {@link Builder}와 {@link NoArgsConstructor} 공존을 위한 명시적 생성자.
      */
     public TestAlimtalkRequest(TestNotificationRecipientMode recipientMode, Long userId,
             String templateCode, Map<String, String> templateParams, String reason,
-            boolean fallbackToSms) {
+            boolean fallbackToSms, String templateSource) {
         this.recipientMode = recipientMode;
         this.userId = userId;
         this.templateCode = templateCode;
         this.templateParams = templateParams;
         this.reason = reason;
         this.fallbackToSms = fallbackToSms;
+        this.templateSource = templateSource;
     }
 }

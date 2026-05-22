@@ -74,18 +74,23 @@ public class SolapiKakaoTemplateClient {
     /**
      * 알림톡 템플릿 목록 조회(검수 승인 한정 권장).
      *
+     * <p>Solapi v2 템플릿 메타 API({@code /kakao/v2/templates*})는 v1의 {@code pfId}
+     * 파라미터가 {@code channelId} 로 명칭만 변경되어 동작한다(값은 동일한
+     * {@code KA01PF…} 발신 프로필 식별자). 발송 API({@code /messages/v4/send-many/detail})
+     * 의 {@code kakaoOptions.pfId} 는 v1 호환을 유지하므로 발송 클라이언트는 무변경이다.
+     *
      * @param credentials 솔라피 자격 증명
-     * @param pfId        솔라피 발신 프로필 ID(필터, null이면 계정 전체)
+     * @param channelId   솔라피 발신 프로필 ID(필터, null이면 계정 전체). v1 명칭 {@code pfId} 값과 동일.
      * @return 응답(성공 여부 + 템플릿 리스트)
      */
-    public Response list(SolapiCredentials credentials, String pfId) {
+    public Response list(SolapiCredentials credentials, String channelId) {
         if (credentials == null || !credentials.isComplete()) {
             return Response.failure(401, "MISSING_CREDENTIALS", "solapi credentials missing");
         }
 
         StringBuilder url = new StringBuilder(apiBaseUrl).append(LIST_ENDPOINT);
-        if (pfId != null && !pfId.isBlank()) {
-            url.append("?pfId=").append(URLEncoder.encode(pfId, StandardCharsets.UTF_8));
+        if (channelId != null && !channelId.isBlank()) {
+            url.append("?channelId=").append(URLEncoder.encode(channelId, StandardCharsets.UTF_8));
         }
 
         HttpHeaders headers = new HttpHeaders();
@@ -93,8 +98,8 @@ public class SolapiKakaoTemplateClient {
         headers.set(SolapiSignatureSigner.AUTH_HEADER,
             signatureSigner.buildAuthorizationHeader(credentials.apiKey(), credentials.apiSecret()));
 
-        log.info("Solapi 알림톡 템플릿 조회 요청: GET {}, headers={Authorization=***MASKED***, Accept={}}, pfId={}",
-            url, headers.getAccept(), pfId == null ? "(null)" : "(present)");
+        log.info("Solapi 알림톡 템플릿 조회 요청: GET {}, headers={Authorization=***MASKED***, Accept={}}, channelId={}",
+            url, headers.getAccept(), channelId == null ? "(null)" : "(present)");
 
         try {
             ResponseEntity<String> response = restTemplate.exchange(

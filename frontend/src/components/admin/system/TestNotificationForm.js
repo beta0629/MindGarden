@@ -31,6 +31,7 @@ import './TestNotificationForm.css';
 
 const RECIPIENT_MODE = Object.freeze({ SELF: 'SELF', USER: 'USER' });
 const CHANNEL = Object.freeze({ SMS: 'SMS', ALIMTALK: 'ALIMTALK' });
+const TEMPLATE_SOURCE = Object.freeze({ COMMON_CODE: 'COMMON_CODE', SOLAPI: 'SOLAPI' });
 const MODAL_STEP = Object.freeze({
   IDLE: 'idle',
   CONFIRM: 'confirm',
@@ -222,9 +223,10 @@ const TestNotificationForm = ({ onSentSuccess }) => {
       ...base,
       templateCode,
       templateParams,
-      fallbackToSms: false
+      fallbackToSms: false,
+      templateSource: templatesLive ? TEMPLATE_SOURCE.SOLAPI : TEMPLATE_SOURCE.COMMON_CODE
     };
-  }, [recipientMode, selectedUserId, reason, channel, smsMessage, templateCode, templateParams]);
+  }, [recipientMode, selectedUserId, reason, channel, smsMessage, templateCode, templateParams, templatesLive]);
 
   const doSend = useCallback(async() => {
     setSubmitting(true);
@@ -415,9 +417,15 @@ const TestNotificationForm = ({ onSentSuccess }) => {
         {templates.map((tpl) => {
           const code = String(tpl.templateCode ?? tpl.code ?? '');
           const label = toDisplayString(tpl.title ?? tpl.name ?? code, code);
+          // 공통코드 출처에서 ALIMTALK_BIZ_TEMPLATE_CODE 매핑이 없으면 [매핑없음] 뱃지로 안내.
+          // 라이브 출처(SOLAPI) 옵션은 항상 매핑 있음. 백엔드가 차단하므로 UI는 안내만.
+          const missingMapping = tpl.solapiTemplateIdPresent === false;
+          const prefix = missingMapping
+            ? t('testNotification.alimtalk.missingMappingBadge', '[매핑없음] ')
+            : '';
           return (
             <option key={code} value={code}>
-              {label} ({code})
+              {prefix}{label} ({code})
             </option>
           );
         })}
@@ -434,6 +442,14 @@ const TestNotificationForm = ({ onSentSuccess }) => {
         />
         <span>{t('testNotification.alimtalk.liveToggle', '솔라피 전체 보기 (실시간 조회)')}</span>
       </label>
+      {selectedTemplate && selectedTemplate.solapiTemplateIdPresent === false && (
+        <p className="mg-test-notif-form__hint mg-test-notif-form__hint--warn">
+          {t(
+            'testNotification.alimtalk.missingMappingHint',
+            '선택한 템플릿은 Solapi 실 templateId 매핑이 없어 발송이 차단됩니다. 공통코드 ALIMTALK_BIZ_TEMPLATE_CODE 에 매핑을 추가하거나, 위 "솔라피 전체 보기" 토글로 실제 등록된 templateId 를 선택해 주세요.'
+          )}
+        </p>
+      )}
       {templateVariableDefs.length > 0 && (
         <div className="mg-test-notif-form__variables">
           <h4 className="mg-test-notif-form__variables-title">

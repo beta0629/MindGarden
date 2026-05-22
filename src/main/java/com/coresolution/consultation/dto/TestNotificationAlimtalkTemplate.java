@@ -30,6 +30,16 @@ public class TestNotificationAlimtalkTemplate {
     private List<Variable> variables;
     /** 출처 — {@code COMMON_CODE} 또는 {@code SOLAPI}. */
     private String source;
+    /**
+     * Solapi 실제 {@code templateId} 매핑 존재 여부.
+     *
+     * <p>{@code COMMON_CODE} 출처 옵션에 대해 공통코드 그룹 {@code ALIMTALK_BIZ_TEMPLATE_CODE}
+     * 의 {@code codeLabel}(={@code KA01TP…})이 채워져 있으면 {@code true}. 비어 있으면
+     * 어드민 도구에서 "매핑없음" 뱃지를 표시하고 발송도 백엔드에서 차단된다.
+     *
+     * <p>{@code SOLAPI} 출처는 항상 {@code true}(사용자가 실 templateId 를 선택).
+     */
+    private boolean solapiTemplateIdPresent;
 
     /**
      * 알림톡 템플릿 변수 메타.

@@ -136,6 +136,38 @@
     to { transform: rotate(360deg); }
 }
 
+/* ===== 알림 테스트 발송 인라인 패널 (2026-05-22) ===== */
+/* 디자인 핸드오프 §1 권장안 2안: SystemTools 카드 그리드 하단 전체 폭 패널 */
+
+.mg-system-tool-panel {
+    margin-top: var(--admin-spacing-lg);
+    width: 100%;
+}
+
+.mg-system-tool-panel__grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--admin-spacing-lg);
+    align-items: stretch;
+}
+
+.mg-system-tool-panel__form,
+.mg-system-tool-panel__history {
+    min-width: 0;
+}
+
+.mg-system-tool-button--active {
+    outline: 2px solid var(--mg-color-primary-main);
+    outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+    .mg-system-tool-panel__grid {
+        grid-template-columns: 1fr;
+        gap: var(--admin-spacing-md);
+    }
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .tools-grid {

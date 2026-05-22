@@ -1,0 +1,247 @@
+/**
+ * 어드민 알림 테스트 발송 폼 스타일.
+ * - 디자인 토큰만 사용 (핸드오프 §4).
+ * - 인라인 스타일/HEX/RGB 직접 사용 금지.
+ *
+ * @author MindGarden
+ * @since 2026-05-22
+ */
+
+.mg-test-notif-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--admin-spacing-md);
+    padding: var(--admin-spacing-lg);
+    background: var(--mg-color-surface-light);
+    border: 1px solid var(--mg-color-border-main);
+    border-radius: var(--admin-radius-lg);
+    box-shadow: var(--admin-shadow-md);
+    color: var(--mg-color-text-main);
+}
+
+.mg-test-notif-form__section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--admin-spacing-sm);
+}
+
+.mg-test-notif-form__section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--mg-color-text-main);
+    margin: 0;
+}
+
+.mg-test-notif-form__label {
+    font-size: 0.875rem;
+    color: var(--mg-color-text-secondary);
+    margin-bottom: var(--admin-spacing-sm);
+}
+
+.mg-test-notif-form__input,
+.mg-test-notif-form__select,
+.mg-test-notif-form__textarea {
+    width: 100%;
+    padding: var(--admin-spacing-sm) var(--admin-spacing-md);
+    background: var(--color-bg-surface);
+    color: var(--mg-color-text-main);
+    border: 1px solid var(--mg-color-border-main);
+    border-radius: var(--admin-radius-md);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    font-family: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mg-test-notif-form__input:focus,
+.mg-test-notif-form__select:focus,
+.mg-test-notif-form__textarea:focus {
+    outline: none;
+    border-color: var(--mg-color-primary-main);
+    box-shadow: var(--admin-shadow-sm);
+}
+
+.mg-test-notif-form__textarea {
+    resize: vertical;
+    min-height: 4rem;
+}
+
+.mg-test-notif-form__user-picker {
+    display: flex;
+    flex-direction: column;
+    gap: var(--admin-spacing-sm);
+    padding: var(--admin-spacing-md);
+    background: var(--color-bg-surface);
+    border: 1px solid var(--mg-color-border-main);
+    border-radius: var(--admin-radius-md);
+}
+
+.mg-test-notif-form__sms-body,
+.mg-test-notif-form__alimtalk-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--admin-spacing-sm);
+    margin-top: var(--admin-spacing-sm);
+}
+
+.mg-test-notif-form__counter {
+    font-size: 0.8125rem;
+    color: var(--mg-color-text-secondary);
+    margin: 0;
+}
+
+.mg-test-notif-form__counter--warn {
+    color: var(--mg-color-warning-main);
+    font-weight: 600;
+}
+
+.mg-test-notif-form__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--admin-spacing-sm);
+    font-size: 0.875rem;
+    color: var(--mg-color-text-secondary);
+    cursor: pointer;
+}
+
+.mg-test-notif-form__variables {
+    display: flex;
+    flex-direction: column;
+    gap: var(--admin-spacing-sm);
+    padding: var(--admin-spacing-md);
+    background: var(--mg-color-surface-light);
+    border: 1px solid var(--mg-color-border-main);
+    border-radius: var(--admin-radius-md);
+}
+
+.mg-test-notif-form__variables-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--mg-color-text-main);
+    margin: 0;
+}
+
+.mg-test-notif-form__variable-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.mg-test-notif-form__variable-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--admin-spacing-sm);
+    font-size: 0.8125rem;
+    color: var(--mg-color-text-secondary);
+}
+
+.mg-test-notif-form__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 var(--admin-spacing-sm);
+    border-radius: var(--admin-radius-md);
+    font-size: 0.6875rem;
+    line-height: 1.4;
+}
+
+.mg-test-notif-form__badge--required {
+    background: var(--mg-color-error-main);
+    color: var(--color-bg-surface);
+}
+
+.mg-test-notif-form__hint {
+    font-size: 0.8125rem;
+    color: var(--mg-color-text-secondary);
+    margin: 0;
+}
+
+.mg-test-notif-form__rate {
+    display: flex;
+    align-items: center;
+    gap: var(--admin-spacing-sm);
+    padding: var(--admin-spacing-sm) var(--admin-spacing-md);
+    background: var(--color-bg-surface);
+    border: 1px solid var(--mg-color-border-main);
+    border-radius: var(--admin-radius-md);
+    font-size: 0.875rem;
+    color: var(--mg-color-text-secondary);
+    margin: 0;
+}
+
+.mg-test-notif-form__rate--exhausted {
+    border-color: var(--mg-color-error-main);
+    color: var(--mg-color-error-main);
+}
+
+.mg-test-notif-form__rate-label {
+    font-weight: 600;
+    color: var(--mg-color-text-main);
+}
+
+.mg-test-notif-form__submit {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: var(--admin-spacing-sm);
+}
+
+.mg-test-notif-form__submit-btn {
+    min-width: 8rem;
+}
+
+.mg-test-notif-form__summary {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--admin-spacing-sm);
+    color: var(--mg-color-text-main);
+}
+
+.mg-test-notif-form__result {
+    display: flex;
+    flex-direction: column;
+    gap: var(--admin-spacing-sm);
+    padding: var(--admin-spacing-md);
+    border-radius: var(--admin-radius-md);
+}
+
+.mg-test-notif-form__result--success {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--mg-color-success-main);
+    color: var(--mg-color-text-main);
+}
+
+.mg-test-notif-form__result--fail {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--mg-color-error-main);
+    color: var(--mg-color-error-main);
+}
+
+.mg-test-notif-form__console-link {
+    align-self: flex-start;
+    color: var(--mg-color-primary-main);
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.mg-test-notif-form__console-link:hover,
+.mg-test-notif-form__console-link:focus {
+    color: var(--mg-color-primary-main);
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .mg-test-notif-form {
+        padding: var(--admin-spacing-md);
+        gap: var(--admin-spacing-sm);
+    }
+
+    .mg-test-notif-form__submit {
+        justify-content: stretch;
+    }
+
+    .mg-test-notif-form__submit-btn {
+        width: 100%;
+    }
+}

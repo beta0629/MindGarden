@@ -54,5 +54,100 @@
     "pleaseSelect": "선택하세요",
     "noAccessPermission": "접근 권한이 없습니다.",
     "pgApprovalManagement": "PG 설정 승인 관리"
+  },
+  "testNotification": {
+    "card": {
+      "label": "알림 테스트 발송",
+      "shortLabel": "알",
+      "description": "SMS·카카오 알림톡 테스트 발송"
+    },
+    "panel": {
+      "title": "알림 테스트 발송",
+      "subtitle": "SMS 또는 카카오 알림톡을 본인 또는 DB 사용자에게 테스트 발송합니다.",
+      "close": "패널 닫기"
+    },
+    "recipient": {
+      "title": "수신자",
+      "self": "본인(SELF)",
+      "user": "DB 사용자",
+      "searchPlaceholder": "이름·이메일·역할 검색",
+      "selected": "선택된 수신자",
+      "empty": "검색 결과가 없습니다.",
+      "loading": "사용자 검색 중...",
+      "required": "DB 사용자 모드에서는 수신자를 반드시 선택해야 합니다."
+    },
+    "channel": {
+      "title": "채널",
+      "sms": "SMS",
+      "alimtalk": "카카오 알림톡"
+    },
+    "sms": {
+      "messageLabel": "메시지 본문",
+      "messagePlaceholder": "전송할 SMS 본문을 입력하세요 (한글 70자 / 영문 160자 권장)",
+      "counter": "글자수: {{count}} / {{limit}} ({{label}})",
+      "warning": "권장 길이를 초과했습니다. 분할 발송될 수 있습니다."
+    },
+    "alimtalk": {
+      "templateLabel": "알림톡 템플릿",
+      "templatePlaceholder": "템플릿을 선택하세요",
+      "liveToggle": "솔라피 전체 보기 (실시간 조회)",
+      "variablesTitle": "변수 입력",
+      "variableRequired": "필수",
+      "templatesLoading": "템플릿 로드 중...",
+      "templatesEmpty": "사용 가능한 템플릿이 없습니다."
+    },
+    "reason": {
+      "label": "발송 사유 (감사로그 기록, 필수)",
+      "placeholder": "예: 사용자 #123 매핑 확정 알림 변수 매칭 검증",
+      "required": "발송 사유는 필수입니다.",
+      "max": "최대 500자까지 입력 가능합니다."
+    },
+    "rateLimit": {
+      "title": "잔여 한도",
+      "perMinute": "분당 {{remaining}} / {{limit}}",
+      "perDay": "일당 {{remaining}} / {{limit}}",
+      "exhausted": "잔여 발송 한도가 모두 소진되었습니다."
+    },
+    "submit": {
+      "send": "발송하기",
+      "sending": "발송 중...",
+      "confirmTitle": "발송 정보 확인",
+      "confirmSubtitle": "다음 정보로 실제 사용자에게 발송됩니다.",
+      "confirmNext": "다음",
+      "finalConfirmTitle": "정말 발송하시겠습니까?",
+      "finalConfirmSubtitle": "실제 단말로 SMS·알림톡이 전송됩니다. 이 작업은 되돌릴 수 없습니다.",
+      "finalConfirmSend": "최종 발송"
+    },
+    "result": {
+      "successTitle": "발송 성공",
+      "successSubtitle": "솔라피 응답을 확인하세요.",
+      "failTitle": "발송 실패",
+      "failSubtitle": "에러를 확인하고 재시도하세요.",
+      "groupId": "groupId",
+      "messageId": "messageId",
+      "errorCode": "에러코드",
+      "errorMessage": "메시지",
+      "openConsole": "솔라피 콘솔에서 보기",
+      "retry": "재시도",
+      "close": "닫기"
+    },
+    "history": {
+      "title": "최근 발송 이력",
+      "subtitle": "최대 30건 (감사로그)",
+      "refresh": "새로고침",
+      "loading": "이력 불러오는 중...",
+      "empty": "발송 이력이 없습니다.",
+      "channelSms": "SMS",
+      "channelAlimtalk": "알림톡",
+      "resultSuccess": "성공",
+      "resultFail": "실패",
+      "recipientLabel": "수신",
+      "reasonLabel": "사유"
+    },
+    "errors": {
+      "forbidden": "이 도구에 접근할 권한이 없습니다. (ADMIN/STAFF 전용)",
+      "loadFailed": "데이터를 불러오지 못했습니다.",
+      "sendFailed": "발송에 실패했습니다."
+    }
   }
 }

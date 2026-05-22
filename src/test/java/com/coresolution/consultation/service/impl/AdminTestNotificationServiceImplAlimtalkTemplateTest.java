@@ -26,8 +26,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -160,16 +160,71 @@ class AdminTestNotificationServiceImplAlimtalkTemplateTest {
     }
 
     @Test
-    @DisplayName("live 모드 — 솔라피 자격증명 없으면 빈 리스트(에러 아님)")
-    void listLiveAlimtalkTemplates_whenCredentialsMissing_returnsEmpty() {
+    @DisplayName("live 모드 — 자격증명이 테넌트 settings·ENV 모두 비어 있으면 ALIMTALK_CREDENTIALS_MISSING throw")
+    void listLiveAlimtalkTemplates_whenCredentialsMissingEverywhere_throwsCredentialsMissing() {
         when(tenantKakaoAlimtalkSettingsRepository.findByTenantIdAndIsDeletedFalse(eq(TENANT_ID)))
             .thenReturn(Optional.empty());
         when(solapiCredentialResolver.resolveCredentials(any()))
             .thenReturn(new SolapiCredentials(null, null));
 
+        assertThatThrownBy(() -> service.listLiveAlimtalkTemplates(TENANT_ID))
+            .isInstanceOf(AlimtalkTemplateFetchException.class)
+            .hasMessageContaining("status=0")
+            .hasMessageContaining("errorCode=ALIMTALK_CREDENTIALS_MISSING")
+            .satisfies(e -> {
+                AlimtalkTemplateFetchException ex = (AlimtalkTemplateFetchException) e;
+                assertThat(ex.getUpstreamStatus()).isZero();
+                assertThat(ex.getUpstreamErrorCode()).isEqualTo("ALIMTALK_CREDENTIALS_MISSING");
+            });
+    }
+
+    @Test
+    @DisplayName("live 모드 — pfId가 테넌트 settings·ENV 모두 비어 있으면 ALIMTALK_PFID_MISSING throw")
+    void listLiveAlimtalkTemplates_whenPfIdMissingEverywhere_throwsPfidMissing() {
+        when(tenantKakaoAlimtalkSettingsRepository.findByTenantIdAndIsDeletedFalse(eq(TENANT_ID)))
+            .thenReturn(Optional.empty());
+        when(solapiCredentialResolver.resolveCredentials(any()))
+            .thenReturn(new SolapiCredentials("apiKey", "apiSecret"));
+        when(solapiCredentialResolver.resolvePfId(any())).thenReturn("");
+
+        assertThatThrownBy(() -> service.listLiveAlimtalkTemplates(TENANT_ID))
+            .isInstanceOf(AlimtalkTemplateFetchException.class)
+            .hasMessageContaining("status=0")
+            .hasMessageContaining("errorCode=ALIMTALK_PFID_MISSING")
+            .satisfies(e -> {
+                AlimtalkTemplateFetchException ex = (AlimtalkTemplateFetchException) e;
+                assertThat(ex.getUpstreamStatus()).isZero();
+                assertThat(ex.getUpstreamErrorCode()).isEqualTo("ALIMTALK_PFID_MISSING");
+            });
+    }
+
+    @Test
+    @DisplayName("live 모드 — 테넌트 settings 부재 + ENV 폴백 존재 시 ENV pfId로 솔라피 호출")
+    void listLiveAlimtalkTemplates_whenTenantSettingsMissingAndEnvFallbackPresent_callsSolapiWithEnvPfId() {
+        String envPfId = "KA01PFENVTEST123";
+        SolapiCredentials envCreds = new SolapiCredentials("ENV_API_KEY", "ENV_API_SECRET");
+
+        when(tenantKakaoAlimtalkSettingsRepository.findByTenantIdAndIsDeletedFalse(eq(TENANT_ID)))
+            .thenReturn(Optional.empty());
+        // tenant settings 부재 → resolver 가 senderKeyRef=null/apiKeyRef=null 입력으로 ENV 폴백을 결과로 반환.
+        when(solapiCredentialResolver.resolveCredentials(any())).thenReturn(envCreds);
+        when(solapiCredentialResolver.resolvePfId(any())).thenReturn(envPfId);
+
+        SolapiKakaoTemplateClient.Response success = SolapiKakaoTemplateClient.Response.success(List.of(
+            new SolapiKakaoTemplateClient.TemplateMeta(
+                "KA01TPL000000001", "결제 안내", "APPROVED", "안녕하세요 #{name}님")));
+        when(solapiKakaoTemplateClient.list(eq(envCreds), eq(envPfId))).thenReturn(success);
+
         List<TestNotificationAlimtalkTemplate> result = service.listLiveAlimtalkTemplates(TENANT_ID);
 
-        assertThat(result).isEmpty();
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getTemplateCode()).isEqualTo("KA01TPL000000001");
+        assertThat(result.get(0).getTitle()).isEqualTo("결제 안내");
+        assertThat(result.get(0).getStatus()).isEqualTo("APPROVED");
+        assertThat(result.get(0).getSource()).isEqualTo("SOLAPI");
+
+        // 호출 검증 — list 가 ENV pfId 인자로 호출됐는지 ArgumentCaptor 대신 eq() 매칭으로 확인.
+        verify(solapiKakaoTemplateClient).list(eq(envCreds), eq(envPfId));
     }
 
     @Test
@@ -179,7 +234,8 @@ class AdminTestNotificationServiceImplAlimtalkTemplateTest {
             .thenReturn(Optional.empty());
         when(solapiCredentialResolver.resolveCredentials(any()))
             .thenReturn(new SolapiCredentials("apiKey", "apiSecret"));
-        when(solapiCredentialResolver.resolvePfId(any())).thenReturn(null);
+        // ENV 폴백으로 pfId 가 결정된 뒤 솔라피가 ValidationError 를 반환하는 상황을 시뮬레이션한다.
+        when(solapiCredentialResolver.resolvePfId(any())).thenReturn("KA01PFENVTEST123");
         SolapiKakaoTemplateClient.Response failure = SolapiKakaoTemplateClient.Response
             .failure(400, "ValidationError", "pfId is required");
         when(solapiKakaoTemplateClient.list(any(), any())).thenReturn(failure);

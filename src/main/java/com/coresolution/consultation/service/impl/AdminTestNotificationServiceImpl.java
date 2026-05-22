@@ -70,6 +70,10 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
     static final String ERROR_CODE_USER_ID_REQUIRED = "USER_ID_REQUIRED";
     static final String ERROR_CODE_SEND_FAILED = "SEND_FAILED";
     static final String ERROR_CODE_ALIMTALK_DISABLED = "ALIMTALK_SERVICE_UNAVAILABLE";
+    /** 라이브 템플릿 조회 사전 검증 — 솔라피 자격증명(테넌트 settings + ENV) 모두 미설정. */
+    static final String ERROR_CODE_ALIMTALK_CREDENTIALS_MISSING = "ALIMTALK_CREDENTIALS_MISSING";
+    /** 라이브 템플릿 조회 사전 검증 — 솔라피 발신 프로필(pfId)이 테넌트 settings·ENV 모두 미설정. */
+    static final String ERROR_CODE_ALIMTALK_PFID_MISSING = "ALIMTALK_PFID_MISSING";
 
     static final String SOURCE_COMMON_CODE = "COMMON_CODE";
     static final String SOURCE_SOLAPI = "SOLAPI";
@@ -191,14 +195,37 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
         String apiKeyRef = settings != null ? settings.getKakaoApiKeyRef() : null;
         String senderKeyRef = settings != null ? settings.getKakaoSenderKeyRef() : null;
 
+        // 자격증명 폴백 체인: tenant settings ref → ENV(kakao.alimtalk.solapi.api-key/secret 또는 sms.auth.api-key/secret).
+        // {@link KakaoSolapiCredentialResolver#resolveCredentials(String)} 가 이 체인을 일괄 처리한다.
         SolapiCredentials credentials = solapiCredentialResolver.resolveCredentials(apiKeyRef);
         if (!credentials.isComplete()) {
-            // 솔라피 미설정 테넌트는 정상 흐름으로 빈 리스트 반환(에러 아님).
-            log.info("어드민 테스트 발송 — 솔라피 실시간 템플릿 조회 자격증명 없음 (tenantId={})", tenantId);
-            return Collections.emptyList();
+            // 어드민 테스트 도구는 사용자가 즉시 원인 파악할 수 있도록 빈 리스트 대신 명시적 errorCode를 노출한다.
+            String message = formatLocalConfigFailureMessage(
+                ERROR_CODE_ALIMTALK_CREDENTIALS_MISSING,
+                "tenant_settings(refPresent=" + isPresentRef(apiKeyRef) + ")"
+                    + " + ENV(kakao.alimtalk.solapi.api-key/api-secret, sms.auth.api-key/api-secret)"
+                    + " 모두 비어 있습니다.");
+            log.warn("어드민 테스트 발송 — 솔라피 자격증명 폴백 실패 (tenantId={}, refPresent={})",
+                tenantId, isPresentRef(apiKeyRef));
+            throw new AlimtalkTemplateFetchException(0,
+                ERROR_CODE_ALIMTALK_CREDENTIALS_MISSING, message);
         }
 
+        // pfId 폴백 체인: tenant settings senderKeyRef → ENV(kakao.alimtalk.solapi.pf-id = SOLAPI_ALIMTALK_PFID).
+        // resolver 내부에서 senderKeyRef 자체가 plain identifier(KA01PF...)인 경우도 처리한다.
         String pfId = solapiCredentialResolver.resolvePfId(senderKeyRef);
+        if (pfId == null || pfId.isBlank()) {
+            String message = formatLocalConfigFailureMessage(
+                ERROR_CODE_ALIMTALK_PFID_MISSING,
+                "tenant_settings(refPresent=" + isPresentRef(senderKeyRef) + ")"
+                    + " + ENV(kakao.alimtalk.solapi.pf-id, SOLAPI_ALIMTALK_PFID)"
+                    + " 모두 비어 있습니다.");
+            log.warn("어드민 테스트 발송 — 솔라피 발신 프로필(pfId) 폴백 실패 (tenantId={}, senderRefPresent={})",
+                tenantId, isPresentRef(senderKeyRef));
+            throw new AlimtalkTemplateFetchException(0,
+                ERROR_CODE_ALIMTALK_PFID_MISSING, message);
+        }
+
         SolapiKakaoTemplateClient.Response response = solapiKakaoTemplateClient.list(credentials, pfId);
         if (!response.success()) {
             // 빈 리스트만 반환하면 프론트는 "템플릿 없음"으로 보여 사용자가 원인 파악 불가 →
@@ -245,6 +272,34 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
             sb.append(", errorMessage=").append(errorMessage);
         }
         return sb.toString();
+    }
+
+    /**
+     * 사전 검증(테넌트 settings·ENV 폴백 모두 부재) 실패 메시지 포맷.
+     *
+     * <p>{@link #formatLiveFailureMessage}와 동일한 {@code status=N, errorCode=…, errorMessage=…}
+     * 직렬화 형식을 사용하여 어드민 프론트가 동일 파서로 처리할 수 있도록 한다. 외부 호출 전 단계 실패는
+     * {@code status=0}으로 표기한다.
+     *
+     * @param errorCode 사전 검증 실패 코드(예: {@link #ERROR_CODE_ALIMTALK_PFID_MISSING})
+     * @param detail    구성 누락 상세(레퍼런스 존재 여부 등 비밀이 아닌 진단 정보)
+     * @return 어드민 응답으로 노출할 메시지
+     */
+    private static String formatLocalConfigFailureMessage(String errorCode, String detail) {
+        return new StringBuilder("솔라피 알림톡 템플릿 조회 사전 검증 실패 (status=0)")
+            .append(", errorCode=").append(errorCode)
+            .append(", errorMessage=").append(detail == null ? "" : detail)
+            .toString();
+    }
+
+    /**
+     * ref 문자열이 비어 있지 않은지 boolean으로 정리(로그·메시지에 비밀값 노출 회피).
+     *
+     * @param ref tenant settings 등에서 가져온 ref 식별자
+     * @return ref 가 null/blank가 아니면 true
+     */
+    private static boolean isPresentRef(String ref) {
+        return ref != null && !ref.isBlank();
     }
 
     @Override

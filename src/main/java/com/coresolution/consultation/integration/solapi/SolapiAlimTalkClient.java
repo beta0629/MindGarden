@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.service.sms.impl.SolapiSmsProvider;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -94,8 +95,9 @@ public class SolapiAlimTalkClient {
                 url, new HttpEntity<>(body, headers), String.class);
             return parseResponse(response.getStatusCode().value(), response.getBody());
         } catch (RestClientResponseException e) {
-            log.warn("Solapi 알림톡 HTTP 오류: status={}, body length={}",
-                e.getStatusCode(), safeLength(e.getResponseBodyAsString()));
+            String maskedBody = SolapiSmsProvider.maskResponseBody(e.getResponseBodyAsString());
+            log.warn("Solapi 알림톡 HTTP 오류: status={}, body length={}, body={}",
+                e.getStatusCode(), safeLength(e.getResponseBodyAsString()), maskedBody);
             return parseResponse(e.getStatusCode().value(), e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error("Solapi 알림톡 호출 실패: {}", e.getMessage(), e);

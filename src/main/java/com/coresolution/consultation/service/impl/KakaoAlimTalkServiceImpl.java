@@ -44,6 +44,11 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
     static final String PROVIDER_BIZMSG = "bizmsg";
     static final String PROVIDER_SOLAPI = "solapi";
 
+    /** 직전 알림톡 발송 시도의 오류 상세(상태코드·errorCode·errorMessage 등). 호출 스레드 단위. */
+    private static final ThreadLocal<String> LAST_ERROR_DETAIL = new ThreadLocal<>();
+    /** 알림톡 errorMessage 절단 한계(감사 컬럼 안전). */
+    private static final int ALIMTALK_ERROR_DETAIL_LIMIT = 500;
+
     @Value("${kakao.alimtalk.enabled:false}")
     private boolean alimTalkEnabled;
     
@@ -111,8 +116,12 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
     @Override
     public boolean sendAlimTalk(String phoneNumber, String apiTemplateCode, String contentTemplateKey,
             Map<String, String> templateParams) {
+        // 진입 시점에 잔여 detail을 비운다.
+        LAST_ERROR_DETAIL.remove();
+
         if (!alimTalkEnabled) {
             log.info("📱 알림톡 비활성화 상태 - SMS로 대체 발송 권장");
+            LAST_ERROR_DETAIL.set("alimtalk disabled (kakao.alimtalk.enabled=false)");
             return false;
         }
 
@@ -141,8 +150,26 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
         } catch (Exception e) {
             log.error("❌ 카카오 알림톡 발송 중 오류: 수신자={}, 템플릿={}",
                 PhoneLogMasking.maskForLog(phoneNumber), apiTemplateCode, e);
+            LAST_ERROR_DETAIL.set(truncateDetail(
+                e.getClass().getSimpleName() + ": " + e.getMessage()));
             return false;
         }
+    }
+
+    @Override
+    public String consumeLastErrorDetail() {
+        String value = LAST_ERROR_DETAIL.get();
+        LAST_ERROR_DETAIL.remove();
+        return value;
+    }
+
+    private static String truncateDetail(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.length() <= ALIMTALK_ERROR_DETAIL_LIMIT
+            ? value
+            : value.substring(0, ALIMTALK_ERROR_DETAIL_LIMIT) + "…(truncated)";
     }
 
     /**
@@ -152,6 +179,7 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
             Map<String, String> templateParams) {
         if (!simulationMode && (apiKey == null || apiKey.isEmpty() || senderKey == null || senderKey.isEmpty())) {
             log.warn("⚠️ 실제 모드에서 카카오 알림톡(bizmsg) API 키 또는 발신자 키가 설정되지 않았습니다");
+            LAST_ERROR_DETAIL.set("bizmsg apiKey/senderKey not configured");
             return false;
         }
 
@@ -185,6 +213,7 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
         }
         if (solapiAlimTalkClient == null || solapiCredentialResolver == null) {
             log.warn("⚠️ provider=solapi 구성에 SolapiAlimTalkClient/Resolver 빈이 주입되지 않음");
+            LAST_ERROR_DETAIL.set("solapi alimtalk client/resolver beans missing");
             return false;
         }
 
@@ -196,6 +225,8 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
         if (!credentials.isComplete()) {
             log.warn("⚠️ 실제 모드에서 solapi API 키/시크릿 resolve 실패. refPresent={}",
                 apiKeyRef != null && !apiKeyRef.isBlank());
+            LAST_ERROR_DETAIL.set("solapi credentials resolve failed (refPresent="
+                + (apiKeyRef != null && !apiKeyRef.isBlank()) + ")");
             return false;
         }
 
@@ -203,6 +234,8 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
         if (pfId == null || pfId.isBlank()) {
             log.warn("⚠️ 실제 모드에서 solapi 발신 프로필(pfId) resolve 실패. refPresent={}",
                 senderKeyRef != null && !senderKeyRef.isBlank());
+            LAST_ERROR_DETAIL.set("solapi pfId resolve failed (refPresent="
+                + (senderKeyRef != null && !senderKeyRef.isBlank()) + ")");
             return false;
         }
 
@@ -220,10 +253,17 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
 
         SolapiAlimTalkResponse response = solapiAlimTalkClient.send(request);
         if (!response.success()) {
-            log.warn("⚠️ solapi 알림톡 응답 실패: status={}, errorCode={}",
-                response.statusCode(), response.errorCode());
+            log.warn("⚠️ solapi 알림톡 응답 실패: status={}, errorCode={}, errorMessage={}",
+                response.statusCode(), response.errorCode(), response.errorMessage());
+            LAST_ERROR_DETAIL.set(truncateDetail("Solapi ATA " + response.statusCode()
+                + " " + safeText(response.errorCode())
+                + ": " + safeText(response.errorMessage())));
         }
         return response.success();
+    }
+
+    private static String safeText(String value) {
+        return value == null ? "" : value;
     }
 
     private TenantKakaoAlimtalkSettings loadTenantSettings() {
@@ -464,16 +504,21 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
                     log.info("✅ 카카오 알림톡 API 호출 성공");
                 } else {
                     log.warn("⚠️ 카카오 알림톡 API 응답 오류: {}", responseBody);
+                    LAST_ERROR_DETAIL.set(truncateDetail("Bizmsg " + response.getStatusCode()
+                        + ": " + responseBody));
                 }
                 
                 return success;
             } else {
                 log.error("❌ 카카오 알림톡 API HTTP 오류: {}", response.getStatusCode());
+                LAST_ERROR_DETAIL.set("Bizmsg HTTP " + response.getStatusCode());
                 return false;
             }
             
         } catch (Exception e) {
             log.error("❌ 카카오 알림톡 API 호출 실패", e);
+            LAST_ERROR_DETAIL.set(truncateDetail(
+                e.getClass().getSimpleName() + ": " + e.getMessage()));
             return false;
         }
     }

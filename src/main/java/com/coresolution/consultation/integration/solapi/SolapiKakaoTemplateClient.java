@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import com.coresolution.consultation.service.sms.impl.SolapiSmsProvider;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -100,9 +101,10 @@ public class SolapiKakaoTemplateClient {
                 String.class);
             return parse(response.getStatusCode().value(), response.getBody());
         } catch (RestClientResponseException e) {
-            log.warn("Solapi 알림톡 템플릿 조회 HTTP 오류: status={}, length={}",
+            String maskedBody = SolapiSmsProvider.maskResponseBody(e.getResponseBodyAsString());
+            log.warn("Solapi 알림톡 템플릿 조회 HTTP 오류: status={}, length={}, body={}",
                 e.getStatusCode(), e.getResponseBodyAsString() == null ? 0
-                    : e.getResponseBodyAsString().length());
+                    : e.getResponseBodyAsString().length(), maskedBody);
             return parse(e.getStatusCode().value(), e.getResponseBodyAsString());
         } catch (Exception e) {
             log.warn("Solapi 알림톡 템플릿 조회 실패: {}", e.getMessage());

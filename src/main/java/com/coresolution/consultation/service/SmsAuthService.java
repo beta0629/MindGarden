@@ -19,7 +19,13 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class SmsAuthService {
-    
+
+    /**
+     * 직전 SMS 발송 시도의 오류 상세(상태코드 + 마스킹 본문). 호출 스레드 단위.
+     * caller는 {@link #consumeLastErrorDetail()}로 한 번만 조회한다.
+     */
+    private static final ThreadLocal<String> LAST_ERROR_DETAIL = new ThreadLocal<>();
+
     private final SmsProperties smsProperties;
     private final TenantSmsSettingsService tenantSmsSettingsService;
     private final List<SmsProvider> smsProviders;
@@ -118,8 +124,12 @@ public class SmsAuthService {
      * @return 발송 성공 여부. 테스트 모드에서는 로그만 남기고 true
      */
     public boolean sendNotificationMessage(String phoneNumber, String message) {
+        // 진입 시점에 잔여 detail을 비운다(스레드 재사용 + caller가 미조회한 경우 대비).
+        LAST_ERROR_DETAIL.remove();
+
         if (!isEffectiveSmsEnabled()) {
             log.warn("⚠️ SMS가 비활성화되어 있습니다.");
+            LAST_ERROR_DETAIL.set("sms disabled (global or tenant)");
             return false;
         }
         if (smsProperties.isTestMode()) {
@@ -128,6 +138,21 @@ public class SmsAuthService {
             return true;
         }
         return sendViaConfiguredProvider(phoneNumber, message);
+    }
+
+    /**
+     * 직전 {@link #sendNotificationMessage(String, String)} 호출에서 발생한 오류 상세를 한 번만 조회.
+     *
+     * <p>caller(예: 어드민 테스트 발송 도구)가 감사로그·응답 errorMessage에 풍부한 진단 정보를
+     * 노출하기 위해 사용한다. 동일 스레드 안에서 SMS 호출 직후 한 번만 조회해야 하며,
+     * 호출 후 내부 ThreadLocal은 clear 된다.
+     *
+     * @return 직전 실패 상세(예: {@code "Solapi 403 FORBIDDEN: {…마스킹된 body…}"}) 또는 {@code null}
+     */
+    public String consumeLastErrorDetail() {
+        String value = LAST_ERROR_DETAIL.get();
+        LAST_ERROR_DETAIL.remove();
+        return value;
     }
     
     /**
@@ -160,6 +185,7 @@ public class SmsAuthService {
     private boolean sendViaConfiguredProvider(String phoneNumber, String message) {
         if (!smsProperties.isProductionMode()) {
             log.warn("⚠️ SMS 프로덕션 모드가 아닙니다. 설정을 확인해주세요.");
+            LAST_ERROR_DETAIL.set("sms not in production mode");
             return false;
         }
 
@@ -173,11 +199,13 @@ public class SmsAuthService {
 
         if (provider == null) {
             log.error("❌ SMS 프로바이더를 찾을 수 없습니다: {}", providerName);
+            LAST_ERROR_DETAIL.set("sms provider not found: " + providerName);
             return false;
         }
 
         if (!provider.isConfigured()) {
             log.error("❌ SMS 프로바이더 설정이 완료되지 않았습니다: {}", providerName);
+            LAST_ERROR_DETAIL.set("sms provider not configured: " + providerName);
             return false;
         }
 
@@ -185,15 +213,32 @@ public class SmsAuthService {
             boolean success = provider.sendSms(phoneNumber, message);
 
             if (success) {
-                log.info("✅ SMS 발송 성공 - 전화번호: {}, 프로바이더: {}", phoneNumber, providerName);
+                log.info("✅ SMS 발송 성공 - 프로바이더: {}", providerName);
             } else {
-                log.error("❌ SMS 발송 실패 - 전화번호: {}, 프로바이더: {}", phoneNumber, providerName);
+                String detail = provider.consumeLastErrorDetail();
+                log.error("❌ SMS 발송 실패 - 프로바이더: {}, detail: {}", providerName, detail);
+                if (detail != null && !detail.isBlank()) {
+                    LAST_ERROR_DETAIL.set(detail);
+                } else {
+                    LAST_ERROR_DETAIL.set("provider returned false (no detail)");
+                }
             }
 
             return success;
 
         } catch (Exception e) {
+            // provider 구현체가 예외를 던졌다면 detail도 함께 끌어오되, 없는 경우 메시지 사용.
+            String providerDetail = null;
+            try {
+                providerDetail = provider.consumeLastErrorDetail();
+            } catch (Exception ignored) {
+                // 방어적: detail 조회 실패는 무시.
+            }
+            String detail = providerDetail != null && !providerDetail.isBlank()
+                ? providerDetail
+                : e.getClass().getSimpleName() + ": " + e.getMessage();
             log.error("❌ SMS 발송 중 오류 발생: {}", e.getMessage(), e);
+            LAST_ERROR_DETAIL.set(detail);
             return false;
         }
     }

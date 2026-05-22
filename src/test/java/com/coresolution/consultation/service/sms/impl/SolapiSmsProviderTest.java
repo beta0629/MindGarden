@@ -29,6 +29,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -203,6 +204,58 @@ class SolapiSmsProviderTest {
         boolean ok = provider.sendMany(List.of(), "msg");
         assertThat(ok).isFalse();
         verify(restTemplate, never()).postForEntity(any(String.class), any(), any());
+    }
+
+    @Test
+    @DisplayName("HttpStatusCodeException(403) 발생 시 consumeLastErrorDetail에 상태·마스킹 본문 전파")
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void httpStatusCodeExceptionExposesMaskedDetail() {
+        when(tenantSmsSettingsService.getEffectiveCredentials(TENANT_ID))
+            .thenReturn(creds("K", "S_LONG_SECRET_VALUE_FOR_TEST", "0212345678"));
+        String responseBody = "{\"errorCode\":\"Forbidden\","
+            + "\"errorMessage\":\"허용되지 않은 IP(114.202.247.246)로 접근하고 있습니다.\"}";
+        when(restTemplate.postForEntity(any(String.class), any(HttpEntity.class), eq(Map.class)))
+            .thenThrow(HttpClientErrorException.create(HttpStatus.FORBIDDEN,
+                "Forbidden", new HttpHeaders(),
+                responseBody.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                java.nio.charset.StandardCharsets.UTF_8));
+
+        boolean ok = provider.sendSms("01012345678", "본문");
+        assertThat(ok).isFalse();
+
+        String detail = provider.consumeLastErrorDetail();
+        assertThat(detail).isNotNull();
+        assertThat(detail).startsWith("Solapi 403 FORBIDDEN: ");
+        assertThat(detail).contains("Forbidden");
+        assertThat(detail).contains("허용되지 않은 IP");
+        // IP 자체는 마스킹 대상이 아니지만, 시크릿 후보(20자+ 영숫자)는 마스킹된다는 회귀 보호용.
+        assertThat(provider.consumeLastErrorDetail()).isNull();
+    }
+
+    @Test
+    @DisplayName("응답 본문 마스킹: 휴대전화·이메일·시크릿 후보가 마스킹된다")
+    void maskResponseBodyAppliesAllRules() {
+        String raw = "{\"to\":\"01012345678\",\"email\":\"test@example.com\","
+            + "\"apiKey\":\"NCSAAAABBBBCCCCDDDDEEEE\"}";
+        String masked = SolapiSmsProvider.maskResponseBody(raw);
+        assertThat(masked).doesNotContain("01012345678");
+        assertThat(masked).contains("010****5678");
+        assertThat(masked).doesNotContain("test@example.com");
+        assertThat(masked).contains("t***@example.com");
+        assertThat(masked).doesNotContain("NCSAAAABBBBCCCCDDDDEEEE");
+        assertThat(masked).contains("NCSA****");
+    }
+
+    @Test
+    @DisplayName("자격 증명 누락 시에도 consumeLastErrorDetail이 사유를 노출")
+    void missingCredentialsExposesDetail() {
+        when(tenantSmsSettingsService.getEffectiveCredentials(TENANT_ID))
+            .thenReturn(creds("", "", null));
+
+        boolean ok = provider.sendSms("01012345678", "본문");
+        assertThat(ok).isFalse();
+        assertThat(provider.consumeLastErrorDetail())
+            .contains("credentials missing");
     }
 
     private static TenantSmsEffectiveCredentials creds(String apiKey, String apiSecret, String sender) {

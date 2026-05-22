@@ -74,6 +74,8 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
     static final String COMMON_CODE_GROUP_ALIMTALK_TEMPLATE = "ALIMTALK_TEMPLATE";
 
     private static final int MAX_RECIPIENT_RESULTS = 100;
+    /** {@code admin_test_notification_logs.error_message} VARCHAR(1000) — 안전을 위해 900자에서 절단. */
+    private static final int ERROR_MESSAGE_LOG_LIMIT = 900;
 
     private final UserRepository userRepository;
     private final CommonCodeRepository commonCodeRepository;
@@ -237,12 +239,19 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
             success = smsAuthService.sendNotificationMessage(recipient.phone(), request.getMessage());
             if (!success) {
                 errorCode = ERROR_CODE_SEND_FAILED;
-                errorMessage = "SmsAuthService.sendNotificationMessage returned false";
+                String detail = consumeSmsDetailSafely();
+                errorMessage = truncateErrorMessage(detail != null && !detail.isBlank()
+                    ? detail
+                    : "SmsAuthService.sendNotificationMessage returned false");
             }
         } catch (Exception e) {
             success = false;
             errorCode = ERROR_CODE_SEND_FAILED;
-            errorMessage = e.getClass().getSimpleName() + ": " + e.getMessage();
+            String detail = consumeSmsDetailSafely();
+            String base = detail != null && !detail.isBlank()
+                ? detail
+                : e.getClass().getSimpleName() + ": " + e.getMessage();
+            errorMessage = truncateErrorMessage(base);
             log.warn("어드민 테스트 SMS 발송 예외: 수신자={}", recipient.maskedPhone(), e);
         }
 
@@ -290,12 +299,19 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
                 request.getTemplateCode(), params);
             if (!success) {
                 errorCode = ERROR_CODE_SEND_FAILED;
-                errorMessage = "KakaoAlimTalkService.sendAlimTalk returned false";
+                String detail = consumeAlimtalkDetailSafely();
+                errorMessage = truncateErrorMessage(detail != null && !detail.isBlank()
+                    ? detail
+                    : "KakaoAlimTalkService.sendAlimTalk returned false");
             }
         } catch (Exception e) {
             success = false;
             errorCode = ERROR_CODE_SEND_FAILED;
-            errorMessage = e.getClass().getSimpleName() + ": " + e.getMessage();
+            String detail = consumeAlimtalkDetailSafely();
+            String base = detail != null && !detail.isBlank()
+                ? detail
+                : e.getClass().getSimpleName() + ": " + e.getMessage();
+            errorMessage = truncateErrorMessage(base);
             log.warn("어드민 테스트 알림톡 발송 예외: 수신자={}", recipient.maskedPhone(), e);
         }
 
@@ -309,6 +325,13 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
                     success = true;
                     errorCode = null;
                     errorMessage = "fallback to SMS success";
+                } else {
+                    String smsDetail = consumeSmsDetailSafely();
+                    if (smsDetail != null && !smsDetail.isBlank()) {
+                        errorMessage = truncateErrorMessage(
+                            (errorMessage != null ? errorMessage : "")
+                                + " | fallback SMS failed: " + smsDetail);
+                    }
                 }
             } catch (Exception e) {
                 log.warn("어드민 테스트 알림톡 SMS 폴백 예외: 수신자={}", recipient.maskedPhone(), e);
@@ -378,6 +401,49 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
                 return ResolvedRecipient.error(ERROR_CODE_PHONE_MODE_UNSUPPORTED,
                     "recipientMode " + mode + " is not supported (C3=self_plus_db)");
         }
+    }
+
+    /**
+     * SMS 프로바이더 detail을 안전 조회한다. 실패해도 호출 흐름을 막지 않는다.
+     *
+     * @return 직전 SMS 발송 실패의 상세(상태코드 + 마스킹 본문) 또는 {@code null}
+     */
+    private String consumeSmsDetailSafely() {
+        try {
+            return smsAuthService.consumeLastErrorDetail();
+        } catch (Exception e) {
+            log.debug("SmsAuthService.consumeLastErrorDetail 실패 (무시): {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 알림톡 detail을 안전 조회한다.
+     *
+     * @return 직전 알림톡 발송 실패의 상세 또는 {@code null}
+     */
+    private String consumeAlimtalkDetailSafely() {
+        try {
+            return kakaoAlimTalkService.consumeLastErrorDetail();
+        } catch (Exception e) {
+            log.debug("KakaoAlimTalkService.consumeLastErrorDetail 실패 (무시): {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * {@code admin_test_notification_logs.error_message} VARCHAR(1000) 길이 안전 절단.
+     *
+     * @param value 원본
+     * @return {@code null} 또는 최대 {@link #ERROR_MESSAGE_LOG_LIMIT}자
+     */
+    private static String truncateErrorMessage(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.length() <= ERROR_MESSAGE_LOG_LIMIT
+            ? value
+            : value.substring(0, ERROR_MESSAGE_LOG_LIMIT) + "…(truncated)";
     }
 
     private String decryptSafely(String value) {

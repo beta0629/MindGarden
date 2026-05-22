@@ -81,4 +81,16 @@ public interface KakaoAlimTalkService {
      * @return 서비스 사용 가능 여부
      */
     boolean isServiceAvailable();
+
+    /**
+     * 직전 {@link #sendAlimTalk(String, String, java.util.Map)} 호출에서 발생한 오류 상세를 한 번만 조회.
+     *
+     * <p>구현체는 호출 스레드 단위(예: {@link ThreadLocal})로 상태를 유지하고,
+     * 본 메서드 호출 시 반환과 동시에 내부 상태를 clear 한다. 정보 없음·미구현이면 {@code null}.
+     *
+     * @return 직전 실패 상세(상태코드·errorCode·errorMessage 등) 또는 {@code null}
+     */
+    default String consumeLastErrorDetail() {
+        return null;
+    }
 }

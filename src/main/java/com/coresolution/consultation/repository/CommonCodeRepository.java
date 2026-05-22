@@ -54,6 +54,20 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
     
     // 코드 그룹과 값으로 활성 코드 조회
     Optional<CommonCode> findByCodeGroupAndCodeValueAndIsActiveTrue(String codeGroup, String codeValue);
+
+    /**
+     * 코드 그룹/값 + 활성 row 를 id 오름차순 List 로 반환 (안전망용).
+     *
+     * <p>{@link #findByCodeGroupAndCodeValueAndIsActiveTrue(String, String)} 가 unique 보장
+     * 가정으로 호출되지만, 데이터 중복(`IncorrectResultSizeDataAccessException`)이 감지될 때
+     * service 안전망에서 fallback 으로 사용한다. 멱등한 deterministic 정렬을 위해 id ASC.
+     *
+     * @param codeGroup 코드 그룹
+     * @param codeValue 코드 값
+     * @return 활성 row 리스트(id ASC). 없으면 빈 리스트.
+     * @since 2026-05-22 (SOLAPI_NOTIFICATION_MISS_DEBUG.md 결함 #4 안전망)
+     */
+    List<CommonCode> findByCodeGroupAndCodeValueAndIsActiveTrueOrderByIdAsc(String codeGroup, String codeValue);
     
     // 상위 코드 그룹별 조회
     List<CommonCode> findByParentCodeGroupOrderBySortOrderAsc(String parentCodeGroup);

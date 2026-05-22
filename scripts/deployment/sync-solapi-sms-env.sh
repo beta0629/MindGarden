@@ -68,7 +68,9 @@ PY
 }
 
 echo "== 개발 ($DEV_HOST) =="
-merge_remote "$DEV_HOST" "$DEV_ENV_FILE" "true"
+# [2026-05-22] dev 실발송 검증을 위해 false 전환 (사용자 컨펌 C1, SOLAPI_NOTIFICATION_MISS_DEBUG.md 결함 #2)
+# prod 측은 별도 결정. 운영 분기(L75)는 "false" 유지(이미 false).
+merge_remote "$DEV_HOST" "$DEV_ENV_FILE" "false"
 ssh "root@${DEV_HOST}" "systemctl restart mindgarden-dev.service && systemctl is-active mindgarden-dev.service"
 
 echo "== 운영 ($PROD_HOST) blue/green =="

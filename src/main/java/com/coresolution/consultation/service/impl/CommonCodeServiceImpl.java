@@ -23,6 +23,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.CommonCodeSubcategoryParents;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.Cacheable;
@@ -310,7 +311,7 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         log.debug("코드명 조회: 그룹={}, 값={}", codeGroup, codeValue);
         
         try {
-            return commonCodeRepository.findByCodeGroupAndCodeValueAndIsActiveTrue(codeGroup, codeValue)
+            return findActiveCommonCodeSafely(codeGroup, codeValue)
                     .map(CommonCode::getCodeLabel)
                     .orElse(codeValue);
             
@@ -326,7 +327,7 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         log.debug("코드값 조회: 그룹={}, 값={}", codeGroup, codeValue);
         
         try {
-            return commonCodeRepository.findByCodeGroupAndCodeValueAndIsActiveTrue(codeGroup, codeValue)
+            return findActiveCommonCodeSafely(codeGroup, codeValue)
                     .map(CommonCode::getCodeDescription) // description에 실제 설정값 저장
                     .orElse(null);
             
@@ -342,13 +343,39 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         log.debug("한글명 조회: 그룹={}, 값={}", codeGroup, codeValue);
         
         try {
-            return commonCodeRepository.findByCodeGroupAndCodeValueAndIsActiveTrue(codeGroup, codeValue)
+            return findActiveCommonCodeSafely(codeGroup, codeValue)
                     .map(CommonCode::getKoreanName)
                     .orElse(codeValue);
             
         } catch (Exception e) {
             log.error("한글명 조회 실패: 그룹={}, 값={}, 오류={}", codeGroup, codeValue, e.getMessage());
             return codeValue;
+        }
+    }
+
+    /**
+     * 공통코드 활성 row 안전망 lookup. 중복 row 가 발견되면 id ASC fallback 후 첫 row 반환.
+     *
+     * <p>현장 사례(SOLAPI_NOTIFICATION_MISS_DEBUG.md 결함 #4): 동일 tenant 에서
+     * (ROLE,CONSULTANT)/(ROLE,CLIENT) 가 2건씩 발견되어 권한·매핑·알림 회귀 발생.
+     * V73 마이그레이션이 데이터 중복을 정리하지만, 추후 재발 시에도 NPE 없이 첫 row 를
+     * 반환하도록 코드 측 안전망을 둔다. fallback 진입은 WARN 로그로 가시화한다.
+     *
+     * @param codeGroup 코드 그룹
+     * @param codeValue 코드 값
+     * @return 활성 row 1건 (없으면 empty)
+     * @since 2026-05-22
+     */
+    private Optional<CommonCode> findActiveCommonCodeSafely(String codeGroup, String codeValue) {
+        try {
+            return commonCodeRepository.findByCodeGroupAndCodeValueAndIsActiveTrue(codeGroup, codeValue);
+        } catch (IncorrectResultSizeDataAccessException ex) {
+            List<CommonCode> rows = commonCodeRepository
+                    .findByCodeGroupAndCodeValueAndIsActiveTrueOrderByIdAsc(codeGroup, codeValue);
+            log.warn("⚠️ 공통코드 중복 감지 (안전망 폴백): 그룹={}, 값={}, count={}, 첫 row id={}",
+                    codeGroup, codeValue, rows.size(),
+                    rows.isEmpty() ? null : rows.get(0).getId());
+            return rows.stream().findFirst();
         }
     }
     

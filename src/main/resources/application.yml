@@ -439,11 +439,29 @@ ops:
 
 # 이메일 설정은 프로파일별 설정 파일에서 관리
 
-# 카카오 알림톡 설정은 프로파일별 설정 파일에서 관리
+# 카카오 알림톡 설정
+# [2026-05-22] dev/prod 베이스 ENV 매핑 추가 (P0 핫픽스 — SOLAPI_NOTIFICATION_MISS_DEBUG.md §4)
+# - 자바 측 키: KakaoSolapiCredentialResolver(@Value 'kakao.alimtalk.solapi.*'),
+#   KakaoAlimTalkServiceImpl(@Value 'kakao.alimtalk.solapi.sender-number'),
+#   SolapiAlimTalkClient(@Value 'kakao.alimtalk.solapi.api-url').
+# - SOLAPI_ALIMTALK_PFID 등 평탄(flat) ENV 변수는 Spring relaxed-binding 으로
+#   `kakao.alimtalk.solapi.pf-id` 키에 자동 매핑되지 않으므로 본 블록이 반드시 필요.
+# - 자격증명 미설정 시 sms.auth.api-key/api-secret(= SMS_API_KEY/SMS_API_SECRET)로 자동 fallback.
+kakao:
+  alimtalk:
+    enabled: ${KAKAO_ALIMTALK_ENABLED:false}
+    provider: ${KAKAO_ALIMTALK_PROVIDER:solapi}
+    simulation-mode: ${KAKAO_ALIMTALK_SIMULATION_MODE:true}
+    solapi:
+      api-key: ${SOLAPI_ALIMTALK_API_KEY:${sms.auth.api-key:}}
+      api-secret: ${SOLAPI_ALIMTALK_API_SECRET:${sms.auth.api-secret:}}
+      pf-id: ${SOLAPI_ALIMTALK_PFID:}
+      sender-number: ${SOLAPI_ALIMTALK_SENDER_NUMBER:${sms.auth.sender-number:}}
+      api-url: ${SOLAPI_ALIMTALK_API_URL:https://api.solapi.com}
 # 지원 ENV 키(값은 프로파일별 yml·Secrets에서만 정의):
 #   - KAKAO_ALIMTALK_ENABLED         : 알림톡 채널 활성화 (true|false)
 #   - KAKAO_ALIMTALK_SIMULATION_MODE : 시뮬레이션 모드 (true|false)
-#   - KAKAO_ALIMTALK_PROVIDER        : provider 선택 (bizmsg|solapi, 기본 bizmsg)
+#   - KAKAO_ALIMTALK_PROVIDER        : provider 선택 (bizmsg|solapi, 기본 solapi)
 #   # bizmsg provider
 #   - KAKAO_ALIMTALK_API_KEY         : 비즈엠 API Key
 #   - KAKAO_ALIMTALK_SENDER_KEY      : 비즈엠 발신자 키
@@ -455,7 +473,6 @@ ops:
 #   - SOLAPI_ALIMTALK_API_URL        : 솔라피 API base URL (기본 https://api.solapi.com)
 #   - SOLAPI_ALIMTALK_SENDER_NUMBER  : 솔라피 발신 번호(폴백 SMS용, 선택)
 #
-# 자격증명 미설정 시 sms.auth.api-key/api-secret(= SMS_API_KEY/SMS_API_SECRET)로 자동 fallback.
 # 솔라피는 계정당 통합 API Key/Secret 하나로 SMS·알림톡 모두 발송하므로,
 # 단일 계정 운영자는 SMS_API_KEY/SECRET 만 채워도 알림톡 발송이 가능하다.
 

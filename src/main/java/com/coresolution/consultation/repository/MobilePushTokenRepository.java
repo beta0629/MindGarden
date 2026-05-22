@@ -1,10 +1,14 @@
 package com.coresolution.consultation.repository;
 
 import com.coresolution.consultation.entity.MobilePushToken;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -45,4 +49,28 @@ public interface MobilePushTokenRepository extends JpaRepository<MobilePushToken
      * @return 엔티티
      */
     Optional<MobilePushToken> findByTenantIdAndPushTokenAndIsDeletedFalse(String tenantId, String pushToken);
+
+    /**
+     * 동일 디바이스(token_sha256 동일) 이전 사용자 행을 비활성화한다.
+     * 디바이스 1대당 마지막 로그인 사용자에게만 푸시가 가도록 격리하기 위함이며, 현재 사용자 행은 보존한다.
+     *
+     * <p>{@code mobile_push_tokens} UNIQUE 키는 {@code (tenant_id, user_id, token_sha256)} 이므로
+     * 동일 토큰 해시가 사용자별로 별도 행(active=true)으로 존재할 수 있다. 본 메서드는 현재 사용자({@code currentUserId})
+     * 를 제외한 동일 해시 행을 active=false 로 일괄 갱신한다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param tokenSha256 토큰 SHA-256 hex
+     * @param currentUserId 보존할 현재 사용자 PK
+     * @param now updatedAt 적용 시각
+     * @return 비활성화 처리된 행 수
+     */
+    @Modifying
+    @Query("UPDATE MobilePushToken t SET t.active = false, t.updatedAt = :now "
+            + "WHERE t.tenantId = :tenantId AND t.tokenSha256 = :tokenSha256 "
+            + "AND t.userId <> :currentUserId AND t.active = true")
+    int deactivateOtherUsersWithSameTokenHash(
+            @Param("tenantId") String tenantId,
+            @Param("tokenSha256") String tokenSha256,
+            @Param("currentUserId") Long currentUserId,
+            @Param("now") LocalDateTime now);
 }

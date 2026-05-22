@@ -11,7 +11,9 @@ import com.coresolution.consultation.repository.MobilePushTokenRepository;
 import com.coresolution.consultation.service.MobilePushService;
 import com.coresolution.consultation.util.MobilePushTokenHasher;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author MindGarden
  * @since 2026-05-14
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MobilePushServiceImpl implements MobilePushService {
@@ -35,6 +38,13 @@ public class MobilePushServiceImpl implements MobilePushService {
         validateToken(rawToken);
         String hash = MobilePushTokenHasher.sha256Hex(rawToken);
         String tid = tenantId.trim();
+        // D-1: 디바이스 1대당 마지막 로그인 사용자에게만 푸시. 동일 토큰 해시의 이전 사용자(active=true)는 비활성화.
+        int isolatedCount = mobilePushTokenRepository
+                .deactivateOtherUsersWithSameTokenHash(tid, hash, userId, LocalDateTime.now());
+        if (isolatedCount > 0) {
+            log.info("device-isolate: token_sha256={} prev_users={} -> current_user={}",
+                    maskTokenHash(hash), isolatedCount, userId);
+        }
         mobilePushTokenRepository
                 .findByTenantIdAndUserIdAndTokenSha256AndIsDeletedFalse(tid, userId, hash)
                 .ifPresentOrElse(
@@ -128,6 +138,16 @@ public class MobilePushServiceImpl implements MobilePushService {
         if (rawToken.length() > MobilePushConstants.PUSH_TOKEN_MAX_CHARS) {
             throw new IllegalArgumentException("token 길이가 상한을 초과했습니다.");
         }
+    }
+
+    /**
+     * 토큰 해시 로그 마스킹: 앞 8자 + ... + 뒤 4자. PII/디바이스 식별값이 로그에 그대로 노출되지 않도록 함.
+     */
+    private static String maskTokenHash(String hash) {
+        if (hash == null || hash.length() <= 12) {
+            return "***";
+        }
+        return hash.substring(0, 8) + "..." + hash.substring(hash.length() - 4);
     }
 
     private static MobilePushSettingsPayload toPayload(MobilePushSettings e) {

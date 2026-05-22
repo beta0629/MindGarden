@@ -90,6 +90,19 @@ public class SessionUtils implements ApplicationContextAware {
     public static boolean isLoggedIn(HttpSession session) {
         return getCurrentUser(session) != null;
     }
+
+    /**
+     * 현재 인증된 사용자의 PK(users.id) 조회. HttpSession 없이 SecurityContext만 사용.
+     *
+     * <p>actor(변경 주체) 식별 등 서비스 계층 비차단 흐름에서 사용한다. 인증/세션 정보가 없는 백그라운드·배치
+     * 컨텍스트에서는 null을 반환하며, 호출부는 null-safe(미식별 시 actor 가드 미적용)로 다루어야 한다.</p>
+     *
+     * @return 현재 사용자 PK 또는 null (인증/세션 미설정 또는 식별 실패 시)
+     */
+    public static Long getCurrentUserId() {
+        User user = getCurrentUser(null);
+        return user != null ? user.getId() : null;
+    }
     
     /**
      * User 객체를 세션에 저장

@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.config.ExpoPushProperties;
+import com.coresolution.consultation.constant.MobilePushAllowedEvents;
 import com.coresolution.consultation.constant.MobilePushCanonicalTypes;
 import com.coresolution.consultation.constant.MobilePushDispatchConstants;
 import com.coresolution.consultation.constant.MobilePushNotificationCategory;
@@ -86,12 +87,18 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void dispatchBookingConfirmed(String tenantId, Schedule schedule) {
+    public void dispatchBookingConfirmed(String tenantId, Schedule schedule, Long actorUserId) {
         if (schedule == null || schedule.getId() == null || schedule.getClientId() == null) {
             return;
         }
         String tid = requireTenantId(tenantId, schedule.getTenantId());
         if (tid == null) {
+            return;
+        }
+        // D-2/D-3: actor(변경 주체)는 자신이 만든 변경 이벤트 푸시를 받지 않는다.
+        if (isActor(actorUserId, schedule.getClientId())) {
+            log.info("actor-skip: type={} scheduleId={} actorUserId={} (client=actor)",
+                    MobilePushCanonicalTypes.BOOKING_CONFIRMED, schedule.getId(), actorUserId);
             return;
         }
         String title = "예약 확정";
@@ -105,20 +112,13 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void dispatchBookingCancelled(String tenantId, Schedule schedule) {
+    public void dispatchBookingCancelled(String tenantId, Schedule schedule, Long actorUserId) {
         if (schedule == null || schedule.getId() == null) {
             return;
         }
         String tid = requireTenantId(tenantId, schedule.getTenantId());
         if (tid == null) {
             return;
-        }
-        List<Long> targets = new ArrayList<>();
-        if (schedule.getClientId() != null) {
-            targets.add(schedule.getClientId());
-        }
-        if (schedule.getConsultantId() != null) {
-            targets.add(schedule.getConsultantId());
         }
         String title = "예약 취소";
         String consultantName = resolveUserDisplayName(tid, schedule.getConsultantId(),
@@ -128,16 +128,26 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
         Map<String, String> data = buildScheduleData(tid, schedule, MobilePushCanonicalTypes.BOOKING_CANCELLED);
         String entityId = String.valueOf(schedule.getId());
         if (schedule.getClientId() != null) {
-            String clientBody = MobilePushMessageFormatter.buildBookingCancelledBody(
-                    schedule, consultantName, clientName, false);
-            dispatchFanout(tid, List.of(schedule.getClientId()), MobilePushCanonicalTypes.BOOKING_CANCELLED, title,
-                    clientBody, data, entityId, "cancelled");
+            if (isActor(actorUserId, schedule.getClientId())) {
+                log.info("actor-skip: type={} scheduleId={} actorUserId={} (client=actor)",
+                        MobilePushCanonicalTypes.BOOKING_CANCELLED, schedule.getId(), actorUserId);
+            } else {
+                String clientBody = MobilePushMessageFormatter.buildBookingCancelledBody(
+                        schedule, consultantName, clientName, false);
+                dispatchFanout(tid, List.of(schedule.getClientId()), MobilePushCanonicalTypes.BOOKING_CANCELLED, title,
+                        clientBody, data, entityId, "cancelled");
+            }
         }
         if (schedule.getConsultantId() != null) {
-            String consultantBody = MobilePushMessageFormatter.buildBookingCancelledBody(
-                    schedule, consultantName, clientName, true);
-            dispatchFanout(tid, List.of(schedule.getConsultantId()), MobilePushCanonicalTypes.BOOKING_CANCELLED,
-                    title, consultantBody, data, entityId, "cancelled|consultant");
+            if (isActor(actorUserId, schedule.getConsultantId())) {
+                log.info("actor-skip: type={} scheduleId={} actorUserId={} (consultant=actor)",
+                        MobilePushCanonicalTypes.BOOKING_CANCELLED, schedule.getId(), actorUserId);
+            } else {
+                String consultantBody = MobilePushMessageFormatter.buildBookingCancelledBody(
+                        schedule, consultantName, clientName, true);
+                dispatchFanout(tid, List.of(schedule.getConsultantId()), MobilePushCanonicalTypes.BOOKING_CANCELLED,
+                        title, consultantBody, data, entityId, "cancelled|consultant");
+            }
         }
     }
 
@@ -148,7 +158,8 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
             Schedule schedule,
             LocalDate previousDate,
             LocalTime previousStart,
-            LocalTime previousEnd) {
+            LocalTime previousEnd,
+            Long actorUserId) {
         if (schedule == null) {
             return;
         }
@@ -173,17 +184,34 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
                 : (schedule.getConsultationId() != null ? "c-" + schedule.getConsultationId() : "unknown");
         String bucket = oldSlot + ">" + newSlot;
         if (schedule.getClientId() != null) {
-            String clientBody = MobilePushMessageFormatter.buildBookingRescheduledBody(
-                    oldSlot, newSlot, consultantName, clientName, false);
-            dispatchFanout(tid, List.of(schedule.getClientId()), MobilePushCanonicalTypes.BOOKING_RESCHEDULED, title,
-                    clientBody, data, entityId, bucket);
+            if (isActor(actorUserId, schedule.getClientId())) {
+                log.info("actor-skip: type={} scheduleId={} actorUserId={} (client=actor)",
+                        MobilePushCanonicalTypes.BOOKING_RESCHEDULED, schedule.getId(), actorUserId);
+            } else {
+                String clientBody = MobilePushMessageFormatter.buildBookingRescheduledBody(
+                        oldSlot, newSlot, consultantName, clientName, false);
+                dispatchFanout(tid, List.of(schedule.getClientId()), MobilePushCanonicalTypes.BOOKING_RESCHEDULED,
+                        title, clientBody, data, entityId, bucket);
+            }
         }
         if (schedule.getConsultantId() != null) {
-            String consultantBody = MobilePushMessageFormatter.buildBookingRescheduledBody(
-                    oldSlot, newSlot, consultantName, clientName, true);
-            dispatchFanout(tid, List.of(schedule.getConsultantId()), MobilePushCanonicalTypes.BOOKING_RESCHEDULED,
-                    title, consultantBody, data, entityId, bucket + "|consultant");
+            if (isActor(actorUserId, schedule.getConsultantId())) {
+                log.info("actor-skip: type={} scheduleId={} actorUserId={} (consultant=actor)",
+                        MobilePushCanonicalTypes.BOOKING_RESCHEDULED, schedule.getId(), actorUserId);
+            } else {
+                String consultantBody = MobilePushMessageFormatter.buildBookingRescheduledBody(
+                        oldSlot, newSlot, consultantName, clientName, true);
+                dispatchFanout(tid, List.of(schedule.getConsultantId()), MobilePushCanonicalTypes.BOOKING_RESCHEDULED,
+                        title, consultantBody, data, entityId, bucket + "|consultant");
+            }
         }
+    }
+
+    /**
+     * actor(변경 주체) 가드. actorUserId가 null이면 가드 미적용. recipient.userId == actorUserId 면 true.
+     */
+    private static boolean isActor(Long actorUserId, Long recipientUserId) {
+        return actorUserId != null && recipientUserId != null && actorUserId.equals(recipientUserId);
     }
 
     @Override
@@ -593,6 +621,13 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
             String body, Map<String, String> data, String dedupeEntityId, String dedupeTimeBucket) {
         if (tenantId == null || tenantId.isBlank()) {
             log.warn("푸시 발송 생략: tenantId 없음 type={}", canonicalType);
+            return;
+        }
+        // D-4: 결제·예약 푸시 화이트리스트 - 운영 결정에 따라 입금확인/예약확인/예약변경 3종만 허용.
+        // 알림톡/SMS 등 다른 채널은 본 가드 영향 없음(본 메서드는 푸시 전용 fanout).
+        if (!MobilePushAllowedEvents.isAllowed(canonicalType)) {
+            log.info("push-filtered: event={} (not in allowlist) tenantId={} entity={} bucket={}",
+                    canonicalType, tenantId, dedupeEntityId, dedupeTimeBucket);
             return;
         }
         if (expoPushProperties.getAccessToken() == null || expoPushProperties.getAccessToken().isBlank()) {

@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -90,7 +91,7 @@ class ScheduleCreatedNotificationHelperImplTest {
         messageTypeCaptor.getAllValues().forEach(type -> assertThat(type.length())
                 .isLessThanOrEqualTo(ConsultationMessageTypeCodes.MAX_MESSAGE_TYPE_LENGTH));
 
-        verify(mobilePushDispatchService).dispatchBookingConfirmed(eq(TENANT_ID), eq(schedule));
+        verify(mobilePushDispatchService).dispatchBookingConfirmed(eq(TENANT_ID), eq(schedule), isNull());
     }
 
     private static Schedule bookedSchedule() {

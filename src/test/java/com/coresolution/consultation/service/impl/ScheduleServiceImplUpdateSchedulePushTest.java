@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -91,6 +92,7 @@ class ScheduleServiceImplUpdateSchedulePushTest {
                 any(Schedule.class),
                 eq(LocalDate.of(2026, 5, 20)),
                 eq(LocalTime.of(10, 0)),
-                eq(LocalTime.of(11, 0)));
+                eq(LocalTime.of(11, 0)),
+                isNull());
     }
 }

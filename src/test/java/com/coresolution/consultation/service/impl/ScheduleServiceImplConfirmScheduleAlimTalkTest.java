@@ -41,6 +41,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -159,7 +160,8 @@ class ScheduleServiceImplConfirmScheduleAlimTalkTest {
             eq("이상담"),
             eq("2026-05-01"),
             eq("10:00-11:00"));
-        verify(mobilePushDispatchService).dispatchBookingConfirmed(eq(TENANT_ID), any(Schedule.class));
+        verify(mobilePushDispatchService).dispatchBookingConfirmed(
+                eq(TENANT_ID), any(Schedule.class), isNull());
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
+import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -92,7 +93,8 @@ public class ScheduleCreatedNotificationHelperImpl implements ScheduleCreatedNot
                 tid = TenantContextHolder.getTenantId();
             }
             if (includeMobilePush && tid != null && !tid.isBlank()) {
-                mobilePushDispatchService.dispatchBookingConfirmed(tid, schedule);
+                mobilePushDispatchService.dispatchBookingConfirmed(
+                        tid, schedule, SessionUtils.getCurrentUserId());
             }
 
             log.info("예약 생성 알림 완료: scheduleId={}", schedule.getId());

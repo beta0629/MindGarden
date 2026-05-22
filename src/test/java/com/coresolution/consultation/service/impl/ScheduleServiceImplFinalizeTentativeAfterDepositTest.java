@@ -45,6 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -196,6 +197,7 @@ class ScheduleServiceImplFinalizeTentativeAfterDepositTest {
 
         verify(sessionSyncService, times(2)).syncAfterSessionUsage(
                 eq(MAPPING_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID));
-        verify(mobilePushDispatchService, times(2)).dispatchBookingConfirmed(eq(TENANT_ID), any(Schedule.class));
+        verify(mobilePushDispatchService, times(2)).dispatchBookingConfirmed(
+                eq(TENANT_ID), any(Schedule.class), isNull());
     }
 }

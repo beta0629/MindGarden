@@ -44,6 +44,7 @@ import com.coresolution.consultation.service.ScheduleMappingContextResolver.Sche
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
+import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
@@ -286,7 +287,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             try {
                 String pushTenantId = tenantId != null ? tenantId : saved.getTenantId();
                 mobilePushDispatchService.dispatchBookingRescheduled(
-                        pushTenantId, saved, previousDate, previousStartTime, previousEndTime);
+                        pushTenantId, saved, previousDate, previousStartTime, previousEndTime,
+                        SessionUtils.getCurrentUserId());
             } catch (Exception ex) {
                 log.warn("예약 일정 변경 푸시 실패: scheduleId={}", saved.getId(), ex);
             }
@@ -572,7 +574,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return;
         }
         try {
-            mobilePushDispatchService.dispatchBookingConfirmed(tenantId, schedule);
+            // 가예약 자동 확정 흐름은 입금 확인 이벤트 처리(actor=어드민/시스템)에서 트리거되므로
+            // 내담자 본인이 actor인 경우는 없다. actorUserId는 현재 SecurityContext 기준으로 전달.
+            mobilePushDispatchService.dispatchBookingConfirmed(
+                    tenantId, schedule, SessionUtils.getCurrentUserId());
         } catch (Exception ex) {
             log.warn("가예약 확정 푸시 실패: scheduleId={}", schedule.getId(), ex);
         }
@@ -732,7 +737,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             restoreSessionForMappingIfDeducted(schedule);
         }
         try {
-            mobilePushDispatchService.dispatchBookingCancelled(saved.getTenantId(), saved);
+            mobilePushDispatchService.dispatchBookingCancelled(
+                    saved.getTenantId(), saved, SessionUtils.getCurrentUserId());
         } catch (Exception ex) {
             log.warn("예약 취소 푸시 실패: scheduleId={}", saved.getId(), ex);
         }
@@ -757,7 +763,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         deductSessionForScheduleIfNeeded(saved);
         tryDispatchScheduleConfirmedExternalNotification(saved);
         try {
-            mobilePushDispatchService.dispatchBookingConfirmed(saved.getTenantId(), saved);
+            mobilePushDispatchService.dispatchBookingConfirmed(
+                    saved.getTenantId(), saved, SessionUtils.getCurrentUserId());
         } catch (Exception ex) {
             log.warn("예약 확정 푸시 실패: scheduleId={}", saved.getId(), ex);
         }

@@ -33,6 +33,7 @@ import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
+import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import com.coresolution.core.util.StatusCodeHelper;
@@ -2109,7 +2110,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                 return;
             }
             mobilePushDispatchService.dispatchBookingRescheduled(
-                    tenantId, pushSchedule, previousDate, previousStart, previousEnd);
+                    tenantId, pushSchedule, previousDate, previousStart, previousEnd,
+                    SessionUtils.getCurrentUserId());
         } catch (Exception e) {
             log.warn("일정 변경 푸시 실패(본 처리 롤백 없음): consultationId={}, {}",
                     consultation.getId(), e.getMessage());

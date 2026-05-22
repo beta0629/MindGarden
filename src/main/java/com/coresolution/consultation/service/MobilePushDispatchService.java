@@ -24,36 +24,40 @@ public interface MobilePushDispatchService {
     void dispatchBookingReminder(String tenantId, Schedule schedule, String body, String reminderSlotCode);
 
     /**
-     * 예약 확정 푸시(내담자).
+     * 예약 확정 푸시(내담자). actor(변경 주체) 본인은 수신 제외.
      *
      * @param tenantId 테넌트 ID
      * @param schedule 일정
+     * @param actorUserId 변경 주체(현재 로그인 사용자) PK. null이면 actor 가드 미적용.
      */
-    void dispatchBookingConfirmed(String tenantId, Schedule schedule);
+    void dispatchBookingConfirmed(String tenantId, Schedule schedule, Long actorUserId);
 
     /**
-     * 예약 취소 푸시(내담자·상담사).
+     * 예약 취소 푸시(내담자·상담사). actor(변경 주체) 본인은 수신 제외.
      *
      * @param tenantId 테넌트 ID
      * @param schedule 일정
+     * @param actorUserId 변경 주체(현재 로그인 사용자) PK. null이면 actor 가드 미적용.
      */
-    void dispatchBookingCancelled(String tenantId, Schedule schedule);
+    void dispatchBookingCancelled(String tenantId, Schedule schedule, Long actorUserId);
 
     /**
-     * 예약 일정 변경 푸시(내담자·상담사).
+     * 예약 일정 변경 푸시(내담자·상담사). actor(변경 주체) 본인은 수신 제외.
      *
      * @param tenantId 테넌트 ID
      * @param schedule 변경 후 일정(식별·수신자·신규 슬롯)
      * @param previousDate 변경 전 일자
      * @param previousStart 변경 전 시작 시각
      * @param previousEnd 변경 전 종료 시각
+     * @param actorUserId 변경 주체(현재 로그인 사용자) PK. null이면 actor 가드 미적용.
      */
     void dispatchBookingRescheduled(
             String tenantId,
             Schedule schedule,
             LocalDate previousDate,
             LocalTime previousStart,
-            LocalTime previousEnd);
+            LocalTime previousEnd,
+            Long actorUserId);
 
     /**
      * 결제 완료 푸시(결제자).

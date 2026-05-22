@@ -115,7 +115,7 @@ class MobilePushDispatchServiceImplTest {
         schedule.setClientId(77L);
         schedule.setConsultantId(88L);
 
-        mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule);
+        mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule, null);
 
         verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(anyString(),
                 anyList());
@@ -171,7 +171,7 @@ class MobilePushDispatchServiceImplTest {
         schedule.setTenantId("tenant-a");
         schedule.setClientId(77L);
 
-        mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule);
+        mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule, null);
 
         verify(mobilePushDispatchDedupService, times(1)).tryClaim(eq("tenant-a"),
                 eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED), eq("50"), eq("confirmed"));
@@ -247,11 +247,11 @@ class MobilePushDispatchServiceImplTest {
         schedule.setTenantId("tenant-a");
         schedule.setClientId(77L);
 
-        assertDoesNotThrow(() -> mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule));
+        assertDoesNotThrow(() -> mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule, null));
     }
 
     @Test
-    @DisplayName("dispatchMappingSettlement: 내담자만 fanout (includeConsultant=false)")
+    @DisplayName("dispatchMappingSettlement: PAYMENT_COMPLETED는 화이트리스트에 포함되어 내담자 fanout 수행")
     void dispatchMappingSettlement_clientOnlyFanout() {
         when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
         when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
@@ -292,38 +292,10 @@ class MobilePushDispatchServiceImplTest {
     }
 
     @Test
-    @DisplayName("dispatchMappingSettlement: 승인 시 내담자·상담사 각각 fanout")
-    void dispatchMappingSettlement_clientAndConsultantFanout() {
-        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
-        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
-
-        MobilePushSettings clientSettings = new MobilePushSettings();
-        clientSettings.setSystemEnabled(true);
-        MobilePushSettings consultantSettings = new MobilePushSettings();
-        consultantSettings.setSystemEnabled(true);
-        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
-                .thenReturn(Optional.of(clientSettings));
-        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(88L)))
-                .thenReturn(Optional.of(consultantSettings));
-
-        MobilePushToken clientToken = new MobilePushToken();
-        clientToken.setPushToken("ExponentPushToken[mapping-client]");
-        clientToken.setUserId(77L);
-        MobilePushToken consultantToken = new MobilePushToken();
-        consultantToken.setPushToken("ExponentPushToken[mapping-consultant]");
-        consultantToken.setUserId(88L);
-        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
-                eq(List.of(77L)))).thenReturn(List.of(clientToken));
-        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
-                eq(List.of(88L)))).thenReturn(List.of(consultantToken));
-
-        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.MAPPING_APPROVED),
-                eq("901"), eq("mapping-approved"))).thenReturn(true);
-        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.MAPPING_APPROVED),
-                eq("901"), eq("mapping-approved|consultant"))).thenReturn(true);
-        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
-                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
-
+    @DisplayName("dispatchMappingSettlement: MAPPING_APPROVED는 D-4 화이트리스트 미포함 — Expo·dedup·token 호출 0")
+    void dispatchMappingSettlement_mappingApprovedFilteredByAllowlist() {
+        // D-4: MAPPING_APPROVED는 푸시 허용 set에 포함되지 않으므로 dispatchFanout이 진입부에서 차단.
+        // Expo access token 확인·token 조회·dedupe claim 모두 호출되지 않아야 한다.
         mobilePushDispatchService.dispatchMappingSettlement(
                 "tenant-a",
                 901L,
@@ -336,11 +308,10 @@ class MobilePushDispatchServiceImplTest {
                 "매칭이 승인되었습니다.",
                 "새 매칭이 승인되었습니다.");
 
-        verify(mobilePushDispatchDedupService).tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.MAPPING_APPROVED),
-                eq("901"), eq("mapping-approved"));
-        verify(mobilePushDispatchDedupService).tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.MAPPING_APPROVED),
-                eq("901"), eq("mapping-approved|consultant"));
-        verify(restTemplate, times(2)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class));
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(anyString(),
+                anyList());
+        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
     }
 
     @Test
@@ -382,7 +353,7 @@ class MobilePushDispatchServiceImplTest {
         schedule.setStartTime(LocalTime.of(14, 0));
         schedule.setEndTime(LocalTime.of(15, 0));
 
-        mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule);
+        mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule, null);
 
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> messages =
@@ -444,7 +415,8 @@ class MobilePushDispatchServiceImplTest {
                 schedule,
                 LocalDate.of(2026, 5, 20),
                 LocalTime.of(10, 0),
-                LocalTime.of(11, 0));
+                LocalTime.of(11, 0),
+                null);
 
         verify(mobilePushDispatchDedupService, times(2)).tryClaim(
                 eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_RESCHEDULED), eq("50"), anyString());
@@ -480,62 +452,179 @@ class MobilePushDispatchServiceImplTest {
     }
 
     @Test
-    @DisplayName("dispatchShopOrderPaid: 내담자 fanout·orderPublicId data")
-    void dispatchShopOrderPaid_fanoutOnce() {
-        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
-        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
-        when(mobilePushDispatchDedupService.tryClaim(
-                        eq("tenant-a"),
-                        eq(MobilePushCanonicalTypes.SHOP_ORDER_PAID),
-                        eq("ord-1"),
-                        eq("paid")))
-                .thenReturn(true);
-        MobilePushToken token = new MobilePushToken();
-        token.setPushToken("ExponentPushToken[shop]");
-        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
-                .thenReturn(Optional.empty());
-        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
-                        eq("tenant-a"), eq(List.of(77L))))
-                .thenReturn(List.of(token));
-        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
-                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
-
+    @DisplayName("dispatchShopOrderPaid: D-4 화이트리스트 미포함 — Expo·dedup·token 호출 0")
+    void dispatchShopOrderPaid_filteredByAllowlist() {
+        // D-4: SHOP_ORDER_PAID는 푸시 허용 set 밖이므로 dispatchFanout이 진입부에서 차단.
         mobilePushDispatchService.dispatchShopOrderPaid("tenant-a", 77L, "ord-1", 12_000L);
 
-        verify(mobilePushDispatchDedupService).tryClaim(
-                eq("tenant-a"), eq(MobilePushCanonicalTypes.SHOP_ORDER_PAID), eq("ord-1"), eq("paid"));
-        verify(restTemplate).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class));
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(anyString(),
+                anyList());
+        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
     }
 
     @Test
-    @DisplayName("dispatchMoodJournalShared: 상담사 fanout·journalDate dedupe")
-    void dispatchMoodJournalShared_fanoutConsultant() {
-        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
-        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
-        when(mobilePushDispatchDedupService.tryClaim(
-                eq("tenant-a"),
-                eq(MobilePushCanonicalTypes.MOOD_JOURNAL_SHARED),
-                eq("77:2026-05-20"),
-                eq("shared")))
-            .thenReturn(true);
-        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(88L)))
-            .thenReturn(Optional.empty());
-        MobilePushToken token = new MobilePushToken();
-        token.setPushToken("ExponentPushToken[mj]");
-        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
-                eq("tenant-a"), eq(List.of(88L))))
-            .thenReturn(List.of(token));
-        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
-            .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
-
+    @DisplayName("dispatchMoodJournalShared: D-4 화이트리스트 미포함 — Expo·dedup·token 호출 0")
+    void dispatchMoodJournalShared_filteredByAllowlist() {
+        // D-4: MOOD_JOURNAL_SHARED는 푸시 허용 set 밖이므로 dispatchFanout이 진입부에서 차단.
         mobilePushDispatchService.dispatchMoodJournalShared(
                 "tenant-a", 77L, 88L, "이내담", "2026-05-20", "🙂", "메모");
 
-        verify(mobilePushDispatchDedupService).tryClaim(
-                eq("tenant-a"),
-                eq(MobilePushCanonicalTypes.MOOD_JOURNAL_SHARED),
-                eq("77:2026-05-20"),
-                eq("shared"));
-        verify(restTemplate).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class));
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(anyString(),
+                anyList());
+        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+    }
+
+    // ===================== D-2/D-3 actor 가드 단위 검증 =====================
+
+    @Test
+    @DisplayName("D-2: dispatchBookingRescheduled — actorUserId가 내담자와 동일하면 내담자 수신 skip, 상담사만 fanout")
+    void dispatchBookingRescheduled_whenActorIsClient_skipsClientRecipient() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setScheduleEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(88L)))
+                .thenReturn(Optional.of(settings));
+
+        User consultant = new User();
+        User client = new User();
+        when(userRepository.findByTenantIdAndId(eq("tenant-a"), eq(88L))).thenReturn(Optional.of(consultant));
+        when(userRepository.findByTenantIdAndId(eq("tenant-a"), eq(77L))).thenReturn(Optional.of(client));
+        when(scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(consultant)).thenReturn("박상담");
+        when(scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(client)).thenReturn("이내담");
+
+        MobilePushToken consultantToken = new MobilePushToken();
+        consultantToken.setPushToken("ExponentPushToken[consultant]");
+        consultantToken.setUserId(88L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(88L)))).thenReturn(List.of(consultantToken));
+
+        when(mobilePushDispatchDedupService.tryClaim(
+                eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_RESCHEDULED), eq("50"), anyString()))
+                .thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        Schedule schedule = new Schedule();
+        schedule.setId(50L);
+        schedule.setTenantId("tenant-a");
+        schedule.setClientId(77L);
+        schedule.setConsultantId(88L);
+        schedule.setDate(LocalDate.of(2026, 5, 21));
+        schedule.setStartTime(LocalTime.of(14, 0));
+        schedule.setEndTime(LocalTime.of(15, 0));
+
+        // actor = 내담자(77L) → 내담자 수신 skip, 상담사만 1회 fanout
+        mobilePushDispatchService.dispatchBookingRescheduled(
+                "tenant-a",
+                schedule,
+                LocalDate.of(2026, 5, 20),
+                LocalTime.of(10, 0),
+                LocalTime.of(11, 0),
+                77L);
+
+        verify(mobilePushDispatchDedupService, times(1)).tryClaim(
+                eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_RESCHEDULED), eq("50"), anyString());
+        verify(restTemplate, times(1)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
+                eq(String.class));
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L)));
+    }
+
+    @Test
+    @DisplayName("D-3: dispatchBookingCancelled — actorUserId가 상담사와 동일하면 상담사 수신 skip — BOOKING_CANCELLED는 화이트리스트 밖이므로 전체 차단")
+    void dispatchBookingCancelled_whenActorIsConsultant_skipsConsultantRecipient() {
+        // BOOKING_CANCELLED는 D-4 화이트리스트 밖이라 어느 수신자에도 Expo POST가 가지 않는 것이 정상이다.
+        // 본 테스트는 actor가드가 dispatchFanout 호출 이전(상단)에서 동작하고, 화이트리스트가 그 뒤(dispatchFanout 진입부)에서
+        // 동작함을 행위 차원에서 보장한다.
+        Schedule schedule = new Schedule();
+        schedule.setId(50L);
+        schedule.setTenantId("tenant-a");
+        schedule.setClientId(77L);
+        schedule.setConsultantId(88L);
+        schedule.setDate(LocalDate.of(2026, 5, 21));
+        schedule.setStartTime(LocalTime.of(14, 0));
+        schedule.setEndTime(LocalTime.of(15, 0));
+
+        // actor = 상담사(88L)
+        mobilePushDispatchService.dispatchBookingCancelled("tenant-a", schedule, 88L);
+
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(anyString(),
+                anyList());
+        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("D-2: dispatchBookingConfirmed — actorUserId가 내담자와 동일하면 즉시 skip(토큰 조회·Expo POST 0)")
+    void dispatchBookingConfirmed_whenActorIsClient_skipsImmediately() {
+        Schedule schedule = new Schedule();
+        schedule.setId(50L);
+        schedule.setTenantId("tenant-a");
+        schedule.setClientId(77L);
+        schedule.setConsultantId(88L);
+
+        // actor = 내담자(77L) — 내담자 본인이 만든 변경 이벤트이므로 본인에게 푸시 skip
+        mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule, 77L);
+
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(anyString(),
+                anyList());
+        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+    }
+
+    // ===================== D-4 화이트리스트 단위 검증 =====================
+
+    @Test
+    @DisplayName("D-4 positive: dispatchBookingConfirmed(allowlist)는 actor 미식별 시 정상 fanout")
+    void dispatchFanout_whenEventInAllowlist_dispatchesNormally() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setScheduleEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+
+        MobilePushToken token = new MobilePushToken();
+        token.setPushToken("ExponentPushToken[allowlist-positive]");
+        token.setUserId(77L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L)))).thenReturn(List.of(token));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED), eq("50"), eq("confirmed"))).thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        Schedule schedule = new Schedule();
+        schedule.setId(50L);
+        schedule.setTenantId("tenant-a");
+        schedule.setClientId(77L);
+
+        mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule, null);
+
+        verify(restTemplate, times(1)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
+                eq(String.class));
+    }
+
+    @Test
+    @DisplayName("D-4 negative: dispatchPaymentFailed(non-allowlist)는 dispatchFanout 진입부에서 전체 skip")
+    void dispatchFanout_whenEventNotInAllowlist_skipsAllRecipients() {
+        // PAYMENT_FAILED는 D-4 화이트리스트 밖. token 조회·dedupe·Expo POST 0.
+        Payment payment = new Payment();
+        payment.setTenantId("tenant-a");
+        payment.setPayerId(77L);
+        payment.setPaymentId("pay-fail-" + UUID.randomUUID());
+
+        mobilePushDispatchService.dispatchPaymentFailed("tenant-a", payment);
+
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(anyString(),
+                anyList());
+        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
     }
 }

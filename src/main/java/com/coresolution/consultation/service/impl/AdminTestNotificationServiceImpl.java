@@ -201,6 +201,7 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
                 .title(code.getCodeLabel())
                 .status(null)
                 .variables(extractVariables(code.getExtraData()))
+                .content(extractTemplateBodyText(code.getExtraData()))
                 .source(SOURCE_COMMON_CODE)
                 .solapiTemplateIdPresent(mappingPresent)
                 .build());
@@ -307,11 +308,14 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
 
         List<TestNotificationAlimtalkTemplate> templates = new ArrayList<>(response.templates().size());
         for (SolapiKakaoTemplateClient.TemplateMeta meta : response.templates()) {
+            // 라이브 응답의 content 에는 솔라피 콘솔에 등록된 본문(`#{변수명}` 포함)이 들어있다.
+            // 공통코드 모드와 동일한 추출기를 재사용하여 어드민 UI가 변수 입력 폼을 자동 생성하도록 한다.
             templates.add(TestNotificationAlimtalkTemplate.builder()
                 .templateCode(meta.templateId())
                 .title(meta.name())
                 .status(meta.status())
-                .variables(Collections.emptyList())
+                .variables(extractVariablesFromText(meta.content()))
+                .content(meta.content())
                 .source(SOURCE_SOLAPI)
                 // 라이브 출처는 사용자가 실 Solapi templateId 를 직접 선택하는 상태이므로 항상 true.
                 .solapiTemplateIdPresent(true)
@@ -716,6 +720,15 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
         }
     }
 
+    /**
+     * 공통코드 {@code extra_data} JSON 문자열의 {@code template} 필드에서 변수를 추출한다.
+     *
+     * <p>본 메서드는 공통코드 모드 전용 wrapper다. 라이브 모드는
+     * {@link #extractVariablesFromText(String)}를 직접 호출한다. 내부 로직은 동일하다.
+     *
+     * @param extraDataJson 공통코드 {@code extra_data} JSON 문자열(null/blank 허용)
+     * @return 추출된 변수 메타 리스트(불변, 빈 리스트 가능)
+     */
     private List<TestNotificationAlimtalkTemplate.Variable> extractVariables(String extraDataJson) {
         if (extraDataJson == null || extraDataJson.isBlank()) {
             return Collections.emptyList();
@@ -726,28 +739,70 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
             if (template == null || template.isNull()) {
                 return Collections.emptyList();
             }
-            String templateText = template.asText();
-            List<TestNotificationAlimtalkTemplate.Variable> variables = new ArrayList<>();
-            int idx = 0;
-            while ((idx = templateText.indexOf("#{", idx)) != -1) {
-                int end = templateText.indexOf('}', idx);
-                if (end < 0) {
-                    break;
-                }
-                String name = templateText.substring(idx + 2, end);
-                if (variables.stream().noneMatch(v -> v.getName().equals(name))) {
-                    variables.add(TestNotificationAlimtalkTemplate.Variable.builder()
-                        .name(name)
-                        .required(true)
-                        .sampleValue(null)
-                        .build());
-                }
-                idx = end + 1;
-            }
-            return variables;
+            return extractVariablesFromText(template.asText());
         } catch (Exception e) {
             log.debug("ALIMTALK_TEMPLATE extraData 파싱 실패: {}", e.getMessage());
             return Collections.emptyList();
+        }
+    }
+
+    /**
+     * 알림톡 템플릿 본문 문자열에서 {@code #{변수명}} 형식의 변수를 추출한다.
+     *
+     * <p>중복 변수명은 1건으로 dedupe. {@code required=true}, {@code sampleValue=null} 기본.
+     * 공통코드·라이브 모드 양쪽에서 동일 추출 로직을 재사용한다.
+     *
+     * @param templateText 템플릿 본문(null/blank 허용)
+     * @return 추출된 변수 메타 리스트(불변, 빈 리스트 가능)
+     */
+    private List<TestNotificationAlimtalkTemplate.Variable> extractVariablesFromText(String templateText) {
+        if (templateText == null || templateText.isBlank()) {
+            return Collections.emptyList();
+        }
+        List<TestNotificationAlimtalkTemplate.Variable> variables = new ArrayList<>();
+        int idx = 0;
+        while ((idx = templateText.indexOf("#{", idx)) != -1) {
+            int end = templateText.indexOf('}', idx + 2);
+            if (end < 0) {
+                break;
+            }
+            String name = templateText.substring(idx + 2, end);
+            if (!name.isBlank()
+                && variables.stream().noneMatch(v -> v.getName().equals(name))) {
+                variables.add(TestNotificationAlimtalkTemplate.Variable.builder()
+                    .name(name)
+                    .required(true)
+                    .sampleValue(null)
+                    .build());
+            }
+            idx = end + 1;
+        }
+        return variables;
+    }
+
+    /**
+     * 공통코드 {@code extra_data} JSON 문자열에서 템플릿 본문({@code template}) 텍스트를 추출한다.
+     *
+     * <p>어드민 도구의 본문 미리보기 노출에 사용된다. 파싱 실패·필드 부재 시 {@code null}.
+     *
+     * @param extraDataJson 공통코드 {@code extra_data} JSON 문자열(null/blank 허용)
+     * @return 템플릿 본문 또는 {@code null}
+     */
+    private String extractTemplateBodyText(String extraDataJson) {
+        if (extraDataJson == null || extraDataJson.isBlank()) {
+            return null;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(extraDataJson);
+            JsonNode template = root.get("template");
+            if (template == null || template.isNull()) {
+                return null;
+            }
+            String text = template.asText();
+            return text == null || text.isBlank() ? null : text;
+        } catch (Exception e) {
+            log.debug("ALIMTALK_TEMPLATE extra_data 본문 추출 실패: {}", e.getMessage());
+            return null;
         }
     }
 

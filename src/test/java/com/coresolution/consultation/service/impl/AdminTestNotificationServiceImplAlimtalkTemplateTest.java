@@ -245,6 +245,68 @@ class AdminTestNotificationServiceImplAlimtalkTemplateTest {
     }
 
     @Test
+    @DisplayName("live 모드 — content에서 #{변수명}을 추출해 variables를 채우고 content는 그대로 노출")
+    void listLiveAlimtalkTemplates_extractsVariablesFromContent() {
+        String envPfId = "KA01PFENVTEST123";
+        SolapiCredentials envCreds = new SolapiCredentials("ENV_API_KEY", "ENV_API_SECRET");
+        String content = "[#{packageName}] 결제금액 #{paymentAmount}원이 입금 확인되었습니다."
+            + " 담당자: #{consultantName}";
+
+        when(tenantKakaoAlimtalkSettingsRepository.findByTenantIdAndIsDeletedFalse(eq(TENANT_ID)))
+            .thenReturn(Optional.empty());
+        when(solapiCredentialResolver.resolveCredentials(any())).thenReturn(envCreds);
+        when(solapiCredentialResolver.resolvePfId(any())).thenReturn(envPfId);
+
+        SolapiKakaoTemplateClient.Response success = SolapiKakaoTemplateClient.Response.success(List.of(
+            new SolapiKakaoTemplateClient.TemplateMeta(
+                "KA01TP260521130131986g9Fyf1DM6iw", "CONSULTATION_CONFIRMED", "APPROVED", content)));
+        when(solapiKakaoTemplateClient.list(eq(envCreds), eq(envPfId))).thenReturn(success);
+
+        List<TestNotificationAlimtalkTemplate> result = service.listLiveAlimtalkTemplates(TENANT_ID);
+
+        assertThat(result).hasSize(1);
+        TestNotificationAlimtalkTemplate template = result.get(0);
+        assertThat(template.getTemplateCode()).isEqualTo("KA01TP260521130131986g9Fyf1DM6iw");
+        assertThat(template.getSource()).isEqualTo("SOLAPI");
+        assertThat(template.getContent()).isEqualTo(content);
+        // dedupe·required=true·sampleValue=null 기본값을 동시 검증한다.
+        assertThat(template.getVariables())
+            .extracting(TestNotificationAlimtalkTemplate.Variable::getName)
+            .containsExactly("packageName", "paymentAmount", "consultantName");
+        assertThat(template.getVariables())
+            .allSatisfy(v -> {
+                assertThat(v.isRequired()).isTrue();
+                assertThat(v.getSampleValue()).isNull();
+            });
+    }
+
+    @Test
+    @DisplayName("live 모드 — content가 평문(변수 없음)이면 variables=[] 이고 content는 그대로 노출")
+    void listLiveAlimtalkTemplates_handlesContentWithoutVariables() {
+        String envPfId = "KA01PFENVTEST123";
+        SolapiCredentials envCreds = new SolapiCredentials("ENV_API_KEY", "ENV_API_SECRET");
+        String content = "안녕하세요. 마인드가든 알림 테스트 메시지입니다.";
+
+        when(tenantKakaoAlimtalkSettingsRepository.findByTenantIdAndIsDeletedFalse(eq(TENANT_ID)))
+            .thenReturn(Optional.empty());
+        when(solapiCredentialResolver.resolveCredentials(any())).thenReturn(envCreds);
+        when(solapiCredentialResolver.resolvePfId(any())).thenReturn(envPfId);
+
+        SolapiKakaoTemplateClient.Response success = SolapiKakaoTemplateClient.Response.success(List.of(
+            new SolapiKakaoTemplateClient.TemplateMeta(
+                "KA01TPPLAIN0000000000000000000001", "PLAIN_BODY", "APPROVED", content)));
+        when(solapiKakaoTemplateClient.list(eq(envCreds), eq(envPfId))).thenReturn(success);
+
+        List<TestNotificationAlimtalkTemplate> result = service.listLiveAlimtalkTemplates(TENANT_ID);
+
+        assertThat(result).hasSize(1);
+        TestNotificationAlimtalkTemplate template = result.get(0);
+        assertThat(template.getVariables()).isEmpty();
+        assertThat(template.getContent()).isEqualTo(content);
+        assertThat(template.getSource()).isEqualTo("SOLAPI");
+    }
+
+    @Test
     @DisplayName("live 모드 — 솔라피 4xx 응답이면 AlimtalkTemplateFetchException 발생")
     void listLiveAlimtalkTemplates_whenSolapi4xx_throwsAlimtalkTemplateFetchException() {
         when(tenantKakaoAlimtalkSettingsRepository.findByTenantIdAndIsDeletedFalse(eq(TENANT_ID)))

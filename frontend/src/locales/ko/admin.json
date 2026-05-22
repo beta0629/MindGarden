@@ -102,7 +102,8 @@
       "templatesLoading": "템플릿 로드 중...",
       "templatesEmpty": "사용 가능한 템플릿이 없습니다.",
       "missingMappingBadge": "[매핑없음] ",
-      "missingMappingHint": "선택한 템플릿은 Solapi 실 templateId 매핑이 없어 발송이 차단됩니다. 공통코드 ALIMTALK_BIZ_TEMPLATE_CODE 에 매핑을 추가하거나, 위 '솔라피 전체 보기' 토글로 실제 등록된 templateId 를 선택해 주세요."
+      "missingMappingHint": "선택한 템플릿은 Solapi 실 templateId 매핑이 없어 발송이 차단됩니다. 공통코드 ALIMTALK_BIZ_TEMPLATE_CODE 에 매핑을 추가하거나, 위 '솔라피 전체 보기' 토글로 실제 등록된 templateId 를 선택해 주세요.",
+      "bodyPreview": "템플릿 본문"
     },
     "reason": {
       "label": "발송 사유 (감사로그 기록, 필수)",

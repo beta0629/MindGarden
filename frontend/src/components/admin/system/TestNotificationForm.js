@@ -450,6 +450,14 @@ const TestNotificationForm = ({ onSentSuccess }) => {
           )}
         </p>
       )}
+      {selectedTemplate && selectedTemplate.content && (
+        <div className="mg-test-notif-form__template-preview" aria-live="polite">
+          <span className="mg-test-notif-form__preview-label">
+            {t('testNotification.alimtalk.bodyPreview', '템플릿 본문')}
+          </span>
+          <pre className="mg-test-notif-form__preview-text">{selectedTemplate.content}</pre>
+        </div>
+      )}
       {templateVariableDefs.length > 0 && (
         <div className="mg-test-notif-form__variables">
           <h4 className="mg-test-notif-form__variables-title">

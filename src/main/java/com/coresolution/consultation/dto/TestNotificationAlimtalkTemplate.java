@@ -31,6 +31,14 @@ public class TestNotificationAlimtalkTemplate {
     /** 출처 — {@code COMMON_CODE} 또는 {@code SOLAPI}. */
     private String source;
     /**
+     * 템플릿 본문(미리보기·변수 매칭 진단용, null 가능).
+     *
+     * <p>{@code SOLAPI} 출처는 솔라피 응답 {@code content} 그대로,
+     * {@code COMMON_CODE} 출처는 {@code extra_data.template} 값. 어드민 도구가 어떤 변수를
+     * 채워야 하는지 직관 이해할 수 있도록 변수 입력 폼 위쪽 영역에 노출한다.
+     */
+    private String content;
+    /**
      * Solapi 실제 {@code templateId} 매핑 존재 여부.
      *
      * <p>{@code COMMON_CODE} 출처 옵션에 대해 공통코드 그룹 {@code ALIMTALK_BIZ_TEMPLATE_CODE}

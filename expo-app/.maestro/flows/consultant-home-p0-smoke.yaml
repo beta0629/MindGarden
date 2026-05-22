@@ -1,0 +1,34 @@
+# Consultant Mobile Home P0 — Maestro smoke
+# SSOT: CONSULTANT_MOBILE_HOME_CONTENT_ENHANCEMENT_ORCHESTRATION.md §8
+# 카피: src/constants/consultantHomeCopy.ts
+# UAT: docs/project-management/MOBILE_HOME_P0_DEVICE_UAT_RUN.md
+appId: com.mindgardenmobile
+name: Consultant home P0 smoke
+tags:
+  - consultant
+  - smoke
+  - home
+  - p0
+---
+- launchApp:
+    clearState: false
+
+- runFlow:
+    file: subflows/consultant-credentials-login.yaml
+
+- extendedWaitUntil:
+    visible: '핵심 지표'
+    timeout: 90000
+
+# 인사 — GREETING 접두사 (이름은 가변)
+- assertVisible: '안녕하세요'
+
+# P0 홈 섹션 (CONSULTANT_HOME_COPY)
+- assertVisible: '핵심 지표'
+- assertVisible: '오늘 상담'
+- assertVisible: '안읽은 메시지'
+- assertVisible: '오늘의 스케줄'
+- assertVisible: '전체 보기'
+- assertVisible: '빠른 액션'
+- assertVisible: '일정 추가'
+- assertVisible: '근무 설정'

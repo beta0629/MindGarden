@@ -2,7 +2,8 @@
 # §7.1 ADMIN_MOBILE_MVP_TEST_PLAN.md · 수동 절차 ADMIN_MOBILE_MVP_SMOKE_RUN.md
 #
 # 전제: ROLE_ADMIN 계정. STAFF(검수 탭 없음)는 admin-mvp-smoke-staff.yaml 별도(선택).
-# 카피: src/constants/adminMobileCopy.ts, adminMobileScreensCopy.ts, adminCommunityModerationCopy.ts
+# 카피: src/constants/adminHomeCopy.ts (ADMIN_MOBILE_HOME_COPY), adminMobileScreensCopy.ts, adminCommunityModerationCopy.ts
+# UAT: docs/project-management/MOBILE_HOME_P0_DEVICE_UAT_RUN.md
 appId: com.mindgardenmobile
 name: Admin MVP smoke (ADMIN)
 tags:
@@ -23,10 +24,17 @@ tags:
     visible: '안녕하세요'
     timeout: 90000
 
-# 관리 홈 (ADMIN_MOBILE_HOME_COPY)
+# 관리 홈 P0 (ADMIN_MOBILE_HOME_COPY — adminHomeCopy.ts)
 - assertVisible: '안녕하세요'
 - assertVisible: '읽지 않은 알림'
 - assertVisible: '오늘 일정'
+- assertVisible: '운영 지표'
+- scrollUntilVisible:
+    element: '빠른 액션'
+    direction: DOWN
+    timeout: 15000
+- assertVisible: '빠른 액션'
+- assertVisible: '일정 등록'
 
 # 검수 탭 (ADMIN_MOBILE_COPY.TAB_REVIEW — STAFF 셸에서는 탭 없음)
 - tapOn: '검수'

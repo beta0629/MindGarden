@@ -12,6 +12,18 @@ export function isExpoGoApp(): boolean {
   return Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 }
 
+/**
+ * Expo Router static export·SSR(Node `render.js`) — DOM·localStorage 없음.
+ * react-native-mmkv web 구현은 서버 접근 시 throw 하므로 메모리 폴백을 쓴다.
+ */
+export function isServerSideRenderContext(): boolean {
+  return typeof window === 'undefined';
+}
+
+function shouldUseMemoryMmkv(): boolean {
+  return isExpoGoApp() || isServerSideRenderContext();
+}
+
 export type MmkvLike = {
   getString: (key: string) => string | undefined;
   set: (key: string, value: boolean | string | number) => void;
@@ -80,9 +92,9 @@ function createLazyNativeMmkv(id: string): MmkvLike {
   };
 }
 
-/** Nitro 없이 동작해야 할 때(Expo Go) 메모리 구현 */
+/** Nitro/DOM 없이 동작해야 할 때(Expo Go·SSR) 메모리 구현 */
 export function getMmkv(id: string): MmkvLike {
-  if (isExpoGoApp()) {
+  if (shouldUseMemoryMmkv()) {
     return getMemoryMmkv(id);
   }
   let lazy = lazyNativeById.get(id);

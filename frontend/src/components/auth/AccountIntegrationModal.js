@@ -7,6 +7,7 @@ import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ACCOUNT_INTEGRATION_SEND_VERIFICATION_CODE = '/api/v1/account-integration/send-verification-code';
@@ -25,6 +26,7 @@ const AccountIntegrationModal = ({
     socialUserInfo, 
     onIntegrationSuccess 
 }) => {
+    const { t } = useTranslation();
     const [step, setStep] = useState(1); // 1: 이메일 입력, 2: 인증 코드, 3: 비밀번호 확인, 4: 완료
     const [formData, setFormData] = useState({
         existingEmail: '',
@@ -253,7 +255,7 @@ const AccountIntegrationModal = ({
                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
-                                    취소
+                                    {t('common.actions.cancel', '취소')}
                                 </MGButton>
                                 <MGButton
                                     type="button"
@@ -313,7 +315,7 @@ const AccountIntegrationModal = ({
                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
-                                    이전
+                                    {t('common.actions.prev', '이전')}
                                 </MGButton>
                                 <MGButton
                                     type="button"
@@ -372,7 +374,7 @@ const AccountIntegrationModal = ({
                             <div className="final-info">
                                 <h4>통합 후 정보</h4>
                                 <div className="form-group">
-                                    <label htmlFor="finalEmail">이메일</label>
+                                    <label htmlFor="finalEmail">{t('common.labels.email', '이메일')}</label>
                                     <input
                                         type="email"
                                         id="finalEmail"
@@ -383,7 +385,7 @@ const AccountIntegrationModal = ({
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="finalName">이름</label>
+                                    <label htmlFor="finalName">{t('common.labels.name', '이름')}</label>
                                     <input
                                         type="text"
                                         id="finalName"
@@ -415,7 +417,7 @@ const AccountIntegrationModal = ({
                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
-                                    이전
+                                    {t('common.actions.prev', '이전')}
                                 </MGButton>
                                 <MGButton
                                     type="button"
@@ -454,7 +456,7 @@ const AccountIntegrationModal = ({
                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
-                                    완료
+                                    {t('common.actions.done', '완료')}
                                 </MGButton>
                             </div>
                         </div>

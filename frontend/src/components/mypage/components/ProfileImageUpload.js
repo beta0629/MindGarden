@@ -3,6 +3,7 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import notificationManager from '../../../utils/notification';
+import { useTranslation } from 'react-i18next';
 
 const ProfileImageUpload = ({
   profileImage,
@@ -13,6 +14,7 @@ const ProfileImageUpload = ({
   isEditing,
   showPreview = true
 }) => {
+  const { t } = useTranslation();
   const [isCropping, setIsCropping] = useState(false);
   const [cropImage, setCropImage] = useState(null);
   const [forceUpdate, setForceUpdate] = useState(0);
@@ -165,7 +167,7 @@ const ProfileImageUpload = ({
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleDeleteImage}
               >
-                삭제
+                {t('common.actions.delete', '삭제')}
               </MGButton>
             ) : null}
           </div>
@@ -195,7 +197,7 @@ const ProfileImageUpload = ({
               }}
               preventDoubleClick={false}
             >
-              취소
+              {t('common.actions.cancel', '취소')}
             </MGButton>
             <MGButton
               type="button"

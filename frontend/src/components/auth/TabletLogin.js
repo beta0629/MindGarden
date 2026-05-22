@@ -35,12 +35,14 @@ import {
 } from '../../constants/loginDisplay';
 import '../../styles/auth/TabletLogin.css';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_SMS_LOGIN = '/api/v1/auth/sms-login';
 
 
 const TabletLogin = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { login, testLogin: centralTestLogin, checkSession, setDuplicateLoginModal } = useSession();
@@ -749,7 +751,7 @@ const TabletLogin = () => {
               <div className={TABLET_LOGIN_CSS.FORM_GROUP}>
                 <label className={TABLET_LOGIN_CSS.LABEL}>
                   <i className="bi bi-envelope" />
-                  이메일
+                  {t('common.labels.email', '이메일')}
                 </label>
                 <input
                   type="email"

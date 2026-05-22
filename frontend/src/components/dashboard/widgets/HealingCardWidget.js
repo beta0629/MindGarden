@@ -21,11 +21,13 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import { RoleUtils, USER_ROLES } from '../../../constants/roles';
 import './HealingCardWidget.css';
 import '../../../components/common/HealingCard.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_HEALING_CONTENT = '/api/v1/healing/content';
 
 const HealingCardWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   // 역할별 데이터 소스 설정
   const getDataSourceConfig = () => {
     const targetRole = RoleUtils.isConsultant(user) ? USER_ROLES.CONSULTANT : USER_ROLES.CLIENT;
@@ -158,7 +160,7 @@ const HealingCardWidget = ({ widget, user }) => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             preventDoubleClick={false}
           >
-            새로고침
+            {t('admin.actions.refresh', '새로고침')}
           </MGButton>
         </div>
 

@@ -32,8 +32,10 @@ import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { useTranslation } from 'react-i18next';
 
 const TenantSelection = ({ tenants, onSelect, onCancel }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { checkSession } = useSession();
   const [selectedTenantId, setSelectedTenantId] = useState(null);
@@ -207,7 +209,7 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
-                취소
+                {t('common.actions.cancel', '취소')}
               </MGButton>
               <MGButton
                 type="button"

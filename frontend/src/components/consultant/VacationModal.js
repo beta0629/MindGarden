@@ -13,11 +13,13 @@ import {
   TIME_SLOTS,
   DEFAULT_VACATION_REASONS
 } from '../../constants/vacation';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 휴무 설정 모달 컴포넌트
  */
 const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     type: VACATION_TYPES.ALL_DAY,
     reason: '',
@@ -133,7 +135,7 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
             onClick={handleClose}
             disabled={loading}
           >
-            취소
+            {t('common.actions.cancel', '취소')}
           </MGButton>
           <MGButton
             type="submit"

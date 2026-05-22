@@ -3,6 +3,7 @@ import MGButton from '../../../components/common/MGButton'; // 임시 비활성�
 import Avatar from '../../common/Avatar';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 /**
  * AdminDashboard 헤더 컴포넌트
@@ -20,6 +21,7 @@ const AdminDashboardHeader = ({
     userPermissions,
     onNavigate
 }) => {
+    const { t } = useTranslation();
     const hasNotificationPermission = userPermissions.includes('NOTIFICATION_MANAGEMENT');
     const hasSystemConfigPermission = userPermissions.includes('SYSTEM_CONFIG');
     const hasUserManagementPermission = userPermissions.includes('USER_MANAGEMENT');
@@ -82,7 +84,7 @@ const AdminDashboardHeader = ({
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => onNavigate('/admin/system-config')}
                         >
-                            시스템 설정
+                            {t('admin.labels.systemSettings', '시스템 설정')}
                         </MGButton>
                     )}
                     
@@ -99,7 +101,7 @@ const AdminDashboardHeader = ({
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => onNavigate('/admin/user-management')}
                         >
-                            사용자 관리
+                            {t('admin.labels.userManagement', '사용자 관리')}
                         </MGButton>
                     )}
                 </div>

@@ -5,6 +5,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './ScheduleB0KlA.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES_GROUPS_CONSULTATION_TYPE = '/api/v1/common-codes/groups/CONSULTATION_TYPE';
@@ -41,6 +42,7 @@ const ScheduleTimeSelectionPanel = ({
   excludeScheduleId,
   onCodeOptionsLoaded
 }) => {
+  const { t } = useTranslation();
   const [consultationTypeOptions, setConsultationTypeOptions] = useState([]);
   const [durationOptions, setDurationOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
@@ -196,7 +198,7 @@ const ScheduleTimeSelectionPanel = ({
               value: option.value,
               label: `${toDisplayString(option.label, '—')} (${toDisplayString(option.value, '')})`
             }))}
-            placeholder="선택하세요"
+            placeholder={t('common.messages.pleaseSelect', '선택하세요')}
             disabled={loadingCodes}
             className="mg-v2-form-badge-select mg-v2-ad-time-step__select"
           />
@@ -210,7 +212,7 @@ const ScheduleTimeSelectionPanel = ({
               value: option.value,
               label: `${toDisplayString(option.label, '—')} (${toDisplayString(option.durationMinutes, '0')}분)`
             }))}
-            placeholder="선택하세요"
+            placeholder={t('common.messages.pleaseSelect', '선택하세요')}
             disabled={loadingCodes}
             className="mg-v2-form-badge-select mg-v2-ad-time-step__select"
           />

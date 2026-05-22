@@ -12,6 +12,7 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTATION_MESSAGES = '/api/v1/consultation-messages';
@@ -23,6 +24,7 @@ const API_CONSULTATION_MESSAGES = '/api/v1/consultation-messages';
  * 상담일지 완료 후 내담자에게 메시지를 전송할 수 있는 화면
  */
 const ConsultantMessageScreen = () => {
+  const { t } = useTranslation();
   const { consultationId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -419,7 +421,7 @@ const ConsultantMessageScreen = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="메시지">
+      <AdminCommonLayout title={t('admin.labels.message', '메시지')}>
         <div className="mg-dashboard-layout">
           <div className="mg-dashboard-header">
             <h1 className="mg-dashboard-title">
@@ -439,7 +441,7 @@ const ConsultantMessageScreen = () => {
 
   if (!client || !consultation) {
     return (
-      <AdminCommonLayout title="메시지">
+      <AdminCommonLayout title={t('admin.labels.message', '메시지')}>
         <div className="mg-dashboard-layout">
           <div className="mg-dashboard-header">
             <h1 className="mg-dashboard-title">메시지 전송</h1>
@@ -451,7 +453,7 @@ const ConsultantMessageScreen = () => {
   }
 
   return (
-    <AdminCommonLayout title="메시지">
+    <AdminCommonLayout title={t('admin.labels.message', '메시지')}>
       <div className="mg-dashboard-layout">
       {/* 헤더 */}
       <div className="mg-dashboard-header">
@@ -470,11 +472,11 @@ const ConsultantMessageScreen = () => {
         </h2>
         <div className="mg-grid mg-grid-cols-2 mg-gap-md">
           <div className="mg-flex mg-flex-col">
-            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">이름</span>
+            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">{t('common.labels.name', '이름')}</span>
             <span className="mg-v2-text-base mg-font-medium"><SafeText>{client.name}</SafeText></span>
           </div>
           <div className="mg-flex mg-flex-col">
-            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">이메일</span>
+            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">{t('common.labels.email', '이메일')}</span>
             <span className="mg-v2-text-base mg-font-medium"><SafeText fallback="정보 없음">{client.email}</SafeText></span>
           </div>
           <div className="mg-flex mg-flex-col">
@@ -496,7 +498,7 @@ const ConsultantMessageScreen = () => {
             </span>
           </div>
           <div className="mg-flex mg-flex-col">
-            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">상담사</span>
+            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">{t('common.labels.consultant', '상담사')}</span>
             <span className="mg-v2-text-base mg-font-medium"><SafeText>{user.name}</SafeText></span>
           </div>
         </div>

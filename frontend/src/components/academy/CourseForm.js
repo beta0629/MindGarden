@@ -20,8 +20,10 @@ import { ACADEMY_API, ACADEMY_MESSAGES, PRICING_POLICY, PRICING_POLICY_LABELS, A
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import './Academy.css';
+import { useTranslation } from 'react-i18next';
 
 const CourseForm = ({ course, branchId, onSave, onCancel }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
     branchId: branchId || null,
@@ -271,7 +273,7 @@ const CourseForm = ({ course, branchId, onSave, onCancel }) => {
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  취소
+                  {t('common.actions.cancel', '취소')}
                 </MGButton>
               )}
               <MGButton

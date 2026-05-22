@@ -6,12 +6,14 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 부분 환불 모달 컴포넌트
  * 지정된 회기수만 환불 처리
  */
 const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
+  const { t } = useTranslation();
   const [refundSessions, setRefundSessions] = useState(1);
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
@@ -177,7 +179,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
             disabled={loading}
             preventDoubleClick={false}
           >
-            취소
+            {t('admin.actions.cancel', '취소')}
           </MGButton>
           <MGButton
             type="submit"

@@ -6,7 +6,9 @@ import BaseWidget from './BaseWidget';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import './ErpPurchaseRequestWidget.css';
+import { useTranslation } from 'react-i18next';
 const ErpPurchaseRequestWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -153,7 +155,7 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
               <div className="erp-purchase-stat-value">
                 {purchaseData.approvedRequests}
               </div>
-              <div className="erp-purchase-stat-label">승인됨</div>
+              <div className="erp-purchase-stat-label">{t('common.labels.approved', '승인됨')}</div>
             </div>
           </div>
 
@@ -163,7 +165,7 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
               <div className="erp-purchase-stat-value">
                 {purchaseData.totalRequests}
               </div>
-              <div className="erp-purchase-stat-label">전체</div>
+              <div className="erp-purchase-stat-label">{t('admin.labels.all', '전체')}</div>
             </div>
           </div>
         </div>

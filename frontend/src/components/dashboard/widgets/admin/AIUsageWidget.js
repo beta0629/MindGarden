@@ -22,6 +22,7 @@ import { RoleUtils, LEGACY_USER_ROLES } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_MONITORING_AI_USAGE_DETAILED = '/api/v1/monitoring/ai-usage/detailed';
@@ -30,6 +31,7 @@ const API_MONITORING_AI_USAGE_DETAILED = '/api/v1/monitoring/ai-usage/detailed';
 const MG_STATS_LUCIDE_SIZE = 22;
 
 const AIUsageWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // AI 사용량 데이터 소스 설정
@@ -317,8 +319,8 @@ const AIUsageWidget = ({ widget, user }) => {
           })}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => handleAction('refresh')}
-          aria-label="새로고침"
-          title="새로고침"
+          aria-label={t('admin.actions.refresh', '새로고침')}
+          title={t('admin.actions.refresh', '새로고침')}
           preventDoubleClick={false}
         >
           {WIDGET_CONSTANTS.ICONS.REFRESH}

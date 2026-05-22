@@ -24,11 +24,13 @@ import './PermissionWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_PERMISSIONS_CURRENT_USER = '/api/v1/admin/permissions/current-user';
 
 const PermissionWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [expandedCategories, setExpandedCategories] = useState({
     '관리 권한': true, // 기본 확장
@@ -295,7 +297,7 @@ const PermissionWidget = ({ widget, user }) => {
               onClick={refresh}
               preventDoubleClick={false}
             >
-              다시 시도
+              {t('common.labels.retry', '다시 시도')}
             </MGButton>
           </div>
         )}

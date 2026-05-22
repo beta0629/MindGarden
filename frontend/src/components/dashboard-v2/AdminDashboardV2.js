@@ -103,6 +103,7 @@ import '../../styles/responsive-layout-tokens.css';
 import '../../styles/themes/admin-theme.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/AdminDashboard/AdminDashboardPipeline.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 // /api/v1/admin/mappings 는 SSOT(API_ENDPOINTS.ADMIN.MAPPINGS.LIST) 사용
@@ -193,6 +194,7 @@ function getEmptyWeeklyChartData(weeks = 6) {
 }
 
 const AdminDashboardV2 = ({ user: propUser }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user: sessionUser, isLoading: sessionLoading, logout, hasRole } = useSession();
   const dashboardUser = propUser || sessionUser;
@@ -1025,8 +1027,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'mg-v2-ad-b0kla__icon-btn' })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}
-            aria-label="알림"
-            title="알림"
+            aria-label={t('admin.labels.notification', '알림')}
+            title={t('admin.labels.notification', '알림')}
             preventDoubleClick={false}
           >
             <Bell size={HEADER_ICON_SIZE} strokeWidth={2} aria-hidden />
@@ -1412,7 +1414,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 onClick={() => setIntegratedDataPeriodType('all')}
                 preventDoubleClick={false}
               >
-                전체
+                {t('admin.labels.all', '전체')}
               </MGButton>
               <MGButton
                 type="button"
@@ -1744,7 +1746,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             to={ADMIN_ROUTES.USER_MANAGEMENT}
             icon={Users}
             tone="blue"
-            label="사용자 관리"
+            label={t('admin.labels.userManagement', '사용자 관리')}
             description="상담사·내담자 통합 관리"
           />
           <AdminMgmtNavCard
@@ -1795,7 +1797,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               to={ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE}
               icon={UserCog}
               tone="blue"
-              label="상담사 관리"
+              label={t('admin.labels.consultantManagement', '상담사 관리')}
               description="상담사 정보를 관리합니다"
             />
           )}
@@ -1804,7 +1806,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               to={ADMIN_ROUTES.CLIENT_COMPREHENSIVE}
               icon={UserRound}
               tone="green"
-              label="내담자 관리"
+              label={t('admin.labels.clientManagement', '내담자 관리')}
               description="내담자 정보를 관리합니다"
             />
           )}
@@ -1829,7 +1831,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               to={ADMIN_ROUTES.USER_MANAGEMENT}
               icon={Users}
               tone="blue"
-              label="사용자 관리"
+              label={t('admin.labels.userManagement', '사용자 관리')}
               description="사용자 역할 변경 및 권한 관리"
             />
           )}
@@ -1867,7 +1869,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             to={ADMIN_ROUTES.SYSTEM_CONFIG}
             icon={Settings}
             tone="gray"
-            label="시스템 설정"
+            label={t('admin.labels.systemSettings', '시스템 설정')}
             description="OpenAI API 키 및 시스템 설정을 관리합니다"
           />
           {!HIDE_ADMIN_CARD_IDS.has('cache-monitoring') && (
@@ -1934,7 +1936,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       {showToastState && (
         <div className={`mg-toast mg-toast-${toastType}`}>
           <div className="mg-toast-header">
-            <strong className="me-auto">알림</strong>
+            <strong className="me-auto">{t('admin.labels.notification', '알림')}</strong>
             <MGButton
               type="button"
               className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-toast-close' })}

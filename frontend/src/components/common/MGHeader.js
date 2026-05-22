@@ -10,6 +10,7 @@ import Avatar from './Avatar';
 import MGButton from './MGButton';
 import SafeText from './SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { useTranslation } from 'react-i18next';
 // 헤더 스타일은 main.css를 통해 _header.css에서 중앙화되어 로드됨
 
 const MGHeader = ({
@@ -22,6 +23,7 @@ const MGHeader = ({
   className = '',
   ...props
 }) => {
+  const { t } = useTranslation();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -62,13 +64,13 @@ const MGHeader = ({
         {/* 데스크톱 네비게이션 */}
         <nav className="mg-header__nav mg-header__nav--desktop">
           <a href="/dashboard" className="mg-header__nav-item active">
-            대시보드
+            {t('admin.labels.dashboard', '대시보드')}
           </a>
           <a href="/sessions" className="mg-header__nav-item">
             세션 관리
           </a>
           <a href="/users" className="mg-header__nav-item">
-            사용자 관리
+            {t('admin.labels.userManagement', '사용자 관리')}
           </a>
           <a href="/analytics" className="mg-header__nav-item">
             분석
@@ -165,7 +167,7 @@ const MGHeader = ({
                 <div className="mg-header__user-menu-items">
                   <a href="/profile" className="mg-header__menu-item">
                     <span className="mg-header__menu-icon">👤</span>
-                    프로필
+                    {t('common.labels.profile', '프로필')}
                   </a>
                   <a href="/settings" className="mg-header__menu-item">
                     <span className="mg-header__menu-icon">⚙️</span>
@@ -199,7 +201,7 @@ const MGHeader = ({
           {isNotificationOpen && (
             <div className="mg-header__notification-dropdown">
               <div className="mg-header__notification-header">
-                <h3>알림</h3>
+                <h3>{t('common.labels.notification', '알림')}</h3>
                 <MGButton
                   type="button"
                   className={buildErpMgButtonClassName({
@@ -261,13 +263,13 @@ const MGHeader = ({
       <div className={`mg-header__mobile-menu ${isMobileMenuOpen ? 'active' : ''}`}>
         <nav className="mg-header__nav mg-header__nav--mobile">
           <a href="/dashboard" className="mg-header__nav-item active">
-            대시보드
+            {t('admin.labels.dashboard', '대시보드')}
           </a>
           <a href="/sessions" className="mg-header__nav-item">
             세션 관리
           </a>
           <a href="/users" className="mg-header__nav-item">
-            사용자 관리
+            {t('admin.labels.userManagement', '사용자 관리')}
           </a>
           <a href="/analytics" className="mg-header__nav-item">
             분석

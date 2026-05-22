@@ -4,6 +4,7 @@ import { CLINICAL_CSS } from '../../constants/clinicalCss';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './RiskAlertBadge.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTATION_RECORD_ALERTS_HIGH_RISK = '/api/v1/consultation-record-alerts/high-risk';
@@ -17,6 +18,7 @@ const API_CONSULTATION_RECORD_ALERTS_HIGH_RISK = '/api/v1/consultation-record-al
  * @param {string} props.tenantId - 테넌트 ID
  */
 const RiskAlertBadge = ({ tenantId }) => {
+    const { t } = useTranslation();
     const [alerts, setAlerts] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -153,7 +155,7 @@ const RiskAlertBadge = ({ tenantId }) => {
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={loadAlerts}
                                 disabled={isLoading}
-                                title="새로고침"
+                                title={t('common.actions.refresh', '새로고침')}
                                 variant="outline"
                                 loading={isLoading}
                                 preventDoubleClick={false}
@@ -166,7 +168,7 @@ const RiskAlertBadge = ({ tenantId }) => {
                             {isLoading && (
                                 <div className="alert-loading">
                                     <div className="spinner-small" />
-                                    <p>로딩 중...</p>
+                                    <p>{t('common.messages.loading', '로딩 중...')}</p>
                                 </div>
                             )}
 

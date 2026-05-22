@@ -24,6 +24,7 @@ import { toDisplayString } from '../../../../utils/safeDisplay';
 import './StatisticsGridWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CONSULTANTS_WITH_STATS = '/api/v1/admin/consultants/with-stats';
@@ -33,6 +34,7 @@ const API_ADMIN_SCHEDULES_TODAY = '/api/v1/admin/schedules/today';
 const API_ADMIN_FINANCE_SUMMARY = '/api/v1/admin/finance/summary';
 
 const StatisticsGridWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // 다중 API 엔드포인트를 위한 데이터 소스 설정
@@ -258,7 +260,7 @@ const StatisticsGridWidget = ({ widget, user }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={refresh}
             >
-              다시 시도
+              {t('common.labels.retry', '다시 시도')}
             </MGButton>
           </div>
         )}

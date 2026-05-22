@@ -8,11 +8,13 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import './SystemNotifications.css';
 import SafeText from '../common/SafeText';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 시스템 공지 목록 페이지
  */
 const SystemNotifications = () => {
+  const { t } = useTranslation();
   const { user, isLoggedIn } = useSession();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -161,7 +163,7 @@ const SystemNotifications = () => {
                             <div className="mg-flex mg-align-center mg-gap-sm mg-flex-wrap">
                               <SafeText tag="h4" className="mg-h5 mg-mb-0">{notification.title}</SafeText>
                               {notification.isUrgent && (
-                                <span className="mg-badge mg-badge-danger mg-v2-text-xs">긴급</span>
+                                <span className="mg-badge mg-badge-danger mg-v2-text-xs">{t('admin.labels.urgent', '긴급')}</span>
                               )}
                               {notification.isImportant && (
                                 <span className="mg-badge mg-badge-warning mg-v2-text-xs">중요</span>
@@ -203,7 +205,7 @@ const SystemNotifications = () => {
                   disabled={currentPage === 0}
                   preventDoubleClick={false}
                 >
-                  이전
+                  {t('common.actions.prev', '이전')}
                 </MGButton>
                 <span className="mg-v2-text-sm mg-v2-color-text-secondary mg-flex mg-align-center">
                   {currentPage + 1} / {totalPages}
@@ -250,7 +252,7 @@ const SystemNotifications = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={closeModal}
             >
-              확인
+              {t('common.actions.confirm', '확인')}
             </MGButton>
           )}
         >
@@ -258,7 +260,7 @@ const SystemNotifications = () => {
             <>
               <div className="mg-flex mg-align-center mg-gap-sm mg-flex-wrap mg-mb-md">
                 {selectedNotification.isUrgent && (
-                  <span className="mg-badge mg-badge-danger">긴급</span>
+                  <span className="mg-badge mg-badge-danger">{t('admin.labels.urgent', '긴급')}</span>
                 )}
                 {selectedNotification.isImportant && (
                   <span className="mg-badge mg-badge-warning">중요</span>

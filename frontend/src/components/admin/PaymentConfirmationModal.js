@@ -7,6 +7,7 @@ import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './PaymentConfirmationModal.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_PAYMENTS_CONFIRM = '/api/v1/admin/payments/confirm';
@@ -36,6 +37,7 @@ const PaymentConfirmationModal = ({
   mappings = [], 
   onPaymentConfirmed 
 }) => {
+  const { t } = useTranslation();
   // notificationManager가 제대로 import되었는지 확인
   if (typeof notificationManager === 'undefined') {
     console.error('notificationManager가 정의되지 않았습니다. import를 확인해주세요.');
@@ -296,7 +298,7 @@ const PaymentConfirmationModal = ({
     <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
-      title="결제 확인"
+      title={t('admin.actions.paymentConfirm', '결제 확인')}
       size="auto"
       className="mg-v2-ad-b0kla"
       backdropClick
@@ -315,7 +317,7 @@ const PaymentConfirmationModal = ({
             }}
             disabled={loading}
           >
-            취소
+            {t('admin.actions.cancel', '취소')}
           </MGButton>
           <MGButton
             type="button"
@@ -339,7 +341,7 @@ const PaymentConfirmationModal = ({
             disabled={selectedMappings.length === 0}
             preventDoubleClick
           >
-            결제 확인
+            {t('admin.actions.paymentConfirm', '결제 확인')}
           </MGButton>
         </>
       }
@@ -389,7 +391,7 @@ const PaymentConfirmationModal = ({
             <h3 className="mg-v2-ad-b0kla__section-title">결제 정보</h3>
             
             <div className="mg-v2-form-group">
-              <label className="mg-v2-label">결제 방법</label>
+              <label className="mg-v2-label">{t('admin.labels.paymentMethod', '결제 방법')}</label>
               <BadgeSelect
                 value={paymentData.method}
                 onChange={(val) => handlePaymentDataChange('method', val)}
@@ -398,11 +400,11 @@ const PaymentConfirmationModal = ({
                   label: `${option.icon != null ? `${option.icon} ` : ''}${option.label || option.value || ''}`,
                   icon: option.icon
                 }))}
-                placeholder="선택하세요"
+                placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
                 className="mg-v2-badge-select-wrap"
                 disabled={loadingCodes}
                 loading={loadingCodes}
-                aria-label="결제 방법"
+                aria-label={t('admin.labels.paymentMethod', '결제 방법')}
               />
             </div>
 

@@ -8,8 +8,10 @@ import UnifiedModal from './modals/UnifiedModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import SafeText from './SafeText';
+import { useTranslation } from 'react-i18next';
 
 const DuplicateLoginModal = () => {
+  const { t } = useTranslation();
   const { duplicateLoginModal, setDuplicateLoginModal, checkSession } = useSession();
   const [confirmLoading, setConfirmLoading] = useState(false);
 
@@ -123,7 +125,7 @@ const DuplicateLoginModal = () => {
             data-testid="duplicate-login-cancel"
           >
             <XCircle size={20} className="mg-v2-icon-inline" />
-            취소
+            {t('common.actions.cancel', '취소')}
           </MGButton>
           <MGButton
             variant="primary"

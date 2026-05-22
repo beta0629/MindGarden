@@ -13,9 +13,11 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const ClientMessageWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [allMessages, setAllMessages] = useState([]);
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -327,7 +329,7 @@ const ClientMessageWidget = ({ widget, user }) => {
                     <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
                   )}
                   {message.isUrgent && (
-                    <Badge variant="status" statusVariant="danger" label="긴급" size="sm" />
+                    <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent', '긴급')} size="sm" />
                   )}
                   <span className="client-message-item-date">
                     
@@ -368,7 +370,7 @@ const ClientMessageWidget = ({ widget, user }) => {
                 <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
               )}
               {selectedMessage.isUrgent && (
-                <Badge variant="status" statusVariant="danger" label="긴급" size="sm" />
+                <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent', '긴급')} size="sm" />
               )}
             </div>
             <span className="client-message-detail-date">

@@ -29,6 +29,7 @@ import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import { MG_DESIGN_TOKENS } from '../../../constants/designTokens';
 import './Widget.css';
 import '../../../styles/unified-design-tokens.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 표준화된 위젯 베이스 컴포넌트
@@ -72,6 +73,7 @@ const BaseWidget = ({
   size = 'md',
   variant = 'default'
 }) => {
+  const { t } = useTranslation();
   const config = widget.config || {};
   const widgetType = widget.type || 'unknown';
   
@@ -123,7 +125,7 @@ const BaseWidget = ({
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={onRefresh}
             >
-              다시 시도
+              {t('common.labels.retry', '다시 시도')}
             </MGButton>
           )}
         </div>
@@ -159,7 +161,7 @@ const BaseWidget = ({
           onClick={onRefresh}
           className="base-widget__refresh-button"
         >
-          새로고침
+          {t('admin.actions.refresh', '새로고침')}
         </MGButton>
       )}
     </div>
@@ -216,10 +218,10 @@ const BaseWidget = ({
                   loading={loading}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={onRefresh}
-                  title="새로고침"
+                  title={t('admin.actions.refresh', '새로고침')}
                   disabled={loading}
                 >
-                  새로고침
+                  {t('admin.actions.refresh', '새로고침')}
                 </MGButton>
               )}
             </div>

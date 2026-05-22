@@ -23,11 +23,13 @@ import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { SCHEDULE_API } from '../../../../constants/api';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SCHEDULES_TODAY_STATS = '/api/v1/schedules/today-stats';
 
 const ScheduleRegistrationWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const getDataSourceConfig = () => {
@@ -244,14 +246,14 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
                 <div className="stat-icon completed" />
                 <div className="stat-info">
                   <div className="stat-number">{todayStats.completed}</div>
-                  <div className="stat-label">완료</div>
+                  <div className="stat-label">{t('admin.actions.done', '완료')}</div>
                 </div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon in-progress" />
                 <div className="stat-info">
                   <div className="stat-number">{todayStats.inProgress}</div>
-                  <div className="stat-label">진행중</div>
+                  <div className="stat-label">{t('common.labels.inProgress', '진행중')}</div>
                 </div>
               </div>
               <div className="stat-card">
@@ -284,7 +286,7 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleViewAll}
             >
-              전체 보기
+              {t('admin.actions.viewAll', '전체 보기')}
             </MGButton>
           </div>
           <div className="schedule-items">
@@ -301,7 +303,7 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
                         )}
                       </div>
                       {isToday(schedule.startTime) && (
-                        <div className="today-badge">오늘</div>
+                        <div className="today-badge">{t('admin.labels.today', '오늘')}</div>
                       )}
                     </div>
                     <div className={`schedule-status ${getStatusClass(schedule.status)}`}>
@@ -353,10 +355,10 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
                     loading={false}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleViewSchedule(schedule.id)}
-                    title="상세 보기"
+                    title={t('admin.actions.viewDetail', '상세 보기')}
                     preventDoubleClick={false}
                   >
-                    보기
+                    {t('admin.actions.view', '보기')}
                   </MGButton>
                 </div>
               </div>

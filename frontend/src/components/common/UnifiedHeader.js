@@ -14,6 +14,7 @@ import { useBranding } from '../../hooks/useBranding';
 import { useSession } from '../../contexts/SessionContext';
 import '../../styles/main.css';
 // import UnifiedHeader from '../common/UnifiedHeader'; // 자기 자신을 import하지 않음
+import { useTranslation } from 'react-i18next';
 
 /**
  * 통합 헤더 컴포넌트 (UnifiedHeader)
@@ -69,6 +70,7 @@ const UnifiedHeader = ({
   logoSubtitle,
   ...props
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { checkSession } = useSession();
@@ -589,7 +591,7 @@ const UnifiedHeader = ({
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                취소
+                {t('common.actions.cancel', '취소')}
               </MGButton>
             </div>
           </div>

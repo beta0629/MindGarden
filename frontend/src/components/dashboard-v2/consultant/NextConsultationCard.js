@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Icon from '../../ui/Icon/Icon';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 다음 상담 준비 카드 컴포넌트
@@ -19,6 +20,7 @@ const NextConsultationCard = ({
   onViewDetails, 
   className = '' 
 }) => {
+  const { t } = useTranslation();
   if (!consultation) return null;
 
   const formatTime = (isoString) => {
@@ -43,7 +45,7 @@ const NextConsultationCard = ({
 
       <div className="mg-v2-next-consultation-card__body">
         <div className="mg-v2-info-block">
-          <div className="mg-v2-info-block__label">내담자</div>
+          <div className="mg-v2-info-block__label">{t('admin.labels.client', '내담자')}</div>
           <div className="mg-v2-info-block__value">{consultation.clientName}</div>
         </div>
         

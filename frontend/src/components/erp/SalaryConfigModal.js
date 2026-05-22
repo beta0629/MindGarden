@@ -10,8 +10,10 @@ import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import { ErpSafeText } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import UnifiedLoading from '../common/UnifiedLoading';
+import { useTranslation } from 'react-i18next';
 
 const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
+  const { t } = useTranslation();
   const [configs, setConfigs] = useState({
     monthlyBaseDay: 'LAST_DAY',
     paymentDay: 5,
@@ -173,7 +175,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.monthlyBaseDay}
                 onChange={(val) => handleInputChange('monthlyBaseDay', val)}
                 options={options.monthlyBaseDays.map(option => ({ value: option.value, label: option.label }))}
-                placeholder="선택하세요"
+                placeholder={t('common.messages.pleaseSelect', '선택하세요')}
                 className="mg-v2-form-badge-select"
               />
             </div>
@@ -185,7 +187,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.paymentDay}
                 onChange={(val) => handleInputChange('paymentDay', Number(val))}
                 options={options.paymentDays.map(option => ({ value: option.value, label: option.label }))}
-                placeholder="선택하세요"
+                placeholder={t('common.messages.pleaseSelect', '선택하세요')}
                 className="mg-v2-form-badge-select"
               />
             </div>
@@ -197,7 +199,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.cutoffDay}
                 onChange={(val) => handleInputChange('cutoffDay', val)}
                 options={options.cutoffDays.map(option => ({ value: option.value, label: option.label }))}
-                placeholder="선택하세요"
+                placeholder={t('common.messages.pleaseSelect', '선택하세요')}
                 className="mg-v2-form-badge-select"
               />
             </div>
@@ -212,7 +214,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.batchCycle}
                 onChange={(val) => handleInputChange('batchCycle', val)}
                 options={options.batchCycles.map(option => ({ value: option.value, label: option.label }))}
-                placeholder="선택하세요"
+                placeholder={t('common.messages.pleaseSelect', '선택하세요')}
                 className="mg-v2-form-badge-select"
               />
             </div>
@@ -227,7 +229,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.calculationMethod}
                 onChange={(val) => handleInputChange('calculationMethod', val)}
                 options={options.calculationMethods.map(option => ({ value: option.value, label: option.label }))}
-                placeholder="선택하세요"
+                placeholder={t('common.messages.pleaseSelect', '선택하세요')}
                 className="mg-v2-form-badge-select"
               />
             </div>
@@ -279,7 +281,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           disabled={dataLoading || saving}
           preventDoubleClick={false}
         >
-          취소
+          {t('common.actions.cancel', '취소')}
         </MGButton>
         <MGButton
           type="button"
@@ -291,7 +293,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           preventDoubleClick
         >
-          저장
+          {t('common.actions.save', '저장')}
         </MGButton>
       </div>
     </UnifiedModal>

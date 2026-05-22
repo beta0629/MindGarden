@@ -3,6 +3,7 @@ import UnifiedModal from '../../components/common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import BadgeSelect from '../common/BadgeSelect';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 드래그앤드롭 시 시간 선택 모달 컴포넌트
@@ -42,6 +43,7 @@ const TimeSelectionModal = ({
     isTimeSlotBooked,
     onConfirm
 }) => {
+    const { t } = useTranslation();
     const [localSchedule, setLocalSchedule] = useState(selectedSchedule || {});
 
     useEffect(() => {
@@ -142,7 +144,7 @@ const TimeSelectionModal = ({
                         onClick={onClose}
                         preventDoubleClick={false}
                     >
-                        취소
+                        {t('common.actions.cancel', '취소')}
                     </MGButton>
                     <MGButton
                         variant="primary"
@@ -155,7 +157,7 @@ const TimeSelectionModal = ({
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={handleConfirm}
                     >
-                        확인
+                        {t('common.actions.confirm', '확인')}
                     </MGButton>
                 </>
             }

@@ -15,6 +15,7 @@ import MappingDepositModal from '../../mapping/MappingDepositModal';
 import { ActionButton, StatusBadge } from '../../../common';
 import MappingMatchActions from '../molecules/MappingMatchActions';
 import './MappingListRow.css';
+import { useTranslation } from 'react-i18next';
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -45,6 +46,7 @@ const MappingListRow = ({
   onConfirmDeposit,
   onApprove
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
@@ -126,7 +128,7 @@ const MappingListRow = ({
               title="스케줄 보기"
               preventDoubleClick={false}
             >
-              스케줄
+              {t('common.labels.schedule', '스케줄')}
             </MGButton>
           )}
         </div>
@@ -162,7 +164,7 @@ const MappingListRow = ({
             size="small"
             onClick={() => onEdit(mapping)}
           >
-            수정
+            {t('common.actions.edit', '수정')}
           </ActionButton>
         )}
         {onRefund && (

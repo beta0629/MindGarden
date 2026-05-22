@@ -8,8 +8,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
 import './MappingPartiesRow.css';
+import { useTranslation } from 'react-i18next';
 
 const MappingPartiesRow = ({ consultantName, clientName }) => {
+  const { t } = useTranslation();
   const consultantDisplay = toDisplayString(consultantName, 'N/A');
   const clientDisplay = toDisplayString(clientName, 'N/A');
 
@@ -23,7 +25,7 @@ const MappingPartiesRow = ({ consultantName, clientName }) => {
       <span className="integrated-schedule__card-client">
         {clientDisplay}
       </span>
-      <span className="integrated-schedule__card-client-honorific">내담자</span>
+      <span className="integrated-schedule__card-client-honorific">{t('admin.labels.client', '내담자')}</span>
     </div>
   );
 };

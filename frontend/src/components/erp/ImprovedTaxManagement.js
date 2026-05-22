@@ -36,6 +36,7 @@ import {
   useErpSilentRefresh
 } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 /** 신고 탭 데모 문구(백엔드 연동 전) */
 const REPORT_TAB_COPY = {
@@ -85,6 +86,7 @@ const getCategoryTaxRateLabel = (category) => {
  * 개선된 ERP 세무 관리 페이지 - 실데이터 /api/v1/admin/salary/tax/* 연동
  */
 const ImprovedTaxManagement = () => {
+  const { t } = useTranslation();
   useSession();
   const sessionUser = sessionManager.getUser();
   const sessionIsLoggedIn = sessionManager.isLoggedIn();
@@ -428,14 +430,14 @@ const ImprovedTaxManagement = () => {
                   loading={loading}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   disabled={loading || silentListRefreshing}
-                  aria-label="다시 시도"
+                  aria-label={t('common.labels.retry', '다시 시도')}
                   className={buildErpMgButtonClassName({
                     variant: 'outline',
                     size: 'sm',
                     loading
                   })}
                 >
-                  다시 시도
+                  {t('common.labels.retry', '다시 시도')}
                 </MGButton>
               </div>
             )}
@@ -668,7 +670,7 @@ const ImprovedTaxManagement = () => {
               disabled={loading}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              취소
+              {t('common.actions.cancel', '취소')}
             </MGButton>
             <MGButton
               variant="primary"

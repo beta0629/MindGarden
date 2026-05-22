@@ -17,6 +17,7 @@ import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ClientConsultationsRenewal.css';
 import { USER_ROLES } from '../../constants/roles';
 import { SCHEDULE_API } from '../../constants/api';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_RATINGS = '/api/v1/ratings';
@@ -53,6 +54,7 @@ const groupByDate = (items) => {
 };
 
 const ClientConsultationsRenewal = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useSession();
   const { showToast } = useToast();
@@ -191,13 +193,13 @@ const ClientConsultationsRenewal = () => {
                 className="client-consult__card-btn client-consult__card-btn--outline"
                 onClick={() => navigate(`/client/schedule`)}
               >
-                상세 보기
+                {t('admin.actions.viewDetail', '상세 보기')}
               </button>
               <button
                 className="client-consult__card-btn client-consult__card-btn--danger"
                 onClick={() => handleCancel(id)}
               >
-                취소
+                {t('common.actions.cancel', '취소')}
               </button>
             </>
           ) : (

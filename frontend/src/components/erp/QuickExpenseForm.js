@@ -9,6 +9,7 @@ import csrfTokenManager from '../../utils/csrfTokenManager';
 import { ErpSafeText } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ERP_COMMON_CODES_FINANCIAL = '/api/v1/erp/common-codes/financial';
@@ -18,6 +19,7 @@ const API_ERP_COMMON_CODES_FINANCIAL = '/api/v1/erp/common-codes/financial';
  * 빠른 지출 등록 컴포넌트 (UnifiedModal + 모달 내 금액 입력)
  */
 const QuickExpenseForm = ({ onClose, onSuccess }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [expenseCategories, setExpenseCategories] = useState([]);
@@ -203,7 +205,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                 disabled={loading}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                취소
+                {t('common.actions.cancel', '취소')}
               </MGButton>
               <MGButton
                 type="button"

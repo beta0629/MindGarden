@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 // import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 /**
  * UnifiedModal 테스트 컴포넌트
@@ -8,6 +9,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
  * 다양한 모달 설정을 테스트할 수 있습니다.
  */
 const UnifiedModalTest = () => {
+  const { t } = useTranslation();
   const [modals, setModals] = useState({
     basic: false,
     confirm: false,
@@ -117,7 +119,7 @@ const UnifiedModalTest = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => closeModal('confirm')}
             >
-              취소
+              {t('common.actions.cancel', '취소')}
             </MGButton>
             <MGButton
               variant="danger"
@@ -126,7 +128,7 @@ const UnifiedModalTest = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => closeModal('confirm')}
             >
-              확인
+              {t('common.actions.confirm', '확인')}
             </MGButton>
           </div>
         }
@@ -152,7 +154,7 @@ const UnifiedModalTest = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => closeModal('form')}
             >
-              취소
+              {t('common.actions.cancel', '취소')}
             </MGButton>
             <MGButton
               type="submit"
@@ -162,7 +164,7 @@ const UnifiedModalTest = () => {
               className={buildErpMgButtonClassName({ variant: 'success', size: 'sm', loading: false })}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              저장
+              {t('common.actions.save', '저장')}
             </MGButton>
           </div>
         }

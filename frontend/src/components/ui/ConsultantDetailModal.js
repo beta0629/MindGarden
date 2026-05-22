@@ -16,6 +16,7 @@ import {
 import Avatar from '../common/Avatar';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 상담사 상세 정보 모달
@@ -39,6 +40,7 @@ const ConsultantDetailModal = ({
     onClose, 
     consultant 
 }) => {
+    const { t } = useTranslation();
     // 공통 함수로 데이터 포맷팅
     const availability = getFormattedAvailability(consultant);
     const contact = getFormattedContact(consultant);
@@ -66,7 +68,7 @@ const ConsultantDetailModal = ({
                         onClick={onClose}
                         preventDoubleClick={false}
                     >
-                        닫기
+                        {t('common.actions.close', '닫기')}
                     </MGButton>
                     <MGButton
                         variant="primary"
@@ -103,7 +105,7 @@ const ConsultantDetailModal = ({
                             
                             <div className="mg-consultant-detail-info">
                                 <SafeText tag="h3" className="mg-consultant-detail-name">{consultant.name}</SafeText>
-                                <p className="mg-consultant-detail-role">상담사</p>
+                                <p className="mg-consultant-detail-role">{t('common.labels.consultant', '상담사')}</p>
                                 
                                 <div className="mg-consultant-detail-stats">
                                     <div className="mg-consultant-detail-stat">
@@ -143,7 +145,7 @@ const ConsultantDetailModal = ({
                                 <div className="mg-consultant-detail-contact-item">
                                     <Mail size={18} />
                                     <div className="mg-consultant-detail-contact-info">
-                                        <span className="mg-consultant-detail-contact-label">이메일</span>
+                                        <span className="mg-consultant-detail-contact-label">{t('common.labels.email', '이메일')}</span>
                                         <span className="mg-consultant-detail-contact-value">
                                             <SafeText>{contact.email}</SafeText>
                                         </span>

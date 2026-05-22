@@ -7,6 +7,7 @@ import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_RECURRING_EXPENSES = '/api/v1/admin/recurring-expenses';
@@ -32,6 +33,7 @@ const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=FINANCIAL_CATEGORY';
  * @since 2025-09-30
  */
 const RecurringExpenseModal = ({ isOpen, onClose }) => {
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [expenses, setExpenses] = useState([]);
     const [statistics, setStatistics] = useState(null);
@@ -354,10 +356,10 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                                 disabled={loading}
                                                 variant="outline"
                                                 size="small"
-                                                title="수정"
+                                                title={t('common.actions.edit', '수정')}
                                                 preventDoubleClick={false}
                                             >
-                                                수정
+                                                {t('common.actions.edit', '수정')}
                                             </MGButton>
                                             <MGButton
                                                 className={buildErpMgButtonClassName({
@@ -371,10 +373,10 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                                 disabled={loading}
                                                 variant="danger"
                                                 size="small"
-                                                title="삭제"
+                                                title={t('common.actions.delete', '삭제')}
                                                 preventDoubleClick={false}
                                             >
-                                                 삭제
+                                                 {t('common.actions.delete', '삭제')}
                                             </MGButton>
                                         </div>
                                     </div>
@@ -412,7 +414,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                         variant="secondary"
                                         preventDoubleClick={false}
                                     >
-                                        취소
+                                        {t('common.actions.cancel', '취소')}
                                     </MGButton>
                                     <MGButton
                                         type="button"
@@ -427,7 +429,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                         variant="primary"
                                     >
-                                        저장
+                                        {t('common.actions.save', '저장')}
                                     </MGButton>
                                 </>
                             }
@@ -475,7 +477,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                                     { value: 'quarterly', label: '분기별' },
                                                     { value: 'yearly', label: '연간' }
                                                 ]}
-                                                placeholder="선택하세요"
+                                                placeholder={t('common.messages.pleaseSelect', '선택하세요')}
                                                 disabled={loading}
                                                 className="mg-v2-form-badge-select"
                                             />
@@ -534,7 +536,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
 
                                     <div className="mg-v2-form-group">
                                         <label htmlFor="description" className="mg-v2-form-label">
-                                            설명
+                                            {t('common.labels.description', '설명')}
                                         </label>
                                         <textarea
                                             id="description"

@@ -28,6 +28,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './PermissionGroupManagementUI.css';
+import { useTranslation } from 'react-i18next';
 
 const PermissionGroupManagementUI = ({
     roles,
@@ -41,6 +42,7 @@ const PermissionGroupManagementUI = ({
     onRevokePermission,
     onBatchGrant
 }) => {
+  const { t } = useTranslation();
 /**
      * 권한 레벨 한글 변환
      */
@@ -165,7 +167,7 @@ const PermissionGroupManagementUI = ({
                                             variant="primary"
                                             size="small"
                                         >
-                                            전체
+                                            {t('common.labels.all', '전체')}
                                         </MGButton>
                                     </div>
                                 )}

@@ -44,11 +44,13 @@ import {
 } from '../../../utils/scheduleExternalDropGuards';
 import { USER_ROLES } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
 
 const IntegratedMatchingSchedule = () => {
+  const { t } = useTranslation();
   const { user } = useSession();
   /** 통합 스케줄 캘린더·등록 모달: 세션 역할 전달(STAFF 등). 미로그인 시에만 ADMIN 폴백 */
   const calendarUserRole = user?.role || USER_ROLES.ADMIN;
@@ -251,7 +253,7 @@ const IntegratedMatchingSchedule = () => {
           <h2 className="integrated-schedule__sidebar-title">매칭 목록</h2>
           {/* Task C: 필터 통합 후보 — MappingFilterSection + UnifiedFilterSearch(quickFilterOptions·filters 계약 정렬 시 이 블록 치환) */}
           <fieldset className="integrated-schedule__filter" aria-label="매칭 목록 보기 필터">
-            <legend className="integrated-schedule__filter-legend">보기</legend>
+            <legend className="integrated-schedule__filter-legend">{t('admin.actions.view', '보기')}</legend>
             <label className={`integrated-schedule__filter-label ${viewFilter === VIEW_FILTER_NEW ? 'integrated-schedule__filter-label--selected' : ''}`}>
               <input
                 type="radio"
@@ -281,13 +283,13 @@ const IntegratedMatchingSchedule = () => {
                 value={VIEW_FILTER_ALL}
                 checked={viewFilter === VIEW_FILTER_ALL}
                 onChange={() => setViewFilter(VIEW_FILTER_ALL)}
-                aria-label="전체"
+                aria-label={t('admin.labels.all', '전체')}
               />
-              <span className="integrated-schedule__filter-text">전체</span>
+              <span className="integrated-schedule__filter-text">{t('admin.labels.all', '전체')}</span>
             </label>
           </fieldset>
           <fieldset className="integrated-schedule__filter integrated-schedule__filter--status" aria-label="상태별 필터">
-            <legend className="integrated-schedule__filter-legend">상태</legend>
+            <legend className="integrated-schedule__filter-legend">{t('admin.labels.status', '상태')}</legend>
             <div className="integrated-schedule__status-btns">
               {STATUS_FILTER_OPTIONS.map((opt) => {
                 const count = getStatusCount(opt.value);

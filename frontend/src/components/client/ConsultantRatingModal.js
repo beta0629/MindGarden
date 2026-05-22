@@ -10,6 +10,7 @@ import '../../styles/unified-design-tokens.css';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './ConsultantRatingModal.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 상담사 하트 평가 모달 컴포넌트
@@ -31,6 +32,7 @@ import './ConsultantRatingModal.css';
  * @since 2025-10-27
  */
 const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) => {
+    const { t } = useTranslation();
     const { user } = useSession();
     const [heartScore, setHeartScore] = useState(0);
     const [hoveredScore, setHoveredScore] = useState(0);
@@ -126,7 +128,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                         disabled={isSubmitting}
                         preventDoubleClick={false}
                     >
-                        취소
+                        {t('common.actions.cancel', '취소')}
                     </MGButton>
                     <MGButton
                         variant="primary"

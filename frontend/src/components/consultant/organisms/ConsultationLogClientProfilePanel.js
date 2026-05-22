@@ -11,6 +11,7 @@ import {
 } from '../../../constants/clientProfileContext';
 import ClientSummaryField from '../molecules/ClientSummaryField';
 import PsychClientContextSummaryBlock from '../../psych-context/organisms/PsychClientContextSummaryBlock';
+import { useTranslation } from 'react-i18next';
 
 const TRIGGER_ID = 'consultation-log-accordion-profile-trigger';
 const PANEL_ID = 'consultation-log-accordion-profile-panel';
@@ -33,6 +34,7 @@ const ConsultationLogClientProfilePanel = ({
   onMemoChange,
   memoDirty
 }) => {
+  const { t } = useTranslation();
   const renderBody = () => {
     if (client) {
       const hideContactDetail = isRestrictedClientProfileTier(visibilityTier);
@@ -73,13 +75,13 @@ const ConsultationLogClientProfilePanel = ({
                 </span>
               </ClientSummaryField>
             )}
-            <ClientSummaryField label="이름">
+            <ClientSummaryField label={t('common.labels.name', '이름')}>
               <SafeText fallback="—">{client.name}</SafeText>
             </ClientSummaryField>
             <ClientSummaryField label="연락처(전화)">
               {displayPhone}
             </ClientSummaryField>
-            <ClientSummaryField label="이메일">
+            <ClientSummaryField label={t('common.labels.email', '이메일')}>
               {hideContactDetail ? '—' : <SafeText fallback="—">{client.email}</SafeText>}
             </ClientSummaryField>
             <ClientSummaryField label="성별">

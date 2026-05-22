@@ -1,6 +1,7 @@
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { ICONS } from '../../../constants/icons';
+import { useTranslation } from 'react-i18next';
 
 const CalendarIcon = ICONS.CALENDAR;
 const XIcon = ICONS.X;
@@ -25,6 +26,7 @@ const ScheduleCalendarMobileZoom = ({
     onScheduleClick, 
     onAddSchedule 
 }) => {
+    const { t } = useTranslation();
     if (!isOpen) return null;
 
     const formatDate = (dateStr) => {
@@ -60,7 +62,7 @@ const ScheduleCalendarMobileZoom = ({
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onClose}
-                        title="닫기"
+                        title={t('common.actions.close', '닫기')}
                         preventDoubleClick={false}
                     >
                         <XIcon className="mg-v2-icon" />

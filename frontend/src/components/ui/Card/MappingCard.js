@@ -16,6 +16,7 @@ import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { useTranslation } from 'react-i18next';
 
 /**
  * statusInfo.variant (legacy) → StatusBadge variant 매핑
@@ -47,53 +48,56 @@ const formatAmount = (amount) => {
 };
 
 /* ─── Summary variant (기존 admin/MappingCard.js) ─── */
-const MappingCardSummary = ({ mapping, onClick, actions }) => (
-  <div
-    className="mg-v2-card mg-v2-mapping-card"
-    onClick={onClick}
-  >
-    <div className="mg-v2-mapping-card-header">
-      <div className="mg-v2-mapping-card-title-section">
-        <Avatar
-          profileImageUrl={mapping.clientProfileImageUrl || mapping.client?.profileImageUrl}
-          displayName={mapping.clientName}
-          className="mg-v2-client-avatar"
-        />
-        <div className="mg-v2-mapping-client-info">
-          <h5 className="mg-v2-client-name">
-            {mapping.clientName || '알 수 없음'}
-          </h5>
-          <span className="mg-v2-client-badge">내담자</span>
+const MappingCardSummary = ({ mapping, onClick, actions }) => {
+  const { t } = useTranslation();
+  return (
+    <div
+      className="mg-v2-card mg-v2-mapping-card"
+      onClick={onClick}
+    >
+      <div className="mg-v2-mapping-card-header">
+        <div className="mg-v2-mapping-card-title-section">
+          <Avatar
+            profileImageUrl={mapping.clientProfileImageUrl || mapping.client?.profileImageUrl}
+            displayName={mapping.clientName}
+            className="mg-v2-client-avatar"
+          />
+          <div className="mg-v2-mapping-client-info">
+            <h5 className="mg-v2-client-name">
+              {mapping.clientName || '알 수 없음'}
+            </h5>
+            <span className="mg-v2-client-badge">{t('common.labels.client', '내담자')}</span>
+          </div>
+        </div>
+        <StatusBadge status={mapping.status} />
+      </div>
+
+      <div className="mg-v2-mapping-card-details">
+        <div className="mg-v2-mapping-detail-item">{mapping.consultantName}</div>
+        <div className="mg-v2-mapping-detail-item">{mapping.packageName}</div>
+      </div>
+
+      <div className="mg-v2-mapping-sessions-grid">
+        <div className="mg-v2-session-stat mg-v2-session-stat-total">
+          <div className="mg-v2-session-stat-label">총</div>
+          <div className="mg-v2-session-stat-value">{mapping.totalSessions}</div>
+        </div>
+        <div className="mg-v2-session-stat mg-v2-session-stat-used">
+          <div className="mg-v2-session-stat-label">사용</div>
+          <div className="mg-v2-session-stat-value">{mapping.usedSessions}</div>
+        </div>
+        <div className="mg-v2-session-stat mg-v2-session-stat-remaining">
+          <div className="mg-v2-session-stat-label">남은</div>
+          <div className="mg-v2-session-stat-value">{mapping.remainingSessions}</div>
         </div>
       </div>
-      <StatusBadge status={mapping.status} />
-    </div>
 
-    <div className="mg-v2-mapping-card-details">
-      <div className="mg-v2-mapping-detail-item">{mapping.consultantName}</div>
-      <div className="mg-v2-mapping-detail-item">{mapping.packageName}</div>
+      {actions && (
+        <div className="mg-v2-mapping-card-actions">{actions}</div>
+      )}
     </div>
-
-    <div className="mg-v2-mapping-sessions-grid">
-      <div className="mg-v2-session-stat mg-v2-session-stat-total">
-        <div className="mg-v2-session-stat-label">총</div>
-        <div className="mg-v2-session-stat-value">{mapping.totalSessions}</div>
-      </div>
-      <div className="mg-v2-session-stat mg-v2-session-stat-used">
-        <div className="mg-v2-session-stat-label">사용</div>
-        <div className="mg-v2-session-stat-value">{mapping.usedSessions}</div>
-      </div>
-      <div className="mg-v2-session-stat mg-v2-session-stat-remaining">
-        <div className="mg-v2-session-stat-label">남은</div>
-        <div className="mg-v2-session-stat-value">{mapping.remainingSessions}</div>
-      </div>
-    </div>
-
-    {actions && (
-      <div className="mg-v2-mapping-card-actions">{actions}</div>
-    )}
-  </div>
-);
+  );
+};
 
 /* ─── Detailed variant (기존 admin/mapping/MappingCard.js) ─── */
 const MappingCardDetailed = ({
@@ -106,6 +110,7 @@ const MappingCardDetailed = ({
   onApprove,
   onRefund
 }) => {
+  const { t } = useTranslation();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
 
@@ -144,7 +149,7 @@ const MappingCardDetailed = ({
           <div className="mg-v2-mapping-participant">
             <User size={16} className="mg-v2-mapping-icon" />
             <div className="mg-v2-mapping-participant-info">
-              <div className="mg-v2-mapping-participant-label">상담사</div>
+              <div className="mg-v2-mapping-participant-label">{t('common.labels.consultant', '상담사')}</div>
               <div className="mg-v2-mapping-participant-name">
                 {mapping.consultantName || 'N/A'}
               </div>
@@ -157,7 +162,7 @@ const MappingCardDetailed = ({
               className="mg-v2-mapping-participant-avatar"
             />
             <div className="mg-v2-mapping-participant-info">
-              <div className="mg-v2-mapping-participant-label">내담자</div>
+              <div className="mg-v2-mapping-participant-label">{t('common.labels.client', '내담자')}</div>
               <div className="mg-v2-mapping-participant-name">
                 {mapping.clientName || 'N/A'}
               </div>
@@ -213,7 +218,7 @@ const MappingCardDetailed = ({
         <div className="mg-v2-mapping-card-footer-left">
           {mapping.status === 'PENDING_PAYMENT' && (
             <ActionButton variant="success" size="small" onClick={() => setShowPaymentModal(true)}>
-              결제 확인
+              {t('admin.actions.paymentConfirm', '결제 확인')}
             </ActionButton>
           )}
           {mapping.status === 'PAYMENT_CONFIRMED' && (
@@ -228,7 +233,7 @@ const MappingCardDetailed = ({
           )}
           {onEdit && (
             <ActionButton variant="outline" size="small" onClick={() => onEdit(mapping)}>
-              수정
+              {t('common.actions.edit', '수정')}
             </ActionButton>
           )}
           {onRefund && (
@@ -275,6 +280,7 @@ const MappingCardCompact = ({
   onViewDetail,
   onEdit
 }) => {
+  const { t } = useTranslation();
   const startDateStr = startDate ? new Date(startDate).toLocaleDateString('ko-KR') : 'N/A';
   const endDateStr = endDate ? new Date(endDate).toLocaleDateString('ko-KR') : null;
   const createdStr = createdAt ? new Date(createdAt).toLocaleDateString('ko-KR') : '날짜 없음';
@@ -293,7 +299,7 @@ const MappingCardCompact = ({
       <div className="mg-v2-card-content">
         <div className="mg-v2-mapping-details">
           <div className="mg-v2-mapping-card__row">
-            <span className="mg-v2-mapping-card__label">상담사</span>
+            <span className="mg-v2-mapping-card__label">{t('common.labels.consultant', '상담사')}</span>
             <span className="mg-v2-mapping-card__value">
               <SafeText fallback="알 수 없음">{consultantName}</SafeText>
             </span>
@@ -351,7 +357,7 @@ const MappingCardCompact = ({
           preventDoubleClick={true}
           onClick={onEdit}
         >
-          수정
+          {t('common.actions.edit', '수정')}
         </MGButton>
       </div>
     </CardContainer>

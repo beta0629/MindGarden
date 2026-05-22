@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { EMOTION_CSS } from '../../constants/emotionCss';
 import './VoiceBiomarkerChart.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 음성 바이오마커 차트 컴포넌트
@@ -11,6 +12,7 @@ import './VoiceBiomarkerChart.css';
  * @param {number} props.biomarkerId - 바이오마커 ID
  */
 const VoiceBiomarkerChart = ({ biomarkerId }) => {
+    const { t } = useTranslation();
     const [biomarker, setBiomarker] = useState(null);
 
     // TODO: 실제 API 호출로 데이터 로드
@@ -29,7 +31,7 @@ const VoiceBiomarkerChart = ({ biomarkerId }) => {
         });
     }, [biomarkerId]);
 
-    if (!biomarker) return <div>로딩 중...</div>;
+    if (!biomarker) return <div>{t('common.messages.loading', '로딩 중...')}</div>;
 
     /**
      * 정상 범위 체크

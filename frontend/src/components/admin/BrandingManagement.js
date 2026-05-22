@@ -32,6 +32,7 @@ import './AdminDashboard/AdminDashboardB0KlA.css';
 import './BrandingManagement.css';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 const BRANDING_MGMT_TITLE_ID = 'branding-management-title';
 const BRANDING_FORM_ID = 'branding-management-form';
@@ -66,6 +67,7 @@ const normalizeIncomingColor = (value, fallbackHex) => {
 };
 
 const BrandingManagement = () => {
+  const { t } = useTranslation();
   const { isLoading, refreshBranding } = useBranding();
 
   const logoInputRef = useRef(null);
@@ -838,7 +840,7 @@ const BrandingManagement = () => {
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           preventDoubleClick={false}
                         >
-                          저장
+                          {t('common.actions.save', '저장')}
                         </MGButton>
                       </div>
                     </div>
@@ -941,7 +943,7 @@ const BrandingManagement = () => {
               onClick={() => setShowPreview(false)}
               preventDoubleClick={false}
             >
-              닫기
+              {t('common.actions.close', '닫기')}
             </MGButton>
           </div>
         </div>

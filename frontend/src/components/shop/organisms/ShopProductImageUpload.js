@@ -21,6 +21,7 @@ import {
 } from '../../../constants/adminShopCatalog';
 import '../../admin/psych-assessment/organisms/PsychUploadSection.css';
 import './ShopProductImageUpload.css';
+import { useTranslation } from 'react-i18next';
 
 const ShopProductImageUpload = ({
   previewUrl,
@@ -29,6 +30,7 @@ const ShopProductImageUpload = ({
   disabled = false,
   testId = 'admin-sku-image-upload'
 }) => {
+  const { t } = useTranslation();
   const [localPreview, setLocalPreview] = useState(null);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [uploadError, setUploadError] = useState('');
@@ -139,7 +141,7 @@ const ShopProductImageUpload = ({
               disabled={disabled}
               onClick={handleClear}
             >
-              삭제
+              {t('common.actions.delete', '삭제')}
             </MGButton>
           </div>
         </figure>

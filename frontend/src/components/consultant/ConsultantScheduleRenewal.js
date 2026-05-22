@@ -17,6 +17,7 @@ import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ConsultantScheduleRenewal.css';
 import { SCHEDULE_API } from '../../constants/api';
+import { useTranslation } from 'react-i18next';
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -99,6 +100,7 @@ const ScheduleSkeleton = () => (
 );
 
 const BottomSheet = ({ schedule, onClose, onStartConsultation, onCompleteConsultation, onWriteLog }) => {
+  const { t } = useTranslation();
   if (!schedule) return null;
   const clientName = schedule.clientName || schedule.userName || '내담자';
   const timeRange = `${formatTime(schedule.startTime)} - ${formatTime(schedule.endTime)}`;
@@ -113,13 +115,13 @@ const BottomSheet = ({ schedule, onClose, onStartConsultation, onCompleteConsult
         <div className="cr-bottomsheet__content">
           <div className="cr-bottomsheet__header">
             <h2 className="cr-bottomsheet__title">상담 상세</h2>
-            <button onClick={onClose} aria-label="닫기" type="button" className="cr-icon-button">
+            <button onClick={onClose} aria-label={t('common.actions.close', '닫기')} type="button" className="cr-icon-button">
               <X size={24} color="var(--mg-color-text-secondary)" />
             </button>
           </div>
 
           <div className="cr-bottomsheet__field">
-            <span className="cr-bottomsheet__label">내담자</span>
+            <span className="cr-bottomsheet__label">{t('common.labels.client', '내담자')}</span>
             <span className="cr-bottomsheet__value">{clientName}</span>
           </div>
           <div className="cr-bottomsheet__field">
@@ -127,7 +129,7 @@ const BottomSheet = ({ schedule, onClose, onStartConsultation, onCompleteConsult
             <span className="cr-bottomsheet__value">{timeRange}</span>
           </div>
           <div className="cr-bottomsheet__field">
-            <span className="cr-bottomsheet__label">상태</span>
+            <span className="cr-bottomsheet__label">{t('common.labels.status', '상태')}</span>
             <span className="cr-bottomsheet__value">{STATUS_LABELS[status] || status}</span>
           </div>
           {schedule.sessionType && (
@@ -171,6 +173,7 @@ const BottomSheet = ({ schedule, onClose, onStartConsultation, onCompleteConsult
 };
 
 const ConsultantScheduleRenewal = () => {
+  const { t } = useTranslation();
   const { user, isLoading: sessionLoading } = useSession();
   const navigate = useNavigate();
   const [viewType, setViewType] = useState(VIEW_TYPES.WEEKLY);
@@ -331,7 +334,7 @@ const ConsultantScheduleRenewal = () => {
           onClick={handleToday}
           type="button"
         >
-          오늘
+          {t('common.labels.today', '오늘')}
         </button>
       </div>
 

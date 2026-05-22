@@ -16,6 +16,7 @@ import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import '../../mapping-management/organisms/MappingListBlock.css';
 import './PsychDocumentListBlock.css';
+import { useTranslation } from 'react-i18next';
 
 /** 심리 문서 목록 보기 전환 옵션 */
 const PSYCH_DOCUMENT_VIEW_MODE_OPTIONS = [
@@ -40,6 +41,7 @@ const PsychDocumentListBlock = ({
   listLoadError = false,
   generatingReportDocumentId = null
 }) => {
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState('table');
   const isEmpty = !documents || documents.length === 0;
 
@@ -60,7 +62,7 @@ const PsychDocumentListBlock = ({
         <thead>
           <tr>
             <th>검사</th>
-            <th>상태</th>
+            <th>{t('admin.labels.status', '상태')}</th>
             <th>파일</th>
             <th>생성</th>
             <th>액션</th>
@@ -70,7 +72,7 @@ const PsychDocumentListBlock = ({
           {documents.map((d) => (
             <tr key={d.documentId}>
               <td data-label="검사">{toDisplayString(d.assessmentType, '-')}</td>
-              <td data-label="상태">
+              <td data-label={t('admin.labels.status', '상태')}>
                 <span className={`mg-v2-badge ${getStatusVariant(d.status)}`}>
                   {toDisplayString(d.status, '-')}
                 </span>

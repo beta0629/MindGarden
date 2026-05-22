@@ -9,6 +9,7 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './PasswordResetModal.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 비밀번호 초기화 모달 컴포넌트
@@ -19,6 +20,7 @@ const PasswordResetModal = ({
     onClose,
     onConfirm
 }) => {
+    const { t } = useTranslation();
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -95,7 +97,7 @@ const PasswordResetModal = ({
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onClose}
                     >
-                        취소
+                        {t('admin.actions.cancel', '취소')}
                     </MGButton>
                     <MGButton
                         type="submit"

@@ -12,6 +12,7 @@ import {
 import StandardizedApi from '../../utils/standardizedApi';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 세금 내역 보기 모달 컴포넌트
@@ -42,6 +43,7 @@ const TaxDetailsModal = ({
   consultantName, 
   period 
 }) => {
+  const { t } = useTranslation();
   const [taxDetails, setTaxDetails] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -121,7 +123,7 @@ const TaxDetailsModal = ({
           preventDoubleClick={false}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
-          닫기
+          {t('common.actions.close', '닫기')}
         </MGButton>
       }
     >
@@ -129,7 +131,7 @@ const TaxDetailsModal = ({
           <div className="mg-v2-info-grid mg-v2-mb-lg">
             <div className="mg-v2-info-item">
               <User size={16} className="mg-v2-icon-inline" />
-              <span className="mg-v2-info-label">상담사</span>
+              <span className="mg-v2-info-label">{t('common.labels.consultant', '상담사')}</span>
               <span className="mg-v2-info-value">{consultantName || '정보 없음'}</span>
             </div>
             <div className="mg-v2-info-item">
@@ -160,7 +162,7 @@ const TaxDetailsModal = ({
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 <RefreshCw size={20} className="mg-v2-icon-inline" />
-                다시 시도
+                {t('common.labels.retry', '다시 시도')}
               </MGButton>
             </div>
           ) : taxDetails.length === 0 ? (
@@ -180,7 +182,7 @@ const TaxDetailsModal = ({
                       <th>세율</th>
                       <th>과세표준</th>
                       <th>세액</th>
-                      <th>설명</th>
+                      <th>{t('common.labels.description', '설명')}</th>
                     </tr>
                   </thead>
                   <tbody>

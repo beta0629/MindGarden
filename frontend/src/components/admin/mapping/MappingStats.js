@@ -16,6 +16,7 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 import '../../dashboard-v2/content/ContentKpiRow.css';
+import { useTranslation } from 'react-i18next';
 
 const KPI_ICON_SIZE = 24;
 
@@ -41,6 +42,7 @@ const KPI_ICON_BY_STAT_ID = {
  * @updated 2025-09-14 - 동적 처리로 변경
  */
 const MappingStats = ({ mappings = [], onStatCardClick }) => {
+    const { t } = useTranslation();
     const [statCards, setStatCards] = useState([]);
     const [loading, setLoading] = useState(true);
     const stats = {
@@ -184,7 +186,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                             <LayoutGrid size={KPI_ICON_SIZE} aria-hidden />
                         </div>
                         <div className="mg-v2-content-kpi-card__info">
-                            <span className="mg-v2-content-kpi-card__label">로딩 중...</span>
+                            <span className="mg-v2-content-kpi-card__label">{t('common.messages.loading', '로딩 중...')}</span>
                             <span className="mg-v2-content-kpi-card__value">-</span>
                         </div>
                     </div>
@@ -232,7 +234,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                                     <SafeText className="mg-v2-content-kpi-card__label">{stat.label}</SafeText>
                                     {stat.action === 'payment' && numericValue > 0 && (
                                         <span className="mg-v2-content-kpi-card__badge mg-v2-content-kpi-card__badge--orange">
-                                            결제 확인
+                                            {t('admin.actions.paymentConfirm', '결제 확인')}
                                         </span>
                                     )}
                                 </div>

@@ -14,6 +14,7 @@ import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './SecurityMonitoringDashboard.css';
+import { useTranslation } from 'react-i18next';
 
 const SECURITY_MONITOR_TITLE_ID = 'security-monitoring-title';
 
@@ -23,6 +24,7 @@ const SECURITY_MONITOR_TITLE_ID = 'security-monitoring-title';
  * 종합적인 보안 상태 분석 및 모니터링
  */
 const SecurityMonitoringDashboard = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [refreshing, setRefreshing] = useState(false);
   const [securitySummary, setSecuritySummary] = useState({
@@ -159,7 +161,7 @@ const SecurityMonitoringDashboard = () => {
                     })}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
-                    새로고침
+                    {t('admin.actions.refresh', '새로고침')}
                   </MGButton>
                 </div>
               )}

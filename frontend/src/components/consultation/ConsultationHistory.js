@@ -18,10 +18,12 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultationHistory.css';
 import SafeText from '../common/SafeText';
+import { useTranslation } from 'react-i18next';
 
 const CONSULTATION_HISTORY_TITLE_ID = 'consultation-history-page-title';
 
 const ConsultationHistory = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [consultations, setConsultations] = useState([]);
@@ -224,7 +226,7 @@ const ConsultationHistory = () => {
           {/* 필터 섹션 */}
           <div className="filter-section">
             <div className="filter-group">
-              <label htmlFor="status-filter">상태</label>
+              <label htmlFor="status-filter">{t('common.labels.status', '상태')}</label>
               <select
                 id="status-filter"
                 value={filterStatus}
@@ -232,7 +234,7 @@ const ConsultationHistory = () => {
                 className="filter-select"
                 disabled={loadingCodes}
               >
-                <option value="ALL">전체</option>
+                <option value="ALL">{t('common.labels.all', '전체')}</option>
                 {statusOptions.map(option => (
                   <option key={option.value} value={option.value}>
                     {option.icon} {option.label} ({option.value})
@@ -290,7 +292,7 @@ const ConsultationHistory = () => {
                   onClick={loadConsultationHistory}
                   preventDoubleClick={false}
                 >
-                  다시 시도
+                  {t('common.labels.retry', '다시 시도')}
                 </MGButton>
               </div>
             ) : filteredConsultations.length === 0 ? (

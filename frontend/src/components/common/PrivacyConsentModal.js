@@ -16,6 +16,7 @@ import {
 } from '../../utils/tenantDisplayName';
 import { getTenantSubdomainFromHost } from '../../utils/subdomainUtils';
 import './PrivacyConsentModal.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_TENANT_BY_SUBDOMAIN = '/api/v1/auth/tenant/by-subdomain';
@@ -37,6 +38,7 @@ const PrivacyConsentModal = ({
   tenantDisplayName = null,
   brandingInfo = null
 }) => {
+  const { t } = useTranslation();
   const [introTenantLabel, setIntroTenantLabel] = useState(() =>
     getConsentModalTenantLabel({ tenantDisplayName, brandingInfo })
   );
@@ -136,7 +138,7 @@ const PrivacyConsentModal = ({
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
             <XCircle size={20} className="mg-v2-icon-inline" />
-            취소
+            {t('common.actions.cancel', '취소')}
           </MGButton>
           <MGButton
             variant="primary"

@@ -8,6 +8,7 @@ import notificationManager from '../../utils/notification';
 import { getLucideIcon } from '../../utils/iconUtils';
 import '../../styles/unified-design-tokens.css';
 import './ClientPersonalizedMessages.css';
+import { useTranslation } from 'react-i18next';
 
 /** message.icon 키 → Lucide 컴포넌트 이름 (iconUtils.getLucideIcon) */
 const MESSAGE_ICON_LUCIDE = {
@@ -29,6 +30,7 @@ const MESSAGE_ICON_LUCIDE = {
  * 매핑 상태, 상담 진행 상황, 결제 상태 등을 기반으로 동적 메시지 생성
  */
 const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [isConsultantModalOpen, setIsConsultantModalOpen] = useState(false);
   const [isConsultationGuideModalOpen, setIsConsultationGuideModalOpen] = useState(false);
@@ -417,7 +419,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
                   <div className={`message-card-action message-card-action--${message.colorClass}`}>
                     {isLoading ? (
                       <span className="message-card-action-text">
-                        처리 중...
+                        {t('common.messages.processingInline', '처리 중...')}
                       </span>
                     ) : (
                       <>

@@ -2,6 +2,7 @@ import React from 'react';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './BadgeSelect.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 배지(칩) 기반 단일/다중 선택 컴포넌트
@@ -24,6 +25,7 @@ const BadgeSelect = ({
   placeholder = '선택하세요',
   'aria-label': ariaLabel
 }) => {
+  const { t } = useTranslation();
   const safeOptions = Array.isArray(options) ? options : [];
   let currentValue;
   if (multiple) {
@@ -78,7 +80,7 @@ const BadgeSelect = ({
         aria-busy="true"
       >
         <span className="mg-v2-badge-select__placeholder">{placeholder}</span>
-        <span className="mg-v2-badge-select__loading-text">로딩 중...</span>
+        <span className="mg-v2-badge-select__loading-text">{t('common.messages.loading', '로딩 중...')}</span>
       </div>
     );
   }

@@ -8,6 +8,7 @@ import SimilarCasesPanel from './SimilarCasesPanel';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './PredictionDashboard.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 예측 기반 경과 모니터링 대시보드
@@ -16,6 +17,7 @@ import './PredictionDashboard.css';
  * @param {number} props.clientId - 내담자 ID
  */
 const PredictionDashboard = ({ clientId }) => {
+    const { t } = useTranslation();
     const [treatmentPrediction, setTreatmentPrediction] = useState(null);
     const [dropoutRisk, setDropoutRisk] = useState(null);
     const [sessionRecommendation, setSessionRecommendation] = useState(null);
@@ -92,7 +94,7 @@ const PredictionDashboard = ({ clientId }) => {
                     onClick={loadPredictionData}
                     variant="primary"
                 >
-                    다시 시도
+                    {t('common.labels.retry', '다시 시도')}
                 </MGButton>
             </div>
         );

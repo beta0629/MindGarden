@@ -19,6 +19,7 @@ import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ConsultantDashboardRenewal.css';
 import { SCHEDULE_API } from '../../constants/api';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTANTS = '/api/v1/consultants';
@@ -94,15 +95,18 @@ const EmptySchedule = ({ onAction }) => (
   </div>
 );
 
-const ErrorState = ({ message, onRetry }) => (
-  <div className="cr-error" role="alert">
-    <AlertTriangle size={40} className="cr-error__icon" />
-    <p className="cr-error__text">{message}</p>
-    <button className="cr-error__retry" onClick={onRetry} type="button">
-      <RefreshCw size={16} /> 다시 시도
-    </button>
-  </div>
-);
+const ErrorState = ({ message, onRetry }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="cr-error" role="alert">
+      <AlertTriangle size={40} className="cr-error__icon" />
+      <p className="cr-error__text">{message}</p>
+      <button className="cr-error__retry" onClick={onRetry} type="button">
+        <RefreshCw size={16} /> {t('common.labels.retry', '다시 시도')}
+      </button>
+    </div>
+  );
+};
 
 const ScheduleCard = ({ schedule, onOpenLog, onDetail }) => {
   const timeRange = getTimeRange(schedule.startTime, schedule.endTime);
@@ -179,6 +183,7 @@ const QuickActionButton = ({ icon: Icon, label, onClick }) => (
 );
 
 const ConsultantDashboardRenewal = () => {
+  const { t } = useTranslation();
   const { user, isLoading: sessionLoading } = useSession();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -348,7 +353,7 @@ const ConsultantDashboardRenewal = () => {
             onClick={() => navigate('/consultant/renewal/schedule')}
             type="button"
           >
-            전체 보기
+            {t('admin.actions.viewAll', '전체 보기')}
           </button>
         </div>
         {todaySchedules.length === 0 ? (

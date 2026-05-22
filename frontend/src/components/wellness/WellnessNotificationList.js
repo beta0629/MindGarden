@@ -17,6 +17,7 @@ import '../../styles/themes/client-theme.css';
 import './WellnessNotificationList.css';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 /**
@@ -34,6 +35,7 @@ const stripHtmlToPreview = (raw) => {
 };
 
 const WellnessNotificationList = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn } = useSession();
   const [notifications, setNotifications] = useState([]);
@@ -135,7 +137,7 @@ const WellnessNotificationList = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={loadNotifications}
               >
-                다시 시도
+                {t('common.labels.retry', '다시 시도')}
               </MGButton>
             </div>
           </div>
@@ -175,7 +177,7 @@ const WellnessNotificationList = () => {
                       <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
                     )}
                     {notification.isUrgent && (
-                      <Badge variant="status" statusVariant="danger" label="긴급" size="sm" />
+                      <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent', '긴급')} size="sm" />
                     )}
                     {!notification.isRead && (
                       <Badge variant="status" statusVariant="info" label="신규" size="sm" />

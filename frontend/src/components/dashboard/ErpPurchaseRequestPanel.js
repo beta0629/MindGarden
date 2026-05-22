@@ -5,7 +5,9 @@ import { apiGet } from '../../utils/ajax';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import './ErpPurchaseRequestPanel.css';
+import { useTranslation } from 'react-i18next';
 const ErpPurchaseRequestPanel = ({ user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [purchaseData, setPurchaseData] = useState({
     pendingRequests: 0,
@@ -109,7 +111,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
                 <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon--success" />
                 <div className="mg-dashboard-stat-content">
                   <div className="mg-dashboard-stat-value">{purchaseData.approvedRequests}</div>
-                  <div className="mg-dashboard-stat-label">승인됨</div>
+                  <div className="mg-dashboard-stat-label">{t('common.labels.approved', '승인됨')}</div>
                 </div>
               </div>
 
@@ -117,7 +119,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
                 <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon--info" />
                 <div className="mg-dashboard-stat-content">
                   <div className="mg-dashboard-stat-value">{purchaseData.totalRequests}</div>
-                  <div className="mg-dashboard-stat-label">전체</div>
+                  <div className="mg-dashboard-stat-label">{t('admin.labels.all', '전체')}</div>
                 </div>
               </div>
             </div>

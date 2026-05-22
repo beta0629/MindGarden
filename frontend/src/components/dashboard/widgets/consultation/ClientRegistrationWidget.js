@@ -25,10 +25,12 @@ import './ClientRegistrationWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { generateMgLoginPassword } from '../../../../utils/generateMgLoginPassword';
+import { useTranslation } from 'react-i18next';
 
 const CLIENT_REGISTER_API = '/api/v1/admin/clients';
 
 const ClientRegistrationWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   
@@ -320,10 +322,10 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleCloseForm}
                 type="button"
-                title="닫기"
+                title={t('common.actions.close', '닫기')}
                 preventDoubleClick={false}
               >
-                닫기
+                {t('common.actions.close', '닫기')}
               </MGButton>
             </div>
             <form onSubmit={handleSubmit} className="client-registration-form">
@@ -358,7 +360,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-group">
                     <label htmlFor="name" className="form-label">
-                      이름 <span className="required">*</span>
+                      {t('common.labels.name', '이름')} <span className="required">*</span>
                     </label>
                     <input
                       type="text"
@@ -379,7 +381,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-group">
                     <label htmlFor="email" className="form-label">
-                      이메일
+                      {t('admin.labels.email', '이메일')}
                     </label>
                     <input
                       type="email"
@@ -662,7 +664,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleCloseForm}
                 >
-                  취소
+                  {t('admin.actions.cancel', '취소')}
                 </MGButton>
                 <MGButton
                   type="button"

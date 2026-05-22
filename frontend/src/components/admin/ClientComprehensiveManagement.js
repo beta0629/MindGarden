@@ -34,6 +34,7 @@ import './ClientManagementPage.css';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 import { Users, UserCheck, Clock, Link2 } from 'lucide-react';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CONSULTATIONS = '/api/v1/admin/consultations';
@@ -77,6 +78,7 @@ const CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS = {
  * @since 2024-12-19
  */
 const ClientComprehensiveManagement = ({ embedded = false }) => {
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [clients, setClients] = useState([]);
     const [consultants, setConsultants] = useState([]);
@@ -501,7 +503,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                     <div className="mg-v2-ad-b0kla__container">
                         <ContentArea ariaLabel="내담자 종합관리 본문">
                             <ContentHeader
-                                title="내담자 관리"
+                                title={t('admin.labels.clientManagement', '내담자 관리')}
                                 subtitle="내담자 정보·상담 이력·매칭·통계를 종합 관리합니다"
                                 titleId={CLIENT_COMP_MGMT_TITLE_ID}
                             />
@@ -598,7 +600,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         <UserCheck size={CLIENT_KPI_ICON_SIZE} aria-hidden />
                                     </div>
                                     <div className="mg-v2-mapping-kpi-section__info">
-                                        <span className="mg-v2-mapping-kpi-section__label">활성</span>
+                                        <span className="mg-v2-mapping-kpi-section__label">{t('admin.labels.active', '활성')}</span>
                                         <span className="mg-v2-mapping-kpi-section__value">{clientKpiStats.active}명</span>
                                     </div>
                                 </div>
@@ -607,7 +609,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         <Clock size={CLIENT_KPI_ICON_SIZE} aria-hidden />
                                     </div>
                                     <div className="mg-v2-mapping-kpi-section__info">
-                                        <span className="mg-v2-mapping-kpi-section__label">대기</span>
+                                        <span className="mg-v2-mapping-kpi-section__label">{t('admin.labels.pending', '대기')}</span>
                                         <span className="mg-v2-mapping-kpi-section__value">{clientKpiStats.pending}명</span>
                                     </div>
                                 </div>
@@ -734,7 +736,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         <>
             {!embedded && (
                 <ContentHeader
-                    title="내담자 관리"
+                    title={t('admin.labels.clientManagement', '내담자 관리')}
                     subtitle="내담자 정보·상담 이력·매칭·통계를 종합 관리합니다"
                     titleId={CLIENT_COMP_MGMT_TITLE_ID}
                     actions={

@@ -14,6 +14,7 @@ import UnifiedLoading from '../../common/UnifiedLoading';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../common/erpMgButtonProps';
 import { ErpSafeNumber, ErpSafeText } from '../common';
+import { useTranslation } from 'react-i18next';
 
 const ERP_FINANCIAL_LIST_PATH = '/erp/financial';
 const ERP_FINANCIAL_DATE_RANGE_QUERY = 'dateRange';
@@ -32,6 +33,7 @@ const ErpRecentTransactionsTable = ({
   recentTransactionsSubtitle,
   recentTransactionsPeriodChipLabel
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleViewAll = () => {
@@ -86,7 +88,7 @@ const ErpRecentTransactionsTable = ({
             preventDoubleClick={false}
             aria-label="재무 관리에서 전체 거래 보기"
           >
-            전체 보기
+            {t('admin.actions.viewAll', '전체 보기')}
           </MGButton>
         </div>
       </div>

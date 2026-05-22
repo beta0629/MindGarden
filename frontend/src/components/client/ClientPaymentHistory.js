@@ -28,6 +28,7 @@ import { isClientMappingPaymentSettled } from '../../constants/mapping';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ClientPaymentHistory.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
@@ -42,6 +43,7 @@ const CLIENT_PAYMENT_HISTORY_TITLE_ID = 'client-payment-history-title';
  * 디자인 시스템 적용 버전
  */
 const ClientPaymentHistory = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useSession();
   const [paymentData, setPaymentData] = useState(null);
@@ -220,7 +222,7 @@ const ClientPaymentHistory = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
-                다시 시도
+                {t('common.labels.retry', '다시 시도')}
               </MGButton>
             </div>
           </div>
@@ -316,7 +318,7 @@ const ClientPaymentHistory = () => {
               onClick={() => setFilter('all')}
               preventDoubleClick={false}
             >
-              전체
+              {t('common.labels.all', '전체')}
             </MGButton>
             <MGButton
               type="button"

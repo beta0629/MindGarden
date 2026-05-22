@@ -12,6 +12,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell } from 'lucide-react';
 import './AppTopBar.css';
+import { useTranslation } from 'react-i18next';
 
 const AppTopBar = ({
   title = '',
@@ -23,6 +24,7 @@ const AppTopBar = ({
   profileImage = null,
   themeClass = '',
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
 
@@ -78,11 +80,11 @@ const AppTopBar = ({
           </button>
         )}
         {showProfile && (
-          <button className="mg-top-bar__profile" aria-label="프로필" type="button">
+          <button className="mg-top-bar__profile" aria-label={t('common.labels.profile', '프로필')} type="button">
             {profileImage ? (
               <img
                 src={profileImage}
-                alt="프로필"
+                alt={t('common.labels.profile', '프로필')}
                 className="mg-top-bar__avatar"
               />
             ) : (

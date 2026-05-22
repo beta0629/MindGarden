@@ -39,6 +39,7 @@ import { resolveShopCatalogDisplayImageUrl } from '../../utils/shopCatalogThumbn
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AdminShopCatalogSkuEditorPage.css';
+import { useTranslation } from 'react-i18next';
 
 const PAGE_TITLE_ID = 'admin-shop-catalog-skus-title';
 
@@ -56,6 +57,7 @@ function normalizeListPayload(raw) {
 }
 
 const AdminShopCatalogSkusPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const allowed = user && (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.STAFF);
@@ -301,7 +303,7 @@ const AdminShopCatalogSkusPage = () => {
             onClick={closePriceHistory}
             disabled={priceHistoryLoading}
           >
-            닫기
+            {t('common.actions.close', '닫기')}
           </MGButton>
         )}
       >

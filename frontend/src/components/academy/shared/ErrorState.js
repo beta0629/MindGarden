@@ -16,11 +16,13 @@ import React from 'react';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './ErrorState.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 에러 상태 컴포넌트
  */
 const ErrorState = ({ message = '오류가 발생했습니다.', onRetry = null }) => {
+  const { t } = useTranslation();
   return (
     <div className="academy-error-state">
       <div className="academy-error-icon">⚠️</div>
@@ -39,7 +41,7 @@ const ErrorState = ({ message = '오류가 발생했습니다.', onRetry = null 
           variant="primary"
           preventDoubleClick={false}
         >
-          다시 시도
+          {t('common.labels.retry', '다시 시도')}
         </MGButton>
       )}
     </div>

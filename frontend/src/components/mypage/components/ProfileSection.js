@@ -9,6 +9,7 @@ import { ROLE_DISPLAY_LABELS } from '../../../constants/mypageUi';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { isLikelyNumericPrimaryKey } from '../../../utils/mypageProfilePayload';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes';
@@ -51,6 +52,7 @@ const ProfileSection = ({
   onSave,
   formatPhoneNumber
 }) => {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [genderOptions, setGenderOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
@@ -202,7 +204,7 @@ const ProfileSection = ({
           <span className="mg-mypage__section-accent" aria-hidden="true" />
           <div className="mg-mypage__section-head-text">
             <h2 id="mg-mypage-profile-header-title" className="mg-mypage__section-title">
-              프로필
+              {t('common.labels.profile', '프로필')}
             </h2>
             <p className="mg-mypage__section-description">다른 사용자에게 보이는 정보입니다.</p>
           </div>
@@ -274,7 +276,7 @@ const ProfileSection = ({
 
             <div className="mg-mypage__form-row">
               <label className="mg-mypage__form-label" htmlFor="mg-mypage-user-id">
-                이름
+                {t('common.labels.name', '이름')}
               </label>
               <input
                 className="mg-mypage__form-control"
@@ -306,7 +308,7 @@ const ProfileSection = ({
 
             <div className="mg-mypage__form-row mg-mypage__form-row--stack">
               <span className="mg-mypage__form-label" id="mg-mypage-email-label">
-                이메일
+                {t('common.labels.email', '이메일')}
               </span>
               <div className="mg-mypage__readonly-row">
                 <p className="mg-mypage__readonly-value" aria-labelledby="mg-mypage-email-label">
@@ -362,7 +364,7 @@ const ProfileSection = ({
                 onChange={handleInputChange}
                 disabled={!isEditing || loadingCodes}
               >
-                <option value="">선택하세요</option>
+                <option value="">{t('common.messages.pleaseSelect', '선택하세요')}</option>
                 {genderOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.icon ? `${option.icon} ` : ''}
@@ -410,7 +412,7 @@ const ProfileSection = ({
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 variant="primary"
               >
-                저장
+                {t('common.actions.save', '저장')}
               </MGButton>
               <MGButton
                 type="button"
@@ -420,7 +422,7 @@ const ProfileSection = ({
                 variant="outline"
                 preventDoubleClick={false}
               >
-                취소
+                {t('common.actions.cancel', '취소')}
               </MGButton>
             </div>
           ) : null}

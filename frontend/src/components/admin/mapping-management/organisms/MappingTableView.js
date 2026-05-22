@@ -14,6 +14,7 @@ import { StatusBadge } from '../../../common';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import './MappingTableView.css';
+import { useTranslation } from 'react-i18next';
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -48,6 +49,7 @@ const MappingTableView = ({
   onConfirmDeposit,
   onApprove
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
@@ -82,9 +84,9 @@ const MappingTableView = ({
       <table className="mg-v2-mapping-table">
         <thead>
           <tr>
-            <th>상태</th>
-            <th>상담사</th>
-            <th>내담자</th>
+            <th>{t('admin.labels.status', '상태')}</th>
+            <th>{t('admin.labels.consultant', '상담사')}</th>
+            <th>{t('admin.labels.client', '내담자')}</th>
             <th>패키지</th>
             <th>금액</th>
             <th>회기</th>
@@ -161,7 +163,7 @@ const MappingTableView = ({
                       onClick={() => navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`)}
                       title="스케줄 보기"
                     >
-                      스케줄
+                      {t('common.labels.schedule', '스케줄')}
                     </MGButton>
                   )}
                 </td>
@@ -203,9 +205,9 @@ const MappingTableView = ({
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick={false}
                         onClick={() => openPaymentModal(mapping)}
-                        title="결제 확인"
+                        title={t('admin.actions.paymentConfirm', '결제 확인')}
                       >
-                        결제 확인
+                        {t('admin.actions.paymentConfirm', '결제 확인')}
                       </MGButton>
                     )}
                     {mapping.status === 'PAYMENT_CONFIRMED' && (
@@ -264,9 +266,9 @@ const MappingTableView = ({
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick={false}
                         onClick={() => onEdit(mapping)}
-                        title="수정"
+                        title={t('common.actions.edit', '수정')}
                       >
-                        수정
+                        {t('common.actions.edit', '수정')}
                       </MGButton>
                     )}
                     {onRefund && (

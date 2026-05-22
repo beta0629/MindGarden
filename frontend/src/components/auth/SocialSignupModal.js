@@ -21,6 +21,7 @@ import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import { SOCIAL_SIGNUP_CHANNEL_HELP } from '../../constants/loginDisplay';
 import '../../styles/auth/social-signup-modal.css';
+import { useTranslation } from 'react-i18next';
 
 const statusToFallbackMessage = (status) => {
   switch (status) {
@@ -84,6 +85,7 @@ const SocialSignupModal = ({
   socialUser,
   onSignupSuccess
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -408,7 +410,7 @@ const SocialSignupModal = ({
 
             <div className="mg-v2-form-group">
               <label htmlFor="socialEmail" className="mg-v2-label">
-                이메일 <span className="mg-v2-form-label-required">*</span>
+                {t('common.labels.email', '이메일')} <span className="mg-v2-form-label-required">*</span>
               </label>
               <input
                 type="email"
@@ -537,7 +539,7 @@ const SocialSignupModal = ({
                 preventDoubleClick={false}
                 onClick={handleDismiss}
               >
-                취소
+                {t('common.actions.cancel', '취소')}
               </MGButton>
               <MGButton
                 type="button"

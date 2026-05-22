@@ -16,6 +16,7 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantAvailability.css';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES_GROUPS_DURATION = '/api/v1/common-codes/groups/DURATION';
@@ -25,6 +26,7 @@ const CONSULTANT_AVAILABILITY_TITLE_ID = 'consultant-availability-page-title';
 const CONSULTANT_AVAILABILITY_FORM_ID = 'consultant-availability-slot-form';
 
 const ConsultantAvailability = () => {
+  const { t } = useTranslation();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [availability, setAvailability] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -274,7 +276,7 @@ const ConsultantAvailability = () => {
         preventDoubleClick={false}
       >
         <i className="bi bi-arrow-clockwise" />
-        새로고침
+        {t('common.actions.refresh', '새로고침')}
       </MGButton>
     </>
   );
@@ -401,7 +403,7 @@ const ConsultantAvailability = () => {
                                   })}
                                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                   onClick={() => setEditingSlot(slot)}
-                                  title="수정"
+                                  title={t('common.actions.edit', '수정')}
                                 >
                                   <i className="bi bi-pencil" />
                                 </MGButton>
@@ -416,7 +418,7 @@ const ConsultantAvailability = () => {
                                   })}
                                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                   onClick={() => handleDeleteAvailability(slot.id)}
-                                  title="삭제"
+                                  title={t('common.actions.delete', '삭제')}
                                 >
                                   <i className="bi bi-trash" />
                                 </MGButton>
@@ -468,6 +470,7 @@ const ConsultantAvailability = () => {
 
 // 상담 가능 시간 모달 컴포넌트
 const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, daysOfWeek, durationOptions }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     dayOfWeek: initialData?.dayOfWeek || 'MONDAY',
     startTime: initialData?.startTime || '09:00',
@@ -552,7 +555,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
             preventDoubleClick={false}
           >
             <i className="bi bi-x-circle" />
-            취소
+            {t('common.actions.cancel', '취소')}
           </MGButton>
           <MGButton
             type="submit"

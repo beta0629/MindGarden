@@ -12,6 +12,7 @@ import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Toast 알림 컴포넌트
@@ -49,6 +50,7 @@ const Toast = ({
   duration = 3000,
   className = ''
 }) => {
+  const { t } = useTranslation();
   const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
@@ -99,7 +101,7 @@ const Toast = ({
         })}
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={handleClose}
-        aria-label="닫기"
+        aria-label={t('common.actions.close', '닫기')}
         variant="outline"
         preventDoubleClick={false}
       >

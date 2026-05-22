@@ -18,6 +18,7 @@ import { useToast } from '../../contexts/ToastContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ConsultantRecordsRenewal.css';
 import { SCHEDULE_API } from '../../constants/api';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTANTS = '/api/v1/consultants';
@@ -72,6 +73,7 @@ const RecordsSkeleton = () => (
 );
 
 const RecordFormSheet = ({ schedule, onClose, onSave }) => {
+  const { t } = useTranslation();
   const [summary, setSummary] = useState('');
   const [privateMemo, setPrivateMemo] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
@@ -121,7 +123,7 @@ const RecordFormSheet = ({ schedule, onClose, onSave }) => {
         </div>
         <div className="cr-form-sheet__header">
           <h2 className="cr-form-sheet__title">일지 작성</h2>
-          <button className="cr-form-sheet__close" onClick={onClose} aria-label="닫기" type="button">
+          <button className="cr-form-sheet__close" onClick={onClose} aria-label={t('common.actions.close', '닫기')} type="button">
             <X size={24} />
           </button>
         </div>
@@ -191,6 +193,7 @@ const RecordFormSheet = ({ schedule, onClose, onSave }) => {
 };
 
 const RecordDetailSheet = ({ record, onClose }) => {
+  const { t } = useTranslation();
   const clientName = record?.clientName || record?.userName || '내담자';
 
   return (
@@ -201,7 +204,7 @@ const RecordDetailSheet = ({ record, onClose }) => {
         </div>
         <div className="cr-form-sheet__header">
           <h2 className="cr-form-sheet__title">일지 상세</h2>
-          <button className="cr-form-sheet__close" onClick={onClose} aria-label="닫기" type="button">
+          <button className="cr-form-sheet__close" onClick={onClose} aria-label={t('common.actions.close', '닫기')} type="button">
             <X size={24} />
           </button>
         </div>
@@ -254,6 +257,7 @@ const RecordDetailSheet = ({ record, onClose }) => {
 };
 
 const ConsultantRecordsRenewal = () => {
+  const { t } = useTranslation();
   const { user, isLoading: sessionLoading } = useSession();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -453,14 +457,14 @@ const ConsultantRecordsRenewal = () => {
                         onClick={() => handleViewDetail(record)}
                         type="button"
                       >
-                        <Eye size={14} /> 상세 보기
+                        <Eye size={14} /> {t('admin.actions.viewDetail', '상세 보기')}
                       </button>
                       <button
                         className="cr-record-card__action-btn cr-record-card__action-btn--secondary"
                         onClick={() => handleWriteLog(record)}
                         type="button"
                       >
-                        수정
+                        {t('common.actions.edit', '수정')}
                       </button>
                     </>
                   )}

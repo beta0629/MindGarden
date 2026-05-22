@@ -14,6 +14,7 @@ import {
 } from '../../constants/clientScheduleNoteConstants';
 import { CALENDAR_EXTENDED_TYPE_VACATION } from '../../constants/schedule';
 import './ScheduleClientNotesSection.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 일정 상세 모달 내부 — 내담자 특이사항(지속 메모) CRUD. adminNote와 분리.
@@ -26,6 +27,7 @@ import './ScheduleClientNotesSection.css';
  * @param {(summary: { unresolvedCount: number, totalCount: number }) => void} [props.onSummaryChange] 부모 탭 배지 등
  */
 const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState([]);
   const [noteTypeOptions, setNoteTypeOptions] = useState([]);
@@ -413,7 +415,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
                     onClick={() => handleEdit(n)}
                     disabled={loading}
                   >
-                    수정
+                    {t('common.actions.edit', '수정')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -430,7 +432,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
                     onClick={() => handleDelete(n)}
                     disabled={loading}
                   >
-                    삭제
+                    {t('common.actions.delete', '삭제')}
                   </MGButton>
                 </div>
               ) : null}
@@ -551,7 +553,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
               onClick={() => resetForm()}
               disabled={loading}
             >
-              취소
+              {t('common.actions.cancel', '취소')}
             </MGButton>
           ) : null}
         </div>

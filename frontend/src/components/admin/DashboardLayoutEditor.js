@@ -20,6 +20,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { FaGripVertical } from 'react-icons/fa';
 import './DashboardLayoutEditor.css';
+import { useTranslation } from 'react-i18next';
 
 // 위젯 타입 한글 이름 매핑 (DashboardWidgetEditor와 동일)
 const WIDGET_TYPE_NAMES = {
@@ -69,6 +70,7 @@ const DashboardLayoutEditor = ({
   onWidgetDelete,
   columns = 3 
 }) => {
+  const { t } = useTranslation();
   const [widgetList, setWidgetList] = useState([]);
 
   // 위젯 목록 초기화
@@ -260,10 +262,10 @@ const DashboardLayoutEditor = ({
                       })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => handleDelete(widget.id)}
-                      title="삭제"
+                      title={t('admin.actions.delete', '삭제')}
                       preventDoubleClick={false}
                     >
-                      삭제
+                      {t('admin.actions.delete', '삭제')}
                     </MGButton>
                   </div>
                 </div>

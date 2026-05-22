@@ -146,6 +146,30 @@
 - common 비중 ≤ 45% 통과 시 → Phase 2.1b (common·admin 빈도 상위 50건 치환 1차) 진입
 - 미달 시 → 추가 사용자 컨펌 라운드
 
+### 6.4 Phase 2.1a 사전 확장 결과 + 4차 잔존 후보 컨펌 (2026-05-22)
+
+**4차 재추출**: 사전 BASE 68 + ACTION 40 + LABEL 153 + MESSAGE 84 = **신규 277 단어 확장** + `classifyKind()` 휴리스틱 3분기(`VERB_ENDING_MESSAGE`/`VERB_ENDING_ACTION`/`NOUN_ENDING_LABEL`) 추가.
+
+| 지표 | 3차 | 4차 |
+|---|---:|---:|
+| common 비중 | 44.85% | **44.85%** (유지) |
+| 7 ns Top 50 합산 350건 `auto_NNNN` 폴백 | 299건 (85.4%) | **0건 (0.0%)** |
+| 자동 매칭률 | 14.6% | **100.0%** |
+
+**4차 게이트**: 자동 매칭률 ≥ 60% **압도 통과**, Phase 2.1b 진입 가능.
+
+**잔존 5건 사용자 컨펌 결과 (2026-05-22)**: ascii-fallback으로 잡힌 의심 키 5건 모두 권장안 accept → 5차 사전 보강 라운드에 일괄 반영.
+
+| text | 빈도 | 확정 suggestedKey | 카테고리 |
+|---|---:|---|---|
+| PG 설정 목록 | 8 | `admin.labels.pgSettingsList` | labels |
+| PG 설정 상세 | 8 | `admin.labels.pgSettingsDetail` | labels |
+| PG 설정 수정 | 8 | `admin.actions.editPgSettings` | actions |
+| PG 설정 승인 관리 | 7 | `admin.labels.pgApprovalManagement` | labels |
+| 강좌 ID | 2 | `client.labels.courseId` | labels |
+
+**Phase 2.1b 진행 방식 컨펌**: **common Top 50 + admin Top 50 병렬 진행** (`frontend/src/locales/ko/{common,admin}.json` 키 추가 + 소스 `t('key', '한글')` 치환 1차). D6 P4 운영 push 완료 직후 일괄 위임.
+
 ---
 
 ## 7. 후속 (Phase 3 가늠)

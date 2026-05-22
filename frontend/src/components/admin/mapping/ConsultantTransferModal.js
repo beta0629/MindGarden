@@ -7,6 +7,7 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import CustomSelect from '../../common/CustomSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_MAPPINGS_TRANSFER = '/api/v1/admin/mappings/transfer';
@@ -32,6 +33,7 @@ const ConsultantTransferModal = ({
   currentMapping, 
   onTransfer 
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     newConsultantId: '',
     transferReason: '',
@@ -216,7 +218,7 @@ const ConsultantTransferModal = ({
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                취소
+                {t('admin.actions.cancel', '취소')}
               </MGButton>
               <MGButton
                 type="button"

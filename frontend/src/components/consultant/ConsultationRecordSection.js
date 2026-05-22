@@ -4,8 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
+import { useTranslation } from 'react-i18next';
 
 const ConsultationRecordSection = ({ consultantId }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [recordStats, setRecordStats] = useState({
     totalRecords: 0,
@@ -175,7 +177,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
                         onClick={() => navigate(`/consultant/consultation-record-view/${record.id}`)}
                         preventDoubleClick={false}
                       >
-                        보기
+                        {t('admin.actions.view', '보기')}
                       </MGButton>
                     </div>
                   </div>

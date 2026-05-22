@@ -15,11 +15,13 @@ import { ErpFilterToolbar, useErpSilentRefresh } from './common';
 import ErpPageShell from './shell/ErpPageShell';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 /**
  * ERP 구매 관리 페이지 — 비품 구매 요청 및 주문 관리
  */
 const PurchaseManagement = () => {
+  const { t } = useTranslation();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [activeTab, setActiveTab] = useState('items');
   const [items, setItems] = useState([]);
@@ -237,9 +239,9 @@ const PurchaseManagement = () => {
                   loading={silentListRefreshing}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   disabled={loading}
-                  aria-label="다시 시도"
+                  aria-label={t('common.labels.retry', '다시 시도')}
                 >
-                  다시 시도
+                  {t('common.labels.retry', '다시 시도')}
                 </MGButton>
               </div>
             )}
@@ -321,7 +323,7 @@ const PurchaseManagement = () => {
                             <span className="mg-purchase-request-card__value">{toDisplayString(request.quantity)}개</span>
                           </div>
                           <div className="mg-purchase-request-card__field">
-                            <span className="mg-purchase-request-card__label">상태</span>
+                            <span className="mg-purchase-request-card__label">{t('common.labels.status', '상태')}</span>
                             <span className={`erp-status ${toDisplayString(request.status, '').toLowerCase()}`}>
                               <SafeText>{request.status}</SafeText>
                             </span>
@@ -373,7 +375,7 @@ const PurchaseManagement = () => {
                             </span>
                           </div>
                           <div className="mg-purchase-order-card__field">
-                            <span className="mg-purchase-order-card__label">상태</span>
+                            <span className="mg-purchase-order-card__label">{t('common.labels.status', '상태')}</span>
                             <span className={`erp-status ${toDisplayString(order.status, '').toLowerCase()}`}>
                               <SafeText>{order.status}</SafeText>
                             </span>

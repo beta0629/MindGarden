@@ -19,11 +19,13 @@ import { fetchUserPermissions, hasPermission } from '../../utils/permissionUtils
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AdminNotificationsPage.css';
+import { useTranslation } from 'react-i18next';
 
 const TAB_SYSTEM = 'system';
 const TAB_MESSAGES = 'messages';
 
 const AdminNotificationsPage = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(
@@ -146,7 +148,7 @@ const AdminNotificationsPage = () => {
                   loading={false}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  메시지
+                  {t('admin.labels.message', '메시지')}
                 </MGButton>
               </div>
 

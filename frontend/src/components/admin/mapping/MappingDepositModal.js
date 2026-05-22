@@ -8,6 +8,7 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import '../MappingCreationModal.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 매칭 입금 확인 모달 컴포넌트
@@ -30,6 +31,7 @@ const MappingDepositModal = ({
     mapping, 
     onDepositConfirmed 
 }) => {
+    const { t } = useTranslation();
     const [depositReference, setDepositReference] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -121,7 +123,7 @@ const MappingDepositModal = ({
                         disabled={isLoading}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
-                        취소
+                        {t('admin.actions.cancel', '취소')}
                     </MGButton>
                     <MGButton
                         type="button"

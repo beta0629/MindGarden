@@ -20,6 +20,7 @@ import '../../styles/unified-design-tokens.css';
 import './ClientMessageSection.css';
 import { USER_ROLES } from '../../constants/roles';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 /**
@@ -44,6 +45,7 @@ const EMPTY_MESSAGE_ICON_SIZE = 40;
 const LIST_MESSAGE_ICON_SIZE = 22;
 
 const ClientMessageSection = ({ userId }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [allMessages, setAllMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -336,7 +338,7 @@ const ClientMessageSection = ({ userId }) => {
                       <span className="mg-badge mg-badge-warning mg-badge-sm">중요</span>
                     )}
                     {message.isUrgent && (
-                      <span className="mg-badge mg-badge-danger mg-badge-sm">긴급</span>
+                      <span className="mg-badge mg-badge-danger mg-badge-sm">{t('admin.labels.urgent', '긴급')}</span>
                     )}
                     <span className="client-message-item__date">
                       
@@ -379,7 +381,7 @@ const ClientMessageSection = ({ userId }) => {
                   <span className="mg-badge mg-badge-warning">중요</span>
                 )}
                 {selectedMessage.isUrgent && (
-                  <span className="mg-badge mg-badge-danger">긴급</span>
+                  <span className="mg-badge mg-badge-danger">{t('admin.labels.urgent', '긴급')}</span>
                 )}
               </div>
               <span className="client-message-detail__date">

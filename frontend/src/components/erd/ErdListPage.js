@@ -6,6 +6,7 @@ import StatusBadge from '../common/StatusBadge';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './ErdListPage.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 테넌트 포털 ERD 목록 페이지
@@ -19,6 +20,7 @@ import './ErdListPage.css';
  * @since 2025-01-XX
  */
 const ErdListPage = () => {
+  const { t } = useTranslation();
   const { user, isLoading: sessionLoading } = useSession();
   const navigate = useNavigate();
   
@@ -117,7 +119,7 @@ const ErdListPage = () => {
             onClick={loadErds}
             preventDoubleClick={false}
           >
-            다시 시도
+            {t('common.labels.retry', '다시 시도')}
           </MGButton>
         </div>
       </div>
@@ -147,7 +149,7 @@ const ErdListPage = () => {
           onClick={() => setFilter('all')}
           preventDoubleClick={false}
         >
-          전체
+          {t('common.labels.all', '전체')}
         </MGButton>
         <MGButton
           type="button"

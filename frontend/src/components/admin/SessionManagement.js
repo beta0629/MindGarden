@@ -21,6 +21,7 @@ import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistr
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
@@ -46,6 +47,7 @@ const API_COMMON_CODES_GROUPS_MAPPING_STATUS = '/api/v1/common-codes/groups/MAPP
  * @since 2024-12-19
  */
 const SessionManagement = () => {
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [clients, setClients] = useState([]);
     const [consultants, setConsultants] = useState([]);
@@ -556,10 +558,10 @@ const SessionManagement = () => {
                                         >
                                             <option value="ALL">모든 상태</option>
                                             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                            <option value="ACTIVE">활성</option>
+                                            <option value="ACTIVE">{t('admin.labels.active', '활성')}</option>
                                             <option value="PAYMENT_CONFIRMED">결제확인</option>
                                             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                            <option value="COMPLETED">완료</option>
+                                            <option value="COMPLETED">{t('admin.actions.done', '완료')}</option>
                                         </select>
                                     </div>
                                     

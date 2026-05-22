@@ -26,10 +26,12 @@ import { kakaoLogin, naverLogin, googleLogin } from '../../utils/socialLogin';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './Academy.css';
+import { useTranslation } from 'react-i18next';
 
 const ACADEMY_REGISTER_TITLE_ID = 'academy-register-page-title';
 
 const AcademyRegister = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tenantId = searchParams.get('tenantId');
@@ -486,7 +488,7 @@ const AcademyRegister = () => {
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
                   >
-                    취소
+                    {t('common.actions.cancel', '취소')}
                   </MGButton>
                   <MGButton
                     type="submit"

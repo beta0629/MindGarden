@@ -8,6 +8,7 @@ import { RoleUtils, LEGACY_USER_ROLES } from '../../../../constants/roles';
 import './AdminSystemOverviewWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_STATISTICS_CONSULTANTS = '/api/v1/admin/statistics/consultants';
@@ -28,6 +29,7 @@ const API_ADMIN_STATISTICS_MAPPINGS = '/api/v1/admin/statistics/mappings';
  * @since 2025-11-29
  */
 const AdminSystemOverviewWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isAllowedForWidget =
     RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, LEGACY_USER_ROLES.HQ_MASTER);
@@ -153,7 +155,7 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
             <div className="stat-icon consultant-icon" />
             <div className="stat-content">
               <div className="stat-value">{displayStats.totalConsultants?.toLocaleString() || 0}</div>
-              <div className="stat-label">상담사</div>
+              <div className="stat-label">{t('admin.labels.consultant', '상담사')}</div>
             </div>
           </div>
 
@@ -164,7 +166,7 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
             <div className="stat-icon client-icon" />
             <div className="stat-content">
               <div className="stat-value">{displayStats.totalClients?.toLocaleString() || 0}</div>
-              <div className="stat-label">내담자</div>
+              <div className="stat-label">{t('admin.labels.client', '내담자')}</div>
             </div>
           </div>
 
@@ -211,7 +213,7 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
               onClick={refresh}
               preventDoubleClick={false}
             >
-              다시 시도
+              {t('common.labels.retry', '다시 시도')}
             </MGButton>
           </div>
         )}

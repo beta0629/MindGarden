@@ -20,6 +20,7 @@ import {
   normalizeMappingsListPayload,
   normalizeScheduleListPayload
 } from '../../utils/apiResponseNormalize';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
@@ -30,6 +31,7 @@ const MAPPINGS_FETCH_ERROR_TEXT = '목록을 불러오지 못했습니다. 잠�
 const CLIENT_SESSION_MGMT_TITLE_ID = 'client-session-management-title';
 
 const ClientSessionManagement = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useSession();
   const [sessionData, setSessionData] = useState(null);
@@ -186,7 +188,7 @@ const ClientSessionManagement = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
-                다시 시도
+                {t('common.labels.retry', '다시 시도')}
               </MGButton>
             </div>
           </div>
@@ -236,7 +238,7 @@ const ClientSessionManagement = () => {
                 preventDoubleClick={false}
               >
                 <i className="bi bi-house client-session-menu-icon" />
-                대시보드
+                {t('admin.labels.dashboard', '대시보드')}
               </MGButton>
               <MGButton
                 variant="outline"
@@ -355,7 +357,7 @@ const ClientSessionManagement = () => {
                     <span className="value">{mapping.remainingSessions || 0}회</span>
                   </div>
                   <div className="detail-item">
-                    <span className="label">상담사</span>
+                    <span className="label">{t('common.labels.consultant', '상담사')}</span>
                     <span className="value">{mapping.consultant?.consultantName || '미지정'}</span>
                   </div>
                   <div className="detail-item">

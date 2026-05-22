@@ -16,6 +16,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import SystemNotificationFormModal from '../molecules/SystemNotificationFormModal';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import '../../../styles/unified-design-tokens.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SYSTEM_NOTIFICATIONS_ADMIN_ALL = '/api/v1/system-notifications/admin/all';
@@ -37,6 +38,7 @@ const TARGET_OPTIONS = [
 ];
 
 const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -183,7 +185,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
     return (
       <section className="mg-v2-ad-b0kla__section mg-v2-ad-b0kla__card" aria-label="시스템 공지 목록">
         <p className="mg-v2-ad-b0kla__table-empty" aria-live="polite">
-          접근 권한이 없습니다.
+          {t('admin.messages.noAccessPermission', '접근 권한이 없습니다.')}
         </p>
       </section>
     );
@@ -214,7 +216,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
               <option key={o.value || 'all'} value={o.value}>{toDisplayString(o.label)}</option>
             ))}
           </select>
-          <label htmlFor="admin-notice-status" className="sr-only">상태</label>
+          <label htmlFor="admin-notice-status" className="sr-only">{t('admin.labels.status', '상태')}</label>
           <select
             id="admin-notice-status"
             className="mg-v2-ad-b0kla__filter-select"
@@ -348,10 +350,10 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                         loading: false
                       })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      aria-label="수정"
+                      aria-label={t('common.actions.edit', '수정')}
                       onClick={() => handleEdit(notification)}
                     >
-                      수정
+                      {t('common.actions.edit', '수정')}
                     </MGButton>
                     <MGButton
                       type="button"
@@ -363,10 +365,10 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                         loading: false
                       })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      aria-label="삭제"
+                      aria-label={t('admin.actions.delete', '삭제')}
                       onClick={() => handleDelete(notification.id)}
                     >
-                      삭제
+                      {t('admin.actions.delete', '삭제')}
                     </MGButton>
                   </div>
                 </li>

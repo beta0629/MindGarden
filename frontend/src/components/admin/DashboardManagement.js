@@ -27,6 +27,7 @@ import DashboardFormModal from './DashboardFormModal';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './DashboardManagement.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_TENANT_DASHBOARDS = '/api/v1/tenant/dashboards';
@@ -35,6 +36,7 @@ const API_TENANT_DASHBOARDS = '/api/v1/tenant/dashboards';
 const DASHBOARD_MGMT_TITLE_ID = 'dashboard-management-title';
 
 const DashboardManagement = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [dashboards, setDashboards] = useState([]);
   const [filteredDashboards, setFilteredDashboards] = useState([]);
@@ -368,7 +370,7 @@ const DashboardManagement = () => {
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              전체
+              {t('admin.labels.all', '전체')}
             </MGButton>
             <MGButton
               type="button"
@@ -384,7 +386,7 @@ const DashboardManagement = () => {
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              활성
+              {t('admin.labels.active', '활성')}
             </MGButton>
             <MGButton
               type="button"
@@ -400,7 +402,7 @@ const DashboardManagement = () => {
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              비활성
+              {t('admin.labels.inactive', '비활성')}
             </MGButton>
             <MGButton
               type="button"
@@ -416,7 +418,7 @@ const DashboardManagement = () => {
               loading={loading}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              새로고침
+              {t('admin.actions.refresh', '새로고침')}
             </MGButton>
           </div>
         </div>
@@ -466,11 +468,11 @@ const DashboardManagement = () => {
                     )}
                     {dashboard.isActive ? (
                       <span className="badge badge-active">
-                        <FaEye /> 활성
+                        <FaEye /> {t('admin.labels.active', '활성')}
                       </span>
                     ) : (
                       <span className="badge badge-inactive">
-                        <FaEyeSlash /> 비활성
+                        <FaEyeSlash /> {t('admin.labels.inactive', '비활성')}
                       </span>
                     )}
                   </div>
@@ -519,7 +521,7 @@ const DashboardManagement = () => {
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     title="대시보드 보기 (새 탭에서 열기: Ctrl+클릭)"
                   >
-                    보기
+                    {t('admin.actions.view', '보기')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -542,7 +544,7 @@ const DashboardManagement = () => {
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     title={dashboard?.dashboardId ? '대시보드 수정' : '대시보드 ID가 없습니다.'}
                   >
-                    수정
+                    {t('common.actions.edit', '수정')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -575,7 +577,7 @@ const DashboardManagement = () => {
                       loading={loading}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
-                      삭제
+                      {t('admin.actions.delete', '삭제')}
                     </MGButton>
                   )}
                 </div>

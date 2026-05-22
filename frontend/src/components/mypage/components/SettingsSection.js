@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import notificationManager from '../../../utils/notification';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 const LOCALE_OPTIONS = [
   { value: 'ko-KR', label: '한국어' },
@@ -14,6 +15,7 @@ const TZ_OPTIONS = [
 ];
 
 const SettingsSection = () => {
+  const { t } = useTranslation();
   const [locale, setLocale] = useState('ko-KR');
   const [timezone, setTimezone] = useState('Asia/Seoul');
   const [notifyPush, setNotifyPush] = useState(false);
@@ -77,7 +79,7 @@ const SettingsSection = () => {
           <span className="mg-mypage__section-accent" aria-hidden="true" />
           <div className="mg-mypage__section-head-text">
             <h2 id="mg-mypage-settings-notify-title" className="mg-mypage__section-title">
-              알림
+              {t('common.labels.notification', '알림')}
             </h2>
           </div>
         </div>

@@ -28,6 +28,7 @@ import {
     LOGIN_PASSWORD_POLICY_HINT_ONE_LINE
 } from '../../../constants/passwordPolicyUi';
 import './ClientModal.css';
+import { useTranslation } from 'react-i18next';
 
 /** GET with-stats 및 목록 스냅샷 필드에 맞춘 KPI 라벨(완료율 등 오해 소지 필드는 표시하지 않음) */
 const CLIENT_MODAL_KPI_LABELS = {
@@ -52,6 +53,7 @@ const ClientModal = ({
     onSave,
     userStatusOptions
 }) => {
+    const { t } = useTranslation();
     const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking', 'duplicate', 'available', null
     const [isCheckingEmail, setIsCheckingEmail] = useState(false);
     const [phoneCheckStatus, setPhoneCheckStatus] = useState(null);
@@ -756,7 +758,7 @@ const ClientModal = ({
                     </div>
                 )}
                 <div className="mg-v2-form-group">
-                    <label htmlFor="status" className="mg-v2-form-label">상태</label>
+                    <label htmlFor="status" className="mg-v2-form-label">{t('admin.labels.status', '상태')}</label>
                     <BadgeSelect
                         value={safeFormData.status}
                         onChange={(val) => setFormData(prev => ({ ...prev, status: val }))}
@@ -771,7 +773,7 @@ const ClientModal = ({
                                 { value: 'INACTIVE', label: '비활성' },
                                 { value: 'PENDING', label: '대기' }
                               ]}
-                        placeholder="선택하세요"
+                        placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
                         className="mg-v2-form-badge-select"
                     />
                 </div>
@@ -788,7 +790,7 @@ const ClientModal = ({
                             { value: 'PLATINUM', label: '플래티넘' },
                             { value: 'DIAMOND', label: '다이아몬드' }
                         ]}
-                        placeholder="선택하세요"
+                        placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
                         className="mg-v2-form-badge-select"
                     />
                 </div>
@@ -911,7 +913,7 @@ const ClientModal = ({
                         onClick={onClose}
                         preventDoubleClick={true}
                     >
-                        취소
+                        {t('admin.actions.cancel', '취소')}
                     </MGButton>
                     <MGButton
                         variant={type === 'delete' ? 'danger' : 'primary'}

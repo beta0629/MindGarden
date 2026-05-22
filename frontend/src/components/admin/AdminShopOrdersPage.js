@@ -34,6 +34,7 @@ import {
 } from '../../services/adminShopOrderService';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
+import { useTranslation } from 'react-i18next';
 
 const PAGE_TITLE_ID = 'admin-shop-orders-title';
 const ORDER_STATUS_PAID = 'PAID';
@@ -157,6 +158,7 @@ function RefundModalBody({ baseId, refundTarget, refundReason, onReasonChange })
 }
 
 const AdminShopOrdersPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const baseId = useId();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -346,7 +348,7 @@ const AdminShopOrdersPage = () => {
               onClick={loadOrders}
               disabled={loading}
             >
-              새로고침
+              {t('admin.actions.refresh', '새로고침')}
             </MGButton>
           )}
         />
@@ -379,7 +381,7 @@ const AdminShopOrdersPage = () => {
             onClick={closeDetail}
             disabled={detailLoading}
           >
-            닫기
+            {t('common.actions.close', '닫기')}
           </MGButton>
         )}
       >
@@ -414,7 +416,7 @@ const AdminShopOrdersPage = () => {
               onClick={closeRefund}
               disabled={refunding}
             >
-              취소
+              {t('admin.actions.cancel', '취소')}
             </MGButton>
             <MGButton
               type="button"

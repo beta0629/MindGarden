@@ -1,5 +1,6 @@
 import React from 'react';
 import './MGTable.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Core Solution 데이터 테이블 컴포넌트
@@ -20,6 +21,7 @@ const MGTable = ({
   onSelectionChange = null,
   ...props
 }) => {
+  const { t } = useTranslation();
   const handleRowClick = (row, index) => {
     if (onRowClick) {
       onRowClick(row, index);
@@ -59,7 +61,7 @@ const MGTable = ({
       {loading && (
         <div className="mg-table__loading">
           <div className="mg-table__spinner" />
-          <span>데이터를 불러오는 중...</span>
+          <span>{t('common.messages.loadingData', '데이터를 불러오는 중...')}</span>
         </div>
       )}
       

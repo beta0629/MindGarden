@@ -13,6 +13,7 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ClientSchedule.css';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 const CLIENT_SCHEDULE_TITLE_ID = 'client-schedule-page-title';
 
@@ -20,6 +21,7 @@ const CLIENT_SCHEDULE_TITLE_ID = 'client-schedule-page-title';
  * 내담자 일정 페이지 (디자인 시스템 적용)
  */
 const ClientSchedule = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading, checkSession } = useSession();
   const [loading, setLoading] = useState(true);
@@ -74,7 +76,7 @@ const ClientSchedule = () => {
 
   if (sessionLoading || loading) {
     return (
-      <AdminCommonLayout title="스케줄" className="mg-v2-dashboard-layout">
+      <AdminCommonLayout title={t('common.labels.schedule', '스케줄')} className="mg-v2-dashboard-layout">
         {pageShell(
           <div aria-busy="true" aria-live="polite">
             <UnifiedLoading type="inline" text="로딩중..." />
@@ -86,7 +88,7 @@ const ClientSchedule = () => {
 
   if (error) {
     return (
-      <AdminCommonLayout title="스케줄" className="mg-v2-dashboard-layout">
+      <AdminCommonLayout title={t('common.labels.schedule', '스케줄')} className="mg-v2-dashboard-layout">
         {pageShell(
           <div className="client-schedule-error">
             <div className="client-schedule-error__icon">
@@ -100,7 +102,7 @@ const ClientSchedule = () => {
               onClick={handleRetry}
               preventDoubleClick={false}
             >
-              다시 시도
+              {t('common.labels.retry', '다시 시도')}
             </MGButton>
           </div>
         )}
@@ -109,7 +111,7 @@ const ClientSchedule = () => {
   }
 
   return (
-    <AdminCommonLayout title="스케줄" className="mg-v2-dashboard-layout">
+    <AdminCommonLayout title={t('common.labels.schedule', '스케줄')} className="mg-v2-dashboard-layout">
       {pageShell(
         <div className="client-schedule-calendar-wrapper">
           <ScheduleCalendar

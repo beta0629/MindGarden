@@ -3,6 +3,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import SafeText from '../../common/SafeText';
 import { MappingCard } from '../../ui/Card/index';
 import './ClientMappingTab.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 내담자 매칭 관리 탭 컴포넌트 (아토믹 디자인: mg-v2-client-mapping / mg-v2-mapping-client-block / mg-v2-card)
@@ -14,6 +15,7 @@ const ClientMappingTab = ({
   mappings,
   onClientSelect
 }) => {
+  const { t } = useTranslation();
   const mappingsByClient = mappings.reduce((acc, mapping) => {
     if (!acc[mapping.clientId]) {
       acc[mapping.clientId] = [];
@@ -73,7 +75,7 @@ const ClientMappingTab = ({
   return (
     <div className="mg-v2-client-mapping mg-v2-client-list-block">
       <header className="mg-v2-mapping-page-header">
-        <h2 className="mg-v2-mapping-page-header__title mg-v2-h2">매칭 관리</h2>
+        <h2 className="mg-v2-mapping-page-header__title mg-v2-h2">{t('admin.labels.matchingManagement', '매칭 관리')}</h2>
         <p className="mg-v2-mapping-page-header__desc">내담자와 상담사의 매칭 정보를 확인하고 관리할 수 있습니다.</p>
       </header>
       {clients.length === 0 ? (

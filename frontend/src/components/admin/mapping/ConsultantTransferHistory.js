@@ -3,6 +3,7 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './ConsultantTransferHistory.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 상담사 변경 이력 컴포넌트
@@ -18,6 +19,7 @@ import './ConsultantTransferHistory.css';
  * @param {Function} props.onClose - 이력 닫기 함수
  */
 const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
+  const { t } = useTranslation();
   const [transferHistory, setTransferHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -97,7 +99,7 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onClose}
         >
-          닫기
+          {t('common.actions.close', '닫기')}
         </MGButton>
       }
     >
@@ -121,7 +123,7 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={loadTransferHistory}
               >
-                다시 시도
+                {t('common.labels.retry', '다시 시도')}
               </MGButton>
             </div>
           ) : transferHistory.length === 0 ? (

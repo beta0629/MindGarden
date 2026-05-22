@@ -9,6 +9,7 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
@@ -147,6 +148,7 @@ const ROLE_DISPLAY_NAMES = {
 };
 
 const PermissionManagement = () => {
+    const { t } = useTranslation();
     const { checkSession } = useSession();
     const [userPermissions, setUserPermissions] = useState([]);
     const [currentUserRole, setCurrentUserRole] = useState(null);
@@ -342,7 +344,7 @@ const PermissionManagement = () => {
 
     if (!canManagePermissions) {
         return (
-            <AdminCommonLayout title="권한 관리">
+            <AdminCommonLayout title={t('admin.labels.permissionManagement', '권한 관리')}>
                 <div className="mg-v2-ad-b0kla mg-v2-permission-management">
                     <div className="mg-v2-ad-b0kla__container">
                         <ContentArea ariaLabel="권한 관리 콘텐츠">
@@ -375,12 +377,12 @@ const PermissionManagement = () => {
     const manageableRoles = getManageableRoles();
 
     return (
-        <AdminCommonLayout title="권한 관리">
+        <AdminCommonLayout title={t('admin.labels.permissionManagement', '권한 관리')}>
             <div className="mg-v2-ad-b0kla mg-v2-permission-management">
                 <div className="mg-v2-ad-b0kla__container">
                     <ContentArea ariaLabel="권한 관리 콘텐츠">
                         <ContentHeader
-                            title="권한 관리"
+                            title={t('admin.labels.permissionManagement', '권한 관리')}
                             subtitle="역할별 메뉴·기능 접근 권한을 설정하고 저장합니다."
                             titleId="permission-management-title"
                         />

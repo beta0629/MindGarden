@@ -20,8 +20,10 @@ import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
+import { useTranslation } from 'react-i18next';
 
 const ActivityListWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   
   // 표준화된 위젯 훅 사용
@@ -101,7 +103,7 @@ const ActivityListWidget = ({ widget, user }) => {
                   navigate(url);
                 }
               }}
-              title="상세 보기"
+              title={t('admin.actions.viewDetail', '상세 보기')}
             >
               <div className="activity-icon">
                 <i className={`bi bi-${activity.icon || 'circle'}`} />

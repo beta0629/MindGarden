@@ -33,6 +33,7 @@ import {
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import './FinancialTransactionForm.css';
 import './FinancialManagement.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ERP_COMMON_CODES_FINANCIAL = '/api/v1/erp/common-codes/financial';
@@ -50,6 +51,7 @@ const FinancialTransactionForm = ({
   mode = 'create',
   initialTransaction = null
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     transactionType: 'EXPENSE',
     category: '',
@@ -565,7 +567,7 @@ const FinancialTransactionForm = ({
               preventDoubleClick={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              취소
+              {t('common.actions.cancel', '취소')}
             </MGButton>
             {/* MGButton은 네이티브 submit 전용일 때 중복클릭 방지를 끄지만, 폼 의도를 드러내기 위해 명시 유지 */}
             <MGButton

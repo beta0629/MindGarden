@@ -9,7 +9,9 @@ import BaseWidget from './BaseWidget';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import './ConsultationRecordWidget.css';
+import { useTranslation } from 'react-i18next';
 const ConsultationRecordWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // 데이터 소스 설정 (상담사 전용)
@@ -250,7 +252,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
                           {record.isCompleted ? (
                             <>
                               
-                              완료
+                              {t('admin.actions.done', '완료')}
                             </>
                           ) : (
                             <>
@@ -280,7 +282,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
                     preventDoubleClick={false}
                   >
                     
-                    보기
+                    {t('admin.actions.view', '보기')}
                   </MGButton>
                 </div>
               ))}

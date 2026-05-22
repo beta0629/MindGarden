@@ -18,8 +18,10 @@ import Icon from '../ui/Icon/Icon';
 import ThemeSelector from '../ui/ThemeSelector/ThemeSelector';
 import SafeText from '../common/SafeText';
 import './UserSettings.css';
+import { useTranslation } from 'react-i18next';
 
-const UserSettings = ({ user, onSettingsUpdate }) => {const {
+const UserSettings = ({ user, onSettingsUpdate }) => {
+    const { t } = useTranslation();const {
     currentTheme,
     changeToTheme,
     applyCustomTheme,
@@ -127,8 +129,8 @@ const UserSettings = ({ user, onSettingsUpdate }) => {const {
                         className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => setShowThemeSelector(false)}
-                        title="닫기"
-                        aria-label="닫기"
+                        title={t('common.actions.close', '닫기')}
+                        aria-label={t('common.actions.close', '닫기')}
                       >
                         <Icon name="X" size="SM" />
                       </MGButton>
@@ -242,7 +244,7 @@ const UserSettings = ({ user, onSettingsUpdate }) => {const {
                   <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-items-center mg-v2-v2-v2-gap-md">
                     <Icon name="MAIL" size="MD" color="PRIMARY" />
                     <div>
-                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">이메일</h4>
+                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">{t('admin.labels.email', '이메일')}</h4>
                       <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">{user?.email}</p>
                     </div>
                   </div>

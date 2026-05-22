@@ -7,6 +7,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import BadgeSelect from '../common/BadgeSelect';
 import SafeText from '../common/SafeText';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 할인 적용 결제 확인 모달 컴포넌트
@@ -31,6 +32,7 @@ const DiscountPaymentConfirmationModal = ({
   mappings = [], 
   onPaymentConfirmed 
 }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [selectedMappings, setSelectedMappings] = useState([]);
   const [paymentData, setPaymentData] = useState({
@@ -234,7 +236,7 @@ const DiscountPaymentConfirmationModal = ({
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onClose}
           >
-            취소
+            {t('admin.actions.cancel', '취소')}
           </MGButton>
           <MGButton
             type="button"
@@ -245,7 +247,7 @@ const DiscountPaymentConfirmationModal = ({
             loading={loading}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
-            결제 확인
+            {t('admin.actions.paymentConfirm', '결제 확인')}
           </MGButton>
         </>
       }
@@ -370,7 +372,7 @@ const DiscountPaymentConfirmationModal = ({
           <div className="mg-v2-form-section">
             <h3 className="mg-v2-section-title">
               <CreditCard size={20} />
-              결제 방법
+              {t('admin.labels.paymentMethod', '결제 방법')}
             </h3>
             <div className="mg-v2-form-group">
               <BadgeSelect
@@ -382,9 +384,9 @@ const DiscountPaymentConfirmationModal = ({
                   { value: 'CASH', label: '현금' },
                   { value: 'OTHER', label: '기타' }
                 ]}
-                placeholder="선택하세요"
+                placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
                 className="mg-v2-select"
-                aria-label="결제 방법"
+                aria-label={t('admin.labels.paymentMethod', '결제 방법')}
               />
             </div>
           </div>

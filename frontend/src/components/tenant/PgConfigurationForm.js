@@ -24,6 +24,7 @@ import {
   PG_PROVIDER_KICC
 } from '../../constants/kiccPgConfiguration';
 import './PgConfigurationForm.css';
+import { useTranslation } from 'react-i18next';
 
 const CreditCardIcon = ICONS.CREDIT_CARD;
 const AlertCircleIcon = ICONS.ALERT_CIRCLE;
@@ -144,6 +145,7 @@ const PgConfigurationForm = ({
   tenantId = null,
   configId = null
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     pgProvider: '',
     pgName: '',
@@ -1332,7 +1334,7 @@ const PgConfigurationForm = ({
           disabled={loading}
           preventDoubleClick={false}
         >
-          취소
+          {t('admin.actions.cancel', '취소')}
         </MGButton>
         <MGButton
           type="submit"

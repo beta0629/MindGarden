@@ -20,8 +20,10 @@ import { ACADEMY_API, ACADEMY_MESSAGES, CLASS_STATUS, CLASS_STATUS_LABELS } from
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import './Academy.css';
+import { useTranslation } from 'react-i18next';
 
 const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditClass, onDeleteClass }) => {
+  const { t } = useTranslation();
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -135,7 +137,7 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => onEditClass(classItem)}
           >
-            수정
+            {t('common.actions.edit', '수정')}
           </MGButton>
         )}
         {onDeleteClass && (
@@ -150,7 +152,7 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => handleDelete(classItem.classId)}
           >
-            삭제
+            {t('common.actions.delete', '삭제')}
           </MGButton>
         )}
       </div>

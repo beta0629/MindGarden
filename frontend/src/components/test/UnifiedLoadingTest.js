@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 /**
  * UnifiedLoading 테스트 컴포넌트
@@ -8,6 +9,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
  * 다양한 로딩 설정을 테스트할 수 있습니다.
  */
 const UnifiedLoadingTest = () => {
+  const { t } = useTranslation();
   const [loadingStates, setLoadingStates] = useState({
     inline: false,
     fullscreen: false,
@@ -129,7 +131,7 @@ const UnifiedLoadingTest = () => {
             loading
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
-            저장
+            {t('common.actions.save', '저장')}
           </MGButton>
         </div>
       )}

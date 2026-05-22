@@ -12,6 +12,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, CreditCard, MessageCircle, Bell, Heart, Volume2 } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import './NotificationSettings.css';
+import { useTranslation } from 'react-i18next';
 
 const STORAGE_KEY = 'mg_notification_settings';
 const TOAST_DURATION = 2000;
@@ -83,6 +84,7 @@ const Toggle = ({ active, disabled = false, onChange }) => (
 );
 
 const NotificationSettings = ({ themeVariant = 'client' }) => {
+  const { t } = useTranslation();
   const { showToast: showAppToast } = useToast();
   const [settings, setSettings] = useState(loadSettings);
   const [showToast, setShowToast] = useState(false);
@@ -205,7 +207,7 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
         <div className="mg-notif-settings__section-header">
           <h3 className="mg-notif-settings__section-title">
             <MessageCircle size={18} className="mg-notif-settings__section-icon" />
-            메시지
+            {t('admin.labels.message', '메시지')}
           </h3>
           <Toggle
             active={settings.message.enabled}

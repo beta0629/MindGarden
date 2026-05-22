@@ -25,6 +25,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './WellnessManagement.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_WELLNESS_USAGE_STATS = '/api/v1/admin/wellness/usage-stats';
@@ -50,6 +51,7 @@ const API_ADMIN_WELLNESS_EXCHANGE_RATE_REFRESH = '/api/v1/admin/wellness/exchang
  * @since 2025-01-21
  */
 const WellnessManagement = () => {
+    const { t } = useTranslation();
     const { user, isLoggedIn } = useSession();
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
@@ -354,7 +356,7 @@ const WellnessManagement = () => {
                                         preventDoubleClick={false}
                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     >
-                                        새로고침
+                                        {t('admin.actions.refresh', '새로고침')}
                                     </MGButton>
                                     <MGButton
                                         variant="primary"

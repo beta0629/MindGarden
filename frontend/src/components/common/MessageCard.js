@@ -2,6 +2,7 @@ import React from 'react';
 import { Mail, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 import SafeText from './SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 메시지 카드 공통 컴포넌트
@@ -14,6 +15,7 @@ const MessageCard = ({
   showUnreadIndicator = true,
   compact = false
 }) => {
+  const { t } = useTranslation();
   // 메시지 타입별 정보
   const getMessageTypeInfo = (messageType) => {
     const typeMap = {
@@ -70,7 +72,7 @@ const MessageCard = ({
               <span className="mg-badge mg-badge-warning mg-v2-text-xs">중요</span>
             )}
             {message.isUrgent && (
-              <span className="mg-badge mg-badge-danger mg-v2-text-xs">긴급</span>
+              <span className="mg-badge mg-badge-danger mg-v2-text-xs">{t('admin.labels.urgent', '긴급')}</span>
             )}
           </div>
           <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-xs">

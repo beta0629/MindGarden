@@ -10,6 +10,7 @@ import { buildErpApprovalHubPath } from './erpApprovalHubRoutes';
 import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../ErpCommon.css';
 import '../ApprovalDashboard.css';
+import { useTranslation } from 'react-i18next';
 
 /** @typedef {'admin' | 'super'} ApprovalHubMode */
 
@@ -40,6 +41,7 @@ const ApprovalHubLayout = ({
   showModeSwitcher = true,
   children
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const titleId = useId();
 
@@ -79,9 +81,9 @@ const ApprovalHubLayout = ({
           disabled={loading}
           loading={refreshing}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          aria-label="새로고침"
+          aria-label={t('common.actions.refresh', '새로고침')}
         >
-          새로고침
+          {t('common.actions.refresh', '새로고침')}
         </MGButton>
       </div>
     </div>

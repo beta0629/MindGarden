@@ -13,8 +13,10 @@ import ConsultationLogModal from './ConsultationLogModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import './ConsultantRecords.css';
+import { useTranslation } from 'react-i18next';
 
 const ConsultantRecords = () => {
+  const { t } = useTranslation();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const navigate = useNavigate();
   const [records, setRecords] = useState([]);
@@ -174,7 +176,7 @@ const ConsultantRecords = () => {
             {loading && (
               <div className="consultant-records__loading">
                 <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">로딩 중...</span>
+                  <span className="visually-hidden">{t('common.messages.loading', '로딩 중...')}</span>
                 </div>
                 <p className="consultant-records__loading-text">상담 기록을 불러오는 중...</p>
               </div>

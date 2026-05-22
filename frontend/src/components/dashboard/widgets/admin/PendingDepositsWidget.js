@@ -8,6 +8,7 @@ import { formatCurrency, formatDate } from '../../../../utils/formatUtils';
 import './PendingDepositsWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_PENDING_DEPOSITS = '/api/v1/admin/pending-deposits';
@@ -26,6 +27,7 @@ const API_ADMIN_PENDING_DEPOSITS = '/api/v1/admin/pending-deposits';
  * @since 2025-11-29
  */
 const PendingDepositsWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // 입금 확인 대기 목록 데이터 소스 설정
@@ -210,7 +212,7 @@ const PendingDepositsWidget = ({ widget, user }) => {
                     title="입금 확인"
                     preventDoubleClick={false}
                   >
-                    확인
+                    {t('common.actions.confirm', '확인')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -251,7 +253,7 @@ const PendingDepositsWidget = ({ widget, user }) => {
               onClick={refresh}
               preventDoubleClick={false}
             >
-              새로고침
+              {t('admin.actions.refresh', '새로고침')}
             </MGButton>
           </div>
         )}

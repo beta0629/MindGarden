@@ -41,6 +41,7 @@ import {
 } from '../../constants/charts';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './Chart.css';
+import { useTranslation } from 'react-i18next';
 
 // Chart.js 등록
 ChartJS.register(
@@ -68,6 +69,7 @@ const Chart = ({
   onDataPointClick = null,
   onLegendClick = null
 }) => {
+  const { t } = useTranslation();
   // 고유한 chartRef 생성 (타임스탬프 + 랜덤)
   const chartRef = useRef(null);
   const [chartInstance, setChartInstance] = useState(null);
@@ -194,7 +196,7 @@ const Chart = ({
       <div className="chart-container chart-loading" data-height={height}>
         <div className="chart-loading-spinner">
           <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">로딩 중...</span>
+            <span className="visually-hidden">{t('common.messages.loading', '로딩 중...')}</span>
           </div>
           <p className="chart-loading-text">차트를 불러오는 중...</p>
         </div>

@@ -21,6 +21,7 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './SessionManagementWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SESSIONS = '/api/v1/sessions';
@@ -28,6 +29,7 @@ const API_SESSIONS_STATS = '/api/v1/sessions/stats';
 const API_SESSIONS_EXTENSION_REQUESTS = '/api/v1/sessions/extension-requests';
 
 const SessionManagementWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const getDataSourceConfig = () => {
@@ -239,14 +241,14 @@ const SessionManagementWidget = ({ widget, user }) => {
               <div className="stat-icon completed" />
               <div className="stat-info">
                 <div className="stat-number">{stats.completed}</div>
-                <div className="stat-label">완료</div>
+                <div className="stat-label">{t('admin.actions.done', '완료')}</div>
               </div>
             </div>
             <div className="stat-card">
               <div className="stat-icon pending" />
               <div className="stat-info">
                 <div className="stat-number">{stats.pending}</div>
-                <div className="stat-label">대기중</div>
+                <div className="stat-label">{t('admin.labels.waiting', '대기중')}</div>
               </div>
             </div>
             <div className="stat-card">
@@ -324,7 +326,7 @@ const SessionManagementWidget = ({ widget, user }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleViewAll}
             >
-              전체 보기
+              {t('admin.actions.viewAll', '전체 보기')}
             </MGButton>
           </div>
           <div className="session-items">
@@ -383,10 +385,10 @@ const SessionManagementWidget = ({ widget, user }) => {
                     loading={false}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleViewSession(session.id)}
-                    title="상세 보기"
+                    title={t('admin.actions.viewDetail', '상세 보기')}
                     preventDoubleClick={false}
                   >
-                    보기
+                    {t('admin.actions.view', '보기')}
                   </MGButton>
                   {session.recordUrl && (
                     <MGButton

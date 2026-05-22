@@ -9,6 +9,7 @@ import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=MESSAGE_TYPE';
@@ -27,6 +28,7 @@ const MessageSendModal = ({
   scheduleData,
   onSend 
 }) => {
+  const { t } = useTranslation();
   const { user } = useSession();
   
   const [sending, setSending] = useState(false);
@@ -183,7 +185,7 @@ const MessageSendModal = ({
             disabled={sending}
             preventDoubleClick={false}
           >
-            취소
+            {t('common.actions.cancel', '취소')}
           </MGButton>
           <MGButton
             type="button"
@@ -238,7 +240,7 @@ const MessageSendModal = ({
                 value: type.value,
                 label: `${toDisplayString(type.icon)} ${toDisplayString(type.label)} (${toDisplayString(type.value)})`
               }))}
-              placeholder="선택하세요"
+              placeholder={t('common.messages.pleaseSelect', '선택하세요')}
               className="mg-v2-form-badge-select"
               disabled={loadingCodes}
             />

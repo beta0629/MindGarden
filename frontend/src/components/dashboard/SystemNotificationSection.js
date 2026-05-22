@@ -5,12 +5,14 @@ import MGButton from '../common/MGButton';
 import { useNavigate } from 'react-router-dom';
 
 import { useNotification } from '../../contexts/NotificationContext';
+import { useTranslation } from 'react-i18next';
 /**
  * 시스템 알림 섹션
 /**
  * 읽지 않은 메시지와 시스템 공지를 함께 표시하는 대시보드 컴포넌트
  */
 const SystemNotificationSection = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { 
     notifications, 
@@ -114,7 +116,7 @@ const SystemNotificationSection = () => {
                       <span className="mg-v2-badge mg-v2-badge-warning mg-ml-xs">중요</span>
                     )}
                     {item.isUrgent && (
-                      <span className="mg-v2-badge mg-v2-badge-danger mg-ml-xs">긴급</span>
+                      <span className="mg-v2-badge mg-v2-badge-danger mg-ml-xs">{t('admin.labels.urgent', '긴급')}</span>
                     )}
                   </div>
                   {!item.isRead && (

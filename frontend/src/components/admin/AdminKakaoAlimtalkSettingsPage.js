@@ -22,6 +22,7 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AdminKakaoAlimtalkSettingsPage.css';
+import { useTranslation } from 'react-i18next';
 
 const TEMPLATE_MAX_LEN = 120;
 const REF_MAX_LEN = 200;
@@ -75,6 +76,7 @@ const mapApiToForm = (data) => {
 };
 
 const AdminKakaoAlimtalkSettingsPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const toggleId = useId();
@@ -251,7 +253,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                   loading={saving}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  저장
+                  {t('common.actions.save', '저장')}
                 </MGButton>
                 <MGButton
                   type="button"

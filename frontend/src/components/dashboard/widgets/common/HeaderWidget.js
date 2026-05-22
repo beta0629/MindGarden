@@ -26,8 +26,10 @@ import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import '../Widget.css';
 import './HeaderWidget.css';
+import { useTranslation } from 'react-i18next';
 
 const HeaderWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -176,7 +178,7 @@ const HeaderWidget = ({ widget, user }) => {
             {isLoading ? (
               <div className="widget-header-loading">
                 <i className="bi bi-hourglass-split" />
-                <span>로딩 중...</span>
+                <span>{t('common.messages.loading', '로딩 중...')}</span>
               </div>
             ) : isLoggedIn && currentUser ? (
               <>

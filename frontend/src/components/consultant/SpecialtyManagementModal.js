@@ -12,6 +12,7 @@ import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=SPECIALTY';
@@ -36,6 +37,7 @@ const API_COMMON_CODES_2 = '/api/v1/common-codes';
  * @since 2025-09-30
  */
 const SpecialtyManagementModal = ({ isOpen, onClose }) => {
+    const { t } = useTranslation();
     const { user } = useSession();
     const [loading, setLoading] = useState(false);
     const [consultants, setConsultants] = useState([]);
@@ -455,7 +457,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                                 disabled={loading || !newSpecialty.trim()}
                                                 loading={loading}
                                             >
-                                                저장
+                                                {t('common.actions.save', '저장')}
                                             </MGButton>
                                         </div>
                                     </div>

@@ -7,6 +7,7 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_PRIVACY_CONSENT_STATUS = '/api/v1/privacy-consent/status';
@@ -17,6 +18,7 @@ const TERMS_PLACEHOLDER =
   '약관 전문은 관리자 설정에 따라 제공됩니다. 자세한 내용은 고객센터로 문의해 주세요.';
 
 const PrivacyConsentSection = () => {
+  const { t } = useTranslation();
   const [consentStatus, setConsentStatus] = useState({
     hasConsent: false,
     privacyConsent: false,
@@ -238,7 +240,7 @@ const PrivacyConsentSection = () => {
             disabled={updating}
             preventDoubleClick={false}
           >
-            새로고침
+            {t('common.actions.refresh', '새로고침')}
           </MGButton>
         </div>
         {!consentStatus.isComplete ? (
@@ -316,7 +318,7 @@ const PrivacyConsentSection = () => {
             onClick={() => setTermsModalOpen(false)}
             preventDoubleClick={false}
           >
-            닫기
+            {t('common.actions.close', '닫기')}
           </MGButton>
         }
       >

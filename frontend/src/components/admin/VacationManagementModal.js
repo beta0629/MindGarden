@@ -13,6 +13,7 @@ import BadgeSelect from '../common/BadgeSelect';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=VACATION_TYPE';
@@ -41,6 +42,7 @@ const VacationManagementModal = ({
     selectedDate,
     onVacationUpdated 
 }) => {
+    const { t } = useTranslation();
     const { userRole: sessionUserRole } = useSession();
     const userRole = propUserRole || sessionUserRole;
     const [consultants, setConsultants] = useState([]);
@@ -567,7 +569,7 @@ const VacationManagementModal = ({
                                                 value: option.value,
                                                 label: `${option.icon} ${toDisplayString(option.label)} (${option.value})`
                                             }))}
-                                            placeholder="선택하세요"
+                                            placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
                                             disabled={loading || loadingCodes}
                                             className="mg-v2-form-badge-select"
                                         />
@@ -634,7 +636,7 @@ const VacationManagementModal = ({
                             <div className="existing-vacations">
                                 <h4>등록된 휴가 목록</h4>
                                 {loading ? (
-                                    <div className="loading">로딩 중...</div>
+                                    <div className="loading">{t('common.messages.loading', '로딩 중...')}</div>
                                 ) : existingVacations.length > 0 ? (
                                     <div className="vacation-list">
                                         {existingVacations.map(vacation => (
@@ -668,7 +670,7 @@ const VacationManagementModal = ({
                                                     disabled={loading}
                                                     loading={loading}
                                                 >
-                                                    삭제
+                                                    {t('admin.actions.delete', '삭제')}
                                                 </MGButton>
                                             </div>
                                         ))}

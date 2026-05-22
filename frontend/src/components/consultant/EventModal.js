@@ -7,9 +7,11 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 // 일정 모달 컴포넌트
 const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = USER_ROLES.CONSULTANT, onWriteConsultationLog, onConsultationLogSaved }) => {
+  const { t } = useTranslation();
   // Date 객체를 datetime-local 형식으로 변환하는 함수
   const formatDateForInput = (date) => {
     if (!date) return '';
@@ -175,7 +177,7 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = USER_RO
               onClick={handleDelete}
               preventDoubleClick={false}
             >
-              삭제
+              {t('common.actions.delete', '삭제')}
             </MGButton>
           )}
           {!isReadOnly && (
@@ -200,7 +202,7 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = USER_RO
             onClick={onClose}
             preventDoubleClick={false}
           >
-            취소
+            {t('common.actions.cancel', '취소')}
           </MGButton>
         </>
       }

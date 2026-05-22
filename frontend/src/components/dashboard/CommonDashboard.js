@@ -50,12 +50,14 @@ import ConsultantRatingWidget from './widgets/ConsultantRatingWidget';
 import ConsultationRecordSection from '../consultant/ConsultationRecordSection';
 import ConsultationRecordWidget from './widgets/ConsultationRecordWidget';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
 
 
 const CommonDashboard = ({ user: propUser }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [currentTime, setCurrentTime] = useState('');
@@ -745,7 +747,7 @@ const CommonDashboard = ({ user: propUser }) => {
   };
 
   return (
-    <AdminCommonLayout title="대시보드">
+    <AdminCommonLayout title={t('admin.labels.dashboard', '대시보드')}>
       {sessionLoading ? (
         <div className="common-dashboard__session-load" aria-busy="true" aria-live="polite">
           <UnifiedLoading type="inline" text="대시보드를 불러오는 중..." />

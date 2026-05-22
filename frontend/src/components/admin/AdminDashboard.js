@@ -86,6 +86,7 @@ import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
@@ -120,6 +121,7 @@ function AdminMgmtCardIcon({ icon: LucideIcon, tone = 'blue' }) {
 }
 
 const AdminDashboard = ({ user: propUser }) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user: sessionUser, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
 
@@ -761,11 +763,11 @@ const AdminDashboard = ({ user: propUser }) => {
                                 className: 'mg-v2-ad-b0kla__icon-btn'
                             })}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            aria-label="알림"
+                            aria-label={t('admin.labels.notification', '알림')}
                             onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}
                             preventDoubleClick={false}
                         >
-                            알림
+                            {t('admin.labels.notification', '알림')}
                         </MGButton>
                         <MGButton
                             type="button"
@@ -1003,13 +1005,13 @@ const AdminDashboard = ({ user: propUser }) => {
                     <StatCard
                         icon={<User />}
                         value={stats.totalConsultants}
-                        label="상담사"
+                        label={t('admin.labels.consultant', '상담사')}
                         onClick={() => navigate(ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE)}
                     />
                     <StatCard
                         icon={<Users />}
                         value={stats.totalClients}
-                        label="내담자"
+                        label={t('admin.labels.client', '내담자')}
                         onClick={() => navigate(ADMIN_ROUTES.CLIENT_COMPREHENSIVE)}
                     />
                     <StatCard
@@ -1299,7 +1301,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Users} tone="blue" />
-                        <span className="mg-v2-ad-b0kla__admin-label">사용자 관리</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.userManagement', '사용자 관리')}</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">상담사·내담자 통합 관리</span>
                     </MGButton>
                     <MGButton
@@ -1413,7 +1415,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={UserCog} tone="blue" />
-                        <span className="mg-v2-ad-b0kla__admin-label">상담사 관리</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.consultantManagement', '상담사 관리')}</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">상담사 정보를 관리합니다</span>
                     </MGButton>
                     <MGButton
@@ -1429,7 +1431,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={UserRound} tone="green" />
-                        <span className="mg-v2-ad-b0kla__admin-label">내담자 관리</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.clientManagement', '내담자 관리')}</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">내담자 정보를 관리합니다</span>
                     </MGButton>
                     <MGButton
@@ -1509,7 +1511,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Settings} tone="gray" />
-                        <span className="mg-v2-ad-b0kla__admin-label">시스템 설정</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.systemSettings', '시스템 설정')}</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">OpenAI API 키 및 시스템 설정을 관리합니다</span>
                     </MGButton>
                     <MGButton
@@ -1785,7 +1787,7 @@ const AdminDashboard = ({ user: propUser }) => {
             {/* 상담사 관리 */}
             {PermissionChecks.canManageConsultants(userPermissions) && (
                 <DashboardSection
-                    title="상담사 관리"
+                    title={t('admin.labels.consultantManagement', '상담사 관리')}
                     subtitle="상담사 정보 및 관리 기능"
                     icon={<Users />}
                 >
@@ -1803,7 +1805,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
             {/* 내담자 관리 */}
             <DashboardSection
-                title="내담자 관리"
+                title={t('admin.labels.clientManagement', '내담자 관리')}
                 subtitle="내담자 정보 및 관리 기능"
                 icon={<User />}
             >
@@ -1844,7 +1846,7 @@ const AdminDashboard = ({ user: propUser }) => {
             {showToastState && (
                 <div className={`mg-toast mg-toast-${toastType}`}>
                     <div className="mg-toast-header">
-                        <strong className="me-auto">알림</strong>
+                        <strong className="me-auto">{t('admin.labels.notification', '알림')}</strong>
                         <MGButton
                             type="button"
                             variant="outline"

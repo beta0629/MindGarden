@@ -46,6 +46,7 @@ import ClientDashboard from '../client/ClientDashboard';
 import AdminDashboard from '../admin/AdminDashboard';
 import AcademyDashboard from '../academy/AcademyDashboard';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
@@ -60,6 +61,7 @@ const DASHBOARD_COMPONENTS = {
 };
 
 const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { user: sessionUser, isLoading: sessionLoading } = useSession();
@@ -241,7 +243,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
 
   if (isLoading) {
     return (
-      <AdminCommonLayout title="대시보드">
+      <AdminCommonLayout title={t('admin.labels.dashboard', '대시보드')}>
         <div className="mg-dashboard-loading">
           <div className="mg-loading">로딩중...</div>
         </div>
@@ -251,7 +253,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
 
   if (error) {
     return (
-      <AdminCommonLayout title="대시보드">
+      <AdminCommonLayout title={t('admin.labels.dashboard', '대시보드')}>
         <div className="mg-dashboard-error">
           <h2 className="mg-dashboard-error__title">대시보드 로드 실패</h2>
           <p className="mg-dashboard-error__message">{error}</p>
@@ -267,7 +269,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
-            다시 시도
+            {t('common.labels.retry', '다시 시도')}
           </MGButton>
         </div>
       </AdminCommonLayout>
@@ -592,6 +594,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
  * @param {string} props.businessType - 업종 타입 (선택적)
  */
 const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: propBusinessType = null }) => {
+  const { t } = useTranslation();
   const { layout, widgets, theme, cardLayout, refresh } = dashboardConfig;
   const [businessType, setBusinessType] = useState(propBusinessType);
   const [widgetLayoutRemountKey, setWidgetLayoutRemountKey] = useState(0);
@@ -924,7 +927,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
   }, [refresh]);
   
   return (
-    <AdminCommonLayout title="대시보드">
+    <AdminCommonLayout title={t('admin.labels.dashboard', '대시보드')}>
       <div className="widget-based-dashboard" style={themeStyle}>
         <div className="dashboard-header">
           <h1>{dashboard?.dashboardName || '대시보드'}</h1>

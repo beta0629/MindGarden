@@ -15,13 +15,15 @@ import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/responsive-layout-tokens.css';
 import '../../styles/themes/admin-theme.css';
+import { useTranslation } from 'react-i18next';
 
 const MappingManagement = () => {
+  const { t } = useTranslation();
   const [searchValue, setSearchValue] = useState('');
 
   return (
     <AdminCommonLayout
-      title="매칭 관리"
+      title={t('admin.labels.matchingManagement', '매칭 관리')}
       searchValue={searchValue}
       onSearchChange={setSearchValue}
     >

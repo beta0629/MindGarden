@@ -251,7 +251,8 @@ const ACTION_DICTIONARY = {
   '기관 코드 입력': 'enterOrgCode',
   '구매 요청 거부': 'rejectPurchaseRequest',
   '걱정 시간 정하기': 'setWorryTime',
-  '건강한 경계 설정하기': 'setHealthyBoundary'
+  '건강한 경계 설정하기': 'setHealthyBoundary',
+  'PG 설정 수정': 'editPgSettings'
 };
 
 // 2차 사전 — labels 카테고리 (명사형, `<ns>.labels.<key>`)
@@ -406,7 +407,6 @@ const LABEL_DICTIONARY = {
   '30분': 'minutes30',
   'PG 설정 목록': 'pgSettingsList',
   'PG 설정 상세': 'pgSettingsDetail',
-  'PG 설정 수정': 'editPgSettings',
   'PG 설정 승인 관리': 'pgApprovalManagement',
   '강좌 ID': 'courseId',
   '6자리 인증 코드': 'sixDigitAuthCode',
@@ -742,7 +742,12 @@ function extractFromSource(source) {
         if (TRANSLATE_KEY_PATTERN.test(rawValue)) {
           continue;
         }
-        // 그 외(=fallback 한글 인자)는 이미 i18n 대상이므로 스킵
+        // 그 외(=한글 키 형태)는 i18n 후보가 아닌 키이므로 스킵
+        continue;
+      }
+
+      // 5-1b) 이미 t('key', '한글') 형태의 fallback 인자인 경우 → i18n 대상이므로 스킵 (Phase 2.1b 보강)
+      if (isInsideTranslateFallbackArg(lineWithoutComment, matchStart)) {
         continue;
       }
 
@@ -816,6 +821,27 @@ function isInsideTranslateFirstArg(line, literalStartIndex) {
     const between = head.slice(callOpenIndex);
     // 1번째 인자 판단: 사이에 쉼표/닫는 괄호 없음, 또한 열린 중첩 괄호 없음
     if (!/[,)]/.test(stripStrings(between))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// 2026-05-22 Phase 2.1b 보강: `t('key', '한글')` 형태의 fallback 한글 인자도 i18n 대상으로 인식하여 스킵
+// 패턴: `t(  '...'  ,  ` (key 문자열 + 쉼표) 직후의 한글 리터럴
+function isInsideTranslateFallbackArg(line, literalStartIndex) {
+  const head = line.slice(0, literalStartIndex);
+  for (const re of TRANSLATE_CALL_PATTERNS) {
+    const all = [...head.matchAll(new RegExp(re.source, 'g'))];
+    if (all.length === 0) {
+      continue;
+    }
+    const last = all[all.length - 1];
+    const callOpenIndex = last.index + last[0].length;
+    const between = head.slice(callOpenIndex);
+    const stripped = stripStrings(between).trim();
+    // 두 번째 인자 판단: 사이에 쉼표 1개 정확히 있고, 추가 닫는 괄호 없음
+    if (/^"",\s*$/.test(stripped) || /^,\s*$/.test(stripped)) {
       return true;
     }
   }

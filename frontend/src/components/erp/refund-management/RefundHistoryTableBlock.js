@@ -17,6 +17,7 @@ import {
 } from '../common/erpMgButtonProps';
 import ErpStatusBadge from '../common/ErpStatusBadge';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT, ErpEmptyState } from '../common';
+import { useTranslation } from 'react-i18next';
 
 const RefundHistoryTableBlock = ({
   refundHistory = [],
@@ -27,6 +28,7 @@ const RefundHistoryTableBlock = ({
   onToggleRowSelection,
   isLoadingReflect = false
 }) => {
+  const { t } = useTranslation();
   const totalPages = pageInfo?.totalPages ?? 0;
   const currentPage = pageInfo?.currentPage ?? 0;
   const hasPrevious = pageInfo?.hasPrevious ?? false;
@@ -72,10 +74,10 @@ const RefundHistoryTableBlock = ({
                   환불일시
                 </th>
                 <th scope="col" className="refund-management__th">
-                  내담자
+                  {t('common.labels.client', '내담자')}
                 </th>
                 <th scope="col" className="refund-management__th">
-                  상담사
+                  {t('common.labels.consultant', '상담사')}
                 </th>
                 <th scope="col" className="refund-management__th">
                   패키지
@@ -191,7 +193,7 @@ const RefundHistoryTableBlock = ({
             onClick={() => onPageChange(currentPage - 1)}
             preventDoubleClick={false}
           >
-            이전
+            {t('common.actions.prev', '이전')}
           </MGButton>
           <span className="refund-management__pagination-info">
             <ErpSafeText value={`${currentPage + 1} / ${totalPages} 페이지`} />

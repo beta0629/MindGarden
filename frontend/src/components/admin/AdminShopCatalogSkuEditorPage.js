@@ -49,8 +49,10 @@ import { useSession } from '../../contexts/SessionContext';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AdminShopCatalogSkuEditorPage.css';
+import { useTranslation } from 'react-i18next';
 
 const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { skuId } = useParams();
   const baseId = useId();
@@ -205,7 +207,7 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
                   disabled={saving}
                   onClick={() => navigate(ADMIN_SHOP_ROUTES.CATALOG_SKUS)}
                 >
-                  취소
+                  {t('admin.actions.cancel', '취소')}
                 </MGButton>
                 <MGButton
                   type="button"

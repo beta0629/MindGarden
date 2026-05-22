@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { EMOTION_CSS } from '../../constants/emotionCss';
 import './CognitiveDistortionPanel.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 인지 왜곡 패널 컴포넌트
@@ -11,6 +12,7 @@ import './CognitiveDistortionPanel.css';
  * @param {number} props.emotionId - 텍스트 감정 분석 ID
  */
 const CognitiveDistortionPanel = ({ emotionId }) => {
+    const { t } = useTranslation();
     const [emotionData, setEmotionData] = useState(null);
 
     // TODO: 실제 API 호출로 데이터 로드
@@ -45,7 +47,7 @@ const CognitiveDistortionPanel = ({ emotionId }) => {
         });
     }, [emotionId]);
 
-    if (!emotionData) return <div>로딩 중...</div>;
+    if (!emotionData) return <div>{t('common.messages.loading', '로딩 중...')}</div>;
 
     const getSentimentColor = (score) => {
         if (score > 0.5) return 'var(--mg-success-500)';

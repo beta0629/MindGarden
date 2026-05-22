@@ -22,6 +22,7 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AdminTenantSmsSettingsPage.css';
+import { useTranslation } from 'react-i18next';
 
 const PROVIDER_MAX_LEN = 120;
 const SENDER_MAX_LEN = 32;
@@ -51,6 +52,7 @@ const mapApiToForm = (data) => {
 };
 
 const AdminTenantSmsSettingsPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const toggleId = useId();
@@ -242,7 +244,7 @@ const AdminTenantSmsSettingsPage = () => {
                   loading={saving}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  저장
+                  {t('common.actions.save', '저장')}
                 </MGButton>
                 <MGButton
                   type="button"

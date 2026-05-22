@@ -22,11 +22,13 @@ import './ConsultationScheduleWidget.css';
 import SafeText from '../../../common/SafeText';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTATION_SCHEDULES = '/api/v1/consultation-schedules';
 
 const ConsultationScheduleWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const getDataSourceConfig = () => ({
@@ -127,10 +129,10 @@ const ConsultationScheduleWidget = ({ widget, user }) => {
                 loading={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => navigate(`/schedules/${schedule.id}`)}
-                title="상세 보기"
+                title={t('admin.actions.viewDetail', '상세 보기')}
                 preventDoubleClick={false}
               >
-                보기
+                {t('admin.actions.view', '보기')}
               </MGButton>
             </div>
           ))}

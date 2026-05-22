@@ -20,8 +20,10 @@ import SafeText from '../../common/SafeText';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { useTranslation } from 'react-i18next';
 
 const FormWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState(null);
@@ -98,7 +100,7 @@ const FormWidget = ({ widget, user }) => {
               onChange={(e) => handleFieldChange(name, e.target.value)}
               required={required}
             >
-              <option value="">선택하세요</option>
+              <option value="">{t('admin.messages.pleaseSelect', '선택하세요')}</option>
               {options.map((option, optIndex) => (
                 <option key={optIndex} value={option.value || option}>
                   {toDisplayString(option.label != null ? option.label : option)}

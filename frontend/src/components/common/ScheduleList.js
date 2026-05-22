@@ -32,6 +32,7 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import './ScheduleList.css';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=SCHEDULE_FILTER';
@@ -49,6 +50,7 @@ const ScheduleList = ({
   onScheduleCancel,
   onScheduleComplete
 }) => {
+  const { t } = useTranslation();
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -334,7 +336,7 @@ const ScheduleList = ({
             onClick={handleRefresh}
           >
             <i className="bi bi-arrow-clockwise" />
-            다시 시도
+            {t('common.labels.retry', '다시 시도')}
           </MGButton>
         </div>
       </div>
@@ -360,7 +362,7 @@ const ScheduleList = ({
           onClick={handleRefresh}
         >
           <i className="bi bi-arrow-clockwise" />
-          새로고침
+          {t('common.actions.refresh', '새로고침')}
         </MGButton>
       </div>
 

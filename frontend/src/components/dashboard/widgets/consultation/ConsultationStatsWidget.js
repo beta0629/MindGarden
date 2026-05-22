@@ -21,11 +21,13 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationStatsWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTATIONS_STATS = '/api/v1/consultations/stats';
 
 const ConsultationStatsWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const getDataSourceConfig = () => ({
@@ -96,7 +98,7 @@ const ConsultationStatsWidget = ({ widget, user }) => {
             <div className="stat-icon cancelled" />
             <div className="stat-info">
               <div className="stat-number">{stats.cancelled || 0}</div>
-              <div className="stat-label">취소됨</div>
+              <div className="stat-label">{t('common.labels.cancelled', '취소됨')}</div>
             </div>
           </div>
           <div className="stat-item">

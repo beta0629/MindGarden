@@ -20,8 +20,10 @@ import { ACADEMY_API, ACADEMY_MESSAGES } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import './Academy.css';
+import { useTranslation } from 'react-i18next';
 
 const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onCreateEnrollment }) => {
+  const { t } = useTranslation();
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -116,7 +118,7 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => handleCancel(enrollment.enrollmentId)}
           >
-            취소
+            {t('common.actions.cancel', '취소')}
           </MGButton>
         )}
       </div>

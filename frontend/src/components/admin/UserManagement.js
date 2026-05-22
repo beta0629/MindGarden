@@ -14,6 +14,7 @@ import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_USERS_ROLES = '/api/v1/admin/users/roles';
@@ -22,6 +23,7 @@ const API_ADMIN_USERS_ROLES = '/api/v1/admin/users/roles';
 const USER_MANAGEMENT_PAGE_TITLE_ID = 'user-management-title';
 
 const UserManagement = ({ onUpdate }) => {
+    const { t } = useTranslation();
     // notificationManager 사용
     const toast = (message, type) => {
         if (type === 'success') notificationManager.success(message);
@@ -270,7 +272,7 @@ const UserManagement = ({ onUpdate }) => {
                             </span>
                             {user.isActive === false && (
                                 <span className="mg-v2-badge mg-v2-badge-secondary">
-                                    비활성
+                                    {t('admin.labels.inactive', '비활성')}
                                 </span>
                             )}
                         </div>
@@ -319,10 +321,10 @@ const UserManagement = ({ onUpdate }) => {
     };
 
     return (
-        <AdminCommonLayout title="사용자 관리">
+        <AdminCommonLayout title={t('admin.labels.userManagement', '사용자 관리')}>
             <ContentArea ariaLabel="관리자 사용자 목록 및 역할 관리">
                 <ContentHeader
-                    title="사용자 관리"
+                    title={t('admin.labels.userManagement', '사용자 관리')}
                     subtitle={`전체 ${filteredUsers.length}명의 사용자를 관리합니다`}
                     titleId={USER_MANAGEMENT_PAGE_TITLE_ID}
                     actions={(
@@ -338,10 +340,10 @@ const UserManagement = ({ onUpdate }) => {
                             })}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={loadData}
-                            title="새로고침"
+                            title={t('admin.actions.refresh', '새로고침')}
                             preventDoubleClick={false}
                         >
-                            새로고침
+                            {t('admin.actions.refresh', '새로고침')}
                         </MGButton>
                     )}
                 />
@@ -463,7 +465,7 @@ const UserManagement = ({ onUpdate }) => {
                                 disabled={roleSubmitting}
                                 preventDoubleClick={false}
                             >
-                                취소
+                                {t('admin.actions.cancel', '취소')}
                             </MGButton>
                             <MGButton
                                 type="submit"

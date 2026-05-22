@@ -19,8 +19,10 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
+import { useTranslation } from 'react-i18next';
 
 const PaymentWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   // 표준화된 위젯 훅 사용
   const {
     data,
@@ -184,13 +186,13 @@ const PaymentWidget = ({ widget, user }) => {
         )}
         {summary.completed !== undefined && (
           <div className="summary-item">
-            <div className="summary-label">완료</div>
+            <div className="summary-label">{t('admin.actions.done', '완료')}</div>
             <div className="summary-value completed">{summary.completed}건</div>
           </div>
         )}
         {summary.pending !== undefined && (
           <div className="summary-item">
-            <div className="summary-label">대기</div>
+            <div className="summary-label">{t('admin.labels.pending', '대기')}</div>
             <div className="summary-value pending">{summary.pending}건</div>
           </div>
         )}

@@ -10,6 +10,7 @@ import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './ConsultationReport.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=REPORT_PERIOD';
@@ -18,6 +19,7 @@ const API_COMMON_CODES_3 = '/api/v1/common-codes?codeGroup=MONTH_RANGE';
 
 
 const ConsultationReport = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [reportData, setReportData] = useState(null);
@@ -441,7 +443,7 @@ const ConsultationReport = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={loadReportData}
               >
-                다시 시도
+                {t('common.labels.retry', '다시 시도')}
               </MGButton>
             </div>
           ) : !reportData ? (
@@ -502,11 +504,11 @@ const ConsultationReport = () => {
                     <h3>상담사별 상담 현황</h3>
                     <div className="stats-table">
                       <div className="table-header">
-                        <span>상담사</span>
+                        <span>{t('common.labels.consultant', '상담사')}</span>
                         <span>총 상담</span>
-                        <span>완료</span>
+                        <span>{t('common.actions.done', '완료')}</span>
                         <span>예정</span>
-                        <span>취소</span>
+                        <span>{t('common.actions.cancel', '취소')}</span>
                       </div>
                       {Object.entries(reportData.consultantStats).map(([consultant, stats]) => (
                         <div key={consultant} className="table-row">
@@ -526,11 +528,11 @@ const ConsultationReport = () => {
                     <h3>내담자별 상담 현황</h3>
                     <div className="stats-table">
                       <div className="table-header">
-                        <span>내담자</span>
+                        <span>{t('common.labels.client', '내담자')}</span>
                         <span>총 상담</span>
-                        <span>완료</span>
+                        <span>{t('common.actions.done', '완료')}</span>
                         <span>예정</span>
-                        <span>취소</span>
+                        <span>{t('common.actions.cancel', '취소')}</span>
                       </div>
                       {Object.entries(reportData.clientStats).map(([client, stats]) => (
                         <div key={client} className="table-row">

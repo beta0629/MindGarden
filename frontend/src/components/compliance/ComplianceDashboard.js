@@ -20,6 +20,7 @@ import {
   getComplianceLevelModifier
 } from './ComplianceDashboardCards';
 import { useComplianceDashboardData } from './useComplianceDashboardData';
+import { useTranslation } from 'react-i18next';
 
 const COMPLIANCE_TITLE_ID = 'compliance-dashboard-title';
 
@@ -46,6 +47,7 @@ const URL_EDU_PLAN = '/api/v1/admin/compliance/education/plan';
  * @since 2024-12-19
  */
 const ComplianceDashboard = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const sectionSubtitle = useMemo(
     () =>
@@ -116,7 +118,7 @@ const ComplianceDashboard = () => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={loadComplianceData}
           >
-            다시 시도
+            {t('common.labels.retry', '다시 시도')}
           </MGButton>
         </section>
       </ComplianceDashboardShell>

@@ -9,6 +9,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { USER_ROLES } from '../../constants/roles';
 import './SimpleHamburgerMenu.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 동적 햄버거 메뉴 컴포넌트
@@ -24,6 +25,7 @@ import './SimpleHamburgerMenu.css';
  * @since 2025-09-14
  */
 const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const user = sessionManager.getUser();
   const [expandedItems, setExpandedItems] = useState({});
@@ -270,7 +272,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
                 }}
                 preventDoubleClick={false}
               >
-                다시 시도
+                {t('common.labels.retry', '다시 시도')}
               </MGButton>
             </div>
           </div>

@@ -12,6 +12,7 @@ import { API_BASE_URL } from '../../constants/api';
 import WelcomeWidget from '../dashboard/widgets/WelcomeWidget';
 import './WidgetBasedAdminDashboard.css';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 위젯 기반 관리자 대시보드
@@ -21,6 +22,7 @@ import { USER_ROLES } from '../../constants/roles';
  * - 하드코딩 없이 완전히 동적으로 구성
  */
 const WidgetBasedAdminDashboard = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
     
@@ -269,7 +271,7 @@ const WidgetBasedAdminDashboard = () => {
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick
                             >
-                                삭제
+                                {t('admin.actions.delete', '삭제')}
                             </MGButton>
                         ) : (
                             <span className="no-delete-msg">
@@ -409,7 +411,7 @@ const WidgetBasedAdminDashboard = () => {
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={handleDashboardLoadRetry}
                         >
-                            다시 시도
+                            {t('common.labels.retry', '다시 시도')}
                         </MGButton>
                     </div>
                 </div>

@@ -22,8 +22,10 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from './MGButton';
 import './StatisticsModal.css';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 const StatisticsModal = ({ isOpen, onClose, userRole = USER_ROLES.ADMIN }) => {
+  const { t } = useTranslation();
   const [statistics, setStatistics] = useState(null);
   const [todayStatistics, setTodayStatistics] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -187,7 +189,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = USER_ROLES.ADMIN }) => {
             className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading })}
           >
             <RefreshCw size={16} />
-            새로고침
+            {t('common.actions.refresh', '새로고침')}
           </MGButton>
           <MGButton
             type="button"
@@ -197,7 +199,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = USER_ROLES.ADMIN }) => {
             className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
-            닫기
+            {t('common.actions.close', '닫기')}
           </MGButton>
         </>
       }

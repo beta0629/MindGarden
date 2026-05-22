@@ -11,11 +11,13 @@ import {
 import ErpStatusBadge from '../common/ErpStatusBadge';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT, ErpEmptyState } from '../common';
 import './RefundHistoryTable.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 환불 이력 테이블 컴포넌트
  */
 const RefundHistoryTable = ({ refundHistory = [], pageInfo = {}, onPageChange }) => {
+  const { t } = useTranslation();
   const rows = Array.isArray(refundHistory) ? refundHistory : [];
   const totalPages = pageInfo?.totalPages ?? 0;
   const currentPage = pageInfo?.currentPage ?? 0;
@@ -37,8 +39,8 @@ const RefundHistoryTable = ({ refundHistory = [], pageInfo = {}, onPageChange })
                 <thead>
                   <tr>
                     <th>환불일시</th>
-                    <th>내담자</th>
-                    <th>상담사</th>
+                    <th>{t('common.labels.client', '내담자')}</th>
+                    <th>{t('common.labels.consultant', '상담사')}</th>
                     <th>패키지</th>
                     <th>환불 회기</th>
                     <th>환불 금액</th>
@@ -102,7 +104,7 @@ const RefundHistoryTable = ({ refundHistory = [], pageInfo = {}, onPageChange })
                 disabled={!hasPrevious}
                 onClick={() => onPageChange(currentPage - 1)}
               >
-                이전
+                {t('common.actions.prev', '이전')}
               </MGButton>
 
               <span className="mg-v2-erp-refund-history__page-indicator">

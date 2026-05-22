@@ -22,11 +22,13 @@ import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_MONITORING_SYSTEM_METRICS_CURRENT = '/api/v1/monitoring/system-metrics/current';
 
 const SystemMetricsWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
 
@@ -329,8 +331,8 @@ const SystemMetricsWidget = ({ widget, user }) => {
           variant="outline"
           size="small"
           type="button"
-          aria-label="새로고침"
-          title="새로고침"
+          aria-label={t('admin.actions.refresh', '새로고침')}
+          title={t('admin.actions.refresh', '새로고침')}
           preventDoubleClick={false}
           className={buildErpMgButtonClassName({
             variant: 'outline',

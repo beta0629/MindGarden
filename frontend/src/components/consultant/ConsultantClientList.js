@@ -15,10 +15,12 @@ import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/cont
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantClientList.css';
+import { useTranslation } from 'react-i18next';
 
 const CONSULTANT_CLIENT_LIST_TITLE_ID = 'consultant-client-list-title';
 
 const ConsultantClientList = () => {
+  const { t } = useTranslation();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const { id: clientIdFromUrl } = useParams();
   const navigate = useNavigate();
@@ -314,7 +316,7 @@ const ConsultantClientList = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={loadClients}
               >
-                다시 시도
+                {t('common.labels.retry', '다시 시도')}
               </MGButton>
             </div>
           )}

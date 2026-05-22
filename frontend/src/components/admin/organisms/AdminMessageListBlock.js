@@ -22,6 +22,7 @@ import {
   filterAdminMessagesForOpsInbox
 } from '../../../utils/adminMessageInboxFilter';
 import '../../../styles/unified-design-tokens.css';
+import { useTranslation } from 'react-i18next';
 
 const MESSAGE_TYPES = {
   ALL: { label: '전체', color: 'var(--mg-color-text-secondary)' },
@@ -33,6 +34,7 @@ const MESSAGE_TYPES = {
 };
 
 const AdminMessageListBlock = () => {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -214,7 +216,7 @@ const AdminMessageListBlock = () => {
                         loading: false
                       })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      aria-label="상세 보기"
+                      aria-label={t('admin.actions.viewDetail', '상세 보기')}
                       onClick={() => handleMessageClick(message)}
                     >
                       상세
@@ -249,7 +251,7 @@ const AdminMessageListBlock = () => {
                   <Badge variant="status" statusVariant="warning" label="중요" />
                 )}
                 {selectedMessage.isUrgent && (
-                  <Badge variant="status" statusVariant="danger" label="긴급" />
+                  <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent', '긴급')} />
                 )}
               </div>
               <div className="mg-v2-message-modal-info-grid">

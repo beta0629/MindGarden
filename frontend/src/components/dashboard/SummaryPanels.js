@@ -9,11 +9,13 @@ import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import { RoleUtils } from '../../constants/roles';
 import { getStatusLabel } from '../../utils/colorUtils';
 import './SummaryPanels.css';
+import { useTranslation } from 'react-i18next';
 
 const isExternalScheduleUrl = (url) =>
   typeof url === 'string' && /^https?:\/\//i.test(url);
 
 const SummaryPanels = ({ user, consultationData }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   // 상담 일정 데이터 처리
   const upcomingCount = consultationData?.upcomingConsultations?.length || 0;
@@ -255,7 +257,7 @@ const SummaryPanels = ({ user, consultationData }) => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => { navigate('/admin/mapping-management'); }}
               >
-                               매핑 관리
+                               {t('admin.labels.mappingManagement', '매핑 관리')}
               </MGButton>
             </div>
           </div>

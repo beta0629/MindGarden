@@ -3,6 +3,7 @@ import { toDisplayString } from '../../../utils/safeDisplay';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './CommonCodeFilters.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=STATUS';
@@ -29,6 +30,7 @@ const CommonCodeFilters = ({
     codeGroups, 
     onNewCode 
 }) => {
+    const { t } = useTranslation();
     const [activeStatusOptions, setActiveStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
 
@@ -135,7 +137,7 @@ const CommonCodeFilters = ({
                     </div>
 
                     <div className="filter-group">
-                        <label htmlFor="isActive">상태</label>
+                        <label htmlFor="isActive">{t('admin.labels.status', '상태')}</label>
                         <select
                             id="isActive"
                             value={filters.isActive}

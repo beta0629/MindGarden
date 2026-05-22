@@ -7,6 +7,7 @@ import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import { ProfileCard } from '../ui/Card/index';
 import './VacationStatistics.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 상담사별 색상 반환 함수 - CSS 변수 사용
@@ -64,6 +65,7 @@ const getVacationTypeKorean = (type) => {
  * @since 2025-09-17
  */
 const VacationStatistics = ({ className = "" }) => {
+    const { t } = useTranslation();
     const [vacationStats, setVacationStats] = useState({
         summary: {
             totalConsultants: 0,
@@ -231,7 +233,7 @@ const VacationStatistics = ({ className = "" }) => {
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={loadVacationStats}
                     >
-                        다시 시도
+                        {t('common.labels.retry', '다시 시도')}
                     </MGButton>
                 </div>
             </div>

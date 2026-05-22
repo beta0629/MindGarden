@@ -19,8 +19,10 @@ import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './WidgetConfigModal.css';
+import { useTranslation } from 'react-i18next';
 
 const WidgetConfigModal = ({ isOpen, onClose, widget, onSave }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     type: '',
     position: {
@@ -188,7 +190,7 @@ const WidgetConfigModal = ({ isOpen, onClose, widget, onSave }) => {
             onClick={onClose}
             preventDoubleClick={true}
           >
-            취소
+            {t('admin.actions.cancel', '취소')}
           </MGButton>
           <MGButton
             variant="primary"
@@ -202,7 +204,7 @@ const WidgetConfigModal = ({ isOpen, onClose, widget, onSave }) => {
             onClick={handleSave}
             preventDoubleClick={true}
           >
-            저장
+            {t('common.actions.save', '저장')}
           </MGButton>
         </>
       }

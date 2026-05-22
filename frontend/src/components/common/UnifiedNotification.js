@@ -4,6 +4,7 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import '../../styles/main.css'; // Ensure main.css is imported for mg-notification styles
+import { useTranslation } from 'react-i18next';
 
 const NOTIFICATION_ACTION_VARIANTS = new Set([
   'primary',
@@ -76,6 +77,7 @@ const UnifiedNotification = ({
   countdown = 5,
   ...props 
 }) => {
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState([]);
   const [countdowns, setCountdowns] = useState({});
 
@@ -211,7 +213,7 @@ const UnifiedNotification = ({
                   e.stopPropagation();
                   removeNotification(notification.id);
                 }}
-                aria-label="닫기"
+                aria-label={t('common.actions.close', '닫기')}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 ×
@@ -333,7 +335,7 @@ const UnifiedNotification = ({
               })}
               preventDoubleClick={false}
               onClick={() => removeNotification(notification.id)}
-              aria-label="닫기"
+              aria-label={t('common.actions.close', '닫기')}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               ×

@@ -12,6 +12,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './ErdDetailPage.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 테넌트 포털 ERD 상세 페이지
@@ -27,6 +28,7 @@ import './ErdDetailPage.css';
  * @since 2025-01-XX
  */
 const ErdDetailPage = () => {
+  const { t } = useTranslation();
   const { diagramId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -576,7 +578,7 @@ const ErdDetailPage = () => {
               preventDoubleClick={false}
               onClick={loadErdDetail}
             >
-              다시 시도
+              {t('common.labels.retry', '다시 시도')}
             </MGButton>
           </div>
         </div>
@@ -613,9 +615,9 @@ const ErdDetailPage = () => {
               )}
               <span className="erd-meta-badge">v{toDisplayString(erd.version)}</span>
               {erd.isActive ? (
-                <StatusBadge variant="success">활성</StatusBadge>
+                <StatusBadge variant="success">{t('common.labels.active', '활성')}</StatusBadge>
               ) : (
-                <StatusBadge variant="neutral">비활성</StatusBadge>
+                <StatusBadge variant="neutral">{t('common.labels.inactive', '비활성')}</StatusBadge>
               )}
             </div>
           </div>
@@ -926,7 +928,7 @@ const ErdDetailPage = () => {
                   preventDoubleClick={false}
                   onClick={renderMermaid}
                 >
-                  다시 시도
+                  {t('common.labels.retry', '다시 시도')}
                 </MGButton>
               </div>
             ) : (

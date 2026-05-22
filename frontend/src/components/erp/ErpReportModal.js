@@ -12,6 +12,7 @@ import BadgeSelect from '../common/BadgeSelect';
 import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import './ErpCommon.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_BRANCHES = '/api/v1/branches';
@@ -34,6 +35,7 @@ const API_ERP_REPORTS = '/api/v1/erp/reports';
  * @since 2025-09-30
  */
 const ErpReportModal = ({ isOpen, onClose }) => {
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [reportType, setReportType] = useState('monthly');
     const [period, setPeriod] = useState('');
@@ -304,7 +306,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 disabled={loading}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
-                                취소
+                                {t('common.actions.cancel', '취소')}
                             </MGButton>
                             <MGButton
                                 variant="primary"

@@ -5,6 +5,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from './MGButton';
 import './HealingCard.css';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 오늘의 힐링 카드 컴포넌트
@@ -12,6 +13,7 @@ import { USER_ROLES } from '../../constants/roles';
  * GPT로 생성된 힐링 컨텐츠를 표시
  */
 const HealingCard = ({ userRole = USER_ROLES.CLIENT, category = null }) => {
+    const { t } = useTranslation();
     const [healingData, setHealingData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -117,7 +119,7 @@ const HealingCard = ({ userRole = USER_ROLES.CLIENT, category = null }) => {
                                 variant="primary"
                                 size="small"
                             >
-                                다시 시도
+                                {t('common.labels.retry', '다시 시도')}
                             </MGButton>
                         </div>
                     </div>

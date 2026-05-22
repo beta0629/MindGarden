@@ -23,6 +23,7 @@ import ConsultationLogPrecautionsPanel from './organisms/ConsultationLogPrecauti
 import ConsultationLogFormPanel from './organisms/ConsultationLogFormPanel';
 import ConsultationLogRequiredFieldsNotice from './molecules/ConsultationLogRequiredFieldsNotice';
 import ConsultationLogSessionHeaderMeta from './molecules/ConsultationLogSessionHeaderMeta';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=PRIORITY';
@@ -160,6 +161,7 @@ const ConsultationLogModal = ({
   recordId,
   isAdmin = false
 }) => {
+  const { t } = useTranslation();
   const { user } = useSession();
 
   const [loading, setLoading] = useState(false);
@@ -1028,7 +1030,7 @@ const ConsultationLogModal = ({
         disabled={saving}
         preventDoubleClick={false}
       >
-        취소
+        {t('common.actions.cancel', '취소')}
       </MGButton>
       <MGButton
         type="button"

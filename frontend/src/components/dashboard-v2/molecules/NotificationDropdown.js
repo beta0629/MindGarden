@@ -21,6 +21,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import GnbDropdownPortal from './GnbDropdownPortal';
 import './NotificationDropdown.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SYSTEM_NOTIFICATIONS = '/api/v1/system-notifications';
@@ -33,6 +34,7 @@ const TAB_MESSAGES = 'messages';
 const LIST_SIZE = 10;
 
 const NotificationDropdown = () => {
+  const { t } = useTranslation();
   const { user } = useSession();
   const {
     unreadSystemCount,
@@ -282,7 +284,7 @@ const NotificationDropdown = () => {
       className="mg-v2-notification-dropdown"
       ref={dropdownRef}
       role="navigation"
-      aria-label="알림"
+      aria-label={t('admin.labels.notification', '알림')}
     >
       <div className="mg-v2-notification-trigger-wrapper" ref={triggerRef}>
         <NavIcon
@@ -309,7 +311,7 @@ const NotificationDropdown = () => {
         ariaModal={false}
       >
         <div className="mg-v2-dropdown-panel__header">
-          <h2 className="mg-v2-dropdown-panel__title">알림</h2>
+          <h2 className="mg-v2-dropdown-panel__title">{t('admin.labels.notification', '알림')}</h2>
           {totalUnread > 0 && (
             <MGButton
               type="button"
@@ -366,7 +368,7 @@ const NotificationDropdown = () => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setActiveTab(TAB_MESSAGES)}
           >
-            메시지
+            {t('admin.labels.message', '메시지')}
           </MGButton>
         </div>
 
@@ -380,7 +382,7 @@ const NotificationDropdown = () => {
           <ul className="mg-v2-notification-list" aria-label="시스템 공지 목록">
             {loadingSystem && (
               <li>
-                <div className="mg-v2-notification-empty">로딩 중...</div>
+                <div className="mg-v2-notification-empty">{t('common.messages.loading', '로딩 중...')}</div>
               </li>
             )}
             {!loadingSystem && systemList.length === 0 && (
@@ -443,7 +445,7 @@ const NotificationDropdown = () => {
           <ul className="mg-v2-notification-list" aria-label="메시지 목록">
             {loadingMessages && (
               <li>
-                <div className="mg-v2-notification-empty">로딩 중...</div>
+                <div className="mg-v2-notification-empty">{t('common.messages.loading', '로딩 중...')}</div>
               </li>
             )}
             {!loadingMessages && messageList.length === 0 && (
@@ -535,7 +537,7 @@ const NotificationDropdown = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={closeDetailModal}
             >
-              확인
+              {t('common.actions.confirm', '확인')}
             </MGButton>
           }
         >

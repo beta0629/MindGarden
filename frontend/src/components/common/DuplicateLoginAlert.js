@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './DuplicateLoginAlert.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 중복 로그인 알림 컴포넌트
@@ -22,6 +23,7 @@ const DuplicateLoginAlert = ({
     onCancel, 
     countdown = 5 
 }) => {
+    const { t } = useTranslation();
     const [timeLeft, setTimeLeft] = useState(countdown);
     const [isClosing, setIsClosing] = useState(false);
 
@@ -103,7 +105,7 @@ const DuplicateLoginAlert = ({
                         variant="outline"
                         preventDoubleClick={false}
                     >
-                        취소
+                        {t('common.actions.cancel', '취소')}
                     </MGButton>
                     <MGButton
                         type="button"

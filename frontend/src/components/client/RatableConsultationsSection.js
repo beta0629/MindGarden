@@ -15,6 +15,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import '../../styles/unified-design-tokens.css';
 import './RatableConsultationsSection.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 평가 가능한 상담 목록 섹션
@@ -34,6 +35,7 @@ import './RatableConsultationsSection.css';
  * @since 2025-01-21
  */
 const RatableConsultationsSection = ({ sessionUserOverride }) => {
+  const { t } = useTranslation();
   const { user } = useSession();
   const effectiveUser = sessionUserOverride ?? user;
   const [ratableSchedules, setRatableSchedules] = useState([]);
@@ -153,7 +155,7 @@ const RatableConsultationsSection = ({ sessionUserOverride }) => {
               aria-label="목록 새로고침"
               preventDoubleClick={false}
             >
-              새로고침
+              {t('common.actions.refresh', '새로고침')}
             </MGButton>
           </div>
           <p className="ratable-consultations-subtitle">

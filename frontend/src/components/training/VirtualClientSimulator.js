@@ -6,6 +6,7 @@ import notificationManager from '../../utils/notification';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './VirtualClientSimulator.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_TRAINING_VIRTUAL_CLIENT_CREATE = '/api/v1/training/virtual-client/create';
@@ -20,6 +21,7 @@ const API_TRAINING_VIRTUAL_CLIENT_CREATE = '/api/v1/training/virtual-client/crea
  * @param {number} props.consultantId - 상담사 ID
  */
 const VirtualClientSimulator = ({ consultantId }) => {
+    const { t } = useTranslation();
     const [session, setSession] = useState(null);
     const [messages, setMessages] = useState([]);
     const [currentMessage, setCurrentMessage] = useState('');
@@ -171,7 +173,7 @@ const VirtualClientSimulator = ({ consultantId }) => {
                                 onChange={(e) => setSelectedScenario(e.target.value)}
                                 className="form-control"
                             >
-                                <option value="">선택하세요</option>
+                                <option value="">{t('common.messages.pleaseSelect', '선택하세요')}</option>
                                 {scenarios.map(s => (
                                     <option key={s.value} value={s.value}>
                                         {s.label}

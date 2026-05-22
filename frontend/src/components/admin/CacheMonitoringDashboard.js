@@ -12,10 +12,12 @@ import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './CacheMonitoringDashboard.css';
+import { useTranslation } from 'react-i18next';
 
 const CACHE_MONITOR_TITLE_ID = 'cache-monitoring-title';
 
 const CacheMonitoringDashboard = () => {
+  const { t } = useTranslation();
   const [cacheStats, setCacheStats] = useState({});
   const [loading, setLoading] = useState(false);
   const [clearLoading, setClearLoading] = useState(false);
@@ -145,7 +147,7 @@ const CacheMonitoringDashboard = () => {
                       className: 'refresh-button'
                     })}
                   >
-                    새로고침
+                    {t('admin.actions.refresh', '새로고침')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -256,7 +258,7 @@ const CacheMonitoringDashboard = () => {
                           className: 'retry-button'
                         })}
                       >
-                        다시 시도
+                        {t('common.labels.retry', '다시 시도')}
                       </MGButton>
                     </div>
                   )}

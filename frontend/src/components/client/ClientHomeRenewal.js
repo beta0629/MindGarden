@@ -19,6 +19,7 @@ import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ClientHomeRenewal.css';
 import { USER_ROLES } from '../../constants/roles';
 import { SCHEDULE_API } from '../../constants/api';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_HEALING_CONTENT = '/api/v1/healing/content';
@@ -65,6 +66,7 @@ const formatScheduleDate = (dateStr, startTime) => {
 };
 
 const ClientHomeRenewal = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useSession();
   const [loading, setLoading] = useState(true);
@@ -190,7 +192,7 @@ const ClientHomeRenewal = () => {
                 navigate('/client/session-management');
               }}
             >
-              상세 보기 <ChevronRight size={16} />
+              {t('admin.actions.viewDetail', '상세 보기')} <ChevronRight size={16} />
             </button>
           </div>
         </section>

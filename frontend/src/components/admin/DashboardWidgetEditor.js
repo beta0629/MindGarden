@@ -27,6 +27,7 @@ import {
 } from '../dashboard/widgets/WidgetRegistry';
 import { FaPlus, FaGripVertical } from 'react-icons/fa';
 import './DashboardWidgetEditor.css';
+import { useTranslation } from 'react-i18next';
 
 // 위젯 타입 한글 이름 매핑
 const WIDGET_TYPE_NAMES = {
@@ -76,6 +77,7 @@ const DashboardWidgetEditor = ({
   businessType = null,
   onWidgetConfig 
 }) => {
+  const { t } = useTranslation();
   const [selectedWidget, setSelectedWidget] = useState(null);
   
   // 기본 위젯과 특화 위젯 분리
@@ -305,7 +307,7 @@ const DashboardWidgetEditor = ({
                     title="위젯 삭제"
                     preventDoubleClick={false}
                   >
-                    삭제
+                    {t('admin.actions.delete', '삭제')}
                   </MGButton>
                 </div>
               </div>

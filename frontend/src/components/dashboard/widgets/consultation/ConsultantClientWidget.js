@@ -24,11 +24,13 @@ import './ConsultantClientWidget.css';
 import MGButton from '../../../common/MGButton';
 import { ProfileCard } from '../../../ui/Card/index';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTANT_CLIENTS = '/api/v1/consultant-clients';
 
 const ConsultantClientWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const getDataSourceConfig = () => ({
@@ -134,10 +136,10 @@ const ConsultantClientWidget = ({ widget, user }) => {
                     loading={false}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => navigate(`/messages/${client.id}`)}
-                    title="메시지"
+                    title={t('admin.labels.message', '메시지')}
                     preventDoubleClick={false}
                   >
-                    메시지
+                    {t('admin.labels.message', '메시지')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -155,7 +157,7 @@ const ConsultantClientWidget = ({ widget, user }) => {
                     title="상세보기"
                     preventDoubleClick={false}
                   >
-                    보기
+                    {t('admin.actions.view', '보기')}
                   </MGButton>
                 </>
               )}

@@ -15,6 +15,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from '../common/MGButton';
 import './ConsultantMessages.css';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTATION_MESSAGES = '/api/v1/consultation-messages';
@@ -62,6 +63,7 @@ function getMessageCounterpartyLine(message) {
 }
 
 const ConsultantMessages = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const { markMessageAsRead } = useNotification();
@@ -262,7 +264,7 @@ const ConsultantMessages = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout title="메시지">
+      <AdminCommonLayout title={t('admin.labels.message', '메시지')}>
         <ContentArea ariaLabel="메시지 페이지 로딩">
           <ContentHeader
             title="메시지 관리"
@@ -287,7 +289,7 @@ const ConsultantMessages = () => {
 
   if (!isLoggedIn) {
     return (
-      <AdminCommonLayout title="메시지">
+      <AdminCommonLayout title={t('admin.labels.message', '메시지')}>
         <ContentArea ariaLabel="메시지">
           <div className="consultant-messages-login-required">
             <h3>로그인이 필요합니다.</h3>
@@ -298,7 +300,7 @@ const ConsultantMessages = () => {
   }
 
   return (
-    <AdminCommonLayout title="메시지">
+    <AdminCommonLayout title={t('admin.labels.message', '메시지')}>
       <ContentArea ariaLabel="상담사 메시지 관리">
         <ContentHeader
           title="메시지 관리"
@@ -332,7 +334,7 @@ const ConsultantMessages = () => {
                   label: type.label
                 }))
               ]}
-              placeholder="선택하세요"
+              placeholder={t('common.messages.pleaseSelect', '선택하세요')}
               className="mg-v2-form-badge-select consultant-messages-filter-select"
             />
           </div>
@@ -405,7 +407,7 @@ const ConsultantMessages = () => {
                             <span className="mg-badge mg-badge-warning mg-v2-text-xs">중요</span>
                           )}
                           {message.isUrgent && (
-                            <span className="mg-badge mg-badge-danger mg-v2-text-xs">긴급</span>
+                            <span className="mg-badge mg-badge-danger mg-v2-text-xs">{t('admin.labels.urgent', '긴급')}</span>
                           )}
                         </div>
                         <span className="mg-v2-text-xs mg-v2-color-text-secondary">
@@ -453,7 +455,7 @@ const ConsultantMessages = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setShowSendModal(false)}
               >
-                취소
+                {t('common.actions.cancel', '취소')}
               </MGButton>
               <MGButton
                 variant="primary"
@@ -492,7 +494,7 @@ const ConsultantMessages = () => {
                 value: type.value,
                 label: type.label
               }))}
-              placeholder="선택하세요"
+              placeholder={t('common.messages.pleaseSelect', '선택하세요')}
             />
           </div>
           <div className="mg-v2-form-group">
@@ -530,7 +532,7 @@ const ConsultantMessages = () => {
                 checked={newMessage.isUrgent}
                 onChange={(e) => setNewMessage({ ...newMessage, isUrgent: e.target.checked })}
               />
-              <span>긴급</span>
+              <span>{t('admin.labels.urgent', '긴급')}</span>
             </label>
           </div>
         </UnifiedModal>

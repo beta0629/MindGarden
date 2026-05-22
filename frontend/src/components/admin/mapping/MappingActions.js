@@ -7,6 +7,7 @@ import { toDisplayString } from '../../../utils/safeDisplay';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './MappingActions.css';
+import { useTranslation } from 'react-i18next';
 
 const BOOTSTRAP_CLASS_TO_MG_VARIANT = {
     'btn-success': 'success',
@@ -47,6 +48,7 @@ const MappingActions = ({
     onSuspend,
     onActivate
 }) => {
+    const { t } = useTranslation();
     const getActionsForStatus = (status) => {
         switch (status) {
             case 'PENDING_PAYMENT':
@@ -188,9 +190,9 @@ const MappingActions = ({
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => onDelete?.(mapping.id)}
-                        title="삭제"
+                        title={t('admin.actions.delete', '삭제')}
                     >
-                        삭제
+                        {t('admin.actions.delete', '삭제')}
                     </MGButton>
                 )}
             </div>

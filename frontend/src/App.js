@@ -175,6 +175,7 @@ import ApiPerformanceMonitoring from './components/admin/ApiPerformanceMonitorin
 import PackagePricingListPage from './components/admin/package-pricing/pages/PackagePricingListPage';
 import PackagePricingDetailPage from './components/admin/package-pricing/pages/PackagePricingDetailPage';
 import { ADMIN_ROUTES } from './constants/adminRoutes';
+import { useTranslation } from 'react-i18next';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -205,6 +206,7 @@ function QueryParamHandler({ children, onLoginSuccess }) {
 
 // 실제 앱 컴포넌트 (SessionProvider 내부에서 사용)
 function AppContent() {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
   const { setPathname } = useNotification();
   const { user, sessionInfo, isLoading, checkSession, logout } = useSession();
@@ -372,7 +374,7 @@ function AppContent() {
             <div className="mg-loading-container mg-loading-container--centered">
               <div className="mg-loading-content">
                 <div className="mg-loading-spinner" />
-                <span className="mg-loading-text">로딩 중...</span>
+                <span className="mg-loading-text">{t('common.messages.loading', '로딩 중...')}</span>
               </div>
             </div>
           </div>
@@ -380,7 +382,7 @@ function AppContent() {
         <div className="App">
           <AppToast />
           <UnifiedNotification type="toast" position="top-right" />
-          <Suspense fallback={<div className="mg-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>로딩 중...</div>}>
+          <Suspense fallback={<div className="mg-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>{t('common.messages.loading', '로딩 중...')}</div>}>
           <Routes>
             <Route path="/" element={<TabletHomepage />} />
             <Route path="/landing" element={<CounselingCenterLanding />} />

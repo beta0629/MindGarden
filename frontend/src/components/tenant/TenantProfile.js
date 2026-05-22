@@ -46,8 +46,10 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './TenantProfile.css';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 const TenantProfile = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     user,
@@ -438,7 +440,7 @@ const TenantProfile = () => {
                         <p><SafeText fallback="-">{tenantInfo.businessType}</SafeText></p>
                       </div>
                       <div className="mg-v2-tenant-profile__field">
-                        <label>상태</label>
+                        <label>{t('admin.labels.status', '상태')}</label>
                         <div>{renderStatusBadge(tenantInfo.status)}</div>
                       </div>
                     </div>
@@ -635,7 +637,7 @@ const TenantProfile = () => {
                               title={toDisplayString('삭제')}
                               preventDoubleClick={false}
                             >
-                              삭제
+                              {t('admin.actions.delete', '삭제')}
                             </MGButton>
                           </div>
                         </div>
@@ -690,7 +692,7 @@ const TenantProfile = () => {
                   disabled={tenantNameSaving}
                   preventDoubleClick={false}
                 >
-                  취소
+                  {t('admin.actions.cancel', '취소')}
                 </MGButton>
                 <MGButton
                   type="submit"
@@ -708,7 +710,7 @@ const TenantProfile = () => {
                   data-testid="tenant-profile-rename-save"
                   preventDoubleClick={false}
                 >
-                  저장
+                  {t('common.actions.save', '저장')}
                 </MGButton>
               </>
             }

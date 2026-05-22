@@ -9,8 +9,10 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
 import Icon from './Icon';
+import { useTranslation } from 'react-i18next';
 
-const IconExamples = () => {const [clickedIcon, setClickedIcon] = useState(null);
+const IconExamples = () => {
+  const { t } = useTranslation();const [clickedIcon, setClickedIcon] = useState(null);
 
   const handleIconClick = (iconName) => {setClickedIcon(iconName);
     setTimeout(() => setClickedIcon(null), FORM_CONSTANTS.MAX_TEXTAREA_LENGTH);};
@@ -227,7 +229,7 @@ const IconExamples = () => {const [clickedIcon, setClickedIcon] = useState(null)
                 preventDoubleClick={false}
               >
                 <Icon name="TRASH" size="SM" />
-                삭제
+                {t('common.actions.delete', '삭제')}
               </MGButton>
             </div>
           </div>

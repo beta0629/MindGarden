@@ -7,7 +7,9 @@ import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './SystemNotificationWidget.css';
+import { useTranslation } from 'react-i18next';
 const SystemNotificationWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     notifications,
@@ -146,7 +148,7 @@ const SystemNotificationWidget = ({ widget, user }) => {
                     <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
                   )}
                   {item.isUrgent && (
-                    <Badge variant="status" statusVariant="danger" label="긴급" size="sm" />
+                    <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent', '긴급')} size="sm" />
                   )}
                 </div>
               </div>

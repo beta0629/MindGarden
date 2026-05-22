@@ -7,6 +7,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import { ActionButton, StatusBadge } from '../common';
 import SafeText from '../common/SafeText';
 import './MappingEditModal.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 매칭 수정 모달 컴포넌트
@@ -20,6 +21,7 @@ import './MappingEditModal.css';
  * @updated 2025-02-22 - B0KlA 디자인 시스템 적용, 누락 정보 추가
  */
 const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     packageName: '',
     packagePrice: '',
@@ -220,7 +222,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             onClick={handleClose}
             disabled={loading}
           >
-            취소
+            {t('admin.actions.cancel', '취소')}
           </ActionButton>
           <ActionButton
             variant="primary"
@@ -241,15 +243,15 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             </h3>
             <div className="mg-v2-info-grid">
               <div className="mg-v2-info-row">
-                <span className="mg-v2-info-label"><User size={14} className="mg-v2-mapping-edit-modal__section-title-icon" />상담사</span>
+                <span className="mg-v2-info-label"><User size={14} className="mg-v2-mapping-edit-modal__section-title-icon" />{t('admin.labels.consultant', '상담사')}</span>
                 <span className="mg-v2-info-value">{mapping.consultantName || '-'}</span>
               </div>
               <div className="mg-v2-info-row">
-                <span className="mg-v2-info-label"><User size={14} className="mg-v2-mapping-edit-modal__section-title-icon" />내담자</span>
+                <span className="mg-v2-info-label"><User size={14} className="mg-v2-mapping-edit-modal__section-title-icon" />{t('admin.labels.client', '내담자')}</span>
                 <span className="mg-v2-info-value">{mapping.clientName || '-'}</span>
               </div>
               <div className="mg-v2-info-row">
-                <span className="mg-v2-info-label">상태</span>
+                <span className="mg-v2-info-label">{t('admin.labels.status', '상태')}</span>
                 <span>
                   <StatusBadge status={mapping?.status} />
                 </span>

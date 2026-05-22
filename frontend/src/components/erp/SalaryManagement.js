@@ -52,12 +52,14 @@ import '../admin/mapping-management/organisms/MappingListBlock.css';
 import ErpPageShell from './shell/ErpPageShell';
 import { ErpFilterToolbar, useErpSilentRefresh } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 const TAB_CALC = 'calculations';
 const TAB_PROFILES = 'profiles';
 const TAB_TAX = 'tax';
 
 const SalaryManagement = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
   const initialTab =
@@ -658,7 +660,7 @@ const SalaryManagement = () => {
                       </div>
                     )}
                     <div className="salary-filter-block__field">
-                      <label htmlFor="salary-consultant" className="mg-v2-form-label">상담사</label>
+                      <label htmlFor="salary-consultant" className="mg-v2-form-label">{t('common.labels.consultant', '상담사')}</label>
                       <select
                         id="salary-consultant"
                         value={selectedConsultant?.id || ''}
@@ -794,7 +796,7 @@ const SalaryManagement = () => {
                   )}
                   {loading ? (
                       <div className="salary-management__loading-text-wrap" role="status" aria-live="polite" aria-busy="true">
-                        <p className="salary-management__loading-text">데이터를 불러오는 중...</p>
+                        <p className="salary-management__loading-text">{t('common.messages.loadingData', '데이터를 불러오는 중...')}</p>
                       </div>
                     ) : consultants.length === 0 ? (
                       <p className="salary-profile-block__empty-state">상담사 데이터가 없습니다.</p>
@@ -1002,7 +1004,7 @@ const SalaryManagement = () => {
                           </div>
                         </div>
                         <dl className="salary-calc-block__preview-grid">
-                          <dt className="salary-management__stat-label">상담사</dt>
+                          <dt className="salary-management__stat-label">{t('common.labels.consultant', '상담사')}</dt>
                           <dd className="salary-management__stat-value"><SafeText>{previewResult.consultantName}</SafeText></dd>
                           <dt className="salary-management__stat-label">기간</dt>
                           <dd className="salary-management__stat-value"><SafeText>{previewResult.period}</SafeText></dd>

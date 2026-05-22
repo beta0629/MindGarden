@@ -11,8 +11,10 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import SafeText from '../../common/SafeText';
 import notificationManager from '../../../utils/notification';
+import { useTranslation } from 'react-i18next';
 
 const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     currentPassword: tempPassword || '',
     newPassword: '',
@@ -334,7 +336,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
             onClick={onClose}
             disabled={isLoading}
           >
-            취소
+            {t('common.actions.cancel', '취소')}
           </MGButton>
           <MGButton
             type="submit"

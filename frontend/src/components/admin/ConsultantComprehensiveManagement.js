@@ -64,6 +64,7 @@ import {
     fetchProfessionalProviderTypeSelectOptions,
     getProfessionalProviderTypeLabel
 } from '../../constants/professionalProviderRoles';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
@@ -81,6 +82,7 @@ const CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS = {
 };
 
 const ConsultantComprehensiveManagement = ({ embedded = false }) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [consultants, setConsultants] = useState([]);
     const [selectedConsultant, setSelectedConsultant] = useState(null);
@@ -1246,7 +1248,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     <div className="mg-v2-ad-b0kla__container">
                         <ContentArea ariaLabel="상담사 종합관리 본문">
                             <ContentHeader
-                                title="상담사 관리"
+                                title={t('admin.labels.consultantManagement', '상담사 관리')}
                                 subtitle="상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다"
                                 titleId={CONSULTANT_COMP_MGMT_TITLE_ID}
                             />
@@ -1430,7 +1432,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    수정
+                                                                    {t('common.actions.edit', '수정')}
                                                                 </MGButton>
                                                                 <MGButton
                                                                     variant="secondary"
@@ -1457,7 +1459,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    삭제
+                                                                    {t('admin.actions.delete', '삭제')}
                                                                 </MGButton>
                                                             </>
                                                         )}
@@ -1606,7 +1608,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    수정
+                                                                    {t('common.actions.edit', '수정')}
                                                                 </MGButton>
                                                                 <MGButton
                                                                     variant="secondary"
@@ -1633,7 +1635,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    삭제
+                                                                    {t('admin.actions.delete', '삭제')}
                                                                 </MGButton>
                                                             </>
                                                         )}
@@ -1686,7 +1688,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         <>
             {!embedded && (
                 <ContentHeader
-                    title="상담사 관리"
+                    title={t('admin.labels.consultantManagement', '상담사 관리')}
                     subtitle="상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다"
                     titleId={CONSULTANT_COMP_MGMT_TITLE_ID}
                     actions={
@@ -2237,7 +2239,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                         onClick={handleCloseModal}
                     >
-                        닫기
+                        {t('common.actions.close', '닫기')}
                     </MGButton>
                     <MGButton
                         type="button"
@@ -2261,7 +2263,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
                         onClick={() => handleOpenModal('edit', selectedConsultant)}
                     >
-                        수정
+                        {t('common.actions.edit', '수정')}
                     </MGButton>
                 </>
             );
@@ -2282,7 +2284,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                     onClick={handleCloseModal}
                 >
-                    취소
+                    {t('admin.actions.cancel', '취소')}
                 </MGButton>
                 <MGButton
                     type="button"
@@ -2338,7 +2340,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             onClick={() => setShowDeleteConfirm(false)}
                             disabled={deleteConfirmLoading}
                         >
-                            취소
+                            {t('admin.actions.cancel', '취소')}
                         </MGButton>
                         <MGButton
                             type="button"
@@ -2357,7 +2359,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 }
                             }}
                         >
-                            삭제
+                            {t('admin.actions.delete', '삭제')}
                         </MGButton>
                     </>
                 }

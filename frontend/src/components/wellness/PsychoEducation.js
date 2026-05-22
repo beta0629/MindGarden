@@ -14,6 +14,7 @@ import {
   Shield, Brain, Users, Heart, Sparkles
 } from 'lucide-react';
 import './PsychoEducation.css';
+import { useTranslation } from 'react-i18next';
 
 const CATEGORIES = [
   { key: 'all', label: '전체' },
@@ -57,6 +58,7 @@ const MOCK_ARTICLES = [
 ];
 
 const PsychoEducation = () => {
+  const { t } = useTranslation();
   const [activeCategory, setActiveCategory] = useState('all');
   const [bookmarks, setBookmarks] = useState(() => {
     try {
@@ -251,7 +253,7 @@ const PsychoEducation = () => {
                 type="button"
                 className="psycho-edu__detail-close"
                 onClick={closeDetail}
-                aria-label="닫기"
+                aria-label={t('common.actions.close', '닫기')}
               >
                 <X size={18} />
               </button>
@@ -287,7 +289,7 @@ const PsychoEducation = () => {
                 disabled={detailIndex === 0}
               >
                 <ChevronLeft size={16} className="psycho-edu__detail-nav-icon" />
-                이전
+                {t('common.actions.prev', '이전')}
               </button>
               <button
                 type="button"

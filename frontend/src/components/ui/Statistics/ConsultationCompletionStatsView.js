@@ -1,6 +1,7 @@
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { ConsultantStatsCard } from '../Card';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 상담 완료 통계 뷰 컴포넌트 (Presentational)
@@ -22,6 +23,7 @@ const ConsultationCompletionStatsView = ({
     convertGradeToKorean,
     convertSpecialtyToKorean
 }) => {
+    const { t } = useTranslation();
     const getGradeLabel = (grade) =>
       grade ? convertGradeToKorean(grade) : null;
     const getSpecializationLabel = (specialization) =>
@@ -51,7 +53,7 @@ const ConsultationCompletionStatsView = ({
                     onClick={onRetry}
                     variant="danger"
                 >
-                    다시 시도
+                    {t('common.labels.retry', '다시 시도')}
                 </MGButton>
             </div>
         );
@@ -74,7 +76,7 @@ const ConsultationCompletionStatsView = ({
                             value={selectedPeriod}
                             onChange={onPeriodChange}
                         >
-                            <option value="">전체</option>
+                            <option value="">{t('common.labels.all', '전체')}</option>
                             {periodOptions.map(option => (
                                 <option key={option.value} value={option.value}>
                                     {option.label}

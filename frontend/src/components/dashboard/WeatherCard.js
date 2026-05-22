@@ -4,6 +4,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from '../common/MGButton';
 
 import '../../styles/unified-design-tokens.css';
+import { useTranslation } from 'react-i18next';
 /**
  * 날씨 정보 카드 컴포넌트
 /**
@@ -12,6 +13,7 @@ import '../../styles/unified-design-tokens.css';
  * 디자인 시스템 v2.0 적용
  */
 const WeatherCard = () => {
+  const { t } = useTranslation();
   const [weatherData, setWeatherData] = useState({
     temperature: null,
     description: '',
@@ -207,7 +209,7 @@ const WeatherCard = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={fetchWeatherData}
               >
-                다시 시도
+                {t('common.labels.retry', '다시 시도')}
               </MGButton>
             </div>
           </div>

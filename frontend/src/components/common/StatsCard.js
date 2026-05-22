@@ -10,6 +10,7 @@ import PropTypes from 'prop-types';
 import { STATS_CARD_CSS } from '../../constants/css';
 import { STATS_CARD } from '../../constants/charts';
 import './StatsCard.css';
+import { useTranslation } from 'react-i18next';
 
 const StatsCard = ({
   icon,
@@ -23,6 +24,7 @@ const StatsCard = ({
   loading = false,
   error = false
 }) => {
+  const { t } = useTranslation();
   // 증감 타입에 따른 클래스 결정
   const getChangeClass = () => {
     if (changeType === STATS_CARD.CHANGE_TYPES.POSITIVE) {
@@ -61,10 +63,10 @@ const StatsCard = ({
       <div className={`${STATS_CARD_CSS.CONTAINER} ${STATS_CARD_CSS.LOADING}`}>
         <div className={STATS_CARD_CSS.LOADING_SPINNER}>
           <div className="spinner-border" role="status">
-            <span className="sr-only">로딩 중...</span>
+            <span className="sr-only">{t('common.messages.loading', '로딩 중...')}</span>
           </div>
         </div>
-        <div className={STATS_CARD_CSS.LOADING_TEXT}>데이터를 불러오는 중...</div>
+        <div className={STATS_CARD_CSS.LOADING_TEXT}>{t('common.messages.loadingData', '데이터를 불러오는 중...')}</div>
       </div>
     );
   }

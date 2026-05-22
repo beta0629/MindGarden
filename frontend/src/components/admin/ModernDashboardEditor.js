@@ -37,6 +37,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './ModernDashboardEditor.css';
 import './CompactWidgetEditor.css';
+import { useTranslation } from 'react-i18next';
 
 // 위젯 타입별 아이콘 매핑 (시각적 구분)
 const WIDGET_ICONS = {
@@ -90,6 +91,7 @@ const ModernDashboardEditor = ({
   onWidgetsChange,
   businessType = null 
 }) => {
+  const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -336,10 +338,10 @@ const ModernDashboardEditor = ({
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => handleDeleteWidget(widget.id)}
-                        title="삭제"
+                        title={t('admin.actions.delete', '삭제')}
                         preventDoubleClick={false}
                       >
-                        삭제
+                        {t('admin.actions.delete', '삭제')}
                       </MGButton>
                     </div>
                   </div>

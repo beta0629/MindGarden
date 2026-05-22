@@ -28,6 +28,7 @@ import {
   ERP_NUMBER_FORMAT,
   useErpSilentRefresh
 } from './common';
+import { useTranslation } from 'react-i18next';
 
 const PURCHASE_REQUEST_TITLE_ID = 'purchase-request-title';
 
@@ -35,6 +36,7 @@ const PURCHASE_REQUEST_TITLE_ID = 'purchase-request-title';
  * 구매 요청 폼 컴포넌트
  */
 const PurchaseRequestForm = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useSession();
   const [loading, setLoading] = useState(false);
@@ -506,7 +508,7 @@ const PurchaseRequestForm = () => {
             preventDoubleClick={false}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
-            확인
+            {t('common.actions.confirm', '확인')}
           </MGButton>
         </div>
       </UnifiedModal>

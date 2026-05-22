@@ -36,6 +36,7 @@ import {
 } from '../../constants/portonePgConfiguration';
 import './PgApprovalManagement.css';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 운영 포털에서 테넌트 PG 설정 승인·거부를 관리하는 페이지
@@ -48,6 +49,7 @@ import { USER_ROLES } from '../../constants/roles';
 const PG_APPROVAL_PAGE_TITLE_ID = 'pg-approval-management-title';
 
 const PgApprovalManagement = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   
@@ -334,7 +336,7 @@ const PgApprovalManagement = () => {
   
   if (sessionLoading || loading && pendingConfigs.length === 0) {
     return (
-      <AdminCommonLayout title="PG 설정 승인 관리">
+      <AdminCommonLayout title={t('admin.messages.pgApprovalManagement', 'PG 설정 승인 관리')}>
         <ContentArea ariaLabel="PG 설정 승인 관리">
           <UnifiedLoading type="inline" text="PG 설정 목록을 불러오는 중..." />
         </ContentArea>
@@ -344,7 +346,7 @@ const PgApprovalManagement = () => {
   
   if (!isLoggedIn || !user) {
     return (
-      <AdminCommonLayout title="PG 설정 승인 관리">
+      <AdminCommonLayout title={t('admin.messages.pgApprovalManagement', 'PG 설정 승인 관리')}>
         <ContentArea ariaLabel="PG 설정 승인 관리">
           <div className="error-message">
             <AlertCircleIcon size={24} />
@@ -356,10 +358,10 @@ const PgApprovalManagement = () => {
   }
   
   return (
-    <AdminCommonLayout title="PG 설정 승인 관리">
+    <AdminCommonLayout title={t('admin.messages.pgApprovalManagement', 'PG 설정 승인 관리')}>
       <ContentArea ariaLabel="PG 설정 승인 관리">
         <ContentHeader
-          title="PG 설정 승인 관리"
+          title={t('admin.messages.pgApprovalManagement', 'PG 설정 승인 관리')}
           subtitle="테넌트가 등록한 PG 설정을 검토하고 승인/거부합니다."
           titleId={PG_APPROVAL_PAGE_TITLE_ID}
         />
@@ -409,7 +411,7 @@ const PgApprovalManagement = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={loadPendingConfigurations}
             >
-              새로고침
+              {t('admin.actions.refresh', '새로고침')}
             </MGButton>
           </div>
         </div>
@@ -593,7 +595,7 @@ const PgApprovalManagement = () => {
                   onClick={handleCloseApprovalModal}
                   disabled={loading}
                 >
-                  취소
+                  {t('admin.actions.cancel', '취소')}
                 </MGButton>
                 <MGButton
                   variant="success"
@@ -727,7 +729,7 @@ const PgApprovalManagement = () => {
                   onClick={handleCloseRejectModal}
                   disabled={loading}
                 >
-                  취소
+                  {t('admin.actions.cancel', '취소')}
                 </MGButton>
                 <MGButton
                   variant="danger"
@@ -799,7 +801,7 @@ const PgApprovalManagement = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleCloseDetailModal}
             >
-              닫기
+              {t('common.actions.close', '닫기')}
             </MGButton>
           }
         >
@@ -925,7 +927,7 @@ const PgApprovalManagement = () => {
                           setDecryptedKeys(null);
                         }}
                       >
-                        숨기기
+                        {t('admin.labels.hide', '숨기기')}
                       </MGButton>
                     </div>
                   )}

@@ -9,6 +9,7 @@ import CognitiveDistortionPanel from './CognitiveDistortionPanel';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './EmotionDashboard.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 멀티모달 감정 분석 대시보드
@@ -20,6 +21,7 @@ import './EmotionDashboard.css';
  * @param {number} props.clientId - 내담자 ID
  */
 const EmotionDashboard = ({ consultationRecordId, clientId }) => {
+    const { t } = useTranslation();
     const [multimodalReport, setMultimodalReport] = useState(null);
     const [voiceBiomarker, setVoiceBiomarker] = useState(null);
     const [videoEmotion, setVideoEmotion] = useState(null);
@@ -111,7 +113,7 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
                     onClick={loadEmotionData}
                     variant="primary"
                 >
-                    다시 시도
+                    {t('common.labels.retry', '다시 시도')}
                 </MGButton>
             </div>
         );

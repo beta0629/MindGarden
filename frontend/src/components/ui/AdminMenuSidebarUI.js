@@ -26,6 +26,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './AdminMenuSidebarUI.css';
+import { useTranslation } from 'react-i18next';
 
 const AdminMenuSidebarUI = ({
     menus,
@@ -34,6 +35,7 @@ const AdminMenuSidebarUI = ({
     onToggleMenu,
     onMenuClick
 }) => {
+  const { t } = useTranslation();
 /**
      * 메뉴 렌더링 (재귀)
      */
@@ -84,7 +86,7 @@ const AdminMenuSidebarUI = ({
         <aside className="mg-admin-sidebar">
             <div className="mg-sidebar-header">
                 <i className="bi bi-gear-fill mg-header-icon" />
-                <h2 className="mg-header-title">시스템 관리</h2>
+                <h2 className="mg-header-title">{t('admin.labels.systemManagement', '시스템 관리')}</h2>
             </div>
 
             <nav className="mg-admin-nav">

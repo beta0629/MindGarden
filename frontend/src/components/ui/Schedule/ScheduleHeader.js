@@ -11,6 +11,7 @@ import { toDisplayString } from '../../../utils/safeDisplay';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 const ScheduleHeader = ({
   userRole,
@@ -21,6 +22,7 @@ const ScheduleHeader = ({
   onRefresh,
   hideTitle = false
 }) => {
+  const { t } = useTranslation();
   const headerClassName = hideTitle
     ? 'mg-v2-schedule-header mg-v2-schedule-header--no-title'
     : 'mg-v2-schedule-header';
@@ -64,12 +66,12 @@ const ScheduleHeader = ({
           })}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           title="데이터 새로고침"
-          aria-label="새로고침"
+          aria-label={t('common.actions.refresh', '새로고침')}
           variant="outline"
           preventDoubleClick={false}
         >
           <RefreshCw size={16} />
-          새로고침
+          {t('common.actions.refresh', '새로고침')}
         </MGButton>
       </div>
     </div>

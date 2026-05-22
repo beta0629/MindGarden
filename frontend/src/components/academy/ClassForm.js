@@ -20,8 +20,10 @@ import { ACADEMY_API, ACADEMY_MESSAGES, CLASS_STATUS, CLASS_STATUS_LABELS, ACADE
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import './Academy.css';
+import { useTranslation } from 'react-i18next';
 
 const ClassForm = ({ classItem, branchId, courseId, onSave, onCancel }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
     branchId: branchId || null,
@@ -216,7 +218,7 @@ const ClassForm = ({ classItem, branchId, courseId, onSave, onCancel }) => {
             <div className="academy-form-row">
               <FormField
                 type="select"
-                label="상태"
+                label={t('common.labels.status', '상태')}
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
@@ -266,7 +268,7 @@ const ClassForm = ({ classItem, branchId, courseId, onSave, onCancel }) => {
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  취소
+                  {t('common.actions.cancel', '취소')}
                 </MGButton>
               )}
               <MGButton

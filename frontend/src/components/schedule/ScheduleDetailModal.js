@@ -22,6 +22,7 @@ import SchedulePartyQuickViewModal from './molecules/SchedulePartyQuickViewModal
 import { ProfileCard } from '../ui/Card/index';
 import { applyPartyPiiPolicy } from '../../utils/partyPiiDisplay';
 import { getProfessionalProviderTypeLabel } from '../../constants/professionalProviderRoles';
+import { useTranslation } from 'react-i18next';
 
 /** 일정 상세·중첩 요약·확인 모달 z-index (부모 < 요약 < 확인) */
 const SCHEDULE_DETAIL_Z_INDEX_MAIN = 1040;
@@ -54,6 +55,7 @@ const ScheduleDetailModal = ({
     onScheduleUpdated,
     onConsultationLogOpen
 }) => {
+    const { t } = useTranslation();
     const { user } = useSession();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -402,7 +404,7 @@ const ScheduleDetailModal = ({
                         onClick={() => setShowConfirmModal(false)}
                         disabled={loading}
                     >
-                        취소
+                        {t('common.actions.cancel', '취소')}
                     </MGButton>
                     <MGButton
                         type="button"
@@ -951,7 +953,7 @@ const ScheduleDetailModal = ({
                     ) : null}
                     <div className="schedule-detail-modal__summary-strip">
                         <div className="schedule-detail-modal__summary-item">
-                            <span className="schedule-detail-modal__summary-label">상태</span>
+                            <span className="schedule-detail-modal__summary-label">{t('common.labels.status', '상태')}</span>
                             <StatusBadge status={getStatusCodeValue(statusForDisplay)}>
                                 {toDisplayString(convertStatusToKorean(statusForDisplay), SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER)}
                             </StatusBadge>
@@ -990,7 +992,7 @@ const ScheduleDetailModal = ({
                                         variant="compact"
                                         avatar={{ displayName: parsedClientName }}
                                         name={<SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText>}
-                                        badges={<span className="schedule-detail-modal__party-role-label">내담자</span>}
+                                        badges={<span className="schedule-detail-modal__party-role-label">{t('common.labels.client', '내담자')}</span>}
                                         onClick={() => setPartyQuickView('client')}
                                         className="schedule-detail-modal__party-card--trigger"
                                         aria-haspopup="dialog"
@@ -1005,7 +1007,7 @@ const ScheduleDetailModal = ({
                                         variant="compact"
                                         avatar={{ displayName: parsedClientName }}
                                         name={<SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText>}
-                                        badges={<span className="schedule-detail-modal__party-role-label">내담자</span>}
+                                        badges={<span className="schedule-detail-modal__party-role-label">{t('common.labels.client', '내담자')}</span>}
                                         renderActions={canPartyQuickSummary ? () => (
                                             <span className="schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
                                         ) : undefined}

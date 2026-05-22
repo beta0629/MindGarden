@@ -25,6 +25,7 @@ import {
   MAPPING_STATUS_DEPOSIT_PENDING,
   MAPPING_STATUS_ACTIVE
 } from '../admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 새로운 디자인의 스케줄 생성 모달 컴포넌트
@@ -52,6 +53,7 @@ const ScheduleModalNew = ({
     onScheduleCreateFailed,
     preFilledMapping
 }) => {
+    const { t } = useTranslation();
     const [selectedConsultant, setSelectedConsultant] = useState(null);
     const [selectedClient, setSelectedClient] = useState(null);
     const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
@@ -296,7 +298,7 @@ const ScheduleModalNew = ({
             onClick={handlePrevStep}
             disabled={loading}
           >
-            이전
+            {t('common.actions.prev', '이전')}
           </MGButton>
         )}
         {step < 4 ? (
@@ -518,7 +520,7 @@ const ScheduleModalNew = ({
                                         />
                                     </div>
                                     <div className="mg-v2-ad-details-step__form-group">
-                                        <label className="mg-v2-ad-details-step__label" htmlFor="schedule-description">설명</label>
+                                        <label className="mg-v2-ad-details-step__label" htmlFor="schedule-description">{t('common.labels.description', '설명')}</label>
                                         <textarea
                                             id="schedule-description"
                                             value={description}

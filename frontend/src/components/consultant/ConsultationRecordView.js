@@ -8,6 +8,7 @@ import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import '../../styles/unified-design-tokens.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 상담일지 조회 전용 화면
@@ -17,6 +18,7 @@ import '../../styles/unified-design-tokens.css';
  * 디자인 시스템 v2.0 적용
  */
 const ConsultationRecordView = () => {
+  const { t } = useTranslation();
   const { recordId } = useParams();
   const navigate = useNavigate();
   const { user } = useSession();
@@ -146,7 +148,7 @@ const ConsultationRecordView = () => {
               <div className="mg-v2-record-value">{record.consultationType || '개별 상담'}</div>
             </div>
             <div className="mg-v2-record-item">
-              <div className="mg-v2-record-label">상태</div>
+              <div className="mg-v2-record-label">{t('common.labels.status', '상태')}</div>
               <div className="mg-v2-record-value">
                 <span className={`mg-v2-badge ${record.isSessionCompleted ? 'mg-v2-badge-success' : 'mg-v2-badge-warning'}`}>
                   {record.isSessionCompleted ? '완료' : '대기'}

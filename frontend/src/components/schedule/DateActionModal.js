@@ -5,6 +5,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 const XCircleIcon = ICONS.X_CIRCLE;
 
@@ -25,6 +26,7 @@ const DateActionModal = ({
   onScheduleClick,
   onVacationClick
 }) => {
+  const { t } = useTranslation();
   const formatDate = (date) => {
     if (!date) return '';
     const dateObj = date instanceof Date ? date : new Date(date);
@@ -59,7 +61,7 @@ const DateActionModal = ({
           preventDoubleClick={false}
         >
           <XCircleIcon size={20} className="mg-v2-icon-inline" />
-          취소
+          {t('common.actions.cancel', '취소')}
         </MGButton>
       }
     >

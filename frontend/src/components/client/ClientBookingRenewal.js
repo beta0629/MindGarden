@@ -17,6 +17,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { useToast } from '../../contexts/ToastContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ClientBookingRenewal.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTANTS = '/api/v1/consultants';
@@ -51,6 +52,7 @@ const generateDateRange = (days = 7) => {
 };
 
 const ClientBookingRenewal = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useSession();
   const { showToast } = useToast();
@@ -318,7 +320,7 @@ const ClientBookingRenewal = () => {
 
       <div className="client-booking__summary-card">
         <div className="client-booking__summary-row">
-          <span className="client-booking__summary-label">상담사</span>
+          <span className="client-booking__summary-label">{t('common.labels.consultant', '상담사')}</span>
           <span className="client-booking__summary-value">
             {selectedConsultant?.name || selectedConsultant?.consultantName || '-'}
           </span>
@@ -383,7 +385,7 @@ const ClientBookingRenewal = () => {
 
       <div className="client-booking__complete-info">
         <div className="client-booking__summary-row">
-          <span className="client-booking__summary-label">상담사</span>
+          <span className="client-booking__summary-label">{t('common.labels.consultant', '상담사')}</span>
           <span className="client-booking__summary-value">
             {selectedConsultant?.name || selectedConsultant?.consultantName || '-'}
           </span>

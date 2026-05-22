@@ -2,6 +2,7 @@ import React from 'react';
 import { FaChartLine, FaSync } from 'react-icons/fa';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 오늘의 통계 뷰 컴포넌트 (Presentational)
@@ -19,6 +20,7 @@ const TodayStatisticsView = ({
     onShowStatistics,
     onRefresh
 }) => {
+    const { t } = useTranslation();
     return (
         <div className="today-statistics">
             <div className="statistics-header">
@@ -56,7 +58,7 @@ const TodayStatisticsView = ({
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onRefresh}
                         disabled={loading}
-                        title="새로고침"
+                        title={t('common.actions.refresh', '새로고침')}
                         variant="outline"
                         preventDoubleClick={false}
                     >
@@ -73,17 +75,17 @@ const TodayStatisticsView = ({
                 
                 <div className="stat-card completed">
                     <div className="stat-number">{statistics.completedToday}</div>
-                    <div className="stat-label">완료</div>
+                    <div className="stat-label">{t('common.actions.done', '완료')}</div>
                 </div>
                 
                 <div className="stat-card in-progress">
                     <div className="stat-number">{statistics.inProgressToday}</div>
-                    <div className="stat-label">진행중</div>
+                    <div className="stat-label">{t('common.labels.inProgress', '진행중')}</div>
                 </div>
                 
                 <div className="stat-card cancelled">
                     <div className="stat-number">{statistics.cancelledToday}</div>
-                    <div className="stat-label">취소</div>
+                    <div className="stat-label">{t('common.actions.cancel', '취소')}</div>
                 </div>
             </div>
             

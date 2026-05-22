@@ -3,6 +3,7 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 일정 상세 내 내담자·상담사 읽기 전용 요약(중첩 UnifiedModal 1겹).
@@ -27,6 +28,7 @@ const SchedulePartyQuickViewModal = ({
   userManagementType,
   onOpenInUserManagement
 }) => {
+  const { t } = useTranslation();
   return (
     <UnifiedModal
       isOpen={isOpen}
@@ -52,7 +54,7 @@ const SchedulePartyQuickViewModal = ({
             preventDoubleClick={false}
             onClick={onClose}
           >
-            닫기
+            {t('common.actions.close', '닫기')}
           </MGButton>
           <MGButton
             type="button"

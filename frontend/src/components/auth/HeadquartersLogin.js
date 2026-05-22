@@ -14,6 +14,7 @@ import { LOGIN_CREDENTIALS_MISMATCH_MESSAGE } from '../../constants/loginDisplay
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './BranchLogin.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 본사 로그인 컴포넌트
@@ -29,6 +30,7 @@ import './BranchLogin.css';
  * @since 2025-09-12
  */
 const HeadquartersLogin = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { setUser, setBranch } = useSession();
   
@@ -195,7 +197,7 @@ const HeadquartersLogin = () => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
-                  다시 시도
+                  {t('common.labels.retry', '다시 시도')}
                 </MGButton>
                 <MGButton
                   type="button"

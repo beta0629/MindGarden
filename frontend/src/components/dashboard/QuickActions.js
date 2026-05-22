@@ -7,7 +7,9 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from '../common/MGButton';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
+import { useTranslation } from 'react-i18next';
 const QuickActions = ({ user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { checkSession } = useSession();
   const [showConsultantApplicationModal, setShowConsultantApplicationModal] = useState(false);
@@ -91,10 +93,10 @@ const QuickActions = ({ user }) => {
       <div className="mg-card-body">
         <div className="quick-actions-grid">
           <MGButton {...actionBtnProps} onClick={goToProfile}>
-            프로필
+            {t('common.labels.profile', '프로필')}
           </MGButton>
           <MGButton {...actionBtnProps} onClick={goToSchedule}>
-            스케줄
+            {t('common.labels.schedule', '스케줄')}
           </MGButton>
 
           {/* 메시지 버튼 (내담자/상담사) */}

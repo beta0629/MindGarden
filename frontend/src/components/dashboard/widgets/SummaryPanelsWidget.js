@@ -26,11 +26,13 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import '../SummaryPanels.css';
 import { SCHEDULE_API } from '../../../constants/api';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SCHEDULES_ADMIN_STATISTICS = '/api/v1/schedules/admin/statistics';
 
 const SummaryPanelsWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   
   // 역할별 API 엔드포인트 결정
@@ -364,7 +366,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
                 onClick={handleMappingManagement}
                 preventDoubleClick={false}
               >
-                매핑 관리
+                {t('admin.labels.mappingManagement', '매핑 관리')}
               </MGButton>
             </div>
           </div>

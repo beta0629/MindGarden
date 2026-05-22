@@ -39,6 +39,7 @@ import CardContainer from '../common/CardContainer';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import './ClientDashboard.css';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 const CLIENT_DASHBOARD_TITLE_ID = 'client-dashboard-page-title';
 
@@ -100,6 +101,7 @@ function parseUnreadCountPayload(raw) {
  * 내담자 대시보드 — 와이어프레임 단일 컬럼 구조
  */
 const ClientDashboard = ({ user: userFromRoute }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading, checkSession } = useSession();
 
@@ -396,7 +398,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
 
   if (isLoading || sessionLoading || !currentIsLoggedIn || !currentUser?.id) {
     return (
-      <AdminCommonLayout title="대시보드">
+      <AdminCommonLayout title={t('admin.labels.dashboard', '대시보드')}>
         {pageShell(
           <div aria-busy="true" aria-live="polite">
             <UnifiedLoading type="inline" text="대시보드를 불러오는 중..." />
@@ -418,7 +420,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
   };
 
   return (
-    <AdminCommonLayout title="대시보드" className="mg-v2-dashboard-layout">
+    <AdminCommonLayout title={t('admin.labels.dashboard', '대시보드')} className="mg-v2-dashboard-layout">
       <ContentArea ariaLabel="내담자 대시보드">
         <ContentHeader
           title="내 대시보드"
@@ -634,9 +636,9 @@ const ClientDashboard = ({ user: userFromRoute }) => {
                   <header className="client-dash__core-card-head">
                     <h3 id="client-dash-core-1" className="client-dash__card-title">진행 중인 상담</h3>
                     {clientStatus?.mappingStatus === 'ACTIVE' ? (
-                      <span className="mg-v2-status-badge mg-v2-badge--success">활성</span>
+                      <span className="mg-v2-status-badge mg-v2-badge--success">{t('common.labels.active', '활성')}</span>
                     ) : (
-                      <span className="mg-v2-status-badge mg-v2-badge--neutral">대기</span>
+                      <span className="mg-v2-status-badge mg-v2-badge--neutral">{t('common.labels.pending', '대기')}</span>
                     )}
                   </header>
                   <p className="client-dash__card-text">{coreConsultationSummary}</p>
@@ -729,7 +731,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
                 preventDoubleClick={false}
               >
                 <MessageCircle size={22} aria-hidden />
-                <span>메시지</span>
+                <span>{t('admin.labels.message', '메시지')}</span>
               </MGButton>
               <MGButton
                 variant="outline"

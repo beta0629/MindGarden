@@ -17,11 +17,13 @@ import ApprovalHubLayout from './approval/ApprovalHubLayout';
 import { formatApprovalCurrency, formatApprovalDate } from './approval/approvalFormatters';
 import StandardizedApi from '../../utils/standardizedApi';
 import { ERP_API } from '../../constants/api';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 수퍼 관리자 승인 대시보드 컴포넌트
  */
 const SuperAdminApprovalDashboard = () => {
+  const { t } = useTranslation();
   const { user } = useSession();
   const [loading, setLoading] = useState(true);
   const { silentListRefreshing, runSilentListRefresh } = useErpSilentRefresh();
@@ -290,7 +292,7 @@ const SuperAdminApprovalDashboard = () => {
                 preventDoubleClick={false}
                 onClick={() => setShowApprovalModal(false)}
               >
-                취소
+                {t('common.actions.cancel', '취소')}
               </MGButton>
               <MGButton
                 variant={mapErpVariantToMg('success')}
@@ -355,7 +357,7 @@ const SuperAdminApprovalDashboard = () => {
                 preventDoubleClick={false}
                 onClick={() => setShowRejectionModal(false)}
               >
-                취소
+                {t('common.actions.cancel', '취소')}
               </MGButton>
               <MGButton
                 variant={mapErpVariantToMg('danger')}

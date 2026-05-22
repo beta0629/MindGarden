@@ -7,6 +7,7 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { useSession } from '../../contexts/SessionContext';
 import UnifiedModal from './modals/UnifiedModal';
 import './NotificationBadge.css';
+import { useTranslation } from 'react-i18next';
 
 const BellIcon = ICONS.BELL;
 const MessageCircleIcon = ICONS.MESSAGE_CIRCLE;
@@ -35,6 +36,7 @@ const NotificationBadge = ({
   onClick,
   ...props
 }) => {
+  const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
   const { user } = useSession();
@@ -104,7 +106,7 @@ const NotificationBadge = ({
       <UnifiedModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        title="알림"
+        title={t('common.labels.notification', '알림')}
         size="auto"
         backdropClick
         showCloseButton

@@ -23,10 +23,12 @@ import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 const MG_STATS_LUCIDE_SIZE = 22;
 
 const SecurityAuditWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   
   // 테넌트 ID 추출
@@ -332,8 +334,8 @@ const SecurityAuditWidget = ({ widget, user }) => {
           })}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => handleAction('refresh')}
-          aria-label="새로고침"
-          title="새로고침"
+          aria-label={t('admin.actions.refresh', '새로고침')}
+          title={t('admin.actions.refresh', '새로고침')}
           preventDoubleClick={false}
         >
           {WIDGET_CONSTANTS.ICONS.REFRESH}

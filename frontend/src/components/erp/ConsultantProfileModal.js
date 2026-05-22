@@ -10,6 +10,7 @@ import notificationManager from '../../utils/notification';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 급여 유형·등급·옵션 API 항목을 폼에서 쓰는 codeValue/codeLabel 형태로 맞춘다.
@@ -38,6 +39,7 @@ const ConsultantProfileModal = ({
     consultant,
     onSuccess
 }) => {
+    const { t } = useTranslation();
     const [salaryProfile, setSalaryProfile] = useState(null);
     const [showSalaryForm, setShowSalaryForm] = useState(false);
     /** 급여 프로필 조회 중 */
@@ -596,7 +598,7 @@ const ConsultantProfileModal = ({
                                         onClick={() => setShowSalaryForm(false)}
                                         disabled={saving}
                                     >
-                                        취소
+                                        {t('common.actions.cancel', '취소')}
                                     </MGButton>
                                     <MGButton
                                         type="submit"
@@ -607,7 +609,7 @@ const ConsultantProfileModal = ({
                                         loading={saving}
                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     >
-                                        저장
+                                        {t('common.actions.save', '저장')}
                                     </MGButton>
                                 </div>
                             </form>
@@ -625,7 +627,7 @@ const ConsultantProfileModal = ({
                     onClick={onClose}
                     disabled={saving}
                 >
-                    닫기
+                    {t('common.actions.close', '닫기')}
                 </MGButton>
             </div>
         </UnifiedModal>

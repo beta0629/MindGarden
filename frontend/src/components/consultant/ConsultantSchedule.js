@@ -8,6 +8,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { USER_ROLES } from '../../constants/roles';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import { useTranslation } from 'react-i18next';
 
 const CONSULTANT_SCHEDULE_TITLE_ID = 'consultant-schedule-page-title';
 
@@ -19,6 +20,7 @@ const CONSULTANT_SCHEDULE_TITLE_ID = 'consultant-schedule-page-title';
  * @since 2025-09-16
  */
 const ConsultantSchedule = () => {
+  const { t } = useTranslation();
   const { user, isLoading: sessionLoading } = useSession();
 
   console.log('📅 ConsultantSchedule 렌더링:', { user, sessionLoading });
@@ -28,7 +30,7 @@ const ConsultantSchedule = () => {
       <div className="mg-v2-ad-b0kla__container">
         <ContentArea ariaLabel="상담사 스케줄">
           <ContentHeader
-            title="스케줄"
+            title={t('common.labels.schedule', '스케줄')}
             subtitle="상담 일정을 확인하고 관리합니다"
             titleId={CONSULTANT_SCHEDULE_TITLE_ID}
           />
@@ -43,7 +45,7 @@ const ConsultantSchedule = () => {
   if (sessionLoading) {
     console.log('⏳ ConsultantSchedule: 세션 로딩 중...');
     return (
-      <AdminCommonLayout title="스케줄">
+      <AdminCommonLayout title={t('common.labels.schedule', '스케줄')}>
         {pageShell(
           <UnifiedLoading type="inline" text="스케줄 정보를 불러오는 중..." />
         )}
@@ -54,7 +56,7 @@ const ConsultantSchedule = () => {
   if (!user) {
     console.log('❌ ConsultantSchedule: 사용자 정보 없음');
     return (
-      <AdminCommonLayout title="스케줄">
+      <AdminCommonLayout title={t('common.labels.schedule', '스케줄')}>
         {pageShell(
           <UnifiedLoading type="inline" text="사용자 정보를 확인하는 중..." />
         )}
@@ -65,7 +67,7 @@ const ConsultantSchedule = () => {
   console.log('✅ ConsultantSchedule: UnifiedScheduleComponent 렌더링 시작', { userRole: USER_ROLES.CONSULTANT, userId: user.id });
 
   return (
-    <AdminCommonLayout title="스케줄">
+    <AdminCommonLayout title={t('common.labels.schedule', '스케줄')}>
       {pageShell(
         <UnifiedScheduleComponent
           userRole="CONSULTANT"

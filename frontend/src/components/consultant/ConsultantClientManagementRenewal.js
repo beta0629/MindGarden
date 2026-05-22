@@ -17,6 +17,7 @@ import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ConsultantClientManagementRenewal.css';
 import { SCHEDULE_API } from '../../constants/api';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTANTS = '/api/v1/consultants';
@@ -66,6 +67,7 @@ const ClientsSkeleton = () => (
 );
 
 const ClientCard = ({ client, onClick }) => {
+  const { t } = useTranslation();
   const name = client.clientName || client.name || client.userName || '내담자';
   const status = client.status || 'ACTIVE';
   const isUrgent = client.isUrgent || client.urgent || status === 'URGENT';
@@ -92,7 +94,7 @@ const ClientCard = ({ client, onClick }) => {
       <div className="cr-client-card__badges">
         {isUrgent && (
           <span className="cr-client-card__badge cr-client-card__badge--urgent">
-            긴급
+            {t('admin.labels.urgent', '긴급')}
           </span>
         )}
         <span className={`cr-client-card__badge ${badge.className}`}>
@@ -105,6 +107,7 @@ const ClientCard = ({ client, onClick }) => {
 };
 
 const ProfileSheet = ({ client, onClose, onMessage }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('info');
   const [consultationHistory, setConsultationHistory] = useState([]);
   const [memo, setMemo] = useState(client?.memo || '');
@@ -173,12 +176,12 @@ const ProfileSheet = ({ client, onClose, onMessage }) => {
           {activeTab === 'info' && (
             <>
               <div className="cr-profile-field">
-                <span className="cr-profile-field__label">이름</span>
+                <span className="cr-profile-field__label">{t('common.labels.name', '이름')}</span>
                 <span className="cr-profile-field__value">{name}</span>
               </div>
               {client?.email && (
                 <div className="cr-profile-field">
-                  <span className="cr-profile-field__label">이메일</span>
+                  <span className="cr-profile-field__label">{t('common.labels.email', '이메일')}</span>
                   <span className="cr-profile-field__value">{client.email}</span>
                 </div>
               )}

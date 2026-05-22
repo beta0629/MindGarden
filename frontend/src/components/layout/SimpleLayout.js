@@ -9,6 +9,7 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { useSession } from '../../contexts/SessionContext';
 import '../../styles/main.css';
 import './SimpleLayout.css';
+import { useTranslation } from 'react-i18next';
 
 // 역할별 알림 페이지 경로 상수
 const NOTIFICATION_ROUTES = {
@@ -36,6 +37,7 @@ const SimpleLayout = ({
   loadingVariant = "default",
   extraActions = null
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useSession();
   const { unreadCount } = useNotification();
@@ -64,7 +66,7 @@ const SimpleLayout = ({
         })}
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={handleNotificationClick}
-        aria-label="알림"
+        aria-label={t('common.labels.notification', '알림')}
         variant="outline"
         preventDoubleClick={false}
       >

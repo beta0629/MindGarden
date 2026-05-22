@@ -27,6 +27,7 @@ import './ErpCommon.css';
 import { PurchaseHubSubNav, normalizeErpListResponse } from './purchase/PurchaseHubSections';
 import ErpPageShell from './shell/ErpPageShell';
 import { useSession } from '../../contexts/SessionContext';
+import { useTranslation } from 'react-i18next';
 
 const ITEM_MANAGEMENT_TITLE_ID = 'item-management-title';
 const ITEM_MANAGEMENT_LIST_TITLE_ID = 'item-management-list-title';
@@ -35,6 +36,7 @@ const ITEM_MANAGEMENT_LIST_TITLE_ID = 'item-management-list-title';
  * 아이템 관리 컴포넌트 (테넌트 관리자 ADMIN — 삭제는 관리자만)
  */
 const ItemManagement = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { isAdmin } = useSession();
   const [loading, setLoading] = useState(false);
@@ -393,7 +395,7 @@ const ItemManagement = () => {
                                 preventDoubleClick={false}
                                 onClick={() => handleEditItem(item)}
                               >
-                                수정
+                                {t('common.actions.edit', '수정')}
                               </MGButton>
                               {isAdmin() && (
                                 <MGButton
@@ -408,7 +410,7 @@ const ItemManagement = () => {
                                   preventDoubleClick={false}
                                   onClick={() => handleDeleteItem(item)}
                                 >
-                                  삭제
+                                  {t('common.actions.delete', '삭제')}
                                 </MGButton>
                               )}
                             </div>
@@ -452,7 +454,7 @@ const ItemManagement = () => {
 
             <div className="mg-v2-form-group">
               <label className="mg-v2-form-label">
-                설명
+                {t('common.labels.description', '설명')}
               </label>
               <textarea
                 name="description"
@@ -541,7 +543,7 @@ const ItemManagement = () => {
                   resetForm();
                 }}
               >
-                취소
+                {t('common.actions.cancel', '취소')}
               </MGButton>
               <MGButton
                 type="submit"
@@ -589,7 +591,7 @@ const ItemManagement = () => {
 
             <div className="mg-v2-form-group">
               <label className="mg-v2-form-label">
-                설명
+                {t('common.labels.description', '설명')}
               </label>
               <textarea
                 name="description"
@@ -676,7 +678,7 @@ const ItemManagement = () => {
                   resetForm();
                 }}
               >
-                취소
+                {t('common.actions.cancel', '취소')}
               </MGButton>
               <MGButton
                 type="submit"
@@ -687,7 +689,7 @@ const ItemManagement = () => {
                 preventDoubleClick={false}
                 loading={loading}
               >
-                수정
+                {t('common.actions.edit', '수정')}
               </MGButton>
             </div>
           </form>

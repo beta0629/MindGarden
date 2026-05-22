@@ -3,6 +3,7 @@ import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import './DepositPendingList.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 입금 확인 대기 목록 (Atomic: organism)
@@ -14,6 +15,7 @@ import './DepositPendingList.css';
  * @since 2025-02-21
  */
 const DepositPendingList = ({ items = [], onDepositConfirm }) => {
+  const { t } = useTranslation();
   if (items.length === 0) return null;
 
   return (
@@ -46,7 +48,7 @@ const DepositPendingList = ({ items = [], onDepositConfirm }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => onDepositConfirm && onDepositConfirm(item)}
             >
-              확인
+              {t('common.actions.confirm', '확인')}
             </MGButton>
           </li>
         ))}

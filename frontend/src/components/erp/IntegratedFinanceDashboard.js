@@ -77,6 +77,7 @@ import {
   INTEGRATED_FINANCE_PAGE,
   INTEGRATED_FINANCE_TAB_ITEMS
 } from '../../constants/integratedFinanceDashboardStrings';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ACCOUNTS_ACTIVE = '/api/v1/accounts/active';
@@ -1895,6 +1896,7 @@ const YearlyReportTab = ({ period }) => {
 
 // 분개 관리 탭 컴포넌트
 const JournalEntriesTab = () => {
+  const { t } = useTranslation();
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedEntry, setSelectedEntry] = useState(null);
@@ -2024,7 +2026,7 @@ const JournalEntriesTab = () => {
                 <th>기준일자</th>
                 <th>차변합계</th>
                 <th>대변합계</th>
-                <th>상태</th>
+                <th>{t('common.labels.status', '상태')}</th>
                 <th>작업</th>
               </tr>
             </thead>
@@ -2269,6 +2271,7 @@ const LedgersTab = () => {
 
 // 정산 관리 탭 컴포넌트
 const SettlementTab = () => {
+  const { t } = useTranslation();
   const [rules, setRules] = useState([]);
   const [settlements, setSettlements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -2423,7 +2426,7 @@ const SettlementTab = () => {
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => { setEditingRule(rule); setShowCreateRuleModal(true); }}
                         >
-                          수정
+                          {t('common.actions.edit', '수정')}
                         </MGButton>
                       </td>
                     </tr>
@@ -2472,7 +2475,7 @@ const SettlementTab = () => {
                     <th>수수료</th>
                     <th>로열티</th>
                     <th>순정산액</th>
-                    <th>상태</th>
+                    <th>{t('common.labels.status', '상태')}</th>
                     <th>작업</th>
                   </tr>
                 </thead>
@@ -2545,6 +2548,7 @@ const SettlementTab = () => {
 
 // 분개 상세 모달 컴포넌트
 const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
+  const { t } = useTranslation();
   const [entryDetail, setEntryDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -2610,7 +2614,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
                         <th>계정</th>
                         <th>차변</th>
                         <th>대변</th>
-                        <th>설명</th>
+                        <th>{t('common.labels.description', '설명')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2640,7 +2644,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onClose}
           >
-            닫기
+            {t('common.actions.close', '닫기')}
           </MGButton>
           {entryDetail && entryDetail.entryStatus === 'DRAFT' && (
             <MGButton
@@ -2650,7 +2654,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => { setShowEditModal(true); }}
             >
-              수정
+              {t('common.actions.edit', '수정')}
             </MGButton>
           )}
         </div>
@@ -2668,6 +2672,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
 
 // 분개 생성 모달 컴포넌트
 const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     entryDate: formatLocalDateYmd(new Date()),
     description: ''
@@ -2854,7 +2859,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
         </div>
 
         <div className="mg-v2-mb-md">
-          <label className="mg-v2-label">설명</label>
+          <label className="mg-v2-label">{t('common.labels.description', '설명')}</label>
           <input
             type="text"
             className="mg-v2-input"
@@ -2895,7 +2900,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
                   <th>계정과목</th>
                   <th>차변</th>
                   <th>대변</th>
-                  <th>설명</th>
+                  <th>{t('common.labels.description', '설명')}</th>
                   <th>작업</th>
                 </tr>
               </thead>
@@ -2960,7 +2965,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => handleRemoveLine(index)}
                         >
-                          삭제
+                          {t('common.actions.delete', '삭제')}
                         </MGButton>
                       )}
                     </td>
@@ -2999,7 +3004,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
           onClick={onClose}
           disabled={loading}
         >
-          취소
+          {t('common.actions.cancel', '취소')}
         </MGButton>
         <MGButton
           variant="primary"
@@ -3009,7 +3014,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
           loading={loading}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
-          저장
+          {t('common.actions.save', '저장')}
         </MGButton>
       </div>
     </UnifiedModal>
@@ -3018,6 +3023,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
 
 // 정산 규칙 생성/수정 모달 컴포넌트
 const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     ruleName: rule?.ruleName || '',
     businessType: rule?.businessType || '',
@@ -3131,7 +3137,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
             onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
           >
             <option value="">선택 안함</option>
-            <option value="CONSULTATION">상담</option>
+            <option value="CONSULTATION">{t('common.labels.consultation', '상담')}</option>
             <option value="EDUCATION">교육</option>
             <option value="HEALTHCARE">의료</option>
           </select>
@@ -3146,7 +3152,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
             value={formData.settlementType}
             onChange={(e) => setFormData({ ...formData, settlementType: e.target.value })}
           >
-            <option value="">선택하세요</option>
+            <option value="">{t('common.messages.pleaseSelect', '선택하세요')}</option>
             <option value="COMMISSION">수수료</option>
             <option value="ROYALTY">로열티</option>
             <option value="REVENUE_SHARE">매출 분배</option>
@@ -3214,7 +3220,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
           onClick={onClose}
           disabled={loading}
         >
-          취소
+          {t('common.actions.cancel', '취소')}
         </MGButton>
         <MGButton
           variant="primary"
@@ -3224,7 +3230,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
           loading={loading}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
-          저장
+          {t('common.actions.save', '저장')}
         </MGButton>
       </div>
     </UnifiedModal>
@@ -3233,6 +3239,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
 
 // 원장 상세 모달 컴포넌트
 const LedgerDetailModal = ({ ledger, onClose }) => {
+  const { t } = useTranslation();
   const [journalEntries, setJournalEntries] = useState([]);
   const [loadingEntries, setLoadingEntries] = useState(false);
 
@@ -3317,7 +3324,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
                     <th>기준일자</th>
                     <th>차변</th>
                     <th>대변</th>
-                    <th>설명</th>
+                    <th>{t('common.labels.description', '설명')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -3349,7 +3356,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onClose}
         >
-          닫기
+          {t('common.actions.close', '닫기')}
         </MGButton>
       </div>
     </UnifiedModal>
@@ -3358,6 +3365,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
 
 // 분개 수정 모달 컴포넌트
 const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     entryDate: entry.entryDate || formatLocalDateYmd(new Date()),
     description: entry.description || ''
@@ -3541,7 +3549,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
         </div>
 
         <div className="mg-v2-mb-md">
-          <label className="mg-v2-label">설명</label>
+          <label className="mg-v2-label">{t('common.labels.description', '설명')}</label>
           <input
             type="text"
             className="mg-v2-input"
@@ -3582,7 +3590,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
                   <th>계정과목</th>
                   <th>차변</th>
                   <th>대변</th>
-                  <th>설명</th>
+                  <th>{t('common.labels.description', '설명')}</th>
                   <th>작업</th>
                 </tr>
               </thead>
@@ -3647,7 +3655,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => handleRemoveLine(index)}
                         >
-                          삭제
+                          {t('common.actions.delete', '삭제')}
                         </MGButton>
                       )}
                     </td>
@@ -3686,7 +3694,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
           onClick={onClose}
           disabled={loading}
         >
-          취소
+          {t('common.actions.cancel', '취소')}
         </MGButton>
         <MGButton
           variant="primary"
@@ -3696,7 +3704,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
           loading={loading}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
-          저장
+          {t('common.actions.save', '저장')}
         </MGButton>
       </div>
     </UnifiedModal>

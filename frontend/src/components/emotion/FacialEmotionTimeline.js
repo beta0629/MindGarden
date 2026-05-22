@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { EMOTION_CSS } from '../../constants/emotionCss';
 import './FacialEmotionTimeline.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 표정 감정 타임라인 컴포넌트
@@ -11,6 +12,7 @@ import './FacialEmotionTimeline.css';
  * @param {number} props.emotionId - 비디오 감정 분석 ID
  */
 const FacialEmotionTimeline = ({ emotionId }) => {
+    const { t } = useTranslation();
     const [emotionData, setEmotionData] = useState(null);
 
     // TODO: 실제 API 호출로 데이터 로드
@@ -32,7 +34,7 @@ const FacialEmotionTimeline = ({ emotionId }) => {
         });
     }, [emotionId]);
 
-    if (!emotionData) return <div>로딩 중...</div>;
+    if (!emotionData) return <div>{t('common.messages.loading', '로딩 중...')}</div>;
 
     return (
         <div className={EMOTION_CSS.FACIAL_EMOTION_TIMELINE}>

@@ -25,11 +25,13 @@ import MGButton from '../../../common/MGButton';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ERP_DASHBOARD_STATISTICS = '/api/v1/erp/dashboard/statistics';
 
 const ErpStatsGridWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // ERP 통계 데이터 소스 설정
@@ -292,7 +294,7 @@ const ErpStatsGridWidget = ({ widget, user }) => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={refresh}
                 >
-                  다시 시도
+                  {t('common.labels.retry', '다시 시도')}
                 </MGButton>
               </div>
             )}

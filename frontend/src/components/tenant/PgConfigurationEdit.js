@@ -10,6 +10,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import PgConfigurationForm from './PgConfigurationForm';
+import { useTranslation } from 'react-i18next';
 
 /**
  * PG 설정 수정 페이지
@@ -19,6 +20,7 @@ import PgConfigurationForm from './PgConfigurationForm';
  * @since 2025-01-XX
  */
 const PgConfigurationEdit = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { configId } = useParams();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -74,7 +76,7 @@ const PgConfigurationEdit = () => {
   
   if (sessionLoading || loading) {
     return (
-      <AdminCommonLayout title="PG 설정 수정">
+      <AdminCommonLayout title={t('admin.actions.editPgSettings', 'PG 설정 수정')}>
         <div className="mg-v2-ad-b0kla mg-v2-pg-config-edit">
           <div className="mg-v2-ad-b0kla__container">
             <UnifiedLoading type="inline" text="PG 설정을 불러오는 중..." variant="pulse" />
@@ -86,7 +88,7 @@ const PgConfigurationEdit = () => {
 
   if (!config) {
     return (
-      <AdminCommonLayout title="PG 설정 수정">
+      <AdminCommonLayout title={t('admin.actions.editPgSettings', 'PG 설정 수정')}>
         <div className="mg-v2-ad-b0kla mg-v2-pg-config-edit">
           <div className="mg-v2-ad-b0kla__container">
             <div className="error-message">
@@ -100,7 +102,7 @@ const PgConfigurationEdit = () => {
 
   if (config.approvalStatus !== 'PENDING') {
     return (
-      <AdminCommonLayout title="PG 설정 수정">
+      <AdminCommonLayout title={t('admin.actions.editPgSettings', 'PG 설정 수정')}>
         <div className="mg-v2-ad-b0kla mg-v2-pg-config-edit">
           <div className="mg-v2-ad-b0kla__container">
             <UnifiedLoading type="inline" text="상세 화면으로 이동합니다..." variant="pulse" />
@@ -111,12 +113,12 @@ const PgConfigurationEdit = () => {
   }
 
   return (
-    <AdminCommonLayout title="PG 설정 수정">
+    <AdminCommonLayout title={t('admin.actions.editPgSettings', 'PG 설정 수정')}>
       <div className="mg-v2-ad-b0kla mg-v2-pg-config-edit">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="PG 설정 수정">
             <ContentHeader
-              title="PG 설정 수정"
+              title={t('admin.actions.editPgSettings', 'PG 설정 수정')}
               subtitle="승인 대기 중인 설정만 수정할 수 있습니다. 저장 시 다시 승인 절차가 진행됩니다."
               titleId="pg-config-edit-title"
             />

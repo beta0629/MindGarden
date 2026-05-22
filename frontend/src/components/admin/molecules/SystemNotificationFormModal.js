@@ -13,6 +13,7 @@ import { toDisplayString } from '../../../utils/safeDisplay';
 import { USER_ROLES } from '../../../constants/roles';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminNotificationsPage.css';
+import { useTranslation } from 'react-i18next';
 
 const TARGET_OPTIONS = [
   { value: 'ALL', label: '전체 사용자' },
@@ -35,6 +36,7 @@ const SystemNotificationFormModal = ({
   onSave,
   loading = false
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = React.useState({
     targetType: 'ALL',
     title: '',
@@ -94,22 +96,22 @@ const SystemNotificationFormModal = ({
             variant="outline"
             className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            aria-label="취소"
+            aria-label={t('admin.actions.cancel', '취소')}
             onClick={onClose}
             disabled={loading}
           >
-            취소
+            {t('admin.actions.cancel', '취소')}
           </MGButton>
           <MGButton
             type="button"
             variant="primary"
             className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            aria-label="저장"
+            aria-label={t('common.actions.save', '저장')}
             onClick={() => onSave?.(formData)}
             disabled={loading}
           >
-            저장
+            {t('common.actions.save', '저장')}
           </MGButton>
         </>
       }
@@ -191,9 +193,9 @@ const SystemNotificationFormModal = ({
                     type="checkbox"
                     checked={formData.isUrgent}
                     onChange={(e) => setFormData({ ...formData, isUrgent: e.target.checked })}
-                    aria-label="긴급"
+                    aria-label={t('admin.labels.urgent', '긴급')}
                   />
-                  <span className="mg-v2-checkbox-text">긴급</span>
+                  <span className="mg-v2-checkbox-text">{t('admin.labels.urgent', '긴급')}</span>
                 </label>
               </div>
             </div>

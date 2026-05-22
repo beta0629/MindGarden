@@ -11,6 +11,7 @@ import { ErpFilterToolbar } from '../common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../common/erpMgButtonProps';
 import '../ErpCommon.css';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { useTranslation } from 'react-i18next';
 
 const PERIOD_OPTIONS = [
   { value: 'today', label: '오늘' },
@@ -39,6 +40,7 @@ const RefundFilterBlock = ({
   isLoadingReflect = false,
   silentListRefreshing = false
 }) => {
+  const { t } = useTranslation();
   const hasSelection = Array.isArray(selectedRowIds) && selectedRowIds.length > 0;
 
   return (
@@ -81,7 +83,7 @@ const RefundFilterBlock = ({
             </div>
             <div className="refund-management__filter-field mg-v2-form-group">
               <label htmlFor="refund-status" className="mg-v2-form-label">
-                상태
+                {t('common.labels.status', '상태')}
               </label>
               <select
                 id="refund-status"
@@ -113,9 +115,9 @@ const RefundFilterBlock = ({
               onClick={onRefresh}
               loading={silentListRefreshing}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              aria-label="새로고침"
+              aria-label={t('common.actions.refresh', '새로고침')}
             >
-              새로고침
+              {t('common.actions.refresh', '새로고침')}
             </MGButton>
             <MGButton
               type="button"

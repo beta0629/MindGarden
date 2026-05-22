@@ -24,6 +24,7 @@ import UnifiedLoading from '../../../common/UnifiedLoading';
 import { toErrorMessage } from '../../../../utils/safeDisplay';
 import '../../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentAdminWidget.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ASSESSMENTS_PSYCH_STATS = '/api/v1/assessments/psych/stats';
@@ -32,6 +33,7 @@ const API_ASSESSMENTS_PSYCH_DOCUMENTS = '/api/v1/assessments/psych/documents';
 
 
 const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
+  const { t } = useTranslation();
   const [uploadType, setUploadType] = useState('TCI');
   const [uploadFiles, setUploadFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -294,7 +296,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           preventDoubleClick={false}
         >
-          다시 시도
+          {t('common.labels.retry', '다시 시도')}
         </MGButton>
       </div>
     );

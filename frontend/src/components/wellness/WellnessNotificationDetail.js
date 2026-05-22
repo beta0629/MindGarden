@@ -15,6 +15,7 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
 import './WellnessNotificationDetail.css';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 웰니스 알림 상세 페이지 컴포넌트
@@ -26,6 +27,7 @@ import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 const WELLNESS_NOTIFICATION_DETAIL_TITLE_ID = 'wellness-notification-detail-title';
 
 const WellnessNotificationDetail = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isLoggedIn } = useSession();
@@ -189,7 +191,7 @@ const WellnessNotificationDetail = () => {
           <div className="wellness-notification-detail">
             <div className="wellness-notification-error">
               <div className="error-icon" aria-hidden="true">
-                알림
+                {t('common.labels.notification', '알림')}
               </div>
               <h2 className="error-title">알림을 찾을 수 없습니다</h2>
               <p className="error-message">
@@ -233,7 +235,7 @@ const WellnessNotificationDetail = () => {
               )}
               {notification.isUrgent && (
                 <span className="badge badge-urgent">
-                  <span>긴급</span>
+                  <span>{t('admin.labels.urgent', '긴급')}</span>
                 </span>
               )}
               <span className={`badge badge-type ${getNotificationTypeClass(notification.notificationType)}`}>

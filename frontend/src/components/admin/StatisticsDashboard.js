@@ -16,6 +16,7 @@ import Chart from '../common/Chart';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './StatisticsDashboard.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_STATISTICS_OVERALL = '/api/v1/admin/statistics/overall';
@@ -34,6 +35,7 @@ const STATISTICS_TITLE_ID = 'statistics-dashboard-title';
  * @since 2025-01-21
  */
 const StatisticsDashboard = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statistics, setStatistics] = useState({
@@ -144,7 +146,7 @@ const StatisticsDashboard = () => {
       })}
       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
     >
-      새로고침
+      {t('admin.actions.refresh', '새로고침')}
     </MGButton>
   );
 
@@ -191,7 +193,7 @@ const StatisticsDashboard = () => {
               loading={loading}
               onClick={loadStatistics}
             >
-              다시 시도
+              {t('common.labels.retry', '다시 시도')}
             </MGButton>
           </div>
         </div>

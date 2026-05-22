@@ -17,6 +17,7 @@ import {
   ClipboardList,
   TrendingUp
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_FINANCIAL_TRANSACTIONS = '/api/v1/admin/financial-transactions';
@@ -27,6 +28,7 @@ const API_ADMIN_FINANCIAL_TRANSACTIONS = '/api/v1/admin/financial-transactions';
  * 공통 달력(mg-calendar) 구조·클래스 사용. 수입/지출을 달력 형태로 표시.
  */
 const FinancialCalendarView = () => {
+  const { t } = useTranslation();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarData, setCalendarData] = useState({});
   const [loading, setLoading] = useState(false);
@@ -152,7 +154,7 @@ const FinancialCalendarView = () => {
                 disabled={silentListRefreshing || loading}
                 preventDoubleClick={false}
               >
-                이전
+                {t('common.actions.prev', '이전')}
               </MGButton>
               <div className="mg-financial-calendar-header-title-row">
                 <h3 className="mg-calendar-title">
@@ -173,7 +175,7 @@ const FinancialCalendarView = () => {
                   disabled={loading}
                   aria-label="달력 데이터 새로고침"
                 >
-                  새로고침
+                  {t('common.actions.refresh', '새로고침')}
                 </MGButton>
               </div>
               <MGButton
@@ -323,10 +325,10 @@ const FinancialCalendarView = () => {
               })}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setSelectedDate(null)}
-              aria-label="닫기"
+              aria-label={t('common.actions.close', '닫기')}
               preventDoubleClick={false}
             >
-              닫기
+              {t('common.actions.close', '닫기')}
             </MGButton>
           </div>
           <div className="mg-financial-calendar-detail-summary-grid">

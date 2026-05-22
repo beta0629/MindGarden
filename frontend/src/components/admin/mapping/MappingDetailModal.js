@@ -8,6 +8,7 @@ import MGButton from '../../common/MGButton';
 import { StatusBadge } from '../../common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './MappingDetailModal.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 매칭 상세보기 모달 컴포넌트
@@ -19,6 +20,7 @@ import './MappingDetailModal.css';
  * - 거래 내역, 변경 이력 등 표시
  */
 const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
+    const { t } = useTranslation();
     const [detailInfo, setDetailInfo] = useState(null);
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('basic');
@@ -87,7 +89,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                     preventDoubleClick={false}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                    닫기
+                    {t('common.actions.close', '닫기')}
                 </MGButton>
             }
         >
@@ -172,7 +174,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                 <span>#{mapping?.id}</span>
                                             </div>
                                             <div className="info-item">
-                                                <label>상태</label>
+                                                <label>{t('admin.labels.status', '상태')}</label>
                                                 <span><StatusBadge status={mapping?.status} /></span>
                                             </div>
                                             <div className="info-item">
@@ -256,7 +258,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                 </span>
                                             </div>
                                             <div className="info-item">
-                                                <label>결제 방법</label>
+                                                <label>{t('admin.labels.paymentMethod', '결제 방법')}</label>
                                                 <span>{getMappingPaymentMethodDisplayLabel(mapping?.paymentMethod)}</span>
                                             </div>
                                             <div className="info-item">

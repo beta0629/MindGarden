@@ -7,6 +7,7 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import BadgeSelect from '../../common/BadgeSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_SESSION_EXTENSIONS_REQUESTS = '/api/v1/admin/session-extensions/requests';
@@ -33,6 +34,7 @@ const SessionExtensionModal = ({
     mapping, 
     onSessionExtensionRequested 
 }) => {
+    const { t } = useTranslation();
     const [additionalSessions, setAdditionalSessions] = useState(1);
     const [packagePrice, setPackagePrice] = useState(0);
     const [selectedPackage, setSelectedPackage] = useState('');
@@ -179,7 +181,7 @@ const SessionExtensionModal = ({
                         onClick={handleClose}
                         disabled={isLoading}
                     >
-                        취소
+                        {t('admin.actions.cancel', '취소')}
                     </MGButton>
                     <MGButton
                         type="button"
@@ -206,13 +208,13 @@ const SessionExtensionModal = ({
                         <div className="mg-v2-card-body">
                             <div className="mg-v2-form-grid">
                                 <div className="mg-v2-form-group">
-                                    <label className="mg-v2-label">내담자</label>
+                                    <label className="mg-v2-label">{t('admin.labels.client', '내담자')}</label>
                                     <div className="mg-v2-text-primary">
                                         {mapping.client?.name || mapping.clientName || '알 수 없음'}
                                     </div>
                                 </div>
                                 <div className="mg-v2-form-group">
-                                    <label className="mg-v2-label">상담사</label>
+                                    <label className="mg-v2-label">{t('admin.labels.consultant', '상담사')}</label>
                                     <div className="mg-v2-text-primary">
                                         {mapping.consultant?.name || mapping.consultantName || '알 수 없음'}
                                     </div>
@@ -270,7 +272,7 @@ const SessionExtensionModal = ({
                         
                         {/* 결제 방법 선택 */}
                         <div className="mg-v2-form-group">
-                            <label className="mg-v2-label">결제 방법</label>
+                            <label className="mg-v2-label">{t('admin.labels.paymentMethod', '결제 방법')}</label>
                             <BadgeSelect
                                 className="mg-v2-form-badge-select"
                                 value={paymentMethod}
@@ -280,7 +282,7 @@ const SessionExtensionModal = ({
                                     { value: '계좌이체', label: '계좌이체' },
                                     { value: '현금', label: '현금' }
                                 ]}
-                                placeholder="선택하세요"
+                                placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
                                 disabled={isLoading}
                             />
                         </div>

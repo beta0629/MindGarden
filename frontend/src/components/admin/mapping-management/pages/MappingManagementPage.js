@@ -32,12 +32,14 @@ import '../../../../styles/dashboard-tokens-extension.css';
 import '../../AdminDashboard/AdminDashboardB0KlA.css';
 import '../MappingManagementPage.css';
 import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES_GROUPS_MAPPING_STATUS = '/api/v1/common-codes/groups/MAPPING_STATUS';
 
 
 const MappingManagementPage = () => {
+  const { t } = useTranslation();
   const { user } = useSession();
   const [mappings, setMappings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -397,7 +399,7 @@ const MappingManagementPage = () => {
     <>
       <ContentArea ariaLabel="매칭 관리 본문" className="mg-v2-mapping-management">
         <ContentHeader
-          title="매칭 관리"
+          title={t('admin.labels.matchingManagement', '매칭 관리')}
           subtitle="상담사와 내담자 간의 매칭을 관리합니다."
           titleId="mapping-management-title"
           actions={
@@ -509,7 +511,7 @@ const MappingManagementPage = () => {
               disabled={loading}
               preventDoubleClick
             >
-              취소
+              {t('admin.actions.cancel', '취소')}
             </MGButton>
             <MGButton
               variant="danger"

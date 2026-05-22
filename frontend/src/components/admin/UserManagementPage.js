@@ -23,6 +23,7 @@ import StaffManagement from './StaffManagement';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 const TYPE_CONSULTANT = 'consultant';
 const TYPE_CLIENT = 'client';
@@ -36,6 +37,7 @@ const getTypeFromParams = (searchParams) => {
 };
 
 const UserManagementPage = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { hasRole } = useSession();
@@ -83,7 +85,7 @@ const UserManagementPage = () => {
                     onClick={() => handleTypeChange(TYPE_CONSULTANT)}
                     preventDoubleClick={false}
                   >
-                    상담사
+                    {t('admin.labels.consultant', '상담사')}
                   </MGButton>
                   {canManageClients && (
                     <MGButton
@@ -100,7 +102,7 @@ const UserManagementPage = () => {
                       onClick={() => handleTypeChange(TYPE_CLIENT)}
                       preventDoubleClick={false}
                     >
-                      내담자
+                      {t('admin.labels.client', '내담자')}
                     </MGButton>
                   )}
                   <MGButton

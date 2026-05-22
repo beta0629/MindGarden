@@ -6,8 +6,10 @@ import React, { useState } from 'react';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './CounselingContact.css';
+import { useTranslation } from 'react-i18next';
 
 const CounselingContact = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -41,7 +43,7 @@ const CounselingContact = () => {
             <h3>상담 문의하기</h3>
             <form onSubmit={handleSubmit} className="counseling-contact__form">
               <div className="counseling-contact__form-group">
-                <label htmlFor="name">이름</label>
+                <label htmlFor="name">{t('common.labels.name', '이름')}</label>
                 <input
                   type="text"
                   id="name"
@@ -53,7 +55,7 @@ const CounselingContact = () => {
               </div>
               
               <div className="counseling-contact__form-group">
-                <label htmlFor="email">이메일</label>
+                <label htmlFor="email">{t('common.labels.email', '이메일')}</label>
                 <input
                   type="email"
                   id="email"

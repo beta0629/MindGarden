@@ -11,6 +11,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './SalaryExportModal.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 급여 출력 모달. 모든 출력 형식에서 상담사 등록 이메일로 발송 옵션 제공.
@@ -29,6 +30,7 @@ const SalaryExportModal = ({
   consultantName,
   period
 }) => {
+  const { t } = useTranslation();
   const [selectedFormat, setSelectedFormat] = useState(EXPORT_FORMAT.PDF);
   const [includeTaxDetails, setIncludeTaxDetails] = useState(true);
   const [includeCalculationDetails, setIncludeCalculationDetails] = useState(true);
@@ -144,7 +146,7 @@ const SalaryExportModal = ({
             preventDoubleClick={false}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
-            취소
+            {t('common.actions.cancel', '취소')}
           </MGButton>
           <MGButton
             type="button"
@@ -175,7 +177,7 @@ const SalaryExportModal = ({
               <div className="mg-v2-card-item">
                 <div className="salary-export-modal__summary-emoji">👤</div>
                 <div>
-                  <div className="salary-export-modal__summary-label">상담사</div>
+                  <div className="salary-export-modal__summary-label">{t('common.labels.consultant', '상담사')}</div>
                   <div className="salary-export-modal__summary-value">{consultantName || '정보 없음'}</div>
                 </div>
               </div>

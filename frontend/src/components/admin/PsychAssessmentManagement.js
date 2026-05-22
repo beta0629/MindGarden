@@ -30,6 +30,7 @@ import { toErrorMessage } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentManagementPage.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ASSESSMENTS_PSYCH_STATS = '/api/v1/assessments/psych/stats';
@@ -46,6 +47,7 @@ const canAccessPsychAssessmentAdmin = (u) =>
   RoleUtils.hasRole(u, USER_ROLES.STAFF);
 
 const PsychAssessmentManagement = ({ user: propUser }) => {
+  const { t } = useTranslation();
   const { user: sessionUser } = useSession();
   const user = propUser || sessionUser;
   const location = useLocation();
@@ -341,12 +343,12 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
                       className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
                     })}
                     onClick={() => loadStatsAndRecent()}
-                    title="새로고침"
+                    title={t('admin.actions.refresh', '새로고침')}
                     loading={loading}
                     preventDoubleClick={true}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
-                    새로고침
+                    {t('admin.actions.refresh', '새로고침')}
                   </MGButton>
                 }
               />

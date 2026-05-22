@@ -26,6 +26,7 @@ import SafeText from '../common/SafeText';
 import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
@@ -46,6 +47,7 @@ const STEPS_CONFIG = [
 ];
 
 const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [selectedConsultant, setSelectedConsultant] = useState(null);
@@ -366,7 +368,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           preventDoubleClick={false}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
-          이전
+          {t('common.actions.prev', '이전')}
         </MGButton>
       )}
       {step < 4 && (
@@ -408,7 +410,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           preventDoubleClick={false}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
-          완료
+          {t('admin.actions.done', '완료')}
         </MGButton>
       )}
     </div>
@@ -573,7 +575,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     { value: 'INACTIVE', label: '비활성' },
                     { value: 'TERMINATED', label: '종료됨' }
                   ]}
-                  placeholder="선택하세요"
+                  placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
                   className="mg-v2-form-badge-select mg-v2-mapping-creation-modal__select"
                 />
                 <BadgeSelect
@@ -585,7 +587,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     { value: 'email', label: '이메일순' },
                     { value: 'createdAt', label: '등록일순' }
                   ]}
-                  placeholder="선택하세요"
+                  placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
                   className="mg-v2-form-badge-select mg-v2-mapping-creation-modal__select"
                 />
               </div>
@@ -664,7 +666,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 </div>
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">
-                <label>결제 방법</label>
+                <label>{t('admin.labels.paymentMethod', '결제 방법')}</label>
                 <BadgeSelect
                   value={paymentInfo.paymentMethod}
                   onChange={(m) => {
@@ -677,9 +679,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                         { value: 'CARD', label: '신용카드' },
                         { value: 'CASH', label: '현금' }
                       ]}
-                  placeholder="선택하세요"
+                  placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
                   className="mg-v2-mapping-creation-modal__input"
-                  aria-label="결제 방법"
+                  aria-label={t('admin.labels.paymentMethod', '결제 방법')}
                 />
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">
@@ -698,7 +700,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   value={paymentInfo.responsibility}
                   onChange={(val) => setPaymentInfo(prev => ({ ...prev, responsibility: val }))}
                   options={responsibilityOptions.map(r => ({ value: r.label, label: r.label }))}
-                  placeholder="선택하세요"
+                  placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
                   className="mg-v2-mapping-creation-modal__input"
                   aria-label="담당 업무"
                 />

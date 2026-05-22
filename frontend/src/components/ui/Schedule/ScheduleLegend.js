@@ -9,6 +9,7 @@ import {
     SCHEDULE_LEGEND_SESSION_REMAINING_MEANING,
     SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE
 } from '../../../constants/schedule';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 스케줄 범례 컴포넌트 (Presentational)
@@ -24,6 +25,7 @@ const ScheduleLegend = ({
     getConsultantColor,
     calendarSkin
 }) => {
+    const { t } = useTranslation();
     // 실제 스케줄이 있는 상담사만 필터링 (최대 5명까지만 표시)
     const activeConsultants = consultants
         .filter(consultant => 
@@ -87,7 +89,7 @@ const ScheduleLegend = ({
             {/* 상담사가 있을 때만 표시 */}
             {activeConsultants.length > 0 && (
                 <div className="mg-v2-legend-section">
-                    <div className="mg-v2-legend-title">상담사</div>
+                    <div className="mg-v2-legend-title">{t('common.labels.consultant', '상담사')}</div>
                     <div className="mg-v2-legend-items mg-v2-consultant-legend">
                         {activeConsultants.map((consultant, index) => (
                             <div key={`consultant-${consultant.id}-${index}`} className="mg-v2-legend-item">

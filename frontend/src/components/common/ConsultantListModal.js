@@ -5,11 +5,13 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import SafeText from './SafeText';
 import MGButton from './MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 상담사 목록 모달 컴포넌트
  */
 const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
@@ -33,7 +35,7 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
           variant="outline"
           preventDoubleClick={false}
         >
-          닫기
+          {t('common.actions.close', '닫기')}
         </MGButton>
       }
     >
@@ -87,7 +89,7 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
             variant="primary"
           >
             <Check size={20} className="mg-v2-icon-inline" />
-            확인
+            {t('common.actions.confirm', '확인')}
           </MGButton>
         </div>
       )}

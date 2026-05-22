@@ -3,6 +3,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 컴플라이언스 대시보드 공통 레이아웃 래퍼
@@ -21,6 +22,7 @@ export function ComplianceDashboardShell({
   refreshDisabled,
   onRefresh
 }) {
+  const { t } = useTranslation();
   return (
     <AdminCommonLayout title="컴플라이언스 관리">
       <div className="mg-v2-ad-b0kla">
@@ -44,7 +46,7 @@ export function ComplianceDashboardShell({
                   onClick={onRefresh}
                   disabled={refreshDisabled}
                 >
-                  새로고침
+                  {t('admin.actions.refresh', '새로고침')}
                 </MGButton>
               )}
             />

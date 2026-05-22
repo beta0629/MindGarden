@@ -7,6 +7,7 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=VACATION_TYPE';
@@ -35,6 +36,7 @@ const ConsultantVacationModal = ({
     consultantId,
     onVacationUpdated 
 }) => {
+    const { t } = useTranslation();
     const [vacationData, setVacationData] = useState({
         date: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
         type: 'MORNING_HALF_DAY',
@@ -174,7 +176,7 @@ const ConsultantVacationModal = ({
                         disabled={loading}
                         preventDoubleClick={false}
                     >
-                        취소
+                        {t('common.actions.cancel', '취소')}
                     </MGButton>
                     <MGButton
                         variant="primary"
@@ -204,7 +206,7 @@ const ConsultantVacationModal = ({
                                 value: option.value,
                                 label: option.label
                             }))}
-                            placeholder="선택하세요"
+                            placeholder={t('common.messages.pleaseSelect', '선택하세요')}
                             disabled={loading}
                         />
                     </div>

@@ -10,6 +10,7 @@ import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import '../../styles/unified-design-tokens.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SYSTEM_NOTIFICATIONS = '/api/v1/system-notifications?page=0&size=50';
@@ -23,6 +24,7 @@ const API_SYSTEM_NOTIFICATIONS = '/api/v1/system-notifications?page=0&size=50';
 const UNIFIED_NOTIFICATIONS_TITLE_ID = 'unified-notifications-title';
 
 const UnifiedNotifications = () => {
+  const { t } = useTranslation();
   const { user, isLoggedIn } = useSession();
   const location = useLocation();
   const navigate = useNavigate();
@@ -253,7 +255,7 @@ const UnifiedNotifications = () => {
 
   if (!isLoggedIn) {
     return (
-      <AdminCommonLayout title="알림">
+      <AdminCommonLayout title={t('common.labels.notification', '알림')}>
         <ContentArea ariaLabel="알림">
           <div className="mg-card mg-v2-text-center mg-p-xl">
             <h3>로그인이 필요합니다.</h3>
@@ -264,10 +266,10 @@ const UnifiedNotifications = () => {
   }
 
   return (
-    <AdminCommonLayout title="알림">
+    <AdminCommonLayout title={t('common.labels.notification', '알림')}>
       <ContentArea ariaLabel="통합 알림">
         <ContentHeader
-          title="알림"
+          title={t('common.labels.notification', '알림')}
           subtitle="시스템 공지와 메시지를 확인하세요."
           titleId={UNIFIED_NOTIFICATIONS_TITLE_ID}
         />
@@ -332,7 +334,7 @@ const UnifiedNotifications = () => {
                               {notification.title}
                             </h4>
                             {notification.isUrgent && (
-                              <span className="mg-badge mg-badge-danger mg-v2-text-xs">긴급</span>
+                              <span className="mg-badge mg-badge-danger mg-v2-text-xs">{t('admin.labels.urgent', '긴급')}</span>
                             )}
                             {notification.isImportant && (
                               <span className="mg-badge mg-badge-warning mg-v2-text-xs">중요</span>
@@ -400,7 +402,7 @@ const UnifiedNotifications = () => {
                               <span className="mg-badge mg-badge-warning mg-v2-text-xs">중요</span>
                             )}
                             {message.isUrgent && (
-                              <span className="mg-badge mg-badge-danger mg-v2-text-xs">긴급</span>
+                              <span className="mg-badge mg-badge-danger mg-v2-text-xs">{t('admin.labels.urgent', '긴급')}</span>
                             )}
                           </div>
                           <span className="mg-v2-text-xs mg-v2-color-text-secondary">
@@ -441,13 +443,13 @@ const UnifiedNotifications = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={closeModal}
               >
-                확인
+                {t('common.actions.confirm', '확인')}
               </MGButton>
             }
           >
             <div className="mg-flex mg-align-center mg-gap-sm mg-mb-md">
               {selectedItem.data.isUrgent && (
-                <span className="mg-badge mg-badge-danger">긴급</span>
+                <span className="mg-badge mg-badge-danger">{t('admin.labels.urgent', '긴급')}</span>
               )}
               {selectedItem.data.isImportant && (
                 <span className="mg-badge mg-badge-warning">중요</span>

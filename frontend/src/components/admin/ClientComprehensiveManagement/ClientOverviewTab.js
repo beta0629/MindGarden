@@ -7,6 +7,7 @@ import { ProfileCard } from '../../ui/Card/index';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, maskEncryptedDisplay } from '../../../utils/codeHelper';
 import { formatKoreanMobileForDisplay } from '../../../utils/koreanMobilePhone';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 내담자 개요 탭 컴포넌트
@@ -22,6 +23,7 @@ const ClientOverviewTab = ({
     consultations,
     viewMode = 'smallCard'
 }) => {
+    const { t } = useTranslation();
     /** 큰/작은 카드·목록에서 동일한 내담자 작업 버튼 (행·카드 클릭과 분리) */
     const renderClientActions = (client, { compact = false, table = false } = {}) => {
         const actionClass = [
@@ -57,7 +59,7 @@ const ClientOverviewTab = ({
                     onClick={() => onEditClient(client)}
                     preventDoubleClick={true}
                 >
-                    수정
+                    {t('common.actions.edit', '수정')}
                 </MGButton>
                 {onResetPassword && (
                     <MGButton
@@ -80,7 +82,7 @@ const ClientOverviewTab = ({
                     onClick={() => onDeleteClient(client)}
                     preventDoubleClick={true}
                 >
-                    삭제
+                    {t('admin.actions.delete', '삭제')}
                 </MGButton>
             </div>
         );

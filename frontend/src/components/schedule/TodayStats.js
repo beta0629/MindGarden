@@ -11,6 +11,7 @@ const CheckCircle2Icon = ICONS.CHECK_CIRCLE_2;
 const ClockIcon = ICONS.CLOCK;
 const XCircleIcon = ICONS.X_CIRCLE;
 import './TodayStats.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 오늘의 통계 컴포넌트 (아토믹 디자인 적용)
@@ -20,6 +21,7 @@ import './TodayStats.css';
  * @since 2024-12-19
  */
 const TodayStats = () => {
+    const { t } = useTranslation();
     const [stats, setStats] = useState({
         total: 0,
         completed: 0,
@@ -108,7 +110,7 @@ const TodayStats = () => {
                     })}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={loadTodayStats}
-                    title="새로고침"
+                    title={t('common.actions.refresh', '새로고침')}
                     preventDoubleClick={false}
                 >
                     🔄 새로고침

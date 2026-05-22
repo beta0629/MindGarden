@@ -10,6 +10,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 const BTN_SM = 'sm';
 
@@ -22,6 +23,7 @@ const MappingMatchActions = ({
   loading = false,
   buttonClassName = ''
 }) => {
+  const { t } = useTranslation();
   if (!mapping?.status) {
     return null;
   }
@@ -52,10 +54,10 @@ const MappingMatchActions = ({
           loading={false}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => onPayment(mapping)}
-          aria-label="결제 확인"
+          aria-label={t('admin.actions.paymentConfirm', '결제 확인')}
           preventDoubleClick={false}
         >
-          결제 확인
+          {t('admin.actions.paymentConfirm', '결제 확인')}
         </MGButton>
       )}
       {showDeposit && (

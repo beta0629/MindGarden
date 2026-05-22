@@ -6,6 +6,7 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import BadgeSelect from '../../common/BadgeSelect';
+import { useTranslation } from 'react-i18next';
 /**
  * 매칭 입금확인 모달 컴포넌트
 /**
@@ -29,6 +30,7 @@ const MappingPaymentModal = ({
     mapping, 
     onPaymentConfirmed 
 }) => {
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [paymentData, setPaymentData] = useState({
         paymentMethod: 'BANK_TRANSFER',
@@ -137,7 +139,7 @@ const MappingPaymentModal = ({
         <UnifiedModal
             isOpen={isOpen}
             onClose={onClose}
-            title="결제 확인"
+            title={t('admin.actions.paymentConfirm', '결제 확인')}
             size="medium"
             className="mg-v2-ad-b0kla"
             backdropClick
@@ -162,7 +164,7 @@ const MappingPaymentModal = ({
                         disabled={loading}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
-                        취소
+                        {t('admin.actions.cancel', '취소')}
                     </MGButton>
                     <MGButton
                         type="button"
@@ -200,14 +202,14 @@ const MappingPaymentModal = ({
 
                 <div className="mg-v2-form-group">
                     <label className="mg-v2-form-label">
-                        결제 방법
+                        {t('admin.labels.paymentMethod', '결제 방법')}
                     </label>
                     <BadgeSelect
                         value={paymentData.paymentMethod}
                         onChange={(val) => handlePaymentMethodChange(val)}
                         options={paymentMethodOptions}
                         className="mg-v2-form-badge-select"
-                        aria-label="결제 방법"
+                        aria-label={t('admin.labels.paymentMethod', '결제 방법')}
                     />
                 </div>
 

@@ -11,6 +11,7 @@ import SafeText from '../common/SafeText';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import PsychClientContextSummaryBlock from '../psych-context/organisms/PsychClientContextSummaryBlock';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=PRIORITY';
@@ -26,6 +27,7 @@ const API_SCHEDULES = '/api/v1/schedules?userId=0&userRole=ADMIN';
 const CONSULTATION_RECORD_TITLE_ID = 'consultation-record-screen-title';
 
 const ConsultationRecordScreen = () => {
+  const { t } = useTranslation();
   const { consultationId: scheduleId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -561,7 +563,7 @@ const ConsultationRecordScreen = () => {
         </h2>
         <div className="mg-grid mg-grid-cols-2 mg-gap-md">
           <div className="mg-flex mg-flex-col">
-            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">이름</span>
+            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">{t('common.labels.name', '이름')}</span>
             <span className="mg-v2-text-base mg-font-medium"><SafeText>{client.name}</SafeText></span>
           </div>
           <div style={styles.clientInfoItem}>
@@ -575,7 +577,7 @@ const ConsultationRecordScreen = () => {
             </span>
           </div>
           <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>이메일</span>
+            <span style={styles.clientInfoLabel}>{t('common.labels.email', '이메일')}</span>
             <span style={styles.clientInfoValue}><SafeText fallback="정보 없음">{client.email}</SafeText></span>
           </div>
           <div style={styles.clientInfoItem}>
@@ -589,7 +591,7 @@ const ConsultationRecordScreen = () => {
             </span>
           </div>
           <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>상태</span>
+            <span style={styles.clientInfoLabel}>{t('common.labels.status', '상태')}</span>
             <span style={styles.clientInfoValue}>
               <span style={{
                 ...styles.statusBadge,
@@ -1012,7 +1014,7 @@ const ConsultationRecordScreen = () => {
             onClick={() => navigate('/consultant/schedule')}
             disabled={saving}
           >
-            취소
+            {t('common.actions.cancel', '취소')}
           </MGButton>
           <MGButton
             type="button"

@@ -19,8 +19,10 @@ import { CONSULTANT_COMP_PROFESSIONAL_TYPE_FORM } from '../../constants/consulta
 import { toDisplayString } from '../../utils/safeDisplay';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { useTranslation } from 'react-i18next';
 
 const ConsultantManagement = ({ onUpdate, showToast }) => {
+    const { t } = useTranslation();
     const [consultants, setConsultants] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
@@ -287,7 +289,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
     };
 
     return (
-        <AdminCommonLayout title="상담사 관리">
+        <AdminCommonLayout title={t('admin.labels.consultantManagement', '상담사 관리')}>
             <div className="consultant-management">
                 <div className="panel-header">
                     <h3 className="panel-title">
@@ -321,7 +323,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
-                            <Form.Label>이메일</Form.Label>
+                            <Form.Label>{t('admin.labels.email', '이메일')}</Form.Label>
                             <Form.Control
                                 type="email"
                                 value={form.email}
@@ -339,7 +341,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
-                            <Form.Label>이름</Form.Label>
+                            <Form.Label>{t('common.labels.name', '이름')}</Form.Label>
                             <Form.Control
                                 type="text"
                                 value={form.name}
@@ -385,7 +387,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                         </Form.Group>
                         <div className="d-flex justify-content-end gap-2">
                             <Button variant="secondary" onClick={() => setShowModal(false)}>
-                                취소
+                                {t('admin.actions.cancel', '취소')}
                             </Button>
                             <Button variant="primary" type="submit">
                                 등록

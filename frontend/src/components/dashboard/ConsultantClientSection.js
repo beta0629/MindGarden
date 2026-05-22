@@ -9,12 +9,14 @@ import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { ProfileCard } from '../ui/Card/index';
 import '../../styles/unified-design-tokens.css';
+import { useTranslation } from 'react-i18next';
 /**
  * 상담사용 내담자 섹션 컴포넌트
 /**
  * 디자인 시스템 v2.0 적용
  */
 const ConsultantClientSection = ({ userId }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -172,7 +174,7 @@ const ConsultantClientSection = ({ userId }) => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={loadClients}
               >
-                다시 시도
+                {t('common.labels.retry', '다시 시도')}
               </MGButton>
             </div>
           </div>

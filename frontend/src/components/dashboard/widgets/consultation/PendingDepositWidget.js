@@ -21,12 +21,14 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './PendingDepositWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_DEPOSITS_PENDING = '/api/v1/deposits/pending';
 const API_DEPOSITS_PENDING_STATS = '/api/v1/deposits/pending-stats';
 
 const PendingDepositWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // 데이터 소스 설정
@@ -202,7 +204,7 @@ const PendingDepositWidget = ({ widget, user }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleViewAll}
             >
-              전체 보기
+              {t('admin.actions.viewAll', '전체 보기')}
             </MGButton>
           </div>
           <div className="deposit-items">
@@ -250,10 +252,10 @@ const PendingDepositWidget = ({ widget, user }) => {
                     loading={false}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleViewDeposit(deposit.id)}
-                    title="상세 보기"
+                    title={t('admin.actions.viewDetail', '상세 보기')}
                     preventDoubleClick={false}
                   >
-                    보기
+                    {t('admin.actions.view', '보기')}
                   </MGButton>
                 </div>
               </div>

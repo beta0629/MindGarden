@@ -16,6 +16,7 @@ import StatsCard from './StatsCard';
 import { STATS_CARD_GRID_CSS } from '../../constants/css';
 import { STATS_CARD, STATS_CARD_GRID } from '../../constants/charts';
 import './StatsCardGrid.css';
+import { useTranslation } from 'react-i18next';
 
 const StatsCardGrid = ({ 
   statistics = {}, 
@@ -23,6 +24,7 @@ const StatsCardGrid = ({
   error = false,
   showChange = true 
 }) => {
+  const { t } = useTranslation();
   // 로딩 상태
   if (loading) {
     return (
@@ -34,7 +36,7 @@ const StatsCardGrid = ({
             </div>
             <div>
               <h3 className="mg-v2-text-sm mg-v2-font-weight-semibold mg-v2-text-secondary">
-                로딩 중...
+                {t('common.messages.loading', '로딩 중...')}
               </h3>
               <div className="mg-v2-text-xxl mg-v2-font-weight-bold mg-v2-text-primary">
                 0

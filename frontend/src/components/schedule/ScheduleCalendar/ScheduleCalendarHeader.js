@@ -3,6 +3,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import CustomSelect from '../../common/CustomSelect';
 import { ICONS } from '../../../constants/icons';
 import { USER_ROLES } from '../../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 const CalendarIcon = ICONS.CALENDAR;
 const UsersIcon = ICONS.USERS;
@@ -33,6 +34,7 @@ const ScheduleCalendarHeader = ({
     setForceMobileMode,
     loading
 }) => {
+    const { t } = useTranslation();
     const isAdmin = currentUserRole === USER_ROLES.ADMIN;
 
     return (
@@ -112,7 +114,7 @@ const ScheduleCalendarHeader = ({
                     preventDoubleClick={false}
                 >
                     <RefreshCwIcon className="mg-v2-icon" />
-                    새로고침
+                    {t('common.actions.refresh', '새로고침')}
                 </MGButton>
             </div>
         </div>

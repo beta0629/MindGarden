@@ -3,8 +3,10 @@ import { User, Home, MessageSquare, AlertCircle, FileText, Mail, Phone, UserPlus
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
+import { useTranslation } from 'react-i18next';
 
 const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     age: '',
@@ -104,7 +106,7 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
               onClick={handleEdit}
               preventDoubleClick={false}
             >
-              수정
+              {t('common.actions.edit', '수정')}
             </MGButton>
           )}
           {(mode === 'add' || isEditing) && (
@@ -130,7 +132,7 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                   onClick={handleCancel}
                   preventDoubleClick={false}
                 >
-                  취소
+                  {t('common.actions.cancel', '취소')}
                 </MGButton>
               )}
             </>
@@ -144,7 +146,7 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
             onClick={onClose}
             preventDoubleClick={false}
           >
-            닫기
+            {t('common.actions.close', '닫기')}
           </MGButton>
         </>
       }
@@ -159,7 +161,7 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
               </h3>
               <div className="mg-v2-form-row">
                 <div className="mg-v2-form-group">
-                  <label className="mg-v2-form-label">이름 <span className="mg-v2-form-label-required">*</span></label>
+                  <label className="mg-v2-form-label">{t('common.labels.name', '이름')} <span className="mg-v2-form-label-required">*</span></label>
                   <input
                     type="text"
                     name="name"
@@ -206,7 +208,7 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                 <div className="mg-v2-form-group">
                   <label className="mg-v2-form-label">
                     <Mail size={16} className="mg-v2-form-label-icon" />
-                    이메일
+                    {t('common.labels.email', '이메일')}
                   </label>
                   <input
                     type="email"

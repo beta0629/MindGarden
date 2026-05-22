@@ -4,8 +4,10 @@ import StandardizedApi from '../../../utils/standardizedApi';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
@@ -121,7 +123,7 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
               variant="outline"
               preventDoubleClick={false}
             >
-              취소
+              {t('common.actions.cancel', '취소')}
             </MGButton>
             <MGButton
               type="submit"
@@ -167,7 +169,7 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
               onClick={onClose}
               variant="primary"
             >
-              확인
+              {t('common.actions.confirm', '확인')}
             </MGButton>
           </div>
           {cooldown > 0 ? (

@@ -4,6 +4,7 @@ import UnifiedModal from './modals/UnifiedModal';
 import { apiPost, apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { USER_ROLES } from '../../constants/roles';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 상담사 신청 모달 컴포넌트
@@ -27,6 +28,7 @@ const ConsultantApplicationModal = ({
     userRole,
     onSuccess 
 }) => {
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [eligibilityChecked, setEligibilityChecked] = useState(false);
     const [isEligible, setIsEligible] = useState(false);
@@ -163,7 +165,7 @@ const ConsultantApplicationModal = ({
     const modalActions = (
         <>
             <Button variant="secondary" onClick={handleClose}>
-                취소
+                {t('common.actions.cancel', '취소')}
             </Button>
             {eligibilityChecked && isEligible && (
                 <Button

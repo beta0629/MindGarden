@@ -11,8 +11,10 @@
 import React from 'react';
 import { Play, Pause, X } from 'lucide-react';
 import './MiniPlayer.css';
+import { useTranslation } from 'react-i18next';
 
 const MiniPlayer = ({ track, isPlaying, progress, onTogglePlay, onClose }) => {
+  const { t } = useTranslation();
   if (!track) return null;
 
   return (
@@ -35,7 +37,7 @@ const MiniPlayer = ({ track, isPlaying, progress, onTogglePlay, onClose }) => {
           type="button"
           className="mini-player__btn mini-player__btn--close"
           onClick={onClose}
-          aria-label="닫기"
+          aria-label={t('common.actions.close', '닫기')}
         >
           <X size={16} />
         </button>

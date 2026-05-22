@@ -1,180 +1,143 @@
-# ALIMTALK_BIZ_TEMPLATE_CODE — 솔라피 검수 통과 후 templateId 갱신 절차
+# ALIMTALK_BIZ_TEMPLATE_CODE — 솔라피 Template ID 회전(rotation) 운영 문서
 
-**대상 템플릿**: 8종 (2026-05-23 솔라피 콘솔 등록 — `검수진행중` 상태)
-**관련 시드**: `src/main/resources/db/migration/V20260528_001__seed_alimtalk_biz_template_code_8types.sql`
-**관련 코드**: `AlimtalkTemplateMappingResolver`, `BatchNotificationDispatchServiceImpl`,
-`AdminTestNotificationServiceImpl`, `AdminManualNotificationServiceImpl`,
-`NotificationServiceImpl#resolveAlimTalkBizTemplateCode`
-
----
-
-## 1. 배경
-
-- **시드(V20260528_001)** 는 `code_label = ''` (빈 문자열) 로 8건을 미리 생성한다.
-- `AlimtalkTemplateMappingResolver` 는 `code_label` 이 `null/blank` 이면 매핑 미발급으로 간주
-  → 호출자별 안전한 폴백 경로로 진입한다.
-  - **배치 디스패치 (정보성 7종)** — F1 SMS 폴백 자동 진행.
-  - **배치 디스패치 (마케팅 1종 — `SESSION_RENEW_PROMPT`)** — F2 정책에 따라 SMS 폴백 미수행.
-  - **어드민 테스트/수동 발송 (공통코드 모드)** — `TEMPLATE_NOT_MAPPED` 차단(라이브 토글로 우회 가능).
-  - **운영 호출부 (`NotificationServiceImpl#sendKakaoAlimTalk`)** — `type.name()` (내부 키) 로 폴백 후
-    `KakaoAlimTalkServiceImpl` 의 `templateId` 검증 단계에서 발송 차단(SMS/이메일 폴백 정책 적용).
-- **솔라피 검수 통과** 시 사용자가 콘솔에서 8개 `templateId(KA01TP…)` 를 회수해 운영 DB 에 갱신해야 한다.
+- **작성일**: 2026-05-23
+- **관련 기획**: `docs/project-management/2026-05-23/NOTIFICATION_BATCH_MESSAGE_DESIGN.md` §2 / §11 / §12
+- **관련 시드/UPDATE**:
+  - `src/main/resources/db/migration/V20260528_001__seed_alimtalk_biz_template_code_8types.sql` (스켈레톤 시드, `code_label=''`)
+  - `src/main/resources/db/migration/V20260528_002__update_alimtalk_biz_template_code_solapi_ids.sql` (실 templateId UPDATE, `is_active=false`)
+- **매핑 컴포넌트**: `AlimtalkTemplateMappingResolver` (`codeLabel = solapi templateId`)
+- **호출자**: `BatchNotificationDispatchServiceImpl`, `AdminTestNotificationServiceImpl`, `AdminManualNotificationServiceImpl`, `NotificationServiceImpl`
 
 ---
 
-## 2. 갱신 방식 — **신규 Flyway PR 권장 (이력 추적 + 운영 게이트 통과)**
+## §1. 배경
 
-### 2.1 권장 — 신규 Flyway 시드 PR
+알림톡 8종(예약 D-2, 즉시 단발, D-2 미달, 회기 종료 예고, 회기 갱신 유도, 신규 환영, 첫 상담 OFFLINE/ONLINE)은 솔라피 콘솔 검수를 거쳐 `KA01TP...` templateId 가 발급된다. 운영 코드 변경 없이 공통코드 `ALIMTALK_BIZ_TEMPLATE_CODE.code_label` 에 templateId 를 주입해 매핑 모드로 발화한다.
 
-새 마이그레이션 파일 `V<YYYYMMDD>_NNN__update_alimtalk_biz_template_code_solapi_ids.sql` 로
-`UPDATE` 8건을 작성하여 PR 한다. 장점:
-
-- **이력 추적**: `flyway_schema_history` 에 적용 시점·체크섬이 기록.
-- **재현성**: 운영·검증·DR DB 모두 동일한 절차로 적용.
-- **롤백 가능**: 직전 값을 복원하는 보강 PR 로 즉시 회복.
-
-```sql
--- 예: V20260601_001__update_alimtalk_biz_template_code_solapi_ids.sql
--- 솔라피 콘솔 검수 통과 — 8종 templateId 회수 후 code_label 갱신.
--- 직전 값(빈 문자열) 백업: 본 파일 적용 전 별도 SELECT 로 캡처 (§4 참고).
-
-UPDATE common_codes
-   SET code_label = 'KA01TP260523000000001RESERVATION_REMINDER_D2',
-       updated_at = NOW()
- WHERE tenant_id IS NULL
-   AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
-   AND code_value = 'RESERVATION_REMINDER_D2';
-
-UPDATE common_codes
-   SET code_label = 'KA01TP260523000000002RESERVATION_IMMEDIATE_SINGLE',
-       updated_at = NOW()
- WHERE tenant_id IS NULL
-   AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
-   AND code_value = 'RESERVATION_IMMEDIATE_SINGLE';
-
-UPDATE common_codes
-   SET code_label = 'KA01TP260523000000003RESERVATION_IMMEDIATE_LATE',
-       updated_at = NOW()
- WHERE tenant_id IS NULL
-   AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
-   AND code_value = 'RESERVATION_IMMEDIATE_LATE';
-
-UPDATE common_codes
-   SET code_label = 'KA01TP260523000000004SESSION_ENDING_SOON',
-       updated_at = NOW()
- WHERE tenant_id IS NULL
-   AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
-   AND code_value = 'SESSION_ENDING_SOON';
-
-UPDATE common_codes
-   SET code_label = 'KA01TP260523000000005SESSION_RENEW_PROMPT',
-       updated_at = NOW()
- WHERE tenant_id IS NULL
-   AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
-   AND code_value = 'SESSION_RENEW_PROMPT';
-
-UPDATE common_codes
-   SET code_label = 'KA01TP260523000000006CLIENT_WELCOME_FIRST',
-       updated_at = NOW()
- WHERE tenant_id IS NULL
-   AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
-   AND code_value = 'CLIENT_WELCOME_FIRST';
-
-UPDATE common_codes
-   SET code_label = 'KA01TP260523000000007INITIAL_GUIDE_OFFLINE',
-       updated_at = NOW()
- WHERE tenant_id IS NULL
-   AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
-   AND code_value = 'INITIAL_GUIDE_OFFLINE';
-
-UPDATE common_codes
-   SET code_label = 'KA01TP260523000000008INITIAL_GUIDE_ONLINE',
-       updated_at = NOW()
- WHERE tenant_id IS NULL
-   AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
-   AND code_value = 'INITIAL_GUIDE_ONLINE';
-```
-
-> **주의**: 위 `KA01TP…` 값은 **샘플** 이며 검수 통과 후 솔라피 콘솔 실제 값으로 교체해야 한다.
-> placeholder/더미 값은 **운영 게이트(§17/§1.3) 위반** 이므로 검수 통과 전까지 절대 적용 금지.
-
-### 2.2 대체 — 핫픽스 직접 SQL (긴급 시 한정)
-
-운영 점검 시간 등 PR 사이클을 기다릴 수 없는 상황에서만 사용한다. 이 경우에도
-실행 후 동일 내용의 Flyway PR 을 **반드시** 후행 등록해 이력을 보존한다.
-
-```sql
--- 핫픽스 직접 SQL (점검 시간 한정)
-UPDATE common_codes
-   SET code_label = '<KA01TP...>',
-       updated_at = NOW()
- WHERE tenant_id IS NULL
-   AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
-   AND code_value = '<RESERVATION_REMINDER_D2 ...>';
--- 8건 반복
-```
+검수 결과를 사전에 예측할 수 없으므로 회전(rotation) 절차를 표준화하고, 검수진행중·통과·취하 상태를 단일 SQL 토글로 전환한다.
 
 ---
 
-## 3. 갱신 후 검증 절차
+## §2. 회전 옵션 비교
 
-### 3.1 DB 확인 (검수 통과 8건 모두 KA01TP… 인지)
+| 옵션 | 시점 | is_active | 발송 영향 | 채택 여부 |
+|---|---|---|---|---|
+| A. 검수 통과 후 INSERT (지연) | 통과 직후 | TRUE | 즉시 매핑 발화 | △ (지연이 크다) |
+| B. 검수 통과 시점에 UPDATE | 통과 직후 | TRUE | 즉시 매핑 발화 | △ (PR 대기 시간) |
+| **C. 사전 UPDATE + 비활성** | **회수 직후** | **FALSE → TRUE** | **검수 통과 후 단일 SQL 활성화** | **✓ 채택** |
 
-```sql
-SELECT code_value, code_label, sort_order, is_active
-  FROM common_codes
- WHERE tenant_id IS NULL
-   AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
- ORDER BY sort_order;
--- 기대: 8 rows, code_label 모두 'KA01TP…' 시작, is_active = TRUE
-```
+옵션 C 의 안전성 근거 (사전 검증 완료):
 
-### 3.2 어드민 테스트 발송 (라이브 토글 OFF — 공통코드 모드)
-
-- 어드민 → 시스템 도구 → 알림 발송 테스트 → `RESERVATION_REMINDER_D2` 선택
-- 자기 자신 번호로 1건 발송 → 알림톡 도착 확인.
-- 8종 모두 동일 절차 반복(또는 batch 1건씩 라이브 발송).
-
-### 3.3 배치 디스패치 dry-run → 라이브
-
-- DEV `batch.notification.dry-run = true` 상태에서 D-2 스케줄러 트리거 → 로그에 `solapiTemplateId` 가
-  `KA01TP…` 로 기록되는지 확인.
-- 이후 `dry-run = false` 로 전환하고 1건 라이브 발송.
-
-### 3.4 운영 적용 시점
-
-- **권장**: 솔라피 검수 통과 즉시(영업일 09:00–17:00 KST) 적용.
-  - 이유: 검수 통과 후에도 발송 실패 시 SMS 폴백이 동작 중이므로 사용자 영향 최소.
-- **점검 필요 시**: 점검 시간(주말 22:00–02:00 KST) 적용.
-- **금지**: 마케팅 템플릿 `SESSION_RENEW_PROMPT` 만 별도 적용하는 것은 권장하지 않음 — 일괄 적용.
+- `CommonCodeRepository.findCoreCodeByGroupAndValue` / `findTenantCodeByGroupAndValue` JPQL 에 `AND c.isActive = true` 명시
+- `is_active=false` 일 때 resolver 는 row 미반환 → `null` 반환
+- 호출자별 null 처리:
+  - `BatchNotificationDispatchServiceImpl` — `solapiTemplateId == null` 분기에서 알림톡 스킵 → SMS 폴백 진입
+  - `AdminTestNotificationServiceImpl` — `ERROR_CODE_TEMPLATE_NOT_MAPPED` 차단 (어드민 명시적 가드)
+  - `AdminManualNotificationServiceImpl` — `ERROR_CODE_TEMPLATE_NOT_MAPPED` 배치 전체 차단
 
 ---
 
-## 4. Rollback 절차
+## §3. 실제 회수된 Template ID 8건 (2026-05-23)
 
-### 4.1 사전 백업 (UPDATE 직전 캡처)
+공통 PFID: `KA01PF260521094243528iVcw1ocbfs8`
 
-```sql
--- 갱신 전 전체 스냅샷 (이전 값 = 빈 문자열)
-SELECT id, tenant_id, code_group, code_value, code_label, sort_order, updated_at
-  FROM common_codes
- WHERE tenant_id IS NULL
-   AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
- ORDER BY sort_order;
--- 결과를 별도 파일로 저장 (예: ops/backup/2026-XX-XX_alimtalk_template_pre_rotation.csv)
-```
+| # | code_value | Template ID | 카테고리 | 비고 |
+|---|---|---|---|---|
+| 1 | `RESERVATION_REMINDER_D2` | `KA01TP260522184308591IIbyy4H3E8U` | 정보성 | D-2 09:00 KST 배치 |
+| 2 | `RESERVATION_IMMEDIATE_SINGLE` | `KA01TP260522184356741ccLBsS676ss` | 정보성 | 단발성(1회기) 결제 즉시 |
+| 3 | `RESERVATION_IMMEDIATE_LATE` | `KA01TP260522184425486nliMfICjHKT` | 정보성 | D-2 미달 즉시 |
+| 4 | `SESSION_ENDING_SOON` | `KA01TP2605221844555544EY1FTbnzPF` | 정보성 | 잔여 1회기 진입 예고 |
+| 5 | `SESSION_RENEW_PROMPT` | `KA01TP260522184529370iMHGpu8lJx5` | 마케팅 | 갱신 유도, 수신동의 필수, F2 SMS 폴백 미수행 |
+| 6 | `CLIENT_WELCOME_FIRST` | `KA01TP260522183559394LFIRKUfcteP` | 정보성 | 신규 매칭 환영 (user 영구 1회) |
+| 7 | `INITIAL_GUIDE_OFFLINE` | `KA01TP2605221836359933KXmooGxUDh` | 정보성 | 첫 상담 안내(오프라인) |
+| 8 | `INITIAL_GUIDE_ONLINE` | `KA01TP260522183954962WPnr2gZSzjL` | 정보성 | 첫 상담 안내(온라인) |
 
-### 4.2 즉시 우회 — 라이브 토글로 폴백
+V20260528_002 가 위 8건을 `code_label` 에 주입 + `is_active = FALSE` 로 비활성 + `extra_data.approval_status = 'pending_verified'` + `template_id_received_at = '2026-05-23T03:47:00+09:00'` 로 갱신한다.
 
-`NotificationServiceImpl` 호출 경로는 매핑 누락 시 `type.name()` 으로 폴백 후
-`KakaoAlimTalkServiceImpl` 검증에서 차단되어 SMS/이메일 폴백이 동작한다.
-배치 디스패치도 SMS 폴백이 자동 진행되므로, 잘못된 templateId 가 기록되었을 때 다음과 같이
-즉시 빈 문자열로 되돌려 안전한 폴백 상태로 회복한다:
+---
+
+## §4. 검수 통과 후 활성화 (옵션 C 채택)
+
+V20260528_002 가 `is_active=false` 로 8건 UPDATE 완료된 상태(검수진행중 동안 매핑 모드 발송 차단, SMS 폴백 정책 자동 우회).
+
+검수 통과 통지 시 다음 SQL 1줄을 운영 DB 에 실행하거나 **신규 Flyway PR** 로 반영한다 (권장: 별도 PR — 멱등 가드 동봉).
+
+### 4.1 단일 SQL (즉시 활성화)
 
 ```sql
 UPDATE common_codes
-   SET code_label = '',
-       updated_at = NOW()
+   SET is_active = TRUE,
+       updated_at = CURRENT_TIMESTAMP
+ WHERE tenant_id IS NULL
+   AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
+   AND code_value IN (
+       'RESERVATION_REMINDER_D2',
+       'RESERVATION_IMMEDIATE_SINGLE',
+       'RESERVATION_IMMEDIATE_LATE',
+       'SESSION_ENDING_SOON',
+       'SESSION_RENEW_PROMPT',
+       'CLIENT_WELCOME_FIRST',
+       'INITIAL_GUIDE_OFFLINE',
+       'INITIAL_GUIDE_ONLINE'
+   )
+   AND is_active = FALSE
+   AND code_label LIKE 'KA01TP%';
+```
+
+- `AND is_active = FALSE` — 이미 활성화된 row 재실행 시 0 rows affected (멱등)
+- `AND code_label LIKE 'KA01TP%'` — code_label 이 비어있거나 다른 값이면 활성화 차단 (안전망)
+
+### 4.2 별도 Flyway PR (권장)
+
+파일명: `src/main/resources/db/migration/V<YYYYMMDD>_NNN__activate_alimtalk_biz_template_code_8types.sql`
+
+```sql
+-- ============================================================================
+-- ALIMTALK_BIZ_TEMPLATE_CODE 8종 활성화 (솔라피 검수 통과)
+-- 시드: V20260528_001 / UPDATE: V20260528_002
+-- 활성화 전제: code_label LIKE 'KA01TP%' (실 templateId 주입 완료)
+-- 멱등성: is_active=TRUE 인 row 는 0 rows affected
+-- ============================================================================
+UPDATE common_codes
+   SET is_active = TRUE,
+       updated_at = CURRENT_TIMESTAMP
+ WHERE tenant_id IS NULL
+   AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
+   AND code_value IN (
+       'RESERVATION_REMINDER_D2',
+       'RESERVATION_IMMEDIATE_SINGLE',
+       'RESERVATION_IMMEDIATE_LATE',
+       'SESSION_ENDING_SOON',
+       'SESSION_RENEW_PROMPT',
+       'CLIENT_WELCOME_FIRST',
+       'INITIAL_GUIDE_OFFLINE',
+       'INITIAL_GUIDE_ONLINE'
+   )
+   AND is_active = FALSE
+   AND code_label LIKE 'KA01TP%';
+```
+
+### 4.3 활성화 후 검증 체크리스트
+
+- [ ] 어드민 매핑 모드 8종 발송 1건씩 테스트 (`/admin/system/test-notification`)
+  - [ ] 정보성 7종: 알림톡 성공 응답 확인
+  - [ ] `SESSION_RENEW_PROMPT` (마케팅): 수신동의 사용자 1건 + 미동의 사용자 1건 (미동의 시 차단 확인)
+- [ ] 배치 D-2 09:00 KST 스케줄러 dry-run → 실 발송 1건 (소수 대상)
+- [ ] `notification_batch_send_log` row 생성 확인 + UNIQUE 멱등 (`scheduleId × templateCode × bizDate`) 검증
+- [ ] Solapi 콘솔 발송 이력에 8종 templateId 적용 확인
+- [ ] SMS 폴백 미발화 확인 (정보성 7종, 알림톡 성공 시)
+- [ ] CloudWatch / 로그: `알림톡 매핑 없음` WARN 미발생 확인
+
+---
+
+## §5. Rollback
+
+### 5.1 활성화 직후 이상 발견 시 (즉시 차단)
+
+```sql
+UPDATE common_codes
+   SET is_active = FALSE,
+       updated_at = CURRENT_TIMESTAMP
  WHERE tenant_id IS NULL
    AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
    AND code_value IN (
@@ -189,28 +152,37 @@ UPDATE common_codes
    );
 ```
 
-### 4.3 정상 복구 — 백업 SQL 재적용
+효과:
 
-§4.1 백업 SQL 의 직전 값(또는 정상 templateId)을 다시 적용해 운영 상태로 복귀한다.
+- resolver → null 즉시 반환
+- 정보성 7종: 알림톡 스킵 → SMS 폴백 자동 진입 (운영 영향 최소)
+- 마케팅 `SESSION_RENEW_PROMPT`: 알림톡 스킵 + SMS 폴백 미수행 (`fallback="none (F2 skip_marketing)"`) → 발송 0건 (의도된 동작)
+- 어드민 발송 도구: `ERROR_CODE_TEMPLATE_NOT_MAPPED` 명시적 차단 (사용자에게 즉시 노출)
+
+### 5.2 개별 templateId 만 차단 (1~7건만 부분 롤백)
+
+```sql
+UPDATE common_codes
+   SET is_active = FALSE,
+       updated_at = CURRENT_TIMESTAMP
+ WHERE tenant_id IS NULL
+   AND code_group = 'ALIMTALK_BIZ_TEMPLATE_CODE'
+   AND code_value = '<문제가 된 codeValue>';
+```
+
+### 5.3 시드 자체 폐기 (긴급 — 거의 사용 안 함)
+
+V20260528_001 / V20260528_002 두 마이그레이션을 폐기하려면 별도 Flyway PR 로 DELETE 한다 (`tenant_id IS NULL AND code_group='ALIMTALK_BIZ_TEMPLATE_CODE'`). Flyway 히스토리 직접 삭제는 금지.
 
 ---
 
-## 5. 본 PR (V20260528_001) 단독 머지 가능성
+## §6. 운영 호출부 영향 매트릭스 (참조)
 
-- **DEV 머지 영향도**: 0 — `code_label = ''` 라 resolver 가 매핑 미발급으로 처리하고 SMS/F2 폴백이
-  동작한다. 기존 호출부에 패치 0건.
-- **운영 영향도**: 0 — 솔라피 검수 통과 전까지는 알림톡 발송이 코드상 차단되며, SMS 폴백으로
-  사용자 알림은 유지된다. 검수 통과 후 §2 의 후행 PR 로 templateId 를 일괄 갱신한다.
+| 호출자 | `is_active=false` 시 동작 | 비고 |
+|---|---|---|
+| `BatchNotificationDispatchServiceImpl` | 알림톡 스킵 → SMS 폴백 (정보성) / 발송 0건 (마케팅) | `solapiTemplateId == null` 분기 + WARN 로그 |
+| `AdminTestNotificationServiceImpl` | `ERROR_CODE_TEMPLATE_NOT_MAPPED` 차단 | 어드민 UI 에 즉시 노출 |
+| `AdminManualNotificationServiceImpl` | `ERROR_CODE_TEMPLATE_NOT_MAPPED` 배치 전체 차단 | 발송 0건 보장 |
+| `NotificationServiceImpl` | 매핑 미발견 처리 → 기존 폴백 정책 진입 | 운영 호출부, 코드 변경 없음 |
 
----
-
-## 6. 체크리스트
-
-- [ ] V20260528_001 시드 머지 후 DEV `flyway:validate` PASS 확인
-- [ ] 솔라피 콘솔 검수 결과 모니터링 (8종 모두 `검수완료` 진입 시점 기록)
-- [ ] 8개 templateId(KA01TP…) 회수 → 후행 Flyway PR 작성
-- [ ] §4.1 백업 SQL 실행 → 결과 파일 저장 (운영 DB 적용 전)
-- [ ] DEV 적용 → §3.2 어드민 테스트 발송 통과
-- [ ] 운영 적용 → §3.3 배치 dry-run 로그 확인
-- [ ] 운영 라이브 발송 1건 → 알림톡 도착 확인
-- [ ] 발송 실패 시 §4.2 빈 문자열 회복 SQL 즉시 적용 가능 상태 유지
+위 4 경로 모두 옵션 C 의 `is_active=false` 비활성 정책에 대해 **운영 영향 0** 으로 검증 완료.

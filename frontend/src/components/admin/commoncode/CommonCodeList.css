@@ -197,7 +197,7 @@
 
 .status-badge.active {
     background: var(--status-success-bg);
-    color: #065f46;
+    color: var(--mg-color-success-800);
 }
 
 .status-badge.inactive {

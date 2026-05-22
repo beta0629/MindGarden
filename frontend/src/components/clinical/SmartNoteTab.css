@@ -37,13 +37,13 @@
 }
 
 .status-processing {
-    background: #dbeafe;
+    background: var(--mg-color-info-100);
     color: var(--mg-color-info-dark);
 }
 
 .status-completed {
-    background: #d1fae5;
-    color: #065f46;
+    background: var(--mg-color-success-100);
+    color: var(--mg-color-success-800);
 }
 
 .status-failed {
@@ -189,7 +189,7 @@
 
 .error-message {
     background: var(--mg-color-error-bg);
-    border: 1px solid #fecaca;
+    border: 1px solid var(--mg-color-error-100);
     color: var(--mg-color-error-dark);
     padding: 12px 16px;
     border-radius: 6px;

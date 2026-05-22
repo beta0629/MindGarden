@@ -42,7 +42,7 @@
 
 .similarity-badge {
     padding: 4px 12px;
-    background: #dbeafe;
+    background: var(--mg-color-info-100);
     border-radius: 12px;
     font-size: 12px;
     color: var(--mg-color-info-dark);
@@ -118,7 +118,7 @@
 
 .lessons-learned p {
     margin: 0;
-    color: #065f46;
+    color: var(--mg-color-success-800);
     line-height: 1.5;
 }
 

@@ -116,7 +116,7 @@
   margin-top: 1rem;
   padding: 1rem;
   background: var(--mg-color-error-50);
-  border: 1px solid #fecaca;
+  border: 1px solid var(--mg-color-error-100);
   border-radius: 6px;
   text-align: left;
 }

@@ -109,8 +109,8 @@
 }
 
 .tenant-selection__item-status--active {
-  background-color: #d1fae5;
-  color: #065f46;
+  background-color: var(--mg-color-success-100);
+  color: var(--mg-color-success-800);
 }
 
 .tenant-selection__item-status--inactive {

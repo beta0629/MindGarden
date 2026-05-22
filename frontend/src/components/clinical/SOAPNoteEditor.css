@@ -38,7 +38,7 @@
 }
 
 .ai-badge {
-    background: #dbeafe;
+    background: var(--mg-color-info-100);
     color: var(--mg-color-info-dark);
 }
 
@@ -48,8 +48,8 @@
 }
 
 .confidence-badge {
-    background: #d1fae5;
-    color: #065f46;
+    background: var(--mg-color-success-100);
+    color: var(--mg-color-success-800);
 }
 
 .completion-badge {
@@ -58,9 +58,9 @@
 }
 
 .approved-badge {
-    background: #d1fae5;
+    background: var(--mg-color-success-100);
     border: 1px solid #6ee7b7;
-    color: #065f46;
+    color: var(--mg-color-success-800);
     padding: 12px 16px;
     border-radius: 6px;
     margin-bottom: 20px;
@@ -145,14 +145,14 @@
 }
 
 .save-message.success {
-    background: #d1fae5;
+    background: var(--mg-color-success-100);
     border: 1px solid #6ee7b7;
-    color: #065f46;
+    color: var(--mg-color-success-800);
 }
 
 .save-message.error {
     background: var(--mg-color-error-bg);
-    border: 1px solid #fecaca;
+    border: 1px solid var(--mg-color-error-100);
     color: var(--mg-color-error-dark);
 }
 

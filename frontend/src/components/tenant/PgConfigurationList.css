@@ -101,7 +101,7 @@
   background: var(--mg-color-warning-bg);
   border: 1px solid var(--mg-warning-500);
   border-radius: 8px;
-  color: #856404;
+  color: var(--mg-color-warning-dark);
   margin-bottom: 24px;
 }
 
@@ -219,7 +219,7 @@
 
 .status-badge--warning {
   background: var(--mg-color-warning-bg);
-  color: #856404;
+  color: var(--mg-color-warning-dark);
 }
 
 .status-badge--danger {
@@ -460,7 +460,7 @@
 
 .pending-notice {
   background: var(--mg-color-warning-bg);
-  color: #856404;
+  color: var(--mg-color-warning-dark);
   border: 1px solid var(--mg-warning-500);
 }
 

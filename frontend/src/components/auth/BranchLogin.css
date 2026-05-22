@@ -385,7 +385,7 @@ select:focus {
 }
 
 .headquarters-info .branch-info {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    background: linear-gradient(135deg, var(--mg-color-info-100) 0%, #bfdbfe 100%);
     border-left: 4px solid var(--branch-login-primary);
 }
 

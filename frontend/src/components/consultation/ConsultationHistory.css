@@ -212,7 +212,7 @@
 
 .mg-status--pending {
   background: var(--mg-color-warning-bg);
-  color: #856404;
+  color: var(--mg-color-warning-dark);
 }
 
 .status-default {

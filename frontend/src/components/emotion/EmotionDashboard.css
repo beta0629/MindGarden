@@ -122,7 +122,7 @@
 .ai-recommendations {
     margin-top: 16px;
     padding: 16px;
-    background: #dbeafe;
+    background: var(--mg-color-info-100);
     border-left: 4px solid var(--mg-primary-500);
     border-radius: 8px;
 }

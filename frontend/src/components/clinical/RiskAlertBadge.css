@@ -206,7 +206,7 @@
 }
 
 .severity-low {
-    background: #dbeafe;
+    background: var(--mg-color-info-100);
     color: var(--mg-color-info-dark);
 }
 

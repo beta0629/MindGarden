@@ -411,12 +411,12 @@
 .mg-v2-tooltip--error {
   background-color: var(--mg-color-error-bg);
   color: var(--mg-color-error-dark);
-  border: 1px solid #fecaca;
+  border: 1px solid var(--mg-color-error-100);
 }
 
 .mg-v2-tooltip--success {
-  background-color: #d1fae5;
-  color: #065f46;
+  background-color: var(--mg-color-success-100);
+  color: var(--mg-color-success-800);
   border: 1px solid #6ee7b7;
 }
 

@@ -191,7 +191,18 @@ const COLOR_MAPPING = {
   '#fef2f2': 'var(--mg-color-error-50)',
   '#991b1b': 'var(--mg-color-error-dark)',
   '#059669': 'var(--mg-color-success)',
-  '#6b7c32': 'var(--mg-color-brand-olive)'
+  '#6b7c32': 'var(--mg-color-brand-olive)',
+
+  // 2026 Q2 D7-1 라운드 매핑 (SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D6.md §3·§6 + P1 §2)
+  // D6 §9.1 C2·C3·C4 결정 후속 — D6 P2-a 에서 정의만 추가된 6 토큰의 사용처 흡수.
+  // 라이트·다크 양쪽 SSOT 정착 확인(unified-design-tokens.css §1451~§1482)
+  // 폴백 위치(`var(--token, #hex)`)는 R-2 보호 패턴에 의해 자동 제외된다.
+  '#9caf88': 'var(--mg-color-brand-olive-light)', // C2 brand-olive light (마케팅 배너)
+  '#d1fae5': 'var(--mg-color-success-100)',       // success light surface (Tailwind emerald-100 톤)
+  '#065f46': 'var(--mg-color-success-800)',       // success dark text (on success-100 6.6:1 PASS)
+  '#fecaca': 'var(--mg-color-error-100)',         // error light surface (Tailwind red-200 톤)
+  '#dbeafe': 'var(--mg-color-info-100)',          // info light surface (Tailwind blue-100 톤)
+  '#856404': 'var(--mg-color-warning-dark)'       // warning dark text (D4 warning-800 톤 통합)
 };
 
 // RGB/RGBA 색상 매핑

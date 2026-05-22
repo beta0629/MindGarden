@@ -49,7 +49,7 @@
   padding: 1rem;
   margin-bottom: 1rem;
   background: var(--mg-color-error-50);
-  border: 1px solid #fecaca;
+  border: 1px solid var(--mg-color-error-100);
   border-radius: 6px;
   color: var(--mg-color-error);
   font-size: 0.875rem;

@@ -328,7 +328,7 @@
 }
 
 .dashboard-drop-zone.drag-over {
-  background: var(--mg-drop-zone-bg, linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%));
+  background: var(--mg-drop-zone-bg, linear-gradient(135deg, var(--mg-color-info-100) 0%, #bfdbfe 100%));
 }
 
 .dashboard-drop-zone.drag-over::after {

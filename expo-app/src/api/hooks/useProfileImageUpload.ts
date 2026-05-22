@@ -7,35 +7,20 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiPut } from '../client';
 import { PROFILE_API } from '../endpoints';
-import { unwrapApiResponse } from '../unwrapApiResponse';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { toClientConsultantMessagingRole } from '@/utils/adminRole';
+import {
+  extractProfileImageUrlFromPutResponse,
+  resolveProfileImageExtractRole,
+} from '@/utils/profileImagePayload';
 import { MESSAGE_QUERY_KEYS } from './useMessages';
 import { CLIENT_QUERY_KEYS } from './useClients';
 import { CONSULTATION_QUERY_KEYS } from './useConsultations';
 
-/**
- * PUT/GET 프로필 API 본문에서 표시용 이미지 URL·data URI 추출
- *
- * @param role 세션 역할
- * @param raw axios 이후 본문(ApiResponse 래퍼 가능)
- * @returns 프로필 이미지 문자열 또는 null
- */
-export function extractProfileImageUrlFromPutResponse(
-  role: 'client' | 'consultant',
-  raw: unknown,
-): string | null {
-  const data = unwrapApiResponse<Record<string, unknown>>(raw);
-  if (!data || typeof data !== 'object') {
-    return null;
-  }
-  if (role === 'client') {
-    const v = data.profileImage ?? data.profileImageUrl;
-    return typeof v === 'string' && v.trim() !== '' ? v : null;
-  }
-  const v = data.profileImageUrl;
-  return typeof v === 'string' && v.trim() !== '' ? v : null;
-}
+export {
+  extractProfileImageUrlFromPutResponse,
+  resolveProfileGetEndpoint,
+  resolveProfileImageExtractRole,
+} from '@/utils/profileImagePayload';
 
 export function useProfileImageUpload() {
   const queryClient = useQueryClient();
@@ -46,7 +31,8 @@ export function useProfileImageUpload() {
       if (!u) {
         throw new Error('로그인이 필요합니다.');
       }
-      if (u.role === 'client') {
+      const extractRole = resolveProfileImageExtractRole(u.role);
+      if (extractRole === 'client') {
         return apiPut<unknown>(PROFILE_API.CLIENT_PROFILE, {
           profileImage: dataUri,
         });
@@ -61,7 +47,7 @@ export function useProfileImageUpload() {
         return;
       }
       const profileImageUrl = extractProfileImageUrlFromPutResponse(
-        toClientConsultantMessagingRole(u.role),
+        resolveProfileImageExtractRole(u.role),
         raw,
       );
       if (profileImageUrl) {

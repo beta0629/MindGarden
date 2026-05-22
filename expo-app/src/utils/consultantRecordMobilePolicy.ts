@@ -14,7 +14,7 @@ function normalizeRecordStatus(
 
 /**
  * 모바일 목록·상세에 노출 가능한 일지 상태인지 판별한다.
- * 작성 완료(COMPLETED) 일지는 모바일에서 노출하지 않는다.
+ * 작성 완료(COMPLETED) 일지도 읽기 전용 조회는 허용한다.
  */
 export function isConsultantRecordVisibleOnMobile(
   status: ConsultantRecordMobileStatus | string | undefined | null,
@@ -23,7 +23,7 @@ export function isConsultantRecordVisibleOnMobile(
   if (!normalized) {
     return false;
   }
-  return normalized !== 'COMPLETED';
+  return normalized === 'DRAFT' || normalized === 'PENDING' || normalized === 'COMPLETED';
 }
 
 /**

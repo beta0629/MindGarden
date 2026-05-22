@@ -247,3 +247,32 @@ export function mapProfileLoadResponseToForm(role, response) {
   }
   return mapMyPageResponseToForm(response);
 }
+
+/**
+ * API 응답에서 표시용 프로필 이미지 URL/data URI 추출 (역할별 필드 정합)
+ * @param {string} role
+ * @param {object} response
+ * @returns {string|null}
+ */
+export function resolveProfileImageFromApiResponse(role, response) {
+  if (!response) {
+    return null;
+  }
+  if (isConsultantUserProfileRole(role)) {
+    return response.profileImageUrl || response.profileImage || null;
+  }
+  return response.profileImage || response.profileImageUrl || null;
+}
+
+/**
+ * 세션·WelcomeSection 등에 profileImage + profileImageUrl 동시 반영
+ * @param {string|null|undefined} profileImageUrl
+ * @returns {{ profileImage: string|null, profileImageUrl: string|null }}
+ */
+export function mapProfileImageToSessionFields(profileImageUrl) {
+  if (profileImageUrl == null || String(profileImageUrl).trim() === '') {
+    return { profileImage: null, profileImageUrl: null };
+  }
+  const normalized = String(profileImageUrl);
+  return { profileImage: normalized, profileImageUrl: normalized };
+}

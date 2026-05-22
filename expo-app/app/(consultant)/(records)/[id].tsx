@@ -1,6 +1,6 @@
 /**
  * 일지 상세 화면
- * DRAFT만 모바일 편집 허용, COMPLETED는 웹 안내
+ * DRAFT만 모바일 편집 허용, COMPLETED는 읽기 전용 조회
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -20,11 +20,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { ArrowLeft, Edit3, Monitor } from 'lucide-react-native';
+import { ArrowLeft, Edit3, Info } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useRecordDetail, useUpdateRecord } from '@/api/hooks/useRecords';
 import { Chip } from '@/components/atoms/Chip';
-import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard, SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 import { CONSULTANT_RECORDS_COPY } from '@/constants/consultantRecordsCopy';
 import { isConsultantRecordEditableOnMobile } from '@/utils/consultantRecordMobilePolicy';
@@ -146,16 +145,38 @@ export default function ConsultantRecordDetail() {
             <SkeletonCard />
             <SkeletonCard />
           </>
-        ) : isCompletedOnMobile ? (
-          <EmptyState
-            icon={<Monitor size={32} color={theme.colors.textTertiary} />}
-            title={CONSULTANT_RECORDS_COPY.COMPLETED_RECORD_DESKTOP_ONLY_TITLE}
-            description={CONSULTANT_RECORDS_COPY.COMPLETED_RECORD_DESKTOP_ONLY_BODY}
-            actionLabel={CONSULTANT_RECORDS_COPY.BACK_BUTTON_LABEL}
-            onAction={() => router.back()}
-          />
         ) : record ? (
           <>
+            {isCompletedOnMobile ? (
+              <View
+                style={[
+                  styles.readOnlyBanner,
+                  {
+                    backgroundColor: theme.colors.accentSoft,
+                    borderRadius: theme.borderRadius.lg,
+                    padding: theme.spacing.md,
+                    marginBottom: theme.spacing.lg,
+                  },
+                ]}
+              >
+                <View style={styles.readOnlyBannerRow}>
+                  <Info size={18} color={theme.colors.primary} />
+                  <Text
+                    style={{
+                      flex: 1,
+                      color: theme.colors.textSecondary,
+                      fontFamily: theme.fontFamily.regular,
+                      fontSize: theme.fontSize.sm,
+                      marginLeft: theme.spacing.sm,
+                      lineHeight: 20,
+                    }}
+                  >
+                    {CONSULTANT_RECORDS_COPY.COMPLETED_RECORD_READ_ONLY_BANNER}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
+
             {/* 상담 정보 */}
             <View
               style={[
@@ -450,5 +471,10 @@ const styles = StyleSheet.create({
   primaryButton: {
     flex: 1,
     alignItems: 'center',
+  },
+  readOnlyBanner: {},
+  readOnlyBannerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
   },
 });

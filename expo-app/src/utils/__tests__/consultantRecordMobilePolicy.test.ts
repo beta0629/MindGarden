@@ -4,9 +4,9 @@ import {
 } from '../consultantRecordMobilePolicy';
 
 describe('isConsultantRecordVisibleOnMobile', () => {
-  it('returns false for COMPLETED', () => {
-    expect(isConsultantRecordVisibleOnMobile('COMPLETED')).toBe(false);
-    expect(isConsultantRecordVisibleOnMobile('completed')).toBe(false);
+  it('returns true for COMPLETED (read-only view)', () => {
+    expect(isConsultantRecordVisibleOnMobile('COMPLETED')).toBe(true);
+    expect(isConsultantRecordVisibleOnMobile('completed')).toBe(true);
   });
 
   it('returns true for DRAFT and PENDING', () => {

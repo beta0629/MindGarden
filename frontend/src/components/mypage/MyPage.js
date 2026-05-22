@@ -6,9 +6,11 @@ import mypageApi from '../../utils/mypageApi';
 import { isConsultantUserProfileRole } from '../../constants/mypageProfileRoles';
 import {
   buildProfileUpdatePayload,
+  mapProfileImageToSessionFields,
   mapProfileLoadResponseToForm,
   normalizeProfileFormNameField,
-  pickSessionProfileNameForForm
+  pickSessionProfileNameForForm,
+  resolveProfileImageFromApiResponse
 } from '../../utils/mypageProfilePayload';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
@@ -156,6 +158,14 @@ const MyPage = () => {
         if (mapped) {
           setFormData(normalizeProfileFormNameField(mapped));
         }
+        const profileImageFromApi = resolveProfileImageFromApiResponse(currentUser.role, response);
+        if (profileImageFromApi && sessionManager.user) {
+          sessionManager.user = {
+            ...sessionManager.user,
+            ...mapProfileImageToSessionFields(profileImageFromApi)
+          };
+          sessionManager.notifyListeners();
+        }
       }
     } catch (error) {
       console.error('사용자 정보 로드 실패:', error);
@@ -232,6 +242,16 @@ const MyPage = () => {
     loadUserInfo();
     loadSocialAccounts();
   }, [loadUserInfo, loadSocialAccounts]);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadUserInfo();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [loadUserInfo]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -385,7 +405,7 @@ const MyPage = () => {
         nickname: dataAfterSave.nickname,
         phone: dataAfterSave.phone,
         gender: dataAfterSave.gender,
-        profileImage: nextProfileImage
+        ...mapProfileImageToSessionFields(nextProfileImage)
       };
       sessionManager.notifyListeners();
     }

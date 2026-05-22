@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { FlashList } from '@shopify/flash-list';
 import {
@@ -97,6 +98,12 @@ export default function ConsultantDashboard() {
     unreadNotificationQuery.refetch();
     unreadMessageQuery.refetch();
   }, [dashboard, pendingQuery, unreadNotificationQuery, unreadMessageQuery]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void unreadMessageQuery.refetch();
+    }, [unreadMessageQuery]),
+  );
 
   const quickActions: QuickAction[] = useMemo(
     () => [

@@ -36,6 +36,7 @@ import {
 } from '@/api/hooks/useMessages';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { toClientConsultantMessagingRole } from '@/utils/adminRole';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { useTenantStore } from '@/stores/useTenantStore';
 import { formatRelativeTime } from '@/utils/dateFormat';
 import { toDisplayString } from '@/utils/safeDisplay';
@@ -54,6 +55,7 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
   const theme = useTheme();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const { userId: resolvedUserId } = useApiQueryReady();
   const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
   const [searchQuery, setSearchQuery] = useState('');
   const [previewConversation, setPreviewConversation] = useState<Conversation | null>(null);
@@ -71,7 +73,7 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
   } = useConversations(deferredSearch);
 
   const conversations = useMemo(() => {
-    if (!tenantId || !user?.id || !user.role) {
+    if (!tenantId || !resolvedUserId || !user?.role) {
       return [];
     }
     const flat = data?.pages.flatMap((p) => ('messages' in p ? p.messages : [])) ?? [];
@@ -85,10 +87,10 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
     return buildConversationsFromRows(
       flat,
       toClientConsultantMessagingRole(user.role),
-      user.id,
+      resolvedUserId,
       deferredSearch,
     );
-  }, [tenantId, data?.pages, deferredSearch, user?.id, user?.role]);
+  }, [tenantId, data?.pages, deferredSearch, resolvedUserId, user?.role]);
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {

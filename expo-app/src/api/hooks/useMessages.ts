@@ -21,7 +21,12 @@ import { resolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { toClientConsultantMessagingRole } from '@/utils/adminRole';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
-import { parseUnreadMessageCountPayload } from '@/utils/consultationMessageUnread';
+import {
+  isUnreadMessageForReceiver,
+  parseMessageIsRead,
+  parseUnreadMessageCountPayload,
+} from '@/utils/consultationMessageUnread';
+import { resolveClientScheduleUserId } from '@/utils/resolveClientScheduleUserId';
 
 export interface Conversation {
   /** 스레드 식별자 = 상대방 사용자 ID(내담자: 상담사 ID / 상담사: 내담자 ID) */
@@ -128,7 +133,7 @@ function rowToMessage(row: ConsultationMessageRow, partnerId: number, selfId: nu
   const id = toSafeNumber(row.id, 0);
   const senderId = toSafeNumber(row.senderId, 0);
   const isMine = senderId === selfId && senderId > 0;
-  const isRead = Boolean(row.isRead);
+  const isRead = parseMessageIsRead(row.isRead);
   const sentRaw = row.sentAt ?? row.createdAt;
   return {
     id,
@@ -203,7 +208,7 @@ export function buildConversationsFromRows(
     const preview = toDisplayString(row.content, toDisplayString(row.title, ''));
 
     const receiverId = toSafeNumber(row.receiverId, 0);
-    const unreadInc = row.isRead === false && receiverId === selfId && selfId > 0 ? 1 : 0;
+    const unreadInc = isUnreadMessageForReceiver(row.isRead, receiverId, selfId) ? 1 : 0;
     const messageId = toSafeNumber(row.id, 0);
 
     const existing = byPartner.get(partnerId);
@@ -295,9 +300,8 @@ async function fetchConsultationMessagesPage(
 
 export function useConversations(searchQuery: string) {
   const user = useAuthStore((s) => s.user);
-  const { ready, tenantId } = useApiQueryReady();
+  const { ready, tenantId, userId } = useApiQueryReady();
   const role = user?.role;
-  const userId = user?.id;
 
   return useInfiniteQuery({
     queryKey: MESSAGE_QUERY_KEYS.conversationsList(role ?? '', userId ?? 0, searchQuery, tenantId),
@@ -320,9 +324,8 @@ export function useConversations(searchQuery: string) {
 
 export function useMessages(partnerId: number | undefined) {
   const user = useAuthStore((s) => s.user);
-  const { ready, tenantId } = useApiQueryReady();
+  const { ready, tenantId, userId: selfId } = useApiQueryReady();
   const role = user?.role;
-  const selfId = user?.id;
 
   return useInfiniteQuery({
     queryKey: MESSAGE_QUERY_KEYS.messagesList(role ?? '', selfId ?? 0, partnerId ?? 0, tenantId),
@@ -409,12 +412,14 @@ export function useSendMessage() {
     },
     onSuccess: (_data, variables) => {
       const user = useAuthStore.getState().user;
+      const accessToken = useAuthStore.getState().accessToken;
       const tid = resolveTenantIdForApi();
-      if (!user || !tid) {
+      const userId = resolveClientScheduleUserId(user?.id, accessToken);
+      if (!user || !tid || !userId) {
         return;
       }
       queryClient.invalidateQueries({
-        queryKey: MESSAGE_QUERY_KEYS.messagesList(user.role, user.id, variables.partnerId, tid),
+        queryKey: MESSAGE_QUERY_KEYS.messagesList(user.role, userId, variables.partnerId, tid),
       });
       queryClient.invalidateQueries({
         queryKey: MESSAGE_QUERY_KEYS.conversations(),
@@ -425,8 +430,7 @@ export function useSendMessage() {
 
 export function useUnreadMessageCount() {
   const user = useAuthStore((s) => s.user);
-  const { ready, tenantId } = useApiQueryReady();
-  const userId = user?.id;
+  const { ready, tenantId, userId } = useApiQueryReady();
   const userType = user?.role ? roleToSenderType(toClientConsultantMessagingRole(user.role)) : '';
 
   return useQuery<{ count: number }>({
@@ -439,7 +443,7 @@ export function useUnreadMessageCount() {
         return { count: 0 };
       }
     },
-    enabled: ready && !!userType,
+    enabled: ready && !!userType && !!userId,
     staleTime: 1000 * 30,
     refetchInterval: 1000 * 60,
     retry: false,
@@ -448,16 +452,21 @@ export function useUnreadMessageCount() {
 
 function invalidateMessageCaches(queryClient: QueryClient): void {
   const user = useAuthStore.getState().user;
+  const accessToken = useAuthStore.getState().accessToken;
   const tid = resolveTenantIdForApi();
+  const userId = resolveClientScheduleUserId(user?.id, accessToken);
   queryClient.invalidateQueries({
     queryKey: MESSAGE_QUERY_KEYS.conversations(),
+    refetchType: 'all',
   });
   queryClient.invalidateQueries({
     queryKey: MESSAGE_QUERY_KEYS.messages(),
+    refetchType: 'all',
   });
-  if (user?.id != null) {
+  if (userId != null && userId > 0) {
     queryClient.invalidateQueries({
-      queryKey: [...MESSAGE_QUERY_KEYS.unreadCount(user.id), tid],
+      queryKey: [...MESSAGE_QUERY_KEYS.unreadCount(userId), tid],
+      refetchType: 'all',
     });
   }
 }

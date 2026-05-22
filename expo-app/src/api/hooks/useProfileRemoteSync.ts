@@ -7,10 +7,12 @@
 import { useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { apiGet } from '../client';
-import { PROFILE_API } from '../endpoints';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { toClientConsultantMessagingRole } from '@/utils/adminRole';
-import { extractProfileImageUrlFromPutResponse } from './useProfileImageUpload';
+import {
+  extractProfileImageUrlFromPutResponse,
+  resolveProfileGetEndpoint,
+  resolveProfileImageExtractRole,
+} from '@/utils/profileImagePayload';
 
 export function useProfileRemoteSync() {
   const user = useAuthStore((s) => s.user);
@@ -24,17 +26,14 @@ export function useProfileRemoteSync() {
       let cancelled = false;
       void (async () => {
         try {
-          const shellRole = toClientConsultantMessagingRole(user.role);
-          const endpoint =
-            shellRole === 'client'
-              ? PROFILE_API.CLIENT_PROFILE
-              : PROFILE_API.userProfile(user.id);
+          const extractRole = resolveProfileImageExtractRole(user.role);
+          const endpoint = resolveProfileGetEndpoint(user.role, user.id);
           const raw = await apiGet<unknown>(endpoint);
           if (cancelled) {
             return;
           }
-          const url = extractProfileImageUrlFromPutResponse(shellRole, raw);
-          if (url) {
+          const url = extractProfileImageUrlFromPutResponse(extractRole, raw);
+          if (url && url !== user.profileImageUrl) {
             updateUser({ profileImageUrl: url });
           }
         } catch {
@@ -44,6 +43,6 @@ export function useProfileRemoteSync() {
       return () => {
         cancelled = true;
       };
-    }, [user?.id, user?.role, updateUser]),
+    }, [user?.id, user?.role, user?.profileImageUrl, updateUser]),
   );
 }

@@ -45,8 +45,8 @@ export function useAdminMobileDashboard(): AdminMobileDashboardSnapshot {
       unreadNotificationCount: unreadQuery.data?.count ?? 0,
       todayScheduleCount: todaySchedulesRaw.length,
       todaySchedules: sliceTodaySchedulePreview(todaySchedulesRaw),
-      notificationsLoading: unreadQuery.isPending && unreadQuery.isFetching,
-      schedulesLoading: schedulesQuery.isPending && schedulesQuery.isFetching,
+      notificationsLoading: unreadQuery.isLoading,
+      schedulesLoading: schedulesQuery.isLoading,
       schedulesEnabled: schedulesQuery.isFetched || schedulesQuery.isFetching,
       refetchAll,
     };
@@ -55,12 +55,10 @@ export function useAdminMobileDashboard(): AdminMobileDashboardSnapshot {
     user?.name,
     user?.nickname,
     unreadQuery.data?.count,
-    unreadQuery.isPending,
-    unreadQuery.isFetching,
+    unreadQuery.isLoading,
     schedulesQuery.data,
-    schedulesQuery.isPending,
+    schedulesQuery.isLoading,
     schedulesQuery.isFetched,
-    schedulesQuery.isFetching,
     refetchAll,
   ]);
 }

@@ -444,8 +444,10 @@ export function useUnreadMessageCount() {
       }
     },
     enabled: ready && !!userType && !!userId,
+    placeholderData: { count: 0 },
     staleTime: 1000 * 30,
     refetchInterval: 1000 * 60,
+    refetchOnWindowFocus: false,
     retry: false,
   });
 }

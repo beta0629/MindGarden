@@ -86,8 +86,7 @@ export default function ConsultantDashboard() {
   );
 
   const isDashboardKpiLoading = dashboard.isLoading;
-  const isUnreadKpiLoading =
-    unreadMessageQuery.isPending && unreadMessageQuery.isFetching;
+  const isUnreadKpiLoading = unreadMessageQuery.isLoading;
   const isKpiLoading = isDashboardKpiLoading || isUnreadKpiLoading;
 
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);

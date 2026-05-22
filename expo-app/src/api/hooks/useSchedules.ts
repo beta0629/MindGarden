@@ -306,10 +306,18 @@ export interface ConsultantDashboardData {
   weeklyCount: number;
 }
 
+const EMPTY_CONSULTANT_DASHBOARD: ConsultantDashboardData = {
+  todaySchedules: [],
+  pendingRecordCount: 0,
+  todayCount: 0,
+  weeklyCount: 0,
+};
+
 export interface ConsultantMobileDashboardSnapshot {
   todaySchedules: Schedule[];
   todayCount: number;
   pendingRecordCount: number;
+  isFetched: boolean;
   isLoading: boolean;
   isFetching: boolean;
   refetchAll: () => Promise<unknown>;
@@ -332,6 +340,7 @@ export function useConsultantDashboard(consultantId: string | number | undefined
       };
     },
     enabled: ready && !!consultantId,
+    placeholderData: EMPTY_CONSULTANT_DASHBOARD,
     staleTime: 1000 * 60 * 2,
   });
 }
@@ -353,7 +362,8 @@ export function useConsultantMobileDashboard(
       todaySchedules: dashboardQuery.data?.todaySchedules ?? [],
       todayCount: dashboardQuery.data?.todayCount ?? 0,
       pendingRecordCount: dashboardQuery.data?.pendingRecordCount ?? 0,
-      isLoading: dashboardQuery.isLoading,
+      isFetched: dashboardQuery.isFetched,
+      isLoading: dashboardQuery.isLoading && !dashboardQuery.isFetched,
       isFetching: dashboardQuery.isFetching,
       refetchAll,
     }),
@@ -361,6 +371,7 @@ export function useConsultantMobileDashboard(
       dashboardQuery.data?.todaySchedules,
       dashboardQuery.data?.todayCount,
       dashboardQuery.data?.pendingRecordCount,
+      dashboardQuery.isFetched,
       dashboardQuery.isLoading,
       dashboardQuery.isFetching,
       refetchAll,

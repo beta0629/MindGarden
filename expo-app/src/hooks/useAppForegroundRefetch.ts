@@ -23,7 +23,7 @@ function invalidateMessageUnreadOnForeground(queryClient: QueryClient): void {
   if (userId != null && userId > 0 && tid) {
     void queryClient.invalidateQueries({
       queryKey: [...MESSAGE_QUERY_KEYS.unreadCount(userId), tid],
-      refetchType: 'all',
+      refetchType: 'active',
     });
   }
 }

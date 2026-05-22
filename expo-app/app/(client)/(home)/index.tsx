@@ -10,7 +10,7 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -59,18 +59,21 @@ export default function ClientHome() {
   const isUpcomingLoading = upcomingQuery.isLoading;
   const isKpiLoading = dashboardQuery.isLoading;
 
-  const onRefresh = useCallback(() => {
-    dashboardQuery.refetch();
-    upcomingQuery.refetch();
-    tipQuery.refetch();
-    unreadQuery.refetch();
-  }, [dashboardQuery, upcomingQuery, tipQuery, unreadQuery]);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
-  const isRefreshing =
-    dashboardQuery.isFetching ||
-    upcomingQuery.isFetching ||
-    tipQuery.isFetching ||
-    unreadQuery.isFetching;
+  const onRefresh = useCallback(async () => {
+    setIsManualRefreshing(true);
+    try {
+      await Promise.all([
+        dashboardQuery.refetch(),
+        upcomingQuery.refetch(),
+        tipQuery.refetch(),
+        unreadQuery.refetch(),
+      ]);
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  }, [dashboardQuery, upcomingQuery, tipQuery, unreadQuery]);
 
   const today = format(new Date(), 'M월 d일 (EEEE)', { locale: ko });
   const upcoming = upcomingQuery.data;
@@ -104,7 +107,7 @@ export default function ClientHome() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={isRefreshing}
+            refreshing={isManualRefreshing}
             onRefresh={onRefresh}
             tintColor={theme.colors.primary}
           />

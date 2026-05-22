@@ -3,7 +3,7 @@
 .mg-v2-homepage {
   width: 100vw;
   min-height: 100vh;
-  background-color: var(--mg-color-background-base, var(--mg-color-background-main));
+  background-color: var(--mg-color-background-main);
   font-family: var(--mg-font-family-base, 'Noto Sans KR', sans-serif);
   overflow-x: hidden;
 }
@@ -439,7 +439,7 @@
 }
 
 .mg-v2-homepage-footer {
-  background-color: var(--mg-color-background-base, var(--mg-color-background-main));
+  background-color: var(--mg-color-background-main);
   padding: var(--mg-spacing-2xl, 32px) var(--mg-spacing-xl, 24px);
   display: flex;
   flex-direction: column;
@@ -570,7 +570,7 @@
 }
 
 .hamburger-menu-item:hover, .profile-menu-item:hover {
-  background-color: var(--mg-color-background-base, var(--mg-color-background-main));
+  background-color: var(--mg-color-background-main);
 }
 
 .profile-menu-user {

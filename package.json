@@ -16,7 +16,9 @@
     "widget:lint": "cd frontend && npx eslint src/components/dashboard/widgets --config ../.eslintrc.widget-standards.js",
     "hooks:install": "chmod +x .githooks/pre-commit-widget-standards && git config core.hooksPath .githooks",
     "check:api": "node scripts/check-api-standardization.js",
-    "check:standards": "npm run check:api"
+    "check:standards": "npm run check:api",
+    "i18n:extract": "node scripts/i18n/extract-hangul-strings.js",
+    "i18n:extract:report": "node scripts/i18n/extract-hangul-strings.js --report-only"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

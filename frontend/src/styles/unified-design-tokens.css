@@ -1405,8 +1405,7 @@
 :root {
   /* surface 메인 — 카드/모달/리스트 아이템/칩 배경 (#F5F3EF, --mg-consultant-surface L1108 톤 통일) */
   --mg-color-surface-main: #F5F3EF;
-  /* 페이지 기본 배경 — 전체 페이지/메인 컨테이너 (#FAF9F7, --mg-color-background-main 동일 톤) */
-  --mg-color-background-base: #FAF9F7;
+  /* --mg-color-background-base — D6 §9.1 C5 결정으로 폐기, --mg-color-background-main 으로 통합 (값 동일 #FAF9F7) */
   /* 한 단계 음영 — LNB(사이드바)/푸터/비활성 탭 (#F2EDE8) */
   --mg-color-background-muted: #F2EDE8;
   /* 보조/분할 영역 — Split layout 보조 패널/우측 사이드바 (#EBE6E0) */
@@ -1418,14 +1417,69 @@
 :root[data-theme="dark"] {
   /* 다크 surface 메인 — 카드/모달/리스트 아이템/칩 배경 (#262626, --mg-dark-bg-800 톤 인접) */
   --mg-color-surface-main: #262626;
-  /* 다크 페이지 기본 배경 — 전체 페이지/메인 컨테이너 (#1A1A1A, --mg-dark-bg-900 동일) */
-  --mg-color-background-base: #1A1A1A;
   /* 다크 한 단계 음영 — LNB/푸터/비활성 탭 (#2C2C2C) */
   --mg-color-background-muted: #2C2C2C;
   /* 다크 보조/분할 영역 — Split layout 보조 패널 (#232323) */
   --mg-color-background-secondary: #232323;
   /* 다크 하위 그룹 음영 — 카드 내 중첩 블록/테이블 헤더 (#333333) */
   --mg-color-background-sub: #333333;
+}
+
+/* ========================================
+   2026 Q2 D6 §3 신설 7 토큰 (디자이너 P1 컨펌, 2026-05-22)
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D6.md §3·§9.1,
+        docs/project-management/2026-05-22/D6_P1_DESIGN_HANDOFF.md §2.
+   배경: D6 §2 잔존 hex Top 20 인벤토리에서 식별된 신설 후보 8종 중
+        C1 Pink accent (#ff6b9d) 는 §9.1 컨펌 결과 사용처 비한정
+        (wellness/dashboard/admin 산재) 으로 폐기·Tailwind 흡수 결정 →
+        본 블록에서 제외. 나머지 7종은 P1 §2 hex 결정표 그대로 채택.
+   채택 항목 (7건):
+     - brand-olive-light : 마케팅 배너 보조 (D5 §3 brand-olive `#6b7c32`
+                          본체와 명도/채도 차로 시각 위계 분리)
+     - naver-green       : NAVER OAuth 버튼 한정 (외부 브랜드 가이드 준수,
+                          다크 동일 hex — 라이트·다크 모두 `#03c75a`)
+     - success-100/800   : success light surface + dark text
+                          (텍스트 on `#d1fae5` 6.6:1 / on `#064e3b` 6.3:1 PASS)
+     - error-100         : error light surface (표면용, 텍스트 아님)
+     - info-100          : info light surface (표면용, 텍스트 아님)
+     - warning-dark      : warning dark text (D4 warning-800 톤과 통합,
+                          on warning-bg 4.7:1 PASS / 다크 6.6:1 PASS)
+   §9.1 C4 결정: D6 P2-a 는 SSOT 정의 추가만 수행. 사용처 codemod 흡수
+        (convert-hardcoded-colors.js 매핑 추가 및 hex → token 치환) 는 D7 이월.
+   ======================================== */
+
+:root {
+  /* 브랜드 olive 라이트 — #9caf88 (마케팅 배너/넓은 보조 표면, brand-olive 본체 #6b7c32 보다 채도 낮춤) */
+  --mg-color-brand-olive-light: #9caf88;
+  /* NAVER OAuth 브랜드 그린 — #03c75a (외부 브랜드 가이드, 라이트·다크 동일) */
+  --mg-color-naver-green: #03c75a;
+  /* success light surface — #d1fae5 (Tailwind emerald-100 톤, success-800 텍스트 6.6:1 PASS) */
+  --mg-color-success-100: #d1fae5;
+  /* success dark text — #065f46 (Tailwind emerald-800 톤, on success-100 6.6:1 PASS) */
+  --mg-color-success-800: #065f46;
+  /* error light surface — #fecaca (Tailwind red-200 톤, 표면용) */
+  --mg-color-error-100: #fecaca;
+  /* info light surface — #dbeafe (Tailwind blue-100 톤, 표면용) */
+  --mg-color-info-100: #dbeafe;
+  /* warning dark text — #856404 (D4 warning-800 톤 통합, on warning-bg #fef3c7 4.7:1 PASS) */
+  --mg-color-warning-dark: #856404;
+}
+
+:root[data-theme="dark"] {
+  /* 다크 브랜드 olive 라이트 — #b5c5a4 (다크 배경 위 가독성 한 단계 밝힘) */
+  --mg-color-brand-olive-light: #b5c5a4;
+  /* 다크 NAVER OAuth — #03c75a (외부 브랜드 가이드 준수, 라이트와 동일 hex) */
+  --mg-color-naver-green: #03c75a;
+  /* 다크 success light surface — #064e3b (emerald-900 톤, 다크 표면 대비 반전) */
+  --mg-color-success-100: #064e3b;
+  /* 다크 success dark text — #6ee7b7 (emerald-300 톤, on success-100 다크 6.3:1 PASS) */
+  --mg-color-success-800: #6ee7b7;
+  /* 다크 error light surface — #7f1d1d (red-900 톤, 다크 표면 대비 반전) */
+  --mg-color-error-100: #7f1d1d;
+  /* 다크 info light surface — #1e3a8a (blue-900 톤, 다크 표면 대비 반전) */
+  --mg-color-info-100: #1e3a8a;
+  /* 다크 warning dark text — #fde68a (amber-200 톤, on warning-bg 다크 6.6:1 PASS) */
+  --mg-color-warning-dark: #fde68a;
 }
 
 /* ===== 테넌트별 브랜딩 오버라이드 ===== */

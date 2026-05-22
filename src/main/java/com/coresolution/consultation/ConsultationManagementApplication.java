@@ -18,6 +18,7 @@ import com.coresolution.consultation.config.BatchNotificationProperties;
 import com.coresolution.consultation.config.ExpoPushProperties;
 import com.coresolution.consultation.config.MobileAppVersionProperties;
 import com.coresolution.consultation.config.MindgardenSecurityProperties;
+import com.coresolution.consultation.config.NotificationRetentionProperties;
 import com.coresolution.core.config.KiccEasypayProperties;
 
 /**
@@ -58,7 +59,8 @@ import com.coresolution.core.config.KiccEasypayProperties;
         ExpoPushProperties.class,
         MobileAppVersionProperties.class,
         AdminTestNotificationProperties.class,
-        BatchNotificationProperties.class
+        BatchNotificationProperties.class,
+        NotificationRetentionProperties.class
 })
 public class ConsultationManagementApplication {
 

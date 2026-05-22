@@ -7,9 +7,11 @@ import com.coresolution.consultation.entity.AdminTestNotificationLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 어드민 테스트 발송 감사로그 Repository.
@@ -119,4 +121,35 @@ public interface AdminTestNotificationLogRepository
         @Param("channel") TestNotificationChannel channel,
         @Param("success") Boolean success,
         Pageable pageable);
+
+    /**
+     * 보관기간 초과 row 일괄 삭제 (시스템 잡 전용 — tenant 무관 전역).
+     *
+     * <p>네이티브 SQL {@code LIMIT} 으로 1회 호출당 삭제량을 제한해 락 시간을 짧게 유지한다.
+     * 호출부({@link com.coresolution.consultation.scheduler.NotificationLogRetentionScheduler})
+     * 가 누적 카운트로 N회 반복 호출하여 전량 처리한다.
+     *
+     * @param cutoff    삭제 기준 시각(이 시각 이전 row 삭제)
+     * @param batchSize 1회 호출당 최대 삭제 row 수
+     * @return 실제 삭제된 row 수
+     */
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM admin_test_notification_logs "
+            + "WHERE created_at < :cutoff LIMIT :batchSize",
+            nativeQuery = true)
+    int deleteOlderThan(
+        @Param("cutoff") LocalDateTime cutoff,
+        @Param("batchSize") int batchSize);
+
+    /**
+     * 드라이런 모드용 — 보관기간 초과 row 개수 카운트 (삭제 없음).
+     *
+     * @param cutoff 삭제 기준 시각(이 시각 이전 row 카운트)
+     * @return 대상 row 수
+     */
+    @Query(value = "SELECT COUNT(*) FROM admin_test_notification_logs "
+            + "WHERE created_at < :cutoff",
+            nativeQuery = true)
+    long countOlderThan(@Param("cutoff") LocalDateTime cutoff);
 }

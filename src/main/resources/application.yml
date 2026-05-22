@@ -504,6 +504,21 @@ admin:
     history-page-size-max: ${ADMIN_TEST_NOTIFICATION_HISTORY_PAGE_SIZE_MAX:100}
 
 # =====================================================
+# 알림 로그 보관기간(retention) 스케줄러 (2026-05-23)
+# - admin_test_notification_logs / notification_batch_send_log 90일 초과 row 일괄 삭제
+# - NotificationLogRetentionScheduler @Scheduled cron 외부화
+# - dry-run=true 시 카운트만 로깅(실삭제 0), 운영 반영 직후 검증용
+# =====================================================
+app:
+  notification:
+    retention:
+      enabled: ${APP_NOTIFICATION_RETENTION_ENABLED:true}
+      retention-days: ${APP_NOTIFICATION_RETENTION_DAYS:90}
+      batch-size: ${APP_NOTIFICATION_RETENTION_BATCH_SIZE:5000}
+      cron: ${APP_NOTIFICATION_RETENTION_CRON:0 30 3 * * *}
+      dry-run: ${APP_NOTIFICATION_RETENTION_DRY_RUN:false}
+
+# =====================================================
 # 스케줄러 설정 (배치 작업 표준화)
 # =====================================================
 scheduler:

@@ -171,7 +171,7 @@
 }
 
 .login-button:hover:not(:disabled) {
-    background: #1d4ed8;
+    background: var(--mg-color-info-dark);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
@@ -237,7 +237,7 @@
 }
 
 .link-button:hover {
-    color: #1d4ed8;
+    color: var(--mg-color-info-dark);
 }
 
 /* 반응형 디자인 */
@@ -455,7 +455,7 @@ select:focus {
 }
 
 .retry-button:hover {
-    background: #1d4ed8;
+    background: var(--mg-color-info-dark);
     transform: translateY(-1px);
 }
 
@@ -546,7 +546,7 @@ select:focus {
     }
     
     .headquarters-info .branch-info {
-        background: linear-gradient(135deg, #1e3a8a 0%, var(--mg-color-info-dark) 100%);
+        background: linear-gradient(135deg, var(--mg-color-info-800) 0%, var(--mg-color-info-dark) 100%);
     }
     
     .loading-spinner p {

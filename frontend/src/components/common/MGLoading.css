@@ -237,7 +237,7 @@
 
 .mg-loading-progress__text {
   font-size: 14px;
-  color: #4a5568;
+  color: var(--mg-color-text-secondary-dark);
   font-weight: 500;
 }
 

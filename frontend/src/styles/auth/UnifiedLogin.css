@@ -422,7 +422,7 @@
 
 .mg-v2-tooltip--warning {
   background-color: var(--mg-color-warning-bg);
-  color: #92400e;
+  color: var(--mg-color-warning-dark);
   border: 1px solid #fde68a;
 }
 

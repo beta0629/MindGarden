@@ -105,7 +105,7 @@
 
 .warning-signs h4 {
     margin: 0 0 12px 0;
-    color: #92400e;
+    color: var(--mg-color-warning-dark);
     font-size: 15px;
 }
 

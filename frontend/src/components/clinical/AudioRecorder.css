@@ -17,7 +17,7 @@
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: #1a202c;
+    color: var(--mg-color-text-main);
 }
 
 .recording-time {
@@ -107,7 +107,7 @@
 }
 
 .btn-primary:hover {
-    background: #1d4ed8;
+    background: var(--mg-color-info-dark);
 }
 
 .btn-success {
@@ -200,7 +200,7 @@
 }
 
 .recording-tips li {
-    color: #1e3a8a;
+    color: var(--mg-color-info-800);
     font-size: 14px;
     line-height: 1.6;
 }

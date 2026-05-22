@@ -18,7 +18,7 @@
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: #1a202c;
+    color: var(--mg-color-text-main);
 }
 
 .editor-info {
@@ -54,7 +54,7 @@
 
 .completion-badge {
     background: var(--mg-color-warning-bg);
-    color: #92400e;
+    color: var(--mg-color-warning-dark);
 }
 
 .approved-badge {

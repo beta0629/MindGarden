@@ -20,14 +20,14 @@
 .counseling-about__title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #1a202c;
+  color: var(--mg-color-text-main);
   margin: 0 0 1.5rem 0;
   line-height: 1.2;
 }
 
 .counseling-about__description {
   font-size: 1.125rem;
-  color: #4a5568;
+  color: var(--mg-color-text-secondary-dark);
   line-height: 1.6;
   max-width: 48rem;
   margin: 0 auto 3rem auto;
@@ -57,13 +57,13 @@
 .counseling-about__feature h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1a202c;
+  color: var(--mg-color-text-main);
   margin: 0 0 0.5rem 0;
 }
 
 .counseling-about__feature p {
   font-size: 1rem;
-  color: #4a5568;
+  color: var(--mg-color-text-secondary-dark);
   line-height: 1.5;
   margin: 0;
 }

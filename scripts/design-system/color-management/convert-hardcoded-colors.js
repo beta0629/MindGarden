@@ -220,7 +220,25 @@ const COLOR_MAPPING = {
   '#721c24': 'var(--mg-color-error-dark)',
   '#721C24': 'var(--mg-color-error-dark)',
   '#d4edda': 'var(--mg-color-success-100)',
-  '#D4EDDA': 'var(--mg-color-success-100)'
+  '#D4EDDA': 'var(--mg-color-success-100)',
+
+  // §4.1 C4 컨펌 (2026-05-22) — T-Top 50 신설 1종 + 통합 4건
+  // PR-B 책무 (D7_2_P1_DESIGN_HANDOFF §4·§5.3):
+  //   - 신설 : info-800 (#1e3a8a 라이트 / #bfdbfe 다크, unified-design-tokens.css §D7-2 블록 정착)
+  //   - 통합 : text-main (#2C2C2C·L1124, ΔRGB 18/12/0) / text-secondary-dark
+  //           (#374151 라이트 L1230 · #d1d5db 다크 L1236, ΔRGB 19/20/23) /
+  //           warning-dark (#856404 라이트 L1465 · #fde68a 다크 L1482, ΔRGB 13/36/10) /
+  //           info-dark (#1e40af 라이트 L1374 · #bae6fd 다크 L1381, ΔRGB 1/14/41 — B채널 41 MEDIUM)
+  '#1e3a8a': 'var(--mg-color-info-800)',
+  '#1E3A8A': 'var(--mg-color-info-800)',
+  '#1a202c': 'var(--mg-color-text-main)',
+  '#1A202C': 'var(--mg-color-text-main)',
+  '#4a5568': 'var(--mg-color-text-secondary-dark)',
+  '#4A5568': 'var(--mg-color-text-secondary-dark)',
+  '#92400e': 'var(--mg-color-warning-dark)',
+  '#92400E': 'var(--mg-color-warning-dark)',
+  '#1d4ed8': 'var(--mg-color-info-dark)',
+  '#1D4ED8': 'var(--mg-color-info-dark)'
 };
 
 // RGB/RGBA 색상 매핑

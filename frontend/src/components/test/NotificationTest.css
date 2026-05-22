@@ -255,7 +255,7 @@
     
     .notification-test-section {
         background: var(--mg-color-text-secondary-dark);
-        border-color: #4a5568;
+        border-color: var(--mg-color-text-secondary-dark);
     }
     
     .notification-test-header h1,
@@ -272,7 +272,7 @@
     .mg-form__group input,
     .mg-form__group select {
         background: var(--mg-color-text-main);
-        border-color: #4a5568;
+        border-color: var(--mg-color-text-secondary-dark);
         color: var(--toast-dark-color);
     }
     

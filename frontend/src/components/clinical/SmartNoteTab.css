@@ -21,7 +21,7 @@
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: #1a202c;
+    color: var(--mg-color-text-main);
 }
 
 .status-badge {
@@ -33,7 +33,7 @@
 
 .status-pending {
     background: var(--mg-color-warning-bg);
-    color: #92400e;
+    color: var(--mg-color-warning-dark);
 }
 
 .status-processing {
@@ -214,7 +214,7 @@
 .guide-message ol {
     margin: 0;
     padding-left: 24px;
-    color: #1e3a8a;
+    color: var(--mg-color-info-800);
 }
 
 .guide-message li {

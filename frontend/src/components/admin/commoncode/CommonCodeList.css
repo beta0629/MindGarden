@@ -144,7 +144,7 @@
 }
 
 .code-group-badge {
-    background: linear-gradient(135deg, var(--mg-primary-500), #1d4ed8);
+    background: linear-gradient(135deg, var(--mg-primary-500), var(--mg-color-info-dark));
     color: white;
     padding: 6px 12px;
     border-radius: 8px;

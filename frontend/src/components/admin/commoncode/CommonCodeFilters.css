@@ -122,12 +122,12 @@
 }
 
 .mg-btn--primary {
-    background: linear-gradient(135deg, var(--mg-primary-500), #1d4ed8);
+    background: linear-gradient(135deg, var(--mg-primary-500), var(--mg-color-info-dark));
     color: white;
 }
 
 .mg-btn--primary:hover {
-    background: linear-gradient(135deg, #1d4ed8, var(--mg-color-info-dark));
+    background: linear-gradient(135deg, var(--mg-color-info-dark), var(--mg-color-info-dark));
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }

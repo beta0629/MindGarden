@@ -37,7 +37,7 @@
     margin: 0;
     font-size: 22px;
     font-weight: 700;
-    color: #1a202c;
+    color: var(--mg-color-text-main);
 }
 
 .header-actions {
@@ -71,7 +71,7 @@
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: #1d4ed8;
+    background: var(--mg-color-info-dark);
 }
 
 .btn-secondary {
@@ -249,7 +249,7 @@
 .report-disclaimer strong {
     display: block;
     margin-bottom: 8px;
-    color: #92400e;
+    color: var(--mg-color-warning-dark);
     font-size: 15px;
 }
 

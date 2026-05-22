@@ -15,7 +15,7 @@
 }
 
 .mg-layout--dark {
-  background: #1a202c;
+  background: var(--mg-color-text-main);
   color: var(--color-bg-surface);
 }
 

@@ -157,7 +157,7 @@
   background: var(--mg-color-warning-bg);
   border: 1px solid #fcd34d;
   border-radius: 6px;
-  color: #92400e;
+  color: var(--mg-color-warning-dark);
   font-size: 0.875rem;
 }
 
@@ -204,7 +204,7 @@
 
 .subscription-management__status--pending_activation {
   background: var(--mg-color-warning-bg);
-  color: #92400e;
+  color: var(--mg-color-warning-dark);
 }
 
 .subscription-management__status--cancelled {

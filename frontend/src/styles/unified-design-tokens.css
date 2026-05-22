@@ -1482,6 +1482,31 @@
   --mg-color-warning-dark: #fde68a;
 }
 
+/* ========================================
+   2026 Q2 D7-2 §4.1 C4 신설 1 토큰 (디자이너 P1 컨펌, 2026-05-22)
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D7_2.md §4.1 C4,
+        docs/project-management/2026-05-22/D7_2_P1_DESIGN_HANDOFF.md §4.
+   배경: T-Top 50 잔존 hex `#1e3a8a` (Tailwind blue-900, 5건) 흡수용 신설.
+        D6 §4 권고 잔존 다크 매트릭스 슬롯 일부 해소 (warning-100/warning-800/
+        success-50 은 D8 라운드 이월). PR-B (T-Top 50 codemod 매핑 묶음) 분리 진행.
+   채택 항목 (1건):
+     - info-800 : info dark text (Tailwind blue-900 톤, info-100 라이트 표면 위
+                  텍스트/보더 강조용). 다크 cascade 는 blue-200 톤으로 대비 반전.
+   WCAG AA 대비비:
+     - Light: #1e3a8a on #dbeafe (info-100) → 8.9:1 PASS
+     - Dark : #bfdbfe on #1e3a8a (info-100 다크) → 7.9:1 PASS
+   ======================================== */
+
+:root {
+  /* info dark text — #1e3a8a (Tailwind blue-900, on info-100 라이트 8.9:1 PASS) */
+  --mg-color-info-800: #1e3a8a;
+}
+
+:root[data-theme="dark"] {
+  /* 다크 info dark text — #bfdbfe (Tailwind blue-200, on info-100 다크 7.9:1 PASS) */
+  --mg-color-info-800: #bfdbfe;
+}
+
 /* ===== 테넌트별 브랜딩 오버라이드 ===== */
 /* 특정 테넌트에 대한 브랜딩 커스터마이징 */
 

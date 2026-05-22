@@ -202,7 +202,7 @@
 
 .severity-medium {
     background: var(--mg-color-warning-bg);
-    color: #92400e;
+    color: var(--mg-color-warning-dark);
 }
 
 .severity-low {
@@ -260,7 +260,7 @@
 .ai-analysis p {
     margin: 0;
     font-size: 13px;
-    color: #1e3a8a;
+    color: var(--mg-color-info-800);
     line-height: 1.5;
 }
 

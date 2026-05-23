@@ -1,12 +1,15 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { CONSTANTS } from '../constants/magicNumbers';
 import { useSession } from './SessionContext';
 import { apiGet, apiPost } from '../utils/ajax';
+import StandardizedApi from '../utils/standardizedApi';
 import { getConsultationMessagesListPath } from '../utils/consultationMessagesApi';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SYSTEM_NOTIFICATIONS_READ_ALL = '/api/v1/system-notifications/read-all';
+// 핫픽스 2026-05-23: 메시지 일괄 markAllAsRead 엔드포인트 (GNB 드롭다운 N건 한계 해소)
+const API_CONSULTATION_MESSAGES_MARK_ALL_READ = '/api/v1/consultation-messages/mark-all-read';
 
 
 const NotificationContext = createContext();
@@ -259,6 +262,18 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
+  // 메시지 일괄 읽음 처리 (수신자 본인 미읽음 전체)
+  // 핫픽스 2026-05-23: 기존 dropdown 의 GET /{id}/read 루프(상위 N건 한계) → 단일 POST 호출.
+  const markAllMessagesAsRead = useCallback(async() => {
+    try {
+      const res = await StandardizedApi.post(API_CONSULTATION_MESSAGES_MARK_ALL_READ);
+      return res?.data ?? res;
+    } catch (err) {
+      console.error('메시지 일괄 읽음 처리 실패:', err);
+      throw err;
+    }
+  }, []);
+
   // 알림 새로고침
   const refreshNotifications = () => {
     // 로그인하지 않으면 스킵
@@ -363,6 +378,7 @@ export const NotificationProvider = ({ children }) => {
     markMessageAsRead,
     markSystemNotificationAsRead,
     markAllSystemNotificationsAsRead,
+    markAllMessagesAsRead,
     refreshNotifications
   };
 

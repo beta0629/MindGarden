@@ -43,7 +43,8 @@ const NotificationDropdown = () => {
     loadUnreadCount,
     markSystemNotificationAsRead,
     markAllSystemNotificationsAsRead,
-    markMessageAsRead
+    markMessageAsRead,
+    markAllMessagesAsRead
   } = useNotification();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -143,13 +144,12 @@ const NotificationDropdown = () => {
       if ((unreadSystemCount || 0) > 0) {
         await markAllSystemNotificationsAsRead();
       }
-      const unreadMessages = messageList.filter((m) => !m.isRead);
-      for (const m of unreadMessages) {
-        try {
-          await markMessageAsRead(m.id);
-        } catch {
-          // 개별 실패 시 무시
-        }
+      // 핫픽스 2026-05-23: 기존 messageList(상위 LIST_SIZE 건) for-loop → 단일 일괄 API 호출.
+      try {
+        await markAllMessagesAsRead();
+      } catch (msgErr) {
+        console.error('메시지 일괄 읽음 처리 실패:', msgErr);
+        // 사용자 토스트는 P3 범위, 본 핫픽스에서는 console.error 만 유지
       }
       refreshNotifications();
       await loadUnreadCount();

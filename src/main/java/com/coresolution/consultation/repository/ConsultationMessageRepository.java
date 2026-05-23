@@ -4,6 +4,7 @@ import java.util.List;
 import com.coresolution.consultation.entity.ConsultationMessage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -117,6 +118,26 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
     @Query("SELECT COUNT(m) FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.receiverId = :receiverId " +
            "AND m.isRead = false AND m.isDeleted = false")
     Long countByTenantIdAndReceiverIdAndIsReadFalse(@Param("tenantId") String tenantId, @Param("receiverId") Long receiverId);
+
+    /**
+     * 수신자 기준 모든 미읽음 메시지 일괄 읽음 처리 (tenantId 필수, isDeleted=false 만 대상).
+     * GNB "모두 읽음" 핫픽스: 기존 개별 GET /{messageId}/read 루프 → 단일 UPDATE 로 치환.
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @param receiverId 수신자 사용자 ID
+     * @param readAt 읽음 처리 시각
+     * @return UPDATE 된 행 수
+     * @author MindGarden
+     * @since 2026-05-23
+     */
+    @Modifying
+    @Query("UPDATE ConsultationMessage m SET m.isRead = true, m.readAt = :readAt " +
+           "WHERE m.tenantId = :tenantId AND m.receiverId = :receiverId " +
+           "AND m.isRead = false AND m.isDeleted = false")
+    int markAllAsReadByTenantIdAndReceiverId(
+        @Param("tenantId") String tenantId,
+        @Param("receiverId") Long receiverId,
+        @Param("readAt") java.time.LocalDateTime readAt);
     
     /**
      * 상담사-내담자 간 대화 목록 조회 (tenantId 필수)

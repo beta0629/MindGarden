@@ -64,6 +64,17 @@ public interface ConsultationMessageService extends BaseService<ConsultationMess
      * 메시지 읽음 처리
      */
     ConsultationMessage markAsRead(Long messageId);
+
+    /**
+     * 수신자 본인 미읽음 메시지를 일괄 읽음 처리합니다.
+     * GNB 드롭다운 "모두 읽음" 핫픽스: tenantId 컨텍스트와 receiverId 기준으로 단일 UPDATE.
+     *
+     * @param receiverUserId 수신자 사용자 ID (현재 로그인 사용자 ID)
+     * @return UPDATE 된 메시지 건수
+     * @author MindGarden
+     * @since 2026-05-23
+     */
+    int markAllAsRead(Long receiverUserId);
     
     /**
      * 메시지 답장

@@ -255,6 +255,28 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         return savedMessage;
     }
 
+    /**
+     * 수신자 본인 미읽음 메시지를 일괄 읽음 처리합니다.
+     * 기존 GNB "모두 읽음" 은 dropdown 의 상위 LIST_SIZE 건만 GET /{id}/read 로 처리하여
+     * 운영 환경에서 273건 중 10건만 감소하는 결함이 있었음 (debug report 2026-05-23 참조).
+     * 본 메서드는 tenantId 컨텍스트 + receiverId 기준으로 단일 UPDATE 를 수행합니다.
+     *
+     * @param receiverUserId 수신자 사용자 ID
+     * @return UPDATE 된 메시지 건수
+     * @author MindGarden
+     * @since 2026-05-23
+     */
+    @Override
+    @Transactional
+    public int markAllAsRead(Long receiverUserId) {
+        log.info("📨 일괄 읽음 처리 시작 - receiverId: {}", receiverUserId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        int updated = consultationMessageRepository.markAllAsReadByTenantIdAndReceiverId(
+            tenantId, receiverUserId, java.time.LocalDateTime.now());
+        log.info("✅ 일괄 읽음 처리 완료 - receiverId: {}, 처리 건수: {}", receiverUserId, updated);
+        return updated;
+    }
+
     @Override
     public void deleteMessage(Long messageId) {
         log.info("📨 메시지 삭제 - 메시지 ID: {}", messageId);

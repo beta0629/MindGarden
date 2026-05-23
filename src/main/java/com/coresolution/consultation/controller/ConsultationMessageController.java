@@ -504,6 +504,40 @@ public class ConsultationMessageController extends BaseApiController {
     }
 
     /**
+     * 모든 미읽음 메시지 일괄 읽음 처리 — 현재 사용자(receiverId) 기준.
+     * GNB 드롭다운 "모두 읽음" 핫픽스: 기존 상위 LIST_SIZE 건 한계 해소.
+     * POST /api/v1/consultation-messages/mark-all-read
+     *
+     * @param session 현재 세션
+     * @return updatedCount 를 포함한 ApiResponse
+     * @author MindGarden
+     * @since 2026-05-23
+     */
+    @PostMapping("/mark-all-read")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> markAllAsRead(HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("로그인이 필요합니다."));
+        }
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("테넌트 정보가 없습니다."));
+        }
+        log.info("📨 일괄 읽음 처리 요청 - userId: {}, tenantId: {}", currentUser.getId(), tenantId);
+        try {
+            TenantContextHolder.setTenantId(tenantId.trim());
+            int updated = consultationMessageService.markAllAsRead(currentUser.getId());
+            Map<String, Object> data = new HashMap<>();
+            data.put("updatedCount", updated);
+            return success("모든 메시지가 읽음 처리되었습니다.", data);
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
+    /**
      * 메시지 전송
      * POST /api/consultation-messages
      */

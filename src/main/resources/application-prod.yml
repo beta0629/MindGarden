@@ -286,6 +286,6 @@ kakao:
     api-key: ${KAKAO_ALIMTALK_API_KEY:}  # 환경 변수에서 가져오기
     sender-key: ${KAKAO_ALIMTALK_SENDER_KEY:}  # 환경 변수에서 가져오기
     api-url: https://alimtalk-api.bizmsg.kr
-    fallback-to-sms: true  # 실패 시 SMS 대체 발송
+    # dead config 제거(2026-05-23 라운드) — @Value 바인딩 0건. SMS 폴백은 BatchNotificationDispatchServiceImpl 내부 정책으로 일원화.
     max-retry-count: 3
     timeout-seconds: 30

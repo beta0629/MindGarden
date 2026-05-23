@@ -614,7 +614,8 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
                 log.info("🔧 ALIMTALK_CONFIG 공통 코드 그룹 생성 중...");
                 
                 createCommonCode("ALIMTALK_CONFIG", "ENABLED", "활성화", null, "{\"value\":true}", 1);
-                createCommonCode("ALIMTALK_CONFIG", "FALLBACK_TO_SMS", "SMS 대체 발송", null, "{\"value\":true}", 2);
+                // dead seed 제거(2026-05-23 라운드) — ALIMTALK_CONFIG.FALLBACK_TO_SMS 사용처 0.
+                // SMS 폴백은 BatchNotificationDispatchServiceImpl 내부 정책(F1/F2)으로 일원화.
                 createCommonCode("ALIMTALK_CONFIG", "MAX_RETRY_COUNT", "최대 재시도 횟수", null, "{\"value\":3}", 3);
                 createCommonCode("ALIMTALK_CONFIG", "TIMEOUT_SECONDS", "타임아웃 시간", null, "{\"value\":30}", 4);
                 

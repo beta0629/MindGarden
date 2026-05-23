@@ -5,7 +5,9 @@ import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.SystemConfigService;
+import com.coresolution.consultation.service.ai.AiProviderResolver;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -37,9 +39,17 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/v1/admin/system-config") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 public class SystemConfigController {
-    
+
+    /** 트랙 B PR-3 (2026-05-23): AI provider 변경 가드 — 키 미등록 시 거부 메시지 */
+    private static final String AI_DEFAULT_PROVIDER_KEY = "AI_DEFAULT_PROVIDER";
+    private static final String MSG_PROVIDER_KEY_NOT_REGISTERED = "선택한 provider 의 API 키가 등록되지 않았습니다.";
+    private static final String MSG_NO_TENANT = "테넌트 정보가 없습니다.";
+
     private final SystemConfigService systemConfigService;
-    
+
+    /** 트랙 B PR-3: AI provider 키 등록 여부 가드 + 캐시 무효화에 사용 */
+    private final AiProviderResolver aiProviderResolver;
+
     /**
      * 권한 체크: BRANCH_ADMIN 이상
      */
@@ -59,6 +69,38 @@ public class SystemConfigController {
             log.error("권한 체크 중 오류 발생", e);
             return false;
         }
+    }
+
+    /**
+     * 트랙 B PR-3 (2026-05-23): AI provider 변경 가드.
+     *
+     * <p>요청된 provider 의 API 키가 현재 테넌트에 등록되어 있는지 확인하고,
+     * 미등록 시 400(BAD_REQUEST) 응답을 반환한다. tenantId 가 비어 있으면 403 을 반환한다.
+     * 통과 시 {@code TenantContextHolder} 에 tenantId 를 설정한다 (호출 측에서 finally clear 필요).
+     *
+     * @param providerId 요청된 provider id (openai|gemini|claude|replicate)
+     * @param session    HTTP 세션
+     * @return 가드 위반 시 ResponseEntity(400/403), 통과 시 null
+     */
+    private ResponseEntity<Map<String, Object>> guardAiProviderChange(String providerId, HttpSession session) {
+        User user = SessionUtils.getCurrentUser(session);
+        String tenantId = (user != null) ? user.getTenantId() : null;
+        if (tenantId == null || tenantId.isBlank()) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", MSG_NO_TENANT);
+            return ResponseEntity.status(403).body(response);
+        }
+        TenantContextHolder.setTenantId(tenantId);
+        if (!aiProviderResolver.isProviderKeyRegistered(tenantId, providerId)) {
+            log.warn("AI provider 변경 거부: tenantId={}, providerId={} — 키 미등록", tenantId, providerId);
+            TenantContextHolder.clear();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", MSG_PROVIDER_KEY_NOT_REGISTERED);
+            return ResponseEntity.badRequest().body(response);
+        }
+        return null;
     }
     
     /**
@@ -90,7 +132,10 @@ public class SystemConfigController {
     }
     
     /**
-     * 설정 값 저장
+     * 설정 값 저장.
+     *
+     * <p>트랙 B PR-3 (2026-05-23): configKey == {@code AI_DEFAULT_PROVIDER} 인 경우
+     * 키 등록 여부 가드를 통과해야 저장 가능하며, 통과 시 프로바이더 캐시를 무효화한다.
      */
     @PostMapping("/{configKey}")
     public ResponseEntity<Map<String, Object>> setConfig(
@@ -103,6 +148,8 @@ public class SystemConfigController {
             response.put("message", "접근 권한이 없습니다.");
             return ResponseEntity.status(403).body(response);
         }
+        boolean isAiProviderKey = AI_DEFAULT_PROVIDER_KEY.equals(configKey);
+        boolean tenantContextSet = false;
         try {
             String configValue = request.get("configValue");
             String description = request.get("description");
@@ -114,9 +161,21 @@ public class SystemConfigController {
                 response.put("message", "configValue는 필수입니다.");
                 return ResponseEntity.badRequest().body(response);
             }
-            
+
+            if (isAiProviderKey) {
+                ResponseEntity<Map<String, Object>> guardResponse = guardAiProviderChange(configValue, session);
+                if (guardResponse != null) {
+                    return guardResponse;
+                }
+                tenantContextSet = true;
+            }
+
             systemConfigService.setConfigValue(configKey, configValue, description, category);
-            
+
+            if (isAiProviderKey) {
+                aiProviderResolver.invalidate(TenantContextHolder.getTenantId());
+            }
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "설정이 저장되었습니다.");
@@ -127,6 +186,10 @@ public class SystemConfigController {
             response.put("success", false);
             response.put("message", "설정 저장 실패: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
+        } finally {
+            if (tenantContextSet) {
+                TenantContextHolder.clear();
+            }
         }
     }
     
@@ -211,7 +274,9 @@ public class SystemConfigController {
     }
     
     /**
-     * 기본 AI 프로바이더 저장
+     * 기본 AI 프로바이더 저장.
+     *
+     * <p>트랙 B PR-3 (2026-05-23): 키 등록 여부 가드 + 캐시 무효화.
      */
     @PostMapping("/ai-default-provider")
     public ResponseEntity<Map<String, Object>> setAiDefaultProvider(
@@ -223,15 +288,21 @@ public class SystemConfigController {
             response.put("message", "접근 권한이 없습니다.");
             return ResponseEntity.status(403).body(response);
         }
+        String providerId = request != null ? request.get("providerId") : null;
+        if (providerId == null || providerId.isBlank()) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "providerId는 필수입니다.");
+            return ResponseEntity.badRequest().body(response);
+        }
+        String trimmedProviderId = providerId.trim();
+        ResponseEntity<Map<String, Object>> guardResponse = guardAiProviderChange(trimmedProviderId, session);
+        if (guardResponse != null) {
+            return guardResponse;
+        }
         try {
-            String providerId = request.get("providerId");
-            if (providerId == null || providerId.isBlank()) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "providerId는 필수입니다.");
-                return ResponseEntity.badRequest().body(response);
-            }
-            systemConfigService.setAiDefaultProvider(providerId.trim());
+            systemConfigService.setAiDefaultProvider(trimmedProviderId);
+            aiProviderResolver.invalidate(TenantContextHolder.getTenantId());
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "기본 AI 프로바이더가 저장되었습니다.");
@@ -242,6 +313,8 @@ public class SystemConfigController {
             response.put("success", false);
             response.put("message", "기본 AI 프로바이더 저장 실패: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
+        } finally {
+            TenantContextHolder.clear();
         }
     }
 

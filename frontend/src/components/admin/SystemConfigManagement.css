@@ -211,6 +211,20 @@
     margin: 0 0 12px 0;
 }
 
+/* 트랙 B PR-3 (2026-05-23): 라디오 헬스 패널 헤더 (제목 + 새로고침 버튼) */
+.mg-v2-system-config__provider-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.mg-v2-system-config__provider-header .mg-v2-system-config__provider-title {
+    margin: 0;
+}
+
 .mg-v2-system-config__radio-group {
     display: flex;
     flex-wrap: wrap;
@@ -233,10 +247,25 @@
     cursor: pointer;
 }
 
+/* 트랙 B PR-3: 헬스체크 미등록 — 라디오 disable 시각 표시 (디자인 토큰만 사용) */
+.mg-v2-system-config__radio-label--disabled {
+    color: var(--medium-gray);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.mg-v2-system-config__radio-label--disabled input[type="radio"] {
+    cursor: not-allowed;
+}
+
 .mg-v2-system-config__radio-empty {
     font-size: 13px;
     color: var(--ad-b0kla-text-secondary, var(--medium-gray));
     margin: 0;
+}
+
+.mg-v2-system-config__radio-empty--error {
+    color: var(--color-error);
 }
 
 .mg-v2-system-config__pricing-notice {

@@ -16,6 +16,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
+import { getAiProviderHealth } from '../../api/admin/aiHealthApi';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -60,6 +61,15 @@ const AI_PROVIDERS = [
   { id: 'replicate', label: 'Replicate', keyPrefix: 'REPLICATE', defaultUrl: '', defaultModel: '' }
 ];
 
+// 트랙 B PR-3 (2026-05-23) — 어드민 AI 라디오 헬스 가드 라벨·메시지
+const AI_RADIO_DISABLED_TOOLTIP = 'API 키 미등록 — 시스템 설정에서 등록 후 사용 가능';
+const AI_RADIO_HEALTH_REFRESH_LABEL = '헬스 새로고침';
+const AI_RADIO_HEALTH_REFRESH_LOADING = '확인 중...';
+const AI_RADIO_HEALTH_LOADING_LABEL = '헬스체크 중...';
+const AI_RADIO_HEALTH_FAILED_LABEL = '헬스체크 실패';
+const AI_RADIO_HEALTH_ACTIVE_PREFIX = '현재 활성: ';
+const AI_RADIO_HEALTH_NOT_SUPPORTED = '키 등록 가드 미지원';
+
 /** OpenAI 목록 미불러온 경우 입력란 datalist용 최소 프리셋 (사용 가능한 모델만 보려면 '목록 불러오기' 권장) */
 const OPENAI_MODEL_PRESETS_FALLBACK = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
 
@@ -95,6 +105,11 @@ const SystemConfigManagement = () => {
 
   const [aiDefaultProvider, setAiDefaultProvider] = useState('openai');
 
+  // 트랙 B PR-3: 백엔드 헬스체크 (DB 기준 실 등록 여부)
+  const [aiHealth, setAiHealth] = useState(null);
+  const [aiHealthLoading, setAiHealthLoading] = useState(false);
+  const [aiHealthError, setAiHealthError] = useState(null);
+
   const [wellness, setWellness] = useState({
     wellnessAutoSendEnabled: true,
     wellnessSendTime: '09:00',
@@ -112,6 +127,25 @@ const SystemConfigManagement = () => {
     }));
   }, []);
 
+  /**
+   * 백엔드 AI 프로바이더 헬스체크 호출 — DB 기준 키 등록 여부.
+   * 라디오 disable·tooltip 가드의 신뢰원본(SSOT)으로 사용.
+   */
+  const refreshAiHealth = useCallback(async() => {
+    try {
+      setAiHealthLoading(true);
+      setAiHealthError(null);
+      const health = await getAiProviderHealth();
+      setAiHealth(health);
+    } catch (error) {
+      console.error('AI 헬스체크 실패:', error);
+      setAiHealth(null);
+      setAiHealthError(error?.message || 'AI 헬스체크에 실패했습니다.');
+    } finally {
+      setAiHealthLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!isLoggedIn || !user) {
       notificationManager.show('로그인이 필요합니다.', 'error');
@@ -123,20 +157,30 @@ const SystemConfigManagement = () => {
       return;
     }
     loadConfigs();
-  }, [isLoggedIn, user]);
+    refreshAiHealth();
+  }, [isLoggedIn, user, refreshAiHealth]);
 
-  // 저장된 기본 프로바이더에 API 키가 없으면, 키가 있는 첫 프로바이더로 보정
+  // 저장된 기본 프로바이더에 API 키가 없으면, 키가 있는 첫 프로바이더로 보정.
+  // 트랙 B PR-3: 헬스체크 결과(DB 기준)가 있을 때 그 결과를 우선 신뢰하고,
+  // 없을 땐 폼 입력값(미저장 포함) 으로 fallback 한다.
   useEffect(() => {
-    if (!loading) {
-      const hasKey = (id) => (providers[id]?.apiKey || '').trim() !== '';
-      if (!hasKey(aiDefaultProvider)) {
-        const firstWithKey = AI_PROVIDERS.find((p) => hasKey(p.id));
-        if (firstWithKey) {
-          setAiDefaultProvider(firstWithKey.id);
-        }
+    if (loading) {
+      return;
+    }
+    const isRegistered = (id) => {
+      if (aiHealth) {
+        if (id === 'openai') return aiHealth.openaiKeyRegistered === true;
+        if (id === 'gemini') return aiHealth.geminiKeyRegistered === true;
+      }
+      return (providers[id]?.apiKey || '').trim() !== '';
+    };
+    if (!isRegistered(aiDefaultProvider)) {
+      const firstRegistered = AI_PROVIDERS.find((p) => isRegistered(p.id));
+      if (firstRegistered) {
+        setAiDefaultProvider(firstRegistered.id);
       }
     }
-  }, [loading, providers]);
+  }, [loading, providers, aiHealth, aiDefaultProvider]);
 
   const loadConfigs = useCallback(async() => {
     try {
@@ -246,9 +290,12 @@ const SystemConfigManagement = () => {
 
       await Promise.all(posts);
       notificationManager.show('설정이 저장되었습니다.', 'success');
+      // 키·기본 프로바이더 변경 후 백엔드 헬스 재확인 (라디오 가드 갱신)
+      refreshAiHealth();
     } catch (error) {
       console.error('설정 저장 실패:', error);
-      notificationManager.show('설정 저장에 실패했습니다.', 'error');
+      const backendMsg = error?.response?.data?.message || error?.data?.message;
+      notificationManager.show(backendMsg || '설정 저장에 실패했습니다.', 'error');
     } finally {
       setSaving(false);
     }
@@ -404,25 +451,91 @@ const SystemConfigManagement = () => {
               </p>
 
               <div className="mg-v2-ad-b0kla__card mg-v2-system-config__provider-card">
-                <h3 className="mg-v2-system-config__provider-title">사용할 AI 프로바이더</h3>
+                <div className="mg-v2-system-config__provider-header">
+                  <h3 className="mg-v2-system-config__provider-title">사용할 AI 프로바이더</h3>
+                  <MGButton
+                    type="button"
+                    variant="secondary"
+                    size="medium"
+                    className={buildErpMgButtonClassName({
+                      variant: 'secondary',
+                      size: 'md',
+                      loading: aiHealthLoading
+                    })}
+                    onClick={refreshAiHealth}
+                    disabled={aiHealthLoading}
+                    loading={aiHealthLoading}
+                    loadingText={AI_RADIO_HEALTH_REFRESH_LOADING}
+                    preventDoubleClick={false}
+                    title="백엔드 DB 기준으로 키 등록 여부를 다시 확인합니다."
+                  >
+                    {AI_RADIO_HEALTH_REFRESH_LABEL}
+                  </MGButton>
+                </div>
                 <p className="mg-v2-system-config__section-desc">
                   API 키가 등록된 프로바이더만 선택할 수 있습니다. 심리검사 AI 리포트 등에 선택한 프로바이더가 사용됩니다.
                 </p>
+                {aiHealthLoading && (
+                  <p className="mg-v2-system-config__radio-empty">{AI_RADIO_HEALTH_LOADING_LABEL}</p>
+                )}
+                {!aiHealthLoading && aiHealthError && (
+                  <p className="mg-v2-system-config__radio-empty mg-v2-system-config__radio-empty--error">
+                    {AI_RADIO_HEALTH_FAILED_LABEL}: {toDisplayString(aiHealthError)}
+                  </p>
+                )}
+                {!aiHealthLoading && !aiHealthError && aiHealth?.activeProvider && (
+                  <p className="mg-v2-system-config__section-desc">
+                    {AI_RADIO_HEALTH_ACTIVE_PREFIX}
+                    <strong>{toDisplayString(aiHealth.activeProvider)}</strong>
+                  </p>
+                )}
                 <div className="mg-v2-system-config__radio-group">
-                  {AI_PROVIDERS.filter((p) => (providers[p.id]?.apiKey || '').trim() !== '').map((p) => (
-                    <label key={p.id} className="mg-v2-system-config__radio-label">
-                      <input
-                        type="radio"
-                        name="aiDefaultProvider"
-                        value={p.id}
-                        checked={aiDefaultProvider === p.id}
-                        onChange={() => setAiDefaultProvider(p.id)}
-                        className="mg-v2-radio"
-                      />
-                      <span>{toDisplayString(p.label)}</span>
-                    </label>
-                  ))}
-                  {AI_PROVIDERS.every((p) => !(providers[p.id]?.apiKey || '').trim()) && (
+                  {AI_PROVIDERS.map((p) => {
+                    // 헬스체크가 등록 여부를 보고하는 provider 만 가드 적용 (openai/gemini)
+                    let isRegistered;
+                    if (p.id === 'openai') {
+                      isRegistered = aiHealth?.openaiKeyRegistered === true;
+                    } else if (p.id === 'gemini') {
+                      isRegistered = aiHealth?.geminiKeyRegistered === true;
+                    } else {
+                      // claude/replicate 는 헬스체크 미커버 — 폼 입력값 fallback (PR-1 보존)
+                      isRegistered = (providers[p.id]?.apiKey || '').trim() !== '';
+                    }
+                    const guarded = (p.id === 'openai' || p.id === 'gemini');
+                    const disabledByHealth = guarded
+                      ? (aiHealthLoading || !aiHealth || !isRegistered)
+                      : !isRegistered;
+                    let tooltip = '';
+                    if (aiHealthLoading) {
+                      tooltip = AI_RADIO_HEALTH_LOADING_LABEL;
+                    } else if (!isRegistered) {
+                      tooltip = AI_RADIO_DISABLED_TOOLTIP;
+                    } else if (!guarded) {
+                      tooltip = AI_RADIO_HEALTH_NOT_SUPPORTED;
+                    }
+                    return (
+                      <label
+                        key={p.id}
+                        className={`mg-v2-system-config__radio-label${disabledByHealth ? ' mg-v2-system-config__radio-label--disabled' : ''}`}
+                        title={tooltip || undefined}
+                      >
+                        <input
+                          type="radio"
+                          name="aiDefaultProvider"
+                          value={p.id}
+                          checked={aiDefaultProvider === p.id}
+                          onChange={() => setAiDefaultProvider(p.id)}
+                          disabled={disabledByHealth}
+                          className="mg-v2-radio"
+                        />
+                        <span>{toDisplayString(p.label)}</span>
+                      </label>
+                    );
+                  })}
+                  {!aiHealthLoading && aiHealth
+                    && aiHealth.openaiKeyRegistered === false
+                    && aiHealth.geminiKeyRegistered === false
+                    && AI_PROVIDERS.every((p) => !(providers[p.id]?.apiKey || '').trim()) && (
                     <p className="mg-v2-system-config__radio-empty">API 키가 등록된 프로바이더가 없습니다. 아래에서 한 개 이상 등록 후 선택할 수 있습니다.</p>
                   )}
                 </div>

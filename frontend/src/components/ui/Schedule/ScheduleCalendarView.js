@@ -105,6 +105,12 @@ const ScheduleCalendarView = ({
     /**
      * 로컬 날짜가 KR 공휴일 표에 있으면 셀에 표식.
      * 통합 스킨일 때만 익일「대체」공휴일 전날 클래스(배지·스타일 정합).
+     *
+     * 2026-05-23 옵션 A 정착 — `!holidayName` 가드를 제거해 공휴일 셀에도 weekend 클래스를 부여한다.
+     * CSS 우선순위 규칙은 ScheduleCalendarView.css 의 공휴일 override 블록으로 명시하므로
+     * Sat+공휴일 → 분홍, Sun+공휴일 → 분홍(동일 톤) 으로 시각 정합한다.
+     * SSOT: docs/project-management/2026-05-23/CALENDAR_OPTION_A_DESIGN_HANDOFF.md §2,
+     *       docs/project-management/2026-05-23/CALENDAR_HOLIDAY_BG_REGRESSION_ANALYSIS.md §4.2
      */
     const dayCellClassNamesForKrHoliday = useCallback((arg) => {
       const list = [];
@@ -116,7 +122,7 @@ const ScheduleCalendarView = ({
         if (getKrSubstituteHolidayEveHintForLocalDate(arg.date)) {
           list.push(SUBSTITUTE_EVE_DAY_CELL_CLASS);
         }
-        if (arg.view?.type === 'dayGridMonth' && !holidayName) {
+        if (arg.view?.type === 'dayGridMonth') {
           const dow = arg.date.getDay();
           if (dow === 6) {
             list.push(WEEKEND_SAT_DAY_CELL_CLASS);
@@ -160,9 +166,15 @@ const ScheduleCalendarView = ({
                 badge.appendChild(hintSpan);
                 badge.title =
                     `${toDisplayString(eveHint.hintLine, '')} (${toDisplayString(eveHint.nextHolidayName, '')})`;
+                badge.setAttribute(
+                    'aria-label',
+                    `공휴일 ${safeName} · ${toDisplayString(eveHint.hintLine, '')}`
+                );
             } else {
                 badge.title = safeName;
+                badge.setAttribute('aria-label', `공휴일 ${safeName}`);
             }
+            badge.setAttribute('role', 'note');
             dayTop.appendChild(badge);
             return;
         }

@@ -191,12 +191,15 @@
 
 /*
  * 통합 스킨: 공휴일 + 월간 주말 틴트 SSOT(한 블록).
- * 공휴일 색 강조는 «날짜 숫자·배지 텍스트» 중심(셀 전체 배경·좌측 세로 강조 없음).
- * 우선순위: 공휴일 셀은 배경 투명 → 비공휴일 토·일만 주말 틴트.
- * 오케스트레이션 INTEGRATED_SCHEDULE_CALENDAR_CSS_ARCHITECTURE_ORCHESTRATION.md §4.2 예외 1블록.
+ * 2026-05-23 옵션 A 정착 — 공휴일 셀에도 일요일과 동일 톤(분홍) 배경을 부여하고,
+ * 그 위에 공휴일 배지·날짜 텍스트(빨강)가 z-index 위로 표시되도록 한다.
+ * 범례 문구 SCHEDULE_LEGEND_INTEGRATED_WEEKEND_HOLIDAY_NOTE 와 시각 정합.
+ * SSOT: docs/project-management/2026-05-23/CALENDAR_OPTION_A_DESIGN_HANDOFF.md §2,
+ *       docs/project-management/2026-05-23/CALENDAR_HOLIDAY_BG_REGRESSION_ANALYSIS.md §5
+ * 우선순위: 공휴일·일요일·토요일 우선순위는 셀렉터 특이도로 결정 — 공휴일이 마지막에 선언.
  */
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc .fc-bg-event.mg-v2-ad-calendar-event--kr-public-holiday-bg {
-    /* 날짜만 붉게: 전일 배경 레이어는 비가시(데이터·포커스는 유지) */
+    /* 배경 이벤트 레이어는 비가시(셀 td 배경이 SSOT, 데이터·포커스는 유지) */
     background-color: transparent !important;
     border: none !important;
     margin: 0;
@@ -206,7 +209,7 @@
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday {
-    background-color: transparent !important;
+    background-color: var(--mg-calendar-holiday-bg) !important;
     border-color: var(--fc-border-color, var(--ad-b0kla-border)) !important;
     box-shadow: none !important;
     outline: none !important;
@@ -214,12 +217,12 @@
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday a.fc-daygrid-day-number,
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-number {
-    color: var(--mg-error-600, var(--mg-error-500)) !important;
+    color: var(--mg-calendar-holiday-text) !important;
     font-weight: 700;
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday:hover {
-    background-color: transparent !important;
+    background-color: var(--mg-calendar-holiday-bg) !important;
     border-color: var(--fc-border-color, var(--ad-b0kla-border)) !important;
 }
 
@@ -287,23 +290,28 @@
 }
 
 /*
- * 월간 dayGrid만: dayCellClassNames가 부여한 주말 클래스(공휴일 아닐 때만 JS에서 부여).
- * 공휴일 셀 스타일이 우선(동일 셀에 주말 클래스 미부여).
+ * 월간 dayGrid만: dayCellClassNames가 부여한 주말 클래스.
+ * 2026-05-23 옵션 A 정착 — 일요일+공휴일 겹침 시 공휴일 배경(분홍)이 우선되도록
+ * CSS 선언 순서를 「주말 → 공휴일」 로 두는 대신 동일 톤 토큰을 공유한다.
+ * (공휴일·일요일은 모두 --mg-calendar-weekend-sun-bg = --mg-calendar-holiday-bg)
  */
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sat {
-    background-color: color-mix(
-        in srgb,
-        var(--mg-info-300) 14%,
-        var(--mg-color-background-main, var(--mg-color-surface-main))
-    ) !important;
+    background-color: var(--mg-calendar-weekend-sat-bg) !important;
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sun {
-    background-color: color-mix(
-        in srgb,
-        var(--mg-error-300) 12%,
-        var(--mg-color-background-main, var(--mg-color-surface-main))
-    ) !important;
+    background-color: var(--mg-calendar-weekend-sun-bg) !important;
+}
+
+/*
+ * 공휴일 우선 override: 토요일+공휴일 겹침 시 공휴일 배경(분홍)이 토요일 배경(파랑)을
+ * 덮어쓰도록 weekend 셀렉터 뒤에 같은 특이도로 한 번 더 선언한다.
+ * 일요일+공휴일은 동일 토큰(--mg-calendar-weekend-sun-bg = --mg-calendar-holiday-bg)이라
+ * 시각적으로 동일하지만, 의미적으로도 공휴일 우선 규칙을 명시한다.
+ * 디자인 핸드오프 §2.1 옵션 A — 「겹치면 공휴일 우선」 정합.
+ */
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday {
+    background-color: var(--mg-calendar-holiday-bg) !important;
 }
 
 /*
@@ -331,7 +339,9 @@
     background: transparent !important;
 }
 
-/* 통합: 공휴일명·대체 전날 배지 — day-top에서 전폭 줄(일자 위 한 줄 확보), 내부는 세로 스택 */
+/* 통합: 공휴일명·대체 전날 배지 — day-top에서 전폭 줄(일자 위 한 줄 확보), 내부는 세로 스택.
+ * 2026-05-23 옵션 A — 공휴일 셀 배경이 분홍이 되었으므로 배지 배경은 반투명 흰(`--mg-calendar-holiday-badge-bg`)으로
+ * 양쪽 색 모두 노출되게 한다(가독성 + 분홍 배경 시각 정합). */
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-holiday-badge {
     flex: 1 0 100%;
     order: 1;
@@ -340,15 +350,15 @@
     flex-direction: column;
     align-items: stretch;
     gap: 1px;
-    background-color: var(--mg-color-surface-main, var(--mg-white));
-    color: var(--mg-color-text-main, inherit);
+    background-color: var(--mg-calendar-holiday-badge-bg);
+    color: var(--mg-calendar-holiday-text);
     border: none;
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-holiday-badge__name {
     font-weight: var(--cs-font-semibold, 600);
     min-width: 0;
-    color: var(--mg-error-600, var(--mg-error-500));
+    color: var(--mg-calendar-holiday-text);
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-holiday-badge__eve-hint {

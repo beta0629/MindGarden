@@ -18869,3 +18869,57 @@ button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="m
 
 }
 
+/* ========================================
+   2026-05-23 CALENDAR HOLIDAY/WEEKEND 통합 토큰 (옵션 A — 디자인 핸드오프 §2)
+   SSOT: docs/project-management/2026-05-23/CALENDAR_OPTION_A_DESIGN_HANDOFF.md
+   - --mg-calendar-weekend-sat-bg : 토요일 배경 (연한 파랑)
+   - --mg-calendar-weekend-sun-bg : 일요일 배경 (연한 분홍)
+   - --mg-calendar-holiday-bg     : 공휴일 배경 (일요일과 동일 톤 = 옵션 A)
+   - --mg-calendar-holiday-text   : 공휴일 텍스트 색
+   - --mg-calendar-holiday-badge-bg : 공휴일 배지 배경(반투명 흰)
+   기존 어드민 통합 캘린더의 color-mix 결과(주말 12% / 14%)와 동일한 시각으로
+   유지하면서, 공휴일도 동일 톤을 받도록 분기 토큰을 신설한다.
+   ======================================== */
+
+:root {
+  --mg-calendar-weekend-sat-bg: color-mix(
+    in srgb,
+    var(--mg-info-300) 14%,
+    var(--mg-color-background-main, var(--mg-color-surface-main))
+  );
+  --mg-calendar-weekend-sat-text: var(--mg-info-600, var(--mg-info-500));
+  --mg-calendar-weekend-sun-bg: color-mix(
+    in srgb,
+    var(--mg-error-300) 12%,
+    var(--mg-color-background-main, var(--mg-color-surface-main))
+  );
+  --mg-calendar-weekend-sun-text: var(--mg-error-600, var(--mg-error-500));
+  --mg-calendar-holiday-bg: var(--mg-calendar-weekend-sun-bg);
+  --mg-calendar-holiday-text: var(--mg-calendar-weekend-sun-text);
+  --mg-calendar-holiday-badge-bg: color-mix(
+    in srgb,
+    var(--mg-color-surface-main, var(--mg-white)) 80%,
+    transparent
+  );
+}
+
+:root[data-theme="dark"] {
+  --mg-calendar-weekend-sat-bg: color-mix(
+    in srgb,
+    var(--mg-info-400) 18%,
+    var(--mg-color-background-main)
+  );
+  --mg-calendar-weekend-sun-bg: color-mix(
+    in srgb,
+    var(--mg-error-400) 16%,
+    var(--mg-color-background-main)
+  );
+  --mg-calendar-holiday-bg: var(--mg-calendar-weekend-sun-bg);
+  --mg-calendar-holiday-text: var(--mg-error-400);
+  --mg-calendar-holiday-badge-bg: color-mix(
+    in srgb,
+    var(--mg-color-surface-main) 70%,
+    transparent
+  );
+}
+

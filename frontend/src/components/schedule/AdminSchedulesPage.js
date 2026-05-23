@@ -23,10 +23,16 @@ const AdminSchedulesPage = ({ userRole, userId }) => (
             subtitle="통합 스케줄을 확인하고 관리합니다"
             titleId={ADMIN_SCHEDULES_TITLE_ID}
           />
-          <main aria-labelledby={ADMIN_SCHEDULES_TITLE_ID}>
+          <main
+            aria-labelledby={ADMIN_SCHEDULES_TITLE_ID}
+            data-calendar-skin="integrated"
+            data-layout-context="admin-schedules"
+          >
             <UnifiedScheduleComponent
               userRole={userRole}
               userId={userId}
+              integratedMonthEventLayout
+              calendarSkin="integrated"
             />
           </main>
         </ContentArea>

@@ -735,9 +735,16 @@ const UnifiedScheduleComponent = ({
             setSelectedDate(info.date);
             setSelectedInfo(info);
             setIsDateActionModalOpen(true);
-        } else {
-            notificationManager.warning('스케줄 생성 권한이 없습니다.');
+            return;
         }
+
+        // 내담자: 캘린더 조회 전용 — 스케줄 생성 권한 없음
+        if (userRole === USER_ROLES.CLIENT) {
+            notificationManager.info('내담자는 캘린더에서 일정을 직접 등록할 수 없습니다. 상담사 또는 관리자에게 문의해 주세요.');
+            return;
+        }
+
+        notificationManager.warning('스케줄 생성 권한이 없습니다.');
     };
 
     const handleScheduleClick = () => {

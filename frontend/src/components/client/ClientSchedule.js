@@ -7,7 +7,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
-import ScheduleCalendar from '../schedule/ScheduleCalendar';
+import UnifiedScheduleComponent from '../schedule/UnifiedScheduleComponent';
 import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -113,13 +113,18 @@ const ClientSchedule = () => {
   return (
     <AdminCommonLayout title={t('common.labels.schedule', '스케줄')} className="mg-v2-dashboard-layout">
       {pageShell(
-        <div className="client-schedule-calendar-wrapper">
-          <ScheduleCalendar
+        <div
+          className="client-schedule-calendar-wrapper"
+          data-calendar-skin="integrated"
+          data-layout-context="client-schedule"
+        >
+          <UnifiedScheduleComponent
             key={calendarKey}
             userRole={user?.role || USER_ROLES.CLIENT}
             userId={user?.id || null}
-            readOnly={false}
-            showClientView={true}
+            integratedMonthEventLayout
+            calendarSkin="integrated"
+            hideScheduleTitle
           />
         </div>
       )}

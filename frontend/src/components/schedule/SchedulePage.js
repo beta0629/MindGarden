@@ -155,11 +155,17 @@ const SchedulePage = ({ user: propUser }) => {
         {/* 좌측 캘린더 영역 (메인) */}
         <div className="mg-v2-schedule-grid__main">
           <ContentSection noCard={true} className="mg-v2-schedule-content-section">
-            <div className="mg-v2-schedule-grid__main-inner">
+            <div
+              className="mg-v2-schedule-grid__main-inner"
+              data-calendar-skin="integrated"
+              data-layout-context="schedule-page"
+            >
               <UnifiedScheduleComponent 
                 user={displayUser}
                 userRole={userRole}
                 userId={isScheduleRegisterActor() ? 0 : userId}
+                integratedMonthEventLayout
+                calendarSkin="integrated"
               />
             </div>
           </ContentSection>

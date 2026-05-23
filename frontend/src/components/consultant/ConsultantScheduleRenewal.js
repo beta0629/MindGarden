@@ -15,9 +15,19 @@ import {
 } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
+import useMediaQuery from '../../hooks/useMediaQuery';
+import UnifiedScheduleComponent from '../schedule/UnifiedScheduleComponent';
+import { USER_ROLES } from '../../constants/roles';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantScheduleRenewal.css';
 import { SCHEDULE_API } from '../../constants/api';
 import { useTranslation } from 'react-i18next';
+
+/**
+ * 데스크탑 진입 기준 — 디자인 핸드오프 §4.2 (--mg-breakpoint-lg = 1024px 동치).
+ * 사용자 컨펌 Q1=preserve: 1024px 이상은 어드민 캘린더, 1024px 미만은 기존 day-bar UX 유지.
+ */
+const DESKTOP_MEDIA_QUERY = '(min-width: 1024px)';
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -176,6 +186,7 @@ const ConsultantScheduleRenewal = () => {
   const { t } = useTranslation();
   const { user, isLoading: sessionLoading } = useSession();
   const navigate = useNavigate();
+  const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
   const [viewType, setViewType] = useState(VIEW_TYPES.WEEKLY);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [baseDate, setBaseDate] = useState(new Date());
@@ -208,12 +219,20 @@ const ConsultantScheduleRenewal = () => {
   }, [user?.id, weekDates]);
 
   useEffect(() => {
-    if (!sessionLoading && user?.id) {
+    if (sessionLoading) {
+      return;
+    }
+    if (isDesktop) {
+      // 데스크탑은 UnifiedScheduleComponent 가 자체 fetch — 본 페이지는 로딩만 해제
+      setLoading(false);
+      return;
+    }
+    if (user?.id) {
       fetchSchedules();
-    } else if (!sessionLoading) {
+    } else {
       setLoading(false);
     }
-  }, [sessionLoading, user?.id, fetchSchedules]);
+  }, [sessionLoading, isDesktop, user?.id, fetchSchedules]);
 
   const schedulesForDate = useMemo(() => {
     return schedules
@@ -280,8 +299,30 @@ const ConsultantScheduleRenewal = () => {
     navigate(`/consultant/consultation-record/${schedule.id || schedule.consultationId}`);
   };
 
-  if (sessionLoading || loading) {
+  if (sessionLoading || (loading && !isDesktop)) {
     return <ScheduleSkeleton />;
+  }
+
+  /**
+   * 데스크탑 분기 — 어드민 통합 캘린더 컴포넌트 재사용 (옵션 A).
+   * 모바일 분기는 본 컴포넌트의 day-bar + 타임라인 + 바텀시트 UX 유지(Q1=preserve).
+   * SSOT: docs/project-management/2026-05-23/CALENDAR_OPTION_A_DESIGN_HANDOFF.md §4
+   */
+  if (isDesktop) {
+    return (
+      <div
+        className="cr-schedule cr-schedule--desktop"
+        data-calendar-skin="integrated"
+        data-layout-context="consultant-renewal-schedule"
+      >
+        <UnifiedScheduleComponent
+          userRole={user?.role || USER_ROLES.CONSULTANT}
+          userId={user?.id}
+          integratedMonthEventLayout
+          calendarSkin="integrated"
+        />
+      </div>
+    );
   }
 
   return (

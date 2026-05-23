@@ -17,7 +17,7 @@ import ContentCard from '../../dashboard-v2/content/ContentCard';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDateStr } from '../../../utils/dateUtils';
-import { getConsultantColor } from '../../schedule/ScheduleCalendar/ScheduleCalendarUtils';
+import { getConsultantColor } from '../../../utils/consultantColor';
 import './ConsultationLogCalendarBlock.css';
 
 const EMPTY_TITLE = '등록된 상담일지가 없습니다.';

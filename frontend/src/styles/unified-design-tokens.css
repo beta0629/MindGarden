@@ -1663,6 +1663,74 @@
 }
 
 /* ========================================
+   2026 Q2 D10 §C1·§C2·§C3 (T-R2-Manual-Final + T-R2-Hold-Final 신설 11종)
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D10.md §2.1·§2.2 + §4 C1·C2·C3,
+         docs/project-management/2026-05-23/D10_P1_DESIGN_HANDOFF.md §2 C2·C3 + §3.
+   배경:
+   - §C2 (T-R2-Manual-Final mg-v2-* 16건 SAFE-new): V2 컴포넌트(ConsultantDashboard
+     광역)의 Tailwind palette 정밀 톤 단계 호환성을 위한 10종 신설.
+     - primary blue 50/200/300 (Tailwind blue-50/200/300, dashboard accent)
+     - warning amber 50/200/600/700 (Tailwind amber-50/200/600/700)
+     - success emerald 600/700 (Tailwind emerald-600/700, V2 step variant)
+     - info blue 600 (Tailwind blue-600, V2 step variant)
+   - §C3 (T-R2-Hold-Final mg-v2-border-light 4건): 정적 border 시맨틱 분리.
+     - `--mg-color-border-soft`: light `#f3f4f6` (gray-100) / dark `#374151` (gray-700)
+       hover-bg(`--mg-color-bg-hover` D9 §C3)와 동일 hex 이지만 시맨틱 분리 (border vs hover).
+   ⚠️ `--mg-color-success-600` 재신설 결정 (P1 §3):
+     D5 P2에서 폐기되고 `--mg-color-success` 로 단일 통합된 바 있으나,
+     V2 컴포넌트의 정밀 톤 단계(emerald-600) 호환 + 다크 모드에서 success(`#6ee7b7`)
+     와 구분되는 중간 명도(`#34d399`, 주로 border/icon) 시맨틱 지원을 위해 명시적 재신설.
+     D5 P2 #81C784 폐기 목적은 그대로 유지된다.
+   WCAG AA 대비비 검증 (P1 §3 매트릭스):
+     - primary-50/200/300        : light/dark 양방향 Text on Bg PASS
+     - warning-50/200            : light/dark 양방향 Text on Bg PASS
+     - warning-600 light 3.0:1   : Large Text only (UI Component 한정)
+     - warning-700 light 4.9:1   : PASS (Normal Text)
+     - success-600 light 4.0:1   : Large Text only (UI Component 한정)
+     - success-700 light 5.4:1   : PASS (Normal Text)
+     - info-600 light 4.5:1      : PASS (Normal Text)
+     - border-soft               : 비-텍스트 (border 컨텍스트, 대비 검증 제외)
+   ======================================== */
+
+:root {
+  /* D10 §C2 primary blue (Tailwind blue-50/200/300) — V2 dashboard accent */
+  --mg-color-primary-50: #eff6ff;
+  --mg-color-primary-200: #bfdbfe;
+  --mg-color-primary-300: #93c5fd;
+  /* D10 §C2 warning amber (Tailwind amber-50/200/600/700) — V2 alert/badge */
+  --mg-color-warning-50: #fffbeb;
+  --mg-color-warning-200: #fde68a;
+  --mg-color-warning-600: #d97706;
+  --mg-color-warning-700: #b45309;
+  /* D10 §C2 success emerald (Tailwind emerald-600/700) — V2 step variant 재신설 */
+  --mg-color-success-600: #059669;
+  --mg-color-success-700: #047857;
+  /* D10 §C2 info blue (Tailwind blue-600) — V2 step variant */
+  --mg-color-info-600: #2563eb;
+  /* D10 §C3 정적 border 시맨틱 분리 — light gray-100 / dark gray-700 */
+  --mg-color-border-soft: #f3f4f6;
+}
+
+:root[data-theme="dark"] {
+  /* D10 §C2 다크 primary blue (Tailwind blue-900/800/700, 표면 대비 반전) */
+  --mg-color-primary-50: #1e3a8a;
+  --mg-color-primary-200: #1e40af;
+  --mg-color-primary-300: #1d4ed8;
+  /* D10 §C2 다크 warning amber (Tailwind amber-900/800 표면 + amber-300/400 텍스트) */
+  --mg-color-warning-50: #451a03;
+  --mg-color-warning-200: #78350f;
+  --mg-color-warning-600: #fcd34d;
+  --mg-color-warning-700: #fbbf24;
+  /* D10 §C2 다크 success emerald (Tailwind emerald-400/300, 다크 가시성) */
+  --mg-color-success-600: #34d399;
+  --mg-color-success-700: #6ee7b7;
+  /* D10 §C2 다크 info blue (Tailwind blue-500, on dark 가시성) */
+  --mg-color-info-600: #3b82f6;
+  /* D10 §C3 다크 border-soft — Tailwind gray-700 (다크 표면 위 가독성 border) */
+  --mg-color-border-soft: #374151;
+}
+
+/* ========================================
    2026 Q2 D9 §C6 (T-Glass-Shadow-Overlay 5종 rgba SSOT)
    SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md §2.6 + §4 C6=a,
         docs/project-management/2026-05-23/D9_P1_DESIGN_HANDOFF.md §2.5·§4(P2-f).

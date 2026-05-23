@@ -31,6 +31,29 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const glob = require('glob');
 
+// ── D10 P2-a HARD_EXCLUDE 보존 토큰 (P1 §C1=a 신설 최소화 결정) ────────────
+// SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D10.md §2.1 + §4 C1=a,
+//       docs/project-management/2026-05-23/D10_P1_DESIGN_HANDOFF.md §2 C1,
+//       docs/project-management/2026-05-23/D10_P0_INVENTORY.md §1 (HOLD 6쌍 / 7건).
+//
+// P1 디자이너 결정 C1=a (신설 최소화) 답습 — 아래 7쌍 (legacy token + hex 컨텍스트) 은
+// 캐노니컬 매핑 부재 또는 시맨틱 시프트 위험 보수 분류 잔존. 본 codemod 의 COLOR_MAPPING /
+// SAFE_PAIRS 어느 경로에도 추가하지 않음으로써 영구 보존한다. 후속 운영 게이트(D11 자산
+// 갱신 라운드) 에서 폐기 마이그레이션 또는 패밀리 신설 여부 재판단.
+//
+// HARD_EXCLUDE_TOKENS_PRESERVED:
+//   1. --mg-purple-light      + #ede9fe  (purple 패밀리 부재, PrivacyPolicy.css)
+//   2. --mg-custom-ffeaa7     + #ffeaa7  (커스텀 placeholder, PrivacyPolicy.css)
+//   3. --mg-custom-e8f4fd     + #e8f4fd  (커스텀 placeholder, PrivacyPolicy.css)
+//   4. --mg-custom-bee5eb     + #bee5eb  (커스텀 placeholder, PrivacyPolicy.css)
+//   5. --mg-custom-0c5460     + #0c5460  (커스텀 placeholder, AppToast.css)
+//   6. --mg-purple-500        + #6f42c1  (purple 패밀리 부재, DashboardFormModal.css)
+//   7. --mg-color-accent-main + #8b7355  (coffee/brown 커스텀 톤, ConsultationRecordScreen.js)
+//
+// R-2 폴백 보호 (`var(--token, #hex)`) 는 1단계에서 placeholder 치환으로 자동 보존되며,
+// 위 7쌍은 SAFE_PAIRS 화이트리스트 미등록으로 인해 본 codemod 의 R-2 alias 대체 경로
+// (--r2-mg-alias-replace / --r2-mg-alias-bc-replace) 에서도 변환되지 않는다.
+
 // 색상 매핑 테이블 (하드코딩 → CSS 변수)
 const COLOR_MAPPING = {
   // Primary Colors
@@ -297,7 +320,59 @@ const COLOR_MAPPING = {
   '#4a90e2': 'var(--mg-color-legacy-primary)',
   '#4A90E2': 'var(--mg-color-legacy-primary)',
   '#4a6354': 'var(--mg-color-brand-olive-muted)',
-  '#4A6354': 'var(--mg-color-brand-olive-muted)'
+  '#4A6354': 'var(--mg-color-brand-olive-muted)',
+
+  // 2026 Q2 D10 P2-a 라운드 매핑 (SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D10.md §2.1·§2.2 + §4 C1·C2,
+  //                              docs/project-management/2026-05-23/D10_P1_DESIGN_HANDOFF.md §2 C2·C3 + §C9=a)
+  // §C2 신설 10종 + §C3 신설 1종(border-soft, 본 매핑 제외 — #f3f4f6 alias 충돌 회피) —
+  // 라이트·다크 cascade 정착 확인 (unified-design-tokens.css D10 §C2/§C3 블록):
+  //   --mg-color-primary-50    : light #eff6ff / dark #1e3a8a (Tailwind blue-50/900)
+  //   --mg-color-primary-200   : light #bfdbfe / dark #1e40af (Tailwind blue-200/800)
+  //   --mg-color-primary-300   : light #93c5fd / dark #1d4ed8 (Tailwind blue-300/700)
+  //   --mg-color-warning-50    : light #fffbeb / dark #451a03 (Tailwind amber-50/900)
+  //   --mg-color-warning-200   : light #fde68a / dark #78350f (Tailwind amber-200/800)
+  //   --mg-color-warning-600   : light #d97706 / dark #fcd34d (Tailwind amber-600/300)
+  //   --mg-color-warning-700   : light #b45309 / dark #fbbf24 (Tailwind amber-700/400)
+  //   --mg-color-success-600   : light #059669 / dark #34d399 (Tailwind emerald-600/400, 재신설)
+  //   --mg-color-success-700   : light #047857 / dark #6ee7b7 (Tailwind emerald-700/300)
+  //   --mg-color-info-600      : light #2563eb / dark #3b82f6 (Tailwind blue-600/500)
+  //
+  // ⚠️ Alias 충돌 회피 의도적 제외:
+  //   - #059669 (success-600 light) : 기존 D4 매핑 `var(--mg-color-success)` 유지.
+  //                                    raw 사용처는 운영 코드 0건(HARD_EXCLUDE 토큰 정의 파일에만 존재).
+  //                                    V2 actual `#16a34a` 만 본 매핑으로 success-600 흡수.
+  //   - #2563eb (info-600 light)    : 기존 D2 매핑 `var(--mg-color-info)` 유지.
+  //                                    V2 actual `#0284c7` 만 본 매핑으로 info-600 흡수.
+  //   - #f3f4f6 (border-soft light) : 기존 D3 매핑 `var(--mg-color-background-main)` 유지.
+  //                                    border-light alias `var(--mg-v2-color-border-light, #f3f4f6)`
+  //                                    는 R2_V2_ALIAS_SAFE_PAIRS 경로로만 border-soft 흡수.
+  //
+  // ⚠️ V2 actual hex ↔ P1 신설 hex 톤 시프트 endorsed (D10 합의서 §9 C9=a, `1bff963bd`):
+  //   success-600 : V2 actual `#16a34a` → SSOT light `#059669` (Tailwind emerald-600, ΔE 인지 가능)
+  //   success-700 : V2 actual `#15803d` → SSOT light `#047857` (Tailwind emerald-700, ΔE 인지 가능)
+  //   info-600    : V2 actual `#0284c7` → SSOT light `#2563eb` (sky-600 → blue-600, ΔE 인지 가능)
+  //   ConsultantDashboard.css 광역 변화는 D10 P3 시각 회귀 검수 게이트.
+  '#eff6ff': 'var(--mg-color-primary-50)',
+  '#EFF6FF': 'var(--mg-color-primary-50)',
+  '#bfdbfe': 'var(--mg-color-primary-200)',
+  '#BFDBFE': 'var(--mg-color-primary-200)',
+  '#93c5fd': 'var(--mg-color-primary-300)',
+  '#93C5FD': 'var(--mg-color-primary-300)',
+  '#fffbeb': 'var(--mg-color-warning-50)',
+  '#FFFBEB': 'var(--mg-color-warning-50)',
+  '#fde68a': 'var(--mg-color-warning-200)',
+  '#FDE68A': 'var(--mg-color-warning-200)',
+  '#d97706': 'var(--mg-color-warning-600)',
+  '#D97706': 'var(--mg-color-warning-600)',
+  '#b45309': 'var(--mg-color-warning-700)',
+  '#B45309': 'var(--mg-color-warning-700)',
+  '#16a34a': 'var(--mg-color-success-600)',
+  '#16A34A': 'var(--mg-color-success-600)',
+  '#15803d': 'var(--mg-color-success-700)',
+  '#15803D': 'var(--mg-color-success-700)',
+  '#047857': 'var(--mg-color-success-700)',
+  '#0284c7': 'var(--mg-color-info-600)',
+  '#0284C7': 'var(--mg-color-info-600)'
 };
 
 // RGB/RGBA 색상 매핑
@@ -490,7 +565,37 @@ const R2_V2_ALIAS_SAFE_PAIRS = [
   // SSOT 정의: --mg-color-info-100 라이트 #dbeafe / 다크 #1e3a8a (다크 cascade 정착 효과)
   // P1 §C3 결정 (--mg-primary-light + #dbeafe → --mg-color-info-100) 과 동일 라인.
   // 라이트 hex 정확 일치 (시각 변화 0), 다크 cascade 정착 효과 (#dbeafe → #1e3a8a)
-  { tokenName: '--mg-v2-color-primary-100', hex: '#dbeafe', canonical: 'var(--mg-color-info-100)' }
+  { tokenName: '--mg-v2-color-primary-100', hex: '#dbeafe', canonical: 'var(--mg-color-info-100)' },
+
+  // ── D10 P2-a (2026-05-23, §C2 Tailwind palette 10종 + §C3 border-soft 1종) ──
+  // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D10.md §2.1·§2.2 + §4 C2/C3,
+  //       docs/project-management/2026-05-23/D10_P1_DESIGN_HANDOFF.md §2 C2·C3 + §3,
+  //       docs/project-management/2026-05-23/D10_P0_INVENTORY.md §2·§3 (16건 + 4건).
+  // mg-v2-* Tailwind palette 10쌍 R-2 폴백 (ConsultantDashboard.css 광역 16건) +
+  // border-light 1쌍 (border-soft 시맨틱 분리, 4건) SAFE 화이트리스트 흡수.
+  //
+  // ⚠️ V2 actual hex ↔ P1 신설 hex 톤 시프트 endorsed (D10 §9 C9=a, commit `1bff963bd`):
+  //   success-600 V2 actual `#16a34a` → SSOT light `#059669` (Tailwind emerald-600, ΔE 인지 가능)
+  //   success-700 V2 actual `#15803d` → SSOT light `#047857` (Tailwind emerald-700, ΔE 인지 가능)
+  //   info-600    V2 actual `#0284c7` → SSOT light `#2563eb` (sky-600 → blue-600, ΔE 인지 가능)
+  //   ConsultantDashboard.css 광역 변화는 D10 P3 시각 회귀 검수 게이트.
+
+  // §C2 — primary blue 3종 (Tailwind blue-50/200/300, ConsultantDashboard accent)
+  { tokenName: '--mg-v2-color-primary-50', hex: '#eff6ff', canonical: 'var(--mg-color-primary-50)' },
+  { tokenName: '--mg-v2-color-primary-200', hex: '#bfdbfe', canonical: 'var(--mg-color-primary-200)' },
+  { tokenName: '--mg-v2-color-primary-300', hex: '#93c5fd', canonical: 'var(--mg-color-primary-300)' },
+  // §C2 — warning amber 4종 (Tailwind amber-50/200/600/700, V2 alert/badge)
+  { tokenName: '--mg-v2-color-warning-50', hex: '#fffbeb', canonical: 'var(--mg-color-warning-50)' },
+  { tokenName: '--mg-v2-color-warning-200', hex: '#fde68a', canonical: 'var(--mg-color-warning-200)' },
+  { tokenName: '--mg-v2-color-warning-600', hex: '#d97706', canonical: 'var(--mg-color-warning-600)' },
+  { tokenName: '--mg-v2-color-warning-700', hex: '#b45309', canonical: 'var(--mg-color-warning-700)' },
+  // §C2 — success emerald 2종 + info blue 1종 (V2 actual hex 톤 시프트 endorsed)
+  { tokenName: '--mg-v2-color-success-600', hex: '#16a34a', canonical: 'var(--mg-color-success-600)' },
+  { tokenName: '--mg-v2-color-success-700', hex: '#15803d', canonical: 'var(--mg-color-success-700)' },
+  { tokenName: '--mg-v2-color-info-600', hex: '#0284c7', canonical: 'var(--mg-color-info-600)' },
+  // §C3 — border-soft 시맨틱 분리 (정적 border 전용, hover-bg 와 동일 hex 시맨틱 분리)
+  // light #f3f4f6 (Tailwind gray-100) / dark #374151 (Tailwind gray-700)
+  { tokenName: '--mg-v2-color-border-light', hex: '#f3f4f6', canonical: 'var(--mg-color-border-soft)' }
 ];
 
 // ── D9 P2-b + P2-c: R-2 mg-* 폴백 alias 대체 SAFE_PAIRS 화이트리스트 (BC) ───────
@@ -566,7 +671,31 @@ const R2_MG_ALIAS_BC_SAFE_PAIRS = [
   // --mg-surface-secondary + #ebe9e4 → --mg-color-background-secondary (SSOT 라이트 #EBE6E0, ΔE 작음)
   { tokenName: '--mg-surface-secondary', hex: '#ebe9e4', canonical: 'var(--mg-color-background-secondary)' },
   // --mg-color-primary-light + #7a9082 → --mg-color-brand-olive-muted (brand-olive 변형, ΔE 작음)
-  { tokenName: '--mg-color-primary-light', hex: '#7a9082', canonical: 'var(--mg-color-brand-olive-muted)' }
+  { tokenName: '--mg-color-primary-light', hex: '#7a9082', canonical: 'var(--mg-color-brand-olive-muted)' },
+
+  // ── D10 P2-a (2026-05-23, §C1 mg-* manual-review SAFE 통합 7쌍 / 9건) ───
+  // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D10.md §2.1 + §4 C1=a (신설 최소화),
+  //       docs/project-management/2026-05-23/D10_P1_DESIGN_HANDOFF.md §2 C1,
+  //       docs/project-management/2026-05-23/D10_P0_INVENTORY.md §1 (SAFE 9건).
+  // mg-* manual-review 16건 중 SAFE 통합 7쌍을 기존 캐노니컬 또는 D10 신설 토큰으로 흡수.
+  // HOLD 7쌍 (`--mg-purple-light` `#ede9fe` / `--mg-custom-*` 4종 / `--mg-purple-500`
+  // `#6f42c1` / `--mg-color-accent-main` `#8b7355`) 은 본 매핑 의도적 제외 (HARD_EXCLUDE 보존,
+  // 본 파일 상단 HARD_EXCLUDE_TOKENS_PRESERVED 주석 참조).
+
+  // P0 §1 row 1 — Bootstrap danger 잔재 통합 (2건, ModernDashboardEditor.css)
+  { tokenName: '--mg-color-danger-dark', hex: '#c82333', canonical: 'var(--mg-color-error-dark)' },
+  // P0 §1 row 2 — brand olive-gray 통합 (2건, ModernDashboardEditor.css)
+  { tokenName: '--mg-color-text-tertiary', hex: '#8a9a90', canonical: 'var(--mg-color-text-secondary)' },
+  // P0 §1 row 4 — Tailwind success 통합 (1건, DashboardFormModal.css)
+  { tokenName: '--mg-success', hex: '#22c55e', canonical: 'var(--mg-color-success)' },
+  // P0 §1 row 5 — V2 actual hex (Tailwind emerald-600), D10 §C2 신설 success-700 으로 흡수 (1건)
+  { tokenName: '--mg-success-dark', hex: '#16a34a', canonical: 'var(--mg-color-success-700)' },
+  // P0 §1 row 6 — text-secondary 표준 보조 통합 (1건, ConsultationRecordScreen.js)
+  { tokenName: '--mg-color-text-secondary', hex: '#888', canonical: 'var(--mg-color-text-secondary)' },
+  // P0 §1 row 11 — Bootstrap warning orange 잔재, D10 §C2 신설 warning-600 으로 흡수 (1건)
+  { tokenName: '--mg-warning-500', hex: '#fd7e14', canonical: 'var(--mg-color-warning-600)' },
+  // P0 §1 row 14 — text-secondary 표준 보조 통합 (1건, Homepage.css)
+  { tokenName: '--mg-text-secondary', hex: '#555555', canonical: 'var(--mg-color-text-secondary)' }
 ];
 
 function escapeRegexLiteral(s) {

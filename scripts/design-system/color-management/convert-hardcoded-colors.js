@@ -298,7 +298,15 @@ const RGB_MAPPING = {
   'rgba(255, 255, 255, 0.45)': 'var(--mg-glass-bg-strong)',
   'rgba(0, 0, 0, 0.1)': 'var(--mg-shadow-light)',
   'rgba(0, 0, 0, 0.15)': 'var(--mg-shadow-medium)',
-  'rgba(0, 0, 0, 0.5)': 'var(--mg-overlay)'
+  'rgba(0, 0, 0, 0.5)': 'var(--mg-overlay)',
+
+  // 2026 Q2 D5 P3 라운드 매핑 (SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D5_DIRECTION.md §3.3 — T-A 흡수)
+  // 불투명 rgba 변형 1종 — 시각 등가 보장 (rgba(R,G,B,1) ≡ #RRGGBB) 의 안전 흡수.
+  //   --mg-white → var(--cs-white) → #ffffff (unified-design-tokens.css L371·L1015·L193)
+  // buildRgbRegex 가 공백·소수점·`1` ↔ `1.0` 변형을 자동 매칭한다.
+  // 잔존 카운트(canonical)는 hex 기준이므로 본 매핑은 canonical 감축에 기여하지 않으나,
+  // codebase 일관성을 위한 cleanup 으로 추가. T-D 가드 영향 없음(--mg-color-* 토큰 미포함).
+  'rgba(255, 255, 255, 1)': 'var(--mg-white)'
 };
 
 // 제외할 파일 패턴

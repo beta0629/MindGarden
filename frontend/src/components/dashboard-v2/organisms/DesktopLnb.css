@@ -73,7 +73,7 @@
 }
 
 .mg-v2-desktop-lnb__group-chevron:hover {
-  color: rgba(255, 255, 255, 1);
+  color: var(--mg-white);
   background: rgba(255, 255, 255, 0.08);
 }
 

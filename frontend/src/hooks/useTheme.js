@@ -80,8 +80,8 @@ export const useTheme = () => {
             root.style.setProperty('--theme-text-primary', 'var(--mg-white)');
             root.style.setProperty('--theme-text-secondary', 'var(--cs-gray-400)');
             root.style.setProperty('--theme-text-tertiary', 'var(--mg-gray-600)');
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.1) -> var(--mg-custom-color)
-            root.style.setProperty('--theme-border', 'rgba(255, 255, 255, 0.1)');
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-glass-bg-light) -> var(--mg-custom-color)
+            root.style.setProperty('--theme-border', 'var(--mg-glass-bg-light)');
             root.style.setProperty('--theme-shadow', 'var(--mg-overlay)');
         } else {
             // 라이트 테마 색상

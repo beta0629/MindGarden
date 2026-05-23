@@ -57,7 +57,7 @@
   --glass-bg-medium: var(--mg-glass-bg-medium);
   --glass-bg-strong: var(--mg-glass-bg-strong);
   --glass-border: rgba(255, 255, 255, 0.18);
-  --glass-border-strong: rgba(255, 255, 255, 0.3);
+  --glass-border-strong: var(--mg-glass-bg-medium);
 
   /* 아이패드 카드 색상 */
   --ipad-card-bg: rgba(255, 255, 255, 0.9);

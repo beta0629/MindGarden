@@ -1,7 +1,7 @@
 /* ===== ClientCard 스타일 - 아이폰 스타일과 글래스모피즘 적용 ===== */
 
 .client-card {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--mg-glass-bg-medium);
     border-radius: 20px;
     padding: 32px;
     border: 2px solid rgba(255, 255, 255, 0.18);
@@ -11,7 +11,7 @@
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 
         0 4px 16px var(--mg-shadow-light),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        inset 0 1px 0 var(--mg-glass-bg-medium);
     display: flex;
     flex-direction: column;
     gap: 28px;
@@ -19,11 +19,11 @@
 
 .client-card:hover {
     transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--mg-glass-bg-medium);
     border-color: var(--color-primary, var(--mg-primary-500));
     box-shadow: 
         0 8px 24px rgba(0, 122, 255, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        inset 0 1px 0 var(--mg-glass-bg-medium);
 }
 
 .client-card.selected {
@@ -31,7 +31,7 @@
     border-color: var(--color-primary, var(--mg-primary-500));
     box-shadow: 
         0 8px 24px rgba(0, 122, 255, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        inset 0 1px 0 var(--mg-glass-bg-medium);
 }
 
 /* 카드 헤더 */
@@ -112,7 +112,7 @@
 /* 카드 바디 */
 .client-card-body {
     padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-top: 1px solid var(--mg-glass-bg-medium);
 }
 
 .mapping-info {
@@ -128,9 +128,9 @@
     font-size: 14px;
     color: var(--text-secondary, var(--mg-gray-600));
     padding: 12px 16px;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--mg-glass-bg-light);
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--mg-glass-bg-medium);
 }
 
 .mapping-count i {

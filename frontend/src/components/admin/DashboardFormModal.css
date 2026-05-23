@@ -302,7 +302,7 @@
 }
 
 .dashboard-form-modal-close:hover {
-  background: var(--mg-hover-overlay-light, rgba(255, 255, 255, 0.1));
+  background: var(--mg-hover-overlay-light, var(--mg-glass-bg-light));
 }
 
 /* ===== 모달 본문 ===== */

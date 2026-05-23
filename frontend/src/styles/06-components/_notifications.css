@@ -233,7 +233,7 @@
   width: 32px;
   height: 32px;
   border: none;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--mg-glass-bg-medium);
   color: var(--color-text-primary);
   cursor: pointer;
   border-radius: var(--border-radius-md);
@@ -245,7 +245,7 @@
 }
 
 .mg-notification-banner-close:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--mg-glass-bg-medium);
 }
 
 /* MGButton 병합 (G8-B11b): 배너 닫기 레이아웃 유지 */

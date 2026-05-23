@@ -16,11 +16,11 @@
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-xxl);
   padding: var(--spacing-xxl);
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--mg-glass-bg-medium);
   backdrop-filter: blur(var(--blur-md));
   -webkit-backdrop-filter: blur(var(--blur-md));
   border-radius: var(--border-radius-xl);
-  border: var(--border-width) solid rgba(255, 255, 255, 0.3);
+  border: var(--border-width) solid var(--mg-glass-bg-medium);
   box-shadow: var(--shadow-md);
 }
 
@@ -31,7 +31,7 @@
   padding: var(--spacing-sm) var(--spacing-md);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--border-radius-md);
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--mg-glass-bg-medium);
   backdrop-filter: blur(var(--blur-md));
   -webkit-backdrop-filter: blur(var(--blur-md));
   color: var(--color-text-secondary);
@@ -40,7 +40,7 @@
 }
 
 .back-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--mg-glass-bg-medium);
   border-color: var(--color-primary);
   color: var(--color-text-primary);
 }
@@ -65,11 +65,11 @@
   justify-content: center;
   padding: calc(var(--spacing-xl) * 3) var(--spacing-lg);
   text-align: center;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--mg-glass-bg-medium);
   backdrop-filter: blur(var(--blur-md));
   -webkit-backdrop-filter: blur(var(--blur-md));
   border-radius: var(--border-radius-lg);
-  border: var(--border-width) solid rgba(255, 255, 255, 0.3);
+  border: var(--border-width) solid var(--mg-glass-bg-medium);
   box-shadow: var(--shadow-md);
 }
 
@@ -138,10 +138,10 @@
   position: fixed;
   top: calc(var(--spacing-xl) * 3);
   right: var(--spacing-lg);
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--mg-glass-bg-medium);
   backdrop-filter: blur(var(--blur-md));
   -webkit-backdrop-filter: blur(var(--blur-md));
-  border: var(--border-width) solid rgba(255, 255, 255, 0.3);
+  border: var(--border-width) solid var(--mg-glass-bg-medium);
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-lg);
   z-index: var(--z-dropdown);
@@ -201,10 +201,10 @@
 }
 
 .summary-card {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--mg-glass-bg-medium);
   backdrop-filter: blur(var(--blur-sm));
   -webkit-backdrop-filter: blur(var(--blur-sm));
-  border: var(--border-width) solid rgba(255, 255, 255, 0.3);
+  border: var(--border-width) solid var(--mg-glass-bg-medium);
   border-radius: var(--border-radius-xl);
   padding: calc(var(--spacing-xl) * 1.5);
   box-shadow: var(--shadow-md);

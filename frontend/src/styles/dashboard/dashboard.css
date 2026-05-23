@@ -31,12 +31,12 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--mg-glass-bg-medium);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid var(--mg-glass-bg-medium);
   flex-shrink: 0;
 }
 

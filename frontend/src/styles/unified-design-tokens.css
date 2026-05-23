@@ -1662,6 +1662,56 @@
   --mg-color-bg-hover: #374151;
 }
 
+/* ========================================
+   2026 Q2 D9 §C6 (T-Glass-Shadow-Overlay 5종 rgba SSOT)
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md §2.6 + §4 C6=a,
+        docs/project-management/2026-05-23/D9_P1_DESIGN_HANDOFF.md §2.5·§4(P2-f).
+   배경:
+   - D5 P3 권고 잔존 (`docs/COLOR_CONVERSION_REPORT.md` §RGB/RGBA): 5종 SSOT
+     정착안의 디자인 결정 부재로 NO-OP 였던 광역 흡수 트랙. D9 P1 §C6 에서
+     라이트·다크 양방향 cascade + α 단계 일관성 결정 → 본 라운드 정착.
+   - 본 5종은 `--mg-color-*` 패밀리가 아니므로 T-D 가드(`validate-codemod-mappings`)
+     의 `--mg-color-*` 정규식 검사 대상에서 제외된다. 단, 동일한 cascade 규칙을
+     따른다 — 라이트 정의 100% + 다크 정의 100% (cascade 부재 0건).
+   α 단계 일관성 가이드 (P1 §2.5 결정):
+     - Light  Glass (white 기반):  0.05 (light) → 0.20 (medium) → 0.40 (strong)
+     - Dark   Glass (black 기반):  0.20 (light) → 0.40 (medium) → 0.60 (strong)
+     - Shadow (black 기반)      :  Light 0.10 / Dark 0.30 (단계 1단)
+     - Overlay (black 기반)     :  Light 0.50 / Dark 0.50 (양방향 고정)
+   WCAG AA 검증 결과 (P1 §3):
+     - 본 5종은 텍스트가 아닌 알파 토큰(배경·그림자·오버레이)으로 텍스트 대비비
+       검증에서 제외. 단, 다크 cascade 시 시각적 인지성(투명도 인지) 확인 완료.
+   광역 영향 평가 (D9 §6):
+     - **HIGH** — 광역 카드/모달/드로워/그림자/오버레이 (~838건 잠재 흡수 대상).
+       PR-D 단독 분리 + 시각 회귀 검수 (PR 분리 정책: D9 §3 권고).
+   ======================================== */
+
+:root {
+  /* D9 §C6 Glass 배경 light — white 0.05 (미세 강조용, sub-layer hover state) */
+  --mg-glass-bg-light: rgba(255, 255, 255, 0.05);
+  /* D9 §C6 Glass 배경 medium — white 0.20 (일반 Glass morphism 표면) */
+  --mg-glass-bg-medium: rgba(255, 255, 255, 0.20);
+  /* D9 §C6 Glass 배경 strong — white 0.40 (강조 Glass morphism, modal head) */
+  --mg-glass-bg-strong: rgba(255, 255, 255, 0.40);
+  /* D9 §C6 박스 그림자 medium — black 0.10 (기본 카드/버튼 hover 그림자) */
+  --mg-shadow-medium: rgba(0, 0, 0, 0.10);
+  /* D9 §C6 백드롭 오버레이 — black 0.50 (modal/drawer backdrop, 양방향 고정) */
+  --mg-overlay: rgba(0, 0, 0, 0.50);
+}
+
+:root[data-theme="dark"] {
+  /* D9 §C6 다크 Glass light — black 0.20 (다크 표면 위 미세 강조) */
+  --mg-glass-bg-light: rgba(0, 0, 0, 0.20);
+  /* D9 §C6 다크 Glass medium — black 0.40 (다크 일반 Glass) */
+  --mg-glass-bg-medium: rgba(0, 0, 0, 0.40);
+  /* D9 §C6 다크 Glass strong — black 0.60 (다크 강조 Glass) */
+  --mg-glass-bg-strong: rgba(0, 0, 0, 0.60);
+  /* D9 §C6 다크 그림자 medium — black 0.30 (다크 표면 대비 깊이 보강) */
+  --mg-shadow-medium: rgba(0, 0, 0, 0.30);
+  /* D9 §C6 다크 오버레이 — black 0.50 (양방향 고정, modal/drawer backdrop) */
+  --mg-overlay: rgba(0, 0, 0, 0.50);
+}
+
 /* ===== 테넌트별 브랜딩 오버라이드 ===== */
 /* 특정 테넌트에 대한 브랜딩 커스터마이징 */
 

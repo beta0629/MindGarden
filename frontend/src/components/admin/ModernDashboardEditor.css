@@ -78,7 +78,7 @@
   padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
   border: none;
   border-radius: var(--mg-border-radius-md, 0.5rem);
-  background: var(--mg-input-overlay-bg, rgba(255, 255, 255, 0.2));
+  background: var(--mg-input-overlay-bg, var(--mg-glass-bg-medium));
   color: var(--mg-text-on-dark, white);
   font-size: var(--mg-font-size-sm, 0.875rem);
   backdrop-filter: var(--mg-backdrop-blur, blur(10px));
@@ -96,7 +96,7 @@
 
 .category-filter {
   padding: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.5rem);
-  border: var(--mg-border-width, 1px) solid var(--mg-border-overlay-light, rgba(255, 255, 255, 0.3));
+  border: var(--mg-border-width, 1px) solid var(--mg-border-overlay-light, var(--mg-glass-bg-medium));
   border-radius: var(--mg-border-radius-sm, 0.25rem);
   background: transparent;
   color: var(--mg-text-on-dark, white);
@@ -108,7 +108,7 @@
 }
 
 .category-filter:hover {
-  background: var(--mg-hover-overlay-light, rgba(255, 255, 255, 0.2));
+  background: var(--mg-hover-overlay-light, var(--mg-glass-bg-medium));
   transform: var(--mg-transform-hover-up, translateY(-1px));
 }
 
@@ -308,7 +308,7 @@
 .widget-count-badge,
 .grid-info-badge {
   padding: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.5rem);
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--mg-glass-bg-medium);
   border-radius: var(--mg-border-radius-sm, 0.25rem);
   font-size: var(--mg-font-size-xs, 0.75rem);
   font-weight: var(--mg-font-weight-medium, 500);

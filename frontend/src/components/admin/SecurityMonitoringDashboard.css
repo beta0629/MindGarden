@@ -53,14 +53,14 @@
 
 .back-button {
   align-self: flex-start;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--mg-glass-bg-light);
+  border: 1px solid var(--mg-glass-bg-medium);
   color: var(--color-text-light);
   backdrop-filter: blur(10px);
 }
 
 .back-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--mg-glass-bg-medium);
   transform: var(--transform-translate-up);
 }
 
@@ -88,7 +88,7 @@
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-md);
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--mg-glass-bg-light);
   border-radius: var(--border-radius-full);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
@@ -132,7 +132,7 @@
   flex-direction: column;
   align-items: center;
   padding: var(--spacing-md);
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--mg-glass-bg-light);
   border-radius: var(--border-radius-default);
   backdrop-filter: blur(10px);
   min-width: 80px;
@@ -165,23 +165,23 @@
 }
 
 .action-buttons .mg-btn.variant-outline {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--mg-glass-bg-light);
+  border-color: var(--mg-glass-bg-medium);
   color: var(--color-text-light);
 }
 
 .action-buttons .mg-btn.variant-outline:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--mg-glass-bg-medium);
 }
 
 .action-buttons .mg-btn.variant-primary {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: var(--mg-glass-bg-medium);
+  border-color: var(--mg-glass-bg-strong);
   color: var(--color-text-light);
 }
 
 .action-buttons .mg-btn.variant-primary:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--mg-glass-bg-medium);
 }
 
 /* 스피닝 애니메이션 */

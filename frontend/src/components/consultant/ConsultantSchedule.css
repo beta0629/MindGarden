@@ -315,7 +315,7 @@
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--mg-glass-bg-medium);
 }
 
 /* 폼 스타일 */

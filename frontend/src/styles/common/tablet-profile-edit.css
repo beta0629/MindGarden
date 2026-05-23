@@ -94,7 +94,7 @@
     border-radius: 1.5rem;
     box-shadow: 0 10px 25px var(--mg-shadow-light);
     margin-top: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--mg-glass-bg-medium);
 }
 
 .tablet-profile-edit .mg-form__group {

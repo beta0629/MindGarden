@@ -106,7 +106,7 @@ export const CHART_OPTIONS = {
       BACKGROUND_COLOR: 'rgba(0, 0, 0, 0.8)',
       TITLE_COLOR: 'var(--mg-white)',
       BODY_COLOR: 'var(--mg-white)',
-      BORDER_COLOR: 'rgba(255, 255, 255, 0.1)',
+      BORDER_COLOR: 'var(--mg-glass-bg-light)',
       BORDER_WIDTH: 1
     }
   },
@@ -161,7 +161,7 @@ export const PIE_CHART_OPTIONS = {
       BACKGROUND_COLOR: 'rgba(0, 0, 0, 0.8)',
       TITLE_COLOR: 'var(--mg-white)',
       BODY_COLOR: 'var(--mg-white)',
-      BORDER_COLOR: 'rgba(255, 255, 255, 0.1)',
+      BORDER_COLOR: 'var(--mg-glass-bg-light)',
       BORDER_WIDTH: 1,
       CALLBACKS: {
         LABEL: function(context) {

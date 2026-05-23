@@ -21,7 +21,7 @@
     width: 60px;
     height: 60px;
     border-radius: var(--radius-lg);
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--mg-glass-bg-medium);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -153,7 +153,7 @@
 .result-preview {
     margin-top: var(--spacing-sm);
     padding: var(--spacing-sm);
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--mg-glass-bg-strong);
     border-radius: var(--radius-sm);
     font-size: var(--mg-body-size);
 }
@@ -296,7 +296,7 @@
     }
     
     .header-icon {
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--mg-glass-bg-light);
         color: var(--mg-dark-text);
     }
     
@@ -330,7 +330,7 @@
     }
     
     .result-preview {
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--mg-glass-bg-light);
     }
 }
 

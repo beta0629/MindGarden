@@ -50,10 +50,10 @@
 .mg-card--glass {
   background: var(--mg-glass-bg-light);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--mg-glass-bg-medium);
   box-shadow: 0 8px 32px var(--mg-shadow-light), 
               0 4px 16px rgba(0, 0, 0, 0.05),
-              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+              inset 0 1px 0 var(--mg-glass-bg-medium);
 }
 
 /* ===== 패딩 크기 ===== */

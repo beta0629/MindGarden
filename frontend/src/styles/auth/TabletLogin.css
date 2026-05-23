@@ -429,7 +429,7 @@
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid var(--mg-glass-bg-medium);
   border-radius: 50%;
   border-top-color: white;
   animation: spin 1s ease-in-out infinite;

@@ -301,6 +301,35 @@ const COLOR_MAPPING = {
 };
 
 // RGB/RGBA 색상 매핑
+//
+// ── 2026 Q2 D9 §C6 (T-Glass-Shadow-Overlay 5종 SSOT 정착 — PR-D) ───────────────
+// SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md §2.6 + §4 C6=a,
+//       docs/project-management/2026-05-23/D9_P1_DESIGN_HANDOFF.md §2.5·§4(P2-f).
+// 본 라운드에서 5종 SSOT(`--mg-glass-bg-{light,medium,strong}` /
+// `--mg-shadow-medium` / `--mg-overlay`) 가 unified-design-tokens.css 에 라이트·
+// 다크 cascade 정의로 정착됨. 이에 따라 D5 P3 NO-OP 였던 rgba 광역 흡수가 가능
+// 해졌다. 본 매핑은 P1 §C6 α 단계 결정 (Light 0.05/0.20/0.40, Dark 0.20/0.40/0.60)
+// 에 맞춰 white-기반 rgba 변형을 glass-bg-* 로 흡수한다.
+//
+// 시맨틱 분류 가이드:
+//   - white(255,255,255) 기반 rgba α 변형 → glass-bg-* (라이트 cascade)
+//     · 0.05 (exact P1 light), 0.10·0.15 (light 근접), 0.20 (exact P1 medium),
+//       0.25 (legacy "light" → 스테이지 보존, 0.05 으로 α 정밀화 — HIGH 시각 변화),
+//       0.30 (medium 근접), 0.35 (legacy "medium" → 0.20 정밀화 — MED 시각 변화),
+//       0.40 (exact P1 strong), 0.45 (legacy "strong" → 0.40 정밀화 — LOW 시각 변화),
+//       0.50 (strong 근접 — LOW 시각 변화)
+//   - black(0,0,0) 기반 rgba α 변형 → shadow / overlay (시맨틱 명확 케이스만)
+//     · 0.10 → shadow-light (기존 D5, dark cascade 부재 — 변화 0)
+//     · 0.15 → shadow-medium (D9 SSOT 정착 후 light=0.10 으로 α 정밀화 — LOW)
+//     · 0.50 → overlay (양방향 0.50 고정, 변화 0)
+//     · 0.20·0.30·0.40·0.60 (black 변형): HOLD — glass-bg-* 다크 cascade 와
+//       shadow-medium 다크 cascade 와 동일 hex 가 겹쳐 시맨틱 시프트 위험 케이스.
+//       (예: rgba(0,0,0,0.40) 은 light-mode 코드 컨텍스트에서 glass-bg-medium 다크 ≠
+//       의도. 라이트 모드에서 glass-bg-medium 은 white(0.20) 으로 cascade 되어
+//       시각 의도와 충돌함.) D9 §6 / D10 케이스별 분리 권장.
+//
+// 모든 매핑은 `buildRgbRegex` 로 공백/소수점/대문자 변형 (`rgba`·`RGBA`·`rgba(...,.10)` 등)
+// 을 자동 매칭한다 (D4 인프라 보강). 따라서 본 표는 카논 형식만 한 줄로 표기.
 const RGB_MAPPING = {
   'rgb(0, 123, 255)': 'var(--mg-primary-500)',
   'rgb(40, 167, 69)': 'var(--mg-success-500)',
@@ -308,12 +337,37 @@ const RGB_MAPPING = {
   'rgb(255, 193, 7)': 'var(--mg-warning-500)',
   'rgb(23, 162, 184)': 'var(--mg-info-500)',
   'rgb(108, 117, 125)': 'var(--mg-secondary-500)',
+
+  // D9 §C6 Glass 배경 light — white α 변형 흡수 (light=0.05 exact)
+  // 0.05 (exact), 0.10·0.15 (근접), 0.25 (legacy light → P1 α 정밀화)
+  'rgba(255, 255, 255, 0.05)': 'var(--mg-glass-bg-light)',
+  'rgba(255, 255, 255, 0.1)': 'var(--mg-glass-bg-light)',
+  'rgba(255, 255, 255, 0.15)': 'var(--mg-glass-bg-light)',
   'rgba(255, 255, 255, 0.25)': 'var(--mg-glass-bg-light)',
+
+  // D9 §C6 Glass 배경 medium — white α 변형 흡수 (medium=0.20 exact)
+  // 0.20 (exact), 0.30 (근접), 0.35 (legacy medium → P1 α 정밀화)
+  'rgba(255, 255, 255, 0.2)': 'var(--mg-glass-bg-medium)',
+  'rgba(255, 255, 255, 0.3)': 'var(--mg-glass-bg-medium)',
   'rgba(255, 255, 255, 0.35)': 'var(--mg-glass-bg-medium)',
+
+  // D9 §C6 Glass 배경 strong — white α 변형 흡수 (strong=0.40 exact)
+  // 0.40 (exact), 0.45 (legacy strong → P1 α 정밀화), 0.50 (근접)
+  'rgba(255, 255, 255, 0.4)': 'var(--mg-glass-bg-strong)',
   'rgba(255, 255, 255, 0.45)': 'var(--mg-glass-bg-strong)',
+  'rgba(255, 255, 255, 0.5)': 'var(--mg-glass-bg-strong)',
+
+  // 그림자·오버레이 (black 기반) — D9 §C6 SAFE 케이스만 흡수
+  // 0.10 → shadow-light (D5 기존, dark cascade 부재로 변화 0)
+  // 0.15 → shadow-medium (D9 SSOT 정착 후 light=0.10 으로 α 정밀화 — LOW)
+  // 0.50 → overlay (D9 SSOT light=dark=0.50 정확 일치, 변화 0)
   'rgba(0, 0, 0, 0.1)': 'var(--mg-shadow-light)',
   'rgba(0, 0, 0, 0.15)': 'var(--mg-shadow-medium)',
   'rgba(0, 0, 0, 0.5)': 'var(--mg-overlay)',
+
+  // black α 0.20/0.30/0.40/0.60 변형은 의도적으로 누락 — glass-bg-* 다크 cascade
+  // 와 shadow-medium 다크 cascade 와 동일 hex 가 겹쳐 시맨틱 시프트 위험 케이스.
+  // 본 위임(P2-f) 제약 "시맨틱 시프트 위험 케이스 일괄 흡수 금지" 준수. D10 이월.
 
   // 2026 Q2 D5 P3 라운드 매핑 (SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D5_DIRECTION.md §3.3 — T-A 흡수)
   // 불투명 rgba 변형 1종 — 시각 등가 보장 (rgba(R,G,B,1) ≡ #RRGGBB) 의 안전 흡수.

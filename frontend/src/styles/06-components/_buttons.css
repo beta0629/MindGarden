@@ -35,7 +35,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, var(--mg-glass-bg-medium), transparent);
   transition: left 0.5s;
 }
 
@@ -55,7 +55,7 @@
 .mg-btn--primary {
   background: rgba(0, 123, 255, 0.8);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--mg-glass-bg-medium);
   box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
 }
 
@@ -68,7 +68,7 @@
 .mg-btn--secondary {
   background: rgba(248, 249, 250, 0.6);
   color: var(--ios-text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--mg-glass-bg-medium);
   box-shadow: 0 4px 15px var(--mg-shadow-light);
 }
 
@@ -82,7 +82,7 @@
 .mg-btn--success {
   background: rgba(52, 199, 89, 0.8);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--mg-glass-bg-medium);
   box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3);
 }
 
@@ -95,7 +95,7 @@
 .mg-btn--warning {
   background: rgba(255, 149, 0, 0.8);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--mg-glass-bg-medium);
   box-shadow: 0 4px 15px rgba(255, 149, 0, 0.3);
 }
 
@@ -108,7 +108,7 @@
 .mg-btn--danger {
   background: rgba(255, 59, 48, 0.8);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--mg-glass-bg-medium);
   box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
 }
 
@@ -121,7 +121,7 @@
 .mg-btn--info {
   background: rgba(88, 86, 214, 0.8);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--mg-glass-bg-medium);
   box-shadow: 0 4px 15px rgba(88, 86, 214, 0.3);
 }
 

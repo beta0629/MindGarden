@@ -376,17 +376,17 @@
   .session-management-sidebar,
   .session-management-main-panel {
     background: rgba(45, 45, 50, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--mg-glass-bg-light);
   }
   
   .session-management-list-item {
     background: rgba(45, 45, 50, 0.6);
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--mg-glass-bg-light);
   }
   
   .session-management-mapping-card {
     background: rgba(45, 45, 50, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--mg-glass-bg-light);
   }
 } */
 

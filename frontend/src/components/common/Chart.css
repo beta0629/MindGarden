@@ -205,7 +205,7 @@
 /* 차트 툴팁 커스터마이징 */
 .chartjs-tooltip {
   background: rgba(0, 0, 0, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--mg-glass-bg-light);
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-md);
   padding: var(--spacing-sm) var(--spacing-md);

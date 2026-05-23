@@ -511,7 +511,7 @@
 .service-icon {
   width: 56px;
   height: 56px;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--mg-glass-bg-medium);
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -645,25 +645,25 @@
 .hero-btn-primary {
   background: rgba(255, 255, 255, 0.95);
   color: var(--mg-primary-500);
-  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 20px var(--mg-glass-bg-medium);
 }
 
 .hero-btn-primary:hover {
   background: var(--mg-white);
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 30px var(--mg-glass-bg-strong);
 }
 
 .hero-btn-secondary {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--mg-glass-bg-medium);
   color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid var(--mg-glass-bg-medium);
   backdrop-filter: blur(10px);
 }
 
 .hero-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: var(--mg-glass-bg-medium);
+  border-color: var(--mg-glass-bg-strong);
   transform: translateY(-2px);
 }
 

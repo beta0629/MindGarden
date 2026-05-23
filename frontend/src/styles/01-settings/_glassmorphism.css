@@ -6,18 +6,18 @@
   /* 글래스모피즘 기본 변수 */
   --glass-bg-primary: var(--mg-glass-bg-light);
   --glass-bg-secondary: var(--mg-glass-bg-medium);
-  --glass-bg-tertiary: rgba(255, 255, 255, 0.15);
+  --glass-bg-tertiary: var(--mg-glass-bg-light);
   
   --glass-blur-sm: blur(10px);
   --glass-blur-md: blur(20px);
   --glass-blur-lg: blur(25px);
   
   --glass-border: rgba(255, 255, 255, 0.18);
-  --glass-border-light: rgba(255, 255, 255, 0.1);
-  --glass-border-strong: rgba(255, 255, 255, 0.3);
+  --glass-border-light: var(--mg-glass-bg-light);
+  --glass-border-strong: var(--mg-glass-bg-medium);
   
   --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-  --glass-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  --glass-shadow-inset: inset 0 1px 0 var(--mg-glass-bg-strong);
   --glass-shadow-hover: 0 20px 40px rgba(31, 38, 135, 0.5);
   
   --glass-radius-sm: 12px;

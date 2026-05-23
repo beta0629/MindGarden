@@ -354,7 +354,7 @@
 .mg-v2-spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid var(--mg-glass-bg-medium);
   border-top-color: var(--mg-color-white, var(--mg-white));
   border-radius: 50%;
   animation: mg-v2-spin 1s linear infinite;

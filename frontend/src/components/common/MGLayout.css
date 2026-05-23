@@ -43,9 +43,9 @@
 }
 
 .mg-section--glass {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--mg-glass-bg-light);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--mg-glass-bg-medium);
   border-radius: 24px;
   margin: 24px 0;
 }

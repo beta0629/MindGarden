@@ -55,7 +55,7 @@
 
 /* MGButton(.mg-button) 기본 variant보다 우선하도록 부모·복합 선택자 사용 */
 .simple-hamburger-menu .simple-hamburger-close.mg-button {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--mg-glass-bg-medium);
   border: none;
   font-size: var(--font-size-xl);
   color: white;
@@ -72,7 +72,7 @@
 }
 
 .simple-hamburger-menu .simple-hamburger-close.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--mg-glass-bg-medium);
   transform: scale(1.05);
 }
 

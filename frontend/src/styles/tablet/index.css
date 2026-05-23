@@ -1314,7 +1314,7 @@ html {
   display: inline-block;
   width: 20px;
   height: 20px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  border: 3px solid var(--mg-glass-bg-medium);
   border-radius: 50%;
   border-top-color: var(--mg-white);
   animation: spin 1s ease-in-out infinite;
@@ -1827,7 +1827,7 @@ html {
   display: inline-block;
   width: 20px;
   height: 20px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  border: 3px solid var(--mg-glass-bg-medium);
   border-radius: 50%;
   border-top-color: var(--mg-white);
   animation: spin 1s ease-in-out infinite;

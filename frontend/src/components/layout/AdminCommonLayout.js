@@ -78,14 +78,14 @@ const AdminCommonLayout = ({
               clientRewardEnabled
             });
           } else {
-            normalized = mergeShopAdminLnbItems(normalized, { adminShopCatalogEnabled });
+            normalized = mergeShopAdminLnbItems(normalized, { adminShopCatalogEnabled, userRole });
           }
           setLnbMenuItems(normalized);
         } else {
           setLnbMenuItems(
             userRole === USER_ROLES.CLIENT
               ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
-              : mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled })
+              : mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole })
           );
         }
       })
@@ -94,7 +94,7 @@ const AdminCommonLayout = ({
           setLnbMenuItems(
             userRole === USER_ROLES.CLIENT
               ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
-              : mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled })
+              : mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole })
           );
         }
       });

@@ -8,10 +8,40 @@
 import { getLnbIcon } from '../components/dashboard-v2/constants/lnbIconMap';
 import { ADMIN_ROUTES } from '../constants/adminRoutes';
 import { CLIENT_SHOP_ROUTES } from '../constants/clientShopConstants';
+import { LEGACY_USER_ROLES, USER_ROLES } from '../constants/roles';
 import { getDashboardPathByRole } from '../constants/session';
 
 const SHOP_ADMIN_LNB_GROUP_LABEL = '쇼핑·리워드';
 const CLIENT_SHOP_LNB_GROUP_LABEL = '온라인 쇼핑';
+
+const SHOP_ADMIN_LNB_ROLES = new Set([
+  USER_ROLES.ADMIN,
+  USER_ROLES.STAFF,
+  LEGACY_USER_ROLES.SUPER_ADMIN,
+  LEGACY_USER_ROLES.HQ_ADMIN,
+  LEGACY_USER_ROLES.HQ_MASTER,
+  LEGACY_USER_ROLES.SUPER_HQ_ADMIN,
+  LEGACY_USER_ROLES.BRANCH_ADMIN,
+  LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN,
+  LEGACY_USER_ROLES.TENANT_ADMIN
+]);
+
+/**
+ * 쇼핑·리워드 어드민 LNB 그룹 폴백 노출 허용 역할 여부.
+ *
+ * - DB·API 트리에 admin shop 경로가 없을 때 폴백으로 쇼핑·리워드 그룹을 끼워 넣는
+ *   `mergeShopAdminLnbItems` 의 안전 게이트.
+ * - CONSULTANT·CLIENT 등 비-admin 역할에서 그룹이 노출되는 운영 결함을 차단한다.
+ *
+ * @param {string|null|undefined} userRole 세션에서 내려온 역할 문자열
+ * @returns {boolean} 어드민 폴백 노출 허용 여부
+ */
+function isShopAdminLnbRole(userRole) {
+  if (typeof userRole !== 'string' || userRole.length === 0) {
+    return false;
+  }
+  return SHOP_ADMIN_LNB_ROLES.has(userRole.toUpperCase());
+}
 
 const CLIENT_SHOP_LNB_PATHS = new Set([
   CLIENT_SHOP_ROUTES.CATALOG,
@@ -148,13 +178,18 @@ export function mergeClientShopLnbItems(items, options = {}) {
 /**
  * DB LNB에 쇼핑·리워드 어드민 항목 보강 (Flyway 선행 배포 전에도 노출)
  * @param {Array} items
- * @param {{ adminShopCatalogEnabled?: boolean }} [options]
+ * @param {{ adminShopCatalogEnabled?: boolean, userRole?: string }} [options]
  *   - `adminShopCatalogEnabled`는 페이지/API 403 게이트용. LNB 보강 여부와 무관.
  *   - DB/API 트리에 shop 경로가 없을 때만 폴백 그룹 추가 (컴포넌트 off여도 노출).
+ *   - `userRole` 미전달 또는 비-admin 역할(CONSULTANT, CLIENT 등)은 폴백 삽입을 하지 않는다.
+ *     CONSULTANT LNB 에 어드민 쇼핑·리워드 그룹이 누출되는 운영 결함 방지(2026-05-23).
  * @returns {typeof items}
  */
 export function mergeShopAdminLnbItems(items, options = {}) {
   if (!Array.isArray(items)) {
+    return items;
+  }
+  if (!isShopAdminLnbRole(options.userRole)) {
     return items;
   }
   const shopPaths = new Set([

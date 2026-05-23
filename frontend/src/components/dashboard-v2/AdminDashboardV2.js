@@ -217,6 +217,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const { adminShopCatalogEnabled } = useTenantComponentFlags({
     enabled: Boolean(dashboardUser)
   });
+  const userRole = dashboardUser?.role;
 
   const [lnbMenuItems, setLnbMenuItems] = useState(null);
 
@@ -259,7 +260,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             normalizeLnbMenuItemsForDashboard(
               mergeShopAdminLnbItems(
                 mergeSupplementalAdminLnbItems(normalizeLnbTree(tree)),
-                { adminShopCatalogEnabled }
+                { adminShopCatalogEnabled, userRole }
               )
             )
           );
@@ -269,7 +270,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         if (!cancelled) setLnbMenuItems(DEFAULT_MENU_ITEMS);
       });
     return () => { cancelled = true; };
-  }, [normalizeLnbMenuItemsForDashboard, adminShopCatalogEnabled]);
+  }, [normalizeLnbMenuItemsForDashboard, adminShopCatalogEnabled, userRole]);
 
   const [userPermissions, setUserPermissions] = useState([]);
   const [stats, setStats] = useState({

@@ -81,7 +81,7 @@
 }
 
 .widget-config-modal-close:hover {
-  background: var(--mg-bg-hover, #f3f4f6);
+  background: var(--mg-color-bg-hover);
   color: var(--mg-text-primary, var(--mg-color-text-main));
 }
 

@@ -55,8 +55,8 @@
 }
 
 .mg-v2-badge-select__item--selected:hover:not(.mg-v2-badge-select__item--disabled) {
-  background-color: var(--mg-color-primary-light, #4A6354);
-  border-color: var(--mg-color-primary-light, #4A6354);
+  background-color: var(--mg-color-brand-olive-muted);
+  border-color: var(--mg-color-brand-olive-muted);
 }
 
 .mg-v2-badge-select__item:focus {
@@ -126,8 +126,8 @@
 }
 
 .mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-badge-select__item--selected:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-color-primary-light, #4a6354);
-  border-color: var(--mg-color-primary-light, #4a6354);
+  background-color: var(--mg-color-brand-olive-muted);
+  border-color: var(--mg-color-brand-olive-muted);
   color: var(--mg-color-text-on-primary, var(--mg-white));
   box-shadow: var(--cs-shadow-soft);
 }

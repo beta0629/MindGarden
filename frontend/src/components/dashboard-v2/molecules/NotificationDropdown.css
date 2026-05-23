@@ -118,7 +118,7 @@
 }
 
 .mg-v2-notification-list::-webkit-scrollbar-thumb:hover {
-  background: var(--mg-color-primary-light, #4A6354);
+  background: var(--mg-color-brand-olive-muted);
 }
 
 .mg-v2-notification-item {
@@ -160,7 +160,7 @@
   width: 32px;
   height: 32px;
   border-radius: 16px;
-  background-color: var(--mg-color-primary-light, #4A6354);
+  background-color: var(--mg-color-brand-olive-muted);
   display: flex;
   align-items: center;
   justify-content: center;

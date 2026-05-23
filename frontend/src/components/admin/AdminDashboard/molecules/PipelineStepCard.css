@@ -6,7 +6,7 @@
   flex-direction: column;
   gap: var(--mg-spacing-sm, 8px);
   padding: var(--mg-spacing-md, 12px);
-  background: var(--mg-pipeline-card-bg, #f8fafc);
+  background: var(--mg-color-background-main);
   border-radius: var(--ad-b0kla-radius-sm, 12px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   min-width: 140px;
@@ -14,7 +14,7 @@
 }
 
 .pipeline-step-card__icon {
-  color: var(--mg-pipeline-primary, #4b745c);
+  color: var(--mg-color-brand-olive-muted);
 }
 
 .pipeline-step-card__content {

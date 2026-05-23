@@ -361,7 +361,7 @@
 }
 
 .mg-text-tertiary {
-  color: var(--mg-text-tertiary, #666);
+  color: var(--mg-color-text-secondary);
 }
 
 .mg-text-secondary {
@@ -498,7 +498,7 @@
 .mg-role-management {
   margin-top: var(--mg-spacing-xs, 0.5rem);
   font-size: var(--mg-font-size-xs, 0.75rem);
-  color: var(--mg-text-tertiary, #666);
+  color: var(--mg-color-text-secondary);
 }
 
 .mg-role-management-summary {
@@ -532,7 +532,7 @@
 
 .mg-advanced-settings-summary {
   cursor: pointer;
-  color: var(--mg-text-tertiary, #666);
+  color: var(--mg-color-text-secondary);
   font-size: var(--mg-font-size-sm, 0.875rem);
   user-select: none;
   padding: var(--mg-spacing-xs, 0.5rem);

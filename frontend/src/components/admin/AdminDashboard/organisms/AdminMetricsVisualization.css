@@ -19,7 +19,7 @@
 
 .admin-metrics-visualization__placeholder {
   padding: var(--mg-spacing-md, 12px) var(--mg-layout-page-padding, 24px);
-  color: var(--mg-text-secondary, #64748b);
+  color: var(--mg-color-text-secondary);
   font-size: var(--mg-font-size-sm, 0.875rem);
 }
 

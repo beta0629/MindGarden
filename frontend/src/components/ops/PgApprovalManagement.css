@@ -85,7 +85,7 @@
 
 .filter-input:focus {
   outline: none;
-  border-color: var(--mg-primary, #4a90e2);
+  border-color: var(--mg-color-legacy-primary);
   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
 }
 
@@ -102,7 +102,7 @@
 
 .filter-select:focus {
   outline: none;
-  border-color: var(--mg-primary, #4a90e2);
+  border-color: var(--mg-color-legacy-primary);
 }
 
 /* 에러 알림 */
@@ -184,7 +184,7 @@
 
 .pg-approval-card:hover {
   box-shadow: 0 4px 12px var(--mg-shadow-light);
-  border-color: var(--mg-primary, #4a90e2);
+  border-color: var(--mg-color-legacy-primary);
 }
 
 .card-header {
@@ -482,7 +482,7 @@
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: var(--mg-primary, #4a90e2);
+  accent-color: var(--mg-color-legacy-primary);
 }
 
 .mg-form__group {
@@ -525,7 +525,7 @@
 
 .form-textarea:focus {
   outline: none;
-  border-color: var(--mg-primary, #4a90e2);
+  border-color: var(--mg-color-legacy-primary);
   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
 }
 
@@ -601,7 +601,7 @@
 }
 
 .detail-value--url a {
-  color: var(--mg-primary, #4a90e2);
+  color: var(--mg-color-legacy-primary);
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -684,7 +684,7 @@
 
 .key-copy-button {
   padding: 6px 12px;
-  background: var(--mg-primary, #4a90e2);
+  background: var(--mg-color-legacy-primary);
   color: white;
   border: none;
   border-radius: 6px;

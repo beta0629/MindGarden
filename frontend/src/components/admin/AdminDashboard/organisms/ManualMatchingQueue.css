@@ -22,7 +22,7 @@
 
 .manual-matching-queue__subtitle {
   font-size: 0.85rem;
-  color: var(--mg-text-secondary, #64748b);
+  color: var(--mg-color-text-secondary);
   margin: 0;
 }
 
@@ -34,6 +34,6 @@
 .manual-matching-queue__empty {
   padding: var(--mg-spacing-xl, 24px);
   text-align: center;
-  color: var(--mg-text-secondary, #64748b);
+  color: var(--mg-color-text-secondary);
   font-size: 0.9rem;
 }

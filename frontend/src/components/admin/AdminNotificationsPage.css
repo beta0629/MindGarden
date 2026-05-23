@@ -40,7 +40,7 @@
 }
 
 .mg-v2-ad-b0kla__section {
-  background: var(--mg-color-surface-main, #F5F3EF);
+  background: var(--mg-color-surface-main);
   border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   border-radius: 16px;
   padding: 24px;
@@ -110,7 +110,7 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  background: var(--mg-color-surface-main, #F5F3EF);
+  background: var(--mg-color-surface-main);
   border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   border-radius: 10px;
   padding: 16px 16px 16px 20px;

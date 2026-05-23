@@ -12,7 +12,7 @@
   
   /* 카테고리별 색상 (공통코드에서 조회 예정) */
   --widget-category-common-color: var(--mg-primary, var(--mg-primary-500));
-  --widget-category-common-bg: var(--mg-primary-light, #dbeafe);
+  --widget-category-common-bg: var(--mg-color-info-100);
   --widget-category-admin-color: var(--mg-purple, var(--mg-purple-500));
   --widget-category-admin-bg: var(--mg-purple-light, #ede9fe);
   --widget-category-consultation-color: var(--mg-amber, var(--mg-warning-500));

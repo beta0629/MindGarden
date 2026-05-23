@@ -29,12 +29,12 @@
 
 .match-queue-row__client-meta {
   font-size: 0.8rem;
-  color: var(--mg-text-secondary, #64748b);
+  color: var(--mg-color-text-secondary);
   margin-top: 2px;
 }
 
 .match-queue-row__arrow {
-  color: var(--mg-pipeline-primary, #4b745c);
+  color: var(--mg-color-brand-olive-muted);
   flex-shrink: 0;
 }
 

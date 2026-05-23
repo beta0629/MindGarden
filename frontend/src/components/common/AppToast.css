@@ -80,15 +80,15 @@
 }
 
 .app-toast__accent--success {
-  background: var(--mg-color-success, #81C784);
+  background: var(--mg-color-success);
 }
 
 .app-toast__accent--error {
-  background: var(--mg-color-error, #E57373);
+  background: var(--mg-color-error);
 }
 
 .app-toast__accent--info {
-  background: var(--mg-consultant-primary-light, #6B7F72);
+  background: var(--mg-color-brand-olive-muted);
 }
 
 /* 본문 */
@@ -105,15 +105,15 @@
 }
 
 .app-toast__icon--success {
-  color: var(--mg-color-success, #81C784);
+  color: var(--mg-color-success);
 }
 
 .app-toast__icon--error {
-  color: var(--mg-color-error, #E57373);
+  color: var(--mg-color-error);
 }
 
 .app-toast__icon--info {
-  color: var(--mg-consultant-primary-light, #6B7F72);
+  color: var(--mg-color-brand-olive-muted);
 }
 
 .app-toast__message {
@@ -155,15 +155,15 @@
 }
 
 .app-toast__progress-bar--success {
-  background: var(--mg-color-success, #81C784);
+  background: var(--mg-color-success);
 }
 
 .app-toast__progress-bar--error {
-  background: var(--mg-color-error, #E57373);
+  background: var(--mg-color-error);
 }
 
 .app-toast__progress-bar--info {
-  background: var(--mg-consultant-primary-light, #6B7F72);
+  background: var(--mg-color-brand-olive-muted);
 }
 
 @keyframes toast-progress {

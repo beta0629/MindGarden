@@ -91,7 +91,7 @@
   width: 48px;
   height: 48px;
   border-radius: 8px;
-  background: var(--mg-color-primary-light, #e3f2fd);
+  background: var(--mg-color-info-soft);
   color: var(--mg-color-primary, var(--mg-primary-500));
   margin-bottom: 0.75rem;
 }

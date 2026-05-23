@@ -160,7 +160,7 @@
 
 .mg-v2-input,
 .mg-v2-auth-form .mg-v2-form-input {
-  background-color: var(--mg-surface-primary, #F5F3EF);
+  background-color: var(--mg-color-surface-main);
   border: 1px solid var(--mg-border-color, var(--mg-color-border-main));
   border-radius: var(--mg-radius-md, 8px);
   padding: 14px 16px;
@@ -185,12 +185,12 @@
 
 .mg-v2-input:disabled,
 .mg-v2-auth-form .mg-v2-form-input:disabled {
-  background-color: var(--mg-surface-secondary, #EBE9E4);
+  background-color: var(--mg-color-background-secondary);
   cursor: not-allowed;
 }
 
 .mg-v2-select {
-  background-color: var(--mg-surface-primary, #F5F3EF);
+  background-color: var(--mg-color-surface-main);
   border: 1px solid var(--mg-border-color, var(--mg-color-border-main));
   border-radius: var(--mg-radius-md, 8px);
   padding: 14px 16px;
@@ -209,7 +209,7 @@
 }
 
 .mg-v2-select:disabled {
-  background-color: var(--mg-surface-secondary, #EBE9E4);
+  background-color: var(--mg-color-background-secondary);
   cursor: not-allowed;
 }
 
@@ -284,7 +284,7 @@
 }
 
 .mg-v2-button-primary:hover:not(:disabled) {
-  background-color: var(--mg-primary-light, #4F6B5A);
+  background-color: var(--mg-color-brand-olive-muted);
 }
 
 .mg-v2-button-primary:disabled {
@@ -394,7 +394,7 @@
 }
 
 .mg-v2-auth-hint {
-  background-color: var(--mg-surface-primary, #F5F3EF);
+  background-color: var(--mg-color-surface-main);
   border: 1px solid var(--mg-border-color, var(--mg-color-border-main));
   border-radius: var(--mg-radius-md, 8px);
   padding: 16px;

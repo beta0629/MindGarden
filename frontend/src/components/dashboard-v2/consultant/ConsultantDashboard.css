@@ -317,7 +317,7 @@
 .chart-bar {
   width: 100%;
   max-width: 32px;
-  background-color: var(--mg-v2-color-primary-100, #dbeafe);
+  background-color: var(--mg-color-info-100);
   border-radius: var(--mg-v2-radius-sm, 4px) var(--mg-v2-radius-sm, 4px) 0 0;
   transition: height 0.3s ease, background-color 0.2s ease;
   min-height: 4px;
@@ -392,7 +392,7 @@
 }
 
 .upcoming-schedule-item--highlighted:hover {
-  background-color: var(--mg-v2-color-primary-100, #dbeafe);
+  background-color: var(--mg-color-info-100);
 }
 
 /* MGButton: 다가오는 상담 행 레이아웃 유지 */
@@ -428,7 +428,7 @@
 }
 
 .upcoming-schedule-item--highlighted.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-v2-color-primary-100, #dbeafe);
+  background-color: var(--mg-color-info-100);
 }
 
 /* Upcoming Schedule Date */
@@ -519,7 +519,7 @@
 
 /* 1. 빠른 액션 바 (Quick Action Bar) */
 .mg-v2-quick-action-bar {
-  background: var(--mg-color-surface-main, #F5F3EF);
+  background: var(--mg-color-surface-main);
   border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   border-radius: 16px;
   padding: 20px 24px;
@@ -668,7 +668,7 @@
 
 /* 3. 다음 상담 준비 카드 (Next Consultation Card) */
 .mg-v2-next-consultation-card {
-  background: var(--mg-color-surface-main, #F5F3EF);
+  background: var(--mg-color-surface-main);
   border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   border-radius: 16px;
   padding: 24px;
@@ -800,7 +800,7 @@
 
 /* 4. 긴급 확인 필요 내담자 (Urgent Clients Section) */
 .mg-v2-urgent-clients-section {
-  background: var(--mg-color-surface-main, #F5F3EF);
+  background: var(--mg-color-surface-main);
   border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   border-radius: 16px;
   padding: 24px;

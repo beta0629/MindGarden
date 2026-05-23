@@ -29,7 +29,7 @@
 }
 
 .mg-v2-profile-trigger:hover {
-  background-color: var(--mg-color-surface-main, #F5F3EF);
+  background-color: var(--mg-color-surface-main);
 }
 
 .mg-v2-profile-trigger__name {
@@ -209,7 +209,7 @@
 }
 
 .mg-v2-profile-trigger.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-color-surface-main, #F5F3EF);
+  background-color: var(--mg-color-surface-main);
   color: inherit;
   transform: none;
   box-shadow: none;

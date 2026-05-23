@@ -403,7 +403,7 @@
 }
 
 .mg-v2-homepage-split-subtitle {
-  color: var(--mg-color-primary-light, #7A9082);
+  color: var(--mg-color-brand-olive-muted);
   font-size: var(--mg-font-size-sm, 0.875rem);
   font-weight: var(--mg-font-weight-bold, 700);
   margin-bottom: var(--mg-spacing-sm, 8px);

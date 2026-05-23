@@ -161,7 +161,7 @@
 }
 
 .detail-value--url a {
-  color: var(--mg-primary, #4a90e2);
+  color: var(--mg-color-legacy-primary);
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -248,7 +248,7 @@
 
 .key-copy-button {
   padding: 6px 12px;
-  background: var(--mg-primary, #4a90e2);
+  background: var(--mg-color-legacy-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -337,7 +337,7 @@
   padding: 16px;
   background: var(--mg-bg-secondary, var(--mg-gray-100));
   border-radius: 8px;
-  border-left: 3px solid var(--mg-primary, #4a90e2);
+  border-left: 3px solid var(--mg-color-legacy-primary);
 }
 
 .history-header {
@@ -541,12 +541,12 @@
 /* 포커스 스타일 개선 (접근성) */
 .detail-section:focus-within,
 .key-value:focus-within {
-  outline: 2px solid var(--mg-primary, #4a90e2);
+  outline: 2px solid var(--mg-color-legacy-primary);
   outline-offset: 2px;
 }
 
 .key-copy-button:focus {
-  outline: 2px solid var(--mg-primary, #4a90e2);
+  outline: 2px solid var(--mg-color-legacy-primary);
   outline-offset: 2px;
 }
 

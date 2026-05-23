@@ -282,7 +282,22 @@ const COLOR_MAPPING = {
   '#f8f9ff': 'var(--mg-color-info-bg)',
   '#F8F9FF': 'var(--mg-color-info-bg)',
   '#e53e3e': 'var(--mg-color-error-500)',
-  '#E53E3E': 'var(--mg-color-error-500)'
+  '#E53E3E': 'var(--mg-color-error-500)',
+
+  // 2026 Q2 D9 §C2 라운드 매핑 (SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md §2.1 + §4 C2)
+  // §C2 신설 2종 — 라이트·다크 cascade 정착 확인 (unified-design-tokens.css D9 §C2/§C3 블록):
+  //   --mg-color-legacy-primary    : light #4a90e2 / dark #60a5fa (Tailwind blue-400, 다크 4.9:1 PASS)
+  //   --mg-color-brand-olive-muted : light #4a6354 / dark #86a793 (brand-olive 변형, 양방향 5.x:1 PASS)
+  // R-2 폴백 위치(`var(--mg-primary, #4a90e2)` 등)는 R-2 보호 패턴에 의해 자동 제외되며,
+  // --r2-mg-alias-bc-replace 옵션을 통해서만 alias 대체된다. 본 매핑은 raw hex 직접 사용처
+  // (예: 인라인 hex / 다른 alias 의 fallback 외 사용) 흡수 + T-D 가드 lint 인입용이다.
+  // §C3 신설 1종 (--mg-color-bg-hover, light #f3f4f6) 은 #f3f4f6 이 D3 라운드에서 이미
+  // --mg-color-background-main 으로 매핑되어 있어 alias 충돌 회피를 위해 본 매핑에서 의도적 제외.
+  // bg-hover 토큰은 --r2-mg-alias-bc-replace 옵션의 SAFE_PAIRS 경로로만 alias 대체된다.
+  '#4a90e2': 'var(--mg-color-legacy-primary)',
+  '#4A90E2': 'var(--mg-color-legacy-primary)',
+  '#4a6354': 'var(--mg-color-brand-olive-muted)',
+  '#4A6354': 'var(--mg-color-brand-olive-muted)'
 };
 
 // RGB/RGBA 색상 매핑
@@ -392,8 +407,14 @@ const R2_MG_ALIAS_SAFE_PAIRS = [
 //   - Group C: mg-v2-* 색 패밀리 alias → 캐노니컬 패밀리 토큰 (라이트 hex 일치, 다크 cascade 정착)
 //
 // 본 화이트리스트에 없는 (token, hex) 쌍은 본 옵션 사용 시에도 절대 변환되지 않는다.
-// HOLD (시맨틱 시프트: border-light / primary-100 / 등) 및 manual-review (캐노니컬 매핑 부재)
+// HOLD (시맨틱 시프트: border-light / 등) 및 manual-review (캐노니컬 매핑 부재)
 // 케이스는 의도적으로 제외 — D10 또는 P1 디자이너 결정 대기.
+//
+// D9 P2-c 보강 (2026-05-23):
+//   `--mg-v2-color-primary-100` + `#dbeafe` (3건) 는 P2-a 시점에서 primary↔info
+//   패밀리 시프트로 HOLD 였으나, P1 §C3 결정으로 `--mg-primary-light` + `#dbeafe`
+//   → `--mg-color-info-100` 시맨틱 시프트가 SAFE 로 정착됨에 따라 일관성 차원에서
+//   본 위임에서도 함께 흡수 (P2-a 이월 통합).
 const R2_V2_ALIAS_SAFE_PAIRS = [
   // Group A: 동명 토큰 (success-50 ↔ success-50, 라이트 hex 정확 일치)
   // SSOT 정의: --mg-color-success-50 라이트 #f0fdf4 / 다크 #064e3b (다크 cascade 정착 효과)
@@ -409,7 +430,89 @@ const R2_V2_ALIAS_SAFE_PAIRS = [
   // Group C: 색 패밀리 alias (info-50 톤 → info-bg 시맨틱, 라이트 hex 정확 일치)
   // SSOT 정의: --mg-color-info-bg 라이트 #f0f9ff / 다크 #082f49 (다크 정착)
   // D8 PR-B 답습 `--mg-amber-light` → warning-bg 패턴
-  { tokenName: '--mg-v2-color-info-50', hex: '#f0f9ff', canonical: 'var(--mg-color-info-bg)' }
+  { tokenName: '--mg-v2-color-info-50', hex: '#f0f9ff', canonical: 'var(--mg-color-info-bg)' },
+
+  // D9 P2-c 보강 — P2-a HOLD 이월: primary↔info 패밀리 시프트
+  // SSOT 정의: --mg-color-info-100 라이트 #dbeafe / 다크 #1e3a8a (다크 cascade 정착 효과)
+  // P1 §C3 결정 (--mg-primary-light + #dbeafe → --mg-color-info-100) 과 동일 라인.
+  // 라이트 hex 정확 일치 (시각 변화 0), 다크 cascade 정착 효과 (#dbeafe → #1e3a8a)
+  { tokenName: '--mg-v2-color-primary-100', hex: '#dbeafe', canonical: 'var(--mg-color-info-100)' }
+];
+
+// ── D9 P2-b + P2-c: R-2 mg-* 폴백 alias 대체 SAFE_PAIRS 화이트리스트 (BC) ───────
+// SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md §2.1·§2.2 + §4 C2·C3 결정
+// 본 화이트리스트는 `--r2-mg-alias-bc-replace` 옵션이 명시될 때에만 사용된다.
+// 옵션 미지정 시 D8 PR-B 단계 1·D9 P2-a 동작은 100% 유지된다 (기존 코드 경로 무수정).
+//
+// 분류 기준 (P1 디자이너 핸드오프 §2.1·§2.2 결정표 정확 인용):
+//   - Group N (NEW): 시각적 보존을 위해 신설된 토큰으로 흡수
+//                    (`legacy-primary` / `brand-olive-muted` / `bg-hover` — 라이트 hex 정확 일치)
+//   - Group A (polyfill-only): 캐노니컬 토큰명이 legacy 와 동일 → 폴백만 제거 (시각 변화 0)
+//   - Group B (tone-shift): P1 명시 endorsed 톤/패밀리 시프트
+//   - Group C (closest-canonical): 라이트 hex 일치 또는 ΔE 작은 변화로 가장 근접한 캐노니컬 흡수
+//
+// 본 화이트리스트에 없는 (token, hex) 쌍은 본 옵션 사용 시에도 절대 변환되지 않는다.
+// HOLD (manual-review 12쌍 — custom-*, danger-dark, purple-* 등): D10 또는 P1 디자이너 재컨펌 대기.
+const R2_MG_ALIAS_BC_SAFE_PAIRS = [
+  // Group N (NEW token 흡수, P1 §C2/§C3 신설 결정)
+  // --mg-color-legacy-primary 라이트 #4a90e2 / 다크 #60a5fa (Tailwind blue-400)
+  { tokenName: '--mg-primary', hex: '#4a90e2', canonical: 'var(--mg-color-legacy-primary)' },
+  // --mg-color-brand-olive-muted 라이트 #4a6354 / 다크 #86a793
+  { tokenName: '--mg-color-primary-light', hex: '#4a6354', canonical: 'var(--mg-color-brand-olive-muted)' },
+  { tokenName: '--mg-primary-light', hex: '#4a6354', canonical: 'var(--mg-color-brand-olive-muted)' },
+  // --mg-color-bg-hover 라이트 #f3f4f6 / 다크 #374151 (Tailwind gray-700)
+  { tokenName: '--mg-bg-hover', hex: '#f3f4f6', canonical: 'var(--mg-color-bg-hover)' },
+
+  // Group A (polyfill-only, 시각 변화 0)
+  // SSOT --mg-color-surface-main 라이트 #F5F3EF / 다크 #262626 (case-insensitive 매칭)
+  { tokenName: '--mg-color-surface-main', hex: '#f5f3ef', canonical: 'var(--mg-color-surface-main)' },
+  // SSOT --mg-color-success 라이트 #059669 (fallback #81c784 다르지만 SSOT 정의 시 fallback 미사용)
+  { tokenName: '--mg-color-success', hex: '#81c784', canonical: 'var(--mg-color-success)' },
+  // SSOT --mg-color-error 라이트 #E57373 (case-insensitive 매칭)
+  { tokenName: '--mg-color-error', hex: '#e57373', canonical: 'var(--mg-color-error)' },
+
+  // Group B (P1 명시 endorsed 톤/패밀리 시프트, P1 §C2/§C3 결정표 원문 인용)
+  // P1 §C2: --mg-surface-primary + #f5f3ef → --mg-color-surface-main (표면 시맨틱 중복 정리)
+  { tokenName: '--mg-surface-primary', hex: '#f5f3ef', canonical: 'var(--mg-color-surface-main)' },
+  // P1 §C2: --mg-text-secondary + #64748b → --mg-color-text-secondary (Tailwind slate-500 → 캐노니컬)
+  //         SSOT 라이트 #5C6B61 (브랜드 olive-gray), 라이트 톤 시프트 인지 (가독성 유지)
+  { tokenName: '--mg-text-secondary', hex: '#64748b', canonical: 'var(--mg-color-text-secondary)' },
+  // P1 §C2: --mg-primary-light + #4f6b5a → --mg-color-brand-olive-muted (brand-olive 변형 통합)
+  //         hex 시프트 #4f6b5a → #4a6354 (ΔE 작은 olive 변형)
+  { tokenName: '--mg-primary-light', hex: '#4f6b5a', canonical: 'var(--mg-color-brand-olive-muted)' },
+  // P1 §C2: --mg-consultant-primary-light + #6b7f72 → --mg-color-brand-olive-muted (도메인 alias 통합)
+  //         hex 시프트 #6b7f72 → #4a6354 (brand-olive 패밀리)
+  { tokenName: '--mg-consultant-primary-light', hex: '#6b7f72', canonical: 'var(--mg-color-brand-olive-muted)' },
+  // P1 §C2: --mg-pipeline-primary + #4b745c → --mg-color-brand-olive-muted (도메인 alias 통합)
+  //         hex 시프트 #4b745c → #4a6354 (brand-olive 패밀리)
+  { tokenName: '--mg-pipeline-primary', hex: '#4b745c', canonical: 'var(--mg-color-brand-olive-muted)' },
+
+  // P1 §C3: --mg-text-tertiary + #666 → --mg-color-text-secondary (tier 시프트 허용)
+  //         tertiary → secondary tier 흡수, P1 결정
+  { tokenName: '--mg-text-tertiary', hex: '#666', canonical: 'var(--mg-color-text-secondary)' },
+  // P1 §C3: --mg-primary-light + #dbeafe → --mg-color-info-100 (info 패밀리 시프트 허용)
+  //         SSOT 라이트 #dbeafe 정확 일치, 다크 cascade #1e3a8a 정착
+  { tokenName: '--mg-primary-light', hex: '#dbeafe', canonical: 'var(--mg-color-info-100)' },
+  // P1 §C3: --mg-pipeline-card-bg + #f8fafc → --mg-color-background-main (generic bg 통합)
+  //         hex 시프트 #f8fafc → #faf9f7 (warm bg 톤 시프트, P1 endorsed)
+  { tokenName: '--mg-pipeline-card-bg', hex: '#f8fafc', canonical: 'var(--mg-color-background-main)' },
+  // P1 §C3: --mg-gray-light + #f3f4f6 → --mg-color-background-main (semantic surface 통합)
+  //         hex 시프트 #f3f4f6 → #faf9f7 (warm bg 톤, P1 endorsed)
+  { tokenName: '--mg-gray-light', hex: '#f3f4f6', canonical: 'var(--mg-color-background-main)' },
+  // P1 §C3: --mg-color-primary-light + #e3f2fd → --mg-color-info-soft (info 패밀리 통합)
+  //         SSOT 라이트 #e3f2fd 정확 일치, 다크 cascade #1e3a8a 정착
+  { tokenName: '--mg-color-primary-light', hex: '#e3f2fd', canonical: 'var(--mg-color-info-soft)' },
+  // P1 §C3: --mg-gray-100 + #f3f4f6 → --mg-color-background-main (semantic surface 통합)
+  //         hex 시프트 #f3f4f6 → #faf9f7 (warm bg 톤, P1 endorsed)
+  { tokenName: '--mg-gray-100', hex: '#f3f4f6', canonical: 'var(--mg-color-background-main)' },
+
+  // Group C (closest-canonical, P1 §C2 "기타 18쌍" 라인 중 ΔE 작은 케이스 흡수)
+  // --mg-layout-main-bg-end + #f2ede8 → --mg-color-background-muted (SSOT 라이트 #F2EDE8 정확 일치)
+  { tokenName: '--mg-layout-main-bg-end', hex: '#f2ede8', canonical: 'var(--mg-color-background-muted)' },
+  // --mg-surface-secondary + #ebe9e4 → --mg-color-background-secondary (SSOT 라이트 #EBE6E0, ΔE 작음)
+  { tokenName: '--mg-surface-secondary', hex: '#ebe9e4', canonical: 'var(--mg-color-background-secondary)' },
+  // --mg-color-primary-light + #7a9082 → --mg-color-brand-olive-muted (brand-olive 변형, ΔE 작음)
+  { tokenName: '--mg-color-primary-light', hex: '#7a9082', canonical: 'var(--mg-color-brand-olive-muted)' }
 ];
 
 function escapeRegexLiteral(s) {
@@ -465,6 +568,8 @@ class HardcodedColorConverter {
       criticalOnly: options.criticalOnly || false,
       target: options.target || null,
       r2MgAliasReplace: options.r2MgAliasReplace || false,
+      r2MgAliasBcReplace: options.r2MgAliasBcReplace || false,
+      r2V2AliasReplace: options.r2V2AliasReplace || false,
       ...options
     };
 
@@ -490,7 +595,11 @@ class HardcodedColorConverter {
       // D9 P2-a: R-2 mg-v2-* 폴백 alias 대체 통계.
       // 본 옵션(`--r2-v2-alias-replace`) 사용 시 SAFE_PAIRS 화이트리스트로 치환된 쌍별 카운트.
       r2V2AliasReplaced: 0,
-      r2V2AliasPairCounts: {}
+      r2V2AliasPairCounts: {},
+      // D9 P2-b + P2-c: R-2 mg-* 폴백 BC SAFE_PAIRS alias 대체 통계.
+      // 본 옵션(`--r2-mg-alias-bc-replace`) 사용 시 R2_MG_ALIAS_BC_SAFE_PAIRS 로 치환된 쌍별 카운트.
+      r2MgAliasBcReplaced: 0,
+      r2MgAliasBcPairCounts: {}
     };
   }
 
@@ -681,6 +790,30 @@ class HardcodedColorConverter {
         }
       }
 
+      // ── 0단계-bc (D9 P2-b + P2-c): R-2 mg-* 폴백 BC SAFE_PAIRS alias 대체 ─────
+      // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md §2.1·§2.2 + §4 C2·C3
+      // `--r2-mg-alias-bc-replace` 옵션이 지정된 경우에만 R2_MG_ALIAS_BC_SAFE_PAIRS
+      // 화이트리스트로 `var(--mg-*, #hex)` → `var(--mg-color-*)` 일괄 치환을 수행한다.
+      // 본 단계도 1단계(R-2 placeholder)보다 먼저 실행되어 원문 패턴 매칭 가능.
+      // D8 PR-B 단계 1 / D9 P2-a 답습 패턴 (옵션 분리로 단계적 흡수, 광역 위험 격리).
+      if (this.options.r2MgAliasBcReplace) {
+        for (const pair of R2_MG_ALIAS_BC_SAFE_PAIRS) {
+          const regex = buildSafePairRegex(pair.tokenName, pair.hex);
+          const matches = modifiedContent.match(regex);
+          if (matches && matches.length > 0) {
+            modifiedContent = modifiedContent.replace(regex, pair.canonical);
+            changeCount += matches.length;
+            this.stats.r2MgAliasBcReplaced += matches.length;
+            const pairKey = `${pair.tokenName}|${pair.hex}`;
+            this.stats.r2MgAliasBcPairCounts[pairKey] =
+              (this.stats.r2MgAliasBcPairCounts[pairKey] || 0) + matches.length;
+            if (this.options.verbose) {
+              console.log(`  🔁 R-2 mg-* BC alias 대체: var(${pair.tokenName}, ${pair.hex}) → ${pair.canonical} (${matches.length}개, ${filePath})`);
+            }
+          }
+        }
+      }
+
       // ── 1단계 (R-2): var(--token, #hex) 폴백 보호 ─────────────────────────────
       // 매핑 적용 전에 폴백 hex 위치를 placeholder 로 임시 치환하여
       // `var(--cs-error-600, #dc2626)` → `var(--cs-error-600, var(--mg-color-error))`
@@ -838,6 +971,9 @@ class HardcodedColorConverter {
     if (this.options.r2V2AliasReplace) {
       console.log(`🔁 R-2 mg-v2-* alias 대체: ${this.stats.r2V2AliasReplaced}건`);
     }
+    if (this.options.r2MgAliasBcReplace) {
+      console.log(`🔁 R-2 mg-* BC alias 대체: ${this.stats.r2MgAliasBcReplaced}건`);
+    }
     console.log(`❌ 오류 발생: ${this.stats.errors.length}개`);
 
     if (this.options.r2MgAliasReplace && this.stats.r2MgAliasReplaced > 0) {
@@ -852,6 +988,15 @@ class HardcodedColorConverter {
     if (this.options.r2V2AliasReplace && this.stats.r2V2AliasReplaced > 0) {
       const aliasPairs = Object.entries(this.stats.r2V2AliasPairCounts).sort((a, b) => b[1] - a[1]);
       console.log('\n🔁 R-2 mg-v2-* alias 대체 — 쌍별 분포:');
+      aliasPairs.forEach(([key, count]) => {
+        const [token, hex] = key.split('|');
+        console.log(`  - var(${token}, ${hex}): ${count}건`);
+      });
+    }
+
+    if (this.options.r2MgAliasBcReplace && this.stats.r2MgAliasBcReplaced > 0) {
+      const aliasPairs = Object.entries(this.stats.r2MgAliasBcPairCounts).sort((a, b) => b[1] - a[1]);
+      console.log('\n🔁 R-2 mg-* BC alias 대체 — 쌍별 분포:');
       aliasPairs.forEach(([key, count]) => {
         const [token, hex] = key.split('|');
         console.log(`  - var(${token}, ${hex}): ${count}건`);
@@ -1094,6 +1239,12 @@ function parseArgs() {
       // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md §2.1 + §4 C1=b.
       // R-2 보호는 그대로 유지되며, 본 옵션이 명시될 때에만 R2_V2_ALIAS_SAFE_PAIRS 가 우선 적용된다.
       options.r2V2AliasReplace = true;
+    } else if (arg === '--r2-mg-alias-bc-replace') {
+      // D9 P2-b + P2-c: R-2 mg-* 폴백 BC SAFE_PAIRS 화이트리스트 alias 대체.
+      // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md §2.1·§2.2 + §4 C2·C3.
+      // R-2 보호 / D8 PR-B / D9 P2-a 동작은 그대로 유지되며, 본 옵션이 명시될 때에만
+      // R2_MG_ALIAS_BC_SAFE_PAIRS 가 우선 적용된다 (단계적 흡수, 광역 위험 격리).
+      options.r2MgAliasBcReplace = true;
     }
   }
 
@@ -1217,8 +1368,18 @@ if (require.main === module) {
     '                            alias 대체 활성화. SSOT: docs/standards/',
     '                            DESIGN_TOKEN_GAP_2026Q2_D9.md §2.1 + §4 C1=b.',
     '                            화이트리스트는 본 파일의 R2_V2_ALIAS_SAFE_PAIRS 참조.',
-    '                            HOLD (border-light·primary-100) / manual-review 케이스는',
+    '                            HOLD (border-light) / manual-review 케이스는',
     '                            본 옵션에서도 변환되지 않음 (D10 또는 P1 결정 대기).',
+    '                            D9 P2-c 보강: primary-100 + #dbeafe (3건) 추가 흡수.',
+    '  --r2-mg-alias-bc-replace  [D9 P2-b + P2-c] R-2 mg-* 폴백 BC SAFE_PAIRS',
+    '                            화이트리스트 alias 대체 활성화 (T-R2-manual + T-R2-hold).',
+    '                            SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md',
+    '                            §2.1·§2.2 + §4 C2·C3. 화이트리스트는 본 파일의',
+    '                            R2_MG_ALIAS_BC_SAFE_PAIRS 참조 (Group N/A/B/C 21쌍).',
+    '                            신설 3종 (legacy-primary / brand-olive-muted /',
+    '                            bg-hover) 흡수 + P1 §C2/§C3 endorsed 통합 매핑.',
+    '                            manual-review HOLD (custom-*, danger-dark, purple-*',
+    '                            등) 케이스는 본 옵션에서도 변환되지 않음.',
     '  --help, -h                도움말 출력',
     '',
     '예시 (영역 목록 파일):',

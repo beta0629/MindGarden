@@ -89,7 +89,7 @@
 
 .filter-select:focus {
   outline: none;
-  border-color: var(--mg-primary, #4a90e2);
+  border-color: var(--mg-color-legacy-primary);
 }
 
 /* 에러 알림 */
@@ -171,7 +171,7 @@
 
 .pg-config-card:hover {
   box-shadow: 0 4px 12px var(--mg-shadow-light);
-  border-color: var(--mg-primary, #4a90e2);
+  border-color: var(--mg-color-legacy-primary);
 }
 
 .card-header {
@@ -362,7 +362,7 @@
 .search-input:focus,
 .filter-select:focus,
 .pg-config-card:focus-within {
-  outline: 2px solid var(--mg-primary, #4a90e2);
+  outline: 2px solid var(--mg-color-legacy-primary);
   outline-offset: 2px;
 }
 

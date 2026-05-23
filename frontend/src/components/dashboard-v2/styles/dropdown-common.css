@@ -36,7 +36,7 @@
 .mg-v2-notification-dropdown__panel {
   position: fixed;
   /* top, left, right는 useDropdownPosition 훅에서 인라인으로 설정 */
-  background-color: var(--mg-color-surface-main, #F5F3EF);
+  background-color: var(--mg-color-surface-main);
   border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);

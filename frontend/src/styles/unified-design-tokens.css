@@ -1618,6 +1618,50 @@
   --mg-color-warning-800: #fde68a;     /* Tailwind amber-200 톤, on warning-100 다크 12.1:1 PASS */
 }
 
+/* ========================================
+   2026 Q2 D9 §C2·§C3 (T-R2-manual + T-R2-hold 신설 3종)
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md §2.1·§2.2 + §4 C2·C3,
+        docs/project-management/2026-05-23/D9_P1_DESIGN_HANDOFF.md §2.1·§2.2·§3.
+   배경:
+   - §C2 (T-R2-manual 77건): manual-review 흡수를 위해 시각적 보존이 필수적인
+     2종 신설 + 나머지 캐노니컬 흡수.
+     - `--mg-color-legacy-primary`: 구 primary blue `#4a90e2` 보존
+       (admin/ops/landing 광역 사용, --mg-primary 15건 흡수 대상).
+     - `--mg-color-brand-olive-muted`: brand-olive 변형 `#4a6354` 보존
+       (consultant/pipeline 도메인 대시보드, --mg-color-primary-light /
+        --mg-primary-light / --mg-consultant-primary-light / --mg-pipeline-primary
+        합산 약 18건 흡수 대상).
+   - §C3 (T-R2-hold 13건): hover 상태 시맨틱 분리를 위해 1종 신설.
+     - `--mg-color-bg-hover`: hover 상태 분리 `#f3f4f6` 라이트 / `#374151` 다크.
+       (--mg-bg-hover 4건 흡수 대상, 테이블/카드/리스트 hover 상태)
+   WCAG AA 대비비 검증 (P1 §3 인용):
+     - legacy-primary    : light #4a90e2 (3.03:1, Large Text 통과) / dark #60a5fa (4.9:1 PASS)
+     - brand-olive-muted : light #4a6354 (5.4:1 PASS) / dark #86a793 (5.2:1 PASS)
+     - bg-hover          : 비-텍스트 토큰 (배경 상태 토큰, 대비 검증 제외)
+   다크 hex 결정 근거 (P1 §2.1·§2.2 hex 결정표 원문 인용):
+     - legacy-primary    dark `#60a5fa` (Tailwind blue-400, 다크 가시성 보강)
+     - brand-olive-muted dark `#86a793` (mg-warm-gray 호환 olive 밝힘)
+     - bg-hover          dark `#374151` (Tailwind gray-700, 다크 hover 표면 대비)
+   ======================================== */
+
+:root {
+  /* D9 §C2 legacy primary blue 보존 — #4a90e2 (admin/ops/landing 광역) */
+  --mg-color-legacy-primary: #4a90e2;
+  /* D9 §C2 brand olive muted — #4a6354 (consultant/pipeline 도메인 대시보드) */
+  --mg-color-brand-olive-muted: #4a6354;
+  /* D9 §C3 hover 상태 시맨틱 분리 — #f3f4f6 (테이블/카드/리스트 hover) */
+  --mg-color-bg-hover: #f3f4f6;
+}
+
+:root[data-theme="dark"] {
+  /* D9 §C2 다크 legacy primary — #60a5fa (Tailwind blue-400, 다크 4.9:1 PASS) */
+  --mg-color-legacy-primary: #60a5fa;
+  /* D9 §C2 다크 brand olive muted — #86a793 (mg-warm-gray 호환 olive 밝힘, 다크 5.2:1 PASS) */
+  --mg-color-brand-olive-muted: #86a793;
+  /* D9 §C3 다크 hover 상태 — #374151 (Tailwind gray-700) */
+  --mg-color-bg-hover: #374151;
+}
+
 /* ===== 테넌트별 브랜딩 오버라이드 ===== */
 /* 특정 테넌트에 대한 브랜딩 커스터마이징 */
 

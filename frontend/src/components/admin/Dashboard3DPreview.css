@@ -75,7 +75,7 @@
 }
 
 .preview-control-btn:hover {
-  background: var(--mg-bg-hover, #f3f4f6);
+  background: var(--mg-color-bg-hover);
   border-color: var(--mg-primary, var(--mg-primary-500));
   color: var(--mg-primary, var(--mg-primary-500));
 }

@@ -228,7 +228,7 @@
 }
 
 .badge-default {
-  background: var(--mg-primary-light, #dbeafe);
+  background: var(--mg-color-info-100);
   color: var(--mg-primary, var(--mg-primary-500));
 }
 
@@ -238,7 +238,7 @@
 }
 
 .badge-inactive {
-  background: var(--mg-gray-light, #f3f4f6);
+  background: var(--mg-color-background-main);
   color: var(--mg-text-secondary, var(--mg-color-text-secondary));
 }
 

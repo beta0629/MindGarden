@@ -260,7 +260,7 @@ export const AudioRecorder = ({
                     barHeight = (dataArray[i] / 255) * HEIGHT * 0.8;
 
                     const gradient = canvasCtx.createLinearGradient(0, HEIGHT - barHeight, 0, HEIGHT);
-                    gradient.addColorStop(0, '#4a90e2');
+                    gradient.addColorStop(0, 'var(--mg-color-legacy-primary)');
                     gradient.addColorStop(1, 'var(--mg-color-info)');
 
                     canvasCtx.fillStyle = gradient;

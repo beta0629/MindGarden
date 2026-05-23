@@ -34,7 +34,8 @@ import lombok.experimental.SuperBuilder;
     },
     indexes = {
         @Index(name = "idx_nbsl_tenant_sent", columnList = "tenant_id, sent_at"),
-        @Index(name = "idx_nbsl_tenant_template", columnList = "tenant_id, template_code")
+        @Index(name = "idx_nbsl_tenant_template", columnList = "tenant_id, template_code"),
+        @Index(name = "idx_nbsl_created_at", columnList = "created_at")
     })
 @Getter
 @Setter

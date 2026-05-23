@@ -3,6 +3,7 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import { normalizeApiObjectPayload } from '../../utils/apiResponseNormalize';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
+import UnifiedLoading from './UnifiedLoading';
 import './HealingCard.css';
 import { USER_ROLES } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
@@ -91,10 +92,12 @@ const HealingCard = ({ userRole = USER_ROLES.CLIENT, category = null }) => {
             <div className="healing-card-wrapper">
                 <div className="mg-card">
                     <div className="mg-card__content">
-                        <div className="mg-loading">
-                            <div className="mg-spinner" />
-                            <p>힐링 컨텐츠를 불러오는 중...</p>
-                        </div>
+                        <UnifiedLoading
+                            variant="spinner"
+                            size="md"
+                            type="inline"
+                            text="힐링 컨텐츠를 불러오는 중..."
+                        />
                     </div>
                 </div>
             </div>

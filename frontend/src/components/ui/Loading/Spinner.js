@@ -1,39 +1,30 @@
 /**
- * Core Solution 디자인 시스템 v2.0 - Spinner Component
-/**
- * 
-/**
- * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.2)
-/**
- * @reference /design-system (LoadingShowcase)
+ * Spinner — UnifiedLoading SSOT 위임 래퍼
+ *
+ * 기존 API(size: small/medium/large)를 유지하면서 내부적으로 UnifiedLoading의
+ * jitter-free 스피너를 그대로 사용한다. 새 코드는 UnifiedLoading을 직접 임포트하는 것을 권장한다.
+ *
+ * @param {Object} props
+ * @param {('xs'|'sm'|'md'|'lg'|'xl'|'small'|'medium'|'large')} [props.size='md']
+ * @param {string} [props.className='']
+ *
+ * @author Core Solution
+ * @since 2026-05-23
  */
 
 import React from 'react';
+import UnifiedLoading from '../../common/UnifiedLoading';
 
-/**
- * 회전 로딩 스피너 컴포넌트
-/**
- * 
-/**
- * @param {Object} props
-/**
- * @param {string} [props.size='medium'] - 크기 ('small'|'medium'|'large')
-/**
- * @param {string} [props.className=''] - 추가 CSS 클래스
-/**
- * 
-/**
- * @example
-/**
- * <Spinner size="large" />
- */
-const Spinner = ({ size = 'medium', className = '' }) => {
-  const sizeClass = size !== 'medium' ? `mg-spinner-${size}` : '';
-  
-  return (
-    <div className={`mg-spinner ${sizeClass} ${className}`.trim()} />
-  );
-};
+const Spinner = ({ size = 'md', className = '' }) => (
+  <UnifiedLoading
+    variant="spinner"
+    size={size}
+    type="inline"
+    inline
+    showText={false}
+    className={className}
+    label="로딩 중"
+  />
+);
 
 export default Spinner;
-

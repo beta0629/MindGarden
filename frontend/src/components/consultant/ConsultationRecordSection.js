@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useTranslation } from 'react-i18next';
 
 const ConsultationRecordSection = ({ consultantId }) => {
@@ -69,10 +69,12 @@ const ConsultationRecordSection = ({ consultantId }) => {
         <div className="mg-v2-card-header">
           <h3 className="mg-h4 mg-mb-0">📝 상담일지</h3>
         </div>
-        <div className="mg-loading-container">
-          <div className="mg-spinner" />
-          <p>상담일지 정보를 불러오는 중...</p>
-        </div>
+        <UnifiedLoading
+          variant="spinner"
+          size="md"
+          type="inline"
+          text="상담일지 정보를 불러오는 중..."
+        />
       </div>
     );
   }

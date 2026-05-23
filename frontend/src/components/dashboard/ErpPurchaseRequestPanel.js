@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
+import UnifiedLoading from '../common/UnifiedLoading';
 import './ErpPurchaseRequestPanel.css';
 import { useTranslation } from 'react-i18next';
 const ErpPurchaseRequestPanel = ({ user }) => {
@@ -91,10 +92,12 @@ const ErpPurchaseRequestPanel = ({ user }) => {
       {/* 아코디언 바디 */}
       {isExpanded && (
         <div className="mg-card-body">{isLoading ? (
-          <div className="mg-loading-container">
-            <div className="mg-spinner" />
-            <p>데이터 로딩 중...</p>
-          </div>
+          <UnifiedLoading
+            variant="spinner"
+            size="md"
+            type="inline"
+            text="데이터 로딩 중..."
+          />
         ) : (
           <>
             {/* 통계 카드 */}

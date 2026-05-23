@@ -29,6 +29,7 @@ import React from 'react';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import UnifiedLoading from '../../common/UnifiedLoading';
 import './DashboardWidgetManager.css';
 const DashboardWidgetManagerPresentation = ({
   // 데이터
@@ -47,10 +48,13 @@ const DashboardWidgetManagerPresentation = ({
   // 로딩 상태
   if (loading) {
     return (
-      <div className="mg-widget-manager-loading">
-        <div className="mg-spinner" />
-        <p>위젯 목록을 불러오는 중...</p>
-      </div>
+      <UnifiedLoading
+        variant="spinner"
+        size="md"
+        type="inline"
+        text="위젯 목록을 불러오는 중..."
+        className="mg-widget-manager-loading"
+      />
     );
   }
   

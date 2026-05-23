@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { API_BASE_URL, RATING_API } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
+import UnifiedLoading from '../common/UnifiedLoading';
 
 /**
  * 상담사용 평가 표시 컴포넌트
@@ -64,10 +65,12 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
         return (
             <div className="mg-v2-card">
                 <div className="mg-v2-card-body">
-                    <div className="mg-loading-container">
-                        <div className="mg-spinner" />
-                        <p>평가 통계를 불러오는 중...</p>
-                    </div>
+                    <UnifiedLoading
+                        variant="spinner"
+                        size="md"
+                        type="inline"
+                        text="평가 통계를 불러오는 중..."
+                    />
                 </div>
             </div>
         );

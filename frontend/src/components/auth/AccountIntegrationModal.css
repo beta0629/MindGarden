@@ -191,14 +191,14 @@
 }
 
 .success-icon svg {
-    color: #16a34a;
+    color: var(--mg-color-success-600);
     font-size: var(--font-size-xxxl);
 }
 
 .success-message h4 {
     margin: 0 0 12px 0;
     font-size: var(--font-size-xl);
-    color: #16a34a;
+    color: var(--mg-color-success-600);
 }
 
 .success-message p {

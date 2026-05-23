@@ -23,7 +23,7 @@
 /* 성공 메시지 */
 .success-message {
     background: #DCFCE7;
-    color: #16A34A;
+    color: var(--mg-color-success-600);
     padding: 1rem;
     border-radius: 0.5rem;
     margin-bottom: 1rem;

@@ -13,8 +13,8 @@
 .consultant-dashboard-tenant-alert {
   margin-bottom: var(--mg-v2-spacing-md, 16px);
   padding: var(--mg-v2-spacing-md, 12px) var(--mg-v2-spacing-lg, 16px);
-  background-color: var(--mg-v2-color-warning-50, #fffbeb);
-  border: 1px solid var(--mg-v2-color-warning-200, #fde68a);
+  background-color: var(--mg-color-warning-50);
+  border: 1px solid var(--mg-color-warning-200);
   border-radius: var(--mg-v2-radius-md, 8px);
   color: var(--mg-color-text-main);
   font-size: var(--mg-v2-font-size-sm, 0.9375rem);
@@ -54,23 +54,23 @@
 }
 
 .stat-icon-wrapper.primary {
-  background-color: var(--mg-v2-color-primary-50, #eff6ff);
+  background-color: var(--mg-color-primary-50);
   color: var(--mg-v2-color-primary-600, var(--mg-color-info));
 }
 
 .stat-icon-wrapper.success {
   background-color: var(--mg-color-success-50);
-  color: var(--mg-v2-color-success-600, #16a34a);
+  color: var(--mg-color-success-600);
 }
 
 .stat-icon-wrapper.warning {
-  background-color: var(--mg-v2-color-warning-50, #fffbeb);
-  color: var(--mg-v2-color-warning-600, #d97706);
+  background-color: var(--mg-color-warning-50);
+  color: var(--mg-color-warning-600);
 }
 
 .stat-icon-wrapper.info {
   background-color: var(--mg-color-info-bg);
-  color: var(--mg-v2-color-info-600, #0284c7);
+  color: var(--mg-color-info-600);
 }
 
 .stat-content {
@@ -171,7 +171,7 @@
   padding: var(--mg-v2-spacing-md, 12px);
   border-radius: var(--mg-v2-radius-md, 8px);
   background-color: var(--mg-v2-color-background, var(--mg-color-background-main));
-  border: 1px solid var(--mg-v2-color-border-light, #f3f4f6);
+  border: 1px solid var(--mg-color-border-soft);
 }
 
 .schedule-time {
@@ -218,12 +218,12 @@
 
 .status-confirmed {
   background-color: var(--mg-color-success-50);
-  color: var(--mg-v2-color-success-700, #15803d);
+  color: var(--mg-color-success-700);
 }
 
 .status-pending {
-  background-color: var(--mg-v2-color-warning-50, #fffbeb);
-  color: var(--mg-v2-color-warning-700, #b45309);
+  background-color: var(--mg-color-warning-50);
+  color: var(--mg-color-warning-700);
 }
 
 /* Notification List */
@@ -237,7 +237,7 @@
   display: flex;
   gap: var(--mg-v2-spacing-md, 12px);
   padding: var(--mg-v2-spacing-md, 12px);
-  border-bottom: 1px solid var(--mg-v2-color-border-light, #f3f4f6);
+  border-bottom: 1px solid var(--mg-color-border-soft);
 }
 
 .notification-item:last-child {
@@ -251,7 +251,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: var(--mg-v2-color-primary-50, #eff6ff);
+  background-color: var(--mg-color-primary-50);
   color: var(--mg-v2-color-primary-600, var(--mg-color-info));
   flex-shrink: 0;
 }
@@ -324,7 +324,7 @@
 }
 
 .chart-bar:hover {
-  background-color: var(--mg-v2-color-primary-300, #93c5fd);
+  background-color: var(--mg-color-primary-300);
 }
 
 .chart-bar.active {
@@ -358,7 +358,7 @@
   padding: var(--mg-v2-spacing-md, 12px);
   border-radius: var(--mg-v2-radius-md, 8px);
   background-color: var(--mg-v2-color-background, var(--mg-color-background-main));
-  border: 1px solid var(--mg-v2-color-border-light, #f3f4f6);
+  border: 1px solid var(--mg-color-border-soft);
   transition: background-color 0.2s ease, transform 0.2s ease;
   cursor: pointer;
   width: 100%;
@@ -374,8 +374,8 @@
 
 /* Upcoming Schedule Item - Highlighted (First Item) */
 .upcoming-schedule-item--highlighted {
-  background-color: var(--mg-v2-color-primary-50, #eff6ff);
-  border: 2px solid var(--mg-v2-color-primary-200, #bfdbfe);
+  background-color: var(--mg-color-primary-50);
+  border: 2px solid var(--mg-color-primary-200);
   position: relative;
   padding-left: calc(var(--mg-v2-spacing-md, 12px) + 8px);
 }
@@ -417,13 +417,13 @@
 
 .upcoming-schedule-item.mg-button.mg-button--outline {
   background-color: var(--mg-v2-color-background, var(--mg-color-background-main));
-  border: 1px solid var(--mg-v2-color-border-light, #f3f4f6);
+  border: 1px solid var(--mg-color-border-soft);
   color: inherit;
 }
 
 .upcoming-schedule-item--highlighted.mg-button.mg-button--outline {
-  background-color: var(--mg-v2-color-primary-50, #eff6ff);
-  border: 2px solid var(--mg-v2-color-primary-200, #bfdbfe);
+  background-color: var(--mg-color-primary-50);
+  border: 2px solid var(--mg-color-primary-200);
   padding-left: calc(var(--mg-v2-spacing-md, 12px) + 8px);
 }
 

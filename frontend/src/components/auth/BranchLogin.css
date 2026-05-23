@@ -3,8 +3,8 @@
 /* CSS 변수 정의 */
 :root {
     --branch-login-primary: var(--mg-color-info);
-    --branch-login-success: #16a34a;
-    --branch-login-warning: #d97706;
+    --branch-login-success: var(--mg-color-success-600);
+    --branch-login-warning: var(--mg-color-warning-600);
     --branch-login-error: var(--mg-color-error);
     --branch-login-gray-100: var(--mg-color-background-main);
     --branch-login-gray-200: var(--mg-color-border-main);
@@ -385,7 +385,7 @@ select:focus {
 }
 
 .headquarters-info .branch-info {
-    background: linear-gradient(135deg, var(--mg-color-info-100) 0%, #bfdbfe 100%);
+    background: linear-gradient(135deg, var(--mg-color-info-100) 0%, var(--mg-color-primary-200) 100%);
     border-left: 4px solid var(--branch-login-primary);
 }
 

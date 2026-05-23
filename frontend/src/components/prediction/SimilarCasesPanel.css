@@ -113,7 +113,7 @@
 .lessons-learned strong {
     display: block;
     margin-bottom: 6px;
-    color: #047857;
+    color: var(--mg-color-success-700);
 }
 
 .lessons-learned p {

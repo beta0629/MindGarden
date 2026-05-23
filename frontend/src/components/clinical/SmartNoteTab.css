@@ -113,7 +113,7 @@
 }
 
 .btn-analyze-risk:hover {
-    background: #d97706;
+    background: var(--mg-color-warning-600);
 }
 
 .format-selector {
@@ -199,7 +199,7 @@
 
 .guide-message {
     background: var(--mg-color-info-bg);
-    border: 1px solid #bfdbfe;
+    border: 1px solid var(--mg-color-primary-200);
     border-radius: 8px;
     padding: 24px;
     margin-top: 24px;

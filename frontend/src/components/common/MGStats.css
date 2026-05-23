@@ -54,7 +54,7 @@
 
 .mg-stats__icon--green {
   background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
+  color: var(--mg-color-success-600);
 }
 
 .mg-stats__icon--purple {
@@ -75,7 +75,7 @@
 
 .mg-stats__trend--positive {
   background: rgba(34, 197, 94, 0.1);
-  color: #15803d;
+  color: var(--mg-color-success-700);
 }
 
 .mg-stats__trend--negative {
@@ -144,7 +144,7 @@
 }
 
 .mg-stats__sparkline-line--green {
-  stroke: #16a34a;
+  stroke: var(--mg-color-success-600);
   stroke-width: 3;
 }
 

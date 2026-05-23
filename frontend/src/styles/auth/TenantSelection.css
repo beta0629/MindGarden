@@ -70,12 +70,12 @@
 
 .tenant-selection__item:hover {
   border-color: var(--color-primary);
-  background-color: #eff6ff;
+  background-color: var(--mg-color-primary-50);
 }
 
 .tenant-selection__item--selected {
   border-color: var(--color-primary);
-  background-color: #eff6ff;
+  background-color: var(--mg-color-primary-50);
 }
 
 .tenant-selection__item-content {

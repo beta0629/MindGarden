@@ -53,7 +53,7 @@
 
 .session-count-box {
     padding: 20px 32px;
-    background: #eff6ff;
+    background: var(--mg-color-primary-50);
     border-radius: 12px;
     text-align: center;
 }

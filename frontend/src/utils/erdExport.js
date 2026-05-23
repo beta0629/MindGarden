@@ -61,7 +61,7 @@ export const exportSvgToPng = async(svg, filename = 'erd-diagram', options = {})
           ctx.fillStyle =
             getComputedStyle(document.documentElement)
               .getPropertyValue('--mg-white')
-              .trim() || '#ffffff';
+              .trim() || 'var(--mg-white)';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
           // 이미지 그리기

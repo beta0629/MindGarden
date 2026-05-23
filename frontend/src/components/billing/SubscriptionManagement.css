@@ -126,7 +126,7 @@
 
 .subscription-management__plan-card.selected {
   border-color: var(--mg-primary-500);
-  background: #eff6ff;
+  background: var(--mg-color-primary-50);
 }
 
 .subscription-management__plan-card h4 {

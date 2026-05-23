@@ -173,7 +173,7 @@
 }
 
 .alert-item.unread:hover {
-    background: #fde68a;
+    background: var(--mg-color-warning-200);
 }
 
 .alert-item-header {

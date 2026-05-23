@@ -449,14 +449,14 @@
 }
 
 .mg-v2-homepage-footer-text {
-  color: var(--mg-color-text-tertiary, #8A9A90);
+  color: var(--mg-color-text-secondary);
   font-size: var(--mg-font-size-sm, 0.875rem);
 }
 
 .mg-v2-homepage-footer-links {
   display: flex;
   gap: var(--mg-spacing-lg, 16px);
-  color: var(--mg-color-text-tertiary, #8A9A90);
+  color: var(--mg-color-text-secondary);
   font-size: var(--mg-font-size-sm, 0.875rem);
   cursor: pointer;
 }

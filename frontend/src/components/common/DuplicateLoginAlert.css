@@ -43,7 +43,7 @@
 .alert-icon {
     width: 48px;
     height: 48px;
-    background: linear-gradient(135deg, var(--mg-color-warning-bg), #fde68a);
+    background: linear-gradient(135deg, var(--mg-color-warning-bg), var(--mg-color-warning-200));
     border-radius: 50%;
     display: flex;
     align-items: center;

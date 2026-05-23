@@ -134,7 +134,7 @@
   border: none;
   background: none;
   cursor: pointer;
-  color: var(--mg-color-text-secondary, #888);
+  color: var(--mg-color-text-secondary);
   border-radius: var(--mg-radius-sm, 6px);
   transition: background 150ms ease;
 }

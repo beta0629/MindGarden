@@ -485,8 +485,8 @@
 }
 
 .mg-btn-delete-role:hover:not(:disabled) {
-  background-color: var(--mg-color-danger-dark, #c82333);
-  border-color: var(--mg-color-danger-dark, #c82333);
+  background-color: var(--mg-color-error-dark);
+  border-color: var(--mg-color-error-dark);
 }
 
 .mg-btn-delete-role:disabled {

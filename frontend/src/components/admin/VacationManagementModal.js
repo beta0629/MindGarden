@@ -117,8 +117,7 @@ const VacationManagementModal = ({
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-warning-500) -> var(--mg-custom-fbbf24)
                     { value: 'MORNING_HALF_1', label: '오전 반반차 1 (09:00-11:00)', icon: '☀️', color: 'var(--mg-color-warning-500)', description: '오전 첫 번째 반반차 (09:00-11:00)' },
                     { value: 'MORNING_HALF_2', label: '오전 반반차 2 (11:00-13:00)', icon: '🌞', color: 'var(--mg-warning-500)', description: '오전 두 번째 반반차 (11:00-13:00)' },
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #60a5fa -> var(--mg-custom-60a5fa)
-                    { value: 'AFTERNOON_HALF_1', label: '오후 반반차 1 (14:00-16:00)', icon: '🌤️', color: '#60a5fa', description: '오후 첫 번째 반반차 (14:00-16:00)' },
+                    { value: 'AFTERNOON_HALF_1', label: '오후 반반차 1 (14:00-16:00)', icon: '🌤️', color: 'var(--mg-color-legacy-primary)', description: '오후 첫 번째 반반차 (14:00-16:00)' },
                     { value: 'AFTERNOON_HALF_2', label: '오후 반반차 2 (16:00-18:00)', icon: '🌅', color: 'var(--mg-primary-500)', description: '오후 두 번째 반반차 (16:00-18:00)' },
                     { value: 'CUSTOM_TIME', label: '사용자 지정', icon: '⏰', color: 'var(--mg-purple-500)', description: '사용자가 직접 시간을 설정하는 휴가' },
                     { value: 'ALL_DAY', label: '휴가', icon: '🏖️', color: 'var(--mg-error-500)', description: '하루 종일 휴가' }

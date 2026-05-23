@@ -6,6 +6,7 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { CSS_VARIABLES } from '../../constants/css-variables';
 import './PaymentConfirmationModal.css';
 import { useTranslation } from 'react-i18next';
 
@@ -115,7 +116,7 @@ const PaymentConfirmationModal = ({
     { value: 'CARD', label: '카드', icon: '💳', color: 'var(--mg-primary-500)', description: '신용카드/체크카드 결제' },
     { value: 'BANK_TRANSFER', label: '계좌이체', icon: '🏦', color: 'var(--mg-success-500)', description: '은행 계좌 이체' },
     { value: 'CASH', label: '현금', icon: '💵', color: 'var(--mg-warning-500)', description: '현금 결제' },
-    { value: 'KAKAO_PAY', label: '카카오페이', icon: '💛', color: '#fee500', description: '카카오페이 간편결제' },
+    { value: 'KAKAO_PAY', label: '카카오페이', icon: '💛', color: CSS_VARIABLES.SOCIAL.BUTTONS.KAKAO.COLOR, description: '카카오페이 간편결제' },
     { value: 'NAVER_PAY', label: '네이버페이', icon: '💚', color: 'var(--mg-color-naver-green)', description: '네이버페이 간편결제' },
     { value: 'TOSS', label: '토스', icon: '🔷', color: '#0064ff', description: '토스 간편결제' },
     { value: 'PAYPAL', label: '페이팔', icon: '🔵', color: '#0070ba', description: '페이팔 결제' },

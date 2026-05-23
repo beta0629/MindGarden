@@ -56,8 +56,12 @@ export const exportSvgToPng = async(svg, filename = 'erd-diagram', options = {})
           canvas.width = svgWidth * scale;
           canvas.height = svgHeight * scale;
 
-          // 배경색 설정 (흰색)
-          ctx.fillStyle = 'var(--mg-white)';
+          // 배경색 설정 — canvas 2D context는 CSS var() 미지원이므로
+          // 디자인 토큰 `--mg-white` 를 getComputedStyle 로 해석한다.
+          ctx.fillStyle =
+            getComputedStyle(document.documentElement)
+              .getPropertyValue('--mg-white')
+              .trim() || '#ffffff';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
           // 이미지 그리기

@@ -5,11 +5,13 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.NotificationChannelPreferenceCode;
 import com.coresolution.consultation.constant.NotificationPhysicalChannel;
+import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.AlertRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
@@ -24,6 +26,8 @@ import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import java.util.List;
 import java.util.UUID;
+import org.assertj.core.api.Assertions;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -89,13 +93,32 @@ class NotificationServiceImplSmsFallbackTest {
     }
 
     @Test
-    @DisplayName("PAYMENT_COMPLETED: 알림톡 실패 후 sendNotificationMessage 호출")
-    void sendPaymentCompleted_fallsBackToSms() {
+    @DisplayName("Task 8 — SMS_TEMPLATE row 부재 시 SMS 발송 skip (의미 없는 fallback 차단)")
+    void sendPaymentCompleted_whenSmsTemplateMissing_skipsSms() {
         User user = userWithPhone();
+        // setTenant 에서 SMS_TEMPLATE 조회를 빈 리스트로 mock — row 미시드 시나리오.
 
         notificationService.sendPaymentCompleted(user, 500_000L, "10회 패키지", "김상담");
 
-        verify(smsAuthService).sendNotificationMessage(eq("01000000000"), anyString());
+        // 알림톡은 실패(setTenant에서 false 반환), SMS 는 buildSmsMessage=null → 발송 skip.
+        verify(smsAuthService, never()).sendNotificationMessage(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("Task 8 회귀 — SMS_TEMPLATE row 존재 시 SMS 정상 발송 + 본문 [마인드가든] prefix 미포함")
+    void sendPaymentCompleted_whenSmsTemplateExists_sendsSms() {
+        User user = userWithPhone();
+        when(commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(eq(TENANT_ID), eq("SMS_TEMPLATE")))
+            .thenReturn(List.of(buildSmsTemplate(NotificationType.PAYMENT_COMPLETED,
+                "결제가 완료되었습니다. 금액 {0}원, 패키지 {1}, 상담사 {2}")));
+
+        notificationService.sendPaymentCompleted(user, 500_000L, "10회 패키지", "김상담");
+
+        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(smsAuthService).sendNotificationMessage(eq("01000000000"), bodyCaptor.capture());
+        Assertions.assertThat(bodyCaptor.getValue())
+            .doesNotContain("[마인드가든]")
+            .contains("결제가 완료되었습니다");
     }
 
     private User userWithPhone() {
@@ -106,5 +129,14 @@ class NotificationServiceImplSmsFallbackTest {
         user.setPhone("cipher-phone");
         when(encryptionUtil.decrypt("cipher-phone")).thenReturn("01000000000");
         return user;
+    }
+
+    private CommonCode buildSmsTemplate(NotificationType type, String template) {
+        CommonCode code = new CommonCode();
+        code.setTenantId(TENANT_ID);
+        code.setCodeGroup("SMS_TEMPLATE");
+        code.setCodeValue(type.name());
+        code.setCodeLabel(template);
+        return code;
     }
 }

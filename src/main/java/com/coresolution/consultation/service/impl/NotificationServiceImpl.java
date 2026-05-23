@@ -179,6 +179,13 @@ public class NotificationServiceImpl implements NotificationService {
                 }
             } else if (ch == NotificationPhysicalChannel.SMS && phoneNumber != null) {
                 String smsMessage = buildSmsMessage(notificationType, params);
+                if (smsMessage == null) {
+                    // SMS_TEMPLATE 공통코드 미시드 → 의미 없는 fallback 발송 차단(2026-05-23 라운드).
+                    // 알림톡 검수 통과 후 자연 해소되며, 인앱·푸시 채널은 영향 없음.
+                    log.info("SMS 발송 skip — SMS_TEMPLATE 미발견: user={}, type={}",
+                            user.getName(), notificationType.name());
+                    continue;
+                }
                 if (sendSms(phoneNumber, smsMessage)) {
                     log.info("✅ SMS 발송 성공: {}", user.getName());
                     return true;
@@ -348,7 +355,15 @@ public class NotificationServiceImpl implements NotificationService {
     }
     
     /**
-     * SMS 메시지 구성 (공통 코드 기반)
+     * SMS 메시지 구성 (공통 코드 기반).
+     *
+     * <p>SMS_TEMPLATE 공통코드(테넌트 → 코어 fallback) 에서 {@code type.name()} 에 매칭되는
+     * row 가 있으면 그 본문을 변수 치환하여 반환한다. row 가 없으면 의미 없는 fallback 본문을
+     * 발송하지 않도록 {@code null} 을 반환한다 — 호출자는 SMS 채널을 skip 하고 다음 채널을 시도해야 한다.
+     *
+     * @param type   알림 유형
+     * @param params 변수 치환 인자
+     * @return SMS 본문, 또는 SMS_TEMPLATE 미시드 시 {@code null}
      */
     private String buildSmsMessage(NotificationType type, String[] params) {
         try {
@@ -374,8 +389,11 @@ public class NotificationServiceImpl implements NotificationService {
             log.error("SMS 템플릿 조회 실패", e);
         }
         
-        // 기본 SMS 메시지 — 발신 프로필명이 통신사 단에서 prefix로 표시되므로 본문에서는 [마인드가든] 생략.
-        return "알림이 있습니다. 자세한 내용은 시스템을 확인해주세요.";
+        // SMS_TEMPLATE 공통코드 미발견 시 의미 없는 fallback 발송 차단(2026-05-23 라운드).
+        // 호출자(dispatchByResolvedChannelOrder)가 null 체크 후 SMS 채널 skip → 다음 채널 시도.
+        // 알림톡 검수 통과 후 자연 해소되며, SMS_TEMPLATE 시드는 디자이너 카피 확정 후 별도 위임으로 보강한다.
+        log.warn("SMS_TEMPLATE 공통코드 미발견: type={} → SMS 폴백 skip", type.name());
+        return null;
     }
     
     /**

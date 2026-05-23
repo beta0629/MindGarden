@@ -99,7 +99,7 @@
 
 .custom-select__search {
   padding: 8px;
-  border-bottom: 1px solid var(--color-border-secondary, #E8E8ED);
+  border-bottom: 1px solid var(--mg-color-border-soft);
 }
 
 .custom-select__search-input {
@@ -160,7 +160,7 @@
 
 .custom-select.disabled .custom-select__trigger {
   cursor: not-allowed;
-  background-color: var(--color-bg-secondary, #F5F5F7);
+  background-color: var(--mg-color-background-secondary);
 }
 
 /* 스크롤바 스타일링 */
@@ -169,7 +169,7 @@
 }
 
 .custom-select__options::-webkit-scrollbar-track {
-  background: var(--color-bg-accent, #E8E8ED);
+  background: var(--mg-color-border-soft);
   border-radius: 3px;
 }
 

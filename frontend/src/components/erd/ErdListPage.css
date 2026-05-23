@@ -13,13 +13,13 @@
 .erd-list-title {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--text-primary, #333);
+  color: var(--mg-color-text-main);
   margin-bottom: 0.5rem;
 }
 
 .erd-list-description {
   font-size: 1rem;
-  color: var(--text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   margin: 0;
 }
 
@@ -36,7 +36,7 @@
   padding: 0.5rem 1rem;
   border: 1px solid var(--border-color, var(--mg-gray-300));
   background: var(--bg-secondary, var(--mg-white));
-  color: var(--text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -44,7 +44,7 @@
 }
 
 .filter-button:hover {
-  background: var(--bg-hover, #f0f0f0);
+  background: var(--mg-color-surface-light);
   border-color: var(--primary-color, var(--mg-primary-500));
 }
 
@@ -124,7 +124,7 @@
 }
 
 .empty-message {
-  color: var(--text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   font-size: 1.1rem;
 }
 
@@ -162,7 +162,7 @@
 .erd-card-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text-primary, #333);
+  color: var(--mg-color-text-main);
   margin: 0;
   flex: 1;
 }
@@ -181,7 +181,7 @@
 }
 
 .erd-status-inactive {
-  background: var(--text-secondary, #999);
+  background: var(--mg-color-text-tertiary);
   color: var(--mg-white);
 }
 
@@ -191,7 +191,7 @@
 
 .erd-card-description {
   font-size: 0.9rem;
-  color: var(--text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   margin: 0 0 1rem 0;
   line-height: 1.5;
   display: -webkit-box;
@@ -213,13 +213,13 @@
 }
 
 .meta-label {
-  color: var(--text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   font-weight: 500;
   min-width: 60px;
 }
 
 .meta-value {
-  color: var(--text-primary, #333);
+  color: var(--mg-color-text-main);
 }
 
 .erd-card-footer {

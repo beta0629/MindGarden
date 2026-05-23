@@ -26,7 +26,7 @@
 .back-button.mg-button {
   padding: 0.5rem 1rem;
   background: var(--bg-secondary, var(--mg-white));
-  color: var(--text-primary, #333);
+  color: var(--mg-color-text-main);
   border: 1px solid var(--border-color, var(--mg-gray-300));
   border-radius: 0.5rem;
   cursor: pointer;
@@ -37,7 +37,7 @@
 
 .back-button:hover,
 .back-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--bg-hover, #f0f0f0);
+  background: var(--mg-color-surface-light);
   border-color: var(--primary-color, var(--mg-primary-500));
   color: var(--primary-color, var(--mg-primary-500));
 }
@@ -49,7 +49,7 @@
 .erd-detail-title {
   font-size: 1.75rem;
   font-weight: 700;
-  color: var(--text-primary, #333);
+  color: var(--mg-color-text-main);
   margin: 0 0 0.75rem 0;
 }
 
@@ -61,8 +61,8 @@
 
 .erd-meta-badge {
   padding: 0.25rem 0.75rem;
-  background: var(--bg-hover, #f0f0f0);
-  color: var(--text-secondary, #666);
+  background: var(--mg-color-surface-light);
+  color: var(--mg-color-text-secondary);
   border-radius: 1rem;
   font-size: 0.75rem;
   font-weight: 500;
@@ -81,13 +81,13 @@
 }
 
 .erd-status-badge.inactive {
-  background: var(--text-secondary, #999);
+  background: var(--mg-color-text-tertiary);
   color: var(--mg-white);
 }
 
 .erd-detail-description {
   font-size: 1rem;
-  color: var(--text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   margin: 0;
   line-height: 1.6;
 }
@@ -153,13 +153,13 @@
   text-align: left;
   cursor: pointer;
   font-size: 0.9rem;
-  color: var(--text-primary, #333);
+  color: var(--mg-color-text-main);
   transition: background-color 0.2s;
 }
 
 .export-menu button:hover,
 .export-menu .erd-export-menu-item.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--bg-hover, #f0f0f0);
+  background-color: var(--mg-color-surface-light);
 }
 
 .export-menu button:first-child,
@@ -185,7 +185,7 @@
 .tab-button.mg-button {
   padding: 0.75rem 1.5rem;
   background: transparent;
-  color: var(--text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   border: none;
   border-bottom: 2px solid transparent;
   cursor: pointer;
@@ -276,7 +276,7 @@
   text-align: center;
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--text-primary, #333);
+  color: var(--mg-color-text-main);
 }
 
 .zoom-reset-button,
@@ -286,7 +286,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--text-secondary, #666);
+  background: var(--mg-color-text-secondary);
   color: var(--mg-white);
   border: none;
   border-radius: 0.25rem;
@@ -299,11 +299,11 @@
 
 .zoom-reset-button:hover,
 .zoom-reset-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--text-primary, #333);
+  background: var(--mg-color-text-main);
 }
 
 .erd-zoom-controls .zoom-reset-button.mg-button.mg-button--secondary {
-  background: var(--text-secondary, #666);
+  background: var(--mg-color-text-secondary);
   color: var(--mg-white);
 }
 
@@ -326,7 +326,7 @@
   align-items: center;
   justify-content: center;
   background: var(--bg-secondary, var(--mg-white));
-  color: var(--text-primary, #333);
+  color: var(--mg-color-text-main);
   border: 1px solid var(--border-color, var(--mg-gray-300));
   border-radius: 0.5rem;
   cursor: pointer;
@@ -339,7 +339,7 @@
 
 .filter-toggle-button:hover,
 .filter-toggle-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--bg-hover, #f0f0f0);
+  background: var(--mg-color-surface-light);
   border-color: var(--primary-color, var(--mg-primary-500));
 }
 
@@ -372,7 +372,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.9rem;
-  color: var(--text-primary, #333);
+  color: var(--mg-color-text-main);
   cursor: pointer;
 }
 
@@ -410,13 +410,13 @@
 
 .selection-label {
   font-weight: 600;
-  color: var(--text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   font-size: 0.9rem;
 }
 
 .selection-value {
   font-weight: 500;
-  color: var(--text-primary, #333);
+  color: var(--mg-color-text-main);
   font-size: 0.95rem;
   flex: 1;
 }
@@ -435,7 +435,7 @@
 
 .clear-selection-button:hover,
 .clear-selection-button.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--error-hover, #c82333);
+  background: var(--mg-color-error-dark);
 }
 
 .mermaid-wrapper {
@@ -520,7 +520,7 @@
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  color: var(--text-secondary, #666);
+  color: var(--mg-color-text-secondary);
 }
 
 .history-list {
@@ -546,7 +546,7 @@
 .history-version {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-primary, #333);
+  color: var(--mg-color-text-main);
 }
 
 .history-change-type {
@@ -573,14 +573,14 @@
 
 .history-description {
   font-size: 0.9rem;
-  color: var(--text-primary, #333);
+  color: var(--mg-color-text-main);
   margin: 0.5rem 0;
   line-height: 1.5;
 }
 
 .history-diff {
   font-size: 0.85rem;
-  color: var(--text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   margin: 0.5rem 0;
   padding: 0.75rem;
   background: var(--bg-secondary, var(--mg-white));
@@ -593,7 +593,7 @@
   gap: 1rem;
   margin-top: 0.75rem;
   font-size: 0.85rem;
-  color: var(--text-secondary, #666);
+  color: var(--mg-color-text-secondary);
 }
 
 .history-author {
@@ -601,7 +601,7 @@
 }
 
 .history-date {
-  color: var(--text-secondary, #999);
+  color: var(--mg-color-text-tertiary);
 }
 
 /* 텍스트 ERD 컨테이너 */
@@ -614,7 +614,7 @@
   font-family: 'Courier New', monospace;
   font-size: 0.9rem;
   line-height: 1.6;
-  color: var(--text-primary, #333);
+  color: var(--mg-color-text-main);
   background: var(--bg-primary, var(--mg-gray-100));
   padding: 1.5rem;
   border-radius: 0.5rem;

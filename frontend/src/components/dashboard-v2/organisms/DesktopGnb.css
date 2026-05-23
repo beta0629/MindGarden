@@ -38,13 +38,13 @@
 .mg-v2-desktop-gnb__logo-text {
   font-size: 18px;
   font-weight: 700;
-  color: var(--ad-b0kla-title-color, #2d3748);
+  color: var(--mg-color-text-main);
 }
 
 .mg-v2-desktop-gnb__brand-name {
   font-size: 18px;
   font-weight: 700;
-  color: var(--ad-b0kla-title-color, #2d3748);
+  color: var(--mg-color-text-main);
   min-width: 0;
   max-width: min(40vw, 28ch);
   overflow: hidden;

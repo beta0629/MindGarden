@@ -10,7 +10,7 @@
   display: block;
   margin-bottom: var(--spacing-xs, 0.25rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-primary, #333);
+  color: var(--mg-color-text-main);
 }
 
 .academy-required {

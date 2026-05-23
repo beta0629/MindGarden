@@ -13,7 +13,7 @@
 
 .academy-loading-message {
   margin-top: var(--spacing-md, 1rem);
-  color: var(--color-text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   font-size: var(--font-size-sm, 0.875rem);
 }
 

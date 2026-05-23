@@ -38,13 +38,13 @@
 .mg-v2-mobile-gnb__logo-text {
   font-size: 16px;
   font-weight: 700;
-  color: var(--ad-b0kla-title-color, #2d3748);
+  color: var(--mg-color-text-main);
 }
 
 .mg-v2-mobile-gnb__brand-name {
   font-size: 16px;
   font-weight: 700;
-  color: var(--ad-b0kla-title-color, #2d3748);
+  color: var(--mg-color-text-main);
   min-width: 0;
   max-width: min(42vw, 14ch);
   overflow: hidden;

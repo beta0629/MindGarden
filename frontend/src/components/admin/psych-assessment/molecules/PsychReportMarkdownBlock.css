@@ -7,7 +7,7 @@
  */
 
 .mg-v2-psych-report-markdown-block {
-  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg, #F5F3EF));
+  background: var(--mg-color-surface-main, var(--mg-color-surface-main));
   border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border, var(--mg-color-border-main)));
   border-radius: 16px;
   padding: 1.5rem;

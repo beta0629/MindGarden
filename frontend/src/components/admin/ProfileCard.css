@@ -30,7 +30,7 @@
 .mg-v2-profile-card__avatar {
   width: 48px;
   height: 48px;
-  background: var(--color-background-alt, #f3f4f6);
+  background: var(--mg-color-background-main);
   color: var(--color-primary, var(--mg-primary-500));
   border-radius: 50%;
   display: flex;
@@ -84,7 +84,7 @@
   margin: 0;
   font-size: var(--font-size-lg, 1.125rem);
   font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-text-primary, #111827);
+  color: var(--mg-color-text-main);
 }
 
 .mg-v2-profile-card__contact {
@@ -173,7 +173,7 @@
 .mg-v2-profile-card__stat-value {
   font-size: var(--font-size-md, 1rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-primary, #111827);
+  color: var(--mg-color-text-main);
 }
 
 .mg-v2-profile-card__extra-info {

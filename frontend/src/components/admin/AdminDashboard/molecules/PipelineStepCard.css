@@ -36,11 +36,11 @@
 }
 
 .pipeline-step-card--success {
-  background: #ebf2ee;
+  background: var(--mg-color-b0kla-green-50);
 }
 
 .pipeline-step-card--info {
-  background: #fcf3ed;
+  background: var(--mg-color-b0kla-orange-50);
 }
 
 .pipeline-step-card--auto {

@@ -135,7 +135,7 @@
   border: 4px solid var(--gray-200);
   border-radius: 50%;
   border-top-color: var(--primary-500);
-  animation: spin 1s ease-in-out infinite;
+  animation: spin 1s linear infinite;
 }
 
 /* 유틸리티 클래스 */

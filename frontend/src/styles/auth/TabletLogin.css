@@ -432,7 +432,7 @@
   border: 2px solid var(--mg-glass-bg-medium);
   border-radius: 50%;
   border-top-color: white;
-  animation: spin 1s ease-in-out infinite;
+  animation: spin 1s linear infinite;
   margin-right: 8px;
 }
 

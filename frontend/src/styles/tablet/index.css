@@ -1317,7 +1317,7 @@ html {
   border: 3px solid var(--mg-glass-bg-medium);
   border-radius: 50%;
   border-top-color: var(--mg-white);
-  animation: spin 1s ease-in-out infinite;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
@@ -1551,7 +1551,7 @@ html {
   border: 3px solid var(--color-primary-light);
   border-radius: 50%;
   border-top-color: var(--color-primary);
-  animation: spin 1s ease-in-out infinite;
+  animation: spin 1s linear infinite;
 }
 
 /* 태블릿 로딩 컨테이너 - 글자 고정 */
@@ -1830,7 +1830,7 @@ html {
   border: 3px solid var(--mg-glass-bg-medium);
   border-radius: 50%;
   border-top-color: var(--mg-white);
-  animation: spin 1s ease-in-out infinite;
+  animation: spin 1s linear infinite;
 }
 
 /* 구분선 */

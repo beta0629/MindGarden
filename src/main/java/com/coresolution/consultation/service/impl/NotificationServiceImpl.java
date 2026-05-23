@@ -374,8 +374,8 @@ public class NotificationServiceImpl implements NotificationService {
             log.error("SMS 템플릿 조회 실패", e);
         }
         
-        // 기본 SMS 메시지
-        return "[마인드가든] 알림이 있습니다. 자세한 내용은 시스템을 확인해주세요.";
+        // 기본 SMS 메시지 — 발신 프로필명이 통신사 단에서 prefix로 표시되므로 본문에서는 [마인드가든] 생략.
+        return "알림이 있습니다. 자세한 내용은 시스템을 확인해주세요.";
     }
     
     /**

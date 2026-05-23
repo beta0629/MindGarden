@@ -590,17 +590,17 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
 
         if (BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2.equals(templateCode)) {
             return String.format(
-                "[마인드가든] %s %s 상담 예약 안내입니다. (%s 상담사) 변경/취소 시 미리 연락 부탁드립니다.",
+                "%s %s 상담 예약 안내입니다. (%s 상담사) 변경/취소 시 미리 연락 부탁드립니다.",
                 scheduleDate, scheduleTime, consultantName);
         }
         if (BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE.equals(templateCode)) {
             return String.format(
-                "[마인드가든] 상담 예약 확정: %s %s (%s 상담사). 편안하게 오시기 바랍니다.",
+                "상담 예약 확정: %s %s (%s 상담사). 편안하게 오시기 바랍니다.",
                 scheduleDate, scheduleTime, consultantName);
         }
         // RESERVATION_IMMEDIATE_LATE
         return String.format(
-            "[마인드가든] 상담 예약 확정: %s %s (%s 상담사). 예약일이 임박하니 일정 확인 부탁드립니다.",
+            "상담 예약 확정: %s %s (%s 상담사). 예약일이 임박하니 일정 확인 부탁드립니다.",
             scheduleDate, scheduleTime, consultantName);
     }
 
@@ -614,7 +614,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         String consultantName = params.getOrDefault(BatchNotificationTemplateCodes.VAR_CONSULTANT_NAME,
             BatchNotificationTemplateCodes.FALLBACK_CONSULTANT_NAME);
         return String.format(
-            "[마인드가든] 패키지 마지막 1회기가 남았습니다. (%s 상담사) 좋은 마무리 되시길 바랍니다.",
+            "패키지 마지막 1회기가 남았습니다. (%s 상담사) 좋은 마무리 되시길 바랍니다.",
             consultantName);
     }
 
@@ -625,7 +625,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      * @return SMS 본문
      */
     private String buildSmsBodySessionRenew(Map<String, String> params) {
-        return "[마인드가든] 그동안 상담 함께해 주셔서 감사합니다. 추가 상담이 필요하시면 언제든 연락 주세요. (수신거부:080-XXX-XXXX)";
+        return "그동안 상담 함께해 주셔서 감사합니다. 추가 상담이 필요하시면 언제든 연락 주세요. (수신거부:080-XXX-XXXX)";
     }
 
     /**
@@ -642,7 +642,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         String contactPhone = params.getOrDefault(BatchNotificationTemplateCodes.VAR_CONTACT_PHONE,
             BatchNotificationTemplateCodes.FALLBACK_CONTACT_PHONE);
         return String.format(
-            "[마인드가든] %s님, 마인드가든에 오신 것을 환영합니다. %s 상담사와 함께 시작합니다. 문의: %s",
+            "%s님, 마인드가든에 오신 것을 환영합니다. %s 상담사와 함께 시작합니다. 문의: %s",
             clientName, consultantName, contactPhone);
     }
 
@@ -658,7 +658,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         String consultantName = params.getOrDefault(BatchNotificationTemplateCodes.VAR_CONSULTANT_NAME,
             BatchNotificationTemplateCodes.FALLBACK_CONSULTANT_NAME);
         return String.format(
-            "[마인드가든] 첫 상담: %s %s (%s 상담사). 15분 전 도착 권장, 변경 시 24h 전 연락 부탁드립니다.",
+            "첫 상담: %s %s (%s 상담사). 15분 전 도착 권장, 변경 시 24h 전 연락 부탁드립니다.",
             scheduleDate, scheduleTime, consultantName);
     }
 
@@ -674,7 +674,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         String consultantName = params.getOrDefault(BatchNotificationTemplateCodes.VAR_CONSULTANT_NAME,
             BatchNotificationTemplateCodes.FALLBACK_CONSULTANT_NAME);
         return String.format(
-            "[마인드가든] 첫 상담: %s %s (%s 상담사). 10분 전 접속 권장, 화상 링크는 알림톡을 참고해 주세요.",
+            "첫 상담: %s %s (%s 상담사). 10분 전 접속 권장, 화상 링크는 알림톡을 참고해 주세요.",
             scheduleDate, scheduleTime, consultantName);
     }
 

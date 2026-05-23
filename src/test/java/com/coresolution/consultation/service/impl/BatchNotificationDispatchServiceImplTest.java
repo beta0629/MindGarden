@@ -505,6 +505,51 @@ class BatchNotificationDispatchServiceImplTest {
     }
 
     @Test
+    @DisplayName("SMS 폴백 본문 — [마인드가든] prefix 미포함 (2026-05-23 라운드 정착)")
+    void dispatch_smsFallbackBody_doesNotIncludeMindGardenPrefix() {
+        givenScheduleAndUsers(SCHEDULE_ID, 3);
+        givenMappingForSchedule(MAPPING_ID, 10, 7);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        givenAlimtalkMappingResolved();
+        givenAlimtalkDispatchFailure("HTTP_500", "alimtalk down");
+        givenSmsDispatchSuccess();
+
+        DispatchOutcome outcome = service.dispatchReservationReminderD2(SCHEDULE_ID);
+
+        assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.SMS_FALLBACK_SENT);
+        ArgumentCaptor<String> smsBodyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(dispatchHelper).dispatchSms(eq(PHONE), smsBodyCaptor.capture());
+        // 발신 프로필명이 통신사 단에서 prefix 로 표시되므로 본문에는 [마인드가든] 미포함.
+        assertThat(smsBodyCaptor.getValue())
+            .doesNotContain("[마인드가든]")
+            .contains("상담 예약 안내");
+    }
+
+    @Test
+    @DisplayName("SMS 폴백 본문 — CLIENT_WELCOME_FIRST 도 prefix 미포함 + 내담자 이름 포함")
+    void dispatchClientWelcomeFirst_smsFallbackBody_noPrefix() {
+        ConsultantClientMapping mapping = givenMapping(MAPPING_ID, 10, 10,
+            MappingStatus.ACTIVE, null);
+        when(mappingRepository.findByTenantIdAndId(TENANT_ID, MAPPING_ID))
+            .thenReturn(Optional.of(mapping));
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        when(templateMappingResolver.resolveSolapiTemplateId(eq(TENANT_ID), anyString()))
+            .thenReturn(null);
+        givenSmsDispatchSuccess();
+
+        DispatchOutcome outcome = service.dispatchClientWelcomeFirst(MAPPING_ID);
+
+        assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.SMS_ONLY_SENT);
+        ArgumentCaptor<String> smsBodyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(dispatchHelper).dispatchSms(eq(PHONE), smsBodyCaptor.capture());
+        assertThat(smsBodyCaptor.getValue())
+            .doesNotContain("[마인드가든]")
+            .contains("마인드가든에 오신 것을 환영합니다");
+    }
+
+    @Test
     @DisplayName("알림톡 + SMS 모두 실패(정보성) → FAILED, channel=ALIMTALK 보존, fallback_to_sms=true")
     void dispatch_whenBothChannelsFail_recordsFailure() {
         givenScheduleAndUsers(SCHEDULE_ID, 3);

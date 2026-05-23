@@ -11,6 +11,7 @@ import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.repository.MobilePushSettingsRepository;
 import com.coresolution.consultation.repository.MobilePushTokenRepository;
+import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MobilePushDispatchDedupService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
@@ -57,6 +58,7 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
     private final MobilePushSettingsRepository mobilePushSettingsRepository;
     private final MobilePushDispatchDedupService mobilePushDispatchDedupService;
     private final UserRepository userRepository;
+    private final ScheduleRepository scheduleRepository;
     private final ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
 
     @Override
@@ -88,17 +90,11 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void dispatchBookingConfirmed(String tenantId, Schedule schedule, Long actorUserId) {
-        if (schedule == null || schedule.getId() == null || schedule.getClientId() == null) {
+        if (schedule == null || schedule.getId() == null) {
             return;
         }
         String tid = requireTenantId(tenantId, schedule.getTenantId());
         if (tid == null) {
-            return;
-        }
-        // D-2/D-3: actor(변경 주체)는 자신이 만든 변경 이벤트 푸시를 받지 않는다.
-        if (isActor(actorUserId, schedule.getClientId())) {
-            log.info("actor-skip: type={} scheduleId={} actorUserId={} (client=actor)",
-                    MobilePushCanonicalTypes.BOOKING_CONFIRMED, schedule.getId(), actorUserId);
             return;
         }
         String title = "예약 확정";
@@ -106,8 +102,56 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
                 MobilePushMessageFormatter.FALLBACK_CONSULTANT_NAME);
         String body = MobilePushMessageFormatter.buildBookingConfirmedBody(schedule, consultantName);
         Map<String, String> data = buildScheduleData(tid, schedule, MobilePushCanonicalTypes.BOOKING_CONFIRMED);
-        dispatchFanout(tid, List.of(schedule.getClientId()), MobilePushCanonicalTypes.BOOKING_CONFIRMED, title, body,
-                data, String.valueOf(schedule.getId()), "confirmed");
+        String entityId = String.valueOf(schedule.getId());
+
+        // 시나리오 #6 — 첫 상담은 내담자 단독 푸시(상담사 skip).
+        // BatchNotificationDispatchServiceImpl#dispatchInitialGuide 의 첫상담 판정과 동일한
+        // countByClientId(tenantId, clientId) == 1 가드를 답습한다(스케줄 저장 후 호출 기준).
+        boolean isFirstBooking = schedule.getClientId() != null
+                && isFirstScheduleForClient(tid, schedule.getClientId());
+
+        // 시나리오 #5 — 후속 상담은 내담자·상담사 양쪽 푸시(actor-skip 적용).
+        // D-2/D-3 정책: actor(변경 주체)는 자신이 만든 변경 이벤트 푸시를 받지 않는다.
+        if (schedule.getClientId() != null) {
+            if (isActor(actorUserId, schedule.getClientId())) {
+                log.info("actor-skip: type={} scheduleId={} actorUserId={} (client=actor)",
+                        MobilePushCanonicalTypes.BOOKING_CONFIRMED, schedule.getId(), actorUserId);
+            } else {
+                // 기존 dedupe 버킷 "confirmed" 보존 — 이미 발송된 client 푸시 재발화 방지.
+                dispatchFanout(tid, List.of(schedule.getClientId()),
+                        MobilePushCanonicalTypes.BOOKING_CONFIRMED, title, body, data, entityId, "confirmed");
+            }
+        }
+        if (schedule.getConsultantId() != null) {
+            if (isFirstBooking) {
+                log.info("first-booking client-only: type={} scheduleId={} consultantId={} skip",
+                        MobilePushCanonicalTypes.BOOKING_CONFIRMED, schedule.getId(), schedule.getConsultantId());
+            } else if (isActor(actorUserId, schedule.getConsultantId())) {
+                log.info("actor-skip: type={} scheduleId={} actorUserId={} (consultant=actor)",
+                        MobilePushCanonicalTypes.BOOKING_CONFIRMED, schedule.getId(), actorUserId);
+            } else {
+                dispatchFanout(tid, List.of(schedule.getConsultantId()),
+                        MobilePushCanonicalTypes.BOOKING_CONFIRMED, title, body, data, entityId, "confirmed|consultant");
+            }
+        }
+    }
+
+    /**
+     * 첫 상담 여부 — client 의 누적(비삭제) 스케줄 카운트가 정확히 1 인지 검사.
+     * 스케줄 저장 후 호출되므로 본 스케줄이 포함된다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientId 내담자 users.id
+     * @return 첫 상담이면 {@code true}
+     */
+    private boolean isFirstScheduleForClient(String tenantId, Long clientId) {
+        try {
+            return scheduleRepository.countByClientId(tenantId, clientId) == 1L;
+        } catch (Exception ex) {
+            log.warn("첫상담 카운트 조회 실패 — 후속 상담으로 가정(consultant 포함): tenantId={}, clientId={}, error={}",
+                    tenantId, clientId, ex.getMessage());
+            return false;
+        }
     }
 
     @Override

@@ -22,6 +22,7 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.MobilePushSettingsRepository;
 import com.coresolution.consultation.repository.MobilePushTokenRepository;
+import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MobilePushDispatchDedupService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
@@ -75,6 +76,9 @@ class MobilePushDispatchServiceImplTest {
     private UserRepository userRepository;
 
     @Mock
+    private ScheduleRepository scheduleRepository;
+
+    @Mock
     private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
 
     @InjectMocks
@@ -105,8 +109,10 @@ class MobilePushDispatchServiceImplTest {
 
         MobilePushSettings settings = new MobilePushSettings();
         settings.setScheduleEnabled(false);
-
+        // 양쪽 fanout(Task 3) — 내담자·상담사 모두 카테고리 off 로 설정하여 차단 일관성 검증.
         when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(java.util.Optional.of(settings));
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(88L)))
                 .thenReturn(java.util.Optional.of(settings));
 
         Schedule schedule = new Schedule();
@@ -292,26 +298,49 @@ class MobilePushDispatchServiceImplTest {
     }
 
     @Test
-    @DisplayName("dispatchMappingSettlement: MAPPING_APPROVED는 D-4 화이트리스트 미포함 — Expo·dedup·token 호출 0")
-    void dispatchMappingSettlement_mappingApprovedFilteredByAllowlist() {
-        // D-4: MAPPING_APPROVED는 푸시 허용 set에 포함되지 않으므로 dispatchFanout이 진입부에서 차단.
-        // Expo access token 확인·token 조회·dedupe claim 모두 호출되지 않아야 한다.
+    @DisplayName("dispatchMappingSettlement: MAPPING_APPROVED 화이트리스트 통과 + includeConsultant=false → 내담자 단독 fanout (2026-05-23 정책)")
+    void dispatchMappingSettlement_mappingApprovedAllowlistedClientOnly() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setSystemEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+
+        MobilePushToken token = new MobilePushToken();
+        token.setPushToken("ExponentPushToken[mapping-approved-client]");
+        token.setUserId(77L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L)))).thenReturn(List.of(token));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.MAPPING_APPROVED),
+                eq("901"), eq("mapping-approved"))).thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        // 시나리오 #1 — MappingSettlementNotificationHelperImpl 가 includeConsultant=false 로 호출.
         mobilePushDispatchService.dispatchMappingSettlement(
                 "tenant-a",
                 901L,
                 77L,
                 88L,
-                true,
+                false,
                 MobilePushCanonicalTypes.MAPPING_APPROVED,
                 "mapping-approved",
                 "매칭 승인",
-                "매칭이 승인되었습니다.",
-                "새 매칭이 승인되었습니다.");
+                "상담 매칭이 승인되었습니다.",
+                "새 상담 매칭이 승인되었습니다.");
 
-        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(anyString(),
-                anyList());
-        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
-        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+        // 내담자만 fanout — 상담사 token/dedupe 호출 0.
+        verify(mobilePushTokenRepository, times(1)).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(77L)));
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(88L)));
+        verify(mobilePushDispatchDedupService, times(1)).tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.MAPPING_APPROVED), eq("901"), eq("mapping-approved"));
+        verify(restTemplate, times(1)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
+                eq(String.class));
     }
 
     @Test
@@ -559,21 +588,200 @@ class MobilePushDispatchServiceImplTest {
     }
 
     @Test
-    @DisplayName("D-2: dispatchBookingConfirmed — actorUserId가 내담자와 동일하면 즉시 skip(토큰 조회·Expo POST 0)")
-    void dispatchBookingConfirmed_whenActorIsClient_skipsImmediately() {
+    @DisplayName("D-2: dispatchBookingConfirmed — actor=내담자면 내담자 수신 skip, 상담사만 fanout (Task 3 후속 상담)")
+    void dispatchBookingConfirmed_whenActorIsClient_skipsClientOnlyConsultantFanout() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        // 후속 상담(count=5) — Task 4 첫상담 guard 미적용.
+        when(scheduleRepository.countByClientId(eq("tenant-a"), eq(77L))).thenReturn(5L);
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setScheduleEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(88L)))
+                .thenReturn(Optional.of(settings));
+
+        User consultant = new User();
+        when(userRepository.findByTenantIdAndId(eq("tenant-a"), eq(88L))).thenReturn(Optional.of(consultant));
+        when(scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(consultant)).thenReturn("박상담");
+
+        MobilePushToken consultantToken = new MobilePushToken();
+        consultantToken.setPushToken("ExponentPushToken[consultant-actor-client]");
+        consultantToken.setUserId(88L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(88L)))).thenReturn(List.of(consultantToken));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED),
+                eq("50"), eq("confirmed|consultant"))).thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
         Schedule schedule = new Schedule();
         schedule.setId(50L);
         schedule.setTenantId("tenant-a");
         schedule.setClientId(77L);
         schedule.setConsultantId(88L);
 
-        // actor = 내담자(77L) — 내담자 본인이 만든 변경 이벤트이므로 본인에게 푸시 skip
+        // actor = 내담자(77L) — 내담자 본인이 만든 변경 이벤트이므로 본인에게 푸시 skip, 상담사만 발화.
         mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule, 77L);
 
-        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(anyString(),
-                anyList());
-        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
-        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+        // 내담자 측은 token 조회·dedupe·Expo POST 모두 0회.
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L)));
+        verify(mobilePushDispatchDedupService, never()).tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED), eq("50"), eq("confirmed"));
+        // 상담사 측은 정상 fanout.
+        verify(mobilePushDispatchDedupService, times(1)).tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED), eq("50"), eq("confirmed|consultant"));
+        verify(restTemplate, times(1)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
+                eq(String.class));
+    }
+
+    // ===================== Task 3·4 BOOKING_CONFIRMED 분기 단위 검증 =====================
+
+    @Test
+    @DisplayName("Task 4 — 첫 상담(count=1): 내담자 단독 fanout (상담사 token/dedupe 0)")
+    void dispatchBookingConfirmed_firstBooking_clientOnly() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        // 첫 상담 가드 — 스케줄 저장 직후이므로 클라이언트 누적 카운트가 정확히 1.
+        when(scheduleRepository.countByClientId(eq("tenant-a"), eq(77L))).thenReturn(1L);
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setScheduleEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+
+        MobilePushToken clientToken = new MobilePushToken();
+        clientToken.setPushToken("ExponentPushToken[first-booking-client]");
+        clientToken.setUserId(77L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L)))).thenReturn(List.of(clientToken));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED), eq("50"), eq("confirmed"))).thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        Schedule schedule = new Schedule();
+        schedule.setId(50L);
+        schedule.setTenantId("tenant-a");
+        schedule.setClientId(77L);
+        schedule.setConsultantId(88L);
+
+        mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule, null);
+
+        // 내담자 fanout 1회.
+        verify(mobilePushDispatchDedupService, times(1)).tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED), eq("50"), eq("confirmed"));
+        verify(restTemplate, times(1)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
+                eq(String.class));
+        // 상담사 skip — token 조회·dedupe 모두 0.
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(88L)));
+        verify(mobilePushDispatchDedupService, never()).tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED), eq("50"), eq("confirmed|consultant"));
+    }
+
+    @Test
+    @DisplayName("Task 3 — 후속 상담(count>1): 내담자·상담사 양쪽 fanout, 분리된 dedupe bucket(confirmed / confirmed|consultant)")
+    void dispatchBookingConfirmed_subsequentBooking_clientAndConsultantFanout() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        // 후속 상담 — 카운트 2 이상.
+        when(scheduleRepository.countByClientId(eq("tenant-a"), eq(77L))).thenReturn(3L);
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setScheduleEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(88L)))
+                .thenReturn(Optional.of(settings));
+
+        User consultant = new User();
+        when(userRepository.findByTenantIdAndId(eq("tenant-a"), eq(88L))).thenReturn(Optional.of(consultant));
+        when(scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(consultant)).thenReturn("박상담");
+
+        MobilePushToken clientToken = new MobilePushToken();
+        clientToken.setPushToken("ExponentPushToken[subseq-client]");
+        clientToken.setUserId(77L);
+        MobilePushToken consultantToken = new MobilePushToken();
+        consultantToken.setPushToken("ExponentPushToken[subseq-consultant]");
+        consultantToken.setUserId(88L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L)))).thenReturn(List.of(clientToken));
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(88L)))).thenReturn(List.of(consultantToken));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED), eq("50"), eq("confirmed"))).thenReturn(true);
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED), eq("50"), eq("confirmed|consultant"))).thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        Schedule schedule = new Schedule();
+        schedule.setId(50L);
+        schedule.setTenantId("tenant-a");
+        schedule.setClientId(77L);
+        schedule.setConsultantId(88L);
+
+        mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule, null);
+
+        // 분리된 dedupe bucket — 멱등 충돌 없이 양쪽 모두 발화.
+        verify(mobilePushDispatchDedupService, times(1)).tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED), eq("50"), eq("confirmed"));
+        verify(mobilePushDispatchDedupService, times(1)).tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED), eq("50"), eq("confirmed|consultant"));
+        verify(restTemplate, times(2)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
+                eq(String.class));
+    }
+
+    @Test
+    @DisplayName("Task 5 — dispatchBookingReminder: BOOKING_REMINDER allowlist 통과 + 내담자·상담사 양쪽 fanout (D-2 슬롯 dedupe)")
+    void dispatchBookingReminder_d2_clientAndConsultantFanout() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setScheduleEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(88L)))
+                .thenReturn(Optional.of(settings));
+
+        MobilePushToken clientToken = new MobilePushToken();
+        clientToken.setPushToken("ExponentPushToken[d2-client]");
+        clientToken.setUserId(77L);
+        MobilePushToken consultantToken = new MobilePushToken();
+        consultantToken.setPushToken("ExponentPushToken[d2-consultant]");
+        consultantToken.setUserId(88L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                anyList())).thenReturn(List.of(clientToken, consultantToken));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_REMINDER), eq("60"), anyString())).thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        Schedule schedule = new Schedule();
+        schedule.setId(60L);
+        schedule.setTenantId("tenant-a");
+        schedule.setClientId(77L);
+        schedule.setConsultantId(88L);
+        schedule.setDate(LocalDate.of(2026, 5, 25));
+        schedule.setStartTime(LocalTime.of(14, 0));
+        schedule.setEndTime(LocalTime.of(15, 0));
+
+        mobilePushDispatchService.dispatchBookingReminder("tenant-a", schedule, "내일 상담 예약이 있습니다.", "D2");
+
+        // D-2 슬롯 dedupe 1회(양쪽 user 묶음) + Expo POST 1회.
+        verify(mobilePushDispatchDedupService, times(1)).tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_REMINDER), eq("60"), anyString());
+        verify(restTemplate, times(1)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
+                eq(String.class));
     }
 
     // ===================== D-4 화이트리스트 단위 검증 =====================
@@ -626,5 +834,161 @@ class MobilePushDispatchServiceImplTest {
                 anyList());
         verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
         verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+    }
+
+    // ===================== Task 3 + 4: BOOKING_CONFIRMED 양쪽 발화 + 첫상담 분기 =====================
+
+    @Test
+    @DisplayName("Task 4 — 첫 상담(countByClientId=1): 내담자만 fanout, 상담사 skip")
+    void dispatchBookingConfirmed_whenFirstBooking_skipsConsultant() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+        when(scheduleRepository.countByClientId(eq("tenant-a"), eq(77L))).thenReturn(1L);
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setScheduleEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+
+        User consultant = new User();
+        when(userRepository.findByTenantIdAndId(eq("tenant-a"), eq(88L))).thenReturn(Optional.of(consultant));
+        when(scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(consultant)).thenReturn("박상담");
+
+        MobilePushToken clientToken = new MobilePushToken();
+        clientToken.setPushToken("ExponentPushToken[first-booking-client]");
+        clientToken.setUserId(77L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L)))).thenReturn(List.of(clientToken));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED),
+                eq("50"), eq("confirmed"))).thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        Schedule schedule = new Schedule();
+        schedule.setId(50L);
+        schedule.setTenantId("tenant-a");
+        schedule.setClientId(77L);
+        schedule.setConsultantId(88L);
+        schedule.setDate(LocalDate.of(2026, 6, 1));
+        schedule.setStartTime(LocalTime.of(10, 0));
+        schedule.setEndTime(LocalTime.of(11, 0));
+
+        mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule, null);
+
+        // 내담자 측만 fanout.
+        verify(mobilePushTokenRepository, times(1)).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(77L)));
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(88L)));
+        verify(mobilePushDispatchDedupService, never()).tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED), eq("50"), eq("confirmed|consultant"));
+        verify(restTemplate, times(1)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
+                eq(String.class));
+    }
+
+    @Test
+    @DisplayName("Task 3 — 후속 상담(countByClientId=2): 내담자·상담사 양쪽 fanout (dedupe 버킷 분리)")
+    void dispatchBookingConfirmed_whenSubsequentBooking_dispatchesBoth() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+        when(scheduleRepository.countByClientId(eq("tenant-a"), eq(77L))).thenReturn(2L);
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setScheduleEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(88L)))
+                .thenReturn(Optional.of(settings));
+
+        User consultant = new User();
+        when(userRepository.findByTenantIdAndId(eq("tenant-a"), eq(88L))).thenReturn(Optional.of(consultant));
+        when(scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(consultant)).thenReturn("박상담");
+
+        MobilePushToken clientToken = new MobilePushToken();
+        clientToken.setPushToken("ExponentPushToken[subseq-client]");
+        clientToken.setUserId(77L);
+        MobilePushToken consultantToken = new MobilePushToken();
+        consultantToken.setPushToken("ExponentPushToken[subseq-consultant]");
+        consultantToken.setUserId(88L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L)))).thenReturn(List.of(clientToken));
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(88L)))).thenReturn(List.of(consultantToken));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED),
+                eq("50"), eq("confirmed"))).thenReturn(true);
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED),
+                eq("50"), eq("confirmed|consultant"))).thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        Schedule schedule = new Schedule();
+        schedule.setId(50L);
+        schedule.setTenantId("tenant-a");
+        schedule.setClientId(77L);
+        schedule.setConsultantId(88L);
+        schedule.setDate(LocalDate.of(2026, 6, 1));
+        schedule.setStartTime(LocalTime.of(10, 0));
+        schedule.setEndTime(LocalTime.of(11, 0));
+
+        mobilePushDispatchService.dispatchBookingConfirmed("tenant-a", schedule, null);
+
+        // 내담자·상담사 dedupe 버킷이 분리되어 양쪽 모두 fanout.
+        verify(mobilePushDispatchDedupService, times(1)).tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED), eq("50"), eq("confirmed"));
+        verify(mobilePushDispatchDedupService, times(1)).tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_CONFIRMED), eq("50"), eq("confirmed|consultant"));
+        verify(restTemplate, times(2)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
+                eq(String.class));
+    }
+
+    // ===================== Task 5: BOOKING_REMINDER 화이트리스트 추가 =====================
+
+    @Test
+    @DisplayName("Task 5 — D-2 BOOKING_REMINDER 화이트리스트 통과 + 내담자·상담사 양쪽 fanout")
+    void dispatchBookingReminder_whenAllowlisted_dispatchesBoth() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setScheduleEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(88L)))
+                .thenReturn(Optional.of(settings));
+
+        MobilePushToken clientToken = new MobilePushToken();
+        clientToken.setPushToken("ExponentPushToken[reminder-client]");
+        clientToken.setUserId(77L);
+        MobilePushToken consultantToken = new MobilePushToken();
+        consultantToken.setPushToken("ExponentPushToken[reminder-consultant]");
+        consultantToken.setUserId(88L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L, 88L)))).thenReturn(List.of(clientToken, consultantToken));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_REMINDER),
+                eq("50"), anyString())).thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"},{\"status\":\"ok\"}]}");
+
+        Schedule schedule = new Schedule();
+        schedule.setId(50L);
+        schedule.setTenantId("tenant-a");
+        schedule.setClientId(77L);
+        schedule.setConsultantId(88L);
+        schedule.setDate(LocalDate.of(2026, 6, 1));
+        schedule.setStartTime(LocalTime.of(10, 0));
+        schedule.setEndTime(LocalTime.of(11, 0));
+
+        mobilePushDispatchService.dispatchBookingReminder("tenant-a", schedule, "내일 상담 예약이 있습니다.", "D2");
+
+        // 한번의 fanout 호출에 양쪽 사용자 ID 가 모두 들어간다(현 구현 — dispatchBookingReminder 는 단일 fanout).
+        verify(mobilePushTokenRepository, times(1)).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(77L, 88L)));
+        verify(mobilePushDispatchDedupService, times(1)).tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.BOOKING_REMINDER), eq("50"), anyString());
+        verify(restTemplate, times(1)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
+                eq(String.class));
     }
 }

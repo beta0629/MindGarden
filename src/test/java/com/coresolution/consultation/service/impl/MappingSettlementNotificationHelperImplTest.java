@@ -130,8 +130,8 @@ class MappingSettlementNotificationHelperImplTest {
     }
 
     @Test
-    @DisplayName("승인: 내담자·상담사 인앱 및 mapping_approved 푸시(상담사 포함)")
-    void notify_mappingApproved_clientAndConsultant() {
+    @DisplayName("승인: 내담자·상담사 인앱 및 mapping_approved 푸시(2026-05-23 라운드: 푸시는 내담자 단독)")
+    void notify_mappingApproved_inAppBothPushClientOnly() {
         when(commonCodeService.getCodeValue("ROLE", UserRole.CONSULTANT.name())).thenReturn("CONSULTANT");
         when(commonCodeService.getCodeValue("ROLE", UserRole.CLIENT.name())).thenReturn("CLIENT");
         when(commonCodeService.getCodeValue("MESSAGE_TYPE", MappingSettlementNotificationCopy.MESSAGE_TYPE_PAYMENT))
@@ -141,6 +141,7 @@ class MappingSettlementNotificationHelperImplTest {
 
         helper.notifyAfterMappingSettlement(mapping, TENANT_ID, MappingSettlementScenario.MAPPING_APPROVED);
 
+        // 인앱은 내담자·상담사 양쪽 발화 (보존).
         verify(consultationMessageService).sendMessage(
                 eq(CONSULTANT_ID),
                 eq(CLIENT_ID),
@@ -161,12 +162,13 @@ class MappingSettlementNotificationHelperImplTest {
                 eq("PAYMENT_COMPLETION"),
                 eq(false),
                 eq(false));
+        // 푸시는 내담자 단독(includeConsultant=false) — 시나리오 #1 정책 정정.
         verify(mobilePushDispatchService).dispatchMappingSettlement(
                 eq(TENANT_ID),
                 eq(MAPPING_ID),
                 eq(CLIENT_ID),
                 eq(CONSULTANT_ID),
-                eq(true),
+                eq(false),
                 eq(MobilePushCanonicalTypes.MAPPING_APPROVED),
                 eq("mapping-approved"),
                 any(),

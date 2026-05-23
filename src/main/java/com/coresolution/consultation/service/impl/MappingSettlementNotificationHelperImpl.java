@@ -230,12 +230,15 @@ public class MappingSettlementNotificationHelperImpl implements MappingSettlemen
                     MappingSettlementNotificationCopy.PUSH_TITLE_DEPOSIT,
                     MobilePushMessageFormatter.buildMappingDepositConfirmedPushBody(packageName, amountLabel),
                     null);
+            // 시나리오 #1 — MAPPING_APPROVED 푸시는 내담자 단독(2026-05-23 라운드 정책 정정).
+            // 상담사 인앱 메시지는 sendInAppMessages 에서 별도 발화하므로 푸시는 client only 로 한정.
+            // BODY_PUSH_APPROVED_CONSULTANT 는 dedupe·로깅 보존을 위해 인자로 전달하되 includeConsultant=false 로 무시된다.
             case MAPPING_APPROVED -> mobilePushDispatchService.dispatchMappingSettlement(
                     tenantId,
                     mappingId,
                     clientUserId,
                     consultantUserId,
-                    true,
+                    false,
                     MobilePushCanonicalTypes.MAPPING_APPROVED,
                     "mapping-approved",
                     MappingSettlementNotificationCopy.PUSH_TITLE_APPROVED,

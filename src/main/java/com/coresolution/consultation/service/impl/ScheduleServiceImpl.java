@@ -716,11 +716,15 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     /**
      * {@code useSession()} 직후 회기 라이프사이클 알림 발송 분기.
      *
-     * <p>트랙 A·B (NOTIFICATION_BATCH_MESSAGE_DESIGN P1.2):
+     * <p>트랙 A·B (NOTIFICATION_BATCH_MESSAGE_DESIGN P1.2 + 2026-05-23 라운드 정정):
      * <ul>
-     *   <li>{@code remainingSessions == 1} + 패키지(총 {@code &gt; 1}) → {@code SESSION_ENDING_SOON}.</li>
+     *   <li>{@code totalSessions <= 1} (단발성 결제) → 모든 라이프사이클 알림 제외.</li>
+     *   <li>{@code totalSessions >= 3 && remainingSessions == 1} → {@code SESSION_ENDING_SOON}.
+     *       2회기 패키지는 첫 상담 직후 remaining=1 상태가 되어 첫상담 안내와 마지막 회기 안내가
+     *       거의 동시에 발송되므로 사용자 경험 저해 — 본 가드로 제외한다.</li>
      *   <li>{@code remainingSessions == 0} + 패키지(총 {@code &gt; 1}) + 마케팅 동의 + cutoff 통과
-     *     → {@code SESSION_RENEW_PROMPT}.</li>
+     *       → {@code SESSION_RENEW_PROMPT}.
+     *       회기 종료 시점이라 2회기 패키지에서도 자연(첫상담 안내와 동시 발화 위험 없음).</li>
      * </ul>
      *
      * <p>발송 자체는 {@link BatchNotificationDispatchService} 가 멱등 로그로 중복을 차단하므로,
@@ -739,9 +743,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 // 단발성(=1회기) 패키지는 회기 라이프사이클 알림 대상 아님.
                 return;
             }
-            if (remaining != null && remaining == 1) {
+            // SESSION_ENDING_SOON: 3회기 이상 패키지에만 발화 — 2회기 패키지의 첫상담 중복 회피.
+            if (total >= 3 && remaining != null && remaining == 1) {
                 batchNotificationDispatchService.dispatchSessionEndingSoon(mapping.getId());
             } else if (remaining != null && remaining == 0) {
+                // SESSION_RENEW_PROMPT: 회기 종료 시점 — 2회기 패키지에도 자연 발화. 마케팅 동의 가드는 dispatch 내부에서 별도 검증.
                 batchNotificationDispatchService.dispatchSessionRenewPrompt(mapping.getId());
             }
         } catch (Exception e) {

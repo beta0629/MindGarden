@@ -1774,6 +1774,8 @@
   --mg-glass-bg-medium: rgba(0, 0, 0, 0.40);
   /* D9 §C6 다크 Glass strong — black 0.60 (다크 강조 Glass) */
   --mg-glass-bg-strong: rgba(0, 0, 0, 0.60);
+  /* D10 §C5 다크 그림자 light — black 0.20 (다크 cascade 정착, broken cascade 해소 / 라이트 0.10 → 다크 0.20 단계 정합) */
+  --mg-shadow-light: rgba(0, 0, 0, 0.20);
   /* D9 §C6 다크 그림자 medium — black 0.30 (다크 표면 대비 깊이 보강) */
   --mg-shadow-medium: rgba(0, 0, 0, 0.30);
   /* D9 §C6 다크 오버레이 — black 0.50 (양방향 고정, modal/drawer backdrop) */

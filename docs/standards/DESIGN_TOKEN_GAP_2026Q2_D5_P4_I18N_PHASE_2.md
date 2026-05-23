@@ -1,0 +1,328 @@
+# D5 P4 합의서 초안 — T-C i18n Phase 2 진입 (namespace 분할·도메인 확장·다국어 합의) (2026 Q2)
+
+> **작성**: 2026-05-23 (core-planner 오케스트레이션, 구현 금지·문서 산출만)
+> **유형**: 의사결정 합의서 초안 (코드·D1~D10 SSOT·D5 P1~P3 정착물 무수정, 분배 골격만 — 사용자 컨펌 7건 대기)
+> **상위 합의**: `docs/standards/DESIGN_TOKEN_GAP_2026Q2_D5_DIRECTION.md` §3.4 (4순위 별도 트랙) + §4 P4 (T-C 별도 합의서 + `core-coder`) + §6 C5 (i18n Phase 2 진입 조건)
+> **선행 라운드**: D5 P1·P2·P3 정착 (T-D 가드 + T-E alias 5종 + T-B 테마 6종 + T-A rgba/3자리) → D6~D10 누적 정착 (운영 main `e88a264a9`, 2026-05-23 push 완료, T-D 가드 54 PASS / 0 WARN / 0 ERROR)
+> **병행 라운드**: D11 라운드 합의서 초안 (`0d226f0c2`, 디자인 토큰 metric 재정의 + R-2/R-3/R-4 잔여, 사용자 컨펌 8건 대기) — **본 합의서와 트랙 영역 분리 (라벨 SSOT vs 디자인 토큰 SSOT)**
+> **연계**: `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md` (Task 모델 — 디자인·비주얼 변경 배치 `gemini-3.1-pro`), `frontend/src/i18n/index.js` (Phase 1 부트스트랩 정착), `frontend/src/locales/README.md` (Phase 1 가이드 SSOT)
+
+---
+
+## §0 라운드 정합 (D5 P1~P3 정착 + D10/D11 경계)
+
+### 0.1 D5 P1~P3 정착 결과 (디자인 토큰 트랙 SSOT)
+
+D5_DIRECTION §4 분배실행 표 기준의 P1~P3 트랙은 모두 정착 완료되었으며, 본 D5 P4 트랙(T-C i18n Phase 2)은 색상 트랙 안정화 이후 진입하는 4순위로 분리되어 있었다.
+
+| Phase | 트랙 | 정착 결과 | 정착 SHA (대표) | NO-OP 여부 |
+|---|---|---|---|---|
+| **D5 P1-a** | T-D codemod 가드 강화 | SSOT 사전 lint + alias 충돌 차단 정착 (D6~D10 누적 54 PASS / 0 WARN) | (D6~D10 누적) | — |
+| **D5 P1-b** | T-E R-5 alias 톤 분리 정착 | surface/background-base/muted/secondary/sub 5종 라이트·다크 SSOT | (D5 디자이너 트랙 합의서 §1) | — |
+| **D5 P2** | T-B 테마 오버라이드 고도화 | 다크 톤 6종 확정 (info-bg/info-dark/error-50/error-dark/success-600/brand-olive) | (D5 디자이너 §2) | — |
+| **D5 P3** | T-A rgba/3자리 완벽 흡수 | D9 PR-D + D10 PR-B 누적 흡수 | `e169c0be3`/`5a45bd806` | (rgba metric 한계, **NO-OP 1건 포함** — D11 T-M 트랙으로 이월) |
+| **D5 P4** | **T-C i18n Phase 2** | **본 합의서로 별도 분리, 사용자 컨펌 7건 대기** | — | — |
+
+> **NO-OP 라운드 1건 포함**: D9 P2-f / PR-D (Glass/Shadow rgba SSOT 정착) — hex-only metric 한계로 `rawLine` 감소량 0건이나 SSOT 정합 의도대로 정착. D11 T-M (metric 재정의) 후 신 metric 기준선에서 재측정 예정.
+
+### 0.2 D10 P3 PASS + 운영 push 정착 (2026-05-23)
+
+| 게이트 | 결과 | 비고 |
+|---|---|---|
+| T-D 가드 (`npm run lint:codemod-mappings`) | **54 PASS / 0 WARN / 0 ERROR / 0 alias 충돌** | 양방향 cascade 100% |
+| 시각 회귀 (HIGH 4 / MED 6 / LOW 5) | **HIGH 0 / MED 0 / LOW 0 (전건 PASS)** | mg-v2 Tailwind / black α / B0KlA 광역 / `#60a5fa` 다크 cascade 안정 |
+| WCAG AA 신설 17종 양방향 | **17/17 PASS** | PR-A 11종 + PR-C 6종 |
+| 운영 push | **`e88a264a9`** (2026-05-23 완료) | — |
+
+### 0.3 D11 합의서 초안 (`0d226f0c2`) 와의 경계 분명
+
+| 항목 | D5 P4 본 합의서 (T-C i18n Phase 2) | D11 합의서 초안 (디자인 토큰 metric/R-2~R-4) |
+|---|---|---|
+| **SSOT 영역** | 라벨 SSOT (`frontend/src/locales/{lang}/{ns}.json`) | 디자인 토큰 SSOT (`frontend/src/styles/unified-design-tokens.css`) |
+| **카운트 게이트** | 한국어 패턴 매칭 / `t()` 호출률 / locale 키 leaves | `legacyRawLine` + `unifiedRawLine` (dual-metric) + `r2Protected` |
+| **변경 대상 파일** | JS/TS/JSX/TSX 의 한글 문자열 → `t('key', '한글 fallback')` 치환 + `*.json` namespace 추가 | `unified-design-tokens.css` / `convert-hardcoded-colors.js` / `inventory-r2-fallbacks.js` |
+| **시각 회귀 범위** | 텍스트 길이 변동 (영문 + 추가 언어 시) | 색상·다크 모드 cascade |
+| **conflict 위험 영역** | 컴포넌트 JS/TS 한글 문자열 (LNB/모달/error 등) | CSS 파일·codemod 스크립트·SSOT 정의 |
+| **병렬 가능성 (§4 C7)** | D11 디자인 토큰 트랙과 **파일 영역 무관** — 단, 동일 컴포넌트 파일에서 CSS·라벨 동시 수정 시 PR conflict 회피 필요 | 동일 |
+
+> **경계 원칙**: 본 D5 P4 라운드는 **라벨 SSOT (i18n)** 단일 책임. 디자인 토큰·색상·CSS 변경 0줄. D11 라운드와 **PR 분리 + 사전 rebase 검증** 으로 conflict 회피.
+
+---
+
+## §1 T-C 인벤토리 실측 (2026-05-23 시점, develop `c31a498df`)
+
+> **측정 환경**: 로컬 `ripgrep` 미설치로 `grep -rE`(POSIX 호환)·`find`·`wc`·`node` 로 동등 산출. 패턴·범위는 사용자 위임의 ripgrep 명령과 정합한다 (`*.{js,jsx,ts,tsx}` / `*.css` / `locales/*.json`).
+
+### 1.1 한국어 패턴 매칭 (frontend src 전체)
+
+| 항목 | 값 | 산출 명령 |
+|---|---:|---|
+| **한국어 라인 — JS/TS/JSX/TSX 전체** | **29,279** | `grep -rnE "[가-힣]" frontend/src --include="*.{js,jsx,ts,tsx}" \| wc -l` |
+| 한국어 라인 — JS/TS/JSX/TSX 파일 수 | 987 | `grep -rlE "[가-힣]" ... \| wc -l` |
+| **한국어 라인 — CSS 전체** | **5,304** | `grep -rnE "[가-힣]" frontend/src --include="*.css" \| wc -l` |
+| frontend src 총 JS/TS/JSX/TSX 파일 | 1,034 | `find frontend/src -type f \( -name '*.js' -o -name ... \) \| wc -l` |
+
+### 1.2 `t()` 호출 / `useTranslation` 사용량
+
+| 항목 | 값 | 비고 |
+|---|---:|---|
+| **`t(` 호출 라인** | **932** | `grep -rnE "\bt\(" ...` (Phase 1 부트스트랩 + common namespace 시범) |
+| **`useTranslation` 사용 파일 수** | **275** | 컴포넌트 파일 (1,034 중 26.6%) |
+
+### 1.3 locale 파일 키 (ko 단일 언어, Phase 1 정착)
+
+| 파일 | 라인 수 | **leaf 키 수** (재귀 카운트) | 비고 |
+|---|---:|---:|---|
+| `frontend/src/locales/ko/common.json` | 68 | **60** | 공통 액션·상태·라벨 (Phase 1 시범) |
+| `frontend/src/locales/ko/admin.json` | 290 | **230** | 어드민 도메인 시범 |
+| **합계 (ko)** | 358 | **290** | Phase 2 진입 기준선 |
+
+### 1.4 alert / confirm / UnifiedModal 인벤토리 (트랙 C 입력)
+
+| 항목 | 값 | 비고 |
+|---|---:|---|
+| `window.alert(` | 1 | 트랙 C 분리 후보 |
+| `window.confirm(` | 9 | 트랙 C 분리 후보 |
+| bare `alert/confirm(` (사용자 함수 포함) | 50 | 일부는 도메인 함수 — P0-inv 에서 정밀 분류 |
+| **UnifiedModal 사용 라인** | **422** | 치환 대상 SSOT (alert/confirm → UnifiedModal i18n) |
+
+### 1.5 영역별 한국어 라인 분포 (트랙 우선순위 입력)
+
+| 영역 (경로/키워드) | 한국어 라인 | 매핑 트랙 |
+|---|---:|---|
+| `**/admin/**` + `**/Admin**` 파일 (어드민 LNB·메인) | **6,087** | **A** (1순위) |
+| `components/common/**` (UnifiedModal·공통) | 1,698 | **A** (1순위 — 모달) |
+| `components/layout/**` (LNB·GNB) | 179 | **A** (1순위 — LNB) |
+| 키워드 `error/toast/notify/message` 포함 파일 | 3,247 | **A** (1순위 — error 메시지) |
+| 키워드 `setting/report/statistic/analytic` 포함 파일 | 1,002 | **B** (2순위 — 보조 화면) |
+| **잔여 (위 분류 외)** | ~17,066 (29,279 − 위 카테고리 합 12,213) | C/D 인벤토리 (P0-inv) |
+
+> **주의**: 위 영역별 합산은 단일 라인이 여러 카테고리에 중복 매칭(예: `admin/error/toast`)될 수 있어 합산이 총합과 정확히 일치하지 않는다. 정밀 분포는 P0-inv (`explore`) 에서 단일 분류 카테고리·우선순위별 인벤토리 JSON 으로 재산출한다.
+
+### 1.6 Phase 1 부트스트랩 정착물 (D5 P4 진입 전 SSOT)
+
+D5_DIRECTION §4 P4 의 합의 대상이 본 합의서이며, Phase 1 부트스트랩은 별도 트랙(D5 직전~D5 P0 시점, `frontend/src/i18n/index.js` 작성·`react-i18next`·`i18next`·`i18next-browser-languagedetector` 도입)으로 이미 정착되어 있다. 본 합의서는 Phase 1 정착물을 **무수정** 으로 보존한다:
+
+- `frontend/src/i18n/index.js` — `SUPPORTED_LANGUAGES = ['ko']` / `FALLBACK_LANGUAGE = 'ko'` / `DEFAULT_NAMESPACE = 'common'` / `LanguageDetector` (localStorage·navigator)
+- `frontend/src/locales/ko/common.json` (60 leaves) + `frontend/src/locales/ko/admin.json` (230 leaves)
+- `frontend/src/locales/README.md` (Phase 1 가이드 SSOT, 키 명명 `domain.feature.element.purpose`)
+- 기존 275 컴포넌트의 `useTranslation` + 932 `t()` 호출 정착 (Phase 1 시범)
+
+---
+
+## §2 Phase 2 트랙 후보 분류 (우선순위 A~D)
+
+> 본 표는 우선순위·범위 결정의 **분류 골격** 이며, 실제 트랙별 진입 범위는 §5 C2 (트랙 범위) + C3 (트랙 D 분리 여부) 컨펌 후 확정한다.
+
+| 우선순위 | 트랙 명 | 범위 (대표 영역) | 한국어 라인 가늠 (§1.5 기반) | 핵심 산출물 | 시각/UX 회귀 위험 |
+|---:|---|---|---:|---|---|
+| **A** | **사용자 노출 빈도 高 화면** | 어드민 LNB·GNB / UnifiedModal / 어드민 메인 / error·toast·notify 메시지 | ~11,000 (admin 6,087 + common 1,698 + layout 179 + error/toast 3,247, 중복 포함) | `frontend/src/locales/ko/{admin,common,error}.json` 확장 (~+600 leaves) + 컴포넌트 `t()` 치환 | **Med~High** (LNB·모달 텍스트 길이 변동, 영역 정렬 영향) |
+| **B** | **보조 화면** | 설정 / 통계 / 보고서 / analytics | ~1,000 | `frontend/src/locales/ko/{settings,report,statistics}.json` 신설 (~+250 leaves) + 컴포넌트 `t()` 치환 | **Low~Med** (어드민 종속, 사용 빈도 낮음) |
+| **C** | **미번역 alert/confirm → UnifiedModal i18n** | `window.alert/confirm` 10건 + bare `alert/confirm` 50건 중 도메인 alert/confirm (P0-inv 분류) | (라인 수 미세, 메시지 텍스트 위주) | UnifiedModal 422 사용처와 정합되는 i18n 메시지 키 + `useConfirm`/`useAlert` 훅 SSOT 통합 (디자이너·코더 분리 합의) | **Low** (메시지 변환만, 레이아웃 무관) |
+| **D** | **추가 언어 지원** | `en-US` / `ja-JP` / `zh-CN` 등 | (한국어 라인 변화 0, 라이브러리·번들 사이즈 변동) | `frontend/src/locales/{en-US,ja-JP,…}/*.json` 신설 + `i18n/index.js` `resources`·`supportedLngs` 확장 + 언어 전환 UI | **Med** (텍스트 길이 변동·SEO·번들 사이즈·번역 품질 — §6 리스크) |
+
+### 2.1 트랙 한눈에 보는 비교
+
+| 기준 | A | B | C | D |
+|---|:---:|:---:|:---:|:---:|
+| 한국어 라인 직접 감축 | ◎ | ○ | △ | × |
+| 사용자 노출 빈도 | ◎ | △ | ○ | (언어 정책) |
+| 디자이너 카피 결정 필요 | ◎ | ○ | ◎ (메시지 톤·UnifiedModal 정합) | ◎ (다국어 번역 품질) |
+| 단독 진행 가능 | ◎ | ○ (A 이후) | ○ (A 이후) | ○ (모든 트랙 무관) |
+| 사용자 컨펌 필요 | △ (A 범위 정의) | △ (B 분리 여부) | **◎ (C3 분리 여부)** | **◎ (C1 언어 선택)** |
+| 시각 회귀 의존 | Med~High | Low~Med | Low | Med |
+
+---
+
+## §3 산출 KPI (Phase 2 종료 시 정량 목표 — §5 C4 컨펌 후 확정)
+
+> **권장값(기본 후보)** 는 D8~D10 답습 답습 (40%·-50% 감축 패턴) 으로 제안하며, **사용자 컨펌(§5 C4) 후 N·M·K 값 확정**.
+
+| KPI | 현재 (Phase 1 정착, 2026-05-23) | **Phase 2 종료 목표 (권장값)** | 측정 도구 |
+|---|---:|---|---|
+| **한국어 라인 (JS/TS 전체)** | **29,279** | **< 15,000 (-49%, ~14,000건 감축)** | `grep -rnE "[가-힣]" frontend/src --include="*.{js,jsx,ts,tsx}" \| wc -l` |
+| 한국어 라인 (CSS 전체) | 5,304 | **유지** (CSS 한글은 의도된 placeholder/주석) | 동일 (`--include="*.css"`) |
+| **`t(` 호출 라인** | **932** | **> 3,000 (Phase 1 대비 +222%)** | `grep -rnE "\bt\(" ...` |
+| `useTranslation` 사용 파일 수 | 275 | **> 500** (~50% 컴포넌트 도달) | `grep -rlE "useTranslation" ...` |
+| **locale 키 leaves (ko)** | **290** (common 60 + admin 230) | **> 1,500 (+1,200 leaves)** | `node` 재귀 leaf 카운트 |
+| `window.alert/confirm` 잔존 | 10 (alert 1 + confirm 9) | **0** (UnifiedModal i18n 흡수) — C 트랙 진입 시 | 동일 |
+| Phase 1 정착물 무수정 | — | **100% 무수정 보존** (i18n/index.js + Phase 1 290 leaves) | git diff 0 라인 |
+| 추가 언어 지원 (en-US/ja-JP 등) | 0 (ko only) | **§5 C1 컨펌 후 확정** (권장: ko only) | `supportedLngs` 배열 |
+
+> **KPI 의미**: 한국어 라인은 "치환 진척" 만 측정하므로 **하한선 < 0 도달 불가능** (의도된 한글 placeholder·주석·fallback 텍스트 잔존). `t()` 호출과 leaf 키 수가 실질 진척 지표이다. dual-tracking 권장.
+
+---
+
+## §4 위임 흐름 (D8~D11 8단계 답습)
+
+> **본 임무 범위 외**: 실제 위임은 사용자 컨펌(§5) 7건 확정 후 메인 어시스턴트가 수행. 본 표는 위임 시 사용할 골격.
+
+### 4.1 분배실행 표
+
+| Phase | 책무 | 담당 서브에이전트 | 위임 프롬프트 골격 (요약) | 적용 스킬 | 모델 권장 |
+|---|---|---|---|---|---|
+| **P0-inv** | T-C 인벤토리 정밀 분류 + 트랙 A~D 영역 산출 | `explore` | (1) `[가-힣]` 매칭 29,279 라인을 **단일 카테고리** 우선순위 A/B/C/D 로 분류 + 파일·라인·문자열 샘플 JSON 산출. (2) `window.alert/confirm` 10건 + bare `alert/confirm` 50건 정밀 분류 (도메인 alert vs 사용자 함수). (3) UnifiedModal 422 사용처와 alert/confirm 메시지 SSOT 정합 검사. (4) namespace 분할 후보 산출 (admin / common / error / settings / report / statistics / schedule / payment …). (5) 트랙 A 영역의 컴포넌트 별 한국어 라인 Top 20 산출 (우선 치환 후보). 산출: `reports/d5-p4-i18n-inventory-{trackA,trackB,trackC,namespace}-20260524.json` + 분류 마크다운. **코드 무수정 (read-only)**. | `/core-solution-frontend`, `/core-solution-standardization` | 기본 |
+| **P1** | §5 C1~C7 디자이너 컨펌 + 번역 카피 결정 + 키 명명 합의 핸드오프 | `core-designer` | (1) §5 C1 추가 언어 결정 (en-US/ja-JP/zh-CN/ko only) → 다국어 진입 시 번역 카피 정책 (외부 번역사 / 사내 카피 / 디자이너 직접). (2) C5 카피 결정 시점 (P0 후 / P1 사전 / **트랙별 분리**) 적용 → 트랙별 분리 시 P2-a (트랙 A) 진입 전 LNB·모달·error 키 명명·한글 카피 시안 1장. (3) namespace 분할 합의 (admin / common / error / settings / report / statistics 등) + 키 명명 패턴 (Phase 1 `domain.feature.element.purpose` 답습). (4) 트랙 C UnifiedModal i18n 메시지 톤 합의 (확인/취소 등 표준 카피). (5) 트랙 D 진입 시 영문 카피 1차 시안 (admin LNB / common action / error 상위 ~50 키). 완료 조건: `docs/project-management/2026-05-24/D5_P4_P1_DESIGN_HANDOFF_I18N.md` (트랙별 키 명명·한글 카피·영문 1차 시안 별첨). | `/core-solution-design-handoff`, `/core-solution-planning` | **`gemini-3.1-pro`** (디자인·번역 카피 결정 규약 — `CORE_PLANNER_DELEGATION_ORDER.md`) |
+| **P2-a** | **트랙 A (1순위)** 어드민 LNB / 모달 / error 메시지 i18n 치환 | `core-coder` | P0-inv + P1 카피 적용 → (1) LNB·GNB·UnifiedModal·error/toast 컴포넌트의 한글 문자열을 `t('key', '한글 fallback')` 으로 치환 (Phase 1 fallback 패턴 답습). (2) `frontend/src/locales/ko/{admin,common,error}.json` 확장 (P1 카피 시안 반영, ~+600 leaves). (3) Phase 1 정착물(`i18n/index.js`·기존 290 leaves) **무수정**. (4) namespace `error` 신설 시 `i18n/index.js` `resources.ko.error` + `ns` 배열 1줄 추가. 완료 조건: 한국어 라인 (admin/common/layout/error 영역) ~11,000 → ~5,000 (-50%~-60%) + `t()` 호출 932 → ~1,800 + 시각 회귀 컴포넌트별 점검. | `/core-solution-frontend` | 기본 (C5=트랙별 분리 시 `gemini-3.1-pro` 옵션) |
+| **P2-b** | **트랙 B (2순위)** 설정 / 통계 / 보고서 i18n 치환 | `core-coder` | P2-a 정착 후 진입. (1) settings·report·statistics·analytics 영역 ~1,000 라인 치환. (2) `frontend/src/locales/ko/{settings,report,statistics}.json` 신설 (~+250 leaves). (3) `i18n/index.js` namespace 등록. 완료 조건: 한국어 라인 (B 영역) ~1,000 → ~300 + `t()` 호출 +500. | `/core-solution-frontend` | 기본 |
+| **P2-c** | **트랙 C (3순위, §5 C3 컨펌 시)** `window.alert/confirm` → UnifiedModal i18n | `core-coder` | (P2-a 이후, C3=a 컨펌 시 본 트랙 포함) (1) `window.alert` 1건 + `window.confirm` 9건 = 10건을 `UnifiedModal` + `useConfirm`/`useAlert` 훅으로 일괄 치환. (2) bare `alert/confirm` 50건 중 도메인 alert 정밀 분류 후 동일 치환. (3) 메시지 한글 카피를 `error.json` 또는 `common.json` 키로 흡수. (4) UnifiedModal i18n props (`titleKey`, `messageKey`, `confirmLabelKey` 등) 정합. 완료 조건: `window.alert/confirm` 잔존 0 + bare 잔존 ≤ 10 (사용자 함수만). | `/core-solution-frontend`, `/core-solution-unified-modal` | 기본 |
+| **P2-d** | **트랙 D (4순위, §5 C1 컨펌 시)** 추가 언어 지원 — en-US/ja-JP 등 | `core-coder` | (C1=ko 외 선택 시 본 트랙 진입) P1 영문 카피 시안 적용 → (1) `frontend/src/locales/{en-US,ja-JP,…}/*.json` 신설 (P2-a~c 정착 키 leaves 1:1 미러). (2) `i18n/index.js` `SUPPORTED_LANGUAGES` 확장 + `resources` 등록. (3) 언어 전환 UI (GNB 우상단 또는 어드민 설정) 신설 — 디자이너 시안 적용. (4) 번들 사이즈 측정 (§6 리스크). 완료 조건: 추가 언어 leaves ≥ Phase 1 290 + 핵심 화면 다국어 렌더링 PASS + 번들 사이즈 증가 < 10%. | `/core-solution-frontend` | 기본 (UI 변경 시 `gemini-3.1-pro` 디자이너 P1 단계 선행) |
+| **P3** | 종합 시각 회귀 검수 + KPI 측정 | `core-tester` | P2-a~d (사용자 컨펌 범위 적용 후) (1) 트랙 A·B·C·D 각 우선 화면 UAT (D8 P3 답습 — admin/임상/대시보드/모달 광역). (2) Phase 1 정착물 회귀 0 검증 (i18n/index.js · 기존 290 leaves · 275 컴포넌트 `t()`). (3) 다국어 진입 시 텍스트 길이 변동에 따른 레이아웃 회귀 (LNB·모달·error 메시지·테이블 헤더). (4) KPI 측정 (한국어 라인 / `t()` 호출 / locale leaves / 번들 사이즈). 완료 조건: HIGH 0 / MED 0 + KPI N·M·K 달성 보고서 + 추가 언어 진입 시 다국어 매트릭스 PASS. | `/core-solution-testing` | **`gemini-3.1-pro`** (다국어 시각 회귀 — 디자인·비주얼 검증 규약) |
+| **P4** | 운영 push (§5 C6 컨펌에 따라 일괄/분할) | `core-deployer` | (P3 PASS 후) **(a) 일괄 push** — PR-A + PR-B + PR-C + PR-D 묶음 1회 또는 **(b) 분할 push** — PR-A → PR-B → PR-C → PR-D 각 단계 P3 PASS 후 분리 push (4회). 완료 조건: develop → main rebase + GitHub Actions PASS + 운영 게이트 KPI 보고 + i18n Phase 2 종결 보고 + D5 P4 라운드 완전 종결 보고. **D11 라운드 진행 시 사전 rebase 검증 필수** (§0.3 conflict 회피). | `/core-solution-deployment` | 기본 |
+
+### 4.2 병렬 / 직렬 의존성
+
+- **P0-inv ↔ P1**: 직렬 (P0-inv 분류 JSON 을 P1 디자이너가 입력으로 사용).
+- **P1 ↔ P2-a/b/c/d**: §5 C5 컨펌 결과에 따름.
+  - C5=a (P0 후 일괄 결정): P1 1회로 트랙 A~D 카피 모두 결정 → P2-a~d 병렬 가능 (단, codemod·namespace 충돌 회피 위해 직렬 권장).
+  - C5=b (P1 사전 일괄): 동일.
+  - **C5=c (트랙별 분리, 권장)**: P1 → P2-a → P1' (트랙 B 카피) → P2-b → … 반복 (안전, 카피 품질↑, 소요↑).
+- **P2-a (트랙 A) → P2-b (트랙 B)**: 직렬 권장 (A 정착 후 B 진입, KPI 단계 측정 가능).
+- **P2-c (트랙 C)**: §5 C3 컨펌 후 진입. C3=a (현재 트랙 포함) 시 P2-a 와 병렬 가능 (UnifiedModal 사용처 분리).
+- **P2-d (트랙 D)**: §5 C1 컨펌 후 진입. ko only 시 본 트랙 생략.
+- **P3 ↔ P4**: D10/D11 답습 직렬 (P3 PASS 전 P4 금지).
+
+> **검증 게이트 (필수)**: P2 코드 변경은 P3 `core-tester` 통과 전 P4 진행 금지 (`CORE_PLANNER_DELEGATION_ORDER.md` 강제 규칙).
+
+---
+
+## §5 사용자 컨펌 필요 항목 (D5 P4 진입 전 — 7건)
+
+> **권장값(기본 후보)** 은 **굵게** 표시한다. 사용자가 옵션 중 선택 후 컨펌하면 P0-inv 위임을 개시한다.
+
+### C1. 추가 언어 (T 트랙 D 진입 여부)
+
+- **질문**: D5 P4 라운드에 추가 언어 지원을 포함할지·어떤 언어를 도입할지.
+  - (a) `en-US` (영어) 추가 — 1차 다국어 확장
+  - (b) `ja-JP` (일본어) 추가
+  - (c) `zh-CN` (중국어 간체) 추가
+  - (d) `en-US` + `ja-JP` 동시 추가 (다중 진입)
+  - (e) **한국어 only 유지 — D5 P4 는 namespace 분할·도메인 확장만, 추가 언어는 후속 라운드 분리**
+- **권장**: **(e) 한국어 only 유지** — 다국어 진입은 (i) 번역 품질 SSOT (외부 번역사·사내 카피팀) 결정 (ii) 번들 사이즈·SEO·운영 비용 트레이드오프 (§6) 검토 후 별도 라운드 (가칭 D5 P5 또는 D12+) 분리. Phase 1 README §3 점진 도입 절차 (Phase 2 종료 → 언어 추가 합의) 답습.
+
+### C2. 우선순위 트랙 범위 (Phase 2 진입 폭)
+
+- **질문**: D5 P4 라운드에 포함할 트랙 우선순위 범위.
+  - (a) **A only** — 어드민 LNB / 모달 / error 메시지만 (한국어 라인 -50% 가늠, 빠른 정착)
+  - (b) **A + B** — 보조 화면(설정/통계/보고서) 포함 (한국어 라인 -55% 가늠)
+  - (c) **A + B + C** — alert/confirm UnifiedModal i18n 포함 (한국어 라인 -55% + alert/confirm 잔존 0)
+  - (d) **all 4 (A + B + C + D)** — 추가 언어까지 포함 (C1=e 와 양립 불가)
+- **권장**: **(c) A + B + C** — 추가 언어 (트랙 D) 는 C1=e 권장에 따라 분리. A~C 는 한국어 단일 언어 내 라벨 SSOT 표준화·alert/confirm 정합 정착으로 본 라운드 완결 가능.
+
+### C3. 트랙 C (미번역 alert/confirm) 진행 정책
+
+- **질문**: `window.alert/confirm` 10건 + bare 50건 정밀 분류 후 UnifiedModal i18n 흡수 트랙을 본 라운드에 포함할지.
+  - (a) **현재 트랙에 포함 (P2-c 진입)** — A 와 병렬 가능, alert/confirm 잔존 0 도달
+  - (b) 별도 라운드 분리 — 본 라운드는 A·B 만, alert/confirm i18n 은 D5 P5 또는 D12+ 후속 라운드
+  - (c) 진행 보류 — UnifiedModal 422 사용처 패턴이 충분히 안정될 때까지 대기
+- **권장**: **(a) 현재 트랙에 포함** — C2=c 권장과 정합. UnifiedModal 422 사용처 SSOT 이미 정착되어 위험 낮음 (트랙 C 시각 회귀 Low). bare 50건 중 사용자 함수는 P0-inv 에서 정밀 분류로 회피.
+
+### C4. KPI 결정값 (한국어 매칭 < N + locale leaves > K)
+
+- **질문**: §3 산출 KPI 표의 **N·K** 결정값.
+  - (a) **N = 15,000 (-49%), K = 1,500** — 권장값 (D8~D10 답습 -50% 패턴)
+  - (b) N = 10,000 (-66%), K = 2,000 — 공격적 목표 (트랙 A+B+C 광역 치환, 소요↑)
+  - (c) N = 20,000 (-32%), K = 800 — 보수적 목표 (트랙 A 만, 빠른 정착)
+  - (d) 사용자 직접 입력값 (예: N = 12,000 / K = 1,800 등)
+- **권장**: **(a) N = 15,000 / K = 1,500** — D8~D10 답습 비율 + C2=c 진입 시 도달 가능 가늠. 정확값은 P0-inv 단일 카테고리 분류 후 보정.
+
+### C5. 디자이너 카피 결정 시점
+
+- **질문**: P1 디자이너 카피 결정 (한글 키 명명 + 영문/추가 언어 카피) 진행 시점·범위.
+  - (a) **P0-inv 후 일괄 결정** — 인벤토리 결과 보고 후 트랙 A~D 카피 1회 결정 → P2 진입 (빠르지만 카피 품질 위험)
+  - (b) **P1 사전 일괄 결정** — P0-inv 와 무관하게 트랙 A~D 카피 사전 결정 (보수적, 인벤토리 반영 X)
+  - (c) **트랙별 분리** — P1 → P2-a → P1' (트랙 B 카피) → P2-b → P1'' (트랙 C 카피) → P2-c (안전, 카피 품질↑, 소요↑)
+- **권장**: **(c) 트랙별 분리** — 트랙별 도메인 어휘·톤이 다르므로 (admin LNB ≠ UnifiedModal alert ≠ 보고서 라벨) 단계별 디자이너 컨펌이 카피 품질·일관성에 유리. D9~D10 디자이너 핸드오프 답습 패턴.
+
+### C6. 운영 push 일괄 / 분할
+
+- **질문**: D5 P4 P4 단계 운영 push PR 분리 단위.
+  - (a) **일괄 push** — PR-A + PR-B + PR-C (+ PR-D) 묶음 1회
+  - (b) **트랙별 분할 push** — PR-A → PR-B → PR-C (→ PR-D) 각 P3 PASS 후 분리 push (트랙 수 2~4회)
+  - (c) **A 단독 + B/C/D 일괄** — 1순위 트랙만 단독 push, 나머지 일괄
+- **권장**: **(b) 트랙별 분할 push** — D5 P4 변경 광역 영향 (한국어 라인 ~14,000 치환) 이라 분할 회귀 안전 마진 확보. D11 라운드와의 PR conflict 회피 (§0.3 / §6.5) 도 트랙별 분할이 유리. D10 P3 답습은 일괄 push 였으나 D5 P4 변경 규모가 더 큼.
+
+### C7. D11 라운드 (디자인 토큰 metric 재정의) 와의 병렬 진행
+
+- **질문**: 본 D5 P4 합의서와 D11 합의서 초안 (`0d226f0c2`) 의 진행 정책.
+  - (a) **병렬 가능** — 트랙 영역 무관 (라벨 SSOT vs 디자인 토큰 SSOT), 동시 진행
+  - (b) **순차 진행** — D11 종료 후 D5 P4 진입 (또는 역순)
+  - (c) **트랙별 결정** — P1 (디자이너) / P3 (테스터) 는 직렬, P2 (코더) 만 병렬
+- **권장**: **(b) 순차 진행** — 위임 직전 시도가 `resource_exhausted` 로 실패한 점, D5 P4 변경 규모 (한국어 라인 ~14,000 라인 광역) 가 D11 (디자인 토큰 -7건 + metric 산식) 보다 크다는 점, 디자이너·테스터 모델 `gemini-3.1-pro` 자원 경합 회피 (CORE_PLANNER_DELEGATION_ORDER.md Task 모델 규약) 를 고려한 안전 우선. D5 P4 정착 후 D11 진입 (또는 D11 정착 후 D5 P4 진입) 순서는 사용자 결정.
+
+---
+
+## §6 리스크 / 트레이드오프
+
+### 6.1 번역 품질 — 다국어 진입 (트랙 D) 시 외부 번역사·사내 카피 결정
+
+- **리스크**: `en-US`/`ja-JP`/`zh-CN` 등 추가 언어 진입 시 자동 번역 (DeepL·Google Translate API) 적용은 도메인 어휘 (상담 매칭·세션 회기·결제·멀티테넌트) 손상 위험. 사내 직접 번역은 디자이너·기획 자원 부담 + 일관성 위험.
+- **완화안**: §5 C1 권장 (e) — Phase 2 본 라운드는 한국어 only 정착, 다국어 진입은 별도 라운드 분리 + 번역 품질 SSOT (외부 번역사 견적 / 사내 카피 가이드) 결정 후 진입.
+- **트레이드오프**: 다국어 진입 지연 vs 번역 품질·일관성 보장.
+
+### 6.2 런타임 사이즈 — i18n 번들 사이즈 증가
+
+- **리스크**: locale 키 290 → 1,500+ 확장 시 ko 단일 언어 번들 사이즈 ~+50KB (gzip 후 ~+15KB) 가늠. 다국어 진입 시 언어 수만큼 선형 증가 (예: en-US 추가 시 +15KB) + 동적 로드 미적용 시 초기 페이로드 증가.
+- **완화안**: (1) `i18next-http-backend` 동적 로드 (Phase 1 미적용, Phase 2 진입 시 검토). (2) namespace 단위 lazy import (`/admin` 라우트 진입 시 `admin.json` 만 로드). (3) Phase 2 P3 검수에 번들 사이즈 측정 KPI 추가 (§3).
+- **트레이드오프**: 동적 로드 도입 시 초기 렌더링 latency vs 초기 페이로드 절감.
+
+### 6.3 SEO — 다국어 진입 시 URL 정책·hreflang
+
+- **리스크**: 다국어 진입 시 `/admin` URL 이 언어별 분리되지 않으면 검색 엔진 hreflang 매트릭스 미적용. 어드민 영역은 인덱싱 비대상이라 영향 낮으나 공개 페이지(랜딩·홍보) 다국어 도입 시 SEO 정책 필요.
+- **완화안**: 본 D5 P4 라운드 범위는 어드민·내담자·상담사 SPA 내부 라벨에 한정. 공개 페이지 다국어 SEO 는 별도 라운드 분리.
+- **트레이드오프**: SEO 정책 결정 비용 vs 다국어 마케팅 효과.
+
+### 6.4 운영 비용 — 번역 SSOT 유지 (locale 키 누락·번역 미동기화)
+
+- **리스크**: 키 추가·수정 시 ko / en-US / ja-JP 등 모든 언어 파일 동기화 필요. 누락 시 `t()` fallback (Phase 1 권장 패턴) 으로 한글 노출 → 다국어 UX 손상.
+- **완화안**: (1) CI 게이트 — locale 키 일관성 검증 스크립트 (`scripts/i18n/check-locale-parity.js`) 신설 권고. (2) Phase 1 fallback 패턴 (`t('key', '한글 fallback')`) 답습으로 회귀 0 보장. (3) 키 추가 PR 시 모든 언어 파일 동시 변경 강제 (lint rule).
+- **트레이드오프**: CI 게이트 운영 부담 vs 다국어 SSOT 일관성.
+
+### 6.5 D11 라운드 (디자인 토큰) 와의 PR conflict
+
+- **리스크**: 동일 컴포넌트 파일에서 CSS·라벨 동시 수정 시 develop 브랜치 conflict. 특히 admin LNB·UnifiedModal·error 메시지는 D11 의 토큰 신설·cascade 변경과 겹칠 가능성.
+- **완화안**: §5 C7 권장 (b) 순차 진행. 병렬 진행 시 (C7=a) 사전 rebase 검증 + 파일 영역 분리 명시 (D5 P4: `*.{js,jsx,ts,tsx}` 한글 문자열 + `*.json` locale / D11: `unified-design-tokens.css` + codemod 스크립트 + 문서).
+- **트레이드오프**: 순차 진행 속도 vs conflict 위험.
+
+### 6.6 텍스트 길이 변동 — LNB / 모달 / 테이블 헤더 레이아웃 회귀
+
+- **리스크**: 다국어 진입 시 영문 라벨이 한글 대비 평균 1.3~1.7배 길어 LNB(260px 너비) / GNB(64px 높이) / 모달 헤더 / 테이블 컬럼 레이아웃 깨질 위험. 일본어는 한글 대비 비슷하나 한자 사용 시 폰트 메트릭 차이.
+- **완화안**: (1) P1 디자이너 카피 결정 시점에 영문 길이 시뮬레이션 (가장 긴 라벨 추출 → CSS overflow / text-truncation 정책). (2) P3 시각 회귀 우선 점검 화면에 LNB·모달·테이블 헤더 광역 포함.
+- **트레이드오프**: 시각 회귀 비용 vs 다국어 UX 완성도.
+
+### 6.7 Phase 1 정착물 회귀 위험 (i18n/index.js / 기존 290 leaves)
+
+- **리스크**: 본 라운드 P2 코더 작업 시 Phase 1 정착물 (`i18n/index.js` 라이브러리 초기화 코드 + 기존 290 leaves + 275 컴포넌트 `t()` 호출) 의도치 않은 수정.
+- **완화안**: 본 합의서 §1.6 SSOT 보존 원칙 명시 + P2 위임 프롬프트에 "Phase 1 정착물 무수정" 강제 + P3 검수에 회귀 0 검증 KPI 추가.
+- **트레이드오프**: 작업 자유도 vs Phase 1 안정성.
+
+---
+
+## §7 산출물 (합의서 정착 시)
+
+- **본 합의서 (`DESIGN_TOKEN_GAP_2026Q2_D5_P4_I18N_PHASE_2.md`)** — 사용자 컨펌 §5 7건 확정 후 §9 변경 이력 갱신, P0-inv 위임 트리거.
+- **P0-inv 산출물 (`explore` 위임 후)**: `reports/d5-p4-i18n-inventory-{trackA,trackB,trackC,namespace}-20260524.json` + 분류 마크다운 1장.
+- **P1 핸드오프 산출물 (`core-designer` 위임 후, 모델 `gemini-3.1-pro`)**: `docs/project-management/2026-05-24/D5_P4_P1_DESIGN_HANDOFF_I18N.md` (트랙별 키 명명·한글 카피·영문 1차 시안·다국어 정책 결정).
+- **P2 코드 변경 산출물 (`core-coder` 위임 후)**: `frontend/src/locales/ko/{admin,common,error,settings,report,statistics}.json` 확장·신설 + 컴포넌트 `t()` 치환 + (C1 다국어 진입 시) `frontend/src/locales/{en-US,ja-JP,…}/*.json` 신설 + `i18n/index.js` `supportedLngs`·`resources` 확장.
+- **P3 검수 산출물 (`core-tester` 위임 후, 모델 `gemini-3.1-pro`)**: `docs/project-management/2026-05-25/D5_P4_P3_VISUAL_REGRESSION_REPORT.md` + KPI 측정값 (한국어 라인 / `t()` 호출 / locale leaves / 번들 사이즈 / Phase 1 회귀 매트릭스).
+- **P4 운영 push 결과**: (C6 컨펌에 따라) develop → main rebase + GitHub Actions PASS + 운영 게이트 KPI 보고 + D5 P4 라운드 완전 종결 보고 + (필요 시) D5 P5 / D12+ 후속 라운드 (다국어 또는 namespace 추가 확장) 트리거.
+
+> **권고**: 합의서 §5 7건 사용자 컨펌 확정 직후, 메인 어시스턴트가 P0-inv (`explore`) 위임을 즉시 개시한다 (D10 P0 / D11 P0-inv 답습 패턴, 단 D11 진행 정책 §5 C7 결정 후).
+
+---
+
+## §8 부록 — 미존재/참조 누락 보고
+
+- `docs/standards/I18N_ADOPTION_STRATEGY_2026Q2.md` — **미존재** (D5_DIRECTION §4 P4 의 예정 SSOT). 본 합의서가 그 자리(별도 합의서)를 대신하며, 명칭은 사용자 위임 (`D5_P4_I18N_PHASE_2.md`) 을 따른다. 필요 시 본 합의서 정착 후 별도 alias 문서로 신설·리다이렉트 가능.
+- `frontend/src/locales/README.md` §3 점진 도입 절차 (Phase 1 → Phase 2 → 언어 추가) — **존재**, 본 합의서 §5 C1 권장(e) 정책과 정합.
+- `scripts/i18n/check-locale-parity.js` (CI 게이트 권고) — **미존재**, §6.4 완화안. 다국어 진입 (트랙 D) 시 신설 필요. 본 라운드 ko only 정착 시 우선 불필요.
+- Phase 1 부트스트랩 시점 PR / 커밋 SHA — `frontend/src/i18n/index.js` 작성일 `2026-05-21` 추정. 정확한 SHA 는 P0-inv 단계에서 git blame 으로 보완 가능 (본 합의서 의사결정에 무영향).
+- 측정 도구 — 사용자 위임은 `ripgrep`(rg) 기반이나 로컬 미설치로 `grep -rE`(POSIX) 동등 산출 사용. 결과값 동등성은 패턴 정합으로 보장 (한국어 매칭 29,279 / `t()` 932 / locale leaves 290 / alert/confirm 인벤토리 10건).
+
+---
+
+## §9 변경 이력
+
+| 일자 | 작성 | 내용 |
+|---|---|---|
+| 2026-05-23 | core-planner | D5 P4 합의서 초안 작성 (D5_DIRECTION §3.4 / §4 P4 / §6 C5 후속). 4 트랙 (A 어드민 LNB/모달/error + B 보조 화면 + C alert/confirm UnifiedModal i18n + D 추가 언어) 분류. **인벤토리 실측 (2026-05-23, develop `c31a498df`)**: 한국어 JS/TS 라인 29,279 / 한국어 CSS 라인 5,304 / `t()` 호출 라인 932 / `useTranslation` 사용 파일 275 / locale 키 leaves 290 (common 60 + admin 230) / `window.alert` 1 + `window.confirm` 9 + bare alert/confirm 50 / UnifiedModal 사용 422 라인. 영역별 한국어 분포 — admin 6,087 / common 1,698 / layout 179 / error/toast 3,247 / settings/report 1,002. **선행 라운드**: D5 P1·P2·P3 정착 + D6~D10 누적 정착 (운영 main `e88a264a9`, NO-OP 1건 D9 P2-f). **D11 합의서 초안 (`0d226f0c2`, 디자인 토큰 metric 재정의) 와의 경계**: 라벨 SSOT vs 디자인 토큰 SSOT 영역 분리 명시 (§0.3). 사용자 컨펌 7건(§5) 대기 — 디폴트 후보: C1=e (ko only) / C2=c (A+B+C) / C3=a (현재 트랙 포함) / C4=a (N=15,000 / K=1,500) / C5=c (트랙별 분리) / C6=b (트랙별 분할 push) / C7=b (순차 진행). 본 합의서는 의사결정 골격만, 코드·디자인 토큰·Phase 1 정착물 직접 수정 0줄. **이후 P0-inv 위임은 §5 컨펌 확정 후 메인 어시스턴트가 개시**. |

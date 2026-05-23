@@ -372,7 +372,37 @@ const COLOR_MAPPING = {
   '#15803D': 'var(--mg-color-success-700)',
   '#047857': 'var(--mg-color-success-700)',
   '#0284c7': 'var(--mg-color-info-600)',
-  '#0284C7': 'var(--mg-color-info-600)'
+  '#0284C7': 'var(--mg-color-info-600)',
+
+  // 2026 Q2 D10 P2-c §C7 B0KlA Admin Palette 신설 6종 raw hex 직접 흡수
+  // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D10.md §9 C7=a (commit `1bff963bd`),
+  //       docs/project-management/2026-05-23/D10_P1_DESIGN_HANDOFF.md §5 (P2-c B0KlA),
+  //       docs/project-management/2026-05-23/D10_P0_INVENTORY.md §6.3.a (28건).
+  // 라이트·다크 cascade 정착 확인 (unified-design-tokens.css §D10 §C7 블록):
+  //   --mg-color-b0kla-green-500  : light #4b745c / dark #9cb89e (admin primary olive-green)
+  //   --mg-color-b0kla-orange-300 : light #e8a87c / dark #f4b988 (Large Text/UI Component 한정)
+  //   --mg-color-b0kla-blue-400   : light #6d9dc5 / dark #9bb8d3 (Large Text/UI Component 한정)
+  //   --mg-color-b0kla-green-50   : light #ebf2ee / dark #1c2e23 (B0KlA green soft bg)
+  //   --mg-color-b0kla-orange-50  : light #fcf3ed / dark #2d1f15 (B0KlA orange soft bg)
+  //   --mg-color-b0kla-blue-50    : light #f0f5f9 / dark #1c2733 (B0KlA blue soft bg)
+  //
+  // brand-olive vs b0kla-green-500 분리 (P1 §5.4):
+  //   #4a6354 (brand-olive-muted) ↔ #4b745c (b0kla-green-500) ΔE ≈ 7.8 — 통합 불가.
+  //
+  // ⚠️ HARD_EXCLUDE 보존: `#0d9488` (teal-600 변형, ad-b0kla-green HOLD-shift, 1건) —
+  //   teal 패밀리 부재로 본 매핑 의도적 제외 (D11 검토 대상).
+  '#4b745c': 'var(--mg-color-b0kla-green-500)',
+  '#4B745C': 'var(--mg-color-b0kla-green-500)',
+  '#e8a87c': 'var(--mg-color-b0kla-orange-300)',
+  '#E8A87C': 'var(--mg-color-b0kla-orange-300)',
+  '#6d9dc5': 'var(--mg-color-b0kla-blue-400)',
+  '#6D9DC5': 'var(--mg-color-b0kla-blue-400)',
+  '#ebf2ee': 'var(--mg-color-b0kla-green-50)',
+  '#EBF2EE': 'var(--mg-color-b0kla-green-50)',
+  '#fcf3ed': 'var(--mg-color-b0kla-orange-50)',
+  '#FCF3ED': 'var(--mg-color-b0kla-orange-50)',
+  '#f0f5f9': 'var(--mg-color-b0kla-blue-50)',
+  '#F0F5F9': 'var(--mg-color-b0kla-blue-50)'
 };
 
 // RGB/RGBA 색상 매핑
@@ -698,6 +728,107 @@ const R2_MG_ALIAS_BC_SAFE_PAIRS = [
   { tokenName: '--mg-text-secondary', hex: '#555555', canonical: 'var(--mg-color-text-secondary)' }
 ];
 
+// ── D10 P2-c (2026-05-23): R-2 other 그룹 폴백 alias 대체 SAFE_PAIRS 화이트리스트 ───
+// SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D10.md §2.5 + §9 C6=b/C7=a/C8=a,
+//       docs/project-management/2026-05-23/D10_P1_DESIGN_HANDOFF.md §5 (P2-c B0KlA),
+//       docs/project-management/2026-05-23/D10_P0_INVENTORY.md §6 (R-2 other 156건).
+// 본 화이트리스트는 `--r2-other-alias-replace` 옵션이 명시될 때에만 사용된다.
+// 옵션 미지정 시 D8 PR-B / D9 P2-a / D9 P2-b/c / D10 P2-a 동작은 100% 유지된다.
+//
+// T-CS-Theme-Other 표준 SAFE 70%+ 광역 (C6=b 결정 답습):
+//   §6.2 SAFE 화이트리스트 12쌍 (캐노니컬 존재, replaceable: true) 광역 흡수 +
+//   §6.3.a B0KlA palette 신설 6쌍 + 통합 8쌍 + HARD_EXCLUDE 1쌍 +
+//   §6.3.b color-* legacy 통합 13쌍 (모호 2쌍 HARD_EXCLUDE 보존)
+//
+// 분류 기준:
+//   - Group A (B0KlA new): D10 §C7 신설 6종 (--mg-color-b0kla-*) 흡수
+//   - Group B (B0KlA merge): B0KlA → 기존 캐노니컬 통합 (P1 §5.5, ΔE endorsed)
+//   - Group C (SAFE white-list): §6.2 캐노니컬 일치 12쌍 광역 흡수
+//   - Group D (color-* legacy merge): §6.3.b legacy alias 통합 (광역)
+//
+// HARD_EXCLUDE 보존 (본 화이트리스트 의도적 제외):
+//   - `--ad-b0kla-green` + `#0d9488` (teal-600 변형, 1건) — teal 패밀리 부재, D11 검토
+//   - `--ios-*-dark` 6쌍 / 9건 — C8=a 다크 전용 시맨틱, D11 iOS theme 재설계 이월
+//   - `--color-primary-hover` + `#0056cc` (5건) — primary hover 시맨틱 모호, 보수 보존
+//   - `--color-border-accent` + `#a1a1a6` (1건) — neutral-400 변형, 캐노니컬 부재 보수 보존
+//
+// 본 화이트리스트에 없는 (token, hex) 쌍은 본 옵션 사용 시에도 절대 변환되지 않는다.
+const R2_OTHER_ALIAS_SAFE_PAIRS = [
+  // ── Group A: B0KlA palette 신설 6쌍 (P1 §5.7.2 신설 흡수, 28건) ─────────────
+  // SSOT 정의: unified-design-tokens.css §D10 §C7 블록 (라이트·다크 양방향 cascade)
+  // 라이트 hex 정확 일치, 다크 cascade 신규 정착 (admin 다크 가시성 향상)
+  { tokenName: '--ad-b0kla-green', hex: '#4b745c', canonical: 'var(--mg-color-b0kla-green-500)' },
+  { tokenName: '--ad-b0kla-orange', hex: '#e8a87c', canonical: 'var(--mg-color-b0kla-orange-300)' },
+  { tokenName: '--ad-b0kla-blue', hex: '#6d9dc5', canonical: 'var(--mg-color-b0kla-blue-400)' },
+  { tokenName: '--ad-b0kla-green-bg', hex: '#ebf2ee', canonical: 'var(--mg-color-b0kla-green-50)' },
+  { tokenName: '--ad-b0kla-orange-bg', hex: '#fcf3ed', canonical: 'var(--mg-color-b0kla-orange-50)' },
+  { tokenName: '--ad-b0kla-blue-bg', hex: '#f0f5f9', canonical: 'var(--mg-color-b0kla-blue-50)' },
+
+  // ── Group B: B0KlA → 기존 캐노니컬 통합 8쌍 (P1 §5.5, 26건) ──────────────────
+  // P1 endorsed ΔE 시프트 — admin SSOT 시각 변화 LOW~MEDIUM (P3 시각 회귀 게이트)
+  // slate-500 #64748b → brand olive-gray #5C6B61 (D9 P2-b/c 답습 톤 시프트, 가독성 유지)
+  { tokenName: '--ad-b0kla-text-secondary', hex: '#64748b', canonical: 'var(--mg-color-text-secondary)' },
+  // warm bg #fcfbfa → background-main #faf9f7 (ΔE ≈ 1.2 미세)
+  { tokenName: '--ad-b0kla-bg', hex: '#fcfbfa', canonical: 'var(--mg-color-background-main)' },
+  // gray-400 placeholder → text-tertiary tier 정합 (P1 §5.5 ΔE 작음)
+  { tokenName: '--ad-b0kla-placeholder', hex: '#a0aec0', canonical: 'var(--mg-color-text-tertiary)' },
+  // 라이트 hex 정확 일치 #f5f3ef → surface-main #F5F3EF (case-insensitive, 시각 변화 0)
+  { tokenName: '--ad-b0kla-card-bg', hex: '#f5f3ef', canonical: 'var(--mg-color-surface-main)' },
+  // P0 §6.2 SAFE — slate-700 #4a5568 → text-secondary-dark #374151 (icon 시맨틱 유지)
+  { tokenName: '--ad-b0kla-icon-color', hex: '#4a5568', canonical: 'var(--mg-color-text-secondary-dark)' },
+  // P0 §6.2 SAFE — slate-700 #4a5568 → text-secondary-dark (위 동일)
+  { tokenName: '--ad-b0kla-text-secondary', hex: '#4a5568', canonical: 'var(--mg-color-text-secondary-dark)' },
+  // P0 §6.2 SAFE — slate-800 #2d3748 → text-main #2C2C2C (ΔE ≈ 3 warm-neutral 시프트)
+  { tokenName: '--ad-b0kla-title-color', hex: '#2d3748', canonical: 'var(--mg-color-text-main)' },
+  // P0 §6.2 SAFE — slate-200 #e2e8f0 → border-main #D4CFC8 (ΔE ≈ 5 warm beige 시프트)
+  { tokenName: '--ad-b0kla-border', hex: '#e2e8f0', canonical: 'var(--mg-color-border-main)' },
+
+  // ── Group C: T-CS-Theme-Other §6.2 SAFE 화이트리스트 10쌍 (74건 중 캐노니컬 일치) ──
+  // P0 §6.2 인벤토리 SSOT (`groups.other.autoReplaceable` 정확 일치)
+  // 라이트 hex 정확 일치 또는 ΔE 작은 endorsed 시프트
+  { tokenName: '--text-secondary', hex: '#666', canonical: 'var(--mg-color-text-secondary)' },
+  { tokenName: '--text-primary', hex: '#333', canonical: 'var(--mg-color-text-main)' },
+  { tokenName: '--color-text-secondary', hex: '#666', canonical: 'var(--mg-color-text-secondary)' },
+  { tokenName: '--color-border', hex: '#ddd', canonical: 'var(--mg-color-border-main)' },
+  { tokenName: '--color-text', hex: '#333', canonical: 'var(--mg-color-text-main)' },
+  { tokenName: '--bg-hover', hex: '#f0f0f0', canonical: 'var(--mg-color-surface-light)' },
+  { tokenName: '--text-secondary', hex: '#999', canonical: 'var(--mg-color-text-tertiary)' },
+  { tokenName: '--color-text-primary', hex: '#333', canonical: 'var(--mg-color-text-main)' },
+  { tokenName: '--color-background-alt', hex: '#f3f4f6', canonical: 'var(--mg-color-background-main)' },
+  { tokenName: '--cs-secondary-400', hex: '#9ca3af', canonical: 'var(--mg-color-text-tertiary)' },
+
+  // ── Group D: §6.3.b color-* legacy 통합 매핑 (C6=b 표준 SAFE 70%+ 광역) ─────
+  // legacy color- 접두 alias 흡수 — D2 라운드 진입 이전 변형. ΔE 작거나 시맨틱 정합.
+  // ΔE 미세 endorsed (P0 §6.4 표준 시나리오) — warm/neutral 시프트는 D5/D6 답습.
+
+  // #fafafa → background-main #faf9f7 (5건, ΔE 미세)
+  { tokenName: '--color-bg-primary', hex: '#fafafa', canonical: 'var(--mg-color-background-main)' },
+  // #f5f5f7 → background-secondary #EBE6E0 (5건, warm bg 시프트 endorsed)
+  { tokenName: '--color-bg-secondary', hex: '#f5f5f7', canonical: 'var(--mg-color-background-secondary)' },
+  // Apple gray-800 #424245 → text-main #2C2C2C (4건, neutral 시프트)
+  { tokenName: '--color-text-secondary', hex: '#424245', canonical: 'var(--mg-color-text-main)' },
+  // Apple gray-200 #e8e8ed → border-soft #f3f4f6 (3건, D10 §C3 신설 토큰)
+  { tokenName: '--color-border-secondary', hex: '#e8e8ed', canonical: 'var(--mg-color-border-soft)' },
+  // Bootstrap gray-600 #5a6268 → text-secondary (2건)
+  { tokenName: '--color-gray-dark', hex: '#5a6268', canonical: 'var(--mg-color-text-secondary)' },
+  // Tailwind slate-900 #111827 → text-main (2건)
+  { tokenName: '--color-text-primary', hex: '#111827', canonical: 'var(--mg-color-text-main)' },
+  // Bootstrap success-700 #218838 → D10 §C2 신설 success-700 (1건, 시맨틱 정합)
+  { tokenName: '--color-success-dark', hex: '#218838', canonical: 'var(--mg-color-success-700)' },
+  // Bootstrap danger-700 #c82333 → error-dark (1건)
+  { tokenName: '--color-danger-dark', hex: '#c82333', canonical: 'var(--mg-color-error-dark)' },
+  // Bootstrap warning-700 #e0a800 → D10 §C2 신설 warning-700 (1건, 시맨틱 정합)
+  { tokenName: '--color-warning-dark', hex: '#e0a800', canonical: 'var(--mg-color-warning-700)' },
+  // Apple gray-300 #d1d1d6 → border-main (1건)
+  { tokenName: '--color-border-primary', hex: '#d1d1d6', canonical: 'var(--mg-color-border-main)' },
+  // Apple gray-200 #e8e8ed → border-soft (1건, 동일 hex 다른 토큰)
+  { tokenName: '--color-bg-accent', hex: '#e8e8ed', canonical: 'var(--mg-color-border-soft)' },
+  // Bootstrap danger-700 #c82333 → error-dark (1건, error-hover 시맨틱 → dark 통합)
+  { tokenName: '--error-hover', hex: '#c82333', canonical: 'var(--mg-color-error-dark)' },
+  // Bootstrap info-700 #138496 → info-dark #1e40af (1건, blue-800 시프트, P1 §C1 답습)
+  { tokenName: '--color-info-dark', hex: '#138496', canonical: 'var(--mg-color-info-dark)' }
+];
+
 function escapeRegexLiteral(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -753,6 +884,7 @@ class HardcodedColorConverter {
       r2MgAliasReplace: options.r2MgAliasReplace || false,
       r2MgAliasBcReplace: options.r2MgAliasBcReplace || false,
       r2V2AliasReplace: options.r2V2AliasReplace || false,
+      r2OtherAliasReplace: options.r2OtherAliasReplace || false,
       ...options
     };
 
@@ -782,7 +914,11 @@ class HardcodedColorConverter {
       // D9 P2-b + P2-c: R-2 mg-* 폴백 BC SAFE_PAIRS alias 대체 통계.
       // 본 옵션(`--r2-mg-alias-bc-replace`) 사용 시 R2_MG_ALIAS_BC_SAFE_PAIRS 로 치환된 쌍별 카운트.
       r2MgAliasBcReplaced: 0,
-      r2MgAliasBcPairCounts: {}
+      r2MgAliasBcPairCounts: {},
+      // D10 P2-c: R-2 other 그룹 폴백 SAFE_PAIRS alias 대체 통계.
+      // 본 옵션(`--r2-other-alias-replace`) 사용 시 R2_OTHER_ALIAS_SAFE_PAIRS 로 치환된 쌍별 카운트.
+      r2OtherAliasReplaced: 0,
+      r2OtherAliasPairCounts: {}
     };
   }
 
@@ -997,6 +1133,32 @@ class HardcodedColorConverter {
         }
       }
 
+      // ── 0단계-other (D10 P2-c): R-2 other 그룹 폴백 SAFE_PAIRS alias 대체 ─────
+      // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D10.md §2.5 + §9 C6=b/C7=a
+      // `--r2-other-alias-replace` 옵션이 지정된 경우에만 R2_OTHER_ALIAS_SAFE_PAIRS
+      // 화이트리스트로 `var(--{ad-b0kla,text,color,bg,cs,error}-*, #hex)` →
+      // `var(--mg-color-*)` 일괄 치환을 수행한다.
+      // 본 단계도 1단계(R-2 placeholder)보다 먼저 실행되어 원문 패턴 매칭 가능.
+      // D8 PR-B / D9 P2-a/b/c / D10 P2-a 답습 패턴 (단계적 흡수, 광역 위험 격리).
+      // T-CS-Theme-Other 표준 SAFE 70%+ 광역 (C6=b 결정) + B0KlA palette 신설 (C7=a).
+      if (this.options.r2OtherAliasReplace) {
+        for (const pair of R2_OTHER_ALIAS_SAFE_PAIRS) {
+          const regex = buildSafePairRegex(pair.tokenName, pair.hex);
+          const matches = modifiedContent.match(regex);
+          if (matches && matches.length > 0) {
+            modifiedContent = modifiedContent.replace(regex, pair.canonical);
+            changeCount += matches.length;
+            this.stats.r2OtherAliasReplaced += matches.length;
+            const pairKey = `${pair.tokenName}|${pair.hex}`;
+            this.stats.r2OtherAliasPairCounts[pairKey] =
+              (this.stats.r2OtherAliasPairCounts[pairKey] || 0) + matches.length;
+            if (this.options.verbose) {
+              console.log(`  🔁 R-2 other alias 대체: var(${pair.tokenName}, ${pair.hex}) → ${pair.canonical} (${matches.length}개, ${filePath})`);
+            }
+          }
+        }
+      }
+
       // ── 1단계 (R-2): var(--token, #hex) 폴백 보호 ─────────────────────────────
       // 매핑 적용 전에 폴백 hex 위치를 placeholder 로 임시 치환하여
       // `var(--cs-error-600, #dc2626)` → `var(--cs-error-600, var(--mg-color-error))`
@@ -1157,6 +1319,9 @@ class HardcodedColorConverter {
     if (this.options.r2MgAliasBcReplace) {
       console.log(`🔁 R-2 mg-* BC alias 대체: ${this.stats.r2MgAliasBcReplaced}건`);
     }
+    if (this.options.r2OtherAliasReplace) {
+      console.log(`🔁 R-2 other alias 대체: ${this.stats.r2OtherAliasReplaced}건`);
+    }
     console.log(`❌ 오류 발생: ${this.stats.errors.length}개`);
 
     if (this.options.r2MgAliasReplace && this.stats.r2MgAliasReplaced > 0) {
@@ -1180,6 +1345,15 @@ class HardcodedColorConverter {
     if (this.options.r2MgAliasBcReplace && this.stats.r2MgAliasBcReplaced > 0) {
       const aliasPairs = Object.entries(this.stats.r2MgAliasBcPairCounts).sort((a, b) => b[1] - a[1]);
       console.log('\n🔁 R-2 mg-* BC alias 대체 — 쌍별 분포:');
+      aliasPairs.forEach(([key, count]) => {
+        const [token, hex] = key.split('|');
+        console.log(`  - var(${token}, ${hex}): ${count}건`);
+      });
+    }
+
+    if (this.options.r2OtherAliasReplace && this.stats.r2OtherAliasReplaced > 0) {
+      const aliasPairs = Object.entries(this.stats.r2OtherAliasPairCounts).sort((a, b) => b[1] - a[1]);
+      console.log('\n🔁 R-2 other alias 대체 — 쌍별 분포:');
       aliasPairs.forEach(([key, count]) => {
         const [token, hex] = key.split('|');
         console.log(`  - var(${token}, ${hex}): ${count}건`);
@@ -1428,6 +1602,13 @@ function parseArgs() {
       // R-2 보호 / D8 PR-B / D9 P2-a 동작은 그대로 유지되며, 본 옵션이 명시될 때에만
       // R2_MG_ALIAS_BC_SAFE_PAIRS 가 우선 적용된다 (단계적 흡수, 광역 위험 격리).
       options.r2MgAliasBcReplace = true;
+    } else if (arg === '--r2-other-alias-replace') {
+      // D10 P2-c: R-2 other 그룹 폴백 SAFE_PAIRS 화이트리스트 alias 대체.
+      // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D10.md §2.5 + §9 C6=b/C7=a.
+      // R-2 보호 / D8 PR-B / D9 P2-a/b/c / D10 P2-a 동작은 그대로 유지되며,
+      // 본 옵션이 명시될 때에만 R2_OTHER_ALIAS_SAFE_PAIRS 가 우선 적용된다.
+      // T-CS-Theme-Other 표준 SAFE 70%+ 광역 (B0KlA palette 신설 6 + 통합 8 + SAFE 화이트리스트 10 + color-* legacy 13쌍).
+      options.r2OtherAliasReplace = true;
     }
   }
 
@@ -1563,6 +1744,14 @@ if (require.main === module) {
     '                            bg-hover) 흡수 + P1 §C2/§C3 endorsed 통합 매핑.',
     '                            manual-review HOLD (custom-*, danger-dark, purple-*',
     '                            등) 케이스는 본 옵션에서도 변환되지 않음.',
+    '  --r2-other-alias-replace  [D10 P2-c] R-2 other 그룹 폴백 SAFE_PAIRS',
+    '                            화이트리스트 alias 대체 활성화 (T-CS-Theme-Other).',
+    '                            SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D10.md',
+    '                            §2.5 + §9 C6=b/C7=a. 화이트리스트는 본 파일의',
+    '                            R2_OTHER_ALIAS_SAFE_PAIRS 참조 (Group A/B/C/D ~37쌍).',
+    '                            B0KlA palette 신설 6 + 통합 8 + SAFE 화이트리스트 10 +',
+    '                            color-* legacy 13쌍 흡수. iOS dark / teal / hover 모호',
+    '                            케이스는 HARD_EXCLUDE 보존 (D11 검토 대상).',
     '  --help, -h                도움말 출력',
     '',
     '예시 (영역 목록 파일):',

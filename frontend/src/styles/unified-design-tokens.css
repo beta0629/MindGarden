@@ -1731,6 +1731,63 @@
 }
 
 /* ========================================
+   2026 Q2 D10 §C7 (T-CS-Theme-Other — B0KlA Admin Palette 신설 6종)
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D10.md §9 C7=a,
+         docs/project-management/2026-05-23/D10_P1_DESIGN_HANDOFF.md §5 (P2-c B0KlA),
+         docs/project-management/2026-05-23/D10_P0_INVENTORY.md §6.3.a (28건).
+   배경:
+   - B0KlA palette는 admin 대시보드(특히 `AdminDashboardB0KlA.css`) 의 관리자
+     화면 전용 SSOT 디자인 자산. consultant/pipeline 도메인 액센트에 사용되는
+     brand-olive-* 패밀리와는 시맨틱 컨텍스트가 명확히 구분된다.
+   - 통합 시 admin SSOT 의 독립성이 훼손되며, 향후 디자인 갱신 시 한쪽 변경이
+     다른 쪽에 의도치 않게 전파될 위험. → 별도의 토큰 패밀리로 분리.
+   brand-olive vs b0kla-green-500 정합 (P1 §5.4 결정):
+     - `--mg-color-brand-olive-muted` light `#4a6354` / dark `#86a793`
+     - `--mg-color-b0kla-green-500`   light `#4b745c` / dark `#9cb89e`
+     - ΔE ≈ 7.8 (라이트, 인지 가능) — 두 톤 의도적 분리 (consultant olive vs admin forest green)
+   WCAG AA 검증 (P1 §5.3):
+     - b0kla-green-500  : light 5.3:1 / dark 6.4:1 — Normal Text PASS (양방향)
+     - b0kla-orange-300 : light 2.4:1 / dark 9.2:1 — Large Text/UI Component 한정 (본문 텍스트 사용 금지)
+     - b0kla-blue-400   : light 3.3:1 / dark 7.6:1 — Large Text/UI Component 한정 (본문 텍스트 사용 금지)
+     - b0kla-*-50       : 비-텍스트 (배경 컨텍스트, text-main 적용 시 12.1:1 ~ 16.1:1 PASS)
+   광역 영향 평가 (P0 §6.3.a + P1 §5.4):
+     - admin 대시보드 B0KlA accent (`AdminDashboardB0KlA.css` 외): LOW (실 hex 일치, 다크 cascade 신규 정착)
+   ⚠️ HARD_EXCLUDE 보존 (P1 §5.6):
+     - `--ad-b0kla-green` + `#0d9488` (teal-600 변형, 1건) — teal 패밀리는 b0kla green olive 계열과
+       hue 차 큼 (ΔE ≈ 13). 신설 토큰 정당화 어려움, D11 라운드 별도 검토.
+   ======================================== */
+
+:root {
+  /* D10 §C7 B0KlA primary olive-green accent (admin SSOT) */
+  --mg-color-b0kla-green-500: #4b745c;
+  /* D10 §C7 B0KlA accent orange-warm (Large Text/UI Component 한정) */
+  --mg-color-b0kla-orange-300: #e8a87c;
+  /* D10 §C7 B0KlA accent blue-muted (Large Text/UI Component 한정) */
+  --mg-color-b0kla-blue-400: #6d9dc5;
+  /* D10 §C7 B0KlA green soft bg (admin 카드/배지 표면) */
+  --mg-color-b0kla-green-50: #ebf2ee;
+  /* D10 §C7 B0KlA orange soft bg (admin 경고/알림 표면) */
+  --mg-color-b0kla-orange-50: #fcf3ed;
+  /* D10 §C7 B0KlA blue soft bg (admin 정보/안내 표면) */
+  --mg-color-b0kla-blue-50: #f0f5f9;
+}
+
+:root[data-theme="dark"] {
+  /* D10 §C7 다크 B0KlA primary olive-green — 한 단계 밝게 (admin 다크 가시성) */
+  --mg-color-b0kla-green-500: #9cb89e;
+  /* D10 §C7 다크 B0KlA accent orange — 약간 라이튼 (warm peach 보존) */
+  --mg-color-b0kla-orange-300: #f4b988;
+  /* D10 §C7 다크 B0KlA accent blue — desaturated lighten */
+  --mg-color-b0kla-blue-400: #9bb8d3;
+  /* D10 §C7 다크 B0KlA green soft bg — deep olive surface */
+  --mg-color-b0kla-green-50: #1c2e23;
+  /* D10 §C7 다크 B0KlA orange soft bg — deep warm-brown surface */
+  --mg-color-b0kla-orange-50: #2d1f15;
+  /* D10 §C7 다크 B0KlA blue soft bg — deep slate surface (Tailwind slate-800 인접) */
+  --mg-color-b0kla-blue-50: #1c2733;
+}
+
+/* ========================================
    2026 Q2 D9 §C6 (T-Glass-Shadow-Overlay 5종 rgba SSOT)
    SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md §2.6 + §4 C6=a,
         docs/project-management/2026-05-23/D9_P1_DESIGN_HANDOFF.md §2.5·§4(P2-f).

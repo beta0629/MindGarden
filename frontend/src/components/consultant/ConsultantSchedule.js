@@ -15,8 +15,13 @@ const CONSULTANT_SCHEDULE_TITLE_ID = 'consultant-schedule-page-title';
 /**
  * 상담사 스케줄 관리 — UnifiedScheduleComponent + B0KlA 셸
  *
+ * 옵션 A 적용 (2026-05-23 핫픽스):
+ *   - `integratedMonthEventLayout` + `calendarSkin="integrated"` 전파
+ *   - 회기 라벨(`0/2회`), 공휴일 분홍 배경, `--mg-calendar-*` 토큰 cascade 자동 노출
+ *   - SSOT: docs/project-management/2026-05-23/CALENDAR_OPTION_A_DESIGN_HANDOFF.md §3
+ *
  * @author Core Solution
- * @version 2.0.0
+ * @version 2.1.0
  * @since 2025-09-16
  */
 const ConsultantSchedule = () => {
@@ -69,10 +74,17 @@ const ConsultantSchedule = () => {
   return (
     <AdminCommonLayout title={t('common.labels.schedule', '스케줄')}>
       {pageShell(
-        <UnifiedScheduleComponent
-          userRole="CONSULTANT"
-          userId={user.id}
-        />
+        <div
+          data-calendar-skin="integrated"
+          data-layout-context="consultant-legacy-schedule"
+        >
+          <UnifiedScheduleComponent
+            userRole="CONSULTANT"
+            userId={user.id}
+            integratedMonthEventLayout
+            calendarSkin="integrated"
+          />
+        </div>
       )}
     </AdminCommonLayout>
   );

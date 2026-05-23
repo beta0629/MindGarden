@@ -1,13 +1,18 @@
 /**
  * 옵션 A 정착 정합 회귀 — 2026-05-23
  *
- * - TC3: caller 3개(ConsultantScheduleRenewal 데스크탑 + ClientSchedule + AdminSchedulesPage)
- *        모두 `integratedMonthEventLayout` + `calendarSkin="integrated"` props 를 UnifiedScheduleComponent 에 전달
+ * - TC3: caller 모두 `integratedMonthEventLayout` + `calendarSkin="integrated"` props 를
+ *        UnifiedScheduleComponent 에 전달
+ *        (ConsultantSchedule 레거시 + ConsultantScheduleRenewal 데스크탑
+ *         + ClientSchedule + AdminSchedulesPage + SchedulePage)
  * - TC4: ConsultantScheduleRenewal 가 1024px 분기 매체 쿼리(`(min-width: 1024px)`)로
  *        데스크탑/모바일 분기를 수행
  * - TC5: 구트리 `frontend/src/components/schedule/ScheduleCalendar(.js|.css|/*)` import 0건
  *
  * SSOT: docs/project-management/2026-05-23/CALENDAR_OPTION_A_DESIGN_HANDOFF.md §3-§4
+ *
+ * 변경 이력:
+ *   2026-05-23 핫픽스 — TC3-e (레거시 ConsultantSchedule) 추가
  */
 import fs from 'fs';
 import path from 'path';
@@ -40,6 +45,13 @@ describe('옵션 A 정착 회귀', () => {
   test('TC3-d: SchedulePage 가 integrated props 전파', () => {
     const src = readFile('components/schedule/SchedulePage.js');
     expect(src).toMatch(/<UnifiedScheduleComponent[\s\S]*integratedMonthEventLayout[\s\S]*calendarSkin=["']integrated["'][\s\S]*\/>/);
+  });
+
+  test('TC3-e: 레거시 ConsultantSchedule(/consultant/schedule) 가 integrated props 전파', () => {
+    const src = readFile('components/consultant/ConsultantSchedule.js');
+    expect(src).toMatch(/import\s+UnifiedScheduleComponent\s+from\s+['"]\.\.\/schedule\/UnifiedScheduleComponent['"]/);
+    expect(src).toMatch(/<UnifiedScheduleComponent[\s\S]*integratedMonthEventLayout[\s\S]*calendarSkin=["']integrated["'][\s\S]*\/>/);
+    expect(src).toMatch(/data-calendar-skin=["']integrated["']/);
   });
 
   test('TC4: ConsultantScheduleRenewal 1024px 분기 — useMediaQuery 사용 + 모바일 day-bar UX 유지', () => {

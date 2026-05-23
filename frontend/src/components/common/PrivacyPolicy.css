@@ -176,7 +176,7 @@
  * @since 2026-05-21
  */
 .privacy-policy-warning-box {
-  background: var(--mg-custom-fff3cd, #fff3cd);
+  background: var(--mg-color-warning-bg);
   border: 1px solid var(--mg-custom-ffeaa7, #ffeaa7);
   border-radius: 8px;
   padding: 15px;
@@ -184,7 +184,7 @@
 }
 
 .privacy-policy-warning-text {
-  color: var(--mg-custom-856404, #856404);
+  color: var(--mg-color-warning-dark);
 }
 
 .privacy-policy-rights-note {

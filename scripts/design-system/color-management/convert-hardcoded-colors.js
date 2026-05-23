@@ -341,6 +341,58 @@ const VAR_FALLBACK_HEX_PATTERN = /var\s*\(\s*--[\w-]+\s*,\s*#[0-9a-fA-F]{3,8}(?!
 const VAR_FALLBACK_PLACEHOLDER_PREFIX = '__MG_VAR_FALLBACK_HEX_';
 const VAR_FALLBACK_PLACEHOLDER_SUFFIX = '__';
 
+// ── D8 PR-B 단계 1: R-2 mg-* 폴백 alias 대체 SAFE_PAIRS 화이트리스트 ────────
+// SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D8.md §2.3 + §4 C3 결정
+// 본 화이트리스트는 `--r2-mg-alias-replace` 옵션이 명시될 때에만 사용된다.
+// 옵션 미지정 시 R-2 폴백 보호 동작은 100% 유지된다 (기존 코드 경로 무수정).
+//
+// 분류 기준:
+//   - Group A: 캐노니컬 토큰명이 legacy 토큰명과 동일 → 폴백만 제거 (시각 변화 0)
+//   - Group B: dashboard-tokens-extension.css legacy alias → D-round 캐노니컬
+//   - Group C: 색 패밀리 alias (legacy 토큰 미정의 + 라이트 hex 일치) → 다크 cascade 정착 효과
+//   - Group D: custom-* placeholder (legacy 토큰 미정의, hex 바인딩 명확) → 다크 cascade 정착 효과
+//
+// 본 화이트리스트에 없는 (token, hex) 쌍은 본 옵션 사용 시에도 절대 변환되지 않는다.
+// mg-v2-* 폴백 (D9 이월), `--mg-bg-hover` 등 시맨틱 시프트 케이스는 의도적으로 제외.
+const R2_MG_ALIAS_SAFE_PAIRS = [
+  // Group A: 캐노니컬 토큰명 동일 (폴백만 제거, 시각 변화 0)
+  { tokenName: '--mg-color-text-secondary', hex: '#666', canonical: 'var(--mg-color-text-secondary)' },
+  { tokenName: '--mg-error-50', hex: '#fef2f2', canonical: 'var(--mg-color-error-50)' },
+
+  // Group B: 텍스트 alias (dashboard-tokens-extension legacy → D-round 캐노니컬)
+  // text-secondary/tertiary/primary 는 dashboard-tokens-extension L94-97 에서 mg-gray-* alias.
+  // D-round 캐노니컬은 unified-design-tokens.css 의 라이트·다크 cascade 정착 토큰.
+  { tokenName: '--mg-text-secondary', hex: '#666', canonical: 'var(--mg-color-text-secondary)' },
+  { tokenName: '--mg-text-tertiary', hex: '#999', canonical: 'var(--mg-color-text-tertiary)' },
+  { tokenName: '--mg-text-tertiary', hex: '#9ca3af', canonical: 'var(--mg-color-text-tertiary)' },
+  { tokenName: '--mg-color-text-primary', hex: '#333', canonical: 'var(--mg-color-text-main)' },
+  { tokenName: '--mg-text-primary', hex: '#2d3748', canonical: 'var(--mg-color-text-main)' },
+
+  // Group C: 색 패밀리 alias (legacy 미정의 + 라이트 hex 정확 일치)
+  // 다크 모드에서는 캐노니컬 토큰의 다크 cascade 가 적용되어 다크 모드 가시성 향상.
+  { tokenName: '--mg-amber-light', hex: '#fef3c7', canonical: 'var(--mg-color-warning-bg)' },
+  { tokenName: '--mg-emerald-light', hex: '#d1fae5', canonical: 'var(--mg-color-success-100)' },
+  { tokenName: '--mg-red-light', hex: '#fee2e2', canonical: 'var(--mg-color-error-bg)' },
+  { tokenName: '--mg-success-light', hex: '#d1fae5', canonical: 'var(--mg-color-success-100)' },
+  { tokenName: '--mg-color-warning-light', hex: '#fef3c7', canonical: 'var(--mg-color-warning-bg)' },
+
+  // Group D: custom-* placeholder (legacy 미정의, hex 바인딩 명확)
+  { tokenName: '--mg-custom-fff3cd', hex: '#fff3cd', canonical: 'var(--mg-color-warning-bg)' },
+  { tokenName: '--mg-custom-856404', hex: '#856404', canonical: 'var(--mg-color-warning-dark)' }
+];
+
+function escapeRegexLiteral(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildSafePairRegex(tokenName, hex) {
+  // var(--token, #hex) 패턴 — 공백 변형 허용 + 케이스 무시 + 인접 hex 문자 가드.
+  return new RegExp(
+    `var\\s*\\(\\s*${escapeRegexLiteral(tokenName)}\\s*,\\s*${escapeRegexLiteral(hex)}(?![0-9a-fA-F])\\s*\\)`,
+    'gi'
+  );
+}
+
 // ── D4 인프라 보강: rgb()/rgba() 변형 매칭 헬퍼 ─────────────────────────────────
 // RGB_MAPPING 키는 카논 형식(`rgba(R, G, B, A)`)만 다루지만, 실 코드에는
 // 다양한 공백·소수점 표기 변형(`rgba(0,0,0,.1)`·`rgba(0, 0, 0, 0.1)` 등)이
@@ -381,6 +433,7 @@ class HardcodedColorConverter {
       verbose: options.verbose || false,
       criticalOnly: options.criticalOnly || false,
       target: options.target || null,
+      r2MgAliasReplace: options.r2MgAliasReplace || false,
       ...options
     };
 
@@ -398,7 +451,11 @@ class HardcodedColorConverter {
       // 시각 QA R-2: `var(--token, #hex)` 폴백 위치에서 치환 대상에서 제외된 hex 개수.
       // dry-run 시 D3 적용 라운드에서 어떤 hex 가 폴백 안에 들어 있어 보호됐는지 추적.
       protectedVarFallbacks: 0,
-      protectedVarFallbackHexCounts: {}
+      protectedVarFallbackHexCounts: {},
+      // D8 PR-B 단계 1: R-2 mg-* 폴백 alias 대체 통계.
+      // 본 옵션 사용 시 SAFE_PAIRS 화이트리스트로 치환된 쌍별 카운트.
+      r2MgAliasReplaced: 0,
+      r2MgAliasPairCounts: {}
     };
   }
 
@@ -541,6 +598,30 @@ class HardcodedColorConverter {
       const originalContent = fs.readFileSync(filePath, 'utf8');
       let modifiedContent = originalContent;
       let changeCount = 0;
+
+      // ── 0단계 (D8 PR-B 단계 1): R-2 mg-* 폴백 alias 대체 ──────────────────────
+      // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D8.md §2.3 + §4 C3
+      // `--r2-mg-alias-replace` 옵션이 지정된 경우에만 SAFE_PAIRS 화이트리스트로
+      // `var(--legacy, #hex)` → `var(--canonical)` 일괄 치환을 수행한다.
+      // 화이트리스트에 없는 쌍은 절대 변환되지 않으며, 1단계 R-2 보호로 폴백 인계.
+      // 본 단계가 1단계보다 먼저 실행되어야 placeholder 치환 전에 원문 패턴 매칭 가능.
+      if (this.options.r2MgAliasReplace) {
+        for (const pair of R2_MG_ALIAS_SAFE_PAIRS) {
+          const regex = buildSafePairRegex(pair.tokenName, pair.hex);
+          const matches = modifiedContent.match(regex);
+          if (matches && matches.length > 0) {
+            modifiedContent = modifiedContent.replace(regex, pair.canonical);
+            changeCount += matches.length;
+            this.stats.r2MgAliasReplaced += matches.length;
+            const pairKey = `${pair.tokenName}|${pair.hex}`;
+            this.stats.r2MgAliasPairCounts[pairKey] =
+              (this.stats.r2MgAliasPairCounts[pairKey] || 0) + matches.length;
+            if (this.options.verbose) {
+              console.log(`  🔁 R-2 alias 대체: var(${pair.tokenName}, ${pair.hex}) → ${pair.canonical} (${matches.length}개, ${filePath})`);
+            }
+          }
+        }
+      }
 
       // ── 1단계 (R-2): var(--token, #hex) 폴백 보호 ─────────────────────────────
       // 매핑 적용 전에 폴백 hex 위치를 placeholder 로 임시 치환하여
@@ -693,7 +774,19 @@ class HardcodedColorConverter {
     console.log(`🎨 변환된 색상: ${this.stats.colorsConverted}개`);
     console.log(`💾 생성된 백업: ${this.stats.backupsCreated}개`);
     console.log(`🛡️  R-2 폴백 보호: ${this.stats.protectedVarFallbacks}건`);
+    if (this.options.r2MgAliasReplace) {
+      console.log(`🔁 R-2 mg-* alias 대체: ${this.stats.r2MgAliasReplaced}건`);
+    }
     console.log(`❌ 오류 발생: ${this.stats.errors.length}개`);
+
+    if (this.options.r2MgAliasReplace && this.stats.r2MgAliasReplaced > 0) {
+      const aliasPairs = Object.entries(this.stats.r2MgAliasPairCounts).sort((a, b) => b[1] - a[1]);
+      console.log('\n🔁 R-2 mg-* alias 대체 — 쌍별 분포:');
+      aliasPairs.forEach(([key, count]) => {
+        const [token, hex] = key.split('|');
+        console.log(`  - var(${token}, ${hex}): ${count}건`);
+      });
+    }
 
     if (this.stats.errors.length > 0) {
       console.log('\n❌ 오류 목록:');
@@ -921,6 +1014,11 @@ function parseArgs() {
       // 회피 사용 사실을 stderr 로 기록하여 운영 게이트 회피가 우발적으로
       // 발생하지 않도록 한다 (가드 회피 차단 정신은 유지).
       options.skipValidation = true;
+    } else if (arg === '--r2-mg-alias-replace') {
+      // D8 PR-B 단계 1: R-2 mg-* 폴백 SAFE_PAIRS 화이트리스트 alias 대체.
+      // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D8.md §2.3 + §4 C3.
+      // R-2 보호는 그대로 유지되며, 본 옵션이 명시될 때에만 SAFE_PAIRS 가 우선 적용된다.
+      options.r2MgAliasReplace = true;
     }
   }
 
@@ -1035,6 +1133,11 @@ if (require.main === module) {
     '  --skip-validation         [T-D 가드 우회 — 긴급용] lint 가드를 건너뛴다. 5초 경고 후',
     '                            진행하며 회피 사용을 stderr 로 기록한다. 운영 반영 전',
     '                            반드시 가드 재실행 필요. (R-3/R-4 재발 위험)',
+    '  --r2-mg-alias-replace     [D8 PR-B 단계 1] R-2 mg-* 폴백 SAFE_PAIRS 화이트리스트',
+    '                            alias 대체 활성화. SSOT: docs/standards/',
+    '                            DESIGN_TOKEN_GAP_2026Q2_D8.md §2.3 + §4 C3.',
+    '                            화이트리스트는 본 파일의 R2_MG_ALIAS_SAFE_PAIRS 참조.',
+    '                            mg-v2-* 폴백 / HOLD 케이스는 본 옵션에서도 변환되지 않음.',
     '  --help, -h                도움말 출력',
     '',
     '예시 (영역 목록 파일):',

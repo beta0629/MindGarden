@@ -26,7 +26,7 @@
 .pipeline-step-card__title {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--mg-text-primary, #2d3748);
+  color: var(--mg-color-text-main);
   margin: 0;
   line-height: 1.3;
 }

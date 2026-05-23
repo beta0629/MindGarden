@@ -16,11 +16,11 @@
   --widget-category-admin-color: var(--mg-purple, var(--mg-purple-500));
   --widget-category-admin-bg: var(--mg-purple-light, #ede9fe);
   --widget-category-consultation-color: var(--mg-amber, var(--mg-warning-500));
-  --widget-category-consultation-bg: var(--mg-amber-light, #fef3c7);
+  --widget-category-consultation-bg: var(--mg-color-warning-bg);
   --widget-category-academy-color: var(--mg-emerald, var(--mg-success-500));
-  --widget-category-academy-bg: var(--mg-emerald-light, #d1fae5);
+  --widget-category-academy-bg: var(--mg-color-success-100);
   --widget-category-erp-color: var(--mg-red, var(--mg-error-500));
-  --widget-category-erp-bg: var(--mg-red-light, #fee2e2);
+  --widget-category-erp-bg: var(--mg-color-error-bg);
   
   /* 편집기 애니메이션 */
   --dashboard-editor-transition-fast: var(--mg-animation-duration-fast, 0.2s);
@@ -502,7 +502,7 @@
 
 .preview-placeholder {
   font-size: var(--mg-font-size-xs, 0.75rem);
-  color: var(--mg-text-tertiary, #9ca3af);
+  color: var(--mg-color-text-tertiary);
   font-style: italic;
 }
 

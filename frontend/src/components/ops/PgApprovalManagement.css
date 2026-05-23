@@ -27,7 +27,7 @@
 
 .header-title p {
   margin: 0;
-  color: var(--mg-text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   font-size: 14px;
 }
 
@@ -51,7 +51,7 @@
 }
 
 .search-box svg {
-  color: var(--mg-text-tertiary, #999);
+  color: var(--mg-color-text-tertiary);
   flex-shrink: 0;
 }
 
@@ -64,7 +64,7 @@
 }
 
 .search-input::placeholder {
-  color: var(--mg-text-tertiary, #999);
+  color: var(--mg-color-text-tertiary);
 }
 
 .filter-group {
@@ -126,7 +126,7 @@
   gap: 16px;
   padding: 48px;
   text-align: center;
-  color: var(--mg-text-secondary, #666);
+  color: var(--mg-color-text-secondary);
 }
 
 .error-message p {
@@ -148,7 +148,7 @@
 }
 
 .empty-state svg {
-  color: var(--mg-text-tertiary, #999);
+  color: var(--mg-color-text-tertiary);
   margin-bottom: 16px;
 }
 
@@ -161,7 +161,7 @@
 
 .empty-state p {
   margin: 0;
-  color: var(--mg-text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   font-size: 14px;
 }
 
@@ -254,7 +254,7 @@
 
 .info-label {
   font-weight: 500;
-  color: var(--mg-text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   min-width: 100px;
 }
 
@@ -358,7 +358,7 @@
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: var(--mg-text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   padding: 0;
   width: 32px;
   height: 32px;
@@ -423,7 +423,7 @@
 
 .detail-label {
   font-weight: 500;
-  color: var(--mg-text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   min-width: 100px;
 }
 
@@ -439,7 +439,7 @@
   display: block;
   margin-top: 8px;
   font-size: 12px;
-  color: var(--mg-text-tertiary, #999);
+  color: var(--mg-color-text-tertiary);
 }
 
 .test-result-preview {
@@ -531,7 +531,7 @@
 
 .char-count {
   text-align: right;
-  color: var(--mg-text-tertiary, #999);
+  color: var(--mg-color-text-tertiary);
   font-size: 12px;
 }
 
@@ -583,7 +583,7 @@
 .detail-item label {
   font-size: 13px;
   font-weight: 500;
-  color: var(--mg-text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -636,7 +636,7 @@
   align-items: center;
   gap: 16px;
   text-align: center;
-  color: var(--mg-text-secondary, #666);
+  color: var(--mg-color-text-secondary);
 }
 
 .key-placeholder p {
@@ -659,7 +659,7 @@
 .key-item label {
   font-size: 13px;
   font-weight: 500;
-  color: var(--mg-text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }

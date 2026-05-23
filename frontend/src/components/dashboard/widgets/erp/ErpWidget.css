@@ -100,12 +100,12 @@
   font-size: 1rem;
   font-weight: 600;
   margin: 0 0 0.5rem 0;
-  color: var(--mg-color-text-primary, #333);
+  color: var(--mg-color-text-main);
 }
 
 .erp-management-description {
   font-size: 0.875rem;
-  color: var(--mg-color-text-secondary, #666);
+  color: var(--mg-color-text-secondary);
   margin: 0;
   line-height: 1.5;
 }

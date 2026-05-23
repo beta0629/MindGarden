@@ -23,7 +23,7 @@
 
 .match-queue-row__client-name {
   font-weight: 600;
-  color: var(--mg-text-primary, #2d3748);
+  color: var(--mg-color-text-main);
   font-size: 0.9rem;
 }
 

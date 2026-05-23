@@ -365,7 +365,7 @@
 }
 
 .mg-text-secondary {
-  color: var(--mg-text-secondary, #666);
+  color: var(--mg-color-text-secondary);
 }
 
 .mg-font-normal {

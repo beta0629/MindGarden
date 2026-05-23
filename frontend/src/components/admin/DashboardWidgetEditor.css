@@ -112,7 +112,7 @@
   display: flex;
   align-items: center;
   gap: var(--mg-spacing-xs, 0.25rem);
-  color: var(--mg-text-tertiary, #9ca3af);
+  color: var(--mg-color-text-tertiary);
   cursor: grab;
 }
 
@@ -231,7 +231,7 @@
   top: 4px;
   right: 4px;
   font-size: 12px;
-  color: var(--mg-text-tertiary, #9ca3af);
+  color: var(--mg-color-text-tertiary);
 }
 
 /* 특화 위젯 아이템 */

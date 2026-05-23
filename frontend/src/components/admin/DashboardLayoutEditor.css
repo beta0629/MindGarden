@@ -179,7 +179,7 @@
 }
 
 .widget-drag-handle {
-  color: var(--mg-text-tertiary, #9ca3af);
+  color: var(--mg-color-text-tertiary);
   cursor: grab;
   display: flex;
   align-items: center;
@@ -251,7 +251,7 @@
 
 .widget-preview-position {
   font-size: var(--mg-font-size-xs, 0.75rem);
-  color: var(--mg-text-tertiary, #9ca3af);
+  color: var(--mg-color-text-tertiary);
 }
 
 /* 빈 상태 */

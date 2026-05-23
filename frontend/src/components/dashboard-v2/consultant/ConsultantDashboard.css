@@ -605,7 +605,7 @@
 }
 
 .mg-v2-alert--warning {
-  background: var(--mg-color-warning-light, #FEF3C7);
+  background: var(--mg-color-warning-bg);
   border: 1px solid var(--mg-color-warning-main, var(--mg-warning-500));
 }
 

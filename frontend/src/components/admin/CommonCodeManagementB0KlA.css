@@ -292,7 +292,7 @@
 }
 
 .mg-v2-btn--danger-outline:hover {
-    background: var(--mg-error-50, #fef2f2);
+    background: var(--mg-color-error-50);
 }
 
 .mg-v2-btn--secondary {

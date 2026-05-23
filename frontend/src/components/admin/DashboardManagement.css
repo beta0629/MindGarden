@@ -137,7 +137,7 @@
   width: var(--mg-icon-size-2xl, 4rem);
   height: var(--mg-icon-size-2xl, 4rem);
   margin: 0 auto var(--mg-spacing-md, 1rem);
-  color: var(--mg-text-tertiary, #9ca3af);
+  color: var(--mg-color-text-tertiary);
 }
 
 .empty-state p {
@@ -233,7 +233,7 @@
 }
 
 .badge-active {
-  background: var(--mg-success-light, #d1fae5);
+  background: var(--mg-color-success-100);
   color: var(--mg-success, var(--mg-success-500));
 }
 

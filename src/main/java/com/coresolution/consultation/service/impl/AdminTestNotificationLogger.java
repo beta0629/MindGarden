@@ -87,9 +87,10 @@ public class AdminTestNotificationLogger {
             String recipientPhoneMasked, TestNotificationChannel channel,
             String templateCode, Map<String, String> templateParams, String messageContent,
             String reason, String batchId) {
+        String resolvedUsername = resolveSentByUsername(sentByUsername, sentByUserId);
         AdminTestNotificationLog entity = AdminTestNotificationLog.builder()
             .sentByUserId(sentByUserId)
-            .sentByUsername(sentByUsername)
+            .sentByUsername(resolvedUsername)
             .sentAt(LocalDateTime.now())
             .recipientMode(recipientMode)
             .recipientUserId(recipientUserId)
@@ -104,6 +105,33 @@ public class AdminTestNotificationLogger {
             .build();
         entity.setTenantId(tenantId);
         return repository.save(entity);
+    }
+
+    /**
+     * {@code sentByUsername} 이 null/blank 인 케이스(소셜 로그인·레거시 데이터로 {@code users.user_id}
+     * 가 NULL 인 어드민 계정)에서 NOT NULL 컬럼 INSERT 실패를 막기 위한 단일 지점 sanitize.
+     *
+     * <p>우선순위:
+     * <ol>
+     *   <li>원본 {@code sentByUsername} (정상 케이스)</li>
+     *   <li>{@code "user-" + sentByUserId} (id 기반 식별자)</li>
+     *   <li>{@code "system"} (sentByUserId 도 null 인 극단 케이스)</li>
+     * </ol>
+     *
+     * <p>fallback 발화 시 {@code log.warn} 으로 영향 받은 발송자 PK 를 남겨 디버거 후속 진단에 사용한다.
+     *
+     * @param sentByUsername 호출 측에서 전달된 발송자 로그인 ID (null 가능)
+     * @param sentByUserId   발송자 PK (null 가능)
+     * @return NOT NULL 컬럼에 안전하게 저장 가능한 식별자
+     */
+    private String resolveSentByUsername(String sentByUsername, Long sentByUserId) {
+        if (sentByUsername != null && !sentByUsername.isBlank()) {
+            return sentByUsername;
+        }
+        String fallback = sentByUserId != null ? "user-" + sentByUserId : "system";
+        log.warn("sentByUsername null/blank → fallback 사용: sentByUserId={}, fallback={}",
+            sentByUserId, fallback);
+        return fallback;
     }
 
     /**

@@ -1,6 +1,8 @@
 package com.coresolution.consultation.service;
 
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import com.coresolution.consultation.entity.OpenAIUsageLog;
 import com.coresolution.consultation.repository.OpenAIUsageLogRepository;
 import com.coresolution.consultation.service.ai.AiChatCompletionResult;
@@ -14,13 +16,110 @@ import lombok.extern.slf4j.Slf4j;
  * OpenAI API를 활용한 웰니스 컨텐츠 생성 서비스
  *
  * @author MindGarden
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2025-01-21
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OpenAIWellnessService {
+
+    /**
+     * AI 호출 실패 시 사용할 회전 fallback 풀.
+     * 트랙 A 핫픽스 (2026-05-23) — 단일 정적 본문 누적 결함 해소를 위해
+     * dayOfWeek/random 으로 회전 선택. 풀 항목의 isFallback=true 로 호출자가
+     * DB 저장 차단 등 분기를 결정할 수 있도록 한다.
+     */
+    private static final List<WellnessContent> FALLBACK_POOL = List.of(
+            new WellnessContent(
+                    "오늘의 마음 건강 팁",
+                    "<h3>💚 마음 건강을 위한 시간</h3>"
+                            + "<p>잠시 멈춰서 깊은 호흡을 해보세요. 천천히 들이마시고, 천천히 내쉬며 마음을 가라앉혀보세요.</p>"
+                            + "<ul>"
+                            + "<li>🌬️ 깊은 호흡 5회 반복하기</li>"
+                            + "<li>💭 현재 순간에 집중하기</li>"
+                            + "<li>😊 자신에게 긍정적인 말 건네기</li>"
+                            + "</ul>"
+                            + "<p><strong>기억하세요:</strong> 작은 실천이 큰 변화를 만듭니다.</p>",
+                    true),
+            new WellnessContent(
+                    "오늘의 감사 일기",
+                    "<h3>🙏 감사의 마음 채우기</h3>"
+                            + "<p>오늘 하루를 돌아보며 감사했던 순간을 떠올려보세요. 작은 순간이라도 좋습니다.</p>"
+                            + "<ul>"
+                            + "<li>📝 감사했던 일 3가지 적기</li>"
+                            + "<li>🌟 그 순간의 감정 떠올리기</li>"
+                            + "<li>💌 누군가에게 고마움 표현하기</li>"
+                            + "</ul>"
+                            + "<p><strong>기억하세요:</strong> 감사는 마음의 근육을 단단하게 만듭니다.</p>",
+                    true),
+            new WellnessContent(
+                    "오늘의 가벼운 산책",
+                    "<h3>🚶 햇볕 한 줌 챙기기</h3>"
+                            + "<p>잠깐이라도 햇볕을 쬐며 가볍게 걸어보세요. 몸과 마음이 함께 환기됩니다.</p>"
+                            + "<ul>"
+                            + "<li>🌤️ 햇볕 쬐며 10분 걷기</li>"
+                            + "<li>👂 주변 소리에 귀 기울이기</li>"
+                            + "<li>🌿 보이는 풍경 한 가지 마음에 담기</li>"
+                            + "</ul>"
+                            + "<p><strong>기억하세요:</strong> 짧은 걸음도 충분한 회복입니다.</p>",
+                    true),
+            new WellnessContent(
+                    "오늘의 따뜻한 차 한 잔",
+                    "<h3>☕ 잠시의 멈춤</h3>"
+                            + "<p>좋아하는 차나 따뜻한 음료를 천천히 마셔보세요. 향과 온기에 집중해보세요.</p>"
+                            + "<ul>"
+                            + "<li>🍵 차의 향 깊이 들이마시기</li>"
+                            + "<li>🤲 컵의 온도 손끝으로 느끼기</li>"
+                            + "<li>🧘 한 모금마다 마음 쉬기</li>"
+                            + "</ul>"
+                            + "<p><strong>기억하세요:</strong> 멈춤이 가장 빠른 회복이 됩니다.</p>",
+                    true),
+            new WellnessContent(
+                    "오늘의 가벼운 스트레칭",
+                    "<h3>🧘 몸의 긴장 풀기</h3>"
+                            + "<p>책상 앞이라면 잠시 일어나 어깨와 목을 천천히 풀어주세요.</p>"
+                            + "<ul>"
+                            + "<li>🙆 어깨 으쓱하며 천천히 떨구기</li>"
+                            + "<li>🦒 목 좌우로 부드럽게 돌리기</li>"
+                            + "<li>🤸 깍지 끼고 팔 위로 쭉 펴기</li>"
+                            + "</ul>"
+                            + "<p><strong>기억하세요:</strong> 5분의 스트레칭이 하루의 컨디션을 바꿉니다.</p>",
+                    true),
+            new WellnessContent(
+                    "오늘의 마음 일기",
+                    "<h3>📝 지금 감정을 한 줄로</h3>"
+                            + "<p>지금 이 순간 떠오르는 감정을 한 줄로 적어보세요. 좋고 나쁨을 판단하지 않아도 됩니다.</p>"
+                            + "<ul>"
+                            + "<li>✍️ 감정 단어 1개 적기</li>"
+                            + "<li>🔍 그 감정이 어디서 왔는지 떠올리기</li>"
+                            + "<li>🌱 나에게 필요한 한 마디 건네기</li>"
+                            + "</ul>"
+                            + "<p><strong>기억하세요:</strong> 알아차림만으로도 마음은 한결 가벼워집니다.</p>",
+                    true),
+            new WellnessContent(
+                    "오늘의 따뜻한 연결",
+                    "<h3>📞 소중한 사람에게 안부</h3>"
+                            + "<p>오랜만에 떠오른 사람에게 짧은 안부를 전해보세요. 관계는 작은 메시지에서 자랍니다.</p>"
+                            + "<ul>"
+                            + "<li>💬 짧은 안부 메시지 보내기</li>"
+                            + "<li>📷 함께한 사진 한 장 떠올리기</li>"
+                            + "<li>🤝 다음에 함께할 일 한 가지 정하기</li>"
+                            + "</ul>"
+                            + "<p><strong>기억하세요:</strong> 연결은 마음 건강의 가장 든든한 토대입니다.</p>",
+                    true),
+            new WellnessContent(
+                    "오늘의 충분한 휴식",
+                    "<h3>🛌 잠시 눈 감기</h3>"
+                            + "<p>10분만 모든 화면을 끄고 눈을 감아보세요. 짧은 휴식이 큰 회복을 만듭니다.</p>"
+                            + "<ul>"
+                            + "<li>👀 눈 감고 천천히 호흡하기</li>"
+                            + "<li>🔕 알림 끄고 조용한 시간 갖기</li>"
+                            + "<li>🌙 좋아하는 장소 떠올리기</li>"
+                            + "</ul>"
+                            + "<p><strong>기억하세요:</strong> 잘 쉬는 것도 중요한 실천입니다.</p>",
+                    true)
+    );
 
     private final OpenAIUsageLogRepository usageLogRepository;
     private final AiChatCompletionService aiChatCompletionService;
@@ -57,11 +156,11 @@ public class OpenAIWellnessService {
                 log.warn("⚠️ 웰니스 AI 미사용/실패 — requestedProvider={}, effectiveProvider={}, model={}, reason={}",
                         result.requestedProviderId(), result.effectiveProviderId(), modelForLog, errMsg);
                 logUsage("wellness", modelForLog, false, errMsg, 0, 0, 0, responseTime, requestedBy);
-                return getDefaultContent();
+                return getDefaultContent(dayOfWeek);
             }
             logUsage("wellness", modelForLog, true, null,
                     result.promptTokens(), result.completionTokens(), result.totalTokens(), responseTime, requestedBy);
-            WellnessContent parsed = parseResponse(result.text());
+            WellnessContent parsed = parseResponse(result.text(), dayOfWeek);
             log.info("✅ 웰니스 컨텐츠 생성 완료 ({}ms), requestedProvider={}, effectiveProvider={}, model={}",
                     responseTime, result.requestedProviderId(), result.effectiveProviderId(), modelForLog);
             return parsed;
@@ -69,7 +168,7 @@ public class OpenAIWellnessService {
             long responseTime = System.currentTimeMillis() - startTime;
             log.error("❌ 웰니스 컨텐츠 생성 예외 ({}ms)", responseTime, e);
             logUsage("wellness", "unknown", false, e.getMessage(), 0, 0, 0, responseTime, requestedBy);
-            return getDefaultContent();
+            return getDefaultContent(dayOfWeek);
         }
     }
 
@@ -135,7 +234,7 @@ public class OpenAIWellnessService {
     /**
      * 응답 파싱
      */
-    private WellnessContent parseResponse(String response) {
+    private WellnessContent parseResponse(String response, Integer dayOfWeek) {
         try {
             String trimmed = response.trim();
             if (trimmed.startsWith("```json")) {
@@ -163,24 +262,30 @@ public class OpenAIWellnessService {
 
         } catch (Exception e) {
             log.error("❌ 응답 파싱 실패: {}", response, e);
-            return getDefaultContent();
+            return getDefaultContent(dayOfWeek);
         }
     }
 
     /**
-     * 기본 컨텐츠 (API 실패 시)
+     * AI 호출 실패 시 사용할 fallback 컨텐츠를 회전 풀에서 선택한다.
+     *
+     * <p>트랙 A 핫픽스 (2026-05-23) — 매일 동일 본문 누적을 막기 위해 dayOfWeek 기반 회전.
+     * dayOfWeek 가 null 이면 (예: parseResponse 실패) 풀에서 무작위 선택한다.
+     * 반환되는 {@link WellnessContent} 는 {@code isFallback=true} 이므로 호출자가
+     * DB 영속화 차단 등 분기 처리에 활용해야 한다.</p>
+     *
+     * @param dayOfWeek 요일 (1-7). null 이면 random.
+     * @return 회전 풀에서 선택된 fallback 컨텐츠 (isFallback=true)
      */
-    private WellnessContent getDefaultContent() {
-        return new WellnessContent(
-                "오늘의 마음 건강 팁",
-                "<h3>💚 마음 건강을 위한 시간</h3>"
-                        + "<p>잠시 멈춰서 깊은 호흡을 해보세요. 천천히 들이마시고, 천천히 내쉬며 마음을 가라앉혀보세요.</p>"
-                        + "<ul>"
-                        + "<li>🌬️ 깊은 호흡 5회 반복하기</li>"
-                        + "<li>💭 현재 순간에 집중하기</li>"
-                        + "<li>😊 자신에게 긍정적인 말 건네기</li>"
-                        + "</ul>"
-                        + "<p><strong>기억하세요:</strong> 작은 실천이 큰 변화를 만듭니다.</p>");
+    private WellnessContent getDefaultContent(Integer dayOfWeek) {
+        int poolSize = FALLBACK_POOL.size();
+        int index;
+        if (dayOfWeek != null && dayOfWeek >= 1 && dayOfWeek <= 7) {
+            index = (dayOfWeek - 1) % poolSize;
+        } else {
+            index = ThreadLocalRandom.current().nextInt(poolSize);
+        }
+        return FALLBACK_POOL.get(index);
     }
 
     private String getDayName(Integer dayOfWeek) {
@@ -217,15 +322,25 @@ public class OpenAIWellnessService {
     }
 
     /**
-     * 웰니스 컨텐츠 DTO
+     * 웰니스 컨텐츠 DTO.
+     *
+     * <p>{@code isFallback} 플래그는 AI 호출 실패로 정적 회전 풀에서 선택된 응답인지 여부를
+     * 호출자에게 알리기 위한 신호다 (트랙 A 핫픽스, 2026-05-23). 호출자는 이 값이 {@code true}
+     * 일 때 DB 영속화·재사용 카운트 갱신 등 부수 효과를 차단해야 한다.</p>
      */
     public static class WellnessContent {
         private final String title;
         private final String content;
+        private final boolean isFallback;
 
         public WellnessContent(String title, String content) {
+            this(title, content, false);
+        }
+
+        public WellnessContent(String title, String content, boolean isFallback) {
             this.title = title;
             this.content = content;
+            this.isFallback = isFallback;
         }
 
         public String getTitle() {
@@ -234,6 +349,10 @@ public class OpenAIWellnessService {
 
         public String getContent() {
             return content;
+        }
+
+        public boolean isFallback() {
+            return isFallback;
         }
     }
 

@@ -207,6 +207,19 @@
             <artifactId>flyway-mysql</artifactId>
         </dependency>
 
+        <!-- ShedLock: 트랙 A 핫픽스 (2026-05-23) — blue/green cutover 09:00 누락 + 중복 실행 방지 -->
+        <dependency>
+            <groupId>net.javacrumbs.shedlock</groupId>
+            <artifactId>shedlock-spring</artifactId>
+            <version>5.13.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.javacrumbs.shedlock</groupId>
+            <artifactId>shedlock-provider-jdbc-template</artifactId>
+            <version>5.13.0</version>
+        </dependency>
+
         <!-- Google Cloud Speech-to-Text -->
         <dependency>
             <groupId>com.google.cloud</groupId>

@@ -60,7 +60,25 @@ public class WellnessTemplateService {
         log.info("🤖 AI로 새 템플릿 생성 중...");
         WellnessContent content = openAIWellnessService.generateWellnessContent(dayOfWeek, season, "GENERAL", "SYSTEM");
         
-        // 3. DB에 저장
+        // 트랙 A 핫픽스 (2026-05-23): AI 호출 실패로 회전 fallback 풀에서 선택된 컨텐츠는
+        // wellness_templates 에 영속화하지 않는다. fallback 본문이 매일 누적되면
+        // findUnusedTemplatesByConditions 의 회전 로직이 가짜 사용 카운트로 오염되어
+        // "오늘의 마음 건강 팁" 결함이 재발한다. 발송은 진행하되 DB 미저장 transient 엔티티만 반환.
+        if (content.isFallback()) {
+            log.warn("⚠️ AI 호출 실패 — fallback 본문 사용, DB 미저장 (dayOfWeek={}, season={})",
+                dayOfWeek, season);
+            return WellnessTemplate.builder()
+                .title(content.getTitle())
+                .content(content.getContent())
+                .dayOfWeek(dayOfWeek)
+                .season(season)
+                .category("GENERAL")
+                .isActive(false)
+                .isImportant(false)
+                .build();
+        }
+        
+        // 3. AI 성공 시에만 DB 저장
         WellnessTemplate newTemplate = WellnessTemplate.builder()
             .title(content.getTitle())
             .content(content.getContent())

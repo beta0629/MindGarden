@@ -23,8 +23,11 @@ import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
 import com.coresolution.core.service.TenantService;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
@@ -69,6 +72,11 @@ public class WellnessNotificationScheduler {
      * Cron: 매일 오전 9시
      */
     @Scheduled(cron = "${scheduler.wellness-notification.cron:0 0 9 * * ?}")
+    @SchedulerLock(
+        name = "wellness-notification",
+        lockAtMostFor = "PT15M",
+        lockAtLeastFor = "PT5M"
+    )
     public void sendDailyWellnessTip() {
         String executionId = UUID.randomUUID().toString();
         LocalDateTime startTime = LocalDateTime.now();
@@ -145,6 +153,61 @@ public class WellnessNotificationScheduler {
     }
     
     /**
+     * 시스템 부팅 직후 catch-up 발송 (트랙 A 핫픽스, 2026-05-23).
+     *
+     * <p>blue/green 컷오버 시점이 09:00 ± 1~2 분과 겹쳐 신규 슬롯이 첫 cron 을 놓친 경우를
+     * 대비한 보정. {@link ApplicationReadyEvent} 시점에 현재 시각이 09:00 이후 ~ 23:59 사이이면
+     * 활성 테넌트별 당일 WELLNESS 공지 존재 여부를 검증하고, 누락된 테넌트에 한해 1 회 발송한다.
+     * {@code @SchedulerLock} 과 {@code existsByTenantIdAndNotificationTypeAndCreatedAtBetween}
+     * idempotency 가드로 중복 발송은 차단된다.</p>
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void catchUpMissedDispatchOnStartup() {
+        LocalDateTime now = LocalDateTime.now();
+        if (now.getHour() < 9) {
+            log.info("⏸️ [WellnessNotification] catch-up skip — 09:00 이전 부팅 (now={})", now);
+            return;
+        }
+        log.info("🔁 [WellnessNotification] 부팅 직후 catch-up 검증 시작 (now={})", now);
+        String catchUpExecutionId = "catchup-" + UUID.randomUUID();
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
+        int caughtUp = 0;
+        try {
+            List<String> activeTenantIds = tenantService.getAllActiveTenantIds();
+            for (String tenantId : activeTenantIds) {
+                try {
+                    if (systemNotificationRepository.existsByTenantIdAndNotificationTypeAndCreatedAtBetween(
+                            tenantId, "WELLNESS", startOfDay, endOfDay)) {
+                        continue;
+                    }
+                    TenantContextHolder.setTenantId(tenantId);
+                    log.warn("⚠️ [WellnessNotification] 당일 발송 누락 감지 — catch-up 실행: tenantId={}", tenantId);
+                    sendWellnessTipForTenant(tenantId);
+                    logService.saveExecutionLog(
+                        catchUpExecutionId, tenantId, "WellnessNotification", "SUCCESS",
+                        "Catch-up dispatch on application startup"
+                    );
+                    caughtUp++;
+                } catch (Exception e) {
+                    log.error("❌ [WellnessNotification] catch-up 실패: tenantId={}, error={}",
+                        tenantId, e.getMessage(), e);
+                    logService.saveExecutionLog(
+                        catchUpExecutionId, tenantId, "WellnessNotification", "FAILED",
+                        "Catch-up failed: " + e.getMessage()
+                    );
+                } finally {
+                    TenantContextHolder.clear();
+                }
+            }
+            log.info("✅ [WellnessNotification] 부팅 catch-up 종료 — 보정 발송 {}건", caughtUp);
+        } catch (Exception e) {
+            log.error("❌ [WellnessNotification] 부팅 catch-up 전체 실패: {}", e.getMessage(), e);
+        }
+    }
+    
+    /**
      * 특정 테넌트에 대한 웰니스 알림 발송
      */
     private void sendWellnessTipForTenant(String tenantId) {
@@ -176,7 +239,8 @@ public class WellnessNotificationScheduler {
         notification.setNotificationType("WELLNESS");
         notification.setTargetType("ALL");
         notification.setStatus("PUBLISHED");
-        notification.setIsImportant(template.getIsImportant());
+        // 핫픽스 (2026-05-23): fallback transient template 의 isImportant 가 null 일 수 있어 NPE 가드.
+        notification.setIsImportant(Boolean.TRUE.equals(template.getIsImportant()));
         notification.setIsUrgent(false);
         notification.setAuthorName("코어솔루션");
         notification.setAuthorId(1L); // 시스템 관리자 ID 설정

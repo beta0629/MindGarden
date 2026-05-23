@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 /**
  * 심리검사 AI 리포트 마크다운의 필수 섹션(헤딩) 검증.
- * OpenAIPsychAiServiceImpl과 단위 테스트에서 공유한다.
+ * PsychAiServiceImpl과 단위 테스트에서 공유한다.
  *
  * @author CoreSolution
  * @since 2026-05-08

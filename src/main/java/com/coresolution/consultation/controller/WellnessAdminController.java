@@ -6,13 +6,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import com.coresolution.consultation.entity.OpenAIUsageLog;
+import com.coresolution.consultation.entity.AiUsageLog;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.WellnessTemplate;
-import com.coresolution.consultation.repository.OpenAIUsageLogRepository;
+import com.coresolution.consultation.repository.AiUsageLogRepository;
 import com.coresolution.consultation.scheduler.WellnessNotificationScheduler;
 import com.coresolution.consultation.service.ExchangeRateService;
-import com.coresolution.consultation.service.OpenAIWellnessService;
+import com.coresolution.consultation.service.WellnessAiService;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.WellnessTemplateService;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -49,14 +49,14 @@ public class WellnessAdminController extends BaseApiController {
     private final WellnessTemplateService wellnessTemplateService;
     @Autowired(required = false)
     private WellnessNotificationScheduler wellnessNotificationScheduler;
-    private final OpenAIUsageLogRepository usageLogRepository;
+    private final AiUsageLogRepository usageLogRepository;
     private final SystemConfigService systemConfigService;
     private final ExchangeRateService exchangeRateService;
     
     // 생성자 주입 (스케줄러는 필드 주입으로 선택적 처리)
     public WellnessAdminController(
             WellnessTemplateService wellnessTemplateService,
-            OpenAIUsageLogRepository usageLogRepository,
+            AiUsageLogRepository usageLogRepository,
             SystemConfigService systemConfigService,
             ExchangeRateService exchangeRateService) {
         this.wellnessTemplateService = wellnessTemplateService;
@@ -190,7 +190,7 @@ public class WellnessAdminController extends BaseApiController {
             Math.round(totalCostKRW * 100.0) / 100.0 : 0.0;
         
         // 최근 로그
-        List<OpenAIUsageLog> recentLogs = usageLogRepository.findTop10ByOrderByCreatedAtDesc();
+        List<AiUsageLog> recentLogs = usageLogRepository.findTop10ByOrderByCreatedAtDesc();
         
         List<Map<String, Object>> logList = recentLogs.stream().map(log -> {
             Map<String, Object> data = new HashMap<>();
@@ -327,12 +327,12 @@ public class WellnessAdminController extends BaseApiController {
      * 웰니스 컨텐츠 테스트 생성
      */
     @PostMapping("/test")
-    public ResponseEntity<ApiResponse<OpenAIWellnessService.WellnessContent>> testWellnessContent(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<ApiResponse<WellnessAiService.WellnessContent>> testWellnessContent(@RequestBody Map<String, Object> request) {
         Integer dayOfWeek = (Integer) request.getOrDefault("dayOfWeek", 1);
         String season = (String) request.getOrDefault("season", "SPRING");
         String category = (String) request.getOrDefault("category", "MENTAL");
         
-        OpenAIWellnessService.WellnessContent content = wellnessTemplateService.generateWellnessContent(dayOfWeek, season, category, "ADMIN_TEST");
+        WellnessAiService.WellnessContent content = wellnessTemplateService.generateWellnessContent(dayOfWeek, season, category, "ADMIN_TEST");
         
         return success("테스트 컨텐츠 생성 성공", content);
     }

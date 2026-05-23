@@ -2,42 +2,64 @@ package com.coresolution.consultation.assessment.service.impl;
 
 import com.coresolution.consultation.assessment.model.PsychAssessmentType;
 import com.coresolution.consultation.assessment.service.PsychAiService;
-import com.coresolution.consultation.service.SystemConfigService;
+import com.coresolution.consultation.service.ai.AiChatCompletionResult;
+import com.coresolution.consultation.service.ai.AiChatCompletionService;
+import com.coresolution.consultation.service.ai.dto.AiCompletionRequest;
+import com.coresolution.consultation.service.ai.dto.AiResponseFormat;
+import com.coresolution.consultation.service.ai.parser.AiJsonResponseParser;
 import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.client.HttpClientErrorException;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
- * 심리검사(TCI/MMPI) 전용 LLM 서비스 (OpenAI Chat Completions)
- * - 입력은 "추출된 지표" 중심(원문 OCR 전체 투입 최소화)
- * - 출력은 한국어 마크다운 + evidence(JSON) 고정
+ * 심리검사(TCI/MMPI) 전용 LLM 서비스 — SSOT 단일 진입점 경유.
+ *
+ * <p>트랙 B PR-2 리네임 + 마이그레이션 (기획서 §4 단계 3·4, §7 Q5=a):</p>
+ * <ul>
+ *   <li>provider-prefix 제거: {@code OpenAIPsychAiServiceImpl} → {@code PsychAiServiceImpl}</li>
+ *   <li>직접 Gemini / OpenAI HTTP 호출 ({@code callGeminiApi}, {@code callGeminiApiWithFallback},
+ *       {@code callOpenAiWithFallback}, {@code callOpenAiFormatApi}) 제거</li>
+ *   <li>{@link AiChatCompletionService#completeChat(AiCompletionRequest)} 단일 경유로 전환</li>
+ *   <li>모델 fallback / Gemini URL 보정 등은 SSOT 본체 ({@code AiChatCompletionServiceImpl}) 가 담당</li>
+ *   <li>JSON 추출은 공통 파서 {@link AiJsonResponseParser} 결과
+ *       ({@link AiChatCompletionResult#parsedJson()}) 우선 활용 + 기존 brace-balanced 추출 보완</li>
+ * </ul>
+ *
+ * <p>입력은 추출된 지표 중심, 출력은 한국어 마크다운 + evidence(JSON) 고정.
+ * TCI/MMPI 시스템 프롬프트 (디자이너 헤딩 v3) 와 응답 검증 로직은 보존한다.</p>
+ *
+ * @author CoreSolution
+ * @since 2026-05-08
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OpenAIPsychAiServiceImpl implements PsychAiService {
+public class PsychAiServiceImpl implements PsychAiService {
 
     private static final String PROMPT_VERSION = "psych-prompt-v3-designer-headings-20260508";
     private static final int MAX_TOKENS = 4096;
     private static final double TEMPERATURE = 0.3;
     private static final int MIN_EVIDENCE_HIGHLIGHTS = 1;
+
+    /**
+     * caller 라벨 — SSOT 사용 로그 / 메트릭 분류용.
+     */
+    private static final String CALLER_ID = "psych";
+
+    /**
+     * 시스템 컨텍스트(스케줄러·배치)에서 {@link TenantContextHolder} 가 비어 있을 때의 안전 fallback.
+     * 심리검사는 일반적으로 세션 컨텍스트에서 호출되므로 거의 사용되지 않는다.
+     */
+    private static final String SYSTEM_TENANT_FALLBACK = "SYSTEM";
 
     // “확정 진단/법적 결론” 방지(오판 리스크 방어): 발견 시 폴백 + 사람 검수 필요 처리
     private static final List<Pattern> FORBIDDEN_PATTERNS = List.of(
@@ -49,14 +71,13 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
             Pattern.compile("정신\\s*질환\\s*확정", Pattern.CASE_INSENSITIVE)
     );
 
-
-    private final SystemConfigService systemConfigService;
+    private final AiChatCompletionService aiChatCompletionService;
+    private final AiJsonResponseParser jsonResponseParser;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final RestTemplate restTemplate = new RestTemplate();
 
     @Override
     public AiResult generateKoreanReport(PsychAssessmentType assessmentType, List<MetricInput> metrics, String baseMarkdown) {
-        String tenantId = TenantContextHolder.getTenantId();
+        String tenantId = resolveTenantId();
 
         if (metrics == null || metrics.isEmpty()) {
             return new AiResult(
@@ -66,208 +87,104 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
                     PROMPT_VERSION);
         }
 
-        String providerId = systemConfigService.getAiDefaultProvider();
-        String apiKey = systemConfigService.getApiKeyForProvider(providerId);
-        String apiUrl = systemConfigService.getApiUrlForProvider(providerId);
-        String model = systemConfigService.getModelForProvider(providerId);
-
-        if (!StringUtils.hasText(apiKey)) {
-            // 키가 없으면 규칙 기반 결과만 반환 (안전 폴백)
-            return new AiResult(baseMarkdown, "{\"ai\":\"disabled\",\"reason\":\"" + providerId.toUpperCase() + "_API_KEY 미설정\"}", "disabled", PROMPT_VERSION);
-        }
-
         try {
             String systemPrompt = buildSystemPrompt(assessmentType);
             String userPrompt = buildUserPrompt(assessmentType, metrics, baseMarkdown);
 
-            log.info("Psych AI report generation start: provider={}, model={}, metricsCount={}",
-                    providerId, model, metrics != null ? metrics.size() : 0);
+            log.info("Psych AI report generation start: tenantId={}, type={}, metricsCount={}",
+                    tenantId, assessmentType, metrics.size());
 
-            String rawContent;
-            if ("gemini".equalsIgnoreCase(providerId)) {
-                String effectiveUrl = StringUtils.hasText(apiUrl)
-                        ? apiUrl
-                        : GEMINI_DEFAULT_URL;
-                rawContent = callGeminiApiWithFallback(apiKey, effectiveUrl, model, systemPrompt, userPrompt);
-            } else {
-                rawContent = callOpenAiWithFallback(apiKey, apiUrl, model, systemPrompt, userPrompt);
+            AiCompletionRequest request = AiCompletionRequest.builder()
+                    .systemPrompt(systemPrompt)
+                    .userPrompt(userPrompt)
+                    .maxTokens(MAX_TOKENS)
+                    .temperature(TEMPERATURE)
+                    .responseFormat(AiResponseFormat.JSON)
+                    .tenantId(tenantId)
+                    .callerId(CALLER_ID)
+                    .traceId(UUID.randomUUID().toString())
+                    .build();
+
+            AiChatCompletionResult result = aiChatCompletionService.completeChat(request);
+            String model = StringUtils.hasText(result.model()) ? result.model() : "unknown";
+
+            if (!result.success()) {
+                String reason = result.errorMessage() != null ? result.errorMessage() : "ai_call_failed";
+                log.warn("Psych AI call failed: tenantId={}, requestedProvider={}, effectiveProvider={}, model={}, reason={}",
+                        tenantId, result.requestedProvider(), result.effectiveProvider(), model, reason);
+                if ("no_openai_or_gemini_api_key".equals(reason)) {
+                    return new AiResult(baseMarkdown,
+                            "{\"ai\":\"disabled\",\"reason\":\"AI_API_KEY 미설정\"}",
+                            "disabled", PROMPT_VERSION);
+                }
+                return new AiResult(baseMarkdown,
+                        buildEvidenceJson("failed", truncate(reason, 400), true),
+                        model, PROMPT_VERSION);
             }
 
-            String content = rawContent != null ? rawContent : "";
-
+            String content = result.text() != null ? result.text() : "";
             if (!StringUtils.hasText(content)) {
-                log.warn("Psych AI empty response: provider={}, model={}, rawContentLen={}", providerId, model, rawContent != null ? rawContent.length() : 0);
-                return new AiResult(baseMarkdown, "{\"ai\":\"failed\",\"reason\":\"empty_response\"}", model, PROMPT_VERSION);
+                log.warn("Psych AI empty response: requestedProvider={}, effectiveProvider={}, model={}",
+                        result.requestedProvider(), result.effectiveProvider(), model);
+                return new AiResult(baseMarkdown, "{\"ai\":\"failed\",\"reason\":\"empty_response\"}",
+                        model, PROMPT_VERSION);
             }
 
-            return parseAndValidateAiOutput(content, baseMarkdown, model, metrics, assessmentType);
+            log.info("Psych AI report success: requestedProvider={}, effectiveProvider={}, model={}, isFallback={}, responseLen={}",
+                    result.requestedProvider(), result.effectiveProvider(), model, result.isFallback(), content.length());
+
+            return parseAndValidateAiOutput(result, baseMarkdown, model, metrics, assessmentType);
 
         } catch (Exception e) {
-            log.error("Psych AI report generation failed: tenantId={}, type={}, provider={}, model={}, error={}",
-                    tenantId, assessmentType, providerId, model, e.getMessage(), e);
+            log.error("Psych AI report generation failed: tenantId={}, type={}, error={}",
+                    tenantId, assessmentType, e.getMessage(), e);
             String reason = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-            if (reason.length() > 400) {
-                reason = reason.substring(0, 400) + "...";
-            }
-            return new AiResult(baseMarkdown, buildEvidenceJson("failed", reason, true), model, PROMPT_VERSION);
-        }
-    }
-
-    /** 404 시 재시도용. 2.0-flash 는 신규 API 사용자에게 비가용( Google NOT_FOUND ). */
-    private static final String GEMINI_FALLBACK_MODEL = "gemini-2.5-flash";
-    private static final String GEMINI_DEFAULT_URL = "https://generativelanguage.googleapis.com/v1beta";
-    private static final String OPENAI_FALLBACK_MODEL = "gpt-4o-mini";
-
-    private String callGeminiApiWithFallback(String apiKey, String baseUrl, String model, String systemPrompt, String userPrompt) {
-        String modelId = normalizeGeminiModelId(model);
-        if (!StringUtils.hasText(modelId)) {
-            throw new IllegalArgumentException("Gemini model id is empty after normalize");
-        }
-        if (model != null && model.contains("models/")) {
-            log.info("Psych AI Gemini model id normalized for URL: raw={} -> {}", model, modelId);
-        }
-        try {
-            return callGeminiApi(apiKey, baseUrl, modelId, systemPrompt, userPrompt);
-        } catch (Exception e) {
-            if (!isGeminiModelNotFoundOrUnsupported(e)) {
-                throw e;
-            }
-            if (!GEMINI_FALLBACK_MODEL.equals(modelId)) {
-                log.info("Psych AI Gemini model not found (model={}), retrying with {}", modelId, GEMINI_FALLBACK_MODEL);
-                return callGeminiApi(apiKey, baseUrl, GEMINI_FALLBACK_MODEL, systemPrompt, userPrompt);
-            }
-            if (!GEMINI_DEFAULT_URL.equals(baseUrl)) {
-                log.info("Psych AI Gemini model not found with fallback model, retrying with default URL");
-                return callGeminiApi(apiKey, GEMINI_DEFAULT_URL, GEMINI_FALLBACK_MODEL, systemPrompt, userPrompt);
-            }
-            throw e;
+            return new AiResult(baseMarkdown,
+                    buildEvidenceJson("failed", truncate(reason, 400), true),
+                    "unknown", PROMPT_VERSION);
         }
     }
 
     /**
-     * UI/복사 시 {@code models/gemini-3.1-pro-preview} 처럼 접두사가 붙으면 URL 이 {@code .../models/models/...} 가 되어 404.
+     * 현재 테넌트 ID 해석 — 비어 있으면 {@link #SYSTEM_TENANT_FALLBACK}.
+     *
+     * <p>{@link AiChatCompletionService#completeChat(AiCompletionRequest)} 는 tenantId 가 빈 값이면
+     * 즉시 {@link IllegalArgumentException} 을 던지므로 null 전파를 차단해야 한다.</p>
      */
-    private static String normalizeGeminiModelId(String model) {
-        if (!StringUtils.hasText(model)) {
+    private String resolveTenantId() {
+        String tenantId = TenantContextHolder.getTenantId();
+        return StringUtils.hasText(tenantId) ? tenantId : SYSTEM_TENANT_FALLBACK;
+    }
+
+    /**
+     * AI 응답에서 JSON 객체 추출 — 공통 파서 우선, 실패 시 brace-balanced 보완.
+     *
+     * <p>SSOT 가 {@link AiResponseFormat#JSON} 요청 시 {@link AiChatCompletionResult#parsedJson()}
+     * 을 채워주지만, GPT가 설명문 + ```json ... ``` 형태로 반환하면 공통 파서가 표면 객체만 잡고
+     * 끝낼 수 있다. 본 메서드는 (1) parsedJson 이 있으면 그대로 사용, (2) 없으면 raw text 에서
+     * 문자열 내부 brace 를 제외한 짝 맞는 객체를 직접 추출해 reportMarkdown 내부 '}' 로 잘리는 문제를
+     * 방지한다.</p>
+     */
+    private String extractJsonFromContent(AiChatCompletionResult result) {
+        JsonNode parsed = result.parsedJson();
+        if (parsed != null && parsed.isObject()) {
+            return parsed.toString();
+        }
+        String content = result.text();
+        if (content == null) {
             return "";
         }
-        String m = model.trim();
-        if (m.startsWith("models/")) {
-            m = m.substring("models/".length()).trim();
+        // 1) 공통 파서 한 번 더 시도 (코드펜스 제거 + greedy)
+        JsonNode retry = jsonResponseParser.parseJson(content).orElse(null);
+        if (retry != null && retry.isObject()) {
+            return retry.toString();
         }
-        return m;
+        // 2) reportMarkdown 안의 '}' 보호용 brace-balanced 추출 (기존 로직 유지)
+        return extractJsonByBraceBalance(content);
     }
 
-    private static boolean isGeminiModelNotFoundOrUnsupported(Exception e) {
-        if (e instanceof HttpClientErrorException he) {
-            int sc = he.getStatusCode().value();
-            if (sc == 404) {
-                return true;
-            }
-        }
-        String msg = e.getMessage() != null ? e.getMessage() : "";
-        return msg.contains("404") || msg.contains("NOT_FOUND") || msg.contains("\"status\": \"NOT_FOUND\"");
-    }
-
-    private String callGeminiApi(String apiKey, String baseUrl, String model, String systemPrompt, String userPrompt) {
-        try {
-            String url = (baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl)
-                    + "/models/" + model + ":generateContent";
-            log.debug("Psych AI Gemini call: url={}", url);
-
-            String fullPrompt = systemPrompt + "\n\n" + userPrompt;
-
-            Map<String, Object> contents = new HashMap<>();
-            contents.put("parts", List.of(Map.of("text", fullPrompt)));
-
-            Map<String, Object> generationConfig = new HashMap<>();
-            generationConfig.put("maxOutputTokens", MAX_TOKENS);
-            generationConfig.put("temperature", TEMPERATURE);
-            generationConfig.put("responseMimeType", "application/json");
-
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("contents", List.of(contents));
-            requestBody.put("generationConfig", generationConfig);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("x-goog-api-key", apiKey);
-
-            HttpEntity<Map<String, Object>> req = new HttpEntity<>(requestBody, headers);
-            @SuppressWarnings("rawtypes")
-            ResponseEntity<Map> res = restTemplate.exchange(url, HttpMethod.POST, req, Map.class);
-            JsonNode root = objectMapper.valueToTree(res.getBody());
-            JsonNode candidates = root.path("candidates");
-            if (!candidates.isArray() || candidates.isEmpty()) {
-                log.warn("Psych AI Gemini: candidates empty");
-                return null;
-            }
-            JsonNode content = candidates.path(0).path("content").path("parts");
-            if (!content.isArray() || content.isEmpty()) {
-                log.warn("Psych AI Gemini: parts empty");
-                return null;
-            }
-            String text = content.path(0).path("text").asText(null);
-            log.info("Psych AI Gemini success: model={}, responseLen={}", model, text != null ? text.length() : 0);
-            return text;
-        } catch (Exception e) {
-            log.warn("Psych AI Gemini API call failed: model={}, error={}", model, e.getMessage());
-            throw e;
-        }
-    }
-
-    /**
-     * OpenAI 호출: 지정 모델 실패 시(404/모델 미지원) 폴백 모델로 1회 재시도
-     */
-    private String callOpenAiWithFallback(String apiKey, String apiUrl, String model, String systemPrompt, String userPrompt) {
-        try {
-            return callOpenAiFormatApi(apiKey, apiUrl, model, systemPrompt, userPrompt);
-        } catch (Exception e) {
-            String msg = e.getMessage() != null ? e.getMessage() : "";
-            boolean modelError = e instanceof HttpClientErrorException
-                    || msg.contains("404") || msg.contains("model") && (msg.contains("not found") || msg.contains("invalid") || msg.contains("does not exist"));
-            if (modelError && !OPENAI_FALLBACK_MODEL.equals(model)) {
-                log.info("Psych AI OpenAI model error (model={}), retrying with {}", model, OPENAI_FALLBACK_MODEL);
-                return callOpenAiFormatApi(apiKey, apiUrl, OPENAI_FALLBACK_MODEL, systemPrompt, userPrompt);
-            }
-            throw e;
-        }
-    }
-
-    private String callOpenAiFormatApi(String apiKey, String apiUrl, String model, String systemPrompt, String userPrompt) {
-        Map<String, Object> msg1 = new HashMap<>();
-        msg1.put("role", "system");
-        msg1.put("content", systemPrompt);
-
-        Map<String, Object> msg2 = new HashMap<>();
-        msg2.put("role", "user");
-        msg2.put("content", userPrompt);
-
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", model);
-        requestBody.put("messages", List.of(msg1, msg2));
-        requestBody.put("max_tokens", MAX_TOKENS);
-        requestBody.put("temperature", TEMPERATURE);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
-
-        HttpEntity<Map<String, Object>> req = new HttpEntity<>(requestBody, headers);
-        @SuppressWarnings("rawtypes")
-        ResponseEntity<Map> res = restTemplate.exchange(apiUrl, HttpMethod.POST, req, Map.class);
-        JsonNode root = objectMapper.valueToTree(res.getBody());
-        return root.path("choices").path(0).path("message").path("content").asText(null);
-    }
-
-    /**
-     * AI 응답에서 JSON 객체 추출 (GPT가 설명문 + ```json ... ``` 형태로 반환하는 경우 대응).
-     * 문자열 값 안의 {, }는 depth 계산에서 제외해 reportMarkdown 내부 '}'로 잘리는 문제 방지.
-     */
-    private String extractJsonFromContent(String content) {
-        if (content == null) return "";
+    private String extractJsonByBraceBalance(String content) {
         String trimmed = content.trim();
-        // ```json ... ``` 또는 ``` ... ``` 블록 추출
         int jsonStart = trimmed.indexOf("```json");
         if (jsonStart >= 0) {
             trimmed = trimmed.substring(jsonStart + 7);
@@ -286,7 +203,6 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         if (braceStart < 0) {
             return "";
         }
-        // 문자열 내부의 {, }는 무시하고 짝 맞는 } 찾기
         int depth = 0;
         boolean inString = false;
         boolean escapeNext = false;
@@ -298,8 +214,11 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
                 continue;
             }
             if (inString) {
-                if (c == '\\') escapeNext = true;
-                else if (c == '"') inString = false;
+                if (c == '\\') {
+                    escapeNext = true;
+                } else if (c == '"') {
+                    inString = false;
+                }
                 continue;
             }
             if (c == '"') {
@@ -324,14 +243,13 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         return trimmed;
     }
 
-    private AiResult parseAndValidateAiOutput(String content, String baseMarkdown, String model,
+    private AiResult parseAndValidateAiOutput(AiChatCompletionResult result, String baseMarkdown, String model,
             List<MetricInput> metrics, PsychAssessmentType assessmentType) {
-        // 모델 출력은 JSON 문자열로 고정(리포트 + evidence)
-        // GPT/Gemini가 ```json ... ``` 형태로 감싸거나 앞뒤에 설명을 붙이는 경우 추출
-        String trimmed = extractJsonFromContent(content);
+        String trimmed = extractJsonFromContent(result);
         if (!StringUtils.hasText(trimmed)) {
+            String contentLen = result.text() != null ? String.valueOf(result.text().length()) : "0";
             log.warn("Psych AI parse failed (no JSON): model={}, contentLen={}, trimmedEmpty=true, hasBrace=false",
-                    model, content != null ? content.length() : 0);
+                    model, contentLen);
             return new AiResult(
                     baseMarkdownWithDisclaimer(baseMarkdown, "AI 출력 파싱 실패"),
                     buildEvidenceJson("rejected", "unparsed", true),
@@ -341,63 +259,63 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         }
 
         try {
-                JsonNode out = objectMapper.readTree(trimmed);
-                Validation validation = validateModelOutput(out, metrics, assessmentType);
-                if (!validation.ok) {
-                    log.warn("Psych AI validation failed: reason={}, contentLen={}", validation.reason, trimmed.length());
-                    String reportMd = out.path("reportMarkdown").asText("");
-                    boolean sectionsOk = StringUtils.hasText(reportMd)
-                            && hasRequiredSections(reportMd, assessmentType);
-                    if (sectionsOk && isEvidenceOnlyFailure(validation.reason)) {
-                        log.info("Psych AI: evidence validation failed but reportMarkdown accepted (reason={})", validation.reason);
-                        JsonNode evNode = out.path("evidence");
-                        String ev = evNode.isMissingNode() ? buildEvidenceJson("ok", "evidence_skipped", true) : evNode.toString();
-                        return new AiResult(reportMd, ev, model, PROMPT_VERSION);
-                    }
-                    return new AiResult(
-                            baseMarkdownWithDisclaimer(baseMarkdown, validation.reason),
-                            buildEvidenceJson("rejected", validation.reason, true),
-                            model,
-                            PROMPT_VERSION
-                    );
+            JsonNode out = objectMapper.readTree(trimmed);
+            Validation validation = validateModelOutput(out, metrics, assessmentType);
+            if (!validation.ok) {
+                log.warn("Psych AI validation failed: reason={}, contentLen={}", validation.reason, trimmed.length());
+                String reportMd = out.path("reportMarkdown").asText("");
+                boolean sectionsOk = StringUtils.hasText(reportMd)
+                        && hasRequiredSections(reportMd, assessmentType);
+                if (sectionsOk && isEvidenceOnlyFailure(validation.reason)) {
+                    log.info("Psych AI: evidence validation failed but reportMarkdown accepted (reason={})", validation.reason);
+                    JsonNode evNode = out.path("evidence");
+                    String ev = evNode.isMissingNode() ? buildEvidenceJson("ok", "evidence_skipped", true) : evNode.toString();
+                    return new AiResult(reportMd, ev, model, PROMPT_VERSION);
                 }
-
-                String reportMarkdown = out.path("reportMarkdown").asText(baseMarkdown);
-                if (!isMostlyKorean(reportMarkdown)) {
-                    return new AiResult(
-                            baseMarkdownWithDisclaimer(baseMarkdown, "한국어 출력 위반"),
-                            buildEvidenceJson("rejected", "non_korean", true),
-                            model,
-                            PROMPT_VERSION
-                    );
-                }
-                if (containsForbiddenText(reportMarkdown)) {
-                    return new AiResult(
-                            baseMarkdownWithDisclaimer(baseMarkdown, "금지 문구 탐지"),
-                            buildEvidenceJson("rejected", "forbidden_text", true),
-                            model,
-                            PROMPT_VERSION
-                    );
-                }
-
-                JsonNode evidence = out.path("evidence");
-                String evidenceJson = evidence.isMissingNode()
-                        ? buildEvidenceJson("ok", "missing_evidence", true)
-                        : evidence.toString();
-
-                return new AiResult(reportMarkdown, evidenceJson, model, PROMPT_VERSION);
-            } catch (Exception parseError) {
-                String preview = trimmed.length() > 300 ? trimmed.substring(0, 300) + "..." : trimmed;
-                log.warn("Psych AI parse failed: model={}, exception={}, message={}, trimmedLen={}, trimmedEmpty={}, hasBrace={}, contentPreview={}",
-                        model, parseError.getClass().getSimpleName(), parseError.getMessage(),
-                        trimmed.length(), trimmed.isEmpty(), trimmed.indexOf('{') >= 0, preview);
                 return new AiResult(
-                        baseMarkdownWithDisclaimer(baseMarkdown, "AI 출력 파싱 실패"),
-                        buildEvidenceJson("rejected", "unparsed", true),
+                        baseMarkdownWithDisclaimer(baseMarkdown, validation.reason),
+                        buildEvidenceJson("rejected", validation.reason, true),
                         model,
                         PROMPT_VERSION
                 );
             }
+
+            String reportMarkdown = out.path("reportMarkdown").asText(baseMarkdown);
+            if (!isMostlyKorean(reportMarkdown)) {
+                return new AiResult(
+                        baseMarkdownWithDisclaimer(baseMarkdown, "한국어 출력 위반"),
+                        buildEvidenceJson("rejected", "non_korean", true),
+                        model,
+                        PROMPT_VERSION
+                );
+            }
+            if (containsForbiddenText(reportMarkdown)) {
+                return new AiResult(
+                        baseMarkdownWithDisclaimer(baseMarkdown, "금지 문구 탐지"),
+                        buildEvidenceJson("rejected", "forbidden_text", true),
+                        model,
+                        PROMPT_VERSION
+                );
+            }
+
+            JsonNode evidence = out.path("evidence");
+            String evidenceJson = evidence.isMissingNode()
+                    ? buildEvidenceJson("ok", "missing_evidence", true)
+                    : evidence.toString();
+
+            return new AiResult(reportMarkdown, evidenceJson, model, PROMPT_VERSION);
+        } catch (Exception parseError) {
+            String preview = trimmed.length() > 300 ? trimmed.substring(0, 300) + "..." : trimmed;
+            log.warn("Psych AI parse failed: model={}, exception={}, message={}, trimmedLen={}, contentPreview={}",
+                    model, parseError.getClass().getSimpleName(), parseError.getMessage(),
+                    trimmed.length(), preview);
+            return new AiResult(
+                    baseMarkdownWithDisclaimer(baseMarkdown, "AI 출력 파싱 실패"),
+                    buildEvidenceJson("rejected", "unparsed", true),
+                    model,
+                    PROMPT_VERSION
+            );
+        }
     }
 
     private record Validation(boolean ok, String reason) {}
@@ -517,6 +435,11 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
 
     private String escapeJson(String s) {
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    private String truncate(String s, int max) {
+        if (s == null) return "";
+        return s.length() > max ? s.substring(0, max) + "..." : s;
     }
 
     private String buildSystemPrompt(PsychAssessmentType assessmentType) {
@@ -654,5 +577,3 @@ evidence.highlights는 최소 1개이며, 각 highlight의 basedOn.scaleCode는 
         return sb.toString();
     }
 }
-
-

@@ -1,6 +1,6 @@
 package com.coresolution.consultation.service;
 
-import com.coresolution.consultation.service.OpenAIWellnessService.HealingContent;
+import com.coresolution.consultation.service.WellnessAiService.HealingContent;
 
 /**
  * 힐링 컨텐츠 서비스 인터페이스

@@ -9,95 +9,76 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * OpenAI API 사용 로그 엔티티
- * - API 호출 내역 및 비용 추적
- * - 월별 사용량 통계
- * 
+ * AI API 사용 로그 엔티티 (멀티 프로바이더 통합).
+ *
+ * <p>트랙 B PR-2 리네임 (기획서 §7 Q5=a): 기존 {@code OpenAIUsageLog} +
+ * {@code openai_usage_logs} 테이블이 OpenAI 외 Gemini·Claude·Replicate 등을 통합 적재함에 따라
+ * provider-prefix 를 제거한다.</p>
+ *
+ * <p>테이블 리네임은 Flyway V20260528_006 (RENAME TABLE openai_usage_logs TO ai_usage_logs)
+ * 에서 처리한다.</p>
+ *
+ * @author CoreSolution
  * @author MindGarden
- * @version 1.0.0
  * @since 2025-01-21
  */
 @Entity
-@Table(name = "openai_usage_logs")
+@Table(name = "ai_usage_logs")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OpenAIUsageLog {
-    
+public class AiUsageLog {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(name = "tenant_id", length = 100)
     private String tenantId;
-    
+
     /**
-     * 요청 타입 (wellness, chat, analysis 등)
+     * 요청 타입 (wellness, healing, psych, anomaly_detection 등 caller 라벨).
      */
     @Column(name = "request_type", length = 50)
     private String requestType;
-    
+
     /**
-     * 사용된 모델 (gpt-4o-mini, gpt-4o 등)
+     * 사용된 모델 (gpt-4o-mini, gpt-4o, gemini-2.5-flash 등).
      */
     @Column(length = 50)
     private String model;
-    
-    /**
-     * 프롬프트 토큰 수
-     */
+
     @Column(name = "prompt_tokens")
     private Integer promptTokens;
-    
-    /**
-     * 완성 토큰 수
-     */
+
     @Column(name = "completion_tokens")
     private Integer completionTokens;
-    
-    /**
-     * 총 토큰 수
-     */
+
     @Column(name = "total_tokens")
     private Integer totalTokens;
-    
+
     /**
-     * 예상 비용 (USD)
+     * 예상 비용(USD).
      */
     @Column(name = "estimated_cost")
     private Double estimatedCost;
-    
-    /**
-     * 성공 여부
-     */
+
     @Column(name = "is_success")
     private Boolean isSuccess;
-    
-    /**
-     * 에러 메시지 (실패 시)
-     */
+
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
-    
-    /**
-     * 응답 시간 (ms)
-     */
+
     @Column(name = "response_time_ms")
     private Long responseTimeMs;
-    
-    /**
-     * 요청 사용자 (관리자 ID)
-     */
+
     @Column(name = "requested_by", length = 100)
     private String requestedBy;
-    
-    /**
-     * 생성 일시
-     */
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-    
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -105,10 +86,10 @@ public class OpenAIUsageLog {
             isSuccess = true;
         }
     }
-    
+
     /**
-     * 예상 비용(USD). 모델명 기준 대략 단가(공식 요금 변동 가능).
-     * 미식별 시 서비스 기본에 맞춰 gpt-4o-mini급 단가를 사용합니다.
+     * 예상 비용(USD)을 모델명 기준 대략 단가로 계산한다.
+     * 미식별 모델은 gpt-4o-mini 단가로 대체한다.
      */
     public void calculateCost() {
         if (promptTokens == null || completionTokens == null) {
@@ -135,4 +116,3 @@ public class OpenAIUsageLog {
         this.estimatedCost = inputCost + outputCost;
     }
 }
-

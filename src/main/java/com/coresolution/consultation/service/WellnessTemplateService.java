@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Random;
 import com.coresolution.consultation.entity.WellnessTemplate;
 import com.coresolution.consultation.repository.WellnessTemplateRepository;
-import com.coresolution.consultation.service.OpenAIWellnessService.WellnessContent;
+import com.coresolution.consultation.service.WellnessAiService.WellnessContent;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class WellnessTemplateService {
     
     private final WellnessTemplateRepository wellnessTemplateRepository;
-    private final OpenAIWellnessService openAIWellnessService;
+    private final WellnessAiService wellnessAiService;
     private final Random random = new Random();
     
     /**
@@ -58,7 +58,7 @@ public class WellnessTemplateService {
         
         // 2. AI로 새 템플릿 생성
         log.info("🤖 AI로 새 템플릿 생성 중...");
-        WellnessContent content = openAIWellnessService.generateWellnessContent(dayOfWeek, season, "GENERAL", "SYSTEM");
+        WellnessContent content = wellnessAiService.generateWellnessContent(dayOfWeek, season, "GENERAL", "SYSTEM");
         
         // 트랙 A 핫픽스 (2026-05-23): AI 호출 실패로 회전 fallback 풀에서 선택된 컨텐츠는
         // wellness_templates 에 영속화하지 않는다. fallback 본문이 매일 누적되면
@@ -146,6 +146,6 @@ public class WellnessTemplateService {
      * 웰니스 컨텐츠 생성 (테스트용)
      */
     public WellnessContent generateWellnessContent(Integer dayOfWeek, String season, String category, String requestedBy) {
-        return openAIWellnessService.generateWellnessContent(dayOfWeek, season, category, requestedBy);
+        return wellnessAiService.generateWellnessContent(dayOfWeek, season, category, requestedBy);
     }
 }

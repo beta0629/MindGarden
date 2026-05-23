@@ -1,7 +1,7 @@
 package com.coresolution.core.service.ai;
 
-import com.coresolution.consultation.entity.OpenAIUsageLog;
-import com.coresolution.consultation.repository.OpenAIUsageLogRepository;
+import com.coresolution.consultation.entity.AiUsageLog;
+import com.coresolution.consultation.repository.AiUsageLogRepository;
 import com.coresolution.core.domain.SystemMetric;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class AIAnalysisService {
     
     private final AIModelProvider modelProvider;
     private final AIPromptService promptService;
-    private final OpenAIUsageLogRepository usageLogRepository;
+    private final AiUsageLogRepository usageLogRepository;
     
     /**
      * 이상 탐지 분석
@@ -110,7 +110,7 @@ public class AIAnalysisService {
      */
     private void logUsage(String requestType, boolean isSuccess, AIModelProvider.AIResponse response) {
         try {
-            OpenAIUsageLog usageLog = OpenAIUsageLog.builder()
+            AiUsageLog usageLog = AiUsageLog.builder()
                 .requestType(requestType)
                 .model(modelProvider.getModelName())
                 .promptTokens(response.getPromptTokens())
@@ -123,7 +123,7 @@ public class AIAnalysisService {
                 .build();
             
             usageLog.calculateCost();
-            OpenAIUsageLog savedLog = usageLogRepository.save(usageLog);
+            AiUsageLog savedLog = usageLogRepository.save(usageLog);
             
             if (isSuccess) {
                 log.info("💰 AI 사용 로그: 모델={}, 토큰={}, 비용=${}", 

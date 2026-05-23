@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import com.coresolution.consultation.entity.WellnessTemplate;
 import com.coresolution.consultation.repository.WellnessTemplateRepository;
-import com.coresolution.consultation.service.OpenAIWellnessService.WellnessContent;
+import com.coresolution.consultation.service.WellnessAiService.WellnessContent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,7 +40,7 @@ class WellnessTemplateServiceTest {
     private WellnessTemplateRepository wellnessTemplateRepository;
 
     @Mock
-    private OpenAIWellnessService openAIWellnessService;
+    private WellnessAiService wellnessAiService;
 
     @InjectMocks
     private WellnessTemplateService service;
@@ -52,7 +52,7 @@ class WellnessTemplateServiceTest {
                 any(), anyString(), any(LocalDateTime.class)))
                 .thenReturn(Collections.emptyList());
         WellnessContent fallback = new WellnessContent("fallback 제목", "<p>fallback 본문</p>", true);
-        when(openAIWellnessService.generateWellnessContent(eq(1), eq("SPRING"), eq("GENERAL"), eq("SYSTEM")))
+        when(wellnessAiService.generateWellnessContent(eq(1), eq("SPRING"), eq("GENERAL"), eq("SYSTEM")))
                 .thenReturn(fallback);
 
         WellnessTemplate result = service.getTodayTemplate(1, "SPRING");
@@ -71,7 +71,7 @@ class WellnessTemplateServiceTest {
                 any(), anyString(), any(LocalDateTime.class)))
                 .thenReturn(Collections.emptyList());
         WellnessContent aiResult = new WellnessContent("AI 생성 제목", "<p>AI 본문</p>", false);
-        when(openAIWellnessService.generateWellnessContent(eq(2), eq("SUMMER"), eq("GENERAL"), eq("SYSTEM")))
+        when(wellnessAiService.generateWellnessContent(eq(2), eq("SUMMER"), eq("GENERAL"), eq("SYSTEM")))
                 .thenReturn(aiResult);
         when(wellnessTemplateRepository.save(any(WellnessTemplate.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));

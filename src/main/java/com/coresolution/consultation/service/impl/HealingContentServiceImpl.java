@@ -3,16 +3,20 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.AiUsageLog;
 import com.coresolution.consultation.entity.DailyHealingContent;
-import com.coresolution.consultation.entity.OpenAIUsageLog;
+import com.coresolution.consultation.repository.AiUsageLogRepository;
 import com.coresolution.consultation.repository.DailyHealingContentRepository;
-import com.coresolution.consultation.repository.OpenAIUsageLogRepository;
 import com.coresolution.consultation.service.HealingContentService;
-import com.coresolution.consultation.service.OpenAIWellnessService.HealingContent;
+import com.coresolution.consultation.service.WellnessAiService.HealingContent;
 import com.coresolution.consultation.service.ai.AiChatCompletionResult;
 import com.coresolution.consultation.service.ai.AiChatCompletionService;
+import com.coresolution.consultation.service.ai.dto.AiCompletionRequest;
+import com.coresolution.consultation.service.ai.dto.AiResponseFormat;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +35,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class HealingContentServiceImpl implements HealingContentService {
 
-    private final OpenAIUsageLogRepository usageLogRepository;
+    private static final String CALLER_ID = "healing";
+    private static final String FALLBACK_TENANT_ID = "SYSTEM";
+
+    private final AiUsageLogRepository usageLogRepository;
     private final DailyHealingContentRepository dailyHealingContentRepository;
     private final AiChatCompletionService aiChatCompletionService;
     
@@ -233,22 +240,39 @@ public class HealingContentServiceImpl implements HealingContentService {
         long startTime = System.currentTimeMillis();
         String systemPrompt = "당신은 마음 건강 전문가이며, 내담자와 상담사를 위한 따뜻하고 실용적인 힐링 컨텐츠를 작성합니다.";
         String prompt = buildHealingPrompt(userRole, category);
-        AiChatCompletionResult result = aiChatCompletionService.completeChat(
-                systemPrompt, prompt, 500, 0.8, false);
+        AiCompletionRequest request = AiCompletionRequest.builder()
+                .systemPrompt(systemPrompt)
+                .userPrompt(prompt)
+                .maxTokens(500)
+                .temperature(0.8)
+                .responseFormat(AiResponseFormat.TEXT)
+                .tenantId(resolveTenantId())
+                .callerId(CALLER_ID)
+                .traceId(UUID.randomUUID().toString())
+                .build();
+        AiChatCompletionResult result = aiChatCompletionService.completeChat(request);
         long responseTime = System.currentTimeMillis() - startTime;
         String modelForLog = StringUtils.hasText(result.model()) ? result.model() : "unknown";
         if (!result.success() || !StringUtils.hasText(result.text())) {
             String err = result.errorMessage() != null ? result.errorMessage() : "call_failed";
             log.warn("⚠️ 힐링 AI 호출 실패 — requestedProvider={}, effectiveProvider={}, model={}, reason={}",
-                    result.requestedProviderId(), result.effectiveProviderId(), modelForLog, err);
-            logHealingUsage("HEALING_CONTENT", modelForLog, false, err, 0, 0, 0, responseTime, "SYSTEM");
+                    result.requestedProvider(), result.effectiveProvider(), modelForLog, err);
+            logHealingUsage("HEALING_CONTENT", modelForLog, false, err, 0, 0, 0, responseTime, FALLBACK_TENANT_ID);
             return "마음의 평화를 찾는 하루가 되시길 바랍니다. 💚";
         }
         log.info("💚 힐링 AI 생성 완료 — requestedProvider={}, effectiveProvider={}, model={}",
-                result.requestedProviderId(), result.effectiveProviderId(), modelForLog);
+                result.requestedProvider(), result.effectiveProvider(), modelForLog);
         logHealingUsage("HEALING_CONTENT", modelForLog, true, null,
-                result.promptTokens(), result.completionTokens(), result.totalTokens(), responseTime, "SYSTEM");
+                result.promptTokens(), result.completionTokens(), result.totalTokens(), responseTime, FALLBACK_TENANT_ID);
         return result.text();
+    }
+
+    private String resolveTenantId() {
+        if (TenantContextHolder.isTenantContextSet()) {
+            return TenantContextHolder.getRequiredTenantId();
+        }
+        log.warn("⚠️ tenantId 미설정 — {} fallback 사용", FALLBACK_TENANT_ID);
+        return FALLBACK_TENANT_ID;
     }
     
     /**
@@ -294,7 +318,7 @@ public class HealingContentServiceImpl implements HealingContentService {
                                 int promptTokens, int completionTokens, int totalTokens, 
                                 long responseTimeMs, String requestedBy) {
         try {
-            OpenAIUsageLog usageLog = OpenAIUsageLog.builder()
+            AiUsageLog usageLog = AiUsageLog.builder()
                 .requestType(requestType)
                 .model(model)
                 .promptTokens(promptTokens)
@@ -307,7 +331,7 @@ public class HealingContentServiceImpl implements HealingContentService {
                 .build();
             
             usageLog.calculateCost();
-            OpenAIUsageLog savedLog = usageLogRepository.save(usageLog);
+            AiUsageLog savedLog = usageLogRepository.save(usageLog);
             
             if (isSuccess) {
                 log.info("💚 힐링 컨텐츠 사용량 로깅: {} 토큰, 예상 비용 ${}", totalTokens, 

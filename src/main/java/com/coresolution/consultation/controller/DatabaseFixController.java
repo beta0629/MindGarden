@@ -2,9 +2,9 @@ package com.coresolution.consultation.controller;
 
 import java.util.HashMap;
 import java.util.Map;
-import com.coresolution.consultation.entity.OpenAIUsageLog;
+import com.coresolution.consultation.entity.AiUsageLog;
 import com.coresolution.consultation.entity.User;
-import com.coresolution.consultation.repository.OpenAIUsageLogRepository;
+import com.coresolution.consultation.repository.AiUsageLogRepository;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class DatabaseFixController extends BaseApiController {
     
-    private final OpenAIUsageLogRepository usageLogRepository;
+    private final AiUsageLogRepository usageLogRepository;
     private final DynamicPermissionService dynamicPermissionService;
     
     /**
@@ -60,7 +60,7 @@ public class DatabaseFixController extends BaseApiController {
         int fixedCount = 0;
         double totalFixedCost = 0.0;
         
-        for (OpenAIUsageLog usageLog : nullCostLogs) {
+        for (AiUsageLog usageLog : nullCostLogs) {
             // 비용 재계산
             if (usageLog.getPromptTokens() != null && usageLog.getCompletionTokens() != null) {
                 double inputCost = (usageLog.getPromptTokens() / 1000.0) * 0.0015;

@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.coresolution.consultation.repository.OpenAIUsageLogRepository;
+import com.coresolution.consultation.repository.AiUsageLogRepository;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.AiAnomalyDetection;
 import com.coresolution.core.domain.SecurityThreatDetection;
@@ -38,7 +38,7 @@ public class AIMonitoringController {
     
     private final AiAnomalyDetectionRepository anomalyDetectionRepository;
     private final SecurityThreatDetectionRepository threatDetectionRepository;
-    private final OpenAIUsageLogRepository usageLogRepository;
+    private final AiUsageLogRepository usageLogRepository;
     
     /**
      * 최근 이상 탐지 목록 조회 (테넌트별)

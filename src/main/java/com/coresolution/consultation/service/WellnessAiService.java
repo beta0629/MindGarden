@@ -2,27 +2,57 @@ package com.coresolution.consultation.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import com.coresolution.consultation.entity.OpenAIUsageLog;
-import com.coresolution.consultation.repository.OpenAIUsageLogRepository;
+import com.coresolution.consultation.entity.AiUsageLog;
+import com.coresolution.consultation.repository.AiUsageLogRepository;
 import com.coresolution.consultation.service.ai.AiChatCompletionResult;
 import com.coresolution.consultation.service.ai.AiChatCompletionService;
+import com.coresolution.consultation.service.ai.dto.AiCompletionRequest;
+import com.coresolution.consultation.service.ai.dto.AiResponseFormat;
+import com.coresolution.consultation.service.ai.parser.AiJsonResponseParser;
+import com.coresolution.core.context.TenantContextHolder;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * OpenAI API를 활용한 웰니스 컨텐츠 생성 서비스
+ * 웰니스 컨텐츠 생성 서비스 (테넌트별 AI 프로바이더 SSOT 경유).
+ *
+ * <p>트랙 B PR-2 리네임 + 마이그레이션 (기획서 §4 단계 3·4, §7 Q5=a):
+ * 기존 {@code OpenAIWellnessService} 는 provider-prefix 가 OpenAI 로 고정되어 있어
+ * Gemini 등으로의 라우팅 의도와 불일치했다. {@link AiChatCompletionService} 단일 진입점
+ * + {@link AiCompletionRequest} DTO 를 사용하도록 전환한다. JSON 파싱은 공통 파서
+ * {@link AiJsonResponseParser} 결과 ({@link AiChatCompletionResult#parsedJson()}) 를
+ * 우선 활용한다.</p>
+ *
+ * <p>트랙 A 회전 fallback 풀은 그대로 보존한다 (1a5b672f2). AI 호출 실패 또는 파싱 실패 시
+ * {@link #getDefaultContent(Integer)} 가 호출되며 결과 {@link WellnessContent#isFallback()}
+ * 가 {@code true} 로 설정된다.</p>
  *
  * @author MindGarden
- * @version 1.1.0
+ * @author CoreSolution
  * @since 2025-01-21
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OpenAIWellnessService {
+public class WellnessAiService {
+
+    /**
+     * caller 라벨 — 사용 로그 분류 + AI SSOT 메트릭 라벨.
+     */
+    private static final String CALLER_ID = "wellness";
+
+    /**
+     * 시스템 스케줄러 컨텍스트에서 {@link TenantContextHolder} 가 비어있는 경우의 안전 fallback.
+     * SSOT {@link AiChatCompletionService} 는 tenantId 가 필수이므로 빈 값으로 호출하면 즉시 예외.
+     * 대다수 호출은 {@link com.coresolution.consultation.scheduler.WellnessNotificationScheduler}
+     * 가 {@code setTenantId(tenantId)} 를 설정한 후 진입한다.
+     */
+    private static final String SYSTEM_TENANT_FALLBACK = "SYSTEM";
 
     /**
      * AI 호출 실패 시 사용할 회전 fallback 풀.
@@ -121,11 +151,12 @@ public class OpenAIWellnessService {
                     true)
     );
 
-    private final OpenAIUsageLogRepository usageLogRepository;
+    private final AiUsageLogRepository usageLogRepository;
     private final AiChatCompletionService aiChatCompletionService;
+    private final AiJsonResponseParser jsonResponseParser;
 
     /**
-     * 웰니스 컨텐츠 생성
+     * 웰니스 컨텐츠 생성 (기본 호출자 "SYSTEM").
      *
      * @param dayOfWeek 요일 (1-7: 월-일)
      * @param season 계절 (SPRING, SUMMER, FALL, WINTER)
@@ -133,47 +164,75 @@ public class OpenAIWellnessService {
      * @return 생성된 컨텐츠 (제목과 내용)
      */
     public WellnessContent generateWellnessContent(Integer dayOfWeek, String season, String category) {
-        return generateWellnessContent(dayOfWeek, season, category, "SYSTEM");
+        return generateWellnessContent(dayOfWeek, season, category, SYSTEM_TENANT_FALLBACK);
     }
 
     /**
-     * 웰니스 컨텐츠 생성 (사용자 추적)
+     * 웰니스 컨텐츠 생성 (호출자 추적 + 신 SSOT 경유).
      *
-     * @param requestedBy 요청 주체 식별
-     * @return 생성된 컨텐츠 또는 기본 컨텐츠
+     * @param dayOfWeek 요일 (1-7)
+     * @param season 계절
+     * @param category 카테고리
+     * @param requestedBy 요청 주체 식별 (사용 로그용)
+     * @return 생성된 컨텐츠 또는 회전 fallback 컨텐츠
      */
     public WellnessContent generateWellnessContent(Integer dayOfWeek, String season, String category, String requestedBy) {
         long startTime = System.currentTimeMillis();
         try {
             String prompt = buildPrompt(dayOfWeek, season, category);
             String systemPrompt = "당신은 마음 건강 전문가이며, 내담자들을 위한 따뜻하고 실용적인 웰니스 팁을 작성합니다.";
-            AiChatCompletionResult result = aiChatCompletionService.completeChat(
-                    systemPrompt, prompt, 800, 0.7, true);
+            AiCompletionRequest request = AiCompletionRequest.builder()
+                    .systemPrompt(systemPrompt)
+                    .userPrompt(prompt)
+                    .maxTokens(800)
+                    .temperature(0.7)
+                    .responseFormat(AiResponseFormat.JSON)
+                    .tenantId(resolveTenantId())
+                    .callerId(CALLER_ID)
+                    .traceId(UUID.randomUUID().toString())
+                    .build();
+            AiChatCompletionResult result = aiChatCompletionService.completeChat(request);
             long responseTime = System.currentTimeMillis() - startTime;
             String modelForLog = StringUtils.hasText(result.model()) ? result.model() : "unknown";
             if (!result.hasUsableText()) {
                 String errMsg = result.errorMessage() != null ? result.errorMessage() : "empty_or_failed";
-                log.warn("⚠️ 웰니스 AI 미사용/실패 — requestedProvider={}, effectiveProvider={}, model={}, reason={}",
-                        result.requestedProviderId(), result.effectiveProviderId(), modelForLog, errMsg);
-                logUsage("wellness", modelForLog, false, errMsg, 0, 0, 0, responseTime, requestedBy);
+                log.warn("⚠️ 웰니스 AI 미사용/실패 — requestedProvider={}, effectiveProvider={}, model={}, isFallback={}, reason={}",
+                        result.requestedProvider(), result.effectiveProvider(), modelForLog, result.isFallback(), errMsg);
+                logUsage(CALLER_ID, modelForLog, false, errMsg, 0, 0, 0, responseTime, requestedBy);
                 return getDefaultContent(dayOfWeek);
             }
-            logUsage("wellness", modelForLog, true, null,
+            logUsage(CALLER_ID, modelForLog, true, null,
                     result.promptTokens(), result.completionTokens(), result.totalTokens(), responseTime, requestedBy);
-            WellnessContent parsed = parseResponse(result.text(), dayOfWeek);
-            log.info("✅ 웰니스 컨텐츠 생성 완료 ({}ms), requestedProvider={}, effectiveProvider={}, model={}",
-                    responseTime, result.requestedProviderId(), result.effectiveProviderId(), modelForLog);
+            WellnessContent parsed = parseResponse(result, dayOfWeek);
+            log.info("✅ 웰니스 컨텐츠 생성 완료 ({}ms), requestedProvider={}, effectiveProvider={}, model={}, isFallback={}",
+                    responseTime, result.requestedProvider(), result.effectiveProvider(), modelForLog, result.isFallback());
             return parsed;
         } catch (Exception e) {
             long responseTime = System.currentTimeMillis() - startTime;
             log.error("❌ 웰니스 컨텐츠 생성 예외 ({}ms)", responseTime, e);
-            logUsage("wellness", "unknown", false, e.getMessage(), 0, 0, 0, responseTime, requestedBy);
+            logUsage(CALLER_ID, "unknown", false, e.getMessage(), 0, 0, 0, responseTime, requestedBy);
             return getDefaultContent(dayOfWeek);
         }
     }
 
     /**
-     * 프롬프트 생성
+     * 현재 테넌트 ID 해석.
+     *
+     * <p>스케줄러는 호출 전 {@code TenantContextHolder.setTenantId(tenantId)} 로 컨텍스트를 설정한다.
+     * 컨텍스트가 비어 있는 경우 (예: 어드민 테스트 호출 일부 경로) {@link #SYSTEM_TENANT_FALLBACK} 으로
+     * 대체한다. {@link AiChatCompletionService} 는 tenantId 가 빈 값이면 즉시 예외이므로 null 전달 금지.</p>
+     */
+    private String resolveTenantId() {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (!StringUtils.hasText(tenantId)) {
+            log.debug("⚠️ 웰니스 호출 — TenantContext 비어있음, SYSTEM fallback 사용");
+            return SYSTEM_TENANT_FALLBACK;
+        }
+        return tenantId;
+    }
+
+    /**
+     * 프롬프트 생성.
      */
     private String buildPrompt(Integer dayOfWeek, String season, String category) {
         String dayName = getDayName(dayOfWeek);
@@ -201,13 +260,13 @@ public class OpenAIWellnessService {
     }
 
     /**
-     * API 사용 로그 저장
+     * API 사용 로그 저장.
      */
     private void logUsage(String requestType, String model, boolean isSuccess, String errorMessage,
             int promptTokens, int completionTokens, int totalTokens,
             long responseTimeMs, String requestedBy) {
         try {
-            OpenAIUsageLog usageLogRow = OpenAIUsageLog.builder()
+            AiUsageLog usageLogRow = AiUsageLog.builder()
                     .requestType(requestType)
                     .model(model)
                     .promptTokens(promptTokens)
@@ -220,50 +279,40 @@ public class OpenAIWellnessService {
                     .build();
 
             usageLogRow.calculateCost();
-            OpenAIUsageLog savedLog = usageLogRepository.save(usageLogRow);
+            AiUsageLog savedLog = usageLogRepository.save(usageLogRow);
 
             if (isSuccess) {
-                OpenAIWellnessService.log.info("💰 API 사용 로그 저장: {} 토큰, 예상 비용 ${}", totalTokens,
+                WellnessAiService.log.info("💰 AI 사용 로그 저장: {} 토큰, 예상 비용 ${}", totalTokens,
                         String.format("%.6f", savedLog.getEstimatedCost()));
             }
         } catch (Exception e) {
-            log.error("❌ API 사용 로그 저장 실패", e);
+            log.error("❌ AI 사용 로그 저장 실패", e);
         }
     }
 
     /**
-     * 응답 파싱
+     * 응답 파싱 — 공통 {@link AiJsonResponseParser} 결과를 우선 활용한다.
+     *
+     * <p>{@link AiCompletionRequest#getResponseFormat()} 이 JSON 일 때 SSOT 가
+     * {@link AiChatCompletionResult#parsedJson()} 을 채워준다. 파서가 실패한 경우 (parsedJson=null)
+     * 본 메서드가 동일 파서를 한 번 더 호출하여 회수한 뒤, 그래도 실패하면 회전 fallback 으로 안내한다.</p>
      */
-    private WellnessContent parseResponse(String response, Integer dayOfWeek) {
-        try {
-            String trimmed = response.trim();
-            if (trimmed.startsWith("```json")) {
-                trimmed = trimmed.substring(7);
-            }
-            if (trimmed.startsWith("```")) {
-                trimmed = trimmed.substring(3);
-            }
-            if (trimmed.endsWith("```")) {
-                trimmed = trimmed.substring(0, trimmed.length() - 3);
-            }
-            trimmed = trimmed.trim();
-
-            int titleStart = trimmed.indexOf("\"title\"") + 9;
-            int titleEnd = trimmed.indexOf("\"", titleStart + 1);
-            String title = trimmed.substring(titleStart, titleEnd);
-
-            int contentStart = trimmed.indexOf("\"content\"") + 11;
-            int contentEnd = trimmed.lastIndexOf("\"");
-            String content = trimmed.substring(contentStart, contentEnd);
-
-            content = content.replace("\\n", "\n").replace("\\\"", "\"");
-
-            return new WellnessContent(title, content);
-
-        } catch (Exception e) {
-            log.error("❌ 응답 파싱 실패: {}", response, e);
+    private WellnessContent parseResponse(AiChatCompletionResult result, Integer dayOfWeek) {
+        JsonNode node = result.parsedJson();
+        if (node == null) {
+            node = jsonResponseParser.parseJson(result.text()).orElse(null);
+        }
+        if (node == null || !node.has("title") || !node.has("content")) {
+            log.warn("❌ 웰니스 AI 응답 JSON 파싱 실패 (회전 fallback 사용)");
             return getDefaultContent(dayOfWeek);
         }
+        String title = node.path("title").asText("");
+        String content = node.path("content").asText("");
+        if (!StringUtils.hasText(title) || !StringUtils.hasText(content)) {
+            log.warn("❌ 웰니스 AI 응답 title/content 비어있음 (회전 fallback 사용)");
+            return getDefaultContent(dayOfWeek);
+        }
+        return new WellnessContent(title, content);
     }
 
     /**
@@ -357,7 +406,7 @@ public class OpenAIWellnessService {
     }
 
     /**
-     * 힐링 컨텐츠 DTO
+     * 힐링 컨텐츠 DTO.
      */
     public static class HealingContent {
         private final String title;

@@ -1,7 +1,7 @@
 package com.coresolution.core.service;
 
-import com.coresolution.consultation.entity.OpenAIUsageLog;
-import com.coresolution.consultation.repository.OpenAIUsageLogRepository;
+import com.coresolution.consultation.entity.AiUsageLog;
+import com.coresolution.consultation.repository.AiUsageLogRepository;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.core.domain.SystemMetric;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +34,7 @@ import java.util.Map;
 @ConditionalOnProperty(name = "ai.monitoring.enabled", havingValue = "true", matchIfMissing = false)
 public class OpenAIMonitoringService {
     
-    private final OpenAIUsageLogRepository usageLogRepository;
+    private final AiUsageLogRepository usageLogRepository;
     private final SystemConfigService systemConfigService;
     private final RestTemplate restTemplate = new RestTemplate();
     
@@ -339,7 +339,7 @@ public class OpenAIMonitoringService {
     private void logUsage(String requestType, String model, boolean isSuccess, String errorMessage, 
                          int promptTokens, int completionTokens, int totalTokens, long responseTimeMs) {
         try {
-            OpenAIUsageLog log = OpenAIUsageLog.builder()
+            AiUsageLog log = AiUsageLog.builder()
                 .requestType(requestType)
                 .model(model)
                 .promptTokens(promptTokens)
@@ -352,7 +352,7 @@ public class OpenAIMonitoringService {
                 .build();
             
             log.calculateCost();
-            OpenAIUsageLog savedLog = usageLogRepository.save(log);
+            AiUsageLog savedLog = usageLogRepository.save(log);
             
             if (isSuccess) {
                 OpenAIMonitoringService.log.info("💰 AI 모니터링 API 사용: {} 토큰, 예상 비용 ${}", 

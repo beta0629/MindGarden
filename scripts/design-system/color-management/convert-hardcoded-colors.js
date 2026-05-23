@@ -903,6 +903,16 @@ function parseArgs() {
       i++;
     } else if (arg.startsWith('--token-priority=')) {
       options.tokenPriority = arg.split('=')[1].split(',').map(s => s.trim()).filter(Boolean);
+    } else if (arg === '--allow-duplicate-alias') {
+      options.allowDuplicateAlias = true;
+    } else if (arg === '--strict-validation') {
+      options.strictValidation = true;
+    } else if (arg === '--skip-validation') {
+      // 긴급 우회용 — 사용자 명세(D5 §3.1·§4 P1-a) 호환.
+      // 본 옵션 사용 시에도 진입 시점에 명시적 경고를 5초간 표시하고,
+      // 회피 사용 사실을 stderr 로 기록하여 운영 게이트 회피가 우발적으로
+      // 발생하지 않도록 한다 (가드 회피 차단 정신은 유지).
+      options.skipValidation = true;
     }
   }
 
@@ -917,26 +927,60 @@ function parseArgs() {
 // 직전 라운드 회귀 4건 (R-3·R-4·weekend·R-5) 모두 codemod 가 토큰 매핑을
 // 일괄 치환했지만 SSOT 정의 없는 토큰을 사용한 사이드이펙트가 원인.
 // 본 가드는 codemod 진입 시 다음을 차단한다:
-//   1) check-token-ssot.js 가 ERROR 보고 → 즉시 abort
+//   1) validate-codemod-mappings.js 가 ERROR/충돌 보고 → 즉시 abort
 //   2) 매핑 텍스트에서 동일 hex → 다중 `--mg-color-*` 매핑 (alias 충돌) 발견 시
-//      `--token-priority` 옵션이 없으면 abort
+//      `--allow-duplicate-alias` (또는 `--token-priority`) 옵션이 없으면 abort
 //
-// `--skip-ssot-check` 옵션은 주지 않는다 — 가드 회피 경로를 차단하기 위함.
+// `--skip-validation` 옵션은 긴급 우회용으로만 제공된다. 사용 시 5초간
+// 강력한 경고를 출력하여 운영 게이트 회피가 우발적으로 발생하지 않도록 한다.
 function runEntryGuards(options) {
-  const lintScript = path.resolve(__dirname, 'check-token-ssot.js');
-  if (!fs.existsSync(lintScript)) {
-    console.error('🚨 [T-D 가드] SSOT lint 스크립트가 존재하지 않습니다:');
-    console.error(`   ${lintScript}`);
+  if (options.skipValidation) {
+    console.error('');
+    console.error('🚨🚨🚨 [T-D 가드 우회] --skip-validation 지정됨 🚨🚨🚨');
+    console.error('   D5 §3.1·§4 P1-a 가드를 우회하여 codemod 를 실행합니다.');
+    console.error('   R-3/R-4/weekend/R-5 류 회귀 재발 위험이 있습니다.');
+    console.error('   본 옵션은 긴급 우회 전용이며 운영 반영 전 반드시 재검증 필요합니다.');
+    console.error('   (5초 후 codemod 본문 실행을 계속합니다...)');
+    console.error('');
+    const waitUntil = Date.now() + 5000;
+    while (Date.now() < waitUntil) {
+      // 의도적 동기 대기 — 우발적 우회 방지 (5초 인지 신호)
+    }
+    return;
+  }
+
+  const validatorScript = path.resolve(__dirname, 'validate-codemod-mappings.js');
+  const legacyScript = path.resolve(__dirname, 'check-token-ssot.js');
+
+  // 신규 wrapper (사용자 명세 호환) 우선, 부재 시 legacy lint 로 fallback.
+  let lintScript = null;
+  let isLegacy = false;
+  if (fs.existsSync(validatorScript)) {
+    lintScript = validatorScript;
+  } else if (fs.existsSync(legacyScript)) {
+    lintScript = legacyScript;
+    isLegacy = true;
+  } else {
+    console.error('🚨 [T-D 가드] lint 스크립트가 존재하지 않습니다:');
+    console.error(`   - ${validatorScript}`);
+    console.error(`   - ${legacyScript}`);
     console.error('   codemod 사이드이펙트 차단 가드가 비활성 상태로 진행할 수 없습니다.');
+    console.error('   (긴급 우회: --skip-validation 옵션 사용 — 위험 인지 후 한정)');
     process.exit(1);
   }
 
   const lintArgs = ['--quiet'];
+  if (options.strictValidation) {
+    lintArgs.push('--strict');
+  }
+  if (options.allowDuplicateAlias && !isLegacy) {
+    lintArgs.push('--allow-duplicate-alias');
+  }
   if (Array.isArray(options.tokenPriority) && options.tokenPriority.length > 0) {
     lintArgs.push('--token-priority', options.tokenPriority.join(','));
   }
 
-  console.log('🔍 [T-D 가드] check-token-ssot.js 실행 중...');
+  console.log(`🔍 [T-D 가드] ${path.basename(lintScript)} 실행 중...`);
   const result = spawnSync(process.execPath, [lintScript, ...lintArgs], {
     cwd: process.cwd(),
     stdio: 'inherit'
@@ -947,7 +991,9 @@ function runEntryGuards(options) {
     console.error('🚨 [T-D 가드] SSOT cross-check 실패 — codemod 를 abort 합니다.');
     console.error('   D5 §3.1·§4 P1-a: SSOT 정의 누락·alias 충돌 토큰의 일괄 치환은 회귀를 유발합니다.');
     console.error('   1) 위 lint 출력의 ❌ ERROR / 🚨 alias 충돌 항목을 먼저 해소하세요.');
-    console.error('   2) 의도적 alias 충돌 운영 시 `--token-priority a,b,c` 옵션을 추가하세요.');
+    console.error('   2) 의도적 alias 충돌 운영 시 `--allow-duplicate-alias` 또는');
+    console.error('      `--token-priority a,b,c` 옵션을 추가하세요.');
+    console.error('   3) 긴급 우회 (운영 반영 전 재검증 전제): `--skip-validation`');
     process.exit(result.status || 1);
   }
 
@@ -974,6 +1020,13 @@ if (require.main === module) {
     '  --token-priority a,b,c    [T-D 가드] alias 충돌 발견 시 명시적 우선순위 (인지 신호)',
     '                            옵션 미지정 + 매핑에 동일 hex → 다중 --mg-color-* 토큰',
     '                            매핑이 있을 때 lint 가 abort 한다.',
+    '  --allow-duplicate-alias   [T-D 가드] alias 충돌을 의도된 운영으로 허용 (D5 명세 호환).',
+    '                            내부적으로 validate-codemod-mappings.js 의 동명 옵션과 동일.',
+    '  --strict-validation       [T-D 가드] WARN (다크 미정의 / chain 깊이 / cycle) 도',
+    '                            ERROR 로 승격하여 abort 한다 (운영 게이트 직전 사용 권장).',
+    '  --skip-validation         [T-D 가드 우회 — 긴급용] lint 가드를 건너뛴다. 5초 경고 후',
+    '                            진행하며 회피 사용을 stderr 로 기록한다. 운영 반영 전',
+    '                            반드시 가드 재실행 필요. (R-3/R-4 재발 위험)',
     '  --help, -h                도움말 출력',
     '',
     '예시 (영역 목록 파일):',
@@ -994,8 +1047,9 @@ if (require.main === module) {
     '    및 *.test.* / *.spec.* / *.stories.* / __tests__/ 도 자동 제외',
     '  - var(--token, #hex) 폴백 위치의 hex 는 절대 변환하지 않음 (시각 QA R-2 보호).',
     '    예: `var(--cs-error-600, #dc2626)` → 그대로 유지 (nested var 부작용 방지)',
-    '  - [T-D 가드, D5 §3.1·§4 P1-a] 진입 시 check-token-ssot.js 를 호출해',
-    '    매핑 토큰의 SSOT 정의·alias 충돌을 cross-check. 실패 시 즉시 abort.',
+    '  - [T-D 가드, D5 §3.1·§4 P1-a] 진입 시 validate-codemod-mappings.js 를',
+    '    (없으면 check-token-ssot.js 를) 호출해 매핑 토큰의 SSOT 정의·alias 충돌을',
+    '    cross-check. 실패 시 즉시 abort. (--skip-validation 명시 시 우회)',
     ''
   ].join('\n');
 

@@ -20,7 +20,9 @@
     "i18n:extract": "node scripts/i18n/extract-hangul-strings.js",
     "i18n:extract:report": "node scripts/i18n/extract-hangul-strings.js --report-only",
     "count:hardcoded-colors": "node scripts/design-system/color-management/count-hardcoded-colors.js",
-    "count:hardcoded-colors:report": "node scripts/design-system/color-management/count-hardcoded-colors.js --report"
+    "count:hardcoded-colors:report": "node scripts/design-system/color-management/count-hardcoded-colors.js --report",
+    "lint:codemod-mappings": "node scripts/design-system/color-management/validate-codemod-mappings.js",
+    "lint:codemod-mappings:strict": "node scripts/design-system/color-management/validate-codemod-mappings.js --strict"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

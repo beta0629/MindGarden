@@ -16,7 +16,7 @@
   background-color: var(--mg-v2-color-warning-50, #fffbeb);
   border: 1px solid var(--mg-v2-color-warning-200, #fde68a);
   border-radius: var(--mg-v2-radius-md, 8px);
-  color: var(--mg-v2-color-text-primary, #111827);
+  color: var(--mg-color-text-main);
   font-size: var(--mg-v2-font-size-sm, 0.9375rem);
 }
 
@@ -59,7 +59,7 @@
 }
 
 .stat-icon-wrapper.success {
-  background-color: var(--mg-v2-color-success-50, #f0fdf4);
+  background-color: var(--mg-color-success-50);
   color: var(--mg-v2-color-success-600, #16a34a);
 }
 
@@ -69,7 +69,7 @@
 }
 
 .stat-icon-wrapper.info {
-  background-color: var(--mg-v2-color-info-50, #f0f9ff);
+  background-color: var(--mg-color-info-bg);
   color: var(--mg-v2-color-info-600, #0284c7);
 }
 
@@ -86,14 +86,14 @@
 
 .stat-value {
   font-size: var(--mg-v2-font-size-2xl, 24px);
-  color: var(--mg-v2-color-text-primary, #111827);
+  color: var(--mg-color-text-main);
   font-weight: var(--mg-v2-font-weight-bold, 700);
   line-height: 1.2;
 }
 
 .stat-sublabel {
   font-size: var(--mg-v2-font-size-xs, 12px);
-  color: var(--mg-v2-color-text-tertiary, #9ca3af);
+  color: var(--mg-color-text-tertiary);
   font-weight: var(--mg-v2-font-weight-normal, 400);
   margin-top: var(--mg-v2-spacing-xs, 4px);
 }
@@ -139,7 +139,7 @@
 
 .card-title {
   font-size: var(--mg-v2-font-size-lg, 16px);
-  color: var(--mg-v2-color-text-primary, #111827);
+  color: var(--mg-color-text-main);
   font-weight: var(--mg-v2-font-weight-semibold, 600);
   display: flex;
   align-items: center;
@@ -186,7 +186,7 @@
 
 .schedule-time-meridiem {
   font-size: var(--mg-v2-font-size-xs, 12px);
-  color: var(--mg-v2-color-text-tertiary, #9ca3af);
+  color: var(--mg-color-text-tertiary);
   font-weight: var(--mg-v2-font-weight-normal, 400);
 }
 
@@ -196,7 +196,7 @@
 
 .schedule-client {
   font-size: var(--mg-v2-font-size-md, 15px);
-  color: var(--mg-v2-color-text-primary, #111827);
+  color: var(--mg-color-text-main);
   font-weight: var(--mg-v2-font-weight-medium, 500);
   margin-bottom: var(--mg-v2-spacing-xs, 4px);
 }
@@ -217,7 +217,7 @@
 }
 
 .status-confirmed {
-  background-color: var(--mg-v2-color-success-50, #f0fdf4);
+  background-color: var(--mg-color-success-50);
   color: var(--mg-v2-color-success-700, #15803d);
 }
 
@@ -262,14 +262,14 @@
 
 .notification-text {
   font-size: var(--mg-v2-font-size-sm, 14px);
-  color: var(--mg-v2-color-text-primary, #111827);
+  color: var(--mg-color-text-main);
   margin-bottom: var(--mg-v2-spacing-xs, 4px);
   line-height: 1.4;
 }
 
 .notification-time {
   font-size: var(--mg-v2-font-size-xs, 12px);
-  color: var(--mg-v2-color-text-tertiary, #9ca3af);
+  color: var(--mg-color-text-tertiary);
 }
 
 /* Empty State */
@@ -284,7 +284,7 @@
 }
 
 .empty-state-icon {
-  color: var(--mg-v2-color-text-tertiary, #9ca3af);
+  color: var(--mg-color-text-tertiary);
   margin-bottom: var(--mg-v2-spacing-md, 12px);
 }
 
@@ -449,7 +449,7 @@
 
 .upcoming-schedule-date__weekday {
   font-size: var(--mg-v2-font-size-xs, 12px);
-  color: var(--mg-v2-color-text-tertiary, #9ca3af);
+  color: var(--mg-color-text-tertiary);
   font-weight: var(--mg-v2-font-weight-normal, 400);
 }
 
@@ -469,7 +469,7 @@
 
 .upcoming-schedule-details__client {
   font-size: var(--mg-v2-font-size-md, 15px);
-  color: var(--mg-v2-color-text-primary, #111827);
+  color: var(--mg-color-text-main);
   font-weight: var(--mg-v2-font-weight-medium, 500);
   line-height: 1.4;
 }

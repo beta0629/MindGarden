@@ -381,6 +381,37 @@ const R2_MG_ALIAS_SAFE_PAIRS = [
   { tokenName: '--mg-custom-856404', hex: '#856404', canonical: 'var(--mg-color-warning-dark)' }
 ];
 
+// ── D9 P2-a: R-2 mg-v2-* 폴백 alias 대체 SAFE_PAIRS 화이트리스트 ────────────
+// SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md §2.1 + §4 C1=b 결정
+// 본 화이트리스트는 `--r2-v2-alias-replace` 옵션이 명시될 때에만 사용된다.
+// 옵션 미지정 시 R-2 폴백 보호 동작은 100% 유지된다 (기존 코드 경로 무수정).
+//
+// 분류 기준 (D8 PR-B 단계 1 §1.2 답습):
+//   - Group A: 캐노니컬 토큰명이 mg-v2-* 토큰명과 시맨틱 동명 → 폴백만 제거 (라이트 hex 동일)
+//   - Group B: mg-v2-* legacy text alias → D-round 캐노니컬 text-* (라이트 톤 시프트 가능, 다크 가시성 향상)
+//   - Group C: mg-v2-* 색 패밀리 alias → 캐노니컬 패밀리 토큰 (라이트 hex 일치, 다크 cascade 정착)
+//
+// 본 화이트리스트에 없는 (token, hex) 쌍은 본 옵션 사용 시에도 절대 변환되지 않는다.
+// HOLD (시맨틱 시프트: border-light / primary-100 / 등) 및 manual-review (캐노니컬 매핑 부재)
+// 케이스는 의도적으로 제외 — D10 또는 P1 디자이너 결정 대기.
+const R2_V2_ALIAS_SAFE_PAIRS = [
+  // Group A: 동명 토큰 (success-50 ↔ success-50, 라이트 hex 정확 일치)
+  // SSOT 정의: --mg-color-success-50 라이트 #f0fdf4 / 다크 #064e3b (다크 cascade 정착 효과)
+  { tokenName: '--mg-v2-color-success-50', hex: '#f0fdf4', canonical: 'var(--mg-color-success-50)' },
+
+  // Group B: mg-v2-* text alias → D-round 캐노니컬
+  // text-primary alias → text-main, text-tertiary 동일 시맨틱 (tier 보존)
+  // 라이트 톤 시프트: #111827→#2C2C2C (text-main), #9ca3af→#4b5563 (text-tertiary) — 가독성 향상 방향
+  // 다크 cascade 정착: #111827→#E5E5E5 (대폭 가시성 향상), #9ca3af→#9ca3af (동일)
+  { tokenName: '--mg-v2-color-text-primary', hex: '#111827', canonical: 'var(--mg-color-text-main)' },
+  { tokenName: '--mg-v2-color-text-tertiary', hex: '#9ca3af', canonical: 'var(--mg-color-text-tertiary)' },
+
+  // Group C: 색 패밀리 alias (info-50 톤 → info-bg 시맨틱, 라이트 hex 정확 일치)
+  // SSOT 정의: --mg-color-info-bg 라이트 #f0f9ff / 다크 #082f49 (다크 정착)
+  // D8 PR-B 답습 `--mg-amber-light` → warning-bg 패턴
+  { tokenName: '--mg-v2-color-info-50', hex: '#f0f9ff', canonical: 'var(--mg-color-info-bg)' }
+];
+
 function escapeRegexLiteral(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -455,7 +486,11 @@ class HardcodedColorConverter {
       // D8 PR-B 단계 1: R-2 mg-* 폴백 alias 대체 통계.
       // 본 옵션 사용 시 SAFE_PAIRS 화이트리스트로 치환된 쌍별 카운트.
       r2MgAliasReplaced: 0,
-      r2MgAliasPairCounts: {}
+      r2MgAliasPairCounts: {},
+      // D9 P2-a: R-2 mg-v2-* 폴백 alias 대체 통계.
+      // 본 옵션(`--r2-v2-alias-replace`) 사용 시 SAFE_PAIRS 화이트리스트로 치환된 쌍별 카운트.
+      r2V2AliasReplaced: 0,
+      r2V2AliasPairCounts: {}
     };
   }
 
@@ -623,6 +658,29 @@ class HardcodedColorConverter {
         }
       }
 
+      // ── 0단계-v2 (D9 P2-a): R-2 mg-v2-* 폴백 alias 대체 ───────────────────────
+      // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md §2.1 + §4 C1=b
+      // `--r2-v2-alias-replace` 옵션이 지정된 경우에만 R2_V2_ALIAS_SAFE_PAIRS 화이트리스트로
+      // `var(--mg-v2-*, #hex)` → `var(--mg-color-*)` 일괄 치환을 수행한다.
+      // 본 단계도 1단계(R-2 placeholder)보다 먼저 실행되어 원문 패턴 매칭 가능.
+      if (this.options.r2V2AliasReplace) {
+        for (const pair of R2_V2_ALIAS_SAFE_PAIRS) {
+          const regex = buildSafePairRegex(pair.tokenName, pair.hex);
+          const matches = modifiedContent.match(regex);
+          if (matches && matches.length > 0) {
+            modifiedContent = modifiedContent.replace(regex, pair.canonical);
+            changeCount += matches.length;
+            this.stats.r2V2AliasReplaced += matches.length;
+            const pairKey = `${pair.tokenName}|${pair.hex}`;
+            this.stats.r2V2AliasPairCounts[pairKey] =
+              (this.stats.r2V2AliasPairCounts[pairKey] || 0) + matches.length;
+            if (this.options.verbose) {
+              console.log(`  🔁 R-2 v2 alias 대체: var(${pair.tokenName}, ${pair.hex}) → ${pair.canonical} (${matches.length}개, ${filePath})`);
+            }
+          }
+        }
+      }
+
       // ── 1단계 (R-2): var(--token, #hex) 폴백 보호 ─────────────────────────────
       // 매핑 적용 전에 폴백 hex 위치를 placeholder 로 임시 치환하여
       // `var(--cs-error-600, #dc2626)` → `var(--cs-error-600, var(--mg-color-error))`
@@ -777,11 +835,23 @@ class HardcodedColorConverter {
     if (this.options.r2MgAliasReplace) {
       console.log(`🔁 R-2 mg-* alias 대체: ${this.stats.r2MgAliasReplaced}건`);
     }
+    if (this.options.r2V2AliasReplace) {
+      console.log(`🔁 R-2 mg-v2-* alias 대체: ${this.stats.r2V2AliasReplaced}건`);
+    }
     console.log(`❌ 오류 발생: ${this.stats.errors.length}개`);
 
     if (this.options.r2MgAliasReplace && this.stats.r2MgAliasReplaced > 0) {
       const aliasPairs = Object.entries(this.stats.r2MgAliasPairCounts).sort((a, b) => b[1] - a[1]);
       console.log('\n🔁 R-2 mg-* alias 대체 — 쌍별 분포:');
+      aliasPairs.forEach(([key, count]) => {
+        const [token, hex] = key.split('|');
+        console.log(`  - var(${token}, ${hex}): ${count}건`);
+      });
+    }
+
+    if (this.options.r2V2AliasReplace && this.stats.r2V2AliasReplaced > 0) {
+      const aliasPairs = Object.entries(this.stats.r2V2AliasPairCounts).sort((a, b) => b[1] - a[1]);
+      console.log('\n🔁 R-2 mg-v2-* alias 대체 — 쌍별 분포:');
       aliasPairs.forEach(([key, count]) => {
         const [token, hex] = key.split('|');
         console.log(`  - var(${token}, ${hex}): ${count}건`);
@@ -1019,6 +1089,11 @@ function parseArgs() {
       // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D8.md §2.3 + §4 C3.
       // R-2 보호는 그대로 유지되며, 본 옵션이 명시될 때에만 SAFE_PAIRS 가 우선 적용된다.
       options.r2MgAliasReplace = true;
+    } else if (arg === '--r2-v2-alias-replace') {
+      // D9 P2-a: R-2 mg-v2-* 폴백 SAFE_PAIRS 화이트리스트 alias 대체.
+      // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md §2.1 + §4 C1=b.
+      // R-2 보호는 그대로 유지되며, 본 옵션이 명시될 때에만 R2_V2_ALIAS_SAFE_PAIRS 가 우선 적용된다.
+      options.r2V2AliasReplace = true;
     }
   }
 
@@ -1138,6 +1213,12 @@ if (require.main === module) {
     '                            DESIGN_TOKEN_GAP_2026Q2_D8.md §2.3 + §4 C3.',
     '                            화이트리스트는 본 파일의 R2_MG_ALIAS_SAFE_PAIRS 참조.',
     '                            mg-v2-* 폴백 / HOLD 케이스는 본 옵션에서도 변환되지 않음.',
+    '  --r2-v2-alias-replace     [D9 P2-a] R-2 mg-v2-* 폴백 SAFE_PAIRS 화이트리스트',
+    '                            alias 대체 활성화. SSOT: docs/standards/',
+    '                            DESIGN_TOKEN_GAP_2026Q2_D9.md §2.1 + §4 C1=b.',
+    '                            화이트리스트는 본 파일의 R2_V2_ALIAS_SAFE_PAIRS 참조.',
+    '                            HOLD (border-light·primary-100) / manual-review 케이스는',
+    '                            본 옵션에서도 변환되지 않음 (D10 또는 P1 결정 대기).',
     '  --help, -h                도움말 출력',
     '',
     '예시 (영역 목록 파일):',

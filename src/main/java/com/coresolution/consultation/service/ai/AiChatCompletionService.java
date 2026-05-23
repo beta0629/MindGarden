@@ -1,5 +1,7 @@
 package com.coresolution.consultation.service.ai;
 
+import com.coresolution.consultation.service.ai.dto.AiCompletionRequest;
+
 /**
  * 시스템 설정의 기본 AI 프로바이더에 따라 OpenAI Chat Completions 또는 Gemini {@code generateContent}로
  * 텍스트 응답을 반환한다. Claude/Replicate는 본 서비스에서 전용 프로토콜을 쓰지 않고 openai→gemini 순으로 폴백한다.
@@ -26,4 +28,12 @@ public interface AiChatCompletionService {
             double temperature,
             boolean geminiJsonResponseMimeType
     );
+
+    /**
+     * SSOT DTO 기반 채팅 완성 — 테넌트별 프로바이더 해석 + JSON 파싱 포함.
+     *
+     * @param request AI 완성 요청 DTO (tenantId 필수)
+     * @return 결과 (isFallback, parsedJson, requestedProvider, effectiveProvider 포함)
+     */
+    AiChatCompletionResult completeChat(AiCompletionRequest request);
 }

@@ -1,6 +1,10 @@
 package com.coresolution.consultation.service.ai;
 
 import com.coresolution.consultation.service.SystemConfigService;
+import com.coresolution.consultation.service.ai.dto.AiCompletionRequest;
+import com.coresolution.consultation.service.ai.dto.AiResponseFormat;
+import com.coresolution.consultation.service.ai.parser.AiJsonResponseParser;
+import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
@@ -38,6 +42,8 @@ public class AiChatCompletionServiceImpl implements AiChatCompletionService {
     private static final String OPENAI_FALLBACK_MODEL = "gpt-4o-mini";
 
     private final SystemConfigService systemConfigService;
+    private final AiProviderResolver providerResolver;
+    private final AiJsonResponseParser jsonResponseParser;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
@@ -48,7 +54,73 @@ public class AiChatCompletionServiceImpl implements AiChatCompletionService {
             int maxTokens,
             double temperature,
             boolean geminiJsonResponseMimeType) {
-        String requested = systemConfigService.getAiDefaultProvider();
+        return completeChatInternal(
+                systemPrompt,
+                userPrompt,
+                maxTokens,
+                temperature,
+                geminiJsonResponseMimeType,
+                systemConfigService.getAiDefaultProvider());
+    }
+
+    @Override
+    public AiChatCompletionResult completeChat(AiCompletionRequest request) {
+        if (request == null || request.getTenantId() == null || request.getTenantId().isBlank()) {
+            throw new IllegalArgumentException("tenantId 는 필수입니다 (멀티테넌트 격리).");
+        }
+        String tenantId = request.getTenantId();
+        String requestedProvider;
+        if (request.getRequestedProvider() != null && !request.getRequestedProvider().isBlank()) {
+            requestedProvider = request.getRequestedProvider().trim().toLowerCase();
+        } else {
+            requestedProvider = providerResolver.resolveProvider(tenantId);
+        }
+        boolean jsonMime = request.getResponseFormatOrDefault() == AiResponseFormat.JSON;
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            AiChatCompletionResult raw = completeChatInternal(
+                    request.getSystemPrompt(),
+                    request.getUserPrompt(),
+                    request.getMaxTokensOrDefault(),
+                    request.getTemperatureOrDefault(),
+                    jsonMime,
+                    requestedProvider);
+            return enrichResult(raw, request.getResponseFormatOrDefault());
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
+    private AiChatCompletionResult enrichResult(AiChatCompletionResult raw, AiResponseFormat format) {
+        boolean isFallback = raw.effectiveProviderId() != null
+                && raw.requestedProviderId() != null
+                && !raw.effectiveProviderId().equalsIgnoreCase(raw.requestedProviderId());
+        JsonNode parsedJson = null;
+        if (format == AiResponseFormat.JSON && raw.hasUsableText()) {
+            parsedJson = jsonResponseParser.parseJson(raw.text()).orElse(null);
+        }
+        return new AiChatCompletionResult(
+                raw.success(),
+                raw.text(),
+                raw.requestedProviderId(),
+                raw.effectiveProviderId(),
+                raw.model(),
+                raw.promptTokens(),
+                raw.completionTokens(),
+                raw.totalTokens(),
+                raw.errorMessage(),
+                isFallback,
+                parsedJson);
+    }
+
+    private AiChatCompletionResult completeChatInternal(
+            String systemPrompt,
+            String userPrompt,
+            int maxTokens,
+            double temperature,
+            boolean geminiJsonResponseMimeType,
+            String requestedProvider) {
+        String requested = requestedProvider != null ? requestedProvider : systemConfigService.getAiDefaultProvider();
         try {
             Optional<EffectiveTarget> target = resolveEffectiveTarget(requested);
             if (target.isEmpty()) {

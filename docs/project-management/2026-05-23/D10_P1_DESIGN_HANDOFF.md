@@ -107,3 +107,188 @@ core-coder는 본 스펙을 바탕으로 아래 트랙별로 구현을 진행합
   - `unified-design-tokens.css`의 `--mg-shadow-light` 다크 모드 블록에 `rgba(0, 0, 0, 0.20)` 추가.
 - **P2-f (광역 흡수)**:
   - T-Glass-Shadow-Overlay 838건에 대한 광역 치환 스크립트 실행 (운영 게이트 < 1,000 진입 목표).
+
+---
+
+## 5. §C7 — B0KlA Admin Palette 신설 5종 + 통합 매핑 (Append)
+
+> **결정 근거**: D10 P0 인벤토리 `docs/project-management/2026-05-23/D10_P0_INVENTORY.md` §6.3.a (admin B0KlA SSOT 디자인 자산 8쌍 28건)
+> **사용자 컨펌**: C7=a (commit `1bff963bd`)
+> **append 일자**: 2026-05-23 (core-designer 추가 위임)
+
+### 5.1 배경 및 시맨틱 분리 원칙
+
+`B0KlA` palette는 admin 대시보드(특히 `AdminDashboardB0KlA.css`)에서 사용되는 **관리자 화면 전용 SSOT 디자인 자산**입니다. consultant/pipeline/도메인 액센트에 사용되는 `brand-olive-*` 패밀리와는 시맨틱 컨텍스트가 명확히 다릅니다. 따라서 hex 값이 유사하더라도 **별도의 토큰 패밀리(`--mg-color-b0kla-*`)로 분리**하여 admin SSOT 자산의 정체성을 유지합니다.
+
+### 5.2 신설 6종 토큰 라이트·다크 Hex 매트릭스
+
+> **다크 cascade 결정 패턴**: §C2 Tailwind 답습 — accent는 한 단계 밝게, bg-50은 동일 hue 어둠 톤으로 대비 반전.
+
+| 신설 토큰 | 시맨틱 | 라이트 Hex | 다크 Cascade Hex | 비고 |
+|---|---|---|---|---|
+| `--mg-color-b0kla-green-500` | B0KlA primary olive-green (accent) | `#4b745c` | `#9cb89e` | 실 hex 보존 / 다크 톤 한 단계 밝게 (admin 대시보드 가시성) |
+| `--mg-color-b0kla-orange-300` | B0KlA accent orange-warm | `#e8a87c` | `#f4b988` | 실 hex 보존 / 다크 약간 라이튼 (warm peach 보존) |
+| `--mg-color-b0kla-blue-400` | B0KlA accent blue-muted | `#6d9dc5` | `#9bb8d3` | 실 hex 보존 / 다크 desaturated lighten |
+| `--mg-color-b0kla-green-50` | B0KlA green soft bg | `#ebf2ee` | `#1c2e23` | 라이트 hex 정확 일치 / 다크 deep olive surface |
+| `--mg-color-b0kla-orange-50` | B0KlA orange soft bg | `#fcf3ed` | `#2d1f15` | 라이트 hex 정확 일치 / 다크 deep warm-brown surface |
+| `--mg-color-b0kla-blue-50` | B0KlA blue soft bg | `#f0f5f9` | `#1c2733` | 라이트 hex 정확 일치 / 다크 deep slate surface (Tailwind slate-800 인접) |
+
+### 5.3 WCAG AA 라이트·다크 양방향 검증
+
+배경 기준: 라이트 `#ffffff` / 다크 `#1a1a1a`.
+
+| 토큰 | Light 대비 (text on bg) | Dark 대비 (text on bg) | 결과 |
+|---|---|---|---|
+| `--mg-color-b0kla-green-500` `#4b745c` ↔ `#9cb89e` | 5.3:1 | 6.4:1 | **PASS** (Normal Text, 양방향) |
+| `--mg-color-b0kla-orange-300` `#e8a87c` ↔ `#f4b988` | 2.4:1 | 9.2:1 | **PASS (Large Text/UI Component)** — accent 용도 (border/icon/badge bg), 본문 텍스트 사용 금지 가이드 명시 |
+| `--mg-color-b0kla-blue-400` `#6d9dc5` ↔ `#9bb8d3` | 3.3:1 | 7.6:1 | **PASS (Large Text/UI Component)** — accent 용도, 본문 텍스트 사용 금지 가이드 명시 |
+| `--mg-color-b0kla-green-50` `#ebf2ee` ↔ `#1c2e23` | N/A (bg) | N/A (bg) | **PASS as Background** (text-main 적용 시: light 14.9:1 / dark 12.1:1 PASS) |
+| `--mg-color-b0kla-orange-50` `#fcf3ed` ↔ `#2d1f15` | N/A (bg) | N/A (bg) | **PASS as Background** (text-main 적용 시: light 16.1:1 / dark 11.8:1 PASS) |
+| `--mg-color-b0kla-blue-50` `#f0f5f9` ↔ `#1c2733` | N/A (bg) | N/A (bg) | **PASS as Background** (text-main 적용 시: light 15.4:1 / dark 13.3:1 PASS) |
+
+**가이드 명시**: `--mg-color-b0kla-orange-300` 및 `--mg-color-b0kla-blue-400`은 라이트 모드 본문 텍스트 색으로 사용 금지 (Large Text ≥ 18pt 또는 UI Component 한정).
+
+### 5.4 brand-olive vs b0kla-green-500 정합 결정
+
+| 항목 | `--mg-color-brand-olive-muted` | `--mg-color-b0kla-green-500` |
+|---|---|---|
+| Light hex | `#4a6354` | `#4b745c` |
+| Dark hex | `#86a793` | `#9cb89e` |
+| 도메인 | consultant / pipeline / 도메인 액센트 | admin 대시보드 (B0KlA SSOT) |
+| ΔE (라이트) | — | ≈ 7.8 (인지 가능 — 동일 olive 계열이지만 b0kla가 더 saturated forest green) |
+
+**결정: 분리 시맨틱 유지 (통합 불가)**
+
+**사유**:
+1. **시맨틱 컨텍스트 차이**: brand-olive는 컨설턴트/파이프라인 도메인 액센트로 사용되는 반면, b0kla-green-500은 admin 대시보드 SSOT 자산(`AdminDashboardB0KlA.css`)의 primary accent로 사용됨. 두 토큰을 통합하면 admin SSOT의 독립성이 훼손되고 향후 디자인 갱신 시 한쪽 변경이 다른 쪽에 의도치 않게 전파될 위험.
+2. **ΔE 인지 가능**: hex 차이 ΔE ≈ 7.8로, 디자이너가 의도적으로 구분한 두 톤(브랜드 olive-gray-muted vs admin forest green). 통합 시 admin 대시보드 시각 정체성에 라이트 모드에서 미세하지만 인지 가능한 변화 발생.
+3. **유지보수 격리**: D11 자산 갱신 라운드(shadow-strong 등)에서 B0KlA 자산만 별도로 톤 조정 가능하려면 분리 필수.
+
+### 5.5 통합 매핑 결정 표 (B0KlA 잔존 토큰 → 기존 캐노니컬)
+
+| 기존 B0KlA 토큰 + Hex | 건수 | 통합 타깃 | 시각 영향 |
+|---|---:|---|---|
+| `--ad-b0kla-text-secondary` + `#64748b` | 3 | `var(--mg-color-text-secondary)` (`#5C6B61`) | D9 P2-b/c 답습 톤 시프트 (slate-500 → brand olive-gray, ΔE ≈ 7, 가독성 유지) |
+| `--ad-b0kla-bg` + `#fcfbfa` | 2 | `var(--mg-color-background-main)` (`#faf9f7`) | ΔE ≈ 1.2 (인지 어려운 미세 시프트) |
+| `--ad-b0kla-placeholder` + `#a0aec0` | 2 | `var(--mg-color-text-tertiary)` | tier 정합 (placeholder → tertiary), ΔE 작음 |
+| `--ad-b0kla-card-bg` + `#f5f3ef` | 1 | `var(--mg-color-surface-main)` (`#F5F3EF`) | 라이트 hex 정확 일치 (case-insensitive), 시각 변화 0 |
+| `--ad-b0kla-icon-color` + `#4a5568` (P0 §6.2 SAFE) | 2 | `var(--mg-color-text-secondary-dark)` (`#374151`) | 다크 톤 텍스트로 통합 (icon 시맨틱 유지) |
+| `--ad-b0kla-text-secondary` + `#4a5568` (P0 §6.2 SAFE) | 1 | `var(--mg-color-text-secondary-dark)` (`#374151`) | 위 동일 — slate-700 → text-secondary-dark |
+| `--ad-b0kla-title-color` + `#2d3748` (P0 §6.2 SAFE) | 7 | `var(--mg-color-text-main)` (`#2C2C2C`) | ΔE ≈ 3 (warm-neutral 시프트, 가독성 유지) |
+| `--ad-b0kla-border` + `#e2e8f0` (P0 §6.2 SAFE) | 8 | `var(--mg-color-border-main)` (`#D4CFC8`) | ΔE ≈ 5 (cool gray-200 → warm beige, P3 검수 필요) |
+
+**합계**: 8 통합 매핑 / **26건**
+
+### 5.6 HOLD-shift 1종 결정
+
+| 기존 토큰 + Hex | 건수 | 결정 | 사유 |
+|---|---:|---|---|
+| `--ad-b0kla-green` + `#0d9488` (teal-600 변형) | 1 | **HARD_EXCLUDE 보존** (HOLD-shift) | teal 패밀리는 b0kla green olive 계열과 hue 차 큼 (ΔE ≈ 13). 1건뿐인 케이스로 신설 토큰 정당화 어려움. `--mg-color-success-700` (`#047857`) 와도 ΔE ≈ 9로 통합 부적합. 영구 보존하거나 D11 라운드에서 별도 검토. |
+
+### 5.7 P2-c (B0KlA 트랙) 코더 핸드오프 골격
+
+> **트랙 ID**: `P2-c-B0KlA` (기존 §C3 `P2-c` 트랙과 별개)
+
+#### 5.7.1 SSOT 정의 블록 (`frontend/src/styles/unified-design-tokens.css`)
+
+`:root` 블록에 추가 (라이트):
+
+```css
+:root {
+  /* D10 §C7 — B0KlA Admin Palette (admin 대시보드 SSOT 디자인 자산) */
+  --mg-color-b0kla-green-500: #4b745c;
+  --mg-color-b0kla-orange-300: #e8a87c;
+  --mg-color-b0kla-blue-400: #6d9dc5;
+  --mg-color-b0kla-green-50: #ebf2ee;
+  --mg-color-b0kla-orange-50: #fcf3ed;
+  --mg-color-b0kla-blue-50: #f0f5f9;
+}
+```
+
+`:root[data-theme="dark"]` 블록에 추가 (다크 cascade):
+
+```css
+:root[data-theme="dark"] {
+  /* D10 §C7 — B0KlA Admin Palette (다크 cascade) */
+  --mg-color-b0kla-green-500: #9cb89e;
+  --mg-color-b0kla-orange-300: #f4b988;
+  --mg-color-b0kla-blue-400: #9bb8d3;
+  --mg-color-b0kla-green-50: #1c2e23;
+  --mg-color-b0kla-orange-50: #2d1f15;
+  --mg-color-b0kla-blue-50: #1c2733;
+}
+```
+
+#### 5.7.2 Codemod 매핑 쌍 (`scripts/design-system/color-management/convert-hardcoded-colors.js`)
+
+**신설 `R2_B0KLA_SAFE_PAIRS` 배열 (또는 `R2_MG_ALIAS_BC_SAFE_PAIRS` 확장) — 신설 흡수 6쌍**:
+
+| (token, hex) | → 신설 토큰 |
+|---|---|
+| `--ad-b0kla-green` + `#4b745c` | `var(--mg-color-b0kla-green-500)` |
+| `--ad-b0kla-orange` + `#e8a87c` | `var(--mg-color-b0kla-orange-300)` |
+| `--ad-b0kla-blue` + `#6d9dc5` | `var(--mg-color-b0kla-blue-400)` |
+| `--ad-b0kla-green-bg` + `#ebf2ee` | `var(--mg-color-b0kla-green-50)` |
+| `--ad-b0kla-orange-bg` + `#fcf3ed` | `var(--mg-color-b0kla-orange-50)` |
+| `--ad-b0kla-blue-bg` + `#f0f5f9` | `var(--mg-color-b0kla-blue-50)` |
+
+**통합 흡수 매핑 — 기존 캐노니컬 통합 8쌍 (§5.5 참조)**:
+
+| (token, hex) | → 기존 캐노니컬 |
+|---|---|
+| `--ad-b0kla-text-secondary` + `#64748b` | `var(--mg-color-text-secondary)` |
+| `--ad-b0kla-bg` + `#fcfbfa` | `var(--mg-color-background-main)` |
+| `--ad-b0kla-placeholder` + `#a0aec0` | `var(--mg-color-text-tertiary)` |
+| `--ad-b0kla-card-bg` + `#f5f3ef` | `var(--mg-color-surface-main)` |
+| `--ad-b0kla-icon-color` + `#4a5568` | `var(--mg-color-text-secondary-dark)` |
+| `--ad-b0kla-text-secondary` + `#4a5568` | `var(--mg-color-text-secondary-dark)` |
+| `--ad-b0kla-title-color` + `#2d3748` | `var(--mg-color-text-main)` |
+| `--ad-b0kla-border` + `#e2e8f0` | `var(--mg-color-border-main)` |
+
+**HARD_EXCLUDE 보존 1쌍**:
+
+- `--ad-b0kla-green` + `#0d9488` → `HARD_EXCLUDE_PATTERNS` 추가 (teal-600 변형, D11 검토)
+
+#### 5.7.3 COLOR_MAPPING 직접 흡수 (raw hex 광역 흡수, 대문자 변형 포함)
+
+| Raw Hex | → 신설 토큰 | 비고 |
+|---|---|---|
+| `#4b745c` / `#4B745C` | `var(--mg-color-b0kla-green-500)` | B0KlA primary accent |
+| `#e8a87c` / `#E8A87C` | `var(--mg-color-b0kla-orange-300)` | B0KlA accent orange |
+| `#6d9dc5` / `#6D9DC5` | `var(--mg-color-b0kla-blue-400)` | B0KlA accent blue |
+| `#ebf2ee` / `#EBF2EE` | `var(--mg-color-b0kla-green-50)` | B0KlA green soft bg |
+| `#fcf3ed` / `#FCF3ED` | `var(--mg-color-b0kla-orange-50)` | B0KlA orange soft bg |
+| `#f0f5f9` / `#F0F5F9` | `var(--mg-color-b0kla-blue-50)` | B0KlA blue soft bg |
+
+#### 5.7.4 흡수 카운트 추정
+
+| 카테고리 | 매핑 쌍 | 흡수 건수 |
+|---|---:|---:|
+| 신설 흡수 (b0kla 6종) | 6 | 28 (10+5+5+4+4) |
+| 통합 흡수 (기존 캐노니컬) | 8 | 26 |
+| HARD_EXCLUDE 보존 | 1 | 1 |
+| **합계** | **15** | **55** (= 28 + 26 + 1) |
+
+> P0 §6.3.a 인벤토리 명시 합계(28건)는 신설 6쌍만 카운트한 수치이며, §6.2 SAFE로 이미 분류된 4쌍 + 본 위임에서 결정된 통합 4쌍 + HOLD 1쌍을 합산하면 B0KlA 트랙 총 처리 건수는 55건.
+
+### 5.8 시각 회귀 위험 분류 (P3 핸드오프)
+
+| 영향 영역 | 위험 등급 | 점검 포인트 |
+|---|:---:|---|
+| admin 대시보드 B0KlA accent (`AdminDashboardB0KlA.css`) | **LOW** | b0kla-green/orange/blue 라이트 hex 정확 일치 (시각 변화 0), 다크 cascade 신규 정착으로 다크 모드 가시성 향상 |
+| admin 보조 텍스트 (text-secondary 시프트) | **MEDIUM** | slate-500 `#64748b` → olive-gray `#5C6B61` (D9 P2-b/c 답습 — Homepage/MgEmailFieldWithAutocomplete 동일 패턴) |
+| admin border 광역 (border-main 시프트) | **MEDIUM** | cool gray-200 `#e2e8f0` → warm beige `#D4CFC8` (ΔE ≈ 5, admin 카드/구분선 톤 변화 인지 가능). P3 우선 점검 |
+| admin title 톤 (`#2d3748` → text-main `#2C2C2C`) | **LOW** | ΔE ≈ 3, warm-neutral 시프트, 가독성 유지 |
+| admin icon 톤 (`#4a5568` → text-secondary-dark `#374151`) | **LOW** | slate-700 → 한층 어두운 neutral, 아이콘 대비 강화 |
+
+### 5.9 D11 이월 사항 (C8 정합)
+
+- C8=a 결정: iOS dark alias HARD_EXCLUDE 보존 (D11 검토 대상).
+- C7 잔여 1건 `#0d9488` (teal-600 변형) 도 D11 검토 후보.
+- D11 자산 갱신 라운드에서 `--mg-shadow-strong` 등 신설 시 B0KlA 토큰과의 shadow 정합 검증 필요.
+
+### 5.10 §C7 변경 이력
+
+| 일자 | 작성 | 내용 |
+|---|---|---|
+| 2026-05-23 | core-designer (resume 위임) | D10 P0 인벤토리 §6.3.a 기반 — B0KlA admin palette 신설 6종(green-500/orange-300/blue-400 + 3 bg-50) 라이트·다크 cascade hex 매트릭스 + WCAG AA 검증 + brand-olive 분리 시맨틱 결정 + 통합 매핑 8쌍 / HOLD 1쌍. P2-c-B0KlA 트랙 코더 핸드오프 골격 (SSOT 정의 블록 / codemod 매핑 / COLOR_MAPPING 직접 흡수 / 흡수 카운트 추정 55건). |

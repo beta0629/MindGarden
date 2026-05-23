@@ -15,6 +15,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService.DispatchOutcome;
+import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
 import com.coresolution.core.service.TenantService;
@@ -66,6 +67,8 @@ class ReservationReminderSchedulerTest {
     @Mock
     private BatchNotificationDispatchService dispatchService;
     @Mock
+    private MobilePushDispatchService mobilePushDispatchService;
+    @Mock
     private SchedulerExecutionLogService logService;
     @Mock
     private SchedulerAlertService alertService;
@@ -78,7 +81,8 @@ class ReservationReminderSchedulerTest {
         properties = new BatchNotificationProperties();
         properties.setReservationReminderDaysAhead(2);
         scheduler = new ReservationReminderScheduler(tenantService, scheduleRepository,
-            mappingRepository, dispatchService, properties, logService, alertService);
+            mappingRepository, dispatchService, mobilePushDispatchService, properties,
+            logService, alertService);
     }
 
     @Test
@@ -207,6 +211,43 @@ class ReservationReminderSchedulerTest {
 
         verify(dispatchService, never()).dispatchReservationReminderD2(any());
         verify(logService, never()).saveExecutionLog(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("D-2 푸시 — 알림톡 발화 직후 mobilePushDispatchService.dispatchBookingReminder 호출 (내담자·상담사 양쪽)")
+    void runDailyReminder_triggersD2BookingReminderPushPerSchedule() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule scheduleA = buildSchedule(101L, TENANT_A, 5001L, 6001L);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+            .thenReturn(List.of(scheduleA));
+        givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
+        when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
+
+        scheduler.runDailyReminder();
+
+        verify(mobilePushDispatchService, times(1)).dispatchBookingReminder(
+            eq(TENANT_A), eq(scheduleA), any(String.class), eq("D2"));
+    }
+
+    @Test
+    @DisplayName("D-2 푸시 실패는 본 배치 실행에 영향 없음 — 카운트 보존")
+    void runDailyReminder_doesNotPropagatePushErrors() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule scheduleA = buildSchedule(101L, TENANT_A, 5001L, 6001L);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+            .thenReturn(List.of(scheduleA));
+        givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
+        when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
+        org.mockito.Mockito.doThrow(new RuntimeException("expo down"))
+            .when(mobilePushDispatchService).dispatchBookingReminder(
+                eq(TENANT_A), eq(scheduleA), any(String.class), eq("D2"));
+
+        scheduler.runDailyReminder();
+
+        // 푸시 실패는 swallow — dispatched=1 이 그대로 기록되어야 한다.
+        verify(logService).saveExecutionLog(any(), eq(TENANT_A),
+            eq("ReservationReminderD2"), eq("SUCCESS"),
+            eq("dispatched=1, skipped=0, failed=0"));
     }
 
     // ---------------------------------------------------------------- fixtures

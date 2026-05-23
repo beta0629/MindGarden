@@ -14,6 +14,8 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService.DispatchOutcome;
+import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.util.MobilePushMessageFormatter;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
@@ -53,10 +55,17 @@ import lombok.extern.slf4j.Slf4j;
 )
 public class ReservationReminderScheduler {
 
+    /** D-2 푸시 본문(임시) — 디자이너 카피 확정 시 교체. */
+    // TODO(D10): 디자이너 카피 확정 후 MobilePushMessageFormatter 에 상수화·표시 양식 통일.
+    private static final String D2_REMINDER_BODY = "내일 상담 예약이 있습니다.";
+    /** D-2 푸시 dedupe 슬롯 코드 — buildScheduleData / dedupe 버킷 prefix. */
+    private static final String D2_REMINDER_SLOT_CODE = "D2";
+
     private final TenantService tenantService;
     private final ScheduleRepository scheduleRepository;
     private final ConsultantClientMappingRepository mappingRepository;
     private final BatchNotificationDispatchService dispatchService;
+    private final MobilePushDispatchService mobilePushDispatchService;
     private final BatchNotificationProperties properties;
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
@@ -180,6 +189,10 @@ public class ReservationReminderScheduler {
                         failed++;
                         break;
                 }
+                // 시나리오 #2 — 알림톡 발화 직후 D-2 푸시(내담자·상담사 양쪽) 트리거.
+                // 스케줄러 = 시스템 actor 이므로 actor-skip 미적용. dedupe 는 MobilePushDispatchService 내부 슬롯 키로 보장.
+                // 알림톡 결과(SKIPPED/FAILED 포함)와 무관하게 푸시는 시도하며, 푸시 실패는 본 배치 카운트에 영향 주지 않는다.
+                tryDispatchD2Push(tenantId, schedule);
             } catch (Exception perScheduleError) {
                 failed++;
                 log.warn("⚠️ [ReservationReminderD2] 스케줄 처리 예외: tenantId={}, scheduleId={}",
@@ -218,6 +231,26 @@ public class ReservationReminderScheduler {
             return false;
         }
         return true;
+    }
+
+    /**
+     * D-2 푸시 발화(비차단). dedupe 는 {@link MobilePushDispatchService} 내부에서
+     * {@code D2|{scheduleDate}} 슬롯 키로 보장하므로 본 배치가 재실행돼도 중복 발송 없음.
+     *
+     * <p>본 배치 흐름의 카운트(dispatched/skipped/failed) 는 알림톡 결과 기준이며
+     * 푸시 결과는 별도 로그로만 기록한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param schedule 일정
+     */
+    private void tryDispatchD2Push(String tenantId, Schedule schedule) {
+        try {
+            String body = MobilePushMessageFormatter.buildBookingReminderLead(D2_REMINDER_BODY, schedule);
+            mobilePushDispatchService.dispatchBookingReminder(tenantId, schedule, body, D2_REMINDER_SLOT_CODE);
+        } catch (Exception pushError) {
+            log.warn("⚠️ [ReservationReminderD2] D-2 푸시 실패(비차단): tenantId={}, scheduleId={}",
+                tenantId, schedule.getId(), pushError);
+        }
     }
 
     /**

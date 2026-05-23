@@ -186,4 +186,31 @@ describe('UnifiedLoading SSOT 컴포넌트', () => {
       // 실제 animation/transform-origin/will-change 값은 시각 회귀(core-tester) 단계에서 확인.
     });
   });
+
+  describe('DOM 구조 (회귀 보호 — 이중 원 방지)', () => {
+    test('variant="spinner" → .mg-loading-spinner wrapper 가 .mg-loading-spinner-icon 하나만 자식으로 가진다', () => {
+      const { container } = render(<UnifiedLoading variant="spinner" size="md" />);
+      const wrapper = container.querySelector('.mg-loading-spinner');
+      expect(wrapper).not.toBeNull();
+
+      const icons = wrapper.querySelectorAll('.mg-loading-spinner-icon');
+      expect(icons).toHaveLength(1);
+
+      // wrapper 의 직계 자식은 spinner-icon 1개뿐 (이중 원 회귀 방지)
+      expect(wrapper.children).toHaveLength(1);
+      expect(wrapper.children[0]).toBe(icons[0]);
+    });
+
+    test('wrapper 자체에는 inline style 의 border/border-radius 가 적용되지 않는다 (SSOT 답습)', () => {
+      const { container } = render(<UnifiedLoading variant="spinner" size="md" />);
+      const wrapper = container.querySelector('.mg-loading-spinner');
+      expect(wrapper).not.toBeNull();
+      // 인라인 스타일에 border / border-radius 직접 적용 금지
+      // (mindgarden-design-system.css 회귀: wrapper 가 자체 원을 그리는 정의 차단)
+      expect(wrapper.style.border).toBe('');
+      expect(wrapper.style.borderRadius).toBe('');
+      // 애니메이션은 spinner-icon 에만 적용되어야 함
+      expect(wrapper.style.animation).toBe('');
+    });
+  });
 });

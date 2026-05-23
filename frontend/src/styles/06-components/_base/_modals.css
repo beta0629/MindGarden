@@ -293,29 +293,16 @@
   pointer-events: none;
 }
 
-/* 로딩 스피너 개선 */
-.mg-modal__loading-spinner .mg-loading-spinner-icon {
-  border: 3px solid var(--color-border-light);
-  border-top: 3px solid var(--color-primary);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-/* 모달 로딩 오버레이 내 공통 스피너 - 폴백으로 항상 표시 (B0KlA/테마 변수 미적용 시) */
+/* 로딩 스피너 SSOT 위임 — `06-components/_loading.css` 의
+ * `.mg-loading-spinner-icon` (jitter-free, mg-spinner-spin) 단일 정의를 사용한다.
+ * 모달 컨텍스트는 사이즈/색상만 디자인 토큰 기반으로 override 한다.
+ * (2026-05-23 hotfix: 자체 animation/border-radius/border 제거, SSOT 회귀 방지)
+ */
+.mg-modal__loading-spinner .mg-loading-spinner-icon,
 .mg-modal__loading-overlay .mg-loading-spinner-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 3px solid var(--color-border-light, var(--mg-color-border-main));
-  border-top-color: var(--color-primary, var(--ad-b0kla-green, #0d9488));
-  animation: mg-spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  width: var(--mg-spinner-size-md);
+  height: var(--mg-spinner-size-md);
+  border-width: var(--mg-spinner-thickness-md);
 }
 
 /* 모달 바리언트별 스타일 */

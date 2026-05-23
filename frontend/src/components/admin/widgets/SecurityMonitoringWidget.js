@@ -3,6 +3,7 @@ import { FaShieldAlt, FaExclamationTriangle, FaBan, FaEye } from 'react-icons/fa
 import { SecurityDataProcessor, SecurityAnalyzer, SecurityDataManager } from '../../../utils/securityUtils';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import MGButton from '../../common/MGButton';
+import UnifiedLoading from '../../common/UnifiedLoading';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './SecurityMonitoringWidget.css';
 
@@ -235,12 +236,12 @@ const SecurityMonitoringWidget = ({
 
       <div className="widget-footer">
         {loading && (
-          <div className="mg-loading-container mg-loading-container--centered">
-            <div className="mg-loading-content">
-              <div className="mg-loading-spinner" />
-              <span className="mg-loading-text">{WIDGET_CONSTANTS.SECURITY_WIDGET.MESSAGES.LOADING}</span>
-            </div>
-          </div>
+          <UnifiedLoading
+            variant="spinner"
+            size="md"
+            type="inline"
+            text={WIDGET_CONSTANTS.SECURITY_WIDGET.MESSAGES.LOADING}
+          />
         )}
         {lastUpdated && !loading && (
           <div className="last-updated">

@@ -645,28 +645,11 @@
   gap: var(--spacing-sm, 0.5rem);
 }
 
-/* 로딩 스피너 */
-.mg-loading-spinner {
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  border: 3px solid var(--cs-secondary-200, #e5e7eb);
-  border-top-color: var(--cs-primary-500, var(--mg-primary-500));
-  border-radius: 50%;
-  animation: mg-spin 1s linear infinite;
-}
-
-.mg-loading-spinner--small {
-  width: 16px;
-  height: 16px;
-  border-width: 2px;
-}
-
-.mg-loading-spinner--large {
-  width: 32px;
-  height: 32px;
-  border-width: 4px;
-}
+/* 로딩 스피너 SSOT — `06-components/_loading.css` 의 `.mg-loading-spinner` (wrapper)
+ * + `.mg-loading-spinner-icon` (실제 원) 정의를 사용한다.
+ * 본 파일에서 별도 정의 시 wrapper 가 한 번, icon 이 또 한 번 원으로 렌더되어
+ * 이중 원 회귀가 발생한다. (2026-05-23 hotfix)
+ */
 
 /* 로딩 도트 */
 .mg-loading-dots {

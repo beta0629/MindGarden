@@ -619,16 +619,8 @@
   padding: var(--mg-spacing-xl);
 }
 
-/* 로딩 스피너 */
-.mg-widget--pending-deposits .mg-loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--mg-gray-200);
-  border-top: 2px solid var(--mg-primary-500);
-  border-radius: 50%;
-  animation: mg-spin var(--mg-duration-normal) linear infinite;
-  margin-bottom: var(--mg-spacing-sm);
-}
+/* 로딩 스피너 SSOT 위임 — BaseWidget 의 UnifiedLoading 사용
+ * (2026-05-23 hotfix: 자체 스피너 정의 제거, .mg-loading-spinner wrapper 회귀 방지) */
 
 /* 에러 컨테이너 */
 .mg-widget--pending-deposits .mg-error-container {
@@ -973,16 +965,8 @@
   padding: var(--mg-spacing-xl);
 }
 
-/* 로딩 스피너 */
-.mg-widget--pending-deposits .mg-loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--mg-gray-200);
-  border-top: 2px solid var(--mg-primary-500);
-  border-radius: 50%;
-  animation: mg-spin var(--mg-duration-normal) linear infinite;
-  margin-bottom: var(--mg-spacing-sm);
-}
+/* 로딩 스피너 SSOT 위임 — BaseWidget 의 UnifiedLoading 사용
+ * (2026-05-23 hotfix: 자체 스피너 정의 제거, .mg-loading-spinner wrapper 회귀 방지) */
 
 /* 에러 컨테이너 */
 .mg-widget--pending-deposits .mg-error-container {
@@ -1136,16 +1120,8 @@
   padding: var(--mg-spacing-xl);
 }
 
-/* 로딩 스피너 */
-.mg-widget--vacation-stats .mg-loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--mg-gray-200);
-  border-top: 2px solid var(--mg-primary-500);
-  border-radius: 50%;
-  animation: mg-spin var(--mg-duration-normal) linear infinite;
-  margin-bottom: var(--mg-spacing-sm);
-}
+/* 로딩 스피너 SSOT 위임 — BaseWidget 의 UnifiedLoading 사용
+ * (2026-05-23 hotfix: 자체 스피너 정의 제거, .mg-loading-spinner wrapper 회귀 방지) */
 
 /* 에러 컨테이너 */
 .mg-widget--vacation-stats .mg-error-container {

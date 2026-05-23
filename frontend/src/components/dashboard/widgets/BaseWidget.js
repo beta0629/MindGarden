@@ -25,6 +25,7 @@ import React from 'react';
 import SafeErrorDisplay from '../../common/SafeErrorDisplay';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
+import UnifiedLoading from '../../common/UnifiedLoading';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import { MG_DESIGN_TOKENS } from '../../../constants/designTokens';
 import './Widget.css';
@@ -89,15 +90,15 @@ const BaseWidget = ({
   );
 
 /**
-   * 로딩 상태 렌더링
+   * 로딩 상태 렌더링 — UnifiedLoading SSOT 위임 (이중 원 회귀 방지)
    */
   const renderLoading = () => (
-    <div className={WIDGET_CONSTANTS.CSS_CLASSES.LOADING_CONTAINER}>
-      <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_LOADING_SPINNER} />
-      <p className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
-        {config.loadingMessage || WIDGET_CONSTANTS.LOADING_MESSAGES.DEFAULT}
-      </p>
-    </div>
+    <UnifiedLoading
+      variant="spinner"
+      size="md"
+      type="inline"
+      text={config.loadingMessage || WIDGET_CONSTANTS.LOADING_MESSAGES.DEFAULT}
+    />
   );
 
 /**

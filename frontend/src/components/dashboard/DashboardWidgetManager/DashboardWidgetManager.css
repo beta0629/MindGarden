@@ -53,20 +53,9 @@
   gap: var(--mg-spacing-4);
 }
 
-.mg-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--mg-gray-200);
-  border-top-color: var(--mg-primary-500);
-  border-radius: 50%;
-  animation: mg-spin 0.8s linear infinite;
-}
-
-@keyframes mg-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+/* 로딩 스피너 SSOT 위임 — UnifiedLoading 컴포넌트 사용 (DashboardWidgetManagerPresentation.js)
+ * 본 파일의 `.mg-spinner` / `@keyframes mg-spin` 정의 제거 (2026-05-23 hotfix, 사용처 0건).
+ * 회전 키프레임 SSOT 는 `06-components/_loading.css` 의 `mg-spinner-spin` / `mg-spin` 사용. */
 
 /* ========================================
    위젯 그룹

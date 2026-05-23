@@ -79,20 +79,8 @@
     color: var(--mg-text-secondary);
 }
 
-.mg-spinner {
-    width: var(--mg-spacing-lg);
-    height: var(--mg-spacing-lg);
-    border: var(--mg-border-width-thin) solid var(--mg-border-light);
-    border-top: var(--mg-border-width-thin) solid var(--mg-primary);
-    border-radius: var(--mg-radius-full);
-    animation: spin var(--mg-transition-slow) linear infinite;
-    margin-bottom: var(--mg-spacing-sm);
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
+/* 로딩 스피너 SSOT 위임 — UnifiedLoading 컴포넌트 사용 (HealingCard.js)
+ * 본 파일의 `.mg-spinner` / `@keyframes spin` 정의 제거 (2026-05-23 hotfix, 사용처 0건). */
 
 /* 에러 상태 */
 .mg-error {
@@ -169,11 +157,6 @@
     
     .mg-loading {
         color: var(--mg-dark-text-secondary);
-    }
-    
-    .mg-spinner {
-        border-color: var(--mg-dark-border-light);
-        border-top-color: var(--mg-dark-primary);
     }
     
     .mg-error {

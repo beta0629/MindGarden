@@ -38,6 +38,7 @@ import SchedulePage from './components/schedule/SchedulePage';
 import AdminSchedulesPage from './components/schedule/AdminSchedulesPage';
 import UnifiedModalTest from './components/test/UnifiedModalTest';
 import UnifiedLoadingTest from './components/test/UnifiedLoadingTest';
+import UnifiedLoading from './components/common/UnifiedLoading';
 import UnifiedHeaderTest from './components/test/UnifiedHeaderTest';
 import UserManagementPage from './components/admin/UserManagementPage';
 import SessionManagement from './components/admin/SessionManagement';
@@ -373,12 +374,12 @@ function AppContent() {
               background: 'var(--cs-glass-strong)'
             }}
           >
-            <div className="mg-loading-container mg-loading-container--centered">
-              <div className="mg-loading-content">
-                <div className="mg-loading-spinner" />
-                <span className="mg-loading-text">{t('common.messages.loading', '로딩 중...')}</span>
-              </div>
-            </div>
+            <UnifiedLoading
+              variant="spinner"
+              size="md"
+              type="inline"
+              text={t('common.messages.loading', '로딩 중...')}
+            />
           </div>
         )}
         <div className="App">

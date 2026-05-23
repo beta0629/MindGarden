@@ -5,6 +5,7 @@
 - **관련 시드/UPDATE**:
   - `src/main/resources/db/migration/V20260528_001__seed_alimtalk_biz_template_code_8types.sql` (스켈레톤 시드, `code_label=''`)
   - `src/main/resources/db/migration/V20260528_002__update_alimtalk_biz_template_code_solapi_ids.sql` (실 templateId UPDATE, `is_active=false`)
+  - `src/main/resources/db/migration/V20260528_003__activate_alimtalk_biz_template_code_8types.sql` (검수 통과 후 활성화 — **사전 작성**, 통과 통지 시 머지)
 - **매핑 컴포넌트**: `AlimtalkTemplateMappingResolver` (`codeLabel = solapi templateId`)
 - **호출자**: `BatchNotificationDispatchServiceImpl`, `AdminTestNotificationServiceImpl`, `AdminManualNotificationServiceImpl`, `NotificationServiceImpl`
 
@@ -186,3 +187,28 @@ V20260528_001 / V20260528_002 두 마이그레이션을 폐기하려면 별도 F
 | `NotificationServiceImpl` | 매핑 미발견 처리 → 기존 폴백 정책 진입 | 운영 호출부, 코드 변경 없음 |
 
 위 4 경로 모두 옵션 C 의 `is_active=false` 비활성 정책에 대해 **운영 영향 0** 으로 검증 완료.
+
+---
+
+## §7. V20260528_003 활성화 PR — 사전 작성 완료 (검수 통과 통지 시 즉시 머지)
+
+- 파일: `src/main/resources/db/migration/V20260528_003__activate_alimtalk_biz_template_code_8types.sql`
+- 작성 시점: 2026-05-23 (검수 진행 중 — develop 미머지 / 미푸시 상태로 사전 준비)
+- 머지 조건: 솔라피/카카오 검수 통과 통지 수신 + 운영 점검 시간 확보
+- 머지 절차:
+  1. develop 에 본 파일 커밋 후 push (DEV Flyway 자동 적용 → 8건 `is_active=1`, `extra_data.approval_status='approved'`, `activated_at` ISO8601 KST 기록)
+  2. DEV 검증 — §6 / §4.3 시나리오 #2~#3 (8건 `is_active=1`, 어드민 매핑 모드 발송 1건 PASS)
+  3. develop → main fast-forward + 운영 워크플로 트리거
+  4. 운영 Flyway 적용 후 활성화 검증 (어드민 매핑 모드 8종 1건씩 발송, `notification_batch_send_log` UNIQUE 멱등 확인)
+- Rollback: §5.1 단일 SQL 실행 (`is_active=FALSE` 전체 차단) — 정보성 7종 자동 SMS 폴백 / 마케팅 1종 발송 0건
+- 본 마이그레이션의 멱등 가드:
+  - `AND is_active = FALSE` → 이미 활성 row 재실행 시 0 rows
+  - `AND code_label LIKE 'KA01TP%'` → templateId 미주입(빈 문자열) row 활성화 차단
+  - 8건 each statement 동일 가드 (V20260528_002 와 동일 분리 UPDATE 패턴)
+- 본 마이그레이션의 데이터 정합성:
+  - `extra_data.approval_status`: `pending_verified` → `approved`
+  - `extra_data.template_id_received_at`: 유지 (감사 추적)
+  - `extra_data.activated_at`: `DATE_FORMAT(CURRENT_TIMESTAMP, '%Y-%m-%dT%H:%i:%s+09:00')` 으로 실 적용 시각 KST 기록
+  - `common_codes.updated_at`: `CURRENT_TIMESTAMP`
+
+본 PR 은 검수 통과 전이라 develop 머지 보류 — 통과 즉시 deployer 위임 1회로 머지 → main 반영 가능.

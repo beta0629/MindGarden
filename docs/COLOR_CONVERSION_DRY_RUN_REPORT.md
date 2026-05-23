@@ -1,6 +1,6 @@
 # 🎨 색상 변환 리포트
 
-> **생성일**: 2026-05-21T03:50:38.040Z  
+> **생성일**: 2026-05-23T02:10:03.620Z  
 > **모드**: DRY RUN  
 > **대상 영역**: 전체 (`frontend/src`)  
 > **필터**: 전체 파일
@@ -11,7 +11,7 @@
 
 | 구분 | 수량 |
 |------|------|
-| 처리된 파일 | 1425개 |
+| 처리된 파일 | 1443개 |
 | 수정된 파일 | 0개 |
 | 변환된 색상 | 0개 |
 | 생성된 백업 | 0개 |
@@ -88,40 +88,17 @@
 > 회색 3자리(`#666`·`#333`·`#000`·`#ccc`·`#999`·`#eee` 등) 미매핑 항목과  
 > 4·8자리 alpha 포함 hex 모두 포함. D3 합의서 작성/적용 라운드의 데이터 소스.
 
-- **고유 종 수**: 238종
-- **총 건수**: 662건
+- **고유 종 수**: 213종
+- **총 건수**: 458건
 
-- `#1a202c` (6자리): 13건
-- `#4a5568` (6자리): 12건
-- `#065f46` (6자리): 10건
-- `#ff6b9d` (6자리): 10건
-- `#dee2e6` (6자리): 10건
-- `#856404` (6자리): 10건
-- `#9caf88` (6자리): 10건
-- `#fecaca` (6자리): 9건
-- `#d1fae5` (6자리): 9건
-- `#92400e` (6자리): 9건
-- `#721c24` (6자리): 9건
-- `#d4edda` (6자리): 9건
-- `#f0f0f0` (6자리): 9건
+- `#130` (3자리): 11건
 - `#3498db` (6자리): 9건
-- `#1d4ed8` (6자리): 9건
 - `#d2b48c` (6자리): 9건
-- `#f8f9ff` (6자리): 8건
-- `#dbeafe` (6자리): 8건
-- `#fbbf24` (6자리): 8건
-- `#03c75a` (6자리): 7건
-- `#ffa5c0` (6자리): 7건
-- `#e53e3e` (6자리): 7건
-- `#130` (3자리): 7건
 - `#718096` (6자리): 6건
 - `#16a34a` (6자리): 6건
-- `#b0e0e6` (6자리): 6건
 - `#212529` (6자리): 6건
 - `#155724` (6자리): 6건
 - `#d1ecf1` (6자리): 6건
-- `#e3f2fd` (6자리): 6건
-- `#7b68ee` (6자리): 6건
 - `#8b7ed8` (6자리): 6건
 - `#7c3aed` (6자리): 5건
 - `#fee500` (6자리): 5건
@@ -129,7 +106,6 @@
 - `#c82333` (6자리): 5건
 - `#ea580c` (6자리): 5건
 - `#60a5fa` (6자리): 5건
-- `#1e3a8a` (6자리): 5건
 - `#6ee7b7` (6자리): 4건
 - `#eff6ff` (6자리): 4건
 - `#86868b` (6자리): 4건
@@ -141,6 +117,30 @@
 - `#34d399` (6자리): 4건
 - `#fd7e14` (6자리): 4건
 - `#fafbfc` (6자리): 4건
+- `#3182ce` (6자리): 4건
+- `#fff5f5` (6자리): 4건
+- `#6b73ff` (6자리): 4건
+- `#f4a261` (6자리): 4건
+- `#7bc4a4` (6자리): 4건
+- `#e76f51` (6자리): 4건
+- `#f5576c` (6자리): 3건
+- `#fde68a` (6자리): 3건
+- `#ffd700` (6자리): 3건
+- `#ffa500` (6자리): 3건
+- `#1e7e34` (6자리): 3건
+- `#fca5a5` (6자리): 3건
+- `#f97316` (6자리): 3건
+- `#f87171` (6자리): 3건
+- `#edf2f7` (6자리): 3건
+- `#7f8c8d` (6자리): 3건
+- `#e8e0ff` (6자리): 3건
+- `#d1c4e9` (6자리): 3건
+- `#ffe8d1` (6자리): 3건
+- `#ffccbc` (6자리): 3건
+- `#d4f1e0` (6자리): 3건
+- `#c8e6c9` (6자리): 3건
+- `#ffe0db` (6자리): 3건
+- `#ffcdd2` (6자리): 3건
 
 ---
 
@@ -236,8 +236,54 @@
 - `#1e40af` → `var(--mg-color-info-dark)`
 - `#fef2f2` → `var(--mg-color-error-50)`
 - `#991b1b` → `var(--mg-color-error-dark)`
-- `#059669` → `var(--mg-color-success-600)`
+- `#059669` → `var(--mg-color-success)`
 - `#6b7c32` → `var(--mg-color-brand-olive)`
+- `#9caf88` → `var(--mg-color-brand-olive-light)`
+- `#d1fae5` → `var(--mg-color-success-100)`
+- `#065f46` → `var(--mg-color-success-800)`
+- `#fecaca` → `var(--mg-color-error-100)`
+- `#dbeafe` → `var(--mg-color-info-100)`
+- `#856404` → `var(--mg-color-warning-dark)`
+- `#03c75a` → `var(--mg-color-naver-green)`
+- `#03C75A` → `var(--mg-color-naver-green)`
+- `#dee2e6` → `var(--mg-color-border-main)`
+- `#DEE2E6` → `var(--mg-color-border-main)`
+- `#721c24` → `var(--mg-color-error-dark)`
+- `#721C24` → `var(--mg-color-error-dark)`
+- `#d4edda` → `var(--mg-color-success-100)`
+- `#D4EDDA` → `var(--mg-color-success-100)`
+- `#1e3a8a` → `var(--mg-color-info-800)`
+- `#1E3A8A` → `var(--mg-color-info-800)`
+- `#1a202c` → `var(--mg-color-text-main)`
+- `#1A202C` → `var(--mg-color-text-main)`
+- `#4a5568` → `var(--mg-color-text-secondary-dark)`
+- `#4A5568` → `var(--mg-color-text-secondary-dark)`
+- `#92400e` → `var(--mg-color-warning-dark)`
+- `#92400E` → `var(--mg-color-warning-dark)`
+- `#1d4ed8` → `var(--mg-color-info-dark)`
+- `#1D4ED8` → `var(--mg-color-info-dark)`
+- `#f472b6` → `var(--mg-color-pink-400)`
+- `#F472B6` → `var(--mg-color-pink-400)`
+- `#fbcfe8` → `var(--mg-color-pink-200)`
+- `#FBCFE8` → `var(--mg-color-pink-200)`
+- `#fb7185` → `var(--mg-color-rose-400)`
+- `#FB7185` → `var(--mg-color-rose-400)`
+- `#f0f0f0` → `var(--mg-color-surface-light)`
+- `#F0F0F0` → `var(--mg-color-surface-light)`
+- `#e3f2fd` → `var(--mg-color-info-soft)`
+- `#E3F2FD` → `var(--mg-color-info-soft)`
+- `#7b68ee` → `var(--mg-color-accent-violet)`
+- `#7B68EE` → `var(--mg-color-accent-violet)`
+- `#b0e0e6` → `var(--mg-color-surface-blue-soft)`
+- `#B0E0E6` → `var(--mg-color-surface-blue-soft)`
+- `#f0fdf4` → `var(--mg-color-success-50)`
+- `#F0FDF4` → `var(--mg-color-success-50)`
+- `#fbbf24` → `var(--mg-color-warning-500)`
+- `#FBBF24` → `var(--mg-color-warning-500)`
+- `#f8f9ff` → `var(--mg-color-info-bg)`
+- `#F8F9FF` → `var(--mg-color-info-bg)`
+- `#e53e3e` → `var(--mg-color-error-500)`
+- `#E53E3E` → `var(--mg-color-error-500)`
 
 ### RGB/RGBA 색상 변환  
 - `rgb(0, 123, 255)` → `var(--mg-primary-500)`

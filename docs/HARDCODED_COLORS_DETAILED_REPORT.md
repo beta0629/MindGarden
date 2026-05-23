@@ -1,9 +1,9 @@
 # 🎨 하드코딩된 색상값 상세 리포트
 
-> **생성일**: 2026-05-22T01:29:00.001Z  
-> **총 검사 파일**: 1502개  
-> **하드코딩 발견 파일**: 233개  
-> **총 하드코딩 색상**: 3322개
+> **생성일**: 2026-05-23T02:09:19.744Z  
+> **총 검사 파일**: 1522개  
+> **하드코딩 발견 파일**: 234개  
+> **총 하드코딩 색상**: 3170개
 
 ---
 
@@ -11,13 +11,13 @@
 
 | 구분 | 수량 | 비율 |
 |------|------|------|
-| 총 파일 | 1502개 | 100% |
-| 영향받는 파일 | 233개 | 15.5% |
+| 총 파일 | 1522개 | 100% |
+| 영향받는 파일 | 234개 | 15.4% |
 | 중요 파일 | 12개 | 0.8% |
 
 ### 색상 유형별 분포
-- **HEX_3**: 104개
-- **HEX_6**: 1870개
+- **HEX_3**: 110개
+- **HEX_6**: 1712개
 - **RGBA**: 1343개
 - **RGB**: 5개
 
@@ -2081,19 +2081,19 @@
 
 ### 📁 `frontend/src/styles/unified-design-tokens.css` (CSS)
 
-**하드코딩 색상**: 931개
+**하드코딩 색상**: 982개
 
-1. **HEX_3**: `#666` (라인 12756)
+1. **HEX_3**: `#666` (라인 12853)
    ```
    color: #666;
    ```
 
-2. **HEX_3**: `#666` (라인 17549)
+2. **HEX_3**: `#666` (라인 17646)
    ```
    color: #666;
    ```
 
-3. **HEX_3**: `#ddd` (라인 18301)
+3. **HEX_3**: `#ddd` (라인 18398)
    ```
    border: 1px solid #ddd;
    ```
@@ -4138,2602 +4138,2857 @@
    --mg-color-warning-dark: #fde68a;
    ```
 
-412. **HEX_6**: `#764ba2` (라인 1491)
+412. **HEX_6**: `#1e3a8a` (라인 1489)
+   ```
+   배경: T-Top 50 잔존 hex `#1e3a8a` (Tailwind blue-900, 5건) 흡수용 신설.
+   ```
+
+413. **HEX_6**: `#1e3a8a` (라인 1496)
+   ```
+   - Light: #1e3a8a on #dbeafe (info-100) → 8.9:1 PASS
+   ```
+
+414. **HEX_6**: `#dbeafe` (라인 1496)
+   ```
+   - Light: #1e3a8a on #dbeafe (info-100) → 8.9:1 PASS
+   ```
+
+415. **HEX_6**: `#bfdbfe` (라인 1497)
+   ```
+   - Dark : #bfdbfe on #1e3a8a (info-100 다크) → 7.9:1 PASS
+   ```
+
+416. **HEX_6**: `#1e3a8a` (라인 1497)
+   ```
+   - Dark : #bfdbfe on #1e3a8a (info-100 다크) → 7.9:1 PASS
+   ```
+
+417. **HEX_6**: `#1e3a8a` (라인 1501)
+   ```
+   /* info dark text — #1e3a8a (Tailwind blue-900, on info-100 라이트 8.9:1 PASS) */
+   ```
+
+418. **HEX_6**: `#1e3a8a` (라인 1502)
+   ```
+   --mg-color-info-800: #1e3a8a;
+   ```
+
+419. **HEX_6**: `#bfdbfe` (라인 1506)
+   ```
+   /* 다크 info dark text — #bfdbfe (Tailwind blue-200, on info-100 다크 7.9:1 PASS) */
+   ```
+
+420. **HEX_6**: `#bfdbfe` (라인 1507)
+   ```
+   --mg-color-info-800: #bfdbfe;
+   ```
+
+421. **HEX_6**: `#f472b6` (라인 1525)
+   ```
+   - pink-400  light #f472b6 / dark #f9a8d4 (다크 7.2:1 AAA PASS)
+   ```
+
+422. **HEX_6**: `#f9a8d4` (라인 1525)
+   ```
+   - pink-400  light #f472b6 / dark #f9a8d4 (다크 7.2:1 AAA PASS)
+   ```
+
+423. **HEX_6**: `#fbcfe8` (라인 1526)
+   ```
+   - pink-200  light #fbcfe8 / dark #fce7f3 (배경 보조)
+   ```
+
+424. **HEX_6**: `#fce7f3` (라인 1526)
+   ```
+   - pink-200  light #fbcfe8 / dark #fce7f3 (배경 보조)
+   ```
+
+425. **HEX_6**: `#fb7185` (라인 1527)
+   ```
+   - rose-400  light #fb7185 / dark #fda4af (다크 7.1:1 AAA PASS)
+   ```
+
+426. **HEX_6**: `#fda4af` (라인 1527)
+   ```
+   - rose-400  light #fb7185 / dark #fda4af (다크 7.1:1 AAA PASS)
+   ```
+
+427. **HEX_6**: `#f0f0f0` (라인 1528)
+   ```
+   - surface-light light #f0f0f0 / dark #262626 (배경용)
+   ```
+
+428. **HEX_6**: `#262626` (라인 1528)
+   ```
+   - surface-light light #f0f0f0 / dark #262626 (배경용)
+   ```
+
+429. **HEX_6**: `#e3f2fd` (라인 1529)
+   ```
+   - info-soft  light #e3f2fd / dark #1e3a8a (배경용)
+   ```
+
+430. **HEX_6**: `#1e3a8a` (라인 1529)
+   ```
+   - info-soft  light #e3f2fd / dark #1e3a8a (배경용)
+   ```
+
+431. **HEX_6**: `#7b68ee` (라인 1530)
+   ```
+   - accent-violet light #7b68ee / dark #a78bfa (Large 4.3:1)
+   ```
+
+432. **HEX_6**: `#a78bfa` (라인 1530)
+   ```
+   - accent-violet light #7b68ee / dark #a78bfa (Large 4.3:1)
+   ```
+
+433. **HEX_6**: `#b0e0e6` (라인 1531)
+   ```
+   - surface-blue-soft light #b0e0e6 / dark #164e63 (배경용)
+   ```
+
+434. **HEX_6**: `#164e63` (라인 1531)
+   ```
+   - surface-blue-soft light #b0e0e6 / dark #164e63 (배경용)
+   ```
+
+435. **HEX_6**: `#f0fdf4` (라인 1532)
+   ```
+   - success-50 light #f0fdf4 / dark #064e3b (배경용)
+   ```
+
+436. **HEX_6**: `#064e3b` (라인 1532)
+   ```
+   - success-50 light #f0fdf4 / dark #064e3b (배경용)
+   ```
+
+437. **HEX_6**: `#2C2C2C` (라인 1533)
+   ```
+   - text-main  light #2C2C2C / dark #E5E5E5 (다크 12.3:1 AAA PASS)
+   ```
+
+438. **HEX_6**: `#E5E5E5` (라인 1533)
+   ```
+   - text-main  light #2C2C2C / dark #E5E5E5 (다크 12.3:1 AAA PASS)
+   ```
+
+439. **HEX_6**: `#f472b6` (라인 1539)
+   ```
+   --mg-color-pink-400: #f472b6;
+   ```
+
+440. **HEX_6**: `#fbcfe8` (라인 1540)
+   ```
+   --mg-color-pink-200: #fbcfe8;
+   ```
+
+441. **HEX_6**: `#fb7185` (라인 1541)
+   ```
+   --mg-color-rose-400: #fb7185;
+   ```
+
+442. **HEX_6**: `#f0f0f0` (라인 1544)
+   ```
+   --mg-color-surface-light: #f0f0f0;
+   ```
+
+443. **HEX_6**: `#e3f2fd` (라인 1545)
+   ```
+   --mg-color-info-soft: #e3f2fd;
+   ```
+
+444. **HEX_6**: `#7b68ee` (라인 1546)
+   ```
+   --mg-color-accent-violet: #7b68ee;
+   ```
+
+445. **HEX_6**: `#b0e0e6` (라인 1547)
+   ```
+   --mg-color-surface-blue-soft: #b0e0e6;
+   ```
+
+446. **HEX_6**: `#f0fdf4` (라인 1548)
+   ```
+   --mg-color-success-50: #f0fdf4;
+   ```
+
+447. **HEX_6**: `#f59e0b` (라인 1551)
+   ```
+   `--cs-warning-500` (#f59e0b) / `--cs-error-500` (#ef4444) 의 hex 를 그대로
+   ```
+
+448. **HEX_6**: `#ef4444` (라인 1551)
+   ```
+   `--cs-warning-500` (#f59e0b) / `--cs-error-500` (#ef4444) 의 hex 를 그대로
+   ```
+
+449. **HEX_6**: `#f59e0b` (라인 1557)
+   ```
+   --mg-color-warning-500: #f59e0b;
+   ```
+
+450. **HEX_6**: `#ef4444` (라인 1558)
+   ```
+   --mg-color-error-500: #ef4444;
+   ```
+
+451. **HEX_6**: `#f9a8d4` (라인 1563)
+   ```
+   --mg-color-pink-400: #f9a8d4;
+   ```
+
+452. **HEX_6**: `#fce7f3` (라인 1564)
+   ```
+   --mg-color-pink-200: #fce7f3;
+   ```
+
+453. **HEX_6**: `#fda4af` (라인 1565)
+   ```
+   --mg-color-rose-400: #fda4af;
+   ```
+
+454. **HEX_6**: `#262626` (라인 1568)
+   ```
+   --mg-color-surface-light: #262626;
+   ```
+
+455. **HEX_6**: `#1e3a8a` (라인 1569)
+   ```
+   --mg-color-info-soft: #1e3a8a;
+   ```
+
+456. **HEX_6**: `#a78bfa` (라인 1570)
+   ```
+   --mg-color-accent-violet: #a78bfa;
+   ```
+
+457. **HEX_6**: `#164e63` (라인 1571)
+   ```
+   --mg-color-surface-blue-soft: #164e63;
+   ```
+
+458. **HEX_6**: `#064e3b` (라인 1572)
+   ```
+   --mg-color-success-50: #064e3b;
+   ```
+
+459. **HEX_6**: `#E5E5E5` (라인 1574)
+   ```
+   /* D8 T-TextMain-Dark — text-main 다크 cascade 분리 (#E5E5E5, AAA 12.3:1) */
+   ```
+
+460. **HEX_6**: `#E5E5E5` (라인 1575)
+   ```
+   --mg-color-text-main: #E5E5E5;
+   ```
+
+461. **HEX_6**: `#f59e0b` (라인 1578)
+   ```
+   --mg-color-warning-500: #f59e0b;
+   ```
+
+462. **HEX_6**: `#ef4444` (라인 1579)
+   ```
+   --mg-color-error-500: #ef4444;
+   ```
+
+463. **HEX_6**: `#764ba2` (라인 1588)
    ```
    --tenant-secondary: #764ba2;
    ```
 
-413. **HEX_6**: `#6b46c1` (라인 1499)
+464. **HEX_6**: `#6b46c1` (라인 1596)
    ```
    --tenant-secondary: #6b46c1;
    ```
 
-414. **HEX_6**: `#059669` (라인 1505)
+465. **HEX_6**: `#059669` (라인 1602)
    ```
    --tenant-secondary: #059669;
    ```
 
-415. **HEX_6**: `#d97706` (라인 1511)
+466. **HEX_6**: `#d97706` (라인 1608)
    ```
    --tenant-secondary: #d97706;
    ```
 
-416. **HEX_6**: `#66b3ff` (라인 1584)
+467. **HEX_6**: `#66b3ff` (라인 1681)
    ```
    --color-primary-light: #66b3ff;
    ```
 
-417. **HEX_6**: `#0056b3` (라인 1585)
+468. **HEX_6**: `#0056b3` (라인 1682)
    ```
    --color-primary-dark: #0056b3;
    ```
 
-418. **HEX_6**: `#9ca3af` (라인 1590)
+469. **HEX_6**: `#9ca3af` (라인 1687)
    ```
    --color-secondary-light: #9ca3af;
    ```
 
-419. **HEX_6**: `#495057` (라인 1591)
+470. **HEX_6**: `#495057` (라인 1688)
    ```
    --color-secondary-dark: #495057;
    ```
 
-420. **HEX_6**: `#6cbb6d` (라인 1596)
+471. **HEX_6**: `#6cbb6d` (라인 1693)
    ```
    --status-success-light: #6cbb6d;
    ```
 
-421. **HEX_6**: `#1e7e34` (라인 1597)
+472. **HEX_6**: `#1e7e34` (라인 1694)
    ```
    --status-success-dark: #1e7e34;
    ```
 
-422. **HEX_6**: `#f56565` (라인 1601)
+473. **HEX_6**: `#f56565` (라인 1698)
    ```
    --status-error-light: #f56565;
    ```
 
-423. **HEX_6**: `#c82333` (라인 1602)
+474. **HEX_6**: `#c82333` (라인 1699)
    ```
    --status-error-dark: #c82333;
    ```
 
-424. **HEX_6**: `#ffeaa7` (라인 1606)
+475. **HEX_6**: `#ffeaa7` (라인 1703)
    ```
    --status-warning-light: #ffeaa7;
    ```
 
-425. **HEX_6**: `#e0a800` (라인 1607)
+476. **HEX_6**: `#e0a800` (라인 1704)
    ```
    --status-warning-dark: #e0a800;
    ```
 
-426. **HEX_6**: `#856404` (라인 1609)
+477. **HEX_6**: `#856404` (라인 1706)
    ```
    --color-warning-dark: #856404;
    ```
 
-427. **HEX_6**: `#bbdefb` (라인 1612)
+478. **HEX_6**: `#bbdefb` (라인 1709)
    ```
    --status-info-light: #bbdefb;
    ```
 
-428. **HEX_6**: `#138496` (라인 1613)
+479. **HEX_6**: `#138496` (라인 1710)
    ```
    --status-info-dark: #138496;
    ```
 
-429. **HEX_6**: `#fd7e14` (라인 1616)
+480. **HEX_6**: `#fd7e14` (라인 1713)
    ```
    --status-pending: #fd7e14;
    ```
 
-430. **HEX_6**: `#ffa94d` (라인 1617)
+481. **HEX_6**: `#ffa94d` (라인 1714)
    ```
    --status-pending-light: #ffa94d;
    ```
 
-431. **HEX_6**: `#e55a00` (라인 1618)
+482. **HEX_6**: `#e55a00` (라인 1715)
    ```
    --status-pending-dark: #e55a00;
    ```
 
-432. **HEX_6**: `#d1fae5` (라인 1622)
+483. **HEX_6**: `#d1fae5` (라인 1719)
    ```
    --status-success-bg: #d1fae5;
    ```
 
-433. **HEX_6**: `#fee2e2` (라인 1623)
+484. **HEX_6**: `#fee2e2` (라인 1720)
    ```
    --status-error-bg: #fee2e2;
    ```
 
-434. **HEX_6**: `#fef3c7` (라인 1624)
+485. **HEX_6**: `#fef3c7` (라인 1721)
    ```
    --status-warning-bg: #fef3c7;
    ```
 
-435. **HEX_6**: `#dbeafe` (라인 1625)
+486. **HEX_6**: `#dbeafe` (라인 1722)
    ```
    --status-info-bg: #dbeafe;
    ```
 
-436. **HEX_6**: `#fecaca` (라인 1628)
+487. **HEX_6**: `#fecaca` (라인 1725)
    ```
    --status-error-border: #fecaca;
    ```
 
-437. **HEX_6**: `#c3e6cb` (라인 1629)
+488. **HEX_6**: `#c3e6cb` (라인 1726)
    ```
    --status-success-border: #c3e6cb;
    ```
 
-438. **HEX_6**: `#e91e63` (라인 1632)
+489. **HEX_6**: `#e91e63` (라인 1729)
    ```
    --color-accent: #e91e63;
    ```
 
-439. **HEX_6**: `#795548` (라인 1633)
+490. **HEX_6**: `#795548` (라인 1730)
    ```
    --color-brown: #795548;
    ```
 
-440. **HEX_6**: `#6d3410` (라인 1634)
+491. **HEX_6**: `#6d3410` (라인 1731)
    ```
    --color-brown-dark: #6d3410;
    ```
 
-441. **HEX_6**: `#9e9e9e` (라인 1635)
+492. **HEX_6**: `#9e9e9e` (라인 1732)
    ```
    --color-gray: #9e9e9e;
    ```
 
-442. **HEX_6**: `#95a5a6` (라인 1636)
+493. **HEX_6**: `#95a5a6` (라인 1733)
    ```
    --color-gray-light: #95a5a6;
    ```
 
-443. **HEX_6**: `#7f8c8d` (라인 1637)
+494. **HEX_6**: `#7f8c8d` (라인 1734)
    ```
    --color-gray-dark: #7f8c8d;
    ```
 
-444. **HEX_6**: `#7b1fa2` (라인 1638)
+495. **HEX_6**: `#7b1fa2` (라인 1735)
    ```
    --color-purple: #7b1fa2;
    ```
 
-445. **HEX_6**: `#f3e5f5` (라인 1639)
+496. **HEX_6**: `#f3e5f5` (라인 1736)
    ```
    --color-purple-light: #f3e5f5;
    ```
 
-446. **HEX_6**: `#e65100` (라인 1640)
+497. **HEX_6**: `#e65100` (라인 1737)
    ```
    --color-orange: #e65100;
    ```
 
-447. **HEX_6**: `#fff3e0` (라인 1641)
+498. **HEX_6**: `#fff3e0` (라인 1738)
    ```
    --color-orange-light: #fff3e0;
    ```
 
-448. **HEX_6**: `#c2185b` (라인 1643)
+499. **HEX_6**: `#c2185b` (라인 1740)
    ```
    --color-pink: #c2185b;
    ```
 
-449. **HEX_6**: `#fce4ec` (라인 1644)
+500. **HEX_6**: `#fce4ec` (라인 1741)
    ```
    --color-pink-light: #fce4ec;
    ```
 
-450. **HEX_6**: `#a8a8a8` (라인 1645)
+501. **HEX_6**: `#a8a8a8` (라인 1742)
    ```
    --color-border-dark: #a8a8a8;
    ```
 
-451. **HEX_6**: `#212529` (라인 1649)
+502. **HEX_6**: `#212529` (라인 1746)
    ```
    --color-dark: #212529;
    ```
 
-452. **HEX_6**: `#2F2F2F` (라인 1652)
+503. **HEX_6**: `#2F2F2F` (라인 1749)
    ```
    --dark-gray: #2F2F2F;
    ```
 
-453. **HEX_6**: `#6B6B6B` (라인 1653)
+504. **HEX_6**: `#6B6B6B` (라인 1750)
    ```
    --medium-gray: #6B6B6B;
    ```
 
-454. **HEX_6**: `#FFFEF7` (라인 1654)
+505. **HEX_6**: `#FFFEF7` (라인 1751)
    ```
    --light-cream: #FFFEF7;
    ```
 
-455. **HEX_6**: `#6b7280` (라인 1818)
+506. **HEX_6**: `#6b7280` (라인 1915)
    ```
    --status-completed: #6b7280;
    ```
 
-456. **HEX_6**: `#FAFAFA` (라인 1834)
+507. **HEX_6**: `#FAFAFA` (라인 1931)
    ```
    --color-bg-secondary: #FAFAFA;
    ```
 
-457. **HEX_6**: `#e9ecef` (라인 1838)
+508. **HEX_6**: `#e9ecef` (라인 1935)
    ```
    --color-border-light: #e9ecef;
    ```
 
-458. **HEX_6**: `#2F2F2F` (라인 1860)
+509. **HEX_6**: `#2F2F2F` (라인 1957)
    ```
    --dark-gray: #2F2F2F;
    ```
 
-459. **HEX_6**: `#6B6B6B` (라인 1861)
+510. **HEX_6**: `#6B6B6B` (라인 1958)
    ```
    --medium-gray: #6B6B6B;
    ```
 
-460. **HEX_6**: `#FFFEF7` (라인 1862)
+511. **HEX_6**: `#FFFEF7` (라인 1959)
    ```
    --light-cream: #FFFEF7;
    ```
 
-461. **HEX_6**: `#FFF5EE` (라인 1918)
+512. **HEX_6**: `#FFF5EE` (라인 2015)
    ```
    #FFF5EE 0%,      /* 연한 베이지 */
    ```
 
-462. **HEX_6**: `#FFE4E1` (라인 1919)
+513. **HEX_6**: `#FFE4E1` (라인 2016)
    ```
    #FFE4E1 30%,     /* 연분홍 */
    ```
 
-463. **HEX_6**: `#FFFACD` (라인 1920)
+514. **HEX_6**: `#FFFACD` (라인 2017)
    ```
    #FFFACD 60%,     /* 레몬 시폰 (연노랑) */
    ```
 
-464. **HEX_6**: `#FFE4E1` (라인 1921)
+515. **HEX_6**: `#FFE4E1` (라인 2018)
    ```
    #FFE4E1 100%     /* 연분홍 */
    ```
 
-465. **HEX_6**: `#e5e7eb` (라인 5496)
+516. **HEX_6**: `#e5e7eb` (라인 5593)
    ```
    border: 1px solid var(--color-border-light, #e5e7eb);
    ```
 
-466. **HEX_6**: `#3b82f6` (라인 5513)
+517. **HEX_6**: `#3b82f6` (라인 5610)
    ```
    border-color: var(--color-border-focus, #3b82f6);
    ```
 
-467. **HEX_6**: `#111827` (라인 5541)
+518. **HEX_6**: `#111827` (라인 5638)
    ```
    color: var(--color-text-primary, #111827);
    ```
 
-468. **HEX_6**: `#4b5563` (라인 5549)
+519. **HEX_6**: `#4b5563` (라인 5646)
    ```
    color: var(--color-text-secondary, #4b5563);
    ```
 
-469. **HEX_6**: `#4b5563` (라인 5587)
+520. **HEX_6**: `#4b5563` (라인 5684)
    ```
    color: var(--color-text-secondary, #4b5563);
    ```
 
-470. **HEX_6**: `#111827` (라인 5593)
+521. **HEX_6**: `#111827` (라인 5690)
    ```
    color: var(--color-text-primary, #111827);
    ```
 
-471. **HEX_6**: `#e5e7eb` (라인 5599)
+522. **HEX_6**: `#e5e7eb` (라인 5696)
    ```
    border-top: 1px dashed var(--color-border-light, #e5e7eb);
    ```
 
-472. **HEX_6**: `#4b5563` (라인 5602)
+523. **HEX_6**: `#4b5563` (라인 5699)
    ```
    color: var(--color-text-secondary, #4b5563);
    ```
 
-473. **HEX_6**: `#dc2626` (라인 5674)
+524. **HEX_6**: `#dc2626` (라인 5771)
    ```
    background: var(--mg-error-600, #dc2626);
    ```
 
-474. **HEX_6**: `#e5e7eb` (라인 5684)
+525. **HEX_6**: `#e5e7eb` (라인 5781)
    ```
    border: 1px solid var(--color-border-light, #e5e7eb);
    ```
 
-475. **HEX_6**: `#3b82f6` (라인 5702)
+526. **HEX_6**: `#3b82f6` (라인 5799)
    ```
    border-color: var(--color-border-focus, #3b82f6);
    ```
 
-476. **HEX_6**: `#111827` (라인 5731)
+527. **HEX_6**: `#111827` (라인 5828)
    ```
    color: var(--color-text-primary, #111827);
    ```
 
-477. **HEX_6**: `#4b5563` (라인 5739)
+528. **HEX_6**: `#4b5563` (라인 5836)
    ```
    color: var(--color-text-secondary, #4b5563);
    ```
 
-478. **HEX_6**: `#6b7280` (라인 5872)
+529. **HEX_6**: `#6b7280` (라인 5969)
    ```
    --color-text-secondary: #6b7280; /* 회색 - 비활성 */
    ```
 
-479. **HEX_6**: `#764ba2` (라인 8145)
+530. **HEX_6**: `#764ba2` (라인 8242)
    ```
    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
    ```
 
-480. **HEX_6**: `#f5576c` (라인 8150)
+531. **HEX_6**: `#f5576c` (라인 8247)
    ```
    background: linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%);
    ```
 
-481. **HEX_6**: `#4facfe` (라인 8155)
+532. **HEX_6**: `#4facfe` (라인 8252)
    ```
    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
    ```
 
-482. **HEX_6**: `#00f2fe` (라인 8155)
+533. **HEX_6**: `#00f2fe` (라인 8252)
    ```
    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
    ```
 
-483. **HEX_6**: `#fa709a` (라인 8160)
+534. **HEX_6**: `#fa709a` (라인 8257)
    ```
    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
    ```
 
-484. **HEX_6**: `#fee140` (라인 8160)
+535. **HEX_6**: `#fee140` (라인 8257)
    ```
    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
    ```
 
-485. **HEX_6**: `#a8edea` (라인 8165)
+536. **HEX_6**: `#a8edea` (라인 8262)
    ```
    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
    ```
 
-486. **HEX_6**: `#fed6e3` (라인 8165)
+537. **HEX_6**: `#fed6e3` (라인 8262)
    ```
    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
    ```
 
-487. **HEX_6**: `#ffecd2` (라인 8170)
+538. **HEX_6**: `#ffecd2` (라인 8267)
    ```
    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
    ```
 
-488. **HEX_6**: `#fcb69f` (라인 8170)
+539. **HEX_6**: `#fcb69f` (라인 8267)
    ```
    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
    ```
 
-489. **HEX_6**: `#764ba2` (라인 8175)
+540. **HEX_6**: `#764ba2` (라인 8272)
    ```
    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
    ```
 
-490. **HEX_6**: `#4facfe` (라인 8180)
+541. **HEX_6**: `#4facfe` (라인 8277)
    ```
    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
    ```
 
-491. **HEX_6**: `#00f2fe` (라인 8180)
+542. **HEX_6**: `#00f2fe` (라인 8277)
    ```
    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
    ```
 
-492. **HEX_6**: `#fa709a` (라인 8185)
+543. **HEX_6**: `#fa709a` (라인 8282)
    ```
    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
    ```
 
-493. **HEX_6**: `#fee140` (라인 8185)
+544. **HEX_6**: `#fee140` (라인 8282)
    ```
    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
    ```
 
-494. **HEX_6**: `#764ba2` (라인 8190)
+545. **HEX_6**: `#764ba2` (라인 8287)
    ```
    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
    ```
 
-495. **HEX_6**: `#ffecd2` (라인 8195)
+546. **HEX_6**: `#ffecd2` (라인 8292)
    ```
    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
    ```
 
-496. **HEX_6**: `#fcb69f` (라인 8195)
+547. **HEX_6**: `#fcb69f` (라인 8292)
    ```
    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
    ```
 
-497. **HEX_6**: `#a8edea` (라인 8200)
+548. **HEX_6**: `#a8edea` (라인 8297)
    ```
    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
    ```
 
-498. **HEX_6**: `#fed6e3` (라인 8200)
+549. **HEX_6**: `#fed6e3` (라인 8297)
    ```
    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
    ```
 
-499. **HEX_6**: `#764ba2` (라인 10287)
+550. **HEX_6**: `#764ba2` (라인 10384)
    ```
    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
    ```
 
-500. **HEX_6**: `#3f51b5` (라인 10339)
+551. **HEX_6**: `#3f51b5` (라인 10436)
    ```
    background: linear-gradient(135deg, #3f51b5 0%, #1e3a8a 100%);
    ```
 
-501. **HEX_6**: `#1e3a8a` (라인 10339)
+552. **HEX_6**: `#1e3a8a` (라인 10436)
    ```
    background: linear-gradient(135deg, #3f51b5 0%, #1e3a8a 100%);
    ```
 
-502. **HEX_6**: `#a8e6a3` (라인 11375)
+553. **HEX_6**: `#a8e6a3` (라인 11472)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-503. **HEX_6**: `#7dd87a` (라인 11375)
+554. **HEX_6**: `#7dd87a` (라인 11472)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-504. **HEX_6**: `#a8e6a3` (라인 11612)
+555. **HEX_6**: `#a8e6a3` (라인 11709)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-505. **HEX_6**: `#7dd87a` (라인 11612)
+556. **HEX_6**: `#7dd87a` (라인 11709)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-506. **HEX_6**: `#c82333` (라인 11932)
+557. **HEX_6**: `#c82333` (라인 12029)
    ```
    background-color: var(--mg-error-600, #c82333);
    ```
 
-507. **HEX_6**: `#e5e7eb` (라인 11979)
+558. **HEX_6**: `#e5e7eb` (라인 12076)
    ```
    border-bottom: 1px solid var(--cs-gray-200, #e5e7eb);
    ```
 
-508. **HEX_6**: `#111827` (라인 11986)
+559. **HEX_6**: `#111827` (라인 12083)
    ```
    color: var(--cs-gray-900, #111827);
    ```
 
-509. **HEX_6**: `#6b7280` (라인 11994)
+560. **HEX_6**: `#6b7280` (라인 12091)
    ```
    color: var(--cs-gray-500, #6b7280);
    ```
 
-510. **HEX_6**: `#f3f4f6` (라인 12003)
+561. **HEX_6**: `#f3f4f6` (라인 12100)
    ```
    background-color: var(--cs-gray-100, #f3f4f6);
    ```
 
-511. **HEX_6**: `#374151` (라인 12004)
+562. **HEX_6**: `#374151` (라인 12101)
    ```
    color: var(--cs-gray-700, #374151);
    ```
 
-512. **HEX_6**: `#e5e7eb` (라인 12013)
+563. **HEX_6**: `#e5e7eb` (라인 12110)
    ```
    border-top: 1px solid var(--cs-gray-200, #e5e7eb);
    ```
 
-513. **HEX_6**: `#495057` (라인 12099)
+564. **HEX_6**: `#495057` (라인 12196)
    ```
    color: #495057;
    ```
 
-514. **HEX_6**: `#495057` (라인 12132)
+565. **HEX_6**: `#495057` (라인 12229)
    ```
    color: #495057;
    ```
 
-515. **HEX_6**: `#495057` (라인 12252)
+566. **HEX_6**: `#495057` (라인 12349)
    ```
    color: #495057;
    ```
 
-516. **HEX_6**: `#e1e5e9` (라인 12545)
+567. **HEX_6**: `#e1e5e9` (라인 12642)
    ```
    border: 2px solid #e1e5e9;
    ```
 
-517. **HEX_6**: `#495057` (라인 12549)
+568. **HEX_6**: `#495057` (라인 12646)
    ```
    color: #495057;
    ```
 
-518. **HEX_6**: `#e9ecef` (라인 12640)
+569. **HEX_6**: `#e9ecef` (라인 12737)
    ```
    border: 2px solid #e9ecef;
    ```
 
-519. **HEX_6**: `#e9ecef` (라인 12653)
+570. **HEX_6**: `#e9ecef` (라인 12750)
    ```
    border: 1px solid #e9ecef;
    ```
 
-520. **HEX_6**: `#e9ecef` (라인 12677)
+571. **HEX_6**: `#e9ecef` (라인 12774)
    ```
    background: #e9ecef;
    ```
 
-521. **HEX_6**: `#e9ecef` (라인 12762)
+572. **HEX_6**: `#e9ecef` (라인 12859)
    ```
    border: 1px solid #e9ecef;
    ```
 
-522. **HEX_6**: `#495057` (라인 12783)
+573. **HEX_6**: `#495057` (라인 12880)
    ```
    color: #495057;
    ```
 
-523. **HEX_6**: `#e5e7eb` (라인 12794)
+574. **HEX_6**: `#e5e7eb` (라인 12891)
    ```
    border: 1px solid #e5e7eb;
    ```
 
-524. **HEX_6**: `#a8e6a3` (라인 12817)
+575. **HEX_6**: `#a8e6a3` (라인 12914)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-525. **HEX_6**: `#7dd87a` (라인 12817)
+576. **HEX_6**: `#7dd87a` (라인 12914)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-526. **HEX_6**: `#1f2937` (라인 12835)
+577. **HEX_6**: `#1f2937` (라인 12932)
    ```
    color: #1f2937;
    ```
 
-527. **HEX_6**: `#6B6B6B` (라인 12840)
+578. **HEX_6**: `#6B6B6B` (라인 12937)
    ```
    color: #6B6B6B;
    ```
 
-528. **HEX_6**: `#f3f4f6` (라인 12862)
+579. **HEX_6**: `#f3f4f6` (라인 12959)
    ```
    border-top: 1px solid #f3f4f6;
    ```
 
-529. **HEX_6**: `#6B6B6B` (라인 12864)
+580. **HEX_6**: `#6B6B6B` (라인 12961)
    ```
    color: #6B6B6B;
    ```
 
-530. **HEX_6**: `#a8e6a3` (라인 12988)
+581. **HEX_6**: `#a8e6a3` (라인 13085)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-531. **HEX_6**: `#7dd87a` (라인 12988)
+582. **HEX_6**: `#7dd87a` (라인 13085)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-532. **HEX_6**: `#a8e6a3` (라인 13361)
+583. **HEX_6**: `#a8e6a3` (라인 13458)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-533. **HEX_6**: `#7dd87a` (라인 13361)
+584. **HEX_6**: `#7dd87a` (라인 13458)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-534. **HEX_6**: `#a8e6a3` (라인 13595)
+585. **HEX_6**: `#a8e6a3` (라인 13692)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-535. **HEX_6**: `#7dd87a` (라인 13595)
+586. **HEX_6**: `#7dd87a` (라인 13692)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-536. **HEX_6**: `#a8e6a3` (라인 13716)
+587. **HEX_6**: `#a8e6a3` (라인 13813)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-537. **HEX_6**: `#7dd87a` (라인 13716)
+588. **HEX_6**: `#7dd87a` (라인 13813)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-538. **HEX_6**: `#6b7280` (라인 14640)
+589. **HEX_6**: `#6b7280` (라인 14737)
    ```
    color: var(--color-text-secondary, #6b7280);
    ```
 
-539. **HEX_6**: `#1f2937` (라인 14654)
+590. **HEX_6**: `#1f2937` (라인 14751)
    ```
    color: var(--color-text-primary, #1f2937);
    ```
 
-540. **HEX_6**: `#a8e6a3` (라인 14957)
+591. **HEX_6**: `#a8e6a3` (라인 15054)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-541. **HEX_6**: `#7dd87a` (라인 14957)
+592. **HEX_6**: `#7dd87a` (라인 15054)
    ```
    background: linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%);
    ```
 
-542. **HEX_6**: `#764ba2` (라인 16175)
+593. **HEX_6**: `#764ba2` (라인 16272)
    ```
    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
    ```
 
-543. **HEX_6**: `#0056b3` (라인 16507)
+594. **HEX_6**: `#0056b3` (라인 16604)
    ```
    background-color: #0056b3;
    ```
 
-544. **HEX_6**: `#0056b3` (라인 16508)
+595. **HEX_6**: `#0056b3` (라인 16605)
    ```
    border-color: #0056b3;
    ```
 
-545. **HEX_6**: `#FFE5E5` (라인 16932)
+596. **HEX_6**: `#FFE5E5` (라인 17029)
    ```
    background: linear-gradient(135deg, #FFE5E5 0%, #FFF8E1 100%);
    ```
 
-546. **HEX_6**: `#FFF8E1` (라인 16932)
+597. **HEX_6**: `#FFF8E1` (라인 17029)
    ```
    background: linear-gradient(135deg, #FFE5E5 0%, #FFF8E1 100%);
    ```
 
-547. **HEX_6**: `#FFE5E5` (라인 16966)
+598. **HEX_6**: `#FFE5E5` (라인 17063)
    ```
    background: linear-gradient(135deg, #FFE5E5 0%, #FFF8E1 100%);
    ```
 
-548. **HEX_6**: `#FFF8E1` (라인 16966)
+599. **HEX_6**: `#FFF8E1` (라인 17063)
    ```
    background: linear-gradient(135deg, #FFE5E5 0%, #FFF8E1 100%);
    ```
 
-549. **HEX_6**: `#FFB6C1` (라인 17033)
+600. **HEX_6**: `#FFB6C1` (라인 17130)
    ```
    background: #FFB6C1;
    ```
 
-550. **HEX_6**: `#98E4D8` (라인 17037)
+601. **HEX_6**: `#98E4D8` (라인 17134)
    ```
    background: #98E4D8;
    ```
 
-551. **HEX_6**: `#A8D8EA` (라인 17041)
+602. **HEX_6**: `#A8D8EA` (라인 17138)
    ```
    background: #A8D8EA;
    ```
 
-552. **HEX_6**: `#FFE5B4` (라인 17045)
+603. **HEX_6**: `#FFE5B4` (라인 17142)
    ```
    background: #FFE5B4;
    ```
 
-553. **HEX_6**: `#FF69B4` (라인 17078)
+604. **HEX_6**: `#FF69B4` (라인 17175)
    ```
    color: #FF69B4;
    ```
 
-554. **HEX_6**: `#fbbf24` (라인 17456)
+605. **HEX_6**: `#fbbf24` (라인 17553)
    ```
    .mg-v2-radio-color[data-color="#fbbf24"] {
    ```
 
-555. **HEX_6**: `#fbbf24` (라인 17457)
+606. **HEX_6**: `#fbbf24` (라인 17554)
    ```
    background-color: #fbbf24;
    ```
 
-556. **HEX_6**: `#e9ecef` (라인 17555)
+607. **HEX_6**: `#e9ecef` (라인 17652)
    ```
    border: 1px solid #e9ecef;
    ```
 
-557. **HEX_6**: `#e9ecef` (라인 17581)
+608. **HEX_6**: `#e9ecef` (라인 17678)
    ```
    border: 1px solid #e9ecef;
    ```
 
-558. **HEX_6**: `#e9ecef` (라인 17593)
+609. **HEX_6**: `#e9ecef` (라인 17690)
    ```
    background: linear-gradient(135deg, var(--mg-gray-100) 0%, #e9ecef 100%);
    ```
 
-559. **HEX_6**: `#e9ecef` (라인 17594)
+610. **HEX_6**: `#e9ecef` (라인 17691)
    ```
    border-bottom: 1px solid #e9ecef;
    ```
 
-560. **HEX_6**: `#2c3e50` (라인 17623)
+611. **HEX_6**: `#2c3e50` (라인 17720)
    ```
    color: #2c3e50;
    ```
 
-561. **HEX_6**: `#e9ecef` (라인 17649)
+612. **HEX_6**: `#e9ecef` (라인 17746)
    ```
    border: 1px solid #e9ecef;
    ```
 
-562. **HEX_6**: `#2c3e50` (라인 17656)
+613. **HEX_6**: `#2c3e50` (라인 17753)
    ```
    color: #2c3e50;
    ```
 
-563. **HEX_6**: `#e9ecef` (라인 17684)
+614. **HEX_6**: `#e9ecef` (라인 17781)
    ```
    border-top: 1px solid #e9ecef;
    ```
 
-564. **HEX_6**: `#3498db` (라인 17700)
+615. **HEX_6**: `#3498db` (라인 17797)
    ```
    border: 1px solid #3498db;
    ```
 
-565. **HEX_6**: `#3498db` (라인 17702)
+616. **HEX_6**: `#3498db` (라인 17799)
    ```
    color: #3498db;
    ```
 
-566. **HEX_6**: `#3498db` (라인 17707)
+617. **HEX_6**: `#3498db` (라인 17804)
    ```
    background: #3498db;
    ```
 
-567. **HEX_6**: `#3498db` (라인 17720)
+618. **HEX_6**: `#3498db` (라인 17817)
    ```
    border: 1px solid #3498db;
    ```
 
-568. **HEX_6**: `#3498db` (라인 17722)
+619. **HEX_6**: `#3498db` (라인 17819)
    ```
    color: #3498db;
    ```
 
-569. **HEX_6**: `#3498db` (라인 17728)
+620. **HEX_6**: `#3498db` (라인 17825)
    ```
    background: #3498db;
    ```
 
-570. **HEX_6**: `#3498db` (라인 17734)
+621. **HEX_6**: `#3498db` (라인 17831)
    ```
    color: #3498db;
    ```
 
-571. **HEX_6**: `#495057` (라인 17748)
+622. **HEX_6**: `#495057` (라인 17845)
    ```
    color: #495057;
    ```
 
-572. **HEX_6**: `#495057` (라인 17779)
+623. **HEX_6**: `#495057` (라인 17876)
    ```
    color: #495057;
    ```
 
-573. **HEX_6**: `#e9ecef` (라인 17781)
+624. **HEX_6**: `#e9ecef` (라인 17878)
    ```
    background-color: #e9ecef;
    ```
 
-574. **HEX_6**: `#495057` (라인 17809)
+625. **HEX_6**: `#495057` (라인 17906)
    ```
    color: #495057;
    ```
 
-575. **HEX_6**: `#e9ecef` (라인 17845)
+626. **HEX_6**: `#e9ecef` (라인 17942)
    ```
    border: 1px solid #e9ecef;
    ```
 
-576. **HEX_6**: `#495057` (라인 17850)
+627. **HEX_6**: `#495057` (라인 17947)
    ```
    color: #495057;
    ```
 
-577. **HEX_6**: `#e9ecef` (라인 17866)
+628. **HEX_6**: `#e9ecef` (라인 17963)
    ```
    border-bottom: 1px solid #e9ecef;
    ```
 
-578. **HEX_6**: `#495057` (라인 17868)
+629. **HEX_6**: `#495057` (라인 17965)
    ```
    color: #495057;
    ```
 
-579. **HEX_6**: `#495057` (라인 17882)
+630. **HEX_6**: `#495057` (라인 17979)
    ```
    color: #495057;
    ```
 
-580. **HEX_6**: `#495057` (라인 17887)
+631. **HEX_6**: `#495057` (라인 17984)
    ```
    color: #495057;
    ```
 
-581. **HEX_6**: `#e5e7eb` (라인 17904)
+632. **HEX_6**: `#e5e7eb` (라인 18001)
    ```
    border: 1px solid #e5e7eb;
    ```
 
-582. **HEX_6**: `#0056b3` (라인 17920)
+633. **HEX_6**: `#0056b3` (라인 18017)
    ```
    color: #0056b3;
    ```
 
-583. **HEX_6**: `#2c3e50` (라인 17975)
+634. **HEX_6**: `#2c3e50` (라인 18072)
    ```
    color: #2c3e50;
    ```
 
-584. **HEX_6**: `#e2e8f0` (라인 18058)
+635. **HEX_6**: `#e2e8f0` (라인 18155)
    ```
    border: 2px solid #e2e8f0;
    ```
 
-585. **HEX_6**: `#f7fafc` (라인 18072)
+636. **HEX_6**: `#f7fafc` (라인 18169)
    ```
    background-color: #f7fafc;
    ```
 
-586. **HEX_6**: `#718096` (라인 18082)
+637. **HEX_6**: `#718096` (라인 18179)
    ```
    color: #718096;
    ```
 
-587. **HEX_6**: `#f7fafc` (라인 18088)
+638. **HEX_6**: `#f7fafc` (라인 18185)
    ```
    background-color: #f7fafc;
    ```
 
-588. **HEX_6**: `#e2e8f0` (라인 18092)
+639. **HEX_6**: `#e2e8f0` (라인 18189)
    ```
    border: 1px solid #e2e8f0;
    ```
 
-589. **HEX_6**: `#4a5568` (라인 18097)
+640. **HEX_6**: `#4a5568` (라인 18194)
    ```
    color: #4a5568;
    ```
 
-590. **HEX_6**: `#764ba2` (라인 18108)
+641. **HEX_6**: `#764ba2` (라인 18205)
    ```
    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
    ```
 
-591. **HEX_6**: `#cbd5e0` (라인 18122)
+642. **HEX_6**: `#cbd5e0` (라인 18219)
    ```
    background: #cbd5e0;
    ```
 
-592. **HEX_6**: `#48bb78` (라인 18129)
+643. **HEX_6**: `#48bb78` (라인 18226)
    ```
    background-color: #48bb78;
    ```
 
-593. **HEX_6**: `#2d3748` (라인 18169)
+644. **HEX_6**: `#2d3748` (라인 18266)
    ```
    color: #2d3748;
    ```
 
-594. **HEX_6**: `#2d3748` (라인 18176)
+645. **HEX_6**: `#2d3748` (라인 18273)
    ```
    color: #2d3748;
    ```
 
-595. **HEX_6**: `#718096` (라인 18182)
+646. **HEX_6**: `#718096` (라인 18279)
    ```
    color: #718096;
    ```
 
-596. **HEX_6**: `#764ba2` (라인 18194)
+647. **HEX_6**: `#764ba2` (라인 18291)
    ```
    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
    ```
 
-597. **HEX_6**: `#e1e5e9` (라인 18210)
+648. **HEX_6**: `#e1e5e9` (라인 18307)
    ```
    border: 2px solid #e1e5e9;
    ```
 
-598. **HEX_6**: `#5a6268` (라인 18236)
+649. **HEX_6**: `#5a6268` (라인 18333)
    ```
    background-color: #5a6268;
    ```
 
-599. **HEX_6**: `#2c3e50` (라인 18254)
+650. **HEX_6**: `#2c3e50` (라인 18351)
    ```
    color: #2c3e50;
    ```
 
-600. **HEX_6**: `#0056b3` (라인 18277)
+651. **HEX_6**: `#0056b3` (라인 18374)
    ```
    background-color: #0056b3;
    ```
 
-601. **HEX_6**: `#e8f4fd` (라인 18328)
+652. **HEX_6**: `#e8f4fd` (라인 18425)
    ```
    background: #e8f4fd;
    ```
 
-602. **HEX_6**: `#bee5eb` (라인 18329)
+653. **HEX_6**: `#bee5eb` (라인 18426)
    ```
    border: 1px solid #bee5eb;
    ```
 
-603. **RGBA**: `rgba(108, 92, 231, 0.1)` (라인 143)
+654. **RGBA**: `rgba(108, 92, 231, 0.1)` (라인 143)
    ```
    --cs-brand-primary-light: rgba(108, 92, 231, 0.1);
    ```
 
-604. **RGBA**: `rgba(108, 92, 231, 0.2)` (라인 144)
+655. **RGBA**: `rgba(108, 92, 231, 0.2)` (라인 144)
    ```
    --cs-brand-primary-hover-bg: rgba(108, 92, 231, 0.2);
    ```
 
-605. **RGBA**: `rgba(108, 92, 231, 0.1)` (라인 145)
+656. **RGBA**: `rgba(108, 92, 231, 0.1)` (라인 145)
    ```
    --cs-brand-outline: rgba(108, 92, 231, 0.1);
    ```
 
-606. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 153)
+657. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 153)
    ```
    --cs-bg-hover: rgba(0, 0, 0, 0.05);
    ```
 
-607. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 198)
+658. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 198)
    ```
    --cs-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
    ```
 
-608. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 202)
+659. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 202)
    ```
    --cs-shadow-dark: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
    ```
 
-609. **RGBA**: `rgba(59, 130, 246, 0.12)` (라인 203)
+660. **RGBA**: `rgba(59, 130, 246, 0.12)` (라인 203)
    ```
    --cs-shadow-primary: 0 8px 20px rgba(59, 130, 246, 0.12);
    ```
 
-610. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 204)
+661. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 204)
    ```
    --cs-shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
    ```
 
-611. **RGBA**: `rgba(255, 107, 53, 0.12)` (라인 205)
+662. **RGBA**: `rgba(255, 107, 53, 0.12)` (라인 205)
    ```
    --cs-shadow-orange: 0 2px 8px rgba(255, 107, 53, 0.12);
    ```
 
-612. **RGBA**: `rgba(220, 53, 69, 0.4)` (라인 206)
+663. **RGBA**: `rgba(220, 53, 69, 0.4)` (라인 206)
    ```
    --cs-shadow-error: 0 4px 15px rgba(220, 53, 69, 0.4);
    ```
 
-613. **RGBA**: `rgba(220, 53, 69, 0.6)` (라인 207)
+664. **RGBA**: `rgba(220, 53, 69, 0.6)` (라인 207)
    ```
    --cs-shadow-error-strong: 0 6px 20px rgba(220, 53, 69, 0.6);
    ```
 
-614. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 208)
+665. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 208)
    ```
    --cs-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
    ```
 
-615. **RGBA**: `rgba(0, 0, 0, 0.06)` (라인 209)
+666. **RGBA**: `rgba(0, 0, 0, 0.06)` (라인 209)
    ```
    --cs-shadow-sm-multi: 0 1px 3px var(--mg-shadow-light), 0 1px 2px rgba(0, 0, 0, 0.06);
    ```
 
-616. **RGBA**: `rgba(0, 0, 0, 0.07)` (라인 210)
+667. **RGBA**: `rgba(0, 0, 0, 0.07)` (라인 210)
    ```
    --cs-shadow-md-multi: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
    ```
 
-617. **RGBA**: `rgba(0, 0, 0, 0.06)` (라인 210)
+668. **RGBA**: `rgba(0, 0, 0, 0.06)` (라인 210)
    ```
    --cs-shadow-md-multi: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
    ```
 
-618. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 211)
+669. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 211)
    ```
    --cs-shadow-lg-multi: 0 10px 15px var(--mg-shadow-light), 0 4px 6px rgba(0, 0, 0, 0.05);
    ```
 
-619. **RGBA**: `rgba(0, 0, 0, 0.04)` (라인 212)
+670. **RGBA**: `rgba(0, 0, 0, 0.04)` (라인 212)
    ```
    --cs-shadow-xl-multi: 0 20px 25px var(--mg-shadow-light), 0 10px 10px rgba(0, 0, 0, 0.04);
    ```
 
-620. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 213)
+671. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 213)
    ```
    --cs-shadow-xxl: 0 25px 50px rgba(0, 0, 0, 0.25);
    ```
 
-621. **RGBA**: `rgba(0, 0, 0, 0.06)` (라인 214)
+672. **RGBA**: `rgba(0, 0, 0, 0.06)` (라인 214)
    ```
    --cs-shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
    ```
 
-622. **RGBA**: `rgba(108, 92, 231, 0.1)` (라인 215)
+673. **RGBA**: `rgba(108, 92, 231, 0.1)` (라인 215)
    ```
    --cs-shadow-outline: 0 0 0 3px rgba(108, 92, 231, 0.1);
    ```
 
-623. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 218)
+674. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 218)
    ```
    --cs-glass-light: rgba(255, 255, 255, 0.8);
    ```
 
-624. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 219)
+675. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 219)
    ```
    --cs-glass-strong: rgba(255, 255, 255, 0.95);
    ```
 
-625. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 221)
+676. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 221)
    ```
    --cs-glass-medium: rgba(255, 255, 255, 0.6);
    ```
 
-626. **RGBA**: `rgba(255, 255, 255, 0.1)` (라인 222)
+677. **RGBA**: `rgba(255, 255, 255, 0.1)` (라인 222)
    ```
    --cs-glass-light-subtle: rgba(255, 255, 255, 0.1);
    ```
 
-627. **RGBA**: `rgba(0, 0, 0, 0.04)` (라인 223)
+678. **RGBA**: `rgba(0, 0, 0, 0.04)` (라인 223)
    ```
    --cs-glass-dark-subtle: rgba(0, 0, 0, 0.04);
    ```
 
-628. **RGBA**: `rgba(0, 122, 255, 0.1)` (라인 224)
+679. **RGBA**: `rgba(0, 122, 255, 0.1)` (라인 224)
    ```
    --cs-glass-blue-light: rgba(0, 122, 255, 0.1);
    ```
 
-629. **RGBA**: `rgba(255, 107, 53, 0.1)` (라인 225)
+680. **RGBA**: `rgba(255, 107, 53, 0.1)` (라인 225)
    ```
    --cs-glass-orange-light: rgba(255, 107, 53, 0.1);
    ```
 
-630. **RGBA**: `rgba(255, 248, 245, 0.95)` (라인 226)
+681. **RGBA**: `rgba(255, 248, 245, 0.95)` (라인 226)
    ```
    --cs-glass-orange-bg: rgba(255, 248, 245, 0.95);
    ```
 
-631. **RGBA**: `rgba(255, 107, 53, 0.08)` (라인 227)
+682. **RGBA**: `rgba(255, 107, 53, 0.08)` (라인 227)
    ```
    --cs-glass-orange-border: rgba(255, 107, 53, 0.08);
    ```
 
-632. **RGBA**: `rgba(107, 114, 128, 0.1)` (라인 228)
+683. **RGBA**: `rgba(107, 114, 128, 0.1)` (라인 228)
    ```
    --cs-glass-gray-light: rgba(107, 114, 128, 0.1);
    ```
 
-633. **RGBA**: `rgba(226, 232, 240, 0.5)` (라인 229)
+684. **RGBA**: `rgba(226, 232, 240, 0.5)` (라인 229)
    ```
    --cs-glass-slate-border: rgba(226, 232, 240, 0.5);
    ```
 
-634. **RGBA**: `rgba(0, 0, 0, 0.3)` (라인 230)
+685. **RGBA**: `rgba(0, 0, 0, 0.3)` (라인 230)
    ```
    --cs-glass-dark-strong: rgba(0, 0, 0, 0.3);
    ```
 
-635. **RGBA**: `rgba(250, 250, 250, 0.98)` (라인 231)
+686. **RGBA**: `rgba(250, 250, 250, 0.98)` (라인 231)
    ```
    --cs-glass-light-strong: rgba(250, 250, 250, 0.98);
    ```
 
-636. **RGBA**: `rgba(209, 209, 214, 0.8)` (라인 232)
+687. **RGBA**: `rgba(209, 209, 214, 0.8)` (라인 232)
    ```
    --cs-glass-gray-border: rgba(209, 209, 214, 0.8);
    ```
 
-637. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 233)
+688. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 233)
    ```
    --cs-glass-white-90: rgba(255, 255, 255, 0.9);
    ```
 
-638. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 234)
+689. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 234)
    ```
    --cs-glass-white-80: rgba(255, 255, 255, 0.8);
    ```
 
-639. **RGBA**: `rgba(102, 126, 234, 0.4)` (라인 235)
+690. **RGBA**: `rgba(102, 126, 234, 0.4)` (라인 235)
    ```
    --cs-glass-primary-40: rgba(102, 126, 234, 0.4);
    ```
 
-640. **RGBA**: `rgba(102, 126, 234, 0.3)` (라인 236)
+691. **RGBA**: `rgba(102, 126, 234, 0.3)` (라인 236)
    ```
    --cs-glass-primary-30: rgba(102, 126, 234, 0.3);
    ```
 
-641. **RGBA**: `rgba(102, 126, 234, 0.2)` (라인 237)
+692. **RGBA**: `rgba(102, 126, 234, 0.2)` (라인 237)
    ```
    --cs-glass-primary-20: rgba(102, 126, 234, 0.2);
    ```
 
-642. **RGBA**: `rgba(102, 126, 234, 0.1)` (라인 238)
+693. **RGBA**: `rgba(102, 126, 234, 0.1)` (라인 238)
    ```
    --cs-glass-primary-10: rgba(102, 126, 234, 0.1);
    ```
 
-643. **RGBA**: `rgba(226, 232, 240, 0.6)` (라인 239)
+694. **RGBA**: `rgba(226, 232, 240, 0.6)` (라인 239)
    ```
    --cs-glass-slate-border-60: rgba(226, 232, 240, 0.6);
    ```
 
-644. **RGBA**: `rgba(0, 0, 0, 0.6)` (라인 240)
+695. **RGBA**: `rgba(0, 0, 0, 0.6)` (라인 240)
    ```
    --cs-glass-dark-60: rgba(0, 0, 0, 0.6);
    ```
 
-645. **RGBA**: `rgba(0, 0, 0, 0.1)` (라인 386)
+696. **RGBA**: `rgba(0, 0, 0, 0.1)` (라인 386)
    ```
    --mg-shadow-light: rgba(0, 0, 0, 0.1);
    ```
 
-646. **RGBA**: `rgba(59, 130, 246, 0.2)` (라인 411)
+697. **RGBA**: `rgba(59, 130, 246, 0.2)` (라인 411)
    ```
    --tenant-primary-light: rgba(59, 130, 246, 0.2);
    ```
 
-647. **RGBA**: `rgba(0, 122, 255, 0.3)` (라인 468)
+698. **RGBA**: `rgba(0, 122, 255, 0.3)` (라인 468)
    ```
    --shadow-hover-primary: 0 4px 12px rgba(0, 122, 255, 0.3);
    ```
 
-648. **RGBA**: `rgba(142, 142, 147, 0.12)` (라인 483)
+699. **RGBA**: `rgba(142, 142, 147, 0.12)` (라인 483)
    ```
    --ipad-btn-secondary: rgba(142, 142, 147, 0.12);
    ```
 
-649. **RGBA**: `rgba(16, 185, 129, 0.1)` (라인 495)
+700. **RGBA**: `rgba(16, 185, 129, 0.1)` (라인 495)
    ```
    --color-success-light: rgba(16, 185, 129, 0.1);
    ```
 
-650. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 513)
+701. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 513)
    ```
    --color-danger-light: rgba(239, 68, 68, 0.1);
    ```
 
-651. **RGBA**: `rgba(245, 158, 11, 0.1)` (라인 536)
+702. **RGBA**: `rgba(245, 158, 11, 0.1)` (라인 536)
    ```
    --color-warning-light: rgba(245, 158, 11, 0.1);
    ```
 
-652. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 553)
+703. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 553)
    ```
    --color-info-light: rgba(59, 130, 246, 0.1);
    ```
 
-653. **RGBA**: `rgba(230, 245, 255, 0.5)` (라인 596)
+704. **RGBA**: `rgba(230, 245, 255, 0.5)` (라인 596)
    ```
    --bg-gradient-cool: linear-gradient(135deg, rgba(230, 245, 255, 0.5), rgba(240, 250, 255, 0.5));
    ```
 
-654. **RGBA**: `rgba(240, 250, 255, 0.5)` (라인 596)
+705. **RGBA**: `rgba(240, 250, 255, 0.5)` (라인 596)
    ```
    --bg-gradient-cool: linear-gradient(135deg, rgba(230, 245, 255, 0.5), rgba(240, 250, 255, 0.5));
    ```
 
-655. **RGBA**: `rgba(255, 250, 240, 0.6)` (라인 597)
+706. **RGBA**: `rgba(255, 250, 240, 0.6)` (라인 597)
    ```
    --bg-gradient-warm: linear-gradient(135deg, rgba(255, 250, 240, 0.6), rgba(255, 255, 250, 0.6));
    ```
 
-656. **RGBA**: `rgba(255, 255, 250, 0.6)` (라인 597)
+707. **RGBA**: `rgba(255, 255, 250, 0.6)` (라인 597)
    ```
    --bg-gradient-warm: linear-gradient(135deg, rgba(255, 250, 240, 0.6), rgba(255, 255, 250, 0.6));
    ```
 
-657. **RGBA**: `rgba(255, 250, 240, 0.5)` (라인 598)
+708. **RGBA**: `rgba(255, 250, 240, 0.5)` (라인 598)
    ```
    --bg-gradient-warm-light: linear-gradient(135deg, rgba(255, 250, 240, 0.5), rgba(255, 255, 250, 0.5));
    ```
 
-658. **RGBA**: `rgba(255, 255, 250, 0.5)` (라인 598)
+709. **RGBA**: `rgba(255, 255, 250, 0.5)` (라인 598)
    ```
    --bg-gradient-warm-light: linear-gradient(135deg, rgba(255, 250, 240, 0.5), rgba(255, 255, 250, 0.5));
    ```
 
-659. **RGBA**: `rgba(255, 250, 240, 0.3)` (라인 599)
+710. **RGBA**: `rgba(255, 250, 240, 0.3)` (라인 599)
    ```
    --bg-gradient-warm-subtle: linear-gradient(135deg, rgba(255, 250, 240, 0.3), rgba(255, 255, 250, 0.3));
    ```
 
-660. **RGBA**: `rgba(255, 255, 250, 0.3)` (라인 599)
+711. **RGBA**: `rgba(255, 255, 250, 0.3)` (라인 599)
    ```
    --bg-gradient-warm-subtle: linear-gradient(135deg, rgba(255, 250, 240, 0.3), rgba(255, 255, 250, 0.3));
    ```
 
-661. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 604)
+712. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 604)
    ```
    --droplet-bg: rgba(255, 255, 255, 0.7);
    ```
 
-662. **RGBA**: `rgba(0, 0, 0, 0.4)` (라인 605)
+713. **RGBA**: `rgba(0, 0, 0, 0.4)` (라인 605)
    ```
    --droplet-bg-dark: rgba(0, 0, 0, 0.4);
    ```
 
-663. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 607)
+714. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 607)
    ```
    --glass-bg: rgba(255, 255, 255, 0.2);
    ```
 
-664. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 608)
+715. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 608)
    ```
    --glass-bg-light: rgba(0, 0, 0, 0.25);
    ```
 
-665. **RGBA**: `rgba(0, 0, 0, 0.35)` (라인 609)
+716. **RGBA**: `rgba(0, 0, 0, 0.35)` (라인 609)
    ```
    --glass-bg-medium: rgba(0, 0, 0, 0.35);
    ```
 
-666. **RGBA**: `rgba(0, 0, 0, 0.45)` (라인 610)
+717. **RGBA**: `rgba(0, 0, 0, 0.45)` (라인 610)
    ```
    --glass-bg-strong: rgba(0, 0, 0, 0.45);
    ```
 
-667. **RGBA**: `rgba(255, 215, 0, 0.1)` (라인 611)
+718. **RGBA**: `rgba(255, 215, 0, 0.1)` (라인 611)
    ```
    --grade-expert-bg: rgba(255, 215, 0, 0.1);
    ```
 
-668. **RGBA**: `rgba(205, 127, 50, 0.1)` (라인 612)
+719. **RGBA**: `rgba(205, 127, 50, 0.1)` (라인 612)
    ```
    --grade-junior-bg: rgba(205, 127, 50, 0.1);
    ```
 
-669. **RGBA**: `rgba(229, 228, 226, 0.1)` (라인 613)
+720. **RGBA**: `rgba(229, 228, 226, 0.1)` (라인 613)
    ```
    --grade-master-bg: rgba(229, 228, 226, 0.1);
    ```
 
-670. **RGBA**: `rgba(192, 192, 192, 0.1)` (라인 614)
+721. **RGBA**: `rgba(192, 192, 192, 0.1)` (라인 614)
    ```
    --grade-senior-bg: rgba(192, 192, 192, 0.1);
    ```
 
-671. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 617)
+722. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 617)
    ```
    --ipad-card-bg: rgba(255, 255, 255, 0.9);
    ```
 
-672. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 620)
+723. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 620)
    ```
    --role-admin-bg: rgba(59, 130, 246, 0.1);
    ```
 
-673. **RGBA**: `rgba(107, 114, 128, 0.1)` (라인 621)
+724. **RGBA**: `rgba(107, 114, 128, 0.1)` (라인 621)
    ```
    --role-client-bg: rgba(107, 114, 128, 0.1);
    ```
 
-674. **RGBA**: `rgba(139, 92, 246, 0.1)` (라인 622)
+725. **RGBA**: `rgba(139, 92, 246, 0.1)` (라인 622)
    ```
    --role-consultant-bg: rgba(139, 92, 246, 0.1);
    ```
 
-675. **RGBA**: `rgba(139, 92, 246, 0.1)` (라인 623)
+726. **RGBA**: `rgba(139, 92, 246, 0.1)` (라인 623)
    ```
    --status-assigned-bg: rgba(139, 92, 246, 0.1);
    ```
 
-676. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 624)
+727. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 624)
    ```
    --status-cancelled-bg: rgba(239, 68, 68, 0.1);
    ```
 
-677. **RGBA**: `rgba(5, 150, 105, 0.1)` (라인 625)
+728. **RGBA**: `rgba(5, 150, 105, 0.1)` (라인 625)
    ```
    --status-completed-bg: rgba(5, 150, 105, 0.1);
    ```
 
-678. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 626)
+729. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 626)
    ```
    --status-confirmed-bg: rgba(59, 130, 246, 0.1);
    ```
 
-679. **RGBA**: `rgba(16, 185, 129, 0.1)` (라인 627)
+730. **RGBA**: `rgba(16, 185, 129, 0.1)` (라인 627)
    ```
    --status-in-progress-bg: rgba(16, 185, 129, 0.1);
    ```
 
-680. **RGBA**: `rgba(251, 191, 36, 0.1)` (라인 628)
+731. **RGBA**: `rgba(251, 191, 36, 0.1)` (라인 628)
    ```
    --status-requested-bg: rgba(251, 191, 36, 0.1);
    ```
 
-681. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 629)
+732. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 629)
    ```
    --vacation-annual-bg: rgba(59, 130, 246, 0.1);
    ```
 
-682. **RGBA**: `rgba(139, 92, 246, 0.1)` (라인 630)
+733. **RGBA**: `rgba(139, 92, 246, 0.1)` (라인 630)
    ```
    --vacation-personal-bg: rgba(139, 92, 246, 0.1);
    ```
 
-683. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 631)
+734. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 631)
    ```
    --vacation-sick-bg: rgba(239, 68, 68, 0.1);
    ```
 
-684. **RGBA**: `rgba(255, 182, 193, 0.2)` (라인 634)
+735. **RGBA**: `rgba(255, 182, 193, 0.2)` (라인 634)
    ```
    --border-pink-light: rgba(255, 182, 193, 0.2);
    ```
 
-685. **RGBA**: `rgba(255, 182, 193, 0.4)` (라인 635)
+736. **RGBA**: `rgba(255, 182, 193, 0.4)` (라인 635)
    ```
    --border-pink-medium: rgba(255, 182, 193, 0.4);
    ```
 
-686. **RGBA**: `rgba(135, 206, 235, 0.2)` (라인 646)
+737. **RGBA**: `rgba(135, 206, 235, 0.2)` (라인 646)
    ```
    --border-sky-light: rgba(135, 206, 235, 0.2);
    ```
 
-687. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 658)
+738. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 658)
    ```
    --droplet-border: rgba(255, 255, 255, 0.3);
    ```
 
-688. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 659)
+739. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 659)
    ```
    --glass-border: rgba(255, 255, 255, 0.2);
    ```
 
-689. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 660)
+740. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 660)
    ```
    --glass-border-strong: rgba(255, 255, 255, 0.2);
    ```
 
-690. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 666)
+741. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 666)
    ```
    --ipad-card-border: rgba(0, 0, 0, 0.05);
    ```
 
-691. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 678)
+742. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 678)
    ```
    --ipad-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
    ```
 
-692. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 679)
+743. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 679)
    ```
    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
    ```
 
-693. **RGBA**: `rgba(31, 38, 135, 0.37)` (라인 682)
+744. **RGBA**: `rgba(31, 38, 135, 0.37)` (라인 682)
    ```
    --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
    ```
 
-694. **RGBA**: `rgba(31, 38, 135, 0.5)` (라인 683)
+745. **RGBA**: `rgba(31, 38, 135, 0.5)` (라인 683)
    ```
    --shadow-glass-strong: 0 8px 32px 0 rgba(31, 38, 135, 0.5);
    ```
 
-695. **RGBA**: `rgba(255, 215, 0, 0.3)` (라인 684)
+746. **RGBA**: `rgba(255, 215, 0, 0.3)` (라인 684)
    ```
    --shadow-gold: 0 4px 12px rgba(255, 215, 0, 0.3);
    ```
 
-696. **RGBA**: `rgba(255, 215, 0, 0.3)` (라인 685)
+747. **RGBA**: `rgba(255, 215, 0, 0.3)` (라인 685)
    ```
    --shadow-gold-sm: 0 2px 8px rgba(255, 215, 0, 0.3);
    ```
 
-697. **RGBA**: `rgba(152, 216, 200, 0.3)` (라인 689)
+748. **RGBA**: `rgba(152, 216, 200, 0.3)` (라인 689)
    ```
    --shadow-mint-sm: 0 2px 8px rgba(152, 216, 200, 0.3);
    ```
 
-698. **RGBA**: `rgba(255, 107, 157, 0.3)` (라인 691)
+749. **RGBA**: `rgba(255, 107, 157, 0.3)` (라인 691)
    ```
    --shadow-peach: 0 4px 16px rgba(255, 107, 157, 0.3);
    ```
 
-699. **RGBA**: `rgba(255, 182, 193, 0.3)` (라인 692)
+750. **RGBA**: `rgba(255, 182, 193, 0.3)` (라인 692)
    ```
    --shadow-pink-sm: 0 2px 8px rgba(255, 182, 193, 0.3);
    ```
 
-700. **RGBA**: `rgba(135, 206, 235, 0.3)` (라인 693)
+751. **RGBA**: `rgba(135, 206, 235, 0.3)` (라인 693)
    ```
    --shadow-sky: 0 4px 12px rgba(135, 206, 235, 0.3);
    ```
 
-701. **RGBA**: `rgba(135, 206, 235, 0.3)` (라인 694)
+752. **RGBA**: `rgba(135, 206, 235, 0.3)` (라인 694)
    ```
    --shadow-sky-sm: 0 2px 8px rgba(135, 206, 235, 0.3);
    ```
 
-702. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 696)
+753. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 696)
    ```
    --shadow-xl: 0 25px 50px rgba(0, 0, 0, 0.25);
    ```
 
-703. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 697)
+754. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 697)
    ```
    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
    ```
 
-704. **RGBA**: `rgba(147, 197, 253, 0.15)` (라인 905)
+755. **RGBA**: `rgba(147, 197, 253, 0.15)` (라인 905)
    ```
    --droplet-pattern-1: radial-gradient(ellipse at 23% 47%, rgba(147, 197, 253, 0.15), transparent 65%);
    ```
 
-705. **RGBA**: `rgba(251, 191, 36, 0.12)` (라인 906)
+756. **RGBA**: `rgba(251, 191, 36, 0.12)` (라인 906)
    ```
    --droplet-pattern-2: radial-gradient(ellipse at 78% 23%, rgba(251, 191, 36, 0.12), transparent 58%);
    ```
 
-706. **RGBA**: `rgba(239, 68, 68, 0.18)` (라인 907)
+757. **RGBA**: `rgba(239, 68, 68, 0.18)` (라인 907)
    ```
    --droplet-pattern-3: radial-gradient(ellipse at 42% 81%, rgba(239, 68, 68, 0.18), transparent 62%);
    ```
 
-707. **RGBA**: `rgba(139, 92, 246, 0.14)` (라인 908)
+758. **RGBA**: `rgba(139, 92, 246, 0.14)` (라인 908)
    ```
    --droplet-pattern-4: radial-gradient(ellipse at 61% 38%, rgba(139, 92, 246, 0.14), transparent 60%);
    ```
 
-708. **RGBA**: `rgba(34, 197, 94, 0.12)` (라인 909)
+759. **RGBA**: `rgba(34, 197, 94, 0.12)` (라인 909)
    ```
    --droplet-pattern-5: radial-gradient(ellipse at 35% 15%, rgba(34, 197, 94, 0.12), transparent 55%);
    ```
 
-709. **RGBA**: `rgba(236, 72, 153, 0.16)` (라인 910)
+760. **RGBA**: `rgba(236, 72, 153, 0.16)` (라인 910)
    ```
    --droplet-pattern-6: radial-gradient(ellipse at 15% 65%, rgba(236, 72, 153, 0.16), transparent 68%);
    ```
 
-710. **RGBA**: `rgba(99, 102, 241, 0.13)` (라인 911)
+761. **RGBA**: `rgba(99, 102, 241, 0.13)` (라인 911)
    ```
    --droplet-pattern-7: radial-gradient(ellipse at 85% 72%, rgba(99, 102, 241, 0.13), transparent 64%);
    ```
 
-711. **RGBA**: `rgba(99, 102, 241, 0.08)` (라인 912)
+762. **RGBA**: `rgba(99, 102, 241, 0.08)` (라인 912)
    ```
    --droplet-pattern-blend: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(236, 72, 153, 0.12));
    ```
 
-712. **RGBA**: `rgba(236, 72, 153, 0.12)` (라인 912)
+763. **RGBA**: `rgba(236, 72, 153, 0.12)` (라인 912)
    ```
    --droplet-pattern-blend: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(236, 72, 153, 0.12));
    ```
 
-713. **RGBA**: `rgba(0,0,0,0.05)` (라인 1169)
+764. **RGBA**: `rgba(0,0,0,0.05)` (라인 1169)
    ```
    --mg-shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
    ```
 
-714. **RGBA**: `rgba(0,0,0,0.07)` (라인 1170)
+765. **RGBA**: `rgba(0,0,0,0.07)` (라인 1170)
    ```
    --mg-shadow-md: 0 4px 6px rgba(0,0,0,0.07);
    ```
 
-715. **RGBA**: `rgba(0,0,0,0.1)` (라인 1171)
+766. **RGBA**: `rgba(0,0,0,0.1)` (라인 1171)
    ```
    --mg-shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
    ```
 
-716. **RGBA**: `rgba(0,0,0,0.12)` (라인 1172)
+767. **RGBA**: `rgba(0,0,0,0.12)` (라인 1172)
    ```
    --mg-shadow-xl: 0 20px 25px rgba(0,0,0,0.12);
    ```
 
-717. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 1657)
+768. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 1754)
    ```
    --glass-bg: rgba(255, 255, 255, 0.2);
    ```
 
-718. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 1658)
+769. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 1755)
    ```
    --glass-border: rgba(255, 255, 255, 0.2);
    ```
 
-719. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 1666)
+770. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 1763)
    ```
    --droplet-bg: rgba(255, 255, 255, 0.7);
    ```
 
-720. **RGBA**: `rgba(0, 0, 0, 0.4)` (라인 1667)
+771. **RGBA**: `rgba(0, 0, 0, 0.4)` (라인 1764)
    ```
    --droplet-bg-dark: rgba(0, 0, 0, 0.4);
    ```
 
-721. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 1668)
+772. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 1765)
    ```
    --droplet-border: rgba(255, 255, 255, 0.3);
    ```
 
-722. **RGBA**: `rgba(147, 197, 253, 0.15)` (라인 1674)
+773. **RGBA**: `rgba(147, 197, 253, 0.15)` (라인 1771)
    ```
    --droplet-pattern-1: radial-gradient(ellipse at 23% 47%, rgba(147, 197, 253, 0.15), transparent 65%);
    ```
 
-723. **RGBA**: `rgba(251, 191, 36, 0.12)` (라인 1675)
+774. **RGBA**: `rgba(251, 191, 36, 0.12)` (라인 1772)
    ```
    --droplet-pattern-2: radial-gradient(ellipse at 78% 23%, rgba(251, 191, 36, 0.12), transparent 58%);
    ```
 
-724. **RGBA**: `rgba(239, 68, 68, 0.18)` (라인 1676)
+775. **RGBA**: `rgba(239, 68, 68, 0.18)` (라인 1773)
    ```
    --droplet-pattern-3: radial-gradient(ellipse at 42% 81%, rgba(239, 68, 68, 0.18), transparent 62%);
    ```
 
-725. **RGBA**: `rgba(139, 92, 246, 0.14)` (라인 1677)
+776. **RGBA**: `rgba(139, 92, 246, 0.14)` (라인 1774)
    ```
    --droplet-pattern-4: radial-gradient(ellipse at 61% 38%, rgba(139, 92, 246, 0.14), transparent 60%);
    ```
 
-726. **RGBA**: `rgba(34, 197, 94, 0.12)` (라인 1678)
+777. **RGBA**: `rgba(34, 197, 94, 0.12)` (라인 1775)
    ```
    --droplet-pattern-5: radial-gradient(ellipse at 35% 15%, rgba(34, 197, 94, 0.12), transparent 55%);
    ```
 
-727. **RGBA**: `rgba(236, 72, 153, 0.16)` (라인 1679)
+778. **RGBA**: `rgba(236, 72, 153, 0.16)` (라인 1776)
    ```
    --droplet-pattern-6: radial-gradient(ellipse at 15% 65%, rgba(236, 72, 153, 0.16), transparent 68%);
    ```
 
-728. **RGBA**: `rgba(99, 102, 241, 0.13)` (라인 1680)
+779. **RGBA**: `rgba(99, 102, 241, 0.13)` (라인 1777)
    ```
    --droplet-pattern-7: radial-gradient(ellipse at 85% 72%, rgba(99, 102, 241, 0.13), transparent 64%);
    ```
 
-729. **RGBA**: `rgba(99, 102, 241, 0.08)` (라인 1681)
+780. **RGBA**: `rgba(99, 102, 241, 0.08)` (라인 1778)
    ```
    --droplet-pattern-blend: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(236, 72, 153, 0.12));
    ```
 
-730. **RGBA**: `rgba(236, 72, 153, 0.12)` (라인 1681)
+781. **RGBA**: `rgba(236, 72, 153, 0.12)` (라인 1778)
    ```
    --droplet-pattern-blend: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(236, 72, 153, 0.12));
    ```
 
-731. **RGBA**: `rgba(0, 122, 255, 0.3)` (라인 1874)
+782. **RGBA**: `rgba(0, 122, 255, 0.3)` (라인 1971)
    ```
    --shadow-hover-primary: 0 4px 12px rgba(0, 122, 255, 0.3);
    ```
 
-732. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 1886)
+783. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 1983)
    ```
    --shadow-xl: 0 25px 50px rgba(0, 0, 0, 0.25);
    ```
 
-733. **RGBA**: `rgba(255, 192, 203, 0.15)` (라인 1932)
+784. **RGBA**: `rgba(255, 192, 203, 0.15)` (라인 2029)
    ```
    rgba(255, 192, 203, 0.15),  /* 연분홍 - 더 연하게 */
    ```
 
-734. **RGBA**: `rgba(255, 223, 186, 0.12)` (라인 1933)
+785. **RGBA**: `rgba(255, 223, 186, 0.12)` (라인 2030)
    ```
    rgba(255, 223, 186, 0.12), /* 복숭아 - 더 연하게 */
    ```
 
-735. **RGBA**: `rgba(255, 192, 203, 0.15)` (라인 1934)
+786. **RGBA**: `rgba(255, 192, 203, 0.15)` (라인 2031)
    ```
    rgba(255, 192, 203, 0.15)   /* 연분홍 - 더 연하게 */
    ```
 
-736. **RGBA**: `rgba(255, 223, 186, 0.12)` (라인 1957)
+787. **RGBA**: `rgba(255, 223, 186, 0.12)` (라인 2054)
    ```
    rgba(255, 223, 186, 0.12), /* 복숭아 - 더 연하게 */
    ```
 
-737. **RGBA**: `rgba(255, 239, 213, 0.1)` (라인 1958)
+788. **RGBA**: `rgba(255, 239, 213, 0.1)` (라인 2055)
    ```
    rgba(255, 239, 213, 0.1),  /* 연한 복숭아 - 더 연하게 */
    ```
 
-738. **RGBA**: `rgba(255, 223, 186, 0.12)` (라인 1959)
+789. **RGBA**: `rgba(255, 223, 186, 0.12)` (라인 2056)
    ```
    rgba(255, 223, 186, 0.12)  /* 복숭아 - 더 연하게 */
    ```
 
-739. **RGBA**: `rgba(255, 239, 213, 0.1)` (라인 1970)
+790. **RGBA**: `rgba(255, 239, 213, 0.1)` (라인 2067)
    ```
    rgba(255, 239, 213, 0.1),  /* 연한 복숭아 - 더 연하게 */
    ```
 
-740. **RGBA**: `rgba(255, 250, 205, 0.08)` (라인 1971)
+791. **RGBA**: `rgba(255, 250, 205, 0.08)` (라인 2068)
    ```
    rgba(255, 250, 205, 0.08), /* 연노랑 - 더 연하게 */
    ```
 
-741. **RGBA**: `rgba(255, 239, 213, 0.1)` (라인 1972)
+792. **RGBA**: `rgba(255, 239, 213, 0.1)` (라인 2069)
    ```
    rgba(255, 239, 213, 0.1)   /* 연한 복숭아 - 더 연하게 */
    ```
 
-742. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 1997)
+793. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 2094)
    ```
    background: rgba(255, 255, 255, 0.6);
    ```
 
-743. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 1999)
+794. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 2096)
    ```
    border: 1px solid rgba(255, 255, 255, 0.5);
    ```
 
-744. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 2046)
+795. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 2143)
    ```
    background: rgba(255, 255, 255, 0.8);
    ```
 
-745. **RGBA**: `rgba(128, 128, 0, 0.1)` (라인 2215)
+796. **RGBA**: `rgba(128, 128, 0, 0.1)` (라인 2312)
    ```
    background: rgba(128, 128, 0, 0.1);
    ```
 
-746. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 2264)
+797. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 2361)
    ```
    background: rgba(255, 255, 255, 0.6);
    ```
 
-747. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 2266)
+798. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 2363)
    ```
    border: 1px solid rgba(255, 255, 255, 0.5);
    ```
 
-748. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 2271)
+799. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 2368)
    ```
    background: rgba(255, 255, 255, 0.7);
    ```
 
-749. **RGBA**: `rgba(152, 251, 152, 0.2)` (라인 2348)
+800. **RGBA**: `rgba(152, 251, 152, 0.2)` (라인 2445)
    ```
    box-shadow: 0 0 0 3px rgba(152, 251, 152, 0.2);
    ```
 
-750. **RGBA**: `rgba(152, 251, 152, 0.2)` (라인 2372)
+801. **RGBA**: `rgba(152, 251, 152, 0.2)` (라인 2469)
    ```
    box-shadow: 0 0 0 3px rgba(152, 251, 152, 0.2);
    ```
 
-751. **RGBA**: `rgba(152, 251, 152, 0.2)` (라인 2391)
+802. **RGBA**: `rgba(152, 251, 152, 0.2)` (라인 2488)
    ```
    box-shadow: 0 0 0 3px rgba(152, 251, 152, 0.2);
    ```
 
-752. **RGBA**: `rgba(255, 255, 255, 0.15)` (라인 2420)
+803. **RGBA**: `rgba(255, 255, 255, 0.15)` (라인 2517)
    ```
    background: rgba(255, 255, 255, 0.15);
    ```
 
-753. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 2422)
+804. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 2519)
    ```
    border: 1px solid rgba(255, 255, 255, 0.2);
    ```
 
-754. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 2428)
+805. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 2525)
    ```
    inset 0 1px 0 rgba(255, 255, 255, 0.3);
    ```
 
-755. **RGBA**: `rgba(255, 255, 255, 0.1)` (라인 2447)
+806. **RGBA**: `rgba(255, 255, 255, 0.1)` (라인 2544)
    ```
    rgba(255, 255, 255, 0.1) 0%,
    ```
 
-756. **RGBA**: `rgba(255, 255, 255, 0.05)` (라인 2448)
+807. **RGBA**: `rgba(255, 255, 255, 0.05)` (라인 2545)
    ```
    rgba(255, 255, 255, 0.05) 100%);
    ```
 
-757. **RGBA**: `rgba(255, 255, 255, 0.4)` (라인 2455)
+808. **RGBA**: `rgba(255, 255, 255, 0.4)` (라인 2552)
    ```
    border-color: rgba(255, 255, 255, 0.4);
    ```
 
-758. **RGBA**: `rgba(255, 255, 255, 0.4)` (라인 2458)
+809. **RGBA**: `rgba(255, 255, 255, 0.4)` (라인 2555)
    ```
    inset 0 1px 0 rgba(255, 255, 255, 0.4);
    ```
 
-759. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 2465)
+810. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 2562)
    ```
    background: rgba(255, 255, 255, 0.2);
    ```
 
-760. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 2467)
+811. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 2564)
    ```
    border: 1px solid rgba(255, 255, 255, 0.3);
    ```
 
-761. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 2486)
+812. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 2583)
    ```
    rgba(255, 255, 255, 0.3) 0%,
    ```
 
-762. **RGBA**: `rgba(255, 255, 255, 0.1)` (라인 2487)
+813. **RGBA**: `rgba(255, 255, 255, 0.1)` (라인 2584)
    ```
    rgba(255, 255, 255, 0.1) 100%);
    ```
 
-763. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 2493)
+814. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 2590)
    ```
    background: rgba(255, 255, 255, 0.3);
    ```
 
-764. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 2494)
+815. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 2591)
    ```
    border-color: rgba(255, 255, 255, 0.5);
    ```
 
-765. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 2555)
+816. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 2652)
    ```
    background: rgba(255, 255, 255, 0.95);
    ```
 
-766. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 2557)
+817. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 2654)
    ```
    border: 1px solid rgba(255, 255, 255, 0.5);
    ```
 
-767. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 2593)
+818. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 2690)
    ```
    background: rgba(255, 255, 255, 0.9);
    ```
 
-768. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 2595)
+819. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 2692)
    ```
    border: 1px solid rgba(255, 255, 255, 0.5);
    ```
 
-769. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 2609)
+820. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 2706)
    ```
    background: rgba(255, 255, 255, 0.95);
    ```
 
-770. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 3073)
+821. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 3170)
    ```
    background: rgba(255, 255, 255, 0.2);
    ```
 
-771. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 3081)
+822. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 3178)
    ```
    border-color: rgba(255, 255, 255, 0.3);
    ```
 
-772. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 4569)
+823. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 4666)
    ```
    background: rgba(255, 255, 255, 0.6);
    ```
 
-773. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 4571)
+824. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 4668)
    ```
    border: 1px solid rgba(255, 255, 255, 0.5);
    ```
 
-774. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 4581)
+825. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 4678)
    ```
    background: rgba(255, 255, 255, 0.7);
    ```
 
-775. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 4583)
+826. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 4680)
    ```
    border: 1px solid rgba(255, 255, 255, 0.6);
    ```
 
-776. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 4814)
+827. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 4911)
    ```
    background: rgba(255, 255, 255, 0.3);
    ```
 
-777. **RGBA**: `rgba(152, 251, 152, 0.1)` (라인 4840)
+828. **RGBA**: `rgba(152, 251, 152, 0.1)` (라인 4937)
    ```
    background: rgba(152, 251, 152, 0.1);
    ```
 
-778. **RGBA**: `rgba(152, 251, 152, 0.3)` (라인 4841)
+829. **RGBA**: `rgba(152, 251, 152, 0.3)` (라인 4938)
    ```
    box-shadow: 0 8px 25px rgba(152, 251, 152, 0.3);
    ```
 
-779. **RGBA**: `rgba(239, 68, 68, 0.05)` (라인 4847)
+830. **RGBA**: `rgba(239, 68, 68, 0.05)` (라인 4944)
    ```
    background: rgba(239, 68, 68, 0.05);
    ```
 
-780. **RGBA**: `rgba(255, 149, 0, 0.1)` (라인 4855)
+831. **RGBA**: `rgba(255, 149, 0, 0.1)` (라인 4952)
    ```
    background: rgba(255, 149, 0, 0.1);
    ```
 
-781. **RGBA**: `rgba(255, 149, 0, 0.3)` (라인 4861)
+832. **RGBA**: `rgba(255, 149, 0, 0.3)` (라인 4958)
    ```
    border: 1px solid rgba(255, 149, 0, 0.3);
    ```
 
-782. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 4865)
+833. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 4962)
    ```
    background: rgba(239, 68, 68, 0.1);
    ```
 
-783. **RGBA**: `rgba(239, 68, 68, 0.3)` (라인 4867)
+834. **RGBA**: `rgba(239, 68, 68, 0.3)` (라인 4964)
    ```
    border: 1px solid rgba(239, 68, 68, 0.3);
    ```
 
-784. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 4873)
+835. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 4970)
    ```
    background: rgba(255, 255, 255, 0.3);
    ```
 
-785. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 4875)
+836. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 4972)
    ```
    border: 1px solid rgba(255, 255, 255, 0.2);
    ```
 
-786. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 4918)
+837. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 5015)
    ```
    background: rgba(255, 255, 255, 0.3);
    ```
 
-787. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 4940)
+838. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 5037)
    ```
    background: rgba(255, 255, 255, 0.3);
    ```
 
-788. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 4942)
+839. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 5039)
    ```
    border: 1px solid rgba(255, 255, 255, 0.2);
    ```
 
-789. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 4977)
+840. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 5074)
    ```
    background: rgba(255, 255, 255, 0.5);
    ```
 
-790. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 4978)
+841. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 5075)
    ```
    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
    ```
 
-791. **RGBA**: `rgba(152, 251, 152, 0.1)` (라인 4984)
+842. **RGBA**: `rgba(152, 251, 152, 0.1)` (라인 5081)
    ```
    background: rgba(152, 251, 152, 0.1);
    ```
 
-792. **RGBA**: `rgba(152, 251, 152, 0.3)` (라인 4985)
+843. **RGBA**: `rgba(152, 251, 152, 0.3)` (라인 5082)
    ```
    box-shadow: 0 8px 25px rgba(152, 251, 152, 0.3);
    ```
 
-793. **RGBA**: `rgba(239, 68, 68, 0.05)` (라인 4991)
+844. **RGBA**: `rgba(239, 68, 68, 0.05)` (라인 5088)
    ```
    background: rgba(239, 68, 68, 0.05);
    ```
 
-794. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 5017)
+845. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 5114)
    ```
    background: rgba(255, 255, 255, 0.3);
    ```
 
-795. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 5022)
+846. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 5119)
    ```
    border: 1px solid rgba(255, 255, 255, 0.2);
    ```
 
-796. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 5036)
+847. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 5133)
    ```
    background: rgba(255, 255, 255, 0.6);
    ```
 
-797. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 5038)
+848. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 5135)
    ```
    border: 1px solid rgba(255, 255, 255, 0.5);
    ```
 
-798. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 5049)
+849. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 5146)
    ```
    background: rgba(255, 255, 255, 0.7);
    ```
 
-799. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 5051)
+850. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 5148)
    ```
    border: 1px solid rgba(255, 255, 255, 0.6);
    ```
 
-800. **RGBA**: `rgba(152, 251, 152, 0.2)` (라인 5259)
+851. **RGBA**: `rgba(152, 251, 152, 0.2)` (라인 5356)
    ```
    background: rgba(152, 251, 152, 0.2);
    ```
 
-801. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 5286)
+852. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 5383)
    ```
    background: rgba(255, 255, 255, 0.8);
    ```
 
-802. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 5288)
+853. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 5385)
    ```
    border: 1px solid rgba(255, 255, 255, 0.6);
    ```
 
-803. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 5291)
+854. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 5388)
    ```
    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
    ```
 
-804. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 5298)
+855. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 5395)
    ```
    background: rgba(255, 255, 255, 0.9);
    ```
 
-805. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 5299)
+856. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 5396)
    ```
    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
    ```
 
-806. **RGBA**: `rgba(152, 251, 152, 0.2)` (라인 5362)
+857. **RGBA**: `rgba(152, 251, 152, 0.2)` (라인 5459)
    ```
    background: rgba(152, 251, 152, 0.2);
    ```
 
-807. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 5401)
+858. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 5498)
    ```
    box-shadow: var(--ad-b0kla-shadow-hover, 0 4px 12px rgba(0, 0, 0, 0.08));
    ```
 
-808. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 5512)
+859. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 5609)
    ```
    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
    ```
 
-809. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 5701)
+860. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 5798)
    ```
    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
    ```
 
-810. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 5778)
+861. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 5875)
    ```
    background: rgba(255, 255, 255, 0.8);
    ```
 
-811. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 5780)
+862. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 5877)
    ```
    border: 1px solid rgba(255, 255, 255, 0.6);
    ```
 
-812. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 5783)
+863. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 5880)
    ```
    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
    ```
 
-813. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 5790)
+864. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 5887)
    ```
    background: rgba(255, 255, 255, 0.9);
    ```
 
-814. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 5791)
+865. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 5888)
    ```
    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
    ```
 
-815. **RGBA**: `rgba(16, 185, 129, 0.1)` (라인 5875)
+866. **RGBA**: `rgba(16, 185, 129, 0.1)` (라인 5972)
    ```
    --color-success-light: rgba(16, 185, 129, 0.1);
    ```
 
-816. **RGBA**: `rgba(245, 158, 11, 0.1)` (라인 5876)
+867. **RGBA**: `rgba(245, 158, 11, 0.1)` (라인 5973)
    ```
    --color-warning-light: rgba(245, 158, 11, 0.1);
    ```
 
-817. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 5877)
+868. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 5974)
    ```
    --color-info-light: rgba(59, 130, 246, 0.1);
    ```
 
-818. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 5878)
+869. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 5975)
    ```
    --color-danger-light: rgba(239, 68, 68, 0.1);
    ```
 
-819. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 5960)
+870. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 6057)
    ```
    background: var(--card-bg, rgba(255, 255, 255, 0.6));
    ```
 
-820. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 5961)
+871. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 6058)
    ```
    border: 1px solid var(--card-border, rgba(255, 255, 255, 0.5));
    ```
 
-821. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 5985)
+872. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 6082)
    ```
    border-bottom: 1px solid var(--border-color, rgba(139, 69, 19, 0.1));
    ```
 
-822. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 6028)
+873. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 6125)
    ```
    border: 1px solid rgba(139, 69, 19, 0.1);
    ```
 
-823. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 6426)
+874. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 6523)
    ```
    border-top: 1px solid var(--border-color, rgba(139, 69, 19, 0.1));
    ```
 
-824. **RGBA**: `rgba(152, 251, 152, 0.2)` (라인 6883)
+875. **RGBA**: `rgba(152, 251, 152, 0.2)` (라인 6980)
    ```
    background: var(--mint-green-light, rgba(152, 251, 152, 0.2));
    ```
 
-825. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 7004)
+876. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 7101)
    ```
    background: rgba(255, 255, 255, 0.3);
    ```
 
-826. **RGBA**: `rgba(152, 251, 152, 0.2)` (라인 7046)
+877. **RGBA**: `rgba(152, 251, 152, 0.2)` (라인 7143)
    ```
    background: rgba(152, 251, 152, 0.2);
    ```
 
-827. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 7064)
+878. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 7161)
    ```
    background: rgba(255, 255, 255, 0.3);
    ```
 
-828. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 7091)
+879. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 7188)
    ```
    background: rgba(255, 255, 255, 0.3);
    ```
 
-829. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 7203)
+880. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 7300)
    ```
    background: rgba(255, 255, 255, 0.6);
    ```
 
-830. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 7205)
+881. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 7302)
    ```
    border: 1px solid rgba(255, 255, 255, 0.5);
    ```
 
-831. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 7217)
+882. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 7314)
    ```
    background: rgba(255, 255, 255, 0.7);
    ```
 
-832. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 7435)
+883. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 7532)
    ```
    background: rgba(255, 255, 255, 0.5);
    ```
 
-833. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 7473)
+884. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 7570)
    ```
    background: rgba(255, 255, 255, 0.3);
    ```
 
-834. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 7493)
+885. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 7590)
    ```
    background: rgba(255, 255, 255, 0.6);
    ```
 
-835. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 7495)
+886. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 7592)
    ```
    border: 1px solid rgba(255, 255, 255, 0.5);
    ```
 
-836. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 7507)
+887. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 7604)
    ```
    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
    ```
 
-837. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 7546)
+888. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 7643)
    ```
    background: rgba(255, 255, 255, 0.5);
    ```
 
-838. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 7588)
+889. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 7685)
    ```
    background: rgba(255, 255, 255, 0.3);
    ```
 
-839. **RGBA**: `rgba(152, 251, 152, 0.1)` (라인 7974)
+890. **RGBA**: `rgba(152, 251, 152, 0.1)` (라인 8071)
    ```
    box-shadow: 0 2px 4px rgba(152, 251, 152, 0.1);
    ```
 
-840. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 8298)
+891. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 8395)
    ```
    background: rgba(255, 255, 255, 0.6);
    ```
 
-841. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 8300)
+892. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 8397)
    ```
    border: 1px solid rgba(139, 69, 19, 0.1);
    ```
 
-842. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 8307)
+893. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 8404)
    ```
    background: rgba(255, 255, 255, 0.8);
    ```
 
-843. **RGBA**: `rgba(182, 229, 216, 0.2)` (라인 8314)
+894. **RGBA**: `rgba(182, 229, 216, 0.2)` (라인 8411)
    ```
    background: rgba(182, 229, 216, 0.2);
    ```
 
-844. **RGBA**: `rgba(182, 229, 216, 0.3)` (라인 8316)
+895. **RGBA**: `rgba(182, 229, 216, 0.3)` (라인 8413)
    ```
    box-shadow: 0 0 0 2px rgba(182, 229, 216, 0.3);
    ```
 
-845. **RGBA**: `rgba(182, 229, 216, 0.4)` (라인 8379)
+896. **RGBA**: `rgba(182, 229, 216, 0.4)` (라인 8476)
    ```
    box-shadow: 0 4px 12px rgba(182, 229, 216, 0.4);
    ```
 
-846. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 8387)
+897. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 8484)
    ```
    border: 2px solid rgba(255, 255, 255, 0.3);
    ```
 
-847. **RGBA**: `rgba(182, 229, 216, 0.1)` (라인 8443)
+898. **RGBA**: `rgba(182, 229, 216, 0.1)` (라인 8540)
    ```
    background: rgba(182, 229, 216, 0.1);
    ```
 
-848. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 8464)
+899. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 8561)
    ```
    border-top: 1px solid rgba(139, 69, 19, 0.1);
    ```
 
-849. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 8498)
+900. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 8595)
    ```
    background: rgba(255, 255, 255, 0.6);
    ```
 
-850. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 8499)
+901. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 8596)
    ```
    border: 1px solid rgba(139, 69, 19, 0.1);
    ```
 
-851. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 8506)
+902. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 8603)
    ```
    background: rgba(255, 255, 255, 0.8);
    ```
 
-852. **RGBA**: `rgba(182, 229, 216, 0.2)` (라인 8573)
+903. **RGBA**: `rgba(182, 229, 216, 0.2)` (라인 8670)
    ```
    background: rgba(182, 229, 216, 0.2);
    ```
 
-853. **RGBA**: `rgba(255, 235, 205, 0.3)` (라인 8579)
+904. **RGBA**: `rgba(255, 235, 205, 0.3)` (라인 8676)
    ```
    background: rgba(255, 235, 205, 0.3);
    ```
 
-854. **RGBA**: `rgba(139, 69, 19, 0.3)` (라인 8581)
+905. **RGBA**: `rgba(139, 69, 19, 0.3)` (라인 8678)
    ```
    border: 1px solid rgba(139, 69, 19, 0.3);
    ```
 
-855. **RGBA**: `rgba(182, 229, 216, 0.3)` (라인 8585)
+906. **RGBA**: `rgba(182, 229, 216, 0.3)` (라인 8682)
    ```
    background: rgba(182, 229, 216, 0.3);
    ```
 
-856. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 8591)
+907. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 8688)
    ```
    background: rgba(139, 69, 19, 0.1);
    ```
 
-857. **RGBA**: `rgba(139, 69, 19, 0.3)` (라인 8593)
+908. **RGBA**: `rgba(139, 69, 19, 0.3)` (라인 8690)
    ```
    border: 1px solid rgba(139, 69, 19, 0.3);
    ```
 
-858. **RGBA**: `rgba(107, 107, 107, 0.1)` (라인 8597)
+909. **RGBA**: `rgba(107, 107, 107, 0.1)` (라인 8694)
    ```
    background: rgba(107, 107, 107, 0.1);
    ```
 
-859. **RGBA**: `rgba(107, 107, 107, 0.3)` (라인 8599)
+910. **RGBA**: `rgba(107, 107, 107, 0.3)` (라인 8696)
    ```
    border: 1px solid rgba(107, 107, 107, 0.3);
    ```
 
-860. **RGBA**: `rgba(107, 107, 107, 0.1)` (라인 8603)
+911. **RGBA**: `rgba(107, 107, 107, 0.1)` (라인 8700)
    ```
    background: rgba(107, 107, 107, 0.1);
    ```
 
-861. **RGBA**: `rgba(107, 107, 107, 0.2)` (라인 8605)
+912. **RGBA**: `rgba(107, 107, 107, 0.2)` (라인 8702)
    ```
    border: 1px solid rgba(107, 107, 107, 0.2);
    ```
 
-862. **RGBA**: `rgba(255, 235, 205, 0.3)` (라인 8610)
+913. **RGBA**: `rgba(255, 235, 205, 0.3)` (라인 8707)
    ```
    background: rgba(255, 235, 205, 0.3);
    ```
 
-863. **RGBA**: `rgba(139, 69, 19, 0.3)` (라인 8612)
+914. **RGBA**: `rgba(139, 69, 19, 0.3)` (라인 8709)
    ```
    border: 1px solid rgba(139, 69, 19, 0.3);
    ```
 
-864. **RGBA**: `rgba(182, 229, 216, 0.2)` (라인 8616)
+915. **RGBA**: `rgba(182, 229, 216, 0.2)` (라인 8713)
    ```
    background: rgba(182, 229, 216, 0.2);
    ```
 
-865. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 8622)
+916. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 8719)
    ```
    background: rgba(139, 69, 19, 0.1);
    ```
 
-866. **RGBA**: `rgba(139, 69, 19, 0.4)` (라인 8624)
+917. **RGBA**: `rgba(139, 69, 19, 0.4)` (라인 8721)
    ```
    border: 1px solid rgba(139, 69, 19, 0.4);
    ```
 
-867. **RGBA**: `rgba(107, 107, 107, 0.1)` (라인 8628)
+918. **RGBA**: `rgba(107, 107, 107, 0.1)` (라인 8725)
    ```
    background: rgba(107, 107, 107, 0.1);
    ```
 
-868. **RGBA**: `rgba(107, 107, 107, 0.2)` (라인 8630)
+919. **RGBA**: `rgba(107, 107, 107, 0.2)` (라인 8727)
    ```
    border: 1px solid rgba(107, 107, 107, 0.2);
    ```
 
-869. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 8637)
+920. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 8734)
    ```
    background: rgba(255, 255, 255, 0.6);
    ```
 
-870. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 8639)
+921. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 8736)
    ```
    border: 1px solid rgba(255, 255, 255, 0.3);
    ```
 
-871. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 8650)
+922. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 8747)
    ```
    border-bottom: 1px solid rgba(139, 69, 19, 0.1);
    ```
 
-872. **RGBA**: `rgba(182, 229, 216, 0.1)` (라인 8658)
+923. **RGBA**: `rgba(182, 229, 216, 0.1)` (라인 8755)
    ```
    background: rgba(182, 229, 216, 0.1);
    ```
 
-873. **RGBA**: `rgba(102, 126, 234, 0.15)` (라인 8733)
+924. **RGBA**: `rgba(102, 126, 234, 0.15)` (라인 8830)
    ```
    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
    ```
 
-874. **RGBA**: `rgba(102, 126, 234, 0.3)` (라인 8775)
+925. **RGBA**: `rgba(102, 126, 234, 0.3)` (라인 8872)
    ```
    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
    ```
 
-875. **RGBA**: `rgba(102, 126, 234, 0.15)` (라인 8981)
+926. **RGBA**: `rgba(102, 126, 234, 0.15)` (라인 9078)
    ```
    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
    ```
 
-876. **RGBA**: `rgba(102, 126, 234, 0.3)` (라인 9022)
+927. **RGBA**: `rgba(102, 126, 234, 0.3)` (라인 9119)
    ```
    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
    ```
 
-877. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 9424)
+928. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 9521)
    ```
    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
    ```
 
-878. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 9543)
+929. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 9640)
    ```
    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
    ```
 
-879. **RGBA**: `rgba(0, 123, 255, 0.3)` (라인 10295)
+930. **RGBA**: `rgba(0, 123, 255, 0.3)` (라인 10392)
    ```
    text-shadow: 0 1px 2px rgba(0, 123, 255, 0.3);
    ```
 
-880. **RGBA**: `rgba(59, 130, 246, 0.05)` (라인 10718)
+931. **RGBA**: `rgba(59, 130, 246, 0.05)` (라인 10815)
    ```
    background: rgba(59, 130, 246, 0.05) !important;
    ```
 
-881. **RGBA**: `rgba(0, 0, 0, 0.98)` (라인 11955)
+932. **RGBA**: `rgba(0, 0, 0, 0.98)` (라인 12052)
    ```
    background-color: rgba(0, 0, 0, 0.98);
    ```
 
-882. **RGBA**: `rgba(40, 167, 69, 0.3)` (라인 12025)
+933. **RGBA**: `rgba(40, 167, 69, 0.3)` (라인 12122)
    ```
    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
    ```
 
-883. **RGBA**: `rgba(0, 123, 255, 0.3)` (라인 12038)
+934. **RGBA**: `rgba(0, 123, 255, 0.3)` (라인 12135)
    ```
    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
    ```
 
-884. **RGBA**: `rgba(220, 53, 69, 0.3)` (라인 12050)
+935. **RGBA**: `rgba(220, 53, 69, 0.3)` (라인 12147)
    ```
    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
    ```
 
-885. **RGBA**: `rgba(0,0,0,0.1)` (라인 12233)
+936. **RGBA**: `rgba(0,0,0,0.1)` (라인 12330)
    ```
    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
    ```
 
-886. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 12311)
+937. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 12408)
    ```
    background: rgba(255, 255, 255, 0.6);
    ```
 
-887. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 12313)
+938. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 12410)
    ```
    border: 1px solid rgba(255, 255, 255, 0.5);
    ```
 
-888. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 12329)
+939. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 12426)
    ```
    background: rgba(255, 255, 255, 0.3);
    ```
 
-889. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 12330)
+940. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 12427)
    ```
    border-bottom: 1px solid rgba(139, 69, 19, 0.1);
    ```
 
-890. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 12445)
+941. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 12542)
    ```
    border-top: 1px solid rgba(139, 69, 19, 0.1);
    ```
 
-891. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 12482)
+942. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 12579)
    ```
    background: rgba(255, 255, 255, 0.2);
    ```
 
-892. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 12483)
+943. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 12580)
    ```
    border-top: 1px solid rgba(139, 69, 19, 0.1);
    ```
 
-893. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 12508)
+944. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 12605)
    ```
    border-top: 1px solid rgba(139, 69, 19, 0.1);
    ```
 
-894. **RGBA**: `rgba(0,0,0,0.1)` (라인 12583)
+945. **RGBA**: `rgba(0,0,0,0.1)` (라인 12680)
    ```
    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
    ```
 
-895. **RGBA**: `rgba(16, 185, 129, 0.15)` (라인 12804)
+946. **RGBA**: `rgba(16, 185, 129, 0.15)` (라인 12901)
    ```
    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
    ```
 
-896. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 13287)
+947. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 13384)
    ```
    border-bottom: 1px solid rgba(139, 69, 19, 0.1);
    ```
 
-897. **RGBA**: `rgba(23, 162, 184, 0.1)` (라인 13306)
+948. **RGBA**: `rgba(23, 162, 184, 0.1)` (라인 13403)
    ```
    background-color: rgba(23, 162, 184, 0.1);
    ```
 
-898. **RGBA**: `rgba(220, 53, 69, 0.1)` (라인 13311)
+949. **RGBA**: `rgba(220, 53, 69, 0.1)` (라인 13408)
    ```
    background-color: rgba(220, 53, 69, 0.1);
    ```
 
-899. **RGBA**: `rgba(40, 167, 69, 0.1)` (라인 13316)
+950. **RGBA**: `rgba(40, 167, 69, 0.1)` (라인 13413)
    ```
    background-color: rgba(40, 167, 69, 0.1);
    ```
 
-900. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 13327)
+951. **RGBA**: `rgba(139, 69, 19, 0.1)` (라인 13424)
    ```
    border-top: 1px solid rgba(139, 69, 19, 0.1);
    ```
 
-901. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 13422)
+952. **RGBA**: `rgba(255, 255, 255, 0.6)` (라인 13519)
    ```
    background: rgba(255, 255, 255, 0.6);
    ```
 
-902. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 13424)
+953. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 13521)
    ```
    border: 1px solid rgba(255, 255, 255, 0.5);
    ```
 
-903. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 14604)
+954. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 14701)
    ```
    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
    ```
 
-904. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 14653)
+955. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 14750)
    ```
    background-color: var(--color-bg-hover, rgba(0, 0, 0, 0.05));
    ```
 
-905. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 14676)
+956. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 14773)
    ```
    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
    ```
 
-906. **RGBA**: `rgba(0, 123, 255, 0.3)` (라인 14941)
+957. **RGBA**: `rgba(0, 123, 255, 0.3)` (라인 15038)
    ```
    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
    ```
 
-907. **RGBA**: `rgba(0, 123, 255, 0.2)` (라인 14982)
+958. **RGBA**: `rgba(0, 123, 255, 0.2)` (라인 15079)
    ```
    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
    ```
 
-908. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 15651)
+959. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 15748)
    ```
    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
    ```
 
-909. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 15882)
+960. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 15979)
    ```
    background: rgba(255, 255, 255, 0.9);
    ```
 
-910. **RGBA**: `rgba(128, 128, 0, 0.1)` (라인 16070)
+961. **RGBA**: `rgba(128, 128, 0, 0.1)` (라인 16167)
    ```
    box-shadow: 0 0 0 2px rgba(128, 128, 0, 0.1);
    ```
 
-911. **RGBA**: `rgba(227, 242, 253, 0.5)` (라인 16196)
+962. **RGBA**: `rgba(227, 242, 253, 0.5)` (라인 16293)
    ```
    background: rgba(227, 242, 253, 0.5);
    ```
 
-912. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 16283)
+963. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 16380)
    ```
    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
    ```
 
-913. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 16298)
+964. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 16395)
    ```
    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
    ```
 
-914. **RGBA**: `rgba(0, 123, 255, 0.1)` (라인 16496)
+965. **RGBA**: `rgba(0, 123, 255, 0.1)` (라인 16593)
    ```
    background-color: rgba(0, 123, 255, 0.1);
    ```
 
-915. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 16826)
+966. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 16923)
    ```
    background: rgba(255, 255, 255, 0.8);
    ```
 
-916. **RGBA**: `rgba(255, 182, 193, 0.2)` (라인 16945)
+967. **RGBA**: `rgba(255, 182, 193, 0.2)` (라인 17042)
    ```
    background: radial-gradient(circle, rgba(255, 182, 193, 0.2) 0%, transparent 70%);
    ```
 
-917. **RGBA**: `rgba(182, 229, 216, 0.2)` (라인 16958)
+968. **RGBA**: `rgba(182, 229, 216, 0.2)` (라인 17055)
    ```
    background: radial-gradient(circle, rgba(182, 229, 216, 0.2) 0%, transparent 70%);
    ```
 
-918. **RGBA**: `rgba(255, 182, 193, 0.15)` (라인 16970)
+969. **RGBA**: `rgba(255, 182, 193, 0.15)` (라인 17067)
    ```
    box-shadow: 0 4px 20px rgba(255, 182, 193, 0.15);
    ```
 
-919. **RGBA**: `rgba(255, 182, 193, 0.1)` (라인 16992)
+970. **RGBA**: `rgba(255, 182, 193, 0.1)` (라인 17089)
    ```
    background: radial-gradient(circle, rgba(255, 182, 193, 0.1) 0%, transparent 70%);
    ```
 
-920. **RGBA**: `rgba(255, 215, 0, 0.3)` (라인 17005)
+971. **RGBA**: `rgba(255, 215, 0, 0.3)` (라인 17102)
    ```
    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
    ```
 
-921. **RGBA**: `rgba(255, 182, 193, 0.25)` (라인 17050)
+972. **RGBA**: `rgba(255, 182, 193, 0.25)` (라인 17147)
    ```
    box-shadow: 0 8px 30px rgba(255, 182, 193, 0.25);
    ```
 
-922. **RGBA**: `rgba(255, 182, 193, 0.15)` (라인 17058)
+973. **RGBA**: `rgba(255, 182, 193, 0.15)` (라인 17155)
    ```
    box-shadow: 0 4px 20px rgba(255, 182, 193, 0.15);
    ```
 
-923. **RGBA**: `rgba(255, 182, 193, 0.2)` (라인 17072)
+974. **RGBA**: `rgba(255, 182, 193, 0.2)` (라인 17169)
    ```
    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.2);
    ```
 
-924. **RGBA**: `rgba(255, 182, 193, 0.15)` (라인 17109)
+975. **RGBA**: `rgba(255, 182, 193, 0.15)` (라인 17206)
    ```
    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.15);
    ```
 
-925. **RGBA**: `rgba(255, 182, 193, 0.25)` (라인 17114)
+976. **RGBA**: `rgba(255, 182, 193, 0.25)` (라인 17211)
    ```
    box-shadow: 0 8px 30px rgba(255, 182, 193, 0.25);
    ```
 
-926. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 17236)
+977. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 17333)
    ```
    background-color: rgba(255, 255, 255, 0.8);
    ```
 
-927. **RGBA**: `rgba(220, 53, 69, 0.25)` (라인 17350)
+978. **RGBA**: `rgba(220, 53, 69, 0.25)` (라인 17447)
    ```
    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
    ```
 
-928. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 17578)
+979. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 17675)
    ```
    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
    ```
 
-929. **RGBA**: `rgba(102, 126, 234, 0.1)` (라인 18068)
+980. **RGBA**: `rgba(102, 126, 234, 0.1)` (라인 18165)
    ```
    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
    ```
 
-930. **RGBA**: `rgba(102, 126, 234, 0.3)` (라인 18118)
+981. **RGBA**: `rgba(102, 126, 234, 0.3)` (라인 18215)
    ```
    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
    ```
 
-931. **RGBA**: `rgba(0, 123, 255, 0.3)` (라인 18279)
+982. **RGBA**: `rgba(0, 123, 255, 0.3)` (라인 18376)
    ```
    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
    ```
@@ -7690,7 +7945,7 @@
 
 ### 📁 `frontend/src/components/dashboard-v2/content/ContentKpiRow.css` (CSS)
 
-**하드코딩 색상**: 37개
+**하드코딩 색상**: 35개
 
 1. **HEX_6**: `#e2e8f0` (라인 22)
    ```
@@ -7762,647 +8017,109 @@
    background: #edf2f7;
    ```
 
-15. **HEX_6**: `#4a5568` (라인 113)
-   ```
-   color: #4a5568;
-   ```
-
-16. **HEX_6**: `#64748b` (라인 137)
+15. **HEX_6**: `#64748b` (라인 137)
    ```
    color: var(--ad-b0kla-text-secondary, #64748b);
    ```
 
-17. **HEX_6**: `#ebf2ee` (라인 150)
+16. **HEX_6**: `#ebf2ee` (라인 150)
    ```
    background: var(--ad-b0kla-green-bg, #ebf2ee);
    ```
 
-18. **HEX_6**: `#4b745c` (라인 151)
+17. **HEX_6**: `#4b745c` (라인 151)
    ```
    color: var(--ad-b0kla-green, #4b745c);
    ```
 
-19. **HEX_6**: `#fcf3ed` (라인 155)
+18. **HEX_6**: `#fcf3ed` (라인 155)
    ```
    background: var(--ad-b0kla-orange-bg, #fcf3ed);
    ```
 
-20. **HEX_6**: `#e8a87c` (라인 156)
+19. **HEX_6**: `#e8a87c` (라인 156)
    ```
    color: var(--ad-b0kla-orange, #e8a87c);
    ```
 
-21. **HEX_6**: `#f0f5f9` (라인 160)
+20. **HEX_6**: `#f0f5f9` (라인 160)
    ```
    background: var(--ad-b0kla-blue-bg, #f0f5f9);
    ```
 
-22. **HEX_6**: `#6d9dc5` (라인 161)
+21. **HEX_6**: `#6d9dc5` (라인 161)
    ```
    color: var(--ad-b0kla-blue, #6d9dc5);
    ```
 
-23. **HEX_6**: `#2d3748` (라인 167)
+22. **HEX_6**: `#2d3748` (라인 167)
    ```
    color: var(--ad-b0kla-title-color, #2d3748);
    ```
 
-24. **HEX_6**: `#64748b` (라인 182)
+23. **HEX_6**: `#64748b` (라인 182)
    ```
    color: var(--ad-b0kla-text-secondary, #64748b);
    ```
 
-25. **HEX_6**: `#ebf2ee` (라인 194)
+24. **HEX_6**: `#ebf2ee` (라인 194)
    ```
    background: var(--ad-b0kla-green-bg, #ebf2ee);
    ```
 
-26. **HEX_6**: `#4b745c` (라인 195)
+25. **HEX_6**: `#4b745c` (라인 195)
    ```
    color: var(--ad-b0kla-green, #4b745c);
    ```
 
-27. **HEX_6**: `#fcf3ed` (라인 199)
+26. **HEX_6**: `#fcf3ed` (라인 199)
    ```
    background: var(--ad-b0kla-orange-bg, #fcf3ed);
    ```
 
-28. **HEX_6**: `#e8a87c` (라인 200)
+27. **HEX_6**: `#e8a87c` (라인 200)
    ```
    color: var(--ad-b0kla-orange, #e8a87c);
    ```
 
-29. **HEX_6**: `#f0f5f9` (라인 204)
+28. **HEX_6**: `#f0f5f9` (라인 204)
    ```
    background: var(--ad-b0kla-blue-bg, #f0f5f9);
    ```
 
-30. **HEX_6**: `#6d9dc5` (라인 205)
+29. **HEX_6**: `#6d9dc5` (라인 205)
    ```
    color: var(--ad-b0kla-blue, #6d9dc5);
    ```
 
-31. **HEX_6**: `#edf2f7` (라인 209)
+30. **HEX_6**: `#edf2f7` (라인 209)
    ```
    background: #edf2f7;
    ```
 
-32. **HEX_6**: `#4a5568` (라인 210)
-   ```
-   color: #4a5568;
-   ```
-
-33. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 24)
+31. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 24)
    ```
    box-shadow: var(--ad-b0kla-shadow, 0 8px 24px rgba(0, 0, 0, 0.05));
    ```
 
-34. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 46)
+32. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 46)
    ```
    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
    ```
 
-35. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 61)
+33. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 61)
    ```
    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
    ```
 
-36. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 72)
+34. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 72)
    ```
    box-shadow: var(--ad-b0kla-shadow, 0 8px 24px rgba(0, 0, 0, 0.05));
    ```
 
-37. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 78)
+35. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 78)
    ```
    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
-   ```
-
----
-
-### 📁 `frontend/src/components/ops/PgApprovalManagement.css` (CSS)
-
-**하드코딩 색상**: 35개
-
-1. **HEX_3**: `#666` (라인 30)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-2. **HEX_3**: `#999` (라인 54)
-   ```
-   color: var(--mg-text-tertiary, #999);
-   ```
-
-3. **HEX_3**: `#999` (라인 67)
-   ```
-   color: var(--mg-text-tertiary, #999);
-   ```
-
-4. **HEX_3**: `#666` (라인 129)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-5. **HEX_3**: `#999` (라인 151)
-   ```
-   color: var(--mg-text-tertiary, #999);
-   ```
-
-6. **HEX_3**: `#666` (라인 164)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-7. **HEX_3**: `#666` (라인 257)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-8. **HEX_3**: `#666` (라인 361)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-9. **HEX_3**: `#666` (라인 426)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-10. **HEX_3**: `#999` (라인 442)
-   ```
-   color: var(--mg-text-tertiary, #999);
-   ```
-
-11. **HEX_3**: `#999` (라인 534)
-   ```
-   color: var(--mg-text-tertiary, #999);
-   ```
-
-12. **HEX_3**: `#666` (라인 586)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-13. **HEX_3**: `#666` (라인 639)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-14. **HEX_3**: `#666` (라인 662)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-15. **HEX_6**: `#4a90e2` (라인 88)
-   ```
-   border-color: var(--mg-primary, #4a90e2);
-   ```
-
-16. **HEX_6**: `#4a90e2` (라인 105)
-   ```
-   border-color: var(--mg-primary, #4a90e2);
-   ```
-
-17. **HEX_6**: `#856404` (라인 117)
-   ```
-   color: #856404;
-   ```
-
-18. **HEX_6**: `#4a90e2` (라인 187)
-   ```
-   border-color: var(--mg-primary, #4a90e2);
-   ```
-
-19. **HEX_6**: `#856404` (라인 230)
-   ```
-   color: #856404;
-   ```
-
-20. **HEX_6**: `#d1ecf1` (라인 234)
-   ```
-   background: #d1ecf1;
-   ```
-
-21. **HEX_6**: `#0c5460` (라인 235)
-   ```
-   color: #0c5460;
-   ```
-
-22. **HEX_6**: `#d4edda` (라인 290)
-   ```
-   background: #d4edda;
-   ```
-
-23. **HEX_6**: `#155724` (라인 291)
-   ```
-   color: #155724;
-   ```
-
-24. **HEX_6**: `#721c24` (라인 296)
-   ```
-   color: #721c24;
-   ```
-
-25. **HEX_6**: `#d4edda` (라인 457)
-   ```
-   background: #d4edda;
-   ```
-
-26. **HEX_6**: `#155724` (라인 458)
-   ```
-   color: #155724;
-   ```
-
-27. **HEX_6**: `#721c24` (라인 463)
-   ```
-   color: #721c24;
-   ```
-
-28. **HEX_6**: `#4a90e2` (라인 485)
-   ```
-   accent-color: var(--mg-primary, #4a90e2);
-   ```
-
-29. **HEX_6**: `#4a90e2` (라인 528)
-   ```
-   border-color: var(--mg-primary, #4a90e2);
-   ```
-
-30. **HEX_6**: `#4a90e2` (라인 604)
-   ```
-   color: var(--mg-primary, #4a90e2);
-   ```
-
-31. **HEX_6**: `#4a90e2` (라인 687)
-   ```
-   background: var(--mg-primary, #4a90e2);
-   ```
-
-32. **HEX_6**: `#357abd` (라인 697)
-   ```
-   background: #357abd;
-   ```
-
-33. **RGBA**: `rgba(74, 144, 226, 0.1)` (라인 89)
-   ```
-   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
-   ```
-
-34. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 331)
-   ```
-   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-   ```
-
-35. **RGBA**: `rgba(74, 144, 226, 0.1)` (라인 529)
-   ```
-   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
-   ```
-
----
-
-### 📁 `frontend/src/components/admin/system/SystemTools.css` (CSS)
-
-**하드코딩 색상**: 34개
-
-1. **HEX_6**: `#FAFBFF` (라인 13)
-   ```
-   background: linear-gradient(135deg, var(--mg-white) 0%, #FAFBFF 100%);
-   ```
-
-2. **HEX_6**: `#E8EBFF` (라인 14)
-   ```
-   border: 1px solid #E8EBFF;
-   ```
-
-3. **HEX_6**: `#B8BCFF` (라인 25)
-   ```
-   border-color: #B8BCFF;
-   ```
-
-4. **HEX_6**: `#6B73FF` (라인 73)
-   ```
-   color: #6B73FF;
-   ```
-
-5. **HEX_6**: `#6B73FF` (라인 82)
-   ```
-   color: #6B73FF;
-   ```
-
-6. **HEX_6**: `#B8BCFF` (라인 83)
-   ```
-   border-color: #B8BCFF;
-   ```
-
-7. **HEX_6**: `#F0F2FF` (라인 84)
-   ```
-   background: linear-gradient(135deg, #F0F2FF 0%, #E8EBFF 100%);
-   ```
-
-8. **HEX_6**: `#E8EBFF` (라인 84)
-   ```
-   background: linear-gradient(135deg, #F0F2FF 0%, #E8EBFF 100%);
-   ```
-
-9. **HEX_6**: `#6B73FF` (라인 88)
-   ```
-   background: linear-gradient(135deg, #6B73FF 0%, #5A63E8 100%);
-   ```
-
-10. **HEX_6**: `#5A63E8` (라인 88)
-   ```
-   background: linear-gradient(135deg, #6B73FF 0%, #5A63E8 100%);
-   ```
-
-11. **HEX_6**: `#6B73FF` (라인 90)
-   ```
-   border-color: #6B73FF;
-   ```
-
-12. **HEX_6**: `#FF9F43` (라인 94)
-   ```
-   color: #FF9F43;
-   ```
-
-13. **HEX_6**: `#FFD4A3` (라인 95)
-   ```
-   border-color: #FFD4A3;
-   ```
-
-14. **HEX_6**: `#FFF5E6` (라인 96)
-   ```
-   background: linear-gradient(135deg, #FFF5E6 0%, #FFE8CC 100%);
-   ```
-
-15. **HEX_6**: `#FFE8CC` (라인 96)
-   ```
-   background: linear-gradient(135deg, #FFF5E6 0%, #FFE8CC 100%);
-   ```
-
-16. **HEX_6**: `#FF9F43` (라인 100)
-   ```
-   background: linear-gradient(135deg, #FF9F43 0%, #FF8C2B 100%);
-   ```
-
-17. **HEX_6**: `#FF8C2B` (라인 100)
-   ```
-   background: linear-gradient(135deg, #FF9F43 0%, #FF8C2B 100%);
-   ```
-
-18. **HEX_6**: `#FF9F43` (라인 102)
-   ```
-   border-color: #FF9F43;
-   ```
-
-19. **HEX_6**: `#FF6B9D` (라인 106)
-   ```
-   color: #FF6B9D;
-   ```
-
-20. **HEX_6**: `#FFB3D1` (라인 107)
-   ```
-   border-color: #FFB3D1;
-   ```
-
-21. **HEX_6**: `#FFE8F0` (라인 108)
-   ```
-   background: linear-gradient(135deg, #FFE8F0 0%, #FFD6E8 100%);
-   ```
-
-22. **HEX_6**: `#FFD6E8` (라인 108)
-   ```
-   background: linear-gradient(135deg, #FFE8F0 0%, #FFD6E8 100%);
-   ```
-
-23. **HEX_6**: `#FF6B9D` (라인 112)
-   ```
-   background: linear-gradient(135deg, #FF6B9D 0%, #FF5A8A 100%);
-   ```
-
-24. **HEX_6**: `#FF5A8A` (라인 112)
-   ```
-   background: linear-gradient(135deg, #FF6B9D 0%, #FF5A8A 100%);
-   ```
-
-25. **HEX_6**: `#FF6B9D` (라인 114)
-   ```
-   border-color: #FF6B9D;
-   ```
-
-26. **HEX_6**: `#4ECDC4` (라인 118)
-   ```
-   color: #4ECDC4;
-   ```
-
-27. **HEX_6**: `#A6E6E1` (라인 119)
-   ```
-   border-color: #A6E6E1;
-   ```
-
-28. **HEX_6**: `#E8F8F7` (라인 120)
-   ```
-   background: linear-gradient(135deg, #E8F8F7 0%, #D6F2F0 100%);
-   ```
-
-29. **HEX_6**: `#D6F2F0` (라인 120)
-   ```
-   background: linear-gradient(135deg, #E8F8F7 0%, #D6F2F0 100%);
-   ```
-
-30. **HEX_6**: `#4ECDC4` (라인 124)
-   ```
-   background: linear-gradient(135deg, #4ECDC4 0%, #3BB5AC 100%);
-   ```
-
-31. **HEX_6**: `#3BB5AC` (라인 124)
-   ```
-   background: linear-gradient(135deg, #4ECDC4 0%, #3BB5AC 100%);
-   ```
-
-32. **HEX_6**: `#4ECDC4` (라인 126)
-   ```
-   border-color: #4ECDC4;
-   ```
-
-33. **RGBA**: `rgba(107, 115, 255, 0.08)` (라인 17)
-   ```
-   box-shadow: 0 2px 8px rgba(107, 115, 255, 0.08);
-   ```
-
-34. **RGBA**: `rgba(107, 115, 255, 0.15)` (라인 24)
-   ```
-   box-shadow: 0 4px 16px rgba(107, 115, 255, 0.15);
-   ```
-
----
-
-### 📁 `frontend/src/styles/auth/UnifiedLogin.css` (CSS)
-
-**하드코딩 색상**: 33개
-
-1. **HEX_6**: `#4A6354` (라인 18)
-   ```
-   background-image: url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80'), linear-gradient(135deg, var(--mg-primary-color, var(--mg-color-primary-main)) 0%, var(--mg-primary-light, #4A6354) 100%);
-   ```
-
-2. **HEX_6**: `#555555` (라인 73)
-   ```
-   color: var(--mg-text-secondary, #555555);
-   ```
-
-3. **HEX_6**: `#4f6b5a` (라인 136)
-   ```
-   background-color: var(--mg-primary-light, #4f6b5a);
-   ```
-
-4. **HEX_6**: `#4f6b5a` (라인 137)
-   ```
-   background: var(--mg-primary-light, #4f6b5a);
-   ```
-
-5. **HEX_6**: `#F5F3EF` (라인 165)
-   ```
-   background-color: var(--mg-surface-primary, #F5F3EF);
-   ```
-
-6. **HEX_6**: `#4F6B5A` (라인 218)
-   ```
-   background-color: var(--mg-primary-light, #4F6B5A);
-   ```
-
-7. **HEX_6**: `#fee500` (라인 283)
-   ```
-   --oauth-kakao-bg: #fee500;
-   ```
-
-8. **HEX_6**: `#e6cf00` (라인 284)
-   ```
-   --oauth-kakao-bg-hover: #e6cf00;
-   ```
-
-9. **HEX_6**: `#03c75a` (라인 286)
-   ```
-   --oauth-naver-bg: #03c75a;
-   ```
-
-10. **HEX_6**: `#02a84e` (라인 287)
-   ```
-   --oauth-naver-bg-hover: #02a84e;
-   ```
-
-11. **HEX_6**: `#fecaca` (라인 414)
-   ```
-   border: 1px solid #fecaca;
-   ```
-
-12. **HEX_6**: `#d1fae5` (라인 418)
-   ```
-   background-color: #d1fae5;
-   ```
-
-13. **HEX_6**: `#065f46` (라인 419)
-   ```
-   color: #065f46;
-   ```
-
-14. **HEX_6**: `#6ee7b7` (라인 420)
-   ```
-   border: 1px solid #6ee7b7;
-   ```
-
-15. **HEX_6**: `#92400e` (라인 425)
-   ```
-   color: #92400e;
-   ```
-
-16. **HEX_6**: `#fde68a` (라인 426)
-   ```
-   border: 1px solid #fde68a;
-   ```
-
-17. **RGBA**: `rgba(44, 44, 44, 0.4)` (라인 36)
-   ```
-   background: rgba(44, 44, 44, 0.4);
-   ```
-
-18. **RGBA**: `rgba(250, 249, 247, 0.94)` (라인 45)
-   ```
-   background: rgba(250, 249, 247, 0.94);
-   ```
-
-19. **RGBA**: `rgba(61, 82, 70, 0.12)` (라인 46)
-   ```
-   border: 1px solid rgba(61, 82, 70, 0.12);
-   ```
-
-20. **RGBA**: `rgba(255, 255, 255, 0.65)` (라인 53)
-   ```
-   0 1px 0 rgba(255, 255, 255, 0.65) inset,
-   ```
-
-21. **RGBA**: `rgba(20, 28, 24, 0.15)` (라인 54)
-   ```
-   0 10px 40px rgba(20, 28, 24, 0.15);
-   ```
-
-22. **RGBA**: `rgba(61, 82, 70, 0.12)` (라인 69)
-   ```
-   border-top: 1px solid rgba(61, 82, 70, 0.12);
-   ```
-
-23. **RGBA**: `rgba(61, 82, 70, 0.1)` (라인 179)
-   ```
-   box-shadow: 0 0 0 2px rgba(61, 82, 70, 0.1);
-   ```
-
-24. **RGBA**: `rgba(0, 0, 0, 0.85)` (라인 285)
-   ```
-   --oauth-kakao-text: rgba(0, 0, 0, 0.85);
-   ```
-
-25. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 303)
-   ```
-   box-shadow: var(--cs-shadow-soft, 0 4px 12px rgba(0, 0, 0, 0.08));
-   ```
-
-26. **RGBA**: `rgba(0, 0, 0, 0.06)` (라인 310)
-   ```
-   box-shadow: var(--cs-shadow-xs, 0 1px 4px rgba(0, 0, 0, 0.06));
-   ```
-
-27. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 322)
-   ```
-   box-shadow: var(--cs-shadow-soft, 0 4px 12px rgba(0, 0, 0, 0.12));
-   ```
-
-28. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 329)
-   ```
-   box-shadow: var(--cs-shadow-xs, 0 1px 4px rgba(0, 0, 0, 0.08));
-   ```
-
-29. **RGBA**: `rgba(0, 0, 0, 0.85)` (라인 334)
-   ```
-   color: rgba(0, 0, 0, 0.85);
-   ```
-
-30. **RGBA**: `rgba(0, 0, 0, 0.85)` (라인 340)
-   ```
-   color: rgba(0, 0, 0, 0.85);
-   ```
-
-31. **RGBA**: `rgba(0, 0, 0, 0.06)` (라인 342)
-   ```
-   box-shadow: var(--cs-shadow-soft, 0 4px 12px rgba(0, 0, 0, 0.06));
-   ```
-
-32. **RGBA**: `rgba(0, 0, 0, 0.06)` (라인 349)
-   ```
-   box-shadow: var(--cs-shadow-xs, 0 1px 4px rgba(0, 0, 0, 0.06));
-   ```
-
-33. **RGBA**: `rgba(0, 0, 0, 0.85)` (라인 372)
-   ```
-   color: rgba(0, 0, 0, 0.85) !important;
    ```
 
 ---
@@ -9061,162 +8778,6 @@
 
 ---
 
-### 📁 `frontend/src/components/tenant/PgConfigurationDetail.css` (CSS)
-
-**하드코딩 색상**: 30개
-
-1. **HEX_3**: `#666` (라인 146)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-2. **HEX_3**: `#666` (라인 203)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-3. **HEX_3**: `#666` (라인 226)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-4. **HEX_3**: `#999` (라인 269)
-   ```
-   color: var(--mg-text-tertiary, #999);
-   ```
-
-5. **HEX_3**: `#666` (라인 317)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-6. **HEX_3**: `#666` (라인 358)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-7. **HEX_3**: `#666` (라인 363)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-8. **HEX_3**: `#666` (라인 382)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-9. **HEX_3**: `#666` (라인 432)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-10. **HEX_6**: `#d4edda` (라인 83)
-   ```
-   background: #d4edda;
-   ```
-
-11. **HEX_6**: `#155724` (라인 84)
-   ```
-   color: #155724;
-   ```
-
-12. **HEX_6**: `#856404` (라인 89)
-   ```
-   color: #856404;
-   ```
-
-13. **HEX_6**: `#721c24` (라인 94)
-   ```
-   color: #721c24;
-   ```
-
-14. **HEX_6**: `#e2e3e5` (라인 98)
-   ```
-   background: #e2e3e5;
-   ```
-
-15. **HEX_6**: `#383d41` (라인 99)
-   ```
-   color: #383d41;
-   ```
-
-16. **HEX_6**: `#d1ecf1` (라인 103)
-   ```
-   background: #d1ecf1;
-   ```
-
-17. **HEX_6**: `#0c5460` (라인 104)
-   ```
-   color: #0c5460;
-   ```
-
-18. **HEX_6**: `#4a90e2` (라인 164)
-   ```
-   color: var(--mg-primary, #4a90e2);
-   ```
-
-19. **HEX_6**: `#4a90e2` (라인 251)
-   ```
-   background: var(--mg-primary, #4a90e2);
-   ```
-
-20. **HEX_6**: `#357abd` (라인 261)
-   ```
-   background: #357abd;
-   ```
-
-21. **HEX_6**: `#4a90e2` (라인 340)
-   ```
-   border-left: 3px solid var(--mg-primary, #4a90e2);
-   ```
-
-22. **HEX_6**: `#856404` (라인 490)
-   ```
-   color: #856404;
-   ```
-
-23. **HEX_6**: `#d4edda` (라인 495)
-   ```
-   background: #d4edda;
-   ```
-
-24. **HEX_6**: `#155724` (라인 500)
-   ```
-   color: #155724;
-   ```
-
-25. **HEX_6**: `#721c24` (라인 510)
-   ```
-   color: #721c24;
-   ```
-
-26. **HEX_6**: `#856404` (라인 524)
-   ```
-   color: #856404;
-   ```
-
-27. **HEX_6**: `#856404` (라인 534)
-   ```
-   color: #856404;
-   ```
-
-28. **HEX_6**: `#4a90e2` (라인 544)
-   ```
-   outline: 2px solid var(--mg-primary, #4a90e2);
-   ```
-
-29. **HEX_6**: `#4a90e2` (라인 549)
-   ```
-   outline: 2px solid var(--mg-primary, #4a90e2);
-   ```
-
-30. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 410)
-   ```
-   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-   ```
-
----
-
 ### 📁 `frontend/src/components/erd/ErdDetailPage.css` (CSS)
 
 **하드코딩 색상**: 30개
@@ -9373,6 +8934,162 @@
 
 ---
 
+### 📁 `frontend/src/components/admin/system/SystemTools.css` (CSS)
+
+**하드코딩 색상**: 30개
+
+1. **HEX_6**: `#FAFBFF` (라인 13)
+   ```
+   background: linear-gradient(135deg, var(--mg-white) 0%, #FAFBFF 100%);
+   ```
+
+2. **HEX_6**: `#E8EBFF` (라인 14)
+   ```
+   border: 1px solid #E8EBFF;
+   ```
+
+3. **HEX_6**: `#B8BCFF` (라인 25)
+   ```
+   border-color: #B8BCFF;
+   ```
+
+4. **HEX_6**: `#6B73FF` (라인 73)
+   ```
+   color: #6B73FF;
+   ```
+
+5. **HEX_6**: `#6B73FF` (라인 82)
+   ```
+   color: #6B73FF;
+   ```
+
+6. **HEX_6**: `#B8BCFF` (라인 83)
+   ```
+   border-color: #B8BCFF;
+   ```
+
+7. **HEX_6**: `#F0F2FF` (라인 84)
+   ```
+   background: linear-gradient(135deg, #F0F2FF 0%, #E8EBFF 100%);
+   ```
+
+8. **HEX_6**: `#E8EBFF` (라인 84)
+   ```
+   background: linear-gradient(135deg, #F0F2FF 0%, #E8EBFF 100%);
+   ```
+
+9. **HEX_6**: `#6B73FF` (라인 88)
+   ```
+   background: linear-gradient(135deg, #6B73FF 0%, #5A63E8 100%);
+   ```
+
+10. **HEX_6**: `#5A63E8` (라인 88)
+   ```
+   background: linear-gradient(135deg, #6B73FF 0%, #5A63E8 100%);
+   ```
+
+11. **HEX_6**: `#6B73FF` (라인 90)
+   ```
+   border-color: #6B73FF;
+   ```
+
+12. **HEX_6**: `#FF9F43` (라인 94)
+   ```
+   color: #FF9F43;
+   ```
+
+13. **HEX_6**: `#FFD4A3` (라인 95)
+   ```
+   border-color: #FFD4A3;
+   ```
+
+14. **HEX_6**: `#FFF5E6` (라인 96)
+   ```
+   background: linear-gradient(135deg, #FFF5E6 0%, #FFE8CC 100%);
+   ```
+
+15. **HEX_6**: `#FFE8CC` (라인 96)
+   ```
+   background: linear-gradient(135deg, #FFF5E6 0%, #FFE8CC 100%);
+   ```
+
+16. **HEX_6**: `#FF9F43` (라인 100)
+   ```
+   background: linear-gradient(135deg, #FF9F43 0%, #FF8C2B 100%);
+   ```
+
+17. **HEX_6**: `#FF8C2B` (라인 100)
+   ```
+   background: linear-gradient(135deg, #FF9F43 0%, #FF8C2B 100%);
+   ```
+
+18. **HEX_6**: `#FF9F43` (라인 102)
+   ```
+   border-color: #FF9F43;
+   ```
+
+19. **HEX_6**: `#FFB3D1` (라인 107)
+   ```
+   border-color: #FFB3D1;
+   ```
+
+20. **HEX_6**: `#FFE8F0` (라인 108)
+   ```
+   background: linear-gradient(135deg, #FFE8F0 0%, #FFD6E8 100%);
+   ```
+
+21. **HEX_6**: `#FFD6E8` (라인 108)
+   ```
+   background: linear-gradient(135deg, #FFE8F0 0%, #FFD6E8 100%);
+   ```
+
+22. **HEX_6**: `#4ECDC4` (라인 118)
+   ```
+   color: #4ECDC4;
+   ```
+
+23. **HEX_6**: `#A6E6E1` (라인 119)
+   ```
+   border-color: #A6E6E1;
+   ```
+
+24. **HEX_6**: `#E8F8F7` (라인 120)
+   ```
+   background: linear-gradient(135deg, #E8F8F7 0%, #D6F2F0 100%);
+   ```
+
+25. **HEX_6**: `#D6F2F0` (라인 120)
+   ```
+   background: linear-gradient(135deg, #E8F8F7 0%, #D6F2F0 100%);
+   ```
+
+26. **HEX_6**: `#4ECDC4` (라인 124)
+   ```
+   background: linear-gradient(135deg, #4ECDC4 0%, #3BB5AC 100%);
+   ```
+
+27. **HEX_6**: `#3BB5AC` (라인 124)
+   ```
+   background: linear-gradient(135deg, #4ECDC4 0%, #3BB5AC 100%);
+   ```
+
+28. **HEX_6**: `#4ECDC4` (라인 126)
+   ```
+   border-color: #4ECDC4;
+   ```
+
+29. **RGBA**: `rgba(107, 115, 255, 0.08)` (라인 17)
+   ```
+   box-shadow: 0 2px 8px rgba(107, 115, 255, 0.08);
+   ```
+
+30. **RGBA**: `rgba(107, 115, 255, 0.15)` (라인 24)
+   ```
+   box-shadow: 0 4px 16px rgba(107, 115, 255, 0.15);
+   ```
+
+---
+
 ### 📁 `frontend/src/styles/00-core/_component-variables.css` (CSS)
 
 **하드코딩 색상**: 29개
@@ -9524,6 +9241,303 @@
 
 ---
 
+### 📁 `frontend/src/components/ops/PgApprovalManagement.css` (CSS)
+
+**하드코딩 색상**: 29개
+
+1. **HEX_3**: `#666` (라인 30)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+2. **HEX_3**: `#999` (라인 54)
+   ```
+   color: var(--mg-text-tertiary, #999);
+   ```
+
+3. **HEX_3**: `#999` (라인 67)
+   ```
+   color: var(--mg-text-tertiary, #999);
+   ```
+
+4. **HEX_3**: `#666` (라인 129)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+5. **HEX_3**: `#999` (라인 151)
+   ```
+   color: var(--mg-text-tertiary, #999);
+   ```
+
+6. **HEX_3**: `#666` (라인 164)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+7. **HEX_3**: `#666` (라인 257)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+8. **HEX_3**: `#666` (라인 361)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+9. **HEX_3**: `#666` (라인 426)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+10. **HEX_3**: `#999` (라인 442)
+   ```
+   color: var(--mg-text-tertiary, #999);
+   ```
+
+11. **HEX_3**: `#999` (라인 534)
+   ```
+   color: var(--mg-text-tertiary, #999);
+   ```
+
+12. **HEX_3**: `#666` (라인 586)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+13. **HEX_3**: `#666` (라인 639)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+14. **HEX_3**: `#666` (라인 662)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+15. **HEX_6**: `#4a90e2` (라인 88)
+   ```
+   border-color: var(--mg-primary, #4a90e2);
+   ```
+
+16. **HEX_6**: `#4a90e2` (라인 105)
+   ```
+   border-color: var(--mg-primary, #4a90e2);
+   ```
+
+17. **HEX_6**: `#4a90e2` (라인 187)
+   ```
+   border-color: var(--mg-primary, #4a90e2);
+   ```
+
+18. **HEX_6**: `#d1ecf1` (라인 234)
+   ```
+   background: #d1ecf1;
+   ```
+
+19. **HEX_6**: `#0c5460` (라인 235)
+   ```
+   color: #0c5460;
+   ```
+
+20. **HEX_6**: `#155724` (라인 291)
+   ```
+   color: #155724;
+   ```
+
+21. **HEX_6**: `#155724` (라인 458)
+   ```
+   color: #155724;
+   ```
+
+22. **HEX_6**: `#4a90e2` (라인 485)
+   ```
+   accent-color: var(--mg-primary, #4a90e2);
+   ```
+
+23. **HEX_6**: `#4a90e2` (라인 528)
+   ```
+   border-color: var(--mg-primary, #4a90e2);
+   ```
+
+24. **HEX_6**: `#4a90e2` (라인 604)
+   ```
+   color: var(--mg-primary, #4a90e2);
+   ```
+
+25. **HEX_6**: `#4a90e2` (라인 687)
+   ```
+   background: var(--mg-primary, #4a90e2);
+   ```
+
+26. **HEX_6**: `#357abd` (라인 697)
+   ```
+   background: #357abd;
+   ```
+
+27. **RGBA**: `rgba(74, 144, 226, 0.1)` (라인 89)
+   ```
+   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+   ```
+
+28. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 331)
+   ```
+   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+   ```
+
+29. **RGBA**: `rgba(74, 144, 226, 0.1)` (라인 529)
+   ```
+   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+   ```
+
+---
+
+### 📁 `frontend/src/styles/auth/UnifiedLogin.css` (CSS)
+
+**하드코딩 색상**: 28개
+
+1. **HEX_6**: `#4A6354` (라인 18)
+   ```
+   background-image: url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80'), linear-gradient(135deg, var(--mg-primary-color, var(--mg-color-primary-main)) 0%, var(--mg-primary-light, #4A6354) 100%);
+   ```
+
+2. **HEX_6**: `#555555` (라인 73)
+   ```
+   color: var(--mg-text-secondary, #555555);
+   ```
+
+3. **HEX_6**: `#4f6b5a` (라인 136)
+   ```
+   background-color: var(--mg-primary-light, #4f6b5a);
+   ```
+
+4. **HEX_6**: `#4f6b5a` (라인 137)
+   ```
+   background: var(--mg-primary-light, #4f6b5a);
+   ```
+
+5. **HEX_6**: `#F5F3EF` (라인 165)
+   ```
+   background-color: var(--mg-surface-primary, #F5F3EF);
+   ```
+
+6. **HEX_6**: `#4F6B5A` (라인 218)
+   ```
+   background-color: var(--mg-primary-light, #4F6B5A);
+   ```
+
+7. **HEX_6**: `#fee500` (라인 283)
+   ```
+   --oauth-kakao-bg: #fee500;
+   ```
+
+8. **HEX_6**: `#e6cf00` (라인 284)
+   ```
+   --oauth-kakao-bg-hover: #e6cf00;
+   ```
+
+9. **HEX_6**: `#02a84e` (라인 287)
+   ```
+   --oauth-naver-bg-hover: #02a84e;
+   ```
+
+10. **HEX_6**: `#6ee7b7` (라인 420)
+   ```
+   border: 1px solid #6ee7b7;
+   ```
+
+11. **HEX_6**: `#fde68a` (라인 426)
+   ```
+   border: 1px solid #fde68a;
+   ```
+
+12. **RGBA**: `rgba(44, 44, 44, 0.4)` (라인 36)
+   ```
+   background: rgba(44, 44, 44, 0.4);
+   ```
+
+13. **RGBA**: `rgba(250, 249, 247, 0.94)` (라인 45)
+   ```
+   background: rgba(250, 249, 247, 0.94);
+   ```
+
+14. **RGBA**: `rgba(61, 82, 70, 0.12)` (라인 46)
+   ```
+   border: 1px solid rgba(61, 82, 70, 0.12);
+   ```
+
+15. **RGBA**: `rgba(255, 255, 255, 0.65)` (라인 53)
+   ```
+   0 1px 0 rgba(255, 255, 255, 0.65) inset,
+   ```
+
+16. **RGBA**: `rgba(20, 28, 24, 0.15)` (라인 54)
+   ```
+   0 10px 40px rgba(20, 28, 24, 0.15);
+   ```
+
+17. **RGBA**: `rgba(61, 82, 70, 0.12)` (라인 69)
+   ```
+   border-top: 1px solid rgba(61, 82, 70, 0.12);
+   ```
+
+18. **RGBA**: `rgba(61, 82, 70, 0.1)` (라인 179)
+   ```
+   box-shadow: 0 0 0 2px rgba(61, 82, 70, 0.1);
+   ```
+
+19. **RGBA**: `rgba(0, 0, 0, 0.85)` (라인 285)
+   ```
+   --oauth-kakao-text: rgba(0, 0, 0, 0.85);
+   ```
+
+20. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 303)
+   ```
+   box-shadow: var(--cs-shadow-soft, 0 4px 12px rgba(0, 0, 0, 0.08));
+   ```
+
+21. **RGBA**: `rgba(0, 0, 0, 0.06)` (라인 310)
+   ```
+   box-shadow: var(--cs-shadow-xs, 0 1px 4px rgba(0, 0, 0, 0.06));
+   ```
+
+22. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 322)
+   ```
+   box-shadow: var(--cs-shadow-soft, 0 4px 12px rgba(0, 0, 0, 0.12));
+   ```
+
+23. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 329)
+   ```
+   box-shadow: var(--cs-shadow-xs, 0 1px 4px rgba(0, 0, 0, 0.08));
+   ```
+
+24. **RGBA**: `rgba(0, 0, 0, 0.85)` (라인 334)
+   ```
+   color: rgba(0, 0, 0, 0.85);
+   ```
+
+25. **RGBA**: `rgba(0, 0, 0, 0.85)` (라인 340)
+   ```
+   color: rgba(0, 0, 0, 0.85);
+   ```
+
+26. **RGBA**: `rgba(0, 0, 0, 0.06)` (라인 342)
+   ```
+   box-shadow: var(--cs-shadow-soft, 0 4px 12px rgba(0, 0, 0, 0.06));
+   ```
+
+27. **RGBA**: `rgba(0, 0, 0, 0.06)` (라인 349)
+   ```
+   box-shadow: var(--cs-shadow-xs, 0 1px 4px rgba(0, 0, 0, 0.06));
+   ```
+
+28. **RGBA**: `rgba(0, 0, 0, 0.85)` (라인 372)
+   ```
+   color: rgba(0, 0, 0, 0.85) !important;
+   ```
+
+---
+
 ### 📁 `frontend/src/styles/06-components/_base/_cards.css` (CSS)
 
 **하드코딩 색상**: 28개
@@ -9670,292 +9684,146 @@
 
 ---
 
-### 📁 `frontend/src/components/admin/WellnessManagement.css` (CSS)
-
-**하드코딩 색상**: 28개
-
-1. **HEX_6**: `#B0E0E6` (라인 18)
-   ```
-   background: linear-gradient(135deg, var(--mg-info-500), #B0E0E6);
-   ```
-
-2. **HEX_6**: `#FFB6C1` (라인 91)
-   ```
-   background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
-   ```
-
-3. **HEX_6**: `#FFC0CB` (라인 91)
-   ```
-   background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
-   ```
-
-4. **HEX_6**: `#FFA0B0` (라인 96)
-   ```
-   background: linear-gradient(135deg, #FFA0B0, #FFB0C0);
-   ```
-
-5. **HEX_6**: `#FFB0C0` (라인 96)
-   ```
-   background: linear-gradient(135deg, #FFA0B0, #FFB0C0);
-   ```
-
-6. **HEX_6**: `#FFD700` (라인 146)
-   ```
-   background: linear-gradient(135deg, #FFD700, #FFA500);
-   ```
-
-7. **HEX_6**: `#FFA500` (라인 146)
-   ```
-   background: linear-gradient(135deg, #FFD700, #FFA500);
-   ```
-
-8. **HEX_6**: `#4682B4` (라인 151)
-   ```
-   background: linear-gradient(135deg, var(--mg-info-500), #4682B4);
-   ```
-
-9. **HEX_6**: `#98D8C8` (라인 156)
-   ```
-   background: linear-gradient(135deg, #98D8C8, #6BCF7F);
-   ```
-
-10. **HEX_6**: `#6BCF7F` (라인 156)
-   ```
-   background: linear-gradient(135deg, #98D8C8, #6BCF7F);
-   ```
-
-11. **HEX_6**: `#DDA0DD` (라인 161)
-   ```
-   background: linear-gradient(135deg, #DDA0DD, #BA55D3);
-   ```
-
-12. **HEX_6**: `#BA55D3` (라인 161)
-   ```
-   background: linear-gradient(135deg, #DDA0DD, #BA55D3);
-   ```
-
-13. **HEX_6**: `#B0E0E6` (라인 226)
-   ```
-   background: linear-gradient(135deg, var(--mg-info-500), #B0E0E6);
-   ```
-
-14. **HEX_6**: `#FFB6C1` (라인 393)
-   ```
-   background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
-   ```
-
-15. **HEX_6**: `#FFC0CB` (라인 393)
-   ```
-   background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
-   ```
-
-16. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 36)
-   ```
-   background: rgba(255, 255, 255, 0.2);
-   ```
-
-17. **RGBA**: `rgba(255, 215, 0, 0.3)` (라인 147)
-   ```
-   box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
-   ```
-
-18. **RGBA**: `rgba(135, 206, 235, 0.3)` (라인 152)
-   ```
-   box-shadow: 0 4px 12px rgba(135, 206, 235, 0.3);
-   ```
-
-19. **RGBA**: `rgba(152, 216, 200, 0.3)` (라인 157)
-   ```
-   box-shadow: 0 4px 12px rgba(152, 216, 200, 0.3);
-   ```
-
-20. **RGBA**: `rgba(221, 160, 221, 0.3)` (라인 162)
-   ```
-   box-shadow: 0 4px 12px rgba(221, 160, 221, 0.3);
-   ```
-
-21. **RGBA**: `rgba(135, 206, 235, 0.05)` (라인 279)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.05), rgba(176, 224, 230, 0.05));
-   ```
-
-22. **RGBA**: `rgba(176, 224, 230, 0.05)` (라인 279)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.05), rgba(176, 224, 230, 0.05));
-   ```
-
-23. **RGBA**: `rgba(135, 206, 235, 0.1)` (라인 286)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-   ```
-
-24. **RGBA**: `rgba(176, 224, 230, 0.1)` (라인 286)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-   ```
-
-25. **RGBA**: `rgba(255, 182, 193, 0.05)` (라인 354)
-   ```
-   background: linear-gradient(135deg, rgba(255, 182, 193, 0.05), rgba(255, 192, 203, 0.05));
-   ```
-
-26. **RGBA**: `rgba(255, 192, 203, 0.05)` (라인 354)
-   ```
-   background: linear-gradient(135deg, rgba(255, 182, 193, 0.05), rgba(255, 192, 203, 0.05));
-   ```
-
-27. **RGBA**: `rgba(255, 182, 193, 0.1)` (라인 366)
-   ```
-   background: linear-gradient(135deg, rgba(255, 182, 193, 0.1), rgba(255, 192, 203, 0.1));
-   ```
-
-28. **RGBA**: `rgba(255, 192, 203, 0.1)` (라인 366)
-   ```
-   background: linear-gradient(135deg, rgba(255, 182, 193, 0.1), rgba(255, 192, 203, 0.1));
-   ```
-
----
-
 ### 📁 `frontend/src/components/admin/VacationStatistics.js` (JS)
 
 **하드코딩 색상**: 28개
 
-1. **RGBA**: `rgba(52, 199, 89, 0.2)` (라인 176)
+1. **RGBA**: `rgba(52, 199, 89, 0.2)` (라인 178)
    ```
    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(52, 199, 89, 0.2) -> var(--mg-custom-color)
    ```
 
-2. **RGBA**: `rgba(52, 199, 89, 0.2)` (라인 177)
+2. **RGBA**: `rgba(52, 199, 89, 0.2)` (라인 179)
    ```
    '연차': 'rgba(52, 199, 89, 0.2)',        // 연한 초록 (연차)
    ```
 
-3. **RGBA**: `rgba(255, 149, 0, 0.2)` (라인 178)
+3. **RGBA**: `rgba(255, 149, 0, 0.2)` (라인 180)
    ```
    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 149, 0, 0.2) -> var(--mg-custom-color)
    ```
 
-4. **RGBA**: `rgba(255, 149, 0, 0.2)` (라인 179)
+4. **RGBA**: `rgba(255, 149, 0, 0.2)` (라인 181)
    ```
    '반차': 'rgba(255, 149, 0, 0.2)',         // 연한 노랑 (반차)
    ```
 
-5. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 180)
+5. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 182)
    ```
    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.2) -> var(--mg-custom-color)
    ```
 
-6. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 181)
+6. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 183)
    ```
    '반반차': 'rgba(0, 122, 255, 0.2)',       // 연한 파랑 (반반차)
    ```
 
-7. **RGBA**: `rgba(88, 86, 214, 0.2)` (라인 182)
+7. **RGBA**: `rgba(88, 86, 214, 0.2)` (라인 184)
    ```
    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(88, 86, 214, 0.2) -> var(--mg-custom-color)
    ```
 
-8. **RGBA**: `rgba(88, 86, 214, 0.2)` (라인 183)
+8. **RGBA**: `rgba(88, 86, 214, 0.2)` (라인 185)
    ```
    '개인사정': 'rgba(88, 86, 214, 0.2)',     // 연한 보라 (개인사정)
    ```
 
-9. **RGBA**: `rgba(255, 59, 48, 0.2)` (라인 184)
+9. **RGBA**: `rgba(255, 59, 48, 0.2)` (라인 186)
    ```
    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 59, 48, 0.2) -> var(--mg-custom-color)
    ```
 
-10. **RGBA**: `rgba(255, 59, 48, 0.2)` (라인 185)
+10. **RGBA**: `rgba(255, 59, 48, 0.2)` (라인 187)
    ```
    '병가': 'rgba(255, 59, 48, 0.2)',         // 연한 빨강 (병가)
    ```
 
-11. **RGBA**: `rgba(52, 199, 89, 0.2)` (라인 186)
+11. **RGBA**: `rgba(52, 199, 89, 0.2)` (라인 188)
    ```
    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(52, 199, 89, 0.2) -> var(--mg-custom-color)
    ```
 
-12. **RGBA**: `rgba(52, 199, 89, 0.2)` (라인 187)
+12. **RGBA**: `rgba(52, 199, 89, 0.2)` (라인 189)
    ```
    '하루 종일 휴가': 'rgba(52, 199, 89, 0.2)',  // 연한 초록 (종일 휴가)
    ```
 
-13. **RGBA**: `rgba(0, 122, 255, 0.15)` (라인 188)
+13. **RGBA**: `rgba(0, 122, 255, 0.15)` (라인 190)
    ```
    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.15) -> var(--mg-custom-color)
    ```
 
-14. **RGBA**: `rgba(0, 122, 255, 0.15)` (라인 189)
+14. **RGBA**: `rgba(0, 122, 255, 0.15)` (라인 191)
    ```
    '사용자 정의 휴가': 'rgba(0, 122, 255, 0.15)', // 연한 하늘색 (사용자 정의)
    ```
 
-15. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 191)
+15. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 193)
    ```
    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.2) -> var(--mg-custom-color)
    ```
 
-16. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 192)
+16. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 194)
    ```
    '오전 반반차 1 (09:00-11:00)': 'rgba(0, 122, 255, 0.2)',
    ```
 
-17. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 193)
+17. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 195)
    ```
    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.2) -> var(--mg-custom-color)
    ```
 
-18. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 194)
+18. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 196)
    ```
    '오전 반반차 2 (11:00-13:00)': 'rgba(0, 122, 255, 0.2)',
    ```
 
-19. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 195)
+19. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 197)
    ```
    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.2) -> var(--mg-custom-color)
    ```
 
-20. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 196)
+20. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 198)
    ```
    '오후 반반차 1 (14:00-16:00)': 'rgba(0, 122, 255, 0.2)',
    ```
 
-21. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 197)
+21. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 199)
    ```
    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.2) -> var(--mg-custom-color)
    ```
 
-22. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 198)
+22. **RGBA**: `rgba(0, 122, 255, 0.2)` (라인 200)
    ```
    '오후 반반차 2 (16:00-18:00)': 'rgba(0, 122, 255, 0.2)',
    ```
 
-23. **RGBA**: `rgba(255, 149, 0, 0.2)` (라인 199)
+23. **RGBA**: `rgba(255, 149, 0, 0.2)` (라인 201)
    ```
    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 149, 0, 0.2) -> var(--mg-custom-color)
    ```
 
-24. **RGBA**: `rgba(255, 149, 0, 0.2)` (라인 200)
+24. **RGBA**: `rgba(255, 149, 0, 0.2)` (라인 202)
    ```
    '오전반차': 'rgba(255, 149, 0, 0.2)',
    ```
 
-25. **RGBA**: `rgba(255, 149, 0, 0.2)` (라인 201)
+25. **RGBA**: `rgba(255, 149, 0, 0.2)` (라인 203)
    ```
    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 149, 0, 0.2) -> var(--mg-custom-color)
    ```
 
-26. **RGBA**: `rgba(255, 149, 0, 0.2)` (라인 202)
+26. **RGBA**: `rgba(255, 149, 0, 0.2)` (라인 204)
    ```
    '오후반차': 'rgba(255, 149, 0, 0.2)'
    ```
 
-27. **RGBA**: `rgba(248, 249, 250, 0.5)` (라인 204)
+27. **RGBA**: `rgba(248, 249, 250, 0.5)` (라인 206)
    ```
    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(248, 249, 250, 0.5) -> var(--mg-custom-color)
    ```
 
-28. **RGBA**: `rgba(248, 249, 250, 0.5)` (라인 205)
+28. **RGBA**: `rgba(248, 249, 250, 0.5)` (라인 207)
    ```
    return colors[type] || 'rgba(248, 249, 250, 0.5)'; // 기본 연한 회색
    ```
@@ -10103,501 +9971,259 @@
 
 ---
 
-### 📁 `frontend/src/components/academy/Academy.css` (CSS)
+### 📁 `frontend/src/components/admin/WellnessManagement.css` (CSS)
 
-**하드코딩 색상**: 25개
+**하드코딩 색상**: 26개
 
-1. **HEX_3**: `#ddd` (라인 30)
+1. **HEX_6**: `#FFB6C1` (라인 91)
    ```
-   border: 1px solid var(--color-border, #ddd);
-   ```
-
-2. **HEX_3**: `#333` (라인 34)
-   ```
-   color: var(--color-text, #333);
+   background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
    ```
 
-3. **HEX_3**: `#666` (라인 63)
+2. **HEX_6**: `#FFC0CB` (라인 91)
    ```
-   color: var(--color-text-secondary, #666);
-   ```
-
-4. **HEX_3**: `#333` (라인 95)
-   ```
-   color: var(--color-text, #333);
+   background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
    ```
 
-5. **HEX_3**: `#666` (라인 117)
+3. **HEX_6**: `#FFA0B0` (라인 96)
    ```
-   color: var(--color-text-secondary, #666);
-   ```
-
-6. **HEX_3**: `#ddd` (라인 129)
-   ```
-   border: 1px solid var(--color-border, #ddd);
+   background: linear-gradient(135deg, #FFA0B0, #FFB0C0);
    ```
 
-7. **HEX_3**: `#333` (라인 133)
+4. **HEX_6**: `#FFB0C0` (라인 96)
    ```
-   color: var(--color-text, #333);
-   ```
-
-8. **HEX_3**: `#333` (라인 171)
-   ```
-   color: var(--color-text, #333);
+   background: linear-gradient(135deg, #FFA0B0, #FFB0C0);
    ```
 
-9. **HEX_3**: `#ddd` (라인 178)
+5. **HEX_6**: `#FFD700` (라인 146)
    ```
-   border-bottom: 2px solid var(--color-border, #ddd);
-   ```
-
-10. **HEX_3**: `#666` (라인 188)
-   ```
-   color: var(--color-text-secondary, #666);
+   background: linear-gradient(135deg, #FFD700, #FFA500);
    ```
 
-11. **HEX_3**: `#333` (라인 220)
+6. **HEX_6**: `#FFA500` (라인 146)
    ```
-   color: var(--color-text, #333);
-   ```
-
-12. **HEX_3**: `#666` (라인 227)
-   ```
-   color: var(--color-text-secondary, #666);
+   background: linear-gradient(135deg, #FFD700, #FFA500);
    ```
 
-13. **HEX_3**: `#ddd` (라인 277)
+7. **HEX_6**: `#4682B4` (라인 151)
    ```
-   border: 1px solid var(--color-border, #ddd);
-   ```
-
-14. **HEX_3**: `#666` (라인 294)
-   ```
-   color: var(--color-text-secondary, #666);
+   background: linear-gradient(135deg, var(--mg-info-500), #4682B4);
    ```
 
-15. **HEX_3**: `#ddd` (라인 302)
+8. **HEX_6**: `#98D8C8` (라인 156)
    ```
-   border-bottom: 1px solid var(--color-border, #ddd);
-   ```
-
-16. **HEX_6**: `#FEE500` (라인 253)
-   ```
-   background-color: #FEE500;
+   background: linear-gradient(135deg, #98D8C8, #6BCF7F);
    ```
 
-17. **HEX_6**: `#FEE500` (라인 255)
+9. **HEX_6**: `#6BCF7F` (라인 156)
    ```
-   border: 1px solid #FEE500;
-   ```
-
-18. **HEX_6**: `#FDD835` (라인 259)
-   ```
-   background-color: #FDD835;
+   background: linear-gradient(135deg, #98D8C8, #6BCF7F);
    ```
 
-19. **HEX_6**: `#FDD835` (라인 260)
+10. **HEX_6**: `#DDA0DD` (라인 161)
    ```
-   border-color: #FDD835;
-   ```
-
-20. **HEX_6**: `#03C75A` (라인 264)
-   ```
-   background-color: #03C75A;
+   background: linear-gradient(135deg, #DDA0DD, #BA55D3);
    ```
 
-21. **HEX_6**: `#03C75A` (라인 266)
+11. **HEX_6**: `#BA55D3` (라인 161)
    ```
-   border: 1px solid #03C75A;
-   ```
-
-22. **HEX_6**: `#02B350` (라인 270)
-   ```
-   background-color: #02B350;
+   background: linear-gradient(135deg, #DDA0DD, #BA55D3);
    ```
 
-23. **HEX_6**: `#02B350` (라인 271)
+12. **HEX_6**: `#FFB6C1` (라인 393)
    ```
-   border-color: #02B350;
-   ```
-
-24. **RGBA**: `rgba(0, 123, 255, 0.25)` (라인 46)
-   ```
-   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+   background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
    ```
 
-25. **RGBA**: `rgba(0, 123, 255, 0.25)` (라인 142)
+13. **HEX_6**: `#FFC0CB` (라인 393)
    ```
-   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+   background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
+   ```
+
+14. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 36)
+   ```
+   background: rgba(255, 255, 255, 0.2);
+   ```
+
+15. **RGBA**: `rgba(255, 215, 0, 0.3)` (라인 147)
+   ```
+   box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+   ```
+
+16. **RGBA**: `rgba(135, 206, 235, 0.3)` (라인 152)
+   ```
+   box-shadow: 0 4px 12px rgba(135, 206, 235, 0.3);
+   ```
+
+17. **RGBA**: `rgba(152, 216, 200, 0.3)` (라인 157)
+   ```
+   box-shadow: 0 4px 12px rgba(152, 216, 200, 0.3);
+   ```
+
+18. **RGBA**: `rgba(221, 160, 221, 0.3)` (라인 162)
+   ```
+   box-shadow: 0 4px 12px rgba(221, 160, 221, 0.3);
+   ```
+
+19. **RGBA**: `rgba(135, 206, 235, 0.05)` (라인 279)
+   ```
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.05), rgba(176, 224, 230, 0.05));
+   ```
+
+20. **RGBA**: `rgba(176, 224, 230, 0.05)` (라인 279)
+   ```
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.05), rgba(176, 224, 230, 0.05));
+   ```
+
+21. **RGBA**: `rgba(135, 206, 235, 0.1)` (라인 286)
+   ```
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
+   ```
+
+22. **RGBA**: `rgba(176, 224, 230, 0.1)` (라인 286)
+   ```
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
+   ```
+
+23. **RGBA**: `rgba(255, 182, 193, 0.05)` (라인 354)
+   ```
+   background: linear-gradient(135deg, rgba(255, 182, 193, 0.05), rgba(255, 192, 203, 0.05));
+   ```
+
+24. **RGBA**: `rgba(255, 192, 203, 0.05)` (라인 354)
+   ```
+   background: linear-gradient(135deg, rgba(255, 182, 193, 0.05), rgba(255, 192, 203, 0.05));
+   ```
+
+25. **RGBA**: `rgba(255, 182, 193, 0.1)` (라인 366)
+   ```
+   background: linear-gradient(135deg, rgba(255, 182, 193, 0.1), rgba(255, 192, 203, 0.1));
+   ```
+
+26. **RGBA**: `rgba(255, 192, 203, 0.1)` (라인 366)
+   ```
+   background: linear-gradient(135deg, rgba(255, 182, 193, 0.1), rgba(255, 192, 203, 0.1));
    ```
 
 ---
 
 ### 📁 `frontend/src/styles/homepage/index.css` (CSS)
 
-**하드코딩 색상**: 24개
+**하드코딩 색상**: 23개
 
-1. **HEX_6**: `#f8f9ff` (라인 248)
-   ```
-   background: linear-gradient(135deg, var(--mg-white) 0%, #f8f9ff 100%);
-   ```
-
-2. **HEX_6**: `#718096` (라인 292)
+1. **HEX_6**: `#718096` (라인 292)
    ```
    color: #718096;
    ```
 
-3. **HEX_6**: `#f5576c` (라인 500)
+2. **HEX_6**: `#f5576c` (라인 500)
    ```
    background: linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%);
    ```
 
-4. **HEX_6**: `#4facfe` (라인 504)
+3. **HEX_6**: `#4facfe` (라인 504)
    ```
    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
    ```
 
-5. **HEX_6**: `#00f2fe` (라인 504)
+4. **HEX_6**: `#00f2fe` (라인 504)
    ```
    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
    ```
 
-6. **HEX_6**: `#fa709a` (라인 508)
+5. **HEX_6**: `#fa709a` (라인 508)
    ```
    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
    ```
 
-7. **HEX_6**: `#fee140` (라인 508)
+6. **HEX_6**: `#fee140` (라인 508)
    ```
    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
    ```
 
-8. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 19)
+7. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 19)
    ```
    background: rgba(255, 255, 255, 0.95);
    ```
 
-9. **RGBA**: `rgba(255, 255, 255, 0.98)` (라인 26)
+8. **RGBA**: `rgba(255, 255, 255, 0.98)` (라인 26)
    ```
    background: rgba(255, 255, 255, 0.98);
    ```
 
-10. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 128)
+9. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 128)
    ```
    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
    ```
 
-11. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 134)
+10. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 134)
    ```
    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
    ```
 
-12. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 259)
+11. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 259)
    ```
    color: rgba(255, 255, 255, 0.9);
    ```
 
-13. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 485)
+12. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 485)
    ```
    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
    ```
 
-14. **RGBA**: `rgba(0, 0, 0, 0.3)` (라인 492)
+13. **RGBA**: `rgba(0, 0, 0, 0.3)` (라인 492)
    ```
    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
    ```
 
-15. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 514)
+14. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 514)
    ```
    background-color: rgba(255, 255, 255, 0.2);
    ```
 
-16. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 534)
+15. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 534)
    ```
    color: rgba(255, 255, 255, 0.9);
    ```
 
-17. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 646)
+16. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 646)
    ```
    background: rgba(255, 255, 255, 0.95);
    ```
 
-18. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 648)
+17. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 648)
    ```
    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
    ```
 
-19. **RGBA**: `rgba(255, 255, 255, 1)` (라인 652)
+18. **RGBA**: `rgba(255, 255, 255, 1)` (라인 652)
    ```
    background: rgba(255, 255, 255, 1);
    ```
 
-20. **RGBA**: `rgba(255, 255, 255, 0.4)` (라인 654)
+19. **RGBA**: `rgba(255, 255, 255, 0.4)` (라인 654)
    ```
    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.4);
    ```
 
-21. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 658)
+20. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 658)
    ```
    background: rgba(255, 255, 255, 0.2);
    ```
 
-22. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 660)
+21. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 660)
    ```
    border: 2px solid rgba(255, 255, 255, 0.3);
    ```
 
-23. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 665)
+22. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 665)
    ```
    background: rgba(255, 255, 255, 0.3);
    ```
 
-24. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 666)
+23. **RGBA**: `rgba(255, 255, 255, 0.5)` (라인 666)
    ```
    border-color: rgba(255, 255, 255, 0.5);
-   ```
-
----
-
-### 📁 `frontend/src/components/wellness/WellnessNotificationDetail.css` (CSS)
-
-**하드코딩 색상**: 23개
-
-1. **HEX_6**: `#FF6B9D` (라인 89)
-   ```
-   background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
-   ```
-
-2. **HEX_6**: `#FFA5C0` (라인 89)
-   ```
-   background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
-   ```
-
-3. **HEX_6**: `#FF8E8E` (라인 95)
-   ```
-   background: linear-gradient(135deg, var(--mg-error-500), #FF8E8E);
-   ```
-
-4. **HEX_6**: `#98D8C8` (라인 106)
-   ```
-   background: linear-gradient(135deg, #98D8C8, #B4E7CE);
-   ```
-
-5. **HEX_6**: `#B4E7CE` (라인 106)
-   ```
-   background: linear-gradient(135deg, #98D8C8, #B4E7CE);
-   ```
-
-6. **HEX_6**: `#FF8E8E` (라인 111)
-   ```
-   background: linear-gradient(135deg, var(--mg-error-500), #FF8E8E);
-   ```
-
-7. **HEX_6**: `#FFD700` (라인 116)
-   ```
-   background: linear-gradient(135deg, #FFD700, #FFA500);
-   ```
-
-8. **HEX_6**: `#FFA500` (라인 116)
-   ```
-   background: linear-gradient(135deg, #FFD700, #FFA500);
-   ```
-
-9. **HEX_6**: `#B0E0E6` (라인 121)
-   ```
-   background: linear-gradient(135deg, var(--mg-info-500), #B0E0E6);
-   ```
-
-10. **HEX_6**: `#6BB6D8` (라인 271)
-   ```
-   color: #6BB6D8;
-   ```
-
-11. **HEX_6**: `#FF6B9D` (라인 337)
-   ```
-   background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
-   ```
-
-12. **HEX_6**: `#FFA5C0` (라인 337)
-   ```
-   background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
-   ```
-
-13. **RGBA**: `rgba(135, 206, 235, 0.1)` (라인 44)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-   ```
-
-14. **RGBA**: `rgba(176, 224, 230, 0.1)` (라인 44)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-   ```
-
-15. **RGBA**: `rgba(135, 206, 235, 0.1)` (라인 64)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-   ```
-
-16. **RGBA**: `rgba(176, 224, 230, 0.1)` (라인 64)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-   ```
-
-17. **RGBA**: `rgba(255, 107, 157, 0.3)` (라인 91)
-   ```
-   box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
-   ```
-
-18. **RGBA**: `rgba(255, 107, 107, 0.3)` (라인 97)
-   ```
-   box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
-   ```
-
-19. **RGBA**: `rgba(135, 206, 235, 0.1)` (라인 201)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-   ```
-
-20. **RGBA**: `rgba(176, 224, 230, 0.1)` (라인 201)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-   ```
-
-21. **RGBA**: `rgba(135, 206, 235, 0.05)` (라인 285)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.05), rgba(176, 224, 230, 0.05));
-   ```
-
-22. **RGBA**: `rgba(176, 224, 230, 0.05)` (라인 285)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.05), rgba(176, 224, 230, 0.05));
-   ```
-
-23. **RGBA**: `rgba(255, 107, 157, 0.3)` (라인 342)
-   ```
-   box-shadow: 0 4px 16px rgba(255, 107, 157, 0.3);
-   ```
-
----
-
-### 📁 `frontend/src/components/tenant/PgConfigurationList.css` (CSS)
-
-**하드코딩 색상**: 23개
-
-1. **HEX_3**: `#666` (라인 33)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-2. **HEX_3**: `#999` (라인 57)
-   ```
-   color: var(--mg-text-tertiary, #999);
-   ```
-
-3. **HEX_3**: `#999` (라인 70)
-   ```
-   color: var(--mg-text-tertiary, #999);
-   ```
-
-4. **HEX_3**: `#666` (라인 116)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-5. **HEX_3**: `#999` (라인 138)
-   ```
-   color: var(--mg-text-tertiary, #999);
-   ```
-
-6. **HEX_3**: `#666` (라인 151)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-7. **HEX_3**: `#666` (라인 259)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-8. **HEX_3**: `#666` (라인 321)
-   ```
-   color: var(--mg-text-secondary, #666);
-   ```
-
-9. **HEX_6**: `#4a90e2` (라인 92)
-   ```
-   border-color: var(--mg-primary, #4a90e2);
-   ```
-
-10. **HEX_6**: `#856404` (라인 104)
-   ```
-   color: #856404;
-   ```
-
-11. **HEX_6**: `#4a90e2` (라인 174)
-   ```
-   border-color: var(--mg-primary, #4a90e2);
-   ```
-
-12. **HEX_6**: `#d4edda` (라인 216)
-   ```
-   background: #d4edda;
-   ```
-
-13. **HEX_6**: `#155724` (라인 217)
-   ```
-   color: #155724;
-   ```
-
-14. **HEX_6**: `#856404` (라인 222)
-   ```
-   color: #856404;
-   ```
-
-15. **HEX_6**: `#721c24` (라인 227)
-   ```
-   color: #721c24;
-   ```
-
-16. **HEX_6**: `#e2e3e5` (라인 231)
-   ```
-   background: #e2e3e5;
-   ```
-
-17. **HEX_6**: `#383d41` (라인 232)
-   ```
-   color: #383d41;
-   ```
-
-18. **HEX_6**: `#d1ecf1` (라인 236)
-   ```
-   background: #d1ecf1;
-   ```
-
-19. **HEX_6**: `#0c5460` (라인 237)
-   ```
-   color: #0c5460;
-   ```
-
-20. **HEX_6**: `#4a90e2` (라인 365)
-   ```
-   outline: 2px solid var(--mg-primary, #4a90e2);
-   ```
-
-21. **HEX_6**: `#856404` (라인 463)
-   ```
-   color: #856404;
-   ```
-
-22. **HEX_6**: `#721c24` (라인 469)
-   ```
-   color: #721c24;
-   ```
-
-23. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 299)
-   ```
-   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
    ```
 
 ---
@@ -10723,9 +10349,246 @@
 
 ---
 
-### 📁 `frontend/src/components/admin/ModernDashboardEditor.css` (CSS)
+### 📁 `frontend/src/components/academy/Academy.css` (CSS)
 
 **하드코딩 색상**: 23개
+
+1. **HEX_3**: `#ddd` (라인 30)
+   ```
+   border: 1px solid var(--color-border, #ddd);
+   ```
+
+2. **HEX_3**: `#333` (라인 34)
+   ```
+   color: var(--color-text, #333);
+   ```
+
+3. **HEX_3**: `#666` (라인 63)
+   ```
+   color: var(--color-text-secondary, #666);
+   ```
+
+4. **HEX_3**: `#333` (라인 95)
+   ```
+   color: var(--color-text, #333);
+   ```
+
+5. **HEX_3**: `#666` (라인 117)
+   ```
+   color: var(--color-text-secondary, #666);
+   ```
+
+6. **HEX_3**: `#ddd` (라인 129)
+   ```
+   border: 1px solid var(--color-border, #ddd);
+   ```
+
+7. **HEX_3**: `#333` (라인 133)
+   ```
+   color: var(--color-text, #333);
+   ```
+
+8. **HEX_3**: `#333` (라인 171)
+   ```
+   color: var(--color-text, #333);
+   ```
+
+9. **HEX_3**: `#ddd` (라인 178)
+   ```
+   border-bottom: 2px solid var(--color-border, #ddd);
+   ```
+
+10. **HEX_3**: `#666` (라인 188)
+   ```
+   color: var(--color-text-secondary, #666);
+   ```
+
+11. **HEX_3**: `#333` (라인 220)
+   ```
+   color: var(--color-text, #333);
+   ```
+
+12. **HEX_3**: `#666` (라인 227)
+   ```
+   color: var(--color-text-secondary, #666);
+   ```
+
+13. **HEX_3**: `#ddd` (라인 277)
+   ```
+   border: 1px solid var(--color-border, #ddd);
+   ```
+
+14. **HEX_3**: `#666` (라인 294)
+   ```
+   color: var(--color-text-secondary, #666);
+   ```
+
+15. **HEX_3**: `#ddd` (라인 302)
+   ```
+   border-bottom: 1px solid var(--color-border, #ddd);
+   ```
+
+16. **HEX_6**: `#FEE500` (라인 253)
+   ```
+   background-color: #FEE500;
+   ```
+
+17. **HEX_6**: `#FEE500` (라인 255)
+   ```
+   border: 1px solid #FEE500;
+   ```
+
+18. **HEX_6**: `#FDD835` (라인 259)
+   ```
+   background-color: #FDD835;
+   ```
+
+19. **HEX_6**: `#FDD835` (라인 260)
+   ```
+   border-color: #FDD835;
+   ```
+
+20. **HEX_6**: `#02B350` (라인 270)
+   ```
+   background-color: #02B350;
+   ```
+
+21. **HEX_6**: `#02B350` (라인 271)
+   ```
+   border-color: #02B350;
+   ```
+
+22. **RGBA**: `rgba(0, 123, 255, 0.25)` (라인 46)
+   ```
+   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+   ```
+
+23. **RGBA**: `rgba(0, 123, 255, 0.25)` (라인 142)
+   ```
+   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+   ```
+
+---
+
+### 📁 `frontend/src/components/tenant/PgConfigurationDetail.css` (CSS)
+
+**하드코딩 색상**: 22개
+
+1. **HEX_3**: `#666` (라인 146)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+2. **HEX_3**: `#666` (라인 203)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+3. **HEX_3**: `#666` (라인 226)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+4. **HEX_3**: `#999` (라인 269)
+   ```
+   color: var(--mg-text-tertiary, #999);
+   ```
+
+5. **HEX_3**: `#666` (라인 317)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+6. **HEX_3**: `#666` (라인 358)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+7. **HEX_3**: `#666` (라인 363)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+8. **HEX_3**: `#666` (라인 382)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+9. **HEX_3**: `#666` (라인 432)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+10. **HEX_6**: `#155724` (라인 84)
+   ```
+   color: #155724;
+   ```
+
+11. **HEX_6**: `#e2e3e5` (라인 98)
+   ```
+   background: #e2e3e5;
+   ```
+
+12. **HEX_6**: `#383d41` (라인 99)
+   ```
+   color: #383d41;
+   ```
+
+13. **HEX_6**: `#d1ecf1` (라인 103)
+   ```
+   background: #d1ecf1;
+   ```
+
+14. **HEX_6**: `#0c5460` (라인 104)
+   ```
+   color: #0c5460;
+   ```
+
+15. **HEX_6**: `#4a90e2` (라인 164)
+   ```
+   color: var(--mg-primary, #4a90e2);
+   ```
+
+16. **HEX_6**: `#4a90e2` (라인 251)
+   ```
+   background: var(--mg-primary, #4a90e2);
+   ```
+
+17. **HEX_6**: `#357abd` (라인 261)
+   ```
+   background: #357abd;
+   ```
+
+18. **HEX_6**: `#4a90e2` (라인 340)
+   ```
+   border-left: 3px solid var(--mg-primary, #4a90e2);
+   ```
+
+19. **HEX_6**: `#155724` (라인 500)
+   ```
+   color: #155724;
+   ```
+
+20. **HEX_6**: `#4a90e2` (라인 544)
+   ```
+   outline: 2px solid var(--mg-primary, #4a90e2);
+   ```
+
+21. **HEX_6**: `#4a90e2` (라인 549)
+   ```
+   outline: 2px solid var(--mg-primary, #4a90e2);
+   ```
+
+22. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 410)
+   ```
+   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+   ```
+
+---
+
+### 📁 `frontend/src/components/admin/ModernDashboardEditor.css` (CSS)
+
+**하드코딩 색상**: 22개
 
 1. **HEX_6**: `#dbeafe` (라인 15)
    ```
@@ -10787,57 +10650,52 @@
    background: linear-gradient(135deg, #fafbfc 0%, #f4f6f8 100%);
    ```
 
-13. **HEX_6**: `#dbeafe` (라인 331)
+13. **HEX_6**: `#bfdbfe` (라인 331)
    ```
-   background: var(--mg-drop-zone-bg, linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%));
-   ```
-
-14. **HEX_6**: `#bfdbfe` (라인 331)
-   ```
-   background: var(--mg-drop-zone-bg, linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%));
+   background: var(--mg-drop-zone-bg, linear-gradient(135deg, var(--mg-color-info-100) 0%, #bfdbfe 100%));
    ```
 
-15. **HEX_6**: `#9ca3af` (라인 505)
+14. **HEX_6**: `#9ca3af` (라인 505)
    ```
    color: var(--mg-text-tertiary, #9ca3af);
    ```
 
-16. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 81)
+15. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 81)
    ```
    background: var(--mg-input-overlay-bg, rgba(255, 255, 255, 0.2));
    ```
 
-17. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 88)
+16. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 88)
    ```
    color: var(--mg-placeholder-on-dark, rgba(255, 255, 255, 0.8));
    ```
 
-18. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 99)
+17. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 99)
    ```
    border: var(--mg-border-width, 1px) solid var(--mg-border-overlay-light, rgba(255, 255, 255, 0.3));
    ```
 
-19. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 111)
+18. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 111)
    ```
    background: var(--mg-hover-overlay-light, rgba(255, 255, 255, 0.2));
    ```
 
-20. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 217)
+19. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 217)
    ```
    box-shadow: var(--mg-shadow-2xl, 0 25px 50px -12px rgba(0, 0, 0, 0.25));
    ```
 
-21. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 311)
+20. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 311)
    ```
    background: rgba(255, 255, 255, 0.2);
    ```
 
-22. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 341)
+21. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 341)
    ```
    background: var(--mg-drop-zone-overlay, rgba(59, 130, 246, 0.1));
    ```
 
-23. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 412)
+22. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 412)
    ```
    box-shadow: var(--mg-shadow-2xl, 0 25px 50px -12px rgba(0, 0, 0, 0.25));
    ```
@@ -10955,218 +10813,6 @@
 
 ---
 
-### 📁 `frontend/src/components/wellness/WellnessNotificationList.css` (CSS)
-
-**하드코딩 색상**: 21개
-
-1. **HEX_6**: `#FF6B9D` (라인 26)
-   ```
-   background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
-   ```
-
-2. **HEX_6**: `#FFA5C0` (라인 26)
-   ```
-   background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
-   ```
-
-3. **HEX_6**: `#B0E0E6` (라인 81)
-   ```
-   background: linear-gradient(180deg, var(--mg-info-500), #B0E0E6);
-   ```
-
-4. **HEX_6**: `#FF6B9D` (라인 101)
-   ```
-   background: linear-gradient(180deg, #FF6B9D, #FFA5C0);
-   ```
-
-5. **HEX_6**: `#FFA5C0` (라인 101)
-   ```
-   background: linear-gradient(180deg, #FF6B9D, #FFA5C0);
-   ```
-
-6. **HEX_6**: `#FF8E8E` (라인 105)
-   ```
-   background: linear-gradient(180deg, var(--mg-error-500), #FF8E8E);
-   ```
-
-7. **HEX_6**: `#FF6B9D` (라인 128)
-   ```
-   background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
-   ```
-
-8. **HEX_6**: `#FFA5C0` (라인 128)
-   ```
-   background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
-   ```
-
-9. **HEX_6**: `#FF8E8E` (라인 133)
-   ```
-   background: linear-gradient(135deg, var(--mg-error-500), #FF8E8E);
-   ```
-
-10. **HEX_6**: `#FFD700` (라인 138)
-   ```
-   background: linear-gradient(135deg, #FFD700, #FFA500);
-   ```
-
-11. **HEX_6**: `#FFA500` (라인 138)
-   ```
-   background: linear-gradient(135deg, #FFD700, #FFA500);
-   ```
-
-12. **RGBA**: `rgba(255, 250, 240, 0.6)` (라인 15)
-   ```
-   background: linear-gradient(135deg, rgba(255, 250, 240, 0.6), rgba(255, 255, 250, 0.6));
-   ```
-
-13. **RGBA**: `rgba(255, 255, 250, 0.6)` (라인 15)
-   ```
-   background: linear-gradient(135deg, rgba(255, 250, 240, 0.6), rgba(255, 255, 250, 0.6));
-   ```
-
-14. **RGBA**: `rgba(255, 182, 193, 0.2)` (라인 16)
-   ```
-   border: var(--border-width-thin) solid rgba(255, 182, 193, 0.2);
-   ```
-
-15. **RGBA**: `rgba(255, 107, 157, 0.3)` (라인 32)
-   ```
-   box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
-   ```
-
-16. **RGBA**: `rgba(255, 250, 240, 0.3)` (라인 97)
-   ```
-   background: linear-gradient(135deg, rgba(255, 250, 240, 0.3), rgba(255, 255, 250, 0.3));
-   ```
-
-17. **RGBA**: `rgba(255, 255, 250, 0.3)` (라인 97)
-   ```
-   background: linear-gradient(135deg, rgba(255, 250, 240, 0.3), rgba(255, 255, 250, 0.3));
-   ```
-
-18. **RGBA**: `rgba(135, 206, 235, 0.1)` (라인 147)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-   ```
-
-19. **RGBA**: `rgba(176, 224, 230, 0.1)` (라인 147)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-   ```
-
-20. **RGBA**: `rgba(135, 206, 235, 0.1)` (라인 238)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-   ```
-
-21. **RGBA**: `rgba(176, 224, 230, 0.1)` (라인 238)
-   ```
-   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
-   ```
-
----
-
-### 📁 `frontend/src/components/super-admin/PaymentManagement.css` (CSS)
-
-**하드코딩 색상**: 19개
-
-1. **HEX_6**: `#f5576c` (라인 58)
-   ```
-   background: linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%);
-   ```
-
-2. **HEX_6**: `#4facfe` (라인 62)
-   ```
-   background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-   ```
-
-3. **HEX_6**: `#00f2fe` (라인 62)
-   ```
-   background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-   ```
-
-4. **HEX_6**: `#43e97b` (라인 66)
-   ```
-   background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-   ```
-
-5. **HEX_6**: `#38f9d7` (라인 66)
-   ```
-   background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-   ```
-
-6. **HEX_6**: `#ced4da` (라인 109)
-   ```
-   border: 1px solid #ced4da;
-   ```
-
-7. **HEX_6**: `#dee2e6` (라인 276)
-   ```
-   border-bottom: 2px solid #dee2e6;
-   ```
-
-8. **HEX_6**: `#dee2e6` (라인 282)
-   ```
-   border-bottom: 1px solid #dee2e6;
-   ```
-
-9. **HEX_6**: `#212529` (라인 303)
-   ```
-   color: #212529;
-   ```
-
-10. **HEX_6**: `#343a40` (라인 327)
-   ```
-   background-color: #343a40;
-   ```
-
-11. **HEX_6**: `#1e7e34` (라인 376)
-   ```
-   background-color: #1e7e34;
-   ```
-
-12. **HEX_6**: `#c82333` (라인 385)
-   ```
-   background-color: #c82333;
-   ```
-
-13. **HEX_6**: `#212529` (라인 390)
-   ```
-   color: #212529;
-   ```
-
-14. **HEX_6**: `#e0a800` (라인 394)
-   ```
-   background-color: #e0a800;
-   ```
-
-15. **HEX_6**: `#dee2e6` (라인 410)
-   ```
-   border-top: 1px solid #dee2e6;
-   ```
-
-16. **HEX_6**: `#721c24` (라인 435)
-   ```
-   color: #721c24;
-   ```
-
-17. **HEX_6**: `#f5c6cb` (라인 437)
-   ```
-   border-color: #f5c6cb;
-   ```
-
-18. **HEX_6**: `#dee2e6` (라인 449)
-   ```
-   border: 1px solid #dee2e6;
-   ```
-
-19. **RGBA**: `rgba(0, 123, 255, 0.25)` (라인 119)
-   ```
-   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-   ```
-
----
-
 ### 📁 `frontend/src/components/common/SimpleHeader.css` (CSS)
 
 **하드코딩 색상**: 19개
@@ -11268,401 +10914,98 @@
 
 ---
 
-### 📁 `frontend/src/components/common/MGLoading.css` (CSS)
-
-**하드코딩 색상**: 19개
-
-1. **HEX_6**: `#718096` (라인 16)
-   ```
-   color: #718096;
-   ```
-
-2. **HEX_6**: `#48cae4` (라인 56)
-   ```
-   border-top-color: #48cae4;
-   ```
-
-3. **HEX_6**: `#ff9ff3` (라인 61)
-   ```
-   border-top-color: #ff9ff3;
-   ```
-
-4. **HEX_6**: `#48cae4` (라인 102)
-   ```
-   background: #48cae4;
-   ```
-
-5. **HEX_6**: `#ff9ff3` (라인 106)
-   ```
-   background: #ff9ff3;
-   ```
-
-6. **HEX_6**: `#48cae4` (라인 146)
-   ```
-   background: #48cae4;
-   ```
-
-7. **HEX_6**: `#ff9ff3` (라인 150)
-   ```
-   background: #ff9ff3;
-   ```
-
-8. **HEX_6**: `#f0f0f0` (라인 166)
-   ```
-   background: linear-gradient(90deg, #f0f0f0 25%, var(--mg-gray-300) 50%, #f0f0f0 75%);
-   ```
-
-9. **HEX_6**: `#f0f0f0` (라인 166)
-   ```
-   background: linear-gradient(90deg, #f0f0f0 25%, var(--mg-gray-300) 50%, #f0f0f0 75%);
-   ```
-
-10. **HEX_6**: `#f0f0f0` (라인 203)
-   ```
-   background: #f0f0f0;
-   ```
-
-11. **HEX_6**: `#4a5568` (라인 240)
-   ```
-   color: #4a5568;
-   ```
-
-12. **HEX_6**: `#718096` (라인 246)
-   ```
-   color: #718096;
-   ```
-
-13. **RGBA**: `rgba(102, 126, 234, 0.2)` (라인 26)
-   ```
-   border: 3px solid rgba(102, 126, 234, 0.2);
-   ```
-
-14. **RGBA**: `rgba(102, 126, 234, 0.2)` (라인 52)
-   ```
-   border-color: rgba(102, 126, 234, 0.2);
-   ```
-
-15. **RGBA**: `rgba(72, 202, 228, 0.2)` (라인 57)
-   ```
-   border-color: rgba(72, 202, 228, 0.2);
-   ```
-
-16. **RGBA**: `rgba(255, 159, 243, 0.2)` (라인 62)
-   ```
-   border-color: rgba(255, 159, 243, 0.2);
-   ```
-
-17. **RGBA**: `rgba(255, 107, 107, 0.2)` (라인 67)
-   ```
-   border-color: rgba(255, 107, 107, 0.2);
-   ```
-
-18. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 234)
-   ```
-   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-   ```
-
-19. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 258)
-   ```
-   background: rgba(255, 255, 255, 0.95);
-   ```
-
----
-
-### 📁 `frontend/src/components/clinical/SOAPNoteEditor.css` (CSS)
-
-**하드코딩 색상**: 19개
-
-1. **HEX_6**: `#1a202c` (라인 21)
-   ```
-   color: #1a202c;
-   ```
-
-2. **HEX_6**: `#dbeafe` (라인 41)
-   ```
-   background: #dbeafe;
-   ```
-
-3. **HEX_6**: `#e0e7ff` (라인 46)
-   ```
-   background: #e0e7ff;
-   ```
-
-4. **HEX_6**: `#4338ca` (라인 47)
-   ```
-   color: #4338ca;
-   ```
-
-5. **HEX_6**: `#d1fae5` (라인 51)
-   ```
-   background: #d1fae5;
-   ```
-
-6. **HEX_6**: `#065f46` (라인 52)
-   ```
-   color: #065f46;
-   ```
-
-7. **HEX_6**: `#92400e` (라인 57)
-   ```
-   color: #92400e;
-   ```
-
-8. **HEX_6**: `#d1fae5` (라인 61)
-   ```
-   background: #d1fae5;
-   ```
-
-9. **HEX_6**: `#6ee7b7` (라인 62)
-   ```
-   border: 1px solid #6ee7b7;
-   ```
-
-10. **HEX_6**: `#065f46` (라인 63)
-   ```
-   color: #065f46;
-   ```
-
-11. **HEX_6**: `#d1fae5` (라인 148)
-   ```
-   background: #d1fae5;
-   ```
-
-12. **HEX_6**: `#6ee7b7` (라인 149)
-   ```
-   border: 1px solid #6ee7b7;
-   ```
-
-13. **HEX_6**: `#065f46` (라인 150)
-   ```
-   color: #065f46;
-   ```
-
-14. **HEX_6**: `#fecaca` (라인 155)
-   ```
-   border: 1px solid #fecaca;
-   ```
-
-15. **HEX_6**: `#34d399` (라인 219)
-   ```
-   background: linear-gradient(135deg, var(--mg-success-500), #34d399);
-   ```
-
-16. **HEX_6**: `#fbbf24` (라인 223)
-   ```
-   background: linear-gradient(135deg, var(--mg-warning-500), #fbbf24);
-   ```
-
-17. **HEX_6**: `#a78bfa` (라인 227)
-   ```
-   background: linear-gradient(135deg, var(--mg-purple-500), #a78bfa);
-   ```
-
-18. **RGBA**: `rgba(37, 99, 235, 0.1)` (라인 81)
-   ```
-   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
-   ```
-
-19. **RGBA**: `rgba(37, 99, 235, 0.1)` (라인 131)
-   ```
-   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-   ```
-
----
-
-### 📁 `frontend/src/components/common/MGForm.js` (JS)
-
-**하드코딩 색상**: 19개
-
-1. **HEX_6**: `#D2B48C` (라인 29)
-   ```
-   card: "bg-[var(--mg-cream)] p-6 rounded-xl border border-[#D2B48C]/20 shadow-sm space-y-4",
-   ```
-
-2. **HEX_6**: `#D2B48C` (라인 56)
-   ```
-   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #D2B48C -> var(--mg-custom-D2B48C)
-   ```
-
-3. **HEX_6**: `#D2B48C` (라인 57)
-   ```
-   <div className="animate-spin text-[#D2B48C]">⟳</div>
-   ```
-
-4. **HEX_6**: `#9CAF88` (라인 90)
-   ```
-   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9CAF88 -> var(--mg-custom-9CAF88)
-   ```
-
-5. **HEX_6**: `#9CAF88` (라인 91)
-   ```
-   <div className="text-xs text-[#9CAF88]">
-   ```
-
-6. **HEX_6**: `#9CAF88` (라인 135)
-   ```
-   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9CAF88 -> var(--mg-custom-9CAF88)
-   ```
-
-7. **HEX_6**: `#9CAF88` (라인 136)
-   ```
-   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CAF88]">
-   ```
-
-8. **HEX_6**: `#D2B48C` (라인 150)
-   ```
-   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #D2B48C -> var(--mg-custom-D2B48C)
-   ```
-
-9. **HEX_6**: `#D2B48C` (라인 151)
-   ```
-   w-full px-3 py-2 rounded-lg border border-[#D2B48C]
-   ```
-
-10. **HEX_6**: `#9CAF88` (라인 155)
-   ```
-   bg-[var(--mg-cream)] text-[var(--mg-color-brand-olive)] placeholder-[#9CAF88]
-   ```
-
-11. **HEX_6**: `#9CAF88` (라인 166)
-   ```
-   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9CAF88 -> var(--mg-custom-9CAF88)
-   ```
-
-12. **HEX_6**: `#9CAF88` (라인 167)
-   ```
-   <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CAF88]">
-   ```
-
-13. **HEX_6**: `#D2B48C` (라인 212)
-   ```
-   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #D2B48C -> var(--mg-custom-D2B48C)
-   ```
-
-14. **HEX_6**: `#D2B48C` (라인 213)
-   ```
-   w-full px-3 py-2 rounded-lg border border-[#D2B48C]
-   ```
-
-15. **HEX_6**: `#9CAF88` (라인 217)
-   ```
-   bg-[var(--mg-cream)] text-[var(--mg-color-brand-olive)] placeholder-[#9CAF88]
-   ```
-
-16. **HEX_6**: `#D2B48C` (라인 264)
-   ```
-   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #D2B48C -> var(--mg-custom-D2B48C)
-   ```
-
-17. **HEX_6**: `#D2B48C` (라인 265)
-   ```
-   w-full px-3 py-2 pr-10 rounded-lg border border-[#D2B48C]
-   ```
-
-18. **HEX_6**: `#9CAF88` (라인 284)
-   ```
-   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9CAF88 -> var(--mg-custom-9CAF88)
-   ```
-
-19. **HEX_6**: `#9CAF88` (라인 285)
-   ```
-   <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CAF88] pointer-events-none">▼</div>
-   ```
-
----
-
-### 📁 `frontend/src/styles/dashboard/dashboard.css` (CSS)
+### 📁 `frontend/src/components/wellness/WellnessNotificationDetail.css` (CSS)
 
 **하드코딩 색상**: 18개
 
-1. **HEX_6**: `#4a5568` (라인 126)
+1. **HEX_6**: `#FF8E8E` (라인 95)
    ```
-   color: #4a5568;
-   ```
-
-2. **HEX_6**: `#5a67d8` (라인 302)
-   ```
-   color: #5a67d8;
+   background: linear-gradient(135deg, var(--mg-error-500), #FF8E8E);
    ```
 
-3. **HEX_6**: `#adb5bd` (라인 404)
+2. **HEX_6**: `#98D8C8` (라인 106)
    ```
-   color: #adb5bd;
-   ```
-
-4. **RGBA**: `rgba(102, 126, 234, 0.15)` (라인 20)
-   ```
-   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+   background: linear-gradient(135deg, #98D8C8, #B4E7CE);
    ```
 
-5. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 34)
+3. **HEX_6**: `#B4E7CE` (라인 106)
    ```
-   background: rgba(255, 255, 255, 0.2);
-   ```
-
-6. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 39)
-   ```
-   border: 2px solid rgba(255, 255, 255, 0.3);
+   background: linear-gradient(135deg, #98D8C8, #B4E7CE);
    ```
 
-7. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 90)
+4. **HEX_6**: `#FF8E8E` (라인 111)
    ```
-   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-   ```
-
-8. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 97)
-   ```
-   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+   background: linear-gradient(135deg, var(--mg-error-500), #FF8E8E);
    ```
 
-9. **RGBA**: `rgba(102, 126, 234, 0.2)` (라인 109)
+5. **HEX_6**: `#FFD700` (라인 116)
    ```
-   box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
-   ```
-
-10. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 142)
-   ```
-   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+   background: linear-gradient(135deg, #FFD700, #FFA500);
    ```
 
-11. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 150)
+6. **HEX_6**: `#FFA500` (라인 116)
    ```
-   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-   ```
-
-12. **RGBA**: `rgba(102, 126, 234, 0.2)` (라인 204)
-   ```
-   box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+   background: linear-gradient(135deg, #FFD700, #FFA500);
    ```
 
-13. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 234)
+7. **HEX_6**: `#6BB6D8` (라인 271)
    ```
-   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-   ```
-
-14. **RGBA**: `rgba(102, 126, 234, 0.15)` (라인 285)
-   ```
-   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+   color: #6BB6D8;
    ```
 
-15. **RGBA**: `rgba(102, 126, 234, 0.15)` (라인 292)
+8. **RGBA**: `rgba(135, 206, 235, 0.1)` (라인 44)
    ```
-   box-shadow: 0 1px 4px rgba(102, 126, 234, 0.15);
-   ```
-
-16. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 317)
-   ```
-   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
    ```
 
-17. **RGBA**: `rgba(102, 126, 234, 0.1)` (라인 358)
+9. **RGBA**: `rgba(176, 224, 230, 0.1)` (라인 44)
    ```
-   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
    ```
 
-18. **RGBA**: `rgba(102, 126, 234, 0.2)` (라인 370)
+10. **RGBA**: `rgba(135, 206, 235, 0.1)` (라인 64)
    ```
-   box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
+   ```
+
+11. **RGBA**: `rgba(176, 224, 230, 0.1)` (라인 64)
+   ```
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
+   ```
+
+12. **RGBA**: `rgba(255, 107, 157, 0.3)` (라인 91)
+   ```
+   box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
+   ```
+
+13. **RGBA**: `rgba(255, 107, 107, 0.3)` (라인 97)
+   ```
+   box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+   ```
+
+14. **RGBA**: `rgba(135, 206, 235, 0.1)` (라인 201)
+   ```
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
+   ```
+
+15. **RGBA**: `rgba(176, 224, 230, 0.1)` (라인 201)
+   ```
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
+   ```
+
+16. **RGBA**: `rgba(135, 206, 235, 0.05)` (라인 285)
+   ```
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.05), rgba(176, 224, 230, 0.05));
+   ```
+
+17. **RGBA**: `rgba(176, 224, 230, 0.05)` (라인 285)
+   ```
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.05), rgba(176, 224, 230, 0.05));
+   ```
+
+18. **RGBA**: `rgba(255, 107, 157, 0.3)` (라인 342)
+   ```
+   box-shadow: 0 4px 16px rgba(255, 107, 157, 0.3);
    ```
 
 ---
@@ -11859,93 +11202,184 @@
 
 ---
 
-### 📁 `frontend/src/components/common/CustomSelect.css` (CSS)
+### 📁 `frontend/src/styles/dashboard/dashboard.css` (CSS)
 
 **하드코딩 색상**: 17개
 
-1. **HEX_6**: `#cbd5e0` (라인 16)
+1. **HEX_6**: `#5a67d8` (라인 302)
    ```
-   border: 1px solid #cbd5e0;
-   ```
-
-2. **HEX_6**: `#3182ce` (라인 26)
-   ```
-   border-color: #3182ce;
+   color: #5a67d8;
    ```
 
-3. **HEX_6**: `#3182ce` (라인 31)
+2. **HEX_6**: `#adb5bd` (라인 404)
    ```
-   border: 2px solid #3182ce;
-   ```
-
-4. **HEX_6**: `#3182ce` (라인 36)
-   ```
-   border: 2px solid #3182ce;
+   color: #adb5bd;
    ```
 
-5. **HEX_6**: `#fff5f5` (라인 41)
+3. **RGBA**: `rgba(102, 126, 234, 0.15)` (라인 20)
    ```
-   background: #fff5f5;
-   ```
-
-6. **HEX_6**: `#e53e3e` (라인 42)
-   ```
-   border: 1px solid #e53e3e;
+   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
    ```
 
-7. **HEX_6**: `#E8E8ED` (라인 102)
+4. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 34)
    ```
-   border-bottom: 1px solid var(--color-border-secondary, #E8E8ED);
-   ```
-
-8. **HEX_6**: `#F5F5F7` (라인 163)
-   ```
-   background-color: var(--color-bg-secondary, #F5F5F7);
+   background: rgba(255, 255, 255, 0.2);
    ```
 
-9. **HEX_6**: `#E8E8ED` (라인 172)
+5. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 39)
    ```
-   background: var(--color-bg-accent, #E8E8ED);
-   ```
-
-10. **RGBA**: `rgba(49, 130, 206, 0.2)` (라인 32)
-   ```
-   box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
+   border: 2px solid rgba(255, 255, 255, 0.3);
    ```
 
-11. **RGBA**: `rgba(49, 130, 206, 0.2)` (라인 37)
+6. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 90)
    ```
-   box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
-   ```
-
-12. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 70)
-   ```
-   background: rgba(255, 255, 255, 0.95);
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
    ```
 
-13. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 75)
+7. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 97)
    ```
-   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-   ```
-
-14. **RGBA**: `rgba(0, 123, 255, 0.25)` (라인 116)
-   ```
-   box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.25);
+   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
    ```
 
-15. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 130)
+8. **RGBA**: `rgba(102, 126, 234, 0.2)` (라인 109)
    ```
-   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-   ```
-
-16. **RGBA**: `rgba(0, 123, 255, 0.1)` (라인 138)
-   ```
-   background-color: rgba(0, 123, 255, 0.1);
+   box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
    ```
 
-17. **RGBA**: `rgba(0, 123, 255, 0.15)` (라인 143)
+9. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 142)
    ```
-   background-color: rgba(0, 123, 255, 0.15);
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+   ```
+
+10. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 150)
+   ```
+   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+   ```
+
+11. **RGBA**: `rgba(102, 126, 234, 0.2)` (라인 204)
+   ```
+   box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+   ```
+
+12. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 234)
+   ```
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+   ```
+
+13. **RGBA**: `rgba(102, 126, 234, 0.15)` (라인 285)
+   ```
+   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+   ```
+
+14. **RGBA**: `rgba(102, 126, 234, 0.15)` (라인 292)
+   ```
+   box-shadow: 0 1px 4px rgba(102, 126, 234, 0.15);
+   ```
+
+15. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 317)
+   ```
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+   ```
+
+16. **RGBA**: `rgba(102, 126, 234, 0.1)` (라인 358)
+   ```
+   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+   ```
+
+17. **RGBA**: `rgba(102, 126, 234, 0.2)` (라인 370)
+   ```
+   box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+   ```
+
+---
+
+### 📁 `frontend/src/components/tenant/PgConfigurationList.css` (CSS)
+
+**하드코딩 색상**: 17개
+
+1. **HEX_3**: `#666` (라인 33)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+2. **HEX_3**: `#999` (라인 57)
+   ```
+   color: var(--mg-text-tertiary, #999);
+   ```
+
+3. **HEX_3**: `#999` (라인 70)
+   ```
+   color: var(--mg-text-tertiary, #999);
+   ```
+
+4. **HEX_3**: `#666` (라인 116)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+5. **HEX_3**: `#999` (라인 138)
+   ```
+   color: var(--mg-text-tertiary, #999);
+   ```
+
+6. **HEX_3**: `#666` (라인 151)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+7. **HEX_3**: `#666` (라인 259)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+8. **HEX_3**: `#666` (라인 321)
+   ```
+   color: var(--mg-text-secondary, #666);
+   ```
+
+9. **HEX_6**: `#4a90e2` (라인 92)
+   ```
+   border-color: var(--mg-primary, #4a90e2);
+   ```
+
+10. **HEX_6**: `#4a90e2` (라인 174)
+   ```
+   border-color: var(--mg-primary, #4a90e2);
+   ```
+
+11. **HEX_6**: `#155724` (라인 217)
+   ```
+   color: #155724;
+   ```
+
+12. **HEX_6**: `#e2e3e5` (라인 231)
+   ```
+   background: #e2e3e5;
+   ```
+
+13. **HEX_6**: `#383d41` (라인 232)
+   ```
+   color: #383d41;
+   ```
+
+14. **HEX_6**: `#d1ecf1` (라인 236)
+   ```
+   background: #d1ecf1;
+   ```
+
+15. **HEX_6**: `#0c5460` (라인 237)
+   ```
+   color: #0c5460;
+   ```
+
+16. **HEX_6**: `#4a90e2` (라인 365)
+   ```
+   outline: 2px solid var(--mg-primary, #4a90e2);
+   ```
+
+17. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 299)
+   ```
+   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
    ```
 
 ---
@@ -12036,260 +11470,88 @@
 
 ---
 
-### 📁 `frontend/src/components/layout/SimpleHamburgerMenu.css` (CSS)
+### 📁 `frontend/src/components/common/CustomSelect.css` (CSS)
 
 **하드코딩 색상**: 16개
 
-1. **HEX_6**: `#c82333` (라인 187)
+1. **HEX_6**: `#cbd5e0` (라인 16)
    ```
-   background: linear-gradient(135deg, var(--mg-error-500) 0%, #c82333 100%);
-   ```
-
-2. **HEX_6**: `#e3f2fd` (라인 320)
-   ```
-   background: #e3f2fd;
+   border: 1px solid #cbd5e0;
    ```
 
-3. **HEX_6**: `#bbdefb` (라인 321)
+2. **HEX_6**: `#3182ce` (라인 26)
    ```
-   border-color: #bbdefb;
-   ```
-
-4. **HEX_6**: `#f1f3f5` (라인 367)
-   ```
-   background: #f1f3f5;
+   border-color: #3182ce;
    ```
 
-5. **HEX_6**: `#dee2e6` (라인 393)
+3. **HEX_6**: `#3182ce` (라인 31)
    ```
-   border-top: 2px solid #dee2e6;
-   ```
-
-6. **HEX_6**: `#c82333` (라인 429)
-   ```
-   background: #c82333;
+   border: 2px solid #3182ce;
    ```
 
-7. **HEX_6**: `#212529` (라인 477)
+4. **HEX_6**: `#3182ce` (라인 36)
    ```
-   color: #212529;
-   ```
-
-8. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 58)
-   ```
-   background: rgba(255, 255, 255, 0.2);
+   border: 2px solid #3182ce;
    ```
 
-9. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 75)
+5. **HEX_6**: `#fff5f5` (라인 41)
    ```
-   background: rgba(255, 255, 255, 0.3);
-   ```
-
-10. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 111)
-   ```
-   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+   background: #fff5f5;
    ```
 
-11. **RGBA**: `rgba(102, 126, 234, 0.3)` (라인 119)
+6. **HEX_6**: `#E8E8ED` (라인 102)
    ```
-   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-   ```
-
-12. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 141)
-   ```
-   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+   border-bottom: 1px solid var(--color-border-secondary, #E8E8ED);
    ```
 
-13. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 183)
+7. **HEX_6**: `#F5F5F7` (라인 163)
    ```
-   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-   ```
-
-14. **RGBA**: `rgba(220, 53, 69, 0.3)` (라인 190)
-   ```
-   box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+   background-color: var(--color-bg-secondary, #F5F5F7);
    ```
 
-15. **RGBA**: `rgba(220, 53, 69, 0.3)` (라인 289)
+8. **HEX_6**: `#E8E8ED` (라인 172)
    ```
-   box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
-   ```
-
-16. **RGBA**: `rgba(220, 53, 69, 0.4)` (라인 295)
-   ```
-   box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+   background: var(--color-bg-accent, #E8E8ED);
    ```
 
----
-
-### 📁 `frontend/src/components/consultation/ConsultationHistory.css` (CSS)
-
-**하드코딩 색상**: 16개
-
-1. **HEX_6**: `#f0f0f0` (라인 68)
+9. **RGBA**: `rgba(49, 130, 206, 0.2)` (라인 32)
    ```
-   border: 1px solid #f0f0f0;
+   box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
    ```
 
-2. **HEX_6**: `#fafbfc` (라인 95)
+10. **RGBA**: `rgba(49, 130, 206, 0.2)` (라인 37)
    ```
-   background: #fafbfc;
-   ```
-
-3. **HEX_6**: `#f0f0f0` (라인 141)
-   ```
-   border: 1px solid #f0f0f0;
+   box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
    ```
 
-4. **HEX_6**: `#d4edda` (라인 194)
+11. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 70)
    ```
-   background: #d4edda;
-   ```
-
-5. **HEX_6**: `#155724` (라인 195)
-   ```
-   color: #155724;
+   background: rgba(255, 255, 255, 0.95);
    ```
 
-6. **HEX_6**: `#cce5ff` (라인 199)
+12. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 75)
    ```
-   background: #cce5ff;
-   ```
-
-7. **HEX_6**: `#004085` (라인 200)
-   ```
-   color: #004085;
+   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
    ```
 
-8. **HEX_6**: `#d1ecf1` (라인 204)
+13. **RGBA**: `rgba(0, 123, 255, 0.25)` (라인 116)
    ```
-   background: #d1ecf1;
-   ```
-
-9. **HEX_6**: `#0c5460` (라인 205)
-   ```
-   color: #0c5460;
+   box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.25);
    ```
 
-10. **HEX_6**: `#721c24` (라인 210)
+14. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 130)
    ```
-   color: #721c24;
-   ```
-
-11. **HEX_6**: `#856404` (라인 215)
-   ```
-   color: #856404;
+   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
    ```
 
-12. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 67)
+15. **RGBA**: `rgba(0, 123, 255, 0.1)` (라인 138)
    ```
-   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-   ```
-
-13. **RGBA**: `rgba(0, 123, 255, 0.1)` (라인 105)
-   ```
-   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+   background-color: rgba(0, 123, 255, 0.1);
    ```
 
-14. **RGBA**: `rgba(108, 117, 125, 0.3)` (라인 126)
+16. **RGBA**: `rgba(0, 123, 255, 0.15)` (라인 143)
    ```
-   box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
-   ```
-
-15. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 140)
-   ```
-   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-   ```
-
-16. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 161)
-   ```
-   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-   ```
-
----
-
-### 📁 `frontend/src/components/common/MGForm.css` (CSS)
-
-**하드코딩 색상**: 16개
-
-1. **HEX_6**: `#4a5568` (라인 86)
-   ```
-   color: #4a5568;
-   ```
-
-2. **HEX_6**: `#718096` (라인 129)
-   ```
-   color: #718096;
-   ```
-
-3. **HEX_6**: `#1a202c` (라인 148)
-   ```
-   color: #1a202c;
-   ```
-
-4. **HEX_6**: `#1a202c` (라인 200)
-   ```
-   color: #1a202c;
-   ```
-
-5. **HEX_6**: `#1a202c` (라인 243)
-   ```
-   color: #1a202c;
-   ```
-
-6. **HEX_6**: `#718096` (라인 277)
-   ```
-   color: #718096;
-   ```
-
-7. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 13)
-   ```
-   box-shadow: 0 8px 32px var(--mg-shadow-light), 0 4px 16px rgba(0, 0, 0, 0.05);
-   ```
-
-8. **RGBA**: `rgba(226, 232, 240, 0.6)` (라인 14)
-   ```
-   border: 1px solid rgba(226, 232, 240, 0.6);
-   ```
-
-9. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 49)
-   ```
-   background: rgba(255, 255, 255, 0.8);
-   ```
-
-10. **RGBA**: `rgba(102, 126, 234, 0.1)` (라인 156)
-   ```
-   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px var(--mg-shadow-medium);
-   ```
-
-11. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 174)
-   ```
-   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-   ```
-
-12. **RGBA**: `rgba(102, 126, 234, 0.1)` (라인 210)
-   ```
-   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px var(--mg-shadow-medium);
-   ```
-
-13. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 220)
-   ```
-   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-   ```
-
-14. **RGBA**: `rgba(102, 126, 234, 0.1)` (라인 253)
-   ```
-   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px var(--mg-shadow-medium);
-   ```
-
-15. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 263)
-   ```
-   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-   ```
-
-16. **RGBA**: `rgba(26, 32, 44, 0.8)` (라인 308)
-   ```
-   background: rgba(26, 32, 44, 0.8);
+   background-color: rgba(0, 123, 255, 0.15);
    ```
 
 ---
@@ -12466,326 +11728,83 @@
 
 ---
 
-### 📁 `frontend/src/components/test/PaymentTest.css` (CSS)
+### 📁 `frontend/src/components/common/MGLoading.css` (CSS)
 
 **하드코딩 색상**: 15개
 
-1. **HEX_6**: `#fef7f0` (라인 30)
-   ```
-   background: #fef7f0;
-   ```
-
-2. **HEX_6**: `#f5e6d3` (라인 34)
-   ```
-   border: 1px solid #f5e6d3;
-   ```
-
-3. **HEX_6**: `#ced4da` (라인 64)
-   ```
-   border: 1px solid #ced4da;
-   ```
-
-4. **HEX_6**: `#545b62` (라인 127)
-   ```
-   background-color: #545b62;
-   ```
-
-5. **HEX_6**: `#1e7e34` (라인 136)
-   ```
-   background-color: #1e7e34;
-   ```
-
-6. **HEX_6**: `#138496` (라인 145)
-   ```
-   background-color: #138496;
-   ```
-
-7. **HEX_6**: `#212529` (라인 150)
-   ```
-   color: #212529;
-   ```
-
-8. **HEX_6**: `#e0a800` (라인 154)
-   ```
-   background-color: #e0a800;
-   ```
-
-9. **HEX_6**: `#c82333` (라인 163)
-   ```
-   background-color: #c82333;
-   ```
-
-10. **HEX_6**: `#f3f3f3` (라인 181)
-   ```
-   border: 2px solid #f3f3f3;
-   ```
-
-11. **HEX_6**: `#dee2e6` (라인 204)
-   ```
-   border-bottom: 1px solid #dee2e6;
-   ```
-
-12. **HEX_6**: `#dee2e6` (라인 223)
-   ```
-   border-bottom: 1px solid #dee2e6;
-   ```
-
-13. **HEX_6**: `#721c24` (라인 282)
-   ```
-   color: #721c24;
-   ```
-
-14. **HEX_6**: `#f5c6cb` (라인 286)
-   ```
-   border: 1px solid #f5c6cb;
-   ```
-
-15. **RGBA**: `rgba(0, 123, 255, 0.25)` (라인 74)
-   ```
-   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-   ```
-
----
-
-### 📁 `frontend/src/components/homepage/Homepage.css` (CSS)
-
-**하드코딩 색상**: 15개
-
-1. **HEX_6**: `#F0F0F0` (라인 199)
-   ```
-   background-color: #F0F0F0;
-   ```
-
-2. **HEX_6**: `#7A9082` (라인 406)
-   ```
-   color: var(--mg-color-primary-light, #7A9082);
-   ```
-
-3. **HEX_6**: `#8A9A90` (라인 452)
-   ```
-   color: var(--mg-color-text-tertiary, #8A9A90);
-   ```
-
-4. **HEX_6**: `#8A9A90` (라인 459)
-   ```
-   color: var(--mg-color-text-tertiary, #8A9A90);
-   ```
-
-5. **HEX_6**: `#D32F2F` (라인 595)
-   ```
-   color: #D32F2F;
-   ```
-
-6. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 23)
-   ```
-   background: rgba(255, 255, 255, 0.9);
-   ```
-
-7. **RGBA**: `rgba(0,0,0,0.05)` (라인 25)
-   ```
-   box-shadow: var(--mg-shadow-sm, 0 1px 2px rgba(0,0,0,0.05));
-   ```
-
-8. **RGBA**: `rgba(72, 104, 86, 0.35)` (라인 236)
-   ```
-   radial-gradient(circle at 20% 20%, rgba(72, 104, 86, 0.35) 0%, rgba(0, 0, 0, 0) 45%),
-   ```
-
-9. **RGBA**: `rgba(8, 12, 10, 0.45)` (라인 237)
-   ```
-   linear-gradient(to bottom, rgba(8, 12, 10, 0.45) 0%, rgba(8, 12, 10, 0.62) 100%);
-   ```
-
-10. **RGBA**: `rgba(8, 12, 10, 0.62)` (라인 237)
-   ```
-   linear-gradient(to bottom, rgba(8, 12, 10, 0.45) 0%, rgba(8, 12, 10, 0.62) 100%);
-   ```
-
-11. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 257)
-   ```
-   color: rgba(255, 255, 255, 0.9);
-   ```
-
-12. **RGBA**: `rgba(0, 0, 0, 0.35)` (라인 258)
-   ```
-   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-   ```
-
-13. **RGBA**: `rgba(255, 255, 255, 0.85)` (라인 270)
-   ```
-   border: 2px solid rgba(255, 255, 255, 0.85);
-   ```
-
-14. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 282)
-   ```
-   background: rgba(255, 255, 255, 0.95);
-   ```
-
-15. **RGBA**: `rgba(0,0,0,0.05)` (라인 448)
-   ```
-   border-top: 1px solid rgba(0,0,0,0.05);
-   ```
-
----
-
-### 📁 `frontend/src/components/common/FormInput.css` (CSS)
-
-**하드코딩 색상**: 15개
-
-1. **HEX_6**: `#c53030` (라인 17)
-   ```
-   color: #c53030;
-   ```
-
-2. **HEX_6**: `#e53e3e` (라인 21)
-   ```
-   color: #e53e3e;
-   ```
-
-3. **HEX_6**: `#cbd5e0` (라인 35)
-   ```
-   border: 1px solid #cbd5e0;
-   ```
-
-4. **HEX_6**: `#a0aec0` (라인 44)
-   ```
-   color: #a0aec0;
-   ```
-
-5. **HEX_6**: `#3182ce` (라인 53)
-   ```
-   border: 2px solid #3182ce;
-   ```
-
-6. **HEX_6**: `#fff5f5` (라인 65)
-   ```
-   background-color: #fff5f5;
-   ```
-
-7. **HEX_6**: `#e53e3e` (라인 66)
-   ```
-   border: 1px solid #e53e3e;
-   ```
-
-8. **HEX_6**: `#e53e3e` (라인 70)
-   ```
-   border: 2px solid #e53e3e;
-   ```
-
-9. **HEX_6**: `#edf2f7` (라인 77)
-   ```
-   background-color: #edf2f7;
-   ```
-
-10. **HEX_6**: `#a0aec0` (라인 78)
-   ```
-   color: #a0aec0;
-   ```
-
-11. **HEX_6**: `#cbd5e0` (라인 79)
-   ```
-   border: 1px solid #cbd5e0;
-   ```
-
-12. **HEX_6**: `#718096` (라인 97)
+1. **HEX_6**: `#718096` (라인 16)
    ```
    color: #718096;
    ```
 
-13. **HEX_6**: `#c53030` (라인 106)
+2. **HEX_6**: `#48cae4` (라인 56)
    ```
-   color: #c53030;
-   ```
-
-14. **RGBA**: `rgba(49, 130, 206, 0.2)` (라인 54)
-   ```
-   box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
+   border-top-color: #48cae4;
    ```
 
-15. **RGBA**: `rgba(229, 62, 62, 0.2)` (라인 71)
+3. **HEX_6**: `#ff9ff3` (라인 61)
    ```
-   box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.2);
-   ```
-
----
-
-### 📁 `frontend/src/components/auth/AuthPageCommon.css` (CSS)
-
-**하드코딩 색상**: 15개
-
-1. **HEX_6**: `#E53E3E` (라인 126)
-   ```
-   color: #E53E3E;
+   border-top-color: #ff9ff3;
    ```
 
-2. **HEX_6**: `#F5F3EF` (라인 163)
+4. **HEX_6**: `#48cae4` (라인 102)
    ```
-   background-color: var(--mg-surface-primary, #F5F3EF);
-   ```
-
-3. **HEX_6**: `#E53E3E` (라인 183)
-   ```
-   border-color: #E53E3E;
+   background: #48cae4;
    ```
 
-4. **HEX_6**: `#EBE9E4` (라인 188)
+5. **HEX_6**: `#ff9ff3` (라인 106)
    ```
-   background-color: var(--mg-surface-secondary, #EBE9E4);
-   ```
-
-5. **HEX_6**: `#F5F3EF` (라인 193)
-   ```
-   background-color: var(--mg-surface-primary, #F5F3EF);
+   background: #ff9ff3;
    ```
 
-6. **HEX_6**: `#EBE9E4` (라인 212)
+6. **HEX_6**: `#48cae4` (라인 146)
    ```
-   background-color: var(--mg-surface-secondary, #EBE9E4);
-   ```
-
-7. **HEX_6**: `#E53E3E` (라인 218)
-   ```
-   color: #E53E3E;
+   background: #48cae4;
    ```
 
-8. **HEX_6**: `#4F6B5A` (라인 287)
+7. **HEX_6**: `#ff9ff3` (라인 150)
    ```
-   background-color: var(--mg-primary-light, #4F6B5A);
-   ```
-
-9. **HEX_6**: `#48bb78` (라인 381)
-   ```
-   background-color: #48bb78;
+   background: #ff9ff3;
    ```
 
-10. **HEX_6**: `#F5F3EF` (라인 397)
+8. **HEX_6**: `#718096` (라인 246)
    ```
-   background-color: var(--mg-surface-primary, #F5F3EF);
-   ```
-
-11. **RGBA**: `rgba(44, 44, 44, 0.5)` (라인 30)
-   ```
-   background: rgba(44, 44, 44, 0.5);
+   color: #718096;
    ```
 
-12. **RGBA**: `rgba(61, 82, 70, 0.1)` (라인 178)
+9. **RGBA**: `rgba(102, 126, 234, 0.2)` (라인 26)
    ```
-   box-shadow: 0 0 0 2px rgba(61, 82, 70, 0.1);
-   ```
-
-13. **RGBA**: `rgba(61, 82, 70, 0.1)` (라인 208)
-   ```
-   box-shadow: 0 0 0 2px rgba(61, 82, 70, 0.1);
+   border: 3px solid rgba(102, 126, 234, 0.2);
    ```
 
-14. **RGBA**: `rgba(61, 82, 70, 0.05)` (라인 314)
+10. **RGBA**: `rgba(102, 126, 234, 0.2)` (라인 52)
    ```
-   background-color: rgba(61, 82, 70, 0.05);
+   border-color: rgba(102, 126, 234, 0.2);
    ```
 
-15. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 357)
+11. **RGBA**: `rgba(72, 202, 228, 0.2)` (라인 57)
    ```
-   border: 2px solid rgba(255, 255, 255, 0.3);
+   border-color: rgba(72, 202, 228, 0.2);
+   ```
+
+12. **RGBA**: `rgba(255, 159, 243, 0.2)` (라인 62)
+   ```
+   border-color: rgba(255, 159, 243, 0.2);
+   ```
+
+13. **RGBA**: `rgba(255, 107, 107, 0.2)` (라인 67)
+   ```
+   border-color: rgba(255, 107, 107, 0.2);
+   ```
+
+14. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 234)
+   ```
+   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+   ```
+
+15. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 258)
+   ```
+   background: rgba(255, 255, 255, 0.95);
    ```
 
 ---
@@ -12952,78 +11971,306 @@
 
 ---
 
-### 📁 `frontend/src/styles/auth/TabletLogin.css` (CSS)
+### 📁 `frontend/src/components/wellness/WellnessNotificationList.css` (CSS)
 
 **하드코딩 색상**: 14개
 
-1. **HEX_6**: `#fef01b` (라인 347)
+1. **HEX_6**: `#FF8E8E` (라인 105)
    ```
-   background: #fef01b;
-   ```
-
-2. **HEX_6**: `#fef01b` (라인 349)
-   ```
-   border-color: #fef01b;
+   background: linear-gradient(180deg, var(--mg-error-500), #FF8E8E);
    ```
 
-3. **HEX_6**: `#f4e800` (라인 353)
+2. **HEX_6**: `#FF8E8E` (라인 133)
    ```
-   background: #f4e800;
-   ```
-
-4. **HEX_6**: `#f4e800` (라인 354)
-   ```
-   border-color: #f4e800;
+   background: linear-gradient(135deg, var(--mg-error-500), #FF8E8E);
    ```
 
-5. **HEX_6**: `#03c75a` (라인 358)
+3. **HEX_6**: `#FFD700` (라인 138)
    ```
-   background: #03c75a;
-   ```
-
-6. **HEX_6**: `#03c75a` (라인 360)
-   ```
-   border-color: #03c75a;
+   background: linear-gradient(135deg, #FFD700, #FFA500);
    ```
 
-7. **HEX_6**: `#02b351` (라인 364)
+4. **HEX_6**: `#FFA500` (라인 138)
    ```
-   background: #02b351;
-   ```
-
-8. **HEX_6**: `#02b351` (라인 365)
-   ```
-   border-color: #02b351;
+   background: linear-gradient(135deg, #FFD700, #FFA500);
    ```
 
-9. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 135)
+5. **RGBA**: `rgba(255, 250, 240, 0.6)` (라인 15)
    ```
-   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-   ```
-
-10. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 141)
-   ```
-   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+   background: linear-gradient(135deg, rgba(255, 250, 240, 0.6), rgba(255, 255, 250, 0.6));
    ```
 
-11. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 183)
+6. **RGBA**: `rgba(255, 255, 250, 0.6)` (라인 15)
    ```
-   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-   ```
-
-12. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 267)
-   ```
-   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+   background: linear-gradient(135deg, rgba(255, 250, 240, 0.6), rgba(255, 255, 250, 0.6));
    ```
 
-13. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 399)
+7. **RGBA**: `rgba(255, 182, 193, 0.2)` (라인 16)
    ```
-   background: rgba(59, 130, 246, 0.1);
+   border: var(--border-width-thin) solid rgba(255, 182, 193, 0.2);
    ```
 
-14. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 432)
+8. **RGBA**: `rgba(255, 107, 157, 0.3)` (라인 32)
    ```
-   border: 2px solid rgba(255, 255, 255, 0.3);
+   box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+   ```
+
+9. **RGBA**: `rgba(255, 250, 240, 0.3)` (라인 97)
+   ```
+   background: linear-gradient(135deg, rgba(255, 250, 240, 0.3), rgba(255, 255, 250, 0.3));
+   ```
+
+10. **RGBA**: `rgba(255, 255, 250, 0.3)` (라인 97)
+   ```
+   background: linear-gradient(135deg, rgba(255, 250, 240, 0.3), rgba(255, 255, 250, 0.3));
+   ```
+
+11. **RGBA**: `rgba(135, 206, 235, 0.1)` (라인 147)
+   ```
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
+   ```
+
+12. **RGBA**: `rgba(176, 224, 230, 0.1)` (라인 147)
+   ```
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
+   ```
+
+13. **RGBA**: `rgba(135, 206, 235, 0.1)` (라인 238)
+   ```
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
+   ```
+
+14. **RGBA**: `rgba(176, 224, 230, 0.1)` (라인 238)
+   ```
+   background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(176, 224, 230, 0.1));
+   ```
+
+---
+
+### 📁 `frontend/src/components/super-admin/PaymentManagement.css` (CSS)
+
+**하드코딩 색상**: 14개
+
+1. **HEX_6**: `#f5576c` (라인 58)
+   ```
+   background: linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%);
+   ```
+
+2. **HEX_6**: `#4facfe` (라인 62)
+   ```
+   background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+   ```
+
+3. **HEX_6**: `#00f2fe` (라인 62)
+   ```
+   background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+   ```
+
+4. **HEX_6**: `#43e97b` (라인 66)
+   ```
+   background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+   ```
+
+5. **HEX_6**: `#38f9d7` (라인 66)
+   ```
+   background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+   ```
+
+6. **HEX_6**: `#ced4da` (라인 109)
+   ```
+   border: 1px solid #ced4da;
+   ```
+
+7. **HEX_6**: `#212529` (라인 303)
+   ```
+   color: #212529;
+   ```
+
+8. **HEX_6**: `#343a40` (라인 327)
+   ```
+   background-color: #343a40;
+   ```
+
+9. **HEX_6**: `#1e7e34` (라인 376)
+   ```
+   background-color: #1e7e34;
+   ```
+
+10. **HEX_6**: `#c82333` (라인 385)
+   ```
+   background-color: #c82333;
+   ```
+
+11. **HEX_6**: `#212529` (라인 390)
+   ```
+   color: #212529;
+   ```
+
+12. **HEX_6**: `#e0a800` (라인 394)
+   ```
+   background-color: #e0a800;
+   ```
+
+13. **HEX_6**: `#f5c6cb` (라인 437)
+   ```
+   border-color: #f5c6cb;
+   ```
+
+14. **RGBA**: `rgba(0, 123, 255, 0.25)` (라인 119)
+   ```
+   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+   ```
+
+---
+
+### 📁 `frontend/src/components/layout/SimpleHamburgerMenu.css` (CSS)
+
+**하드코딩 색상**: 14개
+
+1. **HEX_6**: `#c82333` (라인 187)
+   ```
+   background: linear-gradient(135deg, var(--mg-error-500) 0%, #c82333 100%);
+   ```
+
+2. **HEX_6**: `#bbdefb` (라인 321)
+   ```
+   border-color: #bbdefb;
+   ```
+
+3. **HEX_6**: `#f1f3f5` (라인 367)
+   ```
+   background: #f1f3f5;
+   ```
+
+4. **HEX_6**: `#c82333` (라인 429)
+   ```
+   background: #c82333;
+   ```
+
+5. **HEX_6**: `#212529` (라인 477)
+   ```
+   color: #212529;
+   ```
+
+6. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 58)
+   ```
+   background: rgba(255, 255, 255, 0.2);
+   ```
+
+7. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 75)
+   ```
+   background: rgba(255, 255, 255, 0.3);
+   ```
+
+8. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 111)
+   ```
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+   ```
+
+9. **RGBA**: `rgba(102, 126, 234, 0.3)` (라인 119)
+   ```
+   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+   ```
+
+10. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 141)
+   ```
+   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+   ```
+
+11. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 183)
+   ```
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+   ```
+
+12. **RGBA**: `rgba(220, 53, 69, 0.3)` (라인 190)
+   ```
+   box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+   ```
+
+13. **RGBA**: `rgba(220, 53, 69, 0.3)` (라인 289)
+   ```
+   box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+   ```
+
+14. **RGBA**: `rgba(220, 53, 69, 0.4)` (라인 295)
+   ```
+   box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+   ```
+
+---
+
+### 📁 `frontend/src/components/homepage/Homepage.css` (CSS)
+
+**하드코딩 색상**: 14개
+
+1. **HEX_6**: `#7A9082` (라인 406)
+   ```
+   color: var(--mg-color-primary-light, #7A9082);
+   ```
+
+2. **HEX_6**: `#8A9A90` (라인 452)
+   ```
+   color: var(--mg-color-text-tertiary, #8A9A90);
+   ```
+
+3. **HEX_6**: `#8A9A90` (라인 459)
+   ```
+   color: var(--mg-color-text-tertiary, #8A9A90);
+   ```
+
+4. **HEX_6**: `#D32F2F` (라인 595)
+   ```
+   color: #D32F2F;
+   ```
+
+5. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 23)
+   ```
+   background: rgba(255, 255, 255, 0.9);
+   ```
+
+6. **RGBA**: `rgba(0,0,0,0.05)` (라인 25)
+   ```
+   box-shadow: var(--mg-shadow-sm, 0 1px 2px rgba(0,0,0,0.05));
+   ```
+
+7. **RGBA**: `rgba(72, 104, 86, 0.35)` (라인 236)
+   ```
+   radial-gradient(circle at 20% 20%, rgba(72, 104, 86, 0.35) 0%, rgba(0, 0, 0, 0) 45%),
+   ```
+
+8. **RGBA**: `rgba(8, 12, 10, 0.45)` (라인 237)
+   ```
+   linear-gradient(to bottom, rgba(8, 12, 10, 0.45) 0%, rgba(8, 12, 10, 0.62) 100%);
+   ```
+
+9. **RGBA**: `rgba(8, 12, 10, 0.62)` (라인 237)
+   ```
+   linear-gradient(to bottom, rgba(8, 12, 10, 0.45) 0%, rgba(8, 12, 10, 0.62) 100%);
+   ```
+
+10. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 257)
+   ```
+   color: rgba(255, 255, 255, 0.9);
+   ```
+
+11. **RGBA**: `rgba(0, 0, 0, 0.35)` (라인 258)
+   ```
+   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+   ```
+
+12. **RGBA**: `rgba(255, 255, 255, 0.85)` (라인 270)
+   ```
+   border: 2px solid rgba(255, 255, 255, 0.85);
+   ```
+
+13. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 282)
+   ```
+   background: rgba(255, 255, 255, 0.95);
+   ```
+
+14. **RGBA**: `rgba(0,0,0,0.05)` (라인 448)
+   ```
+   border-top: 1px solid rgba(0,0,0,0.05);
    ```
 
 ---
@@ -13095,219 +12342,6 @@
 13. **HEX_6**: `#0f1b3a` (라인 85)
    ```
    --mg-grade-admin-super-dark: #0f1b3a;
-   ```
-
----
-
-### 📁 `frontend/src/components/common/StatsCardGrid.css` (CSS)
-
-**하드코딩 색상**: 13개
-
-1. **HEX_6**: `#E8E0FF` (라인 63)
-   ```
-   background-color: #E8E0FF;
-   ```
-
-2. **HEX_6**: `#D1C4E9` (라인 64)
-   ```
-   border: 1px solid #D1C4E9;
-   ```
-
-3. **HEX_6**: `#FFE8D1` (라인 68)
-   ```
-   background-color: #FFE8D1;
-   ```
-
-4. **HEX_6**: `#FFCCBC` (라인 69)
-   ```
-   border: 1px solid #FFCCBC;
-   ```
-
-5. **HEX_6**: `#D4F1E0` (라인 73)
-   ```
-   background-color: #D4F1E0;
-   ```
-
-6. **HEX_6**: `#C8E6C9` (라인 74)
-   ```
-   border: 1px solid #C8E6C9;
-   ```
-
-7. **HEX_6**: `#FFE0DB` (라인 78)
-   ```
-   background-color: #FFE0DB;
-   ```
-
-8. **HEX_6**: `#FFCDD2` (라인 79)
-   ```
-   border: 1px solid #FFCDD2;
-   ```
-
-9. **HEX_6**: `#7B68EE` (라인 94)
-   ```
-   background-color: #7B68EE;
-   ```
-
-10. **HEX_6**: `#7B68EE` (라인 127)
-   ```
-   color: #7B68EE;
-   ```
-
-11. **RGBA**: `rgba(0, 123, 255, 0.02)` (라인 285)
-   ```
-   rgba(0, 123, 255, 0.02) 0%,
-   ```
-
-12. **RGBA**: `rgba(40, 167, 69, 0.02)` (라인 286)
-   ```
-   rgba(40, 167, 69, 0.02) 50%,
-   ```
-
-13. **RGBA**: `rgba(255, 193, 7, 0.02)` (라인 287)
-   ```
-   rgba(255, 193, 7, 0.02) 100%);
-   ```
-
----
-
-### 📁 `frontend/src/components/common/DetailedStatsGrid.css` (CSS)
-
-**하드코딩 색상**: 13개
-
-1. **HEX_6**: `#E8E0FF` (라인 251)
-   ```
-   background-color: #E8E0FF;
-   ```
-
-2. **HEX_6**: `#D1C4E9` (라인 252)
-   ```
-   border: 1px solid #D1C4E9;
-   ```
-
-3. **HEX_6**: `#D4F1E0` (라인 260)
-   ```
-   background-color: #D4F1E0;
-   ```
-
-4. **HEX_6**: `#C8E6C9` (라인 261)
-   ```
-   border: 1px solid #C8E6C9;
-   ```
-
-5. **HEX_6**: `#FFE0DB` (라인 269)
-   ```
-   background-color: #FFE0DB;
-   ```
-
-6. **HEX_6**: `#FFCDD2` (라인 270)
-   ```
-   border: 1px solid #FFCDD2;
-   ```
-
-7. **HEX_6**: `#FFE8D1` (라인 278)
-   ```
-   background-color: #FFE8D1;
-   ```
-
-8. **HEX_6**: `#FFCCBC` (라인 279)
-   ```
-   border: 1px solid #FFCCBC;
-   ```
-
-9. **HEX_6**: `#E3F2FD` (라인 287)
-   ```
-   background-color: #E3F2FD;
-   ```
-
-10. **HEX_6**: `#BBDEFB` (라인 288)
-   ```
-   border: 1px solid #BBDEFB;
-   ```
-
-11. **HEX_6**: `#7B68EE` (라인 333)
-   ```
-   background-color: #7B68EE;
-   ```
-
-12. **HEX_6**: `#7B68EE` (라인 388)
-   ```
-   color: #7B68EE;
-   ```
-
-13. **HEX_6**: `#7B68EE` (라인 434)
-   ```
-   color: #7B68EE;
-   ```
-
----
-
-### 📁 `frontend/src/components/auth/BranchLogin.css` (CSS)
-
-**하드코딩 색상**: 13개
-
-1. **HEX_6**: `#16a34a` (라인 6)
-   ```
-   --branch-login-success: #16a34a;
-   ```
-
-2. **HEX_6**: `#d97706` (라인 7)
-   ```
-   --branch-login-warning: #d97706;
-   ```
-
-3. **HEX_6**: `#111827` (라인 16)
-   ```
-   --branch-login-gray-900: #111827;
-   ```
-
-4. **HEX_6**: `#1d4ed8` (라인 174)
-   ```
-   background: #1d4ed8;
-   ```
-
-5. **HEX_6**: `#1d4ed8` (라인 240)
-   ```
-   color: #1d4ed8;
-   ```
-
-6. **HEX_6**: `#dbeafe` (라인 388)
-   ```
-   background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-   ```
-
-7. **HEX_6**: `#bfdbfe` (라인 388)
-   ```
-   background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-   ```
-
-8. **HEX_6**: `#1d4ed8` (라인 458)
-   ```
-   background: #1d4ed8;
-   ```
-
-9. **HEX_6**: `#1e3a8a` (라인 549)
-   ```
-   background: linear-gradient(135deg, #1e3a8a 0%, var(--mg-color-info-dark) 100%);
-   ```
-
-10. **HEX_6**: `#fca5a5` (라인 557)
-   ```
-   color: #fca5a5;
-   ```
-
-11. **RGBA**: `rgba(37, 99, 235, 0.2)` (라인 93)
-   ```
-   box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-   ```
-
-12. **RGBA**: `rgba(37, 99, 235, 0.1)` (라인 129)
-   ```
-   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-   ```
-
-13. **RGBA**: `rgba(37, 99, 235, 0.3)` (라인 176)
-   ```
-   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
    ```
 
 ---
@@ -13454,73 +12488,68 @@
 
 ---
 
-### 📁 `frontend/src/components/admin/DashboardWidgetEditor.css` (CSS)
+### 📁 `frontend/src/styles/auth/TabletLogin.css` (CSS)
 
-**하드코딩 색상**: 13개
+**하드코딩 색상**: 12개
 
-1. **HEX_6**: `#f3f4f6` (라인 66)
+1. **HEX_6**: `#fef01b` (라인 347)
    ```
-   background: var(--mg-bg-hover, #f3f4f6);
-   ```
-
-2. **HEX_6**: `#9ca3af` (라인 115)
-   ```
-   color: var(--mg-text-tertiary, #9ca3af);
+   background: #fef01b;
    ```
 
-3. **HEX_6**: `#e3f2fd` (라인 196)
+2. **HEX_6**: `#fef01b` (라인 349)
    ```
-   /* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd) */
-   ```
-
-4. **HEX_6**: `#e3f2fd` (라인 200)
-   ```
-   background-color: #e3f2fd;
+   border-color: #fef01b;
    ```
 
-5. **HEX_6**: `#fff3e0` (라인 208)
+3. **HEX_6**: `#f4e800` (라인 353)
    ```
-   /* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3e0/#e65100 -> 토큰 매핑 부재 */
-   ```
-
-6. **HEX_6**: `#e65100` (라인 208)
-   ```
-   /* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3e0/#e65100 -> 토큰 매핑 부재 */
+   background: #f4e800;
    ```
 
-7. **HEX_6**: `#fff3e0` (라인 212)
+4. **HEX_6**: `#f4e800` (라인 354)
    ```
-   background-color: #fff3e0;
-   ```
-
-8. **HEX_6**: `#e65100` (라인 213)
-   ```
-   color: #e65100;
+   border-color: #f4e800;
    ```
 
-9. **HEX_6**: `#9ca3af` (라인 234)
+5. **HEX_6**: `#02b351` (라인 364)
    ```
-   color: var(--mg-text-tertiary, #9ca3af);
-   ```
-
-10. **HEX_6**: `#fff8f0` (라인 238)
-   ```
-   /* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff8f0 -> 토큰 매핑 부재 */
+   background: #02b351;
    ```
 
-11. **HEX_6**: `#fff8f0` (라인 241)
+6. **HEX_6**: `#02b351` (라인 365)
    ```
-   background-color: #fff8f0;
-   ```
-
-12. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 69)
-   ```
-   box-shadow: var(--mg-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+   border-color: #02b351;
    ```
 
-13. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 108)
+7. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 135)
    ```
-   box-shadow: var(--mg-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+   ```
+
+8. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 141)
+   ```
+   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+   ```
+
+9. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 183)
+   ```
+   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+   ```
+
+10. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 267)
+   ```
+   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+   ```
+
+11. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 399)
+   ```
+   background: rgba(59, 130, 246, 0.1);
+   ```
+
+12. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 432)
+   ```
+   border: 2px solid rgba(255, 255, 255, 0.3);
    ```
 
 ---
@@ -13657,134 +12686,266 @@
 
 ---
 
-### 📁 `frontend/src/components/clinical/RiskAlertBadge.css` (CSS)
+### 📁 `frontend/src/components/test/PaymentTest.css` (CSS)
 
 **하드코딩 색상**: 12개
 
-1. **HEX_6**: `#fde68a` (라인 176)
+1. **HEX_6**: `#fef7f0` (라인 30)
    ```
-   background: #fde68a;
-   ```
-
-2. **HEX_6**: `#fed7aa` (라인 199)
-   ```
-   background: #fed7aa;
+   background: #fef7f0;
    ```
 
-3. **HEX_6**: `#9a3412` (라인 200)
+2. **HEX_6**: `#f5e6d3` (라인 34)
    ```
-   color: #9a3412;
-   ```
-
-4. **HEX_6**: `#92400e` (라인 205)
-   ```
-   color: #92400e;
+   border: 1px solid #f5e6d3;
    ```
 
-5. **HEX_6**: `#dbeafe` (라인 209)
+3. **HEX_6**: `#ced4da` (라인 64)
    ```
-   background: #dbeafe;
-   ```
-
-6. **HEX_6**: `#1e3a8a` (라인 263)
-   ```
-   color: #1e3a8a;
+   border: 1px solid #ced4da;
    ```
 
-7. **RGBA**: `rgba(245, 158, 11, 0.3)` (라인 22)
+4. **HEX_6**: `#545b62` (라인 127)
    ```
-   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-   ```
-
-8. **RGBA**: `rgba(239, 68, 68, 0.4)` (라인 32)
-   ```
-   box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+   background-color: #545b62;
    ```
 
-9. **RGBA**: `rgba(239, 68, 68, 0)` (라인 35)
+5. **HEX_6**: `#1e7e34` (라인 136)
    ```
-   box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
-   ```
-
-10. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 55)
-   ```
-   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+   background-color: #1e7e34;
    ```
 
-11. **RGBA**: `rgba(0, 0, 0, 0.3)` (라인 64)
+6. **HEX_6**: `#138496` (라인 145)
    ```
-   background: rgba(0, 0, 0, 0.3);
+   background-color: #138496;
    ```
 
-12. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 76)
+7. **HEX_6**: `#212529` (라인 150)
    ```
-   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+   color: #212529;
+   ```
+
+8. **HEX_6**: `#e0a800` (라인 154)
+   ```
+   background-color: #e0a800;
+   ```
+
+9. **HEX_6**: `#c82333` (라인 163)
+   ```
+   background-color: #c82333;
+   ```
+
+10. **HEX_6**: `#f3f3f3` (라인 181)
+   ```
+   border: 2px solid #f3f3f3;
+   ```
+
+11. **HEX_6**: `#f5c6cb` (라인 286)
+   ```
+   border: 1px solid #f5c6cb;
+   ```
+
+12. **RGBA**: `rgba(0, 123, 255, 0.25)` (라인 74)
+   ```
+   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
    ```
 
 ---
 
-### 📁 `frontend/src/constants/mapping.js` (JS)
+### 📁 `frontend/src/components/common/MGForm.css` (CSS)
 
 **하드코딩 색상**: 12개
 
-1. **HEX_6**: `#fd7e14` (라인 49)
+1. **HEX_6**: `#718096` (라인 129)
    ```
-   [MAPPING_STATUS.SUSPENDED]: '#fd7e14',
-   ```
-
-2. **HEX_6**: `#6f42c1` (라인 51)
-   ```
-   [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '#6f42c1'
+   color: #718096;
    ```
 
-3. **HEX_6**: `#d1ecf1` (라인 56)
+2. **HEX_6**: `#718096` (라인 277)
    ```
-   [MAPPING_STATUS.PAYMENT_CONFIRMED]: '#d1ecf1',
-   ```
-
-4. **HEX_6**: `#d4edda` (라인 58)
-   ```
-   [MAPPING_STATUS.ACTIVE]: '#d4edda',
+   color: #718096;
    ```
 
-5. **HEX_6**: `#ffeaa7` (라인 62)
+3. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 13)
    ```
-   [MAPPING_STATUS.SUSPENDED]: '#ffeaa7',
-   ```
-
-6. **HEX_6**: `#e2e3f1` (라인 64)
-   ```
-   [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '#e2e3f1'
+   box-shadow: 0 8px 32px var(--mg-shadow-light), 0 4px 16px rgba(0, 0, 0, 0.05);
    ```
 
-7. **HEX_6**: `#6f42c1` (라인 196)
+4. **RGBA**: `rgba(226, 232, 240, 0.6)` (라인 14)
    ```
-   TOTAL: '#6f42c1',
-   ```
-
-8. **HEX_6**: `#fd7e14` (라인 198)
-   ```
-   SESSIONS_EXHAUSTED: '#fd7e14'
+   border: 1px solid rgba(226, 232, 240, 0.6);
    ```
 
-9. **HEX_6**: `#d4edda` (라인 205)
+5. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 49)
    ```
-   ACTIVE: '#d4edda',
-   ```
-
-10. **HEX_6**: `#d1ecf1` (라인 206)
-   ```
-   PAYMENT_CONFIRMED: '#d1ecf1',
+   background: rgba(255, 255, 255, 0.8);
    ```
 
-11. **HEX_6**: `#e2e3f1` (라인 207)
+6. **RGBA**: `rgba(102, 126, 234, 0.1)` (라인 156)
    ```
-   TOTAL: '#e2e3f1',
+   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px var(--mg-shadow-medium);
    ```
 
-12. **HEX_6**: `#ffeaa7` (라인 209)
+7. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 174)
    ```
-   SESSIONS_EXHAUSTED: '#ffeaa7'
+   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+   ```
+
+8. **RGBA**: `rgba(102, 126, 234, 0.1)` (라인 210)
+   ```
+   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px var(--mg-shadow-medium);
+   ```
+
+9. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 220)
+   ```
+   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+   ```
+
+10. **RGBA**: `rgba(102, 126, 234, 0.1)` (라인 253)
+   ```
+   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px var(--mg-shadow-medium);
+   ```
+
+11. **RGBA**: `rgba(239, 68, 68, 0.1)` (라인 263)
+   ```
+   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+   ```
+
+12. **RGBA**: `rgba(26, 32, 44, 0.8)` (라인 308)
+   ```
+   background: rgba(26, 32, 44, 0.8);
+   ```
+
+---
+
+### 📁 `frontend/src/components/common/FormInput.css` (CSS)
+
+**하드코딩 색상**: 12개
+
+1. **HEX_6**: `#c53030` (라인 17)
+   ```
+   color: #c53030;
+   ```
+
+2. **HEX_6**: `#cbd5e0` (라인 35)
+   ```
+   border: 1px solid #cbd5e0;
+   ```
+
+3. **HEX_6**: `#a0aec0` (라인 44)
+   ```
+   color: #a0aec0;
+   ```
+
+4. **HEX_6**: `#3182ce` (라인 53)
+   ```
+   border: 2px solid #3182ce;
+   ```
+
+5. **HEX_6**: `#fff5f5` (라인 65)
+   ```
+   background-color: #fff5f5;
+   ```
+
+6. **HEX_6**: `#edf2f7` (라인 77)
+   ```
+   background-color: #edf2f7;
+   ```
+
+7. **HEX_6**: `#a0aec0` (라인 78)
+   ```
+   color: #a0aec0;
+   ```
+
+8. **HEX_6**: `#cbd5e0` (라인 79)
+   ```
+   border: 1px solid #cbd5e0;
+   ```
+
+9. **HEX_6**: `#718096` (라인 97)
+   ```
+   color: #718096;
+   ```
+
+10. **HEX_6**: `#c53030` (라인 106)
+   ```
+   color: #c53030;
+   ```
+
+11. **RGBA**: `rgba(49, 130, 206, 0.2)` (라인 54)
+   ```
+   box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
+   ```
+
+12. **RGBA**: `rgba(229, 62, 62, 0.2)` (라인 71)
+   ```
+   box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.2);
+   ```
+
+---
+
+### 📁 `frontend/src/components/auth/AuthPageCommon.css` (CSS)
+
+**하드코딩 색상**: 12개
+
+1. **HEX_6**: `#F5F3EF` (라인 163)
+   ```
+   background-color: var(--mg-surface-primary, #F5F3EF);
+   ```
+
+2. **HEX_6**: `#EBE9E4` (라인 188)
+   ```
+   background-color: var(--mg-surface-secondary, #EBE9E4);
+   ```
+
+3. **HEX_6**: `#F5F3EF` (라인 193)
+   ```
+   background-color: var(--mg-surface-primary, #F5F3EF);
+   ```
+
+4. **HEX_6**: `#EBE9E4` (라인 212)
+   ```
+   background-color: var(--mg-surface-secondary, #EBE9E4);
+   ```
+
+5. **HEX_6**: `#4F6B5A` (라인 287)
+   ```
+   background-color: var(--mg-primary-light, #4F6B5A);
+   ```
+
+6. **HEX_6**: `#48bb78` (라인 381)
+   ```
+   background-color: #48bb78;
+   ```
+
+7. **HEX_6**: `#F5F3EF` (라인 397)
+   ```
+   background-color: var(--mg-surface-primary, #F5F3EF);
+   ```
+
+8. **RGBA**: `rgba(44, 44, 44, 0.5)` (라인 30)
+   ```
+   background: rgba(44, 44, 44, 0.5);
+   ```
+
+9. **RGBA**: `rgba(61, 82, 70, 0.1)` (라인 178)
+   ```
+   box-shadow: 0 0 0 2px rgba(61, 82, 70, 0.1);
+   ```
+
+10. **RGBA**: `rgba(61, 82, 70, 0.1)` (라인 208)
+   ```
+   box-shadow: 0 0 0 2px rgba(61, 82, 70, 0.1);
+   ```
+
+11. **RGBA**: `rgba(61, 82, 70, 0.05)` (라인 314)
+   ```
+   background-color: rgba(61, 82, 70, 0.05);
+   ```
+
+12. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 357)
+   ```
+   border: 2px solid rgba(255, 255, 255, 0.3);
    ```
 
 ---
@@ -13850,63 +13011,124 @@
 
 ---
 
-### 📁 `frontend/src/components/emotion/FacialEmotionTimeline.css` (CSS)
+### 📁 `frontend/src/components/consultation/ConsultationHistory.css` (CSS)
 
 **하드코딩 색상**: 11개
 
-1. **HEX_6**: `#fbbf24` (라인 44)
+1. **HEX_6**: `#fafbfc` (라인 95)
    ```
-   .emotion-joy .bar { background: linear-gradient(90deg, #fbbf24, var(--mg-warning-500)); }
-   ```
-
-2. **HEX_6**: `#60a5fa` (라인 45)
-   ```
-   .emotion-sorrow .bar { background: linear-gradient(90deg, #60a5fa, var(--mg-primary-500)); }
+   background: #fafbfc;
    ```
 
-3. **HEX_6**: `#f87171` (라인 46)
+2. **HEX_6**: `#155724` (라인 195)
    ```
-   .emotion-anger .bar { background: linear-gradient(90deg, #f87171, var(--mg-color-error)); }
-   ```
-
-4. **HEX_6**: `#a78bfa` (라인 47)
-   ```
-   .emotion-fear .bar { background: linear-gradient(90deg, #a78bfa, var(--mg-purple-500)); }
+   color: #155724;
    ```
 
-5. **HEX_6**: `#34d399` (라인 48)
+3. **HEX_6**: `#cce5ff` (라인 199)
    ```
-   .emotion-surprise .bar { background: linear-gradient(90deg, #34d399, var(--mg-success-500)); }
-   ```
-
-6. **HEX_6**: `#fbbf24` (라인 96)
-   ```
-   .mini-bar.joy { background: #fbbf24; }
+   background: #cce5ff;
    ```
 
-7. **HEX_6**: `#60a5fa` (라인 97)
+4. **HEX_6**: `#004085` (라인 200)
    ```
-   .mini-bar.sorrow { background: #60a5fa; }
-   ```
-
-8. **HEX_6**: `#f87171` (라인 98)
-   ```
-   .mini-bar.anger { background: #f87171; }
+   color: #004085;
    ```
 
-9. **HEX_6**: `#a78bfa` (라인 99)
+5. **HEX_6**: `#d1ecf1` (라인 204)
    ```
-   .mini-bar.fear { background: #a78bfa; }
-   ```
-
-10. **HEX_6**: `#dbeafe` (라인 108)
-   ```
-   background: #dbeafe;
+   background: #d1ecf1;
    ```
 
-11. **HEX_6**: `#1e3a8a` (라인 116)
+6. **HEX_6**: `#0c5460` (라인 205)
    ```
-   color: #1e3a8a;
+   color: #0c5460;
+   ```
+
+7. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 67)
+   ```
+   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+   ```
+
+8. **RGBA**: `rgba(0, 123, 255, 0.1)` (라인 105)
+   ```
+   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+   ```
+
+9. **RGBA**: `rgba(108, 117, 125, 0.3)` (라인 126)
+   ```
+   box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+   ```
+
+10. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 140)
+   ```
+   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+   ```
+
+11. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 161)
+   ```
+   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+   ```
+
+---
+
+### 📁 `frontend/src/components/common/StatsCardGrid.css` (CSS)
+
+**하드코딩 색상**: 11개
+
+1. **HEX_6**: `#E8E0FF` (라인 63)
+   ```
+   background-color: #E8E0FF;
+   ```
+
+2. **HEX_6**: `#D1C4E9` (라인 64)
+   ```
+   border: 1px solid #D1C4E9;
+   ```
+
+3. **HEX_6**: `#FFE8D1` (라인 68)
+   ```
+   background-color: #FFE8D1;
+   ```
+
+4. **HEX_6**: `#FFCCBC` (라인 69)
+   ```
+   border: 1px solid #FFCCBC;
+   ```
+
+5. **HEX_6**: `#D4F1E0` (라인 73)
+   ```
+   background-color: #D4F1E0;
+   ```
+
+6. **HEX_6**: `#C8E6C9` (라인 74)
+   ```
+   border: 1px solid #C8E6C9;
+   ```
+
+7. **HEX_6**: `#FFE0DB` (라인 78)
+   ```
+   background-color: #FFE0DB;
+   ```
+
+8. **HEX_6**: `#FFCDD2` (라인 79)
+   ```
+   border: 1px solid #FFCDD2;
+   ```
+
+9. **RGBA**: `rgba(0, 123, 255, 0.02)` (라인 285)
+   ```
+   rgba(0, 123, 255, 0.02) 0%,
+   ```
+
+10. **RGBA**: `rgba(40, 167, 69, 0.02)` (라인 286)
+   ```
+   rgba(40, 167, 69, 0.02) 50%,
+   ```
+
+11. **RGBA**: `rgba(255, 193, 7, 0.02)` (라인 287)
+   ```
+   rgba(255, 193, 7, 0.02) 100%);
    ```
 
 ---
@@ -14033,67 +13255,6 @@
 
 ---
 
-### 📁 `frontend/src/components/clinical/DiagnosticReportEditor.css` (CSS)
-
-**하드코딩 색상**: 11개
-
-1. **HEX_6**: `#1a202c` (라인 40)
-   ```
-   color: #1a202c;
-   ```
-
-2. **HEX_6**: `#1d4ed8` (라인 74)
-   ```
-   background: #1d4ed8;
-   ```
-
-3. **HEX_6**: `#fecaca` (라인 102)
-   ```
-   border: 1px solid #fecaca;
-   ```
-
-4. **HEX_6**: `#d1fae5` (라인 221)
-   ```
-   background: #d1fae5;
-   ```
-
-5. **HEX_6**: `#6ee7b7` (라인 222)
-   ```
-   border: 1px solid #6ee7b7;
-   ```
-
-6. **HEX_6**: `#065f46` (라인 223)
-   ```
-   color: #065f46;
-   ```
-
-7. **HEX_6**: `#fecaca` (라인 228)
-   ```
-   border: 1px solid #fecaca;
-   ```
-
-8. **HEX_6**: `#92400e` (라인 252)
-   ```
-   color: #92400e;
-   ```
-
-9. **HEX_6**: `#78350f` (라인 258)
-   ```
-   color: #78350f;
-   ```
-
-10. **RGBA**: `rgba(37, 99, 235, 0.1)` (라인 172)
-   ```
-   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
-   ```
-
-11. **RGBA**: `rgba(37, 99, 235, 0.1)` (라인 204)
-   ```
-   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-   ```
-
----
-
 ### 📁 `frontend/src/components/client/ClientSessionManagement.css` (CSS)
 
 **하드코딩 색상**: 11개
@@ -14151,6 +13312,67 @@
 11. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 207)
    ```
    border: var(--border-width) solid rgba(255, 255, 255, 0.3);
+   ```
+
+---
+
+### 📁 `frontend/src/components/admin/DashboardWidgetEditor.css` (CSS)
+
+**하드코딩 색상**: 11개
+
+1. **HEX_6**: `#f3f4f6` (라인 66)
+   ```
+   background: var(--mg-bg-hover, #f3f4f6);
+   ```
+
+2. **HEX_6**: `#9ca3af` (라인 115)
+   ```
+   color: var(--mg-text-tertiary, #9ca3af);
+   ```
+
+3. **HEX_6**: `#fff3e0` (라인 208)
+   ```
+   /* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3e0/#e65100 -> 토큰 매핑 부재 */
+   ```
+
+4. **HEX_6**: `#e65100` (라인 208)
+   ```
+   /* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3e0/#e65100 -> 토큰 매핑 부재 */
+   ```
+
+5. **HEX_6**: `#fff3e0` (라인 212)
+   ```
+   background-color: #fff3e0;
+   ```
+
+6. **HEX_6**: `#e65100` (라인 213)
+   ```
+   color: #e65100;
+   ```
+
+7. **HEX_6**: `#9ca3af` (라인 234)
+   ```
+   color: var(--mg-text-tertiary, #9ca3af);
+   ```
+
+8. **HEX_6**: `#fff8f0` (라인 238)
+   ```
+   /* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff8f0 -> 토큰 매핑 부재 */
+   ```
+
+9. **HEX_6**: `#fff8f0` (라인 241)
+   ```
+   background-color: #fff8f0;
+   ```
+
+10. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 69)
+   ```
+   box-shadow: var(--mg-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+   ```
+
+11. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 108)
+   ```
+   box-shadow: var(--mg-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
    ```
 
 ---
@@ -14216,62 +13438,6 @@
 
 ---
 
-### 📁 `frontend/src/components/dashboard/WelcomeSection.css` (CSS)
-
-**하드코딩 색상**: 10개
-
-1. **HEX_6**: `#B0E0E6` (라인 244)
-   ```
-   background: linear-gradient(135deg, var(--mg-info-500), #B0E0E6);
-   ```
-
-2. **HEX_6**: `#FF6B9D` (라인 249)
-   ```
-   background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
-   ```
-
-3. **HEX_6**: `#FFA5C0` (라인 249)
-   ```
-   background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
-   ```
-
-4. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 99)
-   ```
-   background: rgba(255, 255, 255, 0.7);
-   ```
-
-5. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 108)
-   ```
-   background: rgba(255, 255, 255, 0.9);
-   ```
-
-6. **RGBA**: `rgba(128, 128, 0, 0.2)` (라인 240)
-   ```
-   box-shadow: 0 2px 8px rgba(128, 128, 0, 0.2);
-   ```
-
-7. **RGBA**: `rgba(135, 206, 235, 0.3)` (라인 245)
-   ```
-   box-shadow: 0 2px 8px rgba(135, 206, 235, 0.3);
-   ```
-
-8. **RGBA**: `rgba(255, 107, 157, 0.3)` (라인 250)
-   ```
-   box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
-   ```
-
-9. **RGBA**: `rgba(139, 69, 19, 0.2)` (라인 255)
-   ```
-   box-shadow: 0 2px 8px rgba(139, 69, 19, 0.2);
-   ```
-
-10. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 266)
-   ```
-   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-   ```
-
----
-
 ### 📁 `frontend/src/components/common/AppToast.css` (CSS)
 
 **하드코딩 색상**: 10개
@@ -14324,118 +13490,6 @@
 10. **HEX_6**: `#6B7F72` (라인 166)
    ```
    background: var(--mg-consultant-primary-light, #6B7F72);
-   ```
-
----
-
-### 📁 `frontend/src/components/clinical/SmartNoteTab.css` (CSS)
-
-**하드코딩 색상**: 10개
-
-1. **HEX_6**: `#1a202c` (라인 24)
-   ```
-   color: #1a202c;
-   ```
-
-2. **HEX_6**: `#92400e` (라인 36)
-   ```
-   color: #92400e;
-   ```
-
-3. **HEX_6**: `#dbeafe` (라인 40)
-   ```
-   background: #dbeafe;
-   ```
-
-4. **HEX_6**: `#d1fae5` (라인 45)
-   ```
-   background: #d1fae5;
-   ```
-
-5. **HEX_6**: `#065f46` (라인 46)
-   ```
-   color: #065f46;
-   ```
-
-6. **HEX_6**: `#d97706` (라인 116)
-   ```
-   background: #d97706;
-   ```
-
-7. **HEX_6**: `#fecaca` (라인 192)
-   ```
-   border: 1px solid #fecaca;
-   ```
-
-8. **HEX_6**: `#bfdbfe` (라인 202)
-   ```
-   border: 1px solid #bfdbfe;
-   ```
-
-9. **HEX_6**: `#1e3a8a` (라인 217)
-   ```
-   color: #1e3a8a;
-   ```
-
-10. **RGBA**: `rgba(37, 99, 235, 0.1)` (라인 187)
-   ```
-   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-   ```
-
----
-
-### 📁 `frontend/src/components/admin/TodayStatistics.css` (CSS)
-
-**하드코딩 색상**: 10개
-
-1. **HEX_6**: `#f0f0f0` (라인 109)
-   ```
-   border: 1px solid #f0f0f0;
-   ```
-
-2. **HEX_6**: `#E8E0FF` (라인 132)
-   ```
-   background: #E8E0FF; /* 파스텔 보라색 */
-   ```
-
-3. **HEX_6**: `#D1C4E9` (라인 133)
-   ```
-   border-color: #D1C4E9;
-   ```
-
-4. **HEX_6**: `#7B68EE` (라인 137)
-   ```
-   color: #7B68EE; /* 진한 보라색 */
-   ```
-
-5. **HEX_6**: `#D4F1E0` (라인 141)
-   ```
-   background: #D4F1E0; /* 파스텔 민트색 */
-   ```
-
-6. **HEX_6**: `#C8E6C9` (라인 142)
-   ```
-   border-color: #C8E6C9;
-   ```
-
-7. **HEX_6**: `#FFE8D1` (라인 150)
-   ```
-   background: #FFE8D1; /* 파스텔 오렌지색 */
-   ```
-
-8. **HEX_6**: `#FFCCBC` (라인 151)
-   ```
-   border-color: #FFCCBC;
-   ```
-
-9. **HEX_6**: `#FFE0DB` (라인 159)
-   ```
-   background: #FFE0DB; /* 파스텔 코랄색 */
-   ```
-
-10. **HEX_6**: `#FFCDD2` (라인 160)
-   ```
-   border-color: #FFCDD2;
    ```
 
 ---
@@ -14496,6 +13550,62 @@
 
 ---
 
+### 📁 `frontend/src/constants/mapping.js` (JS)
+
+**하드코딩 색상**: 10개
+
+1. **HEX_6**: `#fd7e14` (라인 49)
+   ```
+   [MAPPING_STATUS.SUSPENDED]: '#fd7e14',
+   ```
+
+2. **HEX_6**: `#6f42c1` (라인 51)
+   ```
+   [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '#6f42c1'
+   ```
+
+3. **HEX_6**: `#d1ecf1` (라인 56)
+   ```
+   [MAPPING_STATUS.PAYMENT_CONFIRMED]: '#d1ecf1',
+   ```
+
+4. **HEX_6**: `#ffeaa7` (라인 62)
+   ```
+   [MAPPING_STATUS.SUSPENDED]: '#ffeaa7',
+   ```
+
+5. **HEX_6**: `#e2e3f1` (라인 64)
+   ```
+   [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '#e2e3f1'
+   ```
+
+6. **HEX_6**: `#6f42c1` (라인 196)
+   ```
+   TOTAL: '#6f42c1',
+   ```
+
+7. **HEX_6**: `#fd7e14` (라인 198)
+   ```
+   SESSIONS_EXHAUSTED: '#fd7e14'
+   ```
+
+8. **HEX_6**: `#d1ecf1` (라인 206)
+   ```
+   PAYMENT_CONFIRMED: '#d1ecf1',
+   ```
+
+9. **HEX_6**: `#e2e3f1` (라인 207)
+   ```
+   TOTAL: '#e2e3f1',
+   ```
+
+10. **HEX_6**: `#ffeaa7` (라인 209)
+   ```
+   SESSIONS_EXHAUSTED: '#ffeaa7'
+   ```
+
+---
+
 ### 📁 `frontend/src/styles/responsive-layout-tokens.css` (CSS)
 
 **하드코딩 색상**: 9개
@@ -14547,155 +13657,155 @@
 
 ---
 
-### 📁 `frontend/src/components/landing/CounselingServices.css` (CSS)
+### 📁 `frontend/src/components/common/DetailedStatsGrid.css` (CSS)
 
 **하드코딩 색상**: 9개
 
-1. **HEX_6**: `#1a202c` (라인 26)
+1. **HEX_6**: `#E8E0FF` (라인 251)
    ```
-   color: #1a202c;
-   ```
-
-2. **HEX_6**: `#4a5568` (라인 45)
-   ```
-   color: #4a5568;
+   background-color: #E8E0FF;
    ```
 
-3. **HEX_6**: `#1a202c` (라인 109)
+2. **HEX_6**: `#D1C4E9` (라인 252)
    ```
-   color: #1a202c;
-   ```
-
-4. **HEX_6**: `#4a5568` (라인 120)
-   ```
-   color: #4a5568;
+   border: 1px solid #D1C4E9;
    ```
 
-5. **RGBA**: `rgba(200, 220, 240, 0.1)` (라인 8)
+3. **HEX_6**: `#D4F1E0` (라인 260)
    ```
-   background: rgba(200, 220, 240, 0.1);
-   ```
-
-6. **RGBA**: `rgba(0, 0, 0, 0.04)` (라인 78)
-   ```
-   0 10px 10px -5px rgba(0, 0, 0, 0.04),
+   background-color: #D4F1E0;
    ```
 
-7. **RGBA**: `rgba(200, 220, 255, 0.4)` (라인 79)
+4. **HEX_6**: `#C8E6C9` (라인 261)
    ```
-   0 4px 12px rgba(200, 220, 255, 0.4);
-   ```
-
-8. **RGBA**: `rgba(200, 220, 255, 0.3)` (라인 93)
-   ```
-   background: rgba(200, 220, 255, 0.3);
+   border: 1px solid #C8E6C9;
    ```
 
-9. **RGBA**: `rgba(200, 220, 255, 0.5)` (라인 102)
+5. **HEX_6**: `#FFE0DB` (라인 269)
    ```
-   background: rgba(200, 220, 255, 0.5);
+   background-color: #FFE0DB;
+   ```
+
+6. **HEX_6**: `#FFCDD2` (라인 270)
+   ```
+   border: 1px solid #FFCDD2;
+   ```
+
+7. **HEX_6**: `#FFE8D1` (라인 278)
+   ```
+   background-color: #FFE8D1;
+   ```
+
+8. **HEX_6**: `#FFCCBC` (라인 279)
+   ```
+   border: 1px solid #FFCCBC;
+   ```
+
+9. **HEX_6**: `#BBDEFB` (라인 288)
+   ```
+   border: 1px solid #BBDEFB;
    ```
 
 ---
 
-### 📁 `frontend/src/components/landing/CounselingHero.css` (CSS)
+### 📁 `frontend/src/components/clinical/RiskAlertBadge.css` (CSS)
 
 **하드코딩 색상**: 9개
 
-1. **HEX_6**: `#1a202c` (라인 93)
+1. **HEX_6**: `#fde68a` (라인 176)
    ```
-   color: #1a202c;
-   ```
-
-2. **HEX_6**: `#4a5568` (라인 111)
-   ```
-   color: #4a5568;
+   background: #fde68a;
    ```
 
-3. **RGBA**: `rgba(180, 200, 240, 0.6)` (라인 29)
+2. **HEX_6**: `#fed7aa` (라인 199)
    ```
-   radial-gradient(ellipse at 30% 20%, rgba(180, 200, 240, 0.6) 0%, transparent 60%),
-   ```
-
-4. **RGBA**: `rgba(190, 210, 245, 0.5)` (라인 30)
-   ```
-   radial-gradient(ellipse at 70% 80%, rgba(190, 210, 245, 0.5) 0%, transparent 50%),
+   background: #fed7aa;
    ```
 
-5. **RGBA**: `rgba(200, 220, 250, 0.4)` (라인 31)
+3. **HEX_6**: `#9a3412` (라인 200)
    ```
-   radial-gradient(ellipse at 20% 70%, rgba(200, 220, 250, 0.4) 0%, transparent 40%),
-   ```
-
-6. **RGBA**: `rgba(175, 195, 235, 0.55)` (라인 32)
-   ```
-   radial-gradient(ellipse at 80% 30%, rgba(175, 195, 235, 0.55) 0%, transparent 45%);
+   color: #9a3412;
    ```
 
-7. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 169)
+4. **RGBA**: `rgba(245, 158, 11, 0.3)` (라인 22)
    ```
-   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-   ```
-
-8. **RGBA**: `rgba(200, 220, 255, 0.3)` (라인 190)
-   ```
-   background: rgba(200, 220, 255, 0.3);
+   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
    ```
 
-9. **RGBA**: `rgba(175, 195, 235, 0.3)` (라인 198)
+5. **RGBA**: `rgba(239, 68, 68, 0.4)` (라인 32)
    ```
-   background: rgba(175, 195, 235, 0.3);
+   box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+   ```
+
+6. **RGBA**: `rgba(239, 68, 68, 0)` (라인 35)
+   ```
+   box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+   ```
+
+7. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 55)
+   ```
+   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+   ```
+
+8. **RGBA**: `rgba(0, 0, 0, 0.3)` (라인 64)
+   ```
+   background: rgba(0, 0, 0, 0.3);
+   ```
+
+9. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 76)
+   ```
+   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
    ```
 
 ---
 
-### 📁 `frontend/src/components/auth/AccountIntegrationModal.css` (CSS)
+### 📁 `frontend/src/components/common/MGForm.js` (JS)
 
 **하드코딩 색상**: 9개
 
-1. **HEX_6**: `#bae6fd` (라인 99)
+1. **HEX_6**: `#D2B48C` (라인 29)
    ```
-   border: 1px solid #bae6fd;
-   ```
-
-2. **HEX_6**: `#0369a1` (라인 107)
-   ```
-   color: #0369a1;
+   card: "bg-[var(--mg-cream)] p-6 rounded-xl border border-[#D2B48C]/20 shadow-sm space-y-4",
    ```
 
-3. **HEX_6**: `#f0fdf4` (라인 165)
+2. **HEX_6**: `#D2B48C` (라인 56)
    ```
-   background-color: #f0fdf4;
-   ```
-
-4. **HEX_6**: `#bbf7d0` (라인 166)
-   ```
-   border: 1px solid #bbf7d0;
+   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #D2B48C -> var(--mg-custom-D2B48C)
    ```
 
-5. **HEX_6**: `#166534` (라인 174)
+3. **HEX_6**: `#D2B48C` (라인 57)
    ```
-   color: #166534;
-   ```
-
-6. **HEX_6**: `#dcfce7` (라인 185)
-   ```
-   background-color: #dcfce7;
+   <div className="animate-spin text-[#D2B48C]">⟳</div>
    ```
 
-7. **HEX_6**: `#16a34a` (라인 194)
+4. **HEX_6**: `#D2B48C` (라인 150)
    ```
-   color: #16a34a;
-   ```
-
-8. **HEX_6**: `#16a34a` (라인 201)
-   ```
-   color: #16a34a;
+   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #D2B48C -> var(--mg-custom-D2B48C)
    ```
 
-9. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 151)
+5. **HEX_6**: `#D2B48C` (라인 151)
    ```
-   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+   w-full px-3 py-2 rounded-lg border border-[#D2B48C]
+   ```
+
+6. **HEX_6**: `#D2B48C` (라인 212)
+   ```
+   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #D2B48C -> var(--mg-custom-D2B48C)
+   ```
+
+7. **HEX_6**: `#D2B48C` (라인 213)
+   ```
+   w-full px-3 py-2 rounded-lg border border-[#D2B48C]
+   ```
+
+8. **HEX_6**: `#D2B48C` (라인 264)
+   ```
+   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #D2B48C -> var(--mg-custom-D2B48C)
+   ```
+
+9. **HEX_6**: `#D2B48C` (라인 265)
+   ```
+   w-full px-3 py-2 pr-10 rounded-lg border border-[#D2B48C]
    ```
 
 ---
@@ -14838,94 +13948,186 @@
 
 ---
 
-### 📁 `frontend/src/components/dashboard/RecentActivities.css` (CSS)
+### 📁 `frontend/src/components/clinical/SOAPNoteEditor.css` (CSS)
 
 **하드코딩 색상**: 8개
 
-1. **HEX_6**: `#8b9dc3` (라인 38)
+1. **HEX_6**: `#e0e7ff` (라인 46)
    ```
-   color: #8b9dc3;
-   ```
-
-2. **HEX_6**: `#5a6c7d` (라인 44)
-   ```
-   color: #5a6c7d;
+   background: #e0e7ff;
    ```
 
-3. **HEX_6**: `#f8f9ff` (라인 45)
+2. **HEX_6**: `#4338ca` (라인 47)
    ```
-   background: #f8f9ff;
-   ```
-
-4. **HEX_6**: `#8b9dc3` (라인 49)
-   ```
-   color: #8b9dc3;
+   color: #4338ca;
    ```
 
-5. **HEX_6**: `#adb5bd` (라인 125)
+3. **HEX_6**: `#6ee7b7` (라인 62)
    ```
-   color: #adb5bd;
-   ```
-
-6. **RGBA**: `rgba(102, 126, 234, 0.1)` (라인 73)
-   ```
-   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+   border: 1px solid #6ee7b7;
    ```
 
-7. **RGBA**: `rgba(102, 126, 234, 0.2)` (라인 85)
+4. **HEX_6**: `#6ee7b7` (라인 149)
    ```
-   box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+   border: 1px solid #6ee7b7;
    ```
 
-8. **RGBA**: `rgba(168, 230, 168, 0.2)` (라인 91)
+5. **HEX_6**: `#34d399` (라인 219)
    ```
-   box-shadow: 0 2px 4px rgba(168, 230, 168, 0.2);
+   background: linear-gradient(135deg, var(--mg-success-500), #34d399);
+   ```
+
+6. **HEX_6**: `#a78bfa` (라인 227)
+   ```
+   background: linear-gradient(135deg, var(--mg-purple-500), #a78bfa);
+   ```
+
+7. **RGBA**: `rgba(37, 99, 235, 0.1)` (라인 81)
+   ```
+   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+   ```
+
+8. **RGBA**: `rgba(37, 99, 235, 0.1)` (라인 131)
+   ```
+   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
    ```
 
 ---
 
-### 📁 `frontend/src/components/billing/SubscriptionManagement.css` (CSS)
+### 📁 `frontend/src/components/auth/BranchLogin.css` (CSS)
 
 **하드코딩 색상**: 8개
 
-1. **HEX_6**: `#eff6ff` (라인 129)
+1. **HEX_6**: `#16a34a` (라인 6)
    ```
-   background: #eff6ff;
-   ```
-
-2. **HEX_6**: `#fcd34d` (라인 158)
-   ```
-   border: 1px solid #fcd34d;
+   --branch-login-success: #16a34a;
    ```
 
-3. **HEX_6**: `#92400e` (라인 160)
+2. **HEX_6**: `#d97706` (라인 7)
    ```
-   color: #92400e;
-   ```
-
-4. **HEX_6**: `#d1fae5` (라인 201)
-   ```
-   background: #d1fae5;
+   --branch-login-warning: #d97706;
    ```
 
-5. **HEX_6**: `#065f46` (라인 202)
+3. **HEX_6**: `#111827` (라인 16)
    ```
-   color: #065f46;
-   ```
-
-6. **HEX_6**: `#92400e` (라인 207)
-   ```
-   color: #92400e;
+   --branch-login-gray-900: #111827;
    ```
 
-7. **HEX_6**: `#fecaca` (라인 242)
+4. **HEX_6**: `#bfdbfe` (라인 388)
    ```
-   border: 1px solid #fecaca;
+   background: linear-gradient(135deg, var(--mg-color-info-100) 0%, #bfdbfe 100%);
    ```
 
-8. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 124)
+5. **HEX_6**: `#fca5a5` (라인 557)
    ```
-   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+   color: #fca5a5;
+   ```
+
+6. **RGBA**: `rgba(37, 99, 235, 0.2)` (라인 93)
+   ```
+   box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+   ```
+
+7. **RGBA**: `rgba(37, 99, 235, 0.1)` (라인 129)
+   ```
+   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+   ```
+
+8. **RGBA**: `rgba(37, 99, 235, 0.3)` (라인 176)
+   ```
+   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+   ```
+
+---
+
+### 📁 `frontend/src/components/auth/AccountIntegrationModal.css` (CSS)
+
+**하드코딩 색상**: 8개
+
+1. **HEX_6**: `#bae6fd` (라인 99)
+   ```
+   border: 1px solid #bae6fd;
+   ```
+
+2. **HEX_6**: `#0369a1` (라인 107)
+   ```
+   color: #0369a1;
+   ```
+
+3. **HEX_6**: `#bbf7d0` (라인 166)
+   ```
+   border: 1px solid #bbf7d0;
+   ```
+
+4. **HEX_6**: `#166534` (라인 174)
+   ```
+   color: #166534;
+   ```
+
+5. **HEX_6**: `#dcfce7` (라인 185)
+   ```
+   background-color: #dcfce7;
+   ```
+
+6. **HEX_6**: `#16a34a` (라인 194)
+   ```
+   color: #16a34a;
+   ```
+
+7. **HEX_6**: `#16a34a` (라인 201)
+   ```
+   color: #16a34a;
+   ```
+
+8. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 151)
+   ```
+   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+   ```
+
+---
+
+### 📁 `frontend/src/components/admin/TodayStatistics.css` (CSS)
+
+**하드코딩 색상**: 8개
+
+1. **HEX_6**: `#E8E0FF` (라인 132)
+   ```
+   background: #E8E0FF; /* 파스텔 보라색 */
+   ```
+
+2. **HEX_6**: `#D1C4E9` (라인 133)
+   ```
+   border-color: #D1C4E9;
+   ```
+
+3. **HEX_6**: `#D4F1E0` (라인 141)
+   ```
+   background: #D4F1E0; /* 파스텔 민트색 */
+   ```
+
+4. **HEX_6**: `#C8E6C9` (라인 142)
+   ```
+   border-color: #C8E6C9;
+   ```
+
+5. **HEX_6**: `#FFE8D1` (라인 150)
+   ```
+   background: #FFE8D1; /* 파스텔 오렌지색 */
+   ```
+
+6. **HEX_6**: `#FFCCBC` (라인 151)
+   ```
+   border-color: #FFCCBC;
+   ```
+
+7. **HEX_6**: `#FFE0DB` (라인 159)
+   ```
+   background: #FFE0DB; /* 파스텔 코랄색 */
+   ```
+
+8. **HEX_6**: `#FFCDD2` (라인 160)
+   ```
+   border-color: #FFCDD2;
    ```
 
 ---
@@ -15017,43 +14219,84 @@
 
 ---
 
-### 📁 `frontend/src/components/emotion/VoiceBiomarkerChart.css` (CSS)
+### 📁 `frontend/src/components/landing/CounselingHero.css` (CSS)
 
 **하드코딩 색상**: 7개
 
-1. **HEX_6**: `#fbbf24` (라인 83)
+1. **RGBA**: `rgba(180, 200, 240, 0.6)` (라인 29)
    ```
-   .indicator-fill.anxiety { background: linear-gradient(90deg, #fbbf24, var(--mg-warning-500)); }
-   ```
-
-2. **HEX_6**: `#6366f1` (라인 84)
-   ```
-   .indicator-fill.depression { background: linear-gradient(90deg, #6366f1, #4f46e5); }
+   radial-gradient(ellipse at 30% 20%, rgba(180, 200, 240, 0.6) 0%, transparent 60%),
    ```
 
-3. **HEX_6**: `#4f46e5` (라인 84)
+2. **RGBA**: `rgba(190, 210, 245, 0.5)` (라인 30)
    ```
-   .indicator-fill.depression { background: linear-gradient(90deg, #6366f1, #4f46e5); }
-   ```
-
-4. **HEX_6**: `#f97316` (라인 85)
-   ```
-   .indicator-fill.stress { background: linear-gradient(90deg, #f97316, #ea580c); }
+   radial-gradient(ellipse at 70% 80%, rgba(190, 210, 245, 0.5) 0%, transparent 50%),
    ```
 
-5. **HEX_6**: `#ea580c` (라인 85)
+3. **RGBA**: `rgba(200, 220, 250, 0.4)` (라인 31)
    ```
-   .indicator-fill.stress { background: linear-gradient(90deg, #f97316, #ea580c); }
-   ```
-
-6. **HEX_6**: `#fbbf24` (라인 97)
-   ```
-   border: 1px solid #fbbf24;
+   radial-gradient(ellipse at 20% 70%, rgba(200, 220, 250, 0.4) 0%, transparent 40%),
    ```
 
-7. **HEX_6**: `#92400e` (라인 99)
+4. **RGBA**: `rgba(175, 195, 235, 0.55)` (라인 32)
    ```
-   color: #92400e;
+   radial-gradient(ellipse at 80% 30%, rgba(175, 195, 235, 0.55) 0%, transparent 45%);
+   ```
+
+5. **RGBA**: `rgba(0, 0, 0, 0.25)` (라인 169)
+   ```
+   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+   ```
+
+6. **RGBA**: `rgba(200, 220, 255, 0.3)` (라인 190)
+   ```
+   background: rgba(200, 220, 255, 0.3);
+   ```
+
+7. **RGBA**: `rgba(175, 195, 235, 0.3)` (라인 198)
+   ```
+   background: rgba(175, 195, 235, 0.3);
+   ```
+
+---
+
+### 📁 `frontend/src/components/emotion/FacialEmotionTimeline.css` (CSS)
+
+**하드코딩 색상**: 7개
+
+1. **HEX_6**: `#60a5fa` (라인 45)
+   ```
+   .emotion-sorrow .bar { background: linear-gradient(90deg, #60a5fa, var(--mg-primary-500)); }
+   ```
+
+2. **HEX_6**: `#f87171` (라인 46)
+   ```
+   .emotion-anger .bar { background: linear-gradient(90deg, #f87171, var(--mg-color-error)); }
+   ```
+
+3. **HEX_6**: `#a78bfa` (라인 47)
+   ```
+   .emotion-fear .bar { background: linear-gradient(90deg, #a78bfa, var(--mg-purple-500)); }
+   ```
+
+4. **HEX_6**: `#34d399` (라인 48)
+   ```
+   .emotion-surprise .bar { background: linear-gradient(90deg, #34d399, var(--mg-success-500)); }
+   ```
+
+5. **HEX_6**: `#60a5fa` (라인 97)
+   ```
+   .mini-bar.sorrow { background: #60a5fa; }
+   ```
+
+6. **HEX_6**: `#f87171` (라인 98)
+   ```
+   .mini-bar.anger { background: #f87171; }
+   ```
+
+7. **HEX_6**: `#a78bfa` (라인 99)
+   ```
+   .mini-bar.fear { background: #a78bfa; }
    ```
 
 ---
@@ -15099,43 +14342,84 @@
 
 ---
 
-### 📁 `frontend/src/components/dashboard/widgets/WidgetCardWrapper.css` (CSS)
+### 📁 `frontend/src/components/dashboard/WelcomeSection.css` (CSS)
 
 **하드코딩 색상**: 7개
 
-1. **HEX_6**: `#dee2e6` (라인 46)
-   ```
-   border: 1px solid #dee2e6;
-   ```
-
-2. **HEX_6**: `#dee2e6` (라인 63)
-   ```
-   border: 1px solid #dee2e6;
-   ```
-
-3. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 22)
+1. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 99)
    ```
    background: rgba(255, 255, 255, 0.7);
    ```
 
-4. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 24)
+2. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 108)
    ```
-   border: 1px solid rgba(255, 255, 255, 0.3);
-   ```
-
-5. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 29)
-   ```
-   background: rgba(255, 255, 255, 0.8);
+   background: rgba(255, 255, 255, 0.9);
    ```
 
-6. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 126)
+3. **RGBA**: `rgba(128, 128, 0, 0.2)` (라인 240)
    ```
-   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+   box-shadow: 0 2px 8px rgba(128, 128, 0, 0.2);
    ```
 
-7. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 138)
+4. **RGBA**: `rgba(135, 206, 235, 0.3)` (라인 245)
    ```
-   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+   box-shadow: 0 2px 8px rgba(135, 206, 235, 0.3);
+   ```
+
+5. **RGBA**: `rgba(255, 107, 157, 0.3)` (라인 250)
+   ```
+   box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
+   ```
+
+6. **RGBA**: `rgba(139, 69, 19, 0.2)` (라인 255)
+   ```
+   box-shadow: 0 2px 8px rgba(139, 69, 19, 0.2);
+   ```
+
+7. **RGBA**: `rgba(0, 0, 0, 0.12)` (라인 266)
+   ```
+   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+   ```
+
+---
+
+### 📁 `frontend/src/components/dashboard/RecentActivities.css` (CSS)
+
+**하드코딩 색상**: 7개
+
+1. **HEX_6**: `#8b9dc3` (라인 38)
+   ```
+   color: #8b9dc3;
+   ```
+
+2. **HEX_6**: `#5a6c7d` (라인 44)
+   ```
+   color: #5a6c7d;
+   ```
+
+3. **HEX_6**: `#8b9dc3` (라인 49)
+   ```
+   color: #8b9dc3;
+   ```
+
+4. **HEX_6**: `#adb5bd` (라인 125)
+   ```
+   color: #adb5bd;
+   ```
+
+5. **RGBA**: `rgba(102, 126, 234, 0.1)` (라인 73)
+   ```
+   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+   ```
+
+6. **RGBA**: `rgba(102, 126, 234, 0.2)` (라인 85)
+   ```
+   box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+   ```
+
+7. **RGBA**: `rgba(168, 230, 168, 0.2)` (라인 91)
+   ```
+   box-shadow: 0 2px 4px rgba(168, 230, 168, 0.2);
    ```
 
 ---
@@ -15263,47 +14547,6 @@
 
 ---
 
-### 📁 `frontend/src/components/admin/commoncode/CommonCodeList.css` (CSS)
-
-**하드코딩 색상**: 7개
-
-1. **HEX_6**: `#f1f5f9` (라인 89)
-   ```
-   background: linear-gradient(135deg, var(--mg-color-background-main) 0%, #f1f5f9 100%);
-   ```
-
-2. **HEX_6**: `#1d4ed8` (라인 147)
-   ```
-   background: linear-gradient(135deg, var(--mg-primary-500), #1d4ed8);
-   ```
-
-3. **HEX_6**: `#065f46` (라인 200)
-   ```
-   color: #065f46;
-   ```
-
-4. **HEX_6**: `#fafbfc` (라인 235)
-   ```
-   background: #fafbfc;
-   ```
-
-5. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 66)
-   ```
-   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-   ```
-
-6. **RGBA**: `rgba(59, 130, 246, 0.3)` (라인 269)
-   ```
-   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-   ```
-
-7. **RGBA**: `rgba(239, 68, 68, 0.3)` (라인 282)
-   ```
-   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-   ```
-
----
-
 ### 📁 `frontend/src/components/admin/AdminDashboard/molecules/PipelineStepCard.css` (CSS)
 
 **하드코딩 색상**: 7개
@@ -15427,78 +14670,6 @@
 
 ---
 
-### 📁 `frontend/src/styles/auth/TenantSelection.css` (CSS)
-
-**하드코딩 색상**: 6개
-
-1. **HEX_6**: `#f5f7fa` (라인 11)
-   ```
-   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-   ```
-
-2. **HEX_6**: `#c3cfe2` (라인 11)
-   ```
-   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-   ```
-
-3. **HEX_6**: `#eff6ff` (라인 73)
-   ```
-   background-color: #eff6ff;
-   ```
-
-4. **HEX_6**: `#eff6ff` (라인 78)
-   ```
-   background-color: #eff6ff;
-   ```
-
-5. **HEX_6**: `#d1fae5` (라인 112)
-   ```
-   background-color: #d1fae5;
-   ```
-
-6. **HEX_6**: `#065f46` (라인 113)
-   ```
-   color: #065f46;
-   ```
-
----
-
-### 📁 `frontend/src/components/prediction/SimilarCasesPanel.css` (CSS)
-
-**하드코딩 색상**: 6개
-
-1. **HEX_6**: `#dbeafe` (라인 45)
-   ```
-   background: #dbeafe;
-   ```
-
-2. **HEX_6**: `#e0e7ff` (라인 99)
-   ```
-   background: #e0e7ff;
-   ```
-
-3. **HEX_6**: `#3730a3` (라인 102)
-   ```
-   color: #3730a3;
-   ```
-
-4. **HEX_6**: `#f0fdf4` (라인 107)
-   ```
-   background: #f0fdf4;
-   ```
-
-5. **HEX_6**: `#047857` (라인 116)
-   ```
-   color: #047857;
-   ```
-
-6. **HEX_6**: `#065f46` (라인 121)
-   ```
-   color: #065f46;
-   ```
-
----
-
 ### 📁 `frontend/src/components/dashboard-v2/atoms/NavIcon.css` (CSS)
 
 **하드코딩 색상**: 6개
@@ -15607,42 +14778,6 @@
 
 ---
 
-### 📁 `frontend/src/components/common/HelpPage.css` (CSS)
-
-**하드코딩 색상**: 6개
-
-1. **HEX_6**: `#f8f9ff` (라인 5)
-   ```
-   background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
-   ```
-
-2. **HEX_6**: `#e8f2ff` (라인 5)
-   ```
-   background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
-   ```
-
-3. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 14)
-   ```
-   background: rgba(255, 255, 255, 0.9);
-   ```
-
-4. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 51)
-   ```
-   background: rgba(255, 255, 255, 0.95);
-   ```
-
-5. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 91)
-   ```
-   background: rgba(255, 255, 255, 0.95);
-   ```
-
-6. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 137)
-   ```
-   background: rgba(255, 255, 255, 0.95);
-   ```
-
----
-
 ### 📁 `frontend/src/components/common/DuplicateLoginAlert.css` (CSS)
 
 **하드코딩 색상**: 6개
@@ -15675,42 +14810,6 @@
 6. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 155)
    ```
    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-   ```
-
----
-
-### 📁 `frontend/src/components/client/ClientSchedule.css` (CSS)
-
-**하드코딩 색상**: 6개
-
-1. **HEX_6**: `#B0E0E6` (라인 40)
-   ```
-   background: linear-gradient(135deg, var(--mg-info-500), #B0E0E6);
-   ```
-
-2. **HEX_6**: `#FF6B9D` (라인 109)
-   ```
-   background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
-   ```
-
-3. **HEX_6**: `#FFA5C0` (라인 109)
-   ```
-   background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
-   ```
-
-4. **RGBA**: `rgba(255, 250, 240, 0.6)` (라인 30)
-   ```
-   background: linear-gradient(135deg, rgba(255, 250, 240, 0.6), rgba(255, 255, 250, 0.6));
-   ```
-
-5. **RGBA**: `rgba(255, 255, 250, 0.6)` (라인 30)
-   ```
-   background: linear-gradient(135deg, rgba(255, 250, 240, 0.6), rgba(255, 255, 250, 0.6));
-   ```
-
-6. **RGBA**: `rgba(255, 182, 193, 0.2)` (라인 31)
-   ```
-   border: var(--border-width) solid rgba(255, 182, 193, 0.2);
    ```
 
 ---
@@ -15818,95 +14917,33 @@
 
 ---
 
-### 📁 `frontend/src/components/prediction/DropoutRiskIndicator.css` (CSS)
+### 📁 `frontend/src/components/landing/CounselingServices.css` (CSS)
 
 **하드코딩 색상**: 5개
 
-1. **HEX_6**: `#fbbf24` (라인 101)
+1. **RGBA**: `rgba(200, 220, 240, 0.1)` (라인 8)
    ```
-   border: 1px solid #fbbf24;
-   ```
-
-2. **HEX_6**: `#92400e` (라인 108)
-   ```
-   color: #92400e;
+   background: rgba(200, 220, 240, 0.1);
    ```
 
-3. **HEX_6**: `#78350f` (라인 118)
+2. **RGBA**: `rgba(0, 0, 0, 0.04)` (라인 78)
    ```
-   color: #78350f;
-   ```
-
-4. **HEX_6**: `#fca5a5` (라인 125)
-   ```
-   border: 1px solid #fca5a5;
+   0 10px 10px -5px rgba(0, 0, 0, 0.04),
    ```
 
-5. **HEX_6**: `#7f1d1d` (라인 142)
+3. **RGBA**: `rgba(200, 220, 255, 0.4)` (라인 79)
    ```
-   color: #7f1d1d;
-   ```
-
----
-
-### 📁 `frontend/src/components/landing/CounselingAbout.css` (CSS)
-
-**하드코딩 색상**: 5개
-
-1. **HEX_6**: `#1a202c` (라인 23)
-   ```
-   color: #1a202c;
+   0 4px 12px rgba(200, 220, 255, 0.4);
    ```
 
-2. **HEX_6**: `#4a5568` (라인 30)
+4. **RGBA**: `rgba(200, 220, 255, 0.3)` (라인 93)
    ```
-   color: #4a5568;
-   ```
-
-3. **HEX_6**: `#1a202c` (라인 60)
-   ```
-   color: #1a202c;
+   background: rgba(200, 220, 255, 0.3);
    ```
 
-4. **HEX_6**: `#4a5568` (라인 66)
+5. **RGBA**: `rgba(200, 220, 255, 0.5)` (라인 102)
    ```
-   color: #4a5568;
-   ```
-
-5. **RGBA**: `rgba(245, 250, 255, 0.3)` (라인 7)
-   ```
-   background: rgba(245, 250, 255, 0.3);
-   ```
-
----
-
-### 📁 `frontend/src/components/emotion/EmotionDashboard.css` (CSS)
-
-**하드코딩 색상**: 5개
-
-1. **HEX_6**: `#6366f1` (라인 83)
-   ```
-   .metric-bar-fill.depression { background: linear-gradient(90deg, #6366f1, var(--mg-primary-500)); }
-   ```
-
-2. **HEX_6**: `#f97316` (라인 84)
-   ```
-   .metric-bar-fill.stress { background: linear-gradient(90deg, #f97316, #ea580c); }
-   ```
-
-3. **HEX_6**: `#ea580c` (라인 84)
-   ```
-   .metric-bar-fill.stress { background: linear-gradient(90deg, #f97316, #ea580c); }
-   ```
-
-4. **HEX_6**: `#34d399` (라인 85)
-   ```
-   .metric-bar-fill.energy { background: linear-gradient(90deg, var(--mg-success-500), #34d399); }
-   ```
-
-5. **HEX_6**: `#dbeafe` (라인 125)
-   ```
-   background: #dbeafe;
+   background: rgba(200, 220, 255, 0.5);
    ```
 
 ---
@@ -16035,33 +15072,64 @@
 
 ---
 
-### 📁 `frontend/src/components/common/MGLayout.css` (CSS)
+### 📁 `frontend/src/components/dashboard/widgets/WidgetCardWrapper.css` (CSS)
 
 **하드코딩 색상**: 5개
 
-1. **HEX_6**: `#1a202c` (라인 18)
+1. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 22)
    ```
-   background: #1a202c;
-   ```
-
-2. **HEX_6**: `#f5576c` (라인 65)
-   ```
-   .mg-section--bg-secondary { background: linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%); }
+   background: rgba(255, 255, 255, 0.7);
    ```
 
-3. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 38)
+2. **RGBA**: `rgba(255, 255, 255, 0.3)` (라인 24)
+   ```
+   border: 1px solid rgba(255, 255, 255, 0.3);
+   ```
+
+3. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 29)
+   ```
+   background: rgba(255, 255, 255, 0.8);
+   ```
+
+4. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 126)
+   ```
+   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+   ```
+
+5. **RGBA**: `rgba(0, 0, 0, 0.2)` (라인 138)
+   ```
+   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+   ```
+
+---
+
+### 📁 `frontend/src/components/common/HelpPage.css` (CSS)
+
+**하드코딩 색상**: 5개
+
+1. **HEX_6**: `#e8f2ff` (라인 5)
+   ```
+   background: linear-gradient(135deg, var(--mg-color-info-bg) 0%, #e8f2ff 100%);
+   ```
+
+2. **RGBA**: `rgba(255, 255, 255, 0.9)` (라인 14)
+   ```
+   background: rgba(255, 255, 255, 0.9);
+   ```
+
+3. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 51)
    ```
    background: rgba(255, 255, 255, 0.95);
    ```
 
-4. **RGBA**: `rgba(255, 255, 255, 0.1)` (라인 46)
+4. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 91)
    ```
-   background: rgba(255, 255, 255, 0.1);
+   background: rgba(255, 255, 255, 0.95);
    ```
 
-5. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 48)
+5. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 137)
    ```
-   border: 1px solid rgba(255, 255, 255, 0.2);
+   background: rgba(255, 255, 255, 0.95);
    ```
 
 ---
@@ -16159,6 +15227,37 @@
 
 ---
 
+### 📁 `frontend/src/components/admin/commoncode/CommonCodeList.css` (CSS)
+
+**하드코딩 색상**: 5개
+
+1. **HEX_6**: `#f1f5f9` (라인 89)
+   ```
+   background: linear-gradient(135deg, var(--mg-color-background-main) 0%, #f1f5f9 100%);
+   ```
+
+2. **HEX_6**: `#fafbfc` (라인 235)
+   ```
+   background: #fafbfc;
+   ```
+
+3. **RGBA**: `rgba(0, 0, 0, 0.05)` (라인 66)
+   ```
+   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+   ```
+
+4. **RGBA**: `rgba(59, 130, 246, 0.3)` (라인 269)
+   ```
+   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+   ```
+
+5. **RGBA**: `rgba(239, 68, 68, 0.3)` (라인 282)
+   ```
+   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+   ```
+
+---
+
 ### 📁 `frontend/src/components/admin/AdminDashboard/AdminDashboardPipeline.css` (CSS)
 
 **하드코딩 색상**: 5개
@@ -16212,6 +15311,32 @@
 4. **RGBA**: `rgba(255, 255, 255, 0.8)` (라인 125)
    ```
    background: rgba(255, 255, 255, 0.8);
+   ```
+
+---
+
+### 📁 `frontend/src/styles/auth/TenantSelection.css` (CSS)
+
+**하드코딩 색상**: 4개
+
+1. **HEX_6**: `#f5f7fa` (라인 11)
+   ```
+   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+   ```
+
+2. **HEX_6**: `#c3cfe2` (라인 11)
+   ```
+   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+   ```
+
+3. **HEX_6**: `#eff6ff` (라인 73)
+   ```
+   background-color: #eff6ff;
+   ```
+
+4. **HEX_6**: `#eff6ff` (라인 78)
+   ```
+   background-color: #eff6ff;
    ```
 
 ---
@@ -16320,6 +15445,58 @@
 
 ---
 
+### 📁 `frontend/src/components/emotion/VoiceBiomarkerChart.css` (CSS)
+
+**하드코딩 색상**: 4개
+
+1. **HEX_6**: `#6366f1` (라인 84)
+   ```
+   .indicator-fill.depression { background: linear-gradient(90deg, #6366f1, #4f46e5); }
+   ```
+
+2. **HEX_6**: `#4f46e5` (라인 84)
+   ```
+   .indicator-fill.depression { background: linear-gradient(90deg, #6366f1, #4f46e5); }
+   ```
+
+3. **HEX_6**: `#f97316` (라인 85)
+   ```
+   .indicator-fill.stress { background: linear-gradient(90deg, #f97316, #ea580c); }
+   ```
+
+4. **HEX_6**: `#ea580c` (라인 85)
+   ```
+   .indicator-fill.stress { background: linear-gradient(90deg, #f97316, #ea580c); }
+   ```
+
+---
+
+### 📁 `frontend/src/components/emotion/EmotionDashboard.css` (CSS)
+
+**하드코딩 색상**: 4개
+
+1. **HEX_6**: `#6366f1` (라인 83)
+   ```
+   .metric-bar-fill.depression { background: linear-gradient(90deg, #6366f1, var(--mg-primary-500)); }
+   ```
+
+2. **HEX_6**: `#f97316` (라인 84)
+   ```
+   .metric-bar-fill.stress { background: linear-gradient(90deg, #f97316, #ea580c); }
+   ```
+
+3. **HEX_6**: `#ea580c` (라인 84)
+   ```
+   .metric-bar-fill.stress { background: linear-gradient(90deg, #f97316, #ea580c); }
+   ```
+
+4. **HEX_6**: `#34d399` (라인 85)
+   ```
+   .metric-bar-fill.energy { background: linear-gradient(90deg, var(--mg-success-500), #34d399); }
+   ```
+
+---
+
 ### 📁 `frontend/src/components/dashboard-v2/molecules/ProfileDropdown.css` (CSS)
 
 **하드코딩 색상**: 4개
@@ -16342,32 +15519,6 @@
 4. **HEX_6**: `#F5F3EF` (라인 212)
    ```
    background-color: var(--mg-color-surface-main, #F5F3EF);
-   ```
-
----
-
-### 📁 `frontend/src/components/consultation/ConsultationReport.css` (CSS)
-
-**하드코딩 색상**: 4개
-
-1. **HEX_6**: `#f0f0f0` (라인 88)
-   ```
-   border: 1px solid #f0f0f0;
-   ```
-
-2. **HEX_6**: `#fafbfc` (라인 114)
-   ```
-   background: #fafbfc;
-   ```
-
-3. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 87)
-   ```
-   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-   ```
-
-4. **RGBA**: `rgba(0, 123, 255, 0.1)` (라인 123)
-   ```
-   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
    ```
 
 ---
@@ -16420,6 +15571,32 @@
 4. **RGBA**: `rgba(26, 32, 44, 0.8)` (라인 376)
    ```
    background: rgba(26, 32, 44, 0.8);
+   ```
+
+---
+
+### 📁 `frontend/src/components/common/MGLayout.css` (CSS)
+
+**하드코딩 색상**: 4개
+
+1. **HEX_6**: `#f5576c` (라인 65)
+   ```
+   .mg-section--bg-secondary { background: linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%); }
+   ```
+
+2. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 38)
+   ```
+   background: rgba(255, 255, 255, 0.95);
+   ```
+
+3. **RGBA**: `rgba(255, 255, 255, 0.1)` (라인 46)
+   ```
+   background: rgba(255, 255, 255, 0.1);
+   ```
+
+4. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 48)
+   ```
+   border: 1px solid rgba(255, 255, 255, 0.2);
    ```
 
 ---
@@ -16554,54 +15731,28 @@
 
 ---
 
-### 📁 `frontend/src/components/clinical/AudioRecorder.css` (CSS)
+### 📁 `frontend/src/components/clinical/DiagnosticReportEditor.css` (CSS)
 
 **하드코딩 색상**: 4개
 
-1. **HEX_6**: `#1a202c` (라인 20)
+1. **HEX_6**: `#6ee7b7` (라인 222)
    ```
-   color: #1a202c;
-   ```
-
-2. **HEX_6**: `#1d4ed8` (라인 110)
-   ```
-   background: #1d4ed8;
+   border: 1px solid #6ee7b7;
    ```
 
-3. **HEX_6**: `#fecaca` (라인 175)
+2. **HEX_6**: `#78350f` (라인 258)
    ```
-   border: 1px solid #fecaca;
-   ```
-
-4. **HEX_6**: `#1e3a8a` (라인 203)
-   ```
-   color: #1e3a8a;
+   color: #78350f;
    ```
 
----
-
-### 📁 `frontend/src/components/client/ClientSettings.css` (CSS)
-
-**하드코딩 색상**: 4개
-
-1. **HEX_6**: `#f8f9ff` (라인 7)
+3. **RGBA**: `rgba(37, 99, 235, 0.1)` (라인 172)
    ```
-   background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
    ```
 
-2. **HEX_6**: `#e8f2ff` (라인 7)
+4. **RGBA**: `rgba(37, 99, 235, 0.1)` (라인 204)
    ```
-   background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
-   ```
-
-3. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 14)
-   ```
-   background: rgba(255, 255, 255, 0.95);
-   ```
-
-4. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 19)
-   ```
-   border: var(--border-width) solid rgba(255, 255, 255, 0.2);
+   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
    ```
 
 ---
@@ -16684,32 +15835,6 @@
 
 ---
 
-### 📁 `frontend/src/components/admin/commoncode/CommonCodeFilters.css` (CSS)
-
-**하드코딩 색상**: 4개
-
-1. **HEX_6**: `#1d4ed8` (라인 125)
-   ```
-   background: linear-gradient(135deg, var(--mg-primary-500), #1d4ed8);
-   ```
-
-2. **HEX_6**: `#1d4ed8` (라인 130)
-   ```
-   background: linear-gradient(135deg, #1d4ed8, var(--mg-color-info-dark));
-   ```
-
-3. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 62)
-   ```
-   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-   ```
-
-4. **RGBA**: `rgba(59, 130, 246, 0.3)` (라인 132)
-   ```
-   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-   ```
-
----
-
 ### 📁 `frontend/src/components/admin/AdminDashboard/organisms/ManualMatchingQueue.css` (CSS)
 
 **하드코딩 색상**: 4개
@@ -16788,58 +15913,6 @@
 
 ---
 
-### 📁 `frontend/src/components/erd/ErdDetailPage.js` (JS)
-
-**하드코딩 색상**: 4개
-
-1. **HEX_6**: `#f0f0f0` (라인 112)
-   ```
-   secondaryColor: '#f0f0f0',
-   ```
-
-2. **HEX_6**: `#e3f2fd` (라인 124)
-   ```
-   actorBkg: '#e3f2fd',
-   ```
-
-3. **HEX_6**: `#e3f2fd` (라인 137)
-   ```
-   activationBkgColor: '#e3f2fd',
-   ```
-
-4. **RGBA**: `rgba(0, 123, 255, 0.3)` (라인 240)
-   ```
-   table.style.filter = 'drop-shadow(0 4px 8px rgba(0, 123, 255, 0.3))';
-   ```
-
----
-
-### 📁 `frontend/src/components/consultant/ConsultantMessageScreen.js` (JS)
-
-**하드코딩 색상**: 4개
-
-1. **HEX_6**: `#f8f9ff` (라인 248)
-   ```
-   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8f9ff -> var(--mg-custom-f8f9ff)
-   ```
-
-2. **HEX_6**: `#f8f9ff` (라인 249)
-   ```
-   backgroundColor: '#f8f9ff'
-   ```
-
-3. **RGBA**: `rgba(0,123,255,0.1)` (라인 204)
-   ```
-   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,123,255,0.1) -> var(--mg-custom-color)
-   ```
-
-4. **RGBA**: `rgba(0,123,255,0.1)` (라인 205)
-   ```
-   boxShadow: '0 0 0 3px rgba(0,123,255,0.1)'
-   ```
-
----
-
 ### 📁 `frontend/src/components/auth/UnifiedLogin.js` (JS)
 
 **하드코딩 색상**: 4개
@@ -16862,58 +15935,6 @@
 4. **HEX_6**: `#EA4335` (라인 931)
    ```
    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-   ```
-
----
-
-### 📁 `frontend/src/components/admin/VacationManagementModal.js` (JS)
-
-**하드코딩 색상**: 4개
-
-1. **HEX_6**: `#fbbf24` (라인 115)
-   ```
-   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fbbf24 -> var(--mg-custom-fbbf24)
-   ```
-
-2. **HEX_6**: `#fbbf24` (라인 116)
-   ```
-   { value: 'MORNING_HALF_1', label: '오전 반반차 1 (09:00-11:00)', icon: '☀️', color: '#fbbf24', description: '오전 첫 번째 반반차 (09:00-11:00)' },
-   ```
-
-3. **HEX_6**: `#60a5fa` (라인 118)
-   ```
-   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #60a5fa -> var(--mg-custom-60a5fa)
-   ```
-
-4. **HEX_6**: `#60a5fa` (라인 119)
-   ```
-   { value: 'AFTERNOON_HALF_1', label: '오후 반반차 1 (14:00-16:00)', icon: '🌤️', color: '#60a5fa', description: '오후 첫 번째 반반차 (14:00-16:00)' },
-   ```
-
----
-
-### 📁 `frontend/src/components/admin/PaymentConfirmationModal.js` (JS)
-
-**하드코딩 색상**: 4개
-
-1. **HEX_6**: `#fee500` (라인 116)
-   ```
-   { value: 'KAKAO_PAY', label: '카카오페이', icon: '💛', color: '#fee500', description: '카카오페이 간편결제' },
-   ```
-
-2. **HEX_6**: `#03c75a` (라인 117)
-   ```
-   { value: 'NAVER_PAY', label: '네이버페이', icon: '💚', color: '#03c75a', description: '네이버페이 간편결제' },
-   ```
-
-3. **HEX_6**: `#0064ff` (라인 118)
-   ```
-   { value: 'TOSS', label: '토스', icon: '🔷', color: '#0064ff', description: '토스 간편결제' },
-   ```
-
-4. **HEX_6**: `#0070ba` (라인 119)
-   ```
-   { value: 'PAYPAL', label: '페이팔', icon: '🔵', color: '#0070ba', description: '페이팔 결제' },
    ```
 
 ---
@@ -16981,44 +16002,44 @@
 
 ---
 
-### 📁 `frontend/src/components/test/NotificationTest.css` (CSS)
+### 📁 `frontend/src/components/prediction/SimilarCasesPanel.css` (CSS)
 
 **하드코딩 색상**: 3개
 
-1. **HEX_6**: `#4a5568` (라인 258)
+1. **HEX_6**: `#e0e7ff` (라인 99)
    ```
-   border-color: #4a5568;
-   ```
-
-2. **HEX_6**: `#4a5568` (라인 275)
-   ```
-   border-color: #4a5568;
+   background: #e0e7ff;
    ```
 
-3. **RGBA**: `rgba(184, 230, 184, 0.2)` (라인 190)
+2. **HEX_6**: `#3730a3` (라인 102)
    ```
-   box-shadow: 0 0 0 3px rgba(184, 230, 184, 0.2);
+   color: #3730a3;
+   ```
+
+3. **HEX_6**: `#047857` (라인 116)
+   ```
+   color: #047857;
    ```
 
 ---
 
-### 📁 `frontend/src/components/test/IntegrationTest.css` (CSS)
+### 📁 `frontend/src/components/prediction/DropoutRiskIndicator.css` (CSS)
 
 **하드코딩 색상**: 3개
 
-1. **HEX_6**: `#dee2e6` (라인 8)
+1. **HEX_6**: `#78350f` (라인 118)
    ```
-   border: 1px solid #dee2e6;
-   ```
-
-2. **HEX_6**: `#212529` (라인 68)
-   ```
-   color: #212529;
+   color: #78350f;
    ```
 
-3. **HEX_6**: `#f3f3f3` (라인 193)
+2. **HEX_6**: `#fca5a5` (라인 125)
    ```
-   border: 4px solid #f3f3f3;
+   border: 1px solid #fca5a5;
+   ```
+
+3. **HEX_6**: `#7f1d1d` (라인 142)
+   ```
+   color: #7f1d1d;
    ```
 
 ---
@@ -17061,6 +16082,27 @@
 3. **HEX_6**: `#e3f2fd` (라인 94)
    ```
    background: var(--mg-color-primary-light, #e3f2fd);
+   ```
+
+---
+
+### 📁 `frontend/src/components/consultation/ConsultationReport.css` (CSS)
+
+**하드코딩 색상**: 3개
+
+1. **HEX_6**: `#fafbfc` (라인 114)
+   ```
+   background: #fafbfc;
+   ```
+
+2. **RGBA**: `rgba(0, 0, 0, 0.08)` (라인 87)
+   ```
+   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+   ```
+
+3. **RGBA**: `rgba(0, 123, 255, 0.1)` (라인 123)
+   ```
+   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
    ```
 
 ---
@@ -17170,23 +16212,86 @@
 
 ---
 
-### 📁 `frontend/src/components/auth/MobileLogin.css` (CSS)
+### 📁 `frontend/src/components/clinical/SmartNoteTab.css` (CSS)
 
 **하드코딩 색상**: 3개
 
-1. **HEX_6**: `#FEE500` (라인 102)
+1. **HEX_6**: `#d97706` (라인 116)
    ```
-   background-color: #FEE500;
-   ```
-
-2. **HEX_6**: `#191919` (라인 103)
-   ```
-   color: #191919;
+   background: #d97706;
    ```
 
-3. **HEX_6**: `#03C75A` (라인 108)
+2. **HEX_6**: `#bfdbfe` (라인 202)
    ```
-   background-color: #03C75A;
+   border: 1px solid #bfdbfe;
+   ```
+
+3. **RGBA**: `rgba(37, 99, 235, 0.1)` (라인 187)
+   ```
+   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+   ```
+
+---
+
+### 📁 `frontend/src/components/client/ClientSettings.css` (CSS)
+
+**하드코딩 색상**: 3개
+
+1. **HEX_6**: `#e8f2ff` (라인 7)
+   ```
+   background: linear-gradient(135deg, var(--mg-color-info-bg) 0%, #e8f2ff 100%);
+   ```
+
+2. **RGBA**: `rgba(255, 255, 255, 0.95)` (라인 14)
+   ```
+   background: rgba(255, 255, 255, 0.95);
+   ```
+
+3. **RGBA**: `rgba(255, 255, 255, 0.2)` (라인 19)
+   ```
+   border: var(--border-width) solid rgba(255, 255, 255, 0.2);
+   ```
+
+---
+
+### 📁 `frontend/src/components/client/ClientSchedule.css` (CSS)
+
+**하드코딩 색상**: 3개
+
+1. **RGBA**: `rgba(255, 250, 240, 0.6)` (라인 30)
+   ```
+   background: linear-gradient(135deg, rgba(255, 250, 240, 0.6), rgba(255, 255, 250, 0.6));
+   ```
+
+2. **RGBA**: `rgba(255, 255, 250, 0.6)` (라인 30)
+   ```
+   background: linear-gradient(135deg, rgba(255, 250, 240, 0.6), rgba(255, 255, 250, 0.6));
+   ```
+
+3. **RGBA**: `rgba(255, 182, 193, 0.2)` (라인 31)
+   ```
+   border: var(--border-width) solid rgba(255, 182, 193, 0.2);
+   ```
+
+---
+
+### 📁 `frontend/src/components/billing/SubscriptionManagement.css` (CSS)
+
+**하드코딩 색상**: 3개
+
+1. **HEX_6**: `#eff6ff` (라인 129)
+   ```
+   background: #eff6ff;
+   ```
+
+2. **HEX_6**: `#fcd34d` (라인 158)
+   ```
+   border: 1px solid #fcd34d;
+   ```
+
+3. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 124)
+   ```
+   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
    ```
 
 ---
@@ -17237,19 +16342,40 @@
 
 **하드코딩 색상**: 3개
 
-1. **HEX_6**: `#fd7e14` (라인 63)
+1. **HEX_6**: `#fd7e14` (라인 65)
    ```
    { value: 'HIGH', label: '높음', icon: '🟠', color: 'var(--mg-warning-500, #fd7e14)', description: '높은 우선순위' },
    ```
 
-2. **HEX_6**: `#6f42c1` (라인 65)
+2. **HEX_6**: `#6f42c1` (라인 67)
    ```
    { value: 'CRITICAL', label: '위험', icon: '🚨', color: 'var(--mg-purple-500, #6f42c1)', description: '위험 우선순위' }
    ```
 
-3. **RGBA**: `rgba(0,123,255,0.1)` (라인 243)
+3. **RGBA**: `rgba(0,123,255,0.1)` (라인 245)
    ```
    boxShadow: '0 0 0 3px rgba(0,123,255,0.1)'
+   ```
+
+---
+
+### 📁 `frontend/src/components/admin/PaymentConfirmationModal.js` (JS)
+
+**하드코딩 색상**: 3개
+
+1. **HEX_6**: `#fee500` (라인 118)
+   ```
+   { value: 'KAKAO_PAY', label: '카카오페이', icon: '💛', color: '#fee500', description: '카카오페이 간편결제' },
+   ```
+
+2. **HEX_6**: `#0064ff` (라인 120)
+   ```
+   { value: 'TOSS', label: '토스', icon: '🔷', color: '#0064ff', description: '토스 간편결제' },
+   ```
+
+3. **HEX_6**: `#0070ba` (라인 121)
+   ```
+   { value: 'PAYPAL', label: '페이팔', icon: '🔵', color: '#0070ba', description: '페이팔 결제' },
    ```
 
 ---
@@ -17314,6 +16440,22 @@
 2. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 174)
    ```
    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+   ```
+
+---
+
+### 📁 `frontend/src/components/test/IntegrationTest.css` (CSS)
+
+**하드코딩 색상**: 2개
+
+1. **HEX_6**: `#212529` (라인 68)
+   ```
+   color: #212529;
+   ```
+
+2. **HEX_6**: `#f3f3f3` (라인 193)
+   ```
+   border: 4px solid #f3f3f3;
    ```
 
 ---
@@ -17446,18 +16588,18 @@
 
 ---
 
-### 📁 `frontend/src/components/client/ClientMessageScreen.css` (CSS)
+### 📁 `frontend/src/components/auth/MobileLogin.css` (CSS)
 
 **하드코딩 색상**: 2개
 
-1. **HEX_6**: `#f8f9ff` (라인 146)
+1. **HEX_6**: `#FEE500` (라인 102)
    ```
-   background: #f8f9ff;
+   background-color: #FEE500;
    ```
 
-2. **HEX_6**: `#f8f9ff` (라인 504)
+2. **HEX_6**: `#191919` (라인 103)
    ```
-   background: #f8f9ff;
+   color: #191919;
    ```
 
 ---
@@ -17542,18 +16684,18 @@
 
 ---
 
-### 📁 `frontend/src/components/admin/commoncode/CommonCodeStats.css` (CSS)
+### 📁 `frontend/src/components/admin/commoncode/CommonCodeFilters.css` (CSS)
 
 **하드코딩 색상**: 2개
 
-1. **HEX_6**: `#1d4ed8` (라인 40)
+1. **RGBA**: `rgba(59, 130, 246, 0.1)` (라인 62)
    ```
-   background: linear-gradient(135deg, var(--mg-primary-500), #1d4ed8);
+   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
    ```
 
-2. **HEX_6**: `#7c3aed` (라인 52)
+2. **RGBA**: `rgba(59, 130, 246, 0.3)` (라인 132)
    ```
-   background: linear-gradient(135deg, var(--mg-purple-500), #7c3aed);
+   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
    ```
 
 ---
@@ -17578,30 +16720,30 @@
 
 **하드코딩 색상**: 2개
 
-1. **HEX_6**: `#84cc16` (라인 52)
+1. **HEX_6**: `#84cc16` (라인 54)
    ```
    if (score > 0.2) return '#84cc16';
    ```
 
-2. **HEX_6**: `#f97316` (라인 54)
+2. **HEX_6**: `#f97316` (라인 56)
    ```
    if (score > -0.5) return '#f97316';
    ```
 
 ---
 
-### 📁 `frontend/src/components/common/SalaryPrintComponent.js` (JS)
+### 📁 `frontend/src/components/consultant/ConsultantMessageScreen.js` (JS)
 
 **하드코딩 색상**: 2개
 
-1. **HEX_6**: `#e8f5e8` (라인 107)
+1. **RGBA**: `rgba(0,123,255,0.1)` (라인 206)
    ```
-   backgroundColor: '#e8f5e8',
+   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,123,255,0.1) -> var(--mg-custom-color)
    ```
 
-2. **HEX_6**: `#d4edda` (라인 114)
+2. **RGBA**: `rgba(0,123,255,0.1)` (라인 207)
    ```
-   backgroundColor: '#d4edda',
+   boxShadow: '0 0 0 3px rgba(0,123,255,0.1)'
    ```
 
 ---
@@ -17654,6 +16796,22 @@
 
 ---
 
+### 📁 `frontend/src/components/admin/VacationManagementModal.js` (JS)
+
+**하드코딩 색상**: 2개
+
+1. **HEX_6**: `#60a5fa` (라인 120)
+   ```
+   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #60a5fa -> var(--mg-custom-60a5fa)
+   ```
+
+2. **HEX_6**: `#60a5fa` (라인 121)
+   ```
+   { value: 'AFTERNOON_HALF_1', label: '오후 반반차 1 (14:00-16:00)', icon: '🌤️', color: '#60a5fa', description: '오후 첫 번째 반반차 (14:00-16:00)' },
+   ```
+
+---
+
 ### 📁 `frontend/src/styles/06-components/_base/_loading.css` (CSS)
 
 **하드코딩 색상**: 1개
@@ -17676,17 +16834,6 @@
 
 ---
 
-### 📁 `frontend/src/pages/billing/BillingCallback.css` (CSS)
-
-**하드코딩 색상**: 1개
-
-1. **HEX_6**: `#fecaca` (라인 119)
-   ```
-   border: 1px solid #fecaca;
-   ```
-
----
-
 ### 📁 `frontend/src/components/wellness/PsychoEducation.css` (CSS)
 
 **하드코딩 색상**: 1개
@@ -17694,6 +16841,17 @@
 1. **RGBA**: `rgba(255, 255, 255, 0.7)` (라인 279)
    ```
    color: rgba(255, 255, 255, 0.7);
+   ```
+
+---
+
+### 📁 `frontend/src/components/test/NotificationTest.css` (CSS)
+
+**하드코딩 색상**: 1개
+
+1. **RGBA**: `rgba(184, 230, 184, 0.2)` (라인 190)
+   ```
+   box-shadow: 0 0 0 3px rgba(184, 230, 184, 0.2);
    ```
 
 ---
@@ -17742,13 +16900,13 @@
 
 ---
 
-### 📁 `frontend/src/components/emotion/EmotionTrendChart.css` (CSS)
+### 📁 `frontend/src/components/landing/CounselingAbout.css` (CSS)
 
 **하드코딩 색상**: 1개
 
-1. **HEX_6**: `#d1fae5` (라인 27)
+1. **RGBA**: `rgba(245, 250, 255, 0.3)` (라인 7)
    ```
-   .trend-badge.trend-improving { color: var(--mg-success-500); background: #d1fae5; }
+   background: rgba(245, 250, 255, 0.3);
    ```
 
 ---
@@ -17841,17 +16999,6 @@
 
 ---
 
-### 📁 `frontend/src/components/billing/PaymentMethodRegistration.css` (CSS)
-
-**하드코딩 색상**: 1개
-
-1. **HEX_6**: `#fecaca` (라인 52)
-   ```
-   border: 1px solid #fecaca;
-   ```
-
----
-
 ### 📁 `frontend/src/components/admin/MappingEditModal.css` (CSS)
 
 **하드코딩 색상**: 1개
@@ -17892,6 +17039,17 @@
 1. **HEX_6**: `#F5F3EF` (라인 10)
    ```
    background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg, #F5F3EF));
+   ```
+
+---
+
+### 📁 `frontend/src/components/admin/commoncode/CommonCodeStats.css` (CSS)
+
+**하드코딩 색상**: 1개
+
+1. **HEX_6**: `#7c3aed` (라인 52)
+   ```
+   background: linear-gradient(135deg, var(--mg-purple-500), #7c3aed);
    ```
 
 ---
@@ -17995,11 +17153,22 @@
 
 ---
 
+### 📁 `frontend/src/components/erd/ErdDetailPage.js` (JS)
+
+**하드코딩 색상**: 1개
+
+1. **RGBA**: `rgba(0, 123, 255, 0.3)` (라인 242)
+   ```
+   table.style.filter = 'drop-shadow(0 4px 8px rgba(0, 123, 255, 0.3))';
+   ```
+
+---
+
 ### 📁 `frontend/src/components/emotion/EmotionDashboard.js` (JS)
 
 **하드코딩 색상**: 1개
 
-1. **HEX_6**: `#ea580c` (라인 81)
+1. **HEX_6**: `#ea580c` (라인 83)
    ```
    'HIGH': '#ea580c',
    ```
@@ -18021,9 +17190,20 @@
 
 **하드코딩 색상**: 1개
 
-1. **HEX_6**: `#06b6d4` (라인 120)
+1. **HEX_6**: `#06b6d4` (라인 122)
    ```
    { value: 'STATUS_DESC', label: '상태 내림차순', icon: '🔄', color: '#06b6d4', description: '상태 내림차순 정렬' }
+   ```
+
+---
+
+### 📁 `frontend/src/components/common/SalaryPrintComponent.js` (JS)
+
+**하드코딩 색상**: 1개
+
+1. **HEX_6**: `#e8f5e8` (라인 107)
+   ```
+   backgroundColor: '#e8f5e8',
    ```
 
 ---
@@ -18039,6 +17219,61 @@
 
 ---
 
+### 📁 `frontend/src/components/admin/system/TestNotificationForm.js` (JS)
+
+**하드코딩 색상**: 1개
+
+1. **HEX_3**: `#123` (라인 510)
+   ```
+   placeholder={t('testNotification.reason.placeholder', '예: 사용자 #123 매핑 확정 알림 변수 매칭 검증')}
+   ```
+
+---
+
+### 📁 `frontend/src/components/admin/manual-notification/RecipientPicker.js` (JS)
+
+**하드코딩 색상**: 1개
+
+1. **HEX_3**: `#130` (라인 8)
+   ```
+   * - 모든 표시 값은 `toDisplayString` 으로 React #130(객체 자식 렌더) 방어.
+   ```
+
+---
+
+### 📁 `frontend/src/components/admin/manual-notification/ManualNotificationForm.js` (JS)
+
+**하드코딩 색상**: 1개
+
+1. **HEX_3**: `#130` (라인 16)
+   ```
+   * React #130 방어: `toDisplayString` 적용.
+   ```
+
+---
+
+### 📁 `frontend/src/components/admin/manual-notification/ManualNotificationBatchHistory.js` (JS)
+
+**하드코딩 색상**: 1개
+
+1. **HEX_3**: `#130` (라인 9)
+   ```
+   * - React #130 방어: 모든 표시 값 `toDisplayString` 변환
+   ```
+
+---
+
+### 📁 `frontend/src/components/admin/manual-notification/BatchResultModal.js` (JS)
+
+**하드코딩 색상**: 1개
+
+1. **HEX_3**: `#130` (라인 13)
+   ```
+   * React #130 방어: 모든 표시 값은 `toDisplayString` 으로 변환.
+   ```
+
+---
+
 ### 📁 `frontend/src/components/erp/common/atoms/ErpSafeText.jsx` (JS)
 
 **하드코딩 색상**: 1개
@@ -18046,6 +17281,17 @@
 1. **HEX_3**: `#130` (라인 2)
    ```
    * ERP 표시 경계 Atom — API/스칼라 외 값을 JSX 자식으로 두기 전에 정규화 (React #130 방지)
+   ```
+
+---
+
+### 📁 `frontend/src/locales/ko/admin.json` (JSON)
+
+**하드코딩 색상**: 1개
+
+1. **HEX_3**: `#123` (라인 110)
+   ```
+   "placeholder": "예: 사용자 #123 매핑 확정 알림 변수 매칭 검증",
    ```
 
 ---

@@ -1,7 +1,40 @@
-/* ===== 통합 로딩 컴포넌트 ===== */
-/* BEM 네이밍 컨벤션 적용 */
+/* ===== UnifiedLoading SSOT 컴포넌트 스타일 =====
+ * 단일 SSOT (Single Source of Truth) — `frontend/src/components/common/UnifiedLoading.js`
+ * 표준 클래스 prefix: `mg-loading*`
+ * 회전 키프레임: `mg-spinner-spin` (jitter-free, linear)
+ *
+ * @author MindGarden
+ * @since 2025-01-02
+ * @version 1.2.0 (2026-05-23 — jitter-free + 디자인 토큰 + a11y reduced-motion)
+ */
 
-/* 로딩 컨테이너 */
+/* ===== 디자인 토큰 폴백 (SSOT 토큰 미정의 환경 대비) ===== */
+/* unified-design-tokens.css 와 충돌 없이 폴백만 제공한다. */
+:root {
+  /* 사이즈 (px) */
+  --mg-spinner-size-xs: 16px;
+  --mg-spinner-size-sm: 24px;
+  --mg-spinner-size-md: 40px;
+  --mg-spinner-size-lg: 56px;
+  --mg-spinner-size-xl: 72px;
+
+  /* 테두리 두께 */
+  --mg-spinner-thickness-xs: 2px;
+  --mg-spinner-thickness-sm: 3px;
+  --mg-spinner-thickness-md: 3px;
+  --mg-spinner-thickness-lg: 4px;
+  --mg-spinner-thickness-xl: 5px;
+
+  /* 회전 속도 (등속) */
+  --mg-spinner-duration: 0.9s;
+
+  /* 색상 (톤별 SSOT — primary 디폴트) */
+  /* 디자인 토큰 SSOT(unified-design-tokens.css)에 정의됨 — 하드코딩 폴백 없음 */
+  --mg-spinner-track-color: var(--color-border-light);
+  --mg-spinner-accent-color: var(--color-primary, var(--mg-primary-500));
+}
+
+/* ===== 로딩 컨테이너 ===== */
 .mg-loading-container {
   display: flex;
   align-items: center;
@@ -24,8 +57,7 @@
 
 .mg-loading-container--fullscreen {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
   background: var(--color-bg-primary, var(--mg-layout-main-bg-start, var(--mg-color-background-main)));
@@ -46,17 +78,16 @@
   justify-content: center;
 }
 
-/* 레이아웃 main 내부에서 페이지 로딩이 남은 높이를 채우도록 */
 .mg-loading-container--page.mg-loading-container--centered {
   min-height: 50vh;
   flex: 1 1 0%;
 }
 
-/* 페이지 타입: 스피너 비율 확대(가독성) */
+.mg-loading-container--page .mg-loading--md .mg-loading-spinner-icon,
 .mg-loading-container--page .mg-loading--medium .mg-loading-spinner-icon {
-  width: 48px;
-  height: 48px;
-  border-width: 3px;
+  width: var(--mg-spinner-size-lg);
+  height: var(--mg-spinner-size-lg);
+  border-width: var(--mg-spinner-thickness-lg);
 }
 
 .mg-loading-container--page .mg-loading-content {
@@ -71,7 +102,7 @@
   padding: var(--spacing-xs);
 }
 
-/* 로딩 콘텐츠 */
+/* ===== 로딩 콘텐츠 ===== */
 .mg-loading-content {
   display: flex;
   flex-direction: column;
@@ -80,42 +111,122 @@
   gap: var(--spacing-md);
 }
 
-/* 로딩 텍스트 */
+/* 로딩 텍스트 (회전·애니메이션 강제 방지) */
 .mg-loading-text {
   font-size: var(--font-size-base);
   color: var(--color-text-secondary);
   font-weight: var(--font-weight-medium);
   text-align: center;
+  /* 텍스트는 절대 회전하지 않는다 */
+  animation: none;
+  transform: none;
+  will-change: auto;
 }
 
-/* ===== 로딩 스피너 ===== */
+/* ===== 회전 스피너 (jitter-free SSOT) ===== */
 .mg-loading-spinner {
   position: relative;
+  /* compositor 레이어 분리 — 메인 스레드 jank 회피 */
+  will-change: transform;
 }
 
 .mg-loading-spinner-icon {
   border-radius: 50%;
-  border: 3px solid var(--color-border-light);
-  border-top: 3px solid var(--color-primary);
-  animation: mg-spin 1s linear infinite;
+  border-style: solid;
+  border-color: var(--mg-spinner-track-color);
+  border-top-color: var(--mg-spinner-accent-color);
+  /* 회전 보장 — linear 등속, transform-origin 명시, GPU 가속 */
+  animation: mg-spinner-spin var(--mg-spinner-duration) linear infinite;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
+/* 사이즈 매핑 (신규 토큰 기반) */
+.mg-loading--xs .mg-loading-spinner-icon {
+  width: var(--mg-spinner-size-xs);
+  height: var(--mg-spinner-size-xs);
+  border-width: var(--mg-spinner-thickness-xs);
+}
+
+.mg-loading--sm .mg-loading-spinner-icon,
 .mg-loading--small .mg-loading-spinner-icon {
-  width: 32px;
-  height: 32px;
-  border-width: 3px;
+  width: var(--mg-spinner-size-sm);
+  height: var(--mg-spinner-size-sm);
+  border-width: var(--mg-spinner-thickness-sm);
 }
 
+.mg-loading--md .mg-loading-spinner-icon,
 .mg-loading--medium .mg-loading-spinner-icon {
-  width: 40px;
-  height: 40px;
-  border-width: 3px;
+  width: var(--mg-spinner-size-md);
+  height: var(--mg-spinner-size-md);
+  border-width: var(--mg-spinner-thickness-md);
 }
 
+.mg-loading--lg .mg-loading-spinner-icon,
 .mg-loading--large .mg-loading-spinner-icon {
-  width: 48px;
-  height: 48px;
-  border-width: 4px;
+  width: var(--mg-spinner-size-lg);
+  height: var(--mg-spinner-size-lg);
+  border-width: var(--mg-spinner-thickness-lg);
+}
+
+.mg-loading--xl .mg-loading-spinner-icon {
+  width: var(--mg-spinner-size-xl);
+  height: var(--mg-spinner-size-xl);
+  border-width: var(--mg-spinner-thickness-xl);
+}
+
+/* ===== 톤(색상) 매핑 ===== */
+.mg-loading--tone-primary .mg-loading-spinner-icon {
+  border-top-color: var(--color-primary, var(--mg-primary-500));
+}
+
+.mg-loading--tone-secondary .mg-loading-spinner-icon {
+  border-top-color: var(--color-secondary, var(--mg-secondary-500));
+}
+
+.mg-loading--tone-success .mg-loading-spinner-icon {
+  border-top-color: var(--color-success, var(--mg-success-500));
+}
+
+.mg-loading--tone-danger .mg-loading-spinner-icon {
+  border-top-color: var(--color-danger, var(--mg-error-500));
+}
+
+.mg-loading--tone-neutral .mg-loading-spinner-icon {
+  border-top-color: var(--color-text-secondary);
+}
+
+/* 톤 매핑 — dots/pulse/bars 배경색 */
+.mg-loading--tone-primary .mg-loading-dot,
+.mg-loading--tone-primary .mg-loading-pulse-circle,
+.mg-loading--tone-primary .mg-loading-bar {
+  background: var(--color-primary, var(--mg-primary-500));
+}
+
+.mg-loading--tone-secondary .mg-loading-dot,
+.mg-loading--tone-secondary .mg-loading-pulse-circle,
+.mg-loading--tone-secondary .mg-loading-bar {
+  background: var(--color-secondary, var(--mg-secondary-500));
+}
+
+.mg-loading--tone-success .mg-loading-dot,
+.mg-loading--tone-success .mg-loading-pulse-circle,
+.mg-loading--tone-success .mg-loading-bar {
+  background: var(--color-success, var(--mg-success-500));
+}
+
+.mg-loading--tone-danger .mg-loading-dot,
+.mg-loading--tone-danger .mg-loading-pulse-circle,
+.mg-loading--tone-danger .mg-loading-bar {
+  background: var(--color-danger, var(--mg-error-500));
+}
+
+.mg-loading--tone-neutral .mg-loading-dot,
+.mg-loading--tone-neutral .mg-loading-pulse-circle,
+.mg-loading--tone-neutral .mg-loading-bar {
+  background: var(--color-text-secondary);
 }
 
 /* ===== 도트 로딩 ===== */
@@ -129,22 +240,17 @@
   border-radius: 50%;
   background: var(--color-primary);
   animation: mg-dot-bounce 1.4s ease-in-out infinite both;
+  will-change: transform, opacity;
 }
 
-.mg-loading--small .mg-loading-dot {
-  width: 6px;
-  height: 6px;
-}
-
-.mg-loading--medium .mg-loading-dot {
-  width: 8px;
-  height: 8px;
-}
-
-.mg-loading--large .mg-loading-dot {
-  width: 10px;
-  height: 10px;
-}
+.mg-loading--xs .mg-loading-dot { width: 4px; height: 4px; }
+.mg-loading--sm .mg-loading-dot,
+.mg-loading--small .mg-loading-dot { width: 6px; height: 6px; }
+.mg-loading--md .mg-loading-dot,
+.mg-loading--medium .mg-loading-dot { width: 8px; height: 8px; }
+.mg-loading--lg .mg-loading-dot,
+.mg-loading--large .mg-loading-dot { width: 10px; height: 10px; }
+.mg-loading--xl .mg-loading-dot { width: 12px; height: 12px; }
 
 .mg-loading-dot:nth-child(1) { animation-delay: -0.32s; }
 .mg-loading-dot:nth-child(2) { animation-delay: -0.16s; }
@@ -159,22 +265,17 @@
   border-radius: 50%;
   background: var(--color-primary);
   animation: mg-pulse-scale 1.5s ease-in-out infinite both;
+  will-change: transform, opacity;
 }
 
-.mg-loading--small .mg-loading-pulse-circle {
-  width: 24px;
-  height: 24px;
-}
-
-.mg-loading--medium .mg-loading-pulse-circle {
-  width: 32px;
-  height: 32px;
-}
-
-.mg-loading--large .mg-loading-pulse-circle {
-  width: 48px;
-  height: 48px;
-}
+.mg-loading--xs .mg-loading-pulse-circle { width: 16px; height: 16px; }
+.mg-loading--sm .mg-loading-pulse-circle,
+.mg-loading--small .mg-loading-pulse-circle { width: 24px; height: 24px; }
+.mg-loading--md .mg-loading-pulse-circle,
+.mg-loading--medium .mg-loading-pulse-circle { width: 32px; height: 32px; }
+.mg-loading--lg .mg-loading-pulse-circle,
+.mg-loading--large .mg-loading-pulse-circle { width: 48px; height: 48px; }
+.mg-loading--xl .mg-loading-pulse-circle { width: 64px; height: 64px; }
 
 /* ===== 바 로딩 ===== */
 .mg-loading-bars {
@@ -187,32 +288,39 @@
   background: var(--color-primary);
   border-radius: var(--border-radius-sm);
   animation: mg-bar-wave 1.2s ease-in-out infinite both;
+  will-change: transform;
 }
 
-.mg-loading--small .mg-loading-bar {
-  width: 3px;
-  height: 16px;
-}
-
-.mg-loading--medium .mg-loading-bar {
-  width: 4px;
-  height: 20px;
-}
-
-.mg-loading--large .mg-loading-bar {
-  width: 5px;
-  height: 24px;
-}
+.mg-loading--xs .mg-loading-bar { width: 2px; height: 12px; }
+.mg-loading--sm .mg-loading-bar,
+.mg-loading--small .mg-loading-bar { width: 3px; height: 16px; }
+.mg-loading--md .mg-loading-bar,
+.mg-loading--medium .mg-loading-bar { width: 4px; height: 20px; }
+.mg-loading--lg .mg-loading-bar,
+.mg-loading--large .mg-loading-bar { width: 5px; height: 24px; }
+.mg-loading--xl .mg-loading-bar { width: 6px; height: 32px; }
 
 .mg-loading-bar:nth-child(1) { animation-delay: -1.2s; }
 .mg-loading-bar:nth-child(2) { animation-delay: -1.1s; }
 .mg-loading-bar:nth-child(3) { animation-delay: -1.0s; }
 .mg-loading-bar:nth-child(4) { animation-delay: -0.9s; }
 
-/* ===== 애니메이션 ===== */
+/* ===== 키프레임 (SSOT) ===== */
+/*
+ * `mg-spinner-spin` — SSOT 회전 키프레임
+ * 0% → 100% rotate, linear infinite, jitter-free
+ * 별도 prefix로 컴포넌트별 자체 `@keyframes spin` 정의와 격리.
+ *
+ * `mg-spin` — 레거시 호환 alias (기존 컴포넌트 호환)
+ */
+@keyframes mg-spinner-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 @keyframes mg-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes mg-dot-bounce {
@@ -256,23 +364,15 @@
   transition: transform 0.3s ease;
 }
 
-/* 로고 크기 */
-.mg-loading-logo--small {
-  width: 32px;
-  height: 32px;
-}
+.mg-loading-logo--xs { width: var(--mg-spinner-size-xs); height: var(--mg-spinner-size-xs); }
+.mg-loading-logo--sm,
+.mg-loading-logo--small { width: var(--mg-spinner-size-sm); height: var(--mg-spinner-size-sm); }
+.mg-loading-logo--md,
+.mg-loading-logo--medium { width: var(--mg-spinner-size-md); height: var(--mg-spinner-size-md); }
+.mg-loading-logo--lg,
+.mg-loading-logo--large { width: var(--mg-spinner-size-lg); height: var(--mg-spinner-size-lg); }
+.mg-loading-logo--xl { width: var(--mg-spinner-size-xl); height: var(--mg-spinner-size-xl); }
 
-.mg-loading-logo--medium {
-  width: 40px;
-  height: 40px;
-}
-
-.mg-loading-logo--large {
-  width: 48px;
-  height: 48px;
-}
-
-/* 로고 타입별 스타일 */
 .mg-loading-logo--image {
   width: auto;
   height: auto;
@@ -295,7 +395,6 @@
   justify-content: center;
 }
 
-/* 로고 텍스트 */
 .mg-loading-logo-text {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
@@ -304,80 +403,67 @@
   line-height: 1;
 }
 
-.mg-loading-logo--small .mg-loading-logo-text {
-  font-size: var(--font-size-xs);
-}
+.mg-loading-logo--sm .mg-loading-logo-text,
+.mg-loading-logo--small .mg-loading-logo-text { font-size: var(--font-size-xs); }
+.mg-loading-logo--md .mg-loading-logo-text,
+.mg-loading-logo--medium .mg-loading-logo-text { font-size: var(--font-size-sm); }
+.mg-loading-logo--lg .mg-loading-logo-text,
+.mg-loading-logo--large .mg-loading-logo-text { font-size: var(--font-size-base); }
 
-.mg-loading-logo--medium .mg-loading-logo-text {
-  font-size: var(--font-size-sm);
-}
-
-.mg-loading-logo--large .mg-loading-logo-text {
-  font-size: var(--font-size-base);
-}
-
-/* 로고 회전 애니메이션 */
+/* 로고 회전 (스피너와 동일 SSOT 키프레임 사용) */
 .mg-loading-logo--rotating {
-  animation: mg-logo-rotate 2s linear infinite;
+  animation: mg-spinner-spin 2s linear infinite;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
-@keyframes mg-logo-rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* 로고 펄스 애니메이션 (회전 대신) */
 .mg-loading-logo--pulsing {
   animation: mg-logo-pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes mg-logo-pulse {
-  0%, 100% { 
-    transform: scale(1); 
-    opacity: 1; 
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
   }
-  50% { 
-    transform: scale(1.1); 
-    opacity: 0.8; 
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
   }
 }
 
-/* 로고 바운스 애니메이션 */
 .mg-loading-logo--bouncing {
   animation: mg-logo-bounce 1s ease-in-out infinite;
 }
 
 @keyframes mg-logo-bounce {
-  0%, 100% { 
-    transform: translateY(0); 
-  }
-  50% { 
-    transform: translateY(-8px); 
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
 
-/* 로고 타입별 크기 조정 */
+.mg-loading-logo--image.mg-loading-logo--sm,
 .mg-loading-logo--image.mg-loading-logo--small {
-  width: 24px;
-  height: 24px;
+  width: var(--mg-spinner-size-xs);
+  height: var(--mg-spinner-size-xs);
 }
 
+.mg-loading-logo--image.mg-loading-logo--md,
 .mg-loading-logo--image.mg-loading-logo--medium {
-  width: 32px;
-  height: 32px;
+  width: var(--mg-spinner-size-sm);
+  height: var(--mg-spinner-size-sm);
 }
 
+.mg-loading-logo--image.mg-loading-logo--lg,
 .mg-loading-logo--image.mg-loading-logo--large {
-  width: 40px;
-  height: 40px;
+  width: var(--mg-spinner-size-md);
+  height: var(--mg-spinner-size-md);
 }
 
-/* 로고 호버 효과 (정적 상태에서) */
 .mg-loading-logo:not(.mg-loading-logo--rotating):hover {
   transform: scale(1.05);
 }
 
-/* 다크 모드 지원 */
 @media (prefers-color-scheme: dark) {
   .mg-loading-logo-text {
     color: var(--color-primary-light, var(--color-primary));
@@ -386,34 +472,66 @@
 
 /* ===== 반응형 디자인 ===== */
 @media (max-width: 768px) {
+  .mg-loading--md .mg-loading-spinner-icon,
   .mg-loading--medium .mg-loading-spinner-icon {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
   }
-  
+
+  .mg-loading--lg .mg-loading-spinner-icon,
   .mg-loading--large .mg-loading-spinner-icon {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
   }
-  
+
   .mg-loading-text {
     font-size: var(--font-size-sm);
   }
 }
 
 @media (max-width: 480px) {
+  .mg-loading--sm .mg-loading-spinner-icon,
   .mg-loading--small .mg-loading-spinner-icon {
     width: 20px;
     height: 20px;
   }
-  
+
+  .mg-loading--md .mg-loading-spinner-icon,
   .mg-loading--medium .mg-loading-spinner-icon {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
   }
-  
+
+  .mg-loading--lg .mg-loading-spinner-icon,
   .mg-loading--large .mg-loading-spinner-icon {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
   }
+}
+
+/* ===== 접근성: prefers-reduced-motion ===== */
+/*
+ * 사용자가 모션 감소를 선호하면 회전·바운스를 정지하고 페이드만 표시한다.
+ * a11y 표준 (WCAG 2.3.3, MDN: prefers-reduced-motion).
+ */
+@media (prefers-reduced-motion: reduce) {
+  .mg-loading-spinner-icon,
+  .mg-loading-logo--rotating,
+  .mg-loading-logo--pulsing,
+  .mg-loading-logo--bouncing {
+    animation: mg-loading-fade-pulse 1.6s ease-in-out infinite;
+    transform: none;
+  }
+
+  .mg-loading-dot,
+  .mg-loading-pulse-circle,
+  .mg-loading-bar {
+    animation: mg-loading-fade-pulse 1.6s ease-in-out infinite;
+    transform: none;
+  }
+}
+
+@keyframes mg-loading-fade-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
 }

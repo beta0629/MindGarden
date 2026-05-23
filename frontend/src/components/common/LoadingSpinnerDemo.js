@@ -1,92 +1,107 @@
-import React, { useState } from 'react';
+/**
+ * UnifiedLoading 데모 페이지 (SSOT 사용 예시)
+ *
+ * 기존 LoadingSpinner 데모(broken)를 UnifiedLoading 기반으로 재작성.
+ * 새 코드에서는 반드시 UnifiedLoading을 직접 사용한다.
+ *
+ * @author MindGarden
+ * @since 2026-05-23
+ */
 
-// TODO: LoadingSpinner.js 모듈 추가 시 이 줄 제거
-// eslint-disable-next-line import/no-unresolved -- 데모 전용; 동일 디렉터리 컴포넌트가 아직 없음
-import LoadingSpinner from './LoadingSpinner';
+import React, { useState } from 'react';
+import UnifiedLoading from './UnifiedLoading';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './LoadingSpinnerDemo.css';
 
-const LoadingSpinnerDemo = () => {
-  const [isLoading, setIsLoading] = useState(false);
+const SIZE_OPTIONS = ['xs', 'sm', 'md', 'lg', 'xl'];
+const TONE_OPTIONS = ['primary', 'secondary', 'success', 'danger', 'neutral'];
+const VARIANT_OPTIONS = ['spinner', 'dots', 'pulse', 'bars'];
 
-  const handleToggleLoading = () => {
-    setIsLoading(!isLoading);
-  };
+const LoadingSpinnerDemo = () => {
+  const [isOverlay, setIsOverlay] = useState(false);
 
   return (
     <div className="loading-demo-container">
-      <h2>로딩 스피너 데모</h2>
-      
+      <h2>UnifiedLoading 데모 (SSOT)</h2>
+
       <div className="demo-section">
-        <h3>기본 스피너</h3>
+        <h3>variant 별 (spinner / dots / pulse / bars)</h3>
         <div className="demo-grid">
-          <div className="demo-item">
-            <h4>기본 (default)</h4>
-            <LoadingSpinner text="기본 로딩" size="medium" />
-          </div>
-          
-          <div className="demo-item">
-            <h4>도트 (dots)</h4>
-            <LoadingSpinner variant="dots" text="도트 로딩" size="medium" />
-          </div>
-          
-          <div className="demo-item">
-            <h4>펄스 (pulse)</h4>
-            <LoadingSpinner variant="pulse" text="펄스 로딩" size="medium" />
-          </div>
-          
-          <div className="demo-item">
-            <h4>바 (bars)</h4>
-            <LoadingSpinner variant="bars" text="바 로딩" size="medium" />
-          </div>
+          {VARIANT_OPTIONS.map((variant) => (
+            <div key={variant} className="demo-item">
+              <h4>{variant}</h4>
+              <UnifiedLoading
+                variant={variant}
+                size="md"
+                text={`${variant} 로딩`}
+                type="inline"
+              />
+            </div>
+          ))}
         </div>
       </div>
 
       <div className="demo-section">
-        <h3>크기별 스피너</h3>
+        <h3>size 별 (xs / sm / md / lg / xl)</h3>
         <div className="demo-grid">
-          <div className="demo-item">
-            <h4>Small</h4>
-            <LoadingSpinner text="작은 크기" size="small" />
-          </div>
-          
-          <div className="demo-item">
-            <h4>Medium</h4>
-            <LoadingSpinner text="중간 크기" size="medium" />
-          </div>
-          
-          <div className="demo-item">
-            <h4>Large</h4>
-            <LoadingSpinner text="큰 크기" size="large" />
-          </div>
+          {SIZE_OPTIONS.map((size) => (
+            <div key={size} className="demo-item">
+              <h4>{size}</h4>
+              <UnifiedLoading
+                variant="spinner"
+                size={size}
+                text={size}
+                type="inline"
+              />
+            </div>
+          ))}
         </div>
       </div>
 
       <div className="demo-section">
-        <h3>특수 스타일</h3>
+        <h3>tone 별 (primary / secondary / success / danger / neutral)</h3>
+        <div className="demo-grid">
+          {TONE_OPTIONS.map((tone) => (
+            <div key={tone} className="demo-item">
+              <h4>{tone}</h4>
+              <UnifiedLoading
+                variant="spinner"
+                size="md"
+                tone={tone}
+                text={tone}
+                type="inline"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="demo-section">
+        <h3>접근성·텍스트 옵션</h3>
         <div className="demo-grid">
           <div className="demo-item">
-            <h4>인라인 로딩</h4>
-            <LoadingSpinner 
-              text="인라인 로딩" 
-              size="medium" 
-              className="loading-spinner-inline"
-            />
-          </div>
-          
-          <div className="demo-item">
-            <h4>텍스트 없음</h4>
-            <LoadingSpinner 
-              size="medium" 
+            <h4>label만 (텍스트 숨김)</h4>
+            <UnifiedLoading
+              variant="spinner"
+              size="md"
               showText={false}
+              label="데이터를 불러오는 중"
+              type="inline"
             />
+          </div>
+          <div className="demo-item">
+            <h4>inline (텍스트 흐름에 배치)</h4>
+            <p>
+              저장 중
+              <UnifiedLoading variant="spinner" size="xs" inline showText={false} />
+            </p>
           </div>
         </div>
       </div>
 
       <div className="demo-section">
-        <h3>전체 화면 로딩</h3>
+        <h3>overlay (전체 화면)</h3>
         <MGButton
           className={buildErpMgButtonClassName({
             variant: 'primary',
@@ -97,52 +112,39 @@ const LoadingSpinnerDemo = () => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           variant="primary"
           preventDoubleClick={false}
-          onClick={handleToggleLoading}
+          onClick={() => setIsOverlay((v) => !v)}
         >
-          {isLoading ? '로딩 중지' : '전체 화면 로딩 시작'}
+          {isOverlay ? '오버레이 끄기' : '오버레이 켜기'}
         </MGButton>
-        
-        {isLoading && (
-          <LoadingSpinner 
-            text="전체 화면 로딩 중..." 
-            size="large" 
-            className="loading-spinner-fullscreen"
+
+        {isOverlay && (
+          <UnifiedLoading
+            variant="spinner"
+            size="lg"
+            text="전체 화면 로딩 중..."
+            overlay
           />
         )}
       </div>
 
       <div className="demo-section">
         <h3>사용법</h3>
-        <div className="usage-examples">
-          <pre>{`// 기본 사용
-<LoadingSpinner text="로딩 중..." size="medium" />
+        <pre>{`import UnifiedLoading from '../common/UnifiedLoading';
 
-// 도트 스타일
-<LoadingSpinner variant="dots" text="도트 로딩" size="medium" />
+// 기본
+<UnifiedLoading text="로딩 중..." size="md" />
 
-// 펄스 스타일
-<LoadingSpinner variant="pulse" text="펄스 로딩" size="large" />
+// 사이즈 / 톤
+<UnifiedLoading size="lg" tone="success" text="저장 중..." />
 
-// 바 스타일
-<LoadingSpinner variant="bars" text="바 로딩" size="small" />
+// 인라인
+<UnifiedLoading inline size="xs" showText={false} label="저장 중" />
 
-// 전체 화면 로딩
-<LoadingSpinner 
-  text="전체 화면 로딩 중..." 
-  size="large" 
-  className="loading-spinner-fullscreen"
-/>
+// 전체 화면 오버레이
+<UnifiedLoading overlay text="처리 중..." size="lg" />
 
-// 인라인 로딩
-<LoadingSpinner 
-  text="인라인 로딩" 
-  size="medium" 
-  className="loading-spinner-inline"
-/>
-
-// 텍스트 없음
-<LoadingSpinner size="medium" showText={false} />`}</pre>
-        </div>
+// variant
+<UnifiedLoading variant="dots" text="잠시만요" />`}</pre>
       </div>
     </div>
   );

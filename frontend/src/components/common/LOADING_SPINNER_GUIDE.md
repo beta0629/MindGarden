@@ -1,168 +1,131 @@
-# 공통 로딩바 사용 가이드
+# 공통 로딩 스피너 가이드 (UnifiedLoading SSOT)
 
-## 개요
-프로젝트 전체에서 일관된 로딩 UI를 제공하기 위해 `LoadingSpinner` 컴포넌트를 공통으로 사용합니다.
+> **Phase 2 — 2026-05-23**: 모든 로딩 UI는 `UnifiedLoading` 단일 SSOT를 사용한다.
+>
+> 이전 `LoadingSpinner` / `MGLoading` / `<div className="mg-spinner" />` 등 자체 정의는
+> 모두 `UnifiedLoading` 으로 마이그레이션되었거나 SSOT 위임 래퍼로 전환되었다.
 
-## 컴포넌트 위치
-```
-frontend/src/components/common/LoadingSpinner.js
-frontend/src/components/common/LoadingSpinner.css
-```
+## 1. 위치 (SSOT)
 
-## 사용법
+| 항목 | 경로 |
+|------|------|
+| React 컴포넌트 | `frontend/src/components/common/UnifiedLoading.js` |
+| 스타일 | `frontend/src/styles/06-components/_loading.css` (main.css 로 자동 import) |
+| 디자인 토큰 폴백 | `_loading.css` 상단 `--mg-spinner-*` 정의 |
+| 회전 키프레임 (SSOT) | `@keyframes mg-spinner-spin` (linear, jitter-free) |
 
-### 기본 사용
+## 2. 사용법
+
+### 2.1 기본
+
 ```jsx
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from '../common/UnifiedLoading';
 
-// 기본 로딩바
-<LoadingSpinner text="로딩 중..." size="medium" />
+<UnifiedLoading text="로딩 중..." size="md" />
 ```
 
-### 다양한 스타일
+### 2.2 사이즈
+
+`xs` / `sm` / `md` / `lg` / `xl` (레거시 `small` / `medium` / `large` 지원).
+
 ```jsx
-// 도트 스타일
-<LoadingSpinner variant="dots" text="도트 로딩" size="medium" />
-
-// 펄스 스타일
-<LoadingSpinner variant="pulse" text="펄스 로딩" size="large" />
-
-// 바 스타일
-<LoadingSpinner variant="bars" text="바 로딩" size="small" />
+<UnifiedLoading size="xs" />   // 16px - 인라인/버튼 내부
+<UnifiedLoading size="sm" />   // 24px
+<UnifiedLoading size="md" />   // 40px (기본)
+<UnifiedLoading size="lg" />   // 56px - 페이지/오버레이
+<UnifiedLoading size="xl" />   // 72px
 ```
 
-### 크기 옵션
-- `small`: 32px
-- `medium`: 48px (기본값)
-- `large`: 64px
+### 2.3 톤(색상)
 
-### 특수 스타일 클래스
 ```jsx
-// 전체 화면 로딩
-<LoadingSpinner 
-    text="전체 화면 로딩 중..." 
-    size="large" 
-    className="loading-spinner-fullscreen"
-/>
-
-// 인라인 로딩 (카드 형태)
-<LoadingSpinner 
-    text="인라인 로딩" 
-    size="medium" 
-    className="loading-spinner-inline"
-/>
-
-// 텍스트 없음
-<LoadingSpinner size="medium" showText={false} />
+<UnifiedLoading tone="primary" />    // 기본
+<UnifiedLoading tone="secondary" />
+<UnifiedLoading tone="success" />
+<UnifiedLoading tone="danger" />
+<UnifiedLoading tone="neutral" />
 ```
 
-## Props
+### 2.4 인라인 / 오버레이
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `text` | string | "로딩 중..." | 표시할 텍스트 |
-| `size` | string | "medium" | 크기 (small, medium, large) |
-| `variant` | string | "default" | 스타일 (default, dots, pulse, bars) |
-| `showText` | boolean | true | 텍스트 표시 여부 |
-| `className` | string | "" | 추가 CSS 클래스 |
-
-## 스타일 클래스
-
-### 기본 클래스
-- `.loading-spinner-container`: 컨테이너
-- `.loading-spinner-icon`: 기본 스피너 아이콘
-- `.loading-spinner-text`: 텍스트
-
-### 바리언트별 클래스
-- `.loading-dots`: 도트 스타일
-- `.loading-pulse`: 펄스 스타일
-- `.loading-bars`: 바 스타일
-
-### 특수 클래스
-- `.loading-spinner-fullscreen`: 전체 화면 로딩
-- `.loading-spinner-inline`: 인라인 로딩 (카드 형태)
-
-## 기존 로딩 UI 교체
-
-### Before (기존)
 ```jsx
-{loading && (
-    <div className="loading-overlay">
-        <div className="loading-spinner">로딩 중...</div>
-    </div>
-)}
+// 인라인 (텍스트 흐름)
+<UnifiedLoading inline size="xs" showText={false} label="저장 중" />
+
+// 전체 화면 오버레이
+<UnifiedLoading overlay size="lg" text="처리 중..." />
+
+// 페이지 영역 (기본)
+<UnifiedLoading type="page" size="lg" text="페이지 불러오는 중..." />
 ```
 
-### After (공통 컴포넌트)
+### 2.5 다양한 variant
+
 ```jsx
-{loading && (
-    <LoadingSpinner 
-        text="로딩 중..." 
-        size="large" 
-        variant="pulse"
-        className="loading-spinner-fullscreen"
-    />
-)}
+<UnifiedLoading variant="spinner" />  // 회전 (기본)
+<UnifiedLoading variant="dots" />     // 점 3개 바운스
+<UnifiedLoading variant="pulse" />    // 원형 펄스
+<UnifiedLoading variant="bars" />     // 바 4개 웨이브
+<UnifiedLoading variant="logo" />     // 브랜드 로고
 ```
 
-## 적용된 컴포넌트
+## 3. 접근성
 
-### ✅ 완료된 컴포넌트
-- `ScheduleCalendar`: 전체 화면 로딩 (pulse)
-- `ConsultantSelectionStep`: 인라인 로딩 (dots)
-- `ConsultantStatus`: 인라인 로딩 (bars)
-- `TodayStats`: 인라인 로딩 (dots)
+`UnifiedLoading`은 자동으로 다음 ARIA 속성을 부여한다.
 
-### 🔄 진행 중인 컴포넌트
-- 기타 로딩 상태가 있는 컴포넌트들
+- `role="status"` — 보조 기술이 상태 영역으로 인식
+- `aria-live="polite"` — 변경 사항을 조용히 알림
+- `aria-busy="true"` — 진행 중 상태
+- `aria-label` — `label` prop 또는 `text` 값으로 자동 설정
 
-## CSS 정리
+`prefers-reduced-motion: reduce` 환경에서는 회전·바운스 대신 페이드만 표시한다.
 
-기존 컴포넌트별 로딩 CSS는 제거하고 공통 `LoadingSpinner.css`만 사용합니다.
+## 4. Jitter 방지 핵심 (CSS)
 
-### 제거된 CSS 클래스
-- `.loading-overlay`
-- `.loading-spinner`
-- `.loading-container`
-- `.consultant-status-loading`
-- `.stat-item.loading`
-
-## 반응형 지원
-
-모든 로딩바는 반응형으로 설계되어 모바일에서도 적절한 크기로 표시됩니다.
+`_loading.css` 의 `.mg-loading-spinner-icon` 은 다음을 보장한다.
 
 ```css
-@media (max-width: 768px) {
-  .loading-spinner-medium {
-    width: 40px;
-    height: 40px;
-  }
-}
-
-@media (max-width: 480px) {
-  .loading-spinner-small {
-    width: 28px;
-    height: 28px;
-  }
-}
+animation: mg-spinner-spin var(--mg-spinner-duration) linear infinite;
+transform-origin: 50% 50%;
+will-change: transform;
+backface-visibility: hidden;
 ```
 
-## 애니메이션
+- **linear** — 가속·감속 없는 등속 회전
+- **transform-origin: 50% 50%** — 중심 회전 보장
+- **will-change: transform** — compositor 레이어 분리, 메인 스레드 jank 회피
+- **backface-visibility: hidden** — GPU 가속 안정화
 
-- **기본 스피너**: 회전 애니메이션 (1.2s)
-- **도트**: 바운스 애니메이션 (1.4s)
-- **펄스**: 스케일 애니메이션 (1.5s)
-- **바**: 웨이브 애니메이션 (1.2s)
-- **텍스트**: 페이드 애니메이션 (2s)
+> ⚠️ 새 CSS를 만들 때 `animation: spin ... ease-in-out infinite` 사용 금지.
 
-## 접근성
+## 5. Props 전체 참조
 
-- 스크린 리더를 위한 적절한 텍스트 제공
-- 애니메이션 감도 설정 고려
-- 키보드 네비게이션 지원
+| Prop | 타입 | 기본값 | 설명 |
+|------|------|--------|------|
+| `size` | `xs\|sm\|md\|lg\|xl\|small\|medium\|large` | `md` | 사이즈 (레거시 호환) |
+| `tone` | `primary\|secondary\|success\|danger\|neutral` | `primary` | 색상 톤 |
+| `variant` | `spinner\|dots\|pulse\|bars\|logo` | `spinner` | 시각 변형 |
+| `type` | `inline\|fullscreen\|page\|button` | (자동) | 컨테이너 레이아웃 |
+| `inline` | `boolean` | `false` | 인라인 단축 (`type='inline'` 자동) |
+| `overlay` | `boolean` | `false` | 오버레이 단축 (`type='fullscreen'` 자동) |
+| `text` | `string` | `'로딩 중...'` | 표시 텍스트 |
+| `showText` | `boolean` | `true` | 텍스트 표시 여부 |
+| `label` | `string` | `text` | `aria-label` (스크린리더 전용) |
+| `centered` | `boolean` | `true` | 중앙 정렬 |
+| `className` | `string` | `''` | 추가 클래스 |
 
-## 성능 최적화
+## 6. 마이그레이션 매핑
 
-- CSS 애니메이션 사용으로 GPU 가속
-- 불필요한 리렌더링 방지
-- 메모리 효율적인 구현
+| Before | After |
+|--------|-------|
+| `<div className="mg-spinner" />` | `<UnifiedLoading variant="spinner" size="md" type="inline" />` |
+| `<MGLoading variant="..." />` | `<UnifiedLoading variant="..." />` |
+| `<Spinner size="medium" />` (`ui/Loading`) | (자동 위임) — `Spinner` 는 SSOT 래퍼로 유지 |
+| `<LoadingState message="..." />` (academy) | (자동 위임) — `LoadingState` 는 SSOT 래퍼로 유지 |
+| `<LoadingSpinner ... />` (구 demo) | `<UnifiedLoading ... />` — 데모 파일 재작성됨 |
+
+## 7. 후속 (이 PR 범위 외)
+
+- 컴포넌트별 자체 `@keyframes spin` (50+ 곳) 점진 통합 → `mg-spinner-spin` 단일화
+- `unified-design-tokens.css` 내 `.mg-spinner` / `.mg-v2-spinner` / `.mg-spinner--sm` 중복 정의 정리
+- 시각 회귀 검증: `core-tester` 위임 (Playwright/Chromatic 등)

@@ -1,53 +1,102 @@
 import React from 'react';
-import '../../styles/main.css'; // Ensure main.css is imported for mg-loading styles
+import '../../styles/main.css'; // mg-loading-* / mg-spinner-spin SSOT 보장
 
 /**
- * 통합 로딩 컴포넌트 (UnifiedLoading)
- * 모든 로딩 UI의 표준이 되는 공통 컴포넌트
+ * UnifiedLoading — 모든 로딩 UI의 단일 SSOT 컴포넌트
  *
- * 로고 확장성 고려사항:
- * - 기본 스피너와 커스텀 로고 모두 지원
- * - 로고 회전 애니메이션 지원
- * - 로고 크기 자동 조정 (responsive)
- * - 다크/라이트 모드 대응
- * - 향후 브랜딩 변경 시 쉽게 교체 가능한 구조
+ * 디자인 시스템 정합:
+ * - 회전(jitter-free): `mg-spinner-spin` linear infinite (`06-components/_loading.css`)
+ * - 사이즈 토큰: `--mg-spinner-size-{xs,sm,md,lg,xl}`
+ * - 색상 토큰: `--mg-spinner-track-color`, `--mg-spinner-accent-color`
+ * - 접근성: `role="status"`, `aria-live="polite"`, `aria-label`
+ * - 사용자 환경: `prefers-reduced-motion` 시 회전 정지·페이드
  *
- * @param {Object} props - 컴포넌트 props
- * @param {string} props.text - 로딩 텍스트
- * @param {string} props.size - 로딩 크기 (small, medium, large)
- * @param {string} props.variant - 로딩 스타일 (spinner, dots, pulse, bars, logo)
- * @param {string} props.type - 로딩 타입 (inline, fullscreen, page, button).
- *   신규 화면에서는 `inline`(또는 레이아웃 내 영역) 권장. `page`·`fullscreen`은 레거시·전체 덮음 용도이며 P4(쉘 유지)와 맞지 않을 수 있음.
- * @param {boolean} props.showText - 텍스트 표시 여부
- * @param {string} props.className - 추가 CSS 클래스
- * @param {boolean} props.centered - 중앙 정렬 여부
- * @param {string} props.logoType - 로고 타입 (text, image, custom)
- * @param {string} props.logoImage - 커스텀 로고 이미지 URL 또는 HTML
- * @param {string} props.logoAlt - 로고 alt 텍스트
- * @param {boolean} props.logoRotate - 로고 회전 애니메이션 여부
+ * Props 표준 (신규 API):
+ * @param {('xs'|'sm'|'md'|'lg'|'xl'|'small'|'medium'|'large')} [props.size='md']
+ *   - `small`/`medium`/`large` 는 레거시 호환 (각각 `sm`/`md`/`lg`)
+ * @param {('primary'|'secondary'|'success'|'danger'|'neutral')} [props.tone='primary']
+ *   - 색상 톤. 디자인 토큰을 통해 매핑.
+ * @param {string} [props.label='로딩 중'] - 스크린리더용 접근성 라벨 (aria-label)
+ * @param {boolean} [props.inline=false] - 인라인 모드 (텍스트 흐름에 그대로 배치)
+ * @param {boolean} [props.overlay=false] - 전체 화면 오버레이 (fullscreen) 모드
+ *
+ * Props 레거시 호환 (변경 없음):
+ * @param {string} [props.text='로딩 중...'] - 표시 텍스트
+ * @param {('spinner'|'dots'|'pulse'|'bars'|'logo')} [props.variant='spinner']
+ * @param {('inline'|'fullscreen'|'page'|'button')} [props.type='inline']
+ *   - 명시적으로 전달되면 `inline`/`overlay` 보다 우선.
+ * @param {boolean} [props.showText=true]
+ * @param {string} [props.className='']
+ * @param {boolean} [props.centered=true]
+ * @param {('text'|'image'|'custom')} [props.logoType='text']
+ * @param {string} [props.logoImage='']
+ * @param {string} [props.logoAlt='Core Solution']
+ * @param {boolean} [props.logoRotate=true]
+ *
  * @author Core Solution
- * @version 1.1.0
  * @since 2025-01-02
+ * @version 1.2.0 (2026-05-23 — jitter-free + 표준 props + a11y)
  */
-const UnifiedLoading = ({ 
-  text = "로딩 중...",
-  size = "medium",
-  variant = "spinner",
-  type = "inline",
+
+const LEGACY_SIZE_MAP = {
+  small: 'sm',
+  medium: 'md',
+  large: 'lg'
+};
+
+const TONE_WHITELIST = new Set([
+  'primary',
+  'secondary',
+  'success',
+  'danger',
+  'neutral'
+]);
+
+const SIZE_WHITELIST = new Set(['xs', 'sm', 'md', 'lg', 'xl']);
+
+const normalizeSize = (size) => {
+  if (!size) return 'md';
+  if (LEGACY_SIZE_MAP[size]) return LEGACY_SIZE_MAP[size];
+  if (SIZE_WHITELIST.has(size)) return size;
+  return 'md';
+};
+
+const normalizeTone = (tone) => (TONE_WHITELIST.has(tone) ? tone : 'primary');
+
+const resolveType = ({ type, overlay, inline }) => {
+  if (type) return type;
+  if (overlay) return 'fullscreen';
+  if (inline) return 'inline';
+  return 'inline';
+};
+
+const UnifiedLoading = ({
+  text = '로딩 중...',
+  size = 'md',
+  variant = 'spinner',
+  type,
+  tone = 'primary',
+  label,
+  inline = false,
+  overlay = false,
   showText = true,
-  className = "",
+  className = '',
   centered = true,
-  logoType = "text", // text, image, custom
-  logoImage = "",
-  logoAlt = "Core Solution",
+  logoType = 'text',
+  logoImage = '',
+  logoAlt = 'Core Solution',
   logoRotate = true,
-  ...props 
+  ...props
 }) => {
-  // 로고 렌더링
+  const normalizedSize = normalizeSize(size);
+  const normalizedTone = normalizeTone(tone);
+  const resolvedType = resolveType({ type, overlay, inline });
+  const accessibleLabel = label || text || '로딩 중';
+
   const renderLogo = () => {
     const logoClasses = [
       'mg-loading-logo',
-      `mg-loading-logo--${size}`,
+      `mg-loading-logo--${normalizedSize}`,
       logoRotate ? 'mg-loading-logo--rotating' : '',
       `mg-loading-logo--${logoType}`
     ].filter(Boolean).join(' ');
@@ -55,15 +104,15 @@ const UnifiedLoading = ({
     switch (logoType) {
       case 'image':
         return (
-          <img 
-            src={logoImage || '/logo.png'} 
+          <img
+            src={logoImage || '/logo.png'}
             alt={logoAlt}
             className={logoClasses}
           />
         );
       case 'custom':
         return (
-          <div 
+          <div
             className={logoClasses}
             dangerouslySetInnerHTML={{ __html: logoImage }}
           />
@@ -80,14 +129,18 @@ const UnifiedLoading = ({
     }
   };
 
-  // 로딩 스피너 렌더링
   const renderSpinner = () => {
-    const baseClasses = `mg-loading mg-loading--${size} mg-loading--${variant}`;
-    
+    const baseClasses = [
+      'mg-loading',
+      `mg-loading--${normalizedSize}`,
+      `mg-loading--${variant}`,
+      `mg-loading--tone-${normalizedTone}`
+    ].join(' ');
+
     switch (variant) {
       case 'dots':
         return (
-          <div className={`${baseClasses} mg-loading-dots`}>
+          <div className={`${baseClasses} mg-loading-dots`} aria-hidden="true">
             <div className="mg-loading-dot" />
             <div className="mg-loading-dot" />
             <div className="mg-loading-dot" />
@@ -95,13 +148,13 @@ const UnifiedLoading = ({
         );
       case 'pulse':
         return (
-          <div className={`${baseClasses} mg-loading-pulse`}>
+          <div className={`${baseClasses} mg-loading-pulse`} aria-hidden="true">
             <div className="mg-loading-pulse-circle" />
           </div>
         );
       case 'bars':
         return (
-          <div className={`${baseClasses} mg-loading-bars`}>
+          <div className={`${baseClasses} mg-loading-bars`} aria-hidden="true">
             <div className="mg-loading-bar" />
             <div className="mg-loading-bar" />
             <div className="mg-loading-bar" />
@@ -113,7 +166,7 @@ const UnifiedLoading = ({
       case 'spinner':
       default:
         return (
-          <div className={baseClasses}>
+          <div className={baseClasses} aria-hidden="true">
             <div className="mg-loading-spinner">
               <div className="mg-loading-spinner-icon" />
             </div>
@@ -122,19 +175,26 @@ const UnifiedLoading = ({
     }
   };
 
-  // 컨테이너 클래스 구성
   const containerClasses = [
     'mg-loading-container',
-    `mg-loading-container--${type}`,
+    `mg-loading-container--${resolvedType}`,
+    `mg-loading-container--tone-${normalizedTone}`,
     centered ? 'mg-loading-container--centered' : '',
     className
   ].filter(Boolean).join(' ');
 
-  // DOM에 전달하지 않을 props 필터링
-  const { fullscreen, inline, ...domProps } = props;
+  // DOM에 전달하지 않을 props 필터링 (boolean attribute 경고 방지)
+  const { fullscreen, ...domProps } = props;
 
   return (
-    <div className={containerClasses} {...domProps}>
+    <div
+      className={containerClasses}
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={accessibleLabel}
+      {...domProps}
+    >
       <div className="mg-loading-content">
         {renderSpinner()}
         {showText && text && (

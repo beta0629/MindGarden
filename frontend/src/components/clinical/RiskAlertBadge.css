@@ -52,7 +52,7 @@
     border-radius: 10px;
     min-width: 18px;
     text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px var(--mg-shadow-medium);
 }
 
 .alert-overlay {
@@ -73,7 +73,7 @@
     max-height: 600px;
     background: white;
     border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 40px var(--mg-shadow-medium);
     z-index: 1000;
     overflow: hidden;
     display: flex;

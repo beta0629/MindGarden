@@ -150,7 +150,7 @@
   background-color: white;
   transition: 0.3s;
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px var(--mg-shadow-medium);
 }
 
 .mg-v2-toggle input:checked + .mg-v2-toggle-slider {

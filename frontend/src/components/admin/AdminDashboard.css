@@ -125,7 +125,7 @@
     flex-shrink: 0;
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 25px var(--mg-shadow-medium);
     transition: var(--transition-bounce);
     border: 1px solid var(--mg-glass-bg-medium);
 }

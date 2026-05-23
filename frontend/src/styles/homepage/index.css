@@ -482,7 +482,7 @@
   border-radius: 20px;
   color: white;
   text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px var(--mg-shadow-medium);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
 }

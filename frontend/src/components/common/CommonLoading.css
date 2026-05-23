@@ -93,7 +93,7 @@
   }
   
   .page-loading-container--overlay {
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--mg-overlay);
   }
   
   .page-loading-container--card {

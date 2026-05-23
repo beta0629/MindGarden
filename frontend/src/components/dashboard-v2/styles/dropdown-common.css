@@ -14,7 +14,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: var(--mg-overlay);
   z-index: 999;
   display: none;
   border: none;
@@ -94,7 +94,7 @@
   margin: 0;
   border: none;
   border-radius: 0;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: var(--mg-overlay);
   cursor: default;
   z-index: 999;
   justify-content: stretch;
@@ -109,7 +109,7 @@
 }
 
 .mg-v2-dropdown-overlay.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: var(--mg-overlay);
   transform: none;
   box-shadow: none;
 }

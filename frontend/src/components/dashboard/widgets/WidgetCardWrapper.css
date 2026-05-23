@@ -135,7 +135,7 @@
 }
 
 .mg-shadow-xl {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 16px var(--mg-shadow-medium);
 }
 
 /* 호버 효과 - 표준화 원칙 준수: CSS 변수 사용, 일관된 호버 효과 */

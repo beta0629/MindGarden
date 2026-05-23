@@ -72,13 +72,13 @@
   color: white;
   backdrop-filter: var(--glass-blur-sm);
   -webkit-backdrop-filter: var(--glass-blur-sm);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px var(--mg-shadow-medium);
   transition: var(--glass-transition);
 }
 
 .glass-stat-card:hover .glass-stat-card__icon {
   transform: scale(1.1);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 25px var(--mg-shadow-medium);
 }
 
 /* 글래스 통계 카드 값 */
@@ -204,7 +204,7 @@
   color: white;
   backdrop-filter: var(--glass-blur-sm);
   -webkit-backdrop-filter: var(--glass-blur-sm);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 15px var(--mg-shadow-medium);
   transition: var(--glass-transition);
 }
 

@@ -1579,6 +1579,45 @@
   --mg-color-error-500: #ef4444;
 }
 
+/* ========================================
+   2026 Q2 D9 §C4·§C5 (T-DarkCascade-WARN4 + T-D6-Residue)
+   SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D9.md §9,
+        docs/project-management/2026-05-23/D9_P1_DESIGN_HANDOFF.md §2.3·§2.4·§3.
+   배경:
+   - §C4 (WARN4): D8 PR-A 정착 시점에 다크 cascade 가 누락되었던 4종
+     (`--mg-color-border-main`, `--mg-color-error`, `--mg-color-info`,
+      `--mg-color-text-secondary`) 의 다크 hex 를 Tailwind palette 답습으로
+     일괄 추가. T-D 가드 WARN 4건 → 0건 해소 목표.
+   - §C5 (D6 Residue): D6 §4 잔존 다크 매트릭스 슬롯 (warning-100/800) 신설.
+     warning-100 은 표면용(amber-100/amber-900), warning-800 은 텍스트용
+     (amber-800/amber-200, on warning-100 4.9:1 / 12.1:1 PASS).
+   WCAG AA 검증 (P1 §3 인용):
+     - border-main      : 비-텍스트 토큰 (대비 검증 제외)
+     - error            : light 4.5:1 / dark 6.2:1 PASS
+     - info             : light 3.04:1 (Large Text) / dark 7.6:1 PASS
+     - text-secondary   : light 4.5:1 / dark 5.0:1 PASS
+     - warning-800      : light 4.9:1 / dark 12.1:1 PASS
+   ======================================== */
+
+:root {
+  /* D9 §C5 warning light surface — #fef3c7 (Tailwind amber-100, 표면용) */
+  --mg-color-warning-100: #fef3c7;
+  /* D9 §C5 warning dark text — #92400e (Tailwind amber-800, on warning-100 4.9:1 PASS) */
+  --mg-color-warning-800: #92400e;
+}
+
+:root[data-theme="dark"] {
+  /* D9 §C4 WARN4 다크 cascade — Tailwind palette 답습 (P1 §2.3 결정표) */
+  --mg-color-border-main: #3A3A3A;     /* Tailwind neutral-700 톤 */
+  --mg-color-error: #fca5a5;           /* Tailwind red-300 톤, on dark 6.2:1 PASS */
+  --mg-color-info: #93c5fd;            /* Tailwind blue-300 톤, on dark 7.6:1 PASS */
+  --mg-color-text-secondary: #9CA3AF;  /* Tailwind gray-400 톤, on dark 5.0:1 PASS */
+
+  /* D9 §C5 warning 다크 cascade (P1 §2.4 결정표) */
+  --mg-color-warning-100: #78350f;     /* Tailwind amber-900 톤, 다크 표면 대비 반전 */
+  --mg-color-warning-800: #fde68a;     /* Tailwind amber-200 톤, on warning-100 다크 12.1:1 PASS */
+}
+
 /* ===== 테넌트별 브랜딩 오버라이드 ===== */
 /* 특정 테넌트에 대한 브랜딩 커스터마이징 */
 

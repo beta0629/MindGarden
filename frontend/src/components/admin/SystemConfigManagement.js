@@ -15,12 +15,13 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Database, Cpu, ExternalLink } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
+import { getCommonCodes } from '../../utils/commonCodeApi';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
-import { LEGACY_USER_ROLES, USER_ROLES } from '../../constants/roles';
+import { USER_ROLES } from '../../constants/roles';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import ChipMultiSelect from '../common/ChipMultiSelect';
@@ -34,25 +35,14 @@ const API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED = '/api/v1/admin/system
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME = '/api/v1/admin/system-config/WELLNESS_SEND_TIME';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES = '/api/v1/admin/system-config/WELLNESS_TARGET_ROLES';
 
+/** 웰니스 대상 역할 풀 소스 — 공통코드 그룹 'ROLE' (tenant 우선, core 폴백) */
+const ROLE_COMMON_CODE_GROUP = 'ROLE';
+
 const DEFAULT_WELLNESS = Object.freeze({
   wellnessAutoSendEnabled: true,
   wellnessSendTime: '09:00',
   wellnessTargetRoles: 'CLIENT,ROLE_CLIENT'
 });
-
-/** 표준 역할 풀 (USER_ROLES 순서 보존) */
-const STANDARD_ROLE_OPTIONS = Object.values(USER_ROLES).map((role) => ({
-  value: role,
-  label: role,
-  deprecated: false
-}));
-
-/** 레거시 역할 풀 — 운영 데이터 호환을 위해 유지 (선택은 가능하되 라벨에 (레거시) 부착) */
-const LEGACY_ROLE_OPTIONS = Object.values(LEGACY_USER_ROLES).map((role) => ({
-  value: role,
-  deprecated: true,
-  __legacyRaw: role
-}));
 
 /**
  * DB 저장 형식(콤마 구분 문자열) → 칩 배열 변환.
@@ -86,27 +76,81 @@ const stringifyTargetRoles = (roles) => {
 };
 
 const SystemConfigManagement = () => {
-  const { user, isLoggedIn } = useSession();
+  const { user, isLoggedIn, hasCheckedSession } = useSession();
   const { t } = useTranslation('admin');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [wellness, setWellness] = useState(DEFAULT_WELLNESS);
+  const [roleCodes, setRoleCodes] = useState([]);
+  const [rolesLoading, setRolesLoading] = useState(true);
 
   const legacyLabelSuffix = t('systemConfig.wellness.targetRoles.legacy', '(레거시)');
-
-  const targetRoleOptions = useMemo(() => {
-    const legacyDecorated = LEGACY_ROLE_OPTIONS.map((opt) => ({
-      value: opt.value,
-      label: `${opt.__legacyRaw} ${legacyLabelSuffix}`.trim(),
-      deprecated: true
-    }));
-    return [...STANDARD_ROLE_OPTIONS, ...legacyDecorated];
-  }, [legacyLabelSuffix]);
 
   const targetRoleValues = useMemo(
     () => parseTargetRolesCsv(wellness.wellnessTargetRoles),
     [wellness.wellnessTargetRoles]
   );
+
+  /**
+   * DB 역할 풀 + 현재 저장값에 포함되었지만 풀에 없는 값(레거시)도 칩으로 보이도록 옵션 합성.
+   *
+   * - 활성 역할(공통코드 ROLE 그룹): `koreanName` 또는 `codeLabel` + `(codeValue)` 라벨.
+   * - extraData.isDeprecated === true 또는 saved 값이지만 풀에 없는 경우: `(레거시)` 라벨 부착.
+   */
+  const targetRoleOptions = useMemo(() => {
+    const seen = new Set();
+    const options = [];
+    (Array.isArray(roleCodes) ? roleCodes : []).forEach((code) => {
+      if (!code || !code.codeValue) {
+        return;
+      }
+      const value = String(code.codeValue);
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+      const rawName = code.koreanName || code.codeLabel || '';
+      const hasName = typeof rawName === 'string' && rawName.trim().length > 0 && rawName !== value;
+      const baseLabel = hasName
+        ? t(
+            'systemConfig.wellness.targetRoles.optionLabel',
+            '{{name}} ({{code}})',
+            { name: rawName, code: value }
+          )
+        : value;
+      let isDeprecated = false;
+      try {
+        const extra = typeof code.extraData === 'string' ? JSON.parse(code.extraData) : code.extraData;
+        if (extra && (extra.isDeprecated === true || extra.deprecated === true)) {
+          isDeprecated = true;
+        }
+      } catch (_e) {
+        // extraData JSON 파싱 실패는 무시 (필수 메타 아님)
+      }
+      const label = isDeprecated ? `${baseLabel} ${legacyLabelSuffix}`.trim() : baseLabel;
+      options.push({
+        value,
+        label,
+        chipLabel: isDeprecated ? `${value} ${legacyLabelSuffix}`.trim() : value,
+        deprecated: isDeprecated
+      });
+    });
+
+    // saved 값이지만 DB 풀에 없는 값(예: 운영 잔존 'ROLE_CLIENT')은 레거시 옵션으로 추가
+    targetRoleValues.forEach((value) => {
+      if (!seen.has(value)) {
+        seen.add(value);
+        const legacyLabel = `${value} ${legacyLabelSuffix}`.trim();
+        options.push({
+          value,
+          label: legacyLabel,
+          chipLabel: legacyLabel,
+          deprecated: true
+        });
+      }
+    });
+    return options;
+  }, [roleCodes, targetRoleValues, t, legacyLabelSuffix]);
 
   const handleTargetRolesChange = useCallback((next) => {
     setWellness((prev) => ({ ...prev, wellnessTargetRoles: stringifyTargetRoles(next) }));
@@ -116,6 +160,19 @@ const SystemConfigManagement = () => {
     (label) => t('systemConfig.wellness.targetRoles.remove', '{{role}} 제거', { role: label }),
     [t]
   );
+
+  const loadRoleOptions = useCallback(async() => {
+    try {
+      setRolesLoading(true);
+      const codes = await getCommonCodes(ROLE_COMMON_CODE_GROUP);
+      setRoleCodes(Array.isArray(codes) ? codes : []);
+    } catch (error) {
+      console.error('역할 공통코드 로드 실패:', error);
+      setRoleCodes([]);
+    } finally {
+      setRolesLoading(false);
+    }
+  }, []);
 
   const loadConfigs = useCallback(async() => {
     try {
@@ -139,6 +196,10 @@ const SystemConfigManagement = () => {
   }, []);
 
   useEffect(() => {
+    // 세션 복원 완료 전에는 가드 발동을 보류 (새로고침 race 방지)
+    if (!hasCheckedSession) {
+      return;
+    }
     if (!isLoggedIn || !user) {
       notificationManager.show('로그인이 필요합니다.', 'error');
       setLoading(false);
@@ -151,7 +212,8 @@ const SystemConfigManagement = () => {
       return;
     }
     loadConfigs();
-  }, [isLoggedIn, user, loadConfigs]);
+    loadRoleOptions();
+  }, [hasCheckedSession, isLoggedIn, user, loadConfigs, loadRoleOptions]);
 
   const handleSave = async() => {
     try {
@@ -183,12 +245,13 @@ const SystemConfigManagement = () => {
     }
   };
 
-  if (loading) {
+  if (!hasCheckedSession || loading) {
+    const loadingText = !hasCheckedSession ? '세션을 확인하는 중...' : '설정을 불러오는 중...';
     return (
       <AdminCommonLayout title="시스템 설정 관리">
         <div className="mg-v2-ad-b0kla mg-v2-system-config-management">
           <div className="mg-v2-ad-b0kla__container" aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text="설정을 불러오는 중..." variant="pulse" />
+            <UnifiedLoading type="inline" text={loadingText} variant="pulse" />
           </div>
         </div>
       </AdminCommonLayout>
@@ -289,7 +352,14 @@ const SystemConfigManagement = () => {
                     options={targetRoleOptions}
                     value={targetRoleValues}
                     onChange={handleTargetRolesChange}
-                    placeholder={t('systemConfig.wellness.targetRoles.placeholder', '역할 선택')}
+                    placeholder={rolesLoading
+                      ? t('systemConfig.wellness.targetRoles.placeholderLoading', '역할 로딩 중...')
+                      : t('systemConfig.wellness.targetRoles.placeholder', '역할 선택')}
+                    emptyOptionsText={t(
+                      'systemConfig.wellness.targetRoles.emptyOptions',
+                      '선택 가능한 역할이 없습니다.'
+                    )}
+                    disabled={rolesLoading}
                     ariaLabelledBy="targetRoles-label"
                     formatRemoveLabel={formatRemoveLabel}
                   />

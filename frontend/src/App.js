@@ -785,7 +785,11 @@ function AppContent() {
             <Route path="/admin/users" element={<Navigate to="/admin/user-management" replace />} />
             <Route path="/admin/reports" element={<Navigate to="/admin/consultation-logs" replace />} />
             <Route path="/admin/backup" element={<Navigate to="/admin/system-config" replace />} />
-            <Route path="/admin/system-config" element={<SystemConfigManagement />} />
+            <Route path="/admin/system-config" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <SystemConfigManagement />
+              </ProtectedRoute>
+            } />
             <Route path={ADMIN_ROUTES.AI_PROVIDERS} element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
                 <AiProviderManagementPage />

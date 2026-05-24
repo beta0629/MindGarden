@@ -178,10 +178,13 @@ const ChipMultiSelect = ({
 
   const renderChip = (selectedValue) => {
     const matched = safeOptions.find((opt) => String(opt.value) === String(selectedValue));
-    const label = matched?.label != null ? matched.label : String(selectedValue);
+    // 칩(chip)은 compact 표시를 위해 chipLabel 우선, 없으면 label, 없으면 raw value
+    const chipText = matched?.chipLabel != null
+      ? matched.chipLabel
+      : (matched?.label != null ? matched.label : String(selectedValue));
     const removeAriaLabel = typeof formatRemoveLabel === 'function'
-      ? formatRemoveLabel(label, selectedValue)
-      : `${label} 제거`;
+      ? formatRemoveLabel(chipText, selectedValue)
+      : `${chipText} 제거`;
 
     return (
       <span
@@ -189,7 +192,7 @@ const ChipMultiSelect = ({
         className="mg-chip-multi-select__chip"
         data-deprecated={matched?.deprecated ? 'true' : undefined}
       >
-        <span className="mg-chip-multi-select__chip-label">{label}</span>
+        <span className="mg-chip-multi-select__chip-label">{chipText}</span>
         <button
           type="button"
           className="mg-chip-multi-select__chip-remove"

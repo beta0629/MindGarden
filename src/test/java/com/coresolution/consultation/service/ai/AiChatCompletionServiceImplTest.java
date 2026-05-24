@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.ai;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,11 +15,13 @@ import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.ai.dto.AiCompletionRequest;
 import com.coresolution.consultation.service.ai.dto.AiResponseFormat;
 import com.coresolution.consultation.service.ai.parser.AiJsonResponseParser;
+import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -59,6 +62,12 @@ class AiChatCompletionServiceImplTest {
         jsonResponseParser = new AiJsonResponseParser(objectMapper);
         service = new AiChatCompletionServiceImpl(
                 systemConfigService, providerResolver, jsonResponseParser, restTemplate, objectMapper);
+        TenantContextHolder.clear();
+    }
+
+    @AfterEach
+    void tearDown() {
+        TenantContextHolder.clear();
     }
 
     @Test
@@ -182,6 +191,56 @@ class AiChatCompletionServiceImplTest {
                 .build();
 
         assertThrows(IllegalArgumentException.class, () -> service.completeChat(request));
+    }
+
+    @Test
+    @DisplayName("회귀 가드 (B2) — 호출자가 set 한 ThreadLocal tenantId 가 메서드 종료 후에도 보존된다")
+    void completeChat_dtoRequest_preservesCallerThreadLocalTenantId() {
+        TenantContextHolder.setTenantId("tenant-outer-loop");
+        when(providerResolver.resolveProvider("tenant-inner-call")).thenReturn("openai");
+        when(systemConfigService.getApiKeyForProvider("openai")).thenReturn("sk");
+        when(systemConfigService.getApiUrlForProvider("openai")).thenReturn("https://api.openai.com/v1/chat/completions");
+        when(systemConfigService.getModelForProvider("openai")).thenReturn("gpt-4o-mini");
+
+        Map<String, Object> msg = Map.of("role", "assistant", "content", "ok");
+        Map<String, Object> choice = Map.of("message", msg);
+        Map<String, Object> body = Map.of("choices", List.of(choice), "usage", Map.of());
+        when(restTemplate.exchange(contains("api.openai.com"), eq(HttpMethod.POST), any(), eq(Map.class)))
+                .thenReturn(ResponseEntity.ok(body));
+
+        AiCompletionRequest request = AiCompletionRequest.builder()
+                .systemPrompt("sys").userPrompt("user").tenantId("tenant-inner-call").build();
+        service.completeChat(request);
+
+        // 핵심 회귀 가드: 호출 종료 후에도 외부 루프의 tenantId 가 그대로 보존되어야 한다.
+        // 이전 구현은 finally { clear() } 였고, 이 때문에 6 회 healing 호출 중 1회차 직후
+        // 외부 ThreadLocal 이 비워져 2~6회차가 SYSTEM fallback 으로 회귀했다.
+        assertEquals("tenant-outer-loop", TenantContextHolder.getTenantId(),
+                "completeChat 종료 후 호출자의 ThreadLocal tenantId 가 보존되어야 한다 (B2)");
+    }
+
+    @Test
+    @DisplayName("회귀 가드 (B2) — 진입 시 ThreadLocal 이 비어 있었다면 종료 시에도 비어 있어야 한다")
+    void completeChat_dtoRequest_clearsContextWhenEnteredEmpty() {
+        // 진입 전 ThreadLocal 비어 있음을 명시.
+        assertNull(TenantContextHolder.getTenantId(), "사전 조건: ThreadLocal 비어 있음");
+        when(providerResolver.resolveProvider("tenant-only")).thenReturn("openai");
+        when(systemConfigService.getApiKeyForProvider("openai")).thenReturn("sk");
+        when(systemConfigService.getApiUrlForProvider("openai")).thenReturn("https://api.openai.com/v1/chat/completions");
+        when(systemConfigService.getModelForProvider("openai")).thenReturn("gpt-4o-mini");
+
+        Map<String, Object> msg = Map.of("role", "assistant", "content", "ok");
+        Map<String, Object> choice = Map.of("message", msg);
+        Map<String, Object> body = Map.of("choices", List.of(choice), "usage", Map.of());
+        when(restTemplate.exchange(contains("api.openai.com"), eq(HttpMethod.POST), any(), eq(Map.class)))
+                .thenReturn(ResponseEntity.ok(body));
+
+        AiCompletionRequest request = AiCompletionRequest.builder()
+                .systemPrompt("sys").userPrompt("user").tenantId("tenant-only").build();
+        service.completeChat(request);
+
+        assertNull(TenantContextHolder.getTenantId(),
+                "진입 시 비어 있던 ThreadLocal 은 종료 후에도 비어 있어야 한다");
     }
 
     @Test

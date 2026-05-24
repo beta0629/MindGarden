@@ -255,8 +255,8 @@ public class WellnessNotificationScheduler {
         // 모든 CLIENT와 CONSULTANT 사용자에 대해 읽음 상태 생성 (읽지 않은 상태로)
         createReadStatusForAllUsers(savedNotification.getId(), tenantId);
         
-        // 오늘의 힐링 컨텐츠 생성 및 저장
-        generateDailyHealingContent(today);
+        // 오늘의 힐링 컨텐츠 생성 및 저장 (tenantId 명시 전달)
+        generateDailyHealingContent(today, tenantId);
         
         log.info("💚 [WellnessNotification] 테넌트 알림 발송 완료: tenantId={}, notificationId={}, title={}",
             tenantId, savedNotification.getId(), template.getTitle());
@@ -322,11 +322,19 @@ public class WellnessNotificationScheduler {
     }
     
     /**
-     * 오늘의 힐링 컨텐츠 생성 및 저장
+     * 오늘의 힐링 컨텐츠 생성 및 저장.
+     *
+     * <p>핫픽스 (2026-05-24, B2): tenantId 를 명시 인자로 받아 매 iteration 마다 ThreadLocal 을
+     * 재설정한다 (defense in depth). 이전 구현은 외부 루프의 ThreadLocal 에만 의존했고,
+     * AiChatCompletionServiceImpl.completeChat 의 finally clear 와 결합되어 1회차 직후
+     * 컨텍스트가 소실되어 2~6회차가 "no_openai_or_gemini_api_key" 로 회귀했다.</p>
+     *
+     * @param today 대상 날짜
+     * @param tenantId 테넌트 ID (필수)
      */
-    private void generateDailyHealingContent(LocalDate today) {
+    private void generateDailyHealingContent(LocalDate today, String tenantId) {
         try {
-            log.debug("💚 오늘의 힐링 컨텐츠 생성 시작 - 날짜: {}", today);
+            log.debug("💚 오늘의 힐링 컨텐츠 생성 시작 - 날짜: {}, tenantId: {}", today, tenantId);
             
             // 이미 오늘 컨텐츠가 있는지 확인
             if (dailyHealingContentRepository.existsByDate(today)) {
@@ -335,27 +343,33 @@ public class WellnessNotificationScheduler {
             }
             
             // 내담자용 힐링 컨텐츠 생성
-            generateHealingContentForRole("CLIENT", "GENERAL", today);
-            generateHealingContentForRole("CLIENT", "HUMOR", today);
-            generateHealingContentForRole("CLIENT", "WARM_WORDS", today);
+            generateHealingContentForRole("CLIENT", "GENERAL", today, tenantId);
+            generateHealingContentForRole("CLIENT", "HUMOR", today, tenantId);
+            generateHealingContentForRole("CLIENT", "WARM_WORDS", today, tenantId);
             
             // 상담사용 힐링 컨텐츠 생성
-            generateHealingContentForRole("CONSULTANT", "GENERAL", today);
-            generateHealingContentForRole("CONSULTANT", "HUMOR", today);
-            generateHealingContentForRole("CONSULTANT", "WARM_WORDS", today);
+            generateHealingContentForRole("CONSULTANT", "GENERAL", today, tenantId);
+            generateHealingContentForRole("CONSULTANT", "HUMOR", today, tenantId);
+            generateHealingContentForRole("CONSULTANT", "WARM_WORDS", today, tenantId);
             
-            log.debug("✅ 오늘의 힐링 컨텐츠 생성 완료 - 날짜: {}", today);
+            log.debug("✅ 오늘의 힐링 컨텐츠 생성 완료 - 날짜: {}, tenantId: {}", today, tenantId);
             
         } catch (Exception e) {
-            log.error("❌ 오늘의 힐링 컨텐츠 생성 실패 - 날짜: {}", today, e);
+            log.error("❌ 오늘의 힐링 컨텐츠 생성 실패 - 날짜: {}, tenantId: {}", today, tenantId, e);
         }
     }
     
     /**
-     * 특정 역할과 카테고리의 힐링 컨텐츠 생성
+     * 특정 역할과 카테고리의 힐링 컨텐츠 생성.
+     *
+     * <p>핫픽스 (2026-05-24, B2): 매 호출 진입 시 TenantContextHolder 를 재설정한다
+     * (defense in depth). 하위 SSOT 호출이 ThreadLocal 을 침범해도 보호된다.</p>
      */
-    private void generateHealingContentForRole(String userRole, String category, LocalDate today) {
+    private void generateHealingContentForRole(String userRole, String category, LocalDate today, String tenantId) {
         try {
+            // 핫픽스: 매 iteration 마다 TenantContextHolder 재확인/재설정.
+            TenantContextHolder.setTenantId(tenantId);
+
             // GPT로 힐링 컨텐츠 생성
             var healingContent = healingContentService.generateNewHealingContent(userRole, category);
             
@@ -372,11 +386,12 @@ public class WellnessNotificationScheduler {
             
             dailyHealingContentRepository.save(dailyContent);
             
-            log.debug("💚 힐링 컨텐츠 저장 완료 - 역할: {}, 카테고리: {}, 제목: {}", 
-                userRole, category, healingContent.getTitle());
+            log.debug("💚 힐링 컨텐츠 저장 완료 - tenantId: {}, 역할: {}, 카테고리: {}, 제목: {}",
+                tenantId, userRole, category, healingContent.getTitle());
             
         } catch (Exception e) {
-            log.error("❌ 힐링 컨텐츠 생성 실패 - 역할: {}, 카테고리: {}", userRole, category, e);
+            log.error("❌ 힐링 컨텐츠 생성 실패 - tenantId: {}, 역할: {}, 카테고리: {}",
+                tenantId, userRole, category, e);
         }
     }
     

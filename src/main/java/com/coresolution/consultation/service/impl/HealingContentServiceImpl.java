@@ -36,7 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 public class HealingContentServiceImpl implements HealingContentService {
 
     private static final String CALLER_ID = "healing";
-    private static final String FALLBACK_TENANT_ID = "SYSTEM";
 
     private final AiUsageLogRepository usageLogRepository;
     private final DailyHealingContentRepository dailyHealingContentRepository;
@@ -86,9 +85,14 @@ public class HealingContentServiceImpl implements HealingContentService {
     public HealingContent generateNewHealingContent(String userRole, String category) {
         try {
             log.info("🎨 새로운 힐링 컨텐츠 생성 시작 - 역할: {}, 카테고리: {}", userRole, category);
-            
+
+            // 핫픽스 (2026-05-24, B2): tenantId 를 호출 시점에 한 번 캡처하여 lazy resolve 회귀 차단.
+            // 이전 구현은 매 SSOT 호출마다 ThreadLocal 을 다시 읽었고, AiChatCompletionServiceImpl
+            // finally clear 와 결합되어 2회차부터 "SYSTEM" fallback 으로 빠지는 원인이었다.
+            String tenantId = resolveTenantId();
+
             // 힐링 컨텐츠 전용 GPT API 호출
-            String generatedContent = callHealingContentAPI(userRole, category);
+            String generatedContent = callHealingContentAPI(userRole, category, tenantId);
             
             // 컨텐츠 파싱 및 DTO 생성
             HealingContent content = parseHealingContent(generatedContent, category);
@@ -234,9 +238,14 @@ public class HealingContentServiceImpl implements HealingContentService {
     }
     
     /**
-     * 힐링 컨텐츠 전용 GPT API 호출
+     * 힐링 컨텐츠 전용 GPT API 호출.
+     *
+     * @param userRole 사용자 역할 (CLIENT/CONSULTANT)
+     * @param category 카테고리 (GENERAL/HUMOR/WARM_WORDS 등)
+     * @param tenantId 테넌트 ID (호출 시점에 캡처된 값, blank 금지)
+     * @return AI 생성 텍스트 또는 fallback 문구
      */
-    private String callHealingContentAPI(String userRole, String category) {
+    private String callHealingContentAPI(String userRole, String category, String tenantId) {
         long startTime = System.currentTimeMillis();
         String systemPrompt = "당신은 마음 건강 전문가이며, 내담자와 상담사를 위한 따뜻하고 실용적인 힐링 컨텐츠를 작성합니다.";
         String prompt = buildHealingPrompt(userRole, category);
@@ -246,7 +255,7 @@ public class HealingContentServiceImpl implements HealingContentService {
                 .maxTokens(500)
                 .temperature(0.8)
                 .responseFormat(AiResponseFormat.TEXT)
-                .tenantId(resolveTenantId())
+                .tenantId(tenantId)
                 .callerId(CALLER_ID)
                 .traceId(UUID.randomUUID().toString())
                 .build();
@@ -255,24 +264,34 @@ public class HealingContentServiceImpl implements HealingContentService {
         String modelForLog = StringUtils.hasText(result.model()) ? result.model() : "unknown";
         if (!result.success() || !StringUtils.hasText(result.text())) {
             String err = result.errorMessage() != null ? result.errorMessage() : "call_failed";
-            log.warn("⚠️ 힐링 AI 호출 실패 — requestedProvider={}, effectiveProvider={}, model={}, reason={}",
-                    result.requestedProvider(), result.effectiveProvider(), modelForLog, err);
-            logHealingUsage("HEALING_CONTENT", modelForLog, false, err, 0, 0, 0, responseTime, FALLBACK_TENANT_ID);
+            log.warn("⚠️ 힐링 AI 호출 실패 — tenantId={}, requestedProvider={}, effectiveProvider={}, model={}, reason={}",
+                    tenantId, result.requestedProvider(), result.effectiveProvider(), modelForLog, err);
+            logHealingUsage(tenantId, "HEALING_CONTENT", modelForLog, false, err, 0, 0, 0, responseTime);
             return "마음의 평화를 찾는 하루가 되시길 바랍니다. 💚";
         }
-        log.info("💚 힐링 AI 생성 완료 — requestedProvider={}, effectiveProvider={}, model={}",
-                result.requestedProvider(), result.effectiveProvider(), modelForLog);
-        logHealingUsage("HEALING_CONTENT", modelForLog, true, null,
-                result.promptTokens(), result.completionTokens(), result.totalTokens(), responseTime, FALLBACK_TENANT_ID);
+        log.info("💚 힐링 AI 생성 완료 — tenantId={}, requestedProvider={}, effectiveProvider={}, model={}",
+                tenantId, result.requestedProvider(), result.effectiveProvider(), modelForLog);
+        logHealingUsage(tenantId, "HEALING_CONTENT", modelForLog, true, null,
+                result.promptTokens(), result.completionTokens(), result.totalTokens(), responseTime);
         return result.text();
     }
 
+    /**
+     * 호출 시점의 TenantContextHolder 값을 캡처한다.
+     * 핫픽스 (2026-05-24, B2): blank 일 경우 fail-fast — 이전 SYSTEM fallback 은
+     * system_config 미존재로 인한 "no_openai_or_gemini_api_key" 회귀의 트리거였다.
+     * 호출자(스케줄러/컨트롤러)는 진입 직전에 명시적으로 setTenantId 를 보장해야 한다.
+     *
+     * @return 현재 ThreadLocal 의 tenantId
+     * @throws IllegalStateException tenantId 가 설정되지 않은 경우
+     */
     private String resolveTenantId() {
-        if (TenantContextHolder.isTenantContextSet()) {
-            return TenantContextHolder.getRequiredTenantId();
+        String tenantId = TenantContextHolder.getTenantId();
+        if (!StringUtils.hasText(tenantId)) {
+            log.error("❌ HEALING tenantId 미설정 — 호출자에서 TenantContextHolder.setTenantId() 보장 필요");
+            throw new IllegalStateException("HEALING 호출에 tenantId 가 설정되지 않았습니다 (멀티테넌트 격리).");
         }
-        log.warn("⚠️ tenantId 미설정 — {} fallback 사용", FALLBACK_TENANT_ID);
-        return FALLBACK_TENANT_ID;
+        return tenantId;
     }
     
     /**
@@ -312,13 +331,15 @@ public class HealingContentServiceImpl implements HealingContentService {
     }
     
     /**
-     * 힐링 컨텐츠 사용량 로깅
+     * 힐링 컨텐츠 사용량 로깅 (tenant_id 명시 저장).
+     * 핫픽스 (2026-05-24, B6): 이전 구현은 tenant_id 컬럼을 set 하지 않아 운영 관측 불가.
      */
-    private void logHealingUsage(String requestType, String model, boolean isSuccess, String errorMessage, 
-                                int promptTokens, int completionTokens, int totalTokens, 
-                                long responseTimeMs, String requestedBy) {
+    private void logHealingUsage(String tenantId, String requestType, String model, boolean isSuccess,
+                                String errorMessage, int promptTokens, int completionTokens, int totalTokens,
+                                long responseTimeMs) {
         try {
             AiUsageLog usageLog = AiUsageLog.builder()
+                .tenantId(tenantId)
                 .requestType(requestType)
                 .model(model)
                 .promptTokens(promptTokens)
@@ -327,15 +348,15 @@ public class HealingContentServiceImpl implements HealingContentService {
                 .isSuccess(isSuccess)
                 .errorMessage(errorMessage)
                 .responseTimeMs(responseTimeMs)
-                .requestedBy(requestedBy)
+                .requestedBy(CALLER_ID)
                 .build();
             
             usageLog.calculateCost();
             AiUsageLog savedLog = usageLogRepository.save(usageLog);
             
-            if (isSuccess) {
-                log.info("💚 힐링 컨텐츠 사용량 로깅: {} 토큰, 예상 비용 ${}", totalTokens, 
-                    String.format("%.6f", savedLog.getEstimatedCost()));
+            if (isSuccess && savedLog != null && savedLog.getEstimatedCost() != null) {
+                log.info("💚 힐링 컨텐츠 사용량 로깅: tenantId={}, {} 토큰, 예상 비용 ${}",
+                    tenantId, totalTokens, String.format("%.6f", savedLog.getEstimatedCost()));
             }
         } catch (Exception e) {
             log.error("❌ 힐링 컨텐츠 사용량 로깅 실패", e);

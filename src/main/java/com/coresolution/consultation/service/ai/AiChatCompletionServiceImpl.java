@@ -76,6 +76,11 @@ public class AiChatCompletionServiceImpl implements AiChatCompletionService {
             requestedProvider = providerResolver.resolveProvider(tenantId);
         }
         boolean jsonMime = request.getResponseFormatOrDefault() == AiResponseFormat.JSON;
+        // 호출자가 이미 설정한 ThreadLocal 컨텍스트를 침범하지 않도록 진입 시점 값을 백업.
+        // 핫픽스 (2026-05-24, B2): 이전 구현은 finally { clear() } 로 외부 루프의 컨텍스트까지
+        // 비워버려, 스케줄러의 6회 healing AI 호출 중 1회차 직후 ThreadLocal 이 소실되고
+        // 2~6회차가 "no_openai_or_gemini_api_key" 로 회귀하는 원인이 되었다.
+        String previousTenantId = TenantContextHolder.getTenantId();
         try {
             TenantContextHolder.setTenantId(tenantId);
             AiChatCompletionResult raw = completeChatInternal(
@@ -87,7 +92,11 @@ public class AiChatCompletionServiceImpl implements AiChatCompletionService {
                     requestedProvider);
             return enrichResult(raw, request.getResponseFormatOrDefault());
         } finally {
-            TenantContextHolder.clear();
+            if (previousTenantId != null && !previousTenantId.isBlank()) {
+                TenantContextHolder.setTenantId(previousTenantId);
+            } else {
+                TenantContextHolder.clear();
+            }
         }
     }
 

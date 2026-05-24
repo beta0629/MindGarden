@@ -50,9 +50,13 @@ public class AdminAiUsageController extends BaseApiController {
     /**
      * AI 사용 통계 조회.
      *
-     * @param period  요청 기간 라벨 (today | week | month) — 응답에 echo
+     * <p>응답은 period 라벨과 무관하게 callsToday / callsThisWeek / callsThisMonth 3종을 모두
+     * 반환한다. period 라벨은 응답의 {@code requestedPeriod} 필드(legacy: {@code period})로 echo 된다.
+     * 후속 PR 에서 period 별 분기를 추가할 때도 backward-compatible 하다.</p>
+     *
+     * @param period  요청 기간 라벨 (today | week | month). null/blank 시 응답에 "month" 로 echo.
      * @param session HTTP 세션
-     * @return 통계 DTO
+     * @return 통계 DTO (period 와 무관하게 3종 호출 수 모두 반환 — 클라이언트는 requestedPeriod 로 라벨 식별)
      */
     @GetMapping("/usage-stats")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")

@@ -106,6 +106,7 @@ class AdminAiUsageControllerTest {
         AiUsageStatsResponse stats = AiUsageStatsResponse.builder()
                 .tenantId(TENANT_ID)
                 .period("today")
+                .requestedPeriod("today")
                 .callsToday(10)
                 .callsThisWeek(50)
                 .callsThisMonth(200)
@@ -132,6 +133,46 @@ class AdminAiUsageControllerTest {
             assertEquals(TENANT_ID, data.getTenantId());
             assertEquals(10L, data.getCallsToday());
             verify(aiUsageStatsService).getUsageStats(TENANT_ID, "today");
+        }
+    }
+
+    @Test
+    @DisplayName("usage-stats — period 파라미터를 응답의 requestedPeriod 로 echo (3종 호출 수는 항상 반환)")
+    void getUsageStats_echoesRequestedPeriod() {
+        AiUsageStatsResponse stats = AiUsageStatsResponse.builder()
+                .tenantId(TENANT_ID)
+                .period("week")
+                .requestedPeriod("week")
+                .callsToday(7)
+                .callsThisWeek(21)
+                .callsThisMonth(98)
+                .callsByProvider(Map.of("OPENAI", 70L))
+                .callsByCaller(Map.of("wellness", 50L))
+                .successRate(100.0)
+                .failureRate(0.0)
+                .fallbackUsageRate(-1.0)
+                .averageDurationMs(700L)
+                .totalTokens(8000L)
+                .dailyCalls30d(List.of())
+                .build();
+        when(aiUsageStatsService.getUsageStats(TENANT_ID, "week")).thenReturn(stats);
+
+        try (MockedStatic<SessionUtils> sessionUtils = mockStatic(SessionUtils.class)) {
+            sessionUtils.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(adminUser());
+
+            ResponseEntity<?> response = controller.getUsageStats("week", session);
+
+            assertEquals(HttpStatus.OK, response.getStatusCode());
+            ApiResponse<?> body = (ApiResponse<?>) response.getBody();
+            AiUsageStatsResponse data = (AiUsageStatsResponse) body.getData();
+            assertEquals("week", data.getRequestedPeriod(),
+                    "신규 클라이언트는 requestedPeriod 로 라벨 식별");
+            assertEquals("week", data.getPeriod(),
+                    "legacy period alias 도 동일 값으로 유지 (backward-compat)");
+            // period 와 무관하게 3종 호출 수 모두 반환되는지 확인
+            assertEquals(7L, data.getCallsToday());
+            assertEquals(21L, data.getCallsThisWeek());
+            assertEquals(98L, data.getCallsThisMonth());
         }
     }
 

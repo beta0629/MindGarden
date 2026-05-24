@@ -1,0 +1,224 @@
+/**
+ * ChipMultiSelect — 다중선택 + 칩 표시 공통 molecule 스타일.
+ *
+ * 모든 색상·간격·반경은 디자인 토큰(`unified-design-tokens.css`) 만 사용.
+ * 하드코딩(`#hex`, `rgb()`, 절대값) 금지 — 변수 fallback 만 허용.
+ *
+ * @author Core Solution
+ * @author MindGarden
+ * @since 2026-05-24
+ */
+
+.mg-chip-multi-select {
+  position: relative;
+  width: 100%;
+  font-family: inherit;
+}
+
+.mg-chip-multi-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm, 8px);
+  width: 100%;
+  min-height: 40px;
+  padding: var(--mg-spacing-xs, 4px) var(--mg-spacing-sm, 8px);
+  background: var(--mg-color-background-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md, 8px);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.mg-chip-multi-select__trigger:hover:not(.mg-chip-multi-select__trigger--disabled) {
+  border-color: var(--mg-color-primary-main);
+}
+
+.mg-chip-multi-select__trigger:focus-visible {
+  outline: none;
+  border-color: var(--mg-color-primary-main);
+  box-shadow: 0 0 0 2px var(--mg-color-primary-main);
+}
+
+.mg-chip-multi-select__trigger--open {
+  border-color: var(--mg-color-primary-main);
+}
+
+.mg-chip-multi-select__trigger--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  background: var(--mg-color-surface-main);
+}
+
+.mg-chip-multi-select__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-xs, 4px);
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-chip-multi-select__placeholder {
+  color: var(--mg-color-text-secondary);
+  font-size: 14px;
+  padding: var(--mg-spacing-xs, 4px) var(--mg-spacing-xs, 4px);
+}
+
+.mg-chip-multi-select__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs, 4px);
+  padding: 2px var(--mg-spacing-xs, 4px) 2px var(--mg-spacing-sm, 8px);
+  background: var(--mg-color-primary-main);
+  color: var(--mg-color-text-on-primary);
+  border-radius: var(--mg-radius-full, 9999px);
+  font-size: 12px;
+  line-height: 1.4;
+  max-width: 100%;
+}
+
+.mg-chip-multi-select__chip[data-deprecated='true'] {
+  background: var(--mg-color-brand-olive-muted);
+}
+
+.mg-chip-multi-select__chip-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mg-chip-multi-select__chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: var(--mg-radius-full, 9999px);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.mg-chip-multi-select__chip-remove:hover:not(:disabled),
+.mg-chip-multi-select__chip-remove:focus-visible {
+  background: var(--mg-glass-bg-medium);
+  outline: none;
+}
+
+.mg-chip-multi-select__chip-remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.mg-chip-multi-select__caret {
+  flex-shrink: 0;
+  color: var(--mg-color-text-secondary);
+  transition: transform 0.15s ease;
+  font-size: 12px;
+  padding-right: var(--mg-spacing-xs, 4px);
+}
+
+.mg-chip-multi-select__caret--open {
+  transform: rotate(180deg);
+}
+
+/* ----- Listbox 드롭다운 ----- */
+
+.mg-chip-multi-select__listbox {
+  position: absolute;
+  top: calc(100% + var(--mg-spacing-xs, 4px));
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--mg-spacing-xs, 4px);
+  list-style: none;
+  background: var(--mg-color-background-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md, 8px);
+  box-shadow: var(--mg-shadow-md);
+}
+
+.mg-chip-multi-select__listbox:focus {
+  outline: none;
+}
+
+.mg-chip-multi-select__option {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 8px);
+  padding: var(--mg-spacing-sm, 8px) var(--mg-spacing-sm, 8px);
+  border-radius: var(--mg-radius-sm, 4px);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--mg-color-text-main);
+}
+
+.mg-chip-multi-select__option--active,
+.mg-chip-multi-select__option:hover {
+  background: var(--mg-color-surface-main);
+}
+
+.mg-chip-multi-select__option--selected {
+  color: var(--mg-color-primary-main);
+  font-weight: 600;
+}
+
+.mg-chip-multi-select__option-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-sm, 4px);
+  background: var(--mg-color-background-main);
+  position: relative;
+}
+
+.mg-chip-multi-select__option-checkbox[data-checked='true'] {
+  background: var(--mg-color-primary-main);
+  border-color: var(--mg-color-primary-main);
+}
+
+.mg-chip-multi-select__option-checkbox[data-checked='true']::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 4px;
+  height: 8px;
+  border-right: 2px solid var(--mg-color-text-on-primary);
+  border-bottom: 2px solid var(--mg-color-text-on-primary);
+  transform: rotate(45deg);
+}
+
+.mg-chip-multi-select__option-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mg-chip-multi-select__empty {
+  padding: var(--mg-spacing-sm, 8px);
+  color: var(--mg-color-text-secondary);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ----- 모바일 ----- */
+
+@media (max-width: 768px) {
+  .mg-chip-multi-select__listbox {
+    max-height: 320px;
+  }
+}

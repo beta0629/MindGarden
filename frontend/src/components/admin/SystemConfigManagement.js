@@ -10,8 +10,9 @@
  * @since 2025-01-21
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Database, Cpu, ExternalLink } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
@@ -19,11 +20,11 @@ import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
-import { USER_ROLES } from '../../constants/roles';
+import { LEGACY_USER_ROLES, USER_ROLES } from '../../constants/roles';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
+import ChipMultiSelect from '../common/ChipMultiSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { toDisplayString } from '../../utils/safeDisplay';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -39,11 +40,82 @@ const DEFAULT_WELLNESS = Object.freeze({
   wellnessTargetRoles: 'CLIENT,ROLE_CLIENT'
 });
 
+/** 표준 역할 풀 (USER_ROLES 순서 보존) */
+const STANDARD_ROLE_OPTIONS = Object.values(USER_ROLES).map((role) => ({
+  value: role,
+  label: role,
+  deprecated: false
+}));
+
+/** 레거시 역할 풀 — 운영 데이터 호환을 위해 유지 (선택은 가능하되 라벨에 (레거시) 부착) */
+const LEGACY_ROLE_OPTIONS = Object.values(LEGACY_USER_ROLES).map((role) => ({
+  value: role,
+  deprecated: true,
+  __legacyRaw: role
+}));
+
+/**
+ * DB 저장 형식(콤마 구분 문자열) → 칩 배열 변환.
+ *
+ * 빈 문자열·null 은 빈 배열, 양 옆 공백 제거.
+ *
+ * @param {string|null|undefined} csv 콤마 구분 문자열
+ * @returns {string[]} 칩 배열
+ */
+const parseTargetRolesCsv = (csv) => {
+  if (typeof csv !== 'string' || csv.trim().length === 0) {
+    return [];
+  }
+  return csv
+    .split(',')
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0);
+};
+
+/**
+ * 칩 배열 → DB 저장 형식(콤마 구분 문자열) 변환.
+ *
+ * @param {string[]} roles 선택된 역할 배열
+ * @returns {string} 콤마 구분 문자열
+ */
+const stringifyTargetRoles = (roles) => {
+  if (!Array.isArray(roles)) {
+    return '';
+  }
+  return roles.map((role) => String(role).trim()).filter((role) => role.length > 0).join(',');
+};
+
 const SystemConfigManagement = () => {
   const { user, isLoggedIn } = useSession();
+  const { t } = useTranslation('admin');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [wellness, setWellness] = useState(DEFAULT_WELLNESS);
+
+  const legacyLabelSuffix = t('systemConfig.wellness.targetRoles.legacy', '(레거시)');
+
+  const targetRoleOptions = useMemo(() => {
+    const legacyDecorated = LEGACY_ROLE_OPTIONS.map((opt) => ({
+      value: opt.value,
+      label: `${opt.__legacyRaw} ${legacyLabelSuffix}`.trim(),
+      deprecated: true
+    }));
+    return [...STANDARD_ROLE_OPTIONS, ...legacyDecorated];
+  }, [legacyLabelSuffix]);
+
+  const targetRoleValues = useMemo(
+    () => parseTargetRolesCsv(wellness.wellnessTargetRoles),
+    [wellness.wellnessTargetRoles]
+  );
+
+  const handleTargetRolesChange = useCallback((next) => {
+    setWellness((prev) => ({ ...prev, wellnessTargetRoles: stringifyTargetRoles(next) }));
+  }, []);
+
+  const formatRemoveLabel = useCallback(
+    (label) => t('systemConfig.wellness.targetRoles.remove', '{{role}} 제거', { role: label }),
+    [t]
+  );
 
   const loadConfigs = useCallback(async() => {
     try {
@@ -180,7 +252,10 @@ const SystemConfigManagement = () => {
                 웰니스 시스템 설정
               </h2>
               <p className="mg-v2-system-config__section-desc">
-                매일 지정된 시간에 등록된 사용자에게 웰니스 팁을 자동 발송합니다. 대상 역할은 콤마(,)로 구분 입력합니다.
+                {t(
+                  'systemConfig.wellness.sectionDesc',
+                  '매일 지정된 시간에 등록된 사용자에게 웰니스 팁을 자동 발송합니다. 대상 역할은 다중 선택할 수 있습니다.'
+                )}
               </p>
               <div className="config-grid">
                 <div className="config-item">
@@ -206,16 +281,24 @@ const SystemConfigManagement = () => {
                   />
                 </div>
                 <div className="config-item">
-                  <label htmlFor="targetRoles">대상 역할</label>
-                  <input
+                  <label htmlFor="targetRoles" id="targetRoles-label">
+                    {t('systemConfig.wellness.targetRoles.label', '대상 역할')}
+                  </label>
+                  <ChipMultiSelect
                     id="targetRoles"
-                    type="text"
-                    value={wellness.wellnessTargetRoles}
-                    onChange={(e) => setWellness((prev) => ({ ...prev, wellnessTargetRoles: e.target.value }))}
-                    placeholder="CLIENT,ROLE_CLIENT"
-                    className="mg-v2-input"
+                    options={targetRoleOptions}
+                    value={targetRoleValues}
+                    onChange={handleTargetRolesChange}
+                    placeholder={t('systemConfig.wellness.targetRoles.placeholder', '역할 선택')}
+                    ariaLabelledBy="targetRoles-label"
+                    formatRemoveLabel={formatRemoveLabel}
                   />
-                  <small className="help-text">{toDisplayString('콤마(,)로 구분하여 입력하세요. 예: CLIENT,ROLE_CLIENT')}</small>
+                  <small className="help-text">
+                    {t(
+                      'systemConfig.wellness.targetRoles.hint',
+                      '웰니스 알림을 수신할 역할을 선택하세요. 다중 선택 가능.'
+                    )}
+                  </small>
                 </div>
               </div>
             </div>

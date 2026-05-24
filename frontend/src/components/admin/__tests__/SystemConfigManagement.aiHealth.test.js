@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import SystemConfigManagement from '../SystemConfigManagement';
 import * as ajax from '../../../utils/ajax';
@@ -19,6 +19,21 @@ jest.mock('../../../utils/ajax', () => ({
   __esModule: true,
   apiGet: jest.fn(),
   apiPost: jest.fn()
+}));
+
+jest.mock('react-i18next', () => ({
+  __esModule: true,
+  useTranslation: () => ({
+    t: (key, defOrOpts, opts) => {
+      const hasDefault = typeof defOrOpts === 'string';
+      const fallback = hasDefault ? defOrOpts : key;
+      const variables = hasDefault ? (opts || {}) : (defOrOpts || {});
+      return Object.entries(variables).reduce(
+        (acc, [name, value]) => acc.replace(new RegExp(`{{${name}}}`, 'g'), String(value)),
+        fallback
+      );
+    }
+  })
 }));
 
 jest.mock('../../../contexts/SessionContext', () => {
@@ -159,5 +174,124 @@ describe('SystemConfigManagement — PR-4 AI 섹션 분리 후 회귀 검증', (
     expect(screen.getByLabelText(/자동 발송 활성화/)).toBeInTheDocument();
     expect(screen.getByLabelText(/발송 시간/)).toBeInTheDocument();
     expect(screen.getByLabelText(/대상 역할/)).toBeInTheDocument();
+  });
+});
+
+describe('SystemConfigManagement — 웰니스 대상 역할 다중선택+칩 UI', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    installAjaxDefaults();
+  });
+
+  const waitForLoaded = async() => {
+    await waitFor(() => {
+      expect(screen.queryByTestId('unified-loading')).not.toBeInTheDocument();
+    });
+  };
+
+  it('초기 DB 값 "CLIENT,ROLE_CLIENT" 가 2개의 칩으로 렌더링된다', async() => {
+    renderPage();
+    await waitForLoaded();
+
+    const combobox = screen.getByRole('combobox', { name: /대상 역할/ });
+    expect(combobox).toBeInTheDocument();
+    expect(combobox).toHaveAttribute('aria-haspopup', 'listbox');
+    expect(combobox).toHaveAttribute('aria-expanded', 'false');
+
+    expect(within(combobox).getByText('CLIENT')).toBeInTheDocument();
+    expect(within(combobox).getByText(/ROLE_CLIENT/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /CLIENT 제거/ })).toBeInTheDocument();
+
+    fireEvent.click(combobox);
+    const listbox = await screen.findByRole('listbox');
+    expect(listbox).toHaveAttribute('aria-multiselectable', 'true');
+  });
+
+  it('레거시 옵션은 라벨에 "(레거시)" 가 부착된다', async() => {
+    renderPage();
+    await waitForLoaded();
+
+    const combobox = screen.getByRole('combobox', { name: /대상 역할/ });
+    fireEvent.click(combobox);
+
+    const listbox = await screen.findByRole('listbox');
+    expect(within(listbox).getByText('CLIENT')).toBeInTheDocument();
+    expect(within(listbox).getByText('ROLE_CLIENT (레거시)')).toBeInTheDocument();
+    expect(within(listbox).getByText('SUPER_ADMIN (레거시)')).toBeInTheDocument();
+    expect(within(listbox).getByText('TENANT_ADMIN (레거시)')).toBeInTheDocument();
+  });
+
+  it('드롭다운에서 옵션 클릭 시 칩이 추가되고, 저장 시 콤마 구분 페이로드로 PUT 된다', async() => {
+    ajax.apiGet.mockImplementation((url) => {
+      if (url === '/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED') {
+        return Promise.resolve({ success: true, configValue: 'true' });
+      }
+      if (url === '/api/v1/admin/system-config/WELLNESS_SEND_TIME') {
+        return Promise.resolve({ success: true, configValue: '09:00' });
+      }
+      if (url === '/api/v1/admin/system-config/WELLNESS_TARGET_ROLES') {
+        return Promise.resolve({ success: true, configValue: 'CLIENT' });
+      }
+      return Promise.resolve({ success: true, configValue: '' });
+    });
+
+    renderPage();
+    await waitForLoaded();
+
+    const combobox = screen.getByRole('combobox', { name: /대상 역할/ });
+    fireEvent.click(combobox);
+
+    const listbox = await screen.findByRole('listbox');
+    const consultantOption = within(listbox).getByRole('option', { name: 'CONSULTANT' });
+    fireEvent.click(consultantOption);
+
+    expect(within(combobox).getByText('CLIENT')).toBeInTheDocument();
+    expect(within(combobox).getByText('CONSULTANT')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '설정 저장' }));
+
+    await waitFor(() => {
+      expect(ajax.apiPost).toHaveBeenCalledWith(
+        '/api/v1/admin/system-config/WELLNESS_TARGET_ROLES',
+        expect.objectContaining({
+          configValue: 'CLIENT,CONSULTANT',
+          category: 'WELLNESS'
+        })
+      );
+    });
+  });
+
+  it('칩의 × 버튼 클릭 시 해당 역할이 제거되고 저장 페이로드에 반영된다', async() => {
+    renderPage();
+    await waitForLoaded();
+
+    const removeRoleClient = screen.getByRole('button', { name: 'ROLE_CLIENT (레거시) 제거' });
+    fireEvent.click(removeRoleClient);
+
+    const combobox = screen.getByRole('combobox', { name: /대상 역할/ });
+    expect(within(combobox).queryByText(/ROLE_CLIENT/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '설정 저장' }));
+
+    await waitFor(() => {
+      expect(ajax.apiPost).toHaveBeenCalledWith(
+        '/api/v1/admin/system-config/WELLNESS_TARGET_ROLES',
+        expect.objectContaining({ configValue: 'CLIENT' })
+      );
+    });
+  });
+
+  it('a11y: combobox 는 aria-expanded 토글 + 칩 제거 버튼은 명확한 aria-label 을 가진다', async() => {
+    renderPage();
+    await waitForLoaded();
+
+    const combobox = screen.getByRole('combobox', { name: /대상 역할/ });
+    expect(combobox).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(combobox);
+    expect(combobox).toHaveAttribute('aria-expanded', 'true');
+
+    const clientRemove = screen.getByRole('button', { name: 'CLIENT 제거' });
+    expect(clientRemove).toHaveAttribute('aria-label', 'CLIENT 제거');
   });
 });

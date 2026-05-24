@@ -123,6 +123,8 @@ class AiUsageStatsServiceTest {
 
         assertEquals(TENANT_ID, stats.getTenantId());
         assertEquals("today", stats.getPeriod());
+        assertEquals("today", stats.getRequestedPeriod(),
+                "신규 클라이언트는 requestedPeriod 로 라벨 식별 (legacy period 와 동일 값)");
         assertEquals(0L, stats.getCallsToday());
         assertEquals(0.0, stats.getSuccessRate());
         assertEquals(0.0, stats.getFailureRate());
@@ -166,6 +168,25 @@ class AiUsageStatsServiceTest {
         assertEquals(5.0, stats.getFailureRate());
         assertEquals(840L, stats.getAverageDurationMs());
         assertEquals(12000L, stats.getTotalTokens());
+    }
+
+    @Test
+    @DisplayName("getUsageStats — period null/blank → requestedPeriod=\"month\" 기본 echo")
+    void getUsageStats_nullPeriod_echoesMonth() {
+        when(usageLogRepository.countByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(0L);
+        when(usageLogRepository.countSuccessByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(0L);
+        when(usageLogRepository.sumTokensByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(0L);
+        when(usageLogRepository.averageDurationByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(null);
+        when(usageLogRepository.countByCallerInPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
+        when(usageLogRepository.countByModelInPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
+        when(usageLogRepository.countDailyByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
+
+        AiUsageStatsResponse nullStats = service.getUsageStats(TENANT_ID, null);
+        assertEquals("month", nullStats.getRequestedPeriod());
+        assertEquals("month", nullStats.getPeriod());
+
+        AiUsageStatsResponse blankStats = service.getUsageStats(TENANT_ID, "  ");
+        assertEquals("month", blankStats.getRequestedPeriod());
     }
 
     // ---- 로그 페이징 + provider 필터 ----

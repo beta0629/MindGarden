@@ -65,8 +65,15 @@ public class AiUsageStatsService {
 
     private final AiUsageLogRepository usageLogRepository;
 
+    /** period 미지정 시 기본 echo 라벨. */
+    private static final String DEFAULT_PERIOD_LABEL = "month";
+
     /**
      * 테넌트의 AI 사용 통계를 집계한다.
+     *
+     * <p>응답은 period 라벨과 무관하게 callsToday / callsThisWeek / callsThisMonth 3종을 모두
+     * 반환한다. period 는 {@link AiUsageStatsResponse#getRequestedPeriod()} 로 echo 되며,
+     * 후속 PR 에서 period 별 분기를 추가할 때도 backward-compatible 하다.</p>
      *
      * @param tenantId 테넌트 ID (필수)
      * @param period   요청 기간 라벨 (today | week | month — 응답에 echo). null 허용.
@@ -120,9 +127,12 @@ public class AiUsageStatsService {
 
         List<AiUsageStatsResponse.DailyCount> dailyCalls30d = buildDailyCalls(tenantId, today);
 
+        String echoLabel = (period != null && !period.isBlank()) ? period : DEFAULT_PERIOD_LABEL;
         return AiUsageStatsResponse.builder()
                 .tenantId(tenantId)
-                .period(period != null ? period : "month")
+                // period 는 deprecated alias — 신규 클라이언트는 requestedPeriod 사용
+                .period(echoLabel)
+                .requestedPeriod(echoLabel)
                 .callsToday(callsToday)
                 .callsThisWeek(callsThisWeek)
                 .callsThisMonth(callsThisMonth)

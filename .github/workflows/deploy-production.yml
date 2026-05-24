@@ -623,15 +623,49 @@ jobs:
               echo "::error::업로드된 JAR 없음: $INCOMING (SCP 경로 확인)"
               exit 1
             fi
-            sudo cp "$INCOMING" "/var/www/mindgarden/releases/${INACTIVE}/app.jar"
             # systemd 유닛(deployment/systemd/mindgarden-core-*.service.example)은 User=Group=mindgarden 고정
             if ! getent group mindgarden >/dev/null 2>&1 || ! getent passwd mindgarden >/dev/null 2>&1; then
               echo "::error::운영 호스트에 그룹/사용자 mindgarden 이 없어 chown·systemd(User=mindgarden)가 실패합니다. SSH로 1회 생성 후 재배포: sudo groupadd -f mindgarden; sudo useradd -r -g mindgarden -d /var/www/mindgarden -s /usr/sbin/nologin mindgarden; sudo mkdir -p /var/log/mindgarden; sudo chown -R mindgarden:mindgarden /var/www/mindgarden/releases/blue /var/www/mindgarden/releases/green /var/log/mindgarden — docs/deployment/PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md"
               exit 1
             fi
-            sudo chown mindgarden:mindgarden "/var/www/mindgarden/releases/${INACTIVE}/app.jar"
-            sudo chmod 0755 "/var/www/mindgarden/releases/${INACTIVE}/app.jar"
-            sudo rm -f "$INCOMING"
+          
+            # [B1 핫픽스 2026-05-24] in-place cp 금지 — 임시 파일 + atomic mv 패턴
+            # 배경: 04:25 운영 deploy 가 INACTIVE 슬롯의 app.jar 를 in-place cp 로 덮어쓰면서
+            #       running JVM (PID 4076697, 01:31 기동) 의 mmap 된 JAR 바이트가 변조되어
+            #       JarUrlClassLoader 가 lazy class load 실패 (NoClassDefFoundError: ClockProvider 외 다발).
+            #       cp 는 같은 inode 를 truncate+write 하므로 JVM 의 fd 가 가리키는 파일이 변조됨.
+            #       mv (rename) 는 새 inode 로 path 만 atomic 교체 → JVM 의 기존 inode 는 보존 (unlinked)
+            #       → 다음 systemctl restart 가 새 inode 를 로드. 무중단·무파손.
+            #       참조: docs/project-management/2026-05-24/WELLNESS_TIP_2026_05_24_PROD_DIAGNOSIS.md §6.1 B1
+            TARGET_JAR="/var/www/mindgarden/releases/${INACTIVE}/app.jar"
+            INCOMING_SHA=$(sudo sha256sum "$INCOMING" | awk '{print $1}')
+            echo "📋 [B1] INCOMING JAR SHA-256: $INCOMING_SHA"
+            if [ -f "$TARGET_JAR" ]; then
+              BEFORE_SHA=$(sudo sha256sum "$TARGET_JAR" | awk '{print $1}')
+              BEFORE_STAT=$(sudo stat -c 'inode=%i mtime=%y size=%s' "$TARGET_JAR" 2>/dev/null || echo "(stat 실패)")
+              echo "📋 [B1] ${INACTIVE} BEFORE: $BEFORE_STAT (SHA-256=$BEFORE_SHA)"
+              if [ "$BEFORE_SHA" = "$INCOMING_SHA" ]; then
+                echo "✅ [B1] ${INACTIVE} 슬롯 JAR 동일 (SHA-256 일치) — no-op deploy, 파일 교체 스킵"
+                sudo rm -f "$INCOMING"
+                JAR_REPLACED=0
+              else
+                JAR_REPLACED=1
+              fi
+            else
+              echo "📋 [B1] ${INACTIVE} 슬롯 JAR 최초 배포 (기존 파일 없음)"
+              JAR_REPLACED=1
+            fi
+            if [ "$JAR_REPLACED" = "1" ]; then
+              TMP_JAR="/var/www/mindgarden/releases/${INACTIVE}/app.jar.new.$(date +%Y%m%d_%H%M%S)"
+              sudo cp "$INCOMING" "$TMP_JAR"
+              sudo chown mindgarden:mindgarden "$TMP_JAR"
+              sudo chmod 0755 "$TMP_JAR"
+              # atomic rename — running JVM 의 기존 inode 는 unlinked 로 보존, fd 는 그대로 살아 있음
+              sudo mv -f "$TMP_JAR" "$TARGET_JAR"
+              AFTER_STAT=$(sudo stat -c 'inode=%i mtime=%y size=%s' "$TARGET_JAR" 2>/dev/null || echo "(stat 실패)")
+              echo "✅ [B1] ${INACTIVE} 슬롯 JAR atomic mv 완료: $AFTER_STAT (SHA-256=$INCOMING_SHA)"
+              sudo rm -f "$INCOMING"
+            fi
           
             echo "🔄 비활성 슬롯 서비스 재시작: $INACTIVE_UNIT"
             sudo systemctl restart "$INACTIVE_UNIT" || true
@@ -685,16 +719,33 @@ jobs:
             if [ ! -f "${NEW_ACTIVE_HOME}/app.jar" ]; then
               echo "::warning::active 슬롯 JAR(${NEW_ACTIVE_HOME}/app.jar) 누락 — idle 동기화 스킵"
             else
-              sudo cp "${NEW_ACTIVE_HOME}/app.jar" "${NEW_IDLE_HOME}/app.jar"
-              sudo chown mindgarden:mindgarden "${NEW_IDLE_HOME}/app.jar"
-              sudo chmod 0755 "${NEW_IDLE_HOME}/app.jar"
+              # [B1 핫픽스 2026-05-24] in-place cp 금지 — 임시 파일 + atomic mv 패턴
+              # 배경: cutover 직후 PREVIOUS_ACTIVE 슬롯의 JVM 은 systemd 정책상 정지하지 않고
+              #       다음 배포 사이클에서 자연 재시작한다 (위 주석 참조). 따라서 in-place cp 로 같은 inode 를
+              #       덮어쓰면 still-running JVM 의 mmap 된 JAR 가 변조되어 클래스로더 손상이 잠복한다.
+              #       mv (rename) 는 새 inode 로 path 만 atomic 교체 → 기존 JVM 의 unlinked inode 는 보존.
+              #       참조: docs/project-management/2026-05-24/WELLNESS_TIP_2026_05_24_PROD_DIAGNOSIS.md §6.1 B1
               NEW_SHA=$(sudo sha256sum "${NEW_ACTIVE_HOME}/app.jar" | awk '{print $1}')
-              IDLE_SHA=$(sudo sha256sum "${NEW_IDLE_HOME}/app.jar" | awk '{print $1}')
-              if [ "$NEW_SHA" != "$IDLE_SHA" ]; then
-                echo "::error::idle 슬롯 JAR 동기화 검증 실패 — SHA256 불일치 (active=$NEW_SHA, idle=$IDLE_SHA)"
-                exit 1
+              IDLE_BEFORE_SHA=$(sudo sha256sum "${NEW_IDLE_HOME}/app.jar" 2>/dev/null | awk '{print $1}')
+              IDLE_BEFORE_STAT=$(sudo stat -c 'inode=%i mtime=%y size=%s' "${NEW_IDLE_HOME}/app.jar" 2>/dev/null || echo "(없음)")
+              echo "📋 [B1] PREVIOUS_ACTIVE(${PREVIOUS_ACTIVE}) BEFORE: $IDLE_BEFORE_STAT (SHA-256=${IDLE_BEFORE_SHA:-(없음)})"
+              if [ -n "$IDLE_BEFORE_SHA" ] && [ "$IDLE_BEFORE_SHA" = "$NEW_SHA" ]; then
+                echo "✅ [B1] idle 슬롯 JAR 이미 동일 (SHA-256 일치) — no-op 동기화 스킵"
+              else
+                IDLE_TMP="${NEW_IDLE_HOME}/app.jar.new.$(date +%Y%m%d_%H%M%S)"
+                sudo cp "${NEW_ACTIVE_HOME}/app.jar" "$IDLE_TMP"
+                sudo chown mindgarden:mindgarden "$IDLE_TMP"
+                sudo chmod 0755 "$IDLE_TMP"
+                # atomic rename — running JVM 의 기존 inode 는 보존, JVM 은 다음 배포 사이클에서 자연 재시작
+                sudo mv -f "$IDLE_TMP" "${NEW_IDLE_HOME}/app.jar"
+                IDLE_AFTER_SHA=$(sudo sha256sum "${NEW_IDLE_HOME}/app.jar" | awk '{print $1}')
+                IDLE_AFTER_STAT=$(sudo stat -c 'inode=%i mtime=%y size=%s' "${NEW_IDLE_HOME}/app.jar" 2>/dev/null || echo "(stat 실패)")
+                if [ "$IDLE_AFTER_SHA" != "$NEW_SHA" ]; then
+                  echo "::error::idle 슬롯 JAR 동기화 검증 실패 — SHA256 불일치 (active=$NEW_SHA, idle=$IDLE_AFTER_SHA)"
+                  exit 1
+                fi
+                echo "✅ [B1] idle 슬롯 JAR atomic mv 완료: $IDLE_AFTER_STAT (SHA-256=${NEW_SHA})"
               fi
-              echo "✅ idle 슬롯 JAR 동기화 완료 (SHA256=${NEW_SHA})"
             fi
           
             # 🩺 [선택] idle 슬롯 무결성 스모크 — 트래픽 미수신 상태에서 JAR 파일 확인만 수행

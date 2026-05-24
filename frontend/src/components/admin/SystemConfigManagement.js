@@ -1,22 +1,19 @@
 /**
- * 시스템 설정 관리 페이지
- * ContentArea + ContentHeader 레이아웃(심리검사 관리 페이지와 동일 패턴)
- * AI API(OpenAI·Gemini·Claude·Replicate)·웰니스 설정
+ * 시스템 설정 관리 페이지 — 웰니스 시스템 설정 전담.
+ *
+ * 트랙 B PR-4 (2026-05-24): AI provider 라디오 + 4종 키 입력 폼은 분리된
+ * `AiProviderManagementPage` (`/admin/system/ai-providers`) 로 이전됨.
+ * 본 페이지는 **웰니스 자동 발송·발송 시간·대상 역할** 만 잔류 (사용자 컨펌 Q3=(a)).
  *
  * @author Core Solution
+ * @author MindGarden
  * @since 2025-01-21
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Key,
-  Shield,
-  Database,
-  CheckCircle,
-  AlertCircle
-} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Database, Cpu, ExternalLink } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
-import { getAiProviderHealth } from '../../api/admin/aiHealthApi';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -26,239 +23,41 @@ import { USER_ROLES } from '../../constants/roles';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { getModelPricingLabel, getModelOptionSuffix, PRICING_URLS } from './modelPricing';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './SystemConfigManagement.css';
 
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ADMIN_SYSTEM_CONFIG_OPENAI = '/api/v1/admin/system-config/openai';
-const API_ADMIN_SYSTEM_CONFIG_GEMINI_API_KEY = '/api/v1/admin/system-config/GEMINI_API_KEY';
-const API_ADMIN_SYSTEM_CONFIG_GEMINI_API_URL = '/api/v1/admin/system-config/GEMINI_API_URL';
-const API_ADMIN_SYSTEM_CONFIG_GEMINI_MODEL = '/api/v1/admin/system-config/GEMINI_MODEL';
-const API_ADMIN_SYSTEM_CONFIG_CLAUDE_API_KEY = '/api/v1/admin/system-config/CLAUDE_API_KEY';
-const API_ADMIN_SYSTEM_CONFIG_CLAUDE_API_URL = '/api/v1/admin/system-config/CLAUDE_API_URL';
-const API_ADMIN_SYSTEM_CONFIG_CLAUDE_MODEL = '/api/v1/admin/system-config/CLAUDE_MODEL';
-const API_ADMIN_SYSTEM_CONFIG_REPLICATE_API_KEY = '/api/v1/admin/system-config/REPLICATE_API_KEY';
-const API_ADMIN_SYSTEM_CONFIG_REPLICATE_API_URL = '/api/v1/admin/system-config/REPLICATE_API_URL';
-const API_ADMIN_SYSTEM_CONFIG_REPLICATE_MODEL = '/api/v1/admin/system-config/REPLICATE_MODEL';
-const API_ADMIN_SYSTEM_CONFIG_AI_DEFAULT_PROVIDER = '/api/v1/admin/system-config/ai-default-provider';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED = '/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME = '/api/v1/admin/system-config/WELLNESS_SEND_TIME';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES = '/api/v1/admin/system-config/WELLNESS_TARGET_ROLES';
-const API_ADMIN_SYSTEM_CONFIG_OPENAI_MODELS = '/api/v1/admin/system-config/openai-models';
-const API_ADMIN_SYSTEM_CONFIG_GEMINI_MODELS = '/api/v1/admin/system-config/gemini-models';
-const API_ADMIN_SYSTEM_CONFIG_AI_DEFAULT_PROVIDER_2 = '/api/v1/admin/system-config/AI_DEFAULT_PROVIDER';
-const API_ADMIN_SYSTEM_CONFIG_TEST_OPENAI = '/api/v1/admin/system-config/test-openai';
-const API_ADMIN_SYSTEM_CONFIG_TEST_GEMINI = '/api/v1/admin/system-config/test-gemini';
 
-
-const AI_PROVIDERS = [
-  { id: 'openai', label: 'OpenAI', keyPrefix: 'OPENAI', defaultUrl: 'https://api.openai.com/v1/chat/completions', defaultModel: 'gpt-4o-mini' },
-  { id: 'gemini', label: 'Gemini', keyPrefix: 'GEMINI', defaultUrl: '', defaultModel: 'gemini-3.1-pro' },
-  { id: 'claude', label: 'Claude', keyPrefix: 'CLAUDE', defaultUrl: '', defaultModel: 'claude-3-5-sonnet-20241022' },
-  { id: 'replicate', label: 'Replicate', keyPrefix: 'REPLICATE', defaultUrl: '', defaultModel: '' }
-];
-
-// 트랙 B PR-3 (2026-05-23) — 어드민 AI 라디오 헬스 가드 라벨·메시지
-const AI_RADIO_DISABLED_TOOLTIP = 'API 키 미등록 — 시스템 설정에서 등록 후 사용 가능';
-const AI_RADIO_HEALTH_REFRESH_LABEL = '헬스 새로고침';
-const AI_RADIO_HEALTH_REFRESH_LOADING = '확인 중...';
-const AI_RADIO_HEALTH_LOADING_LABEL = '헬스체크 중...';
-const AI_RADIO_HEALTH_FAILED_LABEL = '헬스체크 실패';
-const AI_RADIO_HEALTH_ACTIVE_PREFIX = '현재 활성: ';
-const AI_RADIO_HEALTH_NOT_SUPPORTED = '키 등록 가드 미지원';
-
-/** OpenAI 목록 미불러온 경우 입력란 datalist용 최소 프리셋 (사용 가능한 모델만 보려면 '목록 불러오기' 권장) */
-const OPENAI_MODEL_PRESETS_FALLBACK = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
-
-/** Gemini 목록 미불러온 경우 입력란 datalist용 최소 프리셋 (사용 가능한 모델만 보려면 '목록 불러오기' 권장) */
-const GEMINI_MODEL_PRESETS_FALLBACK = ['gemini-2.5-flash', 'gemini-3.1-pro', 'gemini-1.5-pro'];
-
-const initialProviderState = (defaultUrl, defaultModel) => ({
-  apiKey: '',
-  apiUrl: defaultUrl || '',
-  model: defaultModel || ''
+const DEFAULT_WELLNESS = Object.freeze({
+  wellnessAutoSendEnabled: true,
+  wellnessSendTime: '09:00',
+  wellnessTargetRoles: 'CLIENT,ROLE_CLIENT'
 });
 
 const SystemConfigManagement = () => {
   const { user, isLoggedIn } = useSession();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
-
-  const [providers, setProviders] = useState(() =>
-    AI_PROVIDERS.reduce((acc, p) => {
-      acc[p.id] = initialProviderState(p.defaultUrl, p.defaultModel);
-      return acc;
-    }, {})
-  );
-  const [showApiKey, setShowApiKey] = useState({});
-  const [testResult, setTestResult] = useState(null);
-  const [testingGemini, setTestingGemini] = useState(false);
-  const [testResultGemini, setTestResultGemini] = useState(null);
-  const [geminiModels, setGeminiModels] = useState([]);
-  const [loadingGeminiModels, setLoadingGeminiModels] = useState(false);
-  const [openaiModels, setOpenaiModels] = useState([]);
-  const [loadingOpenaiModels, setLoadingOpenaiModels] = useState(false);
-
-  const [aiDefaultProvider, setAiDefaultProvider] = useState('openai');
-
-  // 트랙 B PR-3: 백엔드 헬스체크 (DB 기준 실 등록 여부)
-  const [aiHealth, setAiHealth] = useState(null);
-  const [aiHealthLoading, setAiHealthLoading] = useState(false);
-  const [aiHealthError, setAiHealthError] = useState(null);
-
-  const [wellness, setWellness] = useState({
-    wellnessAutoSendEnabled: true,
-    wellnessSendTime: '09:00',
-    wellnessTargetRoles: 'CLIENT,ROLE_CLIENT'
-  });
-
-  const toggleShowApiKey = (providerId) => {
-    setShowApiKey((prev) => ({ ...prev, [providerId]: !prev[providerId] }));
-  };
-
-  const setProvider = useCallback((providerId, field, value) => {
-    setProviders((prev) => ({
-      ...prev,
-      [providerId]: { ...prev[providerId], [field]: value }
-    }));
-  }, []);
-
-  /**
-   * 백엔드 AI 프로바이더 헬스체크 호출 — DB 기준 키 등록 여부.
-   * 라디오 disable·tooltip 가드의 신뢰원본(SSOT)으로 사용.
-   */
-  const refreshAiHealth = useCallback(async() => {
-    try {
-      setAiHealthLoading(true);
-      setAiHealthError(null);
-      const health = await getAiProviderHealth();
-      setAiHealth(health);
-    } catch (error) {
-      console.error('AI 헬스체크 실패:', error);
-      setAiHealth(null);
-      setAiHealthError(error?.message || 'AI 헬스체크에 실패했습니다.');
-    } finally {
-      setAiHealthLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isLoggedIn || !user) {
-      notificationManager.show('로그인이 필요합니다.', 'error');
-      return;
-    }
-    const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.STAFF];
-    if (!allowedRoles.includes(user.role)) {
-      notificationManager.show('접근 권한이 없습니다.', 'error');
-      return;
-    }
-    loadConfigs();
-    refreshAiHealth();
-  }, [isLoggedIn, user, refreshAiHealth]);
-
-  // 저장된 기본 프로바이더에 API 키가 없으면, 키가 있는 첫 프로바이더로 보정.
-  // 트랙 B PR-3: 헬스체크 결과(DB 기준)가 있을 때 그 결과를 우선 신뢰하고,
-  // 없을 땐 폼 입력값(미저장 포함) 으로 fallback 한다.
-  useEffect(() => {
-    if (loading) {
-      return;
-    }
-    const isRegistered = (id) => {
-      if (aiHealth) {
-        if (id === 'openai') return aiHealth.openaiKeyRegistered === true;
-        if (id === 'gemini') return aiHealth.geminiKeyRegistered === true;
-      }
-      return (providers[id]?.apiKey || '').trim() !== '';
-    };
-    if (!isRegistered(aiDefaultProvider)) {
-      const firstRegistered = AI_PROVIDERS.find((p) => isRegistered(p.id));
-      if (firstRegistered) {
-        setAiDefaultProvider(firstRegistered.id);
-      }
-    }
-  }, [loading, providers, aiHealth, aiDefaultProvider]);
+  const [wellness, setWellness] = useState(DEFAULT_WELLNESS);
 
   const loadConfigs = useCallback(async() => {
     try {
       setLoading(true);
-      const openaiRes = await apiGet(API_ADMIN_SYSTEM_CONFIG_OPENAI);
-      if (openaiRes.success) {
-        setProviders((prev) => ({
-          ...prev,
-          openai: {
-            apiKey: openaiRes.apiKey || '',
-            apiUrl: openaiRes.apiUrl || 'https://api.openai.com/v1/chat/completions',
-            model: openaiRes.model || 'gpt-4o-mini'
-          }
-        }));
-      }
-
-      const [geminiKey, geminiUrl, geminiModel, claudeKey, claudeUrl, claudeModel, repKey, repUrl, repModel] = await Promise.all([
-        apiGet(API_ADMIN_SYSTEM_CONFIG_GEMINI_API_KEY),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_GEMINI_API_URL),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_GEMINI_MODEL),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_CLAUDE_API_KEY),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_CLAUDE_API_URL),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_CLAUDE_MODEL),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_REPLICATE_API_KEY),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_REPLICATE_API_URL),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_REPLICATE_MODEL)
-      ]);
-
-      const getVal = (r) => (r && r.success ? r.configValue || '' : '');
-
-      setProviders((prev) => ({
-        ...prev,
-        gemini: {
-          apiKey: getVal(geminiKey),
-          apiUrl: getVal(geminiUrl),
-          model: getVal(geminiModel)
-        },
-        claude: {
-          apiKey: getVal(claudeKey),
-          apiUrl: getVal(claudeUrl),
-          model: getVal(claudeModel)
-        },
-        replicate: {
-          apiKey: getVal(repKey),
-          apiUrl: getVal(repUrl),
-          model: getVal(repModel)
-        }
-      }));
-
-      const defaultProviderRes = await apiGet(API_ADMIN_SYSTEM_CONFIG_AI_DEFAULT_PROVIDER);
-      if (defaultProviderRes?.success && defaultProviderRes.providerId) {
-        setAiDefaultProvider(defaultProviderRes.providerId);
-      }
-
       const [wEnabled, wTime, wRoles] = await Promise.all([
-        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES)
+        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED).catch(() => null),
+        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME).catch(() => null),
+        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES).catch(() => null)
       ]);
       setWellness({
-        wellnessAutoSendEnabled: wEnabled?.success ? wEnabled.configValue === 'true' : true,
-        wellnessSendTime: wTime?.success ? wTime.configValue : '09:00',
-        wellnessTargetRoles: wRoles?.success ? wRoles.configValue : 'CLIENT,ROLE_CLIENT'
+        wellnessAutoSendEnabled: wEnabled?.success ? wEnabled.configValue === 'true' : DEFAULT_WELLNESS.wellnessAutoSendEnabled,
+        wellnessSendTime: wTime?.success ? wTime.configValue : DEFAULT_WELLNESS.wellnessSendTime,
+        wellnessTargetRoles: wRoles?.success ? wRoles.configValue : DEFAULT_WELLNESS.wellnessTargetRoles
       });
-
-      // API 키가 있으면 사용 가능한 모델만 조회해 드롭다운에 표시
-      if (openaiRes?.success && (openaiRes.apiKey || '').trim()) {
-        try {
-          const res = await apiPost(API_ADMIN_SYSTEM_CONFIG_OPENAI_MODELS, { apiKey: (openaiRes.apiKey || '').trim() });
-          if (res.success && Array.isArray(res.models)) setOpenaiModels(res.models);
-        } catch (_) { /* 무시 */ }
-      }
-      if ((getVal(geminiKey) || '').trim()) {
-        try {
-          const res = await apiPost(API_ADMIN_SYSTEM_CONFIG_GEMINI_MODELS, { apiKey: getVal(geminiKey).trim() });
-          if (res.success && Array.isArray(res.models)) setGeminiModels(res.models);
-        } catch (_) { /* 무시 */ }
-      }
     } catch (error) {
       console.error('설정 로드 실패:', error);
       notificationManager.show('설정을 불러오는데 실패했습니다.', 'error');
@@ -267,134 +66,48 @@ const SystemConfigManagement = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (!isLoggedIn || !user) {
+      notificationManager.show('로그인이 필요합니다.', 'error');
+      setLoading(false);
+      return;
+    }
+    const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.STAFF];
+    if (!allowedRoles.includes(user.role)) {
+      notificationManager.show('접근 권한이 없습니다.', 'error');
+      setLoading(false);
+      return;
+    }
+    loadConfigs();
+  }, [isLoggedIn, user, loadConfigs]);
+
   const handleSave = async() => {
     try {
       setSaving(true);
-      const posts = [];
-
-      AI_PROVIDERS.forEach(({ id, keyPrefix }) => {
-        const p = providers[id] || {};
-        posts.push(
-          apiPost(`/api/v1/admin/system-config/${keyPrefix}_API_KEY`, { configValue: p.apiKey || '', description: `${keyPrefix} API 키`, category: 'AI' }),
-          apiPost(`/api/v1/admin/system-config/${keyPrefix}_API_URL`, { configValue: p.apiUrl || '', description: `${keyPrefix} API URL`, category: 'AI' }),
-          apiPost(`/api/v1/admin/system-config/${keyPrefix}_MODEL`, { configValue: p.model || '', description: `${keyPrefix} 모델`, category: 'AI' })
-        );
-      });
-
-      posts.push(
-        apiPost(API_ADMIN_SYSTEM_CONFIG_AI_DEFAULT_PROVIDER_2, { configValue: aiDefaultProvider, description: '기본 AI 프로바이더 (openai|gemini|claude|replicate)', category: 'AI' }),
-        apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED, { configValue: String(wellness.wellnessAutoSendEnabled), description: '웰니스 자동 발송', category: 'WELLNESS' }),
-        apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME, { configValue: wellness.wellnessSendTime, description: '웰니스 발송 시간', category: 'WELLNESS' }),
-        apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES, { configValue: wellness.wellnessTargetRoles, description: '웰니스 대상 역할', category: 'WELLNESS' })
-      );
-
-      await Promise.all(posts);
-      notificationManager.show('설정이 저장되었습니다.', 'success');
-      // 키·기본 프로바이더 변경 후 백엔드 헬스 재확인 (라디오 가드 갱신)
-      refreshAiHealth();
+      await Promise.all([
+        apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED, {
+          configValue: String(wellness.wellnessAutoSendEnabled),
+          description: '웰니스 자동 발송',
+          category: 'WELLNESS'
+        }),
+        apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME, {
+          configValue: wellness.wellnessSendTime,
+          description: '웰니스 발송 시간',
+          category: 'WELLNESS'
+        }),
+        apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES, {
+          configValue: wellness.wellnessTargetRoles,
+          description: '웰니스 대상 역할',
+          category: 'WELLNESS'
+        })
+      ]);
+      notificationManager.show('웰니스 설정이 저장되었습니다.', 'success');
     } catch (error) {
       console.error('설정 저장 실패:', error);
       const backendMsg = error?.response?.data?.message || error?.data?.message;
       notificationManager.show(backendMsg || '설정 저장에 실패했습니다.', 'error');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleTestOpenAI = async() => {
-    const key = (providers.openai?.apiKey || '').trim();
-    if (!key) {
-      notificationManager.show('OpenAI API 키를 입력한 뒤 테스트해 주세요.', 'warning');
-      return;
-    }
-    try {
-      setTesting(true);
-      setTestResult(null);
-      const response = await apiPost(API_ADMIN_SYSTEM_CONFIG_TEST_OPENAI, {
-        apiKey: key,
-        apiUrl: providers.openai?.apiUrl || '',
-        model: providers.openai?.model || ''
-      });
-      if (response.success) {
-        setTestResult({ success: true, message: response.message || 'OpenAI API 키가 정상 동작합니다.' });
-      } else {
-        setTestResult({ success: false, message: response.message || 'API 테스트 실패' });
-      }
-    } catch (error) {
-      console.error('OpenAI API 테스트 실패:', error);
-      const errMsg = error?.response?.data?.message || error?.message || 'API 테스트 중 오류가 발생했습니다.';
-      setTestResult({ success: false, message: errMsg });
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  const handleTestGemini = async() => {
-    const key = (providers.gemini?.apiKey || '').trim();
-    if (!key) {
-      notificationManager.show('Gemini API 키를 입력한 뒤 테스트해 주세요.', 'warning');
-      return;
-    }
-    try {
-      setTestingGemini(true);
-      setTestResultGemini(null);
-      const response = await apiPost(API_ADMIN_SYSTEM_CONFIG_TEST_GEMINI, { apiKey: key });
-      if (response.success) {
-        setTestResultGemini({ success: true, message: response.message || 'Gemini API 키가 정상 동작합니다.' });
-      } else {
-        setTestResultGemini({ success: false, message: response.message || '연결 실패' });
-      }
-    } catch (error) {
-      console.error('Gemini 키 테스트 실패:', error);
-      setTestResultGemini({ success: false, message: error?.message || '테스트 중 오류가 발생했습니다.' });
-    } finally {
-      setTestingGemini(false);
-    }
-  };
-
-  const loadGeminiModels = async() => {
-    const key = (providers.gemini?.apiKey || '').trim();
-    if (!key) {
-      notificationManager.show('Gemini API 키를 입력한 뒤 목록을 불러오세요.', 'warning');
-      return;
-    }
-    try {
-      setLoadingGeminiModels(true);
-      const response = await apiPost(API_ADMIN_SYSTEM_CONFIG_GEMINI_MODELS, { apiKey: key });
-      if (response.success && Array.isArray(response.models)) {
-        setGeminiModels(response.models);
-        notificationManager.show(`모델 ${response.models.length}개를 불러왔습니다.`, 'success');
-      } else {
-        notificationManager.show(response.message || '모델 목록을 불러오지 못했습니다.', 'error');
-      }
-    } catch (error) {
-      console.error('Gemini 모델 목록 로드 실패:', error);
-      notificationManager.show(error?.message || '모델 목록 조회 중 오류가 발생했습니다.', 'error');
-    } finally {
-      setLoadingGeminiModels(false);
-    }
-  };
-
-  const handleLoadOpenAIModels = async() => {
-    const key = (providers.openai?.apiKey || '').trim();
-    if (!key) {
-      notificationManager.show('OpenAI API 키를 입력한 뒤 목록을 불러오세요.', 'warning');
-      return;
-    }
-    try {
-      setLoadingOpenaiModels(true);
-      const response = await apiPost(API_ADMIN_SYSTEM_CONFIG_OPENAI_MODELS, { apiKey: key });
-      if (response.success && Array.isArray(response.models)) {
-        setOpenaiModels(response.models);
-        notificationManager.show(`모델 ${response.models.length}개를 불러왔습니다.`, 'success');
-      } else {
-        notificationManager.show(response.message || '모델 목록을 불러오지 못했습니다.', 'error');
-      }
-    } catch (error) {
-      console.error('OpenAI 모델 목록 로드 실패:', error);
-      notificationManager.show(error?.message || '모델 목록 조회 중 오류가 발생했습니다.', 'error');
-    } finally {
-      setLoadingOpenaiModels(false);
     }
   };
 
@@ -417,7 +130,7 @@ const SystemConfigManagement = () => {
           <ContentArea>
             <ContentHeader
               title="시스템 설정 관리"
-              subtitle="AI API 키(OpenAI·Gemini·Claude·Replicate)·웰니스 자동 발송 등 시스템 설정을 관리합니다."
+              subtitle="웰니스 자동 발송 등 시스템 설정을 관리합니다. AI API 키·프로바이더 선택은 'AI 프로바이더 관리'로 이전되었습니다."
               actions={
                 <MGButton
                   type="button"
@@ -439,380 +152,36 @@ const SystemConfigManagement = () => {
               }
             />
 
-            {/* AI API 설정 섹션 */}
-            <div className="mg-v2-ad-b0kla__card mg-v2-system-config__section">
+            {/* AI 프로바이더 관리 안내 카드 — 이전 사용자 동선 보존 */}
+            <div className="mg-v2-ad-b0kla__card mg-v2-system-config__section mg-v2-system-config__section--notice">
               <h2 className="mg-v2-ad-b0kla__section-title">
-                <Key size={20} />
-                AI API 설정 (다중 프로바이더)
+                <Cpu size={20} aria-hidden="true" />
+                AI 프로바이더 관리 (분리됨)
               </h2>
               <p className="mg-v2-system-config__section-desc">
-                심리검사 AI 리포트·웰니스 등에 사용됩니다. 프로바이더별 API 키·URL·모델을 입력하고 테스트할 수 있습니다.
-                고급 모델일수록 비용이 높을 수 있으므로, 아래 요금 참고를 보고 부담 없이 선택하세요.
+                AI API 키 등록·프로바이더 선택·사용 통계·호출 로그는 별도 페이지로 이전되었습니다.
               </p>
-
-              <div className="mg-v2-ad-b0kla__card mg-v2-system-config__provider-card">
-                <div className="mg-v2-system-config__provider-header">
-                  <h3 className="mg-v2-system-config__provider-title">사용할 AI 프로바이더</h3>
-                  <MGButton
-                    type="button"
-                    variant="secondary"
-                    size="medium"
-                    className={buildErpMgButtonClassName({
-                      variant: 'secondary',
-                      size: 'md',
-                      loading: aiHealthLoading
-                    })}
-                    onClick={refreshAiHealth}
-                    disabled={aiHealthLoading}
-                    loading={aiHealthLoading}
-                    loadingText={AI_RADIO_HEALTH_REFRESH_LOADING}
-                    preventDoubleClick={false}
-                    title="백엔드 DB 기준으로 키 등록 여부를 다시 확인합니다."
-                  >
-                    {AI_RADIO_HEALTH_REFRESH_LABEL}
-                  </MGButton>
-                </div>
-                <p className="mg-v2-system-config__section-desc">
-                  API 키가 등록된 프로바이더만 선택할 수 있습니다. 심리검사 AI 리포트 등에 선택한 프로바이더가 사용됩니다.
-                </p>
-                {aiHealthLoading && (
-                  <p className="mg-v2-system-config__radio-empty">{AI_RADIO_HEALTH_LOADING_LABEL}</p>
-                )}
-                {!aiHealthLoading && aiHealthError && (
-                  <p className="mg-v2-system-config__radio-empty mg-v2-system-config__radio-empty--error">
-                    {AI_RADIO_HEALTH_FAILED_LABEL}: {toDisplayString(aiHealthError)}
-                  </p>
-                )}
-                {!aiHealthLoading && !aiHealthError && aiHealth?.activeProvider && (
-                  <p className="mg-v2-system-config__section-desc">
-                    {AI_RADIO_HEALTH_ACTIVE_PREFIX}
-                    <strong>{toDisplayString(aiHealth.activeProvider)}</strong>
-                  </p>
-                )}
-                <div className="mg-v2-system-config__radio-group">
-                  {AI_PROVIDERS.map((p) => {
-                    // 헬스체크가 등록 여부를 보고하는 provider 만 가드 적용 (openai/gemini)
-                    let isRegistered;
-                    if (p.id === 'openai') {
-                      isRegistered = aiHealth?.openaiKeyRegistered === true;
-                    } else if (p.id === 'gemini') {
-                      isRegistered = aiHealth?.geminiKeyRegistered === true;
-                    } else {
-                      // claude/replicate 는 헬스체크 미커버 — 폼 입력값 fallback (PR-1 보존)
-                      isRegistered = (providers[p.id]?.apiKey || '').trim() !== '';
-                    }
-                    const guarded = (p.id === 'openai' || p.id === 'gemini');
-                    const disabledByHealth = guarded
-                      ? (aiHealthLoading || !aiHealth || !isRegistered)
-                      : !isRegistered;
-                    let tooltip = '';
-                    if (aiHealthLoading) {
-                      tooltip = AI_RADIO_HEALTH_LOADING_LABEL;
-                    } else if (!isRegistered) {
-                      tooltip = AI_RADIO_DISABLED_TOOLTIP;
-                    } else if (!guarded) {
-                      tooltip = AI_RADIO_HEALTH_NOT_SUPPORTED;
-                    }
-                    return (
-                      <label
-                        key={p.id}
-                        className={`mg-v2-system-config__radio-label${disabledByHealth ? ' mg-v2-system-config__radio-label--disabled' : ''}`}
-                        title={tooltip || undefined}
-                      >
-                        <input
-                          type="radio"
-                          name="aiDefaultProvider"
-                          value={p.id}
-                          checked={aiDefaultProvider === p.id}
-                          onChange={() => setAiDefaultProvider(p.id)}
-                          disabled={disabledByHealth}
-                          className="mg-v2-radio"
-                        />
-                        <span>{toDisplayString(p.label)}</span>
-                      </label>
-                    );
-                  })}
-                  {!aiHealthLoading && aiHealth
-                    && aiHealth.openaiKeyRegistered === false
-                    && aiHealth.geminiKeyRegistered === false
-                    && AI_PROVIDERS.every((p) => !(providers[p.id]?.apiKey || '').trim()) && (
-                    <p className="mg-v2-system-config__radio-empty">API 키가 등록된 프로바이더가 없습니다. 아래에서 한 개 이상 등록 후 선택할 수 있습니다.</p>
-                  )}
-                </div>
+              <div className="mg-v2-system-config__notice-actions">
+                <Link
+                  to={ADMIN_ROUTES.AI_PROVIDERS}
+                  className="mg-v2-system-config__notice-link"
+                  aria-label="AI 프로바이더 관리 페이지로 이동"
+                >
+                  <span>AI 프로바이더 관리로 이동</span>
+                  <ExternalLink size={14} aria-hidden="true" />
+                </Link>
               </div>
-
-              {AI_PROVIDERS.map(({ id, label, keyPrefix, defaultUrl }) => (
-                <div key={id} className="mg-v2-ad-b0kla__card mg-v2-system-config__provider-card">
-                  <h3 className="mg-v2-system-config__provider-title">{toDisplayString(label)}</h3>
-                  <div className="config-grid">
-                    <div className="config-item">
-                      <label htmlFor={`apiKey-${id}`}>API 키</label>
-                      <div className="input-group">
-                        <input
-                          id={`apiKey-${id}`}
-                          type={showApiKey[id] ? 'text' : 'password'}
-                          value={providers[id]?.apiKey || ''}
-                          onChange={(e) => setProvider(id, 'apiKey', e.target.value)}
-                          placeholder={id === 'openai' ? 'sk-...' : 'API 키 입력'}
-                          className="mg-v2-input"
-                        />
-                        <MGButton
-                          type="button"
-                          variant="secondary"
-                          size="medium"
-                          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
-                          onClick={() => toggleShowApiKey(id)}
-                          preventDoubleClick={false}
-                        >
-                          {showApiKey[id] ? '숨기기' : '보기'}
-                        </MGButton>
-                      </div>
-                      <small className="help-text"><Shield size={14} /> API 키는 암호화되어 저장됩니다.</small>
-                    </div>
-                    <div className="config-item">
-                      <label htmlFor={`apiUrl-${id}`}>API 주소</label>
-                      <input
-                        id={`apiUrl-${id}`}
-                        type="text"
-                        value={providers[id]?.apiUrl || ''}
-                        onChange={(e) => setProvider(id, 'apiUrl', e.target.value)}
-                        placeholder={defaultUrl || 'https://...'}
-                        className="mg-v2-input"
-                      />
-                    </div>
-                    <div className="config-item">
-                      <label htmlFor={`model-${id}`}>모델</label>
-                      {id === 'gemini' ? (
-                        <>
-                          <div className="section-actions mg-v2-system-config__section-actions--mb-sm">
-                            <MGButton
-                              type="button"
-                              variant="secondary"
-                              size="medium"
-                              className={buildErpMgButtonClassName({
-                                variant: 'secondary',
-                                size: 'md',
-                                loading: loadingGeminiModels
-                              })}
-                              onClick={loadGeminiModels}
-                              disabled={loadingGeminiModels || !(providers.gemini?.apiKey || '').trim()}
-                              loading={loadingGeminiModels}
-                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                              preventDoubleClick={false}
-                            >
-                              {geminiModels.length > 0 ? '모델 목록 다시 불러오기' : '사용 가능한 모델만 불러오기'}
-                            </MGButton>
-                          </div>
-                          {geminiModels.length > 0 ? (
-                            <select
-                              id={`model-select-${id}`}
-                              value={geminiModels.some((m) => m.id === (providers.gemini?.model || '')) ? (providers.gemini?.model || '') : '__custom__'}
-                              onChange={(e) => setProvider('gemini', 'model', e.target.value === '__custom__' ? (providers.gemini?.model || '') : e.target.value)}
-                              className="mg-v2-input mg-v2-system-config__input--mb-sm"
-                            >
-                              <option value="__custom__">직접 입력 (아래 입력란)</option>
-                              {geminiModels.map((m) => (
-                                <option key={m.id} value={m.id}>{m.id}{getModelOptionSuffix('gemini', m.id)}</option>
-                              ))}
-                            </select>
-                          ) : (
-                            <p className="mg-v2-system-config__pricing-notice mg-v2-system-config__notice--mb-sm">
-                              위 버튼을 누르면 이 계정에서 사용 가능한 모델만 목록에 표시됩니다.
-                            </p>
-                          )}
-                          <input
-                            id={`model-${id}`}
-                            type="text"
-                            value={providers[id]?.model || ''}
-                            onChange={(e) => setProvider(id, 'model', e.target.value)}
-                            placeholder={geminiModels.length > 0 ? '모델 ID (예: gemini-3.1-pro)' : '모델 ID (사용 가능한 모델만 보려면 위 버튼 클릭)'}
-                            className="mg-v2-input"
-                            list={geminiModels.length === 0 ? `model-presets-${id}` : undefined}
-                          />
-                          {geminiModels.length === 0 && (
-                            <datalist id={`model-presets-${id}`}>
-                              {GEMINI_MODEL_PRESETS_FALLBACK.map((mid) => (
-                                <option key={mid} value={mid} />
-                              ))}
-                            </datalist>
-                          )}
-                          <div className="mg-v2-system-config__pricing-notice mg-v2-system-config__notice--mt-sm">
-                            <>
-                              {getModelPricingLabel('gemini', providers.gemini?.model || '') ? (
-                                <span><strong>요금 참고:</strong> {getModelPricingLabel('gemini', providers.gemini?.model || '')} (1M tokens 기준, USD). </span>
-                              ) : (
-                                <span><strong>요금 참고:</strong> 선택한 모델의 요금은 공식 문서를 참고하세요. </span>
-                              )}
-                              {' '}
-                              <a href={PRICING_URLS.gemini} target="_blank" rel="noopener noreferrer">Gemini 공식 요금</a>
-                            </>
-                          </div>
-                        </>
-                      ) : id === 'openai' ? (
-                        <>
-                          <div className="section-actions mg-v2-system-config__section-actions--mb-sm">
-                            <MGButton
-                              variant="secondary"
-                              size="medium"
-                              className={buildErpMgButtonClassName({
-                                variant: 'secondary',
-                                size: 'md',
-                                loading: loadingOpenaiModels
-                              })}
-                              onClick={handleLoadOpenAIModels}
-                              disabled={loadingOpenaiModels || !(providers.openai?.apiKey || '').trim()}
-                              loading={loadingOpenaiModels}
-                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                              preventDoubleClick={false}
-                            >
-                              {openaiModels.length > 0 ? '모델 목록 다시 불러오기' : '사용 가능한 모델만 불러오기'}
-                            </MGButton>
-                          </div>
-                          {openaiModels.length > 0 ? (
-                            <select
-                              id={`model-select-${id}`}
-                              value={
-                                openaiModels.some((m) => m.id === (providers.openai?.model || ''))
-                                  ? (providers.openai?.model || '')
-                                  : '__custom__'
-                              }
-                              onChange={(e) => setProvider('openai', 'model', e.target.value === '__custom__' ? (providers.openai?.model || '') : e.target.value)}
-                              className="mg-v2-input mg-v2-system-config__input--mb-sm"
-                            >
-                              <option value="__custom__">직접 입력 (아래 입력란)</option>
-                              {openaiModels.map((m) => (
-                                <option key={m.id} value={m.id}>{m.id}{getModelOptionSuffix('openai', m.id)}</option>
-                              ))}
-                            </select>
-                          ) : (
-                            <p className="mg-v2-system-config__pricing-notice mg-v2-system-config__notice--mb-sm">
-                              위 버튼을 누르면 이 계정에서 사용 가능한 모델만 목록에 표시됩니다.
-                            </p>
-                          )}
-                          <input
-                            id={`model-${id}`}
-                            type="text"
-                            value={providers[id]?.model || ''}
-                            onChange={(e) => setProvider(id, 'model', e.target.value)}
-                            placeholder={openaiModels.length > 0 ? '모델 ID (또는 위에서 선택)' : '모델 ID (사용 가능한 모델만 보려면 위 버튼 클릭)'}
-                            className="mg-v2-input"
-                            list={openaiModels.length === 0 ? 'openai-model-presets-fallback' : undefined}
-                          />
-                          {openaiModels.length === 0 && (
-                            <datalist id="openai-model-presets-fallback">
-                              {OPENAI_MODEL_PRESETS_FALLBACK.map((mid) => (
-                                <option key={mid} value={mid} />
-                              ))}
-                            </datalist>
-                          )}
-                          <div className="mg-v2-system-config__pricing-notice mg-v2-system-config__notice--mt-sm">
-                            <>
-                              {getModelPricingLabel('openai', providers.openai?.model || '') ? (
-                                <span><strong>요금 참고:</strong> {getModelPricingLabel('openai', providers.openai?.model || '')} (1M tokens 기준, USD). </span>
-                              ) : (
-                                <span><strong>요금 참고:</strong> 선택한 모델의 요금은 공식 문서를 참고하세요. </span>
-                              )}
-                              {' '}
-                              <a href={PRICING_URLS.openai} target="_blank" rel="noopener noreferrer">OpenAI 공식 요금</a>
-                            </>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <input
-                            id={`model-${id}`}
-                            type="text"
-                            value={providers[id]?.model || ''}
-                            onChange={(e) => setProvider(id, 'model', e.target.value)}
-                            placeholder="모델 ID"
-                            className="mg-v2-input"
-                            list={`model-presets-${id}`}
-                          />
-                          <datalist id={`model-presets-${id}`}>
-                            <option value="claude-3-5-sonnet-20241022" />
-                            <option value="gemini-3.1-pro" />
-                          </datalist>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  {id === 'openai' && (
-                    <>
-                      <div className="section-actions">
-                        <MGButton
-                          variant="secondary"
-                          size="medium"
-                          className={buildErpMgButtonClassName({
-                            variant: 'secondary',
-                            size: 'md',
-                            loading: testing
-                          })}
-                          onClick={handleTestOpenAI}
-                          disabled={testing || !(providers.openai?.apiKey)}
-                          loading={testing}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          preventDoubleClick={false}
-                        >
-                          API 테스트
-                        </MGButton>
-                      </div>
-                      {testResult && (
-                        <div className={`test-result ${testResult.success ? 'success' : 'error'}`}>
-                          <div className="result-icon">
-                            {testResult.success ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-                          </div>
-                          <div className="result-content">
-                            <strong>{toDisplayString(testResult.message)}</strong>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                  {id === 'gemini' && (
-                    <>
-                      <div className="section-actions">
-                        <MGButton
-                          variant="secondary"
-                          size="medium"
-                          className={buildErpMgButtonClassName({
-                            variant: 'secondary',
-                            size: 'md',
-                            loading: testingGemini
-                          })}
-                          onClick={handleTestGemini}
-                          disabled={testingGemini || !(providers.gemini?.apiKey || '').trim()}
-                          loading={testingGemini}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          preventDoubleClick={false}
-                        >
-                          키 테스트
-                        </MGButton>
-                      </div>
-                      <p className="mg-v2-system-config__section-desc mg-v2-system-config__section-desc--mt-sm">
-                        Google AI Studio에서 발급한 API 키는 키만 입력하면 됩니다. 프로젝트 이름/번호는 입력할 필요 없습니다.
-                      </p>
-                      {testResultGemini && (
-                        <div className={`test-result mg-v2-system-config__test-result--mt-sm ${testResultGemini.success ? 'success' : 'error'}`}>
-                          <div className="result-icon">
-                            {testResultGemini.success ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-                          </div>
-                          <div className="result-content">
-                            <strong>{toDisplayString(testResultGemini.message)}</strong>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              ))}
             </div>
 
-            {/* 웰니스 설정 섹션 */}
+            {/* 웰니스 설정 섹션 (잔류) */}
             <div className="mg-v2-ad-b0kla__card mg-v2-system-config__section">
               <h2 className="mg-v2-ad-b0kla__section-title">
-                <Database size={20} />
+                <Database size={20} aria-hidden="true" />
                 웰니스 시스템 설정
               </h2>
+              <p className="mg-v2-system-config__section-desc">
+                매일 지정된 시간에 등록된 사용자에게 웰니스 팁을 자동 발송합니다. 대상 역할은 콤마(,)로 구분 입력합니다.
+              </p>
               <div className="config-grid">
                 <div className="config-item">
                   <label>
@@ -846,7 +215,7 @@ const SystemConfigManagement = () => {
                     placeholder="CLIENT,ROLE_CLIENT"
                     className="mg-v2-input"
                   />
-                  <small className="help-text">콤마로 구분하여 입력하세요.</small>
+                  <small className="help-text">{toDisplayString('콤마(,)로 구분하여 입력하세요. 예: CLIENT,ROLE_CLIENT')}</small>
                 </div>
               </div>
             </div>

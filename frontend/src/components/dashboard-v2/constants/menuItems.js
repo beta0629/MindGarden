@@ -71,6 +71,7 @@ const DEFAULT_MENU_ITEMS = [
       { to: '/tenant/profile', icon: 'SETTINGS', label: '테넌트 프로필', end: true },
       { to: ADMIN_ROUTES.BRANDING, icon: 'IMAGE', label: '브랜딩', end: true },
       { to: '/admin/system-config', icon: 'SETTINGS', label: '시스템 설정', end: true },
+      { to: ADMIN_ROUTES.AI_PROVIDERS, icon: 'CPU', label: 'AI 프로바이더 관리', end: true },
       { to: ADMIN_ROUTES.COMMON_CODES, icon: 'FILE_TEXT', label: '공통코드', end: true },
       { to: ADMIN_ROUTES.TENANT_COMMON_CODES, icon: 'TAG', label: '테넌트 공통코드', end: true },
       { to: ADMIN_ROUTES.PACKAGE_PRICING, icon: 'PACKAGE', label: '패키지 요금 관리', end: true },

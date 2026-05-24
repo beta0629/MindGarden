@@ -168,6 +168,7 @@ import SystemNotificationManagement from './components/admin/SystemNotificationM
 import AdminMessages from './components/admin/AdminMessages';
 import AdminNotificationsPage from './components/admin/AdminNotificationsPage';
 import SystemConfigManagement from './components/admin/SystemConfigManagement';
+import AiProviderManagementPage from './components/admin/aiProvider/AiProviderManagementPage';
 import PsychAssessmentManagement from './components/admin/PsychAssessmentManagement';
 import PsychAssessmentLegacyRedirect from './components/admin/PsychAssessmentLegacyRedirect';
 import BrandingManagementPage from './pages/BrandingManagementPage';
@@ -785,6 +786,11 @@ function AppContent() {
             <Route path="/admin/reports" element={<Navigate to="/admin/consultation-logs" replace />} />
             <Route path="/admin/backup" element={<Navigate to="/admin/system-config" replace />} />
             <Route path="/admin/system-config" element={<SystemConfigManagement />} />
+            <Route path={ADMIN_ROUTES.AI_PROVIDERS} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AiProviderManagementPage />
+              </ProtectedRoute>
+            } />
             <Route path={ADMIN_ROUTES.TEST_NOTIFICATION} element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
                 <AdminTestNotificationPage />

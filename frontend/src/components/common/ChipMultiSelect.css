@@ -135,6 +135,8 @@
   left: 0;
   right: 0;
   z-index: 20;
+  display: flex;
+  flex-direction: column;
   min-width: 100%;
   max-height: 320px;
   overflow-y: auto;
@@ -151,6 +153,20 @@
   outline: none;
 }
 
+/*
+ * 글로벌 `_dropdowns.css` 의 `[role="listbox"] > *` 가
+ * `position: fixed; transform: translateZ(0); will-change: transform;` 를 적용해
+ * 옵션 li 들이 normal flow 에서 빠져 동일 좌표에 겹치는 회귀를 막는다.
+ * specificity (0,2,1) 로 (0,1,1) 보다 우선하여 컴포넌트 스코프에서만 복원한다.
+ */
+.mg-chip-multi-select__listbox > .mg-chip-multi-select__option,
+.mg-chip-multi-select__listbox > .mg-chip-multi-select__empty {
+  position: static;
+  transform: none;
+  will-change: auto;
+  isolation: auto;
+}
+
 .mg-chip-multi-select__option {
   display: flex;
   align-items: flex-start;
@@ -160,6 +176,7 @@
   cursor: pointer;
   font-size: 14px;
   color: var(--mg-color-text-main);
+  min-height: 44px; /* a11y 최소 터치 타겟 */
   min-width: 0;
 }
 

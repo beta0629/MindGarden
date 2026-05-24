@@ -31,6 +31,7 @@ const LNB_ICON_MAP = {
   Gift: 'GIFT',
   Building2: 'BUILDING_2',
   BarChart3: 'BAR_CHART_3',
+  Cpu: 'CPU',
   'gear-fill': 'SETTINGS',
   speedometer2: 'LAYOUT_DASHBOARD',
   'list-ul': 'FILE_TEXT',

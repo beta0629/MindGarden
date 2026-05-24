@@ -40,6 +40,8 @@ export const ADMIN_ROUTES = {
     /** @deprecated redirect to NOTIFICATIONS */
     SYSTEM_NOTIFICATIONS: '/admin/system-notifications',
     SYSTEM_CONFIG: '/admin/system-config',
+    /** AI 프로바이더 관리 (트랙 B PR-4, 2026-05-24) */
+    AI_PROVIDERS: '/admin/system/ai-providers',
     /** 테넌트 브랜딩(로고·파비콘 등) */
     BRANDING: '/admin/branding',
     /** 테넌트 카카오 알림톡 비시크릿 설정(템플릿 코드·키 참조) */

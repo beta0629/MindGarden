@@ -389,3 +389,33 @@
     width: 100%;
     max-width: 360px;
 }
+
+/* PR-4 (2026-05-24): AI 프로바이더 관리 페이지 이전 안내 카드 */
+.mg-v2-system-config__section--notice {
+    border-left: 4px solid var(--mg-color-primary-main);
+}
+
+.mg-v2-system-config__notice-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-sm, 8px);
+}
+
+.mg-v2-system-config__notice-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--mg-color-primary-main);
+    text-decoration: none;
+    font-weight: var(--mg-font-weight-semibold, 600);
+    padding: 6px 12px;
+    border: 1px solid var(--mg-color-primary-main);
+    border-radius: var(--mg-radius-md, 8px);
+    background: var(--mg-color-background-main);
+}
+
+.mg-v2-system-config__notice-link:hover,
+.mg-v2-system-config__notice-link:focus-visible {
+    background: var(--mg-color-surface-main);
+    text-decoration: none;
+}

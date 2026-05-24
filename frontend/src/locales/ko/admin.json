@@ -10,6 +10,41 @@
     "viewAll": "전체 보기",
     "view": "보기"
   },
+  "lnb": {
+    "aiProviderManagement": "AI 프로바이더 관리"
+  },
+  "aiProviderManagement": {
+    "title": "AI 프로바이더 관리",
+    "subtitle": "시스템의 AI 제공자 및 API 키를 관리합니다.",
+    "activeProvider": "현재 활성 프로바이더",
+    "healthRefresh": "헬스 새로고침",
+    "providerSelect": {
+      "title": "사용할 AI 프로바이더 선택",
+      "unregistered": "API 키 미등록"
+    },
+    "apiKey": {
+      "title": "API 키 관리",
+      "change": "키 변경",
+      "delete": "키 삭제"
+    },
+    "usage": {
+      "title": "사용 통계",
+      "today": "오늘",
+      "thisWeek": "이번 주",
+      "thisMonth": "이번 달",
+      "successRate": "성공률",
+      "fallbackRate": "Fallback 비율"
+    },
+    "logs": {
+      "title": "호출 로그",
+      "filter": {
+        "provider": "프로바이더",
+        "caller": "호출자",
+        "status": "상태"
+      },
+      "detail": "상세"
+    }
+  },
   "labels": {
     "client": "내담자",
     "unknown": "알 수 없음",

@@ -220,6 +220,19 @@
             <version>5.13.0</version>
         </dependency>
 
+        <!-- Spring Retry: 핫픽스 N1 후속 (2026-05-25) — 무중단 배포 비대칭 윈도우에서
+             statistics_values StaleStateException / OptimisticLocking / DataIntegrityViolation
+             1회 자동 재시도. spring-aspects 는 @Retryable AOP 프록시 활성화에 필수. -->
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aspects</artifactId>
+        </dependency>
+
         <!-- Google Cloud Speech-to-Text -->
         <dependency>
             <groupId>com.google.cloud</groupId>

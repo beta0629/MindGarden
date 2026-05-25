@@ -510,6 +510,11 @@ admin:
 # - dry-run=true 시 카운트만 로깅(실삭제 0), 운영 반영 직후 검증용
 # =====================================================
 app:
+  # 슬롯 식별자 (핫픽스 2026-05-25, N1 후속) — ShedLock locked_by 컬럼 기록값.
+  # systemd unit 에서 APP_INSTANCE_ID=blue / green / dev 로 주입하며,
+  # 미설정 시 'default' 로 기록된다. (deployer 후속 작업: systemd Environment 추가)
+  instance:
+    id: ${APP_INSTANCE_ID:default}
   notification:
     retention:
       enabled: ${APP_NOTIFICATION_RETENTION_ENABLED:true}

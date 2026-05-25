@@ -10,6 +10,11 @@ import com.coresolution.core.service.statistics.StatisticsCalculationEngine;
 import com.coresolution.core.service.statistics.StatisticsMetadataService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.StaleStateException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,7 +78,24 @@ public class StatisticsMetadataServiceImpl implements StatisticsMetadataService 
         return definitionRepository.save(definition);
     }
     
+    /**
+     * 통계 계산 + 캐시 갱신 + 생성 이력 저장.
+     *
+     * <p>핫픽스 (2026-05-25, N1 후속): 무중단 배포 비대칭 윈도우(green 슬롯 미적용 시점 blue와
+     * 동시 실행)에서 발생하던 {@link StaleStateException} / {@link ObjectOptimisticLockingFailureException}
+     * / {@link DataIntegrityViolationException} 잔여 사건에 대비해 1회 자동 재시도를 부착한다.
+     * 재시도 후에도 실패하면 기존 동작(rollback + 다음 정시 재시도) 유지.</p>
+     */
     @Override
+    @Retryable(
+        retryFor = {
+            ObjectOptimisticLockingFailureException.class,
+            DataIntegrityViolationException.class,
+            StaleStateException.class
+        },
+        maxAttempts = 2,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     public BigDecimal calculateStatistic(String tenantId, String statisticCode, LocalDate date, Map<String, Object> params) {
         long startTime = System.currentTimeMillis();
         

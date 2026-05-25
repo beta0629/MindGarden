@@ -1,0 +1,87 @@
+{
+  "track": "D",
+  "criteria": "잔여 — A/B/C 트랙에 매칭되지 않는 모든 파일 (광역). constants/_Strings/messages 군집 + erp·auth·schedule·dashboard·tenant·consultant·utils 영역.",
+  "measured_at": "2026-05-26",
+  "branch": "develop",
+  "branch_sha": "d3586eab8",
+  "main_sha": "20e3a2012",
+  "previous_inventory_sha": "9e22d9e4c",
+  "agreement_sha": "8b89df494",
+  "agreement_ref": "docs/standards/DESIGN_TOKEN_GAP_2026Q2_D5_P4_I18N_PHASE_2.md §4.1 P0-inv + §6.1 PR-INV (2차 청크 PR-E 작업 범위 사전 측정)",
+  "classification_rule": "우선순위 A > C > B > D. A/B/C 어느 카테고리에도 매칭되지 않는 잔여 파일·라인을 D 로 분류. 라인 단위 한국어 매칭 [\\u3131-\\u318F\\uAC00-\\uD7A3]. 주석 제외 패턴 ^\\s*(//|\\*|/\\*).",
+  "korean_line_total": 20583,
+  "korean_line_effective": 13477,
+  "files_total": 692,
+  "files_with_kr": 655,
+  "delta_from_chunk1_start": {
+    "korean_line_total": 338,
+    "korean_line_effective": 248,
+    "files_total": 35,
+    "files_with_kr": 25,
+    "note": "1차 청크 동안 D 영역은 i18n 흡수가 없었고 신규 코드 증가 (D11 라운드 진척 + 일부 신규 컴포넌트). 2차 청크 PR-E 의 주력 대상."
+  },
+  "top20_files": [
+    {"rank": 1, "path": "frontend/src/components/erp/IntegratedFinanceDashboard.js", "kr_total": 338, "kr_effective": 290, "namespace_candidate": "erp.finance.dashboard.*", "domain": "erp"},
+    {"rank": 2, "path": "frontend/src/components/dashboard/DynamicDashboard.js", "kr_total": 227, "kr_effective": 136, "namespace_candidate": "dashboard.dynamic.*", "domain": "dashboard"},
+    {"rank": 3, "path": "frontend/src/constants/integratedFinanceDashboardStrings.js", "kr_total": 214, "kr_effective": 192, "namespace_candidate": "erp.finance.dashboard.strings.*", "domain": "erp.constants"},
+    {"rank": 4, "path": "frontend/src/components/auth/TabletLogin.js", "kr_total": 190, "kr_effective": 110, "namespace_candidate": "auth.tabletLogin.*", "domain": "auth"},
+    {"rank": 5, "path": "frontend/src/components/auth/UnifiedLogin.js", "kr_total": 185, "kr_effective": 101, "namespace_candidate": "auth.unifiedLogin.*", "domain": "auth"},
+    {"rank": 6, "path": "frontend/src/constants/financialManagementStrings.js", "kr_total": 182, "kr_effective": 178, "namespace_candidate": "erp.finance.management.strings.*", "domain": "erp.constants"},
+    {"rank": 7, "path": "frontend/src/constants/schedule.js", "kr_total": 179, "kr_effective": 117, "namespace_candidate": "schedule.constants.*", "domain": "schedule.constants"},
+    {"rank": 8, "path": "frontend/src/components/dashboard/CommonDashboard.js", "kr_total": 178, "kr_effective": 171, "namespace_candidate": "dashboard.common.*", "domain": "dashboard"},
+    {"rank": 9, "path": "frontend/src/components/schedule/UnifiedScheduleComponent.js", "kr_total": 177, "kr_effective": 119, "namespace_candidate": "schedule.unified.*", "domain": "schedule"},
+    {"rank": 10, "path": "frontend/src/utils/widgetVisibilityUtils.js", "kr_total": 166, "kr_effective": 48, "namespace_candidate": "common.widget.visibility.*", "domain": "utils"},
+    {"rank": 11, "path": "frontend/src/components/schedule/ScheduleDetailModal.js", "kr_total": 161, "kr_effective": 130, "namespace_candidate": "schedule.detail.*", "domain": "schedule"},
+    {"rank": 12, "path": "frontend/src/constants/messages.js", "kr_total": 157, "kr_effective": 144, "namespace_candidate": "common.messages.* / error.* 확장", "domain": "common.constants"},
+    {"rank": 13, "path": "frontend/src/constants/tenantCommonCodeManagerStrings.js", "kr_total": 155, "kr_effective": 151, "namespace_candidate": "admin.tenantCommonCode.*", "domain": "admin.constants"},
+    {"rank": 14, "path": "frontend/src/constants/commonCodeManagementStrings.js", "kr_total": 152, "kr_effective": 148, "namespace_candidate": "admin.commonCode.*", "domain": "admin.constants"},
+    {"rank": 15, "path": "frontend/src/components/erp/SalaryManagement.js", "kr_total": 144, "kr_effective": 119, "namespace_candidate": "erp.salary.*", "domain": "erp"},
+    {"rank": 16, "path": "frontend/src/components/tenant/PgConfigurationForm.js", "kr_total": 144, "kr_effective": 139, "namespace_candidate": "admin.tenant.pg.*", "domain": "tenant"},
+    {"rank": 17, "path": "frontend/src/components/consultant/ConsultationRecordScreen.js", "kr_total": 139, "kr_effective": 134, "namespace_candidate": "consultant.record.*", "domain": "consultant"},
+    {"rank": 18, "path": "frontend/src/components/erp/BudgetManagement.js", "kr_total": 135, "kr_effective": 131, "namespace_candidate": "erp.budget.*", "domain": "erp"},
+    {"rank": 19, "path": "frontend/src/utils/sessionManager.js", "kr_total": 131, "kr_effective": 57, "namespace_candidate": "common.session.* / error.session.*", "domain": "utils"},
+    {"rank": 20, "path": "frontend/src/components/ops/PgApprovalManagement.js", "kr_total": 124, "kr_effective": 103, "namespace_candidate": "admin.ops.pg.*", "domain": "ops"}
+  ],
+  "top20_subtotal": {
+    "kr_total": 3478,
+    "kr_effective": 2818,
+    "share_of_track_total": 0.169
+  },
+  "constants_clusters": [
+    {"cluster": "erp/finance 상수", "files": ["frontend/src/constants/integratedFinanceDashboardStrings.js", "frontend/src/constants/financialManagementStrings.js"], "kr_total": 396, "namespace_candidate": "erp.finance.*", "new_namespace": true},
+    {"cluster": "admin/commonCode 상수", "files": ["frontend/src/constants/tenantCommonCodeManagerStrings.js", "frontend/src/constants/commonCodeManagementStrings.js"], "kr_total": 307, "namespace_candidate": "admin.commonCode.*", "new_namespace": false},
+    {"cluster": "schedule 상수", "files": ["frontend/src/constants/schedule.js"], "kr_total": 179, "namespace_candidate": "schedule.*", "new_namespace": true},
+    {"cluster": "공통 메시지", "files": ["frontend/src/constants/messages.js"], "kr_total": 157, "namespace_candidate": "common.messages.* / error.*", "new_namespace": false},
+    {"cluster": "dashboard 관련 상수", "files": ["frontend/src/constants/dashboardFormModalStrings.js", "frontend/src/constants/pageConfigs.js", "frontend/src/constants/widgetConstants.js", "frontend/src/constants/charts.js"], "kr_total": 432, "namespace_candidate": "admin.dashboard.* / dashboard.*", "new_namespace": false},
+    {"cluster": "메뉴 상수", "files": ["frontend/src/constants/MenuConstants.js", "frontend/src/constants/menu.js", "frontend/src/constants/menuPermissionManagementStrings.js", "frontend/src/constants/quickActionsConfig.js", "frontend/src/constants/gnbQuickActions.js"], "kr_total": 254, "namespace_candidate": "common.menu.*", "new_namespace": false},
+    {"cluster": "adminWebScaffold / staffManagement / salaryProfile", "files": ["frontend/src/constants/adminWebScaffold.js", "frontend/src/constants/staffManagementStrings.js", "frontend/src/constants/salaryProfileFormModalStrings.js"], "kr_total": 295, "namespace_candidate": "admin.* 확장", "new_namespace": false},
+    {"cluster": "billing/payment 상수", "files": ["frontend/src/constants/billing.js", "frontend/src/constants/cardTypes.js", "frontend/src/constants/paymentTest.js", "frontend/src/constants/portonePgConfiguration.js", "frontend/src/constants/mapping.js"], "kr_total": 300, "namespace_candidate": "admin.billing.*", "new_namespace": true},
+    {"cluster": "session/auth/account 상수", "files": ["frontend/src/constants/sessionManagement.js", "frontend/src/constants/salaryConstants.js", "frontend/src/constants/account.js", "frontend/src/constants/oauth2.js"], "kr_total": 207, "namespace_candidate": "common.session.* / auth.*", "new_namespace": false},
+    {"cluster": "stats/dashboard config", "files": ["frontend/src/constants/stats.js", "frontend/src/constants/dashboard.js", "frontend/src/constants/widgetClasses.js"], "kr_total": 142, "namespace_candidate": "statistics.* 확장", "new_namespace": false},
+    {"cluster": "loginDisplay / onboarding / passwordPolicy", "files": ["frontend/src/constants/loginDisplay.js", "frontend/src/constants/onboarding.js", "frontend/src/constants/adminOnboarding.js", "frontend/src/constants/passwordPolicyUi.js", "frontend/src/constants/magicNumbers.js"], "kr_total": 175, "namespace_candidate": "auth.* / admin.onboarding.*", "new_namespace": false},
+    {"cluster": "academy 상수", "files": ["frontend/src/constants/academy.js"], "kr_total": 53, "namespace_candidate": "academy.*", "new_namespace": true},
+    {"cluster": "client/mypage 상수", "files": ["frontend/src/constants/clientShopConstants.js", "frontend/src/constants/mypageUi.js", "frontend/src/constants/mypageProfileRoles.js"], "kr_total": 74, "namespace_candidate": "client.* / mypage.*", "new_namespace": true},
+    {"cluster": "vacation/professional 상수", "files": ["frontend/src/constants/vacation.js", "frontend/src/constants/professionalProviderRoles.js"], "kr_total": 65, "namespace_candidate": "admin.vacation.*", "new_namespace": false},
+    {"cluster": "psychAssessment 상수", "files": ["frontend/src/constants/psychAssessmentReasonLabels.js", "frontend/src/constants/psychAssessmentClientConstants.js"], "kr_total": 29, "namespace_candidate": "admin.psychAssessment.*", "new_namespace": false},
+    {"cluster": "css/디자인 토큰 (대부분 주석 — i18n 대상 아님)", "files": ["frontend/src/constants/css-variables.js", "frontend/src/constants/designTokens.js", "frontend/src/constants/unifiedDesignTokens.js", "frontend/src/constants/colorThemes.js"], "kr_total": 150, "namespace_candidate": "(D11 토큰 트랙)", "new_namespace": false},
+    {"cluster": "api 메시지/엔드포인트 (대부분 주석)", "files": ["frontend/src/constants/api.js", "frontend/src/constants/apiEndpoints.js", "frontend/src/constants/tenantApi.js", "frontend/src/constants/clinicalApi.js", "frontend/src/constants/emotionApi.js", "frontend/src/constants/predictionApi.js", "frontend/src/constants/trainingApi.js", "frontend/src/constants/clientShopApi.js", "frontend/src/constants/superAdminTenantComponentApi.js", "frontend/src/constants/tenantComponentApi.js", "frontend/src/constants/adminShopApi.js"], "kr_total": 132, "namespace_candidate": "(i18n 대상 아님 — 주석 위주, 우선순위 낮음)", "new_namespace": false}
+  ],
+  "pr_e_recommended_first_wave": {
+    "clusters": ["erp/finance 상수", "admin/commonCode 상수", "schedule 상수", "공통 메시지", "dashboard 관련 상수"],
+    "kr_total_subtotal": 1471,
+    "expected_impact": {
+      "ko_leaves_increment": "400~500",
+      "t_call_increment": "500~700",
+      "use_translation_files_increment": "10~15",
+      "new_namespaces": ["erp.json", "schedule.json"]
+    }
+  },
+  "notes": [
+    "constants/_Strings.js 군집이 D 트랙 거의 절반을 차지 — PR-E 의 자연스러운 작업 단위.",
+    "messages.js (157) 는 toast/alert 메시지 위주로 추정 — 기존 error.json (151 leaves) 와 병합 가능성 사전 검토 필요.",
+    "css/api 상수는 대부분 주석 (실효 라인 ≤10%) — i18n 대상에서 제외하거나 우선순위 최하위.",
+    "auth/TabletLogin, UnifiedLogin 컴포넌트는 PR-E 와 별도로 큰 파일 (190/185) — 가능하면 PR-E 에서 함께 흡수 또는 3차 청크 (PR-G) 로 분리.",
+    "tenant/PgConfigurationForm.js 는 admin.tenant.pg.* 로 흡수 — 추후 admin.json 확장.",
+    "schedule.json 신설 시 schedule 컴포넌트 (UnifiedScheduleComponent, ScheduleDetailModal, ScheduleClientNotesSection 등) 일괄 흡수 가능."
+  ]
+}

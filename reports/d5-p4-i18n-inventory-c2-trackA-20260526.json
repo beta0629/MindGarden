@@ -1,0 +1,71 @@
+{
+  "track": "A",
+  "criteria": "admin|layout|common-modal|error/toast/notify (파일 경로·파일명 기반 단일 카테고리, 우선순위 1)",
+  "measured_at": "2026-05-26",
+  "branch": "develop",
+  "branch_sha": "d3586eab8",
+  "main_sha": "20e3a2012",
+  "previous_inventory_sha": "9e22d9e4c",
+  "agreement_sha": "8b89df494",
+  "agreement_ref": "docs/standards/DESIGN_TOKEN_GAP_2026Q2_D5_P4_I18N_PHASE_2.md §4.1 P0-inv + §6.1 PR-INV (2차 청크 PR-D 작업 범위 사전 측정)",
+  "classification_rule": "우선순위 A > C > B > D. 파일 경로가 A 패턴(/admin/, /Admin*, /layout/, /components/common/, error|toast|notify|notifi|notification) 매칭 시 카테고리 A 확정 — 파일 전체 라인 흡수. 라인 단위 한국어 매칭 [\\u3131-\\u318F\\uAC00-\\uD7A3]. 주석 제외 패턴 ^\\s*(//|\\*|/\\*).",
+  "korean_line_total": 8863,
+  "korean_line_effective": 6255,
+  "files_total": 349,
+  "files_with_kr": 340,
+  "delta_from_chunk1_start": {
+    "korean_line_total": -318,
+    "korean_line_effective": -239,
+    "files_total": -6,
+    "files_with_kr": -15,
+    "note": "1차 청크 PR-A/B 흡수 결과 — admin·common·layout·error 6 namespace 정착, ko leaves 410→1,385"
+  },
+  "top20_files": [
+    {"rank": 1, "path": "frontend/src/components/admin/AdminDashboard.js", "kr_total": 275, "kr_effective": 265, "namespace_candidate": "admin.dashboard.*"},
+    {"rank": 2, "path": "frontend/src/components/admin/ConsultantComprehensiveManagement.js", "kr_total": 270, "kr_effective": 223, "namespace_candidate": "admin.consultant.*"},
+    {"rank": 3, "path": "frontend/src/components/dashboard-v2/AdminDashboardV2.js", "kr_total": 211, "kr_effective": 181, "namespace_candidate": "admin.dashboardV2.*"},
+    {"rank": 4, "path": "frontend/src/components/admin/DashboardFormModal.js", "kr_total": 181, "kr_effective": 93, "namespace_candidate": "admin.dashboard.form.*"},
+    {"rank": 5, "path": "frontend/src/components/admin/PermissionManagement.js", "kr_total": 129, "kr_effective": 114, "namespace_candidate": "admin.permission.*"},
+    {"rank": 6, "path": "frontend/src/components/admin/SystemConfigManagement.js", "kr_total": 120, "kr_effective": 65, "namespace_candidate": "admin.systemConfig.*"},
+    {"rank": 7, "path": "frontend/src/components/admin/VacationManagementModal.js", "kr_total": 119, "kr_effective": 82, "namespace_candidate": "admin.vacation.*"},
+    {"rank": 8, "path": "frontend/src/components/admin/SessionManagement.js", "kr_total": 102, "kr_effective": 87, "namespace_candidate": "admin.session.*"},
+    {"rank": 9, "path": "frontend/src/components/admin/ClientComprehensiveManagement.js", "kr_total": 97, "kr_effective": 78, "namespace_candidate": "admin.client.*"},
+    {"rank": 10, "path": "frontend/src/components/common/UnifiedHeader.js", "kr_total": 96, "kr_effective": 41, "namespace_candidate": "common.header.*"},
+    {"rank": 11, "path": "frontend/src/components/admin/DashboardManagement.js", "kr_total": 96, "kr_effective": 72, "namespace_candidate": "admin.dashboard.management.*"},
+    {"rank": 12, "path": "frontend/src/components/admin/WellnessManagement.js", "kr_total": 96, "kr_effective": 73, "namespace_candidate": "admin.wellness.*"},
+    {"rank": 13, "path": "frontend/src/components/admin/VacationStatistics.js", "kr_total": 95, "kr_effective": 65, "namespace_candidate": "admin.vacation.statistics.*"},
+    {"rank": 14, "path": "frontend/src/components/admin/MappingCreationModal.js", "kr_total": 86, "kr_effective": 82, "namespace_candidate": "admin.mapping.*"},
+    {"rank": 15, "path": "frontend/src/components/admin/WidgetBasedAdminDashboard.js", "kr_total": 82, "kr_effective": 64, "namespace_candidate": "admin.dashboard.widget.*"},
+    {"rank": 16, "path": "frontend/src/components/admin/ClientComprehensiveManagement/ClientModal.js", "kr_total": 80, "kr_effective": 76, "namespace_candidate": "admin.client.modal.*"},
+    {"rank": 17, "path": "frontend/src/components/admin/DashboardWidgetEditor.js", "kr_total": 79, "kr_effective": 63, "namespace_candidate": "admin.dashboard.widget.editor.*"},
+    {"rank": 18, "path": "frontend/src/components/admin/system/TestNotificationForm.js", "kr_total": 76, "kr_effective": 67, "namespace_candidate": "admin.system.notification.*"},
+    {"rank": 19, "path": "frontend/src/components/admin/UserManagement.js", "kr_total": 74, "kr_effective": 64, "namespace_candidate": "admin.user.*"},
+    {"rank": 20, "path": "frontend/src/components/common/TermsOfService.js", "kr_total": 72, "kr_effective": 70, "namespace_candidate": "common.terms.*"}
+  ],
+  "top20_subtotal": {
+    "kr_total": 2436,
+    "kr_effective": 1949,
+    "share_of_track_total": 0.275,
+    "expected_pr_d_impact": {
+      "ko_leaves_increment": "500~700",
+      "t_call_increment": "600~800",
+      "use_translation_files_increment": "15~20"
+    }
+  },
+  "ko_leaves_current": {
+    "admin": 703,
+    "common": 269,
+    "error": 151,
+    "report": 113,
+    "settings": 67,
+    "statistics": 82,
+    "total": 1385
+  },
+  "notes": [
+    "단일 카테고리 분류 — 한 파일은 한 트랙. A 우선 (Admin 패턴 매칭 시 파일 전체 라인 흡수).",
+    "namespace 신설 불필요 — 기존 admin.json / common.json 확장으로 흡수 가능.",
+    "PR-D 작업 후 admin.json 예상 leaves 약 1,200~1,400 (현재 703).",
+    "AdminDashboardV2.js 의 notificationManager 호출 1건은 §4.4 (PR-F 후속 흡수 권장).",
+    "VacationStatistics.js 는 admin/statistics 경계 — 단일 카테고리 원칙상 A (admin.vacation.statistics.*)."
+  ]
+}

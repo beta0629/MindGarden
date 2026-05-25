@@ -273,7 +273,7 @@ const CourseForm = ({ course, branchId, onSave, onCancel }) => {
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  {t('common.actions.cancel', '취소')}
+                  {t('common.actions.cancel')}
                 </MGButton>
               )}
               <MGButton

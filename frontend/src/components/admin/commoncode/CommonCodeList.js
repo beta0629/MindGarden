@@ -200,10 +200,10 @@ const CommonCodeList = ({
                                     })}
                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     onClick={() => onDelete(code.id)}
-                                    title={t('admin.actions.delete', '삭제')}
+                                    title={t('admin.actions.delete')}
                                 >
                                     <i className="bi bi-trash" />
-                                    <span>{t('admin.actions.delete', '삭제')}</span>
+                                    <span>{t('admin.actions.delete')}</span>
                                 </MGButton>
                             </div>
                         </div>

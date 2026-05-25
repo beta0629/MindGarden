@@ -137,7 +137,7 @@ const WellnessNotificationList = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={loadNotifications}
               >
-                {t('common.labels.retry', '다시 시도')}
+                {t('common.labels.retry')}
               </MGButton>
             </div>
           </div>
@@ -177,7 +177,7 @@ const WellnessNotificationList = () => {
                       <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
                     )}
                     {notification.isUrgent && (
-                      <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent', '긴급')} size="sm" />
+                      <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent')} size="sm" />
                     )}
                     {!notification.isRead && (
                       <Badge variant="status" statusVariant="info" label="신규" size="sm" />

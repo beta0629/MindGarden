@@ -35,7 +35,7 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
           variant="outline"
           preventDoubleClick={false}
         >
-          {t('common.actions.close', '닫기')}
+          {t('common.actions.close')}
         </MGButton>
       }
     >
@@ -89,7 +89,7 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
             variant="primary"
           >
             <Check size={20} className="mg-v2-icon-inline" />
-            {t('common.actions.confirm', '확인')}
+            {t('common.actions.confirm')}
           </MGButton>
         </div>
       )}

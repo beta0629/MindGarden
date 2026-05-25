@@ -48,7 +48,7 @@ const DepositPendingList = ({ items = [], onDepositConfirm }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => onDepositConfirm && onDepositConfirm(item)}
             >
-              {t('common.actions.confirm', '확인')}
+              {t('common.actions.confirm')}
             </MGButton>
           </li>
         ))}

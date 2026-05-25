@@ -253,7 +253,7 @@ const PsychoEducation = () => {
                 type="button"
                 className="psycho-edu__detail-close"
                 onClick={closeDetail}
-                aria-label={t('common.actions.close', '닫기')}
+                aria-label={t('common.actions.close')}
               >
                 <X size={18} />
               </button>
@@ -289,7 +289,7 @@ const PsychoEducation = () => {
                 disabled={detailIndex === 0}
               >
                 <ChevronLeft size={16} className="psycho-edu__detail-nav-icon" />
-                {t('common.actions.prev', '이전')}
+                {t('common.actions.prev')}
               </button>
               <button
                 type="button"

@@ -100,7 +100,7 @@ const FormWidget = ({ widget, user }) => {
               onChange={(e) => handleFieldChange(name, e.target.value)}
               required={required}
             >
-              <option value="">{t('admin.messages.pleaseSelect', '선택하세요')}</option>
+              <option value="">{t('admin.messages.pleaseSelect')}</option>
               {options.map((option, optIndex) => (
                 <option key={optIndex} value={option.value || option}>
                   {toDisplayString(option.label != null ? option.label : option)}

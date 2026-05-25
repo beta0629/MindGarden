@@ -252,7 +252,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
                           {record.isCompleted ? (
                             <>
                               
-                              {t('admin.actions.done', '완료')}
+                              {t('admin.actions.done')}
                             </>
                           ) : (
                             <>
@@ -282,7 +282,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
                     preventDoubleClick={false}
                   >
                     
-                    {t('admin.actions.view', '보기')}
+                    {t('admin.actions.view')}
                   </MGButton>
                 </div>
               ))}

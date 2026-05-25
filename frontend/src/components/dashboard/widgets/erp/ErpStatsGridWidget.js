@@ -294,7 +294,7 @@ const ErpStatsGridWidget = ({ widget, user }) => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={refresh}
                 >
-                  {t('common.labels.retry', '다시 시도')}
+                  {t('common.labels.retry')}
                 </MGButton>
               </div>
             )}

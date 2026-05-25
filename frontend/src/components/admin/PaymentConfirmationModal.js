@@ -299,7 +299,7 @@ const PaymentConfirmationModal = ({
     <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
-      title={t('admin.actions.paymentConfirm', '결제 확인')}
+      title={t('admin.actions.paymentConfirm')}
       size="auto"
       className="mg-v2-ad-b0kla"
       backdropClick
@@ -318,7 +318,7 @@ const PaymentConfirmationModal = ({
             }}
             disabled={loading}
           >
-            {t('admin.actions.cancel', '취소')}
+            {t('admin.actions.cancel')}
           </MGButton>
           <MGButton
             type="button"
@@ -342,7 +342,7 @@ const PaymentConfirmationModal = ({
             disabled={selectedMappings.length === 0}
             preventDoubleClick
           >
-            {t('admin.actions.paymentConfirm', '결제 확인')}
+            {t('admin.actions.paymentConfirm')}
           </MGButton>
         </>
       }
@@ -392,7 +392,7 @@ const PaymentConfirmationModal = ({
             <h3 className="mg-v2-ad-b0kla__section-title">결제 정보</h3>
             
             <div className="mg-v2-form-group">
-              <label className="mg-v2-label">{t('admin.labels.paymentMethod', '결제 방법')}</label>
+              <label className="mg-v2-label">{t('admin.labels.paymentMethod')}</label>
               <BadgeSelect
                 value={paymentData.method}
                 onChange={(val) => handlePaymentDataChange('method', val)}
@@ -401,11 +401,11 @@ const PaymentConfirmationModal = ({
                   label: `${option.icon != null ? `${option.icon} ` : ''}${option.label || option.value || ''}`,
                   icon: option.icon
                 }))}
-                placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
+                placeholder={t('admin.messages.pleaseSelect')}
                 className="mg-v2-badge-select-wrap"
                 disabled={loadingCodes}
                 loading={loadingCodes}
-                aria-label={t('admin.labels.paymentMethod', '결제 방법')}
+                aria-label={t('admin.labels.paymentMethod')}
               />
             </div>
 

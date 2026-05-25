@@ -102,7 +102,7 @@ const ErrorState = ({ message, onRetry }) => {
       <AlertTriangle size={40} className="cr-error__icon" />
       <p className="cr-error__text">{message}</p>
       <button className="cr-error__retry" onClick={onRetry} type="button">
-        <RefreshCw size={16} /> {t('common.labels.retry', '다시 시도')}
+        <RefreshCw size={16} /> {t('common.labels.retry')}
       </button>
     </div>
   );
@@ -353,7 +353,7 @@ const ConsultantDashboardRenewal = () => {
             onClick={() => navigate('/consultant/renewal/schedule')}
             type="button"
           >
-            {t('admin.actions.viewAll', '전체 보기')}
+            {t('admin.actions.viewAll')}
           </button>
         </div>
         {todaySchedules.length === 0 ? (

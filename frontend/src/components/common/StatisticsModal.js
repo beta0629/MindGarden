@@ -171,7 +171,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = USER_ROLES.ADMIN }) => {
     <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
-      title={t('statistics:modal.title', '통계 보기')}
+      title={t('statistics:modal.title')}
       size="large"
       backdropClick
       showCloseButton
@@ -189,7 +189,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = USER_ROLES.ADMIN }) => {
             className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading })}
           >
             <RefreshCw size={16} />
-            {t('common.actions.refresh', '새로고침')}
+            {t('common.actions.refresh')}
           </MGButton>
           <MGButton
             type="button"
@@ -199,7 +199,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = USER_ROLES.ADMIN }) => {
             className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
-            {t('common.actions.close', '닫기')}
+            {t('common.actions.close')}
           </MGButton>
         </>
       }
@@ -220,7 +220,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = USER_ROLES.ADMIN }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               <BarChart size={16} />
-              {t('statistics:modal.tabs.overall', '전체 통계')}
+              {t('statistics:modal.tabs.overall')}
             </MGButton>
             <MGButton
               type="button"
@@ -236,7 +236,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = USER_ROLES.ADMIN }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               <Calendar size={16} />
-              {t('statistics:modal.tabs.today', '오늘 통계')}
+              {t('statistics:modal.tabs.today')}
             </MGButton>
           </div>
           

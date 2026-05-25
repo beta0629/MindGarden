@@ -319,8 +319,8 @@ const AIUsageWidget = ({ widget, user }) => {
           })}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => handleAction('refresh')}
-          aria-label={t('admin.actions.refresh', '새로고침')}
-          title={t('admin.actions.refresh', '새로고침')}
+          aria-label={t('admin.actions.refresh')}
+          title={t('admin.actions.refresh')}
           preventDoubleClick={false}
         >
           {WIDGET_CONSTANTS.ICONS.REFRESH}

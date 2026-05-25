@@ -75,7 +75,7 @@ const ClientMappingTab = ({
   return (
     <div className="mg-v2-client-mapping mg-v2-client-list-block">
       <header className="mg-v2-mapping-page-header">
-        <h2 className="mg-v2-mapping-page-header__title mg-v2-h2">{t('admin.labels.matchingManagement', '매칭 관리')}</h2>
+        <h2 className="mg-v2-mapping-page-header__title mg-v2-h2">{t('admin.labels.matchingManagement')}</h2>
         <p className="mg-v2-mapping-page-header__desc">내담자와 상담사의 매칭 정보를 확인하고 관리할 수 있습니다.</p>
       </header>
       {clients.length === 0 ? (

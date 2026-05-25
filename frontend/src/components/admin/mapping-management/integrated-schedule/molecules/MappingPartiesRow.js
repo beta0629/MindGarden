@@ -25,7 +25,7 @@ const MappingPartiesRow = ({ consultantName, clientName }) => {
       <span className="integrated-schedule__card-client">
         {clientDisplay}
       </span>
-      <span className="integrated-schedule__card-client-honorific">{t('admin.labels.client', '내담자')}</span>
+      <span className="integrated-schedule__card-client-honorific">{t('admin.labels.client')}</span>
     </div>
   );
 };

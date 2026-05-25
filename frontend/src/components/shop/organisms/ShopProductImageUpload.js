@@ -141,7 +141,7 @@ const ShopProductImageUpload = ({
               disabled={disabled}
               onClick={handleClear}
             >
-              {t('common.actions.delete', '삭제')}
+              {t('common.actions.delete')}
             </MGButton>
           </div>
         </figure>

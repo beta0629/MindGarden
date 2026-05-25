@@ -148,7 +148,7 @@ const CourseList = ({ branchId, onCourseSelect, onCreateCourse, onEditCourse, on
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => onEditCourse(course)}
           >
-            {t('common.actions.edit', '수정')}
+            {t('common.actions.edit')}
           </MGButton>
         )}
         {onDeleteCourse && (
@@ -163,7 +163,7 @@ const CourseList = ({ branchId, onCourseSelect, onCreateCourse, onEditCourse, on
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => handleDelete(course.courseId)}
           >
-            {t('common.actions.delete', '삭제')}
+            {t('common.actions.delete')}
           </MGButton>
         )}
       </div>

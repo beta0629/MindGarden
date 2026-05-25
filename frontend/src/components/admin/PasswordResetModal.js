@@ -97,7 +97,7 @@ const PasswordResetModal = ({
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onClose}
                     >
-                        {t('admin.actions.cancel', '취소')}
+                        {t('admin.actions.cancel')}
                     </MGButton>
                     <MGButton
                         type="submit"

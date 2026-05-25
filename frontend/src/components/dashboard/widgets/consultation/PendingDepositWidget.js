@@ -204,7 +204,7 @@ const PendingDepositWidget = ({ widget, user }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleViewAll}
             >
-              {t('admin.actions.viewAll', '전체 보기')}
+              {t('admin.actions.viewAll')}
             </MGButton>
           </div>
           <div className="deposit-items">
@@ -252,10 +252,10 @@ const PendingDepositWidget = ({ widget, user }) => {
                     loading={false}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleViewDeposit(deposit.id)}
-                    title={t('admin.actions.viewDetail', '상세 보기')}
+                    title={t('admin.actions.viewDetail')}
                     preventDoubleClick={false}
                   >
-                    {t('admin.actions.view', '보기')}
+                    {t('admin.actions.view')}
                   </MGButton>
                 </div>
               </div>

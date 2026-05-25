@@ -212,7 +212,7 @@ const PendingDepositsWidget = ({ widget, user }) => {
                     title="입금 확인"
                     preventDoubleClick={false}
                   >
-                    {t('common.actions.confirm', '확인')}
+                    {t('common.actions.confirm')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -253,7 +253,7 @@ const PendingDepositsWidget = ({ widget, user }) => {
               onClick={refresh}
               preventDoubleClick={false}
             >
-              {t('admin.actions.refresh', '새로고침')}
+              {t('admin.actions.refresh')}
             </MGButton>
           </div>
         )}

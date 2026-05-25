@@ -190,7 +190,7 @@ const RecipientPicker = ({
           className={`${RECIPIENT_PICKER_CLASS}__search-label`}
           htmlFor="mg-manual-notif-recipient-search"
         >
-          {t('manualNotification.recipient.searchLabel', '수신자 검색')}
+          {t('manualNotification.recipient.searchLabel')}
         </label>
         <input
           id="mg-manual-notif-recipient-search"
@@ -198,7 +198,7 @@ const RecipientPicker = ({
           className={`${RECIPIENT_PICKER_CLASS}__search-input`}
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          placeholder={t('manualNotification.recipient.searchPlaceholder', '이름·이메일·전화 검색')}
+          placeholder={t('manualNotification.recipient.searchPlaceholder')}
           disabled={disabled}
           autoComplete="off"
         />
@@ -226,7 +226,7 @@ const RecipientPicker = ({
           disabled={disabled || visibleAddable.length === 0 || value.length >= maxCount}
           onClick={handleAddAllVisible}
         >
-          {t('manualNotification.recipient.addAllVisible', '검색 결과 모두 추가')}
+          {t('manualNotification.recipient.addAllVisible')}
         </MGButton>
         <MGButton
           type="button"
@@ -242,21 +242,21 @@ const RecipientPicker = ({
           disabled={disabled || value.length === 0}
           onClick={handleClearAll}
         >
-          {t('manualNotification.recipient.clearAll', '전체 해제')}
+          {t('manualNotification.recipient.clearAll')}
         </MGButton>
       </div>
 
       <div className={`${RECIPIENT_PICKER_CLASS}__results`} aria-live="polite">
         {loading && (
           <p className={`${RECIPIENT_PICKER_CLASS}__results-empty`}>
-            {t('manualNotification.recipient.loading', '사용자 검색 중...')}
+            {t('manualNotification.recipient.loading')}
           </p>
         )}
         {!loading && normalizedOptions.length === 0 && (
           <p className={`${RECIPIENT_PICKER_CLASS}__results-empty`}>
             {query.trim()
-              ? t('manualNotification.recipient.empty', '검색 결과가 없습니다.')
-              : t('manualNotification.recipient.noResultsHint', '이름·이메일·전화 일부를 입력해 검색하세요.')}
+              ? t('manualNotification.recipient.empty')
+              : t('manualNotification.recipient.noResultsHint')}
           </p>
         )}
         {!loading && normalizedOptions.length > 0 && (
@@ -277,7 +277,7 @@ const RecipientPicker = ({
                       {toDisplayString(opt.role, '역할 미지정')}
                       {' · '}
                       {cantSelect
-                        ? t('manualNotification.recipient.noPhone', '전화번호 없음')
+                        ? t('manualNotification.recipient.noPhone')
                         : toDisplayString(opt.phoneMasked, '번호 없음')}
                     </span>
                   </div>
@@ -306,7 +306,7 @@ const RecipientPicker = ({
 
       <div className={`${RECIPIENT_PICKER_CLASS}__selected`}>
         <h4 className={`${RECIPIENT_PICKER_CLASS}__selected-title`}>
-          {t('manualNotification.recipient.selectedListTitle', '선택된 수신자')}
+          {t('manualNotification.recipient.selectedListTitle')}
           {' '}
           <span className={`${RECIPIENT_PICKER_CLASS}__selected-count`}>
             ({value.length})
@@ -314,7 +314,7 @@ const RecipientPicker = ({
         </h4>
         {value.length === 0 ? (
           <p className={`${RECIPIENT_PICKER_CLASS}__selected-empty`}>
-            {t('manualNotification.recipient.atLeastOne', '수신자를 최소 1명 이상 선택해 주세요.')}
+            {t('manualNotification.recipient.atLeastOne')}
           </p>
         ) : (
           <div className={`${RECIPIENT_PICKER_CLASS}__chip-list`}>
@@ -323,7 +323,7 @@ const RecipientPicker = ({
                 key={String(recipient.userId)}
                 recipient={recipient}
                 onRemove={handleRemove}
-                removeAriaLabel={t('manualNotification.recipient.removeChip', '선택 해제')}
+                removeAriaLabel={t('manualNotification.recipient.removeChip')}
               />
             ))}
           </div>

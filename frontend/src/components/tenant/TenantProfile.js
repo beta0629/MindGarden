@@ -446,7 +446,7 @@ const TenantProfile = () => {
                         <p><SafeText fallback="-">{tenantInfo.businessType}</SafeText></p>
                       </div>
                       <div className="mg-v2-tenant-profile__field">
-                        <label>{t('admin.labels.status', '상태')}</label>
+                        <label>{t('admin.labels.status')}</label>
                         <div>{renderStatusBadge(tenantInfo.status)}</div>
                       </div>
                     </div>
@@ -643,7 +643,7 @@ const TenantProfile = () => {
                               title={toDisplayString('삭제')}
                               preventDoubleClick={false}
                             >
-                              {t('admin.actions.delete', '삭제')}
+                              {t('admin.actions.delete')}
                             </MGButton>
                           </div>
                         </div>
@@ -698,7 +698,7 @@ const TenantProfile = () => {
                   disabled={tenantNameSaving}
                   preventDoubleClick={false}
                 >
-                  {t('admin.actions.cancel', '취소')}
+                  {t('admin.actions.cancel')}
                 </MGButton>
                 <MGButton
                   type="submit"
@@ -716,7 +716,7 @@ const TenantProfile = () => {
                   data-testid="tenant-profile-rename-save"
                   preventDoubleClick={false}
                 >
-                  {t('common.actions.save', '저장')}
+                  {t('common.actions.save')}
                 </MGButton>
               </>
             }

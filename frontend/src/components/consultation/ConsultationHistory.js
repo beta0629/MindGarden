@@ -226,7 +226,7 @@ const ConsultationHistory = () => {
           {/* 필터 섹션 */}
           <div className="filter-section">
             <div className="filter-group">
-              <label htmlFor="status-filter">{t('common.labels.status', '상태')}</label>
+              <label htmlFor="status-filter">{t('common.labels.status')}</label>
               <select
                 id="status-filter"
                 value={filterStatus}
@@ -234,7 +234,7 @@ const ConsultationHistory = () => {
                 className="filter-select"
                 disabled={loadingCodes}
               >
-                <option value="ALL">{t('common.labels.all', '전체')}</option>
+                <option value="ALL">{t('common.labels.all')}</option>
                 {statusOptions.map(option => (
                   <option key={option.value} value={option.value}>
                     {option.icon} {option.label} ({option.value})
@@ -292,7 +292,7 @@ const ConsultationHistory = () => {
                   onClick={loadConsultationHistory}
                   preventDoubleClick={false}
                 >
-                  {t('common.labels.retry', '다시 시도')}
+                  {t('common.labels.retry')}
                 </MGButton>
               </div>
             ) : filteredConsultations.length === 0 ? (

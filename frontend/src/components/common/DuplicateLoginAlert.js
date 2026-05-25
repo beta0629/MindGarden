@@ -105,7 +105,7 @@ const DuplicateLoginAlert = ({
                         variant="outline"
                         preventDoubleClick={false}
                     >
-                        {t('common.actions.cancel', '취소')}
+                        {t('common.actions.cancel')}
                     </MGButton>
                     <MGButton
                         type="button"

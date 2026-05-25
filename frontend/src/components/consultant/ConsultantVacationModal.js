@@ -176,7 +176,7 @@ const ConsultantVacationModal = ({
                         disabled={loading}
                         preventDoubleClick={false}
                     >
-                        {t('common.actions.cancel', '취소')}
+                        {t('common.actions.cancel')}
                     </MGButton>
                     <MGButton
                         variant="primary"
@@ -206,7 +206,7 @@ const ConsultantVacationModal = ({
                                 value: option.value,
                                 label: option.label
                             }))}
-                            placeholder={t('common.messages.pleaseSelect', '선택하세요')}
+                            placeholder={t('common.messages.pleaseSelect')}
                             disabled={loading}
                         />
                     </div>

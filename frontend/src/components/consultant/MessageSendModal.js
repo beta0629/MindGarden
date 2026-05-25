@@ -185,7 +185,7 @@ const MessageSendModal = ({
             disabled={sending}
             preventDoubleClick={false}
           >
-            {t('common.actions.cancel', '취소')}
+            {t('common.actions.cancel')}
           </MGButton>
           <MGButton
             type="button"
@@ -240,7 +240,7 @@ const MessageSendModal = ({
                 value: type.value,
                 label: `${toDisplayString(type.icon)} ${toDisplayString(type.label)} (${toDisplayString(type.value)})`
               }))}
-              placeholder={t('common.messages.pleaseSelect', '선택하세요')}
+              placeholder={t('common.messages.pleaseSelect')}
               className="mg-v2-form-badge-select"
               disabled={loadingCodes}
             />

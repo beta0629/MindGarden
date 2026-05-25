@@ -113,7 +113,7 @@ const BusinessTypeGuard = ({
 
   // 로딩 중
   if (isLoading && showLoading) {
-    return <div className="mg-loading">{t('common:businessGuard.loading', '로딩중...')}</div>;
+    return <div className="mg-loading">{t('common:businessGuard.loading')}</div>;
   }
 
   // 접근 거부

@@ -146,7 +146,7 @@ const StatisticsDashboard = () => {
       })}
       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
     >
-      {t('admin.actions.refresh', '새로고침')}
+      {t('admin.actions.refresh')}
     </MGButton>
   );
 
@@ -193,7 +193,7 @@ const StatisticsDashboard = () => {
               loading={loading}
               onClick={loadStatistics}
             >
-              {t('common.labels.retry', '다시 시도')}
+              {t('common.labels.retry')}
             </MGButton>
           </div>
         </div>

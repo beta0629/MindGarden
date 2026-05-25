@@ -128,7 +128,7 @@ const MappingListRow = ({
               title="스케줄 보기"
               preventDoubleClick={false}
             >
-              {t('common.labels.schedule', '스케줄')}
+              {t('common.labels.schedule')}
             </MGButton>
           )}
         </div>
@@ -164,7 +164,7 @@ const MappingListRow = ({
             size="small"
             onClick={() => onEdit(mapping)}
           >
-            {t('common.actions.edit', '수정')}
+            {t('common.actions.edit')}
           </ActionButton>
         )}
         {onRefund && (

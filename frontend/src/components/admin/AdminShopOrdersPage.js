@@ -348,7 +348,7 @@ const AdminShopOrdersPage = () => {
               onClick={loadOrders}
               disabled={loading}
             >
-              {t('admin.actions.refresh', '새로고침')}
+              {t('admin.actions.refresh')}
             </MGButton>
           )}
         />
@@ -381,7 +381,7 @@ const AdminShopOrdersPage = () => {
             onClick={closeDetail}
             disabled={detailLoading}
           >
-            {t('common.actions.close', '닫기')}
+            {t('common.actions.close')}
           </MGButton>
         )}
       >
@@ -416,7 +416,7 @@ const AdminShopOrdersPage = () => {
               onClick={closeRefund}
               disabled={refunding}
             >
-              {t('admin.actions.cancel', '취소')}
+              {t('admin.actions.cancel')}
             </MGButton>
             <MGButton
               type="button"

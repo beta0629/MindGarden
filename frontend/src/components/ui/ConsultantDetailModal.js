@@ -68,7 +68,7 @@ const ConsultantDetailModal = ({
                         onClick={onClose}
                         preventDoubleClick={false}
                     >
-                        {t('common.actions.close', '닫기')}
+                        {t('common.actions.close')}
                     </MGButton>
                     <MGButton
                         variant="primary"
@@ -105,7 +105,7 @@ const ConsultantDetailModal = ({
                             
                             <div className="mg-consultant-detail-info">
                                 <SafeText tag="h3" className="mg-consultant-detail-name">{consultant.name}</SafeText>
-                                <p className="mg-consultant-detail-role">{t('common.labels.consultant', '상담사')}</p>
+                                <p className="mg-consultant-detail-role">{t('common.labels.consultant')}</p>
                                 
                                 <div className="mg-consultant-detail-stats">
                                     <div className="mg-consultant-detail-stat">
@@ -145,7 +145,7 @@ const ConsultantDetailModal = ({
                                 <div className="mg-consultant-detail-contact-item">
                                     <Mail size={18} />
                                     <div className="mg-consultant-detail-contact-info">
-                                        <span className="mg-consultant-detail-contact-label">{t('common.labels.email', '이메일')}</span>
+                                        <span className="mg-consultant-detail-contact-label">{t('common.labels.email')}</span>
                                         <span className="mg-consultant-detail-contact-value">
                                             <SafeText>{contact.email}</SafeText>
                                         </span>

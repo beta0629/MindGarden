@@ -167,7 +167,7 @@ const PermissionGroupManagementUI = ({
                                             variant="primary"
                                             size="small"
                                         >
-                                            {t('common.labels.all', '전체')}
+                                            {t('common.labels.all')}
                                         </MGButton>
                                     </div>
                                 )}

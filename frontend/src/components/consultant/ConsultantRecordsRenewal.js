@@ -123,7 +123,7 @@ const RecordFormSheet = ({ schedule, onClose, onSave }) => {
         </div>
         <div className="cr-form-sheet__header">
           <h2 className="cr-form-sheet__title">일지 작성</h2>
-          <button className="cr-form-sheet__close" onClick={onClose} aria-label={t('common.actions.close', '닫기')} type="button">
+          <button className="cr-form-sheet__close" onClick={onClose} aria-label={t('common.actions.close')} type="button">
             <X size={24} />
           </button>
         </div>
@@ -204,7 +204,7 @@ const RecordDetailSheet = ({ record, onClose }) => {
         </div>
         <div className="cr-form-sheet__header">
           <h2 className="cr-form-sheet__title">일지 상세</h2>
-          <button className="cr-form-sheet__close" onClick={onClose} aria-label={t('common.actions.close', '닫기')} type="button">
+          <button className="cr-form-sheet__close" onClick={onClose} aria-label={t('common.actions.close')} type="button">
             <X size={24} />
           </button>
         </div>
@@ -457,14 +457,14 @@ const ConsultantRecordsRenewal = () => {
                         onClick={() => handleViewDetail(record)}
                         type="button"
                       >
-                        <Eye size={14} /> {t('admin.actions.viewDetail', '상세 보기')}
+                        <Eye size={14} /> {t('admin.actions.viewDetail')}
                       </button>
                       <button
                         className="cr-record-card__action-btn cr-record-card__action-btn--secondary"
                         onClick={() => handleWriteLog(record)}
                         type="button"
                       >
-                        {t('common.actions.edit', '수정')}
+                        {t('common.actions.edit')}
                       </button>
                     </>
                   )}

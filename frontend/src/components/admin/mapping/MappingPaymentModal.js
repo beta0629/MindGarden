@@ -139,7 +139,7 @@ const MappingPaymentModal = ({
         <UnifiedModal
             isOpen={isOpen}
             onClose={onClose}
-            title={t('admin.actions.paymentConfirm', '결제 확인')}
+            title={t('admin.actions.paymentConfirm')}
             size="medium"
             className="mg-v2-ad-b0kla"
             backdropClick
@@ -164,7 +164,7 @@ const MappingPaymentModal = ({
                         disabled={loading}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
-                        {t('admin.actions.cancel', '취소')}
+                        {t('admin.actions.cancel')}
                     </MGButton>
                     <MGButton
                         type="button"
@@ -202,14 +202,14 @@ const MappingPaymentModal = ({
 
                 <div className="mg-v2-form-group">
                     <label className="mg-v2-form-label">
-                        {t('admin.labels.paymentMethod', '결제 방법')}
+                        {t('admin.labels.paymentMethod')}
                     </label>
                     <BadgeSelect
                         value={paymentData.paymentMethod}
                         onChange={(val) => handlePaymentMethodChange(val)}
                         options={paymentMethodOptions}
                         className="mg-v2-form-badge-select"
-                        aria-label={t('admin.labels.paymentMethod', '결제 방법')}
+                        aria-label={t('admin.labels.paymentMethod')}
                     />
                 </div>
 

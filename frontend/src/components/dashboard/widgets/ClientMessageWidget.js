@@ -329,7 +329,7 @@ const ClientMessageWidget = ({ widget, user }) => {
                     <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
                   )}
                   {message.isUrgent && (
-                    <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent', '긴급')} size="sm" />
+                    <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent')} size="sm" />
                   )}
                   <span className="client-message-item-date">
                     
@@ -370,7 +370,7 @@ const ClientMessageWidget = ({ widget, user }) => {
                 <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
               )}
               {selectedMessage.isUrgent && (
-                <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent', '긴급')} size="sm" />
+                <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent')} size="sm" />
               )}
             </div>
             <span className="client-message-detail-date">

@@ -457,7 +457,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                                 disabled={loading || !newSpecialty.trim()}
                                                 loading={loading}
                                             >
-                                                {t('common.actions.save', '저장')}
+                                                {t('common.actions.save')}
                                             </MGButton>
                                         </div>
                                     </div>

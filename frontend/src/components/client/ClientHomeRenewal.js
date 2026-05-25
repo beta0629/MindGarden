@@ -192,7 +192,7 @@ const ClientHomeRenewal = () => {
                 navigate('/client/session-management');
               }}
             >
-              {t('admin.actions.viewDetail', '상세 보기')} <ChevronRight size={16} />
+              {t('admin.actions.viewDetail')} <ChevronRight size={16} />
             </button>
           </div>
         </section>

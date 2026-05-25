@@ -380,14 +380,14 @@ function AppContent() {
               variant="spinner"
               size="md"
               type="inline"
-              text={t('common.messages.loading', '로딩 중...')}
+              text={t('common.messages.loading')}
             />
           </div>
         )}
         <div className="App">
           <AppToast />
           <UnifiedNotification type="toast" position="top-right" />
-          <Suspense fallback={<div className="mg-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>{t('common.messages.loading', '로딩 중...')}</div>}>
+          <Suspense fallback={<div className="mg-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>{t('common.messages.loading')}</div>}>
           <Routes>
             <Route path="/" element={<TabletHomepage />} />
             <Route path="/landing" element={<CounselingCenterLanding />} />

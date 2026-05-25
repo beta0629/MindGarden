@@ -94,7 +94,7 @@ const PredictionDashboard = ({ clientId }) => {
                     onClick={loadPredictionData}
                     variant="primary"
                 >
-                    {t('common.labels.retry', '다시 시도')}
+                    {t('common.labels.retry')}
                 </MGButton>
             </div>
         );

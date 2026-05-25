@@ -241,14 +241,14 @@ const SessionManagementWidget = ({ widget, user }) => {
               <div className="stat-icon completed" />
               <div className="stat-info">
                 <div className="stat-number">{stats.completed}</div>
-                <div className="stat-label">{t('admin.actions.done', '완료')}</div>
+                <div className="stat-label">{t('admin.actions.done')}</div>
               </div>
             </div>
             <div className="stat-card">
               <div className="stat-icon pending" />
               <div className="stat-info">
                 <div className="stat-number">{stats.pending}</div>
-                <div className="stat-label">{t('admin.labels.waiting', '대기중')}</div>
+                <div className="stat-label">{t('admin.labels.waiting')}</div>
               </div>
             </div>
             <div className="stat-card">
@@ -326,7 +326,7 @@ const SessionManagementWidget = ({ widget, user }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleViewAll}
             >
-              {t('admin.actions.viewAll', '전체 보기')}
+              {t('admin.actions.viewAll')}
             </MGButton>
           </div>
           <div className="session-items">
@@ -385,10 +385,10 @@ const SessionManagementWidget = ({ widget, user }) => {
                     loading={false}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleViewSession(session.id)}
-                    title={t('admin.actions.viewDetail', '상세 보기')}
+                    title={t('admin.actions.viewDetail')}
                     preventDoubleClick={false}
                   >
-                    {t('admin.actions.view', '보기')}
+                    {t('admin.actions.view')}
                   </MGButton>
                   {session.recordUrl && (
                     <MGButton

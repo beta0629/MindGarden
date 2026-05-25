@@ -80,7 +80,7 @@ const BadgeSelect = ({
         aria-busy="true"
       >
         <span className="mg-v2-badge-select__placeholder">{placeholder}</span>
-        <span className="mg-v2-badge-select__loading-text">{t('common.messages.loading', '로딩 중...')}</span>
+        <span className="mg-v2-badge-select__loading-text">{t('common.messages.loading')}</span>
       </div>
     );
   }

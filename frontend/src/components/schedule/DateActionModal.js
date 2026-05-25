@@ -61,7 +61,7 @@ const DateActionModal = ({
           preventDoubleClick={false}
         >
           <XCircleIcon size={20} className="mg-v2-icon-inline" />
-          {t('common.actions.cancel', '취소')}
+          {t('common.actions.cancel')}
         </MGButton>
       }
     >

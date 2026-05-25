@@ -113,7 +113,7 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
                     onClick={loadEmotionData}
                     variant="primary"
                 >
-                    {t('common.labels.retry', '다시 시도')}
+                    {t('common.labels.retry')}
                 </MGButton>
             </div>
         );

@@ -1334,7 +1334,7 @@ const PgConfigurationForm = ({
           disabled={loading}
           preventDoubleClick={false}
         >
-          {t('admin.actions.cancel', '취소')}
+          {t('admin.actions.cancel')}
         </MGButton>
         <MGButton
           type="submit"

@@ -141,7 +141,7 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => onEditClass(classItem)}
           >
-            {t('common.actions.edit', '수정')}
+            {t('common.actions.edit')}
           </MGButton>
         )}
         {onDeleteClass && (
@@ -156,7 +156,7 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => handleDelete(classItem.classId)}
           >
-            {t('common.actions.delete', '삭제')}
+            {t('common.actions.delete')}
           </MGButton>
         )}
       </div>

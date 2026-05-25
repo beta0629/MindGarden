@@ -191,7 +191,7 @@ const WellnessNotificationDetail = () => {
           <div className="wellness-notification-detail">
             <div className="wellness-notification-error">
               <div className="error-icon" aria-hidden="true">
-                {t('common.labels.notification', '알림')}
+                {t('common.labels.notification')}
               </div>
               <h2 className="error-title">알림을 찾을 수 없습니다</h2>
               <p className="error-message">
@@ -235,7 +235,7 @@ const WellnessNotificationDetail = () => {
               )}
               {notification.isUrgent && (
                 <span className="badge badge-urgent">
-                  <span>{t('admin.labels.urgent', '긴급')}</span>
+                  <span>{t('admin.labels.urgent')}</span>
                 </span>
               )}
               <span className={`badge badge-type ${getNotificationTypeClass(notification.notificationType)}`}>

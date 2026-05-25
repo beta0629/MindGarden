@@ -398,7 +398,7 @@ const ItemManagement = () => {
                                 preventDoubleClick={false}
                                 onClick={() => handleEditItem(item)}
                               >
-                                {t('common.actions.edit', '수정')}
+                                {t('common.actions.edit')}
                               </MGButton>
                               {isAdmin() && (
                                 <MGButton
@@ -413,7 +413,7 @@ const ItemManagement = () => {
                                   preventDoubleClick={false}
                                   onClick={() => handleDeleteItem(item)}
                                 >
-                                  {t('common.actions.delete', '삭제')}
+                                  {t('common.actions.delete')}
                                 </MGButton>
                               )}
                             </div>
@@ -457,7 +457,7 @@ const ItemManagement = () => {
 
             <div className="mg-v2-form-group">
               <label className="mg-v2-form-label">
-                {t('common.labels.description', '설명')}
+                {t('common.labels.description')}
               </label>
               <textarea
                 name="description"
@@ -546,7 +546,7 @@ const ItemManagement = () => {
                   resetForm();
                 }}
               >
-                {t('common.actions.cancel', '취소')}
+                {t('common.actions.cancel')}
               </MGButton>
               <MGButton
                 type="submit"
@@ -594,7 +594,7 @@ const ItemManagement = () => {
 
             <div className="mg-v2-form-group">
               <label className="mg-v2-form-label">
-                {t('common.labels.description', '설명')}
+                {t('common.labels.description')}
               </label>
               <textarea
                 name="description"
@@ -681,7 +681,7 @@ const ItemManagement = () => {
                   resetForm();
                 }}
               >
-                {t('common.actions.cancel', '취소')}
+                {t('common.actions.cancel')}
               </MGButton>
               <MGButton
                 type="submit"
@@ -692,7 +692,7 @@ const ItemManagement = () => {
                 preventDoubleClick={false}
                 loading={loading}
               >
-                {t('common.actions.edit', '수정')}
+                {t('common.actions.edit')}
               </MGButton>
             </div>
           </form>

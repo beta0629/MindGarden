@@ -126,7 +126,7 @@ const BaseWidget = ({
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={onRefresh}
             >
-              {t('common.labels.retry', '다시 시도')}
+              {t('common.labels.retry')}
             </MGButton>
           )}
         </div>
@@ -162,7 +162,7 @@ const BaseWidget = ({
           onClick={onRefresh}
           className="base-widget__refresh-button"
         >
-          {t('admin.actions.refresh', '새로고침')}
+          {t('admin.actions.refresh')}
         </MGButton>
       )}
     </div>
@@ -219,10 +219,10 @@ const BaseWidget = ({
                   loading={loading}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={onRefresh}
-                  title={t('admin.actions.refresh', '새로고침')}
+                  title={t('admin.actions.refresh')}
                   disabled={loading}
                 >
-                  {t('admin.actions.refresh', '새로고침')}
+                  {t('admin.actions.refresh')}
                 </MGButton>
               )}
             </div>

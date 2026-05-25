@@ -119,7 +119,7 @@ const UnifiedModalTest = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => closeModal('confirm')}
             >
-              {t('common.actions.cancel', '취소')}
+              {t('common.actions.cancel')}
             </MGButton>
             <MGButton
               variant="danger"
@@ -128,7 +128,7 @@ const UnifiedModalTest = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => closeModal('confirm')}
             >
-              {t('common.actions.confirm', '확인')}
+              {t('common.actions.confirm')}
             </MGButton>
           </div>
         }
@@ -154,7 +154,7 @@ const UnifiedModalTest = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => closeModal('form')}
             >
-              {t('common.actions.cancel', '취소')}
+              {t('common.actions.cancel')}
             </MGButton>
             <MGButton
               type="submit"
@@ -164,7 +164,7 @@ const UnifiedModalTest = () => {
               className={buildErpMgButtonClassName({ variant: 'success', size: 'sm', loading: false })}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              {t('common.actions.save', '저장')}
+              {t('common.actions.save')}
             </MGButton>
           </div>
         }

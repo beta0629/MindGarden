@@ -155,7 +155,7 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
             <div className="stat-icon consultant-icon" />
             <div className="stat-content">
               <div className="stat-value">{displayStats.totalConsultants?.toLocaleString() || 0}</div>
-              <div className="stat-label">{t('admin.labels.consultant', '상담사')}</div>
+              <div className="stat-label">{t('admin.labels.consultant')}</div>
             </div>
           </div>
 
@@ -166,7 +166,7 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
             <div className="stat-icon client-icon" />
             <div className="stat-content">
               <div className="stat-value">{displayStats.totalClients?.toLocaleString() || 0}</div>
-              <div className="stat-label">{t('admin.labels.client', '내담자')}</div>
+              <div className="stat-label">{t('admin.labels.client')}</div>
             </div>
           </div>
 
@@ -213,7 +213,7 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
               onClick={refresh}
               preventDoubleClick={false}
             >
-              {t('common.labels.retry', '다시 시도')}
+              {t('common.labels.retry')}
             </MGButton>
           </div>
         )}

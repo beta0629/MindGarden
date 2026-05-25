@@ -332,10 +332,10 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleCloseForm}
                 type="button"
-                title={t('common.actions.close', '닫기')}
+                title={t('common.actions.close')}
                 preventDoubleClick={false}
               >
-                {t('common.actions.close', '닫기')}
+                {t('common.actions.close')}
               </MGButton>
             </div>
             <form onSubmit={handleSubmit} className="consultant-registration-form">
@@ -367,7 +367,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-group">
                     <label htmlFor="name" className="form-label">
-                      {t('common.labels.name', '이름')} <span className="required">*</span>
+                      {t('common.labels.name')} <span className="required">*</span>
                     </label>
                     <input
                       type="text"
@@ -409,7 +409,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-group">
                     <label htmlFor="email" className="form-label">
-                      {t('admin.labels.email', '이메일')} <span className="required">*</span>
+                      {t('admin.labels.email')} <span className="required">*</span>
                     </label>
                     <input
                       type="email"
@@ -532,13 +532,13 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                       >
                         <option value="">전문 분야 선택</option>
                         <option value="개인상담">개인상담</option>
-                        <option value="부부상담">{t('common.labels.coupleConsultation', '부부상담')}</option>
-                        <option value="가족상담">{t('common.labels.familyConsultation', '가족상담')}</option>
+                        <option value="부부상담">{t('common.labels.coupleConsultation')}</option>
+                        <option value="가족상담">{t('common.labels.familyConsultation')}</option>
                         <option value="청소년상담">청소년상담</option>
                         <option value="트라우마상담">트라우마상담</option>
                         <option value="중독상담">중독상담</option>
                         <option value="직업상담">직업상담</option>
-                        <option value="기타">{t('admin.labels.other', '기타')}</option>
+                        <option value="기타">{t('admin.labels.other')}</option>
                       </select>
                     </div>
 
@@ -675,7 +675,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleCloseForm}
                 >
-                  {t('admin.actions.cancel', '취소')}
+                  {t('admin.actions.cancel')}
                 </MGButton>
                 <MGButton
                   type="button"

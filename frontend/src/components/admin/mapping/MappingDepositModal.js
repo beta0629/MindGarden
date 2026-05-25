@@ -123,7 +123,7 @@ const MappingDepositModal = ({
                         disabled={isLoading}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
-                        {t('admin.actions.cancel', '취소')}
+                        {t('admin.actions.cancel')}
                     </MGButton>
                     <MGButton
                         type="button"

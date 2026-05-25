@@ -66,12 +66,12 @@ const ScheduleHeader = ({
           })}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           title="데이터 새로고침"
-          aria-label={t('common.actions.refresh', '새로고침')}
+          aria-label={t('common.actions.refresh')}
           variant="outline"
           preventDoubleClick={false}
         >
           <RefreshCw size={16} />
-          {t('common.actions.refresh', '새로고침')}
+          {t('common.actions.refresh')}
         </MGButton>
       </div>
     </div>

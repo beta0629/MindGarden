@@ -63,10 +63,10 @@ const StatsCard = ({
       <div className={`${STATS_CARD_CSS.CONTAINER} ${STATS_CARD_CSS.LOADING}`}>
         <div className={STATS_CARD_CSS.LOADING_SPINNER}>
           <div className="spinner-border" role="status">
-            <span className="sr-only">{t('common.messages.loading', '로딩 중...')}</span>
+            <span className="sr-only">{t('common.messages.loading')}</span>
           </div>
         </div>
-        <div className={STATS_CARD_CSS.LOADING_TEXT}>{t('common.messages.loadingData', '데이터를 불러오는 중...')}</div>
+        <div className={STATS_CARD_CSS.LOADING_TEXT}>{t('common.messages.loadingData')}</div>
       </div>
     );
   }

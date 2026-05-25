@@ -125,7 +125,7 @@ const DuplicateLoginModal = () => {
             data-testid="duplicate-login-cancel"
           >
             <XCircle size={20} className="mg-v2-icon-inline" />
-            {t('common.actions.cancel', '취소')}
+            {t('common.actions.cancel')}
           </MGButton>
           <MGButton
             variant="primary"

@@ -76,10 +76,10 @@ const normalizeHistoryRow = (raw, idx) => {
 const formatChannelLabel = (rawChannel, t) => {
   const upper = String(rawChannel || '').toUpperCase();
   if (upper === 'PUSH') {
-    return t('manualNotification.history.channel.push', '푸시');
+    return t('manualNotification.history.channel.push');
   }
   if (upper === 'ALIMTALK') {
-    return t('manualNotification.history.channel.alimtalk', '알림톡');
+    return t('manualNotification.history.channel.alimtalk');
   }
   if (upper === 'SMS') {
     return t('manualNotification.history.channel.sms', 'SMS');
@@ -124,7 +124,7 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
       console.error('수동 발송 히스토리 로드 실패:', err);
       setError(err?.response?.data?.message
         || err?.message
-        || t('manualNotification.errors.loadFailed', '데이터를 불러오지 못했습니다.'));
+        || t('manualNotification.errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -157,7 +157,7 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
       console.error('수동 발송 배치 상세 로드 실패:', err);
       setDetailError(err?.response?.data?.message
         || err?.message
-        || t('manualNotification.history.detailError', '수신자 상세를 불러오지 못했습니다.'));
+        || t('manualNotification.history.detailError'));
     } finally {
       setDetailLoading(false);
     }
@@ -169,7 +169,7 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
     if (detailLoading && expandedBatchId === batchId && !detailByBatch[batchId]) {
       return (
         <p className={`${HISTORY_CLASS}__detail-empty`}>
-          {t('manualNotification.history.detailLoading', '수신자 상세 불러오는 중...')}
+          {t('manualNotification.history.detailLoading')}
         </p>
       );
     }
@@ -187,7 +187,7 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
     if (!Array.isArray(detail.results) || detail.results.length === 0) {
       return (
         <p className={`${HISTORY_CLASS}__detail-empty`}>
-          {t('manualNotification.history.empty', '발송 이력이 없습니다.')}
+          {t('manualNotification.history.empty')}
         </p>
       );
     }
@@ -249,12 +249,12 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
   return (
     <section
       className={HISTORY_CLASS}
-      aria-label={t('manualNotification.history.title', '배치 발송 히스토리')}
+      aria-label={t('manualNotification.history.title')}
     >
       <header className={`${HISTORY_CLASS}__header`}>
         <div>
           <h3 className={`${HISTORY_CLASS}__title`}>
-            {t('manualNotification.history.title', '배치 발송 히스토리')}
+            {t('manualNotification.history.title')}
           </h3>
           <p className={`${HISTORY_CLASS}__subtitle`}>
             {t('manualNotification.history.subtitle', {
@@ -276,15 +276,15 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
           loading={loading}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={load}
-          aria-label={t('manualNotification.history.refresh', '새로고침')}
+          aria-label={t('manualNotification.history.refresh')}
         >
-          {t('manualNotification.history.refresh', '새로고침')}
+          {t('manualNotification.history.refresh')}
         </MGButton>
       </header>
 
       {loading && items.length === 0 && (
         <p className={`${HISTORY_CLASS}__empty`}>
-          {t('manualNotification.history.loading', '이력 불러오는 중...')}
+          {t('manualNotification.history.loading')}
         </p>
       )}
 
@@ -296,7 +296,7 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
 
       {!loading && !error && items.length === 0 && (
         <p className={`${HISTORY_CLASS}__empty`}>
-          {t('manualNotification.history.empty', '발송 이력이 없습니다.')}
+          {t('manualNotification.history.empty')}
         </p>
       )}
 
@@ -312,15 +312,15 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
                 <div className={`${HISTORY_CLASS}__card-header`}>
                   <div className={`${HISTORY_CLASS}__card-meta`}>
                     <span className={`${HISTORY_CLASS}__card-batch`}>
-                      <strong>{t('manualNotification.history.cardBatchId', '배치')}:</strong>{' '}
+                      <strong>{t('manualNotification.history.cardBatchId')}:</strong>{' '}
                       {toDisplayString(item.batchId, '-')}
                     </span>
                     <span className={`${HISTORY_CLASS}__card-channel`}>
-                      <strong>{t('manualNotification.history.cardChannel', '채널')}:</strong>{' '}
+                      <strong>{t('manualNotification.history.cardChannel')}:</strong>{' '}
                       {formatChannelLabel(item.channel, t)}
                     </span>
                     <span className={`${HISTORY_CLASS}__card-started`}>
-                      <strong>{t('manualNotification.history.cardStartedAt', '발송 시각')}:</strong>{' '}
+                      <strong>{t('manualNotification.history.cardStartedAt')}:</strong>{' '}
                       {toDisplayString(item.startedAt, '-')}
                     </span>
                   </div>
@@ -334,7 +334,7 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
                   </div>
                 </div>
                 <div className={`${HISTORY_CLASS}__card-reason`}>
-                  <strong>{t('manualNotification.history.cardReason', '사유')}:</strong>{' '}
+                  <strong>{t('manualNotification.history.cardReason')}:</strong>{' '}
                   {toDisplayString(item.reason, '-')}
                 </div>
                 <div className={`${HISTORY_CLASS}__card-actions`}>
@@ -353,8 +353,8 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
                     aria-expanded={expanded}
                   >
                     {expanded
-                      ? t('manualNotification.history.closeDetail', '상세 닫기')
-                      : t('manualNotification.history.openDetail', '수신자 상세 보기')}
+                      ? t('manualNotification.history.closeDetail')
+                      : t('manualNotification.history.openDetail')}
                   </MGButton>
                 </div>
                 {expanded && (
@@ -383,7 +383,7 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
             disabled={page <= 0 || loading}
             onClick={() => setPage((p) => Math.max(0, p - 1))}
           >
-            {t('manualNotification.history.pagePrev', '이전')}
+            {t('manualNotification.history.pagePrev')}
           </MGButton>
           <span className={`${HISTORY_CLASS}__page-indicator`}>
             {t('manualNotification.history.pageIndicator', {
@@ -405,7 +405,7 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
             disabled={page + 1 >= totalPages || loading}
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
           >
-            {t('manualNotification.history.pageNext', '다음')}
+            {t('manualNotification.history.pageNext')}
           </MGButton>
         </nav>
       )}

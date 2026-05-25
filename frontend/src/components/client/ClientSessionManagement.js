@@ -188,7 +188,7 @@ const ClientSessionManagement = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
-                {t('common.labels.retry', '다시 시도')}
+                {t('common.labels.retry')}
               </MGButton>
             </div>
           </div>
@@ -238,7 +238,7 @@ const ClientSessionManagement = () => {
                 preventDoubleClick={false}
               >
                 <i className="bi bi-house client-session-menu-icon" />
-                {t('admin.labels.dashboard', '대시보드')}
+                {t('admin.labels.dashboard')}
               </MGButton>
               <MGButton
                 variant="outline"
@@ -357,7 +357,7 @@ const ClientSessionManagement = () => {
                     <span className="value">{mapping.remainingSessions || 0}회</span>
                   </div>
                   <div className="detail-item">
-                    <span className="label">{t('common.labels.consultant', '상담사')}</span>
+                    <span className="label">{t('common.labels.consultant')}</span>
                     <span className="value">{mapping.consultant?.consultantName || '미지정'}</span>
                   </div>
                   <div className="detail-item">

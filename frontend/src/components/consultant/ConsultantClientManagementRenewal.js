@@ -94,7 +94,7 @@ const ClientCard = ({ client, onClick }) => {
       <div className="cr-client-card__badges">
         {isUrgent && (
           <span className="cr-client-card__badge cr-client-card__badge--urgent">
-            {t('admin.labels.urgent', '긴급')}
+            {t('admin.labels.urgent')}
           </span>
         )}
         <span className={`cr-client-card__badge ${badge.className}`}>
@@ -176,12 +176,12 @@ const ProfileSheet = ({ client, onClose, onMessage }) => {
           {activeTab === 'info' && (
             <>
               <div className="cr-profile-field">
-                <span className="cr-profile-field__label">{t('common.labels.name', '이름')}</span>
+                <span className="cr-profile-field__label">{t('common.labels.name')}</span>
                 <span className="cr-profile-field__value">{name}</span>
               </div>
               {client?.email && (
                 <div className="cr-profile-field">
-                  <span className="cr-profile-field__label">{t('common.labels.email', '이메일')}</span>
+                  <span className="cr-profile-field__label">{t('common.labels.email')}</span>
                   <span className="cr-profile-field__value">{client.email}</span>
                 </div>
               )}

@@ -125,13 +125,13 @@ const BottomSheet = ({ schedule, onClose, onStartConsultation, onCompleteConsult
         <div className="cr-bottomsheet__content">
           <div className="cr-bottomsheet__header">
             <h2 className="cr-bottomsheet__title">상담 상세</h2>
-            <button onClick={onClose} aria-label={t('common.actions.close', '닫기')} type="button" className="cr-icon-button">
+            <button onClick={onClose} aria-label={t('common.actions.close')} type="button" className="cr-icon-button">
               <X size={24} color="var(--mg-color-text-secondary)" />
             </button>
           </div>
 
           <div className="cr-bottomsheet__field">
-            <span className="cr-bottomsheet__label">{t('common.labels.client', '내담자')}</span>
+            <span className="cr-bottomsheet__label">{t('common.labels.client')}</span>
             <span className="cr-bottomsheet__value">{clientName}</span>
           </div>
           <div className="cr-bottomsheet__field">
@@ -139,7 +139,7 @@ const BottomSheet = ({ schedule, onClose, onStartConsultation, onCompleteConsult
             <span className="cr-bottomsheet__value">{timeRange}</span>
           </div>
           <div className="cr-bottomsheet__field">
-            <span className="cr-bottomsheet__label">{t('common.labels.status', '상태')}</span>
+            <span className="cr-bottomsheet__label">{t('common.labels.status')}</span>
             <span className="cr-bottomsheet__value">{STATUS_LABELS[status] || status}</span>
           </div>
           {schedule.sessionType && (
@@ -375,7 +375,7 @@ const ConsultantScheduleRenewal = () => {
           onClick={handleToday}
           type="button"
         >
-          {t('common.labels.today', '오늘')}
+          {t('common.labels.today')}
         </button>
       </div>
 

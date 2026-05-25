@@ -167,7 +167,7 @@ const ProfileImageUpload = ({
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleDeleteImage}
               >
-                {t('common.actions.delete', '삭제')}
+                {t('common.actions.delete')}
               </MGButton>
             ) : null}
           </div>
@@ -197,7 +197,7 @@ const ProfileImageUpload = ({
               }}
               preventDoubleClick={false}
             >
-              {t('common.actions.cancel', '취소')}
+              {t('common.actions.cancel')}
             </MGButton>
             <MGButton
               type="button"

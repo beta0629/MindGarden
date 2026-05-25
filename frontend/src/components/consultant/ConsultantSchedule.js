@@ -35,7 +35,7 @@ const ConsultantSchedule = () => {
       <div className="mg-v2-ad-b0kla__container">
         <ContentArea ariaLabel="상담사 스케줄">
           <ContentHeader
-            title={t('common.labels.schedule', '스케줄')}
+            title={t('common.labels.schedule')}
             subtitle="상담 일정을 확인하고 관리합니다"
             titleId={CONSULTANT_SCHEDULE_TITLE_ID}
           />
@@ -50,7 +50,7 @@ const ConsultantSchedule = () => {
   if (sessionLoading) {
     console.log('⏳ ConsultantSchedule: 세션 로딩 중...');
     return (
-      <AdminCommonLayout title={t('common.labels.schedule', '스케줄')}>
+      <AdminCommonLayout title={t('common.labels.schedule')}>
         {pageShell(
           <UnifiedLoading type="inline" text="스케줄 정보를 불러오는 중..." />
         )}
@@ -61,7 +61,7 @@ const ConsultantSchedule = () => {
   if (!user) {
     console.log('❌ ConsultantSchedule: 사용자 정보 없음');
     return (
-      <AdminCommonLayout title={t('common.labels.schedule', '스케줄')}>
+      <AdminCommonLayout title={t('common.labels.schedule')}>
         {pageShell(
           <UnifiedLoading type="inline" text="사용자 정보를 확인하는 중..." />
         )}
@@ -72,7 +72,7 @@ const ConsultantSchedule = () => {
   console.log('✅ ConsultantSchedule: UnifiedScheduleComponent 렌더링 시작', { userRole: USER_ROLES.CONSULTANT, userId: user.id });
 
   return (
-    <AdminCommonLayout title={t('common.labels.schedule', '스케줄')}>
+    <AdminCommonLayout title={t('common.labels.schedule')}>
       {pageShell(
         <div
           data-calendar-skin="integrated"

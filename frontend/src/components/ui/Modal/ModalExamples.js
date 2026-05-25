@@ -183,7 +183,7 @@ const ModalExamples = () => {
                 variant="error"
                 onClick={() => openModal('delete')}
               >
-                {t('common.actions.delete', '삭제')}
+                {t('common.actions.delete')}
               </Button>
               <Button 
                 icon="SETTINGS" 
@@ -208,7 +208,7 @@ const ModalExamples = () => {
             이것은 기본 모달입니다. 오버레이를 클릭하거나 ESC 키를 눌러 닫을 수 있습니다.
           </p>
           <Button onClick={() => closeModal('basic')}>
-            {t('common.actions.confirm', '확인')}
+            {t('common.actions.confirm')}
           </Button>
         </div>
       </Modal>
@@ -224,10 +224,10 @@ const ModalExamples = () => {
           </p>
           <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-sm mg-v2-v2-v2-justify-center">
             <Button onClick={() => closeModal('withTitle')}>
-              {t('common.actions.confirm', '확인')}
+              {t('common.actions.confirm')}
             </Button>
             <Button variant="outline" onClick={() => closeModal('withTitle')}>
-              {t('common.actions.cancel', '취소')}
+              {t('common.actions.cancel')}
             </Button>
           </div>
         </div>
@@ -254,10 +254,10 @@ const ModalExamples = () => {
           </div>
           <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-sm mg-v2-v2-v2-justify-end">
             <Button variant="outline" onClick={() => closeModal('large')}>
-              {t('common.actions.cancel', '취소')}
+              {t('common.actions.cancel')}
             </Button>
             <Button onClick={() => closeModal('large')}>
-              {t('common.actions.confirm', '확인')}
+              {t('common.actions.confirm')}
             </Button>
           </div>
         </div>
@@ -275,7 +275,7 @@ const ModalExamples = () => {
           </p>
           <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-sm mg-v2-v2-v2-justify-center">
             <Button onClick={() => closeModal('drawer')}>
-              {t('common.actions.confirm', '확인')}
+              {t('common.actions.confirm')}
             </Button>
           </div>
         </div>
@@ -293,7 +293,7 @@ const ModalExamples = () => {
             이 모달은 전체 화면을 차지합니다. 모바일에서 유용합니다.
           </p>
           <Button onClick={() => closeModal('fullscreen')}>
-            {t('common.actions.close', '닫기')}
+            {t('common.actions.close')}
           </Button>
         </div>
       </Modal>
@@ -309,7 +309,7 @@ const ModalExamples = () => {
             이 모달은 닫기 버튼이 없습니다. 오버레이 클릭이나 ESC 키로만 닫을 수 있습니다.
           </p>
           <Button onClick={() => closeModal('noCloseButton')}>
-            {t('common.actions.confirm', '확인')}
+            {t('common.actions.confirm')}
           </Button>
         </div>
       </Modal>
@@ -325,7 +325,7 @@ const ModalExamples = () => {
             이 모달은 오버레이 클릭으로 닫을 수 없습니다. 닫기 버튼이나 ESC 키를 사용하세요.
           </p>
           <Button onClick={() => closeModal('noOverlayClose')}>
-            {t('common.actions.confirm', '확인')}
+            {t('common.actions.confirm')}
           </Button>
         </div>
       </Modal>
@@ -341,7 +341,7 @@ const ModalExamples = () => {
             이 모달은 ESC 키로 닫을 수 없습니다. 닫기 버튼이나 오버레이 클릭을 사용하세요.
           </p>
           <Button onClick={() => closeModal('noEscapeClose')}>
-            {t('common.actions.confirm', '확인')}
+            {t('common.actions.confirm')}
           </Button>
         </div>
       </Modal>
@@ -376,7 +376,7 @@ const ModalExamples = () => {
             오류가 발생했습니다. 다시 시도해주세요.
           </p>
           <Button onClick={() => closeModal('error')}>
-            {t('common.actions.confirm', '확인')}
+            {t('common.actions.confirm')}
           </Button>
         </div>
       </Modal>
@@ -395,7 +395,7 @@ const ModalExamples = () => {
             작업이 성공적으로 완료되었습니다.
           </p>
           <Button onClick={() => closeModal('success')}>
-            {t('common.actions.confirm', '확인')}
+            {t('common.actions.confirm')}
           </Button>
         </div>
       </Modal>
@@ -415,7 +415,7 @@ const ModalExamples = () => {
           </p>
           <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-sm mg-v2-v2-v2-justify-center">
             <Button variant="outline" onClick={() => closeModal('warning')}>
-              {t('common.actions.cancel', '취소')}
+              {t('common.actions.cancel')}
             </Button>
             <Button variant="warning" onClick={() => closeModal('warning')}>
               계속
@@ -438,7 +438,7 @@ const ModalExamples = () => {
             이 기능에 대한 추가 정보입니다.
           </p>
           <Button onClick={() => closeModal('info')}>
-            {t('common.actions.confirm', '확인')}
+            {t('common.actions.confirm')}
           </Button>
         </div>
       </Modal>

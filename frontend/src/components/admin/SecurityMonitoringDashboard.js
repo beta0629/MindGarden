@@ -161,7 +161,7 @@ const SecurityMonitoringDashboard = () => {
                     })}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
-                    {t('admin.actions.refresh', '새로고침')}
+                    {t('admin.actions.refresh')}
                   </MGButton>
                 </div>
               )}

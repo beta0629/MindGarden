@@ -76,7 +76,7 @@ const ClientSchedule = () => {
 
   if (sessionLoading || loading) {
     return (
-      <AdminCommonLayout title={t('common.labels.schedule', '스케줄')} className="mg-v2-dashboard-layout">
+      <AdminCommonLayout title={t('common.labels.schedule')} className="mg-v2-dashboard-layout">
         {pageShell(
           <div aria-busy="true" aria-live="polite">
             <UnifiedLoading type="inline" text="로딩중..." />
@@ -88,7 +88,7 @@ const ClientSchedule = () => {
 
   if (error) {
     return (
-      <AdminCommonLayout title={t('common.labels.schedule', '스케줄')} className="mg-v2-dashboard-layout">
+      <AdminCommonLayout title={t('common.labels.schedule')} className="mg-v2-dashboard-layout">
         {pageShell(
           <div className="client-schedule-error">
             <div className="client-schedule-error__icon">
@@ -102,7 +102,7 @@ const ClientSchedule = () => {
               onClick={handleRetry}
               preventDoubleClick={false}
             >
-              {t('common.labels.retry', '다시 시도')}
+              {t('common.labels.retry')}
             </MGButton>
           </div>
         )}
@@ -111,7 +111,7 @@ const ClientSchedule = () => {
   }
 
   return (
-    <AdminCommonLayout title={t('common.labels.schedule', '스케줄')} className="mg-v2-dashboard-layout">
+    <AdminCommonLayout title={t('common.labels.schedule')} className="mg-v2-dashboard-layout">
       {pageShell(
         <div
           className="client-schedule-calendar-wrapper"

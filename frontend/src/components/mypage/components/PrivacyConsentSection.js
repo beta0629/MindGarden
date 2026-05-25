@@ -240,7 +240,7 @@ const PrivacyConsentSection = () => {
             disabled={updating}
             preventDoubleClick={false}
           >
-            {t('common.actions.refresh', '새로고침')}
+            {t('common.actions.refresh')}
           </MGButton>
         </div>
         {!consentStatus.isComplete ? (
@@ -318,7 +318,7 @@ const PrivacyConsentSection = () => {
             onClick={() => setTermsModalOpen(false)}
             preventDoubleClick={false}
           >
-            {t('common.actions.close', '닫기')}
+            {t('common.actions.close')}
           </MGButton>
         }
       >

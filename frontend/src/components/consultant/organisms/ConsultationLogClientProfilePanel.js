@@ -75,13 +75,13 @@ const ConsultationLogClientProfilePanel = ({
                 </span>
               </ClientSummaryField>
             )}
-            <ClientSummaryField label={t('common.labels.name', '이름')}>
+            <ClientSummaryField label={t('common.labels.name')}>
               <SafeText fallback="—">{client.name}</SafeText>
             </ClientSummaryField>
             <ClientSummaryField label="연락처(전화)">
               {displayPhone}
             </ClientSummaryField>
-            <ClientSummaryField label={t('common.labels.email', '이메일')}>
+            <ClientSummaryField label={t('common.labels.email')}>
               {hideContactDetail ? '—' : <SafeText fallback="—">{client.email}</SafeText>}
             </ClientSummaryField>
             <ClientSummaryField label="성별">

@@ -108,7 +108,7 @@ const UnifiedHeaderTest = () => {
               className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              {t('common.labels.notification', '알림')}
+              {t('common.labels.notification')}
             </MGButton>
             <MGButton
               type="button"
@@ -117,7 +117,7 @@ const UnifiedHeaderTest = () => {
               className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              {t('common.actions.refresh', '새로고침')}
+              {t('common.actions.refresh')}
             </MGButton>
           </div>
         }

@@ -37,7 +37,7 @@ const MiniPlayer = ({ track, isPlaying, progress, onTogglePlay, onClose }) => {
           type="button"
           className="mini-player__btn mini-player__btn--close"
           onClick={onClose}
-          aria-label={t('common.actions.close', '닫기')}
+          aria-label={t('common.actions.close')}
         >
           <X size={16} />
         </button>

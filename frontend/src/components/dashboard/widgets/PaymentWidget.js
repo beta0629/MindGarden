@@ -186,13 +186,13 @@ const PaymentWidget = ({ widget, user }) => {
         )}
         {summary.completed !== undefined && (
           <div className="summary-item">
-            <div className="summary-label">{t('admin.actions.done', '완료')}</div>
+            <div className="summary-label">{t('admin.actions.done')}</div>
             <div className="summary-value completed">{summary.completed}건</div>
           </div>
         )}
         {summary.pending !== undefined && (
           <div className="summary-item">
-            <div className="summary-label">{t('admin.labels.pending', '대기')}</div>
+            <div className="summary-label">{t('admin.labels.pending')}</div>
             <div className="summary-value pending">{summary.pending}건</div>
           </div>
         )}

@@ -284,7 +284,7 @@ const NotificationDropdown = () => {
       className="mg-v2-notification-dropdown"
       ref={dropdownRef}
       role="navigation"
-      aria-label={t('admin.labels.notification', '알림')}
+      aria-label={t('admin.labels.notification')}
     >
       <div className="mg-v2-notification-trigger-wrapper" ref={triggerRef}>
         <NavIcon
@@ -311,7 +311,7 @@ const NotificationDropdown = () => {
         ariaModal={false}
       >
         <div className="mg-v2-dropdown-panel__header">
-          <h2 className="mg-v2-dropdown-panel__title">{t('admin.labels.notification', '알림')}</h2>
+          <h2 className="mg-v2-dropdown-panel__title">{t('admin.labels.notification')}</h2>
           {totalUnread > 0 && (
             <MGButton
               type="button"
@@ -368,7 +368,7 @@ const NotificationDropdown = () => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setActiveTab(TAB_MESSAGES)}
           >
-            {t('admin.labels.message', '메시지')}
+            {t('admin.labels.message')}
           </MGButton>
         </div>
 
@@ -382,7 +382,7 @@ const NotificationDropdown = () => {
           <ul className="mg-v2-notification-list" aria-label="시스템 공지 목록">
             {loadingSystem && (
               <li>
-                <div className="mg-v2-notification-empty">{t('common.messages.loading', '로딩 중...')}</div>
+                <div className="mg-v2-notification-empty">{t('common.messages.loading')}</div>
               </li>
             )}
             {!loadingSystem && systemList.length === 0 && (
@@ -445,7 +445,7 @@ const NotificationDropdown = () => {
           <ul className="mg-v2-notification-list" aria-label="메시지 목록">
             {loadingMessages && (
               <li>
-                <div className="mg-v2-notification-empty">{t('common.messages.loading', '로딩 중...')}</div>
+                <div className="mg-v2-notification-empty">{t('common.messages.loading')}</div>
               </li>
             )}
             {!loadingMessages && messageList.length === 0 && (
@@ -537,7 +537,7 @@ const NotificationDropdown = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={closeDetailModal}
             >
-              {t('common.actions.confirm', '확인')}
+              {t('common.actions.confirm')}
             </MGButton>
           }
         >

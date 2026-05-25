@@ -107,11 +107,11 @@ const SummaryStatisticsWidget = ({ widget, user }) => {
               rel="noopener noreferrer"
               target="_blank"
             >
-              {t('statistics:widget.viewMore', '자세히 보기 →')}
+              {t('statistics:widget.viewMore')}
             </a>
           ) : (
             <Link to={config.viewMoreUrl} className="mg-v2-link">
-              {t('statistics:widget.viewMore', '자세히 보기 →')}
+              {t('statistics:widget.viewMore')}
             </Link>
           )}
         </div>

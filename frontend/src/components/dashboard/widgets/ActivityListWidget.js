@@ -103,7 +103,7 @@ const ActivityListWidget = ({ widget, user }) => {
                   navigate(url);
                 }
               }}
-              title={t('admin.actions.viewDetail', '상세 보기')}
+              title={t('admin.actions.viewDetail')}
             >
               <div className="activity-icon">
                 <i className={`bi bi-${activity.icon || 'circle'}`} />

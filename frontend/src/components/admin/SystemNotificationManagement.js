@@ -90,7 +90,7 @@ const SystemNotificationManagement = () => {
   if (!hasManagePermission) {
     const noPerm = (
       <div className="mg-v2-card mg-v2-text-center mg-p-xl">
-        <h3>{t('admin.messages.noAccessPermission', '접근 권한이 없습니다.')}</h3>
+        <h3>{t('admin.messages.noAccessPermission')}</h3>
         <p className="mg-v2-text-sm mg-v2-color-text-secondary">
           시스템 공지 관리 권한이 필요합니다.
         </p>

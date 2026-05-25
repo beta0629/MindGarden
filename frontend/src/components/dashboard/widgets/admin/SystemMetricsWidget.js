@@ -331,8 +331,8 @@ const SystemMetricsWidget = ({ widget, user }) => {
           variant="outline"
           size="small"
           type="button"
-          aria-label={t('admin.actions.refresh', '새로고침')}
-          title={t('admin.actions.refresh', '새로고침')}
+          aria-label={t('admin.actions.refresh')}
+          title={t('admin.actions.refresh')}
           preventDoubleClick={false}
           className={buildErpMgButtonClassName({
             variant: 'outline',

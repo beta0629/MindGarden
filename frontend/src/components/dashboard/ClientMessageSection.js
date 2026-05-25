@@ -338,7 +338,7 @@ const ClientMessageSection = ({ userId }) => {
                       <span className="mg-badge mg-badge-warning mg-badge-sm">중요</span>
                     )}
                     {message.isUrgent && (
-                      <span className="mg-badge mg-badge-danger mg-badge-sm">{t('admin.labels.urgent', '긴급')}</span>
+                      <span className="mg-badge mg-badge-danger mg-badge-sm">{t('admin.labels.urgent')}</span>
                     )}
                     <span className="client-message-item__date">
                       
@@ -381,7 +381,7 @@ const ClientMessageSection = ({ userId }) => {
                   <span className="mg-badge mg-badge-warning">중요</span>
                 )}
                 {selectedMessage.isUrgent && (
-                  <span className="mg-badge mg-badge-danger">{t('admin.labels.urgent', '긴급')}</span>
+                  <span className="mg-badge mg-badge-danger">{t('admin.labels.urgent')}</span>
                 )}
               </div>
               <span className="client-message-detail__date">

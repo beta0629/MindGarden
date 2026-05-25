@@ -45,7 +45,7 @@ const NextConsultationCard = ({
 
       <div className="mg-v2-next-consultation-card__body">
         <div className="mg-v2-info-block">
-          <div className="mg-v2-info-block__label">{t('admin.labels.client', '내담자')}</div>
+          <div className="mg-v2-info-block__label">{t('admin.labels.client')}</div>
           <div className="mg-v2-info-block__value">{consultation.clientName}</div>
         </div>
         

@@ -419,7 +419,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
                   <div className={`message-card-action message-card-action--${message.colorClass}`}>
                     {isLoading ? (
                       <span className="message-card-action-text">
-                        {t('common.messages.processingInline', '처리 중...')}
+                        {t('common.messages.processingInline')}
                       </span>
                     ) : (
                       <>

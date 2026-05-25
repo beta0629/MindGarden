@@ -122,7 +122,7 @@ const HealingCard = ({ userRole = USER_ROLES.CLIENT, category = null }) => {
                                 variant="primary"
                                 size="small"
                             >
-                                {t('common.labels.retry', '다시 시도')}
+                                {t('common.labels.retry')}
                             </MGButton>
                         </div>
                     </div>

@@ -36,7 +36,7 @@ const StatsCardGrid = ({
             </div>
             <div>
               <h3 className="mg-v2-text-sm mg-v2-font-weight-semibold mg-v2-text-secondary">
-                {t('common.messages.loading', '로딩 중...')}
+                {t('common.messages.loading')}
               </h3>
               <div className="mg-v2-text-xxl mg-v2-font-weight-bold mg-v2-text-primary">
                 0

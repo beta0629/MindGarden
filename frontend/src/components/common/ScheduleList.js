@@ -336,7 +336,7 @@ const ScheduleList = ({
             onClick={handleRefresh}
           >
             <i className="bi bi-arrow-clockwise" />
-            {t('common.labels.retry', '다시 시도')}
+            {t('common.labels.retry')}
           </MGButton>
         </div>
       </div>
@@ -362,7 +362,7 @@ const ScheduleList = ({
           onClick={handleRefresh}
         >
           <i className="bi bi-arrow-clockwise" />
-          {t('common.actions.refresh', '새로고침')}
+          {t('common.actions.refresh')}
         </MGButton>
       </div>
 

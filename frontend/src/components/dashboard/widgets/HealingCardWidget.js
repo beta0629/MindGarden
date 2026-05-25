@@ -160,7 +160,7 @@ const HealingCardWidget = ({ widget, user }) => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             preventDoubleClick={false}
           >
-            {t('admin.actions.refresh', '새로고침')}
+            {t('admin.actions.refresh')}
           </MGButton>
         </div>
 

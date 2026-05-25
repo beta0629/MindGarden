@@ -66,7 +66,7 @@ const SimpleLayout = ({
         })}
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={handleNotificationClick}
-        aria-label={t('common.labels.notification', '알림')}
+        aria-label={t('common.labels.notification')}
         variant="outline"
         preventDoubleClick={false}
       >

@@ -148,7 +148,7 @@ const AdminNotificationsPage = () => {
                   loading={false}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  {t('admin.labels.message', '메시지')}
+                  {t('admin.labels.message')}
                 </MGButton>
               </div>
 

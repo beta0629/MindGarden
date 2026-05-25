@@ -508,7 +508,7 @@ const PurchaseRequestForm = () => {
             preventDoubleClick={false}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
-            {t('common.actions.confirm', '확인')}
+            {t('common.actions.confirm')}
           </MGButton>
         </div>
       </UnifiedModal>

@@ -598,7 +598,7 @@ const ConsultantProfileModal = ({
                                         onClick={() => setShowSalaryForm(false)}
                                         disabled={saving}
                                     >
-                                        {t('common.actions.cancel', '취소')}
+                                        {t('common.actions.cancel')}
                                     </MGButton>
                                     <MGButton
                                         type="submit"
@@ -609,7 +609,7 @@ const ConsultantProfileModal = ({
                                         loading={saving}
                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     >
-                                        {t('common.actions.save', '저장')}
+                                        {t('common.actions.save')}
                                     </MGButton>
                                 </div>
                             </form>
@@ -627,7 +627,7 @@ const ConsultantProfileModal = ({
                     onClick={onClose}
                     disabled={saving}
                 >
-                    {t('common.actions.close', '닫기')}
+                    {t('common.actions.close')}
                 </MGButton>
             </div>
         </UnifiedModal>

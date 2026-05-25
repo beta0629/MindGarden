@@ -320,7 +320,7 @@ const ClientBookingRenewal = () => {
 
       <div className="client-booking__summary-card">
         <div className="client-booking__summary-row">
-          <span className="client-booking__summary-label">{t('common.labels.consultant', '상담사')}</span>
+          <span className="client-booking__summary-label">{t('common.labels.consultant')}</span>
           <span className="client-booking__summary-value">
             {selectedConsultant?.name || selectedConsultant?.consultantName || '-'}
           </span>
@@ -385,7 +385,7 @@ const ClientBookingRenewal = () => {
 
       <div className="client-booking__complete-info">
         <div className="client-booking__summary-row">
-          <span className="client-booking__summary-label">{t('common.labels.consultant', '상담사')}</span>
+          <span className="client-booking__summary-label">{t('common.labels.consultant')}</span>
           <span className="client-booking__summary-value">
             {selectedConsultant?.name || selectedConsultant?.consultantName || '-'}
           </span>

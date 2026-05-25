@@ -62,7 +62,7 @@ const PsychDocumentListBlock = ({
         <thead>
           <tr>
             <th>검사</th>
-            <th>{t('admin.labels.status', '상태')}</th>
+            <th>{t('admin.labels.status')}</th>
             <th>파일</th>
             <th>생성</th>
             <th>액션</th>
@@ -72,7 +72,7 @@ const PsychDocumentListBlock = ({
           {documents.map((d) => (
             <tr key={d.documentId}>
               <td data-label="검사">{toDisplayString(d.assessmentType, '-')}</td>
-              <td data-label={t('admin.labels.status', '상태')}>
+              <td data-label={t('admin.labels.status')}>
                 <span className={`mg-v2-badge ${getStatusVariant(d.status)}`}>
                   {toDisplayString(d.status, '-')}
                 </span>

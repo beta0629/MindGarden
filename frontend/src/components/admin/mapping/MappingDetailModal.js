@@ -89,7 +89,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                     preventDoubleClick={false}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                    {t('common.actions.close', '닫기')}
+                    {t('common.actions.close')}
                 </MGButton>
             }
         >
@@ -174,7 +174,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                 <span>#{mapping?.id}</span>
                                             </div>
                                             <div className="info-item">
-                                                <label>{t('admin.labels.status', '상태')}</label>
+                                                <label>{t('admin.labels.status')}</label>
                                                 <span><StatusBadge status={mapping?.status} /></span>
                                             </div>
                                             <div className="info-item">
@@ -258,7 +258,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                 </span>
                                             </div>
                                             <div className="info-item">
-                                                <label>{t('admin.labels.paymentMethod', '결제 방법')}</label>
+                                                <label>{t('admin.labels.paymentMethod')}</label>
                                                 <span>{getMappingPaymentMethodDisplayLabel(mapping?.paymentMethod)}</span>
                                             </div>
                                             <div className="info-item">

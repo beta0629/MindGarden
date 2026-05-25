@@ -174,7 +174,7 @@ const ConsultantClientSection = ({ userId }) => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={loadClients}
               >
-                {t('common.labels.retry', '다시 시도')}
+                {t('common.labels.retry')}
               </MGButton>
             </div>
           </div>

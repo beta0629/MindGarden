@@ -150,7 +150,7 @@ const CacheMonitoringDashboard = () => {
                       className: 'refresh-button'
                     })}
                   >
-                    {t('admin.actions.refresh', '새로고침')}
+                    {t('admin.actions.refresh')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -261,7 +261,7 @@ const CacheMonitoringDashboard = () => {
                           className: 'retry-button'
                         })}
                       >
-                        {t('common.labels.retry', '다시 시도')}
+                        {t('common.labels.retry')}
                       </MGButton>
                     </div>
                   )}

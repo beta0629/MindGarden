@@ -155,7 +155,7 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
               <div className="erp-purchase-stat-value">
                 {purchaseData.approvedRequests}
               </div>
-              <div className="erp-purchase-stat-label">{t('common.labels.approved', '승인됨')}</div>
+              <div className="erp-purchase-stat-label">{t('common.labels.approved')}</div>
             </div>
           </div>
 
@@ -165,7 +165,7 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
               <div className="erp-purchase-stat-value">
                 {purchaseData.totalRequests}
               </div>
-              <div className="erp-purchase-stat-label">{t('admin.labels.all', '전체')}</div>
+              <div className="erp-purchase-stat-label">{t('admin.labels.all')}</div>
             </div>
           </div>
         </div>

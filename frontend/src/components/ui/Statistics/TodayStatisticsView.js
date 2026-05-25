@@ -26,7 +26,7 @@ const TodayStatisticsView = ({
             <div className="statistics-header">
                 <h3 className="statistics-title">
                     <FaChartLine className="title-icon" />
-                    {t('statistics:today.title', '오늘의 통계')}
+                    {t('statistics:today.title')}
                 </h3>
                 <div className="statistics-actions">
                     <MGButton
@@ -39,12 +39,12 @@ const TodayStatisticsView = ({
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onShowStatistics}
-                        title={t('statistics:today.viewAll', '통계 보기')}
+                        title={t('statistics:today.viewAll')}
                         variant="outline"
                         preventDoubleClick={false}
                     >
                         <i className="bi bi-graph-up" />
-                        {t('statistics:today.viewAll', '통계 보기')}
+                        {t('statistics:today.viewAll')}
                     </MGButton>
                     <MGButton
                         type="button"
@@ -58,7 +58,7 @@ const TodayStatisticsView = ({
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onRefresh}
                         disabled={loading}
-                        title={t('common.actions.refresh', '새로고침')}
+                        title={t('common.actions.refresh')}
                         variant="outline"
                         preventDoubleClick={false}
                     >
@@ -70,28 +70,28 @@ const TodayStatisticsView = ({
             <div className="statistics-grid">
                 <div className="stat-card total">
                     <div className="stat-number">{statistics.totalToday}</div>
-                    <div className="stat-label">{t('statistics:today.totalConsultations', '총 상담')}</div>
+                    <div className="stat-label">{t('statistics:today.totalConsultations')}</div>
                 </div>
                 
                 <div className="stat-card completed">
                     <div className="stat-number">{statistics.completedToday}</div>
-                    <div className="stat-label">{t('common.actions.done', '완료')}</div>
+                    <div className="stat-label">{t('common.actions.done')}</div>
                 </div>
                 
                 <div className="stat-card in-progress">
                     <div className="stat-number">{statistics.inProgressToday}</div>
-                    <div className="stat-label">{t('common.labels.inProgress', '진행중')}</div>
+                    <div className="stat-label">{t('common.labels.inProgress')}</div>
                 </div>
                 
                 <div className="stat-card cancelled">
                     <div className="stat-number">{statistics.cancelledToday}</div>
-                    <div className="stat-label">{t('common.actions.cancel', '취소')}</div>
+                    <div className="stat-label">{t('common.actions.cancel')}</div>
                 </div>
             </div>
             
             {lastUpdated && (
                 <div className="last-updated">
-                    {t('statistics:today.lastUpdated', '마지막 업데이트:')} {lastUpdated.toLocaleTimeString('ko-KR')}
+                    {t('statistics:today.lastUpdated')} {lastUpdated.toLocaleTimeString('ko-KR')}
                 </div>
             )}
         </div>

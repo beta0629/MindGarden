@@ -96,22 +96,22 @@ const SystemNotificationFormModal = ({
             variant="outline"
             className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            aria-label={t('admin.actions.cancel', '취소')}
+            aria-label={t('admin.actions.cancel')}
             onClick={onClose}
             disabled={loading}
           >
-            {t('admin.actions.cancel', '취소')}
+            {t('admin.actions.cancel')}
           </MGButton>
           <MGButton
             type="button"
             variant="primary"
             className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            aria-label={t('common.actions.save', '저장')}
+            aria-label={t('common.actions.save')}
             onClick={() => onSave?.(formData)}
             disabled={loading}
           >
-            {t('common.actions.save', '저장')}
+            {t('common.actions.save')}
           </MGButton>
         </>
       }
@@ -193,9 +193,9 @@ const SystemNotificationFormModal = ({
                     type="checkbox"
                     checked={formData.isUrgent}
                     onChange={(e) => setFormData({ ...formData, isUrgent: e.target.checked })}
-                    aria-label={t('admin.labels.urgent', '긴급')}
+                    aria-label={t('admin.labels.urgent')}
                   />
-                  <span className="mg-v2-checkbox-text">{t('admin.labels.urgent', '긴급')}</span>
+                  <span className="mg-v2-checkbox-text">{t('admin.labels.urgent')}</span>
                 </label>
               </div>
             </div>

@@ -190,9 +190,9 @@ const MappingActions = ({
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => onDelete?.(mapping.id)}
-                        title={t('admin.actions.delete', '삭제')}
+                        title={t('admin.actions.delete')}
                     >
-                        {t('admin.actions.delete', '삭제')}
+                        {t('admin.actions.delete')}
                     </MGButton>
                 )}
             </div>

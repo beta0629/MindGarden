@@ -100,7 +100,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
         setForm(mapApiToForm(res.data));
         setTenantIdLine(toDisplayString(res.data.tenantId, ''));
       } else {
-        setLoadError(t('settings:kakao.loadFail', '설정을 불러오지 못했습니다.'));
+        setLoadError(t('settings:kakao.loadFail'));
       }
     } catch (e) {
       setLoadError(e);
@@ -118,7 +118,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
       return;
     }
     if (!allowed) {
-      notificationManager.show(t('settings:kakao.accessDenied', '접근 권한이 없습니다.'), 'error');
+      notificationManager.show(t('settings:kakao.accessDenied'), 'error');
       navigate('/', { replace: true });
       return;
     }
@@ -148,13 +148,13 @@ const AdminKakaoAlimtalkSettingsPage = () => {
       };
       const res = await StandardizedApi.put(API.KAKAO_ALIMTALK_SETTINGS, body);
       if (res && res.success === true) {
-        notificationManager.success(t('settings:kakao.saveSuccess', '카카오 알림톡 설정을 저장했습니다.'));
+        notificationManager.success(t('settings:kakao.saveSuccess'));
         if (res.data) {
           setForm(mapApiToForm(res.data));
           setTenantIdLine(toDisplayString(res.data.tenantId, tenantIdLine));
         }
       } else {
-        setSaveError(t('settings:kakao.saveFail', '저장에 실패했습니다.'));
+        setSaveError(t('settings:kakao.saveFail'));
       }
     } catch (err) {
       setSaveError(err);
@@ -165,40 +165,40 @@ const AdminKakaoAlimtalkSettingsPage = () => {
 
   if (sessionLoading || !allowed) {
     return (
-      <AdminCommonLayout title={t('settings:kakao.title', '카카오 알림톡')} className="mg-v2-dashboard-layout">
-        <UnifiedLoading text={t('settings:loadingShort', '로딩 중...')} />
+      <AdminCommonLayout title={t('settings:kakao.title')} className="mg-v2-dashboard-layout">
+        <UnifiedLoading text={t('settings:loadingShort')} />
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout title={t('settings:kakao.title', '카카오 알림톡')} className="mg-v2-dashboard-layout">
+    <AdminCommonLayout title={t('settings:kakao.title')} className="mg-v2-dashboard-layout">
       <div className="mg-v2-ad-b0kla mg-v2-kakao-alimtalk-settings" data-testid="admin-kakao-alimtalk-settings">
         <ContentArea>
           <ContentHeader
             titleId={pageTitleId}
-            title={t('settings:kakao.title', '카카오 알림톡')}
-            subtitle={t('settings:kakao.subtitle', '예약·상담 알림에 사용하는 비시크릿 설정(템플릿 코드·키 참조)만 관리합니다.')}
+            title={t('settings:kakao.title')}
+            subtitle={t('settings:kakao.subtitle')}
           />
           {loading ? (
-            <UnifiedLoading text={t('settings:kakao.loading', '설정을 불러오는 중...')} />
+            <UnifiedLoading text={t('settings:kakao.loading')} />
           ) : (
             <form className="mg-kakao-alimtalk__form" onSubmit={handleSubmit} noValidate>
               <SafeErrorDisplay error={loadError} />
               <SafeErrorDisplay error={saveError} />
 
-              <ContentSection title={t('settings:kakao.section.info', '안내')}>
+              <ContentSection title={t('settings:kakao.section.info')}>
                 <p className="mg-kakao-alimtalk__hint">
-                  {t('settings:kakao.infoHint', 'API 키·발신 키 등 시크릿은 이 화면에 입력하지 않습니다. 운영 시크릿 저장소에만 보관하고, 여기에는 참조 식별자만 등록하세요.')}
+                  {t('settings:kakao.infoHint')}
                 </p>
                 {tenantIdLine ? (
                   <p className="mg-kakao-alimtalk__readonly-line">
-                    {t('settings:kakao.tenantIdLabel', '테넌트 ID:')} {tenantIdLine}
+                    {t('settings:kakao.tenantIdLabel')} {tenantIdLine}
                   </p>
                 ) : null}
               </ContentSection>
 
-              <ContentSection title={t('settings:kakao.section.enabled', '알림톡 사용')}>
+              <ContentSection title={t('settings:kakao.section.enabled')}>
                 <label className="mg-kakao-alimtalk__toggle" htmlFor={toggleId}>
                   <input
                     id={toggleId}
@@ -206,11 +206,11 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                     checked={Boolean(form.alimtalkEnabled)}
                     onChange={(ev) => handleChange('alimtalkEnabled', ev.target.checked)}
                   />
-                  {t('settings:kakao.enabledLabel', '이 테넌트에서 카카오 알림톡 발송 사용')}
+                  {t('settings:kakao.enabledLabel')}
                 </label>
               </ContentSection>
 
-              <ContentSection variant="card" title={t('settings:kakao.section.templates', '템플릿 코드')}>
+              <ContentSection variant="card" title={t('settings:kakao.section.templates')}>
                 {TEMPLATE_FIELD_SPECS.map((spec) => (
                   <div key={spec.key} className="mg-kakao-alimtalk__field">
                     <label htmlFor={`kakao-field-${spec.key}`}>{t(`settings:${spec.i18nKey}`, spec.fallback)}</label>
@@ -227,7 +227,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                 ))}
               </ContentSection>
 
-              <ContentSection title={t('settings:kakao.section.refs', '키 참조')}>
+              <ContentSection title={t('settings:kakao.section.refs')}>
                 {REF_FIELD_SPECS.map((spec) => (
                   <div key={spec.key} className="mg-kakao-alimtalk__field">
                     <label htmlFor={`kakao-ref-${spec.key}`}>{t(`settings:${spec.i18nKey}`, spec.fallback)}</label>
@@ -252,7 +252,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                   loading={saving}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  {t('common:actions.save', '저장')}
+                  {t('common:actions.save')}
                 </MGButton>
                 <MGButton
                   type="button"
@@ -260,7 +260,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                   disabled={saving || loading}
                   onClick={() => loadSettings()}
                 >
-                  {t('settings:kakao.reload', '다시 불러오기')}
+                  {t('settings:kakao.reload')}
                 </MGButton>
               </div>
             </form>

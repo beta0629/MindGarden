@@ -177,7 +177,7 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = USER_RO
               onClick={handleDelete}
               preventDoubleClick={false}
             >
-              {t('common.actions.delete', '삭제')}
+              {t('common.actions.delete')}
             </MGButton>
           )}
           {!isReadOnly && (
@@ -202,7 +202,7 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = USER_RO
             onClick={onClose}
             preventDoubleClick={false}
           >
-            {t('common.actions.cancel', '취소')}
+            {t('common.actions.cancel')}
           </MGButton>
         </>
       }

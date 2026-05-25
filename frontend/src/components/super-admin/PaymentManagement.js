@@ -479,7 +479,7 @@ const PaymentManagement = () => {
                 onClick={() => loadPayments()}
                 preventDoubleClick={false}
               >
-                {t('admin.actions.refresh', '새로고침')}
+                {t('admin.actions.refresh')}
               </MGButton>
             </div>
           )}
@@ -525,7 +525,7 @@ const PaymentManagement = () => {
               onChange={(e) => handleFilterChange('status', e.target.value)}
               disabled={loadingCodes}
             >
-              <option value="all">{t('admin.labels.all', '전체')}</option>
+              <option value="all">{t('admin.labels.all')}</option>
               {paymentStatusOptions.map(option => (
                 <option key={option.value} value={option.value}>
                   {option.icon} {option.label} ({option.value})
@@ -535,13 +535,13 @@ const PaymentManagement = () => {
           </div>
 
           <div className="filter-group">
-            <label>{t('admin.labels.paymentMethod', '결제 방법')}</label>
+            <label>{t('admin.labels.paymentMethod')}</label>
             <select 
               value={filters.method}
               onChange={(e) => handleFilterChange('method', e.target.value)}
               disabled={loadingMethodCodes}
             >
-              <option value="all">{t('admin.labels.all', '전체')}</option>
+              <option value="all">{t('admin.labels.all')}</option>
               {paymentMethodOptions.map(option => (
                 <option key={option.value} value={option.value}>
                   {option.icon} {option.label}
@@ -557,7 +557,7 @@ const PaymentManagement = () => {
               onChange={(e) => handleFilterChange('provider', e.target.value)}
               disabled={loadingGatewayCodes}
             >
-              <option value="all">{t('admin.labels.all', '전체')}</option>
+              <option value="all">{t('admin.labels.all')}</option>
               {paymentGatewayOptions.map(option => (
                 <option key={option.value} value={option.value}>
                   {option.icon} {option.label}
@@ -688,13 +688,13 @@ const PaymentManagement = () => {
                     </span>
                   </div>
                   <div className="mg-payment-card__field">
-                    <span className="mg-payment-card__label">{t('admin.labels.status', '상태')}</span>
+                    <span className="mg-payment-card__label">{t('admin.labels.status')}</span>
                     <span className="mg-payment-card__value">
                       {getStatusBadge(payment.status)}
                     </span>
                   </div>
                   <div className="mg-payment-card__field">
-                    <span className="mg-payment-card__label">{t('admin.labels.paymentMethod', '결제 방법')}</span>
+                    <span className="mg-payment-card__label">{t('admin.labels.paymentMethod')}</span>
                     <span className="mg-payment-card__value">{payment.method || '-'}</span>
                   </div>
                   <div className="mg-payment-card__field">
@@ -741,7 +741,7 @@ const PaymentManagement = () => {
                         onClick={() => handleStatusUpdate(payment.paymentId, 'CANCELLED')}
                         preventDoubleClick={true}
                       >
-                        {t('admin.actions.cancel', '취소')}
+                        {t('admin.actions.cancel')}
                       </MGButton>
                     )}
                     {payment.status === 'APPROVED' && (
@@ -775,7 +775,7 @@ const PaymentManagement = () => {
             onClick={() => handlePageChange(pagination.currentPage - 1)}
             preventDoubleClick={false}
           >
-            {t('common.actions.prev', '이전')}
+            {t('common.actions.prev')}
           </MGButton>
           <span>
             {pagination.currentPage + 1} / {pagination.totalPages}

@@ -146,7 +146,7 @@ const SalaryExportModal = ({
             preventDoubleClick={false}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
-            {t('common.actions.cancel', '취소')}
+            {t('common.actions.cancel')}
           </MGButton>
           <MGButton
             type="button"
@@ -177,7 +177,7 @@ const SalaryExportModal = ({
               <div className="mg-v2-card-item">
                 <div className="salary-export-modal__summary-emoji">👤</div>
                 <div>
-                  <div className="salary-export-modal__summary-label">{t('common.labels.consultant', '상담사')}</div>
+                  <div className="salary-export-modal__summary-label">{t('common.labels.consultant')}</div>
                   <div className="salary-export-modal__summary-value">{consultantName || '정보 없음'}</div>
                 </div>
               </div>

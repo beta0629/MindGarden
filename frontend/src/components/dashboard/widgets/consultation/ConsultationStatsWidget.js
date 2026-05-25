@@ -98,7 +98,7 @@ const ConsultationStatsWidget = ({ widget, user }) => {
             <div className="stat-icon cancelled" />
             <div className="stat-info">
               <div className="stat-number">{stats.cancelled || 0}</div>
-              <div className="stat-label">{t('common.labels.cancelled', '취소됨')}</div>
+              <div className="stat-label">{t('common.labels.cancelled')}</div>
             </div>
           </div>
           <div className="stat-item">

@@ -119,10 +119,10 @@ const ConsultationRecordWidget = ({ widget, user }) => {
                 loading={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => navigate(`/records/${record.id}`)}
-                title={t('admin.actions.viewDetail', '상세 보기')}
+                title={t('admin.actions.viewDetail')}
                 preventDoubleClick={false}
               >
-                {t('admin.actions.view', '보기')}
+                {t('admin.actions.view')}
               </MGButton>
             </div>
           ))}

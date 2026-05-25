@@ -116,7 +116,7 @@ const SystemNotificationSection = () => {
                       <span className="mg-v2-badge mg-v2-badge-warning mg-ml-xs">중요</span>
                     )}
                     {item.isUrgent && (
-                      <span className="mg-v2-badge mg-v2-badge-danger mg-ml-xs">{t('admin.labels.urgent', '긴급')}</span>
+                      <span className="mg-v2-badge mg-v2-badge-danger mg-ml-xs">{t('admin.labels.urgent')}</span>
                     )}
                   </div>
                   {!item.isRead && (

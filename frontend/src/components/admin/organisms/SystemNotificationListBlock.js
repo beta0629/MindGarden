@@ -190,7 +190,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
     return (
       <section className="mg-v2-ad-b0kla__section mg-v2-ad-b0kla__card" aria-label="시스템 공지 목록">
         <p className="mg-v2-ad-b0kla__table-empty" aria-live="polite">
-          {t('admin.messages.noAccessPermission', '접근 권한이 없습니다.')}
+          {t('admin.messages.noAccessPermission')}
         </p>
       </section>
     );
@@ -221,7 +221,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
               <option key={o.value || 'all'} value={o.value}>{toDisplayString(o.label)}</option>
             ))}
           </select>
-          <label htmlFor="admin-notice-status" className="sr-only">{t('admin.labels.status', '상태')}</label>
+          <label htmlFor="admin-notice-status" className="sr-only">{t('admin.labels.status')}</label>
           <select
             id="admin-notice-status"
             className="mg-v2-ad-b0kla__filter-select"
@@ -355,10 +355,10 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                         loading: false
                       })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      aria-label={t('common.actions.edit', '수정')}
+                      aria-label={t('common.actions.edit')}
                       onClick={() => handleEdit(notification)}
                     >
-                      {t('common.actions.edit', '수정')}
+                      {t('common.actions.edit')}
                     </MGButton>
                     <MGButton
                       type="button"
@@ -370,10 +370,10 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                         loading: false
                       })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      aria-label={t('admin.actions.delete', '삭제')}
+                      aria-label={t('admin.actions.delete')}
                       onClick={() => handleDelete(notification.id)}
                     >
-                      {t('admin.actions.delete', '삭제')}
+                      {t('admin.actions.delete')}
                     </MGButton>
                   </div>
                 </li>

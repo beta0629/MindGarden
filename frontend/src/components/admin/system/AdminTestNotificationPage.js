@@ -53,7 +53,7 @@ const AdminTestNotificationPage = () => {
     }
     if (!hasAccess) {
       notificationManager.show(
-        t('testNotification.page.noAccess', '이 페이지에 접근할 권한이 없습니다.'),
+        t('testNotification.page.noAccess'),
         'error'
       );
       navigate('/', { replace: true });
@@ -64,7 +64,7 @@ const AdminTestNotificationPage = () => {
     setHistoryRefreshKey((prev) => prev + 1);
   }, []);
 
-  const pageTitle = t('testNotification.page.title', '알림 테스트 발송');
+  const pageTitle = t('testNotification.page.title');
   const pageSubtitle = t('testNotification.page.subtitle');
 
   if (sessionLoading || !hasAccess) {

@@ -80,11 +80,11 @@ const AppTopBar = ({
           </button>
         )}
         {showProfile && (
-          <button className="mg-top-bar__profile" aria-label={t('common.labels.profile', '프로필')} type="button">
+          <button className="mg-top-bar__profile" aria-label={t('common.labels.profile')} type="button">
             {profileImage ? (
               <img
                 src={profileImage}
-                alt={t('common.labels.profile', '프로필')}
+                alt={t('common.labels.profile')}
                 className="mg-top-bar__avatar"
               />
             ) : (

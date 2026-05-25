@@ -200,7 +200,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             onClick={handleClose}
             disabled={loading}
           >
-            {t('admin.actions.cancel', '취소')}
+            {t('admin.actions.cancel')}
           </ActionButton>
           <ActionButton
             variant="primary"
@@ -221,15 +221,15 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             </h3>
             <div className="mg-v2-info-grid">
               <div className="mg-v2-info-row">
-                <span className="mg-v2-info-label"><User size={14} className="mg-v2-mapping-edit-modal__section-title-icon" />{t('admin.labels.consultant', '상담사')}</span>
+                <span className="mg-v2-info-label"><User size={14} className="mg-v2-mapping-edit-modal__section-title-icon" />{t('admin.labels.consultant')}</span>
                 <span className="mg-v2-info-value">{mapping.consultantName || '-'}</span>
               </div>
               <div className="mg-v2-info-row">
-                <span className="mg-v2-info-label"><User size={14} className="mg-v2-mapping-edit-modal__section-title-icon" />{t('admin.labels.client', '내담자')}</span>
+                <span className="mg-v2-info-label"><User size={14} className="mg-v2-mapping-edit-modal__section-title-icon" />{t('admin.labels.client')}</span>
                 <span className="mg-v2-info-value">{mapping.clientName || '-'}</span>
               </div>
               <div className="mg-v2-info-row">
-                <span className="mg-v2-info-label">{t('admin.labels.status', '상태')}</span>
+                <span className="mg-v2-info-label">{t('admin.labels.status')}</span>
                 <span>
                   <StatusBadge status={mapping?.status} />
                 </span>

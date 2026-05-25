@@ -39,8 +39,8 @@ const RefundHistoryTable = ({ refundHistory = [], pageInfo = {}, onPageChange })
                 <thead>
                   <tr>
                     <th>환불일시</th>
-                    <th>{t('common.labels.client', '내담자')}</th>
-                    <th>{t('common.labels.consultant', '상담사')}</th>
+                    <th>{t('common.labels.client')}</th>
+                    <th>{t('common.labels.consultant')}</th>
                     <th>패키지</th>
                     <th>환불 회기</th>
                     <th>환불 금액</th>
@@ -104,7 +104,7 @@ const RefundHistoryTable = ({ refundHistory = [], pageInfo = {}, onPageChange })
                 disabled={!hasPrevious}
                 onClick={() => onPageChange(currentPage - 1)}
               >
-                {t('common.actions.prev', '이전')}
+                {t('common.actions.prev')}
               </MGButton>
 
               <span className="mg-v2-erp-refund-history__page-indicator">

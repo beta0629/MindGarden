@@ -343,12 +343,12 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
                       className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
                     })}
                     onClick={() => loadStatsAndRecent()}
-                    title={t('admin.actions.refresh', '새로고침')}
+                    title={t('admin.actions.refresh')}
                     loading={loading}
                     preventDoubleClick={true}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
-                    {t('admin.actions.refresh', '새로고침')}
+                    {t('admin.actions.refresh')}
                   </MGButton>
                 }
               />

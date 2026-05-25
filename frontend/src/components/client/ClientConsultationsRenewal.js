@@ -193,13 +193,13 @@ const ClientConsultationsRenewal = () => {
                 className="client-consult__card-btn client-consult__card-btn--outline"
                 onClick={() => navigate(`/client/schedule`)}
               >
-                {t('admin.actions.viewDetail', '상세 보기')}
+                {t('admin.actions.viewDetail')}
               </button>
               <button
                 className="client-consult__card-btn client-consult__card-btn--danger"
                 onClick={() => handleCancel(id)}
               >
-                {t('common.actions.cancel', '취소')}
+                {t('common.actions.cancel')}
               </button>
             </>
           ) : (

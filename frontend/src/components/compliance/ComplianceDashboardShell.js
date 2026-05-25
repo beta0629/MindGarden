@@ -46,7 +46,7 @@ export function ComplianceDashboardShell({
                   onClick={onRefresh}
                   disabled={refreshDisabled}
                 >
-                  {t('admin.actions.refresh', '새로고침')}
+                  {t('admin.actions.refresh')}
                 </MGButton>
               )}
             />

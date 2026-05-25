@@ -277,7 +277,7 @@ const AdminApprovalDashboard = () => {
                 preventDoubleClick={false}
                 onClick={() => setShowApprovalModal(false)}
               >
-                {t('common.actions.cancel', '취소')}
+                {t('common.actions.cancel')}
               </MGButton>
               <MGButton
                 variant={mapErpVariantToMg('success')}
@@ -341,7 +341,7 @@ const AdminApprovalDashboard = () => {
                 preventDoubleClick={false}
                 onClick={() => setShowRejectionModal(false)}
               >
-                {t('common.actions.cancel', '취소')}
+                {t('common.actions.cancel')}
               </MGButton>
               <MGButton
                 variant={mapErpVariantToMg('danger')}

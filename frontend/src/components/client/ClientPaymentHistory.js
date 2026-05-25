@@ -222,7 +222,7 @@ const ClientPaymentHistory = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
-                {t('common.labels.retry', '다시 시도')}
+                {t('common.labels.retry')}
               </MGButton>
             </div>
           </div>
@@ -318,7 +318,7 @@ const ClientPaymentHistory = () => {
               onClick={() => setFilter('all')}
               preventDoubleClick={false}
             >
-              {t('common.labels.all', '전체')}
+              {t('common.labels.all')}
             </MGButton>
             <MGButton
               type="button"

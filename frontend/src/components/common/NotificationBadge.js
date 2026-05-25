@@ -106,7 +106,7 @@ const NotificationBadge = ({
       <UnifiedModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        title={t('common.labels.notification', '알림')}
+        title={t('common.labels.notification')}
         size="auto"
         backdropClick
         showCloseButton

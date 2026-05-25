@@ -276,7 +276,7 @@ const ConsultantAvailability = () => {
         preventDoubleClick={false}
       >
         <i className="bi bi-arrow-clockwise" />
-        {t('common.actions.refresh', '새로고침')}
+        {t('common.actions.refresh')}
       </MGButton>
     </>
   );
@@ -403,7 +403,7 @@ const ConsultantAvailability = () => {
                                   })}
                                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                   onClick={() => setEditingSlot(slot)}
-                                  title={t('common.actions.edit', '수정')}
+                                  title={t('common.actions.edit')}
                                 >
                                   <i className="bi bi-pencil" />
                                 </MGButton>
@@ -418,7 +418,7 @@ const ConsultantAvailability = () => {
                                   })}
                                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                   onClick={() => handleDeleteAvailability(slot.id)}
-                                  title={t('common.actions.delete', '삭제')}
+                                  title={t('common.actions.delete')}
                                 >
                                   <i className="bi bi-trash" />
                                 </MGButton>
@@ -555,7 +555,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
             preventDoubleClick={false}
           >
             <i className="bi bi-x-circle" />
-            {t('common.actions.cancel', '취소')}
+            {t('common.actions.cancel')}
           </MGButton>
           <MGButton
             type="submit"

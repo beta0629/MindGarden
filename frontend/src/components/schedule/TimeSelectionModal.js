@@ -144,7 +144,7 @@ const TimeSelectionModal = ({
                         onClick={onClose}
                         preventDoubleClick={false}
                     >
-                        {t('common.actions.cancel', '취소')}
+                        {t('common.actions.cancel')}
                     </MGButton>
                     <MGButton
                         variant="primary"
@@ -157,7 +157,7 @@ const TimeSelectionModal = ({
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={handleConfirm}
                     >
-                        {t('common.actions.confirm', '확인')}
+                        {t('common.actions.confirm')}
                     </MGButton>
                 </>
             }

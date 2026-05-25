@@ -110,7 +110,7 @@ const TodayStats = () => {
                     })}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={loadTodayStats}
-                    title={t('common.actions.refresh', '새로고침')}
+                    title={t('common.actions.refresh')}
                     preventDoubleClick={false}
                 >
                     🔄 새로고침

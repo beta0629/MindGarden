@@ -76,7 +76,7 @@ const AdminTenantSmsSettingsPage = () => {
         setForm(mapApiToForm(res.data));
         setTenantIdLine(toDisplayString(res.data.tenantId, ''));
       } else {
-        setLoadError(t('settings:sms.loadFail', '설정을 불러오지 못했습니다.'));
+        setLoadError(t('settings:sms.loadFail'));
       }
     } catch (e) {
       setLoadError(e);
@@ -94,7 +94,7 @@ const AdminTenantSmsSettingsPage = () => {
       return;
     }
     if (!allowed) {
-      notificationManager.show(t('settings:sms.accessDenied', '접근 권한이 없습니다.'), 'error');
+      notificationManager.show(t('settings:sms.accessDenied'), 'error');
       navigate('/', { replace: true });
       return;
     }
@@ -119,13 +119,13 @@ const AdminTenantSmsSettingsPage = () => {
       };
       const res = await StandardizedApi.put(API.TENANT_SMS_SETTINGS, body);
       if (res && res.success === true) {
-        notificationManager.success(t('settings:sms.saveSuccess', '문자 메시지(SMS) 설정을 저장했습니다.'));
+        notificationManager.success(t('settings:sms.saveSuccess'));
         if (res.data) {
           setForm(mapApiToForm(res.data));
           setTenantIdLine(toDisplayString(res.data.tenantId, tenantIdLine));
         }
       } else {
-        setSaveError(t('settings:sms.saveFail', '저장에 실패했습니다.'));
+        setSaveError(t('settings:sms.saveFail'));
       }
     } catch (err) {
       setSaveError(err);
@@ -136,40 +136,40 @@ const AdminTenantSmsSettingsPage = () => {
 
   if (sessionLoading || !allowed) {
     return (
-      <AdminCommonLayout title={t('settings:sms.title', '문자 메시지(SMS)')} className="mg-v2-dashboard-layout">
-        <UnifiedLoading text={t('settings:loadingShort', '로딩 중...')} />
+      <AdminCommonLayout title={t('settings:sms.title')} className="mg-v2-dashboard-layout">
+        <UnifiedLoading text={t('settings:loadingShort')} />
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout title={t('settings:sms.title', '문자 메시지(SMS)')} className="mg-v2-dashboard-layout">
+    <AdminCommonLayout title={t('settings:sms.title')} className="mg-v2-dashboard-layout">
       <div className="mg-v2-ad-b0kla mg-v2-tenant-sms-settings" data-testid="admin-tenant-sms-settings">
         <ContentArea>
           <ContentHeader
             titleId={pageTitleId}
-            title={t('settings:sms.title', '문자 메시지(SMS)')}
-            subtitle={t('settings:sms.subtitle', '테넌트별 비시크릿 설정만 저장합니다. API 키·시크릿 본문은 넣지 말고 참조 식별자만 등록하세요.')}
+            title={t('settings:sms.title')}
+            subtitle={t('settings:sms.subtitle')}
           />
           {loading ? (
-            <UnifiedLoading text={t('settings:sms.loading', '설정을 불러오는 중...')} />
+            <UnifiedLoading text={t('settings:sms.loading')} />
           ) : (
             <form className="mg-tenant-sms__form" onSubmit={handleSubmit} noValidate>
               <SafeErrorDisplay error={loadError} />
               <SafeErrorDisplay error={saveError} />
 
-              <ContentSection title={t('settings:sms.section.info', '안내')}>
+              <ContentSection title={t('settings:sms.section.info')}>
                 <p className="mg-tenant-sms__hint">
-                  {t('settings:sms.infoHint', '발송 시 참조 문자열이 있으면 Spring 설정·환경 변수에서 값을 조회하고, 없으면 애플리케이션 기본 sms.auth 설정을 사용합니다.')}
+                  {t('settings:sms.infoHint')}
                 </p>
                 {tenantIdLine ? (
                   <p className="mg-tenant-sms__readonly-line">
-                    {t('settings:sms.tenantIdLabel', '테넌트 ID:')} {tenantIdLine}
+                    {t('settings:sms.tenantIdLabel')} {tenantIdLine}
                   </p>
                 ) : null}
               </ContentSection>
 
-              <ContentSection title={t('settings:sms.section.enabled', 'SMS 사용')}>
+              <ContentSection title={t('settings:sms.section.enabled')}>
                 <label className="mg-tenant-sms__toggle" htmlFor={toggleId}>
                   <input
                     id={toggleId}
@@ -177,13 +177,13 @@ const AdminTenantSmsSettingsPage = () => {
                     checked={Boolean(form.smsEnabled)}
                     onChange={(ev) => handleChange('smsEnabled', ev.target.checked)}
                   />
-                  {t('settings:sms.enabledLabel', '이 테넌트에서 SMS 발송 사용')}
+                  {t('settings:sms.enabledLabel')}
                 </label>
               </ContentSection>
 
-              <ContentSection variant="card" title={t('settings:sms.section.integration', '연동')}>
+              <ContentSection variant="card" title={t('settings:sms.section.integration')}>
                 <div className="mg-tenant-sms__field">
-                  <label htmlFor="tenant-sms-provider">{t('settings:sms.fields.provider', '프로바이더')}</label>
+                  <label htmlFor="tenant-sms-provider">{t('settings:sms.fields.provider')}</label>
                   <input
                     id="tenant-sms-provider"
                     className="mg-tenant-sms__input"
@@ -195,7 +195,7 @@ const AdminTenantSmsSettingsPage = () => {
                   />
                 </div>
                 <div className="mg-tenant-sms__field">
-                  <label htmlFor="tenant-sms-sender">{t('settings:sms.fields.senderNumber', '발신 번호')}</label>
+                  <label htmlFor="tenant-sms-sender">{t('settings:sms.fields.senderNumber')}</label>
                   <input
                     id="tenant-sms-sender"
                     className="mg-tenant-sms__input"
@@ -208,9 +208,9 @@ const AdminTenantSmsSettingsPage = () => {
                 </div>
               </ContentSection>
 
-              <ContentSection title={t('settings:sms.section.refs', '키 참조')}>
+              <ContentSection title={t('settings:sms.section.refs')}>
                 <div className="mg-tenant-sms__field">
-                  <label htmlFor="tenant-sms-api-key-ref">{t('settings:sms.fields.apiKeyRef', 'API 키 참조(시크릿 저장 금지)')}</label>
+                  <label htmlFor="tenant-sms-api-key-ref">{t('settings:sms.fields.apiKeyRef')}</label>
                   <input
                     id="tenant-sms-api-key-ref"
                     className="mg-tenant-sms__input"
@@ -222,7 +222,7 @@ const AdminTenantSmsSettingsPage = () => {
                   />
                 </div>
                 <div className="mg-tenant-sms__field">
-                  <label htmlFor="tenant-sms-api-secret-ref">{t('settings:sms.fields.apiSecretRef', 'API 시크릿 참조(시크릿 저장 금지)')}</label>
+                  <label htmlFor="tenant-sms-api-secret-ref">{t('settings:sms.fields.apiSecretRef')}</label>
                   <input
                     id="tenant-sms-api-secret-ref"
                     className="mg-tenant-sms__input"
@@ -243,7 +243,7 @@ const AdminTenantSmsSettingsPage = () => {
                   loading={saving}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  {t('common:actions.save', '저장')}
+                  {t('common:actions.save')}
                 </MGButton>
                 <MGButton
                   type="button"
@@ -251,7 +251,7 @@ const AdminTenantSmsSettingsPage = () => {
                   disabled={saving || loading}
                   onClick={() => loadSettings()}
                 >
-                  {t('settings:sms.reload', '다시 불러오기')}
+                  {t('settings:sms.reload')}
                 </MGButton>
               </div>
             </form>

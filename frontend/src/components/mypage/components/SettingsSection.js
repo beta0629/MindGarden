@@ -7,12 +7,12 @@ import { useTranslation } from 'react-i18next';
 const SettingsSection = () => {
   const { t } = useTranslation(['settings', 'common']);
   const LOCALE_OPTIONS = [
-    { value: 'ko-KR', label: t('settings:language.ko', '한국어') },
+    { value: 'ko-KR', label: t('settings:language.ko') },
     { value: 'en-US', label: t('settings:language.en', 'English') }
   ];
 
   const TZ_OPTIONS = [
-    { value: 'Asia/Seoul', label: t('settings:timezone.seoul', '서울 (Asia/Seoul)') },
+    { value: 'Asia/Seoul', label: t('settings:timezone.seoul') },
     { value: 'UTC', label: t('settings:timezone.utc', 'UTC') }
   ];
   const [locale, setLocale] = useState('ko-KR');
@@ -21,7 +21,7 @@ const SettingsSection = () => {
   const [notifyEmail, setNotifyEmail] = useState(false);
 
   const handleSave = () => {
-    notificationManager.show(t('settings:status.mypageSaveInfo', '환경 설정 저장 API 연동 전입니다. 선택값은 이 기기에서만 유지됩니다.'), 'info');
+    notificationManager.show(t('settings:status.mypageSaveInfo'), 'info');
   };
 
   return (
@@ -31,14 +31,14 @@ const SettingsSection = () => {
           <span className="mg-mypage__section-accent" aria-hidden="true" />
           <div className="mg-mypage__section-head-text">
             <h2 id="mg-mypage-settings-general-title" className="mg-mypage__section-title">
-              {t('settings:general.title', '일반')}
+              {t('settings:general.title')}
             </h2>
           </div>
         </div>
         <div className="mg-mypage__card-body">
           <div className="mg-mypage__form-row">
             <label className="mg-mypage__form-label" htmlFor="mg-mypage-lang">
-              {t('settings:general.language', '언어')}
+              {t('settings:general.language')}
             </label>
             <select
               className="mg-mypage__form-control"
@@ -55,7 +55,7 @@ const SettingsSection = () => {
           </div>
           <div className="mg-mypage__form-row">
             <label className="mg-mypage__form-label" htmlFor="mg-mypage-tz">
-              {t('settings:general.timezone', '시간대')}
+              {t('settings:general.timezone')}
             </label>
             <select
               className="mg-mypage__form-control"
@@ -78,15 +78,15 @@ const SettingsSection = () => {
           <span className="mg-mypage__section-accent" aria-hidden="true" />
           <div className="mg-mypage__section-head-text">
             <h2 id="mg-mypage-settings-notify-title" className="mg-mypage__section-title">
-              {t('common.labels.notification', '알림')}
+              {t('common.labels.notification')}
             </h2>
           </div>
         </div>
         <ul className="mg-mypage__list">
           <li className="mg-mypage__list-item mg-mypage__preference-row">
             <div className="mg-mypage__list-item-main">
-              <p className="mg-mypage__preference-title">{t('settings:notification.push.label', '푸시 알림')}</p>
-              <p className="mg-mypage__section-description">{t('settings:notification.push.descriptionApp', '앱 푸시로 예약·메시지를 받습니다.')}</p>
+              <p className="mg-mypage__preference-title">{t('settings:notification.push.label')}</p>
+              <p className="mg-mypage__section-description">{t('settings:notification.push.descriptionApp')}</p>
             </div>
             <div className="mg-mypage__list-item-meta">
               <input
@@ -101,8 +101,8 @@ const SettingsSection = () => {
           </li>
           <li className="mg-mypage__list-item mg-mypage__preference-row">
             <div className="mg-mypage__list-item-main">
-              <p className="mg-mypage__preference-title">{t('settings:notification.email.label', '이메일 알림')}</p>
-              <p className="mg-mypage__section-description">{t('settings:notification.emailSummary.description', '이메일로 요약을 받습니다.')}</p>
+              <p className="mg-mypage__preference-title">{t('settings:notification.email.label')}</p>
+              <p className="mg-mypage__section-description">{t('settings:notification.emailSummary.description')}</p>
             </div>
             <div className="mg-mypage__list-item-meta">
               <input
@@ -124,7 +124,7 @@ const SettingsSection = () => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleSave}
           >
-            {t('settings:action.save', '설정 저장')}
+            {t('settings:action.save')}
           </MGButton>
         </div>
       </article>

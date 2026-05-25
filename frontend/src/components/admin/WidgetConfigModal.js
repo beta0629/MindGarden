@@ -190,7 +190,7 @@ const WidgetConfigModal = ({ isOpen, onClose, widget, onSave }) => {
             onClick={onClose}
             preventDoubleClick={true}
           >
-            {t('admin.actions.cancel', '취소')}
+            {t('admin.actions.cancel')}
           </MGButton>
           <MGButton
             variant="primary"
@@ -204,7 +204,7 @@ const WidgetConfigModal = ({ isOpen, onClose, widget, onSave }) => {
             onClick={handleSave}
             preventDoubleClick={true}
           >
-            {t('common.actions.save', '저장')}
+            {t('common.actions.save')}
           </MGButton>
         </>
       }

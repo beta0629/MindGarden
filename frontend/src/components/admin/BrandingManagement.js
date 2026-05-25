@@ -840,7 +840,7 @@ const BrandingManagement = () => {
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           preventDoubleClick={false}
                         >
-                          {t('common.actions.save', '저장')}
+                          {t('common.actions.save')}
                         </MGButton>
                       </div>
                     </div>
@@ -943,7 +943,7 @@ const BrandingManagement = () => {
               onClick={() => setShowPreview(false)}
               preventDoubleClick={false}
             >
-              {t('common.actions.close', '닫기')}
+              {t('common.actions.close')}
             </MGButton>
           </div>
         </div>

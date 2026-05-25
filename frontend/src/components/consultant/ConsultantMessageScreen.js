@@ -421,7 +421,7 @@ const ConsultantMessageScreen = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title={t('admin.labels.message', '메시지')}>
+      <AdminCommonLayout title={t('admin.labels.message')}>
         <div className="mg-dashboard-layout">
           <div className="mg-dashboard-header">
             <h1 className="mg-dashboard-title">
@@ -441,7 +441,7 @@ const ConsultantMessageScreen = () => {
 
   if (!client || !consultation) {
     return (
-      <AdminCommonLayout title={t('admin.labels.message', '메시지')}>
+      <AdminCommonLayout title={t('admin.labels.message')}>
         <div className="mg-dashboard-layout">
           <div className="mg-dashboard-header">
             <h1 className="mg-dashboard-title">메시지 전송</h1>
@@ -453,7 +453,7 @@ const ConsultantMessageScreen = () => {
   }
 
   return (
-    <AdminCommonLayout title={t('admin.labels.message', '메시지')}>
+    <AdminCommonLayout title={t('admin.labels.message')}>
       <div className="mg-dashboard-layout">
       {/* 헤더 */}
       <div className="mg-dashboard-header">
@@ -472,11 +472,11 @@ const ConsultantMessageScreen = () => {
         </h2>
         <div className="mg-grid mg-grid-cols-2 mg-gap-md">
           <div className="mg-flex mg-flex-col">
-            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">{t('common.labels.name', '이름')}</span>
+            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">{t('common.labels.name')}</span>
             <span className="mg-v2-text-base mg-font-medium"><SafeText>{client.name}</SafeText></span>
           </div>
           <div className="mg-flex mg-flex-col">
-            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">{t('common.labels.email', '이메일')}</span>
+            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">{t('common.labels.email')}</span>
             <span className="mg-v2-text-base mg-font-medium"><SafeText fallback="정보 없음">{client.email}</SafeText></span>
           </div>
           <div className="mg-flex mg-flex-col">
@@ -498,7 +498,7 @@ const ConsultantMessageScreen = () => {
             </span>
           </div>
           <div className="mg-flex mg-flex-col">
-            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">{t('common.labels.consultant', '상담사')}</span>
+            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">{t('common.labels.consultant')}</span>
             <span className="mg-v2-text-base mg-font-medium"><SafeText>{user.name}</SafeText></span>
           </div>
         </div>

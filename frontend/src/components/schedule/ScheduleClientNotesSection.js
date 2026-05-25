@@ -420,7 +420,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
                     onClick={() => handleEdit(n)}
                     disabled={loading}
                   >
-                    {t('common.actions.edit', '수정')}
+                    {t('common.actions.edit')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -437,7 +437,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
                     onClick={() => handleDelete(n)}
                     disabled={loading}
                   >
-                    {t('common.actions.delete', '삭제')}
+                    {t('common.actions.delete')}
                   </MGButton>
                 </div>
               ) : null}
@@ -558,7 +558,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
               onClick={() => resetForm()}
               disabled={loading}
             >
-              {t('common.actions.cancel', '취소')}
+              {t('common.actions.cancel')}
             </MGButton>
           ) : null}
         </div>

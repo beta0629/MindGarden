@@ -218,7 +218,7 @@ const ClassForm = ({ classItem, branchId, courseId, onSave, onCancel }) => {
             <div className="academy-form-row">
               <FormField
                 type="select"
-                label={t('common.labels.status', '상태')}
+                label={t('common.labels.status')}
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
@@ -268,7 +268,7 @@ const ClassForm = ({ classItem, branchId, courseId, onSave, onCancel }) => {
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  {t('common.actions.cancel', '취소')}
+                  {t('common.actions.cancel')}
                 </MGButton>
               )}
               <MGButton

@@ -137,7 +137,7 @@ const BatchResultModal = ({ isOpen, onClose, result }) => {
     <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
-      title={t('manualNotification.result.title', '발송 결과')}
+      title={t('manualNotification.result.title')}
       subtitle={subtitle}
       size="large"
       variant="default"
@@ -153,7 +153,7 @@ const BatchResultModal = ({ isOpen, onClose, result }) => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onClose}
         >
-          {t('manualNotification.result.close', '닫기')}
+          {t('manualNotification.result.close')}
         </MGButton>
       )}
     >
@@ -162,7 +162,7 @@ const BatchResultModal = ({ isOpen, onClose, result }) => {
           <dl className={`${MODAL_CLASS}__meta`}>
             <div className={`${MODAL_CLASS}__meta-item`}>
               <dt className={`${MODAL_CLASS}__meta-label`}>
-                {t('manualNotification.result.batchIdLabel', '배치 ID')}
+                {t('manualNotification.result.batchIdLabel')}
               </dt>
               <dd className={`${MODAL_CLASS}__meta-value`}>
                 {toDisplayString(result?.batchId, '-')}
@@ -170,7 +170,7 @@ const BatchResultModal = ({ isOpen, onClose, result }) => {
             </div>
             <div className={`${MODAL_CLASS}__meta-item`}>
               <dt className={`${MODAL_CLASS}__meta-label`}>
-                {t('manualNotification.result.channelLabel', '채널')}
+                {t('manualNotification.result.channelLabel')}
               </dt>
               <dd className={`${MODAL_CLASS}__meta-value`}>
                 {toDisplayString(result?.channel, '-')}
@@ -178,7 +178,7 @@ const BatchResultModal = ({ isOpen, onClose, result }) => {
             </div>
             <div className={`${MODAL_CLASS}__meta-item`}>
               <dt className={`${MODAL_CLASS}__meta-label`}>
-                {t('manualNotification.result.startedAtLabel', '시작 시각')}
+                {t('manualNotification.result.startedAtLabel')}
               </dt>
               <dd className={`${MODAL_CLASS}__meta-value`}>
                 {toDisplayString(result?.startedAt, '-')}
@@ -235,10 +235,10 @@ const BatchResultModal = ({ isOpen, onClose, result }) => {
         {skippedRows.length > 0 && (
           <section
             className={`${MODAL_CLASS}__section ${MODAL_CLASS}__section--skipped`}
-            aria-label={t('manualNotification.result.skippedListTitle', '스킵 상세')}
+            aria-label={t('manualNotification.result.skippedListTitle')}
           >
             <h4 className={`${MODAL_CLASS}__section-title`}>
-              {t('manualNotification.result.skippedListTitle', '스킵 상세')}
+              {t('manualNotification.result.skippedListTitle')}
               {' '}
               <span className={`${MODAL_CLASS}__section-count`}>({skippedRows.length})</span>
             </h4>
@@ -280,16 +280,16 @@ const BatchResultModal = ({ isOpen, onClose, result }) => {
 
         <section
           className={`${MODAL_CLASS}__section ${MODAL_CLASS}__section--failure`}
-          aria-label={t('manualNotification.result.failureListTitle', '실패 상세')}
+          aria-label={t('manualNotification.result.failureListTitle')}
         >
           <h4 className={`${MODAL_CLASS}__section-title`}>
-            {t('manualNotification.result.failureListTitle', '실패 상세')}
+            {t('manualNotification.result.failureListTitle')}
             {' '}
             <span className={`${MODAL_CLASS}__section-count`}>({failureRows.length})</span>
           </h4>
           {failureRows.length === 0 ? (
             <p className={`${MODAL_CLASS}__empty`}>
-              {t('manualNotification.result.failureEmpty', '실패한 수신자가 없습니다.')}
+              {t('manualNotification.result.failureEmpty')}
             </p>
           ) : (
             <ul className={`${MODAL_CLASS}__list`}>
@@ -330,16 +330,16 @@ const BatchResultModal = ({ isOpen, onClose, result }) => {
 
         <section
           className={`${MODAL_CLASS}__section ${MODAL_CLASS}__section--success`}
-          aria-label={t('manualNotification.result.successListTitle', '성공 상세')}
+          aria-label={t('manualNotification.result.successListTitle')}
         >
           <h4 className={`${MODAL_CLASS}__section-title`}>
-            {t('manualNotification.result.successListTitle', '성공 상세')}
+            {t('manualNotification.result.successListTitle')}
             {' '}
             <span className={`${MODAL_CLASS}__section-count`}>({successRows.length})</span>
           </h4>
           {successRows.length === 0 ? (
             <p className={`${MODAL_CLASS}__empty`}>
-              {t('manualNotification.result.successEmpty', '성공한 수신자가 없습니다.')}
+              {t('manualNotification.result.successEmpty')}
             </p>
           ) : (
             <ul className={`${MODAL_CLASS}__list`}>

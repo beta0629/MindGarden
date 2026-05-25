@@ -175,7 +175,7 @@ const PgConfigurationDetail = () => {
   
   if (sessionLoading || loading) {
     return (
-      <AdminCommonLayout title={t('admin.labels.pgSettingsDetail', 'PG 설정 상세')}>
+      <AdminCommonLayout title={t('admin.labels.pgSettingsDetail')}>
         <ContentArea ariaLabel="PG 설정 상세" className="mg-v2-pg-config-detail">
           <UnifiedLoading type="inline" text="PG 설정 상세를 불러오는 중..." variant="pulse" />
         </ContentArea>
@@ -185,7 +185,7 @@ const PgConfigurationDetail = () => {
   
   if (!isLoggedIn || !user) {
     return (
-      <AdminCommonLayout title={t('admin.labels.pgSettingsDetail', 'PG 설정 상세')}>
+      <AdminCommonLayout title={t('admin.labels.pgSettingsDetail')}>
         <ContentArea ariaLabel="PG 설정 상세" className="mg-v2-pg-config-detail">
           <div className="error-message">
             <AlertCircleIcon size={24} />
@@ -198,7 +198,7 @@ const PgConfigurationDetail = () => {
 
   if (!tenantId) {
     return (
-      <AdminCommonLayout title={t('admin.labels.pgSettingsDetail', 'PG 설정 상세')}>
+      <AdminCommonLayout title={t('admin.labels.pgSettingsDetail')}>
         <ContentArea ariaLabel="PG 설정 상세" className="mg-v2-pg-config-detail">
           <div className="error-message">
             <AlertCircleIcon size={24} />
@@ -211,7 +211,7 @@ const PgConfigurationDetail = () => {
 
   if (error || !config) {
     return (
-      <AdminCommonLayout title={t('admin.labels.pgSettingsDetail', 'PG 설정 상세')}>
+      <AdminCommonLayout title={t('admin.labels.pgSettingsDetail')}>
         <ContentArea ariaLabel="PG 설정 상세 오류" className="mg-v2-pg-config-detail">
           <div className="error-message">
             <AlertCircleIcon size={24} />
@@ -233,7 +233,7 @@ const PgConfigurationDetail = () => {
   }
   
   return (
-    <AdminCommonLayout title={t('admin.labels.pgSettingsDetail', 'PG 설정 상세')}>
+    <AdminCommonLayout title={t('admin.labels.pgSettingsDetail')}>
       <>
         <ContentArea ariaLabel="PG 설정 상세 정보" className="mg-v2-pg-config-detail">
             <ContentHeader
@@ -272,7 +272,7 @@ const PgConfigurationDetail = () => {
                           onClick={() => navigate(`/tenant/pg-configurations/${configId}/edit`)}
                           preventDoubleClick={false}
                         >
-                          {t('common.actions.edit', '수정')}
+                          {t('common.actions.edit')}
                         </MGButton>
                         <MGButton
                           type="button"
@@ -283,7 +283,7 @@ const PgConfigurationDetail = () => {
                           onClick={() => setShowDeleteModal(true)}
                           preventDoubleClick={false}
                         >
-                          {t('admin.actions.delete', '삭제')}
+                          {t('admin.actions.delete')}
                         </MGButton>
                       </>
                     )}
@@ -485,7 +485,7 @@ const PgConfigurationDetail = () => {
                   }}
                   preventDoubleClick={false}
                 >
-                  {t('admin.labels.hide', '숨기기')}
+                  {t('admin.labels.hide')}
                 </MGButton>
               </div>
             )}
@@ -541,7 +541,7 @@ const PgConfigurationDetail = () => {
             <div className="approval-status-approved">
               <CheckCircleIcon size={24} />
               <div>
-                <h3>{t('common.labels.approved', '승인됨')}</h3>
+                <h3>{t('common.labels.approved')}</h3>
                 <div className="detail-grid">
                   {config.approvedBy && (
                     <div className="detail-item">
@@ -565,7 +565,7 @@ const PgConfigurationDetail = () => {
             <div className="approval-status-rejected">
               <XCircleIcon size={24} />
               <div>
-                <h3>{t('admin.labels.rejected', '거부됨')}</h3>
+                <h3>{t('admin.labels.rejected')}</h3>
                 {config.rejectionReason && (
                   <div className="detail-item detail-item--full">
                     <label>거부 사유</label>
@@ -658,7 +658,7 @@ const PgConfigurationDetail = () => {
                 disabled={loading}
                 preventDoubleClick={false}
               >
-                {t('admin.actions.cancel', '취소')}
+                {t('admin.actions.cancel')}
               </MGButton>
               <MGButton
                 type="button"
@@ -673,7 +673,7 @@ const PgConfigurationDetail = () => {
                 disabled={loading}
                 preventDoubleClick={false}
               >
-                {t('admin.actions.delete', '삭제')}
+                {t('admin.actions.delete')}
               </MGButton>
             </>
           }

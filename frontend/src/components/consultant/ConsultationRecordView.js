@@ -148,7 +148,7 @@ const ConsultationRecordView = () => {
               <div className="mg-v2-record-value">{record.consultationType || '개별 상담'}</div>
             </div>
             <div className="mg-v2-record-item">
-              <div className="mg-v2-record-label">{t('common.labels.status', '상태')}</div>
+              <div className="mg-v2-record-label">{t('common.labels.status')}</div>
               <div className="mg-v2-record-value">
                 <span className={`mg-v2-badge ${record.isSessionCompleted ? 'mg-v2-badge-success' : 'mg-v2-badge-warning'}`}>
                   {record.isSessionCompleted ? '완료' : '대기'}

@@ -93,10 +93,10 @@ const QuickActions = ({ user }) => {
       <div className="mg-card-body">
         <div className="quick-actions-grid">
           <MGButton {...actionBtnProps} onClick={goToProfile}>
-            {t('common.labels.profile', '프로필')}
+            {t('common.labels.profile')}
           </MGButton>
           <MGButton {...actionBtnProps} onClick={goToSchedule}>
-            {t('common.labels.schedule', '스케줄')}
+            {t('common.labels.schedule')}
           </MGButton>
 
           {/* 메시지 버튼 (내담자/상담사) */}

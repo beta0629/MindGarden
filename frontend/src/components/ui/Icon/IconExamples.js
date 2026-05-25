@@ -229,7 +229,7 @@ const IconExamples = () => {
                 preventDoubleClick={false}
               >
                 <Icon name="TRASH" size="SM" />
-                {t('common.actions.delete', '삭제')}
+                {t('common.actions.delete')}
               </MGButton>
             </div>
           </div>

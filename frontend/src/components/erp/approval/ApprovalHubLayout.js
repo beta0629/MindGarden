@@ -81,9 +81,9 @@ const ApprovalHubLayout = ({
           disabled={loading}
           loading={refreshing}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          aria-label={t('common.actions.refresh', '새로고침')}
+          aria-label={t('common.actions.refresh')}
         >
-          {t('common.actions.refresh', '새로고침')}
+          {t('common.actions.refresh')}
         </MGButton>
       </div>
     </div>

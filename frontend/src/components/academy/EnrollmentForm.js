@@ -340,7 +340,7 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
                 })}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                {t('common.actions.cancel', '취소')}
+                {t('common.actions.cancel')}
               </MGButton>
             </div>
           </form>

@@ -410,7 +410,7 @@ const SocialSignupModal = ({
 
             <div className="mg-v2-form-group">
               <label htmlFor="socialEmail" className="mg-v2-label">
-                {t('common.labels.email', '이메일')} <span className="mg-v2-form-label-required">*</span>
+                {t('common.labels.email')} <span className="mg-v2-form-label-required">*</span>
               </label>
               <input
                 type="email"
@@ -539,7 +539,7 @@ const SocialSignupModal = ({
                 preventDoubleClick={false}
                 onClick={handleDismiss}
               >
-                {t('common.actions.cancel', '취소')}
+                {t('common.actions.cancel')}
               </MGButton>
               <MGButton
                 type="button"

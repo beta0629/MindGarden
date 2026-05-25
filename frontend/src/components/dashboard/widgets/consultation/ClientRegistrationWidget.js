@@ -322,10 +322,10 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleCloseForm}
                 type="button"
-                title={t('common.actions.close', '닫기')}
+                title={t('common.actions.close')}
                 preventDoubleClick={false}
               >
-                {t('common.actions.close', '닫기')}
+                {t('common.actions.close')}
               </MGButton>
             </div>
             <form onSubmit={handleSubmit} className="client-registration-form">
@@ -360,7 +360,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-group">
                     <label htmlFor="name" className="form-label">
-                      {t('common.labels.name', '이름')} <span className="required">*</span>
+                      {t('common.labels.name')} <span className="required">*</span>
                     </label>
                     <input
                       type="text"
@@ -381,7 +381,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-group">
                     <label htmlFor="email" className="form-label">
-                      {t('admin.labels.email', '이메일')}
+                      {t('admin.labels.email')}
                     </label>
                     <input
                       type="email"
@@ -664,7 +664,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleCloseForm}
                 >
-                  {t('admin.actions.cancel', '취소')}
+                  {t('admin.actions.cancel')}
                 </MGButton>
                 <MGButton
                   type="button"

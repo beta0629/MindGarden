@@ -148,7 +148,7 @@ const PurchaseRequestWidget = ({ widget, user }) => {
         <div className="widget-body mg-card-body">
           <div className="purchase-request-summary">
             <div className="purchase-summary-item">
-              <div className="purchase-summary-label">{t('admin.labels.pending', '대기')}</div>
+              <div className="purchase-summary-label">{t('admin.labels.pending')}</div>
               <div className="purchase-summary-value">{purchaseData.pendingRequests}</div>
             </div>
             <div className="purchase-summary-item">
@@ -156,7 +156,7 @@ const PurchaseRequestWidget = ({ widget, user }) => {
               <div className="purchase-summary-value">{purchaseData.approvedRequests}</div>
             </div>
             <div className="purchase-summary-item">
-              <div className="purchase-summary-label">{t('admin.labels.all', '전체')}</div>
+              <div className="purchase-summary-label">{t('admin.labels.all')}</div>
               <div className="purchase-summary-value">{purchaseData.totalRequests}</div>
             </div>
           </div>

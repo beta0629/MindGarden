@@ -155,7 +155,7 @@ const RatableConsultationsSection = ({ sessionUserOverride }) => {
               aria-label="목록 새로고침"
               preventDoubleClick={false}
             >
-              {t('common.actions.refresh', '새로고침')}
+              {t('common.actions.refresh')}
             </MGButton>
           </div>
           <p className="ratable-consultations-subtitle">

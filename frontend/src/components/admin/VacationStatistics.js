@@ -125,15 +125,15 @@ const VacationStatistics = ({ className = "" }) => {
                         vacationTrend: data.vacationTrend || []
                     });
                 } else {
-                    throw new Error(data.message || t('admin:vacationStats.fetchFailed', '휴가 통계 조회 실패'));
+                    throw new Error(data.message || t('admin:vacationStats.fetchFailed'));
                 }
             } else {
-                throw new Error(t('admin:vacationStats.serverError', '서버 응답 오류'));
+                throw new Error(t('admin:vacationStats.serverError'));
             }
 
         } catch (err) {
             console.error('휴가 통계 로드 실패:', err);
-            setError(t('admin:vacationStats.loadFailed', '휴가 통계를 불러오는데 실패했습니다.'));
+            setError(t('admin:vacationStats.loadFailed'));
             
             // 에러 시 기본값 설정
             setVacationStats({
@@ -211,7 +211,7 @@ const VacationStatistics = ({ className = "" }) => {
     if (loading) {
         return (
             <div className={`vacation-statistics ${className}`}>
-                <div className="mg-loading">{t('admin:vacationStats.loading', '로딩중...')}</div>
+                <div className="mg-loading">{t('admin:vacationStats.loading')}</div>
             </div>
         );
     }
@@ -234,7 +234,7 @@ const VacationStatistics = ({ className = "" }) => {
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={loadVacationStats}
                     >
-                        {t('common.labels.retry', '다시 시도')}
+                        {t('common.labels.retry')}
                     </MGButton>
                 </div>
             </div>
@@ -248,8 +248,8 @@ const VacationStatistics = ({ className = "" }) => {
                 <div className="mg-dashboard-header-content">
                     <div className="mg-dashboard-header-left">
                         <div>
-                            <h1 className="mg-dashboard-title">{t('admin:vacationStats.title', '휴가 현황')}</h1>
-                            <p className="mg-dashboard-subtitle">{t('admin:vacationStats.subtitle', '상담사별 휴가 사용 통계 및 현황')}</p>
+                            <h1 className="mg-dashboard-title">{t('admin:vacationStats.title')}</h1>
+                            <p className="mg-dashboard-subtitle">{t('admin:vacationStats.subtitle')}</p>
                         </div>
                     </div>
                     <div className="mg-dashboard-header-right">
@@ -267,10 +267,10 @@ const VacationStatistics = ({ className = "" }) => {
                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     onClick={() => handlePeriodChange(period)}
                                 >
-                                    {period === 'week' && t('admin:vacationStats.period.week', '1주일')}
-                                    {period === 'month' && t('admin:vacationStats.period.month', '1개월')}
-                                    {period === 'quarter' && t('admin:vacationStats.period.quarter', '3개월')}
-                                    {period === 'year' && t('admin:vacationStats.period.year', '1년')}
+                                    {period === 'week' && t('admin:vacationStats.period.week')}
+                                    {period === 'month' && t('admin:vacationStats.period.month')}
+                                    {period === 'quarter' && t('admin:vacationStats.period.quarter')}
+                                    {period === 'year' && t('admin:vacationStats.period.year')}
                                 </MGButton>
                             ))}
                         </div>
@@ -282,27 +282,27 @@ const VacationStatistics = ({ className = "" }) => {
             <div className="mg-dashboard-stats">
                 <StatCard
                     
-                    value={t('admin:vacationStats.unit.people', '{{count}}명', { count: vacationStats.summary.totalConsultants })}
-                    label={t('admin:vacationStats.summary.totalConsultants', '전체 상담사')}
+                    value={t('admin:vacationStats.unit.people', { count: vacationStats.summary.totalConsultants })}
+                    label={t('admin:vacationStats.summary.totalConsultants')}
                 />
                 <StatCard
                     
-                    value={t('admin:vacationStats.unit.days', '{{count}}일', { count: typeof vacationStats.summary.totalVacationDays === 'number'
+                    value={t('admin:vacationStats.unit.days', { count: typeof vacationStats.summary.totalVacationDays === 'number'
                         ? vacationStats.summary.totalVacationDays.toFixed(1)
                         : vacationStats.summary.totalVacationDays })}
-                    label={t('admin:vacationStats.summary.totalDays', '총 휴가일수')}
+                    label={t('admin:vacationStats.summary.totalDays')}
                 />
                 <StatCard
                     
-                    value={t('admin:vacationStats.unit.days', '{{count}}일', { count: vacationStats.summary.averageVacationDays.toFixed(1) })}
-                    label={t('admin:vacationStats.summary.averageDays', '평균 휴가일수')}
+                    value={t('admin:vacationStats.unit.days', { count: vacationStats.summary.averageVacationDays.toFixed(1) })}
+                    label={t('admin:vacationStats.summary.averageDays')}
                 />
             </div>
 
             {/* 상담사별 휴가 현황 */}
             <div className="mg-dashboard-content">
                 <DashboardSection
-                    title={t('admin:vacationStats.section.consultantStats', '상담사별 휴가 현황')}
+                    title={t('admin:vacationStats.section.consultantStats')}
                     
                 >
                     <div className="consultant-list">
@@ -317,8 +317,8 @@ const VacationStatistics = ({ className = "" }) => {
                                     contactInfo={{ email: consultant.consultantEmail }}
                                     statsItems={[
                                         {
-                                            label: t('admin:vacationStats.row.vacationDaysLabel', '휴가일수'),
-                                            value: t('admin:vacationStats.unit.days', '{{count}}일', { count: typeof consultant.vacationDays === 'number'
+                                            label: t('admin:vacationStats.row.vacationDaysLabel'),
+                                            value: t('admin:vacationStats.unit.days', { count: typeof consultant.vacationDays === 'number'
                                                 ? consultant.vacationDays.toFixed(1)
                                                 : consultant.vacationDays })
                                         }
@@ -334,9 +334,9 @@ const VacationStatistics = ({ className = "" }) => {
                                                         data-bg-color={`${consultantColor}20`}
                                                         data-text-color={consultantColor}
                                                         data-border-color={consultantColor}
-                                                        title={`${getVacationTypeKorean(type)}: ${t('admin:vacationStats.unit.days', '{{count}}일', { count: days.toFixed(1) })}`}
+                                                        title={`${getVacationTypeKorean(type)}: ${t('admin:vacationStats.unit.days', { count: days.toFixed(1) })}`}
                                                     >
-                                                        {getVacationTypeKorean(type)} {t('admin:vacationStats.unit.days', '{{count}}일', { count: days.toFixed(1) })}
+                                                        {getVacationTypeKorean(type)} {t('admin:vacationStats.unit.days', { count: days.toFixed(1) })}
                                                     </span>
                                                 )) : []),
                                         ...(!consultant.vacationDaysByType && consultant.vacationByType
@@ -350,11 +350,11 @@ const VacationStatistics = ({ className = "" }) => {
                                                         data-text-color={consultantColor}
                                                         data-border-color={consultantColor}
                                                     >
-                                                        {getVacationTypeKorean(type)} {t('admin:vacationStats.unit.count', '{{count}}회', { count })}
+                                                        {getVacationTypeKorean(type)} {t('admin:vacationStats.unit.count', { count })}
                                                     </span>
                                                 )) : [])
                                     ]}
-                                    extraInfo={<span>{t('admin:vacationStats.row.recentLabel', '최근:')} {formatDate(consultant.lastVacationDate)}</span>}
+                                    extraInfo={<span>{t('admin:vacationStats.row.recentLabel')} {formatDate(consultant.lastVacationDate)}</span>}
                                 />
                             );
                         })}
@@ -363,7 +363,7 @@ const VacationStatistics = ({ className = "" }) => {
 
                 {/* 휴가 많은 상담사 TOP 3 */}
                 <DashboardSection
-                    title={t('admin:vacationStats.section.top3', '휴가 사용 TOP 3')}
+                    title={t('admin:vacationStats.section.top3')}
                     
                 >
                     <div className="top-list">
@@ -376,7 +376,7 @@ const VacationStatistics = ({ className = "" }) => {
                                     </div>
                                     <div className="consultant-name">{consultant.consultantName}</div>
                                     <div className="vacation-count" data-text-color={consultantColor}>
-                                        {t('admin:vacationStats.unit.days', '{{count}}일', { count: typeof consultant.vacationDays === 'number'
+                                        {t('admin:vacationStats.unit.days', { count: typeof consultant.vacationDays === 'number'
                                             ? consultant.vacationDays.toFixed(1)
                                             : consultant.vacationDays })}
                                     </div>

@@ -366,7 +366,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
                 onClick={handleMappingManagement}
                 preventDoubleClick={false}
               >
-                {t('admin.labels.mappingManagement', '매핑 관리')}
+                {t('admin.labels.mappingManagement')}
               </MGButton>
             </div>
           </div>

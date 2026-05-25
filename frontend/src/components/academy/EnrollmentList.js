@@ -122,7 +122,7 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => handleCancel(enrollment.enrollmentId)}
           >
-            {t('common.actions.cancel', '취소')}
+            {t('common.actions.cancel')}
           </MGButton>
         )}
       </div>

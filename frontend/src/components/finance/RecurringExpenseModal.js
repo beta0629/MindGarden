@@ -360,10 +360,10 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                                 disabled={loading}
                                                 variant="outline"
                                                 size="small"
-                                                title={t('common.actions.edit', '수정')}
+                                                title={t('common.actions.edit')}
                                                 preventDoubleClick={false}
                                             >
-                                                {t('common.actions.edit', '수정')}
+                                                {t('common.actions.edit')}
                                             </MGButton>
                                             <MGButton
                                                 className={buildErpMgButtonClassName({
@@ -377,10 +377,10 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                                 disabled={loading}
                                                 variant="danger"
                                                 size="small"
-                                                title={t('common.actions.delete', '삭제')}
+                                                title={t('common.actions.delete')}
                                                 preventDoubleClick={false}
                                             >
-                                                 {t('common.actions.delete', '삭제')}
+                                                 {t('common.actions.delete')}
                                             </MGButton>
                                         </div>
                                     </div>
@@ -418,7 +418,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                         variant="secondary"
                                         preventDoubleClick={false}
                                     >
-                                        {t('common.actions.cancel', '취소')}
+                                        {t('common.actions.cancel')}
                                     </MGButton>
                                     <MGButton
                                         type="button"
@@ -433,7 +433,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                         variant="primary"
                                     >
-                                        {t('common.actions.save', '저장')}
+                                        {t('common.actions.save')}
                                     </MGButton>
                                 </>
                             }
@@ -481,7 +481,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                                     { value: 'quarterly', label: '분기별' },
                                                     { value: 'yearly', label: '연간' }
                                                 ]}
-                                                placeholder={t('common.messages.pleaseSelect', '선택하세요')}
+                                                placeholder={t('common.messages.pleaseSelect')}
                                                 disabled={loading}
                                                 className="mg-v2-form-badge-select"
                                             />
@@ -540,7 +540,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
 
                                     <div className="mg-v2-form-group">
                                         <label htmlFor="description" className="mg-v2-form-label">
-                                            {t('common.labels.description', '설명')}
+                                            {t('common.labels.description')}
                                         </label>
                                         <textarea
                                             id="description"

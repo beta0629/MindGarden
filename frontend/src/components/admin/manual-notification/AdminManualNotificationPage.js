@@ -54,7 +54,7 @@ const AdminManualNotificationPage = () => {
     }
     if (!hasAccess) {
       notificationManager.show(
-        t('manualNotification.page.noAccess', '이 페이지에 접근할 권한이 없습니다.'),
+        t('manualNotification.page.noAccess'),
         'error'
       );
       navigate('/', { replace: true });
@@ -65,7 +65,7 @@ const AdminManualNotificationPage = () => {
     setHistoryRefreshKey((prev) => prev + 1);
   }, []);
 
-  const pageTitle = t('manualNotification.page.title', '수동 알림 발송');
+  const pageTitle = t('manualNotification.page.title');
   const pageSubtitle = t('manualNotification.page.subtitle');
 
   if (sessionLoading || !hasAccess) {

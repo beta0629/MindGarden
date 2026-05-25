@@ -239,9 +239,9 @@ const PurchaseManagement = () => {
                   loading={silentListRefreshing}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   disabled={loading}
-                  aria-label={t('common.labels.retry', '다시 시도')}
+                  aria-label={t('common.labels.retry')}
                 >
-                  {t('common.labels.retry', '다시 시도')}
+                  {t('common.labels.retry')}
                 </MGButton>
               </div>
             )}
@@ -323,7 +323,7 @@ const PurchaseManagement = () => {
                             <span className="mg-purchase-request-card__value">{toDisplayString(request.quantity)}개</span>
                           </div>
                           <div className="mg-purchase-request-card__field">
-                            <span className="mg-purchase-request-card__label">{t('common.labels.status', '상태')}</span>
+                            <span className="mg-purchase-request-card__label">{t('common.labels.status')}</span>
                             <span className={`erp-status ${toDisplayString(request.status, '').toLowerCase()}`}>
                               <SafeText>{request.status}</SafeText>
                             </span>
@@ -375,7 +375,7 @@ const PurchaseManagement = () => {
                             </span>
                           </div>
                           <div className="mg-purchase-order-card__field">
-                            <span className="mg-purchase-order-card__label">{t('common.labels.status', '상태')}</span>
+                            <span className="mg-purchase-order-card__label">{t('common.labels.status')}</span>
                             <span className={`erp-status ${toDisplayString(order.status, '').toLowerCase()}`}>
                               <SafeText>{order.status}</SafeText>
                             </span>

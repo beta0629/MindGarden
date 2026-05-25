@@ -246,7 +246,7 @@ const ClientMessageScreen = () => {
         disabled={replying}
         preventDoubleClick={false}
       >
-        {t('common.actions.close', '닫기')}
+        {t('common.actions.close')}
       </MGButton>
       <MGButton
         type="button"
@@ -265,7 +265,7 @@ const ClientMessageScreen = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title={t('admin.labels.message', '메시지')}>
+      <AdminCommonLayout title={t('admin.labels.message')}>
         {pageShell(
           <div
             className="client-message-screen-loading"
@@ -280,7 +280,7 @@ const ClientMessageScreen = () => {
   }
 
   return (
-    <AdminCommonLayout title={t('admin.labels.message', '메시지')} className="mg-v2-dashboard-layout">
+    <AdminCommonLayout title={t('admin.labels.message')} className="mg-v2-dashboard-layout">
       {pageShell(
         <div className="client-message-screen-container">
           <div className="client-message-screen-stats-card">
@@ -340,7 +340,7 @@ const ClientMessageScreen = () => {
                       <div className="client-message-screen-message-badges">
                         {!message.isRead && <span className="client-message-screen-badge client-message-screen-badge-unread">읽지 않음</span>}
                         {message.isImportant && <span className="client-message-screen-badge client-message-screen-badge-important">중요</span>}
-                        {message.isUrgent && <span className="client-message-screen-badge client-message-screen-badge-urgent">{t('admin.labels.urgent', '긴급')}</span>}
+                        {message.isUrgent && <span className="client-message-screen-badge client-message-screen-badge-urgent">{t('admin.labels.urgent')}</span>}
                         {message.isRead && <span className="client-message-screen-badge client-message-screen-badge-read">읽음</span>}
                       </div>
                     </div>
@@ -352,7 +352,7 @@ const ClientMessageScreen = () => {
                       </SafeText>
                     </div>
                     <div className="client-message-screen-message-footer">
-                      <span>{t('common.labels.consultant', '상담사')}</span>
+                      <span>{t('common.labels.consultant')}</span>
                       <span>
                         {message.isRead
                           ? `읽음 ${formatDate(message.readAt)}`

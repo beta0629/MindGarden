@@ -292,7 +292,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
     };
 
     return (
-        <AdminCommonLayout title={t('admin.labels.consultantManagement', '상담사 관리')}>
+        <AdminCommonLayout title={t('admin.labels.consultantManagement')}>
             <div className="consultant-management">
                 <div className="panel-header">
                     <h3 className="panel-title">
@@ -326,7 +326,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
-                            <Form.Label>{t('admin.labels.email', '이메일')}</Form.Label>
+                            <Form.Label>{t('admin.labels.email')}</Form.Label>
                             <Form.Control
                                 type="email"
                                 value={form.email}
@@ -344,7 +344,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
-                            <Form.Label>{t('common.labels.name', '이름')}</Form.Label>
+                            <Form.Label>{t('common.labels.name')}</Form.Label>
                             <Form.Control
                                 type="text"
                                 value={form.name}
@@ -390,7 +390,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                         </Form.Group>
                         <div className="d-flex justify-content-end gap-2">
                             <Button variant="secondary" onClick={() => setShowModal(false)}>
-                                {t('admin.actions.cancel', '취소')}
+                                {t('admin.actions.cancel')}
                             </Button>
                             <Button variant="primary" type="submit">
                                 등록

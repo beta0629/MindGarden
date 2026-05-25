@@ -205,7 +205,7 @@ const BranchSpecificLogin = () => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
-                  {t('common.labels.retry', '다시 시도')}
+                  {t('common.labels.retry')}
                 </MGButton>
                 <MGButton
                   type="button"

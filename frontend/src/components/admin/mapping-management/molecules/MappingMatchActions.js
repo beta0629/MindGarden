@@ -54,10 +54,10 @@ const MappingMatchActions = ({
           loading={false}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => onPayment(mapping)}
-          aria-label={t('admin.actions.paymentConfirm', '결제 확인')}
+          aria-label={t('admin.actions.paymentConfirm')}
           preventDoubleClick={false}
         >
-          {t('admin.actions.paymentConfirm', '결제 확인')}
+          {t('admin.actions.paymentConfirm')}
         </MGButton>
       )}
       {showDeposit && (

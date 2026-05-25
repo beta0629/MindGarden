@@ -128,7 +128,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                         disabled={isSubmitting}
                         preventDoubleClick={false}
                     >
-                        {t('common.actions.cancel', '취소')}
+                        {t('common.actions.cancel')}
                     </MGButton>
                     <MGButton
                         variant="primary"

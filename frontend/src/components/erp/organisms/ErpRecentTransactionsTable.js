@@ -88,7 +88,7 @@ const ErpRecentTransactionsTable = ({
             preventDoubleClick={false}
             aria-label="재무 관리에서 전체 거래 보기"
           >
-            {t('admin.actions.viewAll', '전체 보기')}
+            {t('admin.actions.viewAll')}
           </MGButton>
         </div>
       </div>

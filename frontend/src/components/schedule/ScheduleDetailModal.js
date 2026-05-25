@@ -404,7 +404,7 @@ const ScheduleDetailModal = ({
                         onClick={() => setShowConfirmModal(false)}
                         disabled={loading}
                     >
-                        {t('common.actions.cancel', '취소')}
+                        {t('common.actions.cancel')}
                     </MGButton>
                     <MGButton
                         type="button"
@@ -953,7 +953,7 @@ const ScheduleDetailModal = ({
                     ) : null}
                     <div className="schedule-detail-modal__summary-strip">
                         <div className="schedule-detail-modal__summary-item">
-                            <span className="schedule-detail-modal__summary-label">{t('common.labels.status', '상태')}</span>
+                            <span className="schedule-detail-modal__summary-label">{t('common.labels.status')}</span>
                             <StatusBadge status={getStatusCodeValue(statusForDisplay)}>
                                 {toDisplayString(convertStatusToKorean(statusForDisplay), SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER)}
                             </StatusBadge>
@@ -992,7 +992,7 @@ const ScheduleDetailModal = ({
                                         variant="compact"
                                         avatar={{ displayName: parsedClientName }}
                                         name={<SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText>}
-                                        badges={<span className="schedule-detail-modal__party-role-label">{t('common.labels.client', '내담자')}</span>}
+                                        badges={<span className="schedule-detail-modal__party-role-label">{t('common.labels.client')}</span>}
                                         onClick={() => setPartyQuickView('client')}
                                         className="schedule-detail-modal__party-card--trigger"
                                         aria-haspopup="dialog"
@@ -1007,7 +1007,7 @@ const ScheduleDetailModal = ({
                                         variant="compact"
                                         avatar={{ displayName: parsedClientName }}
                                         name={<SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText>}
-                                        badges={<span className="schedule-detail-modal__party-role-label">{t('common.labels.client', '내담자')}</span>}
+                                        badges={<span className="schedule-detail-modal__party-role-label">{t('common.labels.client')}</span>}
                                         renderActions={canPartyQuickSummary ? () => (
                                             <span className="schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
                                         ) : undefined}

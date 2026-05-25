@@ -179,21 +179,21 @@ const DashboardLayoutEditor = ({
     <div className="dashboard-layout-editor">
       <div className="layout-editor-header">
         <h3 className="layout-editor-title">
-          {t('admin:dashboardLayout.editorHeader', '레이아웃 편집 (드래그하여 위치 변경)')}
+          {t('admin:dashboardLayout.editorHeader')}
         </h3>
         <div className="layout-editor-info">
           <span className="widget-count">
-            {t('admin:dashboardLayout.widgetCount', '위젯 {{count}}개', { count: widgetList.length })}
+            {t('admin:dashboardLayout.widgetCount', { count: widgetList.length })}
           </span>
           <span className="grid-info">
-            {t('admin:dashboardLayout.gridInfo', '{{count}}열 그리드', { count: columns })}
+            {t('admin:dashboardLayout.gridInfo', { count: columns })}
           </span>
         </div>
       </div>
 
       {widgetList.length === 0 ? (
         <div className="layout-empty-state">
-          <p>{t('admin:dashboardLayout.emptyMessage', '위젯이 없습니다. 위젯을 추가해주세요.')}</p>
+          <p>{t('admin:dashboardLayout.emptyMessage')}</p>
         </div>
       ) : (
         <div className={getGridContainerClass()}>
@@ -291,10 +291,10 @@ const DashboardLayoutEditor = ({
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => onWidgetConfig(widget)}
-                        title={t('admin:dashboardLayout.settings', '설정')}
+                        title={t('admin:dashboardLayout.settings')}
                         preventDoubleClick={false}
                       >
-                        {t('admin:dashboardLayout.settings', '설정')}
+                        {t('admin:dashboardLayout.settings')}
                       </MGButton>
                     )}
                     <MGButton
@@ -309,10 +309,10 @@ const DashboardLayoutEditor = ({
                       })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => handleDelete(widget.id)}
-                      title={t('admin:dashboardLayout.delete', '삭제')}
+                      title={t('admin:dashboardLayout.delete')}
                       preventDoubleClick={false}
                     >
-                      {t('admin:dashboardLayout.delete', '삭제')}
+                      {t('admin:dashboardLayout.delete')}
                     </MGButton>
                   </div>
                 </div>
@@ -323,12 +323,12 @@ const DashboardLayoutEditor = ({
                     </span>
                     {widget.position && (
                       <span className="widget-preview-position">
-                        {t('admin:dashboardLayout.positionRowCol', '행 {{row}}, 열 {{col}}', {
+                        {t('admin:dashboardLayout.positionRowCol', {
                           row: widget.position.row,
                           col: widget.position.col
                         })}
                         {widget.position.span > 1
-                          ? t('admin:dashboardLayout.positionSpan', ' ({{count}}칸)', { count: widget.position.span })
+                          ? t('admin:dashboardLayout.positionSpan', { count: widget.position.span })
                           : ''}
                       </span>
                     )}

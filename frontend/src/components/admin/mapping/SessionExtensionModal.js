@@ -181,7 +181,7 @@ const SessionExtensionModal = ({
                         onClick={handleClose}
                         disabled={isLoading}
                     >
-                        {t('admin.actions.cancel', '취소')}
+                        {t('admin.actions.cancel')}
                     </MGButton>
                     <MGButton
                         type="button"
@@ -208,13 +208,13 @@ const SessionExtensionModal = ({
                         <div className="mg-v2-card-body">
                             <div className="mg-v2-form-grid">
                                 <div className="mg-v2-form-group">
-                                    <label className="mg-v2-label">{t('admin.labels.client', '내담자')}</label>
+                                    <label className="mg-v2-label">{t('admin.labels.client')}</label>
                                     <div className="mg-v2-text-primary">
                                         {mapping.client?.name || mapping.clientName || '알 수 없음'}
                                     </div>
                                 </div>
                                 <div className="mg-v2-form-group">
-                                    <label className="mg-v2-label">{t('admin.labels.consultant', '상담사')}</label>
+                                    <label className="mg-v2-label">{t('admin.labels.consultant')}</label>
                                     <div className="mg-v2-text-primary">
                                         {mapping.consultant?.name || mapping.consultantName || '알 수 없음'}
                                     </div>
@@ -272,7 +272,7 @@ const SessionExtensionModal = ({
                         
                         {/* 결제 방법 선택 */}
                         <div className="mg-v2-form-group">
-                            <label className="mg-v2-label">{t('admin.labels.paymentMethod', '결제 방법')}</label>
+                            <label className="mg-v2-label">{t('admin.labels.paymentMethod')}</label>
                             <BadgeSelect
                                 className="mg-v2-form-badge-select"
                                 value={paymentMethod}
@@ -282,7 +282,7 @@ const SessionExtensionModal = ({
                                     { value: '계좌이체', label: '계좌이체' },
                                     { value: '현금', label: '현금' }
                                 ]}
-                                placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
+                                placeholder={t('admin.messages.pleaseSelect')}
                                 disabled={isLoading}
                             />
                         </div>

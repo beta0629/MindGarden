@@ -136,10 +136,10 @@ const ConsultantClientWidget = ({ widget, user }) => {
                     loading={false}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => navigate(`/messages/${client.id}`)}
-                    title={t('admin.labels.message', '메시지')}
+                    title={t('admin.labels.message')}
                     preventDoubleClick={false}
                   >
-                    {t('admin.labels.message', '메시지')}
+                    {t('admin.labels.message')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -157,7 +157,7 @@ const ConsultantClientWidget = ({ widget, user }) => {
                     title="상세보기"
                     preventDoubleClick={false}
                   >
-                    {t('admin.actions.view', '보기')}
+                    {t('admin.actions.view')}
                   </MGButton>
                 </>
               )}

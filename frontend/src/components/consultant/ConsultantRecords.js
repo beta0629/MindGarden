@@ -176,7 +176,7 @@ const ConsultantRecords = () => {
             {loading && (
               <div className="consultant-records__loading">
                 <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">{t('common.messages.loading', '로딩 중...')}</span>
+                  <span className="visually-hidden">{t('common.messages.loading')}</span>
                 </div>
                 <p className="consultant-records__loading-text">상담 기록을 불러오는 중...</p>
               </div>

@@ -62,7 +62,7 @@ const AdminOnboarding = () => {
   const handleApprove = async() => {
     const ok = await confirm({
       variant: 'warning',
-      message: t('admin:onboarding.confirm.approve', '이 온보딩 요청을 승인하시겠어요?'),
+      message: t('admin:onboarding.confirm.approve'),
     });
     if (!ok) return;
 
@@ -75,14 +75,14 @@ const AdminOnboarding = () => {
       });
       await alert({
         variant: 'success',
-        message: t('admin:onboarding.msg.approveSuccess', '온보딩이 성공적으로 승인되었습니다.'),
+        message: t('admin:onboarding.msg.approveSuccess'),
       });
       navigate('/admin/onboarding');
     } catch (error) {
       console.error(error);
       await alert({
         variant: 'danger',
-        message: t('admin:onboarding.msg.errorDecision', '심사 처리 중 오류가 발생했습니다. 다시 시도해 주세요.'),
+        message: t('admin:onboarding.msg.errorDecision'),
       });
     } finally {
       setIsLoading(false);
@@ -93,7 +93,7 @@ const AdminOnboarding = () => {
     if (!rejectReason.trim()) {
       await alert({
         variant: 'warning',
-        message: t('admin:onboarding.msg.rejectReasonRequired', '반려 사유를 입력해 주세요.'),
+        message: t('admin:onboarding.msg.rejectReasonRequired'),
       });
       return;
     }
@@ -107,7 +107,7 @@ const AdminOnboarding = () => {
       });
       await alert({
         variant: 'success',
-        message: t('admin:onboarding.msg.rejectSuccess', '온보딩이 반려되었습니다.'),
+        message: t('admin:onboarding.msg.rejectSuccess'),
       });
       setIsRejectModalOpen(false);
       navigate('/admin/onboarding');
@@ -115,7 +115,7 @@ const AdminOnboarding = () => {
       console.error(error);
       await alert({
         variant: 'danger',
-        message: t('admin:onboarding.msg.errorDecision', '심사 처리 중 오류가 발생했습니다. 다시 시도해 주세요.'),
+        message: t('admin:onboarding.msg.errorDecision'),
       });
     } finally {
       setIsLoading(false);
@@ -137,23 +137,23 @@ const AdminOnboarding = () => {
   );
 
   const renderStepContent = () => {
-    if (!onboardingData) return <div>{t('common:state.loadingData', '데이터를 불러오는 중...')}</div>;
+    if (!onboardingData) return <div>{t('common:state.loadingData')}</div>;
 
     switch (currentStep) {
       case 1:
         return (
           <section className="mg-v2-card">
-            <h3 className="mg-v2-card__title">{t('admin:onboarding.step.1.label', '기본 정보')}</h3>
+            <h3 className="mg-v2-card__title">{t('admin:onboarding.step.1.label')}</h3>
             <div className="mg-v2-form-group">
-              <span className="mg-v2-form-label">{t('admin:onboarding.field.tenantName', '기관명')}</span>
+              <span className="mg-v2-form-label">{t('admin:onboarding.field.tenantName')}</span>
               <div className="mg-v2-form-value">{onboardingData.tenantName}</div>
             </div>
             <div className="mg-v2-form-group">
-              <span className="mg-v2-form-label">{t('admin:onboarding.field.contactPhone', '연락처')}</span>
+              <span className="mg-v2-form-label">{t('admin:onboarding.field.contactPhone')}</span>
               <div className="mg-v2-form-value">{onboardingData.contactPhone}</div>
             </div>
             <div className="mg-v2-form-group">
-              <span className="mg-v2-form-label">{t('admin:onboarding.field.businessType', '업종')}</span>
+              <span className="mg-v2-form-label">{t('admin:onboarding.field.businessType')}</span>
               <div className="mg-v2-form-value">{onboardingData.businessType}</div>
             </div>
           </section>
@@ -161,13 +161,13 @@ const AdminOnboarding = () => {
       case 2:
         return (
           <section className="mg-v2-card">
-            <h3 className="mg-v2-card__title">{t('admin:onboarding.step.2.label', '자격 확인')}</h3>
+            <h3 className="mg-v2-card__title">{t('admin:onboarding.step.2.label')}</h3>
             <div className="mg-v2-form-group">
-              <span className="mg-v2-form-label">{t('admin:onboarding.field.adminName', '관리자 이름')}</span>
+              <span className="mg-v2-form-label">{t('admin:onboarding.field.adminName')}</span>
               <div className="mg-v2-form-value">{onboardingData.adminName}</div>
             </div>
             <div className="mg-v2-form-group">
-              <span className="mg-v2-form-label">{t('admin:onboarding.field.adminEmail', '관리자 이메일')}</span>
+              <span className="mg-v2-form-label">{t('admin:onboarding.field.adminEmail')}</span>
               <div className="mg-v2-form-value">{onboardingData.adminEmail}</div>
             </div>
           </section>
@@ -175,8 +175,8 @@ const AdminOnboarding = () => {
       case 3:
         return (
           <section className="mg-v2-card">
-            <h3 className="mg-v2-card__title">{t('admin:onboarding.step.3.label', '최종 심사')}</h3>
-            <p className="mg-v2-text--secondary">{t('admin:onboarding.field.finalReviewDesc', '입력된 모든 정보를 확인했습니다. 승인 또는 반려를 선택해주세요.')}</p>
+            <h3 className="mg-v2-card__title">{t('admin:onboarding.step.3.label')}</h3>
+            <p className="mg-v2-text--secondary">{t('admin:onboarding.field.finalReviewDesc')}</p>
             <div className="mg-v2-action-group mg-v2-margin-top--large">
               <button
                 type="button"
@@ -184,7 +184,7 @@ const AdminOnboarding = () => {
                 onClick={handleApprove}
                 disabled={isLoading}
               >
-                {t('admin:onboarding.btn.approve', '승인')}
+                {t('admin:onboarding.btn.approve')}
               </button>
               <button
                 type="button"
@@ -192,7 +192,7 @@ const AdminOnboarding = () => {
                 onClick={() => setIsRejectModalOpen(true)}
                 disabled={isLoading}
               >
-                {t('admin:onboarding.btn.reject', '거절')}
+                {t('admin:onboarding.btn.reject')}
               </button>
             </div>
           </section>
@@ -210,7 +210,7 @@ const AdminOnboarding = () => {
         onClick={() => setIsRejectModalOpen(false)}
         disabled={isLoading}
       >
-        {t('admin:onboarding.btn.cancel', '취소')}
+        {t('admin:onboarding.btn.cancel')}
       </button>
       <button
         type="button"
@@ -218,13 +218,13 @@ const AdminOnboarding = () => {
         onClick={handleReject}
         disabled={isLoading}
       >
-        {t('admin:onboarding.btn.confirm', '확인')}
+        {t('admin:onboarding.btn.confirm')}
       </button>
     </>
   );
 
   return (
-    <AdminCommonLayout title={t('admin:onboarding.title', '온보딩 심사')}>
+    <AdminCommonLayout title={t('admin:onboarding.title')}>
       <div className="mg-v2-page-container">
         {renderStepper()}
 
@@ -239,7 +239,7 @@ const AdminOnboarding = () => {
             onClick={handlePrevStep}
             disabled={currentStep === 1 || isLoading}
           >
-            {t('admin:onboarding.btn.prev', '이전')}
+            {t('admin:onboarding.btn.prev')}
           </button>
 
           {currentStep < ONBOARDING_STEPS.length && (
@@ -249,7 +249,7 @@ const AdminOnboarding = () => {
               onClick={handleNextStep}
               disabled={isLoading}
             >
-              {t('admin:onboarding.btn.next', '다음')}
+              {t('admin:onboarding.btn.next')}
             </button>
           )}
         </div>
@@ -258,8 +258,8 @@ const AdminOnboarding = () => {
       <UnifiedModal
         isOpen={isRejectModalOpen}
         onClose={() => setIsRejectModalOpen(false)}
-        title={t('admin:onboarding.modal.rejectTitle', '온보딩 반려')}
-        subtitle={t('admin:onboarding.modal.rejectSubtitle', '반려 사유를 입력해 주세요. 해당 사유는 요청자에게 전달될 수 있습니다.')}
+        title={t('admin:onboarding.modal.rejectTitle')}
+        subtitle={t('admin:onboarding.modal.rejectSubtitle')}
         size="medium"
         variant="form"
         actions={rejectModalActions}
@@ -271,7 +271,7 @@ const AdminOnboarding = () => {
             rows={4}
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
-            placeholder={t('admin:onboarding.modal.rejectReasonPlaceholder', '반려 사유 상세 입력')}
+            placeholder={t('admin:onboarding.modal.rejectReasonPlaceholder')}
             disabled={isLoading}
           />
         </div>

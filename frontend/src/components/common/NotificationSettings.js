@@ -79,7 +79,7 @@ const Toggle = ({ active, disabled = false, onChange }) => {
       disabled={disabled}
       type="button"
       aria-pressed={active}
-      aria-label={active ? t('settings:toggle.active', '활성') : t('settings:toggle.inactive', '비활성')}
+      aria-label={active ? t('settings:toggle.active') : t('settings:toggle.inactive')}
     >
       <span className="mg-notif-settings__toggle-knob" />
     </button>
@@ -109,7 +109,7 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
     setSettings(newSettings);
     saveSettings(newSettings);
     setShowToast(true);
-    showAppToast({ message: t('settings:status.saveSuccess', '설정이 저장되었습니다.'), type: 'success' });
+    showAppToast({ message: t('settings:status.saveSuccess'), type: 'success' });
   }, [showAppToast, t]);
 
   useEffect(() => {
@@ -137,7 +137,7 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
         <div className="mg-notif-settings__section-header">
           <h3 className="mg-notif-settings__section-title">
             <Calendar size={18} className="mg-notif-settings__section-icon" />
-            {t('settings:notifSettings.schedule.title', '예약 관련')}
+            {t('settings:notifSettings.schedule.title')}
           </h3>
           <Toggle
             active={settings.schedule.enabled}
@@ -147,12 +147,12 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
         {settings.schedule.enabled && (
           <div className="mg-notif-settings__sub-options">
             <div className="mg-notif-settings__sub-item">
-              <span className="mg-notif-settings__sub-label">{t('settings:notifSettings.schedule.reminderTime', '리마인더 시점')}</span>
+              <span className="mg-notif-settings__sub-label">{t('settings:notifSettings.schedule.reminderTime')}</span>
               <select
                 className="mg-notif-settings__select"
                 value={settings.schedule.reminderMinutes}
                 onChange={(e) => updateCategory('schedule', 'reminderMinutes', e.target.value)}
-                aria-label={t('settings:notifSettings.schedule.reminderTimeAria', '리마인더 시점 선택')}
+                aria-label={t('settings:notifSettings.schedule.reminderTimeAria')}
               >
                 {reminderOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -160,14 +160,14 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
               </select>
             </div>
             <div className="mg-notif-settings__sub-item">
-              <span className="mg-notif-settings__sub-label">{t('settings:notifSettings.schedule.confirmCancel', '예약 확정·취소')}</span>
+              <span className="mg-notif-settings__sub-label">{t('settings:notifSettings.schedule.confirmCancel')}</span>
               <Toggle
                 active={settings.schedule.confirmCancel}
                 onChange={(v) => updateCategory('schedule', 'confirmCancel', v)}
               />
             </div>
             <div className="mg-notif-settings__sub-item">
-              <span className="mg-notif-settings__sub-label">{t('settings:notifSettings.schedule.startEnd', '상담 시작·완료')}</span>
+              <span className="mg-notif-settings__sub-label">{t('settings:notifSettings.schedule.startEnd')}</span>
               <Toggle
                 active={settings.schedule.startEnd}
                 onChange={(v) => updateCategory('schedule', 'startEnd', v)}
@@ -182,7 +182,7 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
         <div className="mg-notif-settings__section-header">
           <h3 className="mg-notif-settings__section-title">
             <CreditCard size={18} className="mg-notif-settings__section-icon" />
-            {t('settings:notifSettings.payment.title', '결제 관련')}
+            {t('settings:notifSettings.payment.title')}
           </h3>
           <Toggle
             active={settings.payment.enabled}
@@ -192,14 +192,14 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
         {settings.payment.enabled && (
           <div className="mg-notif-settings__sub-options">
             <div className="mg-notif-settings__sub-item">
-              <span className="mg-notif-settings__sub-label">{t('settings:notifSettings.payment.confirmFail', '결제 확인·실패')}</span>
+              <span className="mg-notif-settings__sub-label">{t('settings:notifSettings.payment.confirmFail')}</span>
               <Toggle
                 active={settings.payment.confirmFail}
                 onChange={(v) => updateCategory('payment', 'confirmFail', v)}
               />
             </div>
             <div className="mg-notif-settings__sub-item">
-              <span className="mg-notif-settings__sub-label">{t('settings:notifSettings.payment.sessionLow', '회기 소진 임박')}</span>
+              <span className="mg-notif-settings__sub-label">{t('settings:notifSettings.payment.sessionLow')}</span>
               <Toggle
                 active={settings.payment.sessionLow}
                 onChange={(v) => updateCategory('payment', 'sessionLow', v)}
@@ -214,7 +214,7 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
         <div className="mg-notif-settings__section-header">
           <h3 className="mg-notif-settings__section-title">
             <MessageCircle size={18} className="mg-notif-settings__section-icon" />
-            {t('admin:labels.message', '메시지')}
+            {t('admin:labels.message')}
           </h3>
           <Toggle
             active={settings.message.enabled}
@@ -228,7 +228,7 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
         <div className="mg-notif-settings__section-header">
           <h3 className="mg-notif-settings__section-title">
             <Heart size={18} className="mg-notif-settings__section-icon" />
-            {t('settings:notifSettings.wellness.title', '웰니스 리마인드')}
+            {t('settings:notifSettings.wellness.title')}
           </h3>
           <Toggle
             active={settings.wellness.enabled}
@@ -238,13 +238,13 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
         {settings.wellness.enabled && (
           <div className="mg-notif-settings__sub-options">
             <div className="mg-notif-settings__sub-item">
-              <span className="mg-notif-settings__sub-label">{t('settings:notifSettings.wellness.reminderTime', '리마인드 시각')}</span>
+              <span className="mg-notif-settings__sub-label">{t('settings:notifSettings.wellness.reminderTime')}</span>
               <input
                 type="time"
                 className="mg-notif-settings__time-picker"
                 value={settings.wellness.reminderTime}
                 onChange={(e) => updateCategory('wellness', 'reminderTime', e.target.value)}
-                aria-label={t('settings:notifSettings.wellness.reminderTimeAria', '웰니스 리마인드 시각')}
+                aria-label={t('settings:notifSettings.wellness.reminderTimeAria')}
               />
             </div>
           </div>
@@ -256,8 +256,8 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
         <div className="mg-notif-settings__section-header">
           <h3 className="mg-notif-settings__section-title">
             <Bell size={18} className="mg-notif-settings__section-icon" />
-            {t('settings:notifSettings.system.title', '시스템 공지')}
-            <span className="mg-notif-settings__forced-label">{t('settings:notifSettings.system.alwaysOn', '항상 수신')}</span>
+            {t('settings:notifSettings.system.title')}
+            <span className="mg-notif-settings__forced-label">{t('settings:notifSettings.system.alwaysOn')}</span>
           </h3>
           <Toggle active={true} disabled={true} onChange={() => {}} />
         </div>
@@ -268,7 +268,7 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
         <div className="mg-notif-settings__section-header">
           <h3 className="mg-notif-settings__section-title">
             <Volume2 size={18} className="mg-notif-settings__section-icon" />
-            {t('settings:notifSettings.sound.title', '사운드·진동')}
+            {t('settings:notifSettings.sound.title')}
           </h3>
           <Toggle
             active={settings.sound.enabled}
@@ -280,7 +280,7 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
       {/* 저장 토스트 */}
       {showToast && (
         <output className="mg-notif-settings__saved-toast">
-          {t('settings:notifSettings.savedToast', '설정이 저장되었습니다')}
+          {t('settings:notifSettings.savedToast')}
         </output>
       )}
     </div>

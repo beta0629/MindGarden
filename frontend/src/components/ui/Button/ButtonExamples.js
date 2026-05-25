@@ -92,8 +92,8 @@ const ButtonExamples = () => {
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
               <Button icon="PLUS">추가</Button>
               <Button icon="EDIT" variant="secondary">편집</Button>
-              <Button icon="TRASH" variant="error">{t('common.actions.delete', '삭제')}</Button>
-              <Button icon="SAVE" variant="success">{t('common.actions.save', '저장')}</Button>
+              <Button icon="TRASH" variant="error">{t('common.actions.delete')}</Button>
+              <Button icon="SAVE" variant="success">{t('common.actions.save')}</Button>
               <Button icon="SEARCH" variant="outline">검색</Button>
             </div>
           </div>
@@ -106,7 +106,7 @@ const ButtonExamples = () => {
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
-              <Button icon="CHEVRON_LEFT" iconPosition="left">{t('common.actions.prev', '이전')}</Button>
+              <Button icon="CHEVRON_LEFT" iconPosition="left">{t('common.actions.prev')}</Button>
               <Button icon="CHEVRON_RIGHT" iconPosition="right">다음</Button>
               <Button icon="DOWNLOAD" iconPosition="left" variant="outline">다운로드</Button>
               <Button icon="UPLOAD" iconPosition="right" variant="outline">업로드</Button>
@@ -196,8 +196,8 @@ const ButtonExamples = () => {
             <div className="mg-v2-v2-v2-button-toolbar">
               <Button icon="PLUS" size="small">추가</Button>
               <Button icon="EDIT" size="small" variant="secondary">편집</Button>
-              <Button icon="TRASH" size="small" variant="error">{t('common.actions.delete', '삭제')}</Button>
-              <Button icon="SAVE" size="small" variant="success">{t('common.actions.save', '저장')}</Button>
+              <Button icon="TRASH" size="small" variant="error">{t('common.actions.delete')}</Button>
+              <Button icon="SAVE" size="small" variant="success">{t('common.actions.save')}</Button>
             </div>
           </div>
         </div>
@@ -246,21 +246,21 @@ const ButtonExamples = () => {
                 variant="error"
                 onClick={() => handleClick('delete')}
               >
-                {t('common.actions.delete', '삭제')}
+                {t('common.actions.delete')}
               </Button>
               <Button 
                 icon="SAVE" 
                 variant="success"
                 onClick={() => handleClick('save')}
               >
-                {t('common.actions.save', '저장')}
+                {t('common.actions.save')}
               </Button>
               <Button 
                 icon="CANCEL" 
                 variant="outline"
                 onClick={() => handleClick('cancel')}
               >
-                {t('common.actions.cancel', '취소')}
+                {t('common.actions.cancel')}
               </Button>
             </div>
           </div>

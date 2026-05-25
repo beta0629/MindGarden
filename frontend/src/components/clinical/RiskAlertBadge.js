@@ -155,7 +155,7 @@ const RiskAlertBadge = ({ tenantId }) => {
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={loadAlerts}
                                 disabled={isLoading}
-                                title={t('common.actions.refresh', '새로고침')}
+                                title={t('common.actions.refresh')}
                                 variant="outline"
                                 loading={isLoading}
                                 preventDoubleClick={false}
@@ -168,7 +168,7 @@ const RiskAlertBadge = ({ tenantId }) => {
                             {isLoading && (
                                 <div className="alert-loading">
                                     <div className="spinner-small" />
-                                    <p>{t('common.messages.loading', '로딩 중...')}</p>
+                                    <p>{t('common.messages.loading')}</p>
                                 </div>
                             )}
 

@@ -175,7 +175,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.monthlyBaseDay}
                 onChange={(val) => handleInputChange('monthlyBaseDay', val)}
                 options={options.monthlyBaseDays.map(option => ({ value: option.value, label: option.label }))}
-                placeholder={t('common.messages.pleaseSelect', '선택하세요')}
+                placeholder={t('common.messages.pleaseSelect')}
                 className="mg-v2-form-badge-select"
               />
             </div>
@@ -187,7 +187,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.paymentDay}
                 onChange={(val) => handleInputChange('paymentDay', Number(val))}
                 options={options.paymentDays.map(option => ({ value: option.value, label: option.label }))}
-                placeholder={t('common.messages.pleaseSelect', '선택하세요')}
+                placeholder={t('common.messages.pleaseSelect')}
                 className="mg-v2-form-badge-select"
               />
             </div>
@@ -199,7 +199,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.cutoffDay}
                 onChange={(val) => handleInputChange('cutoffDay', val)}
                 options={options.cutoffDays.map(option => ({ value: option.value, label: option.label }))}
-                placeholder={t('common.messages.pleaseSelect', '선택하세요')}
+                placeholder={t('common.messages.pleaseSelect')}
                 className="mg-v2-form-badge-select"
               />
             </div>
@@ -214,7 +214,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.batchCycle}
                 onChange={(val) => handleInputChange('batchCycle', val)}
                 options={options.batchCycles.map(option => ({ value: option.value, label: option.label }))}
-                placeholder={t('common.messages.pleaseSelect', '선택하세요')}
+                placeholder={t('common.messages.pleaseSelect')}
                 className="mg-v2-form-badge-select"
               />
             </div>
@@ -229,7 +229,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.calculationMethod}
                 onChange={(val) => handleInputChange('calculationMethod', val)}
                 options={options.calculationMethods.map(option => ({ value: option.value, label: option.label }))}
-                placeholder={t('common.messages.pleaseSelect', '선택하세요')}
+                placeholder={t('common.messages.pleaseSelect')}
                 className="mg-v2-form-badge-select"
               />
             </div>
@@ -281,7 +281,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           disabled={dataLoading || saving}
           preventDoubleClick={false}
         >
-          {t('common.actions.cancel', '취소')}
+          {t('common.actions.cancel')}
         </MGButton>
         <MGButton
           type="button"
@@ -293,7 +293,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           preventDoubleClick
         >
-          {t('common.actions.save', '저장')}
+          {t('common.actions.save')}
         </MGButton>
       </div>
     </UnifiedModal>

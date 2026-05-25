@@ -257,7 +257,7 @@ const SummaryPanels = ({ user, consultationData }) => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => { navigate('/admin/mapping-management'); }}
               >
-                               {t('admin.labels.mappingManagement', '매핑 관리')}
+                               {t('admin.labels.mappingManagement')}
               </MGButton>
             </div>
           </div>

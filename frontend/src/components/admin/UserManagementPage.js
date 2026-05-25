@@ -85,7 +85,7 @@ const UserManagementPage = () => {
                     onClick={() => handleTypeChange(TYPE_CONSULTANT)}
                     preventDoubleClick={false}
                   >
-                    {t('admin.labels.consultant', '상담사')}
+                    {t('admin.labels.consultant')}
                   </MGButton>
                   {canManageClients && (
                     <MGButton
@@ -102,7 +102,7 @@ const UserManagementPage = () => {
                       onClick={() => handleTypeChange(TYPE_CLIENT)}
                       preventDoubleClick={false}
                     >
-                      {t('admin.labels.client', '내담자')}
+                      {t('admin.labels.client')}
                     </MGButton>
                   )}
                   <MGButton

@@ -41,7 +41,7 @@ const ErrorState = ({ message = '오류가 발생했습니다.', onRetry = null 
           variant="primary"
           preventDoubleClick={false}
         >
-          {t('common.labels.retry', '다시 시도')}
+          {t('common.labels.retry')}
         </MGButton>
       )}
     </div>

@@ -578,7 +578,7 @@ const ErdDetailPage = () => {
               preventDoubleClick={false}
               onClick={loadErdDetail}
             >
-              {t('common.labels.retry', '다시 시도')}
+              {t('common.labels.retry')}
             </MGButton>
           </div>
         </div>
@@ -615,9 +615,9 @@ const ErdDetailPage = () => {
               )}
               <span className="erd-meta-badge">v{toDisplayString(erd.version)}</span>
               {erd.isActive ? (
-                <StatusBadge variant="success">{t('common.labels.active', '활성')}</StatusBadge>
+                <StatusBadge variant="success">{t('common.labels.active')}</StatusBadge>
               ) : (
-                <StatusBadge variant="neutral">{t('common.labels.inactive', '비활성')}</StatusBadge>
+                <StatusBadge variant="neutral">{t('common.labels.inactive')}</StatusBadge>
               )}
             </div>
           </div>
@@ -928,7 +928,7 @@ const ErdDetailPage = () => {
                   preventDoubleClick={false}
                   onClick={renderMermaid}
                 >
-                  {t('common.labels.retry', '다시 시도')}
+                  {t('common.labels.retry')}
                 </MGButton>
               </div>
             ) : (

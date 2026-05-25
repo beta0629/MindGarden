@@ -165,7 +165,7 @@ const UnifiedModal = ({
                   className: 'mg-modal__close'
                 })}
                 onClick={onClose}
-                aria-label={t('action.close', '닫기')}
+                aria-label={t('action.close')}
                 disabled={loading}
                 variant="outline"
                 preventDoubleClick={false}

@@ -1030,7 +1030,7 @@ const ConsultationLogModal = ({
         disabled={saving}
         preventDoubleClick={false}
       >
-        {t('common.actions.cancel', '취소')}
+        {t('common.actions.cancel')}
       </MGButton>
       <MGButton
         type="button"

@@ -64,13 +64,13 @@ const MGHeader = ({
         {/* 데스크톱 네비게이션 */}
         <nav className="mg-header__nav mg-header__nav--desktop">
           <a href="/dashboard" className="mg-header__nav-item active">
-            {t('admin.labels.dashboard', '대시보드')}
+            {t('admin.labels.dashboard')}
           </a>
           <a href="/sessions" className="mg-header__nav-item">
             세션 관리
           </a>
           <a href="/users" className="mg-header__nav-item">
-            {t('admin.labels.userManagement', '사용자 관리')}
+            {t('admin.labels.userManagement')}
           </a>
           <a href="/analytics" className="mg-header__nav-item">
             분석
@@ -167,7 +167,7 @@ const MGHeader = ({
                 <div className="mg-header__user-menu-items">
                   <a href="/profile" className="mg-header__menu-item">
                     <span className="mg-header__menu-icon">👤</span>
-                    {t('common.labels.profile', '프로필')}
+                    {t('common.labels.profile')}
                   </a>
                   <a href="/settings" className="mg-header__menu-item">
                     <span className="mg-header__menu-icon">⚙️</span>
@@ -201,7 +201,7 @@ const MGHeader = ({
           {isNotificationOpen && (
             <div className="mg-header__notification-dropdown">
               <div className="mg-header__notification-header">
-                <h3>{t('common.labels.notification', '알림')}</h3>
+                <h3>{t('common.labels.notification')}</h3>
                 <MGButton
                   type="button"
                   className={buildErpMgButtonClassName({
@@ -263,13 +263,13 @@ const MGHeader = ({
       <div className={`mg-header__mobile-menu ${isMobileMenuOpen ? 'active' : ''}`}>
         <nav className="mg-header__nav mg-header__nav--mobile">
           <a href="/dashboard" className="mg-header__nav-item active">
-            {t('admin.labels.dashboard', '대시보드')}
+            {t('admin.labels.dashboard')}
           </a>
           <a href="/sessions" className="mg-header__nav-item">
             세션 관리
           </a>
           <a href="/users" className="mg-header__nav-item">
-            {t('admin.labels.userManagement', '사용자 관리')}
+            {t('admin.labels.userManagement')}
           </a>
           <a href="/analytics" className="mg-header__nav-item">
             분석

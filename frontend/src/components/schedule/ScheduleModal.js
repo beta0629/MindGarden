@@ -298,7 +298,7 @@ const ScheduleModalNew = ({
             onClick={handlePrevStep}
             disabled={loading}
           >
-            {t('common.actions.prev', '이전')}
+            {t('common.actions.prev')}
           </MGButton>
         )}
         {step < 4 ? (
@@ -520,7 +520,7 @@ const ScheduleModalNew = ({
                                         />
                                     </div>
                                     <div className="mg-v2-ad-details-step__form-group">
-                                        <label className="mg-v2-ad-details-step__label" htmlFor="schedule-description">{t('common.labels.description', '설명')}</label>
+                                        <label className="mg-v2-ad-details-step__label" htmlFor="schedule-description">{t('common.labels.description')}</label>
                                         <textarea
                                             id="schedule-description"
                                             value={description}

@@ -59,7 +59,7 @@ const ClientOverviewTab = ({
                     onClick={() => onEditClient(client)}
                     preventDoubleClick={true}
                 >
-                    {t('common.actions.edit', '수정')}
+                    {t('common.actions.edit')}
                 </MGButton>
                 {onResetPassword && (
                     <MGButton
@@ -82,7 +82,7 @@ const ClientOverviewTab = ({
                     onClick={() => onDeleteClient(client)}
                     preventDoubleClick={true}
                 >
-                    {t('admin.actions.delete', '삭제')}
+                    {t('admin.actions.delete')}
                 </MGButton>
             </div>
         );

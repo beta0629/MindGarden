@@ -204,7 +204,7 @@ const ProfileSection = ({
           <span className="mg-mypage__section-accent" aria-hidden="true" />
           <div className="mg-mypage__section-head-text">
             <h2 id="mg-mypage-profile-header-title" className="mg-mypage__section-title">
-              {t('common.labels.profile', '프로필')}
+              {t('common.labels.profile')}
             </h2>
             <p className="mg-mypage__section-description">다른 사용자에게 보이는 정보입니다.</p>
           </div>
@@ -276,7 +276,7 @@ const ProfileSection = ({
 
             <div className="mg-mypage__form-row">
               <label className="mg-mypage__form-label" htmlFor="mg-mypage-user-id">
-                {t('common.labels.name', '이름')}
+                {t('common.labels.name')}
               </label>
               <input
                 className="mg-mypage__form-control"
@@ -308,7 +308,7 @@ const ProfileSection = ({
 
             <div className="mg-mypage__form-row mg-mypage__form-row--stack">
               <span className="mg-mypage__form-label" id="mg-mypage-email-label">
-                {t('common.labels.email', '이메일')}
+                {t('common.labels.email')}
               </span>
               <div className="mg-mypage__readonly-row">
                 <p className="mg-mypage__readonly-value" aria-labelledby="mg-mypage-email-label">
@@ -364,7 +364,7 @@ const ProfileSection = ({
                 onChange={handleInputChange}
                 disabled={!isEditing || loadingCodes}
               >
-                <option value="">{t('common.messages.pleaseSelect', '선택하세요')}</option>
+                <option value="">{t('common.messages.pleaseSelect')}</option>
                 {genderOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.icon ? `${option.icon} ` : ''}
@@ -412,7 +412,7 @@ const ProfileSection = ({
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 variant="primary"
               >
-                {t('common.actions.save', '저장')}
+                {t('common.actions.save')}
               </MGButton>
               <MGButton
                 type="button"
@@ -422,7 +422,7 @@ const ProfileSection = ({
                 variant="outline"
                 preventDoubleClick={false}
               >
-                {t('common.actions.cancel', '취소')}
+                {t('common.actions.cancel')}
               </MGButton>
             </div>
           ) : null}

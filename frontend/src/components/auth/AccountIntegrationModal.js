@@ -255,7 +255,7 @@ const AccountIntegrationModal = ({
                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
-                                    {t('common.actions.cancel', '취소')}
+                                    {t('common.actions.cancel')}
                                 </MGButton>
                                 <MGButton
                                     type="button"
@@ -315,7 +315,7 @@ const AccountIntegrationModal = ({
                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
-                                    {t('common.actions.prev', '이전')}
+                                    {t('common.actions.prev')}
                                 </MGButton>
                                 <MGButton
                                     type="button"
@@ -374,7 +374,7 @@ const AccountIntegrationModal = ({
                             <div className="final-info">
                                 <h4>통합 후 정보</h4>
                                 <div className="form-group">
-                                    <label htmlFor="finalEmail">{t('common.labels.email', '이메일')}</label>
+                                    <label htmlFor="finalEmail">{t('common.labels.email')}</label>
                                     <input
                                         type="email"
                                         id="finalEmail"
@@ -385,7 +385,7 @@ const AccountIntegrationModal = ({
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="finalName">{t('common.labels.name', '이름')}</label>
+                                    <label htmlFor="finalName">{t('common.labels.name')}</label>
                                     <input
                                         type="text"
                                         id="finalName"
@@ -417,7 +417,7 @@ const AccountIntegrationModal = ({
                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
-                                    {t('common.actions.prev', '이전')}
+                                    {t('common.actions.prev')}
                                 </MGButton>
                                 <MGButton
                                     type="button"
@@ -456,7 +456,7 @@ const AccountIntegrationModal = ({
                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     preventDoubleClick={false}
                                 >
-                                    {t('common.actions.done', '완료')}
+                                    {t('common.actions.done')}
                                 </MGButton>
                             </div>
                         </div>

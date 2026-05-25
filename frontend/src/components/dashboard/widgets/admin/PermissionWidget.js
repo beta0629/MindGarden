@@ -297,7 +297,7 @@ const PermissionWidget = ({ widget, user }) => {
               onClick={refresh}
               preventDoubleClick={false}
             >
-              {t('common.labels.retry', '다시 시도')}
+              {t('common.labels.retry')}
             </MGButton>
           </div>
         )}

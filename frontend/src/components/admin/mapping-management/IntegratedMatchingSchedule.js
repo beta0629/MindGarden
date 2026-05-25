@@ -253,7 +253,7 @@ const IntegratedMatchingSchedule = () => {
           <h2 className="integrated-schedule__sidebar-title">매칭 목록</h2>
           {/* Task C: 필터 통합 후보 — MappingFilterSection + UnifiedFilterSearch(quickFilterOptions·filters 계약 정렬 시 이 블록 치환) */}
           <fieldset className="integrated-schedule__filter" aria-label="매칭 목록 보기 필터">
-            <legend className="integrated-schedule__filter-legend">{t('admin.actions.view', '보기')}</legend>
+            <legend className="integrated-schedule__filter-legend">{t('admin.actions.view')}</legend>
             <label className={`integrated-schedule__filter-label ${viewFilter === VIEW_FILTER_NEW ? 'integrated-schedule__filter-label--selected' : ''}`}>
               <input
                 type="radio"
@@ -283,13 +283,13 @@ const IntegratedMatchingSchedule = () => {
                 value={VIEW_FILTER_ALL}
                 checked={viewFilter === VIEW_FILTER_ALL}
                 onChange={() => setViewFilter(VIEW_FILTER_ALL)}
-                aria-label={t('admin.labels.all', '전체')}
+                aria-label={t('admin.labels.all')}
               />
-              <span className="integrated-schedule__filter-text">{t('admin.labels.all', '전체')}</span>
+              <span className="integrated-schedule__filter-text">{t('admin.labels.all')}</span>
             </label>
           </fieldset>
           <fieldset className="integrated-schedule__filter integrated-schedule__filter--status" aria-label="상태별 필터">
-            <legend className="integrated-schedule__filter-legend">{t('admin.labels.status', '상태')}</legend>
+            <legend className="integrated-schedule__filter-legend">{t('admin.labels.status')}</legend>
             <div className="integrated-schedule__status-btns">
               {STATUS_FILTER_OPTIONS.map((opt) => {
                 const count = getStatusCount(opt.value);

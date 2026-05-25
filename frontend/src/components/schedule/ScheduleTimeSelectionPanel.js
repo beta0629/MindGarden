@@ -198,7 +198,7 @@ const ScheduleTimeSelectionPanel = ({
               value: option.value,
               label: `${toDisplayString(option.label, '—')} (${toDisplayString(option.value, '')})`
             }))}
-            placeholder={t('common.messages.pleaseSelect', '선택하세요')}
+            placeholder={t('common.messages.pleaseSelect')}
             disabled={loadingCodes}
             className="mg-v2-form-badge-select mg-v2-ad-time-step__select"
           />
@@ -212,7 +212,7 @@ const ScheduleTimeSelectionPanel = ({
               value: option.value,
               label: `${toDisplayString(option.label, '—')} (${toDisplayString(option.durationMinutes, '0')}분)`
             }))}
-            placeholder={t('common.messages.pleaseSelect', '선택하세요')}
+            placeholder={t('common.messages.pleaseSelect')}
             disabled={loadingCodes}
             className="mg-v2-form-badge-select mg-v2-ad-time-step__select"
           />

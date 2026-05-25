@@ -148,7 +148,7 @@ const SystemNotificationWidget = ({ widget, user }) => {
                     <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
                   )}
                   {item.isUrgent && (
-                    <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent', '긴급')} size="sm" />
+                    <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent')} size="sm" />
                   )}
                 </div>
               </div>

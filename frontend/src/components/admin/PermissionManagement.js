@@ -150,10 +150,10 @@ const ROLE_DISPLAY_NAMES = {
 const PermissionManagement = () => {
     const { t } = useTranslation(['admin', 'common']);
     const ROLE_DISPLAY_NAMES_I18N = {
-        'ADMIN': t('admin:role.admin', '관리자'),
-        'STAFF': t('admin:role.staff', '사무원'),
-        'CONSULTANT': t('admin:role.consultant', '상담사'),
-        'CLIENT': t('admin:role.client', '내담자')
+        'ADMIN': t('admin:role.admin'),
+        'STAFF': t('admin:role.staff'),
+        'CONSULTANT': t('admin:role.consultant'),
+        'CLIENT': t('admin:role.client')
     };
     const { checkSession } = useSession();
     const [userPermissions, setUserPermissions] = useState([]);
@@ -231,11 +231,11 @@ const PermissionManagement = () => {
                 }
             } else {
                 console.error('❌ 권한 로드 실패:', data.message);
-                setMessage(t('admin:permission.error.load', '권한을 불러오는데 실패했습니다.'));
+                setMessage(t('admin:permission.error.load'));
             }
         } catch (error) {
             console.error('❌ 권한 로드 실패:', error);
-            setMessage(t('admin:permission.error.load', '권한을 불러오는데 실패했습니다.'));
+            setMessage(t('admin:permission.error.load'));
         }
     }, [t]);
 
@@ -314,7 +314,7 @@ const PermissionManagement = () => {
 
             if (response.ok) {
                 await response.json();
-                setMessage(t('admin:permission.success.save', '권한이 성공적으로 저장되었습니다.'));
+                setMessage(t('admin:permission.success.save'));
 
                 await loadRolePermissions();
                 // 본인 역할 권한 변경 시 메뉴·세션 반영: current-user 재조회 (로그인 직후 토큰 동기화 등은 로그인 플로우에서만 풀리로드)
@@ -325,11 +325,11 @@ const PermissionManagement = () => {
                 window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
             } else {
                 const error = await response.json();
-                setMessage(t('admin:permission.error.saveFailed', '저장 실패: {{message}}', { message: error.message || t('common:state.unknownError', '알 수 없는 오류') }));
+                setMessage(t('admin:permission.error.saveFailed', { message: error.message || t('common:state.unknownError') }));
             }
         } catch (error) {
             console.error('권한 저장 실패:', error);
-            setMessage(t('admin:permission.error.save', '권한 저장에 실패했습니다.'));
+            setMessage(t('admin:permission.error.save'));
         } finally {
             setSaveLoading(false);
         }
@@ -350,17 +350,17 @@ const PermissionManagement = () => {
 
     if (!canManagePermissions) {
         return (
-            <AdminCommonLayout title={t('admin:labels.permissionManagement', '권한 관리')}>
+            <AdminCommonLayout title={t('admin:labels.permissionManagement')}>
                 <div className="mg-v2-ad-b0kla mg-v2-permission-management">
                     <div className="mg-v2-ad-b0kla__container">
-                        <ContentArea ariaLabel={t('admin:permission.ariaContent', '권한 관리 콘텐츠')}>
+                        <ContentArea ariaLabel={t('admin:permission.ariaContent')}>
                             <ContentHeader
-                                title={t('admin:permission.noAccessTitle', '접근 권한 없음')}
-                                subtitle={t('admin:permission.noAccessSubtitle', '권한 관리는 관리자(ADMIN)만 이용할 수 있습니다.')}
+                                title={t('admin:permission.noAccessTitle')}
+                                subtitle={t('admin:permission.noAccessSubtitle')}
                                 titleId="permission-management-title"
                             />
                             <div className="mg-v2-error-state" role="alert">
-                                <p>{t('admin:permission.currentRole', '현재 역할')}: {currentUserRole || t('common:state.unknown', '알 수 없음')}</p>
+                                <p>{t('admin:permission.currentRole')}: {currentUserRole || t('common:state.unknown')}</p>
                             </div>
                         </ContentArea>
                     </div>
@@ -383,13 +383,13 @@ const PermissionManagement = () => {
     const manageableRoles = getManageableRoles();
 
     return (
-        <AdminCommonLayout title={t('admin:labels.permissionManagement', '권한 관리')}>
+        <AdminCommonLayout title={t('admin:labels.permissionManagement')}>
             <div className="mg-v2-ad-b0kla mg-v2-permission-management">
                 <div className="mg-v2-ad-b0kla__container">
-                    <ContentArea ariaLabel={t('admin:permission.ariaContent', '권한 관리 콘텐츠')}>
+                    <ContentArea ariaLabel={t('admin:permission.ariaContent')}>
                         <ContentHeader
-                            title={t('admin:labels.permissionManagement', '권한 관리')}
-                            subtitle={t('admin:permission.subtitle', '역할별 메뉴·기능 접근 권한을 설정하고 저장합니다.')}
+                            title={t('admin:labels.permissionManagement')}
+                            subtitle={t('admin:permission.subtitle')}
                             titleId="permission-management-title"
                         />
 
@@ -401,7 +401,7 @@ const PermissionManagement = () => {
 
                         <div className="mg-v2-permission-controls">
                             <div className="mg-v2-role-selector">
-                                <label htmlFor="role-select">{t('admin:permission.roleSelect', '역할 선택')}:</label>
+                                <label htmlFor="role-select">{t('admin:permission.roleSelect')}:</label>
                                 <select 
                                     id="role-select"
                                     value={selectedRole} 
@@ -416,7 +416,7 @@ const PermissionManagement = () => {
                                 </select>
                                 {!isTopAdmin && (
                                     <small className="mg-v2-role-restriction">
-                                        {t('admin:permission.roleRestriction', '{{role}}는 자신의 역할만 관리할 수 있습니다.', { role: ROLE_DISPLAY_NAMES_I18N[currentUserRole] || currentUserRole })}
+                                        {t('admin:permission.roleRestriction', { role: ROLE_DISPLAY_NAMES_I18N[currentUserRole] || currentUserRole })}
                                     </small>
                                 )}
                             </div>
@@ -430,7 +430,7 @@ const PermissionManagement = () => {
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick={false}
                             >
-                                {t('admin:permission.action.save', '권한 저장')}
+                                {t('admin:permission.action.save')}
                             </MGButton>
                         </div>
 
@@ -489,7 +489,7 @@ const PermissionManagement = () => {
                         </div>
 
                         <div className="mg-v2-permission-summary">
-                            <h3>{t('admin:permission.currentlySelected', '현재 선택된 권한 ({{count}}개)', { count: rolePermissions.length })}</h3>
+                            <h3>{t('admin:permission.currentlySelected', { count: rolePermissions.length })}</h3>
                             <div className="mg-v2-selected-permissions">
                                 {rolePermissions.map(permissionCode => {
                                     const permission = Object.values(PERMISSION_CATEGORIES)

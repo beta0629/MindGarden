@@ -31,7 +31,7 @@ const VoiceBiomarkerChart = ({ biomarkerId }) => {
         });
     }, [biomarkerId]);
 
-    if (!biomarker) return <div>{t('common.messages.loading', '로딩 중...')}</div>;
+    if (!biomarker) return <div>{t('common.messages.loading')}</div>;
 
     /**
      * 정상 범위 체크

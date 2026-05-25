@@ -213,7 +213,7 @@ const UnifiedNotification = ({
                   e.stopPropagation();
                   removeNotification(notification.id);
                 }}
-                aria-label={t('common.actions.close', '닫기')}
+                aria-label={t('common.actions.close')}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
                 ×
@@ -335,7 +335,7 @@ const UnifiedNotification = ({
               })}
               preventDoubleClick={false}
               onClick={() => removeNotification(notification.id)}
-              aria-label={t('common.actions.close', '닫기')}
+              aria-label={t('common.actions.close')}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               ×

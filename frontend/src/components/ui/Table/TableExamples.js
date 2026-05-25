@@ -46,8 +46,8 @@ const TableExamples = () => {
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>{t('common.labels.name', '이름')}</th>
-                  <th>{t('common.labels.email', '이메일')}</th>
+                  <th>{t('common.labels.name')}</th>
+                  <th>{t('common.labels.email')}</th>
                   <th>나이</th>
                 </tr>
               </thead>
@@ -55,8 +55,8 @@ const TableExamples = () => {
                 {SAMPLE_ROWS.map((row) => (
                   <tr key={row.id} onClick={() => handleRowClick(row, row.id)}>
                     <td data-label="ID">{row.id}</td>
-                    <td data-label={t('common.labels.name', '이름')}>{row.name}</td>
-                    <td data-label={t('common.labels.email', '이메일')}>{row.email}</td>
+                    <td data-label={t('common.labels.name')}>{row.name}</td>
+                    <td data-label={t('common.labels.email')}>{row.email}</td>
                     <td data-label="나이">{row.age}</td>
                   </tr>
                 ))}
@@ -86,8 +86,8 @@ const TableExamples = () => {
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>{t('common.labels.name', '이름')}</th>
-                  <th>{t('common.labels.email', '이메일')}</th>
+                  <th>{t('common.labels.name')}</th>
+                  <th>{t('common.labels.email')}</th>
                   <th>액션</th>
                 </tr>
               </thead>
@@ -95,8 +95,8 @@ const TableExamples = () => {
                 {SAMPLE_ROWS.map((row) => (
                   <tr key={row.id}>
                     <td data-label="ID">{row.id}</td>
-                    <td data-label={t('common.labels.name', '이름')}>{row.name}</td>
-                    <td data-label={t('common.labels.email', '이메일')}>{row.email}</td>
+                    <td data-label={t('common.labels.name')}>{row.name}</td>
+                    <td data-label={t('common.labels.email')}>{row.email}</td>
                     <td data-label="액션">
                       <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-xs">
                         <Button size="small" icon="EDIT" variant="outline" aria-label={`${row.name} 편집`} />
@@ -110,7 +110,7 @@ const TableExamples = () => {
 
             <div className="mg-v2-v2-v2-table-pagination">
               <Button size="small" variant="outline" disabled>
-                {t('common.actions.prev', '이전')}
+                {t('common.actions.prev')}
               </Button>
               <span className="mg-v2-v2-v2-table-pagination-info">
                 {currentPage}-{SAMPLE_ROWS.length} / {SAMPLE_ROWS.length}개 항목 (정렬: {sortField} {sortDirection})
@@ -132,7 +132,7 @@ const TableExamples = () => {
               <Table data-role="CLIENT" striped>
                 <tbody>
                   <tr>
-                    <td data-label={t('common.labels.name', '이름')}>샘플</td>
+                    <td data-label={t('common.labels.name')}>샘플</td>
                   </tr>
                 </tbody>
               </Table>
@@ -142,7 +142,7 @@ const TableExamples = () => {
               <Table data-role="CONSULTANT" striped>
                 <tbody>
                   <tr>
-                    <td data-label={t('common.labels.name', '이름')}>샘플</td>
+                    <td data-label={t('common.labels.name')}>샘플</td>
                   </tr>
                 </tbody>
               </Table>
@@ -152,7 +152,7 @@ const TableExamples = () => {
               <Table data-role="ADMIN" striped>
                 <tbody>
                   <tr>
-                    <td data-label={t('common.labels.name', '이름')}>샘플</td>
+                    <td data-label={t('common.labels.name')}>샘플</td>
                   </tr>
                 </tbody>
               </Table>

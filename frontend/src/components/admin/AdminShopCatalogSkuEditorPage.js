@@ -207,7 +207,7 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
                   disabled={saving}
                   onClick={() => navigate(ADMIN_SHOP_ROUTES.CATALOG_SKUS)}
                 >
-                  {t('admin.actions.cancel', '취소')}
+                  {t('admin.actions.cancel')}
                 </MGButton>
                 <MGButton
                   type="button"

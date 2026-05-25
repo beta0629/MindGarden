@@ -154,7 +154,7 @@ const FinancialCalendarView = () => {
                 disabled={silentListRefreshing || loading}
                 preventDoubleClick={false}
               >
-                {t('common.actions.prev', '이전')}
+                {t('common.actions.prev')}
               </MGButton>
               <div className="mg-financial-calendar-header-title-row">
                 <h3 className="mg-calendar-title">
@@ -175,7 +175,7 @@ const FinancialCalendarView = () => {
                   disabled={loading}
                   aria-label="달력 데이터 새로고침"
                 >
-                  {t('common.actions.refresh', '새로고침')}
+                  {t('common.actions.refresh')}
                 </MGButton>
               </div>
               <MGButton
@@ -325,10 +325,10 @@ const FinancialCalendarView = () => {
               })}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setSelectedDate(null)}
-              aria-label={t('common.actions.close', '닫기')}
+              aria-label={t('common.actions.close')}
               preventDoubleClick={false}
             >
-              {t('common.actions.close', '닫기')}
+              {t('common.actions.close')}
             </MGButton>
           </div>
           <div className="mg-financial-calendar-detail-summary-grid">

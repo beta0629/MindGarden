@@ -567,7 +567,7 @@ const FinancialTransactionForm = ({
               preventDoubleClick={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              {t('common.actions.cancel', '취소')}
+              {t('common.actions.cancel')}
             </MGButton>
             {/* MGButton은 네이티브 submit 전용일 때 중복클릭 방지를 끄지만, 폼 의도를 드러내기 위해 명시 유지 */}
             <MGButton

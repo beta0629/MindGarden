@@ -101,7 +101,7 @@ const Toast = ({
         })}
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={handleClose}
-        aria-label={t('common.actions.close', '닫기')}
+        aria-label={t('common.actions.close')}
         variant="outline"
         preventDoubleClick={false}
       >

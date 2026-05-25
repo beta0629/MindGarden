@@ -179,7 +179,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
                         onClick={() => navigate(`/consultant/consultation-record-view/${record.id}`)}
                         preventDoubleClick={false}
                       >
-                        {t('admin.actions.view', '보기')}
+                        {t('admin.actions.view')}
                       </MGButton>
                     </div>
                   </div>

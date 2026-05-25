@@ -265,7 +265,7 @@ const UnifiedLogin = () => {
     const logoutMessage = searchParams.get('message');
     
     if (logoutStatus === 'success') {
-      notificationManager.show(t('auth:unifiedLogin.msg.logoutSuccess', '로그아웃되었습니다.'), 'success');
+      notificationManager.show(t('auth:unifiedLogin.msg.logoutSuccess'), 'success');
       
       // 서브도메인 확인 및 안내
       const host = window.location.hostname;
@@ -276,7 +276,7 @@ const UnifiedLogin = () => {
       
       // 서브도메인이 없으면 안내 메시지 추가
       if (!hasSubdomain && !host.includes('localhost') && !host.includes('127.0.0.1')) {
-        const subdomainMessage = t('auth:unifiedLogin.msg.subdomainWarning', '서브도메인으로 접속해주세요.\n\n예: coresolution.dev.core-solution.co.kr');
+        const subdomainMessage = t('auth:unifiedLogin.msg.subdomainWarning');
         setTimeout(() => {
           showTooltip(subdomainMessage, 'warning');
           notificationManager.show(subdomainMessage, 'warning');
@@ -286,7 +286,7 @@ const UnifiedLogin = () => {
       // URL에서 파라미터 제거
       window.history.replaceState({}, document.title, '/login');
     } else if (logoutStatus === 'error') {
-      const errorMsg = logoutMessage ? decodeURIComponent(logoutMessage) : t('auth:unifiedLogin.msg.logoutError', '로그아웃 중 오류가 발생했습니다.');
+      const errorMsg = logoutMessage ? decodeURIComponent(logoutMessage) : t('auth:unifiedLogin.msg.logoutError');
       showTooltip(errorMsg, 'error');
       notificationManager.show(errorMsg, 'error');
       // URL에서 파라미터 제거
@@ -321,7 +321,7 @@ const UnifiedLogin = () => {
         const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         if (!isLocalEnv && (decodedError.includes('테넌트 정보가 없습니다') || decodedError.includes('서브도메인'))) {
           const host = window.location.hostname;
-          const friendlyMessage = t('auth:unifiedLogin.msg.subdomainRequired', '서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: {{host}}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.', { host });
+          const friendlyMessage = t('auth:unifiedLogin.msg.subdomainRequired', { host });
           showTooltip(friendlyMessage, 'error');
           notificationManager.show(friendlyMessage, 'error');
         } else {
@@ -336,7 +336,7 @@ const UnifiedLogin = () => {
         return;
       } catch (parseError) {
         console.error('OAuth 에러 메시지 파싱 실패:', parseError);
-        showTooltip(t('auth:unifiedLogin.msg.oauthGeneralError', '로그인 중 오류가 발생했습니다.'), 'error');
+        showTooltip(t('auth:unifiedLogin.msg.oauthGeneralError'), 'error');
         // URL에서 에러 파라미터 제거
         window.history.replaceState({}, document.title, '/login');
         return;
@@ -505,7 +505,7 @@ const UnifiedLogin = () => {
       const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
 
       if (!hasSubdomain) {
-        const friendlyMessage = t('auth:unifiedLogin.msg.subdomainRequired', '서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: {{host}}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.', { host });
+        const friendlyMessage = t('auth:unifiedLogin.msg.subdomainRequired', { host });
         console.error('⚠️ 서브도메인 없음:', friendlyMessage);
         showTooltip(friendlyMessage, 'error');
         notificationManager.show(friendlyMessage, 'error');
@@ -546,7 +546,7 @@ const UnifiedLogin = () => {
         setIsLoading(false);
         const modalData = {
           isOpen: true,
-          message: (result.data?.message || result.message || loginData.message) || t('auth:unifiedLogin.msg.duplicateLoginPrompt', '다른 기기에서 로그인되어 있습니다. 계속하시겠습니까?'),
+          message: (result.data?.message || result.message || loginData.message) || t('auth:unifiedLogin.msg.duplicateLoginPrompt'),
           loginData: {
             email: actualFormData.email,
             password: actualFormData.password
@@ -579,7 +579,7 @@ const UnifiedLogin = () => {
         // 로그인 직후 플래그 설정 (세션 체크 시 리다이렉트 방지)
         sessionStorage.setItem('justLoggedIn', 'true');
 
-        showTooltip(t('auth:unifiedLogin.msg.loginSuccess', '로그인에 성공했습니다.'), 'success');
+        showTooltip(t('auth:unifiedLogin.msg.loginSuccess'), 'success');
 
         // 임시 비밀번호로 로그인한 경우 비밀번호 변경 모달 표시
         if (result.data?.requiresPasswordChange || loginData.requiresPasswordChange) {
@@ -627,7 +627,7 @@ const UnifiedLogin = () => {
         if (!isLocalEnv && (errorMessage.includes('테넌트 정보가 없습니다') ||
             errorMessage.includes('서브도메인') ||
             errorMessage.includes('TENANT_REQUIRED'))) {
-          const friendlyMessage = t('auth:unifiedLogin.msg.subdomainRequired', '서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: {{host}}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.', { host: window.location.hostname });
+          const friendlyMessage = t('auth:unifiedLogin.msg.subdomainRequired', { host: window.location.hostname });
           showTooltip(friendlyMessage, 'error');
           notificationManager.show(friendlyMessage, 'error');
         } else {
@@ -647,7 +647,7 @@ const UnifiedLogin = () => {
           errorMessage.includes('TENANT_REQUIRED'))) {
         const friendlyMessage = errorMessage.includes('서브도메인이 필요합니다')
           ? errorMessage
-          : t('auth:unifiedLogin.msg.subdomainRequired', '서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: {{host}}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.', { host: window.location.hostname });
+          : t('auth:unifiedLogin.msg.subdomainRequired', { host: window.location.hostname });
         showTooltip(friendlyMessage, 'error');
         notificationManager.show(friendlyMessage, 'error');
       } else {
@@ -663,7 +663,7 @@ const UnifiedLogin = () => {
       await kakaoLogin();
     } catch (error) {
       console.error('카카오 로그인 오류:', error);
-      showTooltip(t('auth:unifiedLogin.socialLogin.kakaoFailed', '카카오 로그인을 시작할 수 없습니다.'), 'error');
+      showTooltip(t('auth:unifiedLogin.socialLogin.kakaoFailed'), 'error');
     }
   };
 
@@ -672,7 +672,7 @@ const UnifiedLogin = () => {
       await naverLogin();
     } catch (error) {
       console.error('네이버 로그인 오류:', error);
-      showTooltip(t('auth:unifiedLogin.socialLogin.naverFailed', '네이버 로그인을 시작할 수 없습니다.'), 'error');
+      showTooltip(t('auth:unifiedLogin.socialLogin.naverFailed'), 'error');
     }
   };
 
@@ -681,7 +681,7 @@ const UnifiedLogin = () => {
       await googleLogin();
     } catch (error) {
       console.error('구글 로그인 오류:', error);
-      showTooltip(t('auth:unifiedLogin.socialLogin.googleFailed', '구글 로그인을 시작할 수 없습니다.'), 'error');
+      showTooltip(t('auth:unifiedLogin.socialLogin.googleFailed'), 'error');
     }
   };
 
@@ -733,7 +733,7 @@ const UnifiedLogin = () => {
         <div className="mg-v2-login-hero">
           <div className="mg-v2-login-hero-content">
             <h1 className="mg-v2-login-hero-logo">{t('auth:unifiedLogin.heroLogo', 'CoreSolution')}</h1>
-            <p className="mg-v2-login-hero-slogan">{t('auth:unifiedLogin.heroSlogan', '마음의 평화를 가꾸는 공간')}</p>
+            <p className="mg-v2-login-hero-slogan">{t('auth:unifiedLogin.heroSlogan')}</p>
           </div>
         </div>
 
@@ -741,8 +741,8 @@ const UnifiedLogin = () => {
         <div className="mg-v2-login-content">
           <div className="mg-v2-login-form-wrapper">
             <div className="mg-v2-login-header">
-              <h1 className="mg-v2-login-title">{t('auth:unifiedLogin.title', '환영합니다')}</h1>
-              <p className="mg-v2-login-subtitle">{t('auth:unifiedLogin.subtitle', 'CoreSolution 서비스에 로그인하세요.')}</p>
+              <h1 className="mg-v2-login-title">{t('auth:unifiedLogin.title')}</h1>
+              <p className="mg-v2-login-subtitle">{t('auth:unifiedLogin.subtitle')}</p>
             </div>
 
             {new URLSearchParams(location.search).get('signup') === 'success' && (
@@ -767,7 +767,7 @@ const UnifiedLogin = () => {
                       : '/login';
                     window.history.replaceState({}, document.title, next);
                     notificationManager.show(
-                      t('auth:unifiedLogin.msg.passwordReentryHint', '비밀번호를 입력한 뒤 로그인해 주세요.'),
+                      t('auth:unifiedLogin.msg.passwordReentryHint'),
                       'info'
                     );
                     setTimeout(() => {
@@ -807,7 +807,7 @@ const UnifiedLogin = () => {
               </div>
 
               <div className="mg-v2-field">
-                <label htmlFor="password" className="mg-v2-label">{t('auth:unifiedLogin.passwordLabel', '비밀번호')}</label>
+                <label htmlFor="password" className="mg-v2-label">{t('auth:unifiedLogin.passwordLabel')}</label>
                 <div className="mg-v2-password-wrapper">
                   <input
                     id="password"
@@ -818,7 +818,7 @@ const UnifiedLogin = () => {
                     onFocus={() => console.log('🔒 비밀번호 필드 포커스됨')}
                     onBlur={() => console.log('🔒 비밀번호 필드 포커스 해제됨')}
                     className="mg-v2-input"
-                    placeholder={t('auth:unifiedLogin.passwordPlaceholder', '비밀번호를 입력하세요')}
+                    placeholder={t('auth:unifiedLogin.passwordPlaceholder')}
                     required
                   />
                   <MGButton
@@ -829,7 +829,7 @@ const UnifiedLogin = () => {
                     className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-password-toggle`}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
-                    aria-label={showPassword ? t('auth:common.passwordHide', '비밀번호 숨기기') : t('auth:common.passwordShow', '비밀번호 표시')}
+                    aria-label={showPassword ? t('auth:common.passwordHide') : t('auth:common.passwordShow')}
                   >
                     {showPassword ? '👁️' : '👁️‍🗨️'}
                   </MGButton>
@@ -851,14 +851,14 @@ const UnifiedLogin = () => {
                 className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })}
                 preventDoubleClick={false}
               >
-                {t('auth:unifiedLogin.loginButton', '로그인')}
+                {t('auth:unifiedLogin.loginButton')}
               </MGButton>
             </form>
 
             {/* 소셜 로그인 버튼 */}
             <div className="mg-v2-login-social">
               <div className="mg-v2-divider">
-                <span>{t('auth:unifiedLogin.dividerLabel', '또는 다음으로 로그인')}</span>
+                <span>{t('auth:unifiedLogin.dividerLabel')}</span>
               </div>
 
               <div className="mg-v2-social-buttons">
@@ -884,7 +884,7 @@ const UnifiedLogin = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  {t('auth:unifiedLogin.socialLogin.kakao', '카카오 로그인')}
+                  {t('auth:unifiedLogin.socialLogin.kakao')}
                 </MGButton>
 
                 <MGButton
@@ -907,7 +907,7 @@ const UnifiedLogin = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  {t('auth:unifiedLogin.socialLogin.naver', '네이버 로그인')}
+                  {t('auth:unifiedLogin.socialLogin.naver')}
                 </MGButton>
 
                 {oauth2Config?.google && (
@@ -932,7 +932,7 @@ const UnifiedLogin = () => {
                       <path d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" fill="#FBBC05"/>
                       <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
                     </svg>
-                    {t('auth:unifiedLogin.socialLogin.google', '구글 로그인')}
+                    {t('auth:unifiedLogin.socialLogin.google')}
                   </MGButton>
                 )}
               </div>
@@ -941,11 +941,11 @@ const UnifiedLogin = () => {
             {/* 추가 링크 */}
             <div className="mg-v2-login-links">
               <a href="/register" className="mg-v2-link">
-                {t('auth:unifiedLogin.links.register', '회원가입')}
+                {t('auth:unifiedLogin.links.register')}
               </a>
               <span className="mg-v2-link-separator" />
               <a href="/forgot-password" className="mg-v2-link">
-                {t('auth:unifiedLogin.links.forgotPassword', '비밀번호 찾기')}
+                {t('auth:unifiedLogin.links.forgotPassword')}
               </a>
             </div>
           </div>
@@ -959,7 +959,7 @@ const UnifiedLogin = () => {
           tempPassword={tempPassword} // 임시 비밀번호 전달 (현재 비밀번호로 자동 입력)
           onClose={() => {
             // 비밀번호 변경 모달을 닫을 수 없도록 설정 (임시 비밀번호인 경우 필수)
-            notificationManager.show(t('auth:common.tempPasswordChangeRequired', '임시 비밀번호를 변경해야 합니다.'), 'warning');
+            notificationManager.show(t('auth:common.tempPasswordChangeRequired'), 'warning');
           }}
           onSuccess={async() => {
             // 비밀번호 변경 성공 시 대시보드로 리다이렉트

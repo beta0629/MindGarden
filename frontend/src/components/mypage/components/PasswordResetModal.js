@@ -123,7 +123,7 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
               variant="outline"
               preventDoubleClick={false}
             >
-              {t('common.actions.cancel', '취소')}
+              {t('common.actions.cancel')}
             </MGButton>
             <MGButton
               type="submit"
@@ -169,7 +169,7 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
               onClick={onClose}
               variant="primary"
             >
-              {t('common.actions.confirm', '확인')}
+              {t('common.actions.confirm')}
             </MGButton>
           </div>
           {cooldown > 0 ? (

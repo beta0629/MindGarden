@@ -23,7 +23,7 @@ const MappingManagement = () => {
 
   return (
     <AdminCommonLayout
-      title={t('admin.labels.matchingManagement', '매칭 관리')}
+      title={t('admin.labels.matchingManagement')}
       searchValue={searchValue}
       onSearchChange={setSearchValue}
     >

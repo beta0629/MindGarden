@@ -246,14 +246,14 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
                 <div className="stat-icon completed" />
                 <div className="stat-info">
                   <div className="stat-number">{todayStats.completed}</div>
-                  <div className="stat-label">{t('admin.actions.done', '완료')}</div>
+                  <div className="stat-label">{t('admin.actions.done')}</div>
                 </div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon in-progress" />
                 <div className="stat-info">
                   <div className="stat-number">{todayStats.inProgress}</div>
-                  <div className="stat-label">{t('common.labels.inProgress', '진행중')}</div>
+                  <div className="stat-label">{t('common.labels.inProgress')}</div>
                 </div>
               </div>
               <div className="stat-card">
@@ -286,7 +286,7 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleViewAll}
             >
-              {t('admin.actions.viewAll', '전체 보기')}
+              {t('admin.actions.viewAll')}
             </MGButton>
           </div>
           <div className="schedule-items">
@@ -303,7 +303,7 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
                         )}
                       </div>
                       {isToday(schedule.startTime) && (
-                        <div className="today-badge">{t('admin.labels.today', '오늘')}</div>
+                        <div className="today-badge">{t('admin.labels.today')}</div>
                       )}
                     </div>
                     <div className={`schedule-status ${getStatusClass(schedule.status)}`}>
@@ -355,10 +355,10 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
                     loading={false}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleViewSchedule(schedule.id)}
-                    title={t('admin.actions.viewDetail', '상세 보기')}
+                    title={t('admin.actions.viewDetail')}
                     preventDoubleClick={false}
                   >
-                    {t('admin.actions.view', '보기')}
+                    {t('admin.actions.view')}
                   </MGButton>
                 </div>
               </div>

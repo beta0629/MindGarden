@@ -66,7 +66,7 @@ const MappingCardSummary = ({ mapping, onClick, actions }) => {
             <h5 className="mg-v2-client-name">
               {mapping.clientName || '알 수 없음'}
             </h5>
-            <span className="mg-v2-client-badge">{t('common.labels.client', '내담자')}</span>
+            <span className="mg-v2-client-badge">{t('common.labels.client')}</span>
           </div>
         </div>
         <StatusBadge status={mapping.status} />
@@ -149,7 +149,7 @@ const MappingCardDetailed = ({
           <div className="mg-v2-mapping-participant">
             <User size={16} className="mg-v2-mapping-icon" />
             <div className="mg-v2-mapping-participant-info">
-              <div className="mg-v2-mapping-participant-label">{t('common.labels.consultant', '상담사')}</div>
+              <div className="mg-v2-mapping-participant-label">{t('common.labels.consultant')}</div>
               <div className="mg-v2-mapping-participant-name">
                 {mapping.consultantName || 'N/A'}
               </div>
@@ -162,7 +162,7 @@ const MappingCardDetailed = ({
               className="mg-v2-mapping-participant-avatar"
             />
             <div className="mg-v2-mapping-participant-info">
-              <div className="mg-v2-mapping-participant-label">{t('common.labels.client', '내담자')}</div>
+              <div className="mg-v2-mapping-participant-label">{t('common.labels.client')}</div>
               <div className="mg-v2-mapping-participant-name">
                 {mapping.clientName || 'N/A'}
               </div>
@@ -218,7 +218,7 @@ const MappingCardDetailed = ({
         <div className="mg-v2-mapping-card-footer-left">
           {mapping.status === 'PENDING_PAYMENT' && (
             <ActionButton variant="success" size="small" onClick={() => setShowPaymentModal(true)}>
-              {t('admin.actions.paymentConfirm', '결제 확인')}
+              {t('admin.actions.paymentConfirm')}
             </ActionButton>
           )}
           {mapping.status === 'PAYMENT_CONFIRMED' && (
@@ -233,7 +233,7 @@ const MappingCardDetailed = ({
           )}
           {onEdit && (
             <ActionButton variant="outline" size="small" onClick={() => onEdit(mapping)}>
-              {t('common.actions.edit', '수정')}
+              {t('common.actions.edit')}
             </ActionButton>
           )}
           {onRefund && (
@@ -299,7 +299,7 @@ const MappingCardCompact = ({
       <div className="mg-v2-card-content">
         <div className="mg-v2-mapping-details">
           <div className="mg-v2-mapping-card__row">
-            <span className="mg-v2-mapping-card__label">{t('common.labels.consultant', '상담사')}</span>
+            <span className="mg-v2-mapping-card__label">{t('common.labels.consultant')}</span>
             <span className="mg-v2-mapping-card__value">
               <SafeText fallback="알 수 없음">{consultantName}</SafeText>
             </span>
@@ -357,7 +357,7 @@ const MappingCardCompact = ({
           preventDoubleClick={true}
           onClick={onEdit}
         >
-          {t('common.actions.edit', '수정')}
+          {t('common.actions.edit')}
         </MGButton>
       </div>
     </CardContainer>

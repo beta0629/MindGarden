@@ -338,10 +338,10 @@ const ModernDashboardEditor = ({
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => handleDeleteWidget(widget.id)}
-                        title={t('admin.actions.delete', '삭제')}
+                        title={t('admin.actions.delete')}
                         preventDoubleClick={false}
                       >
-                        {t('admin.actions.delete', '삭제')}
+                        {t('admin.actions.delete')}
                       </MGButton>
                     </div>
                   </div>

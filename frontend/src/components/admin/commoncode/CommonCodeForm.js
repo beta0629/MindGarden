@@ -206,7 +206,7 @@ const CommonCodeForm = ({
                         onClick={onClose}
                         disabled={isSubmitting}
                     >
-                        {t('admin.actions.cancel', '취소')}
+                        {t('admin.actions.cancel')}
                     </MGButton>
                     <MGButton
                         type="submit"
@@ -319,7 +319,7 @@ const CommonCodeForm = ({
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="codeDescription">{t('common.labels.description', '설명')}</label>
+                        <label htmlFor="codeDescription">{t('common.labels.description')}</label>
                         <textarea
                             id="codeDescription"
                             name="codeDescription"

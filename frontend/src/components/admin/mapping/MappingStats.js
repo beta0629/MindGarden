@@ -186,7 +186,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                             <LayoutGrid size={KPI_ICON_SIZE} aria-hidden />
                         </div>
                         <div className="mg-v2-content-kpi-card__info">
-                            <span className="mg-v2-content-kpi-card__label">{t('common.messages.loading', '로딩 중...')}</span>
+                            <span className="mg-v2-content-kpi-card__label">{t('common.messages.loading')}</span>
                             <span className="mg-v2-content-kpi-card__value">-</span>
                         </div>
                     </div>
@@ -234,7 +234,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                                     <SafeText className="mg-v2-content-kpi-card__label">{stat.label}</SafeText>
                                     {stat.action === 'payment' && numericValue > 0 && (
                                         <span className="mg-v2-content-kpi-card__badge mg-v2-content-kpi-card__badge--orange">
-                                            {t('admin.actions.paymentConfirm', '결제 확인')}
+                                            {t('admin.actions.paymentConfirm')}
                                         </span>
                                     )}
                                 </div>

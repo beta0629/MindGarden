@@ -430,14 +430,14 @@ const ImprovedTaxManagement = () => {
                   loading={loading}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   disabled={loading || silentListRefreshing}
-                  aria-label={t('common.labels.retry', '다시 시도')}
+                  aria-label={t('common.labels.retry')}
                   className={buildErpMgButtonClassName({
                     variant: 'outline',
                     size: 'sm',
                     loading
                   })}
                 >
-                  {t('common.labels.retry', '다시 시도')}
+                  {t('common.labels.retry')}
                 </MGButton>
               </div>
             )}
@@ -670,7 +670,7 @@ const ImprovedTaxManagement = () => {
               disabled={loading}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              {t('common.actions.cancel', '취소')}
+              {t('common.actions.cancel')}
             </MGButton>
             <MGButton
               variant="primary"

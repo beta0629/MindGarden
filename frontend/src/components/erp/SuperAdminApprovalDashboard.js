@@ -292,7 +292,7 @@ const SuperAdminApprovalDashboard = () => {
                 preventDoubleClick={false}
                 onClick={() => setShowApprovalModal(false)}
               >
-                {t('common.actions.cancel', '취소')}
+                {t('common.actions.cancel')}
               </MGButton>
               <MGButton
                 variant={mapErpVariantToMg('success')}
@@ -357,7 +357,7 @@ const SuperAdminApprovalDashboard = () => {
                 preventDoubleClick={false}
                 onClick={() => setShowRejectionModal(false)}
               >
-                {t('common.actions.cancel', '취소')}
+                {t('common.actions.cancel')}
               </MGButton>
               <MGButton
                 variant={mapErpVariantToMg('danger')}

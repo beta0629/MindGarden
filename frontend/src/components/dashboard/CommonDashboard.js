@@ -747,7 +747,7 @@ const CommonDashboard = ({ user: propUser }) => {
   };
 
   return (
-    <AdminCommonLayout title={t('admin.labels.dashboard', '대시보드')}>
+    <AdminCommonLayout title={t('admin.labels.dashboard')}>
       {sessionLoading ? (
         <div className="common-dashboard__session-load" aria-busy="true" aria-live="polite">
           <UnifiedLoading type="inline" text="대시보드를 불러오는 중..." />

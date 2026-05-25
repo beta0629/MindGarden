@@ -487,7 +487,7 @@ const MyPage = () => {
   if (!displayUser) {
     return (
       <AdminCommonLayout
-        title={t('common.labels.myPage', '마이페이지')}
+        title={t('common.labels.myPage')}
         className="mg-v2-dashboard-layout"
         loading
         loadingText="사용자 정보를 불러오는 중..."
@@ -496,12 +496,12 @@ const MyPage = () => {
   }
 
   return (
-    <AdminCommonLayout title={t('common.labels.myPage', '마이페이지')} className="mg-v2-dashboard-layout">
+    <AdminCommonLayout title={t('common.labels.myPage')} className="mg-v2-dashboard-layout">
       <ContentArea ariaLabel="마이페이지">
         <div className="mg-mypage" data-testid="client-mypage-page">
           <div className="mg-v2-ad-b0kla__container">
             <ContentHeader
-              title={t('common.labels.myPage', '마이페이지')}
+              title={t('common.labels.myPage')}
               subtitle="프로필, 설정, 보안, 소셜 계정, 개인정보 동의를 한곳에서 관리합니다."
               titleId={MYPAGE_TITLE_ID}
               actions={

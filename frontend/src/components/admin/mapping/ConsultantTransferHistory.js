@@ -99,7 +99,7 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onClose}
         >
-          {t('common.actions.close', '닫기')}
+          {t('common.actions.close')}
         </MGButton>
       }
     >
@@ -123,7 +123,7 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={loadTransferHistory}
               >
-                {t('common.labels.retry', '다시 시도')}
+                {t('common.labels.retry')}
               </MGButton>
             </div>
           ) : transferHistory.length === 0 ? (

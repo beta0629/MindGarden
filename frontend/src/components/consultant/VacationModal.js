@@ -135,7 +135,7 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
             onClick={handleClose}
             disabled={loading}
           >
-            {t('common.actions.cancel', '취소')}
+            {t('common.actions.cancel')}
           </MGButton>
           <MGButton
             type="submit"

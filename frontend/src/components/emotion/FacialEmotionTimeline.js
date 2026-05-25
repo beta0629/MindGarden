@@ -34,7 +34,7 @@ const FacialEmotionTimeline = ({ emotionId }) => {
         });
     }, [emotionId]);
 
-    if (!emotionData) return <div>{t('common.messages.loading', '로딩 중...')}</div>;
+    if (!emotionData) return <div>{t('common.messages.loading')}</div>;
 
     return (
         <div className={EMOTION_CSS.FACIAL_EMOTION_TIMELINE}>

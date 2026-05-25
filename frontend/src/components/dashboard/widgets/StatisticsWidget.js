@@ -41,7 +41,7 @@ const StatisticsWidget = ({ widget, user }) => {
     if (isEmpty) {
       return (
         <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
-          {t('statistics:widget.noData', '표시할 통계가 없습니다.')}
+          {t('statistics:widget.noData')}
         </div>
       );
     }

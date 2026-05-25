@@ -84,7 +84,7 @@ const AdminDashboardHeader = ({
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => onNavigate('/admin/system-config')}
                         >
-                            {t('admin.labels.systemSettings', '시스템 설정')}
+                            {t('admin.labels.systemSettings')}
                         </MGButton>
                     )}
                     
@@ -101,7 +101,7 @@ const AdminDashboardHeader = ({
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => onNavigate('/admin/user-management')}
                         >
-                            {t('admin.labels.userManagement', '사용자 관리')}
+                            {t('admin.labels.userManagement')}
                         </MGButton>
                     )}
                 </div>

@@ -173,7 +173,7 @@ const VirtualClientSimulator = ({ consultantId }) => {
                                 onChange={(e) => setSelectedScenario(e.target.value)}
                                 className="form-control"
                             >
-                                <option value="">{t('common.messages.pleaseSelect', '선택하세요')}</option>
+                                <option value="">{t('common.messages.pleaseSelect')}</option>
                                 {scenarios.map(s => (
                                     <option key={s.value} value={s.value}>
                                         {s.label}

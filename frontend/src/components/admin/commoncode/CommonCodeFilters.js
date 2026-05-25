@@ -137,7 +137,7 @@ const CommonCodeFilters = ({
                     </div>
 
                     <div className="filter-group">
-                        <label htmlFor="isActive">{t('admin.labels.status', '상태')}</label>
+                        <label htmlFor="isActive">{t('admin.labels.status')}</label>
                         <select
                             id="isActive"
                             value={filters.isActive}

@@ -156,7 +156,7 @@ const PgConfigurationList = () => {
   
   if (sessionLoading || (loading && configurations.length === 0)) {
     return (
-      <AdminCommonLayout title={t('admin.labels.pgSettingsList', 'PG 설정 목록')}>
+      <AdminCommonLayout title={t('admin.labels.pgSettingsList')}>
         <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
           <UnifiedLoading type="inline" text="PG 설정 목록을 불러오는 중..." variant="pulse" />
         </ContentArea>
@@ -166,7 +166,7 @@ const PgConfigurationList = () => {
   
   if (!isLoggedIn || !user) {
     return (
-      <AdminCommonLayout title={t('admin.labels.pgSettingsList', 'PG 설정 목록')}>
+      <AdminCommonLayout title={t('admin.labels.pgSettingsList')}>
         <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
           <div className="error-message">
             <AlertCircleIcon size={24} />
@@ -179,7 +179,7 @@ const PgConfigurationList = () => {
 
   if (!tenantId) {
     return (
-      <AdminCommonLayout title={t('admin.labels.pgSettingsList', 'PG 설정 목록')}>
+      <AdminCommonLayout title={t('admin.labels.pgSettingsList')}>
         <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
           <div className="error-message">
             <AlertCircleIcon size={24} />
@@ -191,7 +191,7 @@ const PgConfigurationList = () => {
   }
   
   return (
-    <AdminCommonLayout title={t('admin.labels.pgSettingsList', 'PG 설정 목록')}>
+    <AdminCommonLayout title={t('admin.labels.pgSettingsList')}>
       <>
         <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
             <ContentHeader
@@ -237,8 +237,8 @@ const PgConfigurationList = () => {
               <option value="">전체 상태</option>
               {/* 표준화: 상태값 공통코드 동적 조회 권장 getCommonCodes('STATUS_GROUP') */}
               <option value="PENDING">대기 중</option>
-              <option value="APPROVED">{t('common.labels.approved', '승인됨')}</option>
-              <option value="REJECTED">{t('admin.labels.rejected', '거부됨')}</option>
+              <option value="APPROVED">{t('common.labels.approved')}</option>
+              <option value="REJECTED">{t('admin.labels.rejected')}</option>
               <option value="ACTIVE">활성화</option>
               <option value="INACTIVE">비활성화</option>
             </select>
@@ -252,8 +252,8 @@ const PgConfigurationList = () => {
               <option value="">전체 승인 상태</option>
               {/* 표준화: 승인 상태 공통코드 동적 조회 권장 */}
               <option value="PENDING">승인 대기</option>
-              <option value="APPROVED">{t('common.labels.approved', '승인됨')}</option>
-              <option value="REJECTED">{t('admin.labels.rejected', '거부됨')}</option>
+              <option value="APPROVED">{t('common.labels.approved')}</option>
+              <option value="REJECTED">{t('admin.labels.rejected')}</option>
             </select>
             
             <MGButton
@@ -265,7 +265,7 @@ const PgConfigurationList = () => {
               onClick={loadConfigurations}
               preventDoubleClick={false}
             >
-              {t('admin.actions.refresh', '새로고침')}
+              {t('admin.actions.refresh')}
             </MGButton>
           </div>
         </div>
@@ -397,7 +397,7 @@ const PgConfigurationList = () => {
                           onClick={() => navigate(`/tenant/pg-configurations/${config.configId}/edit`)}
                           preventDoubleClick={false}
                         >
-                          {t('common.actions.edit', '수정')}
+                          {t('common.actions.edit')}
                         </MGButton>
                         <MGButton
                           type="button"
@@ -411,7 +411,7 @@ const PgConfigurationList = () => {
                           }}
                           preventDoubleClick={false}
                         >
-                          {t('admin.actions.delete', '삭제')}
+                          {t('admin.actions.delete')}
                         </MGButton>
                       </>
                     )}
@@ -458,7 +458,7 @@ const PgConfigurationList = () => {
                 disabled={loading}
                 preventDoubleClick={false}
               >
-                {t('admin.actions.cancel', '취소')}
+                {t('admin.actions.cancel')}
               </MGButton>
               <MGButton
                 type="button"
@@ -469,7 +469,7 @@ const PgConfigurationList = () => {
                 disabled={loading}
                 preventDoubleClick={false}
               >
-                {t('admin.actions.delete', '삭제')}
+                {t('admin.actions.delete')}
               </MGButton>
             </>
           }

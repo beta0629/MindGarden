@@ -72,11 +72,11 @@ const SystemTools = ({
     const testNotificationTool = hasTestNotificationAccess
         ? {
             id: TEST_NOTIFICATION_TOOL_ID,
-            label: t('testNotification.card.label', '알림 테스트 발송'),
-            shortLabel: t('testNotification.card.shortLabel', '알'),
+            label: t('testNotification.card.label'),
+            shortLabel: t('testNotification.card.shortLabel'),
             variant: 'primary',
             onClick: handleToggleTestNotification,
-            description: t('testNotification.card.description', 'SMS·카카오 알림톡 테스트 발송'),
+            description: t('testNotification.card.description'),
             active: expandedTool === TEST_NOTIFICATION_TOOL_ID,
             preventDoubleClick: false
         }
@@ -124,7 +124,7 @@ const SystemTools = ({
             {hasTestNotificationAccess && expandedTool === TEST_NOTIFICATION_TOOL_ID && (
                 <section
                     className="mg-system-tool-panel"
-                    aria-label={t('testNotification.panel.title', '알림 테스트 발송')}
+                    aria-label={t('testNotification.panel.title')}
                 >
                     <div className="mg-system-tool-panel__grid">
                         <div className="mg-system-tool-panel__form">

@@ -460,9 +460,9 @@ const BudgetManagement = () => {
                   loading={silentListRefreshing}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   disabled={loading}
-                  aria-label={t('common.labels.retry', '다시 시도')}
+                  aria-label={t('common.labels.retry')}
                 >
-                  {t('common.labels.retry', '다시 시도')}
+                  {t('common.labels.retry')}
                 </MGButton>
               </div>
             )}
@@ -571,11 +571,11 @@ const BudgetManagement = () => {
                                         type="button"
                                         className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
                                         onClick={() => openEditModal(budget)}
-                                        title={t('common.actions.edit', '수정')}
+                                        title={t('common.actions.edit')}
                                         aria-label="예산 수정"
                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                       >
-                                        {t('common.actions.edit', '수정')}
+                                        {t('common.actions.edit')}
                                       </MGButton>
                                       <MGButton
                                         variant="danger"
@@ -583,11 +583,11 @@ const BudgetManagement = () => {
                                         type="button"
                                         className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
                                         onClick={() => handleDeleteBudget(budget.id)}
-                                        title={t('common.actions.delete', '삭제')}
+                                        title={t('common.actions.delete')}
                                         aria-label="예산 삭제"
                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                       >
-                                        {t('common.actions.delete', '삭제')}
+                                        {t('common.actions.delete')}
                                       </MGButton>
                                     </div>
                                   )}
@@ -691,7 +691,7 @@ const BudgetManagement = () => {
                               <h3>
                                 <SafeText>{category.codeLabel}</SafeText>
                               </h3>
-                              <span className="erp-status success">{t('common.labels.active', '활성')}</span>
+                              <span className="erp-status success">{t('common.labels.active')}</span>
                             </div>
                             <div className="erp-card-body">
                               <p className="erp-description">
@@ -975,7 +975,7 @@ const BudgetManagement = () => {
           </div>
           <div className="mg-v2-form-group">
             <label className="mg-v2-form-label" htmlFor="budget-create-desc">
-              {t('common.labels.description', '설명')}
+              {t('common.labels.description')}
             </label>
             <textarea
               id="budget-create-desc"
@@ -1036,7 +1036,7 @@ const BudgetManagement = () => {
                 resetNewBudgetForm();
               }}
             >
-              {t('common.actions.cancel', '취소')}
+              {t('common.actions.cancel')}
             </MGButton>
             <MGButton
               type="submit"
@@ -1113,7 +1113,7 @@ const BudgetManagement = () => {
             </div>
             <div className="mg-v2-form-group">
               <label className="mg-v2-form-label" htmlFor="budget-edit-desc">
-                {t('common.labels.description', '설명')}
+                {t('common.labels.description')}
               </label>
               <textarea
                 id="budget-edit-desc"
@@ -1151,7 +1151,7 @@ const BudgetManagement = () => {
             </div>
             <div className="mg-v2-form-group">
               <label className="mg-v2-form-label" htmlFor="budget-edit-status">
-                {t('common.labels.status', '상태')}
+                {t('common.labels.status')}
               </label>
               <select
                 id="budget-edit-status"
@@ -1176,7 +1176,7 @@ const BudgetManagement = () => {
                 preventDoubleClick={false}
                 onClick={() => setEditingBudget(null)}
               >
-                {t('common.actions.cancel', '취소')}
+                {t('common.actions.cancel')}
               </MGButton>
               <MGButton
                 type="submit"
@@ -1187,7 +1187,7 @@ const BudgetManagement = () => {
                 preventDoubleClick={false}
                 loading={loading}
               >
-                {t('common.actions.save', '저장')}
+                {t('common.actions.save')}
               </MGButton>
             </div>
           </form>

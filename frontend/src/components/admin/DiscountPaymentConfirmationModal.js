@@ -236,7 +236,7 @@ const DiscountPaymentConfirmationModal = ({
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onClose}
           >
-            {t('admin.actions.cancel', '취소')}
+            {t('admin.actions.cancel')}
           </MGButton>
           <MGButton
             type="button"
@@ -247,7 +247,7 @@ const DiscountPaymentConfirmationModal = ({
             loading={loading}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
-            {t('admin.actions.paymentConfirm', '결제 확인')}
+            {t('admin.actions.paymentConfirm')}
           </MGButton>
         </>
       }
@@ -372,7 +372,7 @@ const DiscountPaymentConfirmationModal = ({
           <div className="mg-v2-form-section">
             <h3 className="mg-v2-section-title">
               <CreditCard size={20} />
-              {t('admin.labels.paymentMethod', '결제 방법')}
+              {t('admin.labels.paymentMethod')}
             </h3>
             <div className="mg-v2-form-group">
               <BadgeSelect
@@ -384,9 +384,9 @@ const DiscountPaymentConfirmationModal = ({
                   { value: 'CASH', label: '현금' },
                   { value: 'OTHER', label: '기타' }
                 ]}
-                placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
+                placeholder={t('admin.messages.pleaseSelect')}
                 className="mg-v2-select"
-                aria-label={t('admin.labels.paymentMethod', '결제 방법')}
+                aria-label={t('admin.labels.paymentMethod')}
               />
             </div>
           </div>

@@ -77,7 +77,7 @@ const TestNotificationHistory = ({ refreshKey = 0 }) => {
     } catch (err) {
       console.error('테스트 발송 이력 로드 실패:', err);
       setError(err?.response?.data?.message || err?.message
-        || t('testNotification.errors.loadFailed', '데이터를 불러오지 못했습니다.'));
+        || t('testNotification.errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -88,11 +88,11 @@ const TestNotificationHistory = ({ refreshKey = 0 }) => {
   }, [load, refreshKey]);
 
   return (
-    <section className="mg-test-notif-history" aria-label={t('testNotification.history.title', '최근 발송 이력')}>
+    <section className="mg-test-notif-history" aria-label={t('testNotification.history.title')}>
       <header className="mg-test-notif-history__header">
         <div>
-          <h3 className="mg-test-notif-history__title">{t('testNotification.history.title', '최근 발송 이력')}</h3>
-          <p className="mg-test-notif-history__subtitle">{t('testNotification.history.subtitle', '최대 30건 (감사로그)')}</p>
+          <h3 className="mg-test-notif-history__title">{t('testNotification.history.title')}</h3>
+          <p className="mg-test-notif-history__subtitle">{t('testNotification.history.subtitle')}</p>
         </div>
         <MGButton
           type="button"
@@ -107,14 +107,14 @@ const TestNotificationHistory = ({ refreshKey = 0 }) => {
           loading={loading}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={load}
-          aria-label={t('testNotification.history.refresh', '새로고침')}
+          aria-label={t('testNotification.history.refresh')}
         >
-          {t('testNotification.history.refresh', '새로고침')}
+          {t('testNotification.history.refresh')}
         </MGButton>
       </header>
 
       {loading && items.length === 0 && (
-        <p className="mg-test-notif-history__empty">{t('testNotification.history.loading', '이력 불러오는 중...')}</p>
+        <p className="mg-test-notif-history__empty">{t('testNotification.history.loading')}</p>
       )}
 
       {!loading && error && (
@@ -122,7 +122,7 @@ const TestNotificationHistory = ({ refreshKey = 0 }) => {
       )}
 
       {!loading && !error && items.length === 0 && (
-        <p className="mg-test-notif-history__empty">{t('testNotification.history.empty', '발송 이력이 없습니다.')}</p>
+        <p className="mg-test-notif-history__empty">{t('testNotification.history.empty')}</p>
       )}
 
       {items.length > 0 && (
@@ -136,18 +136,18 @@ const TestNotificationHistory = ({ refreshKey = 0 }) => {
                 <span className={`mg-test-notif-history__chip mg-test-notif-history__chip--channel${item.channel === 'SMS' ? ' mg-test-notif-history__chip--sms' : ' mg-test-notif-history__chip--alimtalk'}`}>
                   {item.channel === 'SMS'
                     ? t('testNotification.history.channelSms', 'SMS')
-                    : t('testNotification.history.channelAlimtalk', '알림톡')}
+                    : t('testNotification.history.channelAlimtalk')}
                 </span>
                 <span className={`mg-test-notif-history__chip mg-test-notif-history__chip--result${item.success ? ' mg-test-notif-history__chip--success' : ' mg-test-notif-history__chip--fail'}`}>
                   {item.success
-                    ? t('testNotification.history.resultSuccess', '성공')
-                    : t('testNotification.history.resultFail', '실패')}
+                    ? t('testNotification.history.resultSuccess')
+                    : t('testNotification.history.resultFail')}
                 </span>
                 <time className="mg-test-notif-history__time">{item.sentAt}</time>
               </div>
               <div className="mg-test-notif-history__row">
                 <span className="mg-test-notif-history__field">
-                  <strong>{t('testNotification.history.recipientLabel', '수신')}:</strong> {item.recipient}
+                  <strong>{t('testNotification.history.recipientLabel')}:</strong> {item.recipient}
                 </span>
                 {item.templateCode && (
                   <span className="mg-test-notif-history__field">{item.templateCode}</span>
@@ -155,7 +155,7 @@ const TestNotificationHistory = ({ refreshKey = 0 }) => {
               </div>
               <div className="mg-test-notif-history__row mg-test-notif-history__row--reason">
                 <span className="mg-test-notif-history__field">
-                  <strong>{t('testNotification.history.reasonLabel', '사유')}:</strong> {item.reason || '-'}
+                  <strong>{t('testNotification.history.reasonLabel')}:</strong> {item.reason || '-'}
                 </span>
                 {!item.success && item.errorMessage && (
                   <span className="mg-test-notif-history__error-inline">{item.errorMessage}</span>

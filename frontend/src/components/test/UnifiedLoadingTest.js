@@ -131,7 +131,7 @@ const UnifiedLoadingTest = () => {
             loading
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
-            {t('common.actions.save', '저장')}
+            {t('common.actions.save')}
           </MGButton>
         </div>
       )}

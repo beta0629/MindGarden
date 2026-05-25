@@ -216,7 +216,7 @@ const AdminMessageListBlock = () => {
                         loading: false
                       })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      aria-label={t('admin.actions.viewDetail', '상세 보기')}
+                      aria-label={t('admin.actions.viewDetail')}
                       onClick={() => handleMessageClick(message)}
                     >
                       상세
@@ -251,7 +251,7 @@ const AdminMessageListBlock = () => {
                   <Badge variant="status" statusVariant="warning" label="중요" />
                 )}
                 {selectedMessage.isUrgent && (
-                  <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent', '긴급')} />
+                  <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent')} />
                 )}
               </div>
               <div className="mg-v2-message-modal-info-grid">

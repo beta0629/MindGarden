@@ -106,7 +106,7 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
               onClick={handleEdit}
               preventDoubleClick={false}
             >
-              {t('common.actions.edit', '수정')}
+              {t('common.actions.edit')}
             </MGButton>
           )}
           {(mode === 'add' || isEditing) && (
@@ -132,7 +132,7 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                   onClick={handleCancel}
                   preventDoubleClick={false}
                 >
-                  {t('common.actions.cancel', '취소')}
+                  {t('common.actions.cancel')}
                 </MGButton>
               )}
             </>
@@ -146,7 +146,7 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
             onClick={onClose}
             preventDoubleClick={false}
           >
-            {t('common.actions.close', '닫기')}
+            {t('common.actions.close')}
           </MGButton>
         </>
       }
@@ -161,7 +161,7 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
               </h3>
               <div className="mg-v2-form-row">
                 <div className="mg-v2-form-group">
-                  <label className="mg-v2-form-label">{t('common.labels.name', '이름')} <span className="mg-v2-form-label-required">*</span></label>
+                  <label className="mg-v2-form-label">{t('common.labels.name')} <span className="mg-v2-form-label-required">*</span></label>
                   <input
                     type="text"
                     name="name"
@@ -208,7 +208,7 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                 <div className="mg-v2-form-group">
                   <label className="mg-v2-form-label">
                     <Mail size={16} className="mg-v2-form-label-icon" />
-                    {t('common.labels.email', '이메일')}
+                    {t('common.labels.email')}
                   </label>
                   <input
                     type="email"

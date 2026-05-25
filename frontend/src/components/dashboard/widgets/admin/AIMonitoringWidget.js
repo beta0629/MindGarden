@@ -157,7 +157,7 @@ const AIMonitoringWidget = ({ widget, user }) => {
             </div>
             <div className="mg-stats-card__content">
               <div className="mg-stats-card__value">{criticalCount}</div>
-              <div className="mg-stats-card__label">{t('admin.labels.urgent', '긴급')}</div>
+              <div className="mg-stats-card__label">{t('admin.labels.urgent')}</div>
             </div>
           </div>
           
@@ -409,8 +409,8 @@ const AIMonitoringWidget = ({ widget, user }) => {
           })}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => handleAction('refresh')}
-          aria-label={t('admin.actions.refresh', '새로고침')}
-          title={t('admin.actions.refresh', '새로고침')}
+          aria-label={t('admin.actions.refresh')}
+          title={t('admin.actions.refresh')}
           preventDoubleClick={false}
         >
           {WIDGET_CONSTANTS.ICONS.REFRESH}

@@ -119,7 +119,7 @@ const ErdListPage = () => {
             onClick={loadErds}
             preventDoubleClick={false}
           >
-            {t('common.labels.retry', '다시 시도')}
+            {t('common.labels.retry')}
           </MGButton>
         </div>
       </div>
@@ -149,7 +149,7 @@ const ErdListPage = () => {
           onClick={() => setFilter('all')}
           preventDoubleClick={false}
         >
-          {t('common.labels.all', '전체')}
+          {t('common.labels.all')}
         </MGButton>
         <MGButton
           type="button"

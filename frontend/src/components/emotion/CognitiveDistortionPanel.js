@@ -47,7 +47,7 @@ const CognitiveDistortionPanel = ({ emotionId }) => {
         });
     }, [emotionId]);
 
-    if (!emotionData) return <div>{t('common.messages.loading', '로딩 중...')}</div>;
+    if (!emotionData) return <div>{t('common.messages.loading')}</div>;
 
     const getSentimentColor = (score) => {
         if (score > 0.5) return 'var(--mg-success-500)';

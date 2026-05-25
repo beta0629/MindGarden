@@ -72,9 +72,9 @@ const ConsultantIncomeReport = () => {
         payments.map((p) => ({
           id: p.id || p.paymentId,
           date: p.paymentDate || p.createdAt?.split('T')[0],
-          clientName: p.clientName || t('common:labels.client', '내담자'),
+          clientName: p.clientName || t('common:labels.client'),
           amount: p.amount || 0,
-          type: p.consultationType || t('common:labels.consultation', '상담')
+          type: p.consultationType || t('common:labels.consultation')
         }))
       );
 
@@ -83,11 +83,11 @@ const ConsultantIncomeReport = () => {
         const d = new Date(Number(year), Number(month) - 1 - i, 1);
         const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         const income = m === currentMonth ? totalIncome : Math.floor(Math.random() * 500000 + 200000);
-        chartData.push({ month: m, label: t('report:consultation.monthLabel', '{{month}}월', { month: d.getMonth() + 1 }), income });
+        chartData.push({ month: m, label: t('report:consultation.monthLabel', { month: d.getMonth() + 1 }), income });
       }
       setMonthlyData(chartData);
     } catch (err) {
-      console.error(t('statistics:income.loadFail', '수입 리포트 로드 실패'), err);
+      console.error(t('statistics:income.loadFail'), err);
     } finally {
       setLoading(false);
     }
@@ -125,19 +125,19 @@ const ConsultantIncomeReport = () => {
           type="button"
           className="income-report__month-btn"
           onClick={() => changeMonth(-1)}
-          aria-label={t('statistics:income.prevMonth', '이전 달')}
+          aria-label={t('statistics:income.prevMonth')}
         >
           <ChevronLeft size={20} />
         </button>
         <span className="income-report__month-label">{(() => {
           const [yr, mo] = currentMonth.split('-');
-          return t('report:consultation.yearMonthLabel', '{{year}}년 {{month}}월', { year: yr, month: Number(mo) });
+          return t('report:consultation.yearMonthLabel', { year: yr, month: Number(mo) });
         })()}</span>
         <button
           type="button"
           className="income-report__month-btn"
           onClick={() => changeMonth(1)}
-          aria-label={t('statistics:income.nextMonth', '다음 달')}
+          aria-label={t('statistics:income.nextMonth')}
         >
           <ChevronRight size={20} />
         </button>
@@ -150,14 +150,14 @@ const ConsultantIncomeReport = () => {
             <FileText size={20} />
           </div>
           <div className="income-report__summary-value">{summary.totalSessions}</div>
-          <div className="income-report__summary-label">{t('statistics:income.totalSessions', '총 상담 건수')}</div>
+          <div className="income-report__summary-label">{t('statistics:income.totalSessions')}</div>
         </div>
         <div className="income-report__summary-card">
           <div className="income-report__summary-icon">
             <DollarSign size={20} />
           </div>
           <div className="income-report__summary-value">{formatCurrency(summary.totalIncome)}</div>
-          <div className="income-report__summary-label">{t('statistics:income.totalIncome', '총 수입')}</div>
+          <div className="income-report__summary-label">{t('statistics:income.totalIncome')}</div>
         </div>
         <div className="income-report__summary-card">
           <div className="income-report__summary-icon">
@@ -166,7 +166,7 @@ const ConsultantIncomeReport = () => {
           <div className="income-report__summary-value">
             {summary.avgRating ? summary.avgRating.toFixed(1) : '-'}
           </div>
-          <div className="income-report__summary-label">{t('statistics:income.avgRating', '평균 평점')}</div>
+          <div className="income-report__summary-label">{t('statistics:income.avgRating')}</div>
         </div>
       </div>
 
@@ -174,7 +174,7 @@ const ConsultantIncomeReport = () => {
       <div className="income-report__chart-section">
         <div className="income-report__chart-title">
           <BarChart3 size={16} className="income-report__chart-title-icon" />
-          {t('statistics:income.chartTitle', '월별 수입 추이')}
+          {t('statistics:income.chartTitle')}
         </div>
         <div className="income-report__bar-chart">
           {monthlyData.map((d, i) => {
@@ -198,7 +198,7 @@ const ConsultantIncomeReport = () => {
 
       {/* 상세 목록 */}
       <div className="income-report__detail-section">
-        <div className="income-report__detail-title">{t('statistics:income.detailTitle', '상세 내역')}</div>
+        <div className="income-report__detail-title">{t('statistics:income.detailTitle')}</div>
         {detailList.length > 0 ? (
           <div className="income-report__detail-list">
             {detailList.map((item, idx) => (
@@ -224,7 +224,7 @@ const ConsultantIncomeReport = () => {
               <DollarSign size={28} />
             </div>
             <p className="income-report__empty-text">
-              {t('statistics:income.noData', '이번 달 상담 내역이 없습니다')}
+              {t('statistics:income.noData')}
             </p>
           </div>
         )}

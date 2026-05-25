@@ -83,7 +83,7 @@ const RefundFilterBlock = ({
             </div>
             <div className="refund-management__filter-field mg-v2-form-group">
               <label htmlFor="refund-status" className="mg-v2-form-label">
-                {t('common.labels.status', '상태')}
+                {t('common.labels.status')}
               </label>
               <select
                 id="refund-status"
@@ -115,9 +115,9 @@ const RefundFilterBlock = ({
               onClick={onRefresh}
               loading={silentListRefreshing}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              aria-label={t('common.actions.refresh', '새로고침')}
+              aria-label={t('common.actions.refresh')}
             >
-              {t('common.actions.refresh', '새로고침')}
+              {t('common.actions.refresh')}
             </MGButton>
             <MGButton
               type="button"

@@ -61,7 +61,7 @@ const MGTable = ({
       {loading && (
         <div className="mg-table__loading">
           <div className="mg-table__spinner" />
-          <span>{t('common.messages.loadingData', '데이터를 불러오는 중...')}</span>
+          <span>{t('common.messages.loadingData')}</span>
         </div>
       )}
       

@@ -43,7 +43,7 @@ const CounselingContact = () => {
             <h3>상담 문의하기</h3>
             <form onSubmit={handleSubmit} className="counseling-contact__form">
               <div className="counseling-contact__form-group">
-                <label htmlFor="name">{t('common.labels.name', '이름')}</label>
+                <label htmlFor="name">{t('common.labels.name')}</label>
                 <input
                   type="text"
                   id="name"
@@ -55,7 +55,7 @@ const CounselingContact = () => {
               </div>
               
               <div className="counseling-contact__form-group">
-                <label htmlFor="email">{t('common.labels.email', '이메일')}</label>
+                <label htmlFor="email">{t('common.labels.email')}</label>
                 <input
                   type="email"
                   id="email"

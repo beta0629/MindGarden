@@ -84,9 +84,9 @@ const MappingTableView = ({
       <table className="mg-v2-mapping-table">
         <thead>
           <tr>
-            <th>{t('admin.labels.status', '상태')}</th>
-            <th>{t('admin.labels.consultant', '상담사')}</th>
-            <th>{t('admin.labels.client', '내담자')}</th>
+            <th>{t('admin.labels.status')}</th>
+            <th>{t('admin.labels.consultant')}</th>
+            <th>{t('admin.labels.client')}</th>
             <th>패키지</th>
             <th>금액</th>
             <th>회기</th>
@@ -163,7 +163,7 @@ const MappingTableView = ({
                       onClick={() => navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`)}
                       title="스케줄 보기"
                     >
-                      {t('common.labels.schedule', '스케줄')}
+                      {t('common.labels.schedule')}
                     </MGButton>
                   )}
                 </td>
@@ -205,9 +205,9 @@ const MappingTableView = ({
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick={false}
                         onClick={() => openPaymentModal(mapping)}
-                        title={t('admin.actions.paymentConfirm', '결제 확인')}
+                        title={t('admin.actions.paymentConfirm')}
                       >
-                        {t('admin.actions.paymentConfirm', '결제 확인')}
+                        {t('admin.actions.paymentConfirm')}
                       </MGButton>
                     )}
                     {mapping.status === 'PAYMENT_CONFIRMED' && (
@@ -266,9 +266,9 @@ const MappingTableView = ({
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick={false}
                         onClick={() => onEdit(mapping)}
-                        title={t('common.actions.edit', '수정')}
+                        title={t('common.actions.edit')}
                       >
-                        {t('common.actions.edit', '수정')}
+                        {t('common.actions.edit')}
                       </MGButton>
                     )}
                     {onRefund && (

@@ -54,7 +54,7 @@ const SchedulePartyQuickViewModal = ({
             preventDoubleClick={false}
             onClick={onClose}
           >
-            {t('common.actions.close', '닫기')}
+            {t('common.actions.close')}
           </MGButton>
           <MGButton
             type="button"

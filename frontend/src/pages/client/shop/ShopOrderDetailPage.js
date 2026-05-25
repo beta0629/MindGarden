@@ -112,7 +112,7 @@ const ShopOrderDetailPage = () => {
           <section className="client-shop__section" aria-label="주문 정보">
             <h2 className="client-shop__section-title">주문 정보</h2>
             <p className="client-shop__summary-row">
-              <span>{t('common.labels.status', '상태')}</span>
+              <span>{t('common.labels.status')}</span>
               <span>{SHOP_ORDER_STATUS_LABELS[order.status] || order.status}</span>
             </p>
             <p className="client-shop__summary-row">

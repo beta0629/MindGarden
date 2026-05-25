@@ -165,7 +165,7 @@ const ConsultantApplicationModal = ({
     const modalActions = (
         <>
             <Button variant="secondary" onClick={handleClose}>
-                {t('common.actions.cancel', '취소')}
+                {t('common.actions.cancel')}
             </Button>
             {eligibilityChecked && isEligible && (
                 <Button

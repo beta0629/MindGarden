@@ -178,7 +178,7 @@ const HeaderWidget = ({ widget, user }) => {
             {isLoading ? (
               <div className="widget-header-loading">
                 <i className="bi bi-hourglass-split" />
-                <span>{t('common.messages.loading', '로딩 중...')}</span>
+                <span>{t('common.messages.loading')}</span>
               </div>
             ) : isLoggedIn && currentUser ? (
               <>

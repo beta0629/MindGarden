@@ -400,7 +400,7 @@ const AdminDashboard = ({ user: propUser }) => {
             });
         } catch (error) {
             console.error('통계 데이터 로드 실패:', error);
-            showToast(t('admin:dashboard.error.statsLoad', '통계 데이터 로드에 실패했습니다.'), 'danger');
+            showToast(t('admin:dashboard.error.statsLoad'), 'danger');
         } finally {
             setLoading(false);
         }
@@ -442,7 +442,7 @@ const AdminDashboard = ({ user: propUser }) => {
             setConsultants(consultantsList);
         } catch (error) {
             console.error('미배정 내담자/상담사 로드 실패:', error);
-            notificationManager.error(error?.message || t('admin:dashboard.error.unassignedLoad', '미배정 내담자 목록을 불러오는데 실패했습니다.'));
+            notificationManager.error(error?.message || t('admin:dashboard.error.unassignedLoad'));
             setUnassignedClients([]);
             setConsultants([]);
         } finally {
@@ -464,7 +464,7 @@ const AdminDashboard = ({ user: propUser }) => {
             setPendingDepositList(pendingList);
         } catch (error) {
             console.error('입금 확인 대기 통계 로드 실패:', error);
-            notificationManager.error(error?.message || t('admin:dashboard.error.pendingDepositLoad', '입금 확인 대기 목록을 불러오는데 실패했습니다.'));
+            notificationManager.error(error?.message || t('admin:dashboard.error.pendingDepositLoad'));
             setPendingDepositStats({ count: 0, totalAmount: 0, oldestHours: 0 });
             setPendingDepositList([]);
         }
@@ -478,14 +478,14 @@ const AdminDashboard = ({ user: propUser }) => {
                 status: 'PENDING_PAYMENT',
                 totalSessions: 1,
                 remainingSessions: 1,
-                packageName: t('admin:dashboard.initialConsultation', '초기 상담'),
+                packageName: t('admin:dashboard.initialConsultation'),
                 packagePrice: 0,
                 paymentStatus: 'PENDING'
             });
-            notificationManager.success(t('admin:dashboard.success.matchingCreated', '매칭이 성공적으로 생성되었습니다.'));
+            notificationManager.success(t('admin:dashboard.success.matchingCreated'));
             await Promise.all([loadUnassignedClientsAndConsultants(), loadStats(), loadPendingDepositStats()]);
         } catch (error) {
-            const msg = error?.message || error?.response?.data?.message || t('admin:dashboard.error.matchingCreate', '매칭 생성에 실패했습니다.');
+            const msg = error?.message || error?.response?.data?.message || t('admin:dashboard.error.matchingCreate');
             notificationManager.error(msg);
         }
     }, [loadUnassignedClientsAndConsultants, loadStats, loadPendingDepositStats, t]);
@@ -497,15 +497,15 @@ const AdminDashboard = ({ user: propUser }) => {
 
             if (response.ok) {
                 const result = await response.json();
-                showToast(result.message || t('admin:dashboard.autoComplete.success', '스케줄 자동 완료 처리가 완료되었습니다.'));
+                showToast(result.message || t('admin:dashboard.autoComplete.success'));
                 loadStats(); // 통계 새로고침
             } else {
                 const error = await response.json();
-                showToast(error.message || t('admin:dashboard.autoComplete.failed', '스케줄 자동 완료 처리에 실패했습니다.'), 'danger');
+                showToast(error.message || t('admin:dashboard.autoComplete.failed'), 'danger');
             }
         } catch (error) {
             console.error('스케줄 자동 완료 처리 실패:', error);
-            showToast(t('admin:dashboard.autoComplete.failed', '스케줄 자동 완료 처리에 실패했습니다.'), 'danger');
+            showToast(t('admin:dashboard.autoComplete.failed'), 'danger');
         } finally {
             setAutoCompleteLoading(false);
         }
@@ -518,15 +518,15 @@ const AdminDashboard = ({ user: propUser }) => {
 
             if (response.ok) {
                 const result = await response.json();
-                showToast(result.message || t('admin:dashboard.autoCompleteReminder.success', '스케줄 자동 완료 처리 및 알림이 완료되었습니다.'));
+                showToast(result.message || t('admin:dashboard.autoCompleteReminder.success'));
                 loadStats(); // 통계 새로고침
             } else {
                 const error = await response.json();
-                showToast(error.message || t('admin:dashboard.autoCompleteReminder.failed', '스케줄 자동 완료 처리 및 알림에 실패했습니다.'), 'danger');
+                showToast(error.message || t('admin:dashboard.autoCompleteReminder.failed'), 'danger');
             }
         } catch (error) {
             console.error('스케줄 자동 완료 처리 및 알림 실패:', error);
-            showToast(t('admin:dashboard.autoCompleteReminder.failed', '스케줄 자동 완료 처리 및 알림에 실패했습니다.'), 'danger');
+            showToast(t('admin:dashboard.autoCompleteReminder.failed'), 'danger');
         } finally {
             setAutoCompleteWithReminderLoading(false);
         }
@@ -536,17 +536,17 @@ const AdminDashboard = ({ user: propUser }) => {
         try {
             const checkResponse = await fetch(API_ADMIN_DUPLICATE_MAPPINGS);
             if (!checkResponse.ok) {
-                showToast(t('admin:dashboard.duplicate.fetchFailed', '중복 매칭 조회에 실패했습니다.'), 'danger');
+                showToast(t('admin:dashboard.duplicate.fetchFailed'), 'danger');
                 return;
             }
             
             const checkResult = await checkResponse.json();
             if (checkResult.count === 0) {
-                showToast(t('admin:dashboard.duplicate.empty', '중복된 매칭이 없습니다.'));
+                showToast(t('admin:dashboard.duplicate.empty'));
                 return;
             }
             
-            const confirmMessage = t('admin:dashboard.duplicate.confirmMerge', '중복된 매칭이 {{count}}개 발견되었습니다. 통합하시겠습니까?', { count: checkResult.count });
+            const confirmMessage = t('admin:dashboard.duplicate.confirmMerge', { count: checkResult.count });
             const confirmed = await confirm({ message: confirmMessage, variant: 'warning' });
             if (!confirmed) {
                 return;
@@ -556,16 +556,16 @@ const AdminDashboard = ({ user: propUser }) => {
 
             if (response.ok) {
                 const result = await response.json();
-                showToast(result.message || t('admin:dashboard.duplicate.mergeSuccess', '중복 매칭 통합이 완료되었습니다.'));
+                showToast(result.message || t('admin:dashboard.duplicate.mergeSuccess'));
                 loadStats(); // 통계 새로고침
                 loadRefundStats(); // 환불 통계 새로고침
             } else {
                 const error = await response.json();
-                showToast(error.message || t('admin:dashboard.duplicate.mergeFailed', '중복 매칭 통합에 실패했습니다.'), 'danger');
+                showToast(error.message || t('admin:dashboard.duplicate.mergeFailed'), 'danger');
             }
         } catch (error) {
             console.error('중복 매칭 통합 실패:', error);
-            showToast(t('admin:dashboard.duplicate.mergeFailed', '중복 매칭 통합에 실패했습니다.'), 'danger');
+            showToast(t('admin:dashboard.duplicate.mergeFailed'), 'danger');
         }
     };
 
@@ -704,14 +704,14 @@ const AdminDashboard = ({ user: propUser }) => {
     }
 
     return (
-        <SimpleLayout title={t('admin:dashboard.title', '관리자 대시보드')} loading={false}>
+        <SimpleLayout title={t('admin:dashboard.title')} loading={false}>
         <div className="mg-v2-ad-b0kla">
         <div className="mg-v2-ad-b0kla__container mg-dashboard-layout">
             {/* B0KlA Header */}
             <header className="mg-v2-ad-b0kla__header">
                 <div className="mg-v2-ad-b0kla__header-left">
-                    <h1>{t('admin:dashboard.subtitle', '대시보드 개요')}</h1>
-                    <p>{t('admin:dashboard.summary.systemHealth', '오늘의 주요 지표와 현황을 한눈에 확인하세요.')}</p>
+                    <h1>{t('admin:dashboard.subtitle')}</h1>
+                    <p>{t('admin:dashboard.summary.systemHealth')}</p>
                 </div>
                 <div className="mg-v2-ad-b0kla__header-right">
                     <div className="mg-v2-ad-b0kla__search">
@@ -763,11 +763,11 @@ const AdminDashboard = ({ user: propUser }) => {
                                 className: 'mg-v2-ad-b0kla__icon-btn'
                             })}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            aria-label={t('admin.labels.notification', '알림')}
+                            aria-label={t('admin.labels.notification')}
                             onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}
                             preventDoubleClick={false}
                         >
-                            {t('admin.labels.notification', '알림')}
+                            {t('admin.labels.notification')}
                         </MGButton>
                         <MGButton
                             type="button"
@@ -797,7 +797,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     </div>
                     <div className="mg-v2-ad-b0kla__kpi-info">
                         <div className="mg-v2-ad-b0kla__kpi-top">
-                            <span className="mg-v2-ad-b0kla__kpi-label">{t('admin:dashboard.summary.totalUsers', '총 사용자')}</span>
+                            <span className="mg-v2-ad-b0kla__kpi-label">{t('admin:dashboard.summary.totalUsers')}</span>
                             {todayStats.totalUsersGrowthRate !== undefined && (
                                 <Badge
                                   variant="kpi"
@@ -818,7 +818,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     </div>
                     <div className="mg-v2-ad-b0kla__kpi-info">
                         <div className="mg-v2-ad-b0kla__kpi-top">
-                            <span className="mg-v2-ad-b0kla__kpi-label">{t('admin:dashboard.summary.bookedConsultations', '예약된 상담')}</span>
+                            <span className="mg-v2-ad-b0kla__kpi-label">{t('admin:dashboard.summary.bookedConsultations')}</span>
                             {todayStats.bookedGrowthRate !== undefined && (
                                 <Badge
                                   variant="kpi"
@@ -837,7 +837,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     </div>
                     <div className="mg-v2-ad-b0kla__kpi-info">
                         <div className="mg-v2-ad-b0kla__kpi-top">
-                            <span className="mg-v2-ad-b0kla__kpi-label">{t('admin:dashboard.summary.completionRate', '완료율')}</span>
+                            <span className="mg-v2-ad-b0kla__kpi-label">{t('admin:dashboard.summary.completionRate')}</span>
                             {stats.consultationStats?.completionRate !== undefined && (
                                 <Badge
                                   variant="kpi"
@@ -871,8 +871,8 @@ const AdminDashboard = ({ user: propUser }) => {
                 <div className="mg-v2-ad-b0kla__card">
                     <div className="mg-v2-ad-b0kla__chart-header">
                         <div>
-                            <h3 className="mg-v2-ad-b0kla__chart-title">{t('admin:dashboard.chartTitle', '상담 현황 추이')}</h3>
-                            <p className="mg-v2-ad-b0kla__chart-desc">{t('admin:dashboard.chartSubtitle', '최근 6개월 간의 예약 및 완료 추이')}</p>
+                            <h3 className="mg-v2-ad-b0kla__chart-title">{t('admin:dashboard.chartTitle')}</h3>
+                            <p className="mg-v2-ad-b0kla__chart-desc">{t('admin:dashboard.chartSubtitle')}</p>
                         </div>
                         <div className="mg-v2-ad-b0kla__pill-toggle">
                             <MGButton
@@ -887,7 +887,7 @@ const AdminDashboard = ({ user: propUser }) => {
                                 onClick={() => setChartPeriod('monthly')}
                                 preventDoubleClick={false}
                             >
-                                {t('admin:dashboard.v2.period.monthly', '월간')}
+                                {t('admin:dashboard.v2.period.monthly')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -901,7 +901,7 @@ const AdminDashboard = ({ user: propUser }) => {
                                 onClick={() => setChartPeriod('weekly')}
                                 preventDoubleClick={false}
                             >
-                                {t('admin:dashboard.v2.period.weekly', '주간')}
+                                {t('admin:dashboard.v2.period.weekly')}
                             </MGButton>
                         </div>
                     </div>
@@ -997,33 +997,33 @@ const AdminDashboard = ({ user: propUser }) => {
             {/* 상세 통계 섹션들 */}
                 {/* 시스템 개요 */}
             <DashboardSection
-                title={t('admin:dashboard.systemOverview', '시스템 개요')}
-                subtitle={t('admin:dashboard.systemOverviewSubtitle', '전체 시스템 현황 요약')}
+                title={t('admin:dashboard.systemOverview')}
+                subtitle={t('admin:dashboard.systemOverviewSubtitle')}
                 icon={<Activity />}
             >
                 <div className="mg-stats-grid">
                     <StatCard
                         icon={<User />}
                         value={stats.totalConsultants}
-                        label={t('admin.labels.consultant', '상담사')}
+                        label={t('admin.labels.consultant')}
                         onClick={() => navigate(ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE)}
                     />
                     <StatCard
                         icon={<Users />}
                         value={stats.totalClients}
-                        label={t('admin.labels.client', '내담자')}
+                        label={t('admin.labels.client')}
                         onClick={() => navigate(ADMIN_ROUTES.CLIENT_COMPREHENSIVE)}
                     />
                     <StatCard
                         icon={<Link2 />}
                         value={stats.totalMappings}
-                        label={t('admin:matching.title', '매칭')}
+                        label={t('admin:matching.title')}
                         onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
                     />
                     <StatCard
                         icon={<CheckCircle />}
                         value={stats.activeMappings}
-                        label={t('admin:dashboard.summary.activeSessions', '활성 매칭')}
+                        label={t('admin:dashboard.summary.activeSessions')}
                         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=ACTIVE`)}
                     />
@@ -1083,8 +1083,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         <div className="mg-flex mg-align-center mg-gap-sm">
                             <CalendarDays size={20} />
                             <div>
-                                <h3 className="mg-v2-section-title">{t('admin:widget.vacationOverview.title', '휴가 현황')}</h3>
-                                <p className="mg-v2-section-subtitle">{t('admin:widget.vacationOverview.description', '상담사별 휴가 사용 현황 및 통계')}</p>
+                                <h3 className="mg-v2-section-title">{t('admin:widget.vacationOverview.title')}</h3>
+                                <p className="mg-v2-section-subtitle">{t('admin:widget.vacationOverview.description')}</p>
                             </div>
                         </div>
                         <div className="mg-v2-accordion-toggle-icon">
@@ -1099,17 +1099,17 @@ const AdminDashboard = ({ user: propUser }) => {
                         <StatCard
                             icon={<User />}
                             value={`${stats.vacationStats?.summary?.totalConsultants || 0}명`}
-                            label={t('admin:dashboard.summary.totalCounselors', '전체 상담사')}
+                            label={t('admin:dashboard.summary.totalCounselors')}
                         />
                         <StatCard
                             icon={<CalendarDays />}
                             value={`${(stats.vacationStats?.summary?.totalVacationDays || 0).toFixed(1)}일`}
-                            label={t('admin:dashboard.totalVacationDays', '총 휴가일수')}
+                            label={t('admin:dashboard.totalVacationDays')}
                         />
                         <StatCard
                             icon={<BarChart />}
                             value={`${(stats.vacationStats?.summary?.averageVacationDays || 0).toFixed(1)}일`}
-                            label={t('admin:dashboard.avgVacationDays', '평균 휴가일수')}
+                            label={t('admin:dashboard.avgVacationDays')}
                         />
                     </div>
                     
@@ -1301,7 +1301,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Users} tone="blue" />
-                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.userManagement', '사용자 관리')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.userManagement')}</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">상담사·내담자 통합 관리</span>
                     </MGButton>
                     <MGButton
@@ -1415,7 +1415,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={UserCog} tone="blue" />
-                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.consultantManagement', '상담사 관리')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.consultantManagement')}</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">상담사 정보를 관리합니다</span>
                     </MGButton>
                     <MGButton
@@ -1431,7 +1431,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={UserRound} tone="green" />
-                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.clientManagement', '내담자 관리')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.clientManagement')}</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">내담자 정보를 관리합니다</span>
                     </MGButton>
                     <MGButton
@@ -1511,7 +1511,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Settings} tone="gray" />
-                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.systemSettings', '시스템 설정')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.systemSettings')}</span>
                         <span className="mg-v2-ad-b0kla__admin-desc">OpenAI API 키 및 시스템 설정을 관리합니다</span>
                     </MGButton>
                     <MGButton
@@ -1787,7 +1787,7 @@ const AdminDashboard = ({ user: propUser }) => {
             {/* 상담사 관리 */}
             {PermissionChecks.canManageConsultants(userPermissions) && (
                 <DashboardSection
-                    title={t('admin.labels.consultantManagement', '상담사 관리')}
+                    title={t('admin.labels.consultantManagement')}
                     subtitle="상담사 정보 및 관리 기능"
                     icon={<Users />}
                 >
@@ -1805,7 +1805,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
             {/* 내담자 관리 */}
             <DashboardSection
-                title={t('admin.labels.clientManagement', '내담자 관리')}
+                title={t('admin.labels.clientManagement')}
                 subtitle="내담자 정보 및 관리 기능"
                 icon={<User />}
             >
@@ -1846,7 +1846,7 @@ const AdminDashboard = ({ user: propUser }) => {
             {showToastState && (
                 <div className={`mg-toast mg-toast-${toastType}`}>
                     <div className="mg-toast-header">
-                        <strong className="me-auto">{t('admin.labels.notification', '알림')}</strong>
+                        <strong className="me-auto">{t('admin.labels.notification')}</strong>
                         <MGButton
                             type="button"
                             variant="outline"

@@ -154,7 +154,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
 
   const recipientOptions = useMemo(() => recipients.map((u) => ({
     value: String(u.userId ?? u.id ?? ''),
-    label: `${toDisplayString(u.name, t('testNotification.recipient.unknownName', '이름 없음'))} · ${toDisplayString(u.role, t('testNotification.recipient.unknownRole', '역할 미지정'))} · ${toDisplayString(u.phoneMasked, t('testNotification.recipient.unknownPhone', '번호 없음'))}`
+    label: `${toDisplayString(u.name, t('testNotification.recipient.unknownName'))} · ${toDisplayString(u.role, t('testNotification.recipient.unknownRole'))} · ${toDisplayString(u.phoneMasked, t('testNotification.recipient.unknownPhone'))}`
   })), [recipients, t]);
 
   const selectedTemplate = useMemo(() => {
@@ -177,7 +177,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
     return {
       count: smsMessage.length,
       limit,
-      label: isKo ? t('testNotification.sms.langKo', '한글') : t('testNotification.sms.langEn', '영문'),
+      label: isKo ? t('testNotification.sms.langKo') : t('testNotification.sms.langEn'),
       warning: smsMessage.length > limit
     };
   }, [smsMessage, t]);
@@ -267,7 +267,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
       }
     } catch (err) {
       console.error('테스트 발송 실패:', err);
-      const message = err?.response?.data?.message || err?.message || t('testNotification.errors.sendFailed', '발송에 실패했습니다.');
+      const message = err?.response?.data?.message || err?.message || t('testNotification.errors.sendFailed');
       setErrorMessage(message);
       setLastResult({
         success: false,
@@ -312,12 +312,12 @@ const TestNotificationForm = ({ onSentSuccess }) => {
   const renderRecipientSection = () => (
     <section className="mg-test-notif-form__section" aria-labelledby="mg-test-notif-recipient-title">
       <h3 id="mg-test-notif-recipient-title" className="mg-test-notif-form__section-title">
-        {t('testNotification.recipient.title', '수신자')}
+        {t('testNotification.recipient.title')}
       </h3>
       <BadgeSelect
         options={[
-          { value: RECIPIENT_MODE.SELF, label: t('testNotification.recipient.self', '본인(SELF)') },
-          { value: RECIPIENT_MODE.USER, label: t('testNotification.recipient.user', 'DB 사용자') }
+          { value: RECIPIENT_MODE.SELF, label: t('testNotification.recipient.self') },
+          { value: RECIPIENT_MODE.USER, label: t('testNotification.recipient.user') }
         ]}
         value={recipientMode}
         onChange={(val) => {
@@ -326,7 +326,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
             setSelectedUserId('');
           }
         }}
-        aria-label={t('testNotification.recipient.title', '수신자')}
+        aria-label={t('testNotification.recipient.title')}
       />
       {recipientMode === RECIPIENT_MODE.USER && (
         <div className="mg-test-notif-form__user-picker">
@@ -335,8 +335,8 @@ const TestNotificationForm = ({ onSentSuccess }) => {
             className="mg-test-notif-form__input"
             value={recipientSearch}
             onChange={(e) => setRecipientSearch(e.target.value)}
-            placeholder={t('testNotification.recipient.searchPlaceholder', '이름·이메일·역할 검색')}
-            aria-label={t('testNotification.recipient.searchPlaceholder', '이름·이메일·역할 검색')}
+            placeholder={t('testNotification.recipient.searchPlaceholder')}
+            aria-label={t('testNotification.recipient.searchPlaceholder')}
           />
           <BadgeSelect
             options={recipientOptions}
@@ -344,9 +344,9 @@ const TestNotificationForm = ({ onSentSuccess }) => {
             onChange={(val) => setSelectedUserId(val)}
             loading={recipientLoading}
             placeholder={recipientOptions.length === 0
-              ? t('testNotification.recipient.empty', '검색 결과가 없습니다.')
-              : t('testNotification.recipient.searchPlaceholder', '이름·이메일·역할 검색')}
-            aria-label={t('testNotification.recipient.user', 'DB 사용자')}
+              ? t('testNotification.recipient.empty')
+              : t('testNotification.recipient.searchPlaceholder')}
+            aria-label={t('testNotification.recipient.user')}
           />
         </div>
       )}
@@ -356,16 +356,16 @@ const TestNotificationForm = ({ onSentSuccess }) => {
   const renderChannelSection = () => (
     <section className="mg-test-notif-form__section" aria-labelledby="mg-test-notif-channel-title">
       <h3 id="mg-test-notif-channel-title" className="mg-test-notif-form__section-title">
-        {t('testNotification.channel.title', '채널')}
+        {t('testNotification.channel.title')}
       </h3>
       <BadgeSelect
         options={[
           { value: CHANNEL.SMS, label: t('testNotification.channel.sms', 'SMS') },
-          { value: CHANNEL.ALIMTALK, label: t('testNotification.channel.alimtalk', '카카오 알림톡') }
+          { value: CHANNEL.ALIMTALK, label: t('testNotification.channel.alimtalk') }
         ]}
         value={channel}
         onChange={(val) => setChannel(val)}
-        aria-label={t('testNotification.channel.title', '채널')}
+        aria-label={t('testNotification.channel.title')}
       />
       {channel === CHANNEL.SMS ? renderSmsBody() : renderAlimtalkBody()}
     </section>
@@ -374,7 +374,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
   const renderSmsBody = () => (
     <div className="mg-test-notif-form__sms-body">
       <label className="mg-test-notif-form__label" htmlFor="mg-test-notif-sms">
-        {t('testNotification.sms.messageLabel', '메시지 본문')}
+        {t('testNotification.sms.messageLabel')}
       </label>
       <textarea
         id="mg-test-notif-sms"
@@ -382,7 +382,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
         rows={4}
         value={smsMessage}
         onChange={(e) => setSmsMessage(e.target.value)}
-        placeholder={t('testNotification.sms.messagePlaceholder', '전송할 SMS 본문을 입력하세요 (한글 70자 / 영문 160자 권장)')}
+        placeholder={t('testNotification.sms.messagePlaceholder')}
       />
       <p className={`mg-test-notif-form__counter${smsCounter.warning ? ' mg-test-notif-form__counter--warn' : ''}`}>
         {t('testNotification.sms.counter', {
@@ -398,7 +398,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
   const renderAlimtalkBody = () => (
     <div className="mg-test-notif-form__alimtalk-body">
       <label className="mg-test-notif-form__label" htmlFor="mg-test-notif-template">
-        {t('testNotification.alimtalk.templateLabel', '알림톡 템플릿')}
+        {t('testNotification.alimtalk.templateLabel')}
       </label>
       <select
         id="mg-test-notif-template"
@@ -411,8 +411,8 @@ const TestNotificationForm = ({ onSentSuccess }) => {
       >
         <option value="">
           {templatesLoading
-            ? t('testNotification.alimtalk.templatesLoading', '템플릿 로드 중...')
-            : t('testNotification.alimtalk.templatePlaceholder', '템플릿을 선택하세요')}
+            ? t('testNotification.alimtalk.templatesLoading')
+            : t('testNotification.alimtalk.templatePlaceholder')}
         </option>
         {templates.map((tpl) => {
           const code = String(tpl.templateCode ?? tpl.code ?? '');
@@ -421,7 +421,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
           // 라이브 출처(SOLAPI) 옵션은 항상 매핑 있음. 백엔드가 차단하므로 UI는 안내만.
           const missingMapping = tpl.solapiTemplateIdPresent === false;
           const prefix = missingMapping
-            ? t('testNotification.alimtalk.missingMappingBadge', '[매핑없음] ')
+            ? t('testNotification.alimtalk.missingMappingBadge')
             : '';
           return (
             <option key={code} value={code}>
@@ -440,7 +440,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
             setTemplateParams({});
           }}
         />
-        <span>{t('testNotification.alimtalk.liveToggle', '솔라피 전체 보기 (실시간 조회)')}</span>
+        <span>{t('testNotification.alimtalk.liveToggle')}</span>
       </label>
       {selectedTemplate && selectedTemplate.solapiTemplateIdPresent === false && (
         <p className="mg-test-notif-form__hint mg-test-notif-form__hint--warn">
@@ -453,7 +453,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
       {selectedTemplate && selectedTemplate.content && (
         <div className="mg-test-notif-form__template-preview" aria-live="polite">
           <span className="mg-test-notif-form__preview-label">
-            {t('testNotification.alimtalk.bodyPreview', '템플릿 본문')}
+            {t('testNotification.alimtalk.bodyPreview')}
           </span>
           <pre className="mg-test-notif-form__preview-text">{selectedTemplate.content}</pre>
         </div>
@@ -461,15 +461,15 @@ const TestNotificationForm = ({ onSentSuccess }) => {
       {templateVariableDefs.length > 0 && (
         <div className="mg-test-notif-form__variables">
           <h4 className="mg-test-notif-form__variables-title">
-            {t('testNotification.alimtalk.variablesTitle', '변수 입력')}
+            {t('testNotification.alimtalk.variablesTitle')}
           </h4>
           {templateVariableDefs.map((v) => (
             <div key={v.name} className="mg-test-notif-form__variable-row">
               <label className="mg-test-notif-form__variable-label" htmlFor={`mg-test-notif-var-${v.name}`}>
-                {toDisplayString(v.name, t('testNotification.alimtalk.variableFallback', '변수'))}
+                {toDisplayString(v.name, t('testNotification.alimtalk.variableFallback'))}
                 {v.required && (
                   <span className="mg-test-notif-form__badge mg-test-notif-form__badge--required">
-                    {t('testNotification.alimtalk.variableRequired', '필수')}
+                    {t('testNotification.alimtalk.variableRequired')}
                   </span>
                 )}
               </label>
@@ -498,7 +498,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
         className="mg-test-notif-form__section-title"
         htmlFor="mg-test-notif-reason"
       >
-        {t('testNotification.reason.label', '발송 사유 (감사로그 기록, 필수)')}
+        {t('testNotification.reason.label')}
       </label>
       <textarea
         id="mg-test-notif-reason"
@@ -507,7 +507,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
         maxLength={REASON_MAX_LENGTH}
         value={reason}
         onChange={(e) => setReason(e.target.value)}
-        placeholder={t('testNotification.reason.placeholder', '예: 사용자 #123 매핑 확정 알림 변수 매칭 검증')}
+        placeholder={t('testNotification.reason.placeholder')}
       />
       <p className="mg-test-notif-form__hint">
         {reason.length} / {REASON_MAX_LENGTH}
@@ -517,7 +517,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
 
   const renderRateLimit = () => (
     <p className={`mg-test-notif-form__rate${counters.minuteRemaining <= 0 || counters.dayRemaining <= 0 ? ' mg-test-notif-form__rate--exhausted' : ''}`}>
-      <span className="mg-test-notif-form__rate-label">{t('testNotification.rateLimit.title', '잔여 한도')}</span>
+      <span className="mg-test-notif-form__rate-label">{t('testNotification.rateLimit.title')}</span>
       <span className="mg-test-notif-form__rate-value">
         {t('testNotification.rateLimit.perMinute', {
           remaining: counters.minuteRemaining,
@@ -537,19 +537,19 @@ const TestNotificationForm = ({ onSentSuccess }) => {
   const renderConfirmSummary = () => (
     <ul className="mg-test-notif-form__summary">
       <li>
-        <strong>{t('testNotification.recipient.title', '수신자')}: </strong>
+        <strong>{t('testNotification.recipient.title')}: </strong>
         {recipientMode === RECIPIENT_MODE.SELF
-          ? t('testNotification.recipient.self', '본인(SELF)')
-          : `${t('testNotification.recipient.user', 'DB 사용자')} (#${selectedUserId})`}
+          ? t('testNotification.recipient.self')
+          : `${t('testNotification.recipient.user')} (#${selectedUserId})`}
       </li>
       <li>
-        <strong>{t('testNotification.channel.title', '채널')}: </strong>
+        <strong>{t('testNotification.channel.title')}: </strong>
         {channel === CHANNEL.SMS
           ? t('testNotification.channel.sms', 'SMS')
-          : `${t('testNotification.channel.alimtalk', '카카오 알림톡')} (${templateCode})`}
+          : `${t('testNotification.channel.alimtalk')} (${templateCode})`}
       </li>
       <li>
-        <strong>{t('testNotification.reason.label', '발송 사유 (감사로그 기록, 필수)')}: </strong>
+        <strong>{t('testNotification.reason.label')}: </strong>
         {reason}
       </li>
     </ul>
@@ -573,21 +573,21 @@ const TestNotificationForm = ({ onSentSuccess }) => {
             target="_blank"
             rel="noopener noreferrer"
           >
-            {t('testNotification.result.openConsole', '솔라피 콘솔에서 보기')}
+            {t('testNotification.result.openConsole')}
           </a>
         </div>
       );
     }
     return (
       <div className="mg-test-notif-form__result mg-test-notif-form__result--fail">
-        <p><strong>{t('testNotification.result.errorCode', '에러코드')}: </strong>{toDisplayString(lastResult.errorCode, '-')}</p>
-        <p><strong>{t('testNotification.result.errorMessage', '메시지')}: </strong>{toDisplayString(lastResult.errorMessage || errorMessage, '-')}</p>
+        <p><strong>{t('testNotification.result.errorCode')}: </strong>{toDisplayString(lastResult.errorCode, '-')}</p>
+        <p><strong>{t('testNotification.result.errorMessage')}: </strong>{toDisplayString(lastResult.errorMessage || errorMessage, '-')}</p>
       </div>
     );
   };
 
   return (
-    <article className="mg-test-notif-form" aria-label={t('testNotification.panel.title', '알림 테스트 발송')}>
+    <article className="mg-test-notif-form" aria-label={t('testNotification.panel.title')}>
       {renderRecipientSection()}
       {renderChannelSection()}
       {renderReasonSection()}
@@ -609,8 +609,8 @@ const TestNotificationForm = ({ onSentSuccess }) => {
           onClick={handleSendClick}
         >
           {submitting
-            ? t('testNotification.submit.sending', '발송 중...')
-            : t('testNotification.submit.send', '발송하기')}
+            ? t('testNotification.submit.sending')
+            : t('testNotification.submit.send')}
         </MGButton>
       </div>
 
@@ -618,8 +618,8 @@ const TestNotificationForm = ({ onSentSuccess }) => {
       <UnifiedModal
         isOpen={modalStep === MODAL_STEP.CONFIRM}
         onClose={closeModals}
-        title={t('testNotification.submit.confirmTitle', '발송 정보 확인')}
-        subtitle={t('testNotification.submit.confirmSubtitle', '다음 정보로 실제 사용자에게 발송됩니다.')}
+        title={t('testNotification.submit.confirmTitle')}
+        subtitle={t('testNotification.submit.confirmSubtitle')}
         size="medium"
         actions={(
           <>
@@ -630,7 +630,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={closeModals}
             >
-              {t('testNotification.result.close', '닫기')}
+              {t('testNotification.result.close')}
             </MGButton>
             <MGButton
               type="button"
@@ -639,7 +639,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setModalStep(MODAL_STEP.FINAL_CONFIRM)}
             >
-              {t('testNotification.submit.confirmNext', '다음')}
+              {t('testNotification.submit.confirmNext')}
             </MGButton>
           </>
         )}
@@ -651,8 +651,8 @@ const TestNotificationForm = ({ onSentSuccess }) => {
       <UnifiedModal
         isOpen={modalStep === MODAL_STEP.FINAL_CONFIRM}
         onClose={closeModals}
-        title={t('testNotification.submit.finalConfirmTitle', '정말 발송하시겠습니까?')}
-        subtitle={t('testNotification.submit.finalConfirmSubtitle', '실제 단말로 SMS·알림톡이 전송됩니다. 이 작업은 되돌릴 수 없습니다.')}
+        title={t('testNotification.submit.finalConfirmTitle')}
+        subtitle={t('testNotification.submit.finalConfirmSubtitle')}
         size="small"
         variant="confirm"
         loading={submitting}
@@ -665,7 +665,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={closeModals}
             >
-              {t('testNotification.result.close', '닫기')}
+              {t('testNotification.result.close')}
             </MGButton>
             <MGButton
               type="button"
@@ -675,7 +675,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={doSend}
             >
-              {t('testNotification.submit.finalConfirmSend', '최종 발송')}
+              {t('testNotification.submit.finalConfirmSend')}
             </MGButton>
           </>
         )}
@@ -687,8 +687,8 @@ const TestNotificationForm = ({ onSentSuccess }) => {
       <UnifiedModal
         isOpen={modalStep === MODAL_STEP.RESULT_SUCCESS}
         onClose={closeModals}
-        title={t('testNotification.result.successTitle', '발송 성공')}
-        subtitle={t('testNotification.result.successSubtitle', '솔라피 응답을 확인하세요.')}
+        title={t('testNotification.result.successTitle')}
+        subtitle={t('testNotification.result.successSubtitle')}
         size="small"
         variant="alert"
         actions={(
@@ -699,7 +699,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={closeModals}
           >
-            {t('testNotification.result.close', '닫기')}
+            {t('testNotification.result.close')}
           </MGButton>
         )}
       >
@@ -710,8 +710,8 @@ const TestNotificationForm = ({ onSentSuccess }) => {
       <UnifiedModal
         isOpen={modalStep === MODAL_STEP.RESULT_FAIL}
         onClose={closeModals}
-        title={t('testNotification.result.failTitle', '발송 실패')}
-        subtitle={t('testNotification.result.failSubtitle', '에러를 확인하고 재시도하세요.')}
+        title={t('testNotification.result.failTitle')}
+        subtitle={t('testNotification.result.failSubtitle')}
         size="small"
         variant="alert"
         actions={(
@@ -723,7 +723,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={closeModals}
             >
-              {t('testNotification.result.close', '닫기')}
+              {t('testNotification.result.close')}
             </MGButton>
             <MGButton
               type="button"
@@ -736,7 +736,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
                 doSend();
               }}
             >
-              {t('testNotification.result.retry', '재시도')}
+              {t('testNotification.result.retry')}
             </MGButton>
           </>
         )}

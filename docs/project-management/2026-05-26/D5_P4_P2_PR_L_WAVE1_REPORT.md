@@ -98,9 +98,95 @@
 
 ---
 
-## §2 commit-2 — Top-30 파일 Pattern-A codemod (placeholder)
+## §2 commit-2 — Top-30 파일 Pattern-A codemod
 
-(commit-2 적용 후 갱신)
+### 2.1 codemod 정규식 (확장 Pattern-A)
+
+P0-inv-c4 §4.1 Pattern-A 정의 기반 + 트레일링 컴마 (`t('key', '한국어', { ...opts })`) +
+escape sequence (`\n`, `\\`, `\"`) 양쪽 호환 정규식.
+
+```python
+PATTERN_A = re.compile(
+    r"\bt\(\s*"
+    r"(['\"`])([^'\"`\\\n]+?)\1"                         # 1: key (single line)
+    r"\s*,\s*"
+    r"(['\"`])((?:[^'\"`\\\n]|\\.)*?"                    # 3: fallback prefix
+    r"[\u3131-\u318F\uAC00-\uD7A3]"                      #    Korean char (required)
+    r"(?:[^'\"`\\\n]|\\.)*?)\3"                          #    fallback suffix
+    r"\s*([,)])"                                          # 5: trailing , or )
+)
+```
+
+치환 로직:
+- 트레일링 `)` → `t('$2')` (2-arg 호출 종결)
+- 트레일링 `,` → `t('$2',` (옵션 객체 보존: `t('admin:mapping.refund.refundAmount', { amount: ... })`)
+
+배제 패턴 (commit-3 처리):
+- Pattern-C (mixed quote `t('key', "한국어")` / `t("key", '한국어')`)
+- Pattern-D (multiline `t('key',\n  '한국어')`)
+
+### 2.2 Top-30 파일별 적용 결과 (2-pass aggregate)
+
+| # | 파일 | inventory | 1-pass (strict) | 2-pass (ext) | 합계 |
+|---:|---|---:|---:|---:|---:|
+| 1 | `erp/IntegratedFinanceDashboard.js` | 251 | 251 | 0 | **251** |
+| 2 | `erp/FinancialManagement.js` | 176 | 168 | 8 | **176** |
+| 3 | `admin/CommonCodeManagement.js` | 77 | 74 | 3 | **77** |
+| 4 | `common/TermsOfService.js` | 76 | 71 | 0 | 71 (5 잔여 = Pattern-D/edge) |
+| 5 | `admin/ConsultantComprehensiveManagement.js` | 68 | 68 | 0 | **68** |
+| 6 | `admin/MappingCreationModal.js` | 67 | 61 | 6 | **67** |
+| 7 | `admin/ClientComprehensiveManagement/ClientModal.js` | 65 | 65 | 0 | **65** |
+| 8 | `admin/system/TestNotificationForm.js` | 61 | 59 | 0 | 59 (2 잔여 = Pattern-D 1 + 1) |
+| 9 | `admin/UserManagement.js` | 59 | 56 | 3 | **59** |
+| 10 | `admin/DashboardManagement.js` | 58 | 58 | 0 | **58** |
+| 11 | `admin/SessionManagement.js` | 56 | 54 | 2 | **56** |
+| 12 | `admin/manual-notification/ManualNotificationForm.js` | 55 | 43 | 0 | 43 (12 잔여 = Pattern-D 10 + C 2) |
+| 13 | `admin/SystemConfigManagement.js` | 54 | 44 | 4 | 48 (6 잔여 = Pattern-D 5 + C 1) |
+| 14 | `admin/mapping-management/pages/MappingManagementPage.js` | 53 | 51 | 2 | **53** |
+| 15 | `consultation/ConsultationReport.js` | 52 | 44 | 8 | **52** |
+| 16 | `admin/mapping/PartialRefundModal.js` | 50 | 33 | 16 | 49 (1 잔여 = Pattern-D) |
+| 17 | `admin/sms-templates/SmsTemplateManagementPage.js` | 50 | 40 | 0 | 40 (10 잔여 = Pattern-D) |
+| 18 | `admin/AdminDashboard.js` | 48 | 47 | 1 | **48** |
+| 19 | `admin/WidgetBasedAdminDashboard.js` | 43 | 38 | 5 | **43** |
+| 20 | `erp/ErpReportModal.js` | 43 | 36 | 7 | **43** |
+| 21 | `admin/WellnessManagement.js` | 40 | 34 | 6 | **40** |
+| 22 | `admin/VacationManagementModal.js` | 39 | 39 | 0 | 39 (1 C 잔여 — 별도 inventory 카운트 38 + 1) |
+| 23 | `ui/TenantCommonCodeManagerUI.js` | 39 | 39 | 0 | **39** |
+| 24 | `notifications/UnifiedNotifications.js` | 37 | 37 | 0 | **37** |
+| 25 | `dashboard-v2/AdminDashboardV2.js` | 36 | 35 | 1 | **36** |
+| 26 | `admin/ClientComprehensiveManagement.js` | 35 | 31 | 4 | **35** |
+| 27 | `clinical/DiagnosticReportEditor.js` | 35 | 35 | 0 | **35** |
+| 28 | `statistics/PerformanceMetricsModal.js` | 35 | 29 | 6 | **35** |
+| 29 | `admin/TenantCommonCodeManager.js` | 33 | 31 | 2 | **33** |
+| 30 | `auth/TabletLogin.js` | 31 | 31 | 0 | **31** |
+| **합계** | — | **1,822** | **1,702** | **84** | **1,786** (A 패턴 100% in scope) |
+
+### 2.3 잔여 36건 (Top-30 in-scope, commit-3 처리)
+
+- Pattern-D (multiline) 31건: TermsOfService 5 / TestNotificationForm 1 / ManualNotificationForm 10 / SystemConfigManagement 5 / PartialRefundModal 1 / SmsTemplateManagementPage 10 = 32 (인벤토리 추정 29 + 변산 3)
+- Pattern-C (mixed quote) 4건: ManualNotificationForm 2 / SystemConfigManagement 1 / VacationManagementModal 1
+
+### 2.4 키 정합성 audit (commit-2 직후)
+
+| 항목 | 카운트 |
+|---|---:|
+| Top-30 t() 정적 키 (template literal 제외) | 1,834 |
+| ko.json resolve OK | 1,817 |
+| Unresolved (no-fallback, defaultValue 옵션 패턴) | 10 (모두 i18next `defaultValue` 옵션 객체 패턴 — 라벨 정상 렌더) |
+| Unresolved (English-only fallback, 한국어 부재) | 7 (e.g., `t('testNotification.channel.sms', 'SMS')` — 영문 fallback 으로 정상 렌더, 합의서 §C10 skip 대상) |
+| Template literal 동적 키 | 9 (`erp:finance.management.categoryDisplay.${...}` 등) |
+| **라벨 회귀 위험** | **0** (한국어 fallback 모두 ko.json seed, 영문 fallback / defaultValue 옵션은 codemod 미터치) |
+
+### 2.5 commit-2 게이트 매트릭스
+
+| 게이트 | 결과 |
+|---|---|
+| `npm run lint:codemod-mappings` (가드 1·2) | ✅ PASS (57/57) |
+| ESLint (변경 30 파일) | ✅ 0 error / 0 warning |
+| Production build (`cd frontend && npm run build`) | ✅ PASS |
+| Phase 1 정착물 무수정 | ✅ i18n/index.js 무변경 (commit-1 적용본 보존) |
+| 시드 481 키 활용 | ✅ admin/common/erp/report/auth/testNotification/manualNotification/smsTemplate/systemConfig/terms namespace 전 resolve OK |
+
 
 ---
 

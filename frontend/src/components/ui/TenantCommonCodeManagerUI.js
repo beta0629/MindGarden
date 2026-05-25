@@ -85,13 +85,13 @@ const TenantCommonCodeManagerUI = ({
             <div className="mg-v2-ad-b0kla__common-code-container">
                 <div className="mg-v2-ad-b0kla__group-list-section">
                     <div className="mg-v2-ad-b0kla__section-header">
-                        {t('admin:tenantCommonCode.ui.groupListTitle', '코드 그룹')}
+                        {t('admin:tenantCommonCode.ui.groupListTitle')}
                     </div>
                     <div className="mg-v2-ad-b0kla__search-bar">
                         <div className="mg-v2-ad-b0kla__search-input-wrapper">
                             <input
                                 type="text"
-                                placeholder={t('admin:tenantCommonCode.ui.searchPlaceholder', '코드 그룹 검색...')}
+                                placeholder={t('admin:tenantCommonCode.ui.searchPlaceholder')}
                                 value={searchTerm || ''}
                                 onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
                                 className="mg-v2-ad-b0kla__search-input"
@@ -101,7 +101,7 @@ const TenantCommonCodeManagerUI = ({
                     </div>
                     {loading && !selectedGroup ? (
                         <div className="mg-v2-ad-b0kla__detail-empty">
-                            <p>{t('admin:tenantCommonCode.ui.loading', '불러오는 중...')}</p>
+                            <p>{t('admin:tenantCommonCode.ui.loading')}</p>
                         </div>
                     ) : (
                         <div className="mg-v2-ad-b0kla__group-list">
@@ -145,8 +145,8 @@ const TenantCommonCodeManagerUI = ({
                     {!selectedGroup ? (
                         <div className="mg-v2-ad-b0kla__detail-empty">
                             <i className="bi bi-folder-symlink" aria-hidden="true" />
-                            <h3>{t('admin:tenantCommonCode.ui.emptySelectTitle', '코드 그룹을 선택하세요')}</h3>
-                            <p>{t('admin:tenantCommonCode.ui.emptySelectDesc', '좌측 목록에서 그룹을 선택하면 우측에서 코드를 관리할 수 있습니다.')}</p>
+                            <h3>{t('admin:tenantCommonCode.ui.emptySelectTitle')}</h3>
+                            <p>{t('admin:tenantCommonCode.ui.emptySelectDesc')}</p>
                         </div>
                     ) : (
                         <>
@@ -170,7 +170,7 @@ const TenantCommonCodeManagerUI = ({
                                             onClick={onQuickCreatePackage}
                                             preventDoubleClick={true}
                                         >
-                                            {t('admin:tenantCommonCode.ui.btnQuickPackage', '빠른 패키지 생성')}
+                                            {t('admin:tenantCommonCode.ui.btnQuickPackage')}
                                         </MGButton>
                                     )}
                                     <MGButton
@@ -184,7 +184,7 @@ const TenantCommonCodeManagerUI = ({
                                         onClick={onCreateCode}
                                         preventDoubleClick={true}
                                     >
-                                        + {t('admin:tenantCommonCode.ui.btnAddCode', '코드 추가')}
+                                        + {t('admin:tenantCommonCode.ui.btnAddCode')}
                                     </MGButton>
                                 </div>
                             </div>
@@ -194,11 +194,11 @@ const TenantCommonCodeManagerUI = ({
 
                             {loading ? (
                                 <div className="mg-v2-ad-b0kla__detail-empty">
-                                    <p>{t('admin:tenantCommonCode.ui.loading', '불러오는 중...')}</p>
+                                    <p>{t('admin:tenantCommonCode.ui.loading')}</p>
                                 </div>
                             ) : codes.length === 0 ? (
                                 <div className="mg-v2-ad-b0kla__detail-empty">
-                                    <p>{t('admin:tenantCommonCode.ui.emptyNoCodes', '등록된 코드가 없습니다.')}</p>
+                                    <p>{t('admin:tenantCommonCode.ui.emptyNoCodes')}</p>
                                     <MGButton
                                         variant="primary"
                                         className={buildErpMgButtonClassName({
@@ -210,7 +210,7 @@ const TenantCommonCodeManagerUI = ({
                                         onClick={onCreateCode}
                                         preventDoubleClick={true}
                                     >
-                                        {t('admin:tenantCommonCode.ui.btnFirstAdd', '첫 코드 추가하기')}
+                                        {t('admin:tenantCommonCode.ui.btnFirstAdd')}
                                     </MGButton>
                                 </div>
                             ) : (
@@ -246,19 +246,19 @@ const TenantCommonCodeManagerUI = ({
                                                         size="small"
                                                         preventDoubleClick={false}
                                                     >
-                                                        {code.isActive ? t('admin:tenantCommonCode.ui.statusActive', '활성') : t('admin:tenantCommonCode.ui.statusInactive', '비활성')}
+                                                        {code.isActive ? t('admin:tenantCommonCode.ui.statusActive') : t('admin:tenantCommonCode.ui.statusInactive')}
                                                     </MGButton>
                                                 </div>
                                                 <div className="mg-code-card__content">
                                                     {showSubcategoryParent && (
                                                         <div className="mg-code-card__field">
-                                                            <span className="mg-code-card__label">{t('admin:tenantCommonCode.ui.fieldParentCategory', '상위 카테고리')}</span>
+                                                            <span className="mg-code-card__label">{t('admin:tenantCommonCode.ui.fieldParentCategory')}</span>
                                                             <span className="mg-code-card__value">{resolveParentLabel(code)}</span>
                                                         </div>
                                                     )}
                                                     {code.codeDescription && (
                                                         <div className="mg-code-card__field">
-                                                            <span className="mg-code-card__label">{t('admin:tenantCommonCode.ui.fieldDescription', '설명')}</span>
+                                                            <span className="mg-code-card__label">{t('admin:tenantCommonCode.ui.fieldDescription')}</span>
                                                             <p className="mg-code-card__value">
                                                                 {toDisplayString(code.codeDescription, t('admin:tenantCommonCode.ui.displayDash', '—'))}
                                                             </p>
@@ -267,16 +267,16 @@ const TenantCommonCodeManagerUI = ({
                                                     {(selectedGroup.groupName === 'CONSULTATION_PACKAGE'
                                                         || selectedGroup.groupName === 'ASSESSMENT_TYPE') && (
                                                         <div className="mg-code-card__field">
-                                                            <span className="mg-code-card__label">{t('admin:tenantCommonCode.ui.fieldAmount', '금액')}</span>
+                                                            <span className="mg-code-card__label">{t('admin:tenantCommonCode.ui.fieldAmount')}</span>
                                                             <span className="mg-code-card__value">
                                                                 {extraData?.price
-                                                                    ? `${extraData.price.toLocaleString()}${t('admin:tenantCommonCode.ui.currencyWonSuffix', '원')}`
+                                                                    ? `${extraData.price.toLocaleString()}${t('admin:tenantCommonCode.ui.currencyWonSuffix')}`
                                                                     : t('admin:tenantCommonCode.ui.amountEmpty', '-')}
                                                             </span>
                                                         </div>
                                                     )}
                                                     <div className="mg-code-card__field">
-                                                        <span className="mg-code-card__label">{t('admin:tenantCommonCode.ui.fieldSortOrder', '순서')}</span>
+                                                        <span className="mg-code-card__label">{t('admin:tenantCommonCode.ui.fieldSortOrder')}</span>
                                                         <span className="mg-code-card__value">{code.sortOrder}</span>
                                                     </div>
                                                 </div>
@@ -293,7 +293,7 @@ const TenantCommonCodeManagerUI = ({
                                                         onClick={() => onEditCode(code)}
                                                         preventDoubleClick={true}
                                                     >
-                                                        {t('admin:tenantCommonCode.ui.btnEdit', '수정')}
+                                                        {t('admin:tenantCommonCode.ui.btnEdit')}
                                                     </MGButton>
                                                     <MGButton
                                                         variant="danger"
@@ -307,7 +307,7 @@ const TenantCommonCodeManagerUI = ({
                                                         onClick={() => onDeleteCode(code.id)}
                                                         preventDoubleClick={true}
                                                     >
-                                                        {t('admin:tenantCommonCode.ui.btnDelete', '삭제')}
+                                                        {t('admin:tenantCommonCode.ui.btnDelete')}
                                                     </MGButton>
                                                 </div>
                                             </MGCard>
@@ -323,7 +323,7 @@ const TenantCommonCodeManagerUI = ({
             <UnifiedModal
                 isOpen={!!showModal}
                 onClose={onModalClose}
-                title={modalMode === 'create' ? t('admin:tenantCommonCode.ui.modalTitleCreate', '코드 추가') : t('admin:tenantCommonCode.ui.modalTitleEdit', '코드 수정')}
+                title={modalMode === 'create' ? t('admin:tenantCommonCode.ui.modalTitleCreate') : t('admin:tenantCommonCode.ui.modalTitleEdit')}
                 size="large"
                 variant="form"
                 className="mg-v2-ad-b0kla"
@@ -343,7 +343,7 @@ const TenantCommonCodeManagerUI = ({
                             onClick={onModalClose}
                             preventDoubleClick={true}
                         >
-                            {t('admin:tenantCommonCode.ui.modalBtnCancel', '취소')}
+                            {t('admin:tenantCommonCode.ui.modalBtnCancel')}
                         </MGButton>
                         <MGButton
                             type="submit"
@@ -359,14 +359,14 @@ const TenantCommonCodeManagerUI = ({
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             preventDoubleClick={true}
                         >
-                            {modalMode === 'create' ? t('admin:tenantCommonCode.ui.modalBtnSubmitCreate', '생성') : t('admin:tenantCommonCode.ui.modalBtnSubmitEdit', '수정')}
+                            {modalMode === 'create' ? t('admin:tenantCommonCode.ui.modalBtnSubmitCreate') : t('admin:tenantCommonCode.ui.modalBtnSubmitEdit')}
                         </MGButton>
                     </>
                 )}
             >
                 <form id={TENANT_COMMON_CODE_FORM_ID} onSubmit={onFormSubmit}>
                     <div className="mg-v2-ad-b0kla__form-group mg-v2-ad-b0kla__form-group--full-width">
-                        <label htmlFor="tenant-code-group" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelCodeGroup', '코드 그룹')}</label>
+                        <label htmlFor="tenant-code-group" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelCodeGroup')}</label>
                         <input
                             id="tenant-code-group"
                             type="text"
@@ -377,7 +377,7 @@ const TenantCommonCodeManagerUI = ({
                     </div>
                     <div className="mg-v2-ad-b0kla__form-row">
                         <div className="mg-v2-ad-b0kla__form-group">
-                            <label htmlFor="tenant-code-value" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelCodeValue', '코드 값 *')}</label>
+                            <label htmlFor="tenant-code-value" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelCodeValue')}</label>
                             <input
                                 id="tenant-code-value"
                                 type="text"
@@ -386,11 +386,11 @@ const TenantCommonCodeManagerUI = ({
                                 disabled={modalMode === 'edit'}
                                 required
                                 className="mg-v2-ad-b0kla__form-input"
-                                placeholder={t('admin:tenantCommonCode.ui.formPlaceholderCodeValue', '예: PACKAGE_001')}
+                                placeholder={t('admin:tenantCommonCode.ui.formPlaceholderCodeValue')}
                             />
                         </div>
                         <div className="mg-v2-ad-b0kla__form-group">
-                            <label htmlFor="tenant-code-label" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelCodeName', '코드명 *')}</label>
+                            <label htmlFor="tenant-code-label" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelCodeName')}</label>
                             <input
                                 id="tenant-code-label"
                                 type="text"
@@ -398,14 +398,14 @@ const TenantCommonCodeManagerUI = ({
                                 onChange={(e) => onFormChange({ ...formData, codeLabel: e.target.value })}
                                 required
                                 className="mg-v2-ad-b0kla__form-input"
-                                placeholder={t('admin:tenantCommonCode.ui.formPlaceholderCodeName', '예: 기본 10회기 패키지')}
+                                placeholder={t('admin:tenantCommonCode.ui.formPlaceholderCodeName')}
                             />
                         </div>
                     </div>
                     {showParentInModal && (
                         <div className="mg-v2-ad-b0kla__form-group mg-v2-ad-b0kla__form-group--full-width">
                             <label htmlFor="tenant-parent-category" className="mg-v2-ad-b0kla__form-label">
-                                {t('admin:tenantCommonCode.ui.formLabelParentCategory', '상위 카테고리 *')}
+                                {t('admin:tenantCommonCode.ui.formLabelParentCategory')}
                             </label>
                             <CustomSelect
                                 options={parentCategoryOptions}
@@ -415,37 +415,37 @@ const TenantCommonCodeManagerUI = ({
                                     parentCodeGroup: getParentCodeGroupForSubcategory(formData.codeGroup) || '',
                                     parentCodeValue: v
                                 })}
-                                placeholder={t('admin:tenantCommonCode.ui.formPlaceholderParent', '상위 카테고리를 선택하세요')}
+                                placeholder={t('admin:tenantCommonCode.ui.formPlaceholderParent')}
                                 disabled={parentOptionsLoading || parentCategoryOptions.length === 0}
                                 loading={parentOptionsLoading}
                             />
                         </div>
                     )}
                     <div className="mg-v2-ad-b0kla__form-group mg-v2-ad-b0kla__form-group--full-width">
-                        <label htmlFor="tenant-korean-name" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelKoreanName', '한글명')}</label>
+                        <label htmlFor="tenant-korean-name" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelKoreanName')}</label>
                         <input
                             id="tenant-korean-name"
                             type="text"
                             value={formData.koreanName}
                             onChange={(e) => onFormChange({ ...formData, koreanName: e.target.value })}
                             className="mg-v2-ad-b0kla__form-input"
-                            placeholder={t('admin:tenantCommonCode.ui.formPlaceholderKorean', '코드명과 동일하게 입력 (선택)')}
+                            placeholder={t('admin:tenantCommonCode.ui.formPlaceholderKorean')}
                         />
                     </div>
                     <div className="mg-v2-ad-b0kla__form-group mg-v2-ad-b0kla__form-group--full-width">
-                        <label htmlFor="tenant-code-desc" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelDescription', '설명')}</label>
+                        <label htmlFor="tenant-code-desc" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelDescription')}</label>
                         <textarea
                             id="tenant-code-desc"
                             value={formData.codeDescription}
                             onChange={(e) => onFormChange({ ...formData, codeDescription: e.target.value })}
                             className="mg-v2-ad-b0kla__form-textarea"
                             rows={3}
-                            placeholder={t('admin:tenantCommonCode.ui.formPlaceholderDescription', '코드에 대한 설명을 입력하세요')}
+                            placeholder={t('admin:tenantCommonCode.ui.formPlaceholderDescription')}
                         />
                     </div>
                     <div className="mg-v2-ad-b0kla__form-row">
                         <div className="mg-v2-ad-b0kla__form-group">
-                            <label htmlFor="tenant-sort-order" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelSortOrder', '정렬 순서')}</label>
+                            <label htmlFor="tenant-sort-order" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelSortOrder')}</label>
                             <input
                                 id="tenant-sort-order"
                                 type="number"
@@ -458,7 +458,7 @@ const TenantCommonCodeManagerUI = ({
                             />
                         </div>
                         <div className="mg-v2-ad-b0kla__form-group">
-                            <label htmlFor="tenant-active" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelActive', '활성 상태')}</label>
+                            <label htmlFor="tenant-active" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelActive')}</label>
                             <div>
                                 <input
                                     id="tenant-active"
@@ -470,7 +470,7 @@ const TenantCommonCodeManagerUI = ({
                         </div>
                     </div>
                     <div className="mg-v2-ad-b0kla__form-group mg-v2-ad-b0kla__form-group--full-width">
-                        <label htmlFor="tenant-extra-json" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelExtraJson', '추가 데이터 (JSON)')}</label>
+                        <label htmlFor="tenant-extra-json" className="mg-v2-ad-b0kla__form-label">{t('admin:tenantCommonCode.ui.formLabelExtraJson')}</label>
                         <textarea
                             id="tenant-extra-json"
                             value={formData.extraData}
@@ -479,7 +479,7 @@ const TenantCommonCodeManagerUI = ({
                             rows={3}
                             placeholder='{"price": 100000, "duration": 50, "sessions": 10}'
                         />
-                        <small className="mg-v2-ad-b0kla__form-hint">{t('admin:tenantCommonCode.ui.formHelpExtraJson', '상담 패키지·평가 유형의 경우 금액(price), 기간(duration), 회기(sessions) 등을 JSON 형식으로 입력하세요.')}</small>
+                        <small className="mg-v2-ad-b0kla__form-hint">{t('admin:tenantCommonCode.ui.formHelpExtraJson')}</small>
                     </div>
                 </form>
             </UnifiedModal>

@@ -82,7 +82,7 @@ const SmsTemplateManagementPage = () => {
     }
     if (!hasAccess) {
       notificationManager.show(
-        t('smsTemplate.page.noAccess', '이 페이지에 접근할 권한이 없습니다.'),
+        t('smsTemplate.page.noAccess'),
         'error'
       );
       navigate('/', { replace: true });
@@ -98,7 +98,7 @@ const SmsTemplateManagementPage = () => {
     } catch (error) {
       console.error('SMS 템플릿 목록 조회 실패', error);
       notificationManager.show(
-        t('smsTemplate.errors.loadFailed', '목록을 불러오지 못했습니다.'),
+        t('smsTemplate.errors.loadFailed'),
         'error'
       );
     } finally {
@@ -180,7 +180,7 @@ const SmsTemplateManagementPage = () => {
     } catch (error) {
       console.error('SMS 템플릿 미리보기 실패', error);
       notificationManager.show(
-        t('smsTemplate.errors.previewFailed', '미리보기에 실패했습니다.'),
+        t('smsTemplate.errors.previewFailed'),
         'error'
       );
     }
@@ -197,7 +197,7 @@ const SmsTemplateManagementPage = () => {
         content: editingContent
       });
       notificationManager.show(
-        t('smsTemplate.notify.saved', '저장되었습니다.'),
+        t('smsTemplate.notify.saved'),
         'success'
       );
       setSaveModalOpen(false);
@@ -205,7 +205,7 @@ const SmsTemplateManagementPage = () => {
     } catch (error) {
       console.error('SMS 템플릿 저장 실패', error);
       notificationManager.show(
-        t('smsTemplate.errors.saveFailed', '저장에 실패했습니다.'),
+        t('smsTemplate.errors.saveFailed'),
         'error'
       );
     } finally {
@@ -222,7 +222,7 @@ const SmsTemplateManagementPage = () => {
     try {
       await deleteSmsTemplateTenantOverride(selectedKey);
       notificationManager.show(
-        t('smsTemplate.notify.deleted', '테넌트 override 가 삭제되었습니다.'),
+        t('smsTemplate.notify.deleted'),
         'success'
       );
       setDeleteModalOpen(false);
@@ -230,7 +230,7 @@ const SmsTemplateManagementPage = () => {
     } catch (error) {
       console.error('SMS 템플릿 override 삭제 실패', error);
       notificationManager.show(
-        t('smsTemplate.errors.deleteFailed', '삭제에 실패했습니다.'),
+        t('smsTemplate.errors.deleteFailed'),
         'error'
       );
     } finally {
@@ -238,16 +238,13 @@ const SmsTemplateManagementPage = () => {
     }
   }, [selectedKey, loadList, t]);
 
-  const pageTitle = t('smsTemplate.page.title', 'SMS 템플릿 관리');
-  const pageSubtitle = t(
-    'smsTemplate.page.subtitle',
-    '트랜잭션성 SMS 본문을 어드민이 직접 관리합니다. 글로벌 본문은 Flyway 로 관리되며, 테넌트별 override 만 편집 가능합니다.'
-  );
+  const pageTitle = t('smsTemplate.page.title');
+  const pageSubtitle = t('smsTemplate.page.subtitle');
 
   if (sessionLoading || !hasAccess) {
     return (
       <AdminCommonLayout title={pageTitle} className="mg-v2-dashboard-layout">
-        <UnifiedLoading text={t('common.loading', '로딩 중...')} />
+        <UnifiedLoading text={t('common.loading')} />
       </AdminCommonLayout>
     );
   }
@@ -276,10 +273,7 @@ const SmsTemplateManagementPage = () => {
                   <input
                     type="search"
                     className="mg-admin-sms-template__search"
-                    placeholder={t(
-                      'smsTemplate.list.searchPlaceholder',
-                      '키 또는 라벨 검색'
-                    )}
+                    placeholder={t('smsTemplate.list.searchPlaceholder')}
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
                     data-testid="sms-template-search"
@@ -293,7 +287,7 @@ const SmsTemplateManagementPage = () => {
                     {categories.map((category) => (
                       <option key={category} value={category}>
                         {category === 'ALL'
-                          ? t('smsTemplate.list.categoryAll', '전체')
+                          ? t('smsTemplate.list.categoryAll')
                           : category}
                       </option>
                     ))}
@@ -301,7 +295,7 @@ const SmsTemplateManagementPage = () => {
                 </div>
 
                 {loading ? (
-                  <UnifiedLoading text={t('common.loading', '로딩 중...')} />
+                  <UnifiedLoading text={t('common.loading')} />
                 ) : (
                   <ul
                     className="mg-admin-sms-template__items"
@@ -309,7 +303,7 @@ const SmsTemplateManagementPage = () => {
                   >
                     {filteredItems.length === 0 && (
                       <li className="mg-admin-sms-template__empty">
-                        {t('smsTemplate.list.empty', '등록된 템플릿이 없습니다.')}
+                        {t('smsTemplate.list.empty')}
                       </li>
                     )}
                     {filteredItems.map((item) => (
@@ -335,7 +329,7 @@ const SmsTemplateManagementPage = () => {
                           </span>
                           {item.tenantOverride && (
                             <span className="mg-admin-sms-template__item-badge">
-                              {t('smsTemplate.list.overrideBadge', '테넌트 override')}
+                              {t('smsTemplate.list.overrideBadge')}
                             </span>
                           )}
                         </button>
@@ -348,10 +342,7 @@ const SmsTemplateManagementPage = () => {
               <main className="mg-admin-sms-template__editor">
                 {!selectedItem && (
                   <div className="mg-admin-sms-template__placeholder">
-                    {t(
-                      'smsTemplate.editor.selectPrompt',
-                      '왼쪽 목록에서 템플릿을 선택하세요.'
-                    )}
+                    {t('smsTemplate.editor.selectPrompt')}
                   </div>
                 )}
 
@@ -368,7 +359,7 @@ const SmsTemplateManagementPage = () => {
 
                     <section className="mg-admin-sms-template__editor-section">
                       <h4 className="mg-admin-sms-template__editor-section-title">
-                        {t('smsTemplate.editor.globalLabel', '글로벌 본문 (읽기 전용)')}
+                        {t('smsTemplate.editor.globalLabel')}
                       </h4>
                       <pre
                         className="mg-admin-sms-template__global-content"
@@ -380,7 +371,7 @@ const SmsTemplateManagementPage = () => {
 
                     <section className="mg-admin-sms-template__editor-section">
                       <h4 className="mg-admin-sms-template__editor-section-title">
-                        {t('smsTemplate.editor.tenantLabel', '테넌트 override 본문')}
+                        {t('smsTemplate.editor.tenantLabel')}
                       </h4>
                       <textarea
                         className="mg-admin-sms-template__tenant-content"
@@ -391,17 +382,14 @@ const SmsTemplateManagementPage = () => {
                         data-testid="sms-template-tenant-content"
                       />
                       <p className="mg-admin-sms-template__hint">
-                        {t(
-                          'smsTemplate.editor.variableHint',
-                          '변수 자리표시자 형식: {{변수명}} (알림톡과 동일).'
-                        )}
+                        {t('smsTemplate.editor.variableHint')}
                       </p>
                     </section>
 
                     {variableKeys.length > 0 && (
                       <section className="mg-admin-sms-template__editor-section">
                         <h4 className="mg-admin-sms-template__editor-section-title">
-                          {t('smsTemplate.editor.variablesLabel', '변수 입력 (미리보기용)')}
+                          {t('smsTemplate.editor.variablesLabel')}
                         </h4>
                         <div className="mg-admin-sms-template__variables-grid">
                           {variableKeys.map((variableKey) => (
@@ -435,7 +423,7 @@ const SmsTemplateManagementPage = () => {
                           onClick={handlePreview}
                           data-testid="sms-template-preview-btn"
                         >
-                          {t('smsTemplate.actions.preview', '미리보기')}
+                          {t('smsTemplate.actions.preview')}
                         </MGButton>
                         {isAdmin && (
                           <>
@@ -446,7 +434,7 @@ const SmsTemplateManagementPage = () => {
                               disabled={!editingContent.trim()}
                               data-testid="sms-template-save-btn"
                             >
-                              {t('smsTemplate.actions.save', '저장')}
+                              {t('smsTemplate.actions.save')}
                             </MGButton>
                             {selectedItem.tenantOverride && (
                               <MGButton
@@ -455,10 +443,7 @@ const SmsTemplateManagementPage = () => {
                                 onClick={() => setDeleteModalOpen(true)}
                                 data-testid="sms-template-delete-btn"
                               >
-                                {t(
-                                  'smsTemplate.actions.deleteOverride',
-                                  '테넌트 override 삭제'
-                                )}
+                                {t('smsTemplate.actions.deleteOverride')}
                               </MGButton>
                             )}
                           </>
@@ -472,28 +457,25 @@ const SmsTemplateManagementPage = () => {
                         data-testid="sms-template-preview-result"
                       >
                         <h4 className="mg-admin-sms-template__editor-section-title">
-                          {t('smsTemplate.editor.previewLabel', '미리보기 결과')}
+                          {t('smsTemplate.editor.previewLabel')}
                         </h4>
                         <pre className="mg-admin-sms-template__preview-output">
                           {previewResult.previewContent}
                         </pre>
                         <p className="mg-admin-sms-template__preview-meta">
-                          {t('smsTemplate.preview.byteLength', '바이트')}:{' '}
+                          {t('smsTemplate.preview.byteLength')}:{' '}
                           {previewResult.byteLength} /{' '}
-                          {t('smsTemplate.preview.charLength', '문자')}:{' '}
+                          {t('smsTemplate.preview.charLength')}:{' '}
                           {previewResult.charLength} /{' '}
-                          {t('smsTemplate.preview.source', '출처')}:{' '}
+                          {t('smsTemplate.preview.source')}:{' '}
                           {previewResult.fromTenantOverride
-                            ? t('smsTemplate.preview.sourceTenant', '테넌트 override')
-                            : t('smsTemplate.preview.sourceGlobal', '글로벌')}
+                            ? t('smsTemplate.preview.sourceTenant')
+                            : t('smsTemplate.preview.sourceGlobal')}
                         </p>
                         {Array.isArray(previewResult.missingVariables) &&
                           previewResult.missingVariables.length > 0 && (
                             <p className="mg-admin-sms-template__preview-missing">
-                              {t(
-                                'smsTemplate.preview.missing',
-                                '누락된 변수'
-                              )}
+                              {t('smsTemplate.preview.missing')}
                               : {previewResult.missingVariables.join(', ')}
                             </p>
                           )}
@@ -510,11 +492,8 @@ const SmsTemplateManagementPage = () => {
       <UnifiedModal
         isOpen={saveModalOpen}
         onClose={() => setSaveModalOpen(false)}
-        title={t('smsTemplate.modals.saveTitle', '테넌트 override 저장 확인')}
-        subtitle={t(
-          'smsTemplate.modals.saveSubtitle',
-          '저장 후에는 즉시 SMS 발송 본문에 반영됩니다.'
-        )}
+        title={t('smsTemplate.modals.saveTitle')}
+        subtitle={t('smsTemplate.modals.saveSubtitle')}
         variant="confirm"
         actions={
           <>
@@ -524,7 +503,7 @@ const SmsTemplateManagementPage = () => {
               onClick={() => setSaveModalOpen(false)}
               disabled={submitting}
             >
-              {t('common.cancel', '취소')}
+              {t('common.cancel')}
             </MGButton>
             <MGButton
               type="button"
@@ -533,27 +512,21 @@ const SmsTemplateManagementPage = () => {
               loading={submitting}
               data-testid="sms-template-save-confirm"
             >
-              {t('smsTemplate.modals.confirmSave', '저장하기')}
+              {t('smsTemplate.modals.confirmSave')}
             </MGButton>
           </>
         }
       >
         <div data-testid="sms-template-save-modal-body">
-          {t(
-            'smsTemplate.modals.saveBody',
-            '본문을 저장하시겠습니까? 변경 내용은 트랜잭션 SMS 발송 시 즉시 적용됩니다.'
-          )}
+          {t('smsTemplate.modals.saveBody')}
         </div>
       </UnifiedModal>
 
       <UnifiedModal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        title={t('smsTemplate.modals.deleteTitle', '테넌트 override 삭제')}
-        subtitle={t(
-          'smsTemplate.modals.deleteSubtitle',
-          '삭제 후에는 글로벌 본문이 사용됩니다.'
-        )}
+        title={t('smsTemplate.modals.deleteTitle')}
+        subtitle={t('smsTemplate.modals.deleteSubtitle')}
         variant="alert"
         actions={
           <>
@@ -563,7 +536,7 @@ const SmsTemplateManagementPage = () => {
               onClick={() => setDeleteModalOpen(false)}
               disabled={submitting}
             >
-              {t('common.cancel', '취소')}
+              {t('common.cancel')}
             </MGButton>
             <MGButton
               type="button"
@@ -572,16 +545,13 @@ const SmsTemplateManagementPage = () => {
               loading={submitting}
               data-testid="sms-template-delete-confirm"
             >
-              {t('smsTemplate.modals.confirmDelete', '삭제하기')}
+              {t('smsTemplate.modals.confirmDelete')}
             </MGButton>
           </>
         }
       >
         <div data-testid="sms-template-delete-modal-body">
-          {t(
-            'smsTemplate.modals.deleteBody',
-            '테넌트 override 본문을 삭제하시겠습니까? 이후에는 글로벌 본문이 사용됩니다.'
-          )}
+          {t('smsTemplate.modals.deleteBody')}
         </div>
       </UnifiedModal>
     </AdminCommonLayout>

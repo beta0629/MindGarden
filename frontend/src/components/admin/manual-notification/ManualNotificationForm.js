@@ -272,7 +272,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
         ?? MANUAL_NOTIFICATION_ERROR_CODES.SEND_FAILED;
       const message = err?.response?.data?.message
         || err?.message
-        || t(`manualNotification.errors.${code}`, t('manualNotification.errors.sendFailed', '발송에 실패했습니다.'));
+        || t(`manualNotification.errors.${code}`, t('manualNotification.errors.sendFailed'));
       setLastResult({
         batchId: '',
         channel,
@@ -307,8 +307,8 @@ const ManualNotificationForm = ({ onBatchSent }) => {
 
   const channelOptions = useMemo(() => [
     { value: MANUAL_NOTIFICATION_CHANNEL.SMS, label: t('manualNotification.channel.sms', 'SMS') },
-    { value: MANUAL_NOTIFICATION_CHANNEL.ALIMTALK, label: t('manualNotification.channel.alimtalk', '카카오 알림톡') },
-    { value: MANUAL_NOTIFICATION_CHANNEL.PUSH, label: t('manualNotification.channel.push', '푸시 알림') }
+    { value: MANUAL_NOTIFICATION_CHANNEL.ALIMTALK, label: t('manualNotification.channel.alimtalk') },
+    { value: MANUAL_NOTIFICATION_CHANNEL.PUSH, label: t('manualNotification.channel.push') }
   ], [t]);
 
   const channelLabel = useMemo(() => {
@@ -316,9 +316,9 @@ const ManualNotificationForm = ({ onBatchSent }) => {
       return t('manualNotification.channel.sms', 'SMS');
     }
     if (channel === MANUAL_NOTIFICATION_CHANNEL.PUSH) {
-      return t('manualNotification.channel.push', '푸시 알림');
+      return t('manualNotification.channel.push');
     }
-    return t('manualNotification.channel.alimtalk', '카카오 알림톡');
+    return t('manualNotification.channel.alimtalk');
   }, [channel, t]);
 
   const handleLimitExceeded = useCallback(() => {
@@ -333,11 +333,11 @@ const ManualNotificationForm = ({ onBatchSent }) => {
   const renderConfirmSummary = () => (
     <ul className={`${FORM_CLASS}__summary`}>
       <li>
-        <strong>{t('manualNotification.summary.channel', '채널')}:</strong>{' '}
+        <strong>{t('manualNotification.summary.channel')}:</strong>{' '}
         {channelLabel}
       </li>
       <li>
-        <strong>{t('manualNotification.summary.recipientCount', '수신자')}:</strong>{' '}
+        <strong>{t('manualNotification.summary.recipientCount')}:</strong>{' '}
         {t('manualNotification.summary.recipientCountValue', {
           count: selectedUsers.length,
           defaultValue: '{{count}}명'
@@ -346,11 +346,11 @@ const ManualNotificationForm = ({ onBatchSent }) => {
       {channel === MANUAL_NOTIFICATION_CHANNEL.ALIMTALK && templateCode && (
         <>
           <li>
-            <strong>{t('manualNotification.summary.templateCode', '템플릿 코드')}:</strong>{' '}
+            <strong>{t('manualNotification.summary.templateCode')}:</strong>{' '}
             {toDisplayString(templateCode, '-')}
           </li>
           <li>
-            <strong>{t('manualNotification.summary.templateSource', '템플릿 출처')}:</strong>{' '}
+            <strong>{t('manualNotification.summary.templateSource')}:</strong>{' '}
             {templatesLive
               ? MANUAL_NOTIFICATION_TEMPLATE_SOURCE.SOLAPI
               : MANUAL_NOTIFICATION_TEMPLATE_SOURCE.COMMON_CODE}
@@ -358,30 +358,24 @@ const ManualNotificationForm = ({ onBatchSent }) => {
         </>
       )}
       <li>
-        <strong>{t('manualNotification.summary.reason', '발송 사유')}:</strong>{' '}
+        <strong>{t('manualNotification.summary.reason')}:</strong>{' '}
         {toDisplayString(reason, '-')}
       </li>
     </ul>
   );
 
   return (
-    <article className={FORM_CLASS} aria-label={t('manualNotification.page.title', '수동 알림 발송')}>
+    <article className={FORM_CLASS} aria-label={t('manualNotification.page.title')}>
       <section className={`${FORM_CLASS}__warning`} role="note">
         <p className={`${FORM_CLASS}__warning-text`}>
-          {t(
-            'manualNotification.page.warningActualSend',
-            '이 도구는 실제 사용자에게 발송됩니다. 발송 사유는 감사로그에 영구 기록됩니다.'
-          )}
+          {t('manualNotification.page.warningActualSend')}
         </p>
         <p className={`${FORM_CLASS}__warning-link-text`}>
           <a
             className={`${FORM_CLASS}__warning-link`}
             href={ADMIN_ROUTES_TEST_NOTIFICATION}
           >
-            {t(
-              'manualNotification.page.testLinkText',
-              '테스트 목적이라면 알림 테스트 발송을 사용하세요.'
-            )}
+            {t('manualNotification.page.testLinkText')}
           </a>
         </p>
       </section>
@@ -394,13 +388,13 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           id="mg-manual-notif-channel-title"
           className={`${FORM_CLASS}__section-title`}
         >
-          {t('manualNotification.channel.label', '발송 채널')}
+          {t('manualNotification.channel.label')}
         </h3>
         <BadgeSelect
           options={channelOptions}
           value={channel}
           onChange={(val) => setChannel(val)}
-          aria-label={t('manualNotification.channel.label', '발송 채널')}
+          aria-label={t('manualNotification.channel.label')}
         />
       </section>
 
@@ -412,7 +406,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           id="mg-manual-notif-recipient-title"
           className={`${FORM_CLASS}__section-title`}
         >
-          {t('manualNotification.recipient.title', '수신자 선택 (최대 50명)')}
+          {t('manualNotification.recipient.title')}
         </h3>
         <RecipientPicker
           value={selectedUsers}
@@ -444,7 +438,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
             className={`${FORM_CLASS}__section-title`}
             htmlFor="mg-manual-notif-sms-content"
           >
-            {t('manualNotification.sms.contentLabel', 'SMS 본문')}
+            {t('manualNotification.sms.contentLabel')}
           </label>
           <textarea
             id="mg-manual-notif-sms-content"
@@ -453,10 +447,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
             maxLength={MANUAL_NOTIFICATION_SMS_CONTENT_MAX_LENGTH}
             value={smsContent}
             onChange={(e) => setSmsContent(e.target.value)}
-            placeholder={t(
-              'manualNotification.sms.contentPlaceholder',
-              '전송할 SMS 본문을 입력하세요 (한글 70자 / 영문 160자 권장)'
-            )}
+            placeholder={t('manualNotification.sms.contentPlaceholder')}
           />
           <p className={`${FORM_CLASS}__hint`}>
             {t('manualNotification.sms.contentCounter', {
@@ -474,17 +465,14 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           aria-labelledby="mg-manual-notif-push-title-label"
         >
           <p className={`${FORM_CLASS}__hint`} role="note">
-            {t(
-              'manualNotification.push.warning',
-              '푸시 알림은 토큰이 등록된 사용자에게만 발송됩니다. 토큰이 없거나 알림을 끈 사용자는 SKIPPED 로 표기됩니다.'
-            )}
+            {t('manualNotification.push.warning')}
           </p>
           <label
             id="mg-manual-notif-push-title-label"
             className={`${FORM_CLASS}__section-title`}
             htmlFor="mg-manual-notif-push-title"
           >
-            {t('manualNotification.push.titleLabel', '푸시 제목')}
+            {t('manualNotification.push.titleLabel')}
           </label>
           <input
             id="mg-manual-notif-push-title"
@@ -493,10 +481,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
             maxLength={MANUAL_NOTIFICATION_PUSH_TITLE_MAX_LENGTH}
             value={pushTitle}
             onChange={(e) => setPushTitle(e.target.value)}
-            placeholder={t(
-              'manualNotification.push.titlePlaceholder',
-              '푸시 제목을 입력하세요 (최대 50자)'
-            )}
+            placeholder={t('manualNotification.push.titlePlaceholder')}
           />
           <p className={`${FORM_CLASS}__hint`}>
             {t('manualNotification.push.titleCounter', {
@@ -510,7 +495,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
             className={`${FORM_CLASS}__section-title`}
             htmlFor="mg-manual-notif-push-body"
           >
-            {t('manualNotification.push.bodyLabel', '푸시 본문')}
+            {t('manualNotification.push.bodyLabel')}
           </label>
           <textarea
             id="mg-manual-notif-push-body"
@@ -519,10 +504,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
             maxLength={MANUAL_NOTIFICATION_PUSH_BODY_MAX_LENGTH}
             value={pushBody}
             onChange={(e) => setPushBody(e.target.value)}
-            placeholder={t(
-              'manualNotification.push.bodyPlaceholder',
-              '푸시 본문을 입력하세요 (최대 1000자)'
-            )}
+            placeholder={t('manualNotification.push.bodyPlaceholder')}
           />
           <p className={`${FORM_CLASS}__hint`}>
             {t('manualNotification.push.bodyCounter', {
@@ -544,7 +526,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
             className={`${FORM_CLASS}__section-title`}
             htmlFor="mg-manual-notif-template"
           >
-            {t('manualNotification.alimtalk.templateLabel', '알림톡 템플릿')}
+            {t('manualNotification.alimtalk.templateLabel')}
           </label>
           <select
             id="mg-manual-notif-template"
@@ -557,15 +539,15 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           >
             <option value="">
               {templatesLoading
-                ? t('manualNotification.alimtalk.templatesLoading', '템플릿 로드 중...')
-                : t('manualNotification.alimtalk.templatePlaceholder', '템플릿을 선택하세요')}
+                ? t('manualNotification.alimtalk.templatesLoading')
+                : t('manualNotification.alimtalk.templatePlaceholder')}
             </option>
             {templates.map((tpl) => {
               const code = String(tpl.templateCode ?? tpl.code ?? '');
               const label = toDisplayString(tpl.title ?? tpl.name ?? code, code);
               const missingMapping = tpl.solapiTemplateIdPresent === false;
               const prefix = missingMapping
-                ? t('manualNotification.alimtalk.missingMappingBadge', '[매핑없음] ')
+                ? t('manualNotification.alimtalk.missingMappingBadge')
                 : '';
               return (
                 <option key={code} value={code}>
@@ -584,7 +566,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
                 setTemplateParams({});
               }}
             />
-            <span>{t('manualNotification.alimtalk.liveToggle', '솔라피 전체 보기 (실시간 조회)')}</span>
+            <span>{t('manualNotification.alimtalk.liveToggle')}</span>
           </label>
           {selectedTemplate && selectedTemplate.solapiTemplateIdPresent === false && (
             <p className={`${FORM_CLASS}__hint ${FORM_CLASS}__hint--warn`} role="note">
@@ -597,7 +579,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           {selectedTemplate && selectedTemplate.content && (
             <div className={`${FORM_CLASS}__template-preview`} aria-live="polite">
               <span className={`${FORM_CLASS}__preview-label`}>
-                {t('manualNotification.alimtalk.bodyPreview', '템플릿 본문')}
+                {t('manualNotification.alimtalk.bodyPreview')}
               </span>
               <pre className={`${FORM_CLASS}__preview-text`}>{selectedTemplate.content}</pre>
             </div>
@@ -605,10 +587,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           {templateVariableDefs.length > 0 && (
             <div className={`${FORM_CLASS}__variables`}>
               <h4 className={`${FORM_CLASS}__variables-title`}>
-                {t(
-                  'manualNotification.alimtalk.variablesTitle',
-                  '변수 입력 (모든 수신자에게 동일하게 적용)'
-                )}
+                {t('manualNotification.alimtalk.variablesTitle')}
               </h4>
               {templateVariableDefs.map((v) => (
                 <div key={v.name} className={`${FORM_CLASS}__variable-row`}>
@@ -619,7 +598,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
                     {toDisplayString(v.name, '변수')}
                     {v.required && (
                       <span className={`${FORM_CLASS}__badge ${FORM_CLASS}__badge--required`}>
-                        {t('manualNotification.alimtalk.variableRequired', '필수')}
+                        {t('manualNotification.alimtalk.variableRequired')}
                       </span>
                     )}
                   </label>
@@ -650,7 +629,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           className={`${FORM_CLASS}__section-title`}
           htmlFor="mg-manual-notif-reason"
         >
-          {t('manualNotification.reason.label', '발송 사유 (필수)')}
+          {t('manualNotification.reason.label')}
         </label>
         <textarea
           id="mg-manual-notif-reason"
@@ -659,10 +638,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           maxLength={MANUAL_NOTIFICATION_REASON_MAX_LENGTH}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder={t(
-            'manualNotification.reason.placeholder',
-            '발송 사유를 명확히 기재해 주세요 (감사로그에 영구 기록)'
-          )}
+          placeholder={t('manualNotification.reason.placeholder')}
         />
         <p className={`${FORM_CLASS}__hint`}>
           {t('manualNotification.reason.counter', {
@@ -698,15 +674,15 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           onClick={handleSendClick}
         >
           {submitting
-            ? t('manualNotification.submit.sending', '발송 중...')
-            : t('manualNotification.submit.send', '발송하기')}
+            ? t('manualNotification.submit.sending')
+            : t('manualNotification.submit.send')}
         </MGButton>
       </div>
 
       <UnifiedModal
         isOpen={confirmStep === CONFIRM_STEP.STEP_1}
         onClose={closeConfirm}
-        title={t('manualNotification.submit.confirmStep1Title', '발송 미리보기')}
+        title={t('manualNotification.submit.confirmStep1Title')}
         subtitle={t(
           'manualNotification.submit.confirmStep1Subtitle',
           "아래 정보를 확인하고 '다음'을 누르면 최종 확인 단계로 이동합니다."
@@ -725,7 +701,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={closeConfirm}
             >
-              {t('manualNotification.submit.cancel', '취소')}
+              {t('manualNotification.submit.cancel')}
             </MGButton>
             <MGButton
               type="button"
@@ -741,7 +717,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
                 setConfirmChecked(false);
               }}
             >
-              {t('manualNotification.submit.confirmStep1Next', '다음')}
+              {t('manualNotification.submit.confirmStep1Next')}
             </MGButton>
           </>
         )}
@@ -752,11 +728,8 @@ const ManualNotificationForm = ({ onBatchSent }) => {
       <UnifiedModal
         isOpen={confirmStep === CONFIRM_STEP.STEP_2}
         onClose={closeConfirm}
-        title={t('manualNotification.submit.confirmStep2Title', '정말 발송하시겠습니까?')}
-        subtitle={t(
-          'manualNotification.submit.confirmStep2Subtitle',
-          '실제 단말로 발송됩니다. 이 작업은 취소할 수 없습니다.'
-        )}
+        title={t('manualNotification.submit.confirmStep2Title')}
+        subtitle={t('manualNotification.submit.confirmStep2Subtitle')}
         size="small"
         variant="confirm"
         loading={submitting}
@@ -774,7 +747,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
               onClick={closeConfirm}
               disabled={submitting}
             >
-              {t('manualNotification.submit.cancel', '취소')}
+              {t('manualNotification.submit.cancel')}
             </MGButton>
             <MGButton
               type="button"
@@ -789,7 +762,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
               disabled={!confirmChecked || submitting}
               onClick={doSend}
             >
-              {t('manualNotification.submit.confirmStep2Send', '최종 발송')}
+              {t('manualNotification.submit.confirmStep2Send')}
             </MGButton>
           </>
         )}
@@ -803,10 +776,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
             disabled={submitting}
           />
           <span>
-            {t(
-              'manualNotification.submit.confirmCheckbox',
-              '내용을 확인했고, 취소할 수 없음을 이해했습니다.'
-            )}
+            {t('manualNotification.submit.confirmCheckbox')}
           </span>
         </label>
       </UnifiedModal>

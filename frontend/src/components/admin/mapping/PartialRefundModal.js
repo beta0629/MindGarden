@@ -23,7 +23,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
   // 최근 추가된 패키지 정보 추정
   const getLastAddedPackageInfo = () => {
     if (!mapping) {
-      return { sessions: 0, price: 0, packageName: t('admin:mapping.refund.noPackageFallback', '패키지 없음') };
+      return { sessions: 0, price: 0, packageName: t('admin:mapping.refund.noPackageFallback') };
     }
 
     // 표준 패키지 단위 (10회, 20회) 기준으로 추정
@@ -42,7 +42,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
       return {
         sessions: lastPackageSessions,
         price: estimatedPrice,
-        packageName: t('admin:mapping.refund.lastPackageFallback', '{{sessions}}회 패키지 (추정)', {
+        packageName: t('admin:mapping.refund.lastPackageFallback', {
           sessions: lastPackageSessions
         })
       };
@@ -51,7 +51,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
     return {
       sessions: totalSessions,
       price: mapping.packagePrice || 0,
-      packageName: mapping.packageName || t('admin:mapping.refund.basicPackageFallback', '기본 패키지')
+      packageName: mapping.packageName || t('admin:mapping.refund.basicPackageFallback')
     };
   };
 
@@ -65,12 +65,12 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
     e.preventDefault();
 
     if (!reason.trim()) {
-      showNotification(t('admin:mapping.refund.msgReasonRequired', '⚠️ 환불 사유를 반드시 입력해주세요.'), 'warning');
+      showNotification(t('admin:mapping.refund.msgReasonRequired'), 'warning');
       return;
     }
 
     if (reason.trim().length < 5) {
-      showNotification(t('admin:mapping.refund.msgReasonMinLength', '⚠️ 환불 사유를 5자 이상 상세히 입력해주세요.'), 'warning');
+      showNotification(t('admin:mapping.refund.msgReasonMinLength'), 'warning');
       return;
     }
 
@@ -78,15 +78,13 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
 
     if (refundSessions <= 0 || refundSessions > maxRefundSessions) {
       showNotification(
-        t('admin:mapping.refund.msgRefundSessionsRange', '⚠️ 환불 회기수는 1~{{max}} 사이여야 합니다. (최근 추가 패키지 기준)', { max: maxRefundSessions }),
+        t('admin:mapping.refund.msgRefundSessionsRange', { max: maxRefundSessions }),
         'warning'
       );
       return;
     }
 
-    const confirmMessage = t(
-      'admin:mapping.refund.confirmMessage',
-      '{{clientName}}의 {{sessions}}회기를 환불 처리하시겠습니까?\n\n📦 환불 대상: {{packageName}}\n환불 회기: {{sessions}}회 (최근 추가 {{packageSessions}}회 중)\n환불 금액: {{amount}}원 (회기당 {{perSession}}원)\n환불 후 남은 회기: {{remainingAfter}}회\n환불 사유: {{reason}}\n\n⚠️ 가장 최근 추가된 패키지만 환불됩니다.\n이 작업은 되돌릴 수 없습니다.',
+    const confirmMessage = t('admin:mapping.refund.confirmMessage',
       {
         clientName: mapping.clientName,
         sessions: refundSessions,
@@ -115,7 +113,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
 
       if (response.success) {
         showNotification(
-          t('admin:mapping.refund.msgRefundSuccess', '✅ {{sessions}}회기 부분 환불이 완료되었습니다! ERP 시스템에 환불 거래가 자동 등록되었습니다.', { sessions: refundSessions }),
+          t('admin:mapping.refund.msgRefundSuccess', { sessions: refundSessions }),
           'success'
         );
         onSuccess?.();
@@ -134,12 +132,12 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           }
         }));
       } else {
-        showNotification(response.message || t('admin:mapping.refund.msgRefundFailed', '부분 환불 처리에 실패했습니다.'), 'error');
+        showNotification(response.message || t('admin:mapping.refund.msgRefundFailed'), 'error');
       }
 
     } catch (error) {
       console.error('부분 환불 처리 실패:', error);
-      showNotification(t('admin:mapping.refund.msgRefundError', '부분 환불 처리 중 오류가 발생했습니다.'), 'error');
+      showNotification(t('admin:mapping.refund.msgRefundError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -161,7 +159,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
     if (!mapping.paymentDate) {
       return {
         isValid: false,
-        message: t('admin:mapping.refund.withdrawalNoPaymentDate', '결제일 정보가 없습니다.')
+        message: t('admin:mapping.refund.withdrawalNoPaymentDate')
       };
     }
 
@@ -173,8 +171,8 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
       isValid: daysSincePayment <= 15,
       daysSincePayment,
       message: daysSincePayment <= 15
-        ? t('admin:mapping.refund.withdrawalValid', '청약 철회 기간 내 ({{days}}일 경과, 15일 이내)', { days: daysSincePayment })
-        : t('admin:mapping.refund.withdrawalInvalid', '청약 철회 기간 초과 ({{days}}일 경과, 15일 초과)', { days: daysSincePayment })
+        ? t('admin:mapping.refund.withdrawalValid', { days: daysSincePayment })
+        : t('admin:mapping.refund.withdrawalInvalid', { days: daysSincePayment })
     };
   };
 
@@ -185,7 +183,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
     <UnifiedModal
       isOpen={isOpen}
       onClose={handleClose}
-      title={t('admin:mapping.refund.modalTitle', '부분 환불 처리')}
+      title={t('admin:mapping.refund.modalTitle')}
       size="auto"
       className="mg-v2-ad-b0kla"
       backdropClick
@@ -203,7 +201,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
             disabled={loading}
             preventDoubleClick={false}
           >
-            {t('admin:mapping.refund.actionCancel', '취소')}
+            {t('admin:mapping.refund.actionCancel')}
           </MGButton>
           <MGButton
             type="submit"
@@ -218,12 +216,12 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
             disabled={loading || !reason.trim() || reason.trim().length < 5}
             loading={loading}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            title={!withdrawalCheck.isValid ? t('admin:mapping.refund.tooltipExpired', '청약 철회 기간 초과 - 특별 사유 시에만 처리') : ''}
+            title={!withdrawalCheck.isValid ? t('admin:mapping.refund.tooltipExpired') : ''}
             preventDoubleClick={false}
           >
             {!withdrawalCheck.isValid
-              ? t('admin:mapping.refund.actionSpecialRefund', '{{sessions}}회기 특별 환불', { sessions: refundSessions })
-              : t('admin:mapping.refund.actionRefund', '{{sessions}}회기 환불 처리', { sessions: refundSessions })}
+              ? t('admin:mapping.refund.actionSpecialRefund', { sessions: refundSessions })
+              : t('admin:mapping.refund.actionRefund', { sessions: refundSessions })}
           </MGButton>
         </>
       }
@@ -234,15 +232,15 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           <div className="mg-v2-ad-b0kla__card mg-v2-info-box">
             <h4 className="mg-v2-info-box-title">
               <Package size={20} className="mg-v2-section-title-icon" />
-              {t('admin:mapping.refund.mappingInfoTitle', '매핑 정보')}
+              {t('admin:mapping.refund.mappingInfoTitle')}
             </h4>
             <div className="mg-v2-info-grid">
-              <div><strong>{t('admin:mapping.refund.client', '내담자:')}</strong> <SafeText>{mapping.clientName}</SafeText></div>
-              <div><strong>{t('admin:mapping.refund.consultant', '상담사:')}</strong> <SafeText>{mapping.consultantName}</SafeText></div>
-              <div><strong>{t('admin:mapping.refund.totalSessions', '총 회기:')}</strong> {mapping.totalSessions}{t('admin:mapping.page.modal.sessionUnit', '회')}</div>
-              <div><strong>{t('admin:mapping.refund.usedSessions', '사용 회기:')}</strong> {mapping.usedSessions}{t('admin:mapping.page.modal.sessionUnit', '회')}</div>
-              <div><strong>{t('admin:mapping.refund.remainingSessions', '남은 회기:')}</strong> {mapping.remainingSessions}{t('admin:mapping.page.modal.sessionUnit', '회')}</div>
-              <div><strong>{t('admin:mapping.refund.packageTotalPrice', '전체 패키지 가격:')}</strong> {t('admin:mapping.refund.refundAmount', '{{amount}}원', { amount: (mapping.packagePrice ?? 0).toLocaleString() })}</div>
+              <div><strong>{t('admin:mapping.refund.client')}</strong> <SafeText>{mapping.clientName}</SafeText></div>
+              <div><strong>{t('admin:mapping.refund.consultant')}</strong> <SafeText>{mapping.consultantName}</SafeText></div>
+              <div><strong>{t('admin:mapping.refund.totalSessions')}</strong> {mapping.totalSessions}{t('admin:mapping.page.modal.sessionUnit')}</div>
+              <div><strong>{t('admin:mapping.refund.usedSessions')}</strong> {mapping.usedSessions}{t('admin:mapping.page.modal.sessionUnit')}</div>
+              <div><strong>{t('admin:mapping.refund.remainingSessions')}</strong> {mapping.remainingSessions}{t('admin:mapping.page.modal.sessionUnit')}</div>
+              <div><strong>{t('admin:mapping.refund.packageTotalPrice')}</strong> {t('admin:mapping.refund.refundAmount', { amount: (mapping.packagePrice ?? 0).toLocaleString() })}</div>
             </div>
           </div>
 
@@ -250,16 +248,16 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           <div className="mg-v2-ad-b0kla__card mg-v2-refund-target-box">
             <h4 className="mg-v2-refund-target-title">
               <Package size={20} className="mg-v2-section-title-icon" />
-              {t('admin:mapping.refund.lastPackageTitle', '환불 대상 (최근 추가 패키지)')}
+              {t('admin:mapping.refund.lastPackageTitle')}
             </h4>
             <div className="mg-v2-refund-package-grid">
-              <div><strong>{t('admin:mapping.refund.packageName', '패키지명:')}</strong> <SafeText>{lastAddedPackage.packageName}</SafeText></div>
-              <div><strong>{t('admin:mapping.refund.packageSessions', '패키지 회기수:')}</strong> {lastAddedPackage.sessions}{t('admin:mapping.page.modal.sessionUnit', '회')}</div>
-              <div><strong>{t('admin:mapping.refund.packagePrice', '패키지 가격:')}</strong> {t('admin:mapping.refund.refundAmount', '{{amount}}원', { amount: (lastAddedPackage.price ?? 0).toLocaleString() })}</div>
-              <div><strong>{t('admin:mapping.refund.perSessionPrice', '회기당 단가:')}</strong> {t('admin:mapping.refund.refundAmount', '{{amount}}원', { amount: lastAddedPackage.sessions > 0 ? Math.round(lastAddedPackage.price / lastAddedPackage.sessions).toLocaleString() : 0 })}</div>
+              <div><strong>{t('admin:mapping.refund.packageName')}</strong> <SafeText>{lastAddedPackage.packageName}</SafeText></div>
+              <div><strong>{t('admin:mapping.refund.packageSessions')}</strong> {lastAddedPackage.sessions}{t('admin:mapping.page.modal.sessionUnit')}</div>
+              <div><strong>{t('admin:mapping.refund.packagePrice')}</strong> {t('admin:mapping.refund.refundAmount', { amount: (lastAddedPackage.price ?? 0).toLocaleString() })}</div>
+              <div><strong>{t('admin:mapping.refund.perSessionPrice')}</strong> {t('admin:mapping.refund.refundAmount', { amount: lastAddedPackage.sessions > 0 ? Math.round(lastAddedPackage.price / lastAddedPackage.sessions).toLocaleString() : 0 })}</div>
             </div>
             <div className="mg-v2-refund-target-warning">
-              {t('admin:mapping.refund.warningRecent', '⚠️ 부분 환불은 가장 최근에 추가된 패키지를 우선으로 처리됩니다. (단회기, 임의 회기수도 가능)')}
+              {t('admin:mapping.refund.warningRecent')}
             </div>
           </div>
 
@@ -267,20 +265,20 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           <div className={`mg-v2-ad-b0kla__card mg-v2-withdrawal-period-box mg-v2-withdrawal-period-box--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
             <h4 className={`mg-v2-withdrawal-period-title mg-v2-withdrawal-period-title--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
               <Clock size={20} className="mg-v2-section-title-icon" />
-              {t('admin:mapping.refund.withdrawalPeriodTitle', '청약 철회 기간 확인')}
+              {t('admin:mapping.refund.withdrawalPeriodTitle')}
             </h4>
             <div className={`mg-v2-withdrawal-period-message mg-v2-withdrawal-period-message--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
               <SafeText>{withdrawalCheck.message}</SafeText>
             </div>
             {mapping.paymentDate && (
               <div className={`mg-v2-withdrawal-period-date mg-v2-withdrawal-period-date--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
-                {t('admin:mapping.refund.paymentDateLabel', '결제일: {{date}}', { date: new Date(mapping.paymentDate).toLocaleDateString('ko-KR') })}
+                {t('admin:mapping.refund.paymentDateLabel', { date: new Date(mapping.paymentDate).toLocaleDateString('ko-KR') })}
               </div>
             )}
             {!withdrawalCheck.isValid && (
               <div className="mg-v2-withdrawal-period-warning">
                 <AlertTriangle size={16} className="mg-v2-icon-inline" />
-                {t('admin:mapping.refund.warningOver15Days', '15일 초과로 청약 철회 불가능합니다. 특별한 사유가 있는 경우에만 처리하세요.')}
+                {t('admin:mapping.refund.warningOver15Days')}
               </div>
             )}
           </div>
@@ -289,7 +287,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           <div className="mg-v2-form-group">
             <label className="mg-v2-form-label">
               <CreditCard size={16} className="mg-v2-form-label-icon" />
-              {t('admin:mapping.refund.refundSessionsLabel', '환불할 회기수')}
+              {t('admin:mapping.refund.refundSessionsLabel')}
             </label>
             <input
               type="number"
@@ -301,7 +299,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
               className="mg-v2-form-input"
             />
             <small className="mg-v2-form-help">
-              {t('admin:mapping.refund.refundSessionsHelp', '최대 {{max}}회까지 환불 가능 (최근 추가 패키지 기준)', { max: Math.min(mapping.remainingSessions, lastAddedPackage.sessions) })}
+              {t('admin:mapping.refund.refundSessionsHelp', { max: Math.min(mapping.remainingSessions, lastAddedPackage.sessions) })}
             </small>
           </div>
 
@@ -309,13 +307,13 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           <div className="mg-v2-refund-preview">
             <div className="mg-v2-refund-preview-title">
               <DollarSign size={20} className="mg-v2-icon-inline" />
-              {t('admin:mapping.refund.expectedRefundLabel', '예상 환불 금액')}
+              {t('admin:mapping.refund.expectedRefundLabel')}
             </div>
             <div className="mg-v2-refund-preview-amount">
-              {t('admin:mapping.refund.refundAmount', '{{amount}}원', { amount: refundAmount.toLocaleString() })}
+              {t('admin:mapping.refund.refundAmount', { amount: refundAmount.toLocaleString() })}
             </div>
             <small className="mg-v2-refund-preview-detail">
-              {t('admin:mapping.refund.refundAfter', '환불 후 남은 회기: {{count}}회', { count: mapping.remainingSessions - refundSessions })}
+              {t('admin:mapping.refund.refundAfter', { count: mapping.remainingSessions - refundSessions })}
             </small>
           </div>
 
@@ -323,7 +321,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           <div className="mg-v2-refund-reason-section">
             <label className="mg-v2-refund-reason-label">
               <Clock size={16} className="mg-v2-form-label-icon" />
-              {t('admin:mapping.refund.reasonLabel', '환불 사유')}{' '}
+              {t('admin:mapping.refund.reasonLabel')}{' '}
               <span className="mg-v2-form-label-required">
                 {t('admin:mapping.refund.reasonRequiredMark', '*')}
               </span>
@@ -332,12 +330,12 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               disabled={loading}
-              placeholder={t('admin:mapping.refund.reasonPlaceholder', '환불 사유를 상세히 입력해주세요 (최소 5자 이상)')}
+              placeholder={t('admin:mapping.refund.reasonPlaceholder')}
               rows="4"
               className="mg-v2-form-textarea"
             />
             <small className="mg-v2-refund-reason-help">
-              {t('admin:mapping.refund.reasonCounter', '{{count}}/500자 (최소 5자 이상 입력)', { count: reason.length })}
+              {t('admin:mapping.refund.reasonCounter', { count: reason.length })}
             </small>
           </div>
           </div>

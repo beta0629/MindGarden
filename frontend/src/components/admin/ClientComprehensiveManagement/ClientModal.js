@@ -357,21 +357,21 @@ const ClientModal = ({
 
     const getTitle = () => {
         switch (type) {
-            case 'create': return t('admin:clientModal.title.create', '새 내담자 등록');
-            case 'edit': return t('admin:clientModal.title.edit', '내담자 정보 수정');
-            case 'delete': return t('admin:clientModal.title.delete', '내담자 삭제');
-            case 'view': return t('admin:clientModal.title.view', '내담자 상세 정보');
-            default: return t('admin:clientModal.title.default', '내담자 관리');
+            case 'create': return t('admin:clientModal.title.create');
+            case 'edit': return t('admin:clientModal.title.edit');
+            case 'delete': return t('admin:clientModal.title.delete');
+            case 'view': return t('admin:clientModal.title.view');
+            default: return t('admin:clientModal.title.default');
         }
     };
 
     const getSubmitText = () => {
         switch (type) {
-            case 'create': return t('admin:actions.register', '등록');
-            case 'edit': return t('admin:actions.edit', '수정');
-            case 'delete': return t('admin:actions.delete', '삭제');
-            case 'view': return t('common:action.close', '닫기');
-            default: return t('common:action.save', '저장');
+            case 'create': return t('admin:actions.register');
+            case 'edit': return t('admin:actions.edit');
+            case 'delete': return t('admin:actions.delete');
+            case 'view': return t('common:action.close');
+            default: return t('common:action.save');
         }
     };
 
@@ -383,8 +383,8 @@ const ClientModal = ({
         const hasGradeCode = persistedGrade != null && String(persistedGrade).trim() !== '';
         const gradeKorean = hasGradeCode ? getUserGradeKoreanNameSync(persistedGrade) : '—';
 
-        const summaryTitle = t('admin:clientModal.summary.title', '누적 지표');
-        const gradeLabel = t('admin:clientModal.summary.gradeLabel', '현재 등급(저장값)');
+        const summaryTitle = t('admin:clientModal.summary.title');
+        const gradeLabel = t('admin:clientModal.summary.gradeLabel');
 
         return (
             <ContentSection
@@ -394,7 +394,7 @@ const ClientModal = ({
             >
                 {summaryLoading ? (
                     <p className="mg-v2-client-modal__summary-loading">
-                        <SafeText>{t('admin:clientModal.summary.loading', '불러오는 중…')}</SafeText>
+                        <SafeText>{t('admin:clientModal.summary.loading')}</SafeText>
                     </p>
                 ) : (
                     <ContentKpiRow items={summaryKpiItems} />
@@ -421,15 +421,15 @@ const ClientModal = ({
     const renderDeleteContent = () => (
         <div className="mg-v2-modal-content">
             <div className="mg-v2-delete-confirmation">
-                <h3>{t('admin:clientModal.delete.confirmTitle', '정말로 삭제하시겠습니까?')}</h3>
-                <p>{t('admin:clientModal.delete.description', '다음 내담자의 정보가 영구적으로 삭제됩니다:')}</p>
+                <h3>{t('admin:clientModal.delete.confirmTitle')}</h3>
+                <p>{t('admin:clientModal.delete.description')}</p>
                 <div className="mg-v2-client-info">
-                    <p><strong>{t('admin:labels.name', '이름')}:</strong> <SafeText>{client?.name}</SafeText></p>
-                    <p><strong>{t('admin:labels.email', '이메일')}:</strong> <SafeText>{client?.email}</SafeText></p>
-                    <p><strong>{t('admin:labels.phone', '전화번호')}:</strong> <SafeText>{client?.phone}</SafeText></p>
+                    <p><strong>{t('admin:labels.name')}:</strong> <SafeText>{client?.name}</SafeText></p>
+                    <p><strong>{t('admin:labels.email')}:</strong> <SafeText>{client?.email}</SafeText></p>
+                    <p><strong>{t('admin:labels.phone')}:</strong> <SafeText>{client?.phone}</SafeText></p>
                 </div>
                 <p className="mg-v2-warning-text">
-                    ⚠️ {t('admin:clientModal.delete.warning', '이 작업은 되돌릴 수 없습니다.')}
+                    ⚠️ {t('admin:clientModal.delete.warning')}
                 </p>
             </div>
         </div>
@@ -473,7 +473,7 @@ const ClientModal = ({
                 {type === 'create' && (
                     <div className="mg-v2-info-box mg-v2-ad-b0kla-info-box">
                         <p className="mg-v2-info-text">
-                            {t('admin:clientModal.form.passwordHint', '💡 비밀번호는 정책에 맞는 값으로 자동 채워집니다. 비우면 임시 비밀번호(이메일 안내)로 등록됩니다.')}
+                            {t('admin:clientModal.form.passwordHint')}
                         </p>
                     </div>
                 )}
@@ -485,17 +485,17 @@ const ClientModal = ({
                     cropSize={400}
                     maxSize={512}
                     quality={0.85}
-                    helpText={t('admin:clientModal.form.profileImageHelp', '이미지 파일만 가능, 최대 2MB (리사이즈·크롭 적용)')}
+                    helpText={t('admin:clientModal.form.profileImageHelp')}
                     disabled={type === 'view'}
                 />
                 {/* 공통 순서: 1. 주민번호 2. 이름 3. 전화번호 4. 주소 → 나머지 */}
                 <div className="mg-v2-form-group">
                     {type === 'edit' && (
-                        <small className="mg-v2-form-help">{t('admin:clientModal.form.editHelp', '수정 시 기존 값은 표시하지 않습니다. 변경할 때만 입력해 주세요.')}</small>
+                        <small className="mg-v2-form-help">{t('admin:clientModal.form.editHelp')}</small>
                     )}
                     <div className={`mg-v2-form-row mg-v2-form-row--two mg-v2-client-modal__form-row-two${type === 'edit' ? ' mg-v2-client-modal__form-row-two--edit-spaced' : ''}`}>
                         <div className="mg-v2-form-group">
-                            <label htmlFor="client-rrnFirst6" className="mg-v2-form-label">{t('admin:clientModal.form.rrnFirstLabel', '주민번호 앞 6자리 (선택)')}</label>
+                            <label htmlFor="client-rrnFirst6" className="mg-v2-form-label">{t('admin:clientModal.form.rrnFirstLabel')}</label>
                             <input
                                 type="text"
                                 id="client-rrnFirst6"
@@ -510,7 +510,7 @@ const ClientModal = ({
                             />
                         </div>
                         <div className="mg-v2-form-group">
-                            <label htmlFor="client-rrnLast1" className="mg-v2-form-label">{t('admin:clientModal.form.rrnLastLabel', '주민번호 뒤 1자리 (선택)')}</label>
+                            <label htmlFor="client-rrnLast1" className="mg-v2-form-label">{t('admin:clientModal.form.rrnLastLabel')}</label>
                             <input
                                 type="text"
                                 id="client-rrnLast1"
@@ -530,7 +530,7 @@ const ClientModal = ({
                     <div className="mg-v2-form-group">
                         <div className="mg-v2-form-row mg-v2-form-row--two mg-v2-client-modal__form-row-two">
                             <div className="mg-v2-form-group">
-                                <span className="mg-v2-form-label" id="client-demographic-gender-label">{t('admin:clientModal.form.demoGenderLabel', '성별')}</span>
+                                <span className="mg-v2-form-label" id="client-demographic-gender-label">{t('admin:clientModal.form.demoGenderLabel')}</span>
                                 <input
                                     type="text"
                                     readOnly
@@ -540,7 +540,7 @@ const ClientModal = ({
                                 />
                             </div>
                             <div className="mg-v2-form-group">
-                                <span className="mg-v2-form-label" id="client-demographic-age-label">{t('admin:clientModal.form.demoAgeLabel', '나이 (만)')}</span>
+                                <span className="mg-v2-form-label" id="client-demographic-age-label">{t('admin:clientModal.form.demoAgeLabel')}</span>
                                 <input
                                     type="text"
                                     readOnly
@@ -552,13 +552,13 @@ const ClientModal = ({
                         </div>
                         {type === 'edit' ? (
                             <small className="mg-v2-form-help">
-                                {t('admin:clientModal.form.rrnAgeHelp', '주민번호 앞 6자리·뒤 1자리를 입력해 저장하면 생년·성별·나이가 갱신됩니다.')}
+                                {t('admin:clientModal.form.rrnAgeHelp')}
                             </small>
                         ) : null}
                     </div>
                 )}
                 <div className="mg-v2-form-group">
-                    <label htmlFor="name" className="mg-v2-form-label">{t('admin:labels.name', '이름')} {type === 'create' && '*'}</label>
+                    <label htmlFor="name" className="mg-v2-form-label">{t('admin:labels.name')} {type === 'create' && '*'}</label>
                     <input
                         type="text"
                         id="name"
@@ -566,14 +566,14 @@ const ClientModal = ({
                         value={safeFormData.name}
                         onChange={handleInputChange}
                         required={type === 'create'}
-                        placeholder={t('admin:clientModal.namePlaceholder', '내담자 이름')}
+                        placeholder={t('admin:clientModal.namePlaceholder')}
                         className="mg-v2-form-input"
                         readOnly={type === 'view'}
                     />
                 </div>
                 <KoreanMobileDuplicateField
                     mode={type === 'view' ? 'inputOnly' : 'withDuplicate'}
-                    label={t('admin:clientModal.form.phoneLabel', '휴대폰 번호')}
+                    label={t('admin:clientModal.form.phoneLabel')}
                     id="phone"
                     name="phone"
                     value={safeFormData.phone}
@@ -603,14 +603,14 @@ const ClientModal = ({
                     ) : null}
                 </KoreanMobileDuplicateField>
                 <div className="mg-v2-form-group">
-                    <label htmlFor="client-vehiclePlate" className="mg-v2-form-label">{t('admin:clientModal.form.vehiclePlateLabel', '차량번호 (선택)')}</label>
+                    <label htmlFor="client-vehiclePlate" className="mg-v2-form-label">{t('admin:clientModal.form.vehiclePlateLabel')}</label>
                     <input
                         type="text"
                         id="client-vehiclePlate"
                         name="vehiclePlate"
                         value={safeFormData.vehiclePlate}
                         onChange={handleInputChange}
-                        placeholder={t('admin:clientModal.form.vehiclePlatePlaceholder', '예: 12가 3456')}
+                        placeholder={t('admin:clientModal.form.vehiclePlatePlaceholder')}
                         maxLength={32}
                         className={`mg-v2-form-input${vehiclePlateError ? ' mg-v2-form-input--error' : ''}`}
                         readOnly={type === 'view'}
@@ -618,7 +618,7 @@ const ClientModal = ({
                         aria-invalid={vehiclePlateError ? true : undefined}
                         aria-describedby={vehiclePlateError ? 'client-vehiclePlate-error' : undefined}
                     />
-                    <small className="mg-v2-form-help">{t('admin:clientModal.form.vehiclePlateHelp', '숫자, 한글, 영문, 하이픈, 공백만 가능 (최대 32자)')}</small>
+                    <small className="mg-v2-form-help">{t('admin:clientModal.form.vehiclePlateHelp')}</small>
                     {vehiclePlateError ? (
                         <small id="client-vehiclePlate-error" className="mg-v2-form-help mg-v2-form-help--error" role="alert">
                             ⚠️ <SafeText>{vehiclePlateError}</SafeText>
@@ -626,7 +626,7 @@ const ClientModal = ({
                     ) : null}
                 </div>
                 <div className="mg-v2-form-group">
-                    <label className="mg-v2-form-label">{t('admin:clientModal.form.addressLabel', '주소 검색')}</label>
+                    <label className="mg-v2-form-label">{t('admin:clientModal.form.addressLabel')}</label>
                     <div className="mg-v2-address-search-row mg-v2-client-modal__address-row">
                         <MGButton
                             type="button"
@@ -648,37 +648,37 @@ const ClientModal = ({
                                     }).open();
                                 } else {
                                     window.dispatchEvent(new CustomEvent('showNotification', {
-                                        detail: { message: t('admin:clientModal.form.addressLoadFailed', '주소 검색 서비스를 불러올 수 없습니다.'), type: 'info' }
+                                        detail: { message: t('admin:clientModal.form.addressLoadFailed'), type: 'info' }
                                     }));
                                 }
                             }}
                         >
-                            {t('admin:clientModal.form.addressBtn', '주소 검색')}
+                            {t('admin:clientModal.form.addressBtn')}
                         </MGButton>
                         <input
                             type="text"
                             readOnly
                             className="mg-v2-form-input mg-v2-client-modal__address-input"
                             value={safeFormData.address}
-                            placeholder={t('admin:clientModal.form.addressInputPlaceholder', '주소 검색 버튼을 눌러 주소를 입력하세요.')}
+                            placeholder={t('admin:clientModal.form.addressInputPlaceholder')}
                         />
                     </div>
                 </div>
                 <div className="mg-v2-form-group">
-                    <label htmlFor="client-addressDetail" className="mg-v2-form-label">{t('admin:clientModal.form.addressDetailLabel', '상세 주소')}</label>
+                    <label htmlFor="client-addressDetail" className="mg-v2-form-label">{t('admin:clientModal.form.addressDetailLabel')}</label>
                     <input
                         type="text"
                         id="client-addressDetail"
                         name="addressDetail"
                         value={safeFormData.addressDetail}
                         onChange={handleInputChange}
-                        placeholder={t('admin:clientModal.form.addressDetailPlaceholder', '동, 호수, 상세 주소를 입력하세요.')}
+                        placeholder={t('admin:clientModal.form.addressDetailPlaceholder')}
                         className="mg-v2-form-input"
                         readOnly={type === 'view'}
                     />
                 </div>
                 <div className="mg-v2-form-group">
-                    <label htmlFor="client-postalCode" className="mg-v2-form-label">{t('admin:clientModal.form.postalLabel', '우편번호')}</label>
+                    <label htmlFor="client-postalCode" className="mg-v2-form-label">{t('admin:clientModal.form.postalLabel')}</label>
                     <input
                         type="text"
                         id="client-postalCode"
@@ -693,7 +693,7 @@ const ClientModal = ({
                 </div>
                 <div className="mg-v2-form-group">
                     <label htmlFor="email" className="mg-v2-form-label">
-                        {type === 'create' ? t('admin:clientModal.form.emailLabel', '이메일') : VALIDATION_MESSAGES.LABEL_EMAIL_REQUIRED}
+                        {type === 'create' ? t('admin:clientModal.form.emailLabel') : VALIDATION_MESSAGES.LABEL_EMAIL_REQUIRED}
                     </label>
                     <div className="mg-v2-form-email-row">
                         <div className="mg-v2-form-email-row__input-wrap">
@@ -741,7 +741,7 @@ const ClientModal = ({
                 </div>
                 {type === 'create' && (
                     <div className="mg-v2-form-group">
-                        <label htmlFor="password" className="mg-v2-form-label">{t('admin:clientModal.form.passwordLabel', '비밀번호')}</label>
+                        <label htmlFor="password" className="mg-v2-form-label">{t('admin:clientModal.form.passwordLabel')}</label>
                         <input
                             type="password"
                             id="password"
@@ -752,12 +752,12 @@ const ClientModal = ({
                             className="mg-v2-form-input"
                         />
                         <small className="mg-v2-form-help">
-                            {LOGIN_PASSWORD_POLICY_HINT_ONE_LINE}{t('admin:clientModal.form.passwordHelpSuffix', ' 비우면 임시 비밀번호로 등록됩니다.')}
+                            {LOGIN_PASSWORD_POLICY_HINT_ONE_LINE}{t('admin:clientModal.form.passwordHelpSuffix')}
                         </small>
                     </div>
                 )}
                 <div className="mg-v2-form-group">
-                    <label htmlFor="status" className="mg-v2-form-label">{t('admin:labels.status', '상태')}</label>
+                    <label htmlFor="status" className="mg-v2-form-label">{t('admin:labels.status')}</label>
                     <BadgeSelect
                         value={safeFormData.status}
                         onChange={(val) => setFormData(prev => ({ ...prev, status: val }))}
@@ -768,28 +768,28 @@ const ClientModal = ({
                                 label: option.codeLabel || option.name || option.codeValue || option.code
                               }))
                             : [
-                                { value: 'ACTIVE', label: t('admin:labels.active', '활성') },
-                                { value: 'INACTIVE', label: t('admin:labels.inactive', '비활성') },
-                                { value: 'PENDING', label: t('admin:labels.pending', '대기') }
+                                { value: 'ACTIVE', label: t('admin:labels.active') },
+                                { value: 'INACTIVE', label: t('admin:labels.inactive') },
+                                { value: 'PENDING', label: t('admin:labels.pending') }
                               ]}
-                        placeholder={t('admin:messages.pleaseSelect', '선택하세요')}
+                        placeholder={t('admin:messages.pleaseSelect')}
                         className="mg-v2-form-badge-select"
                     />
                 </div>
                 <div className="mg-v2-form-group">
-                    <label htmlFor="grade" className="mg-v2-form-label">{t('admin:clientModal.grade', '등급')}</label>
+                    <label htmlFor="grade" className="mg-v2-form-label">{t('admin:clientModal.grade')}</label>
                     <BadgeSelect
                         value={safeFormData.grade}
                         onChange={(val) => setFormData(prev => ({ ...prev, grade: val }))}
                         disabled={type === 'view'}
                         options={[
-                            { value: 'BRONZE', label: t('admin:clientModal.gradeOption.bronze', '브론즈') },
-                            { value: 'SILVER', label: t('admin:clientModal.gradeOption.silver', '실버') },
-                            { value: 'GOLD', label: t('admin:clientModal.gradeOption.gold', '골드') },
-                            { value: 'PLATINUM', label: t('admin:clientModal.gradeOption.platinum', '플래티넘') },
-                            { value: 'DIAMOND', label: t('admin:clientModal.gradeOption.diamond', '다이아몬드') }
+                            { value: 'BRONZE', label: t('admin:clientModal.gradeOption.bronze') },
+                            { value: 'SILVER', label: t('admin:clientModal.gradeOption.silver') },
+                            { value: 'GOLD', label: t('admin:clientModal.gradeOption.gold') },
+                            { value: 'PLATINUM', label: t('admin:clientModal.gradeOption.platinum') },
+                            { value: 'DIAMOND', label: t('admin:clientModal.gradeOption.diamond') }
                         ]}
-                        placeholder={t('admin:messages.pleaseSelect', '선택하세요')}
+                        placeholder={t('admin:messages.pleaseSelect')}
                         className="mg-v2-form-badge-select"
                     />
                 </div>
@@ -819,9 +819,9 @@ const ClientModal = ({
                         />
                     </div>
                 ) : null}
-                <ContentSection title={t('admin:clientModal.section.consultation', '상담 정보')} noCard className="mg-v2-client-modal__subsection">
+                <ContentSection title={t('admin:clientModal.section.consultation')} noCard className="mg-v2-client-modal__subsection">
                     <div className="mg-v2-form-group">
-                        <label htmlFor="client-consultationPurpose" className="mg-v2-form-label">{t('admin:clientModal.consultationPurpose', '상담 목적')}</label>
+                        <label htmlFor="client-consultationPurpose" className="mg-v2-form-label">{t('admin:clientModal.consultationPurpose')}</label>
                         <textarea
                             id="client-consultationPurpose"
                             name="consultationPurpose"
@@ -830,11 +830,11 @@ const ClientModal = ({
                             rows={3}
                             className="mg-v2-form-textarea"
                             readOnly={type === 'view'}
-                            placeholder={t('admin:clientModal.consultationPurposePlaceholder', '상담을 받는 목적을 입력하세요')}
+                            placeholder={t('admin:clientModal.consultationPurposePlaceholder')}
                         />
                     </div>
                     <div className="mg-v2-form-group">
-                        <label htmlFor="client-consultationHistory" className="mg-v2-form-label">{t('admin:clientModal.consultationHistory', '상담 이력')}</label>
+                        <label htmlFor="client-consultationHistory" className="mg-v2-form-label">{t('admin:clientModal.consultationHistory')}</label>
                         <textarea
                             id="client-consultationHistory"
                             name="consultationHistory"
@@ -843,14 +843,14 @@ const ClientModal = ({
                             rows={3}
                             className="mg-v2-form-textarea"
                             readOnly={type === 'view'}
-                            placeholder={t('admin:clientModal.consultationHistoryPlaceholder', '이전 상담 이력을 입력하세요')}
+                            placeholder={t('admin:clientModal.consultationHistoryPlaceholder')}
                         />
                     </div>
                 </ContentSection>
-                <ContentSection title={t('admin:clientModal.section.emergency', '비상 연락처')} noCard className="mg-v2-client-modal__subsection">
+                <ContentSection title={t('admin:clientModal.section.emergency')} noCard className="mg-v2-client-modal__subsection">
                     <div className="mg-v2-form-row mg-v2-form-row--two mg-v2-client-modal__form-row-two">
                         <div className="mg-v2-form-group">
-                            <label htmlFor="client-emergencyContact" className="mg-v2-form-label">{t('admin:clientModal.emergencyContact', '비상 연락처 이름')}</label>
+                            <label htmlFor="client-emergencyContact" className="mg-v2-form-label">{t('admin:clientModal.emergencyContact')}</label>
                             <input
                                 type="text"
                                 id="client-emergencyContact"
@@ -862,7 +862,7 @@ const ClientModal = ({
                             />
                         </div>
                         <div className="mg-v2-form-group">
-                            <label htmlFor="client-emergencyPhone" className="mg-v2-form-label">{t('admin:clientModal.emergencyPhone', '비상 연락처 전화')}</label>
+                            <label htmlFor="client-emergencyPhone" className="mg-v2-form-label">{t('admin:clientModal.emergencyPhone')}</label>
                             <input
                                 type="tel"
                                 id="client-emergencyPhone"
@@ -876,7 +876,7 @@ const ClientModal = ({
                     </div>
                 </ContentSection>
                 <div className="mg-v2-form-group">
-                    <label htmlFor="notes" className="mg-v2-form-label">{t('common:label.memo', '메모')}</label>
+                    <label htmlFor="notes" className="mg-v2-form-label">{t('common:label.memo')}</label>
                     <textarea
                         id="notes"
                         name="notes"
@@ -912,7 +912,7 @@ const ClientModal = ({
                         onClick={onClose}
                         preventDoubleClick={true}
                     >
-                        {t('admin:actions.cancel', '취소')}
+                        {t('admin:actions.cancel')}
                     </MGButton>
                     <MGButton
                         variant={type === 'delete' ? 'danger' : 'primary'}

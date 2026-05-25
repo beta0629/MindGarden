@@ -142,7 +142,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             }
             setProfessionalTypeOptions(opts);
             if (opts.length === 0) {
-                showError(t('admin:consultantMgmt.loadingFailed', '전문가 유형 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.'));
+                showError(t('admin:consultantMgmt.loadingFailed'));
             }
         } catch (e) {
             console.error('전문가 유형 공통코드 로드 실패:', e);
@@ -151,12 +151,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 const opts = await fetchOnce();
                 setProfessionalTypeOptions(opts);
                 if (opts.length === 0) {
-                    showError(t('admin:consultantMgmt.loadingFailedShort', '전문가 유형 목록을 불러오지 못했습니다.'));
+                    showError(t('admin:consultantMgmt.loadingFailedShort'));
                 }
             } catch (retryError) {
                 console.error('전문가 유형 공통코드 재시도 실패:', retryError);
                 setProfessionalTypeOptions([]);
-                showError(t('admin:consultantMgmt.loadingFailedShort', '전문가 유형 목록을 불러오지 못했습니다.'));
+                showError(t('admin:consultantMgmt.loadingFailedShort'));
             }
         }
     }, []);
@@ -195,18 +195,18 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 return;
             }
             setGradeOptions([
-                { codeValue: 'CONSULTANT_JUNIOR', codeLabel: t('admin:consultantMgmt.grade.junior', '주니어 상담사') },
-                { codeValue: 'CONSULTANT_SENIOR', codeLabel: t('admin:consultantMgmt.grade.senior', '시니어 상담사') },
-                { codeValue: 'CONSULTANT_EXPERT', codeLabel: t('admin:consultantMgmt.grade.expert', '엑스퍼트 상담사') },
-                { codeValue: 'CONSULTANT_MASTER', codeLabel: t('admin:consultantMgmt.grade.master', '마스터 상담사') }
+                { codeValue: 'CONSULTANT_JUNIOR', codeLabel: t('admin:consultantMgmt.grade.junior') },
+                { codeValue: 'CONSULTANT_SENIOR', codeLabel: t('admin:consultantMgmt.grade.senior') },
+                { codeValue: 'CONSULTANT_EXPERT', codeLabel: t('admin:consultantMgmt.grade.expert') },
+                { codeValue: 'CONSULTANT_MASTER', codeLabel: t('admin:consultantMgmt.grade.master') }
             ]);
         } catch (error) {
             console.error('상담사 등급 공통코드 로드 실패:', error);
             setGradeOptions([
-                { codeValue: 'CONSULTANT_JUNIOR', codeLabel: t('admin:consultantMgmt.grade.junior', '주니어 상담사') },
-                { codeValue: 'CONSULTANT_SENIOR', codeLabel: t('admin:consultantMgmt.grade.senior', '시니어 상담사') },
-                { codeValue: 'CONSULTANT_EXPERT', codeLabel: t('admin:consultantMgmt.grade.expert', '엑스퍼트 상담사') },
-                { codeValue: 'CONSULTANT_MASTER', codeLabel: t('admin:consultantMgmt.grade.master', '마스터 상담사') }
+                { codeValue: 'CONSULTANT_JUNIOR', codeLabel: t('admin:consultantMgmt.grade.junior') },
+                { codeValue: 'CONSULTANT_SENIOR', codeLabel: t('admin:consultantMgmt.grade.senior') },
+                { codeValue: 'CONSULTANT_EXPERT', codeLabel: t('admin:consultantMgmt.grade.expert') },
+                { codeValue: 'CONSULTANT_MASTER', codeLabel: t('admin:consultantMgmt.grade.master') }
             ]);
         }
     }, []);
@@ -607,9 +607,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             } catch (error) {
                 console.error('상태 공통코드 로드 실패:', error);
                 setUserStatusOptions([
-                    { codeValue: 'ACTIVE', codeLabel: t('admin:labels.active', '활성') },
-                    { codeValue: 'INACTIVE', codeLabel: t('admin:labels.inactive', '비활성') },
-                    { codeValue: 'SUSPENDED', codeLabel: t('admin:consultantMgmt.status.suspended', '일시정지') }
+                    { codeValue: 'ACTIVE', codeLabel: t('admin:labels.active') },
+                    { codeValue: 'INACTIVE', codeLabel: t('admin:labels.inactive') },
+                    { codeValue: 'SUSPENDED', codeLabel: t('admin:consultantMgmt.status.suspended') }
                 ]);
             }
         };
@@ -963,7 +963,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     
                     if (isRefreshedInvalidDefault) {
                         window.dispatchEvent(new CustomEvent('showNotification', {
-                            detail: { message: t('admin:consultantMgmt.msg.tenantMissing', '테넌트 정보를 찾을 수 없습니다. 페이지를 새로고침해주세요.'), type: 'error' }
+                            detail: { message: t('admin:consultantMgmt.msg.tenantMissing'), type: 'error' }
                         }));
                         return { success: false };
                     }
@@ -974,7 +974,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             } catch (error) {
                 console.error('❌ sessionManager 사용 중 오류:', error);
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: t('admin:consultantMgmt.msg.sessionMissing', '세션 정보를 가져올 수 없습니다. 페이지를 새로고침해주세요.'), type: 'error' }
+                    detail: { message: t('admin:consultantMgmt.msg.sessionMissing'), type: 'error' }
                 }));
                 return { success: false };
             }
@@ -989,7 +989,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             if (!data.name || !data.name.trim()) {
                 console.error('❌ 이름은 필수입니다.');
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: t('admin:consultantMgmt.msg.nameRequired', '이름은 필수입니다.'), type: 'error' }
+                    detail: { message: t('admin:consultantMgmt.msg.nameRequired'), type: 'error' }
                 }));
                 return { success: false };
             }
@@ -1037,20 +1037,20 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: t('admin:consultantMgmt.msg.createSuccess', '상담사가 성공적으로 등록되었습니다.'), type: 'success' }
+                    detail: { message: t('admin:consultantMgmt.msg.createSuccess'), type: 'success' }
                 }));
                 return { success: true };
             } else {
                 console.error('❌ 상담사 등록 실패: 응답이 올바르지 않음', response);
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: (response && response.message) || t('admin:consultantMgmt.msg.createFailed', '상담사 등록에 실패했습니다.'), type: 'error' }
+                    detail: { message: (response && response.message) || t('admin:consultantMgmt.msg.createFailed'), type: 'error' }
                 }));
                 return { success: false };
             }
         } catch (error) {
             console.error('상담사 등록 오류:', error);
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: t('admin:consultantMgmt.msg.createError', '상담사 등록 중 오류가 발생했습니다.'), type: 'error' }
+                detail: { message: t('admin:consultantMgmt.msg.createError'), type: 'error' }
             }));
             return { success: false };
         }
@@ -1069,13 +1069,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             if (rrnFirst6 || rrnLast1) {
                 if (rrnFirst6.length !== 6 || !/^[0-9]{6}$/.test(rrnFirst6)) {
                     window.dispatchEvent(new CustomEvent('showNotification', {
-                        detail: { message: t('admin:consultantMgmt.msg.rrnInvalid', '주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자로 입력해 주세요.'), type: 'error' }
+                        detail: { message: t('admin:consultantMgmt.msg.rrnInvalid'), type: 'error' }
                     }));
                     return { success: false };
                 }
                 if (rrnLast1.length !== 1 || !/^[1-4]$/.test(rrnLast1)) {
                     window.dispatchEvent(new CustomEvent('showNotification', {
-                        detail: { message: t('admin:consultantMgmt.msg.rrnInvalid', '주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자로 입력해 주세요.'), type: 'error' }
+                        detail: { message: t('admin:consultantMgmt.msg.rrnInvalid'), type: 'error' }
                     }));
                     return { success: false };
                 }
@@ -1109,19 +1109,19 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             if (isSuccess) {
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: t('admin:consultantMgmt.msg.updateSuccess', '상담사 정보가 성공적으로 수정되었습니다.'), type: 'success' }
+                    detail: { message: t('admin:consultantMgmt.msg.updateSuccess'), type: 'success' }
                 }));
                 return { success: true };
             } else {
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: (response && response.message) || t('admin:consultantMgmt.msg.updateFailed', '상담사 수정에 실패했습니다.'), type: 'error' }
+                    detail: { message: (response && response.message) || t('admin:consultantMgmt.msg.updateFailed'), type: 'error' }
                 }));
                 return { success: false };
             }
         } catch (error) {
             console.error('상담사 수정 오류:', error);
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: t('admin:consultantMgmt.msg.updateError', '상담사 수정 중 오류가 발생했습니다.'), type: 'error' }
+                detail: { message: t('admin:consultantMgmt.msg.updateError'), type: 'error' }
             }));
             return { success: false };
         }
@@ -1133,19 +1133,19 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             if (!response || response.success !== false) {
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: t('admin:consultantMgmt.msg.deleteSuccess', '상담사가 성공적으로 삭제되었습니다.'), type: 'success' }
+                    detail: { message: t('admin:consultantMgmt.msg.deleteSuccess'), type: 'success' }
                 }));
                 return { success: true };
             } else {
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: response?.message || t('admin:consultantMgmt.msg.deleteFailed', '상담사 삭제에 실패했습니다.'), type: 'error' }
+                    detail: { message: response?.message || t('admin:consultantMgmt.msg.deleteFailed'), type: 'error' }
                 }));
                 return { success: false };
             }
         } catch (error) {
             console.error('상담사 삭제 오류:', error);
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: t('admin:consultantMgmt.msg.deleteError', '상담사 삭제 중 오류가 발생했습니다.'), type: 'error' }
+                detail: { message: t('admin:consultantMgmt.msg.deleteError'), type: 'error' }
             }));
             return { success: false };
         }
@@ -1163,11 +1163,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             console.log('✅ 비밀번호 초기화 응답:', response);
 
             if (response && (response.success !== false)) {
-                showSuccess(t('admin:consultantMgmt.msg.passwordResetSuccess', '비밀번호가 성공적으로 초기화되었습니다.'));
+                showSuccess(t('admin:consultantMgmt.msg.passwordResetSuccess'));
                 setShowPasswordResetModal(false);
                 setPasswordResetConsultant(null);
             } else {
-                throw new Error(response?.message || t('admin:consultantMgmt.msg.passwordResetFailed', '비밀번호 초기화에 실패했습니다.'));
+                throw new Error(response?.message || t('admin:consultantMgmt.msg.passwordResetFailed'));
             }
         } catch (error) {
             console.error('❌ 비밀번호 초기화 실패:', error);
@@ -1218,7 +1218,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         } catch (error) {
             console.error('모달 제출 오류:', error);
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: t('admin:consultantMgmt.msg.submitError', '작업 중 오류가 발생했습니다.'), type: 'error' }
+                detail: { message: t('admin:consultantMgmt.msg.submitError'), type: 'error' }
             }));
         } finally {
             setModalSubmitLoading(false);
@@ -1227,7 +1227,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
     const stats = getOverallStats();
     const consultantFilterOptions = useMemo(() => {
-        const opts = [{ value: 'all', label: t('admin:consultantMgmt.filter.all', '전체') }];
+        const opts = [{ value: 'all', label: t('admin:consultantMgmt.filter.all') }];
         if (userStatusOptions && userStatusOptions.length > 0) {
             opts.push(...userStatusOptions.map(opt => ({
                 value: opt.codeValue,
@@ -1243,13 +1243,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             return <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />;
         }
         return (
-            <AdminCommonLayout title={t('admin:consultant.title', '상담사 종합 관리')}>
+            <AdminCommonLayout title={t('admin:consultant.title')}>
                 <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
                     <div className="mg-v2-ad-b0kla__container">
-                        <ContentArea ariaLabel={t('admin:consultant.title', '상담사 종합 관리')}>
+                        <ContentArea ariaLabel={t('admin:consultant.title')}>
                             <ContentHeader
-                                title={t('admin:consultant.title', '상담사 종합 관리')}
-                                subtitle={t('admin:consultant.subtitle', '상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다')}
+                                title={t('admin:consultant.title')}
+                                subtitle={t('admin:consultant.subtitle')}
                                 titleId={CONSULTANT_COMP_MGMT_TITLE_ID}
                             />
                             <main aria-labelledby={CONSULTANT_COMP_MGMT_TITLE_ID}>
@@ -1273,7 +1273,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} mg-v2-ad-b0kla__pill ${mainTab === 'comprehensive' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setMainTab('comprehensive')}
                             >
-                                {t('admin:consultant.tab.list', '종합관리')}
+                                {t('admin:consultant.tab.list')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -1282,7 +1282,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} mg-v2-ad-b0kla__pill ${mainTab === 'basic' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setMainTab('basic')}
                             >
-                                {t('admin:consultant.tab.detail', '기본관리')}
+                                {t('admin:consultant.tab.detail')}
                             </MGButton>
                         </div>
             </ContentSection>
@@ -1296,7 +1296,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 <Users size={24} />
                                             </div>
                                             <div className="mg-v2-mapping-kpi-section__info">
-                                                <span className="mg-v2-mapping-kpi-section__label">{t('admin:consultant.table.name', '총 상담사')}</span>
+                                                <span className="mg-v2-mapping-kpi-section__label">{t('admin:consultant.table.name')}</span>
                                                 <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.totalConsultants)}명</span>
                                             </div>
                                         </div>
@@ -1305,7 +1305,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 <Link2 size={24} />
                                             </div>
                                             <div className="mg-v2-mapping-kpi-section__info">
-                                                <span className="mg-v2-mapping-kpi-section__label">{t('admin:dashboard.summary.activeSessions', '활성 매칭')}</span>
+                                                <span className="mg-v2-mapping-kpi-section__label">{t('admin:dashboard.summary.activeSessions')}</span>
                                                 <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.activeMappings)}건</span>
                                             </div>
                                         </div>
@@ -1314,7 +1314,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 <Calendar size={24} />
                                             </div>
                                             <div className="mg-v2-mapping-kpi-section__info">
-                                                <span className="mg-v2-mapping-kpi-section__label">{t('admin:consultant.tab.sessions', '총 스케줄')}</span>
+                                                <span className="mg-v2-mapping-kpi-section__label">{t('admin:consultant.tab.sessions')}</span>
                                                 <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.totalSchedules)}건</span>
                                             </div>
                                         </div>
@@ -1395,7 +1395,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 <div className="mg-v2-mapping-list-block__empty-icon">
                                                     <Users size={48} />
                                                 </div>
-                                                <h3 className="mg-v2-mapping-list-block__empty-title">{t('admin:consultant.empty.title', '상담사가 없습니다')}</h3>
+                                                <h3 className="mg-v2-mapping-list-block__empty-title">{t('admin:consultant.empty.title')}</h3>
                                                 <p className="mg-v2-mapping-list-block__empty-desc">새 상담사를 등록해보세요.</p>
                                                 <MGButton
                                                     type="button"
@@ -1432,7 +1432,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    {t('common.actions.edit', '수정')}
+                                                                    {t('common.actions.edit')}
                                                                 </MGButton>
                                                                 <MGButton
                                                                     variant="secondary"
@@ -1459,7 +1459,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    {t('admin.actions.delete', '삭제')}
+                                                                    {t('admin.actions.delete')}
                                                                 </MGButton>
                                                             </>
                                                         )}
@@ -1481,12 +1481,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                         ) : (
                                             <ListTableView
                                                 columns={[
-                                                    { key: 'name', label: t('admin:consultant.table.name', '이름') },
-                                                    { key: 'professionalProviderTypeCode', label: t('admin:consultant.filter.specialization', '전문가 유형') },
-                                                    { key: 'email', label: t('admin:consultant.table.email', '이메일') },
-                                                    { key: 'status', label: t('admin:consultant.table.status', '상태') },
-                                                    { key: 'createdAt', label: t('admin:consultant.table.joinDate', '가입일'), hideOnMobile: true },
-                                                    { key: 'currentClients', label: t('admin:consultant.table.sessionCount', '클라이언트 수'), hideOnMobile: true }
+                                                    { key: 'name', label: t('admin:consultant.table.name') },
+                                                    { key: 'professionalProviderTypeCode', label: t('admin:consultant.filter.specialization') },
+                                                    { key: 'email', label: t('admin:consultant.table.email') },
+                                                    { key: 'status', label: t('admin:consultant.table.status') },
+                                                    { key: 'createdAt', label: t('admin:consultant.table.joinDate'), hideOnMobile: true },
+                                                    { key: 'currentClients', label: t('admin:consultant.table.sessionCount'), hideOnMobile: true }
                                                 ]}
                                                 data={getFilteredConsultants}
                                                 renderCell={(key, item) => {
@@ -1571,7 +1571,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 <div className="mg-v2-mapping-list-block__empty-icon">
                                                     <Users size={48} />
                                                 </div>
-                                                <h3 className="mg-v2-mapping-list-block__empty-title">{t('admin:consultant.empty.title', '상담사가 없습니다')}</h3>
+                                                <h3 className="mg-v2-mapping-list-block__empty-title">{t('admin:consultant.empty.title')}</h3>
                                                 <p className="mg-v2-mapping-list-block__empty-desc">새 상담사를 등록해보세요.</p>
                                                 <MGButton
                                                     type="button"
@@ -1608,7 +1608,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    {t('common.actions.edit', '수정')}
+                                                                    {t('common.actions.edit')}
                                                                 </MGButton>
                                                                 <MGButton
                                                                     variant="secondary"
@@ -1635,7 +1635,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    {t('admin.actions.delete', '삭제')}
+                                                                    {t('admin.actions.delete')}
                                                                 </MGButton>
                                                             </>
                                                         )}
@@ -1657,12 +1657,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                         ) : (
                                             <ListTableView
                                                 columns={[
-                                                    { key: 'name', label: t('admin:consultant.table.name', '이름') },
-                                                    { key: 'professionalProviderTypeCode', label: t('admin:consultant.filter.specialization', '전문가 유형') },
-                                                    { key: 'email', label: t('admin:consultant.table.email', '이메일') },
-                                                    { key: 'status', label: t('admin:consultant.table.status', '상태') },
-                                                    { key: 'createdAt', label: t('admin:consultant.table.joinDate', '가입일'), hideOnMobile: true },
-                                                    { key: 'currentClients', label: t('admin:consultant.table.sessionCount', '클라이언트 수'), hideOnMobile: true }
+                                                    { key: 'name', label: t('admin:consultant.table.name') },
+                                                    { key: 'professionalProviderTypeCode', label: t('admin:consultant.filter.specialization') },
+                                                    { key: 'email', label: t('admin:consultant.table.email') },
+                                                    { key: 'status', label: t('admin:consultant.table.status') },
+                                                    { key: 'createdAt', label: t('admin:consultant.table.joinDate'), hideOnMobile: true },
+                                                    { key: 'currentClients', label: t('admin:consultant.table.sessionCount'), hideOnMobile: true }
                                                 ]}
                                                 data={getFilteredConsultants}
                                                 renderCell={(key, item) => {
@@ -1688,7 +1688,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         <>
             {!embedded && (
                 <ContentHeader
-                    title={t('admin.labels.consultantManagement', '상담사 관리')}
+                    title={t('admin.labels.consultantManagement')}
                     subtitle="상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다"
                     titleId={CONSULTANT_COMP_MGMT_TITLE_ID}
                     actions={
@@ -1753,7 +1753,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             </div>
                             <div className="mg-v2-consultant-detail-content">
                                 <div className="mg-v2-detail-section">
-                                    <h5>{t('admin:consultant.section.basicInfo', '기본 정보')}</h5>
+                                    <h5>{t('admin:consultant.section.basicInfo')}</h5>
                                     <div className="mg-v2-detail-grid">
                                         <div className="mg-v2-detail-item">
                                             <span className="mg-v2-detail-label">성별:</span>
@@ -1784,7 +1784,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                     </div>
                                 </div>
                                 <div className="mg-v2-detail-section">
-                                    <h5>{t('admin:consultant.section.specialty', '전문분야')}</h5>
+                                    <h5>{t('admin:consultant.section.specialty')}</h5>
                                     <div className="mg-v2-specialty-list">
                                         {(selectedConsultant.specialty || selectedConsultant.specialization) ? (
                                             <SpecialtyDisplay
@@ -2171,7 +2171,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         <>
                             <div className="mg-v2-section-heading mg-v2-section-heading--accent">
                                 <span className="mg-v2-section-heading__bar" />
-                                <h3 className="mg-v2-section-heading__title">{t('admin:consultant.section.credentials', '자격·경력')}</h3>
+                                <h3 className="mg-v2-section-heading__title">{t('admin:consultant.section.credentials')}</h3>
                             </div>
                             <div className="mg-v2-form-group">
                                 <label htmlFor="consultant-qualifications" className="mg-v2-form-label">자격증 (선택)</label>
@@ -2239,7 +2239,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                         onClick={handleCloseModal}
                     >
-                        {t('common.actions.close', '닫기')}
+                        {t('common.actions.close')}
                     </MGButton>
                     <MGButton
                         type="button"
@@ -2263,7 +2263,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
                         onClick={() => handleOpenModal('edit', selectedConsultant)}
                     >
-                        {t('common.actions.edit', '수정')}
+                        {t('common.actions.edit')}
                     </MGButton>
                 </>
             );
@@ -2284,7 +2284,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                     onClick={handleCloseModal}
                 >
-                    {t('admin.actions.cancel', '취소')}
+                    {t('admin.actions.cancel')}
                 </MGButton>
                 <MGButton
                     type="button"
@@ -2340,7 +2340,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             onClick={() => setShowDeleteConfirm(false)}
                             disabled={deleteConfirmLoading}
                         >
-                            {t('admin.actions.cancel', '취소')}
+                            {t('admin.actions.cancel')}
                         </MGButton>
                         <MGButton
                             type="button"
@@ -2359,7 +2359,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 }
                             }}
                         >
-                            {t('admin.actions.delete', '삭제')}
+                            {t('admin.actions.delete')}
                         </MGButton>
                     </>
                 }

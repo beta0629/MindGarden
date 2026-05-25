@@ -48,7 +48,7 @@ const WidgetBasedAdminDashboard = () => {
         // 무한루프 방지
         if (fetchAttempts >= MAX_FETCH_ATTEMPTS) {
             console.error('최대 시도 횟수 초과. 무한루프 방지.');
-            setError(t('admin:widgetDashboard.loadFailed', '대시보드를 불러올 수 없습니다. 페이지를 새로고침해주세요.'));
+            setError(t('admin:widgetDashboard.loadFailed'));
             setLoading(false);
             return;
         }
@@ -79,12 +79,12 @@ const WidgetBasedAdminDashboard = () => {
                         await loadWidgetGroups(dashboardList[0]);
                     }
                 } else {
-                    throw new Error(dashboardResponse.data.message || t('admin:widgetDashboard.fetchFailedDashboard', '대시보드 조회 실패'));
+                    throw new Error(dashboardResponse.data.message || t('admin:widgetDashboard.fetchFailedDashboard'));
                 }
             } catch (err) {
                 console.error('대시보드 로드 실패:', err);
                 setError(err.message);
-                notificationManager.error(t('admin:widgetDashboard.fetchFailedTitle', '대시보드 로드 실패'), err.message);
+                notificationManager.error(t('admin:widgetDashboard.fetchFailedTitle'), err.message);
             } finally {
                 setLoading(false);
             }
@@ -158,18 +158,18 @@ const WidgetBasedAdminDashboard = () => {
                 
                 setWidgetGroups(groupsWithWidgets);
             } else {
-                throw new Error(groupResponse.data.message || t('admin:widgetDashboard.fetchFailedGroup', '위젯 그룹 조회 실패'));
+                throw new Error(groupResponse.data.message || t('admin:widgetDashboard.fetchFailedGroup'));
             }
         } catch (err) {
             console.error('위젯 그룹 로드 실패:', err);
-            notificationManager.error(t('admin:widgetDashboard.fetchFailedGroupTitle', '위젯 그룹 로드 실패'), err.message);
+            notificationManager.error(t('admin:widgetDashboard.fetchFailedGroupTitle'), err.message);
         }
     };
 
     // 위젯 삭제
     const handleDeleteWidget = async(widgetId, groupId) => {
         const confirmed = await confirm({
-            message: t('admin:widgetDashboard.deleteConfirm', '이 위젯을 삭제하시겠습니까?'),
+            message: t('admin:widgetDashboard.deleteConfirm'),
             variant: 'danger'
         });
         if (!confirmed) return;
@@ -187,15 +187,15 @@ const WidgetBasedAdminDashboard = () => {
             );
             
             if (response.data.success) {
-                notificationManager.success(t('admin:widgetDashboard.deleteSuccessTitle', '위젯 삭제 완료'), t('admin:widgetDashboard.deleteSuccessMessage', '위젯이 성공적으로 삭제되었습니다.'));
+                notificationManager.success(t('admin:widgetDashboard.deleteSuccessTitle'), t('admin:widgetDashboard.deleteSuccessMessage'));
                 // 위젯 목록 새로고침
                 await loadWidgetGroups(selectedDashboard);
             } else {
-                throw new Error(response.data.message || t('admin:widgetDashboard.deleteFailed', '위젯 삭제 실패'));
+                throw new Error(response.data.message || t('admin:widgetDashboard.deleteFailed'));
             }
         } catch (err) {
             console.error('위젯 삭제 실패:', err);
-            notificationManager.error(t('admin:widgetDashboard.deleteFailed', '위젯 삭제 실패'), err.message);
+            notificationManager.error(t('admin:widgetDashboard.deleteFailed'), err.message);
         } finally {
             setDeletingWidgetId(null);
         }
@@ -212,14 +212,14 @@ const WidgetBasedAdminDashboard = () => {
                 return (
                     <div className="widget-placeholder">
                         <p className="widget-description">
-                            {widget.description || t('admin:widgetDashboard.placeholderDescription', '{{type}} 타입의 위젯입니다.', { type: widget.widgetType })}
+                            {widget.description || t('admin:widgetDashboard.placeholderDescription', { type: widget.widgetType })}
                         </p>
                         <div className="widget-meta">
                             <span className="meta-item">
-                                <strong>{t('admin:widgetDashboard.metaType', '타입')}:</strong> {widget.widgetType}
+                                <strong>{t('admin:widgetDashboard.metaType')}:</strong> {widget.widgetType}
                             </span>
                             <span className="meta-item">
-                                <strong>{t('admin:widgetDashboard.metaOrder', '순서')}:</strong> {widget.displayOrder}
+                                <strong>{t('admin:widgetDashboard.metaOrder')}:</strong> {widget.displayOrder}
                             </span>
                         </div>
                     </div>
@@ -239,13 +239,13 @@ const WidgetBasedAdminDashboard = () => {
                         <h3>{widget.widgetNameKo || widget.widgetName}</h3>
                         <div className="widget-badges">
                             {widget.isSystemManaged && (
-                                <span className="system-badge">{t('admin:widgetDashboard.systemBadge', '시스템')}</span>
+                                <span className="system-badge">{t('admin:widgetDashboard.systemBadge')}</span>
                             )}
                             {widget.isRequired && (
-                                <span className="required-badge">{t('admin:widgetDashboard.requiredBadge', '필수')}</span>
+                                <span className="required-badge">{t('admin:widgetDashboard.requiredBadge')}</span>
                             )}
                             {widget.isDeletable && (
-                                <span className="deletable-badge">{t('admin:widgetDashboard.deletableBadge', '삭제가능')}</span>
+                                <span className="deletable-badge">{t('admin:widgetDashboard.deletableBadge')}</span>
                             )}
                         </div>
                     </div>
@@ -274,11 +274,11 @@ const WidgetBasedAdminDashboard = () => {
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 preventDoubleClick
                             >
-                                {t('admin:actions.delete', '삭제')}
+                                {t('admin:actions.delete')}
                             </MGButton>
                         ) : (
                             <span className="no-delete-msg">
-                                {widget.isSystemManaged ? t('admin:widgetDashboard.systemWidgetNoDelete', '시스템 위젯은 삭제할 수 없습니다') : t('admin:widgetDashboard.requiredWidgetNoDelete', '필수 위젯은 삭제할 수 없습니다')}
+                                {widget.isSystemManaged ? t('admin:widgetDashboard.systemWidgetNoDelete') : t('admin:widgetDashboard.requiredWidgetNoDelete')}
                             </span>
                         )}
                         {widget.isConfigurable && (
@@ -296,7 +296,7 @@ const WidgetBasedAdminDashboard = () => {
                                 preventDoubleClick={false}
                                 onClick={() => console.log('설정:', widget.widgetId)}
                             >
-                                {t('admin:dashboardEditor.config', '설정')}
+                                {t('admin:dashboardEditor.config')}
                             </MGButton>
                         )}
                     </div>
@@ -320,7 +320,7 @@ const WidgetBasedAdminDashboard = () => {
                     </div>
                     <div className="group-actions">
                         <span className="widget-count-badge">
-                            {t('admin:widgetDashboard.widgetCount', '{{count}}개 위젯', { count: group.widgets?.length || 0 })}
+                            {t('admin:widgetDashboard.widgetCount', { count: group.widgets?.length || 0 })}
                         </span>
                         {isManageMode && canAddWidget && (
                             <MGButton
@@ -339,7 +339,7 @@ const WidgetBasedAdminDashboard = () => {
                                     // TODO: 그룹 ID 저장
                                 }}
                             >
-                                {t('admin:widgetDashboard.addWidget', '+ 위젯 추가')}
+                                {t('admin:widgetDashboard.addWidget')}
                             </MGButton>
                         )}
                     </div>
@@ -349,7 +349,7 @@ const WidgetBasedAdminDashboard = () => {
                         group.widgets.map(widget => renderWidget(widget, group.groupId))
                     ) : (
                         <div className="empty-state">
-                            <p>{t('admin:widgetDashboard.emptyGroup', '이 그룹에는 위젯이 없습니다.')}</p>
+                            <p>{t('admin:widgetDashboard.emptyGroup')}</p>
                             {isManageMode && canAddWidget && (
                                 <MGButton
                                     type="button"
@@ -364,10 +364,10 @@ const WidgetBasedAdminDashboard = () => {
                                     preventDoubleClick={false}
                                     onClick={() => setShowAddWidgetModal(true)}
                                 >
-                                    {t('admin:widgetDashboard.addFirstWidget', '+ 첫 위젯 추가하기')}
+                                    {t('admin:widgetDashboard.addFirstWidget')}
                                 </MGButton>
                             )}
-                            <small>{t('admin:widgetDashboard.groupIdLabel', '그룹 ID')}: {group.groupId}</small>
+                            <small>{t('admin:widgetDashboard.groupIdLabel')}: {group.groupId}</small>
                         </div>
                     )}
                 </div>
@@ -376,16 +376,16 @@ const WidgetBasedAdminDashboard = () => {
     };
 
     return (
-        <AdminCommonLayout title={t('admin:widgetDashboard.title', '위젯 기반 대시보드')}>
+        <AdminCommonLayout title={t('admin:widgetDashboard.title')}>
             {sessionLoading || loading ? (
                 <div className="widget-based-dashboard">
                     <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
-                        <UnifiedLoading type="inline" text={t('admin:widgetDashboard.loading', '대시보드를 불러오는 중...')} />
+                        <UnifiedLoading type="inline" text={t('admin:widgetDashboard.loading')} />
                     </div>
                 </div>
             ) : error ? (
                 <div className="error-container">
-                    <h2>{t('admin:widgetDashboard.errorTitle', '오류 발생')}</h2>
+                    <h2>{t('admin:widgetDashboard.errorTitle')}</h2>
                     <p>{error}</p>
                     <div className="widget-based-dashboard__error-actions">
                         <MGButton
@@ -400,7 +400,7 @@ const WidgetBasedAdminDashboard = () => {
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => navigate('/admin/dashboard-old')}
                         >
-                            {t('admin:widgetDashboard.oldDashboard', '이전 대시보드로')}
+                            {t('admin:widgetDashboard.oldDashboard')}
                         </MGButton>
                         <MGButton
                             type="button"
@@ -414,7 +414,7 @@ const WidgetBasedAdminDashboard = () => {
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={handleDashboardLoadRetry}
                         >
-                            {t('common:labels.retry', '다시 시도')}
+                            {t('common:labels.retry')}
                         </MGButton>
                     </div>
                 </div>
@@ -423,15 +423,15 @@ const WidgetBasedAdminDashboard = () => {
                 {/* 헤더 */}
                 <div className="dashboard-header">
                     <div className="header-content">
-                        <h1>{t('admin:widgetDashboard.title', '위젯 기반 대시보드')}</h1>
-                        <p className="subtitle">{t('admin:widgetDashboard.subtitle', '동적으로 구성된 관리자 대시보드')}</p>
+                        <h1>{t('admin:widgetDashboard.title')}</h1>
+                        <p className="subtitle">{t('admin:widgetDashboard.subtitle')}</p>
                     </div>
                     
                     <div className="header-actions">
                         {/* 대시보드 선택 */}
                         {dashboards.length > 1 && (
                             <div className="dashboard-selector">
-                                <label>{t('admin:lnb.dashboard', '대시보드')}:</label>
+                                <label>{t('admin:lnb.dashboard')}:</label>
                                 <select 
                                     value={selectedDashboard?.dashboardId || ''}
                                     onChange={(e) => {
@@ -464,7 +464,7 @@ const WidgetBasedAdminDashboard = () => {
                             preventDoubleClick={false}
                             onClick={() => setIsManageMode(!isManageMode)}
                         >
-                            {isManageMode ? t('admin:widgetDashboard.manageMode', '관리 모드') : t('admin:widgetDashboard.manageDashboard', '대시보드 관리')}
+                            {isManageMode ? t('admin:widgetDashboard.manageMode') : t('admin:widgetDashboard.manageDashboard')}
                         </MGButton>
                     </div>
                 </div>
@@ -475,8 +475,8 @@ const WidgetBasedAdminDashboard = () => {
                         widgetGroups.map(group => renderWidgetGroup(group))
                     ) : (
                         <div className="empty-state">
-                            <h3>{t('admin:widgetDashboard.emptyWidgets', '위젯이 없습니다')}</h3>
-                            <p>{t('admin:widgetDashboard.emptyWidgetsDescription', '이 대시보드에는 아직 위젯이 구성되지 않았습니다.')}</p>
+                            <h3>{t('admin:widgetDashboard.emptyWidgets')}</h3>
+                            <p>{t('admin:widgetDashboard.emptyWidgetsDescription')}</p>
                         </div>
                     )}
                 </div>
@@ -484,18 +484,18 @@ const WidgetBasedAdminDashboard = () => {
                 {/* 통계 정보 */}
                 <div className="dashboard-stats">
                     <div className="stat-item">
-                        <span className="stat-label">{t('admin:widgetDashboard.totalGroups', '총 위젯 그룹')}:</span>
-                        <span className="stat-value">{t('admin:widgetDashboard.countUnit', '{{count}}개', { count: widgetGroups.length })}</span>
+                        <span className="stat-label">{t('admin:widgetDashboard.totalGroups')}:</span>
+                        <span className="stat-value">{t('admin:widgetDashboard.countUnit', { count: widgetGroups.length })}</span>
                     </div>
                     <div className="stat-item">
-                        <span className="stat-label">{t('admin:widgetDashboard.totalWidgets', '총 위젯')}:</span>
+                        <span className="stat-label">{t('admin:widgetDashboard.totalWidgets')}:</span>
                         <span className="stat-value">
-                            {t('admin:widgetDashboard.countUnit', '{{count}}개', { count: widgetGroups.reduce((sum, group) => sum + (group.widgets?.length || 0), 0) })}
+                            {t('admin:widgetDashboard.countUnit', { count: widgetGroups.reduce((sum, group) => sum + (group.widgets?.length || 0), 0) })}
                         </span>
                     </div>
                     <div className="stat-item">
-                        <span className="stat-label">{t('admin:lnb.dashboard', '대시보드')}:</span>
-                        <span className="stat-value">{t('admin:widgetDashboard.countUnit', '{{count}}개', { count: dashboards.length })}</span>
+                        <span className="stat-label">{t('admin:lnb.dashboard')}:</span>
+                        <span className="stat-value">{t('admin:widgetDashboard.countUnit', { count: dashboards.length })}</span>
                     </div>
                 </div>
             </div>

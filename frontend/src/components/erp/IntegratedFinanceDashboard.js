@@ -333,7 +333,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         
         if (!hasIntegratedFinancePermission) {
           console.log('❌ 통합재무관리 접근 권한 없음');
-          setError(t('erp:finance.errors.noPermission', '수입·지출 관리 접근 권한이 없습니다.'));
+          setError(t('erp:finance.errors.noPermission'));
           setLoading(false);
           permissionCheckedRef.current = true;
           return;
@@ -356,7 +356,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
       await fetchDashboardData();
     } catch (err) {
       console.error('컴포넌트 초기화 실패:', err);
-      setError(t('erp:finance.errors.initFailed', '초기화 중 오류가 발생했습니다.'));
+      setError(t('erp:finance.errors.initFailed'));
       setLoading(false);
     }
   };
@@ -396,7 +396,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         return;
       }
 
-      setError(t('erp:finance.errors.loadFailed', '데이터를 불러오는 중 오류가 발생했습니다.'));
+      setError(t('erp:finance.errors.loadFailed'));
     } finally {
       if (!silent) {
         setLoading(false);
@@ -412,8 +412,8 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   const renderIntegratedFinanceHeaderSlot = (actionsDisabled) => (
     <ContentHeader
-      title={t('erp:finance.page.title', '수입·지출 관리')}
-      subtitle={t('erp:finance.page.subtitle', '거래·손익·정산을 한곳에서')}
+      title={t('erp:finance.page.title')}
+      subtitle={t('erp:finance.page.subtitle')}
       titleId={INTEGRATED_FINANCE_TITLE_ID}
       actions={(
         <div className="mg-dashboard-header-right mg-dashboard-header-right--content-header">
@@ -421,7 +421,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             variant="danger"
             size="small"
             onClick={() => setShowQuickExpenseForm(true)}
-            title={t('erp:finance.headerActions.quickExpense', '빠른 지출')}
+            title={t('erp:finance.headerActions.quickExpense')}
             className={buildErpMgButtonClassName({
               variant: 'danger',
               size: 'sm',
@@ -432,13 +432,13 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={actionsDisabled}
           >
-            {t('erp:finance.headerActions.quickExpense', '빠른 지출')}
+            {t('erp:finance.headerActions.quickExpense')}
           </MGButton>
           <MGButton
             variant="success"
             size="small"
             onClick={() => setShowTransactionForm(true)}
-            title={t('erp:finance.headerActions.registerEntry', '거래 등록')}
+            title={t('erp:finance.headerActions.registerEntry')}
             className={buildErpMgButtonClassName({
               variant: 'success',
               size: 'sm',
@@ -449,7 +449,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={actionsDisabled}
           >
-            {t('erp:finance.headerActions.registerEntry', '거래 등록')}
+            {t('erp:finance.headerActions.registerEntry')}
           </MGButton>
           <MGButton
             variant="primary"
@@ -457,7 +457,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             onClick={() => {
               navigate('/erp/financial');
             }}
-            title={t('erp:finance.headerActions.viewFinancialDetail', '상세 내역 보기')}
+            title={t('erp:finance.headerActions.viewFinancialDetail')}
             className={buildErpMgButtonClassName({
               variant: 'primary',
               size: 'sm',
@@ -468,7 +468,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             disabled={actionsDisabled}
           >
-            {t('erp:finance.headerActions.financialDetailShort', '상세 내역')}
+            {t('erp:finance.headerActions.financialDetailShort')}
           </MGButton>
         </div>
       )}
@@ -511,16 +511,16 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   if (error) {
     return (
-      <AdminCommonLayout title={t('erp:finance.page.title', '수입·지출 관리')}>
-        <ContentArea ariaLabel={t('erp:finance.accessibility.contentBody', '수입·지출 관리 본문')}>
+      <AdminCommonLayout title={t('erp:finance.page.title')}>
+        <ContentArea ariaLabel={t('erp:finance.accessibility.contentBody')}>
           <ContentHeader
-            title={t('erp:finance.page.title', '수입·지출 관리')}
-            subtitle={t('erp:finance.page.subtitle', '거래·손익·정산을 한곳에서')}
+            title={t('erp:finance.page.title')}
+            subtitle={t('erp:finance.page.subtitle')}
             titleId={INTEGRATED_FINANCE_TITLE_ID}
           />
           <section aria-labelledby={INTEGRATED_FINANCE_TITLE_ID} className="mg-dashboard-content">
             <div className="error-container">
-              <SafeErrorDisplay error={error} variant="inline" prefix={t('erp:finance.display.errorPrefix', '오류: ')} />
+              <SafeErrorDisplay error={error} variant="inline" prefix={t('erp:finance.display.errorPrefix')} />
             </div>
           </section>
         </ContentArea>
@@ -529,13 +529,13 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   }
 
   return (
-    <AdminCommonLayout title={t('erp:finance.page.title', '수입·지출 관리')}>
-      <ContentArea ariaLabel={t('erp:finance.accessibility.contentBody', '수입·지출 관리 본문')}>
+    <AdminCommonLayout title={t('erp:finance.page.title')}>
+      <ContentArea ariaLabel={t('erp:finance.accessibility.contentBody')}>
         <ErpPageShell
           className="mg-dashboard-content"
           headerSlot={renderIntegratedFinanceHeaderSlot(loading)}
           tabsSlot={renderIntegratedFinanceTabsSlot(loading)}
-          mainAriaLabel={t('erp:finance.accessibility.tabMain', '수입·지출 관리 탭 본문')}
+          mainAriaLabel={t('erp:finance.accessibility.tabMain')}
         >
           <div
             className="integrated-finance-content"
@@ -544,13 +544,13 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
           >
             {loading ? (
               <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
-                <UnifiedLoading type="inline" text={t('erp:finance.display.loadingData', '데이터를 불러오는 중…')} />
+                <UnifiedLoading type="inline" text={t('erp:finance.display.loadingData')} />
               </div>
             ) : (
               <>
                 <div className="mg-w-full mg-mb-md">
                   <ErpFilterToolbar
-                    ariaLabel={t('erp:finance.accessibility.toolbar', '수입·지출 도구')}
+                    ariaLabel={t('erp:finance.accessibility.toolbar')}
                     secondaryRow={(
                       <div className="integrated-finance__toolbar-actions">
                         <MGButton
@@ -564,9 +564,9 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                           onClick={handleSilentDashboardRefresh}
                           loading={silentListRefreshing}
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          aria-label={t('erp:finance.accessibility.refresh', '데이터 새로고침')}
+                          aria-label={t('erp:finance.accessibility.refresh')}
                         >
-                          {t('erp:finance.accessibility.refresh', '데이터 새로고침')}
+                          {t('erp:finance.accessibility.refresh')}
                         </MGButton>
                       </div>
                     )}
@@ -620,8 +620,8 @@ const OverviewTab = ({ data }) => {
   if (!data) {
     return (
       <ErpEmptyState
-        title={t('erp:finance.overview.emptyTitle', '데이터가 없습니다')}
-        description={t('erp:finance.overview.emptyDesc', '재무 개요를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.')}
+        title={t('erp:finance.overview.emptyTitle')}
+        description={t('erp:finance.overview.emptyDesc')}
       />
     );
   }
@@ -635,14 +635,14 @@ const OverviewTab = ({ data }) => {
 
   const getIncomeDescription = () => {
     const categories = Object.keys(incomeByCategory);
-    if (categories.length === 0) return t('erp:finance.overview.incomeDescFallback', '상담료, 기타수입');
+    if (categories.length === 0) return t('erp:finance.overview.incomeDescFallback');
     const labels = categories.map(getIncomeCategoryLabel);
     return [...new Set(labels)].join(', ');
   };
 
   const getExpenseDescription = () => {
     const categories = Object.keys(expenseByCategory);
-    if (categories.length === 0) return t('erp:finance.overview.expenseDescFallback', '급여, 임대료, 관리비, 세금');
+    if (categories.length === 0) return t('erp:finance.overview.expenseDescFallback');
     const labels = categories.map(getExpenseCategoryLabel);
     return [...new Set(labels)].join(', ');
   };
@@ -659,30 +659,30 @@ const OverviewTab = ({ data }) => {
   return (
     <div className="integrated-finance-overview">
       <DashboardSection
-        title={t('erp:finance.overview.sectionFinancial', '재무 개요')}
+        title={t('erp:finance.overview.sectionFinancial')}
         icon={<BarChart3 size={24} />}
       >
         <div className="mg-dashboard-stats">
           <ErpKpiStatCard
-            title={t('erp:finance.overview.kpiTotalItems', '총 아이템 수')}
+            title={t('erp:finance.overview.kpiTotalItems')}
             value={data.erpStats?.totalItems || 0}
             formatType={ERP_NUMBER_FORMAT.COUNT}
-            trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: t('erp:finance.overview.trendRegisteredItems', '등록된 비품 수') }}
+            trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: t('erp:finance.overview.trendRegisteredItems') }}
           />
           <ErpKpiStatCard
-            title={t('erp:finance.overview.kpiPendingApprovals', '승인 대기 요청')}
+            title={t('erp:finance.overview.kpiPendingApprovals')}
             value={data.erpStats?.pendingRequests || 0}
             formatType={ERP_NUMBER_FORMAT.COUNT}
-            trend={{ direction: ERP_KPI_TREND_DIRECTION.DOWN, label: t('erp:finance.overview.trendAdminPending', '관리자 승인 대기') }}
+            trend={{ direction: ERP_KPI_TREND_DIRECTION.DOWN, label: t('erp:finance.overview.trendAdminPending') }}
           />
           <ErpKpiStatCard
-            title={t('erp:finance.overview.kpiTotalOrders', '총 주문 수')}
+            title={t('erp:finance.overview.kpiTotalOrders')}
             value={data.erpStats?.totalOrders || 0}
             formatType={ERP_NUMBER_FORMAT.COUNT}
-            trend={{ direction: ERP_KPI_TREND_DIRECTION.UP, label: t('erp:finance.overview.trendCompletedOrders', '완료된 구매 주문') }}
+            trend={{ direction: ERP_KPI_TREND_DIRECTION.UP, label: t('erp:finance.overview.trendCompletedOrders') }}
           />
           <ErpKpiStatCard
-            title={t('erp:finance.overview.kpiBudgetUsage', '예산 사용률')}
+            title={t('erp:finance.overview.kpiBudgetUsage')}
             value={budgetPctParsed}
             formatType={ERP_NUMBER_FORMAT.PERCENT}
             trend={{
@@ -694,33 +694,33 @@ const OverviewTab = ({ data }) => {
       </DashboardSection>
 
       <DashboardSection
-        title={t('erp:finance.overview.sectionMapping', '매핑시스템 연동 상태')}
+        title={t('erp:finance.overview.sectionMapping')}
         icon={<BarChart3 size={24} />}
       >
         <div className="mg-dashboard-stats">
           <ErpKpiStatCard
-            title={t('erp:finance.overview.kpiMappingDepositIncome', '매핑 입금확인 수입')}
-            value={financialData.incomeByCategory?.CONSULTATION ?? financialData.incomeByCategory?.[t('erp:finance.overview.rowKeyIncomeConsult', '상담료')] ?? 0}
+            title={t('erp:finance.overview.kpiMappingDepositIncome')}
+            value={financialData.incomeByCategory?.CONSULTATION ?? financialData.incomeByCategory?.[t('erp:finance.overview.rowKeyIncomeConsult')] ?? 0}
             formatType={ERP_NUMBER_FORMAT.CURRENCY}
             variant={ERP_KPI_STAT_VARIANT.PRIMARY}
           />
           <ErpKpiStatCard
-            title={t('erp:finance.overview.kpiMappingRefundExpense', '매핑 환불처리 지출')}
-            value={financialData.expenseByCategory?.CONSULTATION ?? financialData.expenseByCategory?.[t('erp:finance.overview.rowKeyExpenseOther', '기타')] ?? 0}
+            title={t('erp:finance.overview.kpiMappingRefundExpense')}
+            value={financialData.expenseByCategory?.CONSULTATION ?? financialData.expenseByCategory?.[t('erp:finance.overview.rowKeyExpenseOther')] ?? 0}
             formatType={ERP_NUMBER_FORMAT.CURRENCY}
             variant={ERP_KPI_STAT_VARIANT.WARNING}
           />
           <ErpKpiStatCard
-            title={t('erp:finance.overview.kpiMappingTxTotal', '총 연동 거래 건수')}
+            title={t('erp:finance.overview.kpiMappingTxTotal')}
             value={financialData.transactionCount || 0}
             formatType={ERP_NUMBER_FORMAT.COUNT}
           />
           <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue integrated-finance-mapping-cta">
             <div className="mg-v2-ad-b0kla__chart-title integrated-finance-mapping-cta__title">
-              {t('erp:finance.overview.mappingLiveTitle', '실시간 연동')}
+              {t('erp:finance.overview.mappingLiveTitle')}
             </div>
             <div className="mg-v2-ad-b0kla__chart-desc">
-              {t('erp:finance.overview.mappingCtaSubtitle', '매핑 ↔ ERP 자동 동기화')}
+              {t('erp:finance.overview.mappingCtaSubtitle')}
             </div>
             <MGButton
               variant="outline"
@@ -735,37 +735,37 @@ const OverviewTab = ({ data }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => navigate('/admin/mapping-management')}
             >
-              {t('erp:finance.overview.mappingCtaButton', '매핑시스템 확인')}
+              {t('erp:finance.overview.mappingCtaButton')}
             </MGButton>
           </div>
         </div>
       </DashboardSection>
 
       <DashboardSection
-        title={t('erp:finance.overview.sectionSummary', '수입/지출 요약')}
+        title={t('erp:finance.overview.sectionSummary')}
         icon={<BarChart3 size={24} />}
       >
         <div className="mg-v2-erp-dashboard-kpi-grid mg-v2-erp-dashboard-kpi-grid--summary">
           <ErpKpiStatCard
-            title={t('erp:finance.overview.labelIncome', '수입')}
+            title={t('erp:finance.overview.labelIncome')}
             value={totalIncome}
             formatType={ERP_NUMBER_FORMAT.CURRENCY}
             variant={ERP_KPI_STAT_VARIANT.PRIMARY}
             trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: getIncomeDescription() }}
           />
           <ErpKpiStatCard
-            title={t('erp:finance.overview.labelExpense', '지출')}
+            title={t('erp:finance.overview.labelExpense')}
             value={totalExpense}
             formatType={ERP_NUMBER_FORMAT.CURRENCY}
             variant={ERP_KPI_STAT_VARIANT.WARNING}
             trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: getExpenseDescription() }}
           />
           <ErpKpiStatCard
-            title={t('erp:finance.overview.labelNetProfit', '순이익')}
+            title={t('erp:finance.overview.labelNetProfit')}
             value={netProfit}
             formatType={ERP_NUMBER_FORMAT.CURRENCY}
             variant={netProfit >= 0 ? ERP_KPI_STAT_VARIANT.PRIMARY : ERP_KPI_STAT_VARIANT.WARNING}
-            trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: t('erp:finance.overview.netProfitTrendHint', '수입 − 지출 · 손익 현황 탭에서 항목별 비용 확인') }}
+            trend={{ direction: ERP_KPI_TREND_DIRECTION.NEUTRAL, label: t('erp:finance.overview.netProfitTrendHint') }}
           />
         </div>
       </DashboardSection>
@@ -792,7 +792,7 @@ const BalanceSheetTab = () => {
     } catch (err) {
       console.error('Balance sheet fetch error:', err);
       setError(err);
-      notificationManager.show(t('erp:finance.notifications.balanceSheetLoadFailed', '대차대조표를 불러오는데 실패했습니다.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.balanceSheetLoadFailed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -814,13 +814,13 @@ const BalanceSheetTab = () => {
   if (loading) {
     return (
       <div>
-        <DashboardSection title={t('erp:finance.financialStatements.balanceSheet', '대차대조표')} icon={<PieChart size={24} />}>
+        <DashboardSection title={t('erp:finance.financialStatements.balanceSheet')} icon={<PieChart size={24} />}>
           <div className="mg-v2-mb-md">
-            <label className="mg-v2-label">{t('erp:finance.financialStatements.asOfDate', '기준일자')}</label>
+            <label className="mg-v2-label">{t('erp:finance.financialStatements.asOfDate')}</label>
             <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
           </div>
           <div className="finance-statement-panel" role="status" aria-live="polite" aria-busy="true">
-            <UnifiedLoading type="inline" text={t('erp:finance.display.loadingData', '데이터를 불러오는 중…')} />
+            <UnifiedLoading type="inline" text={t('erp:finance.display.loadingData')} />
           </div>
         </DashboardSection>
       </div>
@@ -830,14 +830,14 @@ const BalanceSheetTab = () => {
   if (error) {
     return (
       <div>
-        <DashboardSection title={t('erp:finance.financialStatements.balanceSheet', '대차대조표')} icon={<PieChart size={24} />}>
+        <DashboardSection title={t('erp:finance.financialStatements.balanceSheet')} icon={<PieChart size={24} />}>
           <div className="mg-v2-mb-md">
-            <label className="mg-v2-label">{t('erp:finance.financialStatements.asOfDate', '기준일자')}</label>
+            <label className="mg-v2-label">{t('erp:finance.financialStatements.asOfDate')}</label>
             <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
           </div>
           <ErpEmptyState
-            title={t('erp:finance.financialStatements.loadErrorTitle', '데이터를 불러오지 못했습니다')}
-            description={t('erp:finance.financialStatements.loadErrorDesc', '일시적인 오류일 수 있습니다. 아래 버튼으로 다시 시도해 주세요.')}
+            title={t('erp:finance.financialStatements.loadErrorTitle')}
+            description={t('erp:finance.financialStatements.loadErrorDesc')}
             actionSlot={
               <MGButton
                 variant="primary"
@@ -851,7 +851,7 @@ const BalanceSheetTab = () => {
                 loading={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                {t('erp:finance.financialStatements.retry', '다시 불러오기')}
+                {t('erp:finance.financialStatements.retry')}
               </MGButton>
             }
           />
@@ -863,14 +863,14 @@ const BalanceSheetTab = () => {
   if (emptyState) {
     return (
       <div>
-        <DashboardSection title={t('erp:finance.financialStatements.balanceSheet', '대차대조표')} icon={<PieChart size={24} />}>
+        <DashboardSection title={t('erp:finance.financialStatements.balanceSheet')} icon={<PieChart size={24} />}>
           <div className="mg-v2-mb-md">
-            <label className="mg-v2-label">{t('erp:finance.financialStatements.asOfDate', '기준일자')}</label>
+            <label className="mg-v2-label">{t('erp:finance.financialStatements.asOfDate')}</label>
             <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
           </div>
           <ErpEmptyState
-            title={t('erp:finance.financialStatements.noDataTitle', '해당 기간 데이터가 없습니다')}
-            description={t('erp:finance.financialStatements.noDataDescAsOf', '선택한 기준일자에 등록된 내역이 없습니다.')}
+            title={t('erp:finance.financialStatements.noDataTitle')}
+            description={t('erp:finance.financialStatements.noDataDescAsOf')}
           />
         </DashboardSection>
       </div>
@@ -888,9 +888,9 @@ const BalanceSheetTab = () => {
 
   return (
     <div>
-      <DashboardSection title={t('erp:finance.financialStatements.balanceSheet', '대차대조표')} icon={<PieChart size={24} />}>
+      <DashboardSection title={t('erp:finance.financialStatements.balanceSheet')} icon={<PieChart size={24} />}>
         <div className="mg-v2-mb-md">
-          <label className="mg-v2-label">{t('erp:finance.financialStatements.asOfDate', '기준일자')}</label>
+          <label className="mg-v2-label">{t('erp:finance.financialStatements.asOfDate')}</label>
           <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
         </div>
         <p className="mg-v2-caption integrated-finance-balance-sheet-hint integrated-finance-caption-box">
@@ -911,7 +911,7 @@ const BalanceSheetTab = () => {
               <div className="balance-sheet-items">
                 {assetsItems.length > 0 ? assetsItems.map((item, idx) => (
                   <div key={item.accountId ?? idx} className="balance-sheet-item">
-                    <ErpSafeText value={item.accountName} fallback={t('erp:finance.fallback.accountName', '계정')} />
+                    <ErpSafeText value={item.accountName} fallback={t('erp:finance.fallback.accountName')} />
                     {': '}
                     <ErpSafeNumber value={item.balance ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </div>
@@ -932,7 +932,7 @@ const BalanceSheetTab = () => {
               <div className="balance-sheet-items">
                 {liabilitiesItems.length > 0 ? liabilitiesItems.map((item, idx) => (
                   <div key={item.accountId ?? idx} className="balance-sheet-item">
-                    <ErpSafeText value={item.accountName} fallback={t('erp:finance.fallback.accountName', '계정')} />
+                    <ErpSafeText value={item.accountName} fallback={t('erp:finance.fallback.accountName')} />
                     {': '}
                     <ErpSafeNumber value={item.balance ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </div>
@@ -953,7 +953,7 @@ const BalanceSheetTab = () => {
               <div className="balance-sheet-items">
                 {equityItems.length > 0 ? equityItems.map((item, idx) => (
                   <div key={item.accountId ?? idx} className="balance-sheet-item">
-                    <ErpSafeText value={item.accountName} fallback={t('erp:finance.fallback.accountName', '계정')} />
+                    <ErpSafeText value={item.accountName} fallback={t('erp:finance.fallback.accountName')} />
                     {': '}
                     <ErpSafeNumber value={item.balance ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </div>
@@ -968,7 +968,7 @@ const BalanceSheetTab = () => {
         </div>
         <div className={`mg-v2-ad-b0kla__card balance-sheet-card balance-verification-card ${isBalanced ? 'mg-v2-ad-b0kla__card-accent' : 'mg-v2-ad-b0kla__card-accent--orange'}`}>
           <h4 className="balance-sheet-card-title">
-            {isBalanced ? t('erp:finance.balanceSheetStatus.balanced', '대차대조표 균형') : t('erp:finance.balanceSheetStatus.unbalanced', '대차대조표 불균형')}
+            {isBalanced ? t('erp:finance.balanceSheetStatus.balanced') : t('erp:finance.balanceSheetStatus.unbalanced')}
           </h4>
           <div className="balance-sheet-items balance-verification-content">
             자산 총계:{' '}
@@ -1020,7 +1020,7 @@ const IncomeStatementTab = () => {
     } catch (err) {
       console.error('Income statement fetch error:', err);
       setError(err);
-      notificationManager.show(t('erp:finance.notifications.incomeStatementLoadFailed', '손익계산서를 불러오는데 실패했습니다.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.incomeStatementLoadFailed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -1042,21 +1042,21 @@ const IncomeStatementTab = () => {
   if (loading) {
     return (
       <div>
-        <DashboardSection title={t('erp:finance.financialStatements.incomeStatement', '손익계산서')} icon={<BarChart3 size={24} />}>
+        <DashboardSection title={t('erp:finance.financialStatements.incomeStatement')} icon={<BarChart3 size={24} />}>
           <div className="mg-v2-mb-md">
             <div className="mg-v2-form-row">
               <div className="mg-v2-form-group">
-                <label className="mg-v2-label">{t('erp:finance.financialStatements.startDate', '시작일')}</label>
+                <label className="mg-v2-label">{t('erp:finance.financialStatements.startDate')}</label>
                 <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mg-v2-input" />
               </div>
               <div className="mg-v2-form-group">
-                <label className="mg-v2-label">{t('erp:finance.financialStatements.endDate', '종료일')}</label>
+                <label className="mg-v2-label">{t('erp:finance.financialStatements.endDate')}</label>
                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mg-v2-input" />
               </div>
             </div>
           </div>
           <div className="finance-statement-panel" role="status" aria-live="polite" aria-busy="true">
-            <UnifiedLoading type="inline" text={t('erp:finance.display.loadingData', '데이터를 불러오는 중…')} />
+            <UnifiedLoading type="inline" text={t('erp:finance.display.loadingData')} />
           </div>
         </DashboardSection>
       </div>
@@ -1066,22 +1066,22 @@ const IncomeStatementTab = () => {
   if (error) {
     return (
       <div>
-        <DashboardSection title={t('erp:finance.financialStatements.incomeStatement', '손익계산서')} icon={<BarChart3 size={24} />}>
+        <DashboardSection title={t('erp:finance.financialStatements.incomeStatement')} icon={<BarChart3 size={24} />}>
           <div className="mg-v2-mb-md">
             <div className="mg-v2-form-row">
               <div className="mg-v2-form-group">
-                <label className="mg-v2-label">{t('erp:finance.financialStatements.startDate', '시작일')}</label>
+                <label className="mg-v2-label">{t('erp:finance.financialStatements.startDate')}</label>
                 <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mg-v2-input" />
               </div>
               <div className="mg-v2-form-group">
-                <label className="mg-v2-label">{t('erp:finance.financialStatements.endDate', '종료일')}</label>
+                <label className="mg-v2-label">{t('erp:finance.financialStatements.endDate')}</label>
                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mg-v2-input" />
               </div>
             </div>
           </div>
           <ErpEmptyState
-            title={t('erp:finance.financialStatements.loadErrorTitle', '데이터를 불러오지 못했습니다')}
-            description={t('erp:finance.financialStatements.loadErrorDesc', '일시적인 오류일 수 있습니다. 아래 버튼으로 다시 시도해 주세요.')}
+            title={t('erp:finance.financialStatements.loadErrorTitle')}
+            description={t('erp:finance.financialStatements.loadErrorDesc')}
             actionSlot={
               <MGButton
                 variant="primary"
@@ -1095,7 +1095,7 @@ const IncomeStatementTab = () => {
                 loading={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                {t('erp:finance.financialStatements.retry', '다시 불러오기')}
+                {t('erp:finance.financialStatements.retry')}
               </MGButton>
             }
           />
@@ -1107,22 +1107,22 @@ const IncomeStatementTab = () => {
   if (emptyState) {
     return (
       <div>
-        <DashboardSection title={t('erp:finance.financialStatements.incomeStatement', '손익계산서')} icon={<BarChart3 size={24} />}>
+        <DashboardSection title={t('erp:finance.financialStatements.incomeStatement')} icon={<BarChart3 size={24} />}>
           <div className="mg-v2-mb-md">
             <div className="mg-v2-form-row">
               <div className="mg-v2-form-group">
-                <label className="mg-v2-label">{t('erp:finance.financialStatements.startDate', '시작일')}</label>
+                <label className="mg-v2-label">{t('erp:finance.financialStatements.startDate')}</label>
                 <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mg-v2-input" />
               </div>
               <div className="mg-v2-form-group">
-                <label className="mg-v2-label">{t('erp:finance.financialStatements.endDate', '종료일')}</label>
+                <label className="mg-v2-label">{t('erp:finance.financialStatements.endDate')}</label>
                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mg-v2-input" />
               </div>
             </div>
           </div>
           <ErpEmptyState
-            title={t('erp:finance.financialStatements.noDataTitle', '해당 기간 데이터가 없습니다')}
-            description={t('erp:finance.financialStatements.noDataDescPeriod', '선택한 기간에 등록된 내역이 없습니다.')}
+            title={t('erp:finance.financialStatements.noDataTitle')}
+            description={t('erp:finance.financialStatements.noDataDescPeriod')}
           />
         </DashboardSection>
       </div>
@@ -1137,18 +1137,18 @@ const IncomeStatementTab = () => {
 
   return (
     <div>
-      <DashboardSection title={t('erp:finance.financialStatements.incomeStatement', '손익계산서')} icon={<BarChart3 size={24} />}>
+      <DashboardSection title={t('erp:finance.financialStatements.incomeStatement')} icon={<BarChart3 size={24} />}>
         <p className="mg-v2-caption integrated-finance-caption--lead">
           비용·수익 항목별 내역은 아래 카드에서 확인할 수 있습니다. (ERP 원장 기준)
         </p>
         <div className="mg-v2-mb-md">
           <div className="mg-v2-form-row">
             <div className="mg-v2-form-group">
-              <label className="mg-v2-label">{t('erp:finance.financialStatements.startDate', '시작일')}</label>
+              <label className="mg-v2-label">{t('erp:finance.financialStatements.startDate')}</label>
               <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mg-v2-input" />
             </div>
             <div className="mg-v2-form-group">
-              <label className="mg-v2-label">{t('erp:finance.financialStatements.endDate', '종료일')}</label>
+              <label className="mg-v2-label">{t('erp:finance.financialStatements.endDate')}</label>
               <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mg-v2-input" />
             </div>
           </div>
@@ -1168,7 +1168,7 @@ const IncomeStatementTab = () => {
               {revenueItems.length > 0 ? revenueItems.map((item, idx) => (
                 <div key={item.accountId ?? idx} className="income-statement-item">
                   <span>
-                    <ErpSafeText value={item.accountName} fallback={t('erp:finance.fallback.accountName', '계정')} />
+                    <ErpSafeText value={item.accountName} fallback={t('erp:finance.fallback.accountName')} />
                     :
                   </span>
                   <span className="income-statement-item-value">
@@ -1195,7 +1195,7 @@ const IncomeStatementTab = () => {
               {expensesItems.length > 0 ? expensesItems.map((item, idx) => (
                 <div key={item.accountId ?? idx} className="income-statement-item">
                   <span>
-                    <ErpSafeText value={item.accountName} fallback={t('erp:finance.fallback.accountName', '계정')} />
+                    <ErpSafeText value={item.accountName} fallback={t('erp:finance.fallback.accountName')} />
                     :
                   </span>
                   <span className="income-statement-item-value">
@@ -1289,7 +1289,7 @@ const CashFlowStatementTab = () => {
       setCashFlowData(mapped);
     } catch (err) {
       console.error('Cash flow statement fetch error:', err);
-      notificationManager.show(t('erp:finance.notifications.cashFlowLoadFailed', '현금흐름표를 불러오는데 실패했습니다.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.cashFlowLoadFailed'), 'error');
       setCashFlowData(null);
     } finally {
       setLoading(false);
@@ -1299,7 +1299,7 @@ const CashFlowStatementTab = () => {
   if (loading) {
     return (
       <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
-        <UnifiedLoading type="inline" text={t('erp:finance.loading.cashFlow', '현금흐름표를 불러오는 중...')} />
+        <UnifiedLoading type="inline" text={t('erp:finance.loading.cashFlow')} />
       </div>
     );
   }
@@ -1307,13 +1307,13 @@ const CashFlowStatementTab = () => {
   return (
     <div>
       <DashboardSection
-        title={t('erp:finance.cashFlowSection.dashboardTitle', '현금흐름표')}
+        title={t('erp:finance.cashFlowSection.dashboardTitle')}
         icon={<TrendingUp size={24} />}
       >
       <div className="mg-v2-mb-md">
         <div className="mg-v2-form-row">
           <div className="mg-v2-form-group">
-            <label className="mg-v2-label">{t('erp:finance.financialStatements.startDate', '시작일')}</label>
+            <label className="mg-v2-label">{t('erp:finance.financialStatements.startDate')}</label>
             <input
               type="date"
               value={startDate}
@@ -1322,7 +1322,7 @@ const CashFlowStatementTab = () => {
             />
           </div>
           <div className="mg-v2-form-group">
-            <label className="mg-v2-label">{t('erp:finance.financialStatements.endDate', '종료일')}</label>
+            <label className="mg-v2-label">{t('erp:finance.financialStatements.endDate')}</label>
             <input
               type="date"
               value={endDate}
@@ -1445,7 +1445,7 @@ const DailyReportTab = ({ period }) => {
         setReportData(result);
       }
     } catch (err) {
-      setError(t('erp:finance.errors.dailyReportFetch', '일간 리포트를 불러오는 중 오류가 발생했습니다.'));
+      setError(t('erp:finance.errors.dailyReportFetch'));
       console.error('Daily report fetch error:', err);
     } finally {
       setLoading(false);
@@ -1455,7 +1455,7 @@ const DailyReportTab = ({ period }) => {
   if (loading) {
     return (
       <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
-        <UnifiedLoading type="inline" text={t('erp:finance.loading.dailyReport', '일간 리포트 데이터를 불러오는 중...')} />
+        <UnifiedLoading type="inline" text={t('erp:finance.loading.dailyReport')} />
       </div>
     );
   }
@@ -1463,7 +1463,7 @@ const DailyReportTab = ({ period }) => {
   if (error) {
     return (
       <ErpEmptyState
-        title={t('erp:finance.report.emptyTitle', '리포트를 불러오지 못했습니다')}
+        title={t('erp:finance.report.emptyTitle')}
         actionSlot={<SafeErrorDisplay error={error} variant="inline" />}
       />
     );
@@ -1472,7 +1472,7 @@ const DailyReportTab = ({ period }) => {
   return (
     <div>
       <DashboardSection
-        title={t('erp:finance.report.dailySectionTitle', '일간 재무 리포트')}
+        title={t('erp:finance.report.dailySectionTitle')}
         icon={<Calendar size={24} />}
       >
       
@@ -1584,7 +1584,7 @@ const MonthlyReportTab = ({ period }) => {
         setReportData(result);
       }
     } catch (err) {
-      setError(t('erp:finance.errors.monthlyReportFetch', '월간 리포트를 불러오는 중 오류가 발생했습니다.'));
+      setError(t('erp:finance.errors.monthlyReportFetch'));
       console.error('Monthly report fetch error:', err);
     } finally {
       setLoading(false);
@@ -1616,13 +1616,13 @@ const MonthlyReportTab = ({ period }) => {
   };
 
   const formatMonthYear = (year, month) => {
-    return `${year}${t('erp:finance.report.yearSuffix', '년')} ${month}${t('erp:finance.report.monthSuffix', '월')}`;
+    return `${year}${t('erp:finance.report.yearSuffix')} ${month}${t('erp:finance.report.monthSuffix')}`;
   };
 
   if (loading) {
     return (
       <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
-        <UnifiedLoading type="inline" text={t('erp:finance.loading.monthlyReport', '월간 리포트 데이터를 불러오는 중...')} />
+        <UnifiedLoading type="inline" text={t('erp:finance.loading.monthlyReport')} />
       </div>
     );
   }
@@ -1630,7 +1630,7 @@ const MonthlyReportTab = ({ period }) => {
   if (error) {
     return (
       <ErpEmptyState
-        title={t('erp:finance.report.emptyTitle', '리포트를 불러오지 못했습니다')}
+        title={t('erp:finance.report.emptyTitle')}
         actionSlot={<SafeErrorDisplay error={error} variant="inline" />}
       />
     );
@@ -1648,12 +1648,12 @@ const MonthlyReportTab = ({ period }) => {
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handlePreviousMonth}
-              title={t('erp:finance.report.tooltipPrevMonth', '이전 달')}
+              title={t('erp:finance.report.tooltipPrevMonth')}
             >
-              {t('erp:finance.report.btnPrev', '이전')}
+              {t('erp:finance.report.btnPrev')}
             </MGButton>
             <span>
-              {t('erp:finance.report.monthlyHeading', '월간 재무 리포트 - ')}
+              {t('erp:finance.report.monthlyHeading')}
               {formatMonthYear(currentMonth.year, currentMonth.month)}
             </span>
             <MGButton
@@ -1663,9 +1663,9 @@ const MonthlyReportTab = ({ period }) => {
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleNextMonth}
-              title={t('erp:finance.report.tooltipNextMonth', '다음 달')}
+              title={t('erp:finance.report.tooltipNextMonth')}
             >
-              {t('erp:finance.report.btnNext', '다음')}
+              {t('erp:finance.report.btnNext')}
             </MGButton>
           </div>
         }
@@ -1778,7 +1778,7 @@ const YearlyReportTab = ({ period }) => {
         setReportData(result);
       }
     } catch (err) {
-      setError(t('erp:finance.errors.yearlyReportFetch', '년간 리포트를 불러오는 중 오류가 발생했습니다.'));
+      setError(t('erp:finance.errors.yearlyReportFetch'));
       console.error('Yearly report fetch error:', err);
     } finally {
       setLoading(false);
@@ -1796,7 +1796,7 @@ const YearlyReportTab = ({ period }) => {
   if (loading) {
     return (
       <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
-        <UnifiedLoading type="inline" text={t('erp:finance.loading.yearlyReport', '년간 리포트 데이터를 불러오는 중...')} />
+        <UnifiedLoading type="inline" text={t('erp:finance.loading.yearlyReport')} />
       </div>
     );
   }
@@ -1804,7 +1804,7 @@ const YearlyReportTab = ({ period }) => {
   if (error) {
     return (
       <ErpEmptyState
-        title={t('erp:finance.report.emptyTitle', '리포트를 불러오지 못했습니다')}
+        title={t('erp:finance.report.emptyTitle')}
         actionSlot={<SafeErrorDisplay error={error} variant="inline" />}
       />
     );
@@ -1822,14 +1822,14 @@ const YearlyReportTab = ({ period }) => {
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handlePreviousYear}
-              title={t('erp:finance.report.tooltipPrevYear', '전년도')}
+              title={t('erp:finance.report.tooltipPrevYear')}
             >
-              {t('erp:finance.report.btnPrev', '이전')}
+              {t('erp:finance.report.btnPrev')}
             </MGButton>
             <span>
-              {t('erp:finance.report.yearlyHeading', '년간 재무 리포트 - ')}
+              {t('erp:finance.report.yearlyHeading')}
               {currentYear}
-              {t('erp:finance.report.yearSuffix', '년')}
+              {t('erp:finance.report.yearSuffix')}
             </span>
             <MGButton
               variant="outline"
@@ -1838,9 +1838,9 @@ const YearlyReportTab = ({ period }) => {
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleNextYear}
-              title={t('erp:finance.report.tooltipNextYear', '다음 년도')}
+              title={t('erp:finance.report.tooltipNextYear')}
             >
-              {t('erp:finance.report.btnNext', '다음')}
+              {t('erp:finance.report.btnNext')}
             </MGButton>
           </div>
         }
@@ -1924,7 +1924,7 @@ const JournalEntriesTab = () => {
       }
     } catch (err) {
       console.error('Journal entries fetch error:', err);
-      notificationManager.show(t('erp:finance.notifications.journalListLoadFailed', '거래 목록을 불러오는데 실패했습니다.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.journalListLoadFailed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -1934,12 +1934,12 @@ const JournalEntriesTab = () => {
     try {
       const result = await StandardizedApi.put(ERP_API.JOURNAL_ENTRY_APPROVE(id), {});
       if (!isApiEnvelopeFailure(result)) {
-        notificationManager.show(t('erp:finance.notifications.journalPostSuccess', '거래가 반영되었습니다.'), 'success');
+        notificationManager.show(t('erp:finance.notifications.journalPostSuccess'), 'success');
         fetchJournalEntries();
       }
     } catch (err) {
       console.error('Approve error:', err);
-      notificationManager.show(t('erp:finance.notifications.journalPostFailed', '거래 반영에 실패했습니다. 다시 시도해 주세요.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.journalPostFailed'), 'error');
     }
   };
 
@@ -1947,19 +1947,19 @@ const JournalEntriesTab = () => {
     try {
       const result = await StandardizedApi.put(ERP_API.JOURNAL_ENTRY_POST(id), {});
       if (!isApiEnvelopeFailure(result)) {
-        notificationManager.show(t('erp:finance.notifications.journalPostSuccess', '거래가 반영되었습니다.'), 'success');
+        notificationManager.show(t('erp:finance.notifications.journalPostSuccess'), 'success');
         fetchJournalEntries();
       }
     } catch (err) {
       console.error('Post error:', err);
-      notificationManager.show(t('erp:finance.notifications.journalPostFailed', '거래 반영에 실패했습니다. 다시 시도해 주세요.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.journalPostFailed'), 'error');
     }
   };
 
   if (loading) {
     return (
       <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
-        <UnifiedLoading type="inline" text={t('erp:finance.loading.journalList', '거래 목록을 불러오는 중...')} />
+        <UnifiedLoading type="inline" text={t('erp:finance.loading.journalList')} />
       </div>
     );
   }
@@ -1985,7 +1985,7 @@ const JournalEntriesTab = () => {
             onClick={() => setShowHelp(!showHelp)}
             preventDoubleClick={false}
           >
-            <span>{showHelp ? t('erp:finance.journalHelp.expanded', '거래 정리란? (접기)') : t('erp:finance.journalHelp.collapsed', '거래 정리란? (펼치기)')}</span>
+            <span>{showHelp ? t('erp:finance.journalHelp.expanded') : t('erp:finance.journalHelp.collapsed')}</span>
           </MGButton>
           {showHelp && (
             <div className="integrated-finance-journal-help-body">
@@ -2023,18 +2023,18 @@ const JournalEntriesTab = () => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setShowCreateModal(true)}
           >
-            {t('erp:finance.headerActions.registerEntry', '거래 등록')}
+            {t('erp:finance.headerActions.registerEntry')}
           </MGButton>
         </div>
         <div className="mg-v2-table-container">
-          <table className="mg-table" data-label={t('erp:finance.tableCell.entryList', '거래 목록')}>
+          <table className="mg-table" data-label={t('erp:finance.tableCell.entryList')}>
             <thead>
               <tr>
                 <th>거래번호</th>
                 <th>기준일자</th>
                 <th>차변합계</th>
                 <th>대변합계</th>
-                <th>{t('common.labels.status', '상태')}</th>
+                <th>{t('common.labels.status')}</th>
                 <th>작업</th>
               </tr>
             </thead>
@@ -2048,16 +2048,16 @@ const JournalEntriesTab = () => {
               ) : (
                 entries.map(entry => (
                   <tr key={entry.id}>
-                    <td data-label={t('erp:finance.tableCell.entryNumber', '거래번호')}>{entry.entryNumber}</td>
-                    <td data-label={t('erp:finance.financialStatements.asOfDate', '기준일자')}>{entry.entryDate}</td>
-                    <td data-label={t('erp:finance.tableCell.totalDebit', '차변합계')}>{formatCurrency(entry.totalDebit || 0)}</td>
-                    <td data-label={t('erp:finance.tableCell.totalCredit', '대변합계')}>{formatCurrency(entry.totalCredit || 0)}</td>
-                    <td data-label={t('erp:finance.tableCell.status', '상태')}>
+                    <td data-label={t('erp:finance.tableCell.entryNumber')}>{entry.entryNumber}</td>
+                    <td data-label={t('erp:finance.financialStatements.asOfDate')}>{entry.entryDate}</td>
+                    <td data-label={t('erp:finance.tableCell.totalDebit')}>{formatCurrency(entry.totalDebit || 0)}</td>
+                    <td data-label={t('erp:finance.tableCell.totalCredit')}>{formatCurrency(entry.totalCredit || 0)}</td>
+                    <td data-label={t('erp:finance.tableCell.status')}>
                       <span className={`mg-v2-badge mg-v2-badge--${entry.entryStatus?.toLowerCase() || 'default'}`}>
                         {formatJournalEntryStatus(entry.entryStatus)}
                       </span>
                     </td>
-                    <td data-label={t('erp:finance.tableCell.action', '작업')}>
+                    <td data-label={t('erp:finance.tableCell.action')}>
                       <div className={COMMON_CSS_CLASSES.ACTION_BUTTONS}>
                         <MGButton
                           variant="outline"
@@ -2143,7 +2143,7 @@ const LedgersTab = () => {
         setAccountList(Array.isArray(list) ? list : []);
       } catch (err) {
         console.error('계좌 목록 로드 실패:', err);
-        notificationManager.show(t('erp:finance.notifications.bankAccountsLoadFailed', '계좌 목록을 불러오는데 실패했습니다.'), 'error');
+        notificationManager.show(t('erp:finance.notifications.bankAccountsLoadFailed'), 'error');
       }
     };
     loadAccounts();
@@ -2175,7 +2175,7 @@ const LedgersTab = () => {
       }
     } catch (err) {
       console.error('Ledger fetch error:', err);
-      notificationManager.show(t('erp:finance.notifications.ledgersLoadFailed', '계정별 내역을 불러오는데 실패했습니다.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.ledgersLoadFailed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -2190,7 +2190,7 @@ const LedgersTab = () => {
               className="mg-v2-input"
               value={selectedAccountId ?? ''}
               onChange={(e) => setSelectedAccountId(e.target.value ? Number.parseInt(e.target.value, 10) : null)}
-              aria-label={t('erp:finance.accessibility.selectBankAccount', '계좌 선택')}
+              aria-label={t('erp:finance.accessibility.selectBankAccount')}
             >
               <option value="">계좌를 선택하세요</option>
               {accountList.map((acc) => (
@@ -2202,14 +2202,14 @@ const LedgersTab = () => {
             <input
               type="date"
               className="mg-v2-input"
-              placeholder={t('erp:finance.financialStatements.startDate', '시작일')}
+              placeholder={t('erp:finance.financialStatements.startDate')}
               value={periodStart}
               onChange={(e) => setPeriodStart(e.target.value)}
             />
             <input
               type="date"
               className="mg-v2-input"
-              placeholder={t('erp:finance.financialStatements.endDate', '종료일')}
+              placeholder={t('erp:finance.financialStatements.endDate')}
               value={periodEnd}
               onChange={(e) => setPeriodEnd(e.target.value)}
             />
@@ -2229,7 +2229,7 @@ const LedgersTab = () => {
         
         {ledgers.length > 0 ? (
           <div className="mg-v2-table-container">
-            <table className="mg-table" data-label={t('erp:finance.tableCell.ledgerList', '계정별 내역')}>
+            <table className="mg-table" data-label={t('erp:finance.tableCell.ledgerList')}>
               <thead>
                 <tr>
                   <th>계정과목</th>
@@ -2248,13 +2248,13 @@ const LedgersTab = () => {
                     className="integrated-finance-table-row--clickable"
                     onClick={() => { setSelectedLedger(ledger); setShowLedgerDetailModal(true); }}
                   >
-                    <td data-label={t('erp:finance.tableCell.accountSubject', '계정과목')}>{ledger.accountId}</td>
-                    <td data-label={t('erp:finance.tableCell.periodStart', '기간 시작')}>{ledger.periodStart}</td>
-                    <td data-label={t('erp:finance.tableCell.periodEnd', '기간 종료')}>{ledger.periodEnd}</td>
-                    <td data-label={t('erp:finance.tableCell.openingBalance', '기초잔액')}>{formatCurrency(ledger.openingBalance || 0)}</td>
-                    <td data-label={t('erp:finance.tableCell.totalDebit', '차변합계')}>{formatCurrency(ledger.totalDebit || 0)}</td>
-                    <td data-label={t('erp:finance.tableCell.totalCredit', '대변합계')}>{formatCurrency(ledger.totalCredit || 0)}</td>
-                    <td data-label={t('erp:finance.tableCell.closingBalance', '기말잔액')}>{formatCurrency(ledger.closingBalance || 0)}</td>
+                    <td data-label={t('erp:finance.tableCell.accountSubject')}>{ledger.accountId}</td>
+                    <td data-label={t('erp:finance.tableCell.periodStart')}>{ledger.periodStart}</td>
+                    <td data-label={t('erp:finance.tableCell.periodEnd')}>{ledger.periodEnd}</td>
+                    <td data-label={t('erp:finance.tableCell.openingBalance')}>{formatCurrency(ledger.openingBalance || 0)}</td>
+                    <td data-label={t('erp:finance.tableCell.totalDebit')}>{formatCurrency(ledger.totalDebit || 0)}</td>
+                    <td data-label={t('erp:finance.tableCell.totalCredit')}>{formatCurrency(ledger.totalCredit || 0)}</td>
+                    <td data-label={t('erp:finance.tableCell.closingBalance')}>{formatCurrency(ledger.closingBalance || 0)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -2305,7 +2305,7 @@ const SettlementTab = () => {
       }
     } catch (err) {
       console.error('Settlement rules fetch error:', err);
-      notificationManager.show(t('erp:finance.notifications.settlementRulesLoadFailed', '정산 규칙을 불러오는데 실패했습니다.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.settlementRulesLoadFailed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -2320,7 +2320,7 @@ const SettlementTab = () => {
       }
     } catch (err) {
       console.error('Settlements fetch error:', err);
-      notificationManager.show(t('erp:finance.notifications.settlementResultsLoadFailed', '정산 결과를 불러오는데 실패했습니다.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.settlementResultsLoadFailed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -2333,12 +2333,12 @@ const SettlementTab = () => {
         {}
       );
       if (!isApiEnvelopeFailure(result)) {
-        notificationManager.show(t('erp:finance.notifications.settlementCalcSuccess', '정산이 계산되었습니다.'), 'success');
+        notificationManager.show(t('erp:finance.notifications.settlementCalcSuccess'), 'success');
         fetchSettlements();
       }
     } catch (err) {
       console.error('Calculate error:', err);
-      notificationManager.show(t('erp:finance.notifications.settlementCalcFailed', '정산 계산에 실패했습니다.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.settlementCalcFailed'), 'error');
     }
   };
 
@@ -2347,7 +2347,7 @@ const SettlementTab = () => {
   if (loading) {
     return (
       <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
-        <UnifiedLoading type="inline" text={t('erp:finance.loading.generic', '데이터를 불러오는 중...')} />
+        <UnifiedLoading type="inline" text={t('erp:finance.loading.generic')} />
       </div>
     );
   }
@@ -2397,7 +2397,7 @@ const SettlementTab = () => {
               </MGButton>
             </div>
             <div className="mg-v2-table-container">
-              <table className="mg-table" data-label={t('erp:finance.tableCell.ruleList', '정산 규칙 목록')}>
+              <table className="mg-table" data-label={t('erp:finance.tableCell.ruleList')}>
               <thead>
                 <tr>
                   <th>규칙명</th>
@@ -2417,16 +2417,16 @@ const SettlementTab = () => {
                 ) : (
                   rules.map(rule => (
                     <tr key={rule.id}>
-                      <td data-label={t('erp:finance.tableCell.ruleName', '규칙명')}>{rule.ruleName}</td>
-                      <td data-label={t('erp:finance.tableCell.businessType', '업종 유형')}>{rule.businessType}</td>
-                      <td data-label={t('erp:finance.tableCell.settlementType', '정산 유형')}>{rule.settlementType}</td>
-                      <td data-label={t('erp:finance.tableCell.calcMethod', '계산 방법')}>{rule.calculationMethod}</td>
-                      <td data-label={t('erp:finance.tableCell.activation', '활성화')}>
+                      <td data-label={t('erp:finance.tableCell.ruleName')}>{rule.ruleName}</td>
+                      <td data-label={t('erp:finance.tableCell.businessType')}>{rule.businessType}</td>
+                      <td data-label={t('erp:finance.tableCell.settlementType')}>{rule.settlementType}</td>
+                      <td data-label={t('erp:finance.tableCell.calcMethod')}>{rule.calculationMethod}</td>
+                      <td data-label={t('erp:finance.tableCell.activation')}>
                         <span className={`mg-v2-badge ${rule.isActive ? 'mg-v2-badge--success' : 'mg-v2-badge--secondary'}`}>
-                          {rule.isActive ? t('erp:finance.activeLabel.active', '활성') : t('erp:finance.activeLabel.inactive', '비활성')}
+                          {rule.isActive ? t('erp:finance.activeLabel.active') : t('erp:finance.activeLabel.inactive')}
                         </span>
                       </td>
-                      <td data-label={t('erp:finance.tableCell.action', '작업')}>
+                      <td data-label={t('erp:finance.tableCell.action')}>
                         <MGButton
                           variant="outline"
                           size="small"
@@ -2435,7 +2435,7 @@ const SettlementTab = () => {
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => { setEditingRule(rule); setShowCreateRuleModal(true); }}
                         >
-                          {t('common.actions.edit', '수정')}
+                          {t('common.actions.edit')}
                         </MGButton>
                       </td>
                     </tr>
@@ -2454,7 +2454,7 @@ const SettlementTab = () => {
                 <input
                   type="text"
                   className="mg-v2-input"
-                  placeholder={t('erp:finance.inputPlaceholder.settlementPeriod', '정산 기간 (예: 202512)')}
+                  placeholder={t('erp:finance.inputPlaceholder.settlementPeriod')}
                   value={settlementPeriod}
                   onChange={(e) => setSettlementPeriod(e.target.value)}
                 />
@@ -2475,7 +2475,7 @@ const SettlementTab = () => {
             </div>
             
             <div className="mg-v2-table-container">
-              <table className="mg-table" data-label={t('erp:finance.tableCell.resultList', '정산 결과 목록')}>
+              <table className="mg-table" data-label={t('erp:finance.tableCell.resultList')}>
                 <thead>
                   <tr>
                     <th>정산번호</th>
@@ -2484,7 +2484,7 @@ const SettlementTab = () => {
                     <th>수수료</th>
                     <th>로열티</th>
                     <th>순정산액</th>
-                    <th>{t('common.labels.status', '상태')}</th>
+                    <th>{t('common.labels.status')}</th>
                     <th>작업</th>
                   </tr>
                 </thead>
@@ -2498,18 +2498,18 @@ const SettlementTab = () => {
                   ) : (
                     settlements.map(settlement => (
                       <tr key={settlement.id}>
-                        <td data-label={t('erp:finance.tableCell.settlementNumber', '정산번호')}>{settlement.settlementNumber}</td>
-                        <td data-label={t('erp:finance.tableCell.settlementPeriod', '정산기간')}>{settlement.settlementPeriod}</td>
-                        <td data-label={t('erp:finance.tableCell.totalRevenue', '총매출')}>{formatCurrency(settlement.totalRevenue || 0)}</td>
-                        <td data-label={t('erp:finance.tableCell.commission', '수수료')}>{formatCurrency(settlement.commissionAmount || 0)}</td>
-                        <td data-label={t('erp:finance.tableCell.royalty', '로열티')}>{formatCurrency(settlement.royaltyAmount || 0)}</td>
-                        <td data-label={t('erp:finance.tableCell.netSettlement', '순정산액')}>{formatCurrency(settlement.netSettlementAmount || 0)}</td>
-                        <td data-label={t('erp:finance.tableCell.status', '상태')}>
+                        <td data-label={t('erp:finance.tableCell.settlementNumber')}>{settlement.settlementNumber}</td>
+                        <td data-label={t('erp:finance.tableCell.settlementPeriod')}>{settlement.settlementPeriod}</td>
+                        <td data-label={t('erp:finance.tableCell.totalRevenue')}>{formatCurrency(settlement.totalRevenue || 0)}</td>
+                        <td data-label={t('erp:finance.tableCell.commission')}>{formatCurrency(settlement.commissionAmount || 0)}</td>
+                        <td data-label={t('erp:finance.tableCell.royalty')}>{formatCurrency(settlement.royaltyAmount || 0)}</td>
+                        <td data-label={t('erp:finance.tableCell.netSettlement')}>{formatCurrency(settlement.netSettlementAmount || 0)}</td>
+                        <td data-label={t('erp:finance.tableCell.status')}>
                           <span className={`mg-v2-badge mg-v2-badge--${settlement.status?.toLowerCase() || 'default'}`}>
                             {formatSettlementRowStatus(settlement.status)}
                           </span>
                         </td>
-                        <td data-label={t('erp:finance.tableCell.action', '작업')}>
+                        <td data-label={t('erp:finance.tableCell.action')}>
                           {settlement.status === 'PENDING' && (
                             <MGButton
                               variant="success"
@@ -2521,11 +2521,11 @@ const SettlementTab = () => {
                                 try {
                                   const result = await StandardizedApi.post(ERP_API.SETTLEMENT_APPROVE(settlement.id), {});
                                   if (!isApiEnvelopeFailure(result)) {
-                                    notificationManager.show(t('erp:finance.notifications.settlementApproveSuccess', '정산이 승인되었습니다.'), 'success');
+                                    notificationManager.show(t('erp:finance.notifications.settlementApproveSuccess'), 'success');
                                     fetchSettlements();
                                   }
                                 } catch (err) {
-                                  notificationManager.show(t('erp:finance.notifications.settlementApproveFailed', '정산 승인에 실패했습니다.'), 'error');
+                                  notificationManager.show(t('erp:finance.notifications.settlementApproveFailed'), 'error');
                                 }
                               }}
                             >
@@ -2574,7 +2574,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
       }
     } catch (err) {
       console.error('Entry detail fetch error:', err);
-      notificationManager.show(t('erp:finance.notifications.entryDetailLoadFailed', '거래 정보를 불러오는데 실패했습니다.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.entryDetailLoadFailed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -2585,7 +2585,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
       <UnifiedModal
         isOpen={true}
         onClose={onClose}
-        title={t('erp:finance.modalTitle.entryDetail', '거래 상세')}
+        title={t('erp:finance.modalTitle.entryDetail')}
         size="large"
         backdropClick={true}
         className="mg-v2-ad-b0kla"
@@ -2593,7 +2593,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
         <div aria-busy={loading}>
         {loading ? (
           <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
-            <UnifiedLoading type="inline" text={t('erp:finance.loading.entryDetail', '거래 정보를 불러오는 중...')} />
+            <UnifiedLoading type="inline" text={t('erp:finance.loading.entryDetail')} />
           </div>
         ) : entryDetail ? (
           <div className="mg-v2-form-group">
@@ -2602,11 +2602,11 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
               <div className="mg-v2-text">{entryDetail.entryNumber}</div>
             </div>
             <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">{t('erp:finance.financialStatements.asOfDate', '기준일자')}</label>
+              <label className="mg-v2-label">{t('erp:finance.financialStatements.asOfDate')}</label>
               <div className="mg-v2-text">{entryDetail.entryDate}</div>
             </div>
             <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">{t('erp:finance.tableCell.status', '상태')}</label>
+              <label className="mg-v2-label">{t('erp:finance.tableCell.status')}</label>
               <div className="mg-v2-text">
                 <span className={`mg-v2-badge mg-v2-badge--${entryDetail.entryStatus?.toLowerCase() || 'default'}`}>
                   {formatJournalEntryStatus(entryDetail.entryStatus)}
@@ -2617,22 +2617,22 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
               <div className="mg-v2-mb-md">
                 <label className="mg-v2-label">거래 라인</label>
                 <div className="mg-v2-table-container">
-                  <table className="mg-table" data-label={t('erp:finance.tableCell.lineList', '거래 라인 목록')}>
+                  <table className="mg-table" data-label={t('erp:finance.tableCell.lineList')}>
                     <thead>
                       <tr>
                         <th>계정</th>
                         <th>차변</th>
                         <th>대변</th>
-                        <th>{t('common.labels.description', '설명')}</th>
+                        <th>{t('common.labels.description')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {entryDetail.lines.map((line, idx) => (
                         <tr key={idx}>
-                          <td data-label={t('erp:finance.tableCell.account', '계정')}>{line.accountName || line.accountId}</td>
-                          <td data-label={t('erp:finance.tableCell.debit', '차변')}>{formatCurrency(line.debitAmount || 0)}</td>
-                          <td data-label={t('erp:finance.tableCell.credit', '대변')}>{formatCurrency(line.creditAmount || 0)}</td>
-                          <td data-label={t('erp:finance.tableCell.description', '설명')}>{line.description || '-'}</td>
+                          <td data-label={t('erp:finance.tableCell.account')}>{line.accountName || line.accountId}</td>
+                          <td data-label={t('erp:finance.tableCell.debit')}>{formatCurrency(line.debitAmount || 0)}</td>
+                          <td data-label={t('erp:finance.tableCell.credit')}>{formatCurrency(line.creditAmount || 0)}</td>
+                          <td data-label={t('erp:finance.tableCell.description')}>{line.description || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -2653,7 +2653,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onClose}
           >
-            {t('common.actions.close', '닫기')}
+            {t('common.actions.close')}
           </MGButton>
           {entryDetail && entryDetail.entryStatus === 'DRAFT' && (
             <MGButton
@@ -2663,7 +2663,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => { setShowEditModal(true); }}
             >
-              {t('common.actions.edit', '수정')}
+              {t('common.actions.edit')}
             </MGButton>
           )}
         </div>
@@ -2708,7 +2708,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
         setAccountTypes(Array.isArray(raw) ? raw : []);
       } catch (err) {
         if (!cancelled) {
-          setAccountTypesError(err?.message || t('erp:finance.errors.accountTypesFetch', '계정과목 목록을 불러올 수 없습니다.'));
+          setAccountTypesError(err?.message || t('erp:finance.errors.accountTypesFetch'));
           setAccountTypes([]);
         }
       } finally {
@@ -2739,7 +2739,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
     if (lines.length > 2) {
       setLines(lines.filter((_, i) => i !== index));
     } else {
-      notificationManager.show(t('erp:finance.notifications.journalMinTwoLines', '최소 2개의 라인이 필요합니다.'), 'warning');
+      notificationManager.show(t('erp:finance.notifications.journalMinTwoLines'), 'warning');
     }
   };
 
@@ -2789,7 +2789,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
 
   const handleSubmit = async() => {
     if (!validateForm()) {
-      notificationManager.show(t('erp:finance.notifications.formValidateError', '입력 정보를 확인해주세요.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.formValidateError'), 'error');
       return;
     }
 
@@ -2811,15 +2811,15 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
       const result = await StandardizedApi.post(ERP_API.JOURNAL_ENTRIES, requestData);
 
       if (isApiEnvelopeFailure(result)) {
-        notificationManager.show(result.message || t('erp:finance.notifications.journalCreateFailed', '거래 등록에 실패했습니다. 다시 시도해 주세요.'), 'error');
+        notificationManager.show(result.message || t('erp:finance.notifications.journalCreateFailed'), 'error');
       } else {
-        notificationManager.show(t('erp:finance.notifications.journalCreateSuccess', '거래가 등록되었습니다.'), 'success');
+        notificationManager.show(t('erp:finance.notifications.journalCreateSuccess'), 'success');
         onRefresh();
         onClose();
       }
     } catch (err) {
       console.error('Create entry error:', err);
-      notificationManager.show(t('erp:finance.notifications.journalCreateFailed', '거래 등록에 실패했습니다. 다시 시도해 주세요.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.journalCreateFailed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -2832,7 +2832,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
     <UnifiedModal
       isOpen={true}
       onClose={onClose}
-      title={t('erp:finance.modalTitle.entryCreate', '거래 등록')}
+      title={t('erp:finance.modalTitle.entryCreate')}
       size="large"
       backdropClick={true}
       className="mg-v2-ad-b0kla"
@@ -2868,11 +2868,11 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
         </div>
 
         <div className="mg-v2-mb-md">
-          <label className="mg-v2-label">{t('common.labels.description', '설명')}</label>
+          <label className="mg-v2-label">{t('common.labels.description')}</label>
           <input
             type="text"
             className="mg-v2-input"
-            placeholder={t('erp:finance.inputPlaceholder.entryDescription', '거래 내용을 입력하세요')}
+            placeholder={t('erp:finance.inputPlaceholder.entryDescription')}
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
@@ -2903,20 +2903,20 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
             </div>
           )}
           <div className="mg-v2-table-container">
-            <table className="mg-table" data-label={t('erp:finance.tableCell.lineInput', '거래 라인 입력')}>
+            <table className="mg-table" data-label={t('erp:finance.tableCell.lineInput')}>
               <thead>
                 <tr>
                   <th>계정과목</th>
                   <th>차변</th>
                   <th>대변</th>
-                  <th>{t('common.labels.description', '설명')}</th>
+                  <th>{t('common.labels.description')}</th>
                   <th>작업</th>
                 </tr>
               </thead>
               <tbody>
                 {lines.map((line, index) => (
                   <tr key={index}>
-                    <td data-label={t('erp:finance.tableCell.accountSubject', '계정과목')}>
+                    <td data-label={t('erp:finance.tableCell.accountSubject')}>
                       <select
                         className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_accountId`] ? 'mg-v2-input-error' : ''}`}
                         value={line.accountId}
@@ -2934,7 +2934,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
                         <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_accountId`]}</div>
                       )}
                     </td>
-                    <td data-label={t('erp:finance.tableCell.debit', '차변')}>
+                    <td data-label={t('erp:finance.tableCell.debit')}>
                       <input
                         type="number"
                         className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
@@ -2943,7 +2943,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
                         onChange={(e) => handleLineChange(index, 'debitAmount', e.target.value)}
                       />
                     </td>
-                    <td data-label={t('erp:finance.tableCell.credit', '대변')}>
+                    <td data-label={t('erp:finance.tableCell.credit')}>
                       <input
                         type="number"
                         className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
@@ -2955,16 +2955,16 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
                         <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_amount`]}</div>
                       )}
                     </td>
-                    <td data-label={t('erp:finance.tableCell.description', '설명')}>
+                    <td data-label={t('erp:finance.tableCell.description')}>
                       <input
                         type="text"
                         className="mg-v2-input mg-v2-input-sm"
-                        placeholder={t('erp:finance.inputPlaceholder.lineDescription', '설명')}
+                        placeholder={t('erp:finance.inputPlaceholder.lineDescription')}
                         value={line.description}
                         onChange={(e) => handleLineChange(index, 'description', e.target.value)}
                       />
                     </td>
-                    <td data-label={t('erp:finance.tableCell.action', '작업')}>
+                    <td data-label={t('erp:finance.tableCell.action')}>
                       {lines.length > 2 && (
                         <MGButton
                           variant="danger"
@@ -2974,7 +2974,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => handleRemoveLine(index)}
                         >
-                          {t('common.actions.delete', '삭제')}
+                          {t('common.actions.delete')}
                         </MGButton>
                       )}
                     </td>
@@ -3013,7 +3013,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
           onClick={onClose}
           disabled={loading}
         >
-          {t('common.actions.cancel', '취소')}
+          {t('common.actions.cancel')}
         </MGButton>
         <MGButton
           variant="primary"
@@ -3023,7 +3023,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
           loading={loading}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
-          {t('common.actions.save', '저장')}
+          {t('common.actions.save')}
         </MGButton>
       </div>
     </UnifiedModal>
@@ -3079,7 +3079,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
 
   const handleSubmit = async() => {
     if (!validateForm()) {
-      notificationManager.show(t('erp:finance.notifications.formValidateError', '입력 정보를 확인해주세요.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.formValidateError'), 'error');
       return;
     }
 
@@ -3097,10 +3097,10 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
       const result = await StandardizedApi.post(ERP_API.SETTLEMENT_RULES, requestData);
 
       if (isApiEnvelopeFailure(result)) {
-        notificationManager.show(result.message || t('erp:finance.notifications.settlementRuleSaveFailed', '정산 규칙 저장에 실패했습니다.'), 'error');
+        notificationManager.show(result.message || t('erp:finance.notifications.settlementRuleSaveFailed'), 'error');
       } else {
         notificationManager.show(
-          rule ? t('erp:finance.notifications.settlementRuleUpdated', '정산 규칙이 수정되었습니다.') : t('erp:finance.notifications.settlementRuleCreated', '정산 규칙이 생성되었습니다.'),
+          rule ? t('erp:finance.notifications.settlementRuleUpdated') : t('erp:finance.notifications.settlementRuleCreated'),
           'success'
         );
         onRefresh();
@@ -3108,7 +3108,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
       }
     } catch (err) {
       console.error('Settlement rule save error:', err);
-      notificationManager.show(t('erp:finance.notifications.settlementRuleSaveFailed', '정산 규칙 저장에 실패했습니다.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.settlementRuleSaveFailed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -3118,7 +3118,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
     <UnifiedModal
       isOpen={true}
       onClose={onClose}
-      title={rule ? t('erp:finance.modalTitle.settlementRuleEdit', '정산 규칙 수정') : t('erp:finance.modalTitle.settlementRuleCreate', '정산 규칙 생성')}
+      title={rule ? t('erp:finance.modalTitle.settlementRuleEdit') : t('erp:finance.modalTitle.settlementRuleCreate')}
       size="medium"
       backdropClick={true}
       className="mg-v2-ad-b0kla"
@@ -3131,7 +3131,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
           <input
             type="text"
             className={`mg-v2-input ${errors.ruleName ? 'mg-v2-input-error' : ''}`}
-            placeholder={t('erp:finance.inputPlaceholder.settlementRuleName', '정산 규칙명을 입력하세요')}
+            placeholder={t('erp:finance.inputPlaceholder.settlementRuleName')}
             value={formData.ruleName}
             onChange={(e) => setFormData({ ...formData, ruleName: e.target.value })}
           />
@@ -3146,7 +3146,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
             onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
           >
             <option value="">선택 안함</option>
-            <option value="CONSULTATION">{t('common.labels.consultation', '상담')}</option>
+            <option value="CONSULTATION">{t('common.labels.consultation')}</option>
             <option value="EDUCATION">교육</option>
             <option value="HEALTHCARE">의료</option>
           </select>
@@ -3161,7 +3161,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
             value={formData.settlementType}
             onChange={(e) => setFormData({ ...formData, settlementType: e.target.value })}
           >
-            <option value="">{t('common.messages.pleaseSelect', '선택하세요')}</option>
+            <option value="">{t('common.messages.pleaseSelect')}</option>
             <option value="COMMISSION">수수료</option>
             <option value="ROYALTY">로열티</option>
             <option value="REVENUE_SHARE">매출 분배</option>
@@ -3229,7 +3229,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
           onClick={onClose}
           disabled={loading}
         >
-          {t('common.actions.cancel', '취소')}
+          {t('common.actions.cancel')}
         </MGButton>
         <MGButton
           variant="primary"
@@ -3239,7 +3239,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
           loading={loading}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
-          {t('common.actions.save', '저장')}
+          {t('common.actions.save')}
         </MGButton>
       </div>
     </UnifiedModal>
@@ -3286,7 +3286,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
     <UnifiedModal
       isOpen={true}
       onClose={onClose}
-      title={t('erp:finance.modalTitle.ledgerDetail', '계정별 내역 상세')}
+      title={t('erp:finance.modalTitle.ledgerDetail')}
       size="large"
       backdropClick={true}
       className="mg-v2-ad-b0kla"
@@ -3322,18 +3322,18 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
           <label className="mg-v2-label">관련 거래 내역</label>
           {loadingEntries ? (
             <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
-              <UnifiedLoading type="inline" text={t('erp:finance.loading.ledgerEntries', '거래 내역을 불러오는 중...')} />
+              <UnifiedLoading type="inline" text={t('erp:finance.loading.ledgerEntries')} />
             </div>
           ) : journalEntries.length > 0 ? (
             <div className="mg-v2-table-container">
-              <table className="mg-table" data-label={t('erp:finance.tableCell.historyList', '거래 내역 목록')}>
+              <table className="mg-table" data-label={t('erp:finance.tableCell.historyList')}>
                 <thead>
                   <tr>
                     <th>거래번호</th>
                     <th>기준일자</th>
                     <th>차변</th>
                     <th>대변</th>
-                    <th>{t('common.labels.description', '설명')}</th>
+                    <th>{t('common.labels.description')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -3341,11 +3341,11 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
                     const line = entry.lines?.find(l => l.accountId === ledger.accountId);
                     return line ? (
                       <tr key={entry.id}>
-                        <td data-label={t('erp:finance.tableCell.entryNumber', '거래번호')}>{entry.entryNumber}</td>
-                        <td data-label={t('erp:finance.financialStatements.asOfDate', '기준일자')}>{entry.entryDate}</td>
-                        <td data-label={t('erp:finance.tableCell.debit', '차변')}>{formatCurrency(line.debitAmount || 0)}</td>
-                        <td data-label={t('erp:finance.tableCell.credit', '대변')}>{formatCurrency(line.creditAmount || 0)}</td>
-                        <td data-label={t('erp:finance.tableCell.description', '설명')}>{line.description || entry.description || '-'}</td>
+                        <td data-label={t('erp:finance.tableCell.entryNumber')}>{entry.entryNumber}</td>
+                        <td data-label={t('erp:finance.financialStatements.asOfDate')}>{entry.entryDate}</td>
+                        <td data-label={t('erp:finance.tableCell.debit')}>{formatCurrency(line.debitAmount || 0)}</td>
+                        <td data-label={t('erp:finance.tableCell.credit')}>{formatCurrency(line.creditAmount || 0)}</td>
+                        <td data-label={t('erp:finance.tableCell.description')}>{line.description || entry.description || '-'}</td>
                       </tr>
                     ) : null;
                   })}
@@ -3365,7 +3365,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onClose}
         >
-          {t('common.actions.close', '닫기')}
+          {t('common.actions.close')}
         </MGButton>
       </div>
     </UnifiedModal>
@@ -3408,7 +3408,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
         setAccountTypes(Array.isArray(raw) ? raw : []);
       } catch (err) {
         if (!cancelled) {
-          setAccountTypesError(err?.message || t('erp:finance.errors.accountTypesFetch', '계정과목 목록을 불러올 수 없습니다.'));
+          setAccountTypesError(err?.message || t('erp:finance.errors.accountTypesFetch'));
           setAccountTypes([]);
         }
       } finally {
@@ -3439,7 +3439,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
     if (lines.length > 2) {
       setLines(lines.filter((_, i) => i !== index));
     } else {
-      notificationManager.show(t('erp:finance.notifications.journalMinTwoLines', '최소 2개의 라인이 필요합니다.'), 'warning');
+      notificationManager.show(t('erp:finance.notifications.journalMinTwoLines'), 'warning');
     }
   };
 
@@ -3489,7 +3489,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
 
   const handleSubmit = async() => {
     if (!validateForm()) {
-      notificationManager.show(t('erp:finance.notifications.formValidateError', '입력 정보를 확인해주세요.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.formValidateError'), 'error');
       return;
     }
 
@@ -3511,15 +3511,15 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
       const result = await StandardizedApi.put(ERP_API.JOURNAL_ENTRY_UPDATE(entry.id), requestData);
 
       if (isApiEnvelopeFailure(result)) {
-        notificationManager.show(result.message || t('erp:finance.notifications.journalUpdateFailed', '거래 수정에 실패했습니다. 다시 시도해 주세요.'), 'error');
+        notificationManager.show(result.message || t('erp:finance.notifications.journalUpdateFailed'), 'error');
       } else {
-        notificationManager.show(t('erp:finance.notifications.journalUpdateSuccess', '거래가 수정되었습니다.'), 'success');
+        notificationManager.show(t('erp:finance.notifications.journalUpdateSuccess'), 'success');
         onRefresh();
         onClose();
       }
     } catch (err) {
       console.error('Update entry error:', err);
-      notificationManager.show(t('erp:finance.notifications.journalUpdateFailed', '거래 수정에 실패했습니다. 다시 시도해 주세요.'), 'error');
+      notificationManager.show(t('erp:finance.notifications.journalUpdateFailed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -3532,7 +3532,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
     <UnifiedModal
       isOpen={true}
       onClose={onClose}
-      title={t('erp:finance.modalTitle.entryEdit', '거래 수정')}
+      title={t('erp:finance.modalTitle.entryEdit')}
       size="large"
       backdropClick={true}
       className="mg-v2-ad-b0kla"
@@ -3558,11 +3558,11 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
         </div>
 
         <div className="mg-v2-mb-md">
-          <label className="mg-v2-label">{t('common.labels.description', '설명')}</label>
+          <label className="mg-v2-label">{t('common.labels.description')}</label>
           <input
             type="text"
             className="mg-v2-input"
-            placeholder={t('erp:finance.inputPlaceholder.entryDescription', '거래 내용을 입력하세요')}
+            placeholder={t('erp:finance.inputPlaceholder.entryDescription')}
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
@@ -3593,20 +3593,20 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
             </div>
           )}
           <div className="mg-v2-table-container">
-            <table className="mg-table" data-label={t('erp:finance.tableCell.lineInput', '거래 라인 입력')}>
+            <table className="mg-table" data-label={t('erp:finance.tableCell.lineInput')}>
               <thead>
                 <tr>
                   <th>계정과목</th>
                   <th>차변</th>
                   <th>대변</th>
-                  <th>{t('common.labels.description', '설명')}</th>
+                  <th>{t('common.labels.description')}</th>
                   <th>작업</th>
                 </tr>
               </thead>
               <tbody>
                 {lines.map((line, index) => (
                   <tr key={index}>
-                    <td data-label={t('erp:finance.tableCell.accountSubject', '계정과목')}>
+                    <td data-label={t('erp:finance.tableCell.accountSubject')}>
                       <select
                         className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_accountId`] ? 'mg-v2-input-error' : ''}`}
                         value={line.accountId}
@@ -3624,7 +3624,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
                         <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_accountId`]}</div>
                       )}
                     </td>
-                    <td data-label={t('erp:finance.tableCell.debit', '차변')}>
+                    <td data-label={t('erp:finance.tableCell.debit')}>
                       <input
                         type="number"
                         className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
@@ -3633,7 +3633,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
                         onChange={(e) => handleLineChange(index, 'debitAmount', e.target.value)}
                       />
                     </td>
-                    <td data-label={t('erp:finance.tableCell.credit', '대변')}>
+                    <td data-label={t('erp:finance.tableCell.credit')}>
                       <input
                         type="number"
                         className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
@@ -3645,16 +3645,16 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
                         <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_amount`]}</div>
                       )}
                     </td>
-                    <td data-label={t('erp:finance.tableCell.description', '설명')}>
+                    <td data-label={t('erp:finance.tableCell.description')}>
                       <input
                         type="text"
                         className="mg-v2-input mg-v2-input-sm"
-                        placeholder={t('erp:finance.inputPlaceholder.lineDescription', '설명')}
+                        placeholder={t('erp:finance.inputPlaceholder.lineDescription')}
                         value={line.description}
                         onChange={(e) => handleLineChange(index, 'description', e.target.value)}
                       />
                     </td>
-                    <td data-label={t('erp:finance.tableCell.action', '작업')}>
+                    <td data-label={t('erp:finance.tableCell.action')}>
                       {lines.length > 2 && (
                         <MGButton
                           variant="danger"
@@ -3664,7 +3664,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => handleRemoveLine(index)}
                         >
-                          {t('common.actions.delete', '삭제')}
+                          {t('common.actions.delete')}
                         </MGButton>
                       )}
                     </td>
@@ -3703,7 +3703,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
           onClick={onClose}
           disabled={loading}
         >
-          {t('common.actions.cancel', '취소')}
+          {t('common.actions.cancel')}
         </MGButton>
         <MGButton
           variant="primary"
@@ -3713,7 +3713,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
           loading={loading}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
-          {t('common.actions.save', '저장')}
+          {t('common.actions.save')}
         </MGButton>
       </div>
     </UnifiedModal>

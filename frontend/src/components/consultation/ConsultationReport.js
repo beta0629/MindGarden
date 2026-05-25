@@ -30,29 +30,29 @@ const ConsultationReport = () => {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [periodOptions, setPeriodOptions] = useState([
-    { value: 'MONTH', label: t('report:consultation.periodOption.monthly', '월별'), icon: '📅', color: 'var(--mg-primary-500)', description: t('report:consultation.periodOption.monthlyDesc', '월별 보고서') },
-    { value: 'YEAR', label: t('report:consultation.periodOption.yearly', '년별'), icon: '📊', color: 'var(--mg-success-500)', description: t('report:consultation.periodOption.yearlyDesc', '년별 보고서') },
-    { value: 'QUARTER', label: t('report:consultation.periodOption.quarterly', '분기별'), icon: '📈', color: 'var(--mg-warning-500)', description: t('report:consultation.periodOption.quarterlyDesc', '분기별 보고서') },
-    { value: 'WEEK', label: t('report:consultation.periodOption.weekly', '주별'), icon: '📋', color: 'var(--mg-purple-500)', description: t('report:consultation.periodOption.weeklyDesc', '주별 보고서') }
+    { value: 'MONTH', label: t('report:consultation.periodOption.monthly'), icon: '📅', color: 'var(--mg-primary-500)', description: t('report:consultation.periodOption.monthlyDesc') },
+    { value: 'YEAR', label: t('report:consultation.periodOption.yearly'), icon: '📊', color: 'var(--mg-success-500)', description: t('report:consultation.periodOption.yearlyDesc') },
+    { value: 'QUARTER', label: t('report:consultation.periodOption.quarterly'), icon: '📈', color: 'var(--mg-warning-500)', description: t('report:consultation.periodOption.quarterlyDesc') },
+    { value: 'WEEK', label: t('report:consultation.periodOption.weekly'), icon: '📋', color: 'var(--mg-purple-500)', description: t('report:consultation.periodOption.weeklyDesc') }
   ]);
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [yearOptions, setYearOptions] = useState(() => {
     const baseYear = new Date().getFullYear();
     return Array.from({ length: 5 }, (_, i) => ({
       value: baseYear - i,
-      label: t('report:consultation.yearLabel', '{{year}}년', { year: baseYear - i }),
+      label: t('report:consultation.yearLabel', { year: baseYear - i }),
       icon: '📅',
       color: 'var(--mg-primary-500)',
-      description: t('report:consultation.yearLabel', '{{year}}년', { year: baseYear - i })
+      description: t('report:consultation.yearLabel', { year: baseYear - i })
     }));
   });
   const [monthOptions, setMonthOptions] = useState(() => {
     return Array.from({ length: 12 }, (_, i) => ({
       value: i + 1,
-      label: t('report:consultation.monthLabel', '{{month}}월', { month: i + 1 }),
+      label: t('report:consultation.monthLabel', { month: i + 1 }),
       icon: '📅',
       color: 'var(--mg-primary-500)',
-      description: t('report:consultation.monthLabel', '{{month}}월', { month: i + 1 })
+      description: t('report:consultation.monthLabel', { month: i + 1 })
     }));
   });
   const [loadingYearCodes, setLoadingYearCodes] = useState(false);
@@ -189,7 +189,7 @@ const ConsultationReport = () => {
       }
     } catch (error) {
       console.error('❌ 상담 리포트 로드 오류:', error);
-      setError(t('report:consultation.loadFail', '상담 리포트를 불러오는데 실패했습니다.'));
+      setError(t('report:consultation.loadFail'));
     } finally {
       setLoading(false);
     }
@@ -225,7 +225,7 @@ const ConsultationReport = () => {
     const consultantStats = {};
     if (user.role === USER_ROLES.CLIENT) {
       filteredConsultations.forEach(consultation => {
-        const consultantName = consultation.consultantName || t('report:consultation.unknownClient', '알 수 없음');
+        const consultantName = consultation.consultantName || t('report:consultation.unknownClient');
         if (!consultantStats[consultantName]) {
           consultantStats[consultantName] = {
             total: 0,
@@ -247,7 +247,7 @@ const ConsultationReport = () => {
     const clientStats = {};
     if (user.role === USER_ROLES.CONSULTANT) {
       filteredConsultations.forEach(consultation => {
-        const clientName = consultation.clientName || t('report:consultation.unknownClient', '알 수 없음');
+        const clientName = consultation.clientName || t('report:consultation.unknownClient');
         if (!clientStats[clientName]) {
           clientStats[clientName] = {
             total: 0,
@@ -304,11 +304,11 @@ const ConsultationReport = () => {
 
   const getPeriodLabel = () => {
     if (selectedPeriod === 'MONTH') {
-      return t('report:consultation.yearMonthLabel', '{{year}}년 {{month}}월', { year: selectedYear, month: selectedMonth });
+      return t('report:consultation.yearMonthLabel', { year: selectedYear, month: selectedMonth });
     } else if (selectedPeriod === 'YEAR') {
-      return t('report:consultation.yearLabel', '{{year}}년', { year: selectedYear });
+      return t('report:consultation.yearLabel', { year: selectedYear });
     }
-    return t('common.labels.all', '전체');
+    return t('common.labels.all');
   };
 
   const formatDate = (dateString) => {
@@ -323,10 +323,10 @@ const ConsultationReport = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout title={t('report:consultation.title', '상담 리포트')}>
+      <AdminCommonLayout title={t('report:consultation.title')}>
         <div className="consultation-report-page">
           <div className="loading-container">
-            <div className="mg-loading">{t('report:consultation.loading', '로딩중...')}</div>
+            <div className="mg-loading">{t('report:consultation.loading')}</div>
           </div>
         </div>
       </AdminCommonLayout>
@@ -335,10 +335,10 @@ const ConsultationReport = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title={t('report:consultation.title', '상담 리포트')}>
+      <AdminCommonLayout title={t('report:consultation.title')}>
         <div className="consultation-report-page">
           <div className="loading-container">
-            <div className="mg-loading">{t('report:consultation.loading', '로딩중...')}</div>
+            <div className="mg-loading">{t('report:consultation.loading')}</div>
           </div>
         </div>
       </AdminCommonLayout>
@@ -346,7 +346,7 @@ const ConsultationReport = () => {
   }
 
   return (
-    <AdminCommonLayout title={t('report:consultation.title', '상담 리포트')}>
+    <AdminCommonLayout title={t('report:consultation.title')}>
       <div className="consultation-report-page">
         <div className="page-header">
           <div className="header-content">
@@ -361,13 +361,13 @@ const ConsultationReport = () => {
               })}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => navigate(-1)}
-              title={t('report:consultation.back', '뒤로')}
+              title={t('report:consultation.back')}
             >
               <i className="bi bi-arrow-left" />
             </MGButton>
             <div className="header-text">
-              <h1>📊 {t('report:consultation.title', '상담 리포트')}</h1>
-              <p>{t('report:consultation.description', '상담 현황을 분석한 리포트를 확인할 수 있습니다')}</p>
+              <h1>📊 {t('report:consultation.title')}</h1>
+              <p>{t('report:consultation.description')}</p>
             </div>
           </div>
         </div>
@@ -376,7 +376,7 @@ const ConsultationReport = () => {
           {/* 기간 선택 */}
           <div className="period-selector">
             <div className="selector-group">
-              <label htmlFor="period-select">{t('report:consultation.periodLabel', '기간')}</label>
+              <label htmlFor="period-select">{t('report:consultation.periodLabel')}</label>
               <select
                 id="period-select"
                 value={selectedPeriod}
@@ -384,7 +384,7 @@ const ConsultationReport = () => {
                 className="selector-input"
                 disabled={loadingCodes}
               >
-                <option value="">{t('report:consultation.selectPeriod', '기간을 선택하세요')}</option>
+                <option value="">{t('report:consultation.selectPeriod')}</option>
                 {periodOptions.map(period => (
                   <option key={period.value} value={period.value}>
                     {period.icon} {period.label}
@@ -394,7 +394,7 @@ const ConsultationReport = () => {
             </div>
             
             <div className="selector-group">
-              <label htmlFor="year-select">{t('report:consultation.yearFieldLabel', '년도')}</label>
+              <label htmlFor="year-select">{t('report:consultation.yearFieldLabel')}</label>
               <select
                 id="year-select"
                 value={selectedYear}
@@ -411,7 +411,7 @@ const ConsultationReport = () => {
             
             {selectedPeriod === 'MONTH' && (
               <div className="selector-group">
-                <label htmlFor="month-select">{t('report:consultation.monthFieldLabel', '월')}</label>
+                <label htmlFor="month-select">{t('report:consultation.monthFieldLabel')}</label>
                 <select
                   id="month-select"
                   value={selectedMonth}
@@ -443,14 +443,14 @@ const ConsultationReport = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={loadReportData}
               >
-                {t('common.labels.retry', '다시 시도')}
+                {t('common.labels.retry')}
               </MGButton>
             </div>
           ) : !reportData ? (
             <div className="no-data">
               <i className="bi bi-file-text" />
-              <p>{t('report:consultation.noData', '상담 데이터가 없습니다')}</p>
-              <small>{t('report:consultation.noDataHint', '새로운 상담을 예약해보세요')}</small>
+              <p>{t('report:consultation.noData')}</p>
+              <small>{t('report:consultation.noDataHint')}</small>
             </div>
           ) : (
             <div className="report-content">
@@ -461,7 +461,7 @@ const ConsultationReport = () => {
                     <i className="bi bi-calendar-check" />
                   </div>
                   <div className="card-content">
-                    <h3>{t('report:summary.totalConsultations', '총 상담 수')}</h3>
+                    <h3>{t('report:summary.totalConsultations')}</h3>
                     <p className="card-number">{reportData.totalConsultations}</p>
                   </div>
                 </div>
@@ -471,7 +471,7 @@ const ConsultationReport = () => {
                     <i className="bi bi-check-circle" />
                   </div>
                   <div className="card-content">
-                    <h3>{t('report:summary.completed', '완료된 상담')}</h3>
+                    <h3>{t('report:summary.completed')}</h3>
                     <p className="card-number">{reportData.completedConsultations}</p>
                   </div>
                 </div>
@@ -481,7 +481,7 @@ const ConsultationReport = () => {
                     <i className="bi bi-clock" />
                   </div>
                   <div className="card-content">
-                    <h3>{t('report:summary.scheduled', '예정된 상담')}</h3>
+                    <h3>{t('report:summary.scheduled')}</h3>
                     <p className="card-number">{reportData.confirmedConsultations}</p>
                   </div>
                 </div>
@@ -491,7 +491,7 @@ const ConsultationReport = () => {
                     <i className="bi bi-percent" />
                   </div>
                   <div className="card-content">
-                    <h3>{t('report:summary.completionRate', '완료율')}</h3>
+                    <h3>{t('report:summary.completionRate')}</h3>
                     <p className="card-number">{reportData.completionRate}%</p>
                   </div>
                 </div>
@@ -501,14 +501,14 @@ const ConsultationReport = () => {
               <div className="detailed-stats">
                 {user.role === USER_ROLES.CLIENT && Object.keys(reportData.consultantStats).length > 0 && (
                   <div className="stats-section">
-                    <h3>{t('report:byConsultant.title', '상담사별 상담 현황')}</h3>
+                    <h3>{t('report:byConsultant.title')}</h3>
                     <div className="stats-table">
                       <div className="table-header">
-                        <span>{t('common.labels.consultant', '상담사')}</span>
-                        <span>{t('report:byConsultant.totalLabel', '총 상담')}</span>
-                        <span>{t('common.actions.done', '완료')}</span>
-                        <span>{t('report:byConsultant.scheduledLabel', '예정')}</span>
-                        <span>{t('common.actions.cancel', '취소')}</span>
+                        <span>{t('common.labels.consultant')}</span>
+                        <span>{t('report:byConsultant.totalLabel')}</span>
+                        <span>{t('common.actions.done')}</span>
+                        <span>{t('report:byConsultant.scheduledLabel')}</span>
+                        <span>{t('common.actions.cancel')}</span>
                       </div>
                       {Object.entries(reportData.consultantStats).map(([consultant, stats]) => (
                         <div key={consultant} className="table-row">
@@ -525,14 +525,14 @@ const ConsultationReport = () => {
 
                 {user.role === USER_ROLES.CONSULTANT && Object.keys(reportData.clientStats).length > 0 && (
                   <div className="stats-section">
-                    <h3>{t('report:byClient.title', '내담자별 상담 현황')}</h3>
+                    <h3>{t('report:byClient.title')}</h3>
                     <div className="stats-table">
                       <div className="table-header">
-                        <span>{t('common.labels.client', '내담자')}</span>
-                        <span>{t('report:byClient.totalLabel', '총 상담')}</span>
-                        <span>{t('common.actions.done', '완료')}</span>
-                        <span>{t('report:byClient.scheduledLabel', '예정')}</span>
-                        <span>{t('common.actions.cancel', '취소')}</span>
+                        <span>{t('common.labels.client')}</span>
+                        <span>{t('report:byClient.totalLabel')}</span>
+                        <span>{t('common.actions.done')}</span>
+                        <span>{t('report:byClient.scheduledLabel')}</span>
+                        <span>{t('common.actions.cancel')}</span>
                       </div>
                       {Object.entries(reportData.clientStats).map(([client, stats]) => (
                         <div key={client} className="table-row">
@@ -548,10 +548,10 @@ const ConsultationReport = () => {
                 )}
 
                 <div className="stats-section">
-                  <h3>{t('report:summary.period', '기간:')} {getPeriodLabel()}</h3>
+                  <h3>{t('report:summary.period')} {getPeriodLabel()}</h3>
                   <div className="period-info">
-                    <p>{t('report:consultation.periodTotal', '이 기간 동안 총 {{count}}건의 상담이 있었습니다.', { count: reportData.totalConsultations })}</p>
-                    <p>{t('report:consultation.completionRateInfo', '완료율은 {{rate}}%입니다.', { rate: reportData.completionRate })}</p>
+                    <p>{t('report:consultation.periodTotal', { count: reportData.totalConsultations })}</p>
+                    <p>{t('report:consultation.completionRateInfo', { rate: reportData.completionRate })}</p>
                   </div>
                 </div>
               </div>

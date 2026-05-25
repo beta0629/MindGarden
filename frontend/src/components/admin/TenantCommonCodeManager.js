@@ -104,7 +104,7 @@ const TenantCommonCodeManager = () => {
                 setParentCategoryOptions([]);
             }
         } catch (err) {
-            console.error(t('admin:tenantCommonCode.msg.logParentOptionsLoad', '상위 카테고리 옵션 로드 오류:'), err);
+            console.error(t('admin:tenantCommonCode.msg.logParentOptionsLoad'), err);
             setParentCategoryOptions([]);
         } finally {
             setParentOptionsLoading(false);
@@ -144,11 +144,11 @@ const TenantCommonCodeManager = () => {
                     }
                 }
             } else {
-                setError(response.message || t('admin:tenantCommonCode.msg.errCodeGroupsFetchFallback', '코드 그룹 조회 실패'));
+                setError(response.message || t('admin:tenantCommonCode.msg.errCodeGroupsFetchFallback'));
             }
         } catch (err) {
-            console.error(t('admin:tenantCommonCode.msg.logCodeGroupsFetch', '코드 그룹 조회 오류:'), err);
-            setError(t('admin:tenantCommonCode.msg.errCodeGroupsLoad', '코드 그룹을 불러오는 중 오류가 발생했습니다.'));
+            console.error(t('admin:tenantCommonCode.msg.logCodeGroupsFetch'), err);
+            setError(t('admin:tenantCommonCode.msg.errCodeGroupsLoad'));
         } finally {
             setLoading(false);
         }
@@ -181,11 +181,11 @@ const TenantCommonCodeManager = () => {
             if (response.success) {
                 setCodes(response.data || []);
             } else {
-                setError(response.message || t('admin:tenantCommonCode.msg.errCodesFetchFallback', '코드 조회 실패'));
+                setError(response.message || t('admin:tenantCommonCode.msg.errCodesFetchFallback'));
             }
         } catch (err) {
-            console.error(t('admin:tenantCommonCode.msg.logCodesFetch', '코드 조회 오류:'), err);
-            setError(t('admin:tenantCommonCode.msg.errCodesLoad', '코드를 불러오는 중 오류가 발생했습니다.'));
+            console.error(t('admin:tenantCommonCode.msg.logCodesFetch'), err);
+            setError(t('admin:tenantCommonCode.msg.errCodesLoad'));
         } finally {
             setLoading(false);
         }
@@ -260,7 +260,7 @@ const TenantCommonCodeManager = () => {
         const gn = selectedGroup?.groupName || selectedGroup;
         if (isSubcategoryCodeGroup(gn)) {
             if (!formData.parentCodeValue || !String(formData.parentCodeValue).trim()) {
-                notificationManager.error(t('admin:tenantCommonCode.msg.errSelectParentCategory', '상위 카테고리를 선택하세요.'));
+                notificationManager.error(t('admin:tenantCommonCode.msg.errSelectParentCategory'));
                 return;
             }
         }
@@ -290,14 +290,14 @@ const TenantCommonCodeManager = () => {
                 setShowModal(false);
                 loadCodes(selectedGroup.groupName);
                 notificationManager.success(modalMode === 'create'
-                    ? t('admin:tenantCommonCode.msg.successCodeCreated', '코드가 생성되었습니다.')
-                    : t('admin:tenantCommonCode.msg.successCodeUpdated', '코드가 수정되었습니다.'));
+                    ? t('admin:tenantCommonCode.msg.successCodeCreated')
+                    : t('admin:tenantCommonCode.msg.successCodeUpdated'));
             } else {
-                setError(response.message || t('admin:tenantCommonCode.msg.errOperationFallback', '작업 실패'));
+                setError(response.message || t('admin:tenantCommonCode.msg.errOperationFallback'));
             }
         } catch (err) {
-            console.error(t('admin:tenantCommonCode.msg.logCodeSave', '코드 저장 오류:'), err);
-            setError(t('admin:tenantCommonCode.msg.errCodeSave', '코드 저장 중 오류가 발생했습니다.'));
+            console.error(t('admin:tenantCommonCode.msg.logCodeSave'), err);
+            setError(t('admin:tenantCommonCode.msg.errCodeSave'));
         } finally {
             setLoading(false);
         }
@@ -308,7 +308,7 @@ const TenantCommonCodeManager = () => {
      */
     const handleDeleteCode = async(codeId) => {
         const confirmed = await confirm({
-            message: t('admin:tenantCommonCode.msg.confirmDelete', '정말 삭제하시겠습니까?'),
+            message: t('admin:tenantCommonCode.msg.confirmDelete'),
             variant: 'danger'
         });
         if (!confirmed) {
@@ -321,13 +321,13 @@ const TenantCommonCodeManager = () => {
             const response = await deleteTenantCode(codeId);
             if (response.success) {
                 loadCodes(selectedGroup.groupName);
-                notificationManager.success(t('admin:tenantCommonCode.msg.successCodeDeleted', '코드가 삭제되었습니다.'));
+                notificationManager.success(t('admin:tenantCommonCode.msg.successCodeDeleted'));
             } else {
-                setError(response.message || t('admin:tenantCommonCode.msg.errDeleteFallback', '삭제 실패'));
+                setError(response.message || t('admin:tenantCommonCode.msg.errDeleteFallback'));
             }
         } catch (err) {
-            console.error(t('admin:tenantCommonCode.msg.logCodeDelete', '코드 삭제 오류:'), err);
-            setError(t('admin:tenantCommonCode.msg.errCodeDelete', '코드 삭제 중 오류가 발생했습니다.'));
+            console.error(t('admin:tenantCommonCode.msg.logCodeDelete'), err);
+            setError(t('admin:tenantCommonCode.msg.errCodeDelete'));
         } finally {
             setLoading(false);
         }
@@ -344,11 +344,11 @@ const TenantCommonCodeManager = () => {
             if (response.success) {
                 loadCodes(selectedGroup.groupName);
             } else {
-                setError(response.message || t('admin:tenantCommonCode.msg.errToggleFallback', '상태 변경 실패'));
+                setError(response.message || t('admin:tenantCommonCode.msg.errToggleFallback'));
             }
         } catch (err) {
-            console.error(t('admin:tenantCommonCode.msg.logToggle', '상태 변경 오류:'), err);
-            setError(t('admin:tenantCommonCode.msg.errToggle', '상태 변경 중 오류가 발생했습니다.'));
+            console.error(t('admin:tenantCommonCode.msg.logToggle'), err);
+            setError(t('admin:tenantCommonCode.msg.errToggle'));
         } finally {
             setLoading(false);
         }
@@ -358,13 +358,13 @@ const TenantCommonCodeManager = () => {
      * 상담 패키지 빠른 생성
      */
     const handleQuickCreatePackage = () => {
-        const packageName = prompt(t('admin:tenantCommonCode.msg.promptPackageName', '패키지명을 입력하세요:'));
+        const packageName = prompt(t('admin:tenantCommonCode.msg.promptPackageName'));
         if (!packageName) return;
 
-        const price = prompt(t('admin:tenantCommonCode.msg.promptPriceWon', '금액을 입력하세요 (원):'));
+        const price = prompt(t('admin:tenantCommonCode.msg.promptPriceWon'));
         if (!price) return;
 
-        const sessions = prompt(t('admin:tenantCommonCode.msg.promptSessions', '회기 수를 입력하세요:'));
+        const sessions = prompt(t('admin:tenantCommonCode.msg.promptSessions'));
         if (!sessions) return;
 
         createConsultationPackage({
@@ -372,19 +372,19 @@ const TenantCommonCodeManager = () => {
             price: parseInt(price, 10),
             duration: 50,
             sessions: parseInt(sessions, 10),
-            description: t('admin:tenantCommonCode.msg.quickPackageDescription', '{{packageName}} ({{sessions}}회기)', { packageName, sessions })
+            description: t('admin:tenantCommonCode.msg.quickPackageDescription', { packageName, sessions })
         })
             .then(response => {
                 if (response.success) {
                     loadCodes('CONSULTATION_PACKAGE');
-                    notificationManager.success(t('admin:tenantCommonCode.msg.successPackageCreated', '상담 패키지가 생성되었습니다.'));
+                    notificationManager.success(t('admin:tenantCommonCode.msg.successPackageCreated'));
                 } else {
-                    notificationManager.error(t('admin:tenantCommonCode.msg.createFailureWithMessage', '생성 실패: {{message}}', { message: response.message }));
+                    notificationManager.error(t('admin:tenantCommonCode.msg.createFailureWithMessage', { message: response.message }));
                 }
             })
             .catch(err => {
-                console.error(t('admin:tenantCommonCode.msg.logPackageCreate', '패키지 생성 오류:'), err);
-                notificationManager.error(t('admin:tenantCommonCode.msg.errPackageCreate', '패키지 생성 중 오류가 발생했습니다.'));
+                console.error(t('admin:tenantCommonCode.msg.logPackageCreate'), err);
+                notificationManager.error(t('admin:tenantCommonCode.msg.errPackageCreate'));
             });
     };
 
@@ -436,13 +436,13 @@ const TenantCommonCodeManager = () => {
     };
 
     return (
-        <AdminCommonLayout title={t('admin:tenantCommonCode.ui.layoutTitle', '테넌트 공통코드')}>
+        <AdminCommonLayout title={t('admin:tenantCommonCode.ui.layoutTitle')}>
             <div className="mg-v2-ad-b0kla">
                 <div className="mg-v2-ad-b0kla__container">
-                    <ContentArea ariaLabel={t('admin:tenantCommonCode.ui.contentAriaLabel', '테넌트 공통코드 관리 본문')}>
+                    <ContentArea ariaLabel={t('admin:tenantCommonCode.ui.contentAriaLabel')}>
                         <ContentHeader
-                            title={t('admin:tenantCommonCode.ui.headerTitle', '테넌트 공통코드 관리')}
-                            subtitle={t('admin:tenantCommonCode.ui.headerSubtitle', '상담 패키지, 결제 방법, 전문 분야 등 테넌트 전용 코드를 관리합니다.')}
+                            title={t('admin:tenantCommonCode.ui.headerTitle')}
+                            subtitle={t('admin:tenantCommonCode.ui.headerSubtitle')}
                             titleId={TENANT_COMMON_CODE_TITLE_ID}
                         />
                         <main aria-labelledby={TENANT_COMMON_CODE_TITLE_ID}>

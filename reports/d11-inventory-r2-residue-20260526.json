@@ -1,0 +1,324 @@
+{
+  "generatedAt": "2026-05-25T15:35:31.940Z",
+  "schema": "r2-fallback-inventory@1",
+  "summary": {
+    "filesScanned": 1452,
+    "totalFallbacks": 17,
+    "mgTotal": 7,
+    "mgV2Total": 0,
+    "otherTotal": 10
+  },
+  "groups": {
+    "mg": {
+      "total": 7,
+      "autoReplaceable": 0,
+      "manualReview": 7,
+      "uniqueHexCount": 7,
+      "uniqueTokenCount": 7,
+      "uniquePairCount": 7,
+      "topHex": [
+        {
+          "hex": "#ede9fe",
+          "count": 1,
+          "canonical": null
+        },
+        {
+          "hex": "#ffeaa7",
+          "count": 1,
+          "canonical": null
+        },
+        {
+          "hex": "#e8f4fd",
+          "count": 1,
+          "canonical": null
+        },
+        {
+          "hex": "#bee5eb",
+          "count": 1,
+          "canonical": null
+        },
+        {
+          "hex": "#0c5460",
+          "count": 1,
+          "canonical": null
+        },
+        {
+          "hex": "#6f42c1",
+          "count": 1,
+          "canonical": null
+        },
+        {
+          "hex": "#8b7355",
+          "count": 1,
+          "canonical": null
+        }
+      ],
+      "topTokens": [
+        {
+          "token": "--mg-purple-light",
+          "count": 1
+        },
+        {
+          "token": "--mg-custom-ffeaa7",
+          "count": 1
+        },
+        {
+          "token": "--mg-custom-e8f4fd",
+          "count": 1
+        },
+        {
+          "token": "--mg-custom-bee5eb",
+          "count": 1
+        },
+        {
+          "token": "--mg-custom-0c5460",
+          "count": 1
+        },
+        {
+          "token": "--mg-purple-500",
+          "count": 1
+        },
+        {
+          "token": "--mg-color-accent-main",
+          "count": 1
+        }
+      ],
+      "topFiles": [
+        {
+          "file": "frontend/src/components/common/PrivacyPolicy.css",
+          "count": 4
+        },
+        {
+          "file": "frontend/src/components/admin/ModernDashboardEditor.css",
+          "count": 1
+        },
+        {
+          "file": "frontend/src/components/consultant/ConsultationRecordScreen.js",
+          "count": 1
+        },
+        {
+          "file": "frontend/src/components/dashboard-v2/consultant/ConsultantDashboard.css",
+          "count": 1
+        }
+      ],
+      "pairs": [
+        {
+          "tokenName": "--mg-purple-light",
+          "hex": "#ede9fe",
+          "count": 1,
+          "canonical": null,
+          "replaceable": false,
+          "fileCount": 1
+        },
+        {
+          "tokenName": "--mg-custom-ffeaa7",
+          "hex": "#ffeaa7",
+          "count": 1,
+          "canonical": null,
+          "replaceable": false,
+          "fileCount": 1
+        },
+        {
+          "tokenName": "--mg-custom-e8f4fd",
+          "hex": "#e8f4fd",
+          "count": 1,
+          "canonical": null,
+          "replaceable": false,
+          "fileCount": 1
+        },
+        {
+          "tokenName": "--mg-custom-bee5eb",
+          "hex": "#bee5eb",
+          "count": 1,
+          "canonical": null,
+          "replaceable": false,
+          "fileCount": 1
+        },
+        {
+          "tokenName": "--mg-custom-0c5460",
+          "hex": "#0c5460",
+          "count": 1,
+          "canonical": null,
+          "replaceable": false,
+          "fileCount": 1
+        },
+        {
+          "tokenName": "--mg-purple-500",
+          "hex": "#6f42c1",
+          "count": 1,
+          "canonical": null,
+          "replaceable": false,
+          "fileCount": 1
+        },
+        {
+          "tokenName": "--mg-color-accent-main",
+          "hex": "#8b7355",
+          "count": 1,
+          "canonical": null,
+          "replaceable": false,
+          "fileCount": 1
+        }
+      ]
+    },
+    "mg-v2": {
+      "total": 0,
+      "autoReplaceable": 0,
+      "manualReview": 0,
+      "uniqueHexCount": 0,
+      "uniqueTokenCount": 0,
+      "uniquePairCount": 0,
+      "topHex": [],
+      "topTokens": [],
+      "topFiles": [],
+      "pairs": []
+    },
+    "other": {
+      "total": 10,
+      "autoReplaceable": 0,
+      "manualReview": 10,
+      "uniqueHexCount": 7,
+      "uniqueTokenCount": 7,
+      "uniquePairCount": 7,
+      "topHex": [
+        {
+          "hex": "#0056cc",
+          "count": 2,
+          "canonical": null
+        },
+        {
+          "hex": "#2c2c2e",
+          "count": 2,
+          "canonical": null
+        },
+        {
+          "hex": "#38383a",
+          "count": 2,
+          "canonical": null
+        },
+        {
+          "hex": "#a1a1a6",
+          "count": 1,
+          "canonical": null
+        },
+        {
+          "hex": "#3a3a3c",
+          "count": 1,
+          "canonical": null
+        },
+        {
+          "hex": "#48484a",
+          "count": 1,
+          "canonical": null
+        },
+        {
+          "hex": "#1c1c1e",
+          "count": 1,
+          "canonical": null
+        }
+      ],
+      "topTokens": [
+        {
+          "token": "--color-primary-hover",
+          "count": 2
+        },
+        {
+          "token": "--ios-bg-secondary-dark",
+          "count": 2
+        },
+        {
+          "token": "--ios-border-dark",
+          "count": 2
+        },
+        {
+          "token": "--color-border-accent",
+          "count": 1
+        },
+        {
+          "token": "--ios-bg-tertiary-dark",
+          "count": 1
+        },
+        {
+          "token": "--ios-border-hover-dark",
+          "count": 1
+        },
+        {
+          "token": "--ios-bg-primary-dark",
+          "count": 1
+        }
+      ],
+      "topFiles": [
+        {
+          "file": "frontend/src/styles/06-components/_dropdowns.css",
+          "count": 7
+        },
+        {
+          "file": "frontend/src/components/admin/MappingManagement.css",
+          "count": 2
+        },
+        {
+          "file": "frontend/src/components/admin/mapping/MappingFilters.css",
+          "count": 1
+        }
+      ],
+      "pairs": [
+        {
+          "tokenName": "--color-primary-hover",
+          "hex": "#0056cc",
+          "count": 2,
+          "canonical": null,
+          "replaceable": false,
+          "fileCount": 1
+        },
+        {
+          "tokenName": "--ios-bg-secondary-dark",
+          "hex": "#2c2c2e",
+          "count": 2,
+          "canonical": null,
+          "replaceable": false,
+          "fileCount": 1
+        },
+        {
+          "tokenName": "--ios-border-dark",
+          "hex": "#38383a",
+          "count": 2,
+          "canonical": null,
+          "replaceable": false,
+          "fileCount": 1
+        },
+        {
+          "tokenName": "--color-border-accent",
+          "hex": "#a1a1a6",
+          "count": 1,
+          "canonical": null,
+          "replaceable": false,
+          "fileCount": 1
+        },
+        {
+          "tokenName": "--ios-bg-tertiary-dark",
+          "hex": "#3a3a3c",
+          "count": 1,
+          "canonical": null,
+          "replaceable": false,
+          "fileCount": 1
+        },
+        {
+          "tokenName": "--ios-border-hover-dark",
+          "hex": "#48484a",
+          "count": 1,
+          "canonical": null,
+          "replaceable": false,
+          "fileCount": 1
+        },
+        {
+          "tokenName": "--ios-bg-primary-dark",
+          "hex": "#1c1c1e",
+          "count": 1,
+          "canonical": null,
+          "replaceable": false,
+          "fileCount": 1
+        }
+      ]
+    }
+  },
+  "codemodMappingCount": 136
+}

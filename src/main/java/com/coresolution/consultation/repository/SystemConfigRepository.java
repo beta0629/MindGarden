@@ -18,6 +18,19 @@ public interface SystemConfigRepository extends JpaRepository<SystemConfig, Long
     
     @Query("SELECT sc FROM SystemConfig sc WHERE sc.tenantId = :tenantId AND sc.category = :category AND sc.isActive = true")
     List<SystemConfig> findByTenantIdAndCategoryAndIsActiveTrue(@Param("tenantId") String tenantId, @Param("category") String category);
+
+    /**
+     * 전역(테넌트 비종속) 설정 조회.
+     *
+     * <p>{@code tenant_id = ''} (빈 문자열, V20260228_001 표준화) 시 단일 행을 조회한다.
+     * 발송 스케줄러 ON/OFF 같은 운영 전역 토글 키에 사용 — 자세한 규약은
+     * {@code com.coresolution.consultation.constant.NotificationSchedulerFlagKeys} 참조.
+     *
+     * @param configKey 설정 키
+     * @return 활성 전역 행 (없으면 empty)
+     */
+    @Query("SELECT sc FROM SystemConfig sc WHERE sc.tenantId = '' AND sc.configKey = :configKey AND sc.isActive = true")
+    Optional<SystemConfig> findGlobalByConfigKey(@Param("configKey") String configKey);
     
     // ==================== @Deprecated 메서드 (하위 호환성) ====================
     

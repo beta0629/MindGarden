@@ -82,4 +82,17 @@ public interface SystemConfigService {
      * 환율 설정 저장
      */
     void setUsdToKrwRate(Double rate);
+
+    /**
+     * 전역(테넌트 비종속) 불리언 플래그 조회.
+     *
+     * <p>{@code tenant_id = ''} 단일 행을 직접 조회하므로 {@link com.coresolution.core.context.TenantContextHolder}
+     * 설정이 없어도 안전하게 호출 가능하다. 운영 알림 발송 스케줄러 ON/OFF 같은 전역 토글에 사용한다.
+     * 값 파싱은 {@code "true"|"1"|"yes"|"on"} (대소문자 무시) → {@code true}, 그 외 → {@code false}.
+     *
+     * @param configKey    설정 키
+     * @param defaultValue 행이 없거나 비활성일 때 반환할 기본값
+     * @return 플래그 값 (행 없음 시 {@code defaultValue})
+     */
+    boolean getGlobalBoolean(String configKey, boolean defaultValue);
 }

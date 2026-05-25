@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.util.List;
 import java.util.Optional;
 import java.util.Map;
+import java.util.Set;
 import com.coresolution.consultation.entity.SystemConfig;
 import com.coresolution.consultation.repository.SystemConfigRepository;
 import com.coresolution.consultation.service.SystemConfigService;
@@ -216,5 +217,25 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     @Override
     public void setUsdToKrwRate(Double rate) {
         setConfigValue("USD_TO_KRW_RATE", rate.toString(), "USD-KRW 환율", "EXCHANGE_RATE");
+    }
+
+    private static final Set<String> TRUTHY_VALUES = Set.of("true", "1", "yes", "on", "y", "t");
+
+    @Override
+    public boolean getGlobalBoolean(String configKey, boolean defaultValue) {
+        if (configKey == null || configKey.isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return systemConfigRepository.findGlobalByConfigKey(configKey)
+                    .map(SystemConfig::getConfigValue)
+                    .map(value -> value == null ? null : value.trim().toLowerCase())
+                    .map(TRUTHY_VALUES::contains)
+                    .orElse(defaultValue);
+        } catch (Exception e) {
+            log.warn("전역 플래그 조회 실패 — 기본값 사용: key={}, default={}, error={}",
+                    configKey, defaultValue, e.getMessage());
+            return defaultValue;
+        }
     }
 }

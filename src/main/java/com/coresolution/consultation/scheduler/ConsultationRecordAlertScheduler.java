@@ -6,7 +6,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
+import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
@@ -42,9 +44,30 @@ public class ConsultationRecordAlertScheduler {
     private final TenantService tenantService;
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
+    private final SystemConfigService systemConfigService;
     
     @Value("${scheduler.consultation-record-alert.cron:0 0 9 * * *}")
     private String cronExpression;
+
+    /**
+     * 런타임 DB 플래그 가드 — false 면 본문 진입 차단.
+     *
+     * <p>{@code @ConditionalOnProperty} ENV 가드와 별개로 어드민/SQL 토글 즉시 반영용.
+     * 일/주/월 3 개 진입점에서 공통으로 호출한다.
+     *
+     * @param scope 비활성 로그 출처 식별자 (Daily / Weekly / Monthly)
+     * @return DB 플래그가 OFF 면 {@code true}
+     */
+    private boolean isDisabledByDbFlag(String scope) {
+        boolean enabled = systemConfigService.getGlobalBoolean(
+                NotificationSchedulerFlagKeys.CONSULTATION_RECORD_ALERT_ENABLED,
+                NotificationSchedulerFlagKeys.DEFAULT_ENABLED);
+        if (!enabled) {
+            log.info("⏸️ [ConsultationRecordAlert-{}] 스케줄러 비활성 - DB 플래그 OFF: key={}",
+                scope, NotificationSchedulerFlagKeys.CONSULTATION_RECORD_ALERT_ENABLED);
+        }
+        return !enabled;
+    }
     
     /**
      * 매일 오전 9시에 전날 상담일지 미작성 확인 (테넌트별 독립 실행)
@@ -52,6 +75,9 @@ public class ConsultationRecordAlertScheduler {
      */
     @Scheduled(cron = "${scheduler.consultation-record-alert.cron:0 0 9 * * *}")
     public void checkDailyMissingConsultationRecords() {
+        if (isDisabledByDbFlag("Daily")) {
+            return;
+        }
         String executionId = UUID.randomUUID().toString();
         LocalDateTime startTime = LocalDateTime.now();
         
@@ -142,6 +168,9 @@ public class ConsultationRecordAlertScheduler {
      */
     @Scheduled(cron = "0 0 10 * * 1")
     public void checkWeeklyMissingConsultationRecords() {
+        if (isDisabledByDbFlag("Weekly")) {
+            return;
+        }
         String executionId = UUID.randomUUID().toString();
         LocalDateTime startTime = LocalDateTime.now();
         
@@ -228,6 +257,9 @@ public class ConsultationRecordAlertScheduler {
      */
     @Scheduled(cron = "0 0 11 1 * ?")
     public void checkMonthlyMissingConsultationRecords() {
+        if (isDisabledByDbFlag("Monthly")) {
+            return;
+        }
         String executionId = UUID.randomUUID().toString();
         LocalDateTime startTime = LocalDateTime.now();
         

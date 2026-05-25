@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultantPerformance;
@@ -19,6 +20,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.StatisticsService;
+import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.WorkflowAutomationService;
 import com.coresolution.consultation.util.MobilePushMessageFormatter;
 import com.coresolution.core.context.TenantContextHolder;
@@ -47,9 +49,30 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     private final StatisticsService statisticsService;
     private final CommonCodeService commonCodeService;
     private final MobilePushDispatchService mobilePushDispatchService;
+    private final SystemConfigService systemConfigService;
     
     // 워크플로우 실행 로그 저장용 (실제 환경에서는 별도 테이블 사용 권장)
     private final List<Map<String, Object>> workflowLogs = new ArrayList<>();
+
+    /**
+     * 런타임 DB 플래그 가드 — false 면 본문 진입 차단.
+     *
+     * <p>{@code @ConditionalOnProperty}/{@code scheduler.workflow-automation.enabled} ENV 와 별개로
+     * 어드민/SQL 토글 즉시 반영용. 4 개 @Scheduled 진입점에서 공통 호출한다.
+     *
+     * @param scope 비활성 로그 출처 식별자
+     * @return DB 플래그가 OFF 면 {@code true}
+     */
+    private boolean isDisabledByDbFlag(String scope) {
+        boolean enabled = systemConfigService.getGlobalBoolean(
+                NotificationSchedulerFlagKeys.WORKFLOW_AUTOMATION_ENABLED,
+                NotificationSchedulerFlagKeys.DEFAULT_ENABLED);
+        if (!enabled) {
+            log.info("⏸️ [WorkflowAutomation-{}] 스케줄러 비활성 - DB 플래그 OFF: key={}",
+                scope, NotificationSchedulerFlagKeys.WORKFLOW_AUTOMATION_ENABLED);
+        }
+        return !enabled;
+    }
     
     /**
      * 예약 리마인더 자동 발송 (매 10분마다 실행)
@@ -57,6 +80,9 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     @Override
     @Scheduled(fixedRate = 600000) // 10분마다 실행
     public void sendScheduleReminders() {
+        if (isDisabledByDbFlag("ScheduleReminders")) {
+            return;
+        }
         log.info("🔔 예약 리마인더 자동 발송 시작");
         
         try {
@@ -107,6 +133,9 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     @Override
     @Scheduled(cron = "0 0 * * * *") // 매 시간 정각에 실행
     public void sendIncompleteConsultationAlerts() {
+        if (isDisabledByDbFlag("IncompleteAlerts")) {
+            return;
+        }
         log.info("⚠️ 미완료 상담 알림 시작");
         
         try {
@@ -172,6 +201,9 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     @Override
     @Scheduled(cron = "0 0 18 * * *") // 매일 오후 6시
     public void sendDailyPerformanceSummary() {
+        if (isDisabledByDbFlag("DailySummary")) {
+            return;
+        }
         log.info("📊 일일 성과 요약 알림 시작");
         
         try {
@@ -237,6 +269,9 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     @Override
     @Scheduled(cron = "0 0 9 1 * *") // 매월 1일 오전 9시
     public void generateMonthlyPerformanceReport() {
+        if (isDisabledByDbFlag("MonthlyReport")) {
+            return;
+        }
         log.info("📈 월간 성과 리포트 생성 시작");
         
         try {

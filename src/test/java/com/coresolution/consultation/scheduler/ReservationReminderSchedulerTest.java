@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.config.BatchNotificationProperties;
+import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
@@ -16,6 +17,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService.DispatchOutcome;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
 import com.coresolution.core.service.TenantService;
@@ -29,11 +31,13 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -72,6 +76,8 @@ class ReservationReminderSchedulerTest {
     private SchedulerExecutionLogService logService;
     @Mock
     private SchedulerAlertService alertService;
+    @Mock
+    private SystemConfigService systemConfigService;
 
     private BatchNotificationProperties properties;
     private ReservationReminderScheduler scheduler;
@@ -82,7 +88,11 @@ class ReservationReminderSchedulerTest {
         properties.setReservationReminderDaysAhead(2);
         scheduler = new ReservationReminderScheduler(tenantService, scheduleRepository,
             mappingRepository, dispatchService, mobilePushDispatchService, properties,
-            logService, alertService);
+            logService, alertService, systemConfigService);
+        // 기본: DB 플래그 ON (기존 테스트 시나리오 그대로 동작).
+        when(systemConfigService.getGlobalBoolean(
+                eq(NotificationSchedulerFlagKeys.RESERVATION_REMINDER_ENABLED), anyBoolean()))
+            .thenReturn(true);
     }
 
     @Test
@@ -248,6 +258,39 @@ class ReservationReminderSchedulerTest {
         verify(logService).saveExecutionLog(any(), eq(TENANT_A),
             eq("ReservationReminderD2"), eq("SUCCESS"),
             eq("dispatched=1, skipped=0, failed=0"));
+    }
+
+    @Test
+    @DisplayName("DB 플래그 OFF — 본문 진입 차단, TenantService/dispatch 호출 없음")
+    void runDailyReminder_disabledByDbFlag_shortCircuits() {
+        when(systemConfigService.getGlobalBoolean(
+                eq(NotificationSchedulerFlagKeys.RESERVATION_REMINDER_ENABLED), anyBoolean()))
+            .thenReturn(false);
+
+        scheduler.runDailyReminder();
+
+        verifyNoInteractions(tenantService);
+        verifyNoInteractions(scheduleRepository);
+        verify(dispatchService, never()).dispatchReservationReminderD2(any());
+        verifyNoInteractions(logService);
+    }
+
+    @Test
+    @DisplayName("DB 플래그 ON — 기존 다중 테넌트 실행 경로 그대로 동작")
+    void runDailyReminder_enabledByDbFlag_executesNormally() {
+        when(systemConfigService.getGlobalBoolean(
+                eq(NotificationSchedulerFlagKeys.RESERVATION_REMINDER_ENABLED), anyBoolean()))
+            .thenReturn(true);
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule scheduleA = buildSchedule(101L, TENANT_A, 5001L, 6001L);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+            .thenReturn(List.of(scheduleA));
+        givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
+        when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
+
+        scheduler.runDailyReminder();
+
+        verify(dispatchService).dispatchReservationReminderD2(101L);
     }
 
     // ---------------------------------------------------------------- fixtures

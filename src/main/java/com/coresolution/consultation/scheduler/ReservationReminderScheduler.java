@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import com.coresolution.consultation.config.BatchNotificationProperties;
+import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Schedule;
@@ -15,6 +16,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService.DispatchOutcome;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.util.MobilePushMessageFormatter;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.SchedulerAlertService;
@@ -69,6 +71,7 @@ public class ReservationReminderScheduler {
     private final BatchNotificationProperties properties;
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
+    private final SystemConfigService systemConfigService;
 
     /** 디버그·관측용. 외부 cron 변경은 {@code notification.batch.reservation-reminder-cron} 키. */
     @Value("${notification.batch.reservation-reminder-cron:0 0 9 * * *}")
@@ -85,6 +88,15 @@ public class ReservationReminderScheduler {
         zone = "Asia/Seoul"
     )
     public void runDailyReminder() {
+        // 런타임 가드 (2026-05-25): DB SSOT 플래그가 OFF 면 즉시 return.
+        // ENV `NOTIFICATION_BATCH_RESERVATION_REMINDER_ENABLED` 와 이중 가드 — 어드민/SQL 토글 즉시 반영용.
+        if (!systemConfigService.getGlobalBoolean(
+                NotificationSchedulerFlagKeys.RESERVATION_REMINDER_ENABLED,
+                NotificationSchedulerFlagKeys.DEFAULT_ENABLED)) {
+            log.info("⏸️ [ReservationReminderD2] 스케줄러 비활성 - DB 플래그 OFF: key={}",
+                NotificationSchedulerFlagKeys.RESERVATION_REMINDER_ENABLED);
+            return;
+        }
         String executionId = UUID.randomUUID().toString();
         LocalDateTime startTime = LocalDateTime.now();
         int totalTenants = 0;

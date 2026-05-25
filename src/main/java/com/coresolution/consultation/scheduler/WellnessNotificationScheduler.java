@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.List;
 import java.util.UUID;
+import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.DailyHealingContent;
 import com.coresolution.consultation.entity.SystemNotification;
@@ -17,6 +18,7 @@ import com.coresolution.consultation.repository.DailyHealingContentRepository;
 import com.coresolution.consultation.repository.SystemNotificationReadRepository;
 import com.coresolution.consultation.repository.SystemNotificationRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.WellnessTemplateService;
 import com.coresolution.consultation.service.impl.HealingContentServiceImpl;
 import com.coresolution.core.context.TenantContextHolder;
@@ -63,6 +65,7 @@ public class WellnessNotificationScheduler {
     private final TenantService tenantService;
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
+    private final SystemConfigService systemConfigService;
     
     @Value("${scheduler.wellness-notification.cron:0 0 9 * * ?}")
     private String cronExpression;
@@ -78,6 +81,15 @@ public class WellnessNotificationScheduler {
         lockAtLeastFor = "PT5M"
     )
     public void sendDailyWellnessTip() {
+        // 런타임 가드 (2026-05-25): DB SSOT 플래그가 OFF 면 즉시 return.
+        // ENV `SCHEDULER_WELLNESS_NOTIFICATION_ENABLED` 와 이중 가드 — 어드민/SQL 토글 즉시 반영용.
+        if (!systemConfigService.getGlobalBoolean(
+                NotificationSchedulerFlagKeys.WELLNESS_TIP_ENABLED,
+                NotificationSchedulerFlagKeys.DEFAULT_ENABLED)) {
+            log.info("⏸️ [WellnessNotification] 스케줄러 비활성 - DB 플래그 OFF: key={}",
+                NotificationSchedulerFlagKeys.WELLNESS_TIP_ENABLED);
+            return;
+        }
         String executionId = UUID.randomUUID().toString();
         LocalDateTime startTime = LocalDateTime.now();
         
@@ -163,6 +175,14 @@ public class WellnessNotificationScheduler {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void catchUpMissedDispatchOnStartup() {
+        // 런타임 가드 (2026-05-25): DB SSOT 플래그가 OFF 면 catch-up 도 차단.
+        if (!systemConfigService.getGlobalBoolean(
+                NotificationSchedulerFlagKeys.WELLNESS_TIP_ENABLED,
+                NotificationSchedulerFlagKeys.DEFAULT_ENABLED)) {
+            log.info("⏸️ [WellnessNotification] catch-up skip - DB 플래그 OFF: key={}",
+                NotificationSchedulerFlagKeys.WELLNESS_TIP_ENABLED);
+            return;
+        }
         LocalDateTime now = LocalDateTime.now();
         if (now.getHour() < 9) {
             log.info("⏸️ [WellnessNotification] catch-up skip — 09:00 이전 부팅 (now={})", now);

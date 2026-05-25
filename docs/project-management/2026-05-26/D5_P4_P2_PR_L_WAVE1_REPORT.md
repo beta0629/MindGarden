@@ -272,7 +272,7 @@ Wave-1 Top-30 in-scope 흡수 완료 — 회귀 0.
 |---|---|---|---|
 | commit-1 | 시드 481 키 + 5 namespace 신설 + i18n 등록 | `ee458e0e7` | ✅ `766ee3580..ee458e0e7  develop -> develop` |
 | commit-2 | Top-30 Pattern-A codemod (1,786 fallback 제거) | `ca8faeacc` | ✅ `ee458e0e7..ca8faeacc  develop -> develop` |
-| commit-3 | Pattern-C 1 + Pattern-D 11 흡수 (엣지 포함) | (commit 직후 갱신) | (push 후 갱신) |
+| commit-3 | Pattern-C 1 + Pattern-D 11 흡수 (엣지 포함) | `af7a374ca` | ✅ `ca8faeacc..af7a374ca  develop -> develop` |
 
 ---
 

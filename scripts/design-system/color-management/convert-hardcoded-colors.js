@@ -5,12 +5,20 @@
  *
  * CI/BI 변경 대비 하드코딩된 색상을 CSS 변수로 자동 변환.
  *
+ * SSOT 참조 (D11 §4 C4=a 신설 단일 SSOT):
+ *   - docs/standards/HARDCODE_GATE_METRIC.md §3 — HARD_EXCLUDE 토큰 14종 (mg-* 7 + iOS dark 7)
+ *     영구 보존 SSOT. 본 codemod 의 COLOR_MAPPING / RGB_MAPPING / R2_OTHER_ALIAS_SAFE_PAIRS
+ *     어느 경로에도 등록하지 않음. 추가/삭제/hex 변경 시 §3 + 본 파일 주석 동시 갱신 필수.
+ *   - docs/standards/HARDCODE_GATE_METRIC.md §3.4 — 토큰 정의 파일 HARD_EXCLUDE (파일 단위 보호)
+ *     매트릭스. 본 파일의 `HARD_EXCLUDE` 정규식 배열과 정확히 동일 패턴.
+ *   - docs/standards/HARDCODE_GATE_METRIC.md §4 — Cascade 가드 정의 (T-D 가드 54 PASS 매트릭스 보존).
+ *
  * 안전 가드 (T1 2차 §6 회귀 사고 재발 방지):
  *   - HARD_EXCLUDE: 토큰 정의 파일 (unified-design-tokens / dashboard-tokens-extension /
  *     responsive-layout-tokens / mindgarden-design-system / 00-core/_variables /
  *     00-core/_component-variables / common/variables / constants/css-variables.js)
  *     은 절대 처리하지 않음. `*tokens*.css` `*variables*.css` `*design-system*.css`
- *     일반 패턴도 자동 보호. (§6.2)
+ *     일반 패턴도 자동 보호. (§6.2 — HARDCODE_GATE_METRIC.md §3.4 SSOT)
  *   - `--targets-file <path>`: zsh `$TARGETS` 단어 분리 문제 회피용 옵션. (§6.1)
  *   - 잔존 hex 카운트: 매핑 후에도 남는 hex 색상을 dry-run에서 정확히 집계.
  *     회색 3자리(#666·#333·#000·#ccc·#999·#eee 등) 및 8자리 alpha hex 모두 포함.
@@ -22,8 +30,8 @@
  *     같은 nested var 로 잘못 치환되는 부작용을 차단한다.
  *
  * @author MindGarden Team
- * @version 1.3.0
- * @since 2025-11-28
+ * @version 1.3.1 (D11 P2-M 주석 강화 — 정규식 무수정, HARDCODE_GATE_METRIC.md 참조 추가)
+ * @since 2025-11-28 / 2026-05-26 (D11 P2-M)
  */
 
 const fs = require('fs');
@@ -32,16 +40,18 @@ const { spawnSync } = require('child_process');
 const glob = require('glob');
 
 // ── D10 P2-a HARD_EXCLUDE 보존 토큰 (P1 §C1=a 신설 최소화 결정) ────────────
-// SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D10.md §2.1 + §4 C1=a,
+// SSOT: docs/standards/HARDCODE_GATE_METRIC.md §3 (D11 §4 C4=a 신설 단일 SSOT — mg-* 7 + iOS dark 7 = 14종)
+//       docs/standards/DESIGN_TOKEN_GAP_2026Q2_D10.md §2.1 + §4 C1=a,
 //       docs/project-management/2026-05-23/D10_P1_DESIGN_HANDOFF.md §2 C1,
-//       docs/project-management/2026-05-23/D10_P0_INVENTORY.md §1 (HOLD 6쌍 / 7건).
+//       docs/project-management/2026-05-23/D10_P0_INVENTORY.md §1 (HOLD 6쌍 / 7건),
+//       docs/project-management/2026-05-26/D11_P0_INVENTORY.md §2.1 / §4.1 (D11 P0-inv 정밀 분류).
 //
 // P1 디자이너 결정 C1=a (신설 최소화) 답습 — 아래 7쌍 (legacy token + hex 컨텍스트) 은
 // 캐노니컬 매핑 부재 또는 시맨틱 시프트 위험 보수 분류 잔존. 본 codemod 의 COLOR_MAPPING /
-// SAFE_PAIRS 어느 경로에도 추가하지 않음으로써 영구 보존한다. 후속 운영 게이트(D11 자산
-// 갱신 라운드) 에서 폐기 마이그레이션 또는 패밀리 신설 여부 재판단.
+// SAFE_PAIRS 어느 경로에도 추가하지 않음으로써 영구 보존한다. 후속 마이그레이션은 별도 라운드
+// (PrivacyPolicy 개편 / purple 패밀리 신설 / accent-main 일괄 폐기) 에서 처리.
 //
-// HARD_EXCLUDE_TOKENS_PRESERVED:
+// HARD_EXCLUDE_TOKENS_PRESERVED — mg-* 7종 (HARDCODE_GATE_METRIC.md §3.1 SSOT 동기화 필수):
 //   1. --mg-purple-light      + #ede9fe  (purple 패밀리 부재, PrivacyPolicy.css)
 //   2. --mg-custom-ffeaa7     + #ffeaa7  (커스텀 placeholder, PrivacyPolicy.css)
 //   3. --mg-custom-e8f4fd     + #e8f4fd  (커스텀 placeholder, PrivacyPolicy.css)
@@ -50,9 +60,19 @@ const glob = require('glob');
 //   6. --mg-purple-500        + #6f42c1  (purple 패밀리 부재, DashboardFormModal.css)
 //   7. --mg-color-accent-main + #8b7355  (coffee/brown 커스텀 톤, ConsultationRecordScreen.js)
 //
+// HARD_EXCLUDE — iOS dark 7종 (HARDCODE_GATE_METRIC.md §3.2 SSOT — D10 C8=a 결정):
+//   8.  --ios-bg-primary-dark    + #1c1c1e  (iOS 13+ system background)
+//   9.  --ios-bg-secondary-dark  + #2c2c2e  (iOS 13+ secondary system background)
+//   10. --ios-bg-tertiary-dark   + #3a3a3c  (iOS 13+ tertiary system background)
+//   11. --ios-border-dark        + #38383a  (iOS 13+ separator dark)
+//   12. --ios-border-hover-dark  + #48484a  (iOS 13+ separator hover dark)
+//   13. --ios-text-primary-dark  + (ios-theme.css 정의)  (iOS 13+ label primary dark)
+//   14. --ios-text-secondary-dark+ (ios-theme.css 정의)  (iOS 13+ label secondary dark)
+//
 // R-2 폴백 보호 (`var(--token, #hex)`) 는 1단계에서 placeholder 치환으로 자동 보존되며,
-// 위 7쌍은 SAFE_PAIRS 화이트리스트 미등록으로 인해 본 codemod 의 R-2 alias 대체 경로
-// (--r2-mg-alias-replace / --r2-mg-alias-bc-replace) 에서도 변환되지 않는다.
+// 위 14쌍은 SAFE_PAIRS 화이트리스트 미등록으로 인해 본 codemod 의 R-2 alias 대체 경로
+// (--r2-mg-alias-replace / --r2-mg-alias-bc-replace / --r2-other-alias-replace) 에서도
+// 변환되지 않는다. 본 14종 추가/삭제/hex 변경 시 HARDCODE_GATE_METRIC.md §3 + 본 주석 동시 갱신 필수.
 
 // 색상 매핑 테이블 (하드코딩 → CSS 변수)
 const COLOR_MAPPING = {
@@ -746,11 +766,11 @@ const R2_MG_ALIAS_BC_SAFE_PAIRS = [
 //   - Group C (SAFE white-list): §6.2 캐노니컬 일치 12쌍 광역 흡수
 //   - Group D (color-* legacy merge): §6.3.b legacy alias 통합 (광역)
 //
-// HARD_EXCLUDE 보존 (본 화이트리스트 의도적 제외):
-//   - `--ad-b0kla-green` + `#0d9488` (teal-600 변형, 1건) — teal 패밀리 부재, D11 검토
-//   - `--ios-*-dark` 6쌍 / 9건 — C8=a 다크 전용 시맨틱, D11 iOS theme 재설계 이월
-//   - `--color-primary-hover` + `#0056cc` (5건) — primary hover 시맨틱 모호, 보수 보존
-//   - `--color-border-accent` + `#a1a1a6` (1건) — neutral-400 변형, 캐노니컬 부재 보수 보존
+// HARD_EXCLUDE 보존 (본 화이트리스트 의도적 제외 — SSOT: HARDCODE_GATE_METRIC.md §3):
+//   - `--ad-b0kla-green` + `#0d9488` (teal-600 변형, 1건) — teal 패밀리 부재, D11 P2-c B0KlA teal 신설 후보 (별도 PR-R 위임 책무)
+//   - `--ios-*-dark` 7쌍 — HARDCODE_GATE_METRIC.md §3.2 SSOT, D10 C8=a 다크 전용 시맨틱, iOS theme 재설계 이월
+//   - `--color-primary-hover` + `#0056cc` — D11 P2-b PR-R `--mg-color-primary-hover` 신설 흡수 책무 (별도 위임)
+//   - `--color-border-accent` + `#a1a1a6` — D11 P2-b PR-R `--mg-color-border-accent` 신설 흡수 책무 (별도 위임)
 //
 // 본 화이트리스트에 없는 (token, hex) 쌍은 본 옵션 사용 시에도 절대 변환되지 않는다.
 const R2_OTHER_ALIAS_SAFE_PAIRS = [
@@ -994,6 +1014,8 @@ class HardcodedColorConverter {
     // 안전망: 절대 변환 금지 영역 (인벤토리 §6 + 작업 정의서 §치환 규칙)
     // T1 2차 라운드 회귀 사고(§6.2)에서 codemod가 토큰 정의 파일을 휩쓸어
     // `--mg-white: var(--mg-white)` 같은 순환 참조를 만든 사례를 재발 방지.
+    // SSOT: docs/standards/HARDCODE_GATE_METRIC.md §3.4 (토큰 정의 파일 HARD_EXCLUDE 파일 단위 보호 매트릭스).
+    // count-hardcoded-colors.js 의 HARD_EXCLUDE_PATTERNS 와 정확히 동일 패턴 — 한쪽만 변경 금지.
     const HARD_EXCLUDE = [
       // ── 명시적 토큰 정의 파일 (T1 2차 §6.2 되돌린 7개 파일) ──
       /\bfrontend\/src\/styles\/unified-design-tokens\.css$/,

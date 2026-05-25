@@ -1,30 +1,40 @@
 #!/usr/bin/env node
 
 /**
- * 하드코딩된 색상값 카운트 도구 — 3 metric SSOT
+ * 하드코딩된 색상값 카운트 도구 — Dual-metric SSOT (v2)
  *
- * D7-2 인프라 (D6 §8 운영 게이트 metric / D7-1 §7 카운트 측정 / D7-2 합의서 §2.5)
+ * D7-2 인프라 + D11 P2-M 산식 확장 (D11 §1.1 + §4 C1=b/C2=a + P0-inv §1.2)
  *
- * 본 스크립트는 frontend/src 전 영역에서 하드코딩된 hex 색상을 측정하고
- * 3가지 metric 을 동시에 출력하여 측정 불일치를 해소한다.
+ * 본 스크립트는 frontend/src 전 영역에서 하드코딩된 색상값을 측정하고
+ * legacy(D8~D10 호환) + unified(D11 신 산식) 두 계열의 metric 을 동시에 출력한다.
  *
- *   1) canonical (D6 §8 운영 게이트 metric)
- *      - convert-hardcoded-colors.js 의 HARD_EXCLUDE 영역 일관 차감
- *      - R-2 폴백 (`var(--token, #hex)`) 보호 차감
- *      - 주석 (`//`, `/* *\/`) 내부 hex 차감
- *      - D7-1 적용 후 codemod canonical 보고 (residualHexCounts 합계 = 606) 와 정합
+ *   ┌──────────────────────────────── Legacy 계열 (D8~D10 답습, 추적성 보존) ─┐
+ *   │ canonical (D6 §8 운영 게이트 metric)                                    │
+ *   │   - HARD_EXCLUDE + R-2 폴백 보호 차감 후 잔존 hex                       │
+ *   │ withR2 (R-2 보호 미정착 시점 추적용)                                    │
+ *   │   - canonical + R-2 폴백 보호 hex                                        │
+ *   │ legacyRawLine (== rawLine alias)                                         │
+ *   │   - CSS HEX (#fff/#ffffff/#000/#000000 제외) + JS `color.*['"]#hex['"]` │
+ *   │   - .github/workflows/ci-bi-protection.yml grep 라인 카운트 호환        │
+ *   └──────────────────────────────────────────────────────────────────────────┘
  *
- *   2) withR2 (R-2 보호 미정착 시점 추적용)
- *      - canonical + R-2 폴백 보호 hex (codemod 보호로 잔존하는 of-design hex)
- *      - D7-1 적용 후 = canonical + 343 (D6 §6 R-2 폴백 343건)
- *
- *   3) rawLine (CI/BI 보호 시스템 호환 metric)
- *      - .github/workflows/ci-bi-protection.yml 의 grep 라인 카운트와 동일 동작
- *      - HARD_EXCLUDE 미적용 (CI/BI 와 정합 우선) — 토큰 정의 파일 포함, R-2 폴백 포함, 주석 포함
- *      - CSS HEX (#fff/#ffffff/#000/#000000 4종 제외) + JS `color.*['\"]#hex['\"]` 라인 합산
+ *   ┌──────────────────── Unified 계열 (D11 신 산식, KPI 신 baseline) ──────┐
+ *   │ unifiedRawLine = legacyRawLine + rgba(CSS) + rgba(JS) + hsl/hsla + 8hex│
+ *   │   - rgba   : `rgba\([^)]+\)` (CSS 소비처 + JS)                          │
+ *   │   - hsl    : `hsla?\([^)]+\)` (미래 안전성, 현재 0건)                   │
+ *   │   - alpha8 : `#[0-9a-fA-F]{8}\b`   (미래 안전성, 현재 0건)              │
+ *   │   - HARD_EXCLUDE: unified-design-tokens.css 의 rgba 토큰 정의 자동 제외 │
+ *   │     (P0-inv §1.2 grep `--exclude=unified-design-tokens.css` 측정 정합) │
+ *   │   - var(--mg-*) 만 있는 라인은 raw 매치가 없으므로 자연 제외           │
+ *   │     (이미 토큰화 SUCCESS, D11 §4 C2=a)                                  │
+ *   │ varCount = var(--mg-[a-zA-Z0-9_-]+) 발생 합계 (occurrence, CSS+JS)     │
+ *   │ coverage = varCount / (varCount + unifiedRawLine) × 100 (백분율 문자열)│
+ *   │   - D11 §4 C2=a 신 KPI (목표 ≥ 95%)                                     │
+ *   └──────────────────────────────────────────────────────────────────────────┘
  *
  * HARD_EXCLUDE 패턴은 `convert-hardcoded-colors.js` 를 SSOT 로 차용한다.
- * 매핑이 늘어나거나 보호 영역이 변경되면 반드시 양쪽을 동시에 갱신해야 한다.
+ * SSOT 문서: `docs/standards/HARDCODE_GATE_METRIC.md` (D11 §4 C4=a 신설 SSOT)
+ * 매핑·보호 영역이 변경되면 반드시 양쪽을 동시에 갱신해야 한다.
  *
  * 사용법:
  *   node scripts/design-system/color-management/count-hardcoded-colors.js [옵션]
@@ -39,8 +49,8 @@
  *   --help, -h                도움말
  *
  * @author MindGarden Team
- * @version 1.0.0 (D7-2 P2.5 인프라)
- * @since 2026-05-22
+ * @version 2.0.0 (D11 P2-M 산식 확장 — dual-metric)
+ * @since 2026-05-22 (v1.0 D7-2) / 2026-05-26 (v2.0 D11 P2-M)
  */
 
 'use strict';
@@ -173,9 +183,33 @@ const RAW_CSS_HEX_PATTERN = /#[0-9a-fA-F]{3,6}/;
 const RAW_CSS_EXCLUDE_PATTERN = /#fff|#ffffff|#000|#000000/i;
 const RAW_JS_COLOR_PATTERN = /color.*['"]#[0-9a-fA-F]{3,6}['"]/i;
 
+// ── D11 §1.1 신 산식 — unifiedRawLine 매칭 정규식 ────────────────────────
+// SSOT: docs/standards/HARDCODE_GATE_METRIC.md §2 (D11 §4 C1=b/C2=a 정합)
+// rgba: CSS+JS 라인 단위 매칭. hsl/hsla/8자리 hex 는 현재 0건이나 미래 안전성용.
+const RAW_RGBA_PATTERN = /rgba\([^)]+\)/i;
+const RAW_HSL_PATTERN = /hsla?\([^)]+\)/i;
+const RAW_HEX8_PATTERN = /#[0-9a-fA-F]{8}\b/i;
+
+// var(--mg-*) 발생량 (토큰화 SUCCESS 라인) — coverage 분자.
+// grep -rEoh "var\(--mg-[a-zA-Z0-9_-]+" frontend/src ... | wc -l 와 동일 동작 (occurrence count).
+const VAR_MG_TOKEN_PATTERN = /var\(--mg-[a-zA-Z0-9_-]+/g;
+
+// unifiedRawLine HARD_EXCLUDE — token 정의 파일의 rgba 정의는 unifiedRawLine 자동 제외.
+// P0-inv §1.2 측정 (grep --exclude="unified-design-tokens.css") 정합 (CSS rgba 소비처 822 라인).
+// SSOT: docs/standards/HARDCODE_GATE_METRIC.md §3 (HARD_EXCLUDE 토큰 14종 + 정의 파일 보호).
+const UNIFIED_RAW_HARD_EXCLUDE_PATTERNS = [
+  /\bfrontend\/src\/styles\/unified-design-tokens\.css$/
+];
+
 // ── 유틸 ──────────────────────────────────────────────────────────────────
 function isHardExcluded(relPath) {
   return HARD_EXCLUDE_PATTERNS.some(rx => rx.test(relPath));
+}
+
+// D11 §1.1 — unifiedRawLine rgba/hsl/8hex 측정 시 토큰 정의 파일 자동 제외.
+// HARD_EXCLUDE_PATTERNS 와 별개 (legacyRawLine 은 정의 파일 포함, unifiedRawLine 은 제외).
+function isUnifiedHardExcluded(relPath) {
+  return UNIFIED_RAW_HARD_EXCLUDE_PATTERNS.some(rx => rx.test(relPath));
 }
 
 function classifyHexLen(hex) {
@@ -253,6 +287,15 @@ class HardcodedColorCounter {
       jsLines: 0,
       byFile: new Map()
     };
+    // D11 §1.1 dual-metric: unifiedRawLine details (rgba/hsl/8hex) + varCount.
+    // SSOT: docs/standards/HARDCODE_GATE_METRIC.md §2.
+    this.unified = {
+      rgbaCss: 0,
+      rgbaJs: 0,
+      hslAll: 0,
+      alphaHex8: 0,
+      varCount: 0
+    };
     this.byArea = {
       css: { canonical: 0, withR2: 0, rawLine: 0 },
       js: { canonical: 0, withR2: 0, rawLine: 0 }
@@ -302,6 +345,35 @@ class HardcodedColorCounter {
     if (fileRawLines > 0) {
       this.rawLine.byFile.set(relPath, fileRawLines);
       this.byArea[areaKey].rawLine += fileRawLines;
+    }
+
+    // D11 §1.1 unifiedRawLine — rgba/hsl/8hex 라인 단위 카운트 + varCount 발생량.
+    // HARD_EXCLUDE: token 정의 파일(unified-design-tokens.css) 의 rgba 정의는 제외
+    //              (P0-inv §1.2 grep `--exclude=unified-design-tokens.css` 정합).
+    // var(--mg-*) 만 있는 라인은 raw 매치가 없으므로 자연 제외 (D11 §4 C2=a).
+    const unifiedExcluded = isUnifiedHardExcluded(relPath);
+    if (!unifiedExcluded) {
+      for (const line of lines) {
+        if (RAW_RGBA_PATTERN.test(line)) {
+          if (isCss) {
+            this.unified.rgbaCss++;
+          } else {
+            this.unified.rgbaJs++;
+          }
+        }
+        if (RAW_HSL_PATTERN.test(line)) {
+          this.unified.hslAll++;
+        }
+        if (RAW_HEX8_PATTERN.test(line)) {
+          this.unified.alphaHex8++;
+        }
+      }
+    }
+
+    // varCount: HARD_EXCLUDE 미적용. P0-inv §1.3 grep -rEoh 와 동일 (occurrence count).
+    const varMatches = content.match(VAR_MG_TOKEN_PATTERN);
+    if (varMatches) {
+      this.unified.varCount += varMatches.length;
     }
 
     // canonical / withR2: HARD_EXCLUDE 적용 + codemod 매핑 시뮬레이션 후 잔존 카운트
@@ -363,13 +435,43 @@ class HardcodedColorCounter {
   }
 
   buildReport() {
+    // D11 §1.1 dual-metric SSOT — legacy(D8~D10 호환) + unified(D11 신 산식)
+    // SSOT: docs/standards/HARDCODE_GATE_METRIC.md §2.
+    const legacyRawLine = this.rawLine.cssLines + this.rawLine.jsLines;
+    const unifiedRawLine =
+      legacyRawLine +
+      this.unified.rgbaCss +
+      this.unified.rgbaJs +
+      this.unified.hslAll +
+      this.unified.alphaHex8;
+    const coverageDenominator = this.unified.varCount + unifiedRawLine;
+    const coverageValue = coverageDenominator > 0
+      ? (this.unified.varCount / coverageDenominator) * 100
+      : 0;
+    const coverage = `${coverageValue.toFixed(2)}%`;
+
     const summary = {
+      metricVersion: 'v2',
+      // ── Legacy 계열 (D8~D10 호환, 추적성 보존) ──
       canonical: this.canonical.total,
       withR2: this.canonical.total + this.r2Protected.total,
-      rawLine: this.rawLine.cssLines + this.rawLine.jsLines,
+      legacyRawLine,
+      rawLine: legacyRawLine,
       rawLineCss: this.rawLine.cssLines,
       rawLineJs: this.rawLine.jsLines,
       r2Protected: this.r2Protected.total,
+      // ── Unified 계열 (D11 §1.1 신 산식, KPI 신 baseline) ──
+      unifiedRawLine,
+      coverage,
+      varCount: this.unified.varCount,
+      details: {
+        hexOnly: legacyRawLine,
+        rgbaCss: this.unified.rgbaCss,
+        rgbaJs: this.unified.rgbaJs,
+        hslAll: this.unified.hslAll,
+        alphaHex8: this.unified.alphaHex8
+      },
+      // ── 공통 메타 ──
       filesScanned: this.filesScanned,
       filesExcluded: this.filesExcluded,
       uniqueCanonicalHex: this.canonical.byHex.size,
@@ -399,7 +501,7 @@ class HardcodedColorCounter {
 
     const report = {
       generatedAt: new Date().toISOString(),
-      schema: 'count-hardcoded-colors@1',
+      schema: 'count-hardcoded-colors@2',
       summary,
       byArea: this.byArea,
       topHex,
@@ -437,19 +539,30 @@ function printHumanReport(report) {
   const { summary, byArea, topHex, r2ProtectedHex } = report;
 
   console.log('');
-  console.log('🎨 하드코딩 색상 카운트 — 3 metric SSOT');
+  console.log(`🎨 하드코딩 색상 카운트 — Dual-metric SSOT (${summary.metricVersion})`);
   console.log('='.repeat(60));
   console.log(`생성 시각          : ${report.generatedAt}`);
   console.log(`스캔 파일          : ${summary.filesScanned}개`);
   console.log(`HARD_EXCLUDE 제외  : ${summary.filesExcluded}개`);
   console.log('');
-  console.log('📊 metric 요약');
+  console.log('📊 Legacy 계열 (D8~D10 호환 — 추적성 보존)');
   console.log('-'.repeat(60));
   console.log(`  canonical (D6 §8 운영 게이트)         : ${summary.canonical}건`);
   console.log(`  withR2    (= canonical + R-2 보호)    : ${summary.withR2}건`);
-  console.log(`  rawLine   (CI/BI grep 라인 호환)      : ${summary.rawLine}건`);
+  console.log(`  legacyRawLine (== rawLine alias)      : ${summary.legacyRawLine}건`);
   console.log(`    └ CSS 라인 : ${summary.rawLineCss}건 / JS 라인 : ${summary.rawLineJs}건`);
   console.log(`  R-2 폴백 보호 (별도 집계)             : ${summary.r2Protected}건`);
+  console.log('');
+  console.log('📈 Unified 계열 (D11 §1.1 신 산식 — KPI 신 baseline)');
+  console.log('-'.repeat(60));
+  console.log(`  unifiedRawLine (hex + rgba + hsl + 8hex) : ${summary.unifiedRawLine}건`);
+  console.log(`    └ hexOnly  : ${summary.details.hexOnly}건 (== legacyRawLine)`);
+  console.log(`    └ rgbaCss  : ${summary.details.rgbaCss}건 (unified-design-tokens.css 제외)`);
+  console.log(`    └ rgbaJs   : ${summary.details.rgbaJs}건`);
+  console.log(`    └ hslAll   : ${summary.details.hslAll}건 (미래 안전성)`);
+  console.log(`    └ alphaHex8: ${summary.details.alphaHex8}건 (미래 안전성)`);
+  console.log(`  varCount (var(--mg-*) 발생량)         : ${summary.varCount}건`);
+  console.log(`  coverage (var()/(var()+unified))      : ${summary.coverage}  (D11 KPI ≥ 95%)`);
   console.log('');
   console.log('📁 영역별 분포 (canonical / withR2 / rawLine)');
   console.log('-'.repeat(60));
@@ -472,8 +585,9 @@ function printHumanReport(report) {
   }
   console.log('💡 metric SSOT');
   console.log('  - 운영 게이트(D6 §8) 판정은 반드시 canonical 사용');
-  console.log('  - CI/BI 워크플로 호환 비교는 rawLine 사용 (±2% 허용)');
-  console.log('  - 자세한 정의: scripts/design-system/color-management/README.md');
+  console.log('  - legacyRawLine 은 D8~D10 추적성 보존 (CI/BI 호환, ±2% 허용)');
+  console.log('  - unifiedRawLine + coverage 는 D11 신 KPI baseline');
+  console.log('  - 자세한 정의: docs/standards/HARDCODE_GATE_METRIC.md (SSOT)');
   console.log('');
 }
 
@@ -546,13 +660,23 @@ function printHelp() {
     '  --detail                  파일별 분포 포함',
     '  --help, -h                도움말',
     '',
-    '출력 metric:',
-    '  canonical : convert-hardcoded-colors.js 의 HARD_EXCLUDE + R-2 보호 + 주석 차감 후',
-    '              잔존 hex 카운트. D6 §8 운영 게이트 metric (SSOT).',
-    '  withR2    : canonical + R-2 폴백 보호 hex.',
-    '  rawLine   : CI/BI workflow (ci-bi-protection.yml) 의 grep 라인 카운트와 동일.',
-    '              HARD_EXCLUDE 미적용, 라인 단위 카운트.',
+    '출력 metric (Dual-metric v2):',
+    '  [Legacy 계열 — D8~D10 호환, 추적성 보존]',
+    '  canonical     : convert-hardcoded-colors.js 의 HARD_EXCLUDE + R-2 보호 + 주석 차감 후',
+    '                  잔존 hex 카운트. D6 §8 운영 게이트 metric (SSOT).',
+    '  withR2        : canonical + R-2 폴백 보호 hex.',
+    '  legacyRawLine : CI/BI workflow (ci-bi-protection.yml) 의 grep 라인 카운트와 동일.',
+    '                  HARD_EXCLUDE 미적용, 라인 단위 카운트. `rawLine` alias 제공.',
+    '  r2Protected   : R-2 폴백 보호 hex 별도 집계.',
     '',
+    '  [Unified 계열 — D11 §1.1 신 산식, KPI 신 baseline]',
+    '  unifiedRawLine: legacyRawLine + rgba(CSS+JS) + hsl/hsla + 8자리 hex 통합.',
+    '                  unified-design-tokens.css rgba 정의 자동 제외 (HARD_EXCLUDE).',
+    '  varCount      : var(--mg-*) 발생 합계 (occurrence, CSS+JS).',
+    '  coverage      : varCount/(varCount+unifiedRawLine) 백분율. D11 KPI ≥ 95%.',
+    '  details       : { hexOnly, rgbaCss, rgbaJs, hslAll, alphaHex8 } 분리 집계.',
+    '',
+    'SSOT: docs/standards/HARDCODE_GATE_METRIC.md (D11 §4 C4=a 신설)',
     '리포트 디렉터리는 .gitignore 대상 (scripts/design-system/color-management/reports/*.json).',
     ''
   ].join('\n'));
@@ -589,5 +713,11 @@ module.exports = {
   HardcodedColorCounter,
   HARD_EXCLUDE_PATTERNS,
   VAR_FALLBACK_HEX_PATTERN,
-  RESIDUAL_HEX_PATTERN
+  RESIDUAL_HEX_PATTERN,
+  // D11 §1.1 unified metric (P2-M)
+  RAW_RGBA_PATTERN,
+  RAW_HSL_PATTERN,
+  RAW_HEX8_PATTERN,
+  VAR_MG_TOKEN_PATTERN,
+  UNIFIED_RAW_HARD_EXCLUDE_PATTERNS
 };

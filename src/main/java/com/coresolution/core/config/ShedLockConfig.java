@@ -15,12 +15,30 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * 위해 ShedLock 을 도입한다. {@code shedlock} 테이블은 {@code V20260528_005} Flyway
  * 마이그레이션으로 생성되며, {@link JdbcTemplateLockProvider} 가 기본 스키마를 사용한다.</p>
  *
- * <p>적용 스케줄러: {@code WellnessNotificationScheduler#sendDailyWellnessTip}
- * (lock name {@code "wellness-notification"}, lockAtMostFor {@code PT15M},
- * lockAtLeastFor {@code PT5M}).</p>
+ * <p>적용 스케줄러:</p>
+ * <ul>
+ *   <li>{@code WellnessNotificationScheduler#sendDailyWellnessTip} —
+ *     lock name {@code "wellness-notification"}, lockAtMostFor {@code PT15M},
+ *     lockAtLeastFor {@code PT5M}.</li>
+ *   <li>{@code StatisticsGenerationScheduler#generateDailyStatistics} —
+ *     lock name {@code "statistics-generation-daily"}, lockAtMostFor {@code PT30M},
+ *     lockAtLeastFor {@code PT5M}. (핫픽스 2026-05-25, N1)</li>
+ *   <li>{@code StatisticsGenerationScheduler#refreshRealtimeStatistics} —
+ *     lock name {@code "statistics-generation-hourly"}, lockAtMostFor {@code PT10M},
+ *     lockAtLeastFor {@code PT2M}. (핫픽스 2026-05-25, N1 — 매 시각 정시 {@code StaleStateException} 차단)</li>
+ *   <li>{@code StatisticsSchedulerServiceImpl#scheduleDailyStatisticsUpdate} —
+ *     lock name {@code "statistics-scheduler-daily-update"}, lockAtMostFor {@code PT30M},
+ *     lockAtLeastFor {@code PT5M}. (핫픽스 2026-05-25, N1)</li>
+ *   <li>{@code StatisticsSchedulerServiceImpl#scheduleConsultantPerformanceUpdate} —
+ *     lock name {@code "statistics-scheduler-consultant-performance"}, lockAtMostFor {@code PT30M},
+ *     lockAtLeastFor {@code PT5M}. (핫픽스 2026-05-25, N1)</li>
+ *   <li>{@code StatisticsSchedulerServiceImpl#schedulePerformanceMonitoring} —
+ *     lock name {@code "statistics-scheduler-performance-monitoring"}, lockAtMostFor {@code PT30M},
+ *     lockAtLeastFor {@code PT5M}. (핫픽스 2026-05-25, N1)</li>
+ * </ul>
  *
  * @author CoreSolution
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2026-05-23
  */
 @org.springframework.context.annotation.Configuration

@@ -1,0 +1,70 @@
+{
+  "track": "PR-I (notificationManager.alert/confirm 호출처 흡수)",
+  "criteria": "frontend/src/**/*.{js,jsx,ts,tsx} 에서 notificationManager\\.(alert|confirm)\\s*\\( 매칭",
+  "measured_at": "2026-05-26T05:20:00+09:00",
+  "branch": "develop",
+  "branch_sha": "a011a8a44",
+  "main_sha": "cb2f218c8",
+  "previous_inventory_sha": "d3586eab8",
+  "total_call_lines": 25,
+  "unique_callsites": 23,
+  "alert_calls": 0,
+  "confirm_calls": 23,
+  "callsites": [
+    {"path": "frontend/src/components/admin/AdminDashboard.js", "line": 549, "method": "confirm", "arg_pattern": "변수", "category": "admin", "snippet": "notificationManager.confirm(confirmMessage, resolve);"},
+    {"path": "frontend/src/components/admin/AccountManagement.js", "line": 145, "method": "confirm", "arg_pattern": "상수", "category": "admin", "snippet": "notificationManager.confirm(ACCOUNT_MESSAGES.CONFIRM.DELETE, resolve);"},
+    {"path": "frontend/src/components/admin/ApiPerformanceMonitoring.js", "line": 85, "method": "confirm", "arg_pattern": "상수", "category": "admin", "snippet": "notificationManager.confirm(messages.CLEAR_CONFIRM, resolve);"},
+    {"path": "frontend/src/components/admin/CacheMonitoringDashboard.js", "line": 52, "method": "confirm", "arg_pattern": "상수", "category": "admin", "snippet": "notificationManager.confirm(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_CONFIRM, resolve);"},
+    {"path": "frontend/src/components/admin/CommonCodeManagement.js", "line": 357, "method": "confirm", "arg_pattern": "상수", "category": "admin", "snippet": "notificationManager.confirm(CCM_MSG.CONFIRM_DELETE_CODE, resolve);"},
+    {"path": "frontend/src/components/admin/ConsultantManagement.js", "line": 197, "method": "confirm", "arg_pattern": "한국어 인라인", "category": "admin", "snippet": "notificationManager.confirm('정말로 이 상담사를 삭제하시겠습니까?', resolve);"},
+    {"path": "frontend/src/components/admin/DashboardFormModal.js", "line": 351, "method": "confirm", "arg_pattern": "t-키", "category": "admin", "snippet": "notificationManager.confirm(t(DASHBOARD_FORM_CONFIRM_DELETE_ROLE_KEY, { roleName }), resolve);"},
+    {"path": "frontend/src/components/admin/MenuPermissionManagement.js", "line": 174, "method": "confirm", "arg_pattern": "상수", "category": "admin", "snippet": "notificationManager.confirm(MENU_PERM_CONFIRM.BATCH_SAVE, resolve);"},
+    {"path": "frontend/src/components/admin/TenantCodeManagement.js", "line": 172, "method": "confirm", "arg_pattern": "상수", "category": "admin", "snippet": "notificationManager.confirm(NOTIFICATION_MESSAGES.DELETE_CONFIRM, resolve);"},
+    {"path": "frontend/src/components/admin/TenantCommonCodeManager.js", "line": 311, "method": "confirm", "arg_pattern": "상수", "category": "admin", "snippet": "notificationManager.confirm(TENANT_COMMON_CODE_MSG.CONFIRM_DELETE, resolve);"},
+    {"path": "frontend/src/components/admin/UserManagement.js", "line": 159, "method": "confirm", "arg_pattern": "멀티라인", "category": "admin", "snippet": "notificationManager.confirm("},
+    {"path": "frontend/src/components/admin/VacationManagementModal.js", "line": 357, "method": "confirm", "arg_pattern": "t-fallback", "category": "admin", "snippet": "notificationManager.confirm(t('admin:vacation.confirm.delete', '정말로 이 휴가를 삭제하시겠습니까?'), resolve);"},
+    {"path": "frontend/src/components/admin/WidgetBasedAdminDashboard.js", "line": 170, "method": "confirm", "arg_pattern": "t-fallback", "category": "admin", "snippet": "notificationManager.confirm(t('admin:widgetDashboard.deleteConfirm', '이 위젯을 삭제하시겠습니까?'), resolve);"},
+    {"path": "frontend/src/components/admin/mapping-management/pages/MappingManagementPage.js", "line": 290, "method": "confirm", "arg_pattern": "변수", "category": "mapping", "snippet": "notificationManager.confirm(confirmMessage, resolve);"},
+    {"path": "frontend/src/components/admin/mapping/PartialRefundModal.js", "line": 87, "method": "confirm", "arg_pattern": "변수", "category": "mapping", "snippet": "notificationManager.confirm(confirmMessage, resolve);"},
+    {"path": "frontend/src/components/admin/organisms/SystemNotificationListBlock.js", "line": 126, "method": "confirm", "arg_pattern": "한국어 인라인", "category": "admin", "snippet": "notificationManager.confirm('이 공지를 게시하시겠습니까?', resolve);"},
+    {"path": "frontend/src/components/admin/organisms/SystemNotificationListBlock.js", "line": 141, "method": "confirm", "arg_pattern": "한국어 인라인", "category": "admin", "snippet": "notificationManager.confirm('이 공지를 보관하시겠습니까?', resolve);"},
+    {"path": "frontend/src/components/admin/organisms/SystemNotificationListBlock.js", "line": 156, "method": "confirm", "arg_pattern": "한국어 인라인", "category": "admin", "snippet": "notificationManager.confirm('이 공지를 삭제하시겠습니까?', resolve);"},
+    {"path": "frontend/src/components/billing/SubscriptionManagement.js", "line": 191, "method": "confirm", "arg_pattern": "상수", "category": "billing", "snippet": "notificationManager.confirm(BILLING_MESSAGES.SUBSCRIPTION.CANCEL_CONFIRM, resolve);"},
+    {"path": "frontend/src/components/dashboard-v2/AdminDashboardV2.js", "line": 764, "method": "confirm", "arg_pattern": "멀티라인", "category": "dashboard", "snippet": "notificationManager.confirm("},
+    {"path": "frontend/src/components/dashboard/DashboardWidgetManager/DashboardWidgetManagerContainer.js", "line": 174, "method": "confirm", "arg_pattern": "한국어 인라인", "category": "dashboard", "snippet": "notificationManager.confirm('이 위젯을 삭제하시겠습니까?', resolve);"},
+    {"path": "frontend/src/components/erp/BudgetManagement.js", "line": 241, "method": "confirm", "arg_pattern": "한국어 인라인", "category": "erp", "snippet": "notificationManager.confirm('정말로 이 예산을 삭제하시겠습니까?', resolve);"},
+    {"path": "frontend/src/components/erp/ItemManagement.js", "line": 230, "method": "confirm", "arg_pattern": "템플릿", "category": "erp", "snippet": "notificationManager.confirm(`\"${item.name}\" 아이템을 삭제하시겠습니까?`, resolve);"},
+    {"path": "frontend/src/components/finance/RecurringExpenseModal.js", "line": 220, "method": "confirm", "arg_pattern": "한국어 인라인", "category": "finance", "snippet": "notificationManager.confirm('정말로 이 반복 지출을 삭제하시겠습니까?', resolve);"},
+    {"path": "frontend/src/components/super-admin/PaymentManagement.js", "line": 355, "method": "confirm", "arg_pattern": "멀티라인", "category": "super-admin", "snippet": "notificationManager.confirm("}
+  ],
+  "category_distribution": {
+    "admin": 17,
+    "mapping": 2,
+    "dashboard": 2,
+    "erp": 2,
+    "finance": 1,
+    "billing": 1,
+    "super-admin": 1
+  },
+  "arg_pattern_distribution": {
+    "한국어 인라인": 7,
+    "상수": 9,
+    "t-fallback": 2,
+    "t-키": 1,
+    "변수": 4,
+    "템플릿": 1,
+    "멀티라인": 3
+  },
+  "estimated_pr_i_impact": {
+    "line_changes": "70~100",
+    "ko_leaves_added": "5~10",
+    "t_calls_added": "10~15",
+    "useTranslation_files_added": "5~8",
+    "medium_regression_resolved": true
+  },
+  "notes": [
+    "23 유니크 호출처 / 25 라인 매칭 (SystemNotificationListBlock 단일 파일에 line 126/141/156 3 호출).",
+    "콜백 패턴 차이: notificationManager.confirm(msg, resolve) → useConfirm() Promise 패턴으로 전면 재작성 필요.",
+    "PR-I 4단계 분할 권장: admin 17 → mapping 2 → dashboard/erp 4 → finance/billing/super-admin 3."
+  ]
+}

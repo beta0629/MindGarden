@@ -47,9 +47,11 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './TenantProfile.css';
 import { USER_ROLES } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '../../hooks/useConfirm';
 
 const TenantProfile = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['common', 'admin']);
+  const [confirm, ConfirmModal] = useConfirm();
   const navigate = useNavigate();
   const {
     user,
@@ -220,7 +222,11 @@ const TenantProfile = () => {
    * 결제 수단 삭제
    */
   const handleDeletePaymentMethod = async(paymentMethodId) => {
-    if (!confirm('정말 이 결제 수단을 삭제하시겠습니까?')) {
+    const ok = await confirm({
+      messageKey: 'admin:tenant.payment.deleteConfirm',
+      variant: 'danger'
+    });
+    if (!ok) {
       return;
     }
 
@@ -756,6 +762,7 @@ const TenantProfile = () => {
               </div>
             </form>
           </UnifiedModal>
+          <ConfirmModal />
         </div>
       </div>
     </AdminCommonLayout>

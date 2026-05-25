@@ -67,7 +67,7 @@ function useConfirm(defaultOptions = {}) {
       info: 'modal.info.defaultTitle',
       warning: 'modal.warning.defaultTitle',
       danger: 'modal.danger.defaultTitle',
-      success: 'modal.success.defaultTitle',
+      success: 'modal.success.defaultTitle'
     };
     return map[variant] || 'modal.confirm.defaultTitle';
   };
@@ -77,7 +77,7 @@ function useConfirm(defaultOptions = {}) {
       info: 'modal.confirm.defaultConfirmButton',
       warning: 'modal.warning.defaultConfirmButton',
       danger: 'modal.danger.defaultConfirmButton',
-      success: 'modal.confirm.defaultConfirmButton',
+      success: 'modal.confirm.defaultConfirmButton'
     };
     return map[variant] || 'modal.confirm.defaultConfirmButton';
   };

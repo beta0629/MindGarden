@@ -59,7 +59,7 @@ function useAlert(defaultOptions = {}) {
       info: 'modal.info.defaultTitle',
       warning: 'modal.warning.defaultTitle',
       danger: 'modal.danger.defaultTitle',
-      success: 'modal.success.defaultTitle',
+      success: 'modal.success.defaultTitle'
     };
     return map[variant] || 'modal.alert.defaultTitle';
   };

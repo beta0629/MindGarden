@@ -165,12 +165,17 @@ class NotificationManager {
         return message;
     }
 
-/**
-     * 확인 다이얼로그 (Promise 기반)
-/**
+    /**
+     * @deprecated D5 P4 i18n Phase 2 (PR-F, 2026-05-26).
+     *   `window.confirm` 동기 브라우저 다이얼로그를 래핑하는 레거시 헬퍼.
+     *   신규 코드는 `useConfirm` 훅(`frontend/src/hooks/useConfirm.js`)을 사용하고
+     *   `t('<ns>:<key>')` 기반 i18n 메시지를 전달할 것.
+     *   이 메서드는 운영 도메인에서 호출되는 25곳(2026-05-26 기준)을
+     *   `useConfirm` 으로 마이그레이션하는 후속 PR(PR-F+ / 3차 청크)에서 제거 예정.
+     *   호출 매트릭스: `git grep notificationManager.confirm` 참고.
      * @param {string} message - 확인 메시지
-/**
-     * @param {function} callback - 콜백 함수 (true/false 전달)
+     * @param {function} [callback] - 콜백 함수 (true/false 전달)
+     * @returns {boolean}
      */
     confirm(message, callback) {
         const result = window.confirm(message);
@@ -180,12 +185,18 @@ class NotificationManager {
         return result;
     }
 
-/**
-     * 알림 다이얼로그
-/**
+    /**
+     * @deprecated D5 P4 i18n Phase 2 (PR-F, 2026-05-26).
+     *   `window.alert` 동기 브라우저 다이얼로그를 래핑하는 레거시 헬퍼.
+     *   신규 코드는 `useAlert` 훅(`frontend/src/hooks/useAlert.js`)을 사용하고
+     *   `t('<ns>:<key>')` 기반 i18n 메시지를 전달할 것.
+     *   이 메서드는 운영 도메인에서 호출되는 25곳(2026-05-26 기준)을
+     *   `useAlert` / `notificationManager.show()` 로 마이그레이션하는 후속 PR
+     *   (PR-F+ / 3차 청크)에서 제거 예정.
+     *   호출 매트릭스: `git grep notificationManager.alert` 참고.
      * @param {string} message - 알림 메시지
-/**
-     * @param {function} callback - 콜백 함수
+     * @param {function} [callback] - 콜백 함수
+     * @returns {void}
      */
     alert(message, callback) {
         window.alert(message);

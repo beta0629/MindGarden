@@ -2,6 +2,8 @@ package com.coresolution.consultation.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -164,6 +166,50 @@ class HealingContentServiceImplTest {
         assertEquals(TENANT_ID, persisted.getTenantId());
         assertEquals(Boolean.FALSE, persisted.getIsSuccess());
         assertEquals("no_openai_or_gemini_api_key", persisted.getErrorMessage());
+    }
+
+    @Test
+    @DisplayName("N3 — 성공 시 ai_provider/prompt/response 가 AiUsageLog 에 저장된다 (V20260529_001)")
+    void logHealingUsage_persistsProviderPromptResponse() {
+        TenantContextHolder.setTenantId(TENANT_ID);
+        when(aiChatCompletionService.completeChat(any(AiCompletionRequest.class))).thenReturn(successResult());
+
+        service.generateNewHealingContent("CLIENT", "GENERAL");
+
+        ArgumentCaptor<AiUsageLog> logCaptor = ArgumentCaptor.forClass(AiUsageLog.class);
+        verify(usageLogRepository).save(logCaptor.capture());
+        AiUsageLog persisted = logCaptor.getValue();
+        assertEquals("GEMINI", persisted.getAiProvider(),
+                "N3 — effectiveProvider=gemini → 대문자 GEMINI 저장 (default 'OPENAI' 회귀 차단)");
+        assertEquals("gemini-2.5-flash", persisted.getModel());
+        assertNotNull(persisted.getPrompt(), "system + user 결합 본문이 prompt 컬럼에 저장되어야 함");
+        assertTrue(persisted.getPrompt().contains("[system]"));
+        assertTrue(persisted.getPrompt().contains("[user]"));
+        assertNotNull(persisted.getResponse(), "성공 시 응답 본문이 response 컬럼에 저장되어야 함");
+        assertTrue(persisted.getResponse().contains("힐링"));
+    }
+
+    @Test
+    @DisplayName("N3 — 실패 시 ai_provider 는 저장되고 response 는 null (V20260529_001)")
+    void logHealingUsage_failure_persistsProviderWithNullResponse() {
+        TenantContextHolder.setTenantId(TENANT_ID);
+        AiChatCompletionResult failure = new AiChatCompletionResult(
+                false, "", "openai", "openai", "gpt-4o-mini",
+                0, 0, 0, "rate_limited", false, null);
+        when(aiChatCompletionService.completeChat(any(AiCompletionRequest.class))).thenReturn(failure);
+
+        service.generateNewHealingContent("CLIENT", "GENERAL");
+
+        ArgumentCaptor<AiUsageLog> logCaptor = ArgumentCaptor.forClass(AiUsageLog.class);
+        verify(usageLogRepository).save(logCaptor.capture());
+        AiUsageLog persisted = logCaptor.getValue();
+        assertEquals("OPENAI", persisted.getAiProvider(),
+                "실패 케이스도 effectiveProvider 가 정규화되어 저장되어야 함");
+        assertTrue(Boolean.FALSE.equals(persisted.getIsSuccess()));
+        assertNotNull(persisted.getPrompt(),
+                "실패해도 prompt 본문은 저장 (디버깅 컨텍스트 보존)");
+        assertNull(persisted.getResponse(),
+                "실패 시 response 는 null");
     }
 
     @Test

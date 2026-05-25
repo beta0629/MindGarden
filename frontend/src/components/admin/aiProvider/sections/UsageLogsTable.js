@@ -318,6 +318,30 @@ const UsageLogsTable = ({
                 </dd>
               </div>
             ) : null}
+            <div className="mg-ai-logs-table__detail-body">
+              <dt>{AI_PROVIDER_LABELS.detailPromptBody}</dt>
+              <dd>
+                {detailLog.promptBody ? (
+                  <pre className="mg-ai-logs-table__pre">{toDisplayString(detailLog.promptBody)}</pre>
+                ) : (
+                  <span className="mg-ai-logs-table__detail-empty">{AI_PROVIDER_LABELS.detailBodyEmpty}</span>
+                )}
+              </dd>
+            </div>
+            <div className="mg-ai-logs-table__detail-body">
+              <dt>{AI_PROVIDER_LABELS.detailResponseBody}</dt>
+              <dd>
+                {detailLog.responseBody ? (
+                  <pre className="mg-ai-logs-table__pre">{toDisplayString(detailLog.responseBody)}</pre>
+                ) : (
+                  <span className="mg-ai-logs-table__detail-empty">
+                    {detailLog.status === 'failed'
+                      ? AI_PROVIDER_LABELS.detailBodyNotApplicable
+                      : AI_PROVIDER_LABELS.detailBodyEmpty}
+                  </span>
+                )}
+              </dd>
+            </div>
           </dl>
         </UnifiedModal>
       ) : null}

@@ -21,7 +21,6 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,16 +32,11 @@ import org.springframework.util.StringUtils;
  * <p>트랙 B PR-4 (2026-05-24): {@code AiUsageController} 의 비즈니스 로직 담당.
  * 멀티테넌트 격리 — 모든 메서드는 tenantId 필수.</p>
  *
- * <h3>Provider 라벨 추정 규칙</h3>
- * <p>현재 {@link AiUsageLog} 엔티티는 {@code aiProvider} 컬럼이 없으므로 (트랙 B PR-2 보존),
- * {@code model} 컬럼의 prefix 로 provider 라벨을 추정한다.</p>
- * <ul>
- *   <li>{@code gpt-*} / {@code o1-*} / {@code text-*} → {@code OPENAI}</li>
- *   <li>{@code gemini-*} → {@code GEMINI}</li>
- *   <li>{@code claude-*} → {@code CLAUDE}</li>
- *   <li>{@code stability-*} / {@code black-forest-*} / {@code meta/} → {@code REPLICATE}</li>
- *   <li>그 외 / null → {@code UNKNOWN}</li>
- * </ul>
+ * <h3>Provider 라벨 (N3 보강, 2026-05-25)</h3>
+ * <p>이전에는 {@code model} prefix 로 추정 ({@code inferProviderFromModel}) 했으나 결함 N3
+ * (default 'OPENAI' 고정으로 인한 통계 왜곡) 의 본질은 caller 가 {@code effectiveProvider} 를
+ * set 하지 않은 점이었다. V20260529_001 에서 caller 정합화 + DB default 제거 + 컬럼 직접 사용
+ * 으로 전환했다. provider 집계 / 필터는 모두 {@link AiUsageLog#getAiProvider()} 를 사용한다.</p>
  *
  * @author CoreSolution
  * @since 2026-05-24
@@ -104,15 +98,14 @@ public class AiUsageStatsService {
             callsByCaller.put(caller, count);
         }
 
-        List<Object[]> modelRows = usageLogRepository.countByModelInPeriod(tenantId, startOfMonth, startOfNextMonth);
+        List<Object[]> providerRows = usageLogRepository.countByProviderInPeriod(tenantId, startOfMonth, startOfNextMonth);
         Map<String, Long> callsByProvider = new LinkedHashMap<>();
         KNOWN_PROVIDERS.forEach(p -> callsByProvider.put(p, 0L));
         callsByProvider.put(PROVIDER_UNKNOWN, 0L);
-        for (Object[] row : modelRows) {
-            String model = row[0] != null ? row[0].toString() : null;
+        for (Object[] row : providerRows) {
+            String providerLabel = normalizeProviderLabel(row[0]);
             long count = toLong(row[1]);
-            String provider = inferProviderFromModel(model);
-            callsByProvider.merge(provider, count, Long::sum);
+            callsByProvider.merge(providerLabel, count, Long::sum);
         }
 
         double successRate = 0.0;
@@ -151,7 +144,8 @@ public class AiUsageStatsService {
     /**
      * 테넌트의 AI 사용 로그를 페이징 조회한다.
      *
-     * <p>provider 필터는 model prefix 기반이라 SQL 수준 필터링이 어려워 결과 후처리로 적용한다.</p>
+     * <p>2026-05-25 N3 보강 (V20260529_001): provider 필터는 {@code ai_provider} 컬럼 직접 매칭으로
+     * SQL 수준에서 적용되어 {@code totalElements} 가 정확하다.</p>
      *
      * @param tenantId 테넌트 ID
      * @param provider provider 라벨 (대소문자 무관, 예: openai). null/blank 미지정.
@@ -180,22 +174,11 @@ public class AiUsageStatsService {
         }
 
         String callerFilter = StringUtils.hasText(caller) ? caller.trim() : null;
-        Page<AiUsageLog> page = usageLogRepository.findPageByTenantWithFilters(tenantId, callerFilter, isSuccess, pageable);
-
         String providerFilter = StringUtils.hasText(provider) ? provider.trim().toUpperCase(Locale.ROOT) : null;
 
-        List<AiUsageLogResponse> mapped = new ArrayList<>(page.getContent().size());
-        for (AiUsageLog entity : page.getContent()) {
-            String inferred = inferProviderFromModel(entity.getModel());
-            if (providerFilter != null && !providerFilter.equals(inferred)) {
-                continue;
-            }
-            mapped.add(AiUsageLogResponse.fromEntity(entity, inferred));
-        }
-        // provider 필터가 적용된 경우 totalElements 는 근사값(현재 페이지 기준)이 됨.
-        // 정확한 totalElements 가 필요하면 entity 에 aiProvider 컬럼 추가가 우선되어야 한다.
-        long totalElements = providerFilter == null ? page.getTotalElements() : mapped.size();
-        return new PageImpl<>(mapped, pageable, totalElements);
+        Page<AiUsageLog> page = usageLogRepository.findPageByTenantWithFilters(
+                tenantId, providerFilter, callerFilter, isSuccess, pageable);
+        return page.map(AiUsageLogResponse::fromEntity);
     }
 
     /**
@@ -208,34 +191,21 @@ public class AiUsageStatsService {
         }
         return usageLogRepository.findById(id)
                 .filter(entity -> tenantId.equals(entity.getTenantId()))
-                .map(entity -> AiUsageLogDetailResponse.fromEntity(entity, inferProviderFromModel(entity.getModel())));
+                .map(AiUsageLogDetailResponse::fromEntity);
     }
 
     /**
-     * model 문자열에서 provider 라벨을 추정한다.
-     *
-     * @param model 모델 명 (nullable)
-     * @return provider 라벨 (대문자). 미식별 시 {@code UNKNOWN}.
+     * GROUP BY 결과 row 의 provider 컬럼 값을 정규화한다. null/blank 는 {@code UNKNOWN}.
      */
-    public static String inferProviderFromModel(String model) {
-        if (model == null || model.isBlank()) {
+    private static String normalizeProviderLabel(Object raw) {
+        if (raw == null) {
             return PROVIDER_UNKNOWN;
         }
-        String m = model.trim().toLowerCase(Locale.ROOT);
-        if (m.startsWith("gpt-") || m.startsWith("o1-") || m.startsWith("text-") || m.startsWith("openai")) {
-            return PROVIDER_OPENAI;
+        String text = raw.toString();
+        if (text.isBlank()) {
+            return PROVIDER_UNKNOWN;
         }
-        if (m.startsWith("gemini")) {
-            return PROVIDER_GEMINI;
-        }
-        if (m.startsWith("claude")) {
-            return PROVIDER_CLAUDE;
-        }
-        if (m.startsWith("stability") || m.startsWith("black-forest") || m.startsWith("meta/")
-                || m.startsWith("flux") || m.contains("/")) {
-            return PROVIDER_REPLICATE;
-        }
-        return PROVIDER_UNKNOWN;
+        return text.trim().toUpperCase(Locale.ROOT);
     }
 
     private List<AiUsageStatsResponse.DailyCount> buildDailyCalls(String tenantId, LocalDate today) {

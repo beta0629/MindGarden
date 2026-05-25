@@ -37,6 +37,11 @@ public class HealingContentServiceImpl implements HealingContentService {
 
     private static final String CALLER_ID = "healing";
 
+    /**
+     * AI provider 컬럼 결측 시 사용할 fallback 라벨 (N3, V20260529_001).
+     */
+    private static final String PROVIDER_UNKNOWN = "UNKNOWN";
+
     private final AiUsageLogRepository usageLogRepository;
     private final DailyHealingContentRepository dailyHealingContentRepository;
     private final AiChatCompletionService aiChatCompletionService;
@@ -249,6 +254,7 @@ public class HealingContentServiceImpl implements HealingContentService {
         long startTime = System.currentTimeMillis();
         String systemPrompt = "당신은 마음 건강 전문가이며, 내담자와 상담사를 위한 따뜻하고 실용적인 힐링 컨텐츠를 작성합니다.";
         String prompt = buildHealingPrompt(userRole, category);
+        String combinedPrompt = buildCombinedPromptForLog(systemPrompt, prompt);
         AiCompletionRequest request = AiCompletionRequest.builder()
                 .systemPrompt(systemPrompt)
                 .userPrompt(prompt)
@@ -262,17 +268,20 @@ public class HealingContentServiceImpl implements HealingContentService {
         AiChatCompletionResult result = aiChatCompletionService.completeChat(request);
         long responseTime = System.currentTimeMillis() - startTime;
         String modelForLog = StringUtils.hasText(result.model()) ? result.model() : "unknown";
+        String providerForLog = resolveProviderLabel(result);
         if (!result.success() || !StringUtils.hasText(result.text())) {
             String err = result.errorMessage() != null ? result.errorMessage() : "call_failed";
             log.warn("⚠️ 힐링 AI 호출 실패 — tenantId={}, requestedProvider={}, effectiveProvider={}, model={}, reason={}",
                     tenantId, result.requestedProvider(), result.effectiveProvider(), modelForLog, err);
-            logHealingUsage(tenantId, "HEALING_CONTENT", modelForLog, false, err, 0, 0, 0, responseTime);
+            logHealingUsage(tenantId, "HEALING_CONTENT", providerForLog, modelForLog, false, err,
+                    0, 0, 0, responseTime, combinedPrompt, null);
             return "마음의 평화를 찾는 하루가 되시길 바랍니다. 💚";
         }
         log.info("💚 힐링 AI 생성 완료 — tenantId={}, requestedProvider={}, effectiveProvider={}, model={}",
                 tenantId, result.requestedProvider(), result.effectiveProvider(), modelForLog);
-        logHealingUsage(tenantId, "HEALING_CONTENT", modelForLog, true, null,
-                result.promptTokens(), result.completionTokens(), result.totalTokens(), responseTime);
+        logHealingUsage(tenantId, "HEALING_CONTENT", providerForLog, modelForLog, true, null,
+                result.promptTokens(), result.completionTokens(), result.totalTokens(),
+                responseTime, combinedPrompt, result.text());
         return result.text();
     }
 
@@ -331,15 +340,20 @@ public class HealingContentServiceImpl implements HealingContentService {
     }
     
     /**
-     * 힐링 컨텐츠 사용량 로깅 (tenant_id 명시 저장).
-     * 핫픽스 (2026-05-24, B6): 이전 구현은 tenant_id 컬럼을 set 하지 않아 운영 관측 불가.
+     * 힐링 컨텐츠 사용량 로깅 (tenant_id + N3 보강 컬럼 명시 저장).
+     *
+     * <p>핫픽스 (2026-05-24, B6): 이전 구현은 tenant_id 컬럼을 set 하지 않아 운영 관측 불가.</p>
+     * <p>2026-05-25 N3 보강 (V20260529_001): {@code aiProvider} + {@code prompt}/{@code response}
+     * 본문을 함께 저장한다. aiProvider 는 entity NOT NULL — caller 가 반드시 effectiveProvider 정규화 결과 전달.</p>
      */
-    private void logHealingUsage(String tenantId, String requestType, String model, boolean isSuccess,
-                                String errorMessage, int promptTokens, int completionTokens, int totalTokens,
-                                long responseTimeMs) {
+    private void logHealingUsage(String tenantId, String requestType, String aiProvider, String model,
+                                boolean isSuccess, String errorMessage, int promptTokens, int completionTokens,
+                                int totalTokens, long responseTimeMs,
+                                String promptBody, String responseBody) {
         try {
             AiUsageLog usageLog = AiUsageLog.builder()
                 .tenantId(tenantId)
+                .aiProvider(aiProvider)
                 .requestType(requestType)
                 .model(model)
                 .promptTokens(promptTokens)
@@ -349,17 +363,51 @@ public class HealingContentServiceImpl implements HealingContentService {
                 .errorMessage(errorMessage)
                 .responseTimeMs(responseTimeMs)
                 .requestedBy(CALLER_ID)
+                .prompt(promptBody)
+                .response(responseBody)
                 .build();
-            
+
             usageLog.calculateCost();
             AiUsageLog savedLog = usageLogRepository.save(usageLog);
-            
+
             if (isSuccess && savedLog != null && savedLog.getEstimatedCost() != null) {
-                log.info("💚 힐링 컨텐츠 사용량 로깅: tenantId={}, {} 토큰, 예상 비용 ${}",
-                    tenantId, totalTokens, String.format("%.6f", savedLog.getEstimatedCost()));
+                log.info("💚 힐링 컨텐츠 사용량 로깅: tenantId={}, provider={}, {} 토큰, 예상 비용 ${}",
+                    tenantId, aiProvider, totalTokens, String.format("%.6f", savedLog.getEstimatedCost()));
             }
         } catch (Exception e) {
             log.error("❌ 힐링 컨텐츠 사용량 로깅 실패", e);
         }
+    }
+
+    /**
+     * SSOT 결과의 effectiveProvider 를 대문자 라벨로 정규화 (N3 — 2026-05-25).
+     */
+    private static String resolveProviderLabel(AiChatCompletionResult result) {
+        String effective = result != null ? result.effectiveProvider() : null;
+        if (StringUtils.hasText(effective)) {
+            return effective.trim().toUpperCase(java.util.Locale.ROOT);
+        }
+        String requested = result != null ? result.requestedProvider() : null;
+        if (StringUtils.hasText(requested)) {
+            return requested.trim().toUpperCase(java.util.Locale.ROOT);
+        }
+        return PROVIDER_UNKNOWN;
+    }
+
+    /**
+     * system + user 프롬프트를 결합한 본문을 생성한다 (V20260529_001 prompt 컬럼 저장용).
+     */
+    private static String buildCombinedPromptForLog(String systemPrompt, String userPrompt) {
+        StringBuilder sb = new StringBuilder();
+        if (StringUtils.hasText(systemPrompt)) {
+            sb.append("[system]\n").append(systemPrompt.trim());
+        }
+        if (StringUtils.hasText(userPrompt)) {
+            if (sb.length() > 0) {
+                sb.append("\n\n");
+            }
+            sb.append("[user]\n").append(userPrompt.trim());
+        }
+        return sb.length() == 0 ? null : sb.toString();
     }
 }

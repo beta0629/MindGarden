@@ -10,8 +10,11 @@ import lombok.NoArgsConstructor;
 /**
  * AI 사용 로그 상세 응답 DTO (모달용 전체 본문).
  *
- * <p>트랙 B PR-4 (2026-05-24): 디자이너 §5 — 로그 상세 모달.
- * 현 엔티티에 prompt/response 컬럼이 없어 메타 + 에러 본문만 노출한다. 추후 컬럼 추가 시 확장.</p>
+ * <p>트랙 B PR-4 (2026-05-24): 디자이너 §5 — 로그 상세 모달.</p>
+ *
+ * <p>2026-05-25 N3 보강 (V20260529_001): {@code prompt}/{@code response} 컬럼이 엔티티에 신설되어
+ * {@link #promptBody}/{@link #responseBody} 로 전체 본문 노출. {@code aiProvider} 는 entity 컬럼을
+ * 직접 사용 (model prefix 추정 제거).</p>
  *
  * @author CoreSolution
  * @since 2026-05-24
@@ -24,7 +27,7 @@ public class AiUsageLogDetailResponse {
 
     private Long id;
 
-    /** 추정 provider 라벨 (OPENAI / GEMINI / CLAUDE / REPLICATE / UNKNOWN) */
+    /** 실제 호출 provider 라벨 (OPENAI / GEMINI / CLAUDE / REPLICATE / UNKNOWN) — entity 컬럼 직접 사용 */
     private String aiProvider;
 
     /** caller (requestType) */
@@ -60,13 +63,23 @@ public class AiUsageLogDetailResponse {
     /** 호출자 */
     private String requestedBy;
 
-    public static AiUsageLogDetailResponse fromEntity(AiUsageLog entity, String provider) {
+    /**
+     * AI 호출 시 사용한 system + user 결합 프롬프트 본문 (V20260529_001). 기존 행은 null.
+     */
+    private String promptBody;
+
+    /**
+     * AI 응답 본문 (성공 시, V20260529_001). 실패/기존 행은 null.
+     */
+    private String responseBody;
+
+    public static AiUsageLogDetailResponse fromEntity(AiUsageLog entity) {
         if (entity == null) {
             return null;
         }
         return AiUsageLogDetailResponse.builder()
                 .id(entity.getId())
-                .aiProvider(provider)
+                .aiProvider(AiUsageLogResponse.normalizeProvider(entity.getAiProvider()))
                 .requestType(entity.getRequestType())
                 .model(entity.getModel())
                 .status(Boolean.FALSE.equals(entity.getIsSuccess()) ? "failed" : "success")
@@ -78,6 +91,8 @@ public class AiUsageLogDetailResponse {
                 .errorMessage(entity.getErrorMessage())
                 .createdAt(entity.getCreatedAt())
                 .requestedBy(entity.getRequestedBy())
+                .promptBody(entity.getPrompt())
+                .responseBody(entity.getResponse())
                 .build();
     }
 }

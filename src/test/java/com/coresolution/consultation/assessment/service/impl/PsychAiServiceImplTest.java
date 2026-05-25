@@ -2,6 +2,7 @@ package com.coresolution.consultation.assessment.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -10,6 +11,8 @@ import java.util.List;
 import com.coresolution.consultation.assessment.model.PsychAssessmentType;
 import com.coresolution.consultation.assessment.service.PsychAiService.AiResult;
 import com.coresolution.consultation.assessment.service.PsychAiService.MetricInput;
+import com.coresolution.consultation.entity.AiUsageLog;
+import com.coresolution.consultation.repository.AiUsageLogRepository;
 import com.coresolution.consultation.service.ai.AiChatCompletionResult;
 import com.coresolution.consultation.service.ai.AiChatCompletionService;
 import com.coresolution.consultation.service.ai.dto.AiCompletionRequest;
@@ -59,6 +62,9 @@ class PsychAiServiceImplTest {
 
     @Mock
     private AiJsonResponseParser jsonResponseParser;
+
+    @Mock
+    private AiUsageLogRepository usageLogRepository;
 
     @InjectMocks
     private PsychAiServiceImpl service;
@@ -153,5 +159,56 @@ class PsychAiServiceImplTest {
         assertTrue(result.evidenceJson().contains("\"reason\":\"rate_limited\""),
                 "에러 사유가 evidence reason 으로 전파되어야 함");
         assertEquals("gpt-4o-mini", result.modelName());
+    }
+
+    @Test
+    @DisplayName("N3 — 성공 시 ai_provider/prompt/response 가 AiUsageLog 에 저장된다 (V20260529_001)")
+    void generateKoreanReport_success_persistsProviderPromptResponse() throws Exception {
+        when(aiChatCompletionService.completeChat(any(AiCompletionRequest.class)))
+                .thenReturn(successWithParsedJson(VALID_TCI_REPORT_JSON));
+
+        List<MetricInput> metrics = List.of(
+                new MetricInput("NS", "Novelty Seeking", 12.0, null, 45.0, "보통"));
+
+        service.generateKoreanReport(PsychAssessmentType.TCI, metrics, "기본 마크다운");
+
+        ArgumentCaptor<AiUsageLog> captor = ArgumentCaptor.forClass(AiUsageLog.class);
+        org.mockito.Mockito.verify(usageLogRepository).save(captor.capture());
+        AiUsageLog saved = captor.getValue();
+        assertEquals("GEMINI", saved.getAiProvider(),
+                "effectiveProvider=gemini → 대문자 GEMINI 저장 (N3 default 'OPENAI' 회귀 차단)");
+        assertEquals("gemini-2.5-flash", saved.getModel());
+        assertTrue(Boolean.TRUE.equals(saved.getIsSuccess()));
+        assertNotNull(saved.getPrompt(), "system + user 결합 본문이 prompt 컬럼에 저장되어야 함");
+        assertTrue(saved.getPrompt().contains("[system]"));
+        assertTrue(saved.getPrompt().contains("[user]"));
+        assertNotNull(saved.getResponse(), "성공 시 응답 본문이 response 컬럼에 저장되어야 함");
+        assertTrue(saved.getResponse().contains("reportMarkdown"));
+    }
+
+    @Test
+    @DisplayName("N3 — 실패 시 ai_provider 는 저장되고 response 는 null (V20260529_001)")
+    void generateKoreanReport_failure_persistsProviderWithNullResponse() {
+        AiChatCompletionResult failure = new AiChatCompletionResult(
+                false, "", "openai", "openai", "gpt-4o-mini",
+                0, 0, 0, "rate_limited", false, null);
+        when(aiChatCompletionService.completeChat(any(AiCompletionRequest.class)))
+                .thenReturn(failure);
+
+        List<MetricInput> metrics = List.of(
+                new MetricInput("NS", "Novelty Seeking", 12.0, null, 45.0, "보통"));
+
+        service.generateKoreanReport(PsychAssessmentType.TCI, metrics, "기본 마크다운");
+
+        ArgumentCaptor<AiUsageLog> captor = ArgumentCaptor.forClass(AiUsageLog.class);
+        org.mockito.Mockito.verify(usageLogRepository).save(captor.capture());
+        AiUsageLog saved = captor.getValue();
+        assertEquals("OPENAI", saved.getAiProvider(),
+                "effectiveProvider=openai 라벨 정규화 (N3 — 실패 케이스도 caller-set 값 보장)");
+        assertTrue(Boolean.FALSE.equals(saved.getIsSuccess()));
+        assertNotNull(saved.getPrompt(),
+                "실패해도 prompt 본문은 저장 (디버깅 컨텍스트 보존)");
+        assertNull(saved.getResponse(),
+                "실패 시 response 는 null (성공 시에만 raw text 저장)");
     }
 }

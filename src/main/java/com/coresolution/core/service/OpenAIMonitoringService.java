@@ -33,11 +33,25 @@ import java.util.Map;
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "ai.monitoring.enabled", havingValue = "true", matchIfMissing = false)
 public class OpenAIMonitoringService {
-    
+
+    /** 시스템 모니터링 호출의 안전 tenant 라벨. */
+    private static final String SYSTEM_TENANT = "SYSTEM";
+
+    /** 본 서비스는 OpenAI API 직접 호출이므로 provider 라벨은 항상 OPENAI (N3 — 2026-05-25). */
+    private static final String PROVIDER_LABEL = "OPENAI";
+
+    /** 이상 탐지 system prompt (logUsage 본문 결합용). */
+    private static final String SYSTEM_PROMPT_ANOMALY =
+            "당신은 시스템 모니터링 및 이상 탐지 전문가입니다. 메트릭 데이터를 분석하여 이상 패턴을 정확하게 식별합니다.";
+
+    /** 보안 위협 system prompt (logUsage 본문 결합용). */
+    private static final String SYSTEM_PROMPT_SECURITY =
+            "당신은 사이버 보안 전문가입니다. 보안 이벤트를 분석하여 위협을 정확하게 평가합니다.";
+
     private final AiUsageLogRepository usageLogRepository;
     private final SystemConfigService systemConfigService;
     private final RestTemplate restTemplate = new RestTemplate();
-    
+
     @Autowired(required = false)
     private SensitiveDataMaskingService maskingService;
     
@@ -59,17 +73,19 @@ public class OpenAIMonitoringService {
         
         try {
             String prompt = buildAnomalyPrompt(metrics, metricType);
-            AnomalyAnalysisResult result = callOpenAIForAnomalyAnalysis(prompt);
-            
+            String combinedPrompt = buildCombinedPromptForLog(SYSTEM_PROMPT_ANOMALY, prompt);
+            AnomalyAnalysisResult result = callOpenAIForAnomalyAnalysis(prompt, combinedPrompt);
+
             long responseTime = System.currentTimeMillis() - startTime;
             log.info("✅ AI 이상 탐지 분석 완료 ({}ms): {}", responseTime, metricType);
-            
+
             return result;
-            
+
         } catch (Exception e) {
             long responseTime = System.currentTimeMillis() - startTime;
             log.error("❌ AI 이상 탐지 분석 실패 ({}ms): {}", responseTime, metricType, e);
-            logUsage("anomaly_detection", "unknown", false, e.getMessage(), 0, 0, 0, responseTime);
+            logUsage("anomaly_detection", "unknown", false, e.getMessage(),
+                    0, 0, 0, responseTime, null, null);
             return null;
         }
     }
@@ -100,17 +116,19 @@ public class OpenAIMonitoringService {
             }
             
             String prompt = buildSecurityThreatPrompt(eventType, maskedDetails);
-            SecurityThreatAnalysisResult result = callOpenAIForSecurityAnalysis(prompt);
-            
+            String combinedPrompt = buildCombinedPromptForLog(SYSTEM_PROMPT_SECURITY, prompt);
+            SecurityThreatAnalysisResult result = callOpenAIForSecurityAnalysis(prompt, combinedPrompt);
+
             long responseTime = System.currentTimeMillis() - startTime;
             log.info("✅ AI 보안 위협 분석 완료 ({}ms): {}", responseTime, eventType);
-            
+
             return result;
-            
+
         } catch (Exception e) {
             long responseTime = System.currentTimeMillis() - startTime;
             log.error("❌ AI 보안 위협 분석 실패 ({}ms): {}", responseTime, eventType, e);
-            logUsage("security_threat_detection", "unknown", false, e.getMessage(), 0, 0, 0, responseTime);
+            logUsage("security_threat_detection", "unknown", false, e.getMessage(),
+                    0, 0, 0, responseTime, null, null);
             return null;
         }
     }
@@ -185,8 +203,11 @@ public class OpenAIMonitoringService {
     
     /**
      * OpenAI API 호출 - 이상 탐지 분석
+     *
+     * @param prompt              raw user prompt (system_role 분리는 메서드 내부에서 message1 으로 결합)
+     * @param combinedPromptForLog system + user 결합 본문 (V20260529_001 prompt 컬럼 저장용)
      */
-    private AnomalyAnalysisResult callOpenAIForAnomalyAnalysis(String prompt) {
+    private AnomalyAnalysisResult callOpenAIForAnomalyAnalysis(String prompt, String combinedPromptForLog) {
         long startTime = System.currentTimeMillis();
         
         String apiKey = systemConfigService.getOpenAIApiKey();
@@ -248,22 +269,25 @@ public class OpenAIMonitoringService {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> message = (Map<String, Object>) choice.get("message");
                 String content = (String) message.get("content");
-                
-                // 로깅
-                logUsage("anomaly_detection", model, true, null, promptTokens, completionTokens, totalTokens, responseTime);
-                
-                // 파싱
+
+                logUsage("anomaly_detection", model, true, null,
+                        promptTokens, completionTokens, totalTokens, responseTime,
+                        combinedPromptForLog, content);
+
                 return parseAnomalyAnalysisResponse(content);
             }
         }
-        
+
         throw new RuntimeException("OpenAI API 응답 파싱 실패");
     }
-    
+
     /**
      * OpenAI API 호출 - 보안 위협 분석
+     *
+     * @param prompt              raw user prompt
+     * @param combinedPromptForLog system + user 결합 본문 (V20260529_001 prompt 컬럼 저장용)
      */
-    private SecurityThreatAnalysisResult callOpenAIForSecurityAnalysis(String prompt) {
+    private SecurityThreatAnalysisResult callOpenAIForSecurityAnalysis(String prompt, String combinedPromptForLog) {
         long startTime = System.currentTimeMillis();
         
         String apiKey = systemConfigService.getOpenAIApiKey();
@@ -323,23 +347,31 @@ public class OpenAIMonitoringService {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> message = (Map<String, Object>) choice.get("message");
                 String content = (String) message.get("content");
-                
-                logUsage("security_threat_detection", model, true, null, promptTokens, completionTokens, totalTokens, responseTime);
-                
+
+                logUsage("security_threat_detection", model, true, null,
+                        promptTokens, completionTokens, totalTokens, responseTime,
+                        combinedPromptForLog, content);
+
                 return parseSecurityThreatAnalysisResponse(content);
             }
         }
-        
+
         throw new RuntimeException("OpenAI API 응답 파싱 실패");
     }
-    
+
     /**
-     * API 사용 로그 저장
+     * API 사용 로그 저장 (N3 보강, V20260529_001).
+     *
+     * <p>{@code ai_provider} 는 본 서비스가 OpenAI 직접 호출이므로 항상 "OPENAI" 라벨을 사용한다.
+     * {@code prompt}/{@code response} 본문도 함께 적재한다.</p>
      */
-    private void logUsage(String requestType, String model, boolean isSuccess, String errorMessage, 
-                         int promptTokens, int completionTokens, int totalTokens, long responseTimeMs) {
+    private void logUsage(String requestType, String model, boolean isSuccess, String errorMessage,
+                         int promptTokens, int completionTokens, int totalTokens, long responseTimeMs,
+                         String promptBody, String responseBody) {
         try {
-            AiUsageLog log = AiUsageLog.builder()
+            AiUsageLog logRow = AiUsageLog.builder()
+                .tenantId(SYSTEM_TENANT)
+                .aiProvider(PROVIDER_LABEL)
                 .requestType(requestType)
                 .model(model)
                 .promptTokens(promptTokens)
@@ -349,18 +381,37 @@ public class OpenAIMonitoringService {
                 .errorMessage(errorMessage)
                 .responseTimeMs(responseTimeMs)
                 .requestedBy("AI_MONITORING_SYSTEM")
+                .prompt(promptBody)
+                .response(responseBody)
                 .build();
-            
-            log.calculateCost();
-            AiUsageLog savedLog = usageLogRepository.save(log);
-            
+
+            logRow.calculateCost();
+            AiUsageLog savedLog = usageLogRepository.save(logRow);
+
             if (isSuccess) {
-                OpenAIMonitoringService.log.info("💰 AI 모니터링 API 사용: {} 토큰, 예상 비용 ${}", 
-                    totalTokens, String.format("%.6f", savedLog.getEstimatedCost()));
+                OpenAIMonitoringService.log.info("💰 AI 모니터링 API 사용: provider={}, {} 토큰, 예상 비용 ${}",
+                    PROVIDER_LABEL, totalTokens, String.format("%.6f", savedLog.getEstimatedCost()));
             }
         } catch (Exception e) {
             log.error("❌ API 사용 로그 저장 실패", e);
         }
+    }
+
+    /**
+     * system + user 프롬프트 결합 본문 (V20260529_001 prompt 컬럼 저장용).
+     */
+    private static String buildCombinedPromptForLog(String systemPrompt, String userPrompt) {
+        StringBuilder sb = new StringBuilder();
+        if (systemPrompt != null && !systemPrompt.isBlank()) {
+            sb.append("[system]\n").append(systemPrompt.trim());
+        }
+        if (userPrompt != null && !userPrompt.isBlank()) {
+            if (sb.length() > 0) {
+                sb.append("\n\n");
+            }
+            sb.append("[user]\n").append(userPrompt.trim());
+        }
+        return sb.length() == 0 ? null : sb.toString();
     }
     
     /**

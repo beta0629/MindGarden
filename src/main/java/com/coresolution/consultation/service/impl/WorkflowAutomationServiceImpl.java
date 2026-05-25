@@ -24,6 +24,7 @@ import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.WorkflowAutomationService;
 import com.coresolution.consultation.util.MobilePushMessageFormatter;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,11 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@ConditionalOnProperty(
+    name = "scheduler.workflow-automation.enabled",
+    havingValue = "true",
+    matchIfMissing = true
+)
 public class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     
     private final ScheduleRepository scheduleRepository;

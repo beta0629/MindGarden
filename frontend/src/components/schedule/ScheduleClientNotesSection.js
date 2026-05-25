@@ -15,6 +15,7 @@ import {
 import { CALENDAR_EXTENDED_TYPE_VACATION } from '../../constants/schedule';
 import './ScheduleClientNotesSection.css';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '../../hooks/useConfirm';
 
 /**
  * 일정 상세 모달 내부 — 내담자 특이사항(지속 메모) CRUD. adminNote와 분리.
@@ -28,6 +29,7 @@ import { useTranslation } from 'react-i18next';
  */
 const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => {
   const { t } = useTranslation();
+  const [confirm, ConfirmModal] = useConfirm();
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState([]);
   const [noteTypeOptions, setNoteTypeOptions] = useState([]);
@@ -230,7 +232,10 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
 
   const handleDelete = async(note) => {
     if (!canEditNote(note)) return;
-    const ok = window.confirm('이 특이사항을 삭제할까요?');
+    const ok = await confirm({
+      variant: 'danger',
+      messageKey: 'modal.scheduleNote.delete.confirm.message',
+    });
     if (!ok) return;
     setLoading(true);
     try {
@@ -558,6 +563,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
           ) : null}
         </div>
       </form>
+      <ConfirmModal />
     </div>
   );
 };

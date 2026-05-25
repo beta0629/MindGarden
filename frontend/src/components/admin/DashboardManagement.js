@@ -28,6 +28,7 @@ import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './DashboardManagement.css';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '../../hooks/useConfirm';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_TENANT_DASHBOARDS = '/api/v1/tenant/dashboards';
@@ -38,6 +39,7 @@ const DASHBOARD_MGMT_TITLE_ID = 'dashboard-management-title';
 const DashboardManagement = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [confirm, ConfirmModal] = useConfirm();
   const [dashboards, setDashboards] = useState([]);
   const [filteredDashboards, setFilteredDashboards] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -170,9 +172,11 @@ const DashboardManagement = () => {
       return;
     }
 
-    const confirmed = window.confirm(
-      `"${dashboard.dashboardNameKo || dashboard.dashboardName}" 대시보드를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`
-    );
+    const confirmed = await confirm({
+      variant: 'danger',
+      messageKey: 'modal.dashboard.delete.confirm.message',
+      interpolation: { name: dashboard.dashboardNameKo || dashboard.dashboardName },
+    });
 
     if (!confirmed) {
       return;
@@ -291,6 +295,7 @@ const DashboardManagement = () => {
   };
 
   return (
+    <>
     <AdminCommonLayout title="대시보드 관리">
       <div className="mg-v2-ad-b0kla">
         <div className="mg-v2-ad-b0kla__container">
@@ -626,6 +631,8 @@ const DashboardManagement = () => {
         </div>
       </div>
     </AdminCommonLayout>
+    <ConfirmModal />
+    </>
   );
 };
 

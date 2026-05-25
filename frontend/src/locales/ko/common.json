@@ -153,6 +153,53 @@
     "success": {
       "defaultTitle": "완료",
       "defaultMessage": "성공적으로 처리되었습니다."
+    },
+    "delete": {
+      "confirm": {
+        "message": "정말 삭제하시겠습니까?"
+      }
+    },
+    "enrollment": {
+      "cancel": {
+        "confirm": {
+          "message": "정말 수강을 취소하시겠습니까?"
+        }
+      }
+    },
+    "dashboard": {
+      "delete": {
+        "confirm": {
+          "message": "\"{{name}}\" 대시보드를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+        }
+      }
+    },
+    "apiKey": {
+      "delete": {
+        "confirm": {
+          "message": "{{providerId}} API 키를 삭제하시겠습니까?"
+        }
+      }
+    },
+    "soapNote": {
+      "approve": {
+        "confirm": {
+          "message": "이 SOAP 노트를 최종 승인하시겠습니까? 승인 후에는 공식 상담 기록으로 저장됩니다."
+        }
+      }
+    },
+    "scheduleNote": {
+      "delete": {
+        "confirm": {
+          "message": "이 특이사항을 삭제할까요?"
+        }
+      }
+    },
+    "community": {
+      "report": {
+        "success": {
+          "message": "신고가 접수되었습니다. 관리자가 검토 후 처리합니다."
+        }
+      }
     }
   },
   "nav": {

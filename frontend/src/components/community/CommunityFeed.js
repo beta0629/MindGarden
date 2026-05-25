@@ -16,6 +16,7 @@ import {
   Users, Flag
 } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
+import { useAlert } from '../../hooks/useAlert';
 import './CommunityFeed.css';
 
 const TABS = [
@@ -63,6 +64,7 @@ const INITIAL_POSTS = [
 const CommunityFeed = ({ primaryColor }) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const [alert, AlertModal] = useAlert();
   const [activeTab, setActiveTab] = useState('reviews');
   const [posts, setPosts] = useState(() => {
     try {
@@ -135,9 +137,12 @@ const CommunityFeed = ({ primaryColor }) => {
     showToast({ message: '글이 게시되었습니다.', type: 'success' });
   };
 
-  const handleReport = (postId) => {
+  const handleReport = async(postId) => {
     setReportPostId(null);
-    alert('신고가 접수되었습니다. 관리자가 검토 후 처리합니다.');
+    await alert({
+      variant: 'success',
+      messageKey: 'modal.community.report.success.message',
+    });
   };
 
   const openPostDetail = (post) => {
@@ -338,6 +343,7 @@ const CommunityFeed = ({ primaryColor }) => {
           </div>
         </>
       )}
+      <AlertModal />
     </div>
   );
 };

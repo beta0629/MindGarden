@@ -21,9 +21,11 @@ import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import './Academy.css';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '../../hooks/useConfirm';
 
 const CourseList = ({ branchId, onCourseSelect, onCreateCourse, onEditCourse, onDeleteCourse }) => {
   const { t } = useTranslation();
+  const [confirm, ConfirmModal] = useConfirm();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -72,9 +74,11 @@ const CourseList = ({ branchId, onCourseSelect, onCreateCourse, onEditCourse, on
 
   // 강좌 삭제
   const handleDelete = async(courseId) => {
-    if (!window.confirm('정말 삭제하시겠습니까?')) {
-      return;
-    }
+    const ok = await confirm({
+      variant: 'danger',
+      messageKey: 'modal.delete.confirm.message',
+    });
+    if (!ok) return;
     
     try {
       const response = await fetch(`${API_BASE_URL}${ACADEMY_API.COURSE_DELETE(courseId)}`, {
@@ -212,6 +216,7 @@ const CourseList = ({ branchId, onCourseSelect, onCreateCourse, onEditCourse, on
           )}
         </div>
       </div>
+      <ConfirmModal />
     </div>
   );
 };

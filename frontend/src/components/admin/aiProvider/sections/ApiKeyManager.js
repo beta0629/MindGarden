@@ -8,6 +8,7 @@
  * @since 2026-05-24
  */
 import React, { useCallback, useState } from 'react';
+import { useConfirm } from '../../../../hooks/useConfirm';
 import { KeyRound, Trash2 } from 'lucide-react';
 import MGButton from '../../../common/MGButton';
 import UnifiedModal from '../../../common/modals/UnifiedModal';
@@ -28,6 +29,7 @@ const ApiKeyManager = ({
 }) => {
   const [editingProviderId, setEditingProviderId] = useState(null);
   const [formState, setFormState] = useState(null);
+  const [confirm, ConfirmModal] = useConfirm();
 
   const openModal = useCallback((providerId) => {
     const current = providers?.[providerId] || {};
@@ -58,14 +60,14 @@ const ApiKeyManager = ({
   }, [editingProviderId, formState, onSaveProviderKey, closeModal]);
 
   const handleDelete = useCallback(async(providerId) => {
-    if (typeof window !== 'undefined') {
-      const ok = window.confirm(`${providerId.toUpperCase()} API 키를 삭제하시겠습니까?`);
-      if (!ok) {
-        return;
-      }
-    }
+    const ok = await confirm({
+      variant: 'danger',
+      messageKey: 'modal.apiKey.delete.confirm.message',
+      interpolation: { providerId: providerId.toUpperCase() },
+    });
+    if (!ok) return;
     await onDeleteProviderKey(providerId);
-  }, [onDeleteProviderKey]);
+  }, [onDeleteProviderKey, confirm]);
 
   const editingProvider = editingProviderId
     ? AI_PROVIDER_OPTIONS.find((p) => p.id === editingProviderId)
@@ -195,6 +197,7 @@ const ApiKeyManager = ({
           />
         </UnifiedModal>
       ) : null}
+      <ConfirmModal />
     </section>
   );
 };

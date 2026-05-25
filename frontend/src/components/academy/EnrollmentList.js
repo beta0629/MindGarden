@@ -21,9 +21,11 @@ import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import './Academy.css';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '../../hooks/useConfirm';
 
 const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onCreateEnrollment }) => {
   const { t } = useTranslation();
+  const [confirm, ConfirmModal] = useConfirm();
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -66,9 +68,11 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
   }, [branchId, classId, consumerId]);
 
   const handleCancel = async(enrollmentId) => {
-    if (!window.confirm('정말 수강을 취소하시겠습니까?')) {
-      return;
-    }
+    const ok = await confirm({
+      variant: 'warning',
+      messageKey: 'modal.enrollment.cancel.confirm.message',
+    });
+    if (!ok) return;
     
     try {
       const response = await fetch(`${API_BASE_URL}${ACADEMY_API.ENROLLMENT_CANCEL(enrollmentId)}`, {
@@ -164,6 +168,7 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
           )}
         </div>
       </div>
+      <ConfirmModal />
     </div>
   );
 };

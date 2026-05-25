@@ -5,6 +5,7 @@ import { CLINICAL_CSS } from '../../constants/clinicalCss';
 import notificationManager from '../../utils/notification';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { useConfirm } from '../../hooks/useConfirm';
 import './SOAPNoteEditor.css';
 
 /**
@@ -17,6 +18,7 @@ import './SOAPNoteEditor.css';
  */
 const SOAPNoteEditor = ({ report, onSave }) => {
     const [editedReport, setEditedReport] = useState(report);
+    const [confirm, ConfirmModal] = useConfirm();
     const [isSaving, setIsSaving] = useState(false);
     const [isApproving, setIsApproving] = useState(false);
     const [saveMessage, setSaveMessage] = useState('');
@@ -67,9 +69,10 @@ const SOAPNoteEditor = ({ report, onSave }) => {
      * 보고서 승인
      */
     const handleApprove = async() => {
-        const confirmed = window.confirm(
-            '이 SOAP 노트를 최종 승인하시겠습니까?\n승인 후에는 공식 상담 기록으로 저장됩니다.'
-        );
+        const confirmed = await confirm({
+            variant: 'info',
+            messageKey: 'modal.soapNote.approve.confirm.message',
+        });
 
         if (!confirmed) return;
 
@@ -102,6 +105,7 @@ const SOAPNoteEditor = ({ report, onSave }) => {
     };
 
     return (
+        <>
         <div className={CLINICAL_CSS.SOAP_NOTE_EDITOR}>
             <div className="editor-header">
                 <h4>SOAP 노트 편집</h4>
@@ -241,6 +245,8 @@ const SOAPNoteEditor = ({ report, onSave }) => {
                 )}
             </div>
         </div>
+        <ConfirmModal />
+        </>
     );
 };
 

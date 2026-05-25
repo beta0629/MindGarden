@@ -7,6 +7,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './DiagnosticReportEditor.css';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '../../hooks/useConfirm';
 
 /**
  * 진단 보고서 에디터 컴포넌트
@@ -17,6 +18,7 @@ import { useTranslation } from 'react-i18next';
  */
 const DiagnosticReportEditor = ({ consultationRecordId }) => {
     const { t } = useTranslation(['report']);
+    const [confirm, ConfirmModal] = useConfirm();
     const [report, setReport] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -111,9 +113,10 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
      * 보고서 승인
      */
     const handleApprove = async() => {
-        const confirmed = window.confirm(
-            t('report:diagnostic.approveConfirm', '이 진단 보고서를 최종 승인하시겠습니까?\n승인 후에는 공식 문서로 저장됩니다.')
-        );
+        const confirmed = await confirm({
+            variant: 'info',
+            message: t('report:diagnostic.approveConfirm', '이 진단 보고서를 최종 승인하시겠습니까? 승인 후에는 공식 문서로 저장됩니다.'),
+        });
 
         if (!confirmed) return;
 
@@ -155,6 +158,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
     }
 
     return (
+        <>
         <div className={CLINICAL_CSS.DIAGNOSTIC_REPORT_EDITOR}>
             <div className="editor-header">
                 <h3>📋 {t('report:diagnostic.title', '진단 보고서')}</h3>
@@ -345,6 +349,8 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                 </div>
             )}
         </div>
+        <ConfirmModal />
+        </>
     );
 };
 

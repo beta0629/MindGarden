@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '../../../hooks/useConfirm';
+import { useAlert } from '../../../hooks/useAlert';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import StandardizedApi from '../../../utils/standardizedApi';
 import UnifiedModal from '../../common/modals/UnifiedModal';
@@ -22,6 +24,8 @@ const AdminOnboarding = () => {
   const { t } = useTranslation(['admin', 'common']);
   const navigate = useNavigate();
   const params = useParams();
+  const [confirm, ConfirmModal] = useConfirm();
+  const [alert, AlertModal] = useAlert();
   const { id } = params;
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -56,7 +60,11 @@ const AdminOnboarding = () => {
   };
 
   const handleApprove = async() => {
-    if (!window.confirm(t('admin:onboarding.confirm.approve', '이 온보딩 요청을 승인하시겠어요?'))) return;
+    const ok = await confirm({
+      variant: 'warning',
+      message: t('admin:onboarding.confirm.approve', '이 온보딩 요청을 승인하시겠어요?'),
+    });
+    if (!ok) return;
 
     setIsLoading(true);
     try {
@@ -65,11 +73,17 @@ const AdminOnboarding = () => {
         actorId: 'admin_user',
         note: ONBOARDING_MOCK_DATA.NOTE_APPROVE
       });
-      alert(t('admin:onboarding.msg.approveSuccess', '온보딩이 성공적으로 승인되었습니다.'));
+      await alert({
+        variant: 'success',
+        message: t('admin:onboarding.msg.approveSuccess', '온보딩이 성공적으로 승인되었습니다.'),
+      });
       navigate('/admin/onboarding');
     } catch (error) {
       console.error(error);
-      alert(t('admin:onboarding.msg.errorDecision', '심사 처리 중 오류가 발생했습니다. 다시 시도해 주세요.'));
+      await alert({
+        variant: 'danger',
+        message: t('admin:onboarding.msg.errorDecision', '심사 처리 중 오류가 발생했습니다. 다시 시도해 주세요.'),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +91,10 @@ const AdminOnboarding = () => {
 
   const handleReject = async() => {
     if (!rejectReason.trim()) {
-      alert(t('admin:onboarding.msg.rejectReasonRequired', '반려 사유를 입력해 주세요.'));
+      await alert({
+        variant: 'warning',
+        message: t('admin:onboarding.msg.rejectReasonRequired', '반려 사유를 입력해 주세요.'),
+      });
       return;
     }
 
@@ -88,12 +105,18 @@ const AdminOnboarding = () => {
         actorId: 'admin_user',
         note: rejectReason
       });
-      alert(t('admin:onboarding.msg.rejectSuccess', '온보딩이 반려되었습니다.'));
+      await alert({
+        variant: 'success',
+        message: t('admin:onboarding.msg.rejectSuccess', '온보딩이 반려되었습니다.'),
+      });
       setIsRejectModalOpen(false);
       navigate('/admin/onboarding');
     } catch (error) {
       console.error(error);
-      alert(t('admin:onboarding.msg.errorDecision', '심사 처리 중 오류가 발생했습니다. 다시 시도해 주세요.'));
+      await alert({
+        variant: 'danger',
+        message: t('admin:onboarding.msg.errorDecision', '심사 처리 중 오류가 발생했습니다. 다시 시도해 주세요.'),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -253,6 +276,8 @@ const AdminOnboarding = () => {
           />
         </div>
       </UnifiedModal>
+      <ConfirmModal />
+      <AlertModal />
     </AdminCommonLayout>
   );
 };

@@ -390,7 +390,7 @@ const FinancialCalendarView = () => {
                       </div>
                       <div className="mg-financial-calendar-detail-item-category">
                         <ErpSafeText
-                          value={getCategoryDisplayLabel(transaction.category)}
+                          value={transaction.category ? t(`erp:finance.management.categoryDisplay.${transaction.category}`, getCategoryDisplayLabel(transaction.category)) : '-'}
                           fallback="—"
                         />{' '}
                         - <ErpSafeText value={transaction.subcategory} fallback="" />

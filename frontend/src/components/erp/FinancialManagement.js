@@ -8,6 +8,7 @@ import notificationManager from '../../utils/notification';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import MGButton from '../common/MGButton';
+import { useTranslation } from 'react-i18next';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../utils/safeDisplay';
 import {
   getDisplayWithholdingTaxAmount,
@@ -436,6 +437,7 @@ const financialTransactionMatchesSearchText = (transaction, searchLower) => {
  * 재무 거래 및 회계 관리
  */
 const FinancialManagement = () => {
+  const { t } = useTranslation(['erp']);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isLoggedIn, isLoading: sessionLoading, isAdmin } = useSession();
@@ -632,7 +634,7 @@ const FinancialManagement = () => {
       }
     } catch (err) {
       console.error('데이터 로드 실패:', err);
-      setError(FM_ERRORS.DATA_LOAD);
+      setError(t('erp:finance.management.errors.dataLoad', '데이터를 불러오는 중 오류가 발생했습니다.'));
     } finally {
       if (silent) {
         setSilentListRefreshing(false);
@@ -690,12 +692,12 @@ const FinancialManagement = () => {
       );
 
       if (!envelope || typeof envelope !== 'object') {
-        setError(FM_ERRORS.TX_LIST);
+        setError(t('erp:finance.management.errors.txList', '재무 거래 목록을 불러올 수 없습니다.'));
         return;
       }
 
       if (envelope.success === false) {
-        const errorMessage = envelope?.message || FM_ERRORS.TX_LIST;
+        const errorMessage = envelope?.message || t('erp:finance.management.errors.txList', '재무 거래 목록을 불러올 수 없습니다.');
         console.error('API 오류:', errorMessage, envelope);
         setError(errorMessage);
         if (envelope?.redirectToLogin) {
@@ -739,7 +741,7 @@ const FinancialManagement = () => {
       // 네트워크 에러 또는 서버 에러
       const errorMessage = err.response?.data?.message || 
                           err.message || 
-                          FM_ERRORS.TX_LIST_NETWORK;
+                          t('erp:finance.management.errors.txListNetwork', '재무 거래 목록을 불러오는 중 오류가 발생했습니다. 서버 연결을 확인해주세요.');
       console.error('네트워크/서버 오류:', errorMessage);
       setError(errorMessage);
     }
@@ -807,15 +809,15 @@ const FinancialManagement = () => {
       setDeleteSubmitting(true);
       const result = await StandardizedApi.delete(ERP_API.FINANCE_TRANSACTION_BY_ID(transaction.id));
       if (result?.success === false) {
-        notificationManager.error(fmToastDeleteFailed(toErrorMessage(result.message)));
+        notificationManager.error(t('erp:finance.management.toast.deleteFailedWithMessage', '거래 삭제에 실패했습니다: {{message}}', { message: toErrorMessage(result.message) }));
         return;
       }
-      notificationManager.success(FM_TOAST.DELETE_SUCCESS);
+      notificationManager.success(t('erp:finance.management.toast.deleteSuccess', '거래가 성공적으로 삭제되었습니다.'));
       setDeleteModal({ isOpen: false, transaction: null });
       loadData({ silent: true });
     } catch (error) {
       console.error('거래 삭제 실패:', error);
-      notificationManager.error(toErrorMessage(error.message) || FM_TOAST.DELETE_GENERIC);
+      notificationManager.error(toErrorMessage(error.message) || t('erp:finance.management.toast.deleteGeneric', '거래 삭제 중 오류가 발생했습니다.'));
     } finally {
       setDeleteSubmitting(false);
     }
@@ -856,8 +858,8 @@ const FinancialManagement = () => {
   const isMappingTransaction = (transaction) =>
     transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
     transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
-    (typeof transaction.description === 'string' && transaction.description.includes(FM_TX_DESCRIPTION_MATCH.CONSULTATION_DEPOSIT)) ||
-    (typeof transaction.description === 'string' && transaction.description.includes(FM_TX_DESCRIPTION_MATCH.CONSULTATION_REFUND));
+    (typeof transaction.description === 'string' && transaction.description.includes(t('erp:finance.management.txDescriptionMatch.consultationDeposit', '상담료 입금 확인'))) ||
+    (typeof transaction.description === 'string' && transaction.description.includes(t('erp:finance.management.txDescriptionMatch.consultationRefund', '상담료 환불')));
 
   /**
    * 매핑 연동 거래 — 내담자 대시보드형 인물·메타 블록 (목록 카드)
@@ -877,21 +879,21 @@ const FinancialManagement = () => {
         .filter(Boolean)
         .slice(0, 2);
       const ariaLabelParts = [
-        FM_MAPPING_ARIA.CONNECTED_MEMBERS,
-        fmMappingAriaClient(toDisplayString(transaction.clientName)),
-        fmMappingAriaConsultant(toDisplayString(transaction.consultantName))
+        t('erp:finance.management.mappingAria.connectedMembers', '매핑 연결 회원'),
+        t('erp:finance.management.mappingAria.client', '내담자 {{name}}', { name: toDisplayString(transaction.clientName) }),
+        t('erp:finance.management.mappingAria.consultant', '상담사 {{name}}', { name: toDisplayString(transaction.consultantName) })
       ];
       if (transaction.mappingPackageName) {
-        ariaLabelParts.push(fmMappingAriaPackage(toDisplayString(transaction.mappingPackageName)));
+        ariaLabelParts.push(t('erp:finance.management.mappingAria.package', '패키지 {{name}}', { name: toDisplayString(transaction.mappingPackageName) }));
       }
       if (transaction.mappingStatusDisplay) {
-        ariaLabelParts.push(fmMappingAriaMappingStatus(toDisplayString(transaction.mappingStatusDisplay)));
+        ariaLabelParts.push(t('erp:finance.management.mappingAria.mappingStatus', '매핑 상태 {{value}}', { value: toDisplayString(transaction.mappingStatusDisplay) }));
       }
       if (transaction.mappingPaymentStatusDisplay) {
-        ariaLabelParts.push(fmMappingAriaPaymentStatus(toDisplayString(transaction.mappingPaymentStatusDisplay)));
+        ariaLabelParts.push(t('erp:finance.management.mappingAria.paymentStatus', '결제 상태 {{value}}', { value: toDisplayString(transaction.mappingPaymentStatusDisplay) }));
       }
       if (transaction.mappingRemainingSessions != null && transaction.mappingRemainingSessions !== '') {
-        ariaLabelParts.push(fmMappingAriaRemainingSessions(toDisplayString(transaction.mappingRemainingSessions)));
+        ariaLabelParts.push(t('erp:finance.management.mappingAria.remainingSessionsValue', '남은 회기 {{count}}회', { count: toDisplayString(transaction.mappingRemainingSessions) }));
       }
 
       return (
@@ -940,12 +942,12 @@ const FinancialManagement = () => {
     }
 
     return (
-      <div className="mg-financial-transaction-card__people-panel dashboard-client" aria-label={FM_MAPPING_ARIA.CONNECTED_MEMBERS}>
+      <div className="mg-financial-transaction-card__people-panel dashboard-client" aria-label={t('erp:finance.management.mappingAria.connectedMembers', '매핑 연결 회원')}>
         <div className="mg-financial-transaction-card__people-panel-inner">
           <div className="mg-financial-transaction-card__people-row mg-financial-transaction-card__people-row--client">
             <User size={20} aria-hidden className="mg-financial-transaction-card__people-icon" />
             <div className="mg-financial-transaction-card__people-text">
-              <div className="mg-financial-transaction-card__people-eyebrow">{FM_MAPPING_ARIA.CLIENT_EYEBROW}</div>
+              <div className="mg-financial-transaction-card__people-eyebrow">{t('erp:finance.management.mappingAria.clientEyebrow', '내담자 (결제 회원)')}</div>
               <div className="mg-financial-transaction-card__people-name">
                 <ErpSafeText fallback="—">{transaction.clientName}</ErpSafeText>
               </div>
@@ -958,7 +960,7 @@ const FinancialManagement = () => {
               className="mg-financial-transaction-card__people-icon mg-financial-transaction-card__people-icon--muted"
             />
             <div className="mg-financial-transaction-card__people-text">
-              <div className="mg-financial-transaction-card__people-eyebrow">{FM_MAPPING_ARIA.CONSULTANT_EYEBROW}</div>
+              <div className="mg-financial-transaction-card__people-eyebrow">{t('erp:finance.management.mappingAria.consultantEyebrow', '상담사')}</div>
               <div className="mg-financial-transaction-card__people-name-secondary">
                 <ErpSafeText fallback="—">{transaction.consultantName}</ErpSafeText>
               </div>
@@ -982,7 +984,7 @@ const FinancialManagement = () => {
             ) : null}
             {transaction.mappingRemainingSessions != null && transaction.mappingRemainingSessions !== '' ? (
               <span className="mg-v2-status-badge mg-v2-badge--neutral mg-financial-transaction-card__chip">
-                {FM_MAPPING_ARIA.REMAINING_SESSIONS_PREFIX} {toDisplayString(transaction.mappingRemainingSessions)}{FM_MAPPING_ARIA.REMAINING_SESSIONS_SUFFIX}
+                {t('erp:finance.management.mappingAria.remainingSessionsPrefix', '남은 회기')} {toDisplayString(transaction.mappingRemainingSessions)}{t('erp:finance.management.mappingAria.remainingSessionsSuffix', '회')}
               </span>
             ) : null}
           </div>
@@ -1011,7 +1013,7 @@ const FinancialManagement = () => {
     <div
       className={forTable ? 'mg-financial-transaction-table__actions' : 'mg-financial-transaction-card__actions'}
       role="group"
-      aria-label={FM_ROW_ACTIONS.GROUP}
+      aria-label={t('erp:finance.management.rowActions.group', '거래 작업')}
     >
       <MGButton
         type="button"
@@ -1020,8 +1022,8 @@ const FinancialManagement = () => {
         className={buildFinancialTxIconButtonClassName({ variant: 'outline' })}
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={() => handleViewTransaction(transaction)}
-        aria-label={FM_ROW_ACTIONS.VIEW}
-        title={FM_ROW_ACTIONS.VIEW}
+        aria-label={t('erp:finance.management.rowActions.view', '보기')}
+        title={t('erp:finance.management.rowActions.view', '보기')}
         preventDoubleClick={false}
       >
         <Eye size={FINANCIAL_TX_ICON_SIZE} aria-hidden />
@@ -1034,8 +1036,8 @@ const FinancialManagement = () => {
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={() => handleEditTransaction(transaction)}
         loading={pendingEditId === transaction.id}
-        aria-label={FM_ROW_ACTIONS.EDIT}
-        title={FM_ROW_ACTIONS.EDIT}
+        aria-label={t('erp:finance.management.rowActions.edit', '수정')}
+        title={t('erp:finance.management.rowActions.edit', '수정')}
         preventDoubleClick={false}
       >
         <Edit size={FINANCIAL_TX_ICON_SIZE} aria-hidden />
@@ -1051,8 +1053,8 @@ const FinancialManagement = () => {
           })}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => handleDeleteTransaction(transaction)}
-          aria-label={FM_ROW_ACTIONS.DELETE}
-          title={FM_ROW_ACTIONS.DELETE}
+          aria-label={t('erp:finance.management.rowActions.delete', '삭제')}
+          title={t('erp:finance.management.rowActions.delete', '삭제')}
           preventDoubleClick={false}
         >
           <Trash2 size={FINANCIAL_TX_ICON_SIZE} aria-hidden />
@@ -1090,14 +1092,14 @@ const FinancialManagement = () => {
           <Badge
             variant="status"
             statusVariant={transaction.transactionType === 'INCOME' ? 'success' : 'danger'}
-            label={transaction.transactionType === 'INCOME' ? FM_TX_TYPE.INCOME : FM_TX_TYPE.EXPENSE}
+            label={transaction.transactionType === 'INCOME' ? t('erp:finance.management.txType.income', '수입') : t('erp:finance.management.txType.expense', '지출')}
             size="sm"
           />
         );
       case 'category':
         return (
           <ErpSafeText fallback="-">
-            {getCategoryDisplayLabel(transaction.category)}
+            {(transaction.category ? t(`erp:finance.management.categoryDisplay.${transaction.category}`, getCategoryDisplayLabel(transaction.category)) : '-')}
           </ErpSafeText>
         );
       case 'amount':
@@ -1137,7 +1139,7 @@ const FinancialManagement = () => {
         }
         return (
           <div className="mg-financial-transaction-table__mapping-cell">
-            <Badge variant="status" statusVariant="info" size="sm" label={FM_TX_TABLE_LABELS.MAPPING} />
+            <Badge variant="status" statusVariant="info" size="sm" label={t('erp:finance.management.txTableLabels.mapping', '매핑')} />
             {(transaction.clientName || transaction.consultantName) && (
               <div className="mg-financial-transaction-table__mapping-names">
                 <ErpSafeText fallback="">{transaction.clientName}</ErpSafeText>
@@ -1168,11 +1170,11 @@ const FinancialManagement = () => {
     return (
       <AdminCommonLayout>
         <ContentHeader
-          title={FM_PAGE_TITLE}
-          subtitle={FM_SESSION.SUBTITLE_CHECKING}
+          title={t('erp:finance.management.pageTitle', '재무 관리')}
+          subtitle={t('erp:finance.management.session.subtitleChecking', '세션 정보를 확인하는 중입니다.')}
           titleId={FINANCIAL_PAGE_TITLE_ID}
         />
-        <ContentArea className="erp-system" ariaLabel={FM_PAGE_TITLE}>
+        <ContentArea className="erp-system" ariaLabel={t('erp:finance.management.pageTitle', '재무 관리')}>
           <div className="erp-session-inline-load">
             <div
               className="erp-session-inline-load__body"
@@ -1180,7 +1182,7 @@ const FinancialManagement = () => {
               aria-live="polite"
               aria-busy="true"
             >
-              <UnifiedLoading type="inline" text={FM_SESSION.LOADING} />
+              <UnifiedLoading type="inline" text={t('erp:finance.management.session.loading', '세션 정보를 불러오는 중...')} />
             </div>
           </div>
         </ContentArea>
@@ -1192,14 +1194,14 @@ const FinancialManagement = () => {
     return (
       <AdminCommonLayout>
         <ContentHeader
-          title={FM_PAGE_TITLE}
-          subtitle={FM_LOGIN.SUBTITLE}
+          title={t('erp:finance.management.pageTitle', '재무 관리')}
+          subtitle={t('erp:finance.management.login.subtitle', '재무 거래 및 회계를 관리하려면 로그인해주세요.')}
           titleId={FINANCIAL_PAGE_TITLE_ID}
         />
-        <ContentArea className="erp-system" ariaLabel={FM_PAGE_TITLE}>
+        <ContentArea className="erp-system" ariaLabel={t('erp:finance.management.pageTitle', '재무 관리')}>
           <div className="erp-error">
-            <h3>{FM_LOGIN.HEADING}</h3>
-            <p>{FM_LOGIN.BODY}</p>
+            <h3>{t('erp:finance.management.login.heading', '로그인이 필요합니다.')}</h3>
+            <p>{t('erp:finance.management.login.body', '재무 관리 기능을 사용하려면 로그인해주세요.')}</p>
           </div>
         </ContentArea>
       </AdminCommonLayout>
@@ -1207,8 +1209,8 @@ const FinancialManagement = () => {
   }
 
   const financialPageSubtitle = dashboardStats.branchName
-    ? fmFinancialPageSubtitleWithBranch(dashboardStats.branchName)
-    : FM_FINANCIAL_PAGE_SUBTITLE_DEFAULT;
+    ? t('erp:finance.management.financialPageSubtitleWithBranch', '재무 거래 및 회계를 관리합니다. ({{branchName}})', { branchName: dashboardStats.branchName })
+    : t('erp:finance.management.financialPageSubtitleDefault', '재무 거래 및 회계를 관리할 수 있습니다.');
 
   const pageHeaderActions =
     activeTab === 'transactions' ? (
@@ -1219,27 +1221,27 @@ const FinancialManagement = () => {
         className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={() => {}}
-        aria-label={FM_EXPORT.ARIA_LABEL}
+        aria-label={t('erp:finance.management.export.ariaLabel', '거래 목록 내보내기')}
         preventDoubleClick={false}
       >
-        {FM_EXPORT.BUTTON}
+        {t('erp:finance.management.export.button', '내보내기')}
       </MGButton>
     ) : null;
 
   return (
     <AdminCommonLayout>
       <ContentHeader
-        title={FM_PAGE_TITLE}
+        title={t('erp:finance.management.pageTitle', '재무 관리')}
         subtitle={financialPageSubtitle}
         actions={pageHeaderActions}
         titleId={FINANCIAL_PAGE_TITLE_ID}
       />
-      <ContentArea className="erp-system" ariaLabel={FM_PAGE_TITLE}>
+      <ContentArea className="erp-system" ariaLabel={t('erp:finance.management.pageTitle', '재무 관리')}>
         <ErpPageShell
               tabsSlot={
                 <div className="mg-v2-financial-page-hub-tabs">
                   <FinancialRefundHubTabs />
-                  <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist" aria-label={FM_VIEW_TABS.ARIA_LABEL}>
+                  <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist" aria-label={t('erp:finance.management.viewTabs.ariaLabel', '재무 뷰 전환')}>
                     <MGButton
                       type="button"
                       variant="outline"
@@ -1250,7 +1252,7 @@ const FinancialManagement = () => {
                       preventDoubleClick={false}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
-                      {FM_VIEW_TABS.TRANSACTIONS}
+                      {t('erp:finance.management.viewTabs.transactions', '거래 내역')}
                     </MGButton>
                     <MGButton
                       type="button"
@@ -1262,7 +1264,7 @@ const FinancialManagement = () => {
                       preventDoubleClick={false}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
-                      {FM_VIEW_TABS.CALENDAR}
+                      {t('erp:finance.management.viewTabs.calendar', '달력 뷰')}
                     </MGButton>
                     <MGButton
                       type="button"
@@ -1274,7 +1276,7 @@ const FinancialManagement = () => {
                       preventDoubleClick={false}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
-                      {FM_VIEW_TABS.DASHBOARD}
+                      {t('erp:finance.management.viewTabs.dashboard', '대시보드')}
                     </MGButton>
                   </div>
                 </div>
@@ -1283,12 +1285,12 @@ const FinancialManagement = () => {
                 activeTab === 'transactions' && !error ? (
                   <div className="mg-w-full mg-mb-md">
                   <ErpFilterToolbar
-                    ariaLabel={FM_FILTER.ARIA_TOOLBAR}
+                    ariaLabel={t('erp:finance.management.filter.ariaToolbar', '재무 거래 필터')}
                     primaryRow={(
                       <div className="mg-v2-filter-grid mg-v2-filter-grid--row1">
                         <div className="mg-v2-form-group">
                           <label className="mg-v2-form-label" htmlFor="financial-filter-date-range">
-                            {FM_FILTER.PERIOD}
+                            {t('erp:finance.management.filter.period', '기간')}
                           </label>
                           <select
                             id="financial-filter-date-range"
@@ -1305,17 +1307,17 @@ const FinancialManagement = () => {
                             }}
                             className="mg-v2-form-select mg-v2-erp-filter-toolbar__period-select"
                           >
-                            <option value="ALL">{FM_FILTER.DATE_RANGE_ALL}</option>
-                            <option value="TODAY">{FM_FILTER.DATE_RANGE_TODAY}</option>
-                            <option value="WEEK">{FM_FILTER.DATE_RANGE_WEEK}</option>
-                            <option value="MONTH">{FM_FILTER.DATE_RANGE_MONTH}</option>
-                            <option value="CUSTOM">{FM_FILTER.DATE_RANGE_CUSTOM}</option>
+                            <option value="ALL">{t('erp:finance.management.filter.dateRangeAll', '전체')}</option>
+                            <option value="TODAY">{t('erp:finance.management.filter.dateRangeToday', '일간')}</option>
+                            <option value="WEEK">{t('erp:finance.management.filter.dateRangeWeek', '주간')}</option>
+                            <option value="MONTH">{t('erp:finance.management.filter.dateRangeMonth', '월간')}</option>
+                            <option value="CUSTOM">{t('erp:finance.management.filter.dateRangeCustom', '직접 입력')}</option>
                           </select>
                           {filters.dateRange === 'MONTH' && (
                             <div
                               className="mg-financial-month-picker mg-v2-erp-filter-toolbar__custom-range"
                               role="group"
-                              aria-label={FM_FILTER.MONTH_QUERY}
+                              aria-label={t('erp:finance.management.filter.monthQuery', '조회 월')}
                             >
                               <MGButton
                                 type="button"
@@ -1339,8 +1341,8 @@ const FinancialManagement = () => {
                                     )
                                   }))
                                 }
-                                aria-label={FM_FILTER.PREV_MONTH}
-                                title={FM_FILTER.PREV_MONTH}
+                                aria-label={t('erp:finance.management.filter.prevMonth', '이전 달')}
+                                title={t('erp:finance.management.filter.prevMonth', '이전 달')}
                                 preventDoubleClick={false}
                               >
                                 <ChevronLeft size={FINANCIAL_TX_ICON_SIZE} aria-hidden />
@@ -1361,7 +1363,7 @@ const FinancialManagement = () => {
                                   setFilters((prev) => ({ ...prev, monthYm: v }));
                                 }}
                                 className="mg-v2-form-select mg-financial-month-picker__input"
-                                aria-label={FM_FILTER.MONTH_QUERY}
+                                aria-label={t('erp:finance.management.filter.monthQuery', '조회 월')}
                               />
                               <MGButton
                                 type="button"
@@ -1385,8 +1387,8 @@ const FinancialManagement = () => {
                                     )
                                   }))
                                 }
-                                aria-label={FM_FILTER.NEXT_MONTH}
-                                title={FM_FILTER.NEXT_MONTH}
+                                aria-label={t('erp:finance.management.filter.nextMonth', '다음 달')}
+                                title={t('erp:finance.management.filter.nextMonth', '다음 달')}
                                 preventDoubleClick={false}
                               >
                                 <ChevronRight size={FINANCIAL_TX_ICON_SIZE} aria-hidden />
@@ -1395,7 +1397,7 @@ const FinancialManagement = () => {
                           )}
                           {filters.dateRange === 'ALL' && (
                             <p className="mg-financial-filter-all-hint" role="status">
-                              {FM_FILTER.ALL_PERIOD_HINT}
+                              {t('erp:finance.management.filter.allPeriodHint', '전체 기간은 데이터가 많을 수 있습니다. 필요할 때만 선택해 주세요.')}
                             </p>
                           )}
                           {filters.dateRange === 'CUSTOM' && (
@@ -1407,7 +1409,7 @@ const FinancialManagement = () => {
                                   setFilters((prev) => ({ ...prev, startDate: e.target.value }))
                                 }
                                 className="mg-v2-form-select mg-v2-erp-filter-toolbar__date-input--start"
-                                aria-label={FM_FILTER.START_DATE}
+                                aria-label={t('erp:finance.management.filter.startDate', '시작일')}
                               />
                               <span className="mg-v2-erp-filter-toolbar__date-separator" aria-hidden>
                                 ~
@@ -1419,13 +1421,13 @@ const FinancialManagement = () => {
                                   setFilters((prev) => ({ ...prev, endDate: e.target.value }))
                                 }
                                 className="mg-v2-form-select mg-v2-erp-filter-toolbar__date-input--end"
-                                aria-label={FM_FILTER.END_DATE}
+                                aria-label={t('erp:finance.management.filter.endDate', '종료일')}
                               />
                             </div>
                           )}
                         </div>
                         <div className="mg-v2-form-group">
-                          <span className="mg-v2-form-label">{FM_FILTER.TRANSACTION_TYPE}</span>
+                          <span className="mg-v2-form-label">{t('erp:finance.management.filter.transactionType', '거래 유형')}</span>
                           <div className="mg-erp-filter-badge-group">
                             {FM_FILTER_TX_TYPE_OPTIONS.map((opt) => (
                               <MGButton
@@ -1451,7 +1453,7 @@ const FinancialManagement = () => {
                           </div>
                         </div>
                         <div className="mg-v2-form-group">
-                          <span className="mg-v2-form-label">{FM_FILTER.CATEGORY}</span>
+                          <span className="mg-v2-form-label">{t('erp:finance.management.filter.category', '카테고리')}</span>
                           <div className="mg-erp-filter-badge-group">
                             {FM_FILTER_CATEGORY_OPTIONS.map((opt) => (
                               <MGButton
@@ -1483,20 +1485,20 @@ const FinancialManagement = () => {
                         <div className="mg-v2-form-group mg-financial-filter-search">
                           <div className="mg-financial-search-scope-row">
                             <label className="mg-v2-form-label" htmlFor="financial-filter-search">
-                              {FM_FILTER.SEARCH}
+                              {t('erp:finance.management.filter.search', '검색')}
                             </label>
                             <span
                               className="mg-v2-ad-b0kla__pill mg-financial-search-scope-badge"
                               role="note"
                             >
-                              {FM_FILTER.SEARCH_SCOPE_BADGE}
+                              {t('erp:finance.management.filter.searchScopeBadge', '이 목록에서만 검색')}
                             </span>
                           </div>
-                          <p className="mg-financial-search-scope-hint">{FM_FILTER.SEARCH_SCOPE_HINT}</p>
+                          <p className="mg-financial-search-scope-hint">{t('erp:finance.management.filter.searchScopeHint', '다른 페이지에 있을 수 있는 거래는 다음 페이지를 눌러 확인하세요.')}</p>
                           <input
                             id="financial-filter-search"
                             type="text"
-                            placeholder={FM_FILTER.SEARCH_PLACEHOLDER}
+                            placeholder={t('erp:finance.management.filter.searchPlaceholder', '상담사명, 내담자명, 설명 검색...')}
                             value={filters.searchText}
                             onChange={(e) =>
                               setFilters((prev) => ({ ...prev, searchText: e.target.value }))
@@ -1517,7 +1519,7 @@ const FinancialManagement = () => {
                             loading={silentListRefreshing}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
-                            {FM_FILTER.SUBMIT}
+                            {t('erp:finance.management.filter.submit', '검색')}
                           </MGButton>
                         </div>
                       </div>
@@ -1530,7 +1532,7 @@ const FinancialManagement = () => {
               <div className="erp-content" aria-busy={loading || silentListRefreshing}>
             {loading && (
               <div className="erp-initial-fetch-inline" role="status" aria-live="polite" aria-busy="true">
-                <UnifiedLoading type="inline" text={FM_LOADING.INLINE} />
+                <UnifiedLoading type="inline" text={t('erp:finance.management.loading.inline', '로딩 중...')} />
               </div>
             )}
 
@@ -1549,9 +1551,9 @@ const FinancialManagement = () => {
                   loading={silentListRefreshing}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   disabled={loading}
-                  aria-label={FM_RETRY.ARIA_LABEL}
+                  aria-label={t('erp:finance.management.retry.ariaLabel', '다시 시도')}
                 >
-                  {FM_RETRY.LABEL}
+                  {t('erp:finance.management.retry.label', '다시 시도')}
                 </MGButton>
               </div>
             )}
@@ -1574,11 +1576,11 @@ const FinancialManagement = () => {
                     aria-labelledby="financial-tax-summary-heading"
                   >
                     <h2 id="financial-tax-summary-heading" className="mg-v2-ad-b0kla__section-title">
-                      {FM_TAX_SUMMARY.SECTION_TITLE}
+                      {t('erp:finance.management.taxSummary.sectionTitle', '월별 세금 요약')}
                     </h2>
                     <p className="mg-v2-text-secondary mg-mb-md">
-                      {FM_TAX_SUMMARY.INTRO_P1}{' '}
-                      {FM_TAX_SUMMARY.INTRO_P2}
+                      {t('erp:finance.management.taxSummary.introP1', '수입 거래의 부가세·원천징수와 지출 거래의 세액 필드 합계입니다. (저장된 금액 기준)')}{' '}
+                      {t('erp:finance.management.taxSummary.introP2', '수입 금액이 부가세 포함가인 거래는, 부가세(VAT) 열은 포함가에서 분리한 세액의 합계입니다.')}
                     </p>
                     <section
                       className="mg-financial-tax-filing-notice"
@@ -1588,18 +1590,18 @@ const FinancialManagement = () => {
                         id="financial-tax-filing-notice-title"
                         className="mg-financial-tax-filing-notice__title"
                       >
-                        {FM_TAX_SUMMARY.NOTICE_TITLE}
+                        {t('erp:finance.management.taxSummary.noticeTitle', '세금 신고·납부 안내(참고)')}
                       </h3>
                       <p className="mg-financial-tax-filing-notice__text">
-                        {FM_TAX_SUMMARY.NOTICE_P1}{' '}
-                        {FM_TAX_SUMMARY.NOTICE_P2}{' '}
+                        {t('erp:finance.management.taxSummary.noticeP1', '본 화면의 안내는 참고용이며, 실제 신고·납부 기한과 대상은 사업자 등록·과세 유형 등에 따라')}{' '}
+                        {t('erp:finance.management.taxSummary.noticeP2', '달라질 수 있습니다. 정확한 사항은')}{' '}
                         <a
                           className="mg-financial-tax-filing-notice__link"
                           href={FINANCIAL_TAX_NOTICE_HOMETAX_URL}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          {FM_TAX_SUMMARY.HOMETAX}
+                          {t('erp:finance.management.taxSummary.hometax', '홈택스')}
                         </a>
                         {' · '}
                         <a
@@ -1608,25 +1610,25 @@ const FinancialManagement = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          {FM_TAX_SUMMARY.NTS}
+                          {t('erp:finance.management.taxSummary.nts', '국세청')}
                         </a>
-                        {' '}{FM_TAX_SUMMARY.NOTICE_P3}
+                        {' '}{t('erp:finance.management.taxSummary.noticeP3', '또는 세무사 등 전문가를 통해 확인하시기 바랍니다.')}
                       </p>
                       <ul className="mg-financial-tax-filing-notice__list">
                         <li>
-                          {FM_TAX_SUMMARY.BULLET_WITHHOLDING}
+                          {t('erp:finance.management.taxSummary.bulletWithholding', '원천징수: 일반적으로 소득 지급이 속하는 달의 다음 달 10일까지 신고·납부(원천징수이행상황 신고 등)인 경우가 많습니다. 반기 납부 승인 시에는 7·10월, 익년 1·10월 등 별도 기한이 적용될 수 있습니다.')}
                         </li>
                         <li>
-                          {FM_TAX_SUMMARY.BULLET_VAT}
+                          {t('erp:finance.management.taxSummary.bulletVat', '부가가치세: 일반과세자는 반기별 신고·납부가 일반적인 경우가 많으며(과세 유형·규모에 따라 다름), 이 화면의 월별 금액과 별개로 매월 10일이 부가가치세 신고·납부 기한이 아닙니다.')}
                         </li>
                         <li>
-                          {FM_TAX_SUMMARY.BULLET_DISCLAIMER}
+                          {t('erp:finance.management.taxSummary.bulletDisclaimer', '위 내용은 국세청 안내를 바탕으로 한 요약이며, 법령 개정 등으로 달라질 수 있습니다.')}
                         </li>
                       </ul>
                     </section>
                     <div className="mg-v2-form-group mg-mb-md">
                       <label className="mg-v2-form-label" htmlFor="financial-tax-summary-year">
-                        {FM_TAX_SUMMARY.YEAR_LABEL}
+                        {t('erp:finance.management.taxSummary.yearLabel', '연도')}
                       </label>
                       <select
                         id="financial-tax-summary-year"
@@ -1642,14 +1644,14 @@ const FinancialManagement = () => {
                           (_, i) => FINANCIAL_TAX_SUMMARY_MIN_YEAR + i
                         ).map((y) => (
                           <option key={y} value={String(y)}>
-                            {`${y}${FM_TAX_SUMMARY.YEAR_OPTION_SUFFIX}`}
+                            {`${y}${t('erp:finance.management.taxSummary.yearOptionSuffix', '년')}`}
                           </option>
                         ))}
                       </select>
                     </div>
                     {taxSummaryLoading && (
                       <div className="mg-mb-md" role="status" aria-live="polite" aria-busy="true">
-                        <UnifiedLoading type="inline" text={FM_LOADING.TAX_SUMMARY} />
+                        <UnifiedLoading type="inline" text={t('erp:finance.management.loading.taxSummary', '세금 집계를 불러오는 중...')} />
                       </div>
                     )}
                     {taxSummaryError && !taxSummaryLoading && (
@@ -1660,10 +1662,10 @@ const FinancialManagement = () => {
                         <table className="erp-table" role="table">
                           <thead>
                             <tr>
-                              <th scope="col">{FM_TAX_SUMMARY.TH_MONTH}</th>
-                              <th scope="col">{FM_TAX_SUMMARY.TH_VAT}</th>
-                              <th scope="col">{FM_TAX_SUMMARY.TH_WITHHOLDING}</th>
-                              <th scope="col">{FM_TAX_SUMMARY.TH_EXPENSE_VAT}</th>
+                              <th scope="col">{t('erp:finance.management.taxSummary.thMonth', '월')}</th>
+                              <th scope="col">{t('erp:finance.management.taxSummary.thVat', '부가세(VAT)')}</th>
+                              <th scope="col">{t('erp:finance.management.taxSummary.thWithholding', '원천징수')}</th>
+                              <th scope="col">{t('erp:finance.management.taxSummary.thExpenseVat', '지출(세액)')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1671,7 +1673,7 @@ const FinancialManagement = () => {
                               <tr key={String(row.month)}>
                                 <td>
                                   <ErpSafeText>{toDisplayString(row.month)}</ErpSafeText>
-                                  {FM_TAX_SUMMARY.TH_MONTH}
+                                  {t('erp:finance.management.taxSummary.thMonth', '월')}
                                 </td>
                                 <td>{formatKrw(toSafeNumber(row.vatTotal))}</td>
                                 <td>{formatKrw(toSafeNumber(row.withholdingTotal))}</td>
@@ -1681,7 +1683,7 @@ const FinancialManagement = () => {
                           </tbody>
                           <tfoot>
                             <tr>
-                              <th scope="row">{FM_TAX_SUMMARY.FOOT_SUM}</th>
+                              <th scope="row">{t('erp:finance.management.taxSummary.footSum', '합계')}</th>
                               <td>{formatKrw(taxSummaryTotals.vat)}</td>
                               <td>{formatKrw(taxSummaryTotals.withholding)}</td>
                               <td>{formatKrw(taxSummaryTotals.expenseVat)}</td>
@@ -1697,14 +1699,14 @@ const FinancialManagement = () => {
                     className="mg-v2-mapping-list-block__card mg-financial-management-mapping-card"
                   >
                     <div className="mg-v2-mapping-list-block__header">
-                      <div className="mg-v2-mapping-list-block__title">{FM_TX_LIST_SECTION.TITLE}</div>
+                      <div className="mg-v2-mapping-list-block__title">{t('erp:finance.management.txListSection.title', '재무 거래 내역')}</div>
                       <div className="mg-v2-flex mg-v2-gap-sm mg-v2-items-center">
                         <ViewModeToggle
                           viewMode={transactionViewMode}
                           onViewModeChange={setTransactionViewMode}
                           options={TRANSACTION_VIEW_MODE_OPTIONS}
                           className="mg-v2-mapping-list-block__toggle"
-                          ariaLabel={FM_TX_LIST_SECTION.VIEW_TOGGLE_ARIA}
+                          ariaLabel={t('erp:finance.management.txListSection.viewToggleAria', '목록 보기 전환')}
                         />
                       </div>
                     </div>
@@ -1713,7 +1715,7 @@ const FinancialManagement = () => {
                   {transactions.length === 0 ? (
                     <div className="mg-financial-transaction-empty">
                       <Inbox size={48} className="mg-financial-transaction-empty__icon" aria-hidden />
-                      <p className="mg-financial-transaction-empty__text">{FM_TX_LIST_SECTION.EMPTY}</p>
+                      <p className="mg-financial-transaction-empty__text">{t('erp:finance.management.txListSection.empty', '거래 내역이 없습니다.')}</p>
                     </div>
                   ) : transactionViewMode === 'table' ? (
                     <ListTableView
@@ -1762,7 +1764,7 @@ const FinancialManagement = () => {
                                   #{toDisplayString(transaction.id)}
                                 </MGButton>
                                 {isMappingTransaction(transaction) && (
-                                  <Badge variant="status" statusVariant="info" size="sm" label={FM_TX_TABLE_LABELS.MAPPING} />
+                                  <Badge variant="status" statusVariant="info" size="sm" label={t('erp:finance.management.txTableLabels.mapping', '매핑')} />
                                 )}
                               </div>
                               {renderTransactionIconActions(transaction)}
@@ -1780,7 +1782,7 @@ const FinancialManagement = () => {
                                 <Badge
                                   variant="status"
                                   statusVariant={transaction.transactionType === 'INCOME' ? 'success' : 'danger'}
-                                  label={transaction.transactionType === 'INCOME' ? FM_TX_TYPE.INCOME : FM_TX_TYPE.EXPENSE}
+                                  label={transaction.transactionType === 'INCOME' ? t('erp:finance.management.txType.income', '수입') : t('erp:finance.management.txType.expense', '지출')}
                                   size="sm"
                                 />
                                 <span className="mg-financial-transaction-card__compact-sep" aria-hidden>
@@ -1788,7 +1790,7 @@ const FinancialManagement = () => {
                                 </span>
                                 <span className="mg-financial-transaction-card__compact-category">
                                   <ErpSafeText fallback="-">
-                                    {getCategoryDisplayLabel(transaction.category)}
+                                    {(transaction.category ? t(`erp:finance.management.categoryDisplay.${transaction.category}`, getCategoryDisplayLabel(transaction.category)) : '-')}
                                   </ErpSafeText>
                                 </span>
                                 <span className="mg-financial-transaction-card__compact-sep" aria-hidden>
@@ -1824,19 +1826,19 @@ const FinancialManagement = () => {
                           ) : (
                             <div className="mg-financial-transaction-card__body">
                               <div className="mg-financial-transaction-card__field">
-                                <span className="mg-financial-transaction-card__label">{FM_CARD_LABELS.TYPE}</span>
+                                <span className="mg-financial-transaction-card__label">{t('erp:finance.management.cardLabels.type', '유형')}</span>
                                 <Badge
                                   variant="status"
                                   statusVariant={transaction.transactionType === 'INCOME' ? 'success' : 'danger'}
-                                  label={transaction.transactionType === 'INCOME' ? FM_TX_TYPE.INCOME : FM_TX_TYPE.EXPENSE}
+                                  label={transaction.transactionType === 'INCOME' ? t('erp:finance.management.txType.income', '수입') : t('erp:finance.management.txType.expense', '지출')}
                                   size="sm"
                                 />
                               </div>
                               <div className="mg-financial-transaction-card__field">
-                                <span className="mg-financial-transaction-card__label">{FM_CARD_LABELS.CATEGORY}</span>
+                                <span className="mg-financial-transaction-card__label">{t('erp:finance.management.cardLabels.category', '카테고리')}</span>
                                 <span>
                                   <ErpSafeText fallback="-">
-                                    {getCategoryDisplayLabel(transaction.category)}
+                                    {(transaction.category ? t(`erp:finance.management.categoryDisplay.${transaction.category}`, getCategoryDisplayLabel(transaction.category)) : '-')}
                                   </ErpSafeText>
                                 </span>
                               </div>
@@ -1864,7 +1866,7 @@ const FinancialManagement = () => {
                               {renderAmountStackWithholdingRow(transaction, 'card')}
                               {renderAmountStackCardSettlementRows(transaction, 'card')}
                               <div className="mg-financial-transaction-card__field">
-                                <span className="mg-financial-transaction-card__label">{FM_CARD_LABELS.STATUS}</span>
+                                <span className="mg-financial-transaction-card__label">{t('erp:finance.management.cardLabels.status', '상태')}</span>
                                 <span className={`erp-status ${toDisplayString(transaction.status, '').toLowerCase()}`}>
                                   <ErpSafeText>{getStatusLabel(transaction.status)}</ErpSafeText>
                                 </span>
@@ -1880,7 +1882,7 @@ const FinancialManagement = () => {
                   {pagination.totalPages > 1 && (
                     <div className="mg-financial-pagination-wrap">
                       {filters.searchText.trim() ? (
-                        <p className="mg-financial-pagination-meta">{FM_PAGINATION.SERVER_TOTAL_HINT}</p>
+                        <p className="mg-financial-pagination-meta">{t('erp:finance.management.pagination.serverTotalHint', '아래 페이지 수는 기간·유형·카테고리 조건 기준입니다. 검색어는 불러온 목록 안에서만 적용됩니다.')}</p>
                       ) : null}
                       <nav>
                         <ul className="pagination">
@@ -1900,7 +1902,7 @@ const FinancialManagement = () => {
                               disabled={pagination.currentPage === 0}
                               preventDoubleClick={false}
                             >
-                              {FM_PAGINATION.PREV}
+                              {t('erp:finance.management.pagination.prev', '이전')}
                             </MGButton>
                           </li>
                           
@@ -1944,7 +1946,7 @@ const FinancialManagement = () => {
                               disabled={pagination.currentPage === pagination.totalPages - 1}
                               preventDoubleClick={false}
                             >
-                              {FM_PAGINATION.NEXT}
+                              {t('erp:finance.management.pagination.next', '다음')}
                             </MGButton>
                           </li>
                         </ul>
@@ -1957,60 +1959,60 @@ const FinancialManagement = () => {
               )}
 
               {activeTab === 'dashboard' && (
-                <section className="erp-section mg-v2-erp-section-block mg-v2-erp-dashboard-block" aria-label={FM_DASHBOARD.SECTION_ARIA}>
-                  <h2 className="mg-v2-ad-b0kla__section-title">{FM_DASHBOARD.SECTION_TITLE}</h2>
+                <section className="erp-section mg-v2-erp-section-block mg-v2-erp-dashboard-block" aria-label={t('erp:finance.management.dashboard.sectionAria', '재무 대시보드')}>
+                  <h2 className="mg-v2-ad-b0kla__section-title">{t('erp:finance.management.dashboard.sectionTitle', '재무 대시보드')}</h2>
 
                   <div className="mg-v2-erp-dashboard-kpi-area">
                     <div className="mg-v2-erp-dashboard-kpi-grid">
                       <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-success">
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <span className="mg-v2-erp-dashboard-kpi-label">{FM_DASHBOARD.KPI_INCOME}</span>
+                          <span className="mg-v2-erp-dashboard-kpi-label">{t('erp:finance.management.dashboard.kpiIncome', '수입 합계')}</span>
                           <TrendingUp size={24} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--success" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-erp-dashboard-kpi-value">{formatKrw(dashboardStats.totalIncome)}</div>
-                          <span className="mg-v2-erp-dashboard-kpi-label">{FM_DASHBOARD.KPI_THIS_MONTH}</span>
+                          <span className="mg-v2-erp-dashboard-kpi-label">{t('erp:finance.management.dashboard.kpiThisMonth', '이번 달')}</span>
                         </div>
                       </div>
                       <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-error">
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <span className="mg-v2-erp-dashboard-kpi-label">{FM_DASHBOARD.KPI_EXPENSE}</span>
+                          <span className="mg-v2-erp-dashboard-kpi-label">{t('erp:finance.management.dashboard.kpiExpense', '지출 합계')}</span>
                           <TrendingDown size={24} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--error" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-erp-dashboard-kpi-value">{formatKrw(dashboardStats.totalExpense)}</div>
-                          <span className="mg-v2-erp-dashboard-kpi-label">{FM_DASHBOARD.KPI_THIS_MONTH}</span>
+                          <span className="mg-v2-erp-dashboard-kpi-label">{t('erp:finance.management.dashboard.kpiThisMonth', '이번 달')}</span>
                         </div>
                       </div>
                       <div className={`mg-v2-ad-b0kla__card ${dashboardStats.netProfit >= 0 ? 'mg-v2-ad-b0kla__card--accent-primary' : 'mg-v2-ad-b0kla__card--accent-error'}`}>
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <span className="mg-v2-erp-dashboard-kpi-label">{FM_DASHBOARD.KPI_NET}</span>
+                          <span className="mg-v2-erp-dashboard-kpi-label">{t('erp:finance.management.dashboard.kpiNet', '순이익')}</span>
                           <BarChart3 size={24} aria-hidden className={`mg-v2-erp-dashboard-kpi-icon ${dashboardStats.netProfit >= 0 ? 'mg-v2-erp-dashboard-kpi-icon--primary' : 'mg-v2-erp-dashboard-kpi-icon--error'}`} />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-erp-dashboard-kpi-value">{formatKrw(Math.abs(dashboardStats.netProfit))}</div>
-                          <span className="mg-v2-erp-dashboard-kpi-label">{FM_DASHBOARD.KPI_THIS_MONTH}</span>
+                          <span className="mg-v2-erp-dashboard-kpi-label">{t('erp:finance.management.dashboard.kpiThisMonth', '이번 달')}</span>
                         </div>
                       </div>
                       <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-secondary">
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <span className="mg-v2-erp-dashboard-kpi-label">{FM_DASHBOARD.KPI_TX_COUNT}</span>
+                          <span className="mg-v2-erp-dashboard-kpi-label">{t('erp:finance.management.dashboard.kpiTxCount', '거래 건수')}</span>
                           <ClipboardList size={24} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--secondary" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
-                          <div className="mg-v2-erp-dashboard-kpi-value">{toDisplayString(dashboardStats.transactionCount)}{FM_DASHBOARD.TX_COUNT_SUFFIX}</div>
-                          <span className="mg-v2-erp-dashboard-kpi-label">{FM_DASHBOARD.KPI_THIS_MONTH}</span>
+                          <div className="mg-v2-erp-dashboard-kpi-value">{toDisplayString(dashboardStats.transactionCount)}{t('erp:finance.management.dashboard.txCountSuffix', '건')}</div>
+                          <span className="mg-v2-erp-dashboard-kpi-label">{t('erp:finance.management.dashboard.kpiThisMonth', '이번 달')}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <h3 className="mg-v2-ad-b0kla__section-title">{FM_DASHBOARD.MAPPING_STATUS_TITLE}</h3>
+                  <h3 className="mg-v2-ad-b0kla__section-title">{t('erp:finance.management.dashboard.mappingStatusTitle', '매핑 연동 현황')}</h3>
                   <div className="mg-v2-erp-dashboard-mapping-area">
                     <div className="mg-v2-erp-dashboard-kpi-grid mg-v2-erp-dashboard-kpi-grid--half">
                       <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-success">
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <span className="mg-v2-erp-dashboard-kpi-label">{FM_DASHBOARD.KPI_MAPPING_INCOME}</span>
+                          <span className="mg-v2-erp-dashboard-kpi-label">{t('erp:finance.management.dashboard.kpiMappingIncome', '매핑 연동 수입')}</span>
                           <Link2 size={22} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--success" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
@@ -2019,16 +2021,16 @@ const FinancialManagement = () => {
                               transactions
                                 .filter(t => t.transactionType === 'INCOME' &&
                                   (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
-                                    t.description?.includes(FM_TX_DESCRIPTION_MATCH.CONSULTATION_DEPOSIT)))
+                                    t.description?.includes(t('erp:finance.management.txDescriptionMatch.consultationDeposit', '상담료 입금 확인'))))
                                 .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
                             )}
                           </div>
-                          <span className="mg-v2-erp-dashboard-kpi-label">{FM_DASHBOARD.KPI_MAPPING_INCOME_SUB}</span>
+                          <span className="mg-v2-erp-dashboard-kpi-label">{t('erp:finance.management.dashboard.kpiMappingIncomeSub', '자동 생성된 상담료 수입')}</span>
                         </div>
                       </div>
                       <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-warning">
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <span className="mg-v2-erp-dashboard-kpi-label">{FM_DASHBOARD.KPI_MAPPING_REFUND}</span>
+                          <span className="mg-v2-erp-dashboard-kpi-label">{t('erp:finance.management.dashboard.kpiMappingRefund', '매핑 연동 환불')}</span>
                           <Undo2 size={22} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--warning" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
@@ -2037,17 +2039,17 @@ const FinancialManagement = () => {
                               transactions
                                 .filter(t => t.transactionType === 'EXPENSE' &&
                                   (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
-                                    t.description?.includes(FM_TX_DESCRIPTION_MATCH.CONSULTATION_REFUND)))
+                                    t.description?.includes(t('erp:finance.management.txDescriptionMatch.consultationRefund', '상담료 환불'))))
                                 .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
                             )}
                           </div>
-                          <span className="mg-v2-erp-dashboard-kpi-label">{FM_DASHBOARD.KPI_MAPPING_REFUND_SUB}</span>
+                          <span className="mg-v2-erp-dashboard-kpi-label">{t('erp:finance.management.dashboard.kpiMappingRefundSub', '자동 생성된 환불 지출')}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <h3 className="mg-v2-ad-b0kla__section-title">{FM_DASHBOARD.QUICK_ACTIONS}</h3>
+                  <h3 className="mg-v2-ad-b0kla__section-title">{t('erp:finance.management.dashboard.quickActions', '빠른 액션')}</h3>
                   <div className="mg-v2-erp-dashboard-actions">
                     <MGButton
                       type="button"
@@ -2058,7 +2060,7 @@ const FinancialManagement = () => {
                       onClick={() => setActiveTab('transactions')}
                       preventDoubleClick={false}
                     >
-                      {FM_DASHBOARD.GO_TRANSACTIONS}
+                      {t('erp:finance.management.dashboard.goTransactions', '거래 내역 보기')}
                     </MGButton>
                     <MGButton
                       type="button"
@@ -2069,7 +2071,7 @@ const FinancialManagement = () => {
                       onClick={() => setActiveTab('calendar')}
                       preventDoubleClick={false}
                     >
-                      {FM_DASHBOARD.GO_CALENDAR}
+                      {t('erp:finance.management.dashboard.goCalendar', '달력 뷰 보기')}
                     </MGButton>
                     <MGButton
                       type="button"
@@ -2080,7 +2082,7 @@ const FinancialManagement = () => {
                       onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
                       preventDoubleClick={false}
                     >
-                      {FM_DASHBOARD.GO_MAPPING}
+                      {t('erp:finance.management.dashboard.goMapping', '매핑 시스템 확인')}
                     </MGButton>
                     <MGButton
                       type="button"
@@ -2091,7 +2093,7 @@ const FinancialManagement = () => {
                       onClick={() => navigate(ADMIN_ROUTES.ERP_FINANCIAL)}
                       preventDoubleClick={false}
                     >
-                      {FM_DASHBOARD.GO_INTEGRATED_FINANCE}
+                      {t('erp:finance.management.dashboard.goIntegratedFinance', '통합 재무 대시보드')}
                     </MGButton>
                   </div>
                 </section>
@@ -2117,7 +2119,7 @@ const FinancialManagement = () => {
           <UnifiedModal
             isOpen
             onClose={() => setDeleteModal({ isOpen: false, transaction: null })}
-            title={FM_DELETE_MODAL.TITLE}
+            title={t('erp:finance.management.deleteModal.title', '거래 삭제')}
             size="medium"
             variant="confirm"
             showCloseButton
@@ -2138,7 +2140,7 @@ const FinancialManagement = () => {
                   disabled={deleteSubmitting}
                   preventDoubleClick={false}
                 >
-                  {FM_DELETE_MODAL.CANCEL}
+                  {t('erp:finance.management.deleteModal.cancel', '취소')}
                 </MGButton>
                 <MGButton
                   type="button"
@@ -2153,22 +2155,22 @@ const FinancialManagement = () => {
                   loading={deleteSubmitting}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  {FM_DELETE_MODAL.CONFIRM}
+                  {t('erp:finance.management.deleteModal.confirm', '삭제')}
                 </MGButton>
               </>
             }
           >
             <p className="mg-financial-management-delete-modal-text">
-              {FM_DELETE_MODAL.WARNING}
+              {t('erp:finance.management.deleteModal.warning', '이 작업은 되돌릴 수 없습니다. 아래 거래를 영구 삭제할까요?')}
             </p>
             <ul className="mg-v2-text-list mg-financial-management-delete-modal-list">
               <li>
-                {FM_DELETE_MODAL.FIELD_TX_ID} #{toDisplayString(deleteModal.transaction.id)}
+                {t('erp:finance.management.deleteModal.fieldTxId', '거래 번호:')} #{toDisplayString(deleteModal.transaction.id)}
               </li>
               <li>
-                {FM_DELETE_MODAL.FIELD_AMOUNT}{' '}
+                {t('erp:finance.management.deleteModal.fieldAmount', '금액:')}{' '}
                 <ErpSafeText fallback="-">
-                  {`${toSafeNumber(deleteModal.transaction.amount).toLocaleString()}${FM_CURRENCY_SUFFIX}`}
+                  {`${toSafeNumber(deleteModal.transaction.amount).toLocaleString()}${t('erp:finance.management.currencySuffix', '원')}`}
                 </ErpSafeText>
               </li>
             </ul>
@@ -2191,6 +2193,7 @@ const FinancialManagement = () => {
 };
 
 const TransactionDetailModal = ({ transaction, onClose }) => {
+  const { t } = useTranslation(['erp']);
   const [mappingDetail, setMappingDetail] = useState(null);
   const [mappingLoadError, setMappingLoadError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -2224,7 +2227,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             : toDisplayString(payload.error, '');
         setMappingLoadError(
           rawErr
-            ? toDisplayString(rawErr, FM_ERRORS.MAPPING_DETAIL_FALLBACK)
+            ? toDisplayString(rawErr, t('erp:finance.management.errors.mappingDetailFallback', '매핑 정보를 불러올 수 없습니다.'))
             : null
         );
         return;
@@ -2252,7 +2255,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
 
   const modalTitle = (
     <>
-      <DollarSign size={20} aria-hidden /> {FM_DETAIL_MODAL.TITLE_PREFIX} #{toDisplayString(transaction.id)}
+      <DollarSign size={20} aria-hidden /> {t('erp:finance.management.detailModal.titlePrefix', '거래 상세 정보')} #{toDisplayString(transaction.id)}
     </>
   );
 
@@ -2274,7 +2277,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         preventDoubleClick={false}
       >
-        {FM_DETAIL_MODAL.CLOSE}
+        {t('erp:finance.management.detailModal.close', '닫기')}
       </MGButton>
       {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
         <MGButton
@@ -2291,7 +2294,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           preventDoubleClick={false}
         >
-          {FM_DETAIL_MODAL.VIEW_MAPPING}
+          {t('erp:finance.management.detailModal.viewMapping', '매핑 보기')}
         </MGButton>
       )}
     </>
@@ -2309,18 +2312,18 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
     >
       <div className="mg-v2-transaction-detail-card mg-v2-card mg-v2-card--outlined">
         <h3 className="mg-v2-section-header">
-          <BarChart3 size={18} aria-hidden /> {FM_DETAIL_MODAL.BASIC_INFO}
+          <BarChart3 size={18} aria-hidden /> {t('erp:finance.management.detailModal.basicInfo', '기본 정보')}
         </h3>
         <div className="mg-v2-transaction-detail-form-grid mg-v2-form-grid">
           <div>
-            <strong>{FM_DETAIL_MODAL.LABEL_TX_TYPE}</strong>
+            <strong>{t('erp:finance.management.detailModal.labelTxType', '거래 유형:')}</strong>
             <span className={`mg-v2-transaction-detail-badge ${transaction.transactionType === 'INCOME' ? 'mg-v2-transaction-detail-badge--income' : 'mg-v2-transaction-detail-badge--expense'}`}>
-              {transaction.transactionType === 'INCOME' ? FM_TX_TYPE.INCOME : FM_TX_TYPE.EXPENSE}
+              {transaction.transactionType === 'INCOME' ? t('erp:finance.management.txType.income', '수입') : t('erp:finance.management.txType.expense', '지출')}
             </span>
           </div>
           <div>
-            <strong>{FM_DETAIL_MODAL.LABEL_CATEGORY}</strong>{' '}
-            <ErpSafeText fallback="-">{getCategoryDisplayLabel(transaction.category)}</ErpSafeText>
+            <strong>{t('erp:finance.management.detailModal.labelCategory', '카테고리:')}</strong>{' '}
+            <ErpSafeText fallback="-">{(transaction.category ? t(`erp:finance.management.categoryDisplay.${transaction.category}`, getCategoryDisplayLabel(transaction.category)) : '-')}</ErpSafeText>
           </div>
           <div>
             <strong>{FINANCIAL_AMOUNT_STACK_LABEL_TOTAL}:</strong>{' '}
@@ -2340,10 +2343,10 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           {renderAmountStackWithholdingRow(transaction, 'detail')}
           {renderAmountStackCardSettlementRows(transaction, 'detail')}
           <div>
-            <strong>{FM_DETAIL_MODAL.LABEL_TX_DATE}</strong> {formatDate(transaction.transactionDate)}
+            <strong>{t('erp:finance.management.detailModal.labelTxDate', '거래일:')}</strong> {formatDate(transaction.transactionDate)}
           </div>
           <div className="mg-v2-transaction-detail-form-grid__item--span2">
-            <strong>{FM_DETAIL_MODAL.LABEL_DESCRIPTION}</strong> <ErpSafeText fallback="-">{transaction.description}</ErpSafeText>
+            <strong>{t('erp:finance.management.detailModal.labelDescription', '설명:')}</strong> <ErpSafeText fallback="-">{transaction.description}</ErpSafeText>
           </div>
         </div>
       </div>
@@ -2351,66 +2354,66 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
       {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
         <div className="mg-v2-transaction-detail-mapping-box">
           <h3 className="mg-v2-transaction-detail-mapping-title">
-            <Link2 size={18} aria-hidden /> {FM_DETAIL_MODAL.MAPPING_SECTION}
+            <Link2 size={18} aria-hidden /> {t('erp:finance.management.detailModal.mappingSection', '매핑 연동 정보')}
           </h3>
           {loading ? (
             <div className="mg-v2-transaction-detail-loading-wrap" role="status" aria-live="polite" aria-busy="true">
-              <UnifiedLoading type="inline" text={FM_DETAIL_MODAL.LOADING_MAPPING} />
+              <UnifiedLoading type="inline" text={t('erp:finance.management.detailModal.loadingMapping', '매핑 정보를 불러오는 중...')} />
             </div>
           ) : mappingDetail ? (
             <div className="mg-v2-transaction-detail-form-grid mg-v2-form-grid">
               <div>
-                <strong>{FM_DETAIL_MODAL.LABEL_MAPPING_ID}</strong> #{toDisplayString(mappingDetail.mappingId)}
+                <strong>{t('erp:finance.management.detailModal.labelMappingId', '매핑 ID:')}</strong> #{toDisplayString(mappingDetail.mappingId)}
               </div>
               <div className="mg-v2-transaction-detail-form-grid__item--span2">
-                <strong>{FM_DETAIL_MODAL.LABEL_CLIENT}</strong>{' '}
+                <strong>{t('erp:finance.management.detailModal.labelClient', '내담자 (결제 회원):')}</strong>{' '}
                 <ErpSafeText fallback="-">{mappingDetail.clientName}</ErpSafeText>
               </div>
               <div className="mg-v2-transaction-detail-form-grid__item--span2">
-                <strong>{FM_DETAIL_MODAL.LABEL_CONSULTANT}</strong> <ErpSafeText fallback="-">{mappingDetail.consultantName}</ErpSafeText>
+                <strong>{t('erp:finance.management.detailModal.labelConsultant', '상담사:')}</strong> <ErpSafeText fallback="-">{mappingDetail.consultantName}</ErpSafeText>
               </div>
               <div>
-                <strong>{FM_DETAIL_MODAL.LABEL_PACKAGE_NAME}</strong> <ErpSafeText fallback="-">{mappingDetail.packageName}</ErpSafeText>
+                <strong>{t('erp:finance.management.detailModal.labelPackageName', '패키지명:')}</strong> <ErpSafeText fallback="-">{mappingDetail.packageName}</ErpSafeText>
               </div>
               <div>
-                <strong>{FM_DETAIL_MODAL.LABEL_TOTAL_SESSIONS}</strong> {toDisplayString(mappingDetail.totalSessions)}{FM_DETAIL_MODAL.SESSION_SUFFIX}
+                <strong>{t('erp:finance.management.detailModal.labelTotalSessions', '총 회기수:')}</strong> {toDisplayString(mappingDetail.totalSessions)}{t('erp:finance.management.detailModal.sessionSuffix', '회')}
               </div>
               {mappingDetail.remainingSessions != null && mappingDetail.remainingSessions !== '' && (
                 <div>
-                  <strong>{FM_DETAIL_MODAL.LABEL_REMAINING_SESSIONS}</strong> {toDisplayString(mappingDetail.remainingSessions)}{FM_DETAIL_MODAL.SESSION_SUFFIX}
+                  <strong>{t('erp:finance.management.detailModal.labelRemainingSessions', '남은 회기:')}</strong> {toDisplayString(mappingDetail.remainingSessions)}{t('erp:finance.management.detailModal.sessionSuffix', '회')}
                 </div>
               )}
               {mappingDetail.mappingStatusDisplay && (
                 <div>
-                  <strong>{FM_DETAIL_MODAL.LABEL_MAPPING_STATUS}</strong> <ErpSafeText>{mappingDetail.mappingStatusDisplay}</ErpSafeText>
+                  <strong>{t('erp:finance.management.detailModal.labelMappingStatus', '매핑 상태:')}</strong> <ErpSafeText>{mappingDetail.mappingStatusDisplay}</ErpSafeText>
                 </div>
               )}
               {mappingDetail.mappingPaymentStatusDisplay && (
                 <div>
-                  <strong>{FM_DETAIL_MODAL.LABEL_PAYMENT_STATUS}</strong> <ErpSafeText>{mappingDetail.mappingPaymentStatusDisplay}</ErpSafeText>
+                  <strong>{t('erp:finance.management.detailModal.labelPaymentStatus', '결제 상태:')}</strong> <ErpSafeText>{mappingDetail.mappingPaymentStatusDisplay}</ErpSafeText>
                 </div>
               )}
               <div>
-                <strong>{FM_DETAIL_MODAL.LABEL_PRICE_PER_SESSION}</strong> {formatKrw(mappingDetail.pricePerSession)}
+                <strong>{t('erp:finance.management.detailModal.labelPricePerSession', '회기당 단가:')}</strong> {formatKrw(mappingDetail.pricePerSession)}
               </div>
               <div className="mg-v2-transaction-detail-form-grid__item--span2">
-                <strong>{FM_DETAIL_MODAL.LABEL_PACKAGE_PRICE}</strong>
+                <strong>{t('erp:finance.management.detailModal.labelPackagePrice', '패키지 가격:')}</strong>
                 <span className="mg-v2-transaction-detail-package-price">{formatKrw(mappingDetail.packagePrice)}</span>
               </div>
               <div className="mg-v2-transaction-detail-form-grid__item--span2">
-                <strong>{FM_DETAIL_MODAL.LABEL_PAYMENT_AMOUNT}</strong>
+                <strong>{t('erp:finance.management.detailModal.labelPaymentAmount', '결제 금액:')}</strong>
                 <span className={`mg-v2-transaction-detail-payment-amount ${mappingDetail.packagePrice === mappingDetail.paymentAmount ? 'mg-v2-transaction-detail-payment-amount--match' : 'mg-v2-transaction-detail-payment-amount--mismatch'}`}>
                   {formatKrw(mappingDetail.paymentAmount)}
                   {mappingDetail.packagePrice !== mappingDetail.paymentAmount && (
-                    <span className="mg-v2-transaction-detail-message-mismatch">{FM_DETAIL_MODAL.PACKAGE_PRICE_MISMATCH}</span>
+                    <span className="mg-v2-transaction-detail-message-mismatch">{t('erp:finance.management.detailModal.packagePriceMismatch', '(패키지 가격과 다름)')}</span>
                   )}
                 </span>
               </div>
               {mappingDetail.isConsistent !== undefined && (
                 <div className="mg-v2-transaction-detail-form-grid__item--span2">
-                  <strong>{FM_DETAIL_MODAL.LABEL_CONSISTENCY}</strong>
+                  <strong>{t('erp:finance.management.detailModal.labelConsistency', '일관성 검사:')}</strong>
                   <span className={`mg-v2-transaction-detail-consistent-badge ${mappingDetail.isConsistent ? 'mg-v2-transaction-detail-consistent-badge--ok' : 'mg-v2-transaction-detail-consistent-badge--error'}`}>
-                    {mappingDetail.isConsistent ? FM_DETAIL_MODAL.CONSISTENCY_OK : FM_DETAIL_MODAL.CONSISTENCY_ERROR}
+                    {mappingDetail.isConsistent ? t('erp:finance.management.detailModal.consistencyOk', '정상') : t('erp:finance.management.detailModal.consistencyError', '불일치')}
                   </span>
                   {!mappingDetail.isConsistent && (
                     <div className="mg-v2-transaction-detail-consistency-msg"><ErpSafeText>{mappingDetail.consistencyMessage}</ErpSafeText></div>
@@ -2419,7 +2422,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
               )}
               {mappingDetail.relatedTransactions && mappingDetail.relatedTransactions.length > 0 && (
                 <div className="mg-v2-transaction-detail-form-grid__item--span2">
-                  <strong>{FM_DETAIL_MODAL.LABEL_RELATED_TX}</strong>
+                  <strong>{t('erp:finance.management.detailModal.labelRelatedTx', '관련 거래:')}</strong>
                   <div className="mg-v2-transaction-detail-related-list">
                     {mappingDetail.relatedTransactions.map((relatedTx, index) => (
                       <div key={index} className="mg-v2-transaction-detail-related-item">
@@ -2434,7 +2437,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             <div className="mg-v2-transaction-detail-message-empty">
               {mappingLoadError != null && mappingLoadError !== ''
                 ? toDisplayString(mappingLoadError)
-                : FM_ERRORS.MAPPING_DETAIL_FALLBACK}
+                : t('erp:finance.management.errors.mappingDetailFallback', '매핑 정보를 불러올 수 없습니다.')}
             </div>
           )}
         </div>
@@ -2443,14 +2446,14 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
       {transaction.relatedEntityType && transaction.relatedEntityType !== 'CONSULTANT_CLIENT_MAPPING' && (
         <div className="mg-v2-transaction-detail-other-box">
           <h3 className="mg-v2-transaction-detail-other-title">
-            <Link2 size={18} aria-hidden /> {FM_DETAIL_MODAL.OTHER_LINK_SECTION}
+            <Link2 size={18} aria-hidden /> {t('erp:finance.management.detailModal.otherLinkSection', '연동 정보')}
           </h3>
           <div className="mg-v2-transaction-detail-form-grid mg-v2-form-grid">
             <div>
-              <strong>{FM_DETAIL_MODAL.LABEL_RELATED_TYPE}</strong> <ErpSafeText>{transaction.relatedEntityType}</ErpSafeText>
+              <strong>{t('erp:finance.management.detailModal.labelRelatedType', '연동 유형:')}</strong> <ErpSafeText>{transaction.relatedEntityType}</ErpSafeText>
             </div>
             <div>
-              <strong>{FM_DETAIL_MODAL.LABEL_RELATED_ID}</strong> #{toDisplayString(transaction.relatedEntityId)}
+              <strong>{t('erp:finance.management.detailModal.labelRelatedId', '연동 ID:')}</strong> #{toDisplayString(transaction.relatedEntityId)}
             </div>
           </div>
         </div>

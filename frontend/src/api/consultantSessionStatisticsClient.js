@@ -78,7 +78,7 @@ function normalizeBucket(b, idx) {
   const label =
     rawLabel != null && String(rawLabel).trim() !== ''
       ? String(rawLabel)
-      : `항목 ${idx + 1}`;
+      : `#${idx + 1}`;
   return { label, value };
 }
 

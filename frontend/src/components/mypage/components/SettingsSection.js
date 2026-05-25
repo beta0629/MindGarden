@@ -4,18 +4,17 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { useTranslation } from 'react-i18next';
 
-const LOCALE_OPTIONS = [
-  { value: 'ko-KR', label: '한국어' },
-  { value: 'en-US', label: 'English' }
-];
-
-const TZ_OPTIONS = [
-  { value: 'Asia/Seoul', label: '서울 (Asia/Seoul)' },
-  { value: 'UTC', label: 'UTC' }
-];
-
 const SettingsSection = () => {
   const { t } = useTranslation(['settings', 'common']);
+  const LOCALE_OPTIONS = [
+    { value: 'ko-KR', label: t('settings:language.ko', '한국어') },
+    { value: 'en-US', label: t('settings:language.en', 'English') }
+  ];
+
+  const TZ_OPTIONS = [
+    { value: 'Asia/Seoul', label: t('settings:timezone.seoul', '서울 (Asia/Seoul)') },
+    { value: 'UTC', label: t('settings:timezone.utc', 'UTC') }
+  ];
   const [locale, setLocale] = useState('ko-KR');
   const [timezone, setTimezone] = useState('Asia/Seoul');
   const [notifyPush, setNotifyPush] = useState(false);

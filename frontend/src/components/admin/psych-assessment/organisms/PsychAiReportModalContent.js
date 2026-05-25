@@ -8,6 +8,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 import { getPsychAssessmentEvidenceReasonLabel } from '../../../../constants/psychAssessmentReasonLabels';
 import { PSYCH_AI_REPORT_UI } from '../../../../constants/psychAssessmentAiReportUiStrings';
 import { toDisplayString } from '../../../../utils/safeDisplay';
@@ -32,7 +33,7 @@ const MIN_MARKDOWN_LEN_FOR_LEGACY = 40;
  * @param {boolean} evidenceJsonPresent 저장된 evidence 문자열이 있는 경우에만 근거 비움 판단에 사용
  * @returns {{ recoveryPrimaryHint: string, showRegenerate: boolean }}
  */
-const deriveRecoveryUx = (reportMarkdown, evidenceParsed, evidenceJsonPresent) => {
+const deriveRecoveryUx = (reportMarkdown, evidenceParsed, evidenceJsonPresent, t) => {
   const md = reportMarkdown && typeof reportMarkdown === 'string' ? reportMarkdown : '';
   const trimmed = md.trim();
   const v3Ok = hasTciDesignerHeadingsInOrder(md) || hasMmpiDesignerHeadingsInOrder(md);
@@ -50,11 +51,11 @@ const deriveRecoveryUx = (reportMarkdown, evidenceParsed, evidenceJsonPresent) =
 
   let recoveryPrimaryHint = '';
   if (missingRequiredSections) {
-    recoveryPrimaryHint = PSYCH_AI_REPORT_UI.MISSING_SECTIONS_HINT;
+    recoveryPrimaryHint = t(PSYCH_AI_REPORT_UI.MISSING_SECTIONS_HINT);
   } else if (legacyLayout) {
-    recoveryPrimaryHint = PSYCH_AI_REPORT_UI.LEGACY_HEADING_HINT;
+    recoveryPrimaryHint = t(PSYCH_AI_REPORT_UI.LEGACY_HEADING_HINT);
   } else if (emptyKeyHighlights) {
-    recoveryPrimaryHint = PSYCH_AI_REPORT_UI.EMPTY_KEY_HIGHLIGHTS_HINT;
+    recoveryPrimaryHint = t(PSYCH_AI_REPORT_UI.EMPTY_KEY_HIGHLIGHTS_HINT);
   }
 
   const showRegenerate = Boolean(recoveryPrimaryHint);
@@ -69,8 +70,9 @@ const PsychAiReportModalContent = ({
   regenerateLoading = false,
   regenerateDisabled = false
 }) => {
+  const { t } = useTranslation(['report']);
   if (loading) {
-    return <UnifiedLoading type="inline" text={PSYCH_AI_REPORT_UI.LOADING} />;
+    return <UnifiedLoading type="inline" text={t(PSYCH_AI_REPORT_UI.LOADING)} />;
   }
   if (!reportContent?.reportMarkdown) {
     return null;
@@ -89,14 +91,16 @@ const PsychAiReportModalContent = ({
   const aiSkipped = aiStatus === 'skipped';
   const reasonLabel = getPsychAssessmentEvidenceReasonLabel(reason);
   const showFailedNetwork = aiStatus === 'failed' || aiStatus === 'disabled';
+  const skippedFallbackText = t(PSYCH_AI_REPORT_UI.SKIPPED_FALLBACK);
   const skippedBannerText = reasonLabel
-    ? toDisplayString(reasonLabel, PSYCH_AI_REPORT_UI.SKIPPED_FALLBACK)
-    : PSYCH_AI_REPORT_UI.SKIPPED_FALLBACK;
+    ? toDisplayString(reasonLabel, skippedFallbackText)
+    : skippedFallbackText;
 
   const { recoveryPrimaryHint, showRegenerate } = deriveRecoveryUx(
     reportContent.reportMarkdown,
     evidenceParsed,
-    evidenceJsonPresent
+    evidenceJsonPresent,
+    t
   );
   const canRegenerate =
     showRegenerate &&
@@ -120,7 +124,7 @@ const PsychAiReportModalContent = ({
           }
         >
           <p className="mg-v2-psych-ai-report-alert__hint">
-            {showFailedNetwork ? PSYCH_AI_REPORT_UI.FAILED_NETWORK : PSYCH_AI_REPORT_UI.FAILED_VALIDATION_INTRO}
+            {showFailedNetwork ? t(PSYCH_AI_REPORT_UI.FAILED_NETWORK) : t(PSYCH_AI_REPORT_UI.FAILED_VALIDATION_INTRO)}
           </p>
           {reasonLabel ? (
             <p className="mg-v2-psych-ai-report-alert__hint">{toDisplayString(reasonLabel)}</p>
@@ -146,9 +150,9 @@ const PsychAiReportModalContent = ({
               disabled={regenerateDisabled || regenerateLoading}
               preventDoubleClick={true}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              title={regenerateDisabled ? PSYCH_AI_REPORT_UI.REGENERATE_DISABLED_TITLE : undefined}
+              title={regenerateDisabled ? t(PSYCH_AI_REPORT_UI.REGENERATE_DISABLED_TITLE) : undefined}
             >
-              {PSYCH_AI_REPORT_UI.REGENERATE_BUTTON}
+              {t(PSYCH_AI_REPORT_UI.REGENERATE_BUTTON)}
             </MGButton>
           </div>
         </div>

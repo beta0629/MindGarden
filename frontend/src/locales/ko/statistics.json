@@ -59,6 +59,7 @@
     "noDataHint": "상담사들이 평가를 받으면 통계가 표시됩니다",
     "ranking": "상담사 랭킹",
     "recentTrends": "최근 평가 동향",
+    "ratingCount": "({{count}}개 평가)",
     "loadingText": "평가 통계를 불러오는 중..."
   },
   "completion": {

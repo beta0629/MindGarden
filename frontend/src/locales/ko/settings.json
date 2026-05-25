@@ -97,6 +97,10 @@
     "ko": "한국어",
     "en": "English"
   },
+  "timezone": {
+    "seoul": "서울 (Asia/Seoul)",
+    "utc": "UTC"
+  },
   "display": {
     "title": "화면 설정",
     "fontSize": "글자 크기",

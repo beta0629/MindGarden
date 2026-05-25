@@ -104,7 +104,7 @@ const ConsultantRatingStatisticsView = ({ statistics, loading }) => {
                                             ⭐ {consultant.averageRating ? consultant.averageRating.toFixed(1) : '0.0'}
                                         </span>
                                         <span className="consultant-count">
-                                            ({consultant.ratingCount}개 평가)
+                                            {t('statistics:rating.ratingCount', '({{count}}개 평가)', { count: consultant.ratingCount })}
                                         </span>
                                     </div>
                                 </div>

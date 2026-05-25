@@ -14,6 +14,7 @@ import {
   ChevronLeft, ChevronRight, DollarSign, BarChart3,
   Star, FileText
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import { useSession } from '../../contexts/SessionContext';
 import './ConsultantIncomeReport.css';
@@ -28,6 +29,7 @@ const formatCurrency = (amount) => {
 };
 
 const ConsultantIncomeReport = () => {
+  const { t } = useTranslation(['statistics', 'report']);
   const { user } = useSession();
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
@@ -85,7 +87,7 @@ const ConsultantIncomeReport = () => {
       }
       setMonthlyData(chartData);
     } catch (err) {
-      console.error('수입 리포트 로드 실패:', err);
+      console.error(t('statistics:income.loadFail', '수입 리포트 로드 실패'), err);
     } finally {
       setLoading(false);
     }
@@ -123,7 +125,7 @@ const ConsultantIncomeReport = () => {
           type="button"
           className="income-report__month-btn"
           onClick={() => changeMonth(-1)}
-          aria-label="이전 달"
+          aria-label={t('statistics:income.prevMonth', '이전 달')}
         >
           <ChevronLeft size={20} />
         </button>
@@ -132,7 +134,7 @@ const ConsultantIncomeReport = () => {
           type="button"
           className="income-report__month-btn"
           onClick={() => changeMonth(1)}
-          aria-label="다음 달"
+          aria-label={t('statistics:income.nextMonth', '다음 달')}
         >
           <ChevronRight size={20} />
         </button>
@@ -145,14 +147,14 @@ const ConsultantIncomeReport = () => {
             <FileText size={20} />
           </div>
           <div className="income-report__summary-value">{summary.totalSessions}</div>
-          <div className="income-report__summary-label">총 상담 건수</div>
+          <div className="income-report__summary-label">{t('statistics:income.totalSessions', '총 상담 건수')}</div>
         </div>
         <div className="income-report__summary-card">
           <div className="income-report__summary-icon">
             <DollarSign size={20} />
           </div>
           <div className="income-report__summary-value">{formatCurrency(summary.totalIncome)}</div>
-          <div className="income-report__summary-label">총 수입</div>
+          <div className="income-report__summary-label">{t('statistics:income.totalIncome', '총 수입')}</div>
         </div>
         <div className="income-report__summary-card">
           <div className="income-report__summary-icon">
@@ -161,7 +163,7 @@ const ConsultantIncomeReport = () => {
           <div className="income-report__summary-value">
             {summary.avgRating ? summary.avgRating.toFixed(1) : '-'}
           </div>
-          <div className="income-report__summary-label">평균 평점</div>
+          <div className="income-report__summary-label">{t('statistics:income.avgRating', '평균 평점')}</div>
         </div>
       </div>
 
@@ -169,7 +171,7 @@ const ConsultantIncomeReport = () => {
       <div className="income-report__chart-section">
         <div className="income-report__chart-title">
           <BarChart3 size={16} className="income-report__chart-title-icon" />
-          월별 수입 추이
+          {t('statistics:income.chartTitle', '월별 수입 추이')}
         </div>
         <div className="income-report__bar-chart">
           {monthlyData.map((d, i) => {
@@ -193,7 +195,7 @@ const ConsultantIncomeReport = () => {
 
       {/* 상세 목록 */}
       <div className="income-report__detail-section">
-        <div className="income-report__detail-title">상세 내역</div>
+        <div className="income-report__detail-title">{t('statistics:income.detailTitle', '상세 내역')}</div>
         {detailList.length > 0 ? (
           <div className="income-report__detail-list">
             {detailList.map((item, idx) => (
@@ -219,7 +221,7 @@ const ConsultantIncomeReport = () => {
               <DollarSign size={28} />
             </div>
             <p className="income-report__empty-text">
-              이번 달 상담 내역이 없습니다
+              {t('statistics:income.noData', '이번 달 상담 내역이 없습니다')}
             </p>
           </div>
         )}

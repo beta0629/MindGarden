@@ -35,7 +35,7 @@ const API_ERP_REPORTS = '/api/v1/erp/reports';
  * @since 2025-09-30
  */
 const ErpReportModal = ({ isOpen, onClose }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['report', 'common']);
     const [loading, setLoading] = useState(false);
     const [reportType, setReportType] = useState('monthly');
     const [period, setPeriod] = useState('');
@@ -63,7 +63,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
             const list = Array.isArray(raw) ? raw : (raw?.data ?? []);
             setBranches(Array.isArray(list) ? list : []);
         } catch (error) {
-            console.error('지점 목록 로드 실패:', error);
+            console.error(t('report:erp.branchLoadFail', '지점 목록 로드 실패'), error);
         } finally {
             setLoadingBranches(false);
         }
@@ -74,7 +74,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
      */
     const handleGenerateReport = async() => {
         if (!period) {
-            notificationManager.error('기간을 선택해주세요.');
+            notificationManager.error(t('report:erp.noPeriod', '기간을 선택해주세요.'));
             return;
         }
 
@@ -89,19 +89,19 @@ const ErpReportModal = ({ isOpen, onClose }) => {
             });
 
             if (response && response.success === false) {
-                throw new Error(response?.message || '보고서 생성에 실패했습니다.');
+                throw new Error(response?.message || t('report:erp.generateFail', '보고서 생성에 실패했습니다.'));
             }
             const payload = response?.data !== undefined && response?.data !== null ? response.data : response;
             if (payload != null && typeof payload === 'object') {
                 setReportData(payload);
-                notificationManager.success('보고서가 생성되었습니다.');
+                notificationManager.success(t('report:erp.generateSuccess', '보고서가 생성되었습니다.'));
             } else {
-                throw new Error(response?.message || '보고서 생성에 실패했습니다.');
+                throw new Error(response?.message || t('report:erp.generateFail', '보고서 생성에 실패했습니다.'));
             }
 
         } catch (error) {
-            console.error('보고서 생성 실패:', error);
-            notificationManager.error(error.message || '보고서 생성 중 오류가 발생했습니다.');
+            console.error(t('report:erp.generateFail', '보고서 생성 실패'), error);
+            notificationManager.error(error.message || t('report:erp.generateError', '보고서 생성 중 오류가 발생했습니다.'));
         } finally {
             setLoading(false);
         }
@@ -112,7 +112,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
      */
     const handleDownloadReport = async() => {
         if (!reportData) {
-            notificationManager.error('다운로드할 보고서가 없습니다.');
+            notificationManager.error(t('report:erp.noDownload', '다운로드할 보고서가 없습니다.'));
             return;
         }
 
@@ -143,14 +143,14 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                 a.click();
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
-                notificationManager.success('보고서가 다운로드되었습니다.');
+                notificationManager.success(t('report:erp.downloadSuccess', '보고서가 다운로드되었습니다.'));
             } else {
-                throw new Error('다운로드에 실패했습니다.');
+                throw new Error(t('report:erp.downloadFail', '다운로드에 실패했습니다.'));
             }
 
         } catch (error) {
-            console.error('보고서 다운로드 실패:', error);
-            notificationManager.error(error.message || '다운로드 중 오류가 발생했습니다.');
+            console.error(t('report:erp.downloadFail', '보고서 다운로드 실패'), error);
+            notificationManager.error(error.message || t('report:erp.downloadError', '다운로드 중 오류가 발생했습니다.'));
         }
     };
 
@@ -169,7 +169,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
         <UnifiedModal
             isOpen={isOpen}
             onClose={handleClose}
-            title="운영 리포트"
+            title={t('report:erp.title', '운영 리포트')}
             size="large"
             backdropClick
             showCloseButton
@@ -182,11 +182,11 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                     <div className="mg-v2-form-section">
                         <h3 className="mg-v2-section-title">
                             <Calendar size={20} className="mg-v2-section-title-icon" />
-                            보고서 설정
+                            {t('report:erp.settingsTitle', '보고서 설정')}
                         </h3>
 
                         <div className="mg-v2-form-group">
-                            <label className="mg-v2-form-label">보고서 유형</label>
+                            <label className="mg-v2-form-label">{t('report:erp.typeLabel', '보고서 유형')}</label>
                             <div className="mg-v2-form-radio-group">
                                 <label className="mg-v2-form-radio">
                                     <input
@@ -196,7 +196,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                         onChange={(e) => setReportType(e.target.value)}
                                         disabled={loading}
                                     />
-                                    <span>월별 보고서</span>
+                                    <span>{t('report:erp.monthly', '월별 보고서')}</span>
                                 </label>
                                 <label className="mg-v2-form-radio">
                                     <input
@@ -206,7 +206,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                         onChange={(e) => setReportType(e.target.value)}
                                         disabled={loading}
                                     />
-                                    <span>분기별 보고서</span>
+                                    <span>{t('report:erp.quarterly', '분기별 보고서')}</span>
                                 </label>
                                 <label className="mg-v2-form-radio">
                                     <input
@@ -216,13 +216,13 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                         onChange={(e) => setReportType(e.target.value)}
                                         disabled={loading}
                                     />
-                                    <span>연별 보고서</span>
+                                    <span>{t('report:erp.yearly', '연별 보고서')}</span>
                                 </label>
                             </div>
                         </div>
 
                         <div className="mg-v2-form-group">
-                            <label htmlFor="period" className="mg-v2-form-label">기간 선택</label>
+                            <label htmlFor="period" className="mg-v2-form-label">{t('report:erp.periodLabel', '기간 선택')}</label>
                             {reportType === 'monthly' && (
                                 <input
                                     type="month"
@@ -269,21 +269,21 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                         <div className="mg-v2-form-group">
                             <label htmlFor="branch" className="mg-v2-form-label">
                                 <Building size={20} className="mg-v2-form-label-icon" />
-                                지점 선택
+                                {t('report:erp.branchLabel', '지점 선택')}
                             </label>
                             {loadingBranches ? (
                                 <UnifiedLoading
                                     type="inline"
                                     size="small"
                                     centered={false}
-                                    text="지점 목록을 불러오는 중..."
+                                    text={t('statistics:performance.loadingBranches', '지점 목록을 불러오는 중...')}
                                 />
                             ) : (
                                 <CustomSelect
                                     value={branchCode}
                                     onChange={(val) => setBranchCode(val)}
                                     options={[
-                                        { value: '', label: '전체 지점' },
+                                        { value: '', label: t('statistics:filter.allBranches', '전체 지점') },
                                         ...branches.map(branch => ({
                                             value: branch.code,
                                             label: branch.name
@@ -318,7 +318,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 loading={loading}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
-                                보고서 생성
+                                {t('report:erp.generateBtn', '보고서 생성')}
                             </MGButton>
                         </div>
                     </div>
@@ -329,7 +329,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                             <div className="mg-v2-modal-footer mg-v2-justify-between">
                                 <h4 className="mg-v2-section-title">
                                     <FileBarChart size={20} className="mg-v2-section-title-icon" />
-                                    보고서 결과
+                                    {t('report:erp.resultTitle', '보고서 결과')}
                                 </h4>
                                 <MGButton
                                     variant="success"
@@ -338,35 +338,35 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     className={buildErpMgButtonClassName({ variant: 'success', size: 'md', loading: false })}
                                     onClick={handleDownloadReport}
                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                >
-                                    다운로드
+                                    >
+                                    {t('report:erp.downloadBtn', '다운로드')}
                                 </MGButton>
                             </div>
 
                             <div className="mg-v2-info-grid mg-v2-mt-md">
                                 <div className="mg-v2-info-item">
                                     <DollarSign size={20} className="mg-v2-icon-inline" />
-                                    <span className="mg-v2-info-label">총 수익</span>
+                                    <span className="mg-v2-info-label">{t('report:erp.totalRevenue', '총 수익')}</span>
                                     <span className="mg-v2-info-value mg-v2-color-success">
                                         <ErpSafeNumber value={reportData.summary?.totalRevenue} />
                                     </span>
                                 </div>
                                 <div className="mg-v2-info-item">
                                     <DollarSign size={20} className="mg-v2-icon-inline" />
-                                    <span className="mg-v2-info-label">총 지출</span>
+                                    <span className="mg-v2-info-label">{t('report:erp.totalExpenses', '총 지출')}</span>
                                     <span className="mg-v2-info-value mg-v2-color-danger">
                                         <ErpSafeNumber value={reportData.summary?.totalExpenses} />
                                     </span>
                                 </div>
                                 <div className="mg-v2-info-item">
                                     <TrendingUp size={20} className="mg-v2-icon-inline" />
-                                    <span className="mg-v2-info-label">순이익</span>
+                                    <span className="mg-v2-info-label">{t('report:erp.netProfit', '순이익')}</span>
                                     <span className="mg-v2-info-value mg-v2-color-primary">
                                         <ErpSafeNumber value={reportData.summary?.netProfit} />
                                     </span>
                                 </div>
                                 <div className="mg-v2-info-item">
-                                    <span className="mg-v2-info-label">거래 건수</span>
+                                    <span className="mg-v2-info-label">{t('report:erp.transactionCount', '거래 건수')}</span>
                                     <span className="mg-v2-info-value">
                                         <ErpSafeNumber
                                             value={reportData.summary?.transactionCount}
@@ -379,7 +379,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                             {/* 카테고리별 분석 */}
                             {reportData.categoryBreakdown && reportData.categoryBreakdown.length > 0 && (
                                 <div className="mg-v2-mt-lg">
-                                    <h5 className="mg-v2-section-title mg-v2-mb-md">카테고리별 분석</h5>
+                                    <h5 className="mg-v2-section-title mg-v2-mb-md">{t('report:erp.categoryBreakdown', '카테고리별 분석')}</h5>
                                     <div className="mg-v2-list-container">
                                         {reportData.categoryBreakdown.map((item, index) => (
                                             <div key={index} className="mg-v2-list-item">

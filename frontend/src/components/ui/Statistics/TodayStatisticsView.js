@@ -20,13 +20,13 @@ const TodayStatisticsView = ({
     onShowStatistics,
     onRefresh
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['statistics', 'common']);
     return (
         <div className="today-statistics">
             <div className="statistics-header">
                 <h3 className="statistics-title">
                     <FaChartLine className="title-icon" />
-                    오늘의 통계
+                    {t('statistics:today.title', '오늘의 통계')}
                 </h3>
                 <div className="statistics-actions">
                     <MGButton
@@ -39,12 +39,12 @@ const TodayStatisticsView = ({
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={onShowStatistics}
-                        title="전체 통계 보기"
+                        title={t('statistics:today.viewAll', '통계 보기')}
                         variant="outline"
                         preventDoubleClick={false}
                     >
                         <i className="bi bi-graph-up" />
-                        통계 보기
+                        {t('statistics:today.viewAll', '통계 보기')}
                     </MGButton>
                     <MGButton
                         type="button"
@@ -70,7 +70,7 @@ const TodayStatisticsView = ({
             <div className="statistics-grid">
                 <div className="stat-card total">
                     <div className="stat-number">{statistics.totalToday}</div>
-                    <div className="stat-label">총 상담</div>
+                    <div className="stat-label">{t('statistics:today.totalConsultations', '총 상담')}</div>
                 </div>
                 
                 <div className="stat-card completed">
@@ -91,7 +91,7 @@ const TodayStatisticsView = ({
             
             {lastUpdated && (
                 <div className="last-updated">
-                    마지막 업데이트: {lastUpdated.toLocaleTimeString('ko-KR')}
+                    {t('statistics:today.lastUpdated', '마지막 업데이트:')} {lastUpdated.toLocaleTimeString('ko-KR')}
                 </div>
             )}
         </div>

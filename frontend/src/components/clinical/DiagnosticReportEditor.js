@@ -6,6 +6,7 @@ import notificationManager from '../../utils/notification';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './DiagnosticReportEditor.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 진단 보고서 에디터 컴포넌트
@@ -15,6 +16,7 @@ import './DiagnosticReportEditor.css';
  * @param {number} props.consultationRecordId - 상담 기록 ID
  */
 const DiagnosticReportEditor = ({ consultationRecordId }) => {
+    const { t } = useTranslation(['report']);
     const [report, setReport] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -36,7 +38,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
             const data = await apiGet(CLINICAL_API.GET_REPORTS(consultationRecordId));
 
             if (!data) {
-                throw new Error('보고서 로드 실패');
+                throw new Error(t('report:diagnostic.loadFail', '보고서 로드 실패'));
             }
 
             // DIAGNOSTIC 타입 보고서 찾기
@@ -63,7 +65,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
             const data = await apiPost(CLINICAL_API.GENERATE_DIAGNOSTIC(consultationRecordId));
 
             if (!data || !data.success) {
-                throw new Error(data?.message || '진단 보고서 생성 실패');
+                throw new Error(data?.message || t('report:diagnostic.generateFail', '진단 보고서 생성 실패'));
             }
 
             setReport(data.report);
@@ -72,7 +74,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
 
         } catch (error) {
             console.error('❌ 진단 보고서 생성 실패:', error);
-            setError('진단 보고서 생성에 실패했습니다.');
+            setError(t('report:diagnostic.generateError', '진단 보고서 생성에 실패했습니다.'));
         } finally {
             setIsGenerating(false);
         }
@@ -89,17 +91,17 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
             const data = await apiPut(CLINICAL_API.UPDATE_REPORT(report.id), report);
 
             if (!data || !data.success) {
-                throw new Error(data?.message || '저장 실패');
+                throw new Error(data?.message || t('report:diagnostic.savingFail', '저장 실패'));
             }
 
             setReport(data.report);
 
-            setSaveMessage('✅ 저장되었습니다.');
+            setSaveMessage(t('report:diagnostic.saveSuccess', '✅ 저장되었습니다.'));
             setTimeout(() => setSaveMessage(''), 3000);
 
         } catch (error) {
             console.error('저장 실패:', error);
-            setSaveMessage('❌ 저장에 실패했습니다.');
+            setSaveMessage(t('report:diagnostic.saveFail', '❌ 저장에 실패했습니다.'));
         } finally {
             setIsSaving(false);
         }
@@ -110,7 +112,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
      */
     const handleApprove = async() => {
         const confirmed = window.confirm(
-            '이 진단 보고서를 최종 승인하시겠습니까?\n승인 후에는 공식 문서로 저장됩니다.'
+            t('report:diagnostic.approveConfirm', '이 진단 보고서를 최종 승인하시겠습니까?\n승인 후에는 공식 문서로 저장됩니다.')
         );
 
         if (!confirmed) return;
@@ -123,15 +125,15 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
             );
 
             if (!data || !data.success) {
-                throw new Error(data?.message || '승인 실패');
+                throw new Error(data?.message || t('report:diagnostic.approveFail', '승인에 실패했습니다.'));
             }
             setReport(data.report);
 
-            notificationManager.success('진단 보고서가 승인되었습니다.');
+            notificationManager.success(t('report:diagnostic.approveSuccess', '진단 보고서가 승인되었습니다.'));
 
         } catch (error) {
             console.error('승인 실패:', error);
-            notificationManager.error('승인에 실패했습니다.');
+            notificationManager.error(t('report:diagnostic.approveFail', '승인에 실패했습니다.'));
         }
     };
 
@@ -140,14 +142,14 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
      */
     const exportToPDF = () => {
         // TODO: PDF 생성 라이브러리 통합 (jsPDF 등)
-        notificationManager.info('PDF 내보내기 기능은 곧 추가됩니다.');
+        notificationManager.info(t('report:diagnostic.pdfComingSoon', 'PDF 내보내기 기능은 곧 추가됩니다.'));
     };
 
     if (isLoading) {
         return (
             <div className="diagnostic-report-editor loading">
                 <div className="spinner" />
-                <p>보고서를 불러오는 중...</p>
+                <p>{t('report:diagnostic.loading', '보고서를 불러오는 중...')}</p>
             </div>
         );
     }
@@ -155,7 +157,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
     return (
         <div className={CLINICAL_CSS.DIAGNOSTIC_REPORT_EDITOR}>
             <div className="editor-header">
-                <h3>📋 진단 보고서</h3>
+                <h3>📋 {t('report:diagnostic.title', '진단 보고서')}</h3>
                 <div className="header-actions">
                     {!report && (
                         <MGButton
@@ -171,7 +173,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             variant="primary"
                         >
-                            🤖 AI 보고서 생성
+                            🤖 {t('report:diagnostic.generateBtn', 'AI 보고서 생성')}
                         </MGButton>
                     )}
 
@@ -187,7 +189,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                             onClick={exportToPDF}
                             variant="secondary"
                         >
-                            📄 PDF 내보내기
+                            📄 {t('report:diagnostic.exportPdf', 'PDF 내보내기')}
                         </MGButton>
                     )}
                 </div>
@@ -204,8 +206,8 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
             {!report && !isGenerating && (
                 <div className="no-report-message">
                     <div className="icon">📋</div>
-                    <h4>진단 보고서가 없습니다</h4>
-                    <p>상담 기록을 기반으로 AI가 진단 보고서 초안을 생성합니다.</p>
+                    <h4>{t('report:diagnostic.noReport', '진단 보고서가 없습니다')}</h4>
+                    <p>{t('report:diagnostic.noReportDesc', '상담 기록을 기반으로 AI가 진단 보고서 초안을 생성합니다.')}</p>
                     <MGButton
                         className={buildErpMgButtonClassName({
                             variant: 'primary',
@@ -218,7 +220,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                         variant="primary"
                         size="large"
                     >
-                        🤖 진단 보고서 생성하기
+                        🤖 {t('report:diagnostic.generateBtnLarge', '진단 보고서 생성하기')}
                     </MGButton>
                 </div>
             )}
@@ -245,15 +247,15 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
 
                     {/* 진단 요약 */}
                     <div className="report-section">
-                        <h4>📊 진단 요약 (Diagnosis Summary)</h4>
+                        <h4>{t('report:diagnostic.sections.summary.title', '📊 진단 요약 (Diagnosis Summary)')}</h4>
                         <p className="section-guide">
-                            내담자의 주요 증상과 전반적인 상태를 간결하게 요약합니다.
+                            {t('report:diagnostic.sections.summary.guide', '내담자의 주요 증상과 전반적인 상태를 간결하게 요약합니다.')}
                         </p>
                         <textarea
                             className="report-textarea"
                             value={report.diagnosisSummary || ''}
                             onChange={(e) => setReport({ ...report, diagnosisSummary: e.target.value })}
-                            placeholder="진단 요약을 입력하세요..."
+                            placeholder={t('report:diagnostic.sections.summary.placeholder', '진단 요약을 입력하세요...')}
                             rows="6"
                             disabled={report.humanReviewed}
                         />
@@ -261,15 +263,15 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
 
                     {/* 진단적 인상 */}
                     <div className="report-section">
-                        <h4>🔍 진단적 인상 (Diagnostic Impressions)</h4>
+                        <h4>{t('report:diagnostic.sections.impressions.title', '🔍 진단적 인상 (Diagnostic Impressions)')}</h4>
                         <p className="section-guide">
-                            DSM-5/ICD-11 기준을 참고한 임상적 관찰 및 인상을 기록합니다.
+                            {t('report:diagnostic.sections.impressions.guide', 'DSM-5/ICD-11 기준을 참고한 임상적 관찰 및 인상을 기록합니다.')}
                         </p>
                         <textarea
                             className="report-textarea"
                             value={report.diagnosticImpressions || ''}
                             onChange={(e) => setReport({ ...report, diagnosticImpressions: e.target.value })}
-                            placeholder="진단적 인상을 입력하세요..."
+                            placeholder={t('report:diagnostic.sections.impressions.placeholder', '진단적 인상을 입력하세요...')}
                             rows="8"
                             disabled={report.humanReviewed}
                         />
@@ -277,15 +279,15 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
 
                     {/* 치료 권고사항 */}
                     <div className="report-section">
-                        <h4>💊 치료 권고사항 (Treatment Recommendations)</h4>
+                        <h4>{t('report:diagnostic.sections.recommendations.title', '💊 치료 권고사항 (Treatment Recommendations)')}</h4>
                         <p className="section-guide">
-                            근거 기반 치료 방법 및 권고사항을 제시합니다.
+                            {t('report:diagnostic.sections.recommendations.guide', '근거 기반 치료 방법 및 권고사항을 제시합니다.')}
                         </p>
                         <textarea
                             className="report-textarea"
                             value={report.treatmentRecommendations || ''}
                             onChange={(e) => setReport({ ...report, treatmentRecommendations: e.target.value })}
-                            placeholder="치료 권고사항을 입력하세요..."
+                            placeholder={t('report:diagnostic.sections.recommendations.placeholder', '치료 권고사항을 입력하세요...')}
                             rows="7"
                             disabled={report.humanReviewed}
                         />
@@ -314,7 +316,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 variant="secondary"
                             >
-                                💾 저장
+                                💾 {t('report:diagnostic.saveBtn', '저장')}
                             </MGButton>
 
                             <MGButton
@@ -328,18 +330,16 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                                 onClick={handleApprove}
                                 variant="success"
                             >
-                                ✅ 최종 승인
+                                ✅ {t('report:diagnostic.approveBtn', '최종 승인')}
                             </MGButton>
                         </div>
                     )}
 
                     {/* 주의사항 */}
                     <div className="report-disclaimer">
-                        <strong>⚠️ 주의사항:</strong>
+                        <strong>⚠️ {t('report:diagnostic.disclaimerLabel', '주의사항:')}</strong>
                         <p>
-                            이 보고서는 AI가 생성한 초안입니다. 반드시 전문가가 검토하고 수정한 후
-                            최종 승인해야 합니다. 법적 효력이나 의료적 결정을 위해서는
-                            전문가의 직접 평가가 필수입니다.
+                            {t('report:diagnostic.disclaimer', '이 보고서는 AI가 생성한 초안입니다. 반드시 전문가가 검토하고 수정한 후 최종 승인해야 합니다. 법적 효력이나 의료적 결정을 위해서는 전문가의 직접 평가가 필수입니다.')}
                         </p>
                     </div>
                 </div>

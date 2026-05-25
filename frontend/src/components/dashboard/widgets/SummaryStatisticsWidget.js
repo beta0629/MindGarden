@@ -16,6 +16,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import './Widget.css';
@@ -25,6 +26,7 @@ const isExternalViewMoreUrl = (url) =>
   typeof url === 'string' && /^https?:\/\//i.test(url);
 
 const SummaryStatisticsWidget = ({ widget, user }) => {
+  const { t } = useTranslation(['statistics']);
   const config = widget.config || {};
   const statistics = config.statistics || []; // 통계 항목 목록
   
@@ -105,12 +107,11 @@ const SummaryStatisticsWidget = ({ widget, user }) => {
               rel="noopener noreferrer"
               target="_blank"
             >
-              {/* 외부 링크만 앵커 유지 */}
-              자세히 보기 →
+              {t('statistics:widget.viewMore', '자세히 보기 →')}
             </a>
           ) : (
             <Link to={config.viewMoreUrl} className="mg-v2-link">
-              자세히 보기 →
+              {t('statistics:widget.viewMore', '자세히 보기 →')}
             </Link>
           )}
         </div>

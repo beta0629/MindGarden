@@ -25,6 +25,9 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import koCommon from '../locales/ko/common.json';
 import koAdmin from '../locales/ko/admin.json';
 import koError from '../locales/ko/error.json';
+import koSettings from '../locales/ko/settings.json';
+import koStatistics from '../locales/ko/statistics.json';
+import koReport from '../locales/ko/report.json';
 
 const SUPPORTED_LANGUAGES = ['ko'];
 const FALLBACK_LANGUAGE = 'ko';
@@ -39,13 +42,16 @@ i18n
       ko: {
         common: koCommon,
         admin: koAdmin,
-        error: koError
+        error: koError,
+        settings: koSettings,
+        statistics: koStatistics,
+        report: koReport
       }
     },
     supportedLngs: SUPPORTED_LANGUAGES,
     fallbackLng: FALLBACK_LANGUAGE,
     defaultNS: DEFAULT_NAMESPACE,
-    ns: ['common', 'admin', 'error'],
+    ns: ['common', 'admin', 'error', 'settings', 'statistics', 'report'],
     interpolation: {
       escapeValue: false
     },

@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
@@ -20,7 +21,7 @@ import './Widget.css';
 import SafeText from '../../common/SafeText';
 
 const StatisticsWidget = ({ widget, user }) => {
-  // 표준화된 위젯 훅 사용
+  const { t } = useTranslation(['statistics']);
   const {
     data,
     loading,
@@ -40,7 +41,7 @@ const StatisticsWidget = ({ widget, user }) => {
     if (isEmpty) {
       return (
         <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
-          표시할 통계가 없습니다.
+          {t('statistics:widget.noData', '표시할 통계가 없습니다.')}
         </div>
       );
     }

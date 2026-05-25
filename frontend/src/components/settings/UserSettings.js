@@ -21,7 +21,7 @@ import './UserSettings.css';
 import { useTranslation } from 'react-i18next';
 
 const UserSettings = ({ user, onSettingsUpdate }) => {
-    const { t } = useTranslation();const {
+    const { t } = useTranslation(['settings', 'common']); const {
     currentTheme,
     changeToTheme,
     applyCustomTheme,
@@ -45,19 +45,16 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
         smsNotifications: user.smsNotifications ?? false,
         marketingEmails: user.marketingEmails ?? false });}}, [user]);
 
-  // 테마 변경 핸들러
   const handleThemeChange = async(newTheme) => {try {const result = await changeToTheme(newTheme.type);
       if (result.success) {onSettingsUpdate?.({ theme: newTheme });
-        setShowThemeSelector(false);}} catch (err) {console.error('테마 변경 실패:', err);}};
+        setShowThemeSelector(false);}} catch (err) {console.error(t('settings:theme.change'), err);}};
 
-  // 커스텀 테마 적용 핸들러
   const handleCustomThemeApply = async(baseThemeType, customColors) => {try {const result = await applyCustomTheme(baseThemeType, customColors);
       if (result.success) {onSettingsUpdate?.({ theme: result.theme });
-        setShowThemeSelector(false);}} catch (err) {console.error('커스텀 테마 적용 실패:', err);}};
+        setShowThemeSelector(false);}} catch (err) {console.error(t('settings:status.saveFail'), err);}};
 
-  // 테마 초기화 핸들러
   const handleThemeReset = async() => {try {const result = await resetToDefault();
-      if (result.success) {onSettingsUpdate?.({ theme: result.theme });}} catch (err) {console.error('테마 초기화 실패:', err);}};
+      if (result.success) {onSettingsUpdate?.({ theme: result.theme });}} catch (err) {console.error(t('settings:theme.resetToDefault'), err);}};
 
   // 알림 설정 변경 핸들러
   const handleNotificationChange = (setting, value) => {const newSettings = { ...notificationSettings, [setting]: value };
@@ -99,7 +96,7 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
                   onClick={() => setShowThemeSelector(true)}
                 >
                   <Icon name="PALETTE" size="LG" color="PRIMARY" />
-                  테마 변경
+                  {t('settings:theme.change', '테마 변경')}
                 </MGButton>
                 <MGButton
                   variant="outline"
@@ -113,7 +110,7 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
                   loading={isLoading}
                 >
                   <Icon name="REFRESH_CW" size="LG" color="PRIMARY" />
-                  기본값으로 초기화
+                  {t('settings:theme.resetToDefault', '기본값으로 초기화')}
                 </MGButton>
               </div>
             </div>
@@ -122,7 +119,7 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
                 <Card variant="default">
                   <CardHeader>
                     <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-items-center mg-v2-v2-v2-justify-between">
-                      <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-text-primary">테마 선택</h3>
+                      <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-text-primary">{t('settings:theme.select', '테마 선택')}</h3>
                       <MGButton
                         variant="outline"
                         size="small"
@@ -151,13 +148,13 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
         return (<div className="mg-v2-v2-v2-notification-settings">
             <Card variant="default">
               <CardContent>
-                <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-text-primary mg-v2-v2-v2-mb-lg">알림 설정</h3>
+                <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-text-primary mg-v2-v2-v2-mb-lg">{t('settings:notification.title', '알림 설정')}</h3>
                 
                 <div className="mg-v2-v2-v2-setting-item">
                   <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-items-center mg-v2-v2-v2-justify-between">
                     <div>
-                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">이메일 알림</h4>
-                      <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">중요한 업데이트와 알림을 이메일로 받습니다</p>
+                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">{t('settings:notification.email.label', '이메일 알림')}</h4>
+                      <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">{t('settings:notification.email.description', '중요한 업데이트와 알림을 이메일로 받습니다')}</p>
                     </div>
                     <label className="mg-v2-v2-v2-toggle">
                       <input
@@ -173,8 +170,8 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
                 <div className="mg-v2-v2-v2-setting-item">
                   <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-items-center mg-v2-v2-v2-justify-between">
                     <div>
-                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">푸시 알림</h4>
-                      <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">브라우저 푸시 알림을 받습니다</p>
+                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">{t('settings:notification.push.label', '푸시 알림')}</h4>
+                      <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">{t('settings:notification.push.description', '브라우저 푸시 알림을 받습니다')}</p>
                     </div>
                     <label className="mg-v2-v2-v2-toggle">
                       <input
@@ -190,8 +187,8 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
                 <div className="mg-v2-v2-v2-setting-item">
                   <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-items-center mg-v2-v2-v2-justify-between">
                     <div>
-                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">SMS 알림</h4>
-                      <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">긴급한 알림을 SMS로 받습니다</p>
+                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">{t('settings:notification.sms.label', 'SMS 알림')}</h4>
+                      <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">{t('settings:notification.sms.description', '긴급한 알림을 SMS로 받습니다')}</p>
                     </div>
                     <label className="mg-v2-v2-v2-toggle">
                       <input
@@ -207,8 +204,8 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
                 <div className="mg-v2-v2-v2-setting-item">
                   <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-items-center mg-v2-v2-v2-justify-between">
                     <div>
-                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">마케팅 이메일</h4>
-                      <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">프로모션과 새로운 기능 소식을 받습니다</p>
+                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">{t('settings:notification.marketing.label', '마케팅 이메일')}</h4>
+                      <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">{t('settings:notification.marketing.description', '프로모션과 새로운 기능 소식을 받습니다')}</p>
                     </div>
                     <label className="mg-v2-v2-v2-toggle">
                       <input
@@ -228,13 +225,13 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
         return (<div className="mg-v2-v2-v2-account-settings">
             <Card variant="default">
               <CardContent>
-                <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-text-primary mg-v2-v2-v2-mb-lg">계정 설정</h3>
+                <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-text-primary mg-v2-v2-v2-mb-lg">{t('settings:account.title', '계정 설정')}</h3>
                 
                 <div className="mg-v2-v2-v2-setting-item">
                   <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-items-center mg-v2-v2-v2-gap-md">
                     <Icon name="USER" size="MD" color="PRIMARY" />
                     <div>
-                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">사용자 ID</h4>
+                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">{t('settings:account.userId', '사용자 ID')}</h4>
                       <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">{user?.userId}</p>
                     </div>
                   </div>
@@ -254,7 +251,7 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
                   <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-items-center mg-v2-v2-v2-gap-md">
                     <Icon name="SHIELD" size="MD" color="PRIMARY" />
                     <div>
-                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">역할</h4>
+                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">{t('settings:account.role', '역할')}</h4>
                       <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">{user?.role}</p>
                     </div>
                   </div>
@@ -264,7 +261,7 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
                   <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-items-center mg-v2-v2-v2-gap-md">
                     <Icon name="CALENDAR" size="MD" color="PRIMARY" />
                     <div>
-                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">가입일</h4>
+                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">{t('settings:account.joinDate', '가입일')}</h4>
                       <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">
                         {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                       </p>
@@ -280,7 +277,7 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
 
   if (!user) {return (<div className="mg-v2-v2-v2-loading">
         <Icon name="LOADER" size="LG" color="PRIMARY" />
-        <p className="mg-v2-v2-v2-text-muted">사용자 정보를 불러오는 중...</p>
+        <p className="mg-v2-v2-v2-text-muted">{t('settings:status.loading', '사용자 정보를 불러오는 중...')}</p>
       </div>);}
 
   return (<SimpleLayout>
@@ -295,11 +292,11 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
               onClick={() => navigate(-1)}
             >
               <Icon name="ARROW_LEFT" size="SM" />
-              뒤로가기
+              {t('settings:action.back', '뒤로가기')}
             </MGButton>
           </div>
-          <h1 className="mg-v2-v2-v2-h1 mg-v2-v2-v2-text-primary">설정</h1>
-          <p className="mg-v2-v2-v2-text-muted">계정과 환경 설정을 관리하세요</p>
+          <h1 className="mg-v2-v2-v2-h1 mg-v2-v2-v2-text-primary">{t('settings:page.title', '설정')}</h1>
+          <p className="mg-v2-v2-v2-text-muted">{t('settings:page.description', '계정과 환경 설정을 관리하세요')}</p>
         </div>
 
         <div className="mg-v2-v2-v2-settings-layout">
@@ -322,7 +319,7 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
                     preventDoubleClick={false}
                   >
                     <Icon name="PALETTE" size="SM" color={activeTab === 'theme' ? 'PRIMARY' : 'MUTED'} />
-                    테마 설정
+                    {t('settings:nav.theme', '테마 설정')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -338,7 +335,7 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
                     preventDoubleClick={false}
                   >
                     <Icon name="BELL" size="SM" color={activeTab === 'notifications' ? 'PRIMARY' : 'MUTED'} />
-                    알림 설정
+                    {t('settings:nav.notifications', '알림 설정')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -354,7 +351,7 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
                     preventDoubleClick={false}
                   >
                     <Icon name="USER" size="SM" color={activeTab === 'account' ? 'PRIMARY' : 'MUTED'} />
-                    계정 정보
+                    {t('settings:nav.account', '계정 정보')}
                   </MGButton>
                 </nav>
               </CardContent>

@@ -1,0 +1,112 @@
+{
+  "dashboard": {
+    "title": "성과 지표 대시보드"
+  },
+  "filter": {
+    "title": "필터 설정",
+    "startDate": "시작일",
+    "endDate": "종료일",
+    "branch": "지점",
+    "allBranches": "전체 지점",
+    "query": "조회",
+    "recalculate": "재계산"
+  },
+  "metrics": {
+    "title": "주요 성과 지표",
+    "totalConsultants": "총 상담사 수",
+    "totalConsultations": "총 상담 건수",
+    "totalRevenue": "총 매출",
+    "avgSatisfaction": "평균 만족도",
+    "loadFail": "성과 지표 조회에 실패했습니다.",
+    "loadError": "성과 지표 조회 중 오류가 발생했습니다.",
+    "recalculated": "성과 지표가 재계산되었습니다.",
+    "recalculateFail": "성과 지표 재계산에 실패했습니다.",
+    "recalculateError": "성과 지표 재계산 중 오류가 발생했습니다.",
+    "noData": "성과 지표 데이터가 없습니다.",
+    "loadData": "데이터 로드"
+  },
+  "performance": {
+    "title": "상담사별 성과",
+    "daily": "일별 성과 추이",
+    "noData": "데이터가 없습니다.",
+    "loadingBranches": "지점 목록을 불러오는 중..."
+  },
+  "rating": {
+    "title": "상담사 평가 통계",
+    "subtitle": "전체 상담사 평가 현황 및 만족도 지표",
+    "totalRatings": "총 평가 수",
+    "avgScore": "평균 점수",
+    "distribution": "점수 분포",
+    "noData": "아직 평가 데이터가 없습니다",
+    "noDataHint": "상담사들이 평가를 받으면 통계가 표시됩니다",
+    "ranking": "상담사 랭킹",
+    "recentTrends": "최근 평가 동향",
+    "loadingText": "평가 통계를 불러오는 중..."
+  },
+  "completion": {
+    "title": "상담사별 상담 완료 건수",
+    "totalConsultants": "총 상담사",
+    "completedCount": "완료 건수",
+    "avgCount": "평균 건수",
+    "noData": "상담 완료 건수 데이터가 없습니다",
+    "noDataHint": "상담사들이 상담을 완료하면 여기에 통계가 표시됩니다.",
+    "loadingText": "상담 완료 건수 통계를 불러오는 중...",
+    "period": "기간:"
+  },
+  "today": {
+    "title": "오늘의 통계",
+    "totalConsultations": "총 상담",
+    "viewAll": "통계 보기",
+    "lastUpdated": "마지막 업데이트:"
+  },
+  "widget": {
+    "noData": "표시할 통계가 없습니다.",
+    "viewMore": "자세히 보기 →"
+  },
+  "income": {
+    "totalSessions": "총 상담 건수",
+    "totalIncome": "총 수입",
+    "avgRating": "평균 평점",
+    "chartTitle": "월별 수입 추이",
+    "detailTitle": "상세 내역",
+    "noData": "이번 달 상담 내역이 없습니다",
+    "loadFail": "수입 리포트 로드 실패",
+    "prevMonth": "이전 달",
+    "nextMonth": "다음 달"
+  },
+  "branch": {
+    "loadFail": "지점 목록 로드 실패"
+  },
+  "chart": {
+    "loading": "차트를 불러오는 중...",
+    "noData": "표시할 데이터가 없습니다",
+    "error": "차트 로드에 실패했습니다",
+    "zoomIn": "확대",
+    "zoomOut": "축소",
+    "reset": "초기화"
+  },
+  "export": {
+    "title": "내보내기",
+    "csv": "CSV 내보내기",
+    "pdf": "PDF 내보내기",
+    "loading": "내보내는 중...",
+    "success": "내보내기가 완료되었습니다.",
+    "fail": "내보내기에 실패했습니다."
+  },
+  "common": {
+    "total": "합계",
+    "average": "평균",
+    "max": "최대",
+    "min": "최소",
+    "count": "건수",
+    "rate": "비율"
+  },
+  "period": {
+    "label": "기간",
+    "daily": "일별",
+    "weekly": "주별",
+    "monthly": "월별",
+    "quarterly": "분기별",
+    "yearly": "연별"
+  }
+}

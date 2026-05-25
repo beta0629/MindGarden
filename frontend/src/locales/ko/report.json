@@ -1,0 +1,145 @@
+{
+  "consultation": {
+    "title": "상담 리포트",
+    "description": "상담 현황을 분석한 리포트를 확인할 수 있습니다",
+    "periodLabel": "기간",
+    "selectPeriod": "기간을 선택하세요",
+    "yearLabel": "년도",
+    "monthLabel": "월",
+    "back": "뒤로",
+    "noData": "상담 데이터가 없습니다",
+    "noDataHint": "새로운 상담을 예약해보세요",
+    "loading": "로딩중...",
+    "loadFail": "상담 리포트를 불러오는데 실패했습니다.",
+    "periodTotal": "이 기간 동안 총 {{count}}건의 상담이 있었습니다.",
+    "completionRateInfo": "완료율은 {{rate}}%입니다.",
+    "unknownClient": "알 수 없음"
+  },
+  "summary": {
+    "totalConsultations": "총 상담 수",
+    "completed": "완료된 상담",
+    "scheduled": "예정된 상담",
+    "completionRate": "완료율",
+    "period": "기간:"
+  },
+  "byConsultant": {
+    "title": "상담사별 상담 현황",
+    "totalLabel": "총 상담",
+    "scheduledLabel": "예정"
+  },
+  "byClient": {
+    "title": "내담자별 상담 현황",
+    "totalLabel": "총 상담",
+    "scheduledLabel": "예정"
+  },
+  "erp": {
+    "title": "운영 리포트",
+    "settingsTitle": "보고서 설정",
+    "typeLabel": "보고서 유형",
+    "monthly": "월별 보고서",
+    "quarterly": "분기별 보고서",
+    "yearly": "연별 보고서",
+    "periodLabel": "기간 선택",
+    "branchLabel": "지점 선택",
+    "generateBtn": "보고서 생성",
+    "resultTitle": "보고서 결과",
+    "downloadBtn": "다운로드",
+    "totalRevenue": "총 수익",
+    "totalExpenses": "총 지출",
+    "netProfit": "순이익",
+    "transactionCount": "거래 건수",
+    "categoryBreakdown": "카테고리별 분석",
+    "noPeriod": "기간을 선택해주세요.",
+    "generateSuccess": "보고서가 생성되었습니다.",
+    "generateFail": "보고서 생성에 실패했습니다.",
+    "generateError": "보고서 생성 중 오류가 발생했습니다.",
+    "downloadSuccess": "보고서가 다운로드되었습니다.",
+    "downloadFail": "다운로드에 실패했습니다.",
+    "downloadError": "다운로드 중 오류가 발생했습니다.",
+    "noDownload": "다운로드할 보고서가 없습니다.",
+    "branchLoadFail": "지점 목록 로드 실패"
+  },
+  "diagnostic": {
+    "title": "진단 보고서",
+    "loading": "보고서를 불러오는 중...",
+    "noReport": "진단 보고서가 없습니다",
+    "noReportDesc": "상담 기록을 기반으로 AI가 진단 보고서 초안을 생성합니다.",
+    "generateBtn": "AI 보고서 생성",
+    "generateBtnLarge": "진단 보고서 생성하기",
+    "saveBtn": "저장",
+    "approveBtn": "최종 승인",
+    "exportPdf": "PDF 내보내기",
+    "pdfComingSoon": "PDF 내보내기 기능은 곧 추가됩니다.",
+    "saveSuccess": "✅ 저장되었습니다.",
+    "saveFail": "❌ 저장에 실패했습니다.",
+    "loadFail": "보고서 로드 실패",
+    "generateFail": "진단 보고서 생성 실패",
+    "generateError": "진단 보고서 생성에 실패했습니다.",
+    "savingFail": "저장 실패",
+    "approveFail": "승인에 실패했습니다.",
+    "approveSuccess": "진단 보고서가 승인되었습니다.",
+    "approveConfirm": "이 진단 보고서를 최종 승인하시겠습니까?\n승인 후에는 공식 문서로 저장됩니다.",
+    "disclaimer": "이 보고서는 AI가 생성한 초안입니다. 반드시 전문가가 검토하고 수정한 후 최종 승인해야 합니다. 법적 효력이나 의료적 결정을 위해서는 전문가의 직접 평가가 필수입니다.",
+    "disclaimerLabel": "주의사항:",
+    "reviewed": "검토 완료",
+    "generationTimeLabel": "생성 시간:",
+    "sections": {
+      "summary": {
+        "title": "📊 진단 요약 (Diagnosis Summary)",
+        "guide": "내담자의 주요 증상과 전반적인 상태를 간결하게 요약합니다.",
+        "placeholder": "진단 요약을 입력하세요..."
+      },
+      "impressions": {
+        "title": "🔍 진단적 인상 (Diagnostic Impressions)",
+        "guide": "DSM-5/ICD-11 기준을 참고한 임상적 관찰 및 인상을 기록합니다.",
+        "placeholder": "진단적 인상을 입력하세요..."
+      },
+      "recommendations": {
+        "title": "💊 치료 권고사항 (Treatment Recommendations)",
+        "guide": "근거 기반 치료 방법 및 권고사항을 제시합니다.",
+        "placeholder": "치료 권고사항을 입력하세요..."
+      }
+    }
+  },
+  "income": {
+    "totalSessions": "총 상담 건수",
+    "totalIncome": "총 수입",
+    "avgRating": "평균 평점",
+    "chartTitle": "월별 수입 추이",
+    "detailTitle": "상세 내역",
+    "noData": "이번 달 상담 내역이 없습니다",
+    "loadFail": "수입 리포트 로드 실패"
+  },
+  "action": {
+    "download": "다운로드",
+    "generate": "생성",
+    "approve": "승인",
+    "share": "공유",
+    "export": "내보내기",
+    "print": "인쇄"
+  },
+  "filter": {
+    "all": "전체",
+    "period": "기간",
+    "branch": "지점",
+    "consultant": "상담사",
+    "type": "유형"
+  },
+  "status": {
+    "generating": "보고서를 생성하는 중...",
+    "approving": "승인 처리 중...",
+    "approved": "승인 완료",
+    "error": "오류가 발생했습니다"
+  },
+  "psychAi": {
+    "loading": "리포트를 불러오는 중...",
+    "skippedFallback": "AI 해석을 적용하지 않았습니다.",
+    "failedNetwork": "AI 분석이 완료되지 않았습니다. API 설정 또는 네트워크를 확인해 주세요.",
+    "failedValidationIntro": "AI 결과가 검증 기준을 통과하지 못했습니다.",
+    "legacyHeadingHint": "이 리포트는 최신 템플릿(요약·타당도·척도·권고 등)과 다를 수 있습니다. 최신 형식으로 다시 만들려면 아래를 눌러 주세요.",
+    "missingSectionsHint": "필수 섹션(헤딩)이 부족합니다. 입력 지표와 파일이 정상인지 확인한 뒤 재생성해 주세요.",
+    "emptyKeyHighlightsHint": "주요 소견·근거 하이라이트가 비어 있거나 구 형식입니다. 필요하면 재생성해 주세요.",
+    "regenerateButton": "리포트 재생성",
+    "regenerateDisabledTitle": "다른 문서 리포트 생성 중입니다."
+  }
+}

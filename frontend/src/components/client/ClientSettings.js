@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
@@ -16,6 +17,7 @@ import './ClientSettings.css';
 const CLIENT_SETTINGS_TITLE_ID = 'client-settings-page-title';
 
 const ClientSettings = () => {
+  const { t } = useTranslation(['settings']);
   const { user } = useSession();
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState({
@@ -40,7 +42,7 @@ const ClientSettings = () => {
         setSettings(prev => ({ ...prev, ...response.data }));
       }
     } catch (error) {
-      console.error('설정 로드 실패:', error);
+      console.error(t('settings:status.loadFail', '설정 로드 실패'), error);
     } finally {
       setLoading(false);
     }
@@ -49,10 +51,10 @@ const ClientSettings = () => {
   const pageShell = (body) => (
     <div className="mg-v2-ad-b0kla" data-testid="client-settings-page">
       <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="내담자 설정">
+        <ContentArea ariaLabel={t('settings:client.pageArea', '내담자 설정')}>
           <ContentHeader
-            title="계정 설정"
-            subtitle="개인정보 및 알림 설정을 관리할 수 있습니다."
+            title={t('settings:client.title', '계정 설정')}
+            subtitle={t('settings:client.subtitle', '개인정보 및 알림 설정을 관리할 수 있습니다.')}
             titleId={CLIENT_SETTINGS_TITLE_ID}
           />
           <main aria-labelledby={CLIENT_SETTINGS_TITLE_ID}>
@@ -70,23 +72,23 @@ const ClientSettings = () => {
       
       if (response.success) {
         setSettings(newSettings);
-        setMessage('설정이 저장되었습니다.');
+        setMessage(t('settings:status.saveSuccess', '설정이 저장되었습니다.'));
         setTimeout(() => setMessage(null), 3000);
       } else {
-        notificationManager.error('설정 저장 실패', response.message || '설정을 저장할 수 없습니다.');
+        notificationManager.error(t('settings:status.saveFail', '설정 저장 실패'), response.message || t('settings:status.cannotSave', '설정을 저장할 수 없습니다.'));
       }
     } catch (error) {
-      console.error('설정 저장 실패:', error);
-      notificationManager.error('오류', '설정 저장 중 오류가 발생했습니다.');
+      console.error(t('settings:status.saveFail', '설정 저장 실패'), error);
+      notificationManager.error(t('common.status.error', '오류'), t('settings:status.saveError', '설정 저장 중 오류가 발생했습니다.'));
     }
   };
 
   if (loading) {
     return (
-      <AdminCommonLayout title="설정" className="mg-v2-dashboard-layout">
+      <AdminCommonLayout title={t('settings:page.title', '설정')} className="mg-v2-dashboard-layout">
         {pageShell(
           <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text="로딩중..." />
+            <UnifiedLoading type="inline" text={t('common.status.loading', '로딩중...')} />
           </div>
         )}
       </AdminCommonLayout>
@@ -94,7 +96,7 @@ const ClientSettings = () => {
   }
 
   return (
-    <AdminCommonLayout title="설정" className="mg-v2-dashboard-layout">
+    <AdminCommonLayout title={t('settings:page.title', '설정')} className="mg-v2-dashboard-layout">
       {pageShell(
       <div className="client-settings-container">
         <div className="client-settings-card">
@@ -109,14 +111,14 @@ const ClientSettings = () => {
             <div className="client-settings-section">
               <h3 className="client-settings-section-title">
                 <i className="bi bi-bell" />
-                알림 설정
+                {t('settings:notification.title', '알림 설정')}
               </h3>
               
               <div className="client-settings-options">
                 <div className="client-settings-option">
                   <div>
-                    <h4>전체 알림</h4>
-                    <p>모든 알림을 받습니다</p>
+                    <h4>{t('settings:notification.all.label', '전체 알림')}</h4>
+                    <p>{t('settings:notification.all.description', '모든 알림을 받습니다')}</p>
                   </div>
                   <div className="form-check form-switch">
                     <input
@@ -130,8 +132,8 @@ const ClientSettings = () => {
 
                 <div className="client-settings-option">
                   <div>
-                    <h4>이메일 알림</h4>
-                    <p>이메일로 알림을 받습니다</p>
+                    <h4>{t('settings:notification.email.label', '이메일 알림')}</h4>
+                    <p>{t('settings:notification.email.descriptionShort', '이메일로 알림을 받습니다')}</p>
                   </div>
                   <div className="form-check form-switch">
                     <input
@@ -145,8 +147,8 @@ const ClientSettings = () => {
 
                 <div className="client-settings-option">
                   <div>
-                    <h4>SMS 알림</h4>
-                    <p>SMS로 알림을 받습니다</p>
+                    <h4>{t('settings:notification.sms.label', 'SMS 알림')}</h4>
+                    <p>{t('settings:notification.sms.descriptionShort', 'SMS로 알림을 받습니다')}</p>
                   </div>
                   <div className="form-check form-switch">
                     <input
@@ -164,14 +166,14 @@ const ClientSettings = () => {
             <div className="client-settings-section">
               <h3 className="client-settings-section-title">
                 <i className="bi bi-shield-check" />
-                프라이버시
+                {t('settings:privacy.title', '프라이버시')}
               </h3>
               
               <div className="client-settings-options">
                 <div className="client-settings-option">
                   <div>
-                    <h4>프라이버시 모드</h4>
-                    <p>개인정보를 더 안전하게 보호합니다</p>
+                    <h4>{t('settings:privacy.mode.label', '프라이버시 모드')}</h4>
+                    <p>{t('settings:privacy.mode.description', '개인정보를 더 안전하게 보호합니다')}</p>
                   </div>
                   <div className="form-check form-switch">
                     <input
@@ -184,15 +186,15 @@ const ClientSettings = () => {
                 </div>
 
                 <div className="client-settings-option">
-                  <label>동시 상담 제한</label>
+                  <label>{t('settings:session.concurrentLimit', '동시 상담 제한')}</label>
                   <select
                     className="client-settings-select"
                     value={settings.maxConcurrentSessions}
                     onChange={(e) => handleSettingChange('maxConcurrentSessions', parseInt(e.target.value))}
                   >
-                    <option value={1}>1개</option>
-                    <option value={2}>2개</option>
-                    <option value={3}>3개</option>
+                    <option value={1}>{t('settings:option.sessionCount1', '1개')}</option>
+                    <option value={2}>{t('settings:option.sessionCount2', '2개')}</option>
+                    <option value={3}>{t('settings:option.sessionCount3', '3개')}</option>
                   </select>
                 </div>
               </div>
@@ -203,10 +205,10 @@ const ClientSettings = () => {
               <MGButton
                 variant="primary"
                 className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} client-settings-save-btn`}
-                onClick={() => setMessage('설정이 저장되었습니다.')}
+                onClick={() => setMessage(t('settings:status.saveSuccess', '설정이 저장되었습니다.'))}
                 preventDoubleClick={false}
               >
-                설정 저장
+                {t('settings:action.save', '설정 저장')}
               </MGButton>
             </div>
           </div>

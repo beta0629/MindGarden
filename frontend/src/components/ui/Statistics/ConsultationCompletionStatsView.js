@@ -23,7 +23,7 @@ const ConsultationCompletionStatsView = ({
     convertGradeToKorean,
     convertSpecialtyToKorean
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['statistics', 'common']);
     const getGradeLabel = (grade) =>
       grade ? convertGradeToKorean(grade) : null;
     const getSpecializationLabel = (specialization) =>
@@ -33,7 +33,7 @@ const ConsultationCompletionStatsView = ({
         return (
             <div className="mg-v2-loading-container">
                 <div className="mg-v2-spinner" />
-                <p>상담 완료 건수 통계를 불러오는 중...</p>
+                <p>{t('statistics:completion.loadingText', '상담 완료 건수 통계를 불러오는 중...')}</p>
             </div>
         );
     }
@@ -65,11 +65,11 @@ const ConsultationCompletionStatsView = ({
             <div className="mg-v2-card-header">
                 <div className="mg-v2-flex mg-justify-between mg-align-center mg-mb-md">
                     <h3 className="mg-v2-h3 mg-mb-0">
-                        상담사별 상담 완료 건수
+                        {t('statistics:completion.title', '상담사별 상담 완료 건수')}
                     </h3>
                     <div className="mg-v2-flex mg-align-center mg-gap-sm">
-                        <label className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary mg-font-medium">
-                            기간:
+                            <label className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary mg-font-medium">
+                            {t('statistics:completion.period', '기간:')}
                         </label>
                         <select
                             className="mg-v2-select mg-select-sm"
@@ -96,7 +96,7 @@ const ConsultationCompletionStatsView = ({
                             {statistics.length}
                         </div>
                         <div className="mg-v2-stat-label">
-                            총 상담사
+                            {t('statistics:completion.totalConsultants', '총 상담사')}
                         </div>
                     </div>
                     
@@ -108,7 +108,7 @@ const ConsultationCompletionStatsView = ({
                             {statistics.reduce((sum, stat) => sum + stat.completedCount, 0)}
                         </div>
                         <div className="mg-v2-stat-label">
-                            완료 건수
+                            {t('statistics:completion.completedCount', '완료 건수')}
                         </div>
                     </div>
                     
@@ -123,7 +123,7 @@ const ConsultationCompletionStatsView = ({
                             }
                         </div>
                         <div className="mg-v2-stat-label">
-                            평균 건수
+                            {t('statistics:completion.avgCount', '평균 건수')}
                         </div>
                     </div>
                 </div>
@@ -152,10 +152,10 @@ const ConsultationCompletionStatsView = ({
                         📊
                     </div>
                     <h3 className="mg-v2-empty-title">
-                        상담 완료 건수 데이터가 없습니다
+                        {t('statistics:completion.noData', '상담 완료 건수 데이터가 없습니다')}
                     </h3>
                     <p className="mg-v2-empty-description">
-                        상담사들이 상담을 완료하면 여기에 통계가 표시됩니다.
+                        {t('statistics:completion.noDataHint', '상담사들이 상담을 완료하면 여기에 통계가 표시됩니다.')}
                     </p>
                 </div>
             )}

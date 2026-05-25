@@ -1,4 +1,5 @@
 import { Star, Users, TrendingUp, Award } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import SafeText from '../../common/SafeText';
 
 /**
@@ -11,12 +12,13 @@ import SafeText from '../../common/SafeText';
  * - props로 데이터를 받음
  */
 const ConsultantRatingStatisticsView = ({ statistics, loading }) => {
+    const { t } = useTranslation(['statistics']);
     if (loading) {
         return (
             <div className="consultant-rating-statistics">
                 <div className="mg-v2-loading-container">
                     <div className="mg-v2-spinner" />
-                    <p>평가 통계를 불러오는 중...</p>
+                    <p>{t('statistics:rating.loadingText', '평가 통계를 불러오는 중...')}</p>
                 </div>
             </div>
         );
@@ -28,10 +30,10 @@ const ConsultantRatingStatisticsView = ({ statistics, loading }) => {
             <div className="rating-header">
                 <h3 className="rating-title">
                     <Star className="rating-icon" />
-                    상담사 평가 통계
+                    {t('statistics:rating.title', '상담사 평가 통계')}
                 </h3>
                 <p className="rating-subtitle">
-                    전체 상담사 평가 현황 및 만족도 지표
+                    {t('statistics:rating.subtitle', '전체 상담사 평가 현황 및 만족도 지표')}
                 </p>
             </div>
 
@@ -43,7 +45,7 @@ const ConsultantRatingStatisticsView = ({ statistics, loading }) => {
                     </div>
                     <div className="rating-stat-content">
                         <div className="rating-stat-value">{statistics.totalRatings}</div>
-                        <div className="rating-stat-label">총 평가 수</div>
+                        <div className="rating-stat-label">{t('statistics:rating.totalRatings', '총 평가 수')}</div>
                     </div>
                 </div>
                 
@@ -53,7 +55,7 @@ const ConsultantRatingStatisticsView = ({ statistics, loading }) => {
                     </div>
                     <div className="rating-stat-content">
                         <div className="rating-stat-value">{statistics.averageScore ? statistics.averageScore.toFixed(1) : '0.0'}</div>
-                        <div className="rating-stat-label">평균 점수</div>
+                        <div className="rating-stat-label">{t('statistics:rating.avgScore', '평균 점수')}</div>
                     </div>
                 </div>
                 
@@ -67,7 +69,7 @@ const ConsultantRatingStatisticsView = ({ statistics, loading }) => {
                                 ? statistics.recentTrends.reduce((sum, trend) => sum + (trend.count || 0), 0)
                                 : 0}
                         </div>
-                        <div className="rating-stat-label">최근 평가 (7일)</div>
+                        <div className="rating-stat-label">{t('statistics:rating.recentTrends', '최근 평가 동향')}</div>
                     </div>
                 </div>
                 
@@ -77,7 +79,7 @@ const ConsultantRatingStatisticsView = ({ statistics, loading }) => {
                     </div>
                     <div className="rating-stat-content">
                         <div className="rating-stat-value">{statistics.topConsultants ? statistics.topConsultants.length : 0}</div>
-                        <div className="rating-stat-label">우수 상담사</div>
+                        <div className="rating-stat-label">{t('statistics:rating.ranking', '상담사 랭킹')}</div>
                     </div>
                 </div>
             </div>
@@ -87,7 +89,7 @@ const ConsultantRatingStatisticsView = ({ statistics, loading }) => {
                 <div className="rating-section">
                     <h4 className="section-title">
                         <Award className="section-icon" />
-                        상담사 랭킹
+                        {t('statistics:rating.ranking', '상담사 랭킹')}
                     </h4>
                     <div className="consultants-ranking">
                         {statistics.topConsultants.map((consultant, index) => (
@@ -120,7 +122,7 @@ const ConsultantRatingStatisticsView = ({ statistics, loading }) => {
                 <div className="rating-section">
                     <h4 className="section-title">
                         <TrendingUp className="section-icon" />
-                        최근 평가 동향
+                        {t('statistics:rating.recentTrends', '최근 평가 동향')}
                     </h4>
                     <div className="trends-list">
                         {statistics.recentTrends.map((trend, index) => (
@@ -146,10 +148,10 @@ const ConsultantRatingStatisticsView = ({ statistics, loading }) => {
                         <Star size={48} />
                     </div>
                     <div className="mg-v2-empty-state__text">
-                        아직 평가 데이터가 없습니다
+                        {t('statistics:rating.noData', '아직 평가 데이터가 없습니다')}
                     </div>
                     <div className="mg-v2-empty-state__hint">
-                        상담사들이 평가를 받으면 통계가 표시됩니다
+                        {t('statistics:rating.noDataHint', '상담사들이 평가를 받으면 통계가 표시됩니다')}
                     </div>
                 </div>
             )}

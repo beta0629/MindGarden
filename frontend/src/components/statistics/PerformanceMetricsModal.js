@@ -18,6 +18,7 @@ import CustomSelect from '../common/CustomSelect';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 성과 지표 대시보드 모달 컴포넌트
@@ -37,6 +38,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
  * @since 2025-09-30
  */
 const PerformanceMetricsModal = ({ isOpen, onClose }) => {
+    const { t } = useTranslation(['statistics']);
     const [loading, setLoading] = useState(false);
     const [recalculating, setRecalculating] = useState(false);
     const [metrics, setMetrics] = useState(null);
@@ -74,7 +76,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                 setBranches(response.data || []);
             }
         } catch (error) {
-            console.error('지점 목록 로드 실패:', error);
+            console.error(t('statistics:branch.loadFail', '지점 목록 로드 실패'), error);
         }
     };
 
@@ -98,12 +100,12 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
             if (response && response.success !== false) {
                 setMetrics(response.data);
             } else {
-                throw new Error(response?.message || '성과 지표 조회에 실패했습니다.');
+                throw new Error(response?.message || t('statistics:metrics.loadFail', '성과 지표 조회에 실패했습니다.'));
             }
 
         } catch (error) {
-            console.error('❌ 성과 지표 조회 실패:', error);
-            notificationManager.error(error.message || '성과 지표 조회 중 오류가 발생했습니다.');
+            console.error(t('statistics:metrics.loadFail', '성과 지표 조회 실패'), error);
+            notificationManager.error(error.message || t('statistics:metrics.loadError', '성과 지표 조회 중 오류가 발생했습니다.'));
         } finally {
             setLoading(false);
         }
@@ -124,15 +126,15 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
             });
             
             if (response && response.success !== false) {
-                notificationManager.success('성과 지표가 재계산되었습니다.');
-                loadMetrics(); // 재계산 후 데이터 새로고침
+                notificationManager.success(t('statistics:metrics.recalculated', '성과 지표가 재계산되었습니다.'));
+                loadMetrics();
             } else {
-                throw new Error(response?.message || '성과 지표 재계산에 실패했습니다.');
+                throw new Error(response?.message || t('statistics:metrics.recalculateFail', '성과 지표 재계산에 실패했습니다.'));
             }
 
         } catch (error) {
-            console.error('❌ 성과 지표 재계산 실패:', error);
-            notificationManager.error(error.message || '성과 지표 재계산 중 오류가 발생했습니다.');
+            console.error(t('statistics:metrics.recalculateFail', '성과 지표 재계산 실패'), error);
+            notificationManager.error(error.message || t('statistics:metrics.recalculateError', '성과 지표 재계산 중 오류가 발생했습니다.'));
         } finally {
             setRecalculating(false);
         }
@@ -160,7 +162,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
         <UnifiedModal
             isOpen={isOpen}
             onClose={handleClose}
-            title="성과 지표 대시보드"
+            title={t('statistics:dashboard.title', '성과 지표 대시보드')}
             size="large"
             backdropClick
             showCloseButton
@@ -171,13 +173,13 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                     <div className="mg-v2-form-section">
                         <h3 className="mg-v2-section-title">
                             <BarChartIcon size={20} className="mg-v2-section-title-icon" />
-                            필터 설정
+                            {t('statistics:filter.title', '필터 설정')}
                         </h3>
                         <div className="mg-v2-form-grid">
                             <div className="mg-v2-form-group">
                                 <label className="mg-v2-form-label">
                                     <CalendarIcon size={16} className="mg-v2-form-label-icon" />
-                                    시작일
+                                    {t('statistics:filter.startDate', '시작일')}
                                 </label>
                                 <input
                                     type="date"
@@ -190,7 +192,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                             <div className="mg-v2-form-group">
                                 <label className="mg-v2-form-label">
                                     <CalendarIcon size={16} className="mg-v2-form-label-icon" />
-                                    종료일
+                                    {t('statistics:filter.endDate', '종료일')}
                                 </label>
                                 <input
                                     type="date"
@@ -203,19 +205,19 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                             <div className="mg-v2-form-group">
                                 <label className="mg-v2-form-label">
                                     <BuildingIcon size={16} className="mg-v2-form-label-icon" />
-                                    지점
+                                    {t('statistics:filter.branch', '지점')}
                                 </label>
                                 <CustomSelect
                                     value={branchCode}
                                     onChange={(val) => setBranchCode(val)}
                                     options={[
-                                        { value: '', label: '전체 지점' },
+                                        { value: '', label: t('statistics:filter.allBranches', '전체 지점') },
                                         ...branches.map(branch => ({
                                             value: branch.code,
                                             label: branch.name
                                         }))
                                     ]}
-                                    placeholder="전체 지점"
+                                    placeholder={t('statistics:filter.allBranches', '전체 지점')}
                                     disabled={loading || recalculating}
                                     className="mg-v2-form-select"
                                 />
@@ -234,7 +236,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                 disabled={loading || recalculating}
                                 variant="primary"
                             >
-                                조회
+                                {t('statistics:filter.query', '조회')}
                             </MGButton>
                             <MGButton
                                 className={buildErpMgButtonClassName({
@@ -249,7 +251,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 variant="secondary"
                             >
-                                재계산
+                                {t('statistics:filter.recalculate', '재계산')}
                             </MGButton>
                         </div>
                     </div>
@@ -263,26 +265,26 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                         <div className="mg-v2-form-section mg-v2-mt-lg">
                             <h4 className="mg-v2-section-title mg-v2-mb-md">
                                 <TargetIcon size={20} className="mg-v2-section-title-icon" />
-                                주요 성과 지표
+                                {t('statistics:metrics.title', '주요 성과 지표')}
                             </h4>
                             <div className="mg-v2-info-grid">
                                 <div className="mg-v2-info-item">
-                                    <span className="mg-v2-info-label">총 상담사 수</span>
+                                    <span className="mg-v2-info-label">{t('statistics:metrics.totalConsultants', '총 상담사 수')}</span>
                                     <span className="mg-v2-info-value">{metrics.totalConsultants || 0}명</span>
                                 </div>
                                 <div className="mg-v2-info-item">
-                                    <span className="mg-v2-info-label">총 상담 건수</span>
+                                    <span className="mg-v2-info-label">{t('statistics:metrics.totalConsultations', '총 상담 건수')}</span>
                                     <span className="mg-v2-info-value">{metrics.totalConsultations || 0}건</span>
                                 </div>
                                 <div className="mg-v2-info-item">
                                     <DollarSignIcon size={16} className="mg-v2-icon-inline" />
-                                    <span className="mg-v2-info-label">총 매출</span>
+                                    <span className="mg-v2-info-label">{t('statistics:metrics.totalRevenue', '총 매출')}</span>
                                     <span className="mg-v2-info-value">
                                         {(metrics.totalRevenue || 0).toLocaleString()}원
                                     </span>
                                 </div>
                                 <div className="mg-v2-info-item">
-                                    <span className="mg-v2-info-label">평균 만족도</span>
+                                    <span className="mg-v2-info-label">{t('statistics:metrics.avgSatisfaction', '평균 만족도')}</span>
                                     <span className="mg-v2-info-value">{metrics.averageSatisfaction || 0}점</span>
                                 </div>
                             </div>
@@ -290,7 +292,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                             {/* 상세 지표 */}
                             <div className="mg-v2-mt-lg">
                                 <div className="mg-v2-form-section">
-                                    <h5 className="mg-v2-section-title mg-v2-mb-md">상담사별 성과</h5>
+                                    <h5 className="mg-v2-section-title mg-v2-mb-md">{t('statistics:performance.title', '상담사별 성과')}</h5>
                                     <div className="mg-v2-list-container">
                                         {metrics.consultantPerformance?.map((consultant, index) => (
                                             <div key={index} className="mg-v2-list-item">
@@ -301,12 +303,12 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                                     </div>
                                                 </div>
                                             </div>
-                                        )) || <div className="mg-v2-empty-state"><p>데이터가 없습니다.</p></div>}
+                                        )) || <div className="mg-v2-empty-state"><p>{t('statistics:performance.noData', '데이터가 없습니다.')}</p></div>}
                                     </div>
                                 </div>
 
                                 <div className="mg-v2-form-section mg-v2-mt-lg">
-                                    <h5 className="mg-v2-section-title mg-v2-mb-md">일별 성과 추이</h5>
+                                    <h5 className="mg-v2-section-title mg-v2-mb-md">{t('statistics:performance.daily', '일별 성과 추이')}</h5>
                                     <div className="mg-v2-list-container">
                                         {metrics.dailyTrend?.map((day, index) => (
                                             <div key={index} className="mg-v2-list-item">
@@ -317,14 +319,14 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                                     </div>
                                                 </div>
                                             </div>
-                                        )) || <div className="mg-v2-empty-state"><p>데이터가 없습니다.</p></div>}
+                                        )) || <div className="mg-v2-empty-state"><p>{t('statistics:performance.noData', '데이터가 없습니다.')}</p></div>}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     ) : (
                         <div className="mg-v2-empty-state">
-                            <p>성과 지표 데이터가 없습니다.</p>
+                            <p>{t('statistics:metrics.noData', '성과 지표 데이터가 없습니다.')}</p>
                             <MGButton
                                 className={buildErpMgButtonClassName({
                                     variant: 'primary',
@@ -337,7 +339,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                 disabled={loading}
                                 variant="primary"
                             >
-                                데이터 로드
+                                {t('statistics:metrics.loadData', '데이터 로드')}
                             </MGButton>
                         </div>
                     )}

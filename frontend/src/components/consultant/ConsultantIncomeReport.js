@@ -42,7 +42,7 @@ const ConsultantIncomeReport = () => {
 
   const consultantId = user?.id;
 
-  const loadReport = useCallback(async () => {
+  const loadReport = useCallback(async() => {
     if (!consultantId) return;
     try {
       setLoading(true);
@@ -54,8 +54,8 @@ const ConsultantIncomeReport = () => {
           consultantId,
           year,
           month,
-          status: 'COMPLETED',
-        }).catch(() => null),
+          status: 'COMPLETED'
+        }).catch(() => null)
       ]);
 
       const payments = Array.isArray(paymentsRes) ? paymentsRes : (paymentsRes?.data || []);
@@ -65,7 +65,7 @@ const ConsultantIncomeReport = () => {
       setSummary({
         totalSessions: payments.length,
         totalIncome,
-        avgRating: stats.averageRating || 0,
+        avgRating: stats.averageRating || 0
       });
 
       setDetailList(
@@ -74,7 +74,7 @@ const ConsultantIncomeReport = () => {
           date: p.paymentDate || p.createdAt?.split('T')[0],
           clientName: p.clientName || t('common:labels.client', '내담자'),
           amount: p.amount || 0,
-          type: p.consultationType || t('common:labels.consultation', '상담'),
+          type: p.consultationType || t('common:labels.consultation', '상담')
         }))
       );
 

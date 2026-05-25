@@ -12,7 +12,7 @@ import Icon from './Icon';
 import { useTranslation } from 'react-i18next';
 
 const IconExamples = () => {
-  const { t } = useTranslation();const [clickedIcon, setClickedIcon] = useState(null);
+  const { t } = useTranslation(); const [clickedIcon, setClickedIcon] = useState(null);
 
   const handleIconClick = (iconName) => {setClickedIcon(iconName);
     setTimeout(() => setClickedIcon(null), FORM_CONSTANTS.MAX_TEXTAREA_LENGTH);};

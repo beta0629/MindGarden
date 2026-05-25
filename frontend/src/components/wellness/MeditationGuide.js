@@ -24,7 +24,7 @@ const CATEGORIES = [
   { key: 'mindfulness', label: '마음챙김', icon: Brain },
   { key: 'sleep', label: '수면', icon: Moon },
   { key: 'nature', label: '자연소리', icon: TreePine },
-  { key: 'favorites', label: '즐겨찾기', icon: Heart },
+  { key: 'favorites', label: '즐겨찾기', icon: Heart }
 ];
 
 const MOCK_TRACKS = [
@@ -37,7 +37,7 @@ const MOCK_TRACKS = [
   { id: 7, title: '빗소리 자연 명상', category: 'nature', categoryLabel: '자연소리', duration: 1500 },
   { id: 8, title: '파도 소리', category: 'nature', categoryLabel: '자연소리', duration: 1200 },
   { id: 9, title: '새벽 숲 소리', category: 'nature', categoryLabel: '자연소리', duration: 900 },
-  { id: 10, title: '아침 호흡 루틴', category: 'breathing', categoryLabel: '호흡', duration: 300 },
+  { id: 10, title: '아침 호흡 루틴', category: 'breathing', categoryLabel: '호흡', duration: 300 }
 ];
 
 const formatTime = (seconds) => {
@@ -63,7 +63,7 @@ const MeditationGuide = () => {
   const practiceStats = {
     totalMinutes: 42,
     streak: 3,
-    weekMinutes: 15,
+    weekMinutes: 15
   };
 
   useEffect(() => {

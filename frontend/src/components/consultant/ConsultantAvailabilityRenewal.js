@@ -23,7 +23,7 @@ const DAYS_OF_WEEK = [
   { key: 'THU', label: '목' },
   { key: 'FRI', label: '금' },
   { key: 'SAT', label: '토' },
-  { key: 'SUN', label: '일' },
+  { key: 'SUN', label: '일' }
 ];
 
 const START_HOUR = 9;
@@ -67,7 +67,7 @@ const ConsultantAvailabilityRenewal = () => {
 
   const consultantId = user?.id;
 
-  const loadAvailability = useCallback(async () => {
+  const loadAvailability = useCallback(async() => {
     if (!consultantId) return;
     try {
       setLoading(true);
@@ -104,7 +104,7 @@ const ConsultantAvailabilityRenewal = () => {
     dragRef.current = true;
     setGrid((prev) => ({
       ...prev,
-      [day]: { ...prev[day], [time]: newVal },
+      [day]: { ...prev[day], [time]: newVal }
     }));
   };
 
@@ -112,7 +112,7 @@ const ConsultantAvailabilityRenewal = () => {
     if (!dragRef.current) return;
     setGrid((prev) => ({
       ...prev,
-      [day]: { ...prev[day], [time]: dragValue },
+      [day]: { ...prev[day], [time]: dragValue }
     }));
   };
 
@@ -128,11 +128,11 @@ const ConsultantAvailabilityRenewal = () => {
 
   const hasChanges = originalGrid && JSON.stringify(grid) !== JSON.stringify(originalGrid);
 
-  const handleSave = async () => {
+  const handleSave = async() => {
     if (!consultantId) return;
     const DAY_MAP = {
       MON: 'MONDAY', TUE: 'TUESDAY', WED: 'WEDNESDAY',
-      THU: 'THURSDAY', FRI: 'FRIDAY', SAT: 'SATURDAY', SUN: 'SUNDAY',
+      THU: 'THURSDAY', FRI: 'FRIDAY', SAT: 'SATURDAY', SUN: 'SUNDAY'
     };
     const slots = [];
     DAYS_OF_WEEK.forEach((d) => {
@@ -145,7 +145,7 @@ const ConsultantAvailabilityRenewal = () => {
           slots.push({
             dayOfWeek: DAY_MAP[d.key],
             startTime: t,
-            endTime: `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`,
+            endTime: `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
           });
         }
       });
@@ -174,7 +174,7 @@ const ConsultantAvailabilityRenewal = () => {
     if (!vacStartDate || !vacEndDate) return;
     setVacations((prev) => [
       ...prev,
-      { id: Date.now(), start: vacStartDate, end: vacEndDate, reason: vacReason },
+      { id: Date.now(), start: vacStartDate, end: vacEndDate, reason: vacReason }
     ]);
     setVacStartDate('');
     setVacEndDate('');

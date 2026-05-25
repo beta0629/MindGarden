@@ -12,5 +12,5 @@ export const CLIENT_SHOP_NOTIFICATION_COPY = {
   POINT_EARNED_TITLE: '포인트 적립',
   HOLD_EXPIRED_TITLE: '주문 만료',
   REFUNDED_TITLE: '주문 환불',
-  FULFILLMENT_TITLE: '주문 처리 완료',
+  FULFILLMENT_TITLE: '주문 처리 완료'
 };

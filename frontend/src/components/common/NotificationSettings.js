@@ -20,7 +20,7 @@ const TOAST_DURATION = 2000;
 const REMINDER_OPTION_VALUES = [
   { value: '30', i18nKey: 'reminderOptions.min30', fallback: '30분 전' },
   { value: '60', i18nKey: 'reminderOptions.hour1', fallback: '1시간 전' },
-  { value: '120', i18nKey: 'reminderOptions.hour2', fallback: '2시간 전' },
+  { value: '120', i18nKey: 'reminderOptions.hour2', fallback: '2시간 전' }
 ];
 
 const DEFAULT_SETTINGS = {
@@ -28,26 +28,26 @@ const DEFAULT_SETTINGS = {
     enabled: true,
     reminderMinutes: '60',
     confirmCancel: true,
-    startEnd: true,
+    startEnd: true
   },
   payment: {
     enabled: true,
     confirmFail: true,
-    sessionLow: true,
+    sessionLow: true
   },
   message: {
-    enabled: true,
+    enabled: true
   },
   wellness: {
     enabled: true,
-    reminderTime: '09:00',
+    reminderTime: '09:00'
   },
   system: {
-    enabled: true,
+    enabled: true
   },
   sound: {
-    enabled: true,
-  },
+    enabled: true
+  }
 };
 
 const loadSettings = () => {
@@ -93,7 +93,7 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
   const [showToast, setShowToast] = useState(false);
   const reminderOptions = REMINDER_OPTION_VALUES.map((opt) => ({
     value: opt.value,
-    label: t(`settings:${opt.i18nKey}`, opt.fallback),
+    label: t(`settings:${opt.i18nKey}`, opt.fallback)
   }));
 
   const themeStyle = {
@@ -102,7 +102,7 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
       : 'var(--mg-client-primary)',
     '--mg-chat-bg': themeVariant === 'consultant'
       ? 'var(--mg-consultant-bg-main)'
-      : 'var(--mg-client-bg-main)',
+      : 'var(--mg-client-bg-main)'
   };
 
   const persistSettings = useCallback((newSettings) => {
@@ -124,8 +124,8 @@ const NotificationSettings = ({ themeVariant = 'client' }) => {
       ...settings,
       [category]: {
         ...settings[category],
-        [key]: value,
-      },
+        [key]: value
+      }
     };
     persistSettings(updated);
   };

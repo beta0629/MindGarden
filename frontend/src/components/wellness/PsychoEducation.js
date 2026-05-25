@@ -22,21 +22,21 @@ const CATEGORIES = [
   { key: 'cbt', label: '인지행동 팁' },
   { key: 'relationship', label: '관계 스킬' },
   { key: 'selfEsteem', label: '자존감 향상' },
-  { key: 'bookmarks', label: '북마크' },
+  { key: 'bookmarks', label: '북마크' }
 ];
 
 const GRADIENT_MAP = {
   anxiety: 'linear-gradient(135deg, var(--mg-client-primary), var(--mg-client-primary-light))',
   cbt: 'linear-gradient(135deg, var(--mg-consultant-primary), var(--mg-consultant-primary-light))',
   relationship: 'linear-gradient(135deg, var(--mg-client-primary-light), var(--mg-client-primary))',
-  selfEsteem: 'linear-gradient(135deg, var(--mg-color-success), var(--mg-client-primary-light))',
+  selfEsteem: 'linear-gradient(135deg, var(--mg-color-success), var(--mg-client-primary-light))'
 };
 
 const ICON_MAP = {
   anxiety: Shield,
   cbt: Brain,
   relationship: Users,
-  selfEsteem: Heart,
+  selfEsteem: Heart
 };
 
 const MOCK_ARTICLES = [
@@ -54,7 +54,7 @@ const MOCK_ARTICLES = [
   { id: 12, category: 'selfEsteem', categoryLabel: '자존감 향상', title: '완벽주의에서 벗어나기', summary: '완벽하지 않아도 충분하다는 것을 받아들이는 여정.', readTime: 5, content: '완벽주의는 높은 기준이 아니라, 실패에 대한 두려움입니다.\n\n완벽주의의 함정:\n- "100점이 아니면 0점이다" (흑백논리)\n- "실수하면 사람들이 나를 싫어할 거야"\n- 끊임없는 자기 비교와 부족함\n\n벗어나는 방법:\n1. "충분히 좋은" 기준 세우기: 80%도 훌륭합니다.\n2. 실수를 학습으로: "실패"를 "피드백"으로 재명명합니다.\n3. 과정 즐기기: 결과보다 과정에서의 성장에 집중합니다.\n4. 자기 자비 명상: 매일 5분, 자신에게 따뜻하게 말합니다.' },
   { id: 13, category: 'anxiety', categoryLabel: '불안 관리', title: '그라운딩 기법: 5-4-3-2-1', summary: '지금 이 순간으로 돌아오는 감각 기반 안정화 기법.', readTime: 3, content: '패닉이나 강한 불안 시 5-4-3-2-1 기법을 사용하세요.\n\n5가지 — 보이는 것 5개를 말합니다.\n4가지 — 만질 수 있는 것 4개를 느낍니다.\n3가지 — 들리는 소리 3개에 집중합니다.\n2가지 — 냄새 2가지를 맡습니다.\n1가지 — 맛 1가지를 느낍니다.\n\n감각에 집중하면 "지금 여기"로 돌아올 수 있습니다. 불안은 미래의 걱정이고, 이 기법은 현재로 앵커링합니다.' },
   { id: 14, category: 'cbt', categoryLabel: '인지행동 팁', title: '걱정 시간 정하기', summary: '걱정을 특정 시간에 몰아서 하는 역설적 기법.', readTime: 3, content: '걱정이 하루를 지배하나요? "걱정 시간"을 정해보세요.\n\n방법:\n1. 하루 중 15~30분을 "걱정 시간"으로 정합니다.\n2. 그 외 시간에 걱정이 떠오르면 메모만 하고 미룹니다.\n3. 걱정 시간에 메모를 꺼내 하나씩 검토합니다.\n4. 통제 가능/불가능을 분류합니다.\n5. 통제 가능한 것은 행동 계획을, 불가능한 것은 수용합니다.\n\n놀랍게도, 걱정 시간이 되면 대부분의 걱정은 이미 사라져 있습니다.' },
-  { id: 15, category: 'relationship', categoryLabel: '관계 스킬', title: '갈등 해결의 윈-윈 접근법', summary: '이기고 지는 것이 아닌 함께 해결하는 대화법.', readTime: 5, content: '갈등은 관계의 적이 아니라 성장의 기회입니다.\n\n윈-윈 접근법:\n1. 문제와 사람을 분리합니다.\n2. 입장이 아닌 욕구에 집중합니다.\n   예) "늦은 귀가"(입장) → "안전에 대한 걱정"(욕구)\n3. 창의적 대안을 함께 브레인스토밍합니다.\n4. 객관적 기준으로 합의합니다.\n5. 합의 후 실행과 피드백을 합니다.\n\n핵심: "나 vs 너"가 아닌 "우리 vs 문제"로 프레임을 바꿉니다.' },
+  { id: 15, category: 'relationship', categoryLabel: '관계 스킬', title: '갈등 해결의 윈-윈 접근법', summary: '이기고 지는 것이 아닌 함께 해결하는 대화법.', readTime: 5, content: '갈등은 관계의 적이 아니라 성장의 기회입니다.\n\n윈-윈 접근법:\n1. 문제와 사람을 분리합니다.\n2. 입장이 아닌 욕구에 집중합니다.\n   예) "늦은 귀가"(입장) → "안전에 대한 걱정"(욕구)\n3. 창의적 대안을 함께 브레인스토밍합니다.\n4. 객관적 기준으로 합의합니다.\n5. 합의 후 실행과 피드백을 합니다.\n\n핵심: "나 vs 너"가 아닌 "우리 vs 문제"로 프레임을 바꿉니다.' }
 ];
 
 const PsychoEducation = () => {

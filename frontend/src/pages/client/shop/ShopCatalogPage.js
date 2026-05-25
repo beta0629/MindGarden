@@ -39,7 +39,7 @@ const ShopCatalogPage = () => {
   const [catalogLoaded, setCatalogLoaded] = useState(false);
   const [message, setMessage] = useState('');
 
-  const loadCatalog = useCallback(async () => {
+  const loadCatalog = useCallback(async() => {
     try {
       setLoading(true);
       setCatalogLoaded(false);
@@ -93,7 +93,7 @@ const ShopCatalogPage = () => {
     }
   }, [displayCategory, activeCategory, catalog.length]);
 
-  const handleAddToCart = async (skuCode) => {
+  const handleAddToCart = async(skuCode) => {
     try {
       setLoading(true);
       setMessage('');

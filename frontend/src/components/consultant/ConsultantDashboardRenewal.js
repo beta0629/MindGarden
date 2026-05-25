@@ -26,13 +26,13 @@ const API_CONSULTANTS = '/api/v1/consultants';
 const API_ENDPOINTS = {
   DASHBOARD: API_CONSULTANTS,
   SCHEDULES: SCHEDULE_API.SCHEDULES,
-  RECORDS: API_CONSULTANTS,
+  RECORDS: API_CONSULTANTS
 };
 
 const SCHEDULE_STATUS = {
   ACTIVE: 'ACTIVE',
   WAITING: 'WAITING',
-  COMPLETED: 'COMPLETED',
+  COMPLETED: 'COMPLETED'
 };
 
 const getAccentClass = (status) => {
@@ -195,7 +195,7 @@ const ConsultantDashboardRenewal = () => {
 
   const userName = user?.name || user?.username || '선생님';
 
-  const fetchDashboardData = useCallback(async () => {
+  const fetchDashboardData = useCallback(async() => {
     if (!user?.id) return;
     try {
       setError(null);
@@ -205,12 +205,12 @@ const ConsultantDashboardRenewal = () => {
         TenantAwareApiClient.get(`${API_ENDPOINTS.SCHEDULES}`, {
           consultantId: user.id,
           startDate: today,
-          endDate: today,
+          endDate: today
         }),
         TenantAwareApiClient.get(
           `${API_ENDPOINTS.RECORDS}/${user.id}/consultation-records`,
           { status: 'PENDING' }
-        ),
+        )
       ]);
 
       if (schedulesRes.status === 'fulfilled') {
@@ -294,7 +294,7 @@ const ConsultantDashboardRenewal = () => {
     { icon: Calendar, label: '오늘 스케줄', action: () => navigate('/consultant/renewal/schedule') },
     { icon: FileText, label: '일지 작성', action: () => navigate('/consultant/consultation-records') },
     { icon: MessageSquare, label: '메시지', action: () => navigate('/consultant/messages') },
-    { icon: Settings, label: '근무 설정', action: () => navigate('/consultant/renewal/availability') },
+    { icon: Settings, label: '근무 설정', action: () => navigate('/consultant/renewal/availability') }
   ];
 
   if (sessionLoading || loading) {

@@ -177,7 +177,7 @@ const DashboardManagement = () => {
     const confirmed = await confirm({
       variant: 'danger',
       messageKey: 'modal.dashboard.delete.confirm.message',
-      interpolation: { name: dashboard.dashboardNameKo || dashboard.dashboardName },
+      interpolation: { name: dashboard.dashboardNameKo || dashboard.dashboardName }
     });
 
     if (!confirmed) {

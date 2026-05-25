@@ -58,8 +58,8 @@ class TenantAwareApiClient {
       ...opts,
       headers: {
         ...existingHeaders,
-        'X-Tenant-Id': tenantId,
-      },
+        'X-Tenant-Id': tenantId
+      }
     };
   }
 
@@ -124,7 +124,7 @@ class TenantAwareApiClient {
    */
   static async validateTenantCode(tenantCode) {
     const response = await StandardizedApi.post(API_TENANT_VALIDATE_CODE, {
-      code: tenantCode,
+      code: tenantCode
     });
     return response;
   }

@@ -31,13 +31,13 @@ const MOOD_EMOJIS = [
   { value: 2, emoji: '😟', label: '나쁨' },
   { value: 3, emoji: '😐', label: '보통' },
   { value: 4, emoji: '🙂', label: '좋음' },
-  { value: 5, emoji: '😊', label: '매우 좋음' },
+  { value: 5, emoji: '😊', label: '매우 좋음' }
 ];
 
 const ACTIVITY_ICON_MAP = {
   consultation: Calendar,
   message: MessageCircle,
-  payment: CreditCard,
+  payment: CreditCard
 };
 
 const formatCountdown = (dateStr, startTime) => {
@@ -74,17 +74,17 @@ const ClientHomeRenewal = () => {
   const [wellnessTip, setWellnessTip] = useState(null);
   const [recentActivities, setRecentActivities] = useState([]);
 
-  const loadHomeData = useCallback(async () => {
+  const loadHomeData = useCallback(async() => {
     if (!user?.id) return;
     try {
       setLoading(true);
       const [schedulesRes, healingRes, activitiesRes] = await Promise.allSettled([
         TenantAwareApiClient.get(SCHEDULE_API.SCHEDULES, {
           userId: user.id,
-          userRole: USER_ROLES.CLIENT,
+          userRole: USER_ROLES.CLIENT
         }),
         TenantAwareApiClient.get(API_HEALING_CONTENT, { page: 0, size: 1 }),
-        TenantAwareApiClient.get(API_ACTIVITIES, { userId: user.id, size: 3 }),
+        TenantAwareApiClient.get(API_ACTIVITIES, { userId: user.id, size: 3 })
       ]);
 
       if (schedulesRes.status === 'fulfilled') {
@@ -138,7 +138,7 @@ const ClientHomeRenewal = () => {
       nextConsultation
         ? formatCountdown(nextConsultation.date, nextConsultation.startTime)
         : null,
-    [nextConsultation],
+    [nextConsultation]
   );
 
   if (loading) {

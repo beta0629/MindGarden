@@ -24,7 +24,7 @@ const ShopOrdersPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const loadOrders = useCallback(async () => {
+  const loadOrders = useCallback(async() => {
     try {
       setLoading(true);
       setMessage('');

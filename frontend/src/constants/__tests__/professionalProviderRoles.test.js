@@ -81,7 +81,7 @@ describe('professionalProviderRoles', () => {
     expect(merged[0].codeLabel).toBe('덮어쓴');
   });
 
-  test('fetchProfessionalProviderTypeSelectOptions merges integrated and tenant lists', async () => {
+  test('fetchProfessionalProviderTypeSelectOptions merges integrated and tenant lists', async() => {
     const getCommonCodes = jest.fn().mockResolvedValue([
       { codeValue: 'PLAY_THERAPY', codeLabel: '놀이', sortOrder: 10, isActive: true },
       { codeValue: 'DEFAULT_COUNSELOR', codeLabel: '상담사', sortOrder: 0, isActive: true }
@@ -97,7 +97,7 @@ describe('professionalProviderRoles', () => {
     expect(opts.map((o) => o.value)).toEqual(['DEFAULT_COUNSELOR', 'PLAY_THERAPY', 'SPEECH_THERAPY']);
   });
 
-  test('fetchProfessionalProviderTypeSelectOptions falls back to tenant group path', async () => {
+  test('fetchProfessionalProviderTypeSelectOptions falls back to tenant group path', async() => {
     const getCommonCodes = jest.fn().mockResolvedValue([]);
     const standardizedApiGet = jest.fn().mockResolvedValue({
       codes: [
@@ -112,7 +112,7 @@ describe('professionalProviderRoles', () => {
     expect(opts).toEqual([{ value: 'SPEECH_THERAPIST', label: '언어', sortOrder: 1 }]);
   });
 
-  test('fetchProfessionalProviderTypeSelectOptions uses tenant when integrated yields only inactive', async () => {
+  test('fetchProfessionalProviderTypeSelectOptions uses tenant when integrated yields only inactive', async() => {
     const getCommonCodes = jest.fn().mockResolvedValue([
       { codeValue: 'X', codeLabel: '비활성', sortOrder: 1, isActive: false }
     ]);

@@ -19,7 +19,7 @@ const ICON_SIZE = 20;
 const TOAST_ICONS = {
   success: CheckCircle,
   error: XCircle,
-  info: Info,
+  info: Info
 };
 
 const AppToast = () => {

@@ -28,7 +28,7 @@ const ShopPointsPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async() => {
     try {
       setLoading(true);
       setMessage('');

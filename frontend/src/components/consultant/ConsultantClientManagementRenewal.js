@@ -24,14 +24,14 @@ const API_CONSULTANTS = '/api/v1/consultants';
 const API_CONSULTATION_CLIENT_MAPPINGS = '/api/v1/consultation-client-mappings';
 const API_ENDPOINTS = {
   CLIENTS: API_CONSULTANTS,
-  CLIENT_MAPPINGS: API_CONSULTATION_CLIENT_MAPPINGS,
+  CLIENT_MAPPINGS: API_CONSULTATION_CLIENT_MAPPINGS
 };
 
 const FILTER_OPTIONS = [
   { value: 'ALL', label: '전체' },
   { value: 'ACTIVE', label: '활성' },
   { value: 'INACTIVE', label: '비활성' },
-  { value: 'URGENT', label: '긴급' },
+  { value: 'URGENT', label: '긴급' }
 ];
 
 const STATUS_BADGE_MAP = {
@@ -40,13 +40,13 @@ const STATUS_BADGE_MAP = {
   URGENT: { label: '긴급', className: 'cr-client-card__badge--urgent' },
   SUSPENDED: { label: '일시정지', className: 'cr-client-card__badge--inactive' },
   COMPLETED: { label: '완료', className: '' },
-  PENDING: { label: '대기', className: '' },
+  PENDING: { label: '대기', className: '' }
 };
 
 const PROFILE_TABS = [
   { key: 'info', label: '기본 정보' },
   { key: 'history', label: '상담 이력' },
-  { key: 'memo', label: '메모·태그' },
+  { key: 'memo', label: '메모·태그' }
 ];
 
 const getInitials = (name) => name ? name.charAt(0) : '?';
@@ -122,13 +122,13 @@ const ProfileSheet = ({ client, onClose, onMessage }) => {
     }
   }, [client]);
 
-  const loadHistory = async () => {
+  const loadHistory = async() => {
     try {
       const clientId = client.clientId || client.id;
       const res = await TenantAwareApiClient.get(SCHEDULE_API.SCHEDULES, {
         clientId,
         size: 10,
-        sort: 'startTime,desc',
+        sort: 'startTime,desc'
       });
       const data = Array.isArray(res) ? res : res?.data || res?.content || [];
       setConsultationHistory(data);
@@ -275,7 +275,7 @@ const ConsultantClientManagementRenewal = () => {
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [selectedClient, setSelectedClient] = useState(null);
 
-  const fetchClients = useCallback(async () => {
+  const fetchClients = useCallback(async() => {
     if (!user?.id) return;
     try {
       setLoading(true);
@@ -286,7 +286,7 @@ const ConsultantClientManagementRenewal = () => {
         data = Array.isArray(res) ? res : res?.data || res?.content || [];
       } catch {
         const mappingRes = await TenantAwareApiClient.get(API_ENDPOINTS.CLIENT_MAPPINGS, {
-          consultantId: user.id,
+          consultantId: user.id
         });
         data = Array.isArray(mappingRes) ? mappingRes : mappingRes?.data || mappingRes?.content || [];
       }

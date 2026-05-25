@@ -89,7 +89,7 @@ const SmsTemplateManagementPage = () => {
     }
   }, [sessionLoading, isLoggedIn, user, hasAccess, navigate, t]);
 
-  const loadList = useCallback(async () => {
+  const loadList = useCallback(async() => {
     setLoading(true);
     try {
       const response = await getSmsTemplates();
@@ -167,7 +167,7 @@ const SmsTemplateManagementPage = () => {
     setPreviewVariables((prev) => ({ ...prev, [variableKey]: value }));
   }, []);
 
-  const handlePreview = useCallback(async () => {
+  const handlePreview = useCallback(async() => {
     if (!selectedKey) {
       return;
     }
@@ -186,7 +186,7 @@ const SmsTemplateManagementPage = () => {
     }
   }, [selectedKey, previewVariables, t]);
 
-  const handleSaveConfirm = useCallback(async () => {
+  const handleSaveConfirm = useCallback(async() => {
     if (!selectedKey || !editingContent.trim()) {
       setSaveModalOpen(false);
       return;
@@ -213,7 +213,7 @@ const SmsTemplateManagementPage = () => {
     }
   }, [selectedKey, editingContent, loadList, t]);
 
-  const handleDeleteConfirm = useCallback(async () => {
+  const handleDeleteConfirm = useCallback(async() => {
     if (!selectedKey) {
       setDeleteModalOpen(false);
       return;

@@ -19,12 +19,12 @@ const MOOD_EMOJIS = [
   { value: 2, emoji: '😟', label: '나쁨' },
   { value: 3, emoji: '😐', label: '보통' },
   { value: 4, emoji: '🙂', label: '좋음' },
-  { value: 5, emoji: '😊', label: '매우 좋음' },
+  { value: 5, emoji: '😊', label: '매우 좋음' }
 ];
 
 const EMOTION_TAGS = [
   '불안', '우울', '피곤', '외로움', '짜증',
-  '평온', '기쁨', '감사', '설렘', '뿌듯함',
+  '평온', '기쁨', '감사', '설렘', '뿌듯함'
 ];
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -92,7 +92,7 @@ const MoodJournal = () => {
 
   const handleToggleTag = (tag) => {
     setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   };
 
@@ -103,7 +103,7 @@ const MoodJournal = () => {
       mood: selectedMood,
       tags: selectedTags,
       memo,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     };
     saveEntry(todayStr, entry);
     setEntries((prev) => ({ ...prev, [todayStr]: entry }));
@@ -113,7 +113,7 @@ const MoodJournal = () => {
 
   const calendarDays = useMemo(
     () => getCalendarDays(calYear, calMonth),
-    [calYear, calMonth],
+    [calYear, calMonth]
   );
 
   const calendarTitle = `${calYear}년 ${calMonth + 1}월`;
@@ -150,7 +150,7 @@ const MoodJournal = () => {
           chartPeriod === 'weekly'
             ? WEEKDAYS[d.getDay()]
             : `${d.getMonth() + 1}/${d.getDate()}`,
-        value: entry?.mood || 0,
+        value: entry?.mood || 0
       });
     }
     return data;
@@ -256,7 +256,7 @@ const MoodJournal = () => {
               const dateStr = cell.otherMonth
                 ? null
                 : `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(
-                    cell.day,
+                    cell.day
                   ).padStart(2, '0')}`;
               const entry = dateStr ? entries[dateStr] : null;
               const isToday = dateStr === todayStr;
@@ -317,7 +317,7 @@ const MoodJournal = () => {
                         d.value > 0
                           ? `${(d.value / maxChartVal) * 100}%`
                           : '4px',
-                      opacity: d.value > 0 ? 1 : 0.2,
+                      opacity: d.value > 0 ? 1 : 0.2
                     }}
                     title={d.value > 0 ? `${d.label}: ${d.value}점` : `${d.label}: 기록 없음`}
                   />

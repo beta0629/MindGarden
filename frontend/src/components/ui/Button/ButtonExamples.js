@@ -10,7 +10,7 @@ import Button from './Button';
 import { useTranslation } from 'react-i18next';
 
 const ButtonExamples = () => {
-  const { t } = useTranslation();const [loading, setLoading] = useState(false);
+  const { t } = useTranslation(); const [loading, setLoading] = useState(false);
   const [clickedButton, setClickedButton] = useState(null);
 
   const handleAsyncClick = async() => {setLoading(true);

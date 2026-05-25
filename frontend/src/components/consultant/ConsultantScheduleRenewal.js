@@ -33,7 +33,7 @@ const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
 const VIEW_TYPES = {
   WEEKLY: 'WEEKLY',
-  DAILY: 'DAILY',
+  DAILY: 'DAILY'
 };
 
 const STATUS_LABELS = {
@@ -42,7 +42,7 @@ const STATUS_LABELS = {
   ACTIVE: '진행중',
   COMPLETED: '완료',
   CANCELLED: '취소',
-  CONFIRMED: '확정',
+  CONFIRMED: '확정'
 };
 
 const getStatusBadgeClass = (status) => {
@@ -197,7 +197,7 @@ const ConsultantScheduleRenewal = () => {
   const weekDates = useMemo(() => getWeekDates(baseDate), [baseDate]);
   const today = useMemo(() => new Date(), []);
 
-  const fetchSchedules = useCallback(async () => {
+  const fetchSchedules = useCallback(async() => {
     if (!user?.id) return;
     try {
       setLoading(true);
@@ -206,7 +206,7 @@ const ConsultantScheduleRenewal = () => {
       const res = await TenantAwareApiClient.get(SCHEDULE_API.SCHEDULES, {
         consultantId: user.id,
         startDate,
-        endDate,
+        endDate
       });
       const data = Array.isArray(res) ? res : res?.data || res?.content || [];
       setSchedules(data);
@@ -268,7 +268,7 @@ const ConsultantScheduleRenewal = () => {
     setSelectedDate(now);
   };
 
-  const handleStartConsultation = async (schedule) => {
+  const handleStartConsultation = async(schedule) => {
     try {
       await TenantAwareApiClient.put(
         `${SCHEDULE_API.SCHEDULES}/${schedule.id || schedule.scheduleId}/status`,
@@ -281,7 +281,7 @@ const ConsultantScheduleRenewal = () => {
     }
   };
 
-  const handleCompleteConsultation = async (schedule) => {
+  const handleCompleteConsultation = async(schedule) => {
     try {
       await TenantAwareApiClient.put(
         `${SCHEDULE_API.SCHEDULES}/${schedule.id || schedule.scheduleId}/status`,
@@ -392,7 +392,7 @@ const ConsultantScheduleRenewal = () => {
               className={[
                 'cr-schedule__day-cell',
                 isSelected && 'cr-schedule__day-cell--selected',
-                isToday && 'cr-schedule__day-cell--today',
+                isToday && 'cr-schedule__day-cell--today'
               ].filter(Boolean).join(' ')}
               onClick={() => setSelectedDate(new Date(date))}
               role="option"

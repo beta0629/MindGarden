@@ -23,7 +23,7 @@ const ICON_MAP = {
   FileText,
   MoreHorizontal,
   Bookmark,
-  Heart,
+  Heart
 };
 
 const ICON_SIZE = 24;
@@ -34,7 +34,7 @@ const BottomNavigation = ({ items = [], activeColor = 'var(--mg-consultant-prima
 
   const isActive = (path) => {
     if (path === location.pathname) return true;
-    return location.pathname.startsWith(path + '/');
+    return location.pathname.startsWith(`${path}/`);
   };
 
   const handleNavClick = (e, path) => {

@@ -234,7 +234,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
     if (!canEditNote(note)) return;
     const ok = await confirm({
       variant: 'danger',
-      messageKey: 'modal.scheduleNote.delete.confirm.message',
+      messageKey: 'modal.scheduleNote.delete.confirm.message'
     });
     if (!ok) return;
     setLoading(true);

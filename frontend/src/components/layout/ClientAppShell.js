@@ -24,7 +24,7 @@ const CLIENT_NAV_ITEMS = [
   { icon: 'Calendar', label: '예약', path: '/client/booking', badge: 0 },
   { icon: 'Bookmark', label: '내 상담', path: '/client/consultations', badge: 0 },
   { icon: 'Heart', label: '웰니스', path: '/client/wellness-hub', badge: 0 },
-  { icon: 'MoreHorizontal', label: '더보기', path: '/client/more', badge: 0 },
+  { icon: 'MoreHorizontal', label: '더보기', path: '/client/more', badge: 0 }
 ];
 
 const SIDEBAR_ICON_MAP = { Home, Calendar, Bookmark, Heart, MoreHorizontal };

@@ -70,7 +70,7 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
   const handleCancel = async(enrollmentId) => {
     const ok = await confirm({
       variant: 'warning',
-      messageKey: 'modal.enrollment.cancel.confirm.message',
+      messageKey: 'modal.enrollment.cancel.confirm.message'
     });
     if (!ok) return;
     

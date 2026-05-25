@@ -25,11 +25,11 @@ const API_RATINGS = '/api/v1/ratings';
 
 const TABS = [
   { key: 'upcoming', label: '예정' },
-  { key: 'completed', label: '완료' },
+  { key: 'completed', label: '완료' }
 ];
 
 const REVIEW_TAGS = [
-  '공감적', '전문적', '편안한', '따뜻한', '명확한', '경청을 잘하는',
+  '공감적', '전문적', '편안한', '따뜻한', '명확한', '경청을 잘하는'
 ];
 
 const formatDate = (dateStr) => {
@@ -39,7 +39,7 @@ const formatDate = (dateStr) => {
   return d.toLocaleDateString('ko-KR', {
     month: 'long',
     day: 'numeric',
-    weekday: 'short',
+    weekday: 'short'
   });
 };
 
@@ -67,13 +67,13 @@ const ClientConsultationsRenewal = () => {
   const [comment, setComment] = useState('');
   const [submittingRating, setSubmittingRating] = useState(false);
 
-  const loadConsultations = useCallback(async () => {
+  const loadConsultations = useCallback(async() => {
     if (!user?.id) return;
     try {
       setLoading(true);
       const res = await TenantAwareApiClient.get(SCHEDULE_API.SCHEDULES, {
         userId: user.id,
-        userRole: USER_ROLES.CLIENT,
+        userRole: USER_ROLES.CLIENT
       });
       const data = Array.isArray(res) ? res : res?.data || res?.content || [];
       setConsultations(data);
@@ -103,7 +103,7 @@ const ClientConsultationsRenewal = () => {
 
   const completedGroups = tab === 'completed' ? groupByDate(completedList) : [];
 
-  const handleCancel = async (consultationId) => {
+  const handleCancel = async(consultationId) => {
     if (!globalThis.confirm('예약을 취소하시겠습니까?')) return;
     try {
       await TenantAwareApiClient.put(`/api/v1/consultations/${consultationId}/cancel`);
@@ -122,11 +122,11 @@ const ClientConsultationsRenewal = () => {
 
   const handleToggleTag = (tag) => {
     setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   };
 
-  const handleSubmitRating = async () => {
+  const handleSubmitRating = async() => {
     if (!ratingModal || rating === 0) return;
     try {
       setSubmittingRating(true);
@@ -136,7 +136,7 @@ const ClientConsultationsRenewal = () => {
         rating,
         tags: selectedTags,
         comment: comment || null,
-        clientId: user?.id,
+        clientId: user?.id
       });
       showToast({ message: '평가가 저장되었습니다.', type: 'success' });
       setRatingModal(null);

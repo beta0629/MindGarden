@@ -14,7 +14,7 @@ import './CommunityPostDetail.css';
 
 const MOCK_COMMENTS = [
   { id: 1, author: '익명의 구름', text: '정말 공감이 가는 글이에요. 저도 비슷한 경험이 있어서 힘이 됩니다.', time: '1시간 전' },
-  { id: 2, author: '익명의 강', text: '용기 내서 공유해주셔서 감사합니다.', time: '30분 전' },
+  { id: 2, author: '익명의 강', text: '용기 내서 공유해주셔서 감사합니다.', time: '30분 전' }
 ];
 
 const CommunityPostDetail = ({ primaryColor }) => {
@@ -51,7 +51,7 @@ const CommunityPostDetail = ({ primaryColor }) => {
       id: Date.now(),
       author: '나',
       text: newComment.trim(),
-      time: '방금 전',
+      time: '방금 전'
     };
     setComments((prev) => [...prev, comment]);
     setNewComment('');

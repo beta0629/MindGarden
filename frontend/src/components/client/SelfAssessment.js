@@ -21,7 +21,7 @@ const OPTION_LABELS = [
   { score: 0, label: '전혀 아니다' },
   { score: 1, label: '며칠 동안' },
   { score: 2, label: '절반 이상' },
-  { score: 3, label: '거의 매일' },
+  { score: 3, label: '거의 매일' }
 ];
 
 const ASSESSMENTS = {
@@ -37,14 +37,14 @@ const ASSESSMENTS = {
       '자신이 나쁜 사람이라고 느끼거나, 실패자라고 느꼈다.',
       '신문을 읽거나 TV를 볼 때 집중하기 어려웠다.',
       '다른 사람들이 눈치챌 정도로 느리게 움직이거나 반대로 안절부절했다.',
-      '차라리 죽는 것이 낫겠다는 생각을 했다.',
+      '차라리 죽는 것이 낫겠다는 생각을 했다.'
     ],
     interpret: (score) => {
       if (score <= 4) return { level: '정상', severity: 'minimal', desc: '현재 우울 증상이 거의 없습니다. 건강한 심리 상태를 유지하고 계세요.' };
       if (score <= 9) return { level: '경미한 우울', severity: 'mild', desc: '약간의 우울 증상이 있습니다. 자기 돌봄에 신경 쓰시고, 지속되면 전문가 상담을 권합니다.' };
       if (score <= 14) return { level: '중등도 우울', severity: 'moderate', desc: '중등도의 우울 증상이 있습니다. 전문 상담사와 상담을 받아보시는 것을 권합니다.' };
       return { level: '심한 우울', severity: 'severe', desc: '심한 우울 증상이 있습니다. 가능한 빨리 전문가 상담을 받으시길 강력히 권합니다.' };
-    },
+    }
   },
   GAD7: {
     name: 'GAD-7 불안 검사',
@@ -56,14 +56,14 @@ const ASSESSMENTS = {
       '편하게 있기가 어려웠다.',
       '너무 안절부절해서 가만히 있기 어려웠다.',
       '쉽게 짜증이 나거나 화가 났다.',
-      '마치 끔찍한 일이 일어날 것 같은 두려움을 느꼈다.',
+      '마치 끔찍한 일이 일어날 것 같은 두려움을 느꼈다.'
     ],
     interpret: (score) => {
       if (score <= 4) return { level: '정상', severity: 'minimal', desc: '현재 불안 증상이 거의 없습니다.' };
       if (score <= 9) return { level: '경미한 불안', severity: 'mild', desc: '약간의 불안 증상이 있습니다. 이완 기법이나 호흡법을 시도해보세요.' };
       if (score <= 14) return { level: '중등도 불안', severity: 'moderate', desc: '중등도의 불안 증상이 있습니다. 전문 상담을 권합니다.' };
       return { level: '심한 불안', severity: 'severe', desc: '심한 불안 증상이 있습니다. 전문가 상담을 강력히 권합니다.' };
-    },
+    }
   },
   PSS: {
     name: 'PSS 스트레스 검사',
@@ -78,20 +78,20 @@ const ASSESSMENTS = {
       '일상의 짜증을 잘 다룰 수 있었다.',
       '자신이 상황을 잘 통제하고 있다고 느낀 적이 있다.',
       '통제 밖의 일 때문에 화가 난 적이 있다.',
-      '어려운 일이 쌓여서 극복할 수 없다고 느낀 적이 있다.',
+      '어려운 일이 쌓여서 극복할 수 없다고 느낀 적이 있다.'
     ],
     interpret: (score) => {
       if (score <= 13) return { level: '낮은 스트레스', severity: 'minimal', desc: '스트레스 수준이 낮습니다. 현재 상태를 잘 유지하세요.' };
       if (score <= 26) return { level: '보통 스트레스', severity: 'mild', desc: '보통 수준의 스트레스를 느끼고 있습니다. 스트레스 관리 기법을 활용해보세요.' };
       return { level: '높은 스트레스', severity: 'moderate', desc: '높은 수준의 스트레스를 느끼고 있습니다. 전문 상담을 권합니다.' };
-    },
-  },
+    }
+  }
 };
 
 const SELECT_CARDS = [
   { key: 'PHQ9', name: 'PHQ-9 우울 검사', desc: '9문항 · 약 3분', iconClass: 'self-assess__select-icon--phq9', IconComp: Heart },
   { key: 'GAD7', name: 'GAD-7 불안 검사', desc: '7문항 · 약 2분', iconClass: 'self-assess__select-icon--gad7', IconComp: Brain },
-  { key: 'PSS', name: 'PSS 스트레스 검사', desc: '10문항 · 약 4분', iconClass: 'self-assess__select-icon--pss', IconComp: Activity },
+  { key: 'PSS', name: 'PSS 스트레스 검사', desc: '10문항 · 약 4분', iconClass: 'self-assess__select-icon--pss', IconComp: Activity }
 ];
 
 const getHistory = () => {
@@ -110,7 +110,7 @@ const saveResult = (type, score, interpretation) => {
     score,
     level: interpretation.level,
     severity: interpretation.severity,
-    date: new Date().toISOString(),
+    date: new Date().toISOString()
   });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(0, 50)));
 };

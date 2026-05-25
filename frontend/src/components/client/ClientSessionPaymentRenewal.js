@@ -25,20 +25,20 @@ const API_ADMIN_SESSION_EXTENSIONS = '/api/v1/admin/session-extensions';
 
 const TABS = [
   { key: 'payments', label: '결제 내역' },
-  { key: 'extend', label: '회기 연장' },
+  { key: 'extend', label: '회기 연장' }
 ];
 
 const PACKAGES = [
   { id: 1, name: '기본 패키지', sessions: 4, price: 200000 },
   { id: 2, name: '스탠다드 패키지', sessions: 8, price: 360000, popular: true },
-  { id: 3, name: '프리미엄 패키지', sessions: 16, price: 640000 },
+  { id: 3, name: '프리미엄 패키지', sessions: 16, price: 640000 }
 ];
 
 const STATUS_LABELS = {
   COMPLETED: '완료',
   PENDING: '대기',
   FAILED: '실패',
-  CANCELLED: '취소',
+  CANCELLED: '취소'
 };
 
 const formatCurrency = (amount) => `₩${Number(amount || 0).toLocaleString()}`;
@@ -81,13 +81,13 @@ const ClientSessionPaymentRenewal = () => {
 
   const clientId = user?.id;
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async() => {
     if (!clientId) return;
     try {
       setLoading(true);
       const [paymentsRes, sessionsRes] = await Promise.all([
         TenantAwareApiClient.get(API_PAYMENTS, { clientId }).catch(() => []),
-        TenantAwareApiClient.get(API_ADMIN_SESSION_EXTENSIONS, { clientId }).catch(() => null),
+        TenantAwareApiClient.get(API_ADMIN_SESSION_EXTENSIONS, { clientId }).catch(() => null)
       ]);
 
       const paymentList = Array.isArray(paymentsRes) ? paymentsRes : (paymentsRes?.data || []);
@@ -98,7 +98,7 @@ const ClientSessionPaymentRenewal = () => {
           description: p.description || p.packageName || '상담 결제',
           method: p.paymentMethod || '카드',
           amount: p.amount || 0,
-          status: p.status || 'COMPLETED',
+          status: p.status || 'COMPLETED'
         }))
       );
 
@@ -117,13 +117,13 @@ const ClientSessionPaymentRenewal = () => {
     loadData();
   }, [loadData]);
 
-  const handleExtend = async () => {
+  const handleExtend = async() => {
     if (!selectedPackage || !clientId) return;
     try {
       await TenantAwareApiClient.post(API_ADMIN_SESSION_EXTENSIONS, {
         clientId,
         packageId: selectedPackage,
-        sessionCount: PACKAGES.find((p) => p.id === selectedPackage)?.sessions,
+        sessionCount: PACKAGES.find((p) => p.id === selectedPackage)?.sessions
       });
       showToast({ message: '회기 연장 요청이 완료되었습니다.', type: 'success' });
       setSelectedPackage(null);

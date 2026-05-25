@@ -11,7 +11,7 @@ import Modal from './Modal';
 import { useTranslation } from 'react-i18next';
 
 const ModalExamples = () => {
-    const { t } = useTranslation();const [modals, setModals] = useState({ basic: false,
+    const { t } = useTranslation(); const [modals, setModals] = useState({ basic: false,
     withTitle: false,
     large: false,
     drawer: false,

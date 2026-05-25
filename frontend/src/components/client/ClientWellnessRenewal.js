@@ -26,7 +26,7 @@ const MOOD_EMOJIS = [
   { value: 2, emoji: '😟', label: '나쁨' },
   { value: 3, emoji: '😐', label: '보통' },
   { value: 4, emoji: '🙂', label: '좋음' },
-  { value: 5, emoji: '😊', label: '매우 좋음' },
+  { value: 5, emoji: '😊', label: '매우 좋음' }
 ];
 
 const SELF_ASSESSMENTS = [
@@ -35,29 +35,29 @@ const SELF_ASSESSMENTS = [
     name: 'PHQ-9 우울 검사',
     desc: '우울 증상 자가 평가 (9문항)',
     iconClass: 'client-wellness__test-icon--depression',
-    IconComp: Heart,
+    IconComp: Heart
   },
   {
     key: 'GAD7',
     name: 'GAD-7 불안 검사',
     desc: '불안 증상 자가 평가 (7문항)',
     iconClass: 'client-wellness__test-icon--anxiety',
-    IconComp: Brain,
+    IconComp: Brain
   },
   {
     key: 'PSS',
     name: 'PSS 스트레스 검사',
     desc: '스트레스 수준 자가 평가 (10문항)',
     iconClass: 'client-wellness__test-icon--stress',
-    IconComp: Activity,
-  },
+    IconComp: Activity
+  }
 ];
 
 const GUIDE_ITEMS = [
   { key: 'breathing', emoji: '🌬️', name: '호흡법' },
   { key: 'muscle', emoji: '💆', name: '근육 이완' },
   { key: 'mindfulness', emoji: '🧘', name: '마인드풀니스' },
-  { key: 'grounding', emoji: '🌿', name: '그라운딩' },
+  { key: 'grounding', emoji: '🌿', name: '그라운딩' }
 ];
 
 const ClientWellnessRenewal = () => {
@@ -65,12 +65,12 @@ const ClientWellnessRenewal = () => {
   const [loading, setLoading] = useState(true);
   const [healingContent, setHealingContent] = useState([]);
 
-  const loadWellnessData = useCallback(async () => {
+  const loadWellnessData = useCallback(async() => {
     try {
       setLoading(true);
       const res = await TenantAwareApiClient.get(API_HEALING_CONTENT, {
         page: 0,
-        size: 5,
+        size: 5
       });
       const data = Array.isArray(res) ? res : res?.data || res?.content || [];
       setHealingContent(data);

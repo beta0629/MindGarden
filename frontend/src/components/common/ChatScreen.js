@@ -59,7 +59,7 @@ const ChatScreen = ({
   currentUserId,
   currentUserRole = USER_ROLES.CLIENT,
   themeVariant = 'client',
-  onBack,
+  onBack
 }) => {
   const { showToast } = useToast();
   const [messages, setMessages] = useState([]);
@@ -79,14 +79,14 @@ const ChatScreen = ({
       : 'var(--mg-client-bg-main)',
     '--mg-chat-surface': themeVariant === 'consultant'
       ? 'var(--mg-consultant-surface)'
-      : 'var(--mg-client-surface)',
+      : 'var(--mg-client-surface)'
   };
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
-  const loadMessages = useCallback(async () => {
+  const loadMessages = useCallback(async() => {
     if (!partnerId || !currentUserId) return;
     try {
       setLoading(true);
@@ -121,7 +121,7 @@ const ChatScreen = ({
     }
   }, [messages, loading, scrollToBottom]);
 
-  const handleSend = async () => {
+  const handleSend = async() => {
     const trimmed = inputText.trim();
     if (!trimmed || sending) return;
 
@@ -132,7 +132,7 @@ const ChatScreen = ({
       senderType: currentUserRole,
       createdAt: new Date().toISOString(),
       isRead: false,
-      isTemp: true,
+      isTemp: true
     };
 
     setMessages((prev) => [...prev, optimisticMsg]);
@@ -147,7 +147,7 @@ const ChatScreen = ({
       await TenantAwareApiClient.post(API_ENDPOINT, {
         receiverId: partnerId,
         content: trimmed,
-        messageType: 'GENERAL',
+        messageType: 'GENERAL'
       });
       await loadMessages();
     } catch (error) {

@@ -66,7 +66,7 @@ const ShopCheckoutPage = () => {
     [cart.lines, catalog]
   );
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async() => {
     try {
       setLoading(true);
       setMessage('');
@@ -156,7 +156,7 @@ const ShopCheckoutPage = () => {
     setPointsInput(String(Math.min(availableMinor, subtotalMinor)));
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = async() => {
     if (!agreed) {
       setMessage('결제 진행에 동의해 주세요.');
       return;

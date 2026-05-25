@@ -157,7 +157,7 @@ describe('SmsTemplateManagementPage', () => {
     getSmsTemplates.mockResolvedValue({ success: true, data: SAMPLE_ITEMS });
   });
 
-  it('목록 + 카테고리 필터 + 테넌트 override 배지를 렌더한다', async () => {
+  it('목록 + 카테고리 필터 + 테넌트 override 배지를 렌더한다', async() => {
     render(<SmsTemplateManagementPage />);
     await waitFor(() => expect(getSmsTemplates).toHaveBeenCalled());
 
@@ -166,7 +166,7 @@ describe('SmsTemplateManagementPage', () => {
     expect(screen.getByText('테넌트 override')).toBeInTheDocument();
   });
 
-  it('템플릿 선택 시 글로벌 본문 + 변수 입력 폼이 노출된다', async () => {
+  it('템플릿 선택 시 글로벌 본문 + 변수 입력 폼이 노출된다', async() => {
     render(<SmsTemplateManagementPage />);
     await waitFor(() => expect(getSmsTemplates).toHaveBeenCalled());
 
@@ -179,7 +179,7 @@ describe('SmsTemplateManagementPage', () => {
     expect(screen.getByTestId('sms-template-variable-consultantName')).toBeInTheDocument();
   });
 
-  it('미리보기 버튼 클릭 시 previewSmsTemplate 가 호출되고 결과가 노출된다', async () => {
+  it('미리보기 버튼 클릭 시 previewSmsTemplate 가 호출되고 결과가 노출된다', async() => {
     previewSmsTemplate.mockResolvedValue({
       success: true,
       data: {
@@ -208,7 +208,7 @@ describe('SmsTemplateManagementPage', () => {
     expect(await screen.findByTestId('sms-template-preview-result')).toHaveTextContent('결제: 500,000원');
   });
 
-  it('저장 모달 확인 시 updateSmsTemplateTenantOverride 가 호출된다', async () => {
+  it('저장 모달 확인 시 updateSmsTemplateTenantOverride 가 호출된다', async() => {
     updateSmsTemplateTenantOverride.mockResolvedValue({ success: true, data: SAMPLE_ITEMS[0] });
     render(<SmsTemplateManagementPage />);
     await waitFor(() => expect(getSmsTemplates).toHaveBeenCalled());
@@ -228,7 +228,7 @@ describe('SmsTemplateManagementPage', () => {
     ));
   });
 
-  it('테넌트 override 삭제 모달 확인 시 deleteSmsTemplateTenantOverride 가 호출된다', async () => {
+  it('테넌트 override 삭제 모달 확인 시 deleteSmsTemplateTenantOverride 가 호출된다', async() => {
     deleteSmsTemplateTenantOverride.mockResolvedValue({ success: true, data: SAMPLE_ITEMS[1] });
     render(<SmsTemplateManagementPage />);
     await waitFor(() => expect(getSmsTemplates).toHaveBeenCalled());

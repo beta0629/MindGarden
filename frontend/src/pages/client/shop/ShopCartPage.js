@@ -26,7 +26,7 @@ const ShopCartPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const loadCart = useCallback(async () => {
+  const loadCart = useCallback(async() => {
     try {
       setLoading(true);
       setMessage('');
@@ -44,7 +44,7 @@ const ShopCartPage = () => {
     }
   }, [sessionLoading, isLoggedIn, loadCart]);
 
-  const updateQuantity = async (skuCode, delta) => {
+  const updateQuantity = async(skuCode, delta) => {
     try {
       setLoading(true);
       setMessage('');

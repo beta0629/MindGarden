@@ -28,12 +28,12 @@ const STEP_LABELS = ['상담사 선택', '시간 선택', '결제 확인', '완�
 const SPECIALTY_FILTERS = ['전체', '우울', '불안', '대인관계', '자존감', '스트레스', '진로'];
 const SORT_OPTIONS = [
   { key: 'rating', label: '평점순' },
-  { key: 'name', label: '이름순' },
+  { key: 'name', label: '이름순' }
 ];
 
 const PAYMENT_OPTIONS = [
   { key: 'session', label: '보유 회기 차감' },
-  { key: 'card', label: '카드 결제' },
+  { key: 'card', label: '카드 결제' }
 ];
 
 const generateDateRange = (days = 7) => {
@@ -45,7 +45,7 @@ const generateDateRange = (days = 7) => {
     dates.push({
       dateStr: d.toISOString().split('T')[0],
       weekday: d.toLocaleDateString('ko-KR', { weekday: 'short' }),
-      day: d.getDate(),
+      day: d.getDate()
     });
   }
   return dates;
@@ -72,7 +72,7 @@ const ClientBookingRenewal = () => {
   const [paymentMethod, setPaymentMethod] = useState('session');
   const [submitting, setSubmitting] = useState(false);
 
-  const loadConsultants = useCallback(async () => {
+  const loadConsultants = useCallback(async() => {
     try {
       setLoading(true);
       const res = await TenantAwareApiClient.get(API_CONSULTANTS, { status: 'ACTIVE' });
@@ -90,12 +90,12 @@ const ClientBookingRenewal = () => {
     loadConsultants();
   }, [loadConsultants]);
 
-  const loadTimeSlots = useCallback(async (consultantId, dateStr) => {
+  const loadTimeSlots = useCallback(async(consultantId, dateStr) => {
     if (!consultantId || !dateStr) return;
     try {
       const res = await TenantAwareApiClient.get(
         `/api/v1/consultants/${consultantId}/availability`,
-        { date: dateStr },
+        { date: dateStr }
       );
       const slots = Array.isArray(res) ? res : res?.data || res?.content || [];
       if (slots.length > 0) {
@@ -130,7 +130,7 @@ const ClientBookingRenewal = () => {
     if (step < 4) setStep(step + 1);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async() => {
     if (submitting) return;
     try {
       setSubmitting(true);
@@ -140,7 +140,7 @@ const ClientBookingRenewal = () => {
         date: selectedDate,
         startTime: selectedTime,
         paymentMethod,
-        clientId: user?.id,
+        clientId: user?.id
       });
       showToast({ message: '예약이 완료되었습니다.', type: 'success' });
       setStep(4);
@@ -333,7 +333,7 @@ const ClientBookingRenewal = () => {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
-                  weekday: 'short',
+                  weekday: 'short'
                 })
               : '-'}
           </span>
@@ -397,7 +397,7 @@ const ClientBookingRenewal = () => {
               ? new Date(selectedDate).toLocaleDateString('ko-KR', {
                   month: 'long',
                   day: 'numeric',
-                  weekday: 'short',
+                  weekday: 'short'
                 })
               : '-'}{' '}
             {selectedTime || ''}

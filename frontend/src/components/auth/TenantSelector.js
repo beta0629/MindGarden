@@ -30,7 +30,7 @@ const TenantSelector = () => {
     }
   }, [navigate]);
 
-  const handleValidate = async (e) => {
+  const handleValidate = async(e) => {
     e.preventDefault();
 
     if (!tenantCode.trim()) {

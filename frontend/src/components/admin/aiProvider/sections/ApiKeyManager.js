@@ -63,7 +63,7 @@ const ApiKeyManager = ({
     const ok = await confirm({
       variant: 'danger',
       messageKey: 'modal.apiKey.delete.confirm.message',
-      interpolation: { providerId: providerId.toUpperCase() },
+      interpolation: { providerId: providerId.toUpperCase() }
     });
     if (!ok) return;
     await onDeleteProviderKey(providerId);

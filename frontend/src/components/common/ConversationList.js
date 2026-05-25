@@ -42,7 +42,7 @@ const ConversationList = ({
   currentUserId,
   currentUserRole = USER_ROLES.CLIENT,
   themeVariant = 'client',
-  onSelectConversation,
+  onSelectConversation
 }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,10 +54,10 @@ const ConversationList = ({
       : 'var(--mg-client-primary)',
     '--mg-chat-bg': themeVariant === 'consultant'
       ? 'var(--mg-consultant-bg-main)'
-      : 'var(--mg-client-bg-main)',
+      : 'var(--mg-client-bg-main)'
   };
 
-  const loadConversations = useCallback(async () => {
+  const loadConversations = useCallback(async() => {
     if (!currentUserId) return;
     try {
       setLoading(true);
@@ -112,7 +112,7 @@ const ConversationList = ({
           lastMessageAt: msg.createdAt,
           unreadCount: existing
             ? existing.unreadCount + (!isMine && !msg.isRead ? 1 : 0)
-            : (!isMine && !msg.isRead ? 1 : 0),
+            : (!isMine && !msg.isRead ? 1 : 0)
         });
       } else if (!isMine && !msg.isRead) {
         existing.unreadCount += 1;
@@ -133,7 +133,7 @@ const ConversationList = ({
     if (onSelectConversation) {
       onSelectConversation({
         partnerId: conv.partnerId,
-        partnerName: conv.partnerName,
+        partnerName: conv.partnerName
       });
     }
   };

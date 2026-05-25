@@ -73,7 +73,7 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
   const handleDelete = async(classId) => {
     const ok = await confirm({
       variant: 'danger',
-      messageKey: 'modal.delete.confirm.message',
+      messageKey: 'modal.delete.confirm.message'
     });
     if (!ok) return;
     

@@ -24,17 +24,17 @@ import { useTranslation } from 'react-i18next';
 const API_CONSULTANTS = '/api/v1/consultants';
 const API_ENDPOINTS = {
   RECORDS: API_CONSULTANTS,
-  SCHEDULES: SCHEDULE_API.SCHEDULES,
+  SCHEDULES: SCHEDULE_API.SCHEDULES
 };
 
 const TABS = {
   PENDING: 'PENDING',
-  COMPLETED: 'COMPLETED',
+  COMPLETED: 'COMPLETED'
 };
 
 const AVAILABLE_TAGS = [
   '우울', '불안', '가족문제', '대인관계', '자존감',
-  '스트레스', '진로', '트라우마', '분노', '수면',
+  '스트레스', '진로', '트라우마', '분노', '수면'
 ];
 
 const getInitials = (name) => name ? name.charAt(0) : '?';
@@ -96,7 +96,7 @@ const RecordFormSheet = ({ schedule, onClose, onSave }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = async () => {
+  const handleSave = async() => {
     if (!validate()) return;
     setSaving(true);
     try {
@@ -105,7 +105,7 @@ const RecordFormSheet = ({ schedule, onClose, onSave }) => {
         consultationId: schedule.consultationId || schedule.id,
         summary,
         privateMemo,
-        tags: selectedTags,
+        tags: selectedTags
       });
       onClose();
     } catch (err) {
@@ -269,19 +269,19 @@ const ConsultantRecordsRenewal = () => {
   const [formTarget, setFormTarget] = useState(null);
   const [detailTarget, setDetailTarget] = useState(null);
 
-  const fetchRecords = useCallback(async () => {
+  const fetchRecords = useCallback(async() => {
     if (!user?.id) return;
     try {
       setLoading(true);
 
       const [pendingRes, completedRes] = await Promise.allSettled([
         TenantAwareApiClient.get(`${API_ENDPOINTS.RECORDS}/${user.id}/consultation-records`, {
-          status: 'PENDING',
+          status: 'PENDING'
         }),
         TenantAwareApiClient.get(`${API_ENDPOINTS.RECORDS}/${user.id}/consultation-records`, {
           status: 'COMPLETED',
-          ...(dateFilter ? { date: dateFilter } : {}),
-        }),
+          ...(dateFilter ? { date: dateFilter } : {})
+        })
       ]);
 
       if (pendingRes.status === 'fulfilled') {
@@ -317,7 +317,7 @@ const ConsultantRecordsRenewal = () => {
     }
   }, [sessionLoading, user?.id, fetchRecords]);
 
-  const handleSaveRecord = async (formData) => {
+  const handleSaveRecord = async(formData) => {
     try {
       await TenantAwareApiClient.post(
         `${API_ENDPOINTS.RECORDS}/${user.id}/consultation-records`,

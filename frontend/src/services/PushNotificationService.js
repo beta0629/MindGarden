@@ -122,7 +122,7 @@ class PushNotificationService {
         tenantId,
         token,
         platform: 'WEB',
-        deviceInfo,
+        deviceInfo
       });
 
       return true;
@@ -144,7 +144,7 @@ class PushNotificationService {
 
       await StandardizedApi.post(TOKEN_UNREGISTER_ENDPOINT, {
         userId,
-        token,
+        token
       });
 
       localStorage.removeItem(FCM_TOKEN_KEY);
@@ -199,7 +199,7 @@ class PushNotificationService {
       PAYMENT: '/client/payment-history',
       MESSAGE: '/messages',
       WELLNESS: '/client/wellness-hub',
-      SYSTEM: '/notifications',
+      SYSTEM: '/notifications'
     };
 
     const targetRoute = routeMap[type] || '/notifications';
@@ -221,7 +221,7 @@ class PushNotificationService {
       history.unshift({
         ...notification,
         receivedAt: new Date().toISOString(),
-        isRead: false,
+        isRead: false
       });
 
       if (history.length > MAX_HISTORY_SIZE) {
@@ -280,7 +280,7 @@ class PushNotificationService {
         PAYMENT: 'payment',
         MESSAGE: 'message',
         WELLNESS: 'wellness',
-        SYSTEM: 'system',
+        SYSTEM: 'system'
       };
 
       const category = typeMap[type] || 'system';
@@ -303,7 +303,7 @@ class PushNotificationService {
         body: notification.body || '',
         icon: '/favicon.ico',
         tag: notification.id || `mg-${Date.now()}`,
-        data: notification,
+        data: notification
       });
 
       n.onclick = () => {
@@ -327,7 +327,7 @@ class PushNotificationService {
       title: notification.title || data.title || '',
       body: notification.body || data.body || '',
       type: (data.type || data.notificationType || 'SYSTEM').toUpperCase(),
-      data,
+      data
     };
   }
 
@@ -342,7 +342,7 @@ class PushNotificationService {
       platform: navigator.platform || '',
       language: navigator.language || 'ko-KR',
       screenWidth: window.screen?.width || 0,
-      screenHeight: window.screen?.height || 0,
+      screenHeight: window.screen?.height || 0
     };
   }
 

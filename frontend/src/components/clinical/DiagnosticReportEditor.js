@@ -115,7 +115,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
     const handleApprove = async() => {
         const confirmed = await confirm({
             variant: 'info',
-            message: t('report:diagnostic.approveConfirm', '이 진단 보고서를 최종 승인하시겠습니까? 승인 후에는 공식 문서로 저장됩니다.'),
+            message: t('report:diagnostic.approveConfirm', '이 진단 보고서를 최종 승인하시겠습니까? 승인 후에는 공식 문서로 저장됩니다.')
         });
 
         if (!confirmed) return;

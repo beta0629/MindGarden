@@ -71,7 +71,7 @@ const SOAPNoteEditor = ({ report, onSave }) => {
     const handleApprove = async() => {
         const confirmed = await confirm({
             variant: 'info',
-            messageKey: 'modal.soapNote.approve.confirm.message',
+            messageKey: 'modal.soapNote.approve.confirm.message'
         });
 
         if (!confirmed) return;

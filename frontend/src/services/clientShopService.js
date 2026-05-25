@@ -52,36 +52,36 @@ const mapCatalogRow = (row) => {
   };
 };
 
-export const fetchShopCatalog = async () => {
+export const fetchShopCatalog = async() => {
   const res = await StandardizedApi.get(CLIENT_SHOP_API.CATALOG);
   const data = unwrap(res);
   return Array.isArray(data) ? data.map(mapCatalogRow) : [];
 };
 
-export const fetchShopCart = async () => {
+export const fetchShopCart = async() => {
   const res = await StandardizedApi.get(CLIENT_SHOP_API.CART);
   return unwrap(res) || { lines: [], subtotalMinor: 0 };
 };
 
-export const replaceShopCart = async (lines) => {
+export const replaceShopCart = async(lines) => {
   const res = await StandardizedApi.put(CLIENT_SHOP_API.CART, { lines });
   if (!res || !res.success) {
     throw new Error(res?.message || '장바구니 갱신에 실패했습니다.');
   }
 };
 
-export const fetchPointBalance = async () => {
+export const fetchPointBalance = async() => {
   const res = await StandardizedApi.get(CLIENT_SHOP_API.POINTS_BALANCE);
   return unwrap(res) || { availableMinor: 0, heldMinor: 0 };
 };
 
-export const fetchPointLedger = async (limit = 20) => {
+export const fetchPointLedger = async(limit = 20) => {
   const res = await StandardizedApi.get(CLIENT_SHOP_API.POINTS_LEDGER, { limit });
   const data = unwrap(res);
   return Array.isArray(data) ? data : [];
 };
 
-export const fetchShopOrders = async (page = 0, size = 10) => {
+export const fetchShopOrders = async(page = 0, size = 10) => {
   const res = await StandardizedApi.get(CLIENT_SHOP_API.ORDERS, { page, size });
   const data = unwrap(res);
   return Array.isArray(data) ? data : [];
@@ -91,7 +91,7 @@ export const fetchShopOrders = async (page = 0, size = 10) => {
  * @param {string} orderPublicId
  * @returns {Promise<object|null>}
  */
-export const fetchShopOrder = async (orderPublicId) => {
+export const fetchShopOrder = async(orderPublicId) => {
   const res = await StandardizedApi.get(CLIENT_SHOP_API.orderDetail(orderPublicId));
   return unwrap(res);
 };
@@ -102,12 +102,12 @@ export const fetchShopOrder = async (orderPublicId) => {
  * @param {string} skuCode
  * @returns {Promise<object|null>}
  */
-export const fetchShopCatalogSku = async (skuCode) => {
+export const fetchShopCatalogSku = async(skuCode) => {
   const catalog = await fetchShopCatalog();
   return catalog.find((row) => row.skuCode === skuCode) || null;
 };
 
-export const fetchConsultantMappings = async () => {
+export const fetchConsultantMappings = async() => {
   const res = await StandardizedApi.get(CLIENT_SHOP_API.CONSULTANT_MAPPINGS);
   const data = unwrap(res);
   return Array.isArray(data) ? data : [];
@@ -118,7 +118,7 @@ export const fetchConsultantMappings = async () => {
  * @param {number} pointsToRedeemMinor
  * @param {number|null|undefined} consultantClientMappingId
  */
-export const postShopCheckout = async (
+export const postShopCheckout = async(
   idempotencyKey,
   pointsToRedeemMinor,
   consultantClientMappingId
@@ -137,7 +137,7 @@ export const postShopCheckout = async (
   return res.data;
 };
 
-export const prepareShopPayment = async (orderPublicId) => {
+export const prepareShopPayment = async(orderPublicId) => {
   const res = await StandardizedApi.post(CLIENT_SHOP_API.preparePayment(orderPublicId), {});
   if (!res || !res.success) {
     throw new Error(res?.message || '결제 준비에 실패했습니다.');

@@ -70,7 +70,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
 
     useEffect(() => {
         let cancelled = false;
-        (async () => {
+        (async() => {
             try {
                 const opts = await fetchProfessionalProviderTypeSelectOptions();
                 if (cancelled) {
@@ -89,7 +89,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         };
     }, []);
 
-    const loadConsultants = useCallback(async () => {
+    const loadConsultants = useCallback(async() => {
         setLoading(true);
 
         try {
@@ -152,7 +152,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         setShowModal(true);
     }, []);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async(e) => {
         e.preventDefault();
         try {
             const professionalTypeCode =
@@ -194,7 +194,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async(id) => {
         const confirmed = await confirm({
             messageKey: 'admin:consultant.confirm.delete',
             variant: 'danger'

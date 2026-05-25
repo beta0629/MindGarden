@@ -62,7 +62,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    (async() => {
       try {
         const opts = await fetchProfessionalProviderTypeSelectOptions();
         if (cancelled) {

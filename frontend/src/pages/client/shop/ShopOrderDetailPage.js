@@ -30,7 +30,7 @@ const ShopOrderDetailPage = () => {
   const [message, setMessage] = useState('');
   const [paymentUrl, setPaymentUrl] = useState('');
 
-  const loadOrder = useCallback(async () => {
+  const loadOrder = useCallback(async() => {
     if (!orderPublicId) {
       return;
     }
@@ -58,7 +58,7 @@ const ShopOrderDetailPage = () => {
     }
   }, [sessionLoading, isLoggedIn, loadOrder]);
 
-  const handlePreparePayment = async () => {
+  const handlePreparePayment = async() => {
     if (!orderPublicId) {
       return;
     }

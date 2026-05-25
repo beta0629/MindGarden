@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  Calendar, CreditCard, MessageCircle, Bell, Heart, Trash2,
+  Calendar, CreditCard, MessageCircle, Bell, Heart, Trash2
 } from 'lucide-react';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './NotificationCenter.css';
@@ -23,7 +23,7 @@ const FILTER_TYPES = [
   { key: 'PAYMENT', label: '결제' },
   { key: 'MESSAGE', label: '메시지' },
   { key: 'SYSTEM', label: '시스템' },
-  { key: 'WELLNESS', label: '웰니스' },
+  { key: 'WELLNESS', label: '웰니스' }
 ];
 
 const TYPE_ICON_MAP = {
@@ -32,7 +32,7 @@ const TYPE_ICON_MAP = {
   PAYMENT: { Icon: CreditCard, className: 'mg-notif-center__icon--payment' },
   MESSAGE: { Icon: MessageCircle, className: 'mg-notif-center__icon--message' },
   SYSTEM: { Icon: Bell, className: 'mg-notif-center__icon--system' },
-  WELLNESS: { Icon: Heart, className: 'mg-notif-center__icon--wellness' },
+  WELLNESS: { Icon: Heart, className: 'mg-notif-center__icon--wellness' }
 };
 
 const SKELETON_COUNT = 6;
@@ -70,7 +70,7 @@ const formatNotifTime = (dateString) => {
 
 const NotificationCenter = ({
   currentUserId,
-  themeVariant = 'client',
+  themeVariant = 'client'
 }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -82,10 +82,10 @@ const NotificationCenter = ({
       : 'var(--mg-client-primary)',
     '--mg-chat-bg': themeVariant === 'consultant'
       ? 'var(--mg-consultant-bg-main)'
-      : 'var(--mg-client-bg-main)',
+      : 'var(--mg-client-bg-main)'
   };
 
-  const loadNotifications = useCallback(async () => {
+  const loadNotifications = useCallback(async() => {
     if (!currentUserId) return;
     try {
       setLoading(true);
@@ -93,7 +93,7 @@ const NotificationCenter = ({
         userId: currentUserId,
         page: 0,
         size: 100,
-        sort: 'createdAt,desc',
+        sort: 'createdAt,desc'
       });
 
       let data = [];
@@ -116,7 +116,7 @@ const NotificationCenter = ({
     loadNotifications();
   }, [loadNotifications]);
 
-  const markAsRead = async (notifId) => {
+  const markAsRead = async(notifId) => {
     setNotifications((prev) =>
       prev.map((n) => n.id === notifId ? { ...n, isRead: true } : n)
     );
@@ -127,7 +127,7 @@ const NotificationCenter = ({
     }
   };
 
-  const deleteNotification = async (notifId) => {
+  const deleteNotification = async(notifId) => {
     setNotifications((prev) => prev.filter((n) => n.id !== notifId));
     try {
       await TenantAwareApiClient.delete(`${API_ENDPOINT}/${notifId}`);

@@ -3,7 +3,6 @@ package com.coresolution.consultation.service;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import com.coresolution.consultation.entity.AiUsageLog;
 import com.coresolution.consultation.repository.AiUsageLogRepository;
 import com.coresolution.consultation.service.ai.AiChatCompletionResult;
@@ -55,99 +54,112 @@ public class WellnessAiService {
     private static final String SYSTEM_TENANT_FALLBACK = "SYSTEM";
 
     /**
-     * AI 호출 실패 시 사용할 회전 fallback 풀.
-     * 트랙 A 핫픽스 (2026-05-23) — 단일 정적 본문 누적 결함 해소를 위해
-     * dayOfWeek/random 으로 회전 선택. 풀 항목의 isFallback=true 로 호출자가
-     * DB 저장 차단 등 분기를 결정할 수 있도록 한다.
+     * AI 호출 실패 시 사용할 회전 fallback 풀 (B3 핫픽스, 2026-05-25).
+     *
+     * <p>트랙 A 핫픽스 (2026-05-23) — 단일 정적 본문 누적 결함 해소를 위해 dayOfWeek 로 회전 선택.
+     * 풀 항목의 {@link WellnessContent#isFallback()} 가 {@code true} 이므로
+     * 호출자({@code WellnessTemplateService}) 는 DB 저장을 차단해야 한다.</p>
+     *
+     * <p>B3 핫픽스 (2026-05-25) — 디자이너 핸드오프
+     * ({@code docs/project-management/2026-05-25/WELLNESS_ROTATION_POOL_8_COPY_HANDOFF.md} §3)
+     * 의 8가지 테마(호흡휴식 / 시작목표 / 산책자연 / 감사일기 / 마음기록 / 사람연결 /
+     * 자기격려 / 명상고요) 와 정확히 일치하도록 동기화. {@code wellness_templates} DB 시드
+     * (V20260529_002) 와 1:1 매핑된다. 모든 항목의 {@code title} 은 핸드오프 일관성을 위해
+     * 동일 "오늘의 마음 건강 팁" 이며, 변별은 본문(header emoji + headerText + body +
+     * checklist + footer) 에서 이루어진다.</p>
+     *
+     * <p>index 매핑 (ISO {@code java.time.DayOfWeek.getValue()} 기준):
+     * 0=Default/특별(🍃 호흡과 휴식), 1=월(☀️ 시작목표), 2=화(🌱 산책자연), 3=수(🌸 감사일기),
+     * 4=목(🌊 마음기록), 5=금(✨ 사람연결), 6=토(💚 자기격려), 7=일/대체(🌙 명상고요).</p>
      */
     private static final List<WellnessContent> FALLBACK_POOL = List.of(
             new WellnessContent(
                     "오늘의 마음 건강 팁",
-                    "<h3>💚 마음 건강을 위한 시간</h3>"
-                            + "<p>잠시 멈춰서 깊은 호흡을 해보세요. 천천히 들이마시고, 천천히 내쉬며 마음을 가라앉혀보세요.</p>"
+                    "<h3>🍃 마음 건강을 위한 시간</h3>"
+                            + "<p>바쁘게 달려온 일주일, 오늘은 온전히 나를 위해 쉬어가는 날입니다. 편안한 자세로 앉아 깊게 숨을 들이마시고 내쉬며, 몸과 마음의 긴장을 부드럽게 풀어주세요.</p>"
                             + "<ul>"
-                            + "<li>🌬️ 깊은 호흡 5회 반복하기</li>"
-                            + "<li>💭 현재 순간에 집중하기</li>"
-                            + "<li>😊 자신에게 긍정적인 말 건네기</li>"
+                            + "<li>🌬️ 눈을 감고 3번 깊게 심호흡하기</li>"
+                            + "<li>☕ 따뜻한 차 한 잔 마시며 여유 가지기</li>"
+                            + "<li>🛋️ 가장 편안한 공간에서 10분간 아무것도 하지 않기</li>"
                             + "</ul>"
-                            + "<p><strong>기억하세요:</strong> 작은 실천이 큰 변화를 만듭니다.</p>",
+                            + "<p><strong>기억하세요:</strong> 충분한 휴식은 내일을 위한 가장 좋은 준비입니다.</p>",
                     true),
             new WellnessContent(
-                    "오늘의 감사 일기",
-                    "<h3>🙏 감사의 마음 채우기</h3>"
-                            + "<p>오늘 하루를 돌아보며 감사했던 순간을 떠올려보세요. 작은 순간이라도 좋습니다.</p>"
+                    "오늘의 마음 건강 팁",
+                    "<h3>☀️ 새로운 한 주를 여는 마음</h3>"
+                            + "<p>새로운 한 주가 시작되었습니다. 완벽해야 한다는 부담감은 잠시 내려놓고, 오늘 하루 내가 할 수 있는 아주 작은 목표 하나에만 다정하게 집중해 보는 건 어떨까요?</p>"
                             + "<ul>"
-                            + "<li>📝 감사했던 일 3가지 적기</li>"
-                            + "<li>🌟 그 순간의 감정 떠올리기</li>"
-                            + "<li>💌 누군가에게 고마움 표현하기</li>"
+                            + "<li>📝 오늘 실천할 수 있는 가장 작은 목표 1개 적어보기</li>"
+                            + "<li>💪 아침에 일어나서 가볍게 기지개 켜기</li>"
+                            + "<li>😊 거울 속 나에게 다정한 미소 지어주기</li>"
                             + "</ul>"
-                            + "<p><strong>기억하세요:</strong> 감사는 마음의 근육을 단단하게 만듭니다.</p>",
+                            + "<p><strong>기억하세요:</strong> 작은 발걸음이 모여 당신의 아름다운 여정이 됩니다.</p>",
                     true),
             new WellnessContent(
-                    "오늘의 가벼운 산책",
-                    "<h3>🚶 햇볕 한 줌 챙기기</h3>"
-                            + "<p>잠깐이라도 햇볕을 쬐며 가볍게 걸어보세요. 몸과 마음이 함께 환기됩니다.</p>"
+                    "오늘의 마음 건강 팁",
+                    "<h3>🌱 자연이 주는 위로</h3>"
+                            + "<p>실내에만 머물다 보면 마음도 답답해지기 쉽습니다. 잠시 밖으로 나가 뺨에 닿는 바람을 느끼고, 주변의 나무와 하늘을 바라보며 자연의 에너지를 채워보세요.</p>"
                             + "<ul>"
-                            + "<li>🌤️ 햇볕 쬐며 10분 걷기</li>"
-                            + "<li>👂 주변 소리에 귀 기울이기</li>"
-                            + "<li>🌿 보이는 풍경 한 가지 마음에 담기</li>"
+                            + "<li>🚶 점심시간이나 퇴근 후 15분 동안 가볍게 걷기</li>"
+                            + "<li>☁️ 잠시 멈춰서 오늘의 하늘 올려다보기</li>"
+                            + "<li>🌿 길가의 작은 풀꽃이나 나무 관찰하기</li>"
                             + "</ul>"
-                            + "<p><strong>기억하세요:</strong> 짧은 걸음도 충분한 회복입니다.</p>",
+                            + "<p><strong>기억하세요:</strong> 자연은 언제나 당신을 말없이 품어줍니다.</p>",
                     true),
             new WellnessContent(
-                    "오늘의 따뜻한 차 한 잔",
-                    "<h3>☕ 잠시의 멈춤</h3>"
-                            + "<p>좋아하는 차나 따뜻한 음료를 천천히 마셔보세요. 향과 온기에 집중해보세요.</p>"
+                    "오늘의 마음 건강 팁",
+                    "<h3>🌸 일상을 밝히는 감사의 힘</h3>"
+                            + "<p>한 주의 중간, 지치기 쉬운 수요일입니다. 당연하게 여겼던 일상 속에서 작고 소소한 기쁨을 찾아보세요. 감사의 마음은 우리 내면을 단단하고 따뜻하게 만들어줍니다.</p>"
                             + "<ul>"
-                            + "<li>🍵 차의 향 깊이 들이마시기</li>"
-                            + "<li>🤲 컵의 온도 손끝으로 느끼기</li>"
-                            + "<li>🧘 한 모금마다 마음 쉬기</li>"
+                            + "<li>📖 오늘 하루 감사했던 일 3가지 기록해보기</li>"
+                            + "<li>🍽️ 맛있는 식사나 간식에 온전히 집중하며 음미하기</li>"
+                            + "<li>💝 나에게 도움을 준 사람에게 고마움 표현하기</li>"
                             + "</ul>"
-                            + "<p><strong>기억하세요:</strong> 멈춤이 가장 빠른 회복이 됩니다.</p>",
+                            + "<p><strong>기억하세요:</strong> 행복은 크기가 아니라 발견하는 횟수에 있습니다.</p>",
                     true),
             new WellnessContent(
-                    "오늘의 가벼운 스트레칭",
-                    "<h3>🧘 몸의 긴장 풀기</h3>"
-                            + "<p>책상 앞이라면 잠시 일어나 어깨와 목을 천천히 풀어주세요.</p>"
+                    "오늘의 마음 건강 팁",
+                    "<h3>🌊 내 감정과 마주하기</h3>"
+                            + "<p>마음속에 일어나는 파도를 억누르려 하지 말고 가만히 바라봐주세요. 기쁨, 슬픔, 불안, 분노 모두 당신의 소중한 일부입니다. 있는 그대로의 감정을 인정해주는 시간이 필요합니다.</p>"
                             + "<ul>"
-                            + "<li>🙆 어깨 으쓱하며 천천히 떨구기</li>"
-                            + "<li>🦒 목 좌우로 부드럽게 돌리기</li>"
-                            + "<li>🤸 깍지 끼고 팔 위로 쭉 펴기</li>"
+                            + "<li>✍️ 지금 느끼는 감정을 솔직하게 단어로 적어보기</li>"
+                            + "<li>🫂 '그럴 수 있어'라고 내 마음 다독여주기</li>"
+                            + "<li>🎵 현재 내 감정과 어울리는 음악 한 곡 듣기</li>"
                             + "</ul>"
-                            + "<p><strong>기억하세요:</strong> 5분의 스트레칭이 하루의 컨디션을 바꿉니다.</p>",
+                            + "<p><strong>기억하세요:</strong> 모든 감정은 흘러가는 구름처럼 자연스러운 것입니다.</p>",
                     true),
             new WellnessContent(
-                    "오늘의 마음 일기",
-                    "<h3>📝 지금 감정을 한 줄로</h3>"
-                            + "<p>지금 이 순간 떠오르는 감정을 한 줄로 적어보세요. 좋고 나쁨을 판단하지 않아도 됩니다.</p>"
+                    "오늘의 마음 건강 팁",
+                    "<h3>✨ 따뜻한 마음 나누기</h3>"
+                            + "<p>우리는 누군가와 연결되어 있다고 느낄 때 큰 위안을 얻습니다. 바쁜 일상 속에서 잠시 잊고 지냈던 소중한 사람에게 먼저 다가가 따뜻한 안부를 건네보는 건 어떨까요?</p>"
                             + "<ul>"
-                            + "<li>✍️ 감정 단어 1개 적기</li>"
-                            + "<li>🔍 그 감정이 어디서 왔는지 떠올리기</li>"
-                            + "<li>🌱 나에게 필요한 한 마디 건네기</li>"
+                            + "<li>📱 생각나는 사람에게 짧은 안부 메시지 보내기</li>"
+                            + "<li>🗣️ 주변 사람에게 진심 어린 칭찬 한 마디 건네기</li>"
+                            + "<li>🍵 누군가와 함께 차 한 잔 마시며 대화 나누기</li>"
                             + "</ul>"
-                            + "<p><strong>기억하세요:</strong> 알아차림만으로도 마음은 한결 가벼워집니다.</p>",
+                            + "<p><strong>기억하세요:</strong> 진심이 담긴 작은 인사가 누군가의 하루를 구원할 수 있습니다.</p>",
                     true),
             new WellnessContent(
-                    "오늘의 따뜻한 연결",
-                    "<h3>📞 소중한 사람에게 안부</h3>"
-                            + "<p>오랜만에 떠오른 사람에게 짧은 안부를 전해보세요. 관계는 작은 메시지에서 자랍니다.</p>"
+                    "오늘의 마음 건강 팁",
+                    "<h3>💚 나를 사랑하는 시간</h3>"
+                            + "<p>치열하게 한 주를 살아낸 당신, 정말 고생 많으셨습니다. 타인에게는 관대하면서 나에게는 엄격하지 않았나요? 오늘은 나 자신을 가장 친한 친구처럼 다정하게 안아주세요.</p>"
                             + "<ul>"
-                            + "<li>💬 짧은 안부 메시지 보내기</li>"
-                            + "<li>📷 함께한 사진 한 장 떠올리기</li>"
-                            + "<li>🤝 다음에 함께할 일 한 가지 정하기</li>"
+                            + "<li>🏆 이번 주 내가 잘해낸 일 한 가지 찾아 칭찬하기</li>"
+                            + "<li>🎁 나를 위한 작고 기분 좋은 보상 준비하기</li>"
+                            + "<li>🛁 따뜻한 물로 샤워하며 몸의 피로 씻어내기</li>"
                             + "</ul>"
-                            + "<p><strong>기억하세요:</strong> 연결은 마음 건강의 가장 든든한 토대입니다.</p>",
+                            + "<p><strong>기억하세요:</strong> 당신은 이미 충분히 잘하고 있고, 사랑받을 자격이 있습니다.</p>",
                     true),
             new WellnessContent(
-                    "오늘의 충분한 휴식",
-                    "<h3>🛌 잠시 눈 감기</h3>"
-                            + "<p>10분만 모든 화면을 끄고 눈을 감아보세요. 짧은 휴식이 큰 회복을 만듭니다.</p>"
+                    "오늘의 마음 건강 팁",
+                    "<h3>🌙 내면의 고요함 찾기</h3>"
+                            + "<p>외부의 소음과 자극에서 잠시 벗어나, 내 안의 고요한 공간으로 들어가 보세요. 아무런 판단 없이 그저 지금 이 순간에 머무르는 것만으로도 마음은 평온을 되찾습니다.</p>"
                             + "<ul>"
-                            + "<li>👀 눈 감고 천천히 호흡하기</li>"
-                            + "<li>🔕 알림 끄고 조용한 시간 갖기</li>"
-                            + "<li>🌙 좋아하는 장소 떠올리기</li>"
+                            + "<li>🧘 조용한 곳에서 5분 동안 눈 감고 명상하기</li>"
+                            + "<li>📵 잠들기 전 30분 동안 스마트폰 멀리하기</li>"
+                            + "<li>🕯️ 은은한 조명 아래서 차분한 시간 보내기</li>"
                             + "</ul>"
-                            + "<p><strong>기억하세요:</strong> 잘 쉬는 것도 중요한 실천입니다.</p>",
+                            + "<p><strong>기억하세요:</strong> 고요함 속에서 당신의 진짜 목소리를 들을 수 있습니다.</p>",
                     true)
     );
 
@@ -319,20 +331,29 @@ public class WellnessAiService {
      * AI 호출 실패 시 사용할 fallback 컨텐츠를 회전 풀에서 선택한다.
      *
      * <p>트랙 A 핫픽스 (2026-05-23) — 매일 동일 본문 누적을 막기 위해 dayOfWeek 기반 회전.
-     * dayOfWeek 가 null 이면 (예: parseResponse 실패) 풀에서 무작위 선택한다.
      * 반환되는 {@link WellnessContent} 는 {@code isFallback=true} 이므로 호출자가
      * DB 영속화 차단 등 분기 처리에 활용해야 한다.</p>
      *
-     * @param dayOfWeek 요일 (1-7). null 이면 random.
+     * <p>B3 핫픽스 (2026-05-25) — index 매핑을 디자이너 핸드오프와 일치하도록 정정.
+     * 이전에는 {@code (dayOfWeek - 1) % poolSize} 로 매핑되어 일요일(7) 이 index 6
+     * (자기 격려) 에 잘못 연결되고 풀 마지막 슬롯(명상과 고요) 이 사용되지 않았다.
+     * 신 매핑: index = dayOfWeek (0~7 직접 매핑), 범위 밖이면 index 0 (default).</p>
+     *
+     * <ul>
+     *   <li>dayOfWeek=null 또는 0 / 8 이상 / 음수 → index 0 (호흡과 휴식, 핸드오프 default)</li>
+     *   <li>dayOfWeek=1~7 → index 1~7 (월~일요일 핸드오프 매핑)</li>
+     * </ul>
+     *
+     * @param dayOfWeek 요일 (0=default, 1~7=월~일). null/범위 밖이면 index 0.
      * @return 회전 풀에서 선택된 fallback 컨텐츠 (isFallback=true)
      */
     private WellnessContent getDefaultContent(Integer dayOfWeek) {
         int poolSize = FALLBACK_POOL.size();
         int index;
-        if (dayOfWeek != null && dayOfWeek >= 1 && dayOfWeek <= 7) {
-            index = (dayOfWeek - 1) % poolSize;
+        if (dayOfWeek != null && dayOfWeek >= 0 && dayOfWeek <= 7) {
+            index = dayOfWeek;
         } else {
-            index = ThreadLocalRandom.current().nextInt(poolSize);
+            index = 0;
         }
         return FALLBACK_POOL.get(index);
     }

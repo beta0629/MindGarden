@@ -206,3 +206,22 @@ jobs:
         echo "📝 빌드 테스트 실행..."
         cd frontend && ESLINT_NO_DEV_ERRORS=true CI=false npm run build
         echo "✅ 빌드 성공!"
+
+    - name: 🔍 Codemod mappings validation gate (D11 T-R3)
+      working-directory: frontend
+      run: npm run lint:codemod-mappings
+      continue-on-error: false
+
+    - name: 📊 Hardcoded colors dual-metric dry-run (D11 T-M)
+      run: |
+        node scripts/design-system/color-management/count-hardcoded-colors.js --json > /tmp/hardcoded-colors-metric.json
+        echo "=== D11 dual-metric (legacy + unified) ==="
+        jq '.summary | {metricVersion, canonical, withR2, legacyRawLine, unifiedRawLine, coverage, r2Protected, uniqueR2ProtectedHex}' /tmp/hardcoded-colors-metric.json
+        echo "=== D11 KPI 검증 ==="
+        R2=$(jq '.summary.r2Protected' /tmp/hardcoded-colors-metric.json)
+        if [ "$R2" -gt 14 ]; then
+          echo "❌ FAIL: r2Protected=$R2 > 14 (D11 KPI 미달)"
+          exit 1
+        fi
+        echo "✅ PASS: r2Protected=$R2 ≤ 14"
+      continue-on-error: false

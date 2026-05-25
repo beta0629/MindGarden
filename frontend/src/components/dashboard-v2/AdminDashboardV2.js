@@ -194,7 +194,7 @@ function getEmptyWeeklyChartData(weeks = 6) {
 }
 
 const AdminDashboardV2 = ({ user: propUser }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['admin', 'common']);
   const navigate = useNavigate();
   const { user: sessionUser, isLoading: sessionLoading, logout, hasRole } = useSession();
   const dashboardUser = propUser || sessionUser;
@@ -948,7 +948,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   const layoutProps = {
     menuItems: dashboardMenuItems,
-    headerTitle: '시스템 관리',
+    headerTitle: t('admin:system.title', '시스템 관리'),
     logoLabel,
     logoUrl,
     logoBrandingLoading: isBrandingLoading,
@@ -963,7 +963,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     {
       id: 'users',
       icon: <FaUsers size={28} />,
-      label: '총 사용자',
+      label: t('admin:dashboard.summary.totalUsers', '총 사용자'),
       value: (stats.totalConsultants + stats.totalClients).toLocaleString(),
       subtitle: `상담사 ${stats.totalConsultants} · 내담자 ${stats.totalClients}`,
       subtitleBadge: todayStats.totalUsersGrowthRate != null
@@ -978,7 +978,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     {
       id: 'booked',
       icon: <FaCalendarAlt size={28} />,
-      label: '오늘 예약된 상담',
+      label: t('admin:dashboard.summary.bookedConsultations', '오늘 예약된 상담'),
       value: toSafeNumber(todayStats.bookedToday, 0) + toSafeNumber(todayStats.confirmedToday, 0),
       badge: todayStats.bookedGrowthRate != null
         ? (todayStats.bookedGrowthRate === 0 ? '변동 없음' : `${todayStats.bookedGrowthRate > 0 ? '+' : ''}${todayStats.bookedGrowthRate}%`)
@@ -989,7 +989,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     {
       id: 'completion',
       icon: <FaCheckCircle size={28} aria-hidden />,
-      label: '완료율',
+      label: t('admin:dashboard.summary.completionRate', '완료율'),
       value: stats.consultationStats?.completionRate != null ? `${stats.consultationStats.completionRate}%` : 'N/A',
       subtitle: stats.consultationStats?.completionRate == null && todayStats.completedToday != null
         ? `오늘 완료 ${todayStats.completedToday}건`
@@ -1054,8 +1054,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const mainContent = (
     <ContentArea>
       <ContentHeader
-        title="대시보드 개요"
-        subtitle="오늘의 주요 지표와 현황을 한눈에 확인하세요."
+        title={t('admin:dashboard.v2.title', '대시보드 개요')}
+        subtitle={t('admin:dashboard.subtitle', '오늘의 주요 지표와 현황을 한눈에 확인하세요.')}
         actions={headerActions}
       />
 
@@ -1096,9 +1096,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               <div className="mg-v2-ad-b0kla__card">
                 <div className="mg-v2-ad-b0kla__chart-header">
                   <div>
-                    <h3 className="mg-v2-ad-b0kla__chart-title">상담 현황 추이</h3>
+                    <h3 className="mg-v2-ad-b0kla__chart-title">{t('admin:dashboard.chartTitle', '상담 현황 추이')}</h3>
                 <p className="mg-v2-ad-b0kla__chart-desc">
-                  {chartPeriod === 'weekly' ? '최근 6주 간의 완료 추이' : '최근 6개월 간의 예약 및 완료 추이'}
+                  {chartPeriod === 'weekly' ? t('admin:dashboard.chartWeeklySubtitle', '최근 6주 간의 완료 추이') : t('admin:dashboard.chartSubtitle', '최근 6개월 간의 예약 및 완료 추이')}
                 </p>
               </div>
               <div className="mg-v2-ad-b0kla__pill-toggle">
@@ -1114,7 +1114,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                   onClick={() => setChartPeriod('monthly')}
                   preventDoubleClick={false}
                 >
-                  월간
+                  {t('admin:dashboard.v2.period.monthly', '월간')}
                 </MGButton>
                 <MGButton
                   type="button"
@@ -1128,7 +1128,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                   onClick={() => setChartPeriod('weekly')}
                   preventDoubleClick={false}
                 >
-                  주간
+                  {t('admin:dashboard.v2.period.weekly', '주간')}
                 </MGButton>
               </div>
             </div>

@@ -82,7 +82,7 @@ const CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS = {
 };
 
 const ConsultantComprehensiveManagement = ({ embedded = false }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['admin', 'common']);
     const navigate = useNavigate();
     const [consultants, setConsultants] = useState([]);
     const [selectedConsultant, setSelectedConsultant] = useState(null);
@@ -1243,13 +1243,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             return <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />;
         }
         return (
-            <AdminCommonLayout title="상담사 종합관리">
+            <AdminCommonLayout title={t('admin:consultant.title', '상담사 종합 관리')}>
                 <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
                     <div className="mg-v2-ad-b0kla__container">
-                        <ContentArea ariaLabel="상담사 종합관리 본문">
+                        <ContentArea ariaLabel={t('admin:consultant.title', '상담사 종합 관리')}>
                             <ContentHeader
-                                title={t('admin.labels.consultantManagement', '상담사 관리')}
-                                subtitle="상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다"
+                                title={t('admin:consultant.title', '상담사 종합 관리')}
+                                subtitle={t('admin:consultant.subtitle', '상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다')}
                                 titleId={CONSULTANT_COMP_MGMT_TITLE_ID}
                             />
                             <main aria-labelledby={CONSULTANT_COMP_MGMT_TITLE_ID}>
@@ -1273,7 +1273,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} mg-v2-ad-b0kla__pill ${mainTab === 'comprehensive' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setMainTab('comprehensive')}
                             >
-                                종합관리
+                                {t('admin:consultant.tab.list', '종합관리')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -1282,7 +1282,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} mg-v2-ad-b0kla__pill ${mainTab === 'basic' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                                 onClick={() => setMainTab('basic')}
                             >
-                                기본관리
+                                {t('admin:consultant.tab.detail', '기본관리')}
                             </MGButton>
                         </div>
             </ContentSection>
@@ -1296,7 +1296,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 <Users size={24} />
                                             </div>
                                             <div className="mg-v2-mapping-kpi-section__info">
-                                                <span className="mg-v2-mapping-kpi-section__label">총 상담사</span>
+                                                <span className="mg-v2-mapping-kpi-section__label">{t('admin:consultant.table.name', '총 상담사')}</span>
                                                 <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.totalConsultants)}명</span>
                                             </div>
                                         </div>
@@ -1305,7 +1305,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 <Link2 size={24} />
                                             </div>
                                             <div className="mg-v2-mapping-kpi-section__info">
-                                                <span className="mg-v2-mapping-kpi-section__label">활성 매칭</span>
+                                                <span className="mg-v2-mapping-kpi-section__label">{t('admin:dashboard.summary.activeSessions', '활성 매칭')}</span>
                                                 <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.activeMappings)}건</span>
                                             </div>
                                         </div>
@@ -1314,7 +1314,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 <Calendar size={24} />
                                             </div>
                                             <div className="mg-v2-mapping-kpi-section__info">
-                                                <span className="mg-v2-mapping-kpi-section__label">총 스케줄</span>
+                                                <span className="mg-v2-mapping-kpi-section__label">{t('admin:consultant.tab.sessions', '총 스케줄')}</span>
                                                 <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.totalSchedules)}건</span>
                                             </div>
                                         </div>
@@ -1481,12 +1481,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                         ) : (
                                             <ListTableView
                                                 columns={[
-                                                    { key: 'name', label: '이름' },
-                                                    { key: 'professionalProviderTypeCode', label: '전문가 유형' },
-                                                    { key: 'email', label: '이메일' },
-                                                    { key: 'status', label: '상태' },
-                                                    { key: 'createdAt', label: '가입일', hideOnMobile: true },
-                                                    { key: 'currentClients', label: '클라이언트 수', hideOnMobile: true }
+                                                    { key: 'name', label: t('admin:consultant.table.name', '이름') },
+                                                    { key: 'professionalProviderTypeCode', label: t('admin:consultant.filter.specialization', '전문가 유형') },
+                                                    { key: 'email', label: t('admin:consultant.table.email', '이메일') },
+                                                    { key: 'status', label: t('admin:consultant.table.status', '상태') },
+                                                    { key: 'createdAt', label: t('admin:consultant.table.joinDate', '가입일'), hideOnMobile: true },
+                                                    { key: 'currentClients', label: t('admin:consultant.table.sessionCount', '클라이언트 수'), hideOnMobile: true }
                                                 ]}
                                                 data={getFilteredConsultants}
                                                 renderCell={(key, item) => {
@@ -1657,12 +1657,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                         ) : (
                                             <ListTableView
                                                 columns={[
-                                                    { key: 'name', label: '이름' },
-                                                    { key: 'professionalProviderTypeCode', label: '전문가 유형' },
-                                                    { key: 'email', label: '이메일' },
-                                                    { key: 'status', label: '상태' },
-                                                    { key: 'createdAt', label: '가입일', hideOnMobile: true },
-                                                    { key: 'currentClients', label: '클라이언트 수', hideOnMobile: true }
+                                                    { key: 'name', label: t('admin:consultant.table.name', '이름') },
+                                                    { key: 'professionalProviderTypeCode', label: t('admin:consultant.filter.specialization', '전문가 유형') },
+                                                    { key: 'email', label: t('admin:consultant.table.email', '이메일') },
+                                                    { key: 'status', label: t('admin:consultant.table.status', '상태') },
+                                                    { key: 'createdAt', label: t('admin:consultant.table.joinDate', '가입일'), hideOnMobile: true },
+                                                    { key: 'currentClients', label: t('admin:consultant.table.sessionCount', '클라이언트 수'), hideOnMobile: true }
                                                 ]}
                                                 data={getFilteredConsultants}
                                                 renderCell={(key, item) => {

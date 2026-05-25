@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import StandardizedApi from '../../../utils/standardizedApi';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import {
   ONBOARDING_STEPS,
-  ONBOARDING_MESSAGES,
   ONBOARDING_API_ENDPOINTS,
-  ONBOARDING_TEXT,
   ONBOARDING_MOCK_DATA
 } from '../../../constants/adminOnboarding';
 import '../../../styles/main.css';
@@ -20,6 +19,7 @@ import '../../../styles/main.css';
  * @since 2026-03-29
  */
 const AdminOnboarding = () => {
+  const { t } = useTranslation(['admin', 'common']);
   const navigate = useNavigate();
   const params = useParams();
   const { id } = params;
@@ -56,7 +56,7 @@ const AdminOnboarding = () => {
   };
 
   const handleApprove = async() => {
-    if (!window.confirm(ONBOARDING_MESSAGES.CONFIRM_APPROVE)) return;
+    if (!window.confirm(t('admin:onboarding.confirm.approve', '이 온보딩 요청을 승인하시겠어요?'))) return;
 
     setIsLoading(true);
     try {
@@ -65,11 +65,11 @@ const AdminOnboarding = () => {
         actorId: 'admin_user',
         note: ONBOARDING_MOCK_DATA.NOTE_APPROVE
       });
-      alert(ONBOARDING_MESSAGES.APPROVE_SUCCESS);
+      alert(t('admin:onboarding.msg.approveSuccess', '온보딩이 성공적으로 승인되었습니다.'));
       navigate('/admin/onboarding');
     } catch (error) {
       console.error(error);
-      alert(ONBOARDING_MESSAGES.ERROR_DECISION);
+      alert(t('admin:onboarding.msg.errorDecision', '심사 처리 중 오류가 발생했습니다. 다시 시도해 주세요.'));
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +77,7 @@ const AdminOnboarding = () => {
 
   const handleReject = async() => {
     if (!rejectReason.trim()) {
-      alert(ONBOARDING_MESSAGES.REJECT_REASON_REQUIRED);
+      alert(t('admin:onboarding.msg.rejectReasonRequired', '반려 사유를 입력해 주세요.'));
       return;
     }
 
@@ -88,12 +88,12 @@ const AdminOnboarding = () => {
         actorId: 'admin_user',
         note: rejectReason
       });
-      alert(ONBOARDING_MESSAGES.REJECT_SUCCESS);
+      alert(t('admin:onboarding.msg.rejectSuccess', '온보딩이 반려되었습니다.'));
       setIsRejectModalOpen(false);
       navigate('/admin/onboarding');
     } catch (error) {
       console.error(error);
-      alert(ONBOARDING_MESSAGES.ERROR_DECISION);
+      alert(t('admin:onboarding.msg.errorDecision', '심사 처리 중 오류가 발생했습니다. 다시 시도해 주세요.'));
     } finally {
       setIsLoading(false);
     }
@@ -114,23 +114,23 @@ const AdminOnboarding = () => {
   );
 
   const renderStepContent = () => {
-    if (!onboardingData) return <div>{ONBOARDING_TEXT.LOADING}</div>;
+    if (!onboardingData) return <div>{t('common:state.loadingData', '데이터를 불러오는 중...')}</div>;
 
     switch (currentStep) {
       case 1:
         return (
           <section className="mg-v2-card">
-            <h3 className="mg-v2-card__title">{ONBOARDING_TEXT.SECTION_BASIC_INFO}</h3>
+            <h3 className="mg-v2-card__title">{t('admin:onboarding.step.1.label', '기본 정보')}</h3>
             <div className="mg-v2-form-group">
-              <span className="mg-v2-form-label">{ONBOARDING_TEXT.LABEL_TENANT_NAME}</span>
+              <span className="mg-v2-form-label">{t('admin:onboarding.field.tenantName', '기관명')}</span>
               <div className="mg-v2-form-value">{onboardingData.tenantName}</div>
             </div>
             <div className="mg-v2-form-group">
-              <span className="mg-v2-form-label">{ONBOARDING_TEXT.LABEL_CONTACT_PHONE}</span>
+              <span className="mg-v2-form-label">{t('admin:onboarding.field.contactPhone', '연락처')}</span>
               <div className="mg-v2-form-value">{onboardingData.contactPhone}</div>
             </div>
             <div className="mg-v2-form-group">
-              <span className="mg-v2-form-label">{ONBOARDING_TEXT.LABEL_BUSINESS_TYPE}</span>
+              <span className="mg-v2-form-label">{t('admin:onboarding.field.businessType', '업종')}</span>
               <div className="mg-v2-form-value">{onboardingData.businessType}</div>
             </div>
           </section>
@@ -138,13 +138,13 @@ const AdminOnboarding = () => {
       case 2:
         return (
           <section className="mg-v2-card">
-            <h3 className="mg-v2-card__title">{ONBOARDING_TEXT.SECTION_ADMIN_INFO}</h3>
+            <h3 className="mg-v2-card__title">{t('admin:onboarding.step.2.label', '자격 확인')}</h3>
             <div className="mg-v2-form-group">
-              <span className="mg-v2-form-label">{ONBOARDING_TEXT.LABEL_ADMIN_NAME}</span>
+              <span className="mg-v2-form-label">{t('admin:onboarding.field.adminName', '관리자 이름')}</span>
               <div className="mg-v2-form-value">{onboardingData.adminName}</div>
             </div>
             <div className="mg-v2-form-group">
-              <span className="mg-v2-form-label">{ONBOARDING_TEXT.LABEL_ADMIN_EMAIL}</span>
+              <span className="mg-v2-form-label">{t('admin:onboarding.field.adminEmail', '관리자 이메일')}</span>
               <div className="mg-v2-form-value">{onboardingData.adminEmail}</div>
             </div>
           </section>
@@ -152,8 +152,8 @@ const AdminOnboarding = () => {
       case 3:
         return (
           <section className="mg-v2-card">
-            <h3 className="mg-v2-card__title">{ONBOARDING_TEXT.SECTION_FINAL_REVIEW}</h3>
-            <p className="mg-v2-text--secondary">{ONBOARDING_TEXT.DESC_FINAL_REVIEW}</p>
+            <h3 className="mg-v2-card__title">{t('admin:onboarding.step.3.label', '최종 심사')}</h3>
+            <p className="mg-v2-text--secondary">{t('admin:onboarding.field.finalReviewDesc', '입력된 모든 정보를 확인했습니다. 승인 또는 반려를 선택해주세요.')}</p>
             <div className="mg-v2-action-group mg-v2-margin-top--large">
               <button
                 type="button"
@@ -161,7 +161,7 @@ const AdminOnboarding = () => {
                 onClick={handleApprove}
                 disabled={isLoading}
               >
-                {ONBOARDING_MESSAGES.BTN_APPROVE}
+                {t('admin:onboarding.btn.approve', '승인')}
               </button>
               <button
                 type="button"
@@ -169,7 +169,7 @@ const AdminOnboarding = () => {
                 onClick={() => setIsRejectModalOpen(true)}
                 disabled={isLoading}
               >
-                {ONBOARDING_MESSAGES.BTN_REJECT}
+                {t('admin:onboarding.btn.reject', '거절')}
               </button>
             </div>
           </section>
@@ -187,7 +187,7 @@ const AdminOnboarding = () => {
         onClick={() => setIsRejectModalOpen(false)}
         disabled={isLoading}
       >
-        {ONBOARDING_MESSAGES.BTN_CANCEL}
+        {t('admin:onboarding.btn.cancel', '취소')}
       </button>
       <button
         type="button"
@@ -195,13 +195,13 @@ const AdminOnboarding = () => {
         onClick={handleReject}
         disabled={isLoading}
       >
-        {ONBOARDING_MESSAGES.BTN_CONFIRM}
+        {t('admin:onboarding.btn.confirm', '확인')}
       </button>
     </>
   );
 
   return (
-    <AdminCommonLayout title={ONBOARDING_TEXT.PAGE_TITLE}>
+    <AdminCommonLayout title={t('admin:onboarding.title', '온보딩 심사')}>
       <div className="mg-v2-page-container">
         {renderStepper()}
 
@@ -216,7 +216,7 @@ const AdminOnboarding = () => {
             onClick={handlePrevStep}
             disabled={currentStep === 1 || isLoading}
           >
-            {ONBOARDING_MESSAGES.BTN_PREV}
+            {t('admin:onboarding.btn.prev', '이전')}
           </button>
 
           {currentStep < ONBOARDING_STEPS.length && (
@@ -226,7 +226,7 @@ const AdminOnboarding = () => {
               onClick={handleNextStep}
               disabled={isLoading}
             >
-              {ONBOARDING_MESSAGES.BTN_NEXT}
+              {t('admin:onboarding.btn.next', '다음')}
             </button>
           )}
         </div>
@@ -235,8 +235,8 @@ const AdminOnboarding = () => {
       <UnifiedModal
         isOpen={isRejectModalOpen}
         onClose={() => setIsRejectModalOpen(false)}
-        title={ONBOARDING_MESSAGES.MODAL_REJECT_TITLE}
-        subtitle={ONBOARDING_MESSAGES.MODAL_REJECT_SUBTITLE}
+        title={t('admin:onboarding.modal.rejectTitle', '온보딩 반려')}
+        subtitle={t('admin:onboarding.modal.rejectSubtitle', '반려 사유를 입력해 주세요. 해당 사유는 요청자에게 전달될 수 있습니다.')}
         size="medium"
         variant="form"
         actions={rejectModalActions}
@@ -248,7 +248,7 @@ const AdminOnboarding = () => {
             rows={4}
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
-            placeholder={ONBOARDING_MESSAGES.MODAL_PLACEHOLDER_REASON}
+            placeholder={t('admin:onboarding.modal.rejectReasonPlaceholder', '반려 사유 상세 입력')}
             disabled={isLoading}
           />
         </div>

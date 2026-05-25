@@ -35,23 +35,6 @@ export const ONBOARDING_MOCK_DATA = {
   NOTE_APPROVE: '승인 처리'
 };
 
-export const ONBOARDING_MESSAGES = {
-  APPROVE_SUCCESS: '온보딩이 성공적으로 승인되었습니다.',
-  REJECT_SUCCESS: '온보딩이 반려되었습니다.',
-  ERROR_DECISION: '심사 처리 중 오류가 발생했습니다. 다시 시도해주세요.',
-  REJECT_REASON_REQUIRED: '반려 사유를 입력해주세요.',
-  CONFIRM_APPROVE: '이 온보딩 요청을 승인하시겠습니까?',
-  MODAL_REJECT_TITLE: '온보딩 반려',
-  MODAL_REJECT_SUBTITLE: '반려 사유를 입력해주세요. 해당 사유는 요청자에게 전달될 수 있습니다.',
-  MODAL_PLACEHOLDER_REASON: '반려 사유 상세 입력',
-  BTN_PREV: '이전',
-  BTN_NEXT: '다음',
-  BTN_APPROVE: '승인',
-  BTN_REJECT: '거절',
-  BTN_CANCEL: '취소',
-  BTN_CONFIRM: '확인'
-};
-
 export const ONBOARDING_API_ENDPOINTS = {
   DECISION: (id) => `/api/v1/admin/onboarding/requests/${id}/decision`
 };

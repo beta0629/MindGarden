@@ -10,9 +10,6 @@
     "viewAll": "전체 보기",
     "view": "보기"
   },
-  "lnb": {
-    "aiProviderManagement": "AI 프로바이더 관리"
-  },
   "systemConfig": {
     "wellness": {
       "sectionDesc": "매일 지정된 시간에 등록된 사용자에게 웰니스 팁을 자동 발송합니다. 대상 역할은 다중 선택할 수 있습니다.",
@@ -398,6 +395,526 @@
       "sendFailed": "발송에 실패했습니다.",
       "validationFailed": "입력값을 확인해 주세요.",
       "unknown": "알 수 없는 오류가 발생했습니다."
+    }
+  },
+  "lnb": {
+    "aiProviderManagement": "AI 프로바이더 관리",
+    "dashboard": "대시보드",
+    "sessions": "세션 관리",
+    "consultations": "상담 관리",
+    "clients": "내담자 관리",
+    "consultants": "상담사 관리",
+    "matching": "매칭 관리",
+    "courses": "강좌 관리",
+    "classes": "반 관리",
+    "enrollments": "수강 관리",
+    "attendance": "출석 관리",
+    "tuitionFees": "수강료 관리",
+    "erpDashboard": "ERP 대시보드",
+    "purchases": "구매 관리",
+    "adminDashboard": "관리자 대시보드",
+    "users": "사용자 관리",
+    "systemStatus": "시스템 상태",
+    "permissions": "권한 관리",
+    "sessionManagement": "세션 관리",
+    "onboarding": "온보딩 심사",
+    "aiProvider": "AI 프로바이더 관리",
+    "statistics": "통계",
+    "reports": "리포트",
+    "settings": "설정",
+    "notifications": "알림 관리",
+    "payments": "결제 관리",
+    "refunds": "환불 관리"
+  },
+  "gnb": {
+    "profile": "프로필",
+    "logout": "로그아웃",
+    "notifications": "알림",
+    "notificationCount": "알림 {{count}}건",
+    "settings": "설정",
+    "myPage": "마이페이지"
+  },
+  "dashboard": {
+    "title": "관리자 대시보드",
+    "subtitle": "운영 현황 한눈에 보기",
+    "lastUpdated": "마지막 업데이트: {{time}}",
+    "refreshAll": "전체 새로고침",
+    "loadingError": "대시보드를 불러올 수 없습니다.",
+    "summary": {
+      "totalCounselors": "전체 상담사",
+      "activeSessions": "진행 중 세션",
+      "pendingMatching": "대기 매칭",
+      "monthlyRevenue": "이번 달 수익",
+      "totalClients": "전체 내담자",
+      "totalMappings": "전체 매핑",
+      "activeMappings": "활성 매핑",
+      "pendingPayments": "결제 대기",
+      "systemHealth": "시스템 상태"
+    },
+    "filterPeriod": {
+      "today": "오늘",
+      "week": "이번 주",
+      "month": "이번 달",
+      "quarter": "이번 분기",
+      "year": "올해",
+      "custom": "직접 설정"
+    },
+    "noDataForPeriod": "선택한 기간에 데이터가 없습니다.",
+    "systemOverview": "시스템 개요",
+    "systemOverviewSubtitle": "전체 시스템 현황 요약",
+    "recentActivity": "최근 활동",
+    "recentActivityEmpty": "최근 활동 내역이 없습니다.",
+    "formModal": {
+      "createTitle": "대시보드 생성",
+      "editTitle": "대시보드 편집",
+      "field": {
+        "name": "대시보드 이름",
+        "namePlaceholder": "대시보드 이름을 입력하세요.",
+        "description": "설명",
+        "descriptionPlaceholder": "대시보드 용도·목적을 간략히 설명하세요.",
+        "layout": "레이아웃 유형",
+        "visibility": "공개 범위"
+      },
+      "visibility": {
+        "private": "비공개 (나만 보기)",
+        "team": "팀 공개",
+        "public": "전체 공개"
+      },
+      "btn": {
+        "create": "대시보드 생성",
+        "save": "변경 사항 저장",
+        "cancel": "취소"
+      },
+      "createSuccess": "대시보드가 생성되었습니다.",
+      "editSuccess": "대시보드가 수정되었습니다.",
+      "saveError": "저장 중 오류가 발생했습니다. 다시 시도해 주세요."
+    },
+    "v2": {
+      "title": "어드민 대시보드 V2",
+      "gnb": {
+        "homeLink": "홈으로",
+        "settingsLink": "설정"
+      },
+      "header": {
+        "welcome": "안녕하세요, {{name}}님",
+        "roleLabel": "{{role}} 계정"
+      },
+      "layout": {
+        "addWidget": "위젯 추가",
+        "editLayout": "레이아웃 편집",
+        "resetLayout": "기본 레이아웃으로 초기화",
+        "saveLayout": "레이아웃 저장",
+        "emptyState": "위젯을 추가해 대시보드를 구성하세요."
+      },
+      "widget": {
+        "loadError": "위젯 데이터를 불러올 수 없습니다.",
+        "retry": "다시 불러오기"
+      },
+      "period": {
+        "realtime": "실시간",
+        "daily": "일간",
+        "weekly": "주간",
+        "monthly": "월간"
+      }
+    }
+  },
+  "widget": {
+    "counselorStatus": {
+      "title": "상담사 현황",
+      "empty": "등록된 상담사가 없습니다.",
+      "cta": "상담사 등록하기",
+      "description": "전체 상담사 현황"
+    },
+    "sessionCount": {
+      "title": "세션 현황",
+      "empty": "진행 중인 세션이 없습니다.",
+      "cta": "세션 보기",
+      "description": "오늘 진행·예약된 세션 수"
+    },
+    "revenueOverview": {
+      "title": "수익 개요",
+      "empty": "이번 달 수익 데이터가 없습니다.",
+      "cta": "상세 내역 보기",
+      "description": "이번 달 수익 현황"
+    },
+    "clientStatus": {
+      "title": "내담자 현황",
+      "empty": "등록된 내담자가 없습니다.",
+      "cta": "내담자 등록하기",
+      "description": "전체 내담자 현황"
+    },
+    "matchingStatus": {
+      "title": "매칭 현황",
+      "empty": "대기 중인 매칭이 없습니다.",
+      "cta": "매칭 처리하기",
+      "description": "매칭 대기·진행 현황"
+    },
+    "vacationOverview": {
+      "title": "휴가 현황",
+      "empty": "이번 달 휴가 신청이 없습니다.",
+      "cta": "휴가 보기",
+      "description": "이번 달 휴가 신청 현황"
+    },
+    "notificationSummary": {
+      "title": "알림 요약",
+      "empty": "새로운 알림이 없습니다.",
+      "cta": "알림 전체 보기",
+      "description": "미확인 알림 현황"
+    },
+    "wellnessSummary": {
+      "title": "웰니스 요약",
+      "empty": "오늘의 웰니스 데이터가 없습니다.",
+      "cta": "웰니스 현황 보기",
+      "description": "오늘의 웰니스 현황"
+    },
+    "systemStatus": {
+      "title": "시스템 상태",
+      "empty": "시스템 상태 데이터가 없습니다.",
+      "cta": "상세 보기",
+      "description": "서버·DB 상태 모니터링"
+    },
+    "common": {
+      "loading": "위젯 로딩 중...",
+      "error": "데이터를 불러올 수 없습니다.",
+      "retry": "다시 불러오기",
+      "refresh": "새로고침",
+      "settings": "위젯 설정",
+      "remove": "위젯 제거"
+    }
+  },
+  "permission": {
+    "title": "권한 관리",
+    "matrix": {
+      "roleColumn": "역할",
+      "permissionColumn": "권한 항목",
+      "grant": "허용",
+      "deny": "거부",
+      "empty": "설정 가능한 권한 항목이 없습니다.",
+      "loadError": "권한 매트릭스를 불러올 수 없습니다."
+    },
+    "toggle": {
+      "enable": "권한 활성화",
+      "disable": "권한 비활성화"
+    },
+    "confirm": {
+      "grant": {
+        "title": "권한 부여 확인",
+        "message": "{{role}} 역할에 {{permission}} 권한을 부여하시겠어요?"
+      },
+      "revoke": {
+        "title": "권한 회수 확인",
+        "message": "{{role}} 역할의 {{permission}} 권한을 회수하시겠어요?"
+      }
+    },
+    "saveSuccess": "권한 설정이 저장되었습니다.",
+    "saveError": "권한 저장 중 오류가 발생했습니다.",
+    "loadError": "권한 정보를 불러올 수 없습니다.",
+    "role": {
+      "admin": "관리자",
+      "staff": "직원",
+      "consultant": "상담사",
+      "client": "내담자",
+      "superAdmin": "슈퍼 관리자"
+    }
+  },
+  "session": {
+    "title": "세션 관리",
+    "subtitle": "세션 목록 및 상태 관리",
+    "table": {
+      "id": "세션 ID",
+      "client": "내담자",
+      "consultant": "상담사",
+      "status": "상태",
+      "date": "날짜",
+      "time": "시간",
+      "type": "유형",
+      "action": "관리",
+      "empty": "세션이 없습니다."
+    },
+    "filter": {
+      "status": "상태",
+      "dateRange": "기간",
+      "consultant": "상담사",
+      "client": "내담자",
+      "type": "세션 유형",
+      "searchPlaceholder": "내담자 또는 상담사 이름으로 검색"
+    },
+    "status": {
+      "scheduled": "예약됨",
+      "inProgress": "진행 중",
+      "completed": "완료",
+      "cancelled": "취소됨",
+      "noShow": "노쇼",
+      "pending": "대기"
+    },
+    "action": {
+      "complete": "완료 처리",
+      "cancel": "취소",
+      "reschedule": "일정 변경",
+      "viewDetail": "상세 보기"
+    },
+    "loadError": "세션 정보를 불러올 수 없습니다.",
+    "updateSuccess": "세션 상태가 업데이트되었습니다.",
+    "updateError": "세션 업데이트에 실패했습니다."
+  },
+  "user": {
+    "title": "사용자 관리",
+    "subtitle": "사용자 목록 및 계정 관리",
+    "table": {
+      "name": "이름",
+      "email": "이메일",
+      "role": "역할",
+      "status": "상태",
+      "joinDate": "가입일",
+      "lastLogin": "마지막 로그인",
+      "action": "관리",
+      "empty": "사용자가 없습니다."
+    },
+    "filter": {
+      "role": "역할",
+      "status": "상태",
+      "searchPlaceholder": "이름 또는 이메일로 검색"
+    },
+    "status": {
+      "active": "활성",
+      "inactive": "비활성",
+      "suspended": "정지됨",
+      "pending": "가입 대기"
+    },
+    "action": {
+      "activate": "활성화",
+      "suspend": "정지",
+      "resetPassword": "비밀번호 초기화",
+      "viewDetail": "상세 보기",
+      "delete": "삭제"
+    },
+    "confirm": {
+      "suspend": {
+        "title": "사용자 정지 확인",
+        "message": "해당 사용자를 정지하시겠어요?"
+      },
+      "delete": {
+        "title": "사용자 삭제 확인",
+        "message": "삭제하면 복구할 수 없습니다. 정말 삭제하시겠어요?"
+      }
+    },
+    "loadError": "사용자 정보를 불러올 수 없습니다.",
+    "updateSuccess": "사용자 정보가 업데이트되었습니다.",
+    "updateError": "사용자 정보 업데이트에 실패했습니다."
+  },
+  "consultant": {
+    "title": "상담사 종합 관리",
+    "tab": {
+      "list": "상담사 목록",
+      "detail": "상세 정보",
+      "sessions": "세션 현황",
+      "settlements": "정산 내역"
+    },
+    "filter": {
+      "status": "상태",
+      "specialization": "전문 분야",
+      "searchPlaceholder": "이름 또는 이메일로 검색"
+    },
+    "table": {
+      "name": "이름",
+      "email": "이메일",
+      "status": "상태",
+      "sessionCount": "총 세션 수",
+      "joinDate": "가입일",
+      "action": "관리",
+      "empty": "조건에 맞는 상담사가 없습니다.",
+      "specialization": "전문 분야",
+      "rating": "평점",
+      "pendingSettlement": "정산 대기"
+    },
+    "action": {
+      "approve": "승인",
+      "suspend": "정지",
+      "viewDetail": "상세 보기",
+      "activate": "활성화",
+      "delete": "삭제"
+    },
+    "status": {
+      "active": "활성",
+      "inactive": "비활성",
+      "suspended": "정지됨",
+      "pending": "승인 대기"
+    },
+    "confirmSuspend": {
+      "title": "상담사 정지 확인",
+      "message": "해당 상담사를 정지하시겠어요? 정지 중에는 신규 세션이 배정되지 않습니다."
+    },
+    "confirmApprove": {
+      "title": "상담사 승인 확인",
+      "message": "해당 상담사를 승인하시겠어요?"
+    },
+    "loadError": "상담사 정보를 불러올 수 없습니다.",
+    "approveSuccess": "상담사가 승인되었습니다.",
+    "suspendSuccess": "상담사가 정지되었습니다.",
+    "updateSuccess": "상담사 정보가 업데이트되었습니다.",
+    "updateError": "상담사 정보 업데이트에 실패했습니다."
+  },
+  "onboarding": {
+    "title": "온보딩 심사",
+    "btn": {
+      "prev": "이전",
+      "next": "다음",
+      "approve": "승인",
+      "reject": "거절",
+      "cancel": "취소",
+      "confirm": "확인"
+    },
+    "confirm": {
+      "approve": "이 온보딩 요청을 승인하시겠어요?"
+    },
+    "msg": {
+      "approveSuccess": "온보딩이 성공적으로 승인되었습니다.",
+      "rejectSuccess": "온보딩이 반려되었습니다.",
+      "errorDecision": "심사 처리 중 오류가 발생했습니다. 다시 시도해 주세요.",
+      "rejectReasonRequired": "반려 사유를 입력해 주세요."
+    },
+    "modal": {
+      "rejectTitle": "온보딩 반려",
+      "rejectSubtitle": "반려 사유를 입력해 주세요. 해당 사유는 요청자에게 전달될 수 있습니다.",
+      "rejectReasonPlaceholder": "반려 사유 상세 입력"
+    },
+    "step": {
+      "1": {
+        "label": "기본 정보"
+      },
+      "2": {
+        "label": "자격 확인"
+      },
+      "3": {
+        "label": "최종 심사"
+      }
+    },
+    "table": {
+      "applicant": "신청자",
+      "appliedAt": "신청일",
+      "status": "상태",
+      "action": "처리",
+      "empty": "온보딩 신청이 없습니다."
+    },
+    "status": {
+      "pending": "심사 대기",
+      "approved": "승인됨",
+      "rejected": "반려됨",
+      "inReview": "심사 중"
+    },
+    "loadError": "온보딩 목록을 불러올 수 없습니다."
+  },
+  "matching": {
+    "title": "매칭 관리",
+    "subtitle": "내담자-상담사 매칭 현황 및 처리",
+    "table": {
+      "id": "매칭 ID",
+      "client": "내담자",
+      "consultant": "상담사",
+      "status": "상태",
+      "createdAt": "생성일",
+      "updatedAt": "최종 업데이트",
+      "action": "관리",
+      "empty": "매칭 내역이 없습니다."
+    },
+    "filter": {
+      "status": "상태",
+      "searchPlaceholder": "내담자 또는 상담사 이름으로 검색"
+    },
+    "status": {
+      "pending": "대기",
+      "active": "활성",
+      "completed": "완료",
+      "cancelled": "취소됨",
+      "suspended": "정지됨"
+    },
+    "action": {
+      "approve": "승인",
+      "suspend": "정지",
+      "complete": "완료 처리",
+      "viewDetail": "상세 보기",
+      "createNew": "매칭 생성"
+    },
+    "confirm": {
+      "approve": {
+        "title": "매칭 승인 확인",
+        "message": "이 매칭을 승인하시겠어요?"
+      },
+      "suspend": {
+        "title": "매칭 정지 확인",
+        "message": "이 매칭을 정지하시겠어요?"
+      }
+    },
+    "loadError": "매칭 정보를 불러올 수 없습니다.",
+    "approveSuccess": "매칭이 승인되었습니다.",
+    "createSuccess": "매칭이 생성되었습니다.",
+    "createError": "매칭 생성에 실패했습니다."
+  },
+  "payment": {
+    "title": "결제 관리",
+    "subtitle": "결제 현황 및 환불 처리",
+    "table": {
+      "id": "결제 ID",
+      "client": "내담자",
+      "amount": "금액",
+      "method": "결제 방법",
+      "status": "상태",
+      "paidAt": "결제일",
+      "action": "관리",
+      "empty": "결제 내역이 없습니다."
+    },
+    "filter": {
+      "status": "상태",
+      "method": "결제 방법",
+      "dateRange": "기간",
+      "searchPlaceholder": "내담자 이름 또는 결제 ID로 검색"
+    },
+    "status": {
+      "pending": "결제 대기",
+      "completed": "완료",
+      "failed": "실패",
+      "refunded": "환불됨",
+      "partialRefund": "부분 환불",
+      "cancelled": "취소됨"
+    },
+    "action": {
+      "refund": "환불 처리",
+      "viewDetail": "상세 보기",
+      "download": "영수증 다운로드"
+    },
+    "loadError": "결제 정보를 불러올 수 없습니다.",
+    "refundSuccess": "환불이 처리되었습니다.",
+    "refundError": "환불 처리에 실패했습니다."
+  },
+  "system": {
+    "title": "시스템 관리",
+    "status": {
+      "title": "시스템 상태",
+      "healthy": "정상",
+      "warning": "주의",
+      "critical": "위험",
+      "unknown": "알 수 없음",
+      "checkFailed": "상태 체크에 실패했습니다.",
+      "lastChecked": "마지막 확인: {{time}}"
+    },
+    "cache": {
+      "title": "캐시 관리",
+      "clearSuccess": "캐시가 초기화되었습니다.",
+      "clearError": "캐시 초기화에 실패했습니다.",
+      "clearConfirm": "캐시를 초기화하시겠어요?"
+    },
+    "backup": {
+      "title": "백업",
+      "createSuccess": "백업이 생성되었습니다.",
+      "createError": "백업 생성에 실패했습니다.",
+      "createConfirm": "백업을 생성하시겠어요?"
+    },
+    "logs": {
+      "title": "시스템 로그",
+      "viewSuccess": "로그를 새 창에서 열었습니다.",
+      "viewError": "로그 조회에 실패했습니다.",
+      "empty": "로그가 없습니다.",
+      "loading": "로그를 불러오는 중..."
     }
   },
   "smsTemplate": {

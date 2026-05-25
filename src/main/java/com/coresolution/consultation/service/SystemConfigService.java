@@ -2,6 +2,7 @@ package com.coresolution.consultation.service;
 
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.dto.NotificationSchedulerFlagDto;
 
 /**
  * 시스템 설정 서비스 인터페이스
@@ -95,4 +96,30 @@ public interface SystemConfigService {
      * @return 플래그 값 (행 없음 시 {@code defaultValue})
      */
     boolean getGlobalBoolean(String configKey, boolean defaultValue);
+
+    /**
+     * 알림 자동 발송 스케줄러 4 종 전역 플래그 일괄 조회.
+     *
+     * <p>키 SSOT: {@link com.coresolution.consultation.constant.NotificationSchedulerFlagKeys}.
+     * 어드민 토글 UI 가 한 번에 4 키 상태(값·마지막 변경자·시각)를 받아오기 위한 진입점.
+     * 시드되지 않은 키는 {@link com.coresolution.consultation.constant.NotificationSchedulerFlagKeys#DEFAULT_ENABLED}
+     * 으로 응답하되, {@code updatedBy/updatedAt} 은 null 로 반환한다.
+     *
+     * @return 4 종 플래그 DTO (키 정렬 안정성 보장)
+     */
+    List<NotificationSchedulerFlagDto> listNotificationSchedulerFlags();
+
+    /**
+     * 전역(테넌트 비종속) 불리언 플래그 저장.
+     *
+     * <p>화이트리스트 검증은 호출자(컨트롤러) 책임이며, 본 메서드는 키가 화이트리스트에
+     * 포함된다는 전제 하에 동작한다. 행이 없으면 신규 생성, 있으면 업데이트하며
+     * {@code updated_by} 에 호출자가 전달한 식별자를 기록한다.
+     *
+     * @param configKey  설정 키 (전역 행)
+     * @param value      저장할 boolean 값 (true → "true", false → "false")
+     * @param updatedBy  변경 주체 식별자 (admin 사용자 ID/이메일 등). null/blank 면 "ADMIN" 으로 대체.
+     * @return 변경 후 저장된 DTO (key, value, updatedBy, updatedAt)
+     */
+    NotificationSchedulerFlagDto setGlobalBoolean(String configKey, boolean value, String updatedBy);
 }

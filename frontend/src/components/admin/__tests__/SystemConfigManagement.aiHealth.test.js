@@ -23,7 +23,24 @@ import * as commonCodeApi from '../../../utils/commonCodeApi';
 jest.mock('../../../utils/ajax', () => ({
   __esModule: true,
   apiGet: jest.fn(),
-  apiPost: jest.fn()
+  apiPost: jest.fn(),
+  apiPut: jest.fn(),
+  apiPatch: jest.fn(),
+  apiDelete: jest.fn(),
+  apiPostFormData: jest.fn()
+}));
+
+// PR-2 (2026-05-25): StandardizedApi 는 내부에서 getDefaultApiHeadersAsync 를 호출하여
+// 세션 갱신·헤더 준비를 수행하므로 단위 테스트에서는 직접 mock 한다.
+jest.mock('../../../utils/standardizedApi', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn().mockResolvedValue({ success: true, flags: [] }),
+    post: jest.fn().mockResolvedValue({ success: true }),
+    put: jest.fn().mockResolvedValue({ success: true }),
+    patch: jest.fn().mockResolvedValue({ success: true }),
+    delete: jest.fn().mockResolvedValue({ success: true })
+  }
 }));
 
 jest.mock('../../../utils/commonCodeApi', () => ({
@@ -71,6 +88,20 @@ jest.mock('../../layout/AdminCommonLayout', () => ({
 jest.mock('../../common/UnifiedLoading', () => ({
   __esModule: true,
   default: ({ text }) => <div data-testid="unified-loading">{text}</div>
+}));
+
+// PR-2 (2026-05-25): UnifiedModal 은 SessionContext 를 직접 useContext 로 읽으므로
+// SessionContext 모킹과 충돌하지 않도록 본 테스트에서는 단순 fragment 로 대체.
+// (PR-2 토글 모달의 동작 검증은 별도 테스트 파일에서 수행)
+jest.mock('../../common/modals/UnifiedModal', () => ({
+  __esModule: true,
+  default: ({ isOpen, children, actions, title }) =>
+    isOpen ? (
+      <div role="dialog" aria-label={title}>
+        {children}
+        {actions}
+      </div>
+    ) : null
 }));
 
 jest.mock('../../common/MGButton', () => ({

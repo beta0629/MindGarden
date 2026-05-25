@@ -419,3 +419,135 @@
     background: var(--mg-color-surface-main);
     text-decoration: none;
 }
+
+/* PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 섹션 */
+.mg-v2-notification-scheduler {
+    border-left: 4px solid var(--mg-color-info, var(--mg-color-primary-main));
+}
+
+.mg-v2-notification-scheduler__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-12, 12px);
+}
+
+.mg-v2-notification-scheduler__item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--mg-spacing-12, 12px);
+    padding: var(--mg-spacing-12, 12px) var(--mg-spacing-16, 16px);
+    border: 1px solid var(--mg-color-border-subtle, var(--mg-color-border-default));
+    border-radius: var(--mg-radius-md, 8px);
+    background: var(--mg-color-surface-main, var(--mg-color-background-main));
+}
+
+.mg-v2-notification-scheduler__item-main {
+    flex: 1 1 240px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-4, 4px);
+}
+
+.mg-v2-notification-scheduler__item-label {
+    margin: 0;
+    font-size: var(--mg-body-large-size, 15px);
+    font-weight: var(--mg-font-weight-semibold, 600);
+    color: var(--ad-b0kla-title-color, var(--mg-color-text-primary));
+}
+
+.mg-v2-notification-scheduler__item-hint {
+    margin: 0;
+    font-size: var(--mg-body-size, 13px);
+    color: var(--mg-color-text-secondary, var(--medium-gray));
+    line-height: 1.5;
+}
+
+.mg-v2-notification-scheduler__item-meta {
+    margin: 0;
+    font-size: var(--mg-caption-size, 12px);
+    color: var(--mg-color-text-tertiary, var(--medium-gray));
+}
+
+.mg-v2-notification-scheduler__item-control {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-12, 12px);
+    flex-shrink: 0;
+}
+
+.mg-v2-notification-scheduler__status {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--mg-spacing-4, 4px) var(--mg-spacing-8, 8px);
+    border-radius: var(--mg-radius-sm, 4px);
+    font-size: var(--mg-caption-size, 12px);
+    font-weight: var(--mg-font-weight-medium, 500);
+}
+
+.mg-v2-notification-scheduler__status--on {
+    color: var(--mg-color-success-text, var(--mg-color-success));
+    background: var(--mg-color-success-soft, var(--mg-color-success-bg, var(--light-green)));
+}
+
+.mg-v2-notification-scheduler__status--off {
+    color: var(--mg-color-text-secondary, var(--medium-gray));
+    background: var(--mg-color-surface-muted, var(--mg-glass-bg-light));
+}
+
+.mg-v2-notification-scheduler__switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    border-radius: 999px;
+    border: 1px solid var(--mg-color-border-default);
+    background: var(--mg-color-surface-muted, var(--mg-glass-bg-light));
+    cursor: pointer;
+    transition: background-color 160ms ease, border-color 160ms ease;
+    padding: 0;
+}
+
+.mg-v2-notification-scheduler__switch:focus-visible {
+    outline: 2px solid var(--mg-color-primary-main);
+    outline-offset: 2px;
+}
+
+.mg-v2-notification-scheduler__switch--on {
+    background: var(--mg-color-primary-main);
+    border-color: var(--mg-color-primary-main);
+}
+
+.mg-v2-notification-scheduler__switch:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.mg-v2-notification-scheduler__switch-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--mg-color-background-main, var(--mg-glass-bg-medium));
+    transition: transform 160ms ease;
+}
+
+.mg-v2-notification-scheduler__switch--on .mg-v2-notification-scheduler__switch-knob {
+    transform: translateX(20px);
+}
+
+@media (max-width: 640px) {
+    .mg-v2-notification-scheduler__item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mg-v2-notification-scheduler__item-control {
+        justify-content: space-between;
+    }
+}

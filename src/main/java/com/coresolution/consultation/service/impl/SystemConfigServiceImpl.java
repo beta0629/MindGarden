@@ -1,9 +1,12 @@
 package com.coresolution.consultation.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Map;
 import java.util.Set;
+import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
+import com.coresolution.consultation.dto.NotificationSchedulerFlagDto;
 import com.coresolution.consultation.entity.SystemConfig;
 import com.coresolution.consultation.repository.SystemConfigRepository;
 import com.coresolution.consultation.service.SystemConfigService;
@@ -221,6 +224,16 @@ public class SystemConfigServiceImpl implements SystemConfigService {
 
     private static final Set<String> TRUTHY_VALUES = Set.of("true", "1", "yes", "on", "y", "t");
 
+    /** 전역 행 식별자 — V20260228_001 표준화: 빈 문자열. */
+    private static final String GLOBAL_TENANT_ID = "";
+
+    /** 알림 스케줄러 플래그 카테고리 (시드와 동일). */
+    private static final String NOTIFICATION_CATEGORY =
+            NotificationSchedulerFlagKeys.CATEGORY;
+
+    /** updatedBy 가 비었을 때 사용할 fallback. */
+    private static final String DEFAULT_UPDATED_BY = "ADMIN";
+
     @Override
     public boolean getGlobalBoolean(String configKey, boolean defaultValue) {
         if (configKey == null || configKey.isBlank()) {
@@ -237,5 +250,63 @@ public class SystemConfigServiceImpl implements SystemConfigService {
                     configKey, defaultValue, e.getMessage());
             return defaultValue;
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<NotificationSchedulerFlagDto> listNotificationSchedulerFlags() {
+        // 키 정렬 안정성을 위해 상수 SSOT 의 Set 을 정렬된 List 로 변환
+        List<String> keys = new ArrayList<>(NotificationSchedulerFlagKeys.all());
+        keys.sort(String::compareTo);
+
+        List<NotificationSchedulerFlagDto> result = new ArrayList<>(keys.size());
+        for (String key : keys) {
+            SystemConfig entity = systemConfigRepository.findGlobalByConfigKey(key).orElse(null);
+            result.add(NotificationSchedulerFlagDto.fromEntity(
+                    key, entity, NotificationSchedulerFlagKeys.DEFAULT_ENABLED));
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public NotificationSchedulerFlagDto setGlobalBoolean(
+            String configKey, boolean value, String updatedBy) {
+        if (configKey == null || configKey.isBlank()) {
+            throw new IllegalArgumentException("configKey 는 필수입니다.");
+        }
+        String actor = (updatedBy == null || updatedBy.isBlank())
+                ? DEFAULT_UPDATED_BY
+                : updatedBy.trim();
+        String configValue = value ? "true" : "false";
+
+        SystemConfig saved = systemConfigRepository.findGlobalByConfigKey(configKey)
+                .map(existing -> {
+                    existing.setConfigValue(configValue);
+                    existing.setUpdatedBy(actor);
+                    // category 가 빈 값으로 들어온 레거시 행 보정
+                    if (existing.getCategory() == null || existing.getCategory().isBlank()) {
+                        existing.setCategory(NOTIFICATION_CATEGORY);
+                    }
+                    return systemConfigRepository.save(existing);
+                })
+                .orElseGet(() -> {
+                    SystemConfig fresh = SystemConfig.builder()
+                            .tenantId(GLOBAL_TENANT_ID)
+                            .configKey(configKey)
+                            .configValue(configValue)
+                            .description("notification scheduler flag")
+                            .category(NOTIFICATION_CATEGORY)
+                            .isEncrypted(false)
+                            .isActive(true)
+                            .createdBy(actor)
+                            .updatedBy(actor)
+                            .build();
+                    return systemConfigRepository.save(fresh);
+                });
+
+        log.info("[NotificationSchedulerFlag] {} = {} (by {})", configKey, configValue, actor);
+        return NotificationSchedulerFlagDto.fromEntity(
+                configKey, saved, NotificationSchedulerFlagKeys.DEFAULT_ENABLED);
     }
 }

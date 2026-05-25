@@ -13,8 +13,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Database, Cpu, ExternalLink } from 'lucide-react';
+import { Database, Cpu, ExternalLink, BellRing } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
@@ -23,6 +24,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import { USER_ROLES } from '../../constants/roles';
 import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import ChipMultiSelect from '../common/ChipMultiSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -34,6 +36,56 @@ import './SystemConfigManagement.css';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED = '/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME = '/api/v1/admin/system-config/WELLNESS_SEND_TIME';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES = '/api/v1/admin/system-config/WELLNESS_TARGET_ROLES';
+
+/**
+ * PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 어드민 토글 API 베이스 경로.
+ * 단일 키 PUT 은 본 베이스 + `/{key}` 형태로 호출한다.
+ */
+const API_ADMIN_NOTIFICATION_SCHEDULER_FLAGS = '/api/v1/admin/notification-scheduler/flags';
+
+/**
+ * PR-2 키 SSOT — 백엔드 {@code NotificationSchedulerFlagKeys} 와 1:1 매핑.
+ * UI 표시 라벨(i18n)·아이콘 렌더 순서를 정의한다 (alphabetical 정렬은 백엔드가 보장).
+ */
+const NOTIFICATION_SCHEDULER_FLAG_KEYS = Object.freeze({
+  WELLNESS_TIP: 'notification.scheduler.wellness-tip.enabled',
+  CONSULTATION_RECORD_ALERT: 'notification.scheduler.consultation-record-alert.enabled',
+  WORKFLOW_AUTOMATION: 'notification.scheduler.workflow-automation.enabled',
+  RESERVATION_REMINDER: 'notification.scheduler.reservation-reminder.enabled'
+});
+
+/**
+ * PR-2 표시 순서 (UI). 운영자가 가장 자주 토글하는 채널 우선.
+ */
+const NOTIFICATION_SCHEDULER_FLAG_ORDER = Object.freeze([
+  NOTIFICATION_SCHEDULER_FLAG_KEYS.WELLNESS_TIP,
+  NOTIFICATION_SCHEDULER_FLAG_KEYS.CONSULTATION_RECORD_ALERT,
+  NOTIFICATION_SCHEDULER_FLAG_KEYS.WORKFLOW_AUTOMATION,
+  NOTIFICATION_SCHEDULER_FLAG_KEYS.RESERVATION_REMINDER
+]);
+
+/**
+ * PR-2 (2026-05-25): 표시 시각 포맷 — 시·분만 노출하여 토글 UI 의 가독성을 높인다.
+ * Date 파싱 실패 시 원문을 그대로 반환한다.
+ *
+ * @param {string|null|undefined} updatedAt ISO-8601 문자열 또는 null
+ * @returns {string} 'YYYY-MM-DD HH:mm' 또는 원문
+ */
+const formatLastUpdatedAt = (updatedAt) => {
+  if (!updatedAt) {
+    return '';
+  }
+  const date = new Date(updatedAt);
+  if (Number.isNaN(date.getTime())) {
+    return String(updatedAt);
+  }
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const mi = String(date.getMinutes()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+};
 
 /** 웰니스 대상 역할 풀 소스 — 공통코드 그룹 'ROLE' (tenant 우선, core 폴백) */
 const ROLE_COMMON_CODE_GROUP = 'ROLE';
@@ -83,6 +135,14 @@ const SystemConfigManagement = () => {
   const [wellness, setWellness] = useState(DEFAULT_WELLNESS);
   const [roleCodes, setRoleCodes] = useState([]);
   const [rolesLoading, setRolesLoading] = useState(true);
+
+  // PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 상태.
+  // schedulerFlags 는 key 별 메타(value/updatedBy/updatedAt) 를 담은 dict.
+  const [schedulerFlags, setSchedulerFlags] = useState({});
+  const [schedulerLoading, setSchedulerLoading] = useState(true);
+  const [schedulerSavingKey, setSchedulerSavingKey] = useState(null);
+  // 토글 확인 모달 상태 — null 이면 닫힘. { key, label, nextValue } 객체로 보관.
+  const [schedulerConfirm, setSchedulerConfirm] = useState(null);
 
   const legacyLabelSuffix = t('systemConfig.wellness.targetRoles.legacy', '(레거시)');
 
@@ -174,6 +234,101 @@ const SystemConfigManagement = () => {
     }
   }, []);
 
+  /**
+   * PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 플래그 일괄 조회.
+   *
+   * 응답 스펙: {@code { success, flags: [{ key, value, description, updatedBy, updatedAt }, ...] }}
+   * 실패 시 schedulerFlags 는 빈 객체로 초기화한다 (UI 는 fallback OFF 표시).
+   *
+   * 의존성 메모: 기존 {@code loadConfigs}/{@code loadRoleOptions} 와 동일하게 빈 deps 로
+   * 안정 참조를 유지한다 (useEffect 재실행 루프 방지). 토스트 메시지는 한국어 리터럴로 직접
+   * 전달하며 i18n 키는 UI 렌더링 시점(t 호출) 에서만 사용한다.
+   */
+  const loadSchedulerFlags = useCallback(async() => {
+    try {
+      setSchedulerLoading(true);
+      const response = await StandardizedApi.get(API_ADMIN_NOTIFICATION_SCHEDULER_FLAGS);
+      const flagsArray = Array.isArray(response?.flags) ? response.flags : [];
+      const map = {};
+      flagsArray.forEach((flag) => {
+        if (flag && typeof flag.key === 'string') {
+          map[flag.key] = {
+            key: flag.key,
+            value: !!flag.value,
+            updatedBy: flag.updatedBy || '',
+            updatedAt: flag.updatedAt || ''
+          };
+        }
+      });
+      setSchedulerFlags(map);
+    } catch (error) {
+      console.error('알림 스케줄러 플래그 로드 실패:', error);
+      notificationManager.show('스케줄러 플래그를 불러오지 못했습니다.', 'error');
+      setSchedulerFlags({});
+    } finally {
+      setSchedulerLoading(false);
+    }
+  }, []);
+
+  /**
+   * PR-2 (2026-05-25): 토글 클릭 — 확인 모달 오픈만 수행. 실제 PUT 은 confirm 핸들러에서.
+   *
+   * @param {string} key 플래그 키 (NOTIFICATION_SCHEDULER_FLAG_KEYS)
+   * @param {string} label 사용자 표시용 라벨 (i18n 적용된 채널명)
+   * @param {boolean} currentValue 현재 값
+   */
+  const handleSchedulerToggleRequest = useCallback((key, label, currentValue) => {
+    setSchedulerConfirm({ key, label, nextValue: !currentValue });
+  }, []);
+
+  const handleSchedulerConfirmCancel = useCallback(() => {
+    setSchedulerConfirm(null);
+  }, []);
+
+  /**
+   * PR-2 (2026-05-25): 확인 모달 → API 호출.
+   *
+   * 성공: 응답의 flag 메타로 schedulerFlags 즉시 갱신 + 성공 토스트 + 4 키 재조회로 완전 동기화.
+   * 실패: 에러 토스트 + 모달 유지 (사용자가 다시 시도하거나 취소 결정).
+   */
+  const handleSchedulerConfirmProceed = useCallback(async() => {
+    if (!schedulerConfirm) {
+      return;
+    }
+    const { key, nextValue } = schedulerConfirm;
+    try {
+      setSchedulerSavingKey(key);
+      const response = await StandardizedApi.put(
+        `${API_ADMIN_NOTIFICATION_SCHEDULER_FLAGS}/${encodeURIComponent(key)}`,
+        { value: nextValue }
+      );
+      const flag = response?.flag;
+      if (flag && typeof flag.key === 'string') {
+        setSchedulerFlags((prev) => ({
+          ...prev,
+          [flag.key]: {
+            key: flag.key,
+            value: !!flag.value,
+            updatedBy: flag.updatedBy || '',
+            updatedAt: flag.updatedAt || ''
+          }
+        }));
+      }
+      notificationManager.show('스케줄러 플래그가 저장되었습니다.', 'success');
+      setSchedulerConfirm(null);
+      await loadSchedulerFlags();
+    } catch (error) {
+      console.error('알림 스케줄러 플래그 저장 실패:', error);
+      const backendMsg = error?.response?.data?.message || error?.data?.message;
+      notificationManager.show(
+        backendMsg || '스케줄러 플래그 저장에 실패했습니다.',
+        'error'
+      );
+    } finally {
+      setSchedulerSavingKey(null);
+    }
+  }, [schedulerConfirm, loadSchedulerFlags]);
+
   const loadConfigs = useCallback(async() => {
     try {
       setLoading(true);
@@ -213,7 +368,8 @@ const SystemConfigManagement = () => {
     }
     loadConfigs();
     loadRoleOptions();
-  }, [hasCheckedSession, isLoggedIn, user, loadConfigs, loadRoleOptions]);
+    loadSchedulerFlags();
+  }, [hasCheckedSession, isLoggedIn, user, loadConfigs, loadRoleOptions, loadSchedulerFlags]);
 
   const handleSave = async() => {
     try {
@@ -285,6 +441,15 @@ const SystemConfigManagement = () => {
                   설정 저장
                 </MGButton>
               }
+            />
+
+            {/* PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 (DB SSOT) */}
+            <NotificationSchedulerSection
+              t={t}
+              flags={schedulerFlags}
+              loading={schedulerLoading}
+              savingKey={schedulerSavingKey}
+              onToggleRequest={handleSchedulerToggleRequest}
             />
 
             {/* AI 프로바이더 관리 안내 카드 — 이전 사용자 동선 보존 */}
@@ -375,7 +540,207 @@ const SystemConfigManagement = () => {
           </ContentArea>
         </div>
       </div>
+
+      {/* PR-2 (2026-05-25): 토글 확인 모달 — UnifiedModal 표준 */}
+      <NotificationSchedulerConfirmModal
+        t={t}
+        confirm={schedulerConfirm}
+        saving={schedulerSavingKey === schedulerConfirm?.key}
+        onProceed={handleSchedulerConfirmProceed}
+        onCancel={handleSchedulerConfirmCancel}
+      />
     </AdminCommonLayout>
+  );
+};
+
+/**
+ * PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 섹션 (presentational).
+ *
+ * 부모로부터 i18n {@code t}, 플래그 dict, 로딩/저장 상태, 토글 요청 핸들러를 주입받아 렌더링한다.
+ * 4 종 라벨/힌트는 i18n 키로 정적 정의하며, role="switch" + aria-checked 로 접근성을 보장한다.
+ *
+ * @param {object} props
+ * @param {(key: string, fallback: string, vars?: object) => string} props.t i18n 함수
+ * @param {Object<string, {value: boolean, updatedBy: string, updatedAt: string}>} props.flags 키별 메타
+ * @param {boolean} props.loading 4 키 일괄 로딩 중
+ * @param {string|null} props.savingKey 저장 진행 중인 키 (해당 토글만 disabled)
+ * @param {(key: string, label: string, currentValue: boolean) => void} props.onToggleRequest 토글 요청 핸들러
+ */
+const NotificationSchedulerSection = ({ t, flags, loading, savingKey, onToggleRequest }) => {
+  const items = [
+    {
+      key: NOTIFICATION_SCHEDULER_FLAG_KEYS.WELLNESS_TIP,
+      labelKey: 'systemConfig.notificationScheduler.wellnessTip',
+      labelFallback: '웰니스 일일 팁',
+      hintKey: 'systemConfig.notificationScheduler.wellnessTipHint',
+      hintFallback: '매일 09:00 KST 등록된 사용자에게 자동 발송합니다.'
+    },
+    {
+      key: NOTIFICATION_SCHEDULER_FLAG_KEYS.CONSULTATION_RECORD_ALERT,
+      labelKey: 'systemConfig.notificationScheduler.consultationRecordAlert',
+      labelFallback: '상담 기록 미작성 알림',
+      hintKey: 'systemConfig.notificationScheduler.consultationRecordAlertHint',
+      hintFallback: '일·주·월 배치로 상담사에게 미작성 건을 통지합니다.'
+    },
+    {
+      key: NOTIFICATION_SCHEDULER_FLAG_KEYS.WORKFLOW_AUTOMATION,
+      labelKey: 'systemConfig.notificationScheduler.workflowAutomation',
+      labelFallback: '워크플로우 자동화',
+      hintKey: 'systemConfig.notificationScheduler.workflowAutomationHint',
+      hintFallback: '예약 리마인더·미완료 알림·일/월 성과 자동화 4종을 일괄 제어합니다.'
+    },
+    {
+      key: NOTIFICATION_SCHEDULER_FLAG_KEYS.RESERVATION_REMINDER,
+      labelKey: 'systemConfig.notificationScheduler.reservationReminder',
+      labelFallback: '예약 D-1·D-2 리마인더',
+      hintKey: 'systemConfig.notificationScheduler.reservationReminderHint',
+      hintFallback: '매일 09:00 KST 예약 D-2 안내를 일괄 발송합니다.'
+    }
+  ];
+  // 표시 순서 강제 — 키만 반복하여 i18n 라벨 + flags 메타 매핑.
+  const orderedItems = NOTIFICATION_SCHEDULER_FLAG_ORDER
+    .map((key) => items.find((item) => item.key === key))
+    .filter(Boolean);
+
+  return (
+    <section
+      className="mg-v2-ad-b0kla__card mg-v2-system-config__section mg-v2-notification-scheduler"
+      aria-labelledby="notification-scheduler-title"
+    >
+      <h2
+        id="notification-scheduler-title"
+        className="mg-v2-ad-b0kla__section-title"
+      >
+        <BellRing size={20} aria-hidden="true" />
+        {t('systemConfig.notificationScheduler.title', '알림 자동 발송')}
+      </h2>
+      <p className="mg-v2-system-config__section-desc">
+        {t(
+          'systemConfig.notificationScheduler.description',
+          '운영자가 자동 발송 채널을 즉시 ON/OFF 할 수 있습니다. 변경 즉시 다음 cron 시점부터 반영됩니다.'
+        )}
+      </p>
+      {loading ? (
+        <UnifiedLoading
+          type="inline"
+          text={t(
+            'systemConfig.notificationScheduler.loading',
+            '스케줄러 플래그를 불러오는 중...'
+          )}
+          variant="pulse"
+        />
+      ) : (
+        <ul className="mg-v2-notification-scheduler__list">
+          {orderedItems.map((item) => {
+            const flag = flags[item.key];
+            const value = !!(flag && flag.value);
+            const label = t(item.labelKey, item.labelFallback);
+            const hint = t(item.hintKey, item.hintFallback);
+            const statusLabel = value
+              ? t('systemConfig.notificationScheduler.status.on', '켜짐')
+              : t('systemConfig.notificationScheduler.status.off', '꺼짐');
+            const ariaLabel = value
+              ? t('systemConfig.notificationScheduler.toggleAriaOff', '{{label}} 끄기', { label })
+              : t('systemConfig.notificationScheduler.toggleAriaOn', '{{label}} 켜기', { label });
+            const lastUpdatedText = flag && flag.updatedAt
+              ? t('systemConfig.notificationScheduler.lastUpdated', '마지막 변경: {{updatedBy}} ({{updatedAt}})', {
+                updatedBy: flag.updatedBy || '-',
+                updatedAt: formatLastUpdatedAt(flag.updatedAt)
+              })
+              : t('systemConfig.notificationScheduler.lastUpdatedNever', '마지막 변경 이력 없음');
+            const isSaving = savingKey === item.key;
+            return (
+              <li
+                key={item.key}
+                className="mg-v2-notification-scheduler__item"
+              >
+                <div className="mg-v2-notification-scheduler__item-main">
+                  <p className="mg-v2-notification-scheduler__item-label">{label}</p>
+                  <p className="mg-v2-notification-scheduler__item-hint">{hint}</p>
+                  <p className="mg-v2-notification-scheduler__item-meta">{lastUpdatedText}</p>
+                </div>
+                <div className="mg-v2-notification-scheduler__item-control">
+                  <span
+                    className={`mg-v2-notification-scheduler__status mg-v2-notification-scheduler__status--${value ? 'on' : 'off'}`}
+                    role="status"
+                  >
+                    {statusLabel}
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={value}
+                    aria-label={ariaLabel}
+                    disabled={isSaving}
+                    className={`mg-v2-notification-scheduler__switch mg-v2-notification-scheduler__switch--${value ? 'on' : 'off'}`}
+                    onClick={() => onToggleRequest(item.key, label, value)}
+                  >
+                    <span className="mg-v2-notification-scheduler__switch-knob" aria-hidden="true" />
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+};
+
+/**
+ * PR-2 (2026-05-25): 토글 확인 모달.
+ *
+ * UnifiedModal 표준 (className="mg-v2-ad-b0kla") 을 사용한다. 켜기/끄기에 따라
+ * 메시지가 달라지며 (즉시 중단 vs 다음 cron), 처리 중에는 확인 버튼이 disabled 가 된다.
+ */
+const NotificationSchedulerConfirmModal = ({ t, confirm, saving, onProceed, onCancel }) => {
+  const isOpen = !!confirm;
+  const message = !confirm
+    ? ''
+    : confirm.nextValue
+      ? t('systemConfig.notificationScheduler.confirmOn', '켜면 다음 cron 시점부터 자동 발송됩니다. 진행할까요?')
+      : t('systemConfig.notificationScheduler.confirmOff', '끄면 자동 발송이 즉시 중단됩니다. 진행할까요?');
+
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onCancel}
+      title={t('systemConfig.notificationScheduler.confirmTitle', '자동 발송 토글 확인')}
+      subtitle={confirm ? confirm.label : ''}
+      size="small"
+      className="mg-v2-ad-b0kla"
+      backdropClick={!saving}
+      showCloseButton
+      actions={
+        <>
+          <MGButton
+            type="button"
+            variant="secondary"
+            size="medium"
+            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={onCancel}
+            disabled={saving}
+          >
+            {t('systemConfig.notificationScheduler.cancel', '취소')}
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="primary"
+            size="medium"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: saving })}
+            loading={saving}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={onProceed}
+            preventDoubleClick={false}
+          >
+            {t('systemConfig.notificationScheduler.confirm', '확인')}
+          </MGButton>
+        </>
+      }
+    >
+      <p className="mg-v2-info-text">{message}</p>
+    </UnifiedModal>
   );
 };
 

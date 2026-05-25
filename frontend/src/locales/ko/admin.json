@@ -26,6 +26,35 @@
         "remove": "{{role}} 제거",
         "optionLabel": "{{name}} ({{code}})"
       }
+    },
+    "notificationScheduler": {
+      "title": "알림 자동 발송",
+      "description": "운영자가 자동 발송 채널을 즉시 ON/OFF 할 수 있습니다. 변경 즉시 다음 cron 시점부터 반영됩니다.",
+      "loading": "스케줄러 플래그를 불러오는 중...",
+      "loadFailed": "스케줄러 플래그를 불러오지 못했습니다.",
+      "saveFailed": "스케줄러 플래그 저장에 실패했습니다.",
+      "saveSuccess": "스케줄러 플래그가 저장되었습니다.",
+      "wellnessTip": "웰니스 일일 팁",
+      "wellnessTipHint": "매일 09:00 KST 등록된 사용자에게 자동 발송합니다.",
+      "consultationRecordAlert": "상담 기록 미작성 알림",
+      "consultationRecordAlertHint": "일·주·월 배치로 상담사에게 미작성 건을 통지합니다.",
+      "workflowAutomation": "워크플로우 자동화",
+      "workflowAutomationHint": "예약 리마인더·미완료 알림·일/월 성과 자동화 4종을 일괄 제어합니다.",
+      "reservationReminder": "예약 D-1·D-2 리마인더",
+      "reservationReminderHint": "매일 09:00 KST 예약 D-2 안내를 일괄 발송합니다.",
+      "status": {
+        "on": "켜짐",
+        "off": "꺼짐"
+      },
+      "confirmTitle": "자동 발송 토글 확인",
+      "confirmOn": "켜면 다음 cron 시점부터 자동 발송됩니다. 진행할까요?",
+      "confirmOff": "끄면 자동 발송이 즉시 중단됩니다. 진행할까요?",
+      "confirm": "확인",
+      "cancel": "취소",
+      "lastUpdated": "마지막 변경: {{updatedBy}} ({{updatedAt}})",
+      "lastUpdatedNever": "마지막 변경 이력 없음",
+      "toggleAriaOn": "{{label}} 켜기",
+      "toggleAriaOff": "{{label}} 끄기"
     }
   },
   "aiProviderManagement": {

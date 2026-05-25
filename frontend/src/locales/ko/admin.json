@@ -8,7 +8,9 @@
     "editPgSettings": "PG 설정 수정",
     "viewDetail": "상세 보기",
     "viewAll": "전체 보기",
-    "view": "보기"
+    "view": "보기",
+    "register": "등록",
+    "edit": "수정"
   },
   "systemConfig": {
     "wellness": {
@@ -123,7 +125,9 @@
     "systemManagement": "시스템 관리",
     "email": "이메일",
     "rejected": "거부됨",
-    "paymentMethod": "결제 방법"
+    "paymentMethod": "결제 방법",
+    "name": "이름",
+    "phone": "전화번호"
   },
   "messages": {
     "loadingData": "데이터를 불러오는 중...",
@@ -449,7 +453,10 @@
       "totalMappings": "전체 매핑",
       "activeMappings": "활성 매핑",
       "pendingPayments": "결제 대기",
-      "systemHealth": "시스템 상태"
+      "systemHealth": "시스템 상태",
+      "totalUsers": "총 사용자",
+      "bookedConsultations": "오늘 예약된 상담",
+      "completionRate": "완료율"
     },
     "filterPeriod": {
       "today": "오늘",
@@ -688,7 +695,12 @@
         "TEACHER_ALT2": "교사",
         "ADMIN": "관리자"
       }
-    }
+    },
+    "chartTitle": "상담 현황 추이",
+    "chartWeeklySubtitle": "최근 6주 간의 완료 추이",
+    "chartSubtitle": "최근 6개월 간의 예약 및 완료 추이",
+    "totalVacationDays": "총 휴가일수",
+    "avgVacationDays": "평균 휴가일수"
   },
   "widget": {
     "counselorStatus": {
@@ -787,7 +799,26 @@
       "consultant": "상담사",
       "client": "내담자",
       "superAdmin": "슈퍼 관리자"
-    }
+    },
+    "error": {
+      "load": "권한을 불러오는데 실패했습니다.",
+      "saveFailed": "저장 실패: {{message}}",
+      "save": "권한 저장에 실패했습니다."
+    },
+    "success": {
+      "save": "권한이 성공적으로 저장되었습니다."
+    },
+    "ariaContent": "권한 관리 콘텐츠",
+    "noAccessTitle": "접근 권한 없음",
+    "noAccessSubtitle": "권한 관리는 관리자(ADMIN)만 이용할 수 있습니다.",
+    "currentRole": "현재 역할",
+    "subtitle": "역할별 메뉴·기능 접근 권한을 설정하고 저장합니다.",
+    "roleSelect": "역할 선택",
+    "roleRestriction": "{{role}}는 자신의 역할만 관리할 수 있습니다.",
+    "action": {
+      "save": "권한 저장"
+    },
+    "currentlySelected": "현재 선택된 권한 ({{count}}개)"
   },
   "session": {
     "title": "세션 관리",
@@ -809,7 +840,8 @@
       "consultant": "상담사",
       "client": "내담자",
       "type": "세션 유형",
-      "searchPlaceholder": "내담자 또는 상담사 이름으로 검색"
+      "searchPlaceholder": "내담자 또는 상담사 이름으로 검색",
+      "allStatus": "모든 상태"
     },
     "status": {
       "scheduled": "예약됨",
@@ -817,17 +849,68 @@
       "completed": "완료",
       "cancelled": "취소됨",
       "noShow": "노쇼",
-      "pending": "대기"
+      "pending": "대기",
+      "paymentConfirmed": "결제확인"
     },
     "action": {
       "complete": "완료 처리",
       "cancel": "취소",
       "reschedule": "일정 변경",
-      "viewDetail": "상세 보기"
+      "viewDetail": "상세 보기",
+      "addSession": "회기 추가",
+      "paymentConfirm": "입금 확인",
+      "reject": "거부",
+      "adminApprove": "관리자 승인"
     },
     "loadError": "세션 정보를 불러올 수 없습니다.",
     "updateSuccess": "세션 상태가 업데이트되었습니다.",
-    "updateError": "세션 업데이트에 실패했습니다."
+    "updateError": "세션 업데이트에 실패했습니다.",
+    "error": {
+      "dataLoad": "데이터를 불러오는데 실패했습니다.",
+      "paymentConfirm": "입금 확인에 실패했습니다.",
+      "adminApprove": "관리자 승인에 실패했습니다.",
+      "reject": "요청 거부에 실패했습니다."
+    },
+    "success": {
+      "paymentConfirmed": "입금이 확인되었습니다. 회기수가 업데이트되었습니다.",
+      "adminApprove": "관리자 승인이 완료되었습니다.",
+      "reject": "요청이 거부되었습니다."
+    },
+    "adminApproveComment": "관리자 승인",
+    "rejectReason": "요청 거부",
+    "pageTitle": "회기 관리",
+    "ariaContent": "회기 관리 본문",
+    "stat": {
+      "totalClients": "총 내담자",
+      "activeMappings": "활성 매핑",
+      "usedSessions": "사용된 회기",
+      "completionRate": "완료율"
+    },
+    "tab": {
+      "quick": "빠른 추가",
+      "search": "내담자 검색",
+      "mapping": "전체 매핑"
+    },
+    "section": {
+      "quickAdd": "빠른 회기 추가",
+      "search": "내담자 검색 후 회기 추가",
+      "allMapping": "전체 매핑에서 회기 추가",
+      "recentRequests": "최근 회기 추가 요청"
+    },
+    "sessionUnit": "회기",
+    "empty": {
+      "activeMapping": "활성 매핑이 없습니다.",
+      "mapping": "매핑이 없습니다.",
+      "recentRequests": "최근 회기 추가 요청이 없습니다."
+    },
+    "search": {
+      "placeholder": "내담자 이름으로 검색..."
+    },
+    "activeMappingsCount": "{{count}}개 활성 매핑",
+    "noActiveMapping": "활성 매핑이 없습니다",
+    "notActive": "활성 상태가 아닙니다",
+    "addedSessions": "{{count}}회기 추가",
+    "reason": "사유"
   },
   "user": {
     "title": "사용자 관리",
@@ -845,7 +928,9 @@
     "filter": {
       "role": "역할",
       "status": "상태",
-      "searchPlaceholder": "이름 또는 이메일로 검색"
+      "searchPlaceholder": "이름 또는 이메일로 검색",
+      "allRoles": "모든 역할",
+      "includeInactive": "비활성 사용자 포함"
     },
     "status": {
       "active": "활성",
@@ -858,7 +943,12 @@
       "suspend": "정지",
       "resetPassword": "비밀번호 초기화",
       "viewDetail": "상세 보기",
-      "delete": "삭제"
+      "delete": "삭제",
+      "toConsultantHint": "내담자를 상담사로 변경",
+      "toConsultant": "상담사로",
+      "changeRole": "역할 변경",
+      "change": "변경",
+      "changeToConsultant": "상담사로 변경"
     },
     "confirm": {
       "suspend": {
@@ -868,11 +958,43 @@
       "delete": {
         "title": "사용자 삭제 확인",
         "message": "삭제하면 복구할 수 없습니다. 정말 삭제하시겠어요?"
-      }
+      },
+      "changeToConsultant": "{{name}}님을 상담사로 변경하시겠습니까?\\n\\n이 변경으로 인해:\\n• 상담사 메뉴와 기능에 접근 가능\\n• 내담자 관리, 스케줄 관리 권한 부여\\n• 필요시 다시 내담자로 되돌릴 수 있음"
     },
     "loadError": "사용자 정보를 불러올 수 없습니다.",
     "updateSuccess": "사용자 정보가 업데이트되었습니다.",
-    "updateError": "사용자 정보 업데이트에 실패했습니다."
+    "updateError": "사용자 정보 업데이트에 실패했습니다.",
+    "roleDesc": {
+      "client": "상담을 받는 내담자",
+      "consultant": "상담을 제공하는 상담사",
+      "staff": "사무/행정 담당",
+      "admin": "시스템 관리자"
+    },
+    "message": {
+      "becameConsultant": "{{name}}님이 상담사로 성공적으로 변경되었습니다.",
+      "roleChanged": "사용자 역할이 성공적으로 변경되었습니다."
+    },
+    "error": {
+      "roleChangeFailed": "역할 변경에 실패했습니다."
+    },
+    "loadingUsers": "사용자 목록을 불러오는 중...",
+    "emptyRegistered": "등록된 사용자가 없습니다.",
+    "searchHint": "다른 검색어나 필터를 시도해보세요.",
+    "aria": {
+      "list": "관리자 사용자 목록 및 역할 관리"
+    },
+    "modal": {
+      "roleSettingTitle": "역할 설정",
+      "userLabel": "사용자",
+      "currentRole": "현재 역할",
+      "changeToConsultantTitle": "상담사 역할 변경 안내",
+      "changeToConsultantInfo1": "사용자가 상담사 역할로 변경됩니다.",
+      "changeToConsultantInfo2": "상담사 메뉴와 기능에 접근할 수 있게 됩니다.",
+      "changeToConsultantInfo3": "내담자 관리, 스케줄 관리 등의 권한이 부여됩니다.",
+      "changeToConsultantInfo4": "변경 후에는 다시 내담자로 되돌릴 수 있습니다.",
+      "newRole": "새로운 역할",
+      "selectRole": "역할을 선택하세요"
+    }
   },
   "consultant": {
     "title": "상담사 종합 관리",
@@ -927,7 +1049,16 @@
     "approveSuccess": "상담사가 승인되었습니다.",
     "suspendSuccess": "상담사가 정지되었습니다.",
     "updateSuccess": "상담사 정보가 업데이트되었습니다.",
-    "updateError": "상담사 정보 업데이트에 실패했습니다."
+    "updateError": "상담사 정보 업데이트에 실패했습니다.",
+    "subtitle": "상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다",
+    "empty": {
+      "title": "상담사가 없습니다"
+    },
+    "section": {
+      "basicInfo": "기본 정보",
+      "specialty": "전문분야",
+      "credentials": "자격·경력"
+    }
   },
   "onboarding": {
     "title": "온보딩 심사",
@@ -977,7 +1108,15 @@
       "rejected": "반려됨",
       "inReview": "심사 중"
     },
-    "loadError": "온보딩 목록을 불러올 수 없습니다."
+    "loadError": "온보딩 목록을 불러올 수 없습니다.",
+    "field": {
+      "tenantName": "기관명",
+      "contactPhone": "연락처",
+      "businessType": "업종",
+      "adminName": "관리자 이름",
+      "adminEmail": "관리자 이메일",
+      "finalReviewDesc": "입력된 모든 정보를 확인했습니다. 승인 또는 반려를 선택해주세요."
+    }
   },
   "matching": {
     "title": "매칭 관리",
@@ -1309,6 +1448,9 @@
       "activeLabel": "활성:",
       "inactiveLabel": "비활성:",
       "defaultLabel": "기본:"
+    },
+    "badge": {
+      "default": "기본"
     }
   },
   "permissionMgmt": {
@@ -1592,7 +1734,8 @@
       "nameLabel": "이름:",
       "emailLabel": "이메일:",
       "phoneLabel": "전화번호:",
-      "warning": "⚠️ 이 작업은 되돌릴 수 없습니다."
+      "warning": "⚠️ 이 작업은 되돌릴 수 없습니다.",
+      "description": "다음 내담자의 정보가 영구적으로 삭제됩니다:"
     },
     "form": {
       "passwordHint": "💡 비밀번호는 정책에 맞는 값으로 자동 채워집니다. 비우면 임시 비밀번호(이메일 안내)로 등록됩니다.",
@@ -1639,7 +1782,25 @@
       "GOLD": "골드",
       "PLATINUM": "플래티넘",
       "DIAMOND": "다이아몬드"
-    }
+    },
+    "namePlaceholder": "내담자 이름",
+    "gradeOption": {
+      "bronze": "브론즈",
+      "silver": "실버",
+      "gold": "골드",
+      "platinum": "플래티넘",
+      "diamond": "다이아몬드"
+    },
+    "section": {
+      "consultation": "상담 정보",
+      "emergency": "비상 연락처"
+    },
+    "consultationPurpose": "상담 목적",
+    "consultationPurposePlaceholder": "상담을 받는 목적을 입력하세요",
+    "consultationHistory": "상담 이력",
+    "consultationHistoryPlaceholder": "이전 상담 이력을 입력하세요",
+    "emergencyContact": "비상 연락처 이름",
+    "emergencyPhone": "비상 연락처 전화"
   },
   "mappingCreation": {
     "title": "새 매칭 생성",
@@ -2375,5 +2536,86 @@
       "archive": "이 공지를 보관하시겠습니까?",
       "delete": "이 공지를 삭제하시겠습니까?"
     }
+  },
+  "client": {
+    "error": {
+      "commonCodeLoad": "공통 코드를 불러오는데 실패했습니다. 기본값을 사용합니다.",
+      "listLoad": "내담자 목록을 불러오는데 실패했습니다.",
+      "passwordReset": "비밀번호 초기화에 실패했습니다."
+    },
+    "success": {
+      "passwordReset": "비밀번호가 성공적으로 초기화되었습니다."
+    },
+    "pageTitle": "내담자 종합관리",
+    "ariaContent": "내담자 종합관리 본문",
+    "subtitle": "내담자 정보·상담 이력·매칭·통계를 종합 관리합니다",
+    "tab": {
+      "overview": "개요",
+      "consultation": "상담이력",
+      "mapping": "매칭",
+      "statistics": "통계"
+    },
+    "kpi": {
+      "total": "총 내담자",
+      "peopleCount": "{{count}}명",
+      "totalMappings": "총 매칭",
+      "countCases": "{{count}}건"
+    },
+    "search": {
+      "placeholder": "이름, 이메일, 전화번호 또는 #태그로 검색..."
+    },
+    "action": {
+      "createNew": "새 내담자 등록"
+    },
+    "list": {
+      "title": "내담자 목록",
+      "toggleAria": "목록 보기 전환"
+    }
+  },
+  "role": {
+    "admin": "관리자",
+    "staff": "사무원",
+    "consultant": "상담사",
+    "client": "내담자"
+  },
+  "vacation": {
+    "validation": {
+      "consultantRequired": "상담사를 선택해주세요.",
+      "dateRequired": "휴가 날짜를 선택해주세요.",
+      "reasonRequired": "휴가 사유를 입력해주세요.",
+      "customTimeRequired": "사용자 정의 휴가의 경우 시작/종료 시간을 입력해주세요."
+    },
+    "success": {
+      "create": "휴가가 성공적으로 등록되었습니다.",
+      "delete": "휴가가 삭제되었습니다."
+    },
+    "error": {
+      "create": "휴가 등록에 실패했습니다.",
+      "createException": "휴가 등록 중 오류가 발생했습니다.",
+      "delete": "휴가 삭제에 실패했습니다.",
+      "deleteException": "휴가 삭제 중 오류가 발생했습니다."
+    },
+    "confirm": {
+      "delete": "정말로 이 휴가를 삭제하시겠습니까?"
+    },
+    "modalTitle": "휴가 관리",
+    "selectConsultant": "상담사 선택",
+    "selectConsultantPlaceholder": "상담사를 선택하세요",
+    "selfNotice": "본인의 휴가를 등록합니다",
+    "formTitle": "새 휴가 등록",
+    "label": {
+      "date": "휴가 날짜",
+      "type": "휴가 유형",
+      "startTime": "시작 시간",
+      "endTime": "종료 시간",
+      "reason": "휴가 사유"
+    },
+    "reasonPlaceholder": "휴가 사유를 입력하세요",
+    "action": {
+      "create": "휴가 등록"
+    },
+    "listTitle": "등록된 휴가 목록",
+    "allDay": "하루 종일",
+    "empty": "등록된 휴가가 없습니다."
   }
 }

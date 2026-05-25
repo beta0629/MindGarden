@@ -1,0 +1,54 @@
+{
+  "page": {
+    "noAccess": "이 페이지에 접근할 권한이 없습니다.",
+    "title": "SMS 템플릿 관리",
+    "subtitle": "트랜잭션성 SMS 본문을 어드민이 직접 관리합니다. 글로벌 본문은 Flyway 로 관리되며, 테넌트별 override 만 편집 가능합니다."
+  },
+  "errors": {
+    "loadFailed": "목록을 불러오지 못했습니다.",
+    "previewFailed": "미리보기에 실패했습니다.",
+    "saveFailed": "저장에 실패했습니다.",
+    "deleteFailed": "삭제에 실패했습니다."
+  },
+  "notify": {
+    "saved": "저장되었습니다.",
+    "deleted": "테넌트 override 가 삭제되었습니다."
+  },
+  "list": {
+    "searchPlaceholder": "키 또는 라벨 검색",
+    "categoryAll": "전체",
+    "empty": "등록된 템플릿이 없습니다.",
+    "overrideBadge": "테넌트 override"
+  },
+  "editor": {
+    "selectPrompt": "왼쪽 목록에서 템플릿을 선택하세요.",
+    "globalLabel": "글로벌 본문 (읽기 전용)",
+    "tenantLabel": "테넌트 override 본문",
+    "variableHint": "변수 자리표시자 형식: {{변수명}} (알림톡과 동일).",
+    "variablesLabel": "변수 입력 (미리보기용)",
+    "previewLabel": "미리보기 결과"
+  },
+  "actions": {
+    "preview": "미리보기",
+    "save": "저장",
+    "deleteOverride": "테넌트 override 삭제"
+  },
+  "preview": {
+    "byteLength": "바이트",
+    "charLength": "문자",
+    "source": "출처",
+    "sourceTenant": "테넌트 override",
+    "sourceGlobal": "글로벌",
+    "missing": "누락된 변수"
+  },
+  "modals": {
+    "saveTitle": "테넌트 override 저장 확인",
+    "saveSubtitle": "저장 후에는 즉시 SMS 발송 본문에 반영됩니다.",
+    "confirmSave": "저장하기",
+    "saveBody": "본문을 저장하시겠습니까? 변경 내용은 트랜잭션 SMS 발송 시 즉시 적용됩니다.",
+    "deleteTitle": "테넌트 override 삭제",
+    "deleteSubtitle": "삭제 후에는 글로벌 본문이 사용됩니다.",
+    "confirmDelete": "삭제하기",
+    "deleteBody": "테넌트 override 본문을 삭제하시겠습니까? 이후에는 글로벌 본문이 사용됩니다."
+  }
+}

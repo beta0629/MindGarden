@@ -31,6 +31,11 @@ import koReport from '../locales/ko/report.json';
 import koErp from '../locales/ko/erp.json';
 import koSchedule from '../locales/ko/schedule.json';
 import koAuth from '../locales/ko/auth.json';
+import koManualNotification from '../locales/ko/manualNotification.json';
+import koTerms from '../locales/ko/terms.json';
+import koTestNotification from '../locales/ko/testNotification.json';
+import koSystemConfig from '../locales/ko/systemConfig.json';
+import koSmsTemplate from '../locales/ko/smsTemplate.json';
 
 const SUPPORTED_LANGUAGES = ['ko'];
 const FALLBACK_LANGUAGE = 'ko';
@@ -51,13 +56,33 @@ i18n
         report: koReport,
         erp: koErp,
         schedule: koSchedule,
-        auth: koAuth
+        auth: koAuth,
+        manualNotification: koManualNotification,
+        terms: koTerms,
+        testNotification: koTestNotification,
+        systemConfig: koSystemConfig,
+        smsTemplate: koSmsTemplate
       }
     },
     supportedLngs: SUPPORTED_LANGUAGES,
     fallbackLng: FALLBACK_LANGUAGE,
     defaultNS: DEFAULT_NAMESPACE,
-    ns: ['common', 'admin', 'error', 'settings', 'statistics', 'report', 'erp', 'schedule', 'auth'],
+    ns: [
+      'common',
+      'admin',
+      'error',
+      'settings',
+      'statistics',
+      'report',
+      'erp',
+      'schedule',
+      'auth',
+      'manualNotification',
+      'terms',
+      'testNotification',
+      'systemConfig',
+      'smsTemplate'
+    ],
     interpolation: {
       escapeValue: false
     },

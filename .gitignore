@@ -91,6 +91,9 @@ deployment/*template*
 !frontend/src/components/admin/sms-templates/
 !frontend/src/components/admin/sms-templates/**
 
+# Exception: i18n smsTemplate namespace JSON (NOT secrets — UI labels)
+!frontend/src/locales/ko/smsTemplate.json
+
 # API Keys and Secrets
 **/api-keys/
 **/secrets/

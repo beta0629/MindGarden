@@ -1,0 +1,70 @@
+{
+  "wellness": {
+    "targetRoles": {
+      "legacy": "(레거시)",
+      "remove": "{{role}} 제거",
+      "label": "대상 역할",
+      "placeholderLoading": "역할 로딩 중...",
+      "placeholder": "역할 선택",
+      "emptyOptions": "선택 가능한 역할이 없습니다.",
+      "hint": "웰니스 알림을 수신할 역할을 선택하세요. 다중 선택 가능."
+    },
+    "descAutoSend": "웰니스 자동 발송",
+    "descSendTime": "웰니스 발송 시간",
+    "descTargetRoles": "웰니스 대상 역할",
+    "success": {
+      "save": "웰니스 설정이 저장되었습니다."
+    },
+    "title": "웰니스 시스템 설정",
+    "sectionDesc": "매일 지정된 시간에 등록된 사용자에게 웰니스 팁을 자동 발송합니다. 대상 역할은 다중 선택할 수 있습니다.",
+    "autoSendEnabled": "자동 발송 활성화",
+    "autoSendHint": "매일 지정된 시간에 웰니스 팁을 자동으로 발송합니다.",
+    "sendTime": "발송 시간"
+  },
+  "notificationScheduler": {
+    "error": {
+      "load": "스케줄러 플래그를 불러오지 못했습니다.",
+      "save": "스케줄러 플래그 저장에 실패했습니다."
+    },
+    "success": {
+      "save": "스케줄러 플래그가 저장되었습니다."
+    },
+    "title": "알림 자동 발송",
+    "description": "운영자가 자동 발송 채널을 즉시 ON/OFF 할 수 있습니다. 변경 즉시 다음 cron 시점부터 반영됩니다.",
+    "loading": "스케줄러 플래그를 불러오는 중...",
+    "status": {
+      "on": "켜짐",
+      "off": "꺼짐"
+    },
+    "toggleAriaOff": "{{label}} 끄기",
+    "toggleAriaOn": "{{label}} 켜기",
+    "lastUpdated": "마지막 변경: {{updatedBy}} ({{updatedAt}})",
+    "lastUpdatedNever": "마지막 변경 이력 없음",
+    "confirmOn": "켜면 다음 cron 시점부터 자동 발송됩니다. 진행할까요?",
+    "confirmOff": "끄면 자동 발송이 즉시 중단됩니다. 진행할까요?",
+    "confirmTitle": "자동 발송 토글 확인",
+    "cancel": "취소",
+    "confirm": "확인"
+  },
+  "error": {
+    "load": "설정을 불러오는데 실패했습니다.",
+    "loginRequired": "로그인이 필요합니다.",
+    "noAccess": "접근 권한이 없습니다.",
+    "save": "설정 저장에 실패했습니다."
+  },
+  "loading": {
+    "session": "세션을 확인하는 중...",
+    "config": "설정을 불러오는 중..."
+  },
+  "pageTitle": "시스템 설정 관리",
+  "action": {
+    "save": "설정 저장"
+  },
+  "aiProvider": {
+    "title": "AI 프로바이더 관리 (분리됨)",
+    "desc": "AI API 키 등록·프로바이더 선택·사용 통계·호출 로그는 별도 페이지로 이전되었습니다.",
+    "linkAria": "AI 프로바이더 관리 페이지로 이동",
+    "linkText": "AI 프로바이더 관리로 이동"
+  },
+  "pageSubtitle": "웰니스 자동 발송 등 시스템 설정을 관리합니다. AI API 키·프로바이더 선택은 'AI 프로바이더 관리'로 이전되었습니다."
+}

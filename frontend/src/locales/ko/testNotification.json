@@ -1,0 +1,91 @@
+{
+  "errors": {
+    "loadFailed": "데이터를 불러오지 못했습니다.",
+    "sendFailed": "발송에 실패했습니다."
+  },
+  "history": {
+    "title": "최근 발송 이력",
+    "subtitle": "최대 30건 (감사로그)",
+    "refresh": "새로고침",
+    "loading": "이력 불러오는 중...",
+    "empty": "발송 이력이 없습니다.",
+    "channelAlimtalk": "알림톡",
+    "resultSuccess": "성공",
+    "resultFail": "실패",
+    "recipientLabel": "수신",
+    "reasonLabel": "사유"
+  },
+  "card": {
+    "label": "알림 테스트 발송",
+    "shortLabel": "알",
+    "description": "SMS·카카오 알림톡 테스트 발송"
+  },
+  "panel": {
+    "title": "알림 테스트 발송"
+  },
+  "page": {
+    "noAccess": "이 페이지에 접근할 권한이 없습니다.",
+    "title": "알림 테스트 발송",
+    "subtitle": "어드민이 본인·DB 사용자에게 SMS·카카오 알림톡을 테스트 발송하여 운영 사고를 재현·예방합니다."
+  },
+  "recipient": {
+    "unknownName": "이름 없음",
+    "unknownRole": "역할 미지정",
+    "unknownPhone": "번호 없음",
+    "title": "수신자",
+    "self": "본인(SELF)",
+    "user": "DB 사용자",
+    "searchPlaceholder": "이름·이메일·역할 검색",
+    "empty": "검색 결과가 없습니다."
+  },
+  "sms": {
+    "langKo": "한글",
+    "langEn": "영문",
+    "messageLabel": "메시지 본문",
+    "messagePlaceholder": "전송할 SMS 본문을 입력하세요 (한글 70자 / 영문 160자 권장)"
+  },
+  "channel": {
+    "title": "채널",
+    "alimtalk": "카카오 알림톡"
+  },
+  "alimtalk": {
+    "templateLabel": "알림톡 템플릿",
+    "templatesLoading": "템플릿 로드 중...",
+    "templatePlaceholder": "템플릿을 선택하세요",
+    "missingMappingBadge": "[매핑없음] ",
+    "liveToggle": "솔라피 전체 보기 (실시간 조회)",
+    "missingMappingHint": "선택한 템플릿은 Solapi 실 templateId 매핑이 없어 발송이 차단됩니다. 공통코드 ALIMTALK_BIZ_TEMPLATE_CODE 에 매핑을 추가하거나, 위 \"솔라피 전체 보기\" 토글로 실제 등록된 templateId 를 선택해 주세요.",
+    "bodyPreview": "템플릿 본문",
+    "variablesTitle": "변수 입력",
+    "variableFallback": "변수",
+    "variableRequired": "필수"
+  },
+  "reason": {
+    "label": "발송 사유 (감사로그 기록, 필수)",
+    "placeholder": "예: 사용자 #123 매핑 확정 알림 변수 매칭 검증"
+  },
+  "rateLimit": {
+    "title": "잔여 한도"
+  },
+  "result": {
+    "openConsole": "솔라피 콘솔에서 보기",
+    "errorCode": "에러코드",
+    "errorMessage": "메시지",
+    "close": "닫기",
+    "successTitle": "발송 성공",
+    "successSubtitle": "솔라피 응답을 확인하세요.",
+    "failTitle": "발송 실패",
+    "failSubtitle": "에러를 확인하고 재시도하세요.",
+    "retry": "재시도"
+  },
+  "submit": {
+    "sending": "발송 중...",
+    "send": "발송하기",
+    "confirmTitle": "발송 정보 확인",
+    "confirmSubtitle": "다음 정보로 실제 사용자에게 발송됩니다.",
+    "confirmNext": "다음",
+    "finalConfirmTitle": "정말 발송하시겠습니까?",
+    "finalConfirmSubtitle": "실제 단말로 SMS·알림톡이 전송됩니다. 이 작업은 되돌릴 수 없습니다.",
+    "finalConfirmSend": "최종 발송"
+  }
+}

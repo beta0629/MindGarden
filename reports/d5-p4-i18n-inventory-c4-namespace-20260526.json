@@ -1,0 +1,273 @@
+{
+  "meta": {
+    "measured_at": "2026-05-26",
+    "develop_head": "c44a0082b",
+    "main_head_3rd_chunk_settled": "ec273de76",
+    "scope": "frontend/src/**/*.{js,jsx,ts,tsx}",
+    "src_files": 1061,
+    "ko_namespaces_existing": [
+      "admin",
+      "auth",
+      "common",
+      "erp",
+      "error",
+      "report",
+      "schedule",
+      "settings",
+      "statistics"
+    ],
+    "ko_namespaces_referenced": [
+      "action",
+      "admin",
+      "auth",
+      "common",
+      "erp",
+      "manualNotification",
+      "report",
+      "settings",
+      "smsTemplate",
+      "statistics",
+      "systemConfig",
+      "terms",
+      "testNotification"
+    ],
+    "ko_namespaces_new_required": [
+      "action",
+      "manualNotification",
+      "smsTemplate",
+      "systemConfig",
+      "terms",
+      "testNotification"
+    ],
+    "korean_line_baseline_excl_comment_src_all": 20481,
+    "korean_line_baseline_excl_comment_components": 15919,
+    "korean_line_baseline_raw_src_all": 30306,
+    "korean_line_baseline_raw_components": 21350,
+    "agreement_kpi_baseline_match": 20481
+  },
+  "existing_namespaces": [
+    "admin",
+    "auth",
+    "common",
+    "erp",
+    "error",
+    "report",
+    "schedule",
+    "settings",
+    "statistics"
+  ],
+  "new_namespaces_required": [
+    "action",
+    "manualNotification",
+    "smsTemplate",
+    "systemConfig",
+    "terms",
+    "testNotification"
+  ],
+  "distribution": {
+    "common": {
+      "in_existing_ko": true,
+      "fallback_total": 531,
+      "matched": 508,
+      "missing_occurrences": 23,
+      "missing_unique_keys": 12,
+      "file_count": 199,
+      "by_pattern": {
+        "A_inline_singleQuote": 530,
+        "C_mixed_sd": 1
+      },
+      "seed_plan_unique_keys": 12
+    },
+    "statistics": {
+      "in_existing_ko": true,
+      "fallback_total": 78,
+      "matched": 78,
+      "missing_occurrences": 0,
+      "missing_unique_keys": 0,
+      "file_count": 9,
+      "by_pattern": {
+        "A_inline_singleQuote": 78
+      },
+      "seed_plan_unique_keys": 0
+    },
+    "admin": {
+      "in_existing_ko": true,
+      "fallback_total": 1175,
+      "matched": 974,
+      "missing_occurrences": 201,
+      "missing_unique_keys": 168,
+      "file_count": 125,
+      "by_pattern": {
+        "A_inline_singleQuote": 1174,
+        "D_multiline_single": 1
+      },
+      "seed_plan_unique_keys": 168
+    },
+    "settings": {
+      "in_existing_ko": true,
+      "fallback_total": 119,
+      "matched": 119,
+      "missing_occurrences": 0,
+      "missing_unique_keys": 0,
+      "file_count": 6,
+      "by_pattern": {
+        "A_inline_singleQuote": 119
+      },
+      "seed_plan_unique_keys": 0
+    },
+    "report": {
+      "in_existing_ko": true,
+      "fallback_total": 120,
+      "matched": 120,
+      "missing_occurrences": 0,
+      "missing_unique_keys": 0,
+      "file_count": 4,
+      "by_pattern": {
+        "A_inline_singleQuote": 120
+      },
+      "seed_plan_unique_keys": 0
+    },
+    "auth": {
+      "in_existing_ko": true,
+      "fallback_total": 60,
+      "matched": 60,
+      "missing_occurrences": 0,
+      "missing_unique_keys": 0,
+      "file_count": 2,
+      "by_pattern": {
+        "A_inline_singleQuote": 60
+      },
+      "seed_plan_unique_keys": 0
+    },
+    "systemConfig": {
+      "in_existing_ko": false,
+      "fallback_total": 54,
+      "matched": 0,
+      "missing_occurrences": 54,
+      "missing_unique_keys": 46,
+      "file_count": 1,
+      "by_pattern": {
+        "A_inline_singleQuote": 48,
+        "C_mixed_sd": 1,
+        "D_multiline_single": 5
+      },
+      "seed_plan_unique_keys": 46
+    },
+    "manualNotification": {
+      "in_existing_ko": false,
+      "fallback_total": 103,
+      "matched": 0,
+      "missing_occurrences": 103,
+      "missing_unique_keys": 81,
+      "file_count": 5,
+      "by_pattern": {
+        "A_inline_singleQuote": 90,
+        "C_mixed_sd": 2,
+        "D_multiline_single": 11
+      },
+      "seed_plan_unique_keys": 81
+    },
+    "testNotification": {
+      "in_existing_ko": false,
+      "fallback_total": 82,
+      "matched": 0,
+      "missing_occurrences": 82,
+      "missing_unique_keys": 63,
+      "file_count": 4,
+      "by_pattern": {
+        "A_inline_singleQuote": 80,
+        "D_multiline_single": 2
+      },
+      "seed_plan_unique_keys": 63
+    },
+    "smsTemplate": {
+      "in_existing_ko": false,
+      "fallback_total": 46,
+      "matched": 0,
+      "missing_occurrences": 46,
+      "missing_unique_keys": 36,
+      "file_count": 1,
+      "by_pattern": {
+        "A_inline_singleQuote": 36,
+        "D_multiline_single": 10
+      },
+      "seed_plan_unique_keys": 36
+    },
+    "terms": {
+      "in_existing_ko": false,
+      "fallback_total": 76,
+      "matched": 0,
+      "missing_occurrences": 76,
+      "missing_unique_keys": 73,
+      "file_count": 1,
+      "by_pattern": {
+        "A_inline_singleQuote": 76
+      },
+      "seed_plan_unique_keys": 73
+    },
+    "action": {
+      "in_existing_ko": false,
+      "fallback_total": 2,
+      "matched": 0,
+      "missing_occurrences": 2,
+      "missing_unique_keys": 2,
+      "file_count": 2,
+      "by_pattern": {
+        "A_inline_singleQuote": 2
+      },
+      "seed_plan_unique_keys": 2
+    },
+    "erp": {
+      "in_existing_ko": true,
+      "fallback_total": 406,
+      "matched": 406,
+      "missing_occurrences": 0,
+      "missing_unique_keys": 0,
+      "file_count": 3,
+      "by_pattern": {
+        "A_inline_singleQuote": 406
+      },
+      "seed_plan_unique_keys": 0
+    }
+  },
+  "seed_plan_unique_keys_per_namespace": {
+    "action": 2,
+    "admin": 168,
+    "common": 12,
+    "manualNotification": 81,
+    "smsTemplate": 36,
+    "systemConfig": 46,
+    "terms": 73,
+    "testNotification": 63
+  },
+  "seed_plan_unique_keys_total": 481,
+  "scenarios_korean_line_after_fallback_removal": {
+    "baseline": {
+      "ko_src_all_excl_comment": 20481,
+      "ko_components_excl_comment": 15919,
+      "ko_src_all_raw": 30306,
+      "ko_components_raw": 21350
+    },
+    "pattern_A_only": {
+      "ko_src_all_excl_comment": 17734,
+      "ko_components_excl_comment": 13175,
+      "ko_src_all_raw": 27558,
+      "ko_components_raw": 18606
+    },
+    "pattern_ABC": {
+      "ko_src_all_excl_comment": 17730,
+      "ko_components_excl_comment": 13171,
+      "ko_src_all_raw": 27554,
+      "ko_components_raw": 18602
+    },
+    "pattern_all_fallback": {
+      "ko_src_all_excl_comment": 17730,
+      "ko_components_excl_comment": 13171,
+      "ko_src_all_raw": 27554,
+      "ko_components_raw": 18602
+    }
+  },
+  "scenario_baseline_kpi_basis": "ko_src_all_excl_comment",
+  "kpi_target_korean_lines": 15000,
+  "kpi_gap_to_target_after_pr_l": 2730
+}

@@ -1,0 +1,538 @@
+{
+  "meta": {
+    "measured_at": "2026-05-26",
+    "develop_head": "c44a0082b",
+    "main_head_3rd_chunk_settled": "ec273de76",
+    "scope": "frontend/src/**/*.{js,jsx,ts,tsx}",
+    "src_files": 1061,
+    "ko_namespaces_existing": [
+      "admin",
+      "auth",
+      "common",
+      "erp",
+      "error",
+      "report",
+      "schedule",
+      "settings",
+      "statistics"
+    ],
+    "ko_namespaces_referenced": [
+      "action",
+      "admin",
+      "auth",
+      "common",
+      "erp",
+      "manualNotification",
+      "report",
+      "settings",
+      "smsTemplate",
+      "statistics",
+      "systemConfig",
+      "terms",
+      "testNotification"
+    ],
+    "ko_namespaces_new_required": [
+      "action",
+      "manualNotification",
+      "smsTemplate",
+      "systemConfig",
+      "terms",
+      "testNotification"
+    ],
+    "korean_line_baseline_excl_comment_src_all": 20481,
+    "korean_line_baseline_excl_comment_components": 15919,
+    "korean_line_baseline_raw_src_all": 30306,
+    "korean_line_baseline_raw_components": 21350,
+    "agreement_kpi_baseline_match": 20481
+  },
+  "pattern_counts_total": {
+    "A_inline_singleQuote": 2819,
+    "G_dotPrefix": 1064,
+    "C_mixed_sd": 4,
+    "D_multiline_single": 29
+  },
+  "pattern_file_counts": {
+    "A_inline_singleQuote": 290,
+    "C_mixed_sd": 3,
+    "D_multiline_single": 7
+  },
+  "key_kind_counts": {
+    "dot": 1064,
+    "colon": 1788
+  },
+  "top30_files": [
+    {
+      "rank": 1,
+      "file": "frontend/src/components/erp/IntegratedFinanceDashboard.js",
+      "fallback_total": 251,
+      "by_pattern": {
+        "A_inline_singleQuote": 251
+      },
+      "fallback_lines": 245,
+      "t_call_lines": 245,
+      "korean_lines_raw": 561,
+      "korean_lines_excl_comment": 513,
+      "namespaces": {
+        "erp": 229,
+        "common": 22
+      }
+    },
+    {
+      "rank": 2,
+      "file": "frontend/src/components/erp/FinancialManagement.js",
+      "fallback_total": 176,
+      "by_pattern": {
+        "A_inline_singleQuote": 176
+      },
+      "fallback_lines": 168,
+      "t_call_lines": 172,
+      "korean_lines_raw": 207,
+      "korean_lines_excl_comment": 182,
+      "namespaces": {
+        "erp": 176
+      }
+    },
+    {
+      "rank": 3,
+      "file": "frontend/src/components/admin/CommonCodeManagement.js",
+      "fallback_total": 77,
+      "by_pattern": {
+        "A_inline_singleQuote": 77
+      },
+      "fallback_lines": 71,
+      "t_call_lines": 79,
+      "korean_lines_raw": 87,
+      "korean_lines_excl_comment": 84,
+      "namespaces": {
+        "admin": 77
+      }
+    },
+    {
+      "rank": 4,
+      "file": "frontend/src/components/common/TermsOfService.js",
+      "fallback_total": 76,
+      "by_pattern": {
+        "A_inline_singleQuote": 76
+      },
+      "fallback_lines": 70,
+      "t_call_lines": 70,
+      "korean_lines_raw": 72,
+      "korean_lines_excl_comment": 70,
+      "namespaces": {
+        "terms": 76
+      }
+    },
+    {
+      "rank": 5,
+      "file": "frontend/src/components/admin/ConsultantComprehensiveManagement.js",
+      "fallback_total": 68,
+      "by_pattern": {
+        "A_inline_singleQuote": 68
+      },
+      "fallback_lines": 68,
+      "t_call_lines": 68,
+      "korean_lines_raw": 270,
+      "korean_lines_excl_comment": 223,
+      "namespaces": {
+        "admin": 64,
+        "common": 4
+      }
+    },
+    {
+      "rank": 6,
+      "file": "frontend/src/components/admin/MappingCreationModal.js",
+      "fallback_total": 67,
+      "by_pattern": {
+        "A_inline_singleQuote": 67
+      },
+      "fallback_lines": 65,
+      "t_call_lines": 66,
+      "korean_lines_raw": 87,
+      "korean_lines_excl_comment": 83,
+      "namespaces": {
+        "admin": 62,
+        "common": 5
+      }
+    },
+    {
+      "rank": 7,
+      "file": "frontend/src/components/admin/ClientComprehensiveManagement/ClientModal.js",
+      "fallback_total": 65,
+      "by_pattern": {
+        "A_inline_singleQuote": 65
+      },
+      "fallback_lines": 65,
+      "t_call_lines": 69,
+      "korean_lines_raw": 79,
+      "korean_lines_excl_comment": 76,
+      "namespaces": {
+        "admin": 62,
+        "common": 3
+      }
+    },
+    {
+      "rank": 8,
+      "file": "frontend/src/components/admin/system/TestNotificationForm.js",
+      "fallback_total": 61,
+      "by_pattern": {
+        "A_inline_singleQuote": 60,
+        "D_multiline_single": 1
+      },
+      "fallback_lines": 57,
+      "t_call_lines": 64,
+      "korean_lines_raw": 76,
+      "korean_lines_excl_comment": 67,
+      "namespaces": {
+        "testNotification": 61
+      }
+    },
+    {
+      "rank": 9,
+      "file": "frontend/src/components/admin/UserManagement.js",
+      "fallback_total": 59,
+      "by_pattern": {
+        "A_inline_singleQuote": 59
+      },
+      "fallback_lines": 55,
+      "t_call_lines": 55,
+      "korean_lines_raw": 70,
+      "korean_lines_excl_comment": 60,
+      "namespaces": {
+        "admin": 57,
+        "common": 2
+      }
+    },
+    {
+      "rank": 10,
+      "file": "frontend/src/components/admin/DashboardManagement.js",
+      "fallback_total": 58,
+      "by_pattern": {
+        "A_inline_singleQuote": 58
+      },
+      "fallback_lines": 57,
+      "t_call_lines": 57,
+      "korean_lines_raw": 98,
+      "korean_lines_excl_comment": 74,
+      "namespaces": {
+        "admin": 57,
+        "common": 1
+      }
+    },
+    {
+      "rank": 11,
+      "file": "frontend/src/components/admin/SessionManagement.js",
+      "fallback_total": 56,
+      "by_pattern": {
+        "A_inline_singleQuote": 56
+      },
+      "fallback_lines": 56,
+      "t_call_lines": 56,
+      "korean_lines_raw": 100,
+      "korean_lines_excl_comment": 87,
+      "namespaces": {
+        "admin": 49,
+        "common": 7
+      }
+    },
+    {
+      "rank": 12,
+      "file": "frontend/src/components/admin/manual-notification/ManualNotificationForm.js",
+      "fallback_total": 55,
+      "by_pattern": {
+        "A_inline_singleQuote": 43,
+        "C_mixed_sd": 2,
+        "D_multiline_single": 10
+      },
+      "fallback_lines": 45,
+      "t_call_lines": 54,
+      "korean_lines_raw": 68,
+      "korean_lines_excl_comment": 52,
+      "namespaces": {
+        "manualNotification": 55
+      }
+    },
+    {
+      "rank": 13,
+      "file": "frontend/src/components/admin/SystemConfigManagement.js",
+      "fallback_total": 54,
+      "by_pattern": {
+        "A_inline_singleQuote": 48,
+        "C_mixed_sd": 1,
+        "D_multiline_single": 5
+      },
+      "fallback_lines": 49,
+      "t_call_lines": 52,
+      "korean_lines_raw": 121,
+      "korean_lines_excl_comment": 66,
+      "namespaces": {
+        "systemConfig": 54
+      }
+    },
+    {
+      "rank": 14,
+      "file": "frontend/src/components/admin/mapping-management/pages/MappingManagementPage.js",
+      "fallback_total": 53,
+      "by_pattern": {
+        "A_inline_singleQuote": 53
+      },
+      "fallback_lines": 50,
+      "t_call_lines": 51,
+      "korean_lines_raw": 58,
+      "korean_lines_excl_comment": 54,
+      "namespaces": {
+        "admin": 53
+      }
+    },
+    {
+      "rank": 15,
+      "file": "frontend/src/components/consultation/ConsultationReport.js",
+      "fallback_total": 52,
+      "by_pattern": {
+        "A_inline_singleQuote": 52
+      },
+      "fallback_lines": 48,
+      "t_call_lines": 48,
+      "korean_lines_raw": 71,
+      "korean_lines_excl_comment": 58,
+      "namespaces": {
+        "report": 44,
+        "common": 8
+      }
+    },
+    {
+      "rank": 16,
+      "file": "frontend/src/components/admin/mapping/PartialRefundModal.js",
+      "fallback_total": 50,
+      "by_pattern": {
+        "A_inline_singleQuote": 49,
+        "D_multiline_single": 1
+      },
+      "fallback_lines": 42,
+      "t_call_lines": 43,
+      "korean_lines_raw": 60,
+      "korean_lines_excl_comment": 49,
+      "namespaces": {
+        "admin": 50
+      }
+    },
+    {
+      "rank": 17,
+      "file": "frontend/src/components/admin/sms-templates/SmsTemplateManagementPage.js",
+      "fallback_total": 50,
+      "by_pattern": {
+        "A_inline_singleQuote": 40,
+        "D_multiline_single": 10
+      },
+      "fallback_lines": 40,
+      "t_call_lines": 40,
+      "korean_lines_raw": 57,
+      "korean_lines_excl_comment": 44,
+      "namespaces": {
+        "smsTemplate": 46,
+        "common": 4
+      }
+    },
+    {
+      "rank": 18,
+      "file": "frontend/src/components/admin/AdminDashboard.js",
+      "fallback_total": 48,
+      "by_pattern": {
+        "A_inline_singleQuote": 48
+      },
+      "fallback_lines": 48,
+      "t_call_lines": 48,
+      "korean_lines_raw": 275,
+      "korean_lines_excl_comment": 265,
+      "namespaces": {
+        "admin": 48
+      }
+    },
+    {
+      "rank": 19,
+      "file": "frontend/src/components/admin/WidgetBasedAdminDashboard.js",
+      "fallback_total": 43,
+      "by_pattern": {
+        "A_inline_singleQuote": 43
+      },
+      "fallback_lines": 40,
+      "t_call_lines": 40,
+      "korean_lines_raw": 82,
+      "korean_lines_excl_comment": 64,
+      "namespaces": {
+        "admin": 42,
+        "common": 1
+      }
+    },
+    {
+      "rank": 20,
+      "file": "frontend/src/components/erp/ErpReportModal.js",
+      "fallback_total": 43,
+      "by_pattern": {
+        "A_inline_singleQuote": 43
+      },
+      "fallback_lines": 43,
+      "t_call_lines": 43,
+      "korean_lines_raw": 58,
+      "korean_lines_excl_comment": 47,
+      "namespaces": {
+        "report": 39,
+        "statistics": 3,
+        "common": 1
+      }
+    },
+    {
+      "rank": 21,
+      "file": "frontend/src/components/admin/WellnessManagement.js",
+      "fallback_total": 40,
+      "by_pattern": {
+        "A_inline_singleQuote": 40
+      },
+      "fallback_lines": 40,
+      "t_call_lines": 42,
+      "korean_lines_raw": 88,
+      "korean_lines_excl_comment": 65,
+      "namespaces": {
+        "admin": 40
+      }
+    },
+    {
+      "rank": 22,
+      "file": "frontend/src/components/admin/VacationManagementModal.js",
+      "fallback_total": 39,
+      "by_pattern": {
+        "A_inline_singleQuote": 38,
+        "C_mixed_sd": 1
+      },
+      "fallback_lines": 39,
+      "t_call_lines": 39,
+      "korean_lines_raw": 119,
+      "korean_lines_excl_comment": 82,
+      "namespaces": {
+        "admin": 37,
+        "common": 2
+      }
+    },
+    {
+      "rank": 23,
+      "file": "frontend/src/components/ui/TenantCommonCodeManagerUI.js",
+      "fallback_total": 39,
+      "by_pattern": {
+        "A_inline_singleQuote": 39
+      },
+      "fallback_lines": 36,
+      "t_call_lines": 43,
+      "korean_lines_raw": 38,
+      "korean_lines_excl_comment": 36,
+      "namespaces": {
+        "admin": 39
+      }
+    },
+    {
+      "rank": 24,
+      "file": "frontend/src/components/notifications/UnifiedNotifications.js",
+      "fallback_total": 37,
+      "by_pattern": {
+        "A_inline_singleQuote": 37
+      },
+      "fallback_lines": 37,
+      "t_call_lines": 37,
+      "korean_lines_raw": 76,
+      "korean_lines_excl_comment": 50,
+      "namespaces": {
+        "common": 34,
+        "admin": 3
+      }
+    },
+    {
+      "rank": 25,
+      "file": "frontend/src/components/dashboard-v2/AdminDashboardV2.js",
+      "fallback_total": 36,
+      "by_pattern": {
+        "A_inline_singleQuote": 36
+      },
+      "fallback_lines": 35,
+      "t_call_lines": 35,
+      "korean_lines_raw": 211,
+      "korean_lines_excl_comment": 181,
+      "namespaces": {
+        "admin": 36
+      }
+    },
+    {
+      "rank": 26,
+      "file": "frontend/src/components/admin/ClientComprehensiveManagement.js",
+      "fallback_total": 35,
+      "by_pattern": {
+        "A_inline_singleQuote": 35
+      },
+      "fallback_lines": 35,
+      "t_call_lines": 35,
+      "korean_lines_raw": 97,
+      "korean_lines_excl_comment": 78,
+      "namespaces": {
+        "admin": 33,
+        "common": 2
+      }
+    },
+    {
+      "rank": 27,
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "fallback_total": 35,
+      "by_pattern": {
+        "A_inline_singleQuote": 35
+      },
+      "fallback_lines": 34,
+      "t_call_lines": 34,
+      "korean_lines_raw": 60,
+      "korean_lines_excl_comment": 50,
+      "namespaces": {
+        "report": 35
+      }
+    },
+    {
+      "rank": 28,
+      "file": "frontend/src/components/statistics/PerformanceMetricsModal.js",
+      "fallback_total": 35,
+      "by_pattern": {
+        "A_inline_singleQuote": 35
+      },
+      "fallback_lines": 35,
+      "t_call_lines": 35,
+      "korean_lines_raw": 52,
+      "korean_lines_excl_comment": 38,
+      "namespaces": {
+        "statistics": 35
+      }
+    },
+    {
+      "rank": 29,
+      "file": "frontend/src/components/admin/TenantCommonCodeManager.js",
+      "fallback_total": 33,
+      "by_pattern": {
+        "A_inline_singleQuote": 33
+      },
+      "fallback_lines": 33,
+      "t_call_lines": 34,
+      "korean_lines_raw": 52,
+      "korean_lines_excl_comment": 33,
+      "namespaces": {
+        "admin": 33
+      }
+    },
+    {
+      "rank": 30,
+      "file": "frontend/src/components/auth/TabletLogin.js",
+      "fallback_total": 31,
+      "by_pattern": {
+        "A_inline_singleQuote": 31
+      },
+      "fallback_lines": 30,
+      "t_call_lines": 31,
+      "korean_lines_raw": 190,
+      "korean_lines_excl_comment": 110,
+      "namespaces": {
+        "auth": 31
+      }
+    }
+  ]
+}

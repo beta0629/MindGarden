@@ -235,6 +235,46 @@ logging:
     com.zaxxer.hikari: ERROR
     org.springframework.orm.jpa: ERROR
     org.springframework.transaction: ERROR
+    # === N2 정착 (2026-05-25) — 운영 가시성 회복용 도메인 INFO override ===
+    # 디버거 보고서 §4 권고: 핵심 5개 도메인(스케줄러/발송/AI/Healing/통계) INFO 노출.
+    # 광역 노이즈 차단을 위해 root: ERROR 및 com.coresolution: ERROR 는 유지.
+    # notification/healing/statistics 는 전용 패키지가 없어 클래스 FQCN 으로 지정.
+    # 추정 디스크 증분: 약 +3~5MB/일 (보고서 §5).
+    # 1) 스케줄러 (전용 패키지)
+    com.coresolution.consultation.scheduler: INFO
+    # 2) AI (전용 패키지)
+    com.coresolution.consultation.service.ai: INFO
+    # 3) 발송 (notification — 전용 패키지 부재, FQCN)
+    com.coresolution.consultation.service.impl.NotificationServiceImpl: INFO
+    com.coresolution.consultation.service.impl.NotificationBatchSendLogger: INFO
+    com.coresolution.consultation.service.impl.NotificationDispatchHelper: INFO
+    com.coresolution.consultation.service.impl.BatchNotificationDispatchServiceImpl: INFO
+    com.coresolution.consultation.service.impl.AdminManualNotificationServiceImpl: INFO
+    com.coresolution.consultation.service.impl.AdminTestNotificationServiceImpl: INFO
+    com.coresolution.consultation.service.impl.AdminTestNotificationLogger: INFO
+    com.coresolution.consultation.service.impl.AdminTestNotificationRateLimiter: INFO
+    com.coresolution.consultation.service.impl.SystemNotificationServiceImpl: INFO
+    com.coresolution.consultation.service.impl.KakaoAlimTalkServiceImpl: INFO
+    com.coresolution.consultation.service.impl.EmailServiceImpl: INFO
+    com.coresolution.consultation.service.impl.MockEmailServiceImpl: INFO
+    com.coresolution.consultation.service.impl.MobilePushServiceImpl: INFO
+    com.coresolution.consultation.service.impl.MobilePushDispatchServiceImpl: INFO
+    com.coresolution.consultation.service.impl.MobilePushDispatchDedupServiceImpl: INFO
+    com.coresolution.consultation.service.impl.ScheduleCreatedNotificationHelperImpl: INFO
+    com.coresolution.consultation.service.impl.MappingSettlementNotificationHelperImpl: INFO
+    com.coresolution.consultation.service.impl.ShopNotificationHelperImpl: INFO
+    # 4) Healing (전용 패키지 부재, FQCN)
+    com.coresolution.consultation.service.impl.HealingContentServiceImpl: INFO
+    # 5) 통계 (전용 패키지 부재, FQCN)
+    com.coresolution.consultation.service.impl.StatisticsServiceImpl: INFO
+    com.coresolution.consultation.service.impl.StatisticsConfigServiceImpl: INFO
+    com.coresolution.consultation.service.impl.StatisticsSchedulerServiceImpl: INFO
+    com.coresolution.consultation.service.impl.StatisticsTestDataServiceImpl: INFO
+    com.coresolution.consultation.service.impl.BranchStatisticsServiceImpl: INFO
+    com.coresolution.consultation.service.impl.PlSqlStatisticsServiceImpl: INFO
+    com.coresolution.consultation.service.impl.RealTimeStatisticsServiceImpl: INFO
+    # 보조 권고 — Hibernate JDBC batch 경고는 운영 트레이스 단서로 보존
+    org.hibernate.engine.jdbc.batch: WARN
   
   # 로그 파일 설정
   file:

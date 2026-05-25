@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import com.coresolution.consultation.entity.AiUsageLog;
 import com.coresolution.consultation.repository.AiUsageLogRepository;
 import com.coresolution.consultation.service.WellnessAiService.WellnessContent;
 import com.coresolution.consultation.service.ai.AiChatCompletionResult;
@@ -305,5 +306,51 @@ class WellnessAiServiceTest {
         assertTrue(content.isFallback());
         assertNotEquals("", content.getContent(),
                 "예외 fallback 도 비어있지 않은 본문이어야 함");
+    }
+
+    @Test
+    @DisplayName("N3 — 성공 시 ai_provider/prompt/response 가 AiUsageLog 에 저장된다 (V20260529_001)")
+    void generateWellnessContent_success_persistsProviderPromptResponse() {
+        AiChatCompletionResult geminiSuccess = new AiChatCompletionResult(
+                true, "{\"title\":\"t\",\"content\":\"<p>c</p>\"}",
+                "gemini", "gemini", "gemini-3.1-flash-lite",
+                100, 50, 150, null, false, parsedJsonOf("t", "<p>c</p>"));
+        when(aiChatCompletionService.completeChat(any(AiCompletionRequest.class)))
+                .thenReturn(geminiSuccess);
+
+        service.generateWellnessContent(1, "SPRING", "GENERAL", "scheduler");
+
+        ArgumentCaptor<AiUsageLog> captor = ArgumentCaptor.forClass(AiUsageLog.class);
+        verify(usageLogRepository).save(captor.capture());
+        AiUsageLog saved = captor.getValue();
+        assertEquals("GEMINI", saved.getAiProvider(),
+                "N3 — effectiveProvider=gemini → 대문자 GEMINI 저장 (default 'OPENAI' 회귀 차단)");
+        assertEquals("gemini-3.1-flash-lite", saved.getModel());
+        assertTrue(Boolean.TRUE.equals(saved.getIsSuccess()));
+        assertNotNull(saved.getPrompt(), "system + user 결합 본문이 prompt 컬럼에 저장되어야 함");
+        assertTrue(saved.getPrompt().contains("[system]"));
+        assertTrue(saved.getPrompt().contains("[user]"));
+        assertNotNull(saved.getResponse(), "성공 시 응답 본문이 response 컬럼에 저장되어야 함");
+        assertTrue(saved.getResponse().contains("title"));
+    }
+
+    @Test
+    @DisplayName("N3 — 실패 시 ai_provider 는 저장되고 response 는 null (V20260529_001)")
+    void generateWellnessContent_failure_persistsProviderWithNullResponse() {
+        when(aiChatCompletionService.completeChat(any(AiCompletionRequest.class)))
+                .thenReturn(failure("rate_limited"));
+
+        service.generateWellnessContent(2, "SPRING", "GENERAL", "scheduler");
+
+        ArgumentCaptor<AiUsageLog> captor = ArgumentCaptor.forClass(AiUsageLog.class);
+        verify(usageLogRepository).save(captor.capture());
+        AiUsageLog saved = captor.getValue();
+        assertEquals("OPENAI", saved.getAiProvider(),
+                "실패 케이스도 effectiveProvider 가 정규화되어 저장되어야 함");
+        assertTrue(Boolean.FALSE.equals(saved.getIsSuccess()));
+        assertNotNull(saved.getPrompt(),
+                "실패해도 prompt 본문은 저장 (디버깅 컨텍스트 보존)");
+        assertEquals(null, saved.getResponse(),
+                "실패 시 response 는 null");
     }
 }

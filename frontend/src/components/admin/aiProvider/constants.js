@@ -121,7 +121,11 @@ export const AI_PROVIDER_LABELS = Object.freeze({
   filterCaller: '호출자',
   filterStatus: '상태',
   filterAll: '전체',
-  fallbackUnsupported: '미지원'
+  fallbackUnsupported: '미지원',
+  detailPromptBody: '프롬프트 본문',
+  detailResponseBody: 'AI 응답 본문',
+  detailBodyEmpty: '본문이 저장되지 않았습니다 (V20260529_001 이전 호출)',
+  detailBodyNotApplicable: '실패로 인해 응답이 저장되지 않았습니다'
 });
 
 /** 페이지·LNB i18n 키 (i18n 시스템 정착 시 사용) */

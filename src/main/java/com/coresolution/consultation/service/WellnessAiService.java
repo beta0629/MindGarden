@@ -54,6 +54,14 @@ public class WellnessAiService {
     private static final String SYSTEM_TENANT_FALLBACK = "SYSTEM";
 
     /**
+     * AI provider 컬럼 결측 시 사용할 fallback 라벨 (N3, V20260529_001).
+     *
+     * <p>{@link AiChatCompletionResult#effectiveProvider()} 가 null/blank 면 {@code UNKNOWN} 으로 저장한다.
+     * DB DEFAULT 'OPENAI' 제거에 따른 caller 책임 정착.</p>
+     */
+    private static final String PROVIDER_UNKNOWN = "UNKNOWN";
+
+    /**
      * AI 호출 실패 시 사용할 회전 fallback 풀 (B3 핫픽스, 2026-05-25).
      *
      * <p>트랙 A 핫픽스 (2026-05-23) — 단일 정적 본문 누적 결함 해소를 위해 dayOfWeek 로 회전 선택.
@@ -190,31 +198,36 @@ public class WellnessAiService {
      */
     public WellnessContent generateWellnessContent(Integer dayOfWeek, String season, String category, String requestedBy) {
         long startTime = System.currentTimeMillis();
+        String tenantId = resolveTenantId();
+        String systemPrompt = "당신은 마음 건강 전문가이며, 내담자들을 위한 따뜻하고 실용적인 웰니스 팁을 작성합니다.";
+        String userPrompt = buildPrompt(dayOfWeek, season, category);
+        String combinedPrompt = buildCombinedPromptForLog(systemPrompt, userPrompt);
         try {
-            String prompt = buildPrompt(dayOfWeek, season, category);
-            String systemPrompt = "당신은 마음 건강 전문가이며, 내담자들을 위한 따뜻하고 실용적인 웰니스 팁을 작성합니다.";
             AiCompletionRequest request = AiCompletionRequest.builder()
                     .systemPrompt(systemPrompt)
-                    .userPrompt(prompt)
+                    .userPrompt(userPrompt)
                     .maxTokens(800)
                     .temperature(0.7)
                     .responseFormat(AiResponseFormat.JSON)
-                    .tenantId(resolveTenantId())
+                    .tenantId(tenantId)
                     .callerId(CALLER_ID)
                     .traceId(UUID.randomUUID().toString())
                     .build();
             AiChatCompletionResult result = aiChatCompletionService.completeChat(request);
             long responseTime = System.currentTimeMillis() - startTime;
             String modelForLog = StringUtils.hasText(result.model()) ? result.model() : "unknown";
+            String providerForLog = resolveProviderLabel(result);
             if (!result.hasUsableText()) {
                 String errMsg = result.errorMessage() != null ? result.errorMessage() : "empty_or_failed";
                 log.warn("⚠️ 웰니스 AI 미사용/실패 — requestedProvider={}, effectiveProvider={}, model={}, isFallback={}, reason={}",
                         result.requestedProvider(), result.effectiveProvider(), modelForLog, result.isFallback(), errMsg);
-                logUsage(CALLER_ID, modelForLog, false, errMsg, 0, 0, 0, responseTime, requestedBy);
+                logUsage(tenantId, CALLER_ID, providerForLog, modelForLog, false, errMsg,
+                        0, 0, 0, responseTime, requestedBy, combinedPrompt, null);
                 return getDefaultContent(dayOfWeek);
             }
-            logUsage(CALLER_ID, modelForLog, true, null,
-                    result.promptTokens(), result.completionTokens(), result.totalTokens(), responseTime, requestedBy);
+            logUsage(tenantId, CALLER_ID, providerForLog, modelForLog, true, null,
+                    result.promptTokens(), result.completionTokens(), result.totalTokens(),
+                    responseTime, requestedBy, combinedPrompt, result.text());
             WellnessContent parsed = parseResponse(result, dayOfWeek);
             log.info("✅ 웰니스 컨텐츠 생성 완료 ({}ms), requestedProvider={}, effectiveProvider={}, model={}, isFallback={}",
                     responseTime, result.requestedProvider(), result.effectiveProvider(), modelForLog, result.isFallback());
@@ -222,7 +235,8 @@ public class WellnessAiService {
         } catch (Exception e) {
             long responseTime = System.currentTimeMillis() - startTime;
             log.error("❌ 웰니스 컨텐츠 생성 예외 ({}ms)", responseTime, e);
-            logUsage(CALLER_ID, "unknown", false, e.getMessage(), 0, 0, 0, responseTime, requestedBy);
+            logUsage(tenantId, CALLER_ID, PROVIDER_UNKNOWN, "unknown", false, e.getMessage(),
+                    0, 0, 0, responseTime, requestedBy, combinedPrompt, null);
             return getDefaultContent(dayOfWeek);
         }
     }
@@ -272,13 +286,20 @@ public class WellnessAiService {
     }
 
     /**
-     * API 사용 로그 저장.
+     * AI 사용 로그 저장 (N3 보강, V20260529_001).
+     *
+     * <p>{@code aiProvider} 는 {@link AiChatCompletionResult#effectiveProvider()} 를 대문자 라벨로
+     * 정규화한 값이며, DB DEFAULT 'OPENAI' 제거에 따라 caller 가 반드시 명시적으로 set 한다.
+     * {@code promptBody} 는 system + user 결합 본문, {@code responseBody} 는 성공 시 raw text.</p>
      */
-    private void logUsage(String requestType, String model, boolean isSuccess, String errorMessage,
+    private void logUsage(String tenantId, String requestType, String aiProvider, String model,
+            boolean isSuccess, String errorMessage,
             int promptTokens, int completionTokens, int totalTokens,
-            long responseTimeMs, String requestedBy) {
+            long responseTimeMs, String requestedBy, String promptBody, String responseBody) {
         try {
             AiUsageLog usageLogRow = AiUsageLog.builder()
+                    .tenantId(tenantId)
+                    .aiProvider(aiProvider)
                     .requestType(requestType)
                     .model(model)
                     .promptTokens(promptTokens)
@@ -288,18 +309,51 @@ public class WellnessAiService {
                     .errorMessage(errorMessage)
                     .responseTimeMs(responseTimeMs)
                     .requestedBy(requestedBy)
+                    .prompt(promptBody)
+                    .response(responseBody)
                     .build();
 
             usageLogRow.calculateCost();
             AiUsageLog savedLog = usageLogRepository.save(usageLogRow);
 
             if (isSuccess) {
-                WellnessAiService.log.info("💰 AI 사용 로그 저장: {} 토큰, 예상 비용 ${}", totalTokens,
+                WellnessAiService.log.info("💰 AI 사용 로그 저장: provider={}, {} 토큰, 예상 비용 ${}",
+                        aiProvider, totalTokens,
                         String.format("%.6f", savedLog.getEstimatedCost()));
             }
         } catch (Exception e) {
             log.error("❌ AI 사용 로그 저장 실패", e);
         }
+    }
+
+    /**
+     * {@link AiChatCompletionResult} 의 effectiveProvider 를 대문자 라벨로 정규화한다.
+     *
+     * <p>N3 (V20260529_001): {@code ai_provider} 컬럼이 NOT NULL 이므로 null/blank 는
+     * {@link #PROVIDER_UNKNOWN} 으로 대체한다.</p>
+     */
+    private static String resolveProviderLabel(AiChatCompletionResult result) {
+        if (result == null) {
+            return PROVIDER_UNKNOWN;
+        }
+        String effective = result.effectiveProvider();
+        if (!StringUtils.hasText(effective)) {
+            return PROVIDER_UNKNOWN;
+        }
+        return effective.trim().toUpperCase(java.util.Locale.ROOT);
+    }
+
+    /**
+     * system + user 프롬프트를 단일 LONGTEXT 문자열로 결합한다 (N3 보강).
+     *
+     * <p>형식: {@code [system]<systemPrompt>\n\n[user]<userPrompt>}. 어드민 상세 모달에서
+     * 사람이 읽기 좋은 raw 형식. null 입력은 빈 문자열로 안전 처리.</p>
+     */
+    private static String buildCombinedPromptForLog(String systemPrompt, String userPrompt) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[system]\n").append(systemPrompt == null ? "" : systemPrompt);
+        sb.append("\n\n[user]\n").append(userPrompt == null ? "" : userPrompt);
+        return sb.toString();
     }
 
     /**

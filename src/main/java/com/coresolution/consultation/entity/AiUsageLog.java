@@ -18,6 +18,11 @@ import lombok.NoArgsConstructor;
  * <p>테이블 리네임은 Flyway V20260528_006 (RENAME TABLE openai_usage_logs TO ai_usage_logs)
  * 에서 처리한다.</p>
  *
+ * <p>2026-05-25 N3 보강 (Flyway V20260529_001): {@code ai_provider} 컬럼의 DB DEFAULT 'OPENAI'
+ * 제거 → caller 가 반드시 {@code effectiveProvider} 를 명시적으로 set 하도록 강제.
+ * {@code prompt}/{@code response} 본문 컬럼 신설로 어드민 AI 관리 페이지 상세 모달에서
+ * system + user 결합 본문 / 응답 본문 노출 가능.</p>
+ *
  * @author CoreSolution
  * @author MindGarden
  * @since 2025-01-21
@@ -36,6 +41,16 @@ public class AiUsageLog {
 
     @Column(name = "tenant_id", length = 100)
     private String tenantId;
+
+    /**
+     * 실제 호출된 AI provider (OPENAI / GEMINI / CLAUDE / REPLICATE / UNKNOWN).
+     *
+     * <p>2026-05-25 N3 보강: Flyway V20260529_001 에서 DB DEFAULT 'OPENAI' 제거되어 caller 가
+     * {@code AiChatCompletionResult#effectiveProvider()} 를 대문자 라벨로 정규화하여 명시적으로
+     * set 해야 한다. {@code NOT NULL} 제약은 유지된다.</p>
+     */
+    @Column(name = "ai_provider", length = 50, nullable = false)
+    private String aiProvider;
 
     /**
      * 요청 타입 (wellness, healing, psych, anomaly_detection 등 caller 라벨).
@@ -75,6 +90,23 @@ public class AiUsageLog {
 
     @Column(name = "requested_by", length = 100)
     private String requestedBy;
+
+    /**
+     * AI 호출 시 사용한 system + user 결합 프롬프트 본문 (V20260529_001 신설).
+     *
+     * <p>caller 가 {@code [system]<systemPrompt>\n\n[user]<userPrompt>} 형식으로 결합 저장.
+     * 기존 행 / 이전 호출은 NULL 이다.</p>
+     */
+    @Column(name = "prompt", columnDefinition = "LONGTEXT")
+    private String prompt;
+
+    /**
+     * AI 응답 본문 (성공 시, V20260529_001 신설).
+     *
+     * <p>{@code AiChatCompletionResult#text()} 의 원본을 그대로 저장. 실패 또는 빈 응답이면 NULL.</p>
+     */
+    @Column(name = "response", columnDefinition = "LONGTEXT")
+    private String response;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

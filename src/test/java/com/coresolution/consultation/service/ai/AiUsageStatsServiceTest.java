@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -47,44 +46,6 @@ class AiUsageStatsServiceTest {
     @InjectMocks
     private AiUsageStatsService service;
 
-    // ---- provider 추정 ----
-
-    @Test
-    @DisplayName("inferProviderFromModel — gpt-* / o1-* → OPENAI")
-    void infer_openaiPrefixes() {
-        assertEquals("OPENAI", AiUsageStatsService.inferProviderFromModel("gpt-4o-mini"));
-        assertEquals("OPENAI", AiUsageStatsService.inferProviderFromModel("GPT-3.5-TURBO"));
-        assertEquals("OPENAI", AiUsageStatsService.inferProviderFromModel("o1-preview"));
-    }
-
-    @Test
-    @DisplayName("inferProviderFromModel — gemini-* → GEMINI")
-    void infer_geminiPrefix() {
-        assertEquals("GEMINI", AiUsageStatsService.inferProviderFromModel("gemini-2.5-flash"));
-        assertEquals("GEMINI", AiUsageStatsService.inferProviderFromModel("GEMINI-3.1-PRO"));
-    }
-
-    @Test
-    @DisplayName("inferProviderFromModel — claude-* → CLAUDE")
-    void infer_claudePrefix() {
-        assertEquals("CLAUDE", AiUsageStatsService.inferProviderFromModel("claude-3-5-sonnet-20241022"));
-    }
-
-    @Test
-    @DisplayName("inferProviderFromModel — replicate (path) → REPLICATE")
-    void infer_replicatePrefix() {
-        assertEquals("REPLICATE", AiUsageStatsService.inferProviderFromModel("meta/llama-3.1-70b"));
-        assertEquals("REPLICATE", AiUsageStatsService.inferProviderFromModel("stability-ai/sdxl"));
-    }
-
-    @Test
-    @DisplayName("inferProviderFromModel — null / 미식별 → UNKNOWN")
-    void infer_unknown() {
-        assertEquals("UNKNOWN", AiUsageStatsService.inferProviderFromModel(null));
-        assertEquals("UNKNOWN", AiUsageStatsService.inferProviderFromModel(""));
-        assertEquals("UNKNOWN", AiUsageStatsService.inferProviderFromModel("custom-model-x"));
-    }
-
     // ---- tenantId 가드 ----
 
     @Test
@@ -96,8 +57,9 @@ class AiUsageStatsServiceTest {
     @Test
     @DisplayName("getUsageLogs — tenantId blank → IllegalArgumentException")
     void getUsageLogs_blankTenant_throws() {
+        Pageable pageable = PageRequest.of(0, 10);
         assertThrows(IllegalArgumentException.class,
-                () -> service.getUsageLogs("  ", null, null, null, PageRequest.of(0, 10)));
+                () -> service.getUsageLogs("  ", null, null, null, pageable));
     }
 
     @Test
@@ -116,7 +78,7 @@ class AiUsageStatsServiceTest {
         when(usageLogRepository.sumTokensByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(0L);
         when(usageLogRepository.averageDurationByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(null);
         when(usageLogRepository.countByCallerInPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
-        when(usageLogRepository.countByModelInPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
+        when(usageLogRepository.countByProviderInPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
         when(usageLogRepository.countDailyByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
 
         AiUsageStatsResponse stats = service.getUsageStats(TENANT_ID, "today");
@@ -139,8 +101,8 @@ class AiUsageStatsServiceTest {
     }
 
     @Test
-    @DisplayName("getUsageStats — provider 라벨이 model prefix 로 집계됨")
-    void getUsageStats_modelGrouping() {
+    @DisplayName("getUsageStats — provider 라벨이 ai_provider 컬럼으로 집계됨 (N3, V20260529_001)")
+    void getUsageStats_providerGroupingFromColumn() {
         when(usageLogRepository.countByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(100L);
         when(usageLogRepository.countSuccessByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(95L);
         when(usageLogRepository.sumTokensByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(12000L);
@@ -149,10 +111,10 @@ class AiUsageStatsServiceTest {
                 new Object[]{"wellness", 60L},
                 new Object[]{"healing", 40L}
         ));
-        when(usageLogRepository.countByModelInPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of(
-                new Object[]{"gpt-4o-mini", 70L},
-                new Object[]{"gemini-2.5-flash", 25L},
-                new Object[]{"meta/llama-3", 5L}
+        when(usageLogRepository.countByProviderInPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of(
+                new Object[]{"OPENAI", 70L},
+                new Object[]{"GEMINI", 25L},
+                new Object[]{"REPLICATE", 5L}
         ));
         when(usageLogRepository.countDailyByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
 
@@ -171,6 +133,28 @@ class AiUsageStatsServiceTest {
     }
 
     @Test
+    @DisplayName("getUsageStats — null/blank ai_provider 행은 UNKNOWN 으로 집계 (N3 방어)")
+    void getUsageStats_nullProviderRow_aggregatesAsUnknown() {
+        when(usageLogRepository.countByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(10L);
+        when(usageLogRepository.countSuccessByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(10L);
+        when(usageLogRepository.sumTokensByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(100L);
+        when(usageLogRepository.averageDurationByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(100.0);
+        when(usageLogRepository.countByCallerInPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
+        when(usageLogRepository.countByProviderInPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of(
+                new Object[]{null, 3L},
+                new Object[]{"", 2L},
+                new Object[]{"OPENAI", 5L}
+        ));
+        when(usageLogRepository.countDailyByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
+
+        AiUsageStatsResponse stats = service.getUsageStats(TENANT_ID, "month");
+
+        assertEquals(5L, stats.getCallsByProvider().get("OPENAI"));
+        assertEquals(5L, stats.getCallsByProvider().get("UNKNOWN"),
+                "null + blank provider 행 합계가 UNKNOWN 으로 합쳐져야 함");
+    }
+
+    @Test
     @DisplayName("getUsageStats — period null/blank → requestedPeriod=\"month\" 기본 echo")
     void getUsageStats_nullPeriod_echoesMonth() {
         when(usageLogRepository.countByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(0L);
@@ -178,7 +162,7 @@ class AiUsageStatsServiceTest {
         when(usageLogRepository.sumTokensByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(0L);
         when(usageLogRepository.averageDurationByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(null);
         when(usageLogRepository.countByCallerInPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
-        when(usageLogRepository.countByModelInPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
+        when(usageLogRepository.countByProviderInPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
         when(usageLogRepository.countDailyByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
 
         AiUsageStatsResponse nullStats = service.getUsageStats(TENANT_ID, null);
@@ -195,7 +179,8 @@ class AiUsageStatsServiceTest {
     @DisplayName("getUsageLogs — status='success' → isSuccess=TRUE 위임")
     void getUsageLogs_statusSuccess_passesTrue() {
         Pageable pageable = PageRequest.of(0, 50);
-        when(usageLogRepository.findPageByTenantWithFilters(eq(TENANT_ID), eq(null), eq(Boolean.TRUE), eq(pageable)))
+        when(usageLogRepository.findPageByTenantWithFilters(
+                eq(TENANT_ID), eq(null), eq(null), eq(Boolean.TRUE), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
         Page<AiUsageLogResponse> result = service.getUsageLogs(TENANT_ID, null, null, "success", pageable);
@@ -205,21 +190,39 @@ class AiUsageStatsServiceTest {
     }
 
     @Test
-    @DisplayName("getUsageLogs — provider='openai' 필터 시 model prefix 가 다른 행은 제외")
-    void getUsageLogs_providerFilter_excludesOthers() {
+    @DisplayName("getUsageLogs — provider='openai' 필터는 SQL 레벨에서 적용 (N3, 정확한 totalElements)")
+    void getUsageLogs_providerFilter_sqlLevel() {
         Pageable pageable = PageRequest.of(0, 50);
         AiUsageLog openaiLog = AiUsageLog.builder()
-                .id(1L).tenantId(TENANT_ID).requestType("wellness").model("gpt-4o-mini").isSuccess(true).build();
-        AiUsageLog geminiLog = AiUsageLog.builder()
-                .id(2L).tenantId(TENANT_ID).requestType("wellness").model("gemini-2.5-flash").isSuccess(true).build();
-        when(usageLogRepository.findPageByTenantWithFilters(eq(TENANT_ID), eq(null), eq(null), eq(pageable)))
-                .thenReturn(new PageImpl<>(List.of(openaiLog, geminiLog), pageable, 2));
+                .id(1L).tenantId(TENANT_ID).aiProvider("OPENAI")
+                .requestType("wellness").model("gpt-4o-mini").isSuccess(true).build();
+        when(usageLogRepository.findPageByTenantWithFilters(
+                eq(TENANT_ID), eq("OPENAI"), eq(null), eq(null), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(openaiLog), pageable, 1));
 
         Page<AiUsageLogResponse> result = service.getUsageLogs(TENANT_ID, "openai", null, null, pageable);
 
         assertEquals(1, result.getContent().size());
+        assertEquals(1L, result.getTotalElements(),
+                "SQL 레벨 필터 → totalElements 가 정확값 (서비스 후처리 근사값 제거, N3)");
         assertEquals("OPENAI", result.getContent().get(0).getAiProvider());
-        assertEquals(1L, result.getContent().get(0).getId());
+    }
+
+    @Test
+    @DisplayName("getUsageLogs — entity.aiProvider 컬럼 값이 DTO 에 그대로 노출 (N3)")
+    void getUsageLogs_geminiProvider_useColumnValue() {
+        Pageable pageable = PageRequest.of(0, 50);
+        AiUsageLog geminiLog = AiUsageLog.builder()
+                .id(7L).tenantId(TENANT_ID).aiProvider("GEMINI")
+                .requestType("wellness").model("gemini-2.5-flash").isSuccess(true).build();
+        when(usageLogRepository.findPageByTenantWithFilters(
+                eq(TENANT_ID), eq(null), eq(null), eq(null), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(geminiLog), pageable, 1));
+
+        Page<AiUsageLogResponse> result = service.getUsageLogs(TENANT_ID, null, null, null, pageable);
+
+        assertEquals("GEMINI", result.getContent().get(0).getAiProvider(),
+                "DTO 의 aiProvider 는 entity.aiProvider 컬럼 직접 사용 (model prefix 추정 제거)");
     }
 
     // ---- 상세 ----
@@ -244,11 +247,12 @@ class AiUsageStatsServiceTest {
     }
 
     @Test
-    @DisplayName("getLogDetail — 동일 테넌트 + 존재하는 로그 → 정상 본문")
-    void getLogDetail_sameTenant_returnsBody() {
+    @DisplayName("getLogDetail — 동일 테넌트 + 존재하는 로그 → 본문 + N3 prompt/response 노출")
+    void getLogDetail_sameTenant_returnsBodyWithPromptAndResponse() {
         AiUsageLog log = AiUsageLog.builder()
                 .id(42L)
                 .tenantId(TENANT_ID)
+                .aiProvider("OPENAI")
                 .requestType("psych")
                 .model("gpt-4o")
                 .isSuccess(true)
@@ -256,6 +260,8 @@ class AiUsageStatsServiceTest {
                 .promptTokens(80)
                 .completionTokens(40)
                 .totalTokens(120)
+                .prompt("[system]\nyou are\n\n[user]\nhello")
+                .response("hi there")
                 .createdAt(LocalDateTime.now())
                 .build();
         when(usageLogRepository.findById(42L)).thenReturn(Optional.of(log));
@@ -267,5 +273,24 @@ class AiUsageStatsServiceTest {
         assertEquals("success", detail.getStatus());
         assertEquals(120, detail.getTotalTokens());
         assertNull(detail.getErrorMessage());
+        assertEquals("[system]\nyou are\n\n[user]\nhello", detail.getPromptBody(),
+                "promptBody 는 entity.prompt 를 그대로 노출 (V20260529_001)");
+        assertEquals("hi there", detail.getResponseBody(),
+                "responseBody 는 entity.response 를 그대로 노출 (V20260529_001)");
+    }
+
+    @Test
+    @DisplayName("getLogDetail — V20260529_001 이전 행 (prompt/response NULL) → null 그대로 노출")
+    void getLogDetail_legacyRowWithNullBody_returnsNullFields() {
+        AiUsageLog legacy = AiUsageLog.builder()
+                .id(99L).tenantId(TENANT_ID).aiProvider("OPENAI")
+                .requestType("wellness").model("gpt-4o-mini")
+                .isSuccess(true).build();
+        when(usageLogRepository.findById(99L)).thenReturn(Optional.of(legacy));
+
+        AiUsageLogDetailResponse detail = service.getLogDetail(TENANT_ID, 99L).orElseThrow();
+
+        assertNull(detail.getPromptBody(), "기존 행은 prompt NULL 보존");
+        assertNull(detail.getResponseBody(), "기존 행은 response NULL 보존");
     }
 }

@@ -283,18 +283,20 @@ class AdminAiUsageControllerTest {
     }
 
     @Test
-    @DisplayName("usage-logs detail — 200: 정상 본문")
-    void getUsageLogDetail_found_returns200() {
+    @DisplayName("usage-logs detail — 200: 정상 본문 + N3 보강 prompt/response 노출 (V20260529_001)")
+    void getUsageLogDetail_found_returns200_withPromptAndResponse() {
         AiUsageLogDetailResponse detail = AiUsageLogDetailResponse.builder()
                 .id(7L)
-                .aiProvider("OPENAI")
+                .aiProvider("GEMINI")
                 .requestType("psych")
-                .model("gpt-4o")
+                .model("gemini-2.5-flash")
                 .status("success")
                 .durationMs(1200L)
                 .promptTokens(100)
                 .completionTokens(50)
                 .totalTokens(150)
+                .promptBody("[system]\nyou are\n\n[user]\nhello")
+                .responseBody("hi there")
                 .createdAt(LocalDateTime.now())
                 .build();
         when(aiUsageStatsService.getLogDetail(TENANT_ID, 7L)).thenReturn(Optional.of(detail));
@@ -309,6 +311,12 @@ class AdminAiUsageControllerTest {
             assertNotNull(body);
             AiUsageLogDetailResponse data = (AiUsageLogDetailResponse) body.getData();
             assertEquals(7L, data.getId());
+            assertEquals("GEMINI", data.getAiProvider(),
+                    "ai_provider 컬럼 값이 정확히 전달되어야 함 (N3, default OPENAI 고정 결함 해소)");
+            assertEquals("[system]\nyou are\n\n[user]\nhello", data.getPromptBody(),
+                    "promptBody 가 상세 모달에 노출되어야 함 (V20260529_001)");
+            assertEquals("hi there", data.getResponseBody(),
+                    "responseBody 가 상세 모달에 노출되어야 함 (V20260529_001)");
         }
     }
 }

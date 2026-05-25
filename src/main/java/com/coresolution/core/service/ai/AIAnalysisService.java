@@ -29,6 +29,12 @@ public class AIAnalysisService {
     private final AIPromptService promptService;
     private final AiUsageLogRepository usageLogRepository;
     
+    /** 시스템 모니터링 호출의 안전 tenant 라벨 (멀티테넌트 미적용 단일 시스템 컨텍스트). */
+    private static final String SYSTEM_TENANT = "SYSTEM";
+
+    /** provider 라벨 fallback. */
+    private static final String PROVIDER_UNKNOWN = "UNKNOWN";
+
     /**
      * 이상 탐지 분석
      */
@@ -39,29 +45,26 @@ public class AIAnalysisService {
         }
         
         try {
-            // 프롬프트 생성
             String systemPrompt = promptService.getSystemMonitoringExpertPrompt();
             String userPrompt = promptService.buildAnomalyDetectionPrompt(
                 metrics, metricType, getMetricDescription(metricType)
             );
-            
-            // AI 분석 실행
+            String combinedPrompt = buildCombinedPromptForLog(systemPrompt, userPrompt);
+
             AIModelProvider.AIResponse response = modelProvider.analyze(
                 systemPrompt, userPrompt, 500, 0.3
             );
-            
+
             if (!response.isSuccess()) {
                 log.error("AI 분석 실패: {}", response.getErrorMessage());
-                logUsage("anomaly_detection", false, response);
+                logUsage("anomaly_detection", false, response, combinedPrompt, null);
                 return null;
             }
-            
-            // 로그 기록
-            logUsage("anomaly_detection", true, response);
-            
-            // 응답 파싱
+
+            logUsage("anomaly_detection", true, response, combinedPrompt, response.getContent());
+
             return parseAnomalyResponse(response.getContent());
-            
+
         } catch (Exception e) {
             log.error("이상 탐지 분석 실패", e);
             return null;
@@ -78,39 +81,43 @@ public class AIAnalysisService {
         }
         
         try {
-            // 프롬프트 생성
             String systemPrompt = promptService.getSecurityExpertPrompt();
             String userPrompt = promptService.buildSecurityThreatPrompt(eventType, eventDetails);
-            
-            // AI 분석 실행
+            String combinedPrompt = buildCombinedPromptForLog(systemPrompt, userPrompt);
+
             AIModelProvider.AIResponse response = modelProvider.analyze(
                 systemPrompt, userPrompt, 500, 0.3
             );
-            
+
             if (!response.isSuccess()) {
                 log.error("AI 분석 실패: {}", response.getErrorMessage());
-                logUsage("security_threat_detection", false, response);
+                logUsage("security_threat_detection", false, response, combinedPrompt, null);
                 return null;
             }
-            
-            // 로그 기록
-            logUsage("security_threat_detection", true, response);
-            
-            // 응답 파싱
+
+            logUsage("security_threat_detection", true, response, combinedPrompt, response.getContent());
+
             return parseThreatResponse(response.getContent());
-            
+
         } catch (Exception e) {
             log.error("보안 위협 분석 실패", e);
             return null;
         }
     }
-    
+
     /**
-     * 사용 로그 기록
+     * 사용 로그 기록 (N3 보강 — V20260529_001).
+     *
+     * <p>{@code aiProvider}, {@code prompt}, {@code response} 본문을 함께 적재한다.
+     * 모니터링 컨텍스트는 system-level 이므로 tenantId 는 {@link #SYSTEM_TENANT}.</p>
      */
-    private void logUsage(String requestType, boolean isSuccess, AIModelProvider.AIResponse response) {
+    private void logUsage(String requestType, boolean isSuccess, AIModelProvider.AIResponse response,
+                          String promptBody, String responseBody) {
         try {
+            String providerForLog = resolveProviderLabel();
             AiUsageLog usageLog = AiUsageLog.builder()
+                .tenantId(SYSTEM_TENANT)
+                .aiProvider(providerForLog)
                 .requestType(requestType)
                 .model(modelProvider.getModelName())
                 .promptTokens(response.getPromptTokens())
@@ -120,13 +127,16 @@ public class AIAnalysisService {
                 .errorMessage(response.getErrorMessage())
                 .responseTimeMs(response.getResponseTimeMs())
                 .requestedBy("AI_MONITORING_SYSTEM")
+                .prompt(promptBody)
+                .response(responseBody)
                 .build();
-            
+
             usageLog.calculateCost();
             AiUsageLog savedLog = usageLogRepository.save(usageLog);
-            
+
             if (isSuccess) {
-                log.info("💰 AI 사용 로그: 모델={}, 토큰={}, 비용=${}", 
+                log.info("💰 AI 사용 로그: provider={}, 모델={}, 토큰={}, 비용=${}",
+                    providerForLog,
                     modelProvider.getModelName(),
                     response.getTotalTokens(),
                     String.format("%.6f", savedLog.getEstimatedCost()));
@@ -134,6 +144,37 @@ public class AIAnalysisService {
         } catch (Exception e) {
             log.error("AI 사용 로그 저장 실패", e);
         }
+    }
+
+    /**
+     * AIModelProvider 의 modelType 을 대문자 라벨로 정규화한다 (N3, 2026-05-25).
+     *
+     * <p>{@code AIModelProvider#getModelType()} 가 보통 "openai" / "gemini" 등을 반환한다.
+     * 비어있으면 {@link #PROVIDER_UNKNOWN}.</p>
+     */
+    private String resolveProviderLabel() {
+        String type = modelProvider != null ? modelProvider.getModelType() : null;
+        if (type == null || type.isBlank()) {
+            return PROVIDER_UNKNOWN;
+        }
+        return type.trim().toUpperCase(java.util.Locale.ROOT);
+    }
+
+    /**
+     * system + user 프롬프트 결합 본문 (V20260529_001 prompt 컬럼 저장용).
+     */
+    private static String buildCombinedPromptForLog(String systemPrompt, String userPrompt) {
+        StringBuilder sb = new StringBuilder();
+        if (systemPrompt != null && !systemPrompt.isBlank()) {
+            sb.append("[system]\n").append(systemPrompt.trim());
+        }
+        if (userPrompt != null && !userPrompt.isBlank()) {
+            if (sb.length() > 0) {
+                sb.append("\n\n");
+            }
+            sb.append("[user]\n").append(userPrompt.trim());
+        }
+        return sb.length() == 0 ? null : sb.toString();
     }
     
     /**

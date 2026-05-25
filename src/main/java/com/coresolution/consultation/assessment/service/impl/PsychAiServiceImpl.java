@@ -2,6 +2,8 @@ package com.coresolution.consultation.assessment.service.impl;
 
 import com.coresolution.consultation.assessment.model.PsychAssessmentType;
 import com.coresolution.consultation.assessment.service.PsychAiService;
+import com.coresolution.consultation.entity.AiUsageLog;
+import com.coresolution.consultation.repository.AiUsageLogRepository;
 import com.coresolution.consultation.service.ai.AiChatCompletionResult;
 import com.coresolution.consultation.service.ai.AiChatCompletionService;
 import com.coresolution.consultation.service.ai.dto.AiCompletionRequest;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -56,6 +59,15 @@ public class PsychAiServiceImpl implements PsychAiService {
     private static final String CALLER_ID = "psych";
 
     /**
+     * ai_usage_logs.request_type 라벨 (N3 보강 — 2026-05-25). PR-2 에서 PsychAiServiceImpl 은
+     * usage log 적재가 누락되어 있었다. V20260529_001 와 함께 추가.
+     */
+    private static final String USAGE_REQUEST_TYPE = "PSYCH_REPORT";
+
+    /** provider 라벨 fallback (effectiveProvider 가 비어있을 때 사용). */
+    private static final String PROVIDER_UNKNOWN = "UNKNOWN";
+
+    /**
      * 시스템 컨텍스트(스케줄러·배치)에서 {@link TenantContextHolder} 가 비어 있을 때의 안전 fallback.
      * 심리검사는 일반적으로 세션 컨텍스트에서 호출되므로 거의 사용되지 않는다.
      */
@@ -73,6 +85,7 @@ public class PsychAiServiceImpl implements PsychAiService {
 
     private final AiChatCompletionService aiChatCompletionService;
     private final AiJsonResponseParser jsonResponseParser;
+    private final AiUsageLogRepository usageLogRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -87,10 +100,12 @@ public class PsychAiServiceImpl implements PsychAiService {
                     PROMPT_VERSION);
         }
 
-        try {
-            String systemPrompt = buildSystemPrompt(assessmentType);
-            String userPrompt = buildUserPrompt(assessmentType, metrics, baseMarkdown);
+        long startTime = System.currentTimeMillis();
+        String systemPrompt = buildSystemPrompt(assessmentType);
+        String userPrompt = buildUserPrompt(assessmentType, metrics, baseMarkdown);
+        String combinedPrompt = buildCombinedPromptForLog(systemPrompt, userPrompt);
 
+        try {
             log.info("Psych AI report generation start: tenantId={}, type={}, metricsCount={}",
                     tenantId, assessmentType, metrics.size());
 
@@ -106,12 +121,16 @@ public class PsychAiServiceImpl implements PsychAiService {
                     .build();
 
             AiChatCompletionResult result = aiChatCompletionService.completeChat(request);
+            long responseTime = System.currentTimeMillis() - startTime;
             String model = StringUtils.hasText(result.model()) ? result.model() : "unknown";
+            String providerForLog = resolveProviderLabel(result);
 
             if (!result.success()) {
                 String reason = result.errorMessage() != null ? result.errorMessage() : "ai_call_failed";
                 log.warn("Psych AI call failed: tenantId={}, requestedProvider={}, effectiveProvider={}, model={}, reason={}",
                         tenantId, result.requestedProvider(), result.effectiveProvider(), model, reason);
+                logUsage(tenantId, providerForLog, model, false, reason, 0, 0, 0,
+                        responseTime, combinedPrompt, null);
                 if ("no_openai_or_gemini_api_key".equals(reason)) {
                     return new AiResult(baseMarkdown,
                             "{\"ai\":\"disabled\",\"reason\":\"AI_API_KEY 미설정\"}",
@@ -126,6 +145,8 @@ public class PsychAiServiceImpl implements PsychAiService {
             if (!StringUtils.hasText(content)) {
                 log.warn("Psych AI empty response: requestedProvider={}, effectiveProvider={}, model={}",
                         result.requestedProvider(), result.effectiveProvider(), model);
+                logUsage(tenantId, providerForLog, model, false, "empty_response", 0, 0, 0,
+                        responseTime, combinedPrompt, null);
                 return new AiResult(baseMarkdown, "{\"ai\":\"failed\",\"reason\":\"empty_response\"}",
                         model, PROMPT_VERSION);
             }
@@ -133,15 +154,84 @@ public class PsychAiServiceImpl implements PsychAiService {
             log.info("Psych AI report success: requestedProvider={}, effectiveProvider={}, model={}, isFallback={}, responseLen={}",
                     result.requestedProvider(), result.effectiveProvider(), model, result.isFallback(), content.length());
 
+            logUsage(tenantId, providerForLog, model, true, null,
+                    result.promptTokens(), result.completionTokens(), result.totalTokens(),
+                    responseTime, combinedPrompt, content);
+
             return parseAndValidateAiOutput(result, baseMarkdown, model, metrics, assessmentType);
 
         } catch (Exception e) {
+            long responseTime = System.currentTimeMillis() - startTime;
             log.error("Psych AI report generation failed: tenantId={}, type={}, error={}",
                     tenantId, assessmentType, e.getMessage(), e);
             String reason = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            logUsage(tenantId, PROVIDER_UNKNOWN, "unknown", false, truncate(reason, 400),
+                    0, 0, 0, responseTime, combinedPrompt, null);
             return new AiResult(baseMarkdown,
                     buildEvidenceJson("failed", truncate(reason, 400), true),
                     "unknown", PROMPT_VERSION);
+        }
+    }
+
+    /**
+     * SSOT 결과의 effectiveProvider 를 대문자 라벨로 정규화 (N3 — 2026-05-25).
+     */
+    private static String resolveProviderLabel(AiChatCompletionResult result) {
+        String effective = result != null ? result.effectiveProvider() : null;
+        if (StringUtils.hasText(effective)) {
+            return effective.trim().toUpperCase(Locale.ROOT);
+        }
+        String requested = result != null ? result.requestedProvider() : null;
+        if (StringUtils.hasText(requested)) {
+            return requested.trim().toUpperCase(Locale.ROOT);
+        }
+        return PROVIDER_UNKNOWN;
+    }
+
+    /**
+     * system + user 프롬프트를 결합한 본문을 생성한다 (V20260529_001 prompt 컬럼 저장용).
+     */
+    private static String buildCombinedPromptForLog(String systemPrompt, String userPrompt) {
+        StringBuilder sb = new StringBuilder();
+        if (StringUtils.hasText(systemPrompt)) {
+            sb.append("[system]\n").append(systemPrompt.trim());
+        }
+        if (StringUtils.hasText(userPrompt)) {
+            if (sb.length() > 0) {
+                sb.append("\n\n");
+            }
+            sb.append("[user]\n").append(userPrompt.trim());
+        }
+        return sb.length() == 0 ? null : sb.toString();
+    }
+
+    /**
+     * AI 사용 로그 저장 (N3 보강 — PsychAiServiceImpl 누락분 추가, V20260529_001).
+     */
+    private void logUsage(String tenantId, String aiProvider, String model,
+                          boolean isSuccess, String errorMessage,
+                          int promptTokens, int completionTokens, int totalTokens,
+                          long responseTimeMs, String promptBody, String responseBody) {
+        try {
+            AiUsageLog usageLogRow = AiUsageLog.builder()
+                    .tenantId(tenantId)
+                    .aiProvider(aiProvider)
+                    .requestType(USAGE_REQUEST_TYPE)
+                    .model(model)
+                    .promptTokens(promptTokens)
+                    .completionTokens(completionTokens)
+                    .totalTokens(totalTokens)
+                    .isSuccess(isSuccess)
+                    .errorMessage(errorMessage)
+                    .responseTimeMs(responseTimeMs)
+                    .requestedBy(CALLER_ID)
+                    .prompt(promptBody)
+                    .response(responseBody)
+                    .build();
+            usageLogRow.calculateCost();
+            usageLogRepository.save(usageLogRow);
+        } catch (Exception e) {
+            log.error("❌ Psych AI 사용 로그 저장 실패", e);
         }
     }
 

@@ -727,6 +727,30 @@
   width: 100%;
 }
 
+/*
+ * N3 보강 (V20260529_001) — prompt / response 본문 표시 영역.
+ * dt + dd 가 동일 행에 단일 컬럼으로 흐르도록 grid 를 재정의한다.
+ */
+.mg-ai-logs-table__detail-body {
+  display: grid;
+  grid-template-columns: 1fr !important;
+  gap: var(--mg-spacing-xs, 4px) !important;
+}
+
+.mg-ai-logs-table__detail-body dd {
+  width: 100%;
+}
+
+.mg-ai-logs-table__detail-empty {
+  display: inline-block;
+  padding: var(--mg-spacing-xs, 4px) var(--mg-spacing-sm, 8px);
+  font-size: var(--mg-font-size-xs, 12px);
+  color: var(--mg-color-text-secondary);
+  background: var(--mg-color-surface-main);
+  border: 1px dashed var(--mg-color-border-main);
+  border-radius: var(--mg-radius-sm, 4px);
+}
+
 .mg-ai-logs-table__pre {
   margin: 0;
   background: var(--mg-color-surface-main);

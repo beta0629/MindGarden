@@ -188,6 +188,25 @@ public interface AiUsageLogRepository extends JpaRepository<AiUsageLog, Long> {
     );
 
     /**
+     * 테넌트별 ai_provider 컬럼 기준 호출 수 집계 (N3 보강, V20260529_001).
+     *
+     * <p>이전에는 model prefix 추정에 의존했으나 (정확도 결함 N3), 컬럼이 caller-set 값으로
+     * 정합화되어 컬럼 기준 직접 집계로 전환한다. {@code null}/blank provider 는 호출자에서
+     * {@code UNKNOWN} 으로 정규화한다.</p>
+     *
+     * @return Object[] {aiProvider(String), count(Long)} 행 배열
+     */
+    @Query("SELECT log.aiProvider, COUNT(log) FROM AiUsageLog log "
+            + "WHERE log.tenantId = :tenantId "
+            + "AND log.createdAt >= :startDate AND log.createdAt < :endDate "
+            + "GROUP BY log.aiProvider")
+    List<Object[]> countByProviderInPeriod(
+            @Param("tenantId") String tenantId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+    /**
      * 테넌트별 일자별 호출 수 (최근 N일 차트용).
      *
      * @return Object[] {date(java.sql.Date), count(Long)} 행 배열
@@ -205,23 +224,27 @@ public interface AiUsageLogRepository extends JpaRepository<AiUsageLog, Long> {
     );
 
     /**
-     * 테넌트별 로그 페이징 조회 (필터: caller, status).
+     * 테넌트별 로그 페이징 조회 (필터: provider, caller, status).
      *
-     * <p>provider 필터는 model prefix 기반이라 SQL 수준 필터링이 어려워 서비스 계층에서 후처리한다.
-     * (현 entity 가 aiProvider 컬럼을 갖지 않음 — 트랙 B PR-2 보존)
+     * <p>2026-05-25 N3 보강 (V20260529_001): {@code ai_provider} 컬럼이 정합화되어 SQL 수준
+     * 직접 필터링한다. 이전의 서비스 계층 후처리 방식은 {@code totalElements} 가 현재 페이지
+     * 기준 근사값이었으나, 본 쿼리는 DB 수준 필터로 정확한 totalElements 를 보장한다.</p>
      *
      * @param tenantId  테넌트 ID
+     * @param provider  ai_provider 대문자 라벨 또는 null/blank → 미지정
      * @param caller    caller(requestType) 또는 null/blank → 미지정
      * @param isSuccess 성공 여부 또는 null → 미지정
      * @param pageable  페이지 설정
      */
     @Query("SELECT log FROM AiUsageLog log "
             + "WHERE log.tenantId = :tenantId "
+            + "AND (:provider IS NULL OR :provider = '' OR UPPER(log.aiProvider) = :provider) "
             + "AND (:caller IS NULL OR :caller = '' OR log.requestType = :caller) "
             + "AND (:isSuccess IS NULL OR log.isSuccess = :isSuccess) "
             + "ORDER BY log.createdAt DESC")
     Page<AiUsageLog> findPageByTenantWithFilters(
             @Param("tenantId") String tenantId,
+            @Param("provider") String provider,
             @Param("caller") String caller,
             @Param("isSuccess") Boolean isSuccess,
             Pageable pageable

@@ -15,6 +15,7 @@ import {
 } from '../../utils/commonCodeParentGroups';
 import { toDisplayString } from '../../utils/safeDisplay';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import { 
     loadCodeGroupMetadata, 
     getCodeGroupKoreanNameSync,
@@ -47,6 +48,7 @@ const API_COMMON_CODES_GROUPS_LIST = '/api/v1/common-codes/groups/list';
  */
 const CommonCodeManagement = () => {
     const { t } = useTranslation(['admin']);
+    const [confirm, ConfirmModal] = useConfirm();
     const { user } = useSession();
     
     const hasErpCodePermission = () => {
@@ -353,8 +355,9 @@ const CommonCodeManagement = () => {
     };
 
     const handleDeleteCode = async(codeId) => {
-        const confirmed = await new Promise((resolve) => {
-            notificationManager.confirm(t('admin:commonCode.msg.confirmDeleteCode', '정말로 이 코드를 삭제하시겠습니까?'), resolve);
+        const confirmed = await confirm({
+            message: t('admin:commonCode.msg.confirmDeleteCode', '정말로 이 코드를 삭제하시겠습니까?'),
+            variant: 'danger'
         });
         if (!confirmed) {
             return;
@@ -898,6 +901,7 @@ const CommonCodeManagement = () => {
                     </div>
                 </div>
             </ContentArea>
+            <ConfirmModal />
         </AdminCommonLayout>
     );
 };

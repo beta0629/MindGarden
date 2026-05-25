@@ -31,6 +31,7 @@ import {
   getCodeLabel
 } from '../../utils/billingService';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import SimpleLayout from '../layout/SimpleLayout';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
@@ -54,6 +55,7 @@ import './SubscriptionManagement.css';
  * @param {string} props.tenantId - 테넌트 ID (선택적, 세션에서 가져옴)
  */
 const SubscriptionManagement = ({ tenantId: propTenantId }) => {
+  const [confirm, ConfirmModal] = useConfirm();
   const { user, sessionInfo } = useSession();
   const [loading, setLoading] = useState(false);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -187,8 +189,9 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
    * 구독 취소
    */
   const handleCancelSubscription = async(subscriptionId) => {
-    const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm(BILLING_MESSAGES.SUBSCRIPTION.CANCEL_CONFIRM, resolve);
+    const confirmed = await confirm({
+      message: BILLING_MESSAGES.SUBSCRIPTION.CANCEL_CONFIRM,
+      variant: 'warning'
     });
     if (!confirmed) {
       return;
@@ -430,6 +433,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
           )}
         </div>
       </div>
+      <ConfirmModal />
     </SimpleLayout>
   );
 };

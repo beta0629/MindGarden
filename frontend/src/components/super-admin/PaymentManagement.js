@@ -11,6 +11,7 @@ import { API_BASE_URL } from '../../constants/api';
 import { apiGet } from '../../utils/ajax';
 import './PaymentManagement.css';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -40,6 +41,7 @@ const PAYMENT_PAGE_TITLE_ID = 'payment-management-title';
 
 const PaymentManagement = () => {
   const { t } = useTranslation();
+  const [confirm, ConfirmModal] = useConfirm();
   const [payments, setPayments] = useState([]);
   const [statistics, setStatistics] = useState({});
   const [loading, setLoading] = useState(false);
@@ -351,11 +353,10 @@ const PaymentManagement = () => {
       return;
     }
 
-    const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm(
-        `선택된 ${selectedPayments.length}건의 결제를 ${action === 'approve' ? '승인' : action === 'refund' ? '환불' : '취소'}하시겠습니까?`,
-        resolve
-      );
+    const actionLabel = action === 'approve' ? '승인' : action === 'refund' ? '환불' : '취소';
+    const confirmed = await confirm({
+      message: `선택된 ${selectedPayments.length}건의 결제를 ${actionLabel}하시겠습니까?`,
+      variant: action === 'refund' ? 'danger' : 'warning'
     });
 
     if (!confirmed) return;
@@ -801,6 +802,7 @@ const PaymentManagement = () => {
         )}
         </div>
       </ContentArea>
+      <ConfirmModal />
     </AdminCommonLayout>
   );
 };

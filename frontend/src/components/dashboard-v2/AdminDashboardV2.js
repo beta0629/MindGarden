@@ -20,6 +20,7 @@ import { useTenantComponentFlags } from '../../hooks/useTenantComponentFlags';
 import { useNavigate } from 'react-router-dom';
 import { AdminMgmtNavCard, AdminMgmtActionCard } from './molecules/AdminMgmtGridCard';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { FaCalendarAlt, FaCheckCircle, FaUsers } from 'react-icons/fa';
 import {
@@ -195,6 +196,7 @@ function getEmptyWeeklyChartData(weeks = 6) {
 
 const AdminDashboardV2 = ({ user: propUser }) => {
   const { t } = useTranslation(['admin', 'common']);
+  const [confirm, ConfirmModal] = useConfirm();
   const navigate = useNavigate();
   const { user: sessionUser, isLoading: sessionLoading, logout, hasRole } = useSession();
   const dashboardUser = propUser || sessionUser;
@@ -760,11 +762,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         showToast(t('admin:dashboard.duplicate.empty', '중복된 매칭이 없습니다.'));
         return;
       }
-      const confirmed = await new Promise((resolve) => {
-        notificationManager.confirm(
-          t('admin:dashboard.duplicate.confirmMerge', '중복된 매칭이 {{count}}개 발견되었습니다. 통합하시겠습니까?', { count: checkResult.count }),
-          resolve
-        );
+      const confirmed = await confirm({
+        message: t('admin:dashboard.duplicate.confirmMerge', '중복된 매칭이 {{count}}개 발견되었습니다. 통합하시겠습니까?', { count: checkResult.count }),
+        variant: 'warning'
       });
       if (!confirmed) return;
       const response = await csrfTokenManager.post(API_ADMIN_MERGE_DUPLICATE_MAPPINGS);
@@ -2026,6 +2026,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       ) : (
         <MobileLayout {...layoutProps}>{mainContent}</MobileLayout>
       )}
+      <ConfirmModal />
     </div>
   );
 };

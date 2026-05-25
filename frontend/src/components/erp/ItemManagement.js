@@ -18,6 +18,7 @@ import BadgeSelect from '../common/BadgeSelect';
 import StandardizedApi from '../../utils/standardizedApi';
 import { ERP_API, COMMON_CODE_API } from '../../constants/api';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -36,7 +37,8 @@ const ITEM_MANAGEMENT_LIST_TITLE_ID = 'item-management-list-title';
  * 아이템 관리 컴포넌트 (테넌트 관리자 ADMIN — 삭제는 관리자만)
  */
 const ItemManagement = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['erp', 'common']);
+  const [confirm, ConfirmModal] = useConfirm();
   const navigate = useNavigate();
   const { isAdmin } = useSession();
   const [loading, setLoading] = useState(false);
@@ -226,8 +228,9 @@ const ItemManagement = () => {
   };
 
   const handleDeleteItem = async(item) => {
-    const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm(`"${item.name}" 아이템을 삭제하시겠습니까?`, resolve);
+    const confirmed = await confirm({
+      message: t('erp:item.confirm.delete', '"{{name}}" 아이템을 삭제하시겠습니까?', { name: item.name }),
+      variant: 'danger'
     });
     if (!confirmed) {
       return;
@@ -697,6 +700,7 @@ const ItemManagement = () => {
           </ContentArea>
         </div>
       </div>
+      <ConfirmModal />
     </AdminCommonLayout>
   );
 };

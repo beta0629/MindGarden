@@ -6,6 +6,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import { useSession } from '../../contexts/SessionContext';
 import axios from 'axios';
 import { API_BASE_URL } from '../../constants/api';
@@ -23,6 +24,7 @@ import { useTranslation } from 'react-i18next';
  */
 const WidgetBasedAdminDashboard = () => {
     const { t } = useTranslation(['admin', 'common']);
+    const [confirm, ConfirmModal] = useConfirm();
     const navigate = useNavigate();
     const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
     
@@ -166,8 +168,9 @@ const WidgetBasedAdminDashboard = () => {
 
     // 위젯 삭제
     const handleDeleteWidget = async(widgetId, groupId) => {
-        const confirmed = await new Promise((resolve) => {
-            notificationManager.confirm(t('admin:widgetDashboard.deleteConfirm', '이 위젯을 삭제하시겠습니까?'), resolve);
+        const confirmed = await confirm({
+            message: t('admin:widgetDashboard.deleteConfirm', '이 위젯을 삭제하시겠습니까?'),
+            variant: 'danger'
         });
         if (!confirmed) return;
 
@@ -497,6 +500,7 @@ const WidgetBasedAdminDashboard = () => {
                 </div>
             </div>
             )}
+            <ConfirmModal />
         </AdminCommonLayout>
     );
 };

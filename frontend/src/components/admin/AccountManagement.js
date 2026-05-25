@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
@@ -36,6 +37,7 @@ const normalizeListResponse = (payload) => {
 };
 
 const AccountManagement = () => {
+  const [confirm, ConfirmModal] = useConfirm();
   const [accounts, setAccounts] = useState([]);
   const [banks, setBanks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -141,9 +143,7 @@ const AccountManagement = () => {
   };
 
   const handleDelete = async(id) => {
-    const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm(ACCOUNT_MESSAGES.CONFIRM.DELETE, resolve);
-    });
+    const confirmed = await confirm({ message: ACCOUNT_MESSAGES.CONFIRM.DELETE, variant: 'danger' });
     if (!confirmed) return;
     
     try {
@@ -321,6 +321,7 @@ const AccountManagement = () => {
           </ContentArea>
         </div>
       </div>
+      <ConfirmModal />
     </AdminCommonLayout>
   );
 };

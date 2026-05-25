@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import { Button, Form, Badge } from 'react-bootstrap';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { FaUserTie, FaPlus, FaTrash, FaEye } from 'react-icons/fa';
@@ -22,7 +23,8 @@ import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 
 const ConsultantManagement = ({ onUpdate, showToast }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['admin', 'common']);
+    const [confirm, ConfirmModal] = useConfirm();
     const [consultants, setConsultants] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
@@ -193,8 +195,9 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
     };
 
     const handleDelete = async (id) => {
-        const confirmed = await new Promise((resolve) => {
-            notificationManager.confirm('정말로 이 상담사를 삭제하시겠습니까?', resolve);
+        const confirmed = await confirm({
+            messageKey: 'admin:consultant.confirm.delete',
+            variant: 'danger'
         });
         if (!confirmed) {
             return;
@@ -439,6 +442,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                     )}
                 </UnifiedModal>
             </div>
+            <ConfirmModal />
         </AdminCommonLayout>
     );
 };

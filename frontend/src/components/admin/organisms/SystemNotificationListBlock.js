@@ -9,6 +9,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { USER_ROLES } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
+import { useConfirm } from '../../../hooks/useConfirm';
 import StatusBadge from '../../common/StatusBadge';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGButton from '../../common/MGButton';
@@ -38,7 +39,8 @@ const TARGET_OPTIONS = [
 ];
 
 const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['admin', 'common']);
+  const [confirm, ConfirmModal] = useConfirm();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -122,8 +124,9 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
   };
 
   const handlePublish = async(id) => {
-    const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm('이 공지를 게시하시겠습니까?', resolve);
+    const confirmed = await confirm({
+      messageKey: 'admin:systemNotification.confirm.publish',
+      variant: 'warning'
     });
     if (!confirmed) return;
     try {
@@ -137,8 +140,9 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
   };
 
   const handleArchive = async(id) => {
-    const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm('이 공지를 보관하시겠습니까?', resolve);
+    const confirmed = await confirm({
+      messageKey: 'admin:systemNotification.confirm.archive',
+      variant: 'warning'
     });
     if (!confirmed) return;
     try {
@@ -152,8 +156,9 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
   };
 
   const handleDelete = async(id) => {
-    const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm('이 공지를 삭제하시겠습니까?', resolve);
+    const confirmed = await confirm({
+      messageKey: 'admin:systemNotification.confirm.delete',
+      variant: 'danger'
     });
     if (!confirmed) return;
     try {
@@ -385,6 +390,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
         onSave={handleSave}
         loading={saveLoading}
       />
+      <ConfirmModal />
     </>
   );
 };

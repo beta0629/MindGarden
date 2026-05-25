@@ -15,6 +15,7 @@ import { PiggyBank, List, TrendingUp, Wallet, Percent, DollarSign } from 'lucide
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
@@ -53,7 +54,8 @@ const BUDGET_STATUS_OPTIONS = [
  * 예산 계획 및 관리
  */
 const BudgetManagement = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['erp', 'common']);
+  const [confirm, ConfirmModal] = useConfirm();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [userPermissions, setUserPermissions] = useState([]);
   const [activeTab, setActiveTab] = useState('budgets');
@@ -237,8 +239,9 @@ const BudgetManagement = () => {
   };
 
   const handleDeleteBudget = async(budgetId) => {
-    const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm('정말로 이 예산을 삭제하시겠습니까?', resolve);
+    const confirmed = await confirm({
+      messageKey: 'erp:budget.confirm.delete',
+      variant: 'danger'
     });
     if (!confirmed) {
       return;
@@ -1190,6 +1193,7 @@ const BudgetManagement = () => {
           </form>
         )}
       </UnifiedModal>
+      <ConfirmModal />
     </AdminCommonLayout>
   );
 };

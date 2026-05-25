@@ -12,6 +12,7 @@ import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
+import { useConfirm } from '../../../../hooks/useConfirm';
 import { useSession } from '../../../../contexts/SessionContext';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import ContentArea from '../../../dashboard-v2/content/ContentArea';
@@ -40,6 +41,7 @@ const API_COMMON_CODES_GROUPS_MAPPING_STATUS = '/api/v1/common-codes/groups/MAPP
 
 const MappingManagementPage = () => {
   const { t } = useTranslation();
+  const [confirm, ConfirmModal] = useConfirm();
   const { user } = useSession();
   const [mappings, setMappings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -283,9 +285,7 @@ const MappingManagementPage = () => {
       sessions: refundMapping.remainingSessions,
       reason: refundReason.trim()
     });
-    const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm(confirmMessage, resolve);
-    });
+    const confirmed = await confirm({ message: confirmMessage, variant: 'danger' });
     if (!confirmed) return;
 
     try {
@@ -591,6 +591,7 @@ const MappingManagementPage = () => {
         mapping={editMapping}
         onSuccess={handleEditSuccess}
       />
+      <ConfirmModal />
     </>
   );
 };

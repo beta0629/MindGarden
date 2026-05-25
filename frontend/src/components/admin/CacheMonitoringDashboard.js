@@ -9,6 +9,7 @@ import { FaDatabase, FaChartLine, FaClock, FaMemory } from 'react-icons/fa';
 import { DataTransformer, PerformanceUtils } from '../../utils/performanceUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './CacheMonitoringDashboard.css';
@@ -18,6 +19,7 @@ const CACHE_MONITOR_TITLE_ID = 'cache-monitoring-title';
 
 const CacheMonitoringDashboard = () => {
   const { t } = useTranslation();
+  const [confirm, ConfirmModal] = useConfirm();
   const [cacheStats, setCacheStats] = useState({});
   const [loading, setLoading] = useState(false);
   const [clearLoading, setClearLoading] = useState(false);
@@ -48,8 +50,9 @@ const CacheMonitoringDashboard = () => {
 
   // 모든 캐시 클리어
   const clearAllCaches = async() => {
-    const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_CONFIRM, resolve);
+    const confirmed = await confirm({
+      message: WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_CONFIRM,
+      variant: 'warning'
     });
     if (!confirmed) return;
 
@@ -268,6 +271,7 @@ const CacheMonitoringDashboard = () => {
           </ContentArea>
         </div>
       </div>
+      <ConfirmModal />
     </AdminCommonLayout>
   );
 };

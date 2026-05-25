@@ -26,10 +26,12 @@
 
 import React, { useState, useEffect } from 'react';
 import notificationManager from '../../../utils/notification';
+import { useConfirm } from '../../../hooks/useConfirm';
 import DashboardWidgetManagerPresentation from './DashboardWidgetManagerPresentation';
 import { USER_ROLES } from '../../../constants/roles';
 
 const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) => {
+  const [confirm, ConfirmModal] = useConfirm();
   // ========================================
   // 상태 관리
   // ========================================
@@ -170,8 +172,9 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
    * 위젯 삭제 핸들러
    */
   const handleDeleteWidget = async(widgetId) => {
-    const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm('이 위젯을 삭제하시겠습니까?', resolve);
+    const confirmed = await confirm({
+      messageKey: 'admin:dashboard.widget.confirm.delete',
+      variant: 'danger'
     });
     if (!confirmed) {
       return;
@@ -230,20 +233,23 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
   // Presentation 컴포넌트에 전달
   // ========================================
   return (
-    <DashboardWidgetManagerPresentation
-      // 데이터
-      groupedWidgets={groupedWidgets}
-      availableWidgets={availableWidgets}
-      loading={loading}
-      showAddModal={showAddModal}
-      
-      // 이벤트 핸들러
-      onAddWidget={handleAddWidget}
-      onDeleteWidget={handleDeleteWidget}
-      onConfigureWidget={handleConfigureWidget}
-      onShowAddModal={handleShowAddModal}
-      onCloseAddModal={handleCloseAddModal}
-    />
+    <>
+      <DashboardWidgetManagerPresentation
+        // 데이터
+        groupedWidgets={groupedWidgets}
+        availableWidgets={availableWidgets}
+        loading={loading}
+        showAddModal={showAddModal}
+        
+        // 이벤트 핸들러
+        onAddWidget={handleAddWidget}
+        onDeleteWidget={handleDeleteWidget}
+        onConfigureWidget={handleConfigureWidget}
+        onShowAddModal={handleShowAddModal}
+        onCloseAddModal={handleCloseAddModal}
+      />
+      <ConfirmModal />
+    </>
   );
 };
 

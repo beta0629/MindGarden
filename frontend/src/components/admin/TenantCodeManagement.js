@@ -19,6 +19,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
@@ -62,6 +63,7 @@ import './TenantCodeManagement.css';
 const TENANT_CODE_PAGE_TITLE_ID = 'tenant-code-management-title';
 
 const TenantCodeManagement = () => {
+    const [confirm, ConfirmModal] = useConfirm();
     const { user } = useSession();
     
     // 상태 관리
@@ -168,8 +170,9 @@ const TenantCodeManagement = () => {
 
     // 코드 삭제
     const handleDeleteCode = async(codeId) => {
-        const confirmed = await new Promise((resolve) => {
-            notificationManager.confirm(NOTIFICATION_MESSAGES.DELETE_CONFIRM, resolve);
+        const confirmed = await confirm({
+            message: NOTIFICATION_MESSAGES.DELETE_CONFIRM,
+            variant: 'danger'
         });
         if (!confirmed) return;
 
@@ -654,6 +657,7 @@ const TenantCodeManagement = () => {
                 </UnifiedModal>
                 </div>
             </ContentArea>
+            <ConfirmModal />
         </AdminCommonLayout>
     );
 };

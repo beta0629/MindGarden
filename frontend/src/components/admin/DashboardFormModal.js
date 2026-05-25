@@ -16,6 +16,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { API_BASE_URL } from '../../constants/api';
@@ -68,6 +69,7 @@ const DASHBOARD_FORM_ADD_ROLE_MODAL_Z_INDEX = 10050;
 
 const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   const { t } = useTranslation();
+  const [confirm, ConfirmModal] = useConfirm();
   const [formData, setFormData] = useState({
     tenantRoleId: '',
     dashboardName: '',
@@ -347,8 +349,9 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
   // 역할 제거
   const handleDeleteRole = async(tenantRoleId, roleName) => {
-    const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm(t(DASHBOARD_FORM_CONFIRM_DELETE_ROLE_KEY, { roleName }), resolve);
+    const confirmed = await confirm({
+      message: t(DASHBOARD_FORM_CONFIRM_DELETE_ROLE_KEY, { roleName }),
+      variant: 'danger'
     });
     if (!confirmed) {
       return;
@@ -1692,6 +1695,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
           )}
         </UnifiedModal>
       )}
+      <ConfirmModal />
     </>
   );
 };

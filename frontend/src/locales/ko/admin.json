@@ -533,7 +533,10 @@
       },
       "widget": {
         "loadError": "위젯 데이터를 불러올 수 없습니다.",
-        "retry": "다시 불러오기"
+        "retry": "다시 불러오기",
+        "confirm": {
+          "delete": "이 위젯을 삭제하시겠습니까?"
+        }
       },
       "period": {
         "realtime": "실시간",
@@ -916,6 +919,9 @@
     "confirmApprove": {
       "title": "상담사 승인 확인",
       "message": "해당 상담사를 승인하시겠어요?"
+    },
+    "confirm": {
+      "delete": "정말로 이 상담사를 삭제하시겠습니까?"
     },
     "loadError": "상담사 정보를 불러올 수 없습니다.",
     "approveSuccess": "상담사가 승인되었습니다.",
@@ -2361,6 +2367,13 @@
         "detailBodyEmpty": "본문이 저장되지 않았습니다 (V20260529_001 이전 호출)",
         "detailBodyNotApplicable": "실패로 인해 응답이 저장되지 않았습니다"
       }
+    }
+  },
+  "systemNotification": {
+    "confirm": {
+      "publish": "이 공지를 게시하시겠습니까?",
+      "archive": "이 공지를 보관하시겠습니까?",
+      "delete": "이 공지를 삭제하시겠습니까?"
     }
   }
 }

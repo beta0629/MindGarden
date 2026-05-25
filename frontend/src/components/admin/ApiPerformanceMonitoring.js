@@ -9,6 +9,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import { ApiPerformanceReportGenerator } from '../../utils/apiPerformanceUtils';
 import { API_PERFORMANCE_WIDGET } from '../../constants/widgetConstants';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import './ApiPerformanceMonitoring.css';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -51,6 +52,7 @@ const MOCK_CHART_DATA = {
  */
 const ApiPerformanceMonitoring = () => {
   const navigate = useNavigate();
+  const [confirm, ConfirmModal] = useConfirm();
   const [refreshing, setRefreshing] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState(false);
   const [clearLoading, setClearLoading] = useState(false);
@@ -81,9 +83,7 @@ const ApiPerformanceMonitoring = () => {
   // 통계 초기화
   const handleClearStats = async() => {
     const messages = API_PERFORMANCE_WIDGET.MESSAGES;
-    const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm(messages.CLEAR_CONFIRM, resolve);
-    });
+    const confirmed = await confirm({ message: messages.CLEAR_CONFIRM, variant: 'warning' });
     if (!confirmed) return;
     
     setClearLoading(true);
@@ -245,6 +245,7 @@ const ApiPerformanceMonitoring = () => {
 
       </div>
       </ContentArea>
+      <ConfirmModal />
     </AdminCommonLayout>
   );
 };

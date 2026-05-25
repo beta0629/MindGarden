@@ -30,6 +30,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import {
     getRoleMenuPermissions,
     grantMenuPermission,
@@ -48,6 +49,7 @@ import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 
 const MenuPermissionManagement = () => {
+    const [confirm, ConfirmModal] = useConfirm();
     const [roles, setRoles] = useState([]);
     const [selectedRole, setSelectedRole] = useState(null);
     const [menuPermissions, setMenuPermissions] = useState([]);
@@ -170,8 +172,9 @@ const MenuPermissionManagement = () => {
      * 일괄 저장
      */
     const handleBatchSave = async() => {
-        const confirmed = await new Promise((resolve) => {
-            notificationManager.confirm(MENU_PERM_CONFIRM.BATCH_SAVE, resolve);
+        const confirmed = await confirm({
+            message: MENU_PERM_CONFIRM.BATCH_SAVE,
+            variant: 'warning'
         });
         if (!confirmed) {
             return;
@@ -251,6 +254,7 @@ const MenuPermissionManagement = () => {
                     </ContentArea>
                 </div>
             </div>
+            <ConfirmModal />
         </AdminCommonLayout>
     );
 };

@@ -40,6 +40,7 @@ import {
 } from '../../utils/tenantCommonCodeApi';
 import { getCodeGroupKoreanNameSync, loadCodeGroupMetadata } from '../../utils/codeHelper';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import TenantCommonCodeManagerUI from '../ui/TenantCommonCodeManagerUI';
 import {
     getParentCodeGroupForSubcategory,
@@ -55,6 +56,7 @@ const TENANT_COMMON_CODE_TITLE_ID = 'tenant-common-code-title';
 
 const TenantCommonCodeManager = () => {
     const { t } = useTranslation(['admin']);
+    const [confirm, ConfirmModal] = useConfirm();
     const [, setSearchParams] = useSearchParams();
     const urlGroupInitialisedRef = useRef(false);
     const [codeGroups, setCodeGroups] = useState([]);
@@ -305,8 +307,9 @@ const TenantCommonCodeManager = () => {
      * 코드 삭제
      */
     const handleDeleteCode = async(codeId) => {
-        const confirmed = await new Promise((resolve) => {
-            notificationManager.confirm(t('admin:tenantCommonCode.msg.confirmDelete', '정말 삭제하시겠습니까?'), resolve);
+        const confirmed = await confirm({
+            message: t('admin:tenantCommonCode.msg.confirmDelete', '정말 삭제하시겠습니까?'),
+            variant: 'danger'
         });
         if (!confirmed) {
             return;
@@ -476,6 +479,7 @@ const TenantCommonCodeManager = () => {
                     </ContentArea>
                 </div>
             </div>
+            <ConfirmModal />
         </AdminCommonLayout>
     );
 };

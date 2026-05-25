@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Users, User, UserCircle, Crown, Building2, Search } from 'lucide-react';
 import { USER_ROLES } from '../../constants/roles';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
@@ -24,6 +25,7 @@ const USER_MANAGEMENT_PAGE_TITLE_ID = 'user-management-title';
 
 const UserManagement = ({ onUpdate }) => {
     const { t } = useTranslation(['admin', 'common']);
+    const [confirm, ConfirmModal] = useConfirm();
     // notificationManager 사용
     const toast = (message, type) => {
         if (type === 'success') notificationManager.success(message);
@@ -155,11 +157,10 @@ const UserManagement = ({ onUpdate }) => {
         
         // 내담자→상담사 변경 시 확인 메시지 (표준화 2025-12-05: 상수 활용)
         if (selectedUser.role === USER_ROLES.CLIENT && form.newRole === USER_ROLES.CONSULTANT) {
-            const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm(
-                t('admin:user.confirm.changeToConsultant', '{{name}}님을 상담사로 변경하시겠습니까?\n\n이 변경으로 인해:\n• 상담사 메뉴와 기능에 접근 가능\n• 내담자 관리, 스케줄 관리 권한 부여\n• 필요시 다시 내담자로 되돌릴 수 있음', { name: toDisplayString(selectedUser.name) })
-            , resolve);
-    });
+            const confirmed = await confirm({
+                message: t('admin:user.confirm.changeToConsultant', '{{name}}님을 상담사로 변경하시겠습니까?\n\n이 변경으로 인해:\n• 상담사 메뉴와 기능에 접근 가능\n• 내담자 관리, 스케줄 관리 권한 부여\n• 필요시 다시 내담자로 되돌릴 수 있음', { name: toDisplayString(selectedUser.name) }),
+                variant: 'warning'
+            });
             if (!confirmed) return;
         }
         
@@ -484,6 +485,7 @@ const UserManagement = ({ onUpdate }) => {
                     </form>
                 )}
             </UnifiedModal>
+            <ConfirmModal />
         </AdminCommonLayout>
     );
 };

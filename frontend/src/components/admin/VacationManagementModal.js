@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
@@ -43,6 +44,7 @@ const VacationManagementModal = ({
     onVacationUpdated 
 }) => {
     const { t } = useTranslation(['admin', 'common']);
+    const [confirm, ConfirmModal] = useConfirm();
     const { userRole: sessionUserRole } = useSession();
     const userRole = propUserRole || sessionUserRole;
     const [consultants, setConsultants] = useState([]);
@@ -353,12 +355,13 @@ const VacationManagementModal = ({
      * 휴가 삭제
      */
     const handleDeleteVacation = async(vacationId, date) => {
-        const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm(t('admin:vacation.confirm.delete', '정말로 이 휴가를 삭제하시겠습니까?'), resolve);
-    });
-    if (!confirmed) {
-        return;
-    }
+        const confirmed = await confirm({
+            message: t('admin:vacation.confirm.delete', '정말로 이 휴가를 삭제하시겠습니까?'),
+            variant: 'danger'
+        });
+        if (!confirmed) {
+            return;
+        }
 
         setLoading(true);
         try {
@@ -484,6 +487,7 @@ const VacationManagementModal = ({
     }
 
     return (
+        <>
         <UnifiedModal
             isOpen={isOpen}
             onClose={onClose}
@@ -689,6 +693,8 @@ const VacationManagementModal = ({
                     )}
                 </div>
         </UnifiedModal>
+        <ConfirmModal />
+        </>
     );
 };
 

@@ -3,6 +3,7 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import BadgeSelect from '../common/BadgeSelect';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -33,7 +34,8 @@ const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=FINANCIAL_CATEGORY';
  * @since 2025-09-30
  */
 const RecurringExpenseModal = ({ isOpen, onClose }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['erp', 'common']);
+    const [confirm, ConfirmModal] = useConfirm();
     const [loading, setLoading] = useState(false);
     const [expenses, setExpenses] = useState([]);
     const [statistics, setStatistics] = useState(null);
@@ -216,12 +218,13 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      * 반복 지출 삭제
      */
     const handleDeleteExpense = async(expenseId) => {
-        const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm('정말로 이 반복 지출을 삭제하시겠습니까?', resolve);
-    });
-    if (!confirmed) {
-        return;
-    }
+        const confirmed = await confirm({
+            messageKey: 'erp:finance.recurringExpense.confirm.delete',
+            variant: 'danger'
+        });
+        if (!confirmed) {
+            return;
+        }
 
         try {
             setLoading(true);
@@ -259,6 +262,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     }
 
     return (
+        <>
         <UnifiedModal
             isOpen={isOpen}
             onClose={handleClose}
@@ -551,6 +555,8 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                         </UnifiedModal>
                     )}
         </UnifiedModal>
+        <ConfirmModal />
+        </>
     );
 };
 

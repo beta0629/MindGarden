@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { RefreshCcw, Package, Clock, AlertTriangle, DollarSign, CreditCard } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager, { showNotification } from '../../../utils/notification';
+import { useConfirm } from '../../../hooks/useConfirm';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
@@ -14,6 +15,7 @@ import { useTranslation } from 'react-i18next';
  */
 const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
   const { t } = useTranslation();
+  const [confirm, ConfirmModal] = useConfirm();
   const [refundSessions, setRefundSessions] = useState(1);
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
@@ -97,9 +99,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
       }
     );
 
-    const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm(confirmMessage, resolve);
-    });
+    const confirmed = await confirm({ message: confirmMessage, variant: 'danger' });
     if (!confirmed) {
       return;
     }
@@ -154,6 +154,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
   };
 
   if (!isOpen || !mapping) return null;
+  // ConfirmModal 은 return 끝에 sibling 으로 렌더 (UnifiedModal 과 동시 노출 가능)
 
   // 청약 철회 기간 확인 (15일)
   const checkWithdrawalPeriod = () => {
@@ -180,6 +181,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
   const withdrawalCheck = checkWithdrawalPeriod();
 
   return (
+    <>
     <UnifiedModal
       isOpen={isOpen}
       onClose={handleClose}
@@ -341,6 +343,8 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           </div>
         </form>
     </UnifiedModal>
+    <ConfirmModal />
+    </>
   );
 };
 

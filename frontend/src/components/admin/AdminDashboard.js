@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import notificationManager from '../../utils/notification';
+import { useConfirm } from '../../hooks/useConfirm';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
@@ -123,6 +124,7 @@ function AdminMgmtCardIcon({ icon: LucideIcon, tone = 'blue' }) {
 const AdminDashboard = ({ user: propUser }) => {
     const { t } = useTranslation(['admin', 'common']);
     const navigate = useNavigate();
+    const [confirm, ConfirmModal] = useConfirm();
     const { user: sessionUser, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
 
     const [userPermissions, setUserPermissions] = useState([]);
@@ -545,12 +547,10 @@ const AdminDashboard = ({ user: propUser }) => {
             }
             
             const confirmMessage = t('admin:dashboard.duplicate.confirmMerge', '중복된 매칭이 {{count}}개 발견되었습니다. 통합하시겠습니까?', { count: checkResult.count });
-            const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm(confirmMessage, resolve);
-    });
-    if (!confirmed) {
-        return;
-    }
+            const confirmed = await confirm({ message: confirmMessage, variant: 'warning' });
+            if (!confirmed) {
+                return;
+            }
             
             const response = await csrfTokenManager.post(API_ADMIN_MERGE_DUPLICATE_MAPPINGS);
 
@@ -1942,6 +1942,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
         </div>
         </div>
+        <ConfirmModal />
         </SimpleLayout>
     );
 };

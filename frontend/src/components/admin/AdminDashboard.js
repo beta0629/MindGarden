@@ -398,7 +398,7 @@ const AdminDashboard = ({ user: propUser }) => {
             });
         } catch (error) {
             console.error('통계 데이터 로드 실패:', error);
-            showToast('통계 데이터 로드에 실패했습니다.', 'danger');
+            showToast(t('admin:dashboard.error.statsLoad', '통계 데이터 로드에 실패했습니다.'), 'danger');
         } finally {
             setLoading(false);
         }
@@ -440,13 +440,13 @@ const AdminDashboard = ({ user: propUser }) => {
             setConsultants(consultantsList);
         } catch (error) {
             console.error('미배정 내담자/상담사 로드 실패:', error);
-            notificationManager.error(error?.message || '미배정 내담자 목록을 불러오는데 실패했습니다.');
+            notificationManager.error(error?.message || t('admin:dashboard.error.unassignedLoad', '미배정 내담자 목록을 불러오는데 실패했습니다.'));
             setUnassignedClients([]);
             setConsultants([]);
         } finally {
             setMatchingQueueLoading(false);
         }
-    }, []);
+    }, [t]);
 
     const loadPendingDepositStats = useCallback(async() => {
         try {
@@ -462,11 +462,11 @@ const AdminDashboard = ({ user: propUser }) => {
             setPendingDepositList(pendingList);
         } catch (error) {
             console.error('입금 확인 대기 통계 로드 실패:', error);
-            notificationManager.error(error?.message || '입금 확인 대기 목록을 불러오는데 실패했습니다.');
+            notificationManager.error(error?.message || t('admin:dashboard.error.pendingDepositLoad', '입금 확인 대기 목록을 불러오는데 실패했습니다.'));
             setPendingDepositStats({ count: 0, totalAmount: 0, oldestHours: 0 });
             setPendingDepositList([]);
         }
-    }, []);
+    }, [t]);
 
     const handleConfirmMatch = useCallback(async(clientId, consultantId) => {
         try {
@@ -476,17 +476,17 @@ const AdminDashboard = ({ user: propUser }) => {
                 status: 'PENDING_PAYMENT',
                 totalSessions: 1,
                 remainingSessions: 1,
-                packageName: '초기 상담',
+                packageName: t('admin:dashboard.initialConsultation', '초기 상담'),
                 packagePrice: 0,
                 paymentStatus: 'PENDING'
             });
-            notificationManager.success('매칭이 성공적으로 생성되었습니다.');
+            notificationManager.success(t('admin:dashboard.success.matchingCreated', '매칭이 성공적으로 생성되었습니다.'));
             await Promise.all([loadUnassignedClientsAndConsultants(), loadStats(), loadPendingDepositStats()]);
         } catch (error) {
-            const msg = error?.message || error?.response?.data?.message || '매칭 생성에 실패했습니다.';
+            const msg = error?.message || error?.response?.data?.message || t('admin:dashboard.error.matchingCreate', '매칭 생성에 실패했습니다.');
             notificationManager.error(msg);
         }
-    }, [loadUnassignedClientsAndConsultants, loadStats, loadPendingDepositStats]);
+    }, [loadUnassignedClientsAndConsultants, loadStats, loadPendingDepositStats, t]);
 
     const handleAutoCompleteSchedules = async() => {
         setAutoCompleteLoading(true);
@@ -495,15 +495,15 @@ const AdminDashboard = ({ user: propUser }) => {
 
             if (response.ok) {
                 const result = await response.json();
-                showToast(result.message || '스케줄 자동 완료 처리가 완료되었습니다.');
+                showToast(result.message || t('admin:dashboard.autoComplete.success', '스케줄 자동 완료 처리가 완료되었습니다.'));
                 loadStats(); // 통계 새로고침
             } else {
                 const error = await response.json();
-                showToast(error.message || '스케줄 자동 완료 처리에 실패했습니다.', 'danger');
+                showToast(error.message || t('admin:dashboard.autoComplete.failed', '스케줄 자동 완료 처리에 실패했습니다.'), 'danger');
             }
         } catch (error) {
             console.error('스케줄 자동 완료 처리 실패:', error);
-            showToast('스케줄 자동 완료 처리에 실패했습니다.', 'danger');
+            showToast(t('admin:dashboard.autoComplete.failed', '스케줄 자동 완료 처리에 실패했습니다.'), 'danger');
         } finally {
             setAutoCompleteLoading(false);
         }
@@ -516,15 +516,15 @@ const AdminDashboard = ({ user: propUser }) => {
 
             if (response.ok) {
                 const result = await response.json();
-                showToast(result.message || '스케줄 자동 완료 처리 및 알림이 완료되었습니다.');
+                showToast(result.message || t('admin:dashboard.autoCompleteReminder.success', '스케줄 자동 완료 처리 및 알림이 완료되었습니다.'));
                 loadStats(); // 통계 새로고침
             } else {
                 const error = await response.json();
-                showToast(error.message || '스케줄 자동 완료 처리 및 알림에 실패했습니다.', 'danger');
+                showToast(error.message || t('admin:dashboard.autoCompleteReminder.failed', '스케줄 자동 완료 처리 및 알림에 실패했습니다.'), 'danger');
             }
         } catch (error) {
             console.error('스케줄 자동 완료 처리 및 알림 실패:', error);
-            showToast('스케줄 자동 완료 처리 및 알림에 실패했습니다.', 'danger');
+            showToast(t('admin:dashboard.autoCompleteReminder.failed', '스케줄 자동 완료 처리 및 알림에 실패했습니다.'), 'danger');
         } finally {
             setAutoCompleteWithReminderLoading(false);
         }
@@ -534,17 +534,17 @@ const AdminDashboard = ({ user: propUser }) => {
         try {
             const checkResponse = await fetch(API_ADMIN_DUPLICATE_MAPPINGS);
             if (!checkResponse.ok) {
-                showToast('중복 매칭 조회에 실패했습니다.', 'danger');
+                showToast(t('admin:dashboard.duplicate.fetchFailed', '중복 매칭 조회에 실패했습니다.'), 'danger');
                 return;
             }
             
             const checkResult = await checkResponse.json();
             if (checkResult.count === 0) {
-                showToast('중복된 매칭이 없습니다.');
+                showToast(t('admin:dashboard.duplicate.empty', '중복된 매칭이 없습니다.'));
                 return;
             }
             
-            const confirmMessage = `중복된 매칭이 ${checkResult.count}개 발견되었습니다. 통합하시겠습니까?`;
+            const confirmMessage = t('admin:dashboard.duplicate.confirmMerge', '중복된 매칭이 {{count}}개 발견되었습니다. 통합하시겠습니까?', { count: checkResult.count });
             const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(confirmMessage, resolve);
     });
@@ -556,16 +556,16 @@ const AdminDashboard = ({ user: propUser }) => {
 
             if (response.ok) {
                 const result = await response.json();
-                showToast(result.message || '중복 매칭 통합이 완료되었습니다.');
+                showToast(result.message || t('admin:dashboard.duplicate.mergeSuccess', '중복 매칭 통합이 완료되었습니다.'));
                 loadStats(); // 통계 새로고침
                 loadRefundStats(); // 환불 통계 새로고침
             } else {
                 const error = await response.json();
-                showToast(error.message || '중복 매칭 통합에 실패했습니다.', 'danger');
+                showToast(error.message || t('admin:dashboard.duplicate.mergeFailed', '중복 매칭 통합에 실패했습니다.'), 'danger');
             }
         } catch (error) {
             console.error('중복 매칭 통합 실패:', error);
-            showToast('중복 매칭 통합에 실패했습니다.', 'danger');
+            showToast(t('admin:dashboard.duplicate.mergeFailed', '중복 매칭 통합에 실패했습니다.'), 'danger');
         }
     };
 

@@ -142,7 +142,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             }
             setProfessionalTypeOptions(opts);
             if (opts.length === 0) {
-                showError('전문가 유형 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.');
+                showError(t('admin:consultantMgmt.loadingFailed', '전문가 유형 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.'));
             }
         } catch (e) {
             console.error('전문가 유형 공통코드 로드 실패:', e);
@@ -151,12 +151,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 const opts = await fetchOnce();
                 setProfessionalTypeOptions(opts);
                 if (opts.length === 0) {
-                    showError('전문가 유형 목록을 불러오지 못했습니다.');
+                    showError(t('admin:consultantMgmt.loadingFailedShort', '전문가 유형 목록을 불러오지 못했습니다.'));
                 }
             } catch (retryError) {
                 console.error('전문가 유형 공통코드 재시도 실패:', retryError);
                 setProfessionalTypeOptions([]);
-                showError('전문가 유형 목록을 불러오지 못했습니다.');
+                showError(t('admin:consultantMgmt.loadingFailedShort', '전문가 유형 목록을 불러오지 못했습니다.'));
             }
         }
     }, []);
@@ -195,18 +195,18 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 return;
             }
             setGradeOptions([
-                { codeValue: 'CONSULTANT_JUNIOR', codeLabel: '주니어 상담사' },
-                { codeValue: 'CONSULTANT_SENIOR', codeLabel: '시니어 상담사' },
-                { codeValue: 'CONSULTANT_EXPERT', codeLabel: '엑스퍼트 상담사' },
-                { codeValue: 'CONSULTANT_MASTER', codeLabel: '마스터 상담사' }
+                { codeValue: 'CONSULTANT_JUNIOR', codeLabel: t('admin:consultantMgmt.grade.junior', '주니어 상담사') },
+                { codeValue: 'CONSULTANT_SENIOR', codeLabel: t('admin:consultantMgmt.grade.senior', '시니어 상담사') },
+                { codeValue: 'CONSULTANT_EXPERT', codeLabel: t('admin:consultantMgmt.grade.expert', '엑스퍼트 상담사') },
+                { codeValue: 'CONSULTANT_MASTER', codeLabel: t('admin:consultantMgmt.grade.master', '마스터 상담사') }
             ]);
         } catch (error) {
             console.error('상담사 등급 공통코드 로드 실패:', error);
             setGradeOptions([
-                { codeValue: 'CONSULTANT_JUNIOR', codeLabel: '주니어 상담사' },
-                { codeValue: 'CONSULTANT_SENIOR', codeLabel: '시니어 상담사' },
-                { codeValue: 'CONSULTANT_EXPERT', codeLabel: '엑스퍼트 상담사' },
-                { codeValue: 'CONSULTANT_MASTER', codeLabel: '마스터 상담사' }
+                { codeValue: 'CONSULTANT_JUNIOR', codeLabel: t('admin:consultantMgmt.grade.junior', '주니어 상담사') },
+                { codeValue: 'CONSULTANT_SENIOR', codeLabel: t('admin:consultantMgmt.grade.senior', '시니어 상담사') },
+                { codeValue: 'CONSULTANT_EXPERT', codeLabel: t('admin:consultantMgmt.grade.expert', '엑스퍼트 상담사') },
+                { codeValue: 'CONSULTANT_MASTER', codeLabel: t('admin:consultantMgmt.grade.master', '마스터 상담사') }
             ]);
         }
     }, []);
@@ -607,9 +607,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             } catch (error) {
                 console.error('상태 공통코드 로드 실패:', error);
                 setUserStatusOptions([
-                    { codeValue: 'ACTIVE', codeLabel: '활성' },
-                    { codeValue: 'INACTIVE', codeLabel: '비활성' },
-                    { codeValue: 'SUSPENDED', codeLabel: '일시정지' }
+                    { codeValue: 'ACTIVE', codeLabel: t('admin:labels.active', '활성') },
+                    { codeValue: 'INACTIVE', codeLabel: t('admin:labels.inactive', '비활성') },
+                    { codeValue: 'SUSPENDED', codeLabel: t('admin:consultantMgmt.status.suspended', '일시정지') }
                 ]);
             }
         };
@@ -963,7 +963,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     
                     if (isRefreshedInvalidDefault) {
                         window.dispatchEvent(new CustomEvent('showNotification', {
-                            detail: { message: '테넌트 정보를 찾을 수 없습니다. 페이지를 새로고침해주세요.', type: 'error' }
+                            detail: { message: t('admin:consultantMgmt.msg.tenantMissing', '테넌트 정보를 찾을 수 없습니다. 페이지를 새로고침해주세요.'), type: 'error' }
                         }));
                         return { success: false };
                     }
@@ -974,7 +974,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             } catch (error) {
                 console.error('❌ sessionManager 사용 중 오류:', error);
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: '세션 정보를 가져올 수 없습니다. 페이지를 새로고침해주세요.', type: 'error' }
+                    detail: { message: t('admin:consultantMgmt.msg.sessionMissing', '세션 정보를 가져올 수 없습니다. 페이지를 새로고침해주세요.'), type: 'error' }
                 }));
                 return { success: false };
             }
@@ -989,7 +989,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             if (!data.name || !data.name.trim()) {
                 console.error('❌ 이름은 필수입니다.');
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: '이름은 필수입니다.', type: 'error' }
+                    detail: { message: t('admin:consultantMgmt.msg.nameRequired', '이름은 필수입니다.'), type: 'error' }
                 }));
                 return { success: false };
             }
@@ -1037,20 +1037,20 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: '상담사가 성공적으로 등록되었습니다.', type: 'success' }
+                    detail: { message: t('admin:consultantMgmt.msg.createSuccess', '상담사가 성공적으로 등록되었습니다.'), type: 'success' }
                 }));
                 return { success: true };
             } else {
                 console.error('❌ 상담사 등록 실패: 응답이 올바르지 않음', response);
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: (response && response.message) || '상담사 등록에 실패했습니다.', type: 'error' }
+                    detail: { message: (response && response.message) || t('admin:consultantMgmt.msg.createFailed', '상담사 등록에 실패했습니다.'), type: 'error' }
                 }));
                 return { success: false };
             }
         } catch (error) {
             console.error('상담사 등록 오류:', error);
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: '상담사 등록 중 오류가 발생했습니다.', type: 'error' }
+                detail: { message: t('admin:consultantMgmt.msg.createError', '상담사 등록 중 오류가 발생했습니다.'), type: 'error' }
             }));
             return { success: false };
         }
@@ -1069,13 +1069,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             if (rrnFirst6 || rrnLast1) {
                 if (rrnFirst6.length !== 6 || !/^[0-9]{6}$/.test(rrnFirst6)) {
                     window.dispatchEvent(new CustomEvent('showNotification', {
-                        detail: { message: '주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자로 입력해 주세요.', type: 'error' }
+                        detail: { message: t('admin:consultantMgmt.msg.rrnInvalid', '주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자로 입력해 주세요.'), type: 'error' }
                     }));
                     return { success: false };
                 }
                 if (rrnLast1.length !== 1 || !/^[1-4]$/.test(rrnLast1)) {
                     window.dispatchEvent(new CustomEvent('showNotification', {
-                        detail: { message: '주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자로 입력해 주세요.', type: 'error' }
+                        detail: { message: t('admin:consultantMgmt.msg.rrnInvalid', '주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자로 입력해 주세요.'), type: 'error' }
                     }));
                     return { success: false };
                 }
@@ -1109,19 +1109,19 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             if (isSuccess) {
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: '상담사 정보가 성공적으로 수정되었습니다.', type: 'success' }
+                    detail: { message: t('admin:consultantMgmt.msg.updateSuccess', '상담사 정보가 성공적으로 수정되었습니다.'), type: 'success' }
                 }));
                 return { success: true };
             } else {
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: (response && response.message) || '상담사 수정에 실패했습니다.', type: 'error' }
+                    detail: { message: (response && response.message) || t('admin:consultantMgmt.msg.updateFailed', '상담사 수정에 실패했습니다.'), type: 'error' }
                 }));
                 return { success: false };
             }
         } catch (error) {
             console.error('상담사 수정 오류:', error);
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: '상담사 수정 중 오류가 발생했습니다.', type: 'error' }
+                detail: { message: t('admin:consultantMgmt.msg.updateError', '상담사 수정 중 오류가 발생했습니다.'), type: 'error' }
             }));
             return { success: false };
         }
@@ -1133,19 +1133,19 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             if (!response || response.success !== false) {
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: '상담사가 성공적으로 삭제되었습니다.', type: 'success' }
+                    detail: { message: t('admin:consultantMgmt.msg.deleteSuccess', '상담사가 성공적으로 삭제되었습니다.'), type: 'success' }
                 }));
                 return { success: true };
             } else {
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: response?.message || '상담사 삭제에 실패했습니다.', type: 'error' }
+                    detail: { message: response?.message || t('admin:consultantMgmt.msg.deleteFailed', '상담사 삭제에 실패했습니다.'), type: 'error' }
                 }));
                 return { success: false };
             }
         } catch (error) {
             console.error('상담사 삭제 오류:', error);
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: '상담사 삭제 중 오류가 발생했습니다.', type: 'error' }
+                detail: { message: t('admin:consultantMgmt.msg.deleteError', '상담사 삭제 중 오류가 발생했습니다.'), type: 'error' }
             }));
             return { success: false };
         }
@@ -1163,11 +1163,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             console.log('✅ 비밀번호 초기화 응답:', response);
 
             if (response && (response.success !== false)) {
-                showSuccess('비밀번호가 성공적으로 초기화되었습니다.');
+                showSuccess(t('admin:consultantMgmt.msg.passwordResetSuccess', '비밀번호가 성공적으로 초기화되었습니다.'));
                 setShowPasswordResetModal(false);
                 setPasswordResetConsultant(null);
             } else {
-                throw new Error(response?.message || '비밀번호 초기화에 실패했습니다.');
+                throw new Error(response?.message || t('admin:consultantMgmt.msg.passwordResetFailed', '비밀번호 초기화에 실패했습니다.'));
             }
         } catch (error) {
             console.error('❌ 비밀번호 초기화 실패:', error);
@@ -1218,7 +1218,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         } catch (error) {
             console.error('모달 제출 오류:', error);
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: '작업 중 오류가 발생했습니다.', type: 'error' }
+                detail: { message: t('admin:consultantMgmt.msg.submitError', '작업 중 오류가 발생했습니다.'), type: 'error' }
             }));
         } finally {
             setModalSubmitLoading(false);
@@ -1227,7 +1227,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
     const stats = getOverallStats();
     const consultantFilterOptions = useMemo(() => {
-        const opts = [{ value: 'all', label: '전체' }];
+        const opts = [{ value: 'all', label: t('admin:consultantMgmt.filter.all', '전체') }];
         if (userStatusOptions && userStatusOptions.length > 0) {
             opts.push(...userStatusOptions.map(opt => ({
                 value: opt.codeValue,
@@ -1395,7 +1395,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 <div className="mg-v2-mapping-list-block__empty-icon">
                                                     <Users size={48} />
                                                 </div>
-                                                <h3 className="mg-v2-mapping-list-block__empty-title">상담사가 없습니다</h3>
+                                                <h3 className="mg-v2-mapping-list-block__empty-title">{t('admin:consultant.empty.title', '상담사가 없습니다')}</h3>
                                                 <p className="mg-v2-mapping-list-block__empty-desc">새 상담사를 등록해보세요.</p>
                                                 <MGButton
                                                     type="button"
@@ -1571,7 +1571,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 <div className="mg-v2-mapping-list-block__empty-icon">
                                                     <Users size={48} />
                                                 </div>
-                                                <h3 className="mg-v2-mapping-list-block__empty-title">상담사가 없습니다</h3>
+                                                <h3 className="mg-v2-mapping-list-block__empty-title">{t('admin:consultant.empty.title', '상담사가 없습니다')}</h3>
                                                 <p className="mg-v2-mapping-list-block__empty-desc">새 상담사를 등록해보세요.</p>
                                                 <MGButton
                                                     type="button"
@@ -1753,7 +1753,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             </div>
                             <div className="mg-v2-consultant-detail-content">
                                 <div className="mg-v2-detail-section">
-                                    <h5>기본 정보</h5>
+                                    <h5>{t('admin:consultant.section.basicInfo', '기본 정보')}</h5>
                                     <div className="mg-v2-detail-grid">
                                         <div className="mg-v2-detail-item">
                                             <span className="mg-v2-detail-label">성별:</span>
@@ -1784,7 +1784,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                     </div>
                                 </div>
                                 <div className="mg-v2-detail-section">
-                                    <h5>전문분야</h5>
+                                    <h5>{t('admin:consultant.section.specialty', '전문분야')}</h5>
                                     <div className="mg-v2-specialty-list">
                                         {(selectedConsultant.specialty || selectedConsultant.specialization) ? (
                                             <SpecialtyDisplay
@@ -2171,7 +2171,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         <>
                             <div className="mg-v2-section-heading mg-v2-section-heading--accent">
                                 <span className="mg-v2-section-heading__bar" />
-                                <h3 className="mg-v2-section-heading__title">자격·경력</h3>
+                                <h3 className="mg-v2-section-heading__title">{t('admin:consultant.section.credentials', '자격·경력')}</h3>
                             </div>
                             <div className="mg-v2-form-group">
                                 <label htmlFor="consultant-qualifications" className="mg-v2-form-label">자격증 (선택)</label>

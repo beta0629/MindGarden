@@ -154,8 +154,8 @@ const TestNotificationForm = ({ onSentSuccess }) => {
 
   const recipientOptions = useMemo(() => recipients.map((u) => ({
     value: String(u.userId ?? u.id ?? ''),
-    label: `${toDisplayString(u.name, '이름 없음')} · ${toDisplayString(u.role, '역할 미지정')} · ${toDisplayString(u.phoneMasked, '번호 없음')}`
-  })), [recipients]);
+    label: `${toDisplayString(u.name, t('testNotification.recipient.unknownName', '이름 없음'))} · ${toDisplayString(u.role, t('testNotification.recipient.unknownRole', '역할 미지정'))} · ${toDisplayString(u.phoneMasked, t('testNotification.recipient.unknownPhone', '번호 없음'))}`
+  })), [recipients, t]);
 
   const selectedTemplate = useMemo(() => {
     if (!templateCode) {
@@ -177,10 +177,10 @@ const TestNotificationForm = ({ onSentSuccess }) => {
     return {
       count: smsMessage.length,
       limit,
-      label: isKo ? '한글' : '영문',
+      label: isKo ? t('testNotification.sms.langKo', '한글') : t('testNotification.sms.langEn', '영문'),
       warning: smsMessage.length > limit
     };
-  }, [smsMessage]);
+  }, [smsMessage, t]);
 
   const isAllRequiredFilled = useMemo(() => {
     if (!reason.trim() || reason.length > REASON_MAX_LENGTH) {
@@ -466,7 +466,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
           {templateVariableDefs.map((v) => (
             <div key={v.name} className="mg-test-notif-form__variable-row">
               <label className="mg-test-notif-form__variable-label" htmlFor={`mg-test-notif-var-${v.name}`}>
-                {toDisplayString(v.name, '변수')}
+                {toDisplayString(v.name, t('testNotification.alimtalk.variableFallback', '변수'))}
                 {v.required && (
                   <span className="mg-test-notif-form__badge mg-test-notif-form__badge--required">
                     {t('testNotification.alimtalk.variableRequired', '필수')}

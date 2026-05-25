@@ -51,7 +51,7 @@ const API_ADMIN_WELLNESS_EXCHANGE_RATE_REFRESH = '/api/v1/admin/wellness/exchang
  * @since 2025-01-21
  */
 const WellnessManagement = () => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['admin', 'common']);
     const { user, isLoggedIn } = useSession();
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
@@ -127,11 +127,11 @@ const WellnessManagement = () => {
             console.log('✅ 웰니스 관리 데이터 로드 완료');
         } catch (error) {
             console.error('❌ 데이터 로드 실패:', error);
-            notificationManager.show('데이터를 불러오는데 실패했습니다.', 'error');
+            notificationManager.show(t('admin:wellnessMgmt.msg.loadFailed', '데이터를 불러오는데 실패했습니다.'), 'error');
         } finally {
             setLoading(false);
         }
-    }, [selectedMonth]);
+    }, [selectedMonth, t]);
 
     useEffect(() => {
         console.log('🔍 웰니스 관리 useEffect 실행:', { isLoggedIn, userId: user?.id, selectedMonth });
@@ -187,7 +187,7 @@ const WellnessManagement = () => {
                 console.log('✅ 웰니스 관리 데이터 로드 완료');
             } catch (error) {
                 console.error('❌ 데이터 로드 실패:', error);
-                notificationManager.show('데이터를 불러오는데 실패했습니다.', 'error');
+                notificationManager.show(t('admin:wellnessMgmt.msg.loadFailed', '데이터를 불러오는데 실패했습니다.'), 'error');
             } finally {
                 setLoading(false);
             }
@@ -204,8 +204,8 @@ const WellnessManagement = () => {
     const handleTestSend = async() => {
         setConfirmModal({
             isOpen: true,
-            title: '웰니스 알림 테스트 발송',
-            message: '웰니스 알림을 테스트 발송하시겠습니까?\n\n모든 내담자에게 즉시 발송됩니다.',
+            title: t('admin:wellnessMgmt.confirm.testTitle', '웰니스 알림 테스트 발송'),
+            message: t('admin:wellnessMgmt.confirm.testMessage', '웰니스 알림을 테스트 발송하시겠습니까?\n\n모든 내담자에게 즉시 발송됩니다.'),
             type: 'warning',
             onConfirm: async() => {
                 try {
@@ -213,15 +213,15 @@ const WellnessManagement = () => {
                     const response = await apiPost(API_ADMIN_WELLNESS_TEST_SEND);
                     
                     if (response.success) {
-                        notificationManager.show('웰니스 알림이 성공적으로 발송되었습니다!', 'success');
+                        notificationManager.show(t('admin:wellnessMgmt.msg.testSendSuccess', '웰니스 알림이 성공적으로 발송되었습니다!'), 'success');
                         await loadData();
                         window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
                     } else {
-                        notificationManager.show(response.message || '발송에 실패했습니다.', 'error');
+                        notificationManager.show(response.message || t('admin:wellnessMgmt.msg.testSendFailed', '발송에 실패했습니다.'), 'error');
                     }
                 } catch (error) {
                     console.error('❌ 테스트 발송 실패:', error);
-                    notificationManager.show('테스트 발송 중 오류가 발생했습니다.', 'error');
+                    notificationManager.show(t('admin:wellnessMgmt.msg.testSendError', '테스트 발송 중 오류가 발생했습니다.'), 'error');
                 } finally {
                     setSending(false);
                 }
@@ -246,15 +246,15 @@ const WellnessManagement = () => {
             const response = await apiPost(API_ADMIN_WELLNESS_EXCHANGE_RATE_REFRESH);
             
             if (response.success) {
-                notificationManager.show('환율을 새로고침했습니다.', 'success');
+                notificationManager.show(t('admin:wellnessMgmt.msg.exchangeRefreshed', '환율을 새로고침했습니다.'), 'success');
                 // 전체 데이터 다시 로드
                 await loadData();
             } else {
-                notificationManager.show(response.message || '환율 새로고침에 실패했습니다.', 'error');
+                notificationManager.show(response.message || t('admin:wellnessMgmt.msg.exchangeRefreshFailed', '환율 새로고침에 실패했습니다.'), 'error');
             }
         } catch (error) {
             console.error('❌ 환율 새로고침 실패:', error);
-            notificationManager.show('환율 새로고침 중 오류가 발생했습니다.', 'error');
+            notificationManager.show(t('admin:wellnessMgmt.msg.exchangeRefreshError', '환율 새로고침 중 오류가 발생했습니다.'), 'error');
         } finally {
             setRefreshing(false);
         }
@@ -284,47 +284,35 @@ const WellnessManagement = () => {
      * 카테고리 한글 변환
      */
     const getCategoryName = (category) => {
-        const categories = {
-            'MENTAL': '마음 건강',
-            'EXERCISE': '운동',
-            'SLEEP': '수면',
-            'NUTRITION': '영양',
-            'GENERAL': '일반'
-        };
-        return categories[category] || category;
+        const fallback = { MENTAL: '마음 건강', EXERCISE: '운동', SLEEP: '수면', NUTRITION: '영양', GENERAL: '일반' }[category] || category;
+        return t(`admin:wellnessMgmt.category.${category}`, fallback);
     };
 
 /**
      * 요일 한글 변환
      */
     const getDayName = (dayOfWeek) => {
-        if (!dayOfWeek) return '모든 요일';
+        if (!dayOfWeek) return t('admin:wellnessMgmt.day.all', '모든 요일');
         const days = ['', '월', '화', '수', '목', '금', '토', '일'];
-        return `${days[dayOfWeek]}요일`;
+        return t('admin:wellnessMgmt.day.format', '{{name}}요일', { name: days[dayOfWeek] });
     };
 
 /**
      * 계절 한글 변환
      */
     const getSeasonName = (season) => {
-        const seasons = {
-            'SPRING': '봄',
-            'SUMMER': '여름',
-            'FALL': '가을',
-            'WINTER': '겨울',
-            'ALL': '모든 계절'
-        };
-        return seasons[season] || season;
+        const fallback = { SPRING: '봄', SUMMER: '여름', FALL: '가을', WINTER: '겨울', ALL: '모든 계절' }[season] || season;
+        return t(`admin:wellnessMgmt.season.${season}`, fallback);
     };
 
     return (
-        <AdminCommonLayout title="웰니스 알림 관리">
+        <AdminCommonLayout title={t('admin:wellnessMgmt.title', '웰니스 알림 관리')}>
             <div className="mg-v2-ad-b0kla mg-v2-wellness-management">
                 <div className="mg-v2-ad-b0kla__container">
-                    <ContentArea ariaLabel="웰니스 알림 관리 본문">
+                    <ContentArea ariaLabel={t('admin:wellnessMgmt.regionLabel', '웰니스 알림 관리 본문')}>
                         <ContentHeader
-                            title="웰니스 알림 관리"
-                            subtitle="AI 기반 자동 웰니스 컨텐츠 생성 및 발송 관리"
+                            title={t('admin:wellnessMgmt.title', '웰니스 알림 관리')}
+                            subtitle={t('admin:wellnessMgmt.subtitle', 'AI 기반 자동 웰니스 컨텐츠 생성 및 발송 관리')}
                             titleId="wellness-management-title"
                             actions={(
                                 <>
@@ -341,7 +329,7 @@ const WellnessManagement = () => {
                                         preventDoubleClick={false}
                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     >
-                                        환율 새로고침
+                                        {t('admin:wellnessMgmt.buttons.exchangeRefresh', '환율 새로고침')}
                                     </MGButton>
                                     <MGButton
                                         variant="outline"
@@ -372,7 +360,7 @@ const WellnessManagement = () => {
                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                         preventDoubleClick={true}
                                     >
-                                        테스트 발송
+                                        {t('admin:wellnessMgmt.buttons.testSend', '테스트 발송')}
                                     </MGButton>
                                 </>
                             )}
@@ -381,7 +369,7 @@ const WellnessManagement = () => {
                         <main aria-labelledby="wellness-management-title">
                 {loading ? (
                     <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
-                        <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+                        <UnifiedLoading type="inline" text={t('admin:wellnessMgmt.loading', '데이터를 불러오는 중...')} />
                     </div>
                 ) : (
                     <>
@@ -393,10 +381,10 @@ const WellnessManagement = () => {
                         </div>
                         <div className="mg-v2-stat-content">
                             <div className="mg-v2-stat-value">{stats.totalCostDisplay || `$${(stats.totalCost || 0).toFixed(4)}`}</div>
-                            <div className="mg-v2-stat-label">이번 달 비용</div>
+                            <div className="mg-v2-stat-label">{t('admin:wellnessMgmt.stats.monthCost', '이번 달 비용')}</div>
                             <div className="mg-v2-stat-description">
-                                {selectedMonth.year}년 {selectedMonth.month}월
-                                {stats.exchangeRateDisplay && ` (환율: ${stats.exchangeRateDisplay})`}
+                                {t('admin:wellnessMgmt.stats.monthDescription', '{{year}}년 {{month}}월', { year: selectedMonth.year, month: selectedMonth.month })}
+                                {stats.exchangeRateDisplay && t('admin:wellnessMgmt.stats.exchangeSuffix', ' (환율: {{rate}})', { rate: stats.exchangeRateDisplay })}
                             </div>
                         </div>
                     </div>
@@ -407,8 +395,8 @@ const WellnessManagement = () => {
                         </div>
                         <div className="mg-v2-stat-content">
                             <div className="mg-v2-stat-value">{(stats.totalTokens || 0).toLocaleString()}</div>
-                            <div className="mg-v2-stat-label">사용 토큰</div>
-                            <div className="mg-v2-stat-description">총 토큰 사용량</div>
+                            <div className="mg-v2-stat-label">{t('admin:wellnessMgmt.stats.tokens', '사용 토큰')}</div>
+                            <div className="mg-v2-stat-description">{t('admin:wellnessMgmt.stats.tokensDesc', '총 토큰 사용량')}</div>
                         </div>
                     </div>
 
@@ -418,8 +406,8 @@ const WellnessManagement = () => {
                         </div>
                         <div className="mg-v2-stat-content">
                             <div className="mg-v2-stat-value">{(stats.totalRequests || 0).toLocaleString()}</div>
-                            <div className="mg-v2-stat-label">API 호출</div>
-                            <div className="mg-v2-stat-description">이번 달 총 호출 수</div>
+                            <div className="mg-v2-stat-label">{t('admin:wellnessMgmt.stats.apiCalls', 'API 호출')}</div>
+                            <div className="mg-v2-stat-description">{t('admin:wellnessMgmt.stats.apiCallsDesc', '이번 달 총 호출 수')}</div>
                         </div>
                     </div>
 
@@ -429,8 +417,8 @@ const WellnessManagement = () => {
                         </div>
                         <div className="mg-v2-stat-content">
                             <div className="mg-v2-stat-value">{templates.length}</div>
-                            <div className="mg-v2-stat-label">템플릿 수</div>
-                            <div className="mg-v2-stat-description">활성화된 템플릿</div>
+                            <div className="mg-v2-stat-label">{t('admin:wellnessMgmt.stats.templates', '템플릿 수')}</div>
+                            <div className="mg-v2-stat-description">{t('admin:wellnessMgmt.stats.templatesDesc', '활성화된 템플릿')}</div>
                         </div>
                     </div>
                 </div>
@@ -453,7 +441,7 @@ const WellnessManagement = () => {
                             ◀
                         </MGButton>
                         <span className="mg-v2-h2">
-                            {selectedMonth.year}년 {selectedMonth.month}월
+                            {t('admin:wellnessMgmt.monthSelector.label', '{{year}}년 {{month}}월', { year: selectedMonth.year, month: selectedMonth.month })}
                         </span>
                         <MGButton
                             variant="primary"
@@ -480,7 +468,7 @@ const WellnessManagement = () => {
                 <div className="mg-v2-section">
                     <div className="mg-v2-card">
                         <h2 className="mg-v2-h2">
-                            <Clock size={20} /> 최근 API 사용 내역
+                            <Clock size={20} /> {t('admin:wellnessMgmt.recentLogs.title', '최근 API 사용 내역')}
                         </h2>
                     <div className="wellness-logs">
                         {stats.recentLogs && stats.recentLogs.length > 0 ? (
@@ -500,7 +488,7 @@ const WellnessManagement = () => {
                                         </div>
                                         <div className="wellness-log-details">
                                             <span className="wellness-log-tokens">
-                                                {log.totalTokens?.toLocaleString()} 토큰
+                                                {log.totalTokens?.toLocaleString()}{t('admin:wellnessMgmt.recentLogs.tokensSuffix', ' 토큰')}
                                             </span>
                                             <span className="wellness-log-cost">
                                                 {log.estimatedCostDisplay || `$${log.estimatedCost?.toFixed(6)}`}
@@ -520,7 +508,7 @@ const WellnessManagement = () => {
                             ))
                         ) : (
                             <div className="wellness-empty">
-                                <p>최근 사용 내역이 없습니다.</p>
+                                <p>{t('admin:wellnessMgmt.recentLogs.empty', '최근 사용 내역이 없습니다.')}</p>
                             </div>
                         )}
                     </div>
@@ -531,7 +519,7 @@ const WellnessManagement = () => {
                 <div className="mg-v2-section">
                     <div className="mg-v2-card">
                         <h2 className="mg-v2-h2">
-                            <Database size={20} /> 웰니스 템플릿 목록
+                            <Database size={20} /> {t('admin:wellnessMgmt.templates.title', '웰니스 템플릿 목록')}
                         </h2>
                     <div className="wellness-templates">
                         {templates.length > 0 ? (
@@ -541,7 +529,7 @@ const WellnessManagement = () => {
                                         <h3 className="wellness-template-title"><SafeText>{template.title}</SafeText></h3>
                                         {template.isImportant && (
                                             <span className="wellness-template-badge wellness-template-badge--important">
-                                                중요
+                                                {t('admin:wellnessMgmt.templates.important', '중요')}
                                             </span>
                                         )}
                                     </div>
@@ -558,24 +546,24 @@ const WellnessManagement = () => {
                                     </div>
                                     <div className="wellness-template-stats">
                                         <span className="wellness-template-stat">
-                                            사용 {toSafeNumber(template.usageCount)}회
+                                            {t('admin:wellnessMgmt.templates.usageSuffix', '사용 {{count}}회', { count: toSafeNumber(template.usageCount) })}
                                         </span>
                                         <span className="wellness-template-stat">
-                                            생성자: <SafeText>{template.createdBy}</SafeText>
+                                            {t('admin:wellnessMgmt.templates.creatorLabel', '생성자: ')}<SafeText>{template.createdBy}</SafeText>
                                         </span>
                                     </div>
                                     {template.lastUsedAt && (
                                         <div className="wellness-template-date">
-                                            마지막 사용: {new Date(template.lastUsedAt).toLocaleDateString('ko-KR')}
+                                            {t('admin:wellnessMgmt.templates.lastUsedLabel', '마지막 사용: ')}{new Date(template.lastUsedAt).toLocaleDateString('ko-KR')}
                                         </div>
                                     )}
                                 </div>
                             ))
                         ) : (
                             <div className="wellness-empty">
-                                <p>등록된 템플릿이 없습니다.</p>
+                                <p>{t('admin:wellnessMgmt.templates.empty', '등록된 템플릿이 없습니다.')}</p>
                                 <p className="wellness-empty-hint">
-                                    테스트 발송을 하면 AI가 자동으로 템플릿을 생성합니다.
+                                    {t('admin:wellnessMgmt.templates.emptyHint', '테스트 발송을 하면 AI가 자동으로 템플릿을 생성합니다.')}
                                 </p>
                             </div>
                         )}

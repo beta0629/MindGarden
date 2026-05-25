@@ -42,7 +42,7 @@ const VacationManagementModal = ({
     selectedDate,
     onVacationUpdated 
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['admin', 'common']);
     const { userRole: sessionUserRole } = useSession();
     const userRole = propUserRole || sessionUserRole;
     const [consultants, setConsultants] = useState([]);
@@ -249,24 +249,24 @@ const VacationManagementModal = ({
         e.preventDefault();
         
         if (!selectedConsultantId) {
-            setMessage('상담사를 선택해주세요.');
+            setMessage(t('admin:vacation.validation.consultantRequired', '상담사를 선택해주세요.'));
             return;
         }
 
         if (!vacationData.date) {
-            setMessage('휴가 날짜를 선택해주세요.');
+            setMessage(t('admin:vacation.validation.dateRequired', '휴가 날짜를 선택해주세요.'));
             return;
         }
 
         if (!vacationData.reason.trim()) {
-            setMessage('휴가 사유를 입력해주세요.');
+            setMessage(t('admin:vacation.validation.reasonRequired', '휴가 사유를 입력해주세요.'));
             return;
         }
 
         // 휴가 유형별 필수 필드 검증
         if (vacationData.type === 'CUSTOM_TIME') {
             if (!vacationData.startTime || !vacationData.endTime) {
-                setMessage('사용자 정의 휴가의 경우 시작/종료 시간을 입력해주세요.');
+                setMessage(t('admin:vacation.validation.customTimeRequired', '사용자 정의 휴가의 경우 시작/종료 시간을 입력해주세요.'));
                 return;
             }
         }
@@ -286,7 +286,7 @@ const VacationManagementModal = ({
             // vacationData.date가 이미 문자열인 경우 그대로 사용
             formattedDate = vacationData.date;
         } else {
-            setMessage('휴가 날짜를 선택해주세요.');
+            setMessage(t('admin:vacation.validation.dateRequired', '휴가 날짜를 선택해주세요.'));
             setLoading(false);
             return;
         }
@@ -313,9 +313,9 @@ const VacationManagementModal = ({
             if (result.success) {
                 // 공통 알림 시스템 사용
                 if (window.notificationManager) {
-                    window.notificationManager.showSuccess('휴가가 성공적으로 등록되었습니다.');
+                    window.notificationManager.showSuccess(t('admin:vacation.success.create', '휴가가 성공적으로 등록되었습니다.'));
                 } else {
-                    setMessage('휴가가 성공적으로 등록되었습니다.');
+                    setMessage(t('admin:vacation.success.create', '휴가가 성공적으로 등록되었습니다.'));
                 }
                 setVacationData({
                     date: '',
@@ -331,18 +331,18 @@ const VacationManagementModal = ({
             } else {
                 // 공통 알림 시스템 사용
                 if (window.notificationManager) {
-                    window.notificationManager.showError(result.message || '휴가 등록에 실패했습니다.');
+                    window.notificationManager.showError(result.message || t('admin:vacation.error.create', '휴가 등록에 실패했습니다.'));
                 } else {
-                    setMessage(result.message || '휴가 등록에 실패했습니다.');
+                    setMessage(result.message || t('admin:vacation.error.create', '휴가 등록에 실패했습니다.'));
                 }
             }
         } catch (error) {
             console.error('휴가 등록 실패:', error);
             // 공통 알림 시스템 사용
             if (window.notificationManager) {
-                window.notificationManager.showError('휴가 등록 중 오류가 발생했습니다.');
+                window.notificationManager.showError(t('admin:vacation.error.createException', '휴가 등록 중 오류가 발생했습니다.'));
             } else {
-                setMessage('휴가 등록 중 오류가 발생했습니다.');
+                setMessage(t('admin:vacation.error.createException', '휴가 등록 중 오류가 발생했습니다.'));
             }
         } finally {
             setLoading(false);
@@ -354,7 +354,7 @@ const VacationManagementModal = ({
      */
     const handleDeleteVacation = async(vacationId, date) => {
         const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm('정말로 이 휴가를 삭제하시겠습니까?', resolve);
+      notificationManager.confirm(t('admin:vacation.confirm.delete', '정말로 이 휴가를 삭제하시겠습니까?'), resolve);
     });
     if (!confirmed) {
         return;
@@ -375,9 +375,9 @@ const VacationManagementModal = ({
             if (result.success) {
                 // 공통 알림 시스템 사용
                 if (window.notificationManager) {
-                    window.notificationManager.showSuccess('휴가가 삭제되었습니다.');
+                    window.notificationManager.showSuccess(t('admin:vacation.success.delete', '휴가가 삭제되었습니다.'));
                 } else {
-                    setMessage('휴가가 삭제되었습니다.');
+                    setMessage(t('admin:vacation.success.delete', '휴가가 삭제되었습니다.'));
                 }
                 loadVacations(selectedConsultantId);
                 if (onVacationUpdated) {
@@ -386,18 +386,18 @@ const VacationManagementModal = ({
             } else {
                 // 공통 알림 시스템 사용
                 if (window.notificationManager) {
-                    window.notificationManager.showError(result.message || '휴가 삭제에 실패했습니다.');
+                    window.notificationManager.showError(result.message || t('admin:vacation.error.delete', '휴가 삭제에 실패했습니다.'));
                 } else {
-                    setMessage(result.message || '휴가 삭제에 실패했습니다.');
+                    setMessage(result.message || t('admin:vacation.error.delete', '휴가 삭제에 실패했습니다.'));
                 }
             }
         } catch (error) {
             console.error('휴가 삭제 실패:', error);
             // 공통 알림 시스템 사용
             if (window.notificationManager) {
-                window.notificationManager.showError('휴가 삭제 중 오류가 발생했습니다.');
+                window.notificationManager.showError(t('admin:vacation.error.deleteException', '휴가 삭제 중 오류가 발생했습니다.'));
             } else {
-                setMessage('휴가 삭제 중 오류가 발생했습니다.');
+                setMessage(t('admin:vacation.error.deleteException', '휴가 삭제 중 오류가 발생했습니다.'));
             }
         } finally {
             setLoading(false);
@@ -473,7 +473,7 @@ const VacationManagementModal = ({
         }
         
         // 기본값
-        return type || "알 수 없음";
+        return type || t('common:state.unknown', "알 수 없음");
     };
 
     console.log('🏖️ VacationManagementModal 렌더링:', { isOpen, userRole });
@@ -487,7 +487,7 @@ const VacationManagementModal = ({
         <UnifiedModal
             isOpen={isOpen}
             onClose={onClose}
-            title="휴가 관리"
+            title={t('admin:vacation.modalTitle', '휴가 관리')}
             size="large"
             className="mg-v2-ad-b0kla"
             backdropClick
@@ -498,19 +498,19 @@ const VacationManagementModal = ({
                     {/* 상담사 선택 (관리자만) */}
                     {userRole !== USER_ROLES.CONSULTANT && (
                         <div className="mg-v2-form-group">
-                            <label className="mg-v2-label">상담사 선택</label>
+                            <label className="mg-v2-label">{t('admin:vacation.selectConsultant', '상담사 선택')}</label>
                             <CustomSelect
                                 className="mg-v2-select"
                                 value={selectedConsultantId != null ? selectedConsultantId : ''}
                                 onChange={(val) => setSelectedConsultantId(val === '' ? null : Number(val))}
                                 options={[
-                                    { value: '', label: '상담사를 선택하세요' },
+                                    { value: '', label: t('admin:vacation.selectConsultantPlaceholder', '상담사를 선택하세요') },
                                     ...consultants.map(consultant => ({
                                         value: consultant.id,
                                         label: `${toDisplayString(consultant.name)} (${toDisplayString(consultant.email)})`
                                     }))
                                 ]}
-                                placeholder="상담사를 선택하세요"
+                                placeholder={t('admin:vacation.selectConsultantPlaceholder', '상담사를 선택하세요')}
                                 disabled={loading}
                             />
                         </div>
@@ -520,7 +520,7 @@ const VacationManagementModal = ({
                     {userRole === USER_ROLES.CONSULTANT && (
                         <div className="mg-v2-form-group">
                             <div className="mg-v2-flex mg-gap-sm mg-align-center mg-p-sm mg-bg-info-light mg-radius-md">
-                                <span className="mg-v2-text-sm">본인의 휴가를 등록합니다</span>
+                                <span className="mg-v2-text-sm">{t('admin:vacation.selfNotice', '본인의 휴가를 등록합니다')}</span>
                             </div>
                         </div>
                     )}
@@ -529,12 +529,12 @@ const VacationManagementModal = ({
                         <>
                             {/* 휴가 등록 폼 */}
                             <form onSubmit={handleSubmit} className="vacation-form">
-                                <h4>새 휴가 등록</h4>
+                                <h4>{t('admin:vacation.formTitle', '새 휴가 등록')}</h4>
                                 
                                 <div className="form-row">
                                     {!selectedDate && (
                                         <div className="form-group">
-                                            <label>휴가 날짜</label>
+                                            <label>{t('admin:vacation.label.date', '휴가 날짜')}</label>
                                             <input
                                                 type="date"
                                                 value={vacationData.date}
@@ -547,7 +547,7 @@ const VacationManagementModal = ({
                                     
                                     {selectedDate && (
                                         <div className="form-group">
-                                            <label>휴가 날짜</label>
+                                            <label>{t('admin:vacation.label.date', '휴가 날짜')}</label>
                                             <div className="selected-date-display">
                                                 📅 {selectedDate.toLocaleDateString('ko-KR', {
                                                     year: 'numeric',
@@ -560,7 +560,7 @@ const VacationManagementModal = ({
                                     )}
 
                                     <div className="form-group">
-                                        <label>휴가 유형</label>
+                                        <label>{t('admin:vacation.label.type', '휴가 유형')}</label>
                                         <BadgeSelect
                                             value={vacationData.type}
                                             onChange={(val) => handleVacationTypeChange(val)}
@@ -568,7 +568,7 @@ const VacationManagementModal = ({
                                                 value: option.value,
                                                 label: `${option.icon} ${toDisplayString(option.label)} (${option.value})`
                                             }))}
-                                            placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
+                                            placeholder={t('admin:messages.pleaseSelect', '선택하세요')}
                                             disabled={loading || loadingCodes}
                                             className="mg-v2-form-badge-select"
                                         />
@@ -578,7 +578,7 @@ const VacationManagementModal = ({
                                 {shouldShowTimeFields() && (
                                     <div className="form-row">
                                         <div className="form-group">
-                                            <label>시작 시간</label>
+                                            <label>{t('admin:vacation.label.startTime', '시작 시간')}</label>
                                             <input
                                                 type="time"
                                                 value={vacationData.startTime}
@@ -588,7 +588,7 @@ const VacationManagementModal = ({
                                         </div>
 
                                         <div className="form-group">
-                                            <label>종료 시간</label>
+                                            <label>{t('admin:vacation.label.endTime', '종료 시간')}</label>
                                             <input
                                                 type="time"
                                                 value={vacationData.endTime}
@@ -600,12 +600,12 @@ const VacationManagementModal = ({
                                 )}
 
                                 <div className="form-group">
-                                    <label>휴가 사유</label>
+                                    <label>{t('admin:vacation.label.reason', '휴가 사유')}</label>
                                     <textarea
                                         value={vacationData.reason}
                                         onChange={(e) => setVacationData(prev => ({ ...prev, reason: e.target.value }))}
                                         disabled={loading}
-                                        placeholder="휴가 사유를 입력하세요"
+                                        placeholder={t('admin:vacation.reasonPlaceholder', '휴가 사유를 입력하세요')}
                                         rows={3}
                                         required
                                     />
@@ -626,16 +626,16 @@ const VacationManagementModal = ({
                                         loading={loading}
                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     >
-                                        휴가 등록
+                                        {t('admin:vacation.action.create', '휴가 등록')}
                                     </MGButton>
                                 </div>
                             </form>
 
                             {/* 기존 휴가 목록 */}
                             <div className="existing-vacations">
-                                <h4>등록된 휴가 목록</h4>
+                                <h4>{t('admin:vacation.listTitle', '등록된 휴가 목록')}</h4>
                                 {loading ? (
-                                    <div className="loading">{t('common.messages.loading', '로딩 중...')}</div>
+                                    <div className="loading">{t('common:state.loading', '로딩 중...')}</div>
                                 ) : existingVacations.length > 0 ? (
                                     <div className="vacation-list">
                                         {existingVacations.map(vacation => (
@@ -649,7 +649,7 @@ const VacationManagementModal = ({
                                                         <SafeText>
                                                           {vacation.startTime && vacation.endTime
                                                             ? `${toDisplayString(vacation.startTime)} - ${toDisplayString(vacation.endTime)}`
-                                                            : '하루 종일'}
+                                                            : t('admin:vacation.allDay', '하루 종일')}
                                                         </SafeText>
                                                     </div>
                                                     <div className="vacation-reason"><SafeText>{vacation.reason}</SafeText></div>
@@ -669,13 +669,13 @@ const VacationManagementModal = ({
                                                     disabled={loading}
                                                     loading={loading}
                                                 >
-                                                    {t('admin.actions.delete', '삭제')}
+                                                    {t('admin:actions.delete', '삭제')}
                                                 </MGButton>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="no-vacations">등록된 휴가가 없습니다.</div>
+                                    <div className="no-vacations">{t('admin:vacation.empty', '등록된 휴가가 없습니다.')}</div>
                                 )}
                             </div>
                         </>

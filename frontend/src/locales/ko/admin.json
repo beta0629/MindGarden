@@ -460,6 +460,31 @@
       "custom": "직접 설정"
     },
     "noDataForPeriod": "선택한 기간에 데이터가 없습니다.",
+    "error": {
+      "statsLoad": "통계 데이터 로드에 실패했습니다.",
+      "unassignedLoad": "미배정 내담자 목록을 불러오는데 실패했습니다.",
+      "pendingDepositLoad": "입금 확인 대기 목록을 불러오는데 실패했습니다.",
+      "matchingCreate": "매칭 생성에 실패했습니다."
+    },
+    "success": {
+      "matchingCreated": "매칭이 성공적으로 생성되었습니다."
+    },
+    "duplicate": {
+      "fetchFailed": "중복 매칭 조회에 실패했습니다.",
+      "empty": "중복된 매칭이 없습니다.",
+      "confirmMerge": "중복된 매칭이 {{count}}개 발견되었습니다. 통합하시겠습니까?",
+      "mergeSuccess": "중복 매칭 통합이 완료되었습니다.",
+      "mergeFailed": "중복 매칭 통합에 실패했습니다."
+    },
+    "autoComplete": {
+      "success": "스케줄 자동 완료 처리가 완료되었습니다.",
+      "failed": "스케줄 자동 완료 처리에 실패했습니다."
+    },
+    "autoCompleteReminder": {
+      "success": "스케줄 자동 완료 처리 및 알림이 완료되었습니다.",
+      "failed": "스케줄 자동 완료 처리 및 알림에 실패했습니다."
+    },
+    "initialConsultation": "초기 상담",
     "systemOverview": "시스템 개요",
     "systemOverviewSubtitle": "전체 시스템 현황 요약",
     "recentActivity": "최근 활동",
@@ -916,6 +941,694 @@
       "empty": "로그가 없습니다.",
       "loading": "로그를 불러오는 중..."
     }
+  },
+  "userManagement": {
+    "search": {
+      "placeholder": "이름 또는 이메일로 검색...",
+      "loading": "사용자 목록을 불러오는 중..."
+    },
+    "filter": {
+      "allRoles": "모든 역할",
+      "includeInactive": "비활성 사용자 포함",
+      "reset": "초기화"
+    },
+    "card": {
+      "noUsers": "등록된 사용자가 없습니다.",
+      "noResults": "검색 결과가 없습니다.",
+      "noResultsHint": "다른 검색어나 필터를 시도해보세요."
+    },
+    "actions": {
+      "toConsultant": "상담사로",
+      "toConsultantTitle": "내담자를 상담사로 변경",
+      "changeRoleTitle": "역할 변경",
+      "changeRole": "변경",
+      "changeRoleConfirmTitle": "역할 설정"
+    },
+    "roleChange": {
+      "headerLabel": "사용자:",
+      "currentRole": "현재 역할:",
+      "newRoleLabel": "새로운 역할",
+      "newRolePlaceholder": "역할을 선택하세요",
+      "switchSummary": "상담사 역할 변경 안내",
+      "switchInfo": {
+        "item1": "사용자가 상담사 역할로 변경됩니다.",
+        "item2": "상담사 메뉴와 기능에 접근할 수 있게 됩니다.",
+        "item3": "내담자 관리, 스케줄 관리 등의 권한이 부여됩니다.",
+        "item4": "변경 후에는 다시 내담자로 되돌릴 수 있습니다."
+      },
+      "switchConfirmTitle": "상담사로 변경",
+      "submitChange": "역할 변경",
+      "subtitle": "전체 {{count}}명의 사용자를 관리합니다",
+      "title": "사용자 관리",
+      "regionLabel": "관리자 사용자 목록 및 역할 관리",
+      "consultantToClientConfirm": "{{name}}님을 상담사로 변경하시겠습니까?\n\n이 변경으로 인해:\n• 상담사 메뉴와 기능에 접근 가능\n• 내담자 관리, 스케줄 관리 권한 부여\n• 필요시 다시 내담자로 되돌릴 수 있음",
+      "successMessage": "{{name}}님이 상담사로 성공적으로 변경되었습니다.",
+      "successDefault": "사용자 역할이 성공적으로 변경되었습니다.",
+      "failMessage": "역할 변경에 실패했습니다."
+    }
+  },
+  "widgetEditor": {
+    "types": {
+      "welcome": "환영 위젯",
+      "statistics": "통계 위젯",
+      "summary-statistics": "요약 통계",
+      "chart": "차트 위젯",
+      "table": "테이블 위젯",
+      "calendar": "캘린더 위젯",
+      "form": "폼 위젯",
+      "activity-list": "활동 목록",
+      "quick-actions": "빠른 작업",
+      "navigation-menu": "네비게이션 메뉴",
+      "message": "메시지 위젯",
+      "notification": "알림 위젯",
+      "schedule": "일정 위젯",
+      "rating": "평점 위젯",
+      "payment": "결제 위젯",
+      "healing-card": "힐링 카드",
+      "purchase-request": "구매 요청",
+      "personalized-message": "개인화 메시지",
+      "header": "헤더 위젯",
+      "erp-card": "ERP 카드",
+      "erp-stats-grid": "ERP 통계 그리드",
+      "erp-management-grid": "ERP 관리 그리드",
+      "system-status": "시스템 상태",
+      "system-tools": "시스템 도구",
+      "permission": "권한 관리",
+      "statistics-grid": "통계 그리드",
+      "management-grid": "관리 그리드",
+      "consultation-summary": "상담 요약",
+      "consultation-schedule": "상담 일정",
+      "consultation-stats": "상담 통계",
+      "consultation-record": "상담 기록",
+      "consultant-client": "상담사-고객",
+      "mapping-management": "매핑 관리",
+      "session-management": "세션 관리",
+      "schedule-registration": "일정 등록",
+      "pending-deposit": "대기 입금",
+      "custom": "커스텀 위젯"
+    },
+    "section": {
+      "basic": "기본 위젯",
+      "consultation": "상담소 특화 위젯",
+      "academy": "학원 특화 위젯",
+      "specialized": "특화 위젯",
+      "current": "현재 위젯 ({{count}}개)",
+      "countSuffix": "{{count}}개"
+    },
+    "badge": {
+      "specialized": "특화"
+    },
+    "empty": {
+      "current": "추가된 위젯이 없습니다. 위에서 위젯을 추가해주세요."
+    },
+    "card": {
+      "position": "위치: 행 {{row}}, 열 {{col}}",
+      "spanSuffix": " ({{span}}칸)"
+    },
+    "actions": {
+      "config": "설정",
+      "configTitle": "위젯 설정",
+      "deleteTitle": "위젯 삭제"
+    }
+  },
+  "widgetDashboard": {
+    "title": "위젯 기반 대시보드",
+    "subtitle": "동적으로 구성된 관리자 대시보드",
+    "loading": "대시보드를 불러오는 중...",
+    "loadFailed": "대시보드를 불러올 수 없습니다. 페이지를 새로고침해주세요.",
+    "errorTitle": "오류 발생",
+    "oldDashboard": "이전 대시보드로",
+    "systemBadge": "시스템",
+    "requiredBadge": "필수",
+    "deletableBadge": "삭제가능",
+    "systemWidgetNoDelete": "시스템 위젯은 삭제할 수 없습니다",
+    "requiredWidgetNoDelete": "필수 위젯은 삭제할 수 없습니다",
+    "deleteConfirm": "이 위젯을 삭제하시겠습니까?",
+    "deleteSuccessMessage": "위젯이 성공적으로 삭제되었습니다.",
+    "deleteSuccessTitle": "위젯 삭제 완료",
+    "deleteFailed": "위젯 삭제 실패",
+    "fetchFailedDashboard": "대시보드 조회 실패",
+    "fetchFailedTitle": "대시보드 로드 실패",
+    "fetchFailedGroup": "위젯 그룹 조회 실패",
+    "fetchFailedGroupTitle": "위젯 그룹 로드 실패",
+    "addWidget": "+ 위젯 추가",
+    "addFirstWidget": "+ 첫 위젯 추가하기",
+    "manageMode": "관리 모드",
+    "manageDashboard": "대시보드 관리",
+    "emptyWidgets": "위젯이 없습니다",
+    "emptyWidgetsDescription": "이 대시보드에는 아직 위젯이 구성되지 않았습니다.",
+    "emptyGroup": "이 그룹에는 위젯이 없습니다.",
+    "groupIdLabel": "그룹 ID",
+    "totalGroups": "총 위젯 그룹",
+    "totalWidgets": "총 위젯",
+    "widgetCount": "{{count}}개 위젯",
+    "countUnit": "{{count}}개",
+    "placeholderDescription": "{{type}} 타입의 위젯입니다.",
+    "metaType": "타입",
+    "metaOrder": "순서"
+  },
+  "dashboardEditor": {
+    "basicWidgets": "기본 위젯",
+    "consultationWidgets": "상담소 특화 위젯",
+    "academyWidgets": "학원 특화 위젯",
+    "specializedWidgets": "특화 위젯",
+    "currentWidgets": "현재 위젯 ({{count}}개)",
+    "specializedBadge": "특화",
+    "widgetCount": "{{count}}개",
+    "emptyAdded": "추가된 위젯이 없습니다. 위에서 위젯을 추가해주세요.",
+    "position": "위치: 행 {{row}}, 열 {{col}}",
+    "spanCells": "({{span}}칸)",
+    "widgetConfig": "위젯 설정",
+    "widgetDelete": "위젯 삭제",
+    "config": "설정"
+  },
+  "dashboardManagement": {
+    "title": "대시보드 관리",
+    "subtitle": "테넌트 역할별 대시보드를 구성·활성화합니다.",
+    "regionLabel": "대시보드 관리 본문",
+    "createButton": "새 대시보드",
+    "filters": {
+      "searchPlaceholder": "대시보드 이름, 역할, 타입으로 검색...",
+      "clearAria": "검색어 지우기",
+      "clearLabel": "지우기"
+    },
+    "loading": "로딩중...",
+    "empty": {
+      "filtered": "검색 조건에 맞는 대시보드가 없습니다.",
+      "none": "등록된 대시보드가 없습니다. 새 대시보드를 생성해주세요."
+    },
+    "card": {
+      "default": "기본",
+      "roleLabel": "역할:",
+      "typeLabel": "타입:",
+      "descLabel": "설명:",
+      "orderLabel": "표시 순서:"
+    },
+    "actions": {
+      "viewTitle": "대시보드 보기 (새 탭에서 열기: Ctrl+클릭)",
+      "editTitle": "대시보드 수정",
+      "editMissingTitle": "대시보드 ID가 없습니다.",
+      "deactivate": "비활성화",
+      "activate": "활성화"
+    },
+    "type": {
+      "student": "학생",
+      "teacher": "선생님",
+      "admin": "관리자",
+      "client": "내담자",
+      "consultant": "상담사",
+      "principal": "원장",
+      "default": "기본"
+    },
+    "notifications": {
+      "loadFailed": "대시보드 목록을 불러오는 중 오류가 발생했습니다.",
+      "missingId": "대시보드 ID가 없습니다.",
+      "deactivated": "대시보드가 비활성화되었습니다.",
+      "activated": "대시보드가 활성화되었습니다.",
+      "statusChangeFailed": "대시보드 상태 변경 실패",
+      "statusChangeError": "대시보드 상태 변경 중 오류가 발생했습니다.",
+      "defaultDeleteForbidden": "기본 대시보드는 삭제할 수 없습니다. 비활성화만 가능합니다.",
+      "deleted": "대시보드가 삭제되었습니다.",
+      "deleteFailed": "대시보드 삭제 실패",
+      "deleteError": "대시보드 삭제 중 오류가 발생했습니다.",
+      "missingData": "대시보드 데이터가 없습니다.",
+      "saved": "대시보드가 저장되었습니다."
+    },
+    "stats": {
+      "totalLabel": "전체:",
+      "activeLabel": "활성:",
+      "inactiveLabel": "비활성:",
+      "defaultLabel": "기본:"
+    }
+  },
+  "permissionMgmt": {
+    "regionLabel": "권한 관리 콘텐츠",
+    "subtitle": "역할별 메뉴·기능 접근 권한을 설정하고 저장합니다.",
+    "forbidden": {
+      "title": "접근 권한 없음",
+      "subtitle": "권한 관리는 관리자(ADMIN)만 이용할 수 있습니다.",
+      "currentRole": "현재 역할: {{role}}"
+    },
+    "role": {
+      "label": "역할 선택:",
+      "restriction": "{{role}}는 자신의 역할만 관리할 수 있습니다."
+    },
+    "save": "권한 저장",
+    "saveSuccess": "권한이 성공적으로 저장되었습니다.",
+    "saveFailedPrefix": "저장 실패: ",
+    "saveFailedUnknown": "알 수 없는 오류",
+    "saveError": "권한 저장에 실패했습니다.",
+    "loadError": "권한을 불러오는데 실패했습니다.",
+    "selectedTitle": "현재 선택된 권한 ({{count}}개)",
+    "categories": {
+      "etc": "기타"
+    },
+    "roleNames": {
+      "ADMIN": "관리자",
+      "STAFF": "사무원",
+      "CONSULTANT": "상담사",
+      "CLIENT": "내담자",
+      "unknown": "알 수 없음"
+    }
+  },
+  "sessionMgmt": {
+    "title": "회기 관리",
+    "subtitle": "상담 회기 추가 및 관리",
+    "regionLabel": "회기 관리 본문",
+    "stats": {
+      "totalClients": "총 내담자",
+      "activeMappings": "활성 매핑",
+      "usedSessions": "사용된 회기",
+      "completionRate": "완료율"
+    },
+    "tabs": {
+      "quick": "빠른 추가",
+      "search": "내담자 검색",
+      "mapping": "전체 매핑"
+    },
+    "quick": {
+      "title": "빠른 회기 추가",
+      "addBtn": "회기 추가",
+      "empty": "활성 매핑이 없습니다.",
+      "unitSuffix": "회기"
+    },
+    "search": {
+      "title": "내담자 검색 후 회기 추가",
+      "placeholder": "내담자 이름으로 검색...",
+      "btn": "검색",
+      "noResults": "검색 결과가 없습니다.",
+      "activeMappingsLabel": "{{count}}개 활성 매핑",
+      "noActiveMappings": "활성 매핑이 없습니다"
+    },
+    "mappingList": {
+      "title": "전체 매핑에서 회기 추가",
+      "filterAll": "모든 상태",
+      "filterPaymentConfirmed": "결제확인",
+      "emptyMappings": "매핑이 없습니다.",
+      "inactive": "활성 상태가 아닙니다",
+      "sessionsUnit": "회기"
+    },
+    "requests": {
+      "title": "최근 회기 추가 요청",
+      "empty": "최근 회기 추가 요청이 없습니다.",
+      "additionalLabel": "+{{count}}회기 추가",
+      "reasonLabel": "사유:",
+      "confirm": "입금 확인",
+      "reject": "거부",
+      "approve": "관리자 승인",
+      "unknown": "알 수 없음"
+    },
+    "load": {
+      "failed": "데이터를 불러오는데 실패했습니다.",
+      "loading": "데이터를 불러오는 중..."
+    },
+    "msg": {
+      "paymentConfirmed": "입금이 확인되었습니다. 회기수가 업데이트되었습니다.",
+      "paymentConfirmFailed": "입금 확인에 실패했습니다.",
+      "adminApproved": "관리자 승인이 완료되었습니다.",
+      "adminApproveFailed": "관리자 승인에 실패했습니다.",
+      "rejected": "요청이 거부되었습니다.",
+      "rejectFailed": "요청 거부에 실패했습니다."
+    }
+  },
+  "vacationStats": {
+    "title": "휴가 현황",
+    "subtitle": "상담사별 휴가 사용 통계 및 현황",
+    "loading": "로딩중...",
+    "loadFailed": "휴가 통계를 불러오는데 실패했습니다.",
+    "summary": {
+      "totalConsultants": "전체 상담사",
+      "totalDays": "총 휴가일수",
+      "averageDays": "평균 휴가일수"
+    },
+    "section": {
+      "consultantStats": "상담사별 휴가 현황",
+      "top3": "휴가 사용 TOP 3"
+    },
+    "period": {
+      "week": "1주일",
+      "month": "1개월",
+      "quarter": "3개월",
+      "year": "1년"
+    },
+    "vacationTypes": {
+      "annual": "연차",
+      "personal": "개인",
+      "sick": "병가",
+      "maternity": "출산",
+      "paternity": "육아",
+      "bereavement": "경조",
+      "other": "기타"
+    },
+    "row": {
+      "vacationDaysLabel": "휴가일수",
+      "daySuffix": "일",
+      "countSuffix": "회",
+      "recentLabel": "최근:"
+    },
+    "unit": {
+      "people": "{{count}}명",
+      "days": "{{count}}일",
+      "count": "{{count}}회"
+    },
+    "fetchFailed": "휴가 통계 조회 실패",
+    "serverError": "서버 응답 오류"
+  },
+  "wellnessMgmt": {
+    "title": "웰니스 알림 관리",
+    "subtitle": "AI 기반 자동 웰니스 컨텐츠 생성 및 발송 관리",
+    "regionLabel": "웰니스 알림 관리 본문",
+    "buttons": {
+      "exchangeRefresh": "환율 새로고침",
+      "testSend": "테스트 발송"
+    },
+    "loading": "데이터를 불러오는 중...",
+    "stats": {
+      "monthCost": "이번 달 비용",
+      "monthDescription": "{{year}}년 {{month}}월",
+      "exchangeSuffix": " (환율: {{rate}})",
+      "tokens": "사용 토큰",
+      "tokensDesc": "총 토큰 사용량",
+      "apiCalls": "API 호출",
+      "apiCallsDesc": "이번 달 총 호출 수",
+      "templates": "템플릿 수",
+      "templatesDesc": "활성화된 템플릿"
+    },
+    "monthSelector": {
+      "label": "{{year}}년 {{month}}월"
+    },
+    "recentLogs": {
+      "title": "최근 API 사용 내역",
+      "tokensSuffix": " 토큰",
+      "empty": "최근 사용 내역이 없습니다."
+    },
+    "templates": {
+      "title": "웰니스 템플릿 목록",
+      "important": "중요",
+      "usageSuffix": "사용 {{count}}회",
+      "creatorLabel": "생성자: ",
+      "lastUsedLabel": "마지막 사용: ",
+      "empty": "등록된 템플릿이 없습니다.",
+      "emptyHint": "테스트 발송을 하면 AI가 자동으로 템플릿을 생성합니다."
+    },
+    "confirm": {
+      "testTitle": "웰니스 알림 테스트 발송",
+      "testMessage": "웰니스 알림을 테스트 발송하시겠습니까?\n\n모든 내담자에게 즉시 발송됩니다."
+    },
+    "msg": {
+      "loadFailed": "데이터를 불러오는데 실패했습니다.",
+      "testSendSuccess": "웰니스 알림이 성공적으로 발송되었습니다!",
+      "testSendFailed": "발송에 실패했습니다.",
+      "testSendError": "테스트 발송 중 오류가 발생했습니다.",
+      "exchangeRefreshed": "환율을 새로고침했습니다.",
+      "exchangeRefreshFailed": "환율 새로고침에 실패했습니다.",
+      "exchangeRefreshError": "환율 새로고침 중 오류가 발생했습니다."
+    },
+    "category": {
+      "MENTAL": "마음 건강",
+      "EXERCISE": "운동",
+      "SLEEP": "수면",
+      "NUTRITION": "영양",
+      "GENERAL": "일반"
+    },
+    "day": {
+      "all": "모든 요일",
+      "format": "{{name}}요일"
+    },
+    "season": {
+      "SPRING": "봄",
+      "SUMMER": "여름",
+      "FALL": "가을",
+      "WINTER": "겨울",
+      "ALL": "모든 계절"
+    }
+  },
+  "clientMgmt": {
+    "title": "내담자 종합관리",
+    "subtitle": "내담자 정보·상담 이력·매칭·통계를 종합 관리합니다",
+    "regionLabel": "내담자 종합관리 본문",
+    "loadingText": "데이터를 불러오는 중...",
+    "tabs": {
+      "overview": "개요",
+      "consultation": "상담이력",
+      "mapping": "매칭",
+      "statistics": "통계"
+    },
+    "kpi": {
+      "totalClients": "총 내담자",
+      "active": "활성",
+      "pending": "대기",
+      "totalMappings": "총 매칭",
+      "unit": "명",
+      "mappingUnit": "건"
+    },
+    "search": {
+      "placeholder": "이름, 이메일, 전화번호 또는 #태그로 검색..."
+    },
+    "filter": {
+      "all": "전체"
+    },
+    "actions": {
+      "create": "새 내담자 등록"
+    },
+    "list": {
+      "title": "내담자 목록",
+      "toggleAria": "목록 보기 전환"
+    },
+    "msg": {
+      "loadFailed": "내담자 목록을 불러오는데 실패했습니다.",
+      "codeLoadFailed": "공통 코드를 불러오는데 실패했습니다. 기본값을 사용합니다.",
+      "passwordResetSuccess": "비밀번호가 성공적으로 초기화되었습니다.",
+      "passwordResetFailed": "비밀번호 초기화에 실패했습니다.",
+      "rrnInvalid": "주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자(1~4)로 입력해 주세요.",
+      "registerSuccess": "내담자가 성공적으로 등록되었습니다.",
+      "updateSuccess": "내담자 정보가 성공적으로 수정되었습니다.",
+      "deleteSuccess": "내담자가 성공적으로 삭제되었습니다.",
+      "missingIdEdit": "내담자 ID가 없어 수정할 수 없습니다. 목록에서 다시 선택해 주세요.",
+      "noRegisterResponse": "등록 응답이 없습니다.",
+      "updateFailed": "수정에 실패했습니다.",
+      "processError": "내담자 처리 중 오류가 발생했습니다: {{message}}",
+      "unknownError": "알 수 없는 오류"
+    }
+  },
+  "clientModal": {
+    "summary": {
+      "title": "누적 지표",
+      "loading": "불러오는 중…",
+      "gradeLabel": "현재 등급(저장값)",
+      "gradeLoadFallback": "—",
+      "kpi": {
+        "currentConsultants": "연결 상담사",
+        "totalSessions": "일정(회기) 건수"
+      }
+    },
+    "title": {
+      "create": "새 내담자 등록",
+      "edit": "내담자 정보 수정",
+      "delete": "내담자 삭제",
+      "view": "내담자 상세 정보",
+      "default": "내담자 관리"
+    },
+    "submit": {
+      "create": "등록",
+      "edit": "수정",
+      "delete": "삭제",
+      "view": "닫기",
+      "default": "저장"
+    },
+    "delete": {
+      "confirmTitle": "정말로 삭제하시겠습니까?",
+      "body": "다음 내담자의 정보가 영구적으로 삭제됩니다:",
+      "nameLabel": "이름:",
+      "emailLabel": "이메일:",
+      "phoneLabel": "전화번호:",
+      "warning": "⚠️ 이 작업은 되돌릴 수 없습니다."
+    },
+    "form": {
+      "passwordHint": "💡 비밀번호는 정책에 맞는 값으로 자동 채워집니다. 비우면 임시 비밀번호(이메일 안내)로 등록됩니다.",
+      "profileImageHelp": "이미지 파일만 가능, 최대 2MB (리사이즈·크롭 적용)",
+      "editHelp": "수정 시 기존 값은 표시하지 않습니다. 변경할 때만 입력해 주세요.",
+      "rrnFirstLabel": "주민번호 앞 6자리 (선택)",
+      "rrnLastLabel": "주민번호 뒤 1자리 (선택)",
+      "demoGenderLabel": "성별",
+      "demoAgeLabel": "나이 (만)",
+      "rrnAgeHelp": "주민번호 앞 6자리·뒤 1자리를 입력해 저장하면 생년·성별·나이가 갱신됩니다.",
+      "nameLabel": "이름",
+      "namePlaceholder": "내담자 이름",
+      "phoneLabel": "휴대폰 번호",
+      "phonePlaceholder": "010-1234-5678",
+      "vehiclePlateLabel": "차량번호 (선택)",
+      "vehiclePlatePlaceholder": "예: 12가 3456",
+      "vehiclePlateHelp": "숫자, 한글, 영문, 하이픈, 공백만 가능 (최대 32자)",
+      "addressLabel": "주소 검색",
+      "addressBtn": "주소 검색",
+      "addressDetailLabel": "상세 주소",
+      "addressDetailPlaceholder": "동, 호수, 상세 주소를 입력하세요.",
+      "addressInputPlaceholder": "주소 검색 버튼을 눌러 주소를 입력하세요.",
+      "addressLoadFailed": "주소 검색 서비스를 불러올 수 없습니다.",
+      "postalLabel": "우편번호",
+      "postalPlaceholder": "00000",
+      "emailLabel": "이메일",
+      "emailPlaceholder": "example@email.com",
+      "passwordLabel": "비밀번호",
+      "passwordHelpSuffix": " 비우면 임시 비밀번호로 등록됩니다.",
+      "gradeLabel": "등급",
+      "consultationSectionTitle": "상담 정보",
+      "consultationPurposeLabel": "상담 목적",
+      "consultationPurposePlaceholder": "상담을 받는 목적을 입력하세요",
+      "consultationHistoryLabel": "상담 이력",
+      "consultationHistoryPlaceholder": "이전 상담 이력을 입력하세요",
+      "emergencySectionTitle": "비상 연락처",
+      "emergencyContactLabel": "비상 연락처 이름",
+      "emergencyPhoneLabel": "비상 연락처 전화",
+      "notesLabel": "메모"
+    },
+    "grade": {
+      "BRONZE": "브론즈",
+      "SILVER": "실버",
+      "GOLD": "골드",
+      "PLATINUM": "플래티넘",
+      "DIAMOND": "다이아몬드"
+    }
+  },
+  "mappingCreation": {
+    "title": "새 매칭 생성",
+    "step": {
+      "consultant": "상담사",
+      "package": "패키지",
+      "client": "내담자",
+      "paymentLabel": "결제",
+      "complete": "완료",
+      "selectConsultant": "상담사를 선택하세요",
+      "selectPackage": "패키지를 선택하세요",
+      "selectClient": "내담자를 선택하세요",
+      "payment": "결제 정보"
+    },
+    "aria": {
+      "steps": "매칭 생성 단계"
+    },
+    "searchConsultantPlaceholder": "상담사 이름 또는 이메일로 검색...",
+    "searchClientPlaceholder": "내담자 이름 또는 이메일로 검색...",
+    "totalPeople": "총 {{count}}명",
+    "peopleCount": "{{count}}명",
+    "packageLoading": "패키지 로딩 중...",
+    "noPackageData": "패키지 데이터가 등록되지 않았습니다",
+    "noPackageHint": "공통코드 관리에서 패키지를 등록해주세요.",
+    "goToCommonCodes": "공통코드 관리로 이동",
+    "packageSummary": "{{sessions}}회기 · {{price}}원",
+    "package": {
+      "basic": "기본 패키지",
+      "standard": "표준 패키지",
+      "premium": "프리미엄 패키지",
+      "vip": "VIP 패키지"
+    },
+    "filter": {
+      "noMapping": "매칭 없음",
+      "terminated": "종료됨"
+    },
+    "sort": {
+      "name": "이름순",
+      "email": "이메일순",
+      "createdAt": "등록일순"
+    },
+    "totalSessions": "총 세션",
+    "packagePrice": "패키지 가격",
+    "sessionUnit": "{{count}}회",
+    "sessionUnitShort": "회",
+    "currency": "원",
+    "paymentReference": "결제 참조번호",
+    "autoGenerate": "자동 생성",
+    "responsibility": "담당 업무",
+    "specialConsiderations": "특별 고려사항",
+    "specialConsiderationsPlaceholder": "내담자 특이사항",
+    "notesPlaceholder": "추가 메모",
+    "createMapping": "매칭 생성",
+    "completionTitle": "매칭이 완료되었습니다!",
+    "sessionPrice": "세션/가격",
+    "success": "매칭이 완료되었습니다! 상담사: {{consultant}}, 내담자: {{client}}",
+    "warn": {
+      "selectBoth": "상담사와 내담자를 모두 선택해주세요."
+    },
+    "error": {
+      "noPackage": "상담 패키지가 등록되지 않았습니다. 공통코드 관리에서 등록해주세요.",
+      "packageLoad": "패키지 정보를 불러오는 중 오류가 발생했습니다.",
+      "createFailed": "매칭 생성 중 오류가 발생했습니다."
+    }
+  },
+  "vacationModal": {
+    "title": "휴가 관리",
+    "selectConsultant": "상담사 선택",
+    "selectConsultantPlaceholder": "상담사를 선택하세요",
+    "selfHint": "본인의 휴가를 등록합니다",
+    "newVacation": "새 휴가 등록",
+    "field": {
+      "date": "휴가 날짜",
+      "type": "휴가 유형",
+      "start": "시작 시간",
+      "end": "종료 시간",
+      "reason": "휴가 사유",
+      "reasonPlaceholder": "휴가 사유를 입력하세요"
+    },
+    "submit": "휴가 등록",
+    "existingTitle": "등록된 휴가 목록",
+    "emptyList": "등록된 휴가가 없습니다.",
+    "allDay": "하루 종일",
+    "msg": {
+      "selectConsultant": "상담사를 선택해주세요.",
+      "selectDate": "휴가 날짜를 선택해주세요.",
+      "enterReason": "휴가 사유를 입력해주세요.",
+      "customTimeRequired": "사용자 정의 휴가의 경우 시작/종료 시간을 입력해주세요.",
+      "createSuccess": "휴가가 성공적으로 등록되었습니다.",
+      "createFailed": "휴가 등록에 실패했습니다.",
+      "createError": "휴가 등록 중 오류가 발생했습니다.",
+      "deleteConfirm": "정말로 이 휴가를 삭제하시겠습니까?",
+      "deleteSuccess": "휴가가 삭제되었습니다.",
+      "deleteFailed": "휴가 삭제에 실패했습니다.",
+      "deleteError": "휴가 삭제 중 오류가 발생했습니다.",
+      "loadConsultantFailed": "전문가 유형 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요."
+    },
+    "type": {
+      "unknown": "알 수 없음"
+    }
+  },
+  "consultantMgmt": {
+    "title": "상담사 종합관리",
+    "regionLabel": "상담사 종합관리 본문",
+    "loadingFailed": "전문가 유형 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.",
+    "loadingFailedShort": "전문가 유형 목록을 불러오지 못했습니다.",
+    "filter": {
+      "all": "전체"
+    },
+    "grade": {
+      "junior": "주니어 상담사",
+      "senior": "시니어 상담사",
+      "expert": "엑스퍼트 상담사",
+      "master": "마스터 상담사"
+    },
+    "status": {
+      "suspended": "일시정지"
+    },
+    "msg": {
+      "tenantMissing": "테넌트 정보를 찾을 수 없습니다. 페이지를 새로고침해주세요.",
+      "sessionMissing": "세션 정보를 가져올 수 없습니다. 페이지를 새로고침해주세요.",
+      "nameRequired": "이름은 필수입니다.",
+      "createSuccess": "상담사가 성공적으로 등록되었습니다.",
+      "createFailed": "상담사 등록에 실패했습니다.",
+      "createError": "상담사 등록 중 오류가 발생했습니다.",
+      "rrnInvalid": "주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자로 입력해 주세요.",
+      "updateSuccess": "상담사 정보가 성공적으로 수정되었습니다.",
+      "updateFailed": "상담사 수정에 실패했습니다.",
+      "updateError": "상담사 수정 중 오류가 발생했습니다.",
+      "deleteSuccess": "상담사가 성공적으로 삭제되었습니다.",
+      "deleteFailed": "상담사 삭제에 실패했습니다.",
+      "deleteError": "상담사 삭제 중 오류가 발생했습니다.",
+      "passwordResetSuccess": "비밀번호가 성공적으로 초기화되었습니다.",
+      "passwordResetFailed": "비밀번호 초기화에 실패했습니다.",
+      "submitError": "작업 중 오류가 발생했습니다."
+    }
+  },
+  "adminDashboardV2": {
+    "title": "어드민 대시보드 V2"
   },
   "smsTemplate": {
     "page": {

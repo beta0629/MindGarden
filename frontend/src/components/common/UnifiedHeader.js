@@ -109,7 +109,7 @@ const UnifiedHeader = ({
     if (u?.name && !isEncryptedRaw(u.name)) return u.name;
     if (u?.nickname && !isEncryptedRaw(u.nickname)) return u.nickname;
     if (u?.userId) return u.userId;
-    return '사용자';
+    return t('common:header.user.defaultName', '사용자');
   };
 
   // 테넌트 이름 결정 (우선순위: 사용자 정보 > 브랜딩 정보 > 기본값)
@@ -268,7 +268,7 @@ const UnifiedHeader = ({
           }
           
           setShowTenantSwitchModal(false);
-          notificationManager.show('테넌트가 전환되었습니다.', 'success');
+          notificationManager.show(t('common:header.tenant.switchSuccess', '테넌트가 전환되었습니다.'), 'success');
           
           try {
             await checkSession(true);
@@ -277,14 +277,14 @@ const UnifiedHeader = ({
           }
           navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true });
         } else {
-          throw new Error(data.message || '테넌트 전환 실패');
+          throw new Error(data.message || t('common:header.tenant.switchFailed', '테넌트 전환 실패'));
         }
       } else {
-        throw new Error('테넌트 전환 API 호출 실패');
+        throw new Error(t('common:header.tenant.switchApiFailed', '테넌트 전환 API 호출 실패'));
       }
     } catch (error) {
       console.error('❌ 테넌트 전환 오류:', error);
-      notificationManager.show('테넌트 전환 중 오류가 발생했습니다.', 'error');
+      notificationManager.show(t('common:header.tenant.switchError', '테넌트 전환 중 오류가 발생했습니다.'), 'error');
     }
   };
 
@@ -294,8 +294,8 @@ const UnifiedHeader = ({
       return null;
     }
 
-    const currentTenant = accessibleTenants.find(t => t.tenantId === user?.tenantId);
-    const currentTenantName = currentTenant?.tenantName || '현재 테넌트';
+    const currentTenant = accessibleTenants.find((tn) => tn.tenantId === user?.tenantId);
+    const currentTenantName = currentTenant?.tenantName || t('common:header.tenant.current', '현재 테넌트');
 
     return (
       <MGButton
@@ -307,8 +307,8 @@ const UnifiedHeader = ({
           className: 'mg-header__tenant-switch'
         })}
         onClick={() => setShowTenantSwitchModal(true)}
-        title="테넌트 전환"
-        aria-label="테넌트 전환"
+        title={t('common:header.tenant.switch', '테넌트 전환')}
+        aria-label={t('common:header.tenant.switch', '테넌트 전환')}
         preventDoubleClick={false}
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
       >
@@ -421,7 +421,7 @@ const UnifiedHeader = ({
           <div
             className="mg-header__user-avatar mg-header__user-avatar--clickable"
             onClick={handleProfileClick}
-            title="마이페이지로 이동"
+            title={t('common:header.user.mypageMove', '마이페이지로 이동')}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleProfileClick(); } }}
@@ -437,7 +437,7 @@ const UnifiedHeader = ({
           <div className="mg-header__user-details">
             <span className="mg-header__user-name">
               {getSafeDisplayName(user)}
-              {(user.role === LEGACY_USER_ROLES.ROLE_CONSULTANT || user.role === USER_ROLES.CONSULTANT) ? ' 선생님' : ''}
+              {(user.role === LEGACY_USER_ROLES.ROLE_CONSULTANT || user.role === USER_ROLES.CONSULTANT) ? t('common:header.user.consultantSuffix', ' 선생님') : ''}
             </span>
             <span className="mg-header__user-role">{getTenantDisplayName()}</span>
           </div>
@@ -451,7 +451,7 @@ const UnifiedHeader = ({
             className: 'mg-header__hamburger'
           })}
           onClick={toggleHamburger}
-          aria-label="메뉴 열기"
+          aria-label={t('common:header.menu.open', '메뉴 열기')}
           preventDoubleClick={false}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
@@ -487,8 +487,8 @@ const UnifiedHeader = ({
                   className: 'mg-header__back-button'
                 })}
                 onClick={handleBackClick}
-                title="뒤로가기"
-                aria-label="뒤로가기"
+                title={t('common:nav.back', '뒤로가기')}
+                aria-label={t('common:nav.back', '뒤로가기')}
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
@@ -523,17 +523,17 @@ const UnifiedHeader = ({
         <div className="mg-modal"
           isOpen={showTenantSwitchModal}
           onClose={() => setShowTenantSwitchModal(false)}
-          title="테넌트 전환"
+          title={t('common:header.tenant.switch', '테넌트 전환')}
           size="medium"
         >
           <div className="tenant-switch-modal">
             <p className="tenant-switch-modal__description">
-              접근 가능한 테넌트를 선택하세요
+              {t('common:header.tenant.selectPrompt', '접근 가능한 테넌트를 선택하세요')}
             </p>
             
             {isLoadingTenants ? (
               <div className="tenant-switch-modal__loading">
-                <span>테넌트 목록을 불러오는 중...</span>
+                <span>{t('common:header.tenant.loading', '테넌트 목록을 불러오는 중...')}</span>
               </div>
             ) : (
               <div className="tenant-switch-modal__list">
@@ -557,7 +557,7 @@ const UnifiedHeader = ({
                       <div className="tenant-switch-modal__item-name">
                         {tenant.tenantName}
                         {user?.tenantId === tenant.tenantId && (
-                          <span className="tenant-switch-modal__item-badge">현재</span>
+                          <span className="tenant-switch-modal__item-badge">{t('common:header.tenant.currentBadge', '현재')}</span>
                         )}
                       </div>
                       <div className="tenant-switch-modal__item-meta">

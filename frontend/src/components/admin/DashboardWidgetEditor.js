@@ -29,8 +29,7 @@ import { FaPlus, FaGripVertical } from 'react-icons/fa';
 import './DashboardWidgetEditor.css';
 import { useTranslation } from 'react-i18next';
 
-// 위젯 타입 한글 이름 매핑
-const WIDGET_TYPE_NAMES = {
+const WIDGET_TYPE_NAME_FALLBACK = {
   'welcome': '환영 위젯',
   'statistics': '통계 위젯',
   'summary-statistics': '요약 통계',
@@ -58,7 +57,6 @@ const WIDGET_TYPE_NAMES = {
   'permission': '권한 관리',
   'statistics-grid': '통계 그리드',
   'management-grid': '관리 그리드',
-  // 상담소 특화
   'consultation-summary': '상담 요약',
   'consultation-schedule': '상담 일정',
   'consultation-stats': '상담 통계',
@@ -77,7 +75,7 @@ const DashboardWidgetEditor = ({
   businessType = null,
   onWidgetConfig 
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['admin', 'common']);
   const [selectedWidget, setSelectedWidget] = useState(null);
   
   // 기본 위젯과 특화 위젯 분리
@@ -150,9 +148,10 @@ const DashboardWidgetEditor = ({
     }
   };
 
-  // 위젯 타입 이름 가져오기
+  // 위젯 타입 이름 가져오기 (i18n)
   const getWidgetTypeName = (widgetType) => {
-    return WIDGET_TYPE_NAMES[widgetType] || widgetType;
+    const fallback = WIDGET_TYPE_NAME_FALLBACK[widgetType] || widgetType;
+    return t(`admin:widgetEditor.types.${widgetType}`, fallback);
   };
 
   return (
@@ -160,9 +159,9 @@ const DashboardWidgetEditor = ({
       {/* 기본 위젯 목록 */}
       <div className="widget-editor-section">
         <h3 className="widget-editor-section-title">
-          기본 위젯
+          {t('admin:dashboardEditor.basicWidgets', '기본 위젯')}
           <span className="widget-section-badge widget-section-badge--basic">
-            {commonWidgetTypes.length}개
+            {t('admin:dashboardEditor.widgetCount', '{{count}}개', { count: commonWidgetTypes.length })}
           </span>
         </h3>
         <ReactSortable
@@ -202,11 +201,11 @@ const DashboardWidgetEditor = ({
       {specializedWidgetTypes.length > 0 && (
         <div className="widget-editor-section widget-editor-section--with-top-gap">
           <h3 className="widget-editor-section-title">
-            {businessType?.toLowerCase() === 'consultation' && '상담소 특화 위젯'}
-            {businessType?.toLowerCase() === 'academy' && '학원 특화 위젯'}
-            {!businessType && '특화 위젯'}
+            {businessType?.toLowerCase() === 'consultation' && t('admin:dashboardEditor.consultationWidgets', '상담소 특화 위젯')}
+            {businessType?.toLowerCase() === 'academy' && t('admin:dashboardEditor.academyWidgets', '학원 특화 위젯')}
+            {!businessType && t('admin:dashboardEditor.specializedWidgets', '특화 위젯')}
             <span className="widget-section-badge widget-section-badge--specialized">
-              {specializedWidgetTypes.length}개
+              {t('admin:dashboardEditor.widgetCount', '{{count}}개', { count: specializedWidgetTypes.length })}
             </span>
           </h3>
           <ReactSortable
@@ -238,7 +237,7 @@ const DashboardWidgetEditor = ({
                   {getWidgetTypeName(widgetType)}
                 </span>
                 <span className="widget-specialized-badge widget-specialized-badge--marker">
-                  특화
+                  {t('admin:dashboardEditor.specializedBadge', '특화')}
                 </span>
               </div>
             ))}
@@ -249,11 +248,11 @@ const DashboardWidgetEditor = ({
       {/* 현재 위젯 목록 */}
       <div className="widget-editor-section">
         <h3 className="widget-editor-section-title">
-          현재 위젯 ({widgets.length}개)
+          {t('admin:dashboardEditor.currentWidgets', '현재 위젯 ({{count}}개)', { count: widgets.length })}
         </h3>
         {widgets.length === 0 ? (
           <div className="widget-empty-state">
-            <p>추가된 위젯이 없습니다. 위에서 위젯을 추가해주세요.</p>
+            <p>{t('admin:dashboardEditor.emptyAdded', '추가된 위젯이 없습니다. 위에서 위젯을 추가해주세요.')}</p>
           </div>
         ) : (
           <div className="current-widgets-list">
@@ -268,9 +267,9 @@ const DashboardWidgetEditor = ({
                     {getWidgetTypeName(widget.type)}
                   </span>
                   <span className="widget-item-position">
-                    위치: 행 {widget.position?.row || 0}, 열 {widget.position?.col || 0}
+                    {t('admin:dashboardEditor.position', '위치: 행 {{row}}, 열 {{col}}', { row: widget.position?.row || 0, col: widget.position?.col || 0 })}
                     {widget.position?.span && widget.position.span > 1 
-                      ? ` (${widget.position.span}칸)` 
+                      ? ` ${t('admin:dashboardEditor.spanCells', '({{span}}칸)', { span: widget.position.span })}` 
                       : ''}
                   </span>
                 </div>
@@ -287,10 +286,10 @@ const DashboardWidgetEditor = ({
                     })}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleConfigWidget(widget)}
-                    title="위젯 설정"
+                    title={t('admin:dashboardEditor.widgetConfig', '위젯 설정')}
                     preventDoubleClick={false}
                   >
-                    설정
+                    {t('admin:dashboardEditor.config', '설정')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -304,10 +303,10 @@ const DashboardWidgetEditor = ({
                     })}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     onClick={() => handleDeleteWidget(widget.id)}
-                    title="위젯 삭제"
+                    title={t('admin:dashboardEditor.widgetDelete', '위젯 삭제')}
                     preventDoubleClick={false}
                   >
-                    {t('admin.actions.delete', '삭제')}
+                    {t('admin:actions.delete', '삭제')}
                   </MGButton>
                 </div>
               </div>

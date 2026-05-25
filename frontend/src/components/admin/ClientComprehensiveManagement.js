@@ -78,7 +78,7 @@ const CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS = {
  * @since 2024-12-19
  */
 const ClientComprehensiveManagement = ({ embedded = false }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['admin', 'common']);
     const [loading, setLoading] = useState(false);
     const [clients, setClients] = useState([]);
     const [consultants, setConsultants] = useState([]);
@@ -149,17 +149,17 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             console.error('공통 코드 로드 실패:', error);
             setUserStatusOptions([
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                { codeValue: 'ACTIVE', codeLabel: '활성' },
+                { codeValue: 'ACTIVE', codeLabel: t('admin:labels.active', '활성') },
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                { codeValue: 'INACTIVE', codeLabel: '비활성' },
+                { codeValue: 'INACTIVE', codeLabel: t('admin:labels.inactive', '비활성') },
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                { codeValue: 'PENDING', codeLabel: '대기' }
+                { codeValue: 'PENDING', codeLabel: t('admin:labels.pending', '대기') }
             ]);
-            showError('공통 코드를 불러오는데 실패했습니다. 기본값을 사용합니다.');
+            showError(t('admin:client.error.commonCodeLoad', '공통 코드를 불러오는데 실패했습니다. 기본값을 사용합니다.'));
         } finally {
             setLoadingCodes(false);
         }
-    }, [loadingCodes]);
+    }, [loadingCodes, t]);
 
     const loadClients = useCallback(async() => {
         setLoading(true);
@@ -212,11 +212,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         } catch (error) {
             console.error('❌ 내담자 목록 로딩 오류:', error);
             setClients([]);
-            showError('내담자 목록을 불러오는데 실패했습니다.');
+            showError(t('admin:client.error.listLoad', '내담자 목록을 불러오는데 실패했습니다.'));
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [t]);
 
     const loadConsultants = useCallback(async() => {
         try {
@@ -329,7 +329,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
     }, []);
 
     const clientFilterOptions = useMemo(() => {
-        const opts = [{ value: 'all', label: '전체' }];
+        const opts = [{ value: 'all', label: t('admin:labels.all', '전체') }];
         if (userStatusOptions && userStatusOptions.length > 0) {
             opts.push(...userStatusOptions.map(opt => ({
                 value: opt.codeValue,
@@ -337,7 +337,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             })));
         }
         return opts;
-    }, [userStatusOptions]);
+    }, [userStatusOptions, t]);
     const chipFilterStatus = activeFilters.status === 'all' || !activeFilters.status ? 'all' : activeFilters.status;
 
     const clientKpiStats = useMemo(() => {
@@ -427,11 +427,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             console.log('✅ 비밀번호 초기화 응답:', response);
             
             if (response && (response.success !== false)) {
-                showSuccess('비밀번호가 성공적으로 초기화되었습니다.');
+                showSuccess(t('admin:client.success.passwordReset', '비밀번호가 성공적으로 초기화되었습니다.'));
                 setShowPasswordResetModal(false);
                 setPasswordResetClient(null);
             } else {
-                throw new Error(response?.message || '비밀번호 초기화에 실패했습니다.');
+                throw new Error(response?.message || t('admin:client.error.passwordReset', '비밀번호 초기화에 실패했습니다.'));
             }
         } catch (error) {
             console.error('❌ 비밀번호 초기화 실패:', error);
@@ -495,20 +495,20 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
     
     if (loading) {
         if (embedded) {
-            return <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />;
+            return <UnifiedLoading type="inline" text={t('common:state.dataLoading', '데이터를 불러오는 중...')} variant="pulse" />;
         }
         return (
-            <AdminCommonLayout title="내담자 종합관리">
+            <AdminCommonLayout title={t('admin:client.pageTitle', '내담자 종합관리')}>
                 <div className="mg-v2-ad-b0kla mg-v2-client-management">
                     <div className="mg-v2-ad-b0kla__container">
-                        <ContentArea ariaLabel="내담자 종합관리 본문">
+                        <ContentArea ariaLabel={t('admin:client.ariaContent', '내담자 종합관리 본문')}>
                             <ContentHeader
-                                title={t('admin.labels.clientManagement', '내담자 관리')}
-                                subtitle="내담자 정보·상담 이력·매칭·통계를 종합 관리합니다"
+                                title={t('admin:labels.clientManagement', '내담자 관리')}
+                                subtitle={t('admin:client.subtitle', '내담자 정보·상담 이력·매칭·통계를 종합 관리합니다')}
                                 titleId={CLIENT_COMP_MGMT_TITLE_ID}
                             />
                             <main aria-labelledby={CLIENT_COMP_MGMT_TITLE_ID}>
-                                <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+                                <UnifiedLoading type="inline" text={t('common:state.dataLoading', '데이터를 불러오는 중...')} variant="pulse" />
                             </main>
                         </ContentArea>
                     </div>
@@ -534,7 +534,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 })}
                                 onClick={() => handleMainTabChange('overview')}
                             >
-                                개요
+                                {t('admin:client.tab.overview', '개요')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -549,7 +549,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 })}
                                 onClick={() => handleMainTabChange('consultation')}
                             >
-                                상담이력
+                                {t('admin:client.tab.consultation', '상담이력')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -564,7 +564,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 })}
                                 onClick={() => handleMainTabChange('mapping')}
                             >
-                                매칭
+                                {t('admin:client.tab.mapping', '매칭')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -579,7 +579,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 })}
                                 onClick={() => handleMainTabChange('statistics')}
                             >
-                                통계
+                                {t('admin:client.tab.statistics', '통계')}
                             </MGButton>
                         </div>
             </ContentSection>
@@ -591,8 +591,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         <Users size={CLIENT_KPI_ICON_SIZE} aria-hidden />
                                     </div>
                                     <div className="mg-v2-mapping-kpi-section__info">
-                                        <span className="mg-v2-mapping-kpi-section__label">총 내담자</span>
-                                        <span className="mg-v2-mapping-kpi-section__value">{clientKpiStats.total}명</span>
+                                        <span className="mg-v2-mapping-kpi-section__label">{t('admin:client.kpi.total', '총 내담자')}</span>
+                                        <span className="mg-v2-mapping-kpi-section__value">{t('admin:client.kpi.peopleCount', '{{count}}명', { count: clientKpiStats.total })}</span>
                                     </div>
                                 </div>
                                 <div className="mg-v2-mapping-kpi-section__card">
@@ -600,8 +600,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         <UserCheck size={CLIENT_KPI_ICON_SIZE} aria-hidden />
                                     </div>
                                     <div className="mg-v2-mapping-kpi-section__info">
-                                        <span className="mg-v2-mapping-kpi-section__label">{t('admin.labels.active', '활성')}</span>
-                                        <span className="mg-v2-mapping-kpi-section__value">{clientKpiStats.active}명</span>
+                                        <span className="mg-v2-mapping-kpi-section__label">{t('admin:labels.active', '활성')}</span>
+                                        <span className="mg-v2-mapping-kpi-section__value">{t('admin:client.kpi.peopleCount', '{{count}}명', { count: clientKpiStats.active })}</span>
                                     </div>
                                 </div>
                                 <div className="mg-v2-mapping-kpi-section__card">
@@ -609,8 +609,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         <Clock size={CLIENT_KPI_ICON_SIZE} aria-hidden />
                                     </div>
                                     <div className="mg-v2-mapping-kpi-section__info">
-                                        <span className="mg-v2-mapping-kpi-section__label">{t('admin.labels.pending', '대기')}</span>
-                                        <span className="mg-v2-mapping-kpi-section__value">{clientKpiStats.pending}명</span>
+                                        <span className="mg-v2-mapping-kpi-section__label">{t('admin:labels.pending', '대기')}</span>
+                                        <span className="mg-v2-mapping-kpi-section__value">{t('admin:client.kpi.peopleCount', '{{count}}명', { count: clientKpiStats.pending })}</span>
                                     </div>
                                 </div>
                                 <div className="mg-v2-mapping-kpi-section__card">
@@ -618,8 +618,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         <Link2 size={CLIENT_KPI_ICON_SIZE} aria-hidden />
                                     </div>
                                     <div className="mg-v2-mapping-kpi-section__info">
-                                        <span className="mg-v2-mapping-kpi-section__label">총 매칭</span>
-                                        <span className="mg-v2-mapping-kpi-section__value">{clientKpiStats.totalMappings}건</span>
+                                        <span className="mg-v2-mapping-kpi-section__label">{t('admin:client.kpi.totalMappings', '총 매칭')}</span>
+                                        <span className="mg-v2-mapping-kpi-section__value">{t('admin:client.kpi.countCases', '{{count}}건', { count: clientKpiStats.totalMappings })}</span>
                                     </div>
                                 </div>
                             </div>
@@ -631,7 +631,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                     <SearchInput
                                         value={searchTerm}
                                         onChange={handleSearch}
-                                        placeholder="이름, 이메일, 전화번호 또는 #태그로 검색..."
+                                        placeholder={t('admin:client.search.placeholder', '이름, 이메일, 전화번호 또는 #태그로 검색...')}
                                     />
                                 </div>
                                 <div className="mg-v2-mapping-search-section__chips">
@@ -650,7 +650,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                             })}
                                             onClick={handleCreateClient}
                                         >
-                                            새 내담자 등록
+                                            {t('admin:client.action.createNew', '새 내담자 등록')}
                                         </MGButton>
                                     )}
                                     {clientFilterOptions.map((opt) => (
@@ -681,12 +681,12 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 <ContentSection noCard className="mg-v2-mapping-list-block">
                                     <ContentCard className="mg-v2-mapping-list-block__card">
                                         <div className="mg-v2-mapping-list-block__header">
-                                            <div className="mg-v2-mapping-list-block__title">내담자 목록</div>
+                                            <div className="mg-v2-mapping-list-block__title">{t('admin:client.list.title', '내담자 목록')}</div>
                                             <ViewModeToggle
                                                 viewMode={viewMode}
                                                 onViewModeChange={setViewMode}
                                                 className="mg-v2-mapping-list-block__toggle"
-                                                ariaLabel="목록 보기 전환"
+                                                ariaLabel={t('admin:client.list.toggleAria', '목록 보기 전환')}
                                             />
                                         </div>
                                         <ClientOverviewTab
@@ -736,8 +736,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         <>
             {!embedded && (
                 <ContentHeader
-                    title={t('admin.labels.clientManagement', '내담자 관리')}
-                    subtitle="내담자 정보·상담 이력·매칭·통계를 종합 관리합니다"
+                    title={t('admin:labels.clientManagement', '내담자 관리')}
+                    subtitle={t('admin:client.subtitle', '내담자 정보·상담 이력·매칭·통계를 종합 관리합니다')}
                     titleId={CLIENT_COMP_MGMT_TITLE_ID}
                     actions={
                         <MGButton
@@ -753,7 +753,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                             })}
                             onClick={handleCreateClient}
                         >
-                            새 내담자 등록
+                            {t('admin:client.action.createNew', '새 내담자 등록')}
                         </MGButton>
                     }
                 />
@@ -906,10 +906,10 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
     }
 
     return (
-        <AdminCommonLayout title="내담자 종합관리">
+        <AdminCommonLayout title={t('admin:client.pageTitle', '내담자 종합관리')}>
             <div className="mg-v2-ad-b0kla mg-v2-client-management">
                 <div className="mg-v2-ad-b0kla__container">
-                    <ContentArea ariaLabel="내담자 종합관리 본문">
+                    <ContentArea ariaLabel={t('admin:client.ariaContent', '내담자 종합관리 본문')}>
                         {contentBlock}
                     </ContentArea>
                 </div>

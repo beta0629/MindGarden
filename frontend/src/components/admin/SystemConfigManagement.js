@@ -129,7 +129,7 @@ const stringifyTargetRoles = (roles) => {
 
 const SystemConfigManagement = () => {
   const { user, isLoggedIn, hasCheckedSession } = useSession();
-  const { t } = useTranslation('admin');
+  const { t } = useTranslation(['admin', 'common']);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [wellness, setWellness] = useState(DEFAULT_WELLNESS);
@@ -263,12 +263,12 @@ const SystemConfigManagement = () => {
       setSchedulerFlags(map);
     } catch (error) {
       console.error('알림 스케줄러 플래그 로드 실패:', error);
-      notificationManager.show('스케줄러 플래그를 불러오지 못했습니다.', 'error');
+      notificationManager.show(t('systemConfig.notificationScheduler.error.load', '스케줄러 플래그를 불러오지 못했습니다.'), 'error');
       setSchedulerFlags({});
     } finally {
       setSchedulerLoading(false);
     }
-  }, []);
+  }, [t]);
 
   /**
    * PR-2 (2026-05-25): 토글 클릭 — 확인 모달 오픈만 수행. 실제 PUT 은 confirm 핸들러에서.
@@ -314,20 +314,20 @@ const SystemConfigManagement = () => {
           }
         }));
       }
-      notificationManager.show('스케줄러 플래그가 저장되었습니다.', 'success');
+      notificationManager.show(t('systemConfig.notificationScheduler.success.save', '스케줄러 플래그가 저장되었습니다.'), 'success');
       setSchedulerConfirm(null);
       await loadSchedulerFlags();
     } catch (error) {
       console.error('알림 스케줄러 플래그 저장 실패:', error);
       const backendMsg = error?.response?.data?.message || error?.data?.message;
       notificationManager.show(
-        backendMsg || '스케줄러 플래그 저장에 실패했습니다.',
+        backendMsg || t('systemConfig.notificationScheduler.error.save', '스케줄러 플래그 저장에 실패했습니다.'),
         'error'
       );
     } finally {
       setSchedulerSavingKey(null);
     }
-  }, [schedulerConfirm, loadSchedulerFlags]);
+  }, [schedulerConfirm, loadSchedulerFlags, t]);
 
   const loadConfigs = useCallback(async() => {
     try {
@@ -344,11 +344,11 @@ const SystemConfigManagement = () => {
       });
     } catch (error) {
       console.error('설정 로드 실패:', error);
-      notificationManager.show('설정을 불러오는데 실패했습니다.', 'error');
+      notificationManager.show(t('systemConfig.error.load', '설정을 불러오는데 실패했습니다.'), 'error');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     // 세션 복원 완료 전에는 가드 발동을 보류 (새로고침 race 방지)
@@ -356,13 +356,13 @@ const SystemConfigManagement = () => {
       return;
     }
     if (!isLoggedIn || !user) {
-      notificationManager.show('로그인이 필요합니다.', 'error');
+      notificationManager.show(t('systemConfig.error.loginRequired', '로그인이 필요합니다.'), 'error');
       setLoading(false);
       return;
     }
     const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.STAFF];
     if (!allowedRoles.includes(user.role)) {
-      notificationManager.show('접근 권한이 없습니다.', 'error');
+      notificationManager.show(t('systemConfig.error.noAccess', '접근 권한이 없습니다.'), 'error');
       setLoading(false);
       return;
     }
@@ -377,34 +377,36 @@ const SystemConfigManagement = () => {
       await Promise.all([
         apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED, {
           configValue: String(wellness.wellnessAutoSendEnabled),
-          description: '웰니스 자동 발송',
+          description: t('systemConfig.wellness.descAutoSend', '웰니스 자동 발송'),
           category: 'WELLNESS'
         }),
         apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME, {
           configValue: wellness.wellnessSendTime,
-          description: '웰니스 발송 시간',
+          description: t('systemConfig.wellness.descSendTime', '웰니스 발송 시간'),
           category: 'WELLNESS'
         }),
         apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES, {
           configValue: wellness.wellnessTargetRoles,
-          description: '웰니스 대상 역할',
+          description: t('systemConfig.wellness.descTargetRoles', '웰니스 대상 역할'),
           category: 'WELLNESS'
         })
       ]);
-      notificationManager.show('웰니스 설정이 저장되었습니다.', 'success');
+      notificationManager.show(t('systemConfig.wellness.success.save', '웰니스 설정이 저장되었습니다.'), 'success');
     } catch (error) {
       console.error('설정 저장 실패:', error);
       const backendMsg = error?.response?.data?.message || error?.data?.message;
-      notificationManager.show(backendMsg || '설정 저장에 실패했습니다.', 'error');
+      notificationManager.show(backendMsg || t('systemConfig.error.save', '설정 저장에 실패했습니다.'), 'error');
     } finally {
       setSaving(false);
     }
   };
 
   if (!hasCheckedSession || loading) {
-    const loadingText = !hasCheckedSession ? '세션을 확인하는 중...' : '설정을 불러오는 중...';
+    const loadingText = !hasCheckedSession
+      ? t('systemConfig.loading.session', '세션을 확인하는 중...')
+      : t('systemConfig.loading.config', '설정을 불러오는 중...');
     return (
-      <AdminCommonLayout title="시스템 설정 관리">
+      <AdminCommonLayout title={t('systemConfig.pageTitle', '시스템 설정 관리')}>
         <div className="mg-v2-ad-b0kla mg-v2-system-config-management">
           <div className="mg-v2-ad-b0kla__container" aria-busy="true" aria-live="polite">
             <UnifiedLoading type="inline" text={loadingText} variant="pulse" />
@@ -415,13 +417,13 @@ const SystemConfigManagement = () => {
   }
 
   return (
-    <AdminCommonLayout title="시스템 설정 관리">
+    <AdminCommonLayout title={t('systemConfig.pageTitle', '시스템 설정 관리')}>
       <div className="mg-v2-ad-b0kla mg-v2-system-config-management">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea>
             <ContentHeader
-              title="시스템 설정 관리"
-              subtitle="웰니스 자동 발송 등 시스템 설정을 관리합니다. AI API 키·프로바이더 선택은 'AI 프로바이더 관리'로 이전되었습니다."
+              title={t('systemConfig.pageTitle', '시스템 설정 관리')}
+              subtitle={t('systemConfig.pageSubtitle', "웰니스 자동 발송 등 시스템 설정을 관리합니다. AI API 키·프로바이더 선택은 'AI 프로바이더 관리'로 이전되었습니다.")}
               actions={
                 <MGButton
                   type="button"
@@ -434,11 +436,11 @@ const SystemConfigManagement = () => {
                   })}
                   onClick={handleSave}
                   disabled={saving}
-                  title="설정 저장"
+                  title={t('systemConfig.action.save', '설정 저장')}
                   loading={saving}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  설정 저장
+                  {t('systemConfig.action.save', '설정 저장')}
                 </MGButton>
               }
             />
@@ -456,18 +458,18 @@ const SystemConfigManagement = () => {
             <div className="mg-v2-ad-b0kla__card mg-v2-system-config__section mg-v2-system-config__section--notice">
               <h2 className="mg-v2-ad-b0kla__section-title">
                 <Cpu size={20} aria-hidden="true" />
-                AI 프로바이더 관리 (분리됨)
+                {t('systemConfig.aiProvider.title', 'AI 프로바이더 관리 (분리됨)')}
               </h2>
               <p className="mg-v2-system-config__section-desc">
-                AI API 키 등록·프로바이더 선택·사용 통계·호출 로그는 별도 페이지로 이전되었습니다.
+                {t('systemConfig.aiProvider.desc', 'AI API 키 등록·프로바이더 선택·사용 통계·호출 로그는 별도 페이지로 이전되었습니다.')}
               </p>
               <div className="mg-v2-system-config__notice-actions">
                 <Link
                   to={ADMIN_ROUTES.AI_PROVIDERS}
                   className="mg-v2-system-config__notice-link"
-                  aria-label="AI 프로바이더 관리 페이지로 이동"
+                  aria-label={t('systemConfig.aiProvider.linkAria', 'AI 프로바이더 관리 페이지로 이동')}
                 >
-                  <span>AI 프로바이더 관리로 이동</span>
+                  <span>{t('systemConfig.aiProvider.linkText', 'AI 프로바이더 관리로 이동')}</span>
                   <ExternalLink size={14} aria-hidden="true" />
                 </Link>
               </div>
@@ -477,7 +479,7 @@ const SystemConfigManagement = () => {
             <div className="mg-v2-ad-b0kla__card mg-v2-system-config__section">
               <h2 className="mg-v2-ad-b0kla__section-title">
                 <Database size={20} aria-hidden="true" />
-                웰니스 시스템 설정
+                {t('systemConfig.wellness.title', '웰니스 시스템 설정')}
               </h2>
               <p className="mg-v2-system-config__section-desc">
                 {t(
@@ -494,12 +496,12 @@ const SystemConfigManagement = () => {
                       onChange={(e) => setWellness((prev) => ({ ...prev, wellnessAutoSendEnabled: e.target.checked }))}
                     />
                     {' '}
-                    자동 발송 활성화
+                    {t('systemConfig.wellness.autoSendEnabled', '자동 발송 활성화')}
                   </label>
-                  <small className="help-text">매일 지정된 시간에 웰니스 팁을 자동으로 발송합니다.</small>
+                  <small className="help-text">{t('systemConfig.wellness.autoSendHint', '매일 지정된 시간에 웰니스 팁을 자동으로 발송합니다.')}</small>
                 </div>
                 <div className="config-item">
-                  <label htmlFor="sendTime">발송 시간</label>
+                  <label htmlFor="sendTime">{t('systemConfig.wellness.sendTime', '발송 시간')}</label>
                   <input
                     id="sendTime"
                     type="time"

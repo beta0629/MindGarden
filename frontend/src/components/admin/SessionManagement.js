@@ -47,7 +47,7 @@ const API_COMMON_CODES_GROUPS_MAPPING_STATUS = '/api/v1/common-codes/groups/MAPP
  * @since 2024-12-19
  */
 const SessionManagement = () => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['admin', 'common']);
     const [loading, setLoading] = useState(false);
     const [clients, setClients] = useState([]);
     const [consultants, setConsultants] = useState([]);
@@ -111,7 +111,7 @@ const SessionManagement = () => {
             
         } catch (error) {
             console.error('❌ 데이터 로드 실패:', error);
-            notificationManager.error('데이터를 불러오는데 실패했습니다.');
+            notificationManager.error(t('admin:session.error.dataLoad', '데이터를 불러오는데 실패했습니다.'));
             
             setClients([]);
             setConsultants([]);
@@ -120,7 +120,7 @@ const SessionManagement = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [t]);
 
     const loadMappingStatusCodes = useCallback(async() => {
         try {
@@ -140,13 +140,13 @@ const SessionManagement = () => {
         } catch (error) {
             console.error('매핑 상태 코드 로드 실패:', error);
             setMappingStatusOptions([
-                { value: 'ACTIVE', label: '활성', icon: 'Check', color: 'var(--mg-success-600)' },
-                { value: 'INACTIVE', label: '비활성', icon: 'X', color: 'var(--mg-error-600)' }
+                { value: 'ACTIVE', label: t('admin:labels.active', '활성'), icon: 'Check', color: 'var(--mg-success-600)' },
+                { value: 'INACTIVE', label: t('admin:labels.inactive', '비활성'), icon: 'X', color: 'var(--mg-error-600)' }
             ]);
         } finally {
             setLoadingCodes(false);
         }
-    }, []);
+    }, [t]);
 
     const getFilteredMappings = useCallback(() => {
         let filtered = mappings;
@@ -218,7 +218,7 @@ const SessionManagement = () => {
                 paymentMethod: 'CASH',
                 paymentReference: null
             });
-            notificationManager.success('입금이 확인되었습니다. 회기수가 업데이트되었습니다.');
+            notificationManager.success(t('admin:session.success.paymentConfirmed', '입금이 확인되었습니다. 회기수가 업데이트되었습니다.'));
             
             setTimeout(async() => {
                 console.log('🔄 입금 확인 후 데이터 새로고침 시작...');
@@ -228,7 +228,7 @@ const SessionManagement = () => {
             
         } catch (error) {
             console.error('입금 확인 실패:', error);
-            notificationManager.error('입금 확인에 실패했습니다.');
+            notificationManager.error(t('admin:session.error.paymentConfirm', '입금 확인에 실패했습니다.'));
         } finally {
             setConfirmingPayment(false);
         }
@@ -239,13 +239,13 @@ const SessionManagement = () => {
             setConfirmingPayment(true); // 재사용
             await apiPost(`/api/admin/session-extensions/requests/${requestId}/approve`, {
                 adminId: 1, // TODO: 실제 관리자 ID
-                comment: '관리자 승인'
+                comment: t('admin:session.adminApproveComment', '관리자 승인')
             });
-            notificationManager.success('관리자 승인이 완료되었습니다.');
+            notificationManager.success(t('admin:session.success.adminApprove', '관리자 승인이 완료되었습니다.'));
             loadData();
         } catch (error) {
             console.error('관리자 승인 실패:', error);
-            notificationManager.error('관리자 승인에 실패했습니다.');
+            notificationManager.error(t('admin:session.error.adminApprove', '관리자 승인에 실패했습니다.'));
         } finally {
             setConfirmingPayment(false);
         }
@@ -256,13 +256,13 @@ const SessionManagement = () => {
             setRejectingRequest(true);
             await apiPost(`/api/admin/session-extensions/requests/${requestId}/reject`, {
                 adminId: 1, // TODO: 실제 관리자 ID
-                reason: '요청 거부'
+                reason: t('admin:session.rejectReason', '요청 거부')
             });
-            notificationManager.success('요청이 거부되었습니다.');
+            notificationManager.success(t('admin:session.success.reject', '요청이 거부되었습니다.'));
             loadData();
         } catch (error) {
             console.error('요청 거부 실패:', error);
-            notificationManager.error('요청 거부에 실패했습니다.');
+            notificationManager.error(t('admin:session.error.reject', '요청 거부에 실패했습니다.'));
         } finally {
             setRejectingRequest(false);
         }
@@ -289,19 +289,19 @@ const SessionManagement = () => {
         (loading && mappings.length === 0) || (loading && clients.length === 0);
 
     return (
-        <AdminCommonLayout title="회기 관리">
+        <AdminCommonLayout title={t('admin:session.pageTitle', '회기 관리')}>
             <div className="mg-v2-ad-b0kla mg-v2-session-management">
                 <div className="mg-v2-ad-b0kla__container">
-                    <ContentArea ariaLabel="회기 관리 본문">
+                    <ContentArea ariaLabel={t('admin:session.ariaContent', '회기 관리 본문')}>
                         <ContentHeader
-                            title="회기 관리"
-                            subtitle="상담 회기 추가 및 관리"
+                            title={t('admin:session.pageTitle', '회기 관리')}
+                            subtitle={t('admin:session.subtitle', '상담 회기 추가 및 관리')}
                             titleId="session-management-title"
                         />
                         <main aria-labelledby="session-management-title" className="mg-dashboard-layout">
                 {showSessionBodyLoader ? (
                     <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
-                        <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+                        <UnifiedLoading type="inline" text={t('common:state.dataLoading', '데이터를 불러오는 중...')} />
                     </div>
                 ) : (
                     <>
@@ -310,23 +310,23 @@ const SessionManagement = () => {
                     <StatCard
                         icon={<Users />}
                         value={clients.length}
-                        label="총 내담자"
+                        label={t('admin:session.stat.totalClients', '총 내담자')}
                     />
                     <StatCard
                         icon={<CheckCircle />}
                         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         value={mappings.filter(m => m.status === 'ACTIVE').length}
-                        label="활성 매핑"
+                        label={t('admin:session.stat.activeMappings', '활성 매핑')}
                     />
                     <StatCard
                         icon={<Calendar />}
                         value={mappings.reduce((sum, m) => sum + (m.usedSessions || 0), 0)}
-                        label="사용된 회기"
+                        label={t('admin:session.stat.usedSessions', '사용된 회기')}
                     />
                     <StatCard
                         icon={<TrendingUp />}
                         value={`${mappings.length > 0 ? Math.round((mappings.filter(m => m.status === 'SESSIONS_EXHAUSTED' || m.status === 'TERMINATED').length / mappings.length) * 100) : 0}%`}
-                        label="완료율"
+                        label={t('admin:session.stat.completionRate', '완료율')}
                     />
                 </div>
 
@@ -348,7 +348,7 @@ const SessionManagement = () => {
                                 onClick={() => setActiveTab('quick')}
                                 preventDoubleClick={false}
                             >
-                                빠른 추가
+                                {t('admin:session.tab.quick', '빠른 추가')}
                             </MGButton>
                             <MGButton 
                                 type="button"
@@ -363,7 +363,7 @@ const SessionManagement = () => {
                                 onClick={() => setActiveTab('search')}
                                 preventDoubleClick={false}
                             >
-                                내담자 검색
+                                {t('admin:session.tab.search', '내담자 검색')}
                             </MGButton>
                             <MGButton 
                                 type="button"
@@ -378,7 +378,7 @@ const SessionManagement = () => {
                                 onClick={() => setActiveTab('mapping')}
                                 preventDoubleClick={false}
                             >
-                                전체 매핑
+                                {t('admin:session.tab.mapping', '전체 매핑')}
                             </MGButton>
                         </div>
 
@@ -386,13 +386,13 @@ const SessionManagement = () => {
                         <div className="mg-v2-session-section">
                             {activeTab === 'quick' && (
                                 <DashboardSection
-                                    title="빠른 회기 추가"
+                                    title={t('admin:session.section.quickAdd', '빠른 회기 추가')}
                                     icon={<Zap size={24} />}
                                 >
                                     <div className="mg-v2-quick-mappings-grid">
                                 {getRecentActiveMappings().map(mapping => {
-                                    const clientName = mapping.client?.name || mapping.clientName || '알 수 없음';
-                                    const consultantName = mapping.consultant?.name || mapping.consultantName || '알 수 없음';
+                                    const clientName = mapping.client?.name || mapping.clientName || t('common:state.unknown', '알 수 없음');
+                                    const consultantName = mapping.consultant?.name || mapping.consultantName || t('common:state.unknown', '알 수 없음');
                                     const totalSessions = mapping.totalSessions || mapping.package?.sessions || 0;
                                     const usedSessions = mapping.usedSessions || 0;
                                     const clientProfileImageUrl = mapping.client?.profileImageUrl ?? null;
@@ -413,7 +413,7 @@ const SessionManagement = () => {
                                                     <span className="mg-v2-sessions-current mg-v2-sessions-current-danger">{toDisplayString(usedSessions)}</span>
                                                     <span className="mg-v2-sessions-separator">/</span>
                                                     <span className="mg-v2-sessions-total mg-v2-sessions-total-primary">{toDisplayString(totalSessions)}</span>
-                                                    <span className="mg-v2-sessions-unit">회기</span>
+                                                    <span className="mg-v2-sessions-unit">{t('admin:session.sessionUnit', '회기')}</span>
                                                 </span>
                                             ]}
                                             renderActions={() => (
@@ -433,7 +433,7 @@ const SessionManagement = () => {
                                                         handleQuickAdd(mapping);
                                                     }}
                                                 >
-                                                    회기 추가
+                                                    {t('admin:session.action.addSession', '회기 추가')}
                                                 </MGButton>
                                             )}
                                             onClick={() => handleQuickAdd(mapping)}
@@ -443,7 +443,7 @@ const SessionManagement = () => {
                                 
                                 {getRecentActiveMappings().length === 0 && (
                                     <div className="mg-empty-state">
-                                        <div className="mg-empty-state__text">활성 매핑이 없습니다.</div>
+                                        <div className="mg-empty-state__text">{t('admin:session.empty.activeMapping', '활성 매핑이 없습니다.')}</div>
                                     </div>
                                 )}
                                     </div>
@@ -452,14 +452,14 @@ const SessionManagement = () => {
                         
                         {activeTab === 'search' && (
                             <DashboardSection
-                                title="내담자 검색 후 회기 추가"
+                                title={t('admin:session.section.search', '내담자 검색 후 회기 추가')}
                                 icon={<Users size={24} />}
                             >
                             <div className="mg-v2-search-section">
                                 <div className="mg-v2-search-form">
                                     <input
                                         type="text"
-                                        placeholder="내담자 이름으로 검색..."
+                                        placeholder={t('admin:session.search.placeholder', '내담자 이름으로 검색...')}
                                         className="mg-v2-input"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -479,7 +479,7 @@ const SessionManagement = () => {
                                         preventDoubleClick={true}
                                         clickDelay={500}
                                     >
-                                        검색
+                                        {t('common:action.search', '검색')}
                                     </MGButton>
                                 </div>
                                 
@@ -503,7 +503,7 @@ const SessionManagement = () => {
                                                 name={<SafeText tag="div">{client.name}</SafeText>}
                                                 badges={[
                                                     <span key="mappings" className="mg-v2-badge">
-                                                        {clientMappings.length}개 활성 매핑
+                                                        {t('admin:session.activeMappingsCount', '{{count}}개 활성 매핑', { count: clientMappings.length })}
                                                     </span>
                                                 ]}
                                                 renderActions={() => (
@@ -517,7 +517,7 @@ const SessionManagement = () => {
                                                         })}
                                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                         disabled={clientMappings.length === 0}
-                                                        title={toDisplayString(clientMappings.length === 0 ? '활성 매핑이 없습니다' : '')}
+                                                        title={toDisplayString(clientMappings.length === 0 ? t('admin:session.noActiveMapping', '활성 매핑이 없습니다') : '')}
                                                         preventDoubleClick={false}
                                                         onClick={() => {
                                                             if (clientMappings.length > 0) {
@@ -525,7 +525,7 @@ const SessionManagement = () => {
                                                             }
                                                         }}
                                                     >
-                                                        회기 추가
+                                                        {t('admin:session.action.addSession', '회기 추가')}
                                                     </MGButton>
                                                 )}
                                             />
@@ -537,7 +537,7 @@ const SessionManagement = () => {
                                     client.name && client.name.toLowerCase().includes(searchTerm.toLowerCase())
                                 ).length === 0 && (
                                     <div className="mg-empty-state">
-                                        <div className="mg-empty-state__text">검색 결과가 없습니다.</div>
+                                        <div className="mg-empty-state__text">{t('common:state.noResult', '검색 결과가 없습니다.')}</div>
                                     </div>
                                 )}
                             </div>
@@ -546,7 +546,7 @@ const SessionManagement = () => {
                         
                         {activeTab === 'mapping' && (
                             <DashboardSection
-                                title="전체 매핑에서 회기 추가"
+                                title={t('admin:session.section.allMapping', '전체 매핑에서 회기 추가')}
                                 icon={<Calendar size={24} />}
                             >
                                 <div className="mg-v2-mapping-section">
@@ -556,12 +556,10 @@ const SessionManagement = () => {
                                             value={filterStatus}
                                             onChange={(e) => setFilterStatus(e.target.value)}
                                         >
-                                            <option value="ALL">모든 상태</option>
-                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                            <option value="ACTIVE">{t('admin.labels.active', '활성')}</option>
-                                            <option value="PAYMENT_CONFIRMED">결제확인</option>
-                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                            <option value="COMPLETED">{t('admin.actions.done', '완료')}</option>
+                                            <option value="ALL">{t('admin:session.filter.allStatus', '모든 상태')}</option>
+                                            <option value="ACTIVE">{t('admin:labels.active', '활성')}</option>
+                                            <option value="PAYMENT_CONFIRMED">{t('admin:session.status.paymentConfirmed', '결제확인')}</option>
+                                            <option value="COMPLETED">{t('admin:actions.done', '완료')}</option>
                                         </select>
                                     </div>
                                     
@@ -576,7 +574,7 @@ const SessionManagement = () => {
                                                         🤝 <SafeText>{mapping.consultantName}</SafeText>
                                                     </div>
                                                     <div className="mg-v2-mapping-sessions">
-                                                        📊 <SafeText>{mapping.usedSessions}</SafeText>/<SafeText>{mapping.totalSessions}</SafeText>회기
+                                                        📊 <SafeText>{mapping.usedSessions}</SafeText>/<SafeText>{mapping.totalSessions}</SafeText>{t('admin:session.sessionUnit', '회기')}
                                                     </div>
                                                     <div className={`mg-mapping-status mg-status-${toDisplayString(mapping.status, 'unknown').toLowerCase()}`}>
                                                         <SafeText>{getMappingStatusKoreanNameSync(mapping.status)}</SafeText>
@@ -594,10 +592,10 @@ const SessionManagement = () => {
                                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                         onClick={() => handleQuickAdd(mapping)}
                                                         disabled={mapping.status !== 'ACTIVE'}
-                                                        title={toDisplayString(mapping.status !== 'ACTIVE' ? '활성 상태가 아닙니다' : '')}
+                                                        title={toDisplayString(mapping.status !== 'ACTIVE' ? t('admin:session.notActive', '활성 상태가 아닙니다') : '')}
                                                         preventDoubleClick={false}
                                                     >
-                                                        회기 추가
+                                                        {t('admin:session.action.addSession', '회기 추가')}
                                                     </MGButton>
                                                 </div>
                                             </div>
@@ -606,7 +604,7 @@ const SessionManagement = () => {
                                     
                                     {getFilteredMappings().length === 0 && (
                                         <div className="mg-empty-state">
-                                            <div className="mg-empty-state__text">매핑이 없습니다.</div>
+                                            <div className="mg-empty-state__text">{t('admin:session.empty.mapping', '매핑이 없습니다.')}</div>
                                         </div>
                                     )}
                                 </div>
@@ -617,7 +615,7 @@ const SessionManagement = () => {
 
                     {/* 최근 회기 추가 요청 섹션 */}
                     <DashboardSection
-                        title="최근 회기 추가 요청"
+                        title={t('admin:session.section.recentRequests', '최근 회기 추가 요청')}
                         icon={<Calendar size={24} />}
                     >
                         
@@ -627,10 +625,10 @@ const SessionManagement = () => {
                                     <div className="mg-v2-request-header">
                                         <div className="mg-v2-request-info">
                                             <div className="mg-v2-request-client">
-                                                {request.mapping?.client?.name || request.clientName || '알 수 없음'}
+                                                {request.mapping?.client?.name || request.clientName || t('common:state.unknown', '알 수 없음')}
                                             </div>
                                             <div className="mg-v2-request-consultant">
-                                                {request.mapping?.consultant?.name || request.consultantName || '알 수 없음'}
+                                                {request.mapping?.consultant?.name || request.consultantName || t('common:state.unknown', '알 수 없음')}
                                             </div>
                                         </div>
                                         <div className={`mg-request-status mg-request-status--${request.status?.toLowerCase()}`}>
@@ -640,10 +638,10 @@ const SessionManagement = () => {
                                     
                                     <div className="mg-v2-request-details">
                                         <div className="mg-v2-request-sessions">
-                                            +{request.additionalSessions}회기 추가
+                                            +{t('admin:session.addedSessions', '{{count}}회기 추가', { count: request.additionalSessions })}
                                         </div>
                                         <div className="mg-v2-request-package">
-                                            {request.packageName} • {parseInt(request.packagePrice || 0).toLocaleString()}원
+                                            {request.packageName} • {parseInt(request.packagePrice || 0).toLocaleString()}{t('admin:mappingCreation.currency', '원')}
                                         </div>
                                         <div className="mg-v2-request-date">
                                             {new Date(request.createdAt).toLocaleDateString('ko-KR')}
@@ -652,7 +650,7 @@ const SessionManagement = () => {
                                     
                                     {request.reason && (
                                         <div className="mg-v2-request-reason">
-                                            <strong>사유:</strong> {request.reason}
+                                            <strong>{t('admin:session.reason', '사유')}:</strong> {request.reason}
                                         </div>
                                     )}
                                     
@@ -673,7 +671,7 @@ const SessionManagement = () => {
                                                 preventDoubleClick={true}
                                                 clickDelay={2000}
                                             >
-                                                입금 확인
+                                                {t('admin:session.action.paymentConfirm', '입금 확인')}
                                             </MGButton>
                                             <MGButton
                                                 variant="danger"
@@ -689,7 +687,7 @@ const SessionManagement = () => {
                                                 preventDoubleClick={true}
                                                 clickDelay={1000}
                                             >
-                                                거부
+                                                {t('admin:session.action.reject', '거부')}
                                             </MGButton>
                                         </div>
                                     )}
@@ -710,7 +708,7 @@ const SessionManagement = () => {
                                                 preventDoubleClick={true}
                                                 clickDelay={2000}
                                             >
-                                                관리자 승인
+                                                {t('admin:session.action.adminApprove', '관리자 승인')}
                                             </MGButton>
                                             <MGButton
                                                 variant="danger"
@@ -726,7 +724,7 @@ const SessionManagement = () => {
                                                 preventDoubleClick={true}
                                                 clickDelay={1000}
                                             >
-                                                거부
+                                                {t('admin:session.action.reject', '거부')}
                                             </MGButton>
                                         </div>
                                     )}
@@ -736,7 +734,7 @@ const SessionManagement = () => {
                         
                         {getRecentSessionExtensionRequests().length === 0 && (
                             <div className="mg-empty-state">
-                                <div className="mg-empty-state__text">최근 회기 추가 요청이 없습니다.</div>
+                                <div className="mg-empty-state__text">{t('admin:session.empty.recentRequests', '최근 회기 추가 요청이 없습니다.')}</div>
                             </div>
                         )}
                     </DashboardSection>

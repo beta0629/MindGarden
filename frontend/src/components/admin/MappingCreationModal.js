@@ -39,15 +39,15 @@ const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-
  * @updated 2025-02-22 - 전면 재구성 (플로우형)
  */
 const STEPS_CONFIG = [
-  { key: 1, label: '상담사', icon: User },
-  { key: 2, label: '패키지', icon: Package },
-  { key: 3, label: '내담자', icon: UserCircle },
-  { key: 4, label: '결제', icon: CreditCard },
-  { key: 5, label: '완료', icon: CheckCircle }
+  { key: 1, labelKey: 'admin:mappingCreation.step.consultant', labelFallback: '상담사', icon: User },
+  { key: 2, labelKey: 'admin:mappingCreation.step.package', labelFallback: '패키지', icon: Package },
+  { key: 3, labelKey: 'admin:mappingCreation.step.client', labelFallback: '내담자', icon: UserCircle },
+  { key: 4, labelKey: 'admin:mappingCreation.step.paymentLabel', labelFallback: '결제', icon: CreditCard },
+  { key: 5, labelKey: 'admin:mappingCreation.step.complete', labelFallback: '완료', icon: CheckCircle }
 ];
 
 const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['admin', 'common']);
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [selectedConsultant, setSelectedConsultant] = useState(null);
@@ -122,20 +122,20 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             }
           }
           let label = code.koreanName || code.codeLabel || code.codeValue;
-          if (code.codeValue === 'BASIC') label = '기본 패키지';
-          if (code.codeValue === 'STANDARD') label = '표준 패키지';
-          if (code.codeValue === 'PREMIUM') label = '프리미엄 패키지';
-          if (code.codeValue === 'VIP') label = 'VIP 패키지';
+          if (code.codeValue === 'BASIC') label = t('admin:mappingCreation.package.basic', '기본 패키지');
+          if (code.codeValue === 'STANDARD') label = t('admin:mappingCreation.package.standard', '표준 패키지');
+          if (code.codeValue === 'PREMIUM') label = t('admin:mappingCreation.package.premium', '프리미엄 패키지');
+          if (code.codeValue === 'VIP') label = t('admin:mappingCreation.package.vip', 'VIP 패키지');
           return { value: code.codeValue, label, sessions, price };
         });
         setPackageOptions(options);
       } else {
-        notificationManager.warning('상담 패키지가 등록되지 않았습니다. 공통코드 관리에서 등록해주세요.');
+        notificationManager.warning(t('admin:mappingCreation.error.noPackage', '상담 패키지가 등록되지 않았습니다. 공통코드 관리에서 등록해주세요.'));
         setPackageOptions([]);
       }
     } catch (error) {
       console.error('패키지 코드 로드 실패:', error);
-      notificationManager.error('패키지 정보를 불러오는 중 오류가 발생했습니다.');
+      notificationManager.error(t('admin:mappingCreation.error.packageLoad', '패키지 정보를 불러오는 중 오류가 발생했습니다.'));
       setPackageOptions([]);
     } finally {
       setLoadingPackageCodes(false);
@@ -280,7 +280,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
   const handleCreateMapping = async() => {
     if (!selectedConsultant || !selectedClient) {
-      notificationManager.warning('상담사와 내담자를 모두 선택해주세요.');
+      notificationManager.warning(t('admin:mappingCreation.warn.selectBoth', '상담사와 내담자를 모두 선택해주세요.'));
       return;
     }
     setLoading(true);
@@ -315,12 +315,15 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         localStorage.setItem('lastUsedPaymentMethod', paymentInfo.paymentMethod);
       }
       notificationManager.success(
-        `매칭이 완료되었습니다! 상담사: ${toDisplayString(selectedConsultant.name)}, 내담자: ${toDisplayString(selectedClient.name)}`
+        t('admin:mappingCreation.success', '매칭이 완료되었습니다! 상담사: {{consultant}}, 내담자: {{client}}', {
+          consultant: toDisplayString(selectedConsultant.name),
+          client: toDisplayString(selectedClient.name)
+        })
       );
       setStep(5);
       onMappingCreated?.();
     } catch (apiError) {
-      const msg = apiError?.response?.data?.message || apiError?.message || '매칭 생성 중 오류가 발생했습니다.';
+      const msg = apiError?.response?.data?.message || apiError?.message || t('admin:mappingCreation.error.createFailed', '매칭 생성 중 오류가 발생했습니다.');
       notificationManager.error(msg);
     } finally {
       setLoading(false);
@@ -368,7 +371,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           preventDoubleClick={false}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
-          {t('common.actions.prev', '이전')}
+          {t('common:action.prev', '이전')}
         </MGButton>
       )}
       {step < 4 && (
@@ -382,7 +385,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           preventDoubleClick={false}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
-          다음
+          {t('common:action.next', '다음')}
         </MGButton>
       )}
       {step === 4 && (
@@ -397,7 +400,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           preventDoubleClick={false}
         >
-          매칭 생성
+          {t('admin:mappingCreation.createMapping', '매칭 생성')}
         </MGButton>
       )}
       {step === 5 && (
@@ -410,7 +413,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           preventDoubleClick={false}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
-          {t('admin.actions.done', '완료')}
+          {t('admin:actions.done', '완료')}
         </MGButton>
       )}
     </div>
@@ -420,7 +423,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     <div className="mg-v2-mapping-creation-modal-wrapper">
       <div className="mg-v2-ad-b0kla mg-v2-mapping-creation-modal">
         {/* 진행 단계 표시기 (mg-v2-ad-stepper - 스케줄 모달과 동일) */}
-        <nav className="mg-v2-ad-stepper" aria-label="매칭 생성 단계">
+        <nav className="mg-v2-ad-stepper" aria-label={t('admin:mappingCreation.aria.steps', '매칭 생성 단계')}>
           {STEPS_CONFIG.map((s, index) => {
             const Icon = s.icon;
             const isCompleted = step > s.key;
@@ -435,7 +438,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   <div className="mg-v2-ad-stepper__icon">
                     {isCompleted ? <Check size={18} strokeWidth={2.5} /> : <Icon size={18} strokeWidth={isCurrent ? 2.5 : 2} />}
                   </div>
-                  <SafeText className="mg-v2-ad-stepper__title" tag="span">{s.label}</SafeText>
+                  <SafeText className="mg-v2-ad-stepper__title" tag="span">{t(s.labelKey, s.labelFallback)}</SafeText>
                 </div>
                 {index < STEPS_CONFIG.length - 1 && (
                   <div className={`mg-v2-ad-stepper__line ${isCompleted ? 'completed' : ''}`} />
@@ -448,15 +451,17 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         {/* 1단계: 상담사 */}
         {step === 1 && (
           <section className="mg-v2-mapping-creation-modal__step-content">
-            <h3 className="mg-v2-mapping-creation-modal__step-title">상담사를 선택하세요</h3>
+            <h3 className="mg-v2-mapping-creation-modal__step-title">{t('admin:mappingCreation.step.selectConsultant', '상담사를 선택하세요')}</h3>
             <div className="mg-v2-mapping-creation-modal__search">
               <SearchInput
                 value={consultantSearchTerm}
                 onChange={setConsultantSearchTerm}
-                placeholder="상담사 이름 또는 이메일로 검색..."
+                placeholder={t('admin:mappingCreation.searchConsultantPlaceholder', '상담사 이름 또는 이메일로 검색...')}
               />
               <span className="mg-v2-mapping-creation-modal__count">
-                {consultantSearchTerm ? `${filteredConsultants.length}명` : `총 ${consultants.length}명`}
+                {consultantSearchTerm
+                  ? t('admin:mappingCreation.peopleCount', '{{count}}명', { count: filteredConsultants.length })
+                  : t('admin:mappingCreation.totalPeople', '총 {{count}}명', { count: consultants.length })}
               </span>
             </div>
             <div className="mg-v2-mapping-creation-modal__grid">
@@ -491,7 +496,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
               ) : (
                 <div className="mg-v2-mapping-creation-modal__empty">
                   <Search size={32} />
-                  <p>검색 결과가 없습니다</p>
+                  <p>{t('common:state.noResult', '검색 결과가 없습니다')}</p>
                 </div>
               )}
             </div>
@@ -501,14 +506,14 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         {/* 2단계: 패키지 */}
         {step === 2 && (
           <section className="mg-v2-mapping-creation-modal__step-content">
-            <h3 className="mg-v2-mapping-creation-modal__step-title">패키지를 선택하세요</h3>
+            <h3 className="mg-v2-mapping-creation-modal__step-title">{t('admin:mappingCreation.step.selectPackage', '패키지를 선택하세요')}</h3>
             {loadingPackageCodes ? (
-              <div className="mg-v2-mapping-creation-modal__loading">패키지 로딩 중...</div>
+              <div className="mg-v2-mapping-creation-modal__loading">{t('admin:mappingCreation.packageLoading', '패키지 로딩 중...')}</div>
             ) : !packageOptions.length || packageOptions.every(p => !p.price || p.price <= 0) ? (
               <div className="mg-v2-mapping-creation-modal__missing-pkg">
                 <AlertCircle size={40} />
-                <h4>패키지 데이터가 등록되지 않았습니다</h4>
-                <p>공통코드 관리에서 패키지를 등록해주세요.</p>
+                <h4>{t('admin:mappingCreation.noPackageData', '패키지 데이터가 등록되지 않았습니다')}</h4>
+                <p>{t('admin:mappingCreation.noPackageHint', '공통코드 관리에서 패키지를 등록해주세요.')}</p>
                 <MGButton
                   type="button"
                   variant="primary"
@@ -518,7 +523,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   preventDoubleClick={false}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  공통코드 관리로 이동
+                  {t('admin:mappingCreation.goToCommonCodes', '공통코드 관리로 이동')}
                 </MGButton>
               </div>
             ) : (
@@ -545,7 +550,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
                     <strong><SafeText tag="span">{pkg.label}</SafeText></strong>
-                    <span>{pkg.sessions}회기 · {pkg.price.toLocaleString()}원</span>
+                    <span>{t('admin:mappingCreation.packageSummary', '{{sessions}}회기 · {{price}}원', { sessions: pkg.sessions, price: pkg.price.toLocaleString() })}</span>
                   </MGButton>
                 ))}
               </div>
@@ -556,12 +561,12 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         {/* 3단계: 내담자 */}
         {step === 3 && (
           <section className="mg-v2-mapping-creation-modal__step-content">
-            <h3 className="mg-v2-mapping-creation-modal__step-title">내담자를 선택하세요</h3>
+            <h3 className="mg-v2-mapping-creation-modal__step-title">{t('admin:mappingCreation.step.selectClient', '내담자를 선택하세요')}</h3>
             <div className="mg-v2-mapping-creation-modal__filters">
               <SearchInput
                 value={clientSearchTerm}
                 onChange={setClientSearchTerm}
-                placeholder="내담자 이름 또는 이메일로 검색..."
+                placeholder={t('admin:mappingCreation.searchClientPlaceholder', '내담자 이름 또는 이메일로 검색...')}
               />
               <div className="mg-v2-mapping-creation-modal__filter-row">
                 <BadgeSelect
@@ -569,13 +574,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   value={clientFilterStatus}
                   onChange={(val) => setClientFilterStatus(val)}
                   options={[
-                    { value: 'ALL', label: '전체' },
-                    { value: 'NO_MAPPING', label: '매칭 없음' },
-                    { value: 'ACTIVE', label: '활성' },
-                    { value: 'INACTIVE', label: '비활성' },
-                    { value: 'TERMINATED', label: '종료됨' }
+                    { value: 'ALL', label: t('admin:labels.all', '전체') },
+                    { value: 'NO_MAPPING', label: t('admin:mappingCreation.filter.noMapping', '매칭 없음') },
+                    { value: 'ACTIVE', label: t('admin:labels.active', '활성') },
+                    { value: 'INACTIVE', label: t('admin:labels.inactive', '비활성') },
+                    { value: 'TERMINATED', label: t('admin:mappingCreation.filter.terminated', '종료됨') }
                   ]}
-                  placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
+                  placeholder={t('admin:messages.pleaseSelect', '선택하세요')}
                   className="mg-v2-form-badge-select mg-v2-mapping-creation-modal__select"
                 />
                 <BadgeSelect
@@ -583,15 +588,15 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   value={clientSortBy}
                   onChange={(val) => setClientSortBy(val)}
                   options={[
-                    { value: 'name', label: '이름순' },
-                    { value: 'email', label: '이메일순' },
-                    { value: 'createdAt', label: '등록일순' }
+                    { value: 'name', label: t('admin:mappingCreation.sort.name', '이름순') },
+                    { value: 'email', label: t('admin:mappingCreation.sort.email', '이메일순') },
+                    { value: 'createdAt', label: t('admin:mappingCreation.sort.createdAt', '등록일순') }
                   ]}
-                  placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
+                  placeholder={t('admin:messages.pleaseSelect', '선택하세요')}
                   className="mg-v2-form-badge-select mg-v2-mapping-creation-modal__select"
                 />
               </div>
-              <span className="mg-v2-mapping-creation-modal__count">{filteredClients.length}명</span>
+              <span className="mg-v2-mapping-creation-modal__count">{t('admin:mappingCreation.peopleCount', '{{count}}명', { count: filteredClients.length })}</span>
             </div>
             <div className="mg-v2-mapping-creation-modal__grid">
               {filteredClients.length > 0 ? (
@@ -625,7 +630,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
               ) : (
                 <div className="mg-v2-mapping-creation-modal__empty">
                   <Search size={32} />
-                  <p>검색 결과가 없습니다</p>
+                  <p>{t('common:state.noResult', '검색 결과가 없습니다')}</p>
                 </div>
               )}
             </div>
@@ -635,7 +640,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         {/* 4단계: 결제 */}
         {step === 4 && (
           <section className="mg-v2-mapping-creation-modal__step-content">
-            <h3 className="mg-v2-mapping-creation-modal__step-title">결제 정보</h3>
+            <h3 className="mg-v2-mapping-creation-modal__step-title">{t('admin:mappingCreation.step.payment', '결제 정보')}</h3>
             <div className="mg-v2-mapping-creation-modal__summary-bar">
               <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
                 <User size={16} /> {toDisplayString(selectedConsultant?.name)}
@@ -657,16 +662,16 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             <div className="mg-v2-mapping-creation-modal__form">
               <div className="mg-v2-mapping-creation-modal__form-row">
                 <div className="mg-v2-mapping-creation-modal__form-group">
-                  <label>총 세션</label>
-                  <div className="mg-v2-mapping-creation-modal__readonly">{paymentInfo.totalSessions}회</div>
+                  <label>{t('admin:mappingCreation.totalSessions', '총 세션')}</label>
+                  <div className="mg-v2-mapping-creation-modal__readonly">{t('admin:mappingCreation.sessionUnit', '{{count}}회', { count: paymentInfo.totalSessions })}</div>
                 </div>
                 <div className="mg-v2-mapping-creation-modal__form-group">
-                  <label>패키지 가격</label>
-                  <div className="mg-v2-mapping-creation-modal__readonly">{paymentInfo.packagePrice?.toLocaleString()}원</div>
+                  <label>{t('admin:mappingCreation.packagePrice', '패키지 가격')}</label>
+                  <div className="mg-v2-mapping-creation-modal__readonly">{paymentInfo.packagePrice?.toLocaleString()}{t('admin:mappingCreation.currency', '원')}</div>
                 </div>
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">
-                <label>{t('admin.labels.paymentMethod', '결제 방법')}</label>
+                <label>{t('admin:labels.paymentMethod', '결제 방법')}</label>
                 <BadgeSelect
                   value={paymentInfo.paymentMethod}
                   onChange={(m) => {
@@ -675,52 +680,52 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   options={paymentMethodOptions.length
                     ? paymentMethodOptions.map(m => ({ value: m.value, label: m.label }))
                     : [
-                        { value: 'BANK_TRANSFER', label: '계좌이체' },
-                        { value: 'CARD', label: '신용카드' },
-                        { value: 'CASH', label: '현금' }
+                        { value: 'BANK_TRANSFER', label: t('admin:labels.bankTransfer', '계좌이체') },
+                        { value: 'CARD', label: t('admin:labels.creditCard', '신용카드') },
+                        { value: 'CASH', label: t('admin:labels.cash', '현금') }
                       ]}
-                  placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
+                  placeholder={t('admin:messages.pleaseSelect', '선택하세요')}
                   className="mg-v2-mapping-creation-modal__input"
-                  aria-label={t('admin.labels.paymentMethod', '결제 방법')}
+                  aria-label={t('admin:labels.paymentMethod', '결제 방법')}
                 />
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">
-                <label>결제 참조번호</label>
+                <label>{t('admin:mappingCreation.paymentReference', '결제 참조번호')}</label>
                 <input
                   type="text"
                   value={paymentInfo.paymentReference}
                   onChange={e => setPaymentInfo(prev => ({ ...prev, paymentReference: e.target.value }))}
-                  placeholder="자동 생성"
+                  placeholder={t('admin:mappingCreation.autoGenerate', '자동 생성')}
                   className="mg-v2-mapping-creation-modal__input"
                 />
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">
-                <label>담당 업무</label>
+                <label>{t('admin:mappingCreation.responsibility', '담당 업무')}</label>
                 <BadgeSelect
                   value={paymentInfo.responsibility}
                   onChange={(val) => setPaymentInfo(prev => ({ ...prev, responsibility: val }))}
                   options={responsibilityOptions.map(r => ({ value: r.label, label: r.label }))}
-                  placeholder={t('admin.messages.pleaseSelect', '선택하세요')}
+                  placeholder={t('admin:messages.pleaseSelect', '선택하세요')}
                   className="mg-v2-mapping-creation-modal__input"
-                  aria-label="담당 업무"
+                  aria-label={t('admin:mappingCreation.responsibility', '담당 업무')}
                 />
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">
-                <label>특별 고려사항</label>
+                <label>{t('admin:mappingCreation.specialConsiderations', '특별 고려사항')}</label>
                 <textarea
                   value={paymentInfo.specialConsiderations}
                   onChange={e => setPaymentInfo(prev => ({ ...prev, specialConsiderations: e.target.value }))}
-                  placeholder="내담자 특이사항"
+                  placeholder={t('admin:mappingCreation.specialConsiderationsPlaceholder', '내담자 특이사항')}
                   rows={2}
                   className="mg-v2-mapping-creation-modal__input"
                 />
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">
-                <label>메모</label>
+                <label>{t('common:label.memo', '메모')}</label>
                 <textarea
                   value={paymentInfo.notes}
                   onChange={e => setPaymentInfo(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="추가 메모"
+                  placeholder={t('admin:mappingCreation.notesPlaceholder', '추가 메모')}
                   rows={2}
                   className="mg-v2-mapping-creation-modal__input"
                 />
@@ -735,12 +740,12 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             <div className="mg-v2-mapping-creation-modal__success-icon">
               <CheckCircle size={48} />
             </div>
-            <h3>매칭이 완료되었습니다!</h3>
+            <h3>{t('admin:mappingCreation.completionTitle', '매칭이 완료되었습니다!')}</h3>
             <div className="mg-v2-mapping-creation-modal__completion-summary">
-              <p><strong>상담사:</strong> {toDisplayString(selectedConsultant?.name)}</p>
-              <p><strong>내담자:</strong> {toDisplayString(selectedClient?.name)}</p>
-              <p><strong>패키지:</strong> {toDisplayString(paymentInfo.packageName)}</p>
-              <p><strong>세션/가격:</strong> {paymentInfo.totalSessions}회 · {paymentInfo.packagePrice?.toLocaleString()}원</p>
+              <p><strong>{t('admin:labels.consultant', '상담사')}:</strong> {toDisplayString(selectedConsultant?.name)}</p>
+              <p><strong>{t('admin:labels.client', '내담자')}:</strong> {toDisplayString(selectedClient?.name)}</p>
+              <p><strong>{t('admin:mappingCreation.package', '패키지')}:</strong> {toDisplayString(paymentInfo.packageName)}</p>
+              <p><strong>{t('admin:mappingCreation.sessionPrice', '세션/가격')}:</strong> {paymentInfo.totalSessions}{t('admin:mappingCreation.sessionUnitShort', '회')} · {paymentInfo.packagePrice?.toLocaleString()}{t('admin:mappingCreation.currency', '원')}</p>
             </div>
           </section>
         )}
@@ -752,7 +757,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     <UnifiedModal
       isOpen={isOpen}
       onClose={handleClose}
-      title="새 매칭 생성"
+      title={t('admin:mappingCreation.title', '새 매칭 생성')}
       size="large"
       className="mg-v2-ad-b0kla"
       backdropClick={false}

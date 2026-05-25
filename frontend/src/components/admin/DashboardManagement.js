@@ -37,7 +37,7 @@ const API_TENANT_DASHBOARDS = '/api/v1/tenant/dashboards';
 const DASHBOARD_MGMT_TITLE_ID = 'dashboard-management-title';
 
 const DashboardManagement = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['admin', 'common']);
   const navigate = useNavigate();
   const [confirm, ConfirmModal] = useConfirm();
   const [dashboards, setDashboards] = useState([]);
@@ -82,12 +82,12 @@ const DashboardManagement = () => {
       }
     } catch (error) {
       console.error('❌ 대시보드 목록 로드 실패:', error);
-      notificationManager.show('대시보드 목록을 불러오는 중 오류가 발생했습니다.', 'error');
+      notificationManager.show(t('admin:dashboardManagement.notifications.loadFailed', '대시보드 목록을 불러오는 중 오류가 발생했습니다.'), 'error');
       setDashboards([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
@@ -122,7 +122,7 @@ const DashboardManagement = () => {
   // 대시보드 활성화/비활성화 토글
   const handleToggleActive = async(dashboard) => {
     if (!dashboard.dashboardId) {
-      notificationManager.show('대시보드 ID가 없습니다.', 'error');
+      notificationManager.show(t('admin:dashboardManagement.notifications.missingId', '대시보드 ID가 없습니다.'), 'error');
       return;
     }
 
@@ -140,20 +140,22 @@ const DashboardManagement = () => {
         const result = await response.json();
         if (result.success) {
           notificationManager.show(
-            dashboard.isActive ? '대시보드가 비활성화되었습니다.' : '대시보드가 활성화되었습니다.',
+            dashboard.isActive
+              ? t('admin:dashboardManagement.notifications.deactivated', '대시보드가 비활성화되었습니다.')
+              : t('admin:dashboardManagement.notifications.activated', '대시보드가 활성화되었습니다.'),
             'success'
           );
           await loadDashboards();
         } else {
-          throw new Error(result.message || '대시보드 상태 변경 실패');
+          throw new Error(result.message || t('admin:dashboardManagement.notifications.statusChangeFailed', '대시보드 상태 변경 실패'));
         }
       } else {
         const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || '대시보드 상태 변경 실패');
+        throw new Error(error.message || t('admin:dashboardManagement.notifications.statusChangeFailed', '대시보드 상태 변경 실패'));
       }
     } catch (error) {
       console.error('❌ 대시보드 상태 변경 실패:', error);
-      notificationManager.show(error.message || '대시보드 상태 변경 중 오류가 발생했습니다.', 'error');
+      notificationManager.show(error.message || t('admin:dashboardManagement.notifications.statusChangeError', '대시보드 상태 변경 중 오류가 발생했습니다.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -162,13 +164,13 @@ const DashboardManagement = () => {
   // 대시보드 삭제
   const handleDelete = async(dashboard) => {
     if (!dashboard.dashboardId) {
-      notificationManager.show('대시보드 ID가 없습니다.', 'error');
+      notificationManager.show(t('admin:dashboardManagement.notifications.missingId', '대시보드 ID가 없습니다.'), 'error');
       return;
     }
 
     // 기본 대시보드는 삭제 불가
     if (dashboard.isDefault) {
-      notificationManager.show('기본 대시보드는 삭제할 수 없습니다. 비활성화만 가능합니다.', 'warning');
+      notificationManager.show(t('admin:dashboardManagement.notifications.defaultDeleteForbidden', '기본 대시보드는 삭제할 수 없습니다. 비활성화만 가능합니다.'), 'warning');
       return;
     }
 
@@ -191,18 +193,18 @@ const DashboardManagement = () => {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          notificationManager.show('대시보드가 삭제되었습니다.', 'success');
+          notificationManager.show(t('admin:dashboardManagement.notifications.deleted', '대시보드가 삭제되었습니다.'), 'success');
           await loadDashboards();
         } else {
-          throw new Error(result.message || '대시보드 삭제 실패');
+          throw new Error(result.message || t('admin:dashboardManagement.notifications.deleteFailed', '대시보드 삭제 실패'));
         }
       } else {
         const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || '대시보드 삭제 실패');
+        throw new Error(error.message || t('admin:dashboardManagement.notifications.deleteFailed', '대시보드 삭제 실패'));
       }
     } catch (error) {
       console.error('❌ 대시보드 삭제 실패:', error);
-      notificationManager.show(error.message || '대시보드 삭제 중 오류가 발생했습니다.', 'error');
+      notificationManager.show(error.message || t('admin:dashboardManagement.notifications.deleteError', '대시보드 삭제 중 오류가 발생했습니다.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -213,12 +215,12 @@ const DashboardManagement = () => {
     console.log('🔧 대시보드 수정 버튼 클릭:', dashboard);
     if (!dashboard) {
       console.error('❌ 대시보드 데이터가 없습니다.');
-      notificationManager.show('대시보드 데이터가 없습니다.', 'error');
+      notificationManager.show(t('admin:dashboardManagement.notifications.missingData', '대시보드 데이터가 없습니다.'), 'error');
       return;
     }
     if (!dashboard.dashboardId) {
       console.error('❌ 대시보드 ID가 없습니다.');
-      notificationManager.show('대시보드 ID가 없습니다.', 'error');
+      notificationManager.show(t('admin:dashboardManagement.notifications.missingId', '대시보드 ID가 없습니다.'), 'error');
       return;
     }
     setSelectedDashboard(dashboard);
@@ -244,7 +246,7 @@ const DashboardManagement = () => {
     await loadDashboards();
     handleModalClose();
     notificationManager.show(
-      savedDashboard ? '대시보드가 저장되었습니다.' : '대시보드가 저장되었습니다.',
+      t('admin:dashboardManagement.notifications.saved', '대시보드가 저장되었습니다.'),
       'success'
     );
   };
@@ -252,13 +254,13 @@ const DashboardManagement = () => {
   // 대시보드 타입 한글 변환
   const getDashboardTypeLabel = (type) => {
     const typeMap = {
-      'STUDENT': '학생',
-      'TEACHER': '선생님',
-      'ADMIN': '관리자',
-      'CLIENT': '내담자',
-      'CONSULTANT': '상담사',
-      'PRINCIPAL': '원장',
-      'DEFAULT': '기본'
+      'STUDENT': t('admin:dashboardManagement.type.student', '학생'),
+      'TEACHER': t('admin:dashboardManagement.type.teacher', '선생님'),
+      'ADMIN': t('admin:dashboardManagement.type.admin', '관리자'),
+      'CLIENT': t('admin:dashboardManagement.type.client', '내담자'),
+      'CONSULTANT': t('admin:dashboardManagement.type.consultant', '상담사'),
+      'PRINCIPAL': t('admin:dashboardManagement.type.principal', '원장'),
+      'DEFAULT': t('admin:dashboardManagement.type.default', '기본')
     };
     return typeMap[type] || type;
   };
@@ -280,7 +282,7 @@ const DashboardManagement = () => {
   // 대시보드 보기 (관리자용 - 역할 할당 없이도 볼 수 있음)
   const handleViewDashboard = (dashboard) => {
     if (!dashboard.dashboardId) {
-      notificationManager.show('대시보드 ID가 없습니다.', 'error');
+      notificationManager.show(t('admin:dashboardManagement.notifications.missingId', '대시보드 ID가 없습니다.'), 'error');
       return;
     }
 
@@ -296,13 +298,13 @@ const DashboardManagement = () => {
 
   return (
     <>
-    <AdminCommonLayout title="대시보드 관리">
+    <AdminCommonLayout title={t('admin:dashboardManagement.title', '대시보드 관리')}>
       <div className="mg-v2-ad-b0kla">
         <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="대시보드 관리 본문">
+          <ContentArea ariaLabel={t('admin:dashboardManagement.regionLabel', '대시보드 관리 본문')}>
             <ContentHeader
-              title="대시보드 관리"
-              subtitle="테넌트 역할별 대시보드를 구성·활성화합니다."
+              title={t('admin:dashboardManagement.title', '대시보드 관리')}
+              subtitle={t('admin:dashboardManagement.subtitle', '테넌트 역할별 대시보드를 구성·활성화합니다.')}
               titleId={DASHBOARD_MGMT_TITLE_ID}
               actions={(
                 <MGButton
@@ -319,7 +321,7 @@ const DashboardManagement = () => {
                   loading={loading}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  새 대시보드
+                  {t('admin:dashboardManagement.createButton', '새 대시보드')}
                 </MGButton>
               )}
             />
@@ -333,7 +335,7 @@ const DashboardManagement = () => {
             <FaSearch className="search-icon" />
             <input
               type="text"
-              placeholder="대시보드 이름, 역할, 타입으로 검색..."
+              placeholder={t('admin:dashboardManagement.filters.searchPlaceholder', '대시보드 이름, 역할, 타입으로 검색...')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -353,9 +355,9 @@ const DashboardManagement = () => {
                 preventDoubleClick={false}
                 loading={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                aria-label="검색어 지우기"
+                aria-label={t('admin:dashboardManagement.filters.clearAria', '검색어 지우기')}
               >
-                지우기
+                {t('admin:dashboardManagement.filters.clearLabel', '지우기')}
               </MGButton>
             )}
           </div>
@@ -375,7 +377,7 @@ const DashboardManagement = () => {
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              {t('admin.labels.all', '전체')}
+              {t('admin:labels.all', '전체')}
             </MGButton>
             <MGButton
               type="button"
@@ -391,7 +393,7 @@ const DashboardManagement = () => {
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              {t('admin.labels.active', '활성')}
+              {t('admin:labels.active', '활성')}
             </MGButton>
             <MGButton
               type="button"
@@ -407,7 +409,7 @@ const DashboardManagement = () => {
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              {t('admin.labels.inactive', '비활성')}
+              {t('admin:labels.inactive', '비활성')}
             </MGButton>
             <MGButton
               type="button"
@@ -423,7 +425,7 @@ const DashboardManagement = () => {
               loading={loading}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              {t('admin.actions.refresh', '새로고침')}
+              {t('admin:actions.refresh', '새로고침')}
             </MGButton>
           </div>
         </div>
@@ -431,7 +433,7 @@ const DashboardManagement = () => {
         {/* 로딩 상태 */}
         {loading && dashboards.length === 0 && (
           <div className="loading-container">
-            <div className="mg-loading">로딩중...</div>
+            <div className="mg-loading">{t('admin:dashboardManagement.loading', '로딩중...')}</div>
           </div>
         )}
 
@@ -440,8 +442,8 @@ const DashboardManagement = () => {
           <div className="empty-state">
             <p>
               {searchTerm || filterType !== 'all'
-                ? '검색 조건에 맞는 대시보드가 없습니다.'
-                : '등록된 대시보드가 없습니다. 새 대시보드를 생성해주세요.'}
+                ? t('admin:dashboardManagement.empty.filtered', '검색 조건에 맞는 대시보드가 없습니다.')
+                : t('admin:dashboardManagement.empty.none', '등록된 대시보드가 없습니다. 새 대시보드를 생성해주세요.')}
             </p>
           </div>
         )}
@@ -468,16 +470,16 @@ const DashboardManagement = () => {
                   <div className="dashboard-card-badges">
                     {dashboard.isDefault && (
                       <span className="badge badge-default">
-                        <FaCheckCircle /> 기본
+                        <FaCheckCircle /> {t('admin:dashboardManagement.card.default', '기본')}
                       </span>
                     )}
                     {dashboard.isActive ? (
                       <span className="badge badge-active">
-                        <FaEye /> {t('admin.labels.active', '활성')}
+                        <FaEye /> {t('admin:labels.active', '활성')}
                       </span>
                     ) : (
                       <span className="badge badge-inactive">
-                        <FaEyeSlash /> {t('admin.labels.inactive', '비활성')}
+                        <FaEyeSlash /> {t('admin:labels.inactive', '비활성')}
                       </span>
                     )}
                   </div>
@@ -485,27 +487,27 @@ const DashboardManagement = () => {
 
                 <div className="dashboard-card-body">
                   <div className="dashboard-info-row">
-                    <span className="info-label">역할:</span>
+                    <span className="info-label">{t('admin:dashboardManagement.card.roleLabel', '역할:')}</span>
                     <span className="info-value">
                       {dashboard.roleNameKo || dashboard.tenantRoleId || '-'}
                     </span>
                   </div>
                   <div className="dashboard-info-row">
-                    <span className="info-label">타입:</span>
+                    <span className="info-label">{t('admin:dashboardManagement.card.typeLabel', '타입:')}</span>
                     <span className="info-value">
                       {getDashboardTypeLabel(dashboard.dashboardType)}
                     </span>
                   </div>
                   {dashboard.description && (
                     <div className="dashboard-info-row">
-                      <span className="info-label">설명:</span>
+                      <span className="info-label">{t('admin:dashboardManagement.card.descLabel', '설명:')}</span>
                       <span className="info-value description">
                         {dashboard.description}
                       </span>
                     </div>
                   )}
                   <div className="dashboard-info-row">
-                    <span className="info-label">표시 순서:</span>
+                    <span className="info-label">{t('admin:dashboardManagement.card.orderLabel', '표시 순서:')}</span>
                     <span className="info-value">{dashboard.displayOrder || 0}</span>
                   </div>
                 </div>
@@ -524,9 +526,9 @@ const DashboardManagement = () => {
                     })}
                     loading={false}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    title="대시보드 보기 (새 탭에서 열기: Ctrl+클릭)"
+                    title={t('admin:dashboardManagement.actions.viewTitle', '대시보드 보기 (새 탭에서 열기: Ctrl+클릭)')}
                   >
-                    {t('admin.actions.view', '보기')}
+                    {t('admin:actions.view', '보기')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -547,9 +549,9 @@ const DashboardManagement = () => {
                     disabled={loading || !dashboard || !dashboard.dashboardId}
                     loading={loading}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    title={dashboard?.dashboardId ? '대시보드 수정' : '대시보드 ID가 없습니다.'}
+                    title={dashboard?.dashboardId ? t('admin:dashboardManagement.actions.editTitle', '대시보드 수정') : t('admin:dashboardManagement.actions.editMissingTitle', '대시보드 ID가 없습니다.')}
                   >
-                    {t('common.actions.edit', '수정')}
+                    {t('common:action.edit', '수정')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -565,7 +567,9 @@ const DashboardManagement = () => {
                     loading={loading}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   >
-                    {dashboard.isActive ? '비활성화' : '활성화'}
+                    {dashboard.isActive
+                      ? t('admin:dashboardManagement.actions.deactivate', '비활성화')
+                      : t('admin:dashboardManagement.actions.activate', '활성화')}
                   </MGButton>
                   {!dashboard.isDefault && (
                     <MGButton
@@ -582,7 +586,7 @@ const DashboardManagement = () => {
                       loading={loading}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
-                      {t('admin.actions.delete', '삭제')}
+                      {t('admin:actions.delete', '삭제')}
                     </MGButton>
                   )}
                 </div>
@@ -603,23 +607,23 @@ const DashboardManagement = () => {
         {!loading && dashboards.length > 0 && (
           <div className="dashboard-stats">
             <div className="stat-item">
-              <span className="stat-label">전체:</span>
+              <span className="stat-label">{t('admin:labels.all', '전체')}:</span>
               <span className="stat-value">{dashboards.length}</span>
             </div>
             <div className="stat-item">
-              <span className="stat-label">활성:</span>
+              <span className="stat-label">{t('admin:labels.active', '활성')}:</span>
               <span className="stat-value active">
                 {dashboards.filter(d => d.isActive).length}
               </span>
             </div>
             <div className="stat-item">
-              <span className="stat-label">비활성:</span>
+              <span className="stat-label">{t('admin:labels.inactive', '비활성')}:</span>
               <span className="stat-value inactive">
                 {dashboards.filter(d => !d.isActive).length}
               </span>
             </div>
             <div className="stat-item">
-              <span className="stat-label">기본:</span>
+              <span className="stat-label">{t('admin:dashboardManagement.badge.default', '기본')}:</span>
               <span className="stat-value default">
                 {dashboards.filter(d => d.isDefault).length}
               </span>

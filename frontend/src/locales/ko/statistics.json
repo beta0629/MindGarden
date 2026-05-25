@@ -118,7 +118,18 @@
     "max": "최대",
     "min": "최소",
     "count": "건수",
-    "rate": "비율"
+    "rate": "비율",
+    "actions": {
+      "refresh": "새로고침",
+      "done": "완료",
+      "cancel": "취소",
+      "close": "닫기"
+    },
+    "labels": {
+      "inProgress": "진행중",
+      "retry": "다시 시도",
+      "all": "전체"
+    }
   },
   "period": {
     "label": "기간",

@@ -2617,5 +2617,28 @@
     "listTitle": "등록된 휴가 목록",
     "allDay": "하루 종일",
     "empty": "등록된 휴가가 없습니다."
+  },
+  "common": {
+    "labels": {
+      "retry": "다시 시도",
+      "name": "이름"
+    },
+    "actions": {
+      "edit": "수정"
+    }
+  },
+  "admin": {
+    "labels": {
+      "consultantManagement": "상담사 관리",
+      "email": "이메일",
+      "status": "상태"
+    },
+    "actions": {
+      "cancel": "취소",
+      "delete": "삭제"
+    },
+    "messages": {
+      "noAccessPermission": "접근 권한이 없습니다."
+    }
   }
 }

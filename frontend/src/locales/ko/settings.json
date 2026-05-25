@@ -207,5 +207,22 @@
       "apiKeyRef": "API 키 참조(시크릿 저장 금지)",
       "apiSecretRef": "API 시크릿 참조(시크릿 저장 금지)"
     }
+  },
+  "common": {
+    "actions": {
+      "close": "닫기"
+    },
+    "labels": {
+      "notification": "알림"
+    },
+    "status": {
+      "error": "오류",
+      "loading": "로딩중..."
+    }
+  },
+  "admin": {
+    "labels": {
+      "email": "이메일"
+    }
   }
 }

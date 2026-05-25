@@ -480,5 +480,22 @@
     "confirm": {
       "delete": "\"{{name}}\" 아이템을 삭제하시겠습니까?"
     }
+  },
+  "common": {
+    "actions": {
+      "edit": "수정",
+      "delete": "삭제",
+      "cancel": "취소",
+      "save": "저장"
+    },
+    "messages": {
+      "pleaseSelect": "선택하세요"
+    },
+    "labels": {
+      "description": "설명",
+      "retry": "다시 시도",
+      "active": "활성",
+      "status": "상태"
+    }
   }
 }

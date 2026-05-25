@@ -547,5 +547,90 @@
     "footer": "본 이용약관은 2025년 1월 17일부터 시행됩니다."
   },
   "loading": "로딩 중...",
-  "cancel": "취소"
+  "cancel": "취소",
+  "common": {
+    "messages": {
+      "loading": "로딩 중...",
+      "pleaseSelect": "선택하세요",
+      "processingInline": "처리 중...",
+      "loadingData": "데이터를 불러오는 중..."
+    },
+    "actions": {
+      "save": "저장",
+      "edit": "수정",
+      "close": "닫기",
+      "refresh": "새로고침",
+      "delete": "삭제",
+      "prev": "이전",
+      "cancel": "취소",
+      "confirm": "확인",
+      "done": "완료"
+    },
+    "labels": {
+      "approved": "승인됨",
+      "consultant": "상담사",
+      "email": "이메일",
+      "all": "전체",
+      "client": "내담자",
+      "name": "이름",
+      "description": "설명",
+      "status": "상태",
+      "notification": "알림",
+      "schedule": "스케줄",
+      "retry": "다시 시도",
+      "today": "오늘",
+      "profile": "프로필",
+      "inProgress": "진행중",
+      "coupleConsultation": "부부상담",
+      "familyConsultation": "가족상담",
+      "cancelled": "취소됨",
+      "myPage": "마이페이지",
+      "active": "활성",
+      "inactive": "비활성",
+      "pending": "대기"
+    }
+  },
+  "admin": {
+    "actions": {
+      "editPgSettings": "PG 설정 수정",
+      "delete": "삭제",
+      "cancel": "취소",
+      "refresh": "새로고침",
+      "paymentConfirm": "결제 확인",
+      "view": "보기",
+      "viewAll": "전체 보기",
+      "viewDetail": "상세 보기",
+      "done": "완료"
+    },
+    "labels": {
+      "status": "상태",
+      "pgSettingsList": "PG 설정 목록",
+      "rejected": "거부됨",
+      "pgSettingsDetail": "PG 설정 상세",
+      "hide": "숨기기",
+      "systemManagement": "시스템 관리",
+      "message": "메시지",
+      "urgent": "긴급",
+      "notification": "알림",
+      "client": "내담자",
+      "paymentMethod": "결제 방법",
+      "matchingManagement": "매칭 관리",
+      "consultant": "상담사",
+      "all": "전체",
+      "systemSettings": "시스템 설정",
+      "userManagement": "사용자 관리",
+      "dashboard": "대시보드",
+      "mappingManagement": "매핑 관리",
+      "pending": "대기",
+      "today": "오늘",
+      "email": "이메일",
+      "other": "기타",
+      "waiting": "대기중"
+    },
+    "messages": {
+      "pleaseSelect": "선택하세요",
+      "noAccessPermission": "접근 권한이 없습니다.",
+      "pgApprovalManagement": "PG 설정 승인 관리"
+    }
+  }
 }

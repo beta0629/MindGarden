@@ -570,10 +570,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           </label>
           {selectedTemplate && selectedTemplate.solapiTemplateIdPresent === false && (
             <p className={`${FORM_CLASS}__hint ${FORM_CLASS}__hint--warn`} role="note">
-              {t(
-                'manualNotification.alimtalk.missingMappingHint',
-                "선택한 템플릿은 Solapi 실 templateId 매핑이 없어 발송이 차단됩니다. 공통코드 ALIMTALK_BIZ_TEMPLATE_CODE 에 매핑을 추가하거나, 위 '솔라피 전체 보기' 토글로 실제 등록된 templateId 를 선택해 주세요."
-              )}
+              {t('manualNotification.alimtalk.missingMappingHint')}
             </p>
           )}
           {selectedTemplate && selectedTemplate.content && (
@@ -683,10 +680,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
         isOpen={confirmStep === CONFIRM_STEP.STEP_1}
         onClose={closeConfirm}
         title={t('manualNotification.submit.confirmStep1Title')}
-        subtitle={t(
-          'manualNotification.submit.confirmStep1Subtitle',
-          "아래 정보를 확인하고 '다음'을 누르면 최종 확인 단계로 이동합니다."
-        )}
+        subtitle={t('manualNotification.submit.confirmStep1Subtitle')}
         size="medium"
         actions={(
           <>

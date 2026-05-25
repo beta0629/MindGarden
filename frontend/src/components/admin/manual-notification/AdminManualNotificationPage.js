@@ -66,10 +66,7 @@ const AdminManualNotificationPage = () => {
   }, []);
 
   const pageTitle = t('manualNotification.page.title', '수동 알림 발송');
-  const pageSubtitle = t(
-    'manualNotification.page.subtitle',
-    '어드민이 실제 사용자(최대 50명)에게 SMS·카카오 알림톡을 직접 발송합니다. 모든 발송 사유는 감사로그에 영구 기록됩니다.'
-  );
+  const pageSubtitle = t('manualNotification.page.subtitle');
 
   if (sessionLoading || !hasAccess) {
     return (

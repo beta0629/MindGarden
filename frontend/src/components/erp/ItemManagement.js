@@ -229,7 +229,7 @@ const ItemManagement = () => {
 
   const handleDeleteItem = async(item) => {
     const confirmed = await confirm({
-      message: t('erp:item.confirm.delete', '"{{name}}" 아이템을 삭제하시겠습니까?', { name: item.name }),
+      message: t('erp:item.confirm.delete', { name: item.name }),
       variant: 'danger'
     });
     if (!confirmed) {

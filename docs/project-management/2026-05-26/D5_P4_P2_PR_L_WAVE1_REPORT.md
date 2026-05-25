@@ -190,25 +190,124 @@ PATTERN_A = re.compile(
 
 ---
 
-## §3 commit-3 — Pattern-C 4 + Pattern-D 29 흡수 (placeholder)
+## §3 commit-3 — Pattern-C 4 + Pattern-D 29 흡수
 
-(commit-3 적용 후 갱신)
+### 3.1 codemod 정규식 (Pattern-C + Pattern-D 통합 + 엣지 케이스)
+
+```python
+# Pattern-C (single-line, mixed quotes)
+PATTERN_C = ... post-filter: 키-fallback 따옴표 타입 다름 AND single-line
+
+# Pattern-D (multiline + 엣지 케이스 흡수)
+PATTERN_D = ... post-filter: '\n' in match
+                         OR fallback contains internal quote char
+                         (commit-2 strict regex가 잡지 못한 사례)
+```
+
+치환 로직: commit-2 와 동일 (`t('$2')` 또는 `t('$2',`).
+
+### 3.2 commit-3 처리 결과 (전 frontend/src 스캔)
+
+| 파일 | C | D / 엣지 | 비고 |
+|---|---:|---:|---|
+| `admin/SystemConfigManagement.js` | **1** | 0 | mixed quote 1 |
+| `admin/manual-notification/ManualNotificationForm.js` | 0 | **2** | multiline 2 (alimtalk.missingMappingHint / submit.confirmStep1Subtitle) |
+| `admin/manual-notification/AdminManualNotificationPage.js` | 0 | **1** | multiline 1 (Wave-2 영역 파일이지만 commit-3 스윕 흡수) |
+| `admin/system/TestNotificationForm.js` | 0 | **1** | multiline 1 |
+| `admin/system/AdminTestNotificationPage.js` | 0 | **1** | multiline 1 (Wave-2 파일 흡수) |
+| `common/TermsOfService.js` | 0 | **5** | 엣지 (`'`-fallback 내부 `"` 문자 5건) |
+| `erp/ItemManagement.js` | 0 | **1** | 엣지 (Wave-2 파일 1건) |
+| **합계** | **1** | **11** | **12** |
+
+> **인벤토리 (P0-inv-c4 §1.1) 의 Pattern-C 4 / Pattern-D 29 vs 실측 1 / 11 격차**: 인벤토리 측정 시 `defaultValue` 옵션 객체 패턴 (Pattern-D 같지만 두 번째 positional 인자가 객체 — i18next options) 도 일부 포함되었을 가능성이 높음. 본 codemod 는 두 번째 positional 인자가 한국어 문자열인 경우만 흡수 — 회귀 0 보장.
+
+### 3.3 잔여 (commit-3 직후 전체 스캔)
+
+| Scope | 한국어 fallback t() | 파일 수 |
+|---|---:|---:|
+| Top-30 (Wave-1) | **0** | 0 |
+| Non-Top-30 (Wave-2) | **1,025** | 260 |
+| **전체** | **1,025** | **260** |
+
+Wave-1 Top-30 in-scope 흡수 완료 — 회귀 0.
+
+### 3.4 commit-3 게이트 매트릭스
+
+| 게이트 | 결과 |
+|---|---|
+| `npm run lint:codemod-mappings` (가드 1·2) | ✅ PASS (57/57) |
+| ESLint (변경 7 파일) | ✅ 0 error / 0 warning |
+| Production build (`cd frontend && npm run build`) | ✅ PASS |
+| Phase 1 정착물 무수정 | ✅ i18n/index.js 무변경 |
+| 키 정합성 audit (commit-3 modified 7 파일) | ✅ 10 unresolved 모두 사전 존재 `defaultValue` 옵션 패턴 (회귀 0) |
 
 ---
 
-## §4 KPI 갱신 (placeholder — commit-3 직후 측정)
+## §4 KPI 갱신 (Wave-1 정착 직후 측정)
+
+### 4.1 KPI 스냅샷 (post-commit-3)
+
+| KPI | Baseline (`c44a0082b`, P0-inv-c4) | Post-Wave-1 (`commit-3`) | Δ |
+|---|---:|---:|---:|
+| **한국어 라인 (excl-cmt, frontend/src/**)** | 20,481 | **17,979** | **−2,502** (−12.2%) |
+| t() with 한국어 fallback (Pattern-A/B/C/D 합계) | 2,852 | **1,025** | **−1,827** (−64.1%) |
+| ko.json leaf 키 총합 (9+5 namespace) | 3,244 (추정) | **3,725** | **+481** (시드 100%) |
+| t() 호출 라인 | (측정 없음) | **2,834** | — |
+| useTranslation 사용 파일 | (측정 없음) | **295** | — |
+| ko 신설 namespace | 9 | **14** | **+5** (manualNotification/terms/testNotification/systemConfig/smsTemplate) |
+
+### 4.2 §3 합의서 KPI 도달 평가
+
+| 측정 기준 | 현재 (post-Wave-1) | 목표 | 격차 | 도달 여부 |
+|---|---:|---:|---:|:---:|
+| 한국어 라인 (excl-cmt, src 전체) | **17,979** | ≤15,000 | **+2,979** | ❌ **미달 (120%)** |
+
+> P0-inv-c4 §5.2 예측치 (Pattern-A+B+C 제거 후 ~17,730) 와 실측 17,979 매우 근접 (격차 +249 = 0.4%). Wave-2 + PR-M (hardcoded literal · JSX text 흡수) 필요.
 
 ---
 
 ## §5 commit 식별자 + push 정착
 
-(commit 진행 시 SHA append)
+| commit | 메시지 요약 | SHA (local) | push 결과 |
+|---|---|---|---|
+| commit-1 | 시드 481 키 + 5 namespace 신설 + i18n 등록 | `ee458e0e7` | ✅ `766ee3580..ee458e0e7  develop -> develop` |
+| commit-2 | Top-30 Pattern-A codemod (1,786 fallback 제거) | `ca8faeacc` | ✅ `ee458e0e7..ca8faeacc  develop -> develop` |
+| commit-3 | Pattern-C 1 + Pattern-D 11 흡수 (엣지 포함) | (commit 직후 갱신) | (push 후 갱신) |
 
 ---
 
 ## §6 Wave-2 권고
 
-(Wave-1 정착 직후 갱신)
+### 6.1 잔여 1,025 fallback (260 파일) 분포 Top-30 (Wave-2 후속 Wave-1 분배 참조)
+
+| 순위 | 파일 | 잔여 |
+|---:|---|---:|
+| 1 | `auth/UnifiedLogin.js` | 29 |
+| 2 | `client/ClientSettings.js` | 29 |
+| 3 | `settings/UserSettings.js` | 26 |
+| 4 | `admin/VacationStatistics.js` | 26 |
+| 5 | `admin/onboarding/AdminOnboarding.jsx` | 26 |
+| 6 | `admin/PermissionManagement.js` | 24 |
+| 7 | `admin/AdminTenantSmsSettingsPage.js` | 23 |
+| 8 | `layout/SimpleHamburgerMenu.js` | 20 |
+| 9 | `admin/manual-notification/ManualNotificationBatchHistory.js` | 20 |
+| 10 | `admin/AdminKakaoAlimtalkSettingsPage.js` | 19 |
+| 11~30 | (잔여 상위) | ~290 |
+| 외 | (꼬리 230 파일) | ~530 |
+| **합계** | — | **1,025** |
+
+### 6.2 Wave-2 적용 권고
+
+1. **commit-A**: Wave-2 신규 누락 키 시드 (예상 ~150~200 키, 기존 9+5 namespace 확장 위주)
+2. **commit-B**: Wave-2 전체 260 파일 Pattern-A/C/D 일괄 codemod (Wave-1 검증된 정규식 재사용)
+3. **commit-C**: edge-case 흡수 + KPI 측정
+
+### 6.3 PR-M (5차 청크) 후속 권고
+
+Wave-2 적용 후 잔여 한국어 라인 ~16,950 (추정) — KPI ≤15,000 도달 위해 PR-M 필요:
+- hardcoded_string_literal 6,235 → 흡수 시 −2,000~3,000 라인
+- jsx_text_content 2,536 → 흡수 시 −1,000 라인
+- props_label_string 2,920 → 흡수 시 −800 라인
 
 ---
 

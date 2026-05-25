@@ -36,7 +36,7 @@ export const TermsOfServiceContent = ({ omitHeading = false }) => {
             {t('terms.section1.title')}
           </h2>
           <p className="mg-v2-terms-paragraph">
-            {t('terms.section1.body', '이 약관은 Core Solution(이하 "회사")이 제공하는 온라인 상담 서비스(이하 "서비스")를 이용함에 있어 회사와 이용자의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.')}
+            {t('terms.section1.body')}
           </p>
         </div>
 
@@ -46,10 +46,10 @@ export const TermsOfServiceContent = ({ omitHeading = false }) => {
           </h2>
           <p className="mg-v2-terms-paragraph">{t('terms.section2.intro')}</p>
           <ul className="mg-v2-terms-list">
-            <li><strong>{t('terms.section2.item1Label', '"서비스"')}</strong>{t('terms.section2.item1Body')}</li>
-            <li><strong>{t('terms.section2.item2Label', '"이용자"')}</strong>{t('terms.section2.item2Body')}</li>
-            <li><strong>{t('terms.section2.item3Label', '"회원"')}</strong>{t('terms.section2.item3Body')}</li>
-            <li><strong>{t('terms.section2.item4Label', '"상담사"')}</strong>{t('terms.section2.item4Body')}</li>
+            <li><strong>{t('terms.section2.item1Label')}</strong>{t('terms.section2.item1Body')}</li>
+            <li><strong>{t('terms.section2.item2Label')}</strong>{t('terms.section2.item2Body')}</li>
+            <li><strong>{t('terms.section2.item3Label')}</strong>{t('terms.section2.item3Body')}</li>
+            <li><strong>{t('terms.section2.item4Label')}</strong>{t('terms.section2.item4Body')}</li>
           </ul>
         </div>
 

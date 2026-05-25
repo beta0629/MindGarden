@@ -444,10 +444,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
       </label>
       {selectedTemplate && selectedTemplate.solapiTemplateIdPresent === false && (
         <p className="mg-test-notif-form__hint mg-test-notif-form__hint--warn">
-          {t(
-            'testNotification.alimtalk.missingMappingHint',
-            '선택한 템플릿은 Solapi 실 templateId 매핑이 없어 발송이 차단됩니다. 공통코드 ALIMTALK_BIZ_TEMPLATE_CODE 에 매핑을 추가하거나, 위 "솔라피 전체 보기" 토글로 실제 등록된 templateId 를 선택해 주세요.'
-          )}
+          {t('testNotification.alimtalk.missingMappingHint')}
         </p>
       )}
       {selectedTemplate && selectedTemplate.content && (

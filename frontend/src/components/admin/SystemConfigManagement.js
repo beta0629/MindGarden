@@ -423,7 +423,7 @@ const SystemConfigManagement = () => {
           <ContentArea>
             <ContentHeader
               title={t('systemConfig.pageTitle')}
-              subtitle={t('systemConfig.pageSubtitle', "웰니스 자동 발송 등 시스템 설정을 관리합니다. AI API 키·프로바이더 선택은 'AI 프로바이더 관리'로 이전되었습니다.")}
+              subtitle={t('systemConfig.pageSubtitle')}
               actions={
                 <MGButton
                   type="button"

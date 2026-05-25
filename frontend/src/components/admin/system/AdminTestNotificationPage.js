@@ -65,10 +65,7 @@ const AdminTestNotificationPage = () => {
   }, []);
 
   const pageTitle = t('testNotification.page.title', '알림 테스트 발송');
-  const pageSubtitle = t(
-    'testNotification.page.subtitle',
-    '어드민이 본인·DB 사용자에게 SMS·카카오 알림톡을 테스트 발송하여 운영 사고를 재현·예방합니다.'
-  );
+  const pageSubtitle = t('testNotification.page.subtitle');
 
   if (sessionLoading || !hasAccess) {
     return (

@@ -59,9 +59,11 @@ export const ERP_INCOME_EXPENSE_CHART_HEX = {
 /**
  * B0KlA 단계별 도넛 차트용 hex 색상 (5단계).
  * unified-design-tokens: teal-600, orange-400, purple-700, primary-600, slate-500.
+ * D11 P2-R: var(--mg-color-b0kla-teal-500) → var(--mg-color-b0kla-teal-500) 신설 흡수 (B0KlA palette teal accent).
+ * SSOT: docs/project-management/2026-05-26/D11_P1_DESIGN_HANDOFF.md §5 (B0KlA teal = (a) 신설 흡수).
  */
 export const B0KLA_STEP_CHART_HEX = [
-  '#0d9488',
+  'var(--mg-color-b0kla-teal-500)',
   '#fb923c',
   '#7c3aed',
   'var(--mg-color-info)',

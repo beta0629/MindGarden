@@ -422,7 +422,32 @@ const COLOR_MAPPING = {
   '#fcf3ed': 'var(--mg-color-b0kla-orange-50)',
   '#FCF3ED': 'var(--mg-color-b0kla-orange-50)',
   '#f0f5f9': 'var(--mg-color-b0kla-blue-50)',
-  '#F0F5F9': 'var(--mg-color-b0kla-blue-50)'
+  '#F0F5F9': 'var(--mg-color-b0kla-blue-50)',
+
+  // 2026 Q2 D11 §1.2 / §1.6 PR-R 라운드 매핑 (T-R2-Residue 신설 흡수 + T-B0KlA-Residue teal)
+  // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D11.md §1.2 + §1.6 + §3 P2-b/P2-c + §4 8건 컨펌,
+  //       docs/project-management/2026-05-26/D11_P0_INVENTORY.md §2 R-2 17건 + §5 B0KlA + §6 신설 토큰 후보,
+  //       docs/project-management/2026-05-26/D11_P1_DESIGN_HANDOFF.md §1 hex 결정표 (WCAG AA PASS) + §5 B0KlA teal.
+  // 라이트·다크 cascade 정착 확인 (unified-design-tokens.css §D11 §1.2/§1.6 블록):
+  //   --mg-color-primary-hover    : light #0056cc / dark #3b82f6 (Tailwind blue-500 변형, Normal Text 6.0/6.1:1 PASS)
+  //   --mg-color-border-accent    : light #8a8a8e / dark #71717a (Tailwind zinc-500, UI Component 3.1/3.3:1 PASS)
+  //   --mg-color-b0kla-teal-500   : light #0d9488 / dark #5eead4 (Tailwind teal-300, Non-text 3.1/11.5:1 PASS)
+  //
+  // P1 §1 hex 결정표 미세 조정 (라이트 border-accent #a1a1a6 → #8a8a8e, ΔE ≈ 3):
+  //   원본 인벤토리 hex `#a1a1a6` 도 동일 토큰으로 흡수 — gray-50 배경 위 AA 3:1 미충족 hex 를
+  //   AA 충족 hex 로 자동 정밀화. P1 endorsed (광역 1건, 시각 변화 미세).
+  //
+  // ⚠️ D10 §C7 HARD_EXCLUDE `#0d9488` 보존 의도는 D11 §1.6 (a) 결정으로 해제됨 —
+  //   teal 패밀리 부재 → 신설 흡수 (admin SSOT 시각 변화 LOW). 본 라운드 `bg-soft 50`
+  //   변형은 미신설 (P3 검수 후 D12 검토).
+  '#0056cc': 'var(--mg-color-primary-hover)',
+  '#0056CC': 'var(--mg-color-primary-hover)',
+  '#8a8a8e': 'var(--mg-color-border-accent)',
+  '#8A8A8E': 'var(--mg-color-border-accent)',
+  '#a1a1a6': 'var(--mg-color-border-accent)',
+  '#A1A1A6': 'var(--mg-color-border-accent)',
+  '#0d9488': 'var(--mg-color-b0kla-teal-500)',
+  '#0D9488': 'var(--mg-color-b0kla-teal-500)'
 };
 
 // RGB/RGBA 색상 매핑
@@ -767,10 +792,12 @@ const R2_MG_ALIAS_BC_SAFE_PAIRS = [
 //   - Group D (color-* legacy merge): §6.3.b legacy alias 통합 (광역)
 //
 // HARD_EXCLUDE 보존 (본 화이트리스트 의도적 제외 — SSOT: HARDCODE_GATE_METRIC.md §3):
-//   - `--ad-b0kla-green` + `#0d9488` (teal-600 변형, 1건) — teal 패밀리 부재, D11 P2-c B0KlA teal 신설 후보 (별도 PR-R 위임 책무)
 //   - `--ios-*-dark` 7쌍 — HARDCODE_GATE_METRIC.md §3.2 SSOT, D10 C8=a 다크 전용 시맨틱, iOS theme 재설계 이월
-//   - `--color-primary-hover` + `#0056cc` — D11 P2-b PR-R `--mg-color-primary-hover` 신설 흡수 책무 (별도 위임)
-//   - `--color-border-accent` + `#a1a1a6` — D11 P2-b PR-R `--mg-color-border-accent` 신설 흡수 책무 (별도 위임)
+//
+// ⚠️ D10 P2-c HOLD 해제 (D11 P2-R, 본 라운드):
+//   - `--color-primary-hover` + `#0056cc` → D11 §1.2 `--mg-color-primary-hover` 신설 흡수 (Group E 추가)
+//   - `--color-border-accent` + `#a1a1a6` → D11 §1.2 `--mg-color-border-accent` 신설 흡수 (Group E 추가)
+//   - `--ad-b0kla-green` + `#0d9488` → D11 §1.6 `--mg-color-b0kla-teal-500` 신설 흡수 (COLOR_MAPPING 경로)
 //
 // 본 화이트리스트에 없는 (token, hex) 쌍은 본 옵션 사용 시에도 절대 변환되지 않는다.
 const R2_OTHER_ALIAS_SAFE_PAIRS = [
@@ -846,7 +873,19 @@ const R2_OTHER_ALIAS_SAFE_PAIRS = [
   // Bootstrap danger-700 #c82333 → error-dark (1건, error-hover 시맨틱 → dark 통합)
   { tokenName: '--error-hover', hex: '#c82333', canonical: 'var(--mg-color-error-dark)' },
   // Bootstrap info-700 #138496 → info-dark #1e40af (1건, blue-800 시프트, P1 §C1 답습)
-  { tokenName: '--color-info-dark', hex: '#138496', canonical: 'var(--mg-color-info-dark)' }
+  { tokenName: '--color-info-dark', hex: '#138496', canonical: 'var(--mg-color-info-dark)' },
+
+  // ── Group E: D11 P2-R 신설 토큰 흡수 (T-R2-Residue HOLD 해제, 3건) ──────────────
+  // SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2_D11.md §1.2 + §3 P2-b/P2-c + §4 8건 컨펌,
+  //       docs/project-management/2026-05-26/D11_P0_INVENTORY.md §2 R-2 17건 + §6 신설 토큰 후보,
+  //       docs/project-management/2026-05-26/D11_P1_DESIGN_HANDOFF.md §1 hex 결정표 (WCAG AA PASS).
+  // D10 P2-c HOLD 였던 2쌍 (3건) 을 D11 신설 토큰으로 광역 흡수 — r2Protected 17 → 14.
+  // SSOT 정의: unified-design-tokens.css §D11 §1.2 블록 (라이트·다크 양방향 cascade)
+  //   --mg-color-primary-hover : light #0056cc / dark #3b82f6 (Tailwind blue-500 변형, Normal Text 6.x:1 PASS)
+  //   --mg-color-border-accent : light #8a8a8e / dark #71717a (Tailwind zinc-500, UI Component 3.x:1 PASS)
+  //     라이트 hex 미세 조정: 인벤토리 `#a1a1a6` → `#8a8a8e` (AA 3:1 충족, ΔE ≈ 3, P1 endorsed)
+  { tokenName: '--color-primary-hover', hex: '#0056cc', canonical: 'var(--mg-color-primary-hover)' },
+  { tokenName: '--color-border-accent', hex: '#a1a1a6', canonical: 'var(--mg-color-border-accent)' }
 ];
 
 function escapeRegexLiteral(s) {

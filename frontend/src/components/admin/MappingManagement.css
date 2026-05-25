@@ -23,7 +23,7 @@
     font-size: var(--font-size-xxl);
     font-weight: 700;
     color: var(--color-text-primary, var(--mg-color-text-main));
-    background: linear-gradient(135deg, var(--color-primary, var(--mg-primary-500)) 0%, var(--color-primary-hover, #0056CC) 100%);
+    background: linear-gradient(135deg, var(--color-primary, var(--mg-primary-500)) 0%, var(--mg-color-primary-hover) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -127,7 +127,7 @@
 }
 
 .mg-btn--primary:hover:not(:disabled) {
-    background-color: var(--color-primary-hover, #0056CC);
+    background-color: var(--mg-color-primary-hover);
     transform: translateY(-1px);
     box-shadow: var(--shadow-lg, 0 4px 12px rgba(0, 123, 255, 0.3));
 }

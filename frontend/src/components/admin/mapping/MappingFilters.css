@@ -79,7 +79,7 @@
 
 .mapping-filters-select:hover,
 .mapping-filters-input:hover {
-  border-color: var(--color-border-accent, #A1A1A6);
+  border-color: var(--mg-color-border-accent);
 }
 
 .mapping-filters-search-wrapper {

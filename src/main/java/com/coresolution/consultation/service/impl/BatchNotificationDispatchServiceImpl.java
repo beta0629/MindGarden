@@ -22,6 +22,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserPrivacyConsentRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
+import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
@@ -75,6 +76,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
     private final AlimtalkTemplateMappingResolver templateMappingResolver;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final BatchNotificationProperties properties;
+    private final SmsTemplateService smsTemplateService;
 
     @Override
     public DispatchOutcome dispatchReservationReminderD2(Long scheduleId) {
@@ -583,25 +585,8 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      * @return SMS 본문
      */
     private String buildSmsBodyForReservation(String templateCode, Map<String, String> params) {
-        String consultantName = params.getOrDefault(BatchNotificationTemplateCodes.VAR_CONSULTANT_NAME,
-            BatchNotificationTemplateCodes.FALLBACK_CONSULTANT_NAME);
-        String scheduleDate = params.getOrDefault(BatchNotificationTemplateCodes.VAR_SCHEDULE_DATE, "");
-        String scheduleTime = params.getOrDefault(BatchNotificationTemplateCodes.VAR_SCHEDULE_TIME, "");
-
-        if (BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2.equals(templateCode)) {
-            return String.format(
-                "%s %s 상담 예약 안내입니다. (%s 상담사) 변경/취소 시 미리 연락 부탁드립니다.",
-                scheduleDate, scheduleTime, consultantName);
-        }
-        if (BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE.equals(templateCode)) {
-            return String.format(
-                "상담 예약 확정: %s %s (%s 상담사). 편안하게 오시기 바랍니다.",
-                scheduleDate, scheduleTime, consultantName);
-        }
-        // RESERVATION_IMMEDIATE_LATE
-        return String.format(
-            "상담 예약 확정: %s %s (%s 상담사). 예약일이 임박하니 일정 확인 부탁드립니다.",
-            scheduleDate, scheduleTime, consultantName);
+        Map<String, String> vars = ensureFallbackConsultantName(params);
+        return renderSmsBody(templateCode, vars);
     }
 
     /**
@@ -611,11 +596,8 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      * @return SMS 본문
      */
     private String buildSmsBodySessionEndingSoon(Map<String, String> params) {
-        String consultantName = params.getOrDefault(BatchNotificationTemplateCodes.VAR_CONSULTANT_NAME,
-            BatchNotificationTemplateCodes.FALLBACK_CONSULTANT_NAME);
-        return String.format(
-            "패키지 마지막 1회기가 남았습니다. (%s 상담사) 좋은 마무리 되시길 바랍니다.",
-            consultantName);
+        Map<String, String> vars = ensureFallbackConsultantName(params);
+        return renderSmsBody(BatchNotificationTemplateCodes.SESSION_ENDING_SOON, vars);
     }
 
     /**
@@ -625,7 +607,8 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      * @return SMS 본문
      */
     private String buildSmsBodySessionRenew(Map<String, String> params) {
-        return "그동안 상담 함께해 주셔서 감사합니다. 추가 상담이 필요하시면 언제든 연락 주세요. (수신거부:080-XXX-XXXX)";
+        return renderSmsBody(BatchNotificationTemplateCodes.SESSION_RENEW_PROMPT,
+            params != null ? params : new HashMap<>());
     }
 
     /**
@@ -635,15 +618,14 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      * @return SMS 본문
      */
     private String buildSmsBodyClientWelcome(Map<String, String> params) {
-        String clientName = params.getOrDefault(BatchNotificationTemplateCodes.VAR_CLIENT_NAME,
-            BatchNotificationTemplateCodes.FALLBACK_CLIENT_NAME);
-        String consultantName = params.getOrDefault(BatchNotificationTemplateCodes.VAR_CONSULTANT_NAME,
-            BatchNotificationTemplateCodes.FALLBACK_CONSULTANT_NAME);
-        String contactPhone = params.getOrDefault(BatchNotificationTemplateCodes.VAR_CONTACT_PHONE,
-            BatchNotificationTemplateCodes.FALLBACK_CONTACT_PHONE);
-        return String.format(
-            "%s님, 마인드가든에 오신 것을 환영합니다. %s 상담사와 함께 시작합니다. 문의: %s",
-            clientName, consultantName, contactPhone);
+        Map<String, String> vars = new HashMap<>(params != null ? params : new HashMap<>());
+        vars.computeIfAbsent(BatchNotificationTemplateCodes.VAR_CLIENT_NAME,
+            k -> BatchNotificationTemplateCodes.FALLBACK_CLIENT_NAME);
+        vars.computeIfAbsent(BatchNotificationTemplateCodes.VAR_CONSULTANT_NAME,
+            k -> BatchNotificationTemplateCodes.FALLBACK_CONSULTANT_NAME);
+        vars.computeIfAbsent(BatchNotificationTemplateCodes.VAR_CONTACT_PHONE,
+            k -> BatchNotificationTemplateCodes.FALLBACK_CONTACT_PHONE);
+        return renderSmsBody(BatchNotificationTemplateCodes.CLIENT_WELCOME_FIRST, vars);
     }
 
     /**
@@ -653,13 +635,8 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      * @return SMS 본문
      */
     private String buildSmsBodyInitialGuideOffline(Map<String, String> params) {
-        String scheduleDate = params.getOrDefault(BatchNotificationTemplateCodes.VAR_SCHEDULE_DATE, "");
-        String scheduleTime = params.getOrDefault(BatchNotificationTemplateCodes.VAR_SCHEDULE_TIME, "");
-        String consultantName = params.getOrDefault(BatchNotificationTemplateCodes.VAR_CONSULTANT_NAME,
-            BatchNotificationTemplateCodes.FALLBACK_CONSULTANT_NAME);
-        return String.format(
-            "첫 상담: %s %s (%s 상담사). 15분 전 도착 권장, 변경 시 24h 전 연락 부탁드립니다.",
-            scheduleDate, scheduleTime, consultantName);
+        return renderSmsBody(BatchNotificationTemplateCodes.INITIAL_GUIDE_OFFLINE,
+            ensureFallbackConsultantName(params));
     }
 
     /**
@@ -669,13 +646,93 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      * @return SMS 본문
      */
     private String buildSmsBodyInitialGuideOnline(Map<String, String> params) {
-        String scheduleDate = params.getOrDefault(BatchNotificationTemplateCodes.VAR_SCHEDULE_DATE, "");
-        String scheduleTime = params.getOrDefault(BatchNotificationTemplateCodes.VAR_SCHEDULE_TIME, "");
-        String consultantName = params.getOrDefault(BatchNotificationTemplateCodes.VAR_CONSULTANT_NAME,
+        return renderSmsBody(BatchNotificationTemplateCodes.INITIAL_GUIDE_ONLINE,
+            ensureFallbackConsultantName(params));
+    }
+
+    /**
+     * SMS_TEMPLATE 공통코드(테넌트 override → 글로벌 fallback) 본문을 변수 치환하여 반환한다.
+     *
+     * <p>row 미존재 또는 빈 본문 → 코드 fallback (방어적). 본 fallback 은 운영 시드 누락 시
+     * 발송이 0건이 되는 사고를 막기 위한 안전망이며, 정상 운영에서는
+     * {@code V20260529_004__seed_sms_templates.sql} 시드를 통해 항상 적중한다.
+     *
+     * @param templateCode {@link BatchNotificationTemplateCodes} 8종 중 1
+     * @param variables    named 변수 매핑(불변 가능)
+     * @return SMS 본문 (절대 null 이 아님)
+     */
+    private String renderSmsBody(String templateCode, Map<String, String> variables) {
+        String tenantId = TenantContextHolder.getTenantId();
+        try {
+            Optional<String> rendered = smsTemplateService.renderForType(
+                templateCode, tenantId, variables, null);
+            if (rendered.isPresent()) {
+                return rendered.get();
+            }
+        } catch (Exception e) {
+            log.warn("SMS_TEMPLATE 렌더링 실패 — 코드 fallback 사용: code={}, err={}",
+                templateCode, e.getMessage());
+        }
+        return staticFallbackSmsBody(templateCode, variables);
+    }
+
+    /**
+     * 시드 미적용 환경 안전망 — DB 화 이전 본문과 동일한 문구를 반환한다.
+     * 운영에서는 시드 적용 후 사용되지 않는다.
+     *
+     * @param templateCode 템플릿 코드
+     * @param vars         변수 매핑
+     * @return SMS 본문
+     */
+    private String staticFallbackSmsBody(String templateCode, Map<String, String> vars) {
+        Map<String, String> safe = vars != null ? vars : new HashMap<>();
+        String consultant = safe.getOrDefault(BatchNotificationTemplateCodes.VAR_CONSULTANT_NAME,
             BatchNotificationTemplateCodes.FALLBACK_CONSULTANT_NAME);
-        return String.format(
-            "첫 상담: %s %s (%s 상담사). 10분 전 접속 권장, 화상 링크는 알림톡을 참고해 주세요.",
-            scheduleDate, scheduleTime, consultantName);
+        String scheduleDate = safe.getOrDefault(BatchNotificationTemplateCodes.VAR_SCHEDULE_DATE, "");
+        String scheduleTime = safe.getOrDefault(BatchNotificationTemplateCodes.VAR_SCHEDULE_TIME, "");
+        if (BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2.equals(templateCode)) {
+            return String.format("%s %s 상담 예약 안내입니다. (%s 상담사) 변경/취소 시 미리 연락 부탁드립니다.",
+                scheduleDate, scheduleTime, consultant);
+        }
+        if (BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE.equals(templateCode)) {
+            return String.format("상담 예약 확정: %s %s (%s 상담사). 편안하게 오시기 바랍니다.",
+                scheduleDate, scheduleTime, consultant);
+        }
+        if (BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE.equals(templateCode)) {
+            return String.format("상담 예약 확정: %s %s (%s 상담사). 예약일이 임박하니 일정 확인 부탁드립니다.",
+                scheduleDate, scheduleTime, consultant);
+        }
+        if (BatchNotificationTemplateCodes.SESSION_ENDING_SOON.equals(templateCode)) {
+            return String.format("패키지 마지막 1회기가 남았습니다. (%s 상담사) 좋은 마무리 되시길 바랍니다.",
+                consultant);
+        }
+        if (BatchNotificationTemplateCodes.SESSION_RENEW_PROMPT.equals(templateCode)) {
+            return "그동안 상담 함께해 주셔서 감사합니다. 추가 상담이 필요하시면 언제든 연락 주세요. (수신거부:080-XXX-XXXX)";
+        }
+        if (BatchNotificationTemplateCodes.CLIENT_WELCOME_FIRST.equals(templateCode)) {
+            String client = safe.getOrDefault(BatchNotificationTemplateCodes.VAR_CLIENT_NAME,
+                BatchNotificationTemplateCodes.FALLBACK_CLIENT_NAME);
+            String contact = safe.getOrDefault(BatchNotificationTemplateCodes.VAR_CONTACT_PHONE,
+                BatchNotificationTemplateCodes.FALLBACK_CONTACT_PHONE);
+            return String.format("%s님, 마인드가든에 오신 것을 환영합니다. %s 상담사와 함께 시작합니다. 문의: %s",
+                client, consultant, contact);
+        }
+        if (BatchNotificationTemplateCodes.INITIAL_GUIDE_OFFLINE.equals(templateCode)) {
+            return String.format("첫 상담: %s %s (%s 상담사). 15분 전 도착 권장, 변경 시 24h 전 연락 부탁드립니다.",
+                scheduleDate, scheduleTime, consultant);
+        }
+        if (BatchNotificationTemplateCodes.INITIAL_GUIDE_ONLINE.equals(templateCode)) {
+            return String.format("첫 상담: %s %s (%s 상담사). 10분 전 접속 권장, 화상 링크는 알림톡을 참고해 주세요.",
+                scheduleDate, scheduleTime, consultant);
+        }
+        return "";
+    }
+
+    private Map<String, String> ensureFallbackConsultantName(Map<String, String> params) {
+        Map<String, String> vars = new HashMap<>(params != null ? params : new HashMap<>());
+        vars.computeIfAbsent(BatchNotificationTemplateCodes.VAR_CONSULTANT_NAME,
+            k -> BatchNotificationTemplateCodes.FALLBACK_CONSULTANT_NAME);
+        return vars;
     }
 
     /**

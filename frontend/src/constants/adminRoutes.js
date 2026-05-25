@@ -52,6 +52,8 @@ export const ADMIN_ROUTES = {
     TEST_NOTIFICATION: '/admin/test-notification',
     /** 어드민 SMS·카카오 알림톡 수동 일괄 발송 도구 (최대 50명, 감사로그 필수 — P1.3) */
     MANUAL_NOTIFICATION: '/admin/manual-notification',
+    /** 트랜잭션 SMS 템플릿 관리 (글로벌 + 테넌트 override) */
+    SMS_TEMPLATES: '/admin/sms-templates',
     /** PG 설정 승인(운영) — 백엔드 `OpsPermissionUtils.requireAdminOrOps()` 정합; STAFF 제외 */
     PG_OPS_APPROVAL: '/admin/ops/pg-approval',
     /** @deprecated redirect to NOTIFICATIONS */

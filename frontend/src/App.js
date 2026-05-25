@@ -69,6 +69,7 @@ const AdminKakaoAlimtalkSettingsPage = lazy(() => import('./components/admin/Adm
 const AdminTenantSmsSettingsPage = lazy(() => import('./components/admin/AdminTenantSmsSettingsPage'));
 const AdminTestNotificationPage = lazy(() => import('./components/admin/system/AdminTestNotificationPage'));
 const AdminManualNotificationPage = lazy(() => import('./components/admin/manual-notification/AdminManualNotificationPage'));
+const SmsTemplateManagementPage = lazy(() => import('./components/admin/sms-templates/SmsTemplateManagementPage'));
 import UnifiedNotification from './components/common/UnifiedNotification';
 import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
@@ -803,6 +804,11 @@ function AppContent() {
             <Route path={ADMIN_ROUTES.MANUAL_NOTIFICATION} element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
                 <AdminManualNotificationPage />
+              </ProtectedRoute>
+            } />
+            <Route path={ADMIN_ROUTES.SMS_TEMPLATES} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <SmsTemplateManagementPage />
               </ProtectedRoute>
             } />
             <Route path={ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS} element={

@@ -17,6 +17,7 @@ import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.SmsAuthService;
+import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.service.TenantKakaoAlimtalkSettingsService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
@@ -54,6 +55,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final CommonCodeRepository commonCodeRepository;
     private final CommonCodeService commonCodeService;
     private final SmsAuthService smsAuthService;
+    private final SmsTemplateService smsTemplateService;
     private final EmailService emailService;
     private final AlertRepository alertRepository;
     private final PersonalDataEncryptionUtil encryptionUtil;
@@ -355,45 +357,50 @@ public class NotificationServiceImpl implements NotificationService {
     }
     
     /**
-     * SMS 메시지 구성 (공통 코드 기반).
+     * SMS 메시지 구성 (DB 템플릿 기반).
      *
-     * <p>SMS_TEMPLATE 공통코드(테넌트 → 코어 fallback) 에서 {@code type.name()} 에 매칭되는
-     * row 가 있으면 그 본문을 변수 치환하여 반환한다. row 가 없으면 의미 없는 fallback 본문을
-     * 발송하지 않도록 {@code null} 을 반환한다 — 호출자는 SMS 채널을 skip 하고 다음 채널을 시도해야 한다.
+     * <p>{@link SmsTemplateService} 가 SMS_TEMPLATE 공통코드(테넌트 override → 글로벌)
+     * 에서 {@code type.name()} 키에 매칭되는 본문을 조회하고 named 변수
+     * ({@code {{varName}}}) + positional ({@code {0}}) 자리표시자를 모두 치환한다.
+     * row 가 없으면 의미 없는 fallback 본문을 발송하지 않도록 {@code null} 을 반환하여
+     * 호출자가 SMS 채널을 skip 하도록 한다(2026-05-23 핫픽스 정책 보존).
      *
      * @param type   알림 유형
-     * @param params 변수 치환 인자
+     * @param params 변수 치환 인자 (positional, 레거시 호환)
      * @return SMS 본문, 또는 SMS_TEMPLATE 미시드 시 {@code null}
      */
     private String buildSmsMessage(NotificationType type, String[] params) {
         try {
-            // 공통 코드에서 SMS 템플릿 조회 (테넌트별)
             String tenantId = TenantContextHolder.getTenantId();
-            List<CommonCode> smsCodes = tenantId != null 
-                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(tenantId, "SMS_TEMPLATE")
-                : commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("SMS_TEMPLATE");
-            
-            for (CommonCode code : smsCodes) {
-                if (type.name().equals(code.getCodeValue())) {
-                    String template = code.getCodeLabel();
-                    
-                    // 파라미터 치환 (간단한 순서 기반)
-                    for (int i = 0; i < params.length; i++) {
-                        template = template.replace("{" + i + "}", params[i]);
-                    }
-                    
-                    return template;
-                }
+            Map<String, String> variables = buildSmsTemplateVariables(type, params);
+            Optional<String> rendered = smsTemplateService.renderForType(
+                    type.name(), tenantId, variables, params);
+            if (rendered.isPresent()) {
+                return rendered.get();
             }
         } catch (Exception e) {
-            log.error("SMS 템플릿 조회 실패", e);
+            log.error("SMS 템플릿 조회 실패: type={}", type.name(), e);
         }
-        
-        // SMS_TEMPLATE 공통코드 미발견 시 의미 없는 fallback 발송 차단(2026-05-23 라운드).
-        // 호출자(dispatchByResolvedChannelOrder)가 null 체크 후 SMS 채널 skip → 다음 채널 시도.
-        // 알림톡 검수 통과 후 자연 해소되며, SMS_TEMPLATE 시드는 디자이너 카피 확정 후 별도 위임으로 보강한다.
-        log.warn("SMS_TEMPLATE 공통코드 미발견: type={} → SMS 폴백 skip", type.name());
+
+        // SMS_TEMPLATE 미시드 / 본문 비어있음 — 의미 없는 fallback 발송 차단.
+        // 호출자(dispatchByResolvedChannelOrder) 가 null 체크 후 SMS 채널 skip → 다음 채널 시도.
+        log.warn("SMS_TEMPLATE 미발견 또는 빈 본문: type={} → SMS 폴백 skip", type.name());
         return null;
+    }
+
+    /**
+     * NotificationType 별 String[] params 를 named 변수 map 으로 변환한다.
+     *
+     * <p>알림톡 변수명({@link #buildAlimTalkParams(NotificationType, String[])})과 동일한
+     * 키 네이밍을 사용하여, SMS 템플릿 본문을 알림톡과 동일한 변수로 작성할 수 있게 한다.
+     *
+     * @param type   알림 유형
+     * @param params positional 인자 배열
+     * @return named 변수 map (positional 자리표시자도 호환을 위해 함께 적용된다)
+     */
+    private Map<String, String> buildSmsTemplateVariables(NotificationType type, String[] params) {
+        // 알림톡 변수 매핑과 동일한 named 키를 재사용 — SMS 본문에 {{consultantName}} 등 사용 가능.
+        return buildAlimTalkParams(type, params);
     }
     
     /**

@@ -93,6 +93,8 @@ class BatchNotificationDispatchServiceImplTest {
     private AlimtalkTemplateMappingResolver templateMappingResolver;
     @Mock
     private PersonalDataEncryptionUtil encryptionUtil;
+    @Mock
+    private com.coresolution.consultation.service.SmsTemplateService smsTemplateService;
 
     private BatchNotificationProperties properties;
     private BatchNotificationDispatchServiceImpl service;
@@ -105,7 +107,8 @@ class BatchNotificationDispatchServiceImplTest {
         service = new BatchNotificationDispatchServiceImpl(
             scheduleRepository, mappingRepository, userRepository,
             userPrivacyConsentRepository, sendLogRepository, sendLogger,
-            dispatchHelper, templateMappingResolver, encryptionUtil, properties);
+            dispatchHelper, templateMappingResolver, encryptionUtil, properties,
+            smsTemplateService);
 
         TenantContext.setTenantId(TENANT_ID);
 

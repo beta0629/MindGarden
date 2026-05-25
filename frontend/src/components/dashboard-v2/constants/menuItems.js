@@ -80,6 +80,7 @@ const DEFAULT_MENU_ITEMS = [
       { to: ADMIN_ROUTES.TENANT_SMS_SETTINGS, icon: 'MESSAGE_SQUARE', label: '문자 메시지(SMS)', end: true },
       { to: ADMIN_ROUTES.TEST_NOTIFICATION, icon: 'BELL', label: '알림 테스트 발송', end: true },
       { to: ADMIN_ROUTES.MANUAL_NOTIFICATION, icon: 'MEGAPHONE', label: '수동 알림 발송', end: true },
+      { to: ADMIN_ROUTES.SMS_TEMPLATES, icon: 'FILE_TEXT', label: 'SMS 템플릿 관리', end: true },
       { to: ADMIN_ROUTES.PG_OPS_APPROVAL, icon: 'SHIELD_CHECK', label: 'PG 승인(운영)', end: true },
       { to: '/admin/compliance', icon: 'FILE_TEXT', label: '컴플라이언스', end: true }
     ]

@@ -1,0 +1,253 @@
+/**
+ * SmsTemplateManagementPage 전용 스타일.
+ * 디자인 토큰 SSOT(unified-design-tokens.css) 만 사용한다 — 색·공간·반경 하드코딩 금지.
+ *
+ * @author MindGarden
+ * @since 2026-05-29
+ */
+
+.mg-admin-sms-template {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+}
+
+.mg-admin-sms-template__panel {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--spacing-md);
+}
+
+.mg-admin-sms-template__grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 2fr;
+  gap: var(--spacing-md);
+}
+
+@media (max-width: 960px) {
+  .mg-admin-sms-template__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mg-admin-sms-template__list {
+  border-right: 1px solid var(--color-border-light);
+  padding-right: var(--spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.mg-admin-sms-template__filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.mg-admin-sms-template__search,
+.mg-admin-sms-template__filter {
+  width: 100%;
+  padding: var(--spacing-xs);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--font-size-sm, 0.875rem);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+.mg-admin-sms-template__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.mg-admin-sms-template__empty {
+  padding: var(--spacing-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.mg-admin-sms-template__item {
+  display: flex;
+}
+
+.mg-admin-sms-template__item-button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-text-primary);
+  transition: background-color 0.2s ease;
+}
+
+.mg-admin-sms-template__item-button:hover {
+  background: var(--color-bg-secondary);
+}
+
+.mg-admin-sms-template__item--selected .mg-admin-sms-template__item-button {
+  border-color: var(--color-primary, var(--color-primary-main));
+  background: var(--color-bg-secondary);
+}
+
+.mg-admin-sms-template__item-label {
+  font-weight: var(--font-weight-medium, 500);
+  font-size: var(--font-size-md, 0.95rem);
+}
+
+.mg-admin-sms-template__item-key {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-muted);
+}
+
+.mg-admin-sms-template__item-badge {
+  font-size: var(--font-size-xs, 0.75rem);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--color-primary-light, var(--color-bg-secondary));
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-default);
+}
+
+.mg-admin-sms-template__editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.mg-admin-sms-template__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  color: var(--color-text-muted);
+  border: 1px dashed var(--color-border-default);
+  border-radius: var(--radius-sm, 4px);
+}
+
+.mg-admin-sms-template__editor-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.mg-admin-sms-template__editor-title {
+  margin: 0;
+  font-size: var(--font-size-lg, 1.125rem);
+}
+
+.mg-admin-sms-template__editor-description {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.mg-admin-sms-template__editor-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.mg-admin-sms-template__editor-section-title {
+  margin: 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.mg-admin-sms-template__global-content {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm, 4px);
+  padding: var(--spacing-sm);
+  white-space: pre-wrap;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.mg-admin-sms-template__tenant-content {
+  width: 100%;
+  resize: vertical;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm, 4px);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+.mg-admin-sms-template__hint {
+  margin: 0;
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-muted);
+}
+
+.mg-admin-sms-template__variables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-xs);
+}
+
+.mg-admin-sms-template__variable-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.mg-admin-sms-template__variable-name {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-secondary);
+}
+
+.mg-admin-sms-template__variable-input {
+  padding: var(--spacing-xs);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--font-size-sm, 0.875rem);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+.mg-admin-sms-template__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.mg-admin-sms-template__preview-output {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm, 4px);
+  padding: var(--spacing-sm);
+  white-space: pre-wrap;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.mg-admin-sms-template__preview-meta {
+  margin: 0;
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-secondary);
+}
+
+.mg-admin-sms-template__preview-missing {
+  margin: 0;
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-secondary);
+}

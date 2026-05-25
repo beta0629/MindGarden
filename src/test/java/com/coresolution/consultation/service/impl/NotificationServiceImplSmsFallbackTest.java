@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.NotificationChannelPreferenceCode;
 import com.coresolution.consultation.constant.NotificationPhysicalChannel;
-import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.AlertRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
@@ -19,8 +18,8 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
 import com.coresolution.consultation.service.NotificationService.NotificationPriority;
-import com.coresolution.consultation.service.NotificationService.NotificationType;
 import com.coresolution.consultation.service.SmsAuthService;
+import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.service.TenantKakaoAlimtalkSettingsService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
@@ -58,6 +57,8 @@ class NotificationServiceImplSmsFallbackTest {
     @Mock
     private SmsAuthService smsAuthService;
     @Mock
+    private SmsTemplateService smsTemplateService;
+    @Mock
     private EmailService emailService;
     @Mock
     private AlertRepository alertRepository;
@@ -83,8 +84,9 @@ class NotificationServiceImplSmsFallbackTest {
             .thenReturn(List.of(NotificationPhysicalChannel.KAKAO, NotificationPhysicalChannel.SMS));
         when(kakaoAlimTalkService.sendAlimTalk(anyString(), anyString(), anyString(), any())).thenReturn(false);
         when(smsAuthService.sendNotificationMessage(anyString(), anyString())).thenReturn(true);
-        when(commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(eq(TENANT_ID), eq("SMS_TEMPLATE")))
-            .thenReturn(List.of());
+        // SmsTemplateService 가 SSOT — DB 시드 미존재 시 빈 Optional → buildSmsMessage null → SMS skip.
+        when(smsTemplateService.renderForType(anyString(), nullable(String.class), any(), any()))
+            .thenReturn(java.util.Optional.empty());
     }
 
     @AfterEach
@@ -96,7 +98,7 @@ class NotificationServiceImplSmsFallbackTest {
     @DisplayName("Task 8 — SMS_TEMPLATE row 부재 시 SMS 발송 skip (의미 없는 fallback 차단)")
     void sendPaymentCompleted_whenSmsTemplateMissing_skipsSms() {
         User user = userWithPhone();
-        // setTenant 에서 SMS_TEMPLATE 조회를 빈 리스트로 mock — row 미시드 시나리오.
+        // setTenant 에서 SmsTemplateService.renderForType 가 Optional.empty 를 반환 — row 미시드 시나리오.
 
         notificationService.sendPaymentCompleted(user, 500_000L, "10회 패키지", "김상담");
 
@@ -105,12 +107,11 @@ class NotificationServiceImplSmsFallbackTest {
     }
 
     @Test
-    @DisplayName("Task 8 회귀 — SMS_TEMPLATE row 존재 시 SMS 정상 발송 + 본문 [마인드가든] prefix 미포함")
+    @DisplayName("Task 8 회귀 — SMS_TEMPLATE row 존재 시 SMS 정상 발송 (named 변수 + positional 호환)")
     void sendPaymentCompleted_whenSmsTemplateExists_sendsSms() {
         User user = userWithPhone();
-        when(commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(eq(TENANT_ID), eq("SMS_TEMPLATE")))
-            .thenReturn(List.of(buildSmsTemplate(NotificationType.PAYMENT_COMPLETED,
-                "결제가 완료되었습니다. 금액 {0}원, 패키지 {1}, 상담사 {2}")));
+        when(smsTemplateService.renderForType(eq("PAYMENT_COMPLETED"), eq(TENANT_ID), any(), any()))
+            .thenReturn(java.util.Optional.of("결제가 완료되었습니다. 금액 500,000원, 패키지 10회 패키지, 상담사 김상담"));
 
         notificationService.sendPaymentCompleted(user, 500_000L, "10회 패키지", "김상담");
 
@@ -129,14 +130,5 @@ class NotificationServiceImplSmsFallbackTest {
         user.setPhone("cipher-phone");
         when(encryptionUtil.decrypt("cipher-phone")).thenReturn("01000000000");
         return user;
-    }
-
-    private CommonCode buildSmsTemplate(NotificationType type, String template) {
-        CommonCode code = new CommonCode();
-        code.setTenantId(TENANT_ID);
-        code.setCodeGroup("SMS_TEMPLATE");
-        code.setCodeValue(type.name());
-        code.setCodeLabel(template);
-        return code;
     }
 }

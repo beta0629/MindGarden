@@ -7,6 +7,7 @@ import com.coresolution.core.service.SchedulerExecutionLogService;
 import com.coresolution.core.service.statistics.StatisticsMetadataService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -48,8 +49,17 @@ public class StatisticsGenerationScheduler {
     /**
      * 매일 새벽 1시에 전날 통계 자동 생성 (테넌트별 독립 실행)
      * Cron: 매일 자정 1분 후
+     *
+     * <p>핫픽스 (2026-05-25, N1): blue/green 양 슬롯이 동일 통계 행을 동시에 갱신해
+     * {@code @Version} 낙관적 락 충돌({@code StaleStateException})을 일으키는 문제를
+     * 차단하기 위해 ShedLock 분산 락 적용. 한 슬롯만 실행되고 다른 슬롯은 skip 된다.</p>
      */
     @Scheduled(cron = "${scheduler.statistics-generation.cron:0 1 0 * * *}")
+    @SchedulerLock(
+        name = "statistics-generation-daily",
+        lockAtMostFor = "PT30M",
+        lockAtLeastFor = "PT5M"
+    )
     public void generateDailyStatistics() {
         String executionId = UUID.randomUUID().toString();
         LocalDateTime startTime = LocalDateTime.now();
@@ -128,8 +138,18 @@ public class StatisticsGenerationScheduler {
     /**
      * 매시간 정각에 실시간 통계 캐시 갱신 (선택적)
      * Cron: 매시간 정각
+     *
+     * <p>핫픽스 (2026-05-25, N1): blue/green 양 슬롯에서 매 시각 정시(HH:00)에 동시 실행되어
+     * {@code statistics_values} 동일 행 UPDATE 시 {@code StaleStateException}이 발생하던 문제를
+     * ShedLock 분산 락으로 차단한다. 한 슬롯만 실행되고 다른 슬롯은 skip 된다.
+     * (운영 진단: 2026-05-25 07:00·12:00 {@code StaleStateException} 다수 관측)</p>
      */
     @Scheduled(cron = "0 0 * * * ?")
+    @SchedulerLock(
+        name = "statistics-generation-hourly",
+        lockAtMostFor = "PT10M",
+        lockAtLeastFor = "PT2M"
+    )
     public void refreshRealtimeStatistics() {
         log.debug("🔄 [StatisticsGeneration] 실시간 통계 캐시 갱신 시작");
         

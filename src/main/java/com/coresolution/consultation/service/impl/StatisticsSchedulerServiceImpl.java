@@ -10,6 +10,7 @@ import com.coresolution.consultation.service.PlSqlStatisticsService;
 import com.coresolution.consultation.service.StatisticsSchedulerService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.TenantService;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -39,9 +40,16 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
      * 일별 통계 자동 업데이트 스케줄러
      /**
      * 매일 자정 1분 후 실행 (cron: 0 1 0 * * *)
+     *
+     * <p>핫픽스 (2026-05-25, N1): blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 적용.</p>
      */
     @Override
     @Scheduled(cron = "0 1 0 * * *")
+    @SchedulerLock(
+        name = "statistics-scheduler-daily-update",
+        lockAtMostFor = "PT30M",
+        lockAtLeastFor = "PT5M"
+    )
     public void scheduleDailyStatisticsUpdate() {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         LocalDateTime startTime = LocalDateTime.now();
@@ -97,9 +105,16 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
      * 상담사 성과 자동 업데이트 스케줄러
      /**
      * 매일 자정 3분 후 실행 (cron: 0 3 0 * * *)
+     *
+     * <p>핫픽스 (2026-05-25, N1): blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 적용.</p>
      */
     @Override
     @Scheduled(cron = "0 3 0 * * *")
+    @SchedulerLock(
+        name = "statistics-scheduler-consultant-performance",
+        lockAtMostFor = "PT30M",
+        lockAtLeastFor = "PT5M"
+    )
     public void scheduleConsultantPerformanceUpdate() {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         LocalDateTime startTime = LocalDateTime.now();
@@ -155,9 +170,16 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
      * 성과 모니터링 자동 실행 스케줄러
      /**
      * 매일 자정 5분 후 실행 (cron: 0 5 0 * * *)
+     *
+     * <p>핫픽스 (2026-05-25, N1): blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 적용.</p>
      */
     @Override
     @Scheduled(cron = "0 5 0 * * *")
+    @SchedulerLock(
+        name = "statistics-scheduler-performance-monitoring",
+        lockAtMostFor = "PT30M",
+        lockAtLeastFor = "PT5M"
+    )
     public void schedulePerformanceMonitoring() {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         LocalDateTime startTime = LocalDateTime.now();

@@ -40,6 +40,12 @@ import org.mockito.quality.Strictness;
  * {@code OpenAIWellnessServiceTest} 의 트랙 A 회전 풀 검증 시나리오를 모두 보존하면서
  * 신 DTO 시그니처 (callerId/responseFormat/traceId) 와 파서 위임을 추가 검증한다.</p>
  *
+ * <p>B3 핫픽스 (2026-05-25) — 디자이너 핸드오프
+ * ({@code docs/project-management/2026-05-25/WELLNESS_ROTATION_POOL_8_COPY_HANDOFF.md} §3)
+ * 동기화 검증을 추가한다. FALLBACK_POOL 8종이 모두 unique 본문 (단, title 은 핸드오프 일관성을
+ * 위해 동일 "오늘의 마음 건강 팁") 인지, dayOfWeek 매핑이 핸드오프와 일치 (index = dayOfWeek,
+ * 0=default · 1=월 · 7=일) 하는지를 검증한다.</p>
+ *
  * @author CoreSolution
  * @since 2026-05-23
  */
@@ -115,46 +121,104 @@ class WellnessAiServiceTest {
     }
 
     @Test
-    @DisplayName("요일별 fallback 본문은 풀에서 회전된다 (1~7 distinct, 트랙 A 보존)")
+    @DisplayName("요일별 fallback 본문은 풀에서 회전된다 (1~7 본문 distinct, B3 핫픽스)")
     void generateWellnessContent_rotatesByDayOfWeek() {
         when(aiChatCompletionService.completeChat(any(AiCompletionRequest.class)))
                 .thenReturn(failure("api_error"));
 
-        Set<String> distinctTitles = new HashSet<>();
+        Set<String> distinctContents = new HashSet<>();
         for (int dayOfWeek = 1; dayOfWeek <= 7; dayOfWeek++) {
             WellnessContent content = service.generateWellnessContent(dayOfWeek, "SPRING", "GENERAL", "TEST");
             assertTrue(content.isFallback());
-            distinctTitles.add(content.getTitle());
+            distinctContents.add(content.getContent());
         }
 
-        assertEquals(7, distinctTitles.size(),
-                "dayOfWeek 1~7 호출이 모두 다른 fallback 본문을 반환해야 회전 결함이 해소됨");
+        assertEquals(7, distinctContents.size(),
+                "dayOfWeek 1~7 호출이 모두 다른 fallback 본문을 반환해야 회전 결함이 해소됨"
+                        + " (B3 핸드오프 §3 — title 은 동일 '오늘의 마음 건강 팁' 이지만 body 가 unique)");
     }
 
     @Test
     @DisplayName("같은 요일이면 결정론적으로 같은 fallback 본문을 반환한다 (트랙 A 보존)")
-    void generateWellnessContent_sameDayOfWeek_returnsSameTitle() {
+    void generateWellnessContent_sameDayOfWeek_returnsSameContent() {
         when(aiChatCompletionService.completeChat(any(AiCompletionRequest.class)))
                 .thenReturn(failure("api_error"));
 
-        String firstCall = service.generateWellnessContent(3, "SPRING", "GENERAL", "TEST").getTitle();
-        String secondCall = service.generateWellnessContent(3, "SPRING", "GENERAL", "TEST").getTitle();
+        String firstCall = service.generateWellnessContent(3, "SPRING", "GENERAL", "TEST").getContent();
+        String secondCall = service.generateWellnessContent(3, "SPRING", "GENERAL", "TEST").getContent();
 
         assertEquals(firstCall, secondCall,
                 "동일 dayOfWeek 호출은 회전 인덱스가 결정론적이어야 함");
     }
 
     @Test
-    @DisplayName("dayOfWeek=null 입력은 풀 내에서 random 선택되며 isFallback=true 유지 (트랙 A 보존)")
-    void generateWellnessContent_nullDayOfWeek_randomFallback() {
+    @DisplayName("dayOfWeek=null 또는 범위 밖 입력은 default(index 0) 본문을 반환한다 (B3 핫픽스)")
+    void generateWellnessContent_nullOrOutOfRangeDayOfWeek_returnsDefault() {
         when(aiChatCompletionService.completeChat(any(AiCompletionRequest.class)))
                 .thenReturn(failure("api_error"));
 
-        WellnessContent content = service.generateWellnessContent(null, null, "GENERAL", "TEST");
+        WellnessContent nullCase = service.generateWellnessContent(null, null, "GENERAL", "TEST");
+        WellnessContent negativeCase = service.generateWellnessContent(-1, "SPRING", "GENERAL", "TEST");
+        WellnessContent overflowCase = service.generateWellnessContent(8, "SPRING", "GENERAL", "TEST");
+        WellnessContent zeroCase = service.generateWellnessContent(0, "SPRING", "GENERAL", "TEST");
 
-        assertTrue(content.isFallback());
-        assertFalse(content.getTitle() == null || content.getTitle().isBlank(),
-                "random 선택된 fallback 컨텐츠도 비어 있어선 안 됨");
+        assertTrue(nullCase.isFallback());
+        assertTrue(negativeCase.isFallback());
+        assertTrue(overflowCase.isFallback());
+        assertTrue(zeroCase.isFallback());
+
+        assertEquals(zeroCase.getContent(), nullCase.getContent(),
+                "null 입력은 default index 0 (호흡과 휴식) 으로 매핑되어야 함");
+        assertEquals(zeroCase.getContent(), negativeCase.getContent(),
+                "음수 입력은 default index 0 으로 fallback 되어야 함");
+        assertEquals(zeroCase.getContent(), overflowCase.getContent(),
+                "8 이상 입력은 default index 0 으로 fallback 되어야 함");
+    }
+
+    @Test
+    @DisplayName("회전 풀은 8종이며 각 본문은 디자이너 핸드오프 §3 의 unique 본문이다 (B3 핫픽스)")
+    void fallbackPool_has8DistinctContents() {
+        when(aiChatCompletionService.completeChat(any(AiCompletionRequest.class)))
+                .thenReturn(failure("api_error"));
+
+        Set<String> distinctContents = new HashSet<>();
+        for (int dayOfWeek = 0; dayOfWeek <= 7; dayOfWeek++) {
+            WellnessContent content = service.generateWellnessContent(dayOfWeek, "SPRING", "GENERAL", "TEST");
+            distinctContents.add(content.getContent());
+        }
+
+        assertEquals(8, distinctContents.size(),
+                "dayOfWeek 0~7 매핑이 모두 다른 본문을 반환해야 풀 크기 8 이 무력화되지 않음");
+    }
+
+    @Test
+    @DisplayName("dayOfWeek=7 (일요일) 은 풀 마지막 슬롯 (명상과 고요 🌙) 으로 매핑된다 (B3 핫픽스)")
+    void generateWellnessContent_sunday_mapsToMeditation() {
+        when(aiChatCompletionService.completeChat(any(AiCompletionRequest.class)))
+                .thenReturn(failure("api_error"));
+
+        WellnessContent sunday = service.generateWellnessContent(7, "SPRING", "GENERAL", "TEST");
+
+        assertTrue(sunday.isFallback());
+        assertTrue(sunday.getContent().contains("\uD83C\uDF19"),
+                "일요일(7) 은 핸드오프 §3 index 7 (명상과 고요 🌙) 본문을 반환해야 함");
+        assertTrue(sunday.getContent().contains("고요"),
+                "일요일 fallback 본문은 '고요' 테마를 포함해야 함");
+    }
+
+    @Test
+    @DisplayName("dayOfWeek=1 (월요일) 은 풀 index 1 (시작목표 ☀️) 으로 매핑된다 (B3 핫픽스)")
+    void generateWellnessContent_monday_mapsToStartGoal() {
+        when(aiChatCompletionService.completeChat(any(AiCompletionRequest.class)))
+                .thenReturn(failure("api_error"));
+
+        WellnessContent monday = service.generateWellnessContent(1, "SPRING", "GENERAL", "TEST");
+
+        assertTrue(monday.isFallback());
+        assertTrue(monday.getContent().contains("\u2600\uFE0F"),
+                "월요일(1) 은 핸드오프 §3 index 1 (시작목표 ☀️) 본문을 반환해야 함");
+        assertTrue(monday.getContent().contains("새로운 한 주"),
+                "월요일 fallback 본문은 '새로운 한 주' 테마를 포함해야 함");
     }
 
     @Test

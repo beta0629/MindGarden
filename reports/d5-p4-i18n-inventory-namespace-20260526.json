@@ -1,0 +1,281 @@
+{
+  "measured_at": "2026-05-26",
+  "branch_sha": "9e22d9e4c",
+  "agreement_sha": "8b89df494",
+  "agreement_ref": "docs/standards/DESIGN_TOKEN_GAP_2026Q2_D5_P4_I18N_PHASE_2.md §4.1 P0-inv + §6.1 PR-INV (§3 namespace 권장 7개 검증)",
+  "current_ns_leaves": {
+    "admin.json": 350,
+    "common.json": 60
+  },
+  "current_ns_leaves_total": 410,
+  "classification_rule": "디렉터리·파일명 기반 단일 namespace 후보 (한 파일은 한 namespace 후보에 귀속). 우선순위: admin → layout → common(/components/common/) → error → settings → statistics → report → schedule → payment → consultation → dashboard → auth → client → erp → wellness → community → landing → system → misc.",
+  "recommended_ns_verification": {
+    "note": "합의서 §3 권장 7개 (admin/common/error/settings/report/statistics/schedule/payment/consultation) 와 한국어 라인 매칭",
+    "breakdown": {
+      "admin": {
+        "files": 210,
+        "korean_lines": 6349,
+        "korean_effective": 4765
+      },
+      "common": {
+        "files": 97,
+        "korean_lines": 1753,
+        "korean_effective": 1013
+      },
+      "error": {
+        "files": 22,
+        "korean_lines": 565,
+        "korean_effective": 345
+      },
+      "settings": {
+        "files": 4,
+        "korean_lines": 92,
+        "korean_effective": 75
+      },
+      "report": {
+        "files": 7,
+        "korean_lines": 242,
+        "korean_effective": 198
+      },
+      "statistics": {
+        "files": 7,
+        "korean_lines": 127,
+        "korean_effective": 85
+      },
+      "schedule": {
+        "files": 40,
+        "korean_lines": 1509,
+        "korean_effective": 1002
+      },
+      "payment": {
+        "files": 16,
+        "korean_lines": 908,
+        "korean_effective": 610
+      },
+      "consultation": {
+        "files": 82,
+        "korean_lines": 2494,
+        "korean_effective": 1870
+      }
+    }
+  },
+  "all_ns_candidates_sorted": [
+    {
+      "namespace": "misc",
+      "files": 183,
+      "korean_lines": 6675,
+      "korean_effective": 3323
+    },
+    {
+      "namespace": "admin",
+      "files": 210,
+      "korean_lines": 6349,
+      "korean_effective": 4765
+    },
+    {
+      "namespace": "dashboard",
+      "files": 92,
+      "korean_lines": 2889,
+      "korean_effective": 2094
+    },
+    {
+      "namespace": "consultation",
+      "files": 82,
+      "korean_lines": 2494,
+      "korean_effective": 1870
+    },
+    {
+      "namespace": "system",
+      "files": 76,
+      "korean_lines": 1966,
+      "korean_effective": 1429
+    },
+    {
+      "namespace": "common",
+      "files": 97,
+      "korean_lines": 1753,
+      "korean_effective": 1013
+    },
+    {
+      "namespace": "schedule",
+      "files": 40,
+      "korean_lines": 1509,
+      "korean_effective": 1002
+    },
+    {
+      "namespace": "erp",
+      "files": 58,
+      "korean_lines": 1407,
+      "korean_effective": 1117
+    },
+    {
+      "namespace": "auth",
+      "files": 23,
+      "korean_lines": 1095,
+      "korean_effective": 708
+    },
+    {
+      "namespace": "client",
+      "files": 47,
+      "korean_lines": 939,
+      "korean_effective": 787
+    },
+    {
+      "namespace": "payment",
+      "files": 16,
+      "korean_lines": 908,
+      "korean_effective": 610
+    },
+    {
+      "namespace": "error",
+      "files": 22,
+      "korean_lines": 565,
+      "korean_effective": 345
+    },
+    {
+      "namespace": "wellness",
+      "files": 25,
+      "korean_lines": 552,
+      "korean_effective": 418
+    },
+    {
+      "namespace": "report",
+      "files": 7,
+      "korean_lines": 242,
+      "korean_effective": 198
+    },
+    {
+      "namespace": "layout",
+      "files": 11,
+      "korean_lines": 172,
+      "korean_effective": 108
+    },
+    {
+      "namespace": "statistics",
+      "files": 7,
+      "korean_lines": 127,
+      "korean_effective": 85
+    },
+    {
+      "namespace": "landing",
+      "files": 9,
+      "korean_lines": 107,
+      "korean_effective": 94
+    },
+    {
+      "namespace": "settings",
+      "files": 4,
+      "korean_lines": 92,
+      "korean_effective": 75
+    },
+    {
+      "namespace": "community",
+      "files": 2,
+      "korean_lines": 57,
+      "korean_effective": 51
+    }
+  ],
+  "proposed_phase2_namespaces": [
+    {
+      "ns": "admin",
+      "rationale": "한국어 라인 6,349 / 210 파일 — 합의서 admin namespace 확장 권장",
+      "current_leaves": 350,
+      "status": "존재 (admin.json 350 leaves) — Phase 2 확장 대상"
+    },
+    {
+      "ns": "common",
+      "rationale": "한국어 라인 1,753 / 97 파일 (components/common/) — Phase 1 공통 namespace",
+      "current_leaves": 60,
+      "status": "존재 (common.json 60 leaves) — Phase 2 확장 대상"
+    },
+    {
+      "ns": "error",
+      "rationale": "한국어 라인 565 / 22 파일 — error/toast/notification 메시지 SSOT",
+      "current_leaves": 0,
+      "status": "신설 권장 (PR-A 트랙 진입 시)"
+    },
+    {
+      "ns": "settings",
+      "rationale": "한국어 라인 92 / 4 파일 — 보조 화면 (UserSettings 등)",
+      "current_leaves": 0,
+      "status": "신설 권장 (PR-B 트랙)"
+    },
+    {
+      "ns": "statistics",
+      "rationale": "한국어 라인 127 / 7 파일 — 통계·analytics 화면",
+      "current_leaves": 0,
+      "status": "신설 권장 (PR-B 트랙)"
+    },
+    {
+      "ns": "report",
+      "rationale": "한국어 라인 242 / 7 파일 — 보고서 화면",
+      "current_leaves": 0,
+      "status": "신설 권장 (PR-B 트랙)"
+    },
+    {
+      "ns": "schedule",
+      "rationale": "한국어 라인 1,509 / 40 파일 — schedule 도메인 광역",
+      "current_leaves": 0,
+      "status": "신설 권장 (확장 후속 라운드 — 합의서 §3 권장 7개 중 schedule 포함)"
+    },
+    {
+      "ns": "payment",
+      "rationale": "한국어 라인 908 / 16 파일 — billing/tax/payment",
+      "current_leaves": 0,
+      "status": "신설 권장 (확장 후속 라운드)"
+    },
+    {
+      "ns": "consultation",
+      "rationale": "한국어 라인 2,494 / 82 파일 — consultant/consultation 도메인 광역",
+      "current_leaves": 0,
+      "status": "신설 권장 (확장 후속 라운드)"
+    }
+  ],
+  "proposed_additional_namespaces": [
+    {
+      "ns": "dashboard",
+      "rationale": "한국어 라인 2,889 / 92 파일 — dashboard / dashboard-v2 광역, 합의서 §3 미포함이나 도메인 어휘 분리 후보"
+    },
+    {
+      "ns": "system",
+      "rationale": "한국어 라인 1,966 / 76 파일 — ops/ui/tenant/super-admin/compliance"
+    },
+    {
+      "ns": "erp",
+      "rationale": "한국어 라인 1,407 / 58 파일 — erp/finance/salary/purchase/budget"
+    },
+    {
+      "ns": "auth",
+      "rationale": "한국어 라인 1,095 / 23 파일 — auth/login/signup"
+    },
+    {
+      "ns": "client",
+      "rationale": "한국어 라인 939 / 47 파일 — client/mypage"
+    },
+    {
+      "ns": "wellness",
+      "rationale": "한국어 라인 552 / 25 파일 — wellness/emotion/healing/psych/clinical/prediction"
+    },
+    {
+      "ns": "layout",
+      "rationale": "한국어 라인 172 / 11 파일 — LNB/GNB. common 으로 흡수도 가능"
+    },
+    {
+      "ns": "community",
+      "rationale": "한국어 라인 (커뮤니티 도메인) — community/ 디렉터리"
+    },
+    {
+      "ns": "landing",
+      "rationale": "한국어 라인 (랜딩/홈페이지)"
+    },
+    {
+      "ns": "misc",
+      "rationale": "utils/constants/services 등 — 도메인 어휘 산재. 본 라운드는 namespace 신설보다 코드별 흡수 권고"
+    }
+  ],
+  "notes": [
+    "한 파일은 한 namespace 에만 귀속. 단, 동일 파일에 다중 도메인 한글 라벨이 섞이면 라인 단위 namespace 추가 분리 필요 (P1 디자이너 합의 대상).",
+    "합의서 §3 권장 7개 + dashboard/auth/erp/client 등 도메인 어휘 분리는 코더 책무 분배(P2-a/b/c) 와 정합.",
+    "PR-A 트랙 (Phase 2 1순위) 은 admin/common/error 3개 namespace 확장·신설 + layout(common 흡수 가능) 으로 시작 권장."
+  ]
+}

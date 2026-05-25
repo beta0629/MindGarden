@@ -1,0 +1,465 @@
+{
+  "track": "A",
+  "criteria": "admin|layout|common-modal|error/toast/notify (파일 경로·파일명 기반 단일 카테고리, 우선순위 1)",
+  "measured_at": "2026-05-26",
+  "branch_sha": "9e22d9e4c",
+  "agreement_sha": "8b89df494",
+  "agreement_ref": "docs/standards/DESIGN_TOKEN_GAP_2026Q2_D5_P4_I18N_PHASE_2.md §4.1 P0-inv + §6.1 PR-INV",
+  "classification_rule": "우선순위 A > C > B > D. 파일 경로가 A 패턴(/admin/, /Admin*, /layout/, /components/common/, error|toast|notify|notifi|notification) 매칭 시 카테고리 A 확정. 라인 단위 한국어 매칭 [가-힣].",
+  "korean_line_total": 9181,
+  "korean_line_effective": 6494,
+  "files_count": 355,
+  "subcategory_breakdown": {
+    "admin": {
+      "files": 225,
+      "lines": 6691,
+      "effective": 5028
+    },
+    "layout": {
+      "files": 11,
+      "lines": 172,
+      "effective": 108
+    },
+    "common-modal": {
+      "files": 97,
+      "lines": 1753,
+      "effective": 1013
+    },
+    "error/toast": {
+      "files": 22,
+      "lines": 565,
+      "effective": 345
+    }
+  },
+  "top20_files": [
+    {
+      "path": "frontend/src/components/admin/AdminDashboard.js",
+      "korean_lines": 275,
+      "korean_effective": 265,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/ConsultantComprehensiveManagement.js",
+      "korean_lines": 270,
+      "korean_effective": 223,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/dashboard-v2/AdminDashboardV2.js",
+      "korean_lines": 211,
+      "korean_effective": 181,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/DashboardFormModal.js",
+      "korean_lines": 181,
+      "korean_effective": 93,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/PermissionManagement.js",
+      "korean_lines": 129,
+      "korean_effective": 114,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/SystemConfigManagement.js",
+      "korean_lines": 120,
+      "korean_effective": 65,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/VacationManagementModal.js",
+      "korean_lines": 119,
+      "korean_effective": 82,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/constants/adminWebScaffold.js",
+      "korean_lines": 104,
+      "korean_effective": 85,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/SessionManagement.js",
+      "korean_lines": 102,
+      "korean_effective": 87,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/ClientComprehensiveManagement.js",
+      "korean_lines": 97,
+      "korean_effective": 78,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/DashboardManagement.js",
+      "korean_lines": 97,
+      "korean_effective": 73,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/WellnessManagement.js",
+      "korean_lines": 96,
+      "korean_effective": 73,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/common/UnifiedHeader.js",
+      "korean_lines": 96,
+      "korean_effective": 41,
+      "category": "common-modal"
+    },
+    {
+      "path": "frontend/src/components/admin/VacationStatistics.js",
+      "korean_lines": 95,
+      "korean_effective": 65,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/MappingCreationModal.js",
+      "korean_lines": 86,
+      "korean_effective": 82,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/WidgetBasedAdminDashboard.js",
+      "korean_lines": 82,
+      "korean_effective": 64,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/ClientComprehensiveManagement/ClientModal.js",
+      "korean_lines": 80,
+      "korean_effective": 76,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/DashboardWidgetEditor.js",
+      "korean_lines": 79,
+      "korean_effective": 63,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/system/TestNotificationForm.js",
+      "korean_lines": 76,
+      "korean_effective": 67,
+      "category": "admin"
+    },
+    {
+      "path": "frontend/src/components/admin/UserManagement.js",
+      "korean_lines": 74,
+      "korean_effective": 64,
+      "category": "admin"
+    }
+  ],
+  "samples": [
+    {
+      "file": "frontend/src/api/admin/__tests__/aiHealthApi.test.js",
+      "line": 2,
+      "snippet": "* aiHealthApi 헬퍼 단위 테스트.",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiHealthApi.test.js",
+      "line": 4,
+      "snippet": "* 트랙 B PR-3 (2026-05-23): GET /api/v1/admin/ai/health 호출이",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiHealthApi.test.js",
+      "line": 5,
+      "snippet": "* StandardizedApi 를 경유하는지 검증한다.",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiHealthApi.test.js",
+      "line": 27,
+      "snippet": "it('AI_HEALTH_ENDPOINTS.HEALTH 가 표준 어드민 경로를 사용한다', () => {",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiHealthApi.test.js",
+      "line": 31,
+      "snippet": "it('getAiProviderHealth 가 StandardizedApi.get 으로 호출된다', async() => {",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiHealthApi.test.js",
+      "line": 48,
+      "snippet": "it('헬스 API 가 ApiResponse 래퍼 unwrap 후 객체를 그대로 반환한다', async() => {",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiHealthApi.test.js",
+      "line": 65,
+      "snippet": "it('네트워크 오류 시 예외를 그대로 throw 한다', async() => {",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiHealthApi.test.js",
+      "line": 66,
+      "snippet": "const error = new Error('헬스체크 실패');",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiHealthApi.test.js",
+      "line": 69,
+      "snippet": "await expect(getAiProviderHealth()).rejects.toThrow('헬스체크 실패');",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiUsageApi.test.js",
+      "line": 2,
+      "snippet": "* aiUsageApi 헬퍼 단위 테스트.",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiUsageApi.test.js",
+      "line": 4,
+      "snippet": "* 트랙 B PR-4 (2026-05-24): /usage-stats, /usage-logs, /usage-logs/{id}/detail",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiUsageApi.test.js",
+      "line": 5,
+      "snippet": "* 3개 엔드포인트가 StandardizedApi 를 경유하는지 검증한다.",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiUsageApi.test.js",
+      "line": 32,
+      "snippet": "it('AI_USAGE_ENDPOINTS 가 표준 어드민 경로를 사용한다', () => {",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiUsageApi.test.js",
+      "line": 38,
+      "snippet": "it('getAiUsageStats(period) 가 StandardizedApi.get 에 query 로 전달된다', async() => {",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiUsageApi.test.js",
+      "line": 49,
+      "snippet": "it('getAiUsageStats() period 미지정 시 빈 객체 전달', async() => {",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiUsageApi.test.js",
+      "line": 60,
+      "snippet": "it('getAiUsageLogs(params) 가 필터·페이징 그대로 전달된다', async() => {",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiUsageApi.test.js",
+      "line": 71,
+      "snippet": "it('getAiUsageLogDetail(id) 가 path param 으로 호출된다', async() => {",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiUsageApi.test.js",
+      "line": 81,
+      "snippet": "it('네트워크 오류 시 예외를 그대로 throw 한다', async() => {",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiUsageApi.test.js",
+      "line": 82,
+      "snippet": "const error = new Error('네트워크 오류');",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/__tests__/aiUsageApi.test.js",
+      "line": 85,
+      "snippet": "await expect(getAiUsageStats('today')).rejects.toThrow('네트워크 오류');",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiHealthApi.js",
+      "line": 2,
+      "snippet": "* 어드민 AI 프로바이더 헬스체크 API 클라이언트.",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiHealthApi.js",
+      "line": 4,
+      "snippet": "* 모든 호출은 StandardizedApi 를 통해 수행되며, X-Tenant-Id 헤더는",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiHealthApi.js",
+      "line": 5,
+      "snippet": "* 표준 래퍼가 세션 기반으로 자동 추가한다.",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiHealthApi.js",
+      "line": 7,
+      "snippet": "* 백엔드 컨트롤러: AdminAiHealthController",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiHealthApi.js",
+      "line": 8,
+      "snippet": "* 권한: USER_ROLES.ADMIN / USER_ROLES.STAFF (그 외 401/403)",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiHealthApi.js",
+      "line": 10,
+      "snippet": "* 응답 형태 (AiProviderHealth DTO):",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiHealthApi.js",
+      "line": 32,
+      "snippet": "* 테넌트의 AI 프로바이더 헬스 상태를 조회한다.",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiHealthApi.js",
+      "line": 33,
+      "snippet": "* 키 값은 노출되지 않으며, OpenAI/Gemini 키 등록 여부와 활성 프로바이더만 반환된다.",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 2,
+      "snippet": "* 어드민 AI 사용 통계·로그 API 클라이언트.",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 4,
+      "snippet": "* 모든 호출은 StandardizedApi 를 통해 수행되며, X-Tenant-Id 헤더는",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 5,
+      "snippet": "* 표준 래퍼가 세션 기반으로 자동 추가한다.",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 7,
+      "snippet": "* 백엔드 컨트롤러: AdminAiUsageController",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 8,
+      "snippet": "* 권한: USER_ROLES.ADMIN / USER_ROLES.STAFF (그 외 401/403)",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 10,
+      "snippet": "* 응답 형태:",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 29,
+      "snippet": "*     → AiUsageLogDetailResponse (전체 본문 + 비용 + 토큰 + 에러)",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 46,
+      "snippet": "* AI 사용 통계 조회.",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 48,
+      "snippet": "* @param {('today'|'week'|'month')} [period] 요청 기간 라벨 (백엔드에 echo)",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 49,
+      "snippet": "* @returns {Promise<object>} 통계 응답",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 55,
+      "snippet": "* AI 사용 로그 페이징 조회.",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 58,
+      "snippet": "* @param {string} [params.provider] OPENAI|GEMINI|CLAUDE|REPLICATE (대소문자 무관, 옵션)",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 59,
+      "snippet": "* @param {string} [params.caller]   wellness|healing|psych 등 (옵션)",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 60,
+      "snippet": "* @param {string} [params.status]   success|failed (옵션)",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 61,
+      "snippet": "* @param {number} [params.page]     0-base 페이지 (기본 0)",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 62,
+      "snippet": "* @param {number} [params.size]     페이지 크기 (1~200, 기본 50)",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 63,
+      "snippet": "* @returns {Promise<object>} Spring Data Page 응답",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 69,
+      "snippet": "* 단일 AI 사용 로그 상세 조회.",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 71,
+      "snippet": "* @param {number|string} id 로그 PK",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/aiUsageApi.js",
+      "line": 72,
+      "snippet": "* @returns {Promise<object>} 로그 상세 본문 (에러 메시지 포함)",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/manualNotificationApi.js",
+      "line": 2,
+      "snippet": "* 어드민 SMS·카카오 알림톡 수동 일괄 발송 도구 API 클라이언트.",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/admin/manualNotificationApi.js",
+      "line": 4,
+      "snippet": "* - 백엔드 컨트롤러: AdminManualNotificationController (P1.2)",
+      "candidate_key": "common.text"
+    }
+  ],
+  "notes": [
+    "실효 i18n 대상 = 한국어 라인 중 //, /*, * 시작 라인(주석) 을 제외한 라인 수.",
+    "admin 서브카테고리는 /admin/ 경로 + Admin* 파일명 매칭, 양쪽 동시 매칭 시 admin 우선.",
+    "common-modal 서브카테고리는 /components/common/ 디렉터리 전체 (UnifiedModal 류 포함).",
+    "error/toast 서브카테고리는 error|toast|notify|notifi|notification 키워드 파일명·경로 매칭 (NotificationContext 등).",
+    "layout 서브카테고리는 /layout/ 디렉터리 (TabletBottomNavigation, SimpleHamburgerMenu 등)."
+  ]
+}

@@ -1,0 +1,453 @@
+{
+  "track": "B",
+  "criteria": "settings|setting|statistic|analytic|report (보조 화면, 파일 경로 기반 단일 카테고리, 우선순위 2)",
+  "measured_at": "2026-05-26",
+  "branch_sha": "9e22d9e4c",
+  "agreement_sha": "8b89df494",
+  "agreement_ref": "docs/standards/DESIGN_TOKEN_GAP_2026Q2_D5_P4_I18N_PHASE_2.md §4.1 P0-inv + §6.1 PR-INV",
+  "classification_rule": "우선순위 A > C > B > D. A 카테고리 외 + bare/window alert·confirm 한국어 호출 라인이 없는 파일 중, 파일 경로가 settings|setting|statistic|analytic|report 키워드 매칭 시 B.",
+  "korean_line_total": 461,
+  "korean_line_effective": 358,
+  "files_count": 18,
+  "subcategory_breakdown": {
+    "settings": {
+      "files": 4,
+      "lines": 92,
+      "effective": 75
+    },
+    "statistics": {
+      "files": 7,
+      "lines": 127,
+      "effective": 85
+    },
+    "report": {
+      "files": 7,
+      "lines": 242,
+      "effective": 198
+    },
+    "misc": {
+      "files": 0,
+      "lines": 0,
+      "effective": 0
+    }
+  },
+  "files_list": [
+    {
+      "path": "frontend/src/components/consultation/ConsultationReport.js",
+      "korean_lines": 71,
+      "korean_effective": 58,
+      "subcategory": "report"
+    },
+    {
+      "path": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "korean_lines": 62,
+      "korean_effective": 52,
+      "subcategory": "report"
+    },
+    {
+      "path": "frontend/src/components/erp/ErpReportModal.js",
+      "korean_lines": 58,
+      "korean_effective": 47,
+      "subcategory": "report"
+    },
+    {
+      "path": "frontend/src/components/statistics/PerformanceMetricsModal.js",
+      "korean_lines": 53,
+      "korean_effective": 39,
+      "subcategory": "statistics"
+    },
+    {
+      "path": "frontend/src/components/settings/UserSettings.js",
+      "korean_lines": 41,
+      "korean_effective": 33,
+      "subcategory": "settings"
+    },
+    {
+      "path": "frontend/src/components/client/ClientSettings.js",
+      "korean_lines": 30,
+      "korean_effective": 30,
+      "subcategory": "settings"
+    },
+    {
+      "path": "frontend/src/components/consultant/ConsultantIncomeReport.js",
+      "korean_lines": 22,
+      "korean_effective": 17,
+      "subcategory": "report"
+    },
+    {
+      "path": "frontend/src/components/ui/Statistics/ConsultantRatingStatisticsView.js",
+      "korean_lines": 21,
+      "korean_effective": 17,
+      "subcategory": "statistics"
+    },
+    {
+      "path": "frontend/src/components/ui/Statistics/ConsultationCompletionStatsView.js",
+      "korean_lines": 17,
+      "korean_effective": 13,
+      "subcategory": "statistics"
+    },
+    {
+      "path": "frontend/src/utils/psychReportHeadingChecks.js",
+      "korean_lines": 16,
+      "korean_effective": 15,
+      "subcategory": "report"
+    },
+    {
+      "path": "frontend/src/components/ui/Statistics/TodayStatisticsView.js",
+      "korean_lines": 13,
+      "korean_effective": 9,
+      "subcategory": "statistics"
+    },
+    {
+      "path": "frontend/src/components/mypage/components/SettingsSection.js",
+      "korean_lines": 12,
+      "korean_effective": 12,
+      "subcategory": "settings"
+    },
+    {
+      "path": "frontend/src/components/dashboard/widgets/SummaryStatisticsWidget.js",
+      "korean_lines": 11,
+      "korean_effective": 4,
+      "subcategory": "statistics"
+    },
+    {
+      "path": "frontend/src/components/dashboard/widgets/StatisticsWidget.js",
+      "korean_lines": 10,
+      "korean_effective": 2,
+      "subcategory": "statistics"
+    },
+    {
+      "path": "frontend/src/constants/psychAssessmentAiReportUiStrings.js",
+      "korean_lines": 10,
+      "korean_effective": 9,
+      "subcategory": "report"
+    },
+    {
+      "path": "frontend/src/utils/roleMypageSettingsPaths.js",
+      "korean_lines": 9,
+      "korean_effective": 0,
+      "subcategory": "settings"
+    },
+    {
+      "path": "frontend/src/utils/psychReportEvidenceParse.js",
+      "korean_lines": 3,
+      "korean_effective": 0,
+      "subcategory": "report"
+    },
+    {
+      "path": "frontend/src/api/consultantSessionStatisticsClient.js",
+      "korean_lines": 2,
+      "korean_effective": 1,
+      "subcategory": "statistics"
+    }
+  ],
+  "samples": [
+    {
+      "file": "frontend/src/api/consultantSessionStatisticsClient.js",
+      "line": 2,
+      "snippet": "* 상담사 본인 완료 회기 통계 조회 (StandardizedApi)",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/api/consultantSessionStatisticsClient.js",
+      "line": 81,
+      "snippet": ": `항목 ${idx + 1}`;",
+      "candidate_key": "common.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 43,
+      "snippet": "console.error('설정 로드 실패:', error);",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 52,
+      "snippet": "<ContentArea ariaLabel=\"내담자 설정\">",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 54,
+      "snippet": "title=\"계정 설정\"",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 55,
+      "snippet": "subtitle=\"개인정보 및 알림 설정을 관리할 수 있습니다.\"",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 73,
+      "snippet": "setMessage('설정이 저장되었습니다.');",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 76,
+      "snippet": "notificationManager.error('설정 저장 실패', response.message || '설정을 저장할 수 없습니다.');",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 79,
+      "snippet": "console.error('설정 저장 실패:', error);",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 80,
+      "snippet": "notificationManager.error('오류', '설정 저장 중 오류가 발생했습니다.');",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 86,
+      "snippet": "<AdminCommonLayout title=\"설정\" className=\"mg-v2-dashboard-layout\">",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 89,
+      "snippet": "<UnifiedLoading type=\"inline\" text=\"로딩중...\" />",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 97,
+      "snippet": "<AdminCommonLayout title=\"설정\" className=\"mg-v2-dashboard-layout\">",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 108,
+      "snippet": "{/* 알림 설정 */}",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 112,
+      "snippet": "알림 설정",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 118,
+      "snippet": "<h4>전체 알림</h4>",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 119,
+      "snippet": "<p>모든 알림을 받습니다</p>",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 133,
+      "snippet": "<h4>이메일 알림</h4>",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 134,
+      "snippet": "<p>이메일로 알림을 받습니다</p>",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 148,
+      "snippet": "<h4>SMS 알림</h4>",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 149,
+      "snippet": "<p>SMS로 알림을 받습니다</p>",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 163,
+      "snippet": "{/* 프라이버시 설정 */}",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 167,
+      "snippet": "프라이버시",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 173,
+      "snippet": "<h4>프라이버시 모드</h4>",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 174,
+      "snippet": "<p>개인정보를 더 안전하게 보호합니다</p>",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 187,
+      "snippet": "<label>동시 상담 제한</label>",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 193,
+      "snippet": "<option value={1}>1개</option>",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 194,
+      "snippet": "<option value={2}>2개</option>",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 195,
+      "snippet": "<option value={3}>3개</option>",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 201,
+      "snippet": "{/* 저장 버튼 */}",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 206,
+      "snippet": "onClick={() => setMessage('설정이 저장되었습니다.')}",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/client/ClientSettings.js",
+      "line": 209,
+      "snippet": "설정 저장",
+      "candidate_key": "client.clientSettings.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 11,
+      "snippet": "* 진단 보고서 에디터 컴포넌트",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 12,
+      "snippet": "* AI 생성 진단 보고서 초안을 검토하고 편집",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 15,
+      "snippet": "* @param {number} props.consultationRecordId - 상담 기록 ID",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 26,
+      "snippet": "* 기존 보고서 로드",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 39,
+      "snippet": "throw new Error('보고서 로드 실패');",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 42,
+      "snippet": "// DIAGNOSTIC 타입 보고서 찾기",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 49,
+      "snippet": "console.error('보고서 로드 실패:', error);",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 56,
+      "snippet": "* 진단 보고서 생성",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 66,
+      "snippet": "throw new Error(data?.message || '진단 보고서 생성 실패');",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 71,
+      "snippet": "console.log('✅ 진단 보고서 생성 완료');",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 74,
+      "snippet": "console.error('❌ 진단 보고서 생성 실패:', error);",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 75,
+      "snippet": "setError('진단 보고서 생성에 실패했습니다.');",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 82,
+      "snippet": "* 보고서 저장",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 92,
+      "snippet": "throw new Error(data?.message || '저장 실패');",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 97,
+      "snippet": "setSaveMessage('✅ 저장되었습니다.');",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 101,
+      "snippet": "console.error('저장 실패:', error);",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 102,
+      "snippet": "setSaveMessage('❌ 저장에 실패했습니다.');",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    },
+    {
+      "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+      "line": 109,
+      "snippet": "* 보고서 승인",
+      "candidate_key": "clinical.diagnosticReportEditor.text"
+    }
+  ],
+  "notes": [
+    "실효 i18n 대상 = 한국어 라인 중 주석 라인 제외.",
+    "settings 서브카테고리는 settings|setting 파일 (UserSettings 등).",
+    "statistics 서브카테고리는 statistic|analytic 파일 (PerformanceMetricsModal 등).",
+    "report 서브카테고리는 report 파일 (ConsultantIncomeReport, ErpReportModal 등).",
+    "B 트랙 라인 수 461 라인은 합의서 §1.5 가늠치 1,002 보다 적음 — 단일 카테고리 분류로 A 파일과 중복 회피된 결과 (예: AdminSchedulesPage 등은 admin 우선 흡수)."
+  ]
+}

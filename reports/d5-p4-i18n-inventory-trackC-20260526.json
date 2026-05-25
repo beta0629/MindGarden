@@ -1,0 +1,255 @@
+{
+  "track": "C",
+  "criteria": "window.alert/confirm + bare alert/confirm 호출 (사용자 정의 함수/훅 제외) 의 한국어 메시지 라인",
+  "measured_at": "2026-05-26",
+  "branch_sha": "9e22d9e4c",
+  "agreement_sha": "8b89df494",
+  "agreement_ref": "docs/standards/DESIGN_TOKEN_GAP_2026Q2_D5_P4_I18N_PHASE_2.md §4.1 P0-inv + §6.1 PR-INV",
+  "classification_rule": "우선순위 A > C > B > D. A 카테고리 파일이 아닌 파일에서 window.alert/confirm 또는 bare alert/confirm 호출이 한국어 라인을 포함하면 그 라인을 C 로 분류. 사용자 정의 함수/훅(useAlert, useConfirm, alert/confirm 식별자 재할당) 은 제외.",
+  "korean_line_total": 11,
+  "korean_line_effective": 11,
+  "files_count": 8,
+  "alert_confirm_inventory": {
+    "window_alert": {
+      "count": 1,
+      "hits": [
+        {
+          "file": "frontend/src/utils/notification.js",
+          "line": 191,
+          "snippet": "window.alert(message);"
+        }
+      ]
+    },
+    "window_confirm": {
+      "count": 10,
+      "hits": [
+        {
+          "file": "frontend/src/components/academy/ClassList.js",
+          "line": 72,
+          "snippet": "if (!window.confirm('정말 삭제하시겠습니까?')) {"
+        },
+        {
+          "file": "frontend/src/components/academy/CourseList.js",
+          "line": 75,
+          "snippet": "if (!window.confirm('정말 삭제하시겠습니까?')) {"
+        },
+        {
+          "file": "frontend/src/components/academy/EnrollmentList.js",
+          "line": 69,
+          "snippet": "if (!window.confirm('정말 수강을 취소하시겠습니까?')) {"
+        },
+        {
+          "file": "frontend/src/components/admin/DashboardManagement.js",
+          "line": 173,
+          "snippet": "const confirmed = window.confirm("
+        },
+        {
+          "file": "frontend/src/components/admin/aiProvider/sections/ApiKeyManager.js",
+          "line": 62,
+          "snippet": "const ok = window.confirm(`${providerId.toUpperCase()} API 키를 삭제하시겠습니까?`);"
+        },
+        {
+          "file": "frontend/src/components/admin/onboarding/AdminOnboarding.jsx",
+          "line": 59,
+          "snippet": "if (!window.confirm(ONBOARDING_MESSAGES.CONFIRM_APPROVE)) return;"
+        },
+        {
+          "file": "frontend/src/components/clinical/DiagnosticReportEditor.js",
+          "line": 112,
+          "snippet": "const confirmed = window.confirm("
+        },
+        {
+          "file": "frontend/src/components/clinical/SOAPNoteEditor.js",
+          "line": 70,
+          "snippet": "const confirmed = window.confirm("
+        },
+        {
+          "file": "frontend/src/components/schedule/ScheduleClientNotesSection.js",
+          "line": 233,
+          "snippet": "const ok = window.confirm('이 특이사항을 삭제할까요?');"
+        },
+        {
+          "file": "frontend/src/utils/notification.js",
+          "line": 176,
+          "snippet": "const result = window.confirm(message);"
+        }
+      ]
+    },
+    "bare_alert": {
+      "total_count": 12,
+      "korean_count": 6,
+      "hits": [
+        {
+          "file": "frontend/src/components/admin/onboarding/AdminOnboarding.jsx",
+          "line": 68,
+          "snippet": "alert(ONBOARDING_MESSAGES.APPROVE_SUCCESS);",
+          "hasKorean": false
+        },
+        {
+          "file": "frontend/src/components/admin/onboarding/AdminOnboarding.jsx",
+          "line": 72,
+          "snippet": "alert(ONBOARDING_MESSAGES.ERROR_DECISION);",
+          "hasKorean": false
+        },
+        {
+          "file": "frontend/src/components/admin/onboarding/AdminOnboarding.jsx",
+          "line": 80,
+          "snippet": "alert(ONBOARDING_MESSAGES.REJECT_REASON_REQUIRED);",
+          "hasKorean": false
+        },
+        {
+          "file": "frontend/src/components/admin/onboarding/AdminOnboarding.jsx",
+          "line": 91,
+          "snippet": "alert(ONBOARDING_MESSAGES.REJECT_SUCCESS);",
+          "hasKorean": false
+        },
+        {
+          "file": "frontend/src/components/admin/onboarding/AdminOnboarding.jsx",
+          "line": 96,
+          "snippet": "alert(ONBOARDING_MESSAGES.ERROR_DECISION);",
+          "hasKorean": false
+        },
+        {
+          "file": "frontend/src/components/community/CommunityFeed.js",
+          "line": 140,
+          "snippet": "alert('신고가 접수되었습니다. 관리자가 검토 후 처리합니다.');",
+          "hasKorean": true
+        },
+        {
+          "file": "frontend/src/components/ui/Card/Card.test.example.js",
+          "line": 35,
+          "snippet": "<Card variant=\"border\" onClick={() => alert('카드 클릭!')}>",
+          "hasKorean": true
+        },
+        {
+          "file": "frontend/src/components/ui/Icon/Icon.stories.js",
+          "line": 90,
+          "snippet": "<Icon name=\"CALENDAR\" onClick={() => alert('달력 클릭!')} />",
+          "hasKorean": true
+        },
+        {
+          "file": "frontend/src/components/ui/Icon/Icon.stories.js",
+          "line": 91,
+          "snippet": "<Icon name=\"SETTINGS\" onClick={() => alert('설정 클릭!')} />",
+          "hasKorean": true
+        },
+        {
+          "file": "frontend/src/components/ui/Icon/Icon.stories.js",
+          "line": 92,
+          "snippet": "<Icon name=\"BELL\" onClick={() => alert('알림 클릭!')} />",
+          "hasKorean": true
+        },
+        {
+          "file": "frontend/src/components/ui/Icon/Icon.stories.js",
+          "line": 93,
+          "snippet": "<Icon name=\"SEARCH\" onClick={() => alert('검색 클릭!')} />",
+          "hasKorean": true
+        },
+        {
+          "file": "frontend/src/utils/notification.js",
+          "line": 190,
+          "snippet": "alert(message, callback) {",
+          "hasKorean": false
+        }
+      ]
+    },
+    "bare_confirm": {
+      "total_count": 2,
+      "korean_count": 1,
+      "hits": [
+        {
+          "file": "frontend/src/components/tenant/TenantProfile.js",
+          "line": 223,
+          "snippet": "if (!confirm('정말 이 결제 수단을 삭제하시겠습니까?')) {",
+          "hasKorean": true
+        },
+        {
+          "file": "frontend/src/utils/notification.js",
+          "line": 175,
+          "snippet": "confirm(message, callback) {",
+          "hasKorean": false
+        }
+      ]
+    },
+    "user_defined_alert_confirm": {
+      "count": 1,
+      "hits": [
+        {
+          "file": "frontend/src/components/admin/ClientComprehensiveManagement/__tests__/ClientModal.vehiclePlate.test.js",
+          "line": 92,
+          "snippet": "const alert = screen.getByRole('alert');"
+        }
+      ]
+    },
+    "method_shorthand_definitions_note": [
+      "frontend/src/utils/notification.js:175 의 `confirm(message, callback) {` 과 :190 의 `alert(message, callback) {` 는 객체 method shorthand 정의이며 호출이 아님. 정규식이 호출 패턴과 분리하기 어려워 bare alert/confirm hits 에 포함되었으나, 본 라인은 트랙 C 치환 대상에서 제외 권고."
+    ]
+  },
+  "unified_modal_inventory": {
+    "unified_modal_total_occurrences": 450,
+    "unified_modal_active_usage_lines": 142,
+    "unified_modal_active_usage_files": 112,
+    "useConfirm_hook_files": 0,
+    "useAlert_hook_files": 0,
+    "pattern_note": "active_usage 는 <UnifiedModal 또는 useConfirm()/useAlert() 호출 패턴 매칭. 총 occurrence 450 는 import 라인·prop 키워드 포함 광역 매칭 (합의서 §1.4 422 가늠 대응)."
+  },
+  "files_list": [
+    {
+      "path": "frontend/src/components/tenant/TenantProfile.js",
+      "korean_lines": 78,
+      "korean_effective": 71
+    },
+    {
+      "path": "frontend/src/components/schedule/ScheduleClientNotesSection.js",
+      "korean_lines": 48,
+      "korean_effective": 42
+    },
+    {
+      "path": "frontend/src/components/community/CommunityFeed.js",
+      "korean_lines": 44,
+      "korean_effective": 40
+    },
+    {
+      "path": "frontend/src/components/academy/ClassList.js",
+      "korean_lines": 32,
+      "korean_effective": 26
+    },
+    {
+      "path": "frontend/src/components/academy/CourseList.js",
+      "korean_lines": 30,
+      "korean_effective": 24
+    },
+    {
+      "path": "frontend/src/components/academy/EnrollmentList.js",
+      "korean_lines": 26,
+      "korean_effective": 24
+    },
+    {
+      "path": "frontend/src/components/ui/Icon/Icon.stories.js",
+      "korean_lines": 21,
+      "korean_effective": 20
+    },
+    {
+      "path": "frontend/src/components/ui/Card/Card.test.example.js",
+      "korean_lines": 8,
+      "korean_effective": 7
+    }
+  ],
+  "domain_calls_after_filtering": {
+    "note": "window.alert(1) + window.confirm(10) + bare alert/confirm 도메인 호출(한국어 또는 도메인 메시지 상수) 결과",
+    "breakdown": {
+      "window_alert": 1,
+      "window_confirm": 10,
+      "bare_alert_domain": 11,
+      "bare_confirm_domain": 1,
+      "bare_alert_domain_with_korean": 6,
+      "bare_confirm_domain_with_korean": 1
+    }
+  },
+  "notes": [
+    "합의서 §1.4 가늠 (window.alert 1 + window.confirm 9 + bare 50) 와 비교: window.confirm +1 (academy/admin/clinical/schedule 추가 영향).",
+    "bare alert/confirm 50 라인 가늠은 method 정의 + 식별자 매칭 광역으로 추정 — 실제 호출(non-definition) 은 11+1=12건, 그 중 한국어 포함 도메인은 7건 (CommunityFeed 1 + AdminOnboarding 5 ONBOARDING_MESSAGES.* + TenantProfile 1) + 테스트/storybook 5건 (Icon.stories 4 + Card.test.example 1).",
+    "AdminOnboarding ONBOARDING_MESSAGES.* 5건은 한국어 라인 매칭에서 제외 (메시지 상수 키 — 본 위임 §1.1 한국어 매칭 미포함). 트랙 C 치환 시 상수 SSOT (ONBOARDING_MESSAGES) 와 i18n 키 매핑 필요.",
+    "운영 도메인 한국어 호출 — CommunityFeed.js:140 (신고 접수), TenantProfile.js:223 (결제 수단 삭제), academy/ClassList.js:72 + academy/CourseList.js:75 + academy/EnrollmentList.js:69 (window.confirm 삭제/취소), schedule/ScheduleClientNotesSection.js:233 (window.confirm 삭제), aiProvider/ApiKeyManager.js:62 (API 키 삭제)."
+  ]
+}

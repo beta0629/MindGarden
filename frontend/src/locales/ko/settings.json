@@ -109,5 +109,99 @@
     "cancel": "취소",
     "reset": "초기화",
     "back": "뒤로가기"
+  },
+  "loadingShort": "로딩 중...",
+  "toggle": {
+    "active": "활성",
+    "inactive": "비활성"
+  },
+  "reminderOptions": {
+    "min30": "30분 전",
+    "hour1": "1시간 전",
+    "hour2": "2시간 전"
+  },
+  "notifSettings": {
+    "savedToast": "설정이 저장되었습니다",
+    "schedule": {
+      "title": "예약 관련",
+      "reminderTime": "리마인더 시점",
+      "reminderTimeAria": "리마인더 시점 선택",
+      "confirmCancel": "예약 확정·취소",
+      "startEnd": "상담 시작·완료"
+    },
+    "payment": {
+      "title": "결제 관련",
+      "confirmFail": "결제 확인·실패",
+      "sessionLow": "회기 소진 임박"
+    },
+    "wellness": {
+      "title": "웰니스 리마인드",
+      "reminderTime": "리마인드 시각",
+      "reminderTimeAria": "웰니스 리마인드 시각"
+    },
+    "system": {
+      "title": "시스템 공지",
+      "alwaysOn": "항상 수신"
+    },
+    "sound": {
+      "title": "사운드·진동"
+    }
+  },
+  "kakao": {
+    "title": "카카오 알림톡",
+    "subtitle": "예약·상담 알림에 사용하는 비시크릿 설정(템플릿 코드·키 참조)만 관리합니다.",
+    "loading": "설정을 불러오는 중...",
+    "loadFail": "설정을 불러오지 못했습니다.",
+    "saveFail": "저장에 실패했습니다.",
+    "saveSuccess": "카카오 알림톡 설정을 저장했습니다.",
+    "accessDenied": "접근 권한이 없습니다.",
+    "reload": "다시 불러오기",
+    "tenantIdLabel": "테넌트 ID:",
+    "enabledLabel": "이 테넌트에서 카카오 알림톡 발송 사용",
+    "infoHint": "API 키·발신 키 등 시크릿은 이 화면에 입력하지 않습니다. 운영 시크릿 저장소에만 보관하고, 여기에는 참조 식별자만 등록하세요.",
+    "section": {
+      "info": "안내",
+      "enabled": "알림톡 사용",
+      "templates": "템플릿 코드",
+      "refs": "키 참조"
+    },
+    "templates": {
+      "consultationConfirmed": "상담 확정",
+      "consultationReminder": "상담 리마인더",
+      "consultationCancelled": "상담 취소",
+      "refundCompleted": "환불 완료",
+      "scheduleChanged": "일정 변경",
+      "paymentCompleted": "결제 완료",
+      "depositPendingReminder": "입금 대기 리마인더"
+    },
+    "refs": {
+      "apiKey": "카카오 API 키 참조(시크릿 저장 금지)",
+      "senderKey": "발신 프로필 키 참조(시크릿 저장 금지)"
+    }
+  },
+  "sms": {
+    "title": "문자 메시지(SMS)",
+    "subtitle": "테넌트별 비시크릿 설정만 저장합니다. API 키·시크릿 본문은 넣지 말고 참조 식별자만 등록하세요.",
+    "loading": "설정을 불러오는 중...",
+    "loadFail": "설정을 불러오지 못했습니다.",
+    "saveFail": "저장에 실패했습니다.",
+    "saveSuccess": "문자 메시지(SMS) 설정을 저장했습니다.",
+    "accessDenied": "접근 권한이 없습니다.",
+    "reload": "다시 불러오기",
+    "tenantIdLabel": "테넌트 ID:",
+    "enabledLabel": "이 테넌트에서 SMS 발송 사용",
+    "infoHint": "발송 시 참조 문자열이 있으면 Spring 설정·환경 변수에서 값을 조회하고, 없으면 애플리케이션 기본 sms.auth 설정을 사용합니다.",
+    "section": {
+      "info": "안내",
+      "enabled": "SMS 사용",
+      "integration": "연동",
+      "refs": "키 참조"
+    },
+    "fields": {
+      "provider": "프로바이더",
+      "senderNumber": "발신 번호",
+      "apiKeyRef": "API 키 참조(시크릿 저장 금지)",
+      "apiSecretRef": "API 시크릿 참조(시크릿 저장 금지)"
+    }
   }
 }

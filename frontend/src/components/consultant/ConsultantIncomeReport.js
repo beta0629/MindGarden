@@ -29,7 +29,7 @@ const formatCurrency = (amount) => {
 };
 
 const ConsultantIncomeReport = () => {
-  const { t } = useTranslation(['statistics', 'report']);
+  const { t } = useTranslation(['statistics', 'report', 'common']);
   const { user } = useSession();
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
@@ -72,9 +72,9 @@ const ConsultantIncomeReport = () => {
         payments.map((p) => ({
           id: p.id || p.paymentId,
           date: p.paymentDate || p.createdAt?.split('T')[0],
-          clientName: p.clientName || '내담자',
+          clientName: p.clientName || t('common:labels.client', '내담자'),
           amount: p.amount || 0,
-          type: p.consultationType || '상담',
+          type: p.consultationType || t('common:labels.consultation', '상담'),
         }))
       );
 
@@ -83,7 +83,7 @@ const ConsultantIncomeReport = () => {
         const d = new Date(Number(year), Number(month) - 1 - i, 1);
         const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         const income = m === currentMonth ? totalIncome : Math.floor(Math.random() * 500000 + 200000);
-        chartData.push({ month: m, label: `${d.getMonth() + 1}월`, income });
+        chartData.push({ month: m, label: t('report:consultation.monthLabel', '{{month}}월', { month: d.getMonth() + 1 }), income });
       }
       setMonthlyData(chartData);
     } catch (err) {
@@ -129,7 +129,10 @@ const ConsultantIncomeReport = () => {
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="income-report__month-label">{currentMonth.replace('-', '년 ')}월</span>
+        <span className="income-report__month-label">{(() => {
+          const [yr, mo] = currentMonth.split('-');
+          return t('report:consultation.yearMonthLabel', '{{year}}년 {{month}}월', { year: yr, month: Number(mo) });
+        })()}</span>
         <button
           type="button"
           className="income-report__month-btn"

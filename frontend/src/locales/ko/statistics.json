@@ -2,6 +2,23 @@
   "dashboard": {
     "title": "성과 지표 대시보드"
   },
+  "modal": {
+    "title": "통계 보기",
+    "tabs": {
+      "overall": "전체 통계",
+      "today": "오늘 통계"
+    }
+  },
+  "unit": {
+    "personCount": "{{count}}명",
+    "caseCount": "{{count}}건",
+    "wonAmount": "{{amount}}원",
+    "scoreCount": "{{count}}점"
+  },
+  "summary": {
+    "consultantLine": "상담: {{count}}건 · 매출: {{revenue}}원 · 만족도: {{satisfaction}}점",
+    "dailyLine": "상담: {{count}}건 · 매출: {{revenue}}원"
+  },
   "filter": {
     "title": "필터 설정",
     "startDate": "시작일",
@@ -29,7 +46,8 @@
     "title": "상담사별 성과",
     "daily": "일별 성과 추이",
     "noData": "데이터가 없습니다.",
-    "loadingBranches": "지점 목록을 불러오는 중..."
+    "loadingBranches": "지점 목록을 불러오는 중...",
+    "loadingText": "로딩중..."
   },
   "rating": {
     "title": "상담사 평가 통계",

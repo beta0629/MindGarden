@@ -4,8 +4,11 @@
     "description": "상담 현황을 분석한 리포트를 확인할 수 있습니다",
     "periodLabel": "기간",
     "selectPeriod": "기간을 선택하세요",
-    "yearLabel": "년도",
-    "monthLabel": "월",
+    "yearLabel": "{{year}}년",
+    "monthLabel": "{{month}}월",
+    "yearMonthLabel": "{{year}}년 {{month}}월",
+    "yearFieldLabel": "년도",
+    "monthFieldLabel": "월",
     "back": "뒤로",
     "noData": "상담 데이터가 없습니다",
     "noDataHint": "새로운 상담을 예약해보세요",
@@ -13,7 +16,17 @@
     "loadFail": "상담 리포트를 불러오는데 실패했습니다.",
     "periodTotal": "이 기간 동안 총 {{count}}건의 상담이 있었습니다.",
     "completionRateInfo": "완료율은 {{rate}}%입니다.",
-    "unknownClient": "알 수 없음"
+    "unknownClient": "알 수 없음",
+    "periodOption": {
+      "monthly": "월별",
+      "monthlyDesc": "월별 보고서",
+      "yearly": "년별",
+      "yearlyDesc": "년별 보고서",
+      "quarterly": "분기별",
+      "quarterlyDesc": "분기별 보고서",
+      "weekly": "주별",
+      "weeklyDesc": "주별 보고서"
+    }
   },
   "summary": {
     "totalConsultations": "총 상담 수",
@@ -57,7 +70,11 @@
     "downloadFail": "다운로드에 실패했습니다.",
     "downloadError": "다운로드 중 오류가 발생했습니다.",
     "noDownload": "다운로드할 보고서가 없습니다.",
-    "branchLoadFail": "지점 목록 로드 실패"
+    "branchLoadFail": "지점 목록 로드 실패",
+    "selectQuarter": "분기를 선택하세요",
+    "selectYear": "연도를 선택하세요",
+    "yearLabel": "{{year}}년",
+    "quarterLabel": "{{year}}년 {{quarter}}분기"
   },
   "diagnostic": {
     "title": "진단 보고서",
@@ -83,6 +100,8 @@
     "disclaimerLabel": "주의사항:",
     "reviewed": "검토 완료",
     "generationTimeLabel": "생성 시간:",
+    "aiModelLabel": "🤖 AI 모델:",
+    "secondsUnit": "초",
     "sections": {
       "summary": {
         "title": "📊 진단 요약 (Diagnosis Summary)",

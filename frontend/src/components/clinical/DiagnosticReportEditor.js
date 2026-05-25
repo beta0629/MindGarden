@@ -235,16 +235,16 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                     {/* 메타 정보 */}
                     <div className="report-meta">
                         <span className="meta-item">
-                            🤖 AI 모델: {report.aiModelUsed || 'N/A'}
+                            {t('report:diagnostic.aiModelLabel', '🤖 AI 모델:')} {report.aiModelUsed || 'N/A'}
                         </span>
                         {report.generationTimeMs && (
                             <span className="meta-item">
-                                ⏱️ 생성 시간: {(report.generationTimeMs / 1000).toFixed(1)}초
+                                ⏱️ {t('report:diagnostic.generationTimeLabel', '생성 시간:')} {(report.generationTimeMs / 1000).toFixed(1)}{t('report:diagnostic.secondsUnit', '초')}
                             </span>
                         )}
                         {report.humanReviewed && (
                             <span className="meta-item reviewed">
-                                ✅ 검토 완료
+                                ✅ {t('report:diagnostic.reviewed', '검토 완료')}
                             </span>
                         )}
                     </div>

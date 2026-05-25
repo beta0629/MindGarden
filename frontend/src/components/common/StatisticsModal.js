@@ -25,7 +25,7 @@ import { USER_ROLES } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
 
 const StatisticsModal = ({ isOpen, onClose, userRole = USER_ROLES.ADMIN }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['statistics', 'common']);
   const [statistics, setStatistics] = useState(null);
   const [todayStatistics, setTodayStatistics] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -171,7 +171,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = USER_ROLES.ADMIN }) => {
     <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
-      title="통계 보기"
+      title={t('statistics:modal.title', '통계 보기')}
       size="large"
       backdropClick
       showCloseButton
@@ -220,7 +220,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = USER_ROLES.ADMIN }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               <BarChart size={16} />
-              전체 통계
+              {t('statistics:modal.tabs.overall', '전체 통계')}
             </MGButton>
             <MGButton
               type="button"
@@ -236,7 +236,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = USER_ROLES.ADMIN }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
               <Calendar size={16} />
-              오늘 통계
+              {t('statistics:modal.tabs.today', '오늘 통계')}
             </MGButton>
           </div>
           

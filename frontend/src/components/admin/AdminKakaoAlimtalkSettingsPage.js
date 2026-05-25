@@ -28,18 +28,18 @@ const TEMPLATE_MAX_LEN = 120;
 const REF_MAX_LEN = 200;
 
 const TEMPLATE_FIELD_SPECS = [
-  { key: 'templateConsultationConfirmed', label: '상담 확정' },
-  { key: 'templateConsultationReminder', label: '상담 리마인더' },
-  { key: 'templateConsultationCancelled', label: '상담 취소' },
-  { key: 'templateRefundCompleted', label: '환불 완료' },
-  { key: 'templateScheduleChanged', label: '일정 변경' },
-  { key: 'templatePaymentCompleted', label: '결제 완료' },
-  { key: 'templateDepositPendingReminder', label: '입금 대기 리마인더' }
+  { key: 'templateConsultationConfirmed', i18nKey: 'kakao.templates.consultationConfirmed', fallback: '상담 확정' },
+  { key: 'templateConsultationReminder', i18nKey: 'kakao.templates.consultationReminder', fallback: '상담 리마인더' },
+  { key: 'templateConsultationCancelled', i18nKey: 'kakao.templates.consultationCancelled', fallback: '상담 취소' },
+  { key: 'templateRefundCompleted', i18nKey: 'kakao.templates.refundCompleted', fallback: '환불 완료' },
+  { key: 'templateScheduleChanged', i18nKey: 'kakao.templates.scheduleChanged', fallback: '일정 변경' },
+  { key: 'templatePaymentCompleted', i18nKey: 'kakao.templates.paymentCompleted', fallback: '결제 완료' },
+  { key: 'templateDepositPendingReminder', i18nKey: 'kakao.templates.depositPendingReminder', fallback: '입금 대기 리마인더' }
 ];
 
 const REF_FIELD_SPECS = [
-  { key: 'kakaoApiKeyRef', label: '카카오 API 키 참조(시크릿 저장 금지)' },
-  { key: 'kakaoSenderKeyRef', label: '발신 프로필 키 참조(시크릿 저장 금지)' }
+  { key: 'kakaoApiKeyRef', i18nKey: 'kakao.refs.apiKey', fallback: '카카오 API 키 참조(시크릿 저장 금지)' },
+  { key: 'kakaoSenderKeyRef', i18nKey: 'kakao.refs.senderKey', fallback: '발신 프로필 키 참조(시크릿 저장 금지)' }
 ];
 
 const buildInitialForm = () => ({
@@ -76,7 +76,7 @@ const mapApiToForm = (data) => {
 };
 
 const AdminKakaoAlimtalkSettingsPage = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['settings', 'common']);
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const toggleId = useId();
@@ -100,14 +100,14 @@ const AdminKakaoAlimtalkSettingsPage = () => {
         setForm(mapApiToForm(res.data));
         setTenantIdLine(toDisplayString(res.data.tenantId, ''));
       } else {
-        setLoadError('설정을 불러오지 못했습니다.');
+        setLoadError(t('settings:kakao.loadFail', '설정을 불러오지 못했습니다.'));
       }
     } catch (e) {
       setLoadError(e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (sessionLoading) {
@@ -118,12 +118,12 @@ const AdminKakaoAlimtalkSettingsPage = () => {
       return;
     }
     if (!allowed) {
-      notificationManager.show('접근 권한이 없습니다.', 'error');
+      notificationManager.show(t('settings:kakao.accessDenied', '접근 권한이 없습니다.'), 'error');
       navigate('/', { replace: true });
       return;
     }
     loadSettings();
-  }, [sessionLoading, isLoggedIn, user, allowed, navigate, loadSettings]);
+  }, [sessionLoading, isLoggedIn, user, allowed, navigate, loadSettings, t]);
 
   const handleChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -148,13 +148,13 @@ const AdminKakaoAlimtalkSettingsPage = () => {
       };
       const res = await StandardizedApi.put(API.KAKAO_ALIMTALK_SETTINGS, body);
       if (res && res.success === true) {
-        notificationManager.success('카카오 알림톡 설정을 저장했습니다.');
+        notificationManager.success(t('settings:kakao.saveSuccess', '카카오 알림톡 설정을 저장했습니다.'));
         if (res.data) {
           setForm(mapApiToForm(res.data));
           setTenantIdLine(toDisplayString(res.data.tenantId, tenantIdLine));
         }
       } else {
-        setSaveError('저장에 실패했습니다.');
+        setSaveError(t('settings:kakao.saveFail', '저장에 실패했습니다.'));
       }
     } catch (err) {
       setSaveError(err);
@@ -165,41 +165,40 @@ const AdminKakaoAlimtalkSettingsPage = () => {
 
   if (sessionLoading || !allowed) {
     return (
-      <AdminCommonLayout title="카카오 알림톡" className="mg-v2-dashboard-layout">
-        <UnifiedLoading text="로딩 중..." />
+      <AdminCommonLayout title={t('settings:kakao.title', '카카오 알림톡')} className="mg-v2-dashboard-layout">
+        <UnifiedLoading text={t('settings:loadingShort', '로딩 중...')} />
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout title="카카오 알림톡" className="mg-v2-dashboard-layout">
+    <AdminCommonLayout title={t('settings:kakao.title', '카카오 알림톡')} className="mg-v2-dashboard-layout">
       <div className="mg-v2-ad-b0kla mg-v2-kakao-alimtalk-settings" data-testid="admin-kakao-alimtalk-settings">
         <ContentArea>
           <ContentHeader
             titleId={pageTitleId}
-            title="카카오 알림톡"
-            subtitle="예약·상담 알림에 사용하는 비시크릿 설정(템플릿 코드·키 참조)만 관리합니다."
+            title={t('settings:kakao.title', '카카오 알림톡')}
+            subtitle={t('settings:kakao.subtitle', '예약·상담 알림에 사용하는 비시크릿 설정(템플릿 코드·키 참조)만 관리합니다.')}
           />
           {loading ? (
-            <UnifiedLoading text="설정을 불러오는 중..." />
+            <UnifiedLoading text={t('settings:kakao.loading', '설정을 불러오는 중...')} />
           ) : (
             <form className="mg-kakao-alimtalk__form" onSubmit={handleSubmit} noValidate>
               <SafeErrorDisplay error={loadError} />
               <SafeErrorDisplay error={saveError} />
 
-              <ContentSection title="안내">
+              <ContentSection title={t('settings:kakao.section.info', '안내')}>
                 <p className="mg-kakao-alimtalk__hint">
-                  API 키·발신 키 등 시크릿은 이 화면에 입력하지 않습니다. 운영 시크릿 저장소에만 보관하고,
-                  여기에는 참조 식별자만 등록하세요.
+                  {t('settings:kakao.infoHint', 'API 키·발신 키 등 시크릿은 이 화면에 입력하지 않습니다. 운영 시크릿 저장소에만 보관하고, 여기에는 참조 식별자만 등록하세요.')}
                 </p>
                 {tenantIdLine ? (
                   <p className="mg-kakao-alimtalk__readonly-line">
-                    테넌트 ID: {tenantIdLine}
+                    {t('settings:kakao.tenantIdLabel', '테넌트 ID:')} {tenantIdLine}
                   </p>
                 ) : null}
               </ContentSection>
 
-              <ContentSection title="알림톡 사용">
+              <ContentSection title={t('settings:kakao.section.enabled', '알림톡 사용')}>
                 <label className="mg-kakao-alimtalk__toggle" htmlFor={toggleId}>
                   <input
                     id={toggleId}
@@ -207,14 +206,14 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                     checked={Boolean(form.alimtalkEnabled)}
                     onChange={(ev) => handleChange('alimtalkEnabled', ev.target.checked)}
                   />
-                  이 테넌트에서 카카오 알림톡 발송 사용
+                  {t('settings:kakao.enabledLabel', '이 테넌트에서 카카오 알림톡 발송 사용')}
                 </label>
               </ContentSection>
 
-              <ContentSection variant="card" title="템플릿 코드">
+              <ContentSection variant="card" title={t('settings:kakao.section.templates', '템플릿 코드')}>
                 {TEMPLATE_FIELD_SPECS.map((spec) => (
                   <div key={spec.key} className="mg-kakao-alimtalk__field">
-                    <label htmlFor={`kakao-field-${spec.key}`}>{spec.label}</label>
+                    <label htmlFor={`kakao-field-${spec.key}`}>{t(`settings:${spec.i18nKey}`, spec.fallback)}</label>
                     <input
                       id={`kakao-field-${spec.key}`}
                       className="mg-kakao-alimtalk__input"
@@ -228,10 +227,10 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                 ))}
               </ContentSection>
 
-              <ContentSection title="키 참조">
+              <ContentSection title={t('settings:kakao.section.refs', '키 참조')}>
                 {REF_FIELD_SPECS.map((spec) => (
                   <div key={spec.key} className="mg-kakao-alimtalk__field">
-                    <label htmlFor={`kakao-ref-${spec.key}`}>{spec.label}</label>
+                    <label htmlFor={`kakao-ref-${spec.key}`}>{t(`settings:${spec.i18nKey}`, spec.fallback)}</label>
                     <input
                       id={`kakao-ref-${spec.key}`}
                       className="mg-kakao-alimtalk__input"
@@ -253,7 +252,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                   loading={saving}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  {t('common.actions.save', '저장')}
+                  {t('common:actions.save', '저장')}
                 </MGButton>
                 <MGButton
                   type="button"
@@ -261,7 +260,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                   disabled={saving || loading}
                   onClick={() => loadSettings()}
                 >
-                  다시 불러오기
+                  {t('settings:kakao.reload', '다시 불러오기')}
                 </MGButton>
               </div>
             </form>

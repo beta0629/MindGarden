@@ -259,7 +259,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                     {/* 성과 지표 표시 */}
                     {loading ? (
                         <div className="mg-v2-loading-overlay">
-                            <div className="mg-loading">로딩중...</div>
+                            <div className="mg-loading">{t('statistics:performance.loadingText', '로딩중...')}</div>
                         </div>
                     ) : metrics ? (
                         <div className="mg-v2-form-section mg-v2-mt-lg">
@@ -270,22 +270,22 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                             <div className="mg-v2-info-grid">
                                 <div className="mg-v2-info-item">
                                     <span className="mg-v2-info-label">{t('statistics:metrics.totalConsultants', '총 상담사 수')}</span>
-                                    <span className="mg-v2-info-value">{metrics.totalConsultants || 0}명</span>
+                                    <span className="mg-v2-info-value">{t('statistics:unit.personCount', '{{count}}명', { count: metrics.totalConsultants || 0 })}</span>
                                 </div>
                                 <div className="mg-v2-info-item">
                                     <span className="mg-v2-info-label">{t('statistics:metrics.totalConsultations', '총 상담 건수')}</span>
-                                    <span className="mg-v2-info-value">{metrics.totalConsultations || 0}건</span>
+                                    <span className="mg-v2-info-value">{t('statistics:unit.caseCount', '{{count}}건', { count: metrics.totalConsultations || 0 })}</span>
                                 </div>
                                 <div className="mg-v2-info-item">
                                     <DollarSignIcon size={16} className="mg-v2-icon-inline" />
                                     <span className="mg-v2-info-label">{t('statistics:metrics.totalRevenue', '총 매출')}</span>
                                     <span className="mg-v2-info-value">
-                                        {(metrics.totalRevenue || 0).toLocaleString()}원
+                                        {t('statistics:unit.wonAmount', '{{amount}}원', { amount: (metrics.totalRevenue || 0).toLocaleString() })}
                                     </span>
                                 </div>
                                 <div className="mg-v2-info-item">
                                     <span className="mg-v2-info-label">{t('statistics:metrics.avgSatisfaction', '평균 만족도')}</span>
-                                    <span className="mg-v2-info-value">{metrics.averageSatisfaction || 0}점</span>
+                                    <span className="mg-v2-info-value">{t('statistics:unit.scoreCount', '{{count}}점', { count: metrics.averageSatisfaction || 0 })}</span>
                                 </div>
                             </div>
 
@@ -299,7 +299,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                                 <div className="mg-v2-list-item-content">
                                                     <SafeText tag="div" className="mg-v2-list-item-title">{consultant.name}</SafeText>
                                                     <div className="mg-v2-list-item-subtitle">
-                                                        상담: {consultant.consultationCount}건 · 매출: {consultant.revenue?.toLocaleString()}원 · 만족도: {consultant.satisfaction}점
+                                                        {t('statistics:summary.consultantLine', '상담: {{count}}건 · 매출: {{revenue}}원 · 만족도: {{satisfaction}}점', { count: consultant.consultationCount, revenue: consultant.revenue?.toLocaleString(), satisfaction: consultant.satisfaction })}
                                                     </div>
                                                 </div>
                                             </div>
@@ -315,7 +315,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                                 <div className="mg-v2-list-item-content">
                                                     <div className="mg-v2-list-item-title">{day.date}</div>
                                                     <div className="mg-v2-list-item-subtitle">
-                                                        상담: {day.consultations}건 · 매출: {day.revenue?.toLocaleString()}원
+                                                        {t('statistics:summary.dailyLine', '상담: {{count}}건 · 매출: {{revenue}}원', { count: day.consultations, revenue: day.revenue?.toLocaleString() })}
                                                     </div>
                                                 </div>
                                             </div>

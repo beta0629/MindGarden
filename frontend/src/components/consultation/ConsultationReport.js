@@ -30,29 +30,29 @@ const ConsultationReport = () => {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [periodOptions, setPeriodOptions] = useState([
-    { value: 'MONTH', label: '월별', icon: '📅', color: 'var(--mg-primary-500)', description: '월별 보고서' },
-    { value: 'YEAR', label: '년별', icon: '📊', color: 'var(--mg-success-500)', description: '년별 보고서' },
-    { value: 'QUARTER', label: '분기별', icon: '📈', color: 'var(--mg-warning-500)', description: '분기별 보고서' },
-    { value: 'WEEK', label: '주별', icon: '📋', color: 'var(--mg-purple-500)', description: '주별 보고서' }
+    { value: 'MONTH', label: t('report:consultation.periodOption.monthly', '월별'), icon: '📅', color: 'var(--mg-primary-500)', description: t('report:consultation.periodOption.monthlyDesc', '월별 보고서') },
+    { value: 'YEAR', label: t('report:consultation.periodOption.yearly', '년별'), icon: '📊', color: 'var(--mg-success-500)', description: t('report:consultation.periodOption.yearlyDesc', '년별 보고서') },
+    { value: 'QUARTER', label: t('report:consultation.periodOption.quarterly', '분기별'), icon: '📈', color: 'var(--mg-warning-500)', description: t('report:consultation.periodOption.quarterlyDesc', '분기별 보고서') },
+    { value: 'WEEK', label: t('report:consultation.periodOption.weekly', '주별'), icon: '📋', color: 'var(--mg-purple-500)', description: t('report:consultation.periodOption.weeklyDesc', '주별 보고서') }
   ]);
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [yearOptions, setYearOptions] = useState(() => {
-    const currentYear = new Date().getFullYear();
+    const baseYear = new Date().getFullYear();
     return Array.from({ length: 5 }, (_, i) => ({
-      value: currentYear - i,
-      label: `${currentYear - i}년`,
+      value: baseYear - i,
+      label: t('report:consultation.yearLabel', '{{year}}년', { year: baseYear - i }),
       icon: '📅',
       color: 'var(--mg-primary-500)',
-      description: `${currentYear - i}년`
+      description: t('report:consultation.yearLabel', '{{year}}년', { year: baseYear - i })
     }));
   });
   const [monthOptions, setMonthOptions] = useState(() => {
     return Array.from({ length: 12 }, (_, i) => ({
       value: i + 1,
-      label: `${i + 1}월`,
+      label: t('report:consultation.monthLabel', '{{month}}월', { month: i + 1 }),
       icon: '📅',
       color: 'var(--mg-primary-500)',
-      description: `${i + 1}월`
+      description: t('report:consultation.monthLabel', '{{month}}월', { month: i + 1 })
     }));
   });
   const [loadingYearCodes, setLoadingYearCodes] = useState(false);
@@ -304,9 +304,9 @@ const ConsultationReport = () => {
 
   const getPeriodLabel = () => {
     if (selectedPeriod === 'MONTH') {
-      return `${selectedYear}년 ${selectedMonth}월`;
+      return t('report:consultation.yearMonthLabel', '{{year}}년 {{month}}월', { year: selectedYear, month: selectedMonth });
     } else if (selectedPeriod === 'YEAR') {
-      return `${selectedYear}년`;
+      return t('report:consultation.yearLabel', '{{year}}년', { year: selectedYear });
     }
     return t('common.labels.all', '전체');
   };
@@ -394,7 +394,7 @@ const ConsultationReport = () => {
             </div>
             
             <div className="selector-group">
-              <label htmlFor="year-select">{t('report:consultation.yearLabel', '년도')}</label>
+              <label htmlFor="year-select">{t('report:consultation.yearFieldLabel', '년도')}</label>
               <select
                 id="year-select"
                 value={selectedYear}
@@ -411,7 +411,7 @@ const ConsultationReport = () => {
             
             {selectedPeriod === 'MONTH' && (
               <div className="selector-group">
-                <label htmlFor="month-select">{t('report:consultation.monthLabel', '월')}</label>
+                <label htmlFor="month-select">{t('report:consultation.monthFieldLabel', '월')}</label>
                 <select
                   id="month-select"
                   value={selectedMonth}

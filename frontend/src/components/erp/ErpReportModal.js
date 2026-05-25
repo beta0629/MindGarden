@@ -238,13 +238,13 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     value={period}
                                     onChange={(val) => setPeriod(val)}
                                     options={[
-                                        { value: '', label: '분기를 선택하세요' },
-                                        { value: '2025-Q1', label: '2025년 1분기' },
-                                        { value: '2025-Q2', label: '2025년 2분기' },
-                                        { value: '2025-Q3', label: '2025년 3분기' },
-                                        { value: '2025-Q4', label: '2025년 4분기' }
+                                        { value: '', label: t('report:erp.selectQuarter', '분기를 선택하세요') },
+                                        { value: '2025-Q1', label: t('report:erp.quarterLabel', '{{year}}년 {{quarter}}분기', { year: 2025, quarter: 1 }) },
+                                        { value: '2025-Q2', label: t('report:erp.quarterLabel', '{{year}}년 {{quarter}}분기', { year: 2025, quarter: 2 }) },
+                                        { value: '2025-Q3', label: t('report:erp.quarterLabel', '{{year}}년 {{quarter}}분기', { year: 2025, quarter: 3 }) },
+                                        { value: '2025-Q4', label: t('report:erp.quarterLabel', '{{year}}년 {{quarter}}분기', { year: 2025, quarter: 4 }) }
                                     ]}
-                                    placeholder="분기를 선택하세요"
+                                    placeholder={t('report:erp.selectQuarter', '분기를 선택하세요')}
                                     disabled={loading}
                                     className="mg-v2-form-badge-select"
                                 />
@@ -254,12 +254,12 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     value={period}
                                     onChange={(val) => setPeriod(val)}
                                     options={[
-                                        { value: '', label: '연도를 선택하세요' },
-                                        { value: '2025', label: '2025년' },
-                                        { value: '2024', label: '2024년' },
-                                        { value: '2023', label: '2023년' }
+                                        { value: '', label: t('report:erp.selectYear', '연도를 선택하세요') },
+                                        { value: '2025', label: t('report:erp.yearLabel', '{{year}}년', { year: 2025 }) },
+                                        { value: '2024', label: t('report:erp.yearLabel', '{{year}}년', { year: 2024 }) },
+                                        { value: '2023', label: t('report:erp.yearLabel', '{{year}}년', { year: 2023 }) }
                                     ]}
-                                    placeholder="연도를 선택하세요"
+                                    placeholder={t('report:erp.selectYear', '연도를 선택하세요')}
                                     disabled={loading}
                                     className="mg-v2-form-badge-select"
                                 />
@@ -289,7 +289,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                             label: branch.name
                                         }))
                                     ]}
-                                    placeholder="전체 지점"
+                                    placeholder={t('statistics:filter.allBranches', '전체 지점')}
                                     disabled={loading}
                                     className="mg-v2-form-select"
                                 />

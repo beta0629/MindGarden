@@ -45,7 +45,8 @@ public enum MobilePushNotificationCategory {
             case "mood_reminder",
                     MobilePushCanonicalTypes.MIND_WEATHER_SHARED -> WELLNESS;
             case "system_notice",
-                    MobilePushCanonicalTypes.MAPPING_APPROVED -> SYSTEM;
+                    MobilePushCanonicalTypes.MAPPING_APPROVED,
+                    MobilePushCanonicalTypes.ADMIN_ANNOUNCEMENT -> SYSTEM;
             default -> SCHEDULE;
         };
     }

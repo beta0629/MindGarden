@@ -13,8 +13,10 @@ import java.util.Set;
 import java.util.UUID;
 import com.coresolution.consultation.dto.BulkAlimtalkManualRequest;
 import com.coresolution.consultation.dto.BulkNotificationResponse;
+import com.coresolution.consultation.dto.BulkPushManualRequest;
 import com.coresolution.consultation.dto.BulkRecipientResult;
 import com.coresolution.consultation.dto.BulkSmsManualRequest;
+import com.coresolution.consultation.dto.MobilePushBroadcastResult;
 import com.coresolution.consultation.dto.TestNotificationAlimtalkTemplateSource;
 import com.coresolution.consultation.dto.TestNotificationChannel;
 import com.coresolution.consultation.dto.TestNotificationRecipientMode;
@@ -23,6 +25,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.AdminTestNotificationLogRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminManualNotificationService;
+import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import org.springframework.data.domain.Page;
@@ -60,6 +63,9 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
     /** 수신자 전화번호 누락(복호화 실패 포함). */
     public static final String ERROR_CODE_RECIPIENT_PHONE_MISSING = "RECIPIENT_PHONE_MISSING";
 
+    /** 푸시 broadcast 전용 placeholder — admin_test_notification_logs.recipient_phone_masked NOT NULL 충족. */
+    public static final String PUSH_PHONE_PLACEHOLDER = "[push]";
+
     private final UserRepository userRepository;
     private final AdminTestNotificationLogRepository logRepository;
     private final AdminTestNotificationLogger logger;
@@ -67,6 +73,7 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
     private final NotificationDispatchHelper dispatchHelper;
     private final AlimtalkTemplateMappingResolver templateMappingResolver;
     private final PersonalDataEncryptionUtil encryptionUtil;
+    private final MobilePushDispatchService mobilePushDispatchService;
 
     @Override
     public BulkNotificationResponse sendBulkSms(String tenantId, User currentUser,
@@ -260,6 +267,119 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
     }
 
     @Override
+    public BulkNotificationResponse sendBulkPush(String tenantId, User currentUser,
+            BulkPushManualRequest request) {
+        Objects.requireNonNull(tenantId, "tenantId");
+        Objects.requireNonNull(currentUser, "currentUser");
+        Objects.requireNonNull(request, "request");
+
+        String batchId = UUID.randomUUID().toString();
+        LocalDateTime startedAt = LocalDateTime.now();
+        List<Long> orderedIds = dedupePreserveOrder(request.getUserIds());
+
+        // SMS·알림톡과 동일 rate-limit 풀 사용 — 어드민 남용 방지. 잔여 < 요청 수신자 수면 전체 차단.
+        AdminTestNotificationRateLimiter.Decision decision =
+            rateLimiter.tryAcquire(tenantId, currentUser.getId());
+        if (!hasEnoughCapacity(decision, orderedIds.size())) {
+            String message = "분당/일당 발송 한도가 부족하여 배치 전체가 차단되었습니다."
+                + " (요청=" + orderedIds.size() + ", 분당잔여=" + decision.remainingPerMinute()
+                + ", 일당잔여=" + decision.remainingPerDay() + ")";
+            log.warn("어드민 수동 다중 푸시 — rate-limit 부족으로 차단: tenantId={}, userId={}, ids={}",
+                tenantId, currentUser.getId(), orderedIds.size());
+            return BulkNotificationResponse.builder()
+                .batchId(batchId)
+                .channel(TestNotificationChannel.PUSH)
+                .startedAt(startedAt)
+                .totalCount(orderedIds.size())
+                .successCount(0)
+                .failureCount(orderedIds.size())
+                .batchErrorCode(ERROR_CODE_RATE_LIMIT_EXCEEDED_BULK)
+                .batchErrorMessage(message)
+                .results(Collections.emptyList())
+                .build();
+        }
+
+        // dispatchAdminAnnouncement 가 사용자 단위 SKIPPED/FAILED 사유를 결과로 돌려준다.
+        // 토큰 없음·옵트아웃은 SKIPPED — rate-limit 카운트는 호출 시도 시점에 1회씩 증가시킨다.
+        Map<Long, User> resolved = resolveUsers(tenantId, orderedIds);
+        Map<Long, MobilePushBroadcastResult> dispatchByUser = new LinkedHashMap<>();
+        List<MobilePushBroadcastResult> dispatched = mobilePushDispatchService.dispatchAdminAnnouncement(
+            tenantId, orderedIds, request.getTitle(), request.getBody(), batchId);
+        for (MobilePushBroadcastResult row : dispatched) {
+            if (row != null && row.getUserId() != null) {
+                dispatchByUser.put(row.getUserId(), row);
+            }
+        }
+
+        List<BulkRecipientResult> results = new ArrayList<>(orderedIds.size());
+        int successCount = 0;
+        for (Long userId : orderedIds) {
+            User target = resolved.get(userId);
+            String name = resolveUserName(target);
+            MobilePushBroadcastResult outcome = dispatchByUser.get(userId);
+
+            // 사용자 미존재(다른 tenant 등) — 발송 자체가 일어나지 않으므로 FAILED 처리(SMS/알림톡과 동일 정책).
+            if (target == null) {
+                results.add(BulkRecipientResult.builder()
+                    .userId(userId)
+                    .name(null)
+                    .phoneMasked(PUSH_PHONE_PLACEHOLDER)
+                    .success(false)
+                    .errorCode(ERROR_CODE_RECIPIENT_NOT_FOUND)
+                    .errorMessage("user not found in current tenant")
+                    .logId(null)
+                    .build());
+                continue;
+            }
+
+            AdminTestNotificationLog logEntry = logger.logAttempt(tenantId, currentUser.getId(),
+                currentUser.getUserId(), TestNotificationRecipientMode.USER, userId,
+                PUSH_PHONE_PLACEHOLDER, TestNotificationChannel.PUSH, null, null,
+                request.getTitle() + " | " + request.getBody(), request.getReason(), batchId);
+            rateLimiter.recordAttempt(tenantId, currentUser.getId());
+
+            boolean success;
+            String errorCode;
+            String errorMessage;
+            if (outcome == null) {
+                // dispatch 가 응답에 누락(이론상 발생 어렵지만 방어): FAILED 처리.
+                success = false;
+                errorCode = MobilePushBroadcastResult.ERROR_CODE_EXPO_FAILED;
+                errorMessage = "dispatch missing result";
+            } else {
+                success = outcome.getStatus() == MobilePushBroadcastResult.Status.SENT;
+                errorCode = outcome.getErrorCode();
+                errorMessage = outcome.getErrorMessage();
+            }
+            logger.updateResult(logEntry.getId(), success, null, null, errorCode, errorMessage);
+            if (success) {
+                successCount++;
+            }
+            results.add(BulkRecipientResult.builder()
+                .userId(userId)
+                .name(name)
+                .phoneMasked(PUSH_PHONE_PLACEHOLDER)
+                .success(success)
+                .errorCode(errorCode)
+                .errorMessage(errorMessage)
+                .solapiGroupId(null)
+                .solapiMessageId(outcome != null ? outcome.getExpoReceiptId() : null)
+                .logId(logEntry.getId())
+                .build());
+        }
+
+        return BulkNotificationResponse.builder()
+            .batchId(batchId)
+            .channel(TestNotificationChannel.PUSH)
+            .startedAt(startedAt)
+            .totalCount(orderedIds.size())
+            .successCount(successCount)
+            .failureCount(orderedIds.size() - successCount)
+            .results(results)
+            .build();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<BulkRecipientResult> getBatchDetails(String tenantId, String batchId) {
         Objects.requireNonNull(tenantId, "tenantId");
@@ -408,6 +528,20 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
             .solapiMessageId(null)
             .logId(null)
             .build();
+    }
+
+    /**
+     * 푸시 결과 행에 표시할 사용자 이름(복호화 가능 시) — SMS/알림톡과 달리 phone 이 없으므로
+     * resolveRecipient 와 분리한 경량 helper.
+     *
+     * @param target 사용자(null 가능 — 매핑 없을 시)
+     * @return 복호화 이름 또는 {@code null}
+     */
+    private String resolveUserName(User target) {
+        if (target == null) {
+            return null;
+        }
+        return decryptSafely(target.getName());
     }
 
     private String decryptSafely(String value) {

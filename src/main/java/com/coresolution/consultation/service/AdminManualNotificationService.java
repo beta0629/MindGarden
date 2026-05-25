@@ -3,6 +3,7 @@ package com.coresolution.consultation.service;
 import java.util.List;
 import com.coresolution.consultation.dto.BulkAlimtalkManualRequest;
 import com.coresolution.consultation.dto.BulkNotificationResponse;
+import com.coresolution.consultation.dto.BulkPushManualRequest;
 import com.coresolution.consultation.dto.BulkRecipientResult;
 import com.coresolution.consultation.dto.BulkSmsManualRequest;
 import com.coresolution.consultation.entity.User;
@@ -42,6 +43,19 @@ public interface AdminManualNotificationService {
      */
     BulkNotificationResponse sendBulkAlimtalk(String tenantId, User currentUser,
             BulkAlimtalkManualRequest request);
+
+    /**
+     * 다중 푸시(Expo Push API) broadcast. 토큰 없는 사용자·SYSTEM 카테고리 OFF 사용자는 SKIPPED
+     * (실패 아님)로 행 단위 결과에 사유 포함. 멱등은 batch UUID 기반.
+     *
+     * @param tenantId    테넌트 ID
+     * @param currentUser 발송 사용자
+     * @param request     요청
+     * @return 배치 결과(batch_id 포함, 행 단위 결과 SENT/SKIPPED/FAILED)
+     * @since 2026-05-25
+     */
+    BulkNotificationResponse sendBulkPush(String tenantId, User currentUser,
+            BulkPushManualRequest request);
 
     /**
      * 배치 상세 — 같은 batch_id 의 모든 감사로그 행을 행 단위 결과로 노출.

@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.config.ExpoPushProperties;
 import com.coresolution.consultation.constant.MobilePushCanonicalTypes;
+import com.coresolution.consultation.dto.MobilePushBroadcastResult;
 import com.coresolution.consultation.entity.MobilePushSettings;
 import com.coresolution.consultation.entity.MobilePushToken;
 import com.coresolution.consultation.entity.Payment;
@@ -990,5 +991,211 @@ class MobilePushDispatchServiceImplTest {
                 eq(MobilePushCanonicalTypes.BOOKING_REMINDER), eq("50"), anyString());
         verify(restTemplate, times(1)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
                 eq(String.class));
+    }
+
+    // ===================== 2026-05-25: dispatchAdminAnnouncement broadcast =====================
+
+    @Test
+    @DisplayName("dispatchAdminAnnouncement — 토큰 있고 SYSTEM 카테고리 ON + Expo ok → SENT 1행, ticket id 보존")
+    void dispatchAdminAnnouncement_singleUser_returnsSent() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setSystemEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+
+        MobilePushToken token = new MobilePushToken();
+        token.setPushToken("ExponentPushToken[admin-broadcast]");
+        token.setUserId(77L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(77L)))).thenReturn(List.of(token));
+
+        when(mobilePushDispatchDedupService.tryClaim(
+                eq("tenant-a"), eq(MobilePushCanonicalTypes.ADMIN_ANNOUNCEMENT),
+                eq("77"), eq("batch-bucket"))).thenReturn(true);
+
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\",\"id\":\"receipt-77\"}]}");
+
+        List<MobilePushBroadcastResult> results = mobilePushDispatchService.dispatchAdminAnnouncement(
+                "tenant-a", List.of(77L), "공지", "운영 점검 안내", "batch-bucket");
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getStatus()).isEqualTo(MobilePushBroadcastResult.Status.SENT);
+        assertThat(results.get(0).getUserId()).isEqualTo(77L);
+        assertThat(results.get(0).getExpoReceiptId()).isEqualTo("receipt-77");
+        assertThat(results.get(0).getErrorCode()).isNull();
+    }
+
+    @Test
+    @DisplayName("dispatchAdminAnnouncement — 토큰 없는 사용자 → SKIPPED(PUSH_NO_TOKEN), Expo 호출 0")
+    void dispatchAdminAnnouncement_noToken_returnsSkipped() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setSystemEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(78L)))
+                .thenReturn(Optional.of(settings));
+
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(78L)))).thenReturn(List.of());
+
+        List<MobilePushBroadcastResult> results = mobilePushDispatchService.dispatchAdminAnnouncement(
+                "tenant-a", List.of(78L), "공지", "안내", "bucket-2");
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getStatus()).isEqualTo(MobilePushBroadcastResult.Status.SKIPPED);
+        assertThat(results.get(0).getErrorCode()).isEqualTo(MobilePushBroadcastResult.ERROR_CODE_NO_TOKEN);
+        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("dispatchAdminAnnouncement — SYSTEM 카테고리 OFF 사용자 → SKIPPED(PUSH_OPTED_OUT)")
+    void dispatchAdminAnnouncement_optedOut_returnsSkipped() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setSystemEnabled(false);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(79L)))
+                .thenReturn(Optional.of(settings));
+
+        List<MobilePushBroadcastResult> results = mobilePushDispatchService.dispatchAdminAnnouncement(
+                "tenant-a", List.of(79L), "공지", "안내", "bucket-3");
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getStatus()).isEqualTo(MobilePushBroadcastResult.Status.SKIPPED);
+        assertThat(results.get(0).getErrorCode()).isEqualTo(MobilePushBroadcastResult.ERROR_CODE_OPTED_OUT);
+        // SYSTEM OFF 사용자는 토큰 조회 자체 skip.
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                anyString(), anyList());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("dispatchAdminAnnouncement — 멱등 청구 실패 → SKIPPED(PUSH_DUPLICATE), Expo POST 0")
+    void dispatchAdminAnnouncement_dedupConflict_returnsSkipped() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setSystemEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(80L)))
+                .thenReturn(Optional.of(settings));
+
+        MobilePushToken token = new MobilePushToken();
+        token.setPushToken("ExponentPushToken[dup]");
+        token.setUserId(80L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(80L)))).thenReturn(List.of(token));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.ADMIN_ANNOUNCEMENT), eq("80"), eq("bucket-dup")))
+                .thenReturn(false);
+
+        List<MobilePushBroadcastResult> results = mobilePushDispatchService.dispatchAdminAnnouncement(
+                "tenant-a", List.of(80L), "공지", "안내", "bucket-dup");
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getStatus()).isEqualTo(MobilePushBroadcastResult.Status.SKIPPED);
+        assertThat(results.get(0).getErrorCode()).isEqualTo(MobilePushBroadcastResult.ERROR_CODE_DUPLICATE);
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("dispatchAdminAnnouncement — Expo RestClientException → FAILED(PUSH_EXPO_FAILED), 예외 전파 없음")
+    void dispatchAdminAnnouncement_expoHttpFail_returnsFailed() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setSystemEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(81L)))
+                .thenReturn(Optional.of(settings));
+
+        MobilePushToken token = new MobilePushToken();
+        token.setPushToken("ExponentPushToken[fail]");
+        token.setUserId(81L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(81L)))).thenReturn(List.of(token));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.ADMIN_ANNOUNCEMENT), eq("81"), eq("bucket-fail")))
+                .thenReturn(true);
+
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenThrow(new RestClientException("expo-down"));
+
+        List<MobilePushBroadcastResult> results = mobilePushDispatchService.dispatchAdminAnnouncement(
+                "tenant-a", List.of(81L), "공지", "안내", "bucket-fail");
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getStatus()).isEqualTo(MobilePushBroadcastResult.Status.FAILED);
+        assertThat(results.get(0).getErrorCode()).isEqualTo(MobilePushBroadcastResult.ERROR_CODE_EXPO_FAILED);
+    }
+
+    @Test
+    @DisplayName("dispatchAdminAnnouncement — 혼합 입력(SENT/SKIPPED/FAILED)이 입력 순서를 보존하여 행 단위 반환")
+    void dispatchAdminAnnouncement_mixedRoster_preservesOrder() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        // 100 = SENT, 101 = SKIPPED(opt-out), 102 = SKIPPED(no token).
+        MobilePushSettings on = new MobilePushSettings();
+        on.setSystemEnabled(true);
+        MobilePushSettings off = new MobilePushSettings();
+        off.setSystemEnabled(false);
+
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(100L)))
+                .thenReturn(Optional.of(on));
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(101L)))
+                .thenReturn(Optional.of(off));
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(102L)))
+                .thenReturn(Optional.of(on));
+
+        MobilePushToken token100 = new MobilePushToken();
+        token100.setPushToken("ExponentPushToken[u100]");
+        token100.setUserId(100L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(100L)))).thenReturn(List.of(token100));
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(102L)))).thenReturn(List.of());
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"),
+                eq(MobilePushCanonicalTypes.ADMIN_ANNOUNCEMENT), eq("100"), eq("bucket-mix")))
+                .thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\",\"id\":\"r-100\"}]}");
+
+        List<MobilePushBroadcastResult> results = mobilePushDispatchService.dispatchAdminAnnouncement(
+                "tenant-a", List.of(100L, 101L, 102L), "공지", "안내", "bucket-mix");
+
+        assertThat(results).hasSize(3);
+        assertThat(results.get(0).getUserId()).isEqualTo(100L);
+        assertThat(results.get(0).getStatus()).isEqualTo(MobilePushBroadcastResult.Status.SENT);
+        assertThat(results.get(1).getUserId()).isEqualTo(101L);
+        assertThat(results.get(1).getStatus()).isEqualTo(MobilePushBroadcastResult.Status.SKIPPED);
+        assertThat(results.get(1).getErrorCode()).isEqualTo(MobilePushBroadcastResult.ERROR_CODE_OPTED_OUT);
+        assertThat(results.get(2).getUserId()).isEqualTo(102L);
+        assertThat(results.get(2).getStatus()).isEqualTo(MobilePushBroadcastResult.Status.SKIPPED);
+        assertThat(results.get(2).getErrorCode()).isEqualTo(MobilePushBroadcastResult.ERROR_CODE_NO_TOKEN);
+    }
+
+    @Test
+    @DisplayName("dispatchAdminAnnouncement — Expo access token 미설정 시 모든 행 FAILED + Expo POST 0")
+    void dispatchAdminAnnouncement_whenAccessTokenMissing_allFailed() {
+        when(expoPushProperties.getAccessToken()).thenReturn("");
+
+        List<MobilePushBroadcastResult> results = mobilePushDispatchService.dispatchAdminAnnouncement(
+                "tenant-a", List.of(200L, 201L), "공지", "안내", "bucket-na");
+
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).getStatus()).isEqualTo(MobilePushBroadcastResult.Status.FAILED);
+        assertThat(results.get(0).getErrorCode()).isEqualTo(MobilePushBroadcastResult.ERROR_CODE_EXPO_FAILED);
+        assertThat(results.get(1).getStatus()).isEqualTo(MobilePushBroadcastResult.Status.FAILED);
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                anyString(), anyList());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
     }
 }

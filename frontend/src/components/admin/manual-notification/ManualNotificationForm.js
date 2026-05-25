@@ -39,11 +39,14 @@ import {
   MANUAL_NOTIFICATION_REASON_MAX_LENGTH,
   MANUAL_NOTIFICATION_REASON_RECOMMENDED_MIN_LENGTH,
   MANUAL_NOTIFICATION_SMS_CONTENT_MAX_LENGTH,
+  MANUAL_NOTIFICATION_PUSH_TITLE_MAX_LENGTH,
+  MANUAL_NOTIFICATION_PUSH_BODY_MAX_LENGTH,
   searchRecipients,
   fetchCommonCodeTemplates,
   fetchLiveTemplates,
   sendSmsBatch,
   sendAlimtalkBatch,
+  sendPushBatch,
   normalizeBulkResponse
 } from '../../../api/admin/manualNotificationApi';
 import RecipientPicker from './RecipientPicker';
@@ -74,6 +77,9 @@ const ManualNotificationForm = ({ onBatchSent }) => {
   const [maxExceededWarning, setMaxExceededWarning] = useState(false);
 
   const [smsContent, setSmsContent] = useState('');
+
+  const [pushTitle, setPushTitle] = useState('');
+  const [pushBody, setPushBody] = useState('');
 
   const [templatesLive, setTemplatesLive] = useState(false);
   const [templates, setTemplates] = useState([]);
@@ -176,6 +182,14 @@ const ManualNotificationForm = ({ onBatchSent }) => {
       const c = smsContent.trim();
       return c.length > 0 && c.length <= MANUAL_NOTIFICATION_SMS_CONTENT_MAX_LENGTH;
     }
+    if (channel === MANUAL_NOTIFICATION_CHANNEL.PUSH) {
+      const tt = pushTitle.trim();
+      const bb = pushBody.trim();
+      return tt.length > 0
+        && tt.length <= MANUAL_NOTIFICATION_PUSH_TITLE_MAX_LENGTH
+        && bb.length > 0
+        && bb.length <= MANUAL_NOTIFICATION_PUSH_BODY_MAX_LENGTH;
+    }
     if (!templateCode) {
       return false;
     }
@@ -187,7 +201,8 @@ const ManualNotificationForm = ({ onBatchSent }) => {
       return !value || !String(value).trim();
     });
     return !missingRequired;
-  }, [selectedUsers, reasonTrimmedLength, reason, channel, smsContent, templateCode, templateVariableDefs, templateParams]);
+  }, [selectedUsers, reasonTrimmedLength, reason, channel, smsContent, pushTitle, pushBody,
+    templateCode, templateVariableDefs, templateParams]);
 
   const buildPayload = useCallback(() => {
     const userIds = selectedUsers
@@ -200,6 +215,9 @@ const ManualNotificationForm = ({ onBatchSent }) => {
     if (channel === MANUAL_NOTIFICATION_CHANNEL.SMS) {
       return { ...base, content: smsContent.trim() };
     }
+    if (channel === MANUAL_NOTIFICATION_CHANNEL.PUSH) {
+      return { ...base, title: pushTitle.trim(), body: pushBody.trim() };
+    }
     return {
       ...base,
       templateCode,
@@ -208,7 +226,8 @@ const ManualNotificationForm = ({ onBatchSent }) => {
         : MANUAL_NOTIFICATION_TEMPLATE_SOURCE.COMMON_CODE,
       templateParams: templateParams || {}
     };
-  }, [selectedUsers, reason, channel, smsContent, templateCode, templatesLive, templateParams]);
+  }, [selectedUsers, reason, channel, smsContent, pushTitle, pushBody, templateCode,
+    templatesLive, templateParams]);
 
   const closeConfirm = useCallback(() => {
     setConfirmStep(CONFIRM_STEP.CLOSED);
@@ -222,9 +241,14 @@ const ManualNotificationForm = ({ onBatchSent }) => {
     setSubmitting(true);
     try {
       const payload = buildPayload();
-      const response = channel === MANUAL_NOTIFICATION_CHANNEL.SMS
-        ? await sendSmsBatch(payload)
-        : await sendAlimtalkBatch(payload);
+      let response;
+      if (channel === MANUAL_NOTIFICATION_CHANNEL.SMS) {
+        response = await sendSmsBatch(payload);
+      } else if (channel === MANUAL_NOTIFICATION_CHANNEL.PUSH) {
+        response = await sendPushBatch(payload);
+      } else {
+        response = await sendAlimtalkBatch(payload);
+      }
 
       const normalized = normalizeBulkResponse(response);
       const success = response?.success !== false;
@@ -283,8 +307,19 @@ const ManualNotificationForm = ({ onBatchSent }) => {
 
   const channelOptions = useMemo(() => [
     { value: MANUAL_NOTIFICATION_CHANNEL.SMS, label: t('manualNotification.channel.sms', 'SMS') },
-    { value: MANUAL_NOTIFICATION_CHANNEL.ALIMTALK, label: t('manualNotification.channel.alimtalk', '카카오 알림톡') }
+    { value: MANUAL_NOTIFICATION_CHANNEL.ALIMTALK, label: t('manualNotification.channel.alimtalk', '카카오 알림톡') },
+    { value: MANUAL_NOTIFICATION_CHANNEL.PUSH, label: t('manualNotification.channel.push', '푸시 알림') }
   ], [t]);
+
+  const channelLabel = useMemo(() => {
+    if (channel === MANUAL_NOTIFICATION_CHANNEL.SMS) {
+      return t('manualNotification.channel.sms', 'SMS');
+    }
+    if (channel === MANUAL_NOTIFICATION_CHANNEL.PUSH) {
+      return t('manualNotification.channel.push', '푸시 알림');
+    }
+    return t('manualNotification.channel.alimtalk', '카카오 알림톡');
+  }, [channel, t]);
 
   const handleLimitExceeded = useCallback(() => {
     setMaxExceededWarning(true);
@@ -299,9 +334,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
     <ul className={`${FORM_CLASS}__summary`}>
       <li>
         <strong>{t('manualNotification.summary.channel', '채널')}:</strong>{' '}
-        {channel === MANUAL_NOTIFICATION_CHANNEL.SMS
-          ? t('manualNotification.channel.sms', 'SMS')
-          : t('manualNotification.channel.alimtalk', '카카오 알림톡')}
+        {channelLabel}
       </li>
       <li>
         <strong>{t('manualNotification.summary.recipientCount', '수신자')}:</strong>{' '}
@@ -429,6 +462,72 @@ const ManualNotificationForm = ({ onBatchSent }) => {
             {t('manualNotification.sms.contentCounter', {
               count: smsContent.length,
               max: MANUAL_NOTIFICATION_SMS_CONTENT_MAX_LENGTH,
+              defaultValue: '{{count}} / {{max}}'
+            })}
+          </p>
+        </section>
+      )}
+
+      {channel === MANUAL_NOTIFICATION_CHANNEL.PUSH && (
+        <section
+          className={`${FORM_CLASS}__section`}
+          aria-labelledby="mg-manual-notif-push-title-label"
+        >
+          <p className={`${FORM_CLASS}__hint`} role="note">
+            {t(
+              'manualNotification.push.warning',
+              '푸시 알림은 토큰이 등록된 사용자에게만 발송됩니다. 토큰이 없거나 알림을 끈 사용자는 SKIPPED 로 표기됩니다.'
+            )}
+          </p>
+          <label
+            id="mg-manual-notif-push-title-label"
+            className={`${FORM_CLASS}__section-title`}
+            htmlFor="mg-manual-notif-push-title"
+          >
+            {t('manualNotification.push.titleLabel', '푸시 제목')}
+          </label>
+          <input
+            id="mg-manual-notif-push-title"
+            type="text"
+            className={`${FORM_CLASS}__input`}
+            maxLength={MANUAL_NOTIFICATION_PUSH_TITLE_MAX_LENGTH}
+            value={pushTitle}
+            onChange={(e) => setPushTitle(e.target.value)}
+            placeholder={t(
+              'manualNotification.push.titlePlaceholder',
+              '푸시 제목을 입력하세요 (최대 50자)'
+            )}
+          />
+          <p className={`${FORM_CLASS}__hint`}>
+            {t('manualNotification.push.titleCounter', {
+              count: pushTitle.length,
+              max: MANUAL_NOTIFICATION_PUSH_TITLE_MAX_LENGTH,
+              defaultValue: '{{count}} / {{max}}'
+            })}
+          </p>
+          <label
+            id="mg-manual-notif-push-body-label"
+            className={`${FORM_CLASS}__section-title`}
+            htmlFor="mg-manual-notif-push-body"
+          >
+            {t('manualNotification.push.bodyLabel', '푸시 본문')}
+          </label>
+          <textarea
+            id="mg-manual-notif-push-body"
+            className={`${FORM_CLASS}__textarea`}
+            rows={5}
+            maxLength={MANUAL_NOTIFICATION_PUSH_BODY_MAX_LENGTH}
+            value={pushBody}
+            onChange={(e) => setPushBody(e.target.value)}
+            placeholder={t(
+              'manualNotification.push.bodyPlaceholder',
+              '푸시 본문을 입력하세요 (최대 1000자)'
+            )}
+          />
+          <p className={`${FORM_CLASS}__hint`}>
+            {t('manualNotification.push.bodyCounter', {
+              count: pushBody.length,
+              max: MANUAL_NOTIFICATION_PUSH_BODY_MAX_LENGTH,
               defaultValue: '{{count}} / {{max}}'
             })}
           </p>

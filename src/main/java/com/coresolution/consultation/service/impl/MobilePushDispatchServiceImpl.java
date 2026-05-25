@@ -6,6 +6,7 @@ import com.coresolution.consultation.constant.MobilePushCanonicalTypes;
 import com.coresolution.consultation.constant.MobilePushDispatchConstants;
 import com.coresolution.consultation.constant.MobilePushNotificationCategory;
 import com.coresolution.consultation.constant.ShopNotificationCopy;
+import com.coresolution.consultation.dto.MobilePushBroadcastResult;
 import com.coresolution.consultation.entity.MobilePushToken;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.Schedule;
@@ -800,5 +801,217 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
             return s;
         }
         return s.substring(0, max);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public List<MobilePushBroadcastResult> dispatchAdminAnnouncement(
+            String tenantId,
+            List<Long> recipientUserIds,
+            String title,
+            String body,
+            String dedupeBucket) {
+        // 입력 sanitize — 빈 리스트·null 안전 처리. 수신자 미지정은 정상 비즈니스 케이스(예: rate-limit
+        // 차단 후 호출자가 빈 목록을 넘길 수 있음).
+        if (recipientUserIds == null || recipientUserIds.isEmpty()) {
+            return List.of();
+        }
+        String tid = requireTenantId(tenantId, null);
+        if (tid == null) {
+            // 테넌트 누락은 호출자(컨트롤러) 가드를 거쳐도 발생 가능성이 거의 없으므로 빈 결과.
+            return List.of();
+        }
+        String safeTitle = truncate(
+                title != null && !title.isBlank() ? title : "알림",
+                MobilePushDispatchConstants.TITLE_MAX_LENGTH);
+        String safeBody = truncate(
+                body != null && !body.isBlank() ? body : safeTitle,
+                MobilePushDispatchConstants.BODY_MAX_LENGTH);
+        String safeBucket = dedupeBucket != null && !dedupeBucket.isBlank()
+                ? dedupeBucket.trim()
+                : "default";
+
+        // 입력 순서 보존 + 중복 제거.
+        List<Long> orderedIds = recipientUserIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toCollection(java.util.ArrayList::new));
+        List<MobilePushBroadcastResult> results = new ArrayList<>(orderedIds.size());
+
+        // Expo access token 누락 — 모든 수신자에 대해 SKIPPED 가 아니라 FAILED 로 표기해도 좋으나,
+        // 운영 사고 방지 차원에서 호출자(서비스) 가 별도 게이트로 처리하도록 두고 여기서는 행 단위 FAILED
+        // 로 명시한다(빈 결과보다 명확).
+        boolean tokenAbsent = expoPushProperties.getAccessToken() == null
+                || expoPushProperties.getAccessToken().isBlank();
+
+        Map<String, String> data = new LinkedHashMap<>();
+        data.put("type", MobilePushCanonicalTypes.ADMIN_ANNOUNCEMENT);
+        data.put("tenantId", tid);
+        data.put("title", safeTitle);
+        sanitizeDataStrings(data);
+
+        for (Long userId : orderedIds) {
+            if (tokenAbsent) {
+                results.add(MobilePushBroadcastResult.builder()
+                        .userId(userId)
+                        .status(MobilePushBroadcastResult.Status.FAILED)
+                        .errorCode(MobilePushBroadcastResult.ERROR_CODE_EXPO_FAILED)
+                        .errorMessage("Expo access token 미설정")
+                        .build());
+                continue;
+            }
+            // 1. 카테고리(SYSTEM) 게이트 — 사용자가 OFF 면 SKIPPED.
+            if (!isCategoryEnabledForUser(tid, userId, MobilePushNotificationCategory.SYSTEM)) {
+                results.add(MobilePushBroadcastResult.builder()
+                        .userId(userId)
+                        .status(MobilePushBroadcastResult.Status.SKIPPED)
+                        .errorCode(MobilePushBroadcastResult.ERROR_CODE_OPTED_OUT)
+                        .errorMessage("사용자가 시스템 알림을 끔(opt-out)")
+                        .build());
+                continue;
+            }
+            // 2. 활성 토큰 조회 — 없으면 SKIPPED.
+            List<MobilePushToken> tokens =
+                    mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                            tid, List.of(userId));
+            if (tokens.isEmpty()) {
+                results.add(MobilePushBroadcastResult.builder()
+                        .userId(userId)
+                        .status(MobilePushBroadcastResult.Status.SKIPPED)
+                        .errorCode(MobilePushBroadcastResult.ERROR_CODE_NO_TOKEN)
+                        .errorMessage("푸시 토큰이 없는 사용자")
+                        .build());
+                continue;
+            }
+            // 3. 멱등 청구 — bucket 은 호출자(batch UUID) + userId 조합으로 24h 내 중복 차단.
+            String dedupeEntity = String.valueOf(userId);
+            if (!mobilePushDispatchDedupService.tryClaim(tid,
+                    MobilePushCanonicalTypes.ADMIN_ANNOUNCEMENT, dedupeEntity, safeBucket)) {
+                results.add(MobilePushBroadcastResult.builder()
+                        .userId(userId)
+                        .status(MobilePushBroadcastResult.Status.SKIPPED)
+                        .errorCode(MobilePushBroadcastResult.ERROR_CODE_DUPLICATE)
+                        .errorMessage("동일 batch 멱등 중복")
+                        .build());
+                continue;
+            }
+            // 4. 단건 Expo POST — 행 단위 결과 보존을 위해 사용자별로 1회 호출.
+            MobilePushBroadcastResult outcome = postAdminAnnouncementToExpo(
+                    tid, userId, tokens, safeTitle, safeBody, data);
+            results.add(outcome);
+        }
+        return results;
+    }
+
+    /**
+     * 단일 사용자에게 admin announcement Expo POST 1회 수행. 사용자 보유 토큰이 다수일 수 있으므로
+     * Expo 배치 messages 로 묶어 1회 POST 한다(여전히 사용자 단위 결과 1행 보존).
+     *
+     * @param tenantId  테넌트 ID
+     * @param userId    수신 사용자 PK
+     * @param tokens    사용자 활성 토큰 목록(1+)
+     * @param title     제목(이미 truncate 됨)
+     * @param body      본문(이미 truncate 됨)
+     * @param data      Expo data 페이로드
+     * @return 행 단위 결과
+     */
+    private MobilePushBroadcastResult postAdminAnnouncementToExpo(
+            String tenantId,
+            Long userId,
+            List<MobilePushToken> tokens,
+            String title,
+            String body,
+            Map<String, String> data) {
+        List<Map<String, Object>> messages = new ArrayList<>();
+        for (MobilePushToken token : tokens) {
+            Map<String, Object> msg = new LinkedHashMap<>();
+            msg.put("to", token.getPushToken());
+            msg.put("title", title);
+            msg.put("body", body);
+            msg.put("sound", "default");
+            Map<String, String> expoData = new LinkedHashMap<>(data);
+            expoData.putIfAbsent("type", MobilePushCanonicalTypes.ADMIN_ANNOUNCEMENT);
+            expoData.putIfAbsent("tenantId", tenantId);
+            msg.put("data", expoData);
+            messages.add(msg);
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(expoPushProperties.getAccessToken().trim());
+        HttpEntity<List<Map<String, Object>>> entity = new HttpEntity<>(messages, headers);
+        try {
+            String responseBody = restTemplate.postForObject(
+                    expoPushProperties.getApiUrl(), entity, String.class);
+            if (responseBody == null || responseBody.isBlank()) {
+                log.warn("Expo admin-announcement 응답 본문 비어 있음: userId={}", userId);
+                return MobilePushBroadcastResult.builder()
+                        .userId(userId)
+                        .status(MobilePushBroadcastResult.Status.FAILED)
+                        .errorCode(MobilePushBroadcastResult.ERROR_CODE_EXPO_FAILED)
+                        .errorMessage("Expo response empty")
+                        .build();
+            }
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode dataArray = root.get("data");
+            if (dataArray == null || !dataArray.isArray() || dataArray.isEmpty()) {
+                return MobilePushBroadcastResult.builder()
+                        .userId(userId)
+                        .status(MobilePushBroadcastResult.Status.FAILED)
+                        .errorCode(MobilePushBroadcastResult.ERROR_CODE_EXPO_FAILED)
+                        .errorMessage("Expo response shape invalid")
+                        .build();
+            }
+            handleExpoTickets(tenantId, tokens, dataArray);
+            // 사용자 단위 결과 — 토큰 중 하나라도 ok 면 SENT, 전체 error 면 FAILED.
+            String firstReceiptId = null;
+            boolean anyOk = false;
+            boolean anyErr = false;
+            String firstErrorMessage = null;
+            for (int i = 0; i < dataArray.size(); i++) {
+                JsonNode ticket = dataArray.get(i);
+                String status = ticket.path("status").asText("");
+                if ("ok".equals(status)) {
+                    anyOk = true;
+                    if (firstReceiptId == null) {
+                        firstReceiptId = ticket.path("id").asText(null);
+                    }
+                } else if ("error".equals(status)) {
+                    anyErr = true;
+                    if (firstErrorMessage == null) {
+                        firstErrorMessage = ticket.path("message").asText("expo ticket error");
+                    }
+                }
+            }
+            if (anyOk) {
+                return MobilePushBroadcastResult.builder()
+                        .userId(userId)
+                        .status(MobilePushBroadcastResult.Status.SENT)
+                        .expoReceiptId(firstReceiptId)
+                        .build();
+            }
+            return MobilePushBroadcastResult.builder()
+                    .userId(userId)
+                    .status(MobilePushBroadcastResult.Status.FAILED)
+                    .errorCode(MobilePushBroadcastResult.ERROR_CODE_EXPO_FAILED)
+                    .errorMessage(anyErr ? firstErrorMessage : "Expo ticket missing")
+                    .build();
+        } catch (RestClientException ex) {
+            log.error("Expo admin-announcement HTTP 실패 userId={} message={}", userId, ex.getMessage());
+            return MobilePushBroadcastResult.builder()
+                    .userId(userId)
+                    .status(MobilePushBroadcastResult.Status.FAILED)
+                    .errorCode(MobilePushBroadcastResult.ERROR_CODE_EXPO_FAILED)
+                    .errorMessage(ex.getMessage() != null ? ex.getMessage() : "RestClientException")
+                    .build();
+        } catch (Exception ex) {
+            log.error("Expo admin-announcement 처리 실패 userId={}", userId, ex);
+            return MobilePushBroadcastResult.builder()
+                    .userId(userId)
+                    .status(MobilePushBroadcastResult.Status.FAILED)
+                    .errorCode(MobilePushBroadcastResult.ERROR_CODE_EXPO_FAILED)
+                    .errorMessage(ex.getClass().getSimpleName()
+                            + (ex.getMessage() != null ? ": " + ex.getMessage() : ""))
+                    .build();
+        }
     }
 }

@@ -10,8 +10,10 @@ import java.util.UUID;
 import com.coresolution.consultation.config.AdminTestNotificationProperties;
 import com.coresolution.consultation.dto.BulkAlimtalkManualRequest;
 import com.coresolution.consultation.dto.BulkNotificationResponse;
+import com.coresolution.consultation.dto.BulkPushManualRequest;
 import com.coresolution.consultation.dto.BulkRecipientResult;
 import com.coresolution.consultation.dto.BulkSmsManualRequest;
+import com.coresolution.consultation.dto.MobilePushBroadcastResult;
 import com.coresolution.consultation.dto.TestNotificationAlimtalkTemplateSource;
 import com.coresolution.consultation.dto.TestNotificationChannel;
 import com.coresolution.consultation.entity.User;
@@ -400,6 +402,195 @@ class AdminManualNotificationControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.successCount").value(0))
                 .andExpect(jsonPath("$.data.results.length()").value(0));
         }
+    }
+
+    // ===================== 2026-05-25: POST /push (어드민 푸시 broadcast) =====================
+
+    @Test
+    @DisplayName("POST /push — SENT + SKIPPED(no token) 혼합: 200 OK + 행별 status 표기")
+    @WithMockUser(roles = {"ADMIN"})
+    void sendBulkPush_whenMixedSentSkipped_returns200WithRowStatuses() throws Exception {
+        BulkPushManualRequest request = BulkPushManualRequest.builder()
+            .userIds(Arrays.asList(801L, 802L))
+            .title("운영 점검 안내")
+            .body("내일 새벽 2시 점검 예정입니다.")
+            .reason("운영 결정 — 2026-05-25 회의")
+            .build();
+
+        String batchId = UUID.randomUUID().toString();
+        BulkRecipientResult sent = BulkRecipientResult.builder()
+            .userId(801L).success(true)
+            .phoneMasked(AdminManualNotificationServiceImpl.PUSH_PHONE_PLACEHOLDER)
+            .logId(8001L).solapiMessageId("rcpt-801").build();
+        BulkRecipientResult skipped = BulkRecipientResult.builder()
+            .userId(802L).success(false)
+            .phoneMasked(AdminManualNotificationServiceImpl.PUSH_PHONE_PLACEHOLDER)
+            .errorCode(MobilePushBroadcastResult.ERROR_CODE_NO_TOKEN)
+            .errorMessage("푸시 토큰이 없는 사용자")
+            .logId(8002L).build();
+
+        BulkNotificationResponse response = BulkNotificationResponse.builder()
+            .batchId(batchId)
+            .channel(TestNotificationChannel.PUSH)
+            .startedAt(LocalDateTime.now())
+            .totalCount(2)
+            .successCount(1)
+            .failureCount(1)
+            .results(Arrays.asList(sent, skipped))
+            .build();
+
+        when(singleService.checkRateLimit(eq(TEST_TENANT_ID), any())).thenReturn(Decision.allowed(50, 100));
+        when(manualService.sendBulkPush(eq(TEST_TENANT_ID), any(User.class), any(BulkPushManualRequest.class)))
+            .thenReturn(response);
+
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(any(HttpSession.class)))
+                .thenReturn(buildCurrentUser());
+
+            mockMvc.perform(post("/api/v1/admin/manual-notifications/push")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.channel").value("PUSH"))
+                .andExpect(jsonPath("$.data.batchId").value(batchId))
+                .andExpect(jsonPath("$.data.totalCount").value(2))
+                .andExpect(jsonPath("$.data.successCount").value(1))
+                .andExpect(jsonPath("$.data.failureCount").value(1))
+                .andExpect(jsonPath("$.data.results[0].solapiMessageId").value("rcpt-801"))
+                .andExpect(jsonPath("$.data.results[1].errorCode").value("PUSH_NO_TOKEN"));
+        }
+
+        verify(manualService).sendBulkPush(eq(TEST_TENANT_ID), any(User.class), any(BulkPushManualRequest.class));
+    }
+
+    @Test
+    @DisplayName("POST /push — rate-limit 잔여 < 수신자 수: 200 OK + batchErrorCode=RATE_LIMIT_EXCEEDED_BULK + 0건 발송")
+    @WithMockUser(roles = {"STAFF"})
+    void sendBulkPush_whenRateLimitInsufficient_returnsBatchBlock() throws Exception {
+        BulkPushManualRequest request = BulkPushManualRequest.builder()
+            .userIds(Arrays.asList(901L, 902L, 903L))
+            .title("rate-limit 부족 시나리오")
+            .body("body")
+            .reason("rate-limit cap test")
+            .build();
+
+        BulkNotificationResponse blocked = BulkNotificationResponse.builder()
+            .batchId(UUID.randomUUID().toString())
+            .channel(TestNotificationChannel.PUSH)
+            .startedAt(LocalDateTime.now())
+            .totalCount(3)
+            .successCount(0)
+            .failureCount(3)
+            .batchErrorCode(AdminManualNotificationServiceImpl.ERROR_CODE_RATE_LIMIT_EXCEEDED_BULK)
+            .batchErrorMessage("rate-limit insufficient")
+            .results(java.util.Collections.emptyList())
+            .build();
+
+        when(singleService.checkRateLimit(eq(TEST_TENANT_ID), any())).thenReturn(Decision.allowed(1, 100));
+        when(manualService.sendBulkPush(eq(TEST_TENANT_ID), any(User.class), any(BulkPushManualRequest.class)))
+            .thenReturn(blocked);
+
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(any(HttpSession.class)))
+                .thenReturn(buildCurrentUser());
+
+            mockMvc.perform(post("/api/v1/admin/manual-notifications/push")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.batchErrorCode").value("RATE_LIMIT_EXCEEDED_BULK"))
+                .andExpect(jsonPath("$.data.successCount").value(0))
+                .andExpect(jsonPath("$.data.results.length()").value(0));
+        }
+    }
+
+    @Test
+    @DisplayName("POST /push — 단일 도구 rate-limit 초과 시 429 + RATE_LIMIT_EXCEEDED")
+    @WithMockUser(roles = {"ADMIN"})
+    void sendBulkPush_whenSingleRateLimitExceeded_returns429() throws Exception {
+        BulkPushManualRequest request = BulkPushManualRequest.builder()
+            .userIds(Arrays.asList(1001L))
+            .title("429")
+            .body("body")
+            .reason("per-minute cap exceeded")
+            .build();
+
+        when(singleService.checkRateLimit(eq(TEST_TENANT_ID), any()))
+            .thenReturn(Decision.exceeded("PER_MINUTE", 0, 50, 60L));
+
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(any(HttpSession.class)))
+                .thenReturn(buildCurrentUser());
+
+            mockMvc.perform(post("/api/v1/admin/manual-notifications/push")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.data.errorCode").value("RATE_LIMIT_EXCEEDED"));
+        }
+        verify(manualService, never()).sendBulkPush(anyString(), any(User.class), any(BulkPushManualRequest.class));
+    }
+
+    @Test
+    @DisplayName("POST /push — CONSULTANT 권한이면 403")
+    @WithMockUser(roles = {"CONSULTANT"})
+    void sendBulkPush_whenConsultant_returns403() throws Exception {
+        BulkPushManualRequest request = BulkPushManualRequest.builder()
+            .userIds(Arrays.asList(1101L))
+            .title("권한 거부")
+            .body("body")
+            .reason("RBAC 검증")
+            .build();
+
+        mockMvc.perform(post("/api/v1/admin/manual-notifications/push")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isForbidden());
+
+        verify(manualService, never()).sendBulkPush(anyString(), any(User.class), any(BulkPushManualRequest.class));
+    }
+
+    @Test
+    @DisplayName("POST /push — userIds 빈 배열이면 400 BadRequest (@NotEmpty)")
+    @WithMockUser(roles = {"ADMIN"})
+    void sendBulkPush_whenEmptyUserIds_returns400() throws Exception {
+        BulkPushManualRequest request = BulkPushManualRequest.builder()
+            .userIds(java.util.Collections.emptyList())
+            .title("empty")
+            .body("body")
+            .reason("@NotEmpty validation test")
+            .build();
+
+        mockMvc.perform(post("/api/v1/admin/manual-notifications/push")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+
+        verify(manualService, never()).sendBulkPush(anyString(), any(User.class), any(BulkPushManualRequest.class));
+    }
+
+    @Test
+    @DisplayName("POST /push — title 50자 초과면 400 BadRequest (@Size)")
+    @WithMockUser(roles = {"ADMIN"})
+    void sendBulkPush_whenTitleTooLong_returns400() throws Exception {
+        StringBuilder longTitle = new StringBuilder();
+        for (int i = 0; i < 60; i++) {
+            longTitle.append("가");
+        }
+        BulkPushManualRequest request = BulkPushManualRequest.builder()
+            .userIds(Arrays.asList(1201L))
+            .title(longTitle.toString())
+            .body("body")
+            .reason("@Size validation test")
+            .build();
+
+        mockMvc.perform(post("/api/v1/admin/manual-notifications/push")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+
+        verify(manualService, never()).sendBulkPush(anyString(), any(User.class), any(BulkPushManualRequest.class));
     }
 
     private BulkRecipientResult buildSuccess(Long userId, String batchId) {

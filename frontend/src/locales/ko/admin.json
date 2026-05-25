@@ -250,7 +250,8 @@
     "channel": {
       "label": "발송 채널",
       "sms": "SMS",
-      "alimtalk": "카카오 알림톡"
+      "alimtalk": "카카오 알림톡",
+      "push": "푸시 알림"
     },
     "recipient": {
       "title": "수신자 선택 (최대 50명)",
@@ -273,6 +274,27 @@
       "contentPlaceholder": "전송할 SMS 본문을 입력하세요 (한글 70자 / 영문 160자 권장)",
       "contentCounter": "{{count}} / {{max}}",
       "contentRequired": "SMS 본문은 필수입니다."
+    },
+    "push": {
+      "titleLabel": "푸시 제목",
+      "titlePlaceholder": "푸시 제목을 입력하세요 (최대 50자)",
+      "titleCounter": "{{count}} / {{max}}",
+      "titleMax": "최대 50자",
+      "titleRequired": "푸시 제목은 필수입니다.",
+      "bodyLabel": "푸시 본문",
+      "bodyPlaceholder": "푸시 본문을 입력하세요 (최대 1000자)",
+      "bodyCounter": "{{count}} / {{max}}",
+      "bodyMax": "최대 1000자",
+      "bodyRequired": "푸시 본문은 필수입니다.",
+      "confirmTitle": "푸시 알림 발송 확인",
+      "confirmBody": "선택한 {{count}}명에게 즉시 푸시 알림이 발송됩니다. 진행할까요?",
+      "skipReason": {
+        "noToken": "푸시 토큰이 없는 사용자입니다.",
+        "optedOut": "사용자가 알림을 끔.",
+        "duplicate": "동일 배치 멱등 중복으로 스킵되었습니다.",
+        "expoFailed": "Expo Push API 호출이 실패했습니다."
+      },
+      "warning": "푸시 알림은 토큰이 등록된 사용자에게만 발송됩니다. 토큰이 없거나 알림을 끈 사용자는 SKIPPED 로 표기됩니다."
     },
     "alimtalk": {
       "templateLabel": "알림톡 템플릿",
@@ -317,14 +339,17 @@
     "result": {
       "title": "발송 결과",
       "subtitle": "총 {{total}}명 중 성공 {{success}}건 / 실패 {{failed}}건",
+      "subtitleWithSkipped": "총 {{total}}명 중 성공 {{success}}건 / 스킵 {{skipped}}건 / 실패 {{failed}}건",
       "statTotal": "전체 {{count}}",
       "statSuccess": "성공 {{count}}",
+      "statSkipped": "스킵 {{count}}",
       "statFailed": "실패 {{count}}",
       "batchIdLabel": "배치 ID",
       "channelLabel": "채널",
       "startedAtLabel": "시작 시각",
       "failureListTitle": "실패 상세",
       "failureEmpty": "실패한 수신자가 없습니다.",
+      "skippedListTitle": "스킵 상세",
       "successListTitle": "성공 상세",
       "successEmpty": "성공한 수신자가 없습니다.",
       "columnRecipient": "수신자",
@@ -350,7 +375,12 @@
       "cardChannel": "채널",
       "cardStartedAt": "발송 시각",
       "cardStats": "성공 {{success}} / 실패 {{failed}} / 전체 {{total}}",
-      "cardReason": "사유"
+      "cardReason": "사유",
+      "channel": {
+        "sms": "SMS",
+        "alimtalk": "알림톡",
+        "push": "푸시"
+      }
     },
     "errors": {
       "RATE_LIMIT_EXCEEDED_BULK": "잔여 발송 한도가 부족합니다. 잠시 후 다시 시도하거나 수신자 수를 줄여 주세요.",
@@ -359,6 +389,10 @@
       "RECIPIENT_NOT_FOUND": "수신자(사용자)를 찾을 수 없습니다. 다시 검색해 주세요.",
       "RECIPIENT_PHONE_MISSING": "수신자의 전화번호가 등록되어 있지 않습니다.",
       "SEND_FAILED": "발송에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+      "PUSH_NO_TOKEN": "푸시 토큰이 없는 사용자입니다. (Expo 푸시 미등록)",
+      "PUSH_OPTED_OUT": "사용자가 알림을 끔(시스템 카테고리 OFF).",
+      "PUSH_DUPLICATE": "동일 배치 멱등 중복으로 스킵되었습니다.",
+      "PUSH_EXPO_FAILED": "Expo Push API 호출이 실패했습니다.",
       "forbidden": "이 도구에 접근할 권한이 없습니다. (ADMIN/STAFF 전용)",
       "loadFailed": "데이터를 불러오지 못했습니다.",
       "sendFailed": "발송에 실패했습니다.",

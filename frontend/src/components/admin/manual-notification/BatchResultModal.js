@@ -29,6 +29,35 @@ import './BatchResultModal.css';
 const MODAL_CLASS = 'mg-manual-notif-result';
 
 /**
+ * 푸시 broadcast 에서 SKIPPED 로 분류하는 errorCode 집합.
+ * 백엔드 {@code MobilePushBroadcastResult.ERROR_CODE_*} 와 1:1 매핑.
+ */
+const SKIPPED_ERROR_CODES = new Set([
+  MANUAL_NOTIFICATION_ERROR_CODES.PUSH_NO_TOKEN,
+  MANUAL_NOTIFICATION_ERROR_CODES.PUSH_OPTED_OUT,
+  MANUAL_NOTIFICATION_ERROR_CODES.PUSH_DUPLICATE
+]);
+
+/**
+ * 결과 행을 SENT / SKIPPED / FAILED 로 분류. SMS/알림톡은 SKIPPED 가 없으므로 SENT/FAILED 로 양분.
+ *
+ * @param {object} row BulkRecipientResult
+ * @returns {'SENT'|'SKIPPED'|'FAILED'}
+ */
+const classifyRow = (row) => {
+  if (!row) {
+    return 'FAILED';
+  }
+  if (row.success !== false) {
+    return 'SENT';
+  }
+  if (row.errorCode && SKIPPED_ERROR_CODES.has(String(row.errorCode))) {
+    return 'SKIPPED';
+  }
+  return 'FAILED';
+};
+
+/**
  * @param {{
  *   isOpen: boolean,
  *   onClose: function,
@@ -50,25 +79,36 @@ const MODAL_CLASS = 'mg-manual-notif-result';
 const BatchResultModal = ({ isOpen, onClose, result }) => {
   const { t } = useTranslation('admin');
 
+  const classifiedRows = useMemo(() => {
+    if (!result?.results || !Array.isArray(result.results)) {
+      return { sent: [], skipped: [], failed: [] };
+    }
+    const sent = [];
+    const skipped = [];
+    const failed = [];
+    for (const row of result.results) {
+      const kind = classifyRow(row);
+      if (kind === 'SENT') {
+        sent.push(row);
+      } else if (kind === 'SKIPPED') {
+        skipped.push(row);
+      } else {
+        failed.push(row);
+      }
+    }
+    return { sent, skipped, failed };
+  }, [result]);
+
   const totals = useMemo(() => ({
     total: Number(result?.totalCount ?? 0),
-    success: Number(result?.successCount ?? 0),
-    failed: Number(result?.failureCount ?? 0)
-  }), [result]);
+    success: Number(result?.successCount ?? classifiedRows.sent.length),
+    skipped: classifiedRows.skipped.length,
+    failed: classifiedRows.failed.length
+  }), [result, classifiedRows]);
 
-  const failureRows = useMemo(() => {
-    if (!result?.results || !Array.isArray(result.results)) {
-      return [];
-    }
-    return result.results.filter((r) => r && r.success === false);
-  }, [result]);
-
-  const successRows = useMemo(() => {
-    if (!result?.results || !Array.isArray(result.results)) {
-      return [];
-    }
-    return result.results.filter((r) => r && r.success !== false);
-  }, [result]);
+  const failureRows = classifiedRows.failed;
+  const skippedRows = classifiedRows.skipped;
+  const successRows = classifiedRows.sent;
 
   const batchErrorCode = result?.batchErrorCode || null;
   const batchErrorMessage = result?.batchErrorMessage || result?.message || null;
@@ -78,12 +118,20 @@ const BatchResultModal = ({ isOpen, onClose, result }) => {
     ? `manualNotification.errors.${batchErrorCode}`
     : null;
 
-  const subtitle = t('manualNotification.result.subtitle', {
-    total: totals.total,
-    success: totals.success,
-    failed: totals.failed,
-    defaultValue: '총 {{total}}명 중 성공 {{success}}건 / 실패 {{failed}}건'
-  });
+  const subtitle = totals.skipped > 0
+    ? t('manualNotification.result.subtitleWithSkipped', {
+      total: totals.total,
+      success: totals.success,
+      skipped: totals.skipped,
+      failed: totals.failed,
+      defaultValue: '총 {{total}}명 중 성공 {{success}}건 / 스킵 {{skipped}}건 / 실패 {{failed}}건'
+    })
+    : t('manualNotification.result.subtitle', {
+      total: totals.total,
+      success: totals.success,
+      failed: totals.failed,
+      defaultValue: '총 {{total}}명 중 성공 {{success}}건 / 실패 {{failed}}건'
+    });
 
   return (
     <UnifiedModal
@@ -168,6 +216,14 @@ const BatchResultModal = ({ isOpen, onClose, result }) => {
               defaultValue: '성공 {{count}}'
             })}
           </div>
+          {totals.skipped > 0 && (
+            <div className={`${MODAL_CLASS}__stat ${MODAL_CLASS}__stat--skipped`}>
+              {t('manualNotification.result.statSkipped', {
+                count: totals.skipped,
+                defaultValue: '스킵 {{count}}'
+              })}
+            </div>
+          )}
           <div className={`${MODAL_CLASS}__stat ${MODAL_CLASS}__stat--failed`}>
             {t('manualNotification.result.statFailed', {
               count: totals.failed,
@@ -175,6 +231,52 @@ const BatchResultModal = ({ isOpen, onClose, result }) => {
             })}
           </div>
         </section>
+
+        {skippedRows.length > 0 && (
+          <section
+            className={`${MODAL_CLASS}__section ${MODAL_CLASS}__section--skipped`}
+            aria-label={t('manualNotification.result.skippedListTitle', '스킵 상세')}
+          >
+            <h4 className={`${MODAL_CLASS}__section-title`}>
+              {t('manualNotification.result.skippedListTitle', '스킵 상세')}
+              {' '}
+              <span className={`${MODAL_CLASS}__section-count`}>({skippedRows.length})</span>
+            </h4>
+            <ul className={`${MODAL_CLASS}__list`}>
+              {skippedRows.map((row, idx) => {
+                const code = row?.errorCode || '';
+                const codeKey = code && Object.values(MANUAL_NOTIFICATION_ERROR_CODES).includes(code)
+                  ? `manualNotification.errors.${code}`
+                  : null;
+                const fallbackMessage = toDisplayString(row?.errorMessage, '-');
+                const displayedMessage = codeKey ? t(codeKey, fallbackMessage) : fallbackMessage;
+                return (
+                  <li
+                    key={`skip-${row?.userId ?? idx}`}
+                    className={`${MODAL_CLASS}__row ${MODAL_CLASS}__row--skipped`}
+                  >
+                    <div className={`${MODAL_CLASS}__row-main`}>
+                      <span className={`${MODAL_CLASS}__row-name`}>
+                        {toDisplayString(row?.name, '이름 없음')}
+                      </span>
+                      <span className={`${MODAL_CLASS}__row-phone`}>
+                        {toDisplayString(row?.phoneMasked, '번호 없음')}
+                      </span>
+                    </div>
+                    <div className={`${MODAL_CLASS}__row-error`}>
+                      <span className={`${MODAL_CLASS}__row-error-code`}>
+                        {toDisplayString(code, '-')}
+                      </span>
+                      <span className={`${MODAL_CLASS}__row-error-message`}>
+                        {displayedMessage}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
 
         <section
           className={`${MODAL_CLASS}__section ${MODAL_CLASS}__section--failure`}

@@ -37,4 +37,13 @@ public final class MobilePushCanonicalTypes {
     public static final String SHOP_ORDER_REFUNDED = "shop_order_refunded";
     /** 쇼핑몰 CONSULTATION fulfillment COMPLETED — 내담자(·상담사) */
     public static final String SHOP_FULFILLMENT_COMPLETED = "shop_fulfillment_completed";
+    /**
+     * 어드민 수동 다중 발송 broadcast 푸시(2026-05-25).
+     *
+     * <p>{@code AdminManualNotificationService.sendBulkPush(...)} 가 사용하는 canonical type 으로,
+     * 별도 dispatch 경로({@code MobilePushDispatchService.dispatchAdminAnnouncement(...)}) 가
+     * dedup·토큰·카테고리(SYSTEM 재사용)·Expo POST 를 모두 자체 수행한다. 기존 fanout 화이트리스트
+     * 외 추가 푸시 이벤트 정착 없이도 별도 admin broadcast 경로 1종만 사용.
+     */
+    public static final String ADMIN_ANNOUNCEMENT = "admin_announcement";
 }

@@ -6,6 +6,7 @@ import java.util.Map;
 import com.coresolution.consultation.config.AdminTestNotificationProperties;
 import com.coresolution.consultation.dto.BulkAlimtalkManualRequest;
 import com.coresolution.consultation.dto.BulkNotificationResponse;
+import com.coresolution.consultation.dto.BulkPushManualRequest;
 import com.coresolution.consultation.dto.BulkRecipientResult;
 import com.coresolution.consultation.dto.BulkSmsManualRequest;
 import com.coresolution.consultation.dto.TestNotificationAlimtalkTemplate;
@@ -117,6 +118,36 @@ public class AdminManualNotificationController extends BaseApiController {
             return rateLimited(decision);
         }
         BulkNotificationResponse response = manualService.sendBulkAlimtalk(tenantId, currentUser, request);
+        return buildBatchResponse(response);
+    }
+
+    /**
+     * 다중 푸시(Expo Push API) broadcast 발송. SMS/알림톡과 동일한 RBAC·tenant 가드·rate-limit
+     * 풀을 공유하며, 채널만 PUSH 로 분기한다. 토큰 없는 사용자·옵트아웃 사용자는 SKIPPED 로 표기
+     * (실패 아님).
+     *
+     * @param request 요청
+     * @param session HTTP 세션
+     * @return 배치 결과
+     * @since 2026-05-25
+     */
+    @PostMapping("/push")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public ResponseEntity<?> sendPush(@Valid @RequestBody BulkPushManualRequest request,
+            HttpSession session) {
+        String tenantId = getTenantOrFail();
+        if (tenantId == null) {
+            return tenantMissing();
+        }
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || currentUser.getId() == null) {
+            return unauthorized("로그인이 필요합니다.");
+        }
+        Decision decision = singleService.checkRateLimit(tenantId, currentUser.getId());
+        if (decision.exceeded()) {
+            return rateLimited(decision);
+        }
+        BulkNotificationResponse response = manualService.sendBulkPush(tenantId, currentUser, request);
         return buildBatchResponse(response);
     }
 

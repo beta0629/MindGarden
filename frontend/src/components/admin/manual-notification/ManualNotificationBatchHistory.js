@@ -65,6 +65,28 @@ const normalizeHistoryRow = (raw, idx) => {
   };
 };
 
+/**
+ * 채널 enum(BulkNotificationResponse.channel) → 디스플레이 라벨 매핑.
+ * 디자인 토큰 SSOT 정책에 따라 한국어 라벨은 i18n 키에서만 가져온다.
+ *
+ * @param {string} rawChannel
+ * @param {(key:string, options?: any)=>string} t
+ * @returns {string}
+ */
+const formatChannelLabel = (rawChannel, t) => {
+  const upper = String(rawChannel || '').toUpperCase();
+  if (upper === 'PUSH') {
+    return t('manualNotification.history.channel.push', '푸시');
+  }
+  if (upper === 'ALIMTALK') {
+    return t('manualNotification.history.channel.alimtalk', '알림톡');
+  }
+  if (upper === 'SMS') {
+    return t('manualNotification.history.channel.sms', 'SMS');
+  }
+  return toDisplayString(rawChannel, '-');
+};
+
 const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
   const { t } = useTranslation('admin');
 
@@ -295,7 +317,7 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
                     </span>
                     <span className={`${HISTORY_CLASS}__card-channel`}>
                       <strong>{t('manualNotification.history.cardChannel', '채널')}:</strong>{' '}
-                      {toDisplayString(item.channel, '-')}
+                      {formatChannelLabel(item.channel, t)}
                     </span>
                     <span className={`${HISTORY_CLASS}__card-started`}>
                       <strong>{t('manualNotification.history.cardStartedAt', '발송 시각')}:</strong>{' '}

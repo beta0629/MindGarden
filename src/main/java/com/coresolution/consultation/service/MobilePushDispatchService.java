@@ -1,9 +1,11 @@
 package com.coresolution.consultation.service;
 
+import com.coresolution.consultation.dto.MobilePushBroadcastResult;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.Schedule;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 /**
  * Expo Push API를 통한 모바일 OS 푸시 발송(토큰·설정 게이트·멱등·무효 토큰 비활성).
@@ -175,4 +177,38 @@ public interface MobilePushDispatchService {
             Long consultantUserId,
             String orderPublicId,
             String skuCode);
+
+    /**
+     * 어드민 수동 다중 발송용 푸시 broadcast.
+     *
+     * <p>기존 fanout({@code dispatchFanout}) 화이트리스트({@link
+     * com.coresolution.consultation.constant.MobilePushAllowedEvents}) 와 별도 경로로,
+     * 사용자별 토큰 lookup → 카테고리(SYSTEM 재사용) 게이트 → 멱등 청구 → 단건 Expo POST 를
+     * 순차 수행하며 <strong>행 단위 결과</strong>를 반환한다.
+     *
+     * <p>SKIPPED 정책 (실패 아님 — 행 단위 결과에 사유 명시):
+     * <ul>
+     *   <li>{@link MobilePushBroadcastResult#ERROR_CODE_NO_TOKEN}: 활성 토큰 없음</li>
+     *   <li>{@link MobilePushBroadcastResult#ERROR_CODE_OPTED_OUT}:
+     *       사용자 {@code MobilePushSettings.systemEnabled = false} (시스템 카테고리 OFF)</li>
+     *   <li>{@link MobilePushBroadcastResult#ERROR_CODE_DUPLICATE}: 멱등 청구 충돌
+     *       ({@code ADMIN_ANNOUNCEMENT} canonical type 으로 동일 batch+userId 24h 내 중복)</li>
+     * </ul>
+     * FAILED: Expo HTTP/티켓 오류 ({@link MobilePushBroadcastResult#ERROR_CODE_EXPO_FAILED}).
+     *
+     * @param tenantId          테넌트 ID (필수)
+     * @param recipientUserIds  수신 대상 {@code users.id} 목록 (1~50명, 입력 순서 보존)
+     * @param title             푸시 제목 (Expo title)
+     * @param body              푸시 본문 (Expo body)
+     * @param dedupeBucket      멱등 버킷 식별자 — 호출자(보통 batch UUID) 가 결정,
+     *                          내부적으로 {@code ADMIN_ANNOUNCEMENT:{bucket}:{userId}} 키로 청구
+     * @return 입력 {@code recipientUserIds} 순서를 보존한 행 단위 결과 목록.
+     *         null·중복 입력은 dedupe 되며, 결과 크기는 {@code <= recipientUserIds.size()}.
+     */
+    List<MobilePushBroadcastResult> dispatchAdminAnnouncement(
+            String tenantId,
+            List<Long> recipientUserIds,
+            String title,
+            String body,
+            String dedupeBucket);
 }

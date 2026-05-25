@@ -44,6 +44,7 @@ export const MANUAL_NOTIFICATION_ENDPOINTS = Object.freeze({
   ALIMTALK_TEMPLATES_LIVE: `${BASE_PATH}/alimtalk-templates/live`,
   SEND_SMS: `${BASE_PATH}/sms`,
   SEND_ALIMTALK: `${BASE_PATH}/alimtalk`,
+  SEND_PUSH: `${BASE_PATH}/push`,
   /**
    * @param {string} batchId
    * @returns {string}
@@ -55,7 +56,8 @@ export const MANUAL_NOTIFICATION_ENDPOINTS = Object.freeze({
 /** 채널 enum (백엔드 BulkNotificationResponse.channel 과 동일 문자열). */
 export const MANUAL_NOTIFICATION_CHANNEL = Object.freeze({
   SMS: 'SMS',
-  ALIMTALK: 'ALIMTALK'
+  ALIMTALK: 'ALIMTALK',
+  PUSH: 'PUSH'
 });
 
 /** 템플릿 출처 enum (BulkAlimtalkManualRequest.templateSource). */
@@ -71,7 +73,11 @@ export const MANUAL_NOTIFICATION_ERROR_CODES = Object.freeze({
   TEMPLATE_NOT_MAPPED: 'TEMPLATE_NOT_MAPPED',
   RECIPIENT_NOT_FOUND: 'RECIPIENT_NOT_FOUND',
   RECIPIENT_PHONE_MISSING: 'RECIPIENT_PHONE_MISSING',
-  SEND_FAILED: 'SEND_FAILED'
+  SEND_FAILED: 'SEND_FAILED',
+  PUSH_NO_TOKEN: 'PUSH_NO_TOKEN',
+  PUSH_OPTED_OUT: 'PUSH_OPTED_OUT',
+  PUSH_DUPLICATE: 'PUSH_DUPLICATE',
+  PUSH_EXPO_FAILED: 'PUSH_EXPO_FAILED'
 });
 
 /** 수신자 최대 선택 인원 (백엔드 검증과 동일하게 유지: 1~50). */
@@ -85,6 +91,12 @@ export const MANUAL_NOTIFICATION_REASON_RECOMMENDED_MIN_LENGTH = 30;
 
 /** SMS 본문 최대 길이 (백엔드 @Size 와 동일). */
 export const MANUAL_NOTIFICATION_SMS_CONTENT_MAX_LENGTH = 1000;
+
+/** 푸시 제목 최대 길이 (백엔드 @Size 와 동일). */
+export const MANUAL_NOTIFICATION_PUSH_TITLE_MAX_LENGTH = 50;
+
+/** 푸시 본문 최대 길이 (백엔드 @Size 와 동일, Expo 디스패치 단계에서 추가 truncate 가능). */
+export const MANUAL_NOTIFICATION_PUSH_BODY_MAX_LENGTH = 1000;
 
 /** 히스토리 기본 페이지 크기. */
 export const MANUAL_NOTIFICATION_HISTORY_DEFAULT_SIZE = 20;
@@ -187,6 +199,23 @@ export const sendAlimtalkBatch = async(payload) => {
 };
 
 /**
+ * 푸시(Expo Push API) 일괄 broadcast (BulkPushManualRequest).
+ *
+ * <p>토큰이 없거나 SYSTEM 카테고리를 OFF 한 사용자는 SKIPPED 로 결과에 포함되며 실패 카운트에는
+ * 합산되지 않는다(백엔드 정책과 동일).
+ *
+ * @param {{ userIds: number[], title: string, body: string, reason: string }} payload
+ * @returns {Promise<any>}
+ */
+export const sendPushBatch = async(payload) => {
+  try {
+    return await StandardizedApi.post(MANUAL_NOTIFICATION_ENDPOINTS.SEND_PUSH, payload);
+  } catch (err) {
+    throw wrapError(err, '푸시 일괄 발송에 실패했습니다.');
+  }
+};
+
+/**
  * 배치 상세 — 수신자별 결과 행 포함.
  * @param {string} batchId
  * @returns {Promise<any>}
@@ -274,12 +303,15 @@ export default {
   MANUAL_NOTIFICATION_REASON_MAX_LENGTH,
   MANUAL_NOTIFICATION_REASON_RECOMMENDED_MIN_LENGTH,
   MANUAL_NOTIFICATION_SMS_CONTENT_MAX_LENGTH,
+  MANUAL_NOTIFICATION_PUSH_TITLE_MAX_LENGTH,
+  MANUAL_NOTIFICATION_PUSH_BODY_MAX_LENGTH,
   MANUAL_NOTIFICATION_HISTORY_DEFAULT_SIZE,
   searchRecipients,
   fetchCommonCodeTemplates,
   fetchLiveTemplates,
   sendSmsBatch,
   sendAlimtalkBatch,
+  sendPushBatch,
   fetchBatchDetail,
   fetchHistory,
   normalizeBulkResponse

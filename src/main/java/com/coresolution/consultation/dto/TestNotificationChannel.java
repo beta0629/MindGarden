@@ -10,5 +10,7 @@ public enum TestNotificationChannel {
     /** 단문/장문 SMS. */
     SMS,
     /** 카카오 알림톡. */
-    ALIMTALK
+    ALIMTALK,
+    /** 모바일 OS 푸시(Expo Push API)·어드민 수동 다중 broadcast. */
+    PUSH
 }

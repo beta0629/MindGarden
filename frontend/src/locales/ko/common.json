@@ -308,7 +308,66 @@
     "viewAll": "전체 알림 보기",
     "markRead": "읽음 처리",
     "delete": "알림 삭제",
-    "newCount": "새 알림 {{count}}건"
+    "newCount": "새 알림 {{count}}건",
+    "unified": {
+      "pageTitle": "알림",
+      "regionLabel": "통합 알림",
+      "subtitle": "시스템 공지와 메시지를 확인하세요.",
+      "loginRequired": "로그인이 필요합니다.",
+      "tabSystem": "시스템 공지",
+      "tabMessages": "일반 메시지",
+      "loading": "알림을 불러오는 중...",
+      "systemEmpty": "시스템 공지가 없습니다",
+      "messagesEmpty": "메시지가 없습니다",
+      "important": "중요",
+      "targetAll": "전체",
+      "targetConsultant": "상담사",
+      "targetClient": "내담자",
+      "senderConsultant": "발신",
+      "senderClient": "수신",
+      "senderSystem": "시스템 메시지",
+      "senderUnknown": "알 수 없음",
+      "messageTypeGeneral": "일반",
+      "messageTypeFollowUp": "후속 조치",
+      "messageTypeHomework": "과제 안내",
+      "messageTypeReminder": "알림",
+      "messageTypeUrgent": "긴급",
+      "adminLabel": "관리자"
+    }
+  },
+  "menu": {
+    "hamburger": {
+      "userFallback": "사용가/회",
+      "userTypeFallback": "USER",
+      "loadingMenu": "메뉴를 불러오는 중...",
+      "loadFailed": "메뉴를 불러오는 중 오류가 발생했습니다.",
+      "noMenu": "사용 가능한 메뉴가 없습니다.",
+      "preparing": "준비중",
+      "logout": "로그아웃",
+      "logoutConfirmTitle": "로그아웃",
+      "logoutConfirmMessage": "로그아웃하면 현재 세션이 종료됩니다.",
+      "logoutConfirmText": "로그아웃",
+      "logoutCancelText": "취소",
+      "roleAdmin": "관리자",
+      "roleBranchSuperAdmin": "지점 관리자",
+      "roleSuperAdmin": "슈퍼 관리자",
+      "roleConsultant": "상담사",
+      "roleClient": "내담자",
+      "userFallbackKo": "사용자"
+    }
+  },
+  "businessGuard": {
+    "loading": "로딩중...",
+    "denied": {
+      "authenticationRequired": "로그인이 필요합니다.",
+      "businessTypeMismatch": "이 기능은 해당 업종에서 사용할 수 없습니다.",
+      "businessTypeNotAllowed": "접근 권한이 없습니다.",
+      "menuAccessDenied": "메뉴 접근 권한이 없습니다.",
+      "pathBusinessTypeMismatch": "이 페이지는 해당 업종에서 사용할 수 없습니다.",
+      "validationError": "접근 권한 확인 중 오류가 발생했습니다.",
+      "menuValidationError": "메뉴 권한 확인 중 오류가 발생했습니다.",
+      "fallback": "접근이 제한되었습니다."
+    }
   },
   "pagination": {
     "prev": "이전",

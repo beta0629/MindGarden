@@ -173,13 +173,13 @@ const UnifiedNotifications = () => {
   // 메시지 유형 라벨
   const getMessageTypeLabel = (type) => {
     const labels = {
-      GENERAL: '일반',
-      FOLLOW_UP: '후속 조치',
-      HOMEWORK: '과제 안내',
-      REMINDER: '알림',
-      URGENT: '긴급'
+      GENERAL: t('common:notification.unified.messageTypeGeneral', '일반'),
+      FOLLOW_UP: t('common:notification.unified.messageTypeFollowUp', '후속 조치'),
+      HOMEWORK: t('common:notification.unified.messageTypeHomework', '과제 안내'),
+      REMINDER: t('common:notification.unified.messageTypeReminder', '알림'),
+      URGENT: t('common:notification.unified.messageTypeUrgent', '긴급')
     };
-    return labels[type] || '일반';
+    return labels[type] || t('common:notification.unified.messageTypeGeneral', '일반');
   };
 
   // 메시지 유형 색상
@@ -255,10 +255,10 @@ const UnifiedNotifications = () => {
 
   if (!isLoggedIn) {
     return (
-      <AdminCommonLayout title={t('common.labels.notification', '알림')}>
-        <ContentArea ariaLabel="알림">
+      <AdminCommonLayout title={t('common:notification.unified.pageTitle', '알림')}>
+        <ContentArea ariaLabel={t('common:notification.unified.pageTitle', '알림')}>
           <div className="mg-card mg-v2-text-center mg-p-xl">
-            <h3>로그인이 필요합니다.</h3>
+            <h3>{t('common:notification.unified.loginRequired', '로그인이 필요합니다.')}</h3>
           </div>
         </ContentArea>
       </AdminCommonLayout>
@@ -266,11 +266,11 @@ const UnifiedNotifications = () => {
   }
 
   return (
-    <AdminCommonLayout title={t('common.labels.notification', '알림')}>
-      <ContentArea ariaLabel="통합 알림">
+    <AdminCommonLayout title={t('common:notification.unified.pageTitle', '알림')}>
+      <ContentArea ariaLabel={t('common:notification.unified.regionLabel', '통합 알림')}>
         <ContentHeader
-          title={t('common.labels.notification', '알림')}
-          subtitle="시스템 공지와 메시지를 확인하세요."
+          title={t('common:notification.unified.pageTitle', '알림')}
+          subtitle={t('common:notification.unified.subtitle', '시스템 공지와 메시지를 확인하세요.')}
           titleId={UNIFIED_NOTIFICATIONS_TITLE_ID}
         />
 
@@ -289,7 +289,7 @@ const UnifiedNotifications = () => {
               onClick={() => handleTabChange('system')}
               preventDoubleClick={false}
             >
-              시스템 공지
+              {t('common:notification.unified.tabSystem', '시스템 공지')}
             </MGButton>
             <MGButton
               type="button"
@@ -303,20 +303,27 @@ const UnifiedNotifications = () => {
               onClick={() => handleTabChange('messages')}
               preventDoubleClick={false}
             >
-              일반 메시지
+              {t('common:notification.unified.tabMessages', '일반 메시지')}
             </MGButton>
           </div>
         </div>
 
         {/* 로딩 */}
-        {loading && <UnifiedLoading type="inline" text="알림을 불러오는 중..." />}
+        {loading && (
+          <UnifiedLoading
+            type="inline"
+            text={t('common:notification.unified.loading', '알림을 불러오는 중...')}
+          />
+        )}
 
         {/* 시스템 공지 목록 */}
         {!loading && activeTab === 'system' && (
           <div>
             {systemNotifications.length === 0 ? (
               <div className="mg-empty-state">
-                <div className="mg-empty-state__text">시스템 공지가 없습니다</div>
+                <div className="mg-empty-state__text">
+                  {t('common:notification.unified.systemEmpty', '시스템 공지가 없습니다')}
+                </div>
               </div>
             ) : (
               <div className="mg-space-y-sm">
@@ -337,11 +344,16 @@ const UnifiedNotifications = () => {
                               <span className="mg-badge mg-badge-danger mg-v2-text-xs">{t('admin.labels.urgent', '긴급')}</span>
                             )}
                             {notification.isImportant && (
-                              <span className="mg-badge mg-badge-warning mg-v2-text-xs">중요</span>
+                              <span className="mg-badge mg-badge-warning mg-v2-text-xs">
+                                {t('common:notification.unified.important', '중요')}
+                              </span>
                             )}
                             <span className="mg-badge mg-badge-secondary mg-v2-text-xs">
-                              {notification.targetType === 'ALL' ? '전체' :
-                               notification.targetType === 'CONSULTANT' ? '상담사' : '내담자'}
+                              {notification.targetType === 'ALL'
+                                ? t('common:notification.unified.targetAll', '전체')
+                                : notification.targetType === 'CONSULTANT'
+                                  ? t('common:notification.unified.targetConsultant', '상담사')
+                                  : t('common:notification.unified.targetClient', '내담자')}
                             </span>
                           </div>
                           <span className="mg-v2-text-xs mg-v2-color-text-secondary">
@@ -375,7 +387,9 @@ const UnifiedNotifications = () => {
           <div>
             {messages.length === 0 ? (
               <div className="mg-empty-state">
-                <div className="mg-empty-state__text">메시지가 없습니다</div>
+                <div className="mg-empty-state__text">
+                  {t('common:notification.unified.messagesEmpty', '메시지가 없습니다')}
+                </div>
               </div>
             ) : (
               <div className="mg-space-y-sm">
@@ -399,7 +413,9 @@ const UnifiedNotifications = () => {
                               {getMessageTypeLabel(message.messageType)}
                             </span>
                             {message.isImportant && (
-                              <span className="mg-badge mg-badge-warning mg-v2-text-xs">중요</span>
+                              <span className="mg-badge mg-badge-warning mg-v2-text-xs">
+                                {t('common:notification.unified.important', '중요')}
+                              </span>
                             )}
                             {message.isUrgent && (
                               <span className="mg-badge mg-badge-danger mg-v2-text-xs">{t('admin.labels.urgent', '긴급')}</span>
@@ -415,8 +431,12 @@ const UnifiedNotifications = () => {
                             : message.content}
                         </p>
                         <div className="mg-v2-text-xs mg-v2-color-text-secondary">
-                          {message.senderType === 'CONSULTANT' ? '발신' : '수신'} ·
-                          {message.senderType === 'SYSTEM' ? '시스템 메시지' : (message.senderName || '알 수 없음')}
+                          {message.senderType === 'CONSULTANT'
+                            ? t('common:notification.unified.senderConsultant', '발신')
+                            : t('common:notification.unified.senderClient', '수신')} ·
+                          {message.senderType === 'SYSTEM'
+                            ? t('common:notification.unified.senderSystem', '시스템 메시지')
+                            : (message.senderName || t('common:notification.unified.senderUnknown', '알 수 없음'))}
                         </div>
                       </div>
                     </div>
@@ -433,7 +453,9 @@ const UnifiedNotifications = () => {
             isOpen={!!selectedItem}
             onClose={closeModal}
             title={selectedItem.data.title}
-            subtitle={`${selectedItem.data.senderType === 'SYSTEM' ? '시스템 메시지' : (selectedItem.data.authorName || selectedItem.data.senderName || '관리자')} · ${formatDate(selectedItem.data.publishedAt || selectedItem.data.createdAt)}`}
+            subtitle={`${selectedItem.data.senderType === 'SYSTEM'
+              ? t('common:notification.unified.senderSystem', '시스템 메시지')
+              : (selectedItem.data.authorName || selectedItem.data.senderName || t('common:notification.unified.adminLabel', '관리자'))} · ${formatDate(selectedItem.data.publishedAt || selectedItem.data.createdAt)}`}
             size="large"
             actions={
               <MGButton
@@ -452,12 +474,17 @@ const UnifiedNotifications = () => {
                 <span className="mg-badge mg-badge-danger">{t('admin.labels.urgent', '긴급')}</span>
               )}
               {selectedItem.data.isImportant && (
-                <span className="mg-badge mg-badge-warning">중요</span>
+                <span className="mg-badge mg-badge-warning">
+                  {t('common:notification.unified.important', '중요')}
+                </span>
               )}
               {selectedItem.type === 'system' && (
                 <span className="mg-badge mg-badge-secondary">
-                  {selectedItem.data.targetType === 'ALL' ? '전체' :
-                   selectedItem.data.targetType === 'CONSULTANT' ? '상담사' : '내담자'}
+                  {selectedItem.data.targetType === 'ALL'
+                    ? t('common:notification.unified.targetAll', '전체')
+                    : selectedItem.data.targetType === 'CONSULTANT'
+                      ? t('common:notification.unified.targetConsultant', '상담사')
+                      : t('common:notification.unified.targetClient', '내담자')}
                 </span>
               )}
               {selectedItem.type === 'message' && (

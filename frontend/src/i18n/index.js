@@ -30,6 +30,7 @@ import koStatistics from '../locales/ko/statistics.json';
 import koReport from '../locales/ko/report.json';
 import koErp from '../locales/ko/erp.json';
 import koSchedule from '../locales/ko/schedule.json';
+import koAuth from '../locales/ko/auth.json';
 
 const SUPPORTED_LANGUAGES = ['ko'];
 const FALLBACK_LANGUAGE = 'ko';
@@ -49,13 +50,14 @@ i18n
         statistics: koStatistics,
         report: koReport,
         erp: koErp,
-        schedule: koSchedule
+        schedule: koSchedule,
+        auth: koAuth
       }
     },
     supportedLngs: SUPPORTED_LANGUAGES,
     fallbackLng: FALLBACK_LANGUAGE,
     defaultNS: DEFAULT_NAMESPACE,
-    ns: ['common', 'admin', 'error', 'settings', 'statistics', 'report', 'erp', 'schedule'],
+    ns: ['common', 'admin', 'error', 'settings', 'statistics', 'report', 'erp', 'schedule', 'auth'],
     interpolation: {
       escapeValue: false
     },

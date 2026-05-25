@@ -123,7 +123,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
         
       } catch (err) {
         console.error('❌ 동적 햄버거 메뉴 로딩 실패:', err);
-        setError(err.message || '메뉴를 불러오는 중 오류가 발생했습니다.');
+        setError(err.message || t('common:menu.hamburger.loadFailed', '메뉴를 불러오는 중 오류가 발생했습니다.'));
       } finally {
         setIsLoading(false);
       }
@@ -196,8 +196,8 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
         <div className="simple-hamburger-menu">
           <div className="simple-hamburger-header">
             <div className="user-info">
-              <div className="user-name">{user?.name || '사용자'}</div>
-              <div className="user-role">{user?.role || 'USER'}</div>
+              <div className="user-name">{user?.name || t('common:menu.hamburger.userFallbackKo', '사용자')}</div>
+              <div className="user-role">{user?.role || t('common:menu.hamburger.userTypeFallback', 'USER')}</div>
             </div>
             <MGButton
               type="button"
@@ -218,7 +218,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
           <div className="simple-hamburger-content">
             <div className="loading-message">
               <i className="bi bi-arrow-repeat spin" />
-              <span>메뉴를 불러오는 중...</span>
+              <span>{t('common:menu.hamburger.loadingMenu', '메뉴를 불러오는 중...')}</span>
             </div>
           </div>
         </div>
@@ -233,8 +233,8 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
         <div className="simple-hamburger-menu">
           <div className="simple-hamburger-header">
             <div className="user-info">
-              <div className="user-name">{user?.name || '사용자'}</div>
-              <div className="user-role">{user?.role || 'USER'}</div>
+              <div className="user-name">{user?.name || t('common:menu.hamburger.userFallbackKo', '사용자')}</div>
+              <div className="user-role">{user?.role || t('common:menu.hamburger.userTypeFallback', 'USER')}</div>
             </div>
             <MGButton
               type="button"
@@ -289,24 +289,24 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
         {/* 헤더 영역 */}
         <div className="simple-hamburger-header">
           <div className="user-info">
-            <div className="user-name">{user?.name || '사용자'}</div>
+            <div className="user-name">{user?.name || t('common:menu.hamburger.userFallbackKo', '사용자')}</div>
         <div className="user-role">
           {(() => {
             // 역할 표시명 우선순위: menuStructure > user.role 매핑 > user.role
             if (menuStructure?.roleDisplayName) {
               return menuStructure.roleDisplayName;
             }
-            
+
             // user.role을 한국어로 매핑
             const roleDisplayMap = {
-              'ADMIN': '관리자',
-              'BRANCH_SUPER_ADMIN': '지점 관리자',
-              'SUPER_ADMIN': '슈퍼 관리자',
-              'CONSULTANT': '상담사',
-              'CLIENT': '내담자'
+              'ADMIN': t('common:menu.hamburger.roleAdmin', '관리자'),
+              'BRANCH_SUPER_ADMIN': t('common:menu.hamburger.roleBranchSuperAdmin', '지점 관리자'),
+              'SUPER_ADMIN': t('common:menu.hamburger.roleSuperAdmin', '슈퍼 관리자'),
+              'CONSULTANT': t('common:menu.hamburger.roleConsultant', '상담사'),
+              'CLIENT': t('common:menu.hamburger.roleClient', '내담자')
             };
-            
-            return roleDisplayMap[user?.role] || user?.role || '사용자';
+
+            return roleDisplayMap[user?.role] || user?.role || t('common:menu.hamburger.userFallbackKo', '사용자');
           })()}
         </div>
           </div>
@@ -332,7 +332,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
             {mainMenus.length === 0 ? (
               <div className="no-menu-message">
                 <i className="bi bi-info-circle" />
-                <span>사용 가능한 메뉴가 없습니다.</span>
+                <span>{t('common:menu.hamburger.noMenu', '사용 가능한 메뉴가 없습니다.')}</span>
               </div>
             ) : (
               mainMenus.map((item) => (
@@ -351,7 +351,11 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
                     <div className="simple-menu-item-content">
                       {item.icon && <i className={`${item.icon} simple-menu-icon`} />}
                       <span className="simple-menu-label">{item.label}</span>
-                      {!item.path && <span className="preparing-badge">준비중</span>}
+                      {!item.path && (
+                        <span className="preparing-badge">
+                          {t('common:menu.hamburger.preparing', '준비중')}
+                        </span>
+                      )}
                     </div>
                     
                     {item.hasSubMenu && (
@@ -371,7 +375,11 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
                           <div className="simple-submenu-item-content">
                             {subItem.icon && <i className={`${subItem.icon} simple-submenu-icon`} />}
                             <span className="simple-submenu-label">{subItem.label}</span>
-                            {!subItem.path && <span className="preparing-badge">준비중</span>}
+                            {!subItem.path && (
+                              <span className="preparing-badge">
+                                {t('common:menu.hamburger.preparing', '준비중')}
+                              </span>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -399,7 +407,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
             fullWidth
           >
             <i className="bi bi-box-arrow-right" />
-            <span>로그아웃</span>
+            <span>{t('common:menu.hamburger.logout', '로그아웃')}</span>
           </MGButton>
           
           {/* 메뉴 정보 (개발 환경에서만) */}
@@ -418,10 +426,10 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
         onConfirm={confirmLogout}
-        title="로그아웃"
-        message="로그아웃하면 현재 세션이 종료됩니다."
-        confirmText="로그아웃"
-        cancelText="취소"
+        title={t('common:menu.hamburger.logoutConfirmTitle', '로그아웃')}
+        message={t('common:menu.hamburger.logoutConfirmMessage', '로그아웃하면 현재 세션이 종료됩니다.')}
+        confirmText={t('common:menu.hamburger.logoutConfirmText', '로그아웃')}
+        cancelText={t('common:menu.hamburger.logoutCancelText', '취소')}
         type="danger"
       />
     </div>

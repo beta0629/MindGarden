@@ -14,6 +14,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { sessionManager } from '../../utils/sessionManager';
 import { hasMenuAccess } from '../../constants/MenuConstants';
 import { apiGet } from '../../utils/ajax';
@@ -43,6 +44,7 @@ const BusinessTypeGuard = ({
   fallbackPath = '/dashboard',
   showLoading = true
 }) => {
+  const { t } = useTranslation();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
@@ -111,7 +113,7 @@ const BusinessTypeGuard = ({
 
   // 로딩 중
   if (isLoading && showLoading) {
-    return <div className="mg-loading">로딩중...</div>;
+    return <div className="mg-loading">{t('common:businessGuard.loading', '로딩중...')}</div>;
   }
 
   // 접근 거부
@@ -130,7 +132,7 @@ const BusinessTypeGuard = ({
         state={{ 
           from: location,
           reason: accessResult.reason,
-          message: getAccessDeniedMessage(accessResult.reason)
+          message: getAccessDeniedMessage(accessResult.reason, t)
         }} 
         replace 
       />
@@ -299,24 +301,27 @@ const validatePathAccess = async(path, businessType, userRole) => {
 };
 
 /**
- * 접근 거부 메시지 생성
+ * 접근 거부 메시지 생성 (PR-G: i18n t 함수 주입으로 흡수)
 /**
  * @param {string} reason - 거부 사유
 /**
+ * @param {Function} [t] - react-i18next t 함수 (선택적, 없으면 한국어 fallback)
+/**
  * @returns {string} 사용자 친화적 메시지
  */
-const getAccessDeniedMessage = (reason) => {
+const getAccessDeniedMessage = (reason, t) => {
+  const translate = typeof t === 'function' ? t : (_key, fallback) => fallback;
   const messages = {
-    'AUTHENTICATION_REQUIRED': '로그인이 필요합니다.',
-    'BUSINESS_TYPE_MISMATCH': '이 기능은 해당 업종에서 사용할 수 없습니다.',
-    'BUSINESS_TYPE_NOT_ALLOWED': '접근 권한이 없습니다.',
-    'MENU_ACCESS_DENIED': '메뉴 접근 권한이 없습니다.',
-    'PATH_BUSINESS_TYPE_MISMATCH': '이 페이지는 해당 업종에서 사용할 수 없습니다.',
-    'VALIDATION_ERROR': '접근 권한 확인 중 오류가 발생했습니다.',
-    'MENU_VALIDATION_ERROR': '메뉴 권한 확인 중 오류가 발생했습니다.'
+    'AUTHENTICATION_REQUIRED': translate('common:businessGuard.denied.authenticationRequired', '로그인이 필요합니다.'),
+    'BUSINESS_TYPE_MISMATCH': translate('common:businessGuard.denied.businessTypeMismatch', '이 기능은 해당 업종에서 사용할 수 없습니다.'),
+    'BUSINESS_TYPE_NOT_ALLOWED': translate('common:businessGuard.denied.businessTypeNotAllowed', '접근 권한이 없습니다.'),
+    'MENU_ACCESS_DENIED': translate('common:businessGuard.denied.menuAccessDenied', '메뉴 접근 권한이 없습니다.'),
+    'PATH_BUSINESS_TYPE_MISMATCH': translate('common:businessGuard.denied.pathBusinessTypeMismatch', '이 페이지는 해당 업종에서 사용할 수 없습니다.'),
+    'VALIDATION_ERROR': translate('common:businessGuard.denied.validationError', '접근 권한 확인 중 오류가 발생했습니다.'),
+    'MENU_VALIDATION_ERROR': translate('common:businessGuard.denied.menuValidationError', '메뉴 권한 확인 중 오류가 발생했습니다.')
   };
 
-  return messages[reason] || '접근이 제한되었습니다.';
+  return messages[reason] || translate('common:businessGuard.denied.fallback', '접근이 제한되었습니다.');
 };
 
 // ============ 캐시 관리 ============

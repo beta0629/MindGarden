@@ -153,6 +153,72 @@ export const AI_PROVIDER_I18N_KEYS = Object.freeze({
   lnbLabel: 'admin.lnb.aiProviderManagement'
 });
 
+/**
+ * PR-G 흡수: 상수 한국어 문자열들의 i18n 키 ID 매핑 (caller 가 `t()` 호출 시 사용).
+ * 상수 객체 자체는 fallback 한국어를 유지 (PR-L 별도 정리).
+ */
+export const AI_PROVIDER_LABEL_I18N_KEYS = Object.freeze({
+  providerDescription: {
+    openai: 'admin:aiProvider.constants.providerDescription.openai',
+    gemini: 'admin:aiProvider.constants.providerDescription.gemini',
+    claude: 'admin:aiProvider.constants.providerDescription.claude',
+    replicate: 'admin:aiProvider.constants.providerDescription.replicate'
+  },
+  usagePeriod: {
+    today: 'admin:aiProvider.constants.usagePeriod.today',
+    thisWeek: 'admin:aiProvider.constants.usagePeriod.thisWeek',
+    thisMonth: 'admin:aiProvider.constants.usagePeriod.thisMonth'
+  },
+  logStatus: {
+    all: 'admin:aiProvider.constants.logStatus.all',
+    success: 'admin:aiProvider.constants.logStatus.success',
+    failed: 'admin:aiProvider.constants.logStatus.failed'
+  },
+  providerDisplayLabel: {
+    unknown: 'admin:aiProvider.constants.providerDisplayLabel.unknown'
+  },
+  disabledTooltip: 'admin:aiProvider.constants.disabledTooltip',
+  unguardedTooltip: 'admin:aiProvider.constants.unguardedTooltip',
+  labels: {
+    healthRefresh: 'admin:aiProvider.constants.labels.healthRefresh',
+    healthRefreshLoading: 'admin:aiProvider.constants.labels.healthRefreshLoading',
+    healthLoading: 'admin:aiProvider.constants.labels.healthLoading',
+    healthFailedPrefix: 'admin:aiProvider.constants.labels.healthFailedPrefix',
+    activePrefix: 'admin:aiProvider.constants.labels.activePrefix',
+    unregistered: 'admin:aiProvider.constants.labels.unregistered',
+    registered: 'admin:aiProvider.constants.labels.registered',
+    emptyStateNoLogs: 'admin:aiProvider.constants.labels.emptyStateNoLogs',
+    emptyStateNoStats: 'admin:aiProvider.constants.labels.emptyStateNoStats',
+    detail: 'admin:aiProvider.constants.labels.detail',
+    pagePrev: 'admin:aiProvider.constants.labels.pagePrev',
+    pageNext: 'admin:aiProvider.constants.labels.pageNext',
+    saveKey: 'admin:aiProvider.constants.labels.saveKey',
+    deleteKey: 'admin:aiProvider.constants.labels.deleteKey',
+    changeKey: 'admin:aiProvider.constants.labels.changeKey',
+    testKey: 'admin:aiProvider.constants.labels.testKey',
+    apiKeyLabel: 'admin:aiProvider.constants.labels.apiKeyLabel',
+    apiUrlLabel: 'admin:aiProvider.constants.labels.apiUrlLabel',
+    modelLabel: 'admin:aiProvider.constants.labels.modelLabel',
+    successRate: 'admin:aiProvider.constants.labels.successRate',
+    failureRate: 'admin:aiProvider.constants.labels.failureRate',
+    fallbackRate: 'admin:aiProvider.constants.labels.fallbackRate',
+    averageDuration: 'admin:aiProvider.constants.labels.averageDuration',
+    totalTokens: 'admin:aiProvider.constants.labels.totalTokens',
+    callsToday: 'admin:aiProvider.constants.labels.callsToday',
+    callsThisWeek: 'admin:aiProvider.constants.labels.callsThisWeek',
+    callsThisMonth: 'admin:aiProvider.constants.labels.callsThisMonth',
+    filterProvider: 'admin:aiProvider.constants.labels.filterProvider',
+    filterCaller: 'admin:aiProvider.constants.labels.filterCaller',
+    filterStatus: 'admin:aiProvider.constants.labels.filterStatus',
+    filterAll: 'admin:aiProvider.constants.labels.filterAll',
+    fallbackUnsupported: 'admin:aiProvider.constants.labels.fallbackUnsupported',
+    detailPromptBody: 'admin:aiProvider.constants.labels.detailPromptBody',
+    detailResponseBody: 'admin:aiProvider.constants.labels.detailResponseBody',
+    detailBodyEmpty: 'admin:aiProvider.constants.labels.detailBodyEmpty',
+    detailBodyNotApplicable: 'admin:aiProvider.constants.labels.detailBodyNotApplicable'
+  }
+});
+
 /** API 키 미등록 시 표시할 마스킹 (디자이너 §3 — `****1234`) */
 export const maskApiKey = (key) => {
   if (!key) {

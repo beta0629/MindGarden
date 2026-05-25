@@ -42,7 +42,7 @@ const API_AUTH_SMS_LOGIN = '/api/v1/auth/sms-login';
 
 
 const TabletLogin = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['common', 'auth']);
   const navigate = useNavigate();
   const location = useLocation();
   const { login, testLogin: centralTestLogin, checkSession, setDuplicateLoginModal } = useSession();
@@ -223,7 +223,7 @@ const TabletLogin = () => {
         await checkSession(true);
 
         // 로그인 성공 알림
-        showTooltip('로그인에 성공했습니다.', 'success');
+        showTooltip(t('auth:common.loginSuccessMessage', '로그인에 성공했습니다.'), 'success');
         
         // 세션 설정 완료 후 잠시 대기 (시간 단축)
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -242,7 +242,7 @@ const TabletLogin = () => {
         // 중복 로그인 모달 표시
         const modalData = {
           isOpen: true,
-          message: result.message || '다른 곳에서 로그인되어 있습니다. 기존 세션을 종료하고 새로 로그인하시겠습니까?',
+          message: result.message || t('auth:tabletLogin.msg.duplicateLoginPrompt', '다른 곳에서 로그인되어 있습니다. 기존 세션을 종료하고 새로 로그인하시겠습니까?'),
           loginData: formData
         };
         
@@ -376,7 +376,7 @@ const TabletLogin = () => {
       
       if (data.success) {
         console.log('✅ SMS 인증 로그인 성공:', data);
-        showTooltip('SMS 인증 로그인에 성공했습니다.', 'success');
+        showTooltip(t('auth:tabletLogin.msg.smsLoginSuccess', 'SMS 인증 로그인에 성공했습니다.'), 'success');
         
         // 로그인 성공 후 리다이렉트
         if (data.user) {
@@ -402,18 +402,18 @@ const TabletLogin = () => {
         }
       } else {
         console.error('❌ SMS 인증 로그인 실패:', data.message);
-        showTooltip(data.message || 'SMS 인증 로그인이 실패했습니다.', 'error');
+        showTooltip(data.message || t('auth:tabletLogin.msg.smsLoginFailed', 'SMS 인증 로그인이 실패했습니다.'), 'error');
         
         // 로그인 실패 시 회원가입 안내
         if (data.message && data.message.includes('회원가입')) {
-          showTooltip('회원가입이 필요합니다. 회원가입을 진행해주세요.', 'info');
+          showTooltip(t('auth:tabletLogin.msg.signupRequired', '회원가입이 필요합니다. 회원가입을 진행해주세요.'), 'info');
           // 회원가입 모달 표시 또는 회원가입 페이지로 이동
         }
       }
       
     } catch (error) {
       console.error('❌ SMS 인증 성공 후 처리 오류:', error);
-      showTooltip('SMS 인증 후 로그인 처리 중 오류가 발생했습니다.', 'error');
+      showTooltip(t('auth:tabletLogin.msg.smsAuthError', 'SMS 인증 후 로그인 처리 중 오류가 발생했습니다.'), 'error');
     }
   };
 
@@ -703,7 +703,7 @@ const TabletLogin = () => {
     } else {
       // 로그인되지 않은 사용자의 경우 로그인 페이지로 이동
       console.log('👤 로그인되지 않은 사용자 - 로그인 페이지로 이동');
-      showTooltip('로그인이 필요합니다.', 'info');
+      showTooltip(t('auth:common.needLoginInfo', '로그인이 필요합니다.'), 'info');
       
       // 현재 페이지가 이미 로그인 페이지인지 확인
       if (!window.location.pathname.includes('/login')) {
@@ -716,8 +716,8 @@ const TabletLogin = () => {
     <div className={TABLET_LOGIN_CSS.CONTAINER}>
       <div className={TABLET_LOGIN_CSS.CONTENT}>
           <div className={TABLET_LOGIN_CSS.HEADER}>
-            <h1 className={TABLET_LOGIN_CSS.TITLE}>Core Solution 로그인</h1>
-            <p className={TABLET_LOGIN_CSS.SUBTITLE}>Core Solution에 오신 것을 환영합니다</p>
+            <h1 className={TABLET_LOGIN_CSS.TITLE}>{t('auth:tabletLogin.title', 'Core Solution 로그인')}</h1>
+            <p className={TABLET_LOGIN_CSS.SUBTITLE}>{t('auth:tabletLogin.subtitle', 'Core Solution에 오신 것을 환영합니다')}</p>
           </div>
 
           <div className={TABLET_LOGIN_CSS.MODE_SWITCH}>
@@ -730,7 +730,7 @@ const TabletLogin = () => {
               preventDoubleClick={false}
             >
               <i className="bi bi-envelope" />
-              이메일 로그인
+              {t('auth:tabletLogin.modeEmail', '이메일 로그인')}
             </MGButton>
             <MGButton
               type="button"
@@ -741,7 +741,7 @@ const TabletLogin = () => {
               preventDoubleClick={false}
             >
               <i className="bi bi-phone" />
-              SMS 로그인
+              {t('auth:tabletLogin.modeSms', 'SMS 로그인')}
             </MGButton>
           </div>
 
@@ -751,7 +751,7 @@ const TabletLogin = () => {
               <div className={TABLET_LOGIN_CSS.FORM_GROUP}>
                 <label className={TABLET_LOGIN_CSS.LABEL}>
                   <i className="bi bi-envelope" />
-                  {t('common.labels.email', '이메일')}
+                  {t('auth:tabletLogin.emailLabel', '이메일')}
                 </label>
                 <input
                   type="email"
@@ -759,7 +759,7 @@ const TabletLogin = () => {
                   value={formData.email}
                   onChange={handleInputChange}
                   className={TABLET_LOGIN_CSS.INPUT}
-                  placeholder="이메일을 입력하세요"
+                  placeholder={t('auth:tabletLogin.emailPlaceholder', '이메일을 입력하세요')}
                   required
                 />
               </div>
@@ -767,7 +767,7 @@ const TabletLogin = () => {
               <div className={TABLET_LOGIN_CSS.FORM_GROUP}>
                 <label className={TABLET_LOGIN_CSS.LABEL}>
                   <i className="bi bi-lock" />
-                  비밀번호
+                  {t('auth:tabletLogin.passwordLabel', '비밀번호')}
                 </label>
                 <div className={TABLET_LOGIN_CSS.INPUT_GROUP}>
                   <input
@@ -776,7 +776,7 @@ const TabletLogin = () => {
                     value={formData.password}
                     onChange={handleInputChange}
                     className={TABLET_LOGIN_CSS.INPUT}
-                    placeholder="비밀번호를 입력하세요"
+                    placeholder={t('auth:tabletLogin.passwordPlaceholder', '비밀번호를 입력하세요')}
                     required
                   />
                   <MGButton
@@ -787,7 +787,7 @@ const TabletLogin = () => {
                     onClick={togglePassword}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
-                    aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
+                    aria-label={showPassword ? t('auth:common.passwordHide', '비밀번호 숨기기') : t('auth:common.passwordShow', '비밀번호 표시')}
                   >
                     <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`} />
                   </MGButton>
@@ -803,7 +803,7 @@ const TabletLogin = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
-                로그인
+                {t('auth:tabletLogin.loginButton', '로그인')}
               </MGButton>
               
               {/* 비밀번호 찾기 링크 */}
@@ -822,7 +822,7 @@ const TabletLogin = () => {
                     e.currentTarget.style.color = 'var(--mg-primary-500)';
                   }}
                 >
-                  비밀번호를 잊으셨나요?
+                  {t('auth:tabletLogin.forgotPassword', '비밀번호를 잊으셨나요?')}
                 </MGButton>
               </div>
             </form>
@@ -832,7 +832,7 @@ const TabletLogin = () => {
               <div className={TABLET_LOGIN_CSS.FORM_GROUP}>
                 <label className={TABLET_LOGIN_CSS.LABEL}>
                   <i className="bi bi-phone" />
-                  휴대폰 번호
+                  {t('auth:tabletLogin.phoneLabel', '휴대폰 번호')}
                 </label>
                 <div className={TABLET_LOGIN_CSS.INPUT_GROUP}>
                   <input
@@ -840,7 +840,7 @@ const TabletLogin = () => {
                     value={formatPhoneNumber(phoneNumber)}
                     onChange={handlePhoneChange}
                     className={TABLET_LOGIN_CSS.INPUT}
-                    placeholder="010-0000-0000"
+                    placeholder={t('auth:tabletLogin.phonePlaceholder', '010-0000-0000')}
                     maxLength="13"
                   />
                   <MGButton
@@ -855,7 +855,7 @@ const TabletLogin = () => {
                   >
                     {isCodeSent && countdown > 0
                       ? `${Math.floor(countdown / 60)}:${(countdown % 60).toString().padStart(2, '0')}`
-                      : '인증번호 전송'
+                      : t('auth:tabletLogin.sendVerificationCode', '인증번호 전송')
                     }
                   </MGButton>
                 </div>
@@ -865,7 +865,7 @@ const TabletLogin = () => {
                 <div className={TABLET_LOGIN_CSS.FORM_GROUP}>
                   <label className={TABLET_LOGIN_CSS.LABEL}>
                     <i className="bi bi-shield-check" />
-                    인증 코드
+                    {t('auth:tabletLogin.verificationCodeLabel', '인증 코드')}
                   </label>
                   <div className={TABLET_LOGIN_CSS.SMS_VERIFICATION}>
                     <input
@@ -873,7 +873,7 @@ const TabletLogin = () => {
                       value={verificationCode}
                       onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                       className={TABLET_LOGIN_CSS.VERIFICATION_INPUT}
-                      placeholder="6자리 인증 코드"
+                      placeholder={t('auth:tabletLogin.verificationCodePlaceholder', '6자리 인증 코드')}
                       maxLength="6"
                     />
                     <MGButton
@@ -886,7 +886,7 @@ const TabletLogin = () => {
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       preventDoubleClick={false}
                     >
-                      인증
+                      {t('auth:tabletLogin.verifyButton', '인증')}
                     </MGButton>
                   </div>
                 </div>
@@ -900,13 +900,13 @@ const TabletLogin = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
-                SMS 로그인
+                {t('auth:tabletLogin.smsLoginButton', 'SMS 로그인')}
               </MGButton>
             </div>
           )}
 
           <div className={TABLET_LOGIN_CSS.DIVIDER}>
-            <span>또는</span>
+            <span>{t('auth:common.or', '또는')}</span>
           </div>
 
           <div className={TABLET_LOGIN_CSS.SOCIAL_BUTTONS}>
@@ -920,7 +920,7 @@ const TabletLogin = () => {
               preventDoubleClick={false}
             >
               <i className="bi bi-chat-dots" />
-              카카오로 로그인
+              {t('auth:tabletLogin.socialLogin.kakao', '카카오로 로그인')}
             </MGButton>
             <MGButton
               type="button"
@@ -932,13 +932,13 @@ const TabletLogin = () => {
               preventDoubleClick={false}
             >
               <i className="bi bi-n" />
-              네이버로 로그인
+              {t('auth:tabletLogin.socialLogin.naver', '네이버로 로그인')}
             </MGButton>
           </div>
 
           <div className={TABLET_LOGIN_CSS.FOOTER}>
             <p className="register-link">
-              계정이 없으신가요?{' '}
+              {t('auth:tabletLogin.registerHint', '계정이 없으신가요?')}{' '}
               <MGButton
                 type="button"
                 variant="outline"
@@ -947,7 +947,7 @@ const TabletLogin = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick={false}
               >
-                회원가입
+                {t('auth:tabletLogin.register', '회원가입')}
               </MGButton>
             </p>
           </div>
@@ -1003,7 +1003,7 @@ const TabletLogin = () => {
             
             {/* 닫기 안내 */}
             <div className="tablet-login-notification__hint">
-              터치하여 닫기
+              {t('auth:tabletLogin.tooltipDismissHint', '터치하여 닫기')}
             </div>
           </div>
           

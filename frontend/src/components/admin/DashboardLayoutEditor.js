@@ -23,7 +23,48 @@ import './DashboardLayoutEditor.css';
 import { useTranslation } from 'react-i18next';
 
 // 위젯 타입 한글 이름 매핑 (DashboardWidgetEditor와 동일)
+// PR-G 흡수: 값은 i18n 키 (caller 가 t() 로 변환)
 const WIDGET_TYPE_NAMES = {
+  'welcome': 'admin:dashboardLayout.widgetType.welcome',
+  'statistics': 'admin:dashboardLayout.widgetType.statistics',
+  'summary-statistics': 'admin:dashboardLayout.widgetType.summaryStatistics',
+  'chart': 'admin:dashboardLayout.widgetType.chart',
+  'table': 'admin:dashboardLayout.widgetType.table',
+  'calendar': 'admin:dashboardLayout.widgetType.calendar',
+  'form': 'admin:dashboardLayout.widgetType.form',
+  'activity-list': 'admin:dashboardLayout.widgetType.activityList',
+  'quick-actions': 'admin:dashboardLayout.widgetType.quickActions',
+  'navigation-menu': 'admin:dashboardLayout.widgetType.navigationMenu',
+  'message': 'admin:dashboardLayout.widgetType.message',
+  'notification': 'admin:dashboardLayout.widgetType.notification',
+  'schedule': 'admin:dashboardLayout.widgetType.schedule',
+  'rating': 'admin:dashboardLayout.widgetType.rating',
+  'payment': 'admin:dashboardLayout.widgetType.payment',
+  'healing-card': 'admin:dashboardLayout.widgetType.healingCard',
+  'purchase-request': 'admin:dashboardLayout.widgetType.purchaseRequest',
+  'personalized-message': 'admin:dashboardLayout.widgetType.personalizedMessage',
+  'header': 'admin:dashboardLayout.widgetType.header',
+  'erp-card': 'admin:dashboardLayout.widgetType.erpCard',
+  'erp-stats-grid': 'admin:dashboardLayout.widgetType.erpStatsGrid',
+  'erp-management-grid': 'admin:dashboardLayout.widgetType.erpManagementGrid',
+  'system-status': 'admin:dashboardLayout.widgetType.systemStatus',
+  'system-tools': 'admin:dashboardLayout.widgetType.systemTools',
+  'permission': 'admin:dashboardLayout.widgetType.permission',
+  'statistics-grid': 'admin:dashboardLayout.widgetType.statisticsGrid',
+  'management-grid': 'admin:dashboardLayout.widgetType.managementGrid',
+  'consultation-summary': 'admin:dashboardLayout.widgetType.consultationSummary',
+  'consultation-schedule': 'admin:dashboardLayout.widgetType.consultationSchedule',
+  'consultation-stats': 'admin:dashboardLayout.widgetType.consultationStats',
+  'consultation-record': 'admin:dashboardLayout.widgetType.consultationRecord',
+  'consultant-client': 'admin:dashboardLayout.widgetType.consultantClient',
+  'mapping-management': 'admin:dashboardLayout.widgetType.mappingManagement',
+  'session-management': 'admin:dashboardLayout.widgetType.sessionManagement',
+  'schedule-registration': 'admin:dashboardLayout.widgetType.scheduleRegistration',
+  'pending-deposit': 'admin:dashboardLayout.widgetType.pendingDeposit',
+  'custom': 'admin:dashboardLayout.widgetType.custom'
+};
+
+const WIDGET_TYPE_FALLBACK = {
   'welcome': '환영 위젯',
   'statistics': '통계 위젯',
   'summary-statistics': '요약 통계',
@@ -118,7 +159,9 @@ const DashboardLayoutEditor = ({
 
   // 위젯 타입 이름 가져오기
   const getWidgetTypeName = (widgetType) => {
-    return WIDGET_TYPE_NAMES[widgetType] || widgetType;
+    const i18nKey = WIDGET_TYPE_NAMES[widgetType];
+    const fallback = WIDGET_TYPE_FALLBACK[widgetType] || widgetType;
+    return i18nKey ? t(i18nKey, fallback) : fallback;
   };
 
   // 그리드 컬럼 수를 CSS 변수로 설정
@@ -136,17 +179,21 @@ const DashboardLayoutEditor = ({
     <div className="dashboard-layout-editor">
       <div className="layout-editor-header">
         <h3 className="layout-editor-title">
-          레이아웃 편집 (드래그하여 위치 변경)
+          {t('admin:dashboardLayout.editorHeader', '레이아웃 편집 (드래그하여 위치 변경)')}
         </h3>
         <div className="layout-editor-info">
-          <span className="widget-count">위젯 {widgetList.length}개</span>
-          <span className="grid-info">{columns}열 그리드</span>
+          <span className="widget-count">
+            {t('admin:dashboardLayout.widgetCount', '위젯 {{count}}개', { count: widgetList.length })}
+          </span>
+          <span className="grid-info">
+            {t('admin:dashboardLayout.gridInfo', '{{count}}열 그리드', { count: columns })}
+          </span>
         </div>
       </div>
 
       {widgetList.length === 0 ? (
         <div className="layout-empty-state">
-          <p>위젯이 없습니다. 위젯을 추가해주세요.</p>
+          <p>{t('admin:dashboardLayout.emptyMessage', '위젯이 없습니다. 위젯을 추가해주세요.')}</p>
         </div>
       ) : (
         <div className={getGridContainerClass()}>
@@ -244,10 +291,10 @@ const DashboardLayoutEditor = ({
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => onWidgetConfig(widget)}
-                        title="설정"
+                        title={t('admin:dashboardLayout.settings', '설정')}
                         preventDoubleClick={false}
                       >
-                        설정
+                        {t('admin:dashboardLayout.settings', '설정')}
                       </MGButton>
                     )}
                     <MGButton
@@ -262,10 +309,10 @@ const DashboardLayoutEditor = ({
                       })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => handleDelete(widget.id)}
-                      title={t('admin.actions.delete', '삭제')}
+                      title={t('admin:dashboardLayout.delete', '삭제')}
                       preventDoubleClick={false}
                     >
-                      {t('admin.actions.delete', '삭제')}
+                      {t('admin:dashboardLayout.delete', '삭제')}
                     </MGButton>
                   </div>
                 </div>
@@ -276,8 +323,13 @@ const DashboardLayoutEditor = ({
                     </span>
                     {widget.position && (
                       <span className="widget-preview-position">
-                        행 {widget.position.row}, 열 {widget.position.col}
-                        {widget.position.span > 1 ? ` (${widget.position.span}칸)` : ''}
+                        {t('admin:dashboardLayout.positionRowCol', '행 {{row}}, 열 {{col}}', {
+                          row: widget.position.row,
+                          col: widget.position.col
+                        })}
+                        {widget.position.span > 1
+                          ? t('admin:dashboardLayout.positionSpan', ' ({{count}}칸)', { count: widget.position.span })
+                          : ''}
                       </span>
                     )}
                   </div>

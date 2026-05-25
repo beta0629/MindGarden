@@ -80,7 +80,7 @@ const MappingManagementPage = () => {
     } catch (error) {
       console.error('매칭 목록 로드 실패:', error);
       setMappings([]);
-      notificationManager.error('매칭 목록을 불러오는데 실패했습니다.');
+      notificationManager.error(t('admin:mapping.page.msgListLoadFailed', '매칭 목록을 불러오는데 실패했습니다.'));
     } finally {
       setLoading(false);
       setIsLoadingMappings(false);
@@ -98,13 +98,13 @@ const MappingManagementPage = () => {
 
   const getStatusKoreanName = (status) => {
     const statusMap = {
-      ACTIVE: '활성',
-      INACTIVE: '비활성',
-      PENDING_PAYMENT: '결제 대기',
-      PAYMENT_CONFIRMED: '결제 확인',
-      TERMINATED: '종료됨',
-      SESSIONS_EXHAUSTED: '회기 소진',
-      SUSPENDED: '일시정지'
+      ACTIVE: t('admin:mapping.page.status.active', '활성'),
+      INACTIVE: t('admin:mapping.page.status.inactive', '비활성'),
+      PENDING_PAYMENT: t('admin:mapping.page.status.pendingPayment', '결제 대기'),
+      PAYMENT_CONFIRMED: t('admin:mapping.page.status.paymentConfirmed', '결제 확인'),
+      TERMINATED: t('admin:mapping.page.status.terminated', '종료됨'),
+      SESSIONS_EXHAUSTED: t('admin:mapping.page.status.sessionsExhausted', '회기 소진'),
+      SUSPENDED: t('admin:mapping.page.status.suspended', '일시정지')
     };
     return statusMap[status] || status;
   };
@@ -168,46 +168,39 @@ const MappingManagementPage = () => {
         });
         setMappingStatusInfo(statusInfoMap);
       } else {
-        setMappingStatusInfo({
-          PENDING_PAYMENT: { label: '입금대기', color: 'var(--mg-warning-500)', icon: null },
-          PAYMENT_CONFIRMED: { label: '입금확인', color: 'var(--mg-info-500)', icon: null },
-          ACTIVE: { label: '활성', color: 'var(--mg-success-500)', icon: null },
-          TERMINATED: { label: '종료', color: 'var(--mg-error-500)', icon: null },
-          SESSIONS_EXHAUSTED: { label: '회기소진', color: 'var(--mg-purple-500)', icon: null },
-          INACTIVE: { label: '비활성', color: 'var(--mg-secondary-500)', icon: null },
-          SUSPENDED: { label: '일시정지', color: 'var(--mg-warning-500)', icon: null },
-          CANCELLED: { label: '취소', color: 'var(--mg-error-500)', icon: null }
-        });
+        setMappingStatusInfo(buildFallbackStatusInfo());
       }
     } catch (error) {
       console.error('매칭 상태 정보 로드 오류:', error);
-      setMappingStatusInfo({
-        PENDING_PAYMENT: { label: '입금대기', color: 'var(--mg-warning-500)', icon: null },
-        PAYMENT_CONFIRMED: { label: '입금확인', color: 'var(--mg-info-500)', icon: null },
-        ACTIVE: { label: '활성', color: 'var(--mg-success-500)', icon: null },
-        TERMINATED: { label: '종료', color: 'var(--mg-error-500)', icon: null },
-        SESSIONS_EXHAUSTED: { label: '회기소진', color: 'var(--mg-purple-500)', icon: null },
-        INACTIVE: { label: '비활성', color: 'var(--mg-secondary-500)', icon: null },
-        SUSPENDED: { label: '일시정지', color: 'var(--mg-warning-500)', icon: null },
-        CANCELLED: { label: '취소', color: 'var(--mg-error-500)', icon: null }
-      });
+      setMappingStatusInfo(buildFallbackStatusInfo());
     }
   };
+
+  const buildFallbackStatusInfo = () => ({
+    PENDING_PAYMENT: { label: t('admin:mapping.page.status.depositPending', '입금대기'), color: 'var(--mg-warning-500)', icon: null },
+    PAYMENT_CONFIRMED: { label: t('admin:mapping.page.status.depositConfirmed', '입금확인'), color: 'var(--mg-info-500)', icon: null },
+    ACTIVE: { label: t('admin:mapping.page.status.active', '활성'), color: 'var(--mg-success-500)', icon: null },
+    TERMINATED: { label: t('admin:mapping.page.status.ended', '종료'), color: 'var(--mg-error-500)', icon: null },
+    SESSIONS_EXHAUSTED: { label: t('admin:mapping.page.status.sessionsExhaustedShort', '회기소진'), color: 'var(--mg-purple-500)', icon: null },
+    INACTIVE: { label: t('admin:mapping.page.status.inactive', '비활성'), color: 'var(--mg-secondary-500)', icon: null },
+    SUSPENDED: { label: t('admin:mapping.page.status.suspended', '일시정지'), color: 'var(--mg-warning-500)', icon: null },
+    CANCELLED: { label: t('admin:mapping.page.status.cancelled', '취소'), color: 'var(--mg-error-500)', icon: null }
+  });
 
   const handleApproveMapping = async(mappingId) => {
     try {
       const response = await StandardizedApi.post(`/api/v1/admin/mappings/${mappingId}/approve`, {
-        adminName: user?.name || user?.userId || '관리자'
+        adminName: user?.name || user?.userId || t('admin:mapping.page.adminFallback', '관리자')
       });
       if (response) {
-        notificationManager.success('매칭이 승인되었습니다.');
+        notificationManager.success(t('admin:mapping.page.msgApproveSuccess', '매칭이 승인되었습니다.'));
         loadMappings();
       } else {
-        notificationManager.error('매칭 승인에 실패했습니다.');
+        notificationManager.error(t('admin:mapping.page.msgApproveFailed', '매칭 승인에 실패했습니다.'));
       }
     } catch (error) {
       console.error('매칭 승인 실패:', error);
-      notificationManager.error(error.message || '매칭 승인에 실패했습니다.');
+      notificationManager.error(error.message || t('admin:mapping.page.msgApproveFailed', '매칭 승인에 실패했습니다.'));
     }
   };
 
@@ -233,7 +226,7 @@ const MappingManagementPage = () => {
     setShowTransferModal(false);
     setSelectedMapping(null);
     loadMappings();
-    notificationManager.success('상담사가 성공적으로 변경되었습니다.');
+    notificationManager.success(t('admin:mapping.page.msgTransferSuccess', '상담사가 성공적으로 변경되었습니다.'));
   };
 
   const handleViewTransferHistory = (clientId) => {
@@ -248,11 +241,11 @@ const MappingManagementPage = () => {
 
   const handleRefundMapping = (mapping) => {
     if (mapping.status !== 'ACTIVE') {
-      notificationManager.warning('활성 상태의 매칭만 환불 처리할 수 있습니다.');
+      notificationManager.warning(t('admin:mapping.page.msgRefundOnlyActive', '활성 상태의 매칭만 환불 처리할 수 있습니다.'));
       return;
     }
     if (mapping.remainingSessions <= 0) {
-      notificationManager.warning('남은 회기가 없는 매칭은 환불 처리할 수 없습니다.');
+      notificationManager.warning(t('admin:mapping.page.msgRefundNoRemaining', '남은 회기가 없는 매칭은 환불 처리할 수 없습니다.'));
       return;
     }
     setPartialRefundMapping(mapping);
@@ -278,14 +271,18 @@ const MappingManagementPage = () => {
 
   const handleRefundProcess = async() => {
     if (!refundReason.trim()) {
-      notificationManager.warning('환불 사유를 반드시 입력해주세요.');
+      notificationManager.warning(t('admin:mapping.page.msgRefundReasonRequired', '환불 사유를 반드시 입력해주세요.'));
       return;
     }
     if (refundReason.trim().length < 5) {
-      notificationManager.warning('환불 사유를 5자 이상 상세히 입력해주세요.');
+      notificationManager.warning(t('admin:mapping.page.msgRefundReasonMin', '환불 사유를 5자 이상 상세히 입력해주세요.'));
       return;
     }
-    const confirmMessage = `${refundMapping.clientName}과의 매칭을 환불 처리하시겠습니까?\n\n환불 회기: ${refundMapping.remainingSessions}회\n환불 사유: ${refundReason.trim()}\n\n이 작업은 되돌릴 수 없습니다.`;
+    const confirmMessage = t('admin:mapping.page.refundConfirm', '{{clientName}}과의 매칭을 환불 처리하시겠습니까?\n\n환불 회기: {{sessions}}회\n환불 사유: {{reason}}\n\n이 작업은 되돌릴 수 없습니다.', {
+      clientName: refundMapping.clientName,
+      sessions: refundMapping.remainingSessions,
+      reason: refundReason.trim()
+    });
     const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(confirmMessage, resolve);
     });
@@ -297,7 +294,7 @@ const MappingManagementPage = () => {
         reason: refundReason.trim()
       });
       if (response?.success) {
-        notificationManager.success('매칭이 환불 처리되었습니다. 관련 스케줄도 자동으로 취소됩니다.');
+        notificationManager.success(t('admin:mapping.page.msgRefundSuccess', '매칭이 환불 처리되었습니다. 관련 스케줄도 자동으로 취소됩니다.'));
         handleCloseRefundModal();
         loadMappings();
         window.dispatchEvent(
@@ -311,11 +308,11 @@ const MappingManagementPage = () => {
           })
         );
       } else {
-        notificationManager.error(response?.message || '환불 처리에 실패했습니다.');
+        notificationManager.error(response?.message || t('admin:mapping.page.msgRefundFailed', '환불 처리에 실패했습니다.'));
       }
     } catch (error) {
       console.error('환불 처리 실패:', error);
-      notificationManager.error('환불 처리에 실패했습니다.');
+      notificationManager.error(t('admin:mapping.page.msgRefundFailed', '환불 처리에 실패했습니다.'));
     } finally {
       setLoading(false);
     }
@@ -342,9 +339,9 @@ const MappingManagementPage = () => {
           );
           setPendingMappings(pending);
           setShowPaymentModal(true);
-          notificationManager.info(`${stat.label} 매칭의 결제 확인을 진행합니다.`);
+          notificationManager.info(t('admin:mapping.page.statPaymentBoard', '{{label}} 매칭의 결제 확인을 진행합니다.', { label: stat.label }));
         } else {
-          notificationManager.info('결제 대기 중인 매칭이 없습니다.');
+          notificationManager.info(t('admin:mapping.page.statPaymentEmpty', '결제 대기 중인 매칭이 없습니다.'));
         }
         break;
       case 'view':
@@ -390,17 +387,24 @@ const MappingManagementPage = () => {
   if (loading) {
     return (
       <div aria-busy="true" aria-live="polite">
-        <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+        <UnifiedLoading
+          type="inline"
+          text={t('admin:mapping.page.loadingText', '데이터를 불러오는 중...')}
+          variant="pulse"
+        />
       </div>
     );
   }
 
   return (
     <>
-      <ContentArea ariaLabel="매칭 관리 본문" className="mg-v2-mapping-management">
+      <ContentArea
+        ariaLabel={t('admin:mapping.page.regionLabel', '매칭 관리 본문')}
+        className="mg-v2-mapping-management"
+      >
         <ContentHeader
-          title={t('admin.labels.matchingManagement', '매칭 관리')}
-          subtitle="상담사와 내담자 간의 매칭을 관리합니다."
+          title={t('admin:mapping.page.title', '매칭 관리')}
+          subtitle={t('admin:mapping.page.subtitle', '상담사와 내담자 간의 매칭을 관리합니다.')}
           titleId="mapping-management-title"
           actions={
             <MGButton
@@ -413,7 +417,7 @@ const MappingManagementPage = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setShowCreateModal(true)}
             >
-              새 매칭 생성
+              {t('admin:mapping.page.newMapping', '새 매칭 생성')}
             </MGButton>
           }
         />
@@ -424,7 +428,7 @@ const MappingManagementPage = () => {
             onSearchChange={setSearchTerm}
             filterStatus={filterStatus}
             onFilterChange={setFilterStatus}
-            placeholder="상담사, 내담자, 패키지명 또는 #상태로 검색..."
+            placeholder={t('admin:mapping.page.searchPlaceholder', '상담사, 내담자, 패키지명 또는 #상태로 검색...')}
           />
 
           <MappingKpiSection mappings={mappings} onStatCardClick={handleStatCardClick} />
@@ -496,7 +500,7 @@ const MappingManagementPage = () => {
       <UnifiedModal
         isOpen={Boolean(showRefundModal && refundMapping)}
         onClose={handleCloseRefundModal}
-        title="매칭 환불 처리"
+        title={t('admin:mapping.page.modal.title', '매칭 환불 처리')}
         size="medium"
         className="mg-v2-ad-b0kla"
         loading={loading}
@@ -522,7 +526,7 @@ const MappingManagementPage = () => {
               disabled={!refundReason.trim() || loading}
               preventDoubleClick={true}
             >
-              환불 처리
+              {t('admin:mapping.page.modal.refundButton', '환불 처리')}
             </MGButton>
           </>
         }
@@ -530,41 +534,48 @@ const MappingManagementPage = () => {
         {refundMapping && (
           <div className="mapping-refund-modal-body">
             <div className="mapping-refund-info">
-              <h4 className="mapping-refund-info-title">환불 대상 매칭 정보</h4>
+              <h4 className="mapping-refund-info-title">
+                {t('admin:mapping.page.modal.infoTitle', '환불 대상 매칭 정보')}
+              </h4>
               <div className="mapping-refund-info-content">
                 <p>
-                  <strong>상담사:</strong> {refundMapping.consultantName}
+                  <strong>{t('admin:mapping.page.modal.consultant', '상담사:')}</strong> {refundMapping.consultantName}
                 </p>
                 <p>
-                  <strong>내담자:</strong> {refundMapping.clientName}
+                  <strong>{t('admin:mapping.page.modal.client', '내담자:')}</strong> {refundMapping.clientName}
                 </p>
                 <p>
-                  <strong>패키지:</strong> {refundMapping.packageName}
+                  <strong>{t('admin:mapping.page.modal.package', '패키지:')}</strong> {refundMapping.packageName}
                 </p>
                 <p>
-                  <strong>총 회기:</strong> {refundMapping.totalSessions}회
+                  <strong>{t('admin:mapping.page.modal.totalSessions', '총 회기:')}</strong> {refundMapping.totalSessions}{t('admin:mapping.page.modal.sessionUnit', '회')}
                 </p>
                 <p>
-                  <strong>사용 회기:</strong> {refundMapping.usedSessions}회
+                  <strong>{t('admin:mapping.page.modal.usedSessions', '사용 회기:')}</strong> {refundMapping.usedSessions}{t('admin:mapping.page.modal.sessionUnit', '회')}
                 </p>
                 <p className="mapping-refund-info-sessions">
-                  <strong>환불 회기:</strong> {refundMapping.remainingSessions}회
+                  <strong>{t('admin:mapping.page.modal.refundSessionsLabel', '환불 회기:')}</strong> {refundMapping.remainingSessions}{t('admin:mapping.page.modal.sessionUnit', '회')}
                 </p>
               </div>
             </div>
             <div className="mapping-refund-reason">
               <h4 className="mapping-refund-reason-title">
-                환불 사유 <span className="mapping-refund-required">*</span>
+                {t('admin:mapping.page.modal.reasonTitle', '환불 사유')}{' '}
+                <span className="mapping-refund-required">
+                  {t('admin:mapping.page.modal.reasonRequiredMark', '*')}
+                </span>
               </h4>
               <textarea
                 value={refundReason}
                 onChange={(e) => setRefundReason(e.target.value)}
-                placeholder="환불 사유를 상세히 입력해주세요..."
+                placeholder={t('admin:mapping.page.modal.reasonPlaceholder', '환불 사유를 상세히 입력해주세요...')}
                 rows={4}
                 className={`mapping-refund-reason-input ${!refundReason.trim() ? 'mapping-refund-reason-input--error' : ''}`}
               />
               {!refundReason.trim() && (
-                <div className="mapping-refund-reason-error">환불 사유를 반드시 입력해주세요.</div>
+                <div className="mapping-refund-reason-error">
+                  {t('admin:mapping.page.modal.reasonError', '환불 사유를 반드시 입력해주세요.')}
+                </div>
               )}
             </div>
           </div>

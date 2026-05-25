@@ -28,6 +28,8 @@ import koError from '../locales/ko/error.json';
 import koSettings from '../locales/ko/settings.json';
 import koStatistics from '../locales/ko/statistics.json';
 import koReport from '../locales/ko/report.json';
+import koErp from '../locales/ko/erp.json';
+import koSchedule from '../locales/ko/schedule.json';
 
 const SUPPORTED_LANGUAGES = ['ko'];
 const FALLBACK_LANGUAGE = 'ko';
@@ -45,13 +47,15 @@ i18n
         error: koError,
         settings: koSettings,
         statistics: koStatistics,
-        report: koReport
+        report: koReport,
+        erp: koErp,
+        schedule: koSchedule
       }
     },
     supportedLngs: SUPPORTED_LANGUAGES,
     fallbackLng: FALLBACK_LANGUAGE,
     defaultNS: DEFAULT_NAMESPACE,
-    ns: ['common', 'admin', 'error', 'settings', 'statistics', 'report'],
+    ns: ['common', 'admin', 'error', 'settings', 'statistics', 'report', 'erp', 'schedule'],
     interpolation: {
       escapeValue: false
     },

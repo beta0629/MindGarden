@@ -1,0 +1,102 @@
+{
+  "constants": {
+    "status": {
+      "AVAILABLE": "가능",
+      "BOOKED": "예약됨",
+      "CONFIRMED": "확정됨",
+      "VACATION": "휴가",
+      "COMPLETED": "완료",
+      "CANCELLED": "취소됨"
+    },
+    "scheduleType": {
+      "CONSULTATION": "상담",
+      "MEETING": "회의",
+      "TRAINING": "교육",
+      "OTHER": "기타"
+    },
+    "consultationType": {
+      "INDIVIDUAL": "개인상담",
+      "FAMILY": "가족상담",
+      "COUPLE": "부부상담",
+      "GROUP": "그룹상담",
+      "OTHER": "기타"
+    },
+    "sortOption": {
+      "dateAsc": "날짜 (오름차순)",
+      "dateDesc": "날짜 (내림차순)",
+      "titleAsc": "제목 (오름차순)",
+      "titleDesc": "제목 (내림차순)",
+      "statusAsc": "상태 (오름차순)",
+      "statusDesc": "상태 (내림차순)",
+      "consultantAsc": "상담사 (오름차순)",
+      "consultantDesc": "상담사 (내림차순)"
+    },
+    "filterOption": {
+      "all": "전체",
+      "today": "오늘",
+      "thisWeek": "이번 주",
+      "thisMonth": "이번 달",
+      "available": "가능",
+      "booked": "예약됨",
+      "confirmed": "확정됨",
+      "vacation": "휴가",
+      "completed": "완료",
+      "cancelled": "취소됨"
+    },
+    "pagination": {
+      "first": "처음",
+      "previous": "이전",
+      "next": "다음",
+      "last": "마지막",
+      "pageSize": "페이지당 항목 수",
+      "of": "중",
+      "total": "총"
+    },
+    "scheduleAction": {
+      "view": "보기",
+      "edit": "수정",
+      "delete": "삭제",
+      "book": "예약",
+      "cancel": "취소",
+      "complete": "완료"
+    },
+    "errorMessage": {
+      "loadFailed": "스케줄을 불러오는데 실패했습니다.",
+      "saveFailed": "스케줄 저장에 실패했습니다.",
+      "deleteFailed": "스케줄 삭제에 실패했습니다.",
+      "updateFailed": "스케줄 수정에 실패했습니다.",
+      "networkError": "네트워크 오류가 발생했습니다.",
+      "unauthorized": "권한이 없습니다.",
+      "serverError": "서버 오류가 발생했습니다."
+    },
+    "successMessage": {
+      "loadSuccess": "스케줄이 성공적으로 로드되었습니다.",
+      "saveSuccess": "스케줄이 성공적으로 저장되었습니다.",
+      "deleteSuccess": "스케줄이 성공적으로 삭제되었습니다.",
+      "updateSuccess": "스케줄이 성공적으로 수정되었습니다.",
+      "bookSuccess": "스케줄이 예약되었습니다.",
+      "cancelSuccess": "스케줄이 취소되었습니다.",
+      "completeSuccess": "스케줄이 완료되었습니다."
+    },
+    "consultationDuration": {
+      "thirtyMinutes": "30분",
+      "fortyFiveMinutes": "45분",
+      "sixtyMinutes": "60분",
+      "ninetyMinutes": "90분",
+      "oneHundredTwentyMinutes": "120분"
+    },
+    "legend": {
+      "krPublicHoliday": "공휴일(참고)",
+      "krPublicHolidayDisclaimer": "표시는 참고용이며, 실제 휴무·급여 적용은 관공서·고용노동부 고시 및 내규를 확인하세요.",
+      "integratedWeekendHolidayNote": "월간: 토요일은 연한 파랑·일요일은 연한 붉은 틴트, 공휴일은 붉은 계열(겹치면 공휴일 우선).",
+      "sessionLabelsTitle": "회기 표기",
+      "sessionBookingSequenceMeaning": "해당 일정 시점 잔여 회기",
+      "sessionRemainingMeaning": "해당 예약 직후 잔여 회기 (미래 일정)"
+    },
+    "calendar": {
+      "sessionLabelFormat": "{{remaining}}/{{total}}회",
+      "sessionAriaLabelBooking": "{{sequence}}회차 · 잔여 {{remaining}}/{{total}}",
+      "sessionAriaLabelRemaining": "잔여 {{remaining}}/{{total}}"
+    }
+  }
+}

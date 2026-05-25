@@ -1,167 +1,169 @@
 /**
- * DashboardFormModal — 사용자 노출 한글 문자열
+ * DashboardFormModal — i18n 키 매핑 (PR-E)
+ *
+ * D5 P4 i18n Phase 2 PR-E 흡수:
+ * - 모든 한국어 문자열은 frontend/src/locales/ko/admin.json#dashboard.form 로 이관.
+ * - 본 파일은 i18n 키 문자열(namespace prefix 포함)만 export.
+ * - 호출 측: useTranslation() + t(KEYS.NO_CREATABLE_ROLES) 패턴.
  *
  * @author Core Solution
- * @since 2026-04-21
+ * @since 2026-04-21 (원본), 2026-05-26 (i18n 흡수)
  */
 
-/** 대시보드 이름 자동 생성 접미사 (한글) */
-export const DASHBOARD_FORM_NAME_KO_SUFFIX = ' 대시보드';
-
-/** 대시보드 이름 자동 생성 접미사 (영문) — 템플릿용 */
-export const DASHBOARD_FORM_NAME_EN_SUFFIX = ' Dashboard';
+export const DASHBOARD_FORM_NAME_KO_SUFFIX_KEY = 'admin:dashboard.form.nameKoSuffix';
+export const DASHBOARD_FORM_NAME_EN_SUFFIX_KEY = 'admin:dashboard.form.nameEnSuffix';
 
 export const DASHBOARD_FORM_MSG = {
-  NO_CREATABLE_ROLES:
-    '생성 가능한 역할이 없습니다. 모든 역할에 대시보드가 이미 존재합니다. 새로운 역할을 먼저 생성해주세요.',
-  ERR_LOAD_ROLES: '역할 목록을 불러오는 중 오류가 발생했습니다.',
-  ERR_LOAD_ROLE_TEMPLATES: '역할 템플릿 목록을 불러오는 중 오류가 발생했습니다.',
-  WARN_SELECT_TEMPLATE: '템플릿을 선택해주세요.',
-  WARN_ENTER_ROLE_NAME: '역할 이름을 입력해주세요.',
-  TOAST_ROLE_ADDED: '역할이 추가되었습니다.',
-  ERR_ROLE_ADD_FALLBACK: '역할 추가 실패',
-  ERR_ROLE_ADD_PROCESS: '역할 추가 중 오류가 발생했습니다.',
-  TOAST_ROLE_DELETED: '역할이 삭제되었습니다.',
-  ERR_ROLE_DELETE_FALLBACK: '역할 삭제 실패',
-  ERR_ROLE_DELETE_PROCESS: '역할 삭제 중 오류가 발생했습니다.',
-  VAL_CHECK_INPUT: '입력한 정보를 확인해주세요.',
-  TOAST_CREATED_WITH_ROLE:
-    '대시보드가 생성되었고, 현재 계정에 역할이 할당되었습니다. 대시보드를 바로 확인할 수 있습니다.',
-  TOAST_CREATED_ROLE_ASSIGN_FAILED:
-    '대시보드가 생성되었습니다. 역할 할당은 실패했습니다. 수동으로 역할을 할당해주세요.',
-  TOAST_CREATED_ROLE_ASSIGN_NO_SESSION:
-    '대시보드가 생성되었습니다. 역할 할당을 위해 로그인 정보를 확인할 수 없습니다.',
-  TOAST_CREATED_ROLE_ASSIGN_ERROR:
-    '대시보드가 생성되었습니다. 역할 할당 중 오류가 발생했습니다. 수동으로 역할을 할당해주세요.',
-  TOAST_DASHBOARD_UPDATED: '대시보드가 수정되었습니다.',
-  TOAST_DASHBOARD_CREATED: '대시보드가 생성되었습니다.',
-  ERR_SAVE_FALLBACK: '대시보드 저장 실패',
-  ERR_SAVE_PROCESS: '대시보드 저장 중 오류가 발생했습니다.',
-  ERR_CONFLICT_DASHBOARD: '해당 역할에 이미 대시보드가 존재합니다.',
-  ERR_FORBIDDEN: '접근 권한이 없습니다.',
-  ERR_NOT_FOUND_DASHBOARD: '대시보드를 찾을 수 없습니다.'
+  NO_CREATABLE_ROLES: 'admin:dashboard.form.msg.noCreatableRoles',
+  ERR_LOAD_ROLES: 'admin:dashboard.form.msg.errLoadRoles',
+  ERR_LOAD_ROLE_TEMPLATES: 'admin:dashboard.form.msg.errLoadRoleTemplates',
+  WARN_SELECT_TEMPLATE: 'admin:dashboard.form.msg.warnSelectTemplate',
+  WARN_ENTER_ROLE_NAME: 'admin:dashboard.form.msg.warnEnterRoleName',
+  TOAST_ROLE_ADDED: 'admin:dashboard.form.msg.toastRoleAdded',
+  ERR_ROLE_ADD_FALLBACK: 'admin:dashboard.form.msg.errRoleAddFallback',
+  ERR_ROLE_ADD_PROCESS: 'admin:dashboard.form.msg.errRoleAddProcess',
+  TOAST_ROLE_DELETED: 'admin:dashboard.form.msg.toastRoleDeleted',
+  ERR_ROLE_DELETE_FALLBACK: 'admin:dashboard.form.msg.errRoleDeleteFallback',
+  ERR_ROLE_DELETE_PROCESS: 'admin:dashboard.form.msg.errRoleDeleteProcess',
+  VAL_CHECK_INPUT: 'admin:dashboard.form.msg.valCheckInput',
+  TOAST_CREATED_WITH_ROLE: 'admin:dashboard.form.msg.toastCreatedWithRole',
+  TOAST_CREATED_ROLE_ASSIGN_FAILED: 'admin:dashboard.form.msg.toastCreatedRoleAssignFailed',
+  TOAST_CREATED_ROLE_ASSIGN_NO_SESSION: 'admin:dashboard.form.msg.toastCreatedRoleAssignNoSession',
+  TOAST_CREATED_ROLE_ASSIGN_ERROR: 'admin:dashboard.form.msg.toastCreatedRoleAssignError',
+  TOAST_DASHBOARD_UPDATED: 'admin:dashboard.form.msg.toastDashboardUpdated',
+  TOAST_DASHBOARD_CREATED: 'admin:dashboard.form.msg.toastDashboardCreated',
+  ERR_SAVE_FALLBACK: 'admin:dashboard.form.msg.errSaveFallback',
+  ERR_SAVE_PROCESS: 'admin:dashboard.form.msg.errSaveProcess',
+  ERR_CONFLICT_DASHBOARD: 'admin:dashboard.form.msg.errConflictDashboard',
+  ERR_FORBIDDEN: 'admin:dashboard.form.msg.errForbidden',
+  ERR_NOT_FOUND_DASHBOARD: 'admin:dashboard.form.msg.errNotFoundDashboard'
 };
 
-/**
- * 역할 삭제 확인 문구
- *
- * @param {string} roleName 표시용 역할명
- * @returns {string}
- */
-export const dashboardFormConfirmDeleteRole = (roleName) =>
-  `"${roleName}" 역할을 삭제하시겠습니까?\n\n주의: 이 역할에 할당된 사용자가 있으면 삭제할 수 없습니다.`;
+export const DASHBOARD_FORM_CONFIRM_DELETE_ROLE_KEY = 'admin:dashboard.form.msg.confirmDeleteRole';
 
 export const DASHBOARD_FORM_ERR_THROW = {
-  TENANT_ID_MISSING: '테넌트 ID가 없습니다.'
+  TENANT_ID_MISSING: 'admin:dashboard.form.errThrow.tenantIdMissing'
 };
 
-/** 역할-사용자 할당 API 사유(한글) */
-export const DASHBOARD_FORM_ASSIGNMENT_REASON_AUTO = '대시보드 생성 시 자동 할당';
+export const DASHBOARD_FORM_ASSIGNMENT_REASON_AUTO_KEY = 'admin:dashboard.form.assignmentReasonAuto';
 
 export const DASHBOARD_FORM_VAL = {
-  SELECT_ROLE: '역할을 선택해주세요.',
-  DASHBOARD_ROLE_MISSING: '대시보드 역할 정보를 찾을 수 없습니다.',
-  ROLE_INVALID_REOPEN: '선택된 역할이 유효하지 않습니다. 모달을 닫고 다시 열어주세요.',
-  ENTER_DASHBOARD_NAME: '대시보드 이름을 입력해주세요.',
-  SELECT_ROLE_FIRST: '역할을 먼저 선택해주세요.',
-  INVALID_JSON: '올바른 JSON 형식이 아닙니다.'
+  SELECT_ROLE: 'admin:dashboard.form.val.selectRole',
+  DASHBOARD_ROLE_MISSING: 'admin:dashboard.form.val.dashboardRoleMissing',
+  ROLE_INVALID_REOPEN: 'admin:dashboard.form.val.roleInvalidReopen',
+  ENTER_DASHBOARD_NAME: 'admin:dashboard.form.val.enterDashboardName',
+  SELECT_ROLE_FIRST: 'admin:dashboard.form.val.selectRoleFirst',
+  INVALID_JSON: 'admin:dashboard.form.val.invalidJson'
 };
 
 export const DASHBOARD_FORM_MODAL = {
-  TITLE_EDIT: '대시보드 수정',
-  TITLE_CREATE: '새 대시보드 생성',
-  TITLE_ADD_ROLE: '역할 추가',
-  LOADING: '로딩중...'
+  TITLE_EDIT: 'admin:dashboard.form.modal.titleEdit',
+  TITLE_CREATE: 'admin:dashboard.form.modal.titleCreate',
+  TITLE_ADD_ROLE: 'admin:dashboard.form.modal.titleAddRole',
+  LOADING: 'admin:dashboard.form.modal.loading'
 };
 
 export const DASHBOARD_FORM_BUTTON = {
-  CANCEL: '취소',
-  SAVE_EDIT: '수정',
-  SAVE_CREATE: '생성',
-  ADD_ROLE: '역할 추가',
-  ADD_ROLE_SUBMIT: '역할 추가',
-  ADD_ROLE_LOADING: '추가 중...',
-  DELETE: '삭제'
+  CANCEL: 'admin:dashboard.form.button.cancel',
+  SAVE_EDIT: 'admin:dashboard.form.button.saveEdit',
+  SAVE_CREATE: 'admin:dashboard.form.button.saveCreate',
+  ADD_ROLE: 'admin:dashboard.form.button.addRole',
+  ADD_ROLE_SUBMIT: 'admin:dashboard.form.button.addRoleSubmit',
+  ADD_ROLE_LOADING: 'admin:dashboard.form.button.addRoleLoading',
+  DELETE: 'admin:dashboard.form.button.delete'
 };
 
 export const DASHBOARD_FORM_FORM = {
-  ROLE_LABEL: '역할',
-  ROLE_PLACEHOLDER: '역할을 선택해주세요',
-  ROLE_EMPTY_NO_DASHBOARD:
-    '생성 가능한 역할이 없습니다. (모든 역할에 대시보드가 이미 존재합니다)',
-  ROLE_LOADING: '역할 목록을 불러오는 중...',
-  ASSIGN_ROLE_AFTER_CREATE: '대시보드 생성 후 현재 계정에 이 역할 자동 할당',
-  ASSIGN_ROLE_HELP: '체크하면 대시보드 생성 후 바로 확인할 수 있습니다.',
-  ROLE_MANAGE: '역할 관리',
-  DELETE_ROLE_TITLE: '역할 삭제',
-  DASHBOARD_NAME: '대시보드 이름',
-  DASHBOARD_NAME_AUTO_HINT: '(역할 선택 시 자동 생성)',
-  DASHBOARD_NAME_PH_AUTO: '역할을 선택하면 자동으로 생성됩니다',
-  DASHBOARD_NAME_PH_SELECT_ROLE_FIRST: '역할을 먼저 선택해주세요',
-  DASHBOARD_NAME_AUTO_SUCCESS: '✅ 역할 선택 시 자동으로 이름이 생성됩니다',
-  DASHBOARD_NAME_EN: '대시보드 이름 (영문)',
-  DASHBOARD_TYPE: '대시보드 타입',
-  TYPE_PLACEHOLDER: '타입을 선택해주세요',
-  ADVANCED_SUMMARY: '⚙️ 고급 설정 (선택사항)',
-  DESCRIPTION: '설명',
-  DESCRIPTION_PLACEHOLDER: '대시보드에 대한 설명을 입력해주세요 (선택사항)',
-  DISPLAY_ORDER: '표시 순서',
-  DISPLAY_ORDER_HELP: '숫자가 작을수록 먼저 표시됩니다. (기본값: 0)',
-  IS_ACTIVE: '활성화',
-  IS_DEFAULT: '기본 대시보드',
-  IS_DEFAULT_EDIT_HELP: '기본 대시보드는 수정 시 변경할 수 없습니다.',
-  WIDGET_SETTINGS: '위젯 설정',
-  WIDGET_SETTINGS_HELP: '(드래그 앤 드롭으로 쉽게 편집)',
-  WIDGET_EDIT_TITLE: '⚡ 위젯 편집',
-  WIDGET_EDIT_SUBTITLE: '위젯을 클릭으로 추가하고 드래그로 배치하세요',
-  WIDGET_GUIDE_TITLE: '💡 사용 방법',
-  WIDGET_GUIDE_LOADING: '위젯 설정을 불러오는 중...',
-  ROLE_TEMPLATE_LABEL: '역할 템플릿 선택',
-  TEMPLATE_PLACEHOLDER: '템플릿을 선택해주세요',
-  TEMPLATE_EMPTY: '사용 가능한 템플릿이 없습니다.',
-  TEMPLATE_HELP:
-    '템플릿을 선택하면 해당 템플릿의 권한과 기본 위젯 설정이 자동으로 적용됩니다.',
-  NEW_ROLE_NAME_KO: '역할 이름 (한글)',
-  NEW_ROLE_NAME_KO_PLACEHOLDER: '예: 원장, 상담사, 보조강사 등',
-  NEW_ROLE_NAME_KO_HELP:
-    '템플릿 선택 시 자동으로 채워지지만, 원하는 이름으로 변경할 수 있습니다.',
-  NEW_ROLE_NAME_EN: '역할 이름 (영문)',
-  ROLE_DESC_PLACEHOLDER: '역할에 대한 설명을 입력해주세요 (선택사항)'
+  ROLE_LABEL: 'admin:dashboard.form.formFields.roleLabel',
+  ROLE_PLACEHOLDER: 'admin:dashboard.form.formFields.rolePlaceholder',
+  ROLE_EMPTY_NO_DASHBOARD: 'admin:dashboard.form.formFields.roleEmptyNoDashboard',
+  ROLE_LOADING: 'admin:dashboard.form.formFields.roleLoading',
+  ASSIGN_ROLE_AFTER_CREATE: 'admin:dashboard.form.formFields.assignRoleAfterCreate',
+  ASSIGN_ROLE_HELP: 'admin:dashboard.form.formFields.assignRoleHelp',
+  ROLE_MANAGE: 'admin:dashboard.form.formFields.roleManage',
+  DELETE_ROLE_TITLE: 'admin:dashboard.form.formFields.deleteRoleTitle',
+  DASHBOARD_NAME: 'admin:dashboard.form.formFields.dashboardName',
+  DASHBOARD_NAME_AUTO_HINT: 'admin:dashboard.form.formFields.dashboardNameAutoHint',
+  DASHBOARD_NAME_PH_AUTO: 'admin:dashboard.form.formFields.dashboardNamePhAuto',
+  DASHBOARD_NAME_PH_SELECT_ROLE_FIRST: 'admin:dashboard.form.formFields.dashboardNamePhSelectRoleFirst',
+  DASHBOARD_NAME_AUTO_SUCCESS: 'admin:dashboard.form.formFields.dashboardNameAutoSuccess',
+  DASHBOARD_NAME_EN: 'admin:dashboard.form.formFields.dashboardNameEn',
+  DASHBOARD_TYPE: 'admin:dashboard.form.formFields.dashboardType',
+  TYPE_PLACEHOLDER: 'admin:dashboard.form.formFields.typePlaceholder',
+  ADVANCED_SUMMARY: 'admin:dashboard.form.formFields.advancedSummary',
+  DESCRIPTION: 'admin:dashboard.form.formFields.description',
+  DESCRIPTION_PLACEHOLDER: 'admin:dashboard.form.formFields.descriptionPlaceholder',
+  DISPLAY_ORDER: 'admin:dashboard.form.formFields.displayOrder',
+  DISPLAY_ORDER_HELP: 'admin:dashboard.form.formFields.displayOrderHelp',
+  IS_ACTIVE: 'admin:dashboard.form.formFields.isActive',
+  IS_DEFAULT: 'admin:dashboard.form.formFields.isDefault',
+  IS_DEFAULT_EDIT_HELP: 'admin:dashboard.form.formFields.isDefaultEditHelp',
+  WIDGET_SETTINGS: 'admin:dashboard.form.formFields.widgetSettings',
+  WIDGET_SETTINGS_HELP: 'admin:dashboard.form.formFields.widgetSettingsHelp',
+  WIDGET_EDIT_TITLE: 'admin:dashboard.form.formFields.widgetEditTitle',
+  WIDGET_EDIT_SUBTITLE: 'admin:dashboard.form.formFields.widgetEditSubtitle',
+  WIDGET_GUIDE_TITLE: 'admin:dashboard.form.formFields.widgetGuideTitle',
+  WIDGET_GUIDE_LOADING: 'admin:dashboard.form.formFields.widgetGuideLoading',
+  ROLE_TEMPLATE_LABEL: 'admin:dashboard.form.formFields.roleTemplateLabel',
+  TEMPLATE_PLACEHOLDER: 'admin:dashboard.form.formFields.templatePlaceholder',
+  TEMPLATE_EMPTY: 'admin:dashboard.form.formFields.templateEmpty',
+  TEMPLATE_HELP: 'admin:dashboard.form.formFields.templateHelp',
+  NEW_ROLE_NAME_KO: 'admin:dashboard.form.formFields.newRoleNameKo',
+  NEW_ROLE_NAME_KO_PLACEHOLDER: 'admin:dashboard.form.formFields.newRoleNameKoPlaceholder',
+  NEW_ROLE_NAME_KO_HELP: 'admin:dashboard.form.formFields.newRoleNameKoHelp',
+  NEW_ROLE_NAME_EN: 'admin:dashboard.form.formFields.newRoleNameEn',
+  ROLE_DESC_PLACEHOLDER: 'admin:dashboard.form.formFields.roleDescPlaceholder'
 };
 
-/** 위젯 사용 안내 리스트 (strong 구간 분리) */
+/** 위젯 사용 안내 — i18n 키 매핑 (strong 구간 before/strong/after 분리) */
 export const DASHBOARD_FORM_WIDGET_GUIDE = {
-  CLICK: { before: '위젯을 ', strong: '클릭', after: '하여 추가' },
-  DRAG: { before: '위젯을 ', strong: '드래그', after: '하여 위치 변경' },
-  DELETE: { before: '', strong: '🗑️ 버튼', after: '으로 위젯 삭제' },
-  CONFIG: { before: '', strong: '⚙️ 버튼', after: '으로 위젯 설정' }
+  CLICK: {
+    before: 'admin:dashboard.form.widgetGuide.click.before',
+    strong: 'admin:dashboard.form.widgetGuide.click.strong',
+    after: 'admin:dashboard.form.widgetGuide.click.after'
+  },
+  DRAG: {
+    before: 'admin:dashboard.form.widgetGuide.drag.before',
+    strong: 'admin:dashboard.form.widgetGuide.drag.strong',
+    after: 'admin:dashboard.form.widgetGuide.drag.after'
+  },
+  DELETE: {
+    before: 'admin:dashboard.form.widgetGuide.delete.before',
+    strong: 'admin:dashboard.form.widgetGuide.delete.strong',
+    after: 'admin:dashboard.form.widgetGuide.delete.after'
+  },
+  CONFIG: {
+    before: 'admin:dashboard.form.widgetGuide.config.before',
+    strong: 'admin:dashboard.form.widgetGuide.config.strong',
+    after: 'admin:dashboard.form.widgetGuide.config.after'
+  }
 };
 
 export const DASHBOARD_FORM_TYPE_OPTION = {
-  STUDENT: '학생',
-  TEACHER: '선생님',
-  ADMIN: '관리자',
-  CLIENT: '내담자',
-  CONSULTANT: '상담사',
-  PRINCIPAL: '원장',
-  DEFAULT: '기본'
+  STUDENT: 'admin:dashboard.form.typeOption.STUDENT',
+  TEACHER: 'admin:dashboard.form.typeOption.TEACHER',
+  ADMIN: 'admin:dashboard.form.typeOption.ADMIN',
+  CLIENT: 'admin:dashboard.form.typeOption.CLIENT',
+  CONSULTANT: 'admin:dashboard.form.typeOption.CONSULTANT',
+  PRINCIPAL: 'admin:dashboard.form.typeOption.PRINCIPAL',
+  DEFAULT: 'admin:dashboard.form.typeOption.DEFAULT'
 };
 
-/** Fallback 위젯 제목 (역할 메타 없을 때) */
+/** Fallback 위젯 제목 (역할 메타 없을 때) — i18n 키 */
 export const DASHBOARD_FORM_WIDGET_TITLE = {
-  MY_SCHEDULE: '내 일정',
-  NOTIFICATION: '알림',
-  SCHEDULE: '일정',
-  STATS: '통계',
-  WELCOME: '환영합니다',
-  STATS_SUMMARY: '통계 요약',
-  RECENT_ACTIVITY: '최근 활동'
+  MY_SCHEDULE: 'admin:dashboard.form.widgetTitle.mySchedule',
+  NOTIFICATION: 'admin:dashboard.form.widgetTitle.notification',
+  SCHEDULE: 'admin:dashboard.form.widgetTitle.schedule',
+  STATS: 'admin:dashboard.form.widgetTitle.stats',
+  WELCOME: 'admin:dashboard.form.widgetTitle.welcome',
+  STATS_SUMMARY: 'admin:dashboard.form.widgetTitle.statsSummary',
+  RECENT_ACTIVITY: 'admin:dashboard.form.widgetTitle.recentActivity'
 };
 
-/** 역할 키워드 매칭 (한글) — Fallback 위젯 분기 */
+/** 역할 키워드 매칭 (한글) — i18n 키 (Fallback 위젯 분기) */
 export const DASHBOARD_FORM_ROLE_KEY = {
-  STUDENT: '학생',
-  TEACHER_ALT1: '선생님',
-  TEACHER_ALT2: '교사',
-  ADMIN: '관리자'
+  STUDENT: 'admin:dashboard.form.roleKey.STUDENT',
+  TEACHER_ALT1: 'admin:dashboard.form.roleKey.TEACHER_ALT1',
+  TEACHER_ALT2: 'admin:dashboard.form.roleKey.TEACHER_ALT2',
+  ADMIN: 'admin:dashboard.form.roleKey.ADMIN'
 };

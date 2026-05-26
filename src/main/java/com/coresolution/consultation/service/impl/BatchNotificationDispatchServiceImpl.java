@@ -466,6 +466,31 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
                 marketingNote, logEntry.getId());
         }
 
+        // V20260602_001 (P0 SMS 긴급 차단) — SMS_TEMPLATE 시드 비활성 또는 본문 빈값으로
+        // renderSmsBody 가 null/blank 를 반환한 경우 SMS 발송 자체를 skip 한다. 알림톡 미발송 +
+        // SMS 미발송으로 마무리되며 멱등 로그는 TEMPLATE_NOT_MAPPED 로 기록.
+        if (smsFallbackBody == null || smsFallbackBody.isBlank()) {
+            String alimtalkErrMsg = alimtalkAttempted && alimtalkResult != null
+                ? alimtalkResult.errorMessage()
+                : "alimtalk mapping not found";
+            String skipNote = NotificationDispatchHelper.truncate(
+                "SMS_TEMPLATE 시드 비활성/미발견 → SMS 폴백 skip | alimtalk=" + alimtalkErrMsg);
+            sendLogger.updateResult(logEntry.getId(), false,
+                BatchNotificationTemplateCodes.CHANNEL_ALIMTALK,
+                false,
+                BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED,
+                skipNote,
+                alimtalkResult != null ? alimtalkResult.solapiGroupId() : null,
+                alimtalkResult != null ? alimtalkResult.solapiMessageId() : null);
+            log.info("SMS 폴백 skip — 시드 비활성/미발견: tenantId={}, templateCode={}",
+                tenantId, templateCode);
+            return new DispatchOutcome(DispatchOutcome.Status.FAILED,
+                BatchNotificationTemplateCodes.CHANNEL_ALIMTALK,
+                false,
+                BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED,
+                skipNote, logEntry.getId());
+        }
+
         // F1+F3 — 정보성 템플릿: 모든 알림톡 실패(전송 실패/매핑 누락 포함) → 즉시 SMS 폴백.
         // fallbackToSms=true 는 "SMS 가 폴백 경로로 사용됨" 을 의미하며, 알림톡 시도 여부와 무관하게
         // 본 분기에 진입하면 항상 true. 알림톡을 시도조차 못한 경우의 구분은 채널 사용 이력
@@ -653,13 +678,20 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
     /**
      * SMS_TEMPLATE 공통코드(테넌트 override → 글로벌 fallback) 본문을 변수 치환하여 반환한다.
      *
-     * <p>row 미존재 또는 빈 본문 → 코드 fallback (방어적). 본 fallback 은 운영 시드 누락 시
-     * 발송이 0건이 되는 사고를 막기 위한 안전망이며, 정상 운영에서는
-     * {@code V20260529_004__seed_sms_templates.sql} 시드를 통해 항상 적중한다.
+     * <p>{@code SMS_TEMPLATE} 시드(V20260529_004) 가 SSOT 이며, row 미존재/비활성 또는 빈 본문
+     * 일 때의 동작은 {@link BatchNotificationProperties#isSmsStaticFallbackEnabled()} 로 분기한다.
+     * <ul>
+     *   <li>{@code true} — 운영 시드 누락 시 발송 0건 사고를 막기 위한 코드 안전망 사용
+     *       ({@link #staticFallbackSmsBody}).</li>
+     *   <li>{@code false} (기본, 2026-05-26 P0 SMS 긴급 차단 정책, V20260602_001) — {@code null}
+     *       을 반환하여 호출자({@link #dispatchInternal}) 가 SMS 발송을 skip 하도록 신호.
+     *       알림톡 미발송 + SMS 미발송으로 마무리되며 멱등 로그는 {@code TEMPLATE_NOT_MAPPED} 로
+     *       기록된다.</li>
+     * </ul>
      *
      * @param templateCode {@link BatchNotificationTemplateCodes} 8종 중 1
      * @param variables    named 변수 매핑(불변 가능)
-     * @return SMS 본문 (절대 null 이 아님)
+     * @return SMS 본문 또는 {@code null} (SMS skip 신호 — {@code smsStaticFallbackEnabled=false})
      */
     private String renderSmsBody(String templateCode, Map<String, String> variables) {
         String tenantId = TenantContextHolder.getTenantId();
@@ -670,10 +702,17 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
                 return rendered.get();
             }
         } catch (Exception e) {
-            log.warn("SMS_TEMPLATE 렌더링 실패 — 코드 fallback 사용: code={}, err={}",
+            log.warn("SMS_TEMPLATE 렌더링 실패: code={}, err={}",
                 templateCode, e.getMessage());
         }
-        return staticFallbackSmsBody(templateCode, variables);
+        if (properties.isSmsStaticFallbackEnabled()) {
+            log.warn("SMS_TEMPLATE 시드 미발견/비활성 — 코드 안전망(static fallback) 사용: code={}",
+                templateCode);
+            return staticFallbackSmsBody(templateCode, variables);
+        }
+        log.info("SMS_TEMPLATE 시드 미발견/비활성 + 코드 안전망 비활성 → SMS skip: code={}",
+            templateCode);
+        return null;
     }
 
     /**

@@ -93,6 +93,40 @@ class SmsTemplateServiceImplTest {
     }
 
     @Test
+    @DisplayName("V20260602_001 — 시드 is_active=FALSE 면 repository 가 빈 Optional 반환 → renderForType empty (SMS skip 트리거)")
+    void renderForType_returnsEmptyWhenSeedDeactivated() {
+        // CommonCodeRepository.findCoreCodeByGroupAndValue 의 JPA @Query 는
+        // `AND c.isActive = true` 를 강제하므로 is_active=FALSE row 는 Optional.empty.
+        // V20260602_001 적용 후의 운영 상태를 시뮬레이션한다.
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(TENANT_ID, GROUP, KEY))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.findCoreCodeByGroupAndValue(GROUP, KEY))
+            .thenReturn(Optional.empty());
+
+        Optional<String> result = service.renderForType(KEY, TENANT_ID,
+            Map.of("paymentAmount", "500,000"), new String[]{"10회"});
+
+        assertThat(result)
+            .as("시드 비활성 시 renderForType 은 빈 Optional 을 반환하여 호출자가 SMS skip 처리하도록 한다")
+            .isEmpty();
+    }
+
+    @Test
+    @DisplayName("V20260602_001 — 글로벌 시드 비활성이지만 테넌트 override 활성이면 테넌트 본문 반환 (격리)")
+    void renderForType_usesTenantOverrideEvenWhenGlobalDeactivated() {
+        // 멀티테넌트 격리 가드 — V20260602_001 은 글로벌(tenant_id IS NULL) 시드만 비활성.
+        // 테넌트 override (tenant_id IS NOT NULL) 는 어드민 UI 자산이므로 본 시드 변경 미접촉.
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(TENANT_ID, GROUP, KEY))
+            .thenReturn(Optional.of(buildRow(TENANT_ID, "테넌트 override 본문 — 500,000원")));
+        // 글로벌 row 는 V20260602_001 로 is_active=FALSE → repository 가 empty 반환.
+
+        Optional<String> result = service.renderForType(KEY, TENANT_ID,
+            Map.of(), null);
+
+        assertThat(result).contains("테넌트 override 본문 — 500,000원");
+    }
+
+    @Test
     @DisplayName("renderForType — named + positional 자리표시자 모두 치환")
     void renderForType_substitutesBothPatterns() {
         when(commonCodeRepository.findTenantCodeByGroupAndValue(TENANT_ID, GROUP, KEY))

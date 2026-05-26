@@ -11,7 +11,6 @@ import com.coresolution.consultation.repository.erp.accounting.AccountingEntryRe
 import com.coresolution.consultation.repository.erp.accounting.JournalEntryLineRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.PlSqlDiscountAccountingService;
-import com.coresolution.consultation.service.PlSqlMappingSyncService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -64,9 +63,6 @@ public class ErpProcedureJournalEntryIntegrationTest {
 
     @Autowired
     private PlSqlDiscountAccountingService plSqlDiscountAccountingService;
-
-    @Autowired
-    private PlSqlMappingSyncService plSqlMappingSyncService;
 
     @Autowired
     private FinancialTransactionService financialTransactionService;

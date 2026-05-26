@@ -35,6 +35,7 @@ import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 import { Users, UserCheck, Clock, Link2 } from 'lucide-react';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CONSULTATIONS = '/api/v1/admin/consultations';
@@ -843,7 +844,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         response = await StandardizedApi.post(API_ADMIN_CLIENTS, payload);
                                         console.log('✅ 내담자 등록 응답:', response);
                                         if (!response) {
-                                            throw new Error('등록 응답이 없습니다.');
+                                            throw new Error(i18n.t('error:admin.ClientComprehensiveManagement.t_740a4e2f'));
                                         }
                                         const msg = '내담자가 성공적으로 등록되었습니다.';
                                         showSuccess(msg);

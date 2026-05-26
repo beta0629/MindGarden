@@ -48,6 +48,7 @@ import './TenantProfile.css';
 import { USER_ROLES } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../../hooks/useConfirm';
+import i18n from '../../i18n';
 
 const TenantProfile = () => {
   const { t } = useTranslation(['common', 'admin']);
@@ -237,7 +238,7 @@ const TenantProfile = () => {
       });
 
       if (!response.ok) {
-        throw new Error('결제 수단 삭제 실패');
+        throw new Error(i18n.t('error:tenant.TenantProfile.t_45f32c03'));
       }
 
       notificationManager.success('결제 수단이 삭제되었습니다.');
@@ -259,7 +260,7 @@ const TenantProfile = () => {
       });
 
       if (!response.ok) {
-        throw new Error('기본 결제 수단 설정 실패');
+        throw new Error(i18n.t('error:tenant.TenantProfile.t_c5be59ee'));
       }
 
       notificationManager.success('기본 결제 수단이 설정되었습니다.');

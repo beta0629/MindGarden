@@ -14,6 +14,7 @@
 
 import { apiGet } from '../utils/ajax';
 import { USER_ROLES } from './roles';
+import i18n from '../i18n';
 
 /**
  * 메뉴 카테고리 정의
@@ -516,7 +517,7 @@ const fetchAllowedMenusByBusinessType = async(businessType, userRole, features) 
     return response.data || [];
   }
   
-  throw new Error('메뉴 조회 API 실패');
+  throw new Error(i18n.t('error:constants.MenuConstants.t_d782a170'));
 };
 
 /**
@@ -529,7 +530,7 @@ const fetchMenuConfig = async(menuItem) => {
     return response.data || null;
   }
   
-  throw new Error('메뉴 설정 조회 API 실패');
+  throw new Error(i18n.t('error:constants.MenuConstants.t_b2e358fd'));
 };
 
 /**

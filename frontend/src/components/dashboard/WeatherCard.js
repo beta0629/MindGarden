@@ -5,6 +5,7 @@ import MGButton from '../common/MGButton';
 
 import '../../styles/unified-design-tokens.css';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 /**
  * 날씨 정보 카드 컴포넌트
 /**
@@ -109,7 +110,7 @@ const WeatherCard = () => {
       );
       
       if (!response.ok) {
-        throw new Error('날씨 정보를 가져올 수 없습니다');
+        throw new Error(i18n.t('error:dashboard.WeatherCard.t_7736f022'));
       }
       
       const data = await response.json();

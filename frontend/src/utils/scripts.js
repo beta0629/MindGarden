@@ -5,6 +5,7 @@
  */
 
 import { debounce, throttle } from './common';
+import i18n from '../i18n';
 
 // 디바이스 타입 감지
 export const deviceType = {
@@ -177,7 +178,7 @@ export const clipboard = {
       if (navigator.clipboard) {
         return await navigator.clipboard.readText();
       } else {
-        throw new Error('클립보드 읽기가 지원되지 않습니다.');
+        throw new Error(i18n.t('error:utils.scripts.t_a589449c'));
       }
     } catch (error) {
       console.error('클립보드 읽기 실패:', error);

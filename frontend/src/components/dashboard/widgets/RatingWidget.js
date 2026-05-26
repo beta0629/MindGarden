@@ -17,6 +17,7 @@ import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
+import i18n from '../../../i18n';
 
 const RatingWidget = ({ widget, user }) => {
   // 표준화된 위젯 훅 사용
@@ -92,7 +93,7 @@ const RatingWidget = ({ widget, user }) => {
         setUserRating(rating);
         refresh(); // 데이터 새로고침
       } else {
-        throw new Error('평점 제출 실패');
+        throw new Error(i18n.t('error:dashboard.RatingWidget.t_dec0598c'));
       }
     } catch (err) {
       console.error('평점 제출 오류:', err);

@@ -21,6 +21,7 @@ import {
   normalizeScheduleListPayload
 } from '../../utils/apiResponseNormalize';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
@@ -56,7 +57,7 @@ const ClientSessionManagement = () => {
 
       const userResponse = await apiGet(API_AUTH_CURRENT_USER);
       if (!userResponse || !userResponse.id) {
-        throw new Error('로그인이 필요합니다.');
+        throw new Error(i18n.t('error:client.ClientSessionManagement.t_5271ee34'));
       }
 
       const userId = userResponse.id;

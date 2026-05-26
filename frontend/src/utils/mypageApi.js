@@ -1,6 +1,7 @@
 import { API_BASE_URL, MYPAGE_API, PROFILE_API, AUTH_API } from '../constants/api';
 import { isConsultantUserProfileRole } from '../constants/mypageProfileRoles';
 import StandardizedApi from './standardizedApi';
+import i18n from '../i18n';
 
 /**
  * 마이페이지 관련 API 호출 유틸리티
@@ -144,7 +145,7 @@ const mypageApi = {
         if (url) {
           return url;
         }
-        throw new Error('OAuth 인증 URL이 응답에 없습니다.');
+        throw new Error(i18n.t('error:utils.mypageApi.t_12e87596'));
       }
       const url = await response.text();
       return url;
@@ -177,7 +178,7 @@ const mypageApi = {
         if (url) {
           return url;
         }
-        throw new Error('OAuth 로그인 URL이 응답에 없습니다.');
+        throw new Error(i18n.t('error:utils.mypageApi.t_3eff5165'));
       }
       const url = await response.text();
       return url;

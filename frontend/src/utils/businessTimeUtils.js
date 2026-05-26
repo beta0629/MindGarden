@@ -1,4 +1,5 @@
 import { apiGet, apiPost } from './ajax';
+import i18n from '../i18n';
 
 /**
  * 업무 시간 및 정책 관리 유틸리티
@@ -43,7 +44,7 @@ export const getBusinessTimeSettings = async(useCache = true) => {
             console.log('✅ 업무 시간 설정 로드 완료:', businessTimeCache);
             return businessTimeCache;
         } else {
-            throw new Error('업무 시간 설정 응답이 올바르지 않습니다.');
+            throw new Error(i18n.t('error:utils.businessTimeUtils.t_fd32839f'));
         }
     } catch (error) {
         console.error('❌ 업무 시간 설정 조회 실패:', error);

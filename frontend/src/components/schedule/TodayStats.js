@@ -12,6 +12,7 @@ const ClockIcon = ICONS.CLOCK;
 const XCircleIcon = ICONS.X_CIRCLE;
 import './TodayStats.css';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 
 /**
  * 오늘의 통계 컴포넌트 (아토믹 디자인 적용)
@@ -47,7 +48,7 @@ const TodayStats = () => {
                 };
                 setStats(statsData);
             } else {
-                throw new Error('스케줄 데이터를 가져올 수 없습니다.');
+                throw new Error(i18n.t('error:schedule.TodayStats.t_52590b31'));
             }
         } catch (error) {
             setError(error.message);

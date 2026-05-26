@@ -13,6 +13,7 @@ import './PaymentManagement.css';
 import notificationManager from '../../utils/notification';
 import { useConfirm } from '../../hooks/useConfirm';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=PAYMENT_STATUS';
@@ -201,7 +202,7 @@ const PaymentManagement = () => {
           totalElements: data.totalElements || 0
         }));
       } else {
-        throw new Error('결제 목록 조회에 실패했습니다.');
+        throw new Error(i18n.t('error:super-admin.PaymentManagement.t_0f851db6'));
       }
     } catch (error) {
       console.error('결제 목록 로드 실패:', error);
@@ -267,7 +268,7 @@ const PaymentManagement = () => {
         loadPayments();
         loadStatistics();
       } else {
-        throw new Error('결제 상태 업데이트에 실패했습니다.');
+        throw new Error(i18n.t('error:super-admin.PaymentManagement.t_df171b53'));
       }
     } catch (error) {
       console.error('결제 상태 업데이트 실패:', error);
@@ -293,7 +294,7 @@ const PaymentManagement = () => {
         loadPayments();
         loadStatistics();
       } else {
-        throw new Error('환불 처리에 실패했습니다.');
+        throw new Error(i18n.t('error:super-admin.PaymentManagement.t_64f296f5'));
       }
     } catch (error) {
       console.error('환불 처리 실패:', error);

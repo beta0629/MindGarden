@@ -50,6 +50,7 @@ import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AdminShopCatalogSkuEditorPage.css';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 
 const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
   const { t } = useTranslation();
@@ -127,7 +128,7 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
         const created = await createAdminShopCatalogSku(body);
         savedId = created?.id;
         if (savedId == null) {
-          throw new Error('상품 ID를 확인할 수 없습니다.');
+          throw new Error(i18n.t('error:admin.AdminShopCatalogSkuEditorPage.t_405708ea'));
         }
       } else if (skuId != null) {
         await updateAdminShopCatalogSku(skuId, body);

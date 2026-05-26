@@ -275,8 +275,9 @@ def is_inside_console_or_throw(source: str, idx: int) -> bool:
 
 
 def is_inside_throw_error(source: str, idx: int) -> bool:
+    """idx 가 string body 시작 위치 (열린 quote 다음) 일 수 있으므로 quote 포함."""
     head = source[max(0, idx - 200): idx]
-    return bool(re.search(r"\bthrow\s+new\s+Error\s*\(\s*$", head))
+    return bool(re.search(r"\bthrow\s+new\s+(?:[A-Za-z_$][A-Za-z0-9_$]*)?Error\s*\(\s*['\"`]?\s*$", head))
 
 
 def line_of(source: str, idx: int) -> int:
@@ -722,6 +723,10 @@ def wave3_process_file(rel: str, source: str, lines_to_absorb: list[int], dry: b
             continue
         body = m.group("body").strip()
         if not body:
+            continue
+        # 템플릿 리터럴 동적 ${...} 보존 가드 — 단순 변환 시 동적 값 손실.
+        # 본 흡수에서 SKIP, 별도 라운드에서 i18next interpolation `{{var}}` 적용 권고.
+        if "${" in body:
             continue
         # generate error key
         key = error_key_for(rel, ln, body)

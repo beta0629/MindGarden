@@ -33,6 +33,7 @@
 
 import StandardizedApi from '../../utils/standardizedApi';
 import { normalizeApiListPayload, normalizeApiRecordPayload } from '../../constants/adminWebScaffold';
+import i18n from '../../i18n';
 
 /** 기준 경로 — 백엔드 컨트롤러 매핑과 1:1 일치. */
 const BASE_PATH = '/api/v1/admin/manual-notifications';
@@ -222,7 +223,7 @@ export const sendPushBatch = async(payload) => {
  */
 export const fetchBatchDetail = async(batchId) => {
   if (!batchId) {
-    throw new Error('batchId 가 필요합니다.');
+    throw new Error(i18n.t('error:api.manualNotificationApi.t_74e03420'));
   }
   try {
     return await StandardizedApi.get(MANUAL_NOTIFICATION_ENDPOINTS.BATCH_DETAIL(batchId));

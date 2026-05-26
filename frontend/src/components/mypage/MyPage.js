@@ -41,6 +41,7 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './MyPageRenewal.css';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 
 const TAB_IDS = {
   profile: 'mg-mypage-tab-profile',
@@ -147,7 +148,7 @@ const MyPage = () => {
     try {
       const currentUser = await resolveMypageSessionUser();
       if (!currentUser) {
-        throw new Error('세션에 사용자 정보가 없습니다');
+        throw new Error(i18n.t('error:mypage.MyPage.t_2f7f087b'));
       }
 
       const response = await mypageApi.getProfileInfo(currentUser.role, currentUser.id);
@@ -313,7 +314,7 @@ const MyPage = () => {
     const dataToUpdate = normalizeProfileFormNameField({ ...(formDataToUpdate || formData) });
     const currentUser = sessionManager.getUser() || sessionUser;
     if (!currentUser) {
-      throw new Error('세션에 사용자 정보가 없습니다');
+      throw new Error(i18n.t('error:mypage.MyPage.t_2f7f087b'));
     }
 
     const requestData = buildProfileUpdatePayload(currentUser.role, dataToUpdate);

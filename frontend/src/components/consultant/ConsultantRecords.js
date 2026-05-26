@@ -14,6 +14,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from '../common/MGButton';
 import './ConsultantRecords.css';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 
 const ConsultantRecords = () => {
   const { t } = useTranslation();
@@ -63,7 +64,7 @@ const ConsultantRecords = () => {
       setError(null);
 
       if (!user?.id) {
-        throw new Error('사용자 정보를 찾을 수 없습니다.');
+        throw new Error(i18n.t('error:consultant.ConsultantRecords.t_cfaf61dd'));
       }
 
       // StandardizedApi를 사용하여 백엔드 에러 및 null 등을 안전하게 처리 (에러 핸들러 통일)

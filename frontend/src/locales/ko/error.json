@@ -51,7 +51,10 @@
     "serverMaintenance": "서버 점검 중입니다. 잠시 후 다시 시도해 주세요.",
     "rateLimited": "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.",
     "conflict": "데이터 충돌이 발생했습니다. 새로고침 후 다시 시도해 주세요.",
-    "unprocessable": "요청을 처리할 수 없습니다. 입력값을 확인해 주세요."
+    "unprocessable": "요청을 처리할 수 없습니다. 입력값을 확인해 주세요.",
+    "manualNotificationApi": {
+      "t_74e03420": "batchId 가 필요합니다."
+    }
   },
   "network": {
     "offline": "인터넷 연결을 확인해 주세요.",
@@ -169,5 +172,86 @@
     "maintenanceMode": "점검 중입니다. 잠시 후 다시 시도해 주세요.",
     "ipBlocked": "접속이 차단된 IP입니다.",
     "regionBlocked": "해당 지역에서는 접근이 불가합니다."
+  },
+  "constants": {
+    "MenuConstants": {
+      "t_d782a170": "메뉴 조회 API 실패",
+      "t_b2e358fd": "메뉴 설정 조회 API 실패"
+    }
+  },
+  "utils": {
+    "mypageApi": {
+      "t_12e87596": "OAuth 인증 URL이 응답에 없습니다.",
+      "t_3eff5165": "OAuth 로그인 URL이 응답에 없습니다."
+    },
+    "scripts": {
+      "t_a589449c": "클립보드 읽기가 지원되지 않습니다."
+    },
+    "menuHelper": {
+      "t_9ca55900": "메뉴 구조 로드 실패: 응답 형식이 올바르지 않습니다",
+      "t_f9bf62c2": "공통 메뉴 로드 실패: 응답 형식이 올바르지 않습니다",
+      "t_e8c04829": "역할별 메뉴 로드 실패: 응답 형식이 올바르지 않습니다",
+      "t_ea2191b2": "메뉴 권한 확인 실패: 응답 형식이 올바르지 않습니다"
+    },
+    "roleHelper": {
+      "t_300acc17": "역할 정보 응답 형식 오류"
+    },
+    "businessTimeUtils": {
+      "t_fd32839f": "업무 시간 설정 응답이 올바르지 않습니다."
+    }
+  },
+  "tenant": {
+    "TenantProfile": {
+      "t_45f32c03": "결제 수단 삭제 실패",
+      "t_c5be59ee": "기본 결제 수단 설정 실패"
+    }
+  },
+  "schedule": {
+    "TodayStats": {
+      "t_52590b31": "스케줄 데이터를 가져올 수 없습니다."
+    }
+  },
+  "consultant": {
+    "ConsultantRecords": {
+      "t_cfaf61dd": "사용자 정보를 찾을 수 없습니다."
+    }
+  },
+  "admin": {
+    "ClientComprehensiveManagement": {
+      "t_740a4e2f": "등록 응답이 없습니다."
+    },
+    "AdminShopCatalogSkuEditorPage": {
+      "t_405708ea": "상품 ID를 확인할 수 없습니다."
+    }
+  },
+  "dashboard": {
+    "WeatherCard": {
+      "t_7736f022": "날씨 정보를 가져올 수 없습니다"
+    },
+    "RatingWidget": {
+      "t_dec0598c": "평점 제출 실패"
+    }
+  },
+  "mypage": {
+    "MyPage": {
+      "t_2f7f087b": "세션에 사용자 정보가 없습니다"
+    }
+  },
+  "super-admin": {
+    "PaymentManagement": {
+      "t_0f851db6": "결제 목록 조회에 실패했습니다.",
+      "t_df171b53": "결제 상태 업데이트에 실패했습니다.",
+      "t_64f296f5": "환불 처리에 실패했습니다."
+    }
+  },
+  "clinical": {
+    "RiskAlertBadge": {
+      "t_fcf66a59": "알림 로드 실패"
+    }
+  },
+  "client": {
+    "ClientSessionManagement": {
+      "t_5271ee34": "로그인이 필요합니다."
+    }
   }
 }

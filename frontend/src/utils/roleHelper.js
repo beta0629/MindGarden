@@ -5,6 +5,7 @@
  */
 
 import { USER_ROLES } from '../constants/roles';
+import i18n from '../i18n';
 
 let roleDataCache = null;
 let lastFetchTime = null;
@@ -41,7 +42,7 @@ const loadRoleData = async() => {
             console.log('✅ 역할 정보 로딩 완료:', Object.keys(roleDataCache).length, '개 역할');
             return roleDataCache;
         } else {
-            throw new Error('역할 정보 응답 형식 오류');
+            throw new Error(i18n.t('error:utils.roleHelper.t_300acc17'));
         }
     } catch (error) {
         console.error('❌ 역할 정보 로딩 실패:', error);

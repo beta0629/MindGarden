@@ -5,6 +5,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './RiskAlertBadge.css';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTATION_RECORD_ALERTS_HIGH_RISK = '/api/v1/consultation-record-alerts/high-risk';
@@ -47,7 +48,7 @@ const RiskAlertBadge = ({ tenantId }) => {
             const data = await apiGet(API_CONSULTATION_RECORD_ALERTS_HIGH_RISK);
 
             if (!data) {
-                throw new Error('알림 로드 실패');
+                throw new Error(i18n.t('error:clinical.RiskAlertBadge.t_fcf66a59'));
             }
 
             const aiAlerts = data.alerts?.filter(a =>

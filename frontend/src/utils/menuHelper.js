@@ -1,5 +1,6 @@
 import { apiGet } from './ajax';
 import { USER_ROLES } from '../constants/roles';
+import i18n from '../i18n';
 
 /**
  * 메뉴 관련 유틸리티 함수들
@@ -52,7 +53,7 @@ export const loadMenuStructure = async() => {
             
             return menuStructureCache;
         } else {
-            throw new Error('메뉴 구조 로드 실패: 응답 형식이 올바르지 않습니다');
+            throw new Error(i18n.t('error:utils.menuHelper.t_9ca55900'));
         }
         
     } catch (error) {
@@ -106,7 +107,7 @@ export const loadCommonMenus = async() => {
             console.log('✅ 공통 메뉴 로드 성공:', `${response.length}개`);
             return response;
         } else {
-            throw new Error('공통 메뉴 로드 실패: 응답 형식이 올바르지 않습니다');
+            throw new Error(i18n.t('error:utils.menuHelper.t_f9bf62c2'));
         }
         
     } catch (error) {
@@ -132,7 +133,7 @@ export const loadRoleMenus = async() => {
             });
             return response.menus;
         } else {
-            throw new Error('역할별 메뉴 로드 실패: 응답 형식이 올바르지 않습니다');
+            throw new Error(i18n.t('error:utils.menuHelper.t_e8c04829'));
         }
         
     } catch (error) {
@@ -158,7 +159,7 @@ export const checkMenuPermission = async(menuId) => {
             });
             return response.hasPermission;
         } else {
-            throw new Error('메뉴 권한 확인 실패: 응답 형식이 올바르지 않습니다');
+            throw new Error(i18n.t('error:utils.menuHelper.t_ea2191b2'));
         }
         
     } catch (error) {

@@ -42,6 +42,64 @@ const FALLBACK_LANGUAGE = 'ko';
 const DEFAULT_NAMESPACE = 'common';
 const LOCAL_STORAGE_KEY = 'i18nextLng';
 
+const IS_DEV = process.env.NODE_ENV === 'development';
+
+/**
+ * 운영 안전 fallback: 시드 누락 키가 raw 로 화면 노출되는 회귀(2026-05-26 D5 P4 인벤토리에서
+ * 28건 발견)를 차단. 'admin:labels.notification' / 'admin.labels.notification' 등 어떤 형태든
+ * 마지막 leaf 토큰을 사람이 읽을 수 있는 텍스트로 변환한다. 운영 사용자는 키 문자열 대신
+ * 토큰화된 한국어 라벨을 보게 된다.
+ *
+ * 변환 예시:
+ *   'admin:labels.userManagement' → '사용자 관리' (camelCase 분리 + 한국어 사전 매핑 후 fallback)
+ *   'common:actions.refresh'      → 'refresh' (사전 미스 시 camelCase 분리)
+ *   'unknown.deep.path'           → 'path'
+ */
+const KO_LEAF_FALLBACK = {
+  notification: '알림',
+  userManagement: '사용자 관리',
+  clientManagement: '내담자 관리',
+  systemSettings: '시스템 설정',
+  consultant: '상담사',
+  client: '내담자',
+  inactive: '비활성',
+  active: '활성',
+  cancel: '취소',
+  confirm: '확인',
+  close: '닫기',
+  save: '저장',
+  delete: '삭제',
+  refresh: '새로고침',
+  loading: '로딩 중...',
+  all: '전체'
+};
+
+function humanizeLeaf(leaf) {
+  if (!leaf) {
+    return '';
+  }
+  if (KO_LEAF_FALLBACK[leaf]) {
+    return KO_LEAF_FALLBACK[leaf];
+  }
+  // camelCase → "Camel Case" (영문 키만 그대로 표시 — 한글 키는 그대로 노출 안전)
+  return leaf
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
+function parseMissingKeyHandler(key, defaultValue) {
+  if (defaultValue !== undefined && defaultValue !== null && defaultValue !== '') {
+    return defaultValue;
+  }
+  if (typeof key !== 'string') {
+    return '';
+  }
+  // 'ns:path.leaf' 또는 'path.leaf'
+  const afterColon = key.includes(':') ? key.slice(key.indexOf(':') + 1) : key;
+  const tokens = afterColon.split('.');
+  return humanizeLeaf(tokens[tokens.length - 1] || '');
+}
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -94,7 +152,18 @@ i18n
     returnEmptyString: false,
     react: {
       useSuspense: false
-    }
+    },
+    parseMissingKeyHandler,
+    saveMissing: IS_DEV,
+    missingKeyHandler: IS_DEV
+      ? (lngs, ns, key, fallbackValue) => {
+          // eslint-disable-next-line no-console
+          console.warn(
+            `[i18n] Missing key — lng=${Array.isArray(lngs) ? lngs.join(',') : lngs} ns=${ns} key="${key}" fallback="${fallbackValue ?? ''}"`
+          );
+        }
+      : undefined,
+    appendNamespaceToMissingKey: false
   });
 
 export default i18n;

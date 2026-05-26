@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Draggable } from '@fullcalendar/interaction';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
@@ -48,6 +49,32 @@ import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
+const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
+const SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX = 1280;
+
+const readStoredBoolean = (key) => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (raw === null) return null;
+    return raw === 'true';
+  } catch (e) {
+    return null;
+  }
+};
+
+const writeStoredBoolean = (key, value) => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return;
+  }
+  try {
+    window.localStorage.setItem(key, String(Boolean(value)));
+  } catch (e) {
+    // 무시 — Storage 가 비활성/quota 초과여도 UI 동작은 유지
+  }
+};
 
 const IntegratedMatchingSchedule = () => {
   const { t } = useTranslation();
@@ -67,6 +94,51 @@ const IntegratedMatchingSchedule = () => {
   const [depositModalMapping, setDepositModalMapping] = useState(null);
   const [approveProcessing, setApproveProcessing] = useState(false);
   const sidebarListRef = useRef(null);
+
+  // 좌측 사이드바 collapse 상태: localStorage 선호값이 있으면 우선, 없으면 화면 폭 기반 초기값
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    const stored = readStoredBoolean(SIDEBAR_COLLAPSED_STORAGE_KEY);
+    if (stored !== null) return stored;
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      return window.matchMedia(`(max-width: ${SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX}px)`).matches;
+    }
+    return false;
+  });
+  const userOverrideSidebarRef = useRef(readStoredBoolean(SIDEBAR_COLLAPSED_STORAGE_KEY) !== null);
+
+  /**
+   * 1280px 이하에서 자동 접힘 (사용자 명시적 토글 이전까지만 적용).
+   * 사용자가 한 번 토글하면 userOverrideSidebarRef=true 가 되어 자동 접힘이 더는 강제되지 않음.
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+    const mql = window.matchMedia(`(max-width: ${SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX}px)`);
+    const handle = (event) => {
+      if (userOverrideSidebarRef.current) return;
+      setIsSidebarCollapsed(event.matches);
+    };
+    if (typeof mql.addEventListener === 'function') {
+      mql.addEventListener('change', handle);
+    } else if (typeof mql.addListener === 'function') {
+      mql.addListener(handle);
+    }
+    return () => {
+      if (typeof mql.removeEventListener === 'function') {
+        mql.removeEventListener('change', handle);
+      } else if (typeof mql.removeListener === 'function') {
+        mql.removeListener(handle);
+      }
+    };
+  }, []);
+
+  const handleSidebarToggle = useCallback(() => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      userOverrideSidebarRef.current = true;
+      writeStoredBoolean(SIDEBAR_COLLAPSED_STORAGE_KEY, next);
+      return next;
+    });
+  }, []);
 
   const loadMappings = useCallback(async() => {
     setLoading(true);
@@ -249,8 +321,50 @@ const IntegratedMatchingSchedule = () => {
           />
 
           <div className="integrated-schedule__content">
-        <aside className="integrated-schedule__sidebar">
-          <h2 className="integrated-schedule__sidebar-title">매칭 목록</h2>
+        <aside
+          className={`integrated-schedule__sidebar${
+            isSidebarCollapsed ? ' integrated-schedule__sidebar--collapsed' : ''
+          }`}
+          aria-label="매칭 목록 패널"
+        >
+          <div className="integrated-schedule__sidebar-header">
+            <h2
+              className="integrated-schedule__sidebar-title"
+              id="integrated-schedule-sidebar-title"
+            >
+              매칭 목록
+              <span
+                className="integrated-schedule__sidebar-count"
+                aria-label={t('integratedSchedule.sidebar.collapsedBadgeLabel', { count: filteredMappings.length })}
+              >
+                {filteredMappings.length}
+              </span>
+            </h2>
+            <button
+              type="button"
+              className="integrated-schedule__sidebar-toggle"
+              onClick={handleSidebarToggle}
+              aria-expanded={!isSidebarCollapsed}
+              aria-controls="integrated-schedule-sidebar-body"
+              aria-label={
+                isSidebarCollapsed
+                  ? t('integratedSchedule.sidebar.expandAria')
+                  : t('integratedSchedule.sidebar.collapseAria')
+              }
+              title={
+                isSidebarCollapsed
+                  ? t('integratedSchedule.sidebar.expandAria')
+                  : t('integratedSchedule.sidebar.collapseAria')
+              }
+            >
+              {isSidebarCollapsed ? <ChevronRight size={18} aria-hidden="true" /> : <ChevronLeft size={18} aria-hidden="true" />}
+            </button>
+          </div>
+          <div
+            id="integrated-schedule-sidebar-body"
+            className="integrated-schedule__sidebar-body"
+            hidden={isSidebarCollapsed}
+          >
           {/* Task C: 필터 통합 후보 — MappingFilterSection + UnifiedFilterSearch(quickFilterOptions·filters 계약 정렬 시 이 블록 치환) */}
           <fieldset className="integrated-schedule__filter" aria-label="매칭 목록 보기 필터">
             <legend className="integrated-schedule__filter-legend">{t('admin.actions.view')}</legend>
@@ -386,6 +500,7 @@ const IntegratedMatchingSchedule = () => {
               })()}
             </ul>
           )}
+          </div>
         </aside>
 
         <main

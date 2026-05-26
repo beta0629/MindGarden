@@ -61,6 +61,12 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
     private final UserRepository userRepository;
     private final ScheduleRepository scheduleRepository;
     private final ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
+    /**
+     * 2026-05-26 — Expo 발송 시 알림 센터({@code system_notifications}) 인박스 동기 적재.
+     * Expo POST 트랜잭션과 분리({@link Propagation#REQUIRES_NEW}) 하여 OS 푸시는 갔으나
+     * 앱/웹 알림센터가 비어 있던 갭을 해소한다. 실패는 swallow.
+     */
+    private final MobilePushInboxPersister mobilePushInboxPersister;
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -702,8 +708,46 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
             log.debug("푸시 멱등으로 스킵 type={} entity={} bucket={}", canonicalType, dedupeEntityId, dedupeTimeBucket);
             return;
         }
-        sendExpoInBatches(tenantId, tokens, truncate(title, MobilePushDispatchConstants.TITLE_MAX_LENGTH),
-                truncate(body, MobilePushDispatchConstants.BODY_MAX_LENGTH), data, canonicalType);
+        String safeTitle = truncate(title, MobilePushDispatchConstants.TITLE_MAX_LENGTH);
+        String safeBody = truncate(body, MobilePushDispatchConstants.BODY_MAX_LENGTH);
+        // 알림 센터 인박스 적재: 활성 토큰을 가진 수신자만 대상. Expo POST 결과와 무관하게
+        // 시도 기준으로 행을 남겨 OS 푸시-알림센터 갭을 해소한다. persist 실패는 swallow.
+        persistInboxRowsForFanout(tenantId, tokens, canonicalType, safeTitle, safeBody);
+        sendExpoInBatches(tenantId, tokens, safeTitle, safeBody, data, canonicalType);
+    }
+
+    /**
+     * fanout 발송 시 활성 토큰을 가진 사용자별로 알림 센터 인박스 row 를 1건씩 저장한다.
+     * 사용자가 여러 토큰을 보유해도 row 는 사용자당 1건이며, persist 트랜잭션은 분리되어
+     * 일부 사용자 실패가 다른 사용자 persist 또는 푸시 발송을 막지 않는다.
+     *
+     * @param tenantId      테넌트 ID
+     * @param tokens        활성 토큰 목록(사용자당 1+ 토큰)
+     * @param canonicalType canonical 푸시 type
+     * @param safeTitle     이미 절단된 제목
+     * @param safeBody      이미 절단된 본문
+     */
+    private void persistInboxRowsForFanout(
+            String tenantId,
+            List<MobilePushToken> tokens,
+            String canonicalType,
+            String safeTitle,
+            String safeBody) {
+        Set<Long> persistedUserIds = new LinkedHashSet<>();
+        for (MobilePushToken t : tokens) {
+            Long uid = t.getUserId();
+            if (uid == null || !persistedUserIds.add(uid)) {
+                continue;
+            }
+            try {
+                mobilePushInboxPersister.persistForRecipient(tenantId, uid, canonicalType, safeTitle, safeBody);
+            } catch (Exception ex) {
+                // persister 가 자체 swallow 하지만 이중 안전망: 인박스 적재 실패가
+                // 다른 사용자 persist 또는 Expo POST 진행을 막지 않도록 호출 단위로 격리.
+                log.warn("fanout 인박스 persist 호출 실패(무시): tenantId={} userId={} type={} reason={}",
+                        tenantId, uid, canonicalType, ex.getMessage());
+            }
+        }
     }
 
     private boolean isCategoryEnabledForUser(String tenantId, Long userId,
@@ -899,6 +943,22 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
             MobilePushBroadcastResult outcome = postAdminAnnouncementToExpo(
                     tid, userId, tokens, safeTitle, safeBody, data);
             results.add(outcome);
+            // 5. 알림 센터 인박스 적재 — SENT(Expo ok) 인 사용자만. SKIPPED·FAILED 는 적재하지 않아
+            //    "OS 푸시는 갔는데 알림센터에는 없음" 갭을 해소하되, 발송되지 않은 사용자 row 는 만들지 않는다.
+            //    persister 가 자체 swallow 하지만 이중 안전망으로 호출 자체를 try/catch 한다.
+            if (outcome != null && outcome.getStatus() == MobilePushBroadcastResult.Status.SENT) {
+                try {
+                    mobilePushInboxPersister.persistForRecipient(
+                            tid,
+                            userId,
+                            MobilePushCanonicalTypes.ADMIN_ANNOUNCEMENT,
+                            safeTitle,
+                            safeBody);
+                } catch (Exception ex) {
+                    log.warn("admin-announcement 인박스 persist 호출 실패(무시): tenantId={} userId={} reason={}",
+                            tid, userId, ex.getMessage());
+                }
+            }
         }
         return results;
     }

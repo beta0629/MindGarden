@@ -23,6 +23,8 @@ import { router } from 'expo-router';
 import type { Href } from 'expo-router';
 import { apiPost } from '../api/client';
 import { PUSH_API } from '../api/endpoints';
+import { queryClient } from '../api/queryClient';
+import { NOTIFICATION_QUERY_KEYS } from '../api/hooks/useNotifications';
 import { useAuthStore } from '../stores/useAuthStore';
 import { resolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 import { useNotificationSettingsStore } from '../stores/useNotificationSettingsStore';
@@ -36,6 +38,21 @@ import {
   type AppAuthRole,
 } from '@/utils/adminRole';
 import { requestOsNotificationPermission } from '@/utils/notificationPermissionFlow';
+
+/**
+ * 백엔드가 푸시 발송 시 `system_notifications` 인박스에 row 를 적재한다(2026-05-26).
+ * 푸시 수신·탭 응답 시점에 React Query 의 알림 캐시를 무효화하여 알림 센터가 즉시 새 row 를 보여준다.
+ * `_layout.tsx` 의 `PersistQueryClientProvider` 가 같은 singleton 을 client prop 으로 받으므로
+ * 모듈 최상위에서 import 한 `queryClient` 가 동일 인스턴스다.
+ */
+function invalidateNotificationInbox(): void {
+  // QueryClient hydrate 전이거나 일시 오류여도 알림 라우팅 흐름을 막지 않도록 swallow.
+  queryClient
+    .invalidateQueries({ queryKey: NOTIFICATION_QUERY_KEYS.all })
+    .catch(() => {
+      /* noop */
+    });
+}
 
 /** logcat·adb 추적용 — 토큰 원문·길이 노출 금지 */
 function maskPushTokenForLog(token: string): string {
@@ -310,6 +327,8 @@ export const NotificationService = {
       const { title, body, data } = notification.request.content;
       const type = data?.type as string | undefined;
 
+      invalidateNotificationInbox();
+
       if (!type) {
         return;
       }
@@ -352,6 +371,8 @@ export const NotificationService = {
       const { data } = response.notification.request.content;
       const type = data?.type as string | undefined;
       const role = useAuthStore.getState().role;
+
+      invalidateNotificationInbox();
 
       if (!role) return;
 

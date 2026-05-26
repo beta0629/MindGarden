@@ -82,6 +82,14 @@ class MobilePushDispatchServiceImplTest {
     @Mock
     private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
 
+    /**
+     * 2026-05-26 — Expo 발송 시 알림 센터 인박스 동기 적재 헬퍼.
+     * 본 테스트는 발송 게이트·멱등 검증이 목적이므로 persister 는 no-op mock 으로 주입.
+     * 인박스 적재 행위 검증은 {@code MobilePushDispatchServiceImplInboxPersistenceTest} 참고.
+     */
+    @Mock
+    private MobilePushInboxPersister mobilePushInboxPersister;
+
     @InjectMocks
     private MobilePushDispatchServiceImpl mobilePushDispatchService;
 

@@ -10,6 +10,7 @@ import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { COMMUNITY_QUERY_KEYS } from '@/api/hooks/useCommunity';
 import { MIND_WEATHER_QUERY_KEYS } from '@/api/hooks/useMindWeather';
 import { MESSAGE_QUERY_KEYS } from '@/api/hooks/useMessages';
+import { NOTIFICATION_QUERY_KEYS } from '@/api/hooks/useNotifications';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { resolveClientScheduleUserId } from '@/utils/resolveClientScheduleUserId';
 import { resolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
@@ -49,6 +50,7 @@ export function useAppForegroundRefetch(): void {
           lastRunRef.current = Date.now();
           void queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.all });
           void queryClient.invalidateQueries({ queryKey: MIND_WEATHER_QUERY_KEYS.inbox() });
+          void queryClient.invalidateQueries({ queryKey: NOTIFICATION_QUERY_KEYS.all });
           void invalidateMessageUnreadOnForeground(queryClient);
         }, FOREGROUND_REFETCH_DEBOUNCE_MS);
         return;
@@ -56,6 +58,7 @@ export function useAppForegroundRefetch(): void {
       lastRunRef.current = now;
       void queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.all });
       void queryClient.invalidateQueries({ queryKey: MIND_WEATHER_QUERY_KEYS.inbox() });
+      void queryClient.invalidateQueries({ queryKey: NOTIFICATION_QUERY_KEYS.all });
       void invalidateMessageUnreadOnForeground(queryClient);
     };
 

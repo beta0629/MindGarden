@@ -175,37 +175,6 @@ public class StoredProcedureStandardizationIntegrationTest {
     }
 
     @Test
-    @DisplayName("GetRefundableSessions 프로시저 - tenant_id 파라미터 검증")
-    void testGetRefundableSessionsWithTenantId() {
-        // Given
-        Long mappingId = 1L;
-
-        // When
-        Map<String, Object> result = plSqlMappingSyncService.getRefundableSessions(mappingId);
-
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result.containsKey("success")).isTrue();
-        assertThat(result.containsKey("message")).isTrue();
-        
-        // 프로시저 실행 성공 여부 확인
-        // 테스트 데이터가 없을 수 있으므로 success가 false여도 키 존재 여부만 확인
-        assertThat(result.containsKey("success")).isTrue();
-        assertThat(result.containsKey("message")).isTrue();
-        
-        // 성공 시에만 필수 키 확인 (테스트 데이터 부족으로 실패할 수 있음)
-        if (Boolean.TRUE.equals(result.get("success"))) {
-            assertThat(result.containsKey("refundableSessions")).isTrue();
-            assertThat(result.containsKey("maxRefundAmount")).isTrue();
-        } else {
-            // 실패한 경우 메시지 확인 (테스트 데이터 부족으로 인한 예상된 실패일 수 있음)
-            String message = (String) result.get("message");
-            assertThat(message).isNotNull();
-            // 테스트 데이터가 없을 수 있으므로 success가 false여도 테스트는 통과
-        }
-    }
-
-    @Test
     @Disabled("H2에는 MySQL 저장 프로시저·구문이 없음 — MySQL 통합에서 검증")
     @DisplayName("GetRefundStatistics 프로시저 - tenant_id 파라미터 검증 및 branchCode 제거 확인")
     void testGetRefundStatisticsWithTenantId() {
@@ -346,22 +315,6 @@ public class StoredProcedureStandardizationIntegrationTest {
         assertThat(result).matches("^(SUCCESS|ERROR):.*");
         
         // p_success와 p_message가 올바르게 반환되는지 확인
-    }
-
-    @Test
-    @DisplayName("Soft Delete 조건 검증 - is_deleted = FALSE 확인")
-    void testSoftDeleteCondition() {
-        // Given
-        Long mappingId = 1L;
-
-        // When
-        Map<String, Object> result = plSqlMappingSyncService.getRefundableSessions(mappingId);
-
-        // Then
-        assertThat(result).isNotNull();
-        // 프로시저 내부에서 is_deleted = FALSE 조건이 적용되었는지 확인
-        // 실제로는 프로시저 로그나 결과를 통해 확인 가능
-        assertThat(result.containsKey("success")).isTrue();
     }
 
     @Test

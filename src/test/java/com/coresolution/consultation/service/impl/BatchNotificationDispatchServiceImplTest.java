@@ -104,6 +104,11 @@ class BatchNotificationDispatchServiceImplTest {
         properties = new BatchNotificationProperties();
         // 테스트 cutoff — 2024-01-01 ≤ endDate 이면 통과.
         properties.setSessionRenewDeployCutoff(LocalDate.of(2024, 1, 1));
+        // 기본값(2026-05-26 P0 SMS 긴급 차단, V20260602_001) 은 false 이지만, 본 테스트군은
+        // SMS_TEMPLATE 시드 적용 환경의 F1/F2/F3 분기를 검증하므로 코드 안전망을 켜서
+        // SmsTemplateService.renderForType 미스텁 시 정적 본문으로 폴백하도록 한다.
+        // 시드 비활성 회귀 시나리오는 별도 테스트에서 false 로 명시 override 한다.
+        properties.setSmsStaticFallbackEnabled(true);
         service = new BatchNotificationDispatchServiceImpl(
             scheduleRepository, mappingRepository, userRepository,
             userPrivacyConsentRepository, sendLogRepository, sendLogger,
@@ -574,6 +579,92 @@ class BatchNotificationDispatchServiceImplTest {
             .isEqualTo(BatchNotificationTemplateCodes.CHANNEL_ALIMTALK);
         assertThat(outcome.errorCode())
             .isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_SEND_FAILED);
+    }
+
+    // ============================================================
+    // V20260602_001 — Phase 2 P0 SMS 긴급 차단 회귀 테스트
+    //
+    // SMS_TEMPLATE 시드(V20260529_004) is_active=FALSE + 코드 안전망 비활성(기본 false)
+    // 시나리오에서 BatchNotificationDispatchServiceImpl 가 SMS 발송을 skip 하고
+    // FAILED + TEMPLATE_NOT_MAPPED 로 기록하는지 검증한다.
+    // ============================================================
+
+    @Test
+    @DisplayName("V20260602_001 — SMS_TEMPLATE 시드 비활성 + 코드 안전망 비활성(기본) → SMS 폴백 skip + FAILED + TEMPLATE_NOT_MAPPED")
+    void dispatch_whenSmsTemplateInactiveAndStaticFallbackDisabled_skipsSms() {
+        // 기본 false 정책 명시 — 운영(V20260602_001) 과 동일.
+        properties.setSmsStaticFallbackEnabled(false);
+        givenScheduleAndUsers(SCHEDULE_ID, 3);
+        givenMappingForSchedule(MAPPING_ID, 10, 7);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        givenAlimtalkMappingResolved();
+        givenAlimtalkDispatchFailure("HTTP_500", "alimtalk 5xx");
+        // SMS_TEMPLATE 시드 비활성 시뮬레이션 — SmsTemplateService 가 Optional.empty 반환.
+        when(smsTemplateService.renderForType(anyString(), anyString(), anyMap(), any()))
+            .thenReturn(Optional.empty());
+
+        DispatchOutcome outcome = service.dispatchReservationReminderD2(SCHEDULE_ID);
+
+        assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.FAILED);
+        assertThat(outcome.fallbackToSms()).isFalse();
+        assertThat(outcome.channelUsed())
+            .isEqualTo(BatchNotificationTemplateCodes.CHANNEL_ALIMTALK);
+        assertThat(outcome.errorCode())
+            .isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED);
+        verify(dispatchHelper, never()).dispatchSms(anyString(), anyString());
+        verify(sendLogger).updateResult(eq(LOG_ID), eq(false),
+            eq(BatchNotificationTemplateCodes.CHANNEL_ALIMTALK),
+            eq(false),
+            eq(BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED),
+            anyString(), any(), any());
+    }
+
+    @Test
+    @DisplayName("V20260602_001 — 알림톡 매핑 누락 + SMS_TEMPLATE 시드 비활성 → 알림톡 미시도 + SMS skip")
+    void dispatch_whenBothAlimtalkAndSmsSeedAbsent_skipsAllChannels() {
+        properties.setSmsStaticFallbackEnabled(false);
+        givenScheduleAndUsers(SCHEDULE_ID, 0);
+        givenMappingForSchedule(MAPPING_ID, 1, 0);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        when(templateMappingResolver.resolveSolapiTemplateId(eq(TENANT_ID), anyString()))
+            .thenReturn(null);
+        when(smsTemplateService.renderForType(anyString(), anyString(), anyMap(), any()))
+            .thenReturn(Optional.empty());
+
+        DispatchOutcome outcome = service.dispatchReservationImmediateSingle(SCHEDULE_ID);
+
+        assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.FAILED);
+        assertThat(outcome.errorCode())
+            .isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED);
+        verify(dispatchHelper, never()).dispatchAlimtalk(anyString(), anyString(), anyMap());
+        verify(dispatchHelper, never()).dispatchSms(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("V20260602_001 — SMS_TEMPLATE 시드 활성 + 알림톡 실패 → SMS 폴백 정상 발송 (seed body, no static fallback)")
+    void dispatch_whenSmsTemplateActiveAndStaticFallbackDisabled_sendsSeedBody() {
+        properties.setSmsStaticFallbackEnabled(false);
+        givenScheduleAndUsers(SCHEDULE_ID, 3);
+        givenMappingForSchedule(MAPPING_ID, 10, 7);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        givenAlimtalkMappingResolved();
+        givenAlimtalkDispatchFailure("HTTP_500", "alimtalk 5xx");
+        when(smsTemplateService.renderForType(
+                eq(BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2),
+                anyString(), anyMap(), any()))
+            .thenReturn(Optional.of("[테넌트 override] D-2 예약 안내 SMS 본문"));
+        givenSmsDispatchSuccess();
+
+        DispatchOutcome outcome = service.dispatchReservationReminderD2(SCHEDULE_ID);
+
+        assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.SMS_FALLBACK_SENT);
+        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(dispatchHelper).dispatchSms(eq(PHONE), bodyCaptor.capture());
+        assertThat(bodyCaptor.getValue())
+            .isEqualTo("[테넌트 override] D-2 예약 안내 SMS 본문");
     }
 
     // ---------------------------------------------------------------- fixtures

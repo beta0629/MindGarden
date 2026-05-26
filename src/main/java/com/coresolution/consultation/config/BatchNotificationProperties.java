@@ -61,4 +61,19 @@ public class BatchNotificationProperties {
      * 빈 값이면 {@link com.coresolution.consultation.constant.BatchNotificationTemplateCodes#FALLBACK_BRANCH_ADDRESS} 로 대체.
      */
     private String fallbackBranchAddress = "";
+
+    /**
+     * 배치 SMS 폴백 본문의 코드 안전망(static fallback) 사용 여부.
+     *
+     * <p>{@code false} 기본 (2026-05-26 P0 SMS 긴급 차단 정책, V20260602_001). 운영에서는
+     * {@code SMS_TEMPLATE} 시드(V20260529_004) 가 SSOT 이므로 코드 안전망은 평시 미사용이며,
+     * 시드 {@code is_active=FALSE} 로 SMS 발송을 즉시 차단할 수 있도록 본 토글을 {@code false}
+     * 로 유지한다. 시드 누락 / 회귀 사고 등 특수 상황에서만 일시적으로 {@code true} 로 켠다.
+     *
+     * <p>인증 SMS({@link com.coresolution.consultation.service.SmsAuthService#sendVerificationCode})
+     * 경로는 본 토글의 영향을 받지 않는다.
+     *
+     * @since 2026-05-26 (Phase 2 영구 안전망 hotfix)
+     */
+    private boolean smsStaticFallbackEnabled = false;
 }

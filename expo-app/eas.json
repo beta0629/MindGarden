@@ -48,6 +48,7 @@
       "autoIncrement": true,
       "env": {
         "APP_ENV": "production",
+        "EXPO_PUBLIC_API_BASE_URL": "https://app.core-solution.co.kr",
         "EAS_PROJECT_ID": "da41eca0-daad-4825-baf7-16cd3c71e6cd",
         "EXPO_PUBLIC_EAS_PROJECT_ID": "da41eca0-daad-4825-baf7-16cd3c71e6cd"
       }
@@ -56,9 +57,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "YOUR_APPLE_ID",
-        "ascAppId": "YOUR_ASC_APP_ID",
-        "appleTeamId": "YOUR_APPLE_TEAM_ID"
+        "appleId": "beta74@live.co.kr",
+        "ascAppId": "6773278258",
+        "appleTeamId": "65M2946S2L"
       },
       "android": {
         "serviceAccountKeyPath": "./google-services-key.json",

@@ -194,7 +194,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       backgroundColor: '#000000',
     },
     ios: {
-      icon: './assets/images/adaptive-icon.png',
+      icon: './assets/images/icon.png',
       supportsTablet: true,
       bundleIdentifier: 'com.mindgarden.MindGardenMobile',
       infoPlist: {

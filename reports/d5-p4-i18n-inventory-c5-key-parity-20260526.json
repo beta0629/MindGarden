@@ -1,0 +1,32 @@
+{
+  "meta": {
+    "develop_sha": "982f91252",
+    "measured_at": "2026-05-26",
+    "purpose": "Wave-1/2/3 흡수 시 신규 필요 키 추정 + ko.json 자동 시드 정책"
+  },
+  "current_ko_leaves": 3824,
+  "namespaces": {
+    "admin": 2008,
+    "common": 486,
+    "erp": 379,
+    "settings": 138,
+    "error": 151,
+    "report": 130,
+    "statistics": 100,
+    "manualNotification": 81,
+    "schedule": 74,
+    "terms": 73,
+    "testNotification": 63,
+    "auth": 59,
+    "systemConfig": 46,
+    "smsTemplate": 36
+  },
+  "auto_seed_estimate": {
+    "wave1_P1_estimated_keys": 724,
+    "wave2_P2_P3_estimated_keys": 1390,
+    "wave3_P5_estimated_keys": 44,
+    "total_estimated_new_keys": 2158
+  },
+  "estimated_ko_leaves_after_PR_M": 5982,
+  "auto_seed_policy": "PR-L Wave-1 답습 — codemod 적용 직전 ko.json 키 정합성 사전 검증 + 누락 키는 fallback 문자열 자동 시드 + JSON valid 검증 + lint:codemod-mappings 57/57 PASS 게이트 유지"
+}

@@ -1,0 +1,691 @@
+{
+  "meta": {
+    "develop_sha": "982f91252",
+    "main_sha": "a68886273",
+    "measured_at": "2026-05-26",
+    "patterns": [
+      "P2_props_label_string",
+      "P3_jsx_text_content"
+    ],
+    "scope": "frontend/src/**/*.{js,jsx,ts,tsx} (excl tests/locales/build)",
+    "files_scanned": 999
+  },
+  "P2_total": 1187,
+  "P3_total": 2321,
+  "combined_total": 3508,
+  "P2_kinds_distribution": {
+    "title": 400,
+    "description": 49,
+    "label": 104,
+    "text": 111,
+    "aria-label": 252,
+    "placeholder": 243,
+    "alt": 3,
+    "message": 23,
+    "name": 2
+  },
+  "top30_P2": [
+    {
+      "path": "frontend/src/components/dashboard-v2/AdminDashboardV2.js",
+      "matches": 60
+    },
+    {
+      "path": "frontend/src/components/admin/AdminDashboard.js",
+      "matches": 30
+    },
+    {
+      "path": "frontend/src/components/consultant/ConsultationRecordScreen.js",
+      "matches": 24
+    },
+    {
+      "path": "frontend/src/components/erp/ImprovedTaxManagement.js",
+      "matches": 20
+    },
+    {
+      "path": "frontend/src/App.js",
+      "matches": 19
+    },
+    {
+      "path": "frontend/src/components/tenant/PgConfigurationForm.js",
+      "matches": 18
+    },
+    {
+      "path": "frontend/src/components/consultant/organisms/ConsultationLogFormPanel.js",
+      "matches": 15
+    },
+    {
+      "path": "frontend/src/components/tenant/TenantProfile.js",
+      "matches": 14
+    },
+    {
+      "path": "frontend/src/components/erp/SalaryManagement.js",
+      "matches": 14
+    },
+    {
+      "path": "frontend/src/components/admin/ConsultantComprehensiveManagement.js",
+      "matches": 13
+    },
+    {
+      "path": "frontend/src/components/erp/PurchaseRequestForm.js",
+      "matches": 13
+    },
+    {
+      "path": "frontend/src/components/ui/Modal/ModalExamples.js",
+      "matches": 12
+    },
+    {
+      "path": "frontend/src/components/admin/BrandingManagement.js",
+      "matches": 12
+    },
+    {
+      "path": "frontend/src/components/admin/organisms/AdminMessageListBlock.js",
+      "matches": 12
+    },
+    {
+      "path": "frontend/src/components/schedule/UnifiedScheduleComponent.js",
+      "matches": 11
+    },
+    {
+      "path": "frontend/src/components/admin/organisms/SystemNotificationListBlock.js",
+      "matches": 11
+    },
+    {
+      "path": "frontend/src/components/academy/EnrollmentForm.js",
+      "matches": 11
+    },
+    {
+      "path": "frontend/src/components/mypage/components/PasswordChangeModal.js",
+      "matches": 11
+    },
+    {
+      "path": "frontend/src/components/ops/PgApprovalManagement.js",
+      "matches": 11
+    },
+    {
+      "path": "frontend/src/components/erp/BudgetManagement.js",
+      "matches": 11
+    },
+    {
+      "path": "frontend/src/components/academy/CourseForm.js",
+      "matches": 10
+    },
+    {
+      "path": "frontend/src/components/consultant/ConsultantMessages.js",
+      "matches": 9
+    },
+    {
+      "path": "frontend/src/components/consultant/ClientInfoModal.js",
+      "matches": 9
+    },
+    {
+      "path": "frontend/src/components/admin/AdminShopOrdersPage.js",
+      "matches": 9
+    },
+    {
+      "path": "frontend/src/components/admin/molecules/SystemNotificationFormModal.js",
+      "matches": 9
+    },
+    {
+      "path": "frontend/src/components/dashboard/widgets/consultation/ClientRegistrationWidget.js",
+      "matches": 9
+    },
+    {
+      "path": "frontend/src/components/erp/PurchaseManagement.js",
+      "matches": 9
+    },
+    {
+      "path": "frontend/src/components/client/MoodJournal.js",
+      "matches": 9
+    },
+    {
+      "path": "frontend/src/components/ui/Modal/Modal.stories.js",
+      "matches": 8
+    },
+    {
+      "path": "frontend/src/components/schedule/ScheduleDetailModal.js",
+      "matches": 8
+    }
+  ],
+  "top30_P3": [
+    {
+      "path": "frontend/src/components/erp/IntegratedFinanceDashboard.js",
+      "matches": 99
+    },
+    {
+      "path": "frontend/src/components/admin/AdminDashboard.js",
+      "matches": 76
+    },
+    {
+      "path": "frontend/src/components/ui/Modal/Modal.stories.js",
+      "matches": 46
+    },
+    {
+      "path": "frontend/src/components/common/PrivacyPolicy.js",
+      "matches": 41
+    },
+    {
+      "path": "frontend/src/components/erp/BudgetManagement.js",
+      "matches": 40
+    },
+    {
+      "path": "frontend/src/components/consultant/ConsultationRecordScreen.js",
+      "matches": 37
+    },
+    {
+      "path": "frontend/src/components/ui/Button/ButtonExamples.js",
+      "matches": 35
+    },
+    {
+      "path": "frontend/src/components/common/HelpPage.js",
+      "matches": 35
+    },
+    {
+      "path": "frontend/src/components/admin/mapping/MappingDetailModal.js",
+      "matches": 33
+    },
+    {
+      "path": "frontend/src/components/tenant/PgConfigurationDetail.js",
+      "matches": 30
+    },
+    {
+      "path": "frontend/src/components/admin/ConsultantComprehensiveManagement.js",
+      "matches": 29
+    },
+    {
+      "path": "frontend/src/components/compliance/ComplianceDashboardCards.js",
+      "matches": 28
+    },
+    {
+      "path": "frontend/src/components/ops/PgApprovalManagement.js",
+      "matches": 26
+    },
+    {
+      "path": "frontend/src/components/erp/SalaryManagement.js",
+      "matches": 25
+    },
+    {
+      "path": "frontend/src/components/erp/ConsultantProfileModal.js",
+      "matches": 24
+    },
+    {
+      "path": "frontend/src/components/erp/SuperAdminApprovalDashboard.js",
+      "matches": 24
+    },
+    {
+      "path": "frontend/src/components/tenant/PgConfigurationForm.js",
+      "matches": 23
+    },
+    {
+      "path": "frontend/src/components/test/IntegrationTest.js",
+      "matches": 21
+    },
+    {
+      "path": "frontend/src/components/consultant/organisms/ConsultationLogFormPanel.js",
+      "matches": 20
+    },
+    {
+      "path": "frontend/src/components/erp/TaxManagement.js",
+      "matches": 20
+    },
+    {
+      "path": "frontend/src/components/dashboard/widgets/consultation/ConsultantRegistrationWidget.js",
+      "matches": 19
+    },
+    {
+      "path": "frontend/src/components/common/SalaryPrintComponent.js",
+      "matches": 19
+    },
+    {
+      "path": "frontend/src/components/erp/AdminApprovalDashboard.js",
+      "matches": 19
+    },
+    {
+      "path": "frontend/src/components/erp/organisms/ErpQuickActionsPanel.js",
+      "matches": 19
+    },
+    {
+      "path": "frontend/src/components/tenant/PgConfigurationList.js",
+      "matches": 18
+    },
+    {
+      "path": "frontend/src/components/ui/Button/Button.stories.js",
+      "matches": 18
+    },
+    {
+      "path": "frontend/src/components/test/UnifiedHeaderTest.js",
+      "matches": 18
+    },
+    {
+      "path": "frontend/src/components/erp/SalaryConfigModal.js",
+      "matches": 17
+    },
+    {
+      "path": "frontend/src/components/client/ClientPaymentHistory.js",
+      "matches": 17
+    },
+    {
+      "path": "frontend/src/components/admin/aiProvider/sections/UsageLogsTable.js",
+      "matches": 16
+    }
+  ],
+  "top50_combined": [
+    {
+      "path": "frontend/src/components/admin/AdminDashboard.js",
+      "matches": 106,
+      "P2": 30,
+      "P3": 76
+    },
+    {
+      "path": "frontend/src/components/erp/IntegratedFinanceDashboard.js",
+      "matches": 99,
+      "P2": 0,
+      "P3": 99
+    },
+    {
+      "path": "frontend/src/components/dashboard-v2/AdminDashboardV2.js",
+      "matches": 73,
+      "P2": 60,
+      "P3": 13
+    },
+    {
+      "path": "frontend/src/components/consultant/ConsultationRecordScreen.js",
+      "matches": 61,
+      "P2": 24,
+      "P3": 37
+    },
+    {
+      "path": "frontend/src/components/ui/Modal/Modal.stories.js",
+      "matches": 54,
+      "P2": 8,
+      "P3": 46
+    },
+    {
+      "path": "frontend/src/components/erp/BudgetManagement.js",
+      "matches": 51,
+      "P2": 11,
+      "P3": 40
+    },
+    {
+      "path": "frontend/src/components/common/PrivacyPolicy.js",
+      "matches": 43,
+      "P2": 2,
+      "P3": 41
+    },
+    {
+      "path": "frontend/src/components/admin/ConsultantComprehensiveManagement.js",
+      "matches": 42,
+      "P2": 13,
+      "P3": 29
+    },
+    {
+      "path": "frontend/src/components/tenant/PgConfigurationForm.js",
+      "matches": 41,
+      "P2": 18,
+      "P3": 23
+    },
+    {
+      "path": "frontend/src/components/erp/SalaryManagement.js",
+      "matches": 39,
+      "P2": 14,
+      "P3": 25
+    },
+    {
+      "path": "frontend/src/components/common/HelpPage.js",
+      "matches": 37,
+      "P2": 2,
+      "P3": 35
+    },
+    {
+      "path": "frontend/src/components/ops/PgApprovalManagement.js",
+      "matches": 37,
+      "P2": 11,
+      "P3": 26
+    },
+    {
+      "path": "frontend/src/components/ui/Button/ButtonExamples.js",
+      "matches": 35,
+      "P2": 0,
+      "P3": 35
+    },
+    {
+      "path": "frontend/src/components/consultant/organisms/ConsultationLogFormPanel.js",
+      "matches": 35,
+      "P2": 15,
+      "P3": 20
+    },
+    {
+      "path": "frontend/src/components/tenant/PgConfigurationDetail.js",
+      "matches": 34,
+      "P2": 4,
+      "P3": 30
+    },
+    {
+      "path": "frontend/src/components/admin/mapping/MappingDetailModal.js",
+      "matches": 34,
+      "P2": 1,
+      "P3": 33
+    },
+    {
+      "path": "frontend/src/components/erp/ImprovedTaxManagement.js",
+      "matches": 33,
+      "P2": 20,
+      "P3": 13
+    },
+    {
+      "path": "frontend/src/components/compliance/ComplianceDashboardCards.js",
+      "matches": 29,
+      "P2": 1,
+      "P3": 28
+    },
+    {
+      "path": "frontend/src/components/erp/SuperAdminApprovalDashboard.js",
+      "matches": 28,
+      "P2": 4,
+      "P3": 24
+    },
+    {
+      "path": "frontend/src/components/erp/ConsultantProfileModal.js",
+      "matches": 27,
+      "P2": 3,
+      "P3": 24
+    },
+    {
+      "path": "frontend/src/components/erp/TaxManagement.js",
+      "matches": 27,
+      "P2": 7,
+      "P3": 20
+    },
+    {
+      "path": "frontend/src/components/dashboard/widgets/consultation/ConsultantRegistrationWidget.js",
+      "matches": 26,
+      "P2": 7,
+      "P3": 19
+    },
+    {
+      "path": "frontend/src/components/tenant/PgConfigurationList.js",
+      "matches": 25,
+      "P2": 7,
+      "P3": 18
+    },
+    {
+      "path": "frontend/src/components/tenant/TenantProfile.js",
+      "matches": 24,
+      "P2": 14,
+      "P3": 10
+    },
+    {
+      "path": "frontend/src/components/dashboard/widgets/consultation/ClientRegistrationWidget.js",
+      "matches": 24,
+      "P2": 9,
+      "P3": 15
+    },
+    {
+      "path": "frontend/src/components/ui/Modal/ModalExamples.js",
+      "matches": 23,
+      "P2": 12,
+      "P3": 11
+    },
+    {
+      "path": "frontend/src/components/common/ConsultantApplicationModal.js",
+      "matches": 23,
+      "P2": 8,
+      "P3": 15
+    },
+    {
+      "path": "frontend/src/components/erp/AdminApprovalDashboard.js",
+      "matches": 23,
+      "P2": 4,
+      "P3": 19
+    },
+    {
+      "path": "frontend/src/components/client/ClientPaymentHistory.js",
+      "matches": 23,
+      "P2": 6,
+      "P3": 17
+    },
+    {
+      "path": "frontend/src/components/erp/PurchaseManagement.js",
+      "matches": 22,
+      "P2": 9,
+      "P3": 13
+    },
+    {
+      "path": "frontend/src/components/test/IntegrationTest.js",
+      "matches": 21,
+      "P2": 0,
+      "P3": 21
+    },
+    {
+      "path": "frontend/src/components/client/ClientSessionManagement.js",
+      "matches": 21,
+      "P2": 6,
+      "P3": 15
+    },
+    {
+      "path": "frontend/src/App.js",
+      "matches": 20,
+      "P2": 19,
+      "P3": 1
+    },
+    {
+      "path": "frontend/src/components/ui/Table/Table.stories.js",
+      "matches": 19,
+      "P2": 4,
+      "P3": 15
+    },
+    {
+      "path": "frontend/src/components/compliance/ComplianceMenu.js",
+      "matches": 19,
+      "P2": 3,
+      "P3": 16
+    },
+    {
+      "path": "frontend/src/components/common/SalaryPrintComponent.js",
+      "matches": 19,
+      "P2": 0,
+      "P3": 19
+    },
+    {
+      "path": "frontend/src/components/erp/FinancialCalendarView.js",
+      "matches": 19,
+      "P2": 5,
+      "P3": 14
+    },
+    {
+      "path": "frontend/src/components/erp/organisms/ErpQuickActionsPanel.js",
+      "matches": 19,
+      "P2": 0,
+      "P3": 19
+    },
+    {
+      "path": "frontend/src/components/ui/Button/Button.stories.js",
+      "matches": 18,
+      "P2": 0,
+      "P3": 18
+    },
+    {
+      "path": "frontend/src/components/schedule/ScheduleDetailModal.js",
+      "matches": 18,
+      "P2": 8,
+      "P3": 10
+    },
+    {
+      "path": "frontend/src/components/test/UnifiedHeaderTest.js",
+      "matches": 18,
+      "P2": 0,
+      "P3": 18
+    },
+    {
+      "path": "frontend/src/components/auth/BranchLogin.js",
+      "matches": 18,
+      "P2": 4,
+      "P3": 14
+    },
+    {
+      "path": "frontend/src/components/super-admin/PaymentManagement.js",
+      "matches": 18,
+      "P2": 4,
+      "P3": 14
+    },
+    {
+      "path": "frontend/src/components/erp/SalaryConfigModal.js",
+      "matches": 18,
+      "P2": 1,
+      "P3": 17
+    },
+    {
+      "path": "frontend/src/components/homepage/Homepage.js",
+      "matches": 17,
+      "P2": 4,
+      "P3": 13
+    },
+    {
+      "path": "frontend/src/components/test/UnifiedModalTest.js",
+      "matches": 17,
+      "P2": 8,
+      "P3": 9
+    },
+    {
+      "path": "frontend/src/components/consultant/ClientInfoModal.js",
+      "matches": 17,
+      "P2": 9,
+      "P3": 8
+    },
+    {
+      "path": "frontend/src/components/auth/HeadquartersLogin.js",
+      "matches": 17,
+      "P2": 8,
+      "P3": 9
+    },
+    {
+      "path": "frontend/src/components/dashboard-v2/consultant/ConsultantDashboardV2.js",
+      "matches": 17,
+      "P2": 8,
+      "P3": 9
+    },
+    {
+      "path": "frontend/src/components/admin/BrandingManagement.js",
+      "matches": 17,
+      "P2": 12,
+      "P3": 5
+    }
+  ],
+  "coverage_P2": [
+    {
+      "label": "P2",
+      "cutoff": "Top-10",
+      "files": 10,
+      "matches": 227,
+      "coverage_pct": 19.1
+    },
+    {
+      "label": "P2",
+      "cutoff": "Top-20",
+      "files": 20,
+      "matches": 342,
+      "coverage_pct": 28.8
+    },
+    {
+      "label": "P2",
+      "cutoff": "Top-30",
+      "files": 30,
+      "matches": 431,
+      "coverage_pct": 36.3
+    },
+    {
+      "label": "P2",
+      "cutoff": "Top-50",
+      "files": 50,
+      "matches": 580,
+      "coverage_pct": 48.9
+    },
+    {
+      "label": "P2",
+      "cutoff": "Top-100",
+      "files": 100,
+      "matches": 827,
+      "coverage_pct": 69.7
+    },
+    {
+      "label": "P2",
+      "cutoff": "Top-150",
+      "files": 150,
+      "matches": 975,
+      "coverage_pct": 82.1
+    },
+    {
+      "label": "P2",
+      "cutoff": "Top-200",
+      "files": 200,
+      "matches": 1075,
+      "coverage_pct": 90.6
+    },
+    {
+      "label": "P2",
+      "cutoff": "All",
+      "files": 311,
+      "matches": 1187,
+      "coverage_pct": 100.0
+    }
+  ],
+  "coverage_P3": [
+    {
+      "label": "P3",
+      "cutoff": "Top-10",
+      "files": 10,
+      "matches": 472,
+      "coverage_pct": 20.3
+    },
+    {
+      "label": "P3",
+      "cutoff": "Top-20",
+      "files": 20,
+      "matches": 712,
+      "coverage_pct": 30.7
+    },
+    {
+      "label": "P3",
+      "cutoff": "Top-30",
+      "files": 30,
+      "matches": 892,
+      "coverage_pct": 38.4
+    },
+    {
+      "label": "P3",
+      "cutoff": "Top-50",
+      "files": 50,
+      "matches": 1173,
+      "coverage_pct": 50.5
+    },
+    {
+      "label": "P3",
+      "cutoff": "Top-100",
+      "files": 100,
+      "matches": 1631,
+      "coverage_pct": 70.3
+    },
+    {
+      "label": "P3",
+      "cutoff": "Top-150",
+      "files": 150,
+      "matches": 1924,
+      "coverage_pct": 82.9
+    },
+    {
+      "label": "P3",
+      "cutoff": "Top-200",
+      "files": 200,
+      "matches": 2109,
+      "coverage_pct": 90.9
+    },
+    {
+      "label": "P3",
+      "cutoff": "All",
+      "files": 332,
+      "matches": 2321,
+      "coverage_pct": 100.0
+    }
+  ],
+  "wave2_target_lines": 1545,
+  "wave2_recommendation": "Top-50 (P2+P3 통합) 흡수 권장 — AdminDashboard(106) + IntegratedFinanceDashboard(99) + AdminDashboardV2(73) + ConsultationRecordScreen(61) 4종으로 누적 ~340 라인 시작, Top-50 누적 ~1,800 라인"
+}

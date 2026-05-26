@@ -1,0 +1,396 @@
+{
+  "meta": {
+    "develop_sha": "982f91252",
+    "main_sha": "a68886273",
+    "measured_at": "2026-05-26",
+    "pattern": "P1_hardcoded_string_literal",
+    "scope": "frontend/src/**/*.{js,jsx,ts,tsx} (excl tests/locales/build)",
+    "files_scanned": 999
+  },
+  "total_matches": 1560,
+  "affected_files": 50,
+  "top30_files": [
+    {
+      "path": "frontend/src/utils/krPublicHolidays.js",
+      "matches": 96
+    },
+    {
+      "path": "frontend/src/constants/schedule.js",
+      "matches": 50
+    },
+    {
+      "path": "frontend/src/components/admin/DashboardWidgetEditor.js",
+      "matches": 37
+    },
+    {
+      "path": "frontend/src/components/admin/DashboardLayoutEditor.js",
+      "matches": 37
+    },
+    {
+      "path": "frontend/src/components/tenant/PgConfigurationForm.js",
+      "matches": 33
+    },
+    {
+      "path": "frontend/src/components/admin/ConsultationCompletionStats.js",
+      "matches": 29
+    },
+    {
+      "path": "frontend/src/constants/salaryConstants.js",
+      "matches": 25
+    },
+    {
+      "path": "frontend/src/components/schedule/UnifiedScheduleComponent.js",
+      "matches": 23
+    },
+    {
+      "path": "frontend/src/constants/charts.js",
+      "matches": 21
+    },
+    {
+      "path": "frontend/src/components/dashboard/SummaryPanels.js",
+      "matches": 21
+    },
+    {
+      "path": "frontend/src/components/dashboard/CommonDashboard.js",
+      "matches": 21
+    },
+    {
+      "path": "frontend/src/components/dashboard/widgets/SummaryPanelsWidget.js",
+      "matches": 21
+    },
+    {
+      "path": "frontend/src/utils/colorUtils.js",
+      "matches": 20
+    },
+    {
+      "path": "frontend/src/components/schedule/ScheduleDetailModal.js",
+      "matches": 20
+    },
+    {
+      "path": "frontend/src/components/erp/IntegratedFinanceDashboard.js",
+      "matches": 19
+    },
+    {
+      "path": "frontend/src/components/client/ClientDashboard.js",
+      "matches": 19
+    },
+    {
+      "path": "frontend/src/constants/mapping.js",
+      "matches": 18
+    },
+    {
+      "path": "frontend/src/utils/branchUtils.js",
+      "matches": 17
+    },
+    {
+      "path": "frontend/src/components/admin/ModernDashboardEditor.js",
+      "matches": 16
+    },
+    {
+      "path": "frontend/src/constants/notificationChannelPreference.js",
+      "matches": 14
+    },
+    {
+      "path": "frontend/src/constants/codeHelperStrings.js",
+      "matches": 13
+    },
+    {
+      "path": "frontend/src/components/ui/Card/ClientCard.js",
+      "matches": 13
+    },
+    {
+      "path": "frontend/src/constants/stats.js",
+      "matches": 12
+    },
+    {
+      "path": "frontend/src/components/auth/TabletRegister.js",
+      "matches": 12
+    },
+    {
+      "path": "frontend/src/components/dashboard/ClientPaymentSessionsSection.js",
+      "matches": 12
+    },
+    {
+      "path": "frontend/src/components/dashboard/widgets/PaymentSessionsWidget.js",
+      "matches": 12
+    },
+    {
+      "path": "frontend/src/constants/ajaxUserMessages.js",
+      "matches": 11
+    },
+    {
+      "path": "frontend/src/utils/widgetVisibilityUtils.js",
+      "matches": 11
+    },
+    {
+      "path": "frontend/src/components/consultant/ConsultationLogModal.js",
+      "matches": 11
+    },
+    {
+      "path": "frontend/src/components/admin/Dashboard3DPreview.js",
+      "matches": 11
+    }
+  ],
+  "top50_files": [
+    {
+      "path": "frontend/src/utils/krPublicHolidays.js",
+      "matches": 96
+    },
+    {
+      "path": "frontend/src/constants/schedule.js",
+      "matches": 50
+    },
+    {
+      "path": "frontend/src/components/admin/DashboardWidgetEditor.js",
+      "matches": 37
+    },
+    {
+      "path": "frontend/src/components/admin/DashboardLayoutEditor.js",
+      "matches": 37
+    },
+    {
+      "path": "frontend/src/components/tenant/PgConfigurationForm.js",
+      "matches": 33
+    },
+    {
+      "path": "frontend/src/components/admin/ConsultationCompletionStats.js",
+      "matches": 29
+    },
+    {
+      "path": "frontend/src/constants/salaryConstants.js",
+      "matches": 25
+    },
+    {
+      "path": "frontend/src/components/schedule/UnifiedScheduleComponent.js",
+      "matches": 23
+    },
+    {
+      "path": "frontend/src/constants/charts.js",
+      "matches": 21
+    },
+    {
+      "path": "frontend/src/components/dashboard/SummaryPanels.js",
+      "matches": 21
+    },
+    {
+      "path": "frontend/src/components/dashboard/CommonDashboard.js",
+      "matches": 21
+    },
+    {
+      "path": "frontend/src/components/dashboard/widgets/SummaryPanelsWidget.js",
+      "matches": 21
+    },
+    {
+      "path": "frontend/src/utils/colorUtils.js",
+      "matches": 20
+    },
+    {
+      "path": "frontend/src/components/schedule/ScheduleDetailModal.js",
+      "matches": 20
+    },
+    {
+      "path": "frontend/src/components/erp/IntegratedFinanceDashboard.js",
+      "matches": 19
+    },
+    {
+      "path": "frontend/src/components/client/ClientDashboard.js",
+      "matches": 19
+    },
+    {
+      "path": "frontend/src/constants/mapping.js",
+      "matches": 18
+    },
+    {
+      "path": "frontend/src/utils/branchUtils.js",
+      "matches": 17
+    },
+    {
+      "path": "frontend/src/components/admin/ModernDashboardEditor.js",
+      "matches": 16
+    },
+    {
+      "path": "frontend/src/constants/notificationChannelPreference.js",
+      "matches": 14
+    },
+    {
+      "path": "frontend/src/constants/codeHelperStrings.js",
+      "matches": 13
+    },
+    {
+      "path": "frontend/src/components/ui/Card/ClientCard.js",
+      "matches": 13
+    },
+    {
+      "path": "frontend/src/constants/stats.js",
+      "matches": 12
+    },
+    {
+      "path": "frontend/src/components/auth/TabletRegister.js",
+      "matches": 12
+    },
+    {
+      "path": "frontend/src/components/dashboard/ClientPaymentSessionsSection.js",
+      "matches": 12
+    },
+    {
+      "path": "frontend/src/components/dashboard/widgets/PaymentSessionsWidget.js",
+      "matches": 12
+    },
+    {
+      "path": "frontend/src/constants/ajaxUserMessages.js",
+      "matches": 11
+    },
+    {
+      "path": "frontend/src/utils/widgetVisibilityUtils.js",
+      "matches": 11
+    },
+    {
+      "path": "frontend/src/components/consultant/ConsultationLogModal.js",
+      "matches": 11
+    },
+    {
+      "path": "frontend/src/components/admin/Dashboard3DPreview.js",
+      "matches": 11
+    },
+    {
+      "path": "frontend/src/constants/adminShopCatalog.js",
+      "matches": 10
+    },
+    {
+      "path": "frontend/src/utils/consultantHelper.js",
+      "matches": 10
+    },
+    {
+      "path": "frontend/src/components/schedule/RescheduleScheduleModal.js",
+      "matches": 10
+    },
+    {
+      "path": "frontend/src/components/academy/AcademyRegister.js",
+      "matches": 10
+    },
+    {
+      "path": "frontend/src/components/common/NotificationCenter.js",
+      "matches": 10
+    },
+    {
+      "path": "frontend/src/components/erp/FinancialTransactionForm.js",
+      "matches": 10
+    },
+    {
+      "path": "frontend/src/components/client/ClientPaymentHistory.js",
+      "matches": 10
+    },
+    {
+      "path": "frontend/src/utils/tenantCodeUtils.js",
+      "matches": 9
+    },
+    {
+      "path": "frontend/src/utils/erpFinancialAmountStack.js",
+      "matches": 9
+    },
+    {
+      "path": "frontend/src/components/auth/SocialSignupModal.js",
+      "matches": 9
+    },
+    {
+      "path": "frontend/src/components/mypage/components/PasswordChangeModal.js",
+      "matches": 9
+    },
+    {
+      "path": "frontend/src/constants/academy.js",
+      "matches": 8
+    },
+    {
+      "path": "frontend/src/utils/socialLogin.js",
+      "matches": 8
+    },
+    {
+      "path": "frontend/src/utils/commonCodeUtils.js",
+      "matches": 8
+    },
+    {
+      "path": "frontend/src/components/consultant/ConsultantAvailability.js",
+      "matches": 8
+    },
+    {
+      "path": "frontend/src/components/auth/TabletLogin.js",
+      "matches": 8
+    },
+    {
+      "path": "frontend/src/components/admin/PasswordResetModal.js",
+      "matches": 8
+    },
+    {
+      "path": "frontend/src/components/compliance/ComplianceDashboard.js",
+      "matches": 8
+    },
+    {
+      "path": "frontend/src/components/dashboard/widgets/RecentActivitiesWidget.js",
+      "matches": 8
+    },
+    {
+      "path": "frontend/src/constants/mypageUi.js",
+      "matches": 7
+    }
+  ],
+  "coverage": [
+    {
+      "label": "P1",
+      "cutoff": "Top-10",
+      "files": 10,
+      "matches": 372,
+      "coverage_pct": 23.8
+    },
+    {
+      "label": "P1",
+      "cutoff": "Top-20",
+      "files": 20,
+      "matches": 557,
+      "coverage_pct": 35.7
+    },
+    {
+      "label": "P1",
+      "cutoff": "Top-30",
+      "files": 30,
+      "matches": 675,
+      "coverage_pct": 43.3
+    },
+    {
+      "label": "P1",
+      "cutoff": "Top-50",
+      "files": 50,
+      "matches": 852,
+      "coverage_pct": 54.6
+    },
+    {
+      "label": "P1",
+      "cutoff": "Top-100",
+      "files": 100,
+      "matches": 1152,
+      "coverage_pct": 73.8
+    },
+    {
+      "label": "P1",
+      "cutoff": "Top-150",
+      "files": 150,
+      "matches": 1325,
+      "coverage_pct": 84.9
+    },
+    {
+      "label": "P1",
+      "cutoff": "Top-200",
+      "files": 200,
+      "matches": 1433,
+      "coverage_pct": 91.9
+    },
+    {
+      "label": "P1",
+      "cutoff": "All",
+      "files": 318,
+      "matches": 1560,
+      "coverage_pct": 100.0
+    }
+  ],
+  "wave1_target_lines": 852,
+  "wave1_recommendation": "Top-50 흡수 권장 — utils/krPublicHolidays(96) + constants/schedule(50) + components/admin Dashboard 류 5종 (~150 라인) + tenant/PgConfigurationForm(33) 등으로 누적 ~830 라인 흡수"
+}

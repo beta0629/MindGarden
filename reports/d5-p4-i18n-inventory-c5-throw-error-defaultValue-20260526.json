@@ -1,0 +1,380 @@
+{
+  "meta": {
+    "develop_sha": "982f91252",
+    "main_sha": "a68886273",
+    "measured_at": "2026-05-26",
+    "patterns": [
+      "P4_defaultValue_option",
+      "P5_throw_new_Error"
+    ],
+    "policy_C12": "a — throw new Error(t('errors.xxx')) i18n 적용 + ko.json 자동 시드",
+    "fallback_preservation_rule": "utils/paymentGateway/socialLogin/standardizedApi/ajax/sessionManager 류는 SDK 미초기화 시점 호출되어 t() 미사용 안전 마진"
+  },
+  "P4_total": 0,
+  "P4_locations": [],
+  "P4_note": "PR-L 정착 (ec273de76) 으로 defaultValue 옵션 객체 패턴은 0건으로 이미 흡수됨. 합의서 narrative 17건은 PR-L 진입 전 측정값.",
+  "P5_total": 71,
+  "P5_absorb_count": 44,
+  "P5_preserve_count": 27,
+  "P5_locations_absorb": [
+    {
+      "path": "frontend/src/constants/oauth2.js",
+      "line": 77,
+      "message": "지원하지 않는 OAuth2 제공자: ${provider}"
+    },
+    {
+      "path": "frontend/src/constants/MenuConstants.js",
+      "line": 519,
+      "message": "메뉴 조회 API 실패"
+    },
+    {
+      "path": "frontend/src/constants/MenuConstants.js",
+      "line": 532,
+      "message": "메뉴 설정 조회 API 실패"
+    },
+    {
+      "path": "frontend/src/utils/mypageApi.js",
+      "line": 147,
+      "message": "OAuth 인증 URL이 응답에 없습니다."
+    },
+    {
+      "path": "frontend/src/utils/mypageApi.js",
+      "line": 180,
+      "message": "OAuth 로그인 URL이 응답에 없습니다."
+    },
+    {
+      "path": "frontend/src/utils/widgetVisibilityUtils.js",
+      "line": 407,
+      "message": "역할 정보를 찾을 수 없습니다: ${userRole}"
+    },
+    {
+      "path": "frontend/src/utils/scripts.js",
+      "line": 180,
+      "message": "클립보드 읽기가 지원되지 않습니다."
+    },
+    {
+      "path": "frontend/src/utils/consultantHelper.js",
+      "line": 256,
+      "message": "tenantId를 가져올 수 없습니다. 세션을 확인해주세요."
+    },
+    {
+      "path": "frontend/src/utils/menuHelper.js",
+      "line": 55,
+      "message": "메뉴 구조 로드 실패: 응답 형식이 올바르지 않습니다"
+    },
+    {
+      "path": "frontend/src/utils/menuHelper.js",
+      "line": 109,
+      "message": "공통 메뉴 로드 실패: 응답 형식이 올바르지 않습니다"
+    },
+    {
+      "path": "frontend/src/utils/menuHelper.js",
+      "line": 135,
+      "message": "역할별 메뉴 로드 실패: 응답 형식이 올바르지 않습니다"
+    },
+    {
+      "path": "frontend/src/utils/menuHelper.js",
+      "line": 161,
+      "message": "메뉴 권한 확인 실패: 응답 형식이 올바르지 않습니다"
+    },
+    {
+      "path": "frontend/src/utils/roleHelper.js",
+      "line": 34,
+      "message": "역할 정보 로드 실패: ${response.status}"
+    },
+    {
+      "path": "frontend/src/utils/roleHelper.js",
+      "line": 44,
+      "message": "역할 정보 응답 형식 오류"
+    },
+    {
+      "path": "frontend/src/utils/businessTimeUtils.js",
+      "line": 46,
+      "message": "업무 시간 설정 응답이 올바르지 않습니다."
+    },
+    {
+      "path": "frontend/src/utils/brandingUtils.js",
+      "line": 82,
+      "message": "브랜딩 정보 조회 실패: ${response.status}"
+    },
+    {
+      "path": "frontend/src/utils/brandingUtils.js",
+      "line": 320,
+      "message": "브랜딩 정보 업데이트 실패: ${response.status}"
+    },
+    {
+      "path": "frontend/src/utils/brandingUtils.js",
+      "line": 365,
+      "message": "로고 업로드 실패: ${response.status}"
+    },
+    {
+      "path": "frontend/src/utils/brandingUtils.js",
+      "line": 410,
+      "message": "파비콘 업로드 실패: ${response.status}"
+    },
+    {
+      "path": "frontend/src/utils/brandingUtils.js",
+      "line": 447,
+      "message": "로고 삭제 실패: ${response.status}"
+    },
+    {
+      "path": "frontend/src/utils/brandingUtils.js",
+      "line": 484,
+      "message": "파비콘 삭제 실패: ${response.status}"
+    },
+    {
+      "path": "frontend/src/components/tenant/TenantProfile.js",
+      "line": 240,
+      "message": "결제 수단 삭제 실패"
+    },
+    {
+      "path": "frontend/src/components/tenant/TenantProfile.js",
+      "line": 262,
+      "message": "기본 결제 수단 설정 실패"
+    },
+    {
+      "path": "frontend/src/components/schedule/ScheduleDetailModal.js",
+      "line": 271,
+      "message": "예약 취소에 실패했습니다."
+    },
+    {
+      "path": "frontend/src/components/schedule/ScheduleDetailModal.js",
+      "line": 308,
+      "message": "예약 확정에 실패했습니다."
+    },
+    {
+      "path": "frontend/src/components/schedule/TodayStats.js",
+      "line": 50,
+      "message": "스케줄 데이터를 가져올 수 없습니다."
+    },
+    {
+      "path": "frontend/src/components/consultant/ConsultantRecords.js",
+      "line": 66,
+      "message": "사용자 정보를 찾을 수 없습니다."
+    },
+    {
+      "path": "frontend/src/components/auth/BranchLogin.js",
+      "line": 65,
+      "message": "지점 목록을 불러오는데 실패했습니다."
+    },
+    {
+      "path": "frontend/src/components/admin/ClientComprehensiveManagement.js",
+      "line": 846,
+      "message": "등록 응답이 없습니다."
+    },
+    {
+      "path": "frontend/src/components/admin/AdminShopCatalogSkuEditorPage.js",
+      "line": 130,
+      "message": "상품 ID를 확인할 수 없습니다."
+    },
+    {
+      "path": "frontend/src/components/admin/AdminShopCatalogSkuEditorPage.js",
+      "line": 140,
+      "message": "썸네일 업로드 실패: ${detail}"
+    },
+    {
+      "path": "frontend/src/components/dashboard/WeatherCard.js",
+      "line": 112,
+      "message": "날씨 정보를 가져올 수 없습니다"
+    },
+    {
+      "path": "frontend/src/components/dashboard/widgets/FormWidget.js",
+      "line": 73,
+      "message": "제출 실패: ${response.status}"
+    },
+    {
+      "path": "frontend/src/components/dashboard/widgets/RatingWidget.js",
+      "line": 95,
+      "message": "평점 제출 실패"
+    },
+    {
+      "path": "frontend/src/components/mypage/MyPage.js",
+      "line": 150,
+      "message": "세션에 사용자 정보가 없습니다"
+    },
+    {
+      "path": "frontend/src/components/mypage/MyPage.js",
+      "line": 316,
+      "message": "세션에 사용자 정보가 없습니다"
+    },
+    {
+      "path": "frontend/src/components/super-admin/PaymentManagement.js",
+      "line": 204,
+      "message": "결제 목록 조회에 실패했습니다."
+    },
+    {
+      "path": "frontend/src/components/super-admin/PaymentManagement.js",
+      "line": 270,
+      "message": "결제 상태 업데이트에 실패했습니다."
+    },
+    {
+      "path": "frontend/src/components/super-admin/PaymentManagement.js",
+      "line": 296,
+      "message": "환불 처리에 실패했습니다."
+    },
+    {
+      "path": "frontend/src/components/clinical/RiskAlertBadge.js",
+      "line": 50,
+      "message": "알림 로드 실패"
+    },
+    {
+      "path": "frontend/src/components/client/ClientSessionManagement.js",
+      "line": 59,
+      "message": "로그인이 필요합니다."
+    },
+    {
+      "path": "frontend/src/components/client/ClientPaymentHistory.js",
+      "line": 71,
+      "message": "로그인이 필요합니다."
+    },
+    {
+      "path": "frontend/src/components/client/ClientPaymentHistory.js",
+      "line": 80,
+      "message": "결제 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요."
+    },
+    {
+      "path": "frontend/src/api/admin/manualNotificationApi.js",
+      "line": 225,
+      "message": "batchId 가 필요합니다."
+    }
+  ],
+  "P5_locations_preserve": [
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 136,
+      "message": "init() 메서드를 구현해야 합니다."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 147,
+      "message": "createToken() 메서드를 구현해야 합니다."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 158,
+      "message": "verifyToken() 메서드를 구현해야 합니다."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 169,
+      "message": "requestBillingAuth() 메서드를 구현해야 합니다."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 190,
+      "message": "카드 번호가 올바르지 않습니다."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 196,
+      "message": "카드 만료일이 지났습니다."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 200,
+      "message": "CVC 코드가 올바르지 않습니다."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 260,
+      "message": "토스페이먼츠 클라이언트 키가 설정되지 않았습니다. REACT_APP_TOSS_CLIENT_KEY 환경 변수를 확인하세요."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 264,
+      "message": "TossPayments SDK는 브라우저 환경에서만 사용할 수 있습니다."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 268,
+      "message": "TossPayments SDK가 로드되지 않았습니다. index.html에 스크립트 태그가 추가되었는지 확인하세요."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 276,
+      "message": "토스페이먼츠 SDK v2는 리다이렉트 방식만 지원합니다. requestBillingAuth()를 직접 사용하세요."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 285,
+      "message": "TossPayments SDK가 초기화되지 않았습니다. init()을 먼저 호출하세요."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 325,
+      "message": "Stripe SDK는 아직 구현되지 않았습니다."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 330,
+      "message": "Stripe SDK는 아직 구현되지 않았습니다."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 340,
+      "message": "Stripe SDK는 아직 구현되지 않았습니다."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 359,
+      "message": "아임포트 SDK는 아직 구현되지 않았습니다."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 363,
+      "message": "아임포트 SDK는 아직 구현되지 않았습니다."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 371,
+      "message": "아임포트 SDK는 아직 구현되지 않았습니다."
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 423,
+      "message": "지원하지 않는 PG 제공자입니다: ${provider}"
+    },
+    {
+      "path": "frontend/src/utils/paymentGateway.js",
+      "line": 485,
+      "message": "${provider}는 자동결제 등록을 지원하지 않습니다."
+    },
+    {
+      "path": "frontend/src/utils/socialLogin.js",
+      "line": 131,
+      "message": "서브도메인이 필요합니다. 올바른 서브도메인으로 접속 후 다시 시도해주세요."
+    },
+    {
+      "path": "frontend/src/utils/socialLogin.js",
+      "line": 192,
+      "message": "백엔드에서 인증 URL을 받지 못했습니다."
+    },
+    {
+      "path": "frontend/src/utils/socialLogin.js",
+      "line": 220,
+      "message": "서브도메인이 필요합니다. 올바른 서브도메인으로 접속 후 다시 시도해주세요."
+    },
+    {
+      "path": "frontend/src/utils/socialLogin.js",
+      "line": 277,
+      "message": "백엔드에서 인증 URL을 받지 못했습니다."
+    },
+    {
+      "path": "frontend/src/utils/socialLogin.js",
+      "line": 350,
+      "message": "OAuth2 state 검증 실패"
+    },
+    {
+      "path": "frontend/src/utils/socialLogin.js",
+      "line": 401,
+      "message": "세션 설정에 실패했습니다."
+    },
+    {
+      "path": "frontend/src/utils/standardizedApi.js",
+      "line": 219,
+      "message": "엔드포인트는 상대 경로여야 합니다: ${endpoint}"
+    }
+  ],
+  "wave3_target_lines": 44,
+  "wave3_recommendation": "Wave-3 흡수 대상 44건 (paymentGateway/socialLogin/standardized API 류 27건 fallback 영구 보존). t(\"errors.payment.cardInvalid\") 등 errors namespace 키 추가 + 누락 키 자동 시드."
+}

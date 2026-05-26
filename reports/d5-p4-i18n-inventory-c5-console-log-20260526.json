@@ -1,0 +1,137 @@
+{
+  "meta": {
+    "develop_sha": "982f91252",
+    "main_sha": "a68886273",
+    "measured_at": "2026-05-26",
+    "pattern": "P6_console_log",
+    "policy_C11": "b — 운영 로그 한국어 유지 + KPI 측정 산식에서 제외 (사용자 노출 0, 디버깅 효율)",
+    "kpi_exclusion_formula": "한국어 라인 KPI 측정 시 'console.\\(log|warn|info|debug|error\\)' 매칭 라인 제외"
+  },
+  "P6_total": 2107,
+  "ko_lines_with_console": 16926,
+  "ko_lines_without_console": 14819,
+  "console_only_lines": 2107,
+  "top30_files": [
+    {
+      "path": "frontend/src/components/admin/ConsultantComprehensiveManagement.js",
+      "matches": 77
+    },
+    {
+      "path": "frontend/src/components/schedule/UnifiedScheduleComponent.js",
+      "matches": 65
+    },
+    {
+      "path": "frontend/src/components/auth/UnifiedLogin.js",
+      "matches": 52
+    },
+    {
+      "path": "frontend/src/components/dashboard/CommonDashboard.js",
+      "matches": 52
+    },
+    {
+      "path": "frontend/src/utils/sessionManager.js",
+      "matches": 50
+    },
+    {
+      "path": "frontend/src/components/auth/TabletLogin.js",
+      "matches": 44
+    },
+    {
+      "path": "frontend/src/components/dashboard/DynamicDashboard.js",
+      "matches": 44
+    },
+    {
+      "path": "frontend/src/components/admin/DashboardFormModal.js",
+      "matches": 43
+    },
+    {
+      "path": "frontend/src/utils/socialLogin.js",
+      "matches": 35
+    },
+    {
+      "path": "frontend/src/utils/widgetVisibilityUtils.js",
+      "matches": 35
+    },
+    {
+      "path": "frontend/src/contexts/SessionContext.js",
+      "matches": 34
+    },
+    {
+      "path": "frontend/src/utils/ajax.js",
+      "matches": 33
+    },
+    {
+      "path": "frontend/src/components/admin/ClientComprehensiveManagement.js",
+      "matches": 30
+    },
+    {
+      "path": "frontend/src/contexts/NotificationContext.js",
+      "matches": 28
+    },
+    {
+      "path": "frontend/src/utils/session.js",
+      "matches": 26
+    },
+    {
+      "path": "frontend/src/components/auth/OAuth2Callback.js",
+      "matches": 26
+    },
+    {
+      "path": "frontend/src/utils/menuHelper.js",
+      "matches": 23
+    },
+    {
+      "path": "frontend/src/utils/brandingUtils.js",
+      "matches": 23
+    },
+    {
+      "path": "frontend/src/components/schedule/ClientSelector.js",
+      "matches": 23
+    },
+    {
+      "path": "frontend/src/components/schedule/steps/ConsultantSelectionStep.js",
+      "matches": 23
+    },
+    {
+      "path": "frontend/src/components/common/StatisticsModal.js",
+      "matches": 23
+    },
+    {
+      "path": "frontend/src/utils/apiHeaders.js",
+      "matches": 22
+    },
+    {
+      "path": "frontend/src/components/admin/AdminDashboard.js",
+      "matches": 22
+    },
+    {
+      "path": "frontend/src/utils/commonCodeUtils.js",
+      "matches": 21
+    },
+    {
+      "path": "frontend/src/components/erp/IntegratedFinanceDashboard.js",
+      "matches": 21
+    },
+    {
+      "path": "frontend/src/utils/standardizedApi.js",
+      "matches": 19
+    },
+    {
+      "path": "frontend/src/components/schedule/TimeSlotGrid.js",
+      "matches": 19
+    },
+    {
+      "path": "frontend/src/components/consultant/ConsultantAvailability.js",
+      "matches": 17
+    },
+    {
+      "path": "frontend/src/components/admin/WellnessManagement.js",
+      "matches": 17
+    },
+    {
+      "path": "frontend/src/components/admin/SessionManagement.js",
+      "matches": 16
+    }
+  ],
+  "wave4_recommendation": "Wave-4 변경 0건 (보존). KPI 측정 산식 검증만 1회 수행 — 한국어 라인 KPI 14,819 (≤15,000 ✅ 달성, console 제외 산식)."
+}

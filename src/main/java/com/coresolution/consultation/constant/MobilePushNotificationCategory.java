@@ -46,7 +46,8 @@ public enum MobilePushNotificationCategory {
                     MobilePushCanonicalTypes.MIND_WEATHER_SHARED -> WELLNESS;
             case "system_notice",
                     MobilePushCanonicalTypes.MAPPING_APPROVED,
-                    MobilePushCanonicalTypes.ADMIN_ANNOUNCEMENT -> SYSTEM;
+                    MobilePushCanonicalTypes.ADMIN_ANNOUNCEMENT,
+                    MobilePushCanonicalTypes.REFUND_AUTO_CANCEL -> SYSTEM;
             default -> SCHEDULE;
         };
     }

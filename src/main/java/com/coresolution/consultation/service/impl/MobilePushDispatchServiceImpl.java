@@ -342,6 +342,72 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void dispatchAutoCancellation(
+            String tenantId,
+            Long userId,
+            Long mappingId,
+            int cancelCount,
+            String mypageUrl) {
+        if (userId == null) {
+            return;
+        }
+        String tid = requireTenantId(tenantId, null);
+        if (tid == null) {
+            return;
+        }
+        // Phase 0 (Q3=3A·보조=C) 의무 통지: 사용자 카테고리·채널 선호도를 우회하기 위해 dispatchFanout
+        // 을 사용하지 않고 자체 경로로 진행한다. 다만 (a) Expo 인프라 미설정·(b) 활성 토큰 없음·
+        // (c) 동일 mappingId 멱등 충돌은 정상 skip(로그) — 다른 채널에는 영향 없음.
+        if (expoPushProperties.getAccessToken() == null || expoPushProperties.getAccessToken().isBlank()) {
+            log.warn("푸시 발송 생략(REFUND_AUTO_CANCEL): Expo access token 미설정 tenantId={} userId={}",
+                    tid, userId);
+            return;
+        }
+        List<MobilePushToken> tokens = mobilePushTokenRepository
+                .findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(tid, List.of(userId));
+        if (tokens.isEmpty()) {
+            log.info("푸시 발송 skip(REFUND_AUTO_CANCEL): 활성 토큰 없음 tenantId={} userId={} mappingId={}",
+                    tid, userId, mappingId);
+            return;
+        }
+        String dedupeEntity = mappingId != null ? String.valueOf(mappingId) : "u-" + userId;
+        String dedupeBucket = "auto-cancel|" + Math.max(cancelCount, 0);
+        if (!mobilePushDispatchDedupService.tryClaim(tid,
+                MobilePushCanonicalTypes.REFUND_AUTO_CANCEL, dedupeEntity, dedupeBucket)) {
+            log.info("푸시 멱등 skip(REFUND_AUTO_CANCEL): tenantId={} userId={} mappingId={} bucket={}",
+                    tid, userId, mappingId, dedupeBucket);
+            return;
+        }
+
+        String title = com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages
+                .REFUND_AUTO_CANCEL_NOTIFICATION_TITLE;
+        String body = String.format(
+                com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages
+                        .REFUND_AUTO_CANCEL_NOTIFICATION_BODY_FMT,
+                Math.max(cancelCount, 0));
+        Map<String, String> data = new LinkedHashMap<>();
+        data.put("type", MobilePushCanonicalTypes.REFUND_AUTO_CANCEL);
+        data.put("tenantId", tid);
+        if (mappingId != null) {
+            data.put("mappingId", String.valueOf(mappingId));
+            data.put("id", String.valueOf(mappingId));
+        }
+        data.put("cancelCount", String.valueOf(Math.max(cancelCount, 0)));
+        if (mypageUrl != null && !mypageUrl.isBlank()) {
+            data.put("url", mypageUrl.trim());
+        }
+        data.put("title", truncate(title, MobilePushDispatchConstants.TITLE_MAX_LENGTH));
+        sanitizeDataStrings(data);
+
+        sendExpoInBatches(tid, tokens,
+                truncate(title, MobilePushDispatchConstants.TITLE_MAX_LENGTH),
+                truncate(body, MobilePushDispatchConstants.BODY_MAX_LENGTH),
+                data,
+                MobilePushCanonicalTypes.REFUND_AUTO_CANCEL);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void dispatchMindWeatherShared(
             String tenantId,
             Long cardId,

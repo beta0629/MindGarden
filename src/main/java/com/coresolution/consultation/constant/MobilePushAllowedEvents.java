@@ -15,6 +15,13 @@ import java.util.Set;
  * </ul>
  * 그 외(취소·실패·환불 등)는 푸시만 차단하며, 알림톡/SMS 등 다른 채널은 영향 없음.</p>
  *
+ * <p>2026-05-26 Phase 0 추가({@code SESSION_MANAGEMENT_POLICY_DECISIONS.md} Q3=3A·보조=C):
+ * <ul>
+ *   <li>{@link MobilePushCanonicalTypes#REFUND_AUTO_CANCEL} — 부분 환불/강제 종료로 회기 소진 시
+ *       미래 예약 일괄 취소 통지. 약관·전자상거래법상 의무 통지에 해당하여 사용자 선호도와
+ *       무관하게 4채널 동시 발송({@code dispatchAutoCancellation} 전용 경로)에서만 사용한다.</li>
+ * </ul></p>
+ *
  * @author MindGarden
  * @since 2026-05-23
  */
@@ -29,7 +36,8 @@ public final class MobilePushAllowedEvents {
             MobilePushCanonicalTypes.BOOKING_RESCHEDULED,
             MobilePushCanonicalTypes.PAYMENT_COMPLETED,
             MobilePushCanonicalTypes.MAPPING_APPROVED,
-            MobilePushCanonicalTypes.BOOKING_REMINDER);
+            MobilePushCanonicalTypes.BOOKING_REMINDER,
+            MobilePushCanonicalTypes.REFUND_AUTO_CANCEL);
 
     /**
      * 해당 canonical 이벤트 코드가 푸시 발송이 허용된 코드인지 여부.

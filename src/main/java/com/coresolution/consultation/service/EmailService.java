@@ -123,4 +123,19 @@ public interface EmailService {
      * 이메일 템플릿 조회
      */
     String getEmailTemplate(String templateType);
+
+    /**
+     * 부분 환불 / 강제 종료로 회기 소진(remaining&lt;=0) 시 자동 일괄 취소된 미래 예약 안내 메일
+     * (2026-05-26 Phase 0, Q3=3A·보조=C).
+     *
+     * <p>회기관리 운영 정책 합의서 v2 결정에 따라 인앱·이메일·푸시·알림톡 4채널 의무 통지의
+     * 이메일 채널을 담당한다. 약관·전자상거래법상 의무 통지에 해당하여 사용자 채널 선호도와
+     * 무관하게 발송한다.</p>
+     *
+     * @param toEmail 수신 이메일
+     * @param cancelCount 자동 취소된 일정 수
+     * @param mypageUrl 마이페이지 URL (본문에 안내, 빈 값/null이면 안내 라인 생략)
+     * @return 발송 성공 여부 (블록·실패·예외는 모두 false)
+     */
+    boolean sendAutoCancelNotification(String toEmail, int cancelCount, String mypageUrl);
 }

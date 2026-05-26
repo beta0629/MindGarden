@@ -339,6 +339,58 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
         
         return sendAlimTalk(phoneNumber, "SCHEDULE_CHANGED", params);
     }
+
+    @Override
+    public boolean sendAutoCancelRefund(String phoneNumber, int cancelCount, String mypageUrl) {
+        if (phoneNumber == null || phoneNumber.isBlank()) {
+            log.warn("환불 자동 취소 알림톡 발송 실패: 전화번호 없음");
+            return false;
+        }
+        int safeCount = Math.max(cancelCount, 0);
+        Map<String, String> params = new HashMap<>();
+        params.put("cancelCount", String.valueOf(safeCount));
+        params.put("mypageUrl", mypageUrl != null ? mypageUrl.trim() : "");
+        // contentKey 와 apiTemplateCode 분리: 솔라피 비즈 템플릿 코드는 공통코드
+        // ALIMTALK_BIZ_TEMPLATE_CODE 룩업(NotificationServiceImpl 가 일반 알림 발송 시 사용하는 동일 키)으로
+        // 운영 측 검수 ID 가 시드되면 그것을 사용한다. 미시드 상태에서는 내부 키 AUTO_CANCEL_REFUND 가
+        // 그대로 사용되어 솔라피 응답 1042/2032 등으로 실패해도 다른 채널은 영향 없도록 false 만 반환한다.
+        String apiTemplateCode = resolveAlimTalkBizTemplateCodeOverride("AUTO_CANCEL_REFUND");
+        return sendAlimTalk(phoneNumber, apiTemplateCode, "AUTO_CANCEL_REFUND", params);
+    }
+
+    /**
+     * {@code ALIMTALK_BIZ_TEMPLATE_CODE} 공통코드(테넌트 행 → 코어 행, codeLabel)에서 비즈 템플릿 코드
+     * 매핑을 조회한다. 매핑이 없으면 입력 키를 그대로 반환한다.
+     *
+     * <p>{@link com.coresolution.consultation.service.impl.NotificationServiceImpl#resolveAlimTalkBizTemplateCode}
+     * 가 사용하는 동일 공통코드를 재사용하므로, 운영 측에서 검수 통과 후 시드 한 번이면 모든 채널이
+     * 즉시 검수 ID 로 발송한다.</p>
+     *
+     * @param logicalKey 내부 키(예: {@code AUTO_CANCEL_REFUND})
+     * @return 공통코드 codeLabel 또는 입력 키
+     */
+    private String resolveAlimTalkBizTemplateCodeOverride(String logicalKey) {
+        try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId != null && !tenantId.isEmpty()) {
+                java.util.Optional<CommonCode> tenantRow = commonCodeRepository
+                        .findTenantCodeByGroupAndValue(tenantId, "ALIMTALK_BIZ_TEMPLATE_CODE", logicalKey);
+                if (tenantRow.isPresent() && tenantRow.get().getCodeLabel() != null
+                        && !tenantRow.get().getCodeLabel().isBlank()) {
+                    return tenantRow.get().getCodeLabel().trim();
+                }
+            }
+            java.util.Optional<CommonCode> coreRow = commonCodeRepository
+                    .findCoreCodeByGroupAndValue("ALIMTALK_BIZ_TEMPLATE_CODE", logicalKey);
+            if (coreRow.isPresent() && coreRow.get().getCodeLabel() != null
+                    && !coreRow.get().getCodeLabel().isBlank()) {
+                return coreRow.get().getCodeLabel().trim();
+            }
+        } catch (Exception e) {
+            log.debug("ALIMTALK_BIZ_TEMPLATE_CODE 조회 실패, 내부 키 사용: key={}, {}", logicalKey, e.getMessage());
+        }
+        return logicalKey;
+    }
     
     @Override
     public boolean isServiceAvailable() {

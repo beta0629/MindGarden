@@ -46,4 +46,15 @@ public final class MobilePushCanonicalTypes {
      * 외 추가 푸시 이벤트 정착 없이도 별도 admin broadcast 경로 1종만 사용.
      */
     public static final String ADMIN_ANNOUNCEMENT = "admin_announcement";
+
+    /**
+     * 부분 환불 / 강제 종료로 회기 소진(remaining&lt;=0) 시 자동 일괄 취소된 미래 예약 통지(2026-05-26 Phase 0).
+     *
+     * <p>회기관리 운영 정책 합의서 v2 Q3=3A (자동 일괄 취소) + Q3 보조=C (4채널 의무 통지) 결정에 따라
+     * 인앱·이메일·푸시·알림톡 4채널 의무 발송을 수행한다. 환불 처리 통보는 약관·전자상거래법상 의무
+     * 통지에 해당하므로 사용자 채널 선호도({@code MobilePushSettings}/{@code NotificationChannelPreference})
+     * 와 일반 카테고리 게이트를 우회한다. dispatch 경로는
+     * {@code MobilePushDispatchService.dispatchAutoCancellation(...)} 1종만 사용한다.
+     */
+    public static final String REFUND_AUTO_CANCEL = "refund_auto_cancel";
 }

@@ -250,8 +250,8 @@
       "successSubtitle": "솔라피 응답을 확인하세요.",
       "failTitle": "발송 실패",
       "failSubtitle": "에러를 확인하고 재시도하세요.",
-      "groupId": "groupId",
-      "messageId": "messageId",
+      "groupId": "그룹 ID",
+      "messageId": "메시지 ID",
       "errorCode": "에러코드",
       "errorMessage": "메시지",
       "openConsole": "솔라피 콘솔에서 보기",
@@ -699,12 +699,12 @@
           "after": "하여 위치 변경"
         },
         "delete": {
-          "before": "",
+          "before": "위젯의 ",
           "strong": "🗑️ 버튼",
           "after": "으로 위젯 삭제"
         },
         "config": {
-          "before": "",
+          "before": "위젯의 ",
           "strong": "⚙️ 버튼",
           "after": "으로 위젯 설정"
         }
@@ -2669,11 +2669,20 @@
     "labels": {
       "consultantManagement": "상담사 관리",
       "email": "이메일",
-      "status": "상태"
+      "status": "상태",
+      "notification": "알림",
+      "all": "전체",
+      "userManagement": "사용자 관리",
+      "clientManagement": "내담자 관리",
+      "systemSettings": "시스템 설정",
+      "consultant": "상담사",
+      "client": "내담자",
+      "inactive": "비활성"
     },
     "actions": {
       "cancel": "취소",
-      "delete": "삭제"
+      "delete": "삭제",
+      "refresh": "새로고침"
     },
     "messages": {
       "noAccessPermission": "접근 권한이 없습니다."

@@ -58,7 +58,6 @@ import AcademyRegister from './components/academy/AcademyRegister';
 // 대시보드 컴포넌트 지연 로드 (로그인 직후 초기화 순서 오류 방지)
 const TenantSelectorNew = lazy(() => import('./components/auth/TenantSelector'));
 const DynamicDashboard = lazy(() => import('./components/dashboard/DynamicDashboard'));
-const DashboardManagement = lazy(() => import('./components/admin/DashboardManagement'));
 const AdminDashboardV2 = lazy(() => import('./components/dashboard-v2/AdminDashboardV2'));
 const ClientDashboard = lazy(() => import('./components/client/ClientDashboard'));
 const CommonDashboard = lazy(() => import('./components/dashboard/CommonDashboard'));
@@ -772,7 +771,6 @@ function AppContent() {
                 <UserManagementPage />
               </ProtectedRoute>
             } />
-            <Route path="/admin/dashboards" element={<DashboardManagement />} />
                 <Route path="/admin/cache-monitoring" element={<CacheMonitoringDashboard />} />
                 <Route path="/admin/security-monitoring" element={<SecurityMonitoringDashboard />} />
             <Route path="/admin/api-performance" element={<ApiPerformanceMonitoring />} />

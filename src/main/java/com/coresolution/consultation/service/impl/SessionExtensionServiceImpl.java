@@ -100,6 +100,9 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         SessionExtensionRequest savedRequest = requestRepository.save(request);
         
         try {
+            // SSOT 핫픽스 2026-05-26 (P0-A): PL/SQL 성공 시 Java sync 를 추가 호출하면 mapping.addSessions()
+            // 가 두 번 적용되어 total/remaining 이 +n 두 번 누적된다.
+            // PL/SQL 성공 → PL/SQL 단독 적용, PL/SQL 실패 → Java sync 폴백으로 1회 적용한다.
             Map<String, Object> plSqlResult = plSqlMappingSyncService.addSessionsToMapping(
                 request.getMapping().getId(),
                 request.getAdditionalSessions(),
@@ -112,12 +115,10 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
                 log.info("✅ PL/SQL 회기 추가 처리 완료: requestId={}, message={}", 
                         savedRequest.getId(), plSqlResult.get("message"));
             } else {
-                log.warn("⚠️ PL/SQL 회기 추가 처리 실패: requestId={}, message={}", 
+                log.warn("⚠️ PL/SQL 회기 추가 처리 실패 → Java 폴백 동기화 실행: requestId={}, message={}", 
                         savedRequest.getId(), plSqlResult.get("message"));
                 sessionSyncService.syncAfterSessionExtension(savedRequest);
             }
-            
-            sessionSyncService.syncAfterSessionExtension(savedRequest);
             log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
         } catch (Exception e) {
             log.error("❌ 회기 추가 후 동기화 실패: requestId={}, error={}", 
@@ -230,6 +231,8 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         SessionExtensionRequest savedRequest = requestRepository.save(request);
         
         try {
+            // SSOT 핫픽스 2026-05-26 (P0-A): confirmPayment 와 동일 패턴.
+            // PL/SQL 성공 → PL/SQL 단독 적용, 실패 → Java sync 폴백으로 1회 적용해 +n 중복 누적을 방지한다.
             Map<String, Object> plSqlResult = plSqlMappingSyncService.addSessionsToMapping(
                 request.getMapping().getId(),
                 request.getAdditionalSessions(),
@@ -242,11 +245,10 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
                 log.info("✅ PL/SQL 회기 추가 처리 완료: requestId={}, message={}", 
                         savedRequest.getId(), plSqlResult.get("message"));
             } else {
-                log.warn("⚠️ PL/SQL 회기 추가 처리 실패: requestId={}, message={}", 
+                log.warn("⚠️ PL/SQL 회기 추가 처리 실패 → Java 폴백 동기화 실행: requestId={}, message={}", 
                         savedRequest.getId(), plSqlResult.get("message"));
+                sessionSyncService.syncAfterSessionExtension(savedRequest);
             }
-            
-            sessionSyncService.syncAfterSessionExtension(savedRequest);
             log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
         } catch (Exception e) {
             log.error("❌ 회기 추가 후 동기화 실패: requestId={}, error={}", 

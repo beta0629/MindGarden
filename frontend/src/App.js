@@ -59,8 +59,6 @@ import AcademyRegister from './components/academy/AcademyRegister';
 const TenantSelectorNew = lazy(() => import('./components/auth/TenantSelector'));
 const DynamicDashboard = lazy(() => import('./components/dashboard/DynamicDashboard'));
 const DashboardManagement = lazy(() => import('./components/admin/DashboardManagement'));
-const WidgetBasedAdminDashboard = lazy(() => import('./components/admin/WidgetBasedAdminDashboard'));
-const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
 const AdminDashboardV2 = lazy(() => import('./components/dashboard-v2/AdminDashboardV2'));
 const ClientDashboard = lazy(() => import('./components/client/ClientDashboard'));
 const CommonDashboard = lazy(() => import('./components/dashboard/CommonDashboard'));
@@ -503,9 +501,6 @@ function AppContent() {
                 <AdminDashboardV2 user={user} />
               </ProtectedRoute>
             } />
-            <Route path="/admin/dashboard-legacy" element={<AdminDashboard user={user} />} />
-            <Route path="/admin/dashboard-widget" element={<WidgetBasedAdminDashboard />} />
-            <Route path="/admin/dashboard-old" element={<DynamicDashboard user={user} />} />
             <Route path="/super_admin/dashboard" element={<DynamicDashboard user={user} />} />
             <Route
               path={SUPER_ADMIN_ROUTES.TENANT_COMPONENTS}

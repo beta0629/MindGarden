@@ -13,7 +13,7 @@ CREATE PROCEDURE GetBranchFinancialBreakdown(
     OUT p_message TEXT,
     OUT p_breakdown_data JSON
 )
-BEGIN
+fin_proc: BEGIN
     DECLARE v_error_message VARCHAR(500);
     
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -30,14 +30,14 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '테넌트 ID는 필수입니다.';
         SET p_breakdown_data = JSON_OBJECT('error', '테넌트 ID가 필요합니다.');
-        LEAVE;
+        LEAVE fin_proc;
     END IF;
     
     IF p_start_date IS NULL OR p_end_date IS NULL OR p_start_date > p_end_date THEN
         SET p_success = FALSE;
         SET p_message = '유효한 기간을 입력해주세요.';
         SET p_breakdown_data = JSON_OBJECT('error', '유효한 기간이 필요합니다.');
-        LEAVE;
+        LEAVE fin_proc;
     END IF;
     
     -- 2. 재무 분석 (테넌트 격리)
@@ -60,7 +60,7 @@ BEGIN
     SET p_success = TRUE;
     SET p_message = '재무 분석이 완료되었습니다.';
     
-END //
+END fin_proc //
 
 DELIMITER ;
 

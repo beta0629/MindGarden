@@ -18,7 +18,7 @@ CREATE PROCEDURE CalculateFinancialKPIs(
     OUT p_profit_margin DECIMAL(5,2),
     OUT p_avg_transaction_value DECIMAL(15,2)
 )
-BEGIN
+fin_proc: BEGIN
     DECLARE v_error_message VARCHAR(500);
     
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -45,7 +45,7 @@ BEGIN
         SET p_total_transactions = 0;
         SET p_profit_margin = 0;
         SET p_avg_transaction_value = 0;
-        LEAVE;
+        LEAVE fin_proc;
     END IF;
     
     IF p_start_date IS NULL OR p_end_date IS NULL OR p_start_date > p_end_date THEN
@@ -57,7 +57,7 @@ BEGIN
         SET p_total_transactions = 0;
         SET p_profit_margin = 0;
         SET p_avg_transaction_value = 0;
-        LEAVE;
+        LEAVE fin_proc;
     END IF;
     
     -- 2. 기본 재무 데이터 조회 (테넌트 격리)
@@ -85,7 +85,7 @@ BEGIN
     SET p_success = TRUE;
     SET p_message = '재무 KPI 계산이 완료되었습니다.';
     
-END //
+END fin_proc //
 
 DELIMITER ;
 

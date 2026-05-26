@@ -13,7 +13,7 @@ CREATE PROCEDURE GenerateQuarterlyFinancialReport(
     OUT p_message TEXT,
     OUT p_report_data JSON
 )
-BEGIN
+fin_proc: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE start_date DATE;
     DECLARE end_date DATE;
@@ -34,21 +34,21 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '테넌트 ID는 필수입니다.';
         SET p_report_data = JSON_OBJECT('error', '테넌트 ID가 필요합니다.');
-        LEAVE;
+        LEAVE fin_proc;
     END IF;
     
     IF p_year IS NULL OR p_year < 2000 OR p_year > 2100 THEN
         SET p_success = FALSE;
         SET p_message = '유효한 연도를 입력해주세요.';
         SET p_report_data = JSON_OBJECT('error', '유효한 연도가 필요합니다.');
-        LEAVE;
+        LEAVE fin_proc;
     END IF;
     
     IF p_quarter IS NULL OR p_quarter < 1 OR p_quarter > 4 THEN
         SET p_success = FALSE;
         SET p_message = '유효한 분기를 입력해주세요. (1-4)';
         SET p_report_data = JSON_OBJECT('error', '유효한 분기가 필요합니다.');
-        LEAVE;
+        LEAVE fin_proc;
     END IF;
     
     -- 2. 분기 시작/종료 날짜 계산
@@ -111,7 +111,7 @@ BEGIN
     SET p_success = TRUE;
     SET p_message = '분기별 재무 보고서 생성이 완료되었습니다.';
     
-END //
+END fin_proc //
 
 DELIMITER ;
 

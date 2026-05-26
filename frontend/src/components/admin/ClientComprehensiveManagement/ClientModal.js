@@ -777,7 +777,7 @@ const ClientModal = ({
                     />
                 </div>
                 <div className="mg-v2-form-group">
-                    <label htmlFor="grade" className="mg-v2-form-label">{t('admin:clientModal.grade')}</label>
+                    <label htmlFor="grade" className="mg-v2-form-label">{t('admin:clientModal.form.gradeLabel')}</label>
                     <BadgeSelect
                         value={safeFormData.grade}
                         onChange={(val) => setFormData(prev => ({ ...prev, grade: val }))}

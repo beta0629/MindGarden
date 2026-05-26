@@ -2653,7 +2653,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onClose}
           >
-            {t('common.actions.close')}
+            {t('common:actions.close')}
           </MGButton>
           {entryDetail && entryDetail.entryStatus === 'DRAFT' && (
             <MGButton
@@ -3146,7 +3146,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
             onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
           >
             <option value="">{t('erp:IntegratedFinanceDashboard.t_6a59f428')}</option>
-            <option value="CONSULTATION">{t('common.labels.consultation')}</option>
+            <option value="CONSULTATION">{t('common:labels.consultation')}</option>
             <option value="EDUCATION">{t('erp:IntegratedFinanceDashboard.t_05c5ced0')}</option>
             <option value="HEALTHCARE">{t('erp:IntegratedFinanceDashboard.t_bbfe9579')}</option>
           </select>
@@ -3365,7 +3365,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onClose}
         >
-          {t('common.actions.close')}
+          {t('common:actions.close')}
         </MGButton>
       </div>
     </UnifiedModal>

@@ -2239,7 +2239,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
                         onClick={handleCloseModal}
                     >
-                        {t('common.actions.close')}
+                        {t('common:actions.close')}
                     </MGButton>
                     <MGButton
                         type="button"

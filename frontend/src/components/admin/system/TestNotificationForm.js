@@ -154,7 +154,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
 
   const recipientOptions = useMemo(() => recipients.map((u) => ({
     value: String(u.userId ?? u.id ?? ''),
-    label: `${toDisplayString(u.name, t('testNotification.recipient.unknownName'))} · ${toDisplayString(u.role, t('testNotification.recipient.unknownRole'))} · ${toDisplayString(u.phoneMasked, t('testNotification.recipient.unknownPhone'))}`
+    label: `${toDisplayString(u.name, t('testNotification:recipient.unknownName'))} · ${toDisplayString(u.role, t('testNotification:recipient.unknownRole'))} · ${toDisplayString(u.phoneMasked, t('testNotification:recipient.unknownPhone'))}`
   })), [recipients, t]);
 
   const selectedTemplate = useMemo(() => {
@@ -177,7 +177,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
     return {
       count: smsMessage.length,
       limit,
-      label: isKo ? t('testNotification.sms.langKo') : t('testNotification.sms.langEn'),
+      label: isKo ? t('testNotification:sms.langKo') : t('testNotification:sms.langEn'),
       warning: smsMessage.length > limit
     };
   }, [smsMessage, t]);
@@ -463,7 +463,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
           {templateVariableDefs.map((v) => (
             <div key={v.name} className="mg-test-notif-form__variable-row">
               <label className="mg-test-notif-form__variable-label" htmlFor={`mg-test-notif-var-${v.name}`}>
-                {toDisplayString(v.name, t('testNotification.alimtalk.variableFallback'))}
+                {toDisplayString(v.name, t('testNotification:alimtalk.variableFallback'))}
                 {v.required && (
                   <span className="mg-test-notif-form__badge mg-test-notif-form__badge--required">
                     {t('testNotification.alimtalk.variableRequired')}

@@ -308,7 +308,7 @@ const ConsultationReport = () => {
     } else if (selectedPeriod === 'YEAR') {
       return t('report:consultation.yearLabel', { year: selectedYear });
     }
-    return t('common.labels.all');
+    return t('common:labels.all');
   };
 
   const formatDate = (dateString) => {
@@ -443,7 +443,7 @@ const ConsultationReport = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={loadReportData}
               >
-                {t('common.labels.retry')}
+                {t('common:labels.retry')}
               </MGButton>
             </div>
           ) : !reportData ? (
@@ -504,11 +504,11 @@ const ConsultationReport = () => {
                     <h3>{t('report:byConsultant.title')}</h3>
                     <div className="stats-table">
                       <div className="table-header">
-                        <span>{t('common.labels.consultant')}</span>
+                        <span>{t('common:labels.consultant')}</span>
                         <span>{t('report:byConsultant.totalLabel')}</span>
-                        <span>{t('common.actions.done')}</span>
+                        <span>{t('common:actions.done')}</span>
                         <span>{t('report:byConsultant.scheduledLabel')}</span>
-                        <span>{t('common.actions.cancel')}</span>
+                        <span>{t('common:actions.cancel')}</span>
                       </div>
                       {Object.entries(reportData.consultantStats).map(([consultant, stats]) => (
                         <div key={consultant} className="table-row">
@@ -528,11 +528,11 @@ const ConsultationReport = () => {
                     <h3>{t('report:byClient.title')}</h3>
                     <div className="stats-table">
                       <div className="table-header">
-                        <span>{t('common.labels.client')}</span>
+                        <span>{t('common:labels.client')}</span>
                         <span>{t('report:byClient.totalLabel')}</span>
-                        <span>{t('common.actions.done')}</span>
+                        <span>{t('common:actions.done')}</span>
                         <span>{t('report:byClient.scheduledLabel')}</span>
-                        <span>{t('common.actions.cancel')}</span>
+                        <span>{t('common:actions.cancel')}</span>
                       </div>
                       {Object.entries(reportData.clientStats).map(([client, stats]) => (
                         <div key={client} className="table-row">

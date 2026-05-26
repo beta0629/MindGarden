@@ -244,7 +244,7 @@ const SmsTemplateManagementPage = () => {
   if (sessionLoading || !hasAccess) {
     return (
       <AdminCommonLayout title={pageTitle} className="mg-v2-dashboard-layout">
-        <UnifiedLoading text={t('common.loading')} />
+        <UnifiedLoading text={t('common:loading')} />
       </AdminCommonLayout>
     );
   }
@@ -295,7 +295,7 @@ const SmsTemplateManagementPage = () => {
                 </div>
 
                 {loading ? (
-                  <UnifiedLoading text={t('common.loading')} />
+                  <UnifiedLoading text={t('common:loading')} />
                 ) : (
                   <ul
                     className="mg-admin-sms-template__items"
@@ -503,7 +503,7 @@ const SmsTemplateManagementPage = () => {
               onClick={() => setSaveModalOpen(false)}
               disabled={submitting}
             >
-              {t('common.cancel')}
+              {t('common:cancel')}
             </MGButton>
             <MGButton
               type="button"
@@ -536,7 +536,7 @@ const SmsTemplateManagementPage = () => {
               onClick={() => setDeleteModalOpen(false)}
               disabled={submitting}
             >
-              {t('common.cancel')}
+              {t('common:cancel')}
             </MGButton>
             <MGButton
               type="button"

@@ -744,7 +744,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             <div className="mg-v2-mapping-creation-modal__completion-summary">
               <p><strong>{t('admin:labels.consultant')}:</strong> {toDisplayString(selectedConsultant?.name)}</p>
               <p><strong>{t('admin:labels.client')}:</strong> {toDisplayString(selectedClient?.name)}</p>
-              <p><strong>{t('admin:mappingCreation.package')}:</strong> {toDisplayString(paymentInfo.packageName)}</p>
+              <p><strong>{t('admin:mappingCreation.step.package')}:</strong> {toDisplayString(paymentInfo.packageName)}</p>
               <p><strong>{t('admin:mappingCreation.sessionPrice')}:</strong> {paymentInfo.totalSessions}{t('admin:mappingCreation.sessionUnitShort')} · {paymentInfo.packagePrice?.toLocaleString()}{t('admin:mappingCreation.currency')}</p>
             </div>
           </section>

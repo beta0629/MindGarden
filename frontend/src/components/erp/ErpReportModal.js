@@ -306,7 +306,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 disabled={loading}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
-                                {t('common.actions.cancel')}
+                                {t('common:actions.cancel')}
                             </MGButton>
                             <MGButton
                                 variant="primary"
